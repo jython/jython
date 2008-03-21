@@ -221,20 +221,23 @@ class Thread(JavaThread):
 
 class local(object):
     def __init__(self):
-        self._local = _local = ThreadLocal()
-        _local.set(object())
+        self.__dict__['____local__'] = _local = ThreadLocal()
+        _local.set({})
 
-    def __getattribute__(self, name):
-        return object.__getattribute__(self._local.get(), name)
+    def __getattr__(self, name):
+        try:
+            return self.____local__.get()[name]
+        except KeyError:
+            raise AttributeError(name)
 
     def __setattr__(self, name, value):
-        return object.__setattr__(self._local.get(), name, value)
+        self.____local__.get()[name] = value
 
     def __delattr__(self, name):
-        return object.__delattr__(self._local.get(), name)
-
-    def __del__(self):
-        self._local.remove()
+        try:
+            del self.____local__.get()[name]
+        except KeyError:
+            raise AttributeError(name)
 
 
 class _MainThread(Thread):
