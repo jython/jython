@@ -1,5 +1,6 @@
 package org.python.core;
 
+import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedType;
 
@@ -29,7 +30,7 @@ public class PyMethodDescr extends PyDescriptor implements PyBuiltinFunction.Inf
 
     @Override
     public String toString() {
-        return "<method '" + name + "' of '" + dtype.fastGetName() + "' objects>";
+        return String.format("<method '%s' of '%s' objects>", name, dtype.fastGetName());
     }
 
     @Override
@@ -71,5 +72,25 @@ public class PyMethodDescr extends PyDescriptor implements PyBuiltinFunction.Inf
         if(objtype != dtype && !objtype.isSubType(dtype)) {
             throw get_wrongtype(objtype);
         }
+    }
+
+    /**
+     * Return the name this descriptor is exposed as.
+     *
+     * @return a name String
+     */
+    @ExposedGet(name = "__name__")
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * Return the owner class of this descriptor.
+     *
+     * @return this descriptor's owner
+     */
+    @ExposedGet(name = "__objclass__")
+    public PyObject getObjClass() {
+        return dtype;
     }
 }

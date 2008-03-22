@@ -1,5 +1,6 @@
 package org.python.core;
 
+import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedType;
 
@@ -118,7 +119,27 @@ public abstract class PyDataDescr extends PyDescriptor {
 
     @Override
     public String toString() {
-        return "<member '" + name + "' of '" + dtype.fastGetName() + "' objects>";
+        return String.format("<attribute '%s' of '%s' objects>", name, dtype.fastGetName());
+    }
+
+    /**
+     * Return the name this descriptor is exposed as.
+     *
+     * @return a name String
+     */
+    @ExposedGet(name = "__name__")
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * Return the owner class of this descriptor.
+     *
+     * @return this descriptor's owner
+     */
+    @ExposedGet(name = "__objclass__")
+    public PyObject getObjClass() {
+        return dtype;
     }
 
     protected Class ofType;

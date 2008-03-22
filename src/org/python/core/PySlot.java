@@ -1,5 +1,6 @@
 package org.python.core;
 
+import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedType;
 
@@ -60,13 +61,32 @@ public class PySlot extends PyDescriptor {
 
     @Override
     public String toString() {
-        return "<member '" + name + "' of '" + dtype.fastGetName()
-                + "' objects>";
+        return String.format("<member '%s' of '%s' objects>", name, dtype.fastGetName());
     }
 
     private void checkType(PyType type) {
         if(type != dtype && !type.isSubType(dtype))
             throw get_wrongtype(type);
+    }
+
+    /**
+     * Return the name this descriptor is exposed as.
+     *
+     * @return a name String
+     */
+    @ExposedGet(name = "__name__")
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * Return the owner class of this descriptor.
+     *
+     * @return this descriptor's owner
+     */
+    @ExposedGet(name = "__objclass__")
+    public PyObject getObjClass() {
+        return dtype;
     }
 
     private int index;
