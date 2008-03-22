@@ -53,7 +53,6 @@ def settrace(func):
     global _trace_hook
     _trace_hook = func
 
-# TODO: add support for context managers
 class RLock(object):
     def __init__(self):
         self._lock = ReentrantLock()
@@ -64,8 +63,13 @@ class RLock(object):
         else:
             return self._lock.tryLock()
 
+    __enter__ = acquire
+
     def release(self):
         self._lock.unlock()
+
+    def __exit__(self, t, v, tb):
+        self.release()
 
 Lock = RLock
 
@@ -94,6 +98,19 @@ class Condition(object):
     def notifyAll(self):
         return self._condition.signalAll()
 
+class Semaphore(object):
+    def __init__(self, value=1):
+        if value < 0:
+            raise ValueError("Semaphore initial value must be >= 0")
+        self._semaphore = java.util.concurrent.Semaphore(value)
+
+    def acquire(self):
+        self._semaphore.acquire()
+
+    def release(self):
+        self._semaphore.release()
+
+
 ThreadStates = {
     Thread.State.NEW : 'initial',
     Thread.State.RUNNABLE: 'runnable',
@@ -112,6 +129,12 @@ class JavaThread(object):
         status = ThreadStates[_thread.getState()]
         if _thread.isDaemon(): status + " daemon"
         return "<%s(%s, %s)>" % (self.__class__.__name__, self.getName(), status)
+
+    def __eq__(self, other):
+        if isinstance(other, JavaThread):
+            return self._thread == other._thread
+        else:
+            return False
 
     def start(self):
         self._thread.start()
