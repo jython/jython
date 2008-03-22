@@ -104,8 +104,12 @@ class Semaphore(object):
             raise ValueError("Semaphore initial value must be >= 0")
         self._semaphore = java.util.concurrent.Semaphore(value)
 
-    def acquire(self):
-        self._semaphore.acquire()
+    def acquire(self, blocking=True):
+        if blocking:
+            self._semaphore.acquire()
+            return True
+        else:
+            return self._semaphore.tryAcquire()
 
     def release(self):
         self._semaphore.release()
