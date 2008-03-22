@@ -60,12 +60,15 @@ class RLock(object):
     def acquire(self, blocking=1):
         if blocking:
             self._lock.lock()
+            return True
         else:
             return self._lock.tryLock()
 
     __enter__ = acquire
 
     def release(self):
+        assert self._lock.isHeldByCurrentThread(), \
+            "release() of un-acquire()d lock"
         self._lock.unlock()
 
     def __exit__(self, t, v, tb):
@@ -139,6 +142,9 @@ class JavaThread(object):
             return self._thread == other._thread
         else:
             return False
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
     def start(self):
         self._thread.start()
