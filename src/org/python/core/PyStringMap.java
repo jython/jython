@@ -141,9 +141,9 @@ public class PyStringMap extends PyObject {
         for (Entry<Object, PyObject> entry : table.entrySet()) {
             Object key = entry.getKey();
             if (key instanceof String) {
-                buf.append(key);
+                buf.append(Py.java2py(key).__repr__().toString());
             } else {
-                buf.append(((PyObject)entry.getKey()).__repr__().toString());
+                buf.append(((PyObject)key).__repr__().toString());
             }
             buf.append(": ");
             buf.append(entry.getValue().__repr__().toString());
