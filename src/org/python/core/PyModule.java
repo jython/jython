@@ -23,9 +23,6 @@ public class PyModule extends PyObject {
     /** The module's mutable dictionary */
     public PyObject __dict__;
 
-    /** For use with __import__ */
-    private static PyObject fromlist;
-
     public PyModule() {
         super();
     }
@@ -139,10 +136,8 @@ public class PyModule extends PyObject {
     }
 
     final PyObject module___findattr__(String name) {
-        PyObject attr;
-
         if (__dict__ != null) {
-            attr = __dict__.__finditem__(name);
+            PyObject attr = __dict__.__finditem__(name);
             if (attr != null) {
                 return attr;
             }
