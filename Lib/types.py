@@ -33,7 +33,8 @@ try:
 except NameError:
     StringTypes = (StringType,)
 
-BufferType = buffer
+# XXX: no buffer in jython
+#BufferType = buffer
 
 TupleType = tuple
 ListType = list
@@ -64,7 +65,9 @@ MethodType = type(_x._m)
 BuiltinFunctionType = type(len)
 BuiltinMethodType = type([].append)     # Same as BuiltinFunctionType
 
-ModuleType = type(sys)
+# XXX: Jython sys is not a real module
+#ModuleType = type(sys)
+ModuleType = type(sys.modules[__name__])
 FileType = file
 XRangeType = xrange
 
