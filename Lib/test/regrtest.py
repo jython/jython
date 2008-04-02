@@ -957,7 +957,6 @@ _skips = {
         test_email_codecs
         test_fcntl
         test_fork1
-        test_gc
         test_gdbm
         test_getargs2
         test_gl
@@ -1006,7 +1005,6 @@ _skips = {
         test_unicode_file
         test_unicodedata
         test_wave
-        test_weakref
         test_winreg
         test_winsound
         """
@@ -1030,6 +1028,7 @@ _failures = {
     test_email
     test_eof
     test_frozen
+    test_gc
     test_hexoct
     test_iterlen
     test_marshal
@@ -1046,6 +1045,7 @@ _failures = {
     test_trace
     test_ucn
     test_unicode
+    test_weakref
     test_xpickle
     test_zipimport
     ''',
