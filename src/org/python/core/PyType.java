@@ -50,7 +50,6 @@ public class PyType extends PyObject implements Serializable {
     private PyObject[] mro = new PyObject[0];
 
     /** __flags__, the type's options. */
-    @ExposedGet(name = "__flags__")
     private long tp_flags;
 
     /** The underlying java class or null. */
@@ -592,6 +591,11 @@ public class PyType extends PyObject implements Serializable {
         return new PyTuple(mro);
     }
 
+    @ExposedGet(name = "__flags__")
+    public PyLong getFlags() {
+        return new PyLong(tp_flags);
+    }
+
     @ExposedMethod
     public synchronized final PyObject type___subclasses__() {
         PyList result = new PyList();
@@ -1097,7 +1101,8 @@ public class PyType extends PyObject implements Serializable {
 
     final void type___setattr__(String name, PyObject value) {
         if (builtin) {
-            throw Py.TypeError("can't set attributes of built-in type '" + this.name + "'");
+            throw Py.TypeError(String.format("can't set attributes of built-in/extension type "
+                                             + "'%s'", this.name));
         }
         super.__setattr__(name, value);
         if (name == "__set__") {
@@ -1134,7 +1139,8 @@ public class PyType extends PyObject implements Serializable {
 
     final void type___delattr__(String name) {
         if (builtin) {
-            throw Py.TypeError("can't delete attributes of built-in type '" + this.name + "'");
+            throw Py.TypeError(String.format("can't set attributes of built-in/extension type "
+                                             + "'%s'", this.name));
         }
         super.__delattr__(name);
         if (name == "__set__") {
@@ -1191,6 +1197,10 @@ public class PyType extends PyObject implements Serializable {
     }
 
     @ExposedGet(name = "__name__")
+    public PyObject pyGetName() {
+        return Py.newString(getName());
+    }
+
     public String getName() {
         if (!builtin) {
             return name;
@@ -1200,6 +1210,29 @@ public class PyType extends PyObject implements Serializable {
             return name.substring(lastDot + 1);
         }
         return name;
+    }
+
+    @ExposedSet(name = "__name__")
+    public void pySetName(PyObject name) {
+        // guarded by __setattr__ to prevent modification of builtins
+        if (!(name instanceof PyString)) {
+            throw Py.TypeError(String.format("can only assign string to %s.__name__, not '%s'",
+                                             this.name, name.getType().fastGetName()));
+        }
+        String nameStr = name.toString();
+        if (nameStr.indexOf((char)0) > -1) {
+            throw Py.ValueError("__name__ must not contain null bytes");
+        }
+        setName(nameStr);
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    @ExposedDelete(name = "__name__")
+    public void pyDelName() {
+        throw Py.TypeError(String.format("can't delete %s.__name__", name));
     }
 
     public PyObject fastGetDict() {
@@ -1213,12 +1246,14 @@ public class PyType extends PyObject implements Serializable {
 
     @ExposedSet(name = "__dict__")
     public void setDict(PyObject newDict) {
-    	throw Py.TypeError("can't set attribute '__dict__' of type '" + name + "'");
+        // Analogous to CPython's descrobject:getset_set
+    	throw Py.AttributeError(String.format("attribute '__dict__' of '%s' objects is not "
+                                              + "writable", getType().fastGetName()));
     }
 
     @ExposedDelete(name = "__dict__")
     public void delDict() {
-    	throw Py.TypeError("can't delete attribute '__dict__' of type '" + name + "'");
+    	setDict(null);
     }
 
     public Object __tojava__(Class c) {
@@ -1239,6 +1274,11 @@ public class PyType extends PyObject implements Serializable {
             return Py.newString(name.substring(0, lastDot));
         }
         return Py.newString("__builtin__");
+    }
+
+    @ExposedDelete(name = "__module__")
+    public void delModule() {
+        throw Py.TypeError(String.format("can't delete %s.__module__", name));
     }
 
     public int getNumSlots(){

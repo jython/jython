@@ -1,4 +1,4 @@
-"""Misc. type tests
+"""Misc. type tests (and some old style class tests too).
 
 Made for Jython
 """
@@ -6,9 +6,11 @@ import __builtin__
 import unittest
 from test import test_support
 
-class TypesModuleTestCase(unittest.TestCase):
+class TypesGeneralTestCase(unittest.TestCase):
 
-    def test_module(self):
+    TE_MSG = "can't set attributes of built-in/extension type 'str'"
+
+    def test_dunder_module(self):
         self.assertEqual(str.__module__, '__builtin__')
         class Foo:
             pass
@@ -25,6 +27,85 @@ class TypesModuleTestCase(unittest.TestCase):
         self.assertEqual(repr(Bar), "<class '%s.Bar'>" % __name__)
         bar = Bar()
         self.assert_(str(bar).startswith('<%s.Bar object ' % __name__))
+
+
+    def test_builtin_attributes(self):
+        for attr, val in dict(__name__='foo', __module__='bar', __dict__={},
+                              __flags__=1, __base__=object,
+                              __bases__=(unicode, object),
+                              __mro__=(unicode, object)).iteritems():
+            try:
+                setattr(str, attr, val)
+            except TypeError, te:
+                self.assertEqual(str(te), self.TE_MSG)
+            else:
+                self.assert_(False,
+                             'setattr str.%s expected a TypeError' % attr)
+            try:
+                delattr(str, attr)
+            except TypeError, te:
+                self.assertEqual(str(te), self.TE_MSG)
+            else:
+                self.assert_(False,
+                             'delattr str.%s expected a TypeError' % attr)
+
+
+    def test_attributes(self):
+        class Foo(object):
+            pass
+
+        Foo.__name__ = 'Bar'
+        self.assertEqual(Foo.__name__, 'Bar')
+        try:
+            del Foo.__name__
+        except TypeError, te:
+            self.assertEqual(str(te), "can't delete Bar.__name__")
+        else:
+            self.assert_(False, 'Expected a TypeError')
+
+        Foo.__module__ = 'baz'
+        self.assertEqual(Foo.__module__, 'baz')
+        try:
+            del Foo.__module__
+        except TypeError, te:
+            self.assertEqual(str(te), "can't delete Bar.__module__")
+        else:
+            self.assert_(False, 'Expected a TypeError')
+
+        try:
+            Foo.__dict__ = {}
+        except AttributeError, ae:
+            self.assertEqual(str(ae),
+                             "attribute '__dict__' of 'type' objects is not "
+                             "writable")
+        else:
+            self.assert_(False, 'Expected an AttributeError')
+        try:
+            del Foo.__dict__
+        except AttributeError, ae:
+            self.assertEqual(str(ae),
+                             "attribute '__dict__' of 'type' objects is not "
+                             "writable")
+        else:
+            self.assert_(False, 'Expected an AttributeError')
+
+        for attr, val in dict(__flags__=1, __base__=object,
+                              __bases__=(unicode, object),
+                              __mro__=(unicode, object)).iteritems():
+            try:
+                setattr(str, attr, val)
+            except TypeError, te:
+                self.assertEqual(str(te), self.TE_MSG)
+            else:
+                self.assert_(False,
+                             'setattr Foo.%s expected a TypeError' % attr)
+            try:
+                delattr(str, attr)
+            except TypeError, te:
+                self.assertEqual(str(te), self.TE_MSG)
+            else:
+                self.assert_(False,
+                             'delattr Foo.%s expected a TypeError' % attr)
 
 
 class TypesNamelessModuleTestCase(unittest.TestCase):
@@ -82,7 +163,7 @@ class BrokenNameTestCase(unittest.TestCase):
 
 
 def test_main():
-    test_support.run_unittest(TypesModuleTestCase,
+    test_support.run_unittest(TypesGeneralTestCase,
                               TypesNamelessModuleTestCase,
                               BrokenNameTestCase)
 
