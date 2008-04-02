@@ -43,7 +43,7 @@ public class PyType extends PyObject implements Serializable {
     /** __bases__, the base classes. */
     private PyObject[] bases = new PyObject[0];
 
-    /** __dict__. */
+    /** The real, internal __dict__. */
     private PyObject dict;
 
     /** __mro__, the method resolution. order */
@@ -1207,8 +1207,8 @@ public class PyType extends PyObject implements Serializable {
     }
 
     @ExposedGet(name = "__dict__")
-    public PyObject getDict() { // xxx return dict-proxy
-        return dict;
+    public PyObject getDict() {
+        return new PyDictProxy(dict);
     }
 
     @ExposedSet(name = "__dict__")

@@ -297,7 +297,7 @@ public class PySystemState extends PyObject
 
         if (getType() != null) {
             __dict__ = new PyStringMap();
-            __dict__.invoke("update", getType().getDict());
+            __dict__.invoke("update", getType().fastGetDict());
             __dict__.__setitem__("displayhook", __displayhook__);
             __dict__.__setitem__("excepthook", __excepthook__);
         }
