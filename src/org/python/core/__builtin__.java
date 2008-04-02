@@ -110,8 +110,6 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
                 return __builtin__.round(Py.py2double(arg1));
             case 41:
                 return __builtin__.vars(arg1);
-            case 42:
-                return __builtin__.xrange(Py.py2int(arg1));
             case 30:
                 return fancyCall(new PyObject[]{arg1});
             case 31:
@@ -169,8 +167,6 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
                 return __builtin__.reduce(arg1, arg2);
             case 38:
                 return __builtin__.round(Py.py2double(arg1), Py.py2int(arg2));
-            case 42:
-                return __builtin__.xrange(Py.py2int(arg1), Py.py2int(arg2));
             case 29:
                 return fancyCall(new PyObject[]{arg1, arg2});
             case 30:
@@ -217,8 +213,6 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
             case 39:
                 __builtin__.setattr(arg1, asString(arg2, "setattr(): attribute name must be string"), arg3);
                 return Py.None;
-            case 42:
-                return __builtin__.xrange(Py.py2int(arg1), Py.py2int(arg2), Py.py2int(arg3));
             case 44:
                 return fancyCall(new PyObject[]{arg1, arg2, arg3});
             case 29:
@@ -332,6 +326,8 @@ public class __builtin__ {
         dict.__setitem__("file", PyFile.TYPE);
         dict.__setitem__("open", PyFile.TYPE);
         dict.__setitem__("slice", PySlice.TYPE);
+        // PyXRange is still an old style class
+        dict.__setitem__("xrange", PyType.fromClass(PyXRange.class));
 
         /* - */
 
@@ -387,7 +383,6 @@ public class __builtin__ {
         dict.__setitem__("round", new BuiltinFunctions("round", 38, 1, 2));
         dict.__setitem__("setattr", new BuiltinFunctions("setattr", 39, 3));
         dict.__setitem__("vars", new BuiltinFunctions("vars", 41, 0, 1));
-        dict.__setitem__("xrange", new BuiltinFunctions("xrange", 42, 1, 3));
         dict.__setitem__("zip", new BuiltinFunctions("zip", 43, 0, -1));
         dict.__setitem__("reversed", new BuiltinFunctions("reversed", 45, 1));
         dict.__setitem__("__import__", new ImportFunction());
@@ -1080,17 +1075,6 @@ public class __builtin__ {
         }
     }
 
-    public static PyObject xrange(int start, int stop, int step) {
-        return new PyXRange(start, stop, step);
-    }
-
-    public static PyObject xrange(int n) {
-        return xrange(0, n, 1);
-    }
-
-    public static PyObject xrange(int start, int stop) {
-        return xrange(start, stop, 1);
-    }
     public static PyString __doc__zip = new PyString("zip(seq1 [, seq2 [...]]) -> [(seq1[0], seq2[0] ...), (...)]\n" + "\n" + "Return a list of tuples, where each tuple contains the i-th element\n" + "from each of the argument sequences.  The returned list is\n" + "truncated in length to the length of the shortest argument sequence.");
 
     public static PyObject zip() {

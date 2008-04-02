@@ -16,6 +16,14 @@ public class PyXRange extends PySequence {
     int copies;            // The number of copies made (used to implement
                            // xrange(x,y,z)*n)
 
+    public PyXRange(int stop) {
+        this(0, stop, 1);
+    }
+
+    public PyXRange(int start, int stop) {
+        this(start, stop, 1);
+    }
+
     public PyXRange(int start, int stop, int step) {
         if (step == 0)
             throw Py.ValueError("zero step for xrange()");
