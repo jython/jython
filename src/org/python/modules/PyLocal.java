@@ -11,7 +11,7 @@ import org.python.expose.ExposedNew;
 import org.python.expose.ExposedSet;
 import org.python.expose.ExposedType;
 
-@ExposedType(name = "local")
+@ExposedType(name = "thread._local")
 public class PyLocal extends PyObject {
 
     public static final PyType TYPE = PyType.fromClass(PyLocal.class);
@@ -35,7 +35,7 @@ public class PyLocal extends PyObject {
     }
 
     @ExposedNew
-    final static PyObject local___new__(PyNewWrapper new_,
+    final static PyObject _local___new__(PyNewWrapper new_,
                                         boolean init,
                                         PyType subtype,
                                         PyObject[] args,
@@ -47,13 +47,13 @@ public class PyLocal extends PyObject {
             newobj = new PyLocalDerived(subtype);
         }
         if (init) {
-            newobj.local___init__(args, keywords);
+            newobj._local___init__(args, keywords);
         }
         return newobj;
     }
 
     @ExposedMethod
-    final void local___init__(PyObject[] args, String[] keywords) {
+    final void _local___init__(PyObject[] args, String[] keywords) {
         PyObject[] where = new PyObject[1];
         getType().lookup_where("__init__", where);
         if (where[0] == TYPE && args.length > 0) {
