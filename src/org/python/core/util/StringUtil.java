@@ -63,4 +63,24 @@ public class StringUtil {
         return fromBytes(buf.array(), buf.arrayOffset() + buf.position(),
                          buf.arrayOffset() + buf.limit());
     }
+
+    /**
+     * Decapitalize a String if it begins with a capital letter, e.g.:
+     * FooBar -> fooBar
+     *
+     * @param string a String
+     * @return a decapitalized String
+     */
+    public static String decapitalize(String string) {
+        char c0 = string.charAt(0);
+        if (!Character.isUpperCase(c0)) {
+            return string;
+        }
+        if (string.length() > 1 && Character.isUpperCase(string.charAt(1))) {
+            return string;
+        }
+        char[] chars = string.toCharArray();
+        chars[0] = Character.toLowerCase(c0);
+        return new String(chars);
+    }
 }
