@@ -874,7 +874,7 @@ public class PyType extends PyObject implements Serializable {
         String slotstring = mangleName(newtype.name, slotname.toString());
         if (slotstring.equals("__dict__")) {
             newtype.needs_userdict = true;
-        } else {
+        } else if (newtype.dict.__finditem__(slotstring) == null) {
             newtype.dict.__setitem__(slotstring, new PySlot(newtype, slotstring,
                                                             newtype.numSlots++));
         }
