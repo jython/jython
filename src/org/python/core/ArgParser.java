@@ -196,6 +196,17 @@ public class ArgParser {
         return Py.EmptyTuple;
     }
 
+    /**
+     * Ensure no keyword arguments were passed, raising a TypeError if
+     * so.
+     *
+     */
+    public void noKeywords() {
+        if (kws.length > 0) {
+            throw Py.TypeError(String.format("%s does not take keyword arguments", funcname));
+        }
+    }
+
     private void check() {
         int nargs = this.args.length - this.kws.length;
         l1: for (int i = 0; i < this.kws.length; i++) {
