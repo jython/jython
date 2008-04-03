@@ -50,7 +50,8 @@ public class PyMethodDescr extends PyDescriptor implements PyBuiltinFunction.Inf
     }
 
     public PyException unexpectedCall(int nargs, boolean keywords) {
-        return PyBuiltinFunction.DefaultInfo.unexpectedCall(nargs, keywords, name, minargs, maxargs);
+        return PyBuiltinFunction.DefaultInfo.unexpectedCall(nargs, keywords, name, minargs,
+                                                            maxargs);
     }
 
     @Override
