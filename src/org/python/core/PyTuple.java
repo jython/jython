@@ -57,6 +57,18 @@ public class PyTuple extends PySequenceList
         }
     }
 
+    /**
+     * Return a new PyTuple from an iterable.
+     *
+     * Raises a TypeError if the object is not iterable.
+     *
+     * @param iterable an iterable PyObject
+     * @return a PyTuple containing each item in the iterable
+     */
+    public static PyTuple fromIterable(PyObject iterable) {
+        return new PyTuple(Py.make_array(iterable));
+    }
+
     protected PyObject getslice(int start, int stop, int step) {
         if (step > 0 && stop < start)
             stop = start;
