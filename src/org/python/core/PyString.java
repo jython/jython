@@ -3,6 +3,7 @@ package org.python.core;
 
 import java.math.BigInteger;
 
+import org.python.core.util.ExtraMath;
 import org.python.core.util.StringUtil;
 
 import org.python.expose.ExposedMethod;

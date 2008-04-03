@@ -1,6 +1,6 @@
 // Copyright (c) Corporation for National Research Initiatives
 
-package org.python.core;
+package org.python.core.util;
 
 /**
  * A static utility class with two additional math functions.

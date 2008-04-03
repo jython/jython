@@ -1,6 +1,7 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
+import org.python.core.util.ExtraMath;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;

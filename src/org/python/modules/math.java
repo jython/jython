@@ -2,6 +2,7 @@
 package org.python.modules;
 
 import org.python.core.*;
+import org.python.core.util.ExtraMath;
 import java.lang.Math;
 
 public class math implements ClassDictInit {
