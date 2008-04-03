@@ -98,16 +98,16 @@ class LongAsScaledDoubleValueTests(unittest.TestCase):
 
 class ExtraMathTests(unittest.TestCase):
     def test_epsilon(self):
-        from org.python.core import ExtraMath
+        from org.python.core.util import ExtraMath
         self.assertNotEqual(1.0 + ExtraMath.EPSILON, 1.0)
         self.assertEqual(1.0 + (ExtraMath.EPSILON/2.0), 1.0)
     def test_close(self):
-        from org.python.core import ExtraMath
+        from org.python.core.util import ExtraMath
         self.assert_(ExtraMath.close(3.0, 3.0))
         self.assert_(ExtraMath.close(3.0, 3.0 + ExtraMath.CLOSE))
         self.assert_(not ExtraMath.close(3.0, 3.0 + 4.0*ExtraMath.CLOSE))
     def test_closeFloor(self):
-        from org.python.core import ExtraMath
+        from org.python.core.util import ExtraMath
         import math
         self.assertEquals(ExtraMath.closeFloor(3.5), 3.0)
         self.assertEquals(ExtraMath.closeFloor(3.0 - ExtraMath.EPSILON), 3.0)
