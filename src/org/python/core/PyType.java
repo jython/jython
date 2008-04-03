@@ -119,7 +119,7 @@ public class PyType extends PyObject implements Serializable {
         if (!(dict instanceof PyDictionary || dict instanceof PyStringMap)) {
             throw Py.TypeError("type(): dict must be dict");
         }
-        return newType(new_, subtype, name, (PyTuple) bases, dict);
+        return newType(new_, subtype, name, (PyTuple)bases, dict);
     }
 
     public static PyObject newType(PyNewWrapper new_, PyType metatype, String name, PyTuple bases,
@@ -237,7 +237,7 @@ public class PyType extends PyObject implements Serializable {
                                         String[] keywords) {
         PyObject newobj;
         if (new_ instanceof PyNewWrapper) {
-            newobj = ((PyNewWrapper) new_).new_impl(init, type, args, keywords);
+            newobj = ((PyNewWrapper)new_).new_impl(init, type, args, keywords);
         } else {
             int n = args.length;
             PyObject[] type_prepended = new PyObject[n + 1];
@@ -246,7 +246,7 @@ public class PyType extends PyObject implements Serializable {
             newobj = new_.__get__(null, type).__call__(type_prepended, keywords);
         }
         /* special case type(x) */
-        if (type == TYPE && args.length==1 && keywords.length==0) {
+        if (type == TYPE && args.length == 1 && keywords.length == 0) {
             return newobj;
         }
         newobj.dispatch__init__(type, args, keywords);
@@ -418,7 +418,7 @@ public class PyType extends PyObject implements Serializable {
                 @SuppressWarnings("unchecked")
                 Method m = c.getMethod("classDictInit", PyObject.class);
                 m.invoke(null, new Object[] {dict});
-            } catch(Exception exc) {
+            } catch (Exception exc) {
                 throw error(exc);
             }
         }
@@ -460,10 +460,10 @@ public class PyType extends PyObject implements Serializable {
      * Gets the most parent PyType that determines the layout of this type ie
      * has slots or an underlying_class.  Can by this PyType.
      */
-    private PyType getLayout(){
-        if (underlying_class != null){
+    private PyType getLayout() {
+        if (underlying_class != null) {
             return this;
-        } else if (numSlots != base.numSlots){
+        } else if (numSlots != base.numSlots) {
             return this;
         }
         return base.getLayout();
@@ -488,7 +488,7 @@ public class PyType extends PyObject implements Serializable {
 
     @ExposedSet(name = "__bases__")
     public void setBases(PyObject newBasesTuple) {
-        if (!(newBasesTuple instanceof PyTuple)){
+        if (!(newBasesTuple instanceof PyTuple)) {
             throw Py.TypeError("bases must be a tuple");
         }
         PyObject[] newBases = ((PyTuple)newBasesTuple).getArray();
@@ -497,13 +497,13 @@ public class PyType extends PyObject implements Serializable {
                                + newBasesTuple);
         }
         for (int i = 0; i < newBases.length; i++) {
-            if (!(newBases[i] instanceof PyType)){
-                if (!(newBases[i] instanceof PyClass)){
+            if (!(newBases[i] instanceof PyType)) {
+                if (!(newBases[i] instanceof PyClass)) {
                     throw Py.TypeError(name + ".__bases__ must be a tuple of old- or new-style "
                                        + "classes, not " + newBases[i]);
                 }
             } else {
-                if (((PyType)newBases[i]).isSubType(this)){
+                if (((PyType)newBases[i]).isSubType(this)) {
                     throw Py.TypeError("a __bases__ item causes an inheritance cycle");
                 }
             }
@@ -531,8 +531,8 @@ public class PyType extends PyObject implements Serializable {
                     ((PyType)newBases[i]).attachSubclass(this);
                 }
             }
-        } catch(PyException t) {
-            for (Iterator it = savedSubMros.iterator(); it.hasNext(); ){
+        } catch (PyException t) {
+            for (Iterator it = savedSubMros.iterator(); it.hasNext();) {
                 PyType subtype = (PyType)it.next();
                 PyObject[] subtypeSavedMro = (PyObject[])it.next();
                 subtype.mro = subtypeSavedMro;
@@ -559,7 +559,7 @@ public class PyType extends PyObject implements Serializable {
      * mroCollector will equal [C, C.__mro__, D, D.__mro__, E, E.__mro__] after
      * this call.
      */
-    private void mro_subclasses(List<Object> mroCollector){
+    private void mro_subclasses(List<Object> mroCollector) {
         for (WeakReference<PyType> ref : subclasses) {
             PyType subtype = ref.get();
             if (subtype == null) {
@@ -617,7 +617,7 @@ public class PyType extends PyObject implements Serializable {
     private synchronized void detachSubclass(PyType subtype) {
         cleanup_subclasses();
         for (WeakReference<PyType> ref : subclasses) {
-            if (ref.get() == subtype){
+            if (ref.get() == subtype) {
                 subclasses.remove(ref);
                 break;
             }
@@ -671,7 +671,7 @@ public class PyType extends PyObject implements Serializable {
         StringBuffer msg = new StringBuffer("Cannot create a consistent method resolution\n"
                                             + "order (MRO) for bases ");
         PyDictionary set = new PyDictionary();
-        for (int i=0; i < to_merge.length; i++) {
+        for (int i = 0; i < to_merge.length; i++) {
             PyObject[] lst = to_merge[i];
             if (remain[i] < lst.length) {
                 set.__setitem__(lst[remain[i]], Py.None);
@@ -751,7 +751,7 @@ public class PyType extends PyObject implements Serializable {
                 }
             acc.add(candidate);
             for (int j = 0; j < nmerge; j++) {
-                if (remain[j]<to_merge[j].length && to_merge[j][remain[j]]==candidate) {
+                if (remain[j] < to_merge[j].length && to_merge[j][remain[j]] == candidate) {
                     remain[j]++;
                 }
             }
@@ -775,7 +775,7 @@ public class PyType extends PyObject implements Serializable {
         for (int i = 0; i < mro.length; i++) {
             PyObject parent = mro[i];
             if (parent instanceof PyType) {
-                PyType parent_type =(PyType)parent;
+                PyType parent_type = (PyType)parent;
                 if (isSolidBase(parent_type)) {
                     return parent_type;
                 }
@@ -1051,7 +1051,7 @@ public class PyType extends PyObject implements Serializable {
     }
 
     @ExposedMethod
-    final PyObject type___getattribute__(PyObject name){
+    final PyObject type___getattribute__(PyObject name) {
         return type___findattr__(asName(name));
     }
 
@@ -1091,7 +1091,7 @@ public class PyType extends PyObject implements Serializable {
     }
 
     @ExposedMethod
-    final void type___setattr__(PyObject name, PyObject value){
+    final void type___setattr__(PyObject name, PyObject value) {
         type___setattr__(asName(name), value);
     }
 
@@ -1257,8 +1257,8 @@ public class PyType extends PyObject implements Serializable {
     }
 
     public Object __tojava__(Class c) {
-        if (underlying_class!= null &&(
-            c == Object.class || c == Class.class || c == Serializable.class)) {
+        if (underlying_class != null && (c == Object.class || c == Class.class ||
+                                         c == Serializable.class)) {
             return underlying_class;
         }
         return super.__tojava__(c);
@@ -1281,7 +1281,7 @@ public class PyType extends PyObject implements Serializable {
         throw Py.TypeError(String.format("can't delete %s.__module__", name));
     }
 
-    public int getNumSlots(){
+    public int getNumSlots() {
         return numSlots;
     }
 
@@ -1357,7 +1357,7 @@ public class PyType extends PyObject implements Serializable {
         }
 
         private Object readResolve() {
-            if (underlying_class!=null) {
+            if (underlying_class != null) {
                 return PyType.fromClass(underlying_class);
             }
             PyObject mod = imp.importName(module.intern(), false);
