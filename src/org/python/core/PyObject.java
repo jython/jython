@@ -2731,6 +2731,23 @@ public class PyObject implements Serializable {
         return f.__call__(arg1, arg2);
     }
 
+    /**
+     * Shortcut for calling a method on a PyObject with one extra
+     * initial argument.
+     *
+     * @param name the name of the method to call.  This must be an
+     *        interned string!
+     * @param arg1 the first argument of the method.
+     * @param args an array of the arguments to the call.
+     * @param keywords the keywords to use in the call.
+     * @return the result of calling the method name with arg1 args
+     * and keywords
+     **/
+    public PyObject invoke(String name, PyObject arg1, PyObject[] args, String[] keywords) {
+        PyObject f = __getattr__(name);
+        return f.__call__(arg1, args, keywords);
+    }
+
     /* descriptors and lookup protocols */
 
     /** xxx implements where meaningful
