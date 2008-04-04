@@ -15,6 +15,7 @@ import org.python.expose.ExposedType;
 @ExposedType(name = "getset_descriptor", base = PyObject.class)
 public abstract class PyDataDescr extends PyDescriptor {
 
+    protected Class ofType;
 
     /**
      * @param onType -
@@ -58,9 +59,7 @@ public abstract class PyDataDescr extends PyDescriptor {
     @ExposedMethod
     public PyObject getset_descriptor___get__(PyObject obj, PyObject type) {
         if(obj != null) {
-            PyType objtype = obj.getType();
-            if(objtype != dtype && !objtype.isSubType(dtype))
-                throw get_wrongtype(objtype);
+            checkGetterType(obj.getType());
             Object v = invokeGet(obj);
             if(v == null) {
                 obj.noAttributeError(name);
@@ -79,9 +78,7 @@ public abstract class PyDataDescr extends PyDescriptor {
     
     @ExposedMethod
     public void getset_descriptor___set__(PyObject obj, PyObject value) {
-        PyType objtype = obj.getType();
-        if(objtype != dtype && !objtype.isSubType(dtype))
-            throw get_wrongtype(objtype);
+        checkGetterType(obj.getType());
         Object converted = value.__tojava__(ofType);
         if(converted == Py.NoConversion) {
             throw Py.TypeError(""); // xxx
@@ -101,9 +98,7 @@ public abstract class PyDataDescr extends PyDescriptor {
     @ExposedMethod
     public void getset_descriptor___delete__(PyObject obj) {
         if(obj != null) {
-            PyType objtype = obj.getType();
-            if(objtype != dtype && !objtype.isSubType(dtype))
-                throw get_wrongtype(objtype);
+            checkGetterType(obj.getType());
             invokeDelete(obj);
         }
     }
@@ -141,6 +136,4 @@ public abstract class PyDataDescr extends PyDescriptor {
     public PyObject getObjClass() {
         return dtype;
     }
-
-    protected Class ofType;
 }

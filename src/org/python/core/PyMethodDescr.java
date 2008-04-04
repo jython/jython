@@ -43,7 +43,7 @@ public class PyMethodDescr extends PyDescriptor implements PyBuiltinFunction.Inf
         if(args.length == kwargs.length) {
             throw Py.TypeError(name + " requires at least one argument");
         }
-        checkCallerType(args[0]);
+        checkCallerType(args[0].getType());
         PyObject[] actualArgs = new PyObject[args.length - 1];
         System.arraycopy(args, 1, actualArgs, 0, actualArgs.length);
         return meth.bind(args[0]).__call__(actualArgs, kwargs);
@@ -62,17 +62,10 @@ public class PyMethodDescr extends PyDescriptor implements PyBuiltinFunction.Inf
     @ExposedMethod
     final PyObject method_descriptor___get__(PyObject obj, PyObject type) {
         if(obj != null) {
-            checkCallerType(obj);
+            checkGetterType(obj.getType());
             return meth.bind(obj);
         }
         return this;
-    }
-
-    protected void checkCallerType(PyObject obj) {
-        PyType objtype = obj.getType();
-        if(objtype != dtype && !objtype.isSubType(dtype)) {
-            throw get_wrongtype(objtype);
-        }
     }
 
     /**

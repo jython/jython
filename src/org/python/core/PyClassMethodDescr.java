@@ -6,17 +6,12 @@ public class PyClassMethodDescr extends PyMethodDescr {
         super(t, meth);
     }
 
-    protected void checkCallerType(PyObject obj) {
-        if((PyType)obj != dtype && !((PyType)obj).isSubType(dtype))
-            throw get_wrongtype((PyType)obj);
-    }
-
     public PyObject __get__(PyObject obj, PyObject type) {
         if (obj != null) {
-            checkCallerType(obj.getType());
+            checkGetterType(obj.getType());
             return meth.bind(obj.getType()); 
-        }else if(type != null){
-            checkCallerType(type);
+        } else if(type != null) {
+            checkGetterType((PyType)type);
             return meth.bind(type);
         }
         return this;

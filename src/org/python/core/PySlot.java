@@ -7,6 +7,8 @@ import org.python.expose.ExposedType;
 @ExposedType(name = "member_descriptor", base = PyObject.class)
 public class PySlot extends PyDescriptor {
 
+    private int index;
+
     public PySlot(PyType dtype, String name, int index) {
         this.name = name;
         this.dtype = dtype;
@@ -31,7 +33,7 @@ public class PySlot extends PyDescriptor {
     @ExposedMethod
     public PyObject member_descriptor___get__(PyObject obj, PyObject type) {
         if(obj != null) {
-            checkType((PyType)type);
+            checkGetterType(obj.getType());
             return ((Slotted)obj).getSlot(index);
         }
         return this;
@@ -44,7 +46,7 @@ public class PySlot extends PyDescriptor {
 
     @ExposedMethod
     public void member_descriptor___set__(PyObject obj, PyObject value) {
-        checkType(obj.getType());
+        checkGetterType(obj.getType());
         ((Slotted)obj).setSlot(index, value);
     }
 
@@ -55,18 +57,13 @@ public class PySlot extends PyDescriptor {
 
     @ExposedMethod
     public void member_descriptor___delete__(PyObject obj) {
-        checkType(obj.getType());
+        checkGetterType(obj.getType());
         ((Slotted)obj).setSlot(index, null);
     }
 
     @Override
     public String toString() {
         return String.format("<member '%s' of '%s' objects>", name, dtype.fastGetName());
-    }
-
-    private void checkType(PyType type) {
-        if(type != dtype && !type.isSubType(dtype))
-            throw get_wrongtype(type);
     }
 
     /**
@@ -88,6 +85,4 @@ public class PySlot extends PyDescriptor {
     public PyObject getObjClass() {
         return dtype;
     }
-
-    private int index;
 }
