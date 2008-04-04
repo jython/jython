@@ -6,6 +6,56 @@ import org.python.expose.ExposedType;
 @ExposedType(name = "builtin_function_or_method")
 public abstract class PyBuiltinFunction extends PyObject {
 
+    protected Info info;
+
+    protected PyBuiltinFunction(PyType type, Info info) {
+        super(type);
+        this.info = info;
+    }
+
+    protected PyBuiltinFunction(Info info) {
+        this.info = info;
+    }
+
+    /**
+     * @return a new instance of this type of PyBuiltinFunction bound to self
+     */
+    abstract public PyBuiltinFunction bind(PyObject self);
+
+    @ExposedGet(name = "__name__")
+    public PyObject fastGetName() {
+        return Py.newString(this.info.getName());
+    }
+
+    @ExposedGet(name = "__doc__")
+    public PyObject fastGetDoc() {
+        return Py.None;
+    }
+
+    @ExposedGet(name = "__call__")
+    public PyObject makeCall() {
+        return this;
+    }
+
+    @ExposedGet(name = "__self__")
+    public PyObject getSelf() {
+        return Py.None;
+    }
+
+    public void setInfo(Info info) {
+        this.info = info;
+    }
+
+    public String toString() {
+        PyObject self = getSelf();
+        if (self == null) {
+            return String.format("<built-in function %s>", info.getName());
+        } else {
+            return String.format("<built-in method %s of %s object at %s>", info.getName(),
+                                 self.getType().fastGetName(), Py.idstr(self));
+        }
+    }
+
     public interface Info {
 
         String getName();
@@ -84,55 +134,5 @@ public abstract class PyBuiltinFunction extends PyObject {
         public PyException unexpectedCall(int nargs, boolean keywords) {
             return unexpectedCall(nargs, keywords, name, minargs, maxargs);
         }
-    }
-
-    protected PyBuiltinFunction(PyType type, Info info) {
-        super(type);
-        this.info = info;
-    }
-
-    protected PyBuiltinFunction(Info info) {
-        this.info = info;
-    }
-
-    protected Info info;
-
-    public void setInfo(Info info) {
-        this.info = info;
-    }
-
-    /**
-     * @return a new instance of this type of PyBuiltinFunction bound to self
-     */
-    abstract public PyBuiltinFunction bind(PyObject self);
-
-    @ExposedGet(name = "__self__")
-    public PyObject getSelf() {
-        return Py.None;
-    }
-
-    public String toString() {
-        PyObject self = getSelf();
-        if (self == null) {
-            return String.format("<built-in function %s>", info.getName());
-        } else {
-            return String.format("<built-in method %s of %s object at %s>", info.getName(),
-                                 self.getType().fastGetName(), Py.idstr(self));
-        }
-    }
-
-    @ExposedGet(name = "__name__")
-    public PyObject fastGetName() {
-        return Py.newString(this.info.getName());
-    }
-
-    @ExposedGet(name = "__doc__")
-    public PyObject fastGetDoc() {
-        return Py.None;
-    }
-
-    @ExposedGet(name = "__call__")
-    public PyObject makeCall() {
-        return this;
     }
 }
