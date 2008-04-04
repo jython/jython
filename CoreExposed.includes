@@ -1,5 +1,6 @@
 org/python/core/PyArray.class
 org/python/core/PyBaseString.class
+org/python/core/PyBaseException.class
 org/python/core/PyBoolean.class
 org/python/core/PyBuiltinFunction.class
 org/python/core/PyClassMethod.class

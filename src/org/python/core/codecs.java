@@ -1060,7 +1060,7 @@ public class codecs {
                                                 start,
                                                 end,
                                                 reason);
-        exc.instantiate();
+        exc.normalize();
         PyObject replacement = errorHandler.__call__(new PyObject[] {exc.value});
         checkErrorHandlerReturn(errors, replacement);
         return replacement;
@@ -1107,7 +1107,7 @@ public class codecs {
                                                 start,
                                                 end,
                                                 reason);
-        exc.instantiate();
+        exc.normalize();
         return errorHandler.__call__(new PyObject[] {exc.value});
     }
 

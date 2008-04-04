@@ -225,14 +225,10 @@ public final class Py
       return new PyException(Py.SystemExit, message);
       }*/
     static void maybeSystemExit(PyException exc) {
-        //System.err.println("maybeSystemExit: " + exc.type.toString());
         if (Py.matchException(exc, Py.SystemExit)) {
             PyObject value = exc.value;
-            //System.err.println("exiting: "+value.getClass().getName());
-            if (value instanceof PyInstance) {
-                PyObject tmp = value.__findattr__("code");
-                if (tmp != null)
-                    value = tmp;
+            if (isExceptionInstance(exc.value)) {
+                value = value.__findattr__("code");
             }
             Py.getSystemState().callExitFunc();
             if (value instanceof PyInteger) {
@@ -242,8 +238,9 @@ public final class Py
                     try {
                         Py.println(value);
                         System.exit(1);
+                    } catch (Throwable t) {
+                        // continue
                     }
-                    catch (Throwable t0) { }
                 }
                 System.exit(0);
             }
@@ -307,7 +304,7 @@ public final class Py
                                                  int end,
                                                  String reason) {
         return new PyException(Py.UnicodeEncodeError, new PyTuple(new PyString(encoding),
-                                                                  new PyString(object),
+                                                                  new PyUnicode(object),
                                                                   new PyInteger(start),
                                                                   new PyInteger(end),
                                                                   new PyString(reason)));
@@ -343,6 +340,7 @@ public final class Py
     public static PyObject LookupError;
     public static PyObject StandardError;
     public static PyObject Exception;
+    public static PyObject BaseException;
 
     public static PyObject Warning;
     public static void Warning(String message) {
@@ -665,6 +663,7 @@ public final class Py
     static void initClassExceptions(PyObject dict) {
         PyObject exc = imp.load("exceptions");
 
+        BaseException       = initExc("BaseException", exc, dict);
         Exception           = initExc("Exception", exc, dict);
         SystemExit          = initExc("SystemExit", exc, dict);
         StopIteration       = initExc("StopIteration", exc, dict);
@@ -956,6 +955,7 @@ public final class Py
             try {
                 exceptHook.__call__(exc.type, exc.value, exc.traceback);
             } catch (PyException exc2) {
+                // XXX: normalize is done here, Python/pythonrun.c PyErr_PrintEx
                 stderr.println("Error in sys.excepthook:");
                 displayException(exc2.type, exc2.value, exc2.traceback, file);
                 stderr.println();
@@ -1007,8 +1007,23 @@ public final class Py
     static String formatException(PyObject type, PyObject value, PyObject tb) {
         StringBuffer buf = new StringBuffer();
 
-        if (type instanceof PyClass) {
-            buf.append(((PyClass) type).__name__);
+        if (isExceptionClass(type)) {
+            String className = exceptionClassName(type);
+            int lastDot = className.lastIndexOf('.');
+            if (lastDot != -1) {
+                className = className.substring(lastDot + 1);
+            }
+            PyObject moduleName = type.__findattr__("__module__");
+            if (moduleName == null) {
+                buf.append("<unknown>");
+            } else {
+                String moduleStr = moduleName.toString();
+                if (!moduleStr.equals("exceptions")) {
+                    buf.append(moduleStr);
+                    buf.append(".");
+                }
+            }
+            buf.append(className);
         } else {
             buf.append(type.__str__());
         }
@@ -1048,7 +1063,7 @@ public final class Py
     /* Helpers to implement except clauses */
     public static PyException setException(Throwable t, PyFrame frame) {
         PyException pye = Py.JavaError(t);
-        pye.instantiate();
+        pye.normalize();
 
         // attach catching frame
         if (frame != null && pye.traceback.tb_frame != frame && pye.traceback.tb_frame.f_back != null) {
@@ -1063,7 +1078,7 @@ public final class Py
     }
 
     public static boolean matchException(PyException pye, PyObject e) {
-        pye.instantiate();
+        pye.normalize();
         // FIXME, see bug 737978
         //
         // A special case for IOError's to allow them to also match
@@ -1082,8 +1097,28 @@ public final class Py
                 return true;
             }
         }
-        if(e instanceof PyClass) {
-            return __builtin__.isinstance(pye.value, e);
+        if (e instanceof PyClass) {
+            try {
+                return __builtin__.issubclass(pye.type, e);
+            } catch (PyException subclassE) {
+                if (!matchException(subclassE, TypeError)) {
+                    throw subclassE;
+                }
+                return false;
+            }
+        } else if (e instanceof PyType) {
+            if (pye.type == e) {
+                return true;
+            } else {
+                try {
+                    return __builtin__.issubclass(pye.type, e);
+                } catch (PyException subclassE) {
+                    if (!matchException(subclassE, TypeError)) {
+                        throw subclassE;
+                    }
+                    return false;
+                }
+            }
         } else {
             if(e == pye.type)
                 return true;
@@ -1098,55 +1133,110 @@ public final class Py
         }
     }
 
-    /* Implement the raise statement */
-    // reraise the current exception
-    public static PyException makeException() {
-        ThreadState ts = getThreadState();
-        if (ts.exception == null) {
-            throw Py.ValueError("no exception to reraise");
-        }
-        return ts.exception;
-    }
 
-    public static PyException makeException(PyObject type) {
-        if (type instanceof PyInstance) {
-            return new PyException(type.fastGetClass(), type);
-        } else {
-            return makeException(type, Py.None);
-        }
+    // XXX: the following 4 are backwards compat. for the
+    // oldcompiler. newcompiler should just call doRaise instead
+    public static PyException makeException(PyObject type, PyObject value,
+                                            PyObject traceback) {
+        return doRaise(type, value, traceback);
     }
 
     public static PyException makeException(PyObject type, PyObject value) {
-        if (type instanceof PyInstance) {
-            if (value != Py.None) {
-                throw TypeError("instance exceptions may not have " +
-                                "a separate value");
-            } else {
-                return new PyException(type.fastGetClass(), type);
-            }
-        }
-        PyException exc = new PyException(type, value);
-        exc.instantiate();
-        return exc;
+        return makeException(type, value, null);
     }
 
-    public static PyException makeException(PyObject type, PyObject value,
-                                            PyObject traceback)
-    {
-        if (type instanceof PyInstance) {
-            if (value != Py.None) {
-                throw TypeError("instance exceptions may not have " +
-                                "a separate value");
-            } else {
-                type = type.fastGetClass();
-            }
+    public static PyException makeException(PyObject type) {
+        return makeException(type, null);
+    }
+
+    public static PyException makeException() {
+        return makeException(null);
+    }
+
+    /**
+     * Determine whether obj is a Python Exception class
+     *
+     * @param obj a PyObject
+     * @return true if an exception
+     */
+    public static boolean isExceptionClass(PyObject obj) {
+        return obj instanceof PyClass
+                || (obj instanceof PyType && ((PyType)obj).isSubType((PyType)Py.BaseException));
+    }
+
+    /**
+     * Determine whether obj is an Exception instance
+     *
+     * @param obj a PyObject
+     * @return true if an exception instance
+     */
+    public static boolean isExceptionInstance(PyObject obj) {
+        return obj instanceof PyInstance || obj.getType().isSubType((PyType)Py.BaseException);
+    }
+
+    /**
+     * Get the name of the exception's class
+     *
+     * @param obj a PyObject exception
+     * @return String exception name
+     */
+    public static String exceptionClassName(PyObject obj) {
+        return obj instanceof PyClass ? ((PyClass)obj).__name__ : ((PyType)obj).fastGetName();
+    }
+
+    /**
+     * Logic for the raise statement
+     *
+     * @param type the first arg to raise, a type or an instance
+     * @param value the second arg, the instance of the class or
+     * arguments to its constructor
+     * @param tb a traceback object
+     * @return a PyException wrapper
+     */
+    public static PyException doRaise(PyObject type, PyObject value, PyObject traceback) {
+        if (type == null) {
+            ThreadState state = getThreadState();
+            type = state.exception.type;
+            value = state.exception.value;
+            traceback = state.exception.traceback;
         }
 
-        if (traceback == None)
-            return new PyException(type, value);
-        if (!(traceback instanceof PyTraceback))
-            throw TypeError("raise 3rd arg must be traceback or None");
+        if (traceback == Py.None) {
+            traceback = null;
+        } else if (traceback != null && !(traceback instanceof PyTraceback)) {
+            throw Py.TypeError("raise: arg 3 must be a traceback or None");
+        }
 
+        if (value == null) {
+            value = Py.None;
+        }
+
+        // Repeatedly, replace a tuple exception with its first item
+        while (type instanceof PyTuple && ((PyTuple)type).size() > 0) {
+            type = type.__getitem__(0);
+        }
+
+        if (type.getClass() == PyString.class) {
+            Py.warning(Py.DeprecationWarning, "raising a string exception is deprecated");
+        } else if (isExceptionClass(type)) {
+            PyException pye = new PyException(type, value, (PyTraceback)traceback);
+            pye.normalize();
+            return pye;
+        } else if (isExceptionInstance(type)) {
+            // Raising an instance.  The value should be a dummy.
+            if (value != Py.None) {
+                throw Py.TypeError("instance exception may not have a separate value");
+            } else {
+                // Normalize to raise <class>, <instance>
+                value = type;
+                type = type.fastGetClass();
+            }
+        } else {
+            // Not something you can raise.  You get an exception
+            // anyway, just not what you specified :-)
+            throw Py.TypeError("exceptions must be classes, instances, or strings (deprecated), "
+                               + "not " + type.getType().fastGetName());
+        }
         return new PyException(type, value, (PyTraceback)traceback);
     }
 

@@ -25,33 +25,8 @@ public class PyException extends RuntimeException
     public PyObject value = Py.None;
 
     public PyTraceback traceback;
-    private boolean instantiated=false;
 
-    public void instantiate() {
-        if (!instantiated) {
-            // repeatedly, replace a tuple exception with its first item
-            while (type instanceof PyTuple && type.__len__() > 0) {
-                type = type.__getitem__(0);
-            }
-            if(type instanceof PyClass
-                    && (!(value instanceof PyInstance && __builtin__.isinstance(value, type)))) {
-                if (value instanceof PyTuple) {
-                    if (type == Py.KeyError) {
-                        value = ((PyClass)type).__call__(new PyObject[] {value});
-                    } else {
-                        value = ((PyClass)type).__call__(((PyTuple)value).getArray());
-                    }
-                } else {
-                    if (value == Py.None) {
-                        value = ((PyClass)type).__call__(Py.EmptyObjects);
-                    } else {
-                        value = ((PyClass)type).__call__(new PyObject[] {value});
-                    }
-                }
-            }
-            instantiated = true;
-        }
-    }
+    private boolean normalized = false;
 
     public PyException() {
         //System.out.println("PyException");
@@ -64,24 +39,25 @@ public class PyException extends RuntimeException
     }
 
     public PyException(PyObject type, PyObject value) {
-        this.type = type;
-        this.value = value;
-
-        PyFrame frame = Py.getFrame();
-        traceback = new PyTraceback(frame);
-        if (frame != null && frame.tracefunc != null) {
-            frame.tracefunc = frame.tracefunc.traceException(frame, this);
-        }
-    }
-
-    public PyException(PyObject type, String value) {
-        this(type, new PyString(value));
+        this(type, value, null);
     }
 
     public PyException(PyObject type, PyObject value, PyTraceback traceback) {
         this.type = type;
         this.value = value;
+
+        if (traceback == null) {
+            PyFrame frame = Py.getFrame();
+            traceback = new PyTraceback(frame);
+            if (frame != null && frame.tracefunc != null) {
+                frame.tracefunc = frame.tracefunc.traceException(frame, this);
+            }
+        }
         this.traceback = traceback;
+    }
+
+    public PyException(PyObject type, String value) {
+        this(type, new PyString(value));
     }
 
     private boolean printingStackTrace = false;
@@ -119,5 +95,41 @@ public class PyException extends RuntimeException
             printStackTrace(new PrintStream(buf));
         }
         return buf.toString();
+    }
+
+    /**
+     * Instantiates the exception value if it is not already an
+     * instance.
+     *
+     */
+    public void normalize() {
+        if (normalized) {
+            return;
+        }
+        PyObject inClass = null;
+        if (Py.isExceptionInstance(value)) {
+            inClass = value.fastGetClass();
+        }
+
+        if (Py.isExceptionClass(type)) {
+            if (inClass == null || !__builtin__.issubclass(inClass, type)) {
+                PyObject[] args;
+
+                // Don't decouple a tuple into args when it's a
+                // KeyError, pass it on through below
+                if (value == Py.None) {
+                    args = Py.EmptyObjects;
+                } else if (value instanceof PyTuple && type != Py.KeyError) {
+                    args = ((PyTuple)value).getArray();
+                } else {
+                    args = new PyObject[] {value};
+                }
+
+                value = type.__call__(args);
+            } else if (inClass != type) {
+                type = inClass;
+            }
+        }
+        normalized = true;
     }
 }
