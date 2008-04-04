@@ -182,6 +182,23 @@ public class ArgParser {
     }
 
     /**
+     * Return a required argument as a PyObject, ensuring the object
+     * is of the specified type.
+     *
+     * @param pos the position of the argument. First argument is numbered 0
+     * @param type the desired PyType of the argument
+     * @return the PyObject of PyType
+     */
+    public PyObject getPyObjectByType(int pos, PyType type) {
+        PyObject arg = getRequiredArg(pos);
+        if (arg.getType() != type) {
+            throw Py.TypeError(String.format("argument %d must be %s, not %s", pos + 1,
+                                             type.fastGetName(), arg.getType().fastGetName()));
+        }
+        return arg;
+    }
+
+    /**
      * Return the remaining arguments as a tuple.
      * 
      * @param pos The position of the argument. First argument is numbered 0.
