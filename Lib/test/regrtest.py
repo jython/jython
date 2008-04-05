@@ -1021,7 +1021,6 @@ _failures = {
     test___all__
     test_class
     test_copy
-    test_cpickle
     test_dis
     test_descr
     test_descrtut
