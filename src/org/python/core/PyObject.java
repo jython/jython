@@ -37,12 +37,11 @@ public class PyObject implements Serializable {
 
     @ExposedSet(name = "__class__")
     public void setType(PyType type) {
-        if(getType().layoutAligns(type) &&
-                !type.equals(PyType.fromClass(PyObject.class))){
-            this.objtype = type;
-        } else {
-            throw Py.TypeError("Can only assign subtypes of object to __class__ on subclasses of object");
+        if (type.builtin || getType().builtin) {
+            throw Py.TypeError("__class__ assignment: only for heap types");
         }
+        type.compatibleForAssignment(getType(), "__class__");
+        objtype = type;
     }
 
     @ExposedDelete(name = "__class__")
@@ -2987,7 +2986,7 @@ public class PyObject implements Serializable {
     private static PyObject slotnames(PyObject cls) {
         PyObject slotnames;
 
-        slotnames = cls.__findattr__("__slotnames__");
+        slotnames = cls.fastGetDict().__finditem__("__slotnames__");
         if (null != slotnames) {
             return slotnames;
         }

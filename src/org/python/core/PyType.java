@@ -448,12 +448,15 @@ public class PyType extends PyObject implements Serializable {
     }
 
     /**
-     * Checks that the physical layout between this type and <code>other</code>
-     * are compatible.
+     * Ensures that the physical layout between this type and
+     * <code>other</code> are compatible. Raises a TypeError if not.
      */
-    public boolean layoutAligns(PyType other) {
-        return getLayout().equals(other.getLayout()) && needs_userdict == other.needs_userdict
-                && needs_finalizer == other.needs_finalizer;
+    public void compatibleForAssignment(PyType other, String attribute) {
+        if (!getLayout().equals(other.getLayout()) || needs_userdict != other.needs_userdict
+            || needs_finalizer != other.needs_finalizer) {
+            throw Py.TypeError(String.format("%s assignment: '%s' object layout differs from '%s'",
+                                             attribute, other.fastGetName(), fastGetName()));
+        }
     }
 
     /**
@@ -509,9 +512,7 @@ public class PyType extends PyObject implements Serializable {
             }
         }
         PyType newBase = best_base(newBases);
-        if (!newBase.layoutAligns(base)) {
-            throw Py.TypeError("'" + base + "' layout differs from '" + newBase + "'");
-        }
+        base.compatibleForAssignment(newBase, "__bases__");
         PyObject[] savedBases = bases;
         PyType savedBase = base;
         PyObject[] savedMro = mro;
@@ -829,8 +830,8 @@ public class PyType extends PyObject implements Serializable {
     private static boolean necessitatesUserdict(PyObject[] bases_list) {
         for (int i = 0; i < bases_list.length; i++) {
             PyObject cur = bases_list[i];
-            if ((cur instanceof PyType && ((PyType)cur).needs_userdict
-                 && ((PyType)cur).numSlots > 0) || cur instanceof PyClass) {
+            if ((cur instanceof PyType && ((PyType)cur).needs_userdict)
+                || cur instanceof PyClass) {
                return true;
             }
         }

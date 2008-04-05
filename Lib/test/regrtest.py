@@ -1034,7 +1034,6 @@ _failures = {
     test_marshal
     test_new
     test_pep263
-    test_pickle
     test_pkgimport
     test_profilehooks
     test_pyclbr

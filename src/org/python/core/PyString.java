@@ -690,6 +690,7 @@ public class PyString extends PyBaseString
         else return null;
     }
 
+    @ExposedMethod
     final PyTuple str___getnewargs__() {
         return new PyTuple(new PyString(this.string));
     }

@@ -362,6 +362,7 @@ public class PyUnicode extends PyString {
         return str_decode(encoding, errors);
     }
     
+    @ExposedMethod
     final PyTuple unicode___getnewargs__() {
         return new PyTuple(new PyUnicode(this.string));
     }
