@@ -25,18 +25,11 @@ public class _weakref implements ClassDictInit {
     public static void classDictInit(PyObject dict)
         throws PyIgnoreMethodTag
     {
-        ReferenceError = Py.makeClass("ReferenceError",
-                            new PyObject[] { Py.RuntimeError },
-                            Py.newJavaCode(_weakref.class, "empty__init__"),
-                            Py.None);
+        ReferenceError = Py.makeClass("ReferenceError", Py.RuntimeError,
+                                      new PyStringMap() {{
+                                          __setitem__("__module__", Py.newString("_weakref"));
+                                      }});
         dict.__setitem__("ReferenceError", ReferenceError);
-    }
-
-    // An empty __init__ method
-    public static PyObject empty__init__(PyObject[] arg, String[] kws) {
-        PyObject dict = new PyStringMap();
-        dict.__setitem__("__module__", new PyString("_weakref"));
-        return dict;
     }
 
     public static ReferenceType ref(PyObject object)  {

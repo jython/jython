@@ -1539,93 +1539,112 @@ public final class Py
 	 */
 	private static ExtensiblePyObjectAdapter adapter;
 
-    public static PyObject makeClass(String name, PyObject[] bases,
-                                     PyCode code, PyObject doc)
-    {
-        return makeClass(name, bases, code, doc, null, null);
-    }
-
-    public static PyObject makeClass(String name, PyObject[] bases,
-                                     PyCode code, PyObject doc,
-                                     PyObject[] closure_cells)
-    {
-        return makeClass(name, bases, code, doc, null, closure_cells);
-    }
-
-
-    public static PyObject makeClass(String name, PyObject[] bases,
-                                     PyCode code, PyObject doc,
-                                     Class proxyClass) {
-        return makeClass(name, bases, code, doc, proxyClass, null);
-    }
-
-
     private static Class[] pyClassCtrSignature = {
         String.class, PyTuple.class, PyObject.class, Class.class
     };
 
     static private final PyType CLASS_TYPE = PyType.fromClass(PyClass.class);
-    
+
+    // XXX: The following two makeClass overrides are *only* for the
+    // old compiler, they should be removed when the newcompiler hits
+    public static PyObject makeClass(String name, PyObject[] bases,
+                                     PyCode code, PyObject doc)
+    {
+        return makeClass(name, bases, code, doc, null);
+    }
 
     public static PyObject makeClass(String name, PyObject[] bases,
                                      PyCode code, PyObject doc,
-                                     Class proxyClass,
                                      PyObject[] closure_cells)
     {
-        PyFrame frame = getFrame();
-        PyObject globals = frame.f_globals;
-
-        PyObject dict = code.call(Py.EmptyObjects, Py.NoKeywords,
-                                  globals, Py.EmptyObjects,
+        PyObject globals = getFrame().f_globals;
+        PyObject dict = code.call(Py.EmptyObjects, Py.NoKeywords, globals, Py.EmptyObjects,
                                   new PyTuple(closure_cells));
         if (doc != null && dict.__finditem__("__doc__") == null) {
             dict.__setitem__("__doc__", doc);
         }
-        
-        if(dict.__finditem__("__module__") == null) {
+        return makeClass(name, bases, dict, null);
+    }
+
+
+    public static PyObject makeClass(String name, PyObject base, PyObject dict) {
+        PyObject[] bases = base == null ? EmptyObjects : new PyObject[] {base};
+        return makeClass(name, bases, dict);
+    }
+
+    public static PyObject makeClass(String name, PyObject[] bases, PyObject dict) {
+        return makeClass(name, bases, dict, null);
+    }
+
+    /**
+     * Create a new Python class.
+     * 
+     * @param name the String name of the class
+     * @param bases an array of PyObject base classes
+     * @param dict the class's namespace, containing the class body
+     * definition
+     * @param proxyClass an optional underlying Java class
+     * @return a new Python Class PyObject
+     */
+    public static PyObject makeClass(String name, PyObject[] bases, PyObject dict,
+                                     Class proxyClass) {
+        PyFrame frame = getFrame();
+
+        if (dict.__finditem__("__module__") == null) {
             PyObject module = frame.getglobal("__name__");
-            if(module != null) {
+            if (module != null) {
                 dict.__setitem__("__module__", module);
             }
         }
 
-        PyObject metaclass;
-        
-        metaclass = dict.__finditem__("__metaclass__");
-        
+        PyObject metaclass = dict.__finditem__("__metaclass__");
+
         if (metaclass == null) {
             if (bases.length != 0) {
-                PyObject base = bases[0];       
+                PyObject base = bases[0];
                 metaclass = base.__findattr__("__class__");
                 if (metaclass == null) {
                     metaclass = base.getType();
                 }
             } else {
-                if (globals != null)
-                    metaclass = globals.__finditem__("__metaclass__");                     
+                PyObject globals = frame.f_globals;
+                if (globals != null) {
+                    metaclass = globals.__finditem__("__metaclass__");
+                }
             }
         }
-        if (metaclass == null
-                || metaclass == CLASS_TYPE
-                || (metaclass instanceof PyJavaClass && 
-                        ((PyJavaClass)metaclass).proxyClass == Class.class)) {
-            boolean more_general = false;
-            for (int i = 0; i < bases.length; i++) {
-                if (!(bases[i] instanceof PyClass)) {
-                    metaclass = bases[i].getType();
-                    more_general = true;
+
+        if (metaclass == null || metaclass == CLASS_TYPE ||
+            (metaclass instanceof PyJavaClass &&
+             ((PyJavaClass)metaclass).proxyClass == Class.class)) {
+            boolean moreGeneral = false;
+            for (PyObject base : bases) {
+                if (!(base instanceof PyClass)) {
+                    metaclass = base.getType();
+                    moreGeneral = true;
                     break;
                 }
             }
-            if (!more_general)
+            if (!moreGeneral)
                 return new PyClass(name, new PyTuple(bases), dict, proxyClass);
         }
-        
+
         if (proxyClass != null) {
             throw Py.TypeError("the meta-class cannot handle java subclassing");
         }
- 
-        return metaclass.__call__(new PyString(name),new PyTuple(bases),dict);
+
+        try {
+            return metaclass.__call__(new PyString(name), new PyTuple(bases), dict);
+        } catch (PyException pye) {
+            if (!matchException(pye, TypeError)) {
+                throw pye;
+            }
+            pye.value = Py.newString(String.format("Error when calling the metaclass bases\n    "
+                                                   // XXX: matchException instantiates value
+                                                   //+ "%s", pye.value.toString()));
+                                                   + "%s", pye.value.__str__().toString()));
+            throw pye;
+        }
     }
 
     private static int nameindex=0;

@@ -42,144 +42,124 @@ public class exceptions implements ClassDictInit {
 
         dict.__setitem__("BaseException",  PyBaseException.TYPE);
 
-        buildClass(dict, "KeyboardInterrupt", "BaseException", "empty__init__",
-                "Program interrupted by user.");
+        buildClass(dict, "KeyboardInterrupt", "BaseException", "Program interrupted by user.");
 
-        buildClass(dict, "SystemExit", "BaseException", "SystemExit",
-                "Request to exit from the interpreter.");
+        buildClass(dict, "SystemExit", "BaseException", SystemExit(),
+                   "Request to exit from the interpreter.");
 
-        buildClass(dict, "Exception", "BaseException", "empty__init__",
-                "Common base class for all non-exit exceptions.");
+        buildClass(dict, "Exception", "BaseException",
+                   "Proposed base class for all exceptions.");
 
-        buildClass(dict, "StandardError", "Exception", "empty__init__",
-                "Base class for all standard Python exceptions.");
+        buildClass(dict, "StandardError", "Exception",
+                   "Base class for all standard Python exceptions.");
 
-        buildClass(dict, "SyntaxError", "StandardError", "SyntaxError",
-                "Invalid syntax");
+        buildClass(dict, "SyntaxError", "StandardError", SyntaxError(), "Invalid syntax");
 
-        buildClass(dict, "IndentationError", "SyntaxError", "empty__init__",
-                "Improper indentation");
+        buildClass(dict, "IndentationError", "SyntaxError", "Improper indentation");
 
-        buildClass(dict, "TabError", "IndentationError", "empty__init__",
-                "Improper mixture of spaces and tabs.");
+        buildClass(dict, "TabError", "IndentationError", "Improper mixture of spaces and tabs.");
 
-        buildClass(dict, "EnvironmentError", "StandardError",
-                "EnvironmentError", "Base class for I/O related errors.");
+        buildClass(dict, "EnvironmentError", "StandardError", EnvironmentError(),
+                   "Base class for I/O related errors.");
 
-        buildClass(dict, "IOError", "EnvironmentError", "empty__init__",
-                "I/O operation failed.");
+        buildClass(dict, "IOError", "EnvironmentError", "I/O operation failed.");
 
-        buildClass(dict, "OSError", "EnvironmentError", "empty__init__",
-                "OS system call failed.");
+        buildClass(dict, "OSError", "EnvironmentError", "OS system call failed.");
 
-        buildClass(dict, "RuntimeError", "StandardError", "empty__init__",
-                "Unspecified run-time error.");
+        buildClass(dict, "RuntimeError", "StandardError", "Unspecified run-time error.");
 
         buildClass(dict, "NotImplementedError", "RuntimeError",
-                "empty__init__",
-                "Method or function hasn't been implemented yet.");
+                   "Method or function hasn't been implemented yet.");
 
-        buildClass(dict, "SystemError", "StandardError", "empty__init__",
-                "Internal error in the Python interpreter.\n\n"
-                        + "Please report this to the Python maintainer, "
-                        + "along with the traceback,\n"
-                        + "the Python version, and the hardware/OS "
-                        + "platform and version.");
+        buildClass(dict, "SystemError", "StandardError",
+                   "Internal error in the Python interpreter.\n\n"
+                   + "Please report this to the Python maintainer, "
+                   + "along with the traceback,\n"
+                   + "the Python version, and the hardware/OS "
+                   + "platform and version.");
 
-        buildClass(dict, "ReferenceError", "StandardError", "empty__init__",
-                "Weak ref proxy used after referent went away.");
+        buildClass(dict, "ReferenceError", "StandardError",
+                   "Weak ref proxy used after referent went away.");
 
-        buildClass(dict, "EOFError", "StandardError", "empty__init__",
-                "Read beyond end of file.");
+        buildClass(dict, "EOFError", "StandardError", "Read beyond end of file.");
 
-        buildClass(dict, "ImportError", "StandardError", "empty__init__",
-                "Import can't find module, or can't find name in module.");
+        buildClass(dict, "ImportError", "StandardError",
+                   "Import can't find module, or can't find name in module.");
 
-        buildClass(dict, "TypeError", "StandardError", "empty__init__",
-                "Inappropriate argument type.");
+        buildClass(dict, "TypeError", "StandardError", "Inappropriate argument type.");
 
-        buildClass(dict, "ValueError", "StandardError", "empty__init__",
-                "Inappropriate argument value (of correct type).");
+        buildClass(dict, "ValueError", "StandardError",
+                   "Inappropriate argument value (of correct type).");
 
-        buildClass(dict, "UnicodeError", "ValueError", "empty__init__",
-                "Unicode related error.");
+        buildClass(dict, "UnicodeError", "ValueError", "Unicode related error.");
 
-        buildClass(dict, "UnicodeEncodeError", "UnicodeError", "UnicodeEncodeError",
-                "Unicode encoding error.");
+        buildClass(dict, "UnicodeEncodeError", "UnicodeError", UnicodeEncodeError(),
+                   "Unicode encoding error.");
 
-        buildClass(dict, "UnicodeDecodeError", "UnicodeError", "UnicodeDecodeError",
-                "Unicode decoding error.");
+        buildClass(dict, "UnicodeDecodeError", "UnicodeError", UnicodeDecodeError(),
+                   "Unicode decoding error.");
 
-        buildClass(dict, "UnicodeTranslateError", "UnicodeError", "UnicodeTranslateError",
-                "Unicode translation error.");
+        buildClass(dict, "UnicodeTranslateError", "UnicodeError", UnicodeTranslateError(),
+                   "Unicode translation error.");
 
-        buildClass(dict, "AssertionError", "StandardError", "empty__init__",
-                "Assertion failed.");
+        buildClass(dict, "AssertionError", "StandardError", "Assertion failed.");
 
-        buildClass(dict, "ArithmeticError", "StandardError", "empty__init__",
-                "Base class for arithmetic errors.");
+        buildClass(dict, "ArithmeticError", "StandardError", "Base class for arithmetic errors.");
 
-        buildClass(dict, "OverflowError", "ArithmeticError", "empty__init__",
-                "Result too large to be represented.");
+        buildClass(dict, "OverflowError", "ArithmeticError",
+                   "Result too large to be represented.");
 
         buildClass(dict, "FloatingPointError", "ArithmeticError",
-                "empty__init__", "Floating point operation failed.");
+                   "Floating point operation failed.");
 
         buildClass(dict, "ZeroDivisionError", "ArithmeticError",
-                "empty__init__",
-                "Second argument to a division or modulo operation "
-                        + "was zero.");
+                   "Second argument to a division or modulo operation "
+                   + "was zero.");
 
-        buildClass(dict, "LookupError", "StandardError", "empty__init__",
-                "Base class for lookup errors.");
+        buildClass(dict, "LookupError", "StandardError", "Base class for lookup errors.");
 
-        buildClass(dict, "IndexError", "LookupError", "empty__init__",
-                "Sequence index out of range.");
+        buildClass(dict, "IndexError", "LookupError", "Sequence index out of range.");
 
-        buildClass(dict, "KeyError", "LookupError", "empty__init__",
-                "Mapping key not found.");
+        buildClass(dict, "KeyError", "LookupError", "Mapping key not found.");
 
-        buildClass(dict, "AttributeError", "StandardError", "empty__init__",
-                "Attribute not found.");
+        buildClass(dict, "AttributeError", "StandardError", "Attribute not found.");
 
-        buildClass(dict, "NameError", "StandardError", "empty__init__",
-                "Name not found globally.");
+        buildClass(dict, "NameError", "StandardError", "Name not found globally.");
 
-        buildClass(dict, "UnboundLocalError", "NameError", "empty__init__",
-                "Local name referenced but not bound to a value.");
+        buildClass(dict, "UnboundLocalError", "NameError",
+                   "Local name referenced but not bound to a value.");
 
-        buildClass(dict, "MemoryError", "StandardError", "empty__init__",
-                "Out of memory.");
+        buildClass(dict, "MemoryError", "StandardError", "Out of memory.");
 
-        buildClass(dict, "StopIteration", "Exception", "empty__init__",
-                "Signal the end from iterator.next().");
+        buildClass(dict, "StopIteration", "Exception",
+                   "Signal the end from iterator.next().");
         
-        buildClass(dict, "GeneratorExit", "Exception", "empty__init__",
-                "Request that a generator exit.");
+        buildClass(dict, "GeneratorExit", "Exception", "Request that a generator exit.");
 
-        buildClass(dict, "Warning", "Exception", "empty__init__",
-                "Base class for warning categories.");
+        buildClass(dict, "Warning", "Exception", "Base class for warning categories.");
 
-        buildClass(dict, "UserWarning", "Warning", "empty__init__",
-                "Base class for warnings generated by user code.");
+        buildClass(dict, "UserWarning", "Warning",
+                   "Base class for warnings generated by user code.");
 
-        buildClass(dict, "DeprecationWarning", "Warning", "empty__init__",
-                "Base class for warnings about deprecated features.");
+        buildClass(dict, "DeprecationWarning", "Warning",
+                   "Base class for warnings about deprecated features.");
         
-        buildClass(dict, "PendingDeprecationWarning", "Warning", "empty__init__",
-                "Base class for warnings about features which will be deprecated in the future.");
+        buildClass(dict, "PendingDeprecationWarning", "Warning",
+                   "Base class for warnings about features which will be deprecated in the "
+                   + "future.");
 
-        buildClass(dict, "SyntaxWarning", "Warning", "empty__init__",
-                "Base class for warnings about dubious syntax.");
+        buildClass(dict, "SyntaxWarning", "Warning",
+                   "Base class for warnings about dubious syntax.");
 
-        buildClass(dict, "RuntimeWarning", "Warning", "empty__init__",
-                "Base class for warnings about dubious runtime behavior.");
+        buildClass(dict, "RuntimeWarning", "Warning",
+                   "Base class for warnings about dubious runtime behavior.");
 
-        buildClass(dict, "OverflowWarning", "Warning", "empty__init__",
-                "Base class for warnings about numeric overflow.");
+        buildClass(dict, "OverflowWarning", "Warning",
+                   "Base class for warnings about numeric overflow.");
         
-        buildClass(dict, "FutureWarning", "Warning", "empty__init__",
-                "Base class for warnings about constructs that will change semantically in the future.");
+        buildClass(dict, "FutureWarning", "Warning",
+                   "Base class for warnings about constructs that will change semantically in the "
+                   + "future.");
 
         // Initialize ZipImportError here, where it's safe to; it's
         // needed immediately
@@ -188,12 +168,7 @@ public class exceptions implements ClassDictInit {
         ts.frame = ts.frame.f_back;
     }
 
-    // An empty __init__ method
-    public static PyObject empty__init__(PyObject[] arg, String[] kws) {
-        return new PyStringMap();
-    }
-
-    public static PyObject SyntaxError(PyObject[] arg, String[] kws) {
+    public static PyObject SyntaxError() {
         PyObject __dict__ = new PyStringMap();
         defineSlots(__dict__, "msg", "filename", "lineno", "offset", "text",
                     "print_file_and_line");
@@ -222,7 +197,7 @@ public class exceptions implements ClassDictInit {
         }
     }
 
-    public static PyString SyntaxError__str__(PyObject self, PyObject[] arg, String[] kws) {
+    public static PyString SyntaxError__str__(PyObject self, PyObject[] arg, String[] kwargs) {
         PyObject msg = self.__getattr__("msg");
         PyObject str = msg.__str__();
         if (!(msg instanceof PyString)) {
@@ -250,7 +225,7 @@ public class exceptions implements ClassDictInit {
         return Py.newString(result);
     }
 
-    public static PyObject EnvironmentError(PyObject[] args, String[] kwargs) {
+    public static PyObject EnvironmentError() {
         PyObject dict = new PyStringMap();
         defineSlots(dict, "errno", "strerror", "filename");
         dict.__setitem__("__init__", bindStaticJavaMethod("__init__", "EnvironmentError__init__"));
@@ -291,7 +266,7 @@ public class exceptions implements ClassDictInit {
         return Py.newString(result);
     }
 
-    public static PyObject SystemExit(PyObject[] arg, String[] kws) {
+    public static PyObject SystemExit() {
         PyObject dict = new PyStringMap();
         defineSlots(dict, "code");
         dict.__setitem__("__init__", bindStaticJavaMethod("__init__", "SystemExit__init__"));
@@ -309,7 +284,7 @@ public class exceptions implements ClassDictInit {
         }
     }
 
-    public static PyObject UnicodeError(PyObject[] arg, String[] kws) {
+    public static PyObject UnicodeError() {
         PyObject dict = new PyStringMap();
         defineSlots(dict, "encoding", "object", "start", "end", "reason");
         // NOTE: UnicodeError doesn't actually use its own constructor
@@ -329,7 +304,7 @@ public class exceptions implements ClassDictInit {
         self.__setattr__("reason", ap.getPyObjectByType(4, PyString.TYPE));
     }
 
-    public static PyObject UnicodeDecodeError(PyObject[] arg, String[] kws) {
+    public static PyObject UnicodeDecodeError() {
         PyObject dict = new PyStringMap();
         dict.__setitem__("__init__", bindStaticJavaMethod("__init__",
                                                           "UnicodeDecodeError__init__"));
@@ -367,7 +342,7 @@ public class exceptions implements ClassDictInit {
         } 
     }
 
-    public static PyObject UnicodeEncodeError(PyObject[] arg, String[] kws) {
+    public static PyObject UnicodeEncodeError() {
         PyObject dict = new PyStringMap();
         dict.__setitem__("__init__", bindStaticJavaMethod("__init__",
                                                           "UnicodeEncodeError__init__"));
@@ -410,7 +385,7 @@ public class exceptions implements ClassDictInit {
         } 
     }
 
-    public static PyObject UnicodeTranslateError(PyObject[] arg, String[] kws) {
+    public static PyObject UnicodeTranslateError() {
         PyObject dict = new PyStringMap();
         dict.__setitem__("__init__", bindStaticJavaMethod("__init__",
                                                           "UnicodeTranslateError__init__"));
@@ -502,19 +477,19 @@ public class exceptions implements ClassDictInit {
         }
     }
 
-    private static PyObject buildClass(PyObject dict, String classname,
-            String superclass, String classCodeName, String doc) {
-        PyObject[] sclass = Py.EmptyObjects;
-        if (superclass != null) {
-            sclass = new PyObject[] { dict
-                    .__getitem__(new PyString(superclass)) };
-        }
-        PyObject cls = Py.makeClass("exceptions." + classname, sclass,
-                                    Py.newJavaCode(exceptions.class, classCodeName),
-                                    new PyString(doc));
-        ((PyType)cls).builtin = true;
-        dict.__setitem__(classname, cls);
-        return cls;
+    private static PyObject buildClass(PyObject dict, String classname, String superclass,
+                                       String doc) {
+        return buildClass(dict, classname, superclass, new PyStringMap(), doc);
+    }
+
+    private static PyObject buildClass(PyObject dict, String classname, String superclass,
+                                       PyObject classDict, String doc) {
+        classDict.__setitem__("__doc__", Py.newString(doc));
+        PyType type = (PyType)Py.makeClass("exceptions." + classname,
+                                           dict.__finditem__(superclass), classDict);
+        type.builtin = true;
+        dict.__setitem__(classname, type);
+        return type;
     }
 
     public static PyObject bindStaticJavaMethod(String name, String methodName) {
