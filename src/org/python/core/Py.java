@@ -955,7 +955,7 @@ public final class Py
             try {
                 exceptHook.__call__(exc.type, exc.value, exc.traceback);
             } catch (PyException exc2) {
-                // XXX: normalize is done here, Python/pythonrun.c PyErr_PrintEx
+                exc2.normalize();
                 stderr.println("Error in sys.excepthook:");
                 displayException(exc2.type, exc2.value, exc2.traceback, file);
                 stderr.println();
@@ -1620,8 +1620,6 @@ public final class Py
                 throw pye;
             }
             pye.value = Py.newString(String.format("Error when calling the metaclass bases\n    "
-                                                   // XXX: matchException instantiates value
-                                                   //+ "%s", pye.value.toString()));
                                                    + "%s", pye.value.__str__().toString()));
             throw pye;
         }
