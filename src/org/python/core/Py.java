@@ -1077,60 +1077,40 @@ public final class Py
         return pye;
     }
 
-    public static boolean matchException(PyException pye, PyObject e) {
+    public static boolean matchException(PyException pye, PyObject exc) {
+        if (exc instanceof PyTuple) {
+            for (PyObject item : ((PyTuple)exc).getArray()) {
+                if (matchException(pye, item)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         pye.normalize();
         // FIXME, see bug 737978
         //
         // A special case for IOError's to allow them to also match
         // java.io.IOExceptions.  This is a hack for 1.0.x until I can do
         // it right in 1.1
-        if(e == Py.IOError) {
-            if(__builtin__.isinstance(pye.value,
-                                      PyJavaClass.lookup(java.io.IOException.class))) {
+        if (exc == Py.IOError) {
+            if (__builtin__.isinstance(pye.value, PyJavaClass.lookup(java.io.IOException.class))) {
                 return true;
             }
         }
         // FIXME too, same approach for OutOfMemoryError
-        if(e == Py.MemoryError) {
-            if(__builtin__.isinstance(pye.value,
+        if (exc == Py.MemoryError) {
+            if (__builtin__.isinstance(pye.value,
                                       PyJavaClass.lookup(java.lang.OutOfMemoryError.class))) {
                 return true;
             }
         }
-        if (e instanceof PyClass) {
-            try {
-                return __builtin__.issubclass(pye.type, e);
-            } catch (PyException subclassE) {
-                if (!matchException(subclassE, TypeError)) {
-                    throw subclassE;
-                }
-                return false;
-            }
-        } else if (e instanceof PyType) {
-            if (pye.type == e) {
-                return true;
-            } else {
-                try {
-                    return __builtin__.issubclass(pye.type, e);
-                } catch (PyException subclassE) {
-                    if (!matchException(subclassE, TypeError)) {
-                        throw subclassE;
-                    }
-                    return false;
-                }
-            }
-        } else {
-            if(e == pye.type)
-                return true;
-            if(e instanceof PyTuple) {
-                PyObject[] l = ((PyTuple)e).getArray();
-                for(int i = 0; i < l.length; i++) {
-                    if(matchException(pye, l[i]))
-                        return true;
-                }
-            }
-            return false;
+
+        if (isExceptionClass(pye.type) && isExceptionClass(exc)) {
+            return isSubClass(pye.type, exc);
         }
+
+        return pye.type == exc;
     }
 
 
