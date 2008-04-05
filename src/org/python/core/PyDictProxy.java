@@ -87,6 +87,10 @@ public class PyDictProxy extends PyObject {
         return dict.invoke("copy");
     }
 
+    public int __cmp__(PyObject other) {
+        return dictproxy___cmp__(other);
+    }
+
     @ExposedMethod(type = MethodType.CMP)
     public int dictproxy___cmp__(PyObject other) {
         return dict.__cmp__(other);
