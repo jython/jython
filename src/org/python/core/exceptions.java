@@ -320,26 +320,22 @@ public class exceptions implements ClassDictInit {
 
     public static PyString UnicodeDecodeError__str__(PyObject self, PyObject[] args,
                                                      String[] kwargs) {
-        int start = ((PyInteger)self.__getattr__("start")).getValue();
-        int end = ((PyInteger)self.__getattr__("end")).getValue();
+        int start = getStart(self, false);
+        int end = getEnd(self, false);
+        PyObject encoding = self.__getattr__("encoding");
+        PyObject reason = self.__getattr__("reason");
 
+        String result;
         if (end == (start + 1)) {
-            PyInteger badByte = new PyInteger((self.__getattr__("object")
-                    .toString().charAt(start)) & 0xff);
-            return Py.newString("'%.400s' codec can't decode byte 0x%02x in position %d: %.400s")
-                    .__mod__(new PyTuple(self.__getattr__("encoding"),
-                                         badByte,
-                                         self.__getattr__("start"),
-                                         self.__getattr__("reason")))
-                    .__str__();
+            PyObject object = self.__getattr__("object");
+            int badByte = (object.toString().charAt(start)) & 0xff;
+            result = String.format("'%.400s' codec can't decode byte 0x%s in position %d: %.400s",
+                                   encoding, badByte, start, reason);
         } else {
-            return Py.newString("'%.400s' codec can't decode bytes in position %d-%d: %.400s")
-                    .__mod__(new PyTuple(self.__getattr__("encoding"),
-                                         self.__getattr__("start"),
-                                         new PyInteger(end - 1),
-                                         self.__getattr__("reason")))
-                    .__str__();
-        } 
+            result = String.format("'%.400s' codec can't decode bytes in position %d-%d: %.400s",
+                                   encoding, start, end - 1, reason);
+        }
+        return Py.newString(result);
     }
 
     public static PyObject UnicodeEncodeError() {
@@ -357,32 +353,30 @@ public class exceptions implements ClassDictInit {
 
     public static PyString UnicodeEncodeError__str__(PyObject self, PyObject[] args,
                                                      String[] kwargs) {
-        int start = ((PyInteger)self.__getattr__("start")).getValue();
-        int end = ((PyInteger)self.__getattr__("end")).getValue();
+        int start = getStart(self, true);
+        int end = getEnd(self, true);
+        PyObject encoding = self.__getattr__("encoding");
+        PyObject reason = self.__getattr__("reason");
 
-        if(end == (start + 1)) {
-            int badchar = self.__getattr__("object").toString().charAt(start);
-            String format;
-            if(badchar <= 0xff)
-                format = "'%.400s' codec can't encode character u'\\x%02x' in position %d: %.400s";
-            else if(badchar <= 0xffff)
-                format = "'%.400s' codec can't encode character u'\\u%04x' in position %d: %.400s";
-            else
-                format = "'%.400s' codec can't encode character u'\\U%08x' in position %d: %.400s";
-            return Py.newString(format)
-                    .__mod__(new PyTuple(self.__getattr__("encoding"),
-                                                         new PyInteger(badchar),
-                                                         self.__getattr__("start"),
-                                                         self.__getattr__("reason")))
-                    .__str__();
+        String result;
+        if (end == (start + 1)) {
+            PyObject object = self.__getattr__("object");
+            int badchar = object.toString().charAt(start);
+            String badcharStr;
+            if (badchar <= 0xff) {
+                badcharStr = String.format("x%02x", badchar);
+            } else if (badchar <= 0xffff) {
+                badcharStr = String.format("u%04x", badchar);
+            } else {
+                badcharStr = String.format("U%08x", badchar);
+            }
+            result = String.format("'%.400s' codec can't encode character u'\\%s' in position %d: "
+                                   + "%.400s", encoding, badcharStr, start, reason);
         } else {
-            return Py.newString("'%.400s' codec can't encode characters in position %d-%d: %.400s")
-                    .__mod__(new PyTuple(self.__getattr__("encoding"),
-                                                         self.__getattr__("start"),
-                                                         new PyInteger(end - 1),
-                                                         self.__getattr__("reason")))
-                    .__str__();
-        } 
+            result = String.format("'%.400s' codec can't encode characters in position %d-%d: "
+                                   + "%.400s", encoding, start, end - 1, reason);
+        }
+        return Py.newString(result);
     }
 
     public static PyObject UnicodeTranslateError() {
@@ -408,30 +402,122 @@ public class exceptions implements ClassDictInit {
 
     public static PyString UnicodeTranslateError__str__(PyObject self, PyObject[] args,
                                                         String[] kwargs) {
-        int start = ((PyInteger)self.__getattr__("start")).getValue();
-        int end = ((PyInteger)self.__getattr__("end")).getValue();
+        int start = getStart(self, true);
+        int end = getEnd(self, true);
+        PyObject reason = self.__getattr__("reason");
 
-        if(end == (start + 1)) {
+        String result;
+        if (end == (start + 1)) {
             int badchar = (self.__getattr__("object").toString().charAt(start));
-            String format;
-            if(badchar <= 0xff)
-                format = "can't translate character u'\\x%02x' in position %d: %.400s";
-            else if(badchar <= 0xffff)
-                format = "can't translate character u'\\u%04x' in position %d: %.400s";
-            else
-                format = "can't translate character u'\\U%08x' in position %d: %.400s";
-            return Py.newString(format)
-                    .__mod__(new PyTuple(new PyInteger(badchar),
-                                                            self.__getattr__("start"),
-                                                            self.__getattr__("reason")))
-                    .__str__();
+            String badCharStr;
+            if (badchar <= 0xff) {
+                badCharStr = String.format("x%02x", badchar);
+            } else if (badchar <= 0xffff) {
+                badCharStr = String.format("u%04x", badchar);
+            } else {
+                badCharStr = String.format("U%08x", badchar);
+            }
+            result = String.format("can't translate character u'\\%s' in position %d: %.400s",
+                                   badCharStr, start, reason);
         } else {
-            return Py.newString("can't translate characters in position %d-%d: %.400s")
-                    .__mod__(new PyTuple(self.__getattr__("start"),
-                                                         new PyInteger(end - 1),
-                                                         self.__getattr__("reason")))
-                    .__str__();
-        } 
+            result = String.format("can't translate characters in position %d-%d: %.400s",
+                                   start, end - 1, reason);
+        }
+        return Py.newString(result);
+    }
+
+    /**
+     * Determine the start position for UnicodeErrors.
+     *
+     * @param self a UnicodeError value
+     * @param unicode whether the UnicodeError object should be
+     * unicode
+     * @return an the start position
+     */
+    public static int getStart(PyObject self, boolean unicode) {
+        int start = getInt(self.__getattr__("start"), "start");
+        PyObject object;
+        if (unicode) {
+            object = getUnicode(self.__getattr__("object"), "object");
+        } else {
+            object = getString(self.__getattr__("object"), "object");
+        }
+        if (start < 0) {
+            start = 0;
+        }
+        if (start >= object.__len__()) {
+            start = object.__len__() - 1;
+        }
+        return start;
+    }
+
+    /**
+     * Determine the end position for UnicodeErrors.
+     *
+     * @param self a UnicodeError value
+     * @param unicode whether the UnicodeError object should be
+     * unicode
+     * @return an the end position
+     */
+    public static int getEnd(PyObject self, boolean unicode) {
+        int end = getInt(self.__getattr__("end"), "end");
+        PyObject object;
+        if (unicode) {
+            object = getUnicode(self.__getattr__("object"), "object");
+        } else {
+            object = getString(self.__getattr__("object"), "object");
+        }
+        if (end < 1) {
+            end = 1;
+        }
+        if (end > object.__len__()) {
+            end = object.__len__();
+        }
+        return end;
+    }
+
+    /**
+     * Parse an int value for UnicodeErrors
+     *
+     * @param attr a PyObject
+     * @param name of the attribute
+     * @return an int value
+     */
+    public static int getInt(PyObject attr, String name) {
+        if (attr instanceof PyInteger) {
+            return ((PyInteger)attr).asInt();
+        } else if (attr instanceof PyLong) {
+            return ((PyLong)attr).asInt();
+        }
+        throw Py.TypeError(String.format("%.200s attribute must be int", name));
+    }
+
+    /**
+     * Ensure a PyString value for UnicodeErrors
+     *
+     * @param attr a PyObject
+     * @param name of the attribute
+     * @return an PyString
+     */
+    public static PyString getString(PyObject attr, String name) {
+        if (!(attr instanceof PyString)) {
+            throw Py.TypeError(String.format("%.200s attribute must be str", name));
+        }
+        return (PyString)attr;
+    }
+
+    /**
+     * Ensure a PyUnicode value for UnicodeErrors
+     *
+     * @param attr a PyObject
+     * @param name of the attribute
+     * @return an PyUnicode
+     */
+    public static PyUnicode getUnicode(PyObject attr, String name) {
+        if (!(attr instanceof PyUnicode)) {
+            throw Py.TypeError(String.format("%.200s attribute must be unicode", name));
+        }
+        return (PyUnicode)attr;
     }
 
     /**
