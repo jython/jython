@@ -19,6 +19,7 @@ import org.python.core.ArgParser;
 import org.python.core.ClassDictInit;
 import org.python.core.Py;
 import org.python.core.PyBoolean;
+import org.python.core.PyBuiltinFunction;
 import org.python.core.PyClass;
 import org.python.core.PyDictionary;
 import org.python.core.PyException;
@@ -449,7 +450,9 @@ public class cPickle implements ClassDictInit {
     private static PyDictionary inverted_registry;
 
 
-    private static PyType BuiltinFunctionType = PyType.fromClass(PyReflectedFunction.class);
+    private static PyType BuiltinFunctionType = PyType.fromClass(PyBuiltinFunction.class);
+
+    private static PyType ReflectedFunctionType = PyType.fromClass(PyReflectedFunction.class);
 
     private static PyType ClassType = PyType.fromClass(PyClass.class);
 
@@ -1095,6 +1098,8 @@ public class cPickle implements ClassDictInit {
             else if (type == FunctionType)
                 save_global(object);
             else if (type == BuiltinFunctionType)
+                save_global(object);
+            else if (type == ReflectedFunctionType)
                 save_global(object);
             else if (type == BoolType)
                 save_bool(object);
