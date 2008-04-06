@@ -1031,7 +1031,6 @@ _failures = {
     test_hexoct
     test_iterlen
     test_marshal
-    test_new
     test_pep263
     test_pkgimport
     test_profilehooks
