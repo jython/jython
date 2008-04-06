@@ -1044,7 +1044,6 @@ _failures = {
     test_ucn
     test_unicode
     test_weakref
-    test_xpickle
     test_zipimport
     ''',
 }

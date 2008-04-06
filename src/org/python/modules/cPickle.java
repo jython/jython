@@ -1173,10 +1173,10 @@ public class cPickle implements ClassDictInit {
                     file.write(LONG4);
                     writeInt4(l);
                 }
-                for(int i = 0; i < l; i++) {
-                    int b = bytes[i];
-                    if(b < 0)
-                        b += 256;
+                // Write in reverse order: pickle orders by little
+                // endian whereas BigInteger orders by big endian
+                for (int i = l - 1; i >= 0; i--) {
+                    int b = bytes[i] & 0xff;
                     file.write((char)b);
                 }
             } else {
@@ -1941,12 +1941,16 @@ public class cPickle implements ClassDictInit {
             int longLength = read_binint(length);
             String s = file.read(longLength);
             byte[] bytes = new byte[s.length()];
-            for(int i = 0; i < s.length(); i++) {
+            // Write to the byte array in reverse order: pickle orders
+            // by little endian whereas BigInteger orders by big
+            // endian
+            int n = s.length() - 1;
+            for (int i = 0; i < s.length(); i++) {
                 char c = s.charAt(i);
                 if(c >= 128) {
-                    bytes[i] = (byte)(c - 256);
+                    bytes[n--] = (byte)(c - 256);
                 } else {
-                    bytes[i] = (byte)c;
+                    bytes[n--] = (byte)c;
                 }
             }
             BigInteger bigint = new BigInteger(bytes);
