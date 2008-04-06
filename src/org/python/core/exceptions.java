@@ -40,6 +40,9 @@ public class exceptions implements ClassDictInit {
         }
         ts.frame = frame;
 
+        // XXX:
+        PyObject baseExcDict = PyBaseException.TYPE.fastGetDict();
+        baseExcDict.__setitem__("__doc__", Py.newString("Common base class for all exceptions"));
         dict.__setitem__("BaseException",  PyBaseException.TYPE);
 
         buildClass(dict, "KeyboardInterrupt", "BaseException", "Program interrupted by user.");
@@ -48,14 +51,15 @@ public class exceptions implements ClassDictInit {
                    "Request to exit from the interpreter.");
 
         buildClass(dict, "Exception", "BaseException",
-                   "Proposed base class for all exceptions.");
+                   "Common base class for all non-exit exceptions.");
 
         buildClass(dict, "StandardError", "Exception",
-                   "Base class for all standard Python exceptions.");
+                   "Base class for all standard Python exceptions that do not represent\n"
+                   + "interpreter exiting.");
 
-        buildClass(dict, "SyntaxError", "StandardError", SyntaxError(), "Invalid syntax");
+        buildClass(dict, "SyntaxError", "StandardError", SyntaxError(), "Invalid syntax.");
 
-        buildClass(dict, "IndentationError", "SyntaxError", "Improper indentation");
+        buildClass(dict, "IndentationError", "SyntaxError", "Improper indentation.");
 
         buildClass(dict, "TabError", "IndentationError", "Improper mixture of spaces and tabs.");
 
@@ -145,8 +149,8 @@ public class exceptions implements ClassDictInit {
                    "Base class for warnings about deprecated features.");
         
         buildClass(dict, "PendingDeprecationWarning", "Warning",
-                   "Base class for warnings about features which will be deprecated in the "
-                   + "future.");
+                   "Base class for warnings about features which will be deprecated\n"
+                   + "in the future.");
 
         buildClass(dict, "SyntaxWarning", "Warning",
                    "Base class for warnings about dubious syntax.");
@@ -154,12 +158,20 @@ public class exceptions implements ClassDictInit {
         buildClass(dict, "RuntimeWarning", "Warning",
                    "Base class for warnings about dubious runtime behavior.");
 
+        // XXX: remove when CPythonLib 2.5 hits
         buildClass(dict, "OverflowWarning", "Warning",
                    "Base class for warnings about numeric overflow.");
-        
+
         buildClass(dict, "FutureWarning", "Warning",
-                   "Base class for warnings about constructs that will change semantically in the "
-                   + "future.");
+                   "Base class for warnings about constructs that will change semantically\n"
+                   + "in the future.");
+
+        buildClass(dict, "ImportWarning", "Warning",
+                   "Base class for warnings about probable mistakes in module imports");
+
+        buildClass(dict, "UnicodeWarning", "Warning",
+                   "Base class for warnings about Unicode related problems, mostly\n"
+                   + "related to conversion problems.");
 
         // Initialize ZipImportError here, where it's safe to; it's
         // needed immediately
