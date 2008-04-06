@@ -35,7 +35,7 @@ public class PyLong extends PyObject {
         int base = ap.getInt(1, -909);
         if (new_.for_type == subtype) {
             if (x == null) {
-                return Py.Zero;
+                return new PyLong(0);
             }
 
             Object o = x.__tojava__(BigInteger.class);
