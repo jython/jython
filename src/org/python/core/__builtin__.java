@@ -13,6 +13,8 @@ import org.python.expose.ExposedGet;
 
 class BuiltinFunctions extends PyBuiltinFunctionSet {
 
+    public static final PyObject module = Py.newString("__builtin__");
+
     public BuiltinFunctions(String name, int index, int argcount) {
         this(name, index, argcount, argcount);
     }
@@ -292,6 +294,10 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
             default:
                 throw info.unexpectedCall(args.length, false);
         }
+    }
+
+    public PyObject getModule() {
+        return module;
     }
 }
 
