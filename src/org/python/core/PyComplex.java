@@ -98,6 +98,9 @@ public class PyComplex extends PyObject {
 
         complexReal.real -= complexImag.imag;
         complexReal.imag += complexImag.real;
+        if (new_.for_type != subtype) {
+            complexReal = new PyComplexDerived(subtype, complexReal.real, complexReal.imag);
+        }
         return complexReal;
     }
 
