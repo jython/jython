@@ -137,7 +137,7 @@ class TestDefaultDict(unittest.TestCase):
         try:
             d1[(1,)]
         except KeyError, err:
-            # XXX: Exception.message is only supported in CPython 2.5
+            # XXX: Exception.message is only supported in Python 2.5
             #self.assertEqual(err.message, (1,))
             pass
         else:
