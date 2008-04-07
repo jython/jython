@@ -16,9 +16,9 @@ class TypesGeneralTestCase(unittest.TestCase):
             pass
         self.assertEqual(Foo.__module__, __name__)
         self.assertEqual(str(Foo), '%s.Foo' % __name__)
-        self.assert_(repr(Foo).startswith('<class %s.Foo ' % __name__))
+        self.assert_(repr(Foo).startswith('<class %s.Foo at' % __name__))
         foo = Foo()
-        self.assert_(str(foo).startswith('<%s.Foo instance ' % __name__))
+        self.assert_(str(foo).startswith('<%s.Foo instance at' % __name__))
 
         class Bar(object):
             pass
@@ -26,7 +26,7 @@ class TypesGeneralTestCase(unittest.TestCase):
         self.assertEqual(str(Bar), "<class '%s.Bar'>" % __name__)
         self.assertEqual(repr(Bar), "<class '%s.Bar'>" % __name__)
         bar = Bar()
-        self.assert_(str(bar).startswith('<%s.Bar object ' % __name__))
+        self.assert_(str(bar).startswith('<%s.Bar object at' % __name__))
 
 
     def test_builtin_attributes(self):
@@ -124,9 +124,9 @@ class TypesNamelessModuleTestCase(unittest.TestCase):
             pass
         self.assertEqual(Foo.__module__, '__builtin__')
         self.assertEqual(str(Foo), '__builtin__.Foo')
-        self.assert_(repr(Foo).startswith('<class __builtin__.Foo '))
+        self.assert_(repr(Foo).startswith('<class __builtin__.Foo at'))
         foo = Foo()
-        self.assert_(str(foo).startswith('<__builtin__.Foo instance '))
+        self.assert_(str(foo).startswith('<__builtin__.Foo instance at'))
 
         class Bar(object):
             pass
@@ -135,7 +135,7 @@ class TypesNamelessModuleTestCase(unittest.TestCase):
         self.assertEqual(repr(Bar), "<class 'Bar'>")
         bar = Bar()
         self.assert_(str(bar).startswith('<Bar '))
-        self.assert_(str(bar).startswith('<Bar object '))
+        self.assert_(repr(bar).startswith('<Bar object at'))
 
 
 class BrokenNameTestCase(unittest.TestCase):
