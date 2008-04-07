@@ -20,7 +20,7 @@ public class PyBaseException extends PyObject {
     /** Exception message. */
     @ExposedGet
     @ExposedSet
-    public PyObject message = Py.newString("");
+    public PyObject message = Py.EmptyString;
 
     /** Exception's arguments. */
     @ExposedGet
@@ -158,7 +158,7 @@ public class PyBaseException extends PyObject {
     final PyString BaseException___str__() {
         switch (args.__len__()) {
         case 0:
-            return Py.newString("");
+            return Py.EmptyString;
         case 1:
             return args.__getitem__(0).__str__();
         default:
@@ -193,10 +193,5 @@ public class PyBaseException extends PyObject {
     @ExposedDelete(name = "message")
     public void delMessage() {
         message = Py.None;
-    }
-
-    @ExposedDelete(name = "args")
-    public void delArgs() {
-        args = Py.None;
     }
 }
