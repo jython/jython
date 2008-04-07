@@ -274,9 +274,6 @@ public class exceptions implements ClassDictInit {
         PyObject self = ap.getPyObject(0);
         PyObject args = ap.getList(1);
         
-        if (arg.length == 2) {
-            self.__setattr__("message", ap.getPyObject(1));
-        }
         self.__setattr__("args", args);
     }
 
