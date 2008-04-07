@@ -968,14 +968,17 @@ public class PyObject implements Serializable {
      **/
     public final PyObject __coerce__(PyObject pyo) {
         Object o = __coerce_ex__(pyo);
-        if (o == null)
+        if (o == null) {
             throw Py.AttributeError("__coerce__");
-        if (o == Py.None)
-            return (PyObject) o;
-        if (o instanceof PyObject[])
+        }
+        if (o == Py.None) {
+            return Py.NotImplemented;
+        }
+        if (o instanceof PyObject[]) {
             return new PyTuple((PyObject[]) o);
-        else
+        } else {
             return new PyTuple(this, (PyObject) o );
+        }
     }
 
 

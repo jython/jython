@@ -812,6 +812,10 @@ public class PyString extends PyBaseString
                 }
                 int end = endDouble(string, s);
                 z = Double.valueOf(string.substring(s, end)).doubleValue();
+                if (z == Double.POSITIVE_INFINITY) {
+                	throw Py.ValueError(String.format("float() out of range: %.150s", string));
+                }
+
                 s=end;
                 if (s < n) {
                     c = string.charAt(s);

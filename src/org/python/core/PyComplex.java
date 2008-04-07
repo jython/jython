@@ -51,6 +51,11 @@ public class PyComplex extends PyObject {
                         "second arg can't be a string");
         }
 
+        // Special-case for single argument that is already complex
+        if (real.getType() == TYPE && new_.for_type == subtype && imag == null) {
+            return real;
+        }
+
         PyComplex ret = null;
         try {
             ret = real.__complex__();
@@ -260,6 +265,10 @@ public class PyComplex extends PyObject {
         return unsupported_comparison(other);
     }
 
+    @ExposedMethod
+    final PyObject complex___coerce__(PyObject other) {
+        return __coerce__(other);
+    }
 
     public Object __coerce_ex__(PyObject other) {
         if (other instanceof PyComplex)

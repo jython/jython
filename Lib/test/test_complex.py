@@ -98,6 +98,8 @@ class ComplexTest(unittest.TestCase):
 
     def test_coerce(self):
         self.assertRaises(OverflowError, complex.__coerce__, 1+1j, 1L<<10000)
+        self.assertEqual(complex.__coerce__(1+1j, None), NotImplemented)
+        self.assertRaises(TypeError, complex.__coerce__, None, 1+2j)
 
     def test_richcompare(self):
         self.assertRaises(OverflowError, complex.__eq__, 1+1j, 1L<<10000)
@@ -223,6 +225,10 @@ class ComplexTest(unittest.TestCase):
         self.assertAlmostEqual(complex(real=17+23j, imag=23), 17+46j)
         self.assertAlmostEqual(complex(real=1+2j, imag=3+4j), -3+5j)
 
+        c = 3.14 + 1j
+        self.assert_(complex(c) is c)
+        del c
+
         self.assertRaises(TypeError, complex, "1", "1")
         self.assertRaises(TypeError, complex, 1, "1")
 
@@ -306,13 +312,6 @@ class ComplexTest(unittest.TestCase):
                 pass
 
 def test_main():
-# Jython transition 2.3
-# complex parses complex('1' * 500) as (Infinity+0j)
-# http://jython.org/bugs/1758284
-    del ComplexTest.test_constructor
-# complex is missing __coerce__
-# http://jython.org/bugs/1758282
-    del ComplexTest.test_coerce
     test_support.run_unittest(ComplexTest)
 
 if __name__ == "__main__":
