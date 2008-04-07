@@ -686,6 +686,11 @@ public class PyLong extends PyObject {
         return Py.newLong(coerce(left).or(value));
     }
 
+    @ExposedMethod
+    final PyObject long___coerce__(PyObject other) {
+        return __coerce__(other);
+    }
+
     public PyObject __neg__() {
         return long___neg__();
     }

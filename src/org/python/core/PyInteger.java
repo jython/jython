@@ -707,6 +707,11 @@ public class PyInteger extends PyObject {
     	return int___or__(left);
     }
 
+    @ExposedMethod
+    final PyObject int___coerce__(PyObject other) {
+        return __coerce__(other);
+    }
+
     public PyObject __neg__() {
         return int___neg__();
     }

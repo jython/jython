@@ -436,6 +436,11 @@ public class PyFloat extends PyObject
         }
     }
 
+    @ExposedMethod
+    final PyObject float___coerce__(PyObject other) {
+        return __coerce__(other);
+    }
+
     public PyObject __neg__() {
         return float___neg__();
     }
