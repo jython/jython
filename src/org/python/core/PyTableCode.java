@@ -396,8 +396,7 @@ public class PyTableCode extends PyCode
     }
 
     public String toString() {
-        return "<code object " + co_name + " "+Py.idstr(this) +
-            ", file \"" + co_filename + "\", line " +
-            co_firstlineno + ">";
+        return String.format("<code object %.100s at %s, file \"%.300s\", line %d>",
+                             co_name, Py.idstr(this), co_filename, co_firstlineno);
     }
 }

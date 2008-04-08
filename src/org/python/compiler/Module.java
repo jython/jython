@@ -672,7 +672,7 @@ public class Module implements ClassConstants, CompilationContext
         //Add __doc__ if it exists
         //Add __file__ for filename (if it exists?)
 
-        Constant main = module.PyCode(node, "?", false, null, false,
+        Constant main = module.PyCode(node, "<module>", false, null, false,
                                       printResults, 0,
                                       module.getScopeInfo(node),
                                       cflags);
