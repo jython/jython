@@ -2498,23 +2498,29 @@ final class StringFormatter
                 fill = ' ';
                 if (arg instanceof PyString) {
                     string = ((PyString)arg).toString();
-                    if (string.length() != 1)
+                    if (string.length() != 1) {
                         throw Py.TypeError("%c requires int or char");
+                    }
                     if (arg instanceof PyUnicode) {
                         needUnicode = true;
                     }
                     break;
                 }
-                PyInteger val;
+                int val;
                 try {
-                    val = (PyInteger)arg.__int__();
-                } catch(PyException e){
-                    if(Py.matchException(e, Py.AttributeError)) {
+                    val = ((PyInteger)arg.__int__()).getValue();
+                } catch (PyException e){
+                    if (Py.matchException(e, Py.AttributeError)) {
                         throw Py.TypeError("%c requires int or char");
                     }
                     throw e;
                 }
-                string = new Character((char)val.getValue()).toString();
+                if (val < 0) {
+                    throw Py.OverflowError("unsigned byte integer is less than minimum");
+                } else if (val > 255) {
+                    throw Py.OverflowError("unsigned byte integer is greater than maximum");
+                }
+                string = new Character((char)val).toString();
                 break;
 
             default:
