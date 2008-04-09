@@ -35,7 +35,7 @@ public class PyLong extends PyObject {
         int base = ap.getInt(1, -909);
         if (new_.for_type == subtype) {
             if (x == null) {
-                return Py.Zero;
+                return new PyLong(0);
             }
 
             Object o = x.__tojava__(BigInteger.class);
@@ -684,6 +684,11 @@ public class PyLong extends PyObject {
         if (!canCoerce(left))
             return null;
         return Py.newLong(coerce(left).or(value));
+    }
+
+    @ExposedMethod
+    final PyObject long___coerce__(PyObject other) {
+        return __coerce__(other);
     }
 
     public PyObject __neg__() {

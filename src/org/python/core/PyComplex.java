@@ -14,87 +14,95 @@ import org.python.expose.MethodType;
 @ExposedType(name = "complex")
 public class PyComplex extends PyObject {
 
+    public static final PyType TYPE = PyType.fromClass(PyComplex.class);
+
     @ExposedGet
     public double real, imag;
 
     static PyComplex J = new PyComplex(0, 1.);
 
     @ExposedNew
-    public static PyObject complex_new(PyNewWrapper new_,
-                                       boolean init,
-                                       PyType subtype,
-                                       PyObject[] args,
-                                       String[] keywords) {
-        if (args.length == 0) {
-            if (new_.for_type == subtype) {
-                return new PyComplex(0, 0);
-            }
-            return new PyComplexDerived(subtype, 0, 0);
-        }
-
-        if (args.length > 2)
-            throw Py.TypeError("complex() "+"takes at most 2 arguments (" +
-                               args.length + " given)");
-
-        // optimize complex(int, int) here?
-
+    public static PyObject complex_new(PyNewWrapper new_, boolean init, PyType subtype,
+                                       PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("complex", args, keywords, "real", "imag");
         PyObject real = ap.getPyObject(0, Py.Zero);
         PyObject imag = ap.getPyObject(1, null);
 
-        if (imag != null) {
-            if (real instanceof PyString)
-                throw Py.TypeError("complex() " +
-                        "can't take second arg if first is a string");
-            if (imag instanceof PyString)
-                throw Py.TypeError("complex() " +
-                        "second arg can't be a string");
+        // Special-case for single argument that is already complex
+        if (real.getType() == TYPE && new_.for_type == subtype && imag == null) {
+            return real;
         }
-
-        PyComplex ret = null;
-        try {
-            ret = real.__complex__();
-        } catch (PyException pye) {
-            // i.e PyString.__complex__ throws ValueError
-            if (!(Py.matchException(pye, Py.AttributeError))) throw pye;
-        }
-
-        try {
-            if (ret == null)
-                ret = new PyComplex(real.__float__().getValue(), 0);
+        if (real instanceof PyString) {
             if (imag != null) {
-                if (ret == real)
-                    ret = new PyComplex(ret.real, ret.imag);
-                if (imag instanceof PyComplex) {
-                    // optimize away __mul__()
-                    // IMO only allowed on pure PyComplex objects, but CPython
-                    // does it on all complex subtypes, so I do too.
-                    PyComplex c = (PyComplex) imag;
-                    ret.real -= c.imag;
-                    ret.imag += c.real;
-                } else {
-                    // CPython doesn't call __complex__ on second argument
-                    ret.imag += imag.__float__().getValue();
-                }
+                throw Py.TypeError("complex() can't take second arg if first is a string");
             }
-            if (new_.for_type == subtype) {
-                return ret;
-            } else {
-                return new PyComplexDerived(subtype, ret.real, ret.imag);
-            }
-        } catch (PyException pye) {
-            // convert all AttributeErrors except on PyInstance to TypeError
-            if (Py.matchException(pye, Py.AttributeError)) {
-                Object o = (ret == null ? real : imag);
-                if (!(o instanceof PyInstance))
-                    throw Py.TypeError("complex() " +
-                            "argument must be a string or a number");
-            }
-            throw pye;
+            return real.__complex__();
         }
-    }
+        if (imag != null && imag instanceof PyString) {
+            throw Py.TypeError("complex() second arg can't be a string");
+        }
 
-    public static final PyType TYPE = PyType.fromClass(PyComplex.class);
+        try {
+            real = real.__complex__();
+        } catch (PyException pye) {
+            if (!Py.matchException(pye, Py.AttributeError)) {
+                // __complex__ not supported
+                throw pye;
+            }
+            // otherwise try other means
+        }
+
+        PyComplex complexReal;
+        PyComplex complexImag;
+        PyObject toFloat = null;
+        if (real instanceof PyComplex) {
+            complexReal = (PyComplex)real;
+        } else {
+            try {
+                toFloat = real.__float__();
+            } catch (PyException pye) {
+                if (Py.matchException(pye, Py.AttributeError)) {
+                    // __float__ not supported
+                    throw Py.TypeError("complex() argument must be a string or a number");
+                }
+                throw pye;
+            }
+            if (!(toFloat instanceof PyFloat)) {
+                throw Py.TypeError(String.format("__float__ returned non-float (type %.200s)",
+                                                 imag.getType().fastGetName()));
+            }
+            complexReal = new PyComplex(((PyFloat)toFloat).getValue());
+        }
+
+        if (imag == null) {
+            complexImag = new PyComplex(0.0);
+        } else if (imag instanceof PyComplex) {
+            complexImag = (PyComplex)imag;
+        } else {
+            toFloat = null;
+            try {
+                toFloat = imag.__float__();
+            } catch (PyException pye) {
+                if (Py.matchException(pye, Py.AttributeError)) {
+                    // __float__ not supported
+                    throw Py.TypeError("complex() argument must be a string or a number");
+                }
+                throw pye;
+            }
+            if (!(toFloat instanceof PyFloat)) {
+                throw Py.TypeError(String.format("__float__ returned non-float (type %.200s)",
+                                                 imag.getType().fastGetName()));
+            }
+            complexImag = new PyComplex(((PyFloat)toFloat).getValue());
+        }
+
+        complexReal.real -= complexImag.imag;
+        complexReal.imag += complexImag.real;
+        if (new_.for_type != subtype) {
+            complexReal = new PyComplexDerived(subtype, complexReal.real, complexReal.imag);
+        }
+        return complexReal;
+    }
 
     public PyComplex(PyType subtype, double r, double i) {
         super(subtype);
@@ -104,6 +112,10 @@ public class PyComplex extends PyObject {
 
     public PyComplex(double r, double i) {
         this(TYPE, r, i);
+    }
+
+    public PyComplex(double r) {
+        this(r, 0.0);
     }
 
     public final PyFloat getReal() {
@@ -260,6 +272,10 @@ public class PyComplex extends PyObject {
         return unsupported_comparison(other);
     }
 
+    @ExposedMethod
+    final PyObject complex___coerce__(PyObject other) {
+        return __coerce__(other);
+    }
 
     public Object __coerce_ex__(PyObject other) {
         if (other instanceof PyComplex)

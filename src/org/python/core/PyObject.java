@@ -37,12 +37,11 @@ public class PyObject implements Serializable {
 
     @ExposedSet(name = "__class__")
     public void setType(PyType type) {
-        if(getType().layoutAligns(type) &&
-                !type.equals(PyType.fromClass(PyObject.class))){
-            this.objtype = type;
-        } else {
-            throw Py.TypeError("Can only assign subtypes of object to __class__ on subclasses of object");
+        if (type.builtin || getType().builtin) {
+            throw Py.TypeError("__class__ assignment: only for heap types");
         }
+        type.compatibleForAssignment(getType(), "__class__");
+        objtype = type;
     }
 
     @ExposedDelete(name = "__class__")
@@ -969,14 +968,17 @@ public class PyObject implements Serializable {
      **/
     public final PyObject __coerce__(PyObject pyo) {
         Object o = __coerce_ex__(pyo);
-        if (o == null)
+        if (o == null) {
             throw Py.AttributeError("__coerce__");
-        if (o == Py.None)
-            return (PyObject) o;
-        if (o instanceof PyObject[])
+        }
+        if (o == Py.None) {
+            return Py.NotImplemented;
+        }
+        if (o instanceof PyObject[]) {
             return new PyTuple((PyObject[]) o);
-        else
+        } else {
             return new PyTuple(this, (PyObject) o );
+        }
     }
 
 
@@ -2969,18 +2971,17 @@ public class PyObject implements Serializable {
     final PyObject object___reduce_ex__(int arg) {
         PyObject res;
 
-        PyObject clsreduce=this.getType().__findattr__("__reduce__");
-        PyObject objreduce=(new PyObject()).getType().__findattr__("__reduce__");
+        PyObject clsreduce = this.getType().__findattr__("__reduce__");
+        PyObject objreduce = (new PyObject()).getType().__findattr__("__reduce__");
 
-        if (clsreduce!=objreduce) {
-            res=this.__reduce__();
-        } else if (arg>=2) {
-            res=reduce_2();
+        if (clsreduce != objreduce) {
+            res = this.__reduce__();
+        } else if (arg >= 2) {
+            res = reduce_2();
         } else {
-            PyObject copyreg=__builtin__.__import__("copy_reg", null, null,
-                    Py.EmptyTuple);
-            PyObject copyreg_reduce=copyreg.__findattr__("_reduce_ex");
-            res=copyreg_reduce.__call__(this, new PyInteger(arg));
+            PyObject copyreg = __builtin__.__import__("copy_reg", null, null, Py.EmptyTuple);
+            PyObject copyreg_reduce = copyreg.__findattr__("_reduce_ex");
+            res = copyreg_reduce.__call__(this, new PyInteger(arg));
         }
         return res;
     }
@@ -2988,17 +2989,15 @@ public class PyObject implements Serializable {
     private static PyObject slotnames(PyObject cls) {
         PyObject slotnames;
 
-        slotnames=cls.__findattr__("__slotnames__");
-        if(null!=slotnames) {
+        slotnames = cls.fastGetDict().__finditem__("__slotnames__");
+        if (null != slotnames) {
             return slotnames;
         }
 
-        PyObject copyreg=__builtin__.__import__("copy_reg", null, null,
-                Py.EmptyTuple);
-        PyObject copyreg_slotnames=copyreg.__findattr__("_slotnames");
-        slotnames=copyreg_slotnames.__call__(cls);
-        if (null!=slotnames && Py.None!=slotnames &&
-                (!(slotnames instanceof PyList))) {
+        PyObject copyreg = __builtin__.__import__("copy_reg", null, null, Py.EmptyTuple);
+        PyObject copyreg_slotnames = copyreg.__findattr__("_slotnames");
+        slotnames = copyreg_slotnames.__call__(cls);
+        if (null != slotnames && Py.None != slotnames && (!(slotnames instanceof PyList))) {
             throw Py.TypeError("copy_reg._slotnames didn't return a list or None");
         }
 
@@ -3007,35 +3006,35 @@ public class PyObject implements Serializable {
 
     private PyObject reduce_2() {
         PyObject args, state;
-        PyObject res=null;
+        PyObject res = null;
         int n,i;
 
-        PyObject cls=this.__findattr__("__class__");
+        PyObject cls = this.__findattr__("__class__");
 
-        PyObject getnewargs=this.__findattr__("__getnewargs__");
-        if (null!=getnewargs) {
-            args=getnewargs.__call__();
-            if (null!=args && !(args instanceof PyTuple)) {
+        PyObject getnewargs = this.__findattr__("__getnewargs__");
+        if (null != getnewargs) {
+            args = getnewargs.__call__();
+            if (null != args && !(args instanceof PyTuple)) {
                 throw Py.TypeError("__getnewargs__ should return a tuple");
             }
         } else {
-            args=Py.EmptyTuple;
+            args = Py.EmptyTuple;
         }
 
-        PyObject getstate=this.__findattr__("__getstate__");
-        if (null!=getstate) {
-            state=getstate.__call__();
-            if (null==state) {
+        PyObject getstate = this.__findattr__("__getstate__");
+        if (null != getstate) {
+            state = getstate.__call__();
+            if (null == state) {
                 return res;
             }
         } else {
-            state=this.__findattr__("__dict__");
-            if (null==state) {
-                state=Py.None;
+            state = this.__findattr__("__dict__");
+            if (null == state) {
+                state = Py.None;
             }
 
-            PyObject names=slotnames(cls);
-            if (null==names) {
+            PyObject names = slotnames(cls);
+            if (null == names) {
                 return res;
             }
 
@@ -3043,51 +3042,48 @@ public class PyObject implements Serializable {
                 if (!(names instanceof PyList)) {
                     throw Py.AssertionError("slots not a list");
                 }
-                PyObject slots=new PyDictionary();
+                PyObject slots = new PyDictionary();
 
-                n=0;
-                for (i=0;i<((PyList)names).size();i++) {
-                    PyObject name=((PyList)names).pyget(i);
-                    PyObject value=this.__findattr__(name.toString());
-                    if (null==value) {
+                n = 0;
+                for (i = 0; i < ((PyList)names).size(); i++) {
+                    PyObject name = ((PyList)names).pyget(i);
+                    PyObject value = this.__findattr__(name.toString());
+                    if (null == value) {
                         // do nothing
                     } else {
                         slots.__setitem__(name, value);
                         n++;
                     }
                 }
-                if (n>0) {
-                    state=new PyTuple(state, slots);
+                if (n > 0) {
+                    state = new PyTuple(state, slots);
                 }
             }
         }
         PyObject listitems;
         PyObject dictitems;
         if (!(this instanceof PyList)) {
-            listitems=Py.None;
+            listitems = Py.None;
         } else {
-            listitems=((PyList)this).__iter__();
+            listitems = ((PyList)this).__iter__();
         }
         if (!(this instanceof PyDictionary)) {
-            dictitems=Py.None;
+            dictitems = Py.None;
         } else {
-            dictitems=((PyDictionary)this).iteritems();
+            dictitems = ((PyDictionary)this).iteritems();
         }
 
-        PyObject copyreg=__builtin__.__import__("copy_reg", null, null,
-                Py.EmptyTuple);
-        PyObject newobj=copyreg.__findattr__("__newobj__");
+        PyObject copyreg = __builtin__.__import__("copy_reg", null, null, Py.EmptyTuple);
+        PyObject newobj = copyreg.__findattr__("__newobj__");
 
-        n=((PyTuple)args).size();
-        PyObject args2[]=new PyObject[n+1];
-        args2[0]=cls;
-        for(i=0;i<n;i++) {
-            args2[i+1]=((PyTuple)args).pyget(i);
+        n = ((PyTuple)args).size();
+        PyObject args2[] = new PyObject[n+1];
+        args2[0] = cls;
+        for(i = 0; i < n; i++) {
+            args2[i+1] = ((PyTuple)args).pyget(i);
         }
 
-        res = new PyTuple(newobj, new PyTuple(args2), state, listitems, dictitems);
-
-        return res;
+        return new PyTuple(newobj, new PyTuple(args2), state, listitems, dictitems);
     }
 
     public PyTuple __getnewargs__() {

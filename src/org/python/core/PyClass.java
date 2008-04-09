@@ -338,7 +338,7 @@ public class PyClass extends PyObject {
         } else {
             smod = ((PyString) mod).toString();
         }
-        return "<class " + smod + "." + __name__ + " " + Py.idstr(this) + ">";
+        return "<class " + smod + "." + __name__ + " at " + Py.idstr(this) + ">";
     }
 
     public boolean isSubClass(PyClass superclass) {

@@ -32,6 +32,11 @@ public abstract class PyBuiltinFunction extends PyObject {
         return Py.None;
     }
 
+    @ExposedGet(name = "__module__")
+    public PyObject getModule() {
+        return Py.None;
+    }
+
     @ExposedGet(name = "__call__")
     public PyObject makeCall() {
         return this;

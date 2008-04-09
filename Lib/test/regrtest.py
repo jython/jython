@@ -1021,7 +1021,6 @@ _failures = {
     test___all__
     test_class
     test_copy
-    test_cpickle
     test_dis
     test_descr
     test_descrtut
@@ -1032,9 +1031,7 @@ _failures = {
     test_hexoct
     test_iterlen
     test_marshal
-    test_new
     test_pep263
-    test_pickle
     test_pkgimport
     test_profilehooks
     test_pyclbr
@@ -1046,7 +1043,6 @@ _failures = {
     test_ucn
     test_unicode
     test_weakref
-    test_xpickle
     test_zipimport
     ''',
 }

@@ -19,6 +19,7 @@ import org.python.core.ArgParser;
 import org.python.core.ClassDictInit;
 import org.python.core.Py;
 import org.python.core.PyBoolean;
+import org.python.core.PyBuiltinFunction;
 import org.python.core.PyClass;
 import org.python.core.PyDictionary;
 import org.python.core.PyException;
@@ -450,7 +451,9 @@ public class cPickle implements ClassDictInit {
     private static PyDictionary inverted_registry;
 
 
-    private static PyType BuiltinFunctionType = PyType.fromClass(PyReflectedFunction.class);
+    private static PyType BuiltinFunctionType = PyType.fromClass(PyBuiltinFunction.class);
+
+    private static PyType ReflectedFunctionType = PyType.fromClass(PyReflectedFunction.class);
 
     private static PyType ClassType = PyType.fromClass(PyClass.class);
 
@@ -938,6 +941,11 @@ public class cPickle implements ClassDictInit {
                 }
             }
 
+            if (Py.isSubClass(t, PyType.TYPE)) {
+                save_global(object);
+                return;
+            }
+
             PyObject tup = null;
             PyObject reduce = dispatch_table.__finditem__(t);
             if (reduce == null) {
@@ -1063,6 +1071,8 @@ public class cPickle implements ClassDictInit {
                 save_global(object);
             else if (type == BuiltinFunctionType)
                 save_global(object);
+            else if (type == ReflectedFunctionType)
+                save_global(object);
             else if (type == BoolType)
                 save_bool(object);
             else
@@ -1130,10 +1140,10 @@ public class cPickle implements ClassDictInit {
                     file.write(LONG4);
                     writeInt4(l);
                 }
-                for(int i = 0; i < l; i++) {
-                    int b = bytes[i];
-                    if(b < 0)
-                        b += 256;
+                // Write in reverse order: pickle orders by little
+                // endian whereas BigInteger orders by big endian
+                for (int i = l - 1; i >= 0; i--) {
+                    int b = bytes[i] & 0xff;
                     file.write((char)b);
                 }
             } else {
@@ -1325,34 +1335,52 @@ public class cPickle implements ClassDictInit {
 
             put(putMemo(get_id(object), object));
 
-            batch_setitems(object);
+            batch_setitems(object.invoke("iteritems"));
         }
 
         private void batch_setitems(PyObject object) {
-            PyObject list = object.invoke("keys");
-            int len = list.__len__();
-
-            boolean using_setitems = (protocol > 0 && len > 1);
-
-            if (using_setitems)
-                file.write(MARK);
-
-            for (int i = 0; i < len; i++) {
-                PyObject key = list.__finditem__(i);
-                PyObject value = object.__finditem__(key);
-                save(key);
-                save(value);
-
-                if (!using_setitems)
-                     file.write(SETITEM);
-                else if (i > 0 && i % BATCHSIZE == 0) {
-                    file.write(SETITEMS);
-                    if (len % BATCHSIZE != 0)
-                        file.write(MARK);
+            if (protocol == 0) {
+                // SETITEMS isn't available; do one at a time.
+                for (PyObject p : object.asIterable()) {
+                    if (!(p instanceof PyTuple) || p.__len__() != 2) {
+                        throw Py.TypeError("dict items iterator must return 2-tuples");
+                    }
+                    save(p.__getitem__(0));
+                    save(p.__getitem__(1));
+                    file.write(SETITEM);
                 }
+            } else {
+                // proto > 0:  write in batches of BATCHSIZE.
+                PyObject obj;
+                PyObject[] slice = new PyObject[BATCHSIZE];
+                int n;
+                do {
+                    // Get next group of (no more than) BATCHSIZE elements.
+                    for (n = 0; n < BATCHSIZE; n++) {
+                        obj = object.__iternext__();
+                        if (obj == null) {
+                            break;
+                        }
+                        slice[n] = obj;
+                    }
+
+                    if (n > 1) {
+                        // Pump out MARK, slice[0:n], APPENDS.
+                        file.write(MARK);
+                        for (int i = 0; i < n; i++) {
+                            obj = slice[i];
+                            save(obj.__getitem__(0));
+                            save(obj.__getitem__(1));
+                        }
+                        file.write(SETITEMS);
+                    } else if (n == 1) {
+                        obj = slice[0];
+                        save(obj.__getitem__(0));
+                        save(obj.__getitem__(1));
+                        file.write(SETITEM);
+                    }
+                } while (n == BATCHSIZE);
             }
-            if (using_setitems && len % BATCHSIZE != 0)
-                file.write(SETITEMS);
         }
 
 
@@ -1880,12 +1908,16 @@ public class cPickle implements ClassDictInit {
             int longLength = read_binint(length);
             String s = file.read(longLength);
             byte[] bytes = new byte[s.length()];
-            for(int i = 0; i < s.length(); i++) {
+            // Write to the byte array in reverse order: pickle orders
+            // by little endian whereas BigInteger orders by big
+            // endian
+            int n = s.length() - 1;
+            for (int i = 0; i < s.length(); i++) {
                 char c = s.charAt(i);
                 if(c >= 128) {
-                    bytes[i] = (byte)(c - 256);
+                    bytes[n--] = (byte)(c - 256);
                 } else {
-                    bytes[i] = (byte)c;
+                    bytes[n--] = (byte)c;
                 }
             }
             BigInteger bigint = new BigInteger(bytes);
@@ -1970,13 +2002,13 @@ public class cPickle implements ClassDictInit {
             String line = file.readlineNoNl();
             String value = codecs.PyUnicode_DecodeRawUnicodeEscape(line,
                                                                    "strict");
-            push(new PyString(value));
+            push(new PyUnicode(value));
         }
 
         final private void load_binunicode() {
             int len = read_binint();
             String line = file.read(len);
-            push(new PyString(codecs.PyUnicode_DecodeUTF8(line, "strict")));
+            push(new PyUnicode(codecs.PyUnicode_DecodeUTF8(line, "strict")));
         }
 
         final private void load_tuple() {
@@ -2247,6 +2279,15 @@ public class cPickle implements ClassDictInit {
             PyObject inst  = peek();
             PyObject setstate = inst.__findattr__("__setstate__");
             if(setstate == null) {
+                PyObject slotstate = null;
+                // A default __setstate__.  First see whether state
+                // embeds a slot state dict too (a proto 2 addition).
+                if (value instanceof PyTuple && value.__len__() == 2) {
+                    PyObject temp = value;
+                    value = temp.__getitem__(0);
+                    slotstate = temp.__getitem__(1);
+                }
+                
                 PyObject dict;
                 if(inst instanceof PyInstance) {
                     dict = ((PyInstance)inst).__dict__;
@@ -2254,6 +2295,18 @@ public class cPickle implements ClassDictInit {
                     dict = inst.getDict();
                 }
                 dict.__findattr__("update").__call__(value);
+
+                // Also set instance attributes from the slotstate
+                // dict (if any).
+                if (slotstate != null) {
+                    if (!(slotstate instanceof PyDictionary)) {
+                        throw new PyException(UnpicklingError, "slot state is not a dictionary");
+                    }
+                    for (PyObject item : ((PyDictionary)slotstate).iteritems().asIterable()) {
+                        inst.__setattr__(PyObject.asName(item.__getitem__(0)),
+                                         item.__getitem__(1));
+                    }
+                }
             } else {
                 setstate.__call__(value);
             }

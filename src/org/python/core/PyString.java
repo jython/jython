@@ -690,6 +690,7 @@ public class PyString extends PyBaseString
         else return null;
     }
 
+    @ExposedMethod
     final PyTuple str___getnewargs__() {
         return new PyTuple(new PyString(this.string));
     }
@@ -811,6 +812,10 @@ public class PyString extends PyBaseString
                 }
                 int end = endDouble(string, s);
                 z = Double.valueOf(string.substring(s, end)).doubleValue();
+                if (z == Double.POSITIVE_INFINITY) {
+                	throw Py.ValueError(String.format("float() out of range: %.150s", string));
+                }
+
                 s=end;
                 if (s < n) {
                     c = string.charAt(s);
@@ -2195,7 +2200,13 @@ final class StringFormatter
     }
 
     private String formatInteger(PyObject arg, int radix, boolean unsigned) {
-        return formatInteger(((PyInteger)arg.__int__()).getValue(), radix, unsigned);
+        PyInteger x;
+        try {
+            x = (PyInteger)arg.__int__();
+        } catch (PyException pye) {
+            throw Py.TypeError("int argument required");
+        }
+        return formatInteger(x.getValue(), radix, unsigned);
     }
 
     private String formatInteger(long v, int radix, boolean unsigned) {
@@ -2487,23 +2498,29 @@ final class StringFormatter
                 fill = ' ';
                 if (arg instanceof PyString) {
                     string = ((PyString)arg).toString();
-                    if (string.length() != 1)
+                    if (string.length() != 1) {
                         throw Py.TypeError("%c requires int or char");
+                    }
                     if (arg instanceof PyUnicode) {
                         needUnicode = true;
                     }
                     break;
                 }
-                PyInteger val;
+                int val;
                 try {
-                    val = (PyInteger)arg.__int__();
-                } catch(PyException e){
-                    if(Py.matchException(e, Py.AttributeError)) {
+                    val = ((PyInteger)arg.__int__()).getValue();
+                } catch (PyException e){
+                    if (Py.matchException(e, Py.AttributeError)) {
                         throw Py.TypeError("%c requires int or char");
                     }
                     throw e;
                 }
-                string = new Character((char)val.getValue()).toString();
+                if (val < 0) {
+                    throw Py.OverflowError("unsigned byte integer is less than minimum");
+                } else if (val > 255) {
+                    throw Py.OverflowError("unsigned byte integer is greater than maximum");
+                }
+                string = new Character((char)val).toString();
                 break;
 
             default:
