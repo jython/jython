@@ -1,4 +1,4 @@
-<project name="grammar" default="all">
+<project name="asdl" default="all">
 
     <path id="main.classpath">
         <fileset dir="../extlibs">
@@ -12,26 +12,6 @@
         <mkdir dir="build/gensrc/org/python/antlr/ast"/>
     </target>
 
-    <target name="antlr_gen" depends="init">
-        <java classname="org.antlr.Tool">
-            <arg value="-fo"/>
-            <arg path="build/gensrc/org/python/antlr"/>
-            <arg value="-lib"/>
-            <arg path="build/gensrc/org/python/antlr"/>
-            <arg file="grammar/Python.g"/>
-            <arg file="grammar/PythonWalker.g"/>
-            <classpath refid="main.classpath"/>
-        </java>
-        
-        <!-- copy the .tokens to /grammar, for usage in ANTLRWorks -->
-        <copy todir="grammar" preservelastmodified="true">
-            <fileset dir="build/gensrc/org/python/antlr">
-                <include name="Python.tokens" />
-            </fileset>
-        </copy>
-
-    </target>
-    
     <target name="compile" depends="init">
         <javac destdir="build" debug="true"
                 deprecation="false" optimize="false" failonerror="true">
@@ -68,10 +48,6 @@
         </junit>
     </target>
 
-    <target name="antlr" depends="antlr_gen, compile"/>
-    <target name="asdl" depends="asdl_gen, compile"/>
-
-    <target name="all" depends="clean, asdl_gen, antlr_gen, compile"/>
-
+    <target name="all" depends="clean,asdl_gen,compile"/>
 </project>
 
