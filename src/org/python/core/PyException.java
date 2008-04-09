@@ -29,8 +29,6 @@ public class PyException extends RuntimeException
     private boolean normalized = false;
 
     public PyException() {
-        //System.out.println("PyException");
-        //super.printStackTrace();
         this(Py.None, Py.None);
     }
 
@@ -66,7 +64,6 @@ public class PyException extends RuntimeException
     }
 
     public synchronized void printStackTrace(PrintStream s) {
-        //System.err.println("printStackTrace: "+s+", "+printingStackTrace);
         if (printingStackTrace) {
             super.printStackTrace(s);
         } else {
@@ -86,7 +83,6 @@ public class PyException extends RuntimeException
         } finally {
             printingStackTrace = false;
         }
-        //Py.printException(this, null, new PyFile(s));
     }
 
     public synchronized String toString() {
@@ -107,11 +103,11 @@ public class PyException extends RuntimeException
             return;
         }
         PyObject inClass = null;
-        if (Py.isExceptionInstance(value)) {
+        if (isExceptionInstance(value)) {
             inClass = value.fastGetClass();
         }
 
-        if (Py.isExceptionClass(type)) {
+        if (isExceptionClass(type)) {
             if (inClass == null || !__builtin__.issubclass(inClass, type)) {
                 PyObject[] args;
 
@@ -131,5 +127,36 @@ public class PyException extends RuntimeException
             }
         }
         normalized = true;
+    }
+
+    /**
+     * Determine whether obj is a Python exception class
+     *
+     * @param obj a PyObject
+     * @return true if an exception
+     */
+    public static boolean isExceptionClass(PyObject obj) {
+        return obj instanceof PyClass
+                || (obj instanceof PyType && ((PyType)obj).isSubType((PyType)Py.BaseException));
+    }
+
+    /**
+     * Determine whether obj is an Python exception instance
+     *
+     * @param obj a PyObject
+     * @return true if an exception instance
+     */
+    public static boolean isExceptionInstance(PyObject obj) {
+        return obj instanceof PyInstance || obj.getType().isSubType((PyType)Py.BaseException);
+    }
+
+    /**
+     * Get the name of the exception's class
+     *
+     * @param obj a PyObject exception
+     * @return String exception name
+     */
+    public static String exceptionClassName(PyObject obj) {
+        return obj instanceof PyClass ? ((PyClass)obj).__name__ : ((PyType)obj).fastGetName();
     }
 }

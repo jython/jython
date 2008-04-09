@@ -227,7 +227,7 @@ public final class Py
     static void maybeSystemExit(PyException exc) {
         if (Py.matchException(exc, Py.SystemExit)) {
             PyObject value = exc.value;
-            if (isExceptionInstance(exc.value)) {
+            if (PyException.isExceptionInstance(exc.value)) {
                 value = value.__findattr__("code");
             }
             Py.getSystemState().callExitFunc();
@@ -1019,8 +1019,8 @@ public final class Py
     static String formatException(PyObject type, PyObject value, PyObject tb) {
         StringBuffer buf = new StringBuffer();
 
-        if (isExceptionClass(type)) {
-            String className = exceptionClassName(type);
+        if (PyException.isExceptionClass(type)) {
+            String className = PyException.exceptionClassName(type);
             int lastDot = className.lastIndexOf('.');
             if (lastDot != -1) {
                 className = className.substring(lastDot + 1);
@@ -1118,7 +1118,7 @@ public final class Py
             }
         }
 
-        if (isExceptionClass(pye.type) && isExceptionClass(exc)) {
+        if (PyException.isExceptionClass(pye.type) && PyException.isExceptionClass(exc)) {
             return isSubClass(pye.type, exc);
         }
 
@@ -1143,37 +1143,6 @@ public final class Py
 
     public static PyException makeException() {
         return makeException(null);
-    }
-
-    /**
-     * Determine whether obj is a Python Exception class
-     *
-     * @param obj a PyObject
-     * @return true if an exception
-     */
-    public static boolean isExceptionClass(PyObject obj) {
-        return obj instanceof PyClass
-                || (obj instanceof PyType && ((PyType)obj).isSubType((PyType)Py.BaseException));
-    }
-
-    /**
-     * Determine whether obj is an Exception instance
-     *
-     * @param obj a PyObject
-     * @return true if an exception instance
-     */
-    public static boolean isExceptionInstance(PyObject obj) {
-        return obj instanceof PyInstance || obj.getType().isSubType((PyType)Py.BaseException);
-    }
-
-    /**
-     * Get the name of the exception's class
-     *
-     * @param obj a PyObject exception
-     * @return String exception name
-     */
-    public static String exceptionClassName(PyObject obj) {
-        return obj instanceof PyClass ? ((PyClass)obj).__name__ : ((PyType)obj).fastGetName();
     }
 
     /**
@@ -1210,11 +1179,11 @@ public final class Py
 
         if (type.getClass() == PyString.class) {
             Py.warning(Py.DeprecationWarning, "raising a string exception is deprecated");
-        } else if (isExceptionClass(type)) {
+        } else if (PyException.isExceptionClass(type)) {
             PyException pye = new PyException(type, value, (PyTraceback)traceback);
             pye.normalize();
             return pye;
-        } else if (isExceptionInstance(type)) {
+        } else if (PyException.isExceptionInstance(type)) {
             // Raising an instance.  The value should be a dummy.
             if (value != Py.None) {
                 throw Py.TypeError("instance exception may not have a separate value");
