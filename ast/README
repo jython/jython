@@ -1,0 +1,29 @@
+Files in this project:
+Python.asdl - zephyr file taken directly from CPython release25-maint
+asdl.py - base asdl program copied from CPython release25-maint
+asdl_java.py - copied from CPython sandbox for reference
+asdl_anltr.py - adapted from asdl_java.py to produce antlr style ast classes
+astlip.py - adapted from Jim Baker's ast -> s-expression utility
+            it now runs itself and jastlib.py and diffs the results
+            run with -h for more options
+build.xml - ant file for building the project
+crawl - runs only the grammar on a file (note add any second param to get a
+        print of the tree) - empty output means a successful walk.
+fails - a runner for release25 files that fail
+globwalk.py - a recursive globber used by astlib.py
+jastlib.py - adapted from astlib.py to produce a reasonable s-expression
+             from jython parsing with antlr
+regr - a runner for release25 files that should succeed
+run - runs grammar and walker on a file (note add any second param to get a
+      print of the trees) - empty output means a successful walk.
+spark.py - copied from CPython -- used by asdl
+
+known bugs:
+* The following files in release25 completely blow up astlib.py:
+      Lib/test/test_pep263.py
+      Lib/test/bad_coding.py
+      Lib/test/bad_coding2.py
+      Lib/test/badsyntax_nocaret.py
+so I generally delete these files before running astlib.py on the whole 
+release25 Lib.
+

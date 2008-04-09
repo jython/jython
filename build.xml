@@ -185,6 +185,9 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <uptodate property="jarjar.notneeded" targetfile="${output.dir}/jarjar.jar">
             <srcfiles dir="extlibs" includes="*" />
         </uptodate>
+        <uptodate property="antlr.notneeded" targetfile="${dist.dir}/jython.jar">
+            <srcfiles dir="grammar" includes="*.g" />
+        </uptodate>
     </target>
 
     <target name="full-preinit">
@@ -387,8 +390,8 @@ The readme text for the next release will be like:
 		  lazy="${templates.lazy}"/>
     </target>
 
-    <target name="antlr_gen" depends="init,prepare-output">
-        <java classname="org.antlr.Tool">
+    <target name="antlr_gen" depends="init,prepare-output" unless="antlr.notneeded">
+        <java classname="org.antlr.Tool" failonerror="true">
             <arg value="-fo"/>
             <arg path="build/gensrc/org/python/antlr"/>
             <arg value="-lib"/>
@@ -409,7 +412,7 @@ The readme text for the next release will be like:
 
     </target>
  
-    <target name="compile" depends="init,jarjar">
+    <target name="compile" depends="init,antlr_gen,jarjar">
         <javac destdir="${compile.dir}"
                target="${jdk.target.version}"
                source="${jdk.source.version}"
