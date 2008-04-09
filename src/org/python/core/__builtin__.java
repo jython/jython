@@ -156,9 +156,9 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
             case 20:
                 return __builtin__.filter(arg1, arg2);
             case 21:
-                return __builtin__.getattr(arg1, asString(arg2, "getattr(): attribute name must be string"));
+                return __builtin__.getattr(arg1, arg2);
             case 22:
-                return Py.newBoolean(__builtin__.hasattr(arg1, asString(arg2, "hasattr(): attribute name must be string")));
+                return Py.newBoolean(__builtin__.hasattr(arg1, arg2));
             case 26:
                 return Py.newBoolean(__builtin__.issubclass(arg1, arg2));
             case 27:
@@ -207,7 +207,7 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
                 __builtin__.execfile(asString(arg1, "execfile's first argument must be str", false), arg2, arg3);
                 return Py.None;
             case 21:
-                return __builtin__.getattr(arg1, asString(arg2, "getattr(): attribute name must be string"), arg3);
+                return __builtin__.getattr(arg1, arg2, arg3);
             case 33:
                 return __builtin__.pow(arg1, arg2, arg3);
             case 35:
@@ -599,31 +599,47 @@ public class __builtin__ {
         return list;
     }
 
-    public static PyObject getattr(PyObject o, String n) {
-        return o.__getattr__(n);
+    public static PyObject getattr(PyObject obj, PyObject name) {
+        return getattr(obj, name, null);
     }
 
-    public static PyObject getattr(PyObject o, String n, PyObject def) {
-        PyObject val = o.__findattr__(n);
-        if (val != null) {
-            return val;
+    public static PyObject getattr(PyObject obj, PyObject name, PyObject def) {
+        String nameStr;
+        if (name instanceof PyUnicode) {
+            nameStr = ((PyUnicode)name).encode();
+        } else if (name instanceof PyString) {
+            nameStr = name.asString();
+        } else {
+            throw Py.TypeError("getattr(): attribute name must be string");
         }
-        return def;
+
+        PyObject result;
+        try {
+            result = obj.__getattr__(nameStr.intern());
+        } catch (PyException pye) {
+            if (Py.matchException(pye, Py.AttributeError) && def != null) {
+                result = def;
+            } else {
+                throw pye;
+            }
+        }
+        return result;
     }
 
     public static PyObject globals() {
         return Py.getFrame().f_globals;
     }
 
-    public static boolean hasattr(PyObject o, String n) {
-        try {
-            return o.__findattr__(n) != null;
-        } catch (PyException exc) {
-            if (Py.matchException(exc, Py.AttributeError)) {
-                return false;
-            }
-            throw exc;
+    public static boolean hasattr(PyObject obj, PyObject name) {
+        String nameStr;
+        if (name instanceof PyUnicode) {
+            nameStr = ((PyUnicode)name).encode().intern();
+        } else if (name instanceof PyString) {
+            nameStr = name.asString();
+        } else {
+            throw Py.TypeError("hasattr(): attribute name must be string");
         }
+        return obj.__findattr__(nameStr.intern()) != null;
     }
 
     public static PyInteger hash(PyObject o) {
@@ -1034,8 +1050,8 @@ public class __builtin__ {
     }
 
     public static PyObject reversed(PyObject seq) {
-        if (hasattr(seq, "__getitem__") && hasattr(seq, "__len__") &&
-                !hasattr(seq, "keys")) {
+        if (seq.__findattr__("__getitem__") != null && seq.__findattr__("__len__") != null
+            && seq.__findattr__("keys") == null) {
             return new PyReversedIterator(seq);
         } else {
             throw Py.TypeError("argument to reversed() must be a sequence");
