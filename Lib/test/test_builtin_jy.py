@@ -8,6 +8,12 @@ class BuiltinTest(unittest.TestCase):
         self.assert_("__builtin__" in sys.modules,
             "__builtin__ not found in sys.modules")
 
+    def test_hasattr_swallows_exceptions(self):
+        class Foo(object):
+            def __getattr__(self, name):
+                raise TypeError()
+        self.assert_(not hasattr(Foo(), 'bar'))
+
 class LoopTest(unittest.TestCase):
 
     def test_break(self):

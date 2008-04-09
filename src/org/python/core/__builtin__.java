@@ -639,7 +639,13 @@ public class __builtin__ {
         } else {
             throw Py.TypeError("hasattr(): attribute name must be string");
         }
-        return obj.__findattr__(nameStr.intern()) != null;
+
+        try {
+            return obj.__findattr__(nameStr.intern()) != null;
+        } catch (PyException pye) {
+            // swallow
+        }
+        return false;
     }
 
     public static PyInteger hash(PyObject o) {
