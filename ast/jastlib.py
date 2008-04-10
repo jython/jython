@@ -8,10 +8,9 @@ Since this is a tuple, we can directly compare, and this is going to
 be handy when comparing Jython's implementation vs CPython.
 
 """
+import array
 import org.python.antlr.PythonTree as AST
 import org.python.antlr.Main as parser
-
-from types import ArrayType
 
 def lispify_ast(node):
     return tuple(lispify_ast2(node))
@@ -33,7 +32,7 @@ def lispify_ast2(node):
 def lispify_field(field, child, parent):
     fname = field
     yield field
-    if not isinstance(child, ArrayType):
+    if not isinstance(child, array.ArrayType):
         children = [child]
     else:
         children = child
