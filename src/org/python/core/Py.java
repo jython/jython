@@ -1195,7 +1195,7 @@ public final class Py
             } else
                 throw Py.TypeError(
                     "exec: argument 1 must be string, code or file object");
-            code = Py.compile_flags(contents, "<string>", "exec",
+            code = (PyCode)Py.compile_flags(contents, "<string>", "exec",
                                     Py.getCompilerFlags());
         }
         Py.runCode(code, locals, globals);
@@ -1564,17 +1564,17 @@ public final class Py
 
     // w/o compiler-flags
 
-    public static PyCode compile(modType node, String filename) {
+    public static PyObject compile(modType node, String filename) {
         return compile(node, getName(), filename);
     }
 
-    public static PyCode compile(modType node, String name,
+    public static PyObject compile(modType node, String name,
                                  String filename)
     {
         return compile(node, name, filename, true, false);
     }
 
-    public static PyCode compile(modType node, String name,
+    public static PyObject compile(modType node, String name,
                                  String filename,
                                  boolean linenumbers,
                                  boolean printResults)
@@ -1583,7 +1583,7 @@ public final class Py
                              printResults, null);
     }
 
-    public static PyCode compile(InputStream istream, String filename,
+    public static PyObject compile(InputStream istream, String filename,
                                  String type)
     {
         return compile_flags(istream,filename,type,null);
@@ -1591,7 +1591,7 @@ public final class Py
 
     // with compiler-flags
 
-    public static PyCode compile_flags(modType node, String name,
+    public static PyObject compile_flags(modType node, String name,
                                  String filename,
                                  boolean linenumbers,
                                  boolean printResults,CompilerFlags cflags)
@@ -1609,9 +1609,14 @@ public final class Py
         }
     }
 
-    public static PyCode compile_flags(InputStream istream, String filename,
+    public static PyObject compile_flags(InputStream istream, String filename,
                                  String type,CompilerFlags cflags)
     {
+        if (cflags.only_ast) {
+            org.python.antlr.ast.modType node = antlr.parse(istream, type, filename, cflags);
+            return Py.java2py(node);
+        }
+
         modType node = parser.parse(istream, type, filename, cflags);
         boolean printResults = false;
         if (type.equals("single"))
@@ -1620,7 +1625,7 @@ public final class Py
                                 cflags);
     }
 
-    public static PyCode compile_flags(String data,
+    public static PyObject compile_flags(String data,
                                        String filename,
                                        String type,
                                        CompilerFlags cflags) {

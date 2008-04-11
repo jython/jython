@@ -457,11 +457,11 @@ public class __builtin__ {
         throw Py.TypeError("number coercion failed");
     }
 
-    public static PyCode compile(String data, String filename, String type) {
+    public static PyObject compile(String data, String filename, String type) {
         return Py.compile_flags(data, filename, type, Py.getCompilerFlags());
     }
 
-    public static PyCode compile(String data, String filename, String type, int flags, boolean dont_inherit) {
+    public static PyObject compile(String data, String filename, String type, int flags, boolean dont_inherit) {
         if ((flags & ~PyTableCode.CO_ALL_FEATURES) != 0) {
             throw Py.ValueError("compile(): unrecognised flags");
         }
@@ -507,7 +507,7 @@ public class __builtin__ {
             code = (PyCode) o;
         } else {
             if (o instanceof PyString) {
-                code = compile(o.toString(), "<string>", "eval");
+                code = (PyCode)compile(o.toString(), "<string>", "eval");
             } else {
                 throw Py.TypeError("eval: argument 1 must be string or code object");
             }
@@ -540,7 +540,7 @@ public class __builtin__ {
         PyCode code;
 
         try {
-            code = Py.compile_flags(file, name, "exec", cflags);
+            code = (PyCode)Py.compile_flags(file, name, "exec", cflags);
         } finally {
             try {
                 file.close();

@@ -82,7 +82,7 @@ public class jython
             InputStream file = zip.getInputStream(runit);
             PyCode code;
             try {
-                code = Py.compile(file, "__run__", "exec");
+                code = (PyCode)Py.compile(file, "__run__", "exec");
             } finally {
                 file.close();
             }
