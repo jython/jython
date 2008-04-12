@@ -2,19 +2,25 @@
 package org.python.core;
 
 /**
-Used to implement the builtin xrange function.
-
-Significant patches contributed by Jason Orendorff - jorendor@cbu.edu
-
-@author Jim Hugunin - hugunin@python.org
-@since JPython 0.3
-**/
-
+ * The builtin xrange type.
+ *
+ * Significant patches contributed by Jason Orendorff -
+ * jorendor@cbu.edu
+ * 
+ * @author Jim Hugunin - hugunin@python.org
+ * @since JPython 0.3
+ */
 public class PyXRange extends PySequence {
-    public int start, stop, step; // directly from xrange(start, stop, step)
-    int cycleLength;       // The length of an uncopied xrange
-    int copies;            // The number of copies made (used to implement
-                           // xrange(x,y,z)*n)
+
+    /** directly from xrange(start, stop, step) */
+    public int start, stop, step;
+
+    /** The length of an uncopied xrange */
+    int cycleLength;
+
+    /** The number of copies made (used to implement
+     * xrange(x,y,z)*n) */
+    int copies;
 
     public PyXRange(int stop) {
         this(0, stop, 1);
@@ -25,8 +31,9 @@ public class PyXRange extends PySequence {
     }
 
     public PyXRange(int start, int stop, int step) {
-        if (step == 0)
-            throw Py.ValueError("zero step for xrange()");
+        if (step == 0) {
+            throw Py.ValueError("xrange() arg 3 must not be zero");
+        }
         this.start = start;
         this.stop = stop;
         this.step = step;
@@ -40,14 +47,15 @@ public class PyXRange extends PySequence {
     }
 
     public int __len__() {
-        return cycleLength*copies;
+        return cycleLength * copies;
     }
 
     private int getInt(int i) {
-        if (cycleLength == 0) { // avoid divide by zero errors
+        if (cycleLength == 0) {
+            // avoid divide by zero errors
             return start;
         } else {
-            return start + (i % cycleLength)*step;
+            return start + (i % cycleLength) * step;
         }
     }
 
@@ -56,52 +64,17 @@ public class PyXRange extends PySequence {
     }
 
     protected PyObject getslice(int start, int stop, int step) {
-        Py.DeprecationWarning("xrange object slicing is deprecated; " +
-                              "convert to list instead");
-        if (copies != 1) {
-            throw Py.TypeError("cannot slice a replicated range");
-        }
-        int len = sliceLength(start, stop, step);
-        int xslice_start = getInt(start);
-        int xslice_step = this.step * step;
-        int xslice_stop = xslice_start + xslice_step * len;
-        return new PyXRange(xslice_start, xslice_stop, xslice_step);
+        return null;
     }
-
 
     protected PyObject repeat(int howmany) {
-        Py.DeprecationWarning("xrange object multiplication is deprecated; " +
-                              "convert to list instead");
-        PyXRange x = new PyXRange(start, stop, step);
-        x.copies = copies*howmany;
-        return x;
-    }
-
-    public PyObject __add__(PyObject generic_other) {
-        throw Py.TypeError("cannot concatenate xrange objects");
-    }
-
-    public PyObject __findattr__(String name) {
-        String msg = "xrange object's 'start', 'stop' and 'step' " +
-                     "attributes are deprecated";
-        if (name == "start") {
-            Py.DeprecationWarning(msg);
-            return Py.newInteger(start);
-        } else if (name == "stop") {
-            Py.DeprecationWarning(msg);
-            return Py.newInteger(stop);
-        } else if (name == "step") {
-            Py.DeprecationWarning(msg);
-            return Py.newInteger(step);
-        } else {
-            return super.__findattr__(name);
-        }
+        return null;
     }
 
     public int hashCode() {
         // Not the greatest hash function
         // but then again hashing xrange's is rather uncommon
-        return stop^start^step;
+        return stop ^ start ^ step;
     }
 
     public String toString() {
@@ -119,14 +92,8 @@ public class PyXRange extends PySequence {
         return buf.toString();
     }
 
-    public PyList tolist() {
-        Py.DeprecationWarning("xrange.tolist() is deprecated; " +
-                              "use list(xrange) instead");
-        PyList list = new PyList();
-        int count = __len__();
-        for (int i=0; i<count; i++) {
-            list.append(pyget(i));
-        }
-        return list;
+    /** {@inheritDoc} */
+    protected String unsupportedopMessage(String op, PyObject o2) {
+        return null;
     }
 }
