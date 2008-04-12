@@ -1945,12 +1945,12 @@ public class cPickle implements ClassDictInit {
             // by little endian whereas BigInteger orders by big
             // endian
             int n = s.length() - 1;
-            for (int i = 0; i < s.length(); i++) {
+            for (int i = 0; i < s.length(); i++, n--) {
                 char c = s.charAt(i);
                 if(c >= 128) {
-                    bytes[n--] = (byte)(c - 256);
+                    bytes[n] = (byte)(c - 256);
                 } else {
-                    bytes[n--] = (byte)c;
+                    bytes[n] = (byte)c;
                 }
             }
             BigInteger bigint = new BigInteger(bytes);
