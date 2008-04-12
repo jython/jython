@@ -160,6 +160,11 @@ public class PyType extends PyObject implements Serializable {
         } else {
             newtype = new PyTypeDerived(metatype);
         }
+        if (dict instanceof PyStringMap) {
+            dict = ((PyStringMap)dict).copy();
+        } else {
+            dict = ((PyDictionary)dict).copy();
+        }
         newtype.dict = dict;
         newtype.name = name;
         newtype.base = best_base(bases_list);
