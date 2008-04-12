@@ -212,7 +212,8 @@ public class PyFunction extends PyObject
         return func_code.call(arg1, args, keywords, func_globals,
                               func_defaults,  func_closure);
     }
+
     public String toString() {
-        return "<function "+__name__+" "+Py.idstr(this)+">";
+        return String.format("<function %s at %s>", __name__, Py.idstr(this));
     }
 }
