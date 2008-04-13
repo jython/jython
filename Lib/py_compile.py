@@ -3,14 +3,10 @@
 This module has intimate knowledge of the format of .pyc files.
 """
 
-import __builtin__
-import imp
-import marshal
+import _py_compile
 import os
 import sys
 import traceback
-
-MAGIC = imp.get_magic()
 
 __all__ = ["compile", "main", "PyCompileError"]
 
@@ -61,22 +57,6 @@ class PyCompileError(Exception):
         return self.msg
 
 
-# Define an internal helper according to the platform
-if os.name == "mac":
-    import MacOS
-    def set_creator_type(file):
-        MacOS.SetCreatorAndType(file, 'Pyth', 'PYC ')
-else:
-    def set_creator_type(file):
-        pass
-
-def wr_long(f, x):
-    """Internal; write a 32-bit int to a file in little-endian order."""
-    f.write(chr( x        & 0xff))
-    f.write(chr((x >> 8)  & 0xff))
-    f.write(chr((x >> 16) & 0xff))
-    f.write(chr((x >> 24) & 0xff))
-
 def compile(file, cfile=None, dfile=None, doraise=False):
     """Byte-compile one Python source file to Python bytecode.
 
@@ -112,17 +92,8 @@ def compile(file, cfile=None, dfile=None, doraise=False):
     directories).
 
     """
-    f = open(file, 'U')
     try:
-        timestamp = long(os.fstat(f.fileno()).st_mtime)
-    except AttributeError:
-        timestamp = long(os.stat(file).st_mtime)
-    codestring = f.read()
-    f.close()
-    if codestring and codestring[-1] != '\n':
-        codestring = codestring + '\n'
-    try:
-        codeobject = __builtin__.compile(codestring, dfile or file,'exec')
+        _py_compile.compile(file, cfile, dfile)
     except Exception,err:
         py_exc = PyCompileError(err.__class__,err.args,dfile or file)
         if doraise:
@@ -130,17 +101,6 @@ def compile(file, cfile=None, dfile=None, doraise=False):
         else:
             sys.stderr.write(py_exc.msg + '\n')
             return
-    if cfile is None:
-        cfile = file + (__debug__ and 'c' or 'o')
-    fc = open(cfile, 'wb')
-    fc.write('\0\0\0\0')
-    wr_long(fc, timestamp)
-    marshal.dump(codeobject, fc)
-    fc.flush()
-    fc.seek(0, 0)
-    fc.write(MAGIC)
-    fc.close()
-    set_creator_type(cfile)
 
 def main(args=None):
     """Compile several source files.

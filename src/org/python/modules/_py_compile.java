@@ -8,16 +8,8 @@ import org.python.core.PyList;
 import org.python.core.PyString;
 import org.python.core.PySystemState;
 
-public class py_compile {
+public class _py_compile {
     public static PyList __all__ = new PyList(new PyString[] { new PyString("compile") });
-
-    public static boolean compile(String filename, String cfile) {
-        return compile(filename, cfile, null);
-    }
-
-    public static boolean compile(String filename) {
-        return compile(filename, null, null);
-    }
 
     public static boolean compile(String filename, String cfile, String dfile) {
         // Resolve relative path names. dfile is only used for error
@@ -57,5 +49,4 @@ public class py_compile {
 
         return bytes.length > 0;
     }
-    
 }

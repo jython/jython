@@ -31,7 +31,7 @@ public class Setup
         "operator",
         "time:org.python.modules.time.Time",
         "os",
-        "py_compile",
+        "_py_compile",
         "pre:org.python.modules.re",
         "_sre",
         "synchronize",
