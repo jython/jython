@@ -1,4 +1,5 @@
-"""Misc. type tests (and some old style class tests too).
+"""Misc. class tests. These are more general class tests than CPython's
+test_class which focuses on operators.
 
 Made for Jython
 """
