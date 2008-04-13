@@ -210,7 +210,7 @@ class ClassLocalsTestCase(unittest.TestCase):
             locals()
         # Oops, locals() updates f_locals. Hilarity ensues
         self.assertEqual(MyFields2.fields, ['FIELDGATHERERMETA', 'JAVA',
-                                           'JYTHON', 'SOMECLASS'])
+                                            'JYTHON', 'SOMECLASS'])
 
 
 def test_main():
