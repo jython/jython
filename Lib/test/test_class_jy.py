@@ -7,7 +7,7 @@ import __builtin__
 import unittest
 from test import test_support
 
-class TypesGeneralTestCase(unittest.TestCase):
+class ClassGeneralTestCase(unittest.TestCase):
 
     TE_MSG = "can't set attributes of built-in/extension type 'str'"
 
@@ -109,7 +109,7 @@ class TypesGeneralTestCase(unittest.TestCase):
                              'delattr Foo.%s expected a TypeError' % attr)
 
 
-class TypesNamelessModuleTestCase(unittest.TestCase):
+class ClassNamelessModuleTestCase(unittest.TestCase):
 
     def setUp(self):
         global __name__
@@ -163,10 +163,61 @@ class BrokenNameTestCase(unittest.TestCase):
             self.assert_(False, "Expected a NameError")
 
 
+class ClassLocalsTestCase(unittest.TestCase):
+
+    def test_class_locals(self):
+        class Foo(object):
+            pass
+
+        class Bar(object):
+            foo = Foo()
+        self.assert_(not hasattr(Bar, 'Foo'))
+
+        class Bar2(object):
+            foo = Foo()
+            locals()
+        # Observer effect: Bar2 differs because we looked at
+        # locals. This might be considered 'buggy' behavior; but it
+        # matches CPython and Pypy. see below for an example
+        self.assert_(hasattr(Bar2, 'Foo'))
+
+    def test_class_locals_realworld(self):
+        # A more real world test of the above situation, for reference
+        class FieldGathererMeta(type):
+            def __new__(meta, name, bases, class_dict):
+                cls = type.__new__(meta, name, bases, class_dict)
+                cls.fields = [field.upper() for field in class_dict.iterkeys() \
+                                  if not field.startswith('_')]
+                cls.fields.sort()
+                return cls
+
+        class SomeClass(object):
+            pass
+
+        class MyFields(object):
+            __metaclass__ = FieldGathererMeta
+            jython = 'foo'
+            java = ('bar', SomeClass())
+        # Technically SomeClass and FieldGathererMeta are actually
+        # locals in the MyFields' class definition scope, but we expect
+        # them to be omitted from its class_dict
+        self.assertEqual(MyFields.fields, ['JAVA', 'JYTHON'])
+
+        class MyFields2(object):
+            __metaclass__ = FieldGathererMeta
+            jython = 'foo'
+            java = ('bar', SomeClass())
+            locals()
+        # Oops, locals() updates f_locals. Hilarity ensues
+        self.assertEqual(MyFields2.fields, ['FIELDGATHERERMETA', 'JAVA',
+                                           'JYTHON', 'SOMECLASS'])
+
+
 def test_main():
-    test_support.run_unittest(TypesGeneralTestCase,
-                              TypesNamelessModuleTestCase,
-                              BrokenNameTestCase)
+    test_support.run_unittest(ClassGeneralTestCase,
+                              ClassNamelessModuleTestCase,
+                              BrokenNameTestCase,
+                              ClassLocalsTestCase)
 
 
 if __name__ == "__main__":

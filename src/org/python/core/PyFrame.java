@@ -141,8 +141,9 @@ public class PyFrame extends PyObject
     }
 
     public PyObject __findattr__(String name) {
-        if (name == "f_locals")
-            return getf_locals();
+        if (name == "f_locals") {
+            return getLocals();
+        }
         else if (name == "f_trace") {
             if (tracefunc instanceof PythonTraceFunction) {
                 return ((PythonTraceFunction)tracefunc).tracefunc;
@@ -152,7 +153,13 @@ public class PyFrame extends PyObject
         return super.__findattr__(name);
     }
 
-    public PyObject getf_locals() {
+    /**
+     * Return the locals dict. First merges the fast locals into
+     * f_locals, then returns the updated f_locals.
+     *
+     * @return a PyObject mapping of locals
+     */
+    public PyObject getLocals() {
         if (f_locals == null)
             f_locals = new PyStringMap();
         if (f_code != null && (f_code.co_nlocals > 0 || f_nfreevars > 0)) {
@@ -175,6 +182,17 @@ public class PyFrame extends PyObject
                 if (v != null) f_locals.__setitem__(f_code.co_freevars[i], v);
             }
         }
+        return f_locals;
+    }
+
+    /**
+     * Return the current f_locals dict.
+     *
+     * @return a PyObject mapping of locals
+     */
+    public PyObject getf_locals() {
+        // XXX: This could be deprecated, grab f_locals directly
+        // instead. only the compiler calls this
         return f_locals;
     }
 
@@ -203,23 +221,18 @@ public class PyFrame extends PyObject
         }
 
         String name = f_code.co_varnames[index];
-        if (f_locals == null) {
-            getf_locals();
+        if (f_locals != null) {
+            PyObject ret = f_locals.__finditem__(name);
+            if (ret != null) {
+                return ret;
+            }
         }
-        PyObject ret = f_locals.__finditem__(name);
-        if (ret != null) {
-            return ret;
-        }
-
         throw Py.UnboundLocalError(String.format(UNBOUNDLOCAL_ERROR_MSG, name));
     }
 
     public PyObject getname(String index) {
         PyObject ret;
-        if (f_locals == null) {
-            getf_locals();
-        }
-        if (f_locals == f_globals) {
+        if (f_locals == null || f_locals == f_globals) {
             ret = doGetglobal(index);
         } else {
             ret = f_locals.__finditem__(index);
@@ -263,9 +276,11 @@ public class PyFrame extends PyObject
     }
 
     public void setlocal(String index, PyObject value) {
-        if (f_locals == null)
-            getf_locals();
-        f_locals.__setitem__(index, value);
+        if (f_locals != null) {
+            f_locals.__setitem__(index, value);
+        } else {
+            throw Py.SystemError(String.format("no locals found when storing '%s'", value));
+        }
     }
 
     public void setglobal(String index, PyObject value) {
@@ -284,24 +299,28 @@ public class PyFrame extends PyObject
     }
 
     public void dellocal(String index) {
-        if (f_locals == null)
-            getf_locals();
-        try {
-            f_locals.__delitem__(index);
-        } catch (PyException e) {
-            if (!Py.matchException(e, Py.KeyError)) throw e;
-            throw Py.NameError(String.format(NAME_ERROR_MSG, index));
+        if (f_locals != null) {
+            try {
+                f_locals.__delitem__(index);
+            } catch (PyException pye) {
+                if (Py.matchException(pye, Py.KeyError)) {
+                    throw Py.NameError(String.format(NAME_ERROR_MSG, index));
+                }
+                throw pye;
+            }
+        } else {
+            throw Py.SystemError(String.format("no locals when deleting '%s'", index));
         }
     }
 
     public void delglobal(String index) {
         try {
             f_globals.__delitem__(index);
-        } catch (PyException e) {
-            if (!Py.matchException(e, Py.KeyError)) {
-                throw e;
+        } catch (PyException pye) {
+            if (Py.matchException(pye, Py.KeyError)) {
+                throw Py.NameError(String.format(GLOBAL_NAME_ERROR_MSG, index));
             }
-            throw Py.NameError(String.format(GLOBAL_NAME_ERROR_MSG, index));
+            throw pye;
         }
     }
 

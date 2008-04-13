@@ -1159,7 +1159,7 @@ public final class Py
             if (globals != null) {
                 locals = globals;
             } else {
-                locals = Py.getFrame().getf_locals();
+                locals = Py.getFrame().getLocals();
             }
         }
 

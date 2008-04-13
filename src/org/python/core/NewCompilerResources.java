@@ -97,7 +97,7 @@ public class NewCompilerResources {
             }
         }
 
-        loadNames(names, module, frame.getf_locals(), filter);
+        loadNames(names, module, frame.getLocals(), filter);
     }
 
     /**

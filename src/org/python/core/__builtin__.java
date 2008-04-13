@@ -733,7 +733,7 @@ public class __builtin__ {
     }
 
     public static PyObject locals() {
-        return Py.getFrame().getf_locals();
+        return Py.getFrame().getLocals();
     }
 
     public static PyObject map(PyObject[] argstar) {
