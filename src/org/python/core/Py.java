@@ -1612,7 +1612,7 @@ public final class Py
     public static PyObject compile_flags(InputStream istream, String filename,
                                  String type,CompilerFlags cflags)
     {
-        if (cflags.only_ast) {
+        if (cflags != null && cflags.only_ast) {
             org.python.antlr.ast.modType node = antlr.parse(istream, type, filename, cflags);
             return Py.java2py(node);
         }
