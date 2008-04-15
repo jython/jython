@@ -70,12 +70,35 @@ class FormatTest(unittest.TestCase):
         except TypeError, e:
             self.failUnless("not enough arguments for format string" in str(e))
 
+class DisplayTest(unittest.TestCase):
+
+    def test_str_and_repr(self):
+        class s(str):
+            pass
+        class u(str):
+            pass
+
+        for cls in str, s, unicode, u:
+            foo = cls('foo')
+            for expr in 'str(foo)', 'foo.__str__()':
+                result = eval(expr)
+                self.assert_(type(result) == str)
+                self.assertEqual(result, 'foo')
+
+            for expr in 'repr(foo)', 'foo.__repr__()':
+                result = eval(expr)
+                self.assert_(type(result) == str)
+                if issubclass(cls, unicode):
+                    self.assertEqual(result, "u'foo'")
+                else:
+                    self.assertEqual(result, "'foo'")
 
 def test_main():
     test_support.run_unittest(WrappedStrCmpTest,
         IntToStrTest,
         StringSlicingTest,
-        FormatTest)
+        FormatTest,
+        DisplayTest)
 
 if __name__ == '__main__':
     test_main()

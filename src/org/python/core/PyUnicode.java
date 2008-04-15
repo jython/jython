@@ -119,12 +119,12 @@ public class PyUnicode extends PyString {
     }
 
     public PyString __repr__() {
-        return new PyString("u" + encode_UnicodeEscape(string, true));
+        return unicode___repr__();
     }
 
-    @ExposedMethod(names = "__repr__")
-    public String unicode_toString() {
-        return "u'" + encode_UnicodeEscape(string, false) + "'";
+    @ExposedMethod
+    final PyString unicode___repr__() {
+        return new PyString("u'" + encode_UnicodeEscape(string, false) + "'");
     }
     
     @ExposedMethod(type = MethodType.CMP)

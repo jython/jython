@@ -78,7 +78,10 @@ public class PyString extends PyBaseString
 
     @ExposedMethod
     final PyString str___str__() {
-        return this;
+        if (getClass() == PyString.class) {
+            return this;
+        }
+        return new PyString(string);
     }
 
     public PyUnicode __unicode__() {
@@ -100,11 +103,6 @@ public class PyString extends PyBaseString
     }
 
     public String toString() {
-        return str_toString();
-    }
-
-    @ExposedMethod(names = "__repr__")
-    final String str_toString() {
         return string;
     }
 
@@ -119,6 +117,11 @@ public class PyString extends PyBaseString
     }
 
     public PyString __repr__() {
+        return str___repr__();
+    }
+
+    @ExposedMethod
+    final PyString str___repr__() {
         return new PyString(encode_UnicodeEscape(string, true));
     }
 
