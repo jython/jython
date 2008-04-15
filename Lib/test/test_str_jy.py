@@ -93,6 +93,11 @@ class DisplayTest(unittest.TestCase):
                 else:
                     self.assertEqual(result, "'foo'")
 
+    def test_basic_escapes(self):
+        test = '\r\n\tfoo\a\b\f\v'
+        self.assertEqual(repr(test), "'\\r\\n\\tfoo\\x07\\x08\\x0c\\x0b'")
+        self.assertEqual(repr(unicode(test)), "u'\\r\\n\\tfoo\\x07\\x08\\x0c\\x0b'")
+
 def test_main():
     test_support.run_unittest(WrappedStrCmpTest,
         IntToStrTest,

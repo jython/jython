@@ -180,12 +180,11 @@ public class PyString extends PyBaseString
                 v.append(hexdigit[(ch >> 4) & 0xf]);
                 v.append(hexdigit[ch & 15]);
             }
+             /* Map special whitespace to '\t', \n', '\r' */
+            else if (ch == '\t') v.append("\\t");
+            else if (ch == '\n') v.append("\\n");
+            else if (ch == '\r') v.append("\\r");
             /* Map non-printable US ASCII to '\ooo' */
-            else if (use_quotes && ch == '\n') v.append("\\n");
-            else if (use_quotes && ch == '\t') v.append("\\t");
-            else if (use_quotes && ch == '\b') v.append("\\b");
-            else if (use_quotes && ch == '\f') v.append("\\f");
-            else if (use_quotes && ch == '\r') v.append("\\r");
             else if (ch < ' ' || ch >= 127) {
                 v.append('\\');
                 v.append('x');
