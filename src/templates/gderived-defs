@@ -55,7 +55,8 @@ define: (ClassBodyDeclarations)typed_unary
       PyObject res = impl.__get__(this,self_type).__call__();
       if (res instanceof `rettype)
         return (`rettype)res;
-      throw Py.TypeError(`strfy`(`unary) + " should return a " + `strfy`(`rettype_name));
+      throw Py.TypeError(`strfy`(`unary) + " returned non-" + `strfy`(`rettype_name) + " (type "
+                         + res.getType().fastGetName() + ")");
     }
     return super.`unary();
   }
@@ -97,4 +98,17 @@ define: (ClassBodyDeclarations)ctr_userdict
     dict = subtype.instDict();
   }
 
-                
+define: (ClassBodyDeclarations)toString
+  public String toString() {
+    PyType self_type = getType();
+    PyObject impl = self_type.lookup("__repr__");
+    if (impl != null) {
+      PyObject res = impl.__get__(this,self_type).__call__();
+      if (!(res instanceof PyString))
+        throw Py.TypeError("__repr__ returned non-string (type "
+                           + res.getType().fastGetName() + ")");
+      return ((PyString)res).toString();
+    }
+    return super.toString();
+  }
+  

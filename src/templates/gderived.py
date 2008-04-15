@@ -21,7 +21,8 @@ class Gen:
                       'incl',
                       'unary1',
                       'binary', 'ibinary',
-                      'rest'
+                      'rest',
+                      'no_toString'
                       ]
 
     def __init__(self,bindings=None,priority_order=None):
@@ -41,6 +42,7 @@ class Gen:
 
         self.base_class = None
         self.want_dict = None
+        self.no_toString = False
         self.ctr_done = 0
 
     def debug(self,bindings):
@@ -95,6 +97,11 @@ class Gen:
             self.invalid(name,'non-empty body')
         if self.want_dict is None:
             self.want_dict = {"true": 1, "false": 0}[parm.strip()]
+
+    def dire_no_toString(self,name,parm,body):
+        if body is not None:
+            self.invalid(name,'non-empty body')
+        self.no_toString = True
 
     def dire_incl(self,name,parm,body):
         if body is not None:
@@ -174,6 +181,8 @@ class Gen:
         self.add_decl(JavaTemplate(body,start='ClassBodyDeclarations'))   
 
     def generate(self):
+        if not self.no_toString:
+            self.add_decl(self.get_aux('toString'))
         derived_templ = self.get_aux('derived_class')
         return derived_templ.texpand({'base': self.base_class, 'decls': self.decls })
 
