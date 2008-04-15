@@ -97,6 +97,9 @@ class DisplayTest(unittest.TestCase):
         test = '\r\n\tfoo\a\b\f\v'
         self.assertEqual(repr(test), "'\\r\\n\\tfoo\\x07\\x08\\x0c\\x0b'")
         self.assertEqual(repr(unicode(test)), "u'\\r\\n\\tfoo\\x07\\x08\\x0c\\x0b'")
+        test2 = "'bar"
+        self.assertEqual(repr(test2), '"\'bar"')
+        self.assertEqual(repr(unicode(test2)), 'u"\'bar"')
 
 def test_main():
     test_support.run_unittest(WrappedStrCmpTest,
