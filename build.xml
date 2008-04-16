@@ -491,6 +491,9 @@ The readme text for the next release will be like:
        <jar destfile="${dist.dir}/jython.jar">
           <fileset dir="${compile.dir}"/>   
           <fileset dir="${exposed.dir}"/>
+          <fileset dir="${jarjar.dir}">
+              <include name="org/python/objectweb/asm/ClassReader.class" />
+          </fileset>
           <manifest>
               <attribute name="Main-Class" value="org.python.util.jython" />
               <attribute name="Built-By" value="${user.name}" />

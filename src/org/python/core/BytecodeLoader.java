@@ -5,6 +5,8 @@ import java.security.SecureClassLoader;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.python.objectweb.asm.ClassReader;
+
 /**
  * Utility class for loading of compiled python modules and java classes defined in python modules.
  */
@@ -98,6 +100,18 @@ public class BytecodeLoader {
         }
 
         public Class<?> loadClassFromBytes(String name, byte[] data) {
+            if (name.endsWith("$py")) {
+                try {
+                    // Get the real class name: we might request a 'bar'
+                    // Jython module that was compiled as 'foo.bar', or
+                    // even 'baz.__init__' which is compiled as just 'baz'
+                    ClassReader cr = new ClassReader(data);
+                    name = cr.getClassName().replace('/', '.');
+                } catch (RuntimeException re) {
+                    // Probably an invalid .class, fallback to the
+                    // specified name
+                }
+            }
             Class<?> c = defineClass(name, data, 0, data.length, getClass().getProtectionDomain());
             resolveClass(c);
             Compiler.compileClass(c);
