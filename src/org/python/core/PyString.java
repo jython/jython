@@ -681,10 +681,10 @@ public class PyString extends PyBaseString
     
     @ExposedMethod(type = MethodType.BINARY)
     final PyObject str___add__(PyObject generic_other) {
-        if (generic_other.getClass() == PyUnicode.class || generic_other.getClass() == PyString.class) {
+        if (generic_other instanceof PyString) {
             PyString other = (PyString)generic_other;
             String result = string.concat(other.string);
-            if (generic_other.getClass() == PyUnicode.class) {
+            if (generic_other instanceof PyUnicode) {
                 return new PyUnicode(result);
             }
             return createInstance(result);
