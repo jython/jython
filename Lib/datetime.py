@@ -903,8 +903,7 @@ class date(object):
             self._checkOverflow(t.year)
             result = self.__class__(t.year, t.month, t.day)
             return result
-        raise TypeError
-        # XXX Should be 'return NotImplemented', but there's a bug in 2.2...
+        return NotImplemented
 
     __radd__ = __add__
 

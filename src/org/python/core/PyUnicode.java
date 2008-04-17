@@ -248,17 +248,17 @@ public class PyUnicode extends PyString {
 
     @ExposedMethod
     final PyObject unicode_ljust(int width) {
-        return new PyUnicode(str_ljust(width));
+        return new PyUnicode(str_ljust(width, null));
     }
 
     @ExposedMethod
     final PyObject unicode_rjust(int width) {
-        return new PyUnicode(str_rjust(width));
+        return new PyUnicode(str_rjust(width, null));
     }
 
     @ExposedMethod
     final PyObject unicode_center(int width) {
-        return new PyUnicode(str_center(width));
+        return new PyUnicode(str_center(width, null));
     }
 
     @ExposedMethod

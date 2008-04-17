@@ -142,7 +142,7 @@ public class Time implements ClassDictInit
     }
     private static final double NANOS_PER_SECOND = 1000000000.0;
     private static long initialClock;
-    private static boolean clockInitialized;
+    private static volatile boolean clockInitialized;
 
     private static void throwValueError(String msg) {
         throw new PyException(Py.ValueError, new PyString(msg));

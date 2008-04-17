@@ -1411,50 +1411,66 @@ public class PyString extends PyBaseString
     }
 
 
-    private static String spaces(int n) {
+    private static String padding(int n, char pad) {
         char[] chars = new char[n];
         for (int i=0; i<n; i++)
-            chars[i] = ' ';
+            chars[i] = pad;
         return new String(chars);
     }
 
+    private static char parse_fillchar(String function, String fillchar) {
+        if (fillchar == null) { return ' '; }
+        if (fillchar.length() != 1) {
+            throw Py.TypeError(function + "() argument 2 must be char, not str");
+        }
+        return fillchar.charAt(0);
+    }
+    
     public String ljust(int width) {
-        return str_ljust(width);
+        return str_ljust(width, null);
     }
 
-    @ExposedMethod
-    final String str_ljust(int width) {
+    public String ljust(int width, String padding) {
+        return str_ljust(width, padding);
+    }
+    
+    @ExposedMethod(defaults="null")
+    final String str_ljust(int width, String fillchar) {
+        char pad = parse_fillchar("ljust", fillchar);
         int n = width-string.length();
         if (n <= 0)
             return string;
-        return string+spaces(n);
+        return string+padding(n, pad);
     }
 
     public String rjust(int width) {
-        return str_rjust(width);
+        return str_rjust(width, null);
     }
 
-    @ExposedMethod
-    final String str_rjust(int width) {
+    @ExposedMethod(defaults="null")
+    final String str_rjust(int width, String fillchar) {
+        char pad = parse_fillchar("rjust", fillchar);
         int n = width-string.length();
         if (n <= 0)
             return string;
-        return spaces(n)+string;
+        return padding(n, pad)+string;
     }
 
     public String center(int width) {
-        return str_center(width);
+        return str_center(width, null);
     }
 
-    @ExposedMethod
-    final String str_center(int width) {
+    @ExposedMethod(defaults="null")
+    final String str_center(int width, String fillchar) {
+        char pad = parse_fillchar("center", fillchar);
         int n = width-string.length();
         if (n <= 0)
             return string;
         int half = n/2;
         if (n%2 > 0 &&  width%2 > 0)
             half += 1;
-        return spaces(half)+string+spaces(n-half);
+        
+        return padding(half, pad)+string+padding(n-half, pad);
     }
 
     public String zfill(int width) {
