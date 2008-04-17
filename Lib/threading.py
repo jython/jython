@@ -174,7 +174,7 @@ class JavaThread(object):
         return self._thread.isDaemon()
 
     def setDaemon(self, daemonic):
-        self._thread.setDaemon(daemonic)
+        self._thread.setDaemon(bool(daemonic))
 
 # relies on the fact that this is a CHM
 _threads = weakref.WeakValueDictionary()
