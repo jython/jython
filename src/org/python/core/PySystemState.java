@@ -19,6 +19,7 @@ import java.net.URLDecoder;
 import java.security.AccessControlException;
 import java.util.Enumeration;
 import java.util.Hashtable;
+import java.util.Map;
 import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.jar.JarEntry;
@@ -137,6 +138,8 @@ public class PySystemState extends PyObject
     public static PyList warnoptions;
 
     private String currentWorkingDir;
+
+    private PyObject environ;
 
     private ClassLoader classLoader = null;
     public ClassLoader getClassLoader() {
@@ -274,6 +277,7 @@ public class PySystemState extends PyObject
         path_importer_cache = new PyDictionary();
 
         currentWorkingDir = new File("").getAbsolutePath();
+        initEnviron();
 
         // Set up the initial standard ins and outs
         String mode = Options.unbuffered ? "b" : "";
@@ -684,7 +688,7 @@ public class PySystemState extends PyObject
             JarFile jarFile = null;
             try {
                 jarFile = new JarFile(jarFileName);
-                JarEntry jarEntry = jarFile.getJarEntry("Lib/javaos.py");
+                JarEntry jarEntry = jarFile.getJarEntry("Lib/os.py");
                 standalone = jarEntry != null;
             } catch (IOException ioe) {
             } finally {
@@ -815,6 +819,21 @@ public class PySystemState extends PyObject
 
     public void setdefaultencoding(String encoding) {
         codecs.setDefaultEncoding(encoding);
+    }
+
+    /**
+     * Initialize the environ dict from System.getenv.
+     *
+     */
+    public void initEnviron() {
+        environ = new PyDictionary();
+        for (Map.Entry<String, String> entry : System.getenv().entrySet()) {
+            environ.__setitem__(Py.newString(entry.getKey()), Py.newString(entry.getValue()));
+        }
+    }
+
+    public PyObject getEnviron() {
+        return environ;
     }
 
     /**

@@ -17,7 +17,6 @@ util # used to give a NameError
 
 # import java specific py modules
 import os
-import javaos
 
 # now do some java imports which previously failed without a package scan
 # this (most of the time) solves the famous 'no module named java' problem

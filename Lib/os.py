@@ -718,8 +718,7 @@ def walk(top, topdown=True, onerror=None):
 
 __all__.append("walk")
 
-environ = dict([(entry.getKey(), entry.getValue()) for \
-                  entry in java.lang.System.getenv().entrySet()])
+environ = sys.getEnviron()
 
 if _name in ('os2', 'nt'):  # Where Env Var Names Must Be UPPERCASE
     import UserDict

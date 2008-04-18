@@ -30,7 +30,6 @@ public class Setup
         "thread",
         "operator",
         "time:org.python.modules.time.Time",
-        "os",
         "_py_compile",
         "pre:org.python.modules.re",
         "_sre",
