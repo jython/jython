@@ -1,5 +1,5 @@
 // Copyright (c) 2003 Jython project
-package org.python.core;
+package org.python.core.util;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
