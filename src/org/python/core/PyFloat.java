@@ -14,6 +14,10 @@ import org.python.expose.MethodType;
 @ExposedType(name = "float")
 public class PyFloat extends PyObject
 {
+    /** Precisions used by repr() and str(), respectively. */
+    private static final int PREC_REPR = 17;
+    private static final int PREC_STR = 12;
+
     @ExposedNew
     public static PyObject float_new(PyNewWrapper new_, boolean init, PyType subtype,
             PyObject[] args, String[] keywords) {
@@ -54,27 +58,44 @@ public class PyFloat extends PyObject
     }
 
     public String toString() {
-        return float_toString();
+        return __str__().toString();
     }
 
-    @ExposedMethod(names = {"__repr__", "__str__"})
-    final String float_toString() {
-        String s = Double.toString(value);
-        // this is to work around an apparent bug in Double.toString(0.001)
-        // which returns "0.0010"
-        if (s.indexOf('E') == -1) {
-            while (true) {
-                int n = s.length();
-                if (n <= 2)
-                    break;
-                if (s.charAt(n-1) == '0' && s.charAt(n-2) != '.') {
-                    s = s.substring(0,n-1);
-                    continue;
-                }
+    public PyString __str__() {
+        return float___str__();
+    }
+
+    @ExposedMethod
+    final PyString float___str__() {
+        return Py.newString(formatDouble(PREC_STR));
+    }
+
+    public PyString __repr__() {
+        return float___repr__();
+    }
+
+    @ExposedMethod
+    final PyString float___repr__() {
+        return Py.newString(formatDouble(PREC_REPR));
+    }
+
+    private String formatDouble(int precision) {
+        String result = String.format("%%.%dg", precision);
+        result = Py.newString(result).__mod__(this).toString();
+
+        int i = 0;
+        if (result.startsWith("-")) {
+            i++;
+        }
+        for (; i < result.length(); i++) {
+            if (!Character.isDigit(result.charAt(i))) {
                 break;
             }
         }
-        return s;
+        if (i == result.length()) {
+            result += ".0";
+        }
+        return result;
     }
 
     public int hashCode() {
