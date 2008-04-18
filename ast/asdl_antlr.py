@@ -139,7 +139,9 @@ class JavaVisitor(EmitVisitor):
 
     def simple_sum(self, sum, name, depth):
         self.open("%sType" % name, refersToPythonTree=0)
-        self.emit("public enum %(name)sType {" % locals(), depth)
+        self.emit('import org.python.antlr.AST;', depth)
+        self.emit('', 0)
+        self.emit("public enum %(name)sType implements AST {" % locals(), depth)
         self.emit("UNDEFINED,", depth + 1)
         for i in range(len(sum.types)):
             type = sum.types[i]

@@ -11,7 +11,7 @@ import org.antlr.runtime.RecognitionException;
 
 import org.python.antlr.ast.VisitorIF;
 
-public class PythonTree extends CommonTree {
+public class PythonTree extends CommonTree implements AST {
 
     public PythonTree(Token token) {
         super(token);
