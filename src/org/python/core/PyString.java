@@ -2218,13 +2218,16 @@ final class StringFormatter
     }
 
     private String formatInteger(PyObject arg, int radix, boolean unsigned) {
-        PyInteger x;
+        PyObject x;
         try {
-            x = (PyInteger)arg.__int__();
+            x = arg.__int__();
         } catch (PyException pye) {
             throw Py.TypeError("int argument required");
         }
-        return formatInteger(x.getValue(), radix, unsigned);
+        if (!(x instanceof PyInteger)) {
+            throw Py.TypeError("int argument required");
+        }
+        return formatInteger(((PyInteger)x).getValue(), radix, unsigned);
     }
 
     private String formatInteger(long v, int radix, boolean unsigned) {
