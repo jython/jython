@@ -2290,11 +2290,7 @@ final class StringFormatter
             power = ExtraMath.closeFloor(ExtraMath.log10(v));
         //System.err.println("formatExp: "+v+", "+power);
         int savePrecision = precision;
-
-        if (truncate)
-            precision = -1;
-        else
-            precision = 3;
+        precision = 2;
 
         String exp = formatInteger((long)power, 10, false);
         if (negative) {
@@ -2302,8 +2298,7 @@ final class StringFormatter
             exp = '-'+exp;
         }
         else {
-            if (!truncate)
-                exp = '+'+exp;
+            exp = '+' + exp;
         }
 
         precision = savePrecision;
@@ -2488,31 +2483,35 @@ final class StringFormatter
                 break;
             case 'g':
             case 'G':
-                int prec = precision;
-                if (prec == -1)
-                    prec = 6;
+                int origPrecision = precision;
+                if (precision == -1) {
+                    precision = 6;
+                }
+
                 double v = arg.__float__().getValue();
-                int digits = (int)Math.ceil(ExtraMath.log10(v));
-                if (digits > 0) {
-                    if (digits <= prec) {
-                        precision = prec-digits;
-                        string = formatFloatDecimal(arg, true);
-                    } else {
-                        string = formatFloatExponential(arg, (char)(c-2),
-                                                        true);
+                int exponent = (int)ExtraMath.closeFloor(ExtraMath.log10(Math.abs(v == 0
+                                                                                  ? 1 : v)));
+                if (v == Double.POSITIVE_INFINITY) {
+                    string = "inf";
+                } else if (v == Double.NEGATIVE_INFINITY) {
+                    string = "-inf";
+                } else if (exponent >= -4 && exponent < precision) {
+                    precision -= exponent + 1;
+                    string = formatFloatDecimal(arg, !altFlag);
+
+                    // XXX: this block may be unnecessary now
+                    if (altFlag && string.indexOf('.') == -1) {
+                        int zpad = origPrecision - string.length();
+                        string += '.';
+                        if (zpad > 0) {
+                            char zeros[] = new char[zpad];
+                            for (int ci=0; ci<zpad; zeros[ci++] = '0')
+                                ;
+                            string += new String(zeros);
+                        }
                     }
                 } else {
-                    string = formatFloatDecimal(arg, true);
-                }
-                if (altFlag && string.indexOf('.') == -1) {
-                    int zpad = prec - string.length();
-                    string += '.';
-                    if (zpad > 0) {
-                        char zeros[] = new char[zpad];
-                        for (int ci=0; ci<zpad; zeros[ci++] = '0')
-                            ;
-                        string += new String(zeros);
-                    }
+                    string = formatFloatExponential(arg, (char)(c-2), !altFlag);
                 }
                 break;
             case 'c':

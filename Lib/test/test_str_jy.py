@@ -46,9 +46,9 @@ class FormatTest(unittest.TestCase):
     def test_format(self):
         "%#.0f, %e and %+f w/ negative numbers print correctly."
         self.assertEquals("%.1f" % 5, "5.0")
-        self.assertEquals("%e" % -1e-6, "-1.000000e-006")
-        self.assertEquals("%e" % 0, "0.000000e+000")
-        self.assertEquals("%e" % 1e-6, "1.000000e-006")
+        self.assertEquals("%e" % -1e-6, "-1.000000e-06")
+        self.assertEquals("%e" % 0, "0.000000e+00")
+        self.assertEquals("%e" % 1e-6, "1.000000e-06")
         self.assertEquals("%+f" % -5, "-5.000000")
         self.assertEquals("%+f" % 5, "+5.000000")
  
