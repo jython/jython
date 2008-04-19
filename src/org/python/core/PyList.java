@@ -379,6 +379,11 @@ public class PyList extends PySequenceList {
         return seq___nonzero__();
     }
 
+    @ExposedMethod
+    public PyObject list___iter__() {
+        return seq___iter__();
+    }
+
     @ExposedMethod(defaults = "null")
     final PyObject list___getslice__(PyObject start, PyObject stop, PyObject step) {
         return seq___getslice__(start, stop, step);

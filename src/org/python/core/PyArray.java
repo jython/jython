@@ -203,6 +203,11 @@ public class PyArray extends PySequence implements Cloneable {
         return seq___nonzero__();
     }
 
+    @ExposedMethod
+    public PyObject array___iter__() {
+        return seq___iter__();
+    }
+
     @ExposedMethod(defaults = "null")
     final PyObject array___getslice__(PyObject start, PyObject stop, PyObject step) {
         return seq___getslice__(start, stop, step);

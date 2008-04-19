@@ -185,6 +185,11 @@ public class PyTuple extends PySequenceList
         return repeat(count);
     }
 
+    @ExposedMethod
+    public PyObject tuple___iter__() {
+        return seq___iter__();
+    }
+
     @ExposedMethod(defaults = "null")
     final PyObject tuple___getslice__(PyObject s_start, PyObject s_stop, PyObject s_step) {
         return seq___getslice__(s_start,s_stop,s_step);
