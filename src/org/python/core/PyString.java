@@ -2287,7 +2287,7 @@ final class StringFormatter
         }
         double power = 0.0;
         if (v > 0)
-            power = ExtraMath.closeFloor(ExtraMath.log10(v));
+            power = ExtraMath.closeFloor(Math.log10(v));
         //System.err.println("formatExp: "+v+", "+power);
         int savePrecision = precision;
         precision = 2;
@@ -2489,8 +2489,7 @@ final class StringFormatter
                 }
 
                 double v = arg.__float__().getValue();
-                int exponent = (int)ExtraMath.closeFloor(ExtraMath.log10(Math.abs(v == 0
-                                                                                  ? 1 : v)));
+                int exponent = (int)ExtraMath.closeFloor(Math.log10(Math.abs(v == 0 ? 1 : v)));
                 if (v == Double.POSITIVE_INFINITY) {
                     string = "inf";
                 } else if (v == Double.NEGATIVE_INFINITY) {

@@ -2,7 +2,6 @@
 package org.python.modules;
 
 import org.python.core.*;
-import org.python.core.util.ExtraMath;
 import java.lang.Math;
 
 public class math implements ClassDictInit {
@@ -129,7 +128,7 @@ public class math implements ClassDictInit {
     }
 
     private static double log10(double v) {
-        return check(ExtraMath.log10(v));
+        return check(Math.log10(v));
     }
 
     public static double sinh(double v) {
@@ -185,7 +184,7 @@ public class math implements ClassDictInit {
     }
 
     public static double hypot(double v, double w) {
-        return check(ExtraMath.hypot(v, w));
+        return check(Math.hypot(v, w));
     }
 
     public static double radians(double v) {
