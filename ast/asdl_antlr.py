@@ -233,9 +233,6 @@ class JavaVisitor(EmitVisitor):
             self.emit('return getCharPositionInLine();', depth+1)
             self.emit("}", depth)
             self.emit("", 0)
-        else:
-            print "wtf? [%s]" % name
-
 
         self.emit("}", depth)
         self.close()
