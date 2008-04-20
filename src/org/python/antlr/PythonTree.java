@@ -25,7 +25,7 @@ public class PythonTree extends CommonTree implements AST {
         if (isNil()) {
             return "None";
         }
-        return token.getText();
+        return token.getText() + "(" + this.getLine() + "," + this.getCharPositionInLine() + ")";
     }
 
     public String toStringTree() {

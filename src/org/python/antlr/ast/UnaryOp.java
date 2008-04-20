@@ -36,4 +36,12 @@ public class UnaryOp extends exprType {
             operand.accept(visitor);
     }
 
+public int getLineno() {
+    return getLine() + 1;
+}
+
+public int getCol_offset() {
+    return getCharPositionInLine();
+}
+
 }

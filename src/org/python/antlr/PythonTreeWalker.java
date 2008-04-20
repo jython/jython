@@ -46,7 +46,7 @@ public class PythonTreeWalker {
 				}
 			}
 			if (args.length > 1) {
-				//System.out.println(((Tree) r.tree).toStringTree());
+				System.out.println(((Tree) r.tree).toStringTree());
 			}
 			if (!isParseOnly()) {
 				CommonTreeNodeStream nodes = new CommonTreeNodeStream((Tree) r.tree);
@@ -54,7 +54,7 @@ public class PythonTreeWalker {
 				PythonWalker walker = new PythonWalker(nodes);
 				result = walker.module();
 				if (args.length > 1) {
-					//System.out.println(result.toStringTree());
+					System.out.println(result.toStringTree());
 				}
 			}
 		} catch (RecognitionException e) {

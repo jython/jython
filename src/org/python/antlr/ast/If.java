@@ -65,4 +65,12 @@ public class If extends stmtType {
         }
     }
 
+public int getLineno() {
+    return getLine() + 1;
+}
+
+public int getCol_offset() {
+    return getCharPositionInLine();
+}
+
 }

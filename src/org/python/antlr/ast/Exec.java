@@ -45,4 +45,12 @@ public class Exec extends stmtType {
             locals.accept(visitor);
     }
 
+public int getLineno() {
+    return getLine() + 1;
+}
+
+public int getCol_offset() {
+    return getCharPositionInLine();
+}
+
 }

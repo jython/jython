@@ -38,4 +38,12 @@ public class Assert extends stmtType {
             msg.accept(visitor);
     }
 
+public int getLineno() {
+    return getLine() + 1;
+}
+
+public int getCol_offset() {
+    return getCharPositionInLine();
+}
+
 }

@@ -43,4 +43,12 @@ public class Subscript extends exprType {
             slice.accept(visitor);
     }
 
+public int getLineno() {
+    return getLine() + 1;
+}
+
+public int getCol_offset() {
+    return getCharPositionInLine();
+}
+
 }

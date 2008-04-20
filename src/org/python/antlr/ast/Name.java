@@ -34,4 +34,12 @@ public class Name extends exprType {
     public void traverse(VisitorIF visitor) throws Exception {
     }
 
+public int getLineno() {
+    return getLine() + 1;
+}
+
+public int getCol_offset() {
+    return getCharPositionInLine();
+}
+
 }

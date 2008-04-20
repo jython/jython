@@ -33,4 +33,12 @@ public class Return extends stmtType {
             value.accept(visitor);
     }
 
+public int getLineno() {
+    return getLine() + 1;
+}
+
+public int getCol_offset() {
+    return getCharPositionInLine();
+}
+
 }

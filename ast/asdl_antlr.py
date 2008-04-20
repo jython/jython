@@ -119,8 +119,6 @@ class AnalyzeVisitor(EmitVisitor):
     def visitField(self, field, depth):
         field.typedef = self.types.get(str(field.type))
 
-
-
 # The code generator itself.
 #
 class JavaVisitor(EmitVisitor):
@@ -176,6 +174,7 @@ class JavaVisitor(EmitVisitor):
             self.visit(t, name, depth)
 
     def visitProduct(self, product, name, depth):
+
         self.open("%sType" % name, useDataOutput=1)
         self.emit("public class %(name)sType extends PythonTree {" % locals(), depth)
         for f in product.fields:
@@ -221,6 +220,22 @@ class JavaVisitor(EmitVisitor):
         self.emit("", 0)
 
         self.javaMethods(cons, cons.name, cons.name, cons.fields, depth+1)
+
+        if str(name) in ('stmt', 'expr'):
+            # The lineno property
+            self.emit("public int getLineno() {", depth)
+            self.emit('return getLine() + 1;', depth+1)
+            self.emit("}", depth)
+            self.emit("", 0)
+
+            # The col_offset property
+            self.emit("public int getCol_offset() {", depth)
+            self.emit('return getCharPositionInLine();', depth+1)
+            self.emit("}", depth)
+            self.emit("", 0)
+        else:
+            print "wtf? [%s]" % name
+
 
         self.emit("}", depth)
         self.close()
@@ -307,6 +322,10 @@ class JavaVisitor(EmitVisitor):
                 self.emit('%s.accept(visitor);' % f.name, depth+2)
         self.emit('}', depth)
         self.emit("", 0)
+
+        #self.emit('}', depth)
+        #self.emit("", 0)
+
 
     def visitField(self, field, depth):
         self.emit("public %s;" % self.fieldDef(field), depth)
