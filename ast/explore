@@ -1,1 +1,1 @@
-python astlib.py $* | grep '^[-+?]'
+python astlib.py $* | grep -n '^[-+?]'

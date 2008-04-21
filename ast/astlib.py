@@ -36,12 +36,7 @@ def lispify_field(field, child):
         if isinstance(node, _ast.AST):
             yield lispify_ast(node)
         else:
-            if isinstance(node, (str, unicode)):
-                #CPython and Jython represent \b and \f differently.
-                s = node.replace('\b', 'BACKSPACE')
-                s = s.replace('\f', 'FORMFEED')
-                yield s
-            elif isinstance(node, float):
+            if isinstance(node, float):
                 #XXX: stringify floats so they match Java's float representation better
                 #This may mask problems for very small numbers.
                 if .0001 < node < 10000:
