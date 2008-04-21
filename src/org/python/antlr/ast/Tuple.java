@@ -11,15 +11,6 @@ public class Tuple extends exprType {
 
     public static final String[] _fields = new String[] {"elts","ctx"};
 
-    public Tuple(Token token, exprType[] elts, expr_contextType ctx) {
-        super(token);
-        this.elts = elts;
-        for(int ielts=0;ielts<elts.length;ielts++) {
-            addChild(elts[ielts]);
-        }
-        this.ctx = ctx;
-    }
-
     public Tuple(PythonTree tree, exprType[] elts, expr_contextType ctx) {
         super(tree);
         this.elts = elts;
@@ -46,12 +37,12 @@ public class Tuple extends exprType {
         }
     }
 
-public int getLineno() {
-    return getLine() + 1;
-}
+    public int getLineno() {
+        return getLine();
+    }
 
-public int getCol_offset() {
-    return getCharPositionInLine();
-}
+    public int getCol_offset() {
+        return getCharPositionInLine();
+    }
 
 }

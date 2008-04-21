@@ -11,18 +11,6 @@ public class Dict extends exprType {
 
     public static final String[] _fields = new String[] {"keys","values"};
 
-    public Dict(Token token, exprType[] keys, exprType[] values) {
-        super(token);
-        this.keys = keys;
-        for(int ikeys=0;ikeys<keys.length;ikeys++) {
-            addChild(keys[ikeys]);
-        }
-        this.values = values;
-        for(int ivalues=0;ivalues<values.length;ivalues++) {
-            addChild(values[ivalues]);
-        }
-    }
-
     public Dict(PythonTree tree, exprType[] keys, exprType[] values) {
         super(tree);
         this.keys = keys;
@@ -58,12 +46,12 @@ public class Dict extends exprType {
         }
     }
 
-public int getLineno() {
-    return getLine() + 1;
-}
+    public int getLineno() {
+        return getLine();
+    }
 
-public int getCol_offset() {
-    return getCharPositionInLine();
-}
+    public int getCol_offset() {
+        return getCharPositionInLine();
+    }
 
 }

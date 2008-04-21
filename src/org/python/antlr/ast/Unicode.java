@@ -10,11 +10,6 @@ public class Unicode extends exprType {
 
     public static final String[] _fields = new String[] {"s"};
 
-    public Unicode(Token token, String s) {
-        super(token);
-        this.s = s;
-    }
-
     public Unicode(PythonTree tree, String s) {
         super(tree);
         this.s = s;
@@ -31,12 +26,12 @@ public class Unicode extends exprType {
     public void traverse(VisitorIF visitor) throws Exception {
     }
 
-public int getLineno() {
-    return getLine() + 1;
-}
+    public int getLineno() {
+        return getLine();
+    }
 
-public int getCol_offset() {
-    return getCharPositionInLine();
-}
+    public int getCol_offset() {
+        return getCharPositionInLine();
+    }
 
 }

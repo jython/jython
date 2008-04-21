@@ -10,11 +10,6 @@ public class Num extends exprType {
 
     public static final String[] _fields = new String[] {"n"};
 
-    public Num(Token token, Object n) {
-        super(token);
-        this.n = n;
-    }
-
     public Num(PythonTree tree, Object n) {
         super(tree);
         this.n = n;
@@ -31,12 +26,12 @@ public class Num extends exprType {
     public void traverse(VisitorIF visitor) throws Exception {
     }
 
-public int getLineno() {
-    return getLine() + 1;
-}
+    public int getLineno() {
+        return getLine();
+    }
 
-public int getCol_offset() {
-    return getCharPositionInLine();
-}
+    public int getCol_offset() {
+        return getCharPositionInLine();
+    }
 
 }

@@ -10,11 +10,6 @@ public class Expression extends modType {
 
     public static final String[] _fields = new String[] {"body"};
 
-    public Expression(Token token, exprType body) {
-        super(token);
-        this.body = body;
-    }
-
     public Expression(PythonTree tree, exprType body) {
         super(tree);
         this.body = body;

@@ -4,10 +4,6 @@ import org.python.antlr.PythonTree;
 import org.antlr.runtime.Token;
 
 public abstract class stmtType extends PythonTree {
-    public stmtType(Token token) {
-        super(token);
-    }
-
     public stmtType(PythonTree node) {
         super(node);
     }

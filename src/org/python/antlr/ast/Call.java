@@ -15,22 +15,6 @@ public class Call extends exprType {
     public static final String[] _fields = new String[]
     {"func","args","keywords","starargs","kwargs"};
 
-    public Call(Token token, exprType func, exprType[] args, keywordType[]
-    keywords, exprType starargs, exprType kwargs) {
-        super(token);
-        this.func = func;
-        this.args = args;
-        for(int iargs=0;iargs<args.length;iargs++) {
-            addChild(args[iargs]);
-        }
-        this.keywords = keywords;
-        for(int ikeywords=0;ikeywords<keywords.length;ikeywords++) {
-            addChild(keywords[ikeywords]);
-        }
-        this.starargs = starargs;
-        this.kwargs = kwargs;
-    }
-
     public Call(PythonTree tree, exprType func, exprType[] args, keywordType[]
     keywords, exprType starargs, exprType kwargs) {
         super(tree);
@@ -76,12 +60,12 @@ public class Call extends exprType {
             kwargs.accept(visitor);
     }
 
-public int getLineno() {
-    return getLine() + 1;
-}
+    public int getLineno() {
+        return getLine();
+    }
 
-public int getCol_offset() {
-    return getCharPositionInLine();
-}
+    public int getCol_offset() {
+        return getCharPositionInLine();
+    }
 
 }

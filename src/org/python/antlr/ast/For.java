@@ -14,21 +14,6 @@ public class For extends stmtType {
     public static final String[] _fields = new String[]
     {"target","iter","body","orelse"};
 
-    public For(Token token, exprType target, exprType iter, stmtType[] body,
-    stmtType[] orelse) {
-        super(token);
-        this.target = target;
-        this.iter = iter;
-        this.body = body;
-        for(int ibody=0;ibody<body.length;ibody++) {
-            addChild(body[ibody]);
-        }
-        this.orelse = orelse;
-        for(int iorelse=0;iorelse<orelse.length;iorelse++) {
-            addChild(orelse[iorelse]);
-        }
-    }
-
     public For(PythonTree tree, exprType target, exprType iter, stmtType[]
     body, stmtType[] orelse) {
         super(tree);
@@ -71,12 +56,12 @@ public class For extends stmtType {
         }
     }
 
-public int getLineno() {
-    return getLine() + 1;
-}
+    public int getLineno() {
+        return getLine();
+    }
 
-public int getCol_offset() {
-    return getCharPositionInLine();
-}
+    public int getCol_offset() {
+        return getCharPositionInLine();
+    }
 
 }

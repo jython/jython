@@ -11,15 +11,6 @@ public class ListComp extends exprType {
 
     public static final String[] _fields = new String[] {"elt","generators"};
 
-    public ListComp(Token token, exprType elt, comprehensionType[] generators) {
-        super(token);
-        this.elt = elt;
-        this.generators = generators;
-        for(int igenerators=0;igenerators<generators.length;igenerators++) {
-            addChild(generators[igenerators]);
-        }
-    }
-
     public ListComp(PythonTree tree, exprType elt, comprehensionType[]
     generators) {
         super(tree);
@@ -49,12 +40,12 @@ public class ListComp extends exprType {
         }
     }
 
-public int getLineno() {
-    return getLine() + 1;
-}
+    public int getLineno() {
+        return getLine();
+    }
 
-public int getCol_offset() {
-    return getCharPositionInLine();
-}
+    public int getCol_offset() {
+        return getCharPositionInLine();
+    }
 
 }

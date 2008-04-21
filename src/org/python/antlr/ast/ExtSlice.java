@@ -10,14 +10,6 @@ public class ExtSlice extends sliceType {
 
     public static final String[] _fields = new String[] {"dims"};
 
-    public ExtSlice(Token token, sliceType[] dims) {
-        super(token);
-        this.dims = dims;
-        for(int idims=0;idims<dims.length;idims++) {
-            addChild(dims[idims]);
-        }
-    }
-
     public ExtSlice(PythonTree tree, sliceType[] dims) {
         super(tree);
         this.dims = dims;

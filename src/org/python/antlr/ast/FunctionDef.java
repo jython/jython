@@ -11,23 +11,10 @@ public class FunctionDef extends stmtType {
     public stmtType[] body;
     public exprType[] decorators;
 
+    public String __name__ = "BAH";
+
     public static final String[] _fields = new String[]
     {"name","args","body","decorators"};
-
-    public FunctionDef(Token token, String name, argumentsType args, stmtType[]
-    body, exprType[] decorators) {
-        super(token);
-        this.name = name;
-        this.args = args;
-        this.body = body;
-        for(int ibody=0;ibody<body.length;ibody++) {
-            addChild(body[ibody]);
-        }
-        this.decorators = decorators;
-        for(int idecorators=0;idecorators<decorators.length;idecorators++) {
-            addChild(decorators[idecorators]);
-        }
-    }
 
     public FunctionDef(PythonTree tree, String name, argumentsType args,
     stmtType[] body, exprType[] decorators) {
@@ -69,12 +56,12 @@ public class FunctionDef extends stmtType {
         }
     }
 
-public int getLineno() {
-    return getLine() + 1;
-}
+    public int getLineno() {
+        return getLine();
+    }
 
-public int getCol_offset() {
-    return getCharPositionInLine();
-}
+    public int getCol_offset() {
+        return getCharPositionInLine();
+    }
 
 }

@@ -9,10 +9,6 @@ public class Ellipsis extends sliceType {
 
     public static final String[] _fields = new String[] {};
 
-    public Ellipsis(Token token) {
-        super(token);
-    }
-
     public Ellipsis(PythonTree tree) {
         super(tree);
     }

@@ -13,19 +13,6 @@ public class If extends stmtType {
     public static final String[] _fields = new String[]
     {"test","body","orelse"};
 
-    public If(Token token, exprType test, stmtType[] body, stmtType[] orelse) {
-        super(token);
-        this.test = test;
-        this.body = body;
-        for(int ibody=0;ibody<body.length;ibody++) {
-            addChild(body[ibody]);
-        }
-        this.orelse = orelse;
-        for(int iorelse=0;iorelse<orelse.length;iorelse++) {
-            addChild(orelse[iorelse]);
-        }
-    }
-
     public If(PythonTree tree, exprType test, stmtType[] body, stmtType[]
     orelse) {
         super(tree);
@@ -65,12 +52,12 @@ public class If extends stmtType {
         }
     }
 
-public int getLineno() {
-    return getLine() + 1;
-}
+    public int getLineno() {
+        return getLine();
+    }
 
-public int getCol_offset() {
-    return getCharPositionInLine();
-}
+    public int getCol_offset() {
+        return getCharPositionInLine();
+    }
 
 }

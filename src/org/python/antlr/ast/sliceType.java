@@ -4,10 +4,6 @@ import org.python.antlr.PythonTree;
 import org.antlr.runtime.Token;
 
 public abstract class sliceType extends PythonTree {
-    public sliceType(Token token) {
-        super(token);
-    }
-
     public sliceType(PythonTree node) {
         super(node);
     }

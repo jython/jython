@@ -10,11 +10,6 @@ public class Global extends stmtType {
 
     public static final String[] _fields = new String[] {"names"};
 
-    public Global(Token token, String[] names) {
-        super(token);
-        this.names = names;
-    }
-
     public Global(PythonTree tree, String[] names) {
         super(tree);
         this.names = names;
@@ -31,12 +26,12 @@ public class Global extends stmtType {
     public void traverse(VisitorIF visitor) throws Exception {
     }
 
-public int getLineno() {
-    return getLine() + 1;
-}
+    public int getLineno() {
+        return getLine();
+    }
 
-public int getCol_offset() {
-    return getCharPositionInLine();
-}
+    public int getCol_offset() {
+        return getCharPositionInLine();
+    }
 
 }

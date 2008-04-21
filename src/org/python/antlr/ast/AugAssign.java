@@ -12,14 +12,6 @@ public class AugAssign extends stmtType {
 
     public static final String[] _fields = new String[] {"target","op","value"};
 
-    public AugAssign(Token token, exprType target, operatorType op, exprType
-    value) {
-        super(token);
-        this.target = target;
-        this.op = op;
-        this.value = value;
-    }
-
     public AugAssign(PythonTree tree, exprType target, operatorType op,
     exprType value) {
         super(tree);
@@ -43,12 +35,12 @@ public class AugAssign extends stmtType {
             value.accept(visitor);
     }
 
-public int getLineno() {
-    return getLine() + 1;
-}
+    public int getLineno() {
+        return getLine();
+    }
 
-public int getCol_offset() {
-    return getCharPositionInLine();
-}
+    public int getCol_offset() {
+        return getCharPositionInLine();
+    }
 
 }

@@ -4,10 +4,6 @@ import org.python.antlr.PythonTree;
 import org.antlr.runtime.Token;
 
 public abstract class modType extends PythonTree {
-    public modType(Token token) {
-        super(token);
-    }
-
     public modType(PythonTree node) {
         super(node);
     }

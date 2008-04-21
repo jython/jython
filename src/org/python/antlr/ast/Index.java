@@ -10,11 +10,6 @@ public class Index extends sliceType {
 
     public static final String[] _fields = new String[] {"value"};
 
-    public Index(Token token, exprType value) {
-        super(token);
-        this.value = value;
-    }
-
     public Index(PythonTree tree, exprType value) {
         super(tree);
         this.value = value;

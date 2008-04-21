@@ -12,17 +12,6 @@ public class comprehensionType extends PythonTree {
 
     public static final String[] _fields = new String[] {"target","iter","ifs"};
 
-    public comprehensionType(Token token, exprType target, exprType iter,
-    exprType[] ifs) {
-        super(token);
-        this.target = target;
-        this.iter = iter;
-        this.ifs = ifs;
-        for(int iifs=0;iifs<ifs.length;iifs++) {
-            addChild(ifs[iifs]);
-        }
-    }
-
     public comprehensionType(PythonTree tree, exprType target, exprType iter,
     exprType[] ifs) {
         super(tree);

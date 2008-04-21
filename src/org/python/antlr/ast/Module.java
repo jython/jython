@@ -10,14 +10,6 @@ public class Module extends modType {
 
     public static final String[] _fields = new String[] {"body"};
 
-    public Module(Token token, stmtType[] body) {
-        super(token);
-        this.body = body;
-        for(int ibody=0;ibody<body.length;ibody++) {
-            addChild(body[ibody]);
-        }
-    }
-
     public Module(PythonTree tree, stmtType[] body) {
         super(tree);
         this.body = body;

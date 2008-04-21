@@ -11,12 +11,6 @@ public class UnaryOp extends exprType {
 
     public static final String[] _fields = new String[] {"op","operand"};
 
-    public UnaryOp(Token token, unaryopType op, exprType operand) {
-        super(token);
-        this.op = op;
-        this.operand = operand;
-    }
-
     public UnaryOp(PythonTree tree, unaryopType op, exprType operand) {
         super(tree);
         this.op = op;
@@ -36,12 +30,12 @@ public class UnaryOp extends exprType {
             operand.accept(visitor);
     }
 
-public int getLineno() {
-    return getLine() + 1;
-}
+    public int getLineno() {
+        return getLine();
+    }
 
-public int getCol_offset() {
-    return getCharPositionInLine();
-}
+    public int getCol_offset() {
+        return getCharPositionInLine();
+    }
 
 }

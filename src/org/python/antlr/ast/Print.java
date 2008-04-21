@@ -12,16 +12,6 @@ public class Print extends stmtType {
 
     public static final String[] _fields = new String[] {"dest","values","nl"};
 
-    public Print(Token token, exprType dest, exprType[] values, boolean nl) {
-        super(token);
-        this.dest = dest;
-        this.values = values;
-        for(int ivalues=0;ivalues<values.length;ivalues++) {
-            addChild(values[ivalues]);
-        }
-        this.nl = nl;
-    }
-
     public Print(PythonTree tree, exprType dest, exprType[] values, boolean nl)
     {
         super(tree);
@@ -52,12 +42,12 @@ public class Print extends stmtType {
         }
     }
 
-public int getLineno() {
-    return getLine() + 1;
-}
+    public int getLineno() {
+        return getLine();
+    }
 
-public int getCol_offset() {
-    return getCharPositionInLine();
-}
+    public int getCol_offset() {
+        return getCharPositionInLine();
+    }
 
 }

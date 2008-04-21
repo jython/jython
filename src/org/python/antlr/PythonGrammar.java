@@ -22,12 +22,9 @@ public class PythonGrammar {
             return super.nextToken();
         }
     }
-        public static TreeAdaptor pyadaptor = new CommonTreeAdaptor() {
+
+    public static TreeAdaptor pyadaptor = new CommonTreeAdaptor() {
         public Object create(Token token) {
-            /*
-             * if (token != null && token.getType() == PythonParser.Target) {
-             * System.out.println("Target found"); }
-             */
             return new PythonTree(token);
         }
 
@@ -35,6 +32,8 @@ public class PythonGrammar {
             if (t == null) {
                 return null;
             }
+            System.err.println("TREE: " + ((PythonTree) t).getLine());
+            System.err.println("TREE TOK: " + ((PythonTree) t).token.getLine());
             return create(((PythonTree) t).token);
         }
     };  

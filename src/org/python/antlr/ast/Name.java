@@ -11,12 +11,6 @@ public class Name extends exprType {
 
     public static final String[] _fields = new String[] {"id","ctx"};
 
-    public Name(Token token, String id, expr_contextType ctx) {
-        super(token);
-        this.id = id;
-        this.ctx = ctx;
-    }
-
     public Name(PythonTree tree, String id, expr_contextType ctx) {
         super(tree);
         this.id = id;
@@ -34,12 +28,12 @@ public class Name extends exprType {
     public void traverse(VisitorIF visitor) throws Exception {
     }
 
-public int getLineno() {
-    return getLine() + 1;
-}
+    public int getLineno() {
+        return getLine();
+    }
 
-public int getCol_offset() {
-    return getCharPositionInLine();
-}
+    public int getCol_offset() {
+        return getCharPositionInLine();
+    }
 
 }

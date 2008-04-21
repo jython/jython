@@ -11,15 +11,6 @@ public class BoolOp extends exprType {
 
     public static final String[] _fields = new String[] {"op","values"};
 
-    public BoolOp(Token token, boolopType op, exprType[] values) {
-        super(token);
-        this.op = op;
-        this.values = values;
-        for(int ivalues=0;ivalues<values.length;ivalues++) {
-            addChild(values[ivalues]);
-        }
-    }
-
     public BoolOp(PythonTree tree, boolopType op, exprType[] values) {
         super(tree);
         this.op = op;
@@ -46,12 +37,12 @@ public class BoolOp extends exprType {
         }
     }
 
-public int getLineno() {
-    return getLine() + 1;
-}
+    public int getLineno() {
+        return getLine();
+    }
 
-public int getCol_offset() {
-    return getCharPositionInLine();
-}
+    public int getCol_offset() {
+        return getCharPositionInLine();
+    }
 
 }

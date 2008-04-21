@@ -26,14 +26,14 @@ public class PythonTreeWalker {
 	public PythonTree parse(String[] args) throws Exception {
 		PythonTree result = null;
 		CharStream input = new ANTLRFileStream(args[0]);
-		PythonLexer lexer = new PyLexer(input);
+		PythonLexer lexer = new PythonGrammar.PyLexer(input);
 		CommonTokenStream tokens = new CommonTokenStream(lexer);
 		tokens.discardOffChannelTokens(true);
 		PythonTokenSource indentedSource = new PythonTokenSource(tokens);
 		tokens = new CommonTokenStream(indentedSource);
 		// System.out.println("tokens="+tokens.getTokens());
 		PythonParser parser = new PythonParser(tokens);
-		parser.setTreeAdaptor(pyadaptor);
+		parser.setTreeAdaptor(PythonGrammar.pyadaptor);
 		try {
 			PythonParser.file_input_return r = parser.file_input();
 			if (parser.hasErrors()) {
@@ -94,36 +94,5 @@ public class PythonTreeWalker {
 	public boolean isTolerant() {
 		return _tolerant;
 	}
-
-	/**
-	 * override nextToken to set startPos (this seems too hard)
-	 */
-	public static class PyLexer extends PythonLexer {
-		public PyLexer(CharStream lexer) {
-			super(lexer);
-		}
-
-		public Token nextToken() {
-			startPos = getCharPositionInLine();
-			return super.nextToken();
-		}
-	}
-
-	public static TreeAdaptor pyadaptor = new CommonTreeAdaptor() {
-		public Object create(Token token) {
-			/*
-			 * if (token != null && token.getType() == PythonParser.Target) {
-			 * System.out.println("Target found"); }
-			 */
-			return new PythonTree(token);
-		}
-
-		public Object dupNode(Object t) {
-			if (t == null) {
-				return null;
-			}
-			return create(((PythonTree) t).token);
-		}
-	};
 
 }

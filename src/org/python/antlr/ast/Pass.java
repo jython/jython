@@ -9,10 +9,6 @@ public class Pass extends stmtType {
 
     public static final String[] _fields = new String[] {};
 
-    public Pass(Token token) {
-        super(token);
-    }
-
     public Pass(PythonTree tree) {
         super(tree);
     }
@@ -28,12 +24,12 @@ public class Pass extends stmtType {
     public void traverse(VisitorIF visitor) throws Exception {
     }
 
-public int getLineno() {
-    return getLine() + 1;
-}
+    public int getLineno() {
+        return getLine();
+    }
 
-public int getCol_offset() {
-    return getCharPositionInLine();
-}
+    public int getCol_offset() {
+        return getCharPositionInLine();
+    }
 
 }

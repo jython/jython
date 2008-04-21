@@ -10,11 +10,6 @@ public class Yield extends exprType {
 
     public static final String[] _fields = new String[] {"value"};
 
-    public Yield(Token token, exprType value) {
-        super(token);
-        this.value = value;
-    }
-
     public Yield(PythonTree tree, exprType value) {
         super(tree);
         this.value = value;
@@ -33,12 +28,12 @@ public class Yield extends exprType {
             value.accept(visitor);
     }
 
-public int getLineno() {
-    return getLine() + 1;
-}
+    public int getLineno() {
+        return getLine();
+    }
 
-public int getCol_offset() {
-    return getCharPositionInLine();
-}
+    public int getCol_offset() {
+        return getCharPositionInLine();
+    }
 
 }

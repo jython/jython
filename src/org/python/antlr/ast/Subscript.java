@@ -12,14 +12,6 @@ public class Subscript extends exprType {
 
     public static final String[] _fields = new String[] {"value","slice","ctx"};
 
-    public Subscript(Token token, exprType value, sliceType slice,
-    expr_contextType ctx) {
-        super(token);
-        this.value = value;
-        this.slice = slice;
-        this.ctx = ctx;
-    }
-
     public Subscript(PythonTree tree, exprType value, sliceType slice,
     expr_contextType ctx) {
         super(tree);
@@ -43,12 +35,12 @@ public class Subscript extends exprType {
             slice.accept(visitor);
     }
 
-public int getLineno() {
-    return getLine() + 1;
-}
+    public int getLineno() {
+        return getLine();
+    }
 
-public int getCol_offset() {
-    return getCharPositionInLine();
-}
+    public int getCol_offset() {
+        return getCharPositionInLine();
+    }
 
 }

@@ -4,10 +4,6 @@ import org.python.antlr.PythonTree;
 import org.antlr.runtime.Token;
 
 public abstract class exprType extends PythonTree {
-    public exprType(Token token) {
-        super(token);
-    }
-
     public exprType(PythonTree node) {
         super(node);
     }

@@ -15,19 +15,6 @@ public class excepthandlerType extends PythonTree {
     public static final String[] _fields = new String[]
     {"type","name","body","lineno","col_offset"};
 
-    public excepthandlerType(Token token, exprType type, exprType name,
-    stmtType[] body, int lineno, int col_offset) {
-        super(token);
-        this.type = type;
-        this.name = name;
-        this.body = body;
-        for(int ibody=0;ibody<body.length;ibody++) {
-            addChild(body[ibody]);
-        }
-        this.lineno = lineno;
-        this.col_offset = col_offset;
-    }
-
     public excepthandlerType(PythonTree tree, exprType type, exprType name,
     stmtType[] body, int lineno, int col_offset) {
         super(tree);

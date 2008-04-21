@@ -13,23 +13,6 @@ public class TryExcept extends stmtType {
     public static final String[] _fields = new String[]
     {"body","handlers","orelse"};
 
-    public TryExcept(Token token, stmtType[] body, excepthandlerType[]
-    handlers, stmtType[] orelse) {
-        super(token);
-        this.body = body;
-        for(int ibody=0;ibody<body.length;ibody++) {
-            addChild(body[ibody]);
-        }
-        this.handlers = handlers;
-        for(int ihandlers=0;ihandlers<handlers.length;ihandlers++) {
-            addChild(handlers[ihandlers]);
-        }
-        this.orelse = orelse;
-        for(int iorelse=0;iorelse<orelse.length;iorelse++) {
-            addChild(orelse[iorelse]);
-        }
-    }
-
     public TryExcept(PythonTree tree, stmtType[] body, excepthandlerType[]
     handlers, stmtType[] orelse) {
         super(tree);
@@ -76,12 +59,12 @@ public class TryExcept extends stmtType {
         }
     }
 
-public int getLineno() {
-    return getLine() + 1;
-}
+    public int getLineno() {
+        return getLine();
+    }
 
-public int getCol_offset() {
-    return getCharPositionInLine();
-}
+    public int getCol_offset() {
+        return getCharPositionInLine();
+    }
 
 }

@@ -13,13 +13,6 @@ public class Slice extends sliceType {
     public static final String[] _fields = new String[]
     {"lower","upper","step"};
 
-    public Slice(Token token, exprType lower, exprType upper, exprType step) {
-        super(token);
-        this.lower = lower;
-        this.upper = upper;
-        this.step = step;
-    }
-
     public Slice(PythonTree tree, exprType lower, exprType upper, exprType
     step) {
         super(tree);

@@ -11,12 +11,6 @@ public class Assert extends stmtType {
 
     public static final String[] _fields = new String[] {"test","msg"};
 
-    public Assert(Token token, exprType test, exprType msg) {
-        super(token);
-        this.test = test;
-        this.msg = msg;
-    }
-
     public Assert(PythonTree tree, exprType test, exprType msg) {
         super(tree);
         this.test = test;
@@ -38,12 +32,12 @@ public class Assert extends stmtType {
             msg.accept(visitor);
     }
 
-public int getLineno() {
-    return getLine() + 1;
-}
+    public int getLineno() {
+        return getLine();
+    }
 
-public int getCol_offset() {
-    return getCharPositionInLine();
-}
+    public int getCol_offset() {
+        return getCharPositionInLine();
+    }
 
 }

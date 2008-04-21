@@ -14,21 +14,6 @@ public class argumentsType extends PythonTree {
     public static final String[] _fields = new String[]
     {"args","vararg","kwarg","defaults"};
 
-    public argumentsType(Token token, exprType[] args, String vararg, String
-    kwarg, exprType[] defaults) {
-        super(token);
-        this.args = args;
-        for(int iargs=0;iargs<args.length;iargs++) {
-            addChild(args[iargs]);
-        }
-        this.vararg = vararg;
-        this.kwarg = kwarg;
-        this.defaults = defaults;
-        for(int idefaults=0;idefaults<defaults.length;idefaults++) {
-            addChild(defaults[idefaults]);
-        }
-    }
-
     public argumentsType(PythonTree tree, exprType[] args, String vararg,
     String kwarg, exprType[] defaults) {
         super(tree);

@@ -12,13 +12,6 @@ public class Raise extends stmtType {
 
     public static final String[] _fields = new String[] {"type","inst","tback"};
 
-    public Raise(Token token, exprType type, exprType inst, exprType tback) {
-        super(token);
-        this.type = type;
-        this.inst = inst;
-        this.tback = tback;
-    }
-
     public Raise(PythonTree tree, exprType type, exprType inst, exprType tback)
     {
         super(tree);
@@ -44,12 +37,12 @@ public class Raise extends stmtType {
             tback.accept(visitor);
     }
 
-public int getLineno() {
-    return getLine() + 1;
-}
+    public int getLineno() {
+        return getLine();
+    }
 
-public int getCol_offset() {
-    return getCharPositionInLine();
-}
+    public int getCol_offset() {
+        return getCharPositionInLine();
+    }
 
 }

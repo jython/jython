@@ -274,7 +274,7 @@ dotted_attr
 
 //funcdef: [decorators] 'def' NAME parameters ':' suite
 funcdef : decorators? 'def' NAME parameters COLON suite
-       -> ^(FunctionDef ^(Name NAME) ^(Arguments parameters) ^(Body suite) ^(Decorators decorators?))
+       -> ^(FunctionDef 'def' ^(Name NAME) ^(Arguments parameters) ^(Body suite) ^(Decorators decorators?))
         ;
 
 //parameters: '(' [varargslist] ')'
@@ -386,11 +386,11 @@ augassign : PLUSEQUAL
 
 //print_stmt: 'print' ( [ test (',' test)* [','] ] | '>>' test [ (',' test)+ [','] ] )
 print_stmt : 'print'
-             ( t1=printlist -> {$t1.newline}? ^(Print ^(Values $t1) ^(Newline))
-                           -> ^(Print ^(Values $t1))
-             | RIGHTSHIFT t2=printlist -> {$t2.newline}? ^(Print ^(Dest RIGHTSHIFT) ^(Values $t2) ^(Newline))
-                                      -> ^(Print ^(Dest RIGHTSHIFT) ^(Values $t2))
-             | -> ^(Print ^(Newline))
+             ( t1=printlist -> {$t1.newline}? ^(Print 'print' ^(Values $t1) ^(Newline))
+                            -> ^(Print 'print' ^(Values $t1))
+             | RIGHTSHIFT t2=printlist -> {$t2.newline}? ^(Print 'print' ^(Dest RIGHTSHIFT) ^(Values $t2) ^(Newline))
+                                      -> ^(Print 'print' ^(Dest RIGHTSHIFT) ^(Values $t2))
+             | -> ^(Print 'print' ^(Newline))
              )
            ;
 
@@ -411,12 +411,12 @@ printlist returns [boolean newline]
 
 //del_stmt: 'del' exprlist
 del_stmt : 'del' exprlist2
-        -> ^(Delete exprlist2)
+        -> ^(Delete 'del' exprlist2)
          ;
 
 //pass_stmt: 'pass'
 pass_stmt : 'pass'
-         -> Pass
+         -> ^(Pass 'pass')
           ;
 
 //flow_stmt: break_stmt | continue_stmt | return_stmt | raise_stmt | yield_stmt
@@ -439,7 +439,7 @@ continue_stmt : 'continue'
 
 //return_stmt: 'return' [testlist]
 return_stmt : 'return' (testlist)?
-          -> ^(Return ^(Value testlist)?)
+          -> ^(Return 'return' ^(Value testlist)?)
             ;
 
 //yield_stmt: yield_expr
@@ -448,7 +448,7 @@ yield_stmt : yield_expr
 
 //raise_stmt: 'raise' [test [',' test [',' test]]]
 raise_stmt: 'raise' (t1=test (COMMA t2=test (COMMA t3=test)?)?)?
-          -> ^(Raise ^(Type $t1)? ^(Inst $t2)? ^(Tback $t3)?)
+          -> ^(Raise 'raise' ^(Type $t1)? ^(Inst $t2)? ^(Tback $t3)?)
           ;
 
 //import_stmt: import_name | import_from
@@ -522,7 +522,7 @@ compound_stmt : if_stmt
 
 //if_stmt: 'if' test ':' suite ('elif' test ':' suite)* ['else' ':' suite]
 if_stmt: 'if' test COLON ifsuite=suite elif_clause*  ('else' COLON elsesuite=suite)?
-      -> ^(If test $ifsuite elif_clause* ^(OrElse $elsesuite)?)
+      -> ^(If 'if' test $ifsuite elif_clause* ^(OrElse $elsesuite)?)
        ;
 
 //not in CPython's Grammar file
@@ -532,12 +532,12 @@ elif_clause : 'elif' test COLON suite
 
 //while_stmt: 'while' test ':' suite ['else' ':' suite]
 while_stmt : 'while' test COLON s1=suite ('else' COLON s2=suite)?
-          -> ^(While test ^(Body $s1) ^(OrElse $s2)?)
+          -> ^(While 'while' test ^(Body $s1) ^(OrElse $s2)?)
            ;
 
 //for_stmt: 'for' exprlist 'in' testlist ':' suite ['else' ':' suite]
 for_stmt : 'for' exprlist 'in' testlist COLON s1=suite ('else' COLON s2=suite)?
-        -> ^(For ^(Target exprlist) ^(Iter testlist) ^(Body $s1) ^(OrElse $s2)?)
+        -> ^(For 'for' ^(Target exprlist) ^(Iter testlist) ^(Body $s1) ^(OrElse $s2)?)
          ;
 
 //try_stmt: ('try' ':' suite
@@ -753,7 +753,7 @@ dictmaker : test COLON test
 
 //classdef: 'class' NAME ['(' [testlist] ')'] ':' suite
 classdef: 'class' NAME (LPAREN testlist? RPAREN)? COLON suite
-    -> ^(ClassDef ^(Name NAME) ^(Bases testlist)? ^(Body suite))
+    -> ^(ClassDef 'class' ^(Name NAME) ^(Bases testlist)? ^(Body suite))
     ;
 
 //arglist: (argument ',')* (argument [',']| '*' test [',' '**' test] | '**' test)

@@ -10,14 +10,6 @@ public class Import extends stmtType {
 
     public static final String[] _fields = new String[] {"names"};
 
-    public Import(Token token, aliasType[] names) {
-        super(token);
-        this.names = names;
-        for(int inames=0;inames<names.length;inames++) {
-            addChild(names[inames]);
-        }
-    }
-
     public Import(PythonTree tree, aliasType[] names) {
         super(tree);
         this.names = names;
@@ -43,12 +35,12 @@ public class Import extends stmtType {
         }
     }
 
-public int getLineno() {
-    return getLine() + 1;
-}
+    public int getLineno() {
+        return getLine();
+    }
 
-public int getCol_offset() {
-    return getCharPositionInLine();
-}
+    public int getCol_offset() {
+        return getCharPositionInLine();
+    }
 
 }

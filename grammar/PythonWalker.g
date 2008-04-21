@@ -348,8 +348,8 @@ module returns [modType mod]
     ;
 
 funcdef
-    : ^(FunctionDef ^(Name NAME) ^(Arguments varargslist?) ^(Body stmts) ^(Decorators decorators?)) {
-        $stmts::statements.add(makeFunctionDef($FunctionDef, $NAME, $varargslist.args, $stmts.stypes, $decorators.etypes));
+    : ^(FunctionDef tok='def' ^(Name NAME) ^(Arguments varargslist?) ^(Body stmts) ^(Decorators decorators?)) {
+        $stmts::statements.add(makeFunctionDef($tok, $NAME, $varargslist.args, $stmts.stypes, $decorators.etypes));
     }
     ;
 
@@ -567,8 +567,7 @@ binop returns [operatorType op]
 
 
 print_stmt
-    : ^(Print (^(Dest RIGHTSHIFT))? (^(Values ^(Elts elts[expr_contextType.Load])))? (Newline)?) {
-        Print p;
+    : ^(Print tok='print' (^(Dest RIGHTSHIFT))? (^(Values ^(Elts elts[expr_contextType.Load])))? (Newline)?) {
         exprType[] values;
 
         exprType dest = null;
@@ -594,22 +593,22 @@ print_stmt
         } else {
             values = new exprType[0];
         }
-        p = new Print($Print, dest, values, newline);
+        Print p = new Print($tok, dest, values, newline);
         $stmts::statements.add(p);
     }
     ;
 
 del_stmt
-    : ^(Delete elts[expr_contextType.Del]) {
+    : ^(Delete tok='del' elts[expr_contextType.Del]) {
         exprType[] t = (exprType[])$elts.etypes.toArray(new exprType[$elts.etypes.size()]);
-        $stmts::statements.add(new Delete($Delete, t));
+        $stmts::statements.add(new Delete($tok, t));
     }
     ;
 
 pass_stmt
-    : Pass {
+    : ^(Pass tok='pass') {
         debug("Matched Pass");
-        $stmts::statements.add(new Pass($Pass));
+        $stmts::statements.add(new Pass($tok));
     }
     ;
 
@@ -633,12 +632,12 @@ continue_stmt
     ;
 
 return_stmt
-    : ^(Return (^(Value test[expr_contextType.Load]))?) {
+    : ^(Return tok='return' (^(Value test[expr_contextType.Load]))?) {
         exprType v = null;
         if ($Value != null) {
             v = $test.etype;
         }
-        $stmts::statements.add(new Return($Return, v));
+        $stmts::statements.add(new Return($tok, v));
     }
     ;
 
@@ -653,7 +652,7 @@ yield_expr returns [exprType etype]
     ;
 
 raise_stmt
-    : ^(Raise (^(Type type=test[expr_contextType.Load]))? (^(Inst inst=test[expr_contextType.Load]))? (^(Tback tback=test[expr_contextType.Load]))?) {
+    : ^(Raise tok='raise' (^(Type type=test[expr_contextType.Load]))? (^(Inst inst=test[expr_contextType.Load]))? (^(Tback tback=test[expr_contextType.Load]))?) {
         exprType t = null;
         if ($Type != null) {
             t = $type.etype;
@@ -667,7 +666,7 @@ raise_stmt
             b = $tback.etype;
         }
 
-        $stmts::statements.add(new Raise($Raise, t, i, b));
+        $stmts::statements.add(new Raise($tok, t, i, b));
     }
     ;
 
@@ -805,7 +804,7 @@ if_stmt
     List elifs = new ArrayList();
 }
 
-    : ^(If test[expr_contextType.Load] body=stmts elif_clause[elifs]* (^(OrElse orelse=stmts))?) {
+    : ^(If tok='if' test[expr_contextType.Load] body=stmts elif_clause[elifs]* (^(OrElse orelse=stmts))?) {
         stmtType[] o;
         if ($OrElse != null) {
             o = (stmtType[])$orelse.stypes.toArray(new stmtType[$orelse.stypes.size()]);
@@ -819,7 +818,7 @@ if_stmt
             elif.orelse = o;
             o = new stmtType[]{elif};
         }
-        If i = new If($If, $test.etype, b, o);
+        If i = new If($tok, $test.etype, b, o);
         $stmts::statements.add(i);
     }
     ;
@@ -835,23 +834,23 @@ elif_clause[List elifs]
     ;
 
 while_stmt
-    : ^(While test[expr_contextType.Load] ^(Body body=stmts) (^(OrElse orelse=stmts))?) {
+    : ^(While tok='while' test[expr_contextType.Load] ^(Body body=stmts) (^(OrElse orelse=stmts))?) {
         List o = null;
         if ($OrElse != null) {
             o = $orelse.stypes;
         }
-        While w = makeWhile($While, $test.etype, $body.stypes, o);
+        While w = makeWhile($tok, $test.etype, $body.stypes, o);
         $stmts::statements.add(w);
     }
     ;
 
 for_stmt
-    : ^(For ^(Target targ=test[expr_contextType.Store]) ^(Iter iter=test[expr_contextType.Load]) ^(Body body=stmts) (^(OrElse orelse=stmts))?) {
+    : ^(For tok='for' ^(Target targ=test[expr_contextType.Store]) ^(Iter iter=test[expr_contextType.Load]) ^(Body body=stmts) (^(OrElse orelse=stmts))?) {
         List o = null;
         if ($OrElse != null) {
             o = $orelse.stypes;
         }
-        For f = makeFor($For, $targ.etype, $iter.etype, $body.stypes, o);
+        For f = makeFor($tok, $targ.etype, $iter.etype, $body.stypes, o);
         $stmts::statements.add(f);
     }
     ;
@@ -1176,9 +1175,9 @@ atom[expr_contextType ctype] returns [exprType etype, boolean parens]
     | stringlist {
         StringPair sp = extractStrings($stringlist.strings);
         if (sp.isUnicode()) {
-            $etype = new Unicode($stringlist.start, sp.getString());
+            $etype = new Unicode($stringlist.begin, sp.getString());
         } else {
-            $etype = new Str($stringlist.start, sp.getString());
+            $etype = new Str($stringlist.begin, sp.getString());
         }
     }
     | ^(USub test[ctype]) {
@@ -1219,11 +1218,11 @@ comprehension[expr_contextType ctype] returns [exprType etype]
     }
     ;
 
-stringlist returns [List strings]
+stringlist returns [PythonTree begin, List strings]
 @init {
     List strs = new ArrayList();
 }
-    : ^(Str string[strs]+) {$strings = strs;}
+    : ^(Str string[strs]+) {$strings = strs; $begin = $string.start;}
     ;
 
 string[List strs]
@@ -1290,14 +1289,14 @@ subscript [List subs]
           ;
 
 classdef
-    : ^(ClassDef ^(Name classname=NAME) (^(Bases bases))? ^(Body stmts)) {
+    : ^(ClassDef tok='class' ^(Name classname=NAME) (^(Bases bases))? ^(Body stmts)) {
         List b;
         if ($Bases != null) {
             b = $bases.names;
         } else {
             b = new ArrayList();
         }
-        $stmts::statements.add(makeClassDef($ClassDef, $classname, b, $stmts.stypes));
+        $stmts::statements.add(makeClassDef($tok, $classname, b, $stmts.stypes));
     }
     ;
 

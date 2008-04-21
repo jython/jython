@@ -158,10 +158,10 @@ class JavaVisitor(EmitVisitor):
         self.open("%sType" % name)
         self.emit("public abstract class %(name)sType extends PythonTree {" %
                     locals(), depth)
-        self.emit("public %(name)sType(Token token) {" % locals(), depth+1)
-        self.emit("super(token);", depth+2)
-        self.emit("}", depth+1)
-        self.emit("", 0)
+        #self.emit("public %(name)sType(Token token) {" % locals(), depth+1)
+        #self.emit("super(token);", depth+2)
+        #self.emit("}", depth+1)
+        #self.emit("", 0)
 
         self.emit("public %(name)sType(PythonTree node) {" % locals(), depth+1)
         self.emit("super(node);", depth+2)
@@ -223,15 +223,15 @@ class JavaVisitor(EmitVisitor):
 
         if str(name) in ('stmt', 'expr'):
             # The lineno property
-            self.emit("public int getLineno() {", depth)
-            self.emit('return getLine() + 1;', depth+1)
-            self.emit("}", depth)
+            self.emit("public int getLineno() {", depth + 1)
+            self.emit('return getLine();', depth + 2)
+            self.emit("}", depth + 1)
             self.emit("", 0)
 
             # The col_offset property
-            self.emit("public int getCol_offset() {", depth)
-            self.emit('return getCharPositionInLine();', depth+1)
-            self.emit("}", depth)
+            self.emit("public int getCol_offset() {", depth + 1)
+            self.emit('return getCharPositionInLine();', depth + 2)
+            self.emit("}", depth + 1)
             self.emit("", 0)
 
         self.emit("}", depth)
@@ -257,11 +257,11 @@ class JavaVisitor(EmitVisitor):
         token.typedef = False
         fpargs = ", ".join([self.fieldDef(f) for f in [token] + fields])
 
-        self.emit("public %s(%s) {" % (ctorname, fpargs), depth)
-        self.emit("super(token);", depth+1)
-        self.javaConstructorHelper(fields, depth)
-        self.emit("}", depth)
-        self.emit("", 0)
+        #self.emit("public %s(%s) {" % (ctorname, fpargs), depth)
+        #self.emit("super(token);", depth+1)
+        #self.javaConstructorHelper(fields, depth)
+        #self.emit("}", depth)
+        #self.emit("", 0)
 
         tree = asdl.Field('PythonTree', 'tree')
         tree.typedef = False
@@ -416,7 +416,7 @@ if __name__ == "__main__":
 
     usage = "Usage: python %s [-o outdir] [grammar]" % sys.argv[0]
 
-    OUT_DIR = 'build/gensrc/org/python/antlr/ast/'
+    OUT_DIR = '../src/org/python/antlr/ast/'
     try:
         opts, args = getopt.getopt(sys.argv[1:], 'o:')
     except:

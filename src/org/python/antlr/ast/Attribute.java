@@ -12,14 +12,6 @@ public class Attribute extends exprType {
 
     public static final String[] _fields = new String[] {"value","attr","ctx"};
 
-    public Attribute(Token token, exprType value, String attr, expr_contextType
-    ctx) {
-        super(token);
-        this.value = value;
-        this.attr = attr;
-        this.ctx = ctx;
-    }
-
     public Attribute(PythonTree tree, exprType value, String attr,
     expr_contextType ctx) {
         super(tree);
@@ -41,12 +33,12 @@ public class Attribute extends exprType {
             value.accept(visitor);
     }
 
-public int getLineno() {
-    return getLine() + 1;
-}
+    public int getLineno() {
+        return getLine();
+    }
 
-public int getCol_offset() {
-    return getCharPositionInLine();
-}
+    public int getCol_offset() {
+        return getCharPositionInLine();
+    }
 
 }

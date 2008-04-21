@@ -10,14 +10,6 @@ public class Delete extends stmtType {
 
     public static final String[] _fields = new String[] {"targets"};
 
-    public Delete(Token token, exprType[] targets) {
-        super(token);
-        this.targets = targets;
-        for(int itargets=0;itargets<targets.length;itargets++) {
-            addChild(targets[itargets]);
-        }
-    }
-
     public Delete(PythonTree tree, exprType[] targets) {
         super(tree);
         this.targets = targets;
@@ -43,12 +35,12 @@ public class Delete extends stmtType {
         }
     }
 
-public int getLineno() {
-    return getLine() + 1;
-}
+    public int getLineno() {
+        return getLine();
+    }
 
-public int getCol_offset() {
-    return getCharPositionInLine();
-}
+    public int getCol_offset() {
+        return getCharPositionInLine();
+    }
 
 }

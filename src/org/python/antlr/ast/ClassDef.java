@@ -12,20 +12,6 @@ public class ClassDef extends stmtType {
 
     public static final String[] _fields = new String[] {"name","bases","body"};
 
-    public ClassDef(Token token, String name, exprType[] bases, stmtType[]
-    body) {
-        super(token);
-        this.name = name;
-        this.bases = bases;
-        for(int ibases=0;ibases<bases.length;ibases++) {
-            addChild(bases[ibases]);
-        }
-        this.body = body;
-        for(int ibody=0;ibody<body.length;ibody++) {
-            addChild(body[ibody]);
-        }
-    }
-
     public ClassDef(PythonTree tree, String name, exprType[] bases, stmtType[]
     body) {
         super(tree);
@@ -63,12 +49,12 @@ public class ClassDef extends stmtType {
         }
     }
 
-public int getLineno() {
-    return getLine() + 1;
-}
+    public int getLineno() {
+        return getLine();
+    }
 
-public int getCol_offset() {
-    return getCharPositionInLine();
-}
+    public int getCol_offset() {
+        return getCharPositionInLine();
+    }
 
 }

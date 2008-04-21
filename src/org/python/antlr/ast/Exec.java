@@ -13,13 +13,6 @@ public class Exec extends stmtType {
     public static final String[] _fields = new String[]
     {"body","globals","locals"};
 
-    public Exec(Token token, exprType body, exprType globals, exprType locals) {
-        super(token);
-        this.body = body;
-        this.globals = globals;
-        this.locals = locals;
-    }
-
     public Exec(PythonTree tree, exprType body, exprType globals, exprType
     locals) {
         super(tree);
@@ -45,12 +38,12 @@ public class Exec extends stmtType {
             locals.accept(visitor);
     }
 
-public int getLineno() {
-    return getLine() + 1;
-}
+    public int getLineno() {
+        return getLine();
+    }
 
-public int getCol_offset() {
-    return getCharPositionInLine();
-}
+    public int getCol_offset() {
+        return getCharPositionInLine();
+    }
 
 }

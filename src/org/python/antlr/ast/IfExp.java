@@ -13,13 +13,6 @@ public class IfExp extends exprType {
     public static final String[] _fields = new String[]
     {"test","body","orelse"};
 
-    public IfExp(Token token, exprType test, exprType body, exprType orelse) {
-        super(token);
-        this.test = test;
-        this.body = body;
-        this.orelse = orelse;
-    }
-
     public IfExp(PythonTree tree, exprType test, exprType body, exprType
     orelse) {
         super(tree);
@@ -45,12 +38,12 @@ public class IfExp extends exprType {
             orelse.accept(visitor);
     }
 
-public int getLineno() {
-    return getLine() + 1;
-}
+    public int getLineno() {
+        return getLine();
+    }
 
-public int getCol_offset() {
-    return getCharPositionInLine();
-}
+    public int getCol_offset() {
+        return getCharPositionInLine();
+    }
 
 }

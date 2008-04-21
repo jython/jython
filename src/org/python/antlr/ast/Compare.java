@@ -13,17 +13,6 @@ public class Compare extends exprType {
     public static final String[] _fields = new String[]
     {"left","ops","comparators"};
 
-    public Compare(Token token, exprType left, cmpopType[] ops, exprType[]
-    comparators) {
-        super(token);
-        this.left = left;
-        this.ops = ops;
-        this.comparators = comparators;
-        for(int icomparators=0;icomparators<comparators.length;icomparators++) {
-            addChild(comparators[icomparators]);
-        }
-    }
-
     public Compare(PythonTree tree, exprType left, cmpopType[] ops, exprType[]
     comparators) {
         super(tree);
@@ -54,12 +43,12 @@ public class Compare extends exprType {
         }
     }
 
-public int getLineno() {
-    return getLine() + 1;
-}
+    public int getLineno() {
+        return getLine();
+    }
 
-public int getCol_offset() {
-    return getCharPositionInLine();
-}
+    public int getCol_offset() {
+        return getCharPositionInLine();
+    }
 
 }

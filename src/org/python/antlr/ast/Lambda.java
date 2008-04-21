@@ -11,12 +11,6 @@ public class Lambda extends exprType {
 
     public static final String[] _fields = new String[] {"args","body"};
 
-    public Lambda(Token token, argumentsType args, exprType body) {
-        super(token);
-        this.args = args;
-        this.body = body;
-    }
-
     public Lambda(PythonTree tree, argumentsType args, exprType body) {
         super(tree);
         this.args = args;
@@ -38,12 +32,12 @@ public class Lambda extends exprType {
             body.accept(visitor);
     }
 
-public int getLineno() {
-    return getLine() + 1;
-}
+    public int getLineno() {
+        return getLine();
+    }
 
-public int getCol_offset() {
-    return getCharPositionInLine();
-}
+    public int getCol_offset() {
+        return getCharPositionInLine();
+    }
 
 }

@@ -11,15 +11,6 @@ public class Assign extends stmtType {
 
     public static final String[] _fields = new String[] {"targets","value"};
 
-    public Assign(Token token, exprType[] targets, exprType value) {
-        super(token);
-        this.targets = targets;
-        for(int itargets=0;itargets<targets.length;itargets++) {
-            addChild(targets[itargets]);
-        }
-        this.value = value;
-    }
-
     public Assign(PythonTree tree, exprType[] targets, exprType value) {
         super(tree);
         this.targets = targets;
@@ -48,12 +39,12 @@ public class Assign extends stmtType {
             value.accept(visitor);
     }
 
-public int getLineno() {
-    return getLine() + 1;
-}
+    public int getLineno() {
+        return getLine();
+    }
 
-public int getCol_offset() {
-    return getCharPositionInLine();
-}
+    public int getCol_offset() {
+        return getCharPositionInLine();
+    }
 
 }

@@ -12,13 +12,6 @@ public class BinOp extends exprType {
 
     public static final String[] _fields = new String[] {"left","op","right"};
 
-    public BinOp(Token token, exprType left, operatorType op, exprType right) {
-        super(token);
-        this.left = left;
-        this.op = op;
-        this.right = right;
-    }
-
     public BinOp(PythonTree tree, exprType left, operatorType op, exprType
     right) {
         super(tree);
@@ -42,12 +35,12 @@ public class BinOp extends exprType {
             right.accept(visitor);
     }
 
-public int getLineno() {
-    return getLine() + 1;
-}
+    public int getLineno() {
+        return getLine();
+    }
 
-public int getCol_offset() {
-    return getCharPositionInLine();
-}
+    public int getCol_offset() {
+        return getCharPositionInLine();
+    }
 
 }

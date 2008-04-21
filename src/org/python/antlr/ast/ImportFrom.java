@@ -13,17 +13,6 @@ public class ImportFrom extends stmtType {
     public static final String[] _fields = new String[]
     {"module","names","level"};
 
-    public ImportFrom(Token token, String module, aliasType[] names, int level)
-    {
-        super(token);
-        this.module = module;
-        this.names = names;
-        for(int inames=0;inames<names.length;inames++) {
-            addChild(names[inames]);
-        }
-        this.level = level;
-    }
-
     public ImportFrom(PythonTree tree, String module, aliasType[] names, int
     level) {
         super(tree);
@@ -52,12 +41,12 @@ public class ImportFrom extends stmtType {
         }
     }
 
-public int getLineno() {
-    return getLine() + 1;
-}
+    public int getLineno() {
+        return getLine();
+    }
 
-public int getCol_offset() {
-    return getCharPositionInLine();
-}
+    public int getCol_offset() {
+        return getCharPositionInLine();
+    }
 
 }

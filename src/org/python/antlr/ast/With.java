@@ -13,17 +13,6 @@ public class With extends stmtType {
     public static final String[] _fields = new String[]
     {"context_expr","optional_vars","body"};
 
-    public With(Token token, exprType context_expr, exprType optional_vars,
-    stmtType[] body) {
-        super(token);
-        this.context_expr = context_expr;
-        this.optional_vars = optional_vars;
-        this.body = body;
-        for(int ibody=0;ibody<body.length;ibody++) {
-            addChild(body[ibody]);
-        }
-    }
-
     public With(PythonTree tree, exprType context_expr, exprType optional_vars,
     stmtType[] body) {
         super(tree);
@@ -56,12 +45,12 @@ public class With extends stmtType {
         }
     }
 
-public int getLineno() {
-    return getLine() + 1;
-}
+    public int getLineno() {
+        return getLine();
+    }
 
-public int getCol_offset() {
-    return getCharPositionInLine();
-}
+    public int getCol_offset() {
+        return getCharPositionInLine();
+    }
 
 }

@@ -11,18 +11,6 @@ public class TryFinally extends stmtType {
 
     public static final String[] _fields = new String[] {"body","finalbody"};
 
-    public TryFinally(Token token, stmtType[] body, stmtType[] finalbody) {
-        super(token);
-        this.body = body;
-        for(int ibody=0;ibody<body.length;ibody++) {
-            addChild(body[ibody]);
-        }
-        this.finalbody = finalbody;
-        for(int ifinalbody=0;ifinalbody<finalbody.length;ifinalbody++) {
-            addChild(finalbody[ifinalbody]);
-        }
-    }
-
     public TryFinally(PythonTree tree, stmtType[] body, stmtType[] finalbody) {
         super(tree);
         this.body = body;
@@ -58,12 +46,12 @@ public class TryFinally extends stmtType {
         }
     }
 
-public int getLineno() {
-    return getLine() + 1;
-}
+    public int getLineno() {
+        return getLine();
+    }
 
-public int getCol_offset() {
-    return getCharPositionInLine();
-}
+    public int getCol_offset() {
+        return getCharPositionInLine();
+    }
 
 }

@@ -4,27 +4,10 @@
         <fileset dir="../extlibs">
             <include name="**/*.jar"/>
         </fileset>
-        <pathelement path="build" />
         <pathelement path="../dist/jython.jar" />
     </path>
 
-    <target name="init">
-        <mkdir dir="build/gensrc/org/python/antlr/ast"/>
-    </target>
-
-    <target name="compile" depends="init">
-        <javac destdir="build" debug="true"
-                deprecation="false" optimize="false" failonerror="true">
-            <src path="src"/>
-            <src path="build/gensrc"/>
-            <src path="test"/>
-            <classpath refid="main.classpath"/>
-            <classpath location="build"/>
-        </javac>
-
-    </target>
-
-    <target name="asdl_gen" depends="init">
+    <target name="asdl_gen">
         <apply
             verbose="true"
             executable="python">
@@ -33,10 +16,6 @@
         </apply>
     </target>
 
-    <target name="clean">
-        <delete dir="build"/>
-    </target>
-    
     <target name="test">
         <junit printsummary="withOutAndErr" showoutput="true"
             fork="true" forkmode="once" failureproperty="testfailure">
@@ -48,6 +27,6 @@
         </junit>
     </target>
 
-    <target name="all" depends="clean,asdl_gen,compile"/>
+    <target name="all" depends="asdl_gen"/>
 </project>
 
