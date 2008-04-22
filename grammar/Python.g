@@ -79,6 +79,8 @@ tokens {
     DEDENT;
     
     Module;
+    Interactive;
+    Expression;
     Test;
     Msg;
     Import;
@@ -243,9 +245,9 @@ int startPos=-1;
 }
 
 //single_input: NEWLINE | simple_stmt | compound_stmt NEWLINE
-single_input : NEWLINE!
-             | simple_stmt
-             | compound_stmt NEWLINE!
+single_input : NEWLINE
+             | simple_stmt -> ^(Interactive simple_stmt)
+             | compound_stmt NEWLINE -> ^(Interactive compound_stmt)
              ;
 
 //file_input: (NEWLINE | stmt)* ENDMARKER
@@ -254,7 +256,7 @@ file_input : (NEWLINE | stmt)* {debug("parsed file_input");}
            ;
 
 //eval_input: testlist NEWLINE* ENDMARKER
-eval_input : (NEWLINE!)* testlist (NEWLINE!)*
+eval_input : (NEWLINE)* testlist (NEWLINE)* -> ^(Expression testlist)
            ;
 
 //decorators: decorator+
@@ -429,12 +431,12 @@ flow_stmt : break_stmt
 
 //break_stmt: 'break'
 break_stmt : 'break'
-          -> Break
+          -> ^(Break 'break')
            ;
 
 //continue_stmt: 'continue'
 continue_stmt : 'continue'
-             -> Continue
+             -> ^(Continue 'continue')
               ;
 
 //return_stmt: 'return' [testlist]
@@ -458,18 +460,18 @@ import_stmt : import_name
 
 //import_name: 'import' dotted_as_names
 import_name : 'import' dotted_as_names
-           -> ^(Import dotted_as_names)
+           -> ^(Import 'import' dotted_as_names)
             ;
 
 //import_from: ('from' ('.'* dotted_name | '.'+)
 //              'import' ('*' | '(' import_as_names ')' | import_as_names))
 import_from: 'from' (DOT* dotted_name | DOT+) 'import'
               (STAR
-             -> ^(ImportFrom ^(Level DOT*)? ^(Name dotted_name)? ^(Import STAR))
+             -> ^(ImportFrom 'from' ^(Level DOT*)? ^(Name dotted_name)? ^(Import STAR))
               | import_as_names
-             -> ^(ImportFrom ^(Level DOT*)? ^(Name dotted_name)? ^(Import import_as_names))
+             -> ^(ImportFrom 'from' ^(Level DOT*)? ^(Name dotted_name)? ^(Import import_as_names))
               | LPAREN import_as_names RPAREN
-             -> ^(ImportFrom ^(Level DOT*)? ^(Name dotted_name)? ^(Import import_as_names))
+             -> ^(ImportFrom 'from' ^(Level DOT*)? ^(Name dotted_name)? ^(Import import_as_names))
               )
            ;
 
@@ -497,17 +499,17 @@ dotted_name : NAME (DOT NAME)*
 
 //global_stmt: 'global' NAME (',' NAME)*
 global_stmt : 'global' NAME (COMMA NAME)*
-           -> ^(Global NAME+)
+           -> ^(Global 'global' NAME+)
             ;
 
 //exec_stmt: 'exec' expr ['in' test [',' test]]
 exec_stmt : 'exec' expr ('in' t1=test (COMMA t2=test)?)?
-         -> ^(Exec expr ^(Globals $t1)? ^(Locals $t2)?)
+         -> ^(Exec 'exec' expr ^(Globals $t1)? ^(Locals $t2)?)
           ;
 
 //assert_stmt: 'assert' test [',' test]
 assert_stmt : 'assert' t1=test (COMMA t2=test)?
-           -> ^(Assert ^(Test $t1) ^(Msg $t2)?)
+           -> ^(Assert 'assert' ^(Test $t1) ^(Msg $t2)?)
             ;
 
 //compound_stmt: if_stmt | while_stmt | for_stmt | try_stmt | funcdef | classdef
@@ -672,7 +674,7 @@ atom : LPAREN
        )
        RBRACK
      | LCURLY (dictmaker)? RCURLY -> ^(Dict ^(Elts dictmaker)?)
-     | BACKQUOTE testlist BACKQUOTE -> ^(Repr testlist)
+     | BACKQUOTE testlist BACKQUOTE -> ^(Repr BACKQUOTE testlist)
      | NAME {debug("parsed NAME");} -> ^(Name NAME)
      | INT -> ^(Num INT)
      | LONGINT -> ^(Num LONGINT)
@@ -699,7 +701,7 @@ testlist_gexp
 
 //lambdef: 'lambda' [varargslist] ':' test
 lambdef: 'lambda' (varargslist)? COLON test {debug("parsed lambda");}
-      -> ^(Lambda varargslist? ^(Body test))
+      -> ^(Lambda 'lambda' varargslist? ^(Body test))
        ;
 
 //trailer: '(' [arglist] ')' | '[' subscriptlist ']' | '.' NAME

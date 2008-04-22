@@ -32,8 +32,6 @@ public class PythonGrammar {
             if (t == null) {
                 return null;
             }
-            System.err.println("TREE: " + ((PythonTree) t).getLine());
-            System.err.println("TREE TOK: " + ((PythonTree) t).token.getLine());
             return create(((PythonTree) t).token);
         }
     };  
@@ -65,24 +63,22 @@ public class PythonGrammar {
         }
     }
 
+    //XXX: factor out common code.
     public modType file_input() {
         modType tree = null;
-        // CharStream input = new ANTLRFileStream(args[0]);
         PythonLexer lexer = new PyLexer(this.charStream);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         tokens.discardOffChannelTokens(true);
         PythonTokenSource indentedSource = new PythonTokenSource(tokens);
         tokens = new CommonTokenStream(indentedSource);
-        // System.out.println("tokens="+tokens.getTokens());
         PythonParser parser = new PythonParser(tokens);
         parser.setTreeAdaptor(pyadaptor);
+
         try {
-            //PythonParser.file_input_return r = parser.file_input();
             Object rx = parser.file_input();
             PythonParser.file_input_return r = (PythonParser.file_input_return)rx;
-            System.out.println("tree: " + ((Tree) r.tree).toStringTree());
-            System.out.println("-----------------------------------");
-            //printTree((CommonTree) r.tree, 0);
+            //System.out.println("tree: " + ((Tree) r.tree).toStringTree());
+            //System.out.println("-----------------------------------");
             CommonTreeNodeStream nodes = new CommonTreeNodeStream((Tree)r.tree);
             nodes.setTokenStream(tokens);
             PythonWalker walker = new PythonWalker(nodes);
@@ -94,13 +90,57 @@ public class PythonGrammar {
         return tree;
     }
 
+    //XXX: factor out common code.
     public modType eval_input() {
-        // TODO Auto-generated method stub
-        return null;
+        modType tree = null;
+        PythonLexer lexer = new PyLexer(this.charStream);
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        tokens.discardOffChannelTokens(true);
+        PythonTokenSource indentedSource = new PythonTokenSource(tokens);
+        tokens = new CommonTokenStream(indentedSource);
+        PythonParser parser = new PythonParser(tokens);
+        parser.setTreeAdaptor(pyadaptor);
+
+        try {
+            Object rx = parser.eval_input();
+            PythonParser.eval_input_return r = (PythonParser.eval_input_return)rx;
+            //System.out.println("tree: " + ((Tree) r.tree).toStringTree());
+            //System.out.println("-----------------------------------");
+            CommonTreeNodeStream nodes = new CommonTreeNodeStream((Tree)r.tree);
+            nodes.setTokenStream(tokens);
+            PythonWalker walker = new PythonWalker(nodes);
+            tree = walker.expression();
+        } catch (RecognitionException e) {
+            // FIXME:
+            System.err.println("FIXME: don't eat exceptions:" + e);
+        }
+        return tree;
     }
 
+    //XXX: factor out common code.
     public modType single_input() {
-        return file_input();
+        modType tree = null;
+        PythonLexer lexer = new PyLexer(this.charStream);
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        tokens.discardOffChannelTokens(true);
+        PythonTokenSource indentedSource = new PythonTokenSource(tokens);
+        tokens = new CommonTokenStream(indentedSource);
+        PythonParser parser = new PythonParser(tokens);
+        parser.setTreeAdaptor(pyadaptor);
+        try {
+            Object rx = parser.single_input();
+            PythonParser.single_input_return r = (PythonParser.single_input_return)rx;
+            //System.out.println("tree: " + ((Tree) r.tree).toStringTree());
+            //System.out.println("-----------------------------------");
+            CommonTreeNodeStream nodes = new CommonTreeNodeStream((Tree)r.tree);
+            nodes.setTokenStream(tokens);
+            PythonWalker walker = new PythonWalker(nodes);
+            tree = walker.interactive();
+        } catch (RecognitionException e) {
+            // FIXME:
+            System.err.println("FIXME: don't eat exceptions:" + e);
+        }
+        return tree;
     }
 
 }

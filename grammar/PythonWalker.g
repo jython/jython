@@ -41,6 +41,7 @@ import org.python.antlr.ast.Dict;
 import org.python.antlr.ast.Ellipsis;
 import org.python.antlr.ast.Exec;
 import org.python.antlr.ast.Expr;
+import org.python.antlr.ast.Expression;
 import org.python.antlr.ast.ExtSlice;
 import org.python.antlr.ast.For;
 import org.python.antlr.ast.FunctionDef;
@@ -51,6 +52,7 @@ import org.python.antlr.ast.IfExp;
 import org.python.antlr.ast.Index;
 import org.python.antlr.ast.Import;
 import org.python.antlr.ast.ImportFrom;
+import org.python.antlr.ast.Interactive;
 import org.python.antlr.ast.Lambda;
 import org.python.antlr.ast.ListComp;
 import org.python.antlr.ast.Module;
@@ -108,6 +110,15 @@ import java.util.Set;
             s = new stmtType[0];
         }
         return new Module(t, s);
+    }
+
+    private modType makeExpression(PythonTree t, exprType e) {
+        return new Expression(t, e);
+    }
+
+    private modType makeInteractive(PythonTree t, List stmts) {
+        stmtType[] s = (stmtType[])stmts.toArray(new stmtType[stmts.size()]);
+        return new Interactive(t, s);
     }
 
     private ClassDef makeClassDef(PythonTree t, PythonTree nameToken, List bases, List body) {
@@ -338,6 +349,14 @@ import java.util.Set;
         return new UnaryOp(t, unaryopType.USub, o);
     }
 }
+
+expression returns [modType mod]
+    : ^(Expression test[expr_contextType.Load]) { $mod = makeExpression($Expression, $test.etype); }
+    ;
+
+interactive returns [modType mod]
+    : ^(Interactive stmts) { $mod = makeInteractive($Interactive, $stmts.stypes); }
+    ;
 
 module returns [modType mod]
     : ^(Module
@@ -620,14 +639,14 @@ flow_stmt
     ;
 
 break_stmt
-    : Break {
-        $stmts::statements.add(new Break($Break));
+    : ^(Break tok='break') {
+        $stmts::statements.add(new Break($tok));
     }
     ;
 
 continue_stmt
-    : Continue {
-        $stmts::statements.add(new Continue($Continue));
+    : ^(Continue tok='continue') {
+        $stmts::statements.add(new Continue($tok));
     }
     ;
 
@@ -674,11 +693,11 @@ import_stmt
 @init {
     List nms = new ArrayList();
 }
-    : ^(Import dotted_as_name[nms]+) {
+    : ^(Import tok='import' dotted_as_name[nms]+) {
         aliasType[] n = (aliasType[])nms.toArray(new aliasType[nms.size()]);
-        $stmts::statements.add(new Import($Import, n));
+        $stmts::statements.add(new Import($tok, n));
     }
-    | ^(ImportFrom (^(Level dots))? (^(Name dotted_name))? ^(Import STAR)) {
+    | ^(ImportFrom tok='from' (^(Level dots))? (^(Name dotted_name))? ^(Import STAR)) {
         String name = "";
         if ($Name != null) {
             name = $dotted_name.result;
@@ -688,9 +707,9 @@ import_stmt
             level = $dots.level;
         }
         aliasType[] n = (aliasType[])nms.toArray(new aliasType[nms.size()]);
-        $stmts::statements.add(new ImportFrom($Import, name, new aliasType[]{new aliasType($STAR, "*", null)}, level));
+        $stmts::statements.add(new ImportFrom($tok, name, new aliasType[]{new aliasType($STAR, "*", null)}, level));
     }
-    | ^(ImportFrom (^(Level dots))? (^(Name dotted_name))? ^(Import import_as_name[nms]+)) {
+    | ^(ImportFrom tok='from' (^(Level dots))? (^(Name dotted_name))? ^(Import import_as_name[nms]+)) {
         String name = "";
         if ($Name != null) {
             name = $dotted_name.result;
@@ -700,7 +719,7 @@ import_stmt
             level = $dots.level;
         }
         aliasType[] n = (aliasType[])nms.toArray(new aliasType[nms.size()]);
-        $stmts::statements.add(new ImportFrom($Import, name, n, level));
+        $stmts::statements.add(new ImportFrom($tok, name, n, level));
     }
     ;
 
@@ -763,9 +782,9 @@ global_stmt
 @init {
     List nms = new ArrayList();
 }
-    : ^(Global name_expr[nms]+) {
+    : ^(Global tok='global' name_expr[nms]+) {
         String[] n = (String[])nms.toArray(new String[nms.size()]);
-        $stmts::statements.add(new Global($Global, n));
+        $stmts::statements.add(new Global($tok, n));
     }
     ;
 
@@ -776,7 +795,7 @@ name_expr[List nms]
     ;
 
 exec_stmt
-    : ^(Exec exec=test[expr_contextType.Load] (^(Globals globals=test[expr_contextType.Load]))? (^(Locals locals=test[expr_contextType.Load]))?) {
+    : ^(Exec tok='exec' exec=test[expr_contextType.Load] (^(Globals globals=test[expr_contextType.Load]))? (^(Locals locals=test[expr_contextType.Load]))?) {
         exprType g = null;
         if ($Globals != null) {
             g = $globals.etype;
@@ -785,17 +804,17 @@ exec_stmt
         if ($Locals != null) {
             loc = $locals.etype;
         }
-        $stmts::statements.add(new Exec($Exec, $exec.etype, g, loc));
+        $stmts::statements.add(new Exec($tok, $exec.etype, g, loc));
     }
     ;
 
 assert_stmt
-    : ^(Assert ^(Test tst=test[expr_contextType.Load]) (^(Msg msg=test[expr_contextType.Load]))?) {
+    : ^(Assert tok='assert' ^(Test tst=test[expr_contextType.Load]) (^(Msg msg=test[expr_contextType.Load]))?) {
         exprType m = null;
         if ($Msg != null) {
             m = $msg.etype;
         }
-        $stmts::statements.add(new Assert($Assert, $tst.etype, m));
+        $stmts::statements.add(new Assert($tok, $tst.etype, m));
     }
     ;
 
@@ -1059,8 +1078,6 @@ comp_op returns [cmpopType op]
     | IsNot {$op = cmpopType.IsNot;}
     ;
 
-//I *think* only sequences need to collect test rules in the walker since
-//testlist in the parser either results in one test or a tuple.
 elts[expr_contextType ctype] returns [List etypes]
 scope {
     List elements;
@@ -1080,7 +1097,6 @@ elt[expr_contextType ctype]
     }
     ;
 
-//FIXME: lots of placeholders
 atom[expr_contextType ctype] returns [exprType etype, boolean parens]
     : ^(Tuple (^(Elts elts[ctype]))?) {
         debug("matched Tuple");
@@ -1121,8 +1137,8 @@ atom[expr_contextType ctype] returns [exprType etype, boolean parens]
         $etype = new Dict($Dict, keys, values);
  
     }
-    | ^(Repr test[ctype]*) {
-        $etype = new Repr($Repr, $test.etype);
+    | ^(Repr BACKQUOTE test[ctype]*) {
+        $etype = new Repr($BACKQUOTE, $test.etype);
     }
     | ^(Name NAME) {
         debug("matched Name " + $NAME.text);
@@ -1208,7 +1224,7 @@ comprehension[expr_contextType ctype] returns [exprType etype]
         debug("matched ListComp");
         Collections.reverse(gens);
         comprehensionType[] c = (comprehensionType[])gens.toArray(new comprehensionType[gens.size()]);
-        $etype = new ListComp($ListComp, $test.etype, c);
+        $etype = new ListComp($test.start, $test.etype, c);
     }
     | ^(GeneratorExp test[ctype] gen_for[gens]) {
         debug("matched GeneratorExp");
@@ -1230,12 +1246,12 @@ string[List strs]
     ;
 
 lambdef returns [exprType etype]
-    : ^(Lambda varargslist? ^(Body test[expr_contextType.Load])) {
+    : ^(Lambda tok='lambda' varargslist? ^(Body test[expr_contextType.Load])) {
         argumentsType a = $varargslist.args;
         if (a == null) {
             a = new argumentsType($Lambda, new exprType[0], null, null, new exprType[0]);
         }
-        $etype = new Lambda($Lambda, a, $test.etype);
+        $etype = new Lambda($tok, a, $test.etype);
     }
     ;
 
