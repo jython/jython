@@ -459,10 +459,14 @@ decorator [List decs]
     }
     ;
 
-dotted_attr returns [exprType etype]
-    : NAME {$etype = new Name($NAME, $NAME.text, expr_contextType.Load); debug("matched NAME in dotted_attr");}
+dotted_attr returns [exprType etype, PythonTree begin]
+    : NAME {
+        $etype = new Name($NAME, $NAME.text, expr_contextType.Load);
+        $begin = $NAME;
+        debug("matched NAME in dotted_attr");}
     | ^(DOT n1=dotted_attr n2=dotted_attr) {
-        $etype = new Attribute($DOT, $n1.etype, $n2.text, expr_contextType.Load);
+        $etype = new Attribute($n1.begin, $n1.etype, $n2.text, expr_contextType.Load);
+        $begin = $n1.begin;
     }
     ;
 
@@ -505,10 +509,10 @@ stmt //combines simple_stmt and compound_stmt from Python.g
 expr_stmt
     : test[expr_contextType.Load] {
         debug("matched expr_stmt:test " + $test.etype);
-        $stmts::statements.add(new Expr($test.start, $test.etype));
+        $stmts::statements.add(new Expr($test.begin, $test.etype));
     }
     | ^(augassign targ=test[expr_contextType.Store] value=test[expr_contextType.Load]) {
-        AugAssign a = new AugAssign($augassign.start, $targ.etype, $augassign.op, $value.etype);
+        AugAssign a = new AugAssign($targ.begin, $targ.etype, $augassign.op, $value.etype);
         $stmts::statements.add(a);
     }
     | ^(Assign targets ^(Value value=test[expr_contextType.Load])) {
@@ -533,7 +537,7 @@ call_expr returns [exprType etype]
             debug("Matched Call w/ args");
             exprType[] args = (exprType[])$arglist.args.toArray(new exprType[$arglist.args.size()]);
             keywordType[] keywords = (keywordType[])$arglist.keywords.toArray(new keywordType[$arglist.keywords.size()]);
-            c = new Call($Call, $test.etype, args, keywords, $arglist.starargs, $arglist.kwargs);
+            c = new Call($test.begin, $test.etype, args, keywords, $arglist.starargs, $arglist.kwargs);
         }
         $etype = c;
     }
@@ -878,7 +882,7 @@ try_stmt
 @init {
     List handlers = new ArrayList();
 }
-    : ^(TryExcept ^(Body body=stmts) except_clause[handlers]+ (^(OrElse orelse=stmts))? (^(FinalBody 'finally' fin=stmts))?) {
+    : ^(TryExcept tok='try' ^(Body body=stmts) except_clause[handlers]+ (^(OrElse orelse=stmts))? (^(FinalBody 'finally' fin=stmts))?) {
         List o = null;
         List f = null;
         if ($OrElse != null) {
@@ -887,11 +891,11 @@ try_stmt
         if ($FinalBody != null) {
             f = $fin.stypes;
         }
-        stmtType te = makeTryExcept($TryExcept, $body.stypes, handlers, o, f);
+        stmtType te = makeTryExcept($tok, $body.stypes, handlers, o, f);
         $stmts::statements.add(te);
     }
-    | ^(TryFinally ^(Body body=stmts) ^(FinalBody fin=stmts)) {
-        TryFinally tf = makeTryFinally($TryFinally, $body.stypes, $fin.stypes);
+    | ^(TryFinally tok='try' ^(Body body=stmts) ^(FinalBody fin=stmts)) {
+        TryFinally tf = makeTryFinally($tok, $body.stypes, $fin.stypes);
         $stmts::statements.add(tf);
     }
     ;
@@ -932,7 +936,7 @@ with_var returns [exprType etype]
     ;
 
 //FIXME: lots of placeholders
-test[expr_contextType ctype] returns [exprType etype, boolean parens]
+test[expr_contextType ctype] returns [exprType etype, PythonTree begin, boolean parens]
     : ^(AND left=test[ctype] right=test[ctype]) {
         List values = new ArrayList();
         boolean leftIsAnd = false;
@@ -972,7 +976,8 @@ test[expr_contextType ctype] returns [exprType etype, boolean parens]
             e[1] = $right.etype;
         }
         //XXX: could re-use BoolOps discarded above in many cases.
-        $etype = new BoolOp($AND, boolopType.And, e);
+        $etype = new BoolOp($left.begin, boolopType.And, e);
+        $begin = $left.begin;
     }
     | ^(OR left=test[ctype] right=test[ctype]) {
         //XXX: AND and OR could be factored into one method.
@@ -1014,7 +1019,8 @@ test[expr_contextType ctype] returns [exprType etype, boolean parens]
             e[1] = $right.etype;
         }
         //XXX: could re-use BoolOps discarded above in many cases.
-        $etype = new BoolOp($OR, boolopType.Or, e);
+        $etype = new BoolOp($left.begin, boolopType.Or, e);
+        $begin = $left.begin;
     }
     | ^(comp_op left=test[ctype] targs=test[ctype]) {
         exprType[] comparators;
@@ -1037,7 +1043,8 @@ test[expr_contextType ctype] returns [exprType etype, boolean parens]
             comparators[0] = $targs.etype;
             val = $left.etype;
         }
-        $etype = new Compare($comp_op.start, val, ops, comparators);
+        $etype = new Compare($left.begin, val, ops, comparators);
+        $begin = $left.begin;
         debug("COMP_OP: " + $comp_op.start + ":::" + $etype + ":::" + $parens);
     }
     | atom[ctype] {
@@ -1045,22 +1052,28 @@ test[expr_contextType ctype] returns [exprType etype, boolean parens]
         debug("***" + $atom.etype);
         $parens = $atom.parens;
         $etype = $atom.etype;
+        $begin = $atom.begin;
     }
     | ^(binop left=test[ctype] right=test[ctype]) {
         debug("BinOp matched");
-        $etype = new BinOp($left.start, left.etype, $binop.op, right.etype);
+        $etype = new BinOp($left.begin, left.etype, $binop.op, right.etype);
+        $begin = $left.begin;
     }
     | call_expr {
         $etype = $call_expr.etype;
+        $begin = $call_expr.start;
     }
     | lambdef {
         $etype = $lambdef.etype;
+        $begin = $lambdef.start;
     }
     | ^(IfExp ^(Test t1=test[ctype]) ^(Body t2=test[ctype]) ^(OrElse t3=test[ctype])) {
         $etype = new IfExp($IfExp, $t1.etype, $t2.etype, $t3.etype);
+        $begin = $IfExp;
     }
     | yield_expr {
         $etype = $yield_expr.etype;
+        $begin = $yield_expr.start;
     }
     ;
 
@@ -1097,7 +1110,7 @@ elt[expr_contextType ctype]
     }
     ;
 
-atom[expr_contextType ctype] returns [exprType etype, boolean parens]
+atom[expr_contextType ctype] returns [exprType etype, PythonTree begin, boolean parens]
     : ^(Tuple (^(Elts elts[ctype]))?) {
         debug("matched Tuple");
         exprType[] e;
@@ -1107,6 +1120,7 @@ atom[expr_contextType ctype] returns [exprType etype, boolean parens]
             e = new exprType[0];
         }
         $etype = new Tuple($Tuple, e, ctype);
+        $begin = $Tuple;
     }
     | ^(List (^(Elts elts[ctype]))?) {
         debug("matched List");
@@ -1117,9 +1131,10 @@ atom[expr_contextType ctype] returns [exprType etype, boolean parens]
             e = new exprType[0];
         }
         $etype = new org.python.antlr.ast.List($List, e, ctype);
+        $begin = $List;
     }
     | comprehension[ctype] {$etype = $comprehension.etype;}
-    | ^(Dict (^(Elts elts[ctype]))?) {
+    | ^(Dict LCURLY (^(Elts elts[ctype]))?) {
         exprType[] keys;
         exprType[] values;
         if ($Elts != null) {
@@ -1134,19 +1149,23 @@ atom[expr_contextType ctype] returns [exprType etype, boolean parens]
             keys = new exprType[0];
             values = new exprType[0];
         }
-        $etype = new Dict($Dict, keys, values);
+        $etype = new Dict($LCURLY, keys, values);
+        $begin = $LCURLY;
  
     }
     | ^(Repr BACKQUOTE test[ctype]*) {
         $etype = new Repr($BACKQUOTE, $test.etype);
+        $begin = $BACKQUOTE;
     }
     | ^(Name NAME) {
         debug("matched Name " + $NAME.text);
         $etype = new Name($NAME, $NAME.text, ctype);
+        $begin = $NAME;
     }
     | ^(DOT NAME test[expr_contextType.Load]) {
         debug("matched DOT in atom: " + $test.etype + "###" + $NAME.text);
-        $etype = new Attribute($DOT, $test.etype, $NAME.text, ctype);
+        $etype = new Attribute($test.begin, $test.etype, $NAME.text, ctype);
+        $begin = $test.begin;
     }
     | ^(SubscriptList subscriptlist test[expr_contextType.Load]) {
         //XXX: only handling one subscript for now.
@@ -1176,18 +1195,27 @@ atom[expr_contextType ctype] returns [exprType etype, boolean parens]
                 s = new ExtSlice($SubscriptList, st);
             }
         }
-        $etype = new Subscript($SubscriptList, $test.etype, s, ctype);
+        $etype = new Subscript($test.begin, $test.etype, s, ctype);
+        $begin = $test.begin;
     }
     | ^(Num INT) {
         $etype = makeInt($INT);
+        $begin = $INT;
         debug("makeInt output: " + $etype);
     }
-    | ^(Num LONGINT) {$etype = makeInt($LONGINT);}
+    | ^(Num LONGINT) {
+        $etype = makeInt($LONGINT);
+        $begin = $LONGINT;
+    }
     | ^(Num FLOAT) {
         $etype = makeFloat($FLOAT);
         debug("float matched" + $etype);
+        $begin = $FLOAT;
     }
-    | ^(Num COMPLEX) {$etype = makeComplex($COMPLEX);}
+    | ^(Num COMPLEX) {
+        $etype = makeComplex($COMPLEX);
+        $begin = $COMPLEX;
+    }
     | stringlist {
         StringPair sp = extractStrings($stringlist.strings);
         if (sp.isUnicode()) {
@@ -1195,24 +1223,30 @@ atom[expr_contextType ctype] returns [exprType etype, boolean parens]
         } else {
             $etype = new Str($stringlist.begin, sp.getString());
         }
+        $begin = $stringlist.begin;
     }
     | ^(USub test[ctype]) {
         debug("USub matched " + $test.etype);
         $etype = negate($USub, $test.etype);
+        $begin = $USub;
     }
     | ^(UAdd test[ctype]) {
         $etype = new UnaryOp($UAdd, unaryopType.UAdd, $test.etype);
+        $begin = $UAdd;
     }
     | ^(Invert test[ctype]) {
         $etype = new UnaryOp($Invert, unaryopType.Invert, $test.etype);
+        $begin = $Invert;
     }
     | ^(NOT test[ctype]) {
         $etype = new UnaryOp($NOT, unaryopType.Not, $test.etype);
+        $begin = $NOT;
     }
     | ^(Parens test[ctype]) {
         debug("PARENS! " + $test.etype);
         $parens = true;
         $etype = $test.etype;
+        $begin = $Parens;
     }
     ;
 

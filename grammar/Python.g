@@ -549,9 +549,9 @@ for_stmt : 'for' exprlist 'in' testlist COLON s1=suite ('else' COLON s2=suite)?
 //	   'finally' ':' suite))
 try_stmt : 'try' COLON trysuite=suite
            ( (except_clause+ ('else' COLON elsesuite=suite)? ('finally' COLON finalsuite=suite)?
-          -> ^(TryExcept ^(Body $trysuite) except_clause+ ^(OrElse $elsesuite)? ^(FinalBody 'finally' $finalsuite)?))
+          -> ^(TryExcept 'try' ^(Body $trysuite) except_clause+ ^(OrElse $elsesuite)? ^(FinalBody 'finally' $finalsuite)?))
            | ('finally' COLON finalsuite=suite
-          -> ^(TryFinally ^(Body $trysuite) ^(FinalBody $finalsuite)))
+          -> ^(TryFinally 'try' ^(Body $trysuite) ^(FinalBody $finalsuite)))
            )
          ;
 
@@ -601,12 +601,6 @@ not_test : NOT^ not_test
 //comparison: expr (comp_op expr)*
 comparison: expr (comp_op^ expr)*
 	;
-
-//comparison : expr
-//             ( ((comp_op expr)+ -> ^(Compare expr (comp_op expr)+))
-//             | expr
-//             )
-//	       ;
 
 //comp_op: '<'|'>'|'=='|'>='|'<='|'<>'|'!='|'in'|'not' 'in'|'is'|'is' 'not'
 comp_op : LESS
@@ -673,7 +667,7 @@ atom : LPAREN
        | -> ^(List)
        )
        RBRACK
-     | LCURLY (dictmaker)? RCURLY -> ^(Dict ^(Elts dictmaker)?)
+     | LCURLY (dictmaker)? RCURLY -> ^(Dict LCURLY ^(Elts dictmaker)?)
      | BACKQUOTE testlist BACKQUOTE -> ^(Repr BACKQUOTE testlist)
      | NAME {debug("parsed NAME");} -> ^(Name NAME)
      | INT -> ^(Num INT)
