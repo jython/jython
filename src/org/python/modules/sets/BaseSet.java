@@ -229,6 +229,10 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
      * @return An iteration of the set.
      */
     public PyObject __iter__() {
+        return baseset___iter__();
+    }
+
+    final PyObject baseset___iter__() {
         return new PySetIterator(this._set);
     }
 

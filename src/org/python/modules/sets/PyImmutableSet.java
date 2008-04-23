@@ -91,6 +91,11 @@ public class PyImmutableSet extends BaseSet {
     }
 
     @ExposedMethod
+    final PyObject ImmutableSet___iter__() {
+        return baseset___iter__();
+    }
+
+    @ExposedMethod
     final boolean ImmutableSet___contains__(PyObject item) {
         return baseset___contains__(item);
     }

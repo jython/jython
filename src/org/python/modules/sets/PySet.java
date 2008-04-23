@@ -95,6 +95,11 @@ public class PySet extends BaseSet {
     }
 
     @ExposedMethod
+    final PyObject Set___iter__() {
+        return baseset___iter__();
+    }
+
+    @ExposedMethod
     final boolean Set___contains__(PyObject item) {
         return baseset___contains__(item);
     }
