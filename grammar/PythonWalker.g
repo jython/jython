@@ -914,8 +914,6 @@ except_clause[List handlers]
         if ($Name != null) {
             n = $name.etype;
         }
-        //XXX: getCharPositionInLine() -7 is only accurate in the simplist cases -- need to
-        //     look harder at CPython to figure out what is really needed here.
         handlers.add(new excepthandlerType($ExceptHandler, t, n, b, $ExceptHandler.getLine(), $ExceptHandler.getCharPositionInLine()));
     }
     ;
@@ -1122,18 +1120,10 @@ atom[expr_contextType ctype] returns [exprType etype, PythonTree begin, boolean 
         $etype = new Tuple($Tuple, e, ctype);
         $begin = $Tuple;
     }
-    | ^(List (^(Elts elts[ctype]))?) {
-        debug("matched List");
-        exprType[] e;
-        if ($Elts != null) {
-            e = (exprType[])$elts.etypes.toArray(new exprType[$elts.etypes.size()]);
-        } else {
-            e = new exprType[0];
-        }
-        $etype = new org.python.antlr.ast.List($List, e, ctype);
-        $begin = $List;
+    | comprehension[ctype] {
+        $etype = $comprehension.etype;
+        $begin = $comprehension.begin;
     }
-    | comprehension[ctype] {$etype = $comprehension.etype;}
     | ^(Dict LCURLY (^(Elts elts[ctype]))?) {
         exprType[] keys;
         exprType[] values;
@@ -1250,21 +1240,38 @@ atom[expr_contextType ctype] returns [exprType etype, PythonTree begin, boolean 
     }
     ;
 
-comprehension[expr_contextType ctype] returns [exprType etype]
+comprehension[expr_contextType ctype] returns [exprType etype, PythonTree begin]
 @init {
     List gens = new ArrayList();
 }
-    : ^(ListComp test[ctype] list_for[gens]) {
-        debug("matched ListComp");
-        Collections.reverse(gens);
-        comprehensionType[] c = (comprehensionType[])gens.toArray(new comprehensionType[gens.size()]);
-        $etype = new ListComp($test.start, $test.etype, c);
-    }
+    : ^(Brackets LBRACK
+          ( (^(List (^(Elts elts[ctype]))?) {
+                  debug("matched List");
+                  exprType[] e;
+                  if ($Elts != null) {
+                      e = (exprType[])$elts.etypes.toArray(new exprType[$elts.etypes.size()]);
+                  } else {
+                      e = new exprType[0];
+                  }
+                  $etype = new org.python.antlr.ast.List($LBRACK, e, ctype);
+                  $begin = $LBRACK;
+               })
+          | (^(ListComp test[ctype] list_for[gens]) {
+                debug("matched ListComp");
+                Collections.reverse(gens);
+                comprehensionType[] c = (comprehensionType[])gens.toArray(new comprehensionType[gens.size()]);
+                $etype = new ListComp($test.begin, $test.etype, c);
+                $begin = $LBRACK;
+               }
+            )
+          )
+       )
     | ^(GeneratorExp test[ctype] gen_for[gens]) {
         debug("matched GeneratorExp");
         Collections.reverse(gens);
         comprehensionType[] c = (comprehensionType[])gens.toArray(new comprehensionType[gens.size()]);
-        $etype = new GeneratorExp($GeneratorExp, $test.etype, c);
+        $etype = new GeneratorExp($test.begin, $test.etype, c);
+        $begin = $GeneratorExp;
     }
     ;
 

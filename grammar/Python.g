@@ -181,6 +181,7 @@ tokens {
     ListIf;
     FinalBody;
     Parens;
+    Brackets;
 }
 
 @header { 
@@ -663,8 +664,8 @@ atom : LPAREN
        )
        RPAREN
      | LBRACK
-       (listmaker -> listmaker
-       | -> ^(List)
+       (listmaker -> ^(Brackets LBRACK listmaker)
+       | -> ^(Brackets LBRACK ^(List))
        )
        RBRACK
      | LCURLY (dictmaker)? RCURLY -> ^(Dict LCURLY ^(Elts dictmaker)?)
