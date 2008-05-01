@@ -1,11 +1,5 @@
 // Copyright (c) Corporation for National Research Initiatives
-
-// This class implements the standard Python sys module.
-
 package org.python.core;
-
-import org.python.core.packagecache.PackageManager;
-import org.python.core.packagecache.SysPackageManager;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -23,15 +17,17 @@ import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+
 import org.python.core.adapter.ClassicPyObjectAdapter;
 import org.python.core.adapter.ExtensiblePyObjectAdapter;
+import org.python.core.packagecache.PackageManager;
+import org.python.core.packagecache.SysPackageManager;
 import org.python.modules.Setup;
 import org.python.modules.zipimport.zipimporter;
 
 /**
  * The "sys" module.
  */
-
 // xxx this should really be a module!
 public class PySystemState extends PyObject
 {
@@ -92,28 +88,24 @@ public class PySystemState extends PyObject
         "Amsterdam.\n" +
         "All Rights Reserved.\n\n";
 
-    /**
-     * The arguments passed to this program on the command line.
-     */
+    private static Hashtable builtinNames;
+    public static PyTuple builtin_module_names = null;
+
+    public static PackageManager packageManager;
+    public static File cachedir;
+    
+    private static PyList defaultPath;
+    private static PyList defaultArgv;
+    private static PyObject defaultExecutable;
+
+    public static Properties registry; // = init_registry();
+    public static String prefix;
+    public static String exec_prefix="";
+
+    private static boolean initialized = false;
+    
+    /** The arguments passed to this program on the command line. */
     public PyList argv = new PyList();
-
-    /**
-     * Exit a Python program with the given status.
-     *
-     * @param status the value to exit with
-     * @exception Py.SystemExit always throws this exception.
-     * When caught at top level the program will exit.
-     */
-    public static void exit(PyObject status) {
-        throw new PyException(Py.SystemExit, status);
-    }
-
-    /**
-     * Exit a Python program with the status 0.
-     */
-    public static void exit() {
-        exit(Py.None);
-    }
 
     public PyObject modules;
     public PyList path;
@@ -141,39 +133,6 @@ public class PySystemState extends PyObject
     private PyObject environ;
 
     private ClassLoader classLoader = null;
-    public ClassLoader getClassLoader() {
-        return classLoader;
-    }
-    public void setClassLoader(ClassLoader classLoader) {
-        this.classLoader = classLoader;
-    }
-
-    public static PyTuple exc_info() {
-        PyException exc = Py.getThreadState().exception;
-        if(exc == null)
-            return new PyTuple(Py.None, Py.None, Py.None);
-        return new PyTuple(exc.type, exc.value, exc.traceback);
-    }
-
-    public static void exc_clear() {
-    	Py.getThreadState().exception = null;
-    }
-
-    public static PyFrame _getframe() {
-        return _getframe(-1);
-    }
-
-    public static PyFrame _getframe(int depth) {
-        PyFrame f = Py.getFrame();
-
-        while (depth > 0 && f != null) {
-            f = f.f_back;
-            --depth;
-        }
-        if (f == null)
-             throw Py.ValueError("call stack is not deep enough");
-        return f;
-    }
 
     public PyObject stdout, stderr, stdin;
     public PyObject __stdout__, __stderr__, __stdin__;
@@ -184,81 +143,9 @@ public class PySystemState extends PyObject
     public PyObject last_type = Py.None;
     public PyObject last_traceback = Py.None;
 
-    // xxx fix this accessors
-    public PyObject __findattr__(String name) {
-        if (name == "exc_value") {
-            PyException exc = Py.getThreadState().exception;
-            if (exc == null) return null;
-            return exc.value;
-        }
-        if (name == "exc_type") {
-            PyException exc = Py.getThreadState().exception;
-            if (exc == null) return null;
-            return exc.type;
-        }
-        if (name == "exc_traceback") {
-            PyException exc = Py.getThreadState().exception;
-            if (exc == null) return null;
-            return exc.traceback;
-        }
-        if (name == "warnoptions") {
-            if (warnoptions == null)
-                warnoptions = new PyList();
-            return warnoptions;
-        }
-
-        PyObject ret = super.__findattr__(name);
-        if (ret != null) return ret;
-
-        return __dict__.__finditem__(name);
-    }
-
     public PyObject __dict__;
-    public void __setattr__(String name, PyObject value) {
-        PyType selftype = getType();
-        if (selftype == null)
-            return;
-        PyObject ret = selftype.lookup(name); // xxx fix fix fix
-        if (ret != null) {
-            ret.jtryset(this, value);
-            return;
-        }
-        if (__dict__ == null) {
-            __dict__ = new PyStringMap();
-        }
-        __dict__.__setitem__(name, value);
-        //throw Py.AttributeError(name);
-    }
-
-    public void __delattr__(String name) {
-        if (__dict__ != null) {
-            __dict__.__delitem__(name);
-            return;
-        }
-        throw Py.AttributeError("del '"+name+"'");
-    }
-
-    // xxx
-    public void __rawdir__(PyDictionary accum) {
-        accum.update(__dict__);
-    }
-
-    public String toString() {
-        return "sys module";
-    }
 
     private int recursionlimit = 1000;
-
-    public int getrecursionlimit() {
-        return recursionlimit;
-    }
-
-    public void setrecursionlimit(int recursionlimit) {
-        if(recursionlimit <= 0) {
-            throw Py.ValueError("Recursion limit must be positive");
-        }
-        this.recursionlimit = recursionlimit;
-    }
 
     public PySystemState() {
         initialize();
@@ -303,13 +190,177 @@ public class PySystemState extends PyObject
         }
     }
 
-    private static PyList defaultPath;
-    private static PyList defaultArgv;
-    private static PyObject defaultExecutable;
+    // xxx fix this accessors
+    public PyObject __findattr__(String name) {
+        if (name == "exc_value") {
+            PyException exc = Py.getThreadState().exception;
+            if (exc == null) return null;
+            return exc.value;
+        }
+        if (name == "exc_type") {
+            PyException exc = Py.getThreadState().exception;
+            if (exc == null) return null;
+            return exc.type;
+        }
+        if (name == "exc_traceback") {
+            PyException exc = Py.getThreadState().exception;
+            if (exc == null) return null;
+            return exc.traceback;
+        }
+        if (name == "warnoptions") {
+            if (warnoptions == null)
+                warnoptions = new PyList();
+            return warnoptions;
+        }
 
-    public static Properties registry; // = init_registry();
-    public static String prefix;
-    public static String exec_prefix="";
+        PyObject ret = super.__findattr__(name);
+        if (ret != null) return ret;
+
+        return __dict__.__finditem__(name);
+    }
+
+    public void __setattr__(String name, PyObject value) {
+        PyType selftype = getType();
+        if (selftype == null)
+            return;
+        PyObject ret = selftype.lookup(name); // xxx fix fix fix
+        if (ret != null) {
+            ret.jtryset(this, value);
+            return;
+        }
+        if (__dict__ == null) {
+            __dict__ = new PyStringMap();
+        }
+        __dict__.__setitem__(name, value);
+        //throw Py.AttributeError(name);
+    }
+
+    public void __delattr__(String name) {
+        if (__dict__ != null) {
+            __dict__.__delitem__(name);
+            return;
+        }
+        throw Py.AttributeError("del '"+name+"'");
+    }
+
+    // xxx
+    public void __rawdir__(PyDictionary accum) {
+        accum.update(__dict__);
+    }
+
+    public String toString() {
+        return "sys module";
+    }
+
+    public int getrecursionlimit() {
+        return recursionlimit;
+    }
+
+    public void setrecursionlimit(int recursionlimit) {
+        if(recursionlimit <= 0) {
+            throw Py.ValueError("Recursion limit must be positive");
+        }
+        this.recursionlimit = recursionlimit;
+    }
+
+    public void settrace(PyObject tracefunc) {
+        ThreadState ts = Py.getThreadState();
+        if (tracefunc == Py.None) {
+            ts.tracefunc = null;
+        } else {
+            ts.tracefunc = new PythonTraceFunction(tracefunc);
+        }
+    }
+
+    public void setprofile(PyObject profilefunc) {
+        ThreadState ts = Py.getThreadState();
+        if (profilefunc == Py.None) {
+            ts.profilefunc = null;
+        } else {
+            ts.profilefunc = new PythonTraceFunction(profilefunc);
+        }
+    }
+
+    public String getdefaultencoding() {
+        return codecs.getDefaultEncoding();
+    }
+
+    public void setdefaultencoding(String encoding) {
+        codecs.setDefaultEncoding(encoding);
+    }
+
+    /**
+     * Initialize the environ dict from System.getenv.
+     *
+     */
+    public void initEnviron() {
+        environ = new PyDictionary();
+        for (Map.Entry<String, String> entry : System.getenv().entrySet()) {
+            environ.__setitem__(Py.newString(entry.getKey()), Py.newString(entry.getValue()));
+        }
+    }
+
+    public PyObject getEnviron() {
+        return environ;
+    }
+
+    /**
+     * Change the current working directory to the specified path.
+     *
+     * path is assumed to be absolute and canonical (via
+     * os.path.realpath).
+     *
+     * @param path a path String
+     */
+    public void setCurrentWorkingDir(String path) {
+        currentWorkingDir = path;
+    }
+
+    /**
+     * Return a string representing the current working directory.
+     *
+     * @return a path String
+     */
+    public String getCurrentWorkingDir() {
+        return currentWorkingDir;
+    }
+
+    /**
+     * Resolve a path. Returns the full path taking the current
+     * working directory into account.
+     *
+     * @param path a path String
+     * @return a resolved path String
+     */
+    public String getPath(String path) {
+        if (path == null || new File(path).isAbsolute()) {
+            return path;
+        }
+        return new File(getCurrentWorkingDir(), path).getPath();
+    }
+
+    public void callExitFunc() throws PyIgnoreMethodTag {
+        PyObject exitfunc = __findattr__("exitfunc");
+        if (exitfunc != null) {
+            try {
+                exitfunc.__call__();
+            } catch (PyException exc) {
+                if (!Py.matchException(exc, Py.SystemExit)) {
+                    Py.println(stderr,
+                               Py.newString("Error in sys.exitfunc:"));
+                }
+                Py.printException(exc);
+            }
+        }
+    }
+
+    public ClassLoader getClassLoader() {
+        return classLoader;
+    }
+
+    public void setClassLoader(ClassLoader classLoader) {
+        this.classLoader = classLoader;
+    }
 
     private static String findRoot(Properties preProperties,
                                      Properties postProperties,
@@ -428,8 +479,6 @@ public class PySystemState extends PyObject
         }
     }
 
-    private static boolean initialized = false;
-    
     public static Properties getBaseProperties(){
         try{
             return System.getProperties();
@@ -539,9 +588,6 @@ public class PySystemState extends PyObject
                                    Py.newInteger(PY_RELEASE_SERIAL));
     }
 
-    public static PackageManager packageManager;
-    public static File cachedir;
-    
     public static boolean isPackageCacheEnabled() {
         return cachedir != null;
     }
@@ -603,9 +649,6 @@ public class PySystemState extends PyObject
         }
         return new PyString(executableFile.getPath());
     }
-
-    private static Hashtable builtinNames;
-    public static PyTuple builtin_module_names = null;
 
     private static void addBuiltin(String name) {
         String classname;
@@ -790,83 +833,6 @@ public class PySystemState extends PyObject
         packageManager.addJarDir(directoryPath, cache);
     }
 
-
-    public void settrace(PyObject tracefunc) {
-        ThreadState ts = Py.getThreadState();
-        if (tracefunc == Py.None) {
-            ts.tracefunc = null;
-        } else {
-            ts.tracefunc = new PythonTraceFunction(tracefunc);
-        }
-    }
-
-    public void setprofile(PyObject profilefunc) {
-        ThreadState ts = Py.getThreadState();
-        if (profilefunc == Py.None) {
-            ts.profilefunc = null;
-        } else {
-            ts.profilefunc = new PythonTraceFunction(profilefunc);
-        }
-    }
-
-    public String getdefaultencoding() {
-        return codecs.getDefaultEncoding();
-    }
-
-    public void setdefaultencoding(String encoding) {
-        codecs.setDefaultEncoding(encoding);
-    }
-
-    /**
-     * Initialize the environ dict from System.getenv.
-     *
-     */
-    public void initEnviron() {
-        environ = new PyDictionary();
-        for (Map.Entry<String, String> entry : System.getenv().entrySet()) {
-            environ.__setitem__(Py.newString(entry.getKey()), Py.newString(entry.getValue()));
-        }
-    }
-
-    public PyObject getEnviron() {
-        return environ;
-    }
-
-    /**
-     * Change the current working directory to the specified path.
-     *
-     * path is assumed to be absolute and canonical (via
-     * os.path.realpath).
-     *
-     * @param path a path String
-     */
-    public void setCurrentWorkingDir(String path) {
-        currentWorkingDir = path;
-    }
-
-    /**
-     * Return a string representing the current working directory.
-     *
-     * @return a path String
-     */
-    public String getCurrentWorkingDir() {
-        return currentWorkingDir;
-    }
-
-    /**
-     * Resolve a path. Returns the full path taking the current
-     * working directory into account.
-     *
-     * @param path a path String
-     * @return a resolved path String
-     */
-    public String getPath(String path) {
-        if (path == null || new File(path).isAbsolute()) {
-            return path;
-        }
-        return new File(getCurrentWorkingDir(), path).getPath();
-    }
-
     /**
      * Resolve a path. Returns the full path taking the current
      * working directory into account.
@@ -905,19 +871,49 @@ public class PySystemState extends PyObject
         Py.displayException(type, val, tb, null);
     }
 
-    public void callExitFunc() throws PyIgnoreMethodTag {
-        PyObject exitfunc = __findattr__("exitfunc");
-        if (exitfunc != null) {
-            try {
-                exitfunc.__call__();
-            } catch (PyException exc) {
-                if (!Py.matchException(exc, Py.SystemExit)) {
-                    Py.println(stderr,
-                               Py.newString("Error in sys.exitfunc:"));
-                }
-                Py.printException(exc);
-            }
+    /**
+     * Exit a Python program with the given status.
+     *
+     * @param status the value to exit with
+     * @exception Py.SystemExit always throws this exception.
+     * When caught at top level the program will exit.
+     */
+    public static void exit(PyObject status) {
+        throw new PyException(Py.SystemExit, status);
+    }
+
+    /**
+     * Exit a Python program with the status 0.
+     */
+    public static void exit() {
+        exit(Py.None);
+    }
+
+    public static PyTuple exc_info() {
+        PyException exc = Py.getThreadState().exception;
+        if(exc == null)
+            return new PyTuple(Py.None, Py.None, Py.None);
+        return new PyTuple(exc.type, exc.value, exc.traceback);
+    }
+
+    public static void exc_clear() {
+    	Py.getThreadState().exception = null;
+    }
+
+    public static PyFrame _getframe() {
+        return _getframe(-1);
+    }
+
+    public static PyFrame _getframe(int depth) {
+        PyFrame f = Py.getFrame();
+
+        while (depth > 0 && f != null) {
+            f = f.f_back;
+            --depth;
         }
+        if (f == null)
+             throw Py.ValueError("call stack is not deep enough");
+        return f;
     }
 }
 
