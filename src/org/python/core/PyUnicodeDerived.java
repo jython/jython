@@ -1,3 +1,4 @@
+/* Generated file, do not modify.  See jython/src/templates/gderived.py. */
 package org.python.core;
 
 public class PyUnicodeDerived extends PyUnicode implements Slotted {

@@ -1,3 +1,4 @@
+/* Generated file, do not modify.  See jython/src/templates/gderived.py. */
 package org.python.core;
 
 public class PyIntegerDerived extends PyInteger implements Slotted {

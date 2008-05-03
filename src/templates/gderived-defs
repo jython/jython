@@ -1,5 +1,6 @@
 # copyright 2004-2005 Samuele Pedroni
 define: (CompilationUnit)derived_class
+  /* Generated file, do not modify.  See jython/src/templates/gderived.py. */
   package org.python.core;
 
   public class `concat`(`base,Derived) extends `base implements Slotted {
