@@ -7,6 +7,10 @@ import java.util.Hashtable;
 import java.util.Stack;
 import java.util.Vector;
 
+import org.python.objectweb.asm.ClassWriter;
+import org.python.objectweb.asm.Label;
+import org.python.objectweb.asm.MethodVisitor;
+import org.python.objectweb.asm.Opcodes;
 import org.python.core.CompilerFlags;
 import org.python.core.PyComplex;
 import org.python.core.PyFloat;
@@ -71,8 +75,7 @@ import org.python.parser.ast.listcompType;
 import org.python.parser.ast.modType;
 import org.python.parser.ast.stmtType;
 
-public class CodeCompiler extends Visitor
-    implements ClassConstants //, PythonGrammarTreeConstants
+public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //, PythonGrammarTreeConstants
 {
 
     public static final Object Exit=new Integer(1);
@@ -85,8 +88,8 @@ public class CodeCompiler extends Visitor
     public static final int AUGSET=4;
 
     public Module module;
-    public Code code;
-    public ConstantPool pool;
+    public ClassWriter cw;
+    public Code mv;
     public CodeCompiler mrefs;
     public CompilerFlags cflags;
 
@@ -125,7 +128,7 @@ public class CodeCompiler extends Visitor
         this.print_results = print_results;
 
         mrefs = this;
-        pool = module.classfile.pool;
+        cw = module.classfile.cw;
 
         continueLabels = new Stack();
         breakLabels = new Stack();
@@ -134,58 +137,36 @@ public class CodeCompiler extends Visitor
 
     public int PyNone;
     public void getNone() throws IOException {
-        if (mrefs.PyNone == 0) {
-            mrefs.PyNone = pool.Fieldref("org/python/core/Py", "None",
-                                         $pyObj);
-        }
-        code.getstatic(mrefs.PyNone);
+        mv.visitFieldInsn(Opcodes.GETSTATIC, "org/python/core/Py", "None", $pyObj);
     }
 
     public void loadFrame() throws Exception {
-        code.aload(1);
+        mv.visitVarInsn(ALOAD, 1);
     }
-
-
-    int f_lasti;
 
     public void setLastI(int idx) throws Exception {
-        if (mrefs.f_lasti == 0) {
-            mrefs.f_lasti = code.pool.Fieldref(
-                        "org/python/core/PyFrame", "f_lasti", "I");
-        }
         loadFrame();
-        code.iconst(idx);
-        code.putfield(mrefs.f_lasti);
+        mv.iconst(idx);
+        mv.visitFieldInsn(PUTFIELD, "org/python/core/PyFrame", "f_lasti", "I");
     }
     
-    int f_back;
-
     private void loadf_back() throws Exception {
-        if (mrefs.f_back == 0) {
-            mrefs.f_back = code.pool.Fieldref(
-                        "org/python/core/PyFrame", "f_back", $pyFrame);
-        }
-        code.getfield(f_back);
+        mv.visitFieldInsn(GETFIELD, "org/python/core/PyFrame", "f_back", $pyFrame);
     }
 
     public int storeTop() throws Exception {
-        int tmp = code.getLocal("org/python/core/PyObject");
-        code.astore(tmp);
+        int tmp = mv.getLocal("org/python/core/PyObject");
+        mv.visitVarInsn(ASTORE, tmp);
         return tmp;
     }
 
     public int setline;
     public void setline(int line) throws Exception {
-        //System.out.println("line: "+line+", "+code.stack);
         if (module.linenumbers) {
-            code.setline(line);
+            //FJW mv.setline(line);
             loadFrame();
-            code.iconst(line);
-            if (mrefs.setline == 0) {
-                mrefs.setline = pool.Methodref("org/python/core/PyFrame",
-                                               "setline", "(I)V");
-            }
-            code.invokevirtual(mrefs.setline);
+            mv.iconst(line);
+            mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyFrame", "setline", "(I)V");
         }
     }
 
@@ -196,17 +177,16 @@ public class CodeCompiler extends Visitor
     public void set(SimpleNode node) throws Exception {
         int tmp = storeTop();
         set(node, tmp);
-        code.aconst_null();
-        code.astore(tmp);
-        code.freeLocal(tmp);
+        mv.visitInsn(ACONST_NULL);
+        mv.visitVarInsn(ASTORE, tmp);
+        mv.freeLocal(tmp);
     }
 
 
     boolean inSet = false;
     public void set(SimpleNode node, int tmp) throws Exception {
-        //System.out.println("tmp: "+tmp);
         if (inSet) {
-            System.out.println("recurse set: "+tmp+", "+temporary);
+            System.err.println("recurse set: "+tmp+", "+temporary);
         }
         temporary = tmp;
         visit(node);
@@ -215,56 +195,56 @@ public class CodeCompiler extends Visitor
 
     private void saveAugTmps(SimpleNode node, int count) throws Exception {
         if (count >= 4) {
-            augtmp4 = code.getLocal("org/python/core/PyObject");
-            code.astore(augtmp4);
+            augtmp4 = mv.getLocal("org/python/core/PyObject");
+            mv.visitVarInsn(ASTORE, augtmp4);
         }
         if (count >= 3) {
-            augtmp3 = code.getLocal("org/python/core/PyObject");
-            code.astore(augtmp3);
+            augtmp3 = mv.getLocal("org/python/core/PyObject");
+            mv.visitVarInsn(ASTORE, augtmp3);
         }
         if (count >= 2) {
-            augtmp2 = code.getLocal("org/python/core/PyObject");
-            code.astore(augtmp2);
+            augtmp2 = mv.getLocal("org/python/core/PyObject");
+            mv.visitVarInsn(ASTORE, augtmp2);
         }
-        augtmp1 = code.getLocal("org/python/core/PyObject");
-        code.astore(augtmp1);
+        augtmp1 = mv.getLocal("org/python/core/PyObject");
+        mv.visitVarInsn(ASTORE, augtmp1);
 
-        code.aload(augtmp1);
+        mv.visitVarInsn(ALOAD, augtmp1);
         if (count >= 2)
-            code.aload(augtmp2);
+            mv.visitVarInsn(ALOAD, augtmp2);
         if (count >= 3)
-            code.aload(augtmp3);
+            mv.visitVarInsn(ALOAD, augtmp3);
         if (count >= 4)
-            code.aload(augtmp4);
+            mv.visitVarInsn(ALOAD, augtmp4);
     }
 
 
     private void restoreAugTmps(SimpleNode node, int count) throws Exception {
-       code.aload(augtmp1);
-       code.freeLocal(augtmp1);
+       mv.visitVarInsn(ALOAD, augtmp1);
+       mv.freeLocal(augtmp1);
        if (count == 1)
            return;
-       code.aload(augtmp2);
-       code.freeLocal(augtmp2);
+       mv.visitVarInsn(ALOAD, augtmp2);
+       mv.freeLocal(augtmp2);
        if (count == 2)
            return;
-       code.aload(augtmp3);
-       code.freeLocal(augtmp3);
+       mv.visitVarInsn(ALOAD, augtmp3);
+       mv.freeLocal(augtmp3);
        if (count == 3)
            return;
-       code.aload(augtmp4);
-       code.freeLocal(augtmp4);
+       mv.visitVarInsn(ALOAD, augtmp4);
+       mv.freeLocal(augtmp4);
    }
 
 
-    public void parse(modType node, Code code,
+    public void parse(modType node, Code mv,
                       boolean fast_locals, String className,
                       boolean classBody, ScopeInfo scope, CompilerFlags cflags)
         throws Exception
     {
         this.fast_locals = fast_locals;
         this.className = className;
-        this.code = code;
+        this.mv = mv;
         this.cflags = cflags;
 
         my_scope = scope;
@@ -274,20 +254,17 @@ public class CodeCompiler extends Visitor
         optimizeGlobals = fast_locals&&!scope.exec&&!scope.from_import_star;
 
         Object exit = visit(node);
-        //System.out.println("exit: "+exit+", "+(exit==null));
 
         if (classBody) {
             loadFrame();
-            code.invokevirtual("org/python/core/PyFrame", "getf_locals",
-                               "()" + $pyObj);
-            code.areturn();
+            mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyFrame", "getf_locals", "()" + $pyObj);
+            mv.visitInsn(ARETURN);
         } else {
             if (exit == null) {
-                //System.out.println("no exit");
                 setLastI(-1);
 
                 getNone();
-                code.areturn();
+                mv.visitInsn(ARETURN);
             }
         }
     }
@@ -300,26 +277,20 @@ public class CodeCompiler extends Visitor
     public Object visitModule(org.python.parser.ast.Module suite)
         throws Exception
     {
-        if (mrefs.setglobal == 0) {
-            mrefs.setglobal = code.pool.Methodref(
-                "org/python/core/PyFrame", "setglobal",
-                "(" +$str + $pyObj + ")V");
-        }
-
         if (suite.body.length > 0 &&
             suite.body[0] instanceof Expr &&
             ((Expr)suite.body[0]).value instanceof Str)
         {
             loadFrame();
-            code.ldc("__doc__");
+            mv.visitLdcInsn("__doc__");
             visit(((Expr) suite.body[0]).value);
-            code.invokevirtual(mrefs.setglobal);
+            mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyFrame", "setglobal", "(" +$str + $pyObj + ")V");
         }
         if (module.setFile) {
             loadFrame();
-            code.ldc("__file__");
-            module.filename.get(code);
-            code.invokevirtual(mrefs.setglobal);
+            mv.visitLdcInsn("__file__");
+            module.filename.get(mv);
+            mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyFrame", "setglobal", "(" +$str + $pyObj + ")V");
         }
         traverse(suite);
         return null;
@@ -343,36 +314,31 @@ public class CodeCompiler extends Visitor
             n = nodes.length;
 
         if (n == 0) {
-            if (mrefs.EmptyObjects == 0) {
-                mrefs.EmptyObjects = code.pool.Fieldref(
-                    "org/python/core/Py", "EmptyObjects", $pyObjArr);
-            }
-            code.getstatic(mrefs.EmptyObjects);
+            mv.visitFieldInsn(Opcodes.GETSTATIC, "org/python/core/Py", "EmptyObjects", $pyObjArr);
         } else {
-            int tmp = code.getLocal("[org/python/core/PyObject");
-            code.iconst(n);
-            code.anewarray(code.pool.Class("org/python/core/PyObject"));
-            code.astore(tmp);
+            int tmp = mv.getLocal("[org/python/core/PyObject");
+            mv.iconst(n);
+            mv.visitTypeInsn(ANEWARRAY, "org/python/core/PyObject");
+            mv.visitVarInsn(ASTORE, tmp);
 
             for(int i=0; i<n; i++) {
-                code.aload(tmp);
-                code.iconst(i);
+                mv.visitVarInsn(ALOAD, tmp);
+                mv.iconst(i);
                 visit(nodes[i]);
-                code.aastore();
+                mv.visitInsn(AASTORE);
             }
-            code.aload(tmp);
-            code.freeLocal(tmp);
+            mv.visitVarInsn(ALOAD, tmp);
+            mv.freeLocal(tmp);
         }
     }
 
     public void getDocString(stmtType[] suite) throws Exception {
-        //System.out.println("doc: "+suite.getChild(0));
         if (suite.length > 0 && suite[0] instanceof Expr &&
             ((Expr) suite[0]).value instanceof Str)
         {
             visit(((Expr) suite[0]).value);
         } else {
-            code.aconst_null();
+            mv.visitInsn(ACONST_NULL);
         }
     }
 
@@ -383,31 +349,26 @@ public class CodeCompiler extends Visitor
         int n = scope.freevars.size();
         if (n == 0) return false;
 
-        if (mrefs.getclosure == 0) {
-            mrefs.getclosure = code.pool.Methodref(
-            "org/python/core/PyFrame", "getclosure", "(I)" + $pyObj);
-        }
-
-        int tmp = code.getLocal("[org/python/core/PyObject");
-        code.iconst(n);
-        code.anewarray(code.pool.Class("org/python/core/PyObject"));
-        code.astore(tmp);
+        int tmp = mv.getLocal("[org/python/core/PyObject");
+        mv.iconst(n);
+        mv.visitTypeInsn(ANEWARRAY, "org/python/core/PyObject");
+        mv.visitVarInsn(ASTORE, tmp);
         Hashtable upTbl = scope.up.tbl;
         for(int i=0; i<n; i++) {
-            code.aload(tmp);
-            code.iconst(i);
+            mv.visitVarInsn(ALOAD, tmp);
+            mv.iconst(i);
             loadFrame();
             for(int j = 1; j < scope.distance; j++) {
                 loadf_back();
             }
             SymInfo symInfo = (SymInfo)upTbl.get(scope.freevars.elementAt(i));
-            code.iconst(symInfo.env_index);
-            code.invokevirtual(getclosure);
-            code.aastore();
+            mv.iconst(symInfo.env_index);
+            mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyFrame", "getclosure", "(I)" + $pyObj);
+            mv.visitInsn(AASTORE);
         }
 
-        code.aload(tmp);
-        code.freeLocal(tmp);
+        mv.visitVarInsn(ALOAD, tmp);
+        mv.freeLocal(tmp);
 
         return true;
     }
@@ -421,14 +382,10 @@ public class CodeCompiler extends Visitor
 
         setline(node);
 
-        code.new_(code.pool.Class("org/python/core/PyFunction"));
-        code.dup();
+        mv.visitTypeInsn(NEW, "org/python/core/PyFunction");
+        mv.visitInsn(DUP);
         loadFrame();
-        if (mrefs.f_globals == 0) {
-            mrefs.f_globals = code.pool.Fieldref(
-                "org/python/core/PyFrame", "f_globals", $pyObj);
-        }
-        code.getfield(mrefs.f_globals);
+        mv.visitFieldInsn(GETFIELD, "org/python/core/PyFrame", "f_globals", $pyObj);
 
         ScopeInfo scope = module.getScopeInfo(node);
 
@@ -438,26 +395,14 @@ public class CodeCompiler extends Visitor
         scope.dump();
         module.PyCode(new Suite(node.body, node), name, true,
                       className, false, false,
-                      node.beginLine, scope, cflags).get(code);
+                      node.beginLine, scope, cflags).get(mv);
 
         getDocString(node.body);
 
         if (!makeClosure(scope)) {
-            if (mrefs.PyFunction_init == 0) {
-                mrefs.PyFunction_init = code.pool.Methodref(
-                    "org/python/core/PyFunction", "<init>",
-                    "(" + $pyObj + $pyObjArr + $pyCode + $pyObj + ")V");
-            }
-            code.invokespecial(mrefs.PyFunction_init);
+            mv.visitMethodInsn(INVOKESPECIAL, "org/python/core/PyFunction", "<init>", "(" + $pyObj + $pyObjArr + $pyCode + $pyObj + ")V");
         } else {
-            if (mrefs.PyFunction_closure_init == 0) {
-                mrefs.PyFunction_closure_init = code.pool.Methodref(
-                    "org/python/core/PyFunction", "<init>",
-                    "(" + $pyObj + $pyObjArr + $pyCode + $pyObj + $pyObjArr +
-                    ")V");
-            }
-            code.invokespecial(mrefs.PyFunction_closure_init);
-
+            mv.visitMethodInsn(INVOKESPECIAL,  "org/python/core/PyFunction", "<init>", "(" + $pyObj + $pyObjArr + $pyCode + $pyObj + $pyObjArr + ")V");
         }
 
         set(new Name(node.name, Name.Store, node));
@@ -471,14 +416,9 @@ public class CodeCompiler extends Visitor
         visit(node.value);
 
         if (print_results) {
-            if (mrefs.printResult == 0) {
-                mrefs.printResult = code.pool.Methodref(
-                    "org/python/core/Py",
-                    "printResult", "(" + $pyObj + ")V");
-            }
-            code.invokestatic(mrefs.printResult);
+            mv.visitMethodInsn(INVOKESTATIC, "org/python/core/Py", "printResult", "(" + $pyObj + ")V");
         } else {
-            code.pop();
+	        mv.visitInsn(POP);
         }
         return null;
     }
@@ -494,78 +434,49 @@ public class CodeCompiler extends Visitor
         for (int i=node.targets.length-1; i>=0; i--) {
             set(node.targets[i], tmp);
         }
-        code.freeLocal(tmp);
+        mv.freeLocal(tmp);
         return null;
     }
-
-    public int print1, print2, print3, print4, print5, print6;
 
     public Object visitPrint(Print node) throws Exception {
         setline(node);
         int tmp = -1;
-        int printcomma, printlnv, println;
 
         if (node.dest != null) {
             visit(node.dest);
             tmp = storeTop();
-            if (mrefs.print4 == 0) {
-                mrefs.print4 = pool.Methodref(
-                    "org/python/core/Py", "printComma",
-                    "(" + $pyObj + $pyObj + ")V");
-            }
-            printcomma = mrefs.print4;
-            if (mrefs.print5 == 0) {
-                mrefs.print5 = pool.Methodref(
-                    "org/python/core/Py", "println",
-                    "(" + $pyObj + $pyObj + ")V");
-            }
-            println = mrefs.print5;
-            if (mrefs.print6 == 0) {
-                mrefs.print6 = pool.Methodref(
-                    "org/python/core/Py", "printlnv",
-                    "(" + $pyObj + ")V");
-            }
-            printlnv = mrefs.print6;
         }
-        else {
-            if (mrefs.print1 == 0) {
-                mrefs.print1 = pool.Methodref(
-                    "org/python/core/Py", "printComma",
-                    "(" + $pyObj + ")V");
-            }
-            printcomma = mrefs.print1;
-            if (mrefs.print2 == 0) {
-                mrefs.print2 = pool.Methodref(
-                    "org/python/core/Py", "println",
-                    "(" + $pyObj + ")V");
-            }
-            println = mrefs.print2;
-            if (mrefs.print3 == 0) {
-                mrefs.print3 = pool.Methodref(
-                    "org/python/core/Py",
-                    "println", "()V");
-            }
-            printlnv = mrefs.print3;
-        }
-
         if (node.values == null || node.values.length == 0) {
-            if (node.dest != null)
-                code.aload(tmp);
-            code.invokestatic(printlnv);
+            if (node.dest != null) {
+                mv.visitVarInsn(ALOAD, tmp);
+                mv.visitMethodInsn(INVOKESTATIC, "org/python/core/Py", "printlnv", "(" + $pyObj + ")V");
+            } else {
+                mv.visitMethodInsn(INVOKESTATIC, "org/python/core/Py", "println", "()V");
+            }
         } else {
             for (int i = 0; i < node.values.length; i++) {
-                if (node.dest != null)
-                    code.aload(tmp);
-                visit(node.values[i]);
-                if (node.nl && i == node.values.length - 1) {
-                    code.invokestatic(println);
+                if (node.dest != null) {
+                    mv.visitVarInsn(ALOAD, tmp);
+                    visit(node.values[i]);
+                    if (node.nl && i == node.values.length - 1) {
+                        mv.visitMethodInsn(INVOKESTATIC, "org/python/core/Py", "println", "(" + $pyObj + $pyObj + ")V");
+                    } else {
+                        mv.visitMethodInsn(INVOKESTATIC, "org/python/core/Py", "printComma", "(" + $pyObj + $pyObj + ")V");
+                    }
                 } else {
-                    code.invokestatic(printcomma);
+                    visit(node.values[i]);
+                    if (node.nl && i == node.values.length - 1) {
+                        mv.visitMethodInsn(INVOKESTATIC, "org/python/core/Py", "println", "(" + $pyObj + ")V");
+                    } else {
+                        mv.visitMethodInsn(INVOKESTATIC, "org/python/core/Py", "printComma", "(" + $pyObj + ")V");
+                    }
+
                 }
             }
         }
-        if (node.dest != null)
-            code.freeLocal(tmp);
+        if (node.dest != null) {
+            mv.freeLocal(tmp);
+        }
         return null;
     }
 
@@ -588,7 +499,7 @@ public class CodeCompiler extends Visitor
 
         doFinallysDownTo(bcfLevel);
 
-        code.goto_((Label)breakLabels.peek());
+        mv.visitJumpInsn(GOTO, (Label)breakLabels.peek());
         return null;
     }
 
@@ -600,7 +511,7 @@ public class CodeCompiler extends Visitor
 
         doFinallysDownTo(bcfLevel);
 
-        code.goto_((Label)continueLabels.peek());
+        mv.visitJumpInsn(GOTO, (Label)continueLabels.peek());
         return Exit;
     }
 
@@ -622,11 +533,11 @@ public class CodeCompiler extends Visitor
         saveLocals();
         visit(node.value);
         setLastI(++yield_count);
-        code.areturn();
+        mv.visitInsn(ARETURN);
 
-        Label restart = code.getLabel();
+        Label restart = new Label();
         yields.addElement(restart);
-        restart.setPosition();
+        mv.visitLabel(restart);
         restoreLocals();
         return null;
     }
@@ -645,30 +556,25 @@ public class CodeCompiler extends Visitor
     private void restoreLocals() throws Exception {
         endExceptionHandlers();
 
-        Vector v = code.getActiveLocals();
+        Vector v = mv.getActiveLocals();
 
         loadFrame();
-        if (mrefs.f_savedlocals == 0) {
-            mrefs.f_savedlocals = code.pool.Fieldref(
-                    "org/python/core/PyFrame", "f_savedlocals",
-                    "[Ljava/lang/Object;");
-        }
-        code.getfield(mrefs.f_savedlocals);
+        mv.visitFieldInsn(GETFIELD, "org/python/core/PyFrame", "f_savedlocals", "[Ljava/lang/Object;");
 
-        int locals = code.getLocal("[java/lang/Object");
-        code.astore(locals);
+        int locals = mv.getLocal("[java/lang/Object");
+        mv.visitVarInsn(ASTORE, locals);
 
         for (int i = 0; i < v.size(); i++) {
             String type = (String) v.elementAt(i);
             if (type == null)
                 continue;
-            code.aload(locals);
-            code.iconst(i);
-            code.aaload();
-            code.checkcast(code.pool.Class(type));
-            code.astore(i);
+            mv.visitVarInsn(ALOAD, locals);
+            mv.iconst(i);
+            mv.visitInsn(AALOAD);
+            mv.visitTypeInsn(CHECKCAST, type);
+            mv.visitVarInsn(ASTORE, i);
         }
-        code.freeLocal(locals);
+        mv.freeLocal(locals);
 
         restartExceptionHandlers();
     }
@@ -682,7 +588,8 @@ public class CodeCompiler extends Visitor
      */
     private void endExceptionHandlers()
     {
-        Label end = code.getLabelAtPosition();
+        Label end = new Label();
+        mv.visitLabel(end);
         for (int i = 0; i < exceptionHandlers.size(); ++i) {
             ExceptionHandler handler = 
                 (ExceptionHandler)exceptionHandlers.elementAt(i);
@@ -692,7 +599,8 @@ public class CodeCompiler extends Visitor
 
     private void restartExceptionHandlers()
     {
-        Label start = code.getLabelAtPosition();
+        Label start = new Label();
+        mv.visitLabel(start);
         for (int i = 0; i < exceptionHandlers.size(); ++i) {
             ExceptionHandler handler = 
                 (ExceptionHandler)exceptionHandlers.elementAt(i);
@@ -701,38 +609,30 @@ public class CodeCompiler extends Visitor
     }
 
     private void saveLocals() throws Exception {
-        Vector v = code.getActiveLocals();
-//System.out.println("bs:" + bs);
-        code.iconst(v.size());
-        //code.anewarray(code.pool.Class("org/python/core/PyObject"));
-        code.anewarray(code.pool.Class("java/lang/Object"));
-        int locals = code.getLocal("[java/lang/Object");
-        code.astore(locals);
+        Vector v = mv.getActiveLocals();
+        mv.iconst(v.size());
+        mv.visitTypeInsn(ANEWARRAY, "java/lang/Object");
+        int locals = mv.getLocal("[java/lang/Object");
+        mv.visitVarInsn(ASTORE, locals);
 
         for (int i = 0; i < v.size(); i++) {
             String type = (String) v.elementAt(i);
             if (type == null)
                 continue;
-            code.aload(locals);
-            code.iconst(i);
+            mv.visitVarInsn(ALOAD, locals);
+            mv.iconst(i);
             //code.checkcast(code.pool.Class("java/lang/Object"));
             if (i == 2222) {
-                code.aconst_null();
+                mv.visitInsn(ACONST_NULL);
             } else
-                code.aload(i);
-            code.aastore();
-        }
-
-        if (mrefs.f_savedlocals == 0) {
-            mrefs.f_savedlocals = code.pool.Fieldref(
-                    "org/python/core/PyFrame", "f_savedlocals",
-                    "[Ljava/lang/Object;");
+                mv.visitVarInsn(ALOAD, i);
+            mv.visitInsn(AASTORE);
         }
 
         loadFrame();
-        code.aload(locals);
-        code.putfield(mrefs.f_savedlocals);
-        code.freeLocal(locals);
+        mv.visitVarInsn(ALOAD, locals);
+        mv.visitFieldInsn(PUTFIELD, "org/python/core/PyFrame", "f_savedlocals", "[Ljava/lang/Object;");
+        mv.freeLocal(locals);
     }
 
 
@@ -751,19 +651,19 @@ public class CodeCompiler extends Visitor
                 throw new ParseException("'return' with argument " +
                                          "inside generator", node);
             visit(node.value);
-            tmp = code.getReturnLocal();
-            code.astore(tmp);
+            tmp = mv.getReturnLocal();
+            mv.visitVarInsn(ASTORE, tmp);
         }
         doFinallysDownTo(0);
 
         setLastI(-1);
 
         if (node.value != null) {
-            code.aload(tmp);
+            mv.visitVarInsn(ALOAD, tmp);
         } else {
             getNone();
         }
-        code.areturn();
+        mv.visitInsn(ARETURN);
         return Exit;
     }
 
@@ -773,35 +673,15 @@ public class CodeCompiler extends Visitor
         setline(node);
         traverse(node);
         if (node.type == null) {
-            if (mrefs.makeException0 == 0) {
-                mrefs.makeException0 = code.pool.Methodref(
-                    "org/python/core/Py", "makeException",
-                    "()" + $pyExc);
-            }
-            code.invokestatic(mrefs.makeException0);
+            mv.visitMethodInsn(INVOKESTATIC, "org/python/core/Py", "makeException", "()" + $pyExc);
         } else if (node.inst == null) {
-            if (mrefs.makeException1 == 0) {
-                mrefs.makeException1 = code.pool.Methodref(
-                    "org/python/core/Py", "makeException",
-                    "(" + $pyObj + ")" + $pyExc);
-            }
-            code.invokestatic(mrefs.makeException1);
+            mv.visitMethodInsn(INVOKESTATIC, "org/python/core/Py", "makeException", "(" + $pyObj + ")" + $pyExc);
         } else if (node.tback == null) {
-            if (mrefs.makeException2 == 0) {
-                mrefs.makeException2 = code.pool.Methodref(
-                    "org/python/core/Py", "makeException",
-                    "(" + $pyObj + $pyObj + ")" + $pyExc);
-            }
-            code.invokestatic(mrefs.makeException2);
+            mv.visitMethodInsn(INVOKESTATIC, "org/python/core/Py", "makeException", "(" + $pyObj + $pyObj + ")" + $pyExc);
         } else {
-            if (mrefs.makeException3 == 0) {
-                mrefs.makeException3 = code.pool.Methodref(
-                    "org/python/core/Py", "makeException",
-                    "(" + $pyObj + $pyObj + $pyObj + ")" + $pyExc);
-            }
-            code.invokestatic(mrefs.makeException3);
+            mv.visitMethodInsn(INVOKESTATIC, "org/python/core/Py", "makeException", "(" + $pyObj + $pyObj + $pyObj + ")" + $pyExc);
         }
-        code.athrow();
+        mv.visitInsn(ATHROW);
         return Exit;
     }
 
@@ -814,27 +694,17 @@ public class CodeCompiler extends Visitor
             if (node.names[i].asname != null) {
                 String name = node.names[i].name;
                 asname = node.names[i].asname;
-                code.ldc(name);
+                mv.visitLdcInsn(name);
                 loadFrame();
-                if (mrefs.importOneAs == 0) {
-                     mrefs.importOneAs = code.pool.Methodref(
-                        "org/python/core/imp", "importOneAs",
-                        "(" + $str + $pyFrame + ")" + $pyObj);
-                }
-                code.invokestatic(mrefs.importOneAs);
+                mv.visitMethodInsn(INVOKESTATIC, "org/python/core/imp", "importOneAs", "(" + $str + $pyFrame + ")" + $pyObj);
             } else {
                 String name = node.names[i].name;
                 asname = name;
                 if (asname.indexOf('.') > 0)
                     asname = asname.substring(0, asname.indexOf('.'));
-                code.ldc(name);
+                mv.visitLdcInsn(name);
                 loadFrame();
-                if (mrefs.importOne == 0) {
-                    mrefs.importOne = code.pool.Methodref(
-                        "org/python/core/imp", "importOne",
-                        "(" + $str + $pyFrame + ")" + $pyObj);
-                }
-                code.invokestatic(mrefs.importOne);
+                mv.visitMethodInsn(INVOKESTATIC, "org/python/core/imp", "importOne", "(" + $str + $pyFrame + ")" + $pyObj);
             }
             set(new Name(asname, Name.Store, node));
         }
@@ -847,7 +717,7 @@ public class CodeCompiler extends Visitor
     public Object visitImportFrom(ImportFrom node) throws Exception {
         Future.checkFromFuture(node); // future stmt support
         setline(node);
-        code.ldc(node.module);
+        mv.visitLdcInsn(node.module);
         if (node.names.length > 0) {
             String[] names = new String[node.names.length];
             String[] asnames = new String[node.names.length];
@@ -857,31 +727,21 @@ public class CodeCompiler extends Visitor
                 if (asnames[i] == null)
                     asnames[i] = names[i];
             }
-            makeStrings(code, names, names.length);
+            makeStrings(mv, names, names.length);
 
             loadFrame();
-            if (mrefs.importFrom == 0) {
-                mrefs.importFrom = code.pool.Methodref(
-                    "org/python/core/imp", "importFrom",
-                    "(" + $str + $strArr + $pyFrame + ")" + $pyObjArr);
-            }
-            code.invokestatic(mrefs.importFrom);
+            mv.visitMethodInsn(INVOKESTATIC, "org/python/core/imp", "importFrom", "(" + $str + $strArr + $pyFrame + ")" + $pyObjArr);
             int tmp = storeTop();
             for (int i = 0; i < node.names.length; i++) {
-                code.aload(tmp);
-                code.iconst(i);
-                code.aaload();
+                mv.visitVarInsn(ALOAD, tmp);
+                mv.iconst(i);
+                mv.visitInsn(AALOAD);
                 set(new Name(asnames[i], Name.Store, node));
             }
-            code.freeLocal(tmp);
+            mv.freeLocal(tmp);
         } else {
             loadFrame();
-            if (mrefs.importAll == 0) {
-                mrefs.importAll = code.pool.Methodref(
-                    "org/python/core/imp", "importAll",
-                    "(" + $str + $pyFrame + ")V");
-            }
-            code.invokestatic(mrefs.importAll);
+            mv.visitMethodInsn(INVOKESTATIC, "org/python/core/imp", "importAll", "(" + $str + $pyFrame + ")V");
         }
         return null;
     }
@@ -898,80 +758,59 @@ public class CodeCompiler extends Visitor
         if (node.globals != null) {
             visit(node.globals);
         } else {
-            code.aconst_null();
+            mv.visitInsn(ACONST_NULL);
         }
 
         if (node.locals != null) {
             visit(node.locals);
         } else {
-            code.aconst_null();
+            mv.visitInsn(ACONST_NULL);
         }
 
         //do the real work here
-        if (mrefs.exec == 0) {
-            mrefs.exec = code.pool.Methodref(
-                "org/python/core/Py", "exec",
-                "(" + $pyObj + $pyObj + $pyObj + ")V");
-        }
-        code.invokestatic(mrefs.exec);
+        mv.visitMethodInsn(INVOKESTATIC, "org/python/core/Py", "exec", "(" + $pyObj + $pyObj + $pyObj + ")V");
         return null;
     }
 
     public int asserttype;
     public Object visitAssert(Assert node) throws Exception {
         setline(node);
-        Label end_of_assert = code.getLabel();
+        Label end_of_assert = new Label();
         
-	/* First do an if __debug__: */
+        /* First do an if __debug__: */
         loadFrame();
         emitGetGlobal("__debug__");
 
-        if (mrefs.nonzero == 0) {
-            mrefs.nonzero = code.pool.Methodref("org/python/core/PyObject",
-                                                "__nonzero__", "()Z");
-        }
-        code.invokevirtual(mrefs.nonzero);
+        mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyObject", "__nonzero__", "()Z");
 
-        code.ifeq(end_of_assert);
+        mv.visitJumpInsn(IFEQ, end_of_assert);
 
         /* Now do the body of the assert. If PyObject.__nonzero__ is true,
-	   then the assertion succeeded, the message portion should not be
-	   processed. Otherwise, the message will be processed. */
+           then the assertion succeeded, the message portion should not be
+           processed. Otherwise, the message will be processed. */
         visit(node.test);
-	code.invokevirtual(mrefs.nonzero);
+        mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyObject", "__nonzero__", "()Z");
 
-	/* If evaluation is false, then branch to end of method */
-	code.ifne(end_of_assert);
-	
-	/* Push exception type onto stack(Py.AssertionError) */
-        if (mrefs.asserttype == 0) {
-            mrefs.asserttype = code.pool.Fieldref(
-                "org/python/core/Py", "AssertionError",
-                "Lorg/python/core/PyObject;");
+        /* If evaluation is false, then branch to end of method */
+        mv.visitJumpInsn(IFNE, end_of_assert);
+        
+        /* Push exception type onto stack(Py.AssertionError) */
+        mv.visitFieldInsn(Opcodes.GETSTATIC, "org/python/core/Py", "AssertionError", "Lorg/python/core/PyObject;");
+
+        /* Visit the message part of the assertion, or pass Py.None */
+        if( node.msg != null ) {
+             visit(node.msg);
+        } else {
+            getNone(); 
         }
-
-        code.getstatic(mrefs.asserttype);
-
-	/* Visit the message part of the assertion, or pass Py.None */
-	if( node.msg != null ){
- 	    visit(node.msg);
-        } else{
-	    getNone(); 
-  	}
-	
-	if (mrefs.makeException2 == 0) {
-            mrefs.makeException2 = code.pool.Methodref(
-                    "org/python/core/Py", "makeException",
-                    "(" + $pyObj + $pyObj + ")" + $pyExc);
-        }
-        code.invokestatic(mrefs.makeException2);
-	
-	/* Raise assertion error. Only executes this logic if assertion
-	   failed */
-        code.athrow();
+        mv.visitMethodInsn(INVOKESTATIC, "org/python/core/Py", "makeException", "(" + $pyObj + $pyObj + ")" + $pyExc);
+        
+        /* Raise assertion error. Only executes this logic if assertion
+           failed */
+        mv.visitInsn(ATHROW);
  
-	/* And finally set the label for the end of it all */
-        end_of_assert.setPosition();
+        /* And finally set the label for the end of it all */
+        mv.visitLabel(end_of_assert);
 
         return null;
     }
@@ -980,23 +819,20 @@ public class CodeCompiler extends Visitor
     public Object doTest(Label end_of_if, If node, int index)
         throws Exception
     {
-        Label end_of_suite = code.getLabel();
+        Label end_of_suite = new Label();
 
         setline(node.test);
         visit(node.test);
-        if (mrefs.nonzero == 0) {
-            mrefs.nonzero = code.pool.Methodref("org/python/core/PyObject",
-                                                "__nonzero__", "()Z");
-        }
-        code.invokevirtual(mrefs.nonzero);
-        code.ifeq(end_of_suite);
+        mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyObject", "__nonzero__", "()Z");
+
+        mv.visitJumpInsn(IFEQ, end_of_suite);
 
         Object exit = suite(node.body);
 
         if (end_of_if != null && exit == null)
-            code.goto_(end_of_if);
+            mv.visitJumpInsn(GOTO, end_of_if);
 
-        end_of_suite.setPosition();
+        mv.visitLabel(end_of_suite);
 
         if (node.orelse != null) {
             return suite(node.orelse) != null ? exit : null;
@@ -1008,17 +844,17 @@ public class CodeCompiler extends Visitor
     public Object visitIf(If node) throws Exception {
         Label end_of_if = null;
         if (node.orelse != null)
-            end_of_if = code.getLabel();
+            end_of_if = new Label();
 
         Object exit = doTest(end_of_if, node, 0);
         if (end_of_if != null)
-            end_of_if.setPosition();
+            mv.visitLabel(end_of_if);
         return exit;
     }
 
     public int beginLoop() {
-        continueLabels.push(code.getLabel());
-        breakLabels.push(code.getLabel());
+        continueLabels.push(new Label());
+        breakLabels.push(new Label());
         int savebcf = bcfLevel;
         bcfLevel = exceptionHandlers.size();
         return savebcf;
@@ -1036,25 +872,21 @@ public class CodeCompiler extends Visitor
         Label continue_loop = (Label)continueLabels.peek();
         Label break_loop = (Label)breakLabels.peek();
 
-        Label start_loop = code.getLabel();
+        Label start_loop = new Label();
 
-        code.goto_(continue_loop);
-        start_loop.setPosition();
+        mv.visitJumpInsn(GOTO, continue_loop);
+        mv.visitLabel(start_loop);
 
         //Do suite
         suite(node.body);
 
-        continue_loop.setPosition();
+        mv.visitLabel(continue_loop);
         setline(node);
 
         //Do test
         visit(node.test);
-        if (mrefs.nonzero == 0) {
-            mrefs.nonzero = code.pool.Methodref("org/python/core/PyObject",
-                                                "__nonzero__", "()Z");
-        }
-        code.invokevirtual(mrefs.nonzero);
-        code.ifne(start_loop);
+        mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyObject", "__nonzero__", "()Z");
+        mv.visitJumpInsn(IFNE, start_loop);
 
         finishLoop(savebcf);
 
@@ -1062,7 +894,7 @@ public class CodeCompiler extends Visitor
             //Do else
             suite(node.orelse);
         }
-        break_loop.setPosition();
+        mv.visitLabel(break_loop);
 
         // Probably need to detect "guaranteed exits"
         return null;
@@ -1075,11 +907,11 @@ public class CodeCompiler extends Visitor
         int savebcf = beginLoop();
         Label continue_loop = (Label)continueLabels.peek();
         Label break_loop = (Label)breakLabels.peek();
-        Label start_loop = code.getLabel();
-        Label next_loop = code.getLabel();
+        Label start_loop = new Label();
+        Label next_loop = new Label();
 
-        int iter_tmp = code.getLocal("org/python/core/PyObject");
-        int expr_tmp = code.getLocal("org/python/core/PyObject");
+        int iter_tmp = mv.getLocal("org/python/core/PyObject");
+        int expr_tmp = mv.getLocal("org/python/core/PyObject");
 
         setline(node);
 
@@ -1087,40 +919,31 @@ public class CodeCompiler extends Visitor
         visit(node.iter);
 
         //set up the loop iterator
-        if (mrefs.iter == 0) {
-            mrefs.iter = code.pool.Methodref(
-                "org/python/core/PyObject",
-                "__iter__", "()" + $pyObj);
-        }
-        code.invokevirtual(mrefs.iter);
-        code.astore(iter_tmp);
+        mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyObject", "__iter__", "()Lorg/python/core/PyObject;");
+        mv.visitVarInsn(ASTORE, iter_tmp);
 
         //do check at end of loop.  Saves one opcode ;-)
-        code.goto_(next_loop);
+        mv.visitJumpInsn(GOTO, next_loop);
 
-        start_loop.setPosition();
+        mv.visitLabel(start_loop);
         //set iter variable to current entry in list
         set(node.target, expr_tmp);
 
         //evaluate for body
         suite(node.body);
 
-        continue_loop.setPosition();
+        mv.visitLabel(continue_loop);
 
-        next_loop.setPosition();
+        mv.visitLabel(next_loop);
         setline(node);
         //get the next element from the list
-        code.aload(iter_tmp);
-        if (mrefs.iternext == 0) {
-            mrefs.iternext = code.pool.Methodref(
-                "org/python/core/PyObject",
-                "__iternext__", "()" + $pyObj);
-        }
-        code.invokevirtual(mrefs.iternext);
-        code.astore(expr_tmp);
-        code.aload(expr_tmp);
+        mv.visitVarInsn(ALOAD, iter_tmp);
+        mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyObject", "__iternext__", "()" + $pyObj);
+
+        mv.visitVarInsn(ASTORE, expr_tmp);
+        mv.visitVarInsn(ALOAD, expr_tmp);
         //if no more elements then fall through
-        code.ifnonnull(start_loop);
+        mv.visitJumpInsn(IFNONNULL, start_loop);
 
         finishLoop(savebcf);
 
@@ -1129,10 +952,10 @@ public class CodeCompiler extends Visitor
             suite(node.orelse);
         }
 
-        break_loop.setPosition();
+        mv.visitLabel(break_loop);
 
-        code.freeLocal(iter_tmp);
-        code.freeLocal(expr_tmp);
+        mv.freeLocal(iter_tmp);
+        mv.freeLocal(expr_tmp);
 
         // Probably need to detect "guaranteed exits"
         return null;
@@ -1148,19 +971,14 @@ public class CodeCompiler extends Visitor
             excepthandlerType handler = node.handlers[i];
 
             //setline(name);
-            Label end_of_self = code.getLabel();
+            Label end_of_self = new Label();
 
             if (handler.type != null) {
-                code.aload(exc);
+                mv.visitVarInsn(ALOAD, exc);
                 //get specific exception
                 visit(handler.type);
-                if (mrefs.match_exception == 0) {
-                    mrefs.match_exception = code.pool.Methodref(
-                        "org/python/core/Py", "matchException",
-                        "(" + $pyExc + $pyObj + ")Z");
-                }
-                code.invokestatic(mrefs.match_exception);
-                code.ifeq(end_of_self);
+                mv.visitMethodInsn(INVOKESTATIC, "org/python/core/Py", "matchException", "(" + $pyExc + $pyObj + ")Z");
+                mv.visitJumpInsn(IFEQ, end_of_self);
             } else {
                 if (i != node.handlers.length-1) {
                     throw new ParseException(
@@ -1169,29 +987,27 @@ public class CodeCompiler extends Visitor
             }
 
             if (handler.name != null) {
-                code.aload(exc);
-                code.getfield(code.pool.Fieldref("org/python/core/PyException",
-                                                "value",
-                                                "Lorg/python/core/PyObject;"));
+                mv.visitVarInsn(ALOAD, exc);
+                mv.visitFieldInsn(GETFIELD, "org/python/core/PyException", "value", "Lorg/python/core/PyObject;");
                 set(handler.name);
             }
 
             //do exception body
             suite(handler.body);
-            code.goto_(end_of_exceptions);
-            end_of_self.setPosition();
+            mv.visitJumpInsn(GOTO, end_of_exceptions);
+            mv.visitLabel(end_of_self);
         }
-        code.aload(exc);
-        code.athrow();
+        mv.visitVarInsn(ALOAD, exc);
+        mv.visitInsn(ATHROW);
     }
 
     public int add_traceback;
     public Object visitTryFinally(TryFinally node) throws Exception
     {
-        Label start = code.getLabel();
-        Label end = code.getLabel();
-        Label handlerStart = code.getLabel();
-        Label finallyEnd = code.getLabel();
+        Label start = new Label();
+        Label end = new Label();
+        Label handlerStart = new Label();
+        Label finallyEnd = new Label();
 
         Object ret;
 
@@ -1200,16 +1016,16 @@ public class CodeCompiler extends Visitor
         // Do protected suite
         exceptionHandlers.push(inFinally);
 
-        int excLocal = code.getLocal("java/lang/Throwable");
-        code.aconst_null();
-        code.astore(excLocal);
+        int excLocal = mv.getLocal("java/lang/Throwable");
+        mv.visitInsn(ACONST_NULL);
+        mv.visitVarInsn(ASTORE, excLocal);
 
-        start.setPosition();
+        mv.visitLabel(start);
         inFinally.exceptionStarts.addElement(start);
 
         ret = suite(node.body);
 
-        end.setPosition();
+        mv.visitLabel(end);
         inFinally.exceptionEnds.addElement(end);
         inFinally.bodyDone = true;
 
@@ -1217,32 +1033,26 @@ public class CodeCompiler extends Visitor
 
         if (ret == NoExit) {
             inlineFinally(inFinally);
-            code.goto_(finallyEnd);
+            mv.visitJumpInsn(GOTO, finallyEnd);
         }
 
         // Handle any exceptions that get thrown in suite
-        handlerStart.setPosition();
-        code.stack = 1;
-        code.astore(excLocal);
+        mv.visitLabel(handlerStart);
+        mv.visitVarInsn(ASTORE, excLocal);
 
-        code.aload(excLocal);
+        mv.visitVarInsn(ALOAD, excLocal);
         loadFrame();
 
-        if (mrefs.add_traceback == 0) {
-            mrefs.add_traceback = code.pool.Methodref(
-                "org/python/core/Py", "addTraceback",
-                "(" + $throwable + $pyFrame + ")V");
-        }
-        code.invokestatic(mrefs.add_traceback);
+        mv.visitMethodInsn(INVOKESTATIC, "org/python/core/Py", "addTraceback", "(" + $throwable + $pyFrame + ")V");
 
         inlineFinally(inFinally);
-        code.aload(excLocal);
-        code.checkcast(code.pool.Class("java/lang/Throwable"));
-        code.athrow();
+        mv.visitVarInsn(ALOAD, excLocal);
+        mv.visitTypeInsn(CHECKCAST, "java/lang/Throwable");
+        mv.visitInsn(ATHROW);
 
-        finallyEnd.setPosition();
+        mv.visitLabel(finallyEnd);
 
-        code.freeLocal(excLocal);
+        mv.freeLocal(excLocal);
 
         inFinally.addExceptionHandlers(handlerStart);
         // According to any JVM verifiers, this code block might not return
@@ -1253,7 +1063,9 @@ public class CodeCompiler extends Visitor
         if (!handler.bodyDone) {
             // end the previous exception block so inlined finally code doesn't
             // get covered by our exception handler.
-            handler.exceptionEnds.addElement(code.getLabelAtPosition());
+            Label end = new Label();
+            mv.visitLabel(end);
+            handler.exceptionEnds.addElement(end);
             // also exiting the try: portion of this particular finally
          }
         if (handler.isFinallyHandler()) {
@@ -1262,8 +1074,10 @@ public class CodeCompiler extends Visitor
     }
     
     private void reenterProtectedBody(ExceptionHandler handler) throws Exception {
-        // restart exception coverage 
-        handler.exceptionStarts.addElement(code.getLabelAtPosition());
+        // restart exception coverage
+	Label restart = new Label();
+	mv.visitLabel(restart);
+        handler.exceptionStarts.addElement(restart);
     }
  
     /**
@@ -1290,57 +1104,49 @@ public class CodeCompiler extends Visitor
  
     public int set_exception;
     public Object visitTryExcept(TryExcept node) throws Exception {
-        Label start = code.getLabel();
-        Label end = code.getLabel();
-        Label handler_start = code.getLabel();
-        Label handler_end = code.getLabel();
+        Label start = new Label();
+        Label end = new Label();
+        Label handler_start = new Label();
+        Label handler_end = new Label();
         ExceptionHandler handler = new ExceptionHandler();
 
-        start.setPosition();
+        mv.visitLabel(start);
         handler.exceptionStarts.addElement(start);
         exceptionHandlers.push(handler);
         //Do suite
         Object exit = suite(node.body);
-        //System.out.println("exit: "+exit+", "+(exit != null));
         exceptionHandlers.pop();
-        end.setPosition();
+        mv.visitLabel(end);
         handler.exceptionEnds.addElement(end);
 
         if (exit == null)
-            code.goto_(handler_end);
+            mv.visitJumpInsn(GOTO, handler_end);
 
-        handler_start.setPosition();
-        //Stack has eactly one item at start of handler
-        code.stack = 1;
+        mv.visitLabel(handler_start);
 
         loadFrame();
 
-        if (mrefs.set_exception == 0) {
-            mrefs.set_exception = code.pool.Methodref(
-                "org/python/core/Py", "setException",
-                "(" + $throwable + $pyFrame + ")" + $pyExc);
-        }
-        code.invokestatic(mrefs.set_exception);
+        mv.visitMethodInsn(INVOKESTATIC, "org/python/core/Py", "setException", "(" + $throwable + $pyFrame + ")" + $pyExc);
 
-        int exc = code.getFinallyLocal("java/lang/Throwable");
-        code.astore(exc);
+        int exc = mv.getFinallyLocal("java/lang/Throwable");
+        mv.visitVarInsn(ASTORE, exc);
 
         if (node.orelse == null) {
             //No else clause to worry about
             exceptionTest(exc, handler_end, node, 1);
-            handler_end.setPosition();
+            mv.visitLabel(handler_end);
         } else {
             //Have else clause
-            Label else_end = code.getLabel();
+            Label else_end = new Label();
             exceptionTest(exc, else_end, node, 1);
-            handler_end.setPosition();
+            mv.visitLabel(handler_end);
 
             //do else clause
             suite(node.orelse);
-            else_end.setPosition();
+            mv.visitLabel(else_end);
         }
 
-        code.freeFinallyLocal(exc);
+        mv.freeFinallyLocal(exc);
         handler.addExceptionHandlers(handler_start);
         return null;
     }
@@ -1353,7 +1159,6 @@ public class CodeCompiler extends Visitor
         int n = stmts.length;
         for(int i = 0; i < n; i++) {
             Object exit = visit(stmts[i]);
-            //System.out.println("exit: "+exit+", "+n+", "+(exit != null));
             if (exit != null)
                 return Exit;
         }
@@ -1361,91 +1166,75 @@ public class CodeCompiler extends Visitor
     }
 
     public Object visitBoolOp(BoolOp node) throws Exception {
-        Label end = code.getLabel();
+        Label end = new Label();
         visit(node.values[0]);
         for (int i = 1; i < node.values.length; i++) {
-            code.dup();
-            if (mrefs.nonzero == 0) {
-                mrefs.nonzero = code.pool.Methodref("org/python/core/PyObject",
-                                                    "__nonzero__", "()Z");
-            }
-            code.invokevirtual(mrefs.nonzero);
+            mv.visitInsn(DUP);
+            mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyObject", "__nonzero__", "()Z");
             switch (node.op) {
             case BoolOp.Or : 
-                code.ifne(end);
+                mv.visitJumpInsn(IFNE, end);
                 break;
             case BoolOp.And : 
-                code.ifeq(end);
+                mv.visitJumpInsn(IFEQ, end);
                 break;
             }
-            code.pop();
+	        mv.visitInsn(POP);
             visit(node.values[i]);
         }
-        end.setPosition();
+        mv.visitLabel(end);
         return null;
     }
 
 
     public Object visitCompare(Compare node) throws Exception {
-        int tmp1 = code.getLocal("org/python/core/PyObject");
-        int tmp2 = code.getLocal("org/python/core/PyObject");
-
-        if (mrefs.nonzero == 0) {
-            mrefs.nonzero = code.pool.Methodref("org/python/core/PyObject",
-                                                "__nonzero__", "()Z");
-        }
-
-        Label end = code.getLabel();
+        int tmp1 = mv.getLocal("org/python/core/PyObject");
+        int tmp2 = mv.getLocal("org/python/core/PyObject");
+        Label end = new Label();
 
         visit(node.left);
 
         int n = node.ops.length;
         for(int i = 0; i < n - 1; i++) {
             visit(node.comparators[i]);
-            code.dup();
-            code.astore(tmp1);
-            code.invokevirtual(make_cmpop(node.ops[i]));
-            code.dup();
-            code.astore(tmp2);
-            code.invokevirtual(mrefs.nonzero);
-            code.ifeq(end);
-            code.aload(tmp1);
+            mv.visitInsn(DUP);
+            mv.visitVarInsn(ASTORE, tmp1);
+            visitCmpop(node.ops[i]);
+            mv.visitInsn(DUP);
+            mv.visitVarInsn(ASTORE, tmp2);
+            mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyObject", "__nonzero__", "()Z");
+            mv.visitJumpInsn(IFEQ, end);
+            mv.visitVarInsn(ALOAD, tmp1);
         }
 
         visit(node.comparators[n-1]);
-        code.invokevirtual(make_cmpop(node.ops[n-1]));
+        visitCmpop(node.ops[n-1]);
 
         if (n > 1) {
-            code.astore(tmp2);
-            end.setPosition();
-            code.aload(tmp2);
+            mv.visitVarInsn(ASTORE, tmp2);
+            mv.visitLabel(end);
+            mv.visitVarInsn(ALOAD, tmp2);
         }
-        code.freeLocal(tmp1);
-        code.freeLocal(tmp2);
+        mv.freeLocal(tmp1);
+        mv.freeLocal(tmp2);
         return null;
     }
 
-    int[] compare_ops = new int[11];
-    public int make_cmpop(int op) throws Exception {
-        if (compare_ops[op] == 0) {
-            String name = null;
-            switch (op) {
-            case Compare.Eq:    name = "_eq"; break;
-            case Compare.NotEq: name = "_ne"; break;
-            case Compare.Lt:    name = "_lt"; break;
-            case Compare.LtE:   name = "_le"; break;
-            case Compare.Gt:    name = "_gt"; break;
-            case Compare.GtE:   name = "_ge"; break;
-            case Compare.Is:    name = "_is"; break;
-            case Compare.IsNot: name = "_isnot"; break;
-            case Compare.In:    name = "_in"; break;
-            case Compare.NotIn: name = "_notin"; break;
-            }
-            compare_ops[op] = code.pool.Methodref(
-                "org/python/core/PyObject", name,
-                "(" + $pyObj + ")" + $pyObj);
+    public void visitCmpop(int op) throws Exception {
+        String name = null;
+        switch (op) {
+        case Compare.Eq:    name = "_eq"; break;
+        case Compare.NotEq: name = "_ne"; break;
+        case Compare.Lt:    name = "_lt"; break;
+        case Compare.LtE:   name = "_le"; break;
+        case Compare.Gt:    name = "_gt"; break;
+        case Compare.GtE:   name = "_ge"; break;
+        case Compare.Is:    name = "_is"; break;
+        case Compare.IsNot: name = "_isnot"; break;
+        case Compare.In:    name = "_in"; break;
+        case Compare.NotIn: name = "_notin"; break;
         }
-        return compare_ops[op];
+        mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyObject", name, "(" + $pyObj + ")" + $pyObj);
     }
 
     static String[] bin_methods = new String[] {
@@ -1464,27 +1253,16 @@ public class CodeCompiler extends Visitor
         "_floordiv",
     };
 
-    int[] bin_ops = new int[13];
-    public int make_binop(int op) throws Exception {
-        if (bin_ops[op] == 0) {
-            String name = bin_methods[op];
-            if (op == BinOp.Div && module.getFutures().areDivisionOn()) {
-                name = "_truediv";
-            }
-            bin_ops[op] = code.pool.Methodref(
-                "org/python/core/PyObject", name,
-                "(" + $pyObj + ")" + $pyObj);
-        }
-        return bin_ops[op];
-    }
-
     public Object visitBinOp(BinOp node) throws Exception {
         visit(node.left);
         visit(node.right);
-        code.invokevirtual(make_binop(node.op));
+        String name = bin_methods[node.op];
+        if (node.op == BinOp.Div && module.getFutures().areDivisionOn()) {
+            name = "_truediv";
+        }
+        mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyObject", name, "(" + $pyObj + ")" + $pyObj);
         return null;
     }
-
     
     static String[] unary_methods = new String[] {
         null,
@@ -1494,19 +1272,11 @@ public class CodeCompiler extends Visitor
         "__neg__",
     };
 
-    int[] unary_ops = new int[unary_methods.length];
-    public int make_unaryop(int op) throws Exception {
-        if (unary_ops[op] == 0) {
-            String name = unary_methods[op];
-            unary_ops[op] = code.pool.Methodref(
-                "org/python/core/PyObject", name, "()" + $pyObj);
-        }
-        return unary_ops[op];
-    }
-
     public Object visitUnaryOp(UnaryOp node) throws Exception {
         visit(node.operand);
-        code.invokevirtual(make_unaryop(node.op));
+
+        String name = unary_methods[node.op];
+        mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyObject", name, "()" + $pyObj);
         return null;
     }
 
@@ -1527,20 +1297,6 @@ public class CodeCompiler extends Visitor
         "__ifloordiv__",
     };
 
-    int[] augbin_ops = new int[aug_methods.length];
-    public int make_augbinop(int op) throws Exception {
-        if (augbin_ops[op] == 0) {
-            String name = aug_methods[op];
-            if (op == BinOp.Div && module.getFutures().areDivisionOn()) {
-                name = "__itruediv__";
-            }
-            augbin_ops[op] = code.pool.Methodref(
-                "org/python/core/PyObject", name,
-                "(" + $pyObj + ")" + $pyObj);
-        }
-        return augbin_ops[op];
-    }
-
     public Object visitAugAssign(AugAssign node) throws Exception {
         visit(node.value);
         int tmp = storeTop();
@@ -1548,36 +1304,41 @@ public class CodeCompiler extends Visitor
         augmode = expr_contextType.Load;
         visit(node.target);
 
-        code.aload(tmp);
-        code.invokevirtual(make_augbinop(node.op));
-        code.freeLocal(tmp);
+        mv.visitVarInsn(ALOAD, tmp);
+
+        String name = aug_methods[node.op];
+        if (node.op == BinOp.Div && module.getFutures().areDivisionOn()) {
+            name = "__itruediv__";
+        }
+        mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyObject", name, "(" + $pyObj + ")" + $pyObj);
+        mv.freeLocal(tmp);
 
         temporary = storeTop();
         augmode = expr_contextType.Store;
         visit(node.target);
-        code.freeLocal(temporary);
+        mv.freeLocal(temporary);
 
         return null;
     }
 
 
-    public static void makeStrings(Code c, String[] names, int n)
+    public static void makeStrings(Code mv, String[] names, int n)
         throws IOException
     {
-        c.iconst(n);
-        c.anewarray(c.pool.Class("java/lang/String"));
-        int strings = c.getLocal("[java/lang/String");
-        c.astore(strings);
+        mv.iconst(n);
+        mv.visitTypeInsn(ANEWARRAY, "java/lang/String");
+        int strings = mv.getLocal("[java/lang/String");
+        mv.visitVarInsn(ASTORE, strings);
         for (int i=0; i<n; i++) {
-            c.aload(strings);
-            c.iconst(i);
-            c.ldc(names[i]);
-            c.aastore();
+            mv.visitVarInsn(ALOAD, strings);
+            mv.iconst(i);
+            mv.visitLdcInsn(names[i]);
+            mv.visitInsn(AASTORE);
         }
-        c.aload(strings);
-        c.freeLocal(strings);
+        mv.visitVarInsn(ALOAD, strings);
+        mv.freeLocal(strings);
     }
-
+    
     public int invokea0, invokea1, invokea2;
     public int invoke2;
     public Object Invoke(Attribute node, SimpleNode[] values)
@@ -1585,49 +1346,26 @@ public class CodeCompiler extends Visitor
     {
         String name = getName(node.attr);
         visit(node.value);
-        code.ldc(name);
-
-        //System.out.println("invoke: "+name+": "+values.length);
+        mv.visitLdcInsn(name);
 
         switch (values.length) {
         case 0:
-            if (mrefs.invokea0 == 0) {
-                mrefs.invokea0 = code.pool.Methodref(
-                    "org/python/core/PyObject", "invoke",
-                    "(" + $str + ")" + $pyObj);
-            }
-            code.invokevirtual(mrefs.invokea0);
+            mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyObject", "invoke", "(" + $str + ")" + $pyObj);
             break;
         case 1:
-            if (mrefs.invokea1 == 0) {
-                mrefs.invokea1 = code.pool.Methodref(
-                    "org/python/core/PyObject", "invoke",
-                    "(" + $str + $pyObj + ")" + $pyObj);
-            }
             visit(values[0]);
-            code.invokevirtual(mrefs.invokea1);
+            mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyObject", "invoke", "(" + $str + $pyObj + ")" + $pyObj);
             break;
         case 2:
-            if (mrefs.invokea2 == 0) {
-                mrefs.invokea2 = code.pool.Methodref(
-                    "org/python/core/PyObject", "invoke",
-                    "(" + $str + $pyObj + $pyObj + ")" + $pyObj);
-            }
             visit(values[0]);
             visit(values[1]);
-            code.invokevirtual(mrefs.invokea2);
+            mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyObject", "invoke", "(" + $str + $pyObj + $pyObj + ")" + $pyObj);
             break;
         default:
             makeArray(values);
-            if (mrefs.invoke2 == 0) {
-                mrefs.invoke2 = code.pool.Methodref(
-                    "org/python/core/PyObject", "invoke",
-                    "(" + $str + $pyObjArr + ")" + $pyObj);
-            }
-            code.invokevirtual(mrefs.invoke2);
+            mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyObject", "invoke", "(" + $str + $pyObjArr + ")" + $pyObj);
             break;
         }
-
         return null;
     }
 
@@ -1657,94 +1395,51 @@ public class CodeCompiler extends Visitor
 
         if (node.starargs != null || node.kwargs != null) {
             makeArray(values);
-            makeStrings(code, keys, keys.length);
+            makeStrings(mv, keys, keys.length);
             if (node.starargs == null)
-                code.aconst_null();
+                mv.visitInsn(ACONST_NULL);
             else
                 visit(node.starargs);
             if (node.kwargs == null)
-                code.aconst_null();
+                mv.visitInsn(ACONST_NULL);
             else
                 visit(node.kwargs);
 
-            if (mrefs.callextra == 0) {
-                mrefs.callextra = code.pool.Methodref(
-                    "org/python/core/PyObject", "_callextra",
-                    "(" + $pyObjArr + $strArr + $pyObj + $pyObj + ")" +
-                    $pyObj);
-            }
-            code.invokevirtual(mrefs.callextra);
+            mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyObject", "_callextra", "(" + $pyObjArr + $strArr + $pyObj + $pyObj + ")" + $pyObj);
         } else if (keys.length > 0) {
             makeArray(values);
-            makeStrings(code, keys, keys.length);
-
-            if (mrefs.call1 == 0) {
-                mrefs.call1 = code.pool.Methodref(
-                    "org/python/core/PyObject", "__call__",
-                    "(" + $pyObjArr + $strArr + ")" + $pyObj);
-            }
-            code.invokevirtual(mrefs.call1);
+            makeStrings(mv, keys, keys.length);
+            mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyObject", "__call__", "(" + $pyObjArr + $strArr + ")" + $pyObj);
         } else {
             switch (values.length) {
             case 0:
-                if (mrefs.calla0 == 0) {
-                    mrefs.calla0 = code.pool.Methodref(
-                        "org/python/core/PyObject", "__call__",
-                        "()" + $pyObj);
-                }
-                code.invokevirtual(mrefs.calla0);
+                mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyObject", "__call__", "()" + $pyObj);
                 break;
             case 1:
-                if (mrefs.calla1 == 0) {
-                    mrefs.calla1 = code.pool.Methodref(
-                        "org/python/core/PyObject", "__call__",
-                        "(" + $pyObj + ")" + $pyObj);
-                }
                 visit(values[0]);
-                code.invokevirtual(mrefs.calla1);
+                mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyObject", "__call__", "(" + $pyObj + ")" + $pyObj);
                 break;
             case 2:
-                if (mrefs.calla2 == 0) {
-                    mrefs.calla2 = code.pool.Methodref(
-                        "org/python/core/PyObject", "__call__",
-                        "(" + $pyObj + $pyObj + ")" + $pyObj);
-                }
                 visit(values[0]);
                 visit(values[1]);
-                code.invokevirtual(mrefs.calla2);
+                mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyObject", "__call__", "(" + $pyObj + $pyObj + ")" + $pyObj);
                 break;
             case 3:
-                if (mrefs.calla3 == 0) {
-                    mrefs.calla3 = code.pool.Methodref(
-                        "org/python/core/PyObject", "__call__",
-                        "(" + $pyObj + $pyObj + $pyObj + ")" + $pyObj);
-                }
                 visit(values[0]);
                 visit(values[1]);
                 visit(values[2]);
-                code.invokevirtual(mrefs.calla3);
+                mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyObject", "__call__", "(" + $pyObj + $pyObj + $pyObj + ")" + $pyObj);
                 break;
             case 4:
-                if (mrefs.calla4 == 0) {
-                    mrefs.calla4 = code.pool.Methodref(
-                        "org/python/core/PyObject", "__call__",
-                        "(" + $pyObj + $pyObj + $pyObj + $pyObj + ")" +
-                            $pyObj);
-                }
                 visit(values[0]);
                 visit(values[1]);
                 visit(values[2]);
                 visit(values[3]);
-                code.invokevirtual(mrefs.calla4);
+                mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyObject", "__call__", "(" + $pyObj + $pyObj + $pyObj + $pyObj + ")" + $pyObj);
                 break;
             default:
                 makeArray(values);
-                if (mrefs.call2 == 0) {
-                    mrefs.call2 = code.pool.Methodref(
-                        "org/python/core/PyObject", "__call__",
-                        "(" + $pyObjArr + ")" + $pyObj);
-                }
-                code.invokevirtual(mrefs.call2);
+                mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyObject", "__call__", "(" + $pyObjArr + ")" + $pyObj);
                 break;
             }
         }
@@ -1763,15 +1458,15 @@ public class CodeCompiler extends Visitor
             if (slice.lower != null)
                 visit(slice.lower);
             else
-                code.aconst_null();
+                mv.visitInsn(ACONST_NULL);
             if (slice.upper != null)
                 visit(slice.upper);
             else
-                code.aconst_null();
+                mv.visitInsn(ACONST_NULL);
             if (slice.step != null)
                 visit(slice.step);
             else
-                code.aconst_null();
+                mv.visitInsn(ACONST_NULL);
 
             if (node.ctx == expr_contextType.AugStore && augmode == expr_contextType.Load) {
                 saveAugTmps(node, 4);
@@ -1781,29 +1476,14 @@ public class CodeCompiler extends Visitor
 
         switch (ctx) {
         case Subscript.Del:
-            if (mrefs.delslice == 0) {
-                mrefs.delslice = code.pool.Methodref(
-                    "org/python/core/PyObject", "__delslice__",
-                    "(" + $pyObj + $pyObj + $pyObj + ")V");
-            }
-            code.invokevirtual(mrefs.delslice);
+            mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyObject", "__delslice__", "(" + $pyObj + $pyObj + $pyObj + ")V");
             return null;
         case Subscript.Load:
-            if (mrefs.getslice == 0) {
-                mrefs.getslice = code.pool.Methodref(
-                    "org/python/core/PyObject", "__getslice__",
-                    "(" + $pyObj + $pyObj + $pyObj + ")" + $pyObj);
-            }
-            code.invokevirtual(mrefs.getslice);
+            mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyObject", "__getslice__", "(" + $pyObj + $pyObj + $pyObj + ")" + $pyObj);
             return null;
         case Subscript.Store:
-            code.aload(temporary);
-            if (mrefs.setslice == 0) {
-                mrefs.setslice = code.pool.Methodref(
-                    "org/python/core/PyObject", "__setslice__",
-                    "(" + $pyObj + $pyObj + $pyObj + $pyObj + ")V");
-            }
-            code.invokevirtual(mrefs.setslice);
+            mv.visitVarInsn(ALOAD, temporary);
+            mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyObject", "__setslice__", "(" + $pyObj + $pyObj + $pyObj + $pyObj + ")V");
             return null;
         }
         return null;
@@ -1832,29 +1512,14 @@ public class CodeCompiler extends Visitor
 
         switch (ctx) {
         case Subscript.Del:
-            if (mrefs.delitem == 0) {
-                mrefs.delitem = code.pool.Methodref(
-                    "org/python/core/PyObject", "__delitem__",
-                    "(" + $pyObj + ")V");
-            }
-            code.invokevirtual(mrefs.delitem);
+            mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyObject", "__delitem__", "(" + $pyObj + ")V");
             return null;
         case Subscript.Load:
-            if (mrefs.getitem == 0) {
-                mrefs.getitem = code.pool.Methodref(
-                    "org/python/core/PyObject", "__getitem__",
-                    "(" + $pyObj + ")" + $pyObj);
-            }
-            code.invokevirtual(mrefs.getitem);
+            mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyObject", "__getitem__", "(" + $pyObj + ")" + $pyObj);
             return null;
         case Subscript.Store:
-            code.aload(temporary);
-            if (mrefs.setitem == 0) {
-                mrefs.setitem = code.pool.Methodref(
-                    "org/python/core/PyObject", "__setitem__",
-                    "(" + $pyObj + $pyObj + ")V");
-            }
-            code.invokevirtual(mrefs.setitem);
+            mv.visitVarInsn(ALOAD, temporary);
+            mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyObject", "__setitem__", "(" + $pyObj + $pyObj + ")V");
             return null;
         }
         return null;
@@ -1866,15 +1531,10 @@ public class CodeCompiler extends Visitor
     }
 
     public Object visitExtSlice(ExtSlice node) throws Exception {
-        code.new_(code.pool.Class("org/python/core/PyTuple"));
-        code.dup();
+        mv.visitTypeInsn(NEW, "org/python/core/PyTuple");
+        mv.visitInsn(DUP);
         makeArray(node.dims);
-        if (mrefs.PyTuple_init == 0) {
-            mrefs.PyTuple_init = code.pool.Methodref(
-                "org/python/core/PyTuple", "<init>",
-                "(" + $pyObjArr + ")V");
-        }
-        code.invokespecial(mrefs.PyTuple_init);
+        mv.visitMethodInsn(INVOKESPECIAL, "org/python/core/PyTuple", "<init>", "(" + $pyObjArr + ")V");
         return null;
     }
 
@@ -1887,7 +1547,7 @@ public class CodeCompiler extends Visitor
             ctx = expr_contextType.Store;
         } else {
             visit(node.value);
-            code.ldc(getName(node.attr));
+            mv.visitLdcInsn(getName(node.attr));
 
             if (node.ctx == expr_contextType.AugStore && augmode == expr_contextType.Load) {
                 saveAugTmps(node, 2);
@@ -1897,29 +1557,14 @@ public class CodeCompiler extends Visitor
 
         switch (ctx) {
         case Attribute.Del:
-            if (mrefs.delattr == 0) {
-                mrefs.delattr = code.pool.Methodref(
-                    "org/python/core/PyObject", "__delattr__",
-                    "(" + $str + ")V");
-            }
-            code.invokevirtual(mrefs.delattr);
+            mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyObject", "__delattr__", "(" + $str + ")V");
             return null;
         case Attribute.Load:
-            if (mrefs.getattr == 0) {
-                mrefs.getattr = code.pool.Methodref(
-                    "org/python/core/PyObject", "__getattr__",
-                    "(" + $str + ")" + $pyObj);
-            }
-            code.invokevirtual(mrefs.getattr);
+            mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyObject", "__getattr__", "(" + $str + ")" + $pyObj);
             return null;
         case Attribute.Store:
-            code.aload(temporary);
-            if (mrefs.setattr == 0) {
-                mrefs.setattr = code.pool.Methodref(
-                    "org/python/core/PyObject", "__setattr__",
-                    "(" + $str + $pyObj + ")V");
-            }
-            code.invokevirtual(mrefs.setattr);
+            mv.visitVarInsn(ALOAD, temporary);
+            mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyObject", "__setattr__", "(" + $str + $pyObj + ")V");
             return null;
         }
         return null;
@@ -1927,27 +1572,20 @@ public class CodeCompiler extends Visitor
 
     public int getitem2, unpackSequence;
     public Object seqSet(exprType[] nodes) throws Exception {
-        if (mrefs.unpackSequence == 0) {
-            mrefs.unpackSequence = code.pool.Methodref(
-                "org/python/core/Py",
-                "unpackSequence",
-                "(" + $pyObj + "I)" + $pyObjArr);
-        }
+        mv.visitVarInsn(ALOAD, temporary);
+        mv.iconst(nodes.length);
+        mv.visitMethodInsn(INVOKESTATIC, "org/python/core/Py", "unpackSequence", "(" + $pyObj + "I)" + $pyObjArr);
 
-        code.aload(temporary);
-        code.iconst(nodes.length);
-        code.invokestatic(mrefs.unpackSequence);
-
-        int tmp = code.getLocal("[org/python/core/PyObject");
-        code.astore(tmp);
+        int tmp = mv.getLocal("[org/python/core/PyObject");
+        mv.visitVarInsn(ASTORE, tmp);
 
         for (int i = 0; i < nodes.length; i++) {
-            code.aload(tmp);
-            code.iconst(i);
-            code.aaload();
+            mv.visitVarInsn(ALOAD, tmp);
+            mv.iconst(i);
+            mv.visitInsn(AALOAD);
             set(nodes[i]);
         }
-        code.freeLocal(tmp);
+        mv.freeLocal(tmp);
 
         return null;
     }
@@ -1967,42 +1605,22 @@ public class CodeCompiler extends Visitor
         if (node.ctx == expr_contextType.Store) return seqSet(node.elts);
         if (node.ctx == expr_contextType.Del) return seqDel(node.elts);
 
-        code.new_(code.pool.Class("org/python/core/PyTuple"));
-        code.dup();
+        mv.visitTypeInsn(NEW, "org/python/core/PyTuple");
+
+        mv.visitInsn(DUP);
         makeArray(node.elts);
-        if (mrefs.PyTuple_init == 0) {
-            mrefs.PyTuple_init = code.pool.Methodref(
-                "org/python/core/PyTuple", "<init>",
-                "(" + $pyObjArr + ")V");
-        }
-        code.invokespecial(mrefs.PyTuple_init);
+        mv.visitMethodInsn(INVOKESPECIAL, "org/python/core/PyTuple", "<init>", "(" + $pyObjArr + ")V");
         return null;
     }
 
-/*
-    public Object fplist(SimpleNode node) throws Exception {
-        if (mode == SET) return seqSet(node);
-        throw new ParseException("in fplist node", node);
-    }
-*/
-
     public Object visitList(List node) throws Exception {
-        /* if (mode ==AUGSET)
-            throw new ParseException(
-                      "augmented assign to list not possible", node); */
-
         if (node.ctx == expr_contextType.Store) return seqSet(node.elts);
         if (node.ctx == expr_contextType.Del) return seqDel(node.elts);
 
-        code.new_(code.pool.Class("org/python/core/PyList"));
-        code.dup();
+        mv.visitTypeInsn(NEW, "org/python/core/PyList");
+        mv.visitInsn(DUP);
         makeArray(node.elts);
-        if (mrefs.PyList_init == 0) {
-            mrefs.PyList_init = code.pool.Methodref(
-                "org/python/core/PyList", "<init>",
-                "(" + $pyObjArr + ")V");
-        }
-        code.invokespecial(mrefs.PyList_init);
+        mv.visitMethodInsn(INVOKESPECIAL, "org/python/core/PyList", "<init>", "(" + $pyObjArr + ")V");
         return null;
     }
 
@@ -2010,24 +1628,16 @@ public class CodeCompiler extends Visitor
 
     public int PyList_init2;
     public Object visitListComp(ListComp node) throws Exception {
-        code.new_(code.pool.Class("org/python/core/PyList"));
-        code.dup();
-        if (mrefs.PyList_init2 == 0) {
-            mrefs.PyList_init2 = code.pool.Methodref(
-                "org/python/core/PyList", "<init>", "()V");
-        }
-        code.invokespecial(mrefs.PyList_init2);
+        mv.visitTypeInsn(NEW, "org/python/core/PyList");
 
-        code.dup();
+        mv.visitInsn(DUP);
+        mv.visitMethodInsn(INVOKESPECIAL, "org/python/core/PyList", "<init>", "()V");
 
-        code.ldc("append");
+        mv.visitInsn(DUP);
 
-        if (mrefs.getattr == 0) {
-            mrefs.getattr = code.pool.Methodref(
-                "org/python/core/PyObject", "__getattr__",
-                "(" + $str + ")" + $pyObj);
-        }
-        code.invokevirtual(mrefs.getattr);
+        mv.visitLdcInsn("append");
+
+        mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyObject", "__getattr__", "(" + $str + ")" + $pyObj);
 
         String tmp_append = "_[" + (++list_comprehension_count) + "]";
             
@@ -2052,27 +1662,22 @@ public class CodeCompiler extends Visitor
     }
 
     public Object visitDict(Dict node) throws Exception {
-        code.new_(code.pool.Class("org/python/core/PyDictionary"));
-        code.dup();
+        mv.visitTypeInsn(NEW, "org/python/core/PyDictionary");
+
+        mv.visitInsn(DUP);
         SimpleNode[] elts = new SimpleNode[node.keys.length * 2];
         for (int i = 0; i < node.keys.length; i++) {
             elts[i * 2] = node.keys[i];
             elts[i * 2 + 1] = node.values[i];
         }
         makeArray(elts);
-        if (mrefs.PyDictionary_init == 0) {
-            mrefs.PyDictionary_init = code.pool.Methodref(
-                "org/python/core/PyDictionary", "<init>",
-                "(" + $pyObjArr + ")V");
-        }
-        code.invokespecial(mrefs.PyDictionary_init);
+        mv.visitMethodInsn(INVOKESPECIAL, "org/python/core/PyDictionary", "<init>", "(" + $pyObjArr + ")V");
         return null;
     }
 
     public Object visitRepr(Repr node) throws Exception {
         visit(node.value);
-        code.invokevirtual("org/python/core/PyObject", "__repr__",
-                           "()" + $pyStr);
+        mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyObject", "__repr__", "()" + $pyStr);
         return null;
     }
 
@@ -2086,14 +1691,11 @@ public class CodeCompiler extends Visitor
 
         setline(node);
 
-        code.new_(code.pool.Class("org/python/core/PyFunction"));
-        code.dup();
+        mv.visitTypeInsn(NEW, "org/python/core/PyFunction");
+
+        mv.visitInsn(DUP);
         loadFrame();
-        if (mrefs.f_globals == 0) {
-            mrefs.f_globals = code.pool.Fieldref("org/python/core/PyFrame",
-                                                 "f_globals", $pyObj);
-        }
-        code.getfield(mrefs.f_globals);
+        mv.visitFieldInsn(GETFIELD, "org/python/core/PyFrame", "f_globals", $pyObj);
 
         ScopeInfo scope = module.getScopeInfo(node);
 
@@ -2102,22 +1704,12 @@ public class CodeCompiler extends Visitor
         scope.setup_closure();
         scope.dump();
         module.PyCode(retSuite, name, true, className,
-                      false, false, node.beginLine, scope, cflags).get(code);
+                      false, false, node.beginLine, scope, cflags).get(mv);
 
         if (!makeClosure(scope)) {
-            if (mrefs.PyFunction_init1 == 0) {
-                mrefs.PyFunction_init1 = code.pool.Methodref(
-                "org/python/core/PyFunction", "<init>",
-                "(" + $pyObj + $pyObjArr + $pyCode + ")V");
-            }
-            code.invokespecial(mrefs.PyFunction_init1);
+            mv.visitMethodInsn(INVOKESPECIAL, "org/python/core/PyFunction", "<init>", "(" + $pyObj + $pyObjArr + $pyCode + ")V");
         } else {
-            if (mrefs.PyFunction_closure_init1 == 0) {
-                mrefs.PyFunction_closure_init1 = code.pool.Methodref(
-                "org/python/core/PyFunction", "<init>",
-                "(" + $pyObj + $pyObjArr + $pyCode + $pyObjArr + ")V");
-            }
-            code.invokespecial(mrefs.PyFunction_closure_init1);
+            mv.visitMethodInsn(INVOKESPECIAL, "org/python/core/PyFunction", "<init>", "(" + $pyObj + $pyObjArr + $pyCode + $pyObjArr + ")V");
         }
 
         return null;
@@ -2126,28 +1718,19 @@ public class CodeCompiler extends Visitor
 
     public int Ellipsis;
     public Object visitEllipsis(Ellipsis node) throws Exception {
-        if (mrefs.Ellipsis == 0) {
-            mrefs.Ellipsis = code.pool.Fieldref(
-                "org/python/core/Py", "Ellipsis",
-                "Lorg/python/core/PyObject;");
-        }
-        code.getstatic(mrefs.Ellipsis);
+        mv.visitFieldInsn(Opcodes.GETSTATIC, "org/python/core/Py", "Ellipsis", "Lorg/python/core/PyObject;");
         return null;
     }
 
     public int PySlice_init;
     public Object visitSlice(Slice node) throws Exception {
-        code.new_(code.pool.Class("org/python/core/PySlice"));
-        code.dup();
+        mv.visitTypeInsn(NEW, "org/python/core/PySlice");
+
+        mv.visitInsn(DUP);
         if (node.lower == null) getNone(); else visit(node.lower);
         if (node.upper == null) getNone(); else visit(node.upper);
         if (node.step == null) getNone(); else visit(node.step);
-        if (mrefs.PySlice_init == 0) {
-            mrefs.PySlice_init = code.pool.Methodref(
-                "org/python/core/PySlice", "<init>",
-                "(" + $pyObj + $pyObj + $pyObj + ")V");
-        }
-        code.invokespecial(mrefs.PySlice_init);
+        mv.visitMethodInsn(INVOKESPECIAL, "org/python/core/PySlice", "<init>", "(" + $pyObj + $pyObj + $pyObj + ")V");
         return null;
     }
 
@@ -2157,8 +1740,7 @@ public class CodeCompiler extends Visitor
 
         //Get class name
         String name = getName(node.name);
-        //System.out.println("name: "+name);
-        code.ldc(name);
+        mv.visitLdcInsn(name);
 
         makeArray(node.bases);
 
@@ -2168,27 +1750,16 @@ public class CodeCompiler extends Visitor
         scope.dump();
         //Make code object out of suite
         module.PyCode(new Suite(node.body, node), name, false, name,
-                      true, false, node.beginLine, scope, cflags).get(code);
+                      true, false, node.beginLine, scope, cflags).get(mv);
 
         //Get doc string (if there)
         getDocString(node.body);
 
         //Make class out of name, bases, and code
         if (!makeClosure(scope)) {
-            if (mrefs.makeClass == 0) {
-                mrefs.makeClass = code.pool.Methodref(
-                "org/python/core/Py", "makeClass",
-                "(" + $str + $pyObjArr + $pyCode + $pyObj + ")" + $pyObj);
-            }
-            code.invokestatic(mrefs.makeClass);
+            mv.visitMethodInsn(INVOKESTATIC, "org/python/core/Py", "makeClass", "(" + $str + $pyObjArr + $pyCode + $pyObj + ")" + $pyObj);
         } else {
-            if (mrefs.makeClass_closure == 0) {
-                mrefs.makeClass_closure = code.pool.Methodref(
-                "org/python/core/Py", "makeClass",
-                "(" + $str + $pyObjArr + $pyCode + $pyObj + $pyObjArr + ")" +
-                    $pyObj);
-            }
-            code.invokestatic(mrefs.makeClass_closure);
+            mv.visitMethodInsn(INVOKESTATIC, "org/python/core/Py", "makeClass", "(" + $str + $pyObjArr + $pyCode + $pyObj + $pyObjArr + ")" + $pyObj);
         }
 
         //Assign this new class to the given name
@@ -2198,13 +1769,13 @@ public class CodeCompiler extends Visitor
 
     public Object visitNum(Num node) throws Exception {
         if (node.n instanceof PyInteger) {
-            module.PyInteger(((PyInteger) node.n).getValue()).get(code);
+            module.PyInteger(((PyInteger) node.n).getValue()).get(mv);
         } else if (node.n instanceof PyLong) {
-            module.PyLong(((PyObject)node.n).__str__().toString()).get(code);
+            module.PyLong(((PyObject)node.n).__str__().toString()).get(mv);
         } else if (node.n instanceof PyFloat) {
-            module.PyFloat(((PyFloat) node.n).getValue()).get(code);
+            module.PyFloat(((PyFloat) node.n).getValue()).get(mv);
         } else if (node.n instanceof PyComplex) {
-            module.PyComplex(((PyComplex) node.n).imag).get(code);
+            module.PyComplex(((PyComplex) node.n).imag).get(mv);
         }
         return null;
     }
@@ -2228,13 +1799,8 @@ public class CodeCompiler extends Visitor
     int getderef,setderef;
 
     void emitGetGlobal(String name) throws Exception {
-        code.ldc(name);
-        if (mrefs.getglobal == 0) {
-            mrefs.getglobal = code.pool.Methodref(
-            "org/python/core/PyFrame", "getglobal",
-            "(" + $str + ")" + $pyObj);
-        }
-        code.invokevirtual(mrefs.getglobal);
+        mv.visitLdcInsn(name);
+        mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyFrame", "getglobal", "(" + $str + ")" + $pyObj);
     }
 
     public Object visitName(Name node) throws Exception {
@@ -2264,90 +1830,52 @@ public class CodeCompiler extends Visitor
                 }
                 if (fast_locals) {
                     if ((flags&ScopeInfo.CELL) != 0) {
-                        code.iconst(syminf.env_index);
-                        if (mrefs.getderef == 0) {
-                            mrefs.getderef = code.pool.Methodref(
-                            "org/python/core/PyFrame", "getderef",
-                            "(I)" + $pyObj);
-                        }
-                        code.invokevirtual(mrefs.getderef);
+                        mv.iconst(syminf.env_index);
+                        mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyFrame", "getderef", "(I)" + $pyObj);
+
                         return null;
                     }
                     if ((flags&ScopeInfo.BOUND) != 0) {
-                        code.iconst(syminf.locals_index);
-                        if (mrefs.getlocal2 == 0) {
-                            mrefs.getlocal2 = code.pool.Methodref(
-                            "org/python/core/PyFrame", "getlocal",
-                            "(I)" + $pyObj);
-                        }
-                        code.invokevirtual(mrefs.getlocal2);
+                        mv.iconst(syminf.locals_index);
+                        mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyFrame", "getlocal", "(I)" + $pyObj);
                         return null;
                     }
                 }
                 if ((flags&ScopeInfo.FREE) != 0 &&
                             (flags&ScopeInfo.BOUND) == 0) {
-                    code.iconst(syminf.env_index);
-                    if (mrefs.getderef == 0) {
-                        mrefs.getderef = code.pool.Methodref(
-                        "org/python/core/PyFrame", "getderef",
-                        "(I)" + $pyObj);
-                    }
-                    code.invokevirtual(mrefs.getderef);
+                    mv.iconst(syminf.env_index);
+                    mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyFrame", "getderef", "(I)" + $pyObj);
+
                     return null;
                 }
             }
-            code.ldc(name);
-            if (mrefs.getlocal1 == 0) {
-                mrefs.getlocal1 = code.pool.Methodref(
-                    "org/python/core/PyFrame", "getname",
-                    "(" + $str + ")" + $pyObj);
-            }
-            code.invokevirtual(mrefs.getlocal1);
+            mv.visitLdcInsn(name);
+            mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyFrame", "getname", "(" + $str + ")" + $pyObj);
             return null;
 
         case Name.Store:
             loadFrame();
             if (syminf != null && (syminf.flags&ScopeInfo.GLOBAL) != 0) {
-                code.ldc(name);
-                code.aload(temporary);
-                if (mrefs.setglobal == 0) {
-                    mrefs.setglobal = code.pool.Methodref(
-                        "org/python/core/PyFrame", "setglobal",
-                        "(" + $str + $pyObj + ")V");
-                }
-                code.invokevirtual(mrefs.setglobal);
+                mv.visitLdcInsn(name);
+                mv.visitVarInsn(ALOAD, temporary);
+                mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyFrame", "setglobal", "(" + $str + $pyObj + ")V");
             } else {
                 if (!fast_locals) {
-                    code.ldc(name);
-                    code.aload(temporary);
-                    if (mrefs.setlocal1 == 0) {
-                        mrefs.setlocal1 = code.pool.Methodref(
-                            "org/python/core/PyFrame", "setlocal",
-                            "(" + $str + $pyObj + ")V");
-                    }
-                    code.invokevirtual(mrefs.setlocal1);
+                    mv.visitLdcInsn(name);
+                    mv.visitVarInsn(ALOAD, temporary);
+                    mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyFrame", "setlocal", "(" + $str + $pyObj + ")V");
                 } else {
                     if (syminf == null) {
                         System.err.println("internal compiler error: "+node);
                     }
                     if ((syminf.flags&ScopeInfo.CELL) != 0) {
-                        code.iconst(syminf.env_index);
-                        code.aload(temporary);
-                        if (mrefs.setderef == 0) {
-                            mrefs.setderef = code.pool.Methodref(
-                            "org/python/core/PyFrame", "setderef",
-                            "(I" + $pyObj + ")V");
-                        }
-                        code.invokevirtual(mrefs.setderef);
+                        mv.iconst(syminf.env_index);
+                        mv.visitVarInsn(ALOAD, temporary);
+                        mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyFrame", "setderef", "(I" + $pyObj + ")V");
                     } else {
-                        code.iconst(syminf.locals_index);
-                        code.aload(temporary);
-                        if (mrefs.setlocal2 == 0) {
-                            mrefs.setlocal2 = code.pool.Methodref(
-                            "org/python/core/PyFrame", "setlocal",
-                            "(I" + $pyObj + ")V");
-                        }
-                        code.invokevirtual(mrefs.setlocal2);
+                        mv.iconst(syminf.locals_index);
+                        mv.visitVarInsn(ALOAD, temporary);
+                        mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyFrame", "setlocal", "(I" + $pyObj + ")V");
                     }
                 }
             }
@@ -2355,22 +1883,12 @@ public class CodeCompiler extends Visitor
         case Name.Del: {
             loadFrame();
             if (syminf != null && (syminf.flags&ScopeInfo.GLOBAL) != 0) {
-                code.ldc(name);
-                if (mrefs.delglobal == 0) {
-                    mrefs.delglobal = code.pool.Methodref(
-                        "org/python/core/PyFrame", "delglobal",
-                        "(" + $str + ")V");
-                }
-                code.invokevirtual(mrefs.delglobal);
+                mv.visitLdcInsn(name);
+                mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyFrame", "delglobal", "(" + $str + ")V");
             } else {
                 if (!fast_locals) {
-                    code.ldc(name);
-                    if (mrefs.dellocal1 == 0) {
-                        mrefs.dellocal1 = code.pool.Methodref(
-                            "org/python/core/PyFrame", "dellocal",
-                            "(" + $str + ")V");
-                    }
-                    code.invokevirtual(mrefs.dellocal1);
+                    mv.visitLdcInsn(name);
+                    mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyFrame", "dellocal", "(" + $str + ")V");
                 } else {
                     if (syminf == null) {
                         System.err.println("internal compiler error: "+node);
@@ -2379,13 +1897,8 @@ public class CodeCompiler extends Visitor
                         module.error("can not delete variable '"+name+
                               "' referenced in nested scope",true,node);
                     }
-                    code.iconst(syminf.locals_index);
-                    if (mrefs.dellocal2 == 0) {
-                        mrefs.dellocal2 = code.pool.Methodref(
-                            "org/python/core/PyFrame", "dellocal",
-                            "(I)V");
-                    }
-                    code.invokevirtual(mrefs.dellocal2);
+                    mv.iconst(syminf.locals_index);
+                    mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyFrame", "dellocal", "(I)V");
                 }
             }
             return null; }
@@ -2400,7 +1913,7 @@ public class CodeCompiler extends Visitor
                 "string constant too large (more than 32767 characters)",
                 node);
         }
-        module.PyUnicode(s).get(code);
+        module.PyUnicode(s).get(mv);
         return null;
     }
 
@@ -2411,7 +1924,7 @@ public class CodeCompiler extends Visitor
                 "string constant too large (more than 32767 characters)",
                 node);
         }
-        module.PyString(s).get(code);
+        module.PyString(s).get(mv);
         return null;
     }
 
@@ -2458,16 +1971,16 @@ public class CodeCompiler extends Visitor
         }
 
         public void addExceptionHandlers(Label handlerStart) throws Exception {
-            int throwable = code.pool.Class("java/lang/Throwable");
             for (int i = 0; i < exceptionStarts.size(); ++i) {
                 Label start = (Label)exceptionStarts.elementAt(i);
                 Label end = (Label)exceptionEnds.elementAt(i);
-                if (start.getPosition() != end.getPosition()) {
-                    code.addExceptionHandler(
+                //FIXME: not at all sure that getOffset() test is correct or necessary.
+                if (start.getOffset() != end.getOffset()) {
+                    mv.visitTryCatchBlock(
                         (Label)exceptionStarts.elementAt(i),
                         (Label)exceptionEnds.elementAt(i),
                         handlerStart,
-                        throwable);
+                        "java/lang/Throwable");
                 }
             }
         }

@@ -1,20 +1,24 @@
 // Copyright (c) Corporation for National Research Initiatives
 
 package org.python.compiler;
-import java.io.*;
+import java.io.DataOutputStream;
+import java.io.IOException;
 
 public class SourceFile extends Attribute {
-    int attName;
-    int filename;
+    String attName;
+    String filename;
 
-    public SourceFile(String name, ConstantPool pool) throws IOException {
-        attName = pool.UTF8("SourceFile");
-        filename = pool.UTF8(name);
+    public SourceFile(String name) throws IOException {
+        //this.attName = pool.UTF8("SourceFile");
+        //this.filename = pool.UTF8(name);
+        this.attName = "SourceFile";
+        this.filename = name;
     }
 
     public void write(DataOutputStream stream) throws IOException {
-        stream.writeShort(attName);
-        stream.writeInt(2);
-        stream.writeShort(filename);
+	//FIXME: need to LDC the att and name.
+        //FJW stream.writeShort(attName);
+        //FJW stream.writeInt(2);
+        //FJW stream.writeShort(filename);
     }
 }

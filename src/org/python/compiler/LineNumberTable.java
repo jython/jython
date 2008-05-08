@@ -7,12 +7,12 @@ import java.util.*;
 
 public class LineNumberTable extends Attribute {
     int attName;
-    ConstantPool pool;
+    //ConstantPool pool;
     Vector lines;
 
-    public LineNumberTable(ConstantPool pool) throws IOException {
-        this.pool = pool;
-        attName = pool.UTF8("LineNumberTable");
+    public LineNumberTable() throws IOException {
+        //this.pool = pool;
+        //attName = pool.UTF8("LineNumberTable");
         lines = new Vector();
     }
 

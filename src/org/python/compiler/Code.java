@@ -1,80 +1,67 @@
-// Copyright (c) Corporation for National Research Initiatives
-
 package org.python.compiler;
 
-import java.io.*;
+import java.util.BitSet;
 import java.util.Vector;
 
-class ExceptionLabel
-{
-    public Label start, end, handler;
-    public int exc;
+import org.python.objectweb.asm.AnnotationVisitor;
+import org.python.objectweb.asm.Attribute;
+import org.python.objectweb.asm.Label;
+import org.python.objectweb.asm.MethodVisitor;
+import org.python.objectweb.asm.Opcodes;
 
-    public ExceptionLabel(Label start, Label end, Label handler, int exc) {
-        this.start = start;
-        this.end = end;
-        this.handler = handler;
-        this.exc = exc;
-    }
-}
-
-
-public class Code extends Attribute
-{
-    ConstantPool pool;
-    public int stack;
-    int max_stack;
-    public DataOutputStream code;
-    ByteArrayOutputStream stream;
+/**
+ * XXX: I am betting that once I understand ASM better the need for this class will
+ *      may away.
+ */
+class Code implements MethodVisitor, Opcodes {
+    MethodVisitor mv;
     String sig;
     String locals[];
     int nlocals;
     int argcount;
-    int att_name;
-    Vector labels, exceptions;
-    LineNumberTable linenumbers;
     int returnLocal;
-
-    public Label getLabel() {
-        Label l = new Label(this);
-        addLabel(l);
-        return l;
+    BitSet finallyLocals = new java.util.BitSet();
+    
+    //XXX: I'd really like to get sig and access out of here since MethodVistitor
+    //     should already have this information.
+    public Code(MethodVisitor mv, String sig, int access) {
+	this.mv = mv;
+	this.sig = sig;
+	nlocals = -sigSize(sig, false);
+	if ((access & ACC_STATIC) != ACC_STATIC) nlocals = nlocals+1;
+	argcount = nlocals;
+	locals = new String[nlocals+128];
     }
+    
+    // XXX: So far I haven't found an ASM convenience for pushing constant
+    // integers, so for now I'm putting one here.  This shouldn't except for
+    // variable i's (so if you know you are pushing a 0 just use ICONST_0
+    // directly).
+    public void iconst(int i) {
+         if (i == -1) {
+             mv.visitInsn(ICONST_M1);
+         } else if (i == 0) {
+             mv.visitInsn(ICONST_0);
+         } else if (i == 1) {
+             mv.visitInsn(ICONST_1);
+         } else if (i == 2) {
+             mv.visitInsn(ICONST_2);
+         } else if (i == 3) {
+             mv.visitInsn(ICONST_3);
+         } else if (i == 4) {
+             mv.visitInsn(ICONST_4);
+         } else if (i == 5) {
+             mv.visitInsn(ICONST_5);
+         } else if (i > -127 && i < 128) {
+             mv.visitIntInsn(BIPUSH, i);
+         } else if (i > -32767 && i < 32768) {
+             mv.visitIntInsn(SIPUSH, i);
+         } else {
+             mv.visitLdcInsn(new Integer(i));
+         }
+     }
 
-    public Label getLabelAtPosition() {
-        Label l = getLabel();
-        l.setPosition();
-        return l;
-    }
-
-    public void addLabel(Label l) {
-        labels.addElement(l);
-    }
-
-    public int size() {
-        return stream.size();
-    }
-
-    public Code(String sig, ConstantPool pool, boolean isStatic) {
-        this.sig = sig;
-        max_stack = 2;
-        stack = 0;
-        this.pool = pool;
-        stream = new ByteArrayOutputStream();
-        code = new DataOutputStream(stream);
-        nlocals = -ConstantPool.sigSize(sig, false);
-        if (!isStatic) nlocals = nlocals+1;
-        argcount = nlocals;
-        locals = new String[nlocals+128];
-        labels = new Vector();
-        exceptions = new Vector();
-        try {
-            att_name = pool.UTF8("Code");
-        } catch (IOException e) {
-            att_name=0;
-        }
-    }
-
+    
     public int getLocal(String type) {
         //Could optimize this to skip arguments?
         for(int l = argcount; l<nlocals; l++) {
@@ -94,13 +81,12 @@ public class Code extends Attribute
     }
 
     public void freeLocal(int l) {
-        if (locals[l] == null)
+        if (locals[l] == null) {
             System.out.println("Double free:" + l);
+        }
         locals[l] = null;
     }
 
-
-    java.util.BitSet finallyLocals = new java.util.BitSet();
 
     public int getFinallyLocal(String type) {
         int l = getLocal(type);
@@ -130,436 +116,143 @@ public class Code extends Attribute
         return ret;
     }
 
-    public void addExceptionHandler(Label begin, Label end,
-                                    Label handler, int exc)
-    {
-        exceptions.addElement(new ExceptionLabel(begin, end, handler, exc));
+    public AnnotationVisitor visitAnnotation(String arg0, boolean arg1) {
+        return mv.visitAnnotation(arg0, arg1);
     }
 
-    /*
-      cl = self.code_length()
-      self.length = cl+12+8*len(self.exc_table)
-      cw.put2(self.name)
-      cw.put4(self.length)
-      cw.put2(self.max_stack)
-      cw.put2(len(self.locals))
-      cw.put4(cl)
-      self.dump_code(cw)
-      cw.put2(len(self.exc_table))
-      for start, end, handler, exc in self.exc_table:
-      cw.put2(self.labels[start])
-      cw.put2(self.labels[end])
-      cw.put2(self.labels[handler])
-      cw.put2(exc)
-      cw.dump_attributes(self.attributes)
-    */
-
-    public void fixLabels(byte[] bytes) throws IOException {
-        for(int i=0; i<labels.size(); i++) {
-            ((Label)labels.elementAt(i)).fix(bytes);
-        }
+    public AnnotationVisitor visitAnnotationDefault() {
+        return mv.visitAnnotationDefault();
     }
 
-    public void write(DataOutputStream stream) throws IOException {
-        byte[] bytes = this.stream.toByteArray();
-
-        fixLabels(bytes);
-
-        int n = exceptions.size();
-        int length = bytes.length+12+8*n;;
-        if (linenumbers != null)
-            length += linenumbers.length();
-        stream.writeShort(att_name);
-        stream.writeInt(length);
-        stream.writeShort(max_stack);
-        stream.writeShort(nlocals);
-        stream.writeInt(bytes.length);
-        stream.write(bytes);
-
-        //No Exceptions for now
-        stream.writeShort(n);
-        for(int i=0; i<n; i++) {
-            ExceptionLabel e = (ExceptionLabel)exceptions.elementAt(i);
-            stream.writeShort(e.start.getPosition());
-            stream.writeShort(e.end.getPosition());
-            stream.writeShort(e.handler.getPosition());
-            stream.writeShort(e.exc);
-        }
-        if (linenumbers != null)
-            ClassFile.writeAttributes(stream,
-                                      new Attribute[] { linenumbers });
-        else
-            ClassFile.writeAttributes(stream, new Attribute[0]);
+    public void visitAttribute(Attribute arg0) {
+        mv.visitAttribute(arg0);
     }
 
-    public void push(int i) {
-        //System.out.println("push: "+i+" : "+stack);
-        stack = stack+i;
-        if (stack > max_stack) max_stack = stack;
-        if (stack < 0)
-            throw new InternalError("stack < 0: "+stack);
+    public void visitCode() {
+        mv.visitCode();
     }
 
-    public void branch(int b, Label label) throws IOException {
-        int offset = size();
-        code.writeByte(b);
-        label.setBranch(offset, 2);
-        label.setStack(stack);
+    public void visitEnd() {
+        mv.visitEnd();
     }
 
-    public void print(String s) throws IOException {
-        getstatic("java/lang/System", "out", "Ljava/io/PrintStream;");
-        ldc(s);
-        invokevirtual("java/io/PrintStream", "println",
-                      "(Ljava/lang/String;)V");
+    public void visitFieldInsn(int arg0, String arg1, String arg2, String arg3) {
+        mv.visitFieldInsn(arg0, arg1, arg2, arg3);
     }
 
-
-    public void aaload() throws IOException {
-        code.writeByte(50);
-        push(-1);
+    public void visitFrame(int arg0, int arg1, Object[] arg2, int arg3, Object[] arg4) {
+        mv.visitFrame(arg0, arg1, arg2, arg3, arg4);
     }
 
-    public void aastore() throws IOException {
-        code.writeByte(83);
-        push(-3);
+    public void visitIincInsn(int arg0, int arg1) {
+        mv.visitIincInsn(arg0, arg1);
     }
 
-    public void aconst_null() throws IOException {
-        code.writeByte(1);
-        push(1);
+    public void visitInsn(int arg0) {
+        mv.visitInsn(arg0);
     }
 
-    public void aload(int i) throws IOException {
-        if (i >= 0 && i < 4) {
-            code.writeByte(42+i);
-        } else {
-            code.writeByte(25);
-            code.writeByte(i);
-        }
-        push(1);
+    public void visitIntInsn(int arg0, int arg1) {
+        mv.visitIntInsn(arg0, arg1);
     }
 
-    public void anewarray(int c) throws IOException {
-        code.writeByte(189);
-        code.writeShort(c);
-        //push(-1); push(1);
+    public void visitJumpInsn(int arg0, Label arg1) {
+        mv.visitJumpInsn(arg0, arg1);
     }
 
-    public void areturn() throws IOException {
-        code.writeByte(176);
-        push(-1);
+    public void visitLabel(Label arg0) {
+        mv.visitLabel(arg0);
     }
 
-    public void arraylength() throws IOException {
-        code.writeByte(190);
-        //push(-1); push(1);
+    public void visitLdcInsn(Object arg0) {
+        mv.visitLdcInsn(arg0);
     }
 
-    public void astore(int i) throws IOException {
-        if (i >= 0 && i < 4) {
-            code.writeByte(75+i);
-        } else {
-            code.writeByte(58);
-            code.writeByte(i);
-        }
-        push(-1);
+    public void visitLineNumber(int arg0, Label arg1) {
+        mv.visitLineNumber(arg0, arg1);
     }
 
-    public void athrow() throws IOException {
-        code.writeByte(191);
-        push(-1);
+    public void visitLocalVariable(String arg0, String arg1, String arg2, Label arg3, Label arg4, int arg5) {
+        mv.visitLocalVariable(arg0, arg1, arg2, arg3, arg4, arg5);
     }
 
-    public void checkcast(int c) throws IOException {
-        code.writeByte(192);
-        code.writeShort(c);
+    public void visitLookupSwitchInsn(Label arg0, int[] arg1, Label[] arg2) {
+        mv.visitLookupSwitchInsn(arg0, arg1, arg2);
     }
 
-    public void dload(int i) throws IOException {
-        if (i >= 0 && i < 4) {
-            code.writeByte(38+i);
-        } else {
-            code.writeByte(24);
-            code.writeByte(i);
-        }
-        push(2);
+    public void visitMaxs(int arg0, int arg1) {
+        mv.visitMaxs(arg0, arg1);
     }
 
-    public void dreturn() throws IOException {
-        code.writeByte(175);
-        push(-2);
+    public void visitMethodInsn(int arg0, String arg1, String arg2, String arg3) {
+        mv.visitMethodInsn(arg0, arg1, arg2, arg3);
     }
 
-    public void dup() throws IOException {
-        code.writeByte(89);
-        push(1);
+    public void visitMultiANewArrayInsn(String arg0, int arg1) {
+        mv.visitMultiANewArrayInsn(arg0, arg1);
     }
 
-    public void dup_x1() throws IOException {
-        code.writeByte(90);
-        push(1);
+    public AnnotationVisitor visitParameterAnnotation(int arg0, String arg1, boolean arg2) {
+        return mv.visitParameterAnnotation(arg0, arg1, arg2);
     }
 
-    public void fload(int i) throws IOException {
-        if (i >= 0 && i < 4) {
-            code.writeByte(34+i);
-        } else {
-            code.writeByte(23);
-            code.writeByte(i);
-        }
-        push(1);
+    public void visitTableSwitchInsn(int arg0, int arg1, Label arg2, Label[] arg3) {
+        mv.visitTableSwitchInsn(arg0, arg1, arg2, arg3);
     }
 
-    public void freturn() throws IOException {
-        code.writeByte(174);
-        push(-1);
+    public void visitTryCatchBlock(Label arg0, Label arg1, Label arg2, String arg3) {
+        mv.visitTryCatchBlock(arg0, arg1, arg2, arg3);
     }
 
-    public void getfield(int c) throws IOException {
-        code.writeByte(180);
-        code.writeShort(c);
-        push(pool.sizes[c]-1);
+    public void visitTypeInsn(int arg0, String arg1) {
+        mv.visitTypeInsn(arg0, arg1);
     }
 
-    public void getfield(String c, String name, String type)
-        throws IOException
-    {
-        getfield(pool.Fieldref(c, name, type));
+    public void visitVarInsn(int arg0, int arg1) {
+        mv.visitVarInsn(arg0, arg1);
     }
 
-    public void getstatic(int c) throws IOException {
-        code.writeByte(178);
-        code.writeShort(c);
-        push(pool.sizes[c]);
-    }
+    private int sigSize(String sig, boolean includeReturn) {
+        int stack = 0;
+        int i = 0;
+        char[] c = sig.toCharArray();
+        int n = c.length;
+        boolean ret=false;
+        boolean array=false;
 
-    public void getstatic(String c, String name, String type)
-        throws IOException
-    {
-        getstatic(pool.Fieldref(c, name, type));
-    }
-
-    public void goto_(Label label) throws IOException {
-        branch(167, label);
-    }
-
-    public void iconst(int i) throws IOException {
-        if (i >= -1 && i <= 5) {
-            code.writeByte(3+i);
-        } else {
-            if (i > -127 && i < 128) {
-                code.writeByte(16);
-                if (i < 0) i = 256+i;
-                code.writeByte(i);
-            } else {
-                if (i > -32767 && i < 32768) {
-                    code.writeByte(17);
-                    if (i < 0) i = i+65536;
-                    code.writeShort(i);
+        while (++i<n) {
+            switch (c[i]) {
+            case ')':
+                if (!includeReturn)
+                    return stack;
+                ret=true;
+                continue;
+            case '[':
+                array=true;
+                continue;
+            case 'V':
+                continue;
+            case 'D':
+            case 'J':
+                if (array) {
+                    if (ret) stack += 1;
+                    else stack -=1;
+                    array = false;
                 } else {
-                    ldc(pool.Integer(i));
+                    if (ret) stack += 2;
+                    else stack -=2;
                 }
+                break;
+            case 'L':
+                while (c[++i] != ';') {;}
+            default:
+                if (ret) stack++;
+                else stack--;
+                array = false;
             }
         }
-        push(1);
+        return stack;
     }
 
-    public void if_icmpne(Label label) throws IOException {
-        push(-2);
-        branch(160, label);
-    }
 
-    public void ifeq(Label label) throws IOException {
-        push(-1);
-        branch(153, label);
-    }
-
-    public void ifne(Label label) throws IOException {
-        push(-1);
-        branch(154, label);
-    }
-
-    public void ifnonnull(Label label) throws IOException {
-        push(-1);
-        branch(199, label);
-    }
-
-    public void ifnull(Label label) throws IOException {
-        push(-1);
-        branch(198, label);
-    }
-
-    public void iinc(int i, int increment) throws IOException {
-        code.writeByte(132);
-        code.writeByte(i);
-        code.writeByte(increment);
-    }
-
-    public void iinc(int i) throws IOException {
-        iinc(i, 1);
-    }
-
-    public void iload(int i) throws IOException {
-        if (i >= 0 && i < 4) {
-            code.writeByte(26+i);
-        } else {
-            code.writeByte(21);
-            code.writeByte(i);
-        }
-        push(1);
-    }
-
-    public void invokespecial(int c) throws IOException {
-        code.writeByte(183);
-        code.writeShort(c);
-        push(pool.sizes[c]-1);
-    }
-
-    public void invokestatic(int c) throws IOException {
-        code.writeByte(184);
-        code.writeShort(c);
-        push(pool.sizes[c]);
-    }
-
-    public void invokevirtual(int c) throws IOException {
-        code.writeByte(182);
-        code.writeShort(c);
-        push(pool.sizes[c]-1);
-    }
-
-    public void invokevirtual(String c, String name, String type)
-        throws IOException
-    {
-        invokevirtual(pool.Methodref(c, name, type));
-    }
-
-    public void ireturn() throws IOException {
-        code.writeByte(172);
-        push(-1);
-    }
-
-    public void istore(int i) throws IOException {
-        if (i >= 0 && i < 4) {
-            code.writeByte(59+i);
-        } else {
-            code.writeByte(54);
-            code.writeByte(i);
-        }
-        push(-1);
-    }
-
-    public void jsr(Label label) throws IOException {
-        //push(-1);
-        int offset = size();
-        code.writeByte(168);
-        label.setBranch(offset, 2);
-        label.setStack(stack+1);
-    }
-
-    public void ldc(int c) throws IOException {
-        int size = pool.sizes[c];
-        if (size == 1) {
-            if (c < 256) {
-                code.writeByte(18);
-                code.writeByte(c);
-            } else {
-                code.writeByte(19);
-                code.writeShort(c);
-            }
-        } else {
-            code.writeByte(20);
-            code.writeShort(c);
-        }
-
-        push(pool.sizes[c]);
-    }
-
-    public void ldc(String s) throws IOException {
-        ldc(pool.String(s));
-    }
-
-    public void lload(int i) throws IOException {
-        if (i >= 0 && i < 4) {
-            code.writeByte(30+i);
-        } else {
-            code.writeByte(22);
-            code.writeByte(i);
-        }
-        push(2);
-    }
-
-    public void lreturn() throws IOException {
-        code.writeByte(173);
-        push(-2);
-    }
-
-    public void new_(int c) throws IOException {
-            code.writeByte(187);
-            code.writeShort(c);
-            push(1);
-        }
-
-    public void pop() throws IOException {
-        code.writeByte(87);
-        push(-1);
-    }
-
-    public void putfield(int c) throws IOException {
-        code.writeByte(181);
-        code.writeShort(c);
-        push(-pool.sizes[c]-1);
-    }
-
-    public void putfield(String c, String name, String type)
-        throws IOException
-    {
-        putfield(pool.Fieldref(c, name, type));
-    }
-
-    public void putstatic(int c) throws IOException {
-        code.writeByte(179);
-        code.writeShort(c);
-        push(-pool.sizes[c]);
-    }
-
-    public void putstatic(String c, String name, String type)
-        throws IOException
-    {
-        putstatic(pool.Fieldref(c, name, type));
-    }
-
-    public void return_() throws IOException {
-        code.writeByte(177);
-    }
-
-    public void ret(int index) throws IOException {
-        code.writeByte(169);
-        code.writeByte(index);
-    }
-
-    public void swap() throws IOException {
-        code.writeByte(95);
-    }
-
-    public void tableswitch(Label def, int low, Label[] labels)
-        throws IOException
-    {
-        int position = size();
-        push(-1);
-        code.writeByte(170);
-        for(int j=0; j < 3-(position%4); j++) code.writeByte(0);
-        def.setBranch(position, 4);
-        code.writeInt(low);
-        code.writeInt(labels.length-1);
-        for(int i=0; i<labels.length; i++) {
-            labels[i].setBranch(position, 4);
-        }
-    }
-
-    public void setline(int line) throws IOException {
-        if (linenumbers == null)
-            linenumbers = new LineNumberTable(pool);
-        linenumbers.addLine(size(), line);
-    }
 }

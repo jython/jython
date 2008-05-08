@@ -2,13 +2,17 @@
 
 package org.python.compiler;
 
-import java.io.*;
+import java.io.IOException;
 
-abstract class Constant {
+import org.python.objectweb.asm.MethodVisitor;
+import org.python.objectweb.asm.Opcodes;
+
+abstract class Constant implements Opcodes{
     public Module module;
-    public static int access = ClassFile.STATIC | ClassFile.FINAL;
+    public static int access = ACC_STATIC | ACC_FINAL;
     public String name;
 
-    public abstract void get(Code c) throws IOException;
-    public abstract void put(Code c) throws IOException;
+    public abstract void get(Code mv) throws IOException;
+
+    public abstract void put(Code mv) throws IOException;
 }
