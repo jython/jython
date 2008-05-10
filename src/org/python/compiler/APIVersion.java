@@ -4,7 +4,7 @@ package org.python.compiler;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-public class APIVersion extends Attribute {
+public class APIVersion {
     int attName;
     int version;
 

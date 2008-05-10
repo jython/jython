@@ -557,9 +557,11 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
 
         classfile.addInterface("org/python/core/PyRunnable");
         if (sfilename != null) {
-            classfile.addAttribute(new SourceFile(sfilename));
+            //FIXME: switch to asm style source file naming.
+            //classfile.addAttribute(new SourceFile(sfilename));
         }
-        classfile.addAttribute(new APIVersion(org.python.core.imp.APIVersion));
+        //FIXME: switch to asm style.
+        //classfile.addAttribute(new APIVersion(org.python.core.imp.APIVersion));
         classfile.write(stream);
     }
 

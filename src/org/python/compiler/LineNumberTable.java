@@ -5,7 +5,7 @@ package org.python.compiler;
 import java.io.*;
 import java.util.*;
 
-public class LineNumberTable extends Attribute {
+public class LineNumberTable {
     int attName;
     //ConstantPool pool;
     Vector lines;

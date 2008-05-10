@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.python.objectweb.asm.Attribute;
 import org.python.objectweb.asm.ClassWriter;
 import org.python.objectweb.asm.FieldVisitor;
 import org.python.objectweb.asm.MethodVisitor;
@@ -22,9 +23,9 @@ public class ClassFile
     public String name;
     String superclass;
     String[] interfaces;
-    List methodVisitors;
-    List fieldVisitors;
-    List attributes;
+    List<MethodVisitor> methodVisitors;
+    List<FieldVisitor> fieldVisitors;
+    List<Attribute> attributes;
 
     public static String fixName(String n) {
         if (n.indexOf('.') == -1)
@@ -78,45 +79,42 @@ public class ClassFile
         fieldVisitors.add(fv);
     }
 
-    public static void writeAttributes(DataOutputStream stream,
-                                       Attribute[] atts)
+    public void endAttributes()
         throws IOException
     {
-        //stream.writeShort(atts.length);
-        //for (int i=0; i<atts.length; i++) {
-        //    atts[i].write(stream);
-        //}
+        for (Attribute attr : attributes) {
+            cw.visitAttribute(attr);
+        }
     }
 
-    public void endFields(List methods)
+    public void endFields()
         throws IOException
     {
-        for (int i=0; i<methods.size(); i++) {
-            FieldVisitor fv = (FieldVisitor)methods.get(i);
+        for (FieldVisitor fv : fieldVisitors) {
             fv.visitEnd();
         }
     }
     
-    public void endMethods(List methods)
+    public void endMethods()
         throws IOException
     {
-        for (int i=0; i<methods.size(); i++) {
-            MethodVisitor mv = (MethodVisitor)methods.get(i);
-            //XXX: for now computed automatically -- revisit.
+        for (int i=0; i<methodVisitors.size(); i++) {
+            MethodVisitor mv = (MethodVisitor)methodVisitors.get(i);
             mv.visitMaxs(0,0);
             mv.visitEnd();
-            //m.write(stream);
         }
     }
 
     public void addAttribute(Attribute attr) throws IOException {
-        attributes.add(attr);
+        //FIXME: Do nothing for now.
+        //attributes.add(attr);
     }
 
     public void write(OutputStream stream) throws IOException {
         cw.visit(Opcodes.V1_5, Opcodes.ACC_PUBLIC + Opcodes.ACC_SUPER, this.name, null, this.superclass, interfaces);
-        endFields(fieldVisitors);
-        endMethods(methodVisitors);
+        endAttributes();
+        endFields();
+        endMethods();
 
         byte[] ba = cw.toByteArray();
         //fos = io.FileOutputStream("%s.class" % self.name)
@@ -127,7 +125,7 @@ public class ClassFile
         baos.close();
     }
     
-    //XXX: this should probably go away when things stabilize.
+    //XXX: this should go away when things stabilize.
     private void debug(ByteArrayOutputStream baos) throws IOException {
         FileOutputStream fos = new FileOutputStream("DEBUG.class");
         baos.writeTo(fos);

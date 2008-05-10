@@ -4,7 +4,7 @@ package org.python.compiler;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-public class SourceFile extends Attribute {
+public class SourceFile {
     String attName;
     String filename;
 
