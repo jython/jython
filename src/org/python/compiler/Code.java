@@ -33,35 +33,6 @@ class Code implements MethodVisitor, Opcodes {
 	locals = new String[nlocals+128];
     }
     
-    // XXX: So far I haven't found an ASM convenience for pushing constant
-    // integers, so for now I'm putting one here.  This shouldn't except for
-    // variable i's (so if you know you are pushing a 0 just use ICONST_0
-    // directly).
-    public void iconst(int i) {
-         if (i == -1) {
-             mv.visitInsn(ICONST_M1);
-         } else if (i == 0) {
-             mv.visitInsn(ICONST_0);
-         } else if (i == 1) {
-             mv.visitInsn(ICONST_1);
-         } else if (i == 2) {
-             mv.visitInsn(ICONST_2);
-         } else if (i == 3) {
-             mv.visitInsn(ICONST_3);
-         } else if (i == 4) {
-             mv.visitInsn(ICONST_4);
-         } else if (i == 5) {
-             mv.visitInsn(ICONST_5);
-         } else if (i > -127 && i < 128) {
-             mv.visitIntInsn(BIPUSH, i);
-         } else if (i > -32767 && i < 32768) {
-             mv.visitIntInsn(SIPUSH, i);
-         } else {
-             mv.visitLdcInsn(new Integer(i));
-         }
-     }
-
-    
     public int getLocal(String type) {
         //Could optimize this to skip arguments?
         for(int l = argcount; l<nlocals; l++) {
@@ -254,5 +225,371 @@ class Code implements MethodVisitor, Opcodes {
         return stack;
     }
 
+    public void aaload() {
+        mv.visitInsn(AALOAD);
+    }
+    
+    public void aastore() {
+        mv.visitInsn(AASTORE);
+    }
 
+    public void aconst_null() {
+        mv.visitInsn(ACONST_NULL);
+    }
+
+    public void aload(int index) {
+        mv.visitVarInsn(ALOAD, index);
+    }
+
+    public void anewarray(String index) {
+        mv.visitTypeInsn(ANEWARRAY, index);
+    }
+
+    public void areturn() {
+        mv.visitInsn(ARETURN);
+    }
+
+    public void arraylength() {
+        mv.visitInsn(ARRAYLENGTH);
+    }
+
+    public void astore(int index) {
+        mv.visitVarInsn(ASTORE, index);
+    }
+
+    public void athrow() {
+        mv.visitInsn(ATHROW);
+    }
+
+    public void baload() {
+        mv.visitInsn(BALOAD);
+    }
+
+    public void bastore() {
+        mv.visitInsn(BASTORE);
+    }
+
+    public void bipush(int value) {
+        mv.visitIntInsn(BIPUSH, value);
+    }
+
+    public void checkcast(String type) {
+        mv.visitTypeInsn(CHECKCAST, type);
+    }
+
+    public void dconst_0() {
+        mv.visitInsn(DCONST_0);
+    }
+
+    public void dload(int index) {
+        mv.visitVarInsn(DLOAD, index);
+    }
+
+    public void dreturn() {
+        mv.visitInsn(DRETURN);
+    }
+
+    public void dup() {
+        mv.visitInsn(DUP);
+    }
+
+    public void dup2() {
+        mv.visitInsn(DUP2);
+    }
+ 
+    public void dup_x1() {
+        mv.visitInsn(DUP_X1);
+    }
+
+    public void dup_x2() {
+        mv.visitInsn(DUP_X2);
+    }
+
+    public void dup2_x1() {
+        mv.visitInsn(DUP2_X1);
+    }
+
+    public void dup2_x2() {
+        mv.visitInsn(DUP2_X2);
+    }
+
+    public void fconst_0() {
+        mv.visitInsn(FCONST_0);
+    }
+ 
+    public void fload(int index) {
+        mv.visitVarInsn(FLOAD, index);
+    }
+
+    public void freturn() {
+        mv.visitInsn(FRETURN);
+    }
+
+    public void getfield(String owner, String name, String type) {
+        mv.visitFieldInsn(GETFIELD, owner, name, type);
+    }
+
+    public void getstatic(String owner, String name, String type) {
+        mv.visitFieldInsn(GETSTATIC, owner, name, type);
+    }
+
+    public void goto_(Label label) {
+        mv.visitJumpInsn(GOTO, label);
+    }
+  
+    public void iconst(int value) {
+        if (value <= Byte.MAX_VALUE && value >= Byte.MIN_VALUE) {
+            switch (value) {
+            case -1:
+                iconst_m1();
+                break;
+            case 0:
+                iconst_0();
+                break;
+            case 1:
+                iconst_1();
+                break;
+            case 2:
+                iconst_2();
+                break;
+            case 3:
+                iconst_3();
+                break;
+            case 4:
+                iconst_4();
+                break;
+            case 5:
+                iconst_5();
+                break;
+            default:
+                bipush(value);
+                break;
+            }
+        } else if (value <= Short.MAX_VALUE && value >= Short.MIN_VALUE) {
+            sipush(value);
+        } else {
+            ldc(value);
+        }
+    }
+
+    public void iconst_m1() {
+        mv.visitInsn(ICONST_M1);
+    }
+    
+    public void iconst_0() {
+        mv.visitInsn(ICONST_0);
+    }
+    
+    public void iconst_1() {
+        mv.visitInsn(ICONST_1);
+    }
+    
+    public void iconst_2() {
+        mv.visitInsn(ICONST_2);
+    }
+    
+    public void iconst_3() {
+        mv.visitInsn(ICONST_3);
+    }
+    
+    public void iconst_4() {
+        mv.visitInsn(ICONST_4);
+    }
+    
+    public void iconst_5() {
+        mv.visitInsn(ICONST_5);
+    }
+    
+    public void ifeq(Label label) {
+        mv.visitJumpInsn(IFEQ, label);
+    }
+
+    public void ifle(Label label) {
+        mv.visitJumpInsn(IFLE, label);
+    }
+     
+    public void ifne(Label label) {
+        mv.visitJumpInsn(IFNE, label);
+    }
+
+    public void ifnull(Label label) {
+        mv.visitJumpInsn(IFNULL, label);
+    }
+
+    public void ifnonnull(Label label) {
+        mv.visitJumpInsn(IFNONNULL, label);
+    }
+     
+    public void if_acmpne(Label label) {
+        mv.visitJumpInsn(IF_ACMPNE, label);
+    }
+    
+    public void if_acmpeq(Label label) {
+        mv.visitJumpInsn(IF_ACMPEQ, label);
+    }
+    
+    public void if_icmple(Label label) {
+        mv.visitJumpInsn(IF_ICMPLE, label);
+    }
+    
+    public void if_icmpgt(Label label) {
+        mv.visitJumpInsn(IF_ICMPGT, label);
+    }
+    
+    public void if_icmplt(Label label) {
+        mv.visitJumpInsn(IF_ICMPLT, label);
+    }
+    
+    public void if_icmpne(Label label) {
+        mv.visitJumpInsn(IF_ICMPNE, label);
+    }
+    
+    public void if_icmpeq(Label label) {
+        mv.visitJumpInsn(IF_ICMPEQ, label);
+    }
+
+    public void iadd() {
+        mv.visitInsn(IADD);
+    }
+
+    public void iaload() {
+        mv.visitInsn(IALOAD);
+    }
+
+    /* XXX: different API from old iinc */
+    public void iinc() {
+        mv.visitInsn(IINC);
+    }
+  
+    /* XXX: old API for iinc
+    public void iinc(int i, int increment) throws IOException {
+        code.writeByte(132);
+        code.writeByte(i);
+        code.writeByte(increment);
+    }
+
+    public void iinc(int i) throws IOException {
+        iinc(i, 1);
+    }
+    */
+
+    public void iload(int index) {
+        mv.visitVarInsn(ILOAD, index);
+    }
+
+    public void instanceof_(String type) {
+        mv.visitTypeInsn(INSTANCEOF, type);
+    }
+
+    public void invokeinterface(String owner, String name, String type) {
+        mv.visitMethodInsn(INVOKEINTERFACE, owner, name, type);
+    }
+
+    public void invokespecial(String owner, String name, String type) {
+        mv.visitMethodInsn(INVOKESPECIAL, owner, name, type);
+    }
+
+    public void invokestatic(String owner, String name, String type) {
+        mv.visitMethodInsn(INVOKESTATIC, owner, name, type);
+    }
+    
+    public void invokevirtual(String owner, String name, String type) {
+        mv.visitMethodInsn(INVOKEVIRTUAL, owner, name, type);
+    }
+    
+    public void ireturn() {
+        mv.visitInsn(IRETURN);
+    }
+ 
+    public void istore(int index) {
+        mv.visitVarInsn(ISTORE, index);
+    }
+
+    public void isub() {
+        mv.visitInsn(ISUB);
+    }
+
+    /* XXX: needed?
+    public void jsr(Label label) throws IOException {
+        //push(-1);
+        int offset = size();
+        code.writeByte(168);
+        label.setBranch(offset, 2);
+        label.setStack(stack+1);
+    }
+    */
+
+    public void label(Label label) {
+        mv.visitLabel(label);
+    }
+
+    public void lconst_0() {
+        mv.visitInsn(LCONST_0);
+    }
+
+    public void ldc(Object cst) {
+        mv.visitLdcInsn(cst);
+    }
+
+    public void lload(int index) {
+        mv.visitVarInsn(LLOAD, index);
+    }
+
+    public void lreturn() {
+        mv.visitInsn(LRETURN);
+    }
+
+    public void newarray(int atype) {
+        mv.visitIntInsn(NEWARRAY, atype);
+    }
+
+    public void new_(String type) {
+        mv.visitTypeInsn(NEW, type);
+    }
+
+    public void nop() {
+        mv.visitInsn(NOP);
+    }
+
+    public void pop() {
+        mv.visitInsn(POP);
+    }
+    
+    public void pop2() {
+        mv.visitInsn(POP2);
+    }
+
+    public void putstatic(String owner, String name, String type) {
+        mv.visitFieldInsn(PUTSTATIC, owner, name, type);
+    }
+    
+    public void putfield(String owner, String name, String type) {
+        mv.visitFieldInsn(PUTFIELD, owner, name, type);
+    }
+ 
+    public void ret(int index) {
+        mv.visitVarInsn(RET, index);
+    }
+
+    void return_() {
+        mv.visitInsn(RETURN);
+    }
+
+    public void sipush(int value) {
+        mv.visitIntInsn(SIPUSH, value);
+    }
+
+    public void swap() {
+        mv.visitInsn(SWAP);
+    }
+ 
+    public void swap2() {
+        dup2_x2();
+        pop2();
+    }
+
+    public void trycatch(Label start, Label end, Label handlerStart, String type) {
+        mv.visitTryCatchBlock(start, end, handlerStart, type);
+    }
+    
 }
