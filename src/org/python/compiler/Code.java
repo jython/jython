@@ -588,6 +588,10 @@ class Code implements MethodVisitor, Opcodes {
         pop2();
     }
 
+    public void tableswitch(int arg0, int arg1, Label arg2, Label[] arg3) {
+        mv.visitTableSwitchInsn(arg0, arg1, arg2, arg3);
+    }
+
     public void trycatch(Label start, Label end, Label handlerStart, String type) {
         mv.visitTryCatchBlock(start, end, handlerStart, type);
     }
