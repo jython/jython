@@ -2,11 +2,11 @@
 
 package org.python.compiler;
 
-import org.python.parser.*;
-import org.python.parser.ast.*;
-import org.python.parser.ast.Module;
+import org.python.antlr.*;
+import org.python.antlr.ast.*;
+import org.python.antlr.ast.Module;
 
-public class Future extends Object implements PythonGrammarTreeConstants {
+public class Future {
 
     private boolean division;
     private boolean generators;

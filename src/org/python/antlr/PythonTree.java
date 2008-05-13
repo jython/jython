@@ -13,6 +13,8 @@ import org.python.antlr.ast.VisitorIF;
 
 public class PythonTree extends CommonTree implements AST {
 
+    public boolean from_future_checked = false;
+
     public PythonTree(Token token) {
         super(token);
     }

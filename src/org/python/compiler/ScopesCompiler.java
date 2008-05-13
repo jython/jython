@@ -2,8 +2,8 @@
 
 package org.python.compiler;
 
-import org.python.parser.*;
-import org.python.parser.ast.*;
+import org.python.antlr.*;
+import org.python.antlr.ast.*;
 import java.util.*;
 
 public class ScopesCompiler extends Visitor implements ScopeConstants {
@@ -25,7 +25,7 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
         scopes = new Stack();
     }
 
-    public void beginScope(String name, int kind, SimpleNode node,
+    public void beginScope(String name, int kind, PythonTree node,
                            ArgListCompiler ac)
     {
         if (cur != null) {
@@ -53,11 +53,11 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
         cur = up;
     }
 
-    public void parse(SimpleNode node) throws Exception {
+    public void parse(PythonTree node) throws Exception {
         try {
             visit(node);
         } catch(Throwable t) {
-            throw org.python.core.parser.fixParseError(null, t,
+            throw org.python.core.antlr.fixParseError(null, t,
                     code_compiler.getFilename());
         }
     }
@@ -69,7 +69,7 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
         return null;
     }
 
-    public Object visitModule(org.python.parser.ast.Module node)
+    public Object visitModule(org.python.antlr.ast.Module node)
         throws Exception
     {
         beginScope("<file-top>", TOPSCOPE, node, null);
@@ -80,7 +80,7 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
 
     public Object visitExpression(Expression node) throws Exception {
         beginScope("<eval-top>", TOPSCOPE, node, null);
-        visit(new Return(node.body));
+        visit(new Return(node, node.body));
         endScope();
         return null;
     }
@@ -118,7 +118,7 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
         ArgListCompiler ac = new ArgListCompiler();
         ac.visitArgs(node.args);
 
-        SimpleNode[] defaults = ac.getDefaults();
+        PythonTree[] defaults = ac.getDefaults();
         int defc = defaults.length;
         for (int i = 0; i < defc; i++) {
             visit(defaults[i]);
@@ -202,7 +202,7 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
     }
 
 /*
-    private static void illassign(SimpleNode node) throws Exception {
+    private static void illassign(PythonTree node) throws Exception {
         String target = "operator";
         if (node.id == PythonGrammarTreeConstants.JJTCALL_OP) {
             target = "function call";

@@ -3,11 +3,11 @@
 package org.python.compiler;
 
 import java.util.*;
-import org.python.parser.SimpleNode;
+import org.python.antlr.PythonTree;
 
 public class ScopeInfo extends Object implements ScopeConstants {
 
-    public SimpleNode scope_node;
+    public PythonTree scope_node;
     public String scope_name;
     public int level;
     public int func_level;
@@ -38,7 +38,7 @@ public class ScopeInfo extends Object implements ScopeConstants {
         System.err.println();
     }
 
-    public ScopeInfo(String name, SimpleNode node, int level, int kind,
+    public ScopeInfo(String name, PythonTree node, int level, int kind,
                      int func_level, ArgListCompiler ac) {
         scope_name = name;
         scope_node = node;

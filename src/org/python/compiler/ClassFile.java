@@ -22,6 +22,7 @@ public class ClassFile
     int access;
     public String name;
     String superclass;
+    String sfilename;
     String[] interfaces;
     List<MethodVisitor> methodVisitors;
     List<FieldVisitor> fieldVisitors;
@@ -53,6 +54,10 @@ public class ClassFile
         methodVisitors = Collections.synchronizedList(new ArrayList());
         fieldVisitors = Collections.synchronizedList(new ArrayList());
         attributes = Collections.synchronizedList(new ArrayList());
+    }
+
+    public void setSource(String name) {
+        sfilename = name;
     }
 
     public void addInterface(String name) throws IOException {
@@ -112,6 +117,9 @@ public class ClassFile
 
     public void write(OutputStream stream) throws IOException {
         cw.visit(Opcodes.V1_5, Opcodes.ACC_PUBLIC + Opcodes.ACC_SUPER, this.name, null, this.superclass, interfaces);
+        if (sfilename != null) {
+            cw.visitSource(sfilename, null);
+        }
         endAttributes();
         endFields();
         endMethods();

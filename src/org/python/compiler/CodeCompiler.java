@@ -17,63 +17,64 @@ import org.python.core.PyFloat;
 import org.python.core.PyInteger;
 import org.python.core.PyLong;
 import org.python.core.PyObject;
-import org.python.parser.ParseException;
-import org.python.parser.SimpleNode;
-import org.python.parser.Visitor;
-import org.python.parser.ast.Assert;
-import org.python.parser.ast.Assign;
-import org.python.parser.ast.Attribute;
-import org.python.parser.ast.AugAssign;
-import org.python.parser.ast.BinOp;
-import org.python.parser.ast.BoolOp;
-import org.python.parser.ast.Break;
-import org.python.parser.ast.Call;
-import org.python.parser.ast.ClassDef;
-import org.python.parser.ast.Compare;
-import org.python.parser.ast.Continue;
-import org.python.parser.ast.Delete;
-import org.python.parser.ast.Dict;
-import org.python.parser.ast.Ellipsis;
-import org.python.parser.ast.Exec;
-import org.python.parser.ast.Expr;
-import org.python.parser.ast.Expression;
-import org.python.parser.ast.ExtSlice;
-import org.python.parser.ast.For;
-import org.python.parser.ast.FunctionDef;
-import org.python.parser.ast.Global;
-import org.python.parser.ast.If;
-import org.python.parser.ast.Import;
-import org.python.parser.ast.ImportFrom;
-import org.python.parser.ast.Index;
-import org.python.parser.ast.Interactive;
-import org.python.parser.ast.Lambda;
-import org.python.parser.ast.List;
-import org.python.parser.ast.ListComp;
-import org.python.parser.ast.Name;
-import org.python.parser.ast.Num;
-import org.python.parser.ast.Pass;
-import org.python.parser.ast.Print;
-import org.python.parser.ast.Raise;
-import org.python.parser.ast.Repr;
-import org.python.parser.ast.Return;
-import org.python.parser.ast.Slice;
-import org.python.parser.ast.Str;
-import org.python.parser.ast.Subscript;
-import org.python.parser.ast.Suite;
-import org.python.parser.ast.TryExcept;
-import org.python.parser.ast.TryFinally;
-import org.python.parser.ast.Tuple;
-import org.python.parser.ast.UnaryOp;
-import org.python.parser.ast.Unicode;
-import org.python.parser.ast.While;
-import org.python.parser.ast.Yield;
-import org.python.parser.ast.excepthandlerType;
-import org.python.parser.ast.exprType;
-import org.python.parser.ast.expr_contextType;
-import org.python.parser.ast.keywordType;
-import org.python.parser.ast.listcompType;
-import org.python.parser.ast.modType;
-import org.python.parser.ast.stmtType;
+import org.python.antlr.PythonTree;
+import org.python.antlr.Visitor;
+import org.python.antlr.ast.Assert;
+import org.python.antlr.ast.Assign;
+import org.python.antlr.ast.Attribute;
+import org.python.antlr.ast.AugAssign;
+import org.python.antlr.ast.BinOp;
+import org.python.antlr.ast.BoolOp;
+import org.python.antlr.ast.Break;
+import org.python.antlr.ast.Call;
+import org.python.antlr.ast.ClassDef;
+import org.python.antlr.ast.Compare;
+import org.python.antlr.ast.Continue;
+import org.python.antlr.ast.Delete;
+import org.python.antlr.ast.Dict;
+import org.python.antlr.ast.Ellipsis;
+import org.python.antlr.ast.Exec;
+import org.python.antlr.ast.Expr;
+import org.python.antlr.ast.Expression;
+import org.python.antlr.ast.ExtSlice;
+import org.python.antlr.ast.For;
+import org.python.antlr.ast.FunctionDef;
+import org.python.antlr.ast.Global;
+import org.python.antlr.ast.If;
+import org.python.antlr.ast.Import;
+import org.python.antlr.ast.ImportFrom;
+import org.python.antlr.ast.Index;
+import org.python.antlr.ast.Interactive;
+import org.python.antlr.ast.Lambda;
+import org.python.antlr.ast.List;
+import org.python.antlr.ast.ListComp;
+import org.python.antlr.ast.Name;
+import org.python.antlr.ast.Num;
+import org.python.antlr.ast.Pass;
+import org.python.antlr.ast.Print;
+import org.python.antlr.ast.Raise;
+import org.python.antlr.ast.Repr;
+import org.python.antlr.ast.Return;
+import org.python.antlr.ast.Slice;
+import org.python.antlr.ast.Str;
+import org.python.antlr.ast.Subscript;
+import org.python.antlr.ast.Suite;
+import org.python.antlr.ast.TryExcept;
+import org.python.antlr.ast.TryFinally;
+import org.python.antlr.ast.Tuple;
+import org.python.antlr.ast.UnaryOp;
+import org.python.antlr.ast.Unicode;
+import org.python.antlr.ast.While;
+import org.python.antlr.ast.Yield;
+import org.python.antlr.ast.cmpopType;
+import org.python.antlr.ast.comprehensionType;
+import org.python.antlr.ast.excepthandlerType;
+import org.python.antlr.ast.exprType;
+import org.python.antlr.ast.expr_contextType;
+import org.python.antlr.ast.keywordType;
+import org.python.antlr.ast.modType;
+import org.python.antlr.ast.operatorType;
+import org.python.antlr.ast.stmtType;
 
 public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //, PythonGrammarTreeConstants
 {
@@ -94,7 +95,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
     public CompilerFlags cflags;
 
     int temporary;
-    int augmode;
+    expr_contextType augmode;
     int augtmp1;
     int augtmp2;
     int augtmp3;
@@ -170,11 +171,11 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         }
     }
 
-    public void setline(SimpleNode node) throws Exception {
-        setline(node.beginLine);
+    public void setline(PythonTree node) throws Exception {
+        setline(node.startIndex);
     }
 
-    public void set(SimpleNode node) throws Exception {
+    public void set(PythonTree node) throws Exception {
         int tmp = storeTop();
         set(node, tmp);
         mv.visitInsn(ACONST_NULL);
@@ -184,7 +185,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
 
 
     boolean inSet = false;
-    public void set(SimpleNode node, int tmp) throws Exception {
+    public void set(PythonTree node, int tmp) throws Exception {
         if (inSet) {
             System.err.println("recurse set: "+tmp+", "+temporary);
         }
@@ -193,7 +194,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
     }
 
 
-    private void saveAugTmps(SimpleNode node, int count) throws Exception {
+    private void saveAugTmps(PythonTree node, int count) throws Exception {
         if (count >= 4) {
             augtmp4 = mv.getLocal("org/python/core/PyObject");
             mv.visitVarInsn(ASTORE, augtmp4);
@@ -219,7 +220,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
     }
 
 
-    private void restoreAugTmps(SimpleNode node, int count) throws Exception {
+    private void restoreAugTmps(PythonTree node, int count) throws Exception {
        mv.visitVarInsn(ALOAD, augtmp1);
        mv.freeLocal(augtmp1);
        if (count == 1)
@@ -274,7 +275,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         return null;
     }
 
-    public Object visitModule(org.python.parser.ast.Module suite)
+    public Object visitModule(org.python.antlr.ast.Module suite)
         throws Exception
     {
         if (suite.body.length > 0 &&
@@ -301,11 +302,11 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
             module.error("'return' with argument inside generator",
                          true, node);
         }
-        return visitReturn(new Return(node.body, node), true);
+        return visitReturn(new Return(node, node.body), true);
     }
 
     public int EmptyObjects;
-    public void makeArray(SimpleNode[] nodes) throws Exception {
+    public void makeArray(PythonTree[] nodes) throws Exception {
         int n;
 
         if (nodes == null)
@@ -393,9 +394,9 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
 
         scope.setup_closure();
         scope.dump();
-        module.PyCode(new Suite(node.body, node), name, true,
+        module.PyCode(new Suite(node, node.body), name, true,
                       className, false, false,
-                      node.beginLine, scope, cflags).get(mv);
+                      node.startIndex, scope, cflags).get(mv);
 
         getDocString(node.body);
 
@@ -405,7 +406,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
             mv.visitMethodInsn(INVOKESPECIAL,  "org/python/core/PyFunction", "<init>", "(" + $pyObj + $pyObjArr + $pyCode + $pyObj + $pyObjArr + ")V");
         }
 
-        set(new Name(node.name, Name.Store, node));
+        set(new Name(node, node.name, expr_contextType.Store));
         return null;
     }
 
@@ -494,7 +495,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
     public Object visitBreak(Break node) throws Exception {
         //setline(node); Not needed here...
         if (breakLabels.empty()) {
-            throw new ParseException("'break' outside loop", node);
+            throw new Exception("'break' outside loop");//FJW , node);
         }
 
         doFinallysDownTo(bcfLevel);
@@ -506,7 +507,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
     public Object visitContinue(Continue node) throws Exception {
         //setline(node); Not needed here...
         if (continueLabels.empty()) {
-            throw new ParseException("'continue' not properly in loop", node);
+            throw new Exception("'continue' not properly in loop");//FJW , node);
         }
 
         doFinallysDownTo(bcfLevel);
@@ -522,12 +523,12 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
     public Object visitYield(Yield node) throws Exception {
         setline(node);
         if (!fast_locals) {
-            throw new ParseException("'yield' outside function", node);
+            throw new Exception("'yield' outside function");//FJW , node);
         }
 
         if (inFinallyBody()) {
-            throw new ParseException("'yield' not allowed in a 'try' "+
-                                     "block with a 'finally' clause", node);
+            throw new Exception("'yield' not allowed in a 'try' "+
+                                     "block with a 'finally' clause");//FJW , node);
         }
 
         saveLocals();
@@ -643,13 +644,13 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
     public Object visitReturn(Return node, boolean inEval) throws Exception {
         setline(node);
         if (!inEval && !fast_locals) {
-            throw new ParseException("'return' outside function", node);
+            throw new Exception("'return' outside function");//FJW , node);
         }
         int tmp = 0;
         if (node.value != null) {
             if (my_scope.generator)
-                throw new ParseException("'return' with argument " +
-                                         "inside generator", node);
+                throw new Exception("'return' with argument " +
+                                         "inside generator");//FJW , node);
             visit(node.value);
             tmp = mv.getReturnLocal();
             mv.visitVarInsn(ASTORE, tmp);
@@ -706,7 +707,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
                 loadFrame();
                 mv.visitMethodInsn(INVOKESTATIC, "org/python/core/imp", "importOne", "(" + $str + $pyFrame + ")" + $pyObj);
             }
-            set(new Name(asname, Name.Store, node));
+            set(new Name(node.names[i], asname, expr_contextType.Store));
         }
         return null;
     }
@@ -736,7 +737,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
                 mv.visitVarInsn(ALOAD, tmp);
                 mv.iconst(i);
                 mv.visitInsn(AALOAD);
-                set(new Name(asnames[i], Name.Store, node));
+                set(new Name(node.names[i], asnames[i], expr_contextType.Store));
             }
             mv.freeLocal(tmp);
         } else {
@@ -981,8 +982,8 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
                 mv.visitJumpInsn(IFEQ, end_of_self);
             } else {
                 if (i != node.handlers.length-1) {
-                    throw new ParseException(
-                        "bare except must be last except clause", handler.type);
+                    throw new Exception(
+                        "bare except must be last except clause");//FJW , handler.type);
                 }
             }
 
@@ -1172,10 +1173,10 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
             mv.visitInsn(DUP);
             mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyObject", "__nonzero__", "()Z");
             switch (node.op) {
-            case BoolOp.Or : 
+            case Or : 
                 mv.visitJumpInsn(IFNE, end);
                 break;
-            case BoolOp.And : 
+            case And : 
                 mv.visitJumpInsn(IFEQ, end);
                 break;
             }
@@ -1220,82 +1221,61 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         return null;
     }
 
-    public void visitCmpop(int op) throws Exception {
+    public void visitCmpop(cmpopType op) throws Exception {
         String name = null;
         switch (op) {
-        case Compare.Eq:    name = "_eq"; break;
-        case Compare.NotEq: name = "_ne"; break;
-        case Compare.Lt:    name = "_lt"; break;
-        case Compare.LtE:   name = "_le"; break;
-        case Compare.Gt:    name = "_gt"; break;
-        case Compare.GtE:   name = "_ge"; break;
-        case Compare.Is:    name = "_is"; break;
-        case Compare.IsNot: name = "_isnot"; break;
-        case Compare.In:    name = "_in"; break;
-        case Compare.NotIn: name = "_notin"; break;
+        case Eq:    name = "_eq"; break;
+        case NotEq: name = "_ne"; break;
+        case Lt:    name = "_lt"; break;
+        case LtE:   name = "_le"; break;
+        case Gt:    name = "_gt"; break;
+        case GtE:   name = "_ge"; break;
+        case Is:    name = "_is"; break;
+        case IsNot: name = "_isnot"; break;
+        case In:    name = "_in"; break;
+        case NotIn: name = "_notin"; break;
         }
         mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyObject", name, "(" + $pyObj + ")" + $pyObj);
     }
 
-    static String[] bin_methods = new String[] {
-        null,
-        "_add",
-        "_sub",
-        "_mul",
-        "_div",
-        "_mod",
-        "_pow",
-        "_lshift",
-        "_rshift",
-        "_or",
-        "_xor",
-        "_and",
-        "_floordiv",
-    };
-
     public Object visitBinOp(BinOp node) throws Exception {
         visit(node.left);
         visit(node.right);
-        String name = bin_methods[node.op];
-        if (node.op == BinOp.Div && module.getFutures().areDivisionOn()) {
+        String name = null;
+        switch (node.op) {
+        case Add:    name = "_add"; break;
+        case Sub: name = "_sub"; break;
+        case Mult:    name = "_mul"; break;
+        case Div:   name = "_div"; break;
+        case Mod:    name = "_mod"; break;
+        case Pow:   name = "_pow"; break;
+        case LShift:    name = "_lshift"; break;
+        case RShift: name = "_rshift"; break;
+        case BitOr:    name = "_or"; break;
+        case BitXor: name = "_xor"; break;
+        case BitAnd: name = "_and"; break;
+        case FloorDiv: name = "_floordiv"; break;
+        }
+
+        if (node.op == operatorType.Div && module.getFutures().areDivisionOn()) {
             name = "_truediv";
         }
         mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyObject", name, "(" + $pyObj + ")" + $pyObj);
         return null;
     }
     
-    static String[] unary_methods = new String[] {
-        null,
-        "__invert__",
-        "__not__",
-        "__pos__",
-        "__neg__",
-    };
-
     public Object visitUnaryOp(UnaryOp node) throws Exception {
         visit(node.operand);
-
-        String name = unary_methods[node.op];
+        String name = null;
+        switch (node.op) {
+        case Invert:    name = "__invert__"; break;
+        case Not: name = "__not__"; break;
+        case UAdd:    name = "__pos__"; break;
+        case USub:   name = "__neg__"; break;
+        }
         mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyObject", name, "()" + $pyObj);
         return null;
     }
-
-
-    static String[] aug_methods = new String[] {
-        null,
-        "__iadd__",
-        "__isub__",
-        "__imul__",
-        "__idiv__",
-        "__imod__",
-        "__ipow__",
-        "__ilshift__",
-        "__irshift__",
-        "__ior__",
-        "__ixor__",
-        "__iand__",
-        "__ifloordiv__",
-    };
 
     public Object visitAugAssign(AugAssign node) throws Exception {
         visit(node.value);
@@ -1305,9 +1285,22 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         visit(node.target);
 
         mv.visitVarInsn(ALOAD, tmp);
-
-        String name = aug_methods[node.op];
-        if (node.op == BinOp.Div && module.getFutures().areDivisionOn()) {
+        String name = null;
+        switch (node.op) {
+        case Add:    name = "__iadd__"; break;
+        case Sub: name = "__isub__"; break;
+        case Mult:    name = "__imul__"; break;
+        case Div:   name = "__idiv__"; break;
+        case Mod:    name = "__imod__"; break;
+        case Pow:   name = "__ipow__"; break;
+        case LShift:    name = "__ilshift__"; break;
+        case RShift: name = "__irshift__"; break;
+        case BitOr:    name = "__ior__"; break;
+        case BitXor: name = "__ixor__"; break;
+        case BitAnd: name = "__iand__"; break;
+        case FloorDiv: name = "__ifloordiv__"; break;
+        }
+        if (node.op == operatorType.Div && module.getFutures().areDivisionOn()) {
             name = "__itruediv__";
         }
         mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyObject", name, "(" + $pyObj + ")" + $pyObj);
@@ -1341,7 +1334,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
     
     public int invokea0, invokea1, invokea2;
     public int invoke2;
-    public Object Invoke(Attribute node, SimpleNode[] values)
+    public Object Invoke(Attribute node, PythonTree[] values)
         throws Exception
     {
         String name = getName(node.attr);
@@ -1449,7 +1442,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
 
     public int getslice, setslice, delslice;
     public Object Slice(Subscript node, Slice slice) throws Exception {
-        int ctx = node.ctx;
+        expr_contextType ctx = node.ctx;
         if (ctx == expr_contextType.AugStore && augmode == expr_contextType.Store) {
             restoreAugTmps(node, 4);
             ctx = expr_contextType.Store;
@@ -1475,13 +1468,13 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         }
 
         switch (ctx) {
-        case Subscript.Del:
+        case Del:
             mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyObject", "__delslice__", "(" + $pyObj + $pyObj + $pyObj + ")V");
             return null;
-        case Subscript.Load:
+        case Load:
             mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyObject", "__getslice__", "(" + $pyObj + $pyObj + $pyObj + ")" + $pyObj);
             return null;
-        case Subscript.Store:
+        case Store:
             mv.visitVarInsn(ALOAD, temporary);
             mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyObject", "__setslice__", "(" + $pyObj + $pyObj + $pyObj + $pyObj + ")V");
             return null;
@@ -1496,7 +1489,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
             return Slice(node, (Slice) node.slice);
         }
 
-        int ctx = node.ctx;
+        expr_contextType ctx = node.ctx;
         if (node.ctx == expr_contextType.AugStore && augmode == expr_contextType.Store) {
             restoreAugTmps(node, 2);
             ctx = expr_contextType.Store;
@@ -1511,13 +1504,13 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         }
 
         switch (ctx) {
-        case Subscript.Del:
+        case Del:
             mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyObject", "__delitem__", "(" + $pyObj + ")V");
             return null;
-        case Subscript.Load:
+        case Load:
             mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyObject", "__getitem__", "(" + $pyObj + ")" + $pyObj);
             return null;
-        case Subscript.Store:
+        case Store:
             mv.visitVarInsn(ALOAD, temporary);
             mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyObject", "__setitem__", "(" + $pyObj + $pyObj + ")V");
             return null;
@@ -1541,7 +1534,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
     public int getattr, delattr, setattr;
     public Object visitAttribute(Attribute node) throws Exception {
 
-        int ctx = node.ctx;
+        expr_contextType ctx = node.ctx;
         if (node.ctx == expr_contextType.AugStore && augmode == expr_contextType.Store) {
             restoreAugTmps(node, 2);
             ctx = expr_contextType.Store;
@@ -1556,13 +1549,13 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         }
 
         switch (ctx) {
-        case Attribute.Del:
+        case Del:
             mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyObject", "__delattr__", "(" + $str + ")V");
             return null;
-        case Attribute.Load:
+        case Load:
             mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyObject", "__getattr__", "(" + $str + ")" + $pyObj);
             return null;
-        case Attribute.Store:
+        case Store:
             mv.visitVarInsn(ALOAD, temporary);
             mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyObject", "__setattr__", "(" + $str + $pyObj + ")V");
             return null;
@@ -1641,22 +1634,21 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
 
         String tmp_append = "_[" + (++list_comprehension_count) + "]";
             
-        set(new Name(tmp_append, Name.Store, node));
+        set(new Name(node, tmp_append, expr_contextType.Store));
 
-        stmtType n = new Expr(new Call(new Name(tmp_append, Name.Load, node), 
+        stmtType n = new Expr(node, new Call(node, new Name(node, tmp_append, expr_contextType.Load), 
                                        new exprType[] { node.elt },
-                                       new keywordType[0], null, null, node),
-                                            node);
+                                       new keywordType[0], null, null));
 
         for (int i = node.generators.length - 1; i >= 0; i--) {
-            listcompType lc = node.generators[i];
+            comprehensionType lc = node.generators[i];
             for (int j = lc.ifs.length - 1; j >= 0; j--) {
-                n = new If(lc.ifs[j], new stmtType[] { n }, null, lc.ifs[j]);
+                n = new If(lc.ifs[j], lc.ifs[j], new stmtType[] { n }, null);
             }
-            n = new For(lc.target, lc.iter, new stmtType[] { n }, null, lc);
+            n = new For(lc, lc.target, lc.iter, new stmtType[] { n }, null);
         }
         visit(n);
-        visit(new Delete(new exprType[] { new Name(tmp_append, Name.Del) }));
+        visit(new Delete(n, new exprType[] { new Name(n, tmp_append, expr_contextType.Del) }));
 
         return null;
     }
@@ -1665,7 +1657,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         mv.visitTypeInsn(NEW, "org/python/core/PyDictionary");
 
         mv.visitInsn(DUP);
-        SimpleNode[] elts = new SimpleNode[node.keys.length * 2];
+        PythonTree[] elts = new PythonTree[node.keys.length * 2];
         for (int i = 0; i < node.keys.length; i++) {
             elts[i * 2] = node.keys[i];
             elts[i * 2 + 1] = node.values[i];
@@ -1686,8 +1678,8 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         String name = "<lambda>";
 
         //Add a return node onto the outside of suite;
-        modType retSuite = new Suite(new stmtType[] {
-            new Return(node.body, node) }, node);
+        modType retSuite = new Suite(node, new stmtType[] {
+            new Return(node, node.body) });
 
         setline(node);
 
@@ -1704,7 +1696,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         scope.setup_closure();
         scope.dump();
         module.PyCode(retSuite, name, true, className,
-                      false, false, node.beginLine, scope, cflags).get(mv);
+                      false, false, node.startIndex, scope, cflags).get(mv);
 
         if (!makeClosure(scope)) {
             mv.visitMethodInsn(INVOKESPECIAL, "org/python/core/PyFunction", "<init>", "(" + $pyObj + $pyObjArr + $pyCode + ")V");
@@ -1749,8 +1741,8 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         scope.setup_closure();
         scope.dump();
         //Make code object out of suite
-        module.PyCode(new Suite(node.body, node), name, false, name,
-                      true, false, node.beginLine, scope, cflags).get(mv);
+        module.PyCode(new Suite(node, node.body), name, false, name,
+                      true, false, node.startIndex, scope, cflags).get(mv);
 
         //Get doc string (if there)
         getDocString(node.body);
@@ -1763,7 +1755,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         }
 
         //Assign this new class to the given name
-        set(new Name(node.name, Name.Store, node));
+        set(new Name(node, node.name, expr_contextType.Store));
         return null;
     }
 
@@ -1812,13 +1804,13 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
 
         SymInfo syminf = (SymInfo)tbl.get(name);
 
-        int ctx = node.ctx;
+        expr_contextType ctx = node.ctx;
         if (ctx == expr_contextType.AugStore) {
             ctx = augmode;
         }        
 
         switch (ctx) {
-        case Name.Load:
+        case Load:
             loadFrame();
             if (syminf != null) {
                 int flags = syminf.flags;
@@ -1853,7 +1845,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
             mv.visitMethodInsn(INVOKEVIRTUAL, "org/python/core/PyFrame", "getname", "(" + $str + ")" + $pyObj);
             return null;
 
-        case Name.Store:
+        case Store:
             loadFrame();
             if (syminf != null && (syminf.flags&ScopeInfo.GLOBAL) != 0) {
                 mv.visitLdcInsn(name);
@@ -1880,7 +1872,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
                 }
             }
             return null;
-        case Name.Del: {
+        case Del: {
             loadFrame();
             if (syminf != null && (syminf.flags&ScopeInfo.GLOBAL) != 0) {
                 mv.visitLdcInsn(name);
@@ -1909,9 +1901,8 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
     public Object visitUnicode(Unicode node) throws Exception {
         String s = node.s;
         if (s.length() > 32767) {
-            throw new ParseException(
-                "string constant too large (more than 32767 characters)",
-                node);
+            throw new Exception(
+                "string constant too large (more than 32767 characters)");//FJW , node);
         }
         module.PyUnicode(s).get(mv);
         return null;
@@ -1920,15 +1911,14 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
     public Object visitStr(Str node) throws Exception {
         String s = node.s;
         if (s.length() > 32767) {
-            throw new ParseException(
-                "string constant too large (more than 32767 characters)",
-                node);
+            throw new Exception(
+                "string constant too large (more than 32767 characters)");//FJW , node);
         }
         module.PyString(s).get(mv);
         return null;
     }
 
-    protected Object unhandled_node(SimpleNode node) throws Exception {
+    protected Object unhandled_node(PythonTree node) throws Exception {
         throw new Exception("Unhandled node " + node);
     }
 

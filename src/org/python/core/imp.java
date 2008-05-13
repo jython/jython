@@ -113,6 +113,9 @@ public class imp {
         byte[] data = readBytes(fp);
         int n = data.length;
 
+        //Need to find another way to check the api version -- probably using
+        //an Annotation instead of an Attribute makes sense.
+        /*
         int api = (data[n - 4] << 24) + (data[n - 3] << 16)
                 + (data[n - 2] << 8) + data[n - 1];
         if (api != APIVersion) {
@@ -123,6 +126,7 @@ public class imp {
                         + APIVersion + ") in: " + name);
             }
         }
+        */
         return data;
     }
     
@@ -192,9 +196,9 @@ public class imp {
             if(filename == null) {
                 filename = UNKNOWN_SOURCEFILE;
             }
-            org.python.parser.ast.modType node;
+            org.python.antlr.ast.modType node;
             try {
-                node = parser.parse(fp, "exec", filename, Py.getCompilerFlags());
+                node = antlr.parse(fp, "exec", filename, Py.getCompilerFlags());
             } finally {
                 fp.close();
             }
@@ -208,7 +212,7 @@ public class imp {
                                                Py.getCompilerFlags());
             return ofp.toByteArray();
         } catch(Throwable t) {
-            throw parser.fixParseError(null, t, filename);
+            throw antlr.fixParseError(null, t, filename);
         }
     }
 

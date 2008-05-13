@@ -13,10 +13,10 @@ import org.python.objectweb.asm.MethodVisitor;
 import org.python.objectweb.asm.Opcodes;
 import org.python.core.Py;
 import org.python.core.PyException;
-import org.python.parser.ParseException;
-import org.python.parser.SimpleNode;
-import org.python.parser.ast.Suite;
-import org.python.parser.ast.modType;
+import org.python.antlr.ParseException;
+import org.python.antlr.PythonTree;
+import org.python.antlr.ast.Suite;
+import org.python.antlr.ast.modType;
 
 class PyIntegerConstant extends Constant implements ClassConstants, Opcodes
 {
@@ -557,8 +557,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
 
         classfile.addInterface("org/python/core/PyRunnable");
         if (sfilename != null) {
-            //FIXME: switch to asm style source file naming.
-            //classfile.addAttribute(new SourceFile(sfilename));
+            classfile.setSource(sfilename);
         }
         //FIXME: switch to asm style.
         //classfile.addAttribute(new APIVersion(org.python.core.imp.APIVersion));
@@ -570,18 +569,18 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
 
     public String getFilename() { return sfilename; }
 
-    public ScopeInfo getScopeInfo(SimpleNode node) {
+    public ScopeInfo getScopeInfo(PythonTree node) {
         return (ScopeInfo) scopes.get(node);
     }
 
-    public void error(String msg,boolean err,SimpleNode node)
+    public void error(String msg,boolean err,PythonTree node)
         throws Exception
     {
         if (!err) {
             try {
                 Py.warning(Py.SyntaxWarning, msg,
                            (sfilename != null) ? sfilename : "?",
-                           node.beginLine ,null, Py.None);
+                           node.getLine() ,null, Py.None);
                 return;
             } catch(PyException e) {
                 if (!Py.matchException(e, Py.SyntaxWarning))
