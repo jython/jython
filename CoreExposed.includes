@@ -2,6 +2,7 @@ org/python/core/PyArray.class
 org/python/core/PyBaseString.class
 org/python/core/PyBoolean.class
 org/python/core/PyBuiltinFunction.class
+org/python/core/PyCell.class
 org/python/core/PyClassMethod.class
 org/python/core/PyComplex.class
 org/python/core/PyDataDescr.class
@@ -10,6 +11,7 @@ org/python/core/PyDictProxy.class
 org/python/core/PyEnumerate.class
 org/python/core/PyFile.class
 org/python/core/PyFloat.class
+org/python/core/PyFunction.class
 org/python/core/PyInteger.class
 org/python/core/PyList.class
 org/python/core/PyLong.class
