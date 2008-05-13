@@ -69,10 +69,10 @@ def lispify_field(field, child):
             else:
                 yield node
 
-def pretty(pyfile):
+def tree(pyfile):
     ast = compile(open(pyfile).read(), pyfile, "exec", _ast.PyCF_ONLY_AST)
     return lispify_ast(ast)
 
 if __name__ == '__main__':
     import pprint
-    pprint.pprint(pretty(sys.argv[1]))
+    pprint.pprint(tree(sys.argv[1]))
