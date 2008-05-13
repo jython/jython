@@ -31,7 +31,6 @@ import org.python.core.PyInteger;
 import org.python.core.PyJavaInstance;
 import org.python.core.PyList;
 import org.python.core.PyLong;
-import org.python.core.PyMethod;
 import org.python.core.PyModule;
 import org.python.core.PyNone;
 import org.python.core.PyObject;
