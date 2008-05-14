@@ -157,8 +157,8 @@ public class PyFile extends PyObject {
     }
 
     @ExposedNew
-    static final PyObject file_new(PyNewWrapper new_, boolean init, PyType subtype, PyObject[]args,
-                                   String[]keywords) {
+    static final PyObject file_new(PyNewWrapper new_, boolean init, PyType subtype,
+                                   PyObject[] args, String[] keywords) {
         PyFile newFile;
         if (new_.for_type == subtype) {
             if (init) {

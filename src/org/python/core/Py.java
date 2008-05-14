@@ -1968,7 +1968,7 @@ class JavaFunc extends PyObject {
     public PyObject _doget(PyObject container, PyObject wherefound) {
         if (container == null)
             return this;
-        return new PyMethod(container, this, wherefound);
+        return new PyMethod(this, container, wherefound);
     }
 
     public boolean _doset(PyObject container) {

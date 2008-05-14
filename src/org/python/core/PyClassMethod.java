@@ -31,7 +31,7 @@ public class PyClassMethod extends PyObject {
         if(type == null) {
             type = obj.getType();
         }
-        return new PyMethod(type, callable, type.getType());
+        return new PyMethod(callable, type, type.getType());
     }
 
     @ExposedNew

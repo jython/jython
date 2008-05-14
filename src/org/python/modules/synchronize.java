@@ -12,7 +12,7 @@ class SynchronizedCallable extends PyObject
 
     public PyObject _doget(PyObject container) {
         // TBD: third arg == null?  Hmm...
-        return new PyMethod(container, this, null);
+        return new PyMethod(this, container, null);
     }
 
     public PyObject __call__() {

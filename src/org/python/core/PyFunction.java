@@ -1,219 +1,341 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
+import org.python.expose.ExposedDelete;
+import org.python.expose.ExposedGet;
+import org.python.expose.ExposedMethod;
+import org.python.expose.ExposedNew;
+import org.python.expose.ExposedSet;
+import org.python.expose.ExposedType;
+
 /**
- * A python function.
+ * A Python function.
  */
+@ExposedType(name = "function")
+public class PyFunction extends PyObject {
 
-public class PyFunction extends PyObject
-{
+    public static final PyType TYPE = PyType.fromClass(PyFunction.class);
+
+    /** The writable name, also available via func_name. */
+    @ExposedGet
+    @ExposedSet
     public String __name__;
-    public PyObject __doc__;
-    public PyObject func_globals;
-    public PyObject[] func_defaults;
-    public PyCode func_code;
-    public PyObject __dict__;
-    public PyObject func_closure; // nested scopes: closure
-    public PyObject __module__ = Py.None;
 
-    public PyFunction(PyObject globals, PyObject[] defaults, PyCode code,
-                      PyObject doc,PyObject[] closure_cells)
-    {
+    /** The writable doc string, also available via func_doc. */
+    @ExposedGet
+    @ExposedSet
+    public PyObject __doc__;
+
+    /** The read only namespace; a dict (PyStringMap). */
+    @ExposedGet
+    public PyObject func_globals;
+
+    /**
+     * Default argument values for associated kwargs. Exposed as a
+     * tuple to Python. Writable.
+     */
+    public PyObject[] func_defaults;
+
+    /** The actual funtion's code, writable. */
+    @ExposedGet
+    public PyCode func_code;
+
+    /**
+     * A function's lazily created __dict__; allows arbitrary
+     * attributes to be tacked on. Read only.
+     */
+    public PyObject __dict__;
+
+    /** A read only closure tuple for nested scopes. */
+    @ExposedGet
+    public PyObject func_closure;
+
+    /** Writable object describing what module this function belongs to. */
+    @ExposedGet
+    @ExposedSet
+    public PyObject __module__;
+
+    public PyFunction(PyObject globals, PyObject[] defaults, PyCode code, PyObject doc,
+                      PyObject[] closure_cells) {
         func_globals = globals;
         __name__ = code.co_name;
-        if (doc == null)
-            __doc__ = Py.None;
-        else
-            __doc__ = doc;
-        func_defaults = defaults;
+        __doc__ = doc != null ? doc : Py.None;
+        func_defaults = defaults != null ? defaults : Py.EmptyObjects;
         func_code = code;
-        if (closure_cells != null) {
-            func_closure = new PyTuple(closure_cells);
-        } else {
-            func_closure = null;
-        }
+        func_closure = closure_cells != null ? new PyTuple(closure_cells) : Py.EmptyTuple;
         PyObject name = globals.__finditem__("__name__");
-        if(name != null) {
-            __module__ = name;
-        }
+        __module__ = name != null ? name : Py.None;
     }
 
-    public PyFunction(PyObject globals, PyObject[] defaults, PyCode code,
-                      PyObject doc) {
-        this(globals,defaults,code,doc,null);
+    public PyFunction(PyObject globals, PyObject[] defaults, PyCode code, PyObject doc) {
+        this(globals, defaults, code, doc, null);
     }
 
     public PyFunction(PyObject globals, PyObject[] defaults, PyCode code) {
-        this(globals, defaults, code, null,null);
+        this(globals, defaults, code, null, null);
     }
 
     public PyFunction(PyObject globals, PyObject[] defaults, PyCode code,
-                      PyObject[] closure_cells)
-    {
-        this(globals, defaults, code, null,closure_cells);
+                      PyObject[] closure_cells) {
+        this(globals, defaults, code, null, closure_cells);
     }
 
+    @ExposedNew
+    static final PyObject file_new(PyNewWrapper new_, boolean init, PyType subtype,
+                                   PyObject[] args, String[] keywords) {
+        ArgParser ap = new ArgParser("function", args, keywords,
+                                     new String[] {"code", "globals", "name", "argdefs",
+                                                   "closure"},
+                                     0);
+        PyObject code = ap.getPyObject(0);
+        PyObject globals = ap.getPyObject(1);
+        PyObject name = ap.getPyObject(2, Py.None);
+        PyObject defaults = ap.getPyObject(3, Py.None);
+        PyObject closure = ap.getPyObject(4, Py.None);
 
-    private static final String[] __members__ = {"__doc__",
-                                                 "func_doc",
-                                                 "__name__",
-                                                 "func_name",
-                                                 "__dict__",
-                                                 "__module__",
-                                                 "func_globals",
-                                                 "func_defaults",
-                                                 "func_code",
-                                                 "func_closure"};
-
-    public PyObject __dir__() {
-        PyString members[] = new PyString[__members__.length];
-        for (int i = 0; i < __members__.length; i++)
-            members[i] = new PyString(__members__[i]);
-        PyList ret = new PyList(members);
-        PyDictionary accum = new PyDictionary();
-        addKeys(accum, "__dict__");
-        ret.extend(accum.keys());
-        ret.sort();
-        return ret;
-    }
-
-    private void throwReadonly(String name) {
-        for (int i = 0; i < __members__.length; i++)
-            if (__members__[i] == name)
-                throw Py.TypeError("readonly attribute");
-        throw Py.AttributeError(name);
-    }
-
-    public void __setattr__(String name, PyObject value) {
-        if (name == "func_doc" || name == "__doc__")
-            __doc__ = value;
-        else if (name == "func_closure") {
-            throwReadonly(name);
+        if (!(code instanceof PyTableCode)) {
+            throw Py.TypeError("function() argument 1 must be code, not str");
         }
-        else if (name == "__name__")
-            throwReadonly(name);
-        else if (name == "func_name")
-            throwReadonly(name);
-        else if (name == "func_defaults") {
-            if (value == Py.None) {
-                func_defaults = Py.EmptyObjects;
-            } else if (value instanceof PyTuple) {
-                func_defaults = ((PyTuple)value).getArray();
-            } else {
-                throw Py.TypeError("func_defaults must be set to a tuple object");
+        if (name != Py.None && !Py.isInstance(name, PyString.TYPE)) {
+            throw Py.TypeError("arg 3 (name) must be None or string");
+        }
+        if (defaults != Py.None && !(defaults instanceof PyTuple)) {
+            throw Py.TypeError("arg 4 (defaults) must be None or tuple");
+        }
+
+        PyTableCode tcode = (PyTableCode)code;
+        int nfree = tcode.co_freevars == null ? 0 : tcode.co_freevars.length;
+        if (!(closure instanceof PyTuple)) {
+            if (nfree > 0 && closure == Py.None) {
+                throw Py.TypeError("arg 5 (closure) must be tuple");
+            } else if (closure != Py.None) {
+                throw Py.TypeError("arg 5 (closure) must be None or tuple");
             }
         }
-        else if (name == "func_globals")
-            throwReadonly(name);
-        else if (name == "func_code") {
-             if (value instanceof PyCode)
-                 func_code = (PyCode) value;
-             else
-                 throw Py.TypeError("func_code must be set to a code object"); 
-        } else if (name == "__dict__" || name == "func_dict") {
-            if (value instanceof PyDictionary || value instanceof PyStringMap)
-                __dict__ = value;
-            else
-                throw Py.TypeError("setting function's dictionary " + 
-                                   "to a non-dict");
-        } else if(name == "__module__") {
-            __module__ = value;
-        } else {
-            if (__dict__ == null)
-                __dict__ = new PyStringMap();
-            __dict__.__setitem__(name, value);
+
+        int nclosure = closure == Py.None ? 0 : closure.__len__();
+        if (nfree != nclosure) {
+            throw Py.ValueError(String.format("%s requires closure of length %d, not %d",
+                                              tcode.co_name, nfree, nclosure));
         }
+        if (nclosure > 0) {
+            for (PyObject o : ((PyTuple)closure).asIterable()) {
+                if (!(o instanceof PyCell)) {
+                    throw Py.TypeError(String.format("arg 5 (closure) expected cell, found %s",
+                                                     o.getType().fastGetName()));
+                }
+            }
+        }
+
+        PyFunction function = new PyFunction(globals,
+                                             defaults == Py.None
+                                             ? Py.EmptyObjects : ((PyTuple)defaults).getArray(),
+                                             tcode, null,
+                                             closure == Py.None
+                                             ? null : ((PyTuple)closure).getArray());
+        if (name != Py.None) {
+            function.__name__ = name.toString();
+        }
+        return function;
     }
 
-    public void __delattr__(String name) {
-        if (name == "__dict__" || name == "func_dict") {
-            throw Py.TypeError("function's dictionary may not be deleted");
-        } else if (name == "func_defaults") {
-            func_defaults = Py.EmptyObjects;
-            return;
-        } else if (name == "func_doc" || name == "__doc__") {
-            __doc__ = Py.None;
-            return;
-        } else if(name == "__module__") {
-            __module__ = Py.None;
-            return;
-        }
-        if (__dict__ == null)
-            throw Py.AttributeError(name);
-        __dict__.__delitem__(name);
+    @ExposedGet(name = "func_name")
+    public String getFuncName() {
+        return __name__;
     }
 
-    public boolean isMappingType() { return false; }
-    public boolean isNumberType() { return false; }
-    public boolean isSequenceType() { return false; }
+    @ExposedSet(name = "func_name")
+    public void setFuncName(String func_name) {
+        __name__ = func_name;
+    }
 
-    public PyObject __findattr__(String name) {
-        // these are special, everything else is findable by reflection
-        if (name == "func_doc")
-            return __doc__;
-        if (name == "func_name")
-            return new PyString(__name__);
-        if (name == "func_closure") {
-            if (func_closure != null) return func_closure;
+    @ExposedGet(name = "func_doc")
+    public PyObject getFuncDoc() {
+        return __doc__;
+    }
+
+    @ExposedSet(name = "func_doc")
+    public void setFuncDoc(PyObject func_doc) {
+        __doc__ = func_doc;
+    }
+
+    @ExposedDelete(name = "func_doc")
+    public void delFuncDoc() {
+        delDoc();
+    }
+
+    @ExposedDelete(name = "__doc__")
+    public void delDoc() {
+        __doc__ = Py.None;
+    }
+
+    @ExposedGet(name = "func_defaults")
+    public PyObject getFuncDefaults() {
+        if (func_defaults.length == 0) {
             return Py.None;
         }
-        if (name == "func_defaults") {
-            if (func_defaults.length == 0)
-                return Py.None;
-            return new PyTuple(func_defaults);
-        }
-        if (name == "__dict__" || name == "func_dict") {
-            if (__dict__ == null)
-                __dict__ = new PyStringMap();
-            return __dict__;
-        }
-        if (__dict__ != null) {
-            PyObject ret = __dict__.__finditem__(name);
-            if (ret != null)
-                return ret;
-        }
-        return super.__findattr__(name);
+        return new PyTuple(func_defaults);
     }
 
+    @ExposedSet(name = "func_defaults")
+    public void setFuncDefaults(PyObject func_defaults) {
+        if (func_defaults != Py.None && !(func_defaults instanceof PyTuple)) {
+            throw Py.TypeError("func_defaults must be set to a tuple object");
+        }
+        this.func_defaults = func_defaults == Py.None
+                ? Py.EmptyObjects : ((PyTuple)func_defaults).getArray();
+    }
+
+    @ExposedDelete(name = "func_defaults")
+    public void delFuncDefaults() {
+        func_defaults = Py.EmptyObjects;
+    }
+
+    @ExposedSet(name = "func_code")
+    public void setFuncCode(PyCode code) {
+        if (func_code == null || !(code instanceof PyTableCode)) {
+            throw Py.TypeError("func_code must be set to a code object");
+        }
+        PyTableCode tcode = (PyTableCode)code;
+        int nfree = tcode.co_freevars == null ? 0 : tcode.co_freevars.length;
+        int nclosure = func_closure.__len__();
+        if (nclosure != nfree) {
+            throw Py.ValueError(String.format("%s() requires a code object with %d free vars,"
+                                              + " not %d", __name__, nclosure, nfree));
+        }
+        this.func_code = code;
+    }
+
+    @ExposedDelete(name = "__module__")
+    public void delModule() {
+        __module__ = Py.None;
+    }
+
+    @Override
+    public PyObject fastGetDict() {
+        return __dict__;
+    }
+
+    @ExposedGet(name = "__dict__")
+    public PyObject getDict() {
+        ensureDict();
+        return __dict__;
+    }
+
+    @ExposedSet(name = "__dict__")
+    public void setDict(PyObject value) {
+        if (!(value instanceof PyDictionary) && !(value instanceof PyStringMap)) {
+            throw Py.TypeError("setting function's dictionary to a non-dict");
+        }
+        __dict__ = value;
+    }
+
+    @ExposedDelete(name = "__dict__")
+    public void delDict() {
+        throw Py.TypeError("function's dictionary may not be deleted");
+    }
+
+    @ExposedGet(name = "func_dict")
+    public PyObject getFuncDict() {
+        return getDict();
+    }
+
+    @ExposedSet(name = "func_dict")
+    public void setFuncDict(PyObject value) {
+        setDict(value);
+    }
+
+    @ExposedDelete(name = "func_dict")
+    public void delFuncDict() {
+        delDict();
+    }
+
+    @ExposedSet(name = "func_globals")
+    public void setFuncGlobals(PyObject value) {
+        // __setattr__ would set __dict__['func_globals'] = value
+        // without this method
+        throw Py.TypeError("readonly attribute");
+    }
+
+    @ExposedSet(name = "func_closure")
+    public void setFuncClosure(PyObject value) {
+        // same idea as setFuncGlobals
+        throw Py.TypeError("readonly attribute");
+    }
+
+    private void ensureDict() {
+        if (__dict__ == null) {
+            __dict__ = new PyStringMap();
+        }
+    }
+
+    @Override
+    public void __setattr__(String name, PyObject value) {
+        function___setattr__(name, value);
+    }
+
+    @ExposedMethod
+    final void function___setattr__(String name, PyObject value) {
+        ensureDict();
+        super.__setattr__(name, value);
+    }
+
+    @Override
     public PyObject getDoc() {
         return __doc__;
     }
 
-    public PyObject _doget(PyObject container) {
-        return _doget(container, null);
+    @Override
+    public PyObject __get__(PyObject obj, PyObject type) {
+        return function___get__(obj, type);
     }
 
-    public PyObject _doget(PyObject container, PyObject wherefound) {
-        return new PyMethod(container, this, wherefound);
+    @ExposedMethod
+    final PyObject function___get__(PyObject obj, PyObject type) {
+        return new PyMethod(this, obj, type);
     }
 
     public PyObject __call__() {
         return func_code.call(func_globals, func_defaults, func_closure);
     }
+
     public PyObject __call__(PyObject arg) {
         return func_code.call(arg, func_globals, func_defaults, func_closure);
     }
+
     public PyObject __call__(PyObject arg1, PyObject arg2) {
-        return func_code.call(arg1, arg2, func_globals, func_defaults,
-                              func_closure);
+        return func_code.call(arg1, arg2, func_globals, func_defaults, func_closure);
     }
+
     public PyObject __call__(PyObject arg1, PyObject arg2, PyObject arg3) {
         return func_code.call(arg1, arg2, arg3, func_globals, func_defaults,
                               func_closure);
     }
 
     public PyObject __call__(PyObject[] args, String[] keywords) {
-        return func_code.call(args, keywords, func_globals, func_defaults,
-                              func_closure);
-    }
-    public PyObject __call__(PyObject arg1, PyObject[] args,
-                             String[] keywords)
-    {
-        return func_code.call(arg1, args, keywords, func_globals,
-                              func_defaults,  func_closure);
+        return function___call__(args, keywords);
     }
 
+    @ExposedMethod
+    final PyObject function___call__(PyObject[] args, String[] keywords) {
+        return func_code.call(args, keywords, func_globals, func_defaults, func_closure);
+    }
+
+    public PyObject __call__(PyObject arg1, PyObject[] args, String[] keywords) {
+        return func_code.call(arg1, args, keywords, func_globals, func_defaults, func_closure);
+    }
+
+    @Override
     public String toString() {
         return String.format("<function %s at %s>", __name__, Py.idstr(this));
     }
+
+    @Override
+    public boolean isMappingType() { return false; }
+
+    @Override
+    public boolean isNumberType() { return false; }
+
+    @Override
+    public boolean isSequenceType() { return false; }
 }
