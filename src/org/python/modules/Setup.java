@@ -45,7 +45,7 @@ public class Setup
         "sha",
         "ucnhash",
         "_jython",
-        "new:org.python.modules.newmodule",
+        "_new:org.python.modules._newmodule",
         "_weakref",
         "xreadlines",
         "errno",

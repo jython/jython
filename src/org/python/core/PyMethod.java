@@ -11,22 +11,13 @@ public class PyMethod extends PyObject
     public PyObject im_func;
     public PyObject im_class;
 
-    public PyMethod(PyObject self, PyObject f, PyObject wherefound) {
-        if(self == Py.None){
+    public PyMethod(PyObject function, PyObject self, PyObject type) {
+        if (self == Py.None){
             self = null;
         }
-        im_func = f;
+        im_func = function;
         im_self = self;
-        im_class = wherefound;
-    }
-
-    public PyMethod(PyObject self, PyFunction f, PyObject wherefound) {
-        this(self, (PyObject)f, wherefound);
-    }
-
-    public PyMethod(PyObject self, PyReflectedFunction f, PyObject wherefound)
-    {
-        this(self, (PyObject)f, wherefound);
+        im_class = type;
     }
 
     private static final String[] __members__ = {
@@ -77,18 +68,10 @@ public class PyMethod extends PyObject
 
     public PyObject _doget(PyObject container, PyObject wherefound) {
         /* Only if classes are compatible */
-        if(container == null || im_self != null) {
+        if (container == null || im_self != null) {
             return this;
-        } else if(__builtin__.issubclass(container.fastGetClass(), im_class)) {
-           if(im_func instanceof PyFunction) {
-                return new PyMethod(container, (PyFunction)im_func, im_class);
-            } else if(im_func instanceof PyReflectedFunction) {
-                return new PyMethod(container,
-                                    (PyReflectedFunction)im_func,
-                                    im_class);
-            } else {
-                return new PyMethod(container, im_func, im_class);
-            }
+        } else if (__builtin__.issubclass(container.fastGetClass(), im_class)) {
+            return new PyMethod(im_func, container, im_class);
         } else {
             return this;
         }
