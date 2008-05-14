@@ -4,6 +4,7 @@ test_class which focuses on operators.
 Made for Jython
 """
 import __builtin__
+import new
 import unittest
 from test import test_support
 
@@ -107,6 +108,18 @@ class ClassGeneralTestCase(unittest.TestCase):
             else:
                 self.assert_(False,
                              'delattr Foo.%s expected a TypeError' % attr)
+
+    def test_newstyle_new_classobj(self):
+        # Ensure new.classobj can create new style classes
+        class Foo(object):
+            pass
+        def hello(self):
+            return 'hello'
+        Bar = new.classobj('Bar', (Foo,), dict(hello=hello))
+        self.assert_(type(Bar), type)
+        self.assert_(issubclass(Bar, Foo))
+        self.assert_(hasattr(Bar, 'hello'))
+        self.assertEquals(Bar().hello(), 'hello')
 
 
 class ClassNamelessModuleTestCase(unittest.TestCase):
