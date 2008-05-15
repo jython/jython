@@ -511,7 +511,7 @@ expr_stmt
         debug("matched expr_stmt:test " + $test.etype);
         $stmts::statements.add(new Expr($test.begin, $test.etype));
     }
-    | ^(augassign targ=test[expr_contextType.Store] value=test[expr_contextType.Load]) {
+    | ^(augassign targ=test[expr_contextType.AugStore] value=test[expr_contextType.Load]) {
         AugAssign a = new AugAssign($targ.begin, $targ.etype, $augassign.op, $value.etype);
         $stmts::statements.add(a);
     }

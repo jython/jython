@@ -1612,15 +1612,15 @@ public final class Py
     public static PyObject compile_flags(InputStream istream, String filename,
                                  String type,CompilerFlags cflags)
     {
+        modType node = antlr.parse(istream, type, filename, cflags);
         if (cflags != null && cflags.only_ast) {
-            modType node = antlr.parse(istream, type, filename, cflags);
             return Py.java2py(node);
         }
 
-        modType node = antlr.parse(istream, type, filename, cflags);
         boolean printResults = false;
-        if (type.equals("single"))
+        if (type.equals("single")) {
             printResults = true;
+        }
         return Py.compile_flags(node, getName(), filename, true, printResults, cflags);
     }
 
@@ -1968,7 +1968,7 @@ class JavaFunc extends PyObject {
     public PyObject _doget(PyObject container, PyObject wherefound) {
         if (container == null)
             return this;
-        return new PyMethod(this, container, wherefound);
+        return new PyMethod(container, this, wherefound);
     }
 
     public boolean _doset(PyObject container) {

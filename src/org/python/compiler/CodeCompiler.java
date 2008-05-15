@@ -419,7 +419,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
 
         if (print_results) {
             code.invokestatic("org/python/core/Py", "printResult", "(" + $pyObj + ")V");
-        } else {
+        } else if (!(node.value instanceof Yield)) {
             code.pop();
         }
         return null;
@@ -1475,6 +1475,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         case Load:
             code.invokevirtual("org/python/core/PyObject", "__getslice__", "(" + $pyObj + $pyObj + $pyObj + ")" + $pyObj);
             return null;
+        case Param:
         case Store:
             code.aload(temporary);
             code.invokevirtual("org/python/core/PyObject", "__setslice__", "(" + $pyObj + $pyObj + $pyObj + $pyObj + ")V");
@@ -1511,6 +1512,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         case Load:
             code.invokevirtual("org/python/core/PyObject", "__getitem__", "(" + $pyObj + ")" + $pyObj);
             return null;
+        case Param:
         case Store:
             code.aload(temporary);
             code.invokevirtual("org/python/core/PyObject", "__setitem__", "(" + $pyObj + $pyObj + ")V");
@@ -1556,6 +1558,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         case Load:
             code.invokevirtual("org/python/core/PyObject", "__getattr__", "(" + $str + ")" + $pyObj);
             return null;
+        case Param:
         case Store:
             code.aload(temporary);
             code.invokevirtual("org/python/core/PyObject", "__setattr__", "(" + $str + $pyObj + ")V");
@@ -1644,9 +1647,9 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         for (int i = node.generators.length - 1; i >= 0; i--) {
             comprehensionType lc = node.generators[i];
             for (int j = lc.ifs.length - 1; j >= 0; j--) {
-                n = new If(lc.ifs[j], lc.ifs[j], new stmtType[] { n }, null);
+                n = new If(lc.ifs[j], lc.ifs[j], new stmtType[] { n }, new stmtType[0]);
             }
-            n = new For(lc, lc.target, lc.iter, new stmtType[] { n }, null);
+            n = new For(lc, lc.target, lc.iter, new stmtType[] { n }, new stmtType[0]);
         }
         visit(n);
         visit(new Delete(n, new exprType[] { new Name(n, tmp_append, expr_contextType.Del) }));
@@ -1846,6 +1849,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
             code.invokevirtual("org/python/core/PyFrame", "getname", "(" + $str + ")" + $pyObj);
             return null;
 
+        case Param:
         case Store:
             loadFrame();
             if (syminf != null && (syminf.flags&ScopeInfo.GLOBAL) != 0) {
