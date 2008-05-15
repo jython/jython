@@ -173,7 +173,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
     }
 
     public void setline(PythonTree node) throws Exception {
-        setline(node.startIndex);
+        setline(node.getLine());
     }
 
     public void set(PythonTree node) throws Exception {
@@ -720,7 +720,11 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         Future.checkFromFuture(node); // future stmt support
         setline(node);
         code.ldc(node.module);
-        if (node.names.length > 0) {
+        //Note: parser does not allow node.names.length == 0
+        if (node.names.length == 1 && node.names[0].name.equals("*")) {
+            loadFrame();
+            code.invokestatic("org/python/core/imp", "importAll", "(" + $str + $pyFrame + ")V");
+        } else {
             String[] names = new String[node.names.length];
             String[] asnames = new String[node.names.length];
             for (int i = 0; i < node.names.length; i++) {
@@ -741,9 +745,6 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
                 set(new Name(node.names[i], asnames[i], expr_contextType.Store));
             }
             code.freeLocal(tmp);
-        } else {
-            loadFrame();
-            code.invokestatic("org/python/core/imp", "importAll", "(" + $str + $pyFrame + ")V");
         }
         return null;
     }

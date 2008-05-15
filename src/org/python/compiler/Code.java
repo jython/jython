@@ -596,4 +596,7 @@ class Code implements MethodVisitor, Opcodes {
         mv.visitTryCatchBlock(start, end, handlerStart, type);
     }
     
+    public void setline(int line) {
+        mv.visitLineNumber(line, new Label());
+    }
 }
