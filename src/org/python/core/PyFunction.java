@@ -47,7 +47,6 @@ public class PyFunction extends PyObject {
     public PyObject __dict__;
 
     /** A read only closure tuple for nested scopes. */
-    @ExposedGet
     public PyObject func_closure;
 
     /** Writable object describing what module this function belongs to. */
@@ -60,11 +59,14 @@ public class PyFunction extends PyObject {
         func_globals = globals;
         __name__ = code.co_name;
         __doc__ = doc != null ? doc : Py.None;
-        func_defaults = defaults != null ? defaults : Py.EmptyObjects;
+        // XXX: workaround the compiler passing Py.EmptyObjects
+        // instead of null for defaults, whereas we want func_defaults
+        // to be None (null) in that situation
+        func_defaults = (defaults != null && defaults.length == 0) ? null : defaults;
         func_code = code;
-        func_closure = closure_cells != null ? new PyTuple(closure_cells) : Py.EmptyTuple;
-        PyObject name = globals.__finditem__("__name__");
-        __module__ = name != null ? name : Py.None;
+        func_closure = closure_cells != null ? new PyTuple(closure_cells) : null;
+        PyObject moduleName = globals.__finditem__("__name__");
+        __module__ = moduleName != null ? moduleName : Py.None;
     }
 
     public PyFunction(PyObject globals, PyObject[] defaults, PyCode code, PyObject doc) {
@@ -94,7 +96,8 @@ public class PyFunction extends PyObject {
         PyObject closure = ap.getPyObject(4, Py.None);
 
         if (!(code instanceof PyTableCode)) {
-            throw Py.TypeError("function() argument 1 must be code, not str");
+            throw Py.TypeError("function() argument 1 must be code, not " +
+                               code.getType().fastGetName());
         }
         if (name != Py.None && !Py.isInstance(name, PyString.TYPE)) {
             throw Py.TypeError("arg 3 (name) must be None or string");
@@ -129,7 +132,7 @@ public class PyFunction extends PyObject {
 
         PyFunction function = new PyFunction(globals,
                                              defaults == Py.None
-                                             ? Py.EmptyObjects : ((PyTuple)defaults).getArray(),
+                                             ? null : ((PyTuple)defaults).getArray(),
                                              tcode, null,
                                              closure == Py.None
                                              ? null : ((PyTuple)closure).getArray());
@@ -171,7 +174,7 @@ public class PyFunction extends PyObject {
 
     @ExposedGet(name = "func_defaults")
     public PyObject getFuncDefaults() {
-        if (func_defaults.length == 0) {
+        if (func_defaults == null) {
             return Py.None;
         }
         return new PyTuple(func_defaults);
@@ -182,13 +185,12 @@ public class PyFunction extends PyObject {
         if (func_defaults != Py.None && !(func_defaults instanceof PyTuple)) {
             throw Py.TypeError("func_defaults must be set to a tuple object");
         }
-        this.func_defaults = func_defaults == Py.None
-                ? Py.EmptyObjects : ((PyTuple)func_defaults).getArray();
+        this.func_defaults = func_defaults == Py.None ? null : ((PyTuple)func_defaults).getArray();
     }
 
     @ExposedDelete(name = "func_defaults")
     public void delFuncDefaults() {
-        func_defaults = Py.EmptyObjects;
+        func_defaults = null;
     }
 
     @ExposedSet(name = "func_code")
@@ -198,7 +200,7 @@ public class PyFunction extends PyObject {
         }
         PyTableCode tcode = (PyTableCode)code;
         int nfree = tcode.co_freevars == null ? 0 : tcode.co_freevars.length;
-        int nclosure = func_closure.__len__();
+        int nclosure = func_closure != null ? func_closure.__len__() : 0;
         if (nclosure != nfree) {
             throw Py.ValueError(String.format("%s() requires a code object with %d free vars,"
                                               + " not %d", __name__, nclosure, nfree));
@@ -255,6 +257,11 @@ public class PyFunction extends PyObject {
         // __setattr__ would set __dict__['func_globals'] = value
         // without this method
         throw Py.TypeError("readonly attribute");
+    }
+
+    @ExposedGet(name = "func_closure")
+    public PyObject getFuncClosure() {
+        return func_closure != null ? func_closure : Py.None;
     }
 
     @ExposedSet(name = "func_closure")
