@@ -1,6 +1,7 @@
 package org.python.modules.sets;
 
 import org.python.core.PyBuiltinFunction;
+import org.python.core.PyInteger;
 import org.python.core.PyObject;
 import org.python.core.PyType;
 import org.python.expose.ExposedMethod;
@@ -38,6 +39,11 @@ public class PyImmutableSet extends BaseSet {
 
         PyObject o = args[0];
         _update(o);
+    }
+
+    @ExposedMethod(type = MethodType.BINARY)
+    final PyObject ImmutableSet___cmp__(PyObject o) {
+        return new PyInteger(baseset___cmp__(o));
     }
 
     @ExposedMethod(type = MethodType.BINARY)

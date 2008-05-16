@@ -5,6 +5,7 @@ import java.util.Iterator;
 import org.python.core.Py;
 import org.python.core.PyBuiltinFunction;
 import org.python.core.PyException;
+import org.python.core.PyInteger;
 import org.python.core.PyObject;
 import org.python.core.PyType;
 import org.python.expose.ExposedMethod;
@@ -44,6 +45,11 @@ public class PySet extends BaseSet {
         _update(o);
     }
     
+    @ExposedMethod(type = MethodType.BINARY)
+    final PyObject Set___cmp__(PyObject o) {
+        return new PyInteger(baseset___cmp__(o));
+    }
+
     @ExposedMethod(type = MethodType.BINARY)
     final PyObject Set___ne__(PyObject o) {
         return baseset___ne__(o);
