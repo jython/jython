@@ -15,6 +15,7 @@ org/python/core/PyFunction.class
 org/python/core/PyInteger.class
 org/python/core/PyList.class
 org/python/core/PyLong.class
+org/python/core/PyMethod.class
 org/python/core/PyMethodDescr.class
 org/python/core/PyModule.class
 org/python/core/PyNone.class
