@@ -226,11 +226,28 @@ class ClassLocalsTestCase(unittest.TestCase):
                                             'JYTHON', 'SOMECLASS'])
 
 
+class IsDescendentTestCase(unittest.TestCase):
+
+    def test_newstyle_descendent_of_oldstyle(self):
+        class NewStyle(object):
+            pass
+        class OldStyle:
+            pass
+        class Retro(NewStyle, OldStyle):
+            pass
+        self.assert_(issubclass(Retro, NewStyle))
+        self.assert_(issubclass(Retro, OldStyle))
+        retro = Retro()
+        self.assert_(isinstance(retro, NewStyle))
+        self.assert_(isinstance(retro, OldStyle))
+
+
 def test_main():
     test_support.run_unittest(ClassGeneralTestCase,
                               ClassNamelessModuleTestCase,
                               BrokenNameTestCase,
-                              ClassLocalsTestCase)
+                              ClassLocalsTestCase,
+                              IsDescendentTestCase)
 
 
 if __name__ == "__main__":
