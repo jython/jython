@@ -47,6 +47,7 @@ public class PyFunction extends PyObject {
     public PyObject __dict__;
 
     /** A read only closure tuple for nested scopes. */
+    @ExposedGet
     public PyObject func_closure;
 
     /** Writable object describing what module this function belongs to. */
@@ -259,11 +260,6 @@ public class PyFunction extends PyObject {
         throw Py.TypeError("readonly attribute");
     }
 
-    @ExposedGet(name = "func_closure")
-    public PyObject getFuncClosure() {
-        return func_closure != null ? func_closure : Py.None;
-    }
-
     @ExposedSet(name = "func_closure")
     public void setFuncClosure(PyObject value) {
         // same idea as setFuncGlobals
@@ -302,23 +298,28 @@ public class PyFunction extends PyObject {
         return new PyMethod(this, obj, type);
     }
 
+    @Override
     public PyObject __call__() {
         return func_code.call(func_globals, func_defaults, func_closure);
     }
 
+    @Override
     public PyObject __call__(PyObject arg) {
         return func_code.call(arg, func_globals, func_defaults, func_closure);
     }
 
+    @Override
     public PyObject __call__(PyObject arg1, PyObject arg2) {
         return func_code.call(arg1, arg2, func_globals, func_defaults, func_closure);
     }
 
+    @Override
     public PyObject __call__(PyObject arg1, PyObject arg2, PyObject arg3) {
         return func_code.call(arg1, arg2, arg3, func_globals, func_defaults,
                               func_closure);
     }
 
+    @Override
     public PyObject __call__(PyObject[] args, String[] keywords) {
         return function___call__(args, keywords);
     }
@@ -328,6 +329,7 @@ public class PyFunction extends PyObject {
         return func_code.call(args, keywords, func_globals, func_defaults, func_closure);
     }
 
+    @Override
     public PyObject __call__(PyObject arg1, PyObject[] args, String[] keywords) {
         return func_code.call(arg1, args, keywords, func_globals, func_defaults, func_closure);
     }
