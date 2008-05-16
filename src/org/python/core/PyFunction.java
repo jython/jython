@@ -84,12 +84,11 @@ public class PyFunction extends PyObject {
     }
 
     @ExposedNew
-    static final PyObject file_new(PyNewWrapper new_, boolean init, PyType subtype,
-                                   PyObject[] args, String[] keywords) {
+    static final PyObject function___new__(PyNewWrapper new_, boolean init, PyType subtype,
+                                           PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("function", args, keywords,
                                      new String[] {"code", "globals", "name", "argdefs",
-                                                   "closure"},
-                                     0);
+                                                   "closure"}, 0);
         PyObject code = ap.getPyObject(0);
         PyObject globals = ap.getPyObject(1);
         PyObject name = ap.getPyObject(2, Py.None);
