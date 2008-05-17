@@ -208,7 +208,7 @@ public class PySet extends BaseSet {
 
     @ExposedMethod
     final int set___hash__() {
-        throw Py.TypeError("Can't hash a Set, only an FrozenSet.");
+        throw Py.TypeError("set objects are unhashable");
     }
 
     @ExposedMethod
