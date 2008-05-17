@@ -60,11 +60,14 @@ public class PyFunction extends PyObject {
         func_globals = globals;
         __name__ = code.co_name;
         __doc__ = doc != null ? doc : Py.None;
-        func_defaults = defaults != null ? defaults : Py.EmptyObjects;
+        // XXX: workaround the compiler passing Py.EmptyObjects
+        // instead of null for defaults, whereas we want func_defaults
+        // to be None (null) in that situation
+        func_defaults = (defaults != null && defaults.length == 0) ? null : defaults;
         func_code = code;
-        func_closure = closure_cells != null ? new PyTuple(closure_cells) : Py.EmptyTuple;
-        PyObject name = globals.__finditem__("__name__");
-        __module__ = name != null ? name : Py.None;
+        func_closure = closure_cells != null ? new PyTuple(closure_cells) : null;
+        PyObject moduleName = globals.__finditem__("__name__");
+        __module__ = moduleName != null ? moduleName : Py.None;
     }
 
     public PyFunction(PyObject globals, PyObject[] defaults, PyCode code, PyObject doc) {
@@ -81,12 +84,11 @@ public class PyFunction extends PyObject {
     }
 
     @ExposedNew
-    static final PyObject file_new(PyNewWrapper new_, boolean init, PyType subtype,
-                                   PyObject[] args, String[] keywords) {
+    static final PyObject function___new__(PyNewWrapper new_, boolean init, PyType subtype,
+                                           PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("function", args, keywords,
                                      new String[] {"code", "globals", "name", "argdefs",
-                                                   "closure"},
-                                     0);
+                                                   "closure"}, 0);
         PyObject code = ap.getPyObject(0);
         PyObject globals = ap.getPyObject(1);
         PyObject name = ap.getPyObject(2, Py.None);
@@ -94,7 +96,8 @@ public class PyFunction extends PyObject {
         PyObject closure = ap.getPyObject(4, Py.None);
 
         if (!(code instanceof PyTableCode)) {
-            throw Py.TypeError("function() argument 1 must be code, not str");
+            throw Py.TypeError("function() argument 1 must be code, not " +
+                               code.getType().fastGetName());
         }
         if (name != Py.None && !Py.isInstance(name, PyString.TYPE)) {
             throw Py.TypeError("arg 3 (name) must be None or string");
@@ -129,7 +132,7 @@ public class PyFunction extends PyObject {
 
         PyFunction function = new PyFunction(globals,
                                              defaults == Py.None
-                                             ? Py.EmptyObjects : ((PyTuple)defaults).getArray(),
+                                             ? null : ((PyTuple)defaults).getArray(),
                                              tcode, null,
                                              closure == Py.None
                                              ? null : ((PyTuple)closure).getArray());
@@ -171,7 +174,7 @@ public class PyFunction extends PyObject {
 
     @ExposedGet(name = "func_defaults")
     public PyObject getFuncDefaults() {
-        if (func_defaults.length == 0) {
+        if (func_defaults == null) {
             return Py.None;
         }
         return new PyTuple(func_defaults);
@@ -182,13 +185,12 @@ public class PyFunction extends PyObject {
         if (func_defaults != Py.None && !(func_defaults instanceof PyTuple)) {
             throw Py.TypeError("func_defaults must be set to a tuple object");
         }
-        this.func_defaults = func_defaults == Py.None
-                ? Py.EmptyObjects : ((PyTuple)func_defaults).getArray();
+        this.func_defaults = func_defaults == Py.None ? null : ((PyTuple)func_defaults).getArray();
     }
 
     @ExposedDelete(name = "func_defaults")
     public void delFuncDefaults() {
-        func_defaults = Py.EmptyObjects;
+        func_defaults = null;
     }
 
     @ExposedSet(name = "func_code")
@@ -198,7 +200,7 @@ public class PyFunction extends PyObject {
         }
         PyTableCode tcode = (PyTableCode)code;
         int nfree = tcode.co_freevars == null ? 0 : tcode.co_freevars.length;
-        int nclosure = func_closure.__len__();
+        int nclosure = func_closure != null ? func_closure.__len__() : 0;
         if (nclosure != nfree) {
             throw Py.ValueError(String.format("%s() requires a code object with %d free vars,"
                                               + " not %d", __name__, nclosure, nfree));
@@ -295,23 +297,28 @@ public class PyFunction extends PyObject {
         return new PyMethod(this, obj, type);
     }
 
+    @Override
     public PyObject __call__() {
         return func_code.call(func_globals, func_defaults, func_closure);
     }
 
+    @Override
     public PyObject __call__(PyObject arg) {
         return func_code.call(arg, func_globals, func_defaults, func_closure);
     }
 
+    @Override
     public PyObject __call__(PyObject arg1, PyObject arg2) {
         return func_code.call(arg1, arg2, func_globals, func_defaults, func_closure);
     }
 
+    @Override
     public PyObject __call__(PyObject arg1, PyObject arg2, PyObject arg3) {
         return func_code.call(arg1, arg2, arg3, func_globals, func_defaults,
                               func_closure);
     }
 
+    @Override
     public PyObject __call__(PyObject[] args, String[] keywords) {
         return function___call__(args, keywords);
     }
@@ -321,6 +328,7 @@ public class PyFunction extends PyObject {
         return func_code.call(args, keywords, func_globals, func_defaults, func_closure);
     }
 
+    @Override
     public PyObject __call__(PyObject arg1, PyObject[] args, String[] keywords) {
         return func_code.call(arg1, args, keywords, func_globals, func_defaults, func_closure);
     }

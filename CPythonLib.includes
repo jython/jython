@@ -105,6 +105,7 @@ repr.py
 rfc822.py
 rlcompleter.py
 sched.py
+sets.py
 sgmllib.py
 shelve.py
 shlex.py

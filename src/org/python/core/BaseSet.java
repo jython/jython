@@ -1,14 +1,4 @@
-
-package org.python.modules.sets;
-
-import org.python.core.Py;
-import org.python.core.PyException;
-import org.python.core.PyIgnoreMethodTag;
-import org.python.core.PyList;
-import org.python.core.PyObject;
-import org.python.core.PyTuple;
-import org.python.core.__builtin__;
-import org.python.core.PyType;
+package org.python.core;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -55,7 +45,6 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
      * @throws PyIgnoreMethodTag Ignore.
      */
     protected void _update(PyObject data) throws PyIgnoreMethodTag {
-
         if(data instanceof BaseSet) {
             // Skip the iteration if both are sets
             this._set.addAll(((BaseSet)data)._set);
@@ -134,11 +123,10 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
     }
 
     final PyObject baseset_difference(PyObject other) {
-        BaseSet iterable = (other instanceof BaseSet) ? (BaseSet) other : new PySet(other);
-        Set set = iterable._set;
+        BaseSet bs = (other instanceof BaseSet) ? (BaseSet) other : new PySet(other);
+        Set set = bs._set;
         BaseSet o = (BaseSet) this.getType().__call__();
-        for (Iterator i = this._set.iterator(); i.hasNext();) {
-            Object p = i.next();
+        for (Object p : this._set) {
             if (!set.contains(p)) {
                 o._set.add(p);
             }
@@ -172,16 +160,14 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
     }
 
     public PyObject baseset_symmetric_difference(PyObject other) {
-        BaseSet iterable = (other instanceof BaseSet) ? (BaseSet) other : new PySet(other);
+        BaseSet bs = (other instanceof BaseSet) ? (BaseSet) other : new PySet(other);
         BaseSet o = (BaseSet) this.getType().__call__();
-        for (Iterator i = this._set.iterator(); i.hasNext();) {
-            Object p = i.next();
-            if (!iterable._set.contains(p)) {
+        for (Object p : this._set) {
+            if (!bs._set.contains(p)) {
                 o._set.add(p);
             }
         }
-        for (Iterator i = iterable._set.iterator(); i.hasNext();) {
-            Object p = i.next();
+        for (Object p : bs._set) {
             if (!this._set.contains(p)) {
                 o._set.add(p);
             }
@@ -244,14 +230,21 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
         return this._set.contains(other);
     }
 
+    public int __cmp__(PyObject other) {
+        return baseset___cmp__(other);
+    }
+
+    final int baseset___cmp__(PyObject other) {
+    	throw Py.TypeError("cannot compare sets using cmp()");
+    }
+
     public PyObject __eq__(PyObject other) {
         return baseset___eq__(other);
     }
 
     final PyObject baseset___eq__(PyObject other) {
-        if(other instanceof BaseSet) {
-            BaseSet bs = this._binary_sanity_check(other);
-            return Py.newBoolean(this._set.equals(bs._set));
+        if (other instanceof BaseSet) {
+            return Py.newBoolean(this._set.equals(((BaseSet)other)._set));
         }
         return Py.False;
     }
@@ -262,8 +255,7 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
 
     final PyObject baseset___ne__(PyObject other) {
         if(other instanceof BaseSet) {
-            BaseSet bs = this._binary_sanity_check(other);
-            return Py.newBoolean(!this._set.equals(bs._set));
+            return Py.newBoolean(!this._set.equals(((BaseSet)other)._set));
         }
         return Py.True;
     }
@@ -273,6 +265,7 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
     }
 
     final PyObject baseset___le__(PyObject other) {
+        BaseSet bs = this._binary_sanity_check(other);
         return this.baseset_issubset(other);
     }
 
@@ -281,6 +274,7 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
     }
 
     final PyObject baseset___ge__(PyObject other) {
+        BaseSet bs = this._binary_sanity_check(other);
         return this.baseset_issuperset(other);
     }
 
@@ -330,8 +324,8 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
         PyObject deepcopy = copy.__getattr__("deepcopy");
         BaseSet result = (BaseSet) this.getType().__call__();
         memo.__setitem__(Py.newInteger(Py.id(this)), result);
-        for (Iterator iterator = this._set.iterator(); iterator.hasNext();) {
-            result._set.add(deepcopy.__call__(Py.java2py(iterator.next()), memo));
+        for (Object p : this._set) {
+            result._set.add(deepcopy.__call__(Py.java2py(p), memo));
         }
         return result;
     }
@@ -381,12 +375,12 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
     }
 
     public PyObject baseset_issubset(PyObject other) {
-        BaseSet bs = this._binary_sanity_check(other);
+        BaseSet bs = (other instanceof BaseSet) ? (BaseSet) other : new PySet(other);
         if (this.__len__() > bs.__len__()) {
             return Py.False;
         }
-        for (Iterator iterator = this._set.iterator(); iterator.hasNext();) {
-            if (!bs._set.contains(iterator.next())) {
+        for (Object p : this._set) {
+            if (!bs._set.contains(p)) {
                 return Py.False;
             }
         }
@@ -394,12 +388,12 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
     }
 
     public PyObject baseset_issuperset(PyObject other) {
-        BaseSet bs = this._binary_sanity_check(other);
+        BaseSet bs = (other instanceof BaseSet) ? (BaseSet) other : new PySet(other);
         if (this.__len__() < bs.__len__()) {
             return Py.False;
         }
-        for (Iterator iterator = bs._set.iterator(); iterator.hasNext();) {
-            if (!this._set.contains(iterator.next())) {
+        for (Object p : bs._set) {
+            if (!this._set.contains(p)) {
                 return Py.False;
             }
         }

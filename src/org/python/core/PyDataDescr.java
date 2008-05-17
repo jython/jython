@@ -60,11 +60,7 @@ public abstract class PyDataDescr extends PyDescriptor {
     public PyObject getset_descriptor___get__(PyObject obj, PyObject type) {
         if(obj != null) {
             checkGetterType(obj.getType());
-            Object v = invokeGet(obj);
-            if(v == null) {
-                obj.noAttributeError(name);
-            }
-            return Py.java2py(v);
+            return Py.java2py(invokeGet(obj));
         }
         return this;
     }

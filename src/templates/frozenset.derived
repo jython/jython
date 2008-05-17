@@ -1,4 +1,4 @@
-base_class: PyImmutableSet
+base_class: PyFrozenSet
 want_dict: true
 ctr:
 incl: object

@@ -11,15 +11,18 @@ org/python/core/PyDictProxy.class
 org/python/core/PyEnumerate.class
 org/python/core/PyFile.class
 org/python/core/PyFloat.class
+org/python/core/PyFrozenSet.class
 org/python/core/PyFunction.class
 org/python/core/PyInteger.class
 org/python/core/PyList.class
 org/python/core/PyLong.class
+org/python/core/PyMethod.class
 org/python/core/PyMethodDescr.class
 org/python/core/PyModule.class
 org/python/core/PyNone.class
 org/python/core/PyObject.class
 org/python/core/PyProperty.class
+org/python/core/PySet.class
 org/python/core/PySlice.class
 org/python/core/PySlot.class
 org/python/core/PyStaticMethod.class
@@ -32,8 +35,6 @@ org/python/modules/PyLocal.class
 org/python/modules/collections/PyDefaultDict.class
 org/python/modules/collections/PyDeque.class
 org/python/modules/random/PyRandom.class
-org/python/modules/sets/PyImmutableSet.class
-org/python/modules/sets/PySet.class
 org/python/modules/time/PyTimeTuple.class
 org/python/modules/zipimport/zipimporter.class
 org/python/modules/PyTeeIterator.class

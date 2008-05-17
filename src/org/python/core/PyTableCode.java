@@ -298,6 +298,7 @@ public class PyTableCode extends PyCode
                           PyObject closure) {
         PyFrame frame = new PyFrame(this, globals);
         int argcount = args.length - kws.length;
+        int defcount = defs != null ? defs.length : 0;
         PyObject[] fastlocals = frame.f_fastlocals;
         
         if (co_argcount > 0 || (varargs || varkwargs)) {
@@ -316,7 +317,7 @@ public class PyTableCode extends PyCode
                 if (!varargs) {
                     String msg = String.format("%.200s() takes %s %d %sargument%s (%d given)",
                                                co_name,
-                                               defs.length > 0 ? "at most" : "exactly",
+                                               defcount > 0 ? "at most" : "exactly",
                                                co_argcount,
                                                kws.length > 0 ? "non-keyword " : "",
                                                co_argcount == 1 ? "" : "s",
@@ -365,12 +366,12 @@ public class PyTableCode extends PyCode
                 }
             }
             if (argcount < co_argcount) {
-                int m = co_argcount - defs.length;
+                int m = co_argcount - defcount;
                 for (i = argcount; i < m; i++) {
                     if (fastlocals[i] == null) {
                         String msg =
                                 String.format("%.200s() takes %s %d %sargument%s (%d given)",
-                                              co_name, (varargs || defs.length > 0) ?
+                                              co_name, (varargs || defcount > 0) ?
                                               "at least" : "exactly",
                                               m, kws.length > 0 ? "non-keyword " : "",
                                               m == 1 ? "" : "s", i);
@@ -382,7 +383,7 @@ public class PyTableCode extends PyCode
                 } else {
                     i = 0;
                 }
-                for (; i < defs.length; i++) {
+                for (; i < defcount; i++) {
                     if (fastlocals[m + i] == null) {
                         fastlocals[m + i] = defs[i];
                     }
