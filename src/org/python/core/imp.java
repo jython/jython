@@ -12,6 +12,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.python.core.util.FileUtil;
+
 /**
  * Utility functions for "import" support.
  */
@@ -735,7 +737,7 @@ public class imp {
     public static PyObject importOne(String mod, PyFrame frame) {
         // System.out.println("importOne(" + mod + ")");
         PyObject module = __builtin__.__import__(mod, frame.f_globals, frame
-                .getf_locals(), Py.EmptyTuple);
+                .getLocals(), Py.EmptyTuple);
         /*
          * int dot = mod.indexOf('.'); if (dot != -1) { mod = mod.substring(0,
          * dot).intern(); }
@@ -751,7 +753,7 @@ public class imp {
     public static PyObject importOneAs(String mod, PyFrame frame) {
         // System.out.println("importOne(" + mod + ")");
         PyObject module = __builtin__.__import__(mod, frame.f_globals, frame
-                .getf_locals(), getStarArg());
+                .getLocals(), getStarArg());
         // frame.setlocal(asname, module);
         return module;
     }
@@ -776,7 +778,7 @@ public class imp {
             pyNames[i] = Py.newString(names[i]);
         }
 
-        PyObject module = __builtin__.__import__(mod, frame.f_globals, frame.getf_locals(),
+        PyObject module = __builtin__.__import__(mod, frame.f_globals, frame.getLocals(),
                                                  new PyTuple(pyNames));
         PyObject[] submods = new PyObject[names.length];
         for (int i = 0; i < names.length; i++) {
@@ -805,7 +807,7 @@ public class imp {
     public static void importAll(String mod, PyFrame frame) {
         // System.out.println("importAll(" + mod + ")");
         PyObject module = __builtin__.__import__(mod, frame.f_globals, frame
-                .getf_locals(), getStarArg());
+                .getLocals(), getStarArg());
         PyObject names;
         boolean filter = true;
         if (module instanceof PyJavaPackage) {
@@ -820,7 +822,7 @@ public class imp {
             }
         }
 
-        loadNames(names, module, frame.getf_locals(), filter);
+        loadNames(names, module, frame.getLocals(), filter);
     }
 
     /**

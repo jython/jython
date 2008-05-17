@@ -12,9 +12,6 @@ for manipulation of the pathname component of URLs.
 
 import java.io.File
 import java.io.IOException
-# XXX: os (org.python.modules.os) is broken when we're imported: look at
-# javaos.name instead
-import javaos
 import os
 import stat
 
@@ -218,7 +215,7 @@ def isfile(path):
 
 # Are two filenames really pointing to the same file?
 
-if javaos.name == 'java':
+if os.name == 'java':
     def samefile(f1, f2):
         """Test whether two pathnames reference the same actual file"""
         canon1 = java.io.File(_ensure_str(f1)).getCanonicalPath()
@@ -233,7 +230,7 @@ else:
 
 
 # XXX: Plain Jython lacks fstat and st_ino/st_dev
-if javaos.name != 'java':
+if os.name != 'java':
     # Are two open files really referencing the same file?
     # (Not necessarily the same file descriptor!)
 
@@ -441,7 +438,7 @@ symbolic links encountered in the path."""
     return abspath(filename)
 
 
-if javaos.name == 'java':
+if os.name == 'java':
     def _resolve_link(path):
         """Internal helper function.  Takes a path and follows symlinks
         until we either arrive at something that isn't a symlink, or

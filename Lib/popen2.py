@@ -231,7 +231,7 @@ def system( cmd ):
     """
     bufsize = 4096
     # this uses some Popen3 internals, and thus belongs in popen3
-    # javaos.system should also be this function
+    # os.system should also be this function
     p = Popen3( cmd, 1, bufsize)
     p.tochild.close()
     

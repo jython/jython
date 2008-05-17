@@ -369,15 +369,17 @@ class PyCompileTestCase(BaseImportTestCase):
             self.assertEqual(mod.__file__, self.mod_name + COMPILED_SUFFIX)
 
     def test_compile_dest(self):
-        # XXX: py_compile with a destination is a little broken (when
-        # you go to import the file, it raises an error because the
-        # class is mislabeled in regard to the filename). Just test the
-        # destination for now
         py_compile.compile(self.basename1,
                            self.basename1[:-3] +
                            'chdir_test' + COMPILED_SUFFIX)
         self.assert_(os.path.exists(self.filename1[:-3] + 'chdir_test' +
                                     COMPILED_SUFFIX))
+
+        mod_name = self.mod_name + 'chdir_test'
+        __import__(mod_name)
+        self.assert_(mod_name in sys.modules)
+        mod = sys.modules[mod_name]
+        self.assertEqual(mod.__file__, mod_name + COMPILED_SUFFIX)
 
 
 class SubprocessTestCase(BaseChdirTestCase):

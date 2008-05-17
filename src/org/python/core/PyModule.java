@@ -21,6 +21,7 @@ public class PyModule extends PyObject {
         "The name must be a string; the optional doc argument can have any type.");
 
     /** The module's mutable dictionary */
+    @ExposedGet
     public PyObject __dict__;
 
     public PyModule() {
@@ -62,14 +63,6 @@ public class PyModule extends PyObject {
     }
 
     public PyObject fastGetDict() {
-        return __dict__;
-    }
-
-    @ExposedGet(name = "__dict__")
-    public PyObject getDict() {
-        if (__dict__ == null) {
-            return Py.None;
-        }
         return __dict__;
     }
 

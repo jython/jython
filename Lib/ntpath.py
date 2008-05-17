@@ -6,7 +6,6 @@ module as os.path.
 """
 
 import java.io.File
-import javaos
 import os
 import stat
 import sys
@@ -288,7 +287,7 @@ def isfile(path):
     return stat.S_ISREG(st.st_mode)
 
 
-if javaos.name != 'java':
+if os.name != 'java':
     # Is a path a mount point?  Either a root (with or without drive letter)
     # or an UNC path with at most a / or \ after the mount point.
 

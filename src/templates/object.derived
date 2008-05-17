@@ -54,18 +54,6 @@ rest:
         return super.__int__();
   }    
 
-  public String toString() {
-    PyType self_type = getType();
-    PyObject impl = self_type.lookup("__repr__");
-    if (impl != null) {
-      PyObject res = impl.__get__(this,self_type).__call__();
-      if (!(res instanceof PyString))
-        throw Py.TypeError("__repr__ should return a string");
-      return ((PyString)res).toString();
-    }
-    return super.toString();
-  }
-
   public int hashCode() {
     PyType self_type = getType();
     PyObject impl = self_type.lookup("__hash__");

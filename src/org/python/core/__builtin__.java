@@ -7,8 +7,6 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.python.core.util.RelativeFile;
-import org.python.modules.sets.PyImmutableSet;
-import org.python.modules.sets.PySet;
 import org.python.expose.ExposedGet;
 
 class BuiltinFunctions extends PyBuiltinFunctionSet {
@@ -320,7 +318,7 @@ public class __builtin__ {
         dict.__setitem__("list", PyList.TYPE);
         dict.__setitem__("tuple", PyTuple.TYPE);
         dict.__setitem__("set", PySet.TYPE);
-        dict.__setitem__("frozenset", PyImmutableSet.TYPE);
+        dict.__setitem__("frozenset", PyFrozenSet.TYPE);
 
         dict.__setitem__("property", PyProperty.TYPE);
         dict.__setitem__("staticmethod", PyStaticMethod.TYPE);
@@ -430,8 +428,11 @@ public class __builtin__ {
         }
     }
 
-    public static boolean callable(PyObject o) {
-        return o.__findattr__("__call__") != null;
+    public static boolean callable(PyObject obj) {
+        if (obj instanceof PyInstance) {
+            return obj.__findattr__("__call__") != null;
+        }
+        return obj.getType().lookup("__call__") != null;
     }
 
     public static char unichr(int i) {
@@ -457,11 +458,11 @@ public class __builtin__ {
         throw Py.TypeError("number coercion failed");
     }
 
-    public static PyCode compile(String data, String filename, String type) {
+    public static PyObject compile(String data, String filename, String type) {
         return Py.compile_flags(data, filename, type, Py.getCompilerFlags());
     }
 
-    public static PyCode compile(String data, String filename, String type, int flags, boolean dont_inherit) {
+    public static PyObject compile(String data, String filename, String type, int flags, boolean dont_inherit) {
         if ((flags & ~PyTableCode.CO_ALL_FEATURES) != 0) {
             throw Py.ValueError("compile(): unrecognised flags");
         }
@@ -507,7 +508,7 @@ public class __builtin__ {
             code = (PyCode) o;
         } else {
             if (o instanceof PyString) {
-                code = compile(o.toString(), "<string>", "eval");
+                code = (PyCode)compile(o.toString(), "<string>", "eval");
             } else {
                 throw Py.TypeError("eval: argument 1 must be string or code object");
             }
@@ -540,7 +541,7 @@ public class __builtin__ {
         PyCode code;
 
         try {
-            code = Py.compile_flags(file, name, "exec", cflags);
+            code = (PyCode)Py.compile_flags(file, name, "exec", cflags);
         } finally {
             try {
                 file.close();
@@ -639,7 +640,13 @@ public class __builtin__ {
         } else {
             throw Py.TypeError("hasattr(): attribute name must be string");
         }
-        return obj.__findattr__(nameStr.intern()) != null;
+
+        try {
+            return obj.__findattr__(nameStr.intern()) != null;
+        } catch (PyException pye) {
+            // swallow
+        }
+        return false;
     }
 
     public static PyInteger hash(PyObject o) {
@@ -727,7 +734,7 @@ public class __builtin__ {
     }
 
     public static PyObject locals() {
-        return Py.getFrame().getf_locals();
+        return Py.getFrame().getLocals();
     }
 
     public static PyObject map(PyObject[] argstar) {

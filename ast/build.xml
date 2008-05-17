@@ -1,0 +1,32 @@
+<project name="asdl" default="all">
+
+    <path id="main.classpath">
+        <fileset dir="../extlibs">
+            <include name="**/*.jar"/>
+        </fileset>
+        <pathelement path="../dist/jython.jar" />
+    </path>
+
+    <target name="asdl_gen">
+        <apply
+            verbose="true"
+            executable="python">
+            <arg value="./asdl_antlr.py" />
+            <fileset dir="." includes="Python.asdl"/>
+        </apply>
+    </target>
+
+    <target name="test">
+        <junit printsummary="withOutAndErr" showoutput="true"
+            fork="true" forkmode="once" failureproperty="testfailure">
+            <formatter type="plain" />
+            <classpath refid="main.classpath"/>
+            <batchtest todir="test">
+                <fileset dir="test"/>
+            </batchtest>
+        </junit>
+    </target>
+
+    <target name="all" depends="asdl_gen"/>
+</project>
+

@@ -1,6 +1,6 @@
 Some classes have generated code to enable their usage within Jython.  Each 
 such file will have a generated section that is created with the gexpose.py 
-script.  For the PyIntger class it is created thus:
+script.  For the PyInteger class it is created thus:
 
   python gexpose.py int.expose ../../jython/src/org/python/core/PyInteger.java
 

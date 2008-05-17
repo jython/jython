@@ -79,6 +79,8 @@ tokens {
     DEDENT;
     
     Module;
+    Interactive;
+    Expression;
     Test;
     Msg;
     Import;
@@ -179,6 +181,7 @@ tokens {
     ListIf;
     FinalBody;
     Parens;
+    Brackets;
 }
 
 @header { 
@@ -243,9 +246,9 @@ int startPos=-1;
 }
 
 //single_input: NEWLINE | simple_stmt | compound_stmt NEWLINE
-single_input : NEWLINE!
-             | simple_stmt
-             | compound_stmt NEWLINE!
+single_input : NEWLINE
+             | simple_stmt -> ^(Interactive simple_stmt)
+             | compound_stmt NEWLINE -> ^(Interactive compound_stmt)
              ;
 
 //file_input: (NEWLINE | stmt)* ENDMARKER
@@ -254,7 +257,7 @@ file_input : (NEWLINE | stmt)* {debug("parsed file_input");}
            ;
 
 //eval_input: testlist NEWLINE* ENDMARKER
-eval_input : (NEWLINE!)* testlist (NEWLINE!)*
+eval_input : (NEWLINE)* testlist (NEWLINE)* -> ^(Expression testlist)
            ;
 
 //decorators: decorator+
@@ -274,7 +277,7 @@ dotted_attr
 
 //funcdef: [decorators] 'def' NAME parameters ':' suite
 funcdef : decorators? 'def' NAME parameters COLON suite
-       -> ^(FunctionDef ^(Name NAME) ^(Arguments parameters) ^(Body suite) ^(Decorators decorators?))
+       -> ^(FunctionDef 'def' ^(Name NAME) ^(Arguments parameters) ^(Body suite) ^(Decorators decorators?))
         ;
 
 //parameters: '(' [varargslist] ')'
@@ -386,11 +389,11 @@ augassign : PLUSEQUAL
 
 //print_stmt: 'print' ( [ test (',' test)* [','] ] | '>>' test [ (',' test)+ [','] ] )
 print_stmt : 'print'
-             ( t1=printlist -> {$t1.newline}? ^(Print ^(Values $t1) ^(Newline))
-                           -> ^(Print ^(Values $t1))
-             | RIGHTSHIFT t2=printlist -> {$t2.newline}? ^(Print ^(Dest RIGHTSHIFT) ^(Values $t2) ^(Newline))
-                                      -> ^(Print ^(Dest RIGHTSHIFT) ^(Values $t2))
-             | -> ^(Print ^(Newline))
+             ( t1=printlist -> {$t1.newline}? ^(Print 'print' ^(Values $t1) ^(Newline))
+                            -> ^(Print 'print' ^(Values $t1))
+             | RIGHTSHIFT t2=printlist -> {$t2.newline}? ^(Print 'print' ^(Dest RIGHTSHIFT) ^(Values $t2) ^(Newline))
+                                      -> ^(Print 'print' ^(Dest RIGHTSHIFT) ^(Values $t2))
+             | -> ^(Print 'print' ^(Newline))
              )
            ;
 
@@ -411,12 +414,12 @@ printlist returns [boolean newline]
 
 //del_stmt: 'del' exprlist
 del_stmt : 'del' exprlist2
-        -> ^(Delete exprlist2)
+        -> ^(Delete 'del' exprlist2)
          ;
 
 //pass_stmt: 'pass'
 pass_stmt : 'pass'
-         -> Pass
+         -> ^(Pass 'pass')
           ;
 
 //flow_stmt: break_stmt | continue_stmt | return_stmt | raise_stmt | yield_stmt
@@ -429,17 +432,17 @@ flow_stmt : break_stmt
 
 //break_stmt: 'break'
 break_stmt : 'break'
-          -> Break
+          -> ^(Break 'break')
            ;
 
 //continue_stmt: 'continue'
 continue_stmt : 'continue'
-             -> Continue
+             -> ^(Continue 'continue')
               ;
 
 //return_stmt: 'return' [testlist]
 return_stmt : 'return' (testlist)?
-          -> ^(Return ^(Value testlist)?)
+          -> ^(Return 'return' ^(Value testlist)?)
             ;
 
 //yield_stmt: yield_expr
@@ -448,7 +451,7 @@ yield_stmt : yield_expr
 
 //raise_stmt: 'raise' [test [',' test [',' test]]]
 raise_stmt: 'raise' (t1=test (COMMA t2=test (COMMA t3=test)?)?)?
-          -> ^(Raise ^(Type $t1)? ^(Inst $t2)? ^(Tback $t3)?)
+          -> ^(Raise 'raise' ^(Type $t1)? ^(Inst $t2)? ^(Tback $t3)?)
           ;
 
 //import_stmt: import_name | import_from
@@ -458,18 +461,18 @@ import_stmt : import_name
 
 //import_name: 'import' dotted_as_names
 import_name : 'import' dotted_as_names
-           -> ^(Import dotted_as_names)
+           -> ^(Import 'import' dotted_as_names)
             ;
 
 //import_from: ('from' ('.'* dotted_name | '.'+)
 //              'import' ('*' | '(' import_as_names ')' | import_as_names))
 import_from: 'from' (DOT* dotted_name | DOT+) 'import'
               (STAR
-             -> ^(ImportFrom ^(Level DOT*)? ^(Name dotted_name)? ^(Import STAR))
+             -> ^(ImportFrom 'from' ^(Level DOT*)? ^(Name dotted_name)? ^(Import STAR))
               | import_as_names
-             -> ^(ImportFrom ^(Level DOT*)? ^(Name dotted_name)? ^(Import import_as_names))
+             -> ^(ImportFrom 'from' ^(Level DOT*)? ^(Name dotted_name)? ^(Import import_as_names))
               | LPAREN import_as_names RPAREN
-             -> ^(ImportFrom ^(Level DOT*)? ^(Name dotted_name)? ^(Import import_as_names))
+             -> ^(ImportFrom 'from' ^(Level DOT*)? ^(Name dotted_name)? ^(Import import_as_names))
               )
            ;
 
@@ -497,17 +500,17 @@ dotted_name : NAME (DOT NAME)*
 
 //global_stmt: 'global' NAME (',' NAME)*
 global_stmt : 'global' NAME (COMMA NAME)*
-           -> ^(Global NAME+)
+           -> ^(Global 'global' NAME+)
             ;
 
 //exec_stmt: 'exec' expr ['in' test [',' test]]
 exec_stmt : 'exec' expr ('in' t1=test (COMMA t2=test)?)?
-         -> ^(Exec expr ^(Globals $t1)? ^(Locals $t2)?)
+         -> ^(Exec 'exec' expr ^(Globals $t1)? ^(Locals $t2)?)
           ;
 
 //assert_stmt: 'assert' test [',' test]
 assert_stmt : 'assert' t1=test (COMMA t2=test)?
-           -> ^(Assert ^(Test $t1) ^(Msg $t2)?)
+           -> ^(Assert 'assert' ^(Test $t1) ^(Msg $t2)?)
             ;
 
 //compound_stmt: if_stmt | while_stmt | for_stmt | try_stmt | funcdef | classdef
@@ -522,7 +525,7 @@ compound_stmt : if_stmt
 
 //if_stmt: 'if' test ':' suite ('elif' test ':' suite)* ['else' ':' suite]
 if_stmt: 'if' test COLON ifsuite=suite elif_clause*  ('else' COLON elsesuite=suite)?
-      -> ^(If test $ifsuite elif_clause* ^(OrElse $elsesuite)?)
+      -> ^(If 'if' test $ifsuite elif_clause* ^(OrElse $elsesuite)?)
        ;
 
 //not in CPython's Grammar file
@@ -532,12 +535,12 @@ elif_clause : 'elif' test COLON suite
 
 //while_stmt: 'while' test ':' suite ['else' ':' suite]
 while_stmt : 'while' test COLON s1=suite ('else' COLON s2=suite)?
-          -> ^(While test ^(Body $s1) ^(OrElse $s2)?)
+          -> ^(While 'while' test ^(Body $s1) ^(OrElse $s2)?)
            ;
 
 //for_stmt: 'for' exprlist 'in' testlist ':' suite ['else' ':' suite]
 for_stmt : 'for' exprlist 'in' testlist COLON s1=suite ('else' COLON s2=suite)?
-        -> ^(For ^(Target exprlist) ^(Iter testlist) ^(Body $s1) ^(OrElse $s2)?)
+        -> ^(For 'for' ^(Target exprlist) ^(Iter testlist) ^(Body $s1) ^(OrElse $s2)?)
          ;
 
 //try_stmt: ('try' ':' suite
@@ -547,9 +550,9 @@ for_stmt : 'for' exprlist 'in' testlist COLON s1=suite ('else' COLON s2=suite)?
 //	   'finally' ':' suite))
 try_stmt : 'try' COLON trysuite=suite
            ( (except_clause+ ('else' COLON elsesuite=suite)? ('finally' COLON finalsuite=suite)?
-          -> ^(TryExcept ^(Body $trysuite) except_clause+ ^(OrElse $elsesuite)? ^(FinalBody 'finally' $finalsuite)?))
+          -> ^(TryExcept 'try' ^(Body $trysuite) except_clause+ ^(OrElse $elsesuite)? ^(FinalBody 'finally' $finalsuite)?))
            | ('finally' COLON finalsuite=suite
-          -> ^(TryFinally ^(Body $trysuite) ^(FinalBody $finalsuite)))
+          -> ^(TryFinally 'try' ^(Body $trysuite) ^(FinalBody $finalsuite)))
            )
          ;
 
@@ -599,12 +602,6 @@ not_test : NOT^ not_test
 //comparison: expr (comp_op expr)*
 comparison: expr (comp_op^ expr)*
 	;
-
-//comparison : expr
-//             ( ((comp_op expr)+ -> ^(Compare expr (comp_op expr)+))
-//             | expr
-//             )
-//	       ;
 
 //comp_op: '<'|'>'|'=='|'>='|'<='|'<>'|'!='|'in'|'not' 'in'|'is'|'is' 'not'
 comp_op : LESS
@@ -667,12 +664,12 @@ atom : LPAREN
        )
        RPAREN
      | LBRACK
-       (listmaker -> listmaker
-       | -> ^(List)
+       (listmaker -> ^(Brackets LBRACK listmaker)
+       | -> ^(Brackets LBRACK ^(List))
        )
        RBRACK
-     | LCURLY (dictmaker)? RCURLY -> ^(Dict ^(Elts dictmaker)?)
-     | BACKQUOTE testlist BACKQUOTE -> ^(Repr testlist)
+     | LCURLY (dictmaker)? RCURLY -> ^(Dict LCURLY ^(Elts dictmaker)?)
+     | BACKQUOTE testlist BACKQUOTE -> ^(Repr BACKQUOTE testlist)
      | NAME {debug("parsed NAME");} -> ^(Name NAME)
      | INT -> ^(Num INT)
      | LONGINT -> ^(Num LONGINT)
@@ -699,7 +696,7 @@ testlist_gexp
 
 //lambdef: 'lambda' [varargslist] ':' test
 lambdef: 'lambda' (varargslist)? COLON test {debug("parsed lambda");}
-      -> ^(Lambda varargslist? ^(Body test))
+      -> ^(Lambda 'lambda' varargslist? ^(Body test))
        ;
 
 //trailer: '(' [arglist] ')' | '[' subscriptlist ']' | '.' NAME
@@ -753,7 +750,7 @@ dictmaker : test COLON test
 
 //classdef: 'class' NAME ['(' [testlist] ')'] ':' suite
 classdef: 'class' NAME (LPAREN testlist? RPAREN)? COLON suite
-    -> ^(ClassDef ^(Name NAME) ^(Bases testlist)? ^(Body suite))
+    -> ^(ClassDef 'class' ^(Name NAME) ^(Bases testlist)? ^(Body suite))
     ;
 
 //arglist: (argument ',')* (argument [',']| '*' test [',' '**' test] | '**' test)

@@ -41,6 +41,7 @@ import org.python.antlr.ast.Dict;
 import org.python.antlr.ast.Ellipsis;
 import org.python.antlr.ast.Exec;
 import org.python.antlr.ast.Expr;
+import org.python.antlr.ast.Expression;
 import org.python.antlr.ast.ExtSlice;
 import org.python.antlr.ast.For;
 import org.python.antlr.ast.FunctionDef;
@@ -51,6 +52,7 @@ import org.python.antlr.ast.IfExp;
 import org.python.antlr.ast.Index;
 import org.python.antlr.ast.Import;
 import org.python.antlr.ast.ImportFrom;
+import org.python.antlr.ast.Interactive;
 import org.python.antlr.ast.Lambda;
 import org.python.antlr.ast.ListComp;
 import org.python.antlr.ast.Module;
@@ -108,6 +110,15 @@ import java.util.Set;
             s = new stmtType[0];
         }
         return new Module(t, s);
+    }
+
+    private modType makeExpression(PythonTree t, exprType e) {
+        return new Expression(t, e);
+    }
+
+    private modType makeInteractive(PythonTree t, List stmts) {
+        stmtType[] s = (stmtType[])stmts.toArray(new stmtType[stmts.size()]);
+        return new Interactive(t, s);
     }
 
     private ClassDef makeClassDef(PythonTree t, PythonTree nameToken, List bases, List body) {
@@ -339,6 +350,14 @@ import java.util.Set;
     }
 }
 
+expression returns [modType mod]
+    : ^(Expression test[expr_contextType.Load]) { $mod = makeExpression($Expression, $test.etype); }
+    ;
+
+interactive returns [modType mod]
+    : ^(Interactive stmts) { $mod = makeInteractive($Interactive, $stmts.stypes); }
+    ;
+
 module returns [modType mod]
     : ^(Module
         ( stmts {$mod = makeMod($Module, $stmts.stypes); }
@@ -348,8 +367,8 @@ module returns [modType mod]
     ;
 
 funcdef
-    : ^(FunctionDef ^(Name NAME) ^(Arguments varargslist?) ^(Body stmts) ^(Decorators decorators?)) {
-        $stmts::statements.add(makeFunctionDef($FunctionDef, $NAME, $varargslist.args, $stmts.stypes, $decorators.etypes));
+    : ^(FunctionDef tok='def' ^(Name NAME) ^(Arguments varargslist?) ^(Body stmts) ^(Decorators decorators?)) {
+        $stmts::statements.add(makeFunctionDef($tok, $NAME, $varargslist.args, $stmts.stypes, $decorators.etypes));
     }
     ;
 
@@ -440,10 +459,14 @@ decorator [List decs]
     }
     ;
 
-dotted_attr returns [exprType etype]
-    : NAME {$etype = new Name($NAME, $NAME.text, expr_contextType.Load); debug("matched NAME in dotted_attr");}
+dotted_attr returns [exprType etype, PythonTree begin]
+    : NAME {
+        $etype = new Name($NAME, $NAME.text, expr_contextType.Load);
+        $begin = $NAME;
+        debug("matched NAME in dotted_attr");}
     | ^(DOT n1=dotted_attr n2=dotted_attr) {
-        $etype = new Attribute($DOT, $n1.etype, $n2.text, expr_contextType.Load);
+        $etype = new Attribute($n1.begin, $n1.etype, $n2.text, expr_contextType.Load);
+        $begin = $n1.begin;
     }
     ;
 
@@ -486,10 +509,10 @@ stmt //combines simple_stmt and compound_stmt from Python.g
 expr_stmt
     : test[expr_contextType.Load] {
         debug("matched expr_stmt:test " + $test.etype);
-        $stmts::statements.add(new Expr($test.start, $test.etype));
+        $stmts::statements.add(new Expr($test.begin, $test.etype));
     }
     | ^(augassign targ=test[expr_contextType.Store] value=test[expr_contextType.Load]) {
-        AugAssign a = new AugAssign($augassign.start, $targ.etype, $augassign.op, $value.etype);
+        AugAssign a = new AugAssign($targ.begin, $targ.etype, $augassign.op, $value.etype);
         $stmts::statements.add(a);
     }
     | ^(Assign targets ^(Value value=test[expr_contextType.Load])) {
@@ -514,7 +537,7 @@ call_expr returns [exprType etype]
             debug("Matched Call w/ args");
             exprType[] args = (exprType[])$arglist.args.toArray(new exprType[$arglist.args.size()]);
             keywordType[] keywords = (keywordType[])$arglist.keywords.toArray(new keywordType[$arglist.keywords.size()]);
-            c = new Call($Call, $test.etype, args, keywords, $arglist.starargs, $arglist.kwargs);
+            c = new Call($test.begin, $test.etype, args, keywords, $arglist.starargs, $arglist.kwargs);
         }
         $etype = c;
     }
@@ -567,8 +590,7 @@ binop returns [operatorType op]
 
 
 print_stmt
-    : ^(Print (^(Dest RIGHTSHIFT))? (^(Values ^(Elts elts[expr_contextType.Load])))? (Newline)?) {
-        Print p;
+    : ^(Print tok='print' (^(Dest RIGHTSHIFT))? (^(Values ^(Elts elts[expr_contextType.Load])))? (Newline)?) {
         exprType[] values;
 
         exprType dest = null;
@@ -594,22 +616,22 @@ print_stmt
         } else {
             values = new exprType[0];
         }
-        p = new Print($Print, dest, values, newline);
+        Print p = new Print($tok, dest, values, newline);
         $stmts::statements.add(p);
     }
     ;
 
 del_stmt
-    : ^(Delete elts[expr_contextType.Del]) {
+    : ^(Delete tok='del' elts[expr_contextType.Del]) {
         exprType[] t = (exprType[])$elts.etypes.toArray(new exprType[$elts.etypes.size()]);
-        $stmts::statements.add(new Delete($Delete, t));
+        $stmts::statements.add(new Delete($tok, t));
     }
     ;
 
 pass_stmt
-    : Pass {
+    : ^(Pass tok='pass') {
         debug("Matched Pass");
-        $stmts::statements.add(new Pass($Pass));
+        $stmts::statements.add(new Pass($tok));
     }
     ;
 
@@ -621,24 +643,24 @@ flow_stmt
     ;
 
 break_stmt
-    : Break {
-        $stmts::statements.add(new Break($Break));
+    : ^(Break tok='break') {
+        $stmts::statements.add(new Break($tok));
     }
     ;
 
 continue_stmt
-    : Continue {
-        $stmts::statements.add(new Continue($Continue));
+    : ^(Continue tok='continue') {
+        $stmts::statements.add(new Continue($tok));
     }
     ;
 
 return_stmt
-    : ^(Return (^(Value test[expr_contextType.Load]))?) {
+    : ^(Return tok='return' (^(Value test[expr_contextType.Load]))?) {
         exprType v = null;
         if ($Value != null) {
             v = $test.etype;
         }
-        $stmts::statements.add(new Return($Return, v));
+        $stmts::statements.add(new Return($tok, v));
     }
     ;
 
@@ -653,7 +675,7 @@ yield_expr returns [exprType etype]
     ;
 
 raise_stmt
-    : ^(Raise (^(Type type=test[expr_contextType.Load]))? (^(Inst inst=test[expr_contextType.Load]))? (^(Tback tback=test[expr_contextType.Load]))?) {
+    : ^(Raise tok='raise' (^(Type type=test[expr_contextType.Load]))? (^(Inst inst=test[expr_contextType.Load]))? (^(Tback tback=test[expr_contextType.Load]))?) {
         exprType t = null;
         if ($Type != null) {
             t = $type.etype;
@@ -667,7 +689,7 @@ raise_stmt
             b = $tback.etype;
         }
 
-        $stmts::statements.add(new Raise($Raise, t, i, b));
+        $stmts::statements.add(new Raise($tok, t, i, b));
     }
     ;
 
@@ -675,11 +697,11 @@ import_stmt
 @init {
     List nms = new ArrayList();
 }
-    : ^(Import dotted_as_name[nms]+) {
+    : ^(Import tok='import' dotted_as_name[nms]+) {
         aliasType[] n = (aliasType[])nms.toArray(new aliasType[nms.size()]);
-        $stmts::statements.add(new Import($Import, n));
+        $stmts::statements.add(new Import($tok, n));
     }
-    | ^(ImportFrom (^(Level dots))? (^(Name dotted_name))? ^(Import STAR)) {
+    | ^(ImportFrom tok='from' (^(Level dots))? (^(Name dotted_name))? ^(Import STAR)) {
         String name = "";
         if ($Name != null) {
             name = $dotted_name.result;
@@ -689,9 +711,9 @@ import_stmt
             level = $dots.level;
         }
         aliasType[] n = (aliasType[])nms.toArray(new aliasType[nms.size()]);
-        $stmts::statements.add(new ImportFrom($Import, name, new aliasType[]{new aliasType($STAR, "*", null)}, level));
+        $stmts::statements.add(new ImportFrom($tok, name, new aliasType[]{new aliasType($STAR, "*", null)}, level));
     }
-    | ^(ImportFrom (^(Level dots))? (^(Name dotted_name))? ^(Import import_as_name[nms]+)) {
+    | ^(ImportFrom tok='from' (^(Level dots))? (^(Name dotted_name))? ^(Import import_as_name[nms]+)) {
         String name = "";
         if ($Name != null) {
             name = $dotted_name.result;
@@ -701,7 +723,7 @@ import_stmt
             level = $dots.level;
         }
         aliasType[] n = (aliasType[])nms.toArray(new aliasType[nms.size()]);
-        $stmts::statements.add(new ImportFrom($Import, name, n, level));
+        $stmts::statements.add(new ImportFrom($tok, name, n, level));
     }
     ;
 
@@ -764,9 +786,9 @@ global_stmt
 @init {
     List nms = new ArrayList();
 }
-    : ^(Global name_expr[nms]+) {
+    : ^(Global tok='global' name_expr[nms]+) {
         String[] n = (String[])nms.toArray(new String[nms.size()]);
-        $stmts::statements.add(new Global($Global, n));
+        $stmts::statements.add(new Global($tok, n));
     }
     ;
 
@@ -777,7 +799,7 @@ name_expr[List nms]
     ;
 
 exec_stmt
-    : ^(Exec exec=test[expr_contextType.Load] (^(Globals globals=test[expr_contextType.Load]))? (^(Locals locals=test[expr_contextType.Load]))?) {
+    : ^(Exec tok='exec' exec=test[expr_contextType.Load] (^(Globals globals=test[expr_contextType.Load]))? (^(Locals locals=test[expr_contextType.Load]))?) {
         exprType g = null;
         if ($Globals != null) {
             g = $globals.etype;
@@ -786,17 +808,17 @@ exec_stmt
         if ($Locals != null) {
             loc = $locals.etype;
         }
-        $stmts::statements.add(new Exec($Exec, $exec.etype, g, loc));
+        $stmts::statements.add(new Exec($tok, $exec.etype, g, loc));
     }
     ;
 
 assert_stmt
-    : ^(Assert ^(Test tst=test[expr_contextType.Load]) (^(Msg msg=test[expr_contextType.Load]))?) {
+    : ^(Assert tok='assert' ^(Test tst=test[expr_contextType.Load]) (^(Msg msg=test[expr_contextType.Load]))?) {
         exprType m = null;
         if ($Msg != null) {
             m = $msg.etype;
         }
-        $stmts::statements.add(new Assert($Assert, $tst.etype, m));
+        $stmts::statements.add(new Assert($tok, $tst.etype, m));
     }
     ;
 
@@ -805,7 +827,7 @@ if_stmt
     List elifs = new ArrayList();
 }
 
-    : ^(If test[expr_contextType.Load] body=stmts elif_clause[elifs]* (^(OrElse orelse=stmts))?) {
+    : ^(If tok='if' test[expr_contextType.Load] body=stmts elif_clause[elifs]* (^(OrElse orelse=stmts))?) {
         stmtType[] o;
         if ($OrElse != null) {
             o = (stmtType[])$orelse.stypes.toArray(new stmtType[$orelse.stypes.size()]);
@@ -819,7 +841,7 @@ if_stmt
             elif.orelse = o;
             o = new stmtType[]{elif};
         }
-        If i = new If($If, $test.etype, b, o);
+        If i = new If($tok, $test.etype, b, o);
         $stmts::statements.add(i);
     }
     ;
@@ -835,23 +857,23 @@ elif_clause[List elifs]
     ;
 
 while_stmt
-    : ^(While test[expr_contextType.Load] ^(Body body=stmts) (^(OrElse orelse=stmts))?) {
+    : ^(While tok='while' test[expr_contextType.Load] ^(Body body=stmts) (^(OrElse orelse=stmts))?) {
         List o = null;
         if ($OrElse != null) {
             o = $orelse.stypes;
         }
-        While w = makeWhile($While, $test.etype, $body.stypes, o);
+        While w = makeWhile($tok, $test.etype, $body.stypes, o);
         $stmts::statements.add(w);
     }
     ;
 
 for_stmt
-    : ^(For ^(Target targ=test[expr_contextType.Store]) ^(Iter iter=test[expr_contextType.Load]) ^(Body body=stmts) (^(OrElse orelse=stmts))?) {
+    : ^(For tok='for' ^(Target targ=test[expr_contextType.Store]) ^(Iter iter=test[expr_contextType.Load]) ^(Body body=stmts) (^(OrElse orelse=stmts))?) {
         List o = null;
         if ($OrElse != null) {
             o = $orelse.stypes;
         }
-        For f = makeFor($For, $targ.etype, $iter.etype, $body.stypes, o);
+        For f = makeFor($tok, $targ.etype, $iter.etype, $body.stypes, o);
         $stmts::statements.add(f);
     }
     ;
@@ -860,7 +882,7 @@ try_stmt
 @init {
     List handlers = new ArrayList();
 }
-    : ^(TryExcept ^(Body body=stmts) except_clause[handlers]+ (^(OrElse orelse=stmts))? (^(FinalBody 'finally' fin=stmts))?) {
+    : ^(TryExcept tok='try' ^(Body body=stmts) except_clause[handlers]+ (^(OrElse orelse=stmts))? (^(FinalBody 'finally' fin=stmts))?) {
         List o = null;
         List f = null;
         if ($OrElse != null) {
@@ -869,11 +891,11 @@ try_stmt
         if ($FinalBody != null) {
             f = $fin.stypes;
         }
-        stmtType te = makeTryExcept($TryExcept, $body.stypes, handlers, o, f);
+        stmtType te = makeTryExcept($tok, $body.stypes, handlers, o, f);
         $stmts::statements.add(te);
     }
-    | ^(TryFinally ^(Body body=stmts) ^(FinalBody fin=stmts)) {
-        TryFinally tf = makeTryFinally($TryFinally, $body.stypes, $fin.stypes);
+    | ^(TryFinally tok='try' ^(Body body=stmts) ^(FinalBody fin=stmts)) {
+        TryFinally tf = makeTryFinally($tok, $body.stypes, $fin.stypes);
         $stmts::statements.add(tf);
     }
     ;
@@ -892,8 +914,6 @@ except_clause[List handlers]
         if ($Name != null) {
             n = $name.etype;
         }
-        //XXX: getCharPositionInLine() -7 is only accurate in the simplist cases -- need to
-        //     look harder at CPython to figure out what is really needed here.
         handlers.add(new excepthandlerType($ExceptHandler, t, n, b, $ExceptHandler.getLine(), $ExceptHandler.getCharPositionInLine()));
     }
     ;
@@ -914,7 +934,7 @@ with_var returns [exprType etype]
     ;
 
 //FIXME: lots of placeholders
-test[expr_contextType ctype] returns [exprType etype, boolean parens]
+test[expr_contextType ctype] returns [exprType etype, PythonTree begin, boolean parens]
     : ^(AND left=test[ctype] right=test[ctype]) {
         List values = new ArrayList();
         boolean leftIsAnd = false;
@@ -954,7 +974,8 @@ test[expr_contextType ctype] returns [exprType etype, boolean parens]
             e[1] = $right.etype;
         }
         //XXX: could re-use BoolOps discarded above in many cases.
-        $etype = new BoolOp($AND, boolopType.And, e);
+        $etype = new BoolOp($left.begin, boolopType.And, e);
+        $begin = $left.begin;
     }
     | ^(OR left=test[ctype] right=test[ctype]) {
         //XXX: AND and OR could be factored into one method.
@@ -996,7 +1017,8 @@ test[expr_contextType ctype] returns [exprType etype, boolean parens]
             e[1] = $right.etype;
         }
         //XXX: could re-use BoolOps discarded above in many cases.
-        $etype = new BoolOp($OR, boolopType.Or, e);
+        $etype = new BoolOp($left.begin, boolopType.Or, e);
+        $begin = $left.begin;
     }
     | ^(comp_op left=test[ctype] targs=test[ctype]) {
         exprType[] comparators;
@@ -1019,7 +1041,8 @@ test[expr_contextType ctype] returns [exprType etype, boolean parens]
             comparators[0] = $targs.etype;
             val = $left.etype;
         }
-        $etype = new Compare($comp_op.start, val, ops, comparators);
+        $etype = new Compare($left.begin, val, ops, comparators);
+        $begin = $left.begin;
         debug("COMP_OP: " + $comp_op.start + ":::" + $etype + ":::" + $parens);
     }
     | atom[ctype] {
@@ -1027,22 +1050,28 @@ test[expr_contextType ctype] returns [exprType etype, boolean parens]
         debug("***" + $atom.etype);
         $parens = $atom.parens;
         $etype = $atom.etype;
+        $begin = $atom.begin;
     }
     | ^(binop left=test[ctype] right=test[ctype]) {
         debug("BinOp matched");
-        $etype = new BinOp($left.start, left.etype, $binop.op, right.etype);
+        $etype = new BinOp($left.begin, left.etype, $binop.op, right.etype);
+        $begin = $left.begin;
     }
     | call_expr {
         $etype = $call_expr.etype;
+        $begin = $call_expr.start;
     }
     | lambdef {
         $etype = $lambdef.etype;
+        $begin = $lambdef.start;
     }
     | ^(IfExp ^(Test t1=test[ctype]) ^(Body t2=test[ctype]) ^(OrElse t3=test[ctype])) {
         $etype = new IfExp($IfExp, $t1.etype, $t2.etype, $t3.etype);
+        $begin = $IfExp;
     }
     | yield_expr {
         $etype = $yield_expr.etype;
+        $begin = $yield_expr.start;
     }
     ;
 
@@ -1060,8 +1089,6 @@ comp_op returns [cmpopType op]
     | IsNot {$op = cmpopType.IsNot;}
     ;
 
-//I *think* only sequences need to collect test rules in the walker since
-//testlist in the parser either results in one test or a tuple.
 elts[expr_contextType ctype] returns [List etypes]
 scope {
     List elements;
@@ -1081,8 +1108,7 @@ elt[expr_contextType ctype]
     }
     ;
 
-//FIXME: lots of placeholders
-atom[expr_contextType ctype] returns [exprType etype, boolean parens]
+atom[expr_contextType ctype] returns [exprType etype, PythonTree begin, boolean parens]
     : ^(Tuple (^(Elts elts[ctype]))?) {
         debug("matched Tuple");
         exprType[] e;
@@ -1092,19 +1118,13 @@ atom[expr_contextType ctype] returns [exprType etype, boolean parens]
             e = new exprType[0];
         }
         $etype = new Tuple($Tuple, e, ctype);
+        $begin = $Tuple;
     }
-    | ^(List (^(Elts elts[ctype]))?) {
-        debug("matched List");
-        exprType[] e;
-        if ($Elts != null) {
-            e = (exprType[])$elts.etypes.toArray(new exprType[$elts.etypes.size()]);
-        } else {
-            e = new exprType[0];
-        }
-        $etype = new org.python.antlr.ast.List($List, e, ctype);
+    | comprehension[ctype] {
+        $etype = $comprehension.etype;
+        $begin = $comprehension.begin;
     }
-    | comprehension[ctype] {$etype = $comprehension.etype;}
-    | ^(Dict (^(Elts elts[ctype]))?) {
+    | ^(Dict LCURLY (^(Elts elts[ctype]))?) {
         exprType[] keys;
         exprType[] values;
         if ($Elts != null) {
@@ -1119,19 +1139,23 @@ atom[expr_contextType ctype] returns [exprType etype, boolean parens]
             keys = new exprType[0];
             values = new exprType[0];
         }
-        $etype = new Dict($Dict, keys, values);
+        $etype = new Dict($LCURLY, keys, values);
+        $begin = $LCURLY;
  
     }
-    | ^(Repr test[ctype]*) {
-        $etype = new Repr($Repr, $test.etype);
+    | ^(Repr BACKQUOTE test[ctype]*) {
+        $etype = new Repr($BACKQUOTE, $test.etype);
+        $begin = $BACKQUOTE;
     }
     | ^(Name NAME) {
         debug("matched Name " + $NAME.text);
         $etype = new Name($NAME, $NAME.text, ctype);
+        $begin = $NAME;
     }
     | ^(DOT NAME test[expr_contextType.Load]) {
         debug("matched DOT in atom: " + $test.etype + "###" + $NAME.text);
-        $etype = new Attribute($DOT, $test.etype, $NAME.text, ctype);
+        $etype = new Attribute($test.begin, $test.etype, $NAME.text, ctype);
+        $begin = $test.begin;
     }
     | ^(SubscriptList subscriptlist test[expr_contextType.Load]) {
         //XXX: only handling one subscript for now.
@@ -1161,69 +1185,101 @@ atom[expr_contextType ctype] returns [exprType etype, boolean parens]
                 s = new ExtSlice($SubscriptList, st);
             }
         }
-        $etype = new Subscript($SubscriptList, $test.etype, s, ctype);
+        $etype = new Subscript($test.begin, $test.etype, s, ctype);
+        $begin = $test.begin;
     }
     | ^(Num INT) {
         $etype = makeInt($INT);
+        $begin = $INT;
         debug("makeInt output: " + $etype);
     }
-    | ^(Num LONGINT) {$etype = makeInt($LONGINT);}
+    | ^(Num LONGINT) {
+        $etype = makeInt($LONGINT);
+        $begin = $LONGINT;
+    }
     | ^(Num FLOAT) {
         $etype = makeFloat($FLOAT);
         debug("float matched" + $etype);
+        $begin = $FLOAT;
     }
-    | ^(Num COMPLEX) {$etype = makeComplex($COMPLEX);}
+    | ^(Num COMPLEX) {
+        $etype = makeComplex($COMPLEX);
+        $begin = $COMPLEX;
+    }
     | stringlist {
         StringPair sp = extractStrings($stringlist.strings);
         if (sp.isUnicode()) {
-            $etype = new Unicode($stringlist.start, sp.getString());
+            $etype = new Unicode($stringlist.begin, sp.getString());
         } else {
-            $etype = new Str($stringlist.start, sp.getString());
+            $etype = new Str($stringlist.begin, sp.getString());
         }
+        $begin = $stringlist.begin;
     }
     | ^(USub test[ctype]) {
         debug("USub matched " + $test.etype);
         $etype = negate($USub, $test.etype);
+        $begin = $USub;
     }
     | ^(UAdd test[ctype]) {
         $etype = new UnaryOp($UAdd, unaryopType.UAdd, $test.etype);
+        $begin = $UAdd;
     }
     | ^(Invert test[ctype]) {
         $etype = new UnaryOp($Invert, unaryopType.Invert, $test.etype);
+        $begin = $Invert;
     }
     | ^(NOT test[ctype]) {
         $etype = new UnaryOp($NOT, unaryopType.Not, $test.etype);
+        $begin = $NOT;
     }
     | ^(Parens test[ctype]) {
         debug("PARENS! " + $test.etype);
         $parens = true;
         $etype = $test.etype;
+        $begin = $Parens;
     }
     ;
 
-comprehension[expr_contextType ctype] returns [exprType etype]
+comprehension[expr_contextType ctype] returns [exprType etype, PythonTree begin]
 @init {
     List gens = new ArrayList();
 }
-    : ^(ListComp test[ctype] list_for[gens]) {
-        debug("matched ListComp");
-        Collections.reverse(gens);
-        comprehensionType[] c = (comprehensionType[])gens.toArray(new comprehensionType[gens.size()]);
-        $etype = new ListComp($ListComp, $test.etype, c);
-    }
+    : ^(Brackets LBRACK
+          ( (^(List (^(Elts elts[ctype]))?) {
+                  debug("matched List");
+                  exprType[] e;
+                  if ($Elts != null) {
+                      e = (exprType[])$elts.etypes.toArray(new exprType[$elts.etypes.size()]);
+                  } else {
+                      e = new exprType[0];
+                  }
+                  $etype = new org.python.antlr.ast.List($LBRACK, e, ctype);
+                  $begin = $LBRACK;
+               })
+          | (^(ListComp test[ctype] list_for[gens]) {
+                debug("matched ListComp");
+                Collections.reverse(gens);
+                comprehensionType[] c = (comprehensionType[])gens.toArray(new comprehensionType[gens.size()]);
+                $etype = new ListComp($test.begin, $test.etype, c);
+                $begin = $LBRACK;
+               }
+            )
+          )
+       )
     | ^(GeneratorExp test[ctype] gen_for[gens]) {
         debug("matched GeneratorExp");
         Collections.reverse(gens);
         comprehensionType[] c = (comprehensionType[])gens.toArray(new comprehensionType[gens.size()]);
-        $etype = new GeneratorExp($GeneratorExp, $test.etype, c);
+        $etype = new GeneratorExp($test.begin, $test.etype, c);
+        $begin = $GeneratorExp;
     }
     ;
 
-stringlist returns [List strings]
+stringlist returns [PythonTree begin, List strings]
 @init {
     List strs = new ArrayList();
 }
-    : ^(Str string[strs]+) {$strings = strs;}
+    : ^(Str string[strs]+) {$strings = strs; $begin = $string.start;}
     ;
 
 string[List strs]
@@ -1231,12 +1287,12 @@ string[List strs]
     ;
 
 lambdef returns [exprType etype]
-    : ^(Lambda varargslist? ^(Body test[expr_contextType.Load])) {
+    : ^(Lambda tok='lambda' varargslist? ^(Body test[expr_contextType.Load])) {
         argumentsType a = $varargslist.args;
         if (a == null) {
             a = new argumentsType($Lambda, new exprType[0], null, null, new exprType[0]);
         }
-        $etype = new Lambda($Lambda, a, $test.etype);
+        $etype = new Lambda($tok, a, $test.etype);
     }
     ;
 
@@ -1290,14 +1346,14 @@ subscript [List subs]
           ;
 
 classdef
-    : ^(ClassDef ^(Name classname=NAME) (^(Bases bases))? ^(Body stmts)) {
+    : ^(ClassDef tok='class' ^(Name classname=NAME) (^(Bases bases))? ^(Body stmts)) {
         List b;
         if ($Bases != null) {
             b = $bases.names;
         } else {
             b = new ArrayList();
         }
-        $stmts::statements.add(makeClassDef($ClassDef, $classname, b, $stmts.stypes));
+        $stmts::statements.add(makeClassDef($tok, $classname, b, $stmts.stypes));
     }
     ;
 

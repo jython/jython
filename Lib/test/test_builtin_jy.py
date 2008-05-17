@@ -8,6 +8,12 @@ class BuiltinTest(unittest.TestCase):
         self.assert_("__builtin__" in sys.modules,
             "__builtin__ not found in sys.modules")
 
+    def test_hasattr_swallows_exceptions(self):
+        class Foo(object):
+            def __getattr__(self, name):
+                raise TypeError()
+        self.assert_(not hasattr(Foo(), 'bar'))
+
 class LoopTest(unittest.TestCase):
 
     def test_break(self):
@@ -66,6 +72,35 @@ class ReprTest(unittest.TestCase):
                 pass
         self.failUnless(repr(Foo.bar).startswith('<unbound method'))
 
+class CallableTest(unittest.TestCase):
+
+    def test_callable_oldstyle(self):
+        class Foo:
+            pass
+        self.assert_(callable(Foo))
+        self.assert_(not callable(Foo()))
+        class Bar:
+            def __call__(self):
+                return None
+        self.assert_(callable(Bar()))
+        class Baz:
+            def __getattr__(self, name):
+                return None
+        self.assert_(callable(Baz()))
+
+    def test_callable_newstyle(self):
+        class Foo(object):
+            pass
+        self.assert_(callable(Foo))
+        self.assert_(not callable(Foo()))
+        class Bar(object):
+            def __call__(self):
+                return None
+        self.assert_(callable(Bar()))
+        class Baz(object):
+            def __getattr__(self, name):
+                return None
+        self.assert_(not callable(Baz()))
 
 def test_main():
     test.test_support.run_unittest(BuiltinTest,
@@ -74,7 +109,8 @@ def test_main():
                                    GetSliceTest,
                                    ChrTest,
                                    ReturnTest,
-                                   ReprTest)
+                                   ReprTest,
+                                   CallableTest)
 
 if __name__ == "__main__":
     test_main()

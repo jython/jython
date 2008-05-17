@@ -2,3 +2,4 @@ base_class: PyUnicode
 want_dict: true
 ctr: PyString string
 incl: object
+no_toString: true

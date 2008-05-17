@@ -78,7 +78,10 @@ public class PyString extends PyBaseString
 
     @ExposedMethod
     final PyString str___str__() {
-        return this;
+        if (getClass() == PyString.class) {
+            return this;
+        }
+        return new PyString(string);
     }
 
     public PyUnicode __unicode__() {
@@ -100,11 +103,6 @@ public class PyString extends PyBaseString
     }
 
     public String toString() {
-        return str_toString();
-    }
-
-    @ExposedMethod(names = "__repr__")
-    final String str_toString() {
         return string;
     }
 
@@ -119,6 +117,11 @@ public class PyString extends PyBaseString
     }
 
     public PyString __repr__() {
+        return str___repr__();
+    }
+
+    @ExposedMethod
+    final PyString str___repr__() {
         return new PyString(encode_UnicodeEscape(string, true));
     }
 
@@ -177,12 +180,11 @@ public class PyString extends PyBaseString
                 v.append(hexdigit[(ch >> 4) & 0xf]);
                 v.append(hexdigit[ch & 15]);
             }
+             /* Map special whitespace to '\t', \n', '\r' */
+            else if (ch == '\t') v.append("\\t");
+            else if (ch == '\n') v.append("\\n");
+            else if (ch == '\r') v.append("\\r");
             /* Map non-printable US ASCII to '\ooo' */
-            else if (use_quotes && ch == '\n') v.append("\\n");
-            else if (use_quotes && ch == '\t') v.append("\\t");
-            else if (use_quotes && ch == '\b') v.append("\\b");
-            else if (use_quotes && ch == '\f') v.append("\\f");
-            else if (use_quotes && ch == '\r') v.append("\\r");
             else if (ch < ' ' || ch >= 127) {
                 v.append('\\');
                 v.append('x');
@@ -679,10 +681,10 @@ public class PyString extends PyBaseString
     
     @ExposedMethod(type = MethodType.BINARY)
     final PyObject str___add__(PyObject generic_other) {
-        if (generic_other.getClass() == PyUnicode.class || generic_other.getClass() == PyString.class) {
+        if (generic_other instanceof PyString) {
             PyString other = (PyString)generic_other;
             String result = string.concat(other.string);
-            if (generic_other.getClass() == PyUnicode.class) {
+            if (generic_other instanceof PyUnicode) {
                 return new PyUnicode(result);
             }
             return createInstance(result);
@@ -1409,50 +1411,66 @@ public class PyString extends PyBaseString
     }
 
 
-    private static String spaces(int n) {
+    private static String padding(int n, char pad) {
         char[] chars = new char[n];
         for (int i=0; i<n; i++)
-            chars[i] = ' ';
+            chars[i] = pad;
         return new String(chars);
     }
 
+    private static char parse_fillchar(String function, String fillchar) {
+        if (fillchar == null) { return ' '; }
+        if (fillchar.length() != 1) {
+            throw Py.TypeError(function + "() argument 2 must be char, not str");
+        }
+        return fillchar.charAt(0);
+    }
+    
     public String ljust(int width) {
-        return str_ljust(width);
+        return str_ljust(width, null);
     }
 
-    @ExposedMethod
-    final String str_ljust(int width) {
+    public String ljust(int width, String padding) {
+        return str_ljust(width, padding);
+    }
+    
+    @ExposedMethod(defaults="null")
+    final String str_ljust(int width, String fillchar) {
+        char pad = parse_fillchar("ljust", fillchar);
         int n = width-string.length();
         if (n <= 0)
             return string;
-        return string+spaces(n);
+        return string+padding(n, pad);
     }
 
     public String rjust(int width) {
-        return str_rjust(width);
+        return str_rjust(width, null);
     }
 
-    @ExposedMethod
-    final String str_rjust(int width) {
+    @ExposedMethod(defaults="null")
+    final String str_rjust(int width, String fillchar) {
+        char pad = parse_fillchar("rjust", fillchar);
         int n = width-string.length();
         if (n <= 0)
             return string;
-        return spaces(n)+string;
+        return padding(n, pad)+string;
     }
 
     public String center(int width) {
-        return str_center(width);
+        return str_center(width, null);
     }
 
-    @ExposedMethod
-    final String str_center(int width) {
+    @ExposedMethod(defaults="null")
+    final String str_center(int width, String fillchar) {
+        char pad = parse_fillchar("center", fillchar);
         int n = width-string.length();
         if (n <= 0)
             return string;
         int half = n/2;
         if (n%2 > 0 &&  width%2 > 0)
             half += 1;
-        return spaces(half)+string+spaces(n-half);
+        
+        return padding(half, pad)+string+padding(n-half, pad);
     }
 
     public String zfill(int width) {
@@ -2200,13 +2218,16 @@ final class StringFormatter
     }
 
     private String formatInteger(PyObject arg, int radix, boolean unsigned) {
-        PyInteger x;
+        PyObject x;
         try {
-            x = (PyInteger)arg.__int__();
+            x = arg.__int__();
         } catch (PyException pye) {
             throw Py.TypeError("int argument required");
         }
-        return formatInteger(x.getValue(), radix, unsigned);
+        if (!(x instanceof PyInteger)) {
+            throw Py.TypeError("int argument required");
+        }
+        return formatInteger(((PyInteger)x).getValue(), radix, unsigned);
     }
 
     private String formatInteger(long v, int radix, boolean unsigned) {
@@ -2266,14 +2287,10 @@ final class StringFormatter
         }
         double power = 0.0;
         if (v > 0)
-            power = ExtraMath.closeFloor(ExtraMath.log10(v));
+            power = ExtraMath.closeFloor(Math.log10(v));
         //System.err.println("formatExp: "+v+", "+power);
         int savePrecision = precision;
-
-        if (truncate)
-            precision = -1;
-        else
-            precision = 3;
+        precision = 2;
 
         String exp = formatInteger((long)power, 10, false);
         if (negative) {
@@ -2281,8 +2298,7 @@ final class StringFormatter
             exp = '-'+exp;
         }
         else {
-            if (!truncate)
-                exp = '+'+exp;
+            exp = '+' + exp;
         }
 
         precision = savePrecision;
@@ -2467,31 +2483,34 @@ final class StringFormatter
                 break;
             case 'g':
             case 'G':
-                int prec = precision;
-                if (prec == -1)
-                    prec = 6;
+                int origPrecision = precision;
+                if (precision == -1) {
+                    precision = 6;
+                }
+
                 double v = arg.__float__().getValue();
-                int digits = (int)Math.ceil(ExtraMath.log10(v));
-                if (digits > 0) {
-                    if (digits <= prec) {
-                        precision = prec-digits;
-                        string = formatFloatDecimal(arg, true);
-                    } else {
-                        string = formatFloatExponential(arg, (char)(c-2),
-                                                        true);
+                int exponent = (int)ExtraMath.closeFloor(Math.log10(Math.abs(v == 0 ? 1 : v)));
+                if (v == Double.POSITIVE_INFINITY) {
+                    string = "inf";
+                } else if (v == Double.NEGATIVE_INFINITY) {
+                    string = "-inf";
+                } else if (exponent >= -4 && exponent < precision) {
+                    precision -= exponent + 1;
+                    string = formatFloatDecimal(arg, !altFlag);
+
+                    // XXX: this block may be unnecessary now
+                    if (altFlag && string.indexOf('.') == -1) {
+                        int zpad = origPrecision - string.length();
+                        string += '.';
+                        if (zpad > 0) {
+                            char zeros[] = new char[zpad];
+                            for (int ci=0; ci<zpad; zeros[ci++] = '0')
+                                ;
+                            string += new String(zeros);
+                        }
                     }
                 } else {
-                    string = formatFloatDecimal(arg, true);
-                }
-                if (altFlag && string.indexOf('.') == -1) {
-                    int zpad = prec - string.length();
-                    string += '.';
-                    if (zpad > 0) {
-                        char zeros[] = new char[zpad];
-                        for (int ci=0; ci<zpad; zeros[ci++] = '0')
-                            ;
-                        string += new String(zeros);
-                    }
+                    string = formatFloatExponential(arg, (char)(c-2), !altFlag);
                 }
                 break;
             case 'c':

@@ -23,7 +23,6 @@ import org.python.expose.MethodType;
 /**
  * A builtin python dictionary.
  */
-
 @ExposedType(name = "dict")
 public class PyDictionary extends PyObject implements ConcurrentMap {
 
@@ -35,7 +34,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
      * Create an empty dictionary.
      */
     public PyDictionary() {
-        this(new ConcurrentHashMap<PyObject, PyObject>());
+        table = new ConcurrentHashMap<PyObject, PyObject>();
     }
 
     /**

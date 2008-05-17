@@ -71,6 +71,9 @@ public class PyInstance extends PyObject
 
     public PyInstance(PyClass iclass, PyObject dict) {
         instclass = iclass;
+        if (dict == Py.None) {
+            dict = new PyStringMap();
+        }
         __dict__ = dict;
     }
 

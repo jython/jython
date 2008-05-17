@@ -38,6 +38,7 @@ public class PyType extends PyObject implements Serializable {
     private String name;
 
     /** __base__, the direct base type or null. */
+    @ExposedGet(name = "__base__")
     private PyType base;
 
     /** __bases__, the base classes. */
@@ -159,6 +160,11 @@ public class PyType extends PyObject implements Serializable {
             newtype = new PyType(); // XXX set metatype
         } else {
             newtype = new PyTypeDerived(metatype);
+        }
+        if (dict instanceof PyStringMap) {
+            dict = ((PyStringMap)dict).copy();
+        } else {
+            dict = ((PyDictionary)dict).copy();
         }
         newtype.dict = dict;
         newtype.name = name;
@@ -470,13 +476,6 @@ public class PyType extends PyObject implements Serializable {
             return this;
         }
         return base.getLayout();
-    }
-
-    @ExposedGet(name = "__base__")
-    public PyObject getBase() {
-        if (base == null)
-            return Py.None;
-        return base;
     }
 
     @ExposedGet(name = "__bases__")

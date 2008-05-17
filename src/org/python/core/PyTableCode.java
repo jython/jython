@@ -23,17 +23,21 @@ public class PyTableCode extends PyCode
     int func_id;
     public String co_code = ""; // only used by inspect
 
-    final public static int CO_OPTIMIZED      = 0x0001;
-    //final public static int CO_NEWLOCALS    = 0x0002
-    final public static int CO_VARARGS        = 0x0004;
-    final public static int CO_VARKEYWORDS    = 0x0008;
-    final public static int CO_GENERATOR      = 0x0020;
+    final public static int CO_OPTIMIZED         = 0x0001;
+    //final public static int CO_NEWLOCALS       = 0x0002
+    final public static int CO_VARARGS           = 0x0004;
+    final public static int CO_VARKEYWORDS       = 0x0008;
+    final public static int CO_GENERATOR         = 0x0020;
     
-    final public static int CO_NESTED         = 0x0010;
+    final public static int CO_NESTED            = 0x0010;
     final public static int CO_GENERATOR_ALLOWED = 0x1000;
-    final public static int CO_FUTUREDIVISION = 0x2000;
-    final public static int CO_ALL_FEATURES = CO_NESTED|CO_GENERATOR_ALLOWED|CO_FUTUREDIVISION;
+    final public static int CO_FUTUREDIVISION    = 0x2000;
 
+    //XXX: I'm not positive that this is the right place for this constant.
+    final public static int PyCF_ONLY_AST        = 0x0400;
+
+    final public static int CO_ALL_FEATURES = PyCF_ONLY_AST|CO_NESTED|CO_GENERATOR_ALLOWED|
+                                              CO_FUTUREDIVISION;
 
     public PyTableCode(int argcount, String varnames[],
                        String filename, String name,
@@ -294,6 +298,7 @@ public class PyTableCode extends PyCode
                           PyObject closure) {
         PyFrame frame = new PyFrame(this, globals);
         int argcount = args.length - kws.length;
+        int defcount = defs != null ? defs.length : 0;
         PyObject[] fastlocals = frame.f_fastlocals;
         
         if (co_argcount > 0 || (varargs || varkwargs)) {
@@ -312,7 +317,7 @@ public class PyTableCode extends PyCode
                 if (!varargs) {
                     String msg = String.format("%.200s() takes %s %d %sargument%s (%d given)",
                                                co_name,
-                                               defs.length > 0 ? "at most" : "exactly",
+                                               defcount > 0 ? "at most" : "exactly",
                                                co_argcount,
                                                kws.length > 0 ? "non-keyword " : "",
                                                co_argcount == 1 ? "" : "s",
@@ -361,12 +366,12 @@ public class PyTableCode extends PyCode
                 }
             }
             if (argcount < co_argcount) {
-                int m = co_argcount - defs.length;
+                int m = co_argcount - defcount;
                 for (i = argcount; i < m; i++) {
                     if (fastlocals[i] == null) {
                         String msg =
                                 String.format("%.200s() takes %s %d %sargument%s (%d given)",
-                                              co_name, (varargs || defs.length > 0) ?
+                                              co_name, (varargs || defcount > 0) ?
                                               "at least" : "exactly",
                                               m, kws.length > 0 ? "non-keyword " : "",
                                               m == 1 ? "" : "s", i);
@@ -378,7 +383,7 @@ public class PyTableCode extends PyCode
                 } else {
                     i = 0;
                 }
-                for (; i < defs.length; i++) {
+                for (; i < defcount; i++) {
                     if (fastlocals[m + i] == null) {
                         fastlocals[m + i] = defs[i];
                     }

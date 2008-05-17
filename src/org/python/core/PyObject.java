@@ -1629,6 +1629,30 @@ public class PyObject implements Serializable {
         return null;
     }
 
+    /**
+     * Determine if the binary op on types t1 and t2 is an add
+     * operation dealing with a str/unicode and a str/unicode
+     * subclass.
+     *
+     * This operation is special cased in _binop_rule to match
+     * CPython's handling; CPython uses tp_as_number and
+     * tp_as_sequence to allow string/unicode subclasses to override
+     * the left side's __add__ when that left side is an actual str or
+     * unicode object (see test_concat_jy for examples).
+     *
+     * @param t1 left side PyType
+     * @param t2 right side PyType
+     * @param op the binary operation's String
+     * @return true if this is a special case
+     */
+    private boolean isStrUnicodeSpecialCase(PyType t1, PyType t2, String op) {
+        // XXX: We may need to generalize this rule to apply to other
+        // situations
+        // XXX: This method isn't expensive but could (and maybe
+        // should?) be optimized for worst case scenarios
+        return op == "+" && (t1 == PyString.TYPE || t1 == PyUnicode.TYPE) &&
+                (t2.isSubType(PyString.TYPE) || t2.isSubType(PyUnicode.TYPE));
+    }
 
     private PyObject _binop_rule(PyType t1, PyObject o2, PyType t2,
             String left, String right, String op) {
@@ -1648,7 +1672,8 @@ public class PyObject implements Serializable {
         where1 = where[0];
         PyObject impl2 = t2.lookup_where(right, where);
         where2 = where[0];
-        if (impl2 != null && where1 != where2 && t2.isSubType(t1)) {
+        if (impl2 != null && where1 != where2 && (t2.isSubType(t1) ||
+                                                  isStrUnicodeSpecialCase(t1, t2, op))) {
             PyObject tmp = o1;
             o1 = o2;
             o2 = tmp;

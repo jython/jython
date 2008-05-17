@@ -1210,7 +1210,7 @@ public final class Py
             if (globals != null) {
                 locals = globals;
             } else {
-                locals = Py.getFrame().getf_locals();
+                locals = Py.getFrame().getLocals();
             }
         }
 
@@ -1246,7 +1246,7 @@ public final class Py
             } else
                 throw Py.TypeError(
                     "exec: argument 1 must be string, code or file object");
-            code = Py.compile_flags(contents, "<string>", "exec",
+            code = (PyCode)Py.compile_flags(contents, "<string>", "exec",
                                     Py.getCompilerFlags());
         }
         Py.runCode(code, locals, globals);
@@ -1632,17 +1632,17 @@ public final class Py
 
     // w/o compiler-flags
 
-    public static PyCode compile(modType node, String filename) {
+    public static PyObject compile(modType node, String filename) {
         return compile(node, getName(), filename);
     }
 
-    public static PyCode compile(modType node, String name,
+    public static PyObject compile(modType node, String name,
                                  String filename)
     {
         return compile(node, name, filename, true, false);
     }
 
-    public static PyCode compile(modType node, String name,
+    public static PyObject compile(modType node, String name,
                                  String filename,
                                  boolean linenumbers,
                                  boolean printResults)
@@ -1651,7 +1651,7 @@ public final class Py
                              printResults, null);
     }
 
-    public static PyCode compile(InputStream istream, String filename,
+    public static PyObject compile(InputStream istream, String filename,
                                  String type)
     {
         return compile_flags(istream,filename,type,null);
@@ -1659,7 +1659,7 @@ public final class Py
 
     // with compiler-flags
 
-    public static PyCode compile_flags(modType node, String name,
+    public static PyObject compile_flags(modType node, String name,
                                  String filename,
                                  boolean linenumbers,
                                  boolean printResults,CompilerFlags cflags)
@@ -1677,9 +1677,14 @@ public final class Py
         }
     }
 
-    public static PyCode compile_flags(InputStream istream, String filename,
+    public static PyObject compile_flags(InputStream istream, String filename,
                                  String type,CompilerFlags cflags)
     {
+        if (cflags != null && cflags.only_ast) {
+            org.python.antlr.ast.modType node = antlr.parse(istream, type, filename, cflags);
+            return Py.java2py(node);
+        }
+
         modType node = parser.parse(istream, type, filename, cflags);
         boolean printResults = false;
         if (type.equals("single"))
@@ -1688,7 +1693,7 @@ public final class Py
                                 cflags);
     }
 
-    public static PyCode compile_flags(String data,
+    public static PyObject compile_flags(String data,
                                        String filename,
                                        String type,
                                        CompilerFlags cflags) {
@@ -1838,42 +1843,52 @@ public final class Py
         return false;
     }
 
-    public static boolean isInstance(PyObject obj, PyObject cls) {
-        return isInstance(obj, cls, 0);
+    public static boolean isInstance(PyObject inst, PyObject cls) {
+        return recursiveIsInstance(inst, cls, 0);
     }
-    
-    private static boolean isInstance(PyObject obj, PyObject cls, int recursionDepth){
-        if (cls instanceof PyType) {
-            PyType objtype = obj.getType();
-            if (objtype == cls)
+
+    private static boolean recursiveIsInstance(PyObject inst, PyObject cls, int recursionDepth) {
+        if (cls instanceof PyClass && inst instanceof PyInstance) {
+            PyClass inClass = (PyClass)inst.fastGetClass();
+            return inClass.isSubClass((PyClass)cls);
+        } else if (cls instanceof PyType) {
+            PyType instType = inst.getType();
+            PyType type = (PyType)cls;
+
+            // equiv. to PyObject_TypeCheck
+            if (instType == type || instType.isSubType(type)) {
                 return true;
-            return objtype.isSubType((PyType) cls);
-        } else if (cls instanceof PyClass) {
-            if (!(obj instanceof PyInstance))
-                return false;
-            return ((PyClass) obj.fastGetClass()).isSubClass((PyClass) cls);
-        } else if (cls.getClass() == PyTuple.class) {
-            if(recursionDepth > Py.getSystemState().getrecursionlimit()) {
+            }
+
+            PyObject c = inst.__findattr__("__class__");
+            if (c != null && c != instType && c instanceof PyType) {
+                return ((PyType)c).isSubType(type);
+            }
+            return false;
+        } else if (cls instanceof PyTuple) {
+            if (recursionDepth > Py.getSystemState().getrecursionlimit()) {
                 throw Py.RuntimeError("nest level of tuple too deep");
             }
-            for (int i = 0; i < cls.__len__(); i++) {
-                if (isInstance(obj, cls.__getitem__(i), recursionDepth + 1)) {
+
+            for (PyObject tupleItem : ((PyTuple)cls).getArray()) {
+                if (recursiveIsInstance(inst, tupleItem, recursionDepth + 1)) {
                     return true;
                 }
             }
             return false;
         } else {
-            if (cls.__findattr__("__bases__") == null)
-                throw Py.TypeError(
-                    "isinstance() arg 2 must be a class, type,"
-                        + " or tuple of classes and types");
-            PyObject ocls = obj.__findattr__("__class__");
-            if (ocls == null)
+            if (cls.__findattr__("__bases__") == null) {
+                throw Py.TypeError("isinstance() arg 2 must be a class, type, or tuple of "
+                                   + "classes and types");
+            }
+
+            PyObject icls = inst.__findattr__("__class__");
+            if (icls == null) {
                 return false;
-            return abstract_issubclass(ocls, cls);
+            }
+            return abstract_issubclass(icls, cls);
         }
     }
-	
     
     public static boolean isSubClass(PyObject derived,PyObject cls) {
         return isSubClass(derived, cls, 0);
@@ -2032,7 +2047,7 @@ class JavaFunc extends PyObject {
     public PyObject _doget(PyObject container, PyObject wherefound) {
         if (container == null)
             return this;
-        return new PyMethod(container, this, wherefound);
+        return new PyMethod(this, container, wherefound);
     }
 
     public boolean _doset(PyObject container) {

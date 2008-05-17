@@ -1,7 +1,6 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
-import org.python.core.util.ExtraMath;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
@@ -616,7 +615,7 @@ public class PyComplex extends PyObject {
             return ipow(value, iexp);
         }
 
-        double abs = ExtraMath.hypot(xr, xi);
+        double abs = Math.hypot(xr, xi);
         double len = Math.pow(abs, yr);
 
         double at = Math.atan2(xi, xr);
@@ -656,7 +655,7 @@ public class PyComplex extends PyObject {
 
     @ExposedMethod
     final PyObject complex___abs__() {
-        return new PyFloat(ExtraMath.hypot(real, imag));
+        return new PyFloat(Math.hypot(real, imag));
     }
 
     public PyObject __int__() {

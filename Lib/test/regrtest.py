@@ -1018,7 +1018,6 @@ if test_support.is_jython:
 _failures = {
     'java':
     '''
-    test___all__
     test_class
     test_copy
     test_dis

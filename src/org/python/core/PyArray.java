@@ -11,6 +11,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Array;
 
+import org.python.core.util.ByteSwapper;
 import org.python.core.util.StringUtil;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
@@ -200,6 +201,11 @@ public class PyArray extends PySequence implements Cloneable {
     @ExposedMethod
     final boolean array___nonzero__() {
         return seq___nonzero__();
+    }
+
+    @ExposedMethod
+    public PyObject array___iter__() {
+        return seq___iter__();
     }
 
     @ExposedMethod(defaults = "null")
