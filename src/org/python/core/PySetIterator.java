@@ -1,8 +1,4 @@
-
-package org.python.modules.sets;
-
-import org.python.core.PyObject;
-import org.python.core.Py;
+package org.python.core;
 
 import java.util.Iterator;
 import java.util.Set;

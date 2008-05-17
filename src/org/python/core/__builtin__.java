@@ -7,8 +7,6 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.python.core.util.RelativeFile;
-import org.python.modules.sets.PyImmutableSet;
-import org.python.modules.sets.PySet;
 import org.python.expose.ExposedGet;
 
 class BuiltinFunctions extends PyBuiltinFunctionSet {
@@ -320,7 +318,7 @@ public class __builtin__ {
         dict.__setitem__("list", PyList.TYPE);
         dict.__setitem__("tuple", PyTuple.TYPE);
         dict.__setitem__("set", PySet.TYPE);
-        dict.__setitem__("frozenset", PyImmutableSet.TYPE);
+        dict.__setitem__("frozenset", PyFrozenSet.TYPE);
 
         dict.__setitem__("property", PyProperty.TYPE);
         dict.__setitem__("staticmethod", PyStaticMethod.TYPE);

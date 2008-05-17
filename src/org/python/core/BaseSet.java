@@ -1,14 +1,4 @@
-
-package org.python.modules.sets;
-
-import org.python.core.Py;
-import org.python.core.PyException;
-import org.python.core.PyIgnoreMethodTag;
-import org.python.core.PyList;
-import org.python.core.PyObject;
-import org.python.core.PyTuple;
-import org.python.core.__builtin__;
-import org.python.core.PyType;
+package org.python.core;
 
 import java.util.Collection;
 import java.util.Collections;

@@ -1,22 +1,6 @@
-package org.python.modules.sets;
+package org.python.core;
 
-import org.python.core.Py;
-import org.python.core.PyComplex;
-import org.python.core.PyDictionary;
-import org.python.core.PyException;
-import org.python.core.PyFloat;
-import org.python.core.PyInteger;
-import org.python.core.PyLong;
-import org.python.core.PyObject;
-import org.python.core.PySequenceIter;
-import org.python.core.PyString;
-import org.python.core.PyStringMap;
-import org.python.core.PyType;
-import org.python.core.PyUnicode;
-import org.python.core.Slotted;
-import org.python.core.ThreadState;
-
-public class PyImmutableSetDerived extends PyImmutableSet implements Slotted {
+public class PySetDerived extends PySet implements Slotted {
 
     public PyObject getSlot(int index) {
         return slots[index];
@@ -51,7 +35,7 @@ public class PyImmutableSetDerived extends PyImmutableSet implements Slotted {
         dict=new PyStringMap();
     }
 
-    public PyImmutableSetDerived(PyType subtype) {
+    public PySetDerived(PyType subtype) {
         super(subtype);
         slots=new PyObject[subtype.getNumSlots()];
         dict=subtype.instDict();
