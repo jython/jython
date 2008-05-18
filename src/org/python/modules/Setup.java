@@ -27,7 +27,7 @@ public class Setup
     public static String[] builtinModules = {
         "jarray",
         "math",
-        "thread",
+        "thread:org.python.modules.thread.thread",
         "operator",
         "time:org.python.modules.time.Time",
         "_py_compile",

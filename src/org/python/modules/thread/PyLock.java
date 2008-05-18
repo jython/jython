@@ -1,5 +1,5 @@
 // Copyright (c) Corporation for National Research Initiatives
-package org.python.modules;
+package org.python.modules.thread;
 
 import org.python.core.*;
 

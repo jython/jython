@@ -1,4 +1,4 @@
-package org.python.modules;
+package org.python.modules.thread;
 
 import org.python.core.Py;
 import org.python.core.PyDictionary;
