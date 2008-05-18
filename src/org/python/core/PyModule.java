@@ -177,11 +177,9 @@ public class PyModule extends PyObject {
             name = new PyString("?");
         }
         if (filename == null) {
-            filename = new PyString("(built-in)");
-        } else {
-            filename = new PyString("from '" + filename + "'");
+            return String.format("<module '%s' (built-in)>", name);
         }
-        return "<module '" + name + "' " + filename + ">";
+        return String.format("<module '%s' from '%s'>", name, filename);
     }
 
     public PyObject __dir__() {
