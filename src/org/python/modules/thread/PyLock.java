@@ -1,11 +1,12 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.modules.thread;
 
-import org.python.core.*;
+import org.python.core.Py;
+import org.python.core.PyObject;
 
 public class PyLock extends PyObject {
-    private boolean locked=false;
-    //private Object lock = new Object();
+
+    private boolean locked = false;
 
     public boolean acquire() {
         return acquire(true);
@@ -34,7 +35,8 @@ public class PyLock extends PyObject {
 
     public synchronized void release() {
         if (locked) {
-            locked = false; notifyAll();
+            locked = false;
+            notifyAll();
         } else {
             throw Py.ValueError("lock not acquired");
         }
