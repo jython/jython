@@ -107,11 +107,6 @@ public class PySet extends BaseSet {
     }
 
     @ExposedMethod
-    final boolean set___nonzero__() {
-        return baseset___nonzero__();
-    }
-
-    @ExposedMethod
     final PyObject set_copy() {
         return baseset_copy();
     }
@@ -257,11 +252,6 @@ public class PySet extends BaseSet {
     @ExposedMethod
     final void set_update(PyObject data) {
         _update(data);
-    }
-
-    @ExposedMethod
-    final void set_union_update(PyObject other) {
-        _update(other);
     }
 
     @ExposedMethod

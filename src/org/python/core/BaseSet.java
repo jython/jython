@@ -198,10 +198,6 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
      * @return <code>true</code> if the set is not empty, <code>false</code> otherwise
      */
     public boolean __nonzero__() {
-        return baseset___nonzero__();
-    }
-
-    final boolean baseset___nonzero__() {
         return !_set.isEmpty();
     }
 

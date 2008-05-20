@@ -116,11 +116,6 @@ public class PyFrozenSet extends BaseSet {
     }
 
     @ExposedMethod
-    final boolean frozenset___nonzero__() {
-        return baseset___nonzero__();
-    }
-
-    @ExposedMethod
     final PyObject frozenset_copy() {
         if (getClass() == PyFrozenSet.class) {
                 return this;
