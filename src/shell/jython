@@ -1,0 +1,161 @@
+#!/bin/bash
+# -----------------------------------------------------------------------------
+# jython.sh - Start Script for the Jython
+#
+# Adapted from jruby.sh
+#
+# Environment Variable Prequisites
+#
+#   JYTHON_OPTS    (Optional) Default Jython command line args
+#
+#   JAVA_HOME     Must point at your Java Development Kit installation.
+#
+# -----------------------------------------------------------------------------
+
+cygwin=false
+
+# ----- Identify OS we are running under --------------------------------------
+case "`uname`" in
+CYGWIN*) cygwin=true
+esac
+
+# ----- Verify and Set Required Environment Variables -------------------------
+
+## resolve links - $0 may be a link to  home
+PRG=$0
+progname=`basename "$0"`
+
+while [ -h "$PRG" ] ; do
+  ls=`ls -ld "$PRG"`
+  link=`expr "$ls" : '.*-> \(.*\)$'`
+  if expr "$link" : '.*/.*' > /dev/null; then
+  PRG="$link"
+  else
+  PRG="`dirname $PRG`/$link"
+  fi
+done
+
+JYTHON_HOME_1=`dirname "$PRG"`           # the ./bin dir
+JYTHON_HOME=`dirname "$JYTHON_HOME_1"`  # the . dir
+
+if [ -z "$JYTHON_OPTS" ] ; then
+  JYTHON_OPTS=""
+fi
+
+if [ -z "$JAVA_HOME" ] ; then
+  JAVA_CMD='java'
+else
+  if $cygwin; then
+    JAVA_HOME=`cygpath -u "$JAVA_HOME"`
+  fi
+  JAVA_CMD="$JAVA_HOME/bin/java"
+fi
+
+CP_DELIMETER=":"
+
+CP=$JYTHON_HOME/jython.jar
+
+# add necessary jars for command-line execution
+for j in "$JYTHON_HOME"/javalib/*.jar; do
+    if [ "$CP" ]; then
+        CP="$CP$CP_DELIMETER$j"
+        else
+        CP="$j"
+    fi
+done
+
+if $cygwin; then
+    CP=`cygpath -p -w "$CP"`
+fi
+
+# ----- Execute The Requested Command -----------------------------------------
+
+JAVA_MEM=-Xmx378m
+JAVA_STACK=-Xss1024k
+
+# Split out any -J argument for passing to the JVM.
+# Scanning for args is aborted by '--'.
+declare -a java_args
+declare -a python_args
+    while [ $# -gt 0 ]
+do
+    case "$1" in
+    # Stuff after '-J' in this argument goes to JVM
+    -J*)
+        val=${1:2}
+        if [ "${val:0:4}" = "-Xmx" ]; then
+            JAVA_MEM=$val
+        elif [ "${val:0:4}" = "-Xss" ]; then
+            JAVA_STACK=$val
+        else
+            java_args=("${java_args[@]}" "${1:2}")
+        fi
+        ;;
+     # Match switches that take an argument
+     -c|-D|-C|-jar|-Q|-W) python_args=("${python_args[@]}" "$1" "$2"); shift ;;
+     # Match -Dprop=val type args
+     -D*) python_args=("${python_args[@]}" "$1" ) ;;
+     # Run with the instrumented profiler: http://jiprof.sourceforge.net/
+     --profile) PROFILE_ARGS="-javaagent:$JYTHON_HOME/javalib/profile.jar -Dprofile.properties=$JYTHON_HOME/javalib/profile.properties" ;;
+     # Run under JDB
+     --jdb)
+        if [ -z "$JAVA_HOME" ] ; then
+          JAVA_CMD='jdb'
+        else
+          if $cygwin; then
+            JAVA_HOME=`cygpath -u "$JAVA_HOME"`
+          fi
+          JAVA_CMD="$JAVA_HOME/bin/jdb"
+        fi ;;
+     --help) python_args=("${python_args[@]}" "$1") ;;
+     # Abort processing on the double dash
+     --) break ;;
+     # Other opts go to python
+     -*) python_args=("${python_args[@]}" "$1") ;;
+     # Abort processing on first non-opt arg
+     *) break ;;
+    esac
+    shift
+done
+
+# Append the rest of the arguments
+python_args=("${python_args[@]}" "$@")
+
+# Put the python_args back into the position arguments $1, $2 etc
+set -- "${python_args[@]}"
+
+JAVA_OPTS="$JAVA_OPTS $JAVA_MEM $JAVA_STACK"
+
+if $cygwin; then
+  JAVA_HOME=`cygpath --mixed "$JAVA_HOME"`
+  JYTHON_HOME=`cygpath --mixed "$JYTHON_HOME"`
+  
+  if [[ ( "${1:0:1}" = "/" ) && ( ( -f "$1" ) || ( -d "$1" )) ]]; then
+    win_arg=`cygpath -w "$1"`
+    shift
+    win_args=("$win_arg" "$@")
+    set -- "${win_args[@]}"
+  fi
+fi
+
+if [ "$PROFILE_ARGS" != "" ]; then
+  echo "Running with instrumented profiler"
+
+  $JAVA_CMD $PROFILE_ARGS $JAVA_OPTS "${java_args[@]}" -classpath "$CP$CP_SEPARATOR$CLASSPATH" \
+    "-Dpython.home=$JYTHON_HOME" \
+    org.python.util.jython $JYTHON_OPTS "$@"
+
+  echo "Profiling results:"
+
+  cat profile.txt
+
+else
+  echo "$JAVA_CMD" $JAVA_OPTS "${java_args[@]}" -Xbootclasspath/a:"$CP" -classpath "$CLASSPATH" \
+    "-Dpython.home=$JYTHON_HOME" \
+    org.python.util.jython $JYTHON_OPTS "$@"
+
+  exec "$JAVA_CMD" $JAVA_OPTS "${java_args[@]}" -Xbootclasspath/a:"$CP" -classpath "$CLASSPATH" \
+    "-Dpython.home=$JYTHON_HOME" \
+    org.python.util.jython $JYTHON_OPTS "$@"
+
+fi
