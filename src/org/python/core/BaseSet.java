@@ -318,21 +318,6 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
         return new PyTuple(getType(), args, dict);
     }
 
-    public PyObject __deepcopy__(PyObject memo) {
-        return baseset___deepcopy__(memo);
-    }
-
-    final PyObject baseset___deepcopy__(PyObject memo) {
-        PyObject copy = __builtin__.__import__("copy");
-        PyObject deepcopy = copy.__getattr__("deepcopy");
-        BaseSet result = BaseSet.makeNewSet(getType());
-        memo.__setitem__(Py.newInteger(Py.id(this)), result);
-        for (Object p : _set) {
-            result._set.add(deepcopy.__call__(Py.java2py(p), memo));
-        }
-        return result;
-    }
-
     /**
      * Return this instance as a Java object.  Only coerces to Collection and subinterfaces.
      *

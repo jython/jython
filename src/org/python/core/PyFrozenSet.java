@@ -116,11 +116,6 @@ public class PyFrozenSet extends BaseSet {
     }
 
     @ExposedMethod
-    final PyObject frozenset___deepcopy__(PyObject memo) {
-        return baseset___deepcopy__(memo);
-    }
-
-    @ExposedMethod
     final boolean frozenset___nonzero__() {
         return baseset___nonzero__();
     }

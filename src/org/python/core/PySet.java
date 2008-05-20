@@ -107,11 +107,6 @@ public class PySet extends BaseSet {
     }
 
     @ExposedMethod
-    final PyObject set___deepcopy__(PyObject memo) {
-        return baseset___deepcopy__(memo);
-    }
-
-    @ExposedMethod
     final boolean set___nonzero__() {
         return baseset___nonzero__();
     }
