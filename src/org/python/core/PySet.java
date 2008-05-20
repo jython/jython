@@ -224,7 +224,7 @@ public class PySet extends BaseSet {
         try {
             b = this._set.remove(o);
         } catch (PyException e) {
-            PyObject immutable = this.asImmutable(e, o);
+            PyObject immutable = this.asFrozen(e, o);
             b = this._set.remove(immutable);
         }
         if (!b) {
@@ -237,7 +237,7 @@ public class PySet extends BaseSet {
         try {
             this._set.remove(o);
         } catch (PyException e) {
-            PyObject immutable = this.asImmutable(e, o);
+            PyObject immutable = this.asFrozen(e, o);
             this._set.remove(immutable);
         }
     }
@@ -310,8 +310,8 @@ public class PySet extends BaseSet {
         }
     }
 
-    @ExposedMethod
-    final PyObject set__as_immutable() {
-        return new PyFrozenSet(this);
+    @ExposedMethod(names = "__repr__")
+    final String set_toString() {
+        return baseset_toString();
     }
 }

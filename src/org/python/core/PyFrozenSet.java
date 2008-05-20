@@ -179,11 +179,12 @@ public class PyFrozenSet extends BaseSet {
         return this._set.hashCode();
     }
 
-    public int hashCode() {
-        return frozenset___hash__();
+    @ExposedMethod(names = "__repr__")
+    final String frozenset_toString() {
+        return baseset_toString();
     }
 
-    public PyObject _as_immutable() {
-        return this;
+    public int hashCode() {
+        return frozenset___hash__();
     }
 }

@@ -225,8 +225,8 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
     final boolean baseset___contains__(PyObject other) {
         try {
             return this._set.contains(other);
-        } catch (PyException e) {
-            PyObject immutable = this.asImmutable(e, other);
+        } catch (PyException pye) {
+            PyFrozenSet immutable = this.asFrozen(pye, other);
             return this._set.contains(immutable);
         }
     }
@@ -401,12 +401,16 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
         return Py.True;
     }
 
-    final String baseset_toString() {
-        return toString();
+    public String toString() {
+        return baseset_toString();
     }
 
-    public String toString() {
+    final String baseset_toString() {
         String name = getType().fastGetName();
+        ThreadState ts = Py.getThreadState();
+        if (!ts.enterRepr(this)) {
+            return name + "(...)";
+        }
         StringBuffer buf = new StringBuffer(name).append("([");
         for (Iterator i = this._set.iterator(); i.hasNext();) {
             buf.append(((PyObject)i.next()).__repr__().toString());
@@ -415,6 +419,7 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
             }
         }
         buf.append("])");
+        ts.exitRepr(this);
         return buf.toString();
     }
 
@@ -427,25 +432,29 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
     }
 
     /**
-     * If the exception <code>e</code> is a <code>TypeError</code>, attempt to convert
-     * the object <code>value</code> into an ImmutableSet.
-     * 
-     * This is better than special-casing behavior based on isinstance, because a Python
-     * subclass can override, say, __hash__ and all of a sudden you can't assume that
-     * a non-PyFrozenSet is unhashable anymore.
+     * Return a PyFrozenSet whose contents are shared with value when
+     * value is a BaseSet and pye is a TypeError.
      *
-     * @param e     The exception thrown from a hashable operation.
+     * WARNING: The PyFrozenSet returned is only intended to be used
+     * temporarily (and internally); since its contents are shared
+     * with value, it could be mutated!
+     * 
+     * This is better than special-casing behavior based on
+     * isinstance, because a Python subclass can override, say,
+     * __hash__ and all of a sudden you can't assume that a
+     * non-PyFrozenSet is unhashable anymore.
+     *
+     * @param pye   The exception thrown from a hashable operation.
      * @param value The object which was unhashable.
-     * @return An ImmutableSet if available, a <code>TypeError</code> is thrown otherwise.
+     * @return A PyFrozenSet if appropriate, otherwise the pye is rethrown
      */
-    protected final PyObject asImmutable(PyException e, PyObject value) {
-        if (Py.matchException(e, Py.TypeError)) {
-            PyObject transform = value.__findattr__("_as_immutable");
-            if (transform != null) {
-                return transform.__call__();
-            }
+    protected final PyFrozenSet asFrozen(PyException pye, PyObject value) {
+        if (!(value instanceof BaseSet) || !Py.matchException(pye, Py.TypeError)) {
+            throw pye;
         }
-        throw e;
+        PyFrozenSet tmp = new PyFrozenSet();
+        tmp._set = ((BaseSet)value)._set;
+        return tmp;
     }
 
     /**
