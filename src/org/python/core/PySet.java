@@ -1,6 +1,7 @@
 package org.python.core;
 
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
@@ -35,6 +36,7 @@ public class PySet extends BaseSet {
             return;
         }
 
+        this._set.clear();
         PyObject o = args[0];
         _update(o);
     }
@@ -213,12 +215,7 @@ public class PySet extends BaseSet {
 
     @ExposedMethod
     final void set_add(PyObject o) {
-        try {
-            this._set.add(o);
-        } catch (PyException e) {
-            PyObject immutable = this.asImmutable(e, o);
-            this._set.add(immutable);
-        }
+        this._set.add(o);
     }
 
     @ExposedMethod
@@ -231,7 +228,7 @@ public class PySet extends BaseSet {
             b = this._set.remove(immutable);
         }
         if (!b) {
-            throw new PyException(Py.LookupError, o.toString());
+            throw new PyException(Py.KeyError, o);
         }
     }
 
@@ -248,9 +245,13 @@ public class PySet extends BaseSet {
     @ExposedMethod
     final PyObject set_pop() {
         Iterator iterator = this._set.iterator();
-        Object first = iterator.next();
-        this._set.remove(first);
-        return (PyObject) first;
+        try {
+                Object first = iterator.next();
+            this._set.remove(first);
+            return (PyObject) first;
+        } catch (NoSuchElementException e) {
+                throw new PyException(Py.KeyError, "pop from an empty set");
+        }
     }
 
     @ExposedMethod
@@ -280,6 +281,11 @@ public class PySet extends BaseSet {
 
     @ExposedMethod
     final void set_symmetric_difference_update(PyObject other) {
+        if (this == other) {
+            set_clear();
+            return;
+        }
+
         BaseSet bs = (other instanceof BaseSet) ? (BaseSet) other : new PySet(other);
         for (Iterator iterator = bs._set.iterator(); iterator.hasNext();) {
             Object o = iterator.next();

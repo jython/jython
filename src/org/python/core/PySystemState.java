@@ -549,6 +549,7 @@ public class PySystemState extends PyObject
         Py.EmptyObjects = new PyObject[0];
 
         Py.EmptyTuple = new PyTuple(Py.EmptyObjects);
+        Py.EmptyFrozenSet = new PyFrozenSet();
         Py.NoConversion = new PySingleton("Error");
         Py.Ellipsis = new PyEllipsis();
 

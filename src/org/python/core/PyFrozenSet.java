@@ -23,18 +23,31 @@ public class PyFrozenSet extends BaseSet {
     }
 
     @ExposedNew
-    @ExposedMethod
-    final void frozenset___init__(PyObject[] args, String[] kwds) {
-        int nargs = args.length - kwds.length;
-        if (nargs > 1) {
-            throw PyBuiltinFunction.DefaultInfo.unexpectedCall(nargs, false, "FrozenSet", 0, 1);
-        }
-        if (nargs == 0) {
-            return;
+    public static PyObject frozenset___new__(PyNewWrapper new_, boolean init, PyType subtype,
+                                             PyObject[] args, String[] keywords) {
+        ArgParser ap = new ArgParser("frozenset", args, keywords, new String[] {"iterable"}, 0);
+        PyObject iterable = ap.getPyObject(0, null);
+        PyFrozenSet fset = null;
+
+        if (new_.for_type == subtype) {
+            if (iterable == null) {
+                fset = Py.EmptyFrozenSet;
+            } else if (iterable.getClass() == PyFrozenSet.class) {
+                fset = (PyFrozenSet)iterable;
+            } else {
+                fset = new PyFrozenSet(iterable);
+                if (fset.__len__() == 0) {
+                    fset = Py.EmptyFrozenSet;
+                }
+            }
+        } else {
+            fset = new PyFrozenSetDerived(subtype);
+            if (iterable != null) {
+                fset._update(iterable);
+            }
         }
 
-        PyObject o = args[0];
-        _update(o);
+        return fset;
     }
 
     @ExposedMethod(type = MethodType.BINARY)
@@ -114,6 +127,10 @@ public class PyFrozenSet extends BaseSet {
 
     @ExposedMethod
     final PyObject frozenset_copy() {
+        if (getClass() == PyFrozenSet.class) {
+                return this;
+        }
+        // subclasses should revert to normal behavior of creating a new instance
         return baseset_copy();
     }
 
@@ -159,11 +176,11 @@ public class PyFrozenSet extends BaseSet {
 
     @ExposedMethod
     final int frozenset___hash__() {
-        return hashCode();
+        return this._set.hashCode();
     }
 
     public int hashCode() {
-        return this._set.hashCode();
+        return frozenset___hash__();
     }
 
     public PyObject _as_immutable() {

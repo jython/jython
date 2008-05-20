@@ -933,7 +933,6 @@ with_var returns [exprType etype]
     }
     ;
 
-//FIXME: lots of placeholders
 test[expr_contextType ctype] returns [exprType etype, PythonTree begin, boolean parens]
     : ^(AND left=test[ctype] right=test[ctype]) {
         List values = new ArrayList();
