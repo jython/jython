@@ -45,17 +45,13 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
      * @throws PyIgnoreMethodTag Ignore.
      */
     protected void _update(PyObject data) throws PyIgnoreMethodTag {
-        if(data instanceof BaseSet) {
+        if (data instanceof BaseSet) {
             // Skip the iteration if both are sets
             this._set.addAll(((BaseSet)data)._set);
             return;
         }
         for (PyObject item : data.asIterable()) {
-            try {
-                this._set.add(item);
-            } catch (PyException e) {
-                this._set.add(asImmutable(e, item));
-            }
+            this._set.add(item);
         }
     }
 
@@ -125,7 +121,7 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
     final PyObject baseset_difference(PyObject other) {
         BaseSet bs = (other instanceof BaseSet) ? (BaseSet) other : new PySet(other);
         Set set = bs._set;
-        BaseSet o = (BaseSet) this.getType().__call__();
+        BaseSet o = BaseSet.makeNewSet(getType());
         for (Object p : this._set) {
             if (!set.contains(p)) {
                 o._set.add(p);
@@ -161,7 +157,7 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
 
     public PyObject baseset_symmetric_difference(PyObject other) {
         BaseSet bs = (other instanceof BaseSet) ? (BaseSet) other : new PySet(other);
-        BaseSet o = (BaseSet) this.getType().__call__();
+        BaseSet o = BaseSet.makeNewSet(getType());
         for (Object p : this._set) {
             if (!bs._set.contains(p)) {
                 o._set.add(p);
@@ -227,7 +223,12 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
     }
 
     final boolean baseset___contains__(PyObject other) {
-        return this._set.contains(other);
+        try {
+                return this._set.contains(other);
+            } catch (PyException e) {
+                PyObject immutable = this.asImmutable(e, other);
+                return this._set.contains(immutable);
+            }
     }
 
     public int __cmp__(PyObject other) {
@@ -235,7 +236,7 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
     }
 
     final int baseset___cmp__(PyObject other) {
-    	throw Py.TypeError("cannot compare sets using cmp()");
+        throw Py.TypeError("cannot compare sets using cmp()");
     }
 
     public PyObject __eq__(PyObject other) {
@@ -322,7 +323,7 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
     final PyObject baseset___deepcopy__(PyObject memo) {
         PyObject copy = __builtin__.__import__("copy");
         PyObject deepcopy = copy.__getattr__("deepcopy");
-        BaseSet result = (BaseSet) this.getType().__call__();
+        BaseSet result = BaseSet.makeNewSet(getType());
         memo.__setitem__(Py.newInteger(Py.id(this)), result);
         for (Object p : this._set) {
             result._set.add(deepcopy.__call__(Py.java2py(p), memo));
@@ -344,13 +345,12 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
     }
 
     public PyObject baseset_union(PyObject other) {
-        BaseSet result = (BaseSet) this.getType().__call__(this);
+        BaseSet result = BaseSet.makeNewSet(getType(), this);
         result._update(other);
         return result;
     }
 
     public PyObject baseset_intersection(PyObject other) {
-
         PyObject little, big;
         if(!(other instanceof BaseSet)) {
             other = new PySet(other);
@@ -365,12 +365,11 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
         }
 
         PyObject common = __builtin__.filter(big.__getattr__("__contains__"), little);
-        return other.getType().__call__(common);
+        return BaseSet.makeNewSet(getType(), common);
     }
 
     public PyObject baseset_copy() {
-        BaseSet copy = (BaseSet) this.getType().__call__();
-        copy._set = (HashSet) this._set.clone();
+        BaseSet copy = BaseSet.makeNewSet(getType(), this);
         return copy;
     }
 
@@ -428,6 +427,10 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
     /**
      * If the exception <code>e</code> is a <code>TypeError</code>, attempt to convert
      * the object <code>value</code> into an ImmutableSet.
+     * 
+     * This is better than special-casing behavior based on isinstance, because a Python
+     * subclass can override, say, __hash__ and all of a sudden you can't assume that
+     * a non-PyFrozenSet is unhashable anymore.
      *
      * @param e     The exception thrown from a hashable operation.
      * @param value The object which was unhashable.
@@ -443,7 +446,41 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
         throw e;
     }
 
-//    public int size() {
+    /**
+     * Create a new set of type.
+     *
+     * @param type a set type
+     * @return a new set
+     */
+    protected static BaseSet makeNewSet(PyType type) {
+        return makeNewSet(type, null);
+    }
+ 
+    /**
+     * Create a new <et of type from iterable.
+     *
+     * @param type a set type
+     * @param iterable an iterable or null
+     * @return a new set
+     */
+    protected static BaseSet makeNewSet(PyType type, PyObject iterable) {
+        BaseSet so;
+        if (type == PySet.TYPE) {
+            so = new PySet();
+        } else if (type == PyFrozenSet.TYPE) {
+            so = new PyFrozenSet();
+        } else if (Py.isSubClass(type, PySet.TYPE)) {
+            so = new PySetDerived(type);
+        } else {
+            so = new PyFrozenSetDerived(type);
+        }
+        if (iterable != null) {
+            so._update(iterable);
+        }
+        return so;
+    }
+
+ //    public int size() {
 //        return this._set.size();
 //    }
 //
