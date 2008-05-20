@@ -604,6 +604,22 @@ The readme text for the next release will be like:
                 <present present="srconly" targetdir="${jython.base.dir}/Lib"/>
             </fileset>
         </copy>
+
+        <copy todir="${dist.dir}/bin">
+            <fileset dir="${source.dir}/shell"/>
+        </copy>
+
+        <chmod perm="ugo+rx">
+            <fileset dir="${dist.dir}/bin" />
+        </chmod>
+
+        <copy todir="${dist.dir}/javalib">
+            <fileset dir="${jython.base.dir}/extlibs"/>
+            <fileset dir="${jython.base.dir}/build">
+                <include name="*.jar"/>
+                <include name="*.properties"/>
+            </fileset>
+        </copy>
     </target>
 
     <!-- wrap the build into the installer -->
