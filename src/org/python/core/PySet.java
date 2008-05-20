@@ -281,6 +281,11 @@ public class PySet extends BaseSet {
 
     @ExposedMethod
     final void set_symmetric_difference_update(PyObject other) {
+        if (this == other) {
+            set_clear();
+            return;
+        }
+
         BaseSet bs = (other instanceof BaseSet) ? (BaseSet) other : new PySet(other);
         for (Iterator iterator = bs._set.iterator(); iterator.hasNext();) {
             Object o = iterator.next();
