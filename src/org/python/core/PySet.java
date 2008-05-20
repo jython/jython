@@ -36,7 +36,7 @@ public class PySet extends BaseSet {
             return;
         }
 
-        this._set.clear();
+        _set.clear();
         PyObject o = args[0];
         _update(o);
     }
@@ -166,8 +166,8 @@ public class PySet extends BaseSet {
     }
 
     final PyObject set___ior__(PyObject other) {
-        BaseSet bs = this._binary_sanity_check(other);
-        this._set.addAll(bs._set);
+        BaseSet bs = _binary_sanity_check(other);
+        _set.addAll(bs._set);
         return this;
     }
 
@@ -177,7 +177,7 @@ public class PySet extends BaseSet {
 
     @ExposedMethod(type = MethodType.BINARY)
     final PyObject set___ixor__(PyObject other) {
-        this._binary_sanity_check(other);
+        _binary_sanity_check(other);
         set_symmetric_difference_update(other);
         return this;
     }
@@ -188,8 +188,8 @@ public class PySet extends BaseSet {
 
     @ExposedMethod(type = MethodType.BINARY)  
     final PyObject set___iand__(PyObject other) {
-        BaseSet bs = this._binary_sanity_check(other);
-        this._set = ((BaseSet) this.__and__(bs))._set;
+        BaseSet bs = _binary_sanity_check(other);
+        _set = ((BaseSet)__and__(bs))._set;
         return this;
     }
 
@@ -199,8 +199,8 @@ public class PySet extends BaseSet {
 
     @ExposedMethod(type = MethodType.BINARY)
     final PyObject set___isub__(PyObject other) {
-        BaseSet bs = this._binary_sanity_check(other);
-        this._set.removeAll(bs._set);
+        BaseSet bs = _binary_sanity_check(other);
+        _set.removeAll(bs._set);
         return this;
     }
 
@@ -215,17 +215,17 @@ public class PySet extends BaseSet {
 
     @ExposedMethod
     final void set_add(PyObject o) {
-        this._set.add(o);
+        _set.add(o);
     }
 
     @ExposedMethod
     final void set_remove(PyObject o) {
         boolean b = false;
         try {
-            b = this._set.remove(o);
+            b = _set.remove(o);
         } catch (PyException e) {
-            PyObject immutable = this.asFrozen(e, o);
-            b = this._set.remove(immutable);
+            PyObject frozen = asFrozen(e, o);
+            b = _set.remove(frozen);
         }
         if (!b) {
             throw new PyException(Py.KeyError, o);
@@ -235,19 +235,19 @@ public class PySet extends BaseSet {
     @ExposedMethod
     final void set_discard(PyObject o) {
         try {
-            this._set.remove(o);
+            _set.remove(o);
         } catch (PyException e) {
-            PyObject immutable = this.asFrozen(e, o);
-            this._set.remove(immutable);
+            PyObject frozen = asFrozen(e, o);
+            _set.remove(frozen);
         }
     }
 
     @ExposedMethod
     final PyObject set_pop() {
-        Iterator iterator = this._set.iterator();
+        Iterator iterator = _set.iterator();
         try {
                 Object first = iterator.next();
-            this._set.remove(first);
+            _set.remove(first);
             return (PyObject) first;
         } catch (NoSuchElementException e) {
                 throw new PyException(Py.KeyError, "pop from an empty set");
@@ -256,26 +256,26 @@ public class PySet extends BaseSet {
 
     @ExposedMethod
     final void set_clear() {
-        this._set.clear();
+        _set.clear();
     }
 
     @ExposedMethod
     final void set_update(PyObject data) {
-        this._update(data);
+        _update(data);
     }
 
     @ExposedMethod
     final void set_union_update(PyObject other) {
-        this._update(other);
+        _update(other);
     }
 
     @ExposedMethod
     final void set_intersection_update(PyObject other) {
         if (other instanceof BaseSet) {
-            this.__iand__(other);
+            __iand__(other);
         } else {
-            BaseSet set = (BaseSet) baseset_intersection(other);
-            this._set = set._set;
+            BaseSet set = (BaseSet)baseset_intersection(other);
+            _set = set._set;
         }
     }
 
@@ -286,13 +286,13 @@ public class PySet extends BaseSet {
             return;
         }
 
-        BaseSet bs = (other instanceof BaseSet) ? (BaseSet) other : new PySet(other);
+        BaseSet bs = (other instanceof BaseSet) ? (BaseSet)other : new PySet(other);
         for (Iterator iterator = bs._set.iterator(); iterator.hasNext();) {
             Object o = iterator.next();
-            if (this._set.contains(o)) {
-                this._set.remove(o);
+            if (_set.contains(o)) {
+                _set.remove(o);
             } else {
-                this._set.add(o);
+                _set.add(o);
             }
         }
     }
@@ -300,12 +300,12 @@ public class PySet extends BaseSet {
     @ExposedMethod
     final void set_difference_update(PyObject other) {
         if (other instanceof BaseSet) {
-            this.__isub__(other);
+            __isub__(other);
             return;
         }
         for (PyObject o : other.asIterable()) {
-            if (this.__contains__(o)) {
-                this._set.remove(o);
+            if (__contains__(o)) {
+                _set.remove(o);
             }
         }
     }

@@ -176,7 +176,7 @@ public class PyFrozenSet extends BaseSet {
 
     @ExposedMethod
     final int frozenset___hash__() {
-        return this._set.hashCode();
+        return _set.hashCode();
     }
 
     @ExposedMethod(names = "__repr__")
