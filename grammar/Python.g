@@ -481,13 +481,16 @@ import_as_names : import_as_name (COMMA! import_as_name)* (COMMA!)?
                 ;
 
 //import_as_name: NAME [('as' | NAME) NAME]
-import_as_name : name=NAME ('as' asname=NAME)?
+import_as_name : name=NAME (keyAS asname=NAME)?
               -> ^(Alias $name ^(Asname $asname)?)
                ;
 
-//XXX: when does Grammar match "dotted_name NAME NAME"?
+//XXX: when does Grammar match "dotted_name NAME NAME"? This may be a big
+//       problem because of the keyAS rule, which matches NAME (needed to allow
+//       'as' to be a method name for Java integration).
+
 //dotted_as_name: dotted_name [('as' | NAME) NAME]
-dotted_as_name : dotted_name ('as' asname=NAME)?
+dotted_as_name : dotted_name (keyAS asname=NAME)?
               -> ^(Alias dotted_name ^(Asname NAME)?)
                ;
 
@@ -504,8 +507,8 @@ global_stmt : 'global' NAME (COMMA NAME)*
             ;
 
 //exec_stmt: 'exec' expr ['in' test [',' test]]
-exec_stmt : 'exec' expr ('in' t1=test (COMMA t2=test)?)?
-         -> ^(Exec 'exec' expr ^(Globals $t1)? ^(Locals $t2)?)
+exec_stmt : keyEXEC expr ('in' t1=test (COMMA t2=test)?)?
+         -> ^(Exec keyEXEC expr ^(Globals $t1)? ^(Locals $t2)?)
           ;
 
 //assert_stmt: 'assert' test [',' test]
@@ -562,7 +565,7 @@ with_stmt: 'with' test (with_var)? COLON suite
          ;
 
 //with_var: ('as' | NAME) expr
-with_var: ('as' | NAME) expr
+with_var: (keyAS | NAME) expr
         ;
 
 //except_clause: 'except' [test [',' test]]
@@ -813,6 +816,31 @@ yield_expr : 'yield' testlist?
 //XXX:
 //testlist1: test (',' test)*
 
+//These are all Python keywords that are not Java keywords
+//This means that Jython needs to support these as NAMEs
+//unlike CPython.  For now I have only done this for 'as'
+//and 'exec'.
+
+//keyAND    : {input.LT(1).getText().equals("and")}? NAME ;
+keyAS     : {input.LT(1).getText().equals("as")}? NAME ;
+//keyDEF    : {input.LT(1).getText().equals("def")}? NAME ;
+//keyDEL    : {input.LT(1).getText().equals("del")}? NAME ;
+//keyELIF   : {input.LT(1).getText().equals("elif")}? NAME ;
+//keyEXCEPT : {input.LT(1).getText().equals("except")}? NAME ;
+keyEXEC   : {input.LT(1).getText().equals("exec")}? NAME ;
+//keyFROM   : {input.LT(1).getText().equals("from")}? NAME ;
+//keyGLOBAL : {input.LT(1).getText().equals("global")}? NAME ;
+//keyIN     : {input.LT(1).getText().equals("in")}? NAME ;
+//keyIS     : {input.LT(1).getText().equals("is")}? NAME ;
+//keyLAMBDA : {input.LT(1).getText().equals("lambda")}? NAME ;
+//keyNOT    : {input.LT(1).getText().equals("not")}? NAME ;
+//keyOR     : {input.LT(1).getText().equals("or")}? NAME ;
+//keyPASS   : {input.LT(1).getText().equals("pass")}? NAME ;
+//keyPRINT  : {input.LT(1).getText().equals("print")}? NAME ;
+//keyRAISE  : {input.LT(1).getText().equals("raise")}? NAME ;
+//keyWITH   : {input.LT(1).getText().equals("with")}? NAME ;
+//keyYIELD  : {input.LT(1).getText().equals("yield")}? NAME ;
+
 
 LPAREN    : '(' {implicitLineJoiningLevel++;} ;
 
@@ -948,7 +976,7 @@ NAME:    ( 'a' .. 'z' | 'A' .. 'Z' | '_')
  *  should make us exit loop not continue.
  */
 STRING
-    :   ('r'|'u'|'ur')?
+    :   ('r'|'u'|'ur'|'R'|'U'|'UR'|'uR'|'Ur')?
         (   '\'\'\'' (options {greedy=false;}:TRIAPOS)* '\'\'\''
         |   '"""' (options {greedy=false;}:TRIQUOTE)* '"""'
         |   '"' (ESC|~('\\'|'\n'|'"'))* '"'

@@ -116,16 +116,6 @@ public class PyFrozenSet extends BaseSet {
     }
 
     @ExposedMethod
-    final PyObject frozenset___deepcopy__(PyObject memo) {
-        return baseset___deepcopy__(memo);
-    }
-
-    @ExposedMethod
-    final boolean frozenset___nonzero__() {
-        return baseset___nonzero__();
-    }
-
-    @ExposedMethod
     final PyObject frozenset_copy() {
         if (getClass() == PyFrozenSet.class) {
                 return this;
@@ -176,14 +166,15 @@ public class PyFrozenSet extends BaseSet {
 
     @ExposedMethod
     final int frozenset___hash__() {
-        return this._set.hashCode();
+        return _set.hashCode();
+    }
+
+    @ExposedMethod(names = "__repr__")
+    final String frozenset_toString() {
+        return baseset_toString();
     }
 
     public int hashCode() {
         return frozenset___hash__();
-    }
-
-    public PyObject _as_immutable() {
-        return this;
     }
 }

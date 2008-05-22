@@ -257,27 +257,29 @@ class TestJointOps(unittest.TestCase):
             self.assertRaises(RuntimeError, s.discard, BadCmp())
             self.assertRaises(RuntimeError, s.remove, BadCmp())
 
-# XXX: todo not sure why these fail
-#     def test_cyclical_repr(self):
-#         w = ReprWrapper()
-#         s = self.thetype([w])
-#         w.value = s
-#         name = repr(s).partition('(')[0]    # strip class name from repr string
-#         self.assertEqual(repr(s), '%s([%s(...)])' % (name, name))
-# 
-#     def test_cyclical_print(self):
-#         w = ReprWrapper()
-#         s = self.thetype([w])
-#         w.value = s
-#         try:
-#             fo = open(test_support.TESTFN, "wb")
-#             print >> fo, s,
-#             fo.close()
-#             fo = open(test_support.TESTFN, "rb")
-#             self.assertEqual(fo.read(), repr(s))
-#         finally:
-#             fo.close()
-#             os.remove(test_support.TESTFN)
+    def test_cyclical_repr(self):
+        w = ReprWrapper()
+        s = self.thetype([w])
+        w.value = s
+        # XXX: Jython doesn't have str.partition yet
+        #name = repr(s).partition('(')[0]    # strip class name from repr string
+        srepr = repr(s)
+        name = srepr[0:srepr.find('(')]
+        self.assertEqual(repr(s), '%s([%s(...)])' % (name, name))
+
+    def test_cyclical_print(self):
+        w = ReprWrapper()
+        s = self.thetype([w])
+        w.value = s
+        try:
+            fo = open(test_support.TESTFN, "wb")
+            print >> fo, s,
+            fo.close()
+            fo = open(test_support.TESTFN, "rb")
+            self.assertEqual(fo.read(), repr(s))
+        finally:
+            fo.close()
+            os.remove(test_support.TESTFN)
 
 # XXX: tests cpython internals (caches key hashes)
 #     def test_do_not_rehash_dict_keys(self):
