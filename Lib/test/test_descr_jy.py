@@ -3,6 +3,7 @@
 Made for Jython.
 """
 import test_support
+import types
 import unittest
 
 class TestDescrTestCase(unittest.TestCase):
@@ -18,6 +19,32 @@ class TestDescrTestCase(unittest.TestCase):
 
         class Foo(object):
             __metaclass__ = FooMeta
+
+    def test_descr___get__(self):
+        class Foo(object):
+            __slots__ = 'bar'
+            def hello(self):
+                pass
+            def hi(self):
+                pass
+            hi = staticmethod(hi)
+        foo = Foo()
+        foo.bar = 'baz'
+
+        self.assertEqual(Foo.bar.__get__(foo), 'baz')
+        self.assertEqual(Foo.bar.__get__(None, Foo), Foo.bar)
+
+        bound = Foo.hello.__get__(foo)
+        self.assert_(isinstance(bound, types.MethodType))
+        self.assert_(bound.im_self is foo)
+        self.assertEqual(Foo.hello.__get__(None, Foo), Foo.hello)
+
+        bound = Foo.hi.__get__(foo)
+        self.assert_(isinstance(bound, types.MethodType))
+        self.assert_(bound.im_self is foo)
+        unbound = Foo.hi.__get__(None, foo)
+        self.assert_(isinstance(unbound, types.MethodType))
+        self.assert_(unbound.im_self is None)
 
 
 def test_main():
