@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="lib" path="build/exposed"/>
+	<classpathentry excluding="com/ziclix/python/sql/handler/InformixDataHandler.java|com/ziclix/python/sql/handler/OracleDataHandler.java" kind="src" output="build/classes" path="src"/>
+	<classpathentry kind="src" output="build/classes" path="build/gensrc"/>
+	<classpathentry kind="src" output="build/classes" path="tests/java"/>
+	<classpathentry kind="src" path="bugtests/classes"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/3"/>
+	<classpathentry kind="lib" path="extlibs/jline-0.9.94.jar"/>
+	<classpathentry kind="lib" path="extlibs/junit-3.8.2.jar"/>
+	<classpathentry kind="lib" path="extlibs/libreadline-java-0.8.jar"/>
+	<classpathentry kind="lib" path="extlibs/mysql-connector-java-5.1.6.jar"/>
+	<classpathentry kind="lib" path="extlibs/postgresql-8.3-603.jdbc4.jar"/>
+	<classpathentry kind="lib" path="extlibs/servlet-api-2.5.jar"/>
+	<classpathentry kind="lib" path="build/jarjar"/>
+	<classpathentry kind="lib" path="extlibs/antlr-3.0.1.jar"/>
+	<classpathentry kind="var" path="ANT_HOME/lib/ant.jar"/>
+	<classpathentry kind="output" path="bugtests/classes"/>
+</classpath>
