@@ -86,34 +86,9 @@ public class PythonGrammar {
             tree = walker.module();
             if (tree == null) {
                 //XXX: seems like I should be able to get antlr to give me an empty Module instead
-                //     of null so I wouldn't need to build an empty Moduel by hand here...
+                //     of null so I wouldn't need to build an empty Module by hand here...
                 return new Module(new PythonTree(new CommonToken(PyLexer.Module)), new stmtType[0]);
             }
-        } catch (RecognitionException e) {
-            // FIXME:
-            System.err.println("FIXME: don't eat exceptions:" + e);
-        }
-        return tree;
-    }
-
-    //XXX: factor out common code.
-    public modType eval_input() {
-        modType tree = null;
-        PythonLexer lexer = new PyLexer(this.charStream);
-        CommonTokenStream tokens = new CommonTokenStream(lexer);
-        tokens.discardOffChannelTokens(true);
-        PythonTokenSource indentedSource = new PythonTokenSource(tokens);
-        tokens = new CommonTokenStream(indentedSource);
-        PythonParser parser = new PythonParser(tokens);
-        parser.setTreeAdaptor(pyadaptor);
-
-        try {
-            Object rx = parser.eval_input();
-            PythonParser.eval_input_return r = (PythonParser.eval_input_return)rx;
-            CommonTreeNodeStream nodes = new CommonTreeNodeStream((Tree)r.tree);
-            nodes.setTokenStream(tokens);
-            PythonWalker walker = new PythonWalker(nodes);
-            tree = walker.expression();
         } catch (RecognitionException e) {
             // FIXME:
             System.err.println("FIXME: don't eat exceptions:" + e);

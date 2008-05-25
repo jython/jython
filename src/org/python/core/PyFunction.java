@@ -292,7 +292,7 @@ public class PyFunction extends PyObject {
         return function___get__(obj, type);
     }
 
-    @ExposedMethod
+    @ExposedMethod(defaults = "null")
     final PyObject function___get__(PyObject obj, PyObject type) {
         return new PyMethod(this, obj, type);
     }

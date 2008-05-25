@@ -15,12 +15,16 @@ import org.antlr.runtime.tree.TreeAdaptor;
  */
 public class PythonTreeWalker {
 
+    public enum Block { MODULE, INTERACTIVE, EXPRESSION };
+
 	private boolean _parseOnly;
 	private boolean _tolerant;
+    private Block _block;
 
 	public PythonTreeWalker() {
 		setParseOnly(false);
 		setTolerant(true);
+        setBlock(Block.MODULE);
 	}
 
 	public PythonTree parse(String[] args) throws Exception {
@@ -31,11 +35,22 @@ public class PythonTreeWalker {
 		tokens.discardOffChannelTokens(true);
 		PythonTokenSource indentedSource = new PythonTokenSource(tokens);
 		tokens = new CommonTokenStream(indentedSource);
-		// System.out.println("tokens="+tokens.getTokens());
 		PythonParser parser = new PythonParser(tokens);
 		parser.setTreeAdaptor(PythonGrammar.pyadaptor);
 		try {
-			PythonParser.file_input_return r = parser.file_input();
+            Tree r = null;
+            switch (_block) {
+            case MODULE :
+			    r = (Tree)parser.file_input().tree;
+                break;
+            case INTERACTIVE :
+			    r = (Tree)parser.single_input().tree;
+                break;
+            case EXPRESSION :
+			    r = (Tree)parser.eval_input().tree;
+                break;
+            }
+			//Tree r = (Tree)parser.file_input().tree;
 			if (parser.hasErrors()) {
 				// handle errors swallowed by antlr recovery
 				String errors = parser.getErrors().toString();
@@ -46,13 +61,24 @@ public class PythonTreeWalker {
 				}
 			}
 			if (args.length > 1) {
-				System.out.println(((Tree) r.tree).toStringTree());
+				System.out.println((r).toStringTree());
 			}
 			if (!isParseOnly()) {
-				CommonTreeNodeStream nodes = new CommonTreeNodeStream((Tree) r.tree);
+				CommonTreeNodeStream nodes = new CommonTreeNodeStream(r);
 				nodes.setTokenStream(tokens);
 				PythonWalker walker = new PythonWalker(nodes);
-				result = walker.module();
+                switch (_block) {
+                case MODULE :
+				    result = walker.module();
+                    break;
+                case INTERACTIVE :
+                    result = walker.interactive();
+                    break;
+                case EXPRESSION :
+                    result = walker.expression();
+                    break;
+                }
+
 				if (args.length > 1) {
 					System.out.println(result.toStringTree());
 				}
@@ -93,6 +119,14 @@ public class PythonTreeWalker {
 
 	public boolean isTolerant() {
 		return _tolerant;
+	}
+
+	public void setBlock(Block block) {
+		_block = block;
+	}
+
+	public Block getBlock() {
+		return _block;
 	}
 
 }

@@ -65,7 +65,7 @@ public class PyMethod extends PyObject {
         return instancemethod___get__(obj, type);
     }
 
-    @ExposedMethod
+    @ExposedMethod(defaults = "null")
     final PyObject instancemethod___get__(PyObject obj, PyObject type) {
         // Only if classes are compatible
         if (obj == null || im_self != null) {

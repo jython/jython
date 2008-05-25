@@ -12,6 +12,8 @@ import java.io.UnsupportedEncodingException;
 import org.antlr.runtime.ANTLRReaderStream;
 import org.antlr.runtime.CharStream;
 import org.antlr.runtime.RecognitionException;
+import org.python.antlr.ExpressionParser;
+import org.python.antlr.LeadingSpaceSkippingStream;
 import org.python.antlr.PythonGrammar;
 import org.python.core.util.StringUtil;
 import org.python.antlr.IParserHost;
@@ -92,22 +94,23 @@ public class antlr {
     public static modType parse(InputStream istream, String kind,
                                  String filename, CompilerFlags cflags) 
     {
-        BufferedReader bufreader = prepBufreader(istream, cflags);
-        /* FJW FJW
-        PythonGrammar g = new PythonGrammar(new ReaderCharStream(bufreader),
-                                            literalMkrForParser);
-        */
         CharStream cs = null;
-        try {
-            cs = new ANTLRReaderStream(bufreader);
-        } catch (IOException io){
-            //FIXME:
-            System.err.println("FIXME: Don't eat exceptions.");
-        }
-        PythonGrammar g = new PythonGrammar(cs);//FJW, literalMkrForParser);
+        //FIXME: definite NPE potential here -- do we even need prepBufreader
+        //       now?
+        BufferedReader bufreader = null;
         modType node = null;
         try {
-            node = doparse(kind, cflags, g);
+            if (kind.equals("eval")) {
+                bufreader = prepBufreader(new LeadingSpaceSkippingStream(istream), cflags);
+                cs = new ANTLRReaderStream(bufreader);
+                ExpressionParser e = new ExpressionParser(cs);
+                node = e.parse();
+            } else {
+                bufreader = prepBufreader(istream, cflags);
+                cs = new ANTLRReaderStream(bufreader);
+                PythonGrammar g = new PythonGrammar(cs);//FJW, literalMkrForParser);
+                node = doparse(kind, cflags, g);
+            }
         }
         catch (Throwable t) {
             throw fixParseError(bufreader, t, filename);
@@ -162,10 +165,7 @@ public class antlr {
         //FJW if (cflags != null)
         //FJW    g.token_source.generator_allowed = cflags.generator_allowed;
         
-        if (kind.equals("eval")) {
-            node = g.eval_input();
-        }
-        else if (kind.equals("exec")) {
+        if (kind.equals("exec")) {
             node = g.file_input();
         }
         else if (kind.equals("single")) {
