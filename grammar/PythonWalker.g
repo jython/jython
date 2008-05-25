@@ -553,8 +553,8 @@ targets returns [List etypes]
     ;
 
 target[List etypes]
-    : ^(Target test[expr_contextType.Store]) {
-        etypes.add($test.etype);
+    : ^(Target atom[expr_contextType.Store]) {
+        etypes.add($atom.etype);
     }
     ;
 

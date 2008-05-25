@@ -67,7 +67,7 @@ public class PythonGrammar {
     }
 
     //XXX: factor out common code.
-    public modType file_input() {
+    public modType file_input() throws RecognitionException {
         modType tree = null;
         PythonLexer lexer = new PyLexer(this.charStream);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
@@ -77,27 +77,22 @@ public class PythonGrammar {
         PythonParser parser = new PythonParser(tokens);
         parser.setTreeAdaptor(pyadaptor);
 
-        try {
-            Object rx = parser.file_input();
-            PythonParser.file_input_return r = (PythonParser.file_input_return)rx;
-            CommonTreeNodeStream nodes = new CommonTreeNodeStream((Tree)r.tree);
-            nodes.setTokenStream(tokens);
-            PythonWalker walker = new PythonWalker(nodes);
-            tree = walker.module();
-            if (tree == null) {
-                //XXX: seems like I should be able to get antlr to give me an empty Module instead
-                //     of null so I wouldn't need to build an empty Module by hand here...
-                return new Module(new PythonTree(new CommonToken(PyLexer.Module)), new stmtType[0]);
-            }
-        } catch (RecognitionException e) {
-            // FIXME:
-            System.err.println("FIXME: don't eat exceptions:" + e);
+        Object rx = parser.file_input();
+        PythonParser.file_input_return r = (PythonParser.file_input_return)rx;
+        CommonTreeNodeStream nodes = new CommonTreeNodeStream((Tree)r.tree);
+        nodes.setTokenStream(tokens);
+        PythonWalker walker = new PythonWalker(nodes);
+        tree = walker.module();
+        if (tree == null) {
+            //XXX: seems like I should be able to get antlr to give me an empty Module instead
+            //     of null so I wouldn't need to build an empty Module by hand here...
+            return new Module(new PythonTree(new CommonToken(PyLexer.Module)), new stmtType[0]);
         }
         return tree;
     }
 
     //XXX: factor out common code.
-    public modType single_input() {
+    public modType single_input() throws RecognitionException {
         modType tree = null;
         PythonLexer lexer = new PyLexer(this.charStream);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
@@ -106,18 +101,12 @@ public class PythonGrammar {
         tokens = new CommonTokenStream(indentedSource);
         PythonParser parser = new PythonParser(tokens);
         parser.setTreeAdaptor(pyadaptor);
-        try {
-            Object rx = parser.single_input();
-            PythonParser.single_input_return r = (PythonParser.single_input_return)rx;
-            CommonTreeNodeStream nodes = new CommonTreeNodeStream((Tree)r.tree);
-            nodes.setTokenStream(tokens);
-            PythonWalker walker = new PythonWalker(nodes);
-            tree = walker.interactive();
-        } catch (RecognitionException e) {
-            // FIXME:
-            System.err.println("FIXME: don't eat exceptions:" + e);
-        }
+        Object rx = parser.single_input();
+        PythonParser.single_input_return r = (PythonParser.single_input_return)rx;
+        CommonTreeNodeStream nodes = new CommonTreeNodeStream((Tree)r.tree);
+        nodes.setTokenStream(tokens);
+        PythonWalker walker = new PythonWalker(nodes);
+        tree = walker.interactive();
         return tree;
     }
-
 }

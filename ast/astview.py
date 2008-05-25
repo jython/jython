@@ -70,7 +70,10 @@ def lispify_field(field, child):
                 yield node
 
 def tree(pyfile):
-    ast = compile(open(pyfile).read(), pyfile, "exec", _ast.PyCF_ONLY_AST)
+    try:
+        ast = compile(open(pyfile).read(), pyfile, "exec", _ast.PyCF_ONLY_AST)
+    except SyntaxError:
+        return "SyntaxError",
     return lispify_ast(ast)
 
 if __name__ == '__main__':
