@@ -30,9 +30,9 @@ public class PySlot extends PyDescriptor {
         return member_descriptor___get__(obj, type);
     }
 
-    @ExposedMethod
+    @ExposedMethod(defaults = "null")
     public PyObject member_descriptor___get__(PyObject obj, PyObject type) {
-        if(obj != null) {
+        if (obj != null && obj != Py.None) {
             checkGetterType(obj.getType());
             return ((Slotted)obj).getSlot(index);
         }

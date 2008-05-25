@@ -1542,6 +1542,8 @@ public class CodeCompiler extends Visitor
     }
 
     public Object visitAugAssign(AugAssign node) throws Exception {
+        setline(node);
+
         visit(node.value);
         int tmp = storeTop();
 

@@ -12,7 +12,11 @@ import java.io.UnsupportedEncodingException;
 import org.antlr.runtime.ANTLRReaderStream;
 import org.antlr.runtime.CharStream;
 import org.antlr.runtime.RecognitionException;
+import org.antlr.runtime.*;
+import org.python.antlr.ExpressionParser;
+import org.python.antlr.LeadingSpaceSkippingStream;
 import org.python.antlr.PythonGrammar;
+import org.python.antlr.PythonParser;
 import org.python.core.util.StringUtil;
 import org.python.antlr.IParserHost;
 import org.python.antlr.PythonTree;
@@ -56,32 +60,94 @@ public class antlr {
         
         if (t instanceof RecognitionException) {
             RecognitionException e = (RecognitionException)t;
-            //FJW Token tok = e.currentToken;
-            int col=0;
-            int line=0;
-            //FJW if (tok != null && tok.next != null) {
-            //FJW     col = tok.next.beginColumn;
-            //FJW     line = tok.next.beginLine;
-            //FJW }
-            String text=getLine(reader, line);
-            return new PySyntaxError(e.getMessage(), line, col,
+            String msg = e.getMessage();
+            String tokenNames[] = PythonParser.tokenNames;
+            /* XXX: think the first two are new  in antlr 3.1
+            if ( e instanceof UnwantedTokenException ) {
+                UnwantedTokenException ute = (UnwantedTokenException)e;
+                String tokenName="<unknown>";
+                if ( ute.expecting== Token.EOF ) {
+                    tokenName = "EOF";
+                }
+                else {
+                    tokenName = tokenNames[ute.expecting];
+                }
+                msg = "extraneous input "+getTokenErrorDisplay(ute.getUnexpectedToken())+
+                    " expecting "+tokenName;
+            }
+            else if ( e instanceof MissingTokenException ) {
+                MissingTokenException mte = (MissingTokenException)e;
+                String tokenName="<unknown>";
+                if ( mte.expecting== Token.EOF ) {
+                    tokenName = "EOF";
+                }
+                else {
+                    tokenName = tokenNames[mte.expecting];
+                }
+                msg = "missing "+tokenName+" at "+getTokenErrorDisplay(e.token);
+            }
+            */
+            if ( e instanceof MismatchedTokenException ) {
+                MismatchedTokenException mte = (MismatchedTokenException)e;
+                String tokenName="<unknown>";
+                if ( mte.expecting== Token.EOF ) {
+                    tokenName = "EOF";
+                }
+                else {
+                    tokenName = tokenNames[mte.expecting];
+                }
+                msg = "mismatched input "+getTokenErrorDisplay(e.token)+
+                    " expecting "+tokenName;
+            }
+            else if ( e instanceof MismatchedTreeNodeException ) {
+                MismatchedTreeNodeException mtne = (MismatchedTreeNodeException)e;
+                String tokenName="<unknown>";
+                if ( mtne.expecting==Token.EOF ) {
+                    tokenName = "EOF";
+                }
+                else {
+                    tokenName = tokenNames[mtne.expecting];
+                }
+                msg = "mismatched tree node: "+mtne.node+
+                    " expecting "+tokenName;
+            }
+            else if ( e instanceof NoViableAltException ) {
+                NoViableAltException nvae = (NoViableAltException)e;
+                // for development, can add "decision=<<"+nvae.grammarDecisionDescription+">>"
+                // and "(decision="+nvae.decisionNumber+") and
+                // "state "+nvae.stateNumber
+                msg = "no viable alternative at input "+getTokenErrorDisplay(e.token);
+            }
+            else if ( e instanceof EarlyExitException ) {
+                EarlyExitException eee = (EarlyExitException)e;
+                // for development, can add "(decision="+eee.decisionNumber+")"
+                msg = "required (...)+ loop did not match anything at input "+
+                    getTokenErrorDisplay(e.token);
+            }
+            else if ( e instanceof MismatchedSetException ) {
+                MismatchedSetException mse = (MismatchedSetException)e;
+                msg = "mismatched input "+getTokenErrorDisplay(e.token)+
+                    " expecting set "+mse.expecting;
+            }
+            else if ( e instanceof MismatchedNotSetException ) {
+                MismatchedNotSetException mse = (MismatchedNotSetException)e;
+                msg = "mismatched input "+getTokenErrorDisplay(e.token)+
+                    " expecting set "+mse.expecting;
+            }
+            else if ( e instanceof FailedPredicateException ) {
+                FailedPredicateException fpe = (FailedPredicateException)e;
+                msg = "rule "+fpe.ruleName+" failed predicate: {"+
+                    fpe.predicateText+"}?";
+            }
+            String text=getLine(reader, e.line);
+            return new PySyntaxError(msg, e.line, e.charPositionInLine,
                                      text, filename);
         }
-        /* FJW FJW FJW
-        if (t instanceof TokenMgrError) {
-            TokenMgrError e = (TokenMgrError)t;
-            boolean eofSeen = e.EOFSeen;
-
-            int col = e.errorColumn;
-            int line = e.errorLine;
-            String text = getLine(reader, line);
-            if (eofSeen)
-                col -= 1;
-            return new PySyntaxError(e.getMessage(), line, col,
-                                     text, filename);
-        }
-        */
         else return Py.JavaError(t);
+    }
+
+    private static String getTokenErrorDisplay(Token t) {
+        return t.getText();
     }
 
     public static PythonTree parse(String string, String kind) {
@@ -92,22 +158,23 @@ public class antlr {
     public static modType parse(InputStream istream, String kind,
                                  String filename, CompilerFlags cflags) 
     {
-        BufferedReader bufreader = prepBufreader(istream, cflags);
-        /* FJW FJW
-        PythonGrammar g = new PythonGrammar(new ReaderCharStream(bufreader),
-                                            literalMkrForParser);
-        */
         CharStream cs = null;
-        try {
-            cs = new ANTLRReaderStream(bufreader);
-        } catch (IOException io){
-            //FIXME:
-            System.err.println("FIXME: Don't eat exceptions.");
-        }
-        PythonGrammar g = new PythonGrammar(cs);//FJW, literalMkrForParser);
+        //FIXME: definite NPE potential here -- do we even need prepBufreader
+        //       now?
+        BufferedReader bufreader = null;
         modType node = null;
         try {
-            node = doparse(kind, cflags, g);
+            if (kind.equals("eval")) {
+                bufreader = prepBufreader(new LeadingSpaceSkippingStream(istream), cflags);
+                cs = new ANTLRReaderStream(bufreader);
+                ExpressionParser e = new ExpressionParser(cs);
+                node = e.parse();
+            } else {
+                bufreader = prepBufreader(istream, cflags);
+                cs = new ANTLRReaderStream(bufreader);
+                PythonGrammar g = new PythonGrammar(cs);//FJW, literalMkrForParser);
+                node = doparse(kind, cflags, g);
+            }
         }
         catch (Throwable t) {
             throw fixParseError(bufreader, t, filename);
@@ -155,17 +222,14 @@ public class antlr {
     }
 
     private static modType doparse(String kind, CompilerFlags cflags, 
-                                   PythonGrammar g) throws /*Parse*/Exception //FJW
+                                   PythonGrammar g) throws RecognitionException
     {
         modType node = null;
                
         //FJW if (cflags != null)
         //FJW    g.token_source.generator_allowed = cflags.generator_allowed;
         
-        if (kind.equals("eval")) {
-            node = g.eval_input();
-        }
-        else if (kind.equals("exec")) {
+        if (kind.equals("exec")) {
             node = g.file_input();
         }
         else if (kind.equals("single")) {

@@ -61,6 +61,9 @@ public final class Py
     /** A zero-length array of PyObject's to pass to functions that
         expect zero-arguments **/
     public static PyObject[] EmptyObjects;
+    
+    /** A frozenset with zero elements **/
+    public static PyFrozenSet EmptyFrozenSet;
 
     /** A tuple with zero elements **/
     public static PyTuple EmptyTuple;

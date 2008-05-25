@@ -553,8 +553,8 @@ targets returns [List etypes]
     ;
 
 target[List etypes]
-    : ^(Target test[expr_contextType.Store]) {
-        etypes.add($test.etype);
+    : ^(Target atom[expr_contextType.Store]) {
+        etypes.add($atom.etype);
     }
     ;
 
@@ -798,8 +798,9 @@ name_expr[List nms]
     }
     ;
 
+//Using tok=NAME instead of tok='exec' for Java integration
 exec_stmt
-    : ^(Exec tok='exec' exec=test[expr_contextType.Load] (^(Globals globals=test[expr_contextType.Load]))? (^(Locals locals=test[expr_contextType.Load]))?) {
+    : ^(Exec tok=NAME exec=test[expr_contextType.Load] (^(Globals globals=test[expr_contextType.Load]))? (^(Locals locals=test[expr_contextType.Load]))?) {
         exprType g = null;
         if ($Globals != null) {
             g = $globals.etype;
@@ -925,15 +926,13 @@ with_stmt
     }
     ;
 
-//FIXME: how would NAME be used?  I can't find any examples of this usage, but this is what
-//       CPython's Grammar/Grammar file specifies...
+//using NAME because of Java integration for 'as'
 with_var returns [exprType etype]
-    : ('as' | NAME) test[expr_contextType.Store] {
+    : NAME test[expr_contextType.Store] {
         $etype = $test.etype;
     }
     ;
 
-//FIXME: lots of placeholders
 test[expr_contextType ctype] returns [exprType etype, PythonTree begin, boolean parens]
     : ^(AND left=test[ctype] right=test[ctype]) {
         List values = new ArrayList();

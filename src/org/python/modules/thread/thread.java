@@ -1,9 +1,18 @@
 // Copyright (c) Corporation for National Research Initiatives
-package org.python.modules;
-import org.python.core.*;
+package org.python.modules.thread;
 
-public class thread implements ClassDictInit
-{
+import org.python.core.ClassDictInit;
+import org.python.core.FunctionThread;
+import org.python.core.Py;
+import org.python.core.PyException;
+import org.python.core.PyInteger;
+import org.python.core.PyObject;
+import org.python.core.PyString;
+import org.python.core.PyType;
+import org.python.core.PyTuple;
+
+public class thread implements ClassDictInit {
+
     public static PyString __doc__ = new PyString(
         "This module provides primitive operations to write multi-threaded "+
                 "programs.\n" +
@@ -12,7 +21,7 @@ public class thread implements ClassDictInit
 
     public static void classDictInit(PyObject dict) {
         dict.__setitem__("LockType", PyType.fromClass(PyLock.class));
-        dict.__setitem__("_local", PyLocal.TYPE);   
+        dict.__setitem__("_local", PyLocal.TYPE);
     }
 
     public static PyObject error = new PyString("thread.error");
@@ -34,7 +43,7 @@ public class thread implements ClassDictInit
         }
         pt.start();
 	}
-    
+
     public static PyLock allocate_lock() {
         return new PyLock();
     }

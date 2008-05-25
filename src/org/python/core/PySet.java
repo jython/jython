@@ -1,6 +1,7 @@
 package org.python.core;
 
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
@@ -35,6 +36,7 @@ public class PySet extends BaseSet {
             return;
         }
 
+        _set.clear();
         PyObject o = args[0];
         _update(o);
     }
@@ -105,16 +107,6 @@ public class PySet extends BaseSet {
     }
 
     @ExposedMethod
-    final PyObject set___deepcopy__(PyObject memo) {
-        return baseset___deepcopy__(memo);
-    }
-
-    @ExposedMethod
-    final boolean set___nonzero__() {
-        return baseset___nonzero__();
-    }
-
-    @ExposedMethod
     final PyObject set_copy() {
         return baseset_copy();
     }
@@ -164,8 +156,8 @@ public class PySet extends BaseSet {
     }
 
     final PyObject set___ior__(PyObject other) {
-        BaseSet bs = this._binary_sanity_check(other);
-        this._set.addAll(bs._set);
+        BaseSet bs = _binary_sanity_check(other);
+        _set.addAll(bs._set);
         return this;
     }
 
@@ -175,7 +167,7 @@ public class PySet extends BaseSet {
 
     @ExposedMethod(type = MethodType.BINARY)
     final PyObject set___ixor__(PyObject other) {
-        this._binary_sanity_check(other);
+        _binary_sanity_check(other);
         set_symmetric_difference_update(other);
         return this;
     }
@@ -186,8 +178,8 @@ public class PySet extends BaseSet {
 
     @ExposedMethod(type = MethodType.BINARY)  
     final PyObject set___iand__(PyObject other) {
-        BaseSet bs = this._binary_sanity_check(other);
-        this._set = ((BaseSet) this.__and__(bs))._set;
+        BaseSet bs = _binary_sanity_check(other);
+        _set = ((BaseSet)__and__(bs))._set;
         return this;
     }
 
@@ -197,8 +189,8 @@ public class PySet extends BaseSet {
 
     @ExposedMethod(type = MethodType.BINARY)
     final PyObject set___isub__(PyObject other) {
-        BaseSet bs = this._binary_sanity_check(other);
-        this._set.removeAll(bs._set);
+        BaseSet bs = _binary_sanity_check(other);
+        _set.removeAll(bs._set);
         return this;
     }
 
@@ -208,85 +200,84 @@ public class PySet extends BaseSet {
 
     @ExposedMethod
     final int set___hash__() {
-        throw Py.TypeError("Can't hash a Set, only an FrozenSet.");
+        throw Py.TypeError("set objects are unhashable");
     }
 
     @ExposedMethod
     final void set_add(PyObject o) {
-        try {
-            this._set.add(o);
-        } catch (PyException e) {
-            PyObject immutable = this.asImmutable(e, o);
-            this._set.add(immutable);
-        }
+        _set.add(o);
     }
 
     @ExposedMethod
     final void set_remove(PyObject o) {
         boolean b = false;
         try {
-            b = this._set.remove(o);
+            b = _set.remove(o);
         } catch (PyException e) {
-            PyObject immutable = this.asImmutable(e, o);
-            b = this._set.remove(immutable);
+            PyObject frozen = asFrozen(e, o);
+            b = _set.remove(frozen);
         }
         if (!b) {
-            throw new PyException(Py.LookupError, o.toString());
+            throw new PyException(Py.KeyError, o);
         }
     }
 
     @ExposedMethod
     final void set_discard(PyObject o) {
         try {
-            this._set.remove(o);
+            _set.remove(o);
         } catch (PyException e) {
-            PyObject immutable = this.asImmutable(e, o);
-            this._set.remove(immutable);
+            PyObject frozen = asFrozen(e, o);
+            _set.remove(frozen);
         }
     }
 
     @ExposedMethod
     final PyObject set_pop() {
-        Iterator iterator = this._set.iterator();
-        Object first = iterator.next();
-        this._set.remove(first);
-        return (PyObject) first;
+        Iterator iterator = _set.iterator();
+        try {
+                Object first = iterator.next();
+            _set.remove(first);
+            return (PyObject) first;
+        } catch (NoSuchElementException e) {
+                throw new PyException(Py.KeyError, "pop from an empty set");
+        }
     }
 
     @ExposedMethod
     final void set_clear() {
-        this._set.clear();
+        _set.clear();
     }
 
     @ExposedMethod
     final void set_update(PyObject data) {
-        this._update(data);
-    }
-
-    @ExposedMethod
-    final void set_union_update(PyObject other) {
-        this._update(other);
+        _update(data);
     }
 
     @ExposedMethod
     final void set_intersection_update(PyObject other) {
         if (other instanceof BaseSet) {
-            this.__iand__(other);
+            __iand__(other);
         } else {
-            BaseSet set = (BaseSet) baseset_intersection(other);
-            this._set = set._set;
+            BaseSet set = (BaseSet)baseset_intersection(other);
+            _set = set._set;
         }
     }
 
     @ExposedMethod
     final void set_symmetric_difference_update(PyObject other) {
-        BaseSet bs = (other instanceof BaseSet) ? (BaseSet) other : new PySet(other);
+        if (this == other) {
+            set_clear();
+            return;
+        }
+
+        BaseSet bs = (other instanceof BaseSet) ? (BaseSet)other : new PySet(other);
         for (Iterator iterator = bs._set.iterator(); iterator.hasNext();) {
             Object o = iterator.next();
-            if (this._set.contains(o)) {
-                this._set.remove(o);
+            if (_set.contains(o)) {
+                _set.remove(o);
             } else {
-                this._set.add(o);
+                _set.add(o);
             }
         }
     }
@@ -294,18 +285,18 @@ public class PySet extends BaseSet {
     @ExposedMethod
     final void set_difference_update(PyObject other) {
         if (other instanceof BaseSet) {
-            this.__isub__(other);
+            __isub__(other);
             return;
         }
         for (PyObject o : other.asIterable()) {
-            if (this.__contains__(o)) {
-                this._set.remove(o);
+            if (__contains__(o)) {
+                _set.remove(o);
             }
         }
     }
 
-    @ExposedMethod
-    final PyObject set__as_immutable() {
-        return new PyFrozenSet(this);
+    @ExposedMethod(names = "__repr__")
+    final String set_toString() {
+        return baseset_toString();
     }
 }
