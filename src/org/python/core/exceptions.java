@@ -124,7 +124,7 @@ public class exceptions implements ClassDictInit {
 
         buildClass(dict, "IndexError", "LookupError", "Sequence index out of range.");
 
-        buildClass(dict, "KeyError", "LookupError", "Mapping key not found.");
+        buildClass(dict, "KeyError", "LookupError", KeyError(), "Mapping key not found.");
 
         buildClass(dict, "AttributeError", "StandardError", "Attribute not found.");
 
@@ -294,6 +294,27 @@ public class exceptions implements ClassDictInit {
         } else if (args.length > 1) {
             self.__setattr__("code", new PyTuple(args));
         }
+    }
+
+    public static PyObject KeyError() {
+        PyObject dict = new PyStringMap();
+        dict.__setitem__("__str__", bindStaticJavaMethod("__str__", "KeyError__str__"));
+        return dict;
+    }
+
+    public static PyObject KeyError__str__(PyObject self, PyObject[] args, String[] kwargs) {
+        PyBaseException selfBase = (PyBaseException)self;
+        // If args is a tuple of exactly one item, apply repr to args[0].
+        // This is done so that e.g. the exception raised by {}[''] prints
+        // KeyError: ''
+        // rather than the confusing
+        // KeyError
+        // alone.  The downside is that if KeyError is raised with an explanatory
+        // string, that string will be displayed in quotes.  Too bad.
+        if (selfBase.args.__len__() == 1) {
+            return selfBase.args.__getitem__(0).__repr__();
+        }
+        return PyBaseException.TYPE.invoke("__str__", self, args, kwargs);
     }
 
     public static PyObject UnicodeError() {
