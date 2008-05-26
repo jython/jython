@@ -93,6 +93,15 @@ import java.util.Set;
         }
     }
 
+    protected void mismatch(IntStream input, int ttype, BitSet follow) throws RecognitionException {
+        throw new MismatchedTokenException(ttype, input);
+    }
+
+    protected void mismatch(IntStream input, RecognitionException e, BitSet follow) throws RecognitionException {
+        throw e;
+    }
+
+
     String name = "Test";
 
     //XXX: Not sure I need any below...
@@ -349,6 +358,13 @@ import java.util.Set;
         return new UnaryOp(t, unaryopType.USub, o);
     }
 }
+
+@rulecatch {
+catch (RecognitionException e) {
+    throw e;
+}
+}
+
 
 expression returns [modType mod]
     : ^(Expression test[expr_contextType.Load]) { $mod = makeExpression($Expression, $test.etype); }

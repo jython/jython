@@ -15,8 +15,10 @@ import org.antlr.runtime.RecognitionException;
 import org.antlr.runtime.*;
 import org.python.antlr.ExpressionParser;
 import org.python.antlr.LeadingSpaceSkippingStream;
+import org.python.antlr.ParseException;
 import org.python.antlr.PythonGrammar;
 import org.python.antlr.PythonParser;
+import org.python.antlr.PythonTree;
 import org.python.core.util.StringUtil;
 import org.python.antlr.IParserHost;
 import org.python.antlr.PythonTree;
@@ -58,7 +60,20 @@ public class antlr {
             }
         }
         
-        if (t instanceof RecognitionException) {
+        if (t instanceof ParseException) {
+            ParseException e = (ParseException)t;
+            PythonTree tok = e.currentToken;
+            int line=0;
+            int col=0;
+            if (tok != null) {
+                line = tok.getLine();
+                col = tok.getCharPositionInLine();
+            }
+            String text=getLine(reader, line);
+            return new PySyntaxError(e.getMessage(), line, col,
+                                     text, filename);
+        }
+        else if (t instanceof RecognitionException) {
             RecognitionException e = (RecognitionException)t;
             String msg = e.getMessage();
             String tokenNames[] = PythonParser.tokenNames;

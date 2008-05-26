@@ -1,17 +1,21 @@
 package org.python.antlr;
 
+import org.python.antlr.PythonTree;
+
 public class ParseException extends Exception {
 
-  public ParseException() {
-    super();
-  }
+    public PythonTree currentToken = null;
 
-  public ParseException(String message) {
-    super(message);
-  }
+    public ParseException() {
+        super();
+    }
 
-  public ParseException(String message, PythonTree node) {
-    super(message);
-  }
+    public ParseException(String message) {
+        super(message);
+    }
 
+    public ParseException(String message, PythonTree node) {
+        super(message);
+        this.currentToken = node;
+    }
 }
