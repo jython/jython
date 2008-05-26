@@ -199,6 +199,14 @@ import org.python.antlr.PythonTree;
         }
     }
 
+    protected void mismatch(IntStream input, int ttype, BitSet follow) throws RecognitionException {
+        throw new MismatchedTokenException(ttype, input);
+    }
+
+    protected void mismatch(IntStream input, RecognitionException e, BitSet follow) throws RecognitionException {
+        throw e;
+    }
+
     /**
      * A list holding the error message(s) encountered during parse.
      */
@@ -229,6 +237,13 @@ import org.python.antlr.PythonTree;
        super.emitErrorMessage(msg);
        getErrors().add(msg);
     }
+
+}
+
+@rulecatch {
+catch (RecognitionException e) {
+    throw e;
+}
 }
 
 @lexer::header { 
@@ -392,7 +407,7 @@ print_stmt : 'print'
              ( t1=printlist -> {$t1.newline}? ^(Print 'print' ^(Values $t1) ^(Newline))
                             -> ^(Print 'print' ^(Values $t1))
              | RIGHTSHIFT t2=printlist -> {$t2.newline}? ^(Print 'print' ^(Dest RIGHTSHIFT) ^(Values $t2) ^(Newline))
-                                      -> ^(Print 'print' ^(Dest RIGHTSHIFT) ^(Values $t2))
+                                       -> ^(Print 'print' ^(Dest RIGHTSHIFT) ^(Values $t2))
              | -> ^(Print 'print' ^(Newline))
              )
            ;
