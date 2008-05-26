@@ -406,8 +406,8 @@ augassign : PLUSEQUAL
 print_stmt : 'print'
              ( t1=printlist -> {$t1.newline}? ^(Print 'print' ^(Values $t1) ^(Newline))
                             -> ^(Print 'print' ^(Values $t1))
-             | RIGHTSHIFT t2=printlist -> {$t2.newline}? ^(Print 'print' ^(Dest RIGHTSHIFT) ^(Values $t2) ^(Newline))
-                                      -> ^(Print 'print' ^(Dest RIGHTSHIFT) ^(Values $t2))
+             | RIGHTSHIFT t2=printlist2 -> {$t2.newline}? ^(Print 'print' ^(Dest RIGHTSHIFT) ^(Values $t2) ^(Newline))
+                                       -> ^(Print 'print' ^(Dest RIGHTSHIFT) ^(Values $t2))
              | -> ^(Print 'print' ^(Newline))
              )
            ;
@@ -415,6 +415,20 @@ print_stmt : 'print'
 //not in CPython's Grammar file
 printlist returns [boolean newline]
     : (test COMMA) => test (options {k=2;}: COMMA test)* (trailcomma=COMMA)?
+    { if ($trailcomma == null) {
+          $newline = true;
+      } else {
+          $newline = false;
+      }
+    }
+   -> ^(Elts test+)
+    | test {$newline = true;}
+   -> ^(Elts test)
+    ;
+
+//not in CPython's Grammar file
+printlist2 returns [boolean newline]
+    : (test COMMA test) => test (options {k=2;}: COMMA test)* (trailcomma=COMMA)?
     { if ($trailcomma == null) {
           $newline = true;
       } else {
