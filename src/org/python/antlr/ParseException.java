@@ -2,7 +2,7 @@ package org.python.antlr;
 
 import org.python.antlr.PythonTree;
 
-public class ParseException extends Exception {
+public class ParseException extends RuntimeException {
 
     public PythonTree currentToken = null;
 
