@@ -52,21 +52,6 @@ public class PythonGrammar {
         this.charStream = cs;
     }
 
-    public void printTree(CommonTree t, int indent) {
-        if (t != null) {
-            System.out.println("XXX: " + t.toString() + t.getType());
-            StringBuffer sb = new StringBuffer(indent);
-            for (int i = 0; i < indent; i++) {
-                sb = sb.append("   ");
-            }
-            for (int i = 0; i < t.getChildCount(); i++) {
-                System.out.println(sb.toString() + t.getChild(i).toString() + ":" + t.getChild(i).getType());
-                printTree((CommonTree) t.getChild(i), indent + 1);
-            }
-        }
-    }
-
-    //XXX: factor out common code.
     public modType file_input() throws RecognitionException {
         modType tree = null;
         PythonLexer lexer = new PyLexer(this.charStream);
@@ -88,25 +73,6 @@ public class PythonGrammar {
             //     of null so I wouldn't need to build an empty Module by hand here...
             return new Module(new PythonTree(new CommonToken(PyLexer.Module)), new stmtType[0]);
         }
-        return tree;
-    }
-
-    //XXX: factor out common code.
-    public modType single_input() throws RecognitionException {
-        modType tree = null;
-        PythonLexer lexer = new PyLexer(this.charStream);
-        CommonTokenStream tokens = new CommonTokenStream(lexer);
-        tokens.discardOffChannelTokens(true);
-        PythonTokenSource indentedSource = new PythonTokenSource(tokens);
-        tokens = new CommonTokenStream(indentedSource);
-        PythonParser parser = new PythonParser(tokens);
-        parser.setTreeAdaptor(pyadaptor);
-        Object rx = parser.single_input();
-        PythonParser.single_input_return r = (PythonParser.single_input_return)rx;
-        CommonTreeNodeStream nodes = new CommonTreeNodeStream((Tree)r.tree);
-        nodes.setTokenStream(tokens);
-        PythonWalker walker = new PythonWalker(nodes);
-        tree = walker.interactive();
         return tree;
     }
 }
