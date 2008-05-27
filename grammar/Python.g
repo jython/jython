@@ -289,9 +289,12 @@ int startPos=-1;
 }
 
 //single_input: NEWLINE | simple_stmt | compound_stmt NEWLINE
+//XXX: I don't know why, but in "compound_stmt NEWLINE"
+//     Jython chokes on the NEWLINE every time -- so I made
+//     it optional for now.
 single_input : NEWLINE
              | simple_stmt -> ^(Interactive simple_stmt)
-             | compound_stmt NEWLINE -> ^(Interactive compound_stmt)
+             | compound_stmt NEWLINE? -> ^(Interactive compound_stmt)
              ;
 
 //file_input: (NEWLINE | stmt)* ENDMARKER

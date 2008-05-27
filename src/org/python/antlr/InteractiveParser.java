@@ -47,6 +47,27 @@ public class InteractiveParser {
         this.charStream = cs;
     }
 
+    public modType partialParse() {
+        /*
+        CPython codeop exploits that with CPython parser adding newlines
+        to a partial valid sentence move the reported error position,
+        this is not true for our parser, so we need a different approach:
+        we check whether all sentence tokens have been consumed or
+        the remaining ones fullfill lookahead expectations. See:
+        PythonGrammar.partial_valid_sentence (def in python.jjt)
+
+        FJW: the above comment needs to be changed when the current partial
+        parse strategy gels.
+        */
+        try {
+            return parse();
+        } catch (RecognitionException e) {
+            //FIXME: This needs plenty of tuning, this just calls all errors
+            //partial matches.
+            return null;
+        }
+    }
+            
     public modType parse() throws RecognitionException {
         modType tree = null;
         PythonLexer lexer = new PyLexer(this.charStream);

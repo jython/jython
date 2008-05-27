@@ -171,9 +171,10 @@ public class antlr {
                      kind, "<string>", null);
     }
 
-    public static modType parse(InputStream istream, String kind,
-                                 String filename, CompilerFlags cflags) 
-    {
+    public static modType parse(InputStream istream,
+                                String kind,
+                                String filename,
+                                CompilerFlags cflags) {
         CharStream cs = null;
         //FIXME: definite NPE potential here -- do we even need prepBufreader
         //       now?
@@ -189,61 +190,46 @@ public class antlr {
                 bufreader = prepBufreader(istream, cflags);
                 cs = new ANTLRReaderStream(bufreader);
                 InteractiveParser i = new InteractiveParser(cs);
-                node = i.parse();
-            } else {
+                node = i.partialParse();
+            } else if (kind.equals("exec")) {
                 bufreader = prepBufreader(istream, cflags);
                 cs = new ANTLRReaderStream(bufreader);
                 PythonGrammar g = new PythonGrammar(cs);
-                node = doparse(kind, cflags, g);
+                node = g.file_input();
+            } else {
+               throw Py.ValueError("parse kind must be eval, exec, " + "or single");
             }
-        }
-        catch (Throwable t) {
+        } catch (Throwable t) {
             throw fixParseError(bufreader, t, filename);
         }
         return node;
     }
 
-    public static modType partialParse(String string, String kind,
-                                       String filename, CompilerFlags cflags,boolean stdprompt)
-    {
-//FIXME: FJW -- just doing "parse" for now until I come up with a partial parse
-//              strategy for antlr.  3.1 is supposed to have some kind of direct
-//              support for incremental parsing -- hopefully  that can be used.
-        return parse(new ByteArrayInputStream(StringUtil.toBytes(string)), kind, filename, cflags);
-//        modType node = null;        
-//        BufferedReader bufreader = prepBufreader(new ByteArrayInputStream(StringUtil.toBytes(string)),
-//                                                 cflags);
-//
-//        CharStream cs = null;
-//        try {
-//            cs = new ANTLRReaderStream(bufreader);
-//        } catch (IOException io){
-//            //FIXME:
-//            System.err.println("FIXME: Don't eat exceptions.");
-//        }
-//        PythonGrammar g = new PythonGrammar(cs, true);
-//        //FJW g.token_source.partial = true;
-//        //FJW g.token_source.stdprompt = stdprompt;
-//
-//        try {
-//            node = doparse(kind, cflags, g);
-//        }
-//        catch (Throwable t) {
-//            /*
-//             CPython codeop exploits that with CPython parser adding newlines
-//             to a partial valid sentence move the reported error position,
-//             this is not true for our parser, so we need a different approach:
-//             we check whether all sentence tokens have been consumed or
-//             the remaining ones fullfill lookahead expectations. See:
-//             PythonGrammar.partial_valid_sentence (def in python.jjt)
-//            */
-//            
-//            //FJW if (g.partial_valid_sentence(t)) {
-//            //FJW    return null;
-//            //FJW }            
-//            throw fixParseError(bufreader, t, filename);
-//        }
-//        return node;
+    public static modType partialParse(String string,
+                                       String kind,
+                                       String filename,
+                                       CompilerFlags cflags,
+                                       boolean stdprompt) {
+        CharStream cs = null;
+        //FIXME: definite NPE potential here -- do we even need prepBufreader
+        //       now?
+        BufferedReader bufreader = null;
+        modType node = null;
+        if (kind.equals("single")) {
+            ByteArrayInputStream bi = new ByteArrayInputStream(
+                    StringUtil.toBytes(string));
+            bufreader = prepBufreader(bi, cflags);
+            try {
+                cs = new ANTLRReaderStream(bufreader);
+            } catch (IOException io) {
+                //FIXME:
+            }
+            InteractiveParser i = new InteractiveParser(cs);
+            node = i.partialParse();
+        } else {
+            throw Py.ValueError("parse kind must be eval, exec, " + "or single");
+        }
+        return node;
     }
 
     private static modType doparse(String kind, CompilerFlags cflags, 
@@ -254,13 +240,6 @@ public class antlr {
         //FJW if (cflags != null)
         //FJW    g.token_source.generator_allowed = cflags.generator_allowed;
         
-        if (kind.equals("exec")) {
-            node = g.file_input();
-        }
-        else {
-           throw Py.ValueError("parse kind must be eval, exec, " +
-                               "or single");
-        }
         return node;
     }
 
