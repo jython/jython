@@ -14,7 +14,7 @@ import org.python.antlr.ast.modType;
 import org.python.antlr.ast.Module;
 import org.python.antlr.ast.stmtType;
 
-public class ExpressionParser {
+public class InteractiveParser {
 
     private CharStream charStream;
 
@@ -43,7 +43,7 @@ public class ExpressionParser {
         }
     };
 
-    public ExpressionParser(CharStream cs) {
+    public InteractiveParser(CharStream cs) {
         this.charStream = cs;
     }
 
@@ -57,12 +57,12 @@ public class ExpressionParser {
         PythonParser parser = new PythonParser(tokens);
         parser.setTreeAdaptor(pyadaptor);
 
-        Object rx = parser.eval_input();
-        PythonParser.eval_input_return r = (PythonParser.eval_input_return)rx;
+        Object rx = parser.single_input();
+        PythonParser.single_input_return r = (PythonParser.single_input_return)rx;
         CommonTreeNodeStream nodes = new CommonTreeNodeStream((Tree)r.tree);
         nodes.setTokenStream(tokens);
         PythonWalker walker = new PythonWalker(nodes);
-        tree = walker.expression();
+        tree = walker.interactive();
         return tree;
-    }
+    } 
 }
