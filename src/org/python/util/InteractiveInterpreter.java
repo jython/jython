@@ -47,10 +47,10 @@ public class InteractiveInterpreter extends PythonInterpreter {
         return runsource(source, filename, "single");
     }
 
-    public boolean runsource(String source, String filename, String symbol) {
+    public boolean runsource(String source, String filename, String kind) {
         PyObject code;
         try {
-            code = Py.compile_command_flags(source, filename, symbol, cflags, true);
+            code = Py.compile_command_flags(source, filename, kind, cflags, true);
         } catch (PyException exc) {
             if (Py.matchException(exc, Py.SyntaxError)) {
                 // Case 1
