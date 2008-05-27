@@ -11,6 +11,7 @@ package org.python.antlr;
 import org.python.core.Py;
 import org.python.core.PyObject;
 import org.python.core.PyString;
+import org.python.antlr.ParseException;
 import org.python.antlr.ast.aliasType;
 import org.python.antlr.ast.argumentsType;
 import org.python.antlr.ast.boolopType;
@@ -409,6 +410,10 @@ defparameter[List params, List defaults]
         params.add($fpdef.etype);
         if ($ASSIGN != null) {
             defaults.add($test.etype);
+        } else if (!defaults.isEmpty()) {
+            throw new ParseException(
+                "non-default argument follows default argument",
+                $fpdef.start);
         }
     }
     ;
