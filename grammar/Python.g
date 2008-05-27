@@ -187,6 +187,7 @@ tokens {
 @header { 
 package org.python.antlr;
 
+import org.python.antlr.ParseException;
 import org.python.antlr.PythonTree;
 } 
 
@@ -258,6 +259,33 @@ package org.python.antlr;
  */
 int implicitLineJoiningLevel = 0;
 int startPos=-1;
+
+    public Token nextToken() {
+		while (true) {
+			token = null;
+			channel = Token.DEFAULT_CHANNEL;
+			tokenStartCharIndex = input.index();
+			tokenStartCharPositionInLine = input.getCharPositionInLine();
+			tokenStartLine = input.getLine();
+			text = null;
+			if ( input.LA(1)==CharStream.EOF ) {
+                return Token.EOF_TOKEN;
+            }
+            try {
+                mTokens();
+				if ( token==null ) {
+					emit();
+				}
+				else if ( token==Token.SKIP_TOKEN ) {
+					continue;
+				}
+				return token;
+			}
+            catch (RecognitionException re) {
+                throw new ParseException(getErrorMessage(re, this.getTokenNames()));
+            }
+        }
+    }
 }
 
 //single_input: NEWLINE | simple_stmt | compound_stmt NEWLINE
@@ -985,12 +1013,12 @@ Exponent
 INT :   // Hex
         '0' ('x' | 'X') ( '0' .. '9' | 'a' .. 'f' | 'A' .. 'F' )+
     |   // Octal
-        '0' DIGITS*
+        '0'  ( '0' .. '7' )*
     |   '1'..'9' DIGITS*
     ;
 
 COMPLEX
-    :   INT ('j'|'J')
+    :   DIGITS+ ('j'|'J')
     |   FLOAT ('j'|'J')
     ;
 
