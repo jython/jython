@@ -40,8 +40,10 @@ import org.python.antlr.ast.Expression;
 import org.python.antlr.ast.ExtSlice;
 import org.python.antlr.ast.For;
 import org.python.antlr.ast.FunctionDef;
+import org.python.antlr.ast.GeneratorExp;
 import org.python.antlr.ast.Global;
 import org.python.antlr.ast.If;
+import org.python.antlr.ast.IfExp;
 import org.python.antlr.ast.Import;
 import org.python.antlr.ast.ImportFrom;
 import org.python.antlr.ast.Index;
@@ -66,7 +68,10 @@ import org.python.antlr.ast.Tuple;
 import org.python.antlr.ast.UnaryOp;
 import org.python.antlr.ast.Unicode;
 import org.python.antlr.ast.While;
+import org.python.antlr.ast.With;
 import org.python.antlr.ast.Yield;
+import org.python.antlr.ast.aliasType;
+import org.python.antlr.ast.argumentsType;
 import org.python.antlr.ast.cmpopType;
 import org.python.antlr.ast.comprehensionType;
 import org.python.antlr.ast.excepthandlerType;
@@ -75,7 +80,9 @@ import org.python.antlr.ast.expr_contextType;
 import org.python.antlr.ast.keywordType;
 import org.python.antlr.ast.modType;
 import org.python.antlr.ast.operatorType;
+import org.python.antlr.ast.sliceType;
 import org.python.antlr.ast.stmtType;
+import org.python.antlr.ast.unaryopType;
 
 public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //, PythonGrammarTreeConstants
 {
@@ -533,7 +540,11 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         }
 
         saveLocals();
-        visit(node.value);
+        if (node.value != null) {
+            visit(node.value);
+        } else {
+            getNone();
+        }
         setLastI(++yield_count);
         code.areturn();
 
@@ -1923,6 +1934,11 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
                 "string constant too large (more than 32767 characters)", node);
         }
         module.PyString(s).get(code);
+        return null;
+    }
+
+    public Object visitGeneratorExp(GeneratorExp node) {
+        //FIXME
         return null;
     }
 
