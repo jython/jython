@@ -123,8 +123,8 @@ class ThreadableTest:
         self.client_ready.wait()
 
     def _tearDown(self):
-        self.__tearDown()
         self.done.wait()
+        self.__tearDown()
 
         if not self.queue.empty():
             msg = self.queue.get()
