@@ -1026,6 +1026,7 @@ if test_support.is_jython:
 _failures = {
     'java':
     '''
+    test_ast
     test_class
     test_copy
     test_dis
