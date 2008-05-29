@@ -3,9 +3,6 @@ package org.python.core.io;
 
 import java.nio.ByteBuffer;
 import java.nio.channels.Channel;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 
 import org.python.core.Py;
 
@@ -58,27 +55,28 @@ public abstract class RawIOBase extends IOBase {
      * @return a ByteBuffer containing the bytes read
      */
     public ByteBuffer readall() {
-        long count = 0;
-        List<ByteBuffer> chunks = new ArrayList<ByteBuffer>();
-        while (true) {
-            ByteBuffer chunk = read(DEFAULT_BUFFER_SIZE);
-            int chunkSize = chunk.remaining();
-            if (chunkSize == 0) {
-                break;
+        long allCount = 0;
+        int readCount = 0;
+        ByteBuffer all = ByteBuffer.allocate(DEFAULT_BUFFER_SIZE);
+        ByteBuffer readBuffer = ByteBuffer.allocate(DEFAULT_BUFFER_SIZE);
+        while ((readCount = readinto(readBuffer)) > 0) {
+            if (all.remaining() < readCount) {
+                ByteBuffer old = all;
+                all = ByteBuffer.allocate(Math.max(old.capacity() * 2,
+                                                   old.position() + readCount));
+                old.flip();
+                all.put(old);
             }
-            chunks.add(chunk);
-            count += chunkSize;
+            readBuffer.flip();
+            all.put(readBuffer);
+            readBuffer.clear();
         }
 
-        if (count > Integer.MAX_VALUE) {
+        if (allCount > Integer.MAX_VALUE) {
             throw Py.OverflowError("requested number of bytes is more than a Python string can "
                                    + "hold");
         }
 
-        ByteBuffer all = ByteBuffer.allocate((int)count);
-        for (ByteBuffer chunk : chunks) {
-            all.put(chunk);
-        }
         all.flip();
         return all;
     }
