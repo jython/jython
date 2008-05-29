@@ -293,6 +293,7 @@ def main(tests=None, testdir=None, verbose=0, quiet=0, generate=0,
     good = []
     bad = []
     skipped = []
+    resource_denieds = []
 
     if findleaks:
         try:
@@ -367,6 +368,8 @@ def main(tests=None, testdir=None, verbose=0, quiet=0, generate=0,
                 bad.append(test)
             else:
                 skipped.append(test)
+                if ok == -2:
+                    resource_denieds.append(test)
             if findleaks:
                 gc.collect()
                 if gc.garbage:
@@ -397,10 +400,10 @@ def main(tests=None, testdir=None, verbose=0, quiet=0, generate=0,
     surprises = 0
     if skipped and not quiet:
         print count(len(skipped), "test"), "skipped:"
-        surprises += countsurprises(skips, skipped, 'skip', 'ran', allran)
+        surprises += countsurprises(skips, skipped, 'skip', 'ran', allran, resource_denieds)
     if bad:
         print count(len(bad), "test"), "failed:"
-        surprises += countsurprises(failures, bad, 'fail', 'passed', allran)
+        surprises += countsurprises(failures, bad, 'fail', 'passed', allran, resource_denieds)
 
     if memo:
         savememo(memo,good,bad,skipped)
@@ -472,6 +475,11 @@ def runtest(test, generate, verbose, quiet, testdir = None):
                 indirect_test()
         finally:
             sys.stdout = save_stdout
+    except test_support.ResourceDenied, msg:
+        if not quiet:
+            print test, "skipped --", msg
+            sys.stdout.flush()
+        return -2
     except (ImportError, test_support.TestSkipped), msg:
         if not quiet:
             print test, "skipped --", msg
@@ -604,7 +612,7 @@ def printlist(x, width=70, indent=4):
     if len(line) > indent:
         print line
 
-def countsurprises(expected, actual, action, antiaction, allran):
+def countsurprises(expected, actual, action, antiaction, allran, resource_denieds):
     """returns the number of items in actual that aren't in expected."""
     printlist(actual)
     if not expected.isvalid():
@@ -615,7 +623,7 @@ def countsurprises(expected, actual, action, antiaction, allran):
     if allran and good_surprise:
         print count(len(good_surprise), 'test'), antiaction, 'unexpectedly:'
         printlist(good_surprise)
-    bad_surprise = set(actual) - expected.getexpected()
+    bad_surprise = set(actual) - expected.getexpected() - set(resource_denieds)
     if bad_surprise:
         print count(len(bad_surprise), action), "unexpected:"
         printlist(bad_surprise)
