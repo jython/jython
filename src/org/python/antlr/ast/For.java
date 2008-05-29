@@ -20,12 +20,16 @@ public class For extends stmtType {
         this.target = target;
         this.iter = iter;
         this.body = body;
-        for(int ibody=0;ibody<body.length;ibody++) {
-            addChild(body[ibody]);
+        if (body != null) {
+            for(int ibody=0;ibody<body.length;ibody++) {
+                addChild(body[ibody]);
+            }
         }
         this.orelse = orelse;
-        for(int iorelse=0;iorelse<orelse.length;iorelse++) {
-            addChild(orelse[iorelse]);
+        if (orelse != null) {
+            for(int iorelse=0;iorelse<orelse.length;iorelse++) {
+                addChild(orelse[iorelse]);
+            }
         }
     }
 

@@ -17,12 +17,16 @@ public class ClassDef extends stmtType {
         super(tree);
         this.name = name;
         this.bases = bases;
-        for(int ibases=0;ibases<bases.length;ibases++) {
-            addChild(bases[ibases]);
+        if (bases != null) {
+            for(int ibases=0;ibases<bases.length;ibases++) {
+                addChild(bases[ibases]);
+            }
         }
         this.body = body;
-        for(int ibody=0;ibody<body.length;ibody++) {
-            addChild(body[ibody]);
+        if (body != null) {
+            for(int ibody=0;ibody<body.length;ibody++) {
+                addChild(body[ibody]);
+            }
         }
     }
 

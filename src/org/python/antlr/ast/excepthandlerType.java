@@ -21,8 +21,10 @@ public class excepthandlerType extends PythonTree {
         this.type = type;
         this.name = name;
         this.body = body;
-        for(int ibody=0;ibody<body.length;ibody++) {
-            addChild(body[ibody]);
+        if (body != null) {
+            for(int ibody=0;ibody<body.length;ibody++) {
+                addChild(body[ibody]);
+            }
         }
         this.lineno = lineno;
         this.col_offset = col_offset;

@@ -89,36 +89,36 @@ ALL = None
 
 _exception_map = {
 
-# (<javaexception>, <circumstance>) : lambda: <code that raises the python equivalent>
+# (<javaexception>, <circumstance>) : lambda: <code that raises the python equivalent>, or None to stub out as unmapped
 
-(java.io.IOException, ALL)            : error(errno.ECONNRESET, 'Software caused connection abort'),
-(java.io.InterruptedIOException, ALL) : timeout('timed out'),
+(java.io.IOException, ALL)            : lambda: error(errno.ECONNRESET, 'Software caused connection abort'),
+(java.io.InterruptedIOException, ALL) : lambda: timeout('timed out'),
 
-(java.net.BindException, ALL)            : error(errno.EADDRINUSE, 'Address already in use'),
-(java.net.ConnectException, ALL)         : error(errno.ECONNREFUSED, 'Connection refused'),
-(java.net.NoRouteToHostException, ALL)   : error(-1, 'Unmapped exception: java.net.NoRouteToHostException'),
-(java.net.PortUnreachableException, ALL) : error(-1, 'Unmapped exception: java.net.PortUnreachableException'),
-(java.net.ProtocolException, ALL)        : error(-1, 'Unmapped exception: java.net.ProtocolException'),
-(java.net.SocketException, ALL)          : error(-1, 'Unmapped exception: java.net.SocketException'),
-(java.net.SocketTimeoutException, ALL)   : timeout('timed out'),
-(java.net.UnknownHostException, ALL)     : gaierror(errno.EGETADDRINFOFAILED, 'getaddrinfo failed'),
+(java.net.BindException, ALL)            : lambda: error(errno.EADDRINUSE, 'Address already in use'),
+(java.net.ConnectException, ALL)         : lambda: error(errno.ECONNREFUSED, 'Connection refused'),
+(java.net.NoRouteToHostException, ALL)   : None,
+(java.net.PortUnreachableException, ALL) : None,
+(java.net.ProtocolException, ALL)        : None,
+(java.net.SocketException, ALL)          : None,
+(java.net.SocketTimeoutException, ALL)   : lambda: timeout('timed out'),
+(java.net.UnknownHostException, ALL)     : lambda: gaierror(errno.EGETADDRINFOFAILED, 'getaddrinfo failed'),
 
-(java.nio.channels.AlreadyConnectedException, ALL)       : error(errno.EISCONN, 'Socket is already connected'),
-(java.nio.channels.AsynchronousCloseException, ALL)      : error(-1, 'Unmapped exception: java.nio.AsynchronousCloseException'),
-(java.nio.channels.CancelledKeyException, ALL)           : error(-1, 'Unmapped exception: java.nio.CancelledKeyException'),
-(java.nio.channels.ClosedByInterruptException, ALL)      : error(-1, 'Unmapped exception: java.nio.ClosedByInterruptException'),
-(java.nio.channels.ClosedChannelException, ALL)          : error(errno.EPIPE, 'Socket closed'),
-(java.nio.channels.ClosedSelectorException, ALL)         : error(-1, 'Unmapped exception: java.nio.ClosedSelectorException'),
-(java.nio.channels.ConnectionPendingException, ALL)      : error(-1, 'Unmapped exception: java.nio.ConnectionPendingException'),
-(java.nio.channels.IllegalBlockingModeException, ALL)    : error(-1, 'Unmapped exception: java.nio.IllegalBlockingModeException'),
-(java.nio.channels.IllegalSelectorException, ALL)        : error(-1, 'Unmapped exception: java.nio.IllegalSelectorException'),
-(java.nio.channels.NoConnectionPendingException, ALL)    : error(-1, 'Unmapped exception: java.nio.NoConnectionPendingException'),
-(java.nio.channels.NonReadableChannelException, ALL)     : error(-1, 'Unmapped exception: java.nio.NonReadableChannelException'),
-(java.nio.channels.NonWritableChannelException, ALL)     : error(-1, 'Unmapped exception: java.nio.NonWritableChannelException'),
-(java.nio.channels.NotYetBoundException, ALL)            : error(-1, 'Unmapped exception: java.nio.NotYetBoundException'),
-(java.nio.channels.NotYetConnectedException, ALL)        : error(-1, 'Unmapped exception: java.nio.NotYetConnectedException'),
-(java.nio.channels.UnresolvedAddressException, ALL)      : gaierror(errno.EGETADDRINFOFAILED, 'getaddrinfo failed'),
-(java.nio.channels.UnsupportedAddressTypeException, ALL) : error(-1, 'Unmapped exception: java.nio.UnsupportedAddressTypeException'),
+(java.nio.channels.AlreadyConnectedException, ALL)       : lambda: error(errno.EISCONN, 'Socket is already connected'),
+(java.nio.channels.AsynchronousCloseException, ALL)      : None,
+(java.nio.channels.CancelledKeyException, ALL)           : None,
+(java.nio.channels.ClosedByInterruptException, ALL)      : None,
+(java.nio.channels.ClosedChannelException, ALL)          : lambda: error(errno.EPIPE, 'Socket closed'),
+(java.nio.channels.ClosedSelectorException, ALL)         : None,
+(java.nio.channels.ConnectionPendingException, ALL)      : None,
+(java.nio.channels.IllegalBlockingModeException, ALL)    : None,
+(java.nio.channels.IllegalSelectorException, ALL)        : None,
+(java.nio.channels.NoConnectionPendingException, ALL)    : None,
+(java.nio.channels.NonReadableChannelException, ALL)     : None,
+(java.nio.channels.NonWritableChannelException, ALL)     : None,
+(java.nio.channels.NotYetBoundException, ALL)            : None,
+(java.nio.channels.NotYetConnectedException, ALL)        : None,
+(java.nio.channels.UnresolvedAddressException, ALL)      : lambda: gaierror(errno.EGETADDRINFOFAILED, 'getaddrinfo failed'),
+(java.nio.channels.UnsupportedAddressTypeException, ALL) : None,
 
 }
 
@@ -127,12 +127,13 @@ def would_block_error(exc=None):
 
 def _map_exception(exc, circumstance=ALL):
 #    print "Mapping exception: %s" % exc
-    try:
-        mapped_exception = _exception_map[(exc.__class__, circumstance)]
-        mapped_exception.java_exception = exc
-        return mapped_exception
-    except KeyError:
-        return error(-1, 'Unmapped java exception: <%s:%s>' % (exc.toString(), circumstance))
+    mapped_exception = _exception_map.get((exc.__class__, circumstance))
+    if mapped_exception:
+        exception = mapped_exception()
+    else:
+        exception = error(-1, 'Unmapped exception: %s' % exc)
+    exception.java_exception = exc
+    return exception
 
 MODE_BLOCKING    = 'block'
 MODE_NONBLOCKING = 'nonblock'
@@ -202,10 +203,16 @@ class _nio_impl:
 #    close = close4
 
     def shutdownInput(self):
-        self.jsocket.shutdownInput()
+        try:
+            self.jsocket.shutdownInput()
+        except java.lang.Exception, jlx:
+            raise _map_exception(jlx)
 
     def shutdownOutput(self):
-        self.jsocket.shutdownOutput()
+        try:
+            self.jsocket.shutdownOutput()
+        except java.lang.Exception, jlx:
+            raise _map_exception(jlx)
 
     def getchannel(self):
         return self.jchannel

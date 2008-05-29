@@ -123,8 +123,8 @@ class ThreadableTest:
         self.client_ready.wait()
 
     def _tearDown(self):
-        self.__tearDown()
         self.done.wait()
+        self.__tearDown()
 
         if not self.queue.empty():
             msg = self.queue.get()
@@ -766,11 +766,27 @@ class NonBlockingTCPTests(ThreadedTCPSocketTest):
 
     def _testConnectWithLocalBind(self):
         # Testing blocking connect with local bind
-        self.cli.settimeout(1)
-        self.cli.bind( (HOST, PORT-1) )
-        self.cli.connect((HOST, PORT))
+        cli_port = PORT - 1
+        while True:
+            # Keep trying until a local port is available
+            self.cli.settimeout(1)
+            self.cli.bind( (HOST, cli_port) )
+            try:
+                self.cli.connect((HOST, PORT))
+                break
+            except socket.error, se:
+                # cli_port is in use (maybe in TIME_WAIT state from a
+                # previous test run). reset the client socket and try
+                # again
+                self.failUnlessEqual(se[0], errno.EADDRINUSE)
+                try:
+                    self.cli.close()
+                except socket.error:
+                    pass
+                self.clientSetUp()
+                cli_port -= 1
         bound_host, bound_port = self.cli.getsockname()
-        self.failUnlessEqual(bound_port, PORT-1)
+        self.failUnlessEqual(bound_port, cli_port)
 
     def testRecvData(self):
         # Testing non-blocking recv

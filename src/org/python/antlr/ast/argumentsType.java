@@ -18,14 +18,18 @@ public class argumentsType extends PythonTree {
     String kwarg, exprType[] defaults) {
         super(tree);
         this.args = args;
-        for(int iargs=0;iargs<args.length;iargs++) {
-            addChild(args[iargs]);
+        if (args != null) {
+            for(int iargs=0;iargs<args.length;iargs++) {
+                addChild(args[iargs]);
+            }
         }
         this.vararg = vararg;
         this.kwarg = kwarg;
         this.defaults = defaults;
-        for(int idefaults=0;idefaults<defaults.length;idefaults++) {
-            addChild(defaults[idefaults]);
+        if (defaults != null) {
+            for(int idefaults=0;idefaults<defaults.length;idefaults++) {
+                addChild(defaults[idefaults]);
+            }
         }
     }
 

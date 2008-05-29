@@ -11,8 +11,6 @@ public class FunctionDef extends stmtType {
     public stmtType[] body;
     public exprType[] decorators;
 
-    public String __name__ = "BAH";
-
     public static final String[] _fields = new String[]
     {"name","args","body","decorators"};
 
@@ -22,12 +20,16 @@ public class FunctionDef extends stmtType {
         this.name = name;
         this.args = args;
         this.body = body;
-        for(int ibody=0;ibody<body.length;ibody++) {
-            addChild(body[ibody]);
+        if (body != null) {
+            for(int ibody=0;ibody<body.length;ibody++) {
+                addChild(body[ibody]);
+            }
         }
         this.decorators = decorators;
-        for(int idecorators=0;idecorators<decorators.length;idecorators++) {
-            addChild(decorators[idecorators]);
+        if (decorators != null) {
+            for(int idecorators=0;idecorators<decorators.length;idecorators++) {
+                addChild(decorators[idecorators]);
+            }
         }
     }
 

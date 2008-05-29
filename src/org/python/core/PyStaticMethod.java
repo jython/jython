@@ -4,17 +4,23 @@ import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 
+/**
+ * The staticmethod descriptor.
+ */
 @ExposedType(name = "staticmethod")
 public class PyStaticMethod extends PyObject {
 
     public static final PyType TYPE = PyType.fromClass(PyStaticMethod.class);
 
+    protected PyObject callable;
+
+    public PyStaticMethod(PyObject callable) {
+        this.callable = callable;
+    }
+
     @ExposedNew
-    final static PyObject staticmethod_new(PyNewWrapper new_,
-                                           boolean init,
-                                           PyType subtype,
-                                           PyObject[] args,
-                                           String[] keywords) {
+    final static PyObject staticmethod_new(PyNewWrapper new_, boolean init, PyType subtype,
+                                           PyObject[] args, String[] keywords) {
         if (keywords.length != 0) {
             throw Py.TypeError("staticmethod does not accept keyword arguments");
         }
@@ -24,18 +30,12 @@ public class PyStaticMethod extends PyObject {
         return new PyStaticMethod(args[0]);
     }
 
+    public PyObject __get__(PyObject obj, PyObject type) {
+        return staticmethod___get__(obj, type);
+    }
+
     @ExposedMethod(defaults = "null")
     final PyObject staticmethod___get__(PyObject obj, PyObject type) {
         return callable;
-    }
-
-    protected PyObject callable;
-
-    public PyStaticMethod(PyObject callable) {
-        this.callable = callable;
-    }
-
-    public PyObject __get__(PyObject obj, PyObject type) {
-        return staticmethod___get__(obj, type);
     }
 }

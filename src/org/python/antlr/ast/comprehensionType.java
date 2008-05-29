@@ -18,8 +18,10 @@ public class comprehensionType extends PythonTree {
         this.target = target;
         this.iter = iter;
         this.ifs = ifs;
-        for(int iifs=0;iifs<ifs.length;iifs++) {
-            addChild(ifs[iifs]);
+        if (ifs != null) {
+            for(int iifs=0;iifs<ifs.length;iifs++) {
+                addChild(ifs[iifs]);
+            }
         }
     }
 

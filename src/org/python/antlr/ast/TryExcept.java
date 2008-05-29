@@ -17,16 +17,22 @@ public class TryExcept extends stmtType {
     handlers, stmtType[] orelse) {
         super(tree);
         this.body = body;
-        for(int ibody=0;ibody<body.length;ibody++) {
-            addChild(body[ibody]);
+        if (body != null) {
+            for(int ibody=0;ibody<body.length;ibody++) {
+                addChild(body[ibody]);
+            }
         }
         this.handlers = handlers;
-        for(int ihandlers=0;ihandlers<handlers.length;ihandlers++) {
-            addChild(handlers[ihandlers]);
+        if (handlers != null) {
+            for(int ihandlers=0;ihandlers<handlers.length;ihandlers++) {
+                addChild(handlers[ihandlers]);
+            }
         }
         this.orelse = orelse;
-        for(int iorelse=0;iorelse<orelse.length;iorelse++) {
-            addChild(orelse[iorelse]);
+        if (orelse != null) {
+            for(int iorelse=0;iorelse<orelse.length;iorelse++) {
+                addChild(orelse[iorelse]);
+            }
         }
     }
 
