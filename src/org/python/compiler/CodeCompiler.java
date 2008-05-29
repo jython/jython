@@ -415,7 +415,20 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         }
 
         set(new Name(node, node.name, expr_contextType.Store));
+        doDecorators(node);
         return null;
+    }
+
+    private void doDecorators(FunctionDef func) throws Exception {
+        if (func.decorators.length > 0) {
+            exprType currentExpr = new Name(func, func.name, expr_contextType.Load);
+            exprType[] decs = func.decorators;
+            for (int i=decs.length - 1;i > -1;i--) {
+                currentExpr = new Call(func, decs[i], new exprType[]{currentExpr}, new keywordType[0], null, null);
+            }
+            visit(currentExpr);
+            set(new Name(func, func.name, expr_contextType.Store));
+        }
     }
 
     public int printResult;
