@@ -13,8 +13,10 @@ public class Import extends stmtType {
     public Import(PythonTree tree, aliasType[] names) {
         super(tree);
         this.names = names;
-        for(int inames=0;inames<names.length;inames++) {
-            addChild(names[inames]);
+        if (names != null) {
+            for(int inames=0;inames<names.length;inames++) {
+                addChild(names[inames]);
+            }
         }
     }
 

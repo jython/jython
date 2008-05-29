@@ -13,8 +13,10 @@ public class ExtSlice extends sliceType {
     public ExtSlice(PythonTree tree, sliceType[] dims) {
         super(tree);
         this.dims = dims;
-        for(int idims=0;idims<dims.length;idims++) {
-            addChild(dims[idims]);
+        if (dims != null) {
+            for(int idims=0;idims<dims.length;idims++) {
+                addChild(dims[idims]);
+            }
         }
     }
 

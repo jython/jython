@@ -14,12 +14,16 @@ public class TryFinally extends stmtType {
     public TryFinally(PythonTree tree, stmtType[] body, stmtType[] finalbody) {
         super(tree);
         this.body = body;
-        for(int ibody=0;ibody<body.length;ibody++) {
-            addChild(body[ibody]);
+        if (body != null) {
+            for(int ibody=0;ibody<body.length;ibody++) {
+                addChild(body[ibody]);
+            }
         }
         this.finalbody = finalbody;
-        for(int ifinalbody=0;ifinalbody<finalbody.length;ifinalbody++) {
-            addChild(finalbody[ifinalbody]);
+        if (finalbody != null) {
+            for(int ifinalbody=0;ifinalbody<finalbody.length;ifinalbody++) {
+                addChild(finalbody[ifinalbody]);
+            }
         }
     }
 

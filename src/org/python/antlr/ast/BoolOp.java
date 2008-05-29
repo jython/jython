@@ -15,8 +15,10 @@ public class BoolOp extends exprType {
         super(tree);
         this.op = op;
         this.values = values;
-        for(int ivalues=0;ivalues<values.length;ivalues++) {
-            addChild(values[ivalues]);
+        if (values != null) {
+            for(int ivalues=0;ivalues<values.length;ivalues++) {
+                addChild(values[ivalues]);
+            }
         }
     }
 

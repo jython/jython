@@ -18,8 +18,10 @@ public class ImportFrom extends stmtType {
         super(tree);
         this.module = module;
         this.names = names;
-        for(int inames=0;inames<names.length;inames++) {
-            addChild(names[inames]);
+        if (names != null) {
+            for(int inames=0;inames<names.length;inames++) {
+                addChild(names[inames]);
+            }
         }
         this.level = level;
     }

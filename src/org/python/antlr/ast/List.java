@@ -14,8 +14,10 @@ public class List extends exprType {
     public List(PythonTree tree, exprType[] elts, expr_contextType ctx) {
         super(tree);
         this.elts = elts;
-        for(int ielts=0;ielts<elts.length;ielts++) {
-            addChild(elts[ielts]);
+        if (elts != null) {
+            for(int ielts=0;ielts<elts.length;ielts++) {
+                addChild(elts[ielts]);
+            }
         }
         this.ctx = ctx;
     }

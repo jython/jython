@@ -19,8 +19,10 @@ public class With extends stmtType {
         this.context_expr = context_expr;
         this.optional_vars = optional_vars;
         this.body = body;
-        for(int ibody=0;ibody<body.length;ibody++) {
-            addChild(body[ibody]);
+        if (body != null) {
+            for(int ibody=0;ibody<body.length;ibody++) {
+                addChild(body[ibody]);
+            }
         }
     }
 
