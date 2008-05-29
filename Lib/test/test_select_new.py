@@ -2,6 +2,7 @@
 AMAK: 20050515: This module is a brand new test_select module, which gives much wider coverage.
 """
 
+import errno
 import time
 import test_support
 import unittest
@@ -46,7 +47,13 @@ class AsynchronousServer:
         return select.select([self.server_socket], [self.server_socket], [], SELECT_TIMEOUT)[0]
 
     def verify_acceptable(self):
-        assert self.select_acceptable(), "Server socket should be acceptable"
+        start = time.time()
+        while True:
+            if self.select_acceptable():
+                return
+            elif (time.time() - start) > READ_TIMEOUT:
+                raise Exception('Server socket did not accept in time')
+            time.sleep(0.1)
 
     def verify_not_acceptable(self):
         assert not self.select_acceptable(), "Server socket should not be acceptable"
@@ -143,10 +150,21 @@ class AsynchronousClient(AsynchronousHandler):
         result = self.socket.connect_ex(SERVER_ADDRESS)
         if result == 0:
             self.connected = 1
+        else:
+            assert result == errno.EINPROGRESS
 
     def finish_connect(self):
         if self.connected:
             return
+        start = time.time()
+        while True:
+            self.start_connect()
+            if self.connected:
+                break
+            elif (time.time() - start) > READ_TIMEOUT:
+                raise Exception('Client socket incomplete connect')
+            time.sleep(0.1)
+                
         rfds, wfds, xfds = select.select([], [self.socket], [], SELECT_TIMEOUT)
         assert self.socket in wfds, "Client socket incomplete connect"
 
