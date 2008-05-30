@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 # -----------------------------------------------------------------------------
 # jython.sh - start script for Jython (adapted from jruby.sh)
 #
@@ -169,18 +169,15 @@ fi
 
 if [ -n "$profile_requested" ] ; then
   echo "Running with instrumented profiler"
-  alias runjava="$JAVA_CMD"
   java_args=("${java_args[@]}" -classpath "$CP$CP_SEPARATOR$CLASSPATH")
 else
   if [ -z $help_requested ] ; then
-    alias runjava="exec $JAVA_CMD"
-  else
-    alias runjava="$JAVA_CMD"
+    JAVA_CMD="exec $JAVA_CMD"
   fi
   java_args=("${java_args[@]}" -Xbootclasspath/a:"$CP" -classpath "$CLASSPATH")
 fi
 
-runjava $JAVA_OPTS "${java_args[@]}" -Dpython.home="$JYTHON_HOME" \
+$JAVA_CMD $JAVA_OPTS "${java_args[@]}" -Dpython.home="$JYTHON_HOME" \
   -Dpython.executable="$PRG" org.python.util.jython $JYTHON_OPTS "$@"
 
 if [ -n "$profile_requested" ] ; then
