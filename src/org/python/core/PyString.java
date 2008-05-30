@@ -1063,6 +1063,108 @@ public class PyString extends PyBaseString
         return list;
     }
 
+    public PyTuple partition(PyObject sepObj) {
+        return str_partition(sepObj);
+    }
+
+    @ExposedMethod
+    final PyTuple str_partition(PyObject sepObj) {
+        String sep;
+
+        if (sepObj instanceof PyUnicode) {
+            return unicodePartition(sepObj);
+        } else if (sepObj instanceof PyString) {
+            sep = ((PyString)sepObj).string;
+        } else {
+            throw Py.TypeError("expected a character buffer object");
+        }
+
+        if (sep.length() == 0) {
+            throw Py.ValueError("empty separator");
+        }
+
+        int index = string.indexOf(sep);
+        if (index != -1) {
+            return new PyTuple(fromSubstring(0, index), sepObj,
+                               fromSubstring(index + sep.length(), string.length()));
+        } else {
+            return new PyTuple(this, Py.EmptyString, Py.EmptyString);
+        }
+    }
+
+    final PyTuple unicodePartition(PyObject sepObj) {
+        PyUnicode strObj = __unicode__();
+        String str = strObj.string;
+
+        // Will throw a TypeError if not a basestring
+        String sep = sepObj.asString();
+        sepObj = sepObj.__unicode__();
+
+        if (sep.length() == 0) {
+            throw Py.ValueError("empty separator");
+        }
+
+        int index = str.indexOf(sep);
+        if (index != -1) {
+            return new PyTuple(strObj.fromSubstring(0, index), sepObj,
+                               strObj.fromSubstring(index + sep.length(), str.length()));
+        } else {
+            PyUnicode emptyUnicode = Py.newUnicode("");
+            return new PyTuple(this, emptyUnicode, emptyUnicode);
+        }
+    }
+
+    public PyTuple rpartition(PyObject sepObj) {
+        return str_rpartition(sepObj);
+    }
+
+    @ExposedMethod
+    final PyTuple str_rpartition(PyObject sepObj) {
+        String sep;
+
+        if (sepObj instanceof PyUnicode) {
+            return unicodePartition(sepObj);
+        } else if (sepObj instanceof PyString) {
+            sep = ((PyString)sepObj).string;
+        } else {
+            throw Py.TypeError("expected a character buffer object");
+        }
+
+        if (sep.length() == 0) {
+            throw Py.ValueError("empty separator");
+        }
+
+        int index = string.lastIndexOf(sep);
+        if (index != -1) {
+            return new PyTuple(fromSubstring(0, index), sepObj,
+                               fromSubstring(index + sep.length(), string.length()));
+        } else {
+            return new PyTuple(Py.EmptyString, Py.EmptyString, this);
+        }
+    }
+
+    final PyTuple unicodeRpartition(PyObject sepObj) {
+        PyUnicode strObj = __unicode__();
+        String str = strObj.string;
+
+        // Will throw a TypeError if not a basestring
+        String sep = sepObj.asString();
+        sepObj = sepObj.__unicode__();
+
+        if (sep.length() == 0) {
+            throw Py.ValueError("empty separator");
+        }
+
+        int index = str.lastIndexOf(sep);
+        if (index != -1) {
+            return new PyTuple(strObj.fromSubstring(0, index), sepObj,
+                               strObj.fromSubstring(index + sep.length(), str.length()));
+        } else {
+            PyUnicode emptyUnicode = Py.newUnicode("");
+            return new PyTuple(emptyUnicode, emptyUnicode, this);
+        }
+    }
+
     private PyList splitfields(String sep, int maxsplit) {
         PyList list = new PyList();
 

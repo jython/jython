@@ -206,6 +206,15 @@ public class PyUnicode extends PyString {
         return new PyUnicode(str_rstrip(sep));
     }
 
+    @ExposedMethod
+    final PyTuple unicode_partition(PyObject sep) {
+        return unicodePartition(sep);
+    }
+
+    @ExposedMethod
+    final PyTuple unicode_rpartition(PyObject sep) {
+        return unicodeRpartition(sep);
+    }
 
     @ExposedMethod(defaults = {"null", "-1"})
     final PyList unicode_split(String sep, int maxsplit) {
