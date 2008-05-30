@@ -686,13 +686,11 @@ The readme text for the next release will be like:
         </junit>
     </target>
     <target name="regrtest" depends="compile,expose,copy-lib">
-        <java classname="org.python.util.jython" fork="true">
-            <jvmarg value="-Dpython.home=${dist.dir}"/>
-            <arg value="${dist.dir}/Lib/test/regrtest.py"/>
-            <!-- Only run the tests that are expected to work on Jython -->
-            <arg value="--expected"/>
-            <classpath refid="test.classpath" />
-        </java>
+      <exec executable="${dist.dir}/bin/jython">
+        <arg value="${dist.dir}/Lib/test/regrtest.py"/>
+        <!-- Only run the tests that are expected to work on Jython -->
+        <arg value="--expected"/>
+      </exec>
     </target>
 
     <!-- run bugtests, create a config if necessary -->
