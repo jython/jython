@@ -194,6 +194,6 @@ elif [ -n "$help_requested" ] ; then
   echo "--       : pass remaining arguments through to Jython" >&2
   echo "Jython launcher environment variables:" >&2
   echo "JAVA_HOME  : Java installation directory" >&2
-  echo "JYTHON_OPTS: default command line arguments" >&2
   echo "JYTHON_HOME: Jython installation directory" >&2
+  echo "JYTHON_OPTS: default command line arguments" >&2
 fi
