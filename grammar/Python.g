@@ -870,7 +870,7 @@ gen_if: 'if' test gen_iter?
 
 //yield_expr: 'yield' [testlist]
 yield_expr : 'yield' testlist?
-          -> ^(Yield ^(Value testlist)?)
+          -> ^(Yield 'yield' ^(Value testlist)?)
            ;
 
 //XXX:

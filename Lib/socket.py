@@ -624,7 +624,8 @@ class _tcpsocket(_nonblocking_api_mixin):
 
     def connect_ex(self, addr):
         "This signifies a client socket"
-        self._do_connect(addr)
+        if not self.sock_impl:
+            self._do_connect(addr)
         if self.sock_impl.finish_connect():
             self._setup()
             return 0

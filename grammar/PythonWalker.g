@@ -686,12 +686,12 @@ return_stmt
     ;
 
 yield_expr returns [exprType etype]
-    : ^(Yield (^(Value test[expr_contextType.Load]))?) {
+    : ^(Yield tok='yield' (^(Value test[expr_contextType.Load]))?) {
         exprType v = null;
         if ($Value != null) {
             v = $test.etype; 
         }
-        $etype = new Yield($Yield, v);
+        $etype = new Yield($tok, v);
     }
     ;
 
