@@ -685,7 +685,6 @@ def test_main():
              ImportPackageTestCase,
              ZipimportTestCase,
              PyCompileTestCase,
-             SubprocessTestCase,
              ExecfileTestCase,
              ExecfileTracebackTestCase,
              ListdirTestCase,
@@ -694,6 +693,8 @@ def test_main():
     if sys.platform.startswith('java'):
         tests.extend((ImportJavaClassTestCase,
                       ImportJarTestCase))
+    if test_support.is_resource_enabled('subprocess'):
+        tests.append(SubprocessTestCase)
     if WINDOWS:
         tests.append(WindowsChdirTestCase)
     test_support.run_unittest(*tests)
