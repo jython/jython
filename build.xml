@@ -398,6 +398,7 @@ The readme text for the next release will be like:
             <arg path="build/gensrc/org/python/antlr"/>
             <arg file="grammar/Python.g"/>
             <arg file="grammar/PythonWalker.g"/>
+            <arg file="grammar/PythonPartial.g"/>
             <classpath refid="main.classpath"/>
         </java>
         
