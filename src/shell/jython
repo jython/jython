@@ -180,7 +180,6 @@ else
   java_args=("${java_args[@]}" -Xbootclasspath/a:"$CP" -classpath "$CLASSPATH")
 fi
 
-set -x # XXX debugging
 runjava $JAVA_OPTS "${java_args[@]}" -Dpython.home="$JYTHON_HOME" \
   -Dpython.executable="$PRG" org.python.util.jython $JYTHON_OPTS "$@"
 
