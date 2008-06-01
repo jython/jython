@@ -8,12 +8,13 @@ import unittest
 import test_support
 
 import errno
-import socket
+import Queue
 import select
+import socket
+import struct
+import sys
 import time
 import thread, threading
-import Queue
-import sys
 from weakref import proxy
 from StringIO import StringIO
 
@@ -492,6 +493,148 @@ class GeneralModuleTests(unittest.TestCase):
         sock.settimeout(1)
         sock.close()
         self.assertRaises(socket.error, sock.send, "spam")
+
+class TestSocketOptions(unittest.TestCase):
+
+    def setUp(self):
+        self.test_udp = self.test_tcp_client = self.test_tcp_server = 0
+
+    def _testSetAndGetOption(self, sock, option, values):
+        for expected_value in values:
+            sock.setsockopt(socket.SOL_SOCKET, option, expected_value)
+            retrieved_value = sock.getsockopt(socket.SOL_SOCKET, option)
+            self.failUnlessEqual(retrieved_value, expected_value, \
+                "Retrieved option(%s) value %s != %s(value set)" % (option, retrieved_value, expected_value))
+
+    def _testUDPOption(self, option, values):
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            self._testSetAndGetOption(sock, option, values)
+            # now bind the socket i.e. cause the implementation socket to be created
+            sock.bind( (HOST, PORT) )
+            self.failUnlessEqual(sock.getsockopt(socket.SOL_SOCKET, option), values[-1], \
+                 "Option value '%s'='%s' did not propagate to implementation socket" % (option, values[-1]) )
+            self._testSetAndGetOption(sock, option, values)
+        finally:
+            sock.close()
+
+    def _testTCPClientOption(self, option, values):
+        try:
+            # First listen on a server socket, so that the connection won't be refused.
+            server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            server_sock.bind( (HOST, PORT) )
+            server_sock.listen()
+            # Now do the tests
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self._testSetAndGetOption(sock, option, values)
+            # now connect the socket i.e. cause the implementation socket to be created
+            # First bind, so that the SO_REUSEADDR setting propagates
+            sock.bind( (HOST, PORT+1) )
+            sock.connect( (HOST, PORT) )
+            self.failUnlessEqual(sock.getsockopt(socket.SOL_SOCKET, option), values[-1], \
+                 "Option value '%s'='%s' did not propagate to implementation socket" % (option, values[-1]))
+            self._testSetAndGetOption(sock, option, values)
+        finally:
+            server_sock.close()
+            sock.close()
+
+    def _testTCPServerOption(self, option, values):
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self._testSetAndGetOption(sock, option, values)
+            # now bind and listen on the socket i.e. cause the implementation socket to be created
+            sock.bind( (HOST, PORT) )
+            sock.listen()
+            self.failUnlessEqual(sock.getsockopt(socket.SOL_SOCKET, option), values[-1], \
+                 "Option value '%s'='%s' did not propagate to implementation socket" % (option, values[-1]))
+            self._testSetAndGetOption(sock, option, values)
+        finally:
+            sock.close()
+
+    def _testOption(self, option, values):
+        for flag, func in [
+            (self.test_udp,        self._testUDPOption),
+            (self.test_tcp_server, self._testTCPServerOption),
+            (self.test_tcp_client, self._testTCPClientOption),
+        ]:
+            if flag:
+                func(option, values)
+            else:
+                try:
+                    func(option, values)
+                except socket.error, se:
+                    self.failUnlessEqual(se[0], errno.ENOPROTOOPT, "Wrong errno from unsupported option exception: %d" % se[0])
+                except Exception, x:
+                    self.fail("Wrong exception raised from unsupported option: %s" % str(x))
+                else:
+                    self.fail("Setting unsupported option should have raised an exception")
+
+    def testSO_BROADCAST(self):
+        self.test_udp = 1 ; 
+        self._testOption(socket.SO_BROADCAST, [0, 1])
+
+    def testSO_KEEPALIVE(self):
+        self.test_tcp_client = 1
+        self._testOption(socket.SO_KEEPALIVE, [0, 1])
+
+    def testSO_LINGER(self):
+        self.test_tcp_client = 1
+        off = struct.pack('ii', 0, 0)
+        on_2_seconds = struct.pack('ii', 1, 2)
+        self._testOption(socket.SO_LINGER, [off, on_2_seconds])
+
+    def testSO_OOBINLINE(self):
+        self.test_tcp_client = 1
+        self._testOption(socket.SO_OOBINLINE, [0, 1])
+
+    def testSO_RCVBUF(self):
+        self.test_udp = 1
+        self.test_tcp_client = 1
+        self.test_tcp_server = 1
+        self._testOption(socket.SO_RCVBUF, [1024, 4096, 16384])
+
+    def testSO_REUSEADDR(self):
+        self.test_udp = 1
+        self.test_tcp_client = 1
+        self.test_tcp_server = 1
+        self._testOption(socket.SO_REUSEADDR, [0, 1])
+
+    def testSO_SNDBUF(self):
+        self.test_udp = 1
+        self.test_tcp_client = 1
+        self._testOption(socket.SO_SNDBUF, [1024, 4096, 16384])
+
+    def testSO_TIMEOUT(self):
+        self.test_udp = 1
+        self.test_tcp_client = 1
+        self.test_tcp_server = 1
+        self._testOption(socket.SO_TIMEOUT, [0, 1, 1000])
+
+    def testTCP_NODELAY(self):
+        self.test_tcp_client = 1
+        self._testOption(socket.TCP_NODELAY, [0, 1])
+
+class AsYetUnsupportedOptions:
+
+    def testSO_ACCEPTCONN(self): pass
+    def testSO_DEBUG(self): pass
+    def testSO_DONTROUTE(self): pass
+    def testSO_ERROR(self): pass
+    def testSO_EXCLUSIVEADDRUSE(self):
+        # this is an MS specific option that will not be appearing on java
+        # http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6421091
+        # http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6402335
+        pass
+    def testSO_RCVLOWAT(self): pass
+    def testSO_RCVTIMEO(self): pass
+    def testSO_REUSEPORT(self):
+        # not yet supported on java
+        # http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6432031
+        pass
+    def testSO_SNDLOWAT(self): pass
+    def testSO_SNDTIMEO(self): pass
+    def testSO_TYPE(self): pass
+    def testSO_USELOOPBACK(self): pass
 
 class BasicTCPTest(SocketConnectedTest):
 
@@ -1109,11 +1252,7 @@ class TestExceptions(unittest.TestCase):
         self.assert_(issubclass(socket.gaierror, socket.error))
         self.assert_(issubclass(socket.timeout, socket.error))
 
-class TestJythonExceptions(unittest.TestCase):
-
-    def setUp(self):
-        self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+class TestJythonExceptionsShared:
 
     def tearDown(self):
         self.s.close()
@@ -1126,6 +1265,62 @@ class TestJythonExceptions(unittest.TestCase):
             self.failUnlessEqual(gaix[0], errno.EGETADDRINFOFAILED)
         except Exception, x:
             self.fail("Get host name for non-existent host raised wrong exception: %s" % x)
+
+    def testUnresolvedAddress(self):
+        try:
+            self.s.connect( ('non.existent.server', PORT) )
+        except socket.gaierror, gaix:
+            self.failUnlessEqual(gaix[0], errno.EGETADDRINFOFAILED)
+        except Exception, x:
+            self.fail("Get host name for non-existent host raised wrong exception: %s" % x)
+        else:
+            self.fail("Get host name for non-existent host should have raised exception")
+
+    def testSocketNotConnected(self):
+        try:
+            self.s.send(MSG)
+        except socket.error, se:
+            self.failUnlessEqual(se[0], errno.ENOTCONN)
+        except Exception, x:
+            self.fail("Send on unconnected socket raised wrong exception: %s" % x)
+        else:
+            self.fail("Send on unconnected socket raised exception")
+
+    def testSocketNotBound(self):
+        try:
+            result = self.s.recv(1024)
+        except socket.error, se:
+            self.failUnlessEqual(se[0], errno.ENOTCONN)
+        except Exception, x:
+            self.fail("Receive on unbound socket raised wrong exception: %s" % x)
+        else:
+            self.fail("Receive on unbound socket raised exception")
+
+    def testClosedSocket(self):
+        self.s.close()
+        try:
+            self.s.send(MSG)
+        except socket.error, se:
+            self.failUnlessEqual(se[0], errno.EBADF)
+
+        dup = self.s.dup()
+        try:
+            dup.send(MSG)
+        except socket.error, se:
+            self.failUnlessEqual(se[0], errno.EBADF)
+
+        fp = self.s.makefile()
+        try:
+            fp.write(MSG)
+            fp.flush()
+        except socket.error, se:
+            self.failUnlessEqual(se[0], errno.EBADF)
+
+class TestJythonTCPExceptions(TestJythonExceptionsShared, unittest.TestCase):
+
+    def setUp(self):
+        self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
     def testConnectionRefused(self):
         try:
@@ -1154,93 +1349,66 @@ class TestJythonExceptions(unittest.TestCase):
         else:
             self.fail("Binding to already bound host/port should have raised exception")
 
-    def testUnresolvedAddress(self):
+class TestJythonUDPExceptions(TestJythonExceptionsShared, unittest.TestCase):
+
+    def setUp(self):
+        self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+    def testBindException(self):
+        # First bind to the target port
+        self.s.bind( (HOST, PORT) )
         try:
-            self.s.connect( ('non.existent.server', PORT) )
-        except socket.gaierror, gaix:
-            self.failUnlessEqual(gaix[0], errno.EGETADDRINFOFAILED)
+            # And then try to bind again
+            t = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            t.bind( (HOST, PORT) )
+        except socket.error, se:
+            self.failUnlessEqual(se[0], errno.EADDRINUSE)
         except Exception, x:
-            self.fail("Get host name for non-existent host raised wrong exception: %s" % x)
+            self.fail("Binding to already bound host/port raised wrong exception: %s" % x)
         else:
-            self.fail("Get host name for non-existent host should have raised exception")
-
-    def testSocketNotConnected(self):
-        try:
-            self.s.send(MSG)
-        except socket.error, se:
-            self.failUnlessEqual(se[0], errno.ENOTCONN)
-        except Exception, x:
-            self.fail("Send on unconnected socket raised wrong exception: %s" % x)
-        else:
-            self.fail("Send on unconnected socket raised exception")
-        try:
-            result = self.s.recv(1024)
-        except socket.error, se:
-            self.failUnlessEqual(se[0], errno.ENOTCONN)
-        except Exception, x:
-            self.fail("Receive on unconnected socket raised wrong exception: %s" % x)
-        else:
-            self.fail("Receive on unconnected socket raised exception")
-
-    def testClosedSocket(self):
-        self.s.close()
-        try:
-            self.s.send(MSG)
-        except socket.error, se:
-            self.failUnlessEqual(se[0], errno.EBADF)
-
-        dup = self.s.dup()
-        try:
-            dup.send(MSG)
-        except socket.error, se:
-            self.failUnlessEqual(se[0], errno.EBADF)
-
-        fp = self.s.makefile()
-        try:
-            fp.write(MSG)
-            fp.flush()
-        except socket.error, se:
-            self.failUnlessEqual(se[0], errno.EBADF)
+            self.fail("Binding to already bound host/port should have raised exception")
 
 class TestAddressParameters:
 
-	def testBindNonTupleEndpointRaisesTypeError(self):
-		try:
-			self.socket.bind(HOST, PORT)
-		except TypeError:
-			pass
-		else:
-			self.fail("Illegal non-tuple bind address did not raise TypeError")
+    def testBindNonTupleEndpointRaisesTypeError(self):
+        try:
+            self.socket.bind(HOST, PORT)
+        except TypeError:
+            pass
+        else:
+            self.fail("Illegal non-tuple bind address did not raise TypeError")
 
-	def testConnectNonTupleEndpointRaisesTypeError(self):
-		try:
-			self.socket.connect(HOST, PORT)
-		except TypeError:
-			pass
-		else:
-			self.fail("Illegal non-tuple connect address did not raise TypeError")
+    def testConnectNonTupleEndpointRaisesTypeError(self):
+        try:
+            self.socket.connect(HOST, PORT)
+        except TypeError:
+            pass
+        else:
+            self.fail("Illegal non-tuple connect address did not raise TypeError")
 
-	def testConnectExNonTupleEndpointRaisesTypeError(self):
-		try:
-			self.socket.connect_ex(HOST, PORT)
-		except TypeError:
-			pass
-		else:
-			self.fail("Illegal non-tuple connect address did not raise TypeError")
+    def testConnectExNonTupleEndpointRaisesTypeError(self):
+        try:
+            self.socket.connect_ex(HOST, PORT)
+        except TypeError:
+            pass
+        else:
+            self.fail("Illegal non-tuple connect address did not raise TypeError")
 
 class TestTCPAddressParameters(unittest.TestCase, TestAddressParameters):
 
-	def setUp(self):
-		self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    def setUp(self):
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 class TestUDPAddressParameters(unittest.TestCase, TestAddressParameters):
 
-	def setUp(self):
-		self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    def setUp(self):
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 def test_main():
     tests = [
         GeneralModuleTests, 
+        TestSocketOptions,
         BasicTCPTest, 
         TCPTimeoutTest, 
         TCPClientTimeoutTest,
@@ -1263,9 +1431,11 @@ def test_main():
     if hasattr(socket, "socketpair"):
         tests.append(BasicSocketPairTest)
     if sys.platform[:4] == 'java':
-        tests.append(TestJythonExceptions)
+        tests.append(TestJythonTCPExceptions)
+        tests.append(TestJythonUDPExceptions)
     suites = [unittest.makeSuite(klass, 'test') for klass in tests]
     test_support.run_suite(unittest.TestSuite(suites))
 
 if __name__ == "__main__":
     test_main()
+
