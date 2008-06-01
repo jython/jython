@@ -386,6 +386,11 @@ public final class Py
     public static void FutureWarning(String message) {
         warning(FutureWarning, message);
     }
+    
+    public static PyObject ImportWarning;
+    public static void ImportWarning(String message) {
+    	warning(ImportWarning, message);
+    }
 
     private static PyObject warnings_mod;
     private static PyObject importWarnings() {
@@ -711,7 +716,8 @@ public final class Py
         SyntaxWarning       = initExc("SyntaxWarning", exc, dict);
         OverflowWarning     = initExc("OverflowWarning", exc, dict);
         RuntimeWarning      = initExc("RuntimeWarning", exc, dict);
-        FutureWarning      = initExc("FutureWarning", exc, dict);   
+        FutureWarning       = initExc("FutureWarning", exc, dict);
+        ImportWarning       = initExc("ImportWarning", exc, dict);
         
         // Pre-initialize the PyJavaClass for OutOfMemoryError so when we need
         // it it creating the pieces for it won't cause an additional out of
