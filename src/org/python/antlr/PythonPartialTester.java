@@ -27,7 +27,7 @@ public class PythonPartialTester {
     private Block _block = Block.INTERACTIVE;
 
 	public void parse(String[] args) throws Exception {
-        try {
+//        try {
             PythonTree result = null;
             CharStream input = new ANTLRFileStream(args[0]);
             PythonPartialLexer lexer = new PPLexer(input);
@@ -48,9 +48,9 @@ public class PythonPartialTester {
                 break;
             }
             System.out.println("SUCCEED");
-        } catch (RecognitionException e) {
-            System.out.println("FAIL");
-        }
+//        } catch (RecognitionException e) {
+//            System.out.println("FAIL" + );
+//        }
 	}
 
 	public static void main(String[] args) throws Exception {
