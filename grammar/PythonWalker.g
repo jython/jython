@@ -1252,11 +1252,11 @@ atom[expr_contextType ctype] returns [exprType etype, PythonTree marker, boolean
         $etype = new UnaryOp($NOT, unaryopType.Not, $test.etype);
         $marker = $NOT;
     }
-    | ^(Parens test[ctype]) {
+    | ^(Parens tok=LPAREN test[ctype]) {
         debug("PARENS! " + $test.etype);
         $parens = true;
         $etype = $test.etype;
-        $marker = $Parens;
+        $marker = $tok;
     }
     ;
 

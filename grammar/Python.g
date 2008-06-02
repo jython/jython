@@ -721,8 +721,8 @@ power : atom (trailer^)* (options {greedy=true;}:DOUBLESTAR^ factor)?
 //       '`' testlist1 '`' |
 //       NAME | NUMBER | STRING+)
 atom : LPAREN 
-       ( yield_expr    -> ^(Parens yield_expr)
-       | testlist_gexp {debug("parsed testlist_gexp");} -> ^(Parens testlist_gexp)
+       ( yield_expr    -> ^(Parens LPAREN yield_expr)
+       | testlist_gexp {debug("parsed testlist_gexp");} -> ^(Parens LPAREN testlist_gexp)
        | -> ^(Tuple)
        )
        RPAREN
