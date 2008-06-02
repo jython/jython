@@ -168,7 +168,10 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
             <pathelement path="${extlibs.dir}/mysql-connector-java-5.1.6.jar" />
             <pathelement path="${extlibs.dir}/postgresql-8.3-603.jdbc4.jar" />
             <pathelement path="${extlibs.dir}/antlr-2.7.7.jar" />
+            <!--
             <pathelement path="${extlibs.dir}/antlr-3.0.1.jar" />
+            -->
+            <pathelement path="${extlibs.dir}/antlr-3.1b1.jar" />
             <pathelement path="${extlibs.dir}/stringtemplate-3.1b1.jar" />
         </path>
 
