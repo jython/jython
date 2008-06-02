@@ -296,12 +296,12 @@ public class PyUnicode extends PyString {
     }
 
     @ExposedMethod(defaults = {"0", "null"})
-    final boolean unicode_startswith(String prefix, int start, PyObject end) {
+    final boolean unicode_startswith(PyObject prefix, int start, PyObject end) {
         return str_startswith(prefix, start, end);
     }
     
     @ExposedMethod(defaults = {"0", "null"})
-    final boolean unicode_endswith(String suffix, int start, PyObject end) {
+    final boolean unicode_endswith(PyObject suffix, int start, PyObject end) {
         return str_endswith(suffix, start, end);
     }
 

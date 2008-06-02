@@ -5,7 +5,6 @@ import java.math.BigInteger;
 
 import org.python.core.util.ExtraMath;
 import org.python.core.util.StringUtil;
-
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
@@ -1705,45 +1704,81 @@ public class PyString extends PyBaseString
     }
 
 
-    public boolean startswith(String prefix) {
+    public boolean startswith(PyObject prefix) {
         return str_startswith(prefix, 0, null);
     }
 
-    public boolean startswith(String prefix, int offset) {
+    public boolean startswith(PyObject prefix, int offset) {
         return str_startswith(prefix, offset, null);
     }
 
-    public boolean startswith(String prefix, int start, int end) {
+    public boolean startswith(PyObject prefix, int start, int end) {
         return str_startswith(prefix, start, Py.newInteger(end));
     }
 
     @ExposedMethod(defaults = {"0", "null"})
-    final boolean str_startswith(String prefix, int start, PyObject end) {
+    final boolean str_startswith(PyObject prefix, int start, PyObject end) {
         int[] indices = translateIndices(start, end);
-        if(indices[1] - indices[0] < prefix.length()){
-            return false;
+        
+        if (prefix instanceof PyString) {
+        	String strPrefix = ((PyString)prefix).string;
+            if (indices[1] - indices[0] < strPrefix.length())
+                return false;
+            
+        	return string.startsWith(strPrefix, indices[0]);
+        } else if (prefix instanceof PyTuple) {
+        	PyObject[] prefixes = ((PyTuple)prefix).getArray();
+        	
+        	for (int i = 0 ; i < prefixes.length ; i++) {
+        		if (!(prefixes[i] instanceof PyString))
+        			throw Py.TypeError("expected a character buffer object");
+
+        		String strPrefix = ((PyString)prefixes[i]).string;
+                if (indices[1] - indices[0] < strPrefix.length())
+                	continue;
+                
+        		if (string.startsWith(strPrefix, indices[0]))
+        			return true;
+        	}
+        	return false;
+        } else {
+        	throw Py.TypeError("expected a character buffer object or tuple");
         }
-        return string.startsWith(prefix, indices[0]);
     }
 
-    public boolean endswith(String suffix) {
+    public boolean endswith(PyObject suffix) {
         return str_endswith(suffix, 0, null);
     }
 
-    public boolean endswith(String suffix, int start) {
+    public boolean endswith(PyObject suffix, int start) {
         return str_endswith(suffix, start, null);
     }
 
-    public boolean endswith(String suffix, int start, int end) {
+    public boolean endswith(PyObject suffix, int start, int end) {
         return str_endswith(suffix, start, Py.newInteger(end));
     }
 
     @ExposedMethod(defaults = {"0", "null"})
-    final boolean str_endswith(String suffix, int start, PyObject end) {
+    final boolean str_endswith(PyObject suffix, int start, PyObject end) {
         int[] indices = translateIndices(start, end);
 
         String substr = string.substring(indices[0], indices[1]);
-        return substr.endsWith(suffix);
+        if (suffix instanceof PyString) {
+	        return substr.endsWith(((PyString)suffix).string);
+        } else if (suffix instanceof PyTuple) {
+        	PyObject[] suffixes = ((PyTuple)suffix).getArray();
+        	
+        	for (int i = 0 ; i < suffixes.length ; i++) {
+        		if (!(suffixes[i] instanceof PyString))
+        			throw Py.TypeError("expected a character buffer object");
+
+        		if (substr.endsWith(((PyString)suffixes[i]).string))
+        			return true;
+        	}
+        	return false;
+        } else {
+        	throw Py.TypeError("expected a character buffer object or tuple");
+        }
     } 
 
     /**
