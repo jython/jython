@@ -468,7 +468,11 @@ public class PyDeque extends PyObject {
 
     @ExposedMethod
     final PyObject deque___reduce__() {
-        return new PyTuple(getType(), Py.EmptyTuple, Py.None, deque___iter__());
+        PyObject dict = getDict();
+        if (dict == null) {
+            dict = Py.None;
+        }
+        return new PyTuple(getType(), Py.EmptyTuple, dict, __iter__());
     }
 
     @ExposedMethod
