@@ -661,7 +661,7 @@ public class PyString extends PyBaseString
     @ExposedMethod(type = MethodType.BINARY)
     final PyObject str___mul__(PyObject o) {
         if (!(o instanceof PyInteger || o instanceof PyLong))
-            throw Py.TypeError("can't multiply string by non-int");
+            return null;
         int count = ((PyInteger)o.__int__()).getValue();
         return repeat(count);
     }
@@ -669,7 +669,7 @@ public class PyString extends PyBaseString
     @ExposedMethod(type = MethodType.BINARY)
     final PyObject str___rmul__(PyObject o) {
         if (!(o instanceof PyInteger || o instanceof PyLong))
-            throw Py.TypeError("can't multiply string by non-int");
+            return null;
         int count = ((PyInteger)o.__int__()).getValue();
         return repeat(count);
     }
