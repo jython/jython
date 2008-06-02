@@ -874,7 +874,7 @@ elif_clause[List elifs]
         stmtType[] b = (stmtType[])$stmts.stypes.toArray(new stmtType[$stmts.stypes.size()]);
         //the stmtType[0] is intended to be replaced in the iterator of the if_stmt rule.
         //there is probably a better way to do this.
-        elifs.add(new If($Elif, $test.etype, b, new stmtType[0]));
+        elifs.add(new If($test.etype, $test.etype, b, new stmtType[0]));
     }
     ;
 
