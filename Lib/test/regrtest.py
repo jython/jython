@@ -44,6 +44,9 @@ resources to test.  Currently only the following are defined:
     network -   It is okay to run tests that use external network
                 resource, e.g. testing SSL support for sockets.
 
+    subprocess  Run tests that invoke subprocesses, in particular
+                test_subprocess.
+
 To enable all resources except one, use '-uall,-<resource>'.  For
 example, to run all the tests except for the network tests, give the
 option '-uall,-network'.
@@ -179,7 +182,7 @@ def with_indirect_args(args):
 
 
 
-RESOURCE_NAMES = ['curses', 'largefile', 'network']
+RESOURCE_NAMES = ['curses', 'largefile', 'network', 'subprocess']
 
 
 def usage(code, msg=''):

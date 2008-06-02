@@ -127,6 +127,16 @@ public class PyUnicode extends PyString {
         return new PyString("u" + encode_UnicodeEscape(string, true));
     }
     
+    @ExposedMethod
+    final PyObject unicode___getitem__(PyObject index) {
+        return seq___finditem__(index);
+    }
+    
+    @ExposedMethod(defaults = "null")
+    final PyObject unicode___getslice__(PyObject start, PyObject stop, PyObject step) {
+        return seq___getslice__(start, stop, step);
+    }
+
     @ExposedMethod(type = MethodType.CMP)
     final int unicode___cmp__(PyObject other) {
         return str___cmp__(other);

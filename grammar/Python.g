@@ -705,9 +705,9 @@ term : factor ((STAR^ | SLASH^ | PERCENT^ | DOUBLESLASH^ ) factor)*
      ;
 
 //factor: ('+'|'-'|'~') factor | power
-factor : PLUS factor -> ^(UAdd factor)
-       | MINUS factor -> ^(USub factor)
-       | TILDE factor -> ^(Invert factor)
+factor : PLUS factor -> ^(UAdd PLUS factor)
+       | MINUS factor -> ^(USub MINUS factor)
+       | TILDE factor -> ^(Invert TILDE factor)
        | power
        ;
 
@@ -721,8 +721,8 @@ power : atom (trailer^)* (options {greedy=true;}:DOUBLESTAR^ factor)?
 //       '`' testlist1 '`' |
 //       NAME | NUMBER | STRING+)
 atom : LPAREN 
-       ( yield_expr    -> ^(Parens yield_expr)
-       | testlist_gexp {debug("parsed testlist_gexp");} -> ^(Parens testlist_gexp)
+       ( yield_expr    -> ^(Parens LPAREN yield_expr)
+       | testlist_gexp {debug("parsed testlist_gexp");} -> ^(Parens LPAREN testlist_gexp)
        | -> ^(Tuple)
        )
        RPAREN

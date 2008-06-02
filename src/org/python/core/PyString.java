@@ -461,12 +461,12 @@ public class PyString extends PyBaseString
     }
 
     @ExposedMethod
-    public PyObject str___getitem__(PyObject index) {
+    final PyObject str___getitem__(PyObject index) {
         return seq___finditem__(index);
     }
     
     @ExposedMethod(defaults = "null")
-    public PyObject str___getslice__(PyObject start, PyObject stop, PyObject step) {
+    final PyObject str___getslice__(PyObject start, PyObject stop, PyObject step) {
         return seq___getslice__(start, stop, step);
     }
 
