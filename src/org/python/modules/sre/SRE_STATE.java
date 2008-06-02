@@ -31,7 +31,7 @@ for line in sys.stdin:
        print '%s = %s;' % (' '.join(segs[:-1]), segs[-1])                                                          
      */
     //BEGIN generated code
-    public static final int SRE_MAGIC = 20030419;
+    public static final int SRE_MAGIC = 20031017;
     public static final int SRE_OP_FAILURE = 0;
     public static final int SRE_OP_SUCCESS = 1;
     public static final int SRE_OP_ANY = 2;
