@@ -207,6 +207,29 @@ class _nio_impl:
             self._timeout_millis = int(timeout*1000)
             self.jsocket.setSoTimeout(self._timeout_millis)
 
+    def getsockopt(self, option):
+        if self.options.has_key(option):
+            result = getattr(self.jsocket, "get%s" % self.options[option])()
+            if option == SO_LINGER:
+                if result == -1:
+                    enabled, linger_time = 0, 0
+                else:
+                    enabled, linger_time = 1, result
+                return struct.pack('ii', enabled, linger_time)
+            return result
+        else:
+            raise error(errno.ENOPROTOOPT, "Option not supported on socket(%s): %d" % (str(self.jsocket), option))
+
+    def setsockopt(self, option, value):
+        if self.options.has_key(option):
+            if option == SO_LINGER:
+                values = struct.unpack('ii', value)
+                self.jsocket.setSoLinger(*values)
+            else:
+                getattr(self.jsocket, "set%s" % self.options[option])(value)
+        else:
+            raise error(errno.ENOPROTOOPT, "Option not supported on socket(%s): %d" % (str(self.jsocket), option))
+
     def close(self):
         self.jsocket.close()
 
@@ -229,6 +252,17 @@ class _nio_impl:
         return self.socketio
 
 class _client_socket_impl(_nio_impl):
+
+    options = {
+        SO_KEEPALIVE:   'KeepAlive',
+        SO_LINGER:      'SoLinger',
+        SO_OOBINLINE:   'OOBInline',
+        SO_RCVBUF:      'ReceiveBufferSize',
+        SO_REUSEADDR:   'ReuseAddress',
+        SO_SNDBUF:      'SendBufferSize',
+        SO_TIMEOUT:     'SoTimeout',
+        TCP_NODELAY:    'TcpNoDelay',
+    }
 
     def __init__(self, socket=None):
         if socket:
@@ -755,7 +789,7 @@ class _udpsocket(_nonblocking_api_mixin):
     addr = None
 
     def __init__(self):
-        self.sock_impl = None
+        _nonblocking_api_mixin.__init__(self)
 
     def bind(self, addr):
         try:
