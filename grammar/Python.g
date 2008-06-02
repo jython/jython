@@ -705,9 +705,9 @@ term : factor ((STAR^ | SLASH^ | PERCENT^ | DOUBLESLASH^ ) factor)*
      ;
 
 //factor: ('+'|'-'|'~') factor | power
-factor : PLUS factor -> ^(UAdd factor)
-       | MINUS factor -> ^(USub factor)
-       | TILDE factor -> ^(Invert factor)
+factor : PLUS factor -> ^(UAdd PLUS factor)
+       | MINUS factor -> ^(USub MINUS factor)
+       | TILDE factor -> ^(Invert TILDE factor)
        | power
        ;
 

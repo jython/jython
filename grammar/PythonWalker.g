@@ -1074,6 +1074,8 @@ test[expr_contextType ctype] returns [exprType etype, PythonTree marker, boolean
     }
     | ^(binop left=test[ctype] right=test[ctype]) {
         debug("BinOp matched");
+        //XXX: BinOp's line/col info in CPython is subtle -- sometimes left.marker is correct
+        //        as I have it here, but sometimes $binop.start is more correct.
         $etype = new BinOp($left.marker, left.etype, $binop.op, right.etype);
         $marker = $left.marker;
     }
@@ -1235,18 +1237,18 @@ atom[expr_contextType ctype] returns [exprType etype, PythonTree marker, boolean
         }
         $marker = $stringlist.marker;
     }
-    | ^(USub test[ctype]) {
+    | ^(USub tok=MINUS test[ctype]) {
         debug("USub matched " + $test.etype);
-        $etype = negate($USub, $test.etype);
-        $marker = $USub;
+        $etype = negate($tok, $test.etype);
+        $marker = $tok;
     }
-    | ^(UAdd test[ctype]) {
-        $etype = new UnaryOp($UAdd, unaryopType.UAdd, $test.etype);
-        $marker = $UAdd;
+    | ^(UAdd tok=PLUS test[ctype]) {
+        $etype = new UnaryOp($tok, unaryopType.UAdd, $test.etype);
+        $marker = $tok;
     }
-    | ^(Invert test[ctype]) {
-        $etype = new UnaryOp($Invert, unaryopType.Invert, $test.etype);
-        $marker = $Invert;
+    | ^(Invert tok=TILDE test[ctype]) {
+        $etype = new UnaryOp($tok, unaryopType.Invert, $test.etype);
+        $marker = $tok;
     }
     | ^(NOT test[ctype]) {
         $etype = new UnaryOp($NOT, unaryopType.Not, $test.etype);
