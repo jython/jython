@@ -600,6 +600,8 @@ def printlist(x, width=70, indent=4):
     """
 
     line = ' ' * indent
+    x = list(x)
+    x.sort()
     for one in map(str, x):
         w = len(line) + len(one)
         if line[-1:] == ' ':
