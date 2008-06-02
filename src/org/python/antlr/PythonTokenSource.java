@@ -250,6 +250,11 @@ public class PythonTokenSource implements TokenSource {
 		return buf.toString();
 	}
 
+    //FIXME: needed this for the Antlr 3.1b interface change.
+    public String getSourceName() {
+        return "XXX-need-real-name.py";
+    }
+
 }
 
 /* More example input / output pairs with code simplified to single chars

@@ -105,31 +105,30 @@ int startPos=-1;
 
     public Token nextToken() {
 		while (true) {
-			token = null;
-			channel = Token.DEFAULT_CHANNEL;
-			tokenStartCharIndex = input.index();
-			tokenStartCharPositionInLine = input.getCharPositionInLine();
-			tokenStartLine = input.getLine();
-			text = null;
+			state.token = null;
+			state.channel = Token.DEFAULT_CHANNEL;
+			state.tokenStartCharIndex = input.index();
+			state.tokenStartCharPositionInLine = input.getCharPositionInLine();
+			state.tokenStartLine = input.getLine();
+			state.text = null;
 			if ( input.LA(1)==CharStream.EOF ) {
-                return Token.EOF_TOKEN;
-            }
-            try {
-                mTokens();
-				if ( token==null ) {
+				return Token.EOF_TOKEN;
+			}
+			try {
+				mTokens();
+				if ( state.token==null ) {
 					emit();
 				}
-				else if ( token==Token.SKIP_TOKEN ) {
+				else if ( state.token==Token.SKIP_TOKEN ) {
 					continue;
 				}
-				return token;
+				return state.token;
 			}
             catch (RecognitionException re) {
                 throw new ParseException(getErrorMessage(re, this.getTokenNames()));
             }
         }
     }
-
 }
 
 single_input : NEWLINE
@@ -710,8 +709,8 @@ LEADING_WS
             emit(new ClassicToken(LEADING_WS,new String(indentation)));
             }
             // kill trailing newline if present and then ignore
-            ( ('\r')? '\n' {if (token!=null) token.setChannel(HIDDEN); else $channel=HIDDEN;})*
-           // {token.setChannel(99); }
+            ( ('\r')? '\n' {if (state.token!=null) state.token.setChannel(HIDDEN); else $channel=HIDDEN;})*
+           // {state.token.setChannel(99); }
         )
     ;
 
