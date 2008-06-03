@@ -2,6 +2,8 @@ package org.python.core;
 
 public abstract class PyNewWrapper extends PyBuiltinMethod {
 
+    public PyType for_type;
+
     /**
      * Creates a wrapper without binding it to a type. setWrappedType must be called
      * before this wrapper can be used.
@@ -19,6 +21,14 @@ public abstract class PyNewWrapper extends PyBuiltinMethod {
         for_type = (PyType)getSelf();
     }
 
+
+    // init true => invoke subtype.__init__(...) unless it is known to be
+    // unnecessary
+    public abstract PyObject new_impl(boolean init,
+                                      PyType subtype,
+                                      PyObject[] args,
+                                      String[] keywords);
+    
     public PyBuiltinFunction bind(PyObject self) {
         throw Py.SystemError("__new__ wrappers are already bound");
     }
@@ -63,13 +73,4 @@ public abstract class PyNewWrapper extends PyBuiltinMethod {
         System.arraycopy(args, 1, rest, 0, nargs - 1);
         return new_impl(false, subtype, rest, keywords);
     }
-
-    // init true => invoke subtype.__init__(...) unless it is known to be
-    // unnecessary
-    public abstract PyObject new_impl(boolean init,
-                                      PyType subtype,
-                                      PyObject[] args,
-                                      String[] keywords);
-    
-    protected PyType for_type;
 }
