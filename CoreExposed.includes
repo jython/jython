@@ -31,6 +31,9 @@ org/python/core/PySuper.class
 org/python/core/PyTuple.class
 org/python/core/PyType.class
 org/python/core/PyUnicode.class
+org/python/modules/_weakref/CallableProxyType.class
+org/python/modules/_weakref/ReferenceType.class
+org/python/modules/_weakref/ProxyType.class
 org/python/modules/collections/PyDefaultDict.class
 org/python/modules/collections/PyDeque.class
 org/python/modules/random/PyRandom.class

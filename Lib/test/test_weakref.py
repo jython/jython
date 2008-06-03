@@ -608,8 +608,9 @@ class ReferencesTestCase(TestBase):
         self.check_gc_during_creation(weakref.proxy)
 
     def check_gc_during_creation(self, makeref):
-        thresholds = gc.get_threshold()
-        gc.set_threshold(1, 1, 1)
+        # XXX: threshold not applicable to Jython 
+        #thresholds = gc.get_threshold()
+        #gc.set_threshold(1, 1, 1)
         gc.collect()
         class A:
             pass
@@ -630,7 +631,9 @@ class ReferencesTestCase(TestBase):
             weakref.ref(referenced, callback)
 
         finally:
-            gc.set_threshold(*thresholds)
+            # XXX: threshold not applicable to Jython 
+            #gc.set_threshold(*thresholds)
+            pass
 
     def test_ref_created_during_del(self):
         # Bug #1377858
