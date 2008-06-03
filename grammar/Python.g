@@ -86,7 +86,7 @@ tokens {
     Import;
     ImportFrom;
     Level;
-    Name;
+    NameTok;
     Body;
     ClassDef;
     Bases; 
@@ -119,7 +119,7 @@ tokens {
     For;
     Return;
     Yield;
-    Str;
+    StrTok;
     NumTok;
     IsNot;
     In;
@@ -184,17 +184,22 @@ tokens {
     Brackets;
 }
 
-@header { 
+@header {
 package org.python.antlr;
 
 import org.antlr.runtime.CommonToken;
 
 import org.python.antlr.ParseException;
 import org.python.antlr.PythonTree;
+import org.python.antlr.ast.Name;
 import org.python.antlr.ast.Num;
+import org.python.antlr.ast.Str;
 import org.python.core.Py;
+import org.python.core.PyString;
+import org.python.core.PyUnicode;
 
 import java.math.BigInteger;
+import java.util.Iterator;
 } 
 
 @members {
@@ -246,6 +251,84 @@ import java.math.BigInteger;
         return Py.newInteger((int) l);
     }
 
+    class StringPair {
+        private String s;
+        private boolean unicode;
+
+        StringPair(String s, boolean unicode) {
+            this.s = s;
+            this.unicode = unicode;
+        }
+        String getString() {
+            return s;
+        }
+        
+        boolean isUnicode() {
+            return unicode;
+        }
+    }
+
+    PyString extractStrings(List s) {
+        boolean ustring = false;
+        Token last = null;
+        StringBuffer sb = new StringBuffer();
+        Iterator iter = s.iterator();
+        while (iter.hasNext()) {
+            last = (Token)iter.next();
+            StringPair sp = extractString(last);
+            if (sp.isUnicode()) {
+                ustring = true;
+            }
+            sb.append(sp.getString());
+        }
+        if (ustring) {
+            return new PyUnicode(sb.toString());
+        }
+        return new PyString(sb.toString());
+    }
+
+    StringPair extractString(Token t) {
+        String s = t.getText();
+        char quoteChar = s.charAt(0);
+        int start=0;
+        boolean ustring = false;
+        if (quoteChar == 'u' || quoteChar == 'U') {
+            ustring = true;
+            start++;
+        }
+        quoteChar = s.charAt(start);
+        boolean raw = false;
+        if (quoteChar == 'r' || quoteChar == 'R') {
+            raw = true;
+            start++;
+        }
+        int quotes = 3;
+        if (s.length() - start == 2) {
+            quotes = 1;
+        }
+        if (s.charAt(start) != s.charAt(start+1)) {
+            quotes = 1;
+        }
+
+        if (raw) {
+            return new StringPair(s.substring(quotes+start, s.length()-quotes), ustring);
+        } else {
+            StringBuffer sb = new StringBuffer(s.length());
+            char[] ca = s.toCharArray();
+            int n = ca.length-quotes;
+            int i=quotes+start;
+            int last_i=i;
+            return new StringPair(PyString.decode_UnicodeEscape(s, i, n, "strict", ustring), ustring);
+            //return decode_UnicodeEscape(s, i, n, "strict", ustring);
+        }
+    }
+
+    Token extractStringToken(List s) {
+        //XXX: really we want the *last* one.
+        return (Token)s.get(0);
+    }
+
+ 
     protected void mismatch(IntStream input, int ttype, BitSet follow) throws RecognitionException {
         throw new MismatchedTokenException(ttype, input);
     }
@@ -369,7 +452,7 @@ dotted_attr
 
 //funcdef: [decorators] 'def' NAME parameters ':' suite
 funcdef : decorators? 'def' NAME parameters COLON suite
-       -> ^(FunctionDef 'def' ^(Name NAME) parameters ^(Body suite) ^(Decorators decorators?))
+       -> ^(FunctionDef 'def' ^(NameTok NAME) parameters ^(Body suite) ^(Decorators decorators?))
         ;
 
 //parameters: '(' [varargslist] ')'
@@ -577,11 +660,11 @@ import_name : 'import' dotted_as_names
 //              'import' ('*' | '(' import_as_names ')' | import_as_names))
 import_from: 'from' (DOT* dotted_name | DOT+) 'import'
               (STAR
-             -> ^(ImportFrom 'from' ^(Level DOT*)? ^(Name dotted_name)? ^(Import STAR))
+             -> ^(ImportFrom 'from' ^(Level DOT*)? ^(NameTok dotted_name)? ^(Import STAR))
               | import_as_names
-             -> ^(ImportFrom 'from' ^(Level DOT*)? ^(Name dotted_name)? ^(Import import_as_names))
+             -> ^(ImportFrom 'from' ^(Level DOT*)? ^(NameTok dotted_name)? ^(Import import_as_names))
               | LPAREN import_as_names RPAREN
-             -> ^(ImportFrom 'from' ^(Level DOT*)? ^(Name dotted_name)? ^(Import import_as_names))
+             -> ^(ImportFrom 'from' ^(Level DOT*)? ^(NameTok dotted_name)? ^(Import import_as_names))
               )
            ;
 
@@ -594,7 +677,7 @@ import_as_name : name=NAME (keyAS asname=NAME)?
               -> ^(Alias $name ^(Asname $asname)?)
                ;
 
-//XXX: when does Grammar match "dotted_name NAME NAME"? This may be a big
+//XXX: when does CPython Grammar match "dotted_name NAME NAME"? This may be a big
 //       problem because of the keyAS rule, which matches NAME (needed to allow
 //       'as' to be a method name for Java integration).
 
@@ -681,7 +764,7 @@ with_var: (keyAS | NAME) expr
 except_clause : 'except' (t1=test (COMMA t2=test)?)? COLON suite
              //Note: passing the 'except' keyword on so we can pass the same offset
              //      as CPython.
-             -> ^(ExceptHandler 'except' ^(Type $t1)? ^(Name $t2)? ^(Body suite))
+             -> ^(ExceptHandler 'except' ^(Type $t1)? ^(NameTok $t2)? ^(Body suite))
               ;
 
 //suite: simple_stmt | NEWLINE INDENT stmt+ DEDENT
@@ -782,12 +865,13 @@ atom : LPAREN
        RBRACK
      | LCURLY (dictmaker)? RCURLY -> ^(Dict LCURLY ^(Elts dictmaker)?)
      | BACKQUOTE testlist BACKQUOTE -> ^(Repr BACKQUOTE testlist)
-     | NAME {debug("parsed NAME");} -> ^(Name NAME)
+     | NAME -> ^(NameTok NAME)
      | INT -> ^(NumTok<Num>[$INT, makeInt($INT)])
      | LONGINT -> ^(NumTok<Num>[$LONGINT, makeInt($LONGINT)])
      | FLOAT -> ^(NumTok<Num>[$FLOAT, makeFloat($FLOAT)])
      | COMPLEX -> ^(NumTok<Num>[$COMPLEX, makeComplex($COMPLEX)])
-     | (STRING)+ -> ^(Str STRING+)
+     | (S+=STRING)+ {debug("S+: " + $S);} 
+    -> ^(StrTok<Str>[extractStringToken($S), extractStrings($S)])
      ;
 
 //listmaker: test ( list_for | (',' test)* [','] )
@@ -862,7 +946,7 @@ dictmaker : test COLON test
 
 //classdef: 'class' NAME ['(' [testlist] ')'] ':' suite
 classdef: 'class' NAME (LPAREN testlist? RPAREN)? COLON suite
-    -> ^(ClassDef 'class' ^(Name NAME) ^(Bases testlist)? ^(Body suite))
+    -> ^(ClassDef 'class' ^(NameTok NAME) ^(Bases testlist)? ^(Body suite))
     ;
 
 //arglist: (argument ',')* (argument [',']| '*' test [',' '**' test] | '**' test)

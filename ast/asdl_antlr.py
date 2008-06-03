@@ -350,7 +350,7 @@ class JavaVisitor(EmitVisitor):
         'int' : 'int',
         'bool' : 'boolean',
         'identifier' : 'String',
-        'string' : 'String',
+        'string' : 'PyString',
         'object' : 'Object', # was PyObject
         'Token'  : 'Token', # to get antlr token type through
         'PythonTree'  : 'PythonTree', # also for antlr type

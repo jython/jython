@@ -71,7 +71,6 @@ import org.python.antlr.ast.Repr;
 import org.python.antlr.ast.Return;
 import org.python.antlr.ast.Str;
 import org.python.antlr.ast.UnaryOp;
-import org.python.antlr.ast.Unicode;
 import org.python.antlr.ast.With;
 import org.python.antlr.ast.While;
 import org.python.antlr.ast.Yield;
@@ -176,72 +175,6 @@ import java.util.Set;
         return new argumentsType(t, p, s, k, d);
     }
 
-    class StringPair {
-        private String s;
-        private boolean unicode;
-
-        StringPair(String s, boolean unicode) {
-            this.s = s;
-            this.unicode = unicode;
-        }
-        String getString() {
-            return s;
-        }
-        
-        boolean isUnicode() {
-            return unicode;
-        }
-    }
-
-    StringPair extractStrings(List s) {
-        boolean ustring = false;
-        StringBuffer sb = new StringBuffer();
-        Iterator iter = s.iterator();
-        while (iter.hasNext()) {
-            StringPair sp = extractString((String)iter.next());
-            if (sp.isUnicode()) {
-                ustring = true;
-            }
-            sb.append(sp.getString());
-        }
-        return new StringPair(sb.toString(), ustring);
-    }
-
-    StringPair extractString(String s) {
-        char quoteChar = s.charAt(0);
-        int start=0;
-        boolean ustring = false;
-        if (quoteChar == 'u' || quoteChar == 'U') {
-            ustring = true;
-            start++;
-        }
-        quoteChar = s.charAt(start);
-        boolean raw = false;
-        if (quoteChar == 'r' || quoteChar == 'R') {
-            raw = true;
-            start++;
-        }
-        int quotes = 3;
-        if (s.length() - start == 2) {
-            quotes = 1;
-        }
-        if (s.charAt(start) != s.charAt(start+1)) {
-            quotes = 1;
-        }
-
-        if (raw) {
-            return new StringPair(s.substring(quotes+start, s.length()-quotes), ustring);
-        } else {
-            StringBuffer sb = new StringBuffer(s.length());
-            char[] ca = s.toCharArray();
-            int n = ca.length-quotes;
-            int i=quotes+start;
-            int last_i=i;
-            return new StringPair(PyString.decode_UnicodeEscape(s, i, n, "strict", ustring), ustring);
-            //return decode_UnicodeEscape(s, i, n, "strict", ustring);
-        }
-    }
-
     private stmtType makeTryExcept(PythonTree t, List body, List handlers, List orelse, List finBody) {
         stmtType[] b = (stmtType[])body.toArray(new stmtType[body.size()]);
         excepthandlerType[] e = (excepthandlerType[])handlers.toArray(new excepthandlerType[handlers.size()]);
@@ -344,7 +277,7 @@ module returns [modType mod]
     ;
 
 funcdef
-    : ^(FunctionDef tok='def' ^(Name NAME) ^(Arguments varargslist?) ^(Body stmts) ^(Decorators decorators?)) {
+    : ^(FunctionDef tok='def' ^(NameTok NAME) ^(Arguments varargslist?) ^(Body stmts) ^(Decorators decorators?)) {
         $stmts::statements.add(makeFunctionDef($tok, $NAME, $varargslist.args, $stmts.stypes, $decorators.etypes));
     }
     ;
@@ -682,9 +615,9 @@ import_stmt
         aliasType[] n = (aliasType[])nms.toArray(new aliasType[nms.size()]);
         $stmts::statements.add(new Import($tok, n));
     }
-    | ^(ImportFrom tok='from' (^(Level dots))? (^(Name dotted_name))? ^(Import STAR)) {
+    | ^(ImportFrom tok='from' (^(Level dots))? (^(NameTok dotted_name))? ^(Import STAR)) {
         String name = "";
-        if ($Name != null) {
+        if ($NameTok != null) {
             name = $dotted_name.result;
         }
         int level = 0;
@@ -694,9 +627,9 @@ import_stmt
         aliasType[] n = (aliasType[])nms.toArray(new aliasType[nms.size()]);
         $stmts::statements.add(new ImportFrom($tok, name, new aliasType[]{new aliasType($STAR, "*", null)}, level));
     }
-    | ^(ImportFrom tok='from' (^(Level dots))? (^(Name dotted_name))? ^(Import import_as_name[nms]+)) {
+    | ^(ImportFrom tok='from' (^(Level dots))? (^(NameTok dotted_name))? ^(Import import_as_name[nms]+)) {
         String name = "";
-        if ($Name != null) {
+        if ($NameTok != null) {
             name = $dotted_name.result;
         }
         int level = 0;
@@ -883,7 +816,7 @@ try_stmt
     ;
 
 except_clause[List handlers]
-    : ^(ExceptHandler 'except' (^(Type type=test[expr_contextType.Load]))? (^(Name name=test[expr_contextType.Store]))? ^(Body stmts)) {
+    : ^(ExceptHandler 'except' (^(Type type=test[expr_contextType.Load]))? (^(NameTok name=test[expr_contextType.Store]))? ^(Body stmts)) {
         stmtType[] b;
         if ($stmts.start != null) {
             b = (stmtType[])$stmts.stypes.toArray(new stmtType[$stmts.stypes.size()]);
@@ -893,7 +826,7 @@ except_clause[List handlers]
             t = $type.etype;
         }
         exprType n = null;
-        if ($Name != null) {
+        if ($NameTok != null) {
             n = $name.etype;
         }
         handlers.add(new excepthandlerType($ExceptHandler, t, n, b, $ExceptHandler.getLine(), $ExceptHandler.getCharPositionInLine()));
@@ -1059,7 +992,11 @@ test[expr_contextType ctype] returns [exprType etype, PythonTree marker, boolean
         $etype = (Num)$NumTok;
         $marker = (Num)$NumTok;
     }
-    ;
+    | StrTok {
+        $etype = (Str)$StrTok;
+        $marker = (Str)$StrTok;
+    }
+     ;
 
 comp_op returns [cmpopType op]
     : LESS {$op = cmpopType.Lt;}
@@ -1133,7 +1070,7 @@ atom[expr_contextType ctype] returns [exprType etype, PythonTree marker, boolean
         $etype = new Repr($BACKQUOTE, $test.etype);
         $marker = $BACKQUOTE;
     }
-    | ^(Name NAME) {
+    | ^(NameTok NAME) {
         debug("matched Name " + $NAME.text);
         $etype = new Name($NAME, $NAME.text, ctype);
         $marker = $NAME;
@@ -1173,15 +1110,6 @@ atom[expr_contextType ctype] returns [exprType etype, PythonTree marker, boolean
         }
         $etype = new Subscript($test.marker, $test.etype, s, ctype);
         $marker = $test.marker;
-    }
-    | stringlist {
-        StringPair sp = extractStrings($stringlist.strings);
-        if (sp.isUnicode()) {
-            $etype = new Unicode($stringlist.marker, sp.getString());
-        } else {
-            $etype = new Str($stringlist.marker, sp.getString());
-        }
-        $marker = $stringlist.marker;
     }
     | ^(USub tok=MINUS test[ctype]) {
         debug("USub matched " + $test.etype);
@@ -1241,17 +1169,6 @@ comprehension[expr_contextType ctype] returns [exprType etype, PythonTree marker
         $etype = new GeneratorExp($test.marker, $test.etype, c);
         $marker = $GeneratorExp;
     }
-    ;
-
-stringlist returns [PythonTree marker, List strings]
-@init {
-    List strs = new ArrayList();
-}
-    : ^(Str string[strs]+) {$strings = strs; $marker = $string.start;}
-    ;
-
-string[List strs]
-    : STRING {strs.add($STRING.text);}
     ;
 
 lambdef returns [exprType etype]
@@ -1314,7 +1231,7 @@ subscript [List subs]
           ;
 
 classdef
-    : ^(ClassDef tok='class' ^(Name classname=NAME) (^(Bases bases))? ^(Body stmts)) {
+    : ^(ClassDef tok='class' ^(NameTok classname=NAME) (^(Bases bases))? ^(Body stmts)) {
         List b;
         if ($Bases != null) {
             b = $bases.names;

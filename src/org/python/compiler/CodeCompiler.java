@@ -17,6 +17,8 @@ import org.python.core.PyFloat;
 import org.python.core.PyInteger;
 import org.python.core.PyLong;
 import org.python.core.PyObject;
+import org.python.core.PyString;
+import org.python.core.PyUnicode;
 import org.python.antlr.ParseException;
 import org.python.antlr.PythonTree;
 import org.python.antlr.Visitor;
@@ -1930,23 +1932,19 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         return null;
     }
 
-    public Object visitUnicode(Unicode node) throws Exception {
-        String s = node.s;
-        if (s.length() > 32767) {
-            throw new ParseException(
-                "string constant too large (more than 32767 characters)", node);
-        }
-        module.PyUnicode(s).get(code);
-        return null;
-    }
-
     public Object visitStr(Str node) throws Exception {
-        String s = node.s;
-        if (s.length() > 32767) {
+        PyString s = (PyString)node.s;
+        if (s.__len__() > 32767) {
             throw new ParseException(
                 "string constant too large (more than 32767 characters)", node);
         }
-        module.PyString(s).get(code);
+        //FIXME: This is cheating -- need to rewrite module.PyString to deal in PyString
+        //and PyUnicode objects and not java.lang.String.
+        if (s instanceof PyUnicode) {
+            module.PyUnicode(s.asString()).get(code);
+        } else {
+            module.PyString(s.asString()).get(code);
+        }
         return null;
     }
 
