@@ -31,11 +31,12 @@ public class WeakrefModule implements ClassDictInit {
 
     public static ProxyType proxy(PyObject object)  {
         GlobalRef gref = GlobalRef.newInstance(object);
-        ProxyType ret = (ProxyType)gref.find(ProxyType.class);
+        boolean callable = object.isCallable();
+        ProxyType ret = (ProxyType)gref.find(callable ? CallableProxyType.class : ProxyType.class);
         if (ret != null) {
             return ret;
         }
-        if (object.isCallable()) {
+        if (callable) {
             return new CallableProxyType(GlobalRef.newInstance(object), null);
         } else {
             return new ProxyType(GlobalRef.newInstance(object), null);
@@ -43,6 +44,9 @@ public class WeakrefModule implements ClassDictInit {
     }
 
     public static ProxyType proxy(PyObject object, PyObject callback) {
+        if (callback == Py.None) {
+            return proxy(object);
+        }
         if (object.isCallable()) {
             return new CallableProxyType(GlobalRef.newInstance(object), callback);
         } else {

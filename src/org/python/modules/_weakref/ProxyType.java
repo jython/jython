@@ -19,8 +19,12 @@ public class ProxyType extends AbstractReference {
 
     public static final PyType TYPE = PyType.fromClass(ProxyType.class);
 
+    public ProxyType(PyType subType, GlobalRef ref, PyObject callback) {
+        super(subType, ref, callback);
+    }
+
     public ProxyType(GlobalRef ref, PyObject callback) {
-        super(ref, callback);
+        this(TYPE, ref, callback);
     }
 
     public boolean __nonzero__() { return py().__nonzero__(); }

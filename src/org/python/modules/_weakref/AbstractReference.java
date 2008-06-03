@@ -21,10 +21,6 @@ public abstract class AbstractReference extends PyObject {
         gref.add(this);
     }
 
-    public AbstractReference(GlobalRef gref, PyObject callback) {
-        this(TYPE, gref, callback);
-    }
-
     void call() {
         if (callback == null)
             return;

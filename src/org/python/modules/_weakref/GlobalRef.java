@@ -89,10 +89,11 @@ public class GlobalRef extends WeakReference {
     synchronized void call() {
         for (int i = references.size() - 1; i >= 0; i--) {
             AbstractReference r = getReferenceAt(i);
-            if (r == null)
+            if (r == null) {
                 references.removeElementAt(i);
-            else
+            } else {
                 r.call();
+            }
         }
     }
 
@@ -110,10 +111,11 @@ public class GlobalRef extends WeakReference {
         Vector list = new Vector();
         for (int i = references.size() - 1; i >= 0; i--) {
             AbstractReference r = getReferenceAt(i);
-            if (r == null)
+            if (r == null) {
                 references.removeElementAt(i);
-            else
+            } else {
                 list.addElement(r);
+            }
         }
         return new PyList(list);
     }
