@@ -57,6 +57,7 @@ class EmitVisitor(asdl.VisitorBase):
         print >> self.file, 'package org.python.antlr.ast;'
         if refersToPythonTree:
             print >> self.file, 'import org.python.antlr.PythonTree;'
+            print >> self.file, 'import org.antlr.runtime.CommonToken;'
             print >> self.file, 'import org.antlr.runtime.Token;'
         if useDataOutput:
             print >> self.file, 'import java.io.DataOutputStream;'
@@ -158,10 +159,17 @@ class JavaVisitor(EmitVisitor):
         self.open("%sType" % name)
         self.emit("public abstract class %(name)sType extends PythonTree {" %
                     locals(), depth)
-        #self.emit("public %(name)sType(Token token) {" % locals(), depth+1)
-        #self.emit("super(token);", depth+2)
-        #self.emit("}", depth+1)
-        #self.emit("", 0)
+        self.emit("", 0)
+
+        self.emit("public %(name)sType(int ttype, Token token) {" % locals(), depth+1)
+        self.emit("super(ttype, token);", depth+2)
+        self.emit("}", depth+1)
+        self.emit("", 0)
+
+        self.emit("public %(name)sType(Token token) {" % locals(), depth+1)
+        self.emit("super(token);", depth+2)
+        self.emit("}", depth+1)
+        self.emit("", 0)
 
         self.emit("public %(name)sType(PythonTree node) {" % locals(), depth+1)
         self.emit("super(node);", depth+2)
@@ -255,15 +263,24 @@ class JavaVisitor(EmitVisitor):
 
     def javaMethods(self, type, clsname, ctorname, fields, depth):
         # The java ctors
+
         token = asdl.Field('Token', 'token')
         token.typedef = False
         fpargs = ", ".join([self.fieldDef(f) for f in [token] + fields])
+        self.emit("public %s(%s) {" % (ctorname, fpargs), depth)
+        self.emit("super(token);", depth+1)
+        self.javaConstructorHelper(fields, depth)
+        self.emit("}", depth)
+        self.emit("", 0)
 
-        #self.emit("public %s(%s) {" % (ctorname, fpargs), depth)
-        #self.emit("super(token);", depth+1)
-        #self.javaConstructorHelper(fields, depth)
-        #self.emit("}", depth)
-        #self.emit("", 0)
+        ttype = asdl.Field('int', 'ttype')
+        ttype.typedef = False
+        fpargs = ", ".join([self.fieldDef(f) for f in [ttype, token] + fields])
+        self.emit("public %s(%s) {" % (ctorname, fpargs), depth)
+        self.emit("super(ttype, token);", depth+1)
+        self.javaConstructorHelper(fields, depth)
+        self.emit("}", depth)
+        self.emit("", 0)
 
         tree = asdl.Field('PythonTree', 'tree')
         tree.typedef = False

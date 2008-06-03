@@ -120,7 +120,7 @@ tokens {
     Return;
     Yield;
     Str;
-    Num;
+    NumTok;
     IsNot;
     In;
     NotIn;
@@ -187,8 +187,14 @@ tokens {
 @header { 
 package org.python.antlr;
 
+import org.antlr.runtime.CommonToken;
+
 import org.python.antlr.ParseException;
 import org.python.antlr.PythonTree;
+import org.python.antlr.ast.Num;
+import org.python.core.Py;
+
+import java.math.BigInteger;
 } 
 
 @members {
@@ -198,6 +204,46 @@ import org.python.antlr.PythonTree;
         if (debugOn) {
             System.out.println(message);
         }
+    }
+
+    Object makeFloat(Token t) {
+        debug("makeFloat matched " + t.getText());
+        return Py.newFloat(Double.valueOf(t.getText()));
+    }
+
+    Object makeComplex(Token t) {
+        String s = t.getText();
+        s = s.substring(0, s.length() - 1);
+        return Py.newImaginary(Double.valueOf(s));
+    }
+
+    Object makeInt(Token t) {
+        debug("Num matched " + t.getText());
+        String s = t.getText();
+        int radix = 10;
+        if (s.startsWith("0x") || s.startsWith("0X")) {
+            radix = 16;
+            s = s.substring(2, s.length());
+        } else if (s.startsWith("0")) {
+            radix = 8;
+        }
+        if (s.endsWith("L") || s.endsWith("l")) {
+            s = s.substring(0, s.length()-1);
+            return Py.newLong(new BigInteger(s, radix));
+        }
+        int ndigits = s.length();
+        int i=0;
+        while (i < ndigits && s.charAt(i) == '0')
+            i++;
+        if ((ndigits - i) > 11) {
+            return Py.newLong(new BigInteger(s, radix));
+        }
+
+        long l = Long.valueOf(s, radix).longValue();
+        if (l > 0xffffffffl || (radix == 10 && l > Integer.MAX_VALUE)) {
+            return Py.newLong(new BigInteger(s, radix));
+        }
+        return Py.newInteger((int) l);
     }
 
     protected void mismatch(IntStream input, int ttype, BitSet follow) throws RecognitionException {
@@ -737,10 +783,10 @@ atom : LPAREN
      | LCURLY (dictmaker)? RCURLY -> ^(Dict LCURLY ^(Elts dictmaker)?)
      | BACKQUOTE testlist BACKQUOTE -> ^(Repr BACKQUOTE testlist)
      | NAME {debug("parsed NAME");} -> ^(Name NAME)
-     | INT -> ^(Num INT)
-     | LONGINT -> ^(Num LONGINT)
-     | FLOAT -> ^(Num FLOAT)
-     | COMPLEX -> ^(Num COMPLEX)
+     | INT -> ^(NumTok<Num>[$INT, makeInt($INT)])
+     | LONGINT -> ^(NumTok<Num>[$LONGINT, makeInt($LONGINT)])
+     | FLOAT -> ^(NumTok<Num>[$FLOAT, makeFloat($FLOAT)])
+     | COMPLEX -> ^(NumTok<Num>[$COMPLEX, makeComplex($COMPLEX)])
      | (STRING)+ -> ^(Str STRING+)
      ;
 

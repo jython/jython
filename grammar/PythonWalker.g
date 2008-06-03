@@ -242,46 +242,6 @@ import java.util.Set;
         }
     }
 
-    Num makeFloat(PythonTree t) {
-        debug("makeFloat matched " + t.getText());
-        return new Num(t, Py.newFloat(Double.valueOf(t.getText())));
-    }
-
-    Num makeComplex(PythonTree t) {
-        String s = t.getText();
-        s = s.substring(0, s.length() - 1);
-        return new Num(t, Py.newImaginary(Double.valueOf(s)));
-    }
-
-    Num makeInt(PythonTree t) {
-        debug("Num matched " + t.getText());
-        String s = t.getText();
-        int radix = 10;
-        if (s.startsWith("0x") || s.startsWith("0X")) {
-            radix = 16;
-            s = s.substring(2, s.length());
-        } else if (s.startsWith("0")) {
-            radix = 8;
-        }
-        if (s.endsWith("L") || s.endsWith("l")) {
-            s = s.substring(0, s.length()-1);
-            return new Num(t, Py.newLong(new BigInteger(s, radix)));
-        }
-        int ndigits = s.length();
-        int i=0;
-        while (i < ndigits && s.charAt(i) == '0')
-            i++;
-        if ((ndigits - i) > 11) {
-            return new Num(t, Py.newLong(new BigInteger(s, radix)));
-        }
-
-        long l = Long.valueOf(s, radix).longValue();
-        if (l > 0xffffffffl || (radix == 10 && l > Integer.MAX_VALUE)) {
-            return new Num(t, Py.newLong(new BigInteger(s, radix)));
-        }
-        return new Num(t, Py.newInteger((int) l));
-    }
-
     private stmtType makeTryExcept(PythonTree t, List body, List handlers, List orelse, List finBody) {
         stmtType[] b = (stmtType[])body.toArray(new stmtType[body.size()]);
         excepthandlerType[] e = (excepthandlerType[])handlers.toArray(new excepthandlerType[handlers.size()]);
@@ -1095,6 +1055,10 @@ test[expr_contextType ctype] returns [exprType etype, PythonTree marker, boolean
         $etype = $yield_expr.etype;
         $marker = $yield_expr.start;
     }
+    | NumTok {
+        $etype = (Num)$NumTok;
+        $marker = (Num)$NumTok;
+    }
     ;
 
 comp_op returns [cmpopType op]
@@ -1209,24 +1173,6 @@ atom[expr_contextType ctype] returns [exprType etype, PythonTree marker, boolean
         }
         $etype = new Subscript($test.marker, $test.etype, s, ctype);
         $marker = $test.marker;
-    }
-    | ^(Num INT) {
-        $etype = makeInt($INT);
-        $marker = $INT;
-        debug("makeInt output: " + $etype);
-    }
-    | ^(Num LONGINT) {
-        $etype = makeInt($LONGINT);
-        $marker = $LONGINT;
-    }
-    | ^(Num FLOAT) {
-        $etype = makeFloat($FLOAT);
-        debug("float matched" + $etype);
-        $marker = $FLOAT;
-    }
-    | ^(Num COMPLEX) {
-        $etype = makeComplex($COMPLEX);
-        $marker = $COMPLEX;
     }
     | stringlist {
         StringPair sp = extractStrings($stringlist.strings);

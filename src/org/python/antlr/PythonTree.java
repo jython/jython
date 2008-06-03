@@ -2,6 +2,7 @@ package org.python.antlr;
 
 import org.antlr.runtime.tree.BaseTree;
 import org.antlr.runtime.tree.CommonTree;
+import org.antlr.runtime.CommonToken;
 import org.antlr.runtime.Token;
 
 import java.io.DataOutputStream;
@@ -14,6 +15,18 @@ import org.python.antlr.ast.VisitorIF;
 public class PythonTree extends CommonTree implements AST {
 
     public boolean from_future_checked = false;
+
+    public PythonTree(int ttype, Token t) {
+        super();
+        CommonToken c = new CommonToken(ttype, t.getText());
+		c.setLine(t.getLine());
+		c.setTokenIndex(t.getTokenIndex());
+		c.setCharPositionInLine(t.getCharPositionInLine());
+		c.setChannel(t.getChannel());
+        c.setStartIndex(((CommonToken)t).getStartIndex());
+        c.setStopIndex(((CommonToken)t).getStopIndex());
+        token = c;
+    }
 
     public PythonTree(Token token) {
         super(token);
