@@ -46,7 +46,7 @@ public class Setup
         "ucnhash",
         "_jython",
         "_new:org.python.modules._newmodule",
-        "_weakref",
+        "_weakref:org.python.modules._weakref.WeakrefModule",
         "xreadlines",
         "errno",
         "array:org.python.modules.ArrayModule",

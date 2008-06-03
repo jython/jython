@@ -1,13 +1,13 @@
 // Copyright 2001 Finn Bock
 
-package org.python.modules;
+package org.python.modules._weakref;
 
 import java.lang.ref.*;
 import java.util.*;
 import org.python.core.*;
 
 
-public class _weakref implements ClassDictInit {
+public class WeakrefModule implements ClassDictInit {
     static ReferenceQueue referenceQueue = new ReferenceQueue();
 
     static RefReaperThread reaperThread;
@@ -27,7 +27,7 @@ public class _weakref implements ClassDictInit {
     {
         ReferenceError = Py.makeClass("ReferenceError",
                             new PyObject[] { Py.RuntimeError },
-                            Py.newJavaCode(_weakref.class, "empty__init__"),
+                            Py.newJavaCode(WeakrefModule.class, "empty__init__"),
                             Py.None);
         dict.__setitem__("ReferenceError", ReferenceError);
     }
