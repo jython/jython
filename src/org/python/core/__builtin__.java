@@ -429,10 +429,7 @@ public class __builtin__ {
     }
 
     public static boolean callable(PyObject obj) {
-        if (obj instanceof PyInstance) {
-            return obj.__findattr__("__call__") != null;
-        }
-        return obj.getType().lookup("__call__") != null;
+        return obj.isCallable();
     }
 
     public static char unichr(int i) {
