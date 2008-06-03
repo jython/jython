@@ -148,7 +148,7 @@ class AsynchronousClient(AsynchronousHandler):
 
     def start_connect(self):
         result = self.socket.connect_ex(SERVER_ADDRESS)
-        if result == 0:
+        if result == errno.EISCONN:
             self.connected = 1
         else:
             assert result == errno.EINPROGRESS
@@ -164,9 +164,6 @@ class AsynchronousClient(AsynchronousHandler):
             elif (time.time() - start) > READ_TIMEOUT:
                 raise Exception('Client socket incomplete connect')
             time.sleep(0.1)
-                
-        rfds, wfds, xfds = select.select([], [self.socket], [], SELECT_TIMEOUT)
-        assert self.socket in wfds, "Client socket incomplete connect"
 
 class TestSelectOnAccept(unittest.TestCase):
     def setUp(self):
