@@ -398,8 +398,9 @@ public class PyObject implements Serializable {
     /* xxx fix these around */
 
     public boolean isCallable() {
-        return __findattr__("__call__") != null;
+        return getType().lookup("__call__") != null;
     }
+
     public boolean isMappingType() {
         return true;
     }
