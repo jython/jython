@@ -14,12 +14,16 @@ public class Dict extends exprType {
     public Dict(PythonTree tree, exprType[] keys, exprType[] values) {
         super(tree);
         this.keys = keys;
-        for(int ikeys=0;ikeys<keys.length;ikeys++) {
-            addChild(keys[ikeys]);
+        if (keys != null) {
+            for(int ikeys=0;ikeys<keys.length;ikeys++) {
+                addChild(keys[ikeys]);
+            }
         }
         this.values = values;
-        for(int ivalues=0;ivalues<values.length;ivalues++) {
-            addChild(values[ivalues]);
+        if (values != null) {
+            for(int ivalues=0;ivalues<values.length;ivalues++) {
+                addChild(values[ivalues]);
+            }
         }
     }
 

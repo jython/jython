@@ -13,8 +13,10 @@ public class Interactive extends modType {
     public Interactive(PythonTree tree, stmtType[] body) {
         super(tree);
         this.body = body;
-        for(int ibody=0;ibody<body.length;ibody++) {
-            addChild(body[ibody]);
+        if (body != null) {
+            for(int ibody=0;ibody<body.length;ibody++) {
+                addChild(body[ibody]);
+            }
         }
     }
 

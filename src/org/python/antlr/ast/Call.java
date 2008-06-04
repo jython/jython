@@ -20,12 +20,16 @@ public class Call extends exprType {
         super(tree);
         this.func = func;
         this.args = args;
-        for(int iargs=0;iargs<args.length;iargs++) {
-            addChild(args[iargs]);
+        if (args != null) {
+            for(int iargs=0;iargs<args.length;iargs++) {
+                addChild(args[iargs]);
+            }
         }
         this.keywords = keywords;
-        for(int ikeywords=0;ikeywords<keywords.length;ikeywords++) {
-            addChild(keywords[ikeywords]);
+        if (keywords != null) {
+            for(int ikeywords=0;ikeywords<keywords.length;ikeywords++) {
+                addChild(keywords[ikeywords]);
+            }
         }
         this.starargs = starargs;
         this.kwargs = kwargs;

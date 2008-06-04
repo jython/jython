@@ -19,8 +19,11 @@ public class Compare extends exprType {
         this.left = left;
         this.ops = ops;
         this.comparators = comparators;
-        for(int icomparators=0;icomparators<comparators.length;icomparators++) {
-            addChild(comparators[icomparators]);
+        if (comparators != null) {
+            for(int
+            icomparators=0;icomparators<comparators.length;icomparators++) {
+                addChild(comparators[icomparators]);
+            }
         }
     }
 

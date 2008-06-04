@@ -14,9 +14,12 @@ import org.antlr.runtime.CharStream;
 import org.antlr.runtime.RecognitionException;
 import org.antlr.runtime.*;
 import org.python.antlr.ExpressionParser;
+import org.python.antlr.InteractiveParser;
 import org.python.antlr.LeadingSpaceSkippingStream;
+import org.python.antlr.ParseException;
 import org.python.antlr.PythonGrammar;
 import org.python.antlr.PythonParser;
+import org.python.antlr.PythonTree;
 import org.python.core.util.StringUtil;
 import org.python.antlr.IParserHost;
 import org.python.antlr.PythonTree;
@@ -58,7 +61,20 @@ public class antlr {
             }
         }
         
-        if (t instanceof RecognitionException) {
+        if (t instanceof ParseException) {
+            ParseException e = (ParseException)t;
+            PythonTree tok = e.currentToken;
+            int line=0;
+            int col=0;
+            if (tok != null) {
+                line = tok.getLine();
+                col = tok.getCharPositionInLine();
+            }
+            String text=getLine(reader, line);
+            return new PySyntaxError(e.getMessage(), line, col,
+                                     text, filename);
+        }
+        else if (t instanceof RecognitionException) {
             RecognitionException e = (RecognitionException)t;
             String msg = e.getMessage();
             String tokenNames[] = PythonParser.tokenNames;
@@ -155,9 +171,10 @@ public class antlr {
                      kind, "<string>", null);
     }
 
-    public static modType parse(InputStream istream, String kind,
-                                 String filename, CompilerFlags cflags) 
-    {
+    public static modType parse(InputStream istream,
+                                String kind,
+                                String filename,
+                                CompilerFlags cflags) {
         CharStream cs = null;
         //FIXME: definite NPE potential here -- do we even need prepBufreader
         //       now?
@@ -169,54 +186,48 @@ public class antlr {
                 cs = new ANTLRReaderStream(bufreader);
                 ExpressionParser e = new ExpressionParser(cs);
                 node = e.parse();
-            } else {
+            } else if (kind.equals("single")) {
                 bufreader = prepBufreader(istream, cflags);
                 cs = new ANTLRReaderStream(bufreader);
-                PythonGrammar g = new PythonGrammar(cs);//FJW, literalMkrForParser);
-                node = doparse(kind, cflags, g);
+                InteractiveParser i = new InteractiveParser(cs);
+                node = i.partialParse();
+            } else if (kind.equals("exec")) {
+                bufreader = prepBufreader(istream, cflags);
+                cs = new ANTLRReaderStream(bufreader);
+                PythonGrammar g = new PythonGrammar(cs);
+                node = g.file_input();
+            } else {
+               throw Py.ValueError("parse kind must be eval, exec, " + "or single");
             }
-        }
-        catch (Throwable t) {
+        } catch (Throwable t) {
             throw fixParseError(bufreader, t, filename);
         }
         return node;
     }
 
-    public static modType partialParse(String string, String kind,
-                                       String filename, CompilerFlags cflags,boolean stdprompt)
-    {
-        modType node = null;        
-        BufferedReader bufreader = prepBufreader(new ByteArrayInputStream(StringUtil.toBytes(string)),
-                                                 cflags);
-
+    public static modType partialParse(String string,
+                                       String kind,
+                                       String filename,
+                                       CompilerFlags cflags,
+                                       boolean stdprompt) {
         CharStream cs = null;
-        try {
-            cs = new ANTLRReaderStream(bufreader);
-        } catch (IOException io){
-            //FIXME:
-            System.err.println("FIXME: Don't eat exceptions.");
-        }
-        PythonGrammar g = new PythonGrammar(cs, true);
-        //FJW g.token_source.partial = true;
-        //FJW g.token_source.stdprompt = stdprompt;
-
-        try {
-            node = doparse(kind, cflags, g);
-        }
-        catch (Throwable t) {
-            /*
-             CPython codeop exploits that with CPython parser adding newlines
-             to a partial valid sentence move the reported error position,
-             this is not true for our parser, so we need a different approach:
-             we check whether all sentence tokens have been consumed or
-             the remaining ones fullfill lookahead expectations. See:
-             PythonGrammar.partial_valid_sentence (def in python.jjt)
-            */
-            
-            //FJW if (g.partial_valid_sentence(t)) {
-            //FJW    return null;
-            //FJW }            
-            throw fixParseError(bufreader, t, filename);
+        //FIXME: definite NPE potential here -- do we even need prepBufreader
+        //       now?
+        BufferedReader bufreader = null;
+        modType node = null;
+        if (kind.equals("single")) {
+            ByteArrayInputStream bi = new ByteArrayInputStream(
+                    StringUtil.toBytes(string));
+            bufreader = prepBufreader(bi, cflags);
+            try {
+                cs = new ANTLRReaderStream(bufreader);
+            } catch (IOException io) {
+                //FIXME:
+            }
+            InteractiveParser i = new InteractiveParser(cs);
+            node = i.partialParse();
+        } else {
+            throw Py.ValueError("parse kind must be eval, exec, " + "or single");
         }
         return node;
     }
@@ -229,16 +240,6 @@ public class antlr {
         //FJW if (cflags != null)
         //FJW    g.token_source.generator_allowed = cflags.generator_allowed;
         
-        if (kind.equals("exec")) {
-            node = g.file_input();
-        }
-        else if (kind.equals("single")) {
-            node = g.single_input();
-        }
-        else {
-           throw Py.ValueError("parse kind must be eval, exec, " +
-                               "or single");
-        }
         return node;
     }
 

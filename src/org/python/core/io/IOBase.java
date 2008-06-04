@@ -8,8 +8,8 @@ import org.python.modules.errno;
 /**
  * Base class for all I/O classes.
  *
- * IOBase and its descendents in org.python.core.io are loosely based
- * off of Python 3000's new io module (PEP 3116).
+ * IOBase and its descendents in org.python.core.io are based off
+ * Python 3's new io module (PEP 3116).
  *
  * This does not define read(), readinto() and write(), nor readline()
  * and friends, since their signatures vary per layer.
@@ -210,6 +210,6 @@ public abstract class IOBase {
     protected void unsupported(String methodName) {
         String qualifiedName = getClass().getName();
         String className = qualifiedName.substring(qualifiedName.lastIndexOf('.') + 1);
-        throw Py.TypeError(className + "." + methodName + "() not supported");
+        throw Py.TypeError(String.format("%s.%s() not supported", className, methodName));
     }
 }

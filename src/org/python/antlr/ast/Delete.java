@@ -13,8 +13,10 @@ public class Delete extends stmtType {
     public Delete(PythonTree tree, exprType[] targets) {
         super(tree);
         this.targets = targets;
-        for(int itargets=0;itargets<targets.length;itargets++) {
-            addChild(targets[itargets]);
+        if (targets != null) {
+            for(int itargets=0;itargets<targets.length;itargets++) {
+                addChild(targets[itargets]);
+            }
         }
     }
 

@@ -340,10 +340,6 @@ class BoolTest(unittest.TestCase):
                 return self
         check(Baz())
 
-# Jython transition 2.3
-# boolean attribute returns int not bool
-# http://jython.org/bugs/1758276
-del BoolTest.test_fileclosed
 # StackOverflow if __nonzero__ returns self
 # http://jython.org/bugs/1758318
 del BoolTest.test_convert_to_bool

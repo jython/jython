@@ -261,10 +261,7 @@ class TestJointOps(unittest.TestCase):
         w = ReprWrapper()
         s = self.thetype([w])
         w.value = s
-        # XXX: Jython doesn't have str.partition yet
-        #name = repr(s).partition('(')[0]    # strip class name from repr string
-        srepr = repr(s)
-        name = srepr[0:srepr.find('(')]
+        name = repr(s).partition('(')[0]    # strip class name from repr string
         self.assertEqual(repr(s), '%s([%s(...)])' % (name, name))
 
     def test_cyclical_print(self):

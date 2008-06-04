@@ -14,8 +14,10 @@ public class Assign extends stmtType {
     public Assign(PythonTree tree, exprType[] targets, exprType value) {
         super(tree);
         this.targets = targets;
-        for(int itargets=0;itargets<targets.length;itargets++) {
-            addChild(targets[itargets]);
+        if (targets != null) {
+            for(int itargets=0;itargets<targets.length;itargets++) {
+                addChild(targets[itargets]);
+            }
         }
         this.value = value;
     }

@@ -37,11 +37,16 @@ else:
     get_symbol_key = type
     get_class_name = lambda node: node.__class__.__name__
 
+get_lines_and_cols = True
+
 def lispify_ast(node):
     return tuple(lispify_ast2(node))
 
 def lispify_ast2(node):
-    yield get_class_name(node)
+    result = get_class_name(node)
+    if get_lines_and_cols and hasattr(node, 'lineno') and hasattr(node, 'col_offset'):
+        result = "%s (%s,%s)" % (result, node.lineno, node.col_offset)
+    yield result#get_class_name(node)#result
     try:
         for field in node._fields:
             yield tuple(lispify_field(field, getattr(node, field)))

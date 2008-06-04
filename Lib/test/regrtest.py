@@ -44,6 +44,9 @@ resources to test.  Currently only the following are defined:
     network -   It is okay to run tests that use external network
                 resource, e.g. testing SSL support for sockets.
 
+    subprocess  Run tests that invoke subprocesses, in particular
+                test_subprocess.
+
 To enable all resources except one, use '-uall,-<resource>'.  For
 example, to run all the tests except for the network tests, give the
 option '-uall,-network'.
@@ -179,7 +182,7 @@ def with_indirect_args(args):
 
 
 
-RESOURCE_NAMES = ['curses', 'largefile', 'network']
+RESOURCE_NAMES = ['curses', 'largefile', 'network', 'subprocess']
 
 
 def usage(code, msg=''):
@@ -293,6 +296,7 @@ def main(tests=None, testdir=None, verbose=0, quiet=0, generate=0,
     good = []
     bad = []
     skipped = []
+    resource_denieds = []
 
     if findleaks:
         try:
@@ -367,6 +371,8 @@ def main(tests=None, testdir=None, verbose=0, quiet=0, generate=0,
                 bad.append(test)
             else:
                 skipped.append(test)
+                if ok == -2:
+                    resource_denieds.append(test)
             if findleaks:
                 gc.collect()
                 if gc.garbage:
@@ -397,10 +403,10 @@ def main(tests=None, testdir=None, verbose=0, quiet=0, generate=0,
     surprises = 0
     if skipped and not quiet:
         print count(len(skipped), "test"), "skipped:"
-        surprises += countsurprises(skips, skipped, 'skip', 'ran', allran)
+        surprises += countsurprises(skips, skipped, 'skip', 'ran', allran, resource_denieds)
     if bad:
         print count(len(bad), "test"), "failed:"
-        surprises += countsurprises(failures, bad, 'fail', 'passed', allran)
+        surprises += countsurprises(failures, bad, 'fail', 'passed', allran, resource_denieds)
 
     if memo:
         savememo(memo,good,bad,skipped)
@@ -472,6 +478,11 @@ def runtest(test, generate, verbose, quiet, testdir = None):
                 indirect_test()
         finally:
             sys.stdout = save_stdout
+    except test_support.ResourceDenied, msg:
+        if not quiet:
+            print test, "skipped --", msg
+            sys.stdout.flush()
+        return -2
     except (ImportError, test_support.TestSkipped), msg:
         if not quiet:
             print test, "skipped --", msg
@@ -589,6 +600,8 @@ def printlist(x, width=70, indent=4):
     """
 
     line = ' ' * indent
+    x = list(x)
+    x.sort()
     for one in map(str, x):
         w = len(line) + len(one)
         if line[-1:] == ' ':
@@ -604,7 +617,7 @@ def printlist(x, width=70, indent=4):
     if len(line) > indent:
         print line
 
-def countsurprises(expected, actual, action, antiaction, allran):
+def countsurprises(expected, actual, action, antiaction, allran, resource_denieds):
     """returns the number of items in actual that aren't in expected."""
     printlist(actual)
     if not expected.isvalid():
@@ -615,7 +628,7 @@ def countsurprises(expected, actual, action, antiaction, allran):
     if allran and good_surprise:
         print count(len(good_surprise), 'test'), antiaction, 'unexpectedly:'
         printlist(good_surprise)
-    bad_surprise = set(actual) - expected.getexpected()
+    bad_surprise = set(actual) - expected.getexpected() - set(resource_denieds)
     if bad_surprise:
         print count(len(bad_surprise), action), "unexpected:"
         printlist(bad_surprise)
@@ -1018,6 +1031,7 @@ if test_support.is_jython:
 _failures = {
     'java':
     '''
+    test_ast
     test_class
     test_copy
     test_dis
@@ -1041,7 +1055,6 @@ _failures = {
     test_trace
     test_ucn
     test_unicode
-    test_weakref
     test_zipimport
     ''',
 }

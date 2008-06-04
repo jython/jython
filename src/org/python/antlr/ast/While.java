@@ -18,12 +18,16 @@ public class While extends stmtType {
         super(tree);
         this.test = test;
         this.body = body;
-        for(int ibody=0;ibody<body.length;ibody++) {
-            addChild(body[ibody]);
+        if (body != null) {
+            for(int ibody=0;ibody<body.length;ibody++) {
+                addChild(body[ibody]);
+            }
         }
         this.orelse = orelse;
-        for(int iorelse=0;iorelse<orelse.length;iorelse++) {
-            addChild(orelse[iorelse]);
+        if (orelse != null) {
+            for(int iorelse=0;iorelse<orelse.length;iorelse++) {
+                addChild(orelse[iorelse]);
+            }
         }
     }
 

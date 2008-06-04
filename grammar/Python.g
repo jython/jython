@@ -187,6 +187,7 @@ tokens {
 @header { 
 package org.python.antlr;
 
+import org.python.antlr.ParseException;
 import org.python.antlr.PythonTree;
 } 
 
@@ -258,12 +259,42 @@ package org.python.antlr;
  */
 int implicitLineJoiningLevel = 0;
 int startPos=-1;
+
+    public Token nextToken() {
+		while (true) {
+			state.token = null;
+			state.channel = Token.DEFAULT_CHANNEL;
+			state.tokenStartCharIndex = input.index();
+			state.tokenStartCharPositionInLine = input.getCharPositionInLine();
+			state.tokenStartLine = input.getLine();
+			state.text = null;
+			if ( input.LA(1)==CharStream.EOF ) {
+				return Token.EOF_TOKEN;
+			}
+			try {
+				mTokens();
+				if ( state.token==null ) {
+					emit();
+				}
+				else if ( state.token==Token.SKIP_TOKEN ) {
+					continue;
+				}
+				return state.token;
+			}
+            catch (RecognitionException re) {
+                throw new ParseException(getErrorMessage(re, this.getTokenNames()));
+            }
+        }
+    }
 }
 
 //single_input: NEWLINE | simple_stmt | compound_stmt NEWLINE
+//XXX: I don't know why, but in "compound_stmt NEWLINE"
+//     Jython chokes on the NEWLINE every time -- so I made
+//     it optional for now.
 single_input : NEWLINE
              | simple_stmt -> ^(Interactive simple_stmt)
-             | compound_stmt NEWLINE -> ^(Interactive compound_stmt)
+             | compound_stmt NEWLINE? -> ^(Interactive compound_stmt)
              ;
 
 //file_input: (NEWLINE | stmt)* ENDMARKER
@@ -292,12 +323,15 @@ dotted_attr
 
 //funcdef: [decorators] 'def' NAME parameters ':' suite
 funcdef : decorators? 'def' NAME parameters COLON suite
-       -> ^(FunctionDef 'def' ^(Name NAME) ^(Arguments parameters) ^(Body suite) ^(Decorators decorators?))
+       -> ^(FunctionDef 'def' ^(Name NAME) parameters ^(Body suite) ^(Decorators decorators?))
         ;
 
 //parameters: '(' [varargslist] ')'
-parameters : LPAREN (varargslist)? RPAREN
-          -> (varargslist)?
+parameters : LPAREN 
+                 (varargslist -> ^(Arguments varargslist)
+                 | -> ^(Arguments)
+                 )
+             RPAREN
            ;
 
 //varargslist: (fpdef ['=' test] ',')* ('*' NAME [',' '**' NAME] | '**' NAME) | fpdef ['=' test] (',' fpdef ['=' test])* [',']
@@ -406,8 +440,8 @@ augassign : PLUSEQUAL
 print_stmt : 'print'
              ( t1=printlist -> {$t1.newline}? ^(Print 'print' ^(Values $t1) ^(Newline))
                             -> ^(Print 'print' ^(Values $t1))
-             | RIGHTSHIFT t2=printlist -> {$t2.newline}? ^(Print 'print' ^(Dest RIGHTSHIFT) ^(Values $t2) ^(Newline))
-                                      -> ^(Print 'print' ^(Dest RIGHTSHIFT) ^(Values $t2))
+             | RIGHTSHIFT t2=printlist2 -> {$t2.newline}? ^(Print 'print' ^(Dest RIGHTSHIFT) ^(Values $t2) ^(Newline))
+                                       -> ^(Print 'print' ^(Dest RIGHTSHIFT) ^(Values $t2))
              | -> ^(Print 'print' ^(Newline))
              )
            ;
@@ -415,6 +449,20 @@ print_stmt : 'print'
 //not in CPython's Grammar file
 printlist returns [boolean newline]
     : (test COMMA) => test (options {k=2;}: COMMA test)* (trailcomma=COMMA)?
+    { if ($trailcomma == null) {
+          $newline = true;
+      } else {
+          $newline = false;
+      }
+    }
+   -> ^(Elts test+)
+    | test {$newline = true;}
+   -> ^(Elts test)
+    ;
+
+//not in CPython's Grammar file
+printlist2 returns [boolean newline]
+    : (test COMMA test) => test (options {k=2;}: COMMA test)* (trailcomma=COMMA)?
     { if ($trailcomma == null) {
           $newline = true;
       } else {
@@ -660,9 +708,9 @@ term : factor ((STAR^ | SLASH^ | PERCENT^ | DOUBLESLASH^ ) factor)*
      ;
 
 //factor: ('+'|'-'|'~') factor | power
-factor : PLUS factor -> ^(UAdd factor)
-       | MINUS factor -> ^(USub factor)
-       | TILDE factor -> ^(Invert factor)
+factor : PLUS factor -> ^(UAdd PLUS factor)
+       | MINUS factor -> ^(USub MINUS factor)
+       | TILDE factor -> ^(Invert TILDE factor)
        | power
        ;
 
@@ -676,8 +724,8 @@ power : atom (trailer^)* (options {greedy=true;}:DOUBLESTAR^ factor)?
 //       '`' testlist1 '`' |
 //       NAME | NUMBER | STRING+)
 atom : LPAREN 
-       ( yield_expr    -> ^(Parens yield_expr)
-       | testlist_gexp {debug("parsed testlist_gexp");} -> ^(Parens testlist_gexp)
+       ( yield_expr    -> ^(Parens LPAREN yield_expr)
+       | testlist_gexp {debug("parsed testlist_gexp");} -> ^(Parens LPAREN testlist_gexp)
        | -> ^(Tuple)
        )
        RPAREN
@@ -825,7 +873,7 @@ gen_if: 'if' test gen_iter?
 
 //yield_expr: 'yield' [testlist]
 yield_expr : 'yield' testlist?
-          -> ^(Yield ^(Value testlist)?)
+          -> ^(Yield 'yield' ^(Value testlist)?)
            ;
 
 //XXX:
@@ -971,12 +1019,12 @@ Exponent
 INT :   // Hex
         '0' ('x' | 'X') ( '0' .. '9' | 'a' .. 'f' | 'A' .. 'F' )+
     |   // Octal
-        '0' DIGITS*
+        '0'  ( '0' .. '7' )*
     |   '1'..'9' DIGITS*
     ;
 
 COMPLEX
-    :   INT ('j'|'J')
+    :   DIGITS+ ('j'|'J')
     |   FLOAT ('j'|'J')
     ;
 
@@ -1068,8 +1116,8 @@ LEADING_WS
             emit(new ClassicToken(LEADING_WS,new String(indentation)));
             }
             // kill trailing newline if present and then ignore
-            ( ('\r')? '\n' {if (token!=null) token.setChannel(HIDDEN); else $channel=HIDDEN;})*
-           // {token.setChannel(99); }
+            ( ('\r')? '\n' {if (state.token!=null) state.token.setChannel(HIDDEN); else $channel=HIDDEN;})*
+           // {state.token.setChannel(99); }
         )
     ;
 

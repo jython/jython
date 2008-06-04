@@ -242,6 +242,10 @@ public class PyInstance extends PyObject
         }
     }
 
+    public boolean isCallable() {
+        return __findattr__("__call__") != null;
+    }
+
     public PyObject invoke(String name) {
         PyObject f = ifindlocal(name);
         if (f == null) {

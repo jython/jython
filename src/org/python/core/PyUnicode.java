@@ -127,6 +127,16 @@ public class PyUnicode extends PyString {
         return new PyString("u" + encode_UnicodeEscape(string, true));
     }
     
+    @ExposedMethod
+    final PyObject unicode___getitem__(PyObject index) {
+        return seq___finditem__(index);
+    }
+    
+    @ExposedMethod(defaults = "null")
+    final PyObject unicode___getslice__(PyObject start, PyObject stop, PyObject step) {
+        return seq___getslice__(start, stop, step);
+    }
+
     @ExposedMethod(type = MethodType.CMP)
     final int unicode___cmp__(PyObject other) {
         return str___cmp__(other);
@@ -206,6 +216,15 @@ public class PyUnicode extends PyString {
         return new PyUnicode(str_rstrip(sep));
     }
 
+    @ExposedMethod
+    final PyTuple unicode_partition(PyObject sep) {
+        return unicodePartition(sep);
+    }
+
+    @ExposedMethod
+    final PyTuple unicode_rpartition(PyObject sep) {
+        return unicodeRpartition(sep);
+    }
 
     @ExposedMethod(defaults = {"null", "-1"})
     final PyList unicode_split(String sep, int maxsplit) {

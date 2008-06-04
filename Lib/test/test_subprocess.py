@@ -410,14 +410,12 @@ class ProcessTestCase(unittest.TestCase):
     def test_no_leaking(self):
         # Make sure we leak no resources
         if not hasattr(test_support, "is_resource_enabled") \
-               or test_support.is_resource_enabled("subprocess") and \
-               not mswindows:
-            # 1026 is too much for most UNIX systems
-            max_handles = jython and 65 or 1026
-        elif jython:
-            # Spawning java processes takes a long time
-            return
+               or test_support.is_resource_enabled("subprocess") and not mswindows \
+               and not jython:
+            max_handles = 1026 # too much for most UNIX systems
         else:
+            # Settle for 65 on jython: spawning jython processes takes a
+            # long time
             max_handles = 65
         for i in range(max_handles):
             p = subprocess.Popen([sys.executable, "-c",
@@ -702,6 +700,8 @@ class ProcessTestCase(unittest.TestCase):
 
 
 def test_main():
+    # Spawning many new jython processes takes a long time
+    test_support.requires('subprocess')
     test_support.run_unittest(ProcessTestCase)
     if hasattr(test_support, "reap_children"):
         test_support.reap_children()

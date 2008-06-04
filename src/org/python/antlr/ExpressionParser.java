@@ -47,7 +47,7 @@ public class ExpressionParser {
         this.charStream = cs;
     }
 
-    public modType parse() {
+    public modType parse() throws RecognitionException {
         modType tree = null;
         PythonLexer lexer = new PyLexer(this.charStream);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
@@ -57,17 +57,12 @@ public class ExpressionParser {
         PythonParser parser = new PythonParser(tokens);
         parser.setTreeAdaptor(pyadaptor);
 
-        try {
-            Object rx = parser.eval_input();
-            PythonParser.eval_input_return r = (PythonParser.eval_input_return)rx;
-            CommonTreeNodeStream nodes = new CommonTreeNodeStream((Tree)r.tree);
-            nodes.setTokenStream(tokens);
-            PythonWalker walker = new PythonWalker(nodes);
-            tree = walker.expression();
-        } catch (RecognitionException e) {
-            // FIXME:
-            System.err.println("FIXME: don't eat exceptions:" + e);
-        }
+        Object rx = parser.eval_input();
+        PythonParser.eval_input_return r = (PythonParser.eval_input_return)rx;
+        CommonTreeNodeStream nodes = new CommonTreeNodeStream((Tree)r.tree);
+        nodes.setTokenStream(tokens);
+        PythonWalker walker = new PythonWalker(nodes);
+        tree = walker.expression();
         return tree;
-    } 
+    }
 }

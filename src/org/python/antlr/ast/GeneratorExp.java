@@ -16,8 +16,10 @@ public class GeneratorExp extends exprType {
         super(tree);
         this.elt = elt;
         this.generators = generators;
-        for(int igenerators=0;igenerators<generators.length;igenerators++) {
-            addChild(generators[igenerators]);
+        if (generators != null) {
+            for(int igenerators=0;igenerators<generators.length;igenerators++) {
+                addChild(generators[igenerators]);
+            }
         }
     }
 

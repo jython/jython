@@ -613,14 +613,8 @@ def test_main(verbose=None):
     )
 
     if test_support.is_jython:
-      # Py*Derived doesn't pickle its dict if the supertype has __reduce__
-      del TestSubclass.test_pickle
-
       # Jython doesn't weakref things immediately
       del TestSubclass.test_weakref
-
-      # Jython doesn't have the gc module
-      del TestBasic.test_gc_doesnt_blowup
 
       # Needs 2.5 seq_tests
       del TestVariousIteratorArgs.test_constructor
