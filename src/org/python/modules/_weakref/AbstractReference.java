@@ -27,6 +27,8 @@ public abstract class AbstractReference extends PyObject {
         try {
             callback.__call__(this);
         } catch (Exception exc) {
+            // XXX: Should trigger the equiv. of CPython's
+            // PyErr_WriteUnraisable
             exc.printStackTrace();
         }
     }
