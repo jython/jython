@@ -1200,7 +1200,7 @@ def test_main():
         del ReferencesTestCase.test_callback_in_cycle_resurrection
         del ReferencesTestCase.test_callbacks_on_callback
 
-        # Jython's allows objects to be weakref'd that CPyton doesn't
+        # Jython allows types to be weakref'd that CPython doesn't
         del MappingTestCase.test_weak_keyed_bad_delitem
 
         # CPython GC specific

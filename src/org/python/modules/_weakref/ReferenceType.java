@@ -29,8 +29,7 @@ public class ReferenceType extends AbstractReference {
     @ExposedNew
     static final PyObject weakref___new__(PyNewWrapper new_, boolean init, PyType subtype,
                                           PyObject[] args, String[] keywords) {
-        // ignore keywords
-        ArgParser ap = new ArgParser("__new__", args, emptyStringArray, emptyStringArray);
+        ArgParser ap = parseInitArgs("__new__", args, keywords);
         PyObject ob = ap.getPyObject(0);
         PyObject callback = ap.getPyObject(1, null);
         if (callback == Py.None) {
@@ -55,9 +54,28 @@ public class ReferenceType extends AbstractReference {
 
     @ExposedMethod
     final void weakref___init__(PyObject[] args, String[] keywords) {
-        // ignore keywords
-        ArgParser ap = new ArgParser("__init__", args, emptyStringArray, emptyStringArray);
+        // Just ensure at least one arg, leaving other args alone
+        ArgParser ap = parseInitArgs("__init__", args, keywords);
         PyObject ob = ap.getPyObject(0);
+    }
+
+    /**
+     * Return an ArgParser setup to ignore keyword args (allowing them
+     * to passthru).
+     *
+     * @param funcName the name of the caller
+     * @param args PyObject array of args
+     * @param keywords String array of keywords
+     * @return an ArgParser instance
+     */
+    private static ArgParser parseInitArgs(String funcName, PyObject[] args, String[] keywords) {
+        if (keywords.length > 0) {
+            int argc = args.length - keywords.length;
+            PyObject[] justArgs = new PyObject[argc];
+            System.arraycopy(args, 0, justArgs, 0, argc);
+            args = justArgs;
+        }
+        return new ArgParser(funcName, args, emptyStringArray, emptyStringArray);
     }
 
     public PyObject __call__(PyObject args[], String keywords[]) {
