@@ -506,8 +506,9 @@ public class PyObject implements Serializable {
      **/
     public PyObject __getitem__(PyObject key) {
         PyObject ret = __finditem__(key);
-        if (ret == null)
-            throw Py.KeyError(key.toString());
+        if (ret == null) {
+            throw Py.KeyError(key);
+        }
         return ret;
     }
 
