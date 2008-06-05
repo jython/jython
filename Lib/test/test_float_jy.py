@@ -59,6 +59,15 @@ class FloatTestCase(unittest.TestCase):
         self.assertEqual('%.2g' % 99, '99')
         self.assertEqual('%.2g' % 100, '1e+02')
 
+    def test_overflow(self):
+        shuge = '12345' * 120
+        shuge_float = float(shuge)
+        shuge_int = int(shuge)
+        self.assertRaises(OverflowError, float, shuge_int)
+        self.assertRaises(OverflowError, int, shuge_float)
+        # and cmp should not overflow
+        self.assert_(0.1 != shuge_int)
+
 
 def test_main():
     test_support.run_unittest(FloatTestCase)
