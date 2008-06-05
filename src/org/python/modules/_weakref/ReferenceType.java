@@ -16,8 +16,6 @@ public class ReferenceType extends AbstractReference {
 
     public static final PyType TYPE = PyType.fromClass(ReferenceType.class);
 
-    public static final String[] emptyStringArray = new String[] {};
-
     public ReferenceType(PyType subType, GlobalRef gref, PyObject callback) {
         super(subType, gref, callback);
     }
@@ -75,7 +73,7 @@ public class ReferenceType extends AbstractReference {
             System.arraycopy(args, 0, justArgs, 0, argc);
             args = justArgs;
         }
-        return new ArgParser(funcName, args, emptyStringArray, emptyStringArray);
+        return new ArgParser(funcName, args, Py.NoKeywords, Py.NoKeywords);
     }
 
     public PyObject __call__(PyObject args[], String keywords[]) {
@@ -84,7 +82,7 @@ public class ReferenceType extends AbstractReference {
 
     @ExposedMethod
     final PyObject weakref___call__(PyObject args[], String keywords[]) {
-        new ArgParser("__call__", args, keywords, emptyStringArray, 0);
+        new ArgParser("__call__", args, keywords, Py.NoKeywords, 0);
         return Py.java2py(gref.get());
     }
 
