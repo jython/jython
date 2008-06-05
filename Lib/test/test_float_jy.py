@@ -66,7 +66,19 @@ class FloatTestCase(unittest.TestCase):
         self.assertRaises(OverflowError, float, shuge_int)
         self.assertRaises(OverflowError, int, shuge_float)
         # and cmp should not overflow
-        self.assert_(0.1 != shuge_int)
+        self.assertNotEqual(0.1, shuge_int)
+
+    def test_nan(self):
+        self.assert_(type(float('NaN')), float)
+        # XXX: FIXME
+        #self.assert_(type(float('nan')), float)
+        self.assertEqual(long(float('NaN')), 0)
+
+    def test_infinity(self):
+        self.assert_(type(float('Infinity')), float)
+        # XXX: FIXME
+        #self.assert_(type(float('inf')), float)
+        self.assertRaises(OverflowError, long, float('Infinity'))
 
 
 def test_main():

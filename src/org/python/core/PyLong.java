@@ -103,6 +103,9 @@ public class PyLong extends PyObject {
         if (Double.isInfinite(value)) {
             throw Py.OverflowError("cannot convert float infinity to long");
         }
+        if (Double.isNaN(value)) {
+            return BigInteger.valueOf(0);
+        }
         return new BigDecimal(value).toBigInteger();
     }
 
