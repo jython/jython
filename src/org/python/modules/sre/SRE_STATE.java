@@ -450,7 +450,7 @@ for line in sys.stdin:
             break;
 
         case SRE_OP_ANY_ALL:
-            /* repeated dot wildcare.  skip to the end of the target
+            /* repeated dot wildcard.  skip to the end of the target
                string, and backtrack from there */
             //TRACE(pidx, ptr, "COUNT ANY_ALL");
             ptr = end;
