@@ -1650,8 +1650,6 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         return null;
     }
 
-    int list_comprehension_count = 0;
-
     public int PyList_init2;
     public Object visitListComp(ListComp node) throws Exception {
         code.new_("org/python/core/PyList");
@@ -1665,7 +1663,8 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
 
         code.invokevirtual("org/python/core/PyObject", "__getattr__", "(" + $str + ")" + $pyObj);
 
-        String tmp_append = "_[" + (++list_comprehension_count) + "]";
+        String tmp_append ="_[" + node.getLine() + "_" + node.getCharPositionInLine() + "]";
+        System.out.println(tmp_append);
             
         set(new Name(node, tmp_append, expr_contextType.Store));
 

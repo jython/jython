@@ -80,6 +80,9 @@ class FloatTestCase(unittest.TestCase):
         #self.assert_(type(float('inf')), float)
         self.assertRaises(OverflowError, long, float('Infinity'))
 
+    def test_float_none(self):
+        self.assertRaises(TypeError, float, None)
+
 
 def test_main():
     test_support.run_unittest(FloatTestCase)
