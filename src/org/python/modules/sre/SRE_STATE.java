@@ -21,7 +21,7 @@ package org.python.modules.sre;
 public class SRE_STATE {
     
     /*
-     * Generated from Python-2.3.5 like 'python headerToJava.py < Modules/sre_constants.h'
+     * Generated from Python-2.4.5 like 'python headerToJava.py < Modules/sre_constants.h'
      * where headerToJava.py contains the following code 
 import sys
 for line in sys.stdin:
@@ -45,24 +45,25 @@ for line in sys.stdin:
     public static final int SRE_OP_CHARSET = 10;
     public static final int SRE_OP_BIGCHARSET = 11;
     public static final int SRE_OP_GROUPREF = 12;
-    public static final int SRE_OP_GROUPREF_IGNORE = 13;
-    public static final int SRE_OP_IN = 14;
-    public static final int SRE_OP_IN_IGNORE = 15;
-    public static final int SRE_OP_INFO = 16;
-    public static final int SRE_OP_JUMP = 17;
-    public static final int SRE_OP_LITERAL = 18;
-    public static final int SRE_OP_LITERAL_IGNORE = 19;
-    public static final int SRE_OP_MARK = 20;
-    public static final int SRE_OP_MAX_UNTIL = 21;
-    public static final int SRE_OP_MIN_UNTIL = 22;
-    public static final int SRE_OP_NOT_LITERAL = 23;
-    public static final int SRE_OP_NOT_LITERAL_IGNORE = 24;
-    public static final int SRE_OP_NEGATE = 25;
-    public static final int SRE_OP_RANGE = 26;
-    public static final int SRE_OP_REPEAT = 27;
-    public static final int SRE_OP_REPEAT_ONE = 28;
-    public static final int SRE_OP_SUBPATTERN = 29;
-    public static final int SRE_OP_MIN_REPEAT_ONE = 30;
+    public static final int SRE_OP_GROUPREF_EXISTS = 13;
+    public static final int SRE_OP_GROUPREF_IGNORE = 14;
+    public static final int SRE_OP_IN = 15;
+    public static final int SRE_OP_IN_IGNORE = 16;
+    public static final int SRE_OP_INFO = 17;
+    public static final int SRE_OP_JUMP = 18;
+    public static final int SRE_OP_LITERAL = 19;
+    public static final int SRE_OP_LITERAL_IGNORE = 20;
+    public static final int SRE_OP_MARK = 21;
+    public static final int SRE_OP_MAX_UNTIL = 22;
+    public static final int SRE_OP_MIN_UNTIL = 23;
+    public static final int SRE_OP_NOT_LITERAL = 24;
+    public static final int SRE_OP_NOT_LITERAL_IGNORE = 25;
+    public static final int SRE_OP_NEGATE = 26;
+    public static final int SRE_OP_RANGE = 27;
+    public static final int SRE_OP_REPEAT = 28;
+    public static final int SRE_OP_REPEAT_ONE = 29;
+    public static final int SRE_OP_SUBPATTERN = 30;
+    public static final int SRE_OP_MIN_REPEAT_ONE = 31;
     public static final int SRE_AT_BEGINNING = 0;
     public static final int SRE_AT_BEGINNING_LINE = 1;
     public static final int SRE_AT_BEGINNING_STRING = 2;
@@ -241,12 +242,12 @@ for line in sys.stdin:
         return false;
     }
 
-    private void mark_fini() {
+    private void mark_fini() { // XXX => data_stack_dealloc in 2.4
         mark_stack = null;
         mark_stack_size = mark_stack_base = 0;
     }
 
-    private int mark_save(int lo, int hi) {
+    private int mark_save(int lo, int hi) { // XXX => data_stack_grow in 2.4
         if (hi <= lo)
             return mark_stack_base;
 
@@ -651,6 +652,18 @@ for line in sys.stdin:
                     ptr++;
                 }
                 pidx++;
+                break;
+                
+            case SRE_OP_GROUPREF_EXISTS:
+                i = pattern[pidx];
+                //TRACE(pidx, ptr, "GROUPREF_EXISTS " + i);
+                p = mark[i+i];
+                e = mark[i+i+1];
+                if (p == -1 || e == -1 || e < p) {
+                    pidx += pattern[pidx + 1];
+                    break;
+                }
+                pidx += 2;
                 break;
 
             case SRE_OP_LITERAL_IGNORE:
