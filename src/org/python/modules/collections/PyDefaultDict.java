@@ -71,17 +71,8 @@ public class PyDefaultDict extends PyDictionary {
         default_factory = value;
     }
 
-    @ExposedMethod
-    final PyObject defaultdict___getitem__(PyObject key) {
-        PyObject val = super.__finditem__(key);
-        if (val == null) {
-            val = defaultdict___missing__(key);
-        }
-        return val;
-    }
-
     public PyObject __finditem__(PyObject key) {
-        return defaultdict___getitem__(key);
+        return dict___getitem__(key);
     }
 
     /**
