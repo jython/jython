@@ -3,6 +3,7 @@ package org.python.modules._weakref;
 
 import org.python.core.ArgParser;
 import org.python.core.Py;
+import org.python.core.PyBuiltinFunction;
 import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
 import org.python.core.PyType;
@@ -20,15 +21,13 @@ public class ReferenceType extends AbstractReference {
     }
 
     public ReferenceType(GlobalRef gref, PyObject callback) {
-        super(gref, callback);
+        this(TYPE, gref, callback);
     }
 
     @ExposedNew
     static final PyObject weakref___new__(PyNewWrapper new_, boolean init, PyType subtype,
                                           PyObject[] args, String[] keywords) {
-        ArgParser ap = new ArgParser("__new__", args, keywords, new String[] {"ob", "callback"},
-                                     1);
-        ap.noKeywords();
+        ArgParser ap = parseInitArgs("__new__", args, keywords);
         PyObject ob = ap.getPyObject(0);
         PyObject callback = ap.getPyObject(1, null);
         if (callback == Py.None) {
@@ -51,18 +50,45 @@ public class ReferenceType extends AbstractReference {
         }
     }
 
-    public PyObject __call__() {
-        return weakref___call__();
+    @ExposedMethod
+    final void weakref___init__(PyObject[] args, String[] keywords) {
+        // Just ensure at least one arg, leaving other args alone
+        ArgParser ap = parseInitArgs("__init__", args, keywords);
+        PyObject ob = ap.getPyObject(0);
+    }
+
+    /**
+     * Return an ArgParser setup to ignore keyword args (allowing them
+     * to passthru).
+     *
+     * @param funcName the name of the caller
+     * @param args PyObject array of args
+     * @param keywords String array of keywords
+     * @return an ArgParser instance
+     */
+    private static ArgParser parseInitArgs(String funcName, PyObject[] args, String[] keywords) {
+        if (keywords.length > 0) {
+            int argc = args.length - keywords.length;
+            PyObject[] justArgs = new PyObject[argc];
+            System.arraycopy(args, 0, justArgs, 0, argc);
+            args = justArgs;
+        }
+        return new ArgParser(funcName, args, Py.NoKeywords, Py.NoKeywords);
+    }
+
+    public PyObject __call__(PyObject args[], String keywords[]) {
+        return weakref___call__(args, keywords);
     }
 
     @ExposedMethod
-    final PyObject weakref___call__() {
+    final PyObject weakref___call__(PyObject args[], String keywords[]) {
+        new ArgParser("__call__", args, keywords, Py.NoKeywords, 0);
         return Py.java2py(gref.get());
     }
 
     public String toString() {
         PyObject obj = (PyObject)gref.get();
-        if (obj == Py.None) {
+        if (obj == null) {
             return String.format("<weakref at %s; dead>", Py.idstr(this));
         }
 

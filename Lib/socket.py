@@ -150,7 +150,7 @@ SHUT_RDWR = 2
 __all__ = [ 'AF_INET', 'SOCK_DGRAM', 'SOCK_RAW',
         'SOCK_RDM', 'SOCK_SEQPACKET', 'SOCK_STREAM', 'SOL_SOCKET',
         'SO_BROADCAST', 'SO_KEEPALIVE', 'SO_LINGER', 'SO_OOBINLINE',
-        'SO_RCVBUF', 'SO_REUSEADDR', 'SO_SNDBUF', 'SO_TIMEOUT', 'TCP_NODELAY'
+        'SO_RCVBUF', 'SO_REUSEADDR', 'SO_SNDBUF', 'SO_TIMEOUT', 'TCP_NODELAY',
         'SocketType', 'error', 'herror', 'gaierror', 'timeout',
         'getfqdn', 'gethostbyaddr', 'gethostbyname', 'gethostname',
         'socket', 'getaddrinfo', 'getdefaulttimeout', 'setdefaulttimeout',
@@ -696,6 +696,8 @@ class _tcpsocket(_nonblocking_api_mixin):
             self._do_connect(addr)
         if self.sock_impl.finish_connect():
             self._setup()
+            if self.mode == MODE_NONBLOCKING:
+                return errno.EISCONN
             return 0
         return errno.EINPROGRESS
 
@@ -817,8 +819,11 @@ class _udpsocket(_nonblocking_api_mixin):
         self._do_connect(addr)
 
     def connect_ex(self, addr):
-        self._do_connect(addr)
+        if not self.sock_impl:
+            self._do_connect(addr)
         if self.sock_impl.finish_connect():
+            if self.mode == MODE_NONBLOCKING:
+                return errno.EISCONN
             return 0
         return errno.EINPROGRESS
 

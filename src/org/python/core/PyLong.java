@@ -2,6 +2,7 @@
 package org.python.core;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 
 import org.python.expose.ExposedMethod;
@@ -77,20 +78,37 @@ public class PyLong extends PyObject {
         super(subType);
         value = v;
     }
+
     public PyLong(BigInteger v) {
         this(TYPE, v);
     }
 
     public PyLong(double v) {
-        this(new java.math.BigDecimal(v).toBigInteger());
+        this(toBigInteger(v));
     }
+
     public PyLong(long v) {
         this(BigInteger.valueOf(v));
     }
+
     public PyLong(String s) {
         this(new BigInteger(s));
     }
-    
+
+    /**
+     * Convert a double to BigInteger, raising an OverflowError if
+     * infinite.
+     */
+    private static BigInteger toBigInteger(double value) {
+        if (Double.isInfinite(value)) {
+            throw Py.OverflowError("cannot convert float infinity to long");
+        }
+        if (Double.isNaN(value)) {
+            return BigInteger.valueOf(0);
+        }
+        return new BigDecimal(value).toBigInteger();
+    }
+
     public BigInteger getValue() {
         return value;
     }
@@ -124,7 +142,7 @@ public class PyLong extends PyObject {
 
     public double doubleValue() {
         double v = value.doubleValue();
-        if (v == Double.NEGATIVE_INFINITY || v == Double.POSITIVE_INFINITY) {
+        if (Double.isInfinite(v)) {
             throw Py.OverflowError("long int too long to convert");
         }
         return v;

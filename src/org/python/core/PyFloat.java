@@ -2,6 +2,7 @@
 package org.python.core;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
@@ -51,6 +52,13 @@ public class PyFloat extends PyObject
 
     public PyFloat(float v) {
         this((double)v);
+    }
+
+    /**
+     * Determine if this float is not infinity, nor NaN.
+     */
+    public boolean isFinite() {
+        return !Double.isInfinite(value) && !Double.isNaN(value);
     }
 
     public double getValue() {
@@ -145,10 +153,29 @@ public class PyFloat extends PyObject
 
     @ExposedMethod(type = MethodType.CMP)
     final int float___cmp__(PyObject other) {
-        if (!canCoerce(other))
-             return -2;
-        double v = coerce(other);
-        return value < v ? -1 : value > v ? 1 : 0;
+        double i = value;
+        double j;
+        if (other instanceof PyFloat) {
+            j = ((PyFloat)other).value;
+        } else if (!isFinite()) {
+            // we're infinity: our magnitude exceeds any finite
+            // integer, so it doesn't matter which int we compare i
+            // with. If NaN, similarly.
+            if (other instanceof PyInteger || other instanceof PyLong) {
+                j = 0.0;
+            }
+            return -2;
+        } else if (other instanceof PyInteger) {
+            j = ((PyInteger)other).getValue();
+        } else if (other instanceof PyLong) {
+            BigDecimal v = new BigDecimal(value);
+            BigDecimal w = new BigDecimal(((PyLong)other).getValue());
+            return v.compareTo(w);
+        } else {
+            return -2;
+        }
+        return i < j ? -1 : i > j ? 1 : 0;
+
     }
 
     public Object __coerce_ex__(PyObject other) {
@@ -165,8 +192,7 @@ public class PyFloat extends PyObject
     }
 
     private static final boolean canCoerce(PyObject other) {
-        return other instanceof PyFloat || other instanceof PyInteger ||
-            other instanceof PyLong;
+        return other instanceof PyFloat || other instanceof PyInteger || other instanceof PyLong;
     }
 
     private static final double coerce(PyObject other) {
@@ -179,7 +205,6 @@ public class PyFloat extends PyObject
         else
             throw Py.TypeError("xxx");
     }
-
 
     public PyObject __add__(PyObject right) {
         return float___add__(right);

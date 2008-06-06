@@ -16,7 +16,7 @@ public class CallableProxyType extends ProxyType {
     public static final PyType TYPE = PyType.fromClass(CallableProxyType.class);
 
     public CallableProxyType(GlobalRef ref, PyObject callback) {
-        super(ref, callback);
+        super(TYPE, ref, callback);
     }
 
     public PyObject __call__(PyObject[] args, String[] kws) {

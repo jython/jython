@@ -205,7 +205,7 @@ public class PyObject implements Serializable {
      * @param keywords the keywords used for all keyword arguments.
      **/
     public PyObject __call__(PyObject args[], String keywords[]) {
-        throw Py.TypeError("call of non-function (" + getType().fastGetName() + ")");
+        throw Py.TypeError(String.format("'%s' object is not callable", getType().fastGetName()));
     }
 
     /**
@@ -506,8 +506,9 @@ public class PyObject implements Serializable {
      **/
     public PyObject __getitem__(PyObject key) {
         PyObject ret = __finditem__(key);
-        if (ret == null)
-            throw Py.KeyError(key.toString());
+        if (ret == null) {
+            throw Py.KeyError(key);
+        }
         return ret;
     }
 

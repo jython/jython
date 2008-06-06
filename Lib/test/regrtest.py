@@ -1055,7 +1055,6 @@ _failures = {
     test_trace
     test_ucn
     test_unicode
-    test_weakref
     test_zipimport
     ''',
 }
