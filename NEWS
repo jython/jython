@@ -1,7 +1,10 @@
 Jython NEWS
 
 Jython 2.2.2 rc1
-  Bugs fixed
+  Bugs fixed (new numbering due to move to Roundup)
+    - [ 1048 ] List Comprehension in finally throws NPE
+
+  Bugs fixed (old sourceforge numbering)
     - [ 1806980 ] os.path.join ignores empty string
     - [ 1744567 ] Simultaneous read & write on socket FileWrapper causes hang
     - [ 1831710 ] PyFileCloser throws NullPointerException on shutdown

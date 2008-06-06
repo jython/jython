@@ -2030,7 +2030,7 @@ public class CodeCompiler extends Visitor
         }
         code.invokevirtual(mrefs.getattr);
 
-        String tmp_append = "_[" + (++list_comprehension_count) + "]";
+        String tmp_append = "_[" + node.beginLine + "_" + node.beginColumn + "]";
             
         set(new Name(tmp_append, Name.Store, node));
 
