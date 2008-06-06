@@ -24,16 +24,32 @@ public class PyFloat extends PyObject
             PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("float", args, keywords, new String[] { "x" }, 0);
         PyObject x = ap.getPyObject(0, null);
-        if (new_.for_type == subtype) {
-            if (x == null) {
+        if (x == null) {
+            if (new_.for_type == subtype) {
                 return new PyFloat(0.0);
-            }
-            return x.__float__();
-        } else {
-            if (x == null) {
+            } else {
                 return new PyFloatDerived(subtype, 0.0);
             }
-            return new PyFloatDerived(subtype, x.__float__().getValue());
+        } else {
+            PyFloat floatObject = null;
+            try {
+                floatObject = x.__float__();
+            } catch (PyException e) {
+                if (Py.matchException(e, Py.AttributeError)) {
+                    // Translate AttributeError to TypeError
+                    // XXX: We are using the same message as CPython, even if
+                    //      it is not strictly correct (instances of types
+                    //      that implement the __float__ method are also
+                    //      valid arguments)
+                    throw Py.TypeError("float() argument must be a string or a number");
+                }
+                throw e;
+            }
+            if (new_.for_type == subtype) {
+                return floatObject;
+            } else {
+                return new PyFloatDerived(subtype, floatObject.getValue());
+            }
         }
     }
 
