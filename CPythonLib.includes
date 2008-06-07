@@ -97,6 +97,7 @@ pprint.py
 profile.py
 pstats.py
 pyclbr.py
+pydoc.py
 Queue.py
 quopri.py
 random.py
@@ -112,6 +113,7 @@ shlex.py
 shutil.py
 SimpleHTTPServer.py
 SimpleXMLRPCServer.py
+site.py
 site-packages/README
 smtplib.py
 sndhdr.py
