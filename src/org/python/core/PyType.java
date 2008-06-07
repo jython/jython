@@ -1305,6 +1305,15 @@ public class PyType extends PyObject implements Serializable {
         return String.format("<%s '%s'>", kind, getName());
     }
 
+    /**
+     * Raises AttributeError on type objects. The message differs from
+     * PyObject#noAttributeError, to mimic CPython behaviour.
+     */
+    public void noAttributeError(String name) {
+        throw Py.AttributeError(String.format("type object '%.50s' has no attribute '%.400s'",
+                                              fastGetName(), name));
+    }
+
     //XXX: consider pulling this out into a generally accessible place
     //     I bet this is duplicated more or less in other places.
     private static void confirmIdentifier(PyObject o) {
