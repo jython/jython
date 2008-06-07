@@ -356,14 +356,29 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
     </target>
 
     <target name="brand-version" depends="version-init">
-        <exec executable="svnversion" osfamily="unix" outputproperty="build.svn.version"/>
+        <tstamp>
+          <format property="build.date" pattern="MMM d yyyy" offset="0"/>
+          <format property="build.time" pattern="HH:mm:ss" offset="0"/>
+        </tstamp>
+        <exec executable="svnversion" osfamily="unix" outputproperty="build.svn.revision"/>
         <!-- XXX: could attempt to utilize subwcrev.exe to get the revision on Windows  -->
-        <condition property="build.svn.version" value="">
+        <condition property="build.svn.revision" value="">
             <not>
                 <os family="unix"/>
             </not>
         </condition>
         <property name="version.properties" value="${compile.dir}/org/python/version.properties"/>
+        <echo file="${version.properties}"># Jython version information
+jython.version=${jython.version}
+jython.major_version=${jython.major_version}
+jython.minor_version=${jython.minor_version}
+jython.micro_version=${jython.micro_version}
+jython.release_level=${jython.release_level}
+jython.release_serial=${jython.release_serial}
+jython.build.date=${build.date}
+jython.build.time=${build.time}
+jython.build.svn_revision=${build.svn.revision}</echo>
+        <!--
         <touch file="${version.properties}" mkdirs="true"/>
         <propertyfile file="${version.properties}"
                       comment="Jython version information">
@@ -375,8 +390,9 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
             <entry key="jython.release_serial" value="${jython.release_serial}"/>
             <entry key="jython.build.date" type="date" value="now" pattern="MMM d yyyy"/>
             <entry key="jython.build.time" type="date" value="now" pattern="HH:mm:ss"/>
-            <entry key="jython.build.svn_revision" value="${build.svn.version}"/>
+            <entry key="jython.build.svn_revision" value="${build.svn.revision}"/>
         </propertyfile>
+        -->
     </target>
 
     <target name="brand-readme-version" depends="checkout" if="do.snapshot.build">
