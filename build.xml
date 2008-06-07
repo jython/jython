@@ -368,6 +368,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
             </not>
         </condition>
         <property name="version.properties" value="${compile.dir}/org/python/version.properties"/>
+        <mkdir dir="${compile.dir}/org/python"/>
         <echo file="${version.properties}"># Jython version information
 jython.version=${jython.version}
 jython.major_version=${jython.major_version}
