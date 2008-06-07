@@ -18,6 +18,7 @@ import java.util.StringTokenizer;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+import org.python.Version;
 import org.python.core.adapter.ClassicPyObjectAdapter;
 import org.python.core.adapter.ExtensiblePyObjectAdapter;
 import org.python.core.packagecache.PackageManager;
@@ -40,29 +41,16 @@ public class PySystemState extends PyObject
     private static final String JAR_URL_PREFIX = "jar:file:";
     private static final String JAR_SEPARATOR = "!";
 
-    /**
-     * The current version of Jython.
-     * <p>
-     * Usually updated by hand.<br>
-     * Replaced by ant when doing a snapshot build.
-     * <p>
-     * This also applies for the <code>PY_*</code> integer values below
-     */
-    public static String version = "2.3a0";
-
-    private static int PY_MAJOR_VERSION = 2;
-    private static int PY_MINOR_VERSION = 3;
-    private static int PY_MICRO_VERSION = 0;
-    private static int PY_RELEASE_LEVEL = 0x0A;
-    private static int PY_RELEASE_SERIAL = 0;
-
-    public static int hexversion = ((PY_MAJOR_VERSION << 24) |
-                                    (PY_MINOR_VERSION << 16) |
-                                    (PY_MICRO_VERSION <<  8) |
-                                    (PY_RELEASE_LEVEL <<  4) |
-                                    (PY_RELEASE_SERIAL << 0));
+    public static String version = Version.getVersion();
+    public static int hexversion = ((Version.PY_MAJOR_VERSION << 24) |
+                                    (Version.PY_MINOR_VERSION << 16) |
+                                    (Version.PY_MICRO_VERSION <<  8) |
+                                    (Version.PY_RELEASE_LEVEL <<  4) |
+                                    (Version.PY_RELEASE_SERIAL << 0));
 
     public static PyTuple version_info;
+
+    public static PyTuple subversion;
 
     public static int maxunicode = 65535;
 
@@ -71,7 +59,7 @@ public class PySystemState extends PyObject
      */
     // TBD: should we use \u00a9 Unicode c-inside-circle?
     public static String copyright =
-        "Copyright (c) 2000-2007, Jython Developers\n" +
+        "Copyright (c) 2000-2008, Jython Developers\n" +
         "All rights reserved.\n\n" +
 
         "Copyright (c) 2000 BeOpen.com.\n" +
@@ -570,23 +558,26 @@ public class PySystemState extends PyObject
         Py.stdout = new StdoutWrapper();
 
         String s;
-        if(PY_RELEASE_LEVEL == 0x0A)
+        if(Version.PY_RELEASE_LEVEL == 0x0A)
             s = "alpha";
-        else if(PY_RELEASE_LEVEL == 0x0B)
+        else if(Version.PY_RELEASE_LEVEL == 0x0B)
             s = "beta";
-        else if(PY_RELEASE_LEVEL == 0x0C)
+        else if(Version.PY_RELEASE_LEVEL == 0x0C)
             s = "candidate";
-        else if(PY_RELEASE_LEVEL == 0x0F)
+        else if(Version.PY_RELEASE_LEVEL == 0x0F)
             s = "final";
-        else if(PY_RELEASE_LEVEL == 0xAA)
+        else if(Version.PY_RELEASE_LEVEL == 0xAA)
             s = "snapshot";
         else
-            throw new RuntimeException("Illegal value for PY_RELEASE_LEVEL: " + PY_RELEASE_LEVEL);
-        version_info = new PyTuple(Py.newInteger(PY_MAJOR_VERSION),
-                                   Py.newInteger(PY_MINOR_VERSION),
-                                   Py.newInteger(PY_MICRO_VERSION),
+            throw new RuntimeException("Illegal value for PY_RELEASE_LEVEL: " +
+                                       Version.PY_RELEASE_LEVEL);
+        version_info = new PyTuple(Py.newInteger(Version.PY_MAJOR_VERSION),
+                                   Py.newInteger(Version.PY_MINOR_VERSION),
+                                   Py.newInteger(Version.PY_MICRO_VERSION),
                                    Py.newString(s),
-                                   Py.newInteger(PY_RELEASE_SERIAL));
+                                   Py.newInteger(Version.PY_RELEASE_SERIAL));
+        subversion = new PyTuple(Py.newString("Jython"), Py.newString(Version.BRANCH),
+                                 Py.newString(Version.SVN_REVISION));
     }
 
     public static boolean isPackageCacheEnabled() {
