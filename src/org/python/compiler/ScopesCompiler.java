@@ -237,7 +237,6 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
 
     public Object visitListComp(ListComp node) throws Exception {
         String tmp ="_[" + node.getLine() + "_" + node.getCharPositionInLine() + "]";
-        System.out.println(tmp);
         cur.addBound(tmp);
         traverse(node);
         return null;

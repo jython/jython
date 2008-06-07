@@ -1664,8 +1664,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         code.invokevirtual("org/python/core/PyObject", "__getattr__", "(" + $str + ")" + $pyObj);
 
         String tmp_append ="_[" + node.getLine() + "_" + node.getCharPositionInLine() + "]";
-        System.out.println(tmp_append);
-            
+
         set(new Name(node, tmp_append, expr_contextType.Store));
 
         stmtType n = new Expr(node, new Call(node, new Name(node, tmp_append, expr_contextType.Load), 
