@@ -1,3 +1,4 @@
+/* Generated file, do not modify.  See jython/src/templates/gderived.py. */
 package org.python.core;
 
 public class PyFrozenSetDerived extends PyFrozenSet implements Slotted {
@@ -48,7 +49,7 @@ public class PyFrozenSetDerived extends PyFrozenSet implements Slotted {
             PyObject res=impl.__get__(this,self_type).__call__();
             if (res instanceof PyString)
                 return(PyString)res;
-            throw Py.TypeError("__str__"+" should return a "+"string");
+            throw Py.TypeError("__str__"+" returned non-"+"string"+" (type "+res.getType().fastGetName()+")");
         }
         return super.__str__();
     }
@@ -60,7 +61,7 @@ public class PyFrozenSetDerived extends PyFrozenSet implements Slotted {
             PyObject res=impl.__get__(this,self_type).__call__();
             if (res instanceof PyString)
                 return(PyString)res;
-            throw Py.TypeError("__repr__"+" should return a "+"string");
+            throw Py.TypeError("__repr__"+" returned non-"+"string"+" (type "+res.getType().fastGetName()+")");
         }
         return super.__repr__();
     }
@@ -72,7 +73,7 @@ public class PyFrozenSetDerived extends PyFrozenSet implements Slotted {
             PyObject res=impl.__get__(this,self_type).__call__();
             if (res instanceof PyString)
                 return(PyString)res;
-            throw Py.TypeError("__hex__"+" should return a "+"string");
+            throw Py.TypeError("__hex__"+" returned non-"+"string"+" (type "+res.getType().fastGetName()+")");
         }
         return super.__hex__();
     }
@@ -84,7 +85,7 @@ public class PyFrozenSetDerived extends PyFrozenSet implements Slotted {
             PyObject res=impl.__get__(this,self_type).__call__();
             if (res instanceof PyString)
                 return(PyString)res;
-            throw Py.TypeError("__oct__"+" should return a "+"string");
+            throw Py.TypeError("__oct__"+" returned non-"+"string"+" (type "+res.getType().fastGetName()+")");
         }
         return super.__oct__();
     }
@@ -96,7 +97,7 @@ public class PyFrozenSetDerived extends PyFrozenSet implements Slotted {
             PyObject res=impl.__get__(this,self_type).__call__();
             if (res instanceof PyFloat)
                 return(PyFloat)res;
-            throw Py.TypeError("__float__"+" should return a "+"float");
+            throw Py.TypeError("__float__"+" returned non-"+"float"+" (type "+res.getType().fastGetName()+")");
         }
         return super.__float__();
     }
@@ -108,7 +109,7 @@ public class PyFrozenSetDerived extends PyFrozenSet implements Slotted {
             PyObject res=impl.__get__(this,self_type).__call__();
             if (res instanceof PyLong)
                 return(PyLong)res;
-            throw Py.TypeError("__long__"+" should return a "+"long");
+            throw Py.TypeError("__long__"+" returned non-"+"long"+" (type "+res.getType().fastGetName()+")");
         }
         return super.__long__();
     }
@@ -120,7 +121,7 @@ public class PyFrozenSetDerived extends PyFrozenSet implements Slotted {
             PyObject res=impl.__get__(this,self_type).__call__();
             if (res instanceof PyComplex)
                 return(PyComplex)res;
-            throw Py.TypeError("__complex__"+" should return a "+"complex");
+            throw Py.TypeError("__complex__"+" returned non-"+"complex"+" (type "+res.getType().fastGetName()+")");
         }
         return super.__complex__();
     }
@@ -689,18 +690,6 @@ public class PyFrozenSetDerived extends PyFrozenSet implements Slotted {
         return super.__int__();
     }
 
-    public String toString() {
-        PyType self_type=getType();
-        PyObject impl=self_type.lookup("__repr__");
-        if (impl!=null) {
-            PyObject res=impl.__get__(this,self_type).__call__();
-            if (!(res instanceof PyString))
-                throw Py.TypeError("__repr__ should return a string");
-            return((PyString)res).toString();
-        }
-        return super.toString();
-    }
-
     public int hashCode() {
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__hash__");
@@ -895,7 +884,7 @@ public class PyFrozenSetDerived extends PyFrozenSet implements Slotted {
         PyString py_name=null;
         try {
             if (getattribute!=null) {
-                return getattribute.__get__(this,self_type).__call__(py_name=new PyString(name));
+                return getattribute.__get__(this,self_type).__call__(py_name=PyString.fromInterned(name));
             } else {
                 return super.__findattr__(name);
             }
@@ -904,7 +893,7 @@ public class PyFrozenSetDerived extends PyFrozenSet implements Slotted {
                 PyObject getattr=self_type.lookup("__getattr__");
                 if (getattr!=null)
                     try {
-                        return getattr.__get__(this,self_type).__call__(py_name!=null?py_name:new PyString(name));
+                        return getattr.__get__(this,self_type).__call__(py_name!=null?py_name:PyString.fromInterned(name));
                     } catch (PyException e1) {
                         if (!Py.matchException(e1,Py.AttributeError))
                             throw e1;
@@ -919,7 +908,7 @@ public class PyFrozenSetDerived extends PyFrozenSet implements Slotted {
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__setattr__");
         if (impl!=null) {
-            impl.__get__(this,self_type).__call__(new PyString(name),value);
+            impl.__get__(this,self_type).__call__(PyString.fromInterned(name),value);
             return;
         }
         super.__setattr__(name,value);
@@ -929,7 +918,7 @@ public class PyFrozenSetDerived extends PyFrozenSet implements Slotted {
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__delattr__");
         if (impl!=null) {
-            impl.__get__(this,self_type).__call__(new PyString(name));
+            impl.__get__(this,self_type).__call__(PyString.fromInterned(name));
             return;
         }
         super.__delattr__(name);
@@ -975,6 +964,18 @@ public class PyFrozenSetDerived extends PyFrozenSet implements Slotted {
             if (impl!=null)
                 impl.__get__(this,self_type).__call__(args,keywords);
         }
+    }
+
+    public String toString() {
+        PyType self_type=getType();
+        PyObject impl=self_type.lookup("__repr__");
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,self_type).__call__();
+            if (!(res instanceof PyString))
+                throw Py.TypeError("__repr__ returned non-string (type "+res.getType().fastGetName()+")");
+            return((PyString)res).toString();
+        }
+        return super.toString();
     }
 
 }
