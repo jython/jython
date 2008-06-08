@@ -162,7 +162,7 @@ if sys.exec_prefix != sys.prefix:
     prefixes.append(sys.exec_prefix)
 for prefix in prefixes:
     if prefix:
-        if sys.platform in ('os2emx', 'riscos'):
+        if sys.platform in ('os2emx', 'riscos') or sys.platform[:4] == 'java':
             sitedirs = [os.path.join(prefix, "Lib", "site-packages")]
         elif os.sep == '/':
             sitedirs = [os.path.join(prefix,
