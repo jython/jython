@@ -803,6 +803,32 @@ public class PyStringDerived extends PyString implements Slotted {
         return super.__finditem__(key);
     }
 
+    public PyObject __getitem__(PyObject key) {
+        // Same as __finditem__, without swallowing LookupErrors. This allows
+        // __getitem__ implementations written in Python to raise custom
+        // exceptions (such as subclasses of KeyError).
+        //
+        // We are forced to duplicate the code, instead of defining __finditem__
+        // in terms of __getitem__. That's because PyObject defines __getitem__
+        // in terms of __finditem__. Therefore, we would end with an infinite
+        // loop when self_type.lookup("__getitem__") returns null:
+        //
+        //  __getitem__ -> super.__getitem__ -> __finditem__ -> __getitem__
+        //
+        // By duplicating the (short) lookup and call code, we are safe, because
+        // the call chains will be:
+        //
+        // __finditem__ -> super.__finditem__
+        //
+        // __getitem__ -> super.__getitem__ -> __finditem__ -> super.__finditem__
+
+        PyType self_type=getType();
+        PyObject impl=self_type.lookup("__getitem__");
+        if (impl!=null)
+            return impl.__get__(this,self_type).__call__(key);
+        return super.__getitem__(key);
+    }
+
     public void __setitem__(PyObject key,PyObject value) { // ???
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__setitem__");

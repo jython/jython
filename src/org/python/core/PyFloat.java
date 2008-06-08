@@ -171,6 +171,7 @@ public class PyFloat extends PyObject
     final int float___cmp__(PyObject other) {
         double i = value;
         double j;
+
         if (other instanceof PyFloat) {
             j = ((PyFloat)other).value;
         } else if (!isFinite()) {
@@ -191,7 +192,6 @@ public class PyFloat extends PyObject
             return -2;
         }
         return i < j ? -1 : i > j ? 1 : 0;
-
     }
 
     public Object __coerce_ex__(PyObject other) {

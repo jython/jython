@@ -21,7 +21,10 @@ import org.python.core.imp;
 
 public class jython
 {
-    private static String usage =
+    private static final String COPYRIGHT =
+            "Type \"help\", \"copyright\", \"credits\" or \"license\" for more information.";
+
+    private static final String usage =
         // "usage: jython [option] ... [-c cmd | -m mod | file | -] [arg] ...\n" +
         "usage: jython [option] ... [-c cmd | file | -] [arg] ...\n" +
         "Options and arguments:\n" + //(and corresponding environment variables):\n" +
@@ -136,36 +139,11 @@ public class jython
             PySystemState.warnoptions.append(new PyString(wopt));
         }
 
-        String msg = "";
         if (Options.importSite) {
             try {
                 imp.load("site");
-
                 if (opts.notice) {
-                    PyObject builtins = PySystemState.builtins;
-                    boolean copyright =
-                                builtins.__finditem__("copyright") != null;
-                    boolean credits =
-                                builtins.__finditem__("credits") != null;
-                    boolean license =
-                                builtins.__finditem__("license") != null;
-                    if (copyright) {
-                        msg += "\"copyright\"";
-                        if (credits && license)
-                            msg += ", ";
-                        else if (credits || license)
-                            msg += " or ";
-                    }
-                    if (credits) {
-                        msg += "\"credits\"";
-                        if (license)
-                            msg += " or ";
-                    }
-                    if (license)
-                        msg += "\"license\"";
-                    if (msg.length() > 0)
-                        System.err.println("Type " + msg +
-                                           " for more information.");
+                    System.err.println(COPYRIGHT);
                 }
             } catch (PyException pye) {
                 if (!Py.matchException(pye, Py.ImportError)) {
@@ -301,7 +279,7 @@ class CommandLineOptions
         int index=0;
         while (index < args.length && args[index].startsWith("-")) {
             String arg = args[index];
-            if (arg.equals("-h") || arg.equals("--help")) {
+            if (arg.equals("-h") || arg.equals("-?") || arg.equals("--help")) {
                 help = true;
                 return false;
             }
@@ -382,7 +360,7 @@ class CommandLineOptions
                     opt = opt.substring(2);
                 else if (opt.startsWith("-"))
                     opt = opt.substring(1);
-                System.err.println("jython: illegal option -- " + opt);
+                System.err.println("Unknown option: " + opt);
                 return false;
             }
             index += 1;
