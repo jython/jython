@@ -359,7 +359,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
     </target>
 
     <!-- XXX: could attempt to utilize subwcrev.exe to get the revision on Windows  -->
-    <target name="svnversion" unless="${os.family.unix}">
+    <target name="svnversion" if="os.family.unix">
         <exec executable="svnversion" failifexecutionfails="false" outputproperty="build.svn.revision"/>
     </target>
 
