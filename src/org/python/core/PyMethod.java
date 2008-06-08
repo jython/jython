@@ -137,6 +137,12 @@ public class PyMethod extends PyObject {
     }
 
     @Override
+    public int hashCode() {
+        int hashCode = im_self == null ? Py.None.hashCode() : im_self.hashCode();
+        return hashCode ^ im_func.hashCode();
+    }
+
+    @Override
     public PyObject getDoc() {
         return im_func.getDoc();
     }
