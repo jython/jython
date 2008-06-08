@@ -279,7 +279,7 @@ class CommandLineOptions
         int index=0;
         while (index < args.length && args[index].startsWith("-")) {
             String arg = args[index];
-            if (arg.equals("-h") || arg.equals("--help")) {
+            if (arg.equals("-h") || arg.equals("-?") || arg.equals("--help")) {
                 help = true;
                 return false;
             }
@@ -360,7 +360,7 @@ class CommandLineOptions
                     opt = opt.substring(2);
                 else if (opt.startsWith("-"))
                     opt = opt.substring(1);
-                System.err.println("jython: illegal option -- " + opt);
+                System.err.println("Unknown option: " + opt);
                 return false;
             }
             index += 1;
