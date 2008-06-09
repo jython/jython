@@ -7,7 +7,7 @@ public class PyCallIter extends PyIterator {
     private PyObject sentinel;
 
     public PyCallIter(PyObject callable, PyObject sentinel) {
-        if (callable.isCallable()) {
+        if (!callable.isCallable()) {
             throw Py.TypeError("iter(v, w): v must be callable");
         }
         this.callable = callable;
