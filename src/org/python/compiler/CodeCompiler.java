@@ -1946,8 +1946,59 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         return null;
     }
 
-    public Object visitGeneratorExp(GeneratorExp node) {
-        //FIXME
+    public Object visitGeneratorExp(GeneratorExp node) throws Exception {
+        String bound_exp = "x";
+        String tmp_append ="__gen" + node.getLine() + "_" + node.getCharPositionInLine();
+
+        setline(node);
+
+        code.new_("org/python/core/PyFunction");
+        code.dup();
+        loadFrame();
+        code.getfield("org/python/core/PyFrame", "f_globals", $pyObj);
+
+        ScopeInfo scope = module.getScopeInfo(node);
+
+        makeArray(new exprType[0]);
+
+        scope.setup_closure();
+        scope.dump();
+
+        stmtType n = new Expr(node, new Yield(node, node.elt));
+
+        exprType iter = null;
+        for (int i = node.generators.length - 1; i >= 0; i--) {
+            comprehensionType lc = node.generators[i];
+            for (int j = lc.ifs.length - 1; j >= 0; j--) {
+                n = new If(lc.ifs[j], lc.ifs[j], new stmtType[] { n }, new stmtType[0]);
+            }
+            if (i != 0) {
+                n = new For(lc, lc.target, lc.iter, new stmtType[] { n }, new stmtType[0]);
+            } else {
+                n = new For(lc, lc.target, new Name(node, bound_exp, expr_contextType.Load), new stmtType[] { n }, new stmtType[0]);
+                iter = lc.iter;
+            }
+        }
+
+        module.PyCode(new Suite(node, new stmtType[]{n}), tmp_append, true,
+                      className, false, false,
+                      node.getTokenStartIndex(), scope, cflags).get(code);
+
+        code.aconst_null();
+        if (!makeClosure(scope)) {
+            code.invokespecial("org/python/core/PyFunction", "<init>", "(" + $pyObj + $pyObjArr + $pyCode + $pyObj + ")V");
+        } else {
+            code.invokespecial( "org/python/core/PyFunction", "<init>", "(" + $pyObj + $pyObjArr + $pyCode + $pyObj + $pyObjArr + ")V");
+        }
+
+        set(new Name(node, tmp_append, expr_contextType.Store));
+
+        visit(new Name(node, tmp_append, expr_contextType.Load));
+        visit(iter);
+        code.invokevirtual("org/python/core/PyObject", "__call__", "(" + $pyObj + ")" + $pyObj);
+
+        visit(new Delete(n, new exprType[] { new Name(n, tmp_append, expr_contextType.Del) }));
+
         return null;
     }
 

@@ -242,11 +242,31 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
         return null;
     }
 
-
     public Object visitYield(Yield node) throws Exception {
         cur.generator = true;
         cur.yield_count++;
         traverse(node);
         return null;
     }
+
+    public Object visitGeneratorExp(GeneratorExp node) throws Exception {
+        String bound_exp = "x";
+        String tmp ="__gen" + node.getLine() + "_" + node.getCharPositionInLine();
+        def(tmp);
+        ArgListCompiler ac = new ArgListCompiler();
+        ac.visitArgs(new argumentsType(node, new exprType[]{new Name(node.token, bound_exp,
+                        expr_contextType.Param)}, null, null, new exprType[0]));
+        beginScope(tmp, FUNCSCOPE, node, ac);
+        cur.addParam(bound_exp);
+        cur.markFromParam();
+
+        //yield stuff
+        cur.generator = true;
+        cur.yield_count++;
+        traverse(node);
+
+        endScope();
+        return null;
+    }
+
 }
