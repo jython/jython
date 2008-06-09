@@ -726,7 +726,7 @@ The readme text for the next release will be like:
             </batchtest>
         </junit>
     </target>
-    <target name="regrtest" depends="compile,expose,copy-lib">
+    <target name="regrtest" depends="developer-build">
       <exec executable="${dist.dir}/bin/jython">
         <arg value="${dist.dir}/Lib/test/regrtest.py"/>
         <!-- Only run the tests that are expected to work on Jython -->
