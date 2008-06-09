@@ -11,6 +11,8 @@ test/**
 
 # Lib files, in alphabetical order:
 __future__.py
+_LWPCookieJar.py
+_MozillaCookieJar.py
 aifc.py
 anydbm.py
 atexit.py
@@ -34,6 +36,7 @@ colorsys.py
 commands.py
 compileall.py
 ConfigParser.py
+cookielib.py
 copy.py
 copy_reg.py
 Cookie.py
