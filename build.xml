@@ -215,6 +215,9 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <condition property="jython.real_release_level" value="${PY_RELEASE_LEVEL_SNAPSHOT}" else="${jython.release_level}">
             <isset property="do.snapshot.build" />
         </condition>
+        <condition property="os.family.unix">
+            <os family="unix"/>
+        </condition>
     </target>
 
     <target name="full-preinit">
@@ -355,21 +358,23 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         </svn> 
     </target>
 
-    <target name="brand-version" depends="version-init">
-        <tstamp>
-          <format property="build.date" pattern="MMM d yyyy" offset="0"/>
-          <format property="build.time" pattern="HH:mm:ss" offset="0"/>
-        </tstamp>
-        <exec executable="svnversion" osfamily="unix" outputproperty="build.svn.revision"/>
-        <!-- XXX: could attempt to utilize subwcrev.exe to get the revision on Windows  -->
+    <!-- XXX: could attempt to utilize subwcrev.exe to get the revision on Windows  -->
+    <target name="svnversion" if="os.family.unix">
+        <exec executable="svnversion" failifexecutionfails="false" outputproperty="build.svn.revision"/>
+    </target>
+
+    <target name="brand-version" depends="version-init, svnversion">
         <condition property="build.svn.revision" value="">
             <not>
-                <os family="unix"/>
+                <isset property="build.svn.revision"/>
             </not>
         </condition>
-        <property name="version.properties" value="${compile.dir}/org/python/version.properties"/>
+        <tstamp>
+            <format property="build.date" pattern="MMM d yyyy" offset="0"/>
+            <format property="build.time" pattern="HH:mm:ss" offset="0"/>
+        </tstamp>
         <mkdir dir="${compile.dir}/org/python"/>
-        <echo file="${version.properties}"># Jython version information
+        <echo file="${compile.dir}/org/python/version.properties"># Jython version information
 jython.version=${jython.version}
 jython.major_version=${jython.major_version}
 jython.minor_version=${jython.minor_version}
@@ -379,21 +384,6 @@ jython.release_serial=${jython.release_serial}
 jython.build.date=${build.date}
 jython.build.time=${build.time}
 jython.build.svn_revision=${build.svn.revision}</echo>
-        <!--
-        <touch file="${version.properties}" mkdirs="true"/>
-        <propertyfile file="${version.properties}"
-                      comment="Jython version information">
-            <entry key="jython.version" value="${jython.version}"/>
-            <entry key="jython.major_version" value="${jython.major_version}"/>
-            <entry key="jython.minor_version" value="${jython.minor_version}"/>
-            <entry key="jython.micro_version" value="${jython.micro_version}"/>
-            <entry key="jython.release_level" value="${jython.real_release_level}"/>
-            <entry key="jython.release_serial" value="${jython.release_serial}"/>
-            <entry key="jython.build.date" type="date" value="now" pattern="MMM d yyyy"/>
-            <entry key="jython.build.time" type="date" value="now" pattern="HH:mm:ss"/>
-            <entry key="jython.build.svn_revision" value="${build.svn.revision}"/>
-        </propertyfile>
-        -->
     </target>
 
     <target name="brand-readme-version" depends="checkout" if="do.snapshot.build">

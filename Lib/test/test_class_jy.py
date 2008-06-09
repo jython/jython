@@ -142,6 +142,16 @@ class ClassGeneralTestCase(unittest.TestCase):
             self.assertEqual("type object 'Foo' has no attribute 'bar'",
                              str(e))
 
+    def test_inner_class_dict(self):
+        class z:
+            class t:
+                def moo(self):
+                    pass
+        # Printing this caused an NPE in Jython 2.1
+        keys = list(z.t.__dict__)
+        keys.sort()
+        self.assertEqual(str(keys), "['__doc__', '__module__', 'moo']")
+
 
 class ClassNamelessModuleTestCase(unittest.TestCase):
 

@@ -51,25 +51,25 @@ public class Version {
         loadProperties();
 
         int jython = headURL.indexOf("/jython/");
-        if (jython == -1) {
-            BRANCH = "";
-            SHORT_BRANCH = "unknown";
-            return;
-        }
+        if (jython > -1) {
+            int brStart = jython + 8;
+            String end = headURL.substring(brStart, headURL.length());
 
-        int brStart = jython + 8;
-        int brEnd = headURL.indexOf('/', brStart);
-        int brEnd2 = headURL.indexOf('/', brEnd + 1);
-
-        boolean isTag = "tags".equals(headURL.substring(brStart, brStart + 4));
-        if ("trunk".equals(headURL.substring(brStart, brStart + 5))) {
-            BRANCH = SHORT_BRANCH = "trunk";
-        } else if (isTag || "branches".equals(headURL.substring(brStart, brStart + 8))) {
-            int len = brEnd2 - brStart;
-            BRANCH = headURL.substring(brStart, brStart + len);
-            len = brEnd2 - (brEnd + 1);
-            SHORT_BRANCH = headURL.substring(brEnd + 1, brEnd + 1 + len);
+            if (end.startsWith("trunk/")) {
+                BRANCH = SHORT_BRANCH = "trunk";
+                return;
+            } else if (end.startsWith("tags/") || end.startsWith("branches/")) {
+                int brEnd = end.indexOf('/');
+                int brEnd2 = end.indexOf('/', brEnd + 1);
+                if (brEnd2 > -1) {
+                    BRANCH = end.substring(0, brEnd2);
+                    SHORT_BRANCH = end.substring(brEnd + 1, brEnd2);
+                    return;
+                }
+            }
         }
+        BRANCH = "";
+        SHORT_BRANCH = "unknown";
     }
 
     /**
@@ -142,6 +142,6 @@ public class Version {
      * the Java VM).
      */
     public static String getVersion() {
-        return String.format("Jython %.73s (%.80s) %.80s", PY_VERSION, getBuildInfo(), getVM());
+        return String.format("%.80s (%.80s) %.80s", PY_VERSION, getBuildInfo(), getVM());
     }
 }

@@ -1262,6 +1262,17 @@ public class PyType extends PyObject implements Serializable {
     	setDict(null);
     }
 
+    /**
+     * Equivalent of CPython's typeobject type_get_doc; handles __doc__ descriptors.
+     */
+    public PyObject getDoc() {
+        PyObject doc = super.getDoc();
+        if (!builtin && doc != null && doc.getType().lookup("__get__") != null) {
+            return doc.__get__(null, this);
+        }
+        return doc;
+    }
+
     public Object __tojava__(Class c) {
         if (underlying_class != null && (c == Object.class || c == Class.class ||
                                          c == Serializable.class)) {
