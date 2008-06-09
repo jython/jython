@@ -1,3 +1,5 @@
+# from CPython 2.4, changing Python to Jython in test_version and
+# adding workaround for <http://bugs.jython.org/issue1050> (noted below)
 
 import test.test_support, unittest
 import sys
