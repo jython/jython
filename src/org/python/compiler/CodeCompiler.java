@@ -881,6 +881,26 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         return exit;
     }
 
+    public Object visitIfExp(IfExp node) throws Exception {
+        setline(node.test);
+        Label end = new Label();
+        Label end_of_else = new Label();
+
+        visit(node.test);
+        code.invokevirtual("org/python/core/PyObject", "__nonzero__", "()Z");
+
+        code.ifeq(end_of_else);
+        visit(node.body);
+        code.goto_(end);
+
+        code.label(end_of_else);
+        visit(node.orelse);
+
+        code.label(end);
+
+        return null;
+    }
+
     public int beginLoop() {
         continueLabels.push(new Label());
         breakLabels.push(new Label());
