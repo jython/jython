@@ -1968,15 +1968,15 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
 
         exprType iter = null;
         for (int i = node.generators.length - 1; i >= 0; i--) {
-            comprehensionType lc = node.generators[i];
-            for (int j = lc.ifs.length - 1; j >= 0; j--) {
-                n = new If(lc.ifs[j], lc.ifs[j], new stmtType[] { n }, new stmtType[0]);
+            comprehensionType comp = node.generators[i];
+            for (int j = comp.ifs.length - 1; j >= 0; j--) {
+                n = new If(comp.ifs[j], comp.ifs[j], new stmtType[] { n }, new stmtType[0]);
             }
             if (i != 0) {
-                n = new For(lc, lc.target, lc.iter, new stmtType[] { n }, new stmtType[0]);
+                n = new For(comp, comp.target, comp.iter, new stmtType[] { n }, new stmtType[0]);
             } else {
-                n = new For(lc, lc.target, new Name(node, bound_exp, expr_contextType.Load), new stmtType[] { n }, new stmtType[0]);
-                iter = lc.iter;
+                n = new For(comp, comp.target, new Name(node, bound_exp, expr_contextType.Load), new stmtType[] { n }, new stmtType[0]);
+                iter = comp.iter;
             }
         }
 
