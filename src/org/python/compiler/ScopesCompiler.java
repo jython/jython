@@ -251,7 +251,7 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
 
     public Object visitGeneratorExp(GeneratorExp node) throws Exception {
         String bound_exp = "x";
-        String tmp ="__gen" + node.getLine() + "_" + node.getCharPositionInLine();
+        String tmp ="_(" + node.getLine() + "_" + node.getCharPositionInLine() + ")";
         def(tmp);
         ArgListCompiler ac = new ArgListCompiler();
         ac.visitArgs(new argumentsType(node, new exprType[]{new Name(node.token, bound_exp,
