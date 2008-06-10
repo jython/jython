@@ -3157,7 +3157,7 @@ public class PyObject implements Serializable {
     }
 
     public int asInt() {
-        throw Py.TypeError("expected an int");
+        throw Py.TypeError("an integer is required");
     }
 
     public long asLong(int index) throws ConversionException {

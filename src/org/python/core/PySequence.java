@@ -71,15 +71,18 @@ public abstract class PySequence extends PyObject {
      * Sets the given range of elements.
      */
     protected void setslice(int start, int stop, int step, PyObject value) {
-        throw Py.TypeError("can't assign to immutable object");
+        throw Py.TypeError(String.format("'%s' object does not support item assignment",
+                                         getType().fastGetName()));
     }
 
     protected void del(int i) throws PyException {
-        throw Py.TypeError("can't remove from immutable object");
+        throw Py.TypeError(String.format("'%s' object does not support item deletion",
+                                         getType().fastGetName()));
     }
 
     protected void delRange(int start, int stop, int step) {
-        throw Py.TypeError("can't remove from immutable object");
+        throw Py.TypeError(String.format("'%s' object does not support item deletion",
+                                         getType().fastGetName()));
     }
 
     public boolean __nonzero__() {
@@ -273,7 +276,7 @@ public abstract class PySequence extends PyObject {
             PySlice s = (PySlice)index;
             return __getslice__(s.start, s.stop, s.step);
         } else {
-            throw Py.TypeError("sequence subscript must be integer or slice");
+            throw Py.TypeError(getType().fastGetName() + " indices must be integers");
         }
     }
 
@@ -341,7 +344,7 @@ public abstract class PySequence extends PyObject {
     public synchronized void __setitem__(int index, PyObject value) {
         int i = fixindex(index);
         if(i == -1) {
-            throw Py.IndexError("index out of range: " + i);
+            throw Py.IndexError(getType().fastGetName() + " assignment index out of range");
         }
         set(i, value);
     }
@@ -357,7 +360,7 @@ public abstract class PySequence extends PyObject {
             PySlice s = (PySlice)index;
             __setslice__(s.start, s.stop, s.step, value);
         } else {
-            throw Py.TypeError("sequence subscript must be integer or slice");
+            throw Py.TypeError(getType().fastGetName() + " indices must be integers");
         }
     }
 
@@ -369,21 +372,20 @@ public abstract class PySequence extends PyObject {
         if(index instanceof PyInteger || index instanceof PyLong) {
             int i = fixindex(index.asInt());
             if(i == -1) {
-                throw Py.IndexError("index out of range: " + i);
+                throw Py.IndexError(getType().fastGetName() + " assignment index out of range");
             }
             del(i);
         } else if(index instanceof PySlice) {
             PySlice s = (PySlice)index;
             __delslice__(s.start, s.stop, s.step);
         } else {
-            throw Py.TypeError("sequence subscript must be integer or slice");
+            throw Py.TypeError(getType().fastGetName() + " indices must be integers");
         }
     }
 
     public synchronized Object __tojava__(Class c) throws PyIgnoreMethodTag {
         if(c.isArray()) {
             Class component = c.getComponentType();
-            // System.out.println("getting: "+component);
             try {
                 int n = __len__();
                 PyArray array = new PyArray(component, n);
@@ -391,10 +393,9 @@ public abstract class PySequence extends PyObject {
                     PyObject o = pyget(i);
                     array.set(i, o);
                 }
-                // System.out.println("getting: "+component+", "+array.data);
                 return array.getArray();
             } catch(Throwable t) {
-                ;// System.out.println("failed to get: "+component.getName());
+                // ok
             }
         }
         return super.__tojava__(c);
