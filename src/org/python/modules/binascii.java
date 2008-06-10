@@ -223,7 +223,7 @@ public class binascii {
     private static char BASE64_PAD = '=';
 
     /* Max binary chunk size (76 char line) */
-    private static int BASE64_MAXBIN = 57;
+    private static int BASE64_MAXBIN = Integer.MAX_VALUE / 2 - 3;
 
     private static byte[] table_b2a_base64 =
         StringUtil.toBytes("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/");
