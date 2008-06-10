@@ -134,6 +134,8 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
      */
     public int bcfLevel = 0;
 
+    int yield_count = 0;
+
     public CodeCompiler(Module module, boolean print_results) {
         this.module = module;
         this.print_results = print_results;
@@ -146,7 +148,6 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         exceptionHandlers = new Stack();
     }
 
-    public int PyNone;
     public void getNone() throws IOException {
         code.getstatic("org/python/core/Py", "None", $pyObj);
     }
@@ -171,7 +172,6 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         return tmp;
     }
 
-    public int setline;
     public void setline(int line) throws Exception {
         if (module.linenumbers) {
             //FJW code.setline(line);
@@ -194,11 +194,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
     }
 
 
-    boolean inSet = false;
     public void set(PythonTree node, int tmp) throws Exception {
-        if (inSet) {
-            System.err.println("recurse set: "+tmp+", "+temporary);
-        }
         temporary = tmp;
         visit(node);
     }
@@ -315,7 +311,6 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         return visitReturn(new Return(node, node.body), true);
     }
 
-    public int EmptyObjects;
     public void makeArray(PythonTree[] nodes) throws Exception {
         int n;
 
@@ -353,8 +348,6 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         }
     }
 
-    int getclosure;
-
     public boolean makeClosure(ScopeInfo scope) throws Exception {
         if (scope == null || scope.freevars == null) return false;
         int n = scope.freevars.size();
@@ -383,10 +376,6 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
 
         return true;
     }
-
-
-
-    int f_globals, PyFunction_init, PyFunction_closure_init;
 
     public Object visitFunctionDef(FunctionDef node) throws Exception {
         String name = getName(node.name);
@@ -432,8 +421,6 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
             set(new Name(func, func.name, expr_contextType.Store));
         }
     }
-
-    public int printResult;
 
     public Object visitExpr(Expr node) throws Exception {
         setline(node);
@@ -538,10 +525,6 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         code.goto_((Label)continueLabels.peek());
         return Exit;
     }
-
-    int yield_count = 0;
-
-    int f_savedlocals;
 
     public Object visitYield(Yield node) throws Exception {
         setline(node);
@@ -695,8 +678,6 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         return Exit;
     }
 
-    public int makeException0, makeException1, makeException2, makeException3;
-
     public Object visitRaise(Raise node) throws Exception {
         setline(node);
         traverse(node);
@@ -712,8 +693,6 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         code.athrow();
         return Exit;
     }
-
-    public int importOne, importOneAs;
 
     public Object visitImport(Import node) throws Exception {
         setline(node);
@@ -739,8 +718,6 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         return null;
     }
 
-
-    public int importAll, importFrom;
 
     public Object visitImportFrom(ImportFrom node) throws Exception {
         Future.checkFromFuture(node); // future stmt support
@@ -779,7 +756,6 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         return null;
     }
 
-    public int exec;
     public Object visitExec(Exec node) throws Exception {
         setline(node);
         visit(node.body);
@@ -801,7 +777,6 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         return null;
     }
 
-    public int asserttype;
     public Object visitAssert(Assert node) throws Exception {
         setline(node);
         Label end_of_assert = new Label();
@@ -844,7 +819,6 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         return null;
     }
 
-    public int nonzero;
     public Object doTest(Label end_of_if, If node, int index)
         throws Exception
     {
@@ -949,9 +923,6 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         return null;
     }
 
-    public int iter=0;
-    public int iternext=0;
-
     public Object visitFor(For node) throws Exception {
         int savebcf = beginLoop();
         Label continue_loop = (Label)continueLabels.peek();
@@ -1010,8 +981,6 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         return null;
     }
 
-    public int match_exception;
-
     public void exceptionTest(int exc, Label end_of_exceptions,
                               TryExcept node, int index)
         throws Exception
@@ -1050,7 +1019,6 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         code.athrow();
     }
 
-    public int add_traceback;
     public Object visitTryFinally(TryFinally node) throws Exception
     {
         Label start = new Label();
@@ -1151,7 +1119,6 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
          }
      }
  
-    public int set_exception;
     public Object visitTryExcept(TryExcept node) throws Exception {
         Label start = new Label();
         Label end = new Label();
@@ -1382,8 +1349,6 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         c.freeLocal(strings);
     }
     
-    public int invokea0, invokea1, invokea2;
-    public int invoke2;
     public Object Invoke(Attribute node, PythonTree[] values)
         throws Exception
     {
@@ -1413,9 +1378,6 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
     }
 
 
-    public int callextra;
-    public int call1, call2;
-    public int calla0, calla1, calla2, calla3, calla4;
     public Object visitCall(Call node) throws Exception {
         String[] keys = new String[node.keywords.length];
         exprType[] values = new exprType[node.args.length + keys.length];
@@ -1490,7 +1452,6 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
     }
 
 
-    public int getslice, setslice, delslice;
     public Object Slice(Subscript node, Slice slice) throws Exception {
         expr_contextType ctx = node.ctx;
         if (ctx == expr_contextType.AugStore && augmode == expr_contextType.Store) {
@@ -1534,7 +1495,6 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
 
     }
 
-    public int getitem, delitem, setitem;
     public Object visitSubscript(Subscript node) throws Exception {
         if (node.slice instanceof Slice) {
             return Slice(node, (Slice) node.slice);
@@ -1583,7 +1543,6 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         return null;
     }
 
-    public int getattr, delattr, setattr;
     public Object visitAttribute(Attribute node) throws Exception {
 
         expr_contextType ctx = node.ctx;
@@ -1616,7 +1575,6 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         return null;
     }
 
-    public int getitem2, unpackSequence;
     public Object seqSet(exprType[] nodes) throws Exception {
         code.aload(temporary);
         code.iconst(nodes.length);
@@ -1643,7 +1601,6 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         return null;
     }
 
-    public int PyTuple_init, PyList_init, PyDictionary_init;
     public Object visitTuple(Tuple node) throws Exception {
         /* if (mode ==AUGSET)
             throw new ParseException(
@@ -1670,7 +1627,6 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         return null;
     }
 
-    public int PyList_init2;
     public Object visitListComp(ListComp node) throws Exception {
         code.new_("org/python/core/PyList");
 
@@ -1724,7 +1680,6 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         return null;
     }
 
-    public int PyFunction_init1,PyFunction_closure_init1;
     public Object visitLambda(Lambda node) throws Exception {
         String name = "<lambda>";
 
@@ -1759,13 +1714,11 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
     }
 
 
-    public int Ellipsis;
     public Object visitEllipsis(Ellipsis node) throws Exception {
         code.getstatic("org/python/core/Py", "Ellipsis", "Lorg/python/core/PyObject;");
         return null;
     }
 
-    public int PySlice_init;
     public Object visitSlice(Slice node) throws Exception {
         code.new_("org/python/core/PySlice");
 
@@ -1777,7 +1730,6 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         return null;
     }
 
-    public int makeClass,makeClass_closure;
     public Object visitClassDef(ClassDef node) throws Exception {
         setline(node);
 
@@ -1835,11 +1787,6 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         }
         return name;
     }
-
-    int getglobal, getlocal1, getlocal2;
-    int setglobal, setlocal1, setlocal2;
-    int delglobal, dellocal1, dellocal2;
-    int getderef,setderef;
 
     void emitGetGlobal(String name) throws Exception {
         code.ldc(name);
