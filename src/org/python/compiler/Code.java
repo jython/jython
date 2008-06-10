@@ -9,10 +9,6 @@ import org.python.objectweb.asm.Label;
 import org.python.objectweb.asm.MethodVisitor;
 import org.python.objectweb.asm.Opcodes;
 
-/**
- * XXX: I am betting that once I understand ASM better the need for this class will
- *      may away.
- */
 class Code implements MethodVisitor, Opcodes {
     MethodVisitor mv;
     String sig;
