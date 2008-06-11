@@ -113,6 +113,11 @@ public class PyXRange extends PySequence {
         return ret;
     }
 
+    @ExposedMethod
+    public PyObject xrange___iter__() {
+        return seq___iter__();
+    }
+
     @Override
     protected PyObject pyget(int i) {
         return new PyInteger(start + (i % len) * step);
@@ -132,6 +137,7 @@ public class PyXRange extends PySequence {
 
     @Override
     protected String unsupportedopMessage(String op, PyObject o2) {
+        // always return the default unsupported messages instead of PySequence's
         return null;
     }
 
