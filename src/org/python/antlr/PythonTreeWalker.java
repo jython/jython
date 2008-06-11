@@ -3,7 +3,6 @@ package org.python.antlr;
 import org.antlr.runtime.ANTLRFileStream;
 import org.antlr.runtime.CharStream;
 import org.antlr.runtime.CommonTokenStream;
-import org.antlr.runtime.RecognitionException;
 import org.antlr.runtime.Token;
 import org.antlr.runtime.tree.CommonTreeAdaptor;
 import org.antlr.runtime.tree.CommonTreeNodeStream;
@@ -30,13 +29,13 @@ public class PythonTreeWalker {
 	public PythonTree parse(String[] args) throws Exception {
 		PythonTree result = null;
 		CharStream input = new ANTLRFileStream(args[0]);
-		PythonLexer lexer = new PythonGrammar.PyLexer(input);
+		PythonLexer lexer = new ModuleParser.PyLexer(input);
 		CommonTokenStream tokens = new CommonTokenStream(lexer);
 		tokens.discardOffChannelTokens(true);
 		PythonTokenSource indentedSource = new PythonTokenSource(tokens);
 		tokens = new CommonTokenStream(indentedSource);
 		PythonParser parser = new PythonParser(tokens);
-		parser.setTreeAdaptor(PythonGrammar.pyadaptor);
+		parser.setTreeAdaptor(ModuleParser.pyadaptor);
 		try {
             Tree r = null;
             switch (_block) {
@@ -83,7 +82,7 @@ public class PythonTreeWalker {
 					System.out.println(result.toStringTree());
 				}
 			}
-		} catch (RecognitionException e) {
+		} catch (ParseException e) {
 			if (isTolerant()) {
 				System.err.println("Error: " + e);
 			} else {

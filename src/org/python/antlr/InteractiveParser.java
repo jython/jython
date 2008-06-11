@@ -61,14 +61,14 @@ public class InteractiveParser {
         */
         try {
             return parse();
-        } catch (RecognitionException e) {
+        } catch (ParseException e) {
             //FIXME: This needs plenty of tuning, this just calls all errors
             //partial matches.
             return null;
         }
     }
             
-    public modType parse() throws RecognitionException {
+    public modType parse() {
         modType tree = null;
         PythonLexer lexer = new PyLexer(this.charStream);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
@@ -78,12 +78,16 @@ public class InteractiveParser {
         PythonParser parser = new PythonParser(tokens);
         parser.setTreeAdaptor(pyadaptor);
 
-        Object rx = parser.single_input();
-        PythonParser.single_input_return r = (PythonParser.single_input_return)rx;
-        CommonTreeNodeStream nodes = new CommonTreeNodeStream((Tree)r.tree);
-        nodes.setTokenStream(tokens);
-        PythonWalker walker = new PythonWalker(nodes);
-        tree = walker.interactive();
+        try {
+            PythonParser.single_input_return r = parser.single_input();
+            CommonTreeNodeStream nodes = new CommonTreeNodeStream((Tree)r.tree);
+            nodes.setTokenStream(tokens);
+            PythonWalker walker = new PythonWalker(nodes);
+            tree = walker.interactive();
+        } catch (RecognitionException e) {
+            //XXX: this can't happen.  Need to strip the throws from antlr
+            //     generated code.
+        }
         return tree;
     } 
 }

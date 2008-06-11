@@ -254,8 +254,8 @@ import java.util.Set;
 }
 
 @rulecatch {
-catch (RecognitionException e) {
-    throw e;
+catch (RecognitionException r) {
+    throw new ParseException(r);
 }
 }
 

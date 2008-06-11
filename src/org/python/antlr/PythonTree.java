@@ -8,8 +8,6 @@ import org.antlr.runtime.Token;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-import org.antlr.runtime.RecognitionException;
-
 import org.python.antlr.ast.VisitorIF;
 
 public class PythonTree extends CommonTree implements AST {

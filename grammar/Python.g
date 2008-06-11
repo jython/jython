@@ -371,8 +371,8 @@ import java.util.Iterator;
 }
 
 @rulecatch {
-catch (RecognitionException e) {
-    throw e;
+catch (RecognitionException r) {
+    throw new ParseException(r);
 }
 }
 
@@ -411,7 +411,7 @@ int startPos=-1;
 				return state.token;
 			}
             catch (RecognitionException re) {
-                throw new ParseException(getErrorMessage(re, this.getTokenNames()));
+                throw new ParseException(re);
             }
         }
     }

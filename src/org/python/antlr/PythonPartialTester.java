@@ -3,7 +3,6 @@ package org.python.antlr;
 import org.antlr.runtime.ANTLRFileStream;
 import org.antlr.runtime.CharStream;
 import org.antlr.runtime.CommonTokenStream;
-import org.antlr.runtime.RecognitionException;
 import org.antlr.runtime.Token;
 
 /**
@@ -48,7 +47,7 @@ public class PythonPartialTester {
                 break;
             }
             System.out.println("SUCCEED");
-//        } catch (RecognitionException e) {
+//        } catch (ParseException e) {
 //            System.out.println("FAIL" + );
 //        }
 	}
