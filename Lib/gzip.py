@@ -340,11 +340,17 @@ class GzipFile:
             return
         self.close()
 
-    def flush(self,zlib_mode=zlib.Z_SYNC_FLUSH):
-        if self.mode == WRITE:
-            # Ensure the compressor's buffer is flushed
-            self.fileobj.write(self.compress.flush(zlib_mode))
-        self.fileobj.flush()
+    if not sys.platform.startswith('java'):
+        def flush(self,zlib_mode=zlib.Z_SYNC_FLUSH):
+            if self.mode == WRITE:
+                # Ensure the compressor's buffer is flushed
+                self.fileobj.write(self.compress.flush(zlib_mode))
+            self.fileobj.flush()
+    else:
+        # Java lacks Z_SYNC_FLUSH; thus Jython can't flush the
+        # compressobj until EOF
+        def flush(self,zlib_mode=None):
+            self.fileobj.flush()
 
     def fileno(self):
         """Invoke the underlying file object's fileno() method.
