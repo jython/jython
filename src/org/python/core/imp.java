@@ -198,7 +198,7 @@ public class imp {
             }
             org.python.antlr.ast.modType node;
             try {
-                node = antlr.parse(fp, "exec", filename, Py.getCompilerFlags());
+                node = ParserFacade.parse(fp, "exec", filename, Py.getCompilerFlags());
             } finally {
                 fp.close();
             }
@@ -212,7 +212,7 @@ public class imp {
                                                Py.getCompilerFlags());
             return ofp.toByteArray();
         } catch(Throwable t) {
-            throw antlr.fixParseError(null, t, filename);
+            throw ParserFacade.fixParseError(null, t, filename);
         }
     }
 

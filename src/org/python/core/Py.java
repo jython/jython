@@ -1614,14 +1614,14 @@ public final class Py
 
             return BytecodeLoader.makeCode(name, ostream.toByteArray(), filename);
         } catch (Throwable t) {
-            throw antlr.fixParseError(null, t, filename);
+            throw ParserFacade.fixParseError(null, t, filename);
         }
     }
 
     public static PyObject compile_flags(InputStream istream, String filename,
                                  String type,CompilerFlags cflags)
     {
-        modType node = antlr.parse(istream, type, filename, cflags);
+        modType node = ParserFacade.parse(istream, type, filename, cflags);
         if (cflags != null && cflags.only_ast) {
             return Py.java2py(node);
         }
@@ -1646,7 +1646,7 @@ public final class Py
     public static PyObject compile_command_flags(String string,
                     String filename, String kind, CompilerFlags cflags,boolean stdprompt)
     {
-        modType node = antlr.partialParse(string + "\n", kind, filename,
+        modType node = ParserFacade.partialParse(string + "\n", kind, filename,
                 cflags, stdprompt);
     
         if (node == null)

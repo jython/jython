@@ -28,11 +28,11 @@ import org.python.antlr.ast.modType;
  * Facade for the classes in the org.python.antlr package.
  */
 
-public class antlr {
+public class ParserFacade {
     
     private static IParserHost literalMkrForParser = new LiteralMakerForParser2();
 
-    private antlr() {}
+    private ParserFacade() {}
 
     static String getLine(BufferedReader reader, int line) {
         if (reader == null)

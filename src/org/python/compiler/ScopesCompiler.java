@@ -57,7 +57,7 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
         try {
             visit(node);
         } catch(Throwable t) {
-            throw org.python.core.antlr.fixParseError(null, t,
+            throw org.python.core.ParserFacade.fixParseError(null, t,
                     code_compiler.getFilename());
         }
     }
