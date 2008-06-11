@@ -83,13 +83,18 @@ class DumbDBMTestCase(unittest.TestCase):
         f.close()
 
         # Mangle the file by adding \r before each newline
-        data = open(_fname + '.dir').read()
+        fp = open(_fname + '.dir', 'r+')
+        data = fp.read()
         data = data.replace('\n', '\r\n')
-        open(_fname + '.dir', 'wb').write(data)
+        fp.seek(0)
+        fp.truncate()
+        fp.write(data)
+        fp.close()
 
         f = dumbdbm.open(_fname)
         self.assertEqual(f['1'], 'hello')
         self.assertEqual(f['2'], 'hello2')
+        f.close()
 
 
     def read_helper(self, f):
