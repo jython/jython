@@ -13,6 +13,8 @@ public class ParseException extends RuntimeException {
 	public int charPositionInLine;
 	public boolean approximateLineInfo;
 
+    private int offset = -2;
+
     public ParseException() {
         super();
     }
@@ -124,7 +126,30 @@ public class ParseException extends RuntimeException {
     }
 
     private static String getTokenErrorDisplay(Token t) {
-        return t.getText();
+        if (t == null) {
+            return "";
+        } else {
+            return t.getText();
+        }
     }
 
+    public int getOffset() {
+        //!= -2 is cached result
+        if (offset != -2) {
+            return offset;
+        }
+        if (input != null) {
+            if (input instanceof CharStream) {
+                System.out.println("cs");
+                offset = c;
+            } else {
+                System.out.println("token");
+                offset = ((CommonToken)token).getStartIndex();
+            }
+        } else {
+            System.out.println("wth?");
+            offset = -1;
+        }
+        return offset;
+    }
 }
