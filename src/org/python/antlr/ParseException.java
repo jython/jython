@@ -140,14 +140,11 @@ public class ParseException extends RuntimeException {
         }
         if (input != null) {
             if (input instanceof CharStream) {
-                System.out.println("cs");
                 offset = c;
             } else {
-                System.out.println("token");
                 offset = ((CommonToken)token).getStartIndex();
             }
         } else {
-            System.out.println("wth?");
             offset = -1;
         }
         return offset;
