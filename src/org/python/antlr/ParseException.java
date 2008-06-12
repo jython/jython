@@ -13,8 +13,6 @@ public class ParseException extends RuntimeException {
 	public int charPositionInLine;
 	public boolean approximateLineInfo;
 
-    private int offset = -2;
-
     public ParseException() {
         super();
     }
@@ -134,19 +132,13 @@ public class ParseException extends RuntimeException {
     }
 
     public int getOffset() {
-        //!= -2 is cached result
-        if (offset != -2) {
-            return offset;
-        }
         if (input != null) {
             if (input instanceof CharStream) {
-                offset = c;
+                return index;
             } else {
-                offset = ((CommonToken)token).getStartIndex();
+                return ((CommonToken)token).getStartIndex();
             }
-        } else {
-            offset = -1;
         }
-        return offset;
+        return -1;
     }
 }
