@@ -23,4 +23,17 @@ public class LeadingSpaceSkippingStream extends InputStream {
         }
         return i;
     }
+
+    public boolean markSupported() {
+        return inputStream.markSupported();
+    }
+
+    public void mark(int readAheadLimit) {
+        inputStream.mark(readAheadLimit);
+    }
+
+    public void reset() throws IOException {
+        maybeLeadingSpaces = true;
+        inputStream.reset();
+    }
 }

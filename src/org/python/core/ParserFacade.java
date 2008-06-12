@@ -1,6 +1,7 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -8,10 +9,11 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.antlr.runtime.ANTLRReaderStream;
 import org.antlr.runtime.CharStream;
-import org.antlr.runtime.*;
 import org.python.antlr.ExpressionParser;
 import org.python.antlr.InteractiveParser;
 import org.python.antlr.LeadingSpaceSkippingStream;
@@ -30,8 +32,6 @@ import org.python.antlr.ast.modType;
 
 public class ParserFacade {
     
-    private static IParserHost literalMkrForParser = new LiteralMakerForParser2();
-
     private ParserFacade() {}
 
     static String getLine(BufferedReader reader, int line) {
@@ -81,28 +81,29 @@ public class ParserFacade {
                      kind, "<string>", null);
     }
 
-    public static modType parse(InputStream istream,
+    public static modType parse(InputStream stream,
                                 String kind,
                                 String filename,
                                 CompilerFlags cflags) {
         CharStream cs = null;
+        BufferedInputStream bstream = new BufferedInputStream(stream);
         //FIXME: definite NPE potential here -- do we even need prepBufreader
         //       now?
         BufferedReader bufreader = null;
         modType node = null;
         try {
             if (kind.equals("eval")) {
-                bufreader = prepBufreader(new LeadingSpaceSkippingStream(istream), cflags);
+                bufreader = prepBufreader(new LeadingSpaceSkippingStream(bstream), cflags);
                 cs = new ANTLRReaderStream(bufreader);
                 ExpressionParser e = new ExpressionParser(cs);
                 node = e.parse();
             } else if (kind.equals("single")) {
-                bufreader = prepBufreader(istream, cflags);
+                bufreader = prepBufreader(bstream, cflags);
                 cs = new ANTLRReaderStream(bufreader);
                 InteractiveParser i = new InteractiveParser(cs);
                 node = i.partialParse();
             } else if (kind.equals("exec")) {
-                bufreader = prepBufreader(istream, cflags);
+                bufreader = prepBufreader(bstream, cflags);
                 cs = new ANTLRReaderStream(bufreader);
                 ModuleParser g = new ModuleParser(cs);
                 node = g.file_input();
@@ -128,8 +129,9 @@ public class ParserFacade {
         if (kind.equals("single")) {
             ByteArrayInputStream bi = new ByteArrayInputStream(
                     StringUtil.toBytes(string));
-            bufreader = prepBufreader(bi, cflags);
+            BufferedInputStream bstream = new BufferedInputStream(bi);
             try {
+                bufreader = prepBufreader(bstream, cflags);
                 cs = new ANTLRReaderStream(bufreader);
             } catch (IOException io) {
                 //FIXME:
@@ -143,7 +145,7 @@ public class ParserFacade {
     }
 
     private static BufferedReader prepBufreader(InputStream istream,
-                                                CompilerFlags cflags) {
+                                                CompilerFlags cflags) throws IOException {
         int nbytes;
         try {
             nbytes = istream.available();
@@ -155,17 +157,23 @@ public class ParserFacade {
             nbytes = 10000;
         if (nbytes > 100000)
             nbytes = 100000;
+
+        String encoding = readEncoding(istream);
+        if(encoding == null && cflags != null && cflags.encoding != null) {
+            encoding = cflags.encoding;
+        }
+
         Reader reader;
-        if(cflags != null && cflags.encoding != null) {
+        if(encoding != null) {
             try {
-                reader = new InputStreamReader(istream, cflags.encoding);
+                reader = new InputStreamReader(istream, encoding);
             } catch(UnsupportedEncodingException exc) {
-                throw Py.SystemError("python.console.encoding, " + cflags.encoding
+                throw Py.SystemError("Encoding, " + encoding
                         + ", isn't supported by this JVM so we can't parse this data.");
             }
         } else {
             try {
-                // Use ISO-8859-1 to get bytes off the input stream since it leaves their values alone.
+                // Default to ISO-8859-1 to get bytes off the input stream since it leaves their values alone.
                 reader = new InputStreamReader(istream, "ISO-8859-1");
             } catch(UnsupportedEncodingException e) {
                 // This JVM is whacked, it doesn't even have iso-8859-1
@@ -175,38 +183,58 @@ public class ParserFacade {
         
         BufferedReader bufreader = new BufferedReader(reader);
         
-        try {
-            bufreader.mark(nbytes);
-        } catch (IOException exc) { }
+        bufreader.mark(nbytes);
         return bufreader;
     }
-}
 
-class LiteralMakerForParser2 implements IParserHost {
 
-       public Object newLong(String s) {
-               return Py.newLong(s);
-       }
+    private static String readEncoding(InputStream stream) throws IOException {
+        stream.mark(10000);
+        String encoding = null;
+        BufferedReader br = new BufferedReader(new InputStreamReader(stream));
+        for (int i = 0; i < 2; i++) {
+            String strLine = br.readLine();
+            if (strLine == null) {
+                break;
+            }
+            String result = matchEncoding(strLine);
+            if (result != null) {
+                encoding = result;
+                break;
+            }
+        }
+        stream.reset();
+        return encodingMap(encoding);
+    }
 
-       public Object newLong(java.math.BigInteger i) {
-               return Py.newLong(i);
-       }
+    private static String encodingMap(String encoding) {
+        if (encoding == null) {
+            return null;
+        }
+        if (encoding.equals("Latin-1")) {
+            return "ISO8859_1";
+        }
+        //FIXME: I'm not at all sure why utf-8 is breaking test_cookielib.py
+        //       but this fixes it on my machine.  I'm hoping it is a Java
+        //       default behavior, but I'm afraid it may be a Java on Mac
+        //       default behavior.
+        if (encoding.equals("utf-8")) {
+            return null;
+        }
+        return encoding;
+    }
 
-       public Object newFloat(double v) {
-               return Py.newFloat(v);
-       }
+    private static String matchEncoding(String inputStr) {
+        String patternStr = "coding[:=]\\s*([-\\w.]+)";
+        Pattern pattern = Pattern.compile(patternStr);
+        Matcher matcher = pattern.matcher(inputStr);
+        boolean matchFound = matcher.find();
 
-       public Object newImaginary(double v) {
-               return Py.newImaginary(v);
-       }
-
-       public Object newInteger(int i) {
-               return Py.newInteger(i);
-       }
-
-       public String decode_UnicodeEscape(
-               String str, int start, int end, String errors, boolean unicode) {
-                       return PyString.decode_UnicodeEscape(str, start, end, errors, unicode);
-       }
+        if (matchFound && matcher.groupCount() == 1) {
+            String groupStr = matcher.group(1);
+            return groupStr;
+        }
+        return null;
+    }
 
 }
