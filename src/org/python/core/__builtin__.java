@@ -330,8 +330,7 @@ public class __builtin__ {
         dict.__setitem__("file", PyFile.TYPE);
         dict.__setitem__("open", PyFile.TYPE);
         dict.__setitem__("slice", PySlice.TYPE);
-        // PyXRange is still an old style class
-        dict.__setitem__("xrange", PyType.fromClass(PyXRange.class));
+        dict.__setitem__("xrange", PyXRange.TYPE);
 
         /* - */
 

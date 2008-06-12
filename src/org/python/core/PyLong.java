@@ -143,7 +143,7 @@ public class PyLong extends PyObject {
     public double doubleValue() {
         double v = value.doubleValue();
         if (Double.isInfinite(v)) {
-            throw Py.OverflowError("long int too long to convert");
+            throw Py.OverflowError("long int too large to convert to float");
         }
         return v;
     }
@@ -182,25 +182,31 @@ public class PyLong extends PyObject {
 
 
     private long getLong(long min, long max) {
+        return getLong(min, max, "long int too large to convert");
+    }
+
+    private long getLong(long min, long max, String overflowMsg) {
         if (value.compareTo(maxLong) <= 0 && value.compareTo(minLong) >= 0) {
             long v = value.longValue();
             if (v >= min && v <= max)
                 return v;
         }
-        throw Py.OverflowError("long int too large to convert");
+        throw Py.OverflowError(overflowMsg);
     }
 
     public long asLong(int index) {
-        return getLong(Long.MIN_VALUE, Long.MAX_VALUE);
+        return getLong(Long.MIN_VALUE, Long.MAX_VALUE, "long too big to convert");
     }
 
     public int asInt(int index) {
-        return (int)getLong(Integer.MIN_VALUE, Integer.MAX_VALUE);
+        return (int)getLong(Integer.MIN_VALUE, Integer.MAX_VALUE,
+                            "long int too large to convert to int");
     }
 
     @Override
     public int asInt() {
-        return (int)getLong(Integer.MIN_VALUE, Integer.MAX_VALUE);
+        return (int)getLong(Integer.MIN_VALUE, Integer.MAX_VALUE,
+                            "long int too large to convert to int");
     }
 
     public Object __tojava__(Class c) {
@@ -584,8 +590,7 @@ public class PyLong extends PyObject {
 
     private static final int coerceInt(PyObject other) {
         if (other instanceof PyLong)
-            return (int) ((PyLong) other).getLong(
-                          Integer.MIN_VALUE, Integer.MAX_VALUE);
+            return ((PyLong)other).asInt();
         else if (other instanceof PyInteger)
             return ((PyInteger) other).getValue();
         else

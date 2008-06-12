@@ -143,7 +143,7 @@ public class ArgParser {
      * @param pos The position of the argument. First argument is numbered 0.
      */
     public int getInt(int pos) {
-        return ((PyInteger) getRequiredArg(pos).__int__()).getValue();
+        return asInt(getRequiredArg(pos));
     }
 
     /**
@@ -156,7 +156,21 @@ public class ArgParser {
         if (value == null) {
             return def;
         }
-        return ((PyInteger) value.__int__()).getValue();
+        return asInt(value);
+    }
+
+    /**
+     * Convert a PyObject to a Java integer.
+     *
+     * @param value a PyObject
+     * @return value as an int
+     */
+    private int asInt(PyObject value) {
+        if (value instanceof PyFloat) {
+            Py.warning(Py.DeprecationWarning, "integer argument expected, got float");
+            value = value.__int__();
+        }
+        return value.asInt();
     }
 
     /**
