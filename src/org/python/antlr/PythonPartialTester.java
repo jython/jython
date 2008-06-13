@@ -32,7 +32,8 @@ public class PythonPartialTester {
             PythonPartialLexer lexer = new PPLexer(input);
             CommonTokenStream tokens = new CommonTokenStream(lexer);
             tokens.discardOffChannelTokens(true);
-            PythonTokenSource indentedSource = new PythonTokenSource(tokens);
+            //PythonTokenSource indentedSource = new PythonTokenSource(tokens);
+            PythonPartialTokenSource indentedSource = new PythonPartialTokenSource(tokens);
             tokens = new CommonTokenStream(indentedSource);
             PythonPartialParser parser = new PythonPartialParser(tokens);
             switch (_block) {
