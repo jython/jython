@@ -479,18 +479,6 @@ def ints():
         pass
     else:
         raise TestFailed, "should have raised OverflowError"
-    try:
-        foo = int(None)
-    except TypeError:
-        pass
-    else:
-        raise TestFailed, "should have raised TypeError"
-    try:
-        foo = C(None)
-    except TypeError:
-        pass
-    else:
-        raise TestFailed, "should have raised TypeError"
 
 def longs():
     if verbose: print "Testing long operations..."
@@ -2621,6 +2609,7 @@ def setclass():
     class Int(int): __slots__ = []
     cant(2, Int)
     cant(Int(), int)
+    cant(True, int)
     cant(2, bool)
     o = object()
     cant(o, type(1))
@@ -3691,55 +3680,6 @@ def subclass_right_op():
     vereq(E() // C(), "C.__floordiv__")
     vereq(C() // E(), "C.__floordiv__") # This one would fail
 
-def subclass_cmp_right_op():
-    if verbose:
-        print "Testing correct dispatch of subclass overloading for comp ops"
-
-    # Case 1: subclass of int
-
-    class B(int):
-        def __ge__(self, other):
-            return "B.__ge__"
-        def __le__(self, other):
-            return "B.__le__"
-
-    vereq(B(1) >= 1, "B.__ge__")
-    vereq(1 >= B(1), "B.__le__")
-
-    # Case 2: subclass of object
-
-    class C(object):
-        def __ge__(self, other):
-            return "C.__ge__"
-        def __le__(self, other):
-            return "C.__le__"
-
-    vereq(C() >= 1, "C.__ge__")
-    vereq(1 >= C(), "C.__le__")
-
-    # Case 3: subclass of new-style class; here it gets interesting
-
-    class D(C):
-        def __ge__(self, other):
-            return "D.__ge__"
-        def __le__(self, other):
-            return "D.__le__"
-
-    vereq(D() >= C(), "D.__ge__")
-    vereq(C() >= D(), "D.__le__")
-
-    # Case 4: comparison is different than other binops
-
-    class E(C):
-        pass
-
-    vereq(E.__le__, C.__le__)
-
-    vereq(E() >= 1, "C.__ge__")
-    vereq(1 >= E(), "C.__le__")
-    vereq(E() >= C(), "C.__ge__")
-    vereq(C() >= E(), "C.__le__") # different
-
 def dict_type_with_metaclass():
     if verbose:
         print "Testing type of __dict__ when __metaclass__ set..."
@@ -3909,71 +3849,6 @@ def filefault():
     except RuntimeError:
         pass
 
-def subclass_binop():
-    if verbose:
-        print "Testing binary ops with subclasses"
-
-    def raises(exc, expected, callable, *args):
-        try:
-            callable(*args)
-        except exc, msg:
-            if str(msg) != expected:
-                raise TestFailed, "Message %r, expected %r" % (str(msg),
-                                                               expected)
-        else:
-            raise TestFailed, "Expected %s" % exc
-
-    class B(object):
-        pass
-
-    class C(object):
-        def __radd__(self, o):
-            return '%r + C()' % (o,)
-
-        def __rmul__(self, o):
-            return '%r * C()' % (o,)
-
-    # Test strs, unicode, lists and tuples
-    mapping = []
-
-    # + binop
-    mapping.append((lambda o: 'foo' + o,
-                    TypeError, "cannot concatenate 'str' and 'B' objects",
-                    "'foo' + C()"))
-    # XXX: There's probably work to be done here besides just emulating this
-    # message
-    #mapping.append((lambda o: u'foo' + o,
-    #                TypeError,
-    #                'coercing to Unicode: need string or buffer, B found',
-    #                "u'foo' + C()"))
-    mapping.append((lambda o: u'foo' + o,
-                    TypeError, "cannot concatenate 'unicode' and 'B' objects",
-                    "u'foo' + C()"))
-    mapping.append((lambda o: [1, 2] + o,
-                    TypeError, 'can only concatenate list (not "B") to list',
-                    '[1, 2] + C()'))
-    mapping.append((lambda o: ('foo', 'bar') + o,
-                    TypeError, 'can only concatenate tuple (not "B") to tuple',
-                    "('foo', 'bar') + C()"))
-
-    # * binop
-    mapping.append((lambda o: 'foo' * o,
-                    TypeError, "can't multiply sequence by non-int of type 'B'",
-                    "'foo' * C()"))
-    mapping.append((lambda o: u'foo' * o,
-                    TypeError, "can't multiply sequence by non-int of type 'B'",
-                    "u'foo' * C()"))
-    mapping.append((lambda o: [1, 2] * o,
-                    TypeError, "can't multiply sequence by non-int of type 'B'",
-                    '[1, 2] * C()'))
-    mapping.append((lambda o: ('foo', 'bar') * o,
-                    TypeError, "can't multiply sequence by non-int of type 'B'",
-                    "('foo', 'bar') * C()"))
-
-    for func, bexc, bexc_msg, cresult in mapping:
-        raises(bexc, bexc_msg, lambda : func(B()))
-        vereq(func(C()), cresult)
-
 def test_main():
     testfuncs = [
     weakref_segfault, # Must be first, somehow
@@ -4056,14 +3931,12 @@ def test_main():
     test_mutable_bases_catch_mro_conflict,
     mutable_names,
     subclass_right_op,
-    subclass_cmp_right_op,
     dict_type_with_metaclass,
     meth_class_get,
     isinst_isclass,
     proxysuper,
     carloverre,
     filefault,
-    subclass_binop,
     ]
     if __name__ == '__main__':
         import sys
