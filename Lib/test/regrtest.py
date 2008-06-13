@@ -1037,7 +1037,6 @@ _failures = {
     test_dis
     test_descr
     test_descrtut
-    test_email
     test_eof
     test_frozen
     test_gc
