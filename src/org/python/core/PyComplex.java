@@ -180,11 +180,6 @@ public class PyComplex extends PyObject {
       }*/
 
     public int __cmp__(PyObject other) {
-        return complex___cmp__(other);
-    }
-
-    @ExposedMethod(type = MethodType.CMP)
-    final int complex___cmp__(PyObject other) {
         if (!canCoerce(other))
             return -2;
         PyComplex c = coerce(other);
