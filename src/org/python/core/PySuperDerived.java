@@ -842,15 +842,30 @@ public class PySuperDerived extends PySuper implements Slotted {
     public PyObject __getslice__(PyObject start,PyObject stop,PyObject step) { // ???
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__getslice__");
-        if (impl!=null)
-            try {
-                return impl.__get__(this,self_type).__call__(start,stop);
-            } catch (PyException exc) {
-                if (Py.matchException(exc,Py.LookupError))
-                    return null;
-                throw exc;
-            }
+        if (impl!=null) {
+            return impl.__get__(this,self_type).__call__(start,stop);
+        }
         return super.__getslice__(start,stop,step);
+    }
+
+    public void __setslice__(PyObject start,PyObject stop,PyObject step,PyObject value) {
+        PyType self_type=getType();
+        PyObject impl=self_type.lookup("__setslice__");
+        if (impl!=null) {
+            impl.__get__(this,self_type).__call__(start,stop,value);
+            return;
+        }
+        super.__setslice__(start,stop,step,value);
+    }
+
+    public void __delslice__(PyObject start,PyObject stop,PyObject step) {
+        PyType self_type=getType();
+        PyObject impl=self_type.lookup("__delslice__");
+        if (impl!=null) {
+            impl.__get__(this,self_type).__call__(start,stop);
+            return;
+        }
+        super.__delslice__(start,stop,step);
     }
 
     public void __delitem__(PyObject key) { // ???
