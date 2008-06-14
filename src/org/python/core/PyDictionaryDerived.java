@@ -358,18 +358,6 @@ public class PyDictionaryDerived extends PyDictionary implements Slotted {
         return super.__rdivmod__(other);
     }
 
-    public PyObject __pow__(PyObject other) {
-        PyType self_type=getType();
-        PyObject impl=self_type.lookup("__pow__");
-        if (impl!=null) {
-            PyObject res=impl.__get__(this,self_type).__call__(other);
-            if (res==Py.NotImplemented)
-                return null;
-            return res;
-        }
-        return super.__pow__(other);
-    }
-
     public PyObject __rpow__(PyObject other) {
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__rpow__");
@@ -970,6 +958,23 @@ public class PyDictionaryDerived extends PyDictionary implements Slotted {
             return;
         }
         super.__delete__(obj);
+    }
+
+    public PyObject __pow__(PyObject other,PyObject modulo) {
+        PyType self_type=getType();
+        PyObject impl=self_type.lookup("__pow__");
+        if (impl!=null) {
+            PyObject res;
+            if (modulo==null) {
+                res=impl.__get__(this,self_type).__call__(other);
+            } else {
+                res=impl.__get__(this,self_type).__call__(other,modulo);
+            }
+            if (res==Py.NotImplemented)
+                return null;
+            return res;
+        }
+        return super.__pow__(other,modulo);
     }
 
     public void dispatch__init__(PyType type,PyObject[]args,String[]keywords) {

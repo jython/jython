@@ -21,7 +21,7 @@ binary: __add__ __radd__ \
   __truediv__ __rtruediv__ \
   __mod__ __rmod__ \
   __divmod__ __rdivmod__ \
-  __pow__ __rpow__ \
+  __rpow__ \
   __lshift__ __rlshift__ \
   __rshift__ __rrshift__ \
   __and__ __rand__ \
@@ -333,6 +333,23 @@ rest:
           return;
       }
       super.__delete__(obj);
+  }
+
+  public PyObject __pow__(PyObject other, PyObject modulo) {
+      PyType self_type=getType();
+      PyObject impl=self_type.lookup("__pow__");
+      if (impl!=null) {
+          PyObject res;
+          if (modulo == null) {
+              res=impl.__get__(this,self_type).__call__(other);
+          } else {
+              res=impl.__get__(this,self_type).__call__(other, modulo);
+          }
+          if (res==Py.NotImplemented)
+              return null;
+          return res;
+      }
+      return super.__pow__(other, modulo);
   }
 
   public void dispatch__init__(PyType type,PyObject[] args,String[] keywords) {
