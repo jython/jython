@@ -96,15 +96,21 @@ public class PySuper extends PyObject {
     }
 
     @ExposedMethod(defaults = "null")
-    final PyObject super___get__(PyObject obj, PyObject type) { //xxx subtype case!
+    final PyObject super___get__(PyObject obj, PyObject type) {
         if (obj == null || obj == Py.None || self != null)
             return this;
-        PyType obj_type = supercheck(this.thisClass, obj);
-        PySuper newsuper = new PySuper();
-        newsuper.thisClass = this.thisClass;
-        newsuper.self = obj;
-        newsuper.selfClass = obj_type;
-        return newsuper;
+        if (getType() != TYPE) {
+            // If an instance of a (strict) subclass of super, call its type
+            return getType().__call__(thisClass, obj);
+        } else {
+            // Inline the common case
+            PyType obj_type = supercheck(this.thisClass, obj);
+            PySuper newsuper = new PySuper();
+            newsuper.thisClass = this.thisClass;
+            newsuper.self = obj;
+            newsuper.selfClass = obj_type;
+            return newsuper;
+        }
     }
 
 }
