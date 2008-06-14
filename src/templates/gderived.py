@@ -10,6 +10,15 @@ import java_parser
 import java_templating
 from java_templating import JavaTemplate,jast_make,jast
 
+org_python_dir = os.path.join(os.path.dirname(os.path.abspath(scriptdir)),
+                              'org', 'python')
+core_dir = os.path.join(org_python_dir, 'core')
+
+DERIVED_HEADER = """\
+/* Generated file, do not modify.  See jython/src/templates/gderived.py. */
+package org.python.%s;
+
+import org.python.core.*;"""
 
 modif_re = re.compile(r"(?:\((\w+)\))?(\w+)")
 
@@ -193,9 +202,35 @@ def process(fn, outfile, lazy=False):
     gen = Gen()
     directives.execute(directives.load(fn),gen)
     result = gen.generate()
+    result = hack_derived_header(outfile, result)
     print >> open(outfile, 'w'), result
     #gen.debug()
 
+def hack_derived_header(fn, result):
+    """Fix the package and import headers for derived classes outside of
+    org.python.core
+    """
+    parent = os.path.dirname(fn)
+    if os.path.samefile(parent, core_dir):
+        return result
+
+    print 'Fixing header for: %s' % fn
+    dirs = []
+    while True:
+        parent, tail = os.path.split(parent)
+        dirs.insert(0, tail)
+        if os.path.samefile(parent, org_python_dir) or not tail:
+            break
+
+    result = result.splitlines()
+    for num, line in enumerate(result):
+        if line.startswith('public class '):
+            header = DERIVED_HEADER % '.'.join(dirs)
+            result[0:num - 1] = header.splitlines()
+            break
+
+    return '\n'.join(result)
+                
 if __name__ == '__main__':
     from gexpose import load_mappings, usage
     lazy = False
