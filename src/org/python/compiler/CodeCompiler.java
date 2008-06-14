@@ -9,8 +9,9 @@ import java.util.Vector;
 
 import org.python.objectweb.asm.ClassWriter;
 import org.python.objectweb.asm.Label;
-import org.python.objectweb.asm.MethodVisitor;
 import org.python.objectweb.asm.Opcodes;
+import org.python.objectweb.asm.Type;
+import org.python.objectweb.asm.commons.Method;
 import org.python.core.CompilerFlags;
 import org.python.core.PyComplex;
 import org.python.core.PyFloat;
@@ -85,6 +86,7 @@ import org.python.antlr.ast.operatorType;
 import org.python.antlr.ast.sliceType;
 import org.python.antlr.ast.stmtType;
 import org.python.antlr.ast.unaryopType;
+import org.python.core.PyFrame;
 
 public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //, PythonGrammarTreeConstants
 {
@@ -694,6 +696,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         return Exit;
     }
 
+    @Override
     public Object visitImport(Import node) throws Exception {
         setline(node);
         for (int i = 0; i < node.names.length; i++) {
@@ -719,6 +722,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
     }
 
 
+    @Override
     public Object visitImportFrom(ImportFrom node) throws Exception {
         Future.checkFromFuture(node); // future stmt support
         setline(node);
@@ -752,10 +756,12 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         return null;
     }
 
+    @Override
     public Object visitGlobal(Global node) throws Exception {
         return null;
     }
 
+    @Override
     public Object visitExec(Exec node) throws Exception {
         setline(node);
         visit(node.body);
@@ -777,6 +783,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         return null;
     }
 
+    @Override
     public Object visitAssert(Assert node) throws Exception {
         setline(node);
         Label end_of_assert = new Label();
@@ -844,6 +851,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         }
     }
 
+    @Override
     public Object visitIf(If node) throws Exception {
         Label end_of_if = null;
         if (node.orelse != null)
@@ -855,6 +863,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         return exit;
     }
 
+    @Override
     public Object visitIfExp(IfExp node) throws Exception {
         setline(node.test);
         Label end = new Label();
@@ -890,6 +899,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
     }
 
 
+    @Override
     public Object visitWhile(While node) throws Exception {
         int savebcf = beginLoop();
         Label continue_loop = (Label)continueLabels.peek();
@@ -923,6 +933,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         return null;
     }
 
+    @Override
     public Object visitFor(For node) throws Exception {
         int savebcf = beginLoop();
         Label continue_loop = (Label)continueLabels.peek();
@@ -1019,6 +1030,8 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         code.athrow();
     }
 
+     
+    @Override
     public Object visitTryFinally(TryFinally node) throws Exception
     {
         Label start = new Label();
@@ -1086,7 +1099,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
             // also exiting the try: portion of this particular finally
          }
         if (handler.isFinallyHandler()) {
-            suite(handler.node.finalbody);
+            suite(((TryFinally)handler.node).finalbody);
         }
     }
     
@@ -1119,6 +1132,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
          }
      }
  
+    @Override
     public Object visitTryExcept(TryExcept node) throws Exception {
         Label start = new Label();
         Label end = new Label();
@@ -1167,6 +1181,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         return null;
     }
 
+    @Override
     public Object visitSuite(Suite node) throws Exception {
         return suite(node.body);
     }
@@ -1181,6 +1196,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         return null;
     }
 
+    @Override
     public Object visitBoolOp(BoolOp node) throws Exception {
         Label end = new Label();
         visit(node.values[0]);
@@ -1203,6 +1219,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
     }
 
 
+    @Override
     public Object visitCompare(Compare node) throws Exception {
         int tmp1 = code.getLocal("org/python/core/PyObject");
         int tmp2 = code.getLocal("org/python/core/PyObject");
@@ -1969,6 +1986,137 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         return null;
     }
 
+//        mgr = (EXPR)
+//        exit = mgr.__exit__  # Not calling it yet
+//        value = mgr.__enter__()
+//        exc = True
+//        try:
+//            try:
+//                VAR = value  # Only if "as VAR" is present
+//                BLOCK
+//            except:
+//                # The exceptional case is handled here
+//                exc = False
+//                if not exit(*sys.exc_info()):
+//                    raise
+//                # The exception is swallowed if exit() returns true
+//        finally:
+//            # The normal and non-local-goto cases are handled here
+//            if exc:
+//                exit(None, None, None)
+//    
+// # (mgr, exit, value, exc) are non-visible
+
+    
+    @Override
+    public Object visitWith(With node) throws Exception {       
+        int mgr_tmp = code.getLocal("org/python/core/PyObject");
+        int exit_tmp = code.getLocal("org/python/core/PyObject");
+        int value_tmp = code.getLocal("org/python/core/PyObject");
+        int exc_tmp = code.getLocal("java/lang/Throwable");
+        
+        Label label_body_start = new Label();
+        Label label_body_end = new Label();
+        Label label_catch = new Label();
+        Label label_finally = new Label();
+        Label label_end = new Label();
+        
+        Method getattr = Method.getMethod("org.python.core.PyObject __getattr__ (String)");
+        Method call = Method.getMethod("org.python.core.PyObject __call__ ()");
+        Method call3 = Method.getMethod("org.python.core.PyObject __call__ (org.python.core.PyObject,org.python.core.PyObject,org.python.core.PyObject)");
+        
+        code.trycatch(label_body_start, label_body_end, label_catch, "java/lang/Throwable");
+        
+        setline(node);
+        
+        // mgr = (EXPR)
+        visit(node.context_expr);
+        code.astore(mgr_tmp);
+        
+        // exit = mgr.__exit__  # Not calling it yet
+        code.aload(mgr_tmp);
+        code.ldc("__exit__");
+        code.invokevirtual(Type.getType(PyObject.class).getInternalName(), getattr.getName(), getattr.getDescriptor());
+        code.astore(exit_tmp);
+
+        // value = mgr.__enter__()
+        code.aload(mgr_tmp);
+        code.ldc("__enter__");
+        code.invokevirtual(Type.getType(PyObject.class).getInternalName(), getattr.getName(), getattr.getDescriptor());
+        code.invokevirtual(Type.getType(PyObject.class).getInternalName(), call.getName(), call.getDescriptor());
+        code.astore(value_tmp);
+
+        // exc = True # not necessary, since we don't exec finally if exception
+        // try-catch block here
+        
+        // VAR = value  # Only if "as VAR" is present
+        code.label(label_body_start);
+        if (node.optional_vars != null) {
+            set(node.optional_vars, value_tmp);         
+        }
+        // BLOCK
+        suite(node.body);
+        code.goto_(label_finally);
+        code.label(label_body_end);
+        
+        // CATCH
+        code.label(label_catch);
+        code.astore(exc_tmp);
+ 
+        code.aload(exc_tmp);
+        loadFrame();
+        code.invokestatic("org/python/core/Py", "setException", "(" + $throwable + $pyFrame + ")" + $pyExc);
+        code.astore(exc_tmp);
+        
+        code.invokestatic("org/python/core/Py", "getThreadState", "()Lorg/python/core/ThreadState;"); 
+        code.getfield("org/python/core/ThreadState", "exception", $pyExc);
+        int ts_tmp = storeTop();
+
+        // if not exit(*sys.exc_info()):
+        code.aload(exit_tmp); 
+        code.aload(ts_tmp);
+        code.getfield("org/python/core/PyException", "type", $pyObj);
+        code.aload(ts_tmp);
+        code.getfield("org/python/core/PyException", "value", $pyObj);
+        code.aload(ts_tmp);
+        code.getfield("org/python/core/PyException", "traceback", "Lorg/python/core/PyTraceback;");
+        code.checkcast("org/python/core/PyObject");
+        code.invokevirtual(Type.getType(PyObject.class).getInternalName(), call3.getName(), call3.getDescriptor());
+        code.invokevirtual("org/python/core/PyObject", "__nonzero__", "()Z");
+        code.ifne(label_end);
+        // raise
+        code.invokestatic("org/python/core/Py", "makeException", "()Lorg/python/core/PyException;");
+        code.checkcast("java/lang/Throwable");
+        code.athrow();
+
+        // FINALLY
+        // ordinarily with a finally, we need to duplicate the code. that's not the case here
+        // # The normal and non-local-goto cases are handled here
+        // if exc: # implicit
+        //     exit(None, None, None)
+
+        code.label(label_finally);
+        getNone();
+        int none_tmp = storeTop();
+
+        code.aload(exit_tmp);
+        code.aload(none_tmp);
+        code.aload(none_tmp);
+        code.aload(none_tmp);
+        code.invokevirtual(Type.getType(PyObject.class).getInternalName(), call3.getName(), call3.getDescriptor());
+        code.pop();
+
+        code.label(label_end);
+
+        code.freeLocal(ts_tmp);
+        code.freeLocal(exc_tmp);
+        code.freeLocal(value_tmp);
+        code.freeLocal(exit_tmp);
+        code.freeLocal(mgr_tmp);
+        
+        return null;
+    }
+    
     protected Object unhandled_node(PythonTree node) throws Exception {
         throw new Exception("Unhandled node " + node);
     }
@@ -1979,7 +2127,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
      *  each exit of the try: section, so we carry around that data for it.
      *  
      *  Both of these need to stop exception coverage of an area that is either
-     *  the inlined finally of a parent try:finally: or the reentry block after
+     *  the inlined fin ally of a parent try:finally: or the reentry block after
      *  a yield.  Thus we keep around a set of exception ranges that the
      *  catch block will eventually handle.
      */
@@ -1998,12 +2146,12 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
 
         public boolean bodyDone = false;
 
-        public TryFinally node = null;
+        public PythonTree node = null;
 
         public ExceptionHandler() {
         }
 
-        public ExceptionHandler(TryFinally n) {
+        public ExceptionHandler(PythonTree n) {
             node = n;
         }
 

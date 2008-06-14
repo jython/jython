@@ -64,7 +64,9 @@ class RLock(object):
         else:
             return self._lock.tryLock()
 
-    __enter__ = acquire
+    def __enter__(self):
+        self.acquire()
+        return self
 
     def release(self):
         assert self._lock.isHeldByCurrentThread(), \
