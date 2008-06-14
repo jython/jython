@@ -55,13 +55,43 @@ public class PySuper extends PyObject {
         this.objType = objType;
     }
 
+    /**
+     * Check that a super() call makes sense.  Return a type object.
+     *
+     * obj can be a new-style class, or an instance of one:
+     * 
+     * - If it is a class, it must be a subclass of 'type'.  This case is used for class
+     * methods; the return value is obj.
+     * 
+     * - If it is an instance, it must be an instance of 'type'.  This is the normal case;
+     * the return value is obj.__class__.
+     *
+     * But... when obj is an instance, we want to allow for the case where objType is not
+     * a subclass of type, but obj.__class__ is!  This will allow using super() with a
+     * proxy for obj.
+     *
+     * @param type the PyType superType associated with the super
+     * @param obj a the PyObject obj associated with the super
+     * @return a PyType superType
+     */
     private PyType supercheck(PyType type, PyObject obj) {
+        // Check for first bullet above (special case)
         if (obj instanceof PyType && ((PyType)obj).isSubType(type)) {
             return (PyType)obj;
         }
+
+        // Normal case
         PyType objType = obj.getType();
         if (objType.isSubType(type)) {
             return objType;
+        } else {
+            // Try the slow way
+            PyObject classAttr = obj.__findattr__("__class__");
+            if (classAttr != null && classAttr instanceof PyType) {
+                if (((PyType)classAttr).isSubType(type)) {
+                    return (PyType)classAttr;
+                }
+            }
         }
         throw Py.TypeError("super(type, obj): obj must be an instance or subtype of type");
     }
