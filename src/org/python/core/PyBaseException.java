@@ -138,7 +138,7 @@ public class PyBaseException extends PyObject {
 
     @ExposedSet(name = "__dict__")
     public void setDict(PyObject val) {
-        if (val instanceof PyStringMap && !(val instanceof PyDictionary)) {
+        if (!(val instanceof PyStringMap) && !(val instanceof PyDictionary)) {
             throw Py.TypeError("__dict__ must be a dictionary");
         }
         __dict__ = val;
