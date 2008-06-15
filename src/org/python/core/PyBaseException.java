@@ -91,7 +91,7 @@ public class PyBaseException extends PyObject {
     @ExposedMethod
     final PyObject BaseException___setstate__(PyObject state) {
         if (state != Py.None) {
-            if (!(state instanceof PyStringMap)) {
+            if (!(state instanceof PyStringMap) && !(state instanceof PyDictionary)) {
                 throw Py.TypeError("state is not a dictionary");
             }
             for (PyObject key : state.asIterable()) {
@@ -138,7 +138,7 @@ public class PyBaseException extends PyObject {
 
     @ExposedSet(name = "__dict__")
     public void setDict(PyObject val) {
-        if (!(val instanceof PyStringMap)) {
+        if (val instanceof PyStringMap && !(val instanceof PyDictionary)) {
             throw Py.TypeError("__dict__ must be a dictionary");
         }
         __dict__ = val;
