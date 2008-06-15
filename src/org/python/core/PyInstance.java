@@ -187,7 +187,7 @@ public class PyInstance extends PyObject
             }
         }
         else if (ret != Py.None) {
-            throw Py.TypeError("constructor has no return value");
+            throw Py.TypeError("__init__() should return None");
         }
         // Now init all superclasses that haven't already been initialized
         if (javaProxy == null && instclass.proxyClass != null) {
