@@ -293,6 +293,14 @@ public class PyClass extends PyObject {
         }
     }
 
+    /**
+     * Customized AttributeError for class objects.
+     */
+    public void noAttributeError(String name) {
+        throw Py.AttributeError(String.format("class %.50s has no attribute '%.400s'", __name__,
+                                              name));
+    }
+
     public PyObject __call__(PyObject[] args, String[] keywords) {
         PyInstance inst;
         if (__del__ == null) {

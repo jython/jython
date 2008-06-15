@@ -330,8 +330,7 @@ public class __builtin__ {
         dict.__setitem__("file", PyFile.TYPE);
         dict.__setitem__("open", PyFile.TYPE);
         dict.__setitem__("slice", PySlice.TYPE);
-        // PyXRange is still an old style class
-        dict.__setitem__("xrange", PyType.fromClass(PyXRange.class));
+        dict.__setitem__("xrange", PyXRange.TYPE);
 
         /* - */
 
@@ -856,13 +855,12 @@ public class __builtin__ {
         return false;
     }
 
-    public static PyObject pow(PyObject xi, PyObject yi, PyObject zi) {
-        PyObject x = xi;
-        PyObject y = yi;
-        PyObject z = zi;
+    public static PyObject pow(PyObject x, PyObject y, PyObject z) {
+        if (z == Py.None) {
+            return pow(x, y);
+        }
 
         PyObject[] tmp = new PyObject[2];
-
         tmp[0] = x;
         tmp[1] = y;
         if (coerce(tmp)) {
@@ -896,13 +894,14 @@ public class __builtin__ {
             }
         }
 
-        if (x.getType() == y.getType() && x.getType() == z.getType()) {
-            x = x.__pow__(y, z);
-            if (x != null) {
-                return x;
-            }
+        PyObject result = x.__pow__(y, z);
+        if (result != null) {
+            return result;
         }
-        throw Py.TypeError("__pow__ not defined for these operands");
+
+        throw Py.TypeError(String.format("unsupported operand type(s) for pow(): '%.100s', "
+                                         + "'%.100s', '%.100s'", x.getType().fastGetName(),
+                                         y.getType().fastGetName(), z.getType().fastGetName()));
     }
 
     public static PyObject range(PyObject start, PyObject stop, PyObject step) {

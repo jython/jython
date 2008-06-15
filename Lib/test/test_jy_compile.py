@@ -89,6 +89,9 @@ class CompileTests(unittest.TestCase):
         av("\n \na**3","eval",value=8)
         av("#a\n#b\na**3","eval",value=8)
 
+        # this failed under 2.2.1
+        av("def f():\n try: pass\n finally: [x for x in (1,2)]")
+
     def test_incomplete(self):
         ai = self.assertIncomplete
 

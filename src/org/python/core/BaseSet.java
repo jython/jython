@@ -6,7 +6,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-public abstract class BaseSet extends PyObject /*implements Set*/ {
+public abstract class BaseSet extends PyObject implements Set {
 
     /**
      * The underlying container.  HashSet is used rather than Set because
@@ -306,7 +306,7 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
     }
     
     final PyObject baseset___reduce__(){
-        PyObject args = new PyTuple(new PyList(this));
+        PyObject args = new PyTuple(new PyList((PyObject)this));
         PyObject dict = __findattr__("__dict__");
         if (dict == null) {
             dict = Py.None;
@@ -472,55 +472,55 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
         return so;
     }
 
- //    public int size() {
-//        return _set.size();
-//    }
-//
-//    public void clear() {
-//        _set.clear();
-//    }
-//
-//    public boolean isEmpty() {
-//        return _set.isEmpty();
-//    }
-//
-//    public Object[] toArray() {
-//        return _set.toArray();
-//    }
-//
-//    public boolean add(Object o) {
-//        return _set.add(o);
-//    }
-//
-//    public boolean contains(Object o) {
-//        return _set.contains(o);
-//    }
-//
-//    public boolean remove(Object o) {
-//        return _set.remove(o);
-//    }
-//
-//    public boolean addAll(Collection c) {
-//        return _set.addAll(c);
-//    }
-//
-//    public boolean containsAll(Collection c) {
-//        return _set.containsAll(c);
-//    }
-//
-//    public boolean removeAll(Collection c) {
-//        return _set.removeAll(c);
-//    }
-//
-//    public boolean retainAll(Collection c) {
-//        return _set.retainAll(c);
-//    }
-//
-//    public Iterator iterator() {
-//        return _set.iterator();
-//    }
-//
-//    public Object[] toArray(Object a[]) {
-//        return _set.toArray(a);
-//    }
+    public int size() {
+        return _set.size();
+    }
+
+    public void clear() {
+        _set.clear();
+    }
+
+    public boolean isEmpty() {
+        return _set.isEmpty();
+    }
+
+    public Object[] toArray() {
+        return _set.toArray();
+    }
+
+    public boolean add(Object o) {
+        return _set.add(o);
+    }
+
+    public boolean contains(Object o) {
+        return _set.contains(o);
+    }
+
+    public boolean remove(Object o) {
+        return _set.remove(o);
+    }
+
+    public boolean addAll(Collection c) {
+        return _set.addAll(c);
+    }
+
+    public boolean containsAll(Collection c) {
+        return _set.containsAll(c);
+    }
+
+    public boolean removeAll(Collection c) {
+        return _set.removeAll(c);
+    }
+
+    public boolean retainAll(Collection c) {
+        return _set.retainAll(c);
+    }
+
+    public Iterator iterator() {
+        return _set.iterator();
+    }
+
+    public Object[] toArray(Object a[]) {
+        return _set.toArray(a);
+    }
 }

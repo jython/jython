@@ -6,6 +6,7 @@ import java.io.*;
 import java.util.*;
 import org.python.parser.*;
 import org.python.parser.ast.*;
+import org.python.core.CompilerFlags;
 import org.python.core.Py;
 import org.python.core.PyException;
 
@@ -666,6 +667,9 @@ public class Module implements ClassConstants, CompilationContext
     {
         Module module = new Module(name, filename, linenumbers);
         module.setFile = setFile;
+        if (cflags == null) {
+            cflags = new CompilerFlags();
+        }
         module.futures.preprocessFutures(node, cflags);
         new ScopesCompiler(module, module.scopes).parse(node);
 

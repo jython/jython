@@ -205,7 +205,7 @@ public class PyObject implements Serializable {
      * @param keywords the keywords used for all keyword arguments.
      **/
     public PyObject __call__(PyObject args[], String keywords[]) {
-        throw Py.TypeError("call of non-function (" + getType().fastGetName() + ")");
+        throw Py.TypeError(String.format("'%s' object is not callable", getType().fastGetName()));
     }
 
     /**
@@ -506,8 +506,9 @@ public class PyObject implements Serializable {
      **/
     public PyObject __getitem__(PyObject key) {
         PyObject ret = __finditem__(key);
-        if (ret == null)
-            throw Py.KeyError(key.toString());
+        if (ret == null) {
+            throw Py.KeyError(key);
+        }
         return ret;
     }
 
@@ -518,7 +519,8 @@ public class PyObject implements Serializable {
      * @param value the value to set this key to
      **/
     public void __setitem__(PyObject key, PyObject value) {
-        throw Py.AttributeError("__setitem__");
+        throw Py.TypeError(String.format("'%.200s' object does not support item assignment",
+                                         getType().fastGetName()));
     }
 
     /**
@@ -3156,7 +3158,7 @@ public class PyObject implements Serializable {
     }
 
     public int asInt() {
-        throw Py.TypeError("expected an int");
+        throw Py.TypeError("an integer is required");
     }
 
     public long asLong(int index) throws ConversionException {

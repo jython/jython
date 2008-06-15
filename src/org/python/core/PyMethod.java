@@ -43,12 +43,15 @@ public class PyMethod extends PyObject {
         ap.noKeywords();
         PyObject func = ap.getPyObject(0);
         PyObject self = ap.getPyObject(1);
-        PyObject klass = ap.getPyObject(2);
+        PyObject classObj = ap.getPyObject(2, null);
 
         if (!__builtin__.callable(func)) {
             throw Py.TypeError("first argument must be callable");
         }
-        return new PyMethod(func, self, klass);
+        if (self == Py.None && classObj == null) {
+            throw Py.TypeError("unbound methods must have non-NULL im_class");
+        }
+        return new PyMethod(func, self, classObj);
     }
 
     @Override
@@ -137,6 +140,12 @@ public class PyMethod extends PyObject {
     }
 
     @Override
+    public int hashCode() {
+        int hashCode = im_self == null ? Py.None.hashCode() : im_self.hashCode();
+        return hashCode ^ im_func.hashCode();
+    }
+
+    @Override
     public PyObject getDoc() {
         return im_func.getDoc();
     }
@@ -169,11 +178,11 @@ public class PyMethod extends PyObject {
         if (inst == null) {
             return "nothing";
         }
-        PyObject klass = inst.__findattr__("__class__");
-        if (klass == null) {
-            klass = inst.getType();
+        PyObject classObj = inst.__findattr__("__class__");
+        if (classObj == null) {
+            classObj = inst.getType();
         }
-        return getClassName(klass);
+        return getClassName(classObj);
     }
 
     private String getFuncName() {

@@ -1262,6 +1262,17 @@ public class PyType extends PyObject implements Serializable {
     	setDict(null);
     }
 
+    /**
+     * Equivalent of CPython's typeobject type_get_doc; handles __doc__ descriptors.
+     */
+    public PyObject getDoc() {
+        PyObject doc = super.getDoc();
+        if (!builtin && doc != null && doc.getType().lookup("__get__") != null) {
+            return doc.__get__(null, this);
+        }
+        return doc;
+    }
+
     public Object __tojava__(Class c) {
         if (underlying_class != null && (c == Object.class || c == Class.class ||
                                          c == Serializable.class)) {
@@ -1303,6 +1314,15 @@ public class PyType extends PyObject implements Serializable {
             return String.format("<%s '%s.%s'>", kind, module.toString(), getName());
         }
         return String.format("<%s '%s'>", kind, getName());
+    }
+
+    /**
+     * Raises AttributeError on type objects. The message differs from
+     * PyObject#noAttributeError, to mimic CPython behaviour.
+     */
+    public void noAttributeError(String name) {
+        throw Py.AttributeError(String.format("type object '%.50s' has no attribute '%.400s'",
+                                              fastGetName(), name));
     }
 
     //XXX: consider pulling this out into a generally accessible place

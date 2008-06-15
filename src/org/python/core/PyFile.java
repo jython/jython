@@ -162,7 +162,7 @@ public class PyFile extends PyObject {
         PyFile newFile;
         if (new_.for_type == subtype) {
             if (init) {
-                if (args.length == 0) {
+                if (args.length - keywords.length == 0) {
                     newFile = new PyFile();
                     newFile.file___init__(args, keywords);
                 } else if (args[0] instanceof PyString ||

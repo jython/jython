@@ -217,8 +217,8 @@ public class binascii {
 
     private static char BASE64_PAD = '=';
 
-    /* Max binary chunk size (76 char line) */
-    private static int BASE64_MAXBIN = 57;
+    /* Max binary chunk size */
+    private static int BASE64_MAXBIN = Integer.MAX_VALUE / 2 - 3;
 
     private static byte[] table_b2a_base64 =
         StringUtil.toBytes("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/");
@@ -478,8 +478,6 @@ public class binascii {
     /**
      * Convert binary data to a line of ASCII characters in base64 coding.
      * The return value is the converted line, including a newline char.
-     * The length of <i>data</i> should be at most 57 to adhere to the base64
-     * standard.
      */
     public static String b2a_base64(String bin_data) {
         int leftbits = 0;

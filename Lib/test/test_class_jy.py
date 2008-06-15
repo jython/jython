@@ -121,6 +121,37 @@ class ClassGeneralTestCase(unittest.TestCase):
         self.assert_(hasattr(Bar, 'hello'))
         self.assertEquals(Bar().hello(), 'hello')
 
+    def test_attribute_error_message(self):
+        # Ensure that AttributeError matches the CPython message
+        class Bar:
+            pass
+        try:
+            Bar.bar
+            self._assert(False) # The previous line should have raised
+                                # AttributeError
+        except AttributeError, e:
+            self.assertEqual("class Bar has no attribute 'bar'", str(e))
+
+        class Foo(object):
+            pass
+        try:
+            Foo.bar
+            self._assert(False) # The previous line should have raised
+                                # AttributeError
+        except AttributeError, e:
+            self.assertEqual("type object 'Foo' has no attribute 'bar'",
+                             str(e))
+
+    def test_inner_class_dict(self):
+        class z:
+            class t:
+                def moo(self):
+                    pass
+        # Printing this caused an NPE in Jython 2.1
+        keys = list(z.t.__dict__)
+        keys.sort()
+        self.assertEqual(str(keys), "['__doc__', '__module__', 'moo']")
+
 
 class ClassNamelessModuleTestCase(unittest.TestCase):
 

@@ -10,7 +10,7 @@ somewhere near the top of their code.  Because of the automatic
 import, this is no longer necessary (but code that does it still
 works).
 
-This will append site-specific paths to to the module search path.  On
+This will append site-specific paths to the module search path.  On
 Unix, it starts with sys.prefix and sys.exec_prefix (if different) and
 appends lib/python<version>/site-packages as well as lib/site-python.
 On other platforms (mainly Mac and Windows), it uses just sys.prefix
@@ -23,7 +23,7 @@ A path configuration file is a file whose name has the form
 to be added to sys.path.  Non-existing directories (or
 non-directories) are never added to sys.path; no directory is added to
 sys.path more than once.  Blank lines and lines beginning with
-\code{#} are skipped.
+'#' are skipped. Lines starting with 'import' are executed.
 
 For example, suppose sys.prefix and sys.exec_prefix are set to
 /usr/local and there is a directory /usr/local/lib/python1.5/site-packages
@@ -59,44 +59,81 @@ ImportError exception, it is silently ignored.
 
 import sys, os
 
-def makepath(*paths):
-    dir = os.path.join(*paths)
-    if dir == '__classpath__':
-        return dir
-    return os.path.normcase(os.path.abspath(dir))
 
-L = sys.modules.values()
-for m in L:
-    mfile = getattr(m, "__file__", None)
-    if mfile is not None:
-        m.__file__ = makepath(mfile)
-del m, L
+def makepath(*paths):
+    dir = os.path.abspath(os.path.join(*paths))
+    return dir, os.path.normcase(dir)
+
+for m in sys.modules.values():
+    if hasattr(m, "__file__") and m.__file__:
+        m.__file__ = os.path.abspath(m.__file__)
+del m
 
 # This ensures that the initial path provided by the interpreter contains
 # only absolute pathnames, even if we're running from the build directory.
 L = []
+_dirs_in_sys_path = {}
+dir = dircase = None  # sys.path may be empty at this point
 for dir in sys.path:
-    dir = makepath(dir)
-    if dir not in L:
+    # Filter out duplicate paths (on case-insensitive file systems also
+    # if they only differ in case); turn relative paths into absolute
+    # paths.
+    dir, dircase = makepath(dir)
+    if not dircase in _dirs_in_sys_path:
         L.append(dir)
+        _dirs_in_sys_path[dircase] = 1
 sys.path[:] = L
-del dir, L
+del dir, dircase, L
+
+# Append ./build/lib.<platform> in case we're running in the build dir
+# (especially for Guido :-)
+# XXX This should not be part of site.py, since it is needed even when
+# using the -S option for Python.  See http://www.python.org/sf/586680
+if (os.name == "posix" and sys.path and
+    os.path.basename(sys.path[-1]) == "Modules"):
+    from distutils.util import get_platform
+    s = "build/lib.%s-%.3s" % (get_platform(), sys.version)
+    s = os.path.join(os.path.dirname(sys.path[-1]), s)
+    sys.path.append(s)
+    del get_platform, s
+
+def _init_pathinfo():
+    global _dirs_in_sys_path
+    _dirs_in_sys_path = d = {}
+    for dir in sys.path:
+        if dir and not os.path.isdir(dir):
+            continue
+        dir, dircase = makepath(dir)
+        d[dircase] = 1
 
 def addsitedir(sitedir):
-    sitedir = makepath(sitedir)
-    if sitedir not in sys.path:
+    global _dirs_in_sys_path
+    if _dirs_in_sys_path is None:
+        _init_pathinfo()
+        reset = 1
+    else:
+        reset = 0
+    sitedir, sitedircase = makepath(sitedir)
+    if not sitedircase in _dirs_in_sys_path:
         sys.path.append(sitedir)        # Add path component
     try:
         names = os.listdir(sitedir)
     except os.error:
         return
-    names = map(os.path.normcase, names)
     names.sort()
     for name in names:
-        if name[-4:] == ".pth":
+        if name[-4:] == os.extsep + "pth":
             addpackage(sitedir, name)
+    if reset:
+        _dirs_in_sys_path = None
 
 def addpackage(sitedir, name):
+    global _dirs_in_sys_path
+    if _dirs_in_sys_path is None:
+        _init_pathinfo()
+        reset = 1
+    else:
+        reset = 0
     fullname = os.path.join(sitedir, name)
     try:
         f = open(fullname)
@@ -108,30 +145,68 @@ def addpackage(sitedir, name):
             break
         if dir[0] == '#':
             continue
-        if dir[-1] == '\n':
-            dir = dir[:-1]
-        dir = makepath(sitedir, dir)
-        if dir not in sys.path and os.path.exists(dir):
+        if dir.startswith("import"):
+            exec dir
+            continue
+        dir = dir.rstrip()
+        dir, dircase = makepath(sitedir, dir)
+        if not dircase in _dirs_in_sys_path and os.path.exists(dir):
             sys.path.append(dir)
+            _dirs_in_sys_path[dircase] = 1
+    if reset:
+        _dirs_in_sys_path = None
 
 prefixes = [sys.prefix]
+sitedir = None # make sure sitedir is initialized because of later 'del'
 if sys.exec_prefix != sys.prefix:
     prefixes.append(sys.exec_prefix)
 for prefix in prefixes:
     if prefix:
-        if sys.platform[:4] == 'java':
+        if sys.platform in ('os2emx', 'riscos') or sys.platform[:4] == 'java':
             sitedirs = [os.path.join(prefix, "Lib", "site-packages")]
         elif os.sep == '/':
-            sitedirs = [makepath(prefix,
-                                 "lib",
-                                 "python" + sys.version[:3],
-                                 "site-packages"),
-                        makepath(prefix, "lib", "site-python")]
+            sitedirs = [os.path.join(prefix,
+                                     "lib",
+                                     "python" + sys.version[:3],
+                                     "site-packages"),
+                        os.path.join(prefix, "lib", "site-python")]
         else:
-            sitedirs = [prefix]
+            sitedirs = [prefix, os.path.join(prefix, "lib", "site-packages")]
+        if sys.platform == 'darwin':
+            # for framework builds *only* we add the standard Apple
+            # locations. Currently only per-user, but /Library and
+            # /Network/Library could be added too
+            if 'Python.framework' in prefix:
+                home = os.environ.get('HOME')
+                if home:
+                    sitedirs.append(
+                        os.path.join(home,
+                                     'Library',
+                                     'Python',
+                                     sys.version[:3],
+                                     'site-packages'))
         for sitedir in sitedirs:
             if os.path.isdir(sitedir):
                 addsitedir(sitedir)
+del prefix, sitedir
+
+_dirs_in_sys_path = None
+
+
+# the OS/2 EMX port has optional extension modules that do double duty
+# as DLLs (and must use the .DLL file extension) for other extensions.
+# The library search path needs to be amended so these will be found
+# during module import.  Use BEGINLIBPATH so that these are at the start
+# of the library search path.
+if sys.platform == 'os2emx':
+    dllpath = os.path.join(sys.prefix, "Lib", "lib-dynload")
+    libpath = os.environ['BEGINLIBPATH'].split(';')
+    if libpath[-1]:
+        libpath.append(dllpath)
+    else:
+        libpath[-1] = dllpath
+    os.environ['BEGINLIBPATH'] = ';'.join(libpath)
+
 
 # Define new built-ins 'quit' and 'exit'.
 # These are simply strings that display a hint on how to exit.
@@ -207,17 +282,49 @@ class _Printer:
 
 __builtin__.copyright = _Printer("copyright", sys.copyright)
 if sys.platform[:4] == 'java':
-    __builtin__.credits = _Printer("credits",
+    __builtin__.credits = _Printer(
+        "credits",
         "Jython is maintained by the Jython developers (www.jython.org).")
 else:
-    __builtin__.credits = _Printer("credits",
-        "Python development is led by BeOpen PythonLabs (www.pythonlabs.com).")
-here = sys.prefix + "/Lib" # os.path.dirname(os.__file__)
+    __builtin__.credits = _Printer("credits", """\
+Thanks to CWI, CNRI, BeOpen.com, Zope Corporation and a cast of thousands
+for supporting Python development.  See www.python.org for more information.""")
+here = os.path.dirname(os.__file__)
 __builtin__.license = _Printer(
-    "license", "See http://www.pythonlabs.com/products/python2.0/license.html",
+    "license", "See http://www.python.org/%.3s/license.html" % sys.version,
     ["LICENSE.txt", "LICENSE"],
-    [here, os.path.join(here, os.pardir), os.curdir])
+    [os.path.join(here, os.pardir), here, os.curdir])
 
+
+# Define new built-in 'help'.
+# This is a wrapper around pydoc.help (with a twist).
+
+class _Helper:
+    def __repr__(self):
+        return "Type help() for interactive help, " \
+               "or help(object) for help about object."
+    def __call__(self, *args, **kwds):
+        import pydoc
+        return pydoc.help(*args, **kwds)
+
+__builtin__.help = _Helper()
+
+
+# On Windows, some default encodings are not provided
+# by Python (e.g. "cp932" in Japanese locale), while they
+# are always available as "mbcs" in each locale.
+# Make them usable by aliasing to "mbcs" in such a case.
+
+if sys.platform == 'win32':
+    import locale, codecs
+    enc = locale.getdefaultlocale()[1]
+    if enc.startswith('cp'):            # "cp***" ?
+        try:
+            codecs.lookup(enc)
+        except LookupError:
+            import encodings
+            encodings._cache[enc] = encodings._unknown
+            encodings.aliases.aliases[enc] = 'mbcs'
 
 # Set the string encoding used by the Unicode implementation.  The
 # default is 'ascii', but if you're willing to experiment, you can
@@ -238,7 +345,8 @@ if 0:
     encoding = "undefined"
 
 if encoding != "ascii":
-    sys.setdefaultencoding(encoding)
+    # On Non-Unicode builds this will raise an AttributeError...
+    sys.setdefaultencoding(encoding) # Needs Python Unicode build !
 
 #
 # Run custom site specific code, if available.
@@ -251,7 +359,7 @@ except ImportError:
 #
 # Remove sys.setdefaultencoding() so that users cannot change the
 # encoding after initialization.  The test for presence is needed when
-# this module is run as a script, becuase this code is executed twice.
+# this module is run as a script, because this code is executed twice.
 #
 if hasattr(sys, "setdefaultencoding"):
     del sys.setdefaultencoding

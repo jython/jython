@@ -222,7 +222,7 @@ public class PyArray extends PySequence implements Cloneable {
         seq___setslice__(start, stop, step, value);
     }
 
-    @ExposedMethod
+    @ExposedMethod(defaults = "null")
     final void array___delslice__(PyObject start, PyObject stop, PyObject step) {
         seq___delslice__(start, stop, step);
     }

@@ -150,7 +150,7 @@ SHUT_RDWR = 2
 __all__ = [ 'AF_INET', 'SOCK_DGRAM', 'SOCK_RAW',
         'SOCK_RDM', 'SOCK_SEQPACKET', 'SOCK_STREAM', 'SOL_SOCKET',
         'SO_BROADCAST', 'SO_KEEPALIVE', 'SO_LINGER', 'SO_OOBINLINE',
-        'SO_RCVBUF', 'SO_REUSEADDR', 'SO_SNDBUF', 'SO_TIMEOUT', 'TCP_NODELAY'
+        'SO_RCVBUF', 'SO_REUSEADDR', 'SO_SNDBUF', 'SO_TIMEOUT', 'TCP_NODELAY',
         'SocketType', 'error', 'herror', 'gaierror', 'timeout',
         'getfqdn', 'gethostbyaddr', 'gethostbyname', 'gethostname',
         'socket', 'getaddrinfo', 'getdefaulttimeout', 'setdefaulttimeout',

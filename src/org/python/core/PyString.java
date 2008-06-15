@@ -1030,8 +1030,12 @@ public class PyString extends PyBaseString
 
     @ExposedMethod(defaults = {"null", "-1"})
     final PyList str_split(String sep, int maxsplit) {
-        if (sep != null)
+        if (sep != null) {
+            if (sep.length() == 0) {
+                throw Py.ValueError("empty separator");
+            }
             return splitfields(sep, maxsplit);
+        }
 
         PyList list = new PyList();
 
@@ -1670,7 +1674,7 @@ public class PyString extends PyBaseString
         } else {
             iMaxsplit = maxsplit.asInt();
         }
-        return ((PyString)newPiece).str_join(str_split(((PyString)oldPiece).string, iMaxsplit));
+        return ((PyString)newPiece).str_join(splitfields(((PyString)oldPiece).string, iMaxsplit));
     }
 
     public String join(PyObject seq) {

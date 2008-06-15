@@ -5,11 +5,13 @@ org/python/core/PyBoolean.class
 org/python/core/PyBuiltinFunction.class
 org/python/core/PyCell.class
 org/python/core/PyClassMethod.class
+org/python/core/PyClassMethodDescr.class
 org/python/core/PyComplex.class
 org/python/core/PyDataDescr.class
 org/python/core/PyDictionary.class
 org/python/core/PyDictProxy.class
 org/python/core/PyEnumerate.class
+org/python/core/PyEllipsis.class
 org/python/core/PyFile.class
 org/python/core/PyFloat.class
 org/python/core/PyFrozenSet.class
@@ -32,6 +34,7 @@ org/python/core/PySuper.class
 org/python/core/PyTuple.class
 org/python/core/PyType.class
 org/python/core/PyUnicode.class
+org/python/core/PyXRange.class
 org/python/modules/_weakref/CallableProxyType.class
 org/python/modules/_weakref/ReferenceType.class
 org/python/modules/_weakref/ProxyType.class

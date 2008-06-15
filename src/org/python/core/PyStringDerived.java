@@ -358,18 +358,6 @@ public class PyStringDerived extends PyString implements Slotted {
         return super.__rdivmod__(other);
     }
 
-    public PyObject __pow__(PyObject other) {
-        PyType self_type=getType();
-        PyObject impl=self_type.lookup("__pow__");
-        if (impl!=null) {
-            PyObject res=impl.__get__(this,self_type).__call__(other);
-            if (res==Py.NotImplemented)
-                return null;
-            return res;
-        }
-        return super.__pow__(other);
-    }
-
     public PyObject __rpow__(PyObject other) {
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__rpow__");
@@ -803,6 +791,32 @@ public class PyStringDerived extends PyString implements Slotted {
         return super.__finditem__(key);
     }
 
+    public PyObject __getitem__(PyObject key) {
+        // Same as __finditem__, without swallowing LookupErrors. This allows
+        // __getitem__ implementations written in Python to raise custom
+        // exceptions (such as subclasses of KeyError).
+        //
+        // We are forced to duplicate the code, instead of defining __finditem__
+        // in terms of __getitem__. That's because PyObject defines __getitem__
+        // in terms of __finditem__. Therefore, we would end with an infinite
+        // loop when self_type.lookup("__getitem__") returns null:
+        //
+        //  __getitem__ -> super.__getitem__ -> __finditem__ -> __getitem__
+        //
+        // By duplicating the (short) lookup and call code, we are safe, because
+        // the call chains will be:
+        //
+        // __finditem__ -> super.__finditem__
+        //
+        // __getitem__ -> super.__getitem__ -> __finditem__ -> super.__finditem__
+
+        PyType self_type=getType();
+        PyObject impl=self_type.lookup("__getitem__");
+        if (impl!=null)
+            return impl.__get__(this,self_type).__call__(key);
+        return super.__getitem__(key);
+    }
+
     public void __setitem__(PyObject key,PyObject value) { // ???
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__setitem__");
@@ -816,15 +830,30 @@ public class PyStringDerived extends PyString implements Slotted {
     public PyObject __getslice__(PyObject start,PyObject stop,PyObject step) { // ???
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__getslice__");
-        if (impl!=null)
-            try {
-                return impl.__get__(this,self_type).__call__(start,stop);
-            } catch (PyException exc) {
-                if (Py.matchException(exc,Py.LookupError))
-                    return null;
-                throw exc;
-            }
+        if (impl!=null) {
+            return impl.__get__(this,self_type).__call__(start,stop);
+        }
         return super.__getslice__(start,stop,step);
+    }
+
+    public void __setslice__(PyObject start,PyObject stop,PyObject step,PyObject value) {
+        PyType self_type=getType();
+        PyObject impl=self_type.lookup("__setslice__");
+        if (impl!=null) {
+            impl.__get__(this,self_type).__call__(start,stop,value);
+            return;
+        }
+        super.__setslice__(start,stop,step,value);
+    }
+
+    public void __delslice__(PyObject start,PyObject stop,PyObject step) {
+        PyType self_type=getType();
+        PyObject impl=self_type.lookup("__delslice__");
+        if (impl!=null) {
+            impl.__get__(this,self_type).__call__(start,stop);
+            return;
+        }
+        super.__delslice__(start,stop,step);
     }
 
     public void __delitem__(PyObject key) { // ???
@@ -929,6 +958,23 @@ public class PyStringDerived extends PyString implements Slotted {
             return;
         }
         super.__delete__(obj);
+    }
+
+    public PyObject __pow__(PyObject other,PyObject modulo) {
+        PyType self_type=getType();
+        PyObject impl=self_type.lookup("__pow__");
+        if (impl!=null) {
+            PyObject res;
+            if (modulo==null) {
+                res=impl.__get__(this,self_type).__call__(other);
+            } else {
+                res=impl.__get__(this,self_type).__call__(other,modulo);
+            }
+            if (res==Py.NotImplemented)
+                return null;
+            return res;
+        }
+        return super.__pow__(other,modulo);
     }
 
     public void dispatch__init__(PyType type,PyObject[]args,String[]keywords) {

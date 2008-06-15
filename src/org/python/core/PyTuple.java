@@ -93,7 +93,13 @@ public class PyTuple extends PySequenceList
             count = 0;
         }
         if (size() == 0 || count == 1) {
-            return this;
+            if (getType() == TYPE) {
+                // Since tuples are immutable, we can return a shared copy in this case
+                return this;
+            }
+            if (size() == 0) {
+                return new PyTuple();
+            }
         }
         PyObject[] array = getArray();
         int l = size();
@@ -219,7 +225,19 @@ public class PyTuple extends PySequenceList
 
     @ExposedMethod
     final int tuple___hash__() {
-        return super.hashCode();
+        // strengthened hash to avoid common collisions. from CPython
+        // tupleobject.tuplehash. See http://bugs.python.org/issue942952
+        int y;
+        int len = size();
+        int mult = 1000003;
+        int x = 0x345678;
+        PyObject[] array = getArray();
+        while (--len >= 0) {
+            y = array[len].hashCode();
+            x = (x ^ y) * mult;
+            mult += 82520 + len + len;
+        }
+        return x + 97531;
     }
 
     private String subobjRepr(PyObject o) {

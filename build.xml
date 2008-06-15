@@ -93,7 +93,7 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
 # - the revision; only needed for a snapshot full-build
 # To create a snapshot build: uncomment and indicate the correct revision (it has to be a number)
 # For 'normal' builds, this defaults to the latest revision on svn.main.dir (HEAD)
-#svn.revision=3444
+#snapshot.revision=3444
 
 # - the directory containing libsvnjavahl-1.dll (on windows) and svnjavahl.jar; only needed for full-build
 # how to get these (for windows):
@@ -126,10 +126,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
 
     <target name="full-build" depends="full-check, install" description="a full build with svn checkout" />
 
-    <target name="init">
-        <property file="${user.home}/ant.properties" />
-        <property file="${basedir}/ant.properties" />
-
+    <target name="init" depends="version-init">
         <property name="build.compiler" value="modern" />
         <property name="jdk.target.version" value="1.5" />
         <property name="jdk.source.version" value="1.5" />
@@ -193,6 +190,36 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         </uptodate>
     </target>
 
+    <target name="version-init">
+        <property file="${user.home}/ant.properties" />
+        <property file="${basedir}/ant.properties" />
+
+        <property name="PY_RELEASE_LEVEL_ALPHA" value="10"/> <!-- 0xA -->
+        <property name="PY_RELEASE_LEVEL_BETA" value="11"/> <!-- 0xB -->
+        <property name="PY_RELEASE_LEVEL_GAMMA" value="12"/> <!-- 0xC -->
+        <property name="PY_RELEASE_LEVEL_FINAL" value="15"/> <!-- 0xF -->
+        <property name="PY_RELEASE_LEVEL_SNAPSHOT" value="170"/> <!-- 0xAA -->
+
+        <!-- The current version info -->
+        <property name="jython.version" value="2.3a0+" />
+        <property name="jython.major_version" value="2"/>
+        <property name="jython.minor_version" value="3"/>
+        <property name="jython.micro_version" value="0"/>
+        <property name="jython.release_level" value="${PY_RELEASE_LEVEL_ALPHA}"/>
+        <property name="jython.release_serial" value="0"/>
+
+        <condition property="do.snapshot.build">
+            <isset property="snapshot.revision" />
+        </condition>
+        <!-- Switch to a snapshot release_level when appropriate -->
+        <condition property="jython.real_release_level" value="${PY_RELEASE_LEVEL_SNAPSHOT}" else="${jython.release_level}">
+            <isset property="do.snapshot.build" />
+        </condition>
+        <condition property="os.family.unix">
+            <os family="unix"/>
+        </condition>
+    </target>
+
     <target name="full-preinit">
         <property file="${user.home}/ant.properties" />
         <property file="${basedir}/ant.properties" />
@@ -213,17 +240,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <condition property="do.checkout" value="true">
             <istrue value="${has.repositories.connection}" />
         </condition>
-        <condition property="do.snapshot.build">
-            <isset property="svn.revision" />
-        </condition>
-        <condition property="jython.version" value="${svn.revision}">
-            <isset property="svn.revision" />
-        </condition>
-        <property name="jython.version" value="2.3a0" />
-        <!-- if not set so far, default svn.revision to HEAD, since we always want
-    	     the latest revision on the specified subversion main directory -->
-        <property name="svn.revision" value="HEAD"/>
-    	
+
         <!-- classpath for svn ant task -->
         <path id="svn.classpath">
             <pathelement path="${java.class.path}" />
@@ -275,6 +292,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <echo>javahl.dir         = '${javahl.dir}'</echo>
         <echo>svnant.jar.dir     = '${svnant.jar.dir}'</echo>
         <echo>do.snapshot.build  = '${do.snapshot.build}'</echo>
+        <echo>snapshot.revision  = '${snapshot.revision}'</echo>
         <echo>do.checkout        = '${do.checkout}'</echo>
     </target>
 
@@ -330,8 +348,8 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
 
     <target name="checkout" depends="prepare" if="do.checkout">
         <svn javahl="${javahl.dir}" >
-        	<checkout url="https://jython.svn.sourceforge.net/svnroot/jython/${svn.main.dir}/jython" revision="${svn.revision}" destPath="${svn.checkout.dir}/jython" />
-        	<checkout url="https://jython.svn.sourceforge.net/svnroot/jython/${svn.main.dir}/installer" revision="${svn.revision}" destPath="${svn.checkout.dir}/installer" />
+        	<checkout url="https://jython.svn.sourceforge.net/svnroot/jython/${svn.main.dir}/jython" revision="${snapshot.revision}" destPath="${svn.checkout.dir}/jython" />
+        	<checkout url="https://jython.svn.sourceforge.net/svnroot/jython/${svn.main.dir}/installer" revision="${snapshot.revision}" destPath="${svn.checkout.dir}/installer" />
         </svn> 
 
         <!-- checkout cpython license from the correct python maintenance branch -->
@@ -340,31 +358,51 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         </svn> 
     </target>
 
-	
-	<!-- change the version string, if so defined: used for snapshot builds -->
-	<!-- the following replacements have to be updated if the version strings
-	     in PySystemState.java and README.txt change -->
-	<target name="version" depends="checkout" if="do.snapshot.build" >
-		<property name="replace.value.version" value='version = "2.2b${svn.revision}"' />
-		<replace file="${source.dir}/org/python/core/PySystemState.java" token='version = "2.2b2"' value="${replace.value.version}" />
-		<replace file="${source.dir}/org/python/core/PySystemState.java" token="PY_RELEASE_LEVEL = 0x0A" value="PY_RELEASE_LEVEL = 0xAA" />
-		<property name="replace.value.serial" value="PY_RELEASE_SERIAL = ${svn.revision}" />
-		<replace file="${source.dir}/org/python/core/PySystemState.java" token="PY_RELEASE_SERIAL = 2" value="${replace.value.serial}" />
+    <!-- XXX: could attempt to utilize subwcrev.exe to get the revision on Windows  -->
+    <target name="svnversion" if="os.family.unix">
+        <exec executable="svnversion" failifexecutionfails="false" outputproperty="build.svn.revision"/>
+    </target>
 
-    	<!-- change README.txt -->
-		<replace file="${jython.base.dir}/README.txt" token='2.2b2' value='2.2b${svn.revision}' />
-		<replace file="${jython.base.dir}/README.txt">
-			<replacetoken>=======================</replacetoken>
-			<replacevalue>--------------------------
+    <target name="brand-version" depends="version-init, svnversion">
+        <condition property="build.svn.revision" value="">
+            <not>
+                <isset property="build.svn.revision"/>
+            </not>
+        </condition>
+        <tstamp>
+            <format property="build.date" pattern="MMM d yyyy" offset="0"/>
+            <format property="build.time" pattern="HH:mm:ss" offset="0"/>
+        </tstamp>
+        <mkdir dir="${compile.dir}/org/python"/>
+        <echo file="${compile.dir}/org/python/version.properties"># Jython version information
+jython.version=${jython.version}
+jython.major_version=${jython.major_version}
+jython.minor_version=${jython.minor_version}
+jython.micro_version=${jython.micro_version}
+jython.release_level=${jython.release_level}
+jython.release_serial=${jython.release_serial}
+jython.build.date=${build.date}
+jython.build.time=${build.time}
+jython.build.svn_revision=${build.svn.revision}</echo>
+    </target>
+
+    <target name="brand-readme-version" depends="checkout" if="do.snapshot.build">
+        <!-- change README.txt version string, if so defined: used for
+        snapshot builds. XXX: a bit broken for now-->
+        <replace file="${jython.base.dir}/README.txt" token='2.2b2'
+        value='2.2b${snapshot.revision}' />
+        <replace file="${jython.base.dir}/README.txt">
+            <replacetoken>=======================</replacetoken>
+            <replacevalue>--------------------------
 
 This is a snapshot build.
 It reflects the current development status.
 				
 The readme text for the next release will be like:
 
-			</replacevalue>
-		</replace>
-	</target>
+            </replacevalue>
+        </replace>
+    </target>
 
     <!-- separate build.xml for parser grammar -->
     <!-- we use settings as in developer-build - at the moment all properties will already be set if we do a full build -->
@@ -415,7 +453,7 @@ The readme text for the next release will be like:
 
     </target>
  
-    <target name="compile" depends="init,antlr_gen,jarjar">
+    <target name="compile" depends="init,antlr_gen,jarjar,brand-version">
         <javac destdir="${compile.dir}"
                target="${jdk.target.version}"
                source="${jdk.source.version}"
@@ -626,7 +664,7 @@ The readme text for the next release will be like:
     </target>
 
     <!-- wrap the build into the installer -->
-    <target name="install" depends="version, doc, jar, javadoc, copy-full">
+    <target name="install" depends="brand-readme-version, doc, jar, javadoc, copy-full">
         <property name="install.src.dir" value="${jython.base.dir}/../installer/src/java" />
         <echo>compiling installer from ${install.src.dir}</echo>
         <javac srcdir="${install.src.dir}"
@@ -688,7 +726,7 @@ The readme text for the next release will be like:
             </batchtest>
         </junit>
     </target>
-    <target name="regrtest" depends="compile,expose,copy-lib">
+    <target name="regrtest" depends="developer-build">
       <exec executable="${dist.dir}/bin/jython">
         <arg value="${dist.dir}/Lib/test/regrtest.py"/>
         <!-- Only run the tests that are expected to work on Jython -->

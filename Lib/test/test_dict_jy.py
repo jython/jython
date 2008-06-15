@@ -23,8 +23,19 @@ class DictInitTest(unittest.TestCase):
         s[7] = 'called'
         self.assertEquals('called', s.createdInInit)
 
+class DerivedDictTest(unittest.TestCase):
+    "Tests for derived dict behaviour"
+    def test_raising_custom_key_error(self):
+        class CustomKeyError(KeyError):
+            pass
+        class DerivedDict(dict):
+            def __getitem__(self, key):
+                raise CustomKeyError("custom message")
+        self.assertRaises(CustomKeyError, lambda: DerivedDict()['foo'])
+
+
 def test_main():
-    test_support.run_unittest(DictInitTest)
+    test_support.run_unittest(DictInitTest, DerivedDictTest)
 
 if __name__ == '__main__':
     test_main()

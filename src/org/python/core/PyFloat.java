@@ -2,6 +2,7 @@
 package org.python.core;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
@@ -23,16 +24,32 @@ public class PyFloat extends PyObject
             PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("float", args, keywords, new String[] { "x" }, 0);
         PyObject x = ap.getPyObject(0, null);
-        if (new_.for_type == subtype) {
-            if (x == null) {
+        if (x == null) {
+            if (new_.for_type == subtype) {
                 return new PyFloat(0.0);
-            }
-            return x.__float__();
-        } else {
-            if (x == null) {
+            } else {
                 return new PyFloatDerived(subtype, 0.0);
             }
-            return new PyFloatDerived(subtype, x.__float__().getValue());
+        } else {
+            PyFloat floatObject = null;
+            try {
+                floatObject = x.__float__();
+            } catch (PyException e) {
+                if (Py.matchException(e, Py.AttributeError)) {
+                    // Translate AttributeError to TypeError
+                    // XXX: We are using the same message as CPython, even if
+                    //      it is not strictly correct (instances of types
+                    //      that implement the __float__ method are also
+                    //      valid arguments)
+                    throw Py.TypeError("float() argument must be a string or a number");
+                }
+                throw e;
+            }
+            if (new_.for_type == subtype) {
+                return floatObject;
+            } else {
+                return new PyFloatDerived(subtype, floatObject.getValue());
+            }
         }
     }
 
@@ -51,6 +68,13 @@ public class PyFloat extends PyObject
 
     public PyFloat(float v) {
         this((double)v);
+    }
+
+    /**
+     * Determine if this float is not infinity, nor NaN.
+     */
+    public boolean isFinite() {
+        return !Double.isInfinite(value) && !Double.isNaN(value);
     }
 
     public double getValue() {
@@ -145,10 +169,29 @@ public class PyFloat extends PyObject
 
     @ExposedMethod(type = MethodType.CMP)
     final int float___cmp__(PyObject other) {
-        if (!canCoerce(other))
-             return -2;
-        double v = coerce(other);
-        return value < v ? -1 : value > v ? 1 : 0;
+        double i = value;
+        double j;
+
+        if (other instanceof PyFloat) {
+            j = ((PyFloat)other).value;
+        } else if (!isFinite()) {
+            // we're infinity: our magnitude exceeds any finite
+            // integer, so it doesn't matter which int we compare i
+            // with. If NaN, similarly.
+            if (other instanceof PyInteger || other instanceof PyLong) {
+                j = 0.0;
+            }
+            return -2;
+        } else if (other instanceof PyInteger) {
+            j = ((PyInteger)other).getValue();
+        } else if (other instanceof PyLong) {
+            BigDecimal v = new BigDecimal(value);
+            BigDecimal w = new BigDecimal(((PyLong)other).getValue());
+            return v.compareTo(w);
+        } else {
+            return -2;
+        }
+        return i < j ? -1 : i > j ? 1 : 0;
     }
 
     public Object __coerce_ex__(PyObject other) {
@@ -165,8 +208,7 @@ public class PyFloat extends PyObject
     }
 
     private static final boolean canCoerce(PyObject other) {
-        return other instanceof PyFloat || other instanceof PyInteger ||
-            other instanceof PyLong;
+        return other instanceof PyFloat || other instanceof PyInteger || other instanceof PyLong;
     }
 
     private static final double coerce(PyObject other) {
@@ -179,7 +221,6 @@ public class PyFloat extends PyObject
         else
             throw Py.TypeError("xxx");
     }
-
 
     public PyObject __add__(PyObject right) {
         return float___add__(right);

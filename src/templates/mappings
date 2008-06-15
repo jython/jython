@@ -25,8 +25,7 @@ long.derived:org.python.core.PyLongDerived
 module.derived:org.python.core.PyModuleDerived
 object.derived:org.python.core.PyObjectDerived
 property.derived:org.python.core.PyPropertyDerived
-# gderived.py doesn't handle derived out of org.python.core
-#random.derived:org.python.modules.random.PyRandomDerived
+random.derived:org.python.modules.random.PyRandomDerived
 set.derived:org.python.core.PySetDerived
 slice.derived:org.python.core.PySliceDerived
 str.derived:org.python.core.PyStringDerived
