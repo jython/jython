@@ -29,14 +29,15 @@ __all__ = ["altsep", "curdir", "pardir", "sep", "pathsep", "linesep",
 __all__.extend(['EX_OK', 'F_OK', 'O_APPEND', 'O_CREAT', 'O_EXCL', 'O_RDONLY',
                 'O_RDWR', 'O_SYNC', 'O_TRUNC', 'O_WRONLY', 'R_OK', 'SEEK_CUR',
                 'SEEK_END', 'SEEK_SET', 'W_OK', 'X_OK', '_exit', 'access',
-                'altsep', 'chdir', 'close', 'curdir', 'defpath', 'environ',
-                'error', 'fdopen', 'getcwd', 'getenv', 'getlogin', 'linesep',
-                'listdir', 'lseek', 'lstat', 'makedirs', 'mkdir', 'name',
-                'open', 'pardir', 'path', 'pathsep', 'popen', 'popen2',
-                'popen3', 'popen4', 'putenv', 'read', 'remove', 'removedirs',
-                'rename', 'renames', 'rmdir', 'sep', 'stat', 'stat_result',
-                'strerror', 'system', 'unlink', 'unsetenv', 'utime', 'walk',
-                'write'])
+                'altsep', 'chdir', 'chmod', 'close', 'curdir', 'defpath',
+                'environ', 'error', 'fdopen', 'getcwd', 'getegid', 'getenv',
+                'geteuid', 'getgid', 'getlogin', 'getlogin', 'getpgrp',
+                'getpid', 'getppid', 'getuid', 'linesep', 'listdir', 'lseek',
+                'lstat', 'makedirs', 'mkdir', 'name', 'open', 'pardir', 'path',
+                'pathsep', 'popen', 'popen2', 'popen3', 'popen4', 'putenv',
+                'read', 'remove', 'removedirs', 'rename', 'renames', 'rmdir',
+                'sep', 'setpgrp', 'setsid', 'stat', 'stat_result', 'strerror',
+                'system', 'unlink', 'unsetenv', 'utime', 'walk', 'write'])
 
 import errno
 import java.lang.System
@@ -99,6 +100,35 @@ else:
 sys.modules['os.path'] = _path = path
 from os.path import curdir, pardir, sep, pathsep, defpath, extsep, altsep
 linesep = java.lang.System.getProperty('line.separator')
+
+from org.python.posix import POSIXHandler, POSIXFactory
+
+class PythonPOSIXHandler(POSIXHandler):
+    def error(self, error, msg):
+        err = getattr(errno, error.name(), None)
+        if err is None:
+            raise OSError('%s: %s' % (error, msg))
+        raise OSError(err, errno.strerror(err), msg)
+    def unimplementedError(self, method_name):
+        raise NotImplementedError(method_name)
+    def warn(self, warning_id, msg, rest):
+        pass # XXX implement
+    def isVerbose(self):
+        return False
+    def getCurrentWorkingDirectory(self):
+        return getcwd()
+    def getEnv(self):
+        return environ
+    def getInputStream(self):
+        return getattr(java.lang.System, 'in') # XXX handle resetting
+    def getOutputStream(self):
+        return java.lang.System.out # XXX handle resetting
+    def getPID(self):
+        return 0
+    def getErrorStream(self):
+        return java.lang.System.err # XXX handle resetting
+
+_posix = POSIXFactory.getPOSIX(PythonPOSIXHandler(), True)
 
 # open for reading only
 O_RDONLY = 0x0
@@ -220,6 +250,18 @@ def listdir(path):
     if l is None:
         raise OSError(0, 'No such directory', path)
     return list(l)
+
+def chmod(path, mode):
+    """chmod(path, mode)
+
+    Change the access permissions of a file.
+    """
+    # XXX no error handling for chmod in jna-posix
+    # catch not found errors explicitly here, for now
+    abs_path = sys.getPath(path)
+    if not File(path).exists():
+        raise OSError(errno.ENOENT, errno.strerror(errno.ENOENT), path)
+    _posix.chmod(abs_path, mode)
 
 def mkdir(path, mode='ignored'):
     """mkdir(path [, mode=0777])
@@ -363,7 +405,17 @@ def stat(path):
     The Java stat implementation only returns a small subset of
     the standard fields: size, modification time and change time.
     """
-    f = File(sys.getPath(path))
+    abs_path = sys.getPath(path)
+    try:
+        s = _posix.stat(abs_path)
+        return stat_result((s.mode(), s.ino(), s.dev(), s.nlink(),
+                            s.uid(), s.gid(), s.st_size(),
+                            s.atime(), s.mtime(), s.ctime()))
+    except NotImplementedError:
+        pass
+    except:
+        raise
+    f = File(abs_path)
     if not f.exists():
         raise OSError(errno.ENOENT, errno.strerror(errno.ENOENT), path)
     size = f.length()
@@ -422,9 +474,16 @@ def utime(path, times):
     Due to java limitations only the modification time is changed.
     """
     if times is not None:
+        # We don't use the access time, but typecheck it anyway
+        long(times[0])
+        if times[0] is None: # XXX http://bugs.jython.org/issue1059
+            # CPython says the same, although it takes floats too
+            raise TypeError('an integer is required')
         mtime = times[1]
     else:
         mtime = time.time()
+    if path is None:
+        raise TypeError('path must be specified, not None')
     # Only the modification time is changed
     File(sys.getPath(path)).setLastModified(long(mtime * 1000.0))
 
@@ -769,3 +828,63 @@ def getenv(key, default=None):
     """Get an environment variable, return None if it doesn't exist.
     The optional second argument can specify an alternate default."""
     return environ.get(key, default)
+
+def getegid():
+    """getegid() -> egid
+
+    Return the current process's effective group id."""
+    return _posix.getegid()
+
+def geteuid():
+    """geteuid() -> euid
+
+    Return the current process's effective user id."""
+    return _posix.geteuid()
+
+def getgid():
+    """getgid() -> gid
+
+    Return the current process's group id."""
+    return _posix.getgid()
+
+def getlogin():
+    """getlogin() -> string
+
+    Return the actual login name."""
+    return _posix.getlogin()
+
+def getpgrp():
+    """getpgrp() -> pgrp
+
+    Return the current process group id."""
+    return _posix.getpgrp()
+
+def getpid():
+    """getpid() -> pid
+
+    Return the current process id."""
+    return _posix.getpid()
+
+def getppid():
+    """getppid() -> ppid
+
+    Return the parent's process id."""
+    return _posix.getppid()
+
+def getuid():
+    """getuid() -> uid
+
+    Return the current process's user id."""
+    return _posix.getuid()
+
+def setpgrp():
+    """setpgrp()
+
+    Make this process a session leader."""
+    return _posix.setpgrp()
+
+def setsid():
+    """setsid()
+
+    Call the system call setsid()."""
+    return _posix.setsid()
