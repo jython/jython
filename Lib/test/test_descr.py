@@ -4256,104 +4256,128 @@ def test_assign_slice():
     vereq(c.value, 3)
 
 def test_main():
-    weakref_segfault() # Must be first, somehow
-    wrapper_segfault()
-    do_this_first()
-    class_docstrings()
-    lists()
-    dicts()
-    dict_constructor()
-    test_dir()
-    ints()
-    longs()
-    floats()
-    complexes()
-    spamlists()
-    spamdicts()
-    pydicts()
-    pylists()
-    metaclass()
-    pymods()
-    multi()
-    mro_disagreement()
-    diamond()
-    ex5()
-    monotonicity()
-    consistency_with_epg()
-    objects()
-    slots()
-    slotspecials()
-    dynamics()
-    errors()
-    classmethods()
-    classmethods_in_c()
-    staticmethods()
-    staticmethods_in_c()
-    classic()
-    compattr()
-    newslot()
-    altmro()
-    overloading()
-    methods()
-    specials()
-    weakrefs()
-    properties()
-    supers()
-    inherits()
-    keywords()
-    restricted()
-    str_subclass_as_dict_key()
-    classic_comparisons()
-    rich_comparisons()
-    coercions()
-    descrdoc()
-    setclass()
-    setdict()
-    pickles()
-    copies()
-    binopoverride()
-    subclasspropagation()
-    buffer_inherit()
-    str_of_str_subclass()
-    kwdargs()
-    recursive__call__()
-    delhook()
-    hashinherit()
-    strops()
-    deepcopyrecursive()
-    modules()
-    dictproxyiterkeys()
-    dictproxyitervalues()
-    dictproxyiteritems()
-    pickleslots()
-    funnynew()
-    imulbug()
-    docdescriptor()
-    copy_setstate()
-    slices()
-    subtype_resurrection()
-    slottrash()
-    slotmultipleinheritance()
-    testrmul()
-    testipow()
-    test_mutable_bases()
-    test_mutable_bases_with_failing_mro()
-    test_mutable_bases_catch_mro_conflict()
-    mutable_names()
-    subclass_right_op()
-    dict_type_with_metaclass()
-    meth_class_get()
-    isinst_isclass()
-    proxysuper()
-    carloverre()
-    filefault()
-    vicious_descriptor_nonsense()
-    test_init()
-    methodwrapper()
-    notimplemented()
-    test_assign_slice()
+    testfuncs = [
+    weakref_segfault, # Must be first, somehow
+    wrapper_segfault,
+    do_this_first,
+    class_docstrings,
+    lists,
+    dicts,
+    dict_constructor,
+    test_dir,
+    ints,
+    longs,
+    floats,
+    complexes,
+    spamlists,
+    spamdicts,
+    pydicts,
+    pylists,
+    metaclass,
+    pymods,
+    multi,
+    mro_disagreement,
+    diamond,
+    ex5,
+    monotonicity,
+    consistency_with_epg,
+    objects,
+    slots,
+    slotspecials,
+    dynamics,
+    errors,
+    classmethods,
+    classmethods_in_c,
+    staticmethods,
+    staticmethods_in_c,
+    classic,
+    compattr,
+    newslot,
+    altmro,
+    overloading,
+    methods,
+    specials,
+    weakrefs,
+    properties,
+    supers,
+    inherits,
+    keywords,
+    restricted,
+    str_subclass_as_dict_key,
+    classic_comparisons,
+    rich_comparisons,
+    coercions,
+    descrdoc,
+    setclass,
+    setdict,
+    pickles,
+    copies,
+    binopoverride,
+    subclasspropagation,
+    buffer_inherit,
+    str_of_str_subclass,
+    kwdargs,
+    recursive__call__,
+    delhook,
+    hashinherit,
+    strops,
+    deepcopyrecursive,
+    modules,
+    dictproxyiterkeys,
+    dictproxyitervalues,
+    dictproxyiteritems,
+    pickleslots,
+    funnynew,
+    imulbug,
+    docdescriptor,
+    copy_setstate,
+    slices,
+    subtype_resurrection,
+    slottrash,
+    slotmultipleinheritance,
+    testrmul,
+    testipow,
+    test_mutable_bases,
+    test_mutable_bases_with_failing_mro,
+    test_mutable_bases_catch_mro_conflict,
+    mutable_names,
+    subclass_right_op,
+    dict_type_with_metaclass,
+    meth_class_get,
+    isinst_isclass,
+    proxysuper,
+    carloverre,
+    filefault,
+    vicious_descriptor_nonsense,
+    test_init,
+    methodwrapper,
+    notimplemented,
+    test_assign_slice,
+    ]
+    if __name__ == '__main__':
+        import sys
+        if len(sys.argv) > 1:
+            testfuncs = [globals()[arg] for arg in sys.argv[1:]]
 
-    if verbose: print "All OK"
+    n = len(testfuncs)
+    success = 0
+
+    for testfunc in testfuncs:
+        try:
+            print "*"*40
+            testfunc()
+        except Exception, e:
+            if isinstance(e, KeyboardInterrupt) or n == 1:
+                raise
+            print "-->", testfunc.__name__, "FAILURE(%d/%d)" % (success, n), str(e)
+        else:
+            success += 1
+            print "-->", testfunc.__name__, "OK(%d/%d)" % (success, n)
+
+    if n != success:
+        raise TestFailed, "%d/%d" % (success, n)
+    else:
+        if verbose: print "All OK"
 
 if __name__ == "__main__":
     test_main()
