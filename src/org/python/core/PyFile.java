@@ -386,14 +386,18 @@ public class PyFile extends PyObject {
         return file_next();
     }
 
-    @ExposedMethod
-    final PyObject file_xreadlines() {
+    @ExposedMethod(names = {"__enter__", "xreadlines"})
+    final PyObject file_self() {
         checkClosed();
         return this;
     }
 
+    public PyObject __enter__() {
+        return file_self();
+    }
+
     public PyObject xreadlines() {
-        return file_xreadlines();
+        return file_self();
     }
 
     @ExposedMethod
@@ -482,6 +486,15 @@ public class PyFile extends PyObject {
 
     public void close() {
         file_close();
+    }
+
+    @ExposedMethod
+    final void file___exit__(PyObject type, PyObject value, PyObject traceback) {
+        file_close();
+    }
+
+    public void __exit__(PyObject type, PyObject value, PyObject traceback) {
+        file___exit__(type, value, traceback);
     }
 
     @ExposedMethod(defaults = {"null"})
