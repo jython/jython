@@ -981,8 +981,12 @@ public class PyFloatDerived extends PyFloat implements Slotted {
         PyType self_type=getType();
         if (self_type.isSubType(type)) {
             PyObject impl=self_type.lookup("__init__");
-            if (impl!=null)
-                impl.__get__(this,self_type).__call__(args,keywords);
+            if (impl!=null) {
+                PyObject res=impl.__get__(this,self_type).__call__(args,keywords);
+                if (res!=Py.None) {
+                    throw Py.TypeError(String.format("__init__() should return None, not '%.200s'",res.getType().fastGetName()));
+                }
+            }
         }
     }
 
