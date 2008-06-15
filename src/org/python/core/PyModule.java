@@ -66,6 +66,10 @@ public class PyModule extends PyObject {
         return __dict__;
     }
 
+    public PyObject getDict() {
+        return __dict__;
+    }
+
     @ExposedSet(name = "__dict__")
     public void setDict(PyObject newDict) {
         throw Py.TypeError("readonly attribute");
