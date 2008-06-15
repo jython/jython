@@ -452,22 +452,9 @@ class Code implements MethodVisitor, Opcodes {
         mv.visitInsn(IALOAD);
     }
 
-    /* XXX: different API from old iinc */
     public void iinc() {
         mv.visitInsn(IINC);
     }
-  
-    /* XXX: old API for iinc
-    public void iinc(int i, int increment) throws IOException {
-        code.writeByte(132);
-        code.writeByte(i);
-        code.writeByte(increment);
-    }
-
-    public void iinc(int i) throws IOException {
-        iinc(i, 1);
-    }
-    */
 
     public void iload(int index) {
         mv.visitVarInsn(ILOAD, index);
@@ -505,16 +492,6 @@ class Code implements MethodVisitor, Opcodes {
         mv.visitInsn(ISUB);
     }
 
-    /* XXX: needed?
-    public void jsr(Label label) throws IOException {
-        //push(-1);
-        int offset = size();
-        code.writeByte(168);
-        label.setBranch(offset, 2);
-        label.setStack(stack+1);
-    }
-    */
-
     public void label(Label label) {
         mv.visitLabel(label);
     }
@@ -524,7 +501,31 @@ class Code implements MethodVisitor, Opcodes {
     }
 
     public void ldc(Object cst) {
-        mv.visitLdcInsn(cst);
+        if (cst instanceof String) {
+            String value = (String) cst;
+            final int len = value.length();
+            final int maxlen = 32767;
+
+            if (len > maxlen) {
+                new_("java/lang/StringBuilder");
+                dup();
+                iconst(len);
+                invokespecial("java/lang/StringBuilder", "<init>", "(I)V");
+                for (int i = 0; i < len; i += maxlen) {
+                    int j = i + maxlen;
+                    if (j > len) {
+                        j = len;
+                    }
+                    mv.visitLdcInsn(value.substring(i, j));
+                    invokevirtual("java/lang/StringBuilder", "append", "(Ljava/lang/String;)" + "Ljava/lang/StringBuilder;");
+                }
+                invokevirtual("java/lang/StringBuilder", "toString", "()Ljava/lang/String;");
+            } else {
+                mv.visitLdcInsn(value);
+            }
+        } else {
+            mv.visitLdcInsn(cst);
+        }
     }
 
     public void lload(int index) {

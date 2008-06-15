@@ -1916,12 +1916,6 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
 
     public Object visitStr(Str node) throws Exception {
         PyString s = (PyString)node.s;
-        if (s.__len__() > 32767) {
-            throw new ParseException(
-                "string constant too large (more than 32767 characters)", node);
-        }
-        //FIXME: This is cheating -- need to rewrite module.PyString to deal in PyString
-        //and PyUnicode objects and not java.lang.String.
         if (s instanceof PyUnicode) {
             module.PyUnicode(s.asString()).get(code);
         } else {
