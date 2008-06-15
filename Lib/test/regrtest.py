@@ -1035,7 +1035,6 @@ _failures = {
     test_class
     test_copy
     test_dis
-    test_descr
     test_descrtut
     test_eof
     test_frozen
