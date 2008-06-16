@@ -1034,9 +1034,7 @@ _failures = {
     test_class
     test_copy
     test_dis
-    test_descr
     test_descrtut
-    test_email
     test_eof
     test_frozen
     test_gc

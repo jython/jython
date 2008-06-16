@@ -56,7 +56,7 @@ public abstract class PyDataDescr extends PyDescriptor {
         return getset_descriptor___get__(obj, type);
     }
     
-    @ExposedMethod
+    @ExposedMethod(defaults = "null")
     public PyObject getset_descriptor___get__(PyObject obj, PyObject type) {
         if(obj != null) {
             checkGetterType(obj.getType());

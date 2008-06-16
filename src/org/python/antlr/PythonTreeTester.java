@@ -3,6 +3,7 @@ package org.python.antlr;
 import org.antlr.runtime.ANTLRFileStream;
 import org.antlr.runtime.CharStream;
 import org.antlr.runtime.CommonTokenStream;
+import org.antlr.runtime.RecognitionException;
 import org.antlr.runtime.Token;
 import org.antlr.runtime.tree.CommonTreeAdaptor;
 import org.antlr.runtime.tree.CommonTreeNodeStream;
@@ -12,7 +13,7 @@ import org.antlr.runtime.tree.TreeAdaptor;
 /**
  * A walker producing a <code>PythonTree</code> AST.
  */
-public class PythonTreeWalker {
+public class PythonTreeTester {
 
     public enum Block { MODULE, INTERACTIVE, EXPRESSION };
 
@@ -20,7 +21,7 @@ public class PythonTreeWalker {
 	private boolean _tolerant;
     private Block _block;
 
-	public PythonTreeWalker() {
+	public PythonTreeTester() {
 		setParseOnly(false);
 		setTolerant(true);
         setBlock(Block.MODULE);
@@ -82,7 +83,7 @@ public class PythonTreeWalker {
 					System.out.println(result.toStringTree());
 				}
 			}
-		} catch (ParseException e) {
+		} catch (RecognitionException e) {
 			if (isTolerant()) {
 				System.err.println("Error: " + e);
 			} else {

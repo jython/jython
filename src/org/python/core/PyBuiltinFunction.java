@@ -3,6 +3,7 @@ package org.python.core;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedType;
 
+// XXX: not subclassable
 @ExposedType(name = "builtin_function_or_method")
 public abstract class PyBuiltinFunction extends PyObject {
 

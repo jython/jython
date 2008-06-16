@@ -59,7 +59,7 @@ public class PyMethodDescr extends PyDescriptor implements PyBuiltinFunction.Inf
         return method_descriptor___get__(obj, type);
     }
 
-    @ExposedMethod
+    @ExposedMethod(defaults = "null")
     final PyObject method_descriptor___get__(PyObject obj, PyObject type) {
         if(obj != null) {
             checkGetterType(obj.getType());

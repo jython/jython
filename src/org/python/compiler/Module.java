@@ -10,6 +10,7 @@ import java.util.Vector;
 
 import org.python.objectweb.asm.Label;
 import org.python.objectweb.asm.Opcodes;
+import org.python.core.CompilerFlags;
 import org.python.core.Py;
 import org.python.core.PyException;
 import org.python.antlr.ParseException;
@@ -598,6 +599,9 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
     {
         Module module = new Module(name, filename, linenumbers);
         module.setFile = setFile;
+        if (cflags == null) {
+            cflags = new CompilerFlags();
+        }
         module.futures.preprocessFutures(node, cflags);
         new ScopesCompiler(module, module.scopes).parse(node);
 
