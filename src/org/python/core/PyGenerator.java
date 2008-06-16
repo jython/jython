@@ -18,8 +18,7 @@ public class PyGenerator extends PyIterator {
     }
 
     private static final String[] __members__ = {
-        "gi_frame", "gi_running", "next",
-	"close", "send", "throw"
+        "close", "gi_frame", "gi_running", "next", "send", "throw"
     };
 
     public PyObject __dir__() {
