@@ -994,7 +994,6 @@ _skips = {
         test_parser
         test_plistlib
         test_poll
-        test_posix
         test_pty
         test_pwd
         test_pyexpat
