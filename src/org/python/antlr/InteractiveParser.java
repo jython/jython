@@ -30,19 +30,6 @@ public class InteractiveParser {
         }
     }
 
-    public static TreeAdaptor pyadaptor = new CommonTreeAdaptor() {
-        public Object create(Token token) {
-            return new PythonTree(token);
-        }
-
-        public Object dupNode(Object t) {
-            if (t == null) {
-                return null;
-            }
-            return create(((PythonTree) t).token);
-        }
-    };
-
     public InteractiveParser(CharStream cs) {
         this.charStream = cs;
     }
@@ -76,7 +63,7 @@ public class InteractiveParser {
         PythonTokenSource indentedSource = new PythonTokenSource(tokens);
         tokens = new CommonTokenStream(indentedSource);
         PythonParser parser = new PythonParser(tokens);
-        parser.setTreeAdaptor(pyadaptor);
+        parser.setTreeAdaptor(new PythonTreeAdaptor());
 
         try {
             PythonParser.single_input_return r = parser.single_input();

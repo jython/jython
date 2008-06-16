@@ -277,8 +277,8 @@ module returns [modType mod]
     ;
 
 funcdef
-    : ^(FunctionDef tok='def' ^(NameTok NAME) ^(Arguments varargslist?) ^(Body stmts) ^(Decorators decorators?)) {
-        $stmts::statements.add(makeFunctionDef($tok, $NAME, $varargslist.args, $stmts.stypes, $decorators.etypes));
+    : ^(DEF ^(NameTok NAME) ^(Arguments varargslist?) ^(Body stmts) ^(Decorators decorators?)) {
+        $stmts::statements.add(makeFunctionDef($DEF, $NAME, $varargslist.args, $stmts.stypes, $decorators.etypes));
     }
     ;
 

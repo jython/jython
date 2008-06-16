@@ -30,19 +30,6 @@ public class ExpressionParser {
         }
     }
 
-    public static TreeAdaptor pyadaptor = new CommonTreeAdaptor() {
-        public Object create(Token token) {
-            return new PythonTree(token);
-        }
-
-        public Object dupNode(Object t) {
-            if (t == null) {
-                return null;
-            }
-            return create(((PythonTree) t).token);
-        }
-    };
-
     public ExpressionParser(CharStream cs) {
         this.charStream = cs;
     }
@@ -55,7 +42,7 @@ public class ExpressionParser {
         PythonTokenSource indentedSource = new PythonTokenSource(tokens);
         tokens = new CommonTokenStream(indentedSource);
         PythonParser parser = new PythonParser(tokens);
-        parser.setTreeAdaptor(pyadaptor);
+        parser.setTreeAdaptor(new PythonTreeAdaptor());
 
         try {
             PythonParser.eval_input_return r = parser.eval_input();

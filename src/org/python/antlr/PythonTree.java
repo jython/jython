@@ -13,6 +13,8 @@ import org.python.antlr.ast.VisitorIF;
 public class PythonTree extends CommonTree implements AST {
 
     public boolean from_future_checked = false;
+    private int charStartIndex = -1;
+    private int charStopIndex = -1;
 
     public PythonTree(int ttype, Token t) {
         super();
@@ -32,7 +34,31 @@ public class PythonTree extends CommonTree implements AST {
 
     public PythonTree(PythonTree node) {
         super(node);
+        charStartIndex = node.getCharStartIndex();
+        charStopIndex = node.getCharStopIndex();
     }
+
+	public int getCharStartIndex() {
+		if ( charStartIndex == -1 && token != null ) {
+			return token.getTokenIndex();
+		}
+		return charStartIndex ;
+	}
+
+	public void setCharStartIndex(int index) {
+		charStartIndex  = index;
+	}
+
+	public int getCharStopIndex() {
+		if ( charStopIndex == -1 && token != null ) {
+			return token.getTokenIndex();
+		}
+		return charStopIndex;
+	}
+
+	public void setCharStopIndex(int index) {
+		charStopIndex = index;
+	}
 
     public String toString() {
         if (isNil()) {

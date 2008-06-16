@@ -36,7 +36,7 @@ public class PythonTreeTester {
 		PythonTokenSource indentedSource = new PythonTokenSource(tokens);
 		tokens = new CommonTokenStream(indentedSource);
 		PythonParser parser = new PythonParser(tokens);
-		parser.setTreeAdaptor(ModuleParser.pyadaptor);
+		parser.setTreeAdaptor(new PythonTreeAdaptor());
 		try {
             Tree r = null;
             switch (_block) {

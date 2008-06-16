@@ -90,7 +90,6 @@ tokens {
     Body;
     ClassDef;
     Bases; 
-    FunctionDef;
     Arguments;
     Args;
     Arg;
@@ -451,8 +450,8 @@ dotted_attr
     ;
 
 //funcdef: [decorators] 'def' NAME parameters ':' suite
-funcdef : decorators? 'def' NAME parameters COLON suite
-       -> ^(FunctionDef 'def' ^(NameTok NAME) parameters ^(Body suite) ^(Decorators decorators?))
+funcdef : decorators? DEF NAME parameters COLON suite
+       -> ^(DEF ^(NameTok NAME) parameters ^(Body suite) ^(Decorators decorators?))
         ;
 
 //parameters: '(' [varargslist] ')'
@@ -1034,6 +1033,7 @@ keyEXEC   : {input.LT(1).getText().equals("exec")}? NAME ;
 //keyWITH   : {input.LT(1).getText().equals("with")}? NAME ;
 //keyYIELD  : {input.LT(1).getText().equals("yield")}? NAME ;
 
+DEF       : 'def' ;
 
 LPAREN    : '(' {implicitLineJoiningLevel++;} ;
 
