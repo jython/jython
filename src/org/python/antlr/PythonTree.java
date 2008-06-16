@@ -50,6 +50,17 @@ public class PythonTree extends CommonTree implements AST {
 	}
 
 	public int getCharStopIndex() {
+        //XXX: This direct iteration of children is here because PythonTreeAdaptor
+        //     is getting last tokens with indexes of (0,0).  Fix there and then 
+        //     remove this part.
+        if (children != null && children.size() > 0) {
+            for (int i = children.size() - 1; i >= 0; i--) {
+                PythonTree t = (PythonTree)children.get(i);
+                if (t.getCharStopIndex() > 0) {
+                    return t.getCharStopIndex();
+                }
+            }
+        }
 		if ( charStopIndex == -1 && token != null ) {
 			return token.getTokenIndex();
 		}

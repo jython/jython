@@ -504,7 +504,7 @@ binop returns [operatorType op]
 
 
 print_stmt
-    : ^(Print tok='print' (^(Dest RIGHTSHIFT))? (^(Values ^(Elts elts[expr_contextType.Load])))? (Newline)?) {
+    : ^(PRINT (^(Dest RIGHTSHIFT))? (^(Values ^(Elts elts[expr_contextType.Load])))? (Newline)?) {
         exprType[] values;
 
         exprType dest = null;
@@ -530,7 +530,7 @@ print_stmt
         } else {
             values = new exprType[0];
         }
-        Print p = new Print($tok, dest, values, newline);
+        Print p = new Print($PRINT, dest, values, newline);
         $stmts::statements.add(p);
     }
     ;
@@ -1231,14 +1231,14 @@ subscript [List subs]
           ;
 
 classdef
-    : ^(ClassDef tok='class' ^(NameTok classname=NAME) (^(Bases bases))? ^(Body stmts)) {
+    : ^(CLASS ^(NameTok classname=NAME) (^(Bases bases))? ^(Body stmts)) {
         List b;
         if ($Bases != null) {
             b = $bases.names;
         } else {
             b = new ArrayList();
         }
-        $stmts::statements.add(makeClassDef($tok, $classname, b, $stmts.stypes));
+        $stmts::statements.add(makeClassDef($CLASS, $classname, b, $stmts.stypes));
     }
     ;
 

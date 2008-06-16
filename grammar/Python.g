@@ -88,7 +88,6 @@ tokens {
     Level;
     NameTok;
     Body;
-    ClassDef;
     Bases; 
     Arguments;
     Args;
@@ -111,7 +110,6 @@ tokens {
     Pass;
     Break;
     Continue;
-    Print;
     TryExcept;
     TryFinally;
     ExceptHandler;
@@ -565,12 +563,12 @@ augassign : PLUSEQUAL
           ;
 
 //print_stmt: 'print' ( [ test (',' test)* [','] ] | '>>' test [ (',' test)+ [','] ] )
-print_stmt : 'print'
-             ( t1=printlist -> {$t1.newline}? ^(Print 'print' ^(Values $t1) ^(Newline))
-                            -> ^(Print 'print' ^(Values $t1))
-             | RIGHTSHIFT t2=printlist2 -> {$t2.newline}? ^(Print 'print' ^(Dest RIGHTSHIFT) ^(Values $t2) ^(Newline))
-                                       -> ^(Print 'print' ^(Dest RIGHTSHIFT) ^(Values $t2))
-             | -> ^(Print 'print' ^(Newline))
+print_stmt : PRINT
+             ( t1=printlist -> {$t1.newline}? ^(PRINT ^(Values $t1) ^(Newline))
+                            -> ^(PRINT ^(Values $t1))
+             | RIGHTSHIFT t2=printlist2 -> {$t2.newline}? ^(PRINT ^(Dest RIGHTSHIFT) ^(Values $t2) ^(Newline))
+                                       -> ^(PRINT ^(Dest RIGHTSHIFT) ^(Values $t2))
+             | -> ^(PRINT ^(Newline))
              )
            ;
 
@@ -944,8 +942,8 @@ dictmaker : test COLON test
           ;
 
 //classdef: 'class' NAME ['(' [testlist] ')'] ':' suite
-classdef: 'class' NAME (LPAREN testlist? RPAREN)? COLON suite
-    -> ^(ClassDef 'class' ^(NameTok NAME) ^(Bases testlist)? ^(Body suite))
+classdef: CLASS NAME (LPAREN testlist? RPAREN)? COLON suite
+    -> ^(CLASS ^(NameTok NAME) ^(Bases testlist)? ^(Body suite))
     ;
 
 //arglist: (argument ',')* (argument [',']| '*' test [',' '**' test] | '**' test)
@@ -1034,6 +1032,8 @@ keyEXEC   : {input.LT(1).getText().equals("exec")}? NAME ;
 //keyYIELD  : {input.LT(1).getText().equals("yield")}? NAME ;
 
 DEF       : 'def' ;
+CLASS     : 'class' ;
+PRINT     : 'print' ;
 
 LPAREN    : '(' {implicitLineJoiningLevel++;} ;
 
