@@ -6,7 +6,6 @@ import java.math.BigInteger;
 import org.python.core.util.ExtraMath;
 import org.python.core.util.StringUtil;
 
-import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
@@ -22,11 +21,6 @@ public class PyString extends PyBaseString
     protected String string;
     private transient int cached_hashcode=0;
     protected transient boolean interned=false;
-
-    @ExposedGet(name = "__doc__")
-    public PyObject getDoc() {
-        return new PyString("FOO");
-    }
 
     // for PyJavaClass.init()
     public PyString() {
