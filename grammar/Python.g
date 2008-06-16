@@ -108,25 +108,20 @@ tokens {
     Elif;
     While; 
     Pass;
-    Break;
-    Continue;
     TryExcept;
     TryFinally;
     ExceptHandler;
     For;
-    Return;
     Yield;
     StrTok;
     NumTok;
     IsNot;
     In;
     NotIn;
-    Raise;
     Type;
     Inst;
     Tback;
     Global;
-    Exec;
     Globals;
     Locals;
     Assert;
@@ -620,18 +615,18 @@ flow_stmt : break_stmt
           ;
 
 //break_stmt: 'break'
-break_stmt : 'break'
-          -> ^(Break 'break')
+break_stmt : BREAK
+          -> ^(BREAK)
            ;
 
 //continue_stmt: 'continue'
-continue_stmt : 'continue'
-             -> ^(Continue 'continue')
+continue_stmt : CONTINUE
+             -> ^(CONTINUE)
               ;
 
 //return_stmt: 'return' [testlist]
-return_stmt : 'return' (testlist)?
-          -> ^(Return 'return' ^(Value testlist)?)
+return_stmt : RETURN (testlist)?
+          -> ^(RETURN ^(Value testlist)?)
             ;
 
 //yield_stmt: yield_expr
@@ -639,8 +634,8 @@ yield_stmt : yield_expr
            ;
 
 //raise_stmt: 'raise' [test [',' test [',' test]]]
-raise_stmt: 'raise' (t1=test (COMMA t2=test (COMMA t3=test)?)?)?
-          -> ^(Raise 'raise' ^(Type $t1)? ^(Inst $t2)? ^(Tback $t3)?)
+raise_stmt: RAISE (t1=test (COMMA t2=test (COMMA t3=test)?)?)?
+          -> ^(RAISE ^(Type $t1)? ^(Inst $t2)? ^(Tback $t3)?)
           ;
 
 //import_stmt: import_name | import_from
@@ -697,7 +692,7 @@ global_stmt : 'global' NAME (COMMA NAME)*
 
 //exec_stmt: 'exec' expr ['in' test [',' test]]
 exec_stmt : keyEXEC expr ('in' t1=test (COMMA t2=test)?)?
-         -> ^(Exec keyEXEC expr ^(Globals $t1)? ^(Locals $t2)?)
+         -> ^(keyEXEC expr ^(Globals $t1)? ^(Locals $t2)?)
           ;
 
 //assert_stmt: 'assert' test [',' test]
@@ -1034,6 +1029,10 @@ keyEXEC   : {input.LT(1).getText().equals("exec")}? NAME ;
 DEF       : 'def' ;
 CLASS     : 'class' ;
 PRINT     : 'print' ;
+BREAK     : 'break' ;
+CONTINUE  : 'continue' ;
+RETURN    : 'return' ;
+RAISE     : 'raise' ;
 
 LPAREN    : '(' {implicitLineJoiningLevel++;} ;
 

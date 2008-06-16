@@ -557,24 +557,24 @@ flow_stmt
     ;
 
 break_stmt
-    : ^(Break tok='break') {
-        $stmts::statements.add(new Break($tok));
+    : BREAK {
+        $stmts::statements.add(new Break($BREAK));
     }
     ;
 
 continue_stmt
-    : ^(Continue tok='continue') {
-        $stmts::statements.add(new Continue($tok));
+    : CONTINUE {
+        $stmts::statements.add(new Continue($CONTINUE));
     }
     ;
 
 return_stmt
-    : ^(Return tok='return' (^(Value test[expr_contextType.Load]))?) {
+    : ^(RETURN (^(Value test[expr_contextType.Load]))?) {
         exprType v = null;
         if ($Value != null) {
             v = $test.etype;
         }
-        $stmts::statements.add(new Return($tok, v));
+        $stmts::statements.add(new Return($RETURN, v));
     }
     ;
 
@@ -589,7 +589,7 @@ yield_expr returns [exprType etype]
     ;
 
 raise_stmt
-    : ^(Raise tok='raise' (^(Type type=test[expr_contextType.Load]))? (^(Inst inst=test[expr_contextType.Load]))? (^(Tback tback=test[expr_contextType.Load]))?) {
+    : ^(RAISE (^(Type type=test[expr_contextType.Load]))? (^(Inst inst=test[expr_contextType.Load]))? (^(Tback tback=test[expr_contextType.Load]))?) {
         exprType t = null;
         if ($Type != null) {
             t = $type.etype;
@@ -603,7 +603,7 @@ raise_stmt
             b = $tback.etype;
         }
 
-        $stmts::statements.add(new Raise($tok, t, i, b));
+        $stmts::statements.add(new Raise($RAISE, t, i, b));
     }
     ;
 
@@ -712,9 +712,9 @@ name_expr[List nms]
     }
     ;
 
-//Using tok=NAME instead of tok='exec' for Java integration
+//Using NAME instead of 'exec' for Java integration
 exec_stmt
-    : ^(Exec tok=NAME exec=test[expr_contextType.Load] (^(Globals globals=test[expr_contextType.Load]))? (^(Locals locals=test[expr_contextType.Load]))?) {
+    : ^(NAME exec=test[expr_contextType.Load] (^(Globals globals=test[expr_contextType.Load]))? (^(Locals locals=test[expr_contextType.Load]))?) {
         exprType g = null;
         if ($Globals != null) {
             g = $globals.etype;
@@ -723,7 +723,7 @@ exec_stmt
         if ($Locals != null) {
             loc = $locals.etype;
         }
-        $stmts::statements.add(new Exec($tok, $exec.etype, g, loc));
+        $stmts::statements.add(new Exec($NAME, $exec.etype, g, loc));
     }
     ;
 
