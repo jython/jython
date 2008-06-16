@@ -1,11 +1,11 @@
 package org.python.antlr;
 
-public class GrammarOnly {
+public class WalkerTester extends PythonTreeTester {
 
 	public static void main(String[] args) throws Exception {
-		PythonTreeWalker walker = new PythonTreeWalker();
+		PythonTreeTester walker = new PythonTreeTester();
 		walker.setTolerant(true);
-		walker.setParseOnly(true);
+		walker.setParseOnly(false);
 		walker.parse(args);
 	}
 

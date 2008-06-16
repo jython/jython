@@ -1,11 +1,11 @@
 package org.python.antlr;
 
-public class Main extends PythonTreeWalker {
+public class GrammarTester {
 
 	public static void main(String[] args) throws Exception {
-		PythonTreeWalker walker = new PythonTreeWalker();
+		PythonTreeTester walker = new PythonTreeTester();
 		walker.setTolerant(true);
-		walker.setParseOnly(false);
+		walker.setParseOnly(true);
 		walker.parse(args);
 	}
 
