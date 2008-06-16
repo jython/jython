@@ -126,6 +126,10 @@ public class PyFrame extends PyObject
         generatorInput = Py.None;
         return input;
     }
+    
+    public Object checkGeneratorInput() {
+        return generatorInput;
+    }
 
     private void throwReadonly(String name) {
         for (String member : __members__) {

@@ -424,18 +424,20 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         }
     }
 
+    @Override
     public Object visitExpr(Expr node) throws Exception {
         setline(node);
         visit(node.value);
 
         if (print_results) {
             code.invokestatic("org/python/core/Py", "printResult", "(" + $pyObj + ")V");
-        } else if (!(node.value instanceof Yield)) {
+        } else {
             code.pop();
         }
         return null;
     }
 
+    @Override
     public Object visitAssign(Assign node) throws Exception  {
         setline(node);
         visit(node.value);
@@ -451,6 +453,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         return null;
     }
 
+    @Override
     public Object visitPrint(Print node) throws Exception {
         setline(node);
         int tmp = -1;
@@ -493,17 +496,20 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         return null;
     }
 
+    @Override
     public Object visitDelete(Delete node) throws Exception {
         setline(node);
         traverse(node);
         return null;
     }
 
+    @Override
     public Object visitPass(Pass node) throws Exception {
         setline(node);
         return null;
     }
 
+    @Override
     public Object visitBreak(Break node) throws Exception {
         //setline(node); Not needed here...
         if (breakLabels.empty()) {
@@ -516,6 +522,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         return null;
     }
 
+    @Override
     public Object visitContinue(Continue node) throws Exception {
         //setline(node); Not needed here...
         if (continueLabels.empty()) {
@@ -528,18 +535,20 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         return Exit;
     }
 
+    @Override
     public Object visitYield(Yield node) throws Exception {
         setline(node);
         if (!fast_locals) {
             throw new ParseException("'yield' outside function", node);
         }
 
-        if (inFinallyBody()) {
-            throw new ParseException("'yield' not allowed in a 'try' "+
-                                     "block with a 'finally' clause", node);
-        }
+//        if (inFinallyBody()) {
+//            throw new ParseException("'yield' not allowed in a 'try' "+
+//                                     "block with a 'finally' clause", node);
+//        }
 
         saveLocals();
+
         if (node.value != null) {
             visit(node.value);
         } else {
@@ -552,6 +561,18 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         yields.addElement(restart);
         code.label(restart);
         restoreLocals();
+        
+        loadFrame();
+        code.invokevirtual("org/python/core/PyFrame", "getGeneratorInput", "()" + $obj);
+        code.dup();
+        code.instanceof_("org/python/core/PyException");
+        Label done = new Label();
+        code.ifeq(done);
+        code.checkcast("java/lang/Throwable");
+        code.athrow();
+        code.label(done);
+        code.checkcast("org/python/core/PyObject");
+        
         return null;
     }
 
@@ -649,6 +670,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
     }
 
 
+    @Override
     public Object visitReturn(Return node) throws Exception {
         return visitReturn(node, false);
     }
@@ -680,6 +702,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         return Exit;
     }
 
+    @Override
     public Object visitRaise(Raise node) throws Exception {
         setline(node);
         traverse(node);
@@ -1270,6 +1293,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         code.invokevirtual("org/python/core/PyObject", name, "(" + $pyObj + ")" + $pyObj);
     }
 
+    @Override
     public Object visitBinOp(BinOp node) throws Exception {
         visit(node.left);
         visit(node.right);

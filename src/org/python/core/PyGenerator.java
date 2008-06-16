@@ -19,8 +19,7 @@ public class PyGenerator extends PyIterator {
 
     private static final String[] __members__ = {
         "gi_frame", "gi_running", "next",
-	//"close", "send", "throw", // keep these hidden untill Jython is mature
-	// Throwing and closing doesn't work without newcompiler anyway
+	"close", "send", "throw"
     };
 
     public PyObject __dir__() {
@@ -72,7 +71,6 @@ public class PyGenerator extends PyIterator {
         return Py.None;
     }
 
-    /*
     protected void finalize() throws Throwable {
         //if (gi_frame.f_lasti == -1) // Generator already closed.
         //    return; // this is pure optimization
@@ -86,7 +84,6 @@ public class PyGenerator extends PyIterator {
             super.finalize();
         }
     }
-    */
 
     public PyObject __iternext__() {
         if (gi_running)

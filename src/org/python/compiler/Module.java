@@ -432,8 +432,23 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
         compiler.parse(tree, c, fast_locals, className, classBody,
                        scope, cflags);
 
+        
+        // similar to visitResume code in pyasm.py
         if (scope.generator) {
             c.label(genswitch);
+            
+            // throw any exception that was sent into this generator
+            c.aload(1);
+            c.invokevirtual("org/python/core/PyFrame", "checkGeneratorInput", "()" + $obj);
+            c.dup();
+            c.instanceof_("org/python/core/PyException");
+            Label done = new Label();
+            c.ifeq(done);
+            c.checkcast("java/lang/Throwable");
+            c.athrow();
+            c.label(done);
+            
+            c.pop();
             c.aload(1);
             c.getfield("org/python/core/PyFrame", "f_lasti", "I"); 
             Label[] yields = new Label[compiler.yields.size()+1];
