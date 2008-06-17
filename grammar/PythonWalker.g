@@ -277,7 +277,7 @@ module returns [modType mod]
     ;
 
 funcdef
-    : ^(DEF ^(NameTok NAME) ^(Arguments varargslist?) ^(Body stmts) ^(Decorators decorators?)) {
+    : ^(DEF NAME ^(Arguments varargslist?) ^(Body stmts) ^(Decorators decorators?)) {
         $stmts::statements.add(makeFunctionDef($DEF, $NAME, $varargslist.args, $stmts.stypes, $decorators.etypes));
     }
     ;
@@ -615,9 +615,9 @@ import_stmt
         aliasType[] n = (aliasType[])nms.toArray(new aliasType[nms.size()]);
         $stmts::statements.add(new Import($tok, n));
     }
-    | ^(ImportFrom tok='from' (^(Level dots))? (^(NameTok dotted_name))? ^(Import STAR)) {
+    | ^(ImportFrom tok='from' (^(Level dots))? (^(Value dotted_name))? ^(Import STAR)) {
         String name = "";
-        if ($NameTok != null) {
+        if ($Value != null) {
             name = $dotted_name.result;
         }
         int level = 0;
@@ -627,9 +627,9 @@ import_stmt
         aliasType[] n = (aliasType[])nms.toArray(new aliasType[nms.size()]);
         $stmts::statements.add(new ImportFrom($tok, name, new aliasType[]{new aliasType($STAR, "*", null)}, level));
     }
-    | ^(ImportFrom tok='from' (^(Level dots))? (^(NameTok dotted_name))? ^(Import import_as_name[nms]+)) {
+    | ^(ImportFrom tok='from' (^(Level dots))? (^(Value dotted_name))? ^(Import import_as_name[nms]+)) {
         String name = "";
-        if ($NameTok != null) {
+        if ($Value != null) {
             name = $dotted_name.result;
         }
         int level = 0;
@@ -816,7 +816,7 @@ try_stmt
     ;
 
 except_clause[List handlers]
-    : ^(ExceptHandler 'except' (^(Type type=test[expr_contextType.Load]))? (^(NameTok name=test[expr_contextType.Store]))? ^(Body stmts)) {
+    : ^(ExceptHandler 'except' (^(Type type=test[expr_contextType.Load]))? (^(Value name=test[expr_contextType.Store]))? ^(Body stmts)) {
         stmtType[] b;
         if ($stmts.start != null) {
             b = (stmtType[])$stmts.stypes.toArray(new stmtType[$stmts.stypes.size()]);
@@ -826,7 +826,7 @@ except_clause[List handlers]
             t = $type.etype;
         }
         exprType n = null;
-        if ($NameTok != null) {
+        if ($Value != null) {
             n = $name.etype;
         }
         handlers.add(new excepthandlerType($ExceptHandler, t, n, b, $ExceptHandler.getLine(), $ExceptHandler.getCharPositionInLine()));
@@ -1071,9 +1071,9 @@ atom[expr_contextType ctype] returns [exprType etype, PythonTree marker, boolean
         $marker = $BACKQUOTE;
     }
     | ^(NameTok NAME) {
-        debug("matched Name " + $NAME.text);
-        $etype = new Name($NAME, $NAME.text, ctype);
-        $marker = $NAME;
+         debug("matched Name " + $NAME.text);
+                 $etype = new Name($NAME, $NAME.text, ctype);
+                 $marker = $NAME;
     }
     | ^(DOT NAME test[expr_contextType.Load]) {
         debug("matched DOT in atom: " + $test.etype + "###" + $NAME.text);
@@ -1231,7 +1231,7 @@ subscript [List subs]
           ;
 
 classdef
-    : ^(CLASS ^(NameTok classname=NAME) (^(Bases bases))? ^(Body stmts)) {
+    : ^(CLASS classname=NAME (^(Bases bases))? ^(Body stmts)) {
         List b;
         if ($Bases != null) {
             b = $bases.names;

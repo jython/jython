@@ -81,12 +81,12 @@ tokens {
     Module;
     Interactive;
     Expression;
+    NameTok;
     Test;
     Msg;
     Import;
     ImportFrom;
     Level;
-    NameTok;
     Body;
     Bases; 
     Arguments;
@@ -535,7 +535,7 @@ dotted_attr
 
 //funcdef: [decorators] 'def' NAME parameters ':' suite
 funcdef : decorators? DEF NAME parameters COLON suite
-       -> ^(DEF ^(NameTok NAME) parameters ^(Body suite) ^(Decorators decorators?))
+       -> ^(DEF NAME parameters ^(Body suite) ^(Decorators decorators?))
         ;
 
 //parameters: '(' [varargslist] ')'
@@ -612,13 +612,20 @@ assigns
     @after {
         PythonTree pt = ((PythonTree)$assigns.tree);
         int children = pt.getChildCount();
+        PythonTree child;
         if (children == 1) {
+            child = pt;
             pt.token = new CommonToken(Value, "Value");
         } else {
-            PythonTree c = (PythonTree)pt.getChild(children - 1);
-            c.token = new CommonToken(Value, "Value");
+            child = (PythonTree)pt.getChild(children - 1);
+            child.token = new CommonToken(Value, "Value");
         }
-    }
+        child.token = new CommonToken(Value, "Value");
+        PythonTree targ = (PythonTree)child.getChild(0);
+        if (targ instanceof Context) {
+            ((Context)targ).setContext(expr_contextType.Load);
+        }
+}
     : assign_testlist+
     | assign_yield+
     ;
@@ -743,11 +750,11 @@ import_name : 'import' dotted_as_names
 //              'import' ('*' | '(' import_as_names ')' | import_as_names))
 import_from: 'from' (DOT* dotted_name | DOT+) 'import'
               (STAR
-             -> ^(ImportFrom 'from' ^(Level DOT*)? ^(NameTok dotted_name)? ^(Import STAR))
+             -> ^(ImportFrom 'from' ^(Level DOT*)? ^(Value dotted_name)? ^(Import STAR))
               | import_as_names
-             -> ^(ImportFrom 'from' ^(Level DOT*)? ^(NameTok dotted_name)? ^(Import import_as_names))
+             -> ^(ImportFrom 'from' ^(Level DOT*)? ^(Value dotted_name)? ^(Import import_as_names))
               | LPAREN import_as_names RPAREN
-             -> ^(ImportFrom 'from' ^(Level DOT*)? ^(NameTok dotted_name)? ^(Import import_as_names))
+             -> ^(ImportFrom 'from' ^(Level DOT*)? ^(Value dotted_name)? ^(Import import_as_names))
               )
            ;
 
@@ -782,7 +789,7 @@ global_stmt : 'global' NAME (COMMA NAME)*
             ;
 
 //exec_stmt: 'exec' expr ['in' test [',' test]]
-exec_stmt : keyEXEC expr ('in' t1=test[expr_contextType.Load] (COMMA t2=test[expr_contextType.Load])?)?
+exec_stmt : keyEXEC expr[expr_contextType.Load] ('in' t1=test[expr_contextType.Load] (COMMA t2=test[expr_contextType.Load])?)?
          -> ^(keyEXEC expr ^(Globals $t1)? ^(Locals $t2)?)
           ;
 
@@ -840,14 +847,14 @@ with_stmt: 'with' test[expr_contextType.Load] (with_var)? COLON suite
          ;
 
 //with_var: ('as' | NAME) expr
-with_var: (keyAS | NAME) expr
+with_var: (keyAS | NAME) expr[expr_contextType.Load]
         ;
 
 //except_clause: 'except' [test [',' test]]
 except_clause : 'except' (t1=test[expr_contextType.Load] (COMMA t2=test[expr_contextType.Load])?)? COLON suite
              //Note: passing the 'except' keyword on so we can pass the same offset
              //      as CPython.
-             -> ^(ExceptHandler 'except' ^(Type $t1)? ^(NameTok $t2)? ^(Body suite))
+             -> ^(ExceptHandler 'except' ^(Type $t1)? ^(Value $t2)? ^(Body suite))
               ;
 
 //suite: simple_stmt | NEWLINE INDENT stmt+ DEDENT
@@ -856,8 +863,9 @@ suite : simple_stmt
       ;
 
 //test: or_test ['if' or_test 'else' test] | lambdef
-test[expr_contextType ect]: o1=or_test
-    ( ('if' or_test 'else') => 'if' o2=or_test 'else' test[expr_contextType.Load]
+test[expr_contextType ctype]
+    :o1=or_test[ctype]
+    ( ('if' or_test[expr_contextType.Load] 'else') => 'if' o2=or_test[ctype] 'else' test[expr_contextType.Load]
       -> ^(IfExp ^(Test $o2) ^(Body $o1) ^(OrElse test))
     | -> or_test
     )
@@ -865,20 +873,20 @@ test[expr_contextType ect]: o1=or_test
     ;
 
 //or_test: and_test ('or' and_test)*
-or_test : and_test (OR^ and_test)*
+or_test[expr_contextType ctype] : and_test[ctype] (OR^ and_test[ctype])*
         ;
 
 //and_test: not_test ('and' not_test)*
-and_test : not_test (AND^ not_test)*
+and_test[expr_contextType ctype] : not_test[ctype] (AND^ not_test[ctype])*
          ;
 
 //not_test: 'not' not_test | comparison
-not_test : NOT^ not_test
-         | comparison
+not_test[expr_contextType ctype] : NOT^ not_test[ctype]
+         | comparison[ctype]
          ;
 
 //comparison: expr (comp_op expr)*
-comparison: expr (comp_op^ expr)*
+comparison[expr_contextType ctype]: expr[ctype] (comp_op^ expr[ctype])*
 	;
 
 //comp_op: '<'|'>'|'=='|'>='|'<='|'<>'|'!='|'in'|'not' 'in'|'is'|'is' 'not'
@@ -896,8 +904,16 @@ comp_op : LESS
         ;
 
 //expr: xor_expr ('|' xor_expr)*
-expr : xor_expr (VBAR^ xor_expr)*
-     ;
+expr[expr_contextType ect]
+scope {
+    expr_contextType ctype;
+}
+@init {
+    $expr::ctype = ect;
+}
+
+    : xor_expr (VBAR^ xor_expr)*
+    ;
 
 //xor_expr: and_expr ('^' and_expr)*
 xor_expr : and_expr (CIRCUMFLEX^ and_expr)*
@@ -1001,19 +1017,19 @@ sliceop : COLON (test[expr_contextType.Load])? -> ^(Step COLON ^(StepOp test)?)
         ;
 
 //exprlist: expr (',' expr)* [',']
-exprlist[expr_contextType ctype]: (expr COMMA) => expr (options {k=2;}: COMMA expr)* (COMMA)? -> ^(Tuple ^(Elts expr+))
-         | expr
+exprlist[expr_contextType ctype]: (expr[expr_contextType.Load] COMMA) => expr[ctype] (options {k=2;}: COMMA expr[ctype])* (COMMA)? -> ^(Tuple ^(Elts expr+))
+         | expr[ctype]
          ;
 
 //XXX: I'm hoping I can get rid of this -- but for now I need an exprlist that does not produce tuples
 //     at least for del_stmt
-exprlist2 : expr (options {k=2;}: COMMA expr)* (COMMA)?
+exprlist2 : expr[expr_contextType.Load] (options {k=2;}: COMMA expr[expr_contextType.Load])* (COMMA)?
          -> expr+
           ;
 
 //testlist: test (',' test)* [',']
 testlist[expr_contextType ctype]
-    : test[expr_contextType.Load] (options {k=2;}: c1=COMMA test[expr_contextType.Load])* (c2=COMMA)?
+    : test[ctype] (options {k=2;}: c1=COMMA test[ctype])* (c2=COMMA)?
      -> { $c1 != null || $c2 != null }? ^(Tuple ^(Elts test+))
      -> test
     ;
@@ -1029,7 +1045,7 @@ dictmaker : test[expr_contextType.Load] COLON test[expr_contextType.Load]
 
 //classdef: 'class' NAME ['(' [testlist] ')'] ':' suite
 classdef: CLASS NAME (LPAREN testlist[expr_contextType.Load]? RPAREN)? COLON suite
-    -> ^(CLASS ^(NameTok NAME) ^(Bases testlist)? ^(Body suite))
+    -> ^(CLASS NAME ^(Bases testlist)? ^(Body suite))
     ;
 
 //arglist: (argument ',')* (argument [',']| '*' test [',' '**' test] | '**' test)
@@ -1075,7 +1091,7 @@ gen_iter: gen_for
         ;
 
 //gen_for: 'for' exprlist 'in' or_test [gen_iter]
-gen_for: 'for' exprlist[expr_contextType.Load] 'in' or_test gen_iter?
+gen_for: 'for' exprlist[expr_contextType.Load] 'in' or_test[expr_contextType.Load] gen_iter?
       -> ^(GenFor ^(Target exprlist) ^(Iter or_test) ^(Ifs gen_iter)?)
        ;
 
