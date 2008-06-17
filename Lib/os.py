@@ -259,7 +259,7 @@ def chmod(path, mode):
     # XXX no error handling for chmod in jna-posix
     # catch not found errors explicitly here, for now
     abs_path = sys.getPath(path)
-    if not File(path).exists():
+    if not File(abs_path).exists():
         raise OSError(errno.ENOENT, errno.strerror(errno.ENOENT), path)
     _posix.chmod(abs_path, mode)
 
