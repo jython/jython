@@ -542,11 +542,6 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
             throw new ParseException("'yield' outside function", node);
         }
 
-//        if (inFinallyBody()) {
-//            throw new ParseException("'yield' not allowed in a 'try' "+
-//                                     "block with a 'finally' clause", node);
-//        }
-
         saveLocals();
 
         if (node.value != null) {
@@ -1803,6 +1798,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         return null;
     }
 
+    @Override
     public Object visitNum(Num node) throws Exception {
         if (node.n instanceof PyInteger) {
             module.PyInteger(((PyInteger) node.n).getValue()).get(code);
@@ -2004,30 +2000,12 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         return null;
     }
 
-//        mgr = (EXPR)
-//        exit = mgr.__exit__  # Not calling it yet
-//        value = mgr.__enter__()
-//        exc = True
-//        try:
-//            try:
-//                VAR = value  # Only if "as VAR" is present
-//                BLOCK
-//            except:
-//                # The exceptional case is handled here
-//                exc = False
-//                if not exit(*sys.exc_info()):
-//                    raise
-//                # The exception is swallowed if exit() returns true
-//        finally:
-//            # The normal and non-local-goto cases are handled here
-//            if exc:
-//                exit(None, None, None)
-//    
-// # (mgr, exit, value, exc) are non-visible
-
-    
     @Override
-    public Object visitWith(With node) throws Exception {       
+    public Object visitWith(With node) throws Exception {
+        if (!module.getFutures().withStatementSupported()) {
+            throw new ParseException("'with' will become a reserved keyword in Python 2.6", node);
+        }
+        
         int mgr_tmp = code.getLocal("org/python/core/PyObject");
         int exit_tmp = code.getLocal("org/python/core/PyObject");
         int value_tmp = code.getLocal("org/python/core/PyObject");

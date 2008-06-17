@@ -763,7 +763,7 @@ public class imp {
     }
 
     /**
-     * Called from jython generated code when a stamenet like "from spam.eggs
+     * Called from jython generated code when a statement like "from spam.eggs
      * import foo, bar" is executed.
      */
     public static PyObject[] importFrom(String mod, String[] names,

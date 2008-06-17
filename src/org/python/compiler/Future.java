@@ -10,6 +10,7 @@ public class Future {
 
     private boolean division;
     private boolean generators;
+    private boolean with_statement;
 
     private static final String FUTURE = "__future__";
 
@@ -34,6 +35,16 @@ public class Future {
             if (feature.equals("generators")) {
                 generators = true;
                 continue;
+            }
+            if (feature.equals("with_statement")) {
+                with_statement = true;
+                continue;
+            }
+            if (feature.equals("braces")) {
+                throw new ParseException("not a chance");
+            }
+            if (feature.equals("GIL") || feature.equals("global_interpreter_lock")) {
+                throw new ParseException("Never going to happen!");
             }
             throw new ParseException("future feature "+feature+
                                      " is not defined",cand);
@@ -77,6 +88,9 @@ public class Future {
         if (cflags != null) {
             cflags.generator_allowed = cflags.generator_allowed || generators;
         }
+        if (cflags != null) {
+            cflags.with_statement = cflags.with_statement || with_statement;
+        }
     }
 
 
@@ -92,6 +106,10 @@ public class Future {
 
     public boolean areDivisionOn() {
         return division;
+    }
+    
+    public boolean withStatementSupported() {
+        return with_statement;
     }
 
 }

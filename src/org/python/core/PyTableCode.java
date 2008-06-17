@@ -29,15 +29,18 @@ public class PyTableCode extends PyCode
     final public static int CO_VARKEYWORDS       = 0x0008;
     final public static int CO_GENERATOR         = 0x0020;
     
+    // these are defined in __future__.py
     final public static int CO_NESTED            = 0x0010;
-    final public static int CO_GENERATOR_ALLOWED = 0x1000;
+    final public static int CO_GENERATOR_ALLOWED = 0x0;
     final public static int CO_FUTUREDIVISION    = 0x2000;
+    final public static int CO_FUTURE_ABSOLUTE_IMPORT = 0x4000;
+    final public static int CO_WITH_STATEMENT    = 0x8000;
 
     //XXX: I'm not positive that this is the right place for this constant.
     final public static int PyCF_ONLY_AST        = 0x0400;
 
     final public static int CO_ALL_FEATURES = PyCF_ONLY_AST|CO_NESTED|CO_GENERATOR_ALLOWED|
-                                              CO_FUTUREDIVISION;
+                                              CO_FUTUREDIVISION|CO_WITH_STATEMENT;
 
     public PyTableCode(int argcount, String varnames[],
                        String filename, String name,
