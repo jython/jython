@@ -515,7 +515,7 @@ file_input : (NEWLINE | stmt)* {debug("parsed file_input");}
            ;
 
 //eval_input: testlist NEWLINE* ENDMARKER
-eval_input : (NEWLINE)* testlist (NEWLINE)* -> ^(Expression testlist)
+eval_input : (NEWLINE)* testlist[expr_contextType.Load] (NEWLINE)* -> ^(Expression testlist)
            ;
 
 //decorators: decorator+
@@ -561,7 +561,7 @@ varargslist : defparameter (options {greedy=true;}:COMMA defparameter)*
             ;
 
 //not in CPython's Grammar file
-defparameter : fpdef (ASSIGN test)? {debug("parsed defparameter");}
+defparameter : fpdef (ASSIGN test[expr_contextType.Load])? {debug("parsed defparameter");}
              ;
 
 //fpdef: NAME | '(' fplist ')'
@@ -599,9 +599,9 @@ small_stmt : expr_stmt
            ;
 
 //expr_stmt: testlist (augassign testlist | ('=' testlist)*)
-expr_stmt : lhs=testlist
+expr_stmt : lhs=testlist[expr_contextType.Store]
             ( (augassign yield_expr -> ^(augassign $lhs yield_expr))
-            | (augassign rhs=testlist -> ^(augassign $lhs $rhs))
+            | (augassign rhs=testlist[expr_contextType.Load] -> ^(augassign $lhs $rhs))
             | ((assigns) {debug("matched assigns");} -> ^(Assign ^(Target $lhs) assigns))
             | -> $lhs
             )
@@ -625,7 +625,7 @@ assigns
 
 //not in CPython's Grammar file
 assign_testlist
-       : ASSIGN testlist -> ^(Target testlist)
+       : ASSIGN testlist[expr_contextType.Store] -> ^(Target testlist)
        ;
 
 //not in CPython's Grammar file
@@ -660,7 +660,7 @@ print_stmt : PRINT
 
 //not in CPython's Grammar file
 printlist returns [boolean newline]
-    : (test COMMA) => test (options {k=2;}: COMMA test)* (trailcomma=COMMA)?
+    : (test[expr_contextType.Load] COMMA) => test[expr_contextType.Load] (options {k=2;}: COMMA test[expr_contextType.Load])* (trailcomma=COMMA)?
     { if ($trailcomma == null) {
           $newline = true;
       } else {
@@ -668,13 +668,13 @@ printlist returns [boolean newline]
       }
     }
    -> ^(Elts test+)
-    | test {$newline = true;}
+    | test[expr_contextType.Load] {$newline = true;}
    -> ^(Elts test)
     ;
 
 //not in CPython's Grammar file
 printlist2 returns [boolean newline]
-    : (test COMMA test) => test (options {k=2;}: COMMA test)* (trailcomma=COMMA)?
+    : (test[expr_contextType.Load] COMMA test[expr_contextType.Load]) => test[expr_contextType.Load] (options {k=2;}: COMMA test[expr_contextType.Load])* (trailcomma=COMMA)?
     { if ($trailcomma == null) {
           $newline = true;
       } else {
@@ -682,7 +682,7 @@ printlist2 returns [boolean newline]
       }
     }
    -> ^(Elts test+)
-    | test {$newline = true;}
+    | test[expr_contextType.Load] {$newline = true;}
    -> ^(Elts test)
     ;
 
@@ -716,7 +716,7 @@ continue_stmt : CONTINUE
               ;
 
 //return_stmt: 'return' [testlist]
-return_stmt : RETURN (testlist)?
+return_stmt : RETURN (testlist[expr_contextType.Load])?
           -> ^(RETURN ^(Value testlist)?)
             ;
 
@@ -725,7 +725,7 @@ yield_stmt : yield_expr
            ;
 
 //raise_stmt: 'raise' [test [',' test [',' test]]]
-raise_stmt: RAISE (t1=test (COMMA t2=test (COMMA t3=test)?)?)?
+raise_stmt: RAISE (t1=test[expr_contextType.Load] (COMMA t2=test[expr_contextType.Load] (COMMA t3=test[expr_contextType.Load])?)?)?
           -> ^(RAISE ^(Type $t1)? ^(Inst $t2)? ^(Tback $t3)?)
           ;
 
@@ -782,12 +782,12 @@ global_stmt : 'global' NAME (COMMA NAME)*
             ;
 
 //exec_stmt: 'exec' expr ['in' test [',' test]]
-exec_stmt : keyEXEC expr ('in' t1=test (COMMA t2=test)?)?
+exec_stmt : keyEXEC expr ('in' t1=test[expr_contextType.Load] (COMMA t2=test[expr_contextType.Load])?)?
          -> ^(keyEXEC expr ^(Globals $t1)? ^(Locals $t2)?)
           ;
 
 //assert_stmt: 'assert' test [',' test]
-assert_stmt : 'assert' t1=test (COMMA t2=test)?
+assert_stmt : 'assert' t1=test[expr_contextType.Load] (COMMA t2=test[expr_contextType.Load])?
            -> ^(Assert 'assert' ^(Test $t1) ^(Msg $t2)?)
             ;
 
@@ -802,22 +802,22 @@ compound_stmt : if_stmt
               ;
 
 //if_stmt: 'if' test ':' suite ('elif' test ':' suite)* ['else' ':' suite]
-if_stmt: 'if' test COLON ifsuite=suite elif_clause*  ('else' COLON elsesuite=suite)?
+if_stmt: 'if' test[expr_contextType.Load] COLON ifsuite=suite elif_clause*  ('else' COLON elsesuite=suite)?
       -> ^(If 'if' test $ifsuite elif_clause* ^(OrElse $elsesuite)?)
        ;
 
 //not in CPython's Grammar file
-elif_clause : 'elif' test COLON suite
+elif_clause : 'elif' test[expr_contextType.Load] COLON suite
            -> ^(Elif test suite)
             ;
 
 //while_stmt: 'while' test ':' suite ['else' ':' suite]
-while_stmt : 'while' test COLON s1=suite ('else' COLON s2=suite)?
+while_stmt : 'while' test[expr_contextType.Load] COLON s1=suite ('else' COLON s2=suite)?
           -> ^(While 'while' test ^(Body $s1) ^(OrElse $s2)?)
            ;
 
 //for_stmt: 'for' exprlist 'in' testlist ':' suite ['else' ':' suite]
-for_stmt : 'for' exprlist 'in' testlist COLON s1=suite ('else' COLON s2=suite)?
+for_stmt : 'for' exprlist[expr_contextType.Store] 'in' testlist[expr_contextType.Load] COLON s1=suite ('else' COLON s2=suite)?
         -> ^(For 'for' ^(Target exprlist) ^(Iter testlist) ^(Body $s1) ^(OrElse $s2)?)
          ;
 
@@ -835,7 +835,7 @@ try_stmt : 'try' COLON trysuite=suite
          ;
 
 //with_stmt: 'with' test [ with_var ] ':' suite
-with_stmt: 'with' test (with_var)? COLON suite
+with_stmt: 'with' test[expr_contextType.Load] (with_var)? COLON suite
         -> ^(With test with_var? ^(Body suite))
          ;
 
@@ -844,7 +844,7 @@ with_var: (keyAS | NAME) expr
         ;
 
 //except_clause: 'except' [test [',' test]]
-except_clause : 'except' (t1=test (COMMA t2=test)?)? COLON suite
+except_clause : 'except' (t1=test[expr_contextType.Load] (COMMA t2=test[expr_contextType.Load])?)? COLON suite
              //Note: passing the 'except' keyword on so we can pass the same offset
              //      as CPython.
              -> ^(ExceptHandler 'except' ^(Type $t1)? ^(NameTok $t2)? ^(Body suite))
@@ -856,8 +856,8 @@ suite : simple_stmt
       ;
 
 //test: or_test ['if' or_test 'else' test] | lambdef
-test: o1=or_test
-    ( ('if' or_test 'else') => 'if' o2=or_test 'else' test
+test[expr_contextType ect]: o1=or_test
+    ( ('if' or_test 'else') => 'if' o2=or_test 'else' test[expr_contextType.Load]
       -> ^(IfExp ^(Test $o2) ^(Body $o1) ^(OrElse test))
     | -> or_test
     )
@@ -947,7 +947,7 @@ atom : LPAREN
        )
        RBRACK
      | LCURLY (dictmaker)? RCURLY -> ^(Dict LCURLY ^(Elts dictmaker)?)
-     | BACKQUOTE testlist BACKQUOTE -> ^(Repr BACKQUOTE testlist)
+     | BACKQUOTE testlist[expr_contextType.Load] BACKQUOTE -> ^(Repr BACKQUOTE testlist)
      | NAME -> ^(NameTok NAME)
      | INT -> ^(NumTok<Num>[$INT, makeInt($INT)])
      | LONGINT -> ^(NumTok<Num>[$LONGINT, makeInt($LONGINT)])
@@ -958,15 +958,15 @@ atom : LPAREN
      ;
 
 //listmaker: test ( list_for | (',' test)* [','] )
-listmaker : test 
+listmaker : test[expr_contextType.Load] 
             ( list_for -> ^(ListComp test list_for)
-            | (options {greedy=true;}:COMMA test)* -> ^(List ^(Elts test+))
+            | (options {greedy=true;}:COMMA test[expr_contextType.Load])* -> ^(List ^(Elts test+))
             ) (COMMA)?
           ;
 
 //testlist_gexp: test ( gen_for | (',' test)* [','] )
 testlist_gexp
-    : test ( ((options {k=2;}: c1=COMMA test)* (c2=COMMA)? -> { $c1 != null || $c2 != null }? ^(Tuple ^(Elts test+))
+    : test[expr_contextType.Load] ( ((options {k=2;}: c1=COMMA test[expr_contextType.Load])* (c2=COMMA)? -> { $c1 != null || $c2 != null }? ^(Tuple ^(Elts test+))
                                                            -> test
              )
            | ( gen_for -> ^(GeneratorExp test gen_for))
@@ -974,7 +974,7 @@ testlist_gexp
     ;
 
 //lambdef: 'lambda' [varargslist] ':' test
-lambdef: 'lambda' (varargslist)? COLON test {debug("parsed lambda");}
+lambdef: 'lambda' (varargslist)? COLON test[expr_contextType.Load] {debug("parsed lambda");}
       -> ^(Lambda 'lambda' varargslist? ^(Body test))
        ;
 
@@ -991,17 +991,17 @@ subscriptlist : subscript (options {greedy=true;}:COMMA subscript)* (COMMA)?
 
 //subscript: '.' '.' '.' | test | [test] ':' [test] [sliceop]
 subscript : DOT DOT DOT -> Ellipsis
-          | (test COLON) => t1=test (COLON (t2=test)? (sliceop)?)? -> ^(Subscript ^(Lower $t1) ^(Upper COLON ^(UpperOp $t2)?)? sliceop?)
-          | (COLON) => COLON (test)? (sliceop)? -> ^(Subscript ^(Upper COLON ^(UpperOp test)?)? sliceop?)
-          | test -> ^(Index test)
+          | (test[expr_contextType.Load] COLON) => t1=test[expr_contextType.Load] (COLON (t2=test[expr_contextType.Load])? (sliceop)?)? -> ^(Subscript ^(Lower $t1) ^(Upper COLON ^(UpperOp $t2)?)? sliceop?)
+          | (COLON) => COLON (test[expr_contextType.Load])? (sliceop)? -> ^(Subscript ^(Upper COLON ^(UpperOp test)?)? sliceop?)
+          | test[expr_contextType.Load] -> ^(Index test)
           ;
 
 //sliceop: ':' [test]
-sliceop : COLON (test)? -> ^(Step COLON ^(StepOp test)?)
+sliceop : COLON (test[expr_contextType.Load])? -> ^(Step COLON ^(StepOp test)?)
         ;
 
 //exprlist: expr (',' expr)* [',']
-exprlist : (expr COMMA) => expr (options {k=2;}: COMMA expr)* (COMMA)? -> ^(Tuple ^(Elts expr+))
+exprlist[expr_contextType ctype]: (expr COMMA) => expr (options {k=2;}: COMMA expr)* (COMMA)? -> ^(Tuple ^(Elts expr+))
          | expr
          ;
 
@@ -1012,8 +1012,8 @@ exprlist2 : expr (options {k=2;}: COMMA expr)* (COMMA)?
           ;
 
 //testlist: test (',' test)* [',']
-testlist
-    : test (options {k=2;}: c1=COMMA test)* (c2=COMMA)?
+testlist[expr_contextType ctype]
+    : test[expr_contextType.Load] (options {k=2;}: c1=COMMA test[expr_contextType.Load])* (c2=COMMA)?
      -> { $c1 != null || $c2 != null }? ^(Tuple ^(Elts test+))
      -> test
     ;
@@ -1022,33 +1022,33 @@ testlist
 //testlist_safe: test [(',' test)+ [',']]
 
 //dictmaker: test ':' test (',' test ':' test)* [',']
-dictmaker : test COLON test
-            (options {k=2;}:COMMA test COLON test)* (COMMA)?
+dictmaker : test[expr_contextType.Load] COLON test[expr_contextType.Load]
+            (options {k=2;}:COMMA test[expr_contextType.Load] COLON test[expr_contextType.Load])* (COMMA)?
          -> test+
           ;
 
 //classdef: 'class' NAME ['(' [testlist] ')'] ':' suite
-classdef: CLASS NAME (LPAREN testlist? RPAREN)? COLON suite
+classdef: CLASS NAME (LPAREN testlist[expr_contextType.Load]? RPAREN)? COLON suite
     -> ^(CLASS ^(NameTok NAME) ^(Bases testlist)? ^(Body suite))
     ;
 
 //arglist: (argument ',')* (argument [',']| '*' test [',' '**' test] | '**' test)
 arglist : argument (COMMA argument)*
           ( COMMA
-            ( STAR starargs=test (COMMA DOUBLESTAR kwargs=test)?
-            | DOUBLESTAR kwargs=test
+            ( STAR starargs=test[expr_contextType.Load] (COMMA DOUBLESTAR kwargs=test[expr_contextType.Load])?
+            | DOUBLESTAR kwargs=test[expr_contextType.Load]
             )?
           )?
        -> ^(Args argument+) ^(StarArgs $starargs)? ^(KWArgs $kwargs)?
-        |   STAR starargs=test (COMMA DOUBLESTAR kwargs=test)?
+        |   STAR starargs=test[expr_contextType.Load] (COMMA DOUBLESTAR kwargs=test[expr_contextType.Load])?
        -> ^(StarArgs $starargs) ^(KWArgs $kwargs)?
-        |   DOUBLESTAR kwargs=test
+        |   DOUBLESTAR kwargs=test[expr_contextType.Load]
        -> ^(KWArgs $kwargs)
         ;
 
 //argument: test [gen_for] | test '=' test  # Really [keyword '='] test
-argument : t1=test
-         ( (ASSIGN t2=test) -> ^(Keyword ^(Arg $t1) ^(Value $t2)?)
+argument : t1=test[expr_contextType.Load]
+         ( (ASSIGN t2=test[expr_contextType.Load]) -> ^(Keyword ^(Arg $t1) ^(Value $t2)?)
          | gen_for -> ^(GenFor $t1 gen_for)
          | -> ^(Arg $t1)
          )
@@ -1060,12 +1060,12 @@ list_iter : list_for
           ;
 
 //list_for: 'for' exprlist 'in' testlist_safe [list_iter]
-list_for : 'for' exprlist 'in' testlist (list_iter)?
+list_for : 'for' exprlist[expr_contextType.Load] 'in' testlist[expr_contextType.Load] (list_iter)?
         -> ^(ListFor ^(Target exprlist) ^(Iter testlist) ^(Ifs list_iter)?)
          ;
 
 //list_if: 'if' test [list_iter]
-list_if : 'if' test (list_iter)?
+list_if : 'if' test[expr_contextType.Load] (list_iter)?
        -> ^(ListIf ^(Target test) (Ifs list_iter)?)
         ;
 
@@ -1075,17 +1075,17 @@ gen_iter: gen_for
         ;
 
 //gen_for: 'for' exprlist 'in' or_test [gen_iter]
-gen_for: 'for' exprlist 'in' or_test gen_iter?
+gen_for: 'for' exprlist[expr_contextType.Load] 'in' or_test gen_iter?
       -> ^(GenFor ^(Target exprlist) ^(Iter or_test) ^(Ifs gen_iter)?)
        ;
 
 //gen_if: 'if' old_test [gen_iter]
-gen_if: 'if' test gen_iter?
+gen_if: 'if' test[expr_contextType.Load] gen_iter?
      -> ^(GenIf ^(Target test) ^(Ifs gen_iter)?)
       ;
 
 //yield_expr: 'yield' [testlist]
-yield_expr : 'yield' testlist?
+yield_expr : 'yield' testlist[expr_contextType.Load]?
           -> ^(Yield 'yield' ^(Value testlist)?)
            ;
 
