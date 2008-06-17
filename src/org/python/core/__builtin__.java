@@ -390,6 +390,8 @@ public class __builtin__ {
         dict.__setitem__("reversed", new BuiltinFunctions("reversed", 45, 1));
         dict.__setitem__("__import__", new ImportFunction());
         dict.__setitem__("sorted", new SortedFunction());
+        dict.__setitem__("all", new AllFunction());
+        dict.__setitem__("any", new AnyFunction());        
     }
 
     public static PyObject abs(PyObject o) {
@@ -1229,10 +1231,12 @@ class ImportFunction extends PyObject {
 class SortedFunction extends PyObject {
 
     @ExposedGet(name = "__doc__")
+    @Override
     public PyObject getDoc() {
         return new PyString("sorted(iterable, cmp=None, key=None, reverse=False) --> new sorted list");
     }
     
+    @Override
     public PyObject __call__(PyObject args[], String kwds[]) {
         if (args.length == 0) {
             throw Py.TypeError(" sorted() takes at least 1 argument (0 given)");
@@ -1260,9 +1264,70 @@ class SortedFunction extends PyObject {
         return seq;
     }
 
+    @Override
     public String toString() {
         return "<built-in function sorted>";
     }
-    
+}
 
+class AllFunction extends PyObject {
+
+    @ExposedGet(name = "__doc__")
+    @Override
+    public PyObject getDoc() {
+        return new PyString("all(iterable) -> bool\n\nReturn True if bool(x) is True for all values x in the iterable.");
+    }
+
+    @Override
+    public PyObject __call__(PyObject args[], String kwds[]) {
+        if (args.length !=1) {
+            throw Py.TypeError(" all() takes exactly one argument (" + args.length + " given)");
+        }
+        PyObject iter = args[0].__iter__();
+        if (iter == null) {
+            throw Py.TypeError("'" + args[0].getType().fastGetName() + "' object is not iterable");
+        }
+        for (PyObject item : iter.asIterable()) {
+            if (!item.__nonzero__()) {
+                return Py.False;
+            }
+        }
+        return Py.True;
+    }
+    
+    @Override
+    public String toString() {
+        return "<built-in function all>";
+    }
+}
+
+class AnyFunction extends PyObject {
+
+    @ExposedGet(name = "__doc__")
+    @Override
+    public PyObject getDoc() {
+        return new PyString("any(iterable) -> bool\n\nReturn True if bool(x) is True for any x in the iterable.");
+    }
+
+    @Override
+    public PyObject __call__(PyObject args[], String kwds[]) {
+        if (args.length !=1) {
+            throw Py.TypeError(" any() takes exactly one argument (" + args.length + " given)");
+        }
+        PyObject iter = args[0].__iter__();
+        if (iter == null) {
+            throw Py.TypeError("'" + args[0].getType().fastGetName() + "' object is not iterable");
+        }
+        for (PyObject item : iter.asIterable()) {
+            if (item.__nonzero__()) {
+                return Py.True;
+            }
+        }
+        return Py.False;     
+    }
+    
+    @Override
+    public String toString() {
+        return "<built-in function any>";
+    }
 }
