@@ -98,7 +98,6 @@ tokens {
     Assign;
     AugAssign;
     Compare;
-    Expr;
     Tuple;
     List;
     Dict;
@@ -107,7 +106,6 @@ tokens {
     OrElse;
     Elif;
     While; 
-    Pass;
     TryExcept;
     TryFinally;
     ExceptHandler;
@@ -183,8 +181,23 @@ import org.antlr.runtime.CommonToken;
 
 import org.python.antlr.ParseException;
 import org.python.antlr.PythonTree;
+import org.python.antlr.ast.argumentsType;
+import org.python.antlr.ast.Attribute;
+import org.python.antlr.ast.Break;
+import org.python.antlr.ast.Context;
+import org.python.antlr.ast.Continue;
+import org.python.antlr.ast.Expr;
+import org.python.antlr.ast.exprType;
+import org.python.antlr.ast.expr_contextType;
+import org.python.antlr.ast.FunctionDef;
+import org.python.antlr.ast.modType;
+import org.python.antlr.ast.Module;
 import org.python.antlr.ast.Name;
 import org.python.antlr.ast.Num;
+import org.python.antlr.ast.Pass;
+import org.python.antlr.ast.Print;
+import org.python.antlr.ast.Return;
+import org.python.antlr.ast.stmtType;
 import org.python.antlr.ast.Str;
 import org.python.core.Py;
 import org.python.core.PyString;
@@ -202,6 +215,84 @@ import java.util.Iterator;
             System.out.println(message);
         }
     }
+
+    private exprType[] makeExprs(List exprs) {
+        return makeExprs(exprs, 0);
+    }
+
+    private exprType[] makeExprs(List exprs, int start) {
+        if (exprs != null) {
+            List<exprType> result = new ArrayList<exprType>();
+            for (int i=start; i<exprs.size(); i++) {
+                exprType e = (exprType)exprs.get(i);
+                result.add(e);
+            }
+            return (exprType[])result.toArray(new exprType[result.size()]);
+        }
+        return new exprType[0];
+    }
+
+    private stmtType[] makeStmts(List stmts) {
+        if (stmts != null) {
+            List<stmtType> result = new ArrayList<stmtType>();
+            for (int i=0; i<stmts.size(); i++) {
+                result.add((stmtType)stmts.get(i));
+            }
+            return (stmtType[])result.toArray(new stmtType[result.size()]);
+        }
+        return new stmtType[0];
+    }
+
+    private exprType makeDottedAttr(Token nameToken, List attrs) {
+        exprType current = new Name(nameToken, nameToken.getText(), expr_contextType.Load);
+        for (int i=attrs.size() - 1; i > -1; i--) {
+            Token t = ((PythonTree)attrs.get(i)).token;
+            current = new Attribute(t, current, t.getText(),
+                expr_contextType.Load);
+        }
+        return current;
+    }
+
+    private FunctionDef makeFunctionDef(PythonTree t, PythonTree nameToken, argumentsType args, List funcStatements, List decorators) {
+        argumentsType a;
+        debug("Matched FunctionDef");
+        if (args != null) {
+            a = args;
+        } else {
+            a = new argumentsType(t, new exprType[0], null, null, new exprType[0]); 
+        }
+        stmtType[] s = (stmtType[])funcStatements.toArray(new stmtType[funcStatements.size()]);
+        exprType[] d;
+        if (decorators != null) {
+            d = (exprType[])decorators.toArray(new exprType[decorators.size()]);
+        } else {
+            d = new exprType[0];
+        }
+        return new FunctionDef(t, nameToken.getText(), a, s, d);
+    }
+
+    private argumentsType makeArgumentsType(Token t, List params, Token snameToken,
+        Token knameToken, List defaults) {
+        debug("Matched Arguments");
+
+        exprType[] p = (exprType[])params.toArray(new exprType[params.size()]);
+        exprType[] d = (exprType[])defaults.toArray(new exprType[defaults.size()]);
+        String s;
+        String k;
+        if (snameToken == null) {
+            s = null;
+        } else {
+            s = snameToken.getText();
+        }
+        if (knameToken == null) {
+            k = null;
+        } else {
+            k = knameToken.getText();
+        }
+        return new argumentsType(t, p, s, k, d);
+    }
+
+
 
     Object makeFloat(Token t) {
         debug("makeFloat matched " + t.getText());
@@ -370,7 +461,7 @@ catch (RecognitionException r) {
 
 @lexer::header { 
 package org.python.antlr;
-} 
+}
 
 @lexer::members {
 /** Handles context-sensitive lexing of implicit line joining such as
@@ -602,8 +693,8 @@ del_stmt : 'del' exprlist2
          ;
 
 //pass_stmt: 'pass'
-pass_stmt : 'pass'
-         -> ^(Pass 'pass')
+pass_stmt : PASS 
+         -> ^(PASS)
           ;
 
 //flow_stmt: break_stmt | continue_stmt | return_stmt | raise_stmt | yield_stmt
@@ -1033,6 +1124,7 @@ BREAK     : 'break' ;
 CONTINUE  : 'continue' ;
 RETURN    : 'return' ;
 RAISE     : 'raise' ;
+PASS      : 'pass'  ;
 
 LPAREN    : '(' {implicitLineJoiningLevel++;} ;
 

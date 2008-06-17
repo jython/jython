@@ -6,7 +6,7 @@ import org.antlr.runtime.Token;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-public class Tuple extends exprType {
+public class Tuple extends exprType implements Context {
     public exprType[] elts;
     public expr_contextType ctx;
 
@@ -61,6 +61,10 @@ public class Tuple extends exprType {
                     elts[i].accept(visitor);
             }
         }
+    }
+
+    public void setContext(expr_contextType c) {
+        this.ctx = c;
     }
 
     public int getLineno() {

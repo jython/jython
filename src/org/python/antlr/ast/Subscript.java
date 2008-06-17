@@ -6,7 +6,7 @@ import org.antlr.runtime.Token;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-public class Subscript extends exprType {
+public class Subscript extends exprType implements Context {
     public exprType value;
     public sliceType slice;
     public expr_contextType ctx;
@@ -50,6 +50,10 @@ public class Subscript extends exprType {
             value.accept(visitor);
         if (slice != null)
             slice.accept(visitor);
+    }
+
+    public void setContext(expr_contextType c) {
+        this.ctx = c;
     }
 
     public int getLineno() {

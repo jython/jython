@@ -543,9 +543,9 @@ del_stmt
     ;
 
 pass_stmt
-    : ^(Pass tok='pass') {
+    : PASS {
         debug("Matched Pass");
-        $stmts::statements.add(new Pass($tok));
+        $stmts::statements.add(new Pass($PASS));
     }
     ;
 

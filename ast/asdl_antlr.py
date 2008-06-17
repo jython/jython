@@ -205,16 +205,16 @@ class JavaVisitor(EmitVisitor):
 
     def visitConstructor(self, cons, name, depth):
         self.open(cons.name, useDataOutput=1)
-        enums = []
+        ifaces = []
         for f in cons.fields:
-            if f.typedef and f.typedef.simple:
-                enums.append("%sType" % f.type)
-        #if enums:
-        #    s = "implements %s " % ", ".join(enums)
-        #else:
-        #    s = ""
-        self.emit("public class %s extends %sType {" %
-                    (cons.name, name), depth)
+            if str(f.type) == "expr_context":
+                ifaces.append("Context")
+        if ifaces:
+            s = "implements %s " % ", ".join(ifaces)
+        else:
+            s = ""
+        self.emit("public class %s extends %sType %s{" %
+                    (cons.name, name, s), depth)
         for f in cons.fields:
             self.visit(f, depth + 1)
         self.emit("", depth)
@@ -228,6 +228,12 @@ class JavaVisitor(EmitVisitor):
         self.emit("", 0)
 
         self.javaMethods(cons, cons.name, cons.name, cons.fields, depth+1)
+
+        if "Context" in ifaces:
+            self.emit("public void setContext(expr_contextType c) {", depth + 1)
+            self.emit('this.ctx = c;', depth + 2)
+            self.emit("}", depth + 1)
+            self.emit("", 0)
 
         if str(name) in ('stmt', 'expr'):
             # The lineno property
@@ -350,7 +356,7 @@ class JavaVisitor(EmitVisitor):
         'int' : 'int',
         'bool' : 'boolean',
         'identifier' : 'String',
-        'string' : 'PyString',
+        'string' : 'Object',
         'object' : 'Object', # was PyObject
         'Token'  : 'Token', # to get antlr token type through
         'PythonTree'  : 'PythonTree', # also for antlr type
