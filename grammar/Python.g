@@ -707,12 +707,12 @@ flow_stmt : break_stmt
 
 //break_stmt: 'break'
 break_stmt : BREAK
-          -> ^(BREAK)
+          -> ^(BREAK<Break>[$BREAK])
            ;
 
 //continue_stmt: 'continue'
 continue_stmt : CONTINUE
-             -> ^(CONTINUE)
+             -> ^(CONTINUE<Continue>[$CONTINUE])
               ;
 
 //return_stmt: 'return' [testlist]

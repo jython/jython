@@ -558,13 +558,13 @@ flow_stmt
 
 break_stmt
     : BREAK {
-        $stmts::statements.add(new Break($BREAK));
+        $stmts::statements.add($BREAK);
     }
     ;
 
 continue_stmt
     : CONTINUE {
-        $stmts::statements.add(new Continue($CONTINUE));
+        $stmts::statements.add($CONTINUE);
     }
     ;
 
