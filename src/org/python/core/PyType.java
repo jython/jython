@@ -70,7 +70,7 @@ public class PyType extends PyObject implements Serializable {
     private boolean needs_finalizer;
 
     /** Whether this type's instances require a __dict__. */
-    private boolean needs_userdict = true;
+    private boolean needs_userdict = false;
 
     /** The number of __slots__ defined. */
     private int numSlots;
@@ -172,8 +172,15 @@ public class PyType extends PyObject implements Serializable {
         newtype.bases = bases_list;
 
         PyObject slots = dict.__finditem__("__slots__");
-        if (slots != null) {
-            newtype.needs_userdict = false;
+        boolean needsDictDescr = false;
+        if (slots == null) {
+            newtype.needs_userdict = true;
+            // a dict descriptor is required if base doesn't already provide a dict
+            needsDictDescr = !newtype.base.needs_userdict;
+        } else {
+            // have slots, but may inherit a dict
+            newtype.needs_userdict = newtype.base.needs_userdict;
+
             if (slots instanceof PyString) {
                 addSlot(newtype, slots);
             } else {
@@ -181,9 +188,32 @@ public class PyType extends PyObject implements Serializable {
                     addSlot(newtype, slotname);
                 }
             }
-        }
-        if (!newtype.needs_userdict) {
-            newtype.needs_userdict = necessitatesUserdict(bases_list);
+
+            if (!newtype.base.needs_userdict && newtype.needs_userdict) {
+                // base doesn't provide dict but addSlot found the __dict__ slot
+                needsDictDescr = true;
+            } else if (bases_list.length > 0 && !newtype.needs_userdict) {
+                // secondary bases may provide dict
+                for (PyObject base : bases_list) {
+                    if (base == newtype.base) {
+                        // Skip primary base
+                        continue;
+                    }
+                    if (base instanceof PyClass) {
+                        // Classic base class provides dict
+                        newtype.needs_userdict = true;
+                        needsDictDescr = true;
+                        break;
+                    }
+                    PyType tmpType = (PyType)base;
+                    if (tmpType.needs_userdict) {
+                        newtype.needs_userdict = true;
+                        needsDictDescr = true;
+                        // Nothing more to check
+                        break;
+                    }
+                }
+            }
         }
 
         newtype.tp_flags = Py.TPFLAGS_HEAPTYPE;
@@ -196,7 +226,7 @@ public class PyType extends PyObject implements Serializable {
 
         newtype.mro_internal();
         // __dict__ descriptor
-        if (newtype.needs_userdict && newtype.lookup("__dict__") == null) {
+        if (needsDictDescr && dict.__finditem__("__dict__") == null) {
             dict.__setitem__("__dict__", new PyDataDescr(newtype, "__dict__", PyObject.class) {
 
                 @Override
@@ -832,17 +862,6 @@ public class PyType extends PyObject implements Serializable {
         return best;
     }
 
-    private static boolean necessitatesUserdict(PyObject[] bases_list) {
-        for (int i = 0; i < bases_list.length; i++) {
-            PyObject cur = bases_list[i];
-            if ((cur instanceof PyType && ((PyType)cur).needs_userdict)
-                || cur instanceof PyClass) {
-               return true;
-            }
-        }
-        return false;
-    }
-
     /**
      * Finds the most derived subtype of initialMetatype in the types
      * of bases, or initialMetatype if it is already the most derived.
@@ -883,6 +902,9 @@ public class PyType extends PyObject implements Serializable {
         confirmIdentifier(slotname);
         String slotstring = mangleName(newtype.name, slotname.toString());
         if (slotstring.equals("__dict__")) {
+            if (newtype.base.needs_userdict || newtype.needs_userdict) {
+                throw Py.TypeError("__dict__ slot disallowed: we already got one");
+            }
             newtype.needs_userdict = true;
         } else if (newtype.dict.__finditem__(slotstring) == null) {
             newtype.dict.__setitem__(slotstring, new PySlot(newtype, slotstring,

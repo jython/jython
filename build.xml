@@ -728,8 +728,6 @@ The readme text for the next release will be like:
     </target>
     <target name="regrtest" depends="developer-build">
       <exec executable="${dist.dir}/bin/jython">
-        <!-- Temporarily give regrtest more memory until slots are fixed -->
-        <arg value="-J-Xmx128m"/>
         <arg value="${dist.dir}/Lib/test/regrtest.py"/>
         <!-- Only run the tests that are expected to work on Jython -->
         <arg value="--expected"/>

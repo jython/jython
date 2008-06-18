@@ -1251,7 +1251,10 @@ def slots():
             raise TestFailed, "[unichr(128)] slots not caught"
 
     # Test leaks
-    class Counted(object):
+    # XXX: Jython new style classes don't support __del__
+    # http://bugs.jython.org/issue1057
+    class Counted:
+    #class Counted(object):
         counter = 0    # counts the number of instances alive
         def __init__(self):
             Counted.counter += 1
@@ -1265,6 +1268,7 @@ def slots():
     x.c = Counted()
     vereq(Counted.counter, 3)
     del x
+    extra_collect()
     vereq(Counted.counter, 0)
     class D(C):
         pass
@@ -1273,6 +1277,7 @@ def slots():
     x.z = Counted()
     vereq(Counted.counter, 2)
     del x
+    extra_collect()
     vereq(Counted.counter, 0)
     class E(D):
         __slots__ = ['e']
@@ -1282,6 +1287,7 @@ def slots():
     x.e = Counted()
     vereq(Counted.counter, 3)
     del x
+    extra_collect()
     vereq(Counted.counter, 0)
 
     # Test cyclical leaks [SF bug 519621]
@@ -1294,8 +1300,13 @@ def slots():
     s = None
     import gc
     gc.collect()
+    extra_collect()
     vereq(Counted.counter, 0)
 
+    # XXX: This tests a CPython GC reference count bug and Jython lacks
+    # gc.get_objects
+    import sys
+    """
     # Test lookup leaks [SF bug 572567]
     import sys,gc
     class G(object):
@@ -1307,6 +1318,7 @@ def slots():
         g==g
     new_objects = len(gc.get_objects())
     vereq(orig_objects, new_objects)
+    """
     class H(object):
         __slots__ = ['a', 'b']
         def __init__(self):
@@ -1321,6 +1333,7 @@ def slots():
     h = H()
     try:
         del h
+        extra_collect()
     finally:
         sys.stderr = save_stderr
 
@@ -1334,6 +1347,9 @@ def slotspecials():
     verify(not hasattr(a, "__weakref__"))
     a.foo = 42
     vereq(a.__dict__, {"foo": 42})
+
+    # XXX: Jython doesn't support __weakref__
+    return
 
     class W(object):
         __slots__ = ["__weakref__"]
@@ -4387,10 +4403,6 @@ def test_main():
             spamdicts,
             classmethods_in_c,
             staticmethods_in_c,
-
-            # pjenvey broke slots
-            slots,
-            slotspecials,
 
             # Jython allows subclassing of classes it shouldn't (like
             # builtin_function_or_method):
