@@ -140,13 +140,15 @@ class SubclassDescrTestCase(unittest.TestCase):
                         "'foo' + C()"))
         # XXX: There's probably work to be done here besides just emulating this
         # message
-        #mapping.append((lambda o: u'foo' + o,<>
-        #                TypeError,
-        #                'coercing to Unicode: need string or buffer, B found',
-        #                "u'foo' + C()"))
-        mapping.append((lambda o: u'foo' + o,
-                        TypeError, "cannot concatenate 'unicode' and 'B' objects",
-                        "u'foo' + C()"))
+        if test_support.is_jython:
+            mapping.append((lambda o: u'foo' + o,
+                            TypeError, "cannot concatenate 'unicode' and 'B' objects",
+                            "u'foo' + C()"))
+        else:
+            mapping.append((lambda o: u'foo' + o,
+                            TypeError,
+                            'coercing to Unicode: need string or buffer, B found',
+                            "u'foo' + C()"))
         mapping.append((lambda o: [1, 2] + o,
                         TypeError, 'can only concatenate list (not "B") to list',
                         '[1, 2] + C()'))
