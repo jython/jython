@@ -67,6 +67,7 @@ grammar PythonPartial;
 tokens {
     INDENT;
     DEDENT;
+    ENDMARK;
 }
 
 @header { 
@@ -77,10 +78,32 @@ package org.python.antlr;
     protected void mismatch(IntStream input, int ttype, BitSet follow) throws RecognitionException {
         throw new MismatchedTokenException(ttype, input);
     }
-
     protected void mismatch(IntStream input, RecognitionException e, BitSet follow) throws RecognitionException {
         throw e;
     }
+
+	protected Object recoverFromMismatchedToken(IntStream input, int ttype, BitSet follow)
+		throws RecognitionException
+	{
+        mismatch(input, ttype, follow);
+        return null;
+    }
+
+	public void reportError(RecognitionException e) {
+		System.err.print("[REPORTING] ");
+		// if we've already reported an error and have not matched a token
+		// yet successfully, don't report any errors.
+		if ( state.errorRecovery ) {
+			System.err.print("[SPURIOUS] ");
+			return;
+		}
+		state.syntaxErrors++; // don't count spurious
+		state.errorRecovery = true;
+
+		displayRecognitionError(this.getTokenNames(), e);
+	}
+
+
 }
 
 @rulecatch {
@@ -102,7 +125,6 @@ package org.python.antlr;
  */
 int implicitLineJoiningLevel = 0;
 int startPos=-1;
-
     public Token nextToken() {
 		while (true) {
 			state.token = null;
@@ -125,22 +147,16 @@ int startPos=-1;
 				return state.token;
 			}
             catch (RecognitionException re) {
-                throw new ParseException(getErrorMessage(re, this.getTokenNames()));
+                throw new ParseException(re);
             }
         }
     }
 }
 
 single_input : NEWLINE
-             | simple_stmt
+             | simple_stmt {System.out.println("matched simple_stmt");}
              | compound_stmt NEWLINE?
              ;
-
-file_input : (NEWLINE | stmt)*
-           ;
-
-eval_input : (NEWLINE)* testlist (NEWLINE)*
-           ;
 
 decorators: decorator+
           ;
@@ -196,7 +212,7 @@ small_stmt : expr_stmt
            | assert_stmt
            ;
 
-expr_stmt : testlist
+expr_stmt : testlist {System.out.println("matched expr_stmt");}
             ( augassign yield_expr
             | augassign testlist
             | assigns
@@ -236,7 +252,6 @@ print_stmt : 'print' (printlist | RIGHTSHIFT printlist)?
 printlist returns [boolean newline]
     : test (options {k=2;}: COMMA test)* (COMMA)?
     ;
-
 
 del_stmt : 'del' exprlist
          ;
@@ -340,15 +355,15 @@ except_clause : 'except' (test (COMMA test)?)? COLON suite
               ;
 
 suite : simple_stmt
-      | NEWLINE INDENT (stmt)+ DEDENT
+      | NEWLINE ((INDENT (stmt)+ (DEDENT|ENDMARK))|ENDMARK)
       ;
 
-test: or_test
+test: or_test {System.out.println("matched test: or_test");} 
     ( ('if' or_test 'else') => 'if' or_test 'else' test)?
     | lambdef
     ;
 
-or_test : and_test (OR and_test)*
+or_test : and_test (OR and_test)* {System.out.println("matched or_test");} 
         ;
 
 and_test : not_test (AND not_test)*
@@ -374,7 +389,7 @@ comp_op : LESS
         | 'is' NOT
         ;
 
-expr : xor_expr (VBAR xor_expr)*
+expr : xor_expr (VBAR xor_expr)* {System.out.println("matched expr");}
      ;
 
 xor_expr : and_expr (CIRCUMFLEX and_expr)*
@@ -414,7 +429,7 @@ atom : LPAREN
      | LONGINT
      | FLOAT
      | COMPLEX
-     | (STRING)+
+     | (STRING)+ {System.out.println("matched STRING");} 
      ;
 
 listmaker : test 
@@ -453,7 +468,7 @@ exprlist : expr (options {k=2;}: COMMA expr)* (COMMA)?
          ;
 
 testlist
-    : test (options {k=2;}: COMMA test)* (COMMA)?
+    : test (options {k=2;}: COMMA test)* (COMMA)? {System.out.println("matched testlist");}
     ;
 
 dictmaker : test COLON test (options {k=2;}:COMMA test COLON test)* (COMMA)?

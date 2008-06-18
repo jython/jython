@@ -36,162 +36,176 @@ import java.util.*;
  */
 
 public class PythonPartialTokenSource implements TokenSource {
-	public static final int MAX_INDENTS = 100;
-	public static final int FIRST_CHAR_POSITION = 0;
+    public static final int MAX_INDENTS = 100;
+    public static final int FIRST_CHAR_POSITION = 0;
 
-	/** The stack of indent levels (column numbers) */
-	int[] indentStack = new int[MAX_INDENTS];
-	/** stack pointer */
-	int sp=-1; // grow upwards
+    /** The stack of indent levels (column numbers) */
+    int[] indentStack = new int[MAX_INDENTS];
+    /** stack pointer */
+    int sp=-1; // grow upwards
 
-	/** The queue of tokens */
-	Vector tokens = new Vector();
+    /** The queue of tokens */
+    Vector tokens = new Vector();
 
-	/** We pull real tokens from this lexer */
-	CommonTokenStream stream;
+    /** We pull real tokens from this lexer */
+    CommonTokenStream stream;
 
-	int lastTokenAddedIndex = -1;
+    int lastTokenAddedIndex = -1;
 
-	public PythonPartialTokenSource(PythonLexer lexer) {
-	}
+    boolean atEnd = false;
 
-	public PythonPartialTokenSource(CommonTokenStream stream) {
-		this.stream = stream;
-		// "state" of indent level is FIRST_CHAR_POSITION
-		push(FIRST_CHAR_POSITION);
-	}
+    public PythonPartialTokenSource(PythonLexer lexer) {
+    }
 
-	public Token nextToken() {
-		// if something in queue, just remove and return it
-		if ( tokens.size()>0 ) {
-			Token t = (Token)tokens.firstElement();
-			tokens.removeElementAt(0);
-			System.out.println(t);
-			return t;
-		}
+    public PythonPartialTokenSource(CommonTokenStream stream) {
+        this.stream = stream;
+        // "state" of indent level is FIRST_CHAR_POSITION
+        push(FIRST_CHAR_POSITION);
+    }
 
-		insertImaginaryIndentDedentTokens();
+    public Token nextToken() {
+        // if something in queue, just remove and return it
+        if ( tokens.size()>0 ) {
+            Token t = (Token)tokens.firstElement();
+            tokens.removeElementAt(0);
+            System.out.println(t);
+            return t;
+        }
 
-		return nextToken();
-	}
+        insertImaginaryIndentDedentTokens();
 
-	protected void insertImaginaryIndentDedentTokens()
-	{
-		Token t = stream.LT(1);
-		stream.consume();
+        return nextToken();
+    }
 
-		// if not a NEWLINE, doesn't signal indent/dedent work; just enqueue
-		if ( t.getType()!=PythonPartialLexer.NEWLINE ) {
-			List hiddenTokens = stream.getTokens(lastTokenAddedIndex+1,t.getTokenIndex()-1);
-			if ( hiddenTokens!=null ) {
-				tokens.addAll(hiddenTokens);
-			}
-			lastTokenAddedIndex = t.getTokenIndex();
-			tokens.addElement(t);
-			return;
-		}
+    protected void insertImaginaryIndentDedentTokens()
+    {
+        Token t = stream.LT(1);
+        stream.consume();
 
-		// save NEWLINE in the queue
-		//System.out.println("found newline: "+t+" stack is "+stackString());
-		List hiddenTokens = stream.getTokens(lastTokenAddedIndex+1,t.getTokenIndex()-1);
-		if ( hiddenTokens!=null ) {
-			tokens.addAll(hiddenTokens);
-		}
-		lastTokenAddedIndex = t.getTokenIndex();
-		tokens.addElement(t);
+        // if not a NEWLINE, doesn't signal indent/dedent work; just enqueue
+        if ( t.getType()!=PythonPartialLexer.NEWLINE ) {
+            List hiddenTokens = stream.getTokens(lastTokenAddedIndex+1,t.getTokenIndex()-1);
+            if ( hiddenTokens!=null ) {
+                tokens.addAll(hiddenTokens);
+            }
+            lastTokenAddedIndex = t.getTokenIndex();
+            tokens.addElement(t);
+            return;
+        }
 
-		// grab first token of next line
-		t = stream.LT(1);
-		stream.consume();
+        // save NEWLINE in the queue
+        //System.out.println("found newline: "+t+" stack is "+stackString());
+        List hiddenTokens = stream.getTokens(lastTokenAddedIndex+1,t.getTokenIndex()-1);
+        if ( hiddenTokens!=null ) {
+            tokens.addAll(hiddenTokens);
+        }
+        lastTokenAddedIndex = t.getTokenIndex();
+        tokens.addElement(t);
 
-		hiddenTokens = stream.getTokens(lastTokenAddedIndex+1,t.getTokenIndex()-1);
-		if ( hiddenTokens!=null ) {
-			tokens.addAll(hiddenTokens);
-		}
-		lastTokenAddedIndex = t.getTokenIndex();
+        // grab first token of next line
+        t = stream.LT(1);
+        stream.consume();
 
-		// compute cpos as the char pos of next non-WS token in line
-		int cpos = t.getCharPositionInLine(); // column dictates indent/dedent
-		if ( t.getType()==Token.EOF ) {
+        hiddenTokens = stream.getTokens(lastTokenAddedIndex+1,t.getTokenIndex()-1);
+        if ( hiddenTokens!=null ) {
+            tokens.addAll(hiddenTokens);
+        }
+        lastTokenAddedIndex = t.getTokenIndex();
+
+        // compute cpos as the char pos of next non-WS token in line
+        int cpos = t.getCharPositionInLine(); // column dictates indent/dedent
+        if ( t.getType()==Token.EOF ) {
             System.out.println("EOF!!!");
-			cpos = -1; // pretend EOF always happens at left edge
-		}
-		else if ( t.getType()==PythonPartialLexer.LEADING_WS ) {
-			cpos = t.getText().length();
-		}
+            atEnd = true;
 
-		//System.out.println("next token is: "+t);
+            Token em = new ClassicToken(PythonPartialParser.ENDMARK,"");
+            em.setCharPositionInLine(t.getCharPositionInLine());
+            em.setLine(t.getLine());
+            tokens.addElement(em);
+            
+            cpos = -1; // pretend EOF always happens at left edge
+        }
+        else if ( t.getType()==PythonPartialLexer.LEADING_WS ) {
+            cpos = t.getText().length();
+        }
 
-		// compare to last indent level
-		int lastIndent = peek();
-		//System.out.println("cpos, lastIndent = "+cpos+", "+lastIndent);
-		if ( cpos > lastIndent ) { // they indented; track and gen INDENT
-			push(cpos);
-			//System.out.println("push("+cpos+"): "+stackString());
-			Token indent = new ClassicToken(PythonPartialParser.INDENT,"");
-			indent.setCharPositionInLine(t.getCharPositionInLine());
-			indent.setLine(t.getLine());
-			tokens.addElement(indent);
-		}
-		else if ( cpos < lastIndent ) { // they dedented
-			// how far back did we dedent?
-			int prevIndex = findPreviousIndent(cpos);
-			//System.out.println("dedented; prevIndex of cpos="+cpos+" is "+prevIndex);
-			// generate DEDENTs for each indent level we backed up over
-			for (int d=sp-1; d>=prevIndex; d--) {
-				Token dedent = new ClassicToken(PythonPartialParser.DEDENT,"");
-				dedent.setCharPositionInLine(t.getCharPositionInLine());
-				dedent.setLine(t.getLine());
-				tokens.addElement(dedent);
-			}
-			sp = prevIndex; // pop those off indent level
-		}
-		if ( t.getType()!=PythonPartialLexer.LEADING_WS ) { // discard WS
-			tokens.addElement(t);
-		}
-	}
+        //System.out.println("next token is: "+t);
 
-	//  T O K E N  S T A C K  M E T H O D S
+        // compare to last indent level
+        int lastIndent = peek();
+        //System.out.println("cpos, lastIndent = "+cpos+", "+lastIndent);
+        if ( cpos > lastIndent ) { // they indented; track and gen INDENT
+            push(cpos);
+            //System.out.println("push("+cpos+"): "+stackString());
+            Token indent = new ClassicToken(PythonPartialParser.INDENT,"");
+            indent.setCharPositionInLine(t.getCharPositionInLine());
+            indent.setLine(t.getLine());
+            tokens.addElement(indent);
+        }
+        else if ( cpos < lastIndent ) { // they dedented
+            // how far back did we dedent?
+            int prevIndex = findPreviousIndent(cpos);
+            //System.out.println("dedented; prevIndex of cpos="+cpos+" is "+prevIndex);
+            // generate DEDENTs for each indent level we backed up over
+            for (int d=sp-1; d>=prevIndex; d--) {
+                Token tok;
+                if (atEnd) {
+                    tok = new ClassicToken(PythonPartialParser.ENDMARK,"");
+                } else {
+                    tok = new ClassicToken(PythonPartialParser.DEDENT,"");
+                }
+                tok.setCharPositionInLine(t.getCharPositionInLine());
+                tok.setLine(t.getLine());
+                tokens.addElement(tok);
+            }
+            sp = prevIndex; // pop those off indent level
+        }
+        if ( t.getType()!=PythonPartialLexer.LEADING_WS ) { // discard WS
+            tokens.addElement(t);
+        }
+    }
 
-	protected void push(int i) {
-		if (sp>=MAX_INDENTS) {
-			throw new IllegalStateException("stack overflow");
-		}
-		sp++;
-		indentStack[sp] = i;
-	}
+    //  T O K E N  S T A C K  M E T H O D S
 
-	protected int pop() {
-		if (sp<0) {
-			throw new IllegalStateException("stack underflow");
-		}
-		int top = indentStack[sp];
-		sp--;
-		return top;
-	}
+    protected void push(int i) {
+        if (sp>=MAX_INDENTS) {
+            throw new IllegalStateException("stack overflow");
+        }
+        sp++;
+        indentStack[sp] = i;
+    }
 
-	protected int peek() {
-		return indentStack[sp];
-	}
+    protected int pop() {
+        if (sp<0) {
+            throw new IllegalStateException("stack underflow");
+        }
+        int top = indentStack[sp];
+        sp--;
+        return top;
+    }
 
-	/** Return the index on stack of previous indent level == i else -1 */
-	protected int findPreviousIndent(int i) {
-		for (int j=sp-1; j>=0; j--) {
-			if ( indentStack[j]==i ) {
-				return j;
-			}
-		}
-		return FIRST_CHAR_POSITION;
-	}
+    protected int peek() {
+        return indentStack[sp];
+    }
 
-	public String stackString() {
-		StringBuffer buf = new StringBuffer();
-		for (int j=sp; j>=0; j--) {
-			buf.append(" ");
-			buf.append(indentStack[j]);
-		}
-		return buf.toString();
-	}
+    /** Return the index on stack of previous indent level == i else -1 */
+    protected int findPreviousIndent(int i) {
+        for (int j=sp-1; j>=0; j--) {
+            if ( indentStack[j]==i ) {
+                return j;
+            }
+        }
+        return FIRST_CHAR_POSITION;
+    }
+
+    public String stackString() {
+        StringBuffer buf = new StringBuffer();
+        for (int j=sp; j>=0; j--) {
+            buf.append(" ");
+            buf.append(indentStack[j]);
+        }
+        return buf.toString();
+    }
 
     //FIXME: needed this for the Antlr 3.1b interface change.
     public String getSourceName() {
