@@ -75,6 +75,14 @@ package org.python.antlr;
 } 
 
 @members {
+    boolean debugOn = false;
+
+    private void debug(String message) {
+        if (debugOn) {
+            System.out.println(message);
+        }
+    }
+
     protected void mismatch(IntStream input, int ttype, BitSet follow) throws RecognitionException {
         throw new MismatchedTokenException(ttype, input);
     }
@@ -82,12 +90,14 @@ package org.python.antlr;
         throw e;
     }
 
+    /*
 	protected Object recoverFromMismatchedToken(IntStream input, int ttype, BitSet follow)
 		throws RecognitionException
 	{
         mismatch(input, ttype, follow);
         return null;
     }
+    */
 
 	public void reportError(RecognitionException e) {
 		System.err.print("[REPORTING] ");
@@ -154,7 +164,7 @@ int startPos=-1;
 }
 
 single_input : NEWLINE
-             | simple_stmt {System.out.println("matched simple_stmt");}
+             | simple_stmt {debug("matched simple_stmt");}
              | compound_stmt NEWLINE?
              ;
 
@@ -212,7 +222,7 @@ small_stmt : expr_stmt
            | assert_stmt
            ;
 
-expr_stmt : testlist {System.out.println("matched expr_stmt");}
+expr_stmt : testlist {debug("matched expr_stmt");}
             ( augassign yield_expr
             | augassign testlist
             | assigns
@@ -358,12 +368,12 @@ suite : simple_stmt
       | NEWLINE ((INDENT (stmt)+ (DEDENT|ENDMARK))|ENDMARK)
       ;
 
-test: or_test {System.out.println("matched test: or_test");} 
+test: or_test {debug("matched test: or_test");} 
     ( ('if' or_test 'else') => 'if' or_test 'else' test)?
     | lambdef
     ;
 
-or_test : and_test (OR and_test)* {System.out.println("matched or_test");} 
+or_test : and_test (OR and_test)* {debug("matched or_test");} 
         ;
 
 and_test : not_test (AND not_test)*
@@ -389,7 +399,7 @@ comp_op : LESS
         | 'is' NOT
         ;
 
-expr : xor_expr (VBAR xor_expr)* {System.out.println("matched expr");}
+expr : xor_expr (VBAR xor_expr)* {debug("matched expr");}
      ;
 
 xor_expr : and_expr (CIRCUMFLEX and_expr)*
@@ -429,7 +439,7 @@ atom : LPAREN
      | LONGINT
      | FLOAT
      | COMPLEX
-     | (STRING)+ {System.out.println("matched STRING");} 
+     | (STRING)+ {debug("matched STRING");} 
      ;
 
 listmaker : test 
@@ -468,7 +478,7 @@ exprlist : expr (options {k=2;}: COMMA expr)* (COMMA)?
          ;
 
 testlist
-    : test (options {k=2;}: COMMA test)* (COMMA)? {System.out.println("matched testlist");}
+    : test (options {k=2;}: COMMA test)* (COMMA)? {debug("matched testlist");}
     ;
 
 dictmaker : test COLON test (options {k=2;}:COMMA test COLON test)* (COMMA)?

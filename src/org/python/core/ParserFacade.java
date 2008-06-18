@@ -14,16 +14,21 @@ import java.util.regex.Pattern;
 
 import org.antlr.runtime.ANTLRReaderStream;
 import org.antlr.runtime.CharStream;
+import org.antlr.runtime.CommonTokenStream;
 import org.python.antlr.ExpressionParser;
 import org.python.antlr.InteractiveParser;
 import org.python.antlr.LeadingSpaceSkippingStream;
 import org.python.antlr.ParseException;
 import org.python.antlr.ModuleParser;
+import org.python.antlr.NoCloseReaderStream;
 import org.python.antlr.PythonParser;
 import org.python.antlr.PythonTree;
 import org.python.core.util.StringUtil;
 import org.python.antlr.IParserHost;
 import org.python.antlr.PythonTree;
+import org.python.antlr.PythonPartialLexer;
+import org.python.antlr.PythonPartialParser;
+import org.python.antlr.PythonPartialTokenSource;
 import org.python.antlr.ast.modType;
 
 /**
@@ -70,8 +75,14 @@ public class ParserFacade {
                 col = node.getCharPositionInLine();
             }
             String text=getLine(reader, line);
-            return new PySyntaxError(e.getMessage(), line, col,
-                                     text, filename);
+            String msg = e.getMessage();
+            if (msg == null) {
+                msg = "XXX: missing msg";
+            }
+            if (text == null) {
+                text = "XXX: missing text";
+            }
+            return new PySyntaxError(msg, line, col, text, filename);
         }
         else return Py.JavaError(t);
     }
@@ -85,26 +96,23 @@ public class ParserFacade {
                                 String kind,
                                 String filename,
                                 CompilerFlags cflags) {
-        CharStream cs = null;
         BufferedInputStream bstream = new BufferedInputStream(stream);
-        //FIXME: definite NPE potential here -- do we even need prepBufreader
-        //       now?
+        //FIMXE: npe?
         BufferedReader bufreader = null;
         modType node = null;
         try {
             if (kind.equals("eval")) {
                 bufreader = prepBufreader(new LeadingSpaceSkippingStream(bstream), cflags);
-                cs = new ANTLRReaderStream(bufreader);
+                CharStream cs = new ANTLRReaderStream(bufreader);
                 ExpressionParser e = new ExpressionParser(cs);
                 node = e.parse();
             } else if (kind.equals("single")) {
                 bufreader = prepBufreader(bstream, cflags);
-                cs = new ANTLRReaderStream(bufreader);
-                InteractiveParser i = new InteractiveParser(cs);
-                node = i.partialParse();
+                InteractiveParser i = new InteractiveParser(bufreader);
+                node = i.parse();
             } else if (kind.equals("exec")) {
                 bufreader = prepBufreader(bstream, cflags);
-                cs = new ANTLRReaderStream(bufreader);
+                CharStream cs = new ANTLRReaderStream(bufreader);
                 ModuleParser g = new ModuleParser(cs);
                 node = g.file_input();
             } else {
@@ -121,43 +129,50 @@ public class ParserFacade {
                                        String filename,
                                        CompilerFlags cflags,
                                        boolean stdprompt) {
-        CharStream cs = null;
-        //FIXME: definite NPE potential here -- do we even need prepBufreader
-        //       now?
-        BufferedReader bufreader = null;
         modType node = null;
-        if (kind.equals("single")) {
-            ByteArrayInputStream bi = new ByteArrayInputStream(
-                    StringUtil.toBytes(string));
-            BufferedInputStream bstream = new BufferedInputStream(bi);
-            try {
+        //FIMXE: npe?
+        BufferedReader bufreader = null;
+        try {
+            if (kind.equals("single")) {
+                ByteArrayInputStream bi = new ByteArrayInputStream(
+                        StringUtil.toBytes(string));
+                BufferedInputStream bstream = bstream = new BufferedInputStream(bi);
                 bufreader = prepBufreader(bstream, cflags);
-                cs = new ANTLRReaderStream(bufreader);
-            } catch (IOException io) {
-                //FIXME:
+                InteractiveParser i = new InteractiveParser(bufreader);
+                node = i.parse();
+            } else {
+                throw Py.ValueError("parse kind must be eval, exec, " + "or single");
             }
-            InteractiveParser i = new InteractiveParser(cs);
-            node = i.partialParse();
-        } else {
-            throw Py.ValueError("parse kind must be eval, exec, " + "or single");
+        } catch (Throwable t) {
+            PyException p = fixParseError(bufreader, t, filename);
+            if (validPartialSentence(bufreader)) {
+                return null;
+            }
+            throw p;
         }
         return node;
     }
 
+    private static boolean validPartialSentence(BufferedReader bufreader) {
+        try {
+            bufreader.reset();
+            CharStream cs = new NoCloseReaderStream(bufreader);
+            PythonPartialLexer lexer = new InteractiveParser.PPLexer(cs);
+            CommonTokenStream tokens = new CommonTokenStream(lexer);
+            tokens.discardOffChannelTokens(true);
+            PythonPartialTokenSource indentedSource = new PythonPartialTokenSource(tokens);
+            tokens = new CommonTokenStream(indentedSource);
+            PythonPartialParser parser = new PythonPartialParser(tokens);
+            parser.single_input();
+        } catch (Exception e) {
+            return false;
+        }
+        return true;
+    }
+
+
     private static BufferedReader prepBufreader(InputStream istream,
                                                 CompilerFlags cflags) throws IOException {
-        int nbytes;
-        try {
-            nbytes = istream.available();
-        }
-        catch (IOException ioe1) {
-            nbytes = 10000;
-        }
-        if (nbytes <= 0)
-            nbytes = 10000;
-        if (nbytes > 100000)
-            nbytes = 100000;
-
         String encoding = readEncoding(istream);
         if(encoding == null && cflags != null && cflags.encoding != null) {
             encoding = cflags.encoding;
@@ -183,7 +198,7 @@ public class ParserFacade {
         
         BufferedReader bufreader = new BufferedReader(reader);
         
-        bufreader.mark(nbytes);
+        bufreader.mark(100000);
         return bufreader;
     }
 

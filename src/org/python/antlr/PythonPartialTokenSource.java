@@ -68,7 +68,7 @@ public class PythonPartialTokenSource implements TokenSource {
         if ( tokens.size()>0 ) {
             Token t = (Token)tokens.firstElement();
             tokens.removeElementAt(0);
-            System.out.println(t);
+            //System.out.println(t);
             return t;
         }
 
@@ -115,7 +115,6 @@ public class PythonPartialTokenSource implements TokenSource {
         // compute cpos as the char pos of next non-WS token in line
         int cpos = t.getCharPositionInLine(); // column dictates indent/dedent
         if ( t.getType()==Token.EOF ) {
-            System.out.println("EOF!!!");
             atEnd = true;
 
             Token em = new ClassicToken(PythonPartialParser.ENDMARK,"");
