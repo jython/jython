@@ -582,10 +582,31 @@ public class PyType extends PyObject implements Serializable {
     }
 
     private void mro_internal() {
-        if (getType().underlying_class != PyType.class && getType().lookup("mro") != null) {
-            mro = Py.make_array(getType().lookup("mro").__get__(null, getType()).__call__(this));
-        } else {
+        if (getType() == TYPE) {
             mro = compute_mro();
+        } else {
+            PyObject mroDescr = getType().lookup("mro");
+            if (mroDescr == null) {
+                throw Py.AttributeError("mro");
+            }
+            PyObject[] result = Py.make_array(mroDescr.__get__(null, getType()).__call__(this));
+
+            PyType solid = solid_base(this);
+            for (PyObject cls : result) {
+                if (cls instanceof PyClass) {
+                    continue;
+                }
+                if (!(cls instanceof PyType)) {
+                    throw Py.TypeError(String.format("mro() returned a non-class ('%.500s')",
+                                                     cls.getType().fastGetName()));
+                }
+                PyType t = (PyType)cls;
+                if (!solid.isSubType(solid_base(t))) {
+                    throw Py.TypeError(String.format("mro() returned base with unsuitable layout "
+                                                     + "('%.500s')", t.fastGetName()));
+                }
+            }
+            mro = result;
         }
     }
 
@@ -802,22 +823,16 @@ public class PyType extends PyObject implements Serializable {
     }
 
     /**
-     * Finds the parent of base with an underlying_class or with slots
-     *
-     * @raises Py.TypeError if there is no solid base for base
+     * Finds the parent of type with an underlying_class or with slots.
      */
-    private static PyType solid_base(PyType base) {
-        PyObject[] mro = base.mro;
-        for (int i = 0; i < mro.length; i++) {
-            PyObject parent = mro[i];
-            if (parent instanceof PyType) {
-                PyType parent_type = (PyType)parent;
-                if (isSolidBase(parent_type)) {
-                    return parent_type;
-                }
+    private static PyType solid_base(PyType type) {
+        do {
+            if (isSolidBase(type)) {
+                return type;
             }
-        }
-        throw Py.TypeError("base without solid base");
+            type = type.base;
+        } while (type != null);
+        return PyObject.TYPE;
     }
 
     private static boolean isSolidBase(PyType type) {

@@ -4409,10 +4409,6 @@ def test_main():
             # http://bugs.jython.org/issue1758319
             errors,
 
-            # Requires validation of mro() results
-            # http://bugs.jython.org/issue1056
-            altmro,
-
             # CPython's unicode.__cmp__ is derived from type (and only
             # takes 1 arg)
             specials,
