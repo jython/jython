@@ -1,8 +1,7 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -283,10 +282,6 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
                 return __builtin__.compile(args[0].toString(), args[1].toString(), args[2].toString(), flags, dont_inherit);
             case 29:
                 return __builtin__.map(args);
-            case 30:
-                return __builtin__.max(args);
-            case 31:
-                return __builtin__.min(args);
             case 43:
                 return __builtin__.zip(args);
             default:
@@ -375,8 +370,8 @@ public class __builtin__ {
         dict.__setitem__("iter", new BuiltinFunctions("iter", 27, 1, 2));
         dict.__setitem__("locals", new BuiltinFunctions("locals", 28, 0));
         dict.__setitem__("map", new BuiltinFunctions("map", 29, 2, -1));
-        dict.__setitem__("max", new BuiltinFunctions("max", 30, 1, -1));
-        dict.__setitem__("min", new BuiltinFunctions("min", 31, 1, -1));
+        dict.__setitem__("max", new MaxFunction());
+        dict.__setitem__("min", new MinFunction());
         dict.__setitem__("oct", new BuiltinFunctions("oct", 32, 1));
         dict.__setitem__("pow", new BuiltinFunctions("pow", 33, 2, 3));
         dict.__setitem__("raw_input", new BuiltinFunctions("raw_input", 34, 0, 1));
@@ -774,49 +769,6 @@ public class __builtin__ {
             }
         }
         return list;
-    }
-
-    public static PyObject max(PyObject[] l) {
-        if (l.length == 1) {
-            return max(l[0]);
-        }
-        return max(new PyTuple(l));
-    }
-
-    private static PyObject max(PyObject o) {
-        PyObject max = null;
-        for (PyObject item : o.asIterable()) {
-            if (max == null || item._gt(max).__nonzero__()) {
-                max = item;
-            }
-        }
-        if (max == null) {
-            throw Py.ValueError("max of empty sequence");
-        }
-        return max;
-    }
-
-    public static PyObject min(PyObject[] l) {
-        if (l.length == 0) {
-            throw Py.TypeError("min expected 1 arguments, got 0");
-        }
-        if (l.length == 1) {
-            return min(l[0]);
-        }
-        return min(new PyTuple(l));
-    }
-
-    private static PyObject min(PyObject o) {
-        PyObject min = null;
-        for (PyObject item : o.asIterable()) {
-            if (min == null || item._lt(min).__nonzero__()) {
-                min = item;
-            }
-        }
-        if (min == null) {
-            throw Py.ValueError("min of empty sequence");
-        }
-        return min;
     }
 
     public static PyString oct(PyObject o) {
@@ -1249,7 +1201,6 @@ class SortedFunction extends PyObject {
             }
         }
 
-        // redo parsing to be more conformant
         PyList seq = new PyList(args[0]);
 
         PyObject newargs[] = new PyObject[args.length - 1];
@@ -1329,5 +1280,141 @@ class AnyFunction extends PyObject {
     @Override
     public String toString() {
         return "<built-in function any>";
+    }
+}
+
+
+
+class MaxFunction extends PyObject {
+
+    @ExposedGet(name = "__doc__")
+    @Override
+    public PyObject getDoc() {
+        return new PyString(
+                "max(iterable[, key=func]) -> value\nmax(a, b, c, ...[, key=func]) -> value\n\n" +
+                "With a single iterable argument, return its largest item.\n" + 
+                "With two or more arguments, return the largest argument.");
+    }
+
+    @Override
+    public PyObject __call__(PyObject args[], String kwds[]) {
+        int argslen = args.length;
+        PyObject key = null;
+        
+        if (args.length - kwds.length == 0) {
+            throw Py.TypeError(" max() expected 1 arguments, got 0");
+        }
+        if (kwds.length > 0) {
+            if (kwds[0].equals("key")) {
+                key = args[argslen - 1];
+                PyObject newargs[] = new PyObject[argslen - 1];
+                System.arraycopy(args, 0, newargs, 0, argslen - 1);
+                args = newargs;
+            }
+            else {
+                throw Py.TypeError(" max() got an unexpected keyword argument");
+            }
+        }
+        
+        if (args.length > 1) {
+            return max(new PyTuple(args), key);
+        }
+        else {
+            return max(args[0], key);
+        }
+    }
+    
+    @Override
+    public String toString() {
+        return "<built-in function min>";
+    }
+    
+    private static PyObject max(PyObject o, PyObject key) {
+        PyObject max = null;
+        PyObject maxKey = null;
+        for (PyObject item : o.asIterable()) {
+            PyObject itemKey;
+            if (key == null) {
+                itemKey = item;
+            }
+            else {
+                itemKey = key.__call__(item);
+            }
+            if (maxKey == null || itemKey._gt(maxKey).__nonzero__()) {
+                maxKey = itemKey;
+                max = item;
+            }
+        }
+        if (max == null) {
+            throw Py.ValueError("min of empty sequence");
+        }
+        return max;
+    }
+}
+
+class MinFunction extends PyObject {
+
+    @ExposedGet(name = "__doc__")
+    @Override
+    public PyObject getDoc() {
+        return new PyString(
+                "min(iterable[, key=func]) -> value\nmin(a, b, c, ...[, key=func]) -> value\n\n" +
+                "With a single iterable argument, return its smallest item.\n" +
+                "With two or more arguments, return the smallest argument.'");
+    }
+
+    @Override
+    public PyObject __call__(PyObject args[], String kwds[]) {
+        int argslen = args.length;
+        PyObject key = null;
+        
+        if (args.length - kwds.length == 0) {
+            throw Py.TypeError(" min() expected 1 arguments, got 0");
+        }
+        if (kwds.length > 0) {
+            if (kwds[0].equals("key")) {
+                key = args[argslen - 1];
+                PyObject newargs[] = new PyObject[argslen - 1];
+                System.arraycopy(args, 0, newargs, 0, argslen - 1);
+                args = newargs;
+            }
+            else {
+                throw Py.TypeError(" min() got an unexpected keyword argument");
+            }
+        }
+        
+        if (args.length > 1) {
+            return min(new PyTuple(args), key);
+        }
+        else {
+            return min(args[0], key);
+        }
+    }
+    
+    @Override
+    public String toString() {
+        return "<built-in function min>";
+    }
+    
+    private static PyObject min(PyObject o, PyObject key) {
+        PyObject min = null;
+        PyObject minKey = null;
+        for (PyObject item : o.asIterable()) {
+            PyObject itemKey;
+            if (key == null) {
+                itemKey = item;
+            }
+            else {
+                itemKey = key.__call__(item);
+            }
+            if (minKey == null || itemKey._lt(minKey).__nonzero__()) {
+                minKey = itemKey;
+                min = item;
+            }
+        }
+        if (min == null) {
+            throw Py.ValueError("min of empty sequence");
+        }
+        return min;
     }
 }
