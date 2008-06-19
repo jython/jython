@@ -447,26 +447,26 @@ int implicitLineJoiningLevel = 0;
 int startPos=-1;
 
     public Token nextToken() {
-		while (true) {
-			state.token = null;
-			state.channel = Token.DEFAULT_CHANNEL;
-			state.tokenStartCharIndex = input.index();
-			state.tokenStartCharPositionInLine = input.getCharPositionInLine();
-			state.tokenStartLine = input.getLine();
-			state.text = null;
-			if ( input.LA(1)==CharStream.EOF ) {
-				return Token.EOF_TOKEN;
-			}
-			try {
-				mTokens();
-				if ( state.token==null ) {
-					emit();
-				}
-				else if ( state.token==Token.SKIP_TOKEN ) {
-					continue;
-				}
-				return state.token;
-			}
+        while (true) {
+            state.token = null;
+            state.channel = Token.DEFAULT_CHANNEL;
+            state.tokenStartCharIndex = input.index();
+            state.tokenStartCharPositionInLine = input.getCharPositionInLine();
+            state.tokenStartLine = input.getLine();
+            state.text = null;
+            if ( input.LA(1)==CharStream.EOF ) {
+                return Token.EOF_TOKEN;
+            }
+            try {
+                mTokens();
+                if ( state.token==null ) {
+                    emit();
+                }
+                else if ( state.token==Token.SKIP_TOKEN ) {
+                    continue;
+                }
+                return state.token;
+            }
             catch (RecognitionException re) {
                 throw new ParseException(re);
             }
@@ -804,9 +804,9 @@ for_stmt : FOR exprlist[expr_contextType.Store] IN testlist[expr_contextType.Loa
 
 //try_stmt: ('try' ':' suite
 //           ((except_clause ':' suite)+
-//	    ['else' ':' suite]
-//	    ['finally' ':' suite] |
-//	   'finally' ':' suite))
+//           ['else' ':' suite]
+//           ['finally' ':' suite] |
+//           'finally' ':' suite))
 try_stmt : 'try' COLON trysuite=suite
            ( (except_clause+ (ORELSE COLON elsesuite=suite)? (FINALLY COLON finalsuite=suite)?
           -> ^(TryExcept 'try' ^(Body $trysuite) except_clause+ ^(ORELSE $elsesuite)? ^(FINALLY $finalsuite)?))
@@ -861,7 +861,7 @@ not_test[expr_contextType ctype] : NOT^ not_test[ctype]
 
 //comparison: expr (comp_op expr)*
 comparison[expr_contextType ctype]: expr[ctype] (comp_op^ expr[ctype])*
-	;
+    ;
 
 //comp_op: '<'|'>'|'=='|'>='|'<='|'<>'|'!='|'in'|'not' 'in'|'is'|'is' 'not'
 comp_op : LESS
@@ -903,7 +903,7 @@ shift_expr : arith_expr ((LEFTSHIFT^|RIGHTSHIFT^) arith_expr)*
 
 //arith_expr: term (('+'|'-') term)*
 arith_expr: term ((PLUS^|MINUS^) term)*
-	;
+    ;
 
 //term: factor (('*'|'/'|'%'|'//') factor)*
 term : factor ((STAR^ | SLASH^ | PERCENT^ | DOUBLESLASH^ ) factor)*
