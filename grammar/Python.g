@@ -492,9 +492,10 @@ file_input : (NEWLINE | stmt)* {debug("parsed file_input");}
 eval_input : (NEWLINE)* testlist[expr_contextType.Load] (NEWLINE)* -> ^(Expression testlist)
            ;
 
-//decorators: decorator+
-decorators: decorator+
-          ;
+//not in CPython's Grammar file
+dotted_attr
+    : NAME (DOT^ NAME)*
+    ;
 
 //decorator: '@' dotted_name [ '(' [arglist] ')' ] NEWLINE
 decorator: AT dotted_attr 
@@ -503,9 +504,9 @@ decorator: AT dotted_attr
            ) NEWLINE
          ;
 
-dotted_attr
-    : NAME (DOT^ NAME)*
-    ;
+//decorators: decorator+
+decorators: decorator+
+          ;
 
 //funcdef: [decorators] 'def' NAME parameters ':' suite
 funcdef : decorators? DEF NAME parameters COLON suite
@@ -520,7 +521,13 @@ parameters : LPAREN
              RPAREN
            ;
 
-//varargslist: (fpdef ['=' test] ',')* ('*' NAME [',' '**' NAME] | '**' NAME) | fpdef ['=' test] (',' fpdef ['=' test])* [',']
+//not in CPython's Grammar file
+defparameter : fpdef (ASSIGN test[expr_contextType.Load])? {debug("parsed defparameter");}
+             ;
+
+//varargslist: ((fpdef ['=' test] ',')*
+//              ('*' NAME [',' '**' NAME] | '**' NAME) |
+//              fpdef ['=' test] (',' fpdef ['=' test])* [','])
 varargslist : defparameter (options {greedy=true;}:COMMA defparameter)*
               (COMMA
                   ( STAR starargs=NAME (COMMA DOUBLESTAR kwargs=NAME)?
@@ -533,10 +540,6 @@ varargslist : defparameter (options {greedy=true;}:COMMA defparameter)*
             | DOUBLESTAR kwargs=NAME {debug("parsed varargslist KWS");}
            -> ^(KWArgs $kwargs)
             ;
-
-//not in CPython's Grammar file
-defparameter : fpdef (ASSIGN test[expr_contextType.Load])? {debug("parsed defparameter");}
-             ;
 
 //fpdef: NAME | '(' fplist ')'
 fpdef : NAME {debug("parsed fpdef NAME");}
@@ -559,8 +562,8 @@ stmt : simple_stmt
 simple_stmt : small_stmt (options {greedy=true;}:SEMI small_stmt)* (SEMI)? NEWLINE
            -> small_stmt+
             ;
-
-//small_stmt: expr_stmt | print_stmt  | del_stmt | pass_stmt | flow_stmt | import_stmt | global_stmt | exec_stmt | assert_stmt
+//small_stmt: (expr_stmt | print_stmt  | del_stmt | pass_stmt | flow_stmt |
+//             import_stmt | global_stmt | exec_stmt | assert_stmt)
 small_stmt : expr_stmt
            | print_stmt
            | del_stmt
@@ -572,7 +575,8 @@ small_stmt : expr_stmt
            | assert_stmt
            ;
 
-//expr_stmt: testlist (augassign testlist | ('=' testlist)*)
+//expr_stmt: testlist (augassign (yield_expr|testlist) |
+//                     ('=' (yield_expr|testlist))*)
 expr_stmt : lhs=testlist[expr_contextType.Store]
             ( (augassign yield_expr -> ^(augassign $lhs yield_expr))
             | (augassign rhs=testlist[expr_contextType.Load] -> ^(augassign $lhs $rhs))
@@ -614,7 +618,8 @@ assign_yield
     : ASSIGN yield_expr -> ^(Value yield_expr)
     ;
 
-//augassign: '+=' | '-=' | '*=' | '/=' | '%=' | '&=' | '|=' | '^=' | '<<=' | '>>=' | '**=' | '//='
+//augassign: ('+=' | '-=' | '*=' | '/=' | '%=' | '&=' | '|=' | '^=' |
+//            '<<=' | '>>=' | '**=' | '//=')
 augassign : PLUSEQUAL
           | MINUSEQUAL
           | STAREQUAL
@@ -629,7 +634,8 @@ augassign : PLUSEQUAL
           | DOUBLESLASHEQUAL
           ;
 
-//print_stmt: 'print' ( [ test (',' test)* [','] ] | '>>' test [ (',' test)+ [','] ] )
+//print_stmt: 'print' ( [ test (',' test)* [','] ] |
+//                      '>>' test [ (',' test)+ [','] ] )
 print_stmt : PRINT
              ( t1=printlist -> {$t1.newline}? ^(PRINT ^(Values $t1) ^(Newline))
                             -> ^(PRINT ^(Values $t1))
