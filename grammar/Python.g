@@ -84,8 +84,6 @@ tokens {
     NameTok;
     Test;
     Msg;
-    Import;
-    ImportFrom;
     Level;
     Body;
     Bases; 
@@ -97,70 +95,47 @@ tokens {
     KWArgs;
     Assign;
     AugAssign;
-    Compare;
     Tuple;
     List;
     Dict;
-    If;
     IfExp;
-    OrElse;
-    Elif;
-    While; 
     TryExcept;
     TryFinally;
     ExceptHandler;
-    For;
-    Yield;
     StrTok;
     NumTok;
     IsNot;
-    In;
     NotIn;
     Type;
     Inst;
     Tback;
-    Global;
     Globals;
     Locals;
-    Assert;
     Ellipsis;
-    Comprehension;
     ListComp;
-    Lambda;
     Repr;
-    BinOp;
     Subscript;
     SubscriptList;
     Index;
     Target;
-    Targets;
     Value;
     Lower;
     Upper;
     Step;
-    UnaryOp;
     UAdd;
     USub;
     Invert;
-    Delete;
-    Default;
     Alias;
     Asname;
-    Decorator;
     Decorators;
-    With;
     GeneratorExp;
-    Id;
-    Iter;
     Ifs;
     Elts;
-    Ctx;
-    Attr;
     Call;
     Dest;
     Values;
     Newline;
-    //The tokens below are not represented in the 2.5 Python.asdl
+
     FpList;
     StepOp;
     UpperOp;
@@ -169,7 +144,6 @@ tokens {
     GenIf;
     ListFor;
     ListIf;
-    FinalBody;
     Parens;
     Brackets;
 }
@@ -524,8 +498,8 @@ decorators: decorator+
 
 //decorator: '@' dotted_name [ '(' [arglist] ')' ] NEWLINE
 decorator: AT dotted_attr 
-           ( (LPAREN arglist? RPAREN) -> ^(Decorator dotted_attr ^(Call ^(Args arglist)?))
-           | -> ^(Decorator dotted_attr)
+           ( (LPAREN arglist? RPAREN) -> ^(AT dotted_attr ^(Call ^(Args arglist)?))
+           | -> ^(AT dotted_attr)
            ) NEWLINE
          ;
 
@@ -695,8 +669,8 @@ printlist2 returns [boolean newline]
 
 
 //del_stmt: 'del' exprlist
-del_stmt : 'del' exprlist2
-        -> ^(Delete 'del' exprlist2)
+del_stmt : DELETE exprlist2
+        -> ^(DELETE exprlist2)
          ;
 
 //pass_stmt: 'pass'
@@ -742,19 +716,19 @@ import_stmt : import_name
             ;
 
 //import_name: 'import' dotted_as_names
-import_name : 'import' dotted_as_names
-           -> ^(Import 'import' dotted_as_names)
+import_name : IMPORT dotted_as_names
+           -> ^(IMPORT dotted_as_names)
             ;
 
 //import_from: ('from' ('.'* dotted_name | '.'+)
 //              'import' ('*' | '(' import_as_names ')' | import_as_names))
-import_from: 'from' (DOT* dotted_name | DOT+) 'import'
+import_from: FROM (DOT* dotted_name | DOT+) IMPORT 
               (STAR
-             -> ^(ImportFrom 'from' ^(Level DOT*)? ^(Value dotted_name)? ^(Import STAR))
+             -> ^(FROM ^(Level DOT*)? ^(Value dotted_name)? ^(IMPORT STAR))
               | import_as_names
-             -> ^(ImportFrom 'from' ^(Level DOT*)? ^(Value dotted_name)? ^(Import import_as_names))
+             -> ^(FROM ^(Level DOT*)? ^(Value dotted_name)? ^(IMPORT import_as_names))
               | LPAREN import_as_names RPAREN
-             -> ^(ImportFrom 'from' ^(Level DOT*)? ^(Value dotted_name)? ^(Import import_as_names))
+             -> ^(FROM ^(Level DOT*)? ^(Value dotted_name)? ^(IMPORT import_as_names))
               )
            ;
 
@@ -784,8 +758,8 @@ dotted_name : NAME (DOT NAME)*
             ;
 
 //global_stmt: 'global' NAME (',' NAME)*
-global_stmt : 'global' NAME (COMMA NAME)*
-           -> ^(Global 'global' NAME+)
+global_stmt : GLOBAL NAME (COMMA NAME)*
+           -> ^(GLOBAL NAME+)
             ;
 
 //exec_stmt: 'exec' expr ['in' test [',' test]]
@@ -794,8 +768,8 @@ exec_stmt : keyEXEC expr[expr_contextType.Load] ('in' t1=test[expr_contextType.L
           ;
 
 //assert_stmt: 'assert' test [',' test]
-assert_stmt : 'assert' t1=test[expr_contextType.Load] (COMMA t2=test[expr_contextType.Load])?
-           -> ^(Assert 'assert' ^(Test $t1) ^(Msg $t2)?)
+assert_stmt : ASSERT t1=test[expr_contextType.Load] (COMMA t2=test[expr_contextType.Load])?
+           -> ^(ASSERT ^(Test $t1) ^(Msg $t2)?)
             ;
 
 //compound_stmt: if_stmt | while_stmt | for_stmt | try_stmt | funcdef | classdef
@@ -809,23 +783,23 @@ compound_stmt : if_stmt
               ;
 
 //if_stmt: 'if' test ':' suite ('elif' test ':' suite)* ['else' ':' suite]
-if_stmt: 'if' test[expr_contextType.Load] COLON ifsuite=suite elif_clause*  ('else' COLON elsesuite=suite)?
-      -> ^(If 'if' test $ifsuite elif_clause* ^(OrElse $elsesuite)?)
+if_stmt: IF test[expr_contextType.Load] COLON ifsuite=suite elif_clause*  (ORELSE COLON elsesuite=suite)?
+      -> ^(IF test $ifsuite elif_clause* ^(ORELSE $elsesuite)?)
        ;
 
 //not in CPython's Grammar file
-elif_clause : 'elif' test[expr_contextType.Load] COLON suite
-           -> ^(Elif test suite)
+elif_clause : ELIF test[expr_contextType.Load] COLON suite
+           -> ^(ELIF test suite)
             ;
 
 //while_stmt: 'while' test ':' suite ['else' ':' suite]
-while_stmt : 'while' test[expr_contextType.Load] COLON s1=suite ('else' COLON s2=suite)?
-          -> ^(While 'while' test ^(Body $s1) ^(OrElse $s2)?)
+while_stmt : WHILE test[expr_contextType.Load] COLON s1=suite (ORELSE COLON s2=suite)?
+          -> ^(WHILE test ^(Body $s1) ^(ORELSE $s2)?)
            ;
 
 //for_stmt: 'for' exprlist 'in' testlist ':' suite ['else' ':' suite]
-for_stmt : 'for' exprlist[expr_contextType.Store] 'in' testlist[expr_contextType.Load] COLON s1=suite ('else' COLON s2=suite)?
-        -> ^(For 'for' ^(Target exprlist) ^(Iter testlist) ^(Body $s1) ^(OrElse $s2)?)
+for_stmt : FOR exprlist[expr_contextType.Store] IN testlist[expr_contextType.Load] COLON s1=suite (ORELSE COLON s2=suite)?
+        -> ^(FOR ^(Target exprlist) ^(IN testlist) ^(Body $s1) ^(ORELSE $s2)?)
          ;
 
 //try_stmt: ('try' ':' suite
@@ -834,16 +808,16 @@ for_stmt : 'for' exprlist[expr_contextType.Store] 'in' testlist[expr_contextType
 //	    ['finally' ':' suite] |
 //	   'finally' ':' suite))
 try_stmt : 'try' COLON trysuite=suite
-           ( (except_clause+ ('else' COLON elsesuite=suite)? ('finally' COLON finalsuite=suite)?
-          -> ^(TryExcept 'try' ^(Body $trysuite) except_clause+ ^(OrElse $elsesuite)? ^(FinalBody 'finally' $finalsuite)?))
-           | ('finally' COLON finalsuite=suite
-          -> ^(TryFinally 'try' ^(Body $trysuite) ^(FinalBody $finalsuite)))
+           ( (except_clause+ (ORELSE COLON elsesuite=suite)? (FINALLY COLON finalsuite=suite)?
+          -> ^(TryExcept 'try' ^(Body $trysuite) except_clause+ ^(ORELSE $elsesuite)? ^(FINALLY $finalsuite)?))
+           | (FINALLY COLON finalsuite=suite
+          -> ^(TryFinally 'try' ^(Body $trysuite) ^(FINALLY $finalsuite)))
            )
          ;
 
 //with_stmt: 'with' test [ with_var ] ':' suite
-with_stmt: 'with' test[expr_contextType.Load] (with_var)? COLON suite
-        -> ^(With test with_var? ^(Body suite))
+with_stmt: WITH test[expr_contextType.Load] (with_var)? COLON suite
+        -> ^(WITH test with_var? ^(Body suite))
          ;
 
 //with_var: ('as' | NAME) expr
@@ -865,8 +839,8 @@ suite : simple_stmt
 //test: or_test ['if' or_test 'else' test] | lambdef
 test[expr_contextType ctype]
     :o1=or_test[ctype]
-    ( ('if' or_test[expr_contextType.Load] 'else') => 'if' o2=or_test[ctype] 'else' test[expr_contextType.Load]
-      -> ^(IfExp ^(Test $o2) ^(Body $o1) ^(OrElse test))
+    ( (IF or_test[expr_contextType.Load] ORELSE) => IF o2=or_test[ctype] ORELSE test[expr_contextType.Load]
+      -> ^(IfExp ^(Test $o2) ^(Body $o1) ^(ORELSE test))
     | -> or_test
     )
     | lambdef {debug("parsed lambdef");}
@@ -990,8 +964,8 @@ testlist_gexp
     ;
 
 //lambdef: 'lambda' [varargslist] ':' test
-lambdef: 'lambda' (varargslist)? COLON test[expr_contextType.Load] {debug("parsed lambda");}
-      -> ^(Lambda 'lambda' varargslist? ^(Body test))
+lambdef: LAMBDA (varargslist)? COLON test[expr_contextType.Load] {debug("parsed lambda");}
+      -> ^(LAMBDA varargslist? ^(Body test))
        ;
 
 //trailer: '(' [arglist] ')' | '[' subscriptlist ']' | '.' NAME
@@ -1076,12 +1050,12 @@ list_iter : list_for
           ;
 
 //list_for: 'for' exprlist 'in' testlist_safe [list_iter]
-list_for : 'for' exprlist[expr_contextType.Load] 'in' testlist[expr_contextType.Load] (list_iter)?
-        -> ^(ListFor ^(Target exprlist) ^(Iter testlist) ^(Ifs list_iter)?)
+list_for : FOR exprlist[expr_contextType.Load] IN testlist[expr_contextType.Load] (list_iter)?
+        -> ^(ListFor ^(Target exprlist) ^(IN testlist) ^(Ifs list_iter)?)
          ;
 
 //list_if: 'if' test [list_iter]
-list_if : 'if' test[expr_contextType.Load] (list_iter)?
+list_if : IF test[expr_contextType.Load] (list_iter)?
        -> ^(ListIf ^(Target test) (Ifs list_iter)?)
         ;
 
@@ -1091,18 +1065,18 @@ gen_iter: gen_for
         ;
 
 //gen_for: 'for' exprlist 'in' or_test [gen_iter]
-gen_for: 'for' exprlist[expr_contextType.Load] 'in' or_test[expr_contextType.Load] gen_iter?
-      -> ^(GenFor ^(Target exprlist) ^(Iter or_test) ^(Ifs gen_iter)?)
+gen_for: FOR exprlist[expr_contextType.Load] IN or_test[expr_contextType.Load] gen_iter?
+      -> ^(GenFor ^(Target exprlist) ^(IN or_test) ^(Ifs gen_iter)?)
        ;
 
 //gen_if: 'if' old_test [gen_iter]
-gen_if: 'if' test[expr_contextType.Load] gen_iter?
+gen_if: IF test[expr_contextType.Load] gen_iter?
      -> ^(GenIf ^(Target test) ^(Ifs gen_iter)?)
       ;
 
 //yield_expr: 'yield' [testlist]
-yield_expr : 'yield' testlist[expr_contextType.Load]?
-          -> ^(Yield 'yield' ^(Value testlist)?)
+yield_expr : YIELD testlist[expr_contextType.Load]?
+          -> ^(YIELD ^(Value testlist)?)
            ;
 
 //XXX:
@@ -1141,6 +1115,21 @@ CONTINUE  : 'continue' ;
 RETURN    : 'return' ;
 RAISE     : 'raise' ;
 PASS      : 'pass'  ;
+IMPORT    : 'import' ;
+FROM      : 'from' ;
+FOR       : 'for' ;
+ORELSE    : 'else' ;
+ELIF      : 'elif' ;
+IN        : 'in' ;
+IF        : 'if' ;
+WHILE     : 'while' ;
+WITH      : 'with' ;
+LAMBDA    : 'lambda' ;
+GLOBAL    : 'global' ;
+YIELD     : 'yield' ;
+ASSERT    : 'assert' ;
+FINALLY   : 'finally' ;
+DELETE    : 'del' ;
 
 LPAREN    : '(' {implicitLineJoiningLevel++;} ;
 
