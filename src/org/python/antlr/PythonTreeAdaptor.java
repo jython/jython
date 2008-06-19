@@ -20,6 +20,8 @@ public class PythonTreeAdaptor extends CommonTreeAdaptor {
             //     for leading whitespace lexing.
             if (startToken instanceof CommonToken) {
                 startChar = ((CommonToken)startToken).getStartIndex();
+            } else if (startToken instanceof ImaginaryToken) {
+                startChar = ((ImaginaryToken)startToken).getStartIndex();
             }
         }
         if (stopToken!=null) {
@@ -28,6 +30,8 @@ public class PythonTreeAdaptor extends CommonTreeAdaptor {
             //     for leading whitespace lexing.
             if (stopToken instanceof CommonToken) {
                 stopChar = ((CommonToken)stopToken).getStopIndex();
+            } else if (stopToken instanceof ImaginaryToken) {
+                stopChar = ((ImaginaryToken)stopToken).getStopIndex();
             }
         }
         PythonTree pt = (PythonTree)t;

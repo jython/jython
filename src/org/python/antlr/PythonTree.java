@@ -40,7 +40,7 @@ public class PythonTree extends CommonTree implements AST {
 
 	public int getCharStartIndex() {
 		if ( charStartIndex == -1 && token != null ) {
-			return token.getTokenIndex();
+			return ((CommonToken)token).getStartIndex();
 		}
 		return charStartIndex ;
 	}
@@ -51,7 +51,7 @@ public class PythonTree extends CommonTree implements AST {
 
 	public int getCharStopIndex() {
 		if ( charStopIndex == -1 && token != null ) {
-			return token.getTokenIndex();
+			return ((CommonToken)token).getStopIndex();
 		}
 		return charStopIndex;
 	}

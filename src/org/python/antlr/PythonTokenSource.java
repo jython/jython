@@ -151,6 +151,7 @@ public class PythonTokenSource implements TokenSource {
 
 		// save NEWLINE in the queue
 		//System.out.println("found newline: "+t+" stack is "+stackString());
+        CommonToken newline = (CommonToken)t;
 		List hiddenTokens = stream.getTokens(lastTokenAddedIndex+1,t.getTokenIndex()-1);
 		if ( hiddenTokens!=null ) {
 			tokens.addAll(hiddenTokens);
@@ -196,9 +197,14 @@ public class PythonTokenSource implements TokenSource {
 			//System.out.println("dedented; prevIndex of cpos="+cpos+" is "+prevIndex);
 			// generate DEDENTs for each indent level we backed up over
 			for (int d=sp-1; d>=prevIndex; d--) {
-				Token dedent = new ClassicToken(PythonParser.DEDENT,"");
+				ImaginaryToken dedent = new ImaginaryToken(PythonParser.DEDENT,"");
 				dedent.setCharPositionInLine(t.getCharPositionInLine());
 				dedent.setLine(t.getLine());
+
+                //XXX: this will get messed up by comments.
+                dedent.setStartIndex(newline.getStartIndex());
+                dedent.setStopIndex(newline.getStopIndex());
+
 				tokens.addElement(dedent);
 			}
 			sp = prevIndex; // pop those off indent level
