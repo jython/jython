@@ -1,3 +1,7 @@
+/*
+Copyright (c) 2007-2008 Frank Wierzbicki
+Licensed to PSF under a Contributor Agreement.
+*/
 tree grammar PythonWalker;
 
 options {
