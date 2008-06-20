@@ -1340,21 +1340,21 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         code.aload(tmp);
         String name = null;
         switch (node.op) {
-        case Add:    name = "__iadd__"; break;
-        case Sub: name = "__isub__"; break;
-        case Mult:    name = "__imul__"; break;
-        case Div:   name = "__idiv__"; break;
-        case Mod:    name = "__imod__"; break;
-        case Pow:   name = "__ipow__"; break;
-        case LShift:    name = "__ilshift__"; break;
-        case RShift: name = "__irshift__"; break;
-        case BitOr:    name = "__ior__"; break;
-        case BitXor: name = "__ixor__"; break;
-        case BitAnd: name = "__iand__"; break;
-        case FloorDiv: name = "__ifloordiv__"; break;
+        case Add:    name = "_iadd"; break;
+        case Sub: name = "_isub"; break;
+        case Mult:    name = "_imul"; break;
+        case Div:   name = "_idiv"; break;
+        case Mod:    name = "_imod"; break;
+        case Pow:   name = "_ipow"; break;
+        case LShift:    name = "_ilshift"; break;
+        case RShift: name = "_irshift"; break;
+        case BitOr:    name = "_ior"; break;
+        case BitXor: name = "_ixor"; break;
+        case BitAnd: name = "_iand"; break;
+        case FloorDiv: name = "_ifloordiv"; break;
         }
         if (node.op == operatorType.Div && module.getFutures().areDivisionOn()) {
-            name = "__itruediv__";
+            name = "_itruediv";
         }
         code.invokevirtual("org/python/core/PyObject", name, "(" + $pyObj + ")" + $pyObj);
         code.freeLocal(tmp);
