@@ -80,18 +80,6 @@ public class zipimporterDerived extends zipimporter implements Slotted {
         return super.__float__();
     }
 
-    public PyLong __long__() {
-        PyType self_type=getType();
-        PyObject impl=self_type.lookup("__long__");
-        if (impl!=null) {
-            PyObject res=impl.__get__(this,self_type).__call__();
-            if (res instanceof PyLong)
-                return(PyLong)res;
-            throw Py.TypeError("__long__"+" returned non-"+"long"+" (type "+res.getType().fastGetName()+")");
-        }
-        return super.__long__();
-    }
-
     public PyComplex __complex__() {
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__complex__");
@@ -654,6 +642,18 @@ public class zipimporterDerived extends zipimporter implements Slotted {
             throw Py.TypeError("__int__"+" should return an integer");
         }
         return super.__int__();
+    }
+
+    public PyObject __long__() {
+        PyType self_type=getType();
+        PyObject impl=self_type.lookup("__long__");
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,self_type).__call__();
+            if (res instanceof PyLong||res instanceof PyInteger)
+                return res;
+            throw Py.TypeError("__long__"+" returned non-"+"long"+" (type "+res.getType().fastGetName()+")");
+        }
+        return super.__long__();
     }
 
     public int hashCode() {
