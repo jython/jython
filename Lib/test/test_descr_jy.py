@@ -175,9 +175,90 @@ class SubclassDescrTestCase(unittest.TestCase):
             self.assertEqual(func(C()), cresult)
 
 
+class InPlaceTestCase(unittest.TestCase):
+
+    def test_iadd(self):
+        class Foo(object):
+            def __add__(self, other):
+                return 1
+            def __radd__(self, other):
+                return 2
+        class Bar(object):
+            pass
+        class Baz(object):
+            def __iadd__(self, other):
+                return NotImplemented
+        foo = Foo()
+        foo += Bar()
+        self.assertEqual(foo, 1)
+        bar = Bar()
+        bar += Foo()
+        self.assertEqual(bar, 2)
+        baz = Baz()
+        baz += Foo()
+        self.assertEqual(baz, 2)
+
+    def test_imul(self):
+        class FooInplace(list):
+            def __imul__(self, other):
+                return [1]
+        class Bar(FooInplace):
+            def __mul__(self, other):
+                return [2]
+        foo = FooInplace()
+        foo *= 3
+        self.assertEqual(foo, [1])
+        foo = Bar([3])
+        foo *= 3
+        self.assertEqual(foo, [1])
+
+        class Baz(FooInplace):
+            def __mul__(self, other):
+                return [3]
+        baz = Baz()
+        baz *= 3
+        self.assertEqual(baz, [1])
+
+    def test_list(self):
+        class Foo(list):
+            def __mul__(self, other):
+                return [1]
+        foo = Foo([2])
+        foo *= 3
+        if test_support.is_jython:
+            self.assertEqual(foo, [2, 2, 2])
+        else:
+            # CPython ignores list.__imul__ on a subclass with __mul__
+            # (unlike Jython and PyPy)
+            self.assertEqual(foo, [1])
+
+        class Bar(object):
+            def __radd__(self, other):
+                return 1
+            def __rmul__(self, other):
+                return 2
+        l = []
+        l += Bar()
+        self.assertEqual(l, 1)
+        l = []
+        l *= Bar()
+        self.assertEqual(l, 2)
+
+    def test_iand(self):
+        # Jython's set __iand__ (as well as isub, ixor, etc) was
+        # previously broken
+        class Foo(set):
+            def __and__(self, other):
+                return set([1])
+        foo = Foo()
+        foo &= 3
+        self.assertEqual(foo, set([1]))
+
+
 def test_main():
     test_support.run_unittest(TestDescrTestCase,
-                              SubclassDescrTestCase)
+                              SubclassDescrTestCase,
+                              InPlaceTestCase)
 
 if __name__ == '__main__':
     test_main()

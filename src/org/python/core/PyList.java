@@ -250,21 +250,10 @@ public class PyList extends PySequenceList {
     }
 
     public PyObject __imul__(PyObject o) {
-        PyObject result = list___imul__(o);
-        if(result == null) {
-            // We can't perform an in-place multiplication on o's
-            // type, so let o try to rmul this list. A new list will
-            // be created instead of modifying this one, but that's
-            // preferable to just blowing up on this operation.
-            result = o.__rmul__(this);
-            if(result == null) {
-                throw Py.TypeError(_unsupportedop("*", o));
-            }
-        }
-        return result;
+        return list___imul__(o);
     }
 
-    @ExposedMethod
+    @ExposedMethod(type = MethodType.BINARY)
     final PyObject list___imul__(PyObject o) {
         if(!(o instanceof PyInteger || o instanceof PyLong)) {
             return null;
@@ -664,10 +653,24 @@ public class PyList extends PySequenceList {
         return list___iadd__(o);
     }
 
-    @ExposedMethod
+    @ExposedMethod(type = MethodType.BINARY)
     final PyObject list___iadd__(PyObject o) {
-        extend(fastSequence(o, "argument to += must be a sequence"));
+        PyType oType = o.getType();
+        if (oType == TYPE || oType == PyTuple.TYPE || this == o) {
+            extend(fastSequence(o, "argument must be iterable"));
+            return this;
+        }
 
+        PyObject it;
+        try {
+            it = o.__iter__();
+        } catch (PyException pye) {
+            if (!Py.matchException(pye, Py.TypeError)) {
+                throw pye;
+            }
+            return null;
+        }
+        extend(it);
         return this;
     }
 

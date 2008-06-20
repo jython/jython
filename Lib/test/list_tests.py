@@ -450,7 +450,13 @@ class CommonTest(seq_tests.CommonTest):
         u += "eggs"
         self.assertEqual(u, self.type2test("spameggs"))
 
-        self.assertRaises(TypeError, u.__iadd__, None)
+        # CPython specific; Jython/pypy test via the operator module
+        # instead
+        if not test_support.is_jython:
+            self.assertRaises(TypeError, u.__iadd__, None)
+        else:
+            import operator
+            self.assertRaises(TypeError, operator.__iadd__, u, None)
 
     def test_imul(self):
         u = self.type2test([0, 1])

@@ -64,6 +64,19 @@ class OperatorFunctions extends PyBuiltinFunctionSet
         case 36: return arg1._pow(arg2);
         case 37: return arg1._is(arg2);
         case 38: return arg1._isnot(arg2);
+        case 39: return arg1._iadd(arg2);
+        case 40: return arg1._iand(arg2);
+        case 41: return arg1._idiv(arg2);
+        case 42: return arg1._ifloordiv(arg2);
+        case 43: return arg1._ilshift(arg2);
+        case 44: return arg1._imod(arg2);
+        case 45: return arg1._imul(arg2);
+        case 46: return arg1._ior(arg2);
+        case 47: return arg1._ipow(arg2);
+        case 48: return arg1._irshift(arg2);
+        case 49: return arg1._isub(arg2);
+        case 50: return arg1._itruediv(arg2);
+        case 51: return arg1._ixor(arg2);
         default:
             throw info.unexpectedCall(2, false);
         }
@@ -209,6 +222,38 @@ public class operator implements ClassDictInit
         dict.__setitem__("__pow__", new OperatorFunctions("pow", 36, 2));
         dict.__setitem__("is_", new OperatorFunctions("is_", 37, 2));
         dict.__setitem__("is_not", new OperatorFunctions("is_not", 38, 2));
+
+        dict.__setitem__("__iadd__", new OperatorFunctions("__iadd__", 39, 2));
+        dict.__setitem__("iadd", new OperatorFunctions("iadd", 39, 2));
+        dict.__setitem__("__iconcat__", new OperatorFunctions("__iconcat__", 39, 2));
+        dict.__setitem__("iconcat", new OperatorFunctions("iconcat", 39, 2));
+        dict.__setitem__("__iand__", new OperatorFunctions("__iand__", 40, 2));
+        dict.__setitem__("iand", new OperatorFunctions("iand", 40, 2));
+        dict.__setitem__("__idiv__", new OperatorFunctions("__idiv__", 41, 2));
+        dict.__setitem__("idiv", new OperatorFunctions("idiv", 41, 2));
+        dict.__setitem__("__ifloordiv__", new OperatorFunctions("__ifloordiv__", 42, 2));
+        dict.__setitem__("ifloordiv", new OperatorFunctions("ifloordiv", 42, 2));
+        dict.__setitem__("__ilshift__", new OperatorFunctions("__ilshift__", 43, 2));
+        dict.__setitem__("ilshift", new OperatorFunctions("ilshift", 43, 2));
+        dict.__setitem__("__imod__", new OperatorFunctions("__imod__", 44, 2));
+        dict.__setitem__("imod", new OperatorFunctions("imod", 44, 2));
+        dict.__setitem__("__imul__", new OperatorFunctions("__imul__", 45, 2));
+        dict.__setitem__("imul", new OperatorFunctions("imul", 45, 2));
+        dict.__setitem__("__irepeat__", new OperatorFunctions("__irepeat__", 45, 2));
+        dict.__setitem__("irepeat", new OperatorFunctions("irepeat", 45, 2));
+        dict.__setitem__("__ior__", new OperatorFunctions("__ior__", 46, 2));
+        dict.__setitem__("ior", new OperatorFunctions("ior", 46, 2));
+        dict.__setitem__("__ipow__", new OperatorFunctions("__ipow__", 47, 2));
+        dict.__setitem__("ipow", new OperatorFunctions("ipow", 47, 2));
+        dict.__setitem__("__irshift__", new OperatorFunctions("__irshift__", 48, 2));
+        dict.__setitem__("irshift", new OperatorFunctions("irshift", 48, 2));
+        dict.__setitem__("__isub__", new OperatorFunctions("__isub__", 49, 2));
+        dict.__setitem__("isub", new OperatorFunctions("isub", 49, 2));
+        dict.__setitem__("__itruediv__", new OperatorFunctions("__itruediv__", 50, 2));
+        dict.__setitem__("itruediv", new OperatorFunctions("itruediv", 50, 2));
+        dict.__setitem__("__ixor__", new OperatorFunctions("__ixor__", 51, 2));
+        dict.__setitem__("ixor", new OperatorFunctions("ixor", 51, 2));
+
         dict.__setitem__("attrgetter", PyAttrGetter.TYPE);
         dict.__setitem__("itemgetter", PyItemGetter.TYPE);
     }
