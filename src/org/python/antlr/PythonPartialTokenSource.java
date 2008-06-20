@@ -81,14 +81,13 @@ public class PythonPartialTokenSource implements TokenSource {
     {
         Token t = stream.LT(1);
         stream.consume();
-        /*
-        if ( t.getType()==PythonPartialLexer.STRINGPART ) {
-            Token nl = new ClassicToken(PythonPartialParser.NEWLINE,"\n");
-            nl.setCharPositionInLine(t.getCharPositionInLine());
-            nl.setLine(t.getLine());
-            tokens.addElement(nl);
-        }
-        */
+        if ( t.getType()==Token.EOF ) {
+            atEnd = true;
+            Token em = new ClassicToken(PythonPartialParser.ENDMARK,"");
+            em.setCharPositionInLine(t.getCharPositionInLine());
+            em.setLine(t.getLine());
+            tokens.addElement(em);
+         }
 
         // if not a NEWLINE, doesn't signal indent/dedent work; just enqueue
         if ( t.getType()!=PythonPartialLexer.NEWLINE ) {
@@ -124,7 +123,6 @@ public class PythonPartialTokenSource implements TokenSource {
         int cpos = t.getCharPositionInLine(); // column dictates indent/dedent
         if ( t.getType()==Token.EOF ) {
             atEnd = true;
-
             Token em = new ClassicToken(PythonPartialParser.ENDMARK,"");
             em.setCharPositionInLine(t.getCharPositionInLine());
             em.setLine(t.getLine());

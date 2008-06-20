@@ -100,11 +100,11 @@ package org.python.antlr;
     */
 
 	public void emitErrorMessage(String msg) {
-		System.err.print("[EMITTING] ");
+		//System.err.print("[EMITTING] ");
     }
 
 	public void reportError(RecognitionException e) {
-		System.err.print("[REPORTING] ");
+		//System.err.print("[REPORTING] ");
 		// if we've already reported an error and have not matched a token
 		// yet successfully, don't report any errors.
 		if ( state.errorRecovery ) {
