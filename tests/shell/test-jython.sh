@@ -49,6 +49,16 @@ for JYTHON_HOME in "$SPACE_DIR" "$1" ; do
 	[ `egrep -c "^\| Thread depth limit:"` == 1 ]
     [ -f profile.txt ] && rm profile.txt
 
+    # $CLASSPATH
+    CLASSPATH="$JYTHON_HOME/Lib/test/blob.jar" \
+	"$JYTHON" -c "print __import__('Blob')" | \
+	  [ `egrep -c "^Blob"` == 1 ]
+
+    # $CLASSPATH + profiling
+    CLASSPATH="$JYTHON_HOME/Lib/test/blob.jar" \
+	"$JYTHON" --profile -c "print __import__('Blob')" | \
+	  [ `egrep -c "^Blob"` == 1 ]
+
     set +ex
 done
 
