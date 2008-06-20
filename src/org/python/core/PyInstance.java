@@ -454,7 +454,10 @@ public class PyInstance extends PyObject
         if (ret instanceof PyInteger) {
             return ((PyInteger)ret).getValue();
         }
-        throw Py.TypeError("__hash__() must return int");
+        else if (ret instanceof PyLong) {
+            return ((PyLong)ret).hashCode();
+        }
+        throw Py.TypeError("__hash__() must really return int" + ret.getType() );
     }
 
     // special case: does all the work

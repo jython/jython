@@ -61,7 +61,7 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
             case 5:
                 return __builtin__.hash(arg1);
             case 6:
-                return Py.newUnicode(__builtin__.chr(Py.py2int(arg1, "unichr(): 1st arg can't be coerced to int")));
+                return Py.newUnicode(__builtin__.unichr(Py.py2int(arg1, "unichr(): 1st arg can't be coerced to int")));
             case 7:
                 return __builtin__.abs(arg1);
             case 11:
@@ -105,8 +105,6 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
                 return __builtin__.reload((PyModule) o);
             case 37:
                 return __builtin__.repr(arg1);
-            case 38:
-                return __builtin__.round(Py.py2double(arg1));
             case 41:
                 return __builtin__.vars(arg1);
             case 30:
@@ -164,8 +162,6 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
                 return __builtin__.pow(arg1, arg2);
             case 35:
                 return __builtin__.reduce(arg1, arg2);
-            case 38:
-                return __builtin__.round(Py.py2double(arg1), Py.py2int(arg2));
             case 29:
                 return fancyCall(new PyObject[]{arg1, arg2});
             case 30:
@@ -378,7 +374,7 @@ public class __builtin__ {
         dict.__setitem__("reduce", new BuiltinFunctions("reduce", 35, 2, 3));
         dict.__setitem__("reload", new BuiltinFunctions("reload", 36, 1));
         dict.__setitem__("repr", new BuiltinFunctions("repr", 37, 1));
-        dict.__setitem__("round", new BuiltinFunctions("round", 38, 1, 2));
+        dict.__setitem__("round", new RoundFunction());
         dict.__setitem__("setattr", new BuiltinFunctions("setattr", 39, 3));
         dict.__setitem__("vars", new BuiltinFunctions("vars", 41, 0, 1));
         dict.__setitem__("zip", new BuiltinFunctions("zip", 43, 0, -1));
@@ -428,13 +424,17 @@ public class __builtin__ {
         return obj.isCallable();
     }
 
+    // XXX: consider this with respect to codepoints
     public static char unichr(int i) {
-        return chr(i);
+        if (i < 0 || i > 65535) {
+            throw Py.ValueError("unichr() arg not in range(65536)");
+        }
+        return (char) i;
     }
 
     public static char chr(int i) {
-        if (i < 0 || i > 65535) {
-            throw Py.ValueError("chr() arg not in range(65535)");
+        if (i < 0 || i > 255) {
+            throw Py.ValueError("chr() arg not in range(256)");
         }
         return (char) i;
     }
@@ -669,21 +669,19 @@ public class __builtin__ {
     public static PyObject input() {
         return input(new PyString(""));
     }
-    private static PyStringMap internedStrings;
+    private static final PyStringMap internedStrings = new PyStringMap();
 
     public static PyString intern(PyString s) {
-        if (internedStrings == null) {
-            internedStrings = new PyStringMap();
+        // XXX: for some reason, not seeing this as an instance of PyStringDerived when derived
+        if (s instanceof PyStringDerived) {
+            throw Py.TypeError("can't intern subclass of string");
         }
-
         String istring = s.internedString();
         PyObject ret = internedStrings.__finditem__(istring);
         if (ret != null) {
             return (PyString) ret;
         }
-        if (s instanceof PyStringDerived) {
-            s = s.__str__();
-        }
+
         internedStrings.__setitem__(istring, s);
         return s;
     }
@@ -972,24 +970,6 @@ public class __builtin__ {
 
     public static PyString repr(PyObject o) {
         return o.__repr__();
-    }
-
-    // This seems awfully special purpose...
-    public static PyFloat round(double f, int digits) {
-        boolean neg = f < 0;
-        double multiple = Math.pow(10., digits);
-        if (neg) {
-            f = -f;
-        }
-        double tmp = Math.floor(f * multiple + 0.5);
-        if (neg) {
-            tmp = -tmp;
-        }
-        return new PyFloat(tmp / multiple);
-    }
-
-    public static PyFloat round(double f) {
-        return round(f, 0);
     }
 
     public static void setattr(PyObject o, String n, PyObject v) {
@@ -1416,5 +1396,39 @@ class MinFunction extends PyObject {
             throw Py.ValueError("min of empty sequence");
         }
         return min;
+    }
+}
+
+
+class RoundFunction extends PyObject {
+
+    @ExposedGet(name = "__doc__")
+    @Override
+    public PyObject getDoc() {
+        return new PyString(
+                "round(number[, ndigits]) -> floating point number\n\n" +
+                "Round a number to a given precision in decimal digits (default 0 digits).\n" +
+                "This always returns a floating point number.  Precision may be negative.");
+    }
+
+    @Override
+    public PyObject __call__(PyObject args[], String kwds[]) {
+        ArgParser ap = new ArgParser("round", args, kwds, new String[]{"number", "ndigits"}, 0);
+        PyObject number = ap.getPyObject(0);
+        int ndigits = ap.getInt(1, 0);
+        return round(Py.py2double(number), ndigits);
+    }
+    
+    private static PyFloat round(double f, int digits) {
+        boolean neg = f < 0;
+        double multiple = Math.pow(10., digits);
+        if (neg) {
+            f = -f;
+        }
+        double tmp = Math.floor(f * multiple + 0.5);
+        if (neg) {
+            tmp = -tmp;
+        }
+        return new PyFloat(tmp / multiple);
     }
 }

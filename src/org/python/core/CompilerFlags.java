@@ -8,6 +8,7 @@ public class CompilerFlags {
     public boolean generator_allowed = true;
     public boolean only_ast = false;
     public boolean with_statement = false;
+    public boolean absolute_import = false;
 
     public String encoding;
     
@@ -23,6 +24,9 @@ public class CompilerFlags {
         if ((co_flags & org.python.core.PyTableCode.CO_GENERATOR_ALLOWED) != 0) {
             this.generator_allowed = true;
         }
+        if ((co_flags & org.python.core.PyTableCode.CO_FUTURE_ABSOLUTE_IMPORT) != 0) {
+            this.absolute_import = true;
+        }       
         if ((co_flags & org.python.core.PyTableCode.CO_WITH_STATEMENT) != 0) {
             this.with_statement = true;
         }
@@ -33,8 +37,8 @@ public class CompilerFlags {
     
     public String toString() {
         return String.format("CompilerFlags[division=%s nested_scopes=%s generators=%s "
-                             + "with_statement=%s]", division, nested_scopes, generator_allowed,
-                             with_statement);
+                             + "with_statement=%s absolute_import=%s]", division, nested_scopes, generator_allowed,
+                             with_statement, absolute_import);
     }
     
 }

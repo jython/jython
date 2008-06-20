@@ -26,7 +26,14 @@ public class PyObject implements Serializable {
     
     @ExposedNew
     @ExposedMethod
-    final void object___init__(PyObject[] args, String[] keywords) {}
+    final void object___init__(PyObject[] args, String[] keywords) {
+// XXX: attempted fix for object(foo=1), etc        
+// XXX: this doesn't work for metaclasses, for some reason        
+//        if (args.length > 0) {
+//            throw Py.TypeError("default __new__ takes no parameters");
+//        }
+    
+    }
 
     private PyType objtype;
 
@@ -274,7 +281,7 @@ public class PyObject implements Serializable {
      *
      * @param arg0     the first argument to the function.
      * @param arg1     the second argument to the function.
-     **/
+n     **/
     public PyObject __call__(PyObject arg0, PyObject arg1) {
         return __call__(new PyObject[] { arg0, arg1 }, Py.NoKeywords);
     }

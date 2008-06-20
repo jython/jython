@@ -1467,8 +1467,7 @@ public class PyString extends PyBaseString
 
         while (e > b && Character.isWhitespace(str.charAt(e-1)))
             e--;
-        if (e > b && (str.charAt(e-1) == 'L' || str.charAt(e-1) == 'l'))
-            e--;
+
 
         char sign = 0;
         if (b < e) {
@@ -1498,9 +1497,13 @@ public class PyString extends PyBaseString
         if (base < 2 || base > 36)
             throw Py.ValueError("invalid base for long literal:" + base);
 
+        // if the base >= 22, then an 'l' or 'L' is a digit!
+        if (base < 22 && e > b && (str.charAt(e-1) == 'L' || str.charAt(e-1) == 'l'))
+            e--;
+        
         if (b > 0 || e < str.length())
             str = str.substring(b, e);
-
+        
         try {
             java.math.BigInteger bi = null;
             if (sign == '-')
@@ -2351,8 +2354,8 @@ final class StringFormatter
             s = s.substring(ptr, end);
 
         switch (type) {
-        case 'x' :
-            s = s.toLowerCase();
+        case 'X' :
+            s = s.toUpperCase();
             break;
         }
         return s;
@@ -2390,6 +2393,9 @@ final class StringFormatter
     }
 
     private String formatFloatDecimal(PyObject arg, boolean truncate) {
+        if (!(arg instanceof PyFloat || arg instanceof PyInteger || arg instanceof PyLong)) {
+            throw Py.TypeError("float argument required");
+        }
         return formatFloatDecimal(arg.__float__().getValue(), truncate);
     }
 
@@ -2570,47 +2576,51 @@ final class StringFormatter
             case 'd':
                 if (arg instanceof PyLong)
                     string = formatLong(arg.__str__(), c, altFlag);
-                else
+                else if (arg instanceof PyInteger || arg instanceof PyFloat)
                     string = formatInteger(arg, 10, false);
+                else throw Py.TypeError("int argument required");
                 break;
             case 'u':
                 if (arg instanceof PyLong)
                     string = formatLong(arg.__str__(), c, altFlag);
-                else
-                    string = formatInteger(arg, 10, true);
+                else if (arg instanceof PyInteger || arg instanceof PyFloat)
+                    string = formatInteger(arg, 10, false);
+                else throw Py.TypeError("int argument required");
                 break;
             case 'o':
                 if (arg instanceof PyLong)
                     string = formatLong(arg.__oct__(), c, altFlag);
-                else {
-                    string = formatInteger(arg, 8, true);
+                else if (arg instanceof PyInteger || arg instanceof PyFloat) {
+                    string = formatInteger(arg, 8, false);
                     if (altFlag && string.charAt(0) != '0') {
                         string = "0" + string;
                     }
                 }
+                else throw Py.TypeError("int argument required");
                 break;
             case 'x':
                 if (arg instanceof PyLong)
                     string = formatLong(arg.__hex__(), c, altFlag);
-                else {
-                    string = formatInteger(arg, 16, true);
+                else if (arg instanceof PyInteger || arg instanceof PyFloat) {
+                    string = formatInteger(arg, 16, false);
                     string = string.toLowerCase();
                     if (altFlag) {
                         string = "0x" + string;
                     }
                 }
+                else throw Py.TypeError("int argument required");
                 break;
             case 'X':
                 if (arg instanceof PyLong)
                     string = formatLong(arg.__hex__(), c, altFlag);
-                else {
-                    string = formatInteger(arg, 16, true);
+                else if (arg instanceof PyInteger || arg instanceof PyFloat) {
+                    string = formatInteger(arg, 16, false);
                     string = string.toUpperCase();
                     if (altFlag) {
                         string = "0X" + string;
                    }
                 }
-
+                else throw Py.TypeError("int argument required");
                 break;
             case 'e':
             case 'E':

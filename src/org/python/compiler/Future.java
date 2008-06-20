@@ -8,9 +8,9 @@ import org.python.antlr.ast.Module;
 
 public class Future {
 
-    private boolean division;
-    private boolean generators;
-    private boolean with_statement;
+    private boolean division = false;
+    private boolean with_statement = false;
+    private boolean absolute_import = false;
 
     private static final String FUTURE = "__future__";
 
@@ -33,11 +33,14 @@ public class Future {
                 continue;
             }
             if (feature.equals("generators")) {
-                generators = true;
                 continue;
             }
             if (feature.equals("with_statement")) {
                 with_statement = true;
+                continue;
+            }
+            if (feature.equals("absolute_import")) {
+                absolute_import = true;
                 continue;
             }
             if (feature.equals("braces")) {
@@ -83,13 +86,13 @@ public class Future {
         }
 
         if (cflags != null) {
-            cflags.division      = cflags.division      ||  division;
-        }
-        if (cflags != null) {
-            cflags.generator_allowed = cflags.generator_allowed || generators;
+            cflags.division = cflags.division || division;
         }
         if (cflags != null) {
             cflags.with_statement = cflags.with_statement || with_statement;
+        }
+        if (cflags != null) {
+            cflags.absolute_import = cflags.absolute_import || absolute_import;
         }
     }
 

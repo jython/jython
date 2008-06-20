@@ -735,12 +735,17 @@ public class PyFrozenSetDerived extends PyFrozenSet implements Slotted {
         PyObject impl=self_type.lookup("__hash__");
         if (impl!=null) {
             PyObject res=impl.__get__(this,self_type).__call__();
-            if (res instanceof PyInteger)
+            if (res instanceof PyInteger) {
                 return((PyInteger)res).getValue();
+            } else
+                if (res instanceof PyLong) {
+                    return((PyLong)res).getValue().intValue();
+                }
             throw Py.TypeError("__hash__ should return a int");
         }
-        if (self_type.lookup("__eq__")!=null||self_type.lookup("__cmp__")!=null)
+        if (self_type.lookup("__eq__")!=null||self_type.lookup("__cmp__")!=null) {
             throw Py.TypeError("unhashable type");
+        }
         return super.hashCode();
     }
 

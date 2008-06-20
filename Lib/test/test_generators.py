@@ -1,4 +1,3 @@
-
 tutorial_tests = """
 Let's try a simple generator:
 
@@ -237,7 +236,7 @@ Guido's binary tree example.
     ...         self.right = right
     ...
     ...     def __repr__(self, level=0, indent="    "):
-    ...         s = level*indent + `self.label`
+    ...         s = level*indent + repr(self.label)
     ...         if self.left:
     ...             s = s + "\\n" + self.left.__repr__(level+1, indent)
     ...         if self.right:
@@ -268,9 +267,9 @@ Guido's binary tree example.
     ...             yield x
 
     >>> # Show it off: create a tree.
-    ... t = tree("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-    ... # Print the nodes of the tree in in-order.
-    ... for x in t:
+    >>> t = tree("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+    >>> # Print the nodes of the tree in in-order.
+    >>> for x in t:
     ...     print x,
     A B C D E F G H I J K L M N O P Q R S T U V W X Y Z
 
@@ -383,7 +382,7 @@ From the Iterators list, about the types of these things.
 >>> type(i)
 <type 'generator'>
 >>> [s for s in dir(i) if not s.startswith('_')]
-['gi_frame', 'gi_running', 'next']
+['close', 'gi_frame', 'gi_running', 'next', 'send', 'throw']
 >>> print i.next.__doc__
 x.next() -> the next value, or raise StopIteration
 >>> iter(i) is i
@@ -483,7 +482,9 @@ merged F into A
 A->A B->G C->A D->G E->G F->A G->G H->G I->A J->G K->A L->A M->G
 merged A into G
 A->G B->G C->G D->G E->G F->G G->G H->G I->G J->G K->G L->G M->G
+
 """
+# Emacs turd '
 
 # Fun tests (for sufficiently warped notions of "fun").
 
@@ -619,7 +620,6 @@ efficient.
 [200, 216, 225, 240, 243, 250, 256, 270, 288, 300, 320, 324, 360, 375, 384]
 [400, 405, 432, 450, 480, 486, 500, 512, 540, 576, 600, 625, 640, 648, 675]
 
-
 Ye olde Fibonacci generator, LazyList style.
 
 >>> def fibgen(a, b):
@@ -642,6 +642,85 @@ Ye olde Fibonacci generator, LazyList style.
 >>> fib = LazyList(fibgen(1, 2))
 >>> firstn(iter(fib), 17)
 [1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597, 2584]
+
+
+Running after your tail with itertools.tee (new in version 2.4)
+
+The algorithms "m235" (Hamming) and Fibonacci presented above are both
+examples of a whole family of FP (functional programming) algorithms
+where a function produces and returns a list while the production algorithm
+suppose the list as already produced by recursively calling itself.
+For these algorithms to work, they must:
+
+- produce at least a first element without presupposing the existence of
+  the rest of the list
+- produce their elements in a lazy manner
+
+To work efficiently, the beginning of the list must not be recomputed over
+and over again. This is ensured in most FP languages as a built-in feature.
+In python, we have to explicitly maintain a list of already computed results
+and abandon genuine recursivity.
+
+This is what had been attempted above with the LazyList class. One problem
+with that class is that it keeps a list of all of the generated results and
+therefore continually grows. This partially defeats the goal of the generator
+concept, viz. produce the results only as needed instead of producing them
+all and thereby wasting memory.
+
+Thanks to itertools.tee, it is now clear "how to get the internal uses of
+m235 to share a single generator".
+
+>>> from itertools import tee
+>>> def m235():
+...     def _m235():
+...         yield 1
+...         for n in merge(times(2, m2),
+...                        merge(times(3, m3),
+...                              times(5, m5))):
+...             yield n
+...     m1 = _m235()
+...     m2, m3, m5, mRes = tee(m1, 4)
+...     return mRes
+
+>>> it = m235()
+>>> for i in range(5):
+...     print firstn(it, 15)
+[1, 2, 3, 4, 5, 6, 8, 9, 10, 12, 15, 16, 18, 20, 24]
+[25, 27, 30, 32, 36, 40, 45, 48, 50, 54, 60, 64, 72, 75, 80]
+[81, 90, 96, 100, 108, 120, 125, 128, 135, 144, 150, 160, 162, 180, 192]
+[200, 216, 225, 240, 243, 250, 256, 270, 288, 300, 320, 324, 360, 375, 384]
+[400, 405, 432, 450, 480, 486, 500, 512, 540, 576, 600, 625, 640, 648, 675]
+
+The "tee" function does just what we want. It internally keeps a generated
+result for as long as it has not been "consumed" from all of the duplicated
+iterators, whereupon it is deleted. You can therefore print the hamming
+sequence during hours without increasing memory usage, or very little.
+
+The beauty of it is that recursive running-after-their-tail FP algorithms
+are quite straightforwardly expressed with this Python idiom.
+
+Ye olde Fibonacci generator, tee style.
+
+>>> def fib():
+...
+...     def _isum(g, h):
+...         while 1:
+...             yield g.next() + h.next()
+...
+...     def _fib():
+...         yield 1
+...         yield 2
+...         fibTail.next() # throw first away
+...         for res in _isum(fibHead, fibTail):
+...             yield res
+...
+...     realfib = _fib()
+...     fibHead, fibTail, fibRes = tee(realfib, 3)
+...     return fibRes
+
+>>> firstn(fib(), 17)
+[1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597, 2584]
+
 """
 
 # syntax_tests mostly provokes SyntaxErrors.  Also fiddling with #if 0
@@ -653,15 +732,15 @@ syntax_tests = """
 ...     return 22
 ...     yield 1
 Traceback (most recent call last):
-  ...
-SyntaxError: 'return' with argument inside generator
+  ..
+SyntaxError: 'return' with argument inside generator (<doctest test.test_generators.__test__.syntax[0]>, line 3)
 
 >>> def f():
 ...     yield 1
 ...     return 22
 Traceback (most recent call last):
-  ...
-SyntaxError: 'return' with argument inside generator
+  ..
+SyntaxError: 'return' with argument inside generator (<doctest test.test_generators.__test__.syntax[1]>, line 3)
 
 "return None" is not the same as "return" in a generator:
 
@@ -669,10 +748,10 @@ SyntaxError: 'return' with argument inside generator
 ...     yield 1
 ...     return None
 Traceback (most recent call last):
-  ...
-SyntaxError: 'return' with argument inside generator
+  ..
+SyntaxError: 'return' with argument inside generator (<doctest test.test_generators.__test__.syntax[2]>, line 3)
 
-This one is fine:
+These are fine:
 
 >>> def f():
 ...     yield 1
@@ -683,25 +762,17 @@ This one is fine:
 ...         yield 1
 ...     finally:
 ...         pass
-Traceback (most recent call last):
-  ...
-SyntaxError: 'yield' not allowed in a 'try' block with a 'finally' clause
 
 >>> def f():
 ...     try:
 ...         try:
 ...             1//0
 ...         except ZeroDivisionError:
-...             yield 666  # bad because *outer* try has finally
+...             yield 666
 ...         except:
 ...             pass
 ...     finally:
 ...         pass
-Traceback (most recent call last):
-  ...
-SyntaxError: 'yield' not allowed in a 'try' block with a 'finally' clause
-
-But this is fine:
 
 >>> def f():
 ...     try:
@@ -722,14 +793,16 @@ But this is fine:
 
 >>> def f():
 ...    yield
-Traceback (most recent call last):
-SyntaxError: invalid syntax
+>>> type(f())
+<type 'generator'>
+
 
 >>> def f():
 ...    if 0:
 ...        yield
-Traceback (most recent call last):
-SyntaxError: invalid syntax
+>>> type(f())
+<type 'generator'>
+
 
 >>> def f():
 ...     if 0:
@@ -797,14 +870,15 @@ SyntaxError: invalid syntax
 >>> def f():
 ...     if 0:
 ...         lambda x:  x        # shouldn't trigger here
-...         def f(i):           # note: removed a bare return in this test.
+...         return              # or here
+...         def f(i):
 ...             return 2*i      # or here
 ...         if 0:
 ...             return 3        # but *this* sucks (line 8)
 ...     if 0:
-...         yield 2             # because it's a generator
+...         yield 2             # because it's a generator (line 10)
 Traceback (most recent call last):
-SyntaxError: 'return' with argument inside generator
+SyntaxError: 'return' with argument inside generator (<doctest test.test_generators.__test__.syntax[24]>, line 10)
 
 This one caused a crash (see SF bug 567538):
 
@@ -1358,27 +1432,407 @@ Solution 2
 +---+---+---+---+---+---+---+---+---+---+
 """
 
+weakref_tests = """\
+Generators are weakly referencable:
+
+>>> import weakref
+>>> def gen():
+...     yield 'foo!'
+...
+>>> wr = weakref.ref(gen)
+>>> wr() is gen
+True
+>>> p = weakref.proxy(gen)
+
+Generator-iterators are weakly referencable as well:
+
+>>> gi = gen()
+>>> wr = weakref.ref(gi)
+>>> wr() is gi
+True
+>>> p = weakref.proxy(gi)
+>>> list(p)
+['foo!']
+
+"""
+
+coroutine_tests = """\
+Sending a value into a started generator:
+
+>>> def f():
+...     print (yield 1)
+...     yield 2
+>>> g = f()
+>>> g.next()
+1
+>>> g.send(42)
+42
+2
+
+Sending a value into a new generator produces a TypeError:
+
+>>> f().send("foo")
+Traceback (most recent call last):
+...
+TypeError: can't send non-None value to a just-started generator
+
+
+Yield by itself yields None:
+
+>>> def f(): yield
+>>> list(f())
+[None]
+
+
+
+An obscene abuse of a yield expression within a generator expression:
+
+>>> list((yield 21) for i in range(4))
+[21, None, 21, None, 21, None, 21, None]
+
+And a more sane, but still weird usage:
+
+>>> def f(): list(i for i in [(yield 26)])
+>>> type(f())
+<type 'generator'>
+
+
+A yield expression with augmented assignment.
+
+>>> def coroutine(seq):
+...     count = 0
+...     while count < 200:
+...         count += yield
+...         seq.append(count)
+>>> seq = []
+>>> c = coroutine(seq)
+>>> c.next()
+>>> print seq
+[]
+>>> c.send(10)
+>>> print seq
+[10]
+>>> c.send(10)
+>>> print seq
+[10, 20]
+>>> c.send(10)
+>>> print seq
+[10, 20, 30]
+
+
+Check some syntax errors for yield expressions:
+
+>>> f=lambda: (yield 1),(yield 2)
+Traceback (most recent call last):
+  ...
+SyntaxError: 'yield' outside function (<doctest test.test_generators.__test__.coroutine[21]>, line 1)
+
+>>> def f(): return lambda x=(yield): 1
+Traceback (most recent call last):
+  ...
+SyntaxError: 'return' with argument inside generator (<doctest test.test_generators.__test__.coroutine[22]>, line 1)
+
+>>> def f(): x = yield = y
+Traceback (most recent call last):
+  ...
+SyntaxError: assignment to yield expression not possible (<doctest test.test_generators.__test__.coroutine[23]>, line 1)
+
+>>> def f(): (yield bar) = y
+Traceback (most recent call last):
+  ...
+SyntaxError: can't assign to yield expression (<doctest test.test_generators.__test__.coroutine[24]>, line 1)
+
+>>> def f(): (yield bar) += y
+Traceback (most recent call last):
+  ...
+SyntaxError: augmented assignment to yield expression not possible (<doctest test.test_generators.__test__.coroutine[25]>, line 1)
+
+
+Now check some throw() conditions:
+
+>>> def f():
+...     while True:
+...         try:
+...             print (yield)
+...         except ValueError,v:
+...             print "caught ValueError (%s)" % (v),
+>>> import sys
+>>> g = f()
+>>> g.next()
+
+>>> g.throw(ValueError) # type only
+caught ValueError ()
+
+>>> g.throw(ValueError("xyz"))  # value only
+caught ValueError (xyz)
+
+>>> g.throw(ValueError, ValueError(1))   # value+matching type
+caught ValueError (1)
+
+>>> g.throw(ValueError, TypeError(1))  # mismatched type, rewrapped
+caught ValueError (1)
+
+>>> g.throw(ValueError, ValueError(1), None)   # explicit None traceback
+caught ValueError (1)
+
+>>> g.throw(ValueError(1), "foo")       # bad args
+Traceback (most recent call last):
+  ...
+TypeError: instance exception may not have a separate value
+
+>>> g.throw(ValueError, "foo", 23)      # bad args
+Traceback (most recent call last):
+  ...
+TypeError: throw() third argument must be a traceback object
+
+>>> def throw(g,exc):
+...     try:
+...         raise exc
+...     except:
+...         g.throw(*sys.exc_info())
+>>> throw(g,ValueError) # do it with traceback included
+caught ValueError ()
+
+>>> g.send(1)
+1
+
+>>> throw(g,TypeError)  # terminate the generator
+Traceback (most recent call last):
+  ...
+TypeError
+
+>>> print g.gi_frame
+None
+
+>>> g.send(2)
+Traceback (most recent call last):
+  ...
+StopIteration
+
+>>> g.throw(ValueError,6)       # throw on closed generator
+Traceback (most recent call last):
+  ...
+ValueError: 6
+
+>>> f().throw(ValueError,7)     # throw on just-opened generator
+Traceback (most recent call last):
+  ...
+ValueError: 7
+
+>>> f().throw("abc")     # throw on just-opened generator
+Traceback (most recent call last):
+  ...
+abc
+
+Now let's try closing a generator:
+
+>>> def f():
+...     try: yield
+...     except GeneratorExit:
+...         print "exiting"
+
+>>> g = f()
+>>> g.next()
+>>> g.close()
+exiting
+>>> g.close()  # should be no-op now
+
+>>> f().close()  # close on just-opened generator should be fine
+
+>>> def f(): yield      # an even simpler generator
+>>> f().close()         # close before opening
+>>> g = f()
+>>> g.next()
+>>> g.close()           # close normally
+
+And finalization:
+
+>>> def f():
+...     try: yield
+...     finally:
+...         print "exiting"
+
+>>> g = f()
+>>> g.next()
+>>> del g
+exiting
+
+
+Now let's try some ill-behaved generators:
+
+>>> def f():
+...     try: yield
+...     except GeneratorExit:
+...         yield "foo!"
+>>> g = f()
+>>> g.next()
+>>> g.close()
+Traceback (most recent call last):
+  ...
+RuntimeError: generator ignored GeneratorExit
+>>> g.close()
+
+
+Our ill-behaved code should be invoked during GC:
+
+>>> import sys, StringIO
+>>> old, sys.stderr = sys.stderr, StringIO.StringIO()
+>>> g = f()
+>>> g.next()
+>>> del g
+>>> sys.stderr.getvalue().startswith(
+...     "Exception exceptions.RuntimeError: 'generator ignored GeneratorExit' in "
+... )
+True
+>>> sys.stderr = old
+
+
+And errors thrown during closing should propagate:
+
+>>> def f():
+...     try: yield
+...     except GeneratorExit:
+...         raise TypeError("fie!")
+>>> g = f()
+>>> g.next()
+>>> g.close()
+Traceback (most recent call last):
+  ...
+TypeError: fie!
+
+
+Ensure that various yield expression constructs make their
+enclosing function a generator:
+
+>>> def f(): x += yield
+>>> type(f())
+<type 'generator'>
+
+>>> def f(): x = yield
+>>> type(f())
+<type 'generator'>
+
+>>> def f(): lambda x=(yield): 1
+>>> type(f())
+<type 'generator'>
+
+>>> def f(): x=(i for i in (yield) if (yield))
+>>> type(f())
+<type 'generator'>
+
+>>> def f(d): d[(yield "a")] = d[(yield "b")] = 27
+>>> data = [1,2]
+>>> g = f(data)
+>>> type(g)
+<type 'generator'>
+>>> g.send(None)
+'a'
+>>> data
+[1, 2]
+>>> g.send(0)
+'b'
+>>> data
+[27, 2]
+>>> try: g.send(1)
+... except StopIteration: pass
+>>> data
+[27, 27]
+
+"""
+
+refleaks_tests = """
+Prior to adding cycle-GC support to itertools.tee, this code would leak
+references. We add it to the standard suite so the routine refleak-tests
+would trigger if it starts being uncleanable again.
+
+>>> import itertools
+>>> def leak():
+...     class gen:
+...         def __iter__(self):
+...             return self
+...         def next(self):
+...             return self.item
+...     g = gen()
+...     head, tail = itertools.tee(g)
+...     g.item = head
+...     return head
+>>> it = leak()
+
+Make sure to also test the involvement of the tee-internal teedataobject,
+which stores returned items.
+
+>>> item = it.next()
+
+
+
+This test leaked at one point due to generator finalization/destruction.
+It was copied from Lib/test/leakers/test_generator_cycle.py before the file
+was removed.
+
+>>> def leak():
+...    def gen():
+...        while True:
+...            yield g
+...    g = gen()
+
+>>> leak()
+
+
+
+This test isn't really generator related, but rather exception-in-cleanup
+related. The coroutine tests (above) just happen to cause an exception in
+the generator's __del__ (tp_del) method. We can also test for this
+explicitly, without generators. We do have to redirect stderr to avoid
+printing warnings and to doublecheck that we actually tested what we wanted
+to test.
+
+>>> import sys, StringIO
+>>> old = sys.stderr
+>>> try:
+...     sys.stderr = StringIO.StringIO()
+...     class Leaker:
+...         def __del__(self):
+...             raise RuntimeError
+...
+...     l = Leaker()
+...     del l
+...     err = sys.stderr.getvalue().strip()
+...     err.startswith(
+...         "Exception exceptions.RuntimeError: RuntimeError() in <"
+...     )
+...     err.endswith("> ignored")
+...     len(err.splitlines())
+... finally:
+...     sys.stderr = old
+True
+True
+1
+
+
+
+These refleak tests should perhaps be in a testfile of their own,
+test_generators just happened to be the test that drew these out.
+
+"""
+
 __test__ = {"tut":      tutorial_tests,
             "pep":      pep_tests,
             "email":    email_tests,
             "fun":      fun_tests,
             "syntax":   syntax_tests,
-            "conjoin":  conjoin_tests}
+            "conjoin":  conjoin_tests,
+            "weakref":  weakref_tests,
+            "coroutine":  coroutine_tests,
+            "refleaks": refleaks_tests,
+            }
 
 # Magic test name that regrtest.py invokes *after* importing this module.
 # This worms around a bootstrap problem.
 # Note that doctest and regrtest both look in sys.argv for a "-v" argument,
 # so this works as expected in both ways of running regrtest.
 def test_main(verbose=None):
-    import doctest
     from test import test_support, test_generators
-    if 0:   # change to 1 to run forever (to check for leaks)
-        while 1:
-            doctest.master = None
-            test_support.run_doctest(test_generators, verbose)
-            print ".",
-    else:
-        test_support.run_doctest(test_generators, verbose)
+    test_support.run_doctest(test_generators, verbose)
 
 # This part isn't needed for regrtest, but for running the test directly.
 if __name__ == "__main__":

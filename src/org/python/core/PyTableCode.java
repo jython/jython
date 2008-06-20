@@ -40,7 +40,8 @@ public class PyTableCode extends PyCode
     final public static int PyCF_ONLY_AST        = 0x0400;
 
     final public static int CO_ALL_FEATURES = PyCF_ONLY_AST|CO_NESTED|CO_GENERATOR_ALLOWED|
-                                              CO_FUTUREDIVISION|CO_WITH_STATEMENT;
+                                              CO_FUTUREDIVISION|CO_FUTURE_ABSOLUTE_IMPORT|
+                                              CO_WITH_STATEMENT;
 
     public PyTableCode(int argcount, String varnames[],
                        String filename, String name,
