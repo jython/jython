@@ -75,7 +75,7 @@ package org.python.antlr;
 } 
 
 @members {
-    boolean debugOn = false;
+    boolean debugOn = true;
 
     private void debug(String message) {
         if (debugOn) {
@@ -90,14 +90,16 @@ package org.python.antlr;
         throw e;
     }
 
-    /*
 	protected Object recoverFromMismatchedToken(IntStream input, int ttype, BitSet follow)
 		throws RecognitionException
 	{
         mismatch(input, ttype, follow);
         return null;
     }
-    */
+
+	public void emitErrorMessage(String msg) {
+		System.err.print("[EMITTING] ");
+    }
 
 	public void reportError(RecognitionException e) {
 		System.err.print("[REPORTING] ");
@@ -161,6 +163,22 @@ int startPos=-1;
             }
         }
     }
+
+	public void reportError(RecognitionException e) {
+		System.err.print("[LEXER REPORTING] ");
+		// if we've already reported an error and have not matched a token
+		// yet successfully, don't report any errors.
+		if ( state.errorRecovery ) {
+			System.err.print("[SPURIOUS] ");
+			return;
+		}
+		state.syntaxErrors++; // don't count spurious
+		state.errorRecovery = true;
+
+		displayRecognitionError(this.getTokenNames(), e);
+	}
+
+
 }
 
 single_input : NEWLINE
@@ -208,7 +226,7 @@ stmt : simple_stmt
      | compound_stmt
      ;
 
-simple_stmt : small_stmt (options {greedy=true;}:SEMI small_stmt)* (SEMI)? NEWLINE
+simple_stmt : small_stmt (options {greedy=true;}:SEMI small_stmt)* (SEMI)? (NEWLINE|ENDMARK)
             ;
 
 small_stmt : expr_stmt
@@ -440,6 +458,7 @@ atom : LPAREN
      | FLOAT
      | COMPLEX
      | (STRING)+ {debug("matched STRING");} 
+     | STRINGPART
      ;
 
 listmaker : test 
@@ -660,10 +679,15 @@ STRING
     :   ('r'|'u'|'ur')?
         (   '\'\'\'' (options {greedy=false;}:TRIAPOS)* '\'\'\''
         |   '"""' (options {greedy=false;}:TRIQUOTE)* '"""'
-        |   '\'\'\'' ~('\'\'\'')*
-        |   '"""' ~('"""')*
         |   '"' (ESC|~('\\'|'\n'|'"'))* '"'
         |   '\'' (ESC|~('\\'|'\n'|'\''))* '\''
+        )
+    ;
+
+STRINGPART
+    :   ('r'|'u'|'ur')?
+        (   '\'\'\'' ~('\'\'\'')*
+        |   '"""' ~('"""')*
         )
     ;
 

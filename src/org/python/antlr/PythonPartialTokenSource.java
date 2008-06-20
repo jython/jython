@@ -81,6 +81,14 @@ public class PythonPartialTokenSource implements TokenSource {
     {
         Token t = stream.LT(1);
         stream.consume();
+        /*
+        if ( t.getType()==PythonPartialLexer.STRINGPART ) {
+            Token nl = new ClassicToken(PythonPartialParser.NEWLINE,"\n");
+            nl.setCharPositionInLine(t.getCharPositionInLine());
+            nl.setLine(t.getLine());
+            tokens.addElement(nl);
+        }
+        */
 
         // if not a NEWLINE, doesn't signal indent/dedent work; just enqueue
         if ( t.getType()!=PythonPartialLexer.NEWLINE ) {

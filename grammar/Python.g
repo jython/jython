@@ -394,6 +394,14 @@ import java.util.Iterator;
         throw e;
     }
 
+	protected Object recoverFromMismatchedToken(IntStream input, int ttype, BitSet follow)
+		throws RecognitionException
+	{
+        mismatch(input, ttype, follow);
+        return null;
+    }
+
+
     /**
      * A list holding the error message(s) encountered during parse.
      */

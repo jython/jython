@@ -65,8 +65,9 @@ public class InteractiveParser {
             PythonWalker walker = new PythonWalker(nodes);
             tree = walker.interactive();
         } catch (RecognitionException e) {
-            //XXX: this can't happen.  Need to strip the throws from antlr
-            //     generated code.
+            //I am only throwing ParseExceptions, but "throws RecognitionException" still gets
+            //into the generated code.
+            System.err.println("FIXME: pretty sure this can't happen -- but needs to be checked");
         }
         return tree;
     }
