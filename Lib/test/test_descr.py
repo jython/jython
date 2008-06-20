@@ -4434,8 +4434,8 @@ def test_main():
             # should pass anyway?)
             methodwrapper,
 
-            # __ixxx__ doesn't act like a binary op
-            # http://bugs.jython.org/issue1873148
+            # derived classes don't support coerce:
+            # http://bugs.jython.org/issue1060
             notimplemented
             ]:
             testfuncs.remove(testfunc)
