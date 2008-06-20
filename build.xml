@@ -140,6 +140,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
 
         <property name="source.dir" value="${jython.base.dir}/src" />
         <property name="test.source.dir" value="${jython.base.dir}/tests/java" />
+        <property name="test.shell.dir" value="${jython.base.dir}/tests/shell" />
         <property name="templates.dir" value="${source.dir}/templates" />
         <property name="python.lib" value="${jython.base.dir}/CPythonLib" />
         <property name="bugtests.dir" value="${jython.base.dir}/bugtests" />
@@ -716,7 +717,7 @@ The readme text for the next release will be like:
         </jar>
     </target>
 
-    <target name="test" depends="javatest,regrtest"/>
+    <target name="test" depends="javatest,launchertest,regrtest"/>
     <target name="javatest" depends="compile,expose">
         <junit fork="true" printsummary="true">
             <classpath refid="test.classpath"/>
@@ -727,6 +728,11 @@ The readme text for the next release will be like:
                 </fileset>
             </batchtest>
         </junit>
+    </target>
+    <target name="launchertest" depends="developer-build">
+      <exec executable="${test.shell.dir}/test-jython.sh">
+        <arg value="${dist.dir}"/>
+      </exec>
     </target>
     <target name="regrtest" depends="developer-build">
       <exec executable="${dist.dir}/bin/jython">
