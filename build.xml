@@ -655,7 +655,9 @@ The readme text for the next release will be like:
         </chmod>
 
         <copy todir="${dist.dir}/javalib">
-            <fileset dir="${jython.base.dir}/extlibs"/>
+            <fileset dir="${jython.base.dir}/extlibs">
+                <exclude name="profile.properties"/>
+            </fileset>
             <fileset dir="${jython.base.dir}/build">
                 <include name="*.jar"/>
                 <include name="*.properties"/>
