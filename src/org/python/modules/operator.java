@@ -2,6 +2,10 @@
 package org.python.modules;
 
 import org.python.core.*;
+import org.python.expose.ExposedGet;
+import org.python.expose.ExposedMethod;
+import org.python.expose.ExposedNew;
+import org.python.expose.ExposedType;
 
 class OperatorFunctions extends PyBuiltinFunctionSet
 {
@@ -204,9 +208,9 @@ public class operator implements ClassDictInit
         dict.__setitem__("pow", new OperatorFunctions("pow", 36, 2));
         dict.__setitem__("__pow__", new OperatorFunctions("pow", 36, 2));
         dict.__setitem__("is_", new OperatorFunctions("is_", 37, 2));
-        dict.__setitem__("__is__", new OperatorFunctions("__is__", 37, 2));
         dict.__setitem__("is_not", new OperatorFunctions("is_not", 38, 2));
-        dict.__setitem__("__is_not__", new OperatorFunctions("__is_not__", 38, 2));
+        dict.__setitem__("attrgetter", PyAttrGetter.TYPE);
+        dict.__setitem__("itemgetter", PyItemGetter.TYPE);
     }
 
     public static int countOf(PyObject seq, PyObject item) {
@@ -229,5 +233,116 @@ public class operator implements ClassDictInit
             }
         }
         throw Py.ValueError("sequence.index(x): x not in list");
+    }
+
+    /**
+     * The attrgetter type.
+     */
+    // XXX: not subclassable
+    @ExposedType(name = "operator.attrgetter")
+    static class PyAttrGetter extends PyObject {
+        
+        public static final PyType TYPE = PyType.fromClass(PyAttrGetter.class);
+
+        public PyObject[] attrs;
+
+        public PyAttrGetter(PyObject[] attrs) {
+            this.attrs = attrs;
+        }
+        
+        @ExposedNew
+        final static PyObject attrgetter___new__(PyNewWrapper new_, boolean init, PyType subtype,
+                                                 PyObject[] args, String[] keywords) {
+            ArgParser ap = new ArgParser("attrgetter", args, keywords, "attr");
+            ap.noKeywords();
+            ap.getPyObject(0);
+            return new PyAttrGetter(args);
+        }
+
+        @Override
+        public PyObject __call__(PyObject[] args, String[] keywords) {
+            return attrgetter___call__(args, keywords);
+        }
+
+        @ExposedMethod
+        final PyObject attrgetter___call__(PyObject[] args, String[] keywords) {
+            ArgParser ap = new ArgParser("attrgetter", args, Py.NoKeywords, "obj");
+            PyObject obj = ap.getPyObject(0);
+
+            if (attrs.length == 1) {
+                return getattr(obj, attrs[0]);
+            }
+
+            PyObject[] result = new PyObject[attrs.length];
+            int i = 0;
+            for (PyObject attr : attrs) {
+                result[i++] = getattr(obj, attr);
+            }
+            return new PyTuple(result);
+        }
+
+        private PyObject getattr(PyObject obj, PyObject name) {
+            // XXX: We should probably have a PyObject.__getattr__(PyObject) that does
+            // this. This is different than __builtin__.getattr (in how it handles
+            // exceptions)
+            String nameStr;
+            if (name instanceof PyUnicode) {
+                nameStr = ((PyUnicode)name).encode();
+            } else if (name instanceof PyString) {
+                nameStr = name.asString();
+            } else {
+                throw Py.TypeError(String.format("attribute name must be string, not '%.200s'",
+                                                 name.getType().fastGetName()));
+            }
+            return obj.__getattr__(nameStr.intern());
+        }
+
+    }
+
+    /**
+     * The itemgetter type.
+     */
+    // XXX: not subclassable
+    @ExposedType(name = "operator.itemgetter")
+    static class PyItemGetter extends PyObject {
+        
+        public static final PyType TYPE = PyType.fromClass(PyItemGetter.class);
+
+        public PyObject[] items;
+
+        public PyItemGetter(PyObject[] items) {
+            this.items = items;
+        }
+        
+        @ExposedNew
+        final static PyObject itemgetter___new__(PyNewWrapper new_, boolean init, PyType subtype,
+                                                 PyObject[] args, String[] keywords) {
+            ArgParser ap = new ArgParser("itemgetter", args, keywords, "attr");
+            ap.noKeywords();
+            ap.getPyObject(0);
+            return new PyItemGetter(args);
+        }
+
+        @Override
+        public PyObject __call__(PyObject[] args, String[] keywords) {
+            return itemgetter___call__(args, keywords);
+        }
+
+        @ExposedMethod
+        final PyObject itemgetter___call__(PyObject[] args, String[] keywords) {
+            ArgParser ap = new ArgParser("itemgetter", args, Py.NoKeywords, "obj");
+            PyObject obj = ap.getPyObject(0);
+
+            if (items.length == 1) {
+                return obj.__getitem__(items[0]);
+            }
+
+            PyObject[] result = new PyObject[items.length];
+            int i = 0;
+            for (PyObject item : items) {
+                result[i++] = obj.__getitem__(item);
+            }
+            return new PyTuple(result);
+        }
     }
 }

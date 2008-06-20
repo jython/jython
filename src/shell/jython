@@ -169,7 +169,7 @@ fi
 
 if [ -n "$profile_requested" ] ; then
   echo "Running with instrumented profiler"
-  java_args=("${java_args[@]}" -classpath "$CP$CP_SEPARATOR$CLASSPATH")
+  java_args=("${java_args[@]}" -classpath "$CP$CP_DELIMITER$CLASSPATH")
 else
   if [ -z $help_requested ] ; then
     JAVA_CMD="exec $JAVA_CMD"

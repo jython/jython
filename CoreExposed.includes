@@ -39,6 +39,8 @@ org/python/modules/_weakref/ReferenceType.class
 org/python/modules/_weakref/ProxyType.class
 org/python/modules/collections/PyDefaultDict.class
 org/python/modules/collections/PyDeque.class
+org/python/modules/operator$PyAttrGetter.class
+org/python/modules/operator$PyItemGetter.class
 org/python/modules/random/PyRandom.class
 org/python/modules/thread/PyLocal.class
 org/python/modules/time/PyTimeTuple.class
