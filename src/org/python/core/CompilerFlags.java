@@ -32,8 +32,9 @@ public class CompilerFlags {
     }
     
     public String toString() {
-        return "CompilerFlags[division=" + division + " nested_scopes=" + nested_scopes + " generators="
-                + generator_allowed + "with_statement=" + with_statement + "]";
+        return String.format("CompilerFlags[division=%s nested_scopes=%s generators=%s "
+                             + "with_statement=%s]", division, nested_scopes, generator_allowed,
+                             with_statement);
     }
     
 }
