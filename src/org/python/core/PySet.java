@@ -155,6 +155,7 @@ public class PySet extends BaseSet {
         return set___ior__(other);
     }
 
+    @ExposedMethod
     final PyObject set___ior__(PyObject other) {
         BaseSet bs = _binary_sanity_check(other);
         _set.addAll(bs._set);
