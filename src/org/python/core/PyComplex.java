@@ -663,12 +663,12 @@ public class PyComplex extends PyObject {
             "can't convert complex to int; use e.g. int(abs(z))");
     }
 
-    public PyLong __long__() {
+    public PyObject __long__() {
         return complex___long__();
     }
 
     @ExposedMethod
-    final PyLong complex___long__() {
+    final PyObject complex___long__() {
         throw Py.TypeError(
             "can't convert complex to long; use e.g. long(abs(z))");
     }

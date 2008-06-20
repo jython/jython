@@ -756,12 +756,12 @@ public class PyLong extends PyObject {
     }
 
 
-    public PyLong __long__() {
+    public PyObject __long__() {
         return long___long__();
     }
 
     @ExposedMethod
-    final PyLong long___long__() {
+    final PyObject long___long__() {
         return Py.newLong(value);
     }
 

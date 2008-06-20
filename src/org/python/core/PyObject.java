@@ -1518,9 +1518,9 @@ public class PyObject implements Serializable {
      * Should only be overridden by numeric objects that can be
      * reasonably coerced into a python long.
      *
-     * @return a PyLong corresponding to the value of this object.
+     * @return a PyLong or PyInteger corresponding to the value of this object.
      **/
-    public PyLong __long__() {
+    public PyObject __long__() {
         throw Py.AttributeError("__long__");
     }
 

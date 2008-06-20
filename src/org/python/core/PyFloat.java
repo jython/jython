@@ -549,12 +549,12 @@ public class PyFloat extends PyObject
         return __long__();
     }
 
-    public PyLong __long__() {
+    public PyObject __long__() {
         return float___long__();
     }
 
     @ExposedMethod
-    final PyLong float___long__() {
+    final PyObject float___long__() {
         return new PyLong(value);
     }
 
