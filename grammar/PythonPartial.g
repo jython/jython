@@ -75,7 +75,7 @@ package org.python.antlr;
 } 
 
 @members {
-    boolean debugOn = true;
+    boolean debugOn = false;
 
     private void debug(String message) {
         if (debugOn) {
@@ -83,6 +83,7 @@ package org.python.antlr;
         }
     }
 
+    /*
     protected void mismatch(IntStream input, int ttype, BitSet follow) throws RecognitionException {
         throw new MismatchedTokenException(ttype, input);
     }
@@ -96,6 +97,7 @@ package org.python.antlr;
         mismatch(input, ttype, follow);
         return null;
     }
+    */
 
 	public void emitErrorMessage(String msg) {
 		System.err.print("[EMITTING] ");
