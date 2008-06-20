@@ -27,50 +27,43 @@ public class PyLong extends PyObject {
     private BigInteger value;
 
     @ExposedNew
-    public static PyObject long_new(PyNewWrapper new_, boolean init, PyType subtype,
-            PyObject[] args, String[] keywords) {
+    public static PyObject long___new__(PyNewWrapper new_, boolean init, PyType subtype,
+                                        PyObject[] args, String[] keywords) {
+        if (new_.for_type != subtype) {
+            return longSubtypeNew(new_, init, subtype, args, keywords);
+        }
 
         ArgParser ap = new ArgParser("long", args, keywords, new String[] {"x", "base"}, 0);
-
         PyObject x = ap.getPyObject(0, null);
         int base = ap.getInt(1, -909);
-        if (new_.for_type == subtype) {
-            if (x == null) {
-                return new PyLong(0);
-            }
 
-            Object o = x.__tojava__(BigInteger.class);
-            if(o != Py.NoConversion) {
-                return Py.newLong((BigInteger)o);
-            }
+        if (x == null) {
+            return new PyLong(0);
+        }
+        if (base == -909) {
+            return x.__long__();
+        }
+        if (!(x instanceof PyString)) {
+            throw Py.TypeError("long: can't convert non-string with explicit base");
+        }
+        return ((PyString)x).atol(base);
+    }
 
-            if (base == -909) {
-                return x.__long__();
-            }
-
-            if (!(x instanceof PyString)) {
-                throw Py.TypeError("long: can't convert non-string with explicit base");
-            }
-
-            return ((PyString) x).atol(base);
+    /**
+     * Wimpy, slow approach to new calls for subtypes of long.
+     *
+     * First creates a regular long from whatever arguments we got, then allocates a
+     * subtype instance and initializes it from the regular long. The regular long is then
+     * thrown away.
+     */
+    private static PyObject longSubtypeNew(PyNewWrapper new_, boolean init, PyType subtype,
+                                           PyObject[] args, String[] keywords) {
+        PyObject tmp = long___new__(new_, init, TYPE, args, keywords);
+        if (tmp instanceof PyInteger) {
+            int intValue = ((PyInteger)tmp).getValue();
+            return new PyLongDerived(subtype, BigInteger.valueOf(intValue));
         } else {
-            if (x == null) {
-                return new PyLongDerived(subtype, BigInteger.valueOf(0));
-            }
-            Object o = x.__tojava__(BigInteger.class);
-            if(o != Py.NoConversion) {
-                return new PyLongDerived(subtype, (BigInteger)o);
-            }
-
-            if (base == -909) {
-                return new PyLongDerived(subtype, x.__long__().getValue());
-            }
-
-            if (!(x instanceof PyString)) {
-                throw Py.TypeError("long: can't convert non-string with explicit base");
-            }
-
-            return new PyLongDerived(subtype, (((PyString) x).atol(base)).getValue());
+            return new PyLongDerived(subtype, ((PyLong)tmp).value);
         }
     }
     
