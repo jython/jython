@@ -154,10 +154,11 @@ public class ParserFacade {
     }
 
     private static boolean validPartialSentence(BufferedReader bufreader) {
+        PythonPartialLexer lexer = null;
         try {
             bufreader.reset();
             CharStream cs = new NoCloseReaderStream(bufreader);
-            PythonPartialLexer lexer = new InteractiveParser.PPLexer(cs);
+            lexer = new InteractiveParser.PPLexer(cs);
             CommonTokenStream tokens = new CommonTokenStream(lexer);
             tokens.discardOffChannelTokens(true);
             PythonPartialTokenSource indentedSource = new PythonPartialTokenSource(tokens);
@@ -165,7 +166,7 @@ public class ParserFacade {
             PythonPartialParser parser = new PythonPartialParser(tokens);
             parser.single_input();
         } catch (Exception e) {
-            return false;
+            return lexer.eofWhileNested;
         }
         return true;
     }
