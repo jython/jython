@@ -565,104 +565,156 @@ public class PyFrozenSetDerived extends PyFrozenSet implements Slotted {
     public PyObject __iadd__(PyObject other) {
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__iadd__");
-        if (impl!=null)
-            return impl.__get__(this,self_type).__call__(other);
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,self_type).__call__(other);
+            if (res==Py.NotImplemented)
+                return null;
+            return res;
+        }
         return super.__iadd__(other);
     }
 
     public PyObject __isub__(PyObject other) {
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__isub__");
-        if (impl!=null)
-            return impl.__get__(this,self_type).__call__(other);
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,self_type).__call__(other);
+            if (res==Py.NotImplemented)
+                return null;
+            return res;
+        }
         return super.__isub__(other);
     }
 
     public PyObject __imul__(PyObject other) {
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__imul__");
-        if (impl!=null)
-            return impl.__get__(this,self_type).__call__(other);
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,self_type).__call__(other);
+            if (res==Py.NotImplemented)
+                return null;
+            return res;
+        }
         return super.__imul__(other);
     }
 
     public PyObject __idiv__(PyObject other) {
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__idiv__");
-        if (impl!=null)
-            return impl.__get__(this,self_type).__call__(other);
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,self_type).__call__(other);
+            if (res==Py.NotImplemented)
+                return null;
+            return res;
+        }
         return super.__idiv__(other);
     }
 
     public PyObject __ifloordiv__(PyObject other) {
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__ifloordiv__");
-        if (impl!=null)
-            return impl.__get__(this,self_type).__call__(other);
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,self_type).__call__(other);
+            if (res==Py.NotImplemented)
+                return null;
+            return res;
+        }
         return super.__ifloordiv__(other);
     }
 
     public PyObject __itruediv__(PyObject other) {
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__itruediv__");
-        if (impl!=null)
-            return impl.__get__(this,self_type).__call__(other);
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,self_type).__call__(other);
+            if (res==Py.NotImplemented)
+                return null;
+            return res;
+        }
         return super.__itruediv__(other);
     }
 
     public PyObject __imod__(PyObject other) {
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__imod__");
-        if (impl!=null)
-            return impl.__get__(this,self_type).__call__(other);
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,self_type).__call__(other);
+            if (res==Py.NotImplemented)
+                return null;
+            return res;
+        }
         return super.__imod__(other);
     }
 
     public PyObject __ipow__(PyObject other) {
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__ipow__");
-        if (impl!=null)
-            return impl.__get__(this,self_type).__call__(other);
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,self_type).__call__(other);
+            if (res==Py.NotImplemented)
+                return null;
+            return res;
+        }
         return super.__ipow__(other);
     }
 
     public PyObject __ilshift__(PyObject other) {
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__ilshift__");
-        if (impl!=null)
-            return impl.__get__(this,self_type).__call__(other);
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,self_type).__call__(other);
+            if (res==Py.NotImplemented)
+                return null;
+            return res;
+        }
         return super.__ilshift__(other);
     }
 
     public PyObject __irshift__(PyObject other) {
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__irshift__");
-        if (impl!=null)
-            return impl.__get__(this,self_type).__call__(other);
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,self_type).__call__(other);
+            if (res==Py.NotImplemented)
+                return null;
+            return res;
+        }
         return super.__irshift__(other);
     }
 
     public PyObject __iand__(PyObject other) {
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__iand__");
-        if (impl!=null)
-            return impl.__get__(this,self_type).__call__(other);
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,self_type).__call__(other);
+            if (res==Py.NotImplemented)
+                return null;
+            return res;
+        }
         return super.__iand__(other);
     }
 
     public PyObject __ior__(PyObject other) {
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__ior__");
-        if (impl!=null)
-            return impl.__get__(this,self_type).__call__(other);
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,self_type).__call__(other);
+            if (res==Py.NotImplemented)
+                return null;
+            return res;
+        }
         return super.__ior__(other);
     }
 
     public PyObject __ixor__(PyObject other) {
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__ixor__");
-        if (impl!=null)
-            return impl.__get__(this,self_type).__call__(other);
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,self_type).__call__(other);
+            if (res==Py.NotImplemented)
+                return null;
+            return res;
+        }
         return super.__ixor__(other);
     }
 
