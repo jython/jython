@@ -54,6 +54,7 @@ template = jt("""
      **/
      );
     public final PyObject `concat`(_, `name)(PyObject o2) {
+    	`divhook;
     	PyType t1 = this.getType();
     	PyType t2 = o2.getType();
     	if (t1 == t2 || t1.builtin && t2.builtin) {
@@ -75,7 +76,6 @@ template = jt("""
      **/
      );
     final PyObject `concat`(_basic_, `name)(PyObject o2) {
-        `divhook;
         PyObject x = `concat`(__,`name,__)(o2);
         if (x != null)
             return x;

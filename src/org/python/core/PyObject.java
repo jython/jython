@@ -1948,6 +1948,8 @@ public class PyObject implements Serializable {
       *            with these operands.
       **/
     public final PyObject _div(PyObject o2) {
+        if (Options.Qnew)
+            return _truediv(o2);
         PyType t1=this.getType();
         PyType t2=o2.getType();
         if (t1==t2||t1.builtin&&t2.builtin) {
@@ -1965,8 +1967,6 @@ public class PyObject implements Serializable {
      *            with these operands.
      **/
     final PyObject _basic_div(PyObject o2) {
-        if (Options.Qnew)
-            return _truediv(o2);
         PyObject x=__div__(o2);
         if (x!=null)
             return x;
