@@ -127,7 +127,9 @@ public class imp {
             }
         }
         */
-        return data;
+        // XXX: always re-generate byte code until APIVersion is fixed
+        //return data;
+        return null;
     }
     
     public static byte[] compileSource(String name, File file, String sourceFilename,
