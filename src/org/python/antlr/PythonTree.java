@@ -19,10 +19,10 @@ public class PythonTree extends CommonTree implements AST {
     public PythonTree(int ttype, Token t) {
         super();
         CommonToken c = new CommonToken(ttype, t.getText());
-		c.setLine(t.getLine());
-		c.setTokenIndex(t.getTokenIndex());
-		c.setCharPositionInLine(t.getCharPositionInLine());
-		c.setChannel(t.getChannel());
+        c.setLine(t.getLine());
+        c.setTokenIndex(t.getTokenIndex());
+        c.setCharPositionInLine(t.getCharPositionInLine());
+        c.setChannel(t.getChannel());
         c.setStartIndex(((CommonToken)t).getStartIndex());
         c.setStopIndex(((CommonToken)t).getStopIndex());
         token = c;
@@ -38,27 +38,27 @@ public class PythonTree extends CommonTree implements AST {
         charStopIndex = node.getCharStopIndex();
     }
 
-	public int getCharStartIndex() {
-		if ( charStartIndex == -1 && token != null ) {
-			return ((CommonToken)token).getStartIndex();
-		}
-		return charStartIndex ;
-	}
+    public int getCharStartIndex() {
+        if ( charStartIndex == -1 && token != null ) {
+            return ((CommonToken)token).getStartIndex();
+        }
+        return charStartIndex ;
+    }
 
-	public void setCharStartIndex(int index) {
-		charStartIndex  = index;
-	}
+    public void setCharStartIndex(int index) {
+        charStartIndex  = index;
+    }
 
-	public int getCharStopIndex() {
-		if ( charStopIndex == -1 && token != null ) {
-			return ((CommonToken)token).getStopIndex();
-		}
-		return charStopIndex;
-	}
+    public int getCharStopIndex() {
+        if ( charStopIndex == -1 && token != null ) {
+            return ((CommonToken)token).getStopIndex();
+        }
+        return charStopIndex;
+    }
 
-	public void setCharStopIndex(int index) {
-		charStopIndex = index;
-	}
+    public void setCharStopIndex(int index) {
+        charStopIndex = index;
+    }
 
     public String toString() {
         if (isNil()) {
