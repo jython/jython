@@ -51,6 +51,8 @@ public class InteractiveParser {
     public modType parse() throws IOException {
         modType tree = null;
         PythonLexer lexer = new PyLexer(new NoCloseReaderStream(bufreader));
+        //XXX: Hopefully we can remove inSingle when we get PyCF_DONT_IMPLY_DEDENT support.
+        lexer.inSingle = true;
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         tokens.discardOffChannelTokens(true);
         PythonTokenSource indentedSource = new PythonTokenSource(tokens);

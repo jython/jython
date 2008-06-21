@@ -451,6 +451,8 @@ package org.python.antlr;
  *  a = [3,
  *       4]
  */
+//XXX: Hopefully we can remove inSingle when we get PyCF_DONT_IMPLY_DEDENT support.
+public boolean inSingle = false;
 int implicitLineJoiningLevel = 0;
 int startPos=-1;
 
@@ -483,12 +485,9 @@ int startPos=-1;
 }
 
 //single_input: NEWLINE | simple_stmt | compound_stmt NEWLINE
-//XXX: I don't know why, but in "compound_stmt NEWLINE"
-//     Jython chokes on the NEWLINE every time -- so I made
-//     it optional for now.
 single_input : NEWLINE
              | simple_stmt -> ^(Interactive simple_stmt)
-             | compound_stmt NEWLINE? -> ^(Interactive compound_stmt)
+             | compound_stmt NEWLINE -> ^(Interactive compound_stmt)
              ;
 
 //file_input: (NEWLINE | stmt)* ENDMARKER
@@ -1322,7 +1321,11 @@ CONTINUED_LINE
  *  Frank Wierzbicki added: Also ignore FORMFEEDS (\u000C).
  */
 NEWLINE
-    :   (('\u000C')?('\r')? '\n' )+
+    :   {inSingle}? => (('\u000C')?('\r')? '\n' )
+            {if (implicitLineJoiningLevel>0 )
+                $channel=HIDDEN;
+            }
+    |   (('\u000C')?('\r')? '\n' )+
         {if ( startPos==0 || implicitLineJoiningLevel>0 )
             $channel=HIDDEN;
         }
