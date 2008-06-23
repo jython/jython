@@ -785,7 +785,7 @@ public class PyInstance extends PyObject
      **/
     public PyObject __int__() {
         PyObject ret = invoke("__int__");
-        if (ret instanceof PyInteger)
+        if (ret instanceof PyLong || ret instanceof PyInteger)
             return ret;
         throw Py.TypeError("__int__() should return a int");
     }
