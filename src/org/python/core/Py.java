@@ -1043,12 +1043,12 @@ public final class Py
             buf.append(type.__str__());
         }
         if (value != Py.None) {
-            buf.append(": ");
-            if (__builtin__.isinstance(value, Py.SyntaxError)) {
-                buf.append(value.__getitem__(0).__str__());
-            } else {
-                buf.append(value.__str__());
+            // only print colon if the str() of the object is not the empty string
+            PyObject s = value.__str__();
+            if (!(s instanceof PyString) || s.__len__() != 0) {
+                buf.append(": ");
             }
+            buf.append(s);
         }
         return buf.toString();
     }
@@ -1133,7 +1133,7 @@ public final class Py
     // oldcompiler. newcompiler should just call doRaise instead
     public static PyException makeException(PyObject type, PyObject value,
                                             PyObject traceback) {
-        return doRaise(type, value, traceback);
+        return PyException.doRaise(type, value, traceback);
     }
 
     public static PyException makeException(PyObject type, PyObject value) {
@@ -1147,63 +1147,6 @@ public final class Py
     public static PyException makeException() {
         return makeException(null);
     }
-
-    /**
-     * Logic for the raise statement
-     *
-     * @param type the first arg to raise, a type or an instance
-     * @param value the second arg, the instance of the class or
-     * arguments to its constructor
-     * @param tb a traceback object
-     * @return a PyException wrapper
-     */
-    public static PyException doRaise(PyObject type, PyObject value, PyObject traceback) {
-        if (type == null) {
-            ThreadState state = getThreadState();
-            type = state.exception.type;
-            value = state.exception.value;
-            traceback = state.exception.traceback;
-        }
-
-        if (traceback == Py.None) {
-            traceback = null;
-        } else if (traceback != null && !(traceback instanceof PyTraceback)) {
-            throw Py.TypeError("raise: arg 3 must be a traceback or None");
-        }
-
-        if (value == null) {
-            value = Py.None;
-        }
-
-        // Repeatedly, replace a tuple exception with its first item
-        while (type instanceof PyTuple && ((PyTuple)type).size() > 0) {
-            type = type.__getitem__(0);
-        }
-
-        if (type.getClass() == PyString.class) {
-            Py.warning(Py.DeprecationWarning, "raising a string exception is deprecated");
-        } else if (PyException.isExceptionClass(type)) {
-            PyException pye = new PyException(type, value, (PyTraceback)traceback);
-            pye.normalize();
-            return pye;
-        } else if (PyException.isExceptionInstance(type)) {
-            // Raising an instance.  The value should be a dummy.
-            if (value != Py.None) {
-                throw Py.TypeError("instance exception may not have a separate value");
-            } else {
-                // Normalize to raise <class>, <instance>
-                value = type;
-                type = type.fastGetClass();
-            }
-        } else {
-            // Not something you can raise.  You get an exception
-            // anyway, just not what you specified :-)
-            throw Py.TypeError("exceptions must be classes, instances, or strings (deprecated), "
-                               + "not " + type.getType().fastGetName());
-        }
-        return new PyException(type, value, (PyTraceback)traceback);
-    }
-
 
     public static PyObject runCode(PyCode code, PyObject locals,
                                    PyObject globals)

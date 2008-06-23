@@ -130,6 +130,62 @@ public class PyException extends RuntimeException
     }
 
     /**
+     * Logic for the raise statement
+     *
+     * @param type the first arg to raise, a type or an instance
+     * @param value the second arg, the instance of the class or
+     * arguments to its constructor
+     * @param tb a traceback object
+     * @return a PyException wrapper
+     */
+    public static PyException doRaise(PyObject type, PyObject value, PyObject traceback) {
+        if (type == null) {
+            ThreadState state = Py.getThreadState();
+            type = state.exception.type;
+            value = state.exception.value;
+            traceback = state.exception.traceback;
+        }
+
+        if (traceback == Py.None) {
+            traceback = null;
+        } else if (traceback != null && !(traceback instanceof PyTraceback)) {
+            throw Py.TypeError("raise: arg 3 must be a traceback or None");
+        }
+
+        if (value == null) {
+            value = Py.None;
+        }
+
+        // Repeatedly, replace a tuple exception with its first item
+        while (type instanceof PyTuple && ((PyTuple)type).size() > 0) {
+            type = type.__getitem__(0);
+        }
+
+        if (type.getClass() == PyString.class) {
+            Py.warning(Py.DeprecationWarning, "raising a string exception is deprecated");
+        } else if (isExceptionClass(type)) {
+            PyException pye = new PyException(type, value, (PyTraceback)traceback);
+            pye.normalize();
+            return pye;
+        } else if (isExceptionInstance(type)) {
+            // Raising an instance.  The value should be a dummy.
+            if (value != Py.None) {
+                throw Py.TypeError("instance exception may not have a separate value");
+            } else {
+                // Normalize to raise <class>, <instance>
+                value = type;
+                type = type.fastGetClass();
+            }
+        } else {
+            // Not something you can raise.  You get an exception
+            // anyway, just not what you specified :-)
+            throw Py.TypeError("exceptions must be classes, instances, or strings (deprecated), "
+                               + "not " + type.getType().fastGetName());
+        }
+        return new PyException(type, value, (PyTraceback)traceback);
+    }
+
+    /**
      * Determine whether obj is a Python exception class
      *
      * @param obj a PyObject
