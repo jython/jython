@@ -70,7 +70,7 @@ public class PyType extends PyObject implements Serializable {
     private boolean needs_finalizer;
 
     /** Whether this type's instances require a __dict__. */
-    private boolean needs_userdict = true;
+    private boolean needs_userdict = false;
 
     /** The number of __slots__ defined. */
     private int numSlots;
@@ -172,8 +172,15 @@ public class PyType extends PyObject implements Serializable {
         newtype.bases = bases_list;
 
         PyObject slots = dict.__finditem__("__slots__");
-        if (slots != null) {
-            newtype.needs_userdict = false;
+        boolean needsDictDescr = false;
+        if (slots == null) {
+            newtype.needs_userdict = true;
+            // a dict descriptor is required if base doesn't already provide a dict
+            needsDictDescr = !newtype.base.needs_userdict;
+        } else {
+            // have slots, but may inherit a dict
+            newtype.needs_userdict = newtype.base.needs_userdict;
+
             if (slots instanceof PyString) {
                 addSlot(newtype, slots);
             } else {
@@ -181,9 +188,32 @@ public class PyType extends PyObject implements Serializable {
                     addSlot(newtype, slotname);
                 }
             }
-        }
-        if (!newtype.needs_userdict) {
-            newtype.needs_userdict = necessitatesUserdict(bases_list);
+
+            if (!newtype.base.needs_userdict && newtype.needs_userdict) {
+                // base doesn't provide dict but addSlot found the __dict__ slot
+                needsDictDescr = true;
+            } else if (bases_list.length > 0 && !newtype.needs_userdict) {
+                // secondary bases may provide dict
+                for (PyObject base : bases_list) {
+                    if (base == newtype.base) {
+                        // Skip primary base
+                        continue;
+                    }
+                    if (base instanceof PyClass) {
+                        // Classic base class provides dict
+                        newtype.needs_userdict = true;
+                        needsDictDescr = true;
+                        break;
+                    }
+                    PyType tmpType = (PyType)base;
+                    if (tmpType.needs_userdict) {
+                        newtype.needs_userdict = true;
+                        needsDictDescr = true;
+                        // Nothing more to check
+                        break;
+                    }
+                }
+            }
         }
 
         newtype.tp_flags = Py.TPFLAGS_HEAPTYPE;
@@ -196,7 +226,7 @@ public class PyType extends PyObject implements Serializable {
 
         newtype.mro_internal();
         // __dict__ descriptor
-        if (newtype.needs_userdict && newtype.lookup("__dict__") == null) {
+        if (needsDictDescr && dict.__finditem__("__dict__") == null) {
             dict.__setitem__("__dict__", new PyDataDescr(newtype, "__dict__", PyObject.class) {
 
                 @Override
@@ -552,10 +582,31 @@ public class PyType extends PyObject implements Serializable {
     }
 
     private void mro_internal() {
-        if (getType().underlying_class != PyType.class && getType().lookup("mro") != null) {
-            mro = Py.make_array(getType().lookup("mro").__get__(null, getType()).__call__(this));
-        } else {
+        if (getType() == TYPE) {
             mro = compute_mro();
+        } else {
+            PyObject mroDescr = getType().lookup("mro");
+            if (mroDescr == null) {
+                throw Py.AttributeError("mro");
+            }
+            PyObject[] result = Py.make_array(mroDescr.__get__(null, getType()).__call__(this));
+
+            PyType solid = solid_base(this);
+            for (PyObject cls : result) {
+                if (cls instanceof PyClass) {
+                    continue;
+                }
+                if (!(cls instanceof PyType)) {
+                    throw Py.TypeError(String.format("mro() returned a non-class ('%.500s')",
+                                                     cls.getType().fastGetName()));
+                }
+                PyType t = (PyType)cls;
+                if (!solid.isSubType(solid_base(t))) {
+                    throw Py.TypeError(String.format("mro() returned base with unsuitable layout "
+                                                     + "('%.500s')", t.fastGetName()));
+                }
+            }
+            mro = result;
         }
     }
 
@@ -772,22 +823,16 @@ public class PyType extends PyObject implements Serializable {
     }
 
     /**
-     * Finds the parent of base with an underlying_class or with slots
-     *
-     * @raises Py.TypeError if there is no solid base for base
+     * Finds the parent of type with an underlying_class or with slots.
      */
-    private static PyType solid_base(PyType base) {
-        PyObject[] mro = base.mro;
-        for (int i = 0; i < mro.length; i++) {
-            PyObject parent = mro[i];
-            if (parent instanceof PyType) {
-                PyType parent_type = (PyType)parent;
-                if (isSolidBase(parent_type)) {
-                    return parent_type;
-                }
+    private static PyType solid_base(PyType type) {
+        do {
+            if (isSolidBase(type)) {
+                return type;
             }
-        }
-        throw Py.TypeError("base without solid base");
+            type = type.base;
+        } while (type != null);
+        return PyObject.TYPE;
     }
 
     private static boolean isSolidBase(PyType type) {
@@ -832,17 +877,6 @@ public class PyType extends PyObject implements Serializable {
         return best;
     }
 
-    private static boolean necessitatesUserdict(PyObject[] bases_list) {
-        for (int i = 0; i < bases_list.length; i++) {
-            PyObject cur = bases_list[i];
-            if ((cur instanceof PyType && ((PyType)cur).needs_userdict)
-                || cur instanceof PyClass) {
-               return true;
-            }
-        }
-        return false;
-    }
-
     /**
      * Finds the most derived subtype of initialMetatype in the types
      * of bases, or initialMetatype if it is already the most derived.
@@ -883,6 +917,9 @@ public class PyType extends PyObject implements Serializable {
         confirmIdentifier(slotname);
         String slotstring = mangleName(newtype.name, slotname.toString());
         if (slotstring.equals("__dict__")) {
+            if (newtype.base.needs_userdict || newtype.needs_userdict) {
+                throw Py.TypeError("__dict__ slot disallowed: we already got one");
+            }
             newtype.needs_userdict = true;
         } else if (newtype.dict.__finditem__(slotstring) == null) {
             newtype.dict.__setitem__(slotstring, new PySlot(newtype, slotstring,

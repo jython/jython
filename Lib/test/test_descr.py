@@ -1,15 +1,14 @@
 # Test enhancements related to descriptors and new-style classes
 
-# modified from CPython version by:
-#    - removed the tests classmethods_in_c, staticmethods_in_c, spamlists, and spamdicts which
-#      depend on the c extension module xxsubtype 
-#    - merged code from the pypy version of this script to run all tests instead of stopping
-#      at the first failure
-#    - allow specific tests to be run by specifying them on the command line
-
-from test.test_support import verify, vereq, verbose, TestFailed, TESTFN, get_original_stdout
+from test.test_support import verify, vereq, verbose, TestFailed, TESTFN, get_original_stdout, is_jython
 from copy import deepcopy
 import warnings
+import types
+if is_jython:
+    from test_weakref import extra_collect
+else:
+    def extra_collect():
+        pass
 
 warnings.filterwarnings("ignore",
          r'complex divmod\(\), // and % are deprecated$',
@@ -507,16 +506,97 @@ def complexes():
         __str__ = __repr__
 
     a = Number(3.14, prec=6)
-    vereq(`a`, "3.14")
+    vereq(repr(a), "3.14")
     vereq(a.prec, 6)
 
     a = Number(a, prec=2)
-    vereq(`a`, "3.1")
+    vereq(repr(a), "3.1")
     vereq(a.prec, 2)
 
     a = Number(234.5)
-    vereq(`a`, "234.5")
+    vereq(repr(a), "234.5")
     vereq(a.prec, 12)
+
+def spamlists():
+    if verbose: print "Testing spamlist operations..."
+    import copy, xxsubtype as spam
+    def spamlist(l, memo=None):
+        import xxsubtype as spam
+        return spam.spamlist(l)
+    # This is an ugly hack:
+    copy._deepcopy_dispatch[spam.spamlist] = spamlist
+
+    testbinop(spamlist([1]), spamlist([2]), spamlist([1,2]), "a+b", "__add__")
+    testbinop(spamlist([1,2,3]), 2, 1, "b in a", "__contains__")
+    testbinop(spamlist([1,2,3]), 4, 0, "b in a", "__contains__")
+    testbinop(spamlist([1,2,3]), 1, 2, "a[b]", "__getitem__")
+    testternop(spamlist([1,2,3]), 0, 2, spamlist([1,2]),
+               "a[b:c]", "__getslice__")
+    testsetop(spamlist([1]), spamlist([2]), spamlist([1,2]),
+              "a+=b", "__iadd__")
+    testsetop(spamlist([1,2]), 3, spamlist([1,2,1,2,1,2]), "a*=b", "__imul__")
+    testunop(spamlist([1,2,3]), 3, "len(a)", "__len__")
+    testbinop(spamlist([1,2]), 3, spamlist([1,2,1,2,1,2]), "a*b", "__mul__")
+    testbinop(spamlist([1,2]), 3, spamlist([1,2,1,2,1,2]), "b*a", "__rmul__")
+    testset2op(spamlist([1,2]), 1, 3, spamlist([1,3]), "a[b]=c", "__setitem__")
+    testset3op(spamlist([1,2,3,4]), 1, 3, spamlist([5,6]),
+               spamlist([1,5,6,4]), "a[b:c]=d", "__setslice__")
+    # Test subclassing
+    class C(spam.spamlist):
+        def foo(self): return 1
+    a = C()
+    vereq(a, [])
+    vereq(a.foo(), 1)
+    a.append(100)
+    vereq(a, [100])
+    vereq(a.getstate(), 0)
+    a.setstate(42)
+    vereq(a.getstate(), 42)
+
+def spamdicts():
+    if verbose: print "Testing spamdict operations..."
+    import copy, xxsubtype as spam
+    def spamdict(d, memo=None):
+        import xxsubtype as spam
+        sd = spam.spamdict()
+        for k, v in d.items(): sd[k] = v
+        return sd
+    # This is an ugly hack:
+    copy._deepcopy_dispatch[spam.spamdict] = spamdict
+
+    testbinop(spamdict({1:2}), spamdict({2:1}), -1, "cmp(a,b)", "__cmp__")
+    testbinop(spamdict({1:2,3:4}), 1, 1, "b in a", "__contains__")
+    testbinop(spamdict({1:2,3:4}), 2, 0, "b in a", "__contains__")
+    testbinop(spamdict({1:2,3:4}), 1, 2, "a[b]", "__getitem__")
+    d = spamdict({1:2,3:4})
+    l1 = []
+    for i in d.keys(): l1.append(i)
+    l = []
+    for i in iter(d): l.append(i)
+    vereq(l, l1)
+    l = []
+    for i in d.__iter__(): l.append(i)
+    vereq(l, l1)
+    l = []
+    for i in type(spamdict({})).__iter__(d): l.append(i)
+    vereq(l, l1)
+    straightd = {1:2, 3:4}
+    spamd = spamdict(straightd)
+    testunop(spamd, 2, "len(a)", "__len__")
+    testunop(spamd, repr(straightd), "repr(a)", "__repr__")
+    testset2op(spamdict({1:2,3:4}), 2, 3, spamdict({1:2,2:3,3:4}),
+               "a[b]=c", "__setitem__")
+    # Test subclassing
+    class C(spam.spamdict):
+        def foo(self): return 1
+    a = C()
+    vereq(a.items(), [])
+    vereq(a.foo(), 1)
+    a['foo'] = 'bar'
+    vereq(a.items(), [('foo', 'bar')])
+    vereq(a.getstate(), 0)
+    a.setstate(100)
+    vereq(a.getstate(), 100)
 
 def pydicts():
     if verbose: print "Testing Python subclass of dict..."
@@ -617,6 +697,8 @@ def metaclass():
     class _instance(object):
         pass
     class M2(object):
+        # XXX: Jython 2.3
+        #@staticmethod
         def __new__(cls, name, bases, dict):
             self = object.__new__(cls)
             self.name = name
@@ -769,6 +851,16 @@ def pymods():
     vereq(log, [("setattr", "foo", 12),
                 ("getattr", "foo"),
                 ("delattr", "foo")])
+
+    # http://python.org/sf/1174712
+    try:
+        class Module(types.ModuleType, str):
+            pass
+    except TypeError:
+        pass
+    else:
+        raise TestFailed("inheriting from ModuleType and str at the "
+                          "same time should fail")
 
 def multi():
     if verbose: print "Testing multiple inheritance..."
@@ -1135,8 +1227,34 @@ def slots():
     class C(object):
         __slots__ = ["a", "a_b", "_a", "A0123456789Z"]
 
+    # Test unicode slot names
+    try:
+        unichr
+    except NameError:
+        pass
+    else:
+        # _unicode_to_string used to modify slots in certain circumstances
+        slots = (unicode("foo"), unicode("bar"))
+        class C(object):
+            __slots__ = slots
+        x = C()
+        x.foo = 5
+        vereq(x.foo, 5)
+        veris(type(slots[0]), unicode)
+        # this used to leak references
+        try:
+            class C(object):
+                __slots__ = [unichr(128)]
+        except (TypeError, UnicodeEncodeError):
+            pass
+        else:
+            raise TestFailed, "[unichr(128)] slots not caught"
+
     # Test leaks
-    class Counted(object):
+    # XXX: Jython new style classes don't support __del__
+    # http://bugs.jython.org/issue1057
+    class Counted:
+    #class Counted(object):
         counter = 0    # counts the number of instances alive
         def __init__(self):
             Counted.counter += 1
@@ -1150,6 +1268,7 @@ def slots():
     x.c = Counted()
     vereq(Counted.counter, 3)
     del x
+    extra_collect()
     vereq(Counted.counter, 0)
     class D(C):
         pass
@@ -1158,6 +1277,7 @@ def slots():
     x.z = Counted()
     vereq(Counted.counter, 2)
     del x
+    extra_collect()
     vereq(Counted.counter, 0)
     class E(D):
         __slots__ = ['e']
@@ -1167,6 +1287,7 @@ def slots():
     x.e = Counted()
     vereq(Counted.counter, 3)
     del x
+    extra_collect()
     vereq(Counted.counter, 0)
 
     # Test cyclical leaks [SF bug 519621]
@@ -1179,8 +1300,13 @@ def slots():
     s = None
     import gc
     gc.collect()
+    extra_collect()
     vereq(Counted.counter, 0)
 
+    # XXX: This tests a CPython GC reference count bug and Jython lacks
+    # gc.get_objects
+    import sys
+    """
     # Test lookup leaks [SF bug 572567]
     import sys,gc
     class G(object):
@@ -1192,6 +1318,7 @@ def slots():
         g==g
     new_objects = len(gc.get_objects())
     vereq(orig_objects, new_objects)
+    """
     class H(object):
         __slots__ = ['a', 'b']
         def __init__(self):
@@ -1206,6 +1333,7 @@ def slots():
     h = H()
     try:
         del h
+        extra_collect()
     finally:
         sys.stderr = save_stderr
 
@@ -1219,6 +1347,9 @@ def slotspecials():
     verify(not hasattr(a, "__weakref__"))
     a.foo = 42
     vereq(a.__dict__, {"foo": 42})
+
+    # XXX: Jython doesn't support __weakref__
+    return
 
     class W(object):
         __slots__ = ["__weakref__"]
@@ -1418,6 +1549,28 @@ def classmethods():
     else:
         raise TestFailed, "classmethod should check for callability"
 
+    # Verify that classmethod() doesn't allow keyword args
+    try:
+        classmethod(f, kw=1)
+    except TypeError:
+        pass
+    else:
+        raise TestFailed, "classmethod shouldn't accept keyword args"
+
+def classmethods_in_c():
+    if verbose: print "Testing C-based class methods..."
+    import xxsubtype as spam
+    a = (1, 2, 3)
+    d = {'abc': 123}
+    x, a1, d1 = spam.spamlist.classmeth(*a, **d)
+    veris(x, spam.spamlist)
+    vereq(a, a1)
+    vereq(d, d1)
+    x, a1, d1 = spam.spamlist().classmeth(*a, **d)
+    veris(x, spam.spamlist)
+    vereq(a, a1)
+    vereq(d, d1)
+
 def staticmethods():
     if verbose: print "Testing static methods..."
     class C(object):
@@ -1434,6 +1587,20 @@ def staticmethods():
     vereq(d.goo(1), (1,))
     vereq(d.foo(1), (d, 1))
     vereq(D.foo(d, 1), (d, 1))
+
+def staticmethods_in_c():
+    if verbose: print "Testing C-based static methods..."
+    import xxsubtype as spam
+    a = (1, 2, 3)
+    d = {"abc": 123}
+    x, a1, d1 = spam.spamlist.staticmeth(*a, **d)
+    veris(x, None)
+    vereq(a, a1)
+    vereq(d, d1)
+    x, a1, d2 = spam.spamlist().staticmeth(*a, **d)
+    veris(x, None)
+    vereq(a, a1)
+    vereq(d, d1)
 
 def classic():
     if verbose: print "Testing classic classes..."
@@ -1532,6 +1699,37 @@ def altmro():
     vereq(X.__mro__, (object, A, C, B, D, X))
     vereq(X().f(), "A")
 
+    try:
+        class X(object):
+            class __metaclass__(type):
+                def mro(self):
+                    return [self, dict, object]
+    except TypeError:
+        pass
+    else:
+        raise TestFailed, "devious mro() return not caught"
+
+    try:
+        class X(object):
+            class __metaclass__(type):
+                def mro(self):
+                    return [1]
+    except TypeError:
+        pass
+    else:
+        raise TestFailed, "non-class mro() return not caught"
+
+    try:
+        class X(object):
+            class __metaclass__(type):
+                def mro(self):
+                    return 1
+    except TypeError:
+        pass
+    else:
+        raise TestFailed, "non-sequence mro() return not caught"
+
+
 def overloading():
     if verbose: print "Testing operator overloading..."
 
@@ -1621,7 +1819,9 @@ def specials():
     c1 = C()
     c2 = C()
     verify(not not c1)
-    vereq(hash(c1), id(c1))
+    verify(id(c1) != id(c2))
+    hash(c1)
+    hash(c2)
     vereq(cmp(c1, c2), cmp(id(c1), id(c2)))
     vereq(c1, c1)
     verify(c1 != c2)
@@ -1643,7 +1843,9 @@ def specials():
     d1 = D()
     d2 = D()
     verify(not not d1)
-    vereq(hash(d1), id(d1))
+    verify(id(d1) != id(d2))
+    hash(d1)
+    hash(d2)
     vereq(cmp(d1, d2), cmp(id(d1), id(d2)))
     vereq(d1, d1)
     verify(d1 != d2)
@@ -1785,6 +1987,7 @@ def weakrefs():
     r = weakref.ref(c)
     verify(r() is c)
     del c
+    extra_collect()
     verify(r() is None)
     del r
     class NoWeak(object):
@@ -1795,13 +1998,16 @@ def weakrefs():
     except TypeError, msg:
         verify(str(msg).find("weak reference") >= 0)
     else:
-        verify(0, "weakref.ref(no) should be illegal")
+        # XXX: Jython allows a weakref here
+        if not is_jython:
+            verify(0, "weakref.ref(no) should be illegal")
     class Weak(object):
         __slots__ = ['foo', '__weakref__']
     yes = Weak()
     r = weakref.ref(yes)
     verify(r() is yes)
     del yes
+    extra_collect()
     verify(r() is None)
     del r
 
@@ -1865,6 +2071,28 @@ def properties():
         pass
     else:
         raise TestFailed, "expected ZeroDivisionError from bad property"
+
+    class E(object):
+        def getter(self):
+            "getter method"
+            return 0
+        def setter(self, value):
+            "setter method"
+            pass
+        prop = property(getter)
+        vereq(prop.__doc__, "getter method")
+        prop2 = property(fset=setter)
+        vereq(prop2.__doc__, None)
+
+    # this segfaulted in 2.5b2
+    try:
+        import _testcapi
+    except ImportError:
+        pass
+    else:
+        class X(object):
+            p = property(_testcapi.test_with_docstring)
+
 
 def supers():
     if verbose: print "Testing super..."
@@ -1968,12 +2196,21 @@ def supers():
         aProp = property(lambda self: "foo")
 
     class Sub(Base):
+        # XXX: Jython 2.3
+        #@classmethod
         def test(klass):
             return super(Sub,klass).aProp
         test = classmethod(test)
 
     veris(Sub.test(), Base.aProp)
 
+    # Verify that super() doesn't allow keyword args
+    try:
+        super(Base, kw=1)
+    except TypeError:
+        pass
+    else:
+        raise TestFailed, "super shouldn't accept keyword args"
 
 def inherits():
     if verbose: print "Testing inheritance from basic types..."
@@ -2189,22 +2426,6 @@ def inherits():
     vereq(s.center(len(s)), base)
     verify(s.lower().__class__ is str)
     vereq(s.lower(), base)
-
-    s = madstring("x y")
-    vereq(s, "x y")
-    verify(intern(s).__class__ is str)
-    verify(intern(s) is intern("x y"))
-    vereq(intern(s), "x y")
-
-    i = intern("y x")
-    s = madstring("y x")
-    vereq(s, i)
-    verify(intern(s).__class__ is str)
-    verify(intern(s) is i)
-
-    s = madstring(i)
-    verify(intern(s).__class__ is str)
-    verify(intern(s) is i)
 
     class madunicode(unicode):
         _rev = None
@@ -2625,7 +2846,7 @@ def setdict():
     def cant(x, dict):
         try:
             x.__dict__ = dict
-        except TypeError:
+        except (AttributeError, TypeError):
             pass
         else:
             raise TestFailed, "shouldn't allow %r.__dict__ = %r" % (x, dict)
@@ -2633,8 +2854,73 @@ def setdict():
     cant(a, [])
     cant(a, 1)
     del a.__dict__ # Deleting __dict__ is allowed
-    # Classes don't allow __dict__ assignment
-    cant(C, {})
+
+    class Base(object):
+        pass
+    def verify_dict_readonly(x):
+        """
+        x has to be an instance of a class inheriting from Base.
+        """
+        cant(x, {})
+        try:
+            del x.__dict__
+        except (AttributeError, TypeError):
+            pass
+        else:
+            raise TestFailed, "shouldn't allow del %r.__dict__" % x
+        dict_descr = Base.__dict__["__dict__"]
+        try:
+            dict_descr.__set__(x, {})
+        except (AttributeError, TypeError):
+            pass
+        else:
+            raise TestFailed, "dict_descr allowed access to %r's dict" % x
+
+    # Classes don't allow __dict__ assignment and have readonly dicts
+    class Meta1(type, Base):
+        pass
+    class Meta2(Base, type):
+        pass
+    class D(object):
+        __metaclass__ = Meta1
+    class E(object):
+        __metaclass__ = Meta2
+    for cls in C, D, E:
+        verify_dict_readonly(cls)
+        class_dict = cls.__dict__
+        try:
+            class_dict["spam"] = "eggs"
+        except TypeError:
+            pass
+        else:
+            raise TestFailed, "%r's __dict__ can be modified" % cls
+
+    # Modules also disallow __dict__ assignment
+    class Module1(types.ModuleType, Base):
+        pass
+    class Module2(Base, types.ModuleType):
+        pass
+    for ModuleType in Module1, Module2:
+        mod = ModuleType("spam")
+        verify_dict_readonly(mod)
+        mod.__dict__["spam"] = "eggs"
+
+    # Exception's __dict__ can be replaced, but not deleted
+    class Exception1(Exception, Base):
+        pass
+    class Exception2(Base, Exception):
+        pass
+    for ExceptionType in Exception, Exception1, Exception2:
+        e = ExceptionType()
+        e.__dict__ = {"a": 1}
+        vereq(e.a, 1)
+        try:
+            del e.__dict__
+        except (TypeError, AttributeError):
+            pass
+        else:
+            raise TestFaied, "%r's __dict__ can be deleted" % e
+
 
 def pickles():
     if verbose:
@@ -2712,8 +2998,8 @@ def pickles():
             vereq(sorteditems(x.__dict__), sorteditems(a.__dict__))
             vereq(y.__class__, b.__class__)
             vereq(sorteditems(y.__dict__), sorteditems(b.__dict__))
-            vereq(`x`, `a`)
-            vereq(`y`, `b`)
+            vereq(repr(x), repr(a))
+            vereq(repr(y), repr(b))
             if verbose:
                 print "a = x =", a
                 print "b = y =", b
@@ -2746,8 +3032,8 @@ def pickles():
     vereq(sorteditems(x.__dict__), sorteditems(a.__dict__))
     vereq(y.__class__, b.__class__)
     vereq(sorteditems(y.__dict__), sorteditems(b.__dict__))
-    vereq(`x`, `a`)
-    vereq(`y`, `b`)
+    vereq(repr(x), repr(a))
+    vereq(repr(y), repr(b))
     if verbose:
         print "a = x =", a
         print "b = y =", b
@@ -2879,13 +3165,13 @@ def binopoverride():
             else:
                 return I(pow(int(other), int(self), int(mod)))
 
-    vereq(`I(1) + I(2)`, "I(3)")
-    vereq(`I(1) + 2`, "I(3)")
-    vereq(`1 + I(2)`, "I(3)")
-    vereq(`I(2) ** I(3)`, "I(8)")
-    vereq(`2 ** I(3)`, "I(8)")
-    vereq(`I(2) ** 3`, "I(8)")
-    vereq(`pow(I(2), I(3), I(5))`, "I(3)")
+    vereq(repr(I(1) + I(2)), "I(3)")
+    vereq(repr(I(1) + 2), "I(3)")
+    vereq(repr(1 + I(2)), "I(3)")
+    vereq(repr(I(2) ** I(3)), "I(8)")
+    vereq(repr(2 ** I(3)), "I(8)")
+    vereq(repr(I(2) ** 3), "I(8)")
+    vereq(repr(pow(I(2), I(3), I(5))), "I(3)")
     class S(str):
         def __eq__(self, other):
             return self.lower() == other.lower()
@@ -2901,7 +3187,7 @@ def subclasspropagation():
     class D(B, C):
         pass
     d = D()
-    vereq(hash(d), id(d))
+    orig_hash = hash(d) # related to id(d) in platform-dependent ways
     A.__hash__ = lambda self: 42
     vereq(hash(d), 42)
     C.__hash__ = lambda self: 314
@@ -2917,7 +3203,7 @@ def subclasspropagation():
     del C.__hash__
     vereq(hash(d), 42)
     del A.__hash__
-    vereq(hash(d), id(d))
+    vereq(hash(d), orig_hash)
     d.foo = 42
     d.bar = 42
     vereq(d.foo, 42)
@@ -3029,6 +3315,21 @@ def kwdargs():
     list.__init__(a, sequence=[0, 1, 2])
     vereq(a, [0, 1, 2])
 
+def recursive__call__():
+    if verbose: print ("Testing recursive __call__() by setting to instance of "
+                        "class ...")
+    class A(object):
+        pass
+
+    A.__call__ = A()
+    try:
+        A()()
+    except RuntimeError:
+        pass
+    else:
+        raise TestFailed("Recursion limit should have been reached for "
+                         "__call__()")
+
 def delhook():
     if verbose: print "Testing __del__ hook..."
     log = []
@@ -3038,6 +3339,7 @@ def delhook():
     c = C()
     vereq(log, [])
     del c
+    extra_collect()
     vereq(log, [1])
 
     class D(object): pass
@@ -3144,7 +3446,11 @@ def dictproxyiterkeys():
     if verbose: print "Testing dict-proxy iterkeys..."
     keys = [ key for key in C.__dict__.iterkeys() ]
     keys.sort()
-    vereq(keys, ['__dict__', '__doc__', '__module__', '__weakref__', 'meth'])
+    if is_jython:
+        # XXX: It should include __doc__, but no __weakref__ (for now)
+        vereq(keys, ['__dict__', '__module__', 'meth'])
+    else:
+        vereq(keys, ['__dict__', '__doc__', '__module__', '__weakref__', 'meth'])
 
 def dictproxyitervalues():
     class C(object):
@@ -3152,7 +3458,8 @@ def dictproxyitervalues():
             pass
     if verbose: print "Testing dict-proxy itervalues..."
     values = [ values for values in C.__dict__.itervalues() ]
-    vereq(len(values), 5)
+    # XXX: See dictproxyiterkeys
+    vereq(len(values), is_jython and 3 or 5)
 
 def dictproxyiteritems():
     class C(object):
@@ -3161,7 +3468,10 @@ def dictproxyiteritems():
     if verbose: print "Testing dict-proxy iteritems..."
     keys = [ key for (key, value) in C.__dict__.iteritems() ]
     keys.sort()
-    vereq(keys, ['__dict__', '__doc__', '__module__', '__weakref__', 'meth'])
+    if is_jython:
+        vereq(keys, ['__dict__', '__module__', 'meth'])
+    else:
+        vereq(keys, ['__dict__', '__doc__', '__module__', '__weakref__', 'meth'])
 
 def funnynew():
     if verbose: print "Testing __new__ returning something unexpected..."
@@ -3228,31 +3538,6 @@ def docdescriptor():
     vereq(OldClass().__doc__, 'object=OldClass instance; type=OldClass')
     vereq(NewClass.__doc__, 'object=None; type=NewClass')
     vereq(NewClass().__doc__, 'object=NewClass instance; type=NewClass')
-
-def string_exceptions():
-    if verbose:
-        print "Testing string exceptions ..."
-
-    # Ensure builtin strings work OK as exceptions.
-    astring = "An exception string."
-    try:
-        raise astring
-    except astring:
-        pass
-    else:
-        raise TestFailed, "builtin string not usable as exception"
-
-    # Ensure string subclass instances do not.
-    class MyStr(str):
-        pass
-
-    newstring = MyStr("oops -- shouldn't work")
-    try:
-        raise newstring
-    except TypeError:
-        pass
-    except:
-        raise TestFailed, "string subclass allowed as exception"
 
 def copy_setstate():
     if verbose:
@@ -3834,6 +4119,13 @@ def weakref_segfault():
     o.whatever = Provoker(o)
     del o
 
+def wrapper_segfault():
+    # SF 927248: deeply nested wrappers could cause stack overflow
+    f = lambda:None
+    for i in xrange(1000000):
+        f = f.__call__
+    f = None
+
 # Fix SF #762455, segfault when sys.stdout is changed in getattr
 def filefault():
     if verbose:
@@ -3849,9 +4141,166 @@ def filefault():
     except RuntimeError:
         pass
 
+def vicious_descriptor_nonsense():
+    # A potential segfault spotted by Thomas Wouters in mail to
+    # python-dev 2003-04-17, turned into an example & fixed by Michael
+    # Hudson just less than four months later...
+    if verbose:
+        print "Testing vicious_descriptor_nonsense..."
+
+    class Evil(object):
+        def __hash__(self):
+            return hash('attr')
+        def __eq__(self, other):
+            del C.attr
+            return 0
+
+    class Descr(object):
+        def __get__(self, ob, type=None):
+            return 1
+
+    class C(object):
+        attr = Descr()
+
+    c = C()
+    if is_jython:
+        # XXX: 'attr' key is a Java String in PyStringMap, which
+        # prevents Evil's __eq__ from being called. Force __eq__ by
+        # using a dict instead
+        c.__dict__ = {}
+    c.__dict__[Evil()] = 0
+
+    vereq(c.attr, 1)
+    # this makes a crash more likely:
+    import gc; gc.collect()
+    vereq(hasattr(c, 'attr'), False)
+
+def test_init():
+    # SF 1155938
+    class Foo(object):
+        def __init__(self):
+            return 10
+    try:
+        Foo()
+    except TypeError:
+        pass
+    else:
+        raise TestFailed, "did not test __init__() for None return"
+
+def methodwrapper():
+    # <type 'method-wrapper'> did not support any reflection before 2.5
+    if verbose:
+        print "Testing method-wrapper objects..."
+
+    l = []
+    vereq(l.__add__, l.__add__)
+    vereq(l.__add__, [].__add__)
+    verify(l.__add__ != [5].__add__)
+    verify(l.__add__ != l.__mul__)
+    verify(l.__add__.__name__ == '__add__')
+    verify(l.__add__.__self__ is l)
+    verify(l.__add__.__objclass__ is list)
+    vereq(l.__add__.__doc__, list.__add__.__doc__)
+    try:
+        hash(l.__add__)
+    except TypeError:
+        pass
+    else:
+        raise TestFailed("no TypeError from hash([].__add__)")
+
+    t = ()
+    t += (7,)
+    vereq(t.__add__, (7,).__add__)
+    vereq(hash(t.__add__), hash((7,).__add__))
+
+def notimplemented():
+    # all binary methods should be able to return a NotImplemented
+    if verbose:
+        print "Testing NotImplemented..."
+
+    import sys
+    import types
+    import operator
+
+    def specialmethod(self, other):
+        return NotImplemented
+
+    def check(expr, x, y):
+        try:
+            exec expr in {'x': x, 'y': y, 'operator': operator}
+        except TypeError:
+            pass
+        else:
+            raise TestFailed("no TypeError from %r" % (expr,))
+
+    N1 = sys.maxint + 1L    # might trigger OverflowErrors instead of TypeErrors
+    N2 = sys.maxint         # if sizeof(int) < sizeof(long), might trigger
+                            #   ValueErrors instead of TypeErrors
+    for metaclass in [type, types.ClassType]:
+        for name, expr, iexpr in [
+                ('__add__',      'x + y',                   'x += y'),
+                ('__sub__',      'x - y',                   'x -= y'),
+                ('__mul__',      'x * y',                   'x *= y'),
+                ('__truediv__',  'operator.truediv(x, y)',  None),
+                ('__floordiv__', 'operator.floordiv(x, y)', None),
+                ('__div__',      'x / y',                   'x /= y'),
+                ('__mod__',      'x % y',                   'x %= y'),
+                ('__divmod__',   'divmod(x, y)',            None),
+                ('__pow__',      'x ** y',                  'x **= y'),
+                ('__lshift__',   'x << y',                  'x <<= y'),
+                ('__rshift__',   'x >> y',                  'x >>= y'),
+                ('__and__',      'x & y',                   'x &= y'),
+                ('__or__',       'x | y',                   'x |= y'),
+                ('__xor__',      'x ^ y',                   'x ^= y'),
+                ('__coerce__',   'coerce(x, y)',            None)]:
+            if name == '__coerce__':
+                rname = name
+            else:
+                rname = '__r' + name[2:]
+            A = metaclass('A', (), {name: specialmethod})
+            B = metaclass('B', (), {rname: specialmethod})
+            a = A()
+            b = B()
+            check(expr, a, a)
+            check(expr, a, b)
+            check(expr, b, a)
+            check(expr, b, b)
+            check(expr, a, N1)
+            check(expr, a, N2)
+            check(expr, N1, b)
+            check(expr, N2, b)
+            if iexpr:
+                check(iexpr, a, a)
+                check(iexpr, a, b)
+                check(iexpr, b, a)
+                check(iexpr, b, b)
+                check(iexpr, a, N1)
+                check(iexpr, a, N2)
+                iname = '__i' + name[2:]
+                C = metaclass('C', (), {iname: specialmethod})
+                c = C()
+                check(iexpr, c, a)
+                check(iexpr, c, b)
+                check(iexpr, c, N1)
+                check(iexpr, c, N2)
+
+def test_assign_slice():
+    # ceval.c's assign_slice used to check for
+    # tp->tp_as_sequence->sq_slice instead of
+    # tp->tp_as_sequence->sq_ass_slice
+
+    class C(object):
+        def __setslice__(self, start, stop, value):
+            self.value = value
+
+    c = C()
+    c[1:2] = 3
+    vereq(c.value, 3)
+
 def test_main():
     testfuncs = [
     weakref_segfault, # Must be first, somehow
+    wrapper_segfault,
     do_this_first,
     class_docstrings,
     lists,
@@ -3862,6 +4311,8 @@ def test_main():
     longs,
     floats,
     complexes,
+    spamlists,
+    spamdicts,
     pydicts,
     pylists,
     metaclass,
@@ -3878,7 +4329,9 @@ def test_main():
     dynamics,
     errors,
     classmethods,
+    classmethods_in_c,
     staticmethods,
+    staticmethods_in_c,
     classic,
     compattr,
     newslot,
@@ -3906,6 +4359,7 @@ def test_main():
     buffer_inherit,
     str_of_str_subclass,
     kwdargs,
+    recursive__call__,
     delhook,
     hashinherit,
     strops,
@@ -3918,7 +4372,6 @@ def test_main():
     funnynew,
     imulbug,
     docdescriptor,
-    string_exceptions,
     copy_setstate,
     slices,
     subtype_resurrection,
@@ -3937,7 +4390,55 @@ def test_main():
     proxysuper,
     carloverre,
     filefault,
+    vicious_descriptor_nonsense,
+    test_init,
+    methodwrapper,
+    notimplemented,
+    test_assign_slice,
     ]
+    if is_jython:
+        for testfunc in [
+            # Requires CPython specific xxsubtype module
+            spamlists,
+            spamdicts,
+            classmethods_in_c,
+            staticmethods_in_c,
+
+            # Jython allows subclassing of classes it shouldn't (like
+            # builtin_function_or_method):
+            # http://bugs.jython.org/issue1758319
+            errors,
+
+            # CPython's unicode.__cmp__ is derived from type (and only
+            # takes 1 arg)
+            specials,
+
+            # Jython file lacks doc strings
+            descrdoc,
+
+            # Already fixed on the pep352 branch
+            setdict,
+
+            # New style classes don't support __del__:
+            # http://bugs.jython.org/issue1057
+            delhook,
+            subtype_resurrection,
+
+            # Lack __basicsize__: http://bugs.jython.org/issue1017
+            slotmultipleinheritance,
+
+            # Carlo hacked us: http://bugs.jython.org/issue1058
+            carloverre,
+
+            # Jython lacks CPython method-wrappers (though maybe this
+            # should pass anyway?)
+            methodwrapper,
+
+            # derived classes don't support coerce:
+            # http://bugs.jython.org/issue1060
+            notimplemented
+            ]:
+            testfuncs.remove(testfunc)
     if __name__ == '__main__':
         import sys
         if len(sys.argv) > 1:
@@ -3948,7 +4449,8 @@ def test_main():
 
     for testfunc in testfuncs:
         try:
-            print "*"*40
+            if verbose:
+                print "*"*40
             testfunc()
         except Exception, e:
             if isinstance(e, KeyboardInterrupt) or n == 1:
@@ -3956,7 +4458,8 @@ def test_main():
             print "-->", testfunc.__name__, "FAILURE(%d/%d)" % (success, n), str(e)
         else:
             success += 1
-            print "-->", testfunc.__name__, "OK(%d/%d)" % (success, n)
+            if verbose:
+                print "-->", testfunc.__name__, "OK(%d/%d)" % (success, n)
 
     if n != success:
         raise TestFailed, "%d/%d" % (success, n)

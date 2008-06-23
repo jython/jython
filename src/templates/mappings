@@ -6,7 +6,7 @@
 # will map str.expose to org.python.core.PyString.  Many classes will have 2
 # lines; one for their expose, and one for their derived class.
 
-BaseException.derived:org.python.core.exceptions.PyBaseExceptionDerived
+BaseException.derived:org.python.core.PyBaseExceptionDerived
 array.derived:org.python.core.PyArrayDerived
 bool.derived:org.python.core.PyBooleanDerived
 classmethod.derived:org.python.core.PyClassMethodDerived
@@ -17,11 +17,10 @@ dict.derived:org.python.core.PyDictionaryDerived
 file.derived:org.python.core.PyFileDerived
 float.derived:org.python.core.PyFloatDerived
 frozenset.derived:org.python.core.PyFrozenSetDerived
-# gderived.py doesn't handle derived out of org.python.core
-#function.expose:org.python.core.PyFunction
 int.derived:org.python.core.PyIntegerDerived
 list.derived:org.python.core.PyListDerived
 long.derived:org.python.core.PyLongDerived
+local.derived:org.python.modules.thread.PyLocalDerived
 module.derived:org.python.core.PyModuleDerived
 object.derived:org.python.core.PyObjectDerived
 property.derived:org.python.core.PyPropertyDerived

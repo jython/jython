@@ -763,12 +763,12 @@ public class PyInteger extends PyObject {
         return Py.newInteger(getValue());
     }
 
-    public PyLong __long__() {
+    public PyObject __long__() {
         return int___long__();
     }
 
     @ExposedMethod
-    final PyLong int___long__() {
+    final PyObject int___long__() {
         return new PyLong(getValue());
     }
 

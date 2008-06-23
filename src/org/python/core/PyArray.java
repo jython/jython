@@ -250,20 +250,6 @@ public class PyArray extends PySequence implements Cloneable {
     }
 
     /**
-     * Finds the attribute.
-     * 
-     * @param name
-     *            the name of the attribute of interest
-     * @return the value for the attribute of the specified name
-     */
-    public PyObject __findattr__(String name) {
-        if("typecode".equals(name)) {
-            return new PyString(getTypecode());
-        }
-        return super.__findattr__(name);
-    }
-
-    /**
      * Length of the array
      * 
      * @return number of elements in the array

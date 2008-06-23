@@ -187,7 +187,7 @@ public class PyInstance extends PyObject
             }
         }
         else if (ret != Py.None) {
-            throw Py.TypeError("constructor has no return value");
+            throw Py.TypeError("__init__() should return None");
         }
         // Now init all superclasses that haven't already been initialized
         if (javaProxy == null && instclass.proxyClass != null) {
@@ -785,7 +785,7 @@ public class PyInstance extends PyObject
      **/
     public PyObject __int__() {
         PyObject ret = invoke("__int__");
-        if (ret instanceof PyInteger)
+        if (ret instanceof PyLong || ret instanceof PyInteger)
             return ret;
         throw Py.TypeError("__int__() should return a int");
     }
@@ -805,10 +805,10 @@ public class PyInstance extends PyObject
      * Implements the __long__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
-    public PyLong __long__() {
+    public PyObject __long__() {
         PyObject ret = invoke("__long__");
-        if (ret instanceof PyLong)
-            return (PyLong)ret;
+        if (ret instanceof PyLong || ret instanceof PyInteger)
+            return ret;
         throw Py.TypeError("__long__() should return a long");
     }
 

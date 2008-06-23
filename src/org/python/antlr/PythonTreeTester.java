@@ -13,7 +13,7 @@ import org.antlr.runtime.tree.TreeAdaptor;
 /**
  * A walker producing a <code>PythonTree</code> AST.
  */
-public class PythonTreeWalker {
+public class PythonTreeTester {
 
     public enum Block { MODULE, INTERACTIVE, EXPRESSION };
 
@@ -21,7 +21,7 @@ public class PythonTreeWalker {
 	private boolean _tolerant;
     private Block _block;
 
-	public PythonTreeWalker() {
+	public PythonTreeTester() {
 		setParseOnly(false);
 		setTolerant(true);
         setBlock(Block.MODULE);
