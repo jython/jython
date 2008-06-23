@@ -1,9 +1,15 @@
 /* Copyright (c) 2007 Jython Developers */
 package org.python.core.io;
 
+import java.io.FileDescriptor;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.FilterInputStream;
+import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channel;
 import java.nio.channels.Channels;
@@ -11,6 +17,8 @@ import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 
 import org.python.core.Py;
+import org.python.core.PyObject;
+import org.python.core.__builtin__;
 
 /**
  * Raw I/O implementation for simple streams.
@@ -92,6 +100,7 @@ public class StreamIO extends RawIOBase {
      */
     public StreamIO(InputStream inputStream, boolean closefd) {
         this(Channels.newChannel(inputStream), closefd);
+        this.inputStream = inputStream;
     }
 
     /**
@@ -103,6 +112,7 @@ public class StreamIO extends RawIOBase {
      */
     public StreamIO(OutputStream outputStream, boolean closefd) {
         this(Channels.newChannel(outputStream), closefd);
+        this.outputStream = outputStream;
     }
 
     /** {@inheritDoc} */
@@ -147,6 +157,66 @@ public class StreamIO extends RawIOBase {
             }
         }
         super.close();
+    }
+    
+    /** Unwrap one or more nested FilterInputStreams. */
+    private static FileDescriptor getInputFileDescriptor(InputStream stream) throws IOException {
+	if (stream == null)
+	    return null;
+	if (stream instanceof FileInputStream)
+	    return ((FileInputStream)stream).getFD();
+	if (stream instanceof FilterInputStream) {
+	    Field inField = null;
+	    try {
+		inField = FilterInputStream.class.getDeclaredField("in");
+		inField.setAccessible(true);
+		return getInputFileDescriptor((InputStream)inField.get(stream));
+	    } catch (Exception e) {
+	    } finally {
+		if (inField != null && inField.isAccessible())
+		    inField.setAccessible(false);
+	    }
+	}
+	return null;
+    }
+
+    /** Unwrap one or more nested FilterOutputStreams. */
+    private static FileDescriptor getOutputFileDescriptor(OutputStream stream) throws IOException {
+	if (stream == null)
+	    return null;
+	if (stream instanceof FileOutputStream)
+	    return ((FileOutputStream)stream).getFD();
+	if (stream instanceof FilterOutputStream) {
+	    Field outField = null;
+	    try {
+		outField = FilterOutputStream.class.getDeclaredField("out");
+		outField.setAccessible(true);
+		return getOutputFileDescriptor((OutputStream)outField.get(stream));
+	    } catch (Exception e) {
+	    } finally {
+		if (outField != null && outField.isAccessible())
+		    outField.setAccessible(false);
+	    }
+	}
+	return null;
+    }
+    
+    /** {@inheritDoc} */
+    
+    public boolean isatty() {
+        checkClosed();
+        
+        FileDescriptor fd;
+        try {
+            if ( ((fd = getInputFileDescriptor(inputStream)) == null) &&
+                 ((fd = getOutputFileDescriptor(outputStream)) == null))
+                   return false;
+        } catch (IOException e) {
+            return false;
+        }
+        
+        PyObject os = __builtin__.__import__("os");
+        return os.__getattr__("isatty").__call__(Py.java2py(fd)).__nonzero__();
     }
 
     /** {@inheritDoc} */

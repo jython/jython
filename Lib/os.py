@@ -32,12 +32,13 @@ __all__.extend(['EX_OK', 'F_OK', 'O_APPEND', 'O_CREAT', 'O_EXCL', 'O_RDONLY',
                 'altsep', 'chdir', 'chmod', 'close', 'curdir', 'defpath',
                 'environ', 'error', 'fdopen', 'getcwd', 'getegid', 'getenv',
                 'geteuid', 'getgid', 'getlogin', 'getlogin', 'getpgrp',
-                'getpid', 'getppid', 'getuid', 'linesep', 'listdir', 'lseek',
-                'lstat', 'makedirs', 'mkdir', 'name', 'open', 'pardir', 'path',
-                'pathsep', 'popen', 'popen2', 'popen3', 'popen4', 'putenv',
-                'read', 'remove', 'removedirs', 'rename', 'renames', 'rmdir',
-                'sep', 'setpgrp', 'setsid', 'stat', 'stat_result', 'strerror',
-                'system', 'unlink', 'unsetenv', 'utime', 'walk', 'write'])
+                'getpid', 'getppid', 'getuid', 'isatty', 'linesep', 'listdir',
+                'lseek', 'lstat', 'makedirs', 'mkdir', 'name', 'open', 'pardir',
+                'path', 'pathsep', 'popen', 'popen2', 'popen3', 'popen4',
+                'putenv', 'read', 'remove', 'removedirs', 'rename', 'renames',
+                'rmdir', 'sep', 'setpgrp', 'setsid', 'stat', 'stat_result',
+                'strerror', 'system', 'unlink', 'unsetenv', 'utime', 'walk',
+                'write'])
 
 import errno
 import java.lang.System
@@ -888,3 +889,34 @@ def setsid():
 
     Call the system call setsid()."""
     return _posix.setsid()
+
+def isatty(fileno):
+    """isatty(fd) -> bool
+
+    Return True if the file descriptor 'fd' is an open file descriptor
+    connected to the slave end of a terminal."""
+    from java.io import FileDescriptor
+
+    if isinstance(fileno, int):
+        if fileno == 0:
+            fd = getattr(FileDescriptor, 'in')
+        elif fileno == 1:
+            fd = FileDescriptor.out
+        elif fileno == 2:
+            fd = FileDescriptor.err
+        else:
+            raise NotImplemented('Integer file descriptor compatibility only '
+                                 'available for stdin, stdout and stderr (0-2)')
+
+        return _posix.isatty(fd)
+
+    if isinstance(fileno, FileDescriptor):
+        return _posix.isatty(fileno)
+
+    from org.python.core.io import IOBase
+
+    if not isinstance(fileno, IOBase):
+        print fileno
+        raise TypeError('a file descriptor is required')
+
+    return fileno.isatty()

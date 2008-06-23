@@ -13,7 +13,9 @@ import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 
 import org.python.core.Py;
+import org.python.core.PyObject;
 import org.python.core.util.RelativeFile;
+import org.python.core.__builtin__;
 import org.python.modules.errno;
 
 /**
@@ -23,8 +25,11 @@ import org.python.modules.errno;
  */
 public class FileIO extends RawIOBase {
 
-    /** The underlying file */
+    /** The underlying file channel */
     private FileChannel fileChannel;
+    
+    /** The underlying file (if known) */
+    private RandomAccessFile file;
 
     /** true if the file is readable */
     private boolean readable = false;
@@ -51,7 +56,8 @@ public class FileIO extends RawIOBase {
         File fullPath = new RelativeFile(name);
         String rafMode = "r" + (writable ? "w" : "");
         try {
-            fileChannel = new RandomAccessFile(fullPath, rafMode).getChannel();
+            file = new RandomAccessFile(fullPath, rafMode);
+            fileChannel = file.getChannel();
         } catch (FileNotFoundException fnfe) {
             if (fullPath.isDirectory()) {
                 throw Py.IOError(errno.EISDIR, "Is a directory");
@@ -148,6 +154,19 @@ public class FileIO extends RawIOBase {
             seek(0, 2);
         } else if (writable && !readable) {
             truncate(0);
+        }
+    }
+
+    /** {@inheritDoc} */
+    public boolean isatty() {
+        checkClosed();
+        if (file == null) return false;
+        
+        PyObject os = __builtin__.__import__("os");
+        try {
+            return os.__getattr__("isatty").__call__(Py.java2py(file.getFD())).__nonzero__();
+        } catch (IOException e) {
+            return false;
         }
     }
 
