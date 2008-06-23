@@ -129,21 +129,16 @@ public class binascii {
 
     public static String __doc__ = "Conversion between binary data and ASCII";
 
-    public static final PyObject Error = Py.makeClass("Error",
-            new PyObject[] { Py.Exception },
-            Py.newJavaCode(binascii.class, "empty__init__"),
-            Py.None);
+    public static final PyObject Error = Py.makeClass("Error", Py.Exception, exceptionNamespace());
 
-    public static PyObject empty__init__(PyObject[] arg, String[] kws) {
+    public static final PyObject Incomplete = Py.makeClass("Incomplete", Py.Exception,
+                                                           exceptionNamespace());
+
+    public static PyObject exceptionNamespace() {
         PyObject dict = new PyStringMap();
         dict.__setitem__("__module__", new PyString("binascii"));
         return dict;
     }
-
-    public static final PyObject Incomplete = Py.makeClass("Incomplete",
-            new PyObject[] { Py.Exception },
-            Py.newJavaCode(binascii.class, "empty__init__"),
-            Py.None);
 
     // hqx lookup table, ascii->binary.
     private static char RUNCHAR = 0x90;
