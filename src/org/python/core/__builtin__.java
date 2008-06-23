@@ -86,7 +86,7 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
             case 24:
                 return __builtin__.input(arg1);
             case 25:
-                return __builtin__.intern(arg1.__str__());
+                return __builtin__.intern(arg1);
             case 27:
                 return __builtin__.iter(arg1);
             case 32:
@@ -671,7 +671,16 @@ public class __builtin__ {
     }
     private static final PyStringMap internedStrings = new PyStringMap();
 
-    public static PyString intern(PyString s) {
+    public static PyString intern(PyObject obj) {
+        if (!(obj instanceof PyString) || obj instanceof PyUnicode) {
+            throw Py.TypeError("intern() argument 1 must be string, not "
+                               + obj.getType().fastGetName());
+        }
+        if (obj.getType() != PyString.TYPE) {
+            throw Py.TypeError("can't intern subclass of string");
+        }
+        PyString s = (PyString)obj;
+
         // XXX: for some reason, not seeing this as an instance of PyStringDerived when derived
         if (s instanceof PyStringDerived) {
             throw Py.TypeError("can't intern subclass of string");
@@ -679,9 +688,8 @@ public class __builtin__ {
         String istring = s.internedString();
         PyObject ret = internedStrings.__finditem__(istring);
         if (ret != null) {
-            return (PyString) ret;
+            return (PyString)ret;
         }
-
         internedStrings.__setitem__(istring, s);
         return s;
     }

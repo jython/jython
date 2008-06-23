@@ -6,7 +6,6 @@ unary1: __repr__ string
 unary1: __hex__ string
 unary1: __oct__ string
 unary1: __float__ float
-unary1: __long__ long
 unary1: __complex__ complex
 unary1: __pos__
 unary1: __neg__
@@ -53,6 +52,18 @@ rest:
         }
         return super.__int__();
   }    
+
+  public PyObject __long__() {
+      PyType self_type=getType();
+      PyObject impl=self_type.lookup("__long__");
+      if (impl!=null) {
+          PyObject res=impl.__get__(this,self_type).__call__();
+          if (res instanceof PyLong || res instanceof PyInteger)
+              return res;
+          throw Py.TypeError("__long__"+" returned non-"+"long"+" (type "+res.getType().fastGetName()+")");
+      }
+      return super.__long__();
+  }
 
   public int hashCode() {
         PyType self_type = getType();

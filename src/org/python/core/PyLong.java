@@ -41,7 +41,15 @@ public class PyLong extends PyObject {
             return new PyLong(0);
         }
         if (base == -909) {
-            return x.__long__();
+            try {
+                return x.__long__();
+            } catch (PyException pye) {
+                if (!Py.matchException(pye, Py.AttributeError)) {
+                    throw pye;
+                }
+                throw Py.TypeError(String.format("long() argument must be a string or a number, "
+                                                 + "not '%.200s'", x.getType().fastGetName()));
+            }
         }
         if (!(x instanceof PyString)) {
             throw Py.TypeError("long: can't convert non-string with explicit base");
@@ -756,12 +764,12 @@ public class PyLong extends PyObject {
     }
 
 
-    public PyLong __long__() {
+    public PyObject __long__() {
         return long___long__();
     }
 
     @ExposedMethod
-    final PyLong long___long__() {
+    final PyObject long___long__() {
         return Py.newLong(value);
     }
 

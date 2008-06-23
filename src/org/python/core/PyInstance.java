@@ -808,10 +808,10 @@ public class PyInstance extends PyObject
      * Implements the __long__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
-    public PyLong __long__() {
+    public PyObject __long__() {
         PyObject ret = invoke("__long__");
-        if (ret instanceof PyLong)
-            return (PyLong)ret;
+        if (ret instanceof PyLong || ret instanceof PyInteger)
+            return ret;
         throw Py.TypeError("__long__() should return a long");
     }
 

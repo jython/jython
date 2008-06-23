@@ -722,7 +722,7 @@ public class PyString extends PyBaseString
         }
     }
 
-    public PyLong __long__() {
+    public PyObject __long__() {
         return atol(10);
     }
 
