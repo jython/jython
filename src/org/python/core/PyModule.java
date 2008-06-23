@@ -21,10 +21,8 @@ public class PyModule extends PyObject {
         "The name must be a string; the optional doc argument can have any type.");
 
     /** The module's mutable dictionary */
+    @ExposedGet
     public PyObject __dict__;
-
-    /** For use with __import__ */
-    private static PyObject fromlist;
 
     public PyModule() {
         super();
@@ -68,11 +66,7 @@ public class PyModule extends PyObject {
         return __dict__;
     }
 
-    @ExposedGet(name = "__dict__")
     public PyObject getDict() {
-        if (__dict__ == null) {
-            return Py.None;
-        }
         return __dict__;
     }
 
@@ -139,30 +133,14 @@ public class PyModule extends PyObject {
     }
 
     final PyObject module___findattr__(String name) {
-        PyObject attr;
-
         if (__dict__ != null) {
-            attr = __dict__.__finditem__(name);
+            PyObject attr = __dict__.__finditem__(name);
             if (attr != null) {
                 return attr;
             }
         }
 
-        attr = super.__findattr__(name);
-        if (attr != null) {
-            return attr;
-        }
-
-        if (__dict__ == null) {
-            return null;
-        }
-
-        PyObject pyName = __dict__.__finditem__("__name__");
-        if (pyName == null) {
-            return null;
-        }
-
-        return impHook(pyName.__str__().toString() + '.' + name);
+        return super.__findattr__(name);
     }
 
     public void __setattr__(String name, PyObject value) {
@@ -203,11 +181,9 @@ public class PyModule extends PyObject {
             name = new PyString("?");
         }
         if (filename == null) {
-            filename = new PyString("(built-in)");
-        } else {
-            filename = new PyString("from '" + filename + "'");
+            return String.format("<module '%s' (built-in)>", name);
         }
-        return "<module '" + name + "' " + filename + ">";
+        return String.format("<module '%s' from '%s'>", name, filename);
     }
 
     public PyObject __dir__() {
@@ -220,20 +196,6 @@ public class PyModule extends PyObject {
     private void ensureDict() {
         if (__dict__ == null) {
             __dict__ = new PyStringMap();
-        }
-    }
-
-    private static PyObject impHook(String name) {
-        if (fromlist == null) {
-            fromlist = new PyTuple(Py.newString("__doc__"));
-        }
-        try {
-            return __builtin__.__import__(name, null, null, fromlist);
-        } catch (PyException pe) {
-            if (Py.matchException(pe, Py.ImportError)) {
-                return null;
-            }
-            throw pe;
         }
     }
 }

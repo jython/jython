@@ -37,12 +37,11 @@ public class PyObject implements Serializable {
 
     @ExposedSet(name = "__class__")
     public void setType(PyType type) {
-        if(getType().layoutAligns(type) &&
-                !type.equals(PyType.fromClass(PyObject.class))){
-            this.objtype = type;
-        } else {
-            throw Py.TypeError("Can only assign subtypes of object to __class__ on subclasses of object");
+        if (type.builtin || getType().builtin) {
+            throw Py.TypeError("__class__ assignment: only for heap types");
         }
+        type.compatibleForAssignment(getType(), "__class__");
+        objtype = type;
     }
 
     @ExposedDelete(name = "__class__")
@@ -79,36 +78,12 @@ public class PyObject implements Serializable {
 
     /**
      * The standard constructor for a <code>PyObject</code>.  It will set
-     * the <code>__class__</code> field to correspond to the specific
+     * the <code>objtype</code> field to correspond to the specific
      * subclass of <code>PyObject</code> being instantiated.
      **/
     public PyObject() {
-        // xxx for now no such caching
-        // PyClass c = getPyClass();
-        // if (c == null)
-        //    c = PyJavaClass.lookup(getClass());
         objtype = PyType.fromClass(getClass());
     }
-
-    /* xxx will be replaced.
-     * This method is provided to efficiently initialize the __class__
-     * attribute.  If the following boilerplate is added to a subclass of
-     * PyObject, the instantiation time for the object will be greatly
-     * reduced.
-     *
-     * <blockquote><pre>
-     * // __class__ boilerplate -- see PyObject for details
-     * public static PyClass __class__;
-     * protected PyClass getPyClass() { return __class__; }
-     * </pre></blockquote>
-     *
-     * With PyIntegers this leads to a 50% faster instantiation time.
-     * This replaces the PyObject(PyClass c) constructor which is now
-     * deprecated.
-     *
-    protected PyClass getPyClass() {
-        return null;
-    } */
 
     /**
      * Dispatch __init__ behavior
@@ -145,9 +120,9 @@ public class PyObject implements Serializable {
 
         PyObject module = getType().getModule();
         if (module instanceof PyString && !module.toString().equals("__builtin__")) {
-            return String.format("<%s.%s object %s>", module.toString(), name, Py.idstr(this));
+            return String.format("<%s.%s object at %s>", module.toString(), name, Py.idstr(this));
         }
-        return String.format("<%s object %s>", name, Py.idstr(this));
+        return String.format("<%s object at %s>", name, Py.idstr(this));
     }
 
     /**
@@ -212,7 +187,7 @@ public class PyObject implements Serializable {
      *
      * @param c the Class to convert this <code>PyObject</code> to.
      **/
-    public Object __tojava__(Class c) {
+    public Object __tojava__(Class<?> c) {
         if (c.isInstance(this))
             return this;
         return Py.NoConversion;
@@ -230,7 +205,7 @@ public class PyObject implements Serializable {
      * @param keywords the keywords used for all keyword arguments.
      **/
     public PyObject __call__(PyObject args[], String keywords[]) {
-        throw Py.TypeError("call of non-function (" + getType().fastGetName() + ")");
+        throw Py.TypeError(String.format("'%s' object is not callable", getType().fastGetName()));
     }
 
     /**
@@ -423,8 +398,9 @@ public class PyObject implements Serializable {
     /* xxx fix these around */
 
     public boolean isCallable() {
-        return __findattr__("__call__") != null;
+        return getType().lookup("__call__") != null;
     }
+
     public boolean isMappingType() {
         return true;
     }
@@ -461,7 +437,8 @@ public class PyObject implements Serializable {
      * @return the value corresponding to key or null if key is not found
      **/
     public PyObject __finditem__(PyObject key) {
-        throw Py.AttributeError("__getitem__");
+        throw Py.TypeError(String.format("'%.200s' object is unsubscriptable",
+                                         getType().fastGetName()));
     }
 
     /**
@@ -529,8 +506,9 @@ public class PyObject implements Serializable {
      **/
     public PyObject __getitem__(PyObject key) {
         PyObject ret = __finditem__(key);
-        if (ret == null)
-            throw Py.KeyError(key.toString());
+        if (ret == null) {
+            throw Py.KeyError(key);
+        }
         return ret;
     }
 
@@ -541,7 +519,8 @@ public class PyObject implements Serializable {
      * @param value the value to set this key to
      **/
     public void __setitem__(PyObject key, PyObject value) {
-        throw Py.AttributeError("__setitem__");
+        throw Py.TypeError(String.format("'%.200s' object does not support item assignment",
+                                         getType().fastGetName()));
     }
 
     /**
@@ -670,7 +649,8 @@ public class PyObject implements Serializable {
      * @since 2.2
      */
     public PyObject __iter__() {
-        throw Py.TypeError("iteration over non-sequence");
+        throw Py.TypeError(String.format("'%.200s' object is not iterable",
+                                         getType().fastGetName()));
     }
 
     /**
@@ -764,16 +744,7 @@ public class PyObject implements Serializable {
      *
      * @see #__findattr__(PyString)
      **/
-    public PyObject __findattr__(String name) { // xxx accelerators/ expose
-        /*if (getType() == null)
-            return null;
-        if (name == "__class__")
-            return getType();*/
-        /*PyObject ret = getType().lookup(name, false);
-        if (ret != null)
-            return ret._doget(this);
-        return null;*/
-
+    public PyObject __findattr__(String name) {
         return object___findattr__(name);
     }
 
@@ -1000,14 +971,17 @@ public class PyObject implements Serializable {
      **/
     public final PyObject __coerce__(PyObject pyo) {
         Object o = __coerce_ex__(pyo);
-        if (o == null)
+        if (o == null) {
             throw Py.AttributeError("__coerce__");
-        if (o == Py.None)
-            return (PyObject) o;
-        if (o instanceof PyObject[])
+        }
+        if (o == Py.None) {
+            return Py.NotImplemented;
+        }
+        if (o instanceof PyObject[]) {
             return new PyTuple((PyObject[]) o);
-        else
+        } else {
             return new PyTuple(this, (PyObject) o );
+        }
     }
 
 
@@ -1544,9 +1518,9 @@ public class PyObject implements Serializable {
      * Should only be overridden by numeric objects that can be
      * reasonably coerced into a python long.
      *
-     * @return a PyLong corresponding to the value of this object.
+     * @return a PyLong or PyInteger corresponding to the value of this object.
      **/
-    public PyLong __long__() {
+    public PyObject __long__() {
         throw Py.AttributeError("__long__");
     }
 
@@ -1658,6 +1632,30 @@ public class PyObject implements Serializable {
         return null;
     }
 
+    /**
+     * Determine if the binary op on types t1 and t2 is an add
+     * operation dealing with a str/unicode and a str/unicode
+     * subclass.
+     *
+     * This operation is special cased in _binop_rule to match
+     * CPython's handling; CPython uses tp_as_number and
+     * tp_as_sequence to allow string/unicode subclasses to override
+     * the left side's __add__ when that left side is an actual str or
+     * unicode object (see test_concat_jy for examples).
+     *
+     * @param t1 left side PyType
+     * @param t2 right side PyType
+     * @param op the binary operation's String
+     * @return true if this is a special case
+     */
+    private boolean isStrUnicodeSpecialCase(PyType t1, PyType t2, String op) {
+        // XXX: We may need to generalize this rule to apply to other
+        // situations
+        // XXX: This method isn't expensive but could (and maybe
+        // should?) be optimized for worst case scenarios
+        return op == "+" && (t1 == PyString.TYPE || t1 == PyUnicode.TYPE) &&
+                (t2.isSubType(PyString.TYPE) || t2.isSubType(PyUnicode.TYPE));
+    }
 
     private PyObject _binop_rule(PyType t1, PyObject o2, PyType t2,
             String left, String right, String op) {
@@ -1677,7 +1675,8 @@ public class PyObject implements Serializable {
         where1 = where[0];
         PyObject impl2 = t2.lookup_where(right, where);
         where2 = where[0];
-        if (impl2 != null && where1 != where2 && t2.isSubType(t1)) {
+        if (impl2 != null && where1 != where2 && (t2.isSubType(t1) ||
+                                                  isStrUnicodeSpecialCase(t1, t2, op))) {
             PyObject tmp = o1;
             o1 = o2;
             o2 = tmp;
@@ -1949,6 +1948,8 @@ public class PyObject implements Serializable {
       *            with these operands.
       **/
     public final PyObject _div(PyObject o2) {
+        if (Options.Qnew)
+            return _truediv(o2);
         PyType t1=this.getType();
         PyType t2=o2.getType();
         if (t1==t2||t1.builtin&&t2.builtin) {
@@ -1966,8 +1967,6 @@ public class PyObject implements Serializable {
      *            with these operands.
      **/
     final PyObject _basic_div(PyObject o2) {
-        if (Options.Qnew)
-            return _truediv(o2);
         PyObject x=__div__(o2);
         if (x!=null)
             return x;
@@ -2762,6 +2761,23 @@ public class PyObject implements Serializable {
         return f.__call__(arg1, arg2);
     }
 
+    /**
+     * Shortcut for calling a method on a PyObject with one extra
+     * initial argument.
+     *
+     * @param name the name of the method to call.  This must be an
+     *        interned string!
+     * @param arg1 the first argument of the method.
+     * @param args an array of the arguments to the call.
+     * @param keywords the keywords to use in the call.
+     * @return the result of calling the method name with arg1 args
+     * and keywords
+     **/
+    public PyObject invoke(String name, PyObject arg1, PyObject[] args, String[] keywords) {
+        PyObject f = __getattr__(name);
+        return f.__call__(arg1, args, keywords);
+    }
+
     /* descriptors and lookup protocols */
 
     /** xxx implements where meaningful
@@ -2983,18 +2999,17 @@ public class PyObject implements Serializable {
     final PyObject object___reduce_ex__(int arg) {
         PyObject res;
 
-        PyObject clsreduce=this.getType().__findattr__("__reduce__");
-        PyObject objreduce=(new PyObject()).getType().__findattr__("__reduce__");
+        PyObject clsreduce = this.getType().__findattr__("__reduce__");
+        PyObject objreduce = (new PyObject()).getType().__findattr__("__reduce__");
 
-        if (clsreduce!=objreduce) {
-            res=this.__reduce__();
-        } else if (arg>=2) {
-            res=reduce_2();
+        if (clsreduce != objreduce) {
+            res = this.__reduce__();
+        } else if (arg >= 2) {
+            res = reduce_2();
         } else {
-            PyObject copyreg=__builtin__.__import__("copy_reg", null, null,
-                    Py.EmptyTuple);
-            PyObject copyreg_reduce=copyreg.__findattr__("_reduce_ex");
-            res=copyreg_reduce.__call__(this, new PyInteger(arg));
+            PyObject copyreg = __builtin__.__import__("copy_reg", null, null, Py.EmptyTuple);
+            PyObject copyreg_reduce = copyreg.__findattr__("_reduce_ex");
+            res = copyreg_reduce.__call__(this, new PyInteger(arg));
         }
         return res;
     }
@@ -3002,17 +3017,15 @@ public class PyObject implements Serializable {
     private static PyObject slotnames(PyObject cls) {
         PyObject slotnames;
 
-        slotnames=cls.__findattr__("__slotnames__");
-        if(null!=slotnames) {
+        slotnames = cls.fastGetDict().__finditem__("__slotnames__");
+        if (null != slotnames) {
             return slotnames;
         }
 
-        PyObject copyreg=__builtin__.__import__("copy_reg", null, null,
-                Py.EmptyTuple);
-        PyObject copyreg_slotnames=copyreg.__findattr__("_slotnames");
-        slotnames=copyreg_slotnames.__call__(cls);
-        if (null!=slotnames && Py.None!=slotnames &&
-                (!(slotnames instanceof PyList))) {
+        PyObject copyreg = __builtin__.__import__("copy_reg", null, null, Py.EmptyTuple);
+        PyObject copyreg_slotnames = copyreg.__findattr__("_slotnames");
+        slotnames = copyreg_slotnames.__call__(cls);
+        if (null != slotnames && Py.None != slotnames && (!(slotnames instanceof PyList))) {
             throw Py.TypeError("copy_reg._slotnames didn't return a list or None");
         }
 
@@ -3021,35 +3034,35 @@ public class PyObject implements Serializable {
 
     private PyObject reduce_2() {
         PyObject args, state;
-        PyObject res=null;
+        PyObject res = null;
         int n,i;
 
-        PyObject cls=this.__findattr__("__class__");
+        PyObject cls = this.__findattr__("__class__");
 
-        PyObject getnewargs=this.__findattr__("__getnewargs__");
-        if (null!=getnewargs) {
-            args=getnewargs.__call__();
-            if (null!=args && !(args instanceof PyTuple)) {
+        PyObject getnewargs = this.__findattr__("__getnewargs__");
+        if (null != getnewargs) {
+            args = getnewargs.__call__();
+            if (null != args && !(args instanceof PyTuple)) {
                 throw Py.TypeError("__getnewargs__ should return a tuple");
             }
         } else {
-            args=Py.EmptyTuple;
+            args = Py.EmptyTuple;
         }
 
-        PyObject getstate=this.__findattr__("__getstate__");
-        if (null!=getstate) {
-            state=getstate.__call__();
-            if (null==state) {
+        PyObject getstate = this.__findattr__("__getstate__");
+        if (null != getstate) {
+            state = getstate.__call__();
+            if (null == state) {
                 return res;
             }
         } else {
-            state=this.__findattr__("__dict__");
-            if (null==state) {
-                state=Py.None;
+            state = this.__findattr__("__dict__");
+            if (null == state) {
+                state = Py.None;
             }
 
-            PyObject names=slotnames(cls);
-            if (null==names) {
+            PyObject names = slotnames(cls);
+            if (null == names) {
                 return res;
             }
 
@@ -3057,51 +3070,48 @@ public class PyObject implements Serializable {
                 if (!(names instanceof PyList)) {
                     throw Py.AssertionError("slots not a list");
                 }
-                PyObject slots=new PyDictionary();
+                PyObject slots = new PyDictionary();
 
-                n=0;
-                for (i=0;i<((PyList)names).size();i++) {
-                    PyObject name=((PyList)names).pyget(i);
-                    PyObject value=this.__findattr__(name.toString());
-                    if (null==value) {
+                n = 0;
+                for (i = 0; i < ((PyList)names).size(); i++) {
+                    PyObject name = ((PyList)names).pyget(i);
+                    PyObject value = this.__findattr__(name.toString());
+                    if (null == value) {
                         // do nothing
                     } else {
                         slots.__setitem__(name, value);
                         n++;
                     }
                 }
-                if (n>0) {
-                    state=new PyTuple(state, slots);
+                if (n > 0) {
+                    state = new PyTuple(state, slots);
                 }
             }
         }
         PyObject listitems;
         PyObject dictitems;
         if (!(this instanceof PyList)) {
-            listitems=Py.None;
+            listitems = Py.None;
         } else {
-            listitems=((PyList)this).__iter__();
+            listitems = ((PyList)this).__iter__();
         }
         if (!(this instanceof PyDictionary)) {
-            dictitems=Py.None;
+            dictitems = Py.None;
         } else {
-            dictitems=((PyDictionary)this).iteritems();
+            dictitems = ((PyDictionary)this).iteritems();
         }
 
-        PyObject copyreg=__builtin__.__import__("copy_reg", null, null,
-                Py.EmptyTuple);
-        PyObject newobj=copyreg.__findattr__("__newobj__");
+        PyObject copyreg = __builtin__.__import__("copy_reg", null, null, Py.EmptyTuple);
+        PyObject newobj = copyreg.__findattr__("__newobj__");
 
-        n=((PyTuple)args).size();
-        PyObject args2[]=new PyObject[n+1];
-        args2[0]=cls;
-        for(i=0;i<n;i++) {
-            args2[i+1]=((PyTuple)args).pyget(i);
+        n = ((PyTuple)args).size();
+        PyObject args2[] = new PyObject[n+1];
+        args2[0] = cls;
+        for(i = 0; i < n; i++) {
+            args2[i+1] = ((PyTuple)args).pyget(i);
         }
 
-        res = new PyTuple(newobj, new PyTuple(args2), state, listitems, dictitems);
-
-        return res;
+        return new PyTuple(newobj, new PyTuple(args2), state, listitems, dictitems);
     }
 
     public PyTuple __getnewargs__() {
@@ -3148,7 +3158,7 @@ public class PyObject implements Serializable {
     }
 
     public int asInt() {
-        throw Py.TypeError("expected an int");
+        throw Py.TypeError("an integer is required");
     }
 
     public long asLong(int index) throws ConversionException {

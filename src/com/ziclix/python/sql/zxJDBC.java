@@ -150,20 +150,6 @@ public class zxJDBC extends PyObject implements ClassDictInit {
     }
 
     /**
-     * Field __class__
-     */
-    public static PyClass __class__;
-
-    /**
-     * Method getPyClass
-     *
-     * @return PyClass
-     */
-    protected PyClass getPyClass() {
-        return __class__;
-    }
-
-    /**
      * Add the types from java.sql.Types
      *
      * @param dict

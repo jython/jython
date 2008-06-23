@@ -3,6 +3,7 @@ package org.python.modules;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.python.core.ArgParser;
 import org.python.core.ClassDictInit;
 import org.python.core.Py;
 import org.python.core.PyException;
@@ -12,8 +13,7 @@ import org.python.core.PyNone;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyTuple;
-import org.python.core.__builtin__;
-import org.python.core.ArgParser;
+import org.python.core.PyXRange;
 
 /**
  * Functional tools for creating and using iterators. Java implementation of the CPython module
@@ -466,7 +466,7 @@ public class itertools implements ClassDictInit {
         final int itemsize = argstar.length;
         
         if (itemsize == 0) {
-            return (PyIterator)(__builtin__.xrange(0).__iter__());            
+            return (PyIterator)(new PyXRange(0).__iter__());            
         }
 
         // Type check the arguments; they must be sequences.
@@ -632,7 +632,7 @@ public class itertools implements ClassDictInit {
         private GroupBy(PyObject iterable, PyObject key) {
             iterator = iterable.__iter__();
             keyFunc = key;
-            targetKey = currentKey = currentValue = __builtin__.xrange(0);
+            targetKey = currentKey = currentValue = new PyXRange(0);
         }
 
         public PyObject __iternext__() {

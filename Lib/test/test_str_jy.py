@@ -46,9 +46,9 @@ class FormatTest(unittest.TestCase):
     def test_format(self):
         "%#.0f, %e and %+f w/ negative numbers print correctly."
         self.assertEquals("%.1f" % 5, "5.0")
-        self.assertEquals("%e" % -1e-6, "-1.000000e-006")
-        self.assertEquals("%e" % 0, "0.000000e+000")
-        self.assertEquals("%e" % 1e-6, "1.000000e-006")
+        self.assertEquals("%e" % -1e-6, "-1.000000e-06")
+        self.assertEquals("%e" % 0, "0.000000e+00")
+        self.assertEquals("%e" % 1e-6, "1.000000e-06")
         self.assertEquals("%+f" % -5, "-5.000000")
         self.assertEquals("%+f" % 5, "+5.000000")
  
@@ -70,12 +70,43 @@ class FormatTest(unittest.TestCase):
         except TypeError, e:
             self.failUnless("not enough arguments for format string" in str(e))
 
+class DisplayTest(unittest.TestCase):
+
+    def test_str_and_repr(self):
+        class s(str):
+            pass
+        class u(str):
+            pass
+
+        for cls in str, s, unicode, u:
+            foo = cls('foo')
+            for expr in 'str(foo)', 'foo.__str__()':
+                result = eval(expr)
+                self.assert_(type(result) == str)
+                self.assertEqual(result, 'foo')
+
+            for expr in 'repr(foo)', 'foo.__repr__()':
+                result = eval(expr)
+                self.assert_(type(result) == str)
+                if issubclass(cls, unicode):
+                    self.assertEqual(result, "u'foo'")
+                else:
+                    self.assertEqual(result, "'foo'")
+
+    def test_basic_escapes(self):
+        test = '\r\n\tfoo\a\b\f\v'
+        self.assertEqual(repr(test), "'\\r\\n\\tfoo\\x07\\x08\\x0c\\x0b'")
+        self.assertEqual(repr(unicode(test)), "u'\\r\\n\\tfoo\\x07\\x08\\x0c\\x0b'")
+        test2 = "'bar"
+        self.assertEqual(repr(test2), '"\'bar"')
+        self.assertEqual(repr(unicode(test2)), 'u"\'bar"')
 
 def test_main():
     test_support.run_unittest(WrappedStrCmpTest,
         IntToStrTest,
         StringSlicingTest,
-        FormatTest)
+        FormatTest,
+        DisplayTest)
 
 if __name__ == '__main__':
     test_main()

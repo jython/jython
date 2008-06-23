@@ -32,7 +32,7 @@ public class PyReflectedFunction extends PyObject
     public PyObject _doget(PyObject container, PyObject wherefound) {
         if (container == null)
             return this;
-        return new PyMethod(container, this, wherefound);
+        return new PyMethod(this, container, wherefound);
     }
 
     public boolean _doset(PyObject container) {
@@ -122,9 +122,9 @@ public class PyReflectedFunction extends PyObject
 
         ReflectedArgs[] argsl = argslist;
         int n = nargs;
-        for (int i=0; i<n; i++) {
+        for (int i = 0; i < n; i++) {
             ReflectedArgs rargs = argsl[i];
-            //System.err.println(rargs.toString());
+            // System.err.println(rargs.toString());
             if (rargs.matches(self, args, keywords, callData)) {
                 method = rargs.data;
                 break;
@@ -155,21 +155,6 @@ public class PyReflectedFunction extends PyObject
                         }
                     }
                 }
-                /* xxx this way it is slow!
-                Method super_method = null;
-                try {
-                    super_method = cself.getClass().getMethod(mname,m.getParameterTypes());
-                } catch(NoSuchMethodException e) { // ??? more stuff to ignore?
-                }
-                if (super_method != null) {
-                    m = super_method;
-                }*/
-                /* xxx original              
-                PyJavaClass jc = PyJavaClass.lookup(iself.__class__.proxyClass);
-                PyObject super__ = jc.__findattr__(mname.intern());
-                if (super__ != null) {
-                    return super__.__call__(self, args, keywords);
-                }*/
             }
         }
         try {

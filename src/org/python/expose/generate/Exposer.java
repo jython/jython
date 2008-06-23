@@ -33,7 +33,6 @@ public abstract class Exposer implements Opcodes, PyTypes {
 
     /** Maps from a primitive type to its wrapper */
     protected static final Map<Type, Type> PRIMITIVES = new HashMap<Type, Type>() {
-
         {
             put(BOOLEAN, Type.getType(Boolean.class));
             put(BYTE, Type.getType(Byte.class));

@@ -18,7 +18,7 @@ public class Options {
 
     /**
      * When true, python exception raised in overriden methods will be shown on
-     * stderr. This option is remarkable usefull when python is used for
+     * stderr. This option is remarkably useful when python is used for
      * implementing CORBA server. Some CORBA servers will turn python exception
      * (say a NameError) into an anonymous user exception without any
      * stacktrace. Setting this option will show the stacktrace.
@@ -53,7 +53,7 @@ public class Options {
     public static boolean deprecatedKeywordMangling = false;
 
     /**
-     * A directory where the dynamicly generated classes are written. Nothing is
+     * A directory where the dynamically generated classes are written. Nothing is
      * ever read from here, it is only for debugging purposes.
      */
     public static String proxyDebugDirectory = null;

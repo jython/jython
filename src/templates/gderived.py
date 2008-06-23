@@ -10,6 +10,15 @@ import java_parser
 import java_templating
 from java_templating import JavaTemplate,jast_make,jast
 
+org_python_dir = os.path.join(os.path.dirname(os.path.abspath(scriptdir)),
+                              'org', 'python')
+core_dir = os.path.join(org_python_dir, 'core')
+
+DERIVED_HEADER = """\
+/* Generated file, do not modify.  See jython/src/templates/gderived.py. */
+package org.python.%s;
+
+import org.python.core.*;"""
 
 modif_re = re.compile(r"(?:\((\w+)\))?(\w+)")
 
@@ -21,7 +30,8 @@ class Gen:
                       'incl',
                       'unary1',
                       'binary', 'ibinary',
-                      'rest'
+                      'rest',
+                      'no_toString'
                       ]
 
     def __init__(self,bindings=None,priority_order=None):
@@ -41,6 +51,7 @@ class Gen:
 
         self.base_class = None
         self.want_dict = None
+        self.no_toString = False
         self.ctr_done = 0
 
     def debug(self,bindings):
@@ -95,6 +106,11 @@ class Gen:
             self.invalid(name,'non-empty body')
         if self.want_dict is None:
             self.want_dict = {"true": 1, "false": 0}[parm.strip()]
+
+    def dire_no_toString(self,name,parm,body):
+        if body is not None:
+            self.invalid(name,'non-empty body')
+        self.no_toString = True
 
     def dire_incl(self,name,parm,body):
         if body is not None:
@@ -174,6 +190,8 @@ class Gen:
         self.add_decl(JavaTemplate(body,start='ClassBodyDeclarations'))   
 
     def generate(self):
+        if not self.no_toString:
+            self.add_decl(self.get_aux('toString'))
         derived_templ = self.get_aux('derived_class')
         return derived_templ.texpand({'base': self.base_class, 'decls': self.decls })
 
@@ -184,9 +202,35 @@ def process(fn, outfile, lazy=False):
     gen = Gen()
     directives.execute(directives.load(fn),gen)
     result = gen.generate()
+    result = hack_derived_header(outfile, result)
     print >> open(outfile, 'w'), result
     #gen.debug()
 
+def hack_derived_header(fn, result):
+    """Fix the package and import headers for derived classes outside of
+    org.python.core
+    """
+    parent = os.path.dirname(fn)
+    if os.path.samefile(parent, core_dir):
+        return result
+
+    print 'Fixing header for: %s' % fn
+    dirs = []
+    while True:
+        parent, tail = os.path.split(parent)
+        dirs.insert(0, tail)
+        if os.path.samefile(parent, org_python_dir) or not tail:
+            break
+
+    result = result.splitlines()
+    for num, line in enumerate(result):
+        if line.startswith('public class '):
+            header = DERIVED_HEADER % '.'.join(dirs)
+            result[0:num - 1] = header.splitlines()
+            break
+
+    return '\n'.join(result)
+                
 if __name__ == '__main__':
     from gexpose import load_mappings, usage
     lazy = False

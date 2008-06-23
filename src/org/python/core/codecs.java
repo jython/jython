@@ -679,11 +679,16 @@ public class codecs {
     // TODO: need to modify to use a codepoint approach (which is almost the case now,
     // ch is an
     public static String PyUnicode_DecodeUTF8(String str, String errors) {
+        return PyUnicode_DecodeUTF8Stateful(str, errors, null);
+    }
+
+    public static String PyUnicode_DecodeUTF8Stateful(String str, String errors, int[] consumed) {
         int size = str.length();
         StringBuilder unicode = new StringBuilder(size);
 
         /* Unpack UTF-8 encoded data */
-        for (int i = 0; i < size;) {
+        int i;
+        for (i = 0; i < size;) {
             int ch = str.charAt(i);
 
             if (ch < 0x80) {
@@ -699,6 +704,9 @@ public class codecs {
             int n = utf8_code_length[ch];
 
             if (i + n > size) {
+                if (consumed != null) {
+                    break;
+                }
                 i = insertReplacementAndGetResume(unicode, errors, "utf-8", str, i, i + 1, "unexpected end of data");
                 continue;
             }
@@ -773,6 +781,10 @@ public class codecs {
                     continue;
             }
             i += n;
+        }
+
+        if (consumed != null) {
+            consumed[0] = i;
         }
 
         return unicode.toString();

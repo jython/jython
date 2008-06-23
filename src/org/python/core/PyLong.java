@@ -2,6 +2,7 @@
 package org.python.core;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 
 import org.python.expose.ExposedMethod;
@@ -26,50 +27,51 @@ public class PyLong extends PyObject {
     private BigInteger value;
 
     @ExposedNew
-    public static PyObject long_new(PyNewWrapper new_, boolean init, PyType subtype,
-            PyObject[] args, String[] keywords) {
+    public static PyObject long___new__(PyNewWrapper new_, boolean init, PyType subtype,
+                                        PyObject[] args, String[] keywords) {
+        if (new_.for_type != subtype) {
+            return longSubtypeNew(new_, init, subtype, args, keywords);
+        }
 
         ArgParser ap = new ArgParser("long", args, keywords, new String[] {"x", "base"}, 0);
-
         PyObject x = ap.getPyObject(0, null);
         int base = ap.getInt(1, -909);
-        if (new_.for_type == subtype) {
-            if (x == null) {
-                return Py.Zero;
-            }
 
-            Object o = x.__tojava__(BigInteger.class);
-            if(o != Py.NoConversion) {
-                return Py.newLong((BigInteger)o);
-            }
-
-            if (base == -909) {
+        if (x == null) {
+            return new PyLong(0);
+        }
+        if (base == -909) {
+            try {
                 return x.__long__();
+            } catch (PyException pye) {
+                if (!Py.matchException(pye, Py.AttributeError)) {
+                    throw pye;
+                }
+                throw Py.TypeError(String.format("long() argument must be a string or a number, "
+                                                 + "not '%.200s'", x.getType().fastGetName()));
             }
+        }
+        if (!(x instanceof PyString)) {
+            throw Py.TypeError("long: can't convert non-string with explicit base");
+        }
+        return ((PyString)x).atol(base);
+    }
 
-            if (!(x instanceof PyString)) {
-                throw Py.TypeError("long: can't convert non-string with explicit base");
-            }
-
-            return ((PyString) x).atol(base);
+    /**
+     * Wimpy, slow approach to new calls for subtypes of long.
+     *
+     * First creates a regular long from whatever arguments we got, then allocates a
+     * subtype instance and initializes it from the regular long. The regular long is then
+     * thrown away.
+     */
+    private static PyObject longSubtypeNew(PyNewWrapper new_, boolean init, PyType subtype,
+                                           PyObject[] args, String[] keywords) {
+        PyObject tmp = long___new__(new_, init, TYPE, args, keywords);
+        if (tmp instanceof PyInteger) {
+            int intValue = ((PyInteger)tmp).getValue();
+            return new PyLongDerived(subtype, BigInteger.valueOf(intValue));
         } else {
-            if (x == null) {
-                return new PyLongDerived(subtype, BigInteger.valueOf(0));
-            }
-            Object o = x.__tojava__(BigInteger.class);
-            if(o != Py.NoConversion) {
-                return new PyLongDerived(subtype, (BigInteger)o);
-            }
-
-            if (base == -909) {
-                return new PyLongDerived(subtype, x.__long__().getValue());
-            }
-
-            if (!(x instanceof PyString)) {
-                throw Py.TypeError("long: can't convert non-string with explicit base");
-            }
-
-            return new PyLongDerived(subtype, (((PyString) x).atol(base)).getValue());
+            return new PyLongDerived(subtype, ((PyLong)tmp).value);
         }
     }
     
@@ -77,20 +79,37 @@ public class PyLong extends PyObject {
         super(subType);
         value = v;
     }
+
     public PyLong(BigInteger v) {
         this(TYPE, v);
     }
 
     public PyLong(double v) {
-        this(new java.math.BigDecimal(v).toBigInteger());
+        this(toBigInteger(v));
     }
+
     public PyLong(long v) {
         this(BigInteger.valueOf(v));
     }
+
     public PyLong(String s) {
         this(new BigInteger(s));
     }
-    
+
+    /**
+     * Convert a double to BigInteger, raising an OverflowError if
+     * infinite.
+     */
+    private static BigInteger toBigInteger(double value) {
+        if (Double.isInfinite(value)) {
+            throw Py.OverflowError("cannot convert float infinity to long");
+        }
+        if (Double.isNaN(value)) {
+            return BigInteger.valueOf(0);
+        }
+        return new BigDecimal(value).toBigInteger();
+    }
+
     public BigInteger getValue() {
         return value;
     }
@@ -124,8 +143,8 @@ public class PyLong extends PyObject {
 
     public double doubleValue() {
         double v = value.doubleValue();
-        if (v == Double.NEGATIVE_INFINITY || v == Double.POSITIVE_INFINITY) {
-            throw Py.OverflowError("long int too long to convert");
+        if (Double.isInfinite(v)) {
+            throw Py.OverflowError("long int too large to convert to float");
         }
         return v;
     }
@@ -164,25 +183,31 @@ public class PyLong extends PyObject {
 
 
     private long getLong(long min, long max) {
+        return getLong(min, max, "long int too large to convert");
+    }
+
+    private long getLong(long min, long max, String overflowMsg) {
         if (value.compareTo(maxLong) <= 0 && value.compareTo(minLong) >= 0) {
             long v = value.longValue();
             if (v >= min && v <= max)
                 return v;
         }
-        throw Py.OverflowError("long int too large to convert");
+        throw Py.OverflowError(overflowMsg);
     }
 
     public long asLong(int index) {
-        return getLong(Long.MIN_VALUE, Long.MAX_VALUE);
+        return getLong(Long.MIN_VALUE, Long.MAX_VALUE, "long too big to convert");
     }
 
     public int asInt(int index) {
-        return (int)getLong(Integer.MIN_VALUE, Integer.MAX_VALUE);
+        return (int)getLong(Integer.MIN_VALUE, Integer.MAX_VALUE,
+                            "long int too large to convert to int");
     }
 
     @Override
     public int asInt() {
-        return (int)getLong(Integer.MIN_VALUE, Integer.MAX_VALUE);
+        return (int)getLong(Integer.MIN_VALUE, Integer.MAX_VALUE,
+                            "long int too large to convert to int");
     }
 
     public Object __tojava__(Class c) {
@@ -566,8 +591,7 @@ public class PyLong extends PyObject {
 
     private static final int coerceInt(PyObject other) {
         if (other instanceof PyLong)
-            return (int) ((PyLong) other).getLong(
-                          Integer.MIN_VALUE, Integer.MAX_VALUE);
+            return ((PyLong)other).asInt();
         else if (other instanceof PyInteger)
             return ((PyInteger) other).getValue();
         else
@@ -686,6 +710,11 @@ public class PyLong extends PyObject {
         return Py.newLong(coerce(left).or(value));
     }
 
+    @ExposedMethod
+    final PyObject long___coerce__(PyObject other) {
+        return __coerce__(other);
+    }
+
     public PyObject __neg__() {
         return long___neg__();
     }
@@ -735,12 +764,12 @@ public class PyLong extends PyObject {
     }
 
 
-    public PyLong __long__() {
+    public PyObject __long__() {
         return long___long__();
     }
 
     @ExposedMethod
-    final PyLong long___long__() {
+    final PyObject long___long__() {
         return Py.newLong(value);
     }
 

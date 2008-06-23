@@ -128,19 +128,6 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
     this.rsConcur = rsConcur;
   }
 
-  /** Field __class__ */
-  public static PyClass __class__;
-
-  /**
-   * Method getPyClass
-   *
-   * @return PyClass
-   *
-   */
-  protected PyClass getPyClass() {
-    return __class__;
-  }
-
   /** Field __methods__ */
   protected static PyList __methods__;
 

@@ -1,8 +1,9 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
-import java.util.Vector;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A python class.
@@ -36,15 +37,8 @@ public class PyClass extends PyObject {
     // xxx map 'super__*' names -> array of methods
     protected java.util.HashMap super__methods;
 
-    public static PyClass __class__;
-
-    PyClass(boolean fakeArg) { // xxx check
-        super();
-        proxyClass = null;
-    }
-
     protected PyClass() {
-        proxyClass = null;
+        super();
     }
 
     /**
@@ -80,13 +74,11 @@ public class PyClass extends PyObject {
         init(name, bases, dict);
     }
 
-    protected Class getProxyClass() {
+    protected Class<?> getProxyClass() {
         return proxyClass;
     }
 
     void init(String name, PyTuple bases, PyObject dict) {
-        // System.out.println("bases: "+bases+", "+name.string);
-        // System.out.println("init class: "+name);
         __name__ = name;
         __bases__ = bases;
         __dict__ = dict;
@@ -94,25 +86,25 @@ public class PyClass extends PyObject {
         findModule(dict);
 
         if (proxyClass == null) {
-            Vector interfaces = new Vector();
-            Class baseClass = null;
+            List<Class<?>> interfaces = new ArrayList<Class<?>>();
+            Class<?> baseClass = null;
             for (int i = 0; i < bases.size(); i++) {
-                Class proxy = ((PyClass) bases.pyget(i)).getProxyClass();
+                Object base = bases.pyget(i);
+                if (base instanceof PyType) {
+                    // xxx this works in CPython, which checks for a callable here
+                    throw Py.TypeError("can't transmogrify old-style class into new-style "
+                            + "class inheriting from " + ((PyType)base).getName());
+                } else if (!(base instanceof PyClass)) {
+                    throw Py.TypeError("base must be a class");
+                }
+                Class<?> proxy = ((PyClass) base).getProxyClass();
                 if (proxy != null) {
                     if (proxy.isInterface()) {
-                        interfaces.addElement(proxy);
+                        interfaces.add(proxy);
                     } else {
                         if (baseClass != null) {
-                            throw Py.TypeError("no multiple inheritance "
-                                    + "for Java classes: " + proxy.getName()
-                                    + " and " + baseClass.getName());
-                        }
-                        // xxx explicitly disable this for now, types will allow
-                        // this
-                        if (PyObject.class.isAssignableFrom(proxy)) {
-                            throw Py
-                                    .TypeError("subclassing PyObject subclasses"
-                                            + " not supported");
+                            throw Py.TypeError("no multiple inheritance for Java classes: "
+                                    + proxy.getName() + " and " + baseClass.getName());
                         }
                         baseClass = proxy;
                     }
@@ -250,6 +242,9 @@ public class PyClass extends PyObject {
         if (name == "__bases__") {
             return __bases__;
         }
+        if (name == "__class__") {
+            return null;
+        }
 
         PyObject[] result = lookupGivingClass(name, false);
 
@@ -298,6 +293,14 @@ public class PyClass extends PyObject {
         }
     }
 
+    /**
+     * Customized AttributeError for class objects.
+     */
+    public void noAttributeError(String name) {
+        throw Py.AttributeError(String.format("class %.50s has no attribute '%.400s'", __name__,
+                                              name));
+    }
+
     public PyObject __call__(PyObject[] args, String[] keywords) {
         PyInstance inst;
         if (__del__ == null) {
@@ -307,15 +310,6 @@ public class PyClass extends PyObject {
             inst = new PyFinalizableInstance(this);
         }
         inst.__init__(args, keywords);
-
-        // xxx this cannot happen anymore
-        /*
-         * if (proxyClass != null &&
-         * PyObject.class.isAssignableFrom(proxyClass)) { // It would be better
-         * if we didn't have to create a PyInstance // in the first place.
-         * ((PyObject)inst.javaProxy).__class__ = this; return
-         * (PyObject)inst.javaProxy; }
-         */
 
         return inst;
     }
@@ -352,7 +346,7 @@ public class PyClass extends PyObject {
         } else {
             smod = ((PyString) mod).toString();
         }
-        return "<class " + smod + "." + __name__ + " " + Py.idstr(this) + ">";
+        return "<class " + smod + "." + __name__ + " at " + Py.idstr(this) + ">";
     }
 
     public boolean isSubClass(PyClass superclass) {

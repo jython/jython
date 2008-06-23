@@ -425,20 +425,14 @@ class BuiltinTest(unittest.TestCase):
         self.assertRaises(TypeError, getattr, sys, 1)
         self.assertRaises(TypeError, getattr, sys, 1, "foo")
         self.assertRaises(TypeError, getattr)
-# Jython transition 2.3
-# hasattr, getattr allow unicode identifiers
-# http://jython.org/bugs/1768979
-#        self.assertRaises(UnicodeError, getattr, sys, unichr(sys.maxunicode))
+        self.assertRaises(UnicodeError, getattr, sys, unichr(sys.maxunicode))
 
     def test_hasattr(self):
         import sys
         self.assert_(hasattr(sys, 'stdout'))
         self.assertRaises(TypeError, hasattr, sys, 1)
         self.assertRaises(TypeError, hasattr)
-# Jython transition 2.3
-# hasattr, getattr allow unicode identifiers
-# http://jython.org/bugs/1768979
-#        self.assertRaises(UnicodeError, hasattr, sys, unichr(sys.maxunicode))
+        self.assertRaises(UnicodeError, hasattr, sys, unichr(sys.maxunicode))
 
     def test_hash(self):
         hash(None)

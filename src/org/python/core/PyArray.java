@@ -11,6 +11,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Array;
 
+import org.python.core.util.ByteSwapper;
 import org.python.core.util.StringUtil;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
@@ -202,6 +203,11 @@ public class PyArray extends PySequence implements Cloneable {
         return seq___nonzero__();
     }
 
+    @ExposedMethod
+    public PyObject array___iter__() {
+        return seq___iter__();
+    }
+
     @ExposedMethod(defaults = "null")
     final PyObject array___getslice__(PyObject start, PyObject stop, PyObject step) {
         return seq___getslice__(start, stop, step);
@@ -216,7 +222,7 @@ public class PyArray extends PySequence implements Cloneable {
         seq___setslice__(start, stop, step, value);
     }
 
-    @ExposedMethod
+    @ExposedMethod(defaults = "null")
     final void array___delslice__(PyObject start, PyObject stop, PyObject step) {
         seq___delslice__(start, stop, step);
     }
@@ -241,20 +247,6 @@ public class PyArray extends PySequence implements Cloneable {
         PyArray ret = new PyArray(this);
         ret.delegate.appendArray(otherArr.delegate.copyArray());
         return ret;
-    }
-
-    /**
-     * Finds the attribute.
-     * 
-     * @param name
-     *            the name of the attribute of interest
-     * @return the value for the attribute of the specified name
-     */
-    public PyObject __findattr__(String name) {
-        if("typecode".equals(name)) {
-            return new PyString(getTypecode());
-        }
-        return super.__findattr__(name);
     }
 
     /**

@@ -11,6 +11,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import java.util.concurrent.ConcurrentMap;
 import org.python.core.PyMapSet.PySetIter;
 import org.python.expose.ExposedClassMethod;
 import org.python.expose.ExposedMethod;
@@ -18,22 +19,22 @@ import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 import org.python.expose.MethodType;
 
+
 /**
  * A builtin python dictionary.
  */
-
 @ExposedType(name = "dict")
-public class PyDictionary extends PyObject implements Map {
+public class PyDictionary extends PyObject implements ConcurrentMap {
 
     public static final PyType TYPE = PyType.fromClass(PyDictionary.class);
     
-    protected final Map<PyObject, PyObject> table;
+    protected final ConcurrentMap<PyObject, PyObject> table;
 
     /**
      * Create an empty dictionary.
      */
     public PyDictionary() {
-        this(new ConcurrentHashMap<PyObject, PyObject>());
+        table = new ConcurrentHashMap<PyObject, PyObject>();
     }
 
     /**
@@ -81,44 +82,8 @@ public class PyDictionary extends PyObject implements Map {
 
     @ExposedMethod
     @ExposedNew
-    final protected void dict___init__(PyObject[] args, String[] kwds) {
-        int nargs = args.length - kwds.length;
-        if (nargs > 1)
-            throw PyBuiltinFunction.DefaultInfo.unexpectedCall(
-                    nargs,
-                    false,
-                    "dict",
-                    0,
-                    1);
-        if (nargs == 1) {
-            PyObject src = args[0];
-            if (src.__findattr__("keys") != null)
-                this.update(src);
-            else {
-                PyObject pairs = Py.iter(src, "iteration over non-sequence -not");
-                PyObject pair;
-                int cnt = 0;
-                for (; (pair = pairs.__iternext__()) != null; cnt++) {
-                    try {
-                        pair = PySequence.fastSequence(pair, "");
-                    } catch(PyException e) {
-                        if (Py.matchException(e, Py.TypeError))
-                            throw Py.TypeError("cannot convert dictionary update "+
-                                    "sequence element #"+cnt+" to a sequence");
-                        throw e;
-                    }
-                    int n;
-                    if ((n = pair.__len__()) != 2) {
-                        throw Py.ValueError("dictionary update sequence element #"+cnt+
-                             " has length "+n+"; 2 is required");
-                    }
-                    dict___setitem__(pair.__getitem__(0), pair.__getitem__(1));
-                }
-            }
-        }
-        for(int i = 0; i < kwds.length; i++) {
-            dict___setitem__(Py.newString(kwds[i]), args[nargs + i]);
-        }        
+    protected final void dict___init__(PyObject[] args, String[] keywords) {
+        updateCommon(args, keywords, "dict");
     }
     
     public static PyObject fromkeys(PyObject keys) {
@@ -165,12 +130,21 @@ public class PyDictionary extends PyObject implements Map {
     }
 
     @ExposedMethod
-    final PyObject dict___getitem__(PyObject key) {
-        PyObject ret = table.get(key);
-        if(ret == null) {
-            throw Py.KeyError(key);
+    protected final PyObject dict___getitem__(PyObject key) {
+        PyObject result = table.get(key);
+        if (result != null) {
+            return result;
         }
-        return ret;
+
+        // Look up __missing__ method if we're a subclass.
+        PyType type = getType();
+        if (type != TYPE) {
+            PyObject missing = type.lookup("__missing__");
+            if (missing != null) {
+                return missing.__get__(this, type).__call__(key);
+            }
+        }
+        throw Py.KeyError(key);
     }
 
     public void __setitem__(PyObject key, PyObject value) {
@@ -436,29 +410,87 @@ public class PyDictionary extends PyObject implements Map {
      * Insert all the key:value pairs from <code>d</code> into
      * this dictionary.
      */
-    public void update(PyObject d) {
-        dict_update(d);
+    public void update(PyObject other) {
+        dict_update(new PyObject[] {other}, Py.NoKeywords);
     }
 
     @ExposedMethod
-    final void dict_update(PyObject d) {
-        if (d instanceof PyDictionary) {
-            do_update((PyDictionary)d);
-        } else if (d instanceof PyStringMap) {
-            do_update(d,((PyStringMap)d).keys());
-        } else {
-            do_update(d,d.invoke("keys"));
+    final void dict_update(PyObject[] args, String[] keywords) {
+        updateCommon(args, keywords, "update");
+    }
+
+    private void updateCommon(PyObject[] args, String[] keywords, String methName) {
+        int nargs = args.length - keywords.length;
+        if (nargs > 1) {
+            throw PyBuiltinFunction.DefaultInfo.unexpectedCall(nargs, false, methName, 0, 1);
         }
-
+        if (nargs == 1) {
+            PyObject arg = args[0];
+            if (arg.__findattr__("keys") != null) {
+                merge(arg);
+            } else {
+                mergeFromSeq(arg);
+            }
+        }
+        for (int i = 0; i < keywords.length; i++) {
+            dict___setitem__(Py.newString(keywords[i]), args[nargs + i]);
+        }        
     }
 
-    private void do_update(PyDictionary d) {
-        table.putAll(d.table);
+    /**
+     * Merge another PyObject that supports keys() with this
+     * dict.
+     *
+     * @param other a PyObject with a keys() method
+     */
+    private void merge(PyObject other) {
+        if (other instanceof PyDictionary) {
+            table.putAll(((PyDictionary)other).table);
+        } else if (other instanceof PyStringMap) {
+            mergeFromKeys(other, ((PyStringMap)other).keys());
+        } else {
+            mergeFromKeys(other, other.invoke("keys"));
+        }
     }
 
-    private void do_update(PyObject d, PyObject keys) {
+    /**
+     * Merge another PyObject via its keys() method
+     *
+     * @param other a PyObject with a keys() method
+     * @param keys the result of other's keys() method
+     */
+    private void mergeFromKeys(PyObject other, PyObject keys) {
         for (PyObject key : keys.asIterable()) {
-            __setitem__(key, d.__getitem__(key));
+            dict___setitem__(key, other.__getitem__(key));
+        }
+    }
+
+    /**
+     * Merge any iterable object producing iterable objects of length
+     * 2 into this dict.
+     *
+     * @param other another PyObject
+     */
+    private void mergeFromSeq(PyObject other) {
+        PyObject pairs = other.__iter__();
+        PyObject pair;
+
+        for (int i = 0; (pair = pairs.__iternext__()) != null; i++) {
+            try {
+                pair = PySequence.fastSequence(pair, "");
+            } catch(PyException pye) {
+                if (Py.matchException(pye, Py.TypeError)) {
+                    throw Py.TypeError(String.format("cannot convert dictionary update sequence "
+                                                     + "element #%d to a sequence", i));
+                }
+                throw pye;
+            }
+            int n;
+            if ((n = pair.__len__()) != 2) {
+                throw Py.ValueError(String.format("dictionary update sequence element #%d "
+                                                  + "has length %d; 2 is required", i, n));
+            }
+            dict___setitem__(pair.__getitem__(0), pair.__getitem__(1));
         }
     }
 
@@ -486,12 +518,24 @@ public class PyDictionary extends PyObject implements Map {
 
     @ExposedMethod(defaults = "Py.None")
     final PyObject dict_setdefault(PyObject key, PyObject failobj) {
-        PyObject o = __finditem__(key);
-        if (o == null) {
-            __setitem__(key, o = failobj);
+        PyObject oldValue = table.putIfAbsent(key, failobj);
+        if (oldValue == null) {
+            return failobj;
+        } else {
+            return oldValue;
         }
-        return o;
     }
+
+    @ExposedMethod(defaults = "Py.None")
+    final PyObject dict_setifabsent(PyObject key, PyObject failobj) {
+        PyObject oldValue = table.putIfAbsent(key, failobj);
+        if (oldValue == null) {
+            return Py.None;
+        } else {
+            return oldValue;
+        }
+    }
+
     
     /**
      * Return a value based on key
@@ -625,34 +669,51 @@ public class PyDictionary extends PyObject implements Map {
     }
 
     class ValuesIter extends PyIterator {
-        private final Iterator iterator;
-        public ValuesIter(Collection c) {
-            this.iterator = c.iterator();
+
+        private final Iterator<PyObject> iterator;
+
+        private final int size;
+
+        public ValuesIter(Collection<PyObject> values) {
+            iterator = values.iterator();
+            size = values.size();
         }
 
         public PyObject __iternext__() {
-            if (!iterator.hasNext())
+            if (table.size() != size) {
+                throw Py.RuntimeError("dictionary changed size during iteration");
+            }
+            if (!iterator.hasNext()) {
                 return null;
-            return (PyObject)iterator.next();
+            }
+            return iterator.next();
         }
     }
 
     class ItemsIter extends PyIterator {
-        private Iterator iterator;
-        public ItemsIter(Set s) {
-            this.iterator = s.iterator();
+
+        private final Iterator<Entry<PyObject, PyObject>> iterator;
+
+        private final int size;
+
+        public ItemsIter(Set<Entry<PyObject, PyObject>> items) {
+            iterator = items.iterator();
+            size = items.size();
         }
         
         public PyObject __iternext__() {
-        if (!iterator.hasNext())
-            return null;
-        Entry entry =  (Entry)iterator.next();
-        return new PyTuple(new PyObject[] 
-        { (PyObject)entry.getKey(), (PyObject)entry.getValue() });
+            if (table.size() != size) {
+                throw Py.RuntimeError("dictionary changed size during iteration");
+            }
+            if (!iterator.hasNext()) {
+                return null;
+            }
+            Entry<PyObject, PyObject> entry = iterator.next();
+            return new PyTuple(entry.getKey(), entry.getValue());
         }
     }
 
-        /* The following methods implement the java.util.Map interface
+    /* The following methods implement the java.util.Map interface
     which allows PyDictionary to be passed to java methods that take
     java.util.Map as a parameter.  Basically, the Map methods are a
     wrapper around the PyDictionary's Map container stored in member
@@ -723,8 +784,24 @@ public class PyDictionary extends PyObject implements Map {
     static final Object tojava(Object val) {
         return val == null ? null : ((PyObject)val).__tojava__(Object.class);
     }
-}
 
+    public Object putIfAbsent(Object key, Object value) {
+        return tojava(table.putIfAbsent(Py.java2py(key), Py.java2py(value)));
+    }
+
+    public boolean remove(Object key, Object value) {
+        return table.remove(Py.java2py(key), Py.java2py(value));
+    }
+
+    public boolean replace(Object key, Object oldValue, Object newValue) {
+        return table.replace(Py.java2py(key), Py.java2py(oldValue), Py.java2py(newValue));
+    }
+
+    public Object replace(Object key, Object value) {
+        return tojava(table.replace(Py.java2py(key), Py.java2py(value)));
+    }
+
+}
 /** Basic implementation of Entry that just holds onto a key and value and returns them. */
 class SimpleEntry<K, V> implements Entry<K, V> {
     

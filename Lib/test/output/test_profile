@@ -4,7 +4,7 @@ test_profile
    Ordered by: standard name
 
    ncalls  tottime  percall  cumtime  percall filename:lineno(function)
-        1    0.000    0.000    1.000    1.000 <string>:0(?)
+        1    0.000    0.000    1.000    1.000 <string>:0(<module>)
         0    0.000             0.000          profile:0(profiler)
         1    0.000    0.000    1.000    1.000 profile:0(testfunc())
         1    0.400    0.400    1.000    1.000 test_profile.py:21(testfunc)

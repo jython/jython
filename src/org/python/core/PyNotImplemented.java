@@ -8,16 +8,14 @@ public class PyNotImplemented extends PySingleton implements Serializable
         super("NotImplemented");
     }
 
-    public boolean __nonzero__() {
-        return false;
-    }
-
     public Object __tojava__(Class c) {
-        //Danger here.  java.lang.Object gets null not None
-        if (c == PyObject.class)
+        // Danger here. java.lang.Object gets null not None
+        if (c == PyObject.class) {
             return this;
-        if (c.isPrimitive())
+        }
+        if (c.isPrimitive()) {
             return Py.NoConversion;
+        }
         return null;
     }
 

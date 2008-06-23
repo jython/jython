@@ -142,7 +142,7 @@ public class Time implements ClassDictInit
     }
     private static final double NANOS_PER_SECOND = 1000000000.0;
     private static long initialClock;
-    private static boolean clockInitialized;
+    private static volatile boolean clockInitialized;
 
     private static void throwValueError(String msg) {
         throw new PyException(Py.ValueError, new PyString(msg));
@@ -155,13 +155,13 @@ public class Time implements ClassDictInit
         boolean valid = true;
         switch (i) {
         case 0: break;                                  // year
-        case 1: valid = (1 <= val && val <= 12); break; // month 1-12
-        case 2: valid = (1 <= val && val <= 31); break; // day 1 - 31
+        case 1: valid = (0 <= val && val <= 12); break; // month 1-12 (or 0)
+        case 2: valid = (0 <= val && val <= 31); break; // day 1 - 31 (or 0)
         case 3: valid = (0 <= val && val <= 23); break; // hour 0 - 23
         case 4: valid = (0 <= val && val <= 59); break; // minute 0 - 59
-        case 5: valid = (0 <= val && val <= 59); break; // second 0 - 59
+        case 5: valid = (0 <= val && val <= 61); break; // second 0 - 59 (plus 2 leap seconds)
         case 6: valid = (0 <= val && val <= 6);  break; // weekday 0 - 6
-        case 7: valid = (1 <= val && val < 367); break; // julian day 1 - 366
+        case 7: valid = (0 <= val && val < 367); break; // julian day 1 - 366 (or 0)
         case 8: valid = (-1 <= val && val <= 1); break; // d.s. flag, -1,0,1
         }
         // raise a ValueError if not within range
@@ -199,9 +199,21 @@ public class Time implements ClassDictInit
             }
             throwValueError(msg);
         }
-        // Java's months are usually 0-11
-        if (i == 1)
-            val--;
+        switch (i) {
+        case 1:
+            if (val > 0) {
+                // Java's months are usually 0-11
+                val--;
+            }
+            break;
+        case 2:
+        case 7:
+            // 'or 0'
+            if (val == 0) {
+                val = 1;
+            }
+            break;
+        }
         return val;
     }
 
@@ -234,7 +246,11 @@ public class Time implements ClassDictInit
     protected static PyTimeTuple _timefields(double secs, TimeZone tz) {
         GregorianCalendar cal = new GregorianCalendar(tz);
         cal.clear();
-        cal.setTime(new Date((long)(secs*1000)));
+        secs = secs * 1000;
+        if (secs < Long.MIN_VALUE || secs > Long.MAX_VALUE) {
+            throw Py.ValueError("timestamp out of range for platform time_t");
+        }
+        cal.setTime(new Date((long)secs));
         // This call used to be needed to work around JVM bugs.
         // It appears to break jdk1.2, so it's not removed.
         // cal.clear();
@@ -255,27 +271,45 @@ public class Time implements ClassDictInit
                                new PyInteger(isdst ? 1 : 0));
     }
 
-    public static PyTuple localtime() {
-        return localtime(time());
+    /**
+     * Convert a time argument that may be an optional float or None value to a
+     * double. Throws a TypeError on failure.
+     *
+     * @param arg a PyObject number of None
+     * @return a double value
+     */
+    public static double parseTimeDoubleArg(PyObject arg) {
+        if (arg == Py.None) {
+            return time();
+        }
+        Object result = arg.__tojava__(Double.class);
+        if (result == Py.NoConversion) {
+            throw Py.TypeError("a float is required");
+        }
+        return (Double)result;
     }
 
-    public static PyTuple localtime(double secs) {
-        return _timefields(secs, TimeZone.getDefault());
+    public static PyTuple localtime() {
+        return localtime(Py.None);
+    }
+
+    public static PyTuple localtime(PyObject secs) {
+        return _timefields(parseTimeDoubleArg(secs), TimeZone.getDefault());
     }
 
     public static PyTuple gmtime() {
-        return gmtime(time());
+        return gmtime(Py.None);
     }
 
-    public static PyTuple gmtime(double secs) {
-        return _timefields(secs, TimeZone.getTimeZone("GMT"));
+    public static PyTuple gmtime(PyObject arg) {
+        return _timefields(parseTimeDoubleArg(arg), TimeZone.getTimeZone("GMT"));
     }
 
     public static String ctime() {
-        return ctime(time());
+        return ctime(Py.None);
     }
 
-    public static String ctime(double secs) {
+    public static String ctime(PyObject secs) {
         return asctime(localtime(secs));
     }
 
@@ -424,6 +458,12 @@ public class Time implements ClassDictInit
     public static String strftime(String format, PyTuple tup) {
         checkLocale();
 
+        // Immediately validate the tuple
+        int[] items = new int[9];
+        for (int i = 0; i < 9; i ++) {
+            items[i] = item(tup, i);
+        }
+
         String s = "";
         int lastc = 0;
         int j;
@@ -448,14 +488,14 @@ public class Time implements ClassDictInit
             switch (format.charAt(i)) {
             case 'a':
                 // abbrev weekday
-                j = item(tup, 6);
+                j = items[6];
                 s = s + _shortday(j);
                 break;
             case 'A':
                 // full weekday
                 // see _shortday()
                 syms = datesyms.getWeekdays();
-                j = item(tup, 6);
+                j = items[6];
                 if (0 <= j && j < 6)
                     s = s + syms[j+2];
                 else if (j== 6)
@@ -465,13 +505,13 @@ public class Time implements ClassDictInit
                 break;
             case 'b':
                 // abbrev month
-                j = item(tup, 1);
+                j = items[1];
                 s = s + _shortmonth(j);
                 break;
             case 'B':
                 // full month
                 syms = datesyms.getMonths();
-                j = item(tup, 1);
+                j = items[1];
                 s = s + syms[j];
                 break;
             case 'c':
@@ -479,34 +519,34 @@ public class Time implements ClassDictInit
                 break;
             case 'd':
                 // day of month (01-31)
-                s = s + _twodigit(item(tup, 2));
+                s = s + _twodigit(items[2]);
                 break;
             case 'H':
                 // hour (00-23)
-                s = s + _twodigit(item(tup, 3));
+                s = s + _twodigit(items[3]);
                 break;
             case 'I':
                 // hour (01-12)
-                j = item(tup, 3) % 12;
+                j = items[3] % 12;
                 if (j == 0)
                     j = 12;                  // midnight or noon
                 s = s + _twodigit(j);
                 break;
             case 'j':
                 // day of year (001-366)
-                s = s + _padint(item(tup, 7), 3);
+                s = s + _padint(items[7], 3);
                 break;
             case 'm':
                 // month (01-12)
-                s = s + _twodigit(item(tup, 1) + 1);
+                s = s + _twodigit(items[1] + 1);
                 break;
             case 'M':
                 // minute (00-59)
-                s = s + _twodigit(item(tup, 4));
+                s = s + _twodigit(items[4]);
                 break;
             case 'p':
                 // AM/PM
-                j = item(tup, 3);
+                j = items[3];
                 syms = datesyms.getAmPmStrings();
                 if (0 <= j && j < 12)
                     s = s + syms[0];
@@ -517,7 +557,7 @@ public class Time implements ClassDictInit
                 break;
             case 'S':
                 // seconds (00-61)
-                s = s + _twodigit(item(tup, 5));
+                s = s + _twodigit(items[5]);
                 break;
             case 'U':
                 // week of year (sunday is first day) (00-53).  all days in
@@ -535,7 +575,7 @@ public class Time implements ClassDictInit
             case 'w':
                 // weekday as decimal (0=Sunday-6)
                 // tuple format has monday=0
-                j = (item(tup, 6) + 1) % 7;
+                j = (items[6] + 1) % 7;
                 s = s + _twodigit(j);
                 break;
             case 'W':
@@ -569,31 +609,31 @@ public class Time implements ClassDictInit
                 //     %x == mm/dd/yy
                 //     %X == HH:mm:SS
                 //
-                s = s + _twodigit(item(tup, 1) + 1) + "/" +
-                    _twodigit(item(tup, 2)) + "/" +
-                    _truncyear(item(tup, 0));
+                s = s + _twodigit(items[1] + 1) + "/" +
+                    _twodigit(items[2]) + "/" +
+                    _truncyear(items[0]);
                 break;
             case 'X':
                 // See comment for %x above
-                s = s + _twodigit(item(tup, 3)) + ":" +
-                    _twodigit(item(tup, 4)) + ":" +
-                    _twodigit(item(tup, 5));
+                s = s + _twodigit(items[3]) + ":" +
+                    _twodigit(items[4]) + ":" +
+                    _twodigit(items[5]);
                 break;
             case 'Y':
                 // year w/ century
-                s = s + _padint(item(tup, 0), 4);
+                s = s + _padint(items[0], 4);
                 break;
             case 'y':
                 // year w/o century (00-99)
-                s = s + _truncyear(item(tup, 0));
+                s = s + _truncyear(items[0]);
                 break;
             case 'Z':
                 // timezone name
                 if (cal == null)
                     cal = _tupletocal(tup);
-                // If item(tup, 8) == 1, we're in daylight savings time.
+                // If items[8] == 1, we're in daylight savings time.
                 // -1 means the information was not available; treat this as if not in dst.
-                s = s + cal.getTimeZone().getDisplayName(item(tup, 8) > 0, 0);
+                s = s + cal.getTimeZone().getDisplayName(items[8] > 0, 0);
                 break;
             case '%':
                 // %

@@ -399,11 +399,11 @@ elif jython:
     import errno
     import threading
     import java.io.File
-    import java.io.FileDescriptor
-    import java.io.FileOutputStream
     import java.io.IOException
+    import java.lang.IllegalArgumentException
     import java.lang.IllegalThreadStateException
     import java.lang.ProcessBuilder
+    import java.lang.System
     import java.lang.Thread
     import java.nio.ByteBuffer
     import org.python.core.io.RawIOBase
@@ -752,8 +752,7 @@ class Popen(object):
             else:
                 if c2pwrite is None:
                     c2pwrite = org.python.core.io.StreamIO(
-                        java.io.FileOutputStream(java.io.FileDescriptor.out),
-                        False)
+                        java.lang.System.out, False)
                 self._stdout_thread = self._coupler_thread('stdout',
                                                            c2ctread.readinto,
                                                            c2pwrite.write)
@@ -764,8 +763,7 @@ class Popen(object):
             elif not self._stderr_is_stdout(errwrite, c2pwrite):
                 if errwrite is None:
                     errwrite = org.python.core.io.StreamIO(
-                        java.io.FileOutputStream(java.io.FileDescriptor.err),
-                        False)
+                        java.lang.System.err, False)
                 self._stderr_thread = self._coupler_thread('stderr',
                                                            cterrread.readinto,
                                                            errwrite.write)
@@ -1153,7 +1151,11 @@ class Popen(object):
             if executable is not None:
                 args[0] = executable
 
-            builder = java.lang.ProcessBuilder(args)
+            try:
+                builder = java.lang.ProcessBuilder(args)
+            except java.lang.IllegalArgumentException, iae:
+                raise OSError(iae.getMessage() or iae)
+
             if env is not None:
                 builder_env = builder.environment()
                 builder_env.clear()

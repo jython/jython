@@ -43,20 +43,6 @@ public class NewCompilerResources {
         if (metaclass == null) {
             if (bases.length != 0) {
                 PyObject base = bases[0];
-
-                if (base instanceof PyMetaClass) {
-                    // jython-only, experimental PyMetaClass hook
-                    // xxx keep?
-                    try {
-                        java.lang.reflect.Constructor ctor = base.getClass().getConstructor(
-                                pyClassCtrSignature);
-                        return (PyObject) ctor.newInstance(new Object[] { name,
-                                new PyTuple(bases), dict, proxyClass });
-                    } catch (Exception e) {
-                        throw Py.TypeError("meta-class fails to supply proper "
-                                           + "ctr: " + base.getType().fastGetName());
-                    }
-                }
                 metaclass = base.__findattr__("__class__");
                 if (metaclass == null) {
                     metaclass = base.getType();
@@ -111,7 +97,7 @@ public class NewCompilerResources {
             }
         }
 
-        loadNames(names, module, frame.getf_locals(), filter);
+        loadNames(names, module, frame.getLocals(), filter);
     }
 
     /**

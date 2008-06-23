@@ -10,27 +10,26 @@ array.derived:org.python.core.PyArrayDerived
 bool.derived:org.python.core.PyBooleanDerived
 classmethod.derived:org.python.core.PyClassMethodDerived
 complex.derived:org.python.core.PyComplexDerived
+defaultdict.derived:org.python.modules.collections.PyDefaultDictDerived
+deque.derived:org.python.modules.collections.PyDequeDerived
 dict.derived:org.python.core.PyDictionaryDerived
 file.derived:org.python.core.PyFileDerived
 float.derived:org.python.core.PyFloatDerived
-#function.expose:org.python.core.PyFunction
-#gderived.py doesn't handle derived out of org.python.core
-#immutableset.derived:org.python.modules.sets.PyImmutableSetDerived
+frozenset.derived:org.python.core.PyFrozenSetDerived
 int.derived:org.python.core.PyIntegerDerived
 list.derived:org.python.core.PyListDerived
 long.derived:org.python.core.PyLongDerived
+local.derived:org.python.modules.thread.PyLocalDerived
 module.derived:org.python.core.PyModuleDerived
 object.derived:org.python.core.PyObjectDerived
 property.derived:org.python.core.PyPropertyDerived
-#random.derived:org.python.modules.random.PyRandomDerived
-#gderived.py doesn't handle derived out of org.python.core
-#set.derived:org.python.modules.sets.PySetDerived
+random.derived:org.python.modules.random.PyRandomDerived
+set.derived:org.python.core.PySetDerived
 slice.derived:org.python.core.PySliceDerived
 str.derived:org.python.core.PyStringDerived
 super.derived:org.python.core.PySuperDerived
 tuple.derived:org.python.core.PyTupleDerived
 type.derived:org.python.core.PyTypeDerived
 unicode.derived:org.python.core.PyUnicodeDerived
+weakref.derived:org.python.modules._weakref.ReferenceTypeDerived
 zipimporter.derived:org.python.modules.zipimport.zipimporterDerived
-deque.derived:org.python.modules.collections.PyDequeDerived
-defaultdict.derived:org.python.modules.collections.PyDefaultDictDerived

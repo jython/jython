@@ -157,12 +157,12 @@ public class PyFile extends PyObject {
     }
 
     @ExposedNew
-    static final PyObject file_new(PyNewWrapper new_, boolean init, PyType subtype, PyObject[]args,
-                                   String[]keywords) {
+    static final PyObject file_new(PyNewWrapper new_, boolean init, PyType subtype,
+                                   PyObject[] args, String[] keywords) {
         PyFile newFile;
         if (new_.for_type == subtype) {
             if (init) {
-                if (args.length == 0) {
+                if (args.length - keywords.length == 0) {
                     newFile = new PyFile();
                     newFile.file___init__(args, keywords);
                 } else if (args[0] instanceof PyString ||
@@ -386,14 +386,18 @@ public class PyFile extends PyObject {
         return file_next();
     }
 
-    @ExposedMethod
-    final PyObject file_xreadlines() {
+    @ExposedMethod(names = {"__enter__", "xreadlines"})
+    final PyObject file_self() {
         checkClosed();
         return this;
     }
 
+    public PyObject __enter__() {
+        return file_self();
+    }
+
     public PyObject xreadlines() {
-        return file_xreadlines();
+        return file_self();
     }
 
     @ExposedMethod
@@ -484,6 +488,15 @@ public class PyFile extends PyObject {
         file_close();
     }
 
+    @ExposedMethod
+    final void file___exit__(PyObject type, PyObject value, PyObject traceback) {
+        file_close();
+    }
+
+    public void __exit__(PyObject type, PyObject value, PyObject traceback) {
+        file___exit__(type, value, traceback);
+    }
+
     @ExposedMethod(defaults = {"null"})
     final void file_truncate(PyObject position) {
         if (position == null) {
@@ -543,7 +556,7 @@ public class PyFile extends PyObject {
         s.append(name.__repr__());
         s.append(", mode '");
         s.append(mode);
-        s.append("' ");
+        s.append("' at ");
         s.append(Py.idstr(this));
         s.append(">");
         return s.toString();

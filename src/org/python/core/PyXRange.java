@@ -1,124 +1,157 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
+import org.python.expose.ExposedMethod;
+import org.python.expose.ExposedNew;
+import org.python.expose.ExposedType;
+
 /**
-Used to implement the builtin xrange function.
-
-Significant patches contributed by Jason Orendorff - jorendor@cbu.edu
-
-@author Jim Hugunin - hugunin@python.org
-@since JPython 0.3
-**/
-
+ * The builtin xrange type.
+ */
+// XXX: Not subclassable
+@ExposedType(name = "xrange", base = PyObject.class)
 public class PyXRange extends PySequence {
-    public int start, stop, step; // directly from xrange(start, stop, step)
-    int cycleLength;       // The length of an uncopied xrange
-    int copies;            // The number of copies made (used to implement
-                           // xrange(x,y,z)*n)
 
-    public PyXRange(int start, int stop, int step) {
-        if (step == 0)
-            throw Py.ValueError("zero step for xrange()");
-        this.start = start;
-        this.stop = stop;
-        this.step = step;
-        int oneLessThanStep = step + (step > 0 ? -1 : 1);
-        cycleLength = (stop - start + oneLessThanStep) / step;
-        if (cycleLength < 0) {
-            cycleLength = 0;
-        }
-        this.stop = start + cycleLength*step;
-        copies = 1;
+    public static final PyType TYPE = PyType.fromClass(PyXRange.class);
+
+    private int start;
+
+    private int step;
+
+    private int len;
+
+    public PyXRange(int ihigh) {
+        this(0, ihigh, 1);
     }
 
+    public PyXRange(int ilow, int ihigh) {
+        this(ilow, ihigh, 1);
+    }
+
+    public PyXRange(int ilow, int ihigh, int istep) {
+        if (istep == 0) {
+            throw Py.ValueError("xrange() arg 3 must not be zero");
+        }
+
+        int n;
+        if (istep > 0) {
+            n = getLenOfRange(ilow, ihigh, istep);
+        } else {
+            n = getLenOfRange(ihigh, ilow, -istep);
+        }
+        if (n < 0) {
+            throw Py.OverflowError("xrange() result has too many items");
+        }
+
+        start = ilow;
+        len = n;
+        step = istep;
+    }
+
+    @ExposedNew
+    static final PyObject xrange___new__(PyNewWrapper new_, boolean init, PyType subtype,
+                                         PyObject[] args, String[] keywords) {
+        ArgParser ap = new ArgParser("xrange", args, keywords,
+                                     new String[] {"ilow", "ihigh", "istep"}, 1);
+        ap.noKeywords();
+
+        int ilow = 0;
+        int ihigh;
+        int istep = 1;
+        if (args.length == 1) {
+            ihigh = ap.getInt(0);
+        } else {
+            ilow = ap.getInt(0);
+            ihigh = ap.getInt(1);
+            istep = ap.getInt(2, 1);
+        }
+        return new PyXRange(ilow, ihigh, istep);
+    }
+
+    /**
+     * Return number of items in range/xrange (lo, hi, step).  step > 0 required.  Return
+     * a value < 0 if & only if the true value is too large to fit in a Java int.
+     *
+     * @param lo int value
+     * @param hi int value
+     * @param step int value (> 0)
+     * @return int length of range
+     */
+    private int getLenOfRange(int lo, int hi, int step) {
+        int n = 0;
+        if (lo < hi) {
+            // the base difference may be > Integer.MAX_VALUE
+            long diff = (long)hi - (long)lo - 1;
+            // any long > Integer.MAX_VALUE or < Integer.MIN_VALUE gets casted to a
+            // negative number
+            n = (int)((diff / step) + 1);
+        }
+        return n;
+    }
+
+    @Override
     public int __len__() {
-        return cycleLength*copies;
+        return xrange___len__();
     }
 
-    private int getInt(int i) {
-        if (cycleLength == 0) { // avoid divide by zero errors
-            return start;
-        } else {
-            return start + (i % cycleLength)*step;
+    @ExposedMethod
+    final int xrange___len__() {
+        return len;
+    }
+
+    @Override
+    public PyObject __getitem__(PyObject index) {
+        return xrange___getitem__(index);
+    }
+
+    @ExposedMethod
+    final PyObject xrange___getitem__(PyObject index) {
+        PyObject ret = seq___finditem__(index);
+        if (ret == null) {
+            throw Py.IndexError("xrange object index out of range");
         }
+        return ret;
     }
 
+    @ExposedMethod
+    public PyObject xrange___iter__() {
+        return seq___iter__();
+    }
+
+    @Override
     protected PyObject pyget(int i) {
-        return new PyInteger(getInt(i));
+        return new PyInteger(start + (i % len) * step);
     }
 
+    @Override
     protected PyObject getslice(int start, int stop, int step) {
-        Py.DeprecationWarning("xrange object slicing is deprecated; " +
-                              "convert to list instead");
-        if (copies != 1) {
-            throw Py.TypeError("cannot slice a replicated range");
-        }
-        int len = sliceLength(start, stop, step);
-        int xslice_start = getInt(start);
-        int xslice_step = this.step * step;
-        int xslice_stop = xslice_start + xslice_step * len;
-        return new PyXRange(xslice_start, xslice_stop, xslice_step);
+        // not supported
+        return null;
     }
 
-
+    @Override
     protected PyObject repeat(int howmany) {
-        Py.DeprecationWarning("xrange object multiplication is deprecated; " +
-                              "convert to list instead");
-        PyXRange x = new PyXRange(start, stop, step);
-        x.copies = copies*howmany;
-        return x;
+        // not supported
+        return null;
     }
 
-    public PyObject __add__(PyObject generic_other) {
-        throw Py.TypeError("cannot concatenate xrange objects");
+    @Override
+    protected String unsupportedopMessage(String op, PyObject o2) {
+        // always return the default unsupported messages instead of PySequence's
+        return null;
     }
 
-    public PyObject __findattr__(String name) {
-        String msg = "xrange object's 'start', 'stop' and 'step' " +
-                     "attributes are deprecated";
-        if (name == "start") {
-            Py.DeprecationWarning(msg);
-            return Py.newInteger(start);
-        } else if (name == "stop") {
-            Py.DeprecationWarning(msg);
-            return Py.newInteger(stop);
-        } else if (name == "step") {
-            Py.DeprecationWarning(msg);
-            return Py.newInteger(step);
-        } else {
-            return super.__findattr__(name);
-        }
-    }
-
-    public int hashCode() {
-        // Not the greatest hash function
-        // but then again hashing xrange's is rather uncommon
-        return stop^start^step;
-    }
-
+    @Override
     public String toString() {
-        StringBuffer buf = new StringBuffer("xrange(");
-        if (start != 0) {
-            buf.append(start);
-            buf.append(", ");
+        String rtn;
+        int stop = start + len * step;
+        if (start == 0 && step == 1) {
+            rtn = String.format("xrange(%d)", stop);
+        } else if (step == 1) {
+            rtn = String.format("xrange(%d, %d)", start, stop);
+        } else {
+            rtn = String.format("xrange(%d, %d, %d)", start, stop, step);
         }
-        buf.append(__len__() * step + start);
-        if (step != 1) {
-            buf.append(", ");
-            buf.append(step);
-        }
-        buf.append(")");
-        return buf.toString();
-    }
-
-    public PyList tolist() {
-        Py.DeprecationWarning("xrange.tolist() is deprecated; " +
-                              "use list(xrange) instead");
-        PyList list = new PyList();
-        int count = __len__();
-        for (int i=0; i<count; i++) {
-            list.append(pyget(i));
-        }
-        return list;
+        return rtn;
     }
 }

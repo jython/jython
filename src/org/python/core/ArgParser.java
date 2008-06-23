@@ -143,7 +143,7 @@ public class ArgParser {
      * @param pos The position of the argument. First argument is numbered 0.
      */
     public int getInt(int pos) {
-        return ((PyInteger) getRequiredArg(pos).__int__()).getValue();
+        return asInt(getRequiredArg(pos));
     }
 
     /**
@@ -156,7 +156,21 @@ public class ArgParser {
         if (value == null) {
             return def;
         }
-        return ((PyInteger) value.__int__()).getValue();
+        return asInt(value);
+    }
+
+    /**
+     * Convert a PyObject to a Java integer.
+     *
+     * @param value a PyObject
+     * @return value as an int
+     */
+    private int asInt(PyObject value) {
+        if (value instanceof PyFloat) {
+            Py.warning(Py.DeprecationWarning, "integer argument expected, got float");
+            value = value.__int__();
+        }
+        return value.asInt();
     }
 
     /**
@@ -182,6 +196,23 @@ public class ArgParser {
     }
 
     /**
+     * Return a required argument as a PyObject, ensuring the object
+     * is of the specified type.
+     *
+     * @param pos the position of the argument. First argument is numbered 0
+     * @param type the desired PyType of the argument
+     * @return the PyObject of PyType
+     */
+    public PyObject getPyObjectByType(int pos, PyType type) {
+        PyObject arg = getRequiredArg(pos);
+        if (arg.getType() != type) {
+            throw Py.TypeError(String.format("argument %d must be %s, not %s", pos + 1,
+                                             type.fastGetName(), arg.getType().fastGetName()));
+        }
+        return arg;
+    }
+
+    /**
      * Return the remaining arguments as a tuple.
      * 
      * @param pos The position of the argument. First argument is numbered 0.
@@ -194,6 +225,17 @@ public class ArgParser {
             return new PyTuple(ret);
         }
         return Py.EmptyTuple;
+    }
+
+    /**
+     * Ensure no keyword arguments were passed, raising a TypeError if
+     * so.
+     *
+     */
+    public void noKeywords() {
+        if (kws.length > 0) {
+            throw Py.TypeError(String.format("%s does not take keyword arguments", funcname));
+        }
     }
 
     private void check() {

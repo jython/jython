@@ -11,7 +11,7 @@ import org.python.core.__builtin__;
 // Based on CPython-1.5.2's code module
 public class InteractiveConsole extends InteractiveInterpreter {
 
-    public static final String CONSOLE_FILENAME = "<console>";
+    public static final String CONSOLE_FILENAME = "<stdin>";
 
     public String filename;
 
@@ -61,7 +61,7 @@ public class InteractiveConsole extends InteractiveInterpreter {
     }
 
     public static String getDefaultBanner() {
-        return "Jython " + PySystemState.version + " on " + PySystemState.platform;
+        return String.format("Jython %s on %s", PySystemState.version, PySystemState.platform);
     }
 
     public void interact(String banner) {

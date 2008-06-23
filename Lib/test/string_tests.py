@@ -548,12 +548,10 @@ class MixinStrUnicodeUserStringTest:
         self.checkequal('$', "%c", '__mod__', 36)
         self.checkequal('10', "%d", '__mod__', 10)
         self.checkequal('\x7f', "%c", '__mod__', 0x7f)
-# Jython transition 2.3
-# values outside of the size of a single char aren't prohibited in formatting %c
-# http://jython.org/bugs/1768075
-#        for ordinal in (-100, 0x200000):
+
+        for ordinal in (-100, 0x200000):
             # unicode raises ValueError, str raises OverflowError
-#            self.checkraises((ValueError, OverflowError), '%c', '__mod__', ordinal)
+            self.checkraises((ValueError, OverflowError), '%c', '__mod__', ordinal)
 
         self.checkequal(' 42', '%3ld', '__mod__', 42)
         self.checkequal('0042.00', '%07.2f', '__mod__', 42)
@@ -591,6 +589,34 @@ class MixinStrUnicodeUserStringTest:
                     self.checkraises(OverflowError, format, "__mod__", value)
                 else:
                     self.checkcall(format, "__mod__", value)
+
+    def test_partition(self):
+        self.checkequal(('this is the par', 'ti', 'tion method'),
+            'this is the partition method', 'partition', 'ti')
+
+        # from raymond's original specification
+        S = 'http://www.python.org'
+        self.checkequal(('http', '://', 'www.python.org'), S, 'partition', '://')
+        self.checkequal(('http://www.python.org', '', ''), S, 'partition', '?')
+        self.checkequal(('', 'http://', 'www.python.org'), S, 'partition', 'http://')
+        self.checkequal(('http://www.python.', 'org', ''), S, 'partition', 'org')
+
+        self.checkraises(ValueError, S, 'partition', '')
+        self.checkraises(TypeError, S, 'partition', None)
+
+    def test_rpartition(self):
+        self.checkequal(('this is the rparti', 'ti', 'on method'),
+            'this is the rpartition method', 'rpartition', 'ti')
+
+        # from raymond's original specification
+        S = 'http://www.python.org'
+        self.checkequal(('http', '://', 'www.python.org'), S, 'rpartition', '://')
+        self.checkequal(('', '', 'http://www.python.org'), S, 'rpartition', '?')
+        self.checkequal(('', 'http://', 'www.python.org'), S, 'rpartition', 'http://')
+        self.checkequal(('http://www.python.', 'org', ''), S, 'rpartition', 'org')
+
+        self.checkraises(ValueError, S, 'rpartition', '')
+        self.checkraises(TypeError, S, 'rpartition', None)    
 
 class MixinStrStringUserStringTest:
     # Additional tests for 8bit strings, i.e. str, UserString and

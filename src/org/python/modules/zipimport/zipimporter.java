@@ -11,7 +11,6 @@ import java.util.zip.ZipFile;
 
 import org.python.core.ArgParser;
 import org.python.core.BytecodeLoader;
-import org.python.core.FileUtil;
 import org.python.core.Py;
 import org.python.core.PyCode;
 import org.python.core.PyDictionary;
@@ -25,6 +24,7 @@ import org.python.core.PySystemState;
 import org.python.core.PyTuple;
 import org.python.core.PyType;
 import org.python.core.imp;
+import org.python.core.util.FileUtil;
 import org.python.core.util.StringUtil;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;

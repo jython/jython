@@ -1,3 +1,4 @@
+/* Generated file, do not modify.  See jython/src/templates/gderived.py. */
 package org.python.core;
 
 public class PyBooleanDerived extends PyBoolean implements Slotted {
@@ -48,7 +49,7 @@ public class PyBooleanDerived extends PyBoolean implements Slotted {
             PyObject res=impl.__get__(this,self_type).__call__();
             if (res instanceof PyString)
                 return(PyString)res;
-            throw Py.TypeError("__str__"+" should return a "+"string");
+            throw Py.TypeError("__str__"+" returned non-"+"string"+" (type "+res.getType().fastGetName()+")");
         }
         return super.__str__();
     }
@@ -60,7 +61,7 @@ public class PyBooleanDerived extends PyBoolean implements Slotted {
             PyObject res=impl.__get__(this,self_type).__call__();
             if (res instanceof PyString)
                 return(PyString)res;
-            throw Py.TypeError("__repr__"+" should return a "+"string");
+            throw Py.TypeError("__repr__"+" returned non-"+"string"+" (type "+res.getType().fastGetName()+")");
         }
         return super.__repr__();
     }
@@ -72,7 +73,7 @@ public class PyBooleanDerived extends PyBoolean implements Slotted {
             PyObject res=impl.__get__(this,self_type).__call__();
             if (res instanceof PyString)
                 return(PyString)res;
-            throw Py.TypeError("__hex__"+" should return a "+"string");
+            throw Py.TypeError("__hex__"+" returned non-"+"string"+" (type "+res.getType().fastGetName()+")");
         }
         return super.__hex__();
     }
@@ -84,7 +85,7 @@ public class PyBooleanDerived extends PyBoolean implements Slotted {
             PyObject res=impl.__get__(this,self_type).__call__();
             if (res instanceof PyString)
                 return(PyString)res;
-            throw Py.TypeError("__oct__"+" should return a "+"string");
+            throw Py.TypeError("__oct__"+" returned non-"+"string"+" (type "+res.getType().fastGetName()+")");
         }
         return super.__oct__();
     }
@@ -96,21 +97,9 @@ public class PyBooleanDerived extends PyBoolean implements Slotted {
             PyObject res=impl.__get__(this,self_type).__call__();
             if (res instanceof PyFloat)
                 return(PyFloat)res;
-            throw Py.TypeError("__float__"+" should return a "+"float");
+            throw Py.TypeError("__float__"+" returned non-"+"float"+" (type "+res.getType().fastGetName()+")");
         }
         return super.__float__();
-    }
-
-    public PyLong __long__() {
-        PyType self_type=getType();
-        PyObject impl=self_type.lookup("__long__");
-        if (impl!=null) {
-            PyObject res=impl.__get__(this,self_type).__call__();
-            if (res instanceof PyLong)
-                return(PyLong)res;
-            throw Py.TypeError("__long__"+" should return a "+"long");
-        }
-        return super.__long__();
     }
 
     public PyComplex __complex__() {
@@ -120,7 +109,7 @@ public class PyBooleanDerived extends PyBoolean implements Slotted {
             PyObject res=impl.__get__(this,self_type).__call__();
             if (res instanceof PyComplex)
                 return(PyComplex)res;
-            throw Py.TypeError("__complex__"+" should return a "+"complex");
+            throw Py.TypeError("__complex__"+" returned non-"+"complex"+" (type "+res.getType().fastGetName()+")");
         }
         return super.__complex__();
     }
@@ -355,18 +344,6 @@ public class PyBooleanDerived extends PyBoolean implements Slotted {
             return res;
         }
         return super.__rdivmod__(other);
-    }
-
-    public PyObject __pow__(PyObject other) {
-        PyType self_type=getType();
-        PyObject impl=self_type.lookup("__pow__");
-        if (impl!=null) {
-            PyObject res=impl.__get__(this,self_type).__call__(other);
-            if (res==Py.NotImplemented)
-                return null;
-            return res;
-        }
-        return super.__pow__(other);
     }
 
     public PyObject __rpow__(PyObject other) {
@@ -689,16 +666,16 @@ public class PyBooleanDerived extends PyBoolean implements Slotted {
         return super.__int__();
     }
 
-    public String toString() {
+    public PyObject __long__() {
         PyType self_type=getType();
-        PyObject impl=self_type.lookup("__repr__");
+        PyObject impl=self_type.lookup("__long__");
         if (impl!=null) {
             PyObject res=impl.__get__(this,self_type).__call__();
-            if (!(res instanceof PyString))
-                throw Py.TypeError("__repr__ should return a string");
-            return((PyString)res).toString();
+            if (res instanceof PyLong||res instanceof PyInteger)
+                return res;
+            throw Py.TypeError("__long__"+" returned non-"+"long"+" (type "+res.getType().fastGetName()+")");
         }
-        return super.toString();
+        return super.__long__();
     }
 
     public int hashCode() {
@@ -814,6 +791,32 @@ public class PyBooleanDerived extends PyBoolean implements Slotted {
         return super.__finditem__(key);
     }
 
+    public PyObject __getitem__(PyObject key) {
+        // Same as __finditem__, without swallowing LookupErrors. This allows
+        // __getitem__ implementations written in Python to raise custom
+        // exceptions (such as subclasses of KeyError).
+        //
+        // We are forced to duplicate the code, instead of defining __finditem__
+        // in terms of __getitem__. That's because PyObject defines __getitem__
+        // in terms of __finditem__. Therefore, we would end with an infinite
+        // loop when self_type.lookup("__getitem__") returns null:
+        //
+        //  __getitem__ -> super.__getitem__ -> __finditem__ -> __getitem__
+        //
+        // By duplicating the (short) lookup and call code, we are safe, because
+        // the call chains will be:
+        //
+        // __finditem__ -> super.__finditem__
+        //
+        // __getitem__ -> super.__getitem__ -> __finditem__ -> super.__finditem__
+
+        PyType self_type=getType();
+        PyObject impl=self_type.lookup("__getitem__");
+        if (impl!=null)
+            return impl.__get__(this,self_type).__call__(key);
+        return super.__getitem__(key);
+    }
+
     public void __setitem__(PyObject key,PyObject value) { // ???
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__setitem__");
@@ -827,15 +830,30 @@ public class PyBooleanDerived extends PyBoolean implements Slotted {
     public PyObject __getslice__(PyObject start,PyObject stop,PyObject step) { // ???
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__getslice__");
-        if (impl!=null)
-            try {
-                return impl.__get__(this,self_type).__call__(start,stop);
-            } catch (PyException exc) {
-                if (Py.matchException(exc,Py.LookupError))
-                    return null;
-                throw exc;
-            }
+        if (impl!=null) {
+            return impl.__get__(this,self_type).__call__(start,stop);
+        }
         return super.__getslice__(start,stop,step);
+    }
+
+    public void __setslice__(PyObject start,PyObject stop,PyObject step,PyObject value) {
+        PyType self_type=getType();
+        PyObject impl=self_type.lookup("__setslice__");
+        if (impl!=null) {
+            impl.__get__(this,self_type).__call__(start,stop,value);
+            return;
+        }
+        super.__setslice__(start,stop,step,value);
+    }
+
+    public void __delslice__(PyObject start,PyObject stop,PyObject step) {
+        PyType self_type=getType();
+        PyObject impl=self_type.lookup("__delslice__");
+        if (impl!=null) {
+            impl.__get__(this,self_type).__call__(start,stop);
+            return;
+        }
+        super.__delslice__(start,stop,step);
     }
 
     public void __delitem__(PyObject key) { // ???
@@ -942,13 +960,46 @@ public class PyBooleanDerived extends PyBoolean implements Slotted {
         super.__delete__(obj);
     }
 
+    public PyObject __pow__(PyObject other,PyObject modulo) {
+        PyType self_type=getType();
+        PyObject impl=self_type.lookup("__pow__");
+        if (impl!=null) {
+            PyObject res;
+            if (modulo==null) {
+                res=impl.__get__(this,self_type).__call__(other);
+            } else {
+                res=impl.__get__(this,self_type).__call__(other,modulo);
+            }
+            if (res==Py.NotImplemented)
+                return null;
+            return res;
+        }
+        return super.__pow__(other,modulo);
+    }
+
     public void dispatch__init__(PyType type,PyObject[]args,String[]keywords) {
         PyType self_type=getType();
         if (self_type.isSubType(type)) {
             PyObject impl=self_type.lookup("__init__");
-            if (impl!=null)
-                impl.__get__(this,self_type).__call__(args,keywords);
+            if (impl!=null) {
+                PyObject res=impl.__get__(this,self_type).__call__(args,keywords);
+                if (res!=Py.None) {
+                    throw Py.TypeError(String.format("__init__() should return None, not '%.200s'",res.getType().fastGetName()));
+                }
+            }
         }
+    }
+
+    public String toString() {
+        PyType self_type=getType();
+        PyObject impl=self_type.lookup("__repr__");
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,self_type).__call__();
+            if (!(res instanceof PyString))
+                throw Py.TypeError("__repr__ returned non-string (type "+res.getType().fastGetName()+")");
+            return((PyString)res).toString();
+        }
+        return super.toString();
     }
 
 }

@@ -12,6 +12,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.python.core.util.FileUtil;
+
 /**
  * Utility functions for "import" support.
  */
@@ -21,6 +23,9 @@ public class imp {
     private static final String UNKNOWN_SOURCEFILE = "<unknown>";
 
     public static final int APIVersion = 12;
+
+    /** A non-empty fromlist for __import__'ing sub-modules. */
+    private static final PyObject nonEmptyFromlist = new PyTuple(Py.newString("__doc__"));
 
     /** Synchronizes import operations */
     public static final ReentrantLock importLock = new ReentrantLock();
@@ -189,7 +194,7 @@ public class imp {
             }
             org.python.parser.ast.modType node;
             try {
-                node = parser.parse(fp, "exec", filename, Py.getCompilerFlags());
+                node = parser.parse(fp, "exec", filename, new CompilerFlags());
             } finally {
                 fp.close();
             }
@@ -200,7 +205,7 @@ public class imp {
                                                true,
                                                false,
                                                true,
-                                               Py.getCompilerFlags());
+                                               null);
             return ofp.toByteArray();
         } catch(Throwable t) {
             throw parser.fixParseError(null, t, filename);
@@ -680,6 +685,18 @@ public class imp {
         if (top) {
             return topMod;
         }
+
+        if (fromlist != null && fromlist != Py.None) {
+            StringBuffer modNameBuffer = new StringBuffer(name);
+            for (PyObject submodName : fromlist.asIterable()) {
+                if (mod.__findattr__(submodName.toString()) != null
+                    || submodName.toString().equals("*")) {
+                    continue;
+                }
+                String fullName = modNameBuffer.toString() + "." + submodName.toString();
+                import_next(mod, modNameBuffer, submodName.toString(), fullName, null);
+            }
+        }
         return mod;
     }
 
@@ -720,7 +737,7 @@ public class imp {
     public static PyObject importOne(String mod, PyFrame frame) {
         // System.out.println("importOne(" + mod + ")");
         PyObject module = __builtin__.__import__(mod, frame.f_globals, frame
-                .getf_locals(), Py.EmptyTuple);
+                .getLocals(), Py.EmptyTuple);
         /*
          * int dot = mod.indexOf('.'); if (dot != -1) { mod = mod.substring(0,
          * dot).intern(); }
@@ -736,7 +753,7 @@ public class imp {
     public static PyObject importOneAs(String mod, PyFrame frame) {
         // System.out.println("importOne(" + mod + ")");
         PyObject module = __builtin__.__import__(mod, frame.f_globals, frame
-                .getf_locals(), getStarArg());
+                .getLocals(), getStarArg());
         // frame.setlocal(asname, module);
         return module;
     }
@@ -756,49 +773,20 @@ public class imp {
      */
     public static PyObject[] importFromAs(String mod, String[] names,
             String[] asnames, PyFrame frame) {
-        // StringBuffer sb = new StringBuffer();
-        // for(int i=0; i<names.length; i++)
-        // sb.append(names[i] + " ");
-        // System.out.println("importFrom(" + mod + ", [" + sb + "]");
+        PyObject[] pyNames = new PyObject[names.length];
+        for (int i = 0; i < names.length; i++) {
+            pyNames[i] = Py.newString(names[i]);
+        }
 
-        PyObject[] pynames = new PyObject[names.length];
-        for (int i = 0; i < names.length; i++)
-            pynames[i] = Py.newString(names[i]);
-
-        PyObject module = __builtin__.__import__(mod, frame.f_globals, frame
-                .getf_locals(), new PyTuple(pynames));
+        PyObject module = __builtin__.__import__(mod, frame.f_globals, frame.getLocals(),
+                                                 new PyTuple(pyNames));
         PyObject[] submods = new PyObject[names.length];
-        List wrongNames = new ArrayList(1);
         for (int i = 0; i < names.length; i++) {
             PyObject submod = module.__findattr__(names[i]);
             if (submod == null) {
-                if (module instanceof PyJavaPackage) {
-                    if (JavaImportHelper.tryAddPackage(mod + "." + names[i], null)) {
-                        submod = module.__findattr__(names[i]);
-                    }
-                }
+                throw Py.ImportError("cannot import name " + names[i]);
             }
-            if (submod == null) {
-                wrongNames.add(names[i]);
-            } else {
-                submods[i] = submod;
-            }
-        }
-        int size = wrongNames.size();
-        if (size > 0) {
-            StringBuffer buf = new StringBuffer(20);
-            buf.append("cannot import name");
-            if (size > 1) {
-                buf.append("s");
-            }
-            Iterator wrongNamesIterator = wrongNames.iterator();
-            buf.append(" ");
-            buf.append(wrongNamesIterator.next());
-            while (wrongNamesIterator.hasNext()) {
-                buf.append(", ");
-                buf.append(wrongNamesIterator.next());
-            }
-            throw Py.ImportError(buf.toString());
+            submods[i] = submod;
         }
         return submods;
     }
@@ -819,7 +807,7 @@ public class imp {
     public static void importAll(String mod, PyFrame frame) {
         // System.out.println("importAll(" + mod + ")");
         PyObject module = __builtin__.__import__(mod, frame.f_globals, frame
-                .getf_locals(), getStarArg());
+                .getLocals(), getStarArg());
         PyObject names;
         boolean filter = true;
         if (module instanceof PyJavaPackage) {
@@ -834,7 +822,7 @@ public class imp {
             }
         }
 
-        loadNames(names, module, frame.getf_locals(), filter);
+        loadNames(names, module, frame.getLocals(), filter);
     }
 
     /**
@@ -855,7 +843,16 @@ public class imp {
                 continue;
             } else {
                 try {
-                    locals.__setitem__(sname, module.__getattr__(sname));
+                    PyObject value = module.__findattr__(sname);
+                    if (value == null) {
+                        PyObject nameObj = module.__findattr__("__name__");
+                        if (nameObj != null) {
+                            String submodName = nameObj.__str__().toString() + '.' + sname;
+                            value = __builtin__.__import__(submodName, null, null,
+                                                           nonEmptyFromlist);
+                        }
+                    }
+                    locals.__setitem__(sname, value);
                 } catch (Exception exc) {
                     continue;
                 }

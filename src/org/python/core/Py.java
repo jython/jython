@@ -24,12 +24,6 @@ import org.python.parser.ast.modType;
 
 public final class Py {
 
-    static boolean frozen;
-    static String frozenPackage = null;
-    private final static Object PRESENT = new Object();
-    static java.util.Hashtable frozenModules;
-    static boolean initialized;
-
     static class SingletonResolver implements Serializable {
 
         private String which;
@@ -62,6 +56,8 @@ public final class Py {
     /** A zero-length array of PyObject's to pass to functions that
     expect zero-arguments **/
     public static PyObject[] EmptyObjects;
+    /** A frozenset with zero elements **/
+    public static PyFrozenSet EmptyFrozenSet;
     /** A tuple with zero elements **/
     public static PyTuple EmptyTuple;
     /** The Python integer 0 **/
@@ -94,8 +90,20 @@ public final class Py {
     in __tojava__ methods **/
     public static Object NoConversion;
     public static PyObject OSError;
+    public static PyException OSError(String message) {
+        return new PyException(Py.OSError, message);
+    }
+
     public static PyObject NotImplementedError;
+    public static PyException NotImplementedError(String message) {
+        return new PyException(Py.NotImplementedError, message);
+    }
+
     public static PyObject EnvironmentError;
+    public static PyException EnvironmentError(String message) {
+        return new PyException(Py.EnvironmentError, message);
+    }
+
     /* The standard Python exceptions */
     public static PyObject OverflowError;
 
@@ -454,40 +462,34 @@ public final class Py {
         }
         return tojava(o, c); // prev:Class.forName
     }
-
     /* Helper functions for PyProxy's */
-    /** @deprecated * */
-    public static PyObject jfindattr(PyProxy proxy, String name) {
-        PyInstance o = proxy._getPyInstance();
-        if (o == null) {
-            proxy.__initProxy__(new Object[0]);
-            o = proxy._getPyInstance();
-        }
-        PyObject ret = o.__jfindattr__(name);
-        if (ret == null) {
-            return null;
-        }
 
-        // Set the current system state to match proxy -- usually
-        // this is a waste of time :-(
+    /** @deprecated */
+    public static PyObject jfindattr(PyProxy proxy, String name) {
+        PyObject ret = getInstance(proxy, name);
+        if (ret == null)
+            return null;
         Py.setSystemState(proxy._getPySystemState());
         return ret;
     }
 
-    /** @deprecated * */
+
+    /** @deprecated */
     public static PyObject jgetattr(PyProxy proxy, String name) {
+        PyObject ret = getInstance(proxy, name);
+        if (ret == null)
+            throw Py.AttributeError("abstract method '" + name + "' not implemented");
+        Py.setSystemState(proxy._getPySystemState());
+        return ret;
+    }
+
+    private static PyObject getInstance(PyProxy proxy, String name) {
         PyInstance o = proxy._getPyInstance();
         if (o == null) {
             proxy.__initProxy__(new Object[0]);
             o = proxy._getPyInstance();
         }
         PyObject ret = o.__jfindattr__(name);
-        if (ret == null) {
-            throw Py.AttributeError("abstract method \"" + name + "\" not implemented");
-        }
-        // Set the current system state to match proxy -- usually this is a
-        // waste of time :-(
-        Py.setSystemState(proxy._getPySystemState());
         return ret;
     }
 
@@ -777,118 +779,39 @@ public final class Py {
         }
     }
 
-    private static void setArgv(String arg0, String[] args) {
-        PyObject argv[] = new PyObject[args.length + 1];
-        argv[0] = new PyString(arg0);
-        for (int i = 1; i < argv.length; i++) {
-            argv[i] = new PyString(args[i - 1]);
-        }
-        Py.getSystemState().argv = new PyList(argv);
-    }
-    private static boolean propertiesInitialized = false;
-
-    private static synchronized void initProperties(String[] args,
-            String[] packages,
-            String[] props,
-            String frozenPackage,
-            String[] modules,
-            ClassLoader classLoader) {
-        if (!propertiesInitialized) {
-            propertiesInitialized = true;
-
-            if (frozenPackage != null) {
-                Py.frozen = true;
-                if (frozenPackage.length() > 0) {
-                    Py.frozenPackage = frozenPackage;
-                }
-            }
-
-            java.util.Properties sprops;
-            try {
-                sprops = new java.util.Properties(System.getProperties());
-            } catch (Throwable t) {
-                sprops = new java.util.Properties();
-            }
-
-            if (props != null) {
-                for (int i = 0; i < props.length; i += 2) {
-                    sprops.put(props[i], props[i + 1]);
-                }
-            }
-
-            if (args == null) {
-                args = new String[0];
-            }
-            PySystemState.initialize(sprops, null, args, classLoader);
-        }
-
-        if (modules != null) {
-            if (frozenModules == null) {
-                frozenModules = new java.util.Hashtable();
-            }
-
-            for (int i = 0; i < modules.length; i++) {
-                String modname = modules[i];
-                frozenModules.put(modname, PRESENT);
-                // py pkgs are potentially java pkgs too.
-                if (modname.endsWith(".__init__")) {
-                    String jpkg = modname.substring(0, modname.length() - 9);
-                    PySystemState.add_package(jpkg);
-                }
-            }
-        }
-
-        if (packages != null) {
-            for (int i = 0; i < packages.length; i += 2) {
-                PySystemState.add_package(packages[i], packages[i + 1]);
-            }
-        }
-    }
-
-    public static void initProxy(PyProxy proxy, String module, String pyclass,
-            Object[] args, String[] packages,
-            String[] props, boolean frozen) {
-        initProxy(proxy, module, pyclass, args, packages, props, null, null);
-    }
-
-    public static void initProxy(PyProxy proxy, String module, String pyclass,
-            Object[] args, String[] packages,
-            String[] props,
-            String frozenPackage,
-            String[] modules) {
-        initProperties(null, packages, props, frozenPackage, modules,
-                proxy.getClass().getClassLoader());
-
-        if (proxy._getPyInstance() != null) {
+    public static void initProxy(PyProxy proxy, String module, String pyclass, Object[] args)
+    {
+        if (proxy._getPyInstance() != null)
             return;
-        }
-
         ThreadState ts = getThreadState();
         PyInstance instance = ts.getInitializingProxy();
         if (instance != null) {
-            if (instance.javaProxy != null) {
+            if (instance.javaProxy != null)
                 throw Py.TypeError("Proxy instance reused");
-            }
             instance.javaProxy = proxy;
             proxy._setPyInstance(instance);
             proxy._setPySystemState(ts.systemState);
             return;
         }
 
+        //System.out.println("path: "+sys.path.__str__());
         PyObject mod;
-        Class modClass = Py.findClass(module + "$_PyInner");
+        // ??pending: findClass or should avoid sys.path loading?
+        Class modClass = Py.findClass(module+"$_PyInner");
         if (modClass != null) {
-            PyCode code = null;
+            //System.err.println("found as class: "+modClass);
+            PyCode code=null;
             try {
-                code = ((PyRunnable) modClass.newInstance()).getMain();
+                code = ((PyRunnable)modClass.newInstance()).getMain();
             } catch (Throwable t) {
                 throw Py.JavaError(t);
             }
             mod = imp.createFromCode(module, code);
         } else {
             mod = imp.importName(module.intern(), false);
+            //System.err.println("found as mod: "+mod);
         }
-        PyClass pyc = (PyClass) mod.__getattr__(pyclass.intern());
+        PyClass pyc = (PyClass)mod.__getattr__(pyclass.intern());
 
         instance = new PyInstance(pyc);
         instance.javaProxy = proxy;
@@ -900,31 +823,12 @@ public final class Py {
             pargs = Py.EmptyObjects;
         } else {
             pargs = new PyObject[args.length];
-            for (int i = 0; i < args.length; i++) {
+            for(int i=0; i<args.length; i++)
                 pargs[i] = Py.java2py(args[i]);
-            }
         }
         instance.__init__(pargs, Py.NoKeywords);
     }
-
-    public static void initRunnable(String module, PyObject dict) {
-        Class mainClass = null;
-        try {
-            mainClass = Class.forName(module);
-        } catch (ClassNotFoundException exc) {
-            System.err.println("Error running main.  Can't find: " + module);
-            System.exit(-1);
-        }
-        PyCode code = null;
-        try {
-            code = ((PyRunnable) mainClass.newInstance()).getMain();
-        } catch (Throwable t) {
-            System.err.println("Invalid class (runnable): " + module + "$py");
-            System.exit(-1);
-        }
-        Py.runCode(code, dict, dict);
-    }
-
+    
     /**
      * Initializes a default PythonInterpreter and runs the code from
      * {@link PyRunnable#getMain} as __main__
@@ -932,7 +836,7 @@ public final class Py {
      * Called by the code generated in {@link Module#addMain()}
      */
     public static void runMain(PyRunnable main, String[] args) throws Exception {
-        initProperties(args, null, null, null, null, main.getClass().getClassLoader());
+        PySystemState.initialize(null, null, args, main.getClass().getClassLoader());
         try {
             imp.createFromCode("__main__", main.getMain());
         } catch (PyException e) {
@@ -944,36 +848,6 @@ public final class Py {
         }
         Py.getSystemState().callExitFunc();
     }
-
-    public static void runMain(Class mainClass, String[] args,
-            String[] packages,
-            String[] props,
-            String frozenPackage,
-            String[] modules) throws Exception {
-
-        initProperties(args, packages, props, frozenPackage, modules,
-                mainClass.getClassLoader());
-
-        try {
-            PyCode code = null;
-            try {
-                code = ((PyRunnable) mainClass.newInstance()).getMain();
-            } catch (Throwable t) {
-                System.err.println("Invalid class: " + mainClass.getName() +
-                        "$py");
-                System.exit(-1);
-            }
-            imp.createFromCode("__main__", code);
-        } catch (PyException e) {
-            Py.getSystemState().callExitFunc();
-            if (Py.matchException(e, Py.SystemExit)) {
-                return;
-            }
-            throw e;
-        }
-        Py.getSystemState().callExitFunc();
-    }
-
     //XXX: this needs review to make sure we are cutting out all of the Java
     //     exceptions.
     private static String getStackTrace(Throwable javaError) {
@@ -1241,7 +1115,6 @@ public final class Py {
                         "a separate value");
             } else {
                 type = type.fastGetClass();
-            //return new PyException(type.__class__, type);
             }
         }
 
@@ -1262,7 +1135,7 @@ public final class Py {
             if (globals != null) {
                 locals = globals;
             } else {
-                locals = Py.getFrame().getf_locals();
+                locals = Py.getFrame().getLocals();
             }
         }
 
@@ -1301,7 +1174,7 @@ public final class Py {
                 throw Py.TypeError(
                         "exec: argument 1 must be string, code or file object");
             }
-            code = Py.compile_flags(contents, "<string>", "exec",
+            code = (PyCode)Py.compile_flags(contents, "<string>", "exec",
                     Py.getCompilerFlags());
         }
         Py.runCode(code, locals, globals);
@@ -1353,22 +1226,6 @@ public final class Py {
         //System.out.println("setFrame");
         getThreadState().frame = f;
     }
-
-    /* These are not used anymore.  Uncomment them if there is a future
-    clamor to make this functionality more easily usable
-    public static void pushFrame(PyFrame f) {
-    ThreadState ts = getThreadState();
-    f.f_back = ts.frame;
-    if (f.f_builtins == null) f.f_builtins = f.f_back.f_builtins;
-    ts.frame = f;
-    }
-    public static PyFrame popFrame() {
-    ThreadState ts = getThreadState();
-    PyFrame f = ts.frame.f_back;
-    ts.frame = f;
-    return f;
-    }
-     */
 
     /* A collection of functions for implementing the print statement */
     public static StdoutWrapper stderr;
@@ -1619,7 +1476,7 @@ public final class Py {
         PyObject dict = code.call(Py.EmptyObjects, Py.NoKeywords,
                 globals, Py.EmptyObjects,
                 new PyTuple(closure_cells));
-        if (doc != null) {
+        if (doc != null && dict.__finditem__("__doc__") == null) {
             dict.__setitem__("__doc__", doc);
         }
 
@@ -1636,28 +1493,7 @@ public final class Py {
 
         if (metaclass == null) {
             if (bases.length != 0) {
-                PyObject base = bases[0];
-
-                if (base instanceof PyMetaClass) {
-                    // jython-only, experimental PyMetaClass hook
-                    // xxx keep?
-                    try {
-                        java.lang.reflect.Constructor ctor =
-                                base.getClass().getConstructor(pyClassCtrSignature);
-                        return (PyObject) ctor.newInstance(
-                                new Object[]{
-                            name,
-                            new PyTuple(bases),
-                            dict,
-                            proxyClass
-                        });
-                    } catch (Exception e) {
-                        throw Py.TypeError(
-                            "meta-class fails to supply proper "
-                                + "ctr: "
-                                + base.getType().fastGetName());
-                    }
-                }
+                PyObject base = bases[0];       
                 metaclass = base.__findattr__("__class__");
                 if (metaclass == null) {
                     metaclass = base.getType();
@@ -1668,9 +1504,10 @@ public final class Py {
                 }
             }
         }
-
-        if (metaclass == null || metaclass == CLASS_TYPE ||
-                (metaclass instanceof PyJavaClass && ((PyJavaClass) metaclass).proxyClass == Class.class)) {
+        if (metaclass == null
+                || metaclass == CLASS_TYPE
+                || (metaclass instanceof PyJavaClass && 
+                        ((PyJavaClass)metaclass).proxyClass == Class.class)) {
             boolean more_general = false;
             for (int i = 0; i < bases.length; i++) {
                 if (!(bases[i] instanceof PyClass)) {
@@ -1716,16 +1553,16 @@ public final class Py {
     }
 
     // w/o compiler-flags
-    public static PyCode compile(modType node, String filename) {
+    public static PyObject compile(modType node, String filename) {
         return compile(node, getName(), filename);
     }
 
-    public static PyCode compile(modType node, String name,
+    public static PyObject compile(modType node, String name,
             String filename) {
         return compile(node, name, filename, true, false);
     }
 
-    public static PyCode compile(modType node, String name,
+    public static PyObject compile(modType node, String name,
             String filename,
             boolean linenumbers,
             boolean printResults) {
@@ -1733,13 +1570,13 @@ public final class Py {
                 printResults, null);
     }
 
-    public static PyCode compile(InputStream istream, String filename,
+    public static PyObject compile(InputStream istream, String filename,
             String type) {
         return compile_flags(istream, filename, type, null);
     }
 
     // with compiler-flags
-    public static PyCode compile_flags(modType node, String name,
+    public static PyObject compile_flags(modType node, String name,
             String filename,
             boolean linenumbers,
             boolean printResults, CompilerFlags cflags) {
@@ -1756,18 +1593,23 @@ public final class Py {
         }
     }
 
-    public static PyCode compile_flags(InputStream istream, String filename,
-            String type, CompilerFlags cflags) {
+    public static PyObject compile_flags(InputStream istream, String filename,
+                                 String type,CompilerFlags cflags)
+    {
+        if (cflags != null && cflags.only_ast) {
+            org.python.antlr.ast.modType node = antlr.parse(istream, type, filename, cflags);
+            return Py.java2py(node);
+        }
+
         modType node = parser.parse(istream, type, filename, cflags);
         boolean printResults = false;
-        if (type.equals("single")) {
+        if (type.equals("single"))
             printResults = true;
-        }
         return Py.compile_flags(node, getName(), filename, true, printResults,
-                cflags);
+                                cflags);
     }
 
-    public static PyCode compile_flags(String data,
+    public static PyObject compile_flags(String data,
             String filename,
             String type,
             CompilerFlags cflags) {
@@ -1927,46 +1769,54 @@ public final class Py {
         return false;
     }
 
-    public static boolean isInstance(PyObject obj, PyObject cls) {
-        return isInstance(obj, cls, 0);
+    public static boolean isInstance(PyObject inst, PyObject cls) {
+        return recursiveIsInstance(inst, cls, 0);
     }
 
-    private static boolean isInstance(PyObject obj, PyObject cls, int recursionDepth) {
-        if (cls instanceof PyType) {
-            PyType objtype = obj.getType();
-            if (objtype == cls) {
+    private static boolean recursiveIsInstance(PyObject inst, PyObject cls, int recursionDepth) {
+        if (cls instanceof PyClass && inst instanceof PyInstance) {
+            PyClass inClass = (PyClass)inst.fastGetClass();
+            return inClass.isSubClass((PyClass)cls);
+        } else if (cls instanceof PyType) {
+            PyType instType = inst.getType();
+            PyType type = (PyType)cls;
+
+            // equiv. to PyObject_TypeCheck
+            if (instType == type || instType.isSubType(type)) {
                 return true;
             }
-            return objtype.isSubType((PyType) cls);
-        } else if (cls instanceof PyClass) {
-            if (!(obj instanceof PyInstance)) {
-                return false;
+
+            PyObject c = inst.__findattr__("__class__");
+            if (c != null && c != instType && c instanceof PyType) {
+                return ((PyType)c).isSubType(type);
             }
-            return ((PyClass) obj.fastGetClass()).isSubClass((PyClass) cls);
-        } else if (cls.getClass() == PyTuple.class) {
+            return false;
+        } else if (cls instanceof PyTuple) {
             if (recursionDepth > Py.getSystemState().getrecursionlimit()) {
                 throw Py.RuntimeError("nest level of tuple too deep");
             }
-            for (int i = 0; i < cls.__len__(); i++) {
-                if (isInstance(obj, cls.__getitem__(i), recursionDepth + 1)) {
+
+            for (PyObject tupleItem : ((PyTuple)cls).getArray()) {
+                if (recursiveIsInstance(inst, tupleItem, recursionDepth + 1)) {
                     return true;
                 }
             }
             return false;
         } else {
             if (cls.__findattr__("__bases__") == null) {
-                throw Py.TypeError(
-                        "isinstance() arg 2 must be a class, type," + " or tuple of classes and types");
+                throw Py.TypeError("isinstance() arg 2 must be a class, type, or tuple of "
+                                   + "classes and types");
             }
-            PyObject ocls = obj.__findattr__("__class__");
-            if (ocls == null) {
+
+            PyObject icls = inst.__findattr__("__class__");
+            if (icls == null) {
                 return false;
             }
-            return abstract_issubclass(ocls, cls);
+            return abstract_issubclass(icls, cls);
         }
     }
-
-    public static boolean isSubClass(PyObject derived, PyObject cls) {
+    
+    public static boolean isSubClass(PyObject derived,PyObject cls) {
         return isSubClass(derived, cls, 0);
     }
 
@@ -2126,7 +1976,7 @@ class JavaFunc extends PyObject {
         if (container == null) {
             return this;
         }
-        return new PyMethod(container, this, wherefound);
+        return new PyMethod(this, container, wherefound);
     }
 
     public boolean _doset(PyObject container) {

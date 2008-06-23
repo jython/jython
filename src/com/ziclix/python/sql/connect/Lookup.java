@@ -147,20 +147,4 @@ public class Lookup extends PyObject {
     public String toString() {
         return "<lookup object instance at " + Py.id(this) + ">";
     }
-
-    // __class__ boilerplate -- see PyObject for details
-
-    /**
-     * Field __class__
-     */
-    public static PyClass __class__;
-
-    /**
-     * Method getPyClass
-     *
-     * @return PyClass
-     */
-    protected PyClass getPyClass() {
-        return __class__;
-    }
 }

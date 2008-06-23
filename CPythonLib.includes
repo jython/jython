@@ -22,6 +22,7 @@ binhex.py
 bisect.py
 calendar.py
 cgi.py
+cgitb.py
 CGIHTTPServer.py
 chunk.py
 cmd.py
@@ -54,6 +55,7 @@ gettext.py
 glob.py
 gopherlib.py
 gzip.py
+heapq.py
 hmac.py
 htmlentitydefs.py
 htmllib.py
@@ -88,12 +90,14 @@ pdb.py
 pickle.py
 pickletools.py
 pipes.py
+pkgutil.py
 poplib.py
 posixfile.py
 pprint.py
 profile.py
 pstats.py
 pyclbr.py
+pydoc.py
 Queue.py
 quopri.py
 random.py
@@ -102,12 +106,14 @@ repr.py
 rfc822.py
 rlcompleter.py
 sched.py
+sets.py
 sgmllib.py
 shelve.py
 shlex.py
 shutil.py
 SimpleHTTPServer.py
 SimpleXMLRPCServer.py
+site.py
 site-packages/README
 smtplib.py
 sndhdr.py

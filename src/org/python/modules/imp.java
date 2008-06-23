@@ -132,8 +132,16 @@ public class imp {
     }
 
     public static PyObject load_source(String modname, String filename) {
+        return load_source(modname, filename, null);
+    }
+
+    public static PyObject load_source(String modname, String filename, PyObject file) {
         PyObject mod = Py.None;
-        PyFile file = new PyFile(filename, "r", 1024);
+        if (file == null) {
+            // XXX: This should load the accompanying byte code file
+            // instead, if it exists
+            file = new PyFile(filename, "r", 1024);
+        }
         Object o = file.__tojava__(InputStream.class);
         if (o == Py.NoConversion) {
             throw Py.TypeError("must be a file-like object");
@@ -178,9 +186,16 @@ public class imp {
             }
             switch (type) {
                 case PY_SOURCE:
+                    // XXX: This should load the accompanying byte
+                    // code file instead, if it exists
                     String resolvedFilename = sys.getPath(filename.toString());
                     String compiledName =
                             org.python.core.imp.makeCompiledFilename(resolvedFilename);
+                    if (name.endsWith(".__init__")) {
+                        name = name.substring(0, name.length() - ".__init__".length());
+                    } else if (name.equals("__init__")) {
+                        name = new File(sys.getCurrentWorkingDir()).getName();
+                    }
                     mod = org.python.core.imp.createFromSource(name.intern(),
                                                                (InputStream)o,
                                                                filename.toString(),

@@ -12,6 +12,7 @@ XXX Restrictions:
 AMAK: 20050527: added socket timeouts
 AMAK: 20070515: Added non-blocking (asynchronous) support
 AMAK: 20070515: Added client-side SSL support
+AMAK: 20080513: Added support for options
 """
 
 _defaulttimeout = None
@@ -19,6 +20,7 @@ _defaulttimeout = None
 import errno
 import jarray
 import string
+import struct
 import sys
 import threading
 import time
@@ -89,36 +91,36 @@ ALL = None
 
 _exception_map = {
 
-# (<javaexception>, <circumstance>) : lambda: <code that raises the python equivalent>
+# (<javaexception>, <circumstance>) : lambda: <code that raises the python equivalent>, or None to stub out as unmapped
 
-(java.io.IOException, ALL)            : error(errno.ECONNRESET, 'Software caused connection abort'),
-(java.io.InterruptedIOException, ALL) : timeout('timed out'),
+(java.io.IOException, ALL)            : lambda: error(errno.ECONNRESET, 'Software caused connection abort'),
+(java.io.InterruptedIOException, ALL) : lambda: timeout('timed out'),
 
-(java.net.BindException, ALL)            : error(errno.EADDRINUSE, 'Address already in use'),
-(java.net.ConnectException, ALL)         : error(errno.ECONNREFUSED, 'Connection refused'),
-(java.net.NoRouteToHostException, ALL)   : error(-1, 'Unmapped exception: java.net.NoRouteToHostException'),
-(java.net.PortUnreachableException, ALL) : error(-1, 'Unmapped exception: java.net.PortUnreachableException'),
-(java.net.ProtocolException, ALL)        : error(-1, 'Unmapped exception: java.net.ProtocolException'),
-(java.net.SocketException, ALL)          : error(-1, 'Unmapped exception: java.net.SocketException'),
-(java.net.SocketTimeoutException, ALL)   : timeout('timed out'),
-(java.net.UnknownHostException, ALL)     : gaierror(errno.EGETADDRINFOFAILED, 'getaddrinfo failed'),
+(java.net.BindException, ALL)            : lambda: error(errno.EADDRINUSE, 'Address already in use'),
+(java.net.ConnectException, ALL)         : lambda: error(errno.ECONNREFUSED, 'Connection refused'),
+(java.net.NoRouteToHostException, ALL)   : None,
+(java.net.PortUnreachableException, ALL) : None,
+(java.net.ProtocolException, ALL)        : None,
+(java.net.SocketException, ALL)          : None,
+(java.net.SocketTimeoutException, ALL)   : lambda: timeout('timed out'),
+(java.net.UnknownHostException, ALL)     : lambda: gaierror(errno.EGETADDRINFOFAILED, 'getaddrinfo failed'),
 
-(java.nio.channels.AlreadyConnectedException, ALL)       : error(errno.EISCONN, 'Socket is already connected'),
-(java.nio.channels.AsynchronousCloseException, ALL)      : error(-1, 'Unmapped exception: java.nio.AsynchronousCloseException'),
-(java.nio.channels.CancelledKeyException, ALL)           : error(-1, 'Unmapped exception: java.nio.CancelledKeyException'),
-(java.nio.channels.ClosedByInterruptException, ALL)      : error(-1, 'Unmapped exception: java.nio.ClosedByInterruptException'),
-(java.nio.channels.ClosedChannelException, ALL)          : error(errno.EPIPE, 'Socket closed'),
-(java.nio.channels.ClosedSelectorException, ALL)         : error(-1, 'Unmapped exception: java.nio.ClosedSelectorException'),
-(java.nio.channels.ConnectionPendingException, ALL)      : error(-1, 'Unmapped exception: java.nio.ConnectionPendingException'),
-(java.nio.channels.IllegalBlockingModeException, ALL)    : error(-1, 'Unmapped exception: java.nio.IllegalBlockingModeException'),
-(java.nio.channels.IllegalSelectorException, ALL)        : error(-1, 'Unmapped exception: java.nio.IllegalSelectorException'),
-(java.nio.channels.NoConnectionPendingException, ALL)    : error(-1, 'Unmapped exception: java.nio.NoConnectionPendingException'),
-(java.nio.channels.NonReadableChannelException, ALL)     : error(-1, 'Unmapped exception: java.nio.NonReadableChannelException'),
-(java.nio.channels.NonWritableChannelException, ALL)     : error(-1, 'Unmapped exception: java.nio.NonWritableChannelException'),
-(java.nio.channels.NotYetBoundException, ALL)            : error(-1, 'Unmapped exception: java.nio.NotYetBoundException'),
-(java.nio.channels.NotYetConnectedException, ALL)        : error(-1, 'Unmapped exception: java.nio.NotYetConnectedException'),
-(java.nio.channels.UnresolvedAddressException, ALL)      : gaierror(errno.EGETADDRINFOFAILED, 'getaddrinfo failed'),
-(java.nio.channels.UnsupportedAddressTypeException, ALL) : error(-1, 'Unmapped exception: java.nio.UnsupportedAddressTypeException'),
+(java.nio.channels.AlreadyConnectedException, ALL)       : lambda: error(errno.EISCONN, 'Socket is already connected'),
+(java.nio.channels.AsynchronousCloseException, ALL)      : None,
+(java.nio.channels.CancelledKeyException, ALL)           : None,
+(java.nio.channels.ClosedByInterruptException, ALL)      : None,
+(java.nio.channels.ClosedChannelException, ALL)          : lambda: error(errno.EPIPE, 'Socket closed'),
+(java.nio.channels.ClosedSelectorException, ALL)         : None,
+(java.nio.channels.ConnectionPendingException, ALL)      : None,
+(java.nio.channels.IllegalBlockingModeException, ALL)    : None,
+(java.nio.channels.IllegalSelectorException, ALL)        : None,
+(java.nio.channels.NoConnectionPendingException, ALL)    : None,
+(java.nio.channels.NonReadableChannelException, ALL)     : None,
+(java.nio.channels.NonWritableChannelException, ALL)     : None,
+(java.nio.channels.NotYetBoundException, ALL)            : None,
+(java.nio.channels.NotYetConnectedException, ALL)        : None,
+(java.nio.channels.UnresolvedAddressException, ALL)      : lambda: gaierror(errno.EGETADDRINFOFAILED, 'getaddrinfo failed'),
+(java.nio.channels.UnsupportedAddressTypeException, ALL) : None,
 
 }
 
@@ -127,12 +129,13 @@ def would_block_error(exc=None):
 
 def _map_exception(exc, circumstance=ALL):
 #    print "Mapping exception: %s" % exc
-    try:
-        mapped_exception = _exception_map[(exc.__class__, circumstance)]
-        mapped_exception.java_exception = exc
-        return mapped_exception
-    except KeyError:
-        return error(-1, 'Unmapped java exception: <%s:%s>' % (exc.toString(), circumstance))
+    mapped_exception = _exception_map.get((exc.__class__, circumstance))
+    if mapped_exception:
+        exception = mapped_exception()
+    else:
+        exception = error(-1, 'Unmapped exception: %s' % exc)
+    exception.java_exception = exc
+    return exception
 
 MODE_BLOCKING    = 'block'
 MODE_NONBLOCKING = 'nonblock'
@@ -143,6 +146,38 @@ _permitted_modes = (MODE_BLOCKING, MODE_NONBLOCKING, MODE_TIMEOUT)
 SHUT_RD   = 0
 SHUT_WR   = 1
 SHUT_RDWR = 2
+
+__all__ = [ 'AF_INET', 'SOCK_DGRAM', 'SOCK_RAW',
+        'SOCK_RDM', 'SOCK_SEQPACKET', 'SOCK_STREAM', 'SOL_SOCKET',
+        'SO_BROADCAST', 'SO_KEEPALIVE', 'SO_LINGER', 'SO_OOBINLINE',
+        'SO_RCVBUF', 'SO_REUSEADDR', 'SO_SNDBUF', 'SO_TIMEOUT', 'TCP_NODELAY',
+        'SocketType', 'error', 'herror', 'gaierror', 'timeout',
+        'getfqdn', 'gethostbyaddr', 'gethostbyname', 'gethostname',
+        'socket', 'getaddrinfo', 'getdefaulttimeout', 'setdefaulttimeout',
+        'has_ipv6', 'htons', 'htonl', 'ntohs', 'ntohl',
+        'SHUT_RD', 'SHUT_WR', 'SHUT_RDWR',
+        ]
+
+AF_INET = 2
+
+SOCK_DGRAM     = 1
+SOCK_STREAM    = 2
+SOCK_RAW       = 3 # not supported
+SOCK_RDM       = 4 # not supported
+SOCK_SEQPACKET = 5 # not supported
+
+SOL_SOCKET = 0xFFFF
+
+SO_BROADCAST   = 1
+SO_KEEPALIVE   = 2
+SO_LINGER      = 4
+SO_OOBINLINE   = 8
+SO_RCVBUF      = 16
+SO_REUSEADDR   = 32
+SO_SNDBUF      = 64
+SO_TIMEOUT     = 128
+
+TCP_NODELAY    = 256
 
 class _nio_impl:
 
@@ -159,12 +194,6 @@ class _nio_impl:
         count = self.jchannel.write(bytebuf)
         return count
 
-    def _setreuseaddress(self, flag):
-        self.jsocket.setReuseAddress(flag)
-
-    def _getreuseaddress(self, flag):
-        return self.jsocket.getReuseAddress()
-
     def getpeername(self):
         return (self.jsocket.getInetAddress().getHostAddress(), self.jsocket.getPort() )
 
@@ -178,34 +207,43 @@ class _nio_impl:
             self._timeout_millis = int(timeout*1000)
             self.jsocket.setSoTimeout(self._timeout_millis)
 
-    def close1(self):
+    def getsockopt(self, option):
+        if self.options.has_key(option):
+            result = getattr(self.jsocket, "get%s" % self.options[option])()
+            if option == SO_LINGER:
+                if result == -1:
+                    enabled, linger_time = 0, 0
+                else:
+                    enabled, linger_time = 1, result
+                return struct.pack('ii', enabled, linger_time)
+            return result
+        else:
+            raise error(errno.ENOPROTOOPT, "Option not supported on socket(%s): %d" % (str(self.jsocket), option))
+
+    def setsockopt(self, option, value):
+        if self.options.has_key(option):
+            if option == SO_LINGER:
+                values = struct.unpack('ii', value)
+                self.jsocket.setSoLinger(*values)
+            else:
+                getattr(self.jsocket, "set%s" % self.options[option])(value)
+        else:
+            raise error(errno.ENOPROTOOPT, "Option not supported on socket(%s): %d" % (str(self.jsocket), option))
+
+    def close(self):
         self.jsocket.close()
 
-    def close2(self):
-        self.jchannel.close()
-
-    def close3(self):
-        if not self.jsocket.isClosed():
-            self.jsocket.close()
-
-    def close4(self):
-        if not self.jsocket.isClosed():
-            if hasattr(self.jsocket, 'shutdownInput') and not self.jsocket.isInputShutdown():
-                self.jsocket.shutdownInput()
-            if hasattr(self.jsocket, 'shutdownOutput') and not self.jsocket.isOutputShutdown():
-                self.jsocket.shutdownOutput()
-            self.jsocket.close()
-
-    close = close1
-#    close = close2
-#    close = close3
-#    close = close4
-
     def shutdownInput(self):
-        self.jsocket.shutdownInput()
+        try:
+            self.jsocket.shutdownInput()
+        except java.lang.Exception, jlx:
+            raise _map_exception(jlx)
 
     def shutdownOutput(self):
-        self.jsocket.shutdownOutput()
+        try:
+            self.jsocket.shutdownOutput()
+        except java.lang.Exception, jlx:
+            raise _map_exception(jlx)
 
     def getchannel(self):
         return self.jchannel
@@ -214,6 +252,17 @@ class _nio_impl:
         return self.socketio
 
 class _client_socket_impl(_nio_impl):
+
+    options = {
+        SO_KEEPALIVE:   'KeepAlive',
+        SO_LINGER:      'SoLinger',
+        SO_OOBINLINE:   'OOBInline',
+        SO_RCVBUF:      'ReceiveBufferSize',
+        SO_REUSEADDR:   'ReuseAddress',
+        SO_SNDBUF:      'SendBufferSize',
+        SO_TIMEOUT:     'SoTimeout',
+        TCP_NODELAY:    'TcpNoDelay',
+    }
 
     def __init__(self, socket=None):
         if socket:
@@ -227,7 +276,8 @@ class _client_socket_impl(_nio_impl):
         self.jsocket = self.jchannel.socket()
         self.socketio = org.python.core.io.SocketIO(self.jchannel, 'rw')
 
-    def bind(self, host, port):
+    def bind(self, host, port, reuse_addr):
+        self.jsocket.setReuseAddress(reuse_addr)
         self.jsocket.bind(java.net.InetSocketAddress(host, port))
 
     def connect(self, host, port):
@@ -243,6 +293,12 @@ class _client_socket_impl(_nio_impl):
 
 class _server_socket_impl(_nio_impl):
 
+    options = {
+        SO_RCVBUF:      'ReceiveBufferSize',
+        SO_REUSEADDR:   'ReuseAddress',
+        SO_TIMEOUT:     'SoTimeout',
+    }
+
     def __init__(self, host, port, backlog, reuse_addr):
         self.jchannel = java.nio.channels.ServerSocketChannel.open()
         self.jsocket = self.jchannel.socket()
@@ -250,7 +306,7 @@ class _server_socket_impl(_nio_impl):
             bindaddr = java.net.InetSocketAddress(host, port)
         else:
             bindaddr = java.net.InetSocketAddress(port)
-        self._setreuseaddress(reuse_addr)
+        self.jsocket.setReuseAddress(reuse_addr)
         self.jsocket.bind(bindaddr, backlog)
         self.socketio = org.python.core.io.ServerSocketIO(self.jchannel, 'rw')
 
@@ -268,6 +324,14 @@ class _server_socket_impl(_nio_impl):
 
 class _datagram_socket_impl(_nio_impl):
 
+    options = {
+        SO_BROADCAST:   'Broadcast',
+        SO_RCVBUF:      'ReceiveBufferSize',
+        SO_REUSEADDR:   'ReuseAddress',
+        SO_SNDBUF:      'SendBufferSize',
+        SO_TIMEOUT:     'SoTimeout',
+    }
+
     def __init__(self, port=None, address=None, reuse_addr=0):
         self.jchannel = java.nio.channels.DatagramChannel.open()
         self.jsocket = self.jchannel.socket()
@@ -276,8 +340,8 @@ class _datagram_socket_impl(_nio_impl):
                 local_address = java.net.InetSocketAddress(address, port)
             else:
                 local_address = java.net.InetSocketAddress(port)
+            self.jsocket.setReuseAddress(reuse_addr)
             self.jsocket.bind(local_address)
-        self._setreuseaddress(reuse_addr)
         self.socketio = org.python.core.io.DatagramSocketIO(self.jchannel, 'rw')
 
     def connect(self, host, port):
@@ -343,9 +407,9 @@ class _datagram_socket_impl(_nio_impl):
         byte_array = jarray.zeros(num_bytes, 'b')
         byte_buf = java.nio.ByteBuffer.wrap(byte_array)
         source_address = self.jchannel.receive(byte_buf)
-        byte_buf.flip() ; bytes_read = byte_buf.remaining()
         if source_address is None and not self.jchannel.isBlocking():
             raise would_block_error()
+        byte_buf.flip() ; bytes_read = byte_buf.remaining()
         if bytes_read < num_bytes:
             byte_array = byte_array[:bytes_read]
         return_data = byte_array.tostring()
@@ -365,25 +429,6 @@ class _datagram_socket_impl(_nio_impl):
             return self._do_receive_net(0, num_bytes, flags)
         else:
             return self._do_receive_nio(0, num_bytes, flags)
-
-__all__ = [ 'AF_INET', 'SO_REUSEADDR', 'SOCK_DGRAM', 'SOCK_RAW',
-        'SOCK_RDM', 'SOCK_SEQPACKET', 'SOCK_STREAM', 'SOL_SOCKET',
-        'SocketType', 'error', 'herror', 'gaierror', 'timeout',
-        'getfqdn', 'gethostbyaddr', 'gethostbyname', 'gethostname',
-        'socket', 'getaddrinfo', 'getdefaulttimeout', 'setdefaulttimeout',
-        'has_ipv6', 'htons', 'htonl', 'ntohs', 'ntohl',
-        'SHUT_RD', 'SHUT_WR', 'SHUT_RDWR',
-        ]
-
-AF_INET = 2
-
-SOCK_DGRAM = 1
-SOCK_STREAM = 2
-SOCK_RAW = 3 # not supported
-SOCK_RDM = 4 # not supported
-SOCK_SEQPACKET = 5 # not supported
-SOL_SOCKET = 0xFFFF
-SO_REUSEADDR = 4
 
 def _gethostbyaddr(name):
     # This is as close as I can get; at least the types are correct...
@@ -493,6 +538,11 @@ class _nonblocking_api_mixin:
     reference_count = 0
     close_lock = threading.Lock()
 
+    def __init__(self):
+        self.pending_options = {
+            SO_REUSEADDR:  0,
+        }
+
     def gettimeout(self):
         return self.timeout
 
@@ -518,9 +568,33 @@ class _nonblocking_api_mixin:
     def getblocking(self):
         return self.mode == MODE_BLOCKING
 
+    def setsockopt(self, level, optname, value):
+        if level != SOL_SOCKET: return
+        try:
+            if self.sock_impl:
+                self.sock_impl.setsockopt(optname, value)
+            else:
+                self.pending_options[optname] = value
+        except java.lang.Exception, jlx:
+            raise _map_exception(jlx)
+
+    def getsockopt(self, level, optname):
+        if level != SOL_SOCKET: return
+        try:
+            if self.sock_impl:
+                return self.sock_impl.getsockopt(optname)
+            else:
+                return self.pending_options.get(optname, None)
+        except java.lang.Exception, jlx:
+            raise _map_exception(jlx)
+
     def _config(self):
         assert self.mode in _permitted_modes
-        if self.sock_impl: self.sock_impl.config(self.mode, self.timeout)
+        if self.sock_impl:
+            self.sock_impl.config(self.mode, self.timeout)
+            for k in self.pending_options.keys():
+                if k != SO_REUSEADDR:
+                    self.sock_impl.setsockopt(k, self.pending_options[k])
 
     def getchannel(self):
         if not self.sock_impl:
@@ -550,7 +624,9 @@ class _tcpsocket(_nonblocking_api_mixin):
     ostream = None
     local_addr = None
     server = 0
-    reuse_addr = 0
+
+    def __init__(self):
+        _nonblocking_api_mixin.__init__(self)
 
     def bind(self, addr):
         assert not self.sock_impl
@@ -568,7 +644,7 @@ class _tcpsocket(_nonblocking_api_mixin):
                 host, port = self.local_addr
             else:
                 host, port = "", 0
-            self.sock_impl = _server_socket_impl(host, port, backlog, self.reuse_addr)
+            self.sock_impl = _server_socket_impl(host, port, backlog, self.pending_options[SO_REUSEADDR])
             self._config()
         except java.lang.Exception, jlx:
             raise _map_exception(jlx)
@@ -583,7 +659,7 @@ class _tcpsocket(_nonblocking_api_mixin):
             if not new_sock:
                 raise would_block_error()
             cliconn = _tcpsocket()
-            cliconn.reuse_addr = new_sock.jsocket.getReuseAddress()
+            cliconn.pending_options[SO_REUSEADDR] = new_sock.jsocket.getReuseAddress()
             cliconn.sock_impl = new_sock
             cliconn._setup()
             return cliconn, new_sock.getpeername()
@@ -601,10 +677,9 @@ class _tcpsocket(_nonblocking_api_mixin):
             assert not self.sock_impl
             host, port = self._get_host_port(addr)
             self.sock_impl = _client_socket_impl()
-            self.sock_impl._setreuseaddress(self.reuse_addr)
             if self.local_addr: # Has the socket been bound to a local address?
                 bind_host, bind_port = self.local_addr
-                self.sock_impl.bind(bind_host, bind_port)
+                self.sock_impl.bind(bind_host, bind_port, self.pending_options[SO_REUSEADDR])
             self._config() # Configure timeouts, etc, now that the socket exists
             self.sock_impl.connect(host, port)
         except java.lang.Exception, jlx:
@@ -617,9 +692,12 @@ class _tcpsocket(_nonblocking_api_mixin):
 
     def connect_ex(self, addr):
         "This signifies a client socket"
-        self._do_connect(addr)
+        if not self.sock_impl:
+            self._do_connect(addr)
         if self.sock_impl.finish_connect():
             self._setup()
+            if self.mode == MODE_NONBLOCKING:
+                return errno.EISCONN
             return 0
         return errno.EINPROGRESS
 
@@ -686,14 +764,6 @@ class _tcpsocket(_nonblocking_api_mixin):
             return (host, port)
         except java.lang.Exception, jlx:
             raise _map_exception(jlx)
-        
-    def setsockopt(self, level, optname, value):
-        if optname == SO_REUSEADDR:
-            self.reuse_addr = value
-
-    def getsockopt(self, level, optname):
-        if optname == SO_REUSEADDR:
-            return self.reuse_addr
 
     def shutdown(self, how):
         assert how in (SHUT_RD, SHUT_WR, SHUT_RDWR)
@@ -717,17 +787,18 @@ class _tcpsocket(_nonblocking_api_mixin):
 
 class _udpsocket(_nonblocking_api_mixin):
 
+    sock_impl = None
+    addr = None
+
     def __init__(self):
-        self.sock_impl = None
-        self.addr = None
-        self.reuse_addr = 0
+        _nonblocking_api_mixin.__init__(self)
 
     def bind(self, addr):
         try:
             assert not self.sock_impl
             host, port = _unpack_address_tuple(addr)
             host_address = java.net.InetAddress.getByName(host)
-            self.sock_impl = _datagram_socket_impl(port, host_address, reuse_addr = self.reuse_addr)
+            self.sock_impl = _datagram_socket_impl(port, host_address, self.pending_options[SO_REUSEADDR])
             self._config()
         except java.lang.Exception, jlx:
             raise _map_exception(jlx)
@@ -748,8 +819,11 @@ class _udpsocket(_nonblocking_api_mixin):
         self._do_connect(addr)
 
     def connect_ex(self, addr):
-        self._do_connect(addr)
+        if not self.sock_impl:
+            self._do_connect(addr)
         if self.sock_impl.finish_connect():
+            if self.mode == MODE_NONBLOCKING:
+                return errno.EISCONN
             return 0
         return errno.EINPROGRESS
 
@@ -761,6 +835,7 @@ class _udpsocket(_nonblocking_api_mixin):
                 flags, addr = 0, p2
             if not self.sock_impl:
                 self.sock_impl = _datagram_socket_impl()
+                self._config()
             byte_array = java.lang.String(data).getBytes('iso-8859-1')
             result = self.sock_impl.sendto(byte_array, addr, flags)
             return result
@@ -773,13 +848,28 @@ class _udpsocket(_nonblocking_api_mixin):
         return self.sock_impl.send(byte_array, flags)
 
     def recvfrom(self, num_bytes, flags=None):
+        """
+        There is some disagreement as to what the behaviour should be if
+        a recvfrom operation is requested on an unbound socket.
+        See the following links for more information
+        http://bugs.jython.org/issue1005
+        http://bugs.sun.com/view_bug.do?bug_id=6621689
+        """
         try:
-            assert self.sock_impl
+            # This is the old 2.1 behaviour 
+            #assert self.sock_impl
+            # This is amak's preferred interpretation
+            #raise error(errno.ENOTCONN, "Recvfrom on unbound udp socket meaningless operation")
+            # And this is the option for cpython compatibility
+            if not self.sock_impl:
+                self.sock_impl = _datagram_socket_impl()
+                self._config()
             return self.sock_impl.recvfrom(num_bytes, flags)
         except java.lang.Exception, jlx:
             raise _map_exception(jlx)
 
     def recv(self, num_bytes, flags=None):
+        if not self.sock_impl: raise error(errno.ENOTCONN, "Socket is not connected")
         try:
             return self.sock_impl.recv(num_bytes, flags)
         except java.lang.Exception, jlx:
@@ -810,23 +900,6 @@ class _udpsocket(_nonblocking_api_mixin):
         try:
             if self.sock_impl:
                 self.sock_impl.close()
-        except java.lang.Exception, jlx:
-            raise _map_exception(jlx)
-
-    def setsockopt(self, level, optname, value):
-        try:
-            if optname == SO_REUSEADDR:
-                self.reuse_addr = value
-#                self.sock._setreuseaddress(value)
-        except java.lang.Exception, jlx:
-            raise _map_exception(jlx)
-
-    def getsockopt(self, level, optname):
-        try:
-            if optname == SO_REUSEADDR:
-                return self.sock_impl._getreuseaddress()
-            else:
-                return None
         except java.lang.Exception, jlx:
             raise _map_exception(jlx)
 

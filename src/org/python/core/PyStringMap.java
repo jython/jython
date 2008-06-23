@@ -141,9 +141,9 @@ public class PyStringMap extends PyObject {
         for (Entry<Object, PyObject> entry : table.entrySet()) {
             Object key = entry.getKey();
             if (key instanceof String) {
-                buf.append(key);
+                buf.append(Py.java2py(key).__repr__().toString());
             } else {
-                buf.append(((PyObject)entry.getKey()).__repr__().toString());
+                buf.append(((PyObject)key).__repr__().toString());
             }
             buf.append(": ");
             buf.append(entry.getValue().__repr__().toString());
@@ -244,19 +244,80 @@ public class PyStringMap extends PyObject {
     }
 
     /**
-     * Insert all the key:value pairs from <code>map</code> into this mapping. Since this is a
-     * PyStringMap, no need to coerce keys, like from PyDictionary below
+     * Insert all the key:value pairs from <code>dict</code> into this mapping.
      */
-    public void update(PyStringMap map) {
-        table.putAll(map.table);
+    public void update(PyObject[] args, String[] keywords) {
+        int nargs = args.length - keywords.length;
+        if (nargs > 1) {
+            throw PyBuiltinFunction.DefaultInfo.unexpectedCall(nargs, false, "update", 0, 1);
+        }
+        if (nargs == 1) {
+            PyObject arg = args[0];
+            if (arg.__findattr__("keys") != null) {
+                merge(arg);
+            } else {
+                mergeFromSeq(arg);
+            }
+        }
+        for (int i = 0; i < keywords.length; i++) {
+            __setitem__(keywords[i], args[nargs + i]);
+        }        
     }
 
     /**
-     * Insert all the key:value pairs from <code>dict</code> into this mapping.
+     * Merge another PyObject that supports keys() with this
+     * dict.
+     *
+     * @param other a PyObject with a keys() method
      */
-    public void update(PyDictionary dict) {
-        for (Entry<PyObject, PyObject> entry : dict.table.entrySet()) {
-            __setitem__(entry.getKey(), entry.getValue());
+    private void merge(PyObject other) {
+        if (other instanceof PyStringMap) {
+            table.putAll(((PyStringMap)other).table);
+        } else if (other instanceof PyDictionary) {
+            mergeFromKeys(other, ((PyDictionary)other).keys());
+        } else {
+            mergeFromKeys(other, other.invoke("keys"));
+        }
+    }
+
+    /**
+     * Merge another PyObject via its keys() method
+     *
+     * @param other a PyObject with a keys() method
+     * @param keys the result of other's keys() method
+     */
+    private void mergeFromKeys(PyObject other, PyObject keys) {
+        for (PyObject key : keys.asIterable()) {
+            __setitem__(key, other.__getitem__(key));
+        }
+    }
+
+    /**
+     * Merge any iterable object producing iterable objects of length
+     * 2 into this dict.
+     *
+     * @param other another PyObject
+     */
+    private void mergeFromSeq(PyObject other) {
+        PyObject pairs = other.__iter__();
+        PyObject pair;
+
+        for (int i = 0; (pair = pairs.__iternext__()) != null; i++) {
+            try {
+                pair = PySequence.fastSequence(pair, "");
+            } catch(PyException pye) {
+                if (Py.matchException(pye, Py.TypeError)) {
+                    throw Py.TypeError(String.format("cannot convert dictionary update sequence "
+                                                     + "element #%d to a sequence", i));
+                }
+                throw pye;
+            }
+            int n;
+            if ((n = pair.__len__()) != 2) {
+                throw Py.ValueError(String.format("dictionary update sequence element #%d "
+                                                  + "has length %d; 2 is required", i, n));
+            }
+            __setitem__(pair.__getitem__(0), pair.__getitem__(1));
         }
     }
 
@@ -407,11 +468,17 @@ public class PyStringMap extends PyObject {
 
         private final Iterator<PyObject> iterator;
 
+        private final int size;
+
         public ValuesIter(Collection<PyObject> c) {
-            this.iterator = c.iterator();
+            iterator = c.iterator();
+            size = c.size();
         }
 
         public PyObject __iternext__() {
+            if (table.size() != size) {
+                throw Py.RuntimeError("dictionary changed size during iteration");
+            }
             if (!iterator.hasNext()) {
                 return null;
             }
@@ -423,11 +490,17 @@ public class PyStringMap extends PyObject {
 
         private final Iterator iterator;
 
+        private final int size;
+
         public KeysIter(Set s) {
-            this.iterator = s.iterator();
+            iterator = s.iterator();
+            size = s.size();
         }
 
         public PyObject __iternext__() {
+            if (table.size() != size) {
+                throw Py.RuntimeError("dictionary changed size during iteration");
+            }
             if (!iterator.hasNext()) {
                 return null;
             }
@@ -446,11 +519,17 @@ public class PyStringMap extends PyObject {
 
         private final Iterator<Entry<Object, PyObject>> iterator;
 
+        private final int size;
+
         public ItemsIter(Set<Entry<Object, PyObject>> s) {
-            this.iterator = s.iterator();
+            iterator = s.iterator();
+            size = s.size();
         }
 
         public PyObject __iternext__() {
+            if (table.size() != size) {
+                throw Py.RuntimeError("dictionary changed size during iteration");
+            }
             if (!iterator.hasNext()) {
                 return null;
             }

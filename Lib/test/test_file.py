@@ -5,7 +5,7 @@ import unittest
 from array import array
 from weakref import proxy
 
-from test.test_support import TESTFN, findfile, run_unittest
+from test.test_support import TESTFN, findfile, is_jython, run_unittest
 from UserList import UserList
 
 class AutoFileTests(unittest.TestCase):
@@ -19,14 +19,16 @@ class AutoFileTests(unittest.TestCase):
             self.f.close()
         os.remove(TESTFN)
 
-    # XXX: assumes CPython style garbage collection
-    def _testWeakRefs(self):
+    def testWeakRefs(self):
         # verify weak references
         p = proxy(self.f)
         p.write('teststring')
         self.assertEquals(self.f.tell(), p.tell())
         self.f.close()
         self.f = None
+        if is_jython:
+            from test_weakref import extra_collect
+            extra_collect()
         self.assertRaises(ReferenceError, getattr, p, 'tell')
 
     def testAttributes(self):
@@ -111,9 +113,7 @@ class AutoFileTests(unittest.TestCase):
             methods.remove('truncate')
 
         # __exit__ should close the file
-        # XXX: __exit__ is 2.5 specific
-        #self.f.__exit__(None, None, None)
-        self.f.close()
+        self.f.__exit__(None, None, None)
         self.assert_(self.f.closed)
 
         for methodname, arg in methods.iteritems():
@@ -125,8 +125,6 @@ class AutoFileTests(unittest.TestCase):
                 self.assertRaises(ValueError, method, arg)
         self.assertRaises(ValueError, self.f.writelines, [])
 
-        # XXX: __exit__ is 2.5 specific
-        return
         # file is closed, __exit__ shouldn't do anything
         self.assertEquals(self.f.__exit__(None, None, None), None)
         # it must also return None if an exception was given
@@ -149,9 +147,7 @@ class OtherFileTests(unittest.TestCase):
                 f.close()
                 self.fail('%r is an invalid file mode' % mode)
 
-    # XXX: Jython's stdin can't seek, it's not backed by a
-    # RandomAccessFile
-    def _testStdin(self):
+    def testStdin(self):
         # This causes the interpreter to exit on OSF1 v5.1.
         if sys.platform != 'osf1V5':
             self.assertRaises(IOError, sys.stdin.seek, -1)
@@ -232,8 +228,7 @@ class OtherFileTests(unittest.TestCase):
         finally:
             os.unlink(TESTFN)
 
-    # XXX: Jython allows mixing reads with iteration
-    def _testIteration(self):
+    def testIteration(self):
         # Test the complex interaction when mixing file-iteration and the
         # various read* methods. Ostensibly, the mixture could just be tested
         # to work when it should work according to the Python language,
@@ -346,6 +341,13 @@ class OtherFileTests(unittest.TestCase):
 
 
 def test_main():
+    if is_jython:
+        # Jython's stdin can't seek, it's not backed by a
+        # RandomAccessFile
+        del OtherFileTests.testStdin
+        # Jython allows mixing reads with iteration
+        del OtherFileTests.testIteration
+
     # Historically, these tests have been sloppy about removing TESTFN.
     # So get rid of it no matter what.
     try:

@@ -149,7 +149,7 @@ public class PythonInterpreter {
 
     public void execfile(java.io.InputStream s, String name) {
         setState();
-        Py.runCode(Py.compile_flags(s, name, "exec",cflags), locals, locals);
+        Py.runCode((PyCode)Py.compile_flags(s, name, "exec",cflags), locals, locals);
     }
 
     // Getting and setting the locals dictionary

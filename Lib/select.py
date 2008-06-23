@@ -178,7 +178,7 @@ def native_select(read_fd_list, write_fd_list, outofband_fd_list, timeout=None):
         # And now the write list
         for fd in write_fd_list:
             if registered_for_read.has_key(fd):
-            	# registering a second time overwrites the first
+                # registering a second time overwrites the first
                 pobj.register(fd, POLLIN|POLLOUT)
             else:
                 pobj.register(fd, POLLOUT)

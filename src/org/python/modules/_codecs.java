@@ -57,8 +57,13 @@ public class _codecs {
     }
 
     public static PyTuple utf_8_decode(String str, String errors) {
-        int size = str.length();
-        return decode_tuple(codecs.PyUnicode_DecodeUTF8(str, errors), size);
+        return utf_8_decode(str, errors, false);
+    }
+
+    public static PyTuple utf_8_decode(String str, String errors, boolean final_) {
+        int[] consumed = final_ ? new int[1] : null;
+        return decode_tuple(codecs.PyUnicode_DecodeUTF8Stateful(str, errors, consumed),
+                            final_ ? consumed[0] : str.length());
     }
 
     public static PyTuple utf_8_encode(String str) {
@@ -405,13 +410,14 @@ public class _codecs {
     }
 
     public static PyTuple utf_16_decode(String str, String errors) {
-        return utf_16_decode(str, errors, 0);
+        return utf_16_decode(str, errors, false);
     }
 
-    public static PyTuple utf_16_decode(String str, String errors,
-            int byteorder) {
-        int[] bo = new int[]{byteorder};
-        return decode_tuple(decode_UTF16(str, errors, bo), str.length());
+    public static PyTuple utf_16_decode(String str, String errors, boolean final_) {
+        int[] bo = new int[] { 0 };
+        int[] consumed = final_ ? new int[1] : null;
+        return decode_tuple(decode_UTF16(str, errors, bo, consumed),
+                            final_ ? consumed[0] : str.length());
     }
 
     public static PyTuple utf_16_le_decode(String str) {
@@ -419,17 +425,29 @@ public class _codecs {
     }
 
     public static PyTuple utf_16_le_decode(String str, String errors) {
-        int[] bo = new int[]{-1};
-        return decode_tuple(decode_UTF16(str, errors, bo), str.length());
+        return utf_16_le_decode(str, errors, false);
+    }
+        
+    public static PyTuple utf_16_le_decode(String str, String errors, boolean final_) {
+        int[] bo = new int[] { -1 };
+        int[] consumed = final_ ? new int[1] : null;
+        return decode_tuple(decode_UTF16(str, errors, bo, consumed),
+                            final_ ? consumed[0] : str.length());
     }
 
     public static PyTuple utf_16_be_decode(String str) {
         return utf_16_be_decode(str, null);
     }
-
+    
     public static PyTuple utf_16_be_decode(String str, String errors) {
-        int[] bo = new int[]{1};
-        return decode_tuple(decode_UTF16(str, errors, bo), str.length());
+        return utf_16_be_decode(str, errors, false);
+    }
+
+    public static PyTuple utf_16_be_decode(String str, String errors, boolean final_) {
+        int[] bo = new int[] { 1 };
+        int[] consumed = final_ ? new int[1] : null;
+        return decode_tuple(decode_UTF16(str, errors, bo, consumed),
+                            final_ ? consumed[0] : str.length());
     }
 
     public static PyTuple utf_16_ex_decode(String str) {
@@ -440,25 +458,43 @@ public class _codecs {
         return utf_16_ex_decode(str, errors, 0);
     }
 
-    public static PyTuple utf_16_ex_decode(String str, String errors,
-            int byteorder) {
-        int[] bo = new int[]{0};
-        String s = decode_UTF16(str, errors, bo);
-        return new PyTuple(Py.newString(s), Py.newInteger(str.length()), Py.newInteger(bo[0]));
+    public static PyTuple utf_16_ex_decode(String str, String errors, int byteorder) {
+        return utf_16_ex_decode(str, errors, byteorder, false);
+    }
+    
+    public static PyTuple utf_16_ex_decode(String str, String errors, int byteorder,
+                                           boolean final_) {
+        int[] bo = new int[] { 0 };
+        int[] consumed = final_ ? new int[1] : null;
+        String decoded = decode_UTF16(str, errors, bo, consumed);
+        return new PyTuple(Py.newString(decoded),
+                           Py.newInteger(final_ ? consumed[0] : str.length()),
+                           Py.newInteger(bo[0]));
     }
 
     private static String decode_UTF16(String str,
             String errors,
             int[] byteorder) {
+        return decode_UTF16(str, errors, byteorder, null);
+    }
+
+        private static String decode_UTF16(String str,
+            String errors,
+            int[] byteorder,
+            int[] consumed) {
         int bo = 0;
         if (byteorder != null) {
             bo = byteorder[0];
         }
         int size = str.length();
         StringBuilder v = new StringBuilder(size / 2);
-        for (int i = 0; i < size; i += 2) {
+        int i;
+        for (i = 0; i < size; i += 2) {
             char ch1 = str.charAt(i);
             if (i + 1 == size) {
+                if (consumed != null) {
+                    break;
+                }
                 i = codecs.insertReplacementAndGetResume(v,
                         errors,
                         "utf-16",
@@ -521,6 +557,9 @@ public class _codecs {
         }
         if (byteorder != null) {
             byteorder[0] = bo;
+        }
+        if (consumed != null) {
+            consumed[0] = i;
         }
         return v.toString();
     }

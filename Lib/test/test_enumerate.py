@@ -147,7 +147,7 @@ class TestReversed(unittest.TestCase):
 
 def test_main(verbose=None):
     testclasses = (EnumerateTestCase, SubclassTestCase, TestEmpty, TestBig,
-		   TestReversed)
+                   TestReversed)
     for test in testclasses:
         test_support.run_unittest(test)
 

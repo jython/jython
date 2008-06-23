@@ -1,6 +1,7 @@
 // Copyright 2000 Samuele Pedroni
-
 package jxxload_help;
+
+import org.python.core.util.FileUtil;
 
 public class PathVFSJavaLoader extends ClassLoader {
     private ClassLoader parent;
@@ -28,7 +29,7 @@ public class PathVFSJavaLoader extends ClassLoader {
         java.io.InputStream in = vfs.open(name.replace('.','/')+".class");
         if (in == null) throw new ClassNotFoundException(name);
         try {
-	    byte[] buf = org.python.core.FileUtil.readBytes( in );
+	    byte[] buf = FileUtil.readBytes( in );
             in.close();
             return loadClassFromBytes(name,buf);
         } catch(java.io.IOException e) {

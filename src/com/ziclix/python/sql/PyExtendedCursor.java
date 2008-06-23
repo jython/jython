@@ -27,21 +27,6 @@ import org.python.core.PyString;
  * @version $Revision$
  */
 public class PyExtendedCursor extends PyCursor {
-
-    /**
-     * Field __class__
-     */
-    public static PyClass __class__;
-
-    /**
-     * Method getPyClass
-     *
-     * @return PyClass
-     */
-    protected PyClass getPyClass() {
-        return __class__;
-    }
-
     /**
      * Field __members__
      */

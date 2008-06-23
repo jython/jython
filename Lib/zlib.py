@@ -27,11 +27,11 @@ Z_DEFAULT_STRATEGY = 0
 Z_FINISH = 4
 _valid_flush_modes = (Z_FINISH,)
 
-def adler32(string, value=1):
+def adler32(s, value=1):
     if value != 1: 
         raise ValueError, "adler32 only support start value of 1"
     checksum = Adler32()
-    checksum.update(String.getBytes(string))
+    checksum.update(String.getBytes(s, 'iso-8859-1'))
     return Long(checksum.getValue()).intValue()
 
 def crc32(string, value=0):

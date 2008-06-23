@@ -42,10 +42,10 @@ def dirname(path):
     path = _tostr(path, "dirname")
     result = File(path).getParent()
     if not result:
-	if isabs(path):
-	    result = path # Must be root
-	else:
-	    result = ""
+        if isabs(path):
+            result = path # Must be root
+        else:
+            result = ""
     return result
 
 def basename(path):
@@ -121,13 +121,13 @@ def join(path, *args):
     f = File(path)
     for a in args:
         a = _tostr(a, "join")
-	g = File(a)
-	if g.isAbsolute() or len(f.getPath()) == 0:
-	    f = g
-	else:
+        g = File(a)
+        if g.isAbsolute() or len(f.getPath()) == 0:
+            f = g
+        else:
             if a == "":
                 a = os.sep
-	    f = File(f, a)
+            f = File(f, a)
     return f.getPath()
 
 def normcase(path):
@@ -187,17 +187,17 @@ def walk(top, func, arg):
         return
     func(arg, top, names)
     for name in names:
-	name = join(top, name)
-	if isdir(name) and not islink(name):
-	    walk(name, func, arg)
+        name = join(top, name)
+        if isdir(name) and not islink(name):
+            walk(name, func, arg)
 
 def expanduser(path):
     if path[:1] == "~":
-	c = path[1:2]
-	if not c:
-	    return gethome()
-	if c == os.sep:
-	    return File(gethome(), path[2:]).getPath()
+        c = path[1:2]
+        if not c:
+            return gethome()
+        if c == os.sep:
+            return File(gethome(), path[2:]).getPath()
     return path
 
 def getuser():

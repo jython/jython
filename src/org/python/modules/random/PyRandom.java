@@ -19,7 +19,7 @@ import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 
 
-@ExposedType(name = "random")
+@ExposedType(name = "_random.Random")
 public class PyRandom extends PyObject {
 
     public static final PyType TYPE = PyType.fromClass(PyRandom.class);
@@ -40,7 +40,7 @@ public class PyRandom extends PyObject {
      * uses the value, else it uses the hash function of PyObject
      */
     @ExposedMethod(defaults = "null")
-    final PyObject random_seed(PyObject seed) {
+    final PyObject Random_seed(PyObject seed) {
         if (seed == null) {
             seed = new PyLong(System.currentTimeMillis());
         }
@@ -58,10 +58,10 @@ public class PyRandom extends PyObject {
 
     @ExposedNew
     @ExposedMethod
-    public void random___init__(PyObject[] args, String[] keywords) {}
+    public void Random___init__(PyObject[] args, String[] keywords) {}
 
     @ExposedMethod
-    public PyObject random_jumpahead(PyObject arg0) {
+    public PyObject Random_jumpahead(PyObject arg0) {
         long inc;
         if (arg0 instanceof PyLong) {
             inc=((PyLong)arg0).asLong(0);
@@ -77,7 +77,7 @@ public class PyRandom extends PyObject {
     }
 
     @ExposedMethod
-    public PyObject random_setstate(PyObject arg0) {
+    public PyObject Random_setstate(PyObject arg0) {
         if (!(arg0 instanceof PyTuple)) {
             throw Py.TypeError("state vector must be a tuple");
         }
@@ -107,7 +107,7 @@ public class PyRandom extends PyObject {
     }
 
     @ExposedMethod
-    public PyObject random_getstate() {
+    public PyObject Random_getstate() {
         try {
             ByteArrayOutputStream bout=new ByteArrayOutputStream();
             ObjectOutputStream oout=new ObjectOutputStream(bout);
@@ -131,7 +131,7 @@ public class PyRandom extends PyObject {
      * problems.
      */
     @ExposedMethod
-    public PyObject random_random() {
+    public PyObject Random_random() {
         long a=this.javaRandom.nextInt()>>>5;
         long b=this.javaRandom.nextInt()>>>6;
         double ret=(a*67108864.0+b)*(1.0/9007199254740992.0);

@@ -59,20 +59,6 @@ public class PyConnection extends PyObject implements ClassDictInit {
     private Set statements;
 
     /**
-     * Field __class__
-     */
-    public static PyClass __class__;
-
-    /**
-     * Method getPyClass
-     *
-     * @return PyClass
-     */
-    protected PyClass getPyClass() {
-        return __class__;
-    }
-
-    /**
      * Field __members__
      */
     protected static PyList __members__;

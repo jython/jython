@@ -308,40 +308,40 @@ import string
 
 roman = ['i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii', 'viii', 'ix', 'x', 'xi', 'xii']
 symbols = [
-	map(string.upper, roman),
-	string.uppercase,
-	range(1, 50),
-	string.lowercase,
-	roman,
-	]
-	
+        map(string.upper, roman),
+        string.uppercase,
+        range(1, 50),
+        string.lowercase,
+        roman,
+        ]
+        
 def symbol(n, level):
-	return str(symbols[level][n-1])
+        return str(symbols[level][n-1])
 
 levels = [0]*20
 currentLevel = 0
 def print_test(txt, level=-1):
     print txt
     return level
-	
+        
 oldStdout = None
 
 from StringIO import StringIO
 def beginCapture():
-	global oldStdout
-	
-	if oldStdout is not None:
-		raise TestError, "Internal error"
-		
-	oldStdout = sys.stdout
-	sys.stdout = StringIO()
-	
+        global oldStdout
+        
+        if oldStdout is not None:
+                raise TestError, "Internal error"
+                
+        oldStdout = sys.stdout
+        sys.stdout = StringIO()
+        
 def endCapture():
-	global oldStdout
-	
-	txt = sys.stdout.getvalue()
-	sys.stdout = oldStdout
-	oldStdout = None
-	
-	return txt
+        global oldStdout
+        
+        txt = sys.stdout.getvalue()
+        sys.stdout = oldStdout
+        oldStdout = None
+        
+        return txt
 

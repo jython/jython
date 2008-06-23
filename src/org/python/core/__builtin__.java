@@ -1,17 +1,16 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
 
 import org.python.core.util.RelativeFile;
-import org.python.modules.sets.PyImmutableSet;
-import org.python.modules.sets.PySet;
 import org.python.expose.ExposedGet;
 
 class BuiltinFunctions extends PyBuiltinFunctionSet {
+
+    public static final PyObject module = Py.newString("__builtin__");
 
     public BuiltinFunctions(String name, int index, int argcount) {
         this(name, index, argcount, argcount);
@@ -83,7 +82,7 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
             case 24:
                 return __builtin__.input(arg1);
             case 25:
-                return __builtin__.intern(arg1.__str__());
+                return __builtin__.intern(arg1);
             case 27:
                 return __builtin__.iter(arg1);
             case 32:
@@ -106,8 +105,6 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
                 return __builtin__.round(Py.py2double(arg1));
             case 41:
                 return __builtin__.vars(arg1);
-            case 42:
-                return __builtin__.xrange(Py.py2int(arg1));
             case 30:
                 return fancyCall(new PyObject[]{arg1});
             case 31:
@@ -152,9 +149,9 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
             case 20:
                 return __builtin__.filter(arg1, arg2);
             case 21:
-                return __builtin__.getattr(arg1, asString(arg2, "getattr(): attribute name must be string"));
+                return __builtin__.getattr(arg1, arg2);
             case 22:
-                return Py.newBoolean(__builtin__.hasattr(arg1, asString(arg2, "hasattr(): attribute name must be string")));
+                return Py.newBoolean(__builtin__.hasattr(arg1, arg2));
             case 26:
                 return Py.newBoolean(__builtin__.issubclass(arg1, arg2));
             case 27:
@@ -165,8 +162,6 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
                 return __builtin__.reduce(arg1, arg2);
             case 38:
                 return __builtin__.round(Py.py2double(arg1), Py.py2int(arg2));
-            case 42:
-                return __builtin__.xrange(Py.py2int(arg1), Py.py2int(arg2));
             case 29:
                 return fancyCall(new PyObject[]{arg1, arg2});
             case 30:
@@ -205,7 +200,7 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
                 __builtin__.execfile(asString(arg1, "execfile's first argument must be str", false), arg2, arg3);
                 return Py.None;
             case 21:
-                return __builtin__.getattr(arg1, asString(arg2, "getattr(): attribute name must be string"), arg3);
+                return __builtin__.getattr(arg1, arg2, arg3);
             case 33:
                 return __builtin__.pow(arg1, arg2, arg3);
             case 35:
@@ -213,8 +208,6 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
             case 39:
                 __builtin__.setattr(arg1, asString(arg2, "setattr(): attribute name must be string"), arg3);
                 return Py.None;
-            case 42:
-                return __builtin__.xrange(Py.py2int(arg1), Py.py2int(arg2), Py.py2int(arg3));
             case 44:
                 return fancyCall(new PyObject[]{arg1, arg2, arg3});
             case 29:
@@ -285,15 +278,15 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
                 return __builtin__.compile(args[0].toString(), args[1].toString(), args[2].toString(), flags, dont_inherit);
             case 29:
                 return __builtin__.map(args);
-            case 30:
-                return __builtin__.max(args);
-            case 31:
-                return __builtin__.min(args);
             case 43:
                 return __builtin__.zip(args);
             default:
                 throw info.unexpectedCall(args.length, false);
         }
+    }
+
+    public PyObject getModule() {
+        return module;
     }
 }
 
@@ -316,7 +309,7 @@ public class __builtin__ {
         dict.__setitem__("list", PyList.TYPE);
         dict.__setitem__("tuple", PyTuple.TYPE);
         dict.__setitem__("set", PySet.TYPE);
-        dict.__setitem__("frozenset", PyImmutableSet.TYPE);
+        dict.__setitem__("frozenset", PyFrozenSet.TYPE);
 
         dict.__setitem__("property", PyProperty.TYPE);
         dict.__setitem__("staticmethod", PyStaticMethod.TYPE);
@@ -328,6 +321,7 @@ public class __builtin__ {
         dict.__setitem__("file", PyFile.TYPE);
         dict.__setitem__("open", PyFile.TYPE);
         dict.__setitem__("slice", PySlice.TYPE);
+        dict.__setitem__("xrange", PyXRange.TYPE);
 
         /* - */
 
@@ -372,8 +366,8 @@ public class __builtin__ {
         dict.__setitem__("iter", new BuiltinFunctions("iter", 27, 1, 2));
         dict.__setitem__("locals", new BuiltinFunctions("locals", 28, 0));
         dict.__setitem__("map", new BuiltinFunctions("map", 29, 2, -1));
-        dict.__setitem__("max", new BuiltinFunctions("max", 30, 1, -1));
-        dict.__setitem__("min", new BuiltinFunctions("min", 31, 1, -1));
+        dict.__setitem__("max", new MaxFunction());
+        dict.__setitem__("min", new MinFunction());
         dict.__setitem__("oct", new BuiltinFunctions("oct", 32, 1));
         dict.__setitem__("pow", new BuiltinFunctions("pow", 33, 2, 3));
         dict.__setitem__("raw_input", new BuiltinFunctions("raw_input", 34, 0, 1));
@@ -383,11 +377,12 @@ public class __builtin__ {
         dict.__setitem__("round", new BuiltinFunctions("round", 38, 1, 2));
         dict.__setitem__("setattr", new BuiltinFunctions("setattr", 39, 3));
         dict.__setitem__("vars", new BuiltinFunctions("vars", 41, 0, 1));
-        dict.__setitem__("xrange", new BuiltinFunctions("xrange", 42, 1, 3));
         dict.__setitem__("zip", new BuiltinFunctions("zip", 43, 0, -1));
         dict.__setitem__("reversed", new BuiltinFunctions("reversed", 45, 1));
         dict.__setitem__("__import__", new ImportFunction());
         dict.__setitem__("sorted", new SortedFunction());
+        dict.__setitem__("all", new AllFunction());
+        dict.__setitem__("any", new AnyFunction());        
     }
 
     public static PyObject abs(PyObject o) {
@@ -425,8 +420,8 @@ public class __builtin__ {
         }
     }
 
-    public static boolean callable(PyObject o) {
-        return o.__findattr__("__call__") != null;
+    public static boolean callable(PyObject obj) {
+        return obj.isCallable();
     }
 
     public static int unichr(int i) {
@@ -455,11 +450,11 @@ public class __builtin__ {
         throw Py.TypeError("number coercion failed");
     }
 
-    public static PyCode compile(String data, String filename, String type) {
+    public static PyObject compile(String data, String filename, String type) {
         return Py.compile_flags(data, filename, type, Py.getCompilerFlags());
     }
 
-    public static PyCode compile(String data, String filename, String type, int flags, boolean dont_inherit) {
+    public static PyObject compile(String data, String filename, String type, int flags, boolean dont_inherit) {
         if ((flags & ~PyTableCode.CO_ALL_FEATURES) != 0) {
             throw Py.ValueError("compile(): unrecognised flags");
         }
@@ -505,7 +500,7 @@ public class __builtin__ {
             code = (PyCode) o;
         } else {
             if (o instanceof PyString) {
-                code = compile(o.toString(), "<string>", "eval");
+                code = (PyCode)compile(o.toString(), "<string>", "eval");
             } else {
                 throw Py.TypeError("eval: argument 1 must be string or code object");
             }
@@ -538,7 +533,7 @@ public class __builtin__ {
         PyCode code;
 
         try {
-            code = Py.compile_flags(file, name, "exec", cflags);
+            code = (PyCode)Py.compile_flags(file, name, "exec", cflags);
         } finally {
             try {
                 file.close();
@@ -597,31 +592,53 @@ public class __builtin__ {
         return list;
     }
 
-    public static PyObject getattr(PyObject o, String n) {
-        return o.__getattr__(n);
+    public static PyObject getattr(PyObject obj, PyObject name) {
+        return getattr(obj, name, null);
     }
 
-    public static PyObject getattr(PyObject o, String n, PyObject def) {
-        PyObject val = o.__findattr__(n);
-        if (val != null) {
-            return val;
+    public static PyObject getattr(PyObject obj, PyObject name, PyObject def) {
+        String nameStr;
+        if (name instanceof PyUnicode) {
+            nameStr = ((PyUnicode)name).encode();
+        } else if (name instanceof PyString) {
+            nameStr = name.asString();
+        } else {
+            throw Py.TypeError("getattr(): attribute name must be string");
         }
-        return def;
+
+        PyObject result;
+        try {
+            result = obj.__getattr__(nameStr.intern());
+        } catch (PyException pye) {
+            if (Py.matchException(pye, Py.AttributeError) && def != null) {
+                result = def;
+            } else {
+                throw pye;
+            }
+        }
+        return result;
     }
 
     public static PyObject globals() {
         return Py.getFrame().f_globals;
     }
 
-    public static boolean hasattr(PyObject o, String n) {
-        try {
-            return o.__findattr__(n) != null;
-        } catch (PyException exc) {
-            if (Py.matchException(exc, Py.AttributeError)) {
-                return false;
-            }
-            throw exc;
+    public static boolean hasattr(PyObject obj, PyObject name) {
+        String nameStr;
+        if (name instanceof PyUnicode) {
+            nameStr = ((PyUnicode)name).encode().intern();
+        } else if (name instanceof PyString) {
+            nameStr = name.asString();
+        } else {
+            throw Py.TypeError("hasattr(): attribute name must be string");
         }
+
+        try {
+            return obj.__findattr__(nameStr.intern()) != null;
+        } catch (PyException pye) {
+            // swallow
+        }
+        return false;
     }
 
     public static PyInteger hash(PyObject o) {
@@ -653,7 +670,16 @@ public class __builtin__ {
     }
     private static PyStringMap internedStrings;
 
-    public static PyString intern(PyString s) {
+    public static PyString intern(PyObject obj) {
+        if (!(obj instanceof PyString) || obj instanceof PyUnicode) {
+            throw Py.TypeError("intern() argument 1 must be string, not "
+                               + obj.getType().fastGetName());
+        }
+        if (obj.getType() != PyString.TYPE) {
+            throw Py.TypeError("can't intern subclass of string");
+        }
+        PyString s = (PyString)obj;
+
         if (internedStrings == null) {
             internedStrings = new PyStringMap();
         }
@@ -661,10 +687,7 @@ public class __builtin__ {
         String istring = s.internedString();
         PyObject ret = internedStrings.__finditem__(istring);
         if (ret != null) {
-            return (PyString) ret;
-        }
-        if (s instanceof PyStringDerived) {
-            s = s.__str__();
+            return (PyString)ret;
         }
         internedStrings.__setitem__(istring, s);
         return s;
@@ -709,7 +732,7 @@ public class __builtin__ {
     }
 
     public static PyObject locals() {
-        return Py.getFrame().getf_locals();
+        return Py.getFrame().getLocals();
     }
 
     public static PyObject map(PyObject[] argstar) {
@@ -751,49 +774,6 @@ public class __builtin__ {
             }
         }
         return list;
-    }
-
-    public static PyObject max(PyObject[] l) {
-        if (l.length == 1) {
-            return max(l[0]);
-        }
-        return max(new PyTuple(l));
-    }
-
-    private static PyObject max(PyObject o) {
-        PyObject max = null;
-        for (PyObject item : o.asIterable()) {
-            if (max == null || item._gt(max).__nonzero__()) {
-                max = item;
-            }
-        }
-        if (max == null) {
-            throw Py.ValueError("max of empty sequence");
-        }
-        return max;
-    }
-
-    public static PyObject min(PyObject[] l) {
-        if (l.length == 0) {
-            throw Py.TypeError("min expected 1 arguments, got 0");
-        }
-        if (l.length == 1) {
-            return min(l[0]);
-        }
-        return min(new PyTuple(l));
-    }
-
-    private static PyObject min(PyObject o) {
-        PyObject min = null;
-        for (PyObject item : o.asIterable()) {
-            if (min == null || item._lt(min).__nonzero__()) {
-                min = item;
-            }
-        }
-        if (min == null) {
-            throw Py.ValueError("min of empty sequence");
-        }
-        return min;
     }
 
     public static PyString oct(PyObject o) {
@@ -848,13 +828,12 @@ public class __builtin__ {
         return false;
     }
 
-    public static PyObject pow(PyObject xi, PyObject yi, PyObject zi) {
-        PyObject x = xi;
-        PyObject y = yi;
-        PyObject z = zi;
+    public static PyObject pow(PyObject x, PyObject y, PyObject z) {
+        if (z == Py.None) {
+            return pow(x, y);
+        }
 
         PyObject[] tmp = new PyObject[2];
-
         tmp[0] = x;
         tmp[1] = y;
         if (coerce(tmp)) {
@@ -888,13 +867,14 @@ public class __builtin__ {
             }
         }
 
-        if (x.getType() == y.getType() && x.getType() == z.getType()) {
-            x = x.__pow__(y, z);
-            if (x != null) {
-                return x;
-            }
+        PyObject result = x.__pow__(y, z);
+        if (result != null) {
+            return result;
         }
-        throw Py.TypeError("__pow__ not defined for these operands");
+
+        throw Py.TypeError(String.format("unsupported operand type(s) for pow(): '%.100s', "
+                                         + "'%.100s', '%.100s'", x.getType().fastGetName(),
+                                         y.getType().fastGetName(), z.getType().fastGetName()));
     }
 
     public static PyObject range(PyObject start, PyObject stop, PyObject step) {
@@ -1046,8 +1026,8 @@ public class __builtin__ {
     }
 
     public static PyObject reversed(PyObject seq) {
-        if (hasattr(seq, "__getitem__") && hasattr(seq, "__len__") &&
-                !hasattr(seq, "keys")) {
+        if (seq.__findattr__("__getitem__") != null && seq.__findattr__("__len__") != null
+            && seq.__findattr__("keys") == null) {
             return new PyReversedIterator(seq);
         } else {
             throw Py.TypeError("argument to reversed() must be a sequence");
@@ -1093,17 +1073,6 @@ public class __builtin__ {
         }
     }
 
-    public static PyObject xrange(int start, int stop, int step) {
-        return new PyXRange(start, stop, step);
-    }
-
-    public static PyObject xrange(int n) {
-        return xrange(0, n, 1);
-    }
-
-    public static PyObject xrange(int start, int stop) {
-        return xrange(start, stop, 1);
-    }
     public static PyString __doc__zip = new PyString("zip(seq1 [, seq2 [...]]) -> [(seq1[0], seq2[0] ...), (...)]\n" + "\n" + "Return a list of tuples, where each tuple contains the i-th element\n" + "from each of the argument sequences.  The returned list is\n" + "truncated in length to the length of the shortest argument sequence.");
 
     public static PyObject zip() {
@@ -1233,10 +1202,12 @@ class ImportFunction extends PyObject {
 class SortedFunction extends PyObject {
 
     @ExposedGet(name = "__doc__")
+    @Override
     public PyObject getDoc() {
         return new PyString("sorted(iterable, cmp=None, key=None, reverse=False) --> new sorted list");
     }
     
+    @Override
     public PyObject __call__(PyObject args[], String kwds[]) {
         if (args.length == 0) {
             throw Py.TypeError(" sorted() takes at least 1 argument (0 given)");
@@ -1249,7 +1220,6 @@ class SortedFunction extends PyObject {
             }
         }
 
-        // redo parsing to be more conformant
         PyList seq = new PyList(args[0]);
 
         PyObject newargs[] = new PyObject[args.length - 1];
@@ -1264,9 +1234,206 @@ class SortedFunction extends PyObject {
         return seq;
     }
 
+    @Override
     public String toString() {
         return "<built-in function sorted>";
     }
-    
+}
 
+class AllFunction extends PyObject {
+
+    @ExposedGet(name = "__doc__")
+    @Override
+    public PyObject getDoc() {
+        return new PyString("all(iterable) -> bool\n\nReturn True if bool(x) is True for all values x in the iterable.");
+    }
+
+    @Override
+    public PyObject __call__(PyObject args[], String kwds[]) {
+        if (args.length !=1) {
+            throw Py.TypeError(" all() takes exactly one argument (" + args.length + " given)");
+        }
+        PyObject iter = args[0].__iter__();
+        if (iter == null) {
+            throw Py.TypeError("'" + args[0].getType().fastGetName() + "' object is not iterable");
+        }
+        for (PyObject item : iter.asIterable()) {
+            if (!item.__nonzero__()) {
+                return Py.False;
+            }
+        }
+        return Py.True;
+    }
+    
+    @Override
+    public String toString() {
+        return "<built-in function all>";
+    }
+}
+
+class AnyFunction extends PyObject {
+
+    @ExposedGet(name = "__doc__")
+    @Override
+    public PyObject getDoc() {
+        return new PyString("any(iterable) -> bool\n\nReturn True if bool(x) is True for any x in the iterable.");
+    }
+
+    @Override
+    public PyObject __call__(PyObject args[], String kwds[]) {
+        if (args.length !=1) {
+            throw Py.TypeError(" any() takes exactly one argument (" + args.length + " given)");
+        }
+        PyObject iter = args[0].__iter__();
+        if (iter == null) {
+            throw Py.TypeError("'" + args[0].getType().fastGetName() + "' object is not iterable");
+        }
+        for (PyObject item : iter.asIterable()) {
+            if (item.__nonzero__()) {
+                return Py.True;
+            }
+        }
+        return Py.False;     
+    }
+    
+    @Override
+    public String toString() {
+        return "<built-in function any>";
+    }
+}
+
+
+
+class MaxFunction extends PyObject {
+
+    @ExposedGet(name = "__doc__")
+    @Override
+    public PyObject getDoc() {
+        return new PyString(
+                "max(iterable[, key=func]) -> value\nmax(a, b, c, ...[, key=func]) -> value\n\n" +
+                "With a single iterable argument, return its largest item.\n" + 
+                "With two or more arguments, return the largest argument.");
+    }
+
+    @Override
+    public PyObject __call__(PyObject args[], String kwds[]) {
+        int argslen = args.length;
+        PyObject key = null;
+        
+        if (args.length - kwds.length == 0) {
+            throw Py.TypeError(" max() expected 1 arguments, got 0");
+        }
+        if (kwds.length > 0) {
+            if (kwds[0].equals("key")) {
+                key = args[argslen - 1];
+                PyObject newargs[] = new PyObject[argslen - 1];
+                System.arraycopy(args, 0, newargs, 0, argslen - 1);
+                args = newargs;
+            }
+            else {
+                throw Py.TypeError(" max() got an unexpected keyword argument");
+            }
+        }
+        
+        if (args.length > 1) {
+            return max(new PyTuple(args), key);
+        }
+        else {
+            return max(args[0], key);
+        }
+    }
+    
+    @Override
+    public String toString() {
+        return "<built-in function min>";
+    }
+    
+    private static PyObject max(PyObject o, PyObject key) {
+        PyObject max = null;
+        PyObject maxKey = null;
+        for (PyObject item : o.asIterable()) {
+            PyObject itemKey;
+            if (key == null) {
+                itemKey = item;
+            }
+            else {
+                itemKey = key.__call__(item);
+            }
+            if (maxKey == null || itemKey._gt(maxKey).__nonzero__()) {
+                maxKey = itemKey;
+                max = item;
+            }
+        }
+        if (max == null) {
+            throw Py.ValueError("min of empty sequence");
+        }
+        return max;
+    }
+}
+
+class MinFunction extends PyObject {
+
+    @ExposedGet(name = "__doc__")
+    @Override
+    public PyObject getDoc() {
+        return new PyString(
+                "min(iterable[, key=func]) -> value\nmin(a, b, c, ...[, key=func]) -> value\n\n" +
+                "With a single iterable argument, return its smallest item.\n" +
+                "With two or more arguments, return the smallest argument.'");
+    }
+
+    @Override
+    public PyObject __call__(PyObject args[], String kwds[]) {
+        int argslen = args.length;
+        PyObject key = null;
+        
+        if (args.length - kwds.length == 0) {
+            throw Py.TypeError(" min() expected 1 arguments, got 0");
+        }
+        if (kwds.length > 0) {
+            if (kwds[0].equals("key")) {
+                key = args[argslen - 1];
+                PyObject newargs[] = new PyObject[argslen - 1];
+                System.arraycopy(args, 0, newargs, 0, argslen - 1);
+                args = newargs;
+            }
+            else {
+                throw Py.TypeError(" min() got an unexpected keyword argument");
+            }
+        }
+        
+        if (args.length > 1) {
+            return min(new PyTuple(args), key);
+        }
+        else {
+            return min(args[0], key);
+        }
+    }
+    
+    @Override
+    public String toString() {
+        return "<built-in function min>";
+    }
+    
+    private static PyObject min(PyObject o, PyObject key) {
+        PyObject min = null;
+        PyObject minKey = null;
+        for (PyObject item : o.asIterable()) {
+            PyObject itemKey;
+            if (key == null) {
+                itemKey = item;
+            }
+            else {
+                itemKey = key.__call__(item);
+            }
+            if (minKey == null || itemKey._lt(minKey).__nonzero__()) {
+                minKey = itemKey;
+                min = item;
+            }
+        }
+        if (min == null) {
+            throw Py.ValueError("min of empty sequence");
+        }
+        return min;
+    }
 }

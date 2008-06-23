@@ -2,6 +2,7 @@
 package org.python.core;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
@@ -14,21 +15,41 @@ import org.python.expose.MethodType;
 @ExposedType(name = "float")
 public class PyFloat extends PyObject
 {
+    /** Precisions used by repr() and str(), respectively. */
+    private static final int PREC_REPR = 17;
+    private static final int PREC_STR = 12;
+
     @ExposedNew
     public static PyObject float_new(PyNewWrapper new_, boolean init, PyType subtype,
             PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("float", args, keywords, new String[] { "x" }, 0);
         PyObject x = ap.getPyObject(0, null);
-        if (new_.for_type == subtype) {
-            if (x == null) {
+        if (x == null) {
+            if (new_.for_type == subtype) {
                 return new PyFloat(0.0);
-            }
-            return x.__float__();
-        } else {
-            if (x == null) {
+            } else {
                 return new PyFloatDerived(subtype, 0.0);
             }
-            return new PyFloatDerived(subtype, x.__float__().getValue());
+        } else {
+            PyFloat floatObject = null;
+            try {
+                floatObject = x.__float__();
+            } catch (PyException e) {
+                if (Py.matchException(e, Py.AttributeError)) {
+                    // Translate AttributeError to TypeError
+                    // XXX: We are using the same message as CPython, even if
+                    //      it is not strictly correct (instances of types
+                    //      that implement the __float__ method are also
+                    //      valid arguments)
+                    throw Py.TypeError("float() argument must be a string or a number");
+                }
+                throw e;
+            }
+            if (new_.for_type == subtype) {
+                return floatObject;
+            } else {
+                return new PyFloatDerived(subtype, floatObject.getValue());
+            }
         }
     }
 
@@ -49,32 +70,56 @@ public class PyFloat extends PyObject
         this((double)v);
     }
 
+    /**
+     * Determine if this float is not infinity, nor NaN.
+     */
+    public boolean isFinite() {
+        return !Double.isInfinite(value) && !Double.isNaN(value);
+    }
+
     public double getValue() {
         return value;
     }
 
     public String toString() {
-        return float_toString();
+        return __str__().toString();
     }
 
-    @ExposedMethod(names = {"__repr__", "__str__"})
-    final String float_toString() {
-        String s = Double.toString(value);
-        // this is to work around an apparent bug in Double.toString(0.001)
-        // which returns "0.0010"
-        if (s.indexOf('E') == -1) {
-            while (true) {
-                int n = s.length();
-                if (n <= 2)
-                    break;
-                if (s.charAt(n-1) == '0' && s.charAt(n-2) != '.') {
-                    s = s.substring(0,n-1);
-                    continue;
-                }
+    public PyString __str__() {
+        return float___str__();
+    }
+
+    @ExposedMethod
+    final PyString float___str__() {
+        return Py.newString(formatDouble(PREC_STR));
+    }
+
+    public PyString __repr__() {
+        return float___repr__();
+    }
+
+    @ExposedMethod
+    final PyString float___repr__() {
+        return Py.newString(formatDouble(PREC_REPR));
+    }
+
+    private String formatDouble(int precision) {
+        String result = String.format("%%.%dg", precision);
+        result = Py.newString(result).__mod__(this).toString();
+
+        int i = 0;
+        if (result.startsWith("-")) {
+            i++;
+        }
+        for (; i < result.length(); i++) {
+            if (!Character.isDigit(result.charAt(i))) {
                 break;
             }
         }
-        return s;
+        if (i == result.length()) {
+            result += ".0";
+        }
+        return result;
     }
 
     public int hashCode() {
@@ -124,10 +169,29 @@ public class PyFloat extends PyObject
 
     @ExposedMethod(type = MethodType.CMP)
     final int float___cmp__(PyObject other) {
-        if (!canCoerce(other))
-             return -2;
-        double v = coerce(other);
-        return value < v ? -1 : value > v ? 1 : 0;
+        double i = value;
+        double j;
+
+        if (other instanceof PyFloat) {
+            j = ((PyFloat)other).value;
+        } else if (!isFinite()) {
+            // we're infinity: our magnitude exceeds any finite
+            // integer, so it doesn't matter which int we compare i
+            // with. If NaN, similarly.
+            if (other instanceof PyInteger || other instanceof PyLong) {
+                j = 0.0;
+            }
+            return -2;
+        } else if (other instanceof PyInteger) {
+            j = ((PyInteger)other).getValue();
+        } else if (other instanceof PyLong) {
+            BigDecimal v = new BigDecimal(value);
+            BigDecimal w = new BigDecimal(((PyLong)other).getValue());
+            return v.compareTo(w);
+        } else {
+            return -2;
+        }
+        return i < j ? -1 : i > j ? 1 : 0;
     }
 
     public Object __coerce_ex__(PyObject other) {
@@ -144,8 +208,7 @@ public class PyFloat extends PyObject
     }
 
     private static final boolean canCoerce(PyObject other) {
-        return other instanceof PyFloat || other instanceof PyInteger ||
-            other instanceof PyLong;
+        return other instanceof PyFloat || other instanceof PyInteger || other instanceof PyLong;
     }
 
     private static final double coerce(PyObject other) {
@@ -158,7 +221,6 @@ public class PyFloat extends PyObject
         else
             throw Py.TypeError("xxx");
     }
-
 
     public PyObject __add__(PyObject right) {
         return float___add__(right);
@@ -436,6 +498,11 @@ public class PyFloat extends PyObject
         }
     }
 
+    @ExposedMethod
+    final PyObject float___coerce__(PyObject other) {
+        return __coerce__(other);
+    }
+
     public PyObject __neg__() {
         return float___neg__();
     }
@@ -482,12 +549,12 @@ public class PyFloat extends PyObject
         return __long__();
     }
 
-    public PyLong __long__() {
+    public PyObject __long__() {
         return float___long__();
     }
 
     @ExposedMethod
-    final PyLong float___long__() {
+    final PyObject float___long__() {
         return new PyLong(value);
     }
 

@@ -2,6 +2,13 @@
 package org.python.core;
 
 public class CompilerFlags {
+
+    public boolean nested_scopes = true;
+    public boolean division;
+    public boolean generator_allowed = true;
+    public boolean only_ast = false;
+
+    public String encoding;
     
     public CompilerFlags(){}
 
@@ -15,6 +22,9 @@ public class CompilerFlags {
         if ((co_flags & org.python.core.PyTableCode.CO_GENERATOR_ALLOWED) != 0) {
             this.generator_allowed = true;
         }
+        if ((co_flags & org.python.core.PyTableCode.PyCF_ONLY_AST) != 0) {
+            this.only_ast = true;
+        }
     }
     
     public String toString() {
@@ -22,11 +32,4 @@ public class CompilerFlags {
                 + generator_allowed + "]";
     }
     
-    
-
-    public boolean nested_scopes = true;
-    public boolean division;
-    public boolean generator_allowed = true;
-
-    public String encoding;
 }

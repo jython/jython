@@ -218,11 +218,11 @@ d[foo]
 
 # Test all predefined function attributes systematically
 
-def cantset(obj, name, value):
+def cantset(obj, name, value, exception=(AttributeError, TypeError)):
     verify(hasattr(obj, name)) # Otherwise it's probably a typo
     try:
         setattr(obj, name, value)
-    except (AttributeError, TypeError):
+    except exception:
         pass
     else:
         raise TestFailed, "shouldn't be able to set %s to %r" % (name, value)
@@ -241,6 +241,17 @@ def test_func_closure():
     verify(len(c) == 1)
     verify(c[0].__class__.__name__ == "cell") # don't have a type object handy
     cantset(f, "func_closure", c)
+
+def test_empty_cell():
+    def f(): print a
+    try:
+        f.func_closure[0].cell_contents
+    except ValueError:
+        pass
+    else:
+        raise TestFailed, "shouldn't be able to read an empty cell"
+
+    a = 12
 
 def test_func_doc():
     def f(): pass
@@ -268,17 +279,34 @@ def test_func_name():
     def f(): pass
     verify(f.__name__ == "f")
     verify(f.func_name == "f")
-    cantset(f, "func_name", "f")
-    cantset(f, "__name__", "f")
+    f.__name__ = "g"
+    verify(f.__name__ == "g")
+    verify(f.func_name == "g")
+    f.func_name = "h"
+    verify(f.__name__ == "h")
+    verify(f.func_name == "h")
+    cantset(f, "func_globals", 1)
+    cantset(f, "__name__", 1)
+    # test that you can access func.__name__ in restricted mode
+    s = """def f(): pass\nf.__name__"""
+    exec s in {'__builtins__':{}}
+
 
 def test_func_code():
+    a = b = 24
     def f(): pass
     def g(): print 12
-    # XXX: changed to isinstance for jython
-    #verify(type(f.func_code) is types.CodeType)
-    verify(isinstance(f.func_code, types.CodeType))
+    def f1(): print a
+    def g1(): print b
+    def f2(): print a, b
+    verify(type(f.func_code) is types.CodeType)
     f.func_code = g.func_code
     cantset(f, "func_code", None)
+    # can't change the number of free vars
+    cantset(f,  "func_code", f1.func_code, exception=ValueError)
+    cantset(f1, "func_code",  f.func_code, exception=ValueError)
+    cantset(f1, "func_code", f2.func_code, exception=ValueError)
+    f1.func_code = g1.func_code
 
 def test_func_defaults():
     def f(a, b): return (a, b)
@@ -368,6 +396,7 @@ def test_im_name():
 
 def testmore():
     test_func_closure()
+    test_empty_cell()
     test_func_doc()
     test_func_globals()
     test_func_name()

@@ -57,6 +57,18 @@ public class PyTuple extends PySequenceList
         }
     }
 
+    /**
+     * Return a new PyTuple from an iterable.
+     *
+     * Raises a TypeError if the object is not iterable.
+     *
+     * @param iterable an iterable PyObject
+     * @return a PyTuple containing each item in the iterable
+     */
+    public static PyTuple fromIterable(PyObject iterable) {
+        return new PyTuple(Py.make_array(iterable));
+    }
+
     protected PyObject getslice(int start, int stop, int step) {
         if (step > 0 && stop < start)
             stop = start;
@@ -81,7 +93,13 @@ public class PyTuple extends PySequenceList
             count = 0;
         }
         if (size() == 0 || count == 1) {
-            return this;
+            if (getType() == TYPE) {
+                // Since tuples are immutable, we can return a shared copy in this case
+                return this;
+            }
+            if (size() == 0) {
+                return new PyTuple();
+            }
         }
         PyObject[] array = getArray();
         int l = size();
@@ -173,6 +191,11 @@ public class PyTuple extends PySequenceList
         return repeat(count);
     }
 
+    @ExposedMethod
+    public PyObject tuple___iter__() {
+        return seq___iter__();
+    }
+
     @ExposedMethod(defaults = "null")
     final PyObject tuple___getslice__(PyObject s_start, PyObject s_stop, PyObject s_step) {
         return seq___getslice__(s_start,s_stop,s_step);
@@ -202,7 +225,19 @@ public class PyTuple extends PySequenceList
 
     @ExposedMethod
     final int tuple___hash__() {
-        return super.hashCode();
+        // strengthened hash to avoid common collisions. from CPython
+        // tupleobject.tuplehash. See http://bugs.python.org/issue942952
+        int y;
+        int len = size();
+        int mult = 1000003;
+        int x = 0x345678;
+        PyObject[] array = getArray();
+        while (--len >= 0) {
+            y = array[len].hashCode();
+            x = (x ^ y) * mult;
+            mult += 82520 + len + len;
+        }
+        return x + 97531;
     }
 
     private String subobjRepr(PyObject o) {

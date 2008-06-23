@@ -4,7 +4,8 @@ package org.python.core;
 import java.security.SecureClassLoader;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
+
+import org.python.objectweb.asm.ClassReader;
 
 /**
  * Utility class for loading of compiled python modules and java classes defined in python modules.
@@ -21,7 +22,7 @@ public class BytecodeLoader {
      * @param referents
      *            superclasses and interfaces that the new class will reference.
      */
-    public static Class makeClass(String name, byte[] data, Class... referents) {
+    public static Class<?> makeClass(String name, byte[] data, Class<?>... referents) {
         Loader loader = new Loader();
         for (int i = 0; i < referents.length; i++) {
             try {
@@ -44,9 +45,9 @@ public class BytecodeLoader {
      * @param data
      *            the java byte code.
      */
-    public static Class makeClass(String name, Vector<Class> referents, byte[] data) {
+    public static Class<?> makeClass(String name, List<Class<?>> referents, byte[] data) {
         if (referents != null) {
-            return makeClass(name, data, referents.toArray(new Class[0]));
+            return makeClass(name, data, referents.toArray(new Class[referents.size()]));
         }
         return makeClass(name, data);
     }
@@ -61,8 +62,7 @@ public class BytecodeLoader {
      */
     public static PyCode makeCode(String name, byte[] data, String filename) {
         try {
-            Class c = makeClass(name, data);
-            @SuppressWarnings("unchecked")
+            Class<?> c = makeClass(name, data);
             Object o = c.getConstructor(new Class[] {String.class})
                     .newInstance(new Object[] {filename});
             return ((PyRunnable)o).getMain();
@@ -86,7 +86,7 @@ public class BytecodeLoader {
         }
 
         protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
-            Class c = findLoadedClass(name);
+            Class<?> c = findLoadedClass(name);
             if (c != null) {
                 return c;
             }
@@ -100,6 +100,18 @@ public class BytecodeLoader {
         }
 
         public Class<?> loadClassFromBytes(String name, byte[] data) {
+            if (name.endsWith("$py")) {
+                try {
+                    // Get the real class name: we might request a 'bar'
+                    // Jython module that was compiled as 'foo.bar', or
+                    // even 'baz.__init__' which is compiled as just 'baz'
+                    ClassReader cr = new ClassReader(data);
+                    name = cr.getClassName().replace('/', '.');
+                } catch (RuntimeException re) {
+                    // Probably an invalid .class, fallback to the
+                    // specified name
+                }
+            }
             Class<?> c = defineClass(name, data, 0, data.length, getClass().getProtectionDomain());
             resolveClass(c);
             Compiler.compileClass(c);

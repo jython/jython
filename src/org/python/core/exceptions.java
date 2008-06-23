@@ -199,7 +199,7 @@ public class exceptions implements ClassDictInit {
         buildClass(dict, "IndexError", "LookupError", "empty__init__",
                 "Sequence index out of range.");
 
-        buildClass(dict, "KeyError", "LookupError", "empty__init__",
+        buildClass(dict, "KeyError", "LookupError", "KeyError",
                 "Mapping key not found.");
 
         buildClass(dict, "AttributeError", "StandardError", "empty__init__",
@@ -274,9 +274,6 @@ public class exceptions implements ClassDictInit {
         PyObject self = ap.getPyObject(0);
         PyObject args = ap.getList(1);
         
-        if (arg.length == 2) {
-            self.__setattr__("message", ap.getPyObject(1));
-        }
         self.__setattr__("args", args);
     }
 
@@ -614,6 +611,32 @@ public class exceptions implements ClassDictInit {
         dict.__setitem__("__init__", getJavaFunc("UnicodeTranslateError__init__"));
         dict.__setitem__("__str__", getJavaFunc("UnicodeTranslateError__str__"));
         return dict;
+    }
+
+    public static PyObject KeyError__str__(PyObject[] arg, String[] kws) {
+        ArgParser ap = new ArgParser("__str__", arg, kws, "self");
+        PyObject self = ap.getPyObject(0);
+
+        PyObject args = self.__getattr__("args");
+        // If args is a tuple of exactly one item, apply repr to args[0].
+        // This is done so that e.g. the exception raised by {}[''] prints
+        // KeyError: ''
+        // rather than the confusing
+        // KeyError
+        // alone.  The downside is that if KeyError is raised with an explanatory
+        // string, that string will be displayed in quotes.  Too bad.
+        if (args.__len__() == 1) {
+            return args.__getitem__(0).__repr__();
+        } else {
+            return Exception__str__(arg, kws);
+        }
+    }
+
+    public static PyObject KeyError(PyObject[] arg, String[] kws) {
+        PyObject dict = empty__init__(arg, kws);
+        dict.__setitem__("__str__", getJavaFunc("KeyError__str__"));
+        return dict;
+
     }
 
     private static PyObject getJavaFunc(String name) {

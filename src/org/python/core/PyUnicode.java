@@ -220,12 +220,12 @@ public class PyUnicode extends PyString implements Iterable {
 
     @Override
     public PyString __repr__() {
-        return new PyString("u" + encode_UnicodeEscape(string, true));
+        return unicode___repr__();
     }
 
-    @ExposedMethod(names = "__repr__")
-    public String unicode_toString() {
-        return "u'" + encode_UnicodeEscape(string, false) + "'";
+    @ExposedMethod
+    final PyString unicode___repr__() {
+        return new PyString("u" + encode_UnicodeEscape(string, true));
     }
 
     @ExposedMethod
@@ -599,8 +599,12 @@ public class PyUnicode extends PyString implements Iterable {
                 new ReversedIterator(newSubsequenceIterator()))));
     }
 
-    private abstract class SplitIterator implements Iterator {
+    @ExposedMethod
+    final PyTuple unicode_partition(PyObject sep) {
+        return unicodePartition(sep);
+    }
 
+    private abstract class SplitIterator implements Iterator {
         protected final int maxsplit;
         protected final Iterator<Integer> iter = newSubsequenceIterator();
         protected final LinkedList<Integer> lookahead = new LinkedList<Integer>();
@@ -831,6 +835,11 @@ public class PyUnicode extends PyString implements Iterable {
         }
     }
 
+    @ExposedMethod
+    final PyTuple unicode_rpartition(PyObject sep) {
+        return unicodeRpartition(sep);
+    }
+
     @ExposedMethod(defaults = {"null", "-1"})
     final PyList unicode_split(PyObject sepObj, int maxsplit) {
         PyUnicode sep = coerceToUnicode(sepObj);
@@ -905,28 +914,43 @@ public class PyUnicode extends PyString implements Iterable {
         return str_rfind(sub, start, end);
     }
 
-    @ExposedMethod
-    final PyObject unicode_ljust(int width) {
+    private static String padding(int n, int pad) {
+        StringBuilder buffer = new StringBuilder(n);
+        for (int i=0; i<n; i++)
+            buffer.appendCodePoint(pad);
+        return buffer.toString();
+    }
+
+    private static int parse_fillchar(String function, String fillchar) {
+        if (fillchar == null) { return ' '; }
+        if (fillchar.codePointCount(0, fillchar.length()) != 1) {
+            throw Py.TypeError(function + "() argument 2 must be char, not str");
+        }
+        return fillchar.codePointAt(0);
+    }   
+    
+    @ExposedMethod(defaults="null")
+    final PyObject unicode_ljust(int width, String padding) {
         int n = width - getCodePointCount();
         if (n <= 0) {
             return new PyUnicode(string);
         } else {
-            return new PyUnicode(string + spaces(n));
+            return new PyUnicode(string + padding(n, parse_fillchar("ljust", padding)));
         }
     }
 
-    @ExposedMethod
-    final PyObject unicode_rjust(int width) {
+    @ExposedMethod(defaults="null")
+    final PyObject unicode_rjust(int width, String padding) {
         int n = width - getCodePointCount();
         if (n <= 0) {
             return new PyUnicode(string);
         } else {
-            return new PyUnicode(spaces(n) + string);
+            return new PyUnicode(padding(n, parse_fillchar("ljust", padding)) + string);
         }
     }
 
-    @ExposedMethod
-    final PyObject unicode_center(int width) {
+    @ExposedMethod(defaults="null")
+    final PyObject unicode_center(int width, String padding) {
         int n = width - getCodePointCount();
         if (n <= 0) {
             return new PyUnicode(string);
@@ -935,7 +959,8 @@ public class PyUnicode extends PyString implements Iterable {
         if (n % 2 > 0 && width % 2 > 0) {
             half += 1;
         }
-        return new PyUnicode(spaces(half) + string + spaces(n - half));
+        int pad =  parse_fillchar("center", padding);
+        return new PyUnicode(padding(half, pad) + string + padding(n - half, pad));
     }
 
     @ExposedMethod
@@ -943,6 +968,9 @@ public class PyUnicode extends PyString implements Iterable {
         int n = getCodePointCount();
         if (n >= width) {
             return new PyUnicode(string);
+        }
+        if (isBasicPlane()) {
+            return new PyUnicode(str_zfill(width));
         }
         StringBuilder buffer = new StringBuilder(width);
         int nzeros = width - n;
@@ -1241,6 +1269,7 @@ public class PyUnicode extends PyString implements Iterable {
         return str_decode(encoding, errors);
     }
 
+    @ExposedMethod
     final PyTuple unicode___getnewargs__() {
         return new PyTuple(new PyUnicode(this.string));
     }

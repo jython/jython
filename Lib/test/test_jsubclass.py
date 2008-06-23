@@ -8,9 +8,9 @@ from java.lang import Runnable, Thread
 
 print_test('override methods', 2)
 class MyThread(Thread):
-	count = 0
-	def run(self):
-		self.count = self.count+1
+        count = 0
+        def run(self):
+                self.count = self.count+1
 
 
 t1 = MyThread()
@@ -21,9 +21,9 @@ assert t1.count == 1, 'subclassing java.lang.Thread'
 print_test('pass subclass back to java', 2)
 
 class MyRun(Runnable):
-	count = 0
-	def run(self):
-		self.count = self.count+1
+        count = 0
+        def run(self):
+                self.count = self.count+1
 
 run = MyRun()
 t = Thread(run)
@@ -34,15 +34,15 @@ assert run.count == 1, 'subclassing java.lang.Thread'
 print_test("invoke super's constructor", 2)
 
 class MyThread(Thread):
-	def __init__(self):
-		self.name = "Python-"+self.name
+        def __init__(self):
+                self.name = "Python-"+self.name
 
 t = MyThread()
 assert t.name[:14] == "Python-Thread-", 'automatic constructor call'
 
 class MyThread(Thread):
-	def __init__(self):
-		Thread.__init__(self, "Python-Thread")
+        def __init__(self):
+                Thread.__init__(self, "Python-Thread")
 
 t = MyThread()
 assert t.name == "Python-Thread", 'explicit constructor call'

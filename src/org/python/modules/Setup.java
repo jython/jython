@@ -27,12 +27,10 @@ public class Setup
     public static String[] builtinModules = {
         "jarray",
         "math",
-        "thread",
+        "thread:org.python.modules.thread.thread",
         "operator",
         "time:org.python.modules.time.Time",
-        "os",
-        "types",
-        "py_compile",
+        "_py_compile",
         "pre:org.python.modules.re",
         "_sre",
         "synchronize",
@@ -47,16 +45,16 @@ public class Setup
         "sha",
         "ucnhash",
         "_jython",
-        "new:org.python.modules.newmodule",
-        "_weakref",
+        "_new:org.python.modules._newmodule",
+        "_weakref:org.python.modules._weakref.WeakrefModule",
         "xreadlines",
         "errno",
         "array:org.python.modules.ArrayModule",
-        "sets:org.python.modules.sets.Sets",
         "_random:org.python.modules.random.RandomModule",
         "cmath",
         "itertools",
         "zipimport:org.python.modules.zipimport.zipimport",
-        "collections:org.python.modules.collections.Collections"
+        "collections:org.python.modules.collections.Collections",
+        "gc"
     };
 }

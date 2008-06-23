@@ -71,6 +71,9 @@ public class PyInstance extends PyObject
 
     public PyInstance(PyClass iclass, PyObject dict) {
         instclass = iclass;
+        if (dict == Py.None) {
+            dict = new PyStringMap();
+        }
         __dict__ = dict;
     }
 
@@ -184,7 +187,7 @@ public class PyInstance extends PyObject
             }
         }
         else if (ret != Py.None) {
-            throw Py.TypeError("constructor has no return value");
+            throw Py.TypeError("__init__() should return None");
         }
         // Now init all superclasses that haven't already been initialized
         if (javaProxy == null && instclass.proxyClass != null) {
@@ -237,6 +240,10 @@ public class PyInstance extends PyObject
             if (Py.matchException(exc, Py.AttributeError)) return null;
             throw exc;
         }
+    }
+
+    public boolean isCallable() {
+        return __findattr__("__call__") != null;
     }
 
     public PyObject invoke(String name) {
@@ -408,7 +415,7 @@ public class PyInstance extends PyObject
                 smod = ((PyString)mod).toString() + '.';
             }
         }
-        return new PyString("<" + smod + instclass.__name__ + " instance " + 
+        return new PyString("<" + smod + instclass.__name__ + " instance at " + 
                             Py.idstr(this) + ">");
     }
 
@@ -798,10 +805,10 @@ public class PyInstance extends PyObject
      * Implements the __long__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
-    public PyLong __long__() {
+    public PyObject __long__() {
         PyObject ret = invoke("__long__");
-        if (ret instanceof PyLong)
-            return (PyLong)ret;
+        if (ret instanceof PyLong || ret instanceof PyInteger)
+            return ret;
         throw Py.TypeError("__long__() should return a long");
     }
 

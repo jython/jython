@@ -28,7 +28,8 @@ def test_basic():
     f.close()
 
 def test_rude_shutdown():
-    if test_support.is_jython:#see http://jython.org/bugs/1754222
+    # This test deadlocks, see http://bugs.jython.org/issue1049
+    if test_support.is_jython:
         return
     try:
         import thread

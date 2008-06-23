@@ -40,6 +40,11 @@ class ChecksumTestCase(unittest.TestCase):
         self.assertEqual(zlib.adler32("", 1), 1)
         ##self.assertEqual(zlib.adler32("", 432), 432)
 
+    def test_adler32_non7bit(self):
+        # Introduced on jython to test non-7-bit strings
+        self.assertEqual(zlib.adler32("\x80", 1), 8454273)
+        self.assertEqual(zlib.adler32("\x3b3", 1), 11206767)
+
     def assertEqual32(self, seen, expected):
         # 32-bit values masked -- checksums on 32- vs 64- bit machines
         # This is important if bit 31 (0x08000000L) is set.
@@ -479,4 +484,4 @@ if False:
     su.addTest(ut.makeSuite(tz.CompressTestCase))
     ts.run_suite(su)
 
- 	  	 
+                 
