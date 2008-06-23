@@ -53,11 +53,7 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
                 if (!(arg1 instanceof PyString)) {
                     throw Py.TypeError("ord() expected string of length 1, but " + arg1.getType().fastGetName() + " found");
                 }
-                if (arg1.__len__() > 1) {
-                    throw Py.TypeError("ord() expected a character, but string of length " + arg1.__len__() + " found");
-                }
-                return Py.newInteger(__builtin__.ord(Py.py2char(arg1,
-                        "ord(): 1st arg can't be coerced to char")));
+                return Py.newInteger(__builtin__.ord(arg1));
             case 5:
                 return __builtin__.hash(arg1);
             case 6:
@@ -424,12 +420,11 @@ public class __builtin__ {
         return obj.isCallable();
     }
 
-    // XXX: consider this with respect to codepoints
-    public static char unichr(int i) {
-        if (i < 0 || i > 65535) {
-            throw Py.ValueError("unichr() arg not in range(65536)");
+    public static int unichr(int i) {
+        if (i < 0 || i > PySystemState.maxunicode) {
+            throw Py.ValueError("unichr() arg not in range(0x110000)");
         }
-        return (char) i;
+        return i;
     }
 
     public static char chr(int i) {
@@ -788,10 +783,24 @@ public class __builtin__ {
         }
     }
 
-    public static final int ord(char c) {
-        return c;
+    public static final int ord(PyObject c) {
+        final int length;
+        PyString x = (PyString) c;
+        if (x instanceof PyUnicode) {
+            length = x.string.codePointCount(0, x.string.length());
+            if (length == 1) {
+                return x.string.codePointAt(0);
+            }
+        } else {
+            length = x.string.length();
+            if (length == 1) {
+                return x.string.charAt(0);
+            }
+        }
+        throw Py.TypeError("ord() expected a character, but string of length " +
+                length + " found");
     }
-
+    
     public static PyObject pow(PyObject x, PyObject y) {
         return x._pow(y);
     }

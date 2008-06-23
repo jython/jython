@@ -71,6 +71,19 @@ public class PyString extends PyBaseString
         }
     }
 
+    public int[] toCodePoints() {
+        int n = string.length();
+        int[] codePoints = new int[n];
+        for (int i = 0; i < n; i++) {
+            codePoints[i] = string.charAt(i);
+        }
+        return codePoints;
+    }
+    
+    public String substring(int start, int end) {
+        return string.substring(start, end);
+    }
+    
     public PyString __str__() {
         return str___str__();
     }
@@ -130,7 +143,7 @@ public class PyString extends PyBaseString
                                               boolean use_quotes)
     {
         int size = str.length();
-        StringBuffer v = new StringBuffer(str.length());
+        StringBuilder v = new StringBuilder(str.length());
 
         char quote = 0;
 
@@ -207,7 +220,7 @@ public class PyString extends PyBaseString
                                               int end,
                                               String errors,
                                               boolean unicode) {
-        StringBuffer v = new StringBuffer(end - start);
+        StringBuilder v = new StringBuilder(end - start);
         for(int s = start; s < end;) {
             char ch = str.charAt(s);
             /* Non-escape characters are interpreted as Unicode ordinals */
@@ -386,7 +399,7 @@ public class PyString extends PyBaseString
         return v.toString();
     }
 
-    private static int hexescape(StringBuffer partialDecode,
+    private static int hexescape(StringBuilder partialDecode,
                                  String errors,
                                  int digits,
                                  int hexDigitStart,
@@ -439,22 +452,11 @@ public class PyString extends PyBaseString
 
     /*pass in an int since this can be a UCS-4 character */
     private static boolean storeUnicodeCharacter(int value,
-                                                 StringBuffer partialDecode) {
-        if(value < 0) {
+            StringBuilder partialDecode) {
+        if (value < 0 || (value >= 0xD800 && value <= 0xDFFF)) {
             return false;
-        } else if(value < 1 << 16) {
-            /* In UCS-2 range, easy solution.. */
-            partialDecode.append((char)value);
-            return true;
-        } else if(value <= 0x10ffff) {
-            /* Oops, its in UCS-4 space, */
-            /* compute and append the two surrogates: */
-            /* translate from 10000..10FFFF to 0..FFFFF */
-            value -= 0x10000;
-            /* high surrogate = top 10 bits added to D800 */
-            partialDecode.append((char)(0xD800 + (value >> 10)));
-            /* low surrogate = bottom 10 bits added to DC00 */
-            partialDecode.append((char)(0xDC00 + (value & ~0xFC00)));
+        } else if (value <= PySystemState.maxunicode) {
+            partialDecode.appendCodePoint(value);
             return true;
         }
         return false;
@@ -1359,7 +1361,7 @@ public class PyString extends PyBaseString
     }
 
     public double atof() {
-        StringBuffer s = null;
+        StringBuilder s = null;
         int n = string.length();
         for (int i = 0; i < n; i++) {
             char ch = string.charAt(i);
@@ -1368,7 +1370,7 @@ public class PyString extends PyBaseString
             }
             if (Character.isDigit(ch)) {
                 if (s == null)
-                    s = new StringBuffer(string);
+                    s = new StringBuilder(string);
                 int val = Character.digit(ch, 10);
                 s.setCharAt(i, Character.forDigit(val, 10));
             }
@@ -1512,12 +1514,21 @@ public class PyString extends PyBaseString
                 bi = new java.math.BigInteger(str, base);
             return new PyLong(bi);
         } catch (NumberFormatException exc) {
-            throw Py.ValueError("invalid literal for __long__: "+str);
+            if (this instanceof PyUnicode) {
+                // TODO: here's a basic issue: do we use the BigInteger constructor
+                // above, or add an equivalent to CPython's PyUnicode_EncodeDecimal;
+                // we should note that the current error string does not quite match
+                // CPython regardless of the codec, that's going to require some more work
+                throw Py.UnicodeEncodeError("decimal", "codec can't encode character",
+                        0,0, "invalid decimal Unicode string");
+            }
+            else {
+                throw Py.ValueError("invalid literal for __long__: "+str);
+            }
         } catch (StringIndexOutOfBoundsException exc) {
             throw Py.ValueError("invalid literal for __long__: "+str);
         }
     }
-
 
     private static String padding(int n, char pad) {
         char[] chars = new char[n];
@@ -1622,7 +1633,7 @@ public class PyString extends PyBaseString
     @ExposedMethod(defaults = "8")
     final String str_expandtabs(int tabsize) {
         String s = string;
-        StringBuffer buf = new StringBuffer((int)(s.length()*1.5));
+        StringBuilder buf = new StringBuilder((int)(s.length()*1.5));
         char[] chars = s.toCharArray();
         int n = chars.length;
         int position = 0;
@@ -1685,7 +1696,7 @@ public class PyString extends PyBaseString
 
     @ExposedMethod
     final PyString str_join(PyObject seq) {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
 
         PyObject iter = seq.__iter__();
         PyObject obj = null;
@@ -1797,7 +1808,7 @@ public class PyString extends PyBaseString
      *         string.length()
      * 
      */
-    private int[] translateIndices(int start, PyObject end) {
+    protected int[] translateIndices(int start, PyObject end) {
         int iEnd;
         if(end == null) {
             iEnd = string.length();
@@ -1839,7 +1850,7 @@ public class PyString extends PyBaseString
             throw Py.ValueError(
                 "translation table must be 256 characters long");
 
-        StringBuffer buf = new StringBuffer(string.length());
+        StringBuilder buf = new StringBuilder(string.length());
         for (int i=0; i < string.length(); i++) {
             char c = string.charAt(i);
             if (deletechars != null && deletechars.indexOf(c) >= 0)
@@ -1857,7 +1868,7 @@ public class PyString extends PyBaseString
 
     //XXX: is this needed?
     public String translate(PyObject table) {
-        StringBuffer v = new StringBuffer(string.length());
+        StringBuilder v = new StringBuilder(string.length());
         for (int i=0; i < string.length(); i++) {
             char ch = string.charAt(i);
 
@@ -2219,7 +2230,7 @@ final class StringFormatter
 {
     int index;
     String format;
-    StringBuffer buffer;
+    StringBuilder buffer;
     boolean negative;
     int precision;
     int argIndex;
@@ -2250,7 +2261,7 @@ final class StringFormatter
         index = 0;
         this.format = format;
         this.unicodeCoercion = unicodeCoercion;
-        buffer = new StringBuffer(format.length()+100);
+        buffer = new StringBuilder(format.length()+100);
     }
 
     PyObject getarg() {
@@ -2342,7 +2353,7 @@ final class StringFormatter
             }
         }
         if (precision > numdigits) {
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
             for (int i = 0; i < numnondigits; ++i)
                 buf.append(s.charAt(ptr++));
             for (int i = 0; i < precision - numdigits; i++)
@@ -2425,7 +2436,7 @@ final class StringFormatter
     private String formatFloatExponential(PyObject arg, char e,
                                          boolean truncate)
     {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         double v = arg.__float__().getValue();
         boolean isNegative = false;
         if (v < 0) {

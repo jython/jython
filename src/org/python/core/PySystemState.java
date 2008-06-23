@@ -50,10 +50,8 @@ public class PySystemState extends PyObject
 
     public static PyTuple version_info;
 
+    public final static int maxunicode = 1114111;
     public static PyTuple subversion;
-
-    public static int maxunicode = 65535;
-
     /**
      * The copyright notice for this release.
      */
