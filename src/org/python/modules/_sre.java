@@ -34,12 +34,12 @@ public class _sre {
                                         PyObject code, int groups,
                                         PyObject groupindex,
                                         PyObject indexgroup) {
-        char[] ccode = null;
+        int[] ccode = null;
         if (code instanceof PyList) {
             int n = code.__len__();
-            ccode = new char[n];
+            ccode = new int[n];
             for (int i = 0; i < n; i++)
-                ccode[i] = (char) ((PyInteger)code.__getitem__(i).__int__()).getValue();
+                ccode[i] = (int) ((PyInteger)code.__getitem__(i).__int__()).getValue();
         } else {
             throw Py.TypeError("Expected list");
         }

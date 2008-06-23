@@ -16,7 +16,7 @@
 // Last updated to _sre.c: 2.52
 
 package org.python.modules.sre;
-
+import org.python.core.PyString;
 
 public class SRE_STATE {
     
@@ -140,27 +140,27 @@ for line in sys.stdin:
         106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119,
         120, 121, 122, 123, 124, 125, 126, 127 };
 
-    final boolean SRE_IS_DIGIT(char ch) {
+    final boolean SRE_IS_DIGIT(int ch) {
         return ((ch) < 128 ?
                 (sre_char_info[(ch)] & SRE_DIGIT_MASK) != 0 : false);
     }
 
-    final boolean SRE_IS_SPACE(char ch) {
+    final boolean SRE_IS_SPACE(int ch) {
         return ((ch) < 128 ?
                 (sre_char_info[(ch)] & SRE_SPACE_MASK) != 0 : false);
     }
 
-    final boolean SRE_IS_LINEBREAK(char ch) {
+    final boolean SRE_IS_LINEBREAK(int ch) {
         //TODO why is this different than _sre.c
         return ch == '\n';
     }
 
-    final boolean SRE_IS_WORD(char ch) {
+    final boolean SRE_IS_WORD(int ch) {
         return ((ch) < 128 ?
                 (sre_char_info[(ch)] & SRE_WORD_MASK) != 0 : false);
     }
 
-    final char lower(char ch) {
+    final int lower(int ch) {
         if ((flags & SRE_FLAG_LOCALE) != 0)
              return ((ch) < 256 ? Character.toLowerCase(ch) : ch);
         if ((flags & SRE_FLAG_UNICODE) != 0)
@@ -168,11 +168,11 @@ for line in sys.stdin:
         return ((ch) < 128 ? (char)sre_char_lower[ch] : ch);
     }
 
-    final boolean SRE_LOC_IS_WORD(char ch) {
+    final boolean SRE_LOC_IS_WORD(int ch) {
         return Character.isLetterOrDigit(ch) || ch == '_';
     }
 
-    final boolean SRE_UNI_IS_LINEBREAK(char ch) {
+    final boolean SRE_UNI_IS_LINEBREAK(int ch) {
         switch (ch) {
         case 0x000A: /* LINE FEED */
         case 0x000D: /* CARRIAGE RETURN */
@@ -188,7 +188,7 @@ for line in sys.stdin:
         }
     }
     
-    final boolean sre_category(char category, char ch) {
+    final boolean sre_category(int category, int ch) {
         switch (category) {
 
         case SRE_CATEGORY_DIGIT:
@@ -299,7 +299,7 @@ for line in sys.stdin:
         System.arraycopy(mark_stack, this.mark_stack_base, mark, lo, size);
     }
     
-    final boolean SRE_AT(int ptr, char at) {
+    final boolean SRE_AT(int ptr, int at) {
         /* check if pointer is at given position. */
 
         boolean thiS, that;
@@ -358,7 +358,7 @@ for line in sys.stdin:
         return false;
     }
 
-    final boolean SRE_CHARSET(char[] set, int setidx, char ch) {
+    final boolean SRE_CHARSET(int[] set, int setidx, int ch) {
         /* check if character is a member of the given set.  */
 
         boolean ok = true;
@@ -393,7 +393,7 @@ for line in sys.stdin:
 
             case SRE_OP_BIGCHARSET:
                 /* <BIGCHARSET> <blockcount> <256 blockindices> <blocks> */
-                //TRACE(setidx, ch, "CHARSET BIGCHARSET ");
+                // TRACE(setidx, ch, "CHARSET BIGCHARSET ");              
                 int count = set[setidx++];
                 int shift = ((ch >> 8) & 1) == 0 ? 8 : 0;
                 int block = (set[setidx + (ch >> 8) / 2] >> shift) & 0xFF;
@@ -402,6 +402,17 @@ for line in sys.stdin:
                 if ((set[setidx + idx] & (1 << (ch & 15))) != 0)
                     return ok;
                 setidx += count*16;
+
+                // this is a rewriting of what is in _sre.c in python 2.5;
+                // however we need a corresponding setting of the blocks
+//                int count = set[setidx++];
+//                int block = ch < 65536 ? set[ch >> 8] : -1;
+//                setidx += 64;
+//                int idx = block*8 + ((ch & 255)>>5);
+//                if (block >=0 &&
+//                    ((set[setidx + idx] & (1 << (ch & 31))) != 0))
+//                    return ok;
+//                setidx += count*8;
                 break;
 
             case SRE_OP_CATEGORY:
@@ -422,6 +433,7 @@ for line in sys.stdin:
                 return !ok;
 
             default:
+                // TRACE(setidx, ch, "CHARSET default (internal error)");
                 /* internal error -- there's not much we can do about it
                    here, so let's just pretend it didn't match... */
                 return false;
@@ -429,8 +441,8 @@ for line in sys.stdin:
         }
     }
     
-    private int SRE_COUNT(char[] pattern, int pidx, int maxcount, int level) {
-        char chr;
+    private int SRE_COUNT(int[] pattern, int pidx, int maxcount, int level) {
+        int chr;
         int ptr = this.ptr;
         int end = this.end;
         int i;
@@ -509,14 +521,14 @@ for line in sys.stdin:
         return ptr - this.ptr;
     }
 
-    final int SRE_MATCH(char[] pattern, int pidx, int level) {
+    final int SRE_MATCH(int[] pattern, int pidx, int level) {
         /* check if string matches the given pattern.  returns <0 for
            error, 0 for failure, and 1 for success */
 
         int end = this.end;
         int ptr = this.ptr;
         int i, count;
-        char chr;
+        int chr;
 
         int lastmark, lastindex, mark_stack_base = 0;
 
@@ -1049,7 +1061,7 @@ for line in sys.stdin:
         }
     }
     
-    int SRE_SEARCH(char[] pattern, int pidx) {
+    int SRE_SEARCH(int[] pattern, int pidx) {
         int ptr = this.start;
         int end = this.end;
         int status = 0;
@@ -1129,7 +1141,7 @@ for line in sys.stdin:
 
         if (pattern[pidx] == SRE_OP_LITERAL) {
             /* pattern starts with a literal */
-            char chr = pattern[pidx + 1];
+            int chr = pattern[pidx + 1];
             end = this.end;
             for (;;) {
                 while (ptr < end && str[ptr] != chr)
@@ -1185,7 +1197,7 @@ for line in sys.stdin:
     int end; /* end of original string */
 
     /* attributes for the match object */
-    char[] str;
+    int[] str;
     int pos;
     int endpos;
 
@@ -1215,9 +1227,9 @@ for line in sys.stdin:
 
 
 
-    public SRE_STATE(String str, int start, int end, int flags) {
-        this.str = str.toCharArray();
-        int size = str.length();
+    public SRE_STATE(PyString str, int start, int end, int flags) {
+        this.str = str.toCodePoints();
+        int size = str.__len__();
 
         this.charsize = 1;
 
@@ -1285,6 +1297,6 @@ for line in sys.stdin:
     }
 
     private void TRACE(int pidx, int ptr, String string) {
-        System.out.println("      |" + pidx + "|" + ptr + ": " + string);
+        System.out.println("      |" + pidx + "|" + Integer.toHexString(ptr) + ": " + string);
     }
 }
