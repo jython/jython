@@ -58,6 +58,7 @@ public class InteractiveParser {
         PythonTokenSource indentedSource = new PythonTokenSource(tokens);
         tokens = new CommonTokenStream(indentedSource);
         PythonParser parser = new PythonParser(tokens);
+        parser.inSingle = true;
         parser.setTreeAdaptor(new PythonTreeAdaptor());
 
         try {

@@ -182,6 +182,10 @@ import java.util.Iterator;
 } 
 
 @members {
+    //XXX: only used for single_input -- seems kludgy.
+    public boolean inSingle = false;
+    private boolean seenSingleOuterSuite = false;
+
     boolean debugOn = false;
 
     private void debug(String message) {
@@ -487,7 +491,7 @@ int startPos=-1;
 //single_input: NEWLINE | simple_stmt | compound_stmt NEWLINE
 single_input : NEWLINE
              | simple_stmt -> ^(Interactive simple_stmt)
-             | compound_stmt NEWLINE -> ^(Interactive compound_stmt)
+             | compound_stmt -> ^(Interactive compound_stmt)
              ;
 
 //file_input: (NEWLINE | stmt)* ENDMARKER
@@ -845,9 +849,28 @@ except_clause : 'except' (t1=test[expr_contextType.Load] (COMMA t2=test[expr_con
               ;
 
 //suite: simple_stmt | NEWLINE INDENT stmt+ DEDENT
-suite : simple_stmt
-      | NEWLINE! INDENT (stmt)+ DEDENT
-      ;
+suite
+    : simple_stmt
+    | {inSingle}? => single_suite
+    | NEWLINE! INDENT (stmt)+ DEDENT
+    ;
+
+single_suite
+scope {
+    //XXX: feels like I should be able to do this with a local variable
+    //     instead of a scoped one, but locals don't appear to work in
+    //     the semantic predicate.
+    boolean outer;
+}
+@init {
+    if (seenSingleOuterSuite == false) {
+        $single_suite::outer = true;
+        seenSingleOuterSuite = true;
+    }
+}
+    : NEWLINE! INDENT (stmt)+ DEDENT NEWLINE!
+    | {!$single_suite::outer}? => NEWLINE! INDENT (stmt)+ DEDENT
+    ;
 
 //test: or_test ['if' or_test 'else' test] | lambdef
 test[expr_contextType ctype]
