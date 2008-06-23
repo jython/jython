@@ -102,16 +102,16 @@ public class ParserFacade {
         modType node = null;
         try {
             if (kind.equals("eval")) {
-                bufreader = prepBufreader(new LeadingSpaceSkippingStream(bstream), cflags);
+                bufreader = prepBufreader(new LeadingSpaceSkippingStream(bstream), cflags, filename);
                 CharStream cs = new ANTLRReaderStream(bufreader);
                 ExpressionParser e = new ExpressionParser(cs);
                 node = e.parse();
             } else if (kind.equals("single")) {
-                bufreader = prepBufreader(bstream, cflags);
+                bufreader = prepBufreader(bstream, cflags, filename);
                 InteractiveParser i = new InteractiveParser(bufreader);
                 node = i.parse();
             } else if (kind.equals("exec")) {
-                bufreader = prepBufreader(bstream, cflags);
+                bufreader = prepBufreader(bstream, cflags, filename);
                 CharStream cs = new ANTLRReaderStream(bufreader);
                 ModuleParser g = new ModuleParser(cs);
                 node = g.file_input();
@@ -137,7 +137,7 @@ public class ParserFacade {
                 ByteArrayInputStream bi = new ByteArrayInputStream(
                         StringUtil.toBytes(string));
                 BufferedInputStream bstream = bstream = new BufferedInputStream(bi);
-                bufreader = prepBufreader(bstream, cflags);
+                bufreader = prepBufreader(bstream, cflags, filename);
                 InteractiveParser i = new InteractiveParser(bufreader);
                 node = i.parse();
             } else {
@@ -173,7 +173,8 @@ public class ParserFacade {
 
 
     private static BufferedReader prepBufreader(InputStream istream,
-                                                CompilerFlags cflags) throws IOException {
+                                                CompilerFlags cflags,
+                                                String filename) throws IOException {
         String encoding = readEncoding(istream);
         if(encoding == null && cflags != null && cflags.encoding != null) {
             encoding = cflags.encoding;
@@ -184,8 +185,7 @@ public class ParserFacade {
             try {
                 reader = new InputStreamReader(istream, encoding);
             } catch(UnsupportedEncodingException exc) {
-                throw Py.SystemError("Encoding, " + encoding
-                        + ", isn't supported by this JVM so we can't parse this data.");
+                throw new PySyntaxError("Encoding '" + encoding + "' isn't supported by this JVM.", 0, 0, "", filename);
             }
         } else {
             try {
