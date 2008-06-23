@@ -277,6 +277,10 @@ public class PySystemState extends PyObject
         codecs.setDefaultEncoding(encoding);
     }
 
+    public PyObject getfilesystemencoding() {
+        return Py.None;
+    }
+
     /**
      * Initialize the environ dict from System.getenv.
      *
