@@ -130,7 +130,12 @@ import java.util.Set;
     }
 
     private modType makeInteractive(PythonTree t, List stmts) {
-        stmtType[] s = (stmtType[])stmts.toArray(new stmtType[stmts.size()]);
+        stmtType[] s;
+        if (stmts == null) {
+            s = new stmtType[0];
+        } else {
+            s = (stmtType[])stmts.toArray(new stmtType[stmts.size()]);
+        }
         return new Interactive(t, s);
     }
 
@@ -269,7 +274,7 @@ expression returns [modType mod]
     ;
 
 interactive returns [modType mod]
-    : ^(Interactive stmts) { $mod = makeInteractive($Interactive, $stmts.stypes); }
+    : ^(Interactive stmts?) { $mod = makeInteractive($Interactive, $stmts.stypes); }
     ;
 
 module returns [modType mod]

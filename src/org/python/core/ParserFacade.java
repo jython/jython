@@ -171,7 +171,6 @@ public class ParserFacade {
         return true;
     }
 
-
     private static BufferedReader prepBufreader(InputStream istream,
                                                 CompilerFlags cflags,
                                                 String filename) throws IOException {

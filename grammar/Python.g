@@ -489,7 +489,7 @@ int startPos=-1;
 }
 
 //single_input: NEWLINE | simple_stmt | compound_stmt NEWLINE
-single_input : NEWLINE
+single_input : NEWLINE -> ^(Interactive)
              | simple_stmt -> ^(Interactive simple_stmt)
              | compound_stmt NEWLINE -> ^(Interactive compound_stmt)
              ;
