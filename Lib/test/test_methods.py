@@ -2,7 +2,7 @@
 
 from test_support import *
 
-print_test('Bound and unbound methods (test_methods.py)', 1)
+print 'Bound and unbound methods (test_methods.py)'
 
 class A:
     def one(self): return 'one'
@@ -17,18 +17,18 @@ a = A()
 b = B()
 c = C()
 
-print_test('unbound method equality', 2)
+print 'unbound method equality'
 assert A.one == B.one
 assert A.one <> C.one
 
-print_test('method attributes', 2)
+print 'method attributes'
 assert A.one.im_func == a.one.im_func
 assert a.one.im_self == a
 assert a.one.im_class == A
 assert b.one.im_self == b
 assert b.one.im_class == B
 
-print_test('unbound method invocation w/ explicit self', 2)
+print 'unbound method invocation w/ explicit self'
 assert A.one(b) == 'one'
 assert B.two(b) == 'two'
 assert B.one(b) == 'one'
@@ -48,7 +48,7 @@ try:
 except TypeError:
     pass
 
-print_test('"unbound" methods of builtin types', 2)
+print '"unbound" methods of builtin types'
 w = [1,2,3].append
 x = [4,5,6].append
 assert w <> x

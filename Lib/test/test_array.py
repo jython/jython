@@ -14,7 +14,7 @@ from java.lang import String
 from java.lang.reflect import Array
 from java.util import Arrays
 
-print_test('array module (test_array.py)', 1)
+print 'array module (test_array.py)'
 
 def main():
    
@@ -58,7 +58,7 @@ def test_java_object_arrays():
    
 
 def test_java_compat():
-   print_test('array', 2)
+   print 'array'
    from java import awt
    hsb = awt.Color.RGBtoHSB(0,255,255, None)
    #print hsb
@@ -69,7 +69,7 @@ def test_java_compat():
    #print hex(rgb)
    verify(rgb == 0xff00ffff, "output rgb bytes don't match input hsb floats")
    
-   print_test('zeros', 2)
+   print 'zeros'
    hsb1 = zeros('f', 3)
    awt.Color.RGBtoHSB(0,255,255, hsb1)
    #print hsb, hsb1

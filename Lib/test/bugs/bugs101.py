@@ -38,8 +38,8 @@ def test32():
     'return in finally clause causes java.lang.VerifyError at compile time'
     exec code32
 
-print_test('Bug Fixes', 0)
-print_test('From 1.0.1 to 1.0.2', 1)
+print 'Bug Fixes'
+print 'From 1.0.1 to 1.0.2'
 
 items = locals().items()
 items.sort()
@@ -47,7 +47,7 @@ items.sort()
 errors = 0
 for name, value in items:
     if name[:4] == 'test':
-        print_test(value.__doc__+' #'+name[4:], 2)
+        print value.__doc__+' #'+name[4:]
         try:
             value()
         except:

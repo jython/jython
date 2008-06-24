@@ -2,10 +2,10 @@
 
 from test_support import *
 
-print_test('Operations (test_operations.py)', 1)
+print 'Operations (test_operations.py)'
 
-print_test('Numeric', 2)
-print_test('+', 3)
+print 'Numeric'
+print '+'
 assert 0 + 0 == 0
 assert 0 + 3 == 3
 assert 0 + 42 == 42
@@ -33,7 +33,7 @@ assert 3L + 42L == 45L
 assert 42L + 0L == 42L
 assert 42L + 3L == 45L
 assert 42L + 42L == 84L
-print_test('-', 3)
+print '-'
 assert 0 - 0 == 0
 assert 0 - 3 == -3
 assert 0 - 42 == -42
@@ -61,7 +61,7 @@ assert 3L - 42L == -39L
 assert 42L - 0L == 42L
 assert 42L - 3L == 39L
 assert 42L - 42L == 0L
-print_test('*', 3)
+print '*'
 assert 0 * 0 == 0
 assert 0 * 3 == 0
 assert 0 * 42 == 0
@@ -89,7 +89,7 @@ assert 3L * 42L == 126L
 assert 42L * 0L == 0L
 assert 42L * 3L == 126L
 assert 42L * 42L == 1764L
-print_test('/', 3)
+print '/'
 assert 0 / 3 == 0
 assert 0 / 42 == 0
 assert 3 / 3 == 1
@@ -108,7 +108,7 @@ assert 3L / 3L == 1L
 assert 3L / 42L == 0L
 assert 42L / 3L == 14L
 assert 42L / 42L == 1L
-print_test('**', 3)
+print '**'
 assert 0 ** 0 == 1
 assert 0 ** 3 == 0
 assert 0 ** 42 == 0
@@ -134,7 +134,7 @@ assert 3L ** 42L == 109418989131512359209L
 assert 42L ** 0L == 1L
 assert 42L ** 3L == 74088L
 assert 42L ** 42L == 150130937545296572356771972164254457814047970568738777235893533016064L
-print_test('%', 3)
+print '%'
 assert 0 % 3 == 0
 assert 0 % 42 == 0
 assert 3 % 3 == 0
@@ -154,8 +154,8 @@ assert 3L % 42L == 3L
 assert 42L % 3L == 0L
 assert 42L % 42L == 0L
 
-print_test('Binary', 2)
-print_test('|', 3)
+print 'Binary'
+print '|'
 assert 0 | 0 == 0
 assert 0 | 3 == 3
 assert 0 | 42 == 42
@@ -174,7 +174,7 @@ assert 3L | 42L == 43L
 assert 42L | 0L == 42L
 assert 42L | 3L == 43L
 assert 42L | 42L == 42L
-print_test('^', 3)
+print '^'
 assert 0 ^ 0 == 0
 assert 0 ^ 3 == 3
 assert 0 ^ 42 == 42
@@ -193,7 +193,7 @@ assert 3L ^ 42L == 41L
 assert 42L ^ 0L == 42L
 assert 42L ^ 3L == 41L
 assert 42L ^ 42L == 0L
-print_test('&', 3)
+print '&'
 assert 0 & 0 == 0
 assert 0 & 3 == 0
 assert 0 & 42 == 0
@@ -212,7 +212,7 @@ assert 3L & 42L == 2L
 assert 42L & 0L == 0L
 assert 42L & 3L == 2L
 assert 42L & 42L == 42L
-print_test('<<', 3)
+print '<<'
 assert 0 << 0 == 0
 assert 0 << 3 == 0
 assert 0 << 42 == 0
@@ -231,7 +231,7 @@ assert 3L << 42L == 13194139533312L
 assert 42L << 0L == 42L
 assert 42L << 3L == 336L
 assert 42L << 42L == 184717953466368L
-print_test('>>', 3)
+print '>>'
 assert 0 >> 0 == 0
 assert 0 >> 3 == 0
 assert 0 >> 42 == 0
@@ -251,8 +251,8 @@ assert 42L >> 0L == 42L
 assert 42L >> 3L == 5L
 assert 42L >> 42L == 0L
 
-print_test('Comparison', 2)
-print_test('<', 3)
+print 'Comparison'
+print '<'
 assert (0 < 0) == 0
 assert (0 < 3) == 1
 assert (0 < 42) == 1
@@ -280,7 +280,7 @@ assert (3L < 42L) == 1
 assert (42L < 0L) == 0
 assert (42L < 3L) == 0
 assert (42L < 42L) == 0
-print_test('>', 3)
+print '>'
 assert (0 > 0) == 0
 assert (0 > 3) == 0
 assert (0 > 42) == 0
@@ -308,7 +308,7 @@ assert (3L > 42L) == 0
 assert (42L > 0L) == 1
 assert (42L > 3L) == 1
 assert (42L > 42L) == 0
-print_test('==', 3)
+print '=='
 assert (0 == 0) == 1
 assert (0 == 3) == 0
 assert (0 == 42) == 0
@@ -336,7 +336,7 @@ assert (3L == 42L) == 0
 assert (42L == 0L) == 0
 assert (42L == 3L) == 0
 assert (42L == 42L) == 1
-print_test('<=', 3)
+print '<='
 assert (0 <= 0) == 1
 assert (0 <= 3) == 1
 assert (0 <= 42) == 1
@@ -364,7 +364,7 @@ assert (3L <= 42L) == 1
 assert (42L <= 0L) == 0
 assert (42L <= 3L) == 0
 assert (42L <= 42L) == 1
-print_test('>=', 3)
+print '>='
 assert (0 >= 0) == 1
 assert (0 >= 3) == 0
 assert (0 >= 42) == 0
@@ -392,7 +392,7 @@ assert (3L >= 42L) == 0
 assert (42L >= 0L) == 1
 assert (42L >= 3L) == 1
 assert (42L >= 42L) == 1
-print_test('and', 3)
+print 'and'
 assert (0 and 0) == 0
 assert (0 and 3) == 0
 assert (0 and 42) == 0
@@ -420,7 +420,7 @@ assert (3L and 42L) == 42L
 assert (42L and 0L) == 0L
 assert (42L and 3L) == 3L
 assert (42L and 42L) == 42L
-print_test('or', 3)
+print 'or'
 assert (0 or 0) == 0
 assert (0 or 3) == 3
 assert (0 or 42) == 42
@@ -449,27 +449,27 @@ assert (42L or 0L) == 42L
 assert (42L or 3L) == 42L
 assert (42L or 42L) == 42L
 
-print_test('Indexing', 2)
+print 'Indexing'
 lst = range(5)
 
-print_test('[i]', 3)
+print '[i]'
 assert lst[0] == 0
 assert lst[3] == 3
 lst[3] = 99 
 assert lst[3] == 99
 lst[3] = 3
 
-print_test('[i:j]', 3)
+print '[i:j]'
 assert lst[:2] == [0,1]
 assert lst[-3:] == [2,3,4]
 assert lst[2:] == [2,3,4]
 assert lst[0:2] == [0,1]
 assert lst[1:3] == [1,2]
 
-print_test('in', 3)
+print 'in'
 assert 2 in lst
 assert not (8 in lst)
 
-print_test('not in', 3)
+print 'not in'
 assert 8 not in lst
 assert not (2 not in lst)
