@@ -306,7 +306,7 @@ import java.util.Iterator;
         }
 
         long l = Long.valueOf(s, radix).longValue();
-        if (l > 0xffffffffl || (radix == 10 && l > Integer.MAX_VALUE)) {
+        if (l > 0xffffffffl || (l > Integer.MAX_VALUE)) {
             return Py.newLong(new BigInteger(s, radix));
         }
         return Py.newInteger((int) l);
