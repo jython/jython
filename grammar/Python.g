@@ -868,8 +868,8 @@ scope {
         seenSingleOuterSuite = true;
     }
 }
-    : NEWLINE! INDENT (stmt)+ DEDENT NEWLINE!
-    | {!$single_suite::outer}? => NEWLINE! INDENT (stmt)+ DEDENT
+    : {!$single_suite::outer}? => NEWLINE! INDENT (stmt)+ DEDENT
+    | NEWLINE! INDENT (stmt)+ DEDENT NEWLINE!
     ;
 
 //test: or_test ['if' or_test 'else' test] | lambdef
