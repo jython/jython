@@ -144,11 +144,17 @@ except NameError:
 
 is_jython = sys.platform.startswith('java')
 
+underlying_system = sys.platform
+if is_jython:
+    import java.lang.System
+    underlying_system = java.lang.System.getProperty('os.name').lower()
+
 import os
 # Filename used for testing
 if os.name == 'java':
     # Jython disallows @ in module names
-    TESTFN = '$test'
+    #TESTFN = '$test'
+    TESTFN = '__test' # XXX mmh, something good and that works on unix too
 elif os.name == 'riscos':
     TESTFN = 'testfile'
 else:
