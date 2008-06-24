@@ -949,6 +949,7 @@ _skips = {
         """
         test_aepack
         test_al
+        test_asynchat
         test_audioop
         test_bsddb
         test_bsddb185
