@@ -243,6 +243,7 @@ public class exceptions implements ClassDictInit {
         defineSlots(dict, "errno", "strerror", "filename");
         dict.__setitem__("__init__", bindStaticJavaMethod("__init__", "EnvironmentError__init__"));
         dict.__setitem__("__str__", bindStaticJavaMethod("__str__", "EnvironmentError__str__"));
+        dict.__setitem__("__reduce__", bindStaticJavaMethod("__reduce__", "EnvironmentError__reduce__"));
         return dict;
     }
 
@@ -277,6 +278,27 @@ public class exceptions implements ClassDictInit {
             return PyBaseException.TYPE.invoke("__str__", self, args, kwargs);
         }
         return Py.newString(result);
+    }
+
+    public static PyObject EnvironmentError__reduce__(PyObject self, PyObject[] args,
+                                                      String[] kwargs) {
+        PyBaseException selfBase = (PyBaseException)self;
+        PyObject reduceArgs = selfBase.args;
+        PyObject filename = self.__findattr__("filename");
+
+        // self->args is only the first two real arguments if there was a file name given
+        // to EnvironmentError
+        if (selfBase.args.__len__() == 2 && filename != null) {
+            reduceArgs = new PyTuple(selfBase.args.__finditem__(0),
+                                     selfBase.args.__finditem__(1),
+                                     filename);
+        }
+
+        if (selfBase.__dict__ != null) {
+            return new PyTuple(selfBase.getType(), reduceArgs, selfBase.__dict__);
+        } else {
+            return new PyTuple(selfBase.getType(), reduceArgs);
+        }
     }
 
     public static PyObject SystemExit() {
