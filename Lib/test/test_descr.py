@@ -4416,9 +4416,6 @@ def test_main():
             # Jython file lacks doc strings
             descrdoc,
 
-            # Already fixed on the pep352 branch
-            setdict,
-
             # New style classes don't support __del__:
             # http://bugs.jython.org/issue1057
             delhook,
