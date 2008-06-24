@@ -100,6 +100,14 @@ class LogRecordSocketReceiver(ThreadingTCPServer):
         self.timeout = 1
 
     def serve_until_stopped(self):
+        if sys.platform.startswith('java'):
+            # XXX: There's a problem using cpython_compatibile_select
+            # here: it seems to be due to the fact that
+            # cpython_compatible_select switches blocking mode on while
+            # a separate thread is reading from the same socket, causing
+            # a read of 0 in LogRecordStreamHandler.handle (which
+            # deadlocks this test)
+            self.socket.setblocking(0)
         while not self.abort:
             rd, wr, ex = select.select([self.socket.fileno()], [], [],
                                        self.timeout)
