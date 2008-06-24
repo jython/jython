@@ -8,6 +8,7 @@
 # $Id: test_optparse.py 50791 2006-07-23 16:05:51Z greg.ward $
 #
 
+import __builtin__
 import sys
 import os
 import re
@@ -795,14 +796,14 @@ class TestBool(BaseTest):
         (options, args) = self.assertParseOK(["-q"],
                                              {'verbose': 0},
                                              [])
-        if hasattr(__builtins__, 'False'):
+        if hasattr(__builtin__, 'False'):
             self.failUnless(options.verbose is False)
 
     def test_bool_true(self):
         (options, args) = self.assertParseOK(["-v"],
                                              {'verbose': 1},
                                              [])
-        if hasattr(__builtins__, 'True'):
+        if hasattr(__builtin__, 'True'):
             self.failUnless(options.verbose is True)
 
     def test_bool_flicker_on_and_off(self):
@@ -1628,6 +1629,9 @@ def _testclasses():
     return [getattr(mod, name) for name in dir(mod) if name.startswith('Test')]
 
 def suite():
+    if test_support.is_jython:
+        # XXX: CPython ref count specific test
+        del TestOptionParser.test_refleak
     suite = unittest.TestSuite()
     for testclass in _testclasses():
         suite.addTest(unittest.makeSuite(testclass))
@@ -1637,4 +1641,4 @@ def test_main():
     test_support.run_suite(suite())
 
 if __name__ == '__main__':
-    unittest.main()
+    test_main()
