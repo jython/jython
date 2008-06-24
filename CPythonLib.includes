@@ -104,6 +104,7 @@ pydoc.py
 Queue.py
 quopri.py
 random.py
+re.py
 reconvert.py
 repr.py
 rfc822.py
