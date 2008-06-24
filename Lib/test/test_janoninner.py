@@ -3,13 +3,13 @@
 import sys
 from test_support import *
 
-print_test('Java Anonymous Inner Classes (test_janoninner.py)', 1)
+print 'Java Anonymous Inner Classes (test_janoninner.py)'
 
-print_test('importing', 2)
+print 'importing'
 import javatests.AnonInner
 
-print_test('instantiating', 2)
+print 'instantiating'
 x = javatests.AnonInner()
 
-print_test('invoking', 2)
+print 'invoking'
 assert x.doit() == 2000

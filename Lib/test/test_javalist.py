@@ -32,22 +32,22 @@ class PyTupleTest(ListTest):
 
 
 # these first two tests just verify that we have a good unit test
-print_test("ListTest.java driver (test_javalist.py)", 1)
-print_test("running test on ArrayList", 2)
+print "ListTest.java driver (test_javalist.py)"
+print "running test on ArrayList"
 alt = ListTest.getArrayListTest(False)
 alt.testAll()
 
-print_test("running test on ArrayList (read-only)", 2)
+print "running test on ArrayList (read-only)"
 alt = ListTest.getArrayListTest(True)
 alt.testAll()
 
 
 # Now run the critical tests
 
-print_test("running test on PyListTest", 2)       
+print "running test on PyListTest"
 plt = PyListTest()
 plt.testAll()       
 
-print_test("running test on PyTupleTest", 2)       
+print "running test on PyTupleTest"
 ptt = PyTupleTest()
 ptt.testAll()  

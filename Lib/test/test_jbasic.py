@@ -1,9 +1,9 @@
 from test_support import *
 
-print_test('Basic Java Integration (test_jbasic.py)', 1)
+print 'Basic Java Integration (test_jbasic.py)'
 
-print_test('type conversions', 2)
-print_test('numbers', 3)
+print 'type conversions'
+print 'numbers'
 
 from java.lang.Math import abs
 assert abs(-2.) == 2., 'Python float to Java double'
@@ -13,16 +13,16 @@ assert abs(-2l) == 2l, 'Python long to Java long'
 try: abs(-123456789123456789123l)
 except TypeError: pass
 
-print_test('strings', 3)
+print 'strings'
 from java.lang import Integer, String
 
 assert Integer.valueOf('42') == 42, 'Python string to Java string'
 
-print_test('arrays', 3)
+print 'arrays'
 chars = ['a', 'b', 'c']
 assert String.valueOf(chars) == 'abc', 'char array'
 
-print_test('Enumerations', 3)
+print 'Enumerations'
 from java.util import Vector
 
 vec = Vector()
@@ -41,7 +41,7 @@ for i in iter(vec):
     expected = expected+1
 
 
-print_test('create java objects', 2)
+print 'create java objects'
 
 from java.math import BigInteger
 
@@ -49,7 +49,7 @@ assert BigInteger('1234', 10).intValue() == 1234, 'BigInteger(string)'
 assert BigInteger([0x11, 0x11, 0x11]).intValue() == 0x111111, 'BigInteger(byte[])'
 assert BigInteger(-1, [0x11, 0x11, 0x11]).intValue() == -0x111111, 'BigInteger(int, byte[])'
 
-print_test('call static methods')
+print 'call static methods'
 s1 = String.valueOf(['1', '2', '3'])
 s2 = String.valueOf('123')
 s3 = String.valueOf(123)
@@ -57,7 +57,7 @@ s4 = String.valueOf(123l)
 s5 = String.valueOf(['0', '1', '2', '3', 'a', 'b'], 1, 3)
 assert s1 == s2 == s3 == s4 == s5, 'String.valueOf method with different arguments'
 
-print_test('call instance methods')
+print 'call instance methods'
 s = String('hello')
 assert s.regionMatches(1, 1, 'ell', 0, 3), 'method call with boolean true'
 assert s.regionMatches(0, 1, 'ell', 0, 3), 'method call with boolean false'
@@ -68,7 +68,7 @@ assert not s.regionMatches(1, 'eLl', 0, 3), 'should ignore case'
 
 from java.awt import Dimension
 
-print_test('get/set fields')
+print 'get/set fields'
 d = Dimension(3,9)
 assert d.width == 3 and d.height == 9, 'getting fields'
 d.width = 42
@@ -82,7 +82,7 @@ except AttributeError:
 else:
         raise AssertionError, 'd.foo should throw type error'
 
-print_test('get/set bean properties')
+print 'get/set bean properties'
 
 from javax import swing
 b1 = swing.JButton()
@@ -90,7 +90,7 @@ b1.label = 'foo'
 b2 = swing.JButton(label='foo')
 assert b1.label == b2.label == 'foo', 'Button label bean property'
 
-print_test('bean event properties')
+print 'bean event properties'
 # Test bean event properties - single and multiple
 flag = 0
 def testAction(event):

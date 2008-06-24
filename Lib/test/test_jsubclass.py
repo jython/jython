@@ -1,12 +1,12 @@
 from test_support import *
 
-print_test('Subclassing Java from Python (test_jsubclass.py)', 1)
+print 'Subclassing Java from Python (test_jsubclass.py)'
 
 from java.lang import Runnable, Thread
 
 # Overriding Methods
 
-print_test('override methods', 2)
+print 'override methods'
 class MyThread(Thread):
         count = 0
         def run(self):
@@ -18,7 +18,7 @@ t1.start()
 t1.join()
 assert t1.count == 1, 'subclassing java.lang.Thread'
 
-print_test('pass subclass back to java', 2)
+print 'pass subclass back to java'
 
 class MyRun(Runnable):
         count = 0
@@ -31,7 +31,7 @@ t.start()
 t.join()
 assert run.count == 1, 'subclassing java.lang.Thread'
 
-print_test("invoke super's constructor", 2)
+print "invoke super's constructor"
 
 class MyThread(Thread):
         def __init__(self):
