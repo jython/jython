@@ -40,6 +40,7 @@ cookielib.py
 copy.py
 copy_reg.py
 Cookie.py
+decimal.py
 difflib.py
 dircache.py
 dircmp.py
@@ -58,6 +59,7 @@ gettext.py
 glob.py
 gopherlib.py
 gzip.py
+hashlib.py
 heapq.py
 hmac.py
 htmlentitydefs.py
@@ -94,6 +96,7 @@ pickle.py
 pickletools.py
 pipes.py
 pkgutil.py
+platform.py
 poplib.py
 posixfile.py
 pprint.py
@@ -133,6 +136,7 @@ textwrap.py
 timeit.py
 token.py
 tokenize.py
+trace.py
 traceback.py
 tzparse.py
 unittest.py
