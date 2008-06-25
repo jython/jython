@@ -182,6 +182,10 @@ import java.util.Iterator;
 } 
 
 @members {
+    //If you want to use antlr's default error recovery mechanisms change this
+    //and the same one in the lexer to true.
+    private boolean antlrErrorHandling = false;
+
     //XXX: only used for single_input -- seems kludgy.
     public boolean inSingle = false;
     private boolean seenSingleOuterSuite = false;
@@ -391,16 +395,19 @@ import java.util.Iterator;
 
  
     protected void mismatch(IntStream input, int ttype, BitSet follow) throws RecognitionException {
-        throw new MismatchedTokenException(ttype, input);
-    }
-
-    protected void mismatch(IntStream input, RecognitionException e, BitSet follow) throws RecognitionException {
-        throw e;
+        if (antlrErrorHandling) {
+            super.mismatch(input, ttype, follow);
+        } else {
+            throw new MismatchedTokenException(ttype, input);
+        }
     }
 
 	protected Object recoverFromMismatchedToken(IntStream input, int ttype, BitSet follow)
 		throws RecognitionException
 	{
+        if (antlrErrorHandling) {
+            return super.recoverFromMismatchedToken(input, ttype, follow);
+        }
         mismatch(input, ttype, follow);
         return null;
     }
@@ -408,8 +415,14 @@ import java.util.Iterator;
 }
 
 @rulecatch {
-catch (RecognitionException r) {
-    throw new ParseException(r);
+catch (RecognitionException re) {
+    if (antlrErrorHandling) {
+        reportError(re);
+        recover(input,re);
+    	retval.tree = (PythonTree)adaptor.errorNode(input, retval.start, input.LT(-1), re);
+    } else {
+        throw new ParseException(re);
+    }
 }
 }
 
@@ -423,12 +436,20 @@ package org.python.antlr;
  *  a = [3,
  *       4]
  */
+
+//If you want to use antlr's default error recovery mechanisms change this
+//and the same one in the parser to true.
+private boolean antlrErrorHandling = false;
+
 //XXX: Hopefully we can remove inSingle when we get PyCF_DONT_IMPLY_DEDENT support.
 public boolean inSingle = false;
 int implicitLineJoiningLevel = 0;
 int startPos=-1;
 
     public Token nextToken() {
+        if (antlrErrorHandling) {
+            return super.nextToken();
+        }
         while (true) {
             state.token = null;
             state.channel = Token.DEFAULT_CHANNEL;
