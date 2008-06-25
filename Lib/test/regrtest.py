@@ -15,6 +15,7 @@ Command line options:
 -x: exclude    -- arguments are tests to *exclude*
 -s: single     -- run only a single test (see below)
 -r: random     -- randomize test execution order
+-m: memo       -- save results to file
 -f: fromfile   -- read names of tests to run from a file (see below)
 -l: findleaks  -- if GC is available detect tests that leak memory
 -u: use        -- specify which special resource intensive tests to run
@@ -180,7 +181,7 @@ def usage(code, msg=''):
 def main(tests=None, testdir=None, verbose=0, quiet=False, generate=False,
          exclude=False, single=False, randomize=False, fromfile=None,
          findleaks=False, use_resources=None, trace=False, coverdir='coverage',
-         runleaks=False, huntrleaks=False, verbose2=False, expected=False):
+         runleaks=False, huntrleaks=False, verbose2=False, expected=False, memo=None):
     """Execute a test suite.
 
     This also parses command-line options and modifies its behavior
@@ -205,13 +206,13 @@ def main(tests=None, testdir=None, verbose=0, quiet=False, generate=False,
 
     test_support.record_original_stdout(sys.stdout)
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hvgqxsrf:lu:t:TD:NLR:wM:e',
+        opts, args = getopt.getopt(sys.argv[1:], 'hvgqxsrf:lu:t:TD:NLR:wM:em:',
                                    ['help', 'verbose', 'quiet', 'generate',
                                     'exclude', 'single', 'random', 'fromfile',
                                     'findleaks', 'use=', 'threshold=', 'trace',
                                     'coverdir=', 'nocoverdir', 'runleaks',
                                     'huntrleaks=', 'verbose2', 'memlimit=',
-                                    'expected'
+                                    'expected', 'memo'
                                     ])
     except getopt.error, msg:
         usage(2, msg)
@@ -248,6 +249,8 @@ def main(tests=None, testdir=None, verbose=0, quiet=False, generate=False,
             findleaks = True
         elif o in ('-L', '--runleaks'):
             runleaks = True
+        elif o in ('-m', '--memo'):
+            memo = a
         elif o in ('-t', '--threshold'):
             import gc
             gc.set_threshold(int(a))
@@ -464,6 +467,9 @@ def main(tests=None, testdir=None, verbose=0, quiet=False, generate=False,
 
     if runleaks:
         os.system("leaks %d" % os.getpid())
+
+    if memo:
+        savememo(memo,good,bad,skipped)
 
     sys.exit(surprises > 0)
 
@@ -1503,6 +1509,17 @@ class _ExpectedFailures(_ExpectedSkips):
             self.expected = set(s.split())
             self.valid = True
 
+def savememo(memo,good,bad,skipped):
+    f = open(memo,'w')
+    try:
+        for n,l in [('good',good),('bad',bad),('skipped',skipped)]:
+            print >>f,"%s = [" % n
+            for x in l:
+                print >>f,"    %r," % x
+            print >>f," ]"
+    finally:
+        f.close()
+ 
 if __name__ == '__main__':
     # Remove regrtest.py's own directory from the module search path.  This
     # prevents relative imports from working, and relative imports will screw
