@@ -141,4 +141,16 @@ public class ParseException extends RuntimeException {
         }
         return -1;
     }
+
+    public String info() {
+        return "info: " + 
+        "input:" + input +
+        "\nindex:" + index +
+        "\ntoken:" + token +
+        "\nnode:" + node +
+        "\nc:" + c +
+        "\nline:" + line +
+        "\ncharPositionInLine:" + charPositionInLine +
+        "\napproximateLineInfo:" + approximateLineInfo;
+    }
 }

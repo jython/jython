@@ -17,116 +17,82 @@ public class PythonTreeTester {
 
     public enum Block { MODULE, INTERACTIVE, EXPRESSION };
 
-	private boolean _parseOnly;
-	private boolean _tolerant;
+    private boolean _parseOnly;
     private Block _block;
 
-	public PythonTreeTester() {
-		setParseOnly(false);
-		setTolerant(true);
+    public PythonTreeTester() {
+        setParseOnly(false);
         setBlock(Block.MODULE);
-	}
+    }
 
-	public PythonTree parse(String[] args) throws Exception {
-		PythonTree result = null;
-		CharStream input = new ANTLRFileStream(args[0]);
-		PythonLexer lexer = new ModuleParser.PyLexer(input);
-		CommonTokenStream tokens = new CommonTokenStream(lexer);
-		tokens.discardOffChannelTokens(true);
-		PythonTokenSource indentedSource = new PythonTokenSource(tokens);
-		tokens = new CommonTokenStream(indentedSource);
-		PythonParser parser = new PythonParser(tokens);
-		parser.setTreeAdaptor(new PythonTreeAdaptor());
-		try {
-            Tree r = null;
+    public PythonTree parse(String[] args) throws Exception {
+        PythonTree result = null;
+        CharStream input = new ANTLRFileStream(args[0]);
+        PythonLexer lexer = new ModuleParser.PyLexer(input);
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        tokens.discardOffChannelTokens(true);
+        PythonTokenSource indentedSource = new PythonTokenSource(tokens);
+        tokens = new CommonTokenStream(indentedSource);
+        PythonParser parser = new PythonParser(tokens);
+        parser.setTreeAdaptor(new PythonTreeAdaptor());
+        Tree r = null;
+        switch (_block) {
+        case MODULE :
+            r = (Tree)parser.file_input().tree;
+            break;
+        case INTERACTIVE :
+            r = (Tree)parser.single_input().tree;
+            break;
+        case EXPRESSION :
+            r = (Tree)parser.eval_input().tree;
+                break;
+        }
+        if (args.length > 1) {
+            System.out.println((r).toStringTree());
+        }
+        if (!isParseOnly()) {
+            CommonTreeNodeStream nodes = new CommonTreeNodeStream(r);
+            nodes.setTokenStream(tokens);
+            PythonWalker walker = new PythonWalker(nodes);
             switch (_block) {
             case MODULE :
-			    r = (Tree)parser.file_input().tree;
+                result = walker.module();
                 break;
             case INTERACTIVE :
-			    r = (Tree)parser.single_input().tree;
+                result = walker.interactive();
                 break;
             case EXPRESSION :
-			    r = (Tree)parser.eval_input().tree;
+                result = walker.expression();
                 break;
             }
-			//Tree r = (Tree)parser.file_input().tree;
-			if (parser.hasErrors()) {
-				// handle errors swallowed by antlr recovery
-				String errors = parser.getErrors().toString();
-				if (isTolerant()) {
-					System.err.println(errors);
-				} else {
-					throw new RuntimeException(errors);
-				}
-			}
-			if (args.length > 1) {
-				System.out.println((r).toStringTree());
-			}
-			if (!isParseOnly()) {
-				CommonTreeNodeStream nodes = new CommonTreeNodeStream(r);
-				nodes.setTokenStream(tokens);
-				PythonWalker walker = new PythonWalker(nodes);
-                switch (_block) {
-                case MODULE :
-				    result = walker.module();
-                    break;
-                case INTERACTIVE :
-                    result = walker.interactive();
-                    break;
-                case EXPRESSION :
-                    result = walker.expression();
-                    break;
-                }
 
-				if (args.length > 1) {
-					System.out.println(result.toStringTree());
-				}
-			}
-		} catch (RecognitionException e) {
-			if (isTolerant()) {
-				System.err.println("Error: " + e);
-			} else {
-				throw e;
-			}
-		}
-		return result;
-	}
+            if (args.length > 1) {
+                System.out.println(result.toStringTree());
+            }
+        }
+        return result;
+    }
 
-	/**
-	 * If set to <code>true</code>, only <code>PythonParser</code> is
-	 * called.
-	 * 
-	 * @param parseOnly
-	 */
-	public void setParseOnly(boolean parseOnly) {
-		_parseOnly = parseOnly;
-	}
+    /**
+     * If set to <code>true</code>, only <code>PythonParser</code> is
+     * called.
+     * 
+     * @param parseOnly
+     */
+    public void setParseOnly(boolean parseOnly) {
+        _parseOnly = parseOnly;
+    }
 
-	public boolean isParseOnly() {
-		return _parseOnly;
-	}
+    public boolean isParseOnly() {
+        return _parseOnly;
+    }
 
-	/**
-	 * If set to <code>true</code>, exceptions are catched and logged to
-	 * <code>System.err</code>.
-	 * 
-	 * @param tolerant
-	 */
-	public void setTolerant(boolean tolerant) {
-		_tolerant = tolerant;
-	}
+    public void setBlock(Block block) {
+        _block = block;
+    }
 
-	public boolean isTolerant() {
-		return _tolerant;
-	}
-
-	public void setBlock(Block block) {
-		_block = block;
-	}
-
-	public Block getBlock() {
-		return _block;
-	}
+    public Block getBlock() {
+        return _block;
+    }
 
 }

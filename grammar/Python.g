@@ -405,38 +405,6 @@ import java.util.Iterator;
         return null;
     }
 
-
-    /**
-     * A list holding the error message(s) encountered during parse.
-     */
-    private List<String> _errors = new ArrayList<String>();
-
-    /**
-     * @return <code>true</code> if the parser collected one or more error messages,
-     *         <code>false</code> otherwise.
-     */
-    public boolean hasErrors() {
-      return getErrors().size() > 0;
-    }
-
-    /**
-     * @return A list of the error message(s) collected during parse.
-     */
-    public List<String> getErrors() {
-        return _errors;
-    }
-
-    /**
-     * Overridden to be able to collect error messages.
-     * <p>
-     * Since we do not want to lose the recovery mechanism and the verbose messages.
-     */
-    @Override
-    public void emitErrorMessage(String msg) {
-       super.emitErrorMessage(msg);
-       getErrors().add(msg);
-    }
-
 }
 
 @rulecatch {
