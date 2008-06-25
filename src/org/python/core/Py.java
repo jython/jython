@@ -1640,23 +1640,19 @@ public final class Py {
                 cflags);
     }
 
-    public static PyObject[] unpackSequence(PyObject o, int length) {
-        if (o instanceof PyTuple) {
-            PyTuple tup = (PyTuple) o;
-            //System.err.println("unpack tuple");
-            if (tup.__len__() == length) {
-                return tup.getArray();
-            }
-            throw Py.ValueError("too many values to unpack");
+    public static PyObject[] unpackSequence(PyObject obj, int length) {
+        if (obj instanceof PyTuple && obj.__len__() == length) {
+            // optimization
+            return ((PyTuple)obj).getArray();
         }
 
         PyObject[] ret = new PyObject[length];
-        PyObject iter = o.__iter__();
+        PyObject iter = obj.__iter__();
         for (int i = 0; i < length; i++) {
             PyObject tmp = iter.__iternext__();
             if (tmp == null) {
-                throw Py.ValueError(String.format("need more than %d value%s to unpack",
-                                                  i, i == 1 ? "" : "s"));
+                throw Py.ValueError(String.format("need more than %d value%s to unpack", i,
+                                                  i == 1 ? "" : "s"));
             }
             ret[i] = tmp;
         }
