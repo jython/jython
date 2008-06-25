@@ -159,10 +159,6 @@ public class exceptions implements ClassDictInit {
         buildClass(dict, "RuntimeWarning", "Warning",
                    "Base class for warnings about dubious runtime behavior.");
 
-        // XXX: remove when CPythonLib 2.5 hits
-        buildClass(dict, "OverflowWarning", "Warning",
-                   "Base class for warnings about numeric overflow.");
-        
         buildClass(dict, "FutureWarning", "Warning",
                    "Base class for warnings about constructs that will change semantically\n"
                    + "in the future.");

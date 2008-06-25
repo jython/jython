@@ -339,11 +339,6 @@ public final class Py {
     public static void SyntaxWarning(String message) {
         warning(SyntaxWarning, message);
     }
-    public static PyObject OverflowWarning;
-
-    public static void OverflowWarning(String message) {
-        warning(OverflowWarning, message);
-    }
     public static PyObject RuntimeWarning;
 
     public static void RuntimeWarning(String message) {
@@ -693,7 +688,6 @@ public final class Py {
         DeprecationWarning = initExc("DeprecationWarning", exc, dict);
         PendingDeprecationWarning = initExc("PendingDeprecationWarning", exc, dict);
         SyntaxWarning = initExc("SyntaxWarning", exc, dict);
-        OverflowWarning = initExc("OverflowWarning", exc, dict);
         RuntimeWarning = initExc("RuntimeWarning", exc, dict);
         FutureWarning = initExc("FutureWarning", exc, dict);
         ImportWarning = initExc("ImportWarning", exc, dict);

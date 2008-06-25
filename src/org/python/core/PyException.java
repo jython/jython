@@ -161,7 +161,7 @@ public class PyException extends RuntimeException
             type = type.__getitem__(0);
         }
 
-        if (type == PyString.TYPE) {
+        if (type.getType() == PyString.TYPE) {
             Py.warning(Py.DeprecationWarning, "raising a string exception is deprecated");
         } else if (isExceptionClass(type)) {
             PyException pye = new PyException(type, value, (PyTraceback)traceback);
