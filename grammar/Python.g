@@ -184,7 +184,7 @@ import java.util.Iterator;
 @members {
     //If you want to use antlr's default error recovery mechanisms change this
     //and the same one in the lexer to true.
-    private boolean antlrErrorHandling = false;
+    public boolean antlrErrorHandling = false;
 
     //XXX: only used for single_input -- seems kludgy.
     public boolean inSingle = false;
@@ -439,7 +439,7 @@ package org.python.antlr;
 
 //If you want to use antlr's default error recovery mechanisms change this
 //and the same one in the parser to true.
-private boolean antlrErrorHandling = false;
+public boolean antlrErrorHandling = false;
 
 //XXX: Hopefully we can remove inSingle when we get PyCF_DONT_IMPLY_DEDENT support.
 public boolean inSingle = false;
