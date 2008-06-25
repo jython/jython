@@ -1647,29 +1647,22 @@ public final class Py {
             if (tup.__len__() == length) {
                 return tup.getArray();
             }
-            throw Py.ValueError("unpack tuple of wrong size");
+            throw Py.ValueError("too many values to unpack");
         }
 
         PyObject[] ret = new PyObject[length];
         PyObject iter = o.__iter__();
-        try {
-            for (int i = 0; i < length; i++) {
-                PyObject tmp = iter.__iternext__();
-                if (tmp == null) {
-                    throw Py.ValueError("unpack sequence too short");
-                }
-                ret[i] = tmp;
+        for (int i = 0; i < length; i++) {
+            PyObject tmp = iter.__iternext__();
+            if (tmp == null) {
+                throw Py.ValueError(String.format("need more than %d value%s to unpack",
+                                                  i, i == 1 ? "" : "s"));
             }
-        } catch (PyException exc) {
-            if (Py.matchException(exc, Py.AttributeError)) {
-                throw Py.TypeError("unpack non-sequence");
-            } else {
-                throw exc;
-            }
+            ret[i] = tmp;
         }
 
         if (iter.__iternext__() != null) {
-            throw Py.ValueError("unpack sequence too long");
+            throw Py.ValueError("too many values to unpack");
         }
         return ret;
     }
