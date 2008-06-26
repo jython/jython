@@ -1318,6 +1318,11 @@ argument[List arguments]
         arguments.add($test.etype);
     }
     | ^(GenFor test[expr_contextType.Load] gen_for[gens]) {
+        if (!arguments.isEmpty()) {
+            throw new ParseException(
+                "Generator expression must be parenthesized if not sole argument",
+                $test.start);
+        }
         Collections.reverse(gens);
         comprehensionType[] c = (comprehensionType[])gens.toArray(new comprehensionType[gens.size()]);
         arguments.add(new GeneratorExp($GenFor, $test.etype, c));
