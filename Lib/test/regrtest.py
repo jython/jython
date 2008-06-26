@@ -1335,14 +1335,17 @@ _expectations = {
         """,
     'java':
         """
+        test__locale
         test_aepack
         test_al
+        test_applesingle
         test_asynchat
         test_audioop
         test_bsddb
         test_bsddb185
         test_bsddb3
         test_bz2
+        test_cProfile
         test_capi
         test_cd
         test_cl
@@ -1351,6 +1354,7 @@ _expectations = {
         test_commands
         test_crypt
         test_csv
+        test_ctypes
         test_curses
         test_dbm
         test_dl
@@ -1395,16 +1399,24 @@ _expectations = {
         test_signal
         test_socket_ssl
         test_socketserver
+        test_sqlite
+        test_startfile
         test_stringprep
         test_strop
         test_strptime
         test_sunaudiodev
         test_sundry
+        test_structmembers
         test_symtable
+        test_tcl
+        test_threadsignals
         test_timeout
         test_timing
         test_unicode_file
         test_unicodedata
+        test_wait3
+        test_wait4
+        test_xml_etree_c
         test_wave
         test_winreg
         test_winsound
@@ -1419,6 +1431,16 @@ _failures = {
         """
         test_ast
         test_class
+        test_codecencodings_cn
+        test_codecencodings_hk
+        test_codecencodings_jp
+        test_codecencodings_kr
+        test_codecencodings_tw
+        test_codecmaps_cn
+        test_codecmaps_hk
+        test_codecmaps_jp
+        test_codecmaps_kr
+        test_codecmaps_tw
         test_copy
         test_dis
         test_descrtut
@@ -1438,7 +1460,7 @@ _failures = {
         test_syntax
         test_trace
         test_ucn
-        test_unicode
+        test_xml_etree
         test_zipimport
         """,
 }
