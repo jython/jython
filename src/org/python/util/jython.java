@@ -3,6 +3,7 @@ package org.python.util;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.FileInputStream;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.zip.ZipEntry;
@@ -12,12 +13,14 @@ import org.python.core.Options;
 import org.python.core.Py;
 import org.python.core.PyCode;
 import org.python.core.PyException;
+import org.python.core.PyFile;
 import org.python.core.PyModule;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyStringMap;
 import org.python.core.PySystemState;
 import org.python.core.imp;
+import org.python.core.util.RelativeFile;
 
 public class jython
 {
@@ -113,10 +116,6 @@ public class jython
         PySystemState.initialize(PySystemState.getBaseProperties(),
                                  opts.properties, opts.argv);
 
-        if (opts.notice) {
-            System.err.println(InteractiveConsole.getDefaultBanner());
-        }
-
         // Now create an interpreter
         InteractiveConsole interp = null;
         try {
@@ -139,10 +138,20 @@ public class jython
             PySystemState.warnoptions.append(new PyString(wopt));
         }
 
+        // Decide if stdin is interactive
+        if (!opts.fixInteractive && opts.interactive) {
+            opts.interactive = ((PyFile)Py.defaultSystemState.stdin).isatty();
+        }
+        
+        // Print banner and copyright information (or not)
+        if (opts.interactive && opts.notice) {
+            System.err.println(InteractiveConsole.getDefaultBanner());
+        }
+
         if (Options.importSite) {
             try {
                 imp.load("site");
-                if (opts.notice) {
+                if (opts.interactive && opts.notice) {
                     System.err.println(COPYRIGHT);
                 }
             } catch (PyException pye) {
@@ -193,7 +202,20 @@ public class jython
                 try {
                    interp.locals.__setitem__(new PyString("__file__"),
                                              new PyString(opts.filename));
-                    interp.execfile(opts.filename);
+
+                   FileInputStream file;
+                   try {
+                       file = new java.io.FileInputStream(new RelativeFile(opts.filename));
+                   } catch (java.io.FileNotFoundException e) {
+                       throw Py.IOError(e);
+                   }
+                   if (imp.load("os").__getattr__("isatty").__call__(Py.java2py(file.getFD())).__nonzero__()) {
+                       opts.interactive = true;
+                       interp.interact(null, new PyFile(file));
+                       System.exit(0);
+                   } else {
+                       interp.execfile(file, opts.filename);
+                   }
                 } catch(Throwable t) {
                     Py.printException(t);
                     if (!opts.interactive) {
@@ -220,7 +242,7 @@ public class jython
             }
         }
 
-        if (opts.interactive) {
+        if (opts.fixInteractive || opts.interactive) {
             if (opts.encoding == null) {
                 opts.encoding = PySystemState.registry.getProperty(
                                 "python.console.encoding", null);
@@ -234,13 +256,13 @@ public class jython
                 interp.cflags.encoding = opts.encoding;
             }
             try {
-                interp.interact(null);
+                interp.interact(null, null);
             } catch (Throwable t) {
                 Py.printException(t);
             }
         }
         interp.cleanup();
-        if (opts.interactive) {
+        if (opts.fixInteractive || opts.interactive) {
             System.exit(0);
         }
     }
@@ -250,7 +272,7 @@ class CommandLineOptions
 {
     public String filename;
     public boolean jar, interactive, notice;
-    private boolean fixInteractive;
+    public boolean fixInteractive;
     public boolean help, version;
     public String[] argv;
     public java.util.Properties properties;

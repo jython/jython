@@ -937,11 +937,10 @@ public class __builtin__ {
             return (PyString) ret;
         }
     }
-
-    public static String raw_input(PyObject prompt) {
+    
+    public static String raw_input(PyObject prompt, PyObject file) {
         Py.print(prompt);
-        PyObject stdin = Py.getSystemState().stdin;
-        String data = readline(stdin).toString();
+        String data = readline(file).toString();
         if (data.endsWith("\n")) {
             return data.substring(0, data.length() - 1);
         } else {
@@ -950,6 +949,10 @@ public class __builtin__ {
             }
         }
         return data;
+    }
+
+    public static String raw_input(PyObject prompt) {
+        return raw_input(prompt, Py.getSystemState().stdin);
     }
 
     public static String raw_input() {

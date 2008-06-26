@@ -16,9 +16,9 @@ import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 
+import org.python.core.imp;
 import org.python.core.Py;
 import org.python.core.PyObject;
-import org.python.core.__builtin__;
 
 /**
  * Raw I/O implementation for simple streams.
@@ -215,8 +215,7 @@ public class StreamIO extends RawIOBase {
             return false;
         }
         
-        PyObject os = __builtin__.__import__("os");
-        return os.__getattr__("isatty").__call__(Py.java2py(fd)).__nonzero__();
+        return imp.load("os").__getattr__("isatty").__call__(Py.java2py(fd)).__nonzero__();
     }
 
     /** {@inheritDoc} */

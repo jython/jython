@@ -1,5 +1,4 @@
-# from CPython 2.4, changing Python to Jython in test_version and
-# adding workaround for <http://bugs.jython.org/issue1050> (noted below)
+# from CPython 2.4, changing Python to Jython in test_version
 
 import test.test_support, unittest
 import sys
@@ -23,8 +22,7 @@ class CmdLineTest(unittest.TestCase):
 
     def verify_valid_flag(self, cmd_line):
         data = self.start_python(cmd_line)
-        self.assertTrue(data == '' or data.endswith('\n')
-                        or data.startswith('Jython')) # Jython issue 1050
+        self.assertTrue(data == '' or data.endswith('\n'))
         self.assertTrue('Traceback' not in data)
 
     def test_environment(self):

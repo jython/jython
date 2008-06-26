@@ -12,10 +12,10 @@ import java.nio.channels.Channel;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 
+import org.python.core.imp;
 import org.python.core.Py;
 import org.python.core.PyObject;
 import org.python.core.util.RelativeFile;
-import org.python.core.__builtin__;
 import org.python.modules.errno;
 
 /**
@@ -163,9 +163,8 @@ public class FileIO extends RawIOBase {
         checkClosed();
         if (file == null) return false;
         
-        PyObject os = __builtin__.__import__("os");
         try {
-            return os.__getattr__("isatty").__call__(Py.java2py(file.getFD())).__nonzero__();
+            return imp.load("os").__getattr__("isatty").__call__(Py.java2py(file.getFD())).__nonzero__();
         } catch (IOException e) {
             return false;
         }

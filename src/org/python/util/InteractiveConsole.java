@@ -57,14 +57,14 @@ public class InteractiveConsole extends InteractiveInterpreter {
      * first interaction; by default it prints "Jython <version> on <platform>".
      */
     public void interact() {
-        interact(getDefaultBanner());
+        interact(getDefaultBanner(), null);
     }
 
     public static String getDefaultBanner() {
         return String.format("Jython %s on %s", PySystemState.version, PySystemState.platform);
     }
 
-    public void interact(String banner) {
+    public void interact(String banner, PyObject file) {
         if(banner != null) {
             write(banner);
             write("\n");
@@ -77,7 +77,10 @@ public class InteractiveConsole extends InteractiveInterpreter {
             PyObject prompt = more ? systemState.ps2 : systemState.ps1;
             String line;
             try {
-                line = raw_input(prompt);
+        	if (file == null)
+        	    line = raw_input(prompt);
+        	else
+        	    line = raw_input(prompt, file);
             } catch(PyException exc) {
                 if(!Py.matchException(exc, Py.EOFError))
                     throw exc;
@@ -111,7 +114,7 @@ public class InteractiveConsole extends InteractiveInterpreter {
     }
 
     /**
-     * Write a prompt and read a line.
+     * Write a prompt and read a line from standard input.
      * 
      * The returned line does not include the trailing newline. When the user
      * enters the EOF key sequence, EOFError is raised.
@@ -121,5 +124,12 @@ public class InteractiveConsole extends InteractiveInterpreter {
      */
     public String raw_input(PyObject prompt) {
         return __builtin__.raw_input(prompt);
+    }
+    
+    /**
+     * Write a prompt and read a line from a file.
+     */
+    public String raw_input(PyObject prompt, PyObject file) {
+	return __builtin__.raw_input(prompt, file);
     }
 }
