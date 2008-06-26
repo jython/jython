@@ -1447,7 +1447,6 @@ _failures = {
         test_eof
         test_frozen
         test_gc
-        test_hexoct
         test_iterlen
         test_marshal
         test_pep263
