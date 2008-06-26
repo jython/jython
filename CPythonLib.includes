@@ -147,6 +147,7 @@ user.py
 UserDict.py
 UserString.py
 uu.py
+uuid.py
 warnings.py
 weakref.py
 whichdb.py
