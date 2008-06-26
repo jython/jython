@@ -62,7 +62,8 @@ public class FileIO extends RawIOBase {
             if (fullPath.isDirectory()) {
                 throw Py.IOError(errno.EISDIR, "Is a directory");
             }
-            if (rafMode.equals("rw") && !fullPath.canWrite()) {
+            if ( (rafMode.equals("rw") && !fullPath.canWrite()) ||
+        	    fnfe.getMessage().endsWith("(Permission denied)")) {
                 throw Py.IOError(errno.EACCES, "Permission denied: '" + name + "'");
             }
             throw Py.IOError(errno.ENOENT, "No such file or directory: '" + name + "'");
