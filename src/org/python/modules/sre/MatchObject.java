@@ -39,7 +39,7 @@ public class MatchObject extends PyObject {
         if(args.length == 0) {
             throw Py.TypeError("expand() takes exactly 1 argument (0 given)");
         }
-        PyObject mod = imp.importName("sre", true);
+        PyObject mod = imp.importName("re", true);
         PyObject func = mod.__getattr__("_expand");
         return func.__call__(new PyObject[] {pattern, this, args[0]});
     }

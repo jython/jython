@@ -10,7 +10,7 @@
  *
  * Portions of this engine have been developed in cooperation with
  * CNRI.  Hewlett-Packard provided funding for 1.6 integration and
- * other compatibility work.
+ ther compatibility work.
  */
 
 
@@ -110,7 +110,7 @@ public class PatternObject extends PyObject {
                 filter = template;
                 filter_is_callable = false;
             } else {
-                filter = call("sre", "_subx", new PyObject[] {
+                filter = call("re", "_subx", new PyObject[] {
                     this, template});
                 filter_is_callable = filter.isCallable();
             }
