@@ -543,8 +543,10 @@ varargslist : defparameter (options {greedy=true;}:COMMA defparameter)*
 
 //fpdef: NAME | '(' fplist ')'
 fpdef : NAME {debug("parsed fpdef NAME");}
-      | LPAREN fplist RPAREN {debug("parsed fpdef:fplist");}
+      | (LPAREN fpdef COMMA) => LPAREN fplist RPAREN
      -> ^(FpList fplist)
+      | LPAREN fplist RPAREN
+     -> fplist
       ;
 
 //fplist: fpdef (',' fpdef)* [',']
