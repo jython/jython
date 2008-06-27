@@ -112,7 +112,13 @@ class ThreadTests(unittest.TestCase):
         self.test_various_ops()
         threading.stack_size(0)
 
-    def test_foreign_thread(self):
+    # this test is not applicable to jython since 
+    # 1. Lock is equiv to RLock, so this weird sync behavior won't be seen
+    # 2. We use a weak hash map to map these threads
+    # 3. This behavior doesn't make sense for Jython since any foreign
+    #    Java threads can use the same underlying locks, etc
+
+    def na_for_jython_test_foreign_thread(self):
         # Check that a "foreign" thread can use the threading module.
         def f(mutex):
             # Acquiring an RLock forces an entry for the foreign
