@@ -91,7 +91,7 @@ public class PyArray extends PySequence implements Cloneable {
         if (obj instanceof PyString) {
             String code = obj.toString();
             if (code.length() != 1) {
-                throw Py.ValueError("typecode must be in [zcbhilfd]");
+                throw Py.ValueError("array() argument 1 must be char, not str");
             }
             type = char2class(code.charAt(0));
             typecode = code;
@@ -399,15 +399,19 @@ public class PyArray extends PySequence implements Cloneable {
      * @return <code>Class</code> of the native type
      */
 
-    // promote H, I (unsigned int) to next larger size
+    // promote B, H, I (unsigned int) to next larger size
     public static Class char2class(char type) throws PyIgnoreMethodTag {
         switch(type){
             case 'z':
                 return Boolean.TYPE;
-            case 'c':
-                return Character.TYPE;
             case 'b':
                 return Byte.TYPE;
+            case 'B':
+                return Short.TYPE;
+            case 'u':
+                return Integer.TYPE;
+            case 'c':
+                return Character.TYPE;
             case 'h':
                 return Short.TYPE;
             case 'H':
@@ -418,12 +422,14 @@ public class PyArray extends PySequence implements Cloneable {
                 return Long.TYPE;
             case 'l':
                 return Long.TYPE;
+            case 'L':
+                return PyLong.class;
             case 'f':
                 return Float.TYPE;
             case 'd':
                 return Double.TYPE;
             default:
-                throw Py.ValueError("typecode must be in [zcbhilfd]");
+                throw Py.ValueError("bad typecode (must be c, b, B, u, h, H, i, I, l, L, f or d)");
         }
     }
 

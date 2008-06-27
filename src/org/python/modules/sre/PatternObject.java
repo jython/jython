@@ -374,6 +374,9 @@ public class PatternObject extends PyObject {
     private static PyString extractPyString(ArgParser ap, int pos){
         PyObject obj = ap.getPyObject(pos);
         if(!(obj instanceof PyString)){
+            if (obj instanceof PyArray) {
+                return new PyString(obj.toString());
+            }
             throw Py.TypeError("expected str or unicode but got " + obj.getType());
         }
         return (PyString)obj;
