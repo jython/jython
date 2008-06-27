@@ -99,7 +99,7 @@ else:
     import posixpath as path
 
 sys.modules['os.path'] = _path = path
-from os.path import curdir, pardir, sep, pathsep, defpath, extsep, altsep
+from os.path import curdir, pardir, sep, pathsep, defpath, extsep, altsep, devnull
 linesep = java.lang.System.getProperty('line.separator')
 
 from org.python.posix import POSIXHandler, POSIXFactory
@@ -283,8 +283,22 @@ def makedirs(path, mode='ignored'):
     just the rightmost) will be created if it does not exist.
     The optional parameter is currently ignored.
     """
-    if not File(sys.getPath(path)).mkdirs():
-        raise OSError(0, "couldn't make directories", path)
+
+    sys_path = sys.getPath(path)
+    if File(sys_path).mkdirs():
+        return
+
+    # if making a /x/y/z/., java.io.File#mkdirs inexplicably fails. So we need
+    # to force it
+    
+    # need to use _path instead of path, because param is hiding
+    # os.path module in namespace!
+    head, tail = _path.split(sys_path)
+    if tail == curdir:
+        if File(_path.join(head)).mkdirs():
+            return
+                
+    raise OSError(0, "couldn't make directories", path)
 
 def remove(path):
     """remove(path)
@@ -920,3 +934,16 @@ def isatty(fileno):
         raise TypeError('a file descriptor is required')
 
     return fileno.isatty()
+
+
+import jarray
+from java.security import SecureRandom
+urandom_source = None
+
+def urandom(n):
+    global urandom_source
+    if urandom_source is None:
+        urandom_source = SecureRandom()
+    buffer = jarray.zeros(n, 'b')
+    urandom_source.nextBytes(buffer)
+    return buffer.tostring()
