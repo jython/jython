@@ -56,10 +56,12 @@ def settrace(func):
 class RLock(object):
     def __init__(self):
         self._lock = ReentrantLock()
+        self.__owner = None
 
     def acquire(self, blocking=1):
         if blocking:
             self._lock.lock()
+            self.__owner = currentThread()
             return True
         else:
             return self._lock.tryLock()
@@ -71,10 +73,17 @@ class RLock(object):
     def release(self):
         assert self._lock.isHeldByCurrentThread(), \
             "release() of un-acquire()d lock"
+        self.__owner = None
         self._lock.unlock()
 
     def __exit__(self, t, v, tb):
         self.release()
+
+    def locked(self):
+        return self._lock.isLocked()
+
+    def _is_owned(self):
+        return self._lock.isHeldByCurrentThread()
 
 Lock = RLock
 
@@ -87,9 +96,16 @@ class Condition(object):
 
     def acquire(self):
         return self._lock.acquire()
+
+    def __enter__(self):
+        self.acquire()
+        return self
     
     def release(self):
         return self._lock.release()
+
+    def __exit__(self, t, v, tb):
+        self.release()
 
     def wait(self, timeout=None):
         if timeout:
@@ -102,6 +118,9 @@ class Condition(object):
 
     def notifyAll(self):
         return self._condition.signalAll()
+
+    def _is_owned(self):
+        return self._lock._lock.isHeldByCurrentThread()
 
 class Semaphore(object):
     def __init__(self, value=1):
@@ -116,8 +135,15 @@ class Semaphore(object):
         else:
             return self._semaphore.tryAcquire()
 
+    def __enter__(self):
+        self.acquire()
+        return self
+
     def release(self):
         self._semaphore.release()
+
+    def __exit__(self, t, v, tb):
+        self.release()
 
 
 ThreadStates = {
@@ -379,10 +405,17 @@ class _BoundedSemaphore(_Semaphore):
         _Semaphore.__init__(self, value, verbose)
         self._initial_value = value
 
+    def __enter__(self):
+        self.acquire()
+        return self
+
     def release(self):
         if self._Semaphore__value >= self._initial_value:
             raise ValueError, "Semaphore released too many times"
         return _Semaphore.release(self)
+
+    def __exit__(self, t, v, tb):
+        self.release()
 
 
 def Event(*args, **kwargs):
