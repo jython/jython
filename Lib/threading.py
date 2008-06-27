@@ -12,7 +12,7 @@ from traceback import print_exc as _print_exc
 # Rename some stuff so "from threading import *" is safe
 __all__ = ['activeCount', 'Condition', 'currentThread', 'enumerate', 'Event',
            'Lock', 'RLock', 'Semaphore', 'BoundedSemaphore', 'Thread',
-           'Timer', 'setprofile', 'settrace', 'local']
+           'Timer', 'setprofile', 'settrace', 'local', 'stack_size']
 
 _VERBOSE = False
 
@@ -180,7 +180,7 @@ class JavaThread(object):
 
 # relies on the fact that this is a CHM
 _threads = weakref.WeakValueDictionary()
-
+_active = _threads
 
 class Thread(JavaThread):
     def __init__(self, group=None, target=None, name=None, args=None, kwargs=None):
@@ -288,6 +288,9 @@ def activeCount():
 
 def enumerate():
     return _threads.values()
+
+from thread import stack_size
+
 
 _MainThread()
 

@@ -13,6 +13,8 @@ import org.python.core.PyTuple;
 
 public class thread implements ClassDictInit {
 
+    private static volatile long stack_size = 0; // XXX - can we figure out the current stack size?
+    
     public static PyString __doc__ = new PyString(
         "This module provides primitive operations to write multi-threaded "+
                 "programs.\n" +
@@ -27,7 +29,7 @@ public class thread implements ClassDictInit {
     public static PyObject error = new PyString("thread.error");
 
     public static void start_new_thread(PyObject func, PyTuple args) {
-        Thread pt = new FunctionThread(func, args.getArray());
+        Thread pt = new FunctionThread(func, args.getArray(), stack_size);
         PyObject currentThread = func.__findattr__("im_self");
         if (currentThread != null) {
             PyObject isDaemon = currentThread.__findattr__("isDaemon");
@@ -58,5 +60,19 @@ public class thread implements ClassDictInit {
 
     public static long get_ident() {
         return Py.java_obj_id(Thread.currentThread());
+    }
+    
+    
+    public static long stack_size(PyObject[] args) {
+        switch (args.length) {
+            case 0:
+                return stack_size;
+            case 1:
+                long old_stack_size = stack_size;
+                stack_size = ((PyInteger)args[0].__int__()).getValue();
+                return old_stack_size;
+            default:
+                throw Py.TypeError("stack_size() takes at most 1 argument (" + args.length + "given)");
+        }
     }
 }

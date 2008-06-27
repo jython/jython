@@ -12,6 +12,13 @@ public class FunctionThread extends Thread
         this.args = args;
         this.systemState = Py.getSystemState();
     }
+        
+    public FunctionThread(PyObject func, PyObject[] args, long stack_size) {
+        super(null, null, "Thread", stack_size);
+        this.func = func;
+        this.args = args;
+        this.systemState = Py.getSystemState();
+    }
 
     public void run() {
         Py.setSystemState(systemState);
