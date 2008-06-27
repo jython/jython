@@ -3,10 +3,8 @@ package org.python.modules;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.List;
 
 import org.python.core.ClassDictInit;
 import org.python.core.PyObject;
@@ -111,12 +109,6 @@ public class _hashlib implements ClassDictInit {
         @ExposedGet
         public String name;
 
-        /**
-         * The inputted data, maintained because Java MessageDigest resets after
-         * calculating a digest.
-         */
-        private List<byte[]> data;
-
         /** The hashing engine. */
         private MessageDigest digest;
 
@@ -129,7 +121,7 @@ public class _hashlib implements ClassDictInit {
                 put("sha-512", 128);
             }};
 
-        public Hash(String name, List data) {
+        public Hash(String name) {
             super(TYPE);
             this.name = name;
             try {
@@ -137,20 +129,34 @@ public class _hashlib implements ClassDictInit {
             } catch (NoSuchAlgorithmException nsae) {
                 throw Py.ValueError("unsupported hash type");
             }
-            this.data = data == null ? new ArrayList() : data;
         }
 
-        public Hash(String name) {
-            this(name, null);
+        private Hash(String name, MessageDigest digest) {
+            super(TYPE);
+            this.name = name;
+            this.digest = digest;
         }
 
         /**
-         * Input all of the data required to calculate the digest.
+         * Clone the underlying MessageDigest.
+         *
+         * @return a copy of MessageDigest
          */
-        private void calculate() {
-            for (byte[] bytes : data) {
-                digest.update(bytes);
+        private MessageDigest cloneDigest() {
+            try {
+                return (MessageDigest)digest.clone();
+            } catch (CloneNotSupportedException cnse) {
+                throw Py.RuntimeError(String.format("_hashlib.HASH (%s) internal error", name));
             }
+        }
+
+        /**
+         * Safely calculate the digest without resetting state.
+         *
+         * @return a byte[] calculated digest
+         */
+        private byte[] calculateDigest() {
+            return cloneDigest().digest();
         }
 
         public void update(PyObject obj) {
@@ -164,7 +170,7 @@ public class _hashlib implements ClassDictInit {
                                    + obj.getType().fastGetName());
             }
             byte[] bytes = ((PyString)obj).toBytes();
-            data.add(bytes);
+            digest.update(bytes);
         }
 
         public PyObject digest() {
@@ -173,8 +179,7 @@ public class _hashlib implements ClassDictInit {
 
         @ExposedMethod
         final PyObject HASH_digest() {
-            calculate();
-            return Py.newString(StringUtil.fromBytes(digest.digest()));
+            return Py.newString(StringUtil.fromBytes(calculateDigest()));
         }
 
         public PyObject hexdigest() {
@@ -183,8 +188,7 @@ public class _hashlib implements ClassDictInit {
 
         @ExposedMethod
         final PyObject HASH_hexdigest() {
-            calculate();
-            byte[] result = digest.digest();
+            byte[] result = calculateDigest();
             // Make hex version of the digest
             char[] hexDigest = new char[result.length * 2];
             for (int i = 0, j = 0; i < result.length; i++) {
@@ -204,7 +208,7 @@ public class _hashlib implements ClassDictInit {
 
         @ExposedMethod
         final PyObject HASH_copy() {
-            return new Hash(name, new ArrayList(data));
+            return new Hash(name, cloneDigest());
         }
 
         @ExposedGet(name = "digestsize")
