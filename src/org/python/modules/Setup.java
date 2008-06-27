@@ -41,7 +41,6 @@ public class Setup
         "exceptions:org.python.core.exceptions",
         "_codecs",
         "imp",
-        "sha",
         "ucnhash",
         "_jython",
         "_new:org.python.modules._newmodule",

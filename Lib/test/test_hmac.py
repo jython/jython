@@ -282,6 +282,10 @@ class CopyTestCase(unittest.TestCase):
             "Hexdigest of copy doesn't match original hexdigest.")
 
 def test_main():
+    if test_support.is_jython:
+        # XXX: Jython doesn't support sha224
+        del TestVectorsTestCase.test_sha224_rfc4231
+        hashlib.sha224 = None
     test_support.run_unittest(
         TestVectorsTestCase,
         ConstructorTestCase,
