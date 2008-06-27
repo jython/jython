@@ -184,6 +184,16 @@ class HashLibTestCase(unittest.TestCase):
 
 
 def test_main():
+    if test_support.is_jython:
+        # Java has no builtin support for sha224
+        hashes = [hash for hash in HashLibTestCase.supported_hash_names
+                  if hash.lower() != 'sha224']
+        HashLibTestCase.supported_hash_names = tuple(hashes)
+        del HashLibTestCase.test_case_sha224_0
+        del HashLibTestCase.test_case_sha224_1
+        del HashLibTestCase.test_case_sha224_2
+        del HashLibTestCase.test_case_sha224_3
+
     test_support.run_unittest(HashLibTestCase)
 
 

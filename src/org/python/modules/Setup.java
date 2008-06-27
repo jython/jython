@@ -38,7 +38,6 @@ public class Setup
         "cStringIO",
         "struct",
         "binascii",
-        "md5:org.python.modules.MD5Module",
         "exceptions:org.python.core.exceptions",
         "_codecs",
         "imp",
@@ -55,6 +54,7 @@ public class Setup
         "itertools",
         "zipimport:org.python.modules.zipimport.zipimport",
         "collections:org.python.modules.collections.Collections",
-        "gc"
+        "gc",
+        "_hashlib"
     };
 }

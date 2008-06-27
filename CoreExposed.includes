@@ -38,6 +38,7 @@ org/python/core/PyXRange.class
 org/python/modules/_weakref/CallableProxyType.class
 org/python/modules/_weakref/ReferenceType.class
 org/python/modules/_weakref/ProxyType.class
+org/python/modules/_hashlib$Hash.class
 org/python/modules/collections/PyDefaultDict.class
 org/python/modules/collections/PyDeque.class
 org/python/modules/operator$PyAttrGetter.class
