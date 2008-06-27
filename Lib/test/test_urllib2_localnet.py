@@ -69,6 +69,7 @@ class LoopbackHttpServerThread(threading.Thread):
         self.ready.set()
         while not self._stop:
             httpd.handle_request()
+        httpd.server_close()
 
 # Authentication infrastructure
 
