@@ -276,6 +276,9 @@ public class binascii {
         int leftbits = 0;
         int leftchar = 0;
 
+        if (ascii_data.length() == 0)
+            return "";
+        
         StringBuffer bin_data = new StringBuffer();
 
         char this_ch;
@@ -924,8 +927,6 @@ static long[] crc_32_tab = new long[] {
 
         if (header)
         	s = UNDERSCORE.matcher(s).replaceAll(" ");
-
-        s = WS.matcher(s).replaceAll("");
         
         for (int i=0, m=s.length(); i<m;) {
         	char c = s.charAt(i++);
@@ -934,6 +935,8 @@ static long[] crc_32_tab = new long[] {
         			c = s.charAt(i++);
         			if (c == '=') {
         				sb.append(c);
+                                } else if (c == ' ') {
+                                    sb.append("= ");     
         			} else if ((c >= '0' && c <= '9' || c >= 'A' && c <= 'F') && i < m) {
         				char nc = s.charAt(i++);
         				if ((nc >= '0' && nc <= '9' || nc >= 'A' && nc <= 'F')) {
