@@ -95,7 +95,7 @@ public class PatternObject extends PyObject {
     private PyObject subx(PyObject template, PyString instring, int count,
                           boolean subn)
     {
-        final PyString string = instring;
+        final PyString string = instring; 
         PyObject filter = null;
         boolean filter_is_callable = false;
         if (template.isCallable()) {
@@ -170,15 +170,22 @@ public class PatternObject extends PyObject {
             appended = true;
         }
 
-        if (!appended) {
-            return pattern == null ? Py.EmptyString :
-                    pattern.__getslice__(Py.newInteger(0), Py.newInteger(0));
+        // XXX - does this break derived types? anyway, following rule enumerated in
+        // test_re.test_bug_1140
+
+        PyString outstring;
+        if (__builtin__.isinstance(instring, PyString.TYPE) &&
+                (buf.length() == 0 || __builtin__.isinstance(template, PyString.TYPE))) {
+            outstring = new PyString(buf.toString());
+        }
+        else {
+            outstring = new PyUnicode(buf.toString());
         }
 
         if (subn)
-            return new PyTuple(instring.createInstance(buf.toString()), Py.newInteger(n));
+            return new PyTuple(outstring, Py.newInteger(n));
         else
-            return instring.createInstance(buf.toString());
+            return outstring;
     }
 
 
@@ -369,7 +376,7 @@ public class PatternObject extends PyObject {
         if(!(obj instanceof PyString)){
             throw Py.TypeError("expected str or unicode but got " + obj.getType());
         }
-        return (PyString)ap.getPyObject(pos);
+        return (PyString)obj;
     }
 }
 

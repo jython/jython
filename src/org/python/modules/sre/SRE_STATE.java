@@ -1316,6 +1316,8 @@ for line in sys.stdin:
         mark_fini();
     }
 
+    // XXX - this should get hot-spotted out, but for now useful for doing further optimization
+    // of this code (by comparing to CPython 2.5.2)
     private static final boolean do_trace = false;
     private void TRACE(int pidx, int ptr, String string) {
         if (do_trace) {
