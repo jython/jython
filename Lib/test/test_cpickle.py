@@ -1,8 +1,8 @@
 import cPickle
-import test_support
 import unittest
 from cStringIO import StringIO
-from pickletester import AbstractPickleTests, AbstractPickleModuleTests
+from test.pickletester import AbstractPickleTests, AbstractPickleModuleTests
+from test import test_support
 
 class cPickleTests(AbstractPickleTests, AbstractPickleModuleTests):
 
@@ -15,9 +15,9 @@ class cPickleTests(AbstractPickleTests, AbstractPickleModuleTests):
 
 class cPicklePicklerTests(AbstractPickleTests):
 
-    def dumps(self, arg, bin=0):
+    def dumps(self, arg, proto=0):
         f = StringIO()
-        p = cPickle.Pickler(f, bin)
+        p = cPickle.Pickler(f, proto)
         p.dump(arg)
         f.seek(0)
         return f.read()
@@ -31,8 +31,8 @@ class cPicklePicklerTests(AbstractPickleTests):
 
 class cPickleListPicklerTests(AbstractPickleTests):
 
-    def dumps(self, arg, bin=0):
-        p = cPickle.Pickler(bin)
+    def dumps(self, arg, proto=0):
+        p = cPickle.Pickler(proto)
         p.dump(arg)
         return p.getvalue()
 
@@ -45,9 +45,9 @@ class cPickleListPicklerTests(AbstractPickleTests):
 
 class cPickleFastPicklerTests(AbstractPickleTests):
 
-    def dumps(self, arg, bin=0):
+    def dumps(self, arg, proto=0):
         f = StringIO()
-        p = cPickle.Pickler(f, bin)
+        p = cPickle.Pickler(f, proto)
         p.fast = 1
         p.dump(arg)
         f.seek(0)
@@ -60,22 +60,44 @@ class cPickleFastPicklerTests(AbstractPickleTests):
 
     error = cPickle.BadPickleGet
 
+    def test_recursive_list(self):
+        self.assertRaises(ValueError,
+                          AbstractPickleTests.test_recursive_list,
+                          self)
+
+    def test_recursive_inst(self):
+        self.assertRaises(ValueError,
+                          AbstractPickleTests.test_recursive_inst,
+                          self)
+
+    def test_recursive_dict(self):
+        self.assertRaises(ValueError,
+                          AbstractPickleTests.test_recursive_dict,
+                          self)
+
+    def test_recursive_multi(self):
+        self.assertRaises(ValueError,
+                          AbstractPickleTests.test_recursive_multi,
+                          self)
+
     def test_nonrecursive_deep(self):
+        # If it's not cyclic, it should pickle OK even if the nesting
+        # depth exceeds PY_CPICKLE_FAST_LIMIT.  That happens to be
+        # 50 today.  Jack Jansen reported stack overflow on Mac OS 9
+        # at 64.
         a = []
-        for i in range(100):
+        for i in range(60):
             a = [a]
         b = self.loads(self.dumps(a))
         self.assertEqual(a, b)
 
 def test_main():
-    loader = unittest.TestLoader()
-    suite = unittest.TestSuite()
-    suite.addTest(loader.loadTestsFromTestCase(cPickleTests))
-    suite.addTest(loader.loadTestsFromTestCase(cPicklePicklerTests))
-    #Jython doesn't support list based picklers
-    #suite.addTest(loader.loadTestsFromTestCase(cPickleListPicklerTests))
-    suite.addTest(loader.loadTestsFromTestCase(cPickleFastPicklerTests))
-    test_support.run_suite(suite)
+    test_support.run_unittest(
+        cPickleTests,
+        cPicklePicklerTests,
+        cPickleListPicklerTests,
+        cPickleFastPicklerTests
+    )
 
 if __name__ == "__main__":
     test_main()
