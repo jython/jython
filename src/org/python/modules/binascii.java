@@ -901,7 +901,6 @@ static long[] crc_32_tab = new long[] {
         return sb;
     }
 
-    final private static Pattern WS = Pattern.compile("=\r?\n|[\t ]+$");
     final private static Pattern UNDERSCORE = Pattern.compile("_");
 
     final public static PyString __doc__a2b_qp = new PyString("Decode a string of qp-encoded data");
