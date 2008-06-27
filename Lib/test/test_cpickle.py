@@ -92,12 +92,21 @@ class cPickleFastPicklerTests(AbstractPickleTests):
         self.assertEqual(a, b)
 
 def test_main():
-    test_support.run_unittest(
+    tests = [
         cPickleTests,
         cPicklePicklerTests,
         cPickleListPicklerTests,
         cPickleFastPicklerTests
-    )
+    ]
+    if test_support.is_jython:
+        # XXX: Jython doesn't support list based picklers
+        tests.remove(cPickleListPicklerTests)
+        # XXX: These don't cause exceptions on Jython
+        del cPickleFastPicklerTests.test_recursive_list
+        del cPickleFastPicklerTests.test_recursive_inst
+        del cPickleFastPicklerTests.test_recursive_dict
+        del cPickleFastPicklerTests.test_recursive_multi
+    test_support.run_unittest(*tests)
 
 if __name__ == "__main__":
     test_main()
