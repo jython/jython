@@ -248,6 +248,26 @@ import java.util.Set;
         return new For(t, target, iter, b, o);
     }
     
+    private Call makeCall(PythonTree t, exprType func) {
+        return makeCall(t, func, null, null, null, null);
+    }
+
+    private Call makeCall(PythonTree t, exprType func, List args, List keywords, exprType starargs, exprType kwargs) {
+        exprType[] a;
+        keywordType[] k;
+        if (args == null) {
+            a = new exprType[0];
+        } else {
+            a = (exprType[])args.toArray(new exprType[args.size()]);
+        }
+        if (keywords == null) {
+            k = new keywordType[0];
+        } else {
+            k = (keywordType[])keywords.toArray(new keywordType[keywords.size()]);
+        }
+        return new Call(t, func, a, k, starargs, kwargs);
+    }
+
     //FIXME: just calling __neg__ for now - can be better.  Also does not parse expressions like
     //       --2 correctly (should give ^(USub -2) but gives 2).
     private exprType negate(PythonTree t, exprType o) {
@@ -363,20 +383,12 @@ decorator [List decs]
         if ($Call == null) {
             decs.add($dotted_attr.etype);
         } else {
-            exprType[] args;
-            keywordType[] keywords;
-            exprType starargs = null;
-            exprType kwargs = null;
-            if ($Args != null) {
-                args = (exprType[])$arglist.args.toArray(new exprType[$arglist.args.size()]);
-                keywords = (keywordType[])$arglist.keywords.toArray(new keywordType[$arglist.keywords.size()]);
-                starargs = $arglist.starargs;
-                kwargs = $arglist.kwargs;
+            Call c;
+            if ($Args == null) {
+                c = makeCall($Call, $dotted_attr.etype);
             } else {
-                args = new exprType[0];
-                keywords = new keywordType[0];
+                c = makeCall($Call, $dotted_attr.etype, $arglist.args, $arglist.keywords, $arglist.starargs, $arglist.kwargs);
             }
-            Call c = new Call($Call, $dotted_attr.etype, args, keywords, starargs, kwargs);
             decs.add(c);
         }
     }
@@ -454,13 +466,9 @@ call_expr returns [exprType etype, PythonTree marker]
     : ^(Call (^(Args arglist))? test[expr_contextType.Load]) {
         Call c;
         if ($Args == null) {
-            c = new Call($test.marker, $test.etype, new exprType[0], new keywordType[0], null, null);
-            debug("Matched Call site no args");
+            c = makeCall($test.marker, $test.etype);
         } else {
-            debug("Matched Call w/ args");
-            exprType[] args = (exprType[])$arglist.args.toArray(new exprType[$arglist.args.size()]);
-            keywordType[] keywords = (keywordType[])$arglist.keywords.toArray(new keywordType[$arglist.keywords.size()]);
-            c = new Call($test.marker, $test.etype, args, keywords, $arglist.starargs, $arglist.kwargs);
+            c = makeCall($test.marker, $test.etype, $arglist.args, $arglist.keywords, $arglist.starargs, $arglist.kwargs);
         }
         $etype = c;
     }
@@ -1318,11 +1326,6 @@ argument[List arguments]
         arguments.add($test.etype);
     }
     | ^(GenFor test[expr_contextType.Load] gen_for[gens]) {
-        if (!arguments.isEmpty()) {
-            throw new ParseException(
-                "Generator expression must be parenthesized if not sole argument",
-                $test.start);
-        }
         Collections.reverse(gens);
         comprehensionType[] c = (comprehensionType[])gens.toArray(new comprehensionType[gens.size()]);
         arguments.add(new GeneratorExp($GenFor, $test.etype, c));

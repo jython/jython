@@ -198,6 +198,10 @@ import java.util.Iterator;
         }
     }
 
+    private void throwGenExpNotSoleArg(PythonTree t) {
+        throw new ParseException("Generator expression must be parenthesized if not sole argument", t);
+    }
+
     private exprType[] makeExprs(List exprs) {
         return makeExprs(exprs, 0);
     }
@@ -1032,12 +1036,22 @@ classdef: CLASS NAME (LPAREN testlist[expr_contextType.Load]? RPAREN)? COLON sui
     ;
 
 //arglist: (argument ',')* (argument [',']| '*' test [',' '**' test] | '**' test)
-arglist : argument (COMMA argument)*
+arglist : a1=argument[true] (COMMA a2+=argument[false])*
           ( COMMA
             ( STAR starargs=test[expr_contextType.Load] (COMMA DOUBLESTAR kwargs=test[expr_contextType.Load])?
             | DOUBLESTAR kwargs=test[expr_contextType.Load]
             )?
-          )?
+          )? { if ($a2 != null) {
+                   if ($a1.gen) {
+                       throwGenExpNotSoleArg($a1.tree);
+                   }
+                   for (int i=0;i<$a2.size();i++) {
+                       if (((argument_return)$a2.get(i)).gen) {
+                           throwGenExpNotSoleArg(((argument_return)$a2.get(i)).tree);
+                       }
+                   }
+               }
+             }
        -> ^(Args argument+) ^(StarArgs $starargs)? ^(KWArgs $kwargs)?
         |   STAR starargs=test[expr_contextType.Load] (COMMA DOUBLESTAR kwargs=test[expr_contextType.Load])?
        -> ^(StarArgs $starargs) ^(KWArgs $kwargs)?
@@ -1046,9 +1060,15 @@ arglist : argument (COMMA argument)*
         ;
 
 //argument: test [gen_for] | test '=' test  # Really [keyword '='] test
-argument : t1=test[expr_contextType.Load]
+argument[boolean first] returns [boolean gen]
+    : t1=test[expr_contextType.Load]
          ( (ASSIGN t2=test[expr_contextType.Load]) -> ^(Keyword ^(Arg $t1) ^(Value $t2)?)
-         | gen_for -> ^(GenFor $t1 gen_for)
+         | gen_for { if (!first) {
+                           throwGenExpNotSoleArg($gen_for.tree);
+                     }
+                     $gen = true;
+                   }
+        -> ^(GenFor $t1 gen_for)
          | -> ^(Arg $t1)
          )
          ;
