@@ -6,8 +6,8 @@
  * The Netherlands.
  */
 
-// we probably should use StringBuffer instead of StringBuilder, since StringIO
-// most likely means not thread-confined, so we want those locking semantics.
+// cStringIO with StringBuilder semantics - don't use without using external
+// synchronization. Java does provide other alternatives.
 
 package org.python.modules;
 
@@ -62,15 +62,15 @@ public class cStringIO {
         public boolean closed = false;
         public int pos = 0;
 
-        private final StringBuffer buf;
+        private final StringBuilder buf;
 
         StringIO() {
-            buf = new StringBuffer();
+            buf = new StringBuilder();
         }
 
 
         StringIO(String buffer) {
-            buf = new StringBuffer(buffer);
+            buf = new StringBuilder(buffer);
         }
 
         private void _complain_ifclosed() {
