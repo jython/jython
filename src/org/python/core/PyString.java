@@ -712,7 +712,7 @@ public class PyString extends PyBaseString
     
     @ExposedMethod
     public PyObject str___mod__(PyObject other){
-        StringFormatter fmt = new StringFormatter(string, true);
+        StringFormatter fmt = new StringFormatter(string, false);
         return fmt.format(other);
     }
 
@@ -2573,8 +2573,11 @@ final class StringFormatter
             case 's':
             case 'r':
                 fill = ' ';
+                if (arg instanceof PyUnicode) {
+                    needUnicode = true;
+                }
                 if (c == 's')
-                    if (unicodeCoercion)
+                    if (unicodeCoercion || needUnicode)
                         string = arg.__unicode__().toString();
                     else
                         string = arg.__str__().toString();
@@ -2583,9 +2586,7 @@ final class StringFormatter
                 if (precision >= 0 && string.length() > precision) {
                     string = string.substring(0, precision);
                 }
-                if (arg instanceof PyUnicode) {
-                    needUnicode = true;
-                }
+
                 break;
             case 'i':
             case 'd':
