@@ -43,6 +43,10 @@ public class PyString extends PyBaseString
         this(TYPE,String.valueOf(c));
     }
 
+    PyString(StringBuilder buffer) {
+        this(TYPE, new String(buffer));
+    }
+    
     /**
      * Creates a PyString from an already interned String. Just means it won't
      * be reinterned if used in a place that requires interned Strings.
@@ -708,7 +712,7 @@ public class PyString extends PyBaseString
     
     @ExposedMethod
     public PyObject str___mod__(PyObject other){
-        StringFormatter fmt = new StringFormatter(string);
+        StringFormatter fmt = new StringFormatter(string, true);
         return fmt.format(other);
     }
 
@@ -1449,9 +1453,9 @@ public class PyString extends PyBaseString
             }
             return bi.intValue();
         } catch (NumberFormatException exc) {
-            throw Py.ValueError("invalid literal for __int__: "+string);
+            throw Py.ValueError("invalid literal for int() with base " + base + ": " + string);
         } catch (StringIndexOutOfBoundsException exc) {
-            throw Py.ValueError("invalid literal for __int__: "+string);
+            throw Py.ValueError("invalid literal for int() with base " + base + ": " + string);
         }
     }
 
@@ -1523,10 +1527,10 @@ public class PyString extends PyBaseString
                         0,0, "invalid decimal Unicode string");
             }
             else {
-                throw Py.ValueError("invalid literal for __long__: "+str);
+            throw Py.ValueError("invalid literal for long() with base " + base + ": " + string);
             }
         } catch (StringIndexOutOfBoundsException exc) {
-            throw Py.ValueError("invalid literal for __long__: "+str);
+            throw Py.ValueError("invalid literal for long() with base " + base + ": " + string);
         }
     }
 
@@ -2771,9 +2775,9 @@ final class StringFormatter
             throw Py.TypeError("not all arguments converted during string formatting");
         }
         if (needUnicode) {
-            return new PyUnicode(buffer.toString());
+            return new PyUnicode(buffer);
         }
-        return new PyString(buffer.toString());
+        return new PyString(buffer);
     }
 
 }
