@@ -354,5 +354,20 @@ public class cStringIO {
         }
 
     }
+    
+    private static String[] strings = new String[256];
+    static String getString(char ch) {
+        if (ch > 255) {
+            return new String(new char[] { ch });
+        }
+
+      String s = strings[ch];
+
+      if (s == null) {
+          s = new String(new char[] { ch });
+          strings[ch] = s;
+      }
+      return s;
+   }
 
 }
