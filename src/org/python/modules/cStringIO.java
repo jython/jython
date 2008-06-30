@@ -233,7 +233,7 @@ public class cStringIO {
 
 
         /**
-         * Read and return a line without the trailing newling.
+         * Read and return a line without the trailing newline.
          * Usind by cPickle as an optimization.
          */
         public String readlineNoNl() {
@@ -303,15 +303,16 @@ public class cStringIO {
          * @param s     The data to write.
          */
         public void write(PyObject obj) {
+            write(obj.toString());
+        }
+
+        public void write(String s) {
             _complain_ifclosed();
-            
-            String s = obj.toString();
             buf.setLength(pos);
             int newpos = pos + s.length();
             buf.replace(pos, newpos, s);
             pos = newpos;
         }
-
 
         /**
          * Write a char to the file. Used by cPickle as an optimization.
@@ -319,8 +320,8 @@ public class cStringIO {
          */
         public void writeChar(char ch) {
             int len = buf.length();
-            if (len < pos)
-                buf.setLength(pos);
+            if (len <= pos)
+                buf.setLength(pos + 1);
             buf.setCharAt(pos++, ch);
         }
 
