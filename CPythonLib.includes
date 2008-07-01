@@ -35,6 +35,7 @@ codecs.py
 colorsys.py
 commands.py
 compileall.py
+contextlib.py
 ConfigParser.py
 cookielib.py
 copy.py
@@ -113,6 +114,7 @@ reconvert.py
 repr.py
 rfc822.py
 rlcompleter.py
+runpy.py
 sched.py
 sha.py
 sets.py
@@ -154,6 +156,7 @@ warnings.py
 weakref.py
 whichdb.py
 whrandom.py
+wsgiref/*.py
 xdrlib.py
 xmllib.py
 xmlrpclib.py

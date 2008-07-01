@@ -77,6 +77,13 @@ public class cStringIO {
             if (closed)
                 throw Py.ValueError("I/O operation on closed file");
         }
+        
+        private int _convert_to_int(long val) {
+            if (val > Integer.MAX_VALUE) {
+                throw Py.OverflowError("long int too large to convert to int");
+            }
+            return (int)val;
+        }
 
         public void __setattr__(String name, PyObject value) {
             if (name == "softspace") {
@@ -116,7 +123,7 @@ public class cStringIO {
          * Position the file pointer to the absolute position.
          * @param       pos the position in the file.
          */
-        public void seek(int pos) {
+        public void seek(long pos) {
             seek(pos, os.SEEK_SET);
         }
 
@@ -126,18 +133,18 @@ public class cStringIO {
          * @param       pos the position in the file.
          * @param       mode; 0=from the start, 1=relative, 2=from the end.
          */
-        public void seek(int pos, int mode) {
+        public void seek(long pos, int mode) {
             _complain_ifclosed();
             switch (mode) {
                 case os.SEEK_CUR:
                     this.pos += pos;
                     break;
                 case os.SEEK_END:
-                    this.pos = pos + buf.length();
+                    this.pos = _convert_to_int(pos + buf.length());
                     break;
                 case os.SEEK_SET:
                 default:
-                    this.pos = pos;
+                    this.pos = _convert_to_int(pos);
                     break;
             }
         }
@@ -178,15 +185,18 @@ public class cStringIO {
          * @param size  the number of characters to read.
          * @returns     A string containing the data read.
          */
-        public String read(int size) {
+               
+        public String read(long size) {
             _complain_ifclosed();
+            int size_int = _convert_to_int(size);
             int len = buf.length();
             String substr;
             if (size < 0) {
                 substr = pos >= len ? "" : buf.substring(pos);
                 pos = len;
             } else {
-                int newpos = Math.min(pos + size, len);
+                // ensure no overflow
+                int newpos = _convert_to_int(Math.min(pos + size, len));
                 substr = buf.substring(pos, newpos);
                 pos = newpos;
             }
@@ -215,8 +225,9 @@ public class cStringIO {
          * returned.
          * @returns data from the file up to and including the newline.
          */
-        public String readline(int size) {
+        public String readline(long size) {
             _complain_ifclosed();
+            int size_int = _convert_to_int(size);
             int len = buf.length();
             if (pos == len) {
                 return "";
@@ -224,11 +235,11 @@ public class cStringIO {
             int i = buf.indexOf("\n", pos);
             int newpos = (i < 0) ? len : i + 1;
             if (size >= 0) {
-                newpos = Math.min(newpos - pos, size) + pos;
+                newpos = _convert_to_int(Math.min(newpos - pos, size) + pos);
             }
             String r = buf.substring(pos, newpos);
             pos = newpos;
-            return (i < 0 && size <= 0) ? r + "\n" : r;
+            return r;
         }
 
 
@@ -265,15 +276,17 @@ public class cStringIO {
          * the lines thus read.
          * @return      a list of the lines.
          */
-        public PyObject readlines(int sizehint) {
+        public PyObject readlines(long sizehint) {
             _complain_ifclosed();
+
+            int sizehint_int = (int)sizehint;
             int total = 0;
             PyList lines = new PyList();
             String line = readline();
             while (line.length() > 0) {
                 lines.append(new PyString(line));
                 total += line.length();
-                if (0 < sizehint  && sizehint <= total)
+                if (0 < sizehint_int  && sizehint_int <= total)
                     break;
                 line = readline();
             }
@@ -290,11 +303,12 @@ public class cStringIO {
         /**
          * truncate the file at the position pos.
          */
-        public void truncate(int pos) {
-            if (pos < 0)
-                pos = this.pos;
-            buf.setLength(pos);
-            this.pos = pos;
+        public void truncate(long pos) {
+            int pos_int = _convert_to_int(pos);
+            if (pos_int < 0)
+                pos_int = this.pos;
+            buf.setLength(pos_int);
+            this.pos = pos_int;
         }
 
 
