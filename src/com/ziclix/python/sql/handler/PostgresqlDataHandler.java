@@ -14,6 +14,7 @@ import org.python.core.PyFile;
 import org.python.core.PyObject;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -122,4 +123,16 @@ public class PostgresqlDataHandler extends RowIdHandler {
         super.setJDBCObject(stmt, index, object, type);
     }
   }
+  public void setJDBCObject(PreparedStatement stmt, int index, PyObject object) throws SQLException {
+      // PostgreSQL doesn't support BigIntegers without explicitely setting the
+      // type.
+      Object value = object.__tojava__(Object.class);
+      if (value instanceof BigInteger) {
+          super.setJDBCObject(stmt, index, object, Types.BIGINT);
+      } else {
+          super.setJDBCObject(stmt, index, object);
+      }
+
+  }
+
 }
