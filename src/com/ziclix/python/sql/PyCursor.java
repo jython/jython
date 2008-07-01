@@ -506,7 +506,11 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
    * @param maxRows
    */
   public void executemany(PyObject sql, PyObject params, PyObject bindings, PyObject maxRows) {
-    execute(sql, params, bindings, maxRows);
+      if (isSeq(params) && params.__len__() == 0) {
+          //executemany with an empty params tuple is a no-op
+          return;
+      }
+      execute(sql, params, bindings, maxRows);
   }
 
   /**
