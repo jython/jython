@@ -767,16 +767,22 @@ public class ReferenceTypeDerived extends ReferenceType implements Slotted {
 
     public int __cmp__(PyObject other) {
         PyType self_type=getType();
-        PyObject impl=self_type.lookup("__cmp__");
-        if (impl!=null) {
-            PyObject res=impl.__get__(this,self_type).__call__(other);
-            if (res instanceof PyInteger) {
-                int v=((PyInteger)res).getValue();
-                return v<0?-1:v>0?1:0;
-            }
-            throw Py.TypeError("__cmp__ should return a int");
+        PyType[]where_type=new PyType[1];
+        PyObject impl=self_type.lookup_where("__cmp__",where_type);
+        // Full Compatibility with CPython __cmp__:
+        // If the derived type don't override __cmp__, the
+        // *internal* super().__cmp__ should be called, not the
+        // exposed one. The difference is that the exposed __cmp__
+        // throws a TypeError if the argument is an instance of the same type.
+        if (impl==null||where_type[0]==TYPE||Py.isSubClass(TYPE,where_type[0])) {
+            return super.__cmp__(other);
         }
-        return super.__cmp__(other);
+        PyObject res=impl.__get__(this,self_type).__call__(other);
+        if (res instanceof PyInteger) {
+            int v=((PyInteger)res).getValue();
+            return v<0?-1:v>0?1:0;
+        }
+        throw Py.TypeError("__cmp__ should return a int");
     }
 
     public boolean __nonzero__() {

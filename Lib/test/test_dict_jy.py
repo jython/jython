@@ -1,14 +1,14 @@
-import test_support
+from test import test_support
 import unittest
 
 class DictInitTest(unittest.TestCase):
     def testInternalSetitemInInit(self):
-        '''Test for http://jython.org/bugs/1816134
+        """Test for http://jython.org/bugs/1816134
 
         CPython's dict uses an internal setitem method to initialize itself
         rather than the one on its subclasses, and this tests that Jython does
         as well.
-        '''
+        """
         class Subdict(dict):
             def __init__(self):
                 super(Subdict, self).__init__([('a',1)])
@@ -23,6 +23,50 @@ class DictInitTest(unittest.TestCase):
         s[7] = 'called'
         self.assertEquals('called', s.createdInInit)
 
+class DictCmpTest(unittest.TestCase):
+    "Test for http://bugs.jython.org/issue1031"
+    def testDictCmp(self):
+        # 'Implicit' comparision of dicts against other types instances
+        # shouldn't raise exception:
+        self.assertNotEqual({}, '')
+        # The same, but explicitly calling __cmp__ should raise TypeError:
+        self.assertRaises(TypeError, {}.__cmp__, '')
+    def testDictDerivedCmp(self):
+        # With derived classes that doesn't override __cmp__, the behaviour
+        # should be the same that with dicts:
+        class derived_dict(dict): pass
+        self.assertNotEqual(derived_dict(), '')
+        self.assertRaises(TypeError, derived_dict().__cmp__, '')
+        # But, if they *override* __cmp__ and raise TypeError from there, we
+        # have exception raised when checking for equality...
+        class non_comparable_dict(dict):
+            def __cmp__(self, other):
+                raise TypeError, "I always raise TypeError"
+        self.assertRaises(TypeError, lambda: non_comparable_dict() == '')
+        self.assertRaises(TypeError, non_comparable_dict().__cmp__, '')
+        # ...unless you compare it with other dicts:
+        # self.assertEqual(non_comparable_dict(), {})
+
+        # The same happens even if the overridden __cmp__ doesn't nothing apart
+        # from calling super:
+        class dummy_dict_with_cmp(dict):
+            def __cmp__(self, other):
+                return super(dummy_dict_with_cmp, self).__cmp__(other)
+
+        self.assertEqual(dummy_dict_with_cmp(), {})
+        # But TypeError is raised when comparing against other types
+        self.assertRaises(TypeError, lambda: dummy_dict_with_cmp() == '')
+        self.assertRaises(TypeError, dummy_dict_with_cmp().__cmp__, '')
+        # Finally, the Python implementation shouldn't be tricked by not
+        # implementing __cmp__ on the actual type of the dict-derived instance,
+        # but implementing it on a superclass.
+        class derived_dict_with_custom_cmp(dict):
+            def __cmp__(self, other):
+                return 0
+        class yet_another_dict(derived_dict_with_custom_cmp): pass
+        self.assertEqual(derived_dict_with_custom_cmp(), '')
+        self.assertEqual(yet_another_dict(), '')
+
 class DerivedDictTest(unittest.TestCase):
     "Tests for derived dict behaviour"
     def test_raising_custom_key_error(self):
@@ -35,7 +79,7 @@ class DerivedDictTest(unittest.TestCase):
 
 
 def test_main():
-    test_support.run_unittest(DictInitTest, DerivedDictTest)
+    test_support.run_unittest(DictInitTest, DictCmpTest, DerivedDictTest)
 
 if __name__ == '__main__':
     test_main()
