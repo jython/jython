@@ -280,6 +280,8 @@ class DOMEventStream:
         """ Fallback replacement for getEvent() that emits
             the events that _slurp() read previously.
         """
+        if self.pulldom.firstEvent[1] is None:
+            return None
         rc = self.pulldom.firstEvent[1][0]
         self.pulldom.firstEvent[1] = self.pulldom.firstEvent[1][1]
         return rc
