@@ -190,7 +190,7 @@ public class PyUnicode extends PyString implements Iterable {
     @ExposedMethod
     final PyObject unicode___mod__(PyObject other) {
         StringFormatter fmt = new StringFormatter(string, true);
-        return fmt.format(other).__unicode__();
+        return fmt.format(other);
     }
 
     @ExposedMethod

@@ -2478,7 +2478,7 @@ final class StringFormatter
     public PyString format(PyObject args) {
         PyObject dict = null;
         this.args = args;
-        boolean needUnicode = false;
+        boolean needUnicode = unicodeCoercion;
         if (args instanceof PyTuple) {
             argIndex = 0;
         } else {
@@ -2577,7 +2577,7 @@ final class StringFormatter
                     needUnicode = true;
                 }
                 if (c == 's')
-                    if (unicodeCoercion || needUnicode)
+                    if (needUnicode)
                         string = arg.__unicode__().toString();
                     else
                         string = arg.__str__().toString();
