@@ -226,15 +226,8 @@ public class ParserFacade {
         if (encoding == null) {
             return null;
         }
-        if (encoding.equals("Latin-1")) {
+        if (encoding.equals("Latin-1") || encoding.equals("latin-1")) {
             return "ISO8859_1";
-        }
-        //FIXME: I'm not at all sure why utf-8 is breaking test_cookielib.py
-        //       but this fixes it on my machine.  I'm hoping it is a Java
-        //       default behavior, but I'm afraid it may be a Java on Mac
-        //       default behavior.
-        if (encoding.equals("utf-8")) {
-            return null;
         }
         return encoding;
     }
