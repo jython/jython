@@ -206,7 +206,7 @@ public class ParserFacade {
     private static String readEncoding(InputStream stream) throws IOException {
         stream.mark(10000);
         String encoding = null;
-        BufferedReader br = new BufferedReader(new InputStreamReader(stream));
+        BufferedReader br = new BufferedReader(new InputStreamReader(stream), 512);
         for (int i = 0; i < 2; i++) {
             String strLine = br.readLine();
             if (strLine == null) {
