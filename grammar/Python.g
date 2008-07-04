@@ -77,7 +77,6 @@ options {
 tokens {
     INDENT;
     DEDENT;
-    ENDMARKER;
 
     Module;
     Interactive;
@@ -483,18 +482,18 @@ int startPos=-1;
 }
 
 //single_input: NEWLINE | simple_stmt | compound_stmt NEWLINE
-single_input : NEWLINE ENDMARKER? -> ^(Interactive)
-             | simple_stmt ENDMARKER? -> ^(Interactive simple_stmt)
-             | compound_stmt NEWLINE ENDMARKER? -> ^(Interactive compound_stmt)
+single_input : NEWLINE -> ^(Interactive)
+             | simple_stmt -> ^(Interactive simple_stmt)
+             | compound_stmt NEWLINE -> ^(Interactive compound_stmt)
              ;
 
 //file_input: (NEWLINE | stmt)* ENDMARKER
-file_input : (NEWLINE | stmt)* ENDMARKER? {debug("parsed file_input");}
+file_input : (NEWLINE | stmt)* {debug("parsed file_input");}
           -> ^(Module stmt*)
            ;
 
 //eval_input: testlist NEWLINE* ENDMARKER
-eval_input : (NEWLINE)* testlist[expr_contextType.Load] (NEWLINE)* ENDMARKER? -> ^(Expression testlist)
+eval_input : (NEWLINE)* testlist[expr_contextType.Load] (NEWLINE)* -> ^(Expression testlist)
            ;
 
 //not in CPython's Grammar file
@@ -566,7 +565,7 @@ stmt : simple_stmt
      ;
 
 //simple_stmt: small_stmt (';' small_stmt)* [';'] NEWLINE
-simple_stmt : small_stmt (options {greedy=true;}:SEMI small_stmt)* (SEMI)? (NEWLINE|ENDMARKER)
+simple_stmt : small_stmt (options {greedy=true;}:SEMI small_stmt)* (SEMI)? NEWLINE
            -> small_stmt+
             ;
 //small_stmt: (expr_stmt | print_stmt  | del_stmt | pass_stmt | flow_stmt |

@@ -125,13 +125,6 @@ public class PythonTokenSource implements TokenSource {
         // if something in queue, just remove and return it
         if ( tokens.size()>0 ) {
             Token t = (Token)tokens.firstElement();
-            if ( !atEnd && t.getType()==Token.EOF ) {
-                atEnd = true;
-                Token em = new ClassicToken(PythonPartialParser.ENDMARKER,"END");
-                em.setCharPositionInLine(t.getCharPositionInLine());
-                em.setLine(t.getLine());
-                return em;
-            }
             tokens.removeElementAt(0);
             //System.out.println(t);
             return t;
@@ -147,8 +140,8 @@ public class PythonTokenSource implements TokenSource {
         Token t = stream.LT(1);
         stream.consume();
 
-        // if not a NEWLINE, doesn't signal indent/dedent work; just enqueue
-        if ( t.getType()!=PythonLexer.NEWLINE ) {
+        // if the current token is not a NEWLINE or EOF, it doesn't signal indent/dedent work; just enqueue
+        if (t.getType() != PythonLexer.NEWLINE && t.getType() != PythonLexer.EOF) {
             List hiddenTokens = stream.getTokens(lastTokenAddedIndex+1,t.getTokenIndex()-1);
             if ( hiddenTokens!=null ) {
                 tokens.addAll(hiddenTokens);
@@ -158,25 +151,34 @@ public class PythonTokenSource implements TokenSource {
             return;
         }
 
-        // save NEWLINE in the queue
-        //System.out.println("found newline: "+t+" stack is "+stackString());
-        CommonToken newline = (CommonToken)t;
-        List hiddenTokens = stream.getTokens(lastTokenAddedIndex+1,t.getTokenIndex()-1);
-        if ( hiddenTokens!=null ) {
-            tokens.addAll(hiddenTokens);
-        }
-        lastTokenAddedIndex = t.getTokenIndex();
-        tokens.addElement(t);
+        CommonToken newline;
+        if (t.getType() == PythonLexer.NEWLINE) {
+            // save NEWLINE in the queue
+            //System.out.println("found newline: "+t+" stack is "+stackString());
+            newline = (CommonToken)t;
+            List hiddenTokens = stream.getTokens(lastTokenAddedIndex+1,t.getTokenIndex()-1);
+            if (hiddenTokens!=null) {
+                tokens.addAll(hiddenTokens);
+            }
+            lastTokenAddedIndex = t.getTokenIndex();
+            tokens.addElement(t);
 
-        // grab first token of next line
-        t = stream.LT(1);
-        stream.consume();
+            // grab first token of next line
+            t = stream.LT(1);
+            stream.consume();
 
-        hiddenTokens = stream.getTokens(lastTokenAddedIndex+1,t.getTokenIndex()-1);
-        if ( hiddenTokens!=null ) {
-            tokens.addAll(hiddenTokens);
+            hiddenTokens = stream.getTokens(lastTokenAddedIndex+1,t.getTokenIndex()-1);
+            if (hiddenTokens!=null) {
+                tokens.addAll(hiddenTokens);
+            }
+            lastTokenAddedIndex = t.getTokenIndex();
+        } else {
+            // Imaginary newline before EOF
+            newline = new CommonToken(PythonLexer.NEWLINE, "\n");
+            newline.setLine(t.getLine());
+            newline.setCharPositionInLine(t.getCharPositionInLine());
+            tokens.addElement(newline);
         }
-        lastTokenAddedIndex = t.getTokenIndex();
 
         // compute cpos as the char pos of next non-WS token in line
         int cpos = t.getCharPositionInLine(); // column dictates indent/dedent
@@ -195,7 +197,7 @@ public class PythonTokenSource implements TokenSource {
         if ( cpos > lastIndent ) { // they indented; track and gen INDENT
             push(cpos);
             //System.out.println("push("+cpos+"): "+stackString());
-            Token indent = new ClassicToken(PythonParser.INDENT,"");
+            Token indent = new ImaginaryToken(PythonParser.INDENT,"");
             indent.setCharPositionInLine(t.getCharPositionInLine());
             indent.setLine(t.getLine());
             tokens.addElement(indent);
