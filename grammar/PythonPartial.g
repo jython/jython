@@ -67,7 +67,7 @@ grammar PythonPartial;
 tokens {
     INDENT;
     DEDENT;
-    ENDMARK;
+    ENDMARKER;
 }
 
 @header { 
@@ -232,7 +232,7 @@ stmt : simple_stmt
      | compound_stmt
      ;
 
-simple_stmt : small_stmt (options {greedy=true;}:SEMI small_stmt)* (SEMI)? (NEWLINE|ENDMARK)
+simple_stmt : small_stmt (options {greedy=true;}:SEMI small_stmt)* (SEMI)? (NEWLINE|ENDMARKER)
             ;
 
 small_stmt : expr_stmt
@@ -389,7 +389,7 @@ except_clause : 'except' (test (COMMA test)?)? COLON suite
               ;
 
 suite : simple_stmt
-      | NEWLINE ((INDENT (stmt)+ (DEDENT|ENDMARK))|ENDMARK)
+      | NEWLINE ((INDENT (stmt)+ (DEDENT|ENDMARKER))|ENDMARKER)
       ;
 
 test: or_test {debug("matched test: or_test");} 

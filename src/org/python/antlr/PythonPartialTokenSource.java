@@ -83,7 +83,7 @@ public class PythonPartialTokenSource implements TokenSource {
         stream.consume();
         if ( t.getType()==Token.EOF ) {
             atEnd = true;
-            Token em = new ClassicToken(PythonPartialParser.ENDMARK,"");
+            Token em = new ClassicToken(PythonPartialParser.ENDMARKER,"");
             em.setCharPositionInLine(t.getCharPositionInLine());
             em.setLine(t.getLine());
             tokens.addElement(em);
@@ -123,7 +123,7 @@ public class PythonPartialTokenSource implements TokenSource {
         int cpos = t.getCharPositionInLine(); // column dictates indent/dedent
         if ( t.getType()==Token.EOF ) {
             atEnd = true;
-            Token em = new ClassicToken(PythonPartialParser.ENDMARK,"");
+            Token em = new ClassicToken(PythonPartialParser.ENDMARKER,"");
             em.setCharPositionInLine(t.getCharPositionInLine());
             em.setLine(t.getLine());
             tokens.addElement(em);
@@ -155,7 +155,7 @@ public class PythonPartialTokenSource implements TokenSource {
             for (int d=sp-1; d>=prevIndex; d--) {
                 Token tok;
                 if (atEnd) {
-                    tok = new ClassicToken(PythonPartialParser.ENDMARK,"");
+                    tok = new ClassicToken(PythonPartialParser.ENDMARKER,"");
                 } else {
                     tok = new ClassicToken(PythonPartialParser.DEDENT,"");
                 }
