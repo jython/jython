@@ -88,8 +88,6 @@ public class PythonTokenSource implements TokenSource {
 
     int lastTokenAddedIndex = -1;
 
-    boolean atEnd = false;
-
     public PythonTokenSource(PythonLexer lexer) {
     }
 
@@ -123,7 +121,7 @@ public class PythonTokenSource implements TokenSource {
      */
     public Token nextToken() {
         // if something in queue, just remove and return it
-        if ( tokens.size()>0 ) {
+        if (tokens.size() > 0) {
             Token t = (Token)tokens.firstElement();
             tokens.removeElementAt(0);
             //System.out.println(t);
@@ -135,15 +133,14 @@ public class PythonTokenSource implements TokenSource {
         return nextToken();
     }
 
-    protected void insertImaginaryIndentDedentTokens()
-    {
+    protected void insertImaginaryIndentDedentTokens() {
         Token t = stream.LT(1);
         stream.consume();
 
         // if the current token is not a NEWLINE or EOF, it doesn't signal indent/dedent work; just enqueue
         if (t.getType() != PythonLexer.NEWLINE && t.getType() != PythonLexer.EOF) {
-            List hiddenTokens = stream.getTokens(lastTokenAddedIndex+1,t.getTokenIndex()-1);
-            if ( hiddenTokens!=null ) {
+            List hiddenTokens = stream.getTokens(lastTokenAddedIndex + 1,t.getTokenIndex() - 1);
+            if (hiddenTokens != null) {
                 tokens.addAll(hiddenTokens);
             }
             lastTokenAddedIndex = t.getTokenIndex();
@@ -156,7 +153,7 @@ public class PythonTokenSource implements TokenSource {
             // save NEWLINE in the queue
             //System.out.println("found newline: "+t+" stack is "+stackString());
             newline = (CommonToken)t;
-            List hiddenTokens = stream.getTokens(lastTokenAddedIndex+1,t.getTokenIndex()-1);
+            List hiddenTokens = stream.getTokens(lastTokenAddedIndex + 1,t.getTokenIndex() - 1);
             if (hiddenTokens!=null) {
                 tokens.addAll(hiddenTokens);
             }
@@ -167,7 +164,7 @@ public class PythonTokenSource implements TokenSource {
             t = stream.LT(1);
             stream.consume();
 
-            hiddenTokens = stream.getTokens(lastTokenAddedIndex+1,t.getTokenIndex()-1);
+            hiddenTokens = stream.getTokens(lastTokenAddedIndex + 1,t.getTokenIndex() - 1);
             if (hiddenTokens!=null) {
                 tokens.addAll(hiddenTokens);
             }
@@ -182,10 +179,10 @@ public class PythonTokenSource implements TokenSource {
 
         // compute cpos as the char pos of next non-WS token in line
         int cpos = t.getCharPositionInLine(); // column dictates indent/dedent
-        if ( t.getType()==Token.EOF ) {
+        if (t.getType() == Token.EOF) {
             cpos = -1; // pretend EOF always happens at left edge
         }
-        else if ( t.getType()==PythonLexer.LEADING_WS ) {
+        else if (t.getType() == PythonLexer.LEADING_WS) {
             cpos = t.getText().length();
         }
 
@@ -194,7 +191,7 @@ public class PythonTokenSource implements TokenSource {
         // compare to last indent level
         int lastIndent = peek();
         //System.out.println("cpos, lastIndent = "+cpos+", "+lastIndent);
-        if ( cpos > lastIndent ) { // they indented; track and gen INDENT
+        if (cpos > lastIndent) { // they indented; track and gen INDENT
             push(cpos);
             //System.out.println("push("+cpos+"): "+stackString());
             Token indent = new ImaginaryToken(PythonParser.INDENT,"");
@@ -202,12 +199,12 @@ public class PythonTokenSource implements TokenSource {
             indent.setLine(t.getLine());
             tokens.addElement(indent);
         }
-        else if ( cpos < lastIndent ) { // they dedented
+        else if (cpos < lastIndent) { // they dedented
             // how far back did we dedent?
             int prevIndex = findPreviousIndent(cpos);
             //System.out.println("dedented; prevIndex of cpos="+cpos+" is "+prevIndex);
             // generate DEDENTs for each indent level we backed up over
-            for (int d=sp-1; d>=prevIndex; d--) {
+            for (int d = sp - 1; d >= prevIndex; d--) {
                 ImaginaryToken dedent = new ImaginaryToken(PythonParser.DEDENT,"");
                 dedent.setCharPositionInLine(t.getCharPositionInLine());
                 dedent.setLine(t.getLine());
@@ -220,7 +217,7 @@ public class PythonTokenSource implements TokenSource {
             }
             sp = prevIndex; // pop those off indent level
         }
-        if ( t.getType()!=PythonLexer.LEADING_WS ) { // discard WS
+        if (t.getType() != PythonLexer.LEADING_WS) { // discard WS
             tokens.addElement(t);
         }
     }
@@ -228,7 +225,7 @@ public class PythonTokenSource implements TokenSource {
     //  T O K E N  S T A C K  M E T H O D S
 
     protected void push(int i) {
-        if (sp>=MAX_INDENTS) {
+        if (sp >= MAX_INDENTS) {
             throw new IllegalStateException("stack overflow");
         }
         sp++;
@@ -250,8 +247,8 @@ public class PythonTokenSource implements TokenSource {
 
     /** Return the index on stack of previous indent level == i else -1 */
     protected int findPreviousIndent(int i) {
-        for (int j=sp-1; j>=0; j--) {
-            if ( indentStack[j]==i ) {
+        for (int j = sp - 1; j >= 0; j--) {
+            if (indentStack[j] == i) {
                 return j;
             }
         }
@@ -260,7 +257,7 @@ public class PythonTokenSource implements TokenSource {
 
     public String stackString() {
         StringBuffer buf = new StringBuffer();
-        for (int j=sp; j>=0; j--) {
+        for (int j = sp; j >= 0; j--) {
             buf.append(" ");
             buf.append(indentStack[j]);
         }
