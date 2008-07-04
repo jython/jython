@@ -174,7 +174,6 @@ public class PythonTokenSource implements TokenSource {
             newline = new CommonToken(PythonLexer.NEWLINE, "\n");
             newline.setLine(t.getLine());
             newline.setCharPositionInLine(t.getCharPositionInLine());
-            tokens.addElement(newline);
         }
 
         // compute cpos as the char pos of next non-WS token in line
@@ -217,6 +216,10 @@ public class PythonTokenSource implements TokenSource {
             }
             sp = prevIndex; // pop those off indent level
         }
+        if (t.getType() == PythonLexer.EOF) {
+            tokens.addElement(newline);
+        }
+
         if (t.getType() != PythonLexer.LEADING_WS) { // discard WS
             tokens.addElement(t);
         }
