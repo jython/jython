@@ -88,6 +88,8 @@ public class PythonTokenSource implements TokenSource {
 
     int lastTokenAddedIndex = -1;
 
+    boolean atEnd = false;
+
     public PythonTokenSource(PythonLexer lexer) {
     }
 
@@ -123,8 +125,15 @@ public class PythonTokenSource implements TokenSource {
         // if something in queue, just remove and return it
         if ( tokens.size()>0 ) {
             Token t = (Token)tokens.firstElement();
+            if ( !atEnd && t.getType()==Token.EOF ) {
+                atEnd = true;
+                Token em = new ClassicToken(PythonPartialParser.ENDMARKER,"END");
+                em.setCharPositionInLine(t.getCharPositionInLine());
+                em.setLine(t.getLine());
+                return em;
+            }
             tokens.removeElementAt(0);
-            // System.out.println(t);
+            //System.out.println(t);
             return t;
         }
 
