@@ -360,11 +360,6 @@ public class PyFile extends PyObject {
     }
 
     public PyObject __iternext__() {
-        return file___iternext__();
-    }
-
-    @ExposedMethod
-    final synchronized PyObject file___iternext__() {
         checkClosed();
         String next = file.readline(-1);
         if (next.length() == 0) {

@@ -575,9 +575,9 @@ class timedelta(object):
 
     def __add__(self, other):
         if isinstance(other, timedelta):
-            return self.__class__(self.__days + other.__days,
-                                  self.__seconds + other.__seconds,
-                                  self.__microseconds + other.__microseconds)
+            return timedelta(self.__days + other.__days,
+                             self.__seconds + other.__seconds,
+                             self.__microseconds + other.__microseconds)
         return NotImplemented
 
     __radd__ = __add__
