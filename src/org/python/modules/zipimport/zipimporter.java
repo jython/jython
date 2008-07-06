@@ -437,6 +437,9 @@ public class zipimporter extends PyObject {
      * @return boolean whether or not the byte code is older
      */
     private boolean isOutdatedBytecode(String path, PyObject tocEntry) {
+        // XXX: Always recompile bytecode until bytecode APIVersion is fixed
+        return true;
+        /*
         String sourcePath = path.substring(0, path.length() - 9) + ".py";
         PyObject sourceTocEntry = files.__finditem__(sourcePath);
         if (sourceTocEntry == null) {
@@ -452,6 +455,7 @@ public class zipimporter extends PyObject {
         catch (PyObject.ConversionException ce) {
             return false;
         }
+        */
     }
 
     /**
