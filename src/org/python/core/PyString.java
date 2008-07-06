@@ -2322,9 +2322,22 @@ final class StringFormatter
         
     }
 
-    private String formatLong(PyString arg, char type, boolean altFlag) {
+    private String formatLong(PyObject arg, char type, boolean altFlag) {
+        PyString argAsString;
+        switch (type) {
+            case 'o':
+                argAsString = arg.__oct__();
+                break;
+            case 'x':
+            case 'X':
+                argAsString = arg.__hex__();
+                break;
+            default:
+                argAsString = arg.__str__();
+                break;
+        }
         checkPrecision("long");
-        String s = arg.toString();
+        String s = argAsString.toString();
         int end = s.length();
         int ptr = 0;
 
@@ -2376,17 +2389,45 @@ final class StringFormatter
         return s;
     }
 
-    private String formatInteger(PyObject arg, int radix, boolean unsigned) {
-        PyObject x;
+    /**
+     * Formats arg as an integer, with the specified radix
+     *
+     * type and altFlag are needed to be passed to {@link #formatLong(PyObject, char, boolean)}
+     * in case the result of <code>arg.__int__()</code> is a PyLong.
+     */
+    private String formatInteger(PyObject arg, int radix, boolean unsigned, char type, boolean altFlag) {
+        PyObject argAsInt;
+        if (arg instanceof PyInteger || arg instanceof PyLong) {
+            argAsInt = arg;
+        } else {
+            // use __int__ to get an int (or long)
+            if (arg instanceof PyFloat) {
+                // safe to call __int__:
+                argAsInt = arg.__int__();
+            } else {
+                // Same case noted on formatFloatDecimal:
+                // We can't simply call arg.__int__() because PyString implements
+                // it without exposing it to python (i.e, str instances has no
+                // __int__ attribute). So, we would support strings as arguments
+                // for %d format, which is forbidden by CPython tests (on
+                // test_format.py).
         try {
-            x = arg.__int__();
-        } catch (PyException pye) {
+                    argAsInt = arg.__getattr__("__int__").__call__();
+                } catch (PyException e) {
+                    // XXX: Swallow customs AttributeError throws from __float__ methods
+                    // No better alternative for the moment
+                    if (Py.matchException(e, Py.AttributeError)) {
             throw Py.TypeError("int argument required");
         }
-        if (!(x instanceof PyInteger)) {
-            throw Py.TypeError("int argument required");
+                    throw e;
         }
-        return formatInteger(((PyInteger)x).getValue(), radix, unsigned);
+    }
+        }
+        if (argAsInt instanceof PyInteger) {
+            return formatInteger(((PyInteger)argAsInt).getValue(), radix, unsigned);
+        } else { // must be a PyLong (as per __int__ contract)
+            return formatLong(argAsInt, type, altFlag);
+        }
     }
 
     private String formatInteger(long v, int radix, boolean unsigned) {
@@ -2408,10 +2449,34 @@ final class StringFormatter
     }
 
     private String formatFloatDecimal(PyObject arg, boolean truncate) {
-        if (!(arg instanceof PyFloat || arg instanceof PyInteger || arg instanceof PyLong)) {
+        PyFloat argAsFloat;
+        if (arg instanceof PyFloat) {
+            // Fast path
+            argAsFloat = (PyFloat)arg;
+        } else {
+            // Use __float__
+            if (arg instanceof PyInteger || arg instanceof PyLong) {
+                // Typical cases, safe to call __float__:
+                argAsFloat = arg.__float__();
+            } else  {
+                try {
+                    // We can't simply call arg.__float__() because PyString implements
+                    // it without exposing it to python (i.e, str instances has no
+                    // __float__ attribute). So, we would support strings as arguments
+                    // for %g format, which is forbidden by CPython tests (on
+                    // test_format.py).
+                    argAsFloat = (PyFloat)arg.__getattr__("__float__").__call__();
+                } catch (PyException e) {
+                    // XXX: Swallow customs AttributeError throws from __float__ methods
+                    // No better alternative for the moment
+                    if (Py.matchException(e, Py.AttributeError)) {
             throw Py.TypeError("float argument required");
         }
-        return formatFloatDecimal(arg.__float__().getValue(), truncate);
+                    throw e;
+    }
+            }
+        }
+        return formatFloatDecimal(argAsFloat.getValue(), truncate);
     }
 
     private String formatFloatDecimal(double v, boolean truncate) {
@@ -2591,23 +2656,22 @@ final class StringFormatter
             case 'i':
             case 'd':
                 if (arg instanceof PyLong)
-                    string = formatLong(arg.__str__(), c, altFlag);
-                else if (arg instanceof PyInteger || arg instanceof PyFloat)
-                    string = formatInteger(arg, 10, false);
-                else throw Py.TypeError("int argument required");
+                    string = formatLong(arg, c, altFlag);
+                else
+                    string = formatInteger(arg, 10, false, c, altFlag);
                 break;
             case 'u':
                 if (arg instanceof PyLong)
-                    string = formatLong(arg.__str__(), c, altFlag);
+                    string = formatLong(arg, c, altFlag);
                 else if (arg instanceof PyInteger || arg instanceof PyFloat)
-                    string = formatInteger(arg, 10, false);
+                    string = formatInteger(arg, 10, false, c, altFlag);
                 else throw Py.TypeError("int argument required");
                 break;
             case 'o':
                 if (arg instanceof PyLong)
-                    string = formatLong(arg.__oct__(), c, altFlag);
+                    string = formatLong(arg, c, altFlag);
                 else if (arg instanceof PyInteger || arg instanceof PyFloat) {
-                    string = formatInteger(arg, 8, false);
+                    string = formatInteger(arg, 8, false, c, altFlag);
                     if (altFlag && string.charAt(0) != '0') {
                         string = "0" + string;
                     }
@@ -2616,9 +2680,9 @@ final class StringFormatter
                 break;
             case 'x':
                 if (arg instanceof PyLong)
-                    string = formatLong(arg.__hex__(), c, altFlag);
+                    string = formatLong(arg, c, altFlag);
                 else if (arg instanceof PyInteger || arg instanceof PyFloat) {
-                    string = formatInteger(arg, 16, false);
+                    string = formatInteger(arg, 16, false, c, altFlag);
                     string = string.toLowerCase();
                     if (altFlag) {
                         string = "0x" + string;
@@ -2628,9 +2692,9 @@ final class StringFormatter
                 break;
             case 'X':
                 if (arg instanceof PyLong)
-                    string = formatLong(arg.__hex__(), c, altFlag);
+                    string = formatLong(arg, c, altFlag);
                 else if (arg instanceof PyInteger || arg instanceof PyFloat) {
-                    string = formatInteger(arg, 16, false);
+                    string = formatInteger(arg, 16, false, c, altFlag);
                     string = string.toUpperCase();
                     if (altFlag) {
                         string = "0X" + string;
