@@ -108,7 +108,7 @@ public class PyException extends RuntimeException
         }
 
         if (isExceptionClass(type)) {
-            if (inClass == null || !__builtin__.issubclass(inClass, type)) {
+            if (inClass == null || !Py.isSubClass(inClass, type)) {
                 PyObject[] args;
 
                 // Don't decouple a tuple into args when it's a
