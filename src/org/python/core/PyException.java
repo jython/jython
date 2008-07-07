@@ -203,7 +203,7 @@ public class PyException extends RuntimeException
      * @return true if an exception instance
      */
     public static boolean isExceptionInstance(PyObject obj) {
-        return obj instanceof PyInstance || obj.getType().isSubType((PyType)Py.BaseException);
+        return obj instanceof PyInstance || obj instanceof PyBaseException;
     }
 
     /**
