@@ -360,6 +360,10 @@ public class PyFile extends PyObject {
     }
 
     public PyObject __iternext__() {
+        return file___iternext__();
+    }
+
+    final synchronized PyObject file___iternext__() {
         checkClosed();
         String next = file.readline(-1);
         if (next.length() == 0) {
@@ -370,7 +374,7 @@ public class PyFile extends PyObject {
 
     @ExposedMethod
     final PyObject file_next() {
-        PyObject ret = __iternext__();
+        PyObject ret = file___iternext__();
         if (ret == null) {
             throw Py.StopIteration("");
         }
