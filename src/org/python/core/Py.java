@@ -1168,20 +1168,14 @@ public final class Py {
         }
         Py.runCode(code, locals, globals);
     }
-    private static ThreadStateMapping threadStateMapping = null;
+    
+    private final static ThreadStateMapping threadStateMapping = new ThreadStateMapping();
 
     public static final ThreadState getThreadState() {
         return getThreadState(null);
     }
 
     public static final ThreadState getThreadState(PySystemState newSystemState) {
-        if (threadStateMapping == null) {
-            synchronized (Py.class) {
-                if (threadStateMapping == null) {
-                    threadStateMapping = new ThreadStateMapping();
-                }
-            }
-        }
         return threadStateMapping.getThreadState(newSystemState);
     }
 

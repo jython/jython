@@ -2021,8 +2021,6 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         Method call = Method.getMethod("org.python.core.PyObject __call__ ()");
         Method call3 = Method.getMethod("org.python.core.PyObject __call__ (org.python.core.PyObject,org.python.core.PyObject,org.python.core.PyObject)");
         
-        code.trycatch(label_body_start, label_body_end, label_catch, "java/lang/Throwable");
-        
         setline(node);
         
         // mgr = (EXPR)
@@ -2044,6 +2042,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
 
         // exc = True # not necessary, since we don't exec finally if exception
         // try-catch block here
+        code.trycatch(label_body_start, label_body_end, label_catch, "java/lang/Throwable");
         
         // VAR = value  # Only if "as VAR" is present
         code.label(label_body_start);
