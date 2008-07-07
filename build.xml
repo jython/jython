@@ -518,6 +518,7 @@ The readme text for the next release will be like:
     <target name="jarjar" depends="init" unless="jarjar.notneeded">
         <taskdef name="jarjar" classname="com.tonicsystems.jarjar.JarJarTask" classpath="extlibs/jarjar-0.7.jar"/>
         <jarjar destfile="${output.dir}/jarjar.jar">
+            <zipfileset src="extlibs/antlr-runtime-3.1b1.jar"/>
             <zipfileset src="extlibs/asm-3.1.jar"/>
             <zipfileset src="extlibs/asm-commons-3.1.jar"/>
             <zipfileset src="extlibs/asm-util-3.1.jar"/>
@@ -532,6 +533,30 @@ The readme text for the next release will be like:
                 <exclude name="META-INF/**"/>
             </patternset>
         </unjar>
+    </target>
+
+    <target name="jar-complete" depends="compile,expose,jarjar">
+       <jar destfile="${dist.dir}/jython-complete.jar">
+          <fileset dir="${compile.dir}"/>   
+          <fileset dir="${exposed.dir}"/>
+          <fileset dir="${jarjar.dir}">
+          </fileset>
+          <manifest>
+              <attribute name="Main-Class" value="org.python.util.jython" />
+              <attribute name="Built-By" value="${user.name}" />
+              <!-- info section. ATTN: no blanks, no '.' in the names -->
+              <section name="Build-Info">
+                  <attribute name="version" value="${jython.version}" />
+                  <attribute name="svn-build" value="${do.checkout}" />
+                  <attribute name="oracle" value="${oracle.present}" />
+                  <attribute name="informix" value="${informix.present}" />
+                  <attribute name="build-compiler" value="${build.compiler}" />
+                  <attribute name="jdk-target-version" value="${jdk.target.version}" />
+                  <attribute name="debug" value="${debug}" />
+                  <attribute name="optimize" value="${optimize}" />
+              </section>
+          </manifest>
+        </jar>
     </target>
 
     <target name="jar" depends="compile,expose,jarjar">
