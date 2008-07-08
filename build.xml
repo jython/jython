@@ -202,7 +202,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <property name="PY_RELEASE_LEVEL_SNAPSHOT" value="170"/> <!-- 0xAA -->
 
         <!-- The current version info -->
-        <property name="jython.version" value="2.5a0+" />
+        <property name="jython.version" value="2.5a0" />
         <property name="jython.major_version" value="2"/>
         <property name="jython.minor_version" value="5"/>
         <property name="jython.micro_version" value="0"/>
@@ -515,7 +515,7 @@ The readme text for the next release will be like:
             destdir="${exposed.dir}" 
             includesfile="${jython.base.dir}/CoreExposed.includes"/>
     </target>
-    <target name="jarjar" depends="init" unless="jarjar.notneeded">
+    <target name="jarjar" depends="init" >
         <taskdef name="jarjar" classname="com.tonicsystems.jarjar.JarJarTask" classpath="extlibs/jarjar-0.7.jar"/>
         <jarjar destfile="${output.dir}/jarjar.jar">
             <zipfileset src="extlibs/antlr-runtime-3.1b1.jar"/>
@@ -535,7 +535,7 @@ The readme text for the next release will be like:
         </unjar>
     </target>
 
-    <target name="jar-complete" depends="compile,expose,jarjar">
+    <target name="jar-complete" depends="jarjar,compile,expose">
        <jar destfile="${dist.dir}/jython-complete.jar">
           <fileset dir="${compile.dir}"/>   
           <fileset dir="${exposed.dir}"/>
@@ -697,8 +697,8 @@ The readme text for the next release will be like:
     </target>
 
     <!-- wrap the build into the installer -->
-    <target name="install" depends="brand-readme-version, doc, jar, javadoc, copy-full">
-        <property name="install.src.dir" value="${jython.base.dir}/../installer/src/java" />
+    <target name="install" depends="brand-readme-version, doc, jar-complete, javadoc, copy-full">
+        <property name="install.src.dir" value="${jython.base.dir}/../installer25/src/java" />
         <echo>compiling installer from ${install.src.dir}</echo>
         <javac srcdir="${install.src.dir}"
                includes="org/**"
