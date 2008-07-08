@@ -780,11 +780,16 @@ class TestCase(unittest.TestCase):
 
         # Test reference count behavior
 
-        class C(object):
+        # XXX: Jython new style objects don't support __del__ yet
+        from test_weakref import extra_collect
+        #class C(object):
+        class C:
             count = 0
-            def __new__(cls):
+            #def __new__(cls):
+            def __init__(self):
+                cls = C
                 cls.count += 1
-                return object.__new__(cls)
+                #return object.__new__(cls)
             def __del__(self):
                 cls = self.__class__
                 assert cls.count > 0
@@ -792,6 +797,7 @@ class TestCase(unittest.TestCase):
         x = C()
         self.assertEqual(C.count, 1)
         del x
+        extra_collect()
         self.assertEqual(C.count, 0)
         l = [C(), C(), C()]
         self.assertEqual(C.count, 3)
@@ -800,6 +806,7 @@ class TestCase(unittest.TestCase):
         except ValueError:
             pass
         del l
+        extra_collect()
         self.assertEqual(C.count, 0)
 
 

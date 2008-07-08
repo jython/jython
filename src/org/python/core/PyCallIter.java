@@ -15,19 +15,25 @@ public class PyCallIter extends PyIterator {
     }
 
     public PyObject __iternext__() {
-        PyObject val = null;
+        if (callable == null) {
+            return null;
+        }
+
+        PyObject result;
         try {
-            val = callable.__call__();
+            result = callable.__call__();
         } catch (PyException exc) {
             if (Py.matchException(exc, Py.StopIteration)) {
+                callable = null;
                 stopException = exc;
                 return null;
             }
             throw exc;
         }
-        if (val._eq(sentinel).__nonzero__()) {
+        if (result._eq(sentinel).__nonzero__()) {
+            callable = null;
             return null;
         }
-        return val;
+        return result;
     }
 }

@@ -10,14 +10,24 @@ public class PySequenceIter extends PyIterator {
     }
 
     public PyObject __iternext__() {
+        if (seq == null) {
+            return null;
+        }
+
+        PyObject result;
         try {
-            return seq.__finditem__(idx++);
+            result = seq.__finditem__(idx++);
         } catch (PyException exc) {
-            if (Py.matchException(exc, Py.StopIteration))
+            if (Py.matchException(exc, Py.StopIteration)) {
+                seq = null;
                 return null;
+            }
             throw exc;
         }
+        if (result == null) {
+            seq = null;
+        }
+        return result;
     }
-
 }
 
