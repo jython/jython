@@ -1,5 +1,4 @@
 // Copyright 2000 Finn Bock
-
 package org.python.core;
 
 /**
@@ -7,12 +6,14 @@ package org.python.core;
  * implementation supply a correct __iter__() and a next() method based on the
  * __iternext__() implementation. The __iternext__() method must be supplied by
  * the subclass.
- * 
+ *
  * If the implementation raises a StopIteration exception, it should be stored
  * in stopException so the correct exception can be thrown to preserve the line
  * numbers in the traceback.
  */
 public abstract class PyIterator extends PyObject {
+
+    protected PyException stopException;
 
     public PyIterator() {
     }
@@ -20,6 +21,8 @@ public abstract class PyIterator extends PyObject {
     public PyIterator(PyType subType) {
         super(subType);
     }
+
+    public abstract PyObject __iternext__();
 
     public PyObject __iter__() {
         return this;
@@ -42,8 +45,8 @@ public abstract class PyIterator extends PyObject {
     }
 
     protected final PyObject doNext(PyObject ret) {
-        if(ret == null) {
-            if(stopException != null) {
+        if (ret == null) {
+            if (stopException != null) {
                 PyException toThrow = stopException;
                 stopException = null;
                 throw toThrow;
@@ -52,8 +55,4 @@ public abstract class PyIterator extends PyObject {
         }
         return ret;
     }
-    
-    public abstract PyObject __iternext__();
-    
-    protected PyException stopException;
-}    
+}
