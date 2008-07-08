@@ -197,6 +197,11 @@ class TestReversed(unittest.TestCase):
 
 
 def test_main(verbose=None):
+    if test_support.is_jython:
+        # XXX: CPython implementation details
+        del EnumerateTestCase.test_tuple_reuse
+        del TestReversed.test_len
+        del TestReversed.test_xrange_optimization
     testclasses = (EnumerateTestCase, SubclassTestCase, TestEmpty, TestBig,
                    TestReversed)
     test_support.run_unittest(*testclasses)
