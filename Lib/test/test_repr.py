@@ -5,10 +5,12 @@
 
 import sys
 import os
+import shutil
 import unittest
 
-from test_support import run_unittest
+from test.test_support import run_unittest
 from repr import repr as r # Don't shadow builtin repr
+from repr import Repr
 
 
 def nestedTuple(nesting):
@@ -25,15 +27,30 @@ class ReprTests(unittest.TestCase):
         eq(r("abcdefghijklmnop"),"'abcdefghijklmnop'")
 
         s = "a"*30+"b"*30
-        expected = `s`[:13] + "..." + `s`[-14:]
+        expected = repr(s)[:13] + "..." + repr(s)[-14:]
         eq(r(s), expected)
 
         eq(r("\"'"), repr("\"'"))
         s = "\""*30+"'"*100
-        expected = `s`[:13] + "..." + `s`[-14:]
+        expected = repr(s)[:13] + "..." + repr(s)[-14:]
         eq(r(s), expected)
 
+    def test_tuple(self):
+        eq = self.assertEquals
+        eq(r((1,)), "(1,)")
+
+        t3 = (1, 2, 3)
+        eq(r(t3), "(1, 2, 3)")
+
+        r2 = Repr()
+        r2.maxtuple = 2
+        expected = repr(t3)[:-2] + "...)"
+        eq(r2.repr(t3), expected)
+
     def test_container(self):
+        from array import array
+        from collections import deque
+
         eq = self.assertEquals
         # Tuples give up after 6 elements
         eq(r(()), "()")
@@ -49,12 +66,39 @@ class ReprTests(unittest.TestCase):
         eq(r([1, 2, 3, 4, 5, 6]), "[1, 2, 3, 4, 5, 6]")
         eq(r([1, 2, 3, 4, 5, 6, 7]), "[1, 2, 3, 4, 5, 6, ...]")
 
+        # Sets give up after 6 as well
+        eq(r(set([])), "set([])")
+        eq(r(set([1])), "set([1])")
+        eq(r(set([1, 2, 3])), "set([1, 2, 3])")
+        eq(r(set([1, 2, 3, 4, 5, 6])), "set([1, 2, 3, 4, 5, 6])")
+        eq(r(set([1, 2, 3, 4, 5, 6, 7])), "set([1, 2, 3, 4, 5, 6, ...])")
+
+        # Frozensets give up after 6 as well
+        eq(r(frozenset([])), "frozenset([])")
+        eq(r(frozenset([1])), "frozenset([1])")
+        eq(r(frozenset([1, 2, 3])), "frozenset([1, 2, 3])")
+        eq(r(frozenset([1, 2, 3, 4, 5, 6])), "frozenset([1, 2, 3, 4, 5, 6])")
+        eq(r(frozenset([1, 2, 3, 4, 5, 6, 7])), "frozenset([1, 2, 3, 4, 5, 6, ...])")
+
+        # collections.deque after 6
+        eq(r(deque([1, 2, 3, 4, 5, 6, 7])), "deque([1, 2, 3, 4, 5, 6, ...])")
+
         # Dictionaries give up after 4.
         eq(r({}), "{}")
         d = {'alice': 1, 'bob': 2, 'charles': 3, 'dave': 4}
         eq(r(d), "{'alice': 1, 'bob': 2, 'charles': 3, 'dave': 4}")
         d['arthur'] = 1
         eq(r(d), "{'alice': 1, 'arthur': 1, 'bob': 2, 'charles': 3, ...}")
+
+        # array.array after 5.
+        eq(r(array('i')), "array('i', [])")
+        eq(r(array('i', [1])), "array('i', [1])")
+        eq(r(array('i', [1, 2])), "array('i', [1, 2])")
+        eq(r(array('i', [1, 2, 3])), "array('i', [1, 2, 3])")
+        eq(r(array('i', [1, 2, 3, 4])), "array('i', [1, 2, 3, 4])")
+        eq(r(array('i', [1, 2, 3, 4, 5])), "array('i', [1, 2, 3, 4, 5])")
+        eq(r(array('i', [1, 2, 3, 4, 5, 6])),
+                   "array('i', [1, 2, 3, 4, 5, ...])")
 
     def test_numbers(self):
         eq = self.assertEquals
@@ -63,7 +107,7 @@ class ReprTests(unittest.TestCase):
         eq(r(1.0/3), repr(1.0/3))
 
         n = 10L**100
-        expected = `n`[:18] + "..." + `n`[-19:]
+        expected = repr(n)[:18] + "..." + repr(n)[-19:]
         eq(r(n), expected)
 
     def test_instance(self):
@@ -72,7 +116,7 @@ class ReprTests(unittest.TestCase):
         eq(r(i1), repr(i1))
 
         i2 = ClassWithRepr("x"*1000)
-        expected = `i2`[:13] + "..." + `i2`[-14:]
+        expected = repr(i2)[:13] + "..." + repr(i2)[-14:]
         eq(r(i2), expected)
 
         i3 = ClassWithFailingRepr()
@@ -86,10 +130,10 @@ class ReprTests(unittest.TestCase):
     def test_file(self):
         fp = open(unittest.__file__)
         self.failUnless(repr(fp).startswith(
-            "<open file '%s', mode 'r'" % unittest.__file__))
+            "<open file '%s', mode 'r' at 0x" % unittest.__file__))
         fp.close()
         self.failUnless(repr(fp).startswith(
-            "<closed file '%s', mode 'r'" % unittest.__file__))
+            "<closed file '%s', mode 'r' at 0x" % unittest.__file__))
 
     def test_lambda(self):
         self.failUnless(repr(lambda x: x).startswith(
@@ -102,19 +146,14 @@ class ReprTests(unittest.TestCase):
         eq(repr(hash), '<built-in function hash>')
         # Methods
         self.failUnless(repr(''.split).startswith(
-            '<built-in method split of str object'))
+            '<built-in method split of str object at 0x'))
 
     def test_xrange(self):
+        import warnings
         eq = self.assertEquals
         eq(repr(xrange(1)), 'xrange(1)')
         eq(repr(xrange(1, 2)), 'xrange(1, 2)')
         eq(repr(xrange(1, 2, 3)), 'xrange(1, 4, 3)')
-        #commented out for jython since this is deprecated.
-        # Turn off warnings for deprecated multiplication
-        #import warnings
-        #warnings.filterwarnings('ignore', category=DeprecationWarning,
-        #                        module=ReprTests.__module__)
-        #eq(repr(xrange(1) * 3), '(xrange(1) * 3)')
 
     def test_nesting(self):
         eq = self.assertEquals
@@ -133,12 +172,11 @@ class ReprTests(unittest.TestCase):
         eq(r([[[[[[{}]]]]]]), "[[[[[[{}]]]]]]")
         eq(r([[[[[[[{}]]]]]]]), "[[[[[[[...]]]]]]]")
 
-    #XXX: no buffer in jython.
-    #def test_buffer(self):
+    def test_buffer(self):
         # XXX doesn't test buffers with no b_base or read-write buffers (see
         # bufferobject.c).  The test is fairly incomplete too.  Sigh.
-    #    x = buffer('foo')
-    #    self.failUnless(repr(x).startswith('<read-only buffer'))
+        x = buffer('foo')
+        self.failUnless(repr(x).startswith('<read-only buffer for 0x'))
 
     def test_cell(self):
         # XXX Hmm? How to get at a cell object?
@@ -155,9 +193,19 @@ class ReprTests(unittest.TestCase):
         class C:
             def foo(cls): pass
         x = staticmethod(C.foo)
-        self.failUnless(repr(x).startswith('<staticmethod object'))
+        self.failUnless(repr(x).startswith('<staticmethod object at 0x'))
         x = classmethod(C.foo)
-        self.failUnless(repr(x).startswith('<classmethod object'))
+        self.failUnless(repr(x).startswith('<classmethod object at 0x'))
+
+    def test_unsortable(self):
+        # Repr.repr() used to call sorted() on sets, frozensets and dicts
+        # without taking into account that not all objects are comparable
+        x = set([1j, 2j, 3j])
+        y = frozenset(x)
+        z = {1j: 1, 2j: 2}
+        r(x)
+        r(y)
+        r(z)
 
 def touch(path, text=''):
     fp = open(path, 'w')
@@ -168,15 +216,16 @@ def zap(actions, dirname, names):
     for name in names:
         actions.append(os.path.join(dirname, name))
 
-#
 class LongReprTest(unittest.TestCase):
     def setUp(self):
         longname = 'areallylongpackageandmodulenametotestreprtruncation'
         self.pkgname = os.path.join(longname)
         self.subpkgname = os.path.join(longname, longname)
         # Make the package and subpackage
+        shutil.rmtree(self.pkgname, ignore_errors=True)
         os.mkdir(self.pkgname)
         touch(os.path.join(self.pkgname, '__init__'+os.extsep+'py'))
+        shutil.rmtree(self.subpkgname, ignore_errors=True)
         os.mkdir(self.subpkgname)
         touch(os.path.join(self.subpkgname, '__init__'+os.extsep+'py'))
         # Remember where we are
@@ -201,7 +250,8 @@ class LongReprTest(unittest.TestCase):
         touch(os.path.join(self.subpkgname, self.pkgname + os.extsep + 'py'))
         from areallylongpackageandmodulenametotestreprtruncation.areallylongpackageandmodulenametotestreprtruncation import areallylongpackageandmodulenametotestreprtruncation
         eq(repr(areallylongpackageandmodulenametotestreprtruncation),
-           "<module 'areallylongpackageandmodulenametotestreprtruncation.areallylongpackageandmodulenametotestreprtruncation.areallylongpackageandmodulenametotestreprtruncation' from '%s'>" % areallylongpackageandmodulenametotestreprtruncation.__file__)
+           "<module '%s' from '%s'>" % (areallylongpackageandmodulenametotestreprtruncation.__name__, areallylongpackageandmodulenametotestreprtruncation.__file__))
+        eq(repr(sys), "<module 'sys' (built-in)>")
 
     def test_type(self):
         eq = self.assertEquals
@@ -211,7 +261,7 @@ class foo(object):
 ''')
         from areallylongpackageandmodulenametotestreprtruncation.areallylongpackageandmodulenametotestreprtruncation import foo
         eq(repr(foo.foo),
-               "<class 'areallylongpackageandmodulenametotestreprtruncation.areallylongpackageandmodulenametotestreprtruncation.foo.foo'>")
+               "<class '%s.foo'>" % foo.__name__)
 
     def test_object(self):
         # XXX Test the repr of a type with a really long tp_name but with no
@@ -224,8 +274,9 @@ class bar:
     pass
 ''')
         from areallylongpackageandmodulenametotestreprtruncation.areallylongpackageandmodulenametotestreprtruncation import bar
+        # Module name may be prefixed with "test.", depending on how run.
         self.failUnless(repr(bar.bar).startswith(
-            "<class areallylongpackageandmodulenametotestreprtruncation.areallylongpackageandmodulenametotestreprtruncation.bar.bar"))
+            "<class %s.bar at 0x" % bar.__name__))
 
     def test_instance(self):
         touch(os.path.join(self.subpkgname, 'baz'+os.extsep+'py'), '''\
@@ -235,7 +286,7 @@ class baz:
         from areallylongpackageandmodulenametotestreprtruncation.areallylongpackageandmodulenametotestreprtruncation import baz
         ibaz = baz.baz()
         self.failUnless(repr(ibaz).startswith(
-            "<areallylongpackageandmodulenametotestreprtruncation.areallylongpackageandmodulenametotestreprtruncation.baz.baz instance"))
+            "<%s.baz instance at 0x" % baz.__name__))
 
     def test_method(self):
         eq = self.assertEquals
@@ -250,7 +301,8 @@ class aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
         # Bound method next
         iqux = qux.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa()
         self.failUnless(repr(iqux.amethod).startswith(
-            '<bound method aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.amethod of <areallylongpackageandmodulenametotestreprtruncation.areallylongpackageandmodulenametotestreprtruncation.qux.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa instance'))
+            '<bound method aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.amethod of <%s.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa instance at 0x' \
+            % (qux.__name__,) ))
 
     def test_builtin_function(self):
         # XXX test built-in functions and methods with really long names
@@ -270,7 +322,7 @@ class ClassWithFailingRepr:
 
 def test_main():
     run_unittest(ReprTests)
-    if os.name != 'mac' and not os.name.startswith('java'):
+    if os.name != 'mac':
         run_unittest(LongReprTest)
 
 
