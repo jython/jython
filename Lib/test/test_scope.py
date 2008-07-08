@@ -1,4 +1,4 @@
-from test.test_support import verify, TestFailed, check_syntax, vereq
+from test.test_support import verify, TestFailed, check_syntax, vereq, is_jython
 
 import warnings
 warnings.filterwarnings("ignore", r"import \*", SyntaxWarning, "<string>")
@@ -435,6 +435,9 @@ def f1():
 for i in range(100):
     f1()
 
+if is_jython:
+    from test_weakref import extra_collect
+    extra_collect()
 vereq(Foo.count, 0)
 
 print "17. class and global"

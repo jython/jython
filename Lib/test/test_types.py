@@ -229,58 +229,60 @@ try: type(1, 2, 3, 4)
 except TypeError: pass
 else: raise TestFailed, 'type(), w/4 args expected TypeError'
 
+# XXX: Jython lacks buffers
 print 'Buffers'
-try: buffer('asdf', -1)
-except ValueError: pass
-else: raise TestFailed, "buffer('asdf', -1) should raise ValueError"
-cmp(buffer("abc"), buffer("def")) # used to raise a warning: tp_compare didn't return -1, 0, or 1
+if not is_jython:
+    try: buffer('asdf', -1)
+    except ValueError: pass
+    else: raise TestFailed, "buffer('asdf', -1) should raise ValueError"
+    cmp(buffer("abc"), buffer("def")) # used to raise a warning: tp_compare didn't return -1, 0, or 1
 
-try: buffer(None)
-except TypeError: pass
-else: raise TestFailed, "buffer(None) should raise TypeError"
+    try: buffer(None)
+    except TypeError: pass
+    else: raise TestFailed, "buffer(None) should raise TypeError"
 
-a = buffer('asdf')
-hash(a)
-b = a * 5
-if a == b:
-    raise TestFailed, 'buffers should not be equal'
-if str(b) != ('asdf' * 5):
-    raise TestFailed, 'repeated buffer has wrong content'
-if str(a * 0) != '':
-    raise TestFailed, 'repeated buffer zero times has wrong content'
-if str(a + buffer('def')) != 'asdfdef':
-    raise TestFailed, 'concatenation of buffers yields wrong content'
-if str(buffer(a)) != 'asdf':
-    raise TestFailed, 'composing buffers failed'
-if str(buffer(a, 2)) != 'df':
-    raise TestFailed, 'specifying buffer offset failed'
-if str(buffer(a, 0, 2)) != 'as':
-    raise TestFailed, 'specifying buffer size failed'
-if str(buffer(a, 1, 2)) != 'sd':
-    raise TestFailed, 'specifying buffer offset and size failed'
-try: buffer(buffer('asdf', 1), -1)
-except ValueError: pass
-else: raise TestFailed, "buffer(buffer('asdf', 1), -1) should raise ValueError"
-if str(buffer(buffer('asdf', 0, 2), 0)) != 'as':
-    raise TestFailed, 'composing length-specified buffer failed'
-if str(buffer(buffer('asdf', 0, 2), 0, 5000)) != 'as':
-    raise TestFailed, 'composing length-specified buffer failed'
-if str(buffer(buffer('asdf', 0, 2), 0, -1)) != 'as':
-    raise TestFailed, 'composing length-specified buffer failed'
-if str(buffer(buffer('asdf', 0, 2), 1, 2)) != 's':
-    raise TestFailed, 'composing length-specified buffer failed'
+    a = buffer('asdf')
+    hash(a)
+    b = a * 5
+    if a == b:
+        raise TestFailed, 'buffers should not be equal'
+    if str(b) != ('asdf' * 5):
+        raise TestFailed, 'repeated buffer has wrong content'
+    if str(a * 0) != '':
+        raise TestFailed, 'repeated buffer zero times has wrong content'
+    if str(a + buffer('def')) != 'asdfdef':
+        raise TestFailed, 'concatenation of buffers yields wrong content'
+    if str(buffer(a)) != 'asdf':
+        raise TestFailed, 'composing buffers failed'
+    if str(buffer(a, 2)) != 'df':
+        raise TestFailed, 'specifying buffer offset failed'
+    if str(buffer(a, 0, 2)) != 'as':
+        raise TestFailed, 'specifying buffer size failed'
+    if str(buffer(a, 1, 2)) != 'sd':
+        raise TestFailed, 'specifying buffer offset and size failed'
+    try: buffer(buffer('asdf', 1), -1)
+    except ValueError: pass
+    else: raise TestFailed, "buffer(buffer('asdf', 1), -1) should raise ValueError"
+    if str(buffer(buffer('asdf', 0, 2), 0)) != 'as':
+        raise TestFailed, 'composing length-specified buffer failed'
+    if str(buffer(buffer('asdf', 0, 2), 0, 5000)) != 'as':
+        raise TestFailed, 'composing length-specified buffer failed'
+    if str(buffer(buffer('asdf', 0, 2), 0, -1)) != 'as':
+        raise TestFailed, 'composing length-specified buffer failed'
+    if str(buffer(buffer('asdf', 0, 2), 1, 2)) != 's':
+        raise TestFailed, 'composing length-specified buffer failed'
 
-try: a[1] = 'g'
-except TypeError: pass
-else: raise TestFailed, "buffer assignment should raise TypeError"
+    try: a[1] = 'g'
+    except TypeError: pass
+    else: raise TestFailed, "buffer assignment should raise TypeError"
 
-try: a[0:1] = 'g'
-except TypeError: pass
-else: raise TestFailed, "buffer slice assignment should raise TypeError"
+    try: a[0:1] = 'g'
+    except TypeError: pass
+    else: raise TestFailed, "buffer slice assignment should raise TypeError"
 
-# array.array() returns an object that does not implement a char buffer,
-# something which int() uses for conversion.
-import array
-try: int(buffer(array.array('c')))
-except TypeError :pass
-else: raise TestFailed, "char buffer (at C level) not working"
+    # array.array() returns an object that does not implement a char buffer,
+    # something which int() uses for conversion.
+    import array
+    try: int(buffer(array.array('c')))
+    except TypeError :pass
+    else: raise TestFailed, "char buffer (at C level) not working"
