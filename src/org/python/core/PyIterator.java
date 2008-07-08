@@ -13,6 +13,14 @@ package org.python.core;
  * numbers in the traceback.
  */
 public abstract class PyIterator extends PyObject {
+
+    public PyIterator() {
+    }
+
+    public PyIterator(PyType subType) {
+        super(subType);
+    }
+
     public PyObject __iter__() {
         return this;
     }
@@ -21,8 +29,19 @@ public abstract class PyIterator extends PyObject {
         "x.next() -> the next value, or raise StopIteration"
     );
 
+    /**
+     * The exposed next method.
+     *
+     * Note that exposed derivable subclasses of PyIterator should override next to call
+     * doNext(custom___iternext__), as __iternext__ is overridden by the Derived classes.
+     *
+     * @return a PyObject result
+     */
     public PyObject next() {
-        PyObject ret = __iternext__();
+        return doNext(__iternext__());
+    }
+
+    protected final PyObject doNext(PyObject ret) {
         if(ret == null) {
             if(stopException != null) {
                 PyException toThrow = stopException;

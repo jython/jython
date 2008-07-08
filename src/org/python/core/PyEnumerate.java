@@ -12,14 +12,18 @@ public class PyEnumerate extends PyIterator {
     private long en_index;          /* current index of enumeration */
     private PyObject en_sit;        /* secondary iterator of enumeration */
 
-    @ExposedMethod
-    public PyObject enumerate_next() {
-        return next();
+    public PyObject next() {
+        return enumerate_next();
     }
-    
+
     @ExposedMethod
-    public PyObject enumerate___iter__() {
-        return __iter__();
+    final PyObject enumerate_next() {
+        return doNext(enumerate___iternext__());
+    }
+
+    @ExposedMethod
+    final PyObject enumerate___iter__() {
+        return super.__iter__();
     }
 
     @ExposedNew
@@ -35,15 +39,32 @@ public class PyEnumerate extends PyIterator {
                                                                0,
                                                                1);
         }
-        return new PyEnumerate(args[0]);        
+        if (new_.for_type == subtype) {
+            return new PyEnumerate(args[0]);
+        } else {
+            return new PyEnumerateDerived(subtype, args[0]);
+        }
     }
     
-    public PyEnumerate(PyObject seq) {
+    public PyEnumerate(PyType subType) {
+        super(subType);
+    }
+    
+    public PyEnumerate(PyType subType, PyObject seq) {
+        super(subType);
         en_index = 0;
         en_sit = seq.__iter__();
     }
     
+    public PyEnumerate(PyObject seq) {
+        this(TYPE, seq);
+    }
+    
     public PyObject __iternext__() {
+        return enumerate___iternext__();
+    }
+
+    final PyObject enumerate___iternext__() {
         PyObject next_item;
 
         next_item = en_sit.__iternext__();

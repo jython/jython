@@ -13,6 +13,7 @@ complex.derived:org.python.core.PyComplexDerived
 defaultdict.derived:org.python.modules.collections.PyDefaultDictDerived
 deque.derived:org.python.modules.collections.PyDequeDerived
 dict.derived:org.python.core.PyDictionaryDerived
+enumerate.derived:org.python.core.PyEnumerateDerived
 file.derived:org.python.core.PyFileDerived
 float.derived:org.python.core.PyFloatDerived
 frozenset.derived:org.python.core.PyFrozenSetDerived
