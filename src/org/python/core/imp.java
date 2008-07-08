@@ -127,11 +127,7 @@ public class imp {
             }
         }
         */
-        // XXX: always re-generate byte code until APIVersion is fixed. Note that
-        // zipimporter.isOutdatedBytecode is also disabled so that all zipimported
-        // bytecode is also always re-generated
-        //return data;
-        return null;
+        return data;
     }
     
     public static byte[] compileSource(String name, File file, String sourceFilename,
