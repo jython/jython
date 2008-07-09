@@ -17,6 +17,13 @@ public class Options {
     public static boolean showJavaExceptions = false;
 
     /**
+     * If true, exceptions raised from Python code will include a Java stack
+     * trace in addition to the Python traceback.  This can slow raising
+     * considerably.
+     */
+    public static boolean includeJavaStackInExceptions = false;
+    
+    /**
      * When true, python exception raised in overriden methods will be shown on
      * stderr. This option is remarkably useful when python is used for
      * implementing CORBA server. Some CORBA servers will turn python exception
@@ -116,6 +123,9 @@ public class Options {
         // Set the more unusual options
         Options.showJavaExceptions = getBooleanOption(
                 "options.showJavaExceptions", Options.showJavaExceptions);
+        
+        Options.includeJavaStackInExceptions = getBooleanOption(
+        	"options.includeJavaStackInExceptions", Options.includeJavaStackInExceptions);
 
         Options.showPythonProxyExceptions = getBooleanOption(
                 "options.showPythonProxyExceptions",

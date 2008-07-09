@@ -62,6 +62,13 @@ public class PyException extends RuntimeException
     public void printStackTrace() {
         Py.printException(this);
     }
+    
+    public Throwable fillInStackTrace() {
+	if (Options.includeJavaStackInExceptions)
+	    return super.fillInStackTrace();
+	else
+	    return this;
+    }
 
     public synchronized void printStackTrace(PrintStream s) {
         if (printingStackTrace) {
