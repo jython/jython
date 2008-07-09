@@ -655,9 +655,9 @@ def java_ver(release='',vendor='',vminfo=('','',''),osinfo=('','','')):
     vm_release = _java_getprop('java.vm.version',vm_release)
     vminfo = vm_name,vm_release,vm_vendor
     os_name,os_version,os_arch = osinfo
-    os_arch = _java_getprop('java.os.arch',os_arch)
-    os_name = _java_getprop('java.os.name',os_name)
-    os_version = _java_getprop('java.os.version',os_version)
+    os_arch = _java_getprop('os.arch',os_arch)
+    os_name = _java_getprop('os.name',os_name)
+    os_version = _java_getprop('os.version',os_version)
     osinfo = os_name,os_version,os_arch
 
     return release,vendor,vminfo,osinfo
