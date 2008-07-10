@@ -331,7 +331,22 @@ public class zxJDBC extends PyObject implements ClassDictInit {
      * @return PyException
      */
     public static PyException makeException(Throwable throwable) {
-        return makeException(Error, throwable);
+        PyObject type = Error;
+        if (throwable instanceof SQLException) {
+            String state = ((SQLException)throwable).getSQLState();
+            // The SQL standard is not freely available, but
+            // http://www.postgresql.org/docs/current/static/errcodes-appendix.html
+            // contains most of the SQLSTATES codes
+            if (state.length() == 5) { // Otherwise, the state is not following the standard.
+                if (state.startsWith("23")) { //Class 23 => Integrity Constraint Violation
+                    type = IntegrityError;
+                } else if (state.equals("40002")) {
+                    // 40002  => TRANSACTION INTEGRITY CONSTRAINT VIOLATION
+                    type = IntegrityError;
+                }
+            }
+        }
+        return makeException(type, throwable);
     }
 
     /**
@@ -342,15 +357,15 @@ public class zxJDBC extends PyObject implements ClassDictInit {
      * @return PyException
      */
     public static PyException makeException(PyObject type, Throwable t) {
-    	return makeException(type, t, -1);
+        return makeException(type, t, -1);
     }
-    
+
     /**
      * Return a newly instantiated PyException of the given type.
      *
      * @param type
      * @param t
-     * @param rowIndex		Row index where the error has happened.  Useful for diagnosing. 
+     * @param rowIndex		Row index where the error has happened.  Useful for diagnosing.
      * @return PyException
      */
     public static PyException makeException(PyObject type, Throwable t, int rowIndex) {
