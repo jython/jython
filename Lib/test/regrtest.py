@@ -1489,7 +1489,6 @@ _failures = {
         test_gc
         test_iterlen
         test_marshal
-        test_pep263
         test_pkgimport
         test_profilehooks
         test_pyclbr
