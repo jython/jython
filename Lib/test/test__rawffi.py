@@ -5,6 +5,7 @@ class RawFFITestCase(unittest.TestCase):
 
     def setUp(self):
         self.libc_name = "c"
+        self.lib_name = "ctypes_test"
 
     def test_libload(self):
         import _rawffi
@@ -22,6 +23,21 @@ class RawFFITestCase(unittest.TestCase):
         assert libc.ptr('rand', [], 'l') is not func
         assert isinstance(func, _rawffi.FuncPtr)
         self.assertRaises(AttributeError, getattr, libc, "xxx")
+
+    def test_short_addition(self):
+        import _rawffi
+        lib = _rawffi.CDLL(self.lib_name)
+        short_add = lib.ptr('add_shorts', ['h', 'h'], 'H')
+        A = _rawffi.Array('h')
+        arg1 = A(1, autofree=True)
+        arg2 = A(1, autofree=True)
+        arg1[0] = 1
+        arg2[0] = 2
+        res = short_add(arg1, arg2)
+        assert res[0] == 3
+        # this does not apply to this version of memory allocation
+        #arg1.free()
+        #arg2.free()
 
 def test_main():
     tests = [RawFFITestCase,
