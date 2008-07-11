@@ -1072,6 +1072,76 @@ public class PyString extends PyBaseString
         return list;
     }
 
+    public PyList rsplit() {
+        return str_rsplit(null, -1);
+    }
+
+    public PyList rsplit(String sep) {
+        return str_rsplit(sep, -1);
+    }
+
+    public PyList rsplit(String sep, int maxsplit) {
+        return str_rsplit(sep, maxsplit);
+    }
+
+    @ExposedMethod(defaults = {"null", "-1"})
+    final PyList str_rsplit(String sep, int maxsplit) {
+        if (sep != null) {
+            if (sep.length() == 0) {
+                throw Py.ValueError("empty separator");
+            }
+            PyList list = rsplitfields(sep, maxsplit);
+            list.reverse();
+            return list;
+        }
+
+        PyList list = new PyList();
+        char[] chars = string.toCharArray();
+
+        if (maxsplit < 0) {
+            maxsplit = chars.length;
+        }
+
+        int splits = 0;
+        int i = chars.length - 1;
+
+        while (i > -1 && Character.isWhitespace(chars[i])) {
+            i--;
+        }
+        if (i == -1) {
+            return list;
+        }
+
+        while (splits < maxsplit) {
+            while (i > -1 && Character.isWhitespace(chars[i])) {
+                i--;
+            }
+            if (i == -1) {
+                break;
+            }
+
+            int nextWsChar = i;
+            while (nextWsChar > -1 && !Character.isWhitespace(chars[nextWsChar])) {
+                nextWsChar--;
+            }
+            if (nextWsChar == -1) {
+                break;
+            }
+
+            splits++;
+            list.add(fromSubstring(nextWsChar + 1, i + 1));
+            i = nextWsChar;
+        }
+        while (i > -1 && Character.isWhitespace(chars[i])) {
+            i--;
+        }
+        if (i > -1) {
+            list.add(fromSubstring(0,i+1));
+        }
+        list.reverse();
+        return list;
+    }
+
     public PyTuple partition(PyObject sepObj) {
         return str_partition(sepObj);
     }
@@ -1203,6 +1273,37 @@ public class PyString extends PyBaseString
         if (lastbreak <= length) {
             list.append(fromSubstring(lastbreak, length));
         }
+        return list;
+    }
+
+    private PyList rsplitfields(String sep, int maxsplit) {
+        PyList list = new PyList();
+
+        int length = string.length();
+        if (maxsplit < 0) {
+            maxsplit = length + 1;
+        }
+
+        int lastbreak = length;
+        int splits = 0;
+        int index = length;
+        int sepLength = sep.length();
+
+        while (index > 0 && splits < maxsplit) {
+            int i = string.lastIndexOf(sep, index - sepLength);
+            if (i == index) {
+                i -= sepLength;
+            }
+            if (i < 0) {
+                break;
+            }
+            splits++;
+            list.append(fromSubstring(i + sepLength, lastbreak));
+            lastbreak = i;
+            index = i;
+
+        }
+        list.append(fromSubstring(0, lastbreak));
         return list;
     }
 

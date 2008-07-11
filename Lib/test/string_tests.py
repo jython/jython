@@ -936,7 +936,12 @@ class MixinStrUnicodeUserStringTest:
         self.checkequal('abc', 'abc', '__mul__', 1)
         self.checkequal('abcabcabc', 'abc', '__mul__', 3)
         self.checkraises(TypeError, 'abc', '__mul__')
-        self.checkraises(TypeError, 'abc', '__mul__', '')
+        # CPython specific; pypy tests via the operator module instead
+        if not test_support.is_jython:
+            self.checkraises(TypeError, 'abc', '__mul__', '')
+        else:
+            import operator
+            self.checkraises(TypeError, operator, '__mul__', 'abc', '')
         # XXX: on a 64-bit system, this doesn't raise an overflow error,
         # but either raises a MemoryError, or succeeds (if you have 54TiB)
         #self.checkraises(OverflowError, 10000*'abc', '__mul__', 2000000000)
@@ -1027,7 +1032,7 @@ class MixinStrUnicodeUserStringTest:
                 # unicodeobject.c uses a 120 byte buffer and switches from
                 # 'f' formatting to 'g' at precision 50, so we expect
                 # OverflowErrors for the ranges x < 50 and prec >= 67.
-                if x < 50 and prec >= 67:
+                if not test_support.is_jython and x < 50 and prec >= 67:
                     self.checkraises(OverflowError, format, "__mod__", value)
                 else:
                     self.checkcall(format, "__mod__", value)
