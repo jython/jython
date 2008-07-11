@@ -17,6 +17,7 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.TimeZone;
 import java.text.ParseException;
@@ -702,31 +703,62 @@ public class Time implements ClassDictInit
 
     private static final String DEFAULT_FORMAT_PY = "%a %b %d %H:%M:%S %Y";
     private static final String DEFAULT_FORMAT_JA = "EEE MMM dd HH:mm:ss zzz yyyy";
+    private static final HashMap<Character, String> py2java = new HashMap<Character, String>() {{
+        put('a', "EEE");
+        put('A', "EEEE");
+        put('b', "MMM");
+        put('B', "MMMM");
+        put('c', "EEE MMM dd HH:mm:ss yyyy");
+        put('d', "dd");
+        put('H', "HH");
+        put('I', "kk");
+        put('j', "DDD");
+        put('m', "MM");
+        put('M', "mm");
+        put('p', "a");
+        put('S', "ss");
+        put('U', "ww");
+        put('w', "0"); // unsupported in java
+        put('W', "ww"); // same as U ??
+        put('x', "MM/dd/yy");
+        put('X', "HH:mm:ss");
+        put('y', "yy");
+        put('Y', "yyyy");
+        put('Z', "zzz");
+        put('%', "%");
+        }};
+
     private static String py2java_format(String format) {
-        format = format
-                .replaceAll("%a", "EEE")
-                .replaceAll("%A", "EEEE")
-                .replaceAll("%b", "MMM")
-                .replaceAll("%B", "MMMM")
-                .replaceAll("%c", "EEE MMM dd HH:mm:ss yyyy")
-                .replaceAll("%d", "dd")
-                .replaceAll("%H", "HH")
-                .replaceAll("%I", "kk")
-                .replaceAll("%j", "DDD")
-                .replaceAll("%m", "MM")
-                .replaceAll("%M", "mm")
-                .replaceAll("%p", "a")
-                .replaceAll("%S", "ss")
-                .replaceAll("%U", "ww")
-                .replaceAll("%w", "0") // unsupported in java
-                .replaceAll("%W", "ww") // same as %U ??
-                .replaceAll("%x", "MM/dd/yy")
-                .replaceAll("%X", "HH:mm:ss")
-                .replaceAll("%y", "yy")
-                .replaceAll("%Y", "yyyy")
-                .replaceAll("%Z", "zzz")
-                .replaceAll("%%", "%")
-            ;
-            return format;
+        StringBuilder builder = new StringBuilder();
+        boolean directive = false;
+        boolean inQuote = false;
+
+        for (int i = 0; i < format.length(); i++) {
+            char charAt = format.charAt(i);
+
+            if (charAt == '%' && !directive) {
+                directive = true;
+                continue;
+            }
+
+            if (!directive) {
+                // ascii letters are considered SimpleDateFormat directive patterns unless
+                // escaped
+                boolean needsQuote = charAt >= 'A' && charAt <= 'z';
+                if (needsQuote && !inQuote || !needsQuote && inQuote) {
+                    builder.append("'");
+                    inQuote = needsQuote;
+                }
+                builder.append(charAt);
+                continue;
+            } else if (inQuote) {
+                builder.append("'");
+            }
+
+            String translated = py2java.get(charAt);
+            builder.append(translated != null ? translated : charAt);
+            directive = false;
+        }
+        return builder.toString();
     }
 }
