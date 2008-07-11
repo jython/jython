@@ -126,6 +126,16 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
 
     <target name="full-build" depends="full-check, install" description="a full build with svn checkout" />
 
+    <target name="needed-check" unless="full-build">
+        <echo message="check needed"/>
+        <uptodate property="jarjar.notneeded" targetfile="${output.dir}/jarjar.jar">
+            <srcfiles dir="extlibs" includes="*" />
+        </uptodate>
+        <uptodate property="antlr.notneeded" targetfile="${dist.dir}/jython.jar">
+            <srcfiles dir="grammar" includes="*.g" />
+        </uptodate>
+    </target>
+
     <target name="init" depends="version-init">
         <property name="build.compiler" value="modern" />
         <property name="jdk.target.version" value="1.5" />
@@ -183,12 +193,6 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
             <pathelement path="${exposed.dir}" />
             <pathelement path="${compile.dir}" />
         </path>
-        <uptodate property="jarjar.notneeded" targetfile="${output.dir}/jarjar.jar">
-            <srcfiles dir="extlibs" includes="*" />
-        </uptodate>
-        <uptodate property="antlr.notneeded" targetfile="${dist.dir}/jython.jar">
-            <srcfiles dir="grammar" includes="*.g" />
-        </uptodate>
     </target>
 
     <target name="version-init">
@@ -432,7 +436,7 @@ The readme text for the next release will be like:
 		  lazy="${templates.lazy}"/>
     </target>
 
-    <target name="antlr_gen" depends="init,prepare-output" unless="antlr.notneeded">
+    <target name="antlr_gen" depends="init,needed-check,prepare-output" unless="antlr.notneeded">
         <java classname="org.antlr.Tool" failonerror="true">
             <arg value="-fo"/>
             <arg path="build/gensrc/org/python/antlr"/>
@@ -515,7 +519,8 @@ The readme text for the next release will be like:
             destdir="${exposed.dir}" 
             includesfile="${jython.base.dir}/CoreExposed.includes"/>
     </target>
-    <target name="jarjar" depends="init" >
+
+    <target name="jarjar" depends="init,needed-check" unless="jarjar.notneeded">
         <taskdef name="jarjar" classname="com.tonicsystems.jarjar.JarJarTask" classpath="extlibs/jarjar-0.7.jar"/>
         <jarjar destfile="${output.dir}/jarjar.jar">
             <zipfileset src="extlibs/antlr-runtime-3.1b1.jar"/>
