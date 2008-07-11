@@ -16,6 +16,7 @@ Command line options:
 -s: single     -- run only a single test (see below)
 -r: random     -- randomize test execution order
 -m: memo       -- save results to file
+-j: junit-xml  -- save results as JUnit XML to files in directory
 -f: fromfile   -- read names of tests to run from a file (see below)
 -l: findleaks  -- if GC is available detect tests that leak memory
 -u: use        -- specify which special resource intensive tests to run
@@ -131,6 +132,7 @@ import warnings
 import re
 import cStringIO
 import traceback
+import time
 
 # I see no other way to suppress these warnings;
 # putting them in test_grammar.py has no effect:
@@ -181,7 +183,8 @@ def usage(code, msg=''):
 def main(tests=None, testdir=None, verbose=0, quiet=False, generate=False,
          exclude=False, single=False, randomize=False, fromfile=None,
          findleaks=False, use_resources=None, trace=False, coverdir='coverage',
-         runleaks=False, huntrleaks=False, verbose2=False, expected=False, memo=None):
+         runleaks=False, huntrleaks=False, verbose2=False, expected=False,
+         memo=None, junit_xml=None):
     """Execute a test suite.
 
     This also parses command-line options and modifies its behavior
@@ -206,7 +209,7 @@ def main(tests=None, testdir=None, verbose=0, quiet=False, generate=False,
 
     test_support.record_original_stdout(sys.stdout)
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hvgqxsrf:lu:t:TD:NLR:wM:em:',
+        opts, args = getopt.getopt(sys.argv[1:], 'hvgqxsrf:lu:t:TD:NLR:wM:emj:',
                                    ['help', 'verbose', 'quiet', 'generate',
                                     'exclude', 'single', 'random', 'fromfile',
                                     'findleaks', 'use=', 'threshold=', 'trace',
@@ -251,6 +254,8 @@ def main(tests=None, testdir=None, verbose=0, quiet=False, generate=False,
             runleaks = True
         elif o in ('-m', '--memo'):
             memo = a
+        elif o in ('-j', '--junit-xml'):
+            junit_xml = a
         elif o in ('-t', '--threshold'):
             import gc
             gc.set_threshold(int(a))
@@ -365,6 +370,7 @@ def main(tests=None, testdir=None, verbose=0, quiet=False, generate=False,
                              trace=False, count=True)
     test_support.verbose = verbose      # Tell tests to be moderately quiet
     test_support.use_resources = use_resources
+    test_support.junit_xml_dir = junit_xml
     save_modules = sys.modules.keys()
     skips = _ExpectedSkips()
     failures = _ExpectedFailures()
@@ -382,7 +388,7 @@ def main(tests=None, testdir=None, verbose=0, quiet=False, generate=False,
         else:
             try:
                 ok = runtest(test, generate, verbose, quiet, testdir,
-                             huntrleaks)
+                             huntrleaks, junit_xml)
             except KeyboardInterrupt:
                 # print a newline separate from the ^C
                 print
@@ -506,7 +512,8 @@ def findtests(testdir=None, stdtests=STDTESTS, nottests=NOTTESTS):
     tests.sort()
     return stdtests + tests
 
-def runtest(test, generate, verbose, quiet, testdir=None, huntrleaks=False):
+def runtest(test, generate, verbose, quiet, testdir=None, huntrleaks=False,
+            junit_xml=None):
     """Run a single test.
 
     test -- the name of the test
@@ -526,12 +533,12 @@ def runtest(test, generate, verbose, quiet, testdir=None, huntrleaks=False):
 
     try:
         return runtest_inner(test, generate, verbose, quiet, testdir,
-                             huntrleaks)
+                             huntrleaks, junit_xml)
     finally:
         cleanup_test_droppings(test, verbose)
 
 def runtest_inner(test, generate, verbose, quiet,
-                     testdir=None, huntrleaks=False):
+                     testdir=None, huntrleaks=False, junit_xml_dir=None):
     test_support.unload(test)
     if not testdir:
         testdir = findtestdir()
@@ -544,6 +551,12 @@ def runtest_inner(test, generate, verbose, quiet,
 
     try:
         save_stdout = sys.stdout
+        if junit_xml_dir:
+            from test.junit_xml import Tee, write_direct_test
+            indirect_test = None
+            save_stderr = sys.stderr
+            sys.stdout = stdout = Tee(sys.stdout)
+            sys.stderr = stderr = Tee(sys.stderr)
         try:
             if cfp:
                 sys.stdout = cfp
@@ -553,6 +566,7 @@ def runtest_inner(test, generate, verbose, quiet,
             else:
                 # Always import it from the test package
                 abstest = 'test.' + test
+            start = time.time()
             the_package = __import__(abstest, globals(), locals(), [])
             the_module = getattr(the_package, test)
             # Most tests run to completion simply as a side-effect of
@@ -562,25 +576,46 @@ def runtest_inner(test, generate, verbose, quiet,
             indirect_test = getattr(the_module, "test_main", None)
             if indirect_test is not None:
                 indirect_test()
+            elif junit_xml_dir:
+                write_direct_test(junit_xml_dir, abstest, time.time() - start,
+                                  stdout=stdout.getvalue(),
+                                  stderr=stderr.getvalue())
             if huntrleaks:
                 dash_R(the_module, test, indirect_test, huntrleaks)
         finally:
             sys.stdout = save_stdout
+            if junit_xml_dir:
+                sys.stderr = save_stderr
     except test_support.ResourceDenied, msg:
         if not quiet:
             print test, "skipped --", msg
             sys.stdout.flush()
+        if junit_xml_dir:
+            write_direct_test(junit_xml_dir, abstest, time.time() - start,
+                              'skipped', sys.exc_info(),
+                              stdout=stdout.getvalue(),
+                              stderr=stderr.getvalue())
         return -2
     except (ImportError, test_support.TestSkipped), msg:
         if not quiet:
             print test, "skipped --", msg
             sys.stdout.flush()
+        if junit_xml_dir:
+            write_direct_test(junit_xml_dir, abstest, time.time() - start,
+                              'skipped', sys.exc_info(),
+                              stdout=stdout.getvalue(),
+                              stderr=stderr.getvalue())
         return -1
     except KeyboardInterrupt:
         raise
     except test_support.TestFailed, msg:
         print "test", test, "failed --", msg
         sys.stdout.flush()
+        if junit_xml_dir and indirect_test is None:
+            write_direct_test(junit_xml_dir, abstest, time.time() - start,
+                              'failure', sys.exc_info(),
+                              stdout=stdout.getvalue(),
+                              stderr=stderr.getvalue())
         return 0
     except:
         type, value = sys.exc_info()[:2]
@@ -589,6 +624,11 @@ def runtest_inner(test, generate, verbose, quiet,
         if verbose:
             traceback.print_exc(file=sys.stdout)
             sys.stdout.flush()
+        if junit_xml_dir and indirect_test is None:
+            write_direct_test(junit_xml_dir, abstest, time.time() - start,
+                              'error', sys.exc_info(),
+                              stdout=stdout.getvalue(),
+                              stderr=stderr.getvalue())
         return 0
     else:
         if not cfp:

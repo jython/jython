@@ -4,6 +4,7 @@ if __name__ != 'test.test_support':
     raise ImportError, 'test_support must be imported from the test package'
 
 import sys
+import time
 
 class Error(Exception):
     """Base class for regression test exceptions."""
@@ -31,6 +32,7 @@ class ResourceDenied(TestSkipped):
 
 verbose = 1              # Flag set to 0 by regrtest.py
 use_resources = None     # Flag set to [] by regrtest.py
+junit_xml_dir = None     # Option set by regrtest.py
 max_memuse = 0           # Disable bigmem tests (they will still be run with
                          # small sizes, to make sure they work.)
 
@@ -414,8 +416,30 @@ class BasicTestRunner:
 
 
 def run_suite(suite, testclass=None):
+    """Run all TestCases in their own individual TestSuite"""
+    if not junit_xml_dir:
+        # Splitting tests apart slightly changes the handling of the
+        # TestFailed message
+        return _run_suite(suite, testclass)
+
+    failed = False
+    for test in suite:
+        suite = unittest.TestSuite()
+        suite.addTest(test)
+        try:
+            _run_suite(suite, testclass)
+        except TestFailed, e:
+            if not failed:
+                failed = e
+    if failed:
+        raise failed
+
+def _run_suite(suite, testclass=None):
     """Run tests from a unittest.TestSuite-derived class."""
-    if verbose:
+    if junit_xml_dir:
+        from junit_xml import JUnitXMLTestRunner
+        runner = JUnitXMLTestRunner(junit_xml_dir)
+    elif verbose:
         runner = unittest.TextTestRunner(sys.stdout, verbosity=2)
     else:
         runner = BasicTestRunner()
@@ -473,12 +497,36 @@ def run_doctest(module, verbosity=None):
     # output shouldn't be compared by regrtest.
     save_stdout = sys.stdout
     sys.stdout = get_original_stdout()
+
+    if junit_xml_dir:
+        from junit_xml import Tee, write_doctest
+        save_stderr = sys.stderr
+        sys.stdout = stdout = Tee(sys.stdout)
+        sys.stderr = stderr = Tee(sys.stderr)
+
     try:
-        f, t = doctest.testmod(module, verbose=verbosity)
+        start = time.time()
+        try:
+            f, t = doctest.testmod(module, verbose=verbosity)
+        except:
+            took = time.time() - start
+            if junit_xml_dir:
+                write_doctest(junit_xml_dir, module.__name__, took, 'error',
+                              sys.exc_info(), stdout.getvalue(),
+                              stderr.getvalue())
+            raise
+        took = time.time() - start
         if f:
+            if junit_xml_dir:
+                write_doctest(junit_xml_dir, module.__name__, took, 'failure',
+                              stdout=stdout.getvalue(),
+                              stderr=stderr.getvalue())
             raise TestFailed("%d of %d doctests failed" % (f, t))
     finally:
         sys.stdout = save_stdout
+    if junit_xml_dir:
+        write_doctest(junit_xml_dir, module.__name__, took,
+                      stdout=stdout.getvalue(), stderr=stderr.getvalue())
     if verbose:
         print 'doctest (%s) ... %d tests with zero failures' % (module.__name__, t)
     return f, t
