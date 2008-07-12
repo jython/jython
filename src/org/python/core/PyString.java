@@ -625,7 +625,7 @@ public class PyString extends PyBaseString
             for (int i=start; j<n; i+=step)
                 new_chars[j++] = string.charAt(i);
 
-            return createInstance(new String(new_chars));
+            return createInstance(new String(new_chars), true);
         }
     }
 
@@ -666,7 +666,7 @@ public class PyString extends PyBaseString
         for(int i = 0; i < count; i++) {
             string.getChars(0, s, new_chars, i * s);
         }
-        return createInstance(new String(new_chars));
+        return createInstance(new String(new_chars), true);
     }
 
     @ExposedMethod(type = MethodType.BINARY)
@@ -697,7 +697,7 @@ public class PyString extends PyBaseString
             if (generic_other instanceof PyUnicode) {
                 return new PyUnicode(result);
             }
-            return createInstance(result);
+            return createInstance(result, true);
         }
         else return null;
     }
@@ -1354,7 +1354,7 @@ public class PyString extends PyBaseString
     }
 
     protected PyString fromSubstring(int begin, int end) {
-        return createInstance(string.substring(begin, end));
+        return createInstance(string.substring(begin, end), true);
     }
 
     public int index(String sub) {
@@ -1798,9 +1798,9 @@ public class PyString extends PyBaseString
         int old_len = oldPiece.string.length();
         if (len == 0) {
             if (maxsplit == -1 && old_len == 0) {
-                return createInstance(newPiece.string);
+                return createInstance(newPiece.string, true);
             }
-            return createInstance(string);
+            return createInstance(string, true);
         }
         
         if (old_len == 0 && newPiece.string.length() != 0 && maxsplit !=0) {
@@ -1813,7 +1813,7 @@ public class PyString extends PyBaseString
                 buffer.append(newPiece.string);
             }
             buffer.append(string.substring(i));
-            return createInstance(buffer.toString());
+            return createInstance(buffer.toString(), true);
         }
        
         if(maxsplit == -1) {
@@ -1844,7 +1844,7 @@ public class PyString extends PyBaseString
         PyObject item;
         int seqlen = seq.__len__();
         if (seqlen == 0) {
-            return createInstance("");
+            return createInstance("", true);
         }
         if (seqlen == 1) {
             item = seq.pyget(0);
@@ -1881,7 +1881,7 @@ public class PyString extends PyBaseString
         if (needsUnicode){
             return new PyUnicode(buf.toString());
         }
-        return createInstance(buf.toString());
+        return createInstance(buf.toString(), true);
     }
 
 

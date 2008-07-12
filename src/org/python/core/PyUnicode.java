@@ -253,6 +253,9 @@ public class PyUnicode extends PyString implements Iterable {
 
     @Override
     protected PyObject getslice(int start, int stop, int step) {
+        if (isBasicPlane()) {
+            return super.getslice(start, stop, step);
+        }
         if (step > 0 && stop < start) {
             stop = start;
         }
