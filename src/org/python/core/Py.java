@@ -999,7 +999,10 @@ public final class Py {
             }
             PyObject moduleName = type.__findattr__("__module__");
             if (moduleName == null) {
-                buf.append("<unknown>");
+                // XXX: Workaround the fact that PyClass lacks __module__
+                if (!(type instanceof PyClass)) {
+                    buf.append("<unknown>");
+                }
             } else {
                 String moduleStr = moduleName.toString();
                 if (!moduleStr.equals("exceptions")) {
