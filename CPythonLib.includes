@@ -11,6 +11,7 @@ test/**
 
 # Lib files, in alphabetical order:
 __future__.py
+_strptime.py
 _LWPCookieJar.py
 _MozillaCookieJar.py
 _strptime.py
