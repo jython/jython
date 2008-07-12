@@ -1409,6 +1409,9 @@ public class PyString extends PyBaseString
         int[] indices = translateIndices(start, end);
         int n = sub.length();
         if(n == 0) {
+            if (start > string.length()) {
+                return 0;
+            }
             return indices[1] - indices[0] + 1;
         }
         int count = 0;
@@ -1439,8 +1442,9 @@ public class PyString extends PyBaseString
     final int str_find(String sub, int start, PyObject end) {
         int[] indices = translateIndices(start, end);
         int index = string.indexOf(sub, indices[0]);
-        if (index > indices[1])
+        if (index < start || index > indices[1]) {
             return -1;
+        }
         return index;
     }
 
@@ -1460,8 +1464,9 @@ public class PyString extends PyBaseString
     final int str_rfind(String sub, int start, PyObject end) {
         int[] indices = translateIndices(start, end);
         int index = string.lastIndexOf(sub, indices[1] - sub.length());
-        if(index < indices[0])
+        if (index < start) {
             return -1;
+        }
         return index;
     }
 
@@ -1800,27 +1805,53 @@ public class PyString extends PyBaseString
     }
 
     @ExposedMethod
-    final PyString str_join(PyObject seq) {
-        StringBuilder buf = new StringBuilder();
+    final PyString str_join(PyObject obj) {
+        // Similar to CPython's abstract::PySequence_Fast
+        PySequence seq;
+        if (obj instanceof PySequence) {
+            seq = (PySequence)obj;
+        } else {
+            seq = new PyList(obj.__iter__());
+        }
 
-        PyObject iter = seq.__iter__();
-        PyObject obj = null;
-        boolean needsUnicode = false;
-        for (int i = 0; (obj = iter.__iternext__()) != null; i++) {
-            if (!(obj instanceof PyString)){
-                 throw Py.TypeError(
-                        "sequence item " + i + ": expected string, " +
-                        obj.getType().fastGetName() + " found");
+        PyObject item;
+        int seqlen = seq.__len__();
+        if (seqlen == 0) {
+            return createInstance("");
+        }
+        if (seqlen == 1) {
+            item = seq.pyget(0);
+            if (item.getType() == PyUnicode.TYPE ||
+                (item.getType() == PyString.TYPE && getType() == PyString.TYPE)) {
+                return (PyString)item;
             }
-            if(obj instanceof PyUnicode){
+        }
+
+        boolean needsUnicode = false;
+        long joinedSize = 0;
+        StringBuilder buf = new StringBuilder();
+        for (int i = 0; i < seqlen; i++) {
+            item = seq.pyget(i);
+            if (!(item instanceof PyString)) {
+                throw Py.TypeError(String.format("sequence item %d: expected string, %.80s found",
+                                                 i, item.getType().fastGetName()));
+            }
+            if (item instanceof PyUnicode) {
                 needsUnicode = true;
             }
-            if (i > 0){
+            if (i > 0) {
                 buf.append(string);
+                joinedSize += string.length();
             }
-            buf.append(((PyString)obj).string);
+            String itemString = ((PyString)item).string;
+            buf.append(itemString);
+            joinedSize += itemString.length();
+            if (joinedSize > Integer.MAX_VALUE) {
+                throw Py.OverflowError("join() result is too long for a Python string");
+            }
         }
-        if(needsUnicode){
+
+        if (needsUnicode){
             return new PyUnicode(buf.toString());
         }
         return createInstance(buf.toString());
