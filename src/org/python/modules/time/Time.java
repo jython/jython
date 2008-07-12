@@ -744,7 +744,8 @@ public class Time implements ClassDictInit
             if (!directive) {
                 // ascii letters are considered SimpleDateFormat directive patterns unless
                 // escaped
-                boolean needsQuote = charAt >= 'A' && charAt <= 'z';
+                boolean needsQuote = (charAt >= 'A' && charAt <= 'Z') ||
+                        (charAt >= 'a' && charAt <= 'z');
                 if (needsQuote && !inQuote || !needsQuote && inQuote) {
                     builder.append("'");
                     inQuote = needsQuote;
@@ -753,6 +754,7 @@ public class Time implements ClassDictInit
                 continue;
             } else if (inQuote) {
                 builder.append("'");
+                inQuote = false;
             }
 
             String translated = py2java.get(charAt);
