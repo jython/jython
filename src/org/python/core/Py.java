@@ -571,7 +571,11 @@ public final class Py {
     public static PyUnicode newUnicode(String s) {
         return new PyUnicode(s);
     }
-
+    
+    public static PyUnicode newUnicode(String s, boolean isBasic) {
+        return new PyUnicode(s, isBasic);
+    }
+    
     public static PyBoolean newBoolean(boolean t) {
         return t ? Py.True : Py.False;
     }

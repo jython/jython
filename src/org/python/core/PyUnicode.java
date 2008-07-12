@@ -37,6 +37,11 @@ public class PyUnicode extends PyString implements Iterable {
         this(TYPE, string);
     }
 
+    public PyUnicode(String string, boolean isBasic) {
+        this(TYPE, string);
+        plane = isBasic ? Plane.BASIC : Plane.UNKNOWN;  
+    }
+    
     public PyUnicode(PyType subtype, String string) {
         super(subtype, string);
     }
@@ -190,9 +195,7 @@ public class PyUnicode extends PyString implements Iterable {
     // case of deletes. So optimize by providing a tainting mechanism.
     @Override
     protected PyString createInstance(String str, boolean isBasic) {
-        PyUnicode uni = new PyUnicode(str);
-        uni.plane = isBasic ? Plane.BASIC : Plane.UNKNOWN;
-        return uni;
+        return new PyUnicode(str, isBasic);
     }
     
     @Override

@@ -135,8 +135,9 @@ public class codecs {
 
         /* Shortcut for ascii encoding */
         if (encoding.equals("ascii")) {
-            return new PyUnicode(PyUnicode_DecodeASCII(v.toString(),
-                    v.__len__(), errors));
+            return new PyUnicode(
+                    PyUnicode_DecodeASCII(v.toString(), v.__len__(), errors),
+                    true);
         }
 
         /* Decode via the codec registry */
