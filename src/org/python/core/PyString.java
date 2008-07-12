@@ -633,6 +633,11 @@ public class PyString extends PyBaseString
         return new PyString(str);
     }
 
+    protected PyString createInstance(String str, boolean isBasic) {
+        // ignore isBasic, doesn't apply to PyString, just PyUnicode
+        return new PyString(str);
+    } 
+    
     public boolean __contains__(PyObject o) {
         return str___contains__(o);
     }
@@ -1784,20 +1789,42 @@ public class PyString extends PyBaseString
         if(!(oldPiece instanceof PyString) || !(newPiece instanceof PyString)) {
             throw Py.TypeError("str or unicode required for replace");
         }
-        if(string.length() == 0) {
+
+        return replace((PyString)oldPiece, (PyString)newPiece, maxsplit == null ? -1 : maxsplit.asInt());
+    }
+    
+    protected PyString replace(PyString oldPiece, PyString newPiece, int maxsplit) {
+        int len = string.length();
+        int old_len = oldPiece.string.length();
+        if (len == 0) {
+            if (maxsplit == -1 && old_len == 0) {
+                return createInstance(newPiece.string);
+            }
             return createInstance(string);
         }
-        int iMaxsplit;
-        if(maxsplit == null) {
-            if(oldPiece.__len__() == 0) {
-                iMaxsplit = string.length() + 1;
-            } else {
-                iMaxsplit = string.length();
+        
+        if (old_len == 0 && newPiece.string.length() != 0 && maxsplit !=0) {
+            // old="" and new != "", interleave new piece with each char in original, taking in effect maxsplit
+            StringBuilder buffer = new StringBuilder();
+            int i = 0;
+            buffer.append(newPiece.string);
+            for (; i < len && (i < maxsplit-1 || maxsplit == -1); i++) {
+                buffer.append(string.charAt(i));
+                buffer.append(newPiece.string);
             }
-        } else {
-            iMaxsplit = maxsplit.asInt();
+            buffer.append(string.substring(i));
+            return createInstance(buffer.toString());
         }
-        return ((PyString)newPiece).str_join(splitfields(((PyString)oldPiece).string, iMaxsplit));
+       
+        if(maxsplit == -1) {
+            if(old_len == 0) {
+                maxsplit = len + 1;
+            } else {
+                maxsplit = len;
+            }
+        }
+        
+        return newPiece.str_join(splitfields(oldPiece.string, maxsplit));
     }
 
     public String join(PyObject seq) {

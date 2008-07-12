@@ -641,11 +641,13 @@ class CommonTest(unittest.TestCase):
         EQ("bobobXbobob", "bobobobXbobobob", "replace", "bobob", "bob")
         EQ("BOBOBOB", "BOBOBOB", "replace", "bob", "bobby")
 
-        ba = buffer('a')
-        bb = buffer('b')
-        EQ("bbc", "abc", "replace", ba, bb)
-        EQ("aac", "abc", "replace", bb, ba)
+        # XXX - Jython does not support the buffer protocol; perhaps
+        # it's possible for things like strings. Not likely to be in 2.5
 
+        # ba = buffer('a')
+        # bb = buffer('b')
+        # EQ("bbc", "abc", "replace", ba, bb)
+        # EQ("aac", "abc", "replace", bb, ba)
         #
         self.checkequal('one@two!three!', 'one!two!three!', 'replace', '!', '@', 1)
         self.checkequal('onetwothree', 'one!two!three!', 'replace', '!', '')

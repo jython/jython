@@ -185,6 +185,16 @@ public class PyUnicode extends PyString implements Iterable {
         return new PyUnicode(str);
     }
 
+    // Unicode ops consisting of basic strings can only produce basic strings;
+    // this may not be the case for astral ones - they also might be basic, in
+    // case of deletes. So optimize by providing a tainting mechanism.
+    @Override
+    protected PyString createInstance(String str, boolean isBasic) {
+        PyUnicode uni = new PyUnicode(str);
+        uni.plane = isBasic ? Plane.BASIC : Plane.UNKNOWN;
+        return uni;
+    }
+    
     @Override
     public PyObject __mod__(PyObject other) {
         return unicode___mod__(other);
@@ -1033,10 +1043,14 @@ public class PyUnicode extends PyString implements Iterable {
 
     @ExposedMethod(defaults = "-1")
     final PyObject unicode_replace(PyObject oldPieceObj, PyObject newPieceObj, int maxsplit) {
-        StringBuilder buffer = new StringBuilder();
         PyUnicode newPiece = coerceToUnicode(newPieceObj);
         PyUnicode oldPiece = coerceToUnicode(oldPieceObj);
-
+        if (isBasicPlane() && newPiece.isBasicPlane() && oldPiece.isBasicPlane()) {
+            return replace(oldPiece, newPiece, maxsplit);
+        }
+        
+        StringBuilder buffer = new StringBuilder();
+        
         if (oldPiece.getCodePointCount() == 0) {
             Iterator<Integer> iter = newSubsequenceIterator();
             for (int i = 1; (maxsplit == -1 || i < maxsplit) && iter.hasNext(); i++) {
