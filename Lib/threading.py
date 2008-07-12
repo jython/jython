@@ -1,7 +1,6 @@
 from java.util.concurrent import Semaphore, CyclicBarrier
 from java.util.concurrent.locks import ReentrantLock
 from org.python.core import FunctionThread
-from java.lang import Thread
 from thread import _local as local
 import java.lang.Thread
 import weakref
@@ -147,12 +146,12 @@ class Semaphore(object):
 
 
 ThreadStates = {
-    Thread.State.NEW : 'initial',
-    Thread.State.RUNNABLE: 'runnable',
-    Thread.State.BLOCKED: 'blocked',
-    Thread.State.WAITING: 'waiting',
-    Thread.State.TIMED_WAITING: 'timed_waiting',
-    Thread.State.TERMINATED: 'stopped',
+    java.lang.Thread.State.NEW : 'initial',
+    java.lang.Thread.State.RUNNABLE: 'runnable',
+    java.lang.Thread.State.BLOCKED: 'blocked',
+    java.lang.Thread.State.WAITING: 'waiting',
+    java.lang.Thread.State.TIMED_WAITING: 'timed_waiting',
+    java.lang.Thread.State.TERMINATED: 'stopped',
 }
 
 class JavaThread(object):
@@ -207,6 +206,7 @@ class JavaThread(object):
 # relies on the fact that this is a CHM
 _threads = weakref.WeakValueDictionary()
 _active = _threads
+_jthread_to_pythread = weakref.WeakKeyDictionary()
 
 class Thread(JavaThread):
     def __init__(self, group=None, target=None, name=None, args=None, kwargs=None):
@@ -217,10 +217,14 @@ class Thread(JavaThread):
         self._target = target
         self._args = args
         self._kwargs = kwargs
-        self._thread = _thread = FunctionThread(self.__bootstrap, ())
+        self._thread = _thread = self._create_thread()
         if name:
             self._thread.setName(name)
+        _jthread_to_pythread[_thread] = self
         _threads[_thread.getId()] = self
+
+    def _create_thread(self):
+        return FunctionThread(self.__bootstrap, ())
 
     def run(self):
         if self._target:
@@ -287,10 +291,14 @@ class _MainThread(Thread):
         import atexit
         atexit.register(self.__exitfunc)
 
+    def _create_thread(self):
+        return java.lang.Thread.currentThread()
+
     def _set_daemon(self):
         return False
 
     def __exitfunc(self):
+        del _threads[self._thread.getId()]
         t = _pickSomeNonDaemonThread()
         while t:
             t.join()
@@ -303,9 +311,8 @@ def _pickSomeNonDaemonThread():
     return None
 
 def currentThread():
-    id = java.lang.Thread.currentThread().getId()
     try:
-        return _threads[id]
+        return _jthread_to_pythread[java.lang.Thread.currentThread()]
     except KeyError:
         return JavaThread(java.lang.Thread.currentThread())
 

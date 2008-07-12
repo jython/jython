@@ -34,6 +34,10 @@ __all__ = ["popen", "popen2", "popen3", "popen4", "Popen3", "Popen4"]
 
 _active = []
 
+def _cleanup():
+    """For CPython compatibility"""
+    pass
+
 class _ProcessFile:
     """Python file object that returns the process exit status from
     the close method.
