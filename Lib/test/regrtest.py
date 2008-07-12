@@ -1393,7 +1393,6 @@ _expectations = {
         test_codeop
         test_commands
         test_crypt
-        test_csv
         test_ctypes
         test_curses
         test_dbm
@@ -1425,12 +1424,13 @@ _expectations = {
         test_openpty
         test_ossaudiodev
         test_parser
+        test_peepholer
         test_plistlib
         test_poll
+        test_profile
         test_pty
         test_pwd
         test_pyexpat
-        test_regex
         test_resource
         test_rgbimg
         test_robotparser
@@ -1443,10 +1443,9 @@ _expectations = {
         test_startfile
         test_stringprep
         test_strop
-        test_strptime
+        test_structmembers
         test_sunaudiodev
         test_sundry
-        test_structmembers
         test_symtable
         test_tcl
         test_threadsignals
@@ -1456,10 +1455,10 @@ _expectations = {
         test_unicodedata
         test_wait3
         test_wait4
-        test_xml_etree_c
         test_wave
         test_winreg
         test_winsound
+        test_xml_etree_c
         """
 }
 _expectations['freebsd5'] = _expectations['freebsd4']

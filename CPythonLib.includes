@@ -13,6 +13,7 @@ test/**
 __future__.py
 _LWPCookieJar.py
 _MozillaCookieJar.py
+_strptime.py
 aifc.py
 anydbm.py
 atexit.py
