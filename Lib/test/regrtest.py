@@ -1389,6 +1389,7 @@ _expectations = {
         test_capi
         test_cd
         test_cl
+        test_code
         test_codeccallbacks
         test_codeop
         test_commands
@@ -1451,6 +1452,7 @@ _expectations = {
         test_threadsignals
         test_timeout
         test_timing
+        test_transformer
         test_unicode_file
         test_unicodedata
         test_wait3
