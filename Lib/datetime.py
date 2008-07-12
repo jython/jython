@@ -1399,8 +1399,17 @@ class datetime(date):
             converter = _time.gmtime
         y, m, d, hh, mm, ss, weekday, jday, dst = converter(t)
         us = int((t % 1.0) * 1000000)
+
+        if us == 1000001 or us == 999999:
+            us = 0
+            rounded = True
+        else:
+            rounded = False
+
         ss = min(ss, 59)    # clamp out leap seconds if the platform has them
         result = cls(y, m, d, hh, mm, ss, us, tz)
+        if rounded:
+            result += timedelta(seconds=1)
         if tz is not None:
             result = tz.fromutc(result)
         return result
