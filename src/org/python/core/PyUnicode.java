@@ -156,6 +156,9 @@ public class PyUnicode extends PyString implements Iterable {
                 return new PyUnicode(((PyUnicode) S).string);
             }
             if (S instanceof PyString) {
+                if (S.getType() != PyString.TYPE && encoding == null && errors == null) {
+                    return S.__unicode__();
+                }
                 PyObject decoded = codecs.decode((PyString) S, encoding, errors);
                 if (decoded instanceof PyUnicode) {
                     return new PyUnicode((PyUnicode) decoded);
