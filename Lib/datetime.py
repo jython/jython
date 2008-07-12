@@ -1442,6 +1442,15 @@ class datetime(date):
                    time.tzinfo)
     combine = classmethod(combine)
 
+    def strptime(cls, date_string, format):
+        """datetime(year, month, day[, hour[, minute[, second[, microsecond[,tzinfo]]]]])
+
+        The year, month and day arguments are required. tzinfo may be None, or an
+        instance of a tzinfo subclass. The remaining arguments may be ints or longs."""
+        return cls(*(_time.strptime(date_string, format))[0:6])
+
+    strptime = classmethod(strptime)
+
     def timetuple(self):
         "Return local time tuple compatible with time.localtime()."
         dst = self._dst()
