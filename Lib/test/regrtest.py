@@ -1543,6 +1543,9 @@ class _ExpectedSkips:
                 for skip in WIN_ONLY:
                     self.expected.add(skip)
 
+            if test_support.is_jython and os._name != 'posix':
+                self.expected.add('test_mhlib')
+
             self.valid = True
 
     def isvalid(self):
