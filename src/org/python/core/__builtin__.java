@@ -94,7 +94,10 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
                 if (o == Py.NoConversion) {
                     o = arg1.__tojava__(PyJavaClass.class);
                     if (o == Py.NoConversion) {
-                        Py.TypeError("reload() argument must be a module");
+                        if (arg1 instanceof PySystemState) {
+                            return __builtin__.reload((PySystemState)arg1);
+                        }
+                        throw Py.TypeError("reload() argument must be a module");
                     }
                     return __builtin__.reload((PyJavaClass) o);
                 }
@@ -986,6 +989,11 @@ public class __builtin__ {
 
     public static PyObject reload(PyJavaClass o) {
         return imp.reload(o);
+    }
+
+    public static PyObject reload(PySystemState o) {
+        // fake it like imp.reload(PyJavaClass) does
+        return o;
     }
 
     public static PyString repr(PyObject o) {
