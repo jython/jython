@@ -55,7 +55,11 @@ class GzipFile:
     """
 
     myfileobj = None
-    max_read_chunk = 10 * 1024 * 1024   # 10Mb
+    # XXX: repeated 10mb chunk reads hurt test_gzip.test_many_append's
+    # performance on Jython (maybe CPython's allocator recycles the same
+    # 10mb buffer whereas Java's doesn't)
+    #max_read_chunk = 10 * 1024 * 1024   # 10Mb
+    max_read_chunk = 256 * 1024 # 256kb
 
     def __init__(self, filename=None, mode=None,
                  compresslevel=9, fileobj=None):
