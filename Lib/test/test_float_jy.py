@@ -4,8 +4,8 @@ Made for Jython.
 """
 import math
 import sys
-import test_support
 import unittest
+from test import test_support
 
 jython = sys.platform.startswith('java')
 
@@ -28,8 +28,7 @@ class FloatTestCase(unittest.TestCase):
         self.assertEqual(str(12345678.00005),
                          jython and '12345678.0' or '12345678.0001')
         self.assertEqual(str(12345678.0005), '12345678.0005')
-        self.assertEqual(str(math.pi**-100),
-                         jython and '1.927581416056e-50' or '1.92758141606e-50')
+        self.assertEqual(str(math.pi**-100), '1.92758141606e-50')
         self.assertEqual(str(0.0), '0.0')
         self.assertEqual(str(-1.0), '-1.0')
         self.assertEqual(str(-9876.543210), '-9876.54321')
@@ -43,8 +42,7 @@ class FloatTestCase(unittest.TestCase):
         self.assertEqual('%.11g' % 12345678.00005, '12345678')
         # XXX: The exponential formatter isn't totally correct, e.g. our
         # output here is really .13g
-        self.assertEqual('%.12g' % math.pi**-100,
-                         jython and '1.927581416056e-50' or '1.92758141606e-50')
+        self.assertEqual('%.12g' % math.pi**-100, '1.92758141606e-50')
         self.assertEqual('%.5g' % 123.005, '123')
         self.assertEqual('%#.5g' % 123.005, '123.00')
         self.assertEqual('%#g' % 0.001, '0.00100000')
@@ -53,8 +51,7 @@ class FloatTestCase(unittest.TestCase):
         self.assertEqual('%#.4g' % 100, '100.0')
         self.assertEqual('%#.4g' % 100.25, '100.2')
         self.assertEqual('%g' % 0.00001, '1e-05')
-        self.assertEqual('%#g' % 0.00001,
-                         jython and '1.000000e-05' or '1.00000e-05')
+        self.assertEqual('%#g' % 0.00001, '1.00000e-05')
         self.assertEqual('%e' % -400.0, '-4.000000e+02')
         self.assertEqual('%.2g' % 99, '99')
         self.assertEqual('%.2g' % 100, '1e+02')
