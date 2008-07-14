@@ -70,7 +70,7 @@ INSTALL_SCHEMES = {
         'purelib': '$base/Lib/site-packages',
         'platlib': '$base/Lib/site-packages',
         'headers': '$base/Include/$dist_name',
-        'scripts': '$base/Scripts',
+        'scripts': '$base/bin',
         'data'   : '$base',
         }
     }
