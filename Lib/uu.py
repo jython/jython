@@ -44,6 +44,10 @@ def encode(in_file, out_file, name=None, mode=None):
     #
     # If in_file is a pathname open it and change defaults
     #
+
+    close_in_file = False
+    close_out_file = False
+
     if in_file == '-':
         in_file = sys.stdin
     elif isinstance(in_file, basestring):
@@ -55,6 +59,7 @@ def encode(in_file, out_file, name=None, mode=None):
             except AttributeError:
                 pass
         in_file = open(in_file, 'rb')
+        close_in_file = True
     #
     # Open out_file if it is a pathname
     #
@@ -62,6 +67,7 @@ def encode(in_file, out_file, name=None, mode=None):
         out_file = sys.stdout
     elif isinstance(out_file, basestring):
         out_file = open(out_file, 'w')
+        close_out_file = True
     #
     # Set defaults for name and mode
     #
@@ -79,15 +85,26 @@ def encode(in_file, out_file, name=None, mode=None):
         data = in_file.read(45)
     out_file.write(' \nend\n')
 
+    # Jython and other implementations requires files to be explicitly
+    # closed if we don't want to wait for GC
+    if close_in_file:
+        in_file.close()
+    if close_out_file:
+        out_file.close()
 
 def decode(in_file, out_file=None, mode=None, quiet=0):
     """Decode uuencoded file"""
+
+    close_in_file = False
+    close_out_file = False
+
     #
     # Open the input file, if needed.
     #
     if in_file == '-':
         in_file = sys.stdin
     elif isinstance(in_file, basestring):
+        close_in_file = True
         in_file = open(in_file)
     #
     # Read until a begin is encountered or we've exhausted the file
@@ -118,6 +135,7 @@ def decode(in_file, out_file=None, mode=None, quiet=0):
     if out_file == '-':
         out_file = sys.stdout
     elif isinstance(out_file, basestring):
+        close_out_file = True
         fp = open(out_file, 'wb')
         try:
             os.path.chmod(out_file, mode)
@@ -143,6 +161,13 @@ def decode(in_file, out_file=None, mode=None, quiet=0):
     if not s:
         raise Error('Truncated input file')
     if opened:
+        out_file.close()
+
+    # Jython and other implementations requires files to be explicitly
+    # closed if we don't want to wait for GC
+    if close_in_file:
+        in_file.close()
+    if close_out_file:
         out_file.close()
 
 def test():
