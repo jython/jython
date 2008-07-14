@@ -1055,6 +1055,23 @@ public class PyDefaultDictDerived extends PyDefaultDict implements Slotted {
         }
     }
 
+    public Object __tojava__(Class c) {
+        // If we are not being asked by the "default" conversion to java, then
+        // we can provide this as the result, as long as it is a instance of the
+        // specified class. Without this, derived.__tojava__(PyObject.class)
+        // would broke. (And that's not pure speculation: PyReflectedFunction's
+        // ReflectedArgs asks for things like that).
+        if ((c!=Object.class)&&(c.isInstance(this))) {
+            return this;
+        }
+        // Otherwise, we call the derived __tojava__, if it exists:
+        PyType self_type=getType();
+        PyObject impl=self_type.lookup("__tojava__");
+        if (impl!=null)
+            return impl.__get__(this,self_type).__call__(Py.java2py(c)).__tojava__(Object.class);
+        return super.__tojava__(c);
+    }
+
     public String toString() {
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__repr__");
