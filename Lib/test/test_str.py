@@ -89,7 +89,10 @@ class StrTest(
         # This test only affects 32-bit platforms because expandtabs can only take
         # an int as the max value, not a 64-bit C long.  If expandtabs is changed
         # to take a 64-bit long, this test should apply to all platforms.
-        if sys.maxint > (1 << 32) or struct.calcsize('P') != 4:
+
+        # Jython uses a different algorithm for which overflows cannot occur;
+        # but memory exhaustion of course can. So not applicable.
+        if sys.maxint > (1 << 32) or test_support.is_jython or struct.calcsize('P') != 4:
             return
         self.assertRaises(OverflowError, 't\tt\t'.expandtabs, sys.maxint)
 

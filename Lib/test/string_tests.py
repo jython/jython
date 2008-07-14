@@ -251,7 +251,11 @@ class CommonTest(unittest.TestCase):
 
         self.checkraises(TypeError, 'hello', 'expandtabs', 42, 42)
         # This test is only valid when sizeof(int) == sizeof(void*) == 4.
-        if sys.maxint < (1 << 32) and struct.calcsize('P') == 4:
+
+        # Jython uses a different algorithm for which overflows cannot occur;
+        # but memory exhaustion of course can. So not applicable.
+        if (sys.maxint < (1 << 32) and not test_support.is_jython
+            and struct.calcsize('P') == 4):
             self.checkraises(OverflowError,
                              '\ta\n\tb', 'expandtabs', sys.maxint)
 
@@ -678,7 +682,7 @@ class CommonTest(unittest.TestCase):
 
     def test_replace_overflow(self):
         # Check for overflow checking on 32 bit machines
-        if sys.maxint != 2147483647 or struct.calcsize("P") > 4:
+        if sys.maxint != 2147483647 or test_support.is_jython or struct.calcsize("P") > 4:
             return
         A2_16 = "A" * (2**16)
         self.checkraises(OverflowError, A2_16, "replace", "", A2_16)
