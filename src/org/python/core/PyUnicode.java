@@ -803,7 +803,7 @@ public class PyUnicode extends PyString implements Iterable {
             super(maxsplit);
             this.sep = sep;
         }
-
+        
         public PyUnicode next() {
             StringBuilder buffer = new StringBuilder();
 
@@ -853,7 +853,7 @@ public class PyUnicode extends PyString implements Iterable {
             return new SepSplitIterator(sep, maxsplit);
         }
     }
-
+    
     @ExposedMethod
     final PyTuple unicode_rpartition(PyObject sep) {
         return unicodeRpartition(sep);
@@ -862,16 +862,23 @@ public class PyUnicode extends PyString implements Iterable {
     @ExposedMethod(defaults = {"null", "-1"})
     final PyList unicode_split(PyObject sepObj, int maxsplit) {
         PyUnicode sep = coerceToUnicode(sepObj);
-        if (isBasicPlane() && (sep == null || sep.isBasicPlane())) {
-            if (sep != null) {
-                return str_split(sep.string, maxsplit);
-            } else {
-                return str_split(null, maxsplit);
-            }
+        if (sep != null) {
+            return str_split(sep.string, maxsplit);
+        } else {
+            return str_split(null, maxsplit);
         }
-        return new PyList(newSplitIterator(sep, maxsplit));
     }
 
+    @ExposedMethod(defaults = {"null", "-1"})
+    final PyList unicode_rsplit(PyObject sepObj, int maxsplit) {
+        PyUnicode sep = coerceToUnicode(sepObj);
+        if (sep != null) {
+            return str_rsplit(sep.string, maxsplit);
+        } else {
+            return str_rsplit(null, maxsplit);
+        }
+    }
+    
     @ExposedMethod(defaults = "false")
     final PyList unicode_splitlines(boolean keepends) {
         if (isBasicPlane()) {
