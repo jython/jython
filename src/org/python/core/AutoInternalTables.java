@@ -8,7 +8,7 @@ import java.util.Map;
 
 public abstract class AutoInternalTables extends InternalTables {
 
-    protected ReferenceQueue queue = new ReferenceQueue();
+    protected transient ReferenceQueue queue = new ReferenceQueue();
 
     protected abstract Reference newAutoRef(short type, Object key,
                                             Object obj);

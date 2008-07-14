@@ -8,7 +8,7 @@ public class IdImpl {
 
     public static class WeakIdentityMap {
         
-        private ReferenceQueue refqueue = new ReferenceQueue();
+        private transient ReferenceQueue refqueue = new ReferenceQueue();
         private HashMap hashmap = new HashMap();
         
         private void cleanup() {
