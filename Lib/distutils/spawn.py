@@ -6,9 +6,9 @@ Also provides the 'find_executable()' to search the path for a given
 executable name.
 """
 
-# This module should be kept compatible with Python 1.5.2.
+# This module should be kept compatible with Python 2.1.
 
-__revision__ = "$Id: spawn.py 29801 2002-11-21 20:41:07Z akuchling $"
+__revision__ = "$Id: spawn.py 37828 2004-11-10 22:23:15Z loewis $"
 
 import sys, os, string
 from distutils.errors import *
@@ -39,8 +39,6 @@ def spawn (cmd,
         _spawn_nt(cmd, search_path, dry_run=dry_run)
     elif os.name == 'os2':
         _spawn_os2(cmd, search_path, dry_run=dry_run)
-    elif os.name == 'java':
-        _spawn_java(cmd, search_path, dry_run=dry_run)
     else:
         raise DistutilsPlatformError, \
               "don't know how to spawn programs on platform '%s'" % os.name
@@ -99,7 +97,7 @@ def _spawn_os2 (cmd,
     #cmd = _nt_quote_args(cmd)
     if search_path:
         # either we find one or it stays the same
-        executable = find_executable(executable) or executable 
+        executable = find_executable(executable) or executable
     log.info(string.join([executable] + cmd[1:], ' '))
     if not dry_run:
         # spawnv for OS/2 EMX requires a full path to the .exe
@@ -146,7 +144,14 @@ def _spawn_posix (cmd,
         # Loop until the child either exits or is terminated by a signal
         # (ie. keep waiting if it's merely stopped)
         while 1:
-            (pid, status) = os.waitpid(pid, 0)
+            try:
+                (pid, status) = os.waitpid(pid, 0)
+            except OSError, exc:
+                import errno
+                if exc.errno == errno.EINTR:
+                    continue
+                raise DistutilsExecError, \
+                      "command '%s' failed: %s" % (cmd[0], exc[-1])
             if os.WIFSIGNALED(status):
                 raise DistutilsExecError, \
                       "command '%s' terminated by signal %d" % \
@@ -169,27 +174,6 @@ def _spawn_posix (cmd,
                       "unknown error executing '%s': termination status %d" % \
                       (cmd[0], status)
 # _spawn_posix ()
-
-
-def _spawn_java(cmd,
-                search_path=1,
-                verbose=0,
-                dry_run=0):
-    executable = cmd[0]
-    cmd = ' '.join(_nt_quote_args(cmd))
-    log.info(cmd)
-    if not dry_run:
-        try:
-            rc = os.system(cmd) >> 8
-        except OSError, exc:
-            # this seems to happen when the command isn't found
-            raise DistutilsExecError, \
-                  "command '%s' failed: %s" % (executable, exc[-1])
-        if rc != 0:
-            # and this reflects the command running but failing
-            print "command '%s' failed with exit status %d" % (executable, rc)
-            raise DistutilsExecError, \
-                  "command '%s' failed with exit status %d" % (executable, rc)
 
 
 def find_executable(executable, path=None):

@@ -2,9 +2,9 @@
 
 Implements the Distutils 'sdist' command (create a source distribution)."""
 
-# This module should be kept compatible with Python 1.5.2.
+# This module should be kept compatible with Python 2.1.
 
-__revision__ = "$Id: sdist.py 37012 2004-08-16 12:15:00Z doko $"
+__revision__ = "$Id: sdist.py 61268 2008-03-06 07:14:26Z martin.v.loewis $"
 
 import sys, os, string
 from types import *
@@ -80,7 +80,6 @@ class sdist (Command):
                     'no-prune': 'prune' }
 
     default_format = { 'posix': 'gztar',
-                       'java': 'gztar',
                        'nt': 'zip' }
 
     def initialize_options (self):
@@ -348,14 +347,14 @@ class sdist (Command):
           * the build tree (typically "build")
           * the release tree itself (only an issue if we ran "sdist"
             previously with --keep-temp, or it aborted)
-          * any RCS or CVS directories
+          * any RCS, CVS, .svn, .hg, .git, .bzr, _darcs directories
         """
         build = self.get_finalized_command('build')
         base_dir = self.distribution.get_fullname()
 
         self.filelist.exclude_pattern(None, prefix=build.build_base)
         self.filelist.exclude_pattern(None, prefix=base_dir)
-        self.filelist.exclude_pattern(r'/(RCS|CVS|\.svn)/.*', is_regex=1)
+        self.filelist.exclude_pattern(r'(^|/)(RCS|CVS|\.svn|\.hg|\.git|\.bzr|_darcs)/.*', is_regex=1)
 
 
     def write_manifest (self):
@@ -377,16 +376,13 @@ class sdist (Command):
         """
         log.info("reading manifest file '%s'", self.manifest)
         manifest = open(self.manifest)
-        try:
-            while 1:
-                line = manifest.readline()
-                if line == '':              # end of file
-                    break
-                if line[-1] == '\n':
-                    line = line[0:-1]
-                self.filelist.append(line)
-        finally:
-            manifest.close()
+        while 1:
+            line = manifest.readline()
+            if line == '':              # end of file
+                break
+            if line[-1] == '\n':
+                line = line[0:-1]
+            self.filelist.append(line)
 
     # read_manifest ()
 
@@ -453,6 +449,7 @@ class sdist (Command):
         for fmt in self.formats:
             file = self.make_archive(base_name, fmt, base_dir=base_dir)
             archive_files.append(file)
+            self.distribution.dist_files.append(('sdist', '', file))
 
         self.archive_files = archive_files
 

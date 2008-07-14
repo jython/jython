@@ -4,9 +4,9 @@ Implements the Distutils 'install' command."""
 
 from distutils import log
 
-# This module should be kept compatible with Python 1.5.2.
+# This module should be kept compatible with Python 2.1.
 
-__revision__ = "$Id: install.py 38351 2005-01-20 19:16:27Z theller $"
+__revision__ = "$Id: install.py 43363 2006-03-27 21:55:21Z phillip.eby $"
 
 import sys, os, string
 from types import *
@@ -64,13 +64,6 @@ INSTALL_SCHEMES = {
         'platlib': '$base/Lib/site-packages',
         'headers': '$base/Include/$dist_name',
         'scripts': '$base/Scripts',
-        'data'   : '$base',
-        },
-    'java': {
-        'purelib': '$base/Lib/site-packages',
-        'platlib': '$base/Lib/site-packages',
-        'headers': '$base/Include/$dist_name',
-        'scripts': '$base/bin',
         'data'   : '$base',
         }
     }
@@ -244,19 +237,15 @@ class install (Command):
                   ("must supply either prefix/exec-prefix/home or " +
                    "install-base/install-platbase -- not both")
 
+        if self.home and (self.prefix or self.exec_prefix):
+            raise DistutilsOptionError, \
+                  "must supply either home or prefix/exec-prefix -- not both"
+
         # Next, stuff that's wrong (or dubious) only on certain platforms.
-        if os.name == 'posix':
-            if self.home and (self.prefix or self.exec_prefix):
-                raise DistutilsOptionError, \
-                      ("must supply either home or prefix/exec-prefix -- " +
-                       "not both")
-        else:
+        if os.name != "posix":
             if self.exec_prefix:
                 self.warn("exec-prefix option ignored on this platform")
                 self.exec_prefix = None
-            if self.home:
-                self.warn("home option ignored on this platform")
-                self.home = None
 
         # Now the interesting logic -- so interesting that we farm it out
         # to other methods.  The goal of these methods is to set the final
@@ -412,15 +401,19 @@ class install (Command):
 
     def finalize_other (self):          # Windows and Mac OS for now
 
-        if self.prefix is None:
-            self.prefix = os.path.normpath(sys.prefix)
+        if self.home is not None:
+            self.install_base = self.install_platbase = self.home
+            self.select_scheme("unix_home")
+        else:
+            if self.prefix is None:
+                self.prefix = os.path.normpath(sys.prefix)
 
-        self.install_base = self.install_platbase = self.prefix
-        try:
-            self.select_scheme(os.name)
-        except KeyError:
-            raise DistutilsPlatformError, \
-                  "I don't know how to install stuff on '%s'" % os.name
+            self.install_base = self.install_platbase = self.prefix
+            try:
+                self.select_scheme(os.name)
+            except KeyError:
+                raise DistutilsPlatformError, \
+                      "I don't know how to install stuff on '%s'" % os.name
 
     # finalize_other ()
 
@@ -538,7 +531,7 @@ class install (Command):
             not (self.path_file and self.install_path_file) and
             install_lib not in sys_path):
             log.debug(("modules installed to '%s', which is not in "
-                       "Python's module search path (sys.path) -- " 
+                       "Python's module search path (sys.path) -- "
                        "you'll have to change the search path yourself"),
                        self.install_lib)
 
@@ -608,6 +601,7 @@ class install (Command):
                     ('install_headers', has_headers),
                     ('install_scripts', has_scripts),
                     ('install_data',    has_data),
+                    ('install_egg_info', lambda self:True),
                    ]
 
 # class install

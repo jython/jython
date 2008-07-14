@@ -4,15 +4,16 @@ Implements the Distutils 'bdist_dumb' command (create a "dumb" built
 distribution -- i.e., just an archive to be unpacked under $prefix or
 $exec_prefix)."""
 
-# This module should be kept compatible with Python 1.5.2.
+# This module should be kept compatible with Python 2.1.
 
-__revision__ = "$Id: bdist_dumb.py 29901 2002-11-26 17:45:19Z akuchling $"
+__revision__ = "$Id: bdist_dumb.py 38697 2005-03-23 18:54:36Z loewis $"
 
 import os
 from distutils.core import Command
 from distutils.util import get_platform
 from distutils.dir_util import create_tree, remove_tree, ensure_relative
 from distutils.errors import *
+from distutils.sysconfig import get_python_version
 from distutils import log
 
 class bdist_dumb (Command):
@@ -41,7 +42,6 @@ class bdist_dumb (Command):
     boolean_options = ['keep-temp', 'skip-build', 'relative']
 
     default_format = { 'posix': 'gztar',
-                       'java': 'gztar',
                        'nt': 'zip',
                        'os2': 'zip' }
 
@@ -54,7 +54,7 @@ class bdist_dumb (Command):
         self.dist_dir = None
         self.skip_build = 0
         self.relative = 0
-        
+
     # initialize_options()
 
 
@@ -118,8 +118,14 @@ class bdist_dumb (Command):
                                    ensure_relative(install.install_base))
 
         # Make the archive
-        self.make_archive(pseudoinstall_root,
-                          self.format, root_dir=archive_root)
+        filename = self.make_archive(pseudoinstall_root,
+                                     self.format, root_dir=archive_root)
+        if self.distribution.has_ext_modules():
+            pyversion = get_python_version()
+        else:
+            pyversion = 'any'
+        self.distribution.dist_files.append(('bdist_dumb', pyversion,
+                                             filename))
 
         if not self.keep_temp:
             remove_tree(self.bdist_dir, dry_run=self.dry_run)
