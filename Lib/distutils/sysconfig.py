@@ -73,7 +73,7 @@ def get_python_inc(plat_specific=0, prefix=None):
             return os.path.join(prefix, "Mac", "Include")
         else:
             return os.path.join(prefix, "Include")
-    elif os.name == "os2":
+    elif os.name == "os2" or os.name == "java":
         return os.path.join(prefix, "Include")
     else:
         raise DistutilsPlatformError(
@@ -127,7 +127,7 @@ def get_python_lib(plat_specific=0, standard_lib=0, prefix=None):
             else:
                 return os.path.join(prefix, "Lib", "site-packages")
 
-    elif os.name == "os2":
+    elif os.name == "os2" or os.name == "java":
         if standard_lib:
             return os.path.join(PREFIX, "Lib")
         else:
@@ -476,6 +476,13 @@ def _init_os2():
     _config_vars = g
 
 
+def _init_jython():
+    """Initialize the module as appropriate for Jython"""
+    # Stub out some values that build_ext expects; they don't matter
+    # anyway
+    _init_os2()
+
+
 def get_config_vars(*args):
     """With no arguments, return a dictionary of all configuration
     variables relevant for the current platform.  Generally this includes
@@ -488,7 +495,12 @@ def get_config_vars(*args):
     """
     global _config_vars
     if _config_vars is None:
-        func = globals().get("_init_" + os.name)
+        if sys.platform.startswith('java'):
+            # Jython might pose as a different os.name, but we always
+            # want _init_jython regardless
+            func = _init_jython
+        else:
+            func = globals().get("_init_" + os.name)
         if func:
             func()
         else:

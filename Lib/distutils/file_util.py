@@ -170,7 +170,7 @@ def copy_file (src, dst,
             # before chmod() (at least under NT).
             if preserve_times:
                 os.utime(dst, (st[ST_ATIME], st[ST_MTIME]))
-            if preserve_mode:
+            if preserve_mode and hasattr(os, 'chmod'):
                 os.chmod(dst, S_IMODE(st[ST_MODE]))
 
     return (dst, 1)

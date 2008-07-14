@@ -53,7 +53,10 @@ class BuildPyTestCase(support.TempdirManager,
         pkgdest = os.path.join(destination, "pkg")
         files = os.listdir(pkgdest)
         self.assert_("__init__.py" in files)
-        self.assert_("__init__.pyc" in files)
+        if sys.platform.startswith('java'):
+            self.assert_("__init__$py.class" in files, files)
+        else:
+            self.assert_("__init__.pyc" in files)
         self.assert_("README.txt" in files)
 
     def test_empty_package_dir (self):

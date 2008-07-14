@@ -42,6 +42,7 @@ class bdist_dumb (Command):
     boolean_options = ['keep-temp', 'skip-build', 'relative']
 
     default_format = { 'posix': 'gztar',
+                       'java': 'gztar',
                        'nt': 'zip',
                        'os2': 'zip' }
 
