@@ -91,13 +91,16 @@ public class PyArray extends PySequence implements Cloneable {
         if (obj instanceof PyString) {
             String code = obj.toString();
             if (code.length() != 1) {
-                throw Py.ValueError("array() argument 1 must be char, not str");
+                throw Py.TypeError("array() argument 1 must be char, not str");
             }
             type = char2class(code.charAt(0));
             typecode = code;
         } else if (obj instanceof PyJavaClass) {
             type = ((PyJavaClass)obj).proxyClass;
             typecode = type.getName();
+        } else {
+            throw Py.TypeError("array() argument 1 must be char, not " +
+                               obj.getType().fastGetName());
         }
         data = Array.newInstance(type, 0);
         delegate = new ArrayDelegate();
@@ -227,6 +230,10 @@ public class PyArray extends PySequence implements Cloneable {
         seq___delslice__(start, stop, step);
     }
 
+    public PyObject __add__(PyObject other) {
+        return array___add__(other);
+    }
+
     /**
      * Adds (appends) two PyArrays together
      * 
@@ -234,7 +241,8 @@ public class PyArray extends PySequence implements Cloneable {
      *            a PyArray to be added to the instance
      * @return the result of the addition as a new PyArray instance
      */
-    public PyObject __add__(PyObject other) {
+    @ExposedMethod
+    final PyObject array___add__(PyObject other) {
         PyArray otherArr = null;
         if(!(other instanceof PyArray)) {
             throw Py.TypeError("can only append another array to an array");
