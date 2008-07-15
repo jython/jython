@@ -43,7 +43,6 @@ cookielib.py
 copy.py
 copy_reg.py
 Cookie.py
-decimal.py
 difflib.py
 dircache.py
 dircmp.py
