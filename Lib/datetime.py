@@ -981,6 +981,24 @@ class date(object):
     def __reduce__(self):
         return (self.__class__, self.__getstate())
 
+    def __tojava__(self, java_class):
+        from java.lang import Object
+        from java.sql import Date
+        from java.util import Calendar
+        from org.python.core import Py
+
+        if java_class not in (Calendar, Date, Object):
+            return Py.NoConversion
+
+        calendar = Calendar.getInstance()
+        calendar.clear()
+        calendar.set(self.year, self.month - 1, self.day)
+        if java_class == Calendar:
+            return calendar
+        else:
+            return Date(calendar.getTimeInMillis())
+
+
 _date_class = date  # so functions w/ args named "date" can get at the class
 
 date.min = date(1, 1, 1)
@@ -1345,6 +1363,28 @@ class time(object):
 
     def __reduce__(self):
         return (time, self.__getstate())
+
+    def __tojava__(self, java_class):
+        # TODO, if self.tzinfo is not None, convert time to UTC
+        from java.lang import Object
+        from java.sql import Time
+        from java.util import Calendar
+        from org.python.core import Py
+
+        if java_class not in (Calendar, Time, Object):
+            return Py.NoConversion
+
+        calendar = Calendar.getInstance()
+        calendar.clear()
+        calendar.set(Calendar.HOUR_OF_DAY, self.hour)
+        calendar.set(Calendar.MINUTE, self.minute)
+        calendar.set(Calendar.SECOND, self.second)
+        calendar.set(Calendar.MILLISECOND, self.microsecond // 1000)
+        if java_class == Calendar:
+            return calendar
+        else:
+            return Time(calendar.getTimeInMillis())
+
 
 _time_class = time  # so functions w/ args named "time" can get at the class
 
@@ -1798,6 +1838,27 @@ class datetime(date):
 
     def __reduce__(self):
         return (self.__class__, self.__getstate())
+
+    def __tojava__(self, java_class):
+        # TODO, if self.tzinfo is not None, convert time to UTC
+        from java.lang import Object
+        from java.sql import Timestamp
+        from java.util import Calendar
+        from org.python.core import Py
+
+        if java_class not in (Calendar, Timestamp, Object):
+            return Py.NoConversion
+
+        calendar = Calendar.getInstance()
+        calendar.clear()
+        calendar.set(self.year, self.month - 1, self.day,
+                     self.hour, self.minute, self.second)
+        calendar.set(Calendar.MILLISECOND, self.microsecond // 1000)
+
+        if java_class == Calendar:
+            return calendar
+        else:
+            return Timestamp(calendar.getTimeInMillis())
 
 
 datetime.min = datetime(1, 1, 1)
