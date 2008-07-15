@@ -21,17 +21,6 @@ Please be aware:
 To build older releases, it may be necessary to use an older build.xml, too (with the corresponding tag).
 For example it is not possible to build Release_2_2alpha1 with this version of build.xml.
 
-
-Use case 3: build only the parser (grammar)
--------------------------------------------
-  - override javaccHome in ant.properties (if necessary)
-  - call target 'parser'
-or:
-  - set javaccHome, either on the command line, or inside parser/build.xml
-  - call parser/build.xml (default target)
-This build will only create files inside org/python/parser.
-
-
 Note on targets
 ---------------
 The following targets are designed for direct invocation:
@@ -39,7 +28,6 @@ The following targets are designed for direct invocation:
   - developer-build
   - full-build
   - clean (uses developer-build settings if called directly)
-  - parser (uses developer-build settings if called directly)
 Following an ant convention, the callable targets have a description attribute.
 All other targets may give unpredicted results if called directly.
 
@@ -58,12 +46,6 @@ See http://wiki.python.org/jython/JythonDeveloperGuide/HowToReleaseJython
         	
 An example ant.properties file:
 -------------------------------
-
-# - define the home for javacc (only used for parser grammar)
-javaccHome=${basedir}/../externals/javacc-4.0
-
-# - ht2html tool for the doc target (only needed for full-build)
-ht2html.dir=${basedir}/../externals/ht2html-2.0
 
 # - define the home of the corresponding CPython version
 python.home=c:/Programme/Python/Python23
@@ -162,7 +144,6 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <property name="gensrc.dir" value="${output.dir}/gensrc" />
         <property name="dist.dir" value="${work.dir}/dist" />
         <property name="apidoc.dir" value="${dist.dir}/Doc/javadoc" />
-        <property name="parser.dir" value="${source.dir}/org/python/parser" />
 
         <!-- classpaths -->
         <path id="main.classpath">
@@ -175,9 +156,6 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
             <pathelement path="${extlibs.dir}/mysql-connector-java-5.1.6.jar" />
             <pathelement path="${extlibs.dir}/postgresql-8.3-603.jdbc4.jar" />
             <pathelement path="${extlibs.dir}/antlr-2.7.7.jar" />
-            <!--
-            <pathelement path="${extlibs.dir}/antlr-3.0.1.jar" />
-            -->
             <pathelement path="${extlibs.dir}/antlr-3.1b1.jar" />
             <pathelement path="${extlibs.dir}/stringtemplate-3.1b1.jar" />
         </path>
@@ -205,7 +183,8 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <property name="PY_RELEASE_LEVEL_SNAPSHOT" value="170"/> <!-- 0xAA -->
 
         <!-- The current version info -->
-        <property name="jython.version" value="2.5a0" />
+        <property name="jython.version" value="2.5a0+"/>
+        <property name="jython.version.noplus" value="2.5a0"/>
         <property name="jython.major_version" value="2"/>
         <property name="jython.minor_version" value="5"/>
         <property name="jython.micro_version" value="0"/>
@@ -234,18 +213,23 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <property name="full-build" value="true" />
 
         <!-- predefined main directory for checkout -->
-        <property name="svn.main.dir" value="trunk" />
+        <property name="svn.main.dir" value="branches" />
+        <property name="svn.code.dir" value="asm" />
+        <property name="svn.installer.dir" value="installer25" />
 
         <!-- properties work.dir and jython.base.dir are also definied in init, 
              so full-preinit must run first to work -->
-        <property name="work.dir" value="${basedir}/../full_build/${svn.main.dir}" />
+        <property name="work.dir" value="${basedir}/../full_build/work" />
         <property name="svn.checkout.dir" value="${work.dir}/checkout" />
-        <property name="jython.base.dir" value="${svn.checkout.dir}/jython" />
+        <property name="jython.base.dir" value="${svn.checkout.dir}/${svn.code.dir}" />
         <property name="has.repositories.connection" value="true" />
         <property name="python.exe" value="${python.home}/python" />
+        <property name="do.checkout" value="false" />
+        <!--
         <condition property="do.checkout" value="true">
             <istrue value="${has.repositories.connection}" />
         </condition>
+        -->
 
         <!-- classpath for svn ant task -->
         <path id="svn.classpath">
@@ -273,7 +257,6 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <echo>work.dir           = '${work.dir}'</echo>
         <echo>jython.base.dir    = '${jython.base.dir}'</echo>
         <echo>source.dir         = '${source.dir}'</echo>
-        <echo>parser.dir         = '${parser.dir}'</echo>
         <echo>output.dir         = '${output.dir}'</echo>
         <echo>compile.dir        = '${compile.dir}'</echo>
         <echo>exposed.dir        = '${exposed.dir}'</echo>
@@ -283,7 +266,6 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <echo>templates.lazy     = '${templates.lazy}'</echo>
         <echo>python.lib         = '${python.lib}'</echo>
         <echo>javaccHome         = '${javaccHome}'</echo>
-        <echo>ht2html.dir        = '${ht2html.dir}'</echo>
         <echo>build.compiler     = '${build.compiler}'</echo>
         <echo>jdk.target.version = '${jdk.target.version}'</echo>
         <echo>jdk.source.version = '${jdk.source.version}'</echo>
@@ -354,13 +336,13 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
 
     <target name="checkout" depends="prepare" if="do.checkout">
         <svn javahl="${javahl.dir}" >
-        	<checkout url="https://jython.svn.sourceforge.net/svnroot/jython/${svn.main.dir}/jython" revision="${snapshot.revision}" destPath="${svn.checkout.dir}/jython" />
-        	<checkout url="https://jython.svn.sourceforge.net/svnroot/jython/${svn.main.dir}/installer" revision="${snapshot.revision}" destPath="${svn.checkout.dir}/installer" />
+            <checkout url="https://jython.svn.sourceforge.net/svnroot/jython/${svn.main.dir}/${svn.installer.dir}" revision="${snapshot.revision}" destPath="${svn.checkout.dir}/${svn.installer.dir}" />
+            <checkout url="https://jython.svn.sourceforge.net/svnroot/jython/${svn.main.dir}/${svn.code.dir}" revision="${snapshot.revision}" destPath="${svn.checkout.dir}/${svn.code.dir}" />
         </svn> 
 
         <!-- checkout cpython license from the correct python maintenance branch -->
         <svn javahl="${javahl.dir}" >
-               <checkout url="http://svn.python.org/projects/python/branches/release23-maint/" destPath="${svn.checkout.dir}/python" recurse="false" />
+               <checkout url="http://svn.python.org/projects/python/branches/release25-maint/" destPath="${svn.checkout.dir}/python" recurse="false" />
         </svn> 
     </target>
 
@@ -410,13 +392,6 @@ The readme text for the next release will be like:
         </replace>
     </target>
 
-    <!-- separate build.xml for parser grammar -->
-    <!-- we use settings as in developer-build - at the moment all properties will already be set if we do a full build -->
-    <target name="parser" depends="init, prepare" if="javaccHome" description="the grammar build">
-        <echo>processing ${parser.dir}/build.xml</echo>
-        <ant dir="${parser.dir}" />
-    </target>
-
     <target name="template-init" depends="prepare">
         <javac srcdir="${source.dir}/"
                 destdir="${compile.dir}"
@@ -438,14 +413,14 @@ The readme text for the next release will be like:
     </target>
 
     <target name="antlr_gen" depends="init,needed-check,prepare-output" unless="antlr.notneeded">
-        <java classname="org.antlr.Tool" failonerror="true">
+        <java classname="org.antlr.Tool" failonerror="true" fork="true" dir="${jython.base.dir}">
             <arg value="-fo"/>
-            <arg path="build/gensrc/org/python/antlr"/>
+            <arg path="${work.dir}/build/gensrc/org/python/antlr"/>
             <arg value="-lib"/>
-            <arg path="build/gensrc/org/python/antlr"/>
-            <arg file="grammar/Python.g"/>
-            <arg file="grammar/PythonWalker.g"/>
-            <arg file="grammar/PythonPartial.g"/>
+            <arg path="${work.dir}/build/gensrc/org/python/antlr"/>
+            <arg file="${jython.base.dir}/grammar/Python.g"/>
+            <arg file="${jython.base.dir}/grammar/PythonWalker.g"/>
+            <arg file="${jython.base.dir}/grammar/PythonPartial.g"/>
             <classpath refid="main.classpath"/>
         </java>
         
@@ -460,7 +435,7 @@ The readme text for the next release will be like:
 
     </target>
  
-    <target name="compile" depends="init,antlr_gen,jarjar,brand-version">
+    <target name="compile" depends="init,antlr_gen,copy-antlr,jarjar,brand-version">
         <javac destdir="${compile.dir}"
                target="${jdk.target.version}"
                source="${jdk.source.version}"
@@ -470,7 +445,6 @@ The readme text for the next release will be like:
             <src path="${source.dir}"/>
             <src path="${gensrc.dir}"/>
 
-            <exclude name="org/python/parser/python.java" />
             <exclude name="**/handler/InformixDataHandler.java" unless="informix.present" />
             <exclude name="**/handler/OracleDataHandler.java" unless="oracle.present" />
             <classpath refid="main.classpath" />
@@ -590,26 +564,6 @@ The readme text for the next release will be like:
         </jar>
     </target>
 
-    <!-- build the .html files using the ht2html tool -->
-    <target name="doc" depends="compile" if="full-build">
-        <fail unless="ht2html.dir" message="ht2html.dir is not set" />
-        <copy todir="${dist.dir}/Doc" preservelastmodified="true">
-            <fileset dir="Doc" includes="*.ht, **/*.gif" />
-        </copy>
-        <!-- Create .html files in Doc -->
-        <apply executable="${python.exe}" dir="Doc">
-            <env key="PYTHONPATH" path="${jython.base.dir}/Misc/htgen" />
-            <arg line="${ht2html.dir}/ht2html.py" />
-            <arg line="-s JyLocalGenerator" />
-            <fileset dir="${dist.dir}/Doc">
-                <include name="*.ht" />
-            </fileset>
-        </apply>
-        <delete>
-            <fileset dir="${dist.dir}/Doc" includes="*.ht" />
-        </delete>
-    </target>
-
     <target name="javadoc" depends="compile">
         <path id="javadoc.classpath">
             <pathelement path="${java.class.path}" />
@@ -626,6 +580,12 @@ The readme text for the next release will be like:
         >
             <classpath refid="javadoc.classpath" />
         </javadoc>
+    </target>
+
+    <target name="copy-antlr" if="full-build">
+        <copy todir="${dist.dir}/src/java" preservelastmodified="true">
+            <fileset dir="${gensrc.dir}" />
+        </copy>
     </target>
 
     <target name="copy-full" depends="copy-lib" if="full-build">
@@ -648,8 +608,6 @@ The readme text for the next release will be like:
               <include name="Lib/jxxload_help/*.java" />
               <include name="tests/java/**/*.java" />
               <include name="src/org/**/ucnhash.dat" />
-              <include name="src/org/python/parser/build.xml" />
-              <exclude name="src/org/python/parser/python.java" />
             </fileset>
         </copy>
 
@@ -695,7 +653,7 @@ The readme text for the next release will be like:
             <fileset dir="${jython.base.dir}/extlibs">
                 <exclude name="profile.properties"/>
             </fileset>
-            <fileset dir="${jython.base.dir}/build">
+            <fileset dir="${work.dir}/build">
                 <include name="*.jar"/>
                 <include name="*.properties"/>
             </fileset>
@@ -703,7 +661,7 @@ The readme text for the next release will be like:
     </target>
 
     <!-- wrap the build into the installer -->
-    <target name="install" depends="brand-readme-version, doc, jar-complete, javadoc, copy-full">
+    <target name="install" depends="brand-readme-version, jar-complete, javadoc, copy-full">
         <property name="install.src.dir" value="${jython.base.dir}/../installer25/src/java" />
         <echo>compiling installer from ${install.src.dir}</echo>
         <javac srcdir="${install.src.dir}"
@@ -730,7 +688,7 @@ The readme text for the next release will be like:
             <fileset dir="${install.src.dir}" includes="**/*.png" excludes="bin/**" />
         </copy>
         <echo>building installer .jar file</echo>
-        <jar destfile="${work.dir}/jython_installer-${jython.version}.jar" basedir="${dist.dir}" update="true">
+        <jar destfile="${work.dir}/jython_installer-${jython.version.noplus}.jar" basedir="${dist.dir}" update="true">
             <manifest>
                 <attribute name="Main-Class" value="org.python.util.install.Installation" />
                 <attribute name="Built-By" value="${user.name}" />
