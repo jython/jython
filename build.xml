@@ -336,8 +336,8 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
 
     <target name="checkout" depends="prepare" if="do.checkout">
         <svn javahl="${javahl.dir}" >
-            <checkout url="https://jython.svn.sourceforge.net/svnroot/jython/${svn.main.dir}/${svn.installer.dir}" revision="${snapshot.revision}" destPath="${svn.checkout.dir}/${svn.installer.dir}" />
-            <checkout url="https://jython.svn.sourceforge.net/svnroot/jython/${svn.main.dir}/${svn.code.dir}" revision="${snapshot.revision}" destPath="${svn.checkout.dir}/${svn.code.dir}" />
+            <checkout url="https://jython.svn.sourceforge.net/svnroot/jython/${svn.main.dir}/${svn.installer.dir}" revision="${svn.revision}" destPath="${svn.checkout.dir}/${svn.installer.dir}" />
+            <checkout url="https://jython.svn.sourceforge.net/svnroot/jython/${svn.main.dir}/${svn.code.dir}" revision="${svn.revision}" destPath="${svn.checkout.dir}/${svn.code.dir}" />
         </svn> 
 
         <!-- checkout cpython license from the correct python maintenance branch -->
@@ -377,8 +377,8 @@ jython.build.svn_revision=${build.svn.revision}</echo>
     <target name="brand-readme-version" depends="checkout" if="do.snapshot.build">
         <!-- change README.txt version string, if so defined: used for
         snapshot builds. XXX: a bit broken for now-->
-        <replace file="${jython.base.dir}/README.txt" token='2.2b2'
-        value='2.2b${snapshot.revision}' />
+        <replace file="${jython.base.dir}/README.txt" token='2.5a0+'
+        value='2.5a${svn.revision}' />
         <replace file="${jython.base.dir}/README.txt">
             <replacetoken>=======================</replacetoken>
             <replacevalue>--------------------------

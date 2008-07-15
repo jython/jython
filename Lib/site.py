@@ -73,7 +73,9 @@ def abs__file__():
         if hasattr(m, '__loader__'):
             continue   # don't mess with a PEP 302-supplied __file__
         try:
-            m.__file__ = os.path.abspath(m.__file__)
+            #XXX: temp workaround while we figure out why this is None on NT.
+            if m.__file__ != None:
+                m.__file__ = os.path.abspath(m.__file__)
         except AttributeError:
             continue
 
