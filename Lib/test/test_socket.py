@@ -801,21 +801,6 @@ class BasicUDPTest(ThreadedUDPSocketTest):
         self.cli.settimeout(10)
         self.cli.sendto(EIGHT_BIT_MSG, 0, (HOST, PORT))
 
-class UDPBroadcastTest(ThreadedUDPSocketTest):
-
-    def setUp(self):
-        self.serv = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.serv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-
-    def testBroadcast(self):
-        self.serv.bind( ("<broadcast>", PORT) )
-        msg = self.serv.recv(len(EIGHT_BIT_MSG))
-        self.assertEqual(msg, EIGHT_BIT_MSG)
-
-    def _testBroadcast(self):
-        self.cli.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        self.cli.sendto(EIGHT_BIT_MSG, ("<broadcast>", PORT) )
-
 class BasicSocketPairTest(SocketPairTest):
 
     def __init__(self, methodName='runTest'):
@@ -1464,10 +1449,6 @@ def test_main():
     if sys.platform[:4] == 'java':
         tests.append(TestJythonTCPExceptions)
         tests.append(TestJythonUDPExceptions)
-    # TODO: Broadcast requires permission, and is blocked by some firewalls
-    # Need some way to discover the network setup on the test machine
-    if False:
-        tests.append(UDPBroadcastTest)
     suites = [unittest.makeSuite(klass, 'test') for klass in tests]
     test_support.run_suite(unittest.TestSuite(suites))
 
