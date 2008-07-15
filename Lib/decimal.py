@@ -3330,6 +3330,15 @@ class Decimal(object):
             return self     # My components are also immutable
         return self.__class__(str(self))
 
+    # support for Jython __tojava__:
+    def __tojava__(self, java_class):
+        from java.lang import Object
+        from java.math import BigDecimal
+        from org.python.core import Py
+        if java_class not in (BigDecimal, Object):
+            return Py.NoConversion
+        return BigDecimal(str(self))
+
 def _dec_from_triple(sign, coefficient, exponent, special=False):
     """Create a decimal instance directly, without any validation,
     normalization (e.g. removal of leading zeros) or argument
