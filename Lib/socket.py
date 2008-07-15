@@ -143,8 +143,8 @@ SHUT_RD   = 0
 SHUT_WR   = 1
 SHUT_RDWR = 2
 
-__all__ = [ 'AF_INET', 'SOCK_DGRAM', 'SOCK_RAW',
-        'SOCK_RDM', 'SOCK_SEQPACKET', 'SOCK_STREAM', 'SOL_SOCKET',
+__all__ = ['AF_UNSPEC', 'AF_INET', 'AF_INET6', 'AI_PASSIVE', 'SOCK_DGRAM',
+        'SOCK_RAW', 'SOCK_RDM', 'SOCK_SEQPACKET', 'SOCK_STREAM', 'SOL_SOCKET',
         'SO_BROADCAST', 'SO_KEEPALIVE', 'SO_LINGER', 'SO_OOBINLINE',
         'SO_RCVBUF', 'SO_REUSEADDR', 'SO_SNDBUF', 'SO_TIMEOUT', 'TCP_NODELAY',
         'SocketType', 'error', 'herror', 'gaierror', 'timeout',
@@ -154,7 +154,11 @@ __all__ = [ 'AF_INET', 'SOCK_DGRAM', 'SOCK_RAW',
         'SHUT_RD', 'SHUT_WR', 'SHUT_RDWR',
         ]
 
+AF_UNSPEC = 0
 AF_INET = 2
+AF_INET6 = 23
+
+AI_PASSIVE=1
 
 SOCK_DGRAM     = 1
 SOCK_STREAM    = 2
@@ -364,8 +368,7 @@ class _datagram_socket_impl(_nio_impl):
         bytes_sent = self.jchannel.send(byte_buf, socket_address)
         return bytes_sent
 
-    def sendto(self, byte_array, address, flags):
-        host, port = _unpack_address_tuple(address)
+    def sendto(self, byte_array, host, port, flags):
         socket_address = java.net.InetSocketAddress(host, port)
         if self.mode == MODE_TIMEOUT:
             return self._do_send_net(byte_array, socket_address, flags)
@@ -421,6 +424,10 @@ class _datagram_socket_impl(_nio_impl):
             return self._do_receive_net(0, num_bytes, flags)
         else:
             return self._do_receive_nio(0, num_bytes, flags)
+
+# Name and address functions
+
+has_ipv6 = 1
 
 def _gethostbyaddr(name):
     # This is as close as I can get; at least the types are correct...
@@ -487,10 +494,28 @@ def _realsocket(family = AF_INET, type = SOCK_STREAM, flags=0):
     else:
         return _udpsocket()
 
-def getaddrinfo(host, port, family=0, socktype=SOCK_STREAM, proto=0, flags=0):
-    return ( (AF_INET, socktype, 0, "", (gethostbyname(host), port)), )
-
-has_ipv6 = 1
+def getaddrinfo(host, port, family=None, socktype=None, proto=None, flags=None):
+    try:
+        if not family in [AF_INET, AF_INET6, AF_UNSPEC]:
+            raise NotSupportedError()
+        filter_fns = []
+        filter_fns.append({
+            AF_INET:   lambda x: isinstance(x, java.net.Inet4Address),
+            AF_INET6:  lambda x: isinstance(x, java.net.Inet6Address),
+            AF_UNSPEC: lambda x: isinstance(x, java.net.InetAddress),
+        }[family])
+        # Cant see a way to support AI_PASSIVE right now.
+        # if flags and flags & AI_PASSIVE:
+        #     pass
+        results = []
+        for a in java.net.InetAddress.getAllByName(host):
+            if len([f for f in filter_fns if f(a)]):
+                family = {java.net.Inet4Address: AF_INET, java.net.Inet6Address: AF_INET6}[a.class]
+                # TODO: Include flowinfo and scopeid in a 4-tuple for IPv6 addresses
+                results.append( (family, socktype, proto, a.getCanonicalHostName(), (a.getHostAddress(), port)) )
+        return results
+    except java.lang.Exception, jlx:
+        raise _map_exception(jlx)
 
 def getnameinfo(sock_addr, flags):
     raise NotImplementedError("getnameinfo not yet supported on jython.")
@@ -598,13 +623,22 @@ class _nonblocking_api_mixin:
     def _get_jsocket(self):
         return self.sock_impl.jsocket
 
-def _unpack_address_tuple(address_tuple):
+def _unpack_address_tuple(address_tuple, for_tx=False):
+    # TODO: Upgrade to support the 4-tuples used for IPv6 addresses
+    # which include flowinfo and scope_id.
+    # To be upgraded in synch with getaddrinfo
     error_message = "Address must be a tuple of (hostname, port)"
     if type(address_tuple) is not type( () ) \
             or type(address_tuple[0]) is not type("") \
             or type(address_tuple[1]) is not type(0):
         raise TypeError(error_message)
-    return address_tuple[0], address_tuple[1]
+    hostname = address_tuple[0].strip()
+    if hostname == "<broadcast>":
+        if for_tx:
+            hostname = "255.255.255.255"
+        else:
+            hostname = "0.0.0.0"
+    return hostname, address_tuple[1]
 
 class _tcpsocket(_nonblocking_api_mixin):
 
@@ -621,7 +655,7 @@ class _tcpsocket(_nonblocking_api_mixin):
         assert not self.sock_impl
         assert not self.local_addr
         # Do the address format check
-        host, port = _unpack_address_tuple(addr)
+        _unpack_address_tuple(addr)
         self.local_addr = addr
 
     def listen(self, backlog=50):
@@ -630,7 +664,7 @@ class _tcpsocket(_nonblocking_api_mixin):
             assert not self.sock_impl
             self.server = 1
             if self.local_addr:
-                host, port = self.local_addr
+                host, port = _unpack_address_tuple(self.local_addr)
             else:
                 host, port = "", 0
             self.sock_impl = _server_socket_impl(host, port, backlog, self.pending_options[SO_REUSEADDR])
@@ -667,7 +701,7 @@ class _tcpsocket(_nonblocking_api_mixin):
             host, port = self._get_host_port(addr)
             self.sock_impl = _client_socket_impl()
             if self.local_addr: # Has the socket been bound to a local address?
-                bind_host, bind_port = self.local_addr
+                bind_host, bind_port = _unpack_address_tuple(self.local_addr)
                 self.sock_impl.bind(bind_host, bind_port, self.pending_options[SO_REUSEADDR])
             self._config() # Configure timeouts, etc, now that the socket exists
             self.sock_impl.connect(host, port)
@@ -819,8 +853,9 @@ class _udpsocket(_nonblocking_api_mixin):
             if not self.sock_impl:
                 self.sock_impl = _datagram_socket_impl()
                 self._config()
+            host, port = _unpack_address_tuple(addr, True)
             byte_array = java.lang.String(data).getBytes('iso-8859-1')
-            result = self.sock_impl.sendto(byte_array, addr, flags)
+            result = self.sock_impl.sendto(byte_array, host, port, flags)
             return result
         except java.lang.Exception, jlx:
             raise _map_exception(jlx)
