@@ -12,6 +12,10 @@ import java.io.PrintStream;
 import java.io.Serializable;
 import java.io.StreamCorruptedException;
 import java.lang.reflect.InvocationTargetException;
+import java.sql.Date;
+import java.sql.Time;
+import java.sql.Timestamp;
+import java.util.Calendar;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -578,6 +582,54 @@ public final class Py {
     
     public static PyBoolean newBoolean(boolean t) {
         return t ? Py.True : Py.False;
+    }
+
+    public static PyObject newDate(Date date) {
+        if (date == null) {
+            return Py.None;
+        }
+        PyObject datetimeModule = __builtin__.__import__("datetime");
+        PyObject dateClass = datetimeModule.__getattr__("date");
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(date);
+
+        return dateClass.__call__(newInteger(cal.get(Calendar.YEAR)),
+                                  newInteger(cal.get(Calendar.MONTH) + 1),
+                                  newInteger(cal.get(Calendar.DAY_OF_MONTH)));
+
+    }
+
+    public static PyObject newTime(Time time) {
+        if (time == null) {
+            return Py.None;
+        }
+        PyObject datetimeModule = __builtin__.__import__("datetime");
+        PyObject timeClass = datetimeModule.__getattr__("time");
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(time);
+        return timeClass.__call__(newInteger(cal.get(Calendar.HOUR_OF_DAY)),
+                                  newInteger(cal.get(Calendar.MINUTE)),
+                                  newInteger(cal.get(Calendar.SECOND)),
+                                  newInteger(cal.get(Calendar.MILLISECOND) *
+                                             1000));
+    }
+
+    public static PyObject newDatetime(Timestamp timestamp) {
+        if (timestamp == null) {
+            return Py.None;
+        }
+        PyObject datetimeModule = __builtin__.__import__("datetime");
+        PyObject datetimeClass = datetimeModule.__getattr__("datetime");
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(timestamp);
+        return datetimeClass.__call__(new PyObject[] {
+                                      newInteger(cal.get(Calendar.YEAR)),
+                                      newInteger(cal.get(Calendar.MONTH) + 1),
+                                      newInteger(cal.get(Calendar.DAY_OF_MONTH)),
+                                      newInteger(cal.get(Calendar.HOUR_OF_DAY)),
+                                      newInteger(cal.get(Calendar.MINUTE)),
+                                      newInteger(cal.get(Calendar.SECOND)),
+                                      newInteger(timestamp.getNanos() / 1000)});
     }
 
     public static PyCode newCode(int argcount, String varnames[],

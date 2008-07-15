@@ -3,10 +3,15 @@
 """
 import unittest
 import time
-from test_support import run_suite
+from test.test_support import run_suite
 
 import java
 import jarray
+
+from org.python.core import Py
+from java.sql import Date, Time, Timestamp
+import datetime
+
 
 class WeakIdentityMapTests(unittest.TestCase):
 
@@ -44,7 +49,7 @@ class WeakIdentityMapTests(unittest.TestCase):
         time.sleep(1)
 
         assert widmap.get(i) == 'i' # triggers stale weak refs cleanup
-        assert widmap._internal_map_size() == 1        
+        assert widmap._internal_map_size() == 1
 
 class LongAsScaledDoubleValueTests(unittest.TestCase):
 
@@ -94,7 +99,7 @@ class LongAsScaledDoubleValueTests(unittest.TestCase):
         for d in range(8):
           for y in [0,255]:
             assert float((v+d)*256+y) == sdv(((v+d)*256+y)*256, e)
-            assert e[0] == 1        
+            assert e[0] == 1
 
 class ExtraMathTests(unittest.TestCase):
     def test_epsilon(self):
@@ -115,6 +120,28 @@ class ExtraMathTests(unittest.TestCase):
           ExtraMath.closeFloor(3.0 - 3.0 * ExtraMath.CLOSE), 2.0)
         self.assertEquals(ExtraMath.closeFloor(math.log10(10**3)), 3.0)
 
+class DatetimeTypeMappingTest(unittest.TestCase):
+    def test_date(self):
+        self.assertEquals(datetime.date(2008, 5, 29),
+                          Py.newDate(Date(108, 4, 29)))
+        self.assertEquals(datetime.date(1999, 1, 1),
+                          Py.newDate(Date(99, 0, 1)))
+
+    def test_time(self):
+        self.assertEquals(datetime.time(0, 0, 0),
+                          Py.newTime(Time(0, 0, 0)))
+        self.assertEquals(datetime.time(23, 59, 59),
+                          Py.newTime(Time(23, 59, 59)))
+
+    def test_datetime(self):
+        self.assertEquals(datetime.datetime(2008, 1, 1),
+                          Py.newDatetime(Timestamp(108, 0, 1, 0, 0, 0, 0)))
+        self.assertEquals(datetime.datetime(2008, 5, 29, 16, 50, 0),
+                          Py.newDatetime(Timestamp(108, 4, 29, 16, 50, 0, 0)))
+        self.assertEquals(datetime.datetime(2008, 5, 29, 16, 50, 1, 1),
+                          Py.newDatetime(Timestamp(108, 4, 29, 16, 50, 1, 1000)))
+
+
 def test_main():
     test_suite = unittest.TestSuite()
     test_loader = unittest.TestLoader()
@@ -123,6 +150,7 @@ def test_main():
     suite_add(WeakIdentityMapTests)
     suite_add(LongAsScaledDoubleValueTests)
     suite_add(ExtraMathTests)
+    suite_add(DatetimeTypeMappingTest)
     run_suite(test_suite)
 
 if __name__ == "__main__":

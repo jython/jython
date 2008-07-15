@@ -1,7 +1,7 @@
 /*
  * Jython Database Specification API 2.0
  *
- * $Id$
+ * $Id: DataHandler.java 3708 2007-11-20 20:03:46Z pjenvey $
  *
  * Copyright (c) 2001 brian zimmer <bzimmer@ziclix.com>
  *
@@ -10,6 +10,7 @@ package com.ziclix.python.sql;
 
 import org.python.core.Py;
 import org.python.core.PyFile;
+import org.python.core.PyLong;
 import org.python.core.PyObject;
 import org.python.core.PyList;
 import org.python.core.PyString;
@@ -17,11 +18,9 @@ import org.python.core.util.StringUtil;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.io.StringReader;
-import java.lang.reflect.Constructor;
 import java.math.BigDecimal;
 import java.sql.CallableStatement;
 import java.sql.Date;
@@ -34,33 +33,19 @@ import java.sql.Timestamp;
 import java.sql.Types;
 
 /**
- * The DataHandler is responsible mapping the JDBC data type to
- * a Jython object.  Depending on the version of the JDBC
- * implementation and the particulars of the driver, the type
- * mapping can be significantly different.
- *
- * This interface can also be used to change the behaviour of
- * the default mappings provided by the cursor.  This might be
- * useful in handling more complicated data types such as BLOBs,
- * CLOBs and Arrays.
+ * A copy of the DataHandler class as it was before Jython 2.5. By that version,
+ * some backward-incompatible changes was made, as returning datetime.*
+ * objects for DATE, TIME and TIMESTAMP columns, instead of java.sql.* classes.
  *
  * @author brian zimmer
- * @author last revised by $Author$
- * @version $Revision$
+ * @author last revised by $Author: pjenvey $
+ * @version $Revision: 3708 $
  */
-public class DataHandler {
-
-    // default size for buffers
-    private static final int INITIAL_SIZE = 1024 * 4;
-
-    private static final String[] SYSTEM_DATAHANDLERS = {
-        "com.ziclix.python.sql.JDBC20DataHandler"
-    };
-
+public class Jython22DataHandler extends DataHandler {
     /**
      * Handle most generic Java data types.
      */
-    public DataHandler() {}
+    public Jython22DataHandler() {}
 
     /**
      * Some database vendors are case sensitive on calls to DatabaseMetaData,
@@ -150,6 +135,7 @@ public class DataHandler {
      * @throws SQLException
      */
     public void setJDBCObject(PreparedStatement stmt, int index, PyObject object, int type) throws SQLException {
+
         try {
             if (checkNull(stmt, index, object, type)) {
                 return;
@@ -234,7 +220,7 @@ public class DataHandler {
             case Types.VARCHAR:
                 String string = set.getString(col);
 
-                obj = (string == null) ? Py.None : Py.newUnicode(string);
+                obj = (string == null) ? Py.None : Py.newString(string);
                 break;
 
             case Types.LONGVARCHAR:
@@ -246,10 +232,10 @@ public class DataHandler {
                     try {
                         longvarchar = new BufferedInputStream(longvarchar);
 
-                        byte[] bytes = DataHandler.read(longvarchar);
+                        byte[] bytes = Jython22DataHandler.read(longvarchar);
 
                         if (bytes != null) {
-                            obj = Py.newUnicode(StringUtil.fromBytes(bytes));
+                            obj = Py.newString(StringUtil.fromBytes(bytes));
                         }
                     } finally {
                         try {
@@ -261,12 +247,19 @@ public class DataHandler {
 
             case Types.NUMERIC:
             case Types.DECIMAL:
-                BigDecimal bd = set.getBigDecimal(col);
+                BigDecimal bd = null;
+
+                try {
+                    bd = set.getBigDecimal(col, set.getMetaData().getPrecision(col));
+                } catch (Throwable t) {
+                    bd = set.getBigDecimal(col, 10);
+                }
+
                 obj = (bd == null) ? Py.None : Py.newFloat(bd.doubleValue());
                 break;
 
             case Types.BIT:
-                obj = set.getBoolean(col) ? Py.True : Py.False;
+                obj = set.getBoolean(col) ? Py.One : Py.Zero;
                 break;
 
             case Types.INTEGER:
@@ -276,7 +269,7 @@ public class DataHandler {
                 break;
 
             case Types.BIGINT:
-                obj = Py.newLong(set.getLong(col));
+                obj = new PyLong(set.getLong(col));
                 break;
 
             case Types.FLOAT:
@@ -289,15 +282,15 @@ public class DataHandler {
                 break;
 
             case Types.TIME:
-                obj = Py.newTime(set.getTime(col));
+                obj = Py.java2py(set.getTime(col));
                 break;
 
             case Types.TIMESTAMP:
-                obj = Py.newDatetime(set.getTimestamp(col));
+                obj = Py.java2py(set.getTimestamp(col));
                 break;
 
             case Types.DATE:
-                obj = Py.newDate(set.getDate(col));
+                obj = Py.java2py(set.getDate(col));
                 break;
 
             case Types.NULL:
@@ -344,18 +337,18 @@ public class DataHandler {
             case Types.LONGVARCHAR:
                 String string = stmt.getString(col);
 
-                obj = (string == null) ? Py.None : Py.newUnicode(string);
+                obj = (string == null) ? Py.None : Py.newString(string);
                 break;
 
             case Types.NUMERIC:
             case Types.DECIMAL:
-                BigDecimal bd = stmt.getBigDecimal(col);
+                BigDecimal bd = stmt.getBigDecimal(col, 10);
 
                 obj = (bd == null) ? Py.None : Py.newFloat(bd.doubleValue());
                 break;
 
             case Types.BIT:
-                obj = stmt.getBoolean(col) ? Py.True : Py.False;
+                obj = stmt.getBoolean(col) ? Py.One : Py.Zero;
                 break;
 
             case Types.INTEGER:
@@ -365,7 +358,7 @@ public class DataHandler {
                 break;
 
             case Types.BIGINT:
-                obj = Py.newLong(stmt.getLong(col));
+                obj = new PyLong(stmt.getLong(col));
                 break;
 
             case Types.FLOAT:
@@ -378,15 +371,15 @@ public class DataHandler {
                 break;
 
             case Types.TIME:
-                obj = Py.newTime(stmt.getTime(col));
+                obj = Py.java2py(stmt.getTime(col));
                 break;
 
             case Types.TIMESTAMP:
-                obj = Py.newDatetime(stmt.getTimestamp(col));
+                obj = Py.java2py(stmt.getTimestamp(col));
                 break;
 
             case Types.DATE:
-                obj = Py.newDate(stmt.getDate(col));
+                obj = Py.java2py(stmt.getDate(col));
                 break;
 
             case Types.NULL:
@@ -447,90 +440,6 @@ public class DataHandler {
     }
 
     /**
-     * Handles checking if the object is null or None and setting it on the statement.
-     *
-     * @return true if the object is null and was set on the statement, false otherwise
-     */
-    public static final boolean checkNull(PreparedStatement stmt, int index, PyObject object, int type) throws SQLException {
-
-        if ((object == null) || (Py.None == object)) {
-            stmt.setNull(index, type);
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * Since the driver needs to the know the length of all streams,
-     * read it into a byte[] array.
-     *
-     * @return the stream as a byte[]
-     */
-    public static final byte[] read(InputStream stream) {
-
-        int b = -1, read = 0;
-        byte[] results = new byte[INITIAL_SIZE];
-
-        try {
-            while ((b = stream.read()) != -1) {
-                if (results.length < (read + 1)) {
-                    byte[] tmp = results;
-                    results = new byte[results.length * 2];
-                    System.arraycopy(tmp, 0, results, 0, tmp.length);
-                }
-                results[read++] = (byte) b;
-            }
-        } catch (IOException e) {
-            throw zxJDBC.makeException(e);
-        }
-
-        byte[] tmp = results;
-        results = new byte[read];
-        System.arraycopy(tmp, 0, results, 0, read);
-        return results;
-    }
-
-    /**
-     * Read all the chars from the Reader into the String.
-     *
-     * @return the contents of the Reader in a String
-     */
-    public static final String read(Reader reader) {
-
-        int c = 0;
-        StringBuffer buffer = new StringBuffer(INITIAL_SIZE);
-
-        try {
-            while ((c = reader.read()) != -1) {
-                buffer.append((char) c);
-            }
-        } catch (IOException e) {
-            throw zxJDBC.makeException(e);
-        }
-
-        return buffer.toString();
-    }
-
-    /**
-     * Build the DataHandler chain depending on the VM.  This guarentees a DataHandler
-     * but might additionally chain a JDBC2.0 or JDBC3.0 implementation.
-     * @return a DataHandler configured for the VM version
-     */
-    public static final DataHandler getSystemDataHandler() {
-        DataHandler dh = new DataHandler();
-
-        for (int i = 0; i < SYSTEM_DATAHANDLERS.length; i++) {
-            try {
-                Class c = Class.forName(SYSTEM_DATAHANDLERS[i]);
-                Constructor cons = c.getConstructor(new Class[]{DataHandler.class});
-                dh = (DataHandler) cons.newInstance(new Object[]{dh});
-            } catch (Throwable t) {}
-        }
-
-        return dh;
-    }
-
-    /**
      * Returns a list of datahandlers chained together through the use of delegation.
      *
      * @return a list of datahandlers
@@ -539,11 +448,5 @@ public class DataHandler {
         return new PyList(new PyObject[] { Py.java2py(this) });
     }
 
-    /**
-     * Returns the classname of this datahandler.
-     */
-    public String toString() {
-        return getClass().getName();
-    }
 }
 
