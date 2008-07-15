@@ -40,7 +40,6 @@ if not exist %_JYTHON_HOME%\jython.jar goto run
 rem prefer built version
 set _CP=%_JYTHON_HOME%\jython.jar
 for %%j in (%_JYTHON_HOME%\javalib\*.jar) do (
-    echo %%j
     set _CP=!_CP!;"%%j"
 )
 
