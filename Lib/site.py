@@ -72,12 +72,10 @@ def abs__file__():
     for m in sys.modules.values():
         if hasattr(m, '__loader__'):
             continue   # don't mess with a PEP 302-supplied __file__
-        try:
-            #XXX: temp workaround while we figure out why this is None on NT.
-            if m.__file__ != None:
-                m.__file__ = os.path.abspath(m.__file__)
-        except AttributeError:
+        f = getattr(m, '__file__', None)
+        if f is None:
             continue
+        m.__file__ = os.path.abspath(f)
 
 def removeduppaths():
     """ Remove duplicate entries from sys.path along with making them
