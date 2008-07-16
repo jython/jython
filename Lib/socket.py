@@ -502,7 +502,7 @@ def _realsocket(family = AF_INET, type = SOCK_STREAM, flags=0):
     else:
         return _udpsocket()
 
-def getaddrinfo(host, port, family=None, socktype=None, proto=None, flags=None):
+def getaddrinfo(host, port, family=None, socktype=None, proto=0, flags=None):
     try:
         if not family in [AF_INET, AF_INET6, AF_UNSPEC]:
             raise NotSupportedError()
