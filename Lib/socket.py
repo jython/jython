@@ -494,7 +494,7 @@ def _realsocket(family = AF_INET, type = SOCK_STREAM, flags=0):
     else:
         return _udpsocket()
 
-def getaddrinfo(host, port, family=None, socktype=None, proto=None, flags=None):
+def getaddrinfo(host, port, family=None, socktype=None, proto=0, flags=None):
     try:
         if not family in [AF_INET, AF_INET6, AF_UNSPEC]:
             raise NotSupportedError()
@@ -510,7 +510,7 @@ def getaddrinfo(host, port, family=None, socktype=None, proto=None, flags=None):
         results = []
         for a in java.net.InetAddress.getAllByName(host):
             if len([f for f in filter_fns if f(a)]):
-                family = {java.net.Inet4Address: AF_INET, java.net.Inet6Address: AF_INET6}[a.class]
+                family = {java.net.Inet4Address: AF_INET, java.net.Inet6Address: AF_INET6}[a.getClass()]
                 # TODO: Include flowinfo and scopeid in a 4-tuple for IPv6 addresses
                 results.append( (family, socktype, proto, a.getCanonicalHostName(), (a.getHostAddress(), port)) )
         return results
