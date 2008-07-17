@@ -30,6 +30,14 @@ public class Global extends stmtType {
         return "Global";
     }
 
+    public String toStringTree() {
+        StringBuffer sb = new StringBuffer("Global[");
+        sb.append("names=");
+        sb.append(this.names);
+        sb.append("]");
+        return sb.toString();
+    }
+
     public <R> R accept(VisitorIF<R> visitor) throws Exception {
         return visitor.visitGlobal(this);
     }

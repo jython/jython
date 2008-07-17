@@ -56,6 +56,18 @@ public class comprehensionType extends PythonTree {
         return "comprehension";
     }
 
+    public String toStringTree() {
+        StringBuffer sb = new StringBuffer("comprehension[");
+        sb.append("target=");
+        sb.append(this.target);
+        sb.append("iter=");
+        sb.append(this.iter);
+        sb.append("ifs=");
+        sb.append(this.ifs);
+        sb.append("]");
+        return sb.toString();
+    }
+
     public <R> R accept(VisitorIF<R> visitor) throws Exception {
         traverse(visitor);
         return null;

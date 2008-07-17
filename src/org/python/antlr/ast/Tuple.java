@@ -50,6 +50,16 @@ public class Tuple extends exprType implements Context {
         return "Tuple";
     }
 
+    public String toStringTree() {
+        StringBuffer sb = new StringBuffer("Tuple[");
+        sb.append("elts=");
+        sb.append(this.elts);
+        sb.append("ctx=");
+        sb.append(this.ctx);
+        sb.append("]");
+        return sb.toString();
+    }
+
     public <R> R accept(VisitorIF<R> visitor) throws Exception {
         return visitor.visitTuple(this);
     }

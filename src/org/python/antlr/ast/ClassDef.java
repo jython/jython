@@ -71,6 +71,18 @@ public class ClassDef extends stmtType {
         return "ClassDef";
     }
 
+    public String toStringTree() {
+        StringBuffer sb = new StringBuffer("ClassDef[");
+        sb.append("name=");
+        sb.append(this.name);
+        sb.append("bases=");
+        sb.append(this.bases);
+        sb.append("body=");
+        sb.append(this.body);
+        sb.append("]");
+        return sb.toString();
+    }
+
     public <R> R accept(VisitorIF<R> visitor) throws Exception {
         return visitor.visitClassDef(this);
     }

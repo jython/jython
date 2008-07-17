@@ -41,6 +41,18 @@ public class AugAssign extends stmtType {
         return "AugAssign";
     }
 
+    public String toStringTree() {
+        StringBuffer sb = new StringBuffer("AugAssign[");
+        sb.append("target=");
+        sb.append(this.target);
+        sb.append("op=");
+        sb.append(this.op);
+        sb.append("value=");
+        sb.append(this.value);
+        sb.append("]");
+        return sb.toString();
+    }
+
     public <R> R accept(VisitorIF<R> visitor) throws Exception {
         return visitor.visitAugAssign(this);
     }

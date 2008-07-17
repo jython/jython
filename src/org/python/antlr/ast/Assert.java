@@ -34,6 +34,16 @@ public class Assert extends stmtType {
         return "Assert";
     }
 
+    public String toStringTree() {
+        StringBuffer sb = new StringBuffer("Assert[");
+        sb.append("test=");
+        sb.append(this.test);
+        sb.append("msg=");
+        sb.append(this.msg);
+        sb.append("]");
+        return sb.toString();
+    }
+
     public <R> R accept(VisitorIF<R> visitor) throws Exception {
         return visitor.visitAssert(this);
     }

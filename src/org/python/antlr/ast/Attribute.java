@@ -41,6 +41,18 @@ public class Attribute extends exprType implements Context {
         return "Attribute";
     }
 
+    public String toStringTree() {
+        StringBuffer sb = new StringBuffer("Attribute[");
+        sb.append("value=");
+        sb.append(this.value);
+        sb.append("attr=");
+        sb.append(this.attr);
+        sb.append("ctx=");
+        sb.append(this.ctx);
+        sb.append("]");
+        return sb.toString();
+    }
+
     public <R> R accept(VisitorIF<R> visitor) throws Exception {
         return visitor.visitAttribute(this);
     }

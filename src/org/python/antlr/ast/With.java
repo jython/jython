@@ -57,6 +57,18 @@ public class With extends stmtType {
         return "With";
     }
 
+    public String toStringTree() {
+        StringBuffer sb = new StringBuffer("With[");
+        sb.append("context_expr=");
+        sb.append(this.context_expr);
+        sb.append("optional_vars=");
+        sb.append(this.optional_vars);
+        sb.append("body=");
+        sb.append(this.body);
+        sb.append("]");
+        return sb.toString();
+    }
+
     public <R> R accept(VisitorIF<R> visitor) throws Exception {
         return visitor.visitWith(this);
     }

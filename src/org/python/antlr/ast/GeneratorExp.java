@@ -52,6 +52,16 @@ public class GeneratorExp extends exprType {
         return "GeneratorExp";
     }
 
+    public String toStringTree() {
+        StringBuffer sb = new StringBuffer("GeneratorExp[");
+        sb.append("elt=");
+        sb.append(this.elt);
+        sb.append("generators=");
+        sb.append(this.generators);
+        sb.append("]");
+        return sb.toString();
+    }
+
     public <R> R accept(VisitorIF<R> visitor) throws Exception {
         return visitor.visitGeneratorExp(this);
     }

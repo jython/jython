@@ -26,6 +26,12 @@ public class Break extends stmtType {
         return "Break";
     }
 
+    public String toStringTree() {
+        StringBuffer sb = new StringBuffer("Break[");
+        sb.append("]");
+        return sb.toString();
+    }
+
     public <R> R accept(VisitorIF<R> visitor) throws Exception {
         return visitor.visitBreak(this);
     }

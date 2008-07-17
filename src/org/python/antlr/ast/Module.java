@@ -45,6 +45,14 @@ public class Module extends modType {
         return "Module";
     }
 
+    public String toStringTree() {
+        StringBuffer sb = new StringBuffer("Module[");
+        sb.append("body=");
+        sb.append(this.body);
+        sb.append("]");
+        return sb.toString();
+    }
+
     public <R> R accept(VisitorIF<R> visitor) throws Exception {
         return visitor.visitModule(this);
     }

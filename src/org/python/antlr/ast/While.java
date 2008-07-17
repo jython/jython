@@ -72,6 +72,18 @@ public class While extends stmtType {
         return "While";
     }
 
+    public String toStringTree() {
+        StringBuffer sb = new StringBuffer("While[");
+        sb.append("test=");
+        sb.append(this.test);
+        sb.append("body=");
+        sb.append(this.body);
+        sb.append("orelse=");
+        sb.append(this.orelse);
+        sb.append("]");
+        return sb.toString();
+    }
+
     public <R> R accept(VisitorIF<R> visitor) throws Exception {
         return visitor.visitWhile(this);
     }

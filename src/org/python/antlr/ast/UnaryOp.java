@@ -34,6 +34,16 @@ public class UnaryOp extends exprType {
         return "UnaryOp";
     }
 
+    public String toStringTree() {
+        StringBuffer sb = new StringBuffer("UnaryOp[");
+        sb.append("op=");
+        sb.append(this.op);
+        sb.append("operand=");
+        sb.append(this.operand);
+        sb.append("]");
+        return sb.toString();
+    }
+
     public <R> R accept(VisitorIF<R> visitor) throws Exception {
         return visitor.visitUnaryOp(this);
     }

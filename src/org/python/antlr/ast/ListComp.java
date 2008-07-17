@@ -51,6 +51,16 @@ public class ListComp extends exprType {
         return "ListComp";
     }
 
+    public String toStringTree() {
+        StringBuffer sb = new StringBuffer("ListComp[");
+        sb.append("elt=");
+        sb.append(this.elt);
+        sb.append("generators=");
+        sb.append(this.generators);
+        sb.append("]");
+        return sb.toString();
+    }
+
     public <R> R accept(VisitorIF<R> visitor) throws Exception {
         return visitor.visitListComp(this);
     }

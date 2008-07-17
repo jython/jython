@@ -76,6 +76,20 @@ public class FunctionDef extends stmtType {
         return "FunctionDef";
     }
 
+    public String toStringTree() {
+        StringBuffer sb = new StringBuffer("FunctionDef[");
+        sb.append("name=");
+        sb.append(this.name);
+        sb.append("args=");
+        sb.append(this.args);
+        sb.append("body=");
+        sb.append(this.body);
+        sb.append("decorators=");
+        sb.append(this.decorators);
+        sb.append("]");
+        return sb.toString();
+    }
+
     public <R> R accept(VisitorIF<R> visitor) throws Exception {
         return visitor.visitFunctionDef(this);
     }

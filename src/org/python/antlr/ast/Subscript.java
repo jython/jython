@@ -41,6 +41,18 @@ public class Subscript extends exprType implements Context {
         return "Subscript";
     }
 
+    public String toStringTree() {
+        StringBuffer sb = new StringBuffer("Subscript[");
+        sb.append("value=");
+        sb.append(this.value);
+        sb.append("slice=");
+        sb.append(this.slice);
+        sb.append("ctx=");
+        sb.append(this.ctx);
+        sb.append("]");
+        return sb.toString();
+    }
+
     public <R> R accept(VisitorIF<R> visitor) throws Exception {
         return visitor.visitSubscript(this);
     }

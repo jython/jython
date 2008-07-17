@@ -41,6 +41,18 @@ public class IfExp extends exprType {
         return "IfExp";
     }
 
+    public String toStringTree() {
+        StringBuffer sb = new StringBuffer("IfExp[");
+        sb.append("test=");
+        sb.append(this.test);
+        sb.append("body=");
+        sb.append(this.body);
+        sb.append("orelse=");
+        sb.append(this.orelse);
+        sb.append("]");
+        return sb.toString();
+    }
+
     public <R> R accept(VisitorIF<R> visitor) throws Exception {
         return visitor.visitIfExp(this);
     }

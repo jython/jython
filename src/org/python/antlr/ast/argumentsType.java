@@ -76,6 +76,20 @@ public class argumentsType extends PythonTree {
         return "arguments";
     }
 
+    public String toStringTree() {
+        StringBuffer sb = new StringBuffer("arguments[");
+        sb.append("args=");
+        sb.append(this.args);
+        sb.append("vararg=");
+        sb.append(this.vararg);
+        sb.append("kwarg=");
+        sb.append(this.kwarg);
+        sb.append("defaults=");
+        sb.append(this.defaults);
+        sb.append("]");
+        return sb.toString();
+    }
+
     public <R> R accept(VisitorIF<R> visitor) throws Exception {
         traverse(visitor);
         return null;

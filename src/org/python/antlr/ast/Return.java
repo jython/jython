@@ -30,6 +30,14 @@ public class Return extends stmtType {
         return "Return";
     }
 
+    public String toStringTree() {
+        StringBuffer sb = new StringBuffer("Return[");
+        sb.append("value=");
+        sb.append(this.value);
+        sb.append("]");
+        return sb.toString();
+    }
+
     public <R> R accept(VisitorIF<R> visitor) throws Exception {
         return visitor.visitReturn(this);
     }

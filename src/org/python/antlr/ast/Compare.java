@@ -60,6 +60,18 @@ public class Compare extends exprType {
         return "Compare";
     }
 
+    public String toStringTree() {
+        StringBuffer sb = new StringBuffer("Compare[");
+        sb.append("left=");
+        sb.append(this.left);
+        sb.append("ops=");
+        sb.append(this.ops);
+        sb.append("comparators=");
+        sb.append(this.comparators);
+        sb.append("]");
+        return sb.toString();
+    }
+
     public <R> R accept(VisitorIF<R> visitor) throws Exception {
         return visitor.visitCompare(this);
     }

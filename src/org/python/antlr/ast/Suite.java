@@ -45,6 +45,14 @@ public class Suite extends modType {
         return "Suite";
     }
 
+    public String toStringTree() {
+        StringBuffer sb = new StringBuffer("Suite[");
+        sb.append("body=");
+        sb.append(this.body);
+        sb.append("]");
+        return sb.toString();
+    }
+
     public <R> R accept(VisitorIF<R> visitor) throws Exception {
         return visitor.visitSuite(this);
     }

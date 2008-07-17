@@ -34,6 +34,16 @@ public class aliasType extends PythonTree {
         return "alias";
     }
 
+    public String toStringTree() {
+        StringBuffer sb = new StringBuffer("alias[");
+        sb.append("name=");
+        sb.append(this.name);
+        sb.append("asname=");
+        sb.append(this.asname);
+        sb.append("]");
+        return sb.toString();
+    }
+
     public <R> R accept(VisitorIF<R> visitor) throws Exception {
         traverse(visitor);
         return null;

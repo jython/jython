@@ -30,6 +30,14 @@ public class Str extends exprType {
         return "Str";
     }
 
+    public String toStringTree() {
+        StringBuffer sb = new StringBuffer("Str[");
+        sb.append("s=");
+        sb.append(this.s);
+        sb.append("]");
+        return sb.toString();
+    }
+
     public <R> R accept(VisitorIF<R> visitor) throws Exception {
         return visitor.visitStr(this);
     }

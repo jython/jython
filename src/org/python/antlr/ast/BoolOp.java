@@ -49,6 +49,16 @@ public class BoolOp extends exprType {
         return "BoolOp";
     }
 
+    public String toStringTree() {
+        StringBuffer sb = new StringBuffer("BoolOp[");
+        sb.append("op=");
+        sb.append(this.op);
+        sb.append("values=");
+        sb.append(this.values);
+        sb.append("]");
+        return sb.toString();
+    }
+
     public <R> R accept(VisitorIF<R> visitor) throws Exception {
         return visitor.visitBoolOp(this);
     }

@@ -49,6 +49,16 @@ public class Assign extends stmtType {
         return "Assign";
     }
 
+    public String toStringTree() {
+        StringBuffer sb = new StringBuffer("Assign[");
+        sb.append("targets=");
+        sb.append(this.targets);
+        sb.append("value=");
+        sb.append(this.value);
+        sb.append("]");
+        return sb.toString();
+    }
+
     public <R> R accept(VisitorIF<R> visitor) throws Exception {
         return visitor.visitAssign(this);
     }

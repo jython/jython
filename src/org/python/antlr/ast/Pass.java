@@ -26,6 +26,12 @@ public class Pass extends stmtType {
         return "Pass";
     }
 
+    public String toStringTree() {
+        StringBuffer sb = new StringBuffer("Pass[");
+        sb.append("]");
+        return sb.toString();
+    }
+
     public <R> R accept(VisitorIF<R> visitor) throws Exception {
         return visitor.visitPass(this);
     }

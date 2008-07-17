@@ -30,6 +30,14 @@ public class Repr extends exprType {
         return "Repr";
     }
 
+    public String toStringTree() {
+        StringBuffer sb = new StringBuffer("Repr[");
+        sb.append("value=");
+        sb.append(this.value);
+        sb.append("]");
+        return sb.toString();
+    }
+
     public <R> R accept(VisitorIF<R> visitor) throws Exception {
         return visitor.visitRepr(this);
     }

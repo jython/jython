@@ -30,6 +30,14 @@ public class Expression extends modType {
         return "Expression";
     }
 
+    public String toStringTree() {
+        StringBuffer sb = new StringBuffer("Expression[");
+        sb.append("body=");
+        sb.append(this.body);
+        sb.append("]");
+        return sb.toString();
+    }
+
     public <R> R accept(VisitorIF<R> visitor) throws Exception {
         return visitor.visitExpression(this);
     }

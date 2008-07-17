@@ -40,6 +40,18 @@ public class Raise extends stmtType {
         return "Raise";
     }
 
+    public String toStringTree() {
+        StringBuffer sb = new StringBuffer("Raise[");
+        sb.append("type=");
+        sb.append(this.type);
+        sb.append("inst=");
+        sb.append(this.inst);
+        sb.append("tback=");
+        sb.append(this.tback);
+        sb.append("]");
+        return sb.toString();
+    }
+
     public <R> R accept(VisitorIF<R> visitor) throws Exception {
         return visitor.visitRaise(this);
     }

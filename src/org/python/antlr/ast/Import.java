@@ -45,6 +45,14 @@ public class Import extends stmtType {
         return "Import";
     }
 
+    public String toStringTree() {
+        StringBuffer sb = new StringBuffer("Import[");
+        sb.append("names=");
+        sb.append(this.names);
+        sb.append("]");
+        return sb.toString();
+    }
+
     public <R> R accept(VisitorIF<R> visitor) throws Exception {
         return visitor.visitImport(this);
     }

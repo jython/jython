@@ -34,6 +34,16 @@ public class Lambda extends exprType {
         return "Lambda";
     }
 
+    public String toStringTree() {
+        StringBuffer sb = new StringBuffer("Lambda[");
+        sb.append("args=");
+        sb.append(this.args);
+        sb.append("body=");
+        sb.append(this.body);
+        sb.append("]");
+        return sb.toString();
+    }
+
     public <R> R accept(VisitorIF<R> visitor) throws Exception {
         return visitor.visitLambda(this);
     }

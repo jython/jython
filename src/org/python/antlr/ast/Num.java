@@ -30,6 +30,14 @@ public class Num extends exprType {
         return "Num";
     }
 
+    public String toStringTree() {
+        StringBuffer sb = new StringBuffer("Num[");
+        sb.append("n=");
+        sb.append(this.n);
+        sb.append("]");
+        return sb.toString();
+    }
+
     public <R> R accept(VisitorIF<R> visitor) throws Exception {
         return visitor.visitNum(this);
     }

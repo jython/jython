@@ -30,6 +30,14 @@ public class Yield extends exprType {
         return "Yield";
     }
 
+    public String toStringTree() {
+        StringBuffer sb = new StringBuffer("Yield[");
+        sb.append("value=");
+        sb.append(this.value);
+        sb.append("]");
+        return sb.toString();
+    }
+
     public <R> R accept(VisitorIF<R> visitor) throws Exception {
         return visitor.visitYield(this);
     }

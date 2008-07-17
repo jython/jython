@@ -57,6 +57,18 @@ public class ImportFrom extends stmtType {
         return "ImportFrom";
     }
 
+    public String toStringTree() {
+        StringBuffer sb = new StringBuffer("ImportFrom[");
+        sb.append("module=");
+        sb.append(this.module);
+        sb.append("names=");
+        sb.append(this.names);
+        sb.append("level=");
+        sb.append(this.level);
+        sb.append("]");
+        return sb.toString();
+    }
+
     public <R> R accept(VisitorIF<R> visitor) throws Exception {
         return visitor.visitImportFrom(this);
     }

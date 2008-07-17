@@ -30,6 +30,14 @@ public class Index extends sliceType {
         return "Index";
     }
 
+    public String toStringTree() {
+        StringBuffer sb = new StringBuffer("Index[");
+        sb.append("value=");
+        sb.append(this.value);
+        sb.append("]");
+        return sb.toString();
+    }
+
     public <R> R accept(VisitorIF<R> visitor) throws Exception {
         return visitor.visitIndex(this);
     }

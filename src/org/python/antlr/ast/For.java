@@ -76,6 +76,20 @@ public class For extends stmtType {
         return "For";
     }
 
+    public String toStringTree() {
+        StringBuffer sb = new StringBuffer("For[");
+        sb.append("target=");
+        sb.append(this.target);
+        sb.append("iter=");
+        sb.append(this.iter);
+        sb.append("body=");
+        sb.append(this.body);
+        sb.append("orelse=");
+        sb.append(this.orelse);
+        sb.append("]");
+        return sb.toString();
+    }
+
     public <R> R accept(VisitorIF<R> visitor) throws Exception {
         return visitor.visitFor(this);
     }

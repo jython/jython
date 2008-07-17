@@ -80,6 +80,22 @@ public class Call extends exprType {
         return "Call";
     }
 
+    public String toStringTree() {
+        StringBuffer sb = new StringBuffer("Call[");
+        sb.append("func=");
+        sb.append(this.func);
+        sb.append("args=");
+        sb.append(this.args);
+        sb.append("keywords=");
+        sb.append(this.keywords);
+        sb.append("starargs=");
+        sb.append(this.starargs);
+        sb.append("kwargs=");
+        sb.append(this.kwargs);
+        sb.append("]");
+        return sb.toString();
+    }
+
     public <R> R accept(VisitorIF<R> visitor) throws Exception {
         return visitor.visitCall(this);
     }

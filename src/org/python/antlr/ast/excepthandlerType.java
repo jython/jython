@@ -65,6 +65,22 @@ public class excepthandlerType extends PythonTree {
         return "excepthandler";
     }
 
+    public String toStringTree() {
+        StringBuffer sb = new StringBuffer("excepthandler[");
+        sb.append("type=");
+        sb.append(this.type);
+        sb.append("name=");
+        sb.append(this.name);
+        sb.append("body=");
+        sb.append(this.body);
+        sb.append("lineno=");
+        sb.append(this.lineno);
+        sb.append("col_offset=");
+        sb.append(this.col_offset);
+        sb.append("]");
+        return sb.toString();
+    }
+
     public <R> R accept(VisitorIF<R> visitor) throws Exception {
         traverse(visitor);
         return null;

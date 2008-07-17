@@ -71,6 +71,18 @@ public class If extends stmtType {
         return "If";
     }
 
+    public String toStringTree() {
+        StringBuffer sb = new StringBuffer("If[");
+        sb.append("test=");
+        sb.append(this.test);
+        sb.append("body=");
+        sb.append(this.body);
+        sb.append("orelse=");
+        sb.append(this.orelse);
+        sb.append("]");
+        return sb.toString();
+    }
+
     public <R> R accept(VisitorIF<R> visitor) throws Exception {
         return visitor.visitIf(this);
     }

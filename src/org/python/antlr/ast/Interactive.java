@@ -45,6 +45,14 @@ public class Interactive extends modType {
         return "Interactive";
     }
 
+    public String toStringTree() {
+        StringBuffer sb = new StringBuffer("Interactive[");
+        sb.append("body=");
+        sb.append(this.body);
+        sb.append("]");
+        return sb.toString();
+    }
+
     public <R> R accept(VisitorIF<R> visitor) throws Exception {
         return visitor.visitInteractive(this);
     }

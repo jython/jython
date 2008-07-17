@@ -30,6 +30,14 @@ public class Unicode extends exprType {
         return "Unicode";
     }
 
+    public String toStringTree() {
+        StringBuffer sb = new StringBuffer("Unicode[");
+        sb.append("s=");
+        sb.append(this.s);
+        sb.append("]");
+        return sb.toString();
+    }
+
     public <R> R accept(VisitorIF<R> visitor) throws Exception {
         return visitor.visitUnicode(this);
     }

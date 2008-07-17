@@ -49,6 +49,16 @@ public class List extends exprType implements Context {
         return "List";
     }
 
+    public String toStringTree() {
+        StringBuffer sb = new StringBuffer("List[");
+        sb.append("elts=");
+        sb.append(this.elts);
+        sb.append("ctx=");
+        sb.append(this.ctx);
+        sb.append("]");
+        return sb.toString();
+    }
+
     public <R> R accept(VisitorIF<R> visitor) throws Exception {
         return visitor.visitList(this);
     }

@@ -55,6 +55,18 @@ public class Print extends stmtType {
         return "Print";
     }
 
+    public String toStringTree() {
+        StringBuffer sb = new StringBuffer("Print[");
+        sb.append("dest=");
+        sb.append(this.dest);
+        sb.append("values=");
+        sb.append(this.values);
+        sb.append("nl=");
+        sb.append(this.nl);
+        sb.append("]");
+        return sb.toString();
+    }
+
     public <R> R accept(VisitorIF<R> visitor) throws Exception {
         return visitor.visitPrint(this);
     }

@@ -41,6 +41,18 @@ public class Slice extends sliceType {
         return "Slice";
     }
 
+    public String toStringTree() {
+        StringBuffer sb = new StringBuffer("Slice[");
+        sb.append("lower=");
+        sb.append(this.lower);
+        sb.append("upper=");
+        sb.append(this.upper);
+        sb.append("step=");
+        sb.append(this.step);
+        sb.append("]");
+        return sb.toString();
+    }
+
     public <R> R accept(VisitorIF<R> visitor) throws Exception {
         return visitor.visitSlice(this);
     }

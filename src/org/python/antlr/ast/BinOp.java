@@ -40,6 +40,18 @@ public class BinOp extends exprType {
         return "BinOp";
     }
 
+    public String toStringTree() {
+        StringBuffer sb = new StringBuffer("BinOp[");
+        sb.append("left=");
+        sb.append(this.left);
+        sb.append("op=");
+        sb.append(this.op);
+        sb.append("right=");
+        sb.append(this.right);
+        sb.append("]");
+        return sb.toString();
+    }
+
     public <R> R accept(VisitorIF<R> visitor) throws Exception {
         return visitor.visitBinOp(this);
     }

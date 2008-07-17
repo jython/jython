@@ -34,6 +34,16 @@ public class Name extends exprType implements Context {
         return "Name";
     }
 
+    public String toStringTree() {
+        StringBuffer sb = new StringBuffer("Name[");
+        sb.append("id=");
+        sb.append(this.id);
+        sb.append("ctx=");
+        sb.append(this.ctx);
+        sb.append("]");
+        return sb.toString();
+    }
+
     public <R> R accept(VisitorIF<R> visitor) throws Exception {
         return visitor.visitName(this);
     }

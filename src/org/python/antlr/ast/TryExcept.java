@@ -87,6 +87,18 @@ public class TryExcept extends stmtType {
         return "TryExcept";
     }
 
+    public String toStringTree() {
+        StringBuffer sb = new StringBuffer("TryExcept[");
+        sb.append("body=");
+        sb.append(this.body);
+        sb.append("handlers=");
+        sb.append(this.handlers);
+        sb.append("orelse=");
+        sb.append(this.orelse);
+        sb.append("]");
+        return sb.toString();
+    }
+
     public <R> R accept(VisitorIF<R> visitor) throws Exception {
         return visitor.visitTryExcept(this);
     }

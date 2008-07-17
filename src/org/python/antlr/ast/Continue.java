@@ -26,6 +26,12 @@ public class Continue extends stmtType {
         return "Continue";
     }
 
+    public String toStringTree() {
+        StringBuffer sb = new StringBuffer("Continue[");
+        sb.append("]");
+        return sb.toString();
+    }
+
     public <R> R accept(VisitorIF<R> visitor) throws Exception {
         return visitor.visitContinue(this);
     }

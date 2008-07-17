@@ -306,6 +306,18 @@ class JavaVisitor(EmitVisitor):
         self.emit("}", depth)
         self.emit("", 0)
 
+        # The toStringTree() method
+        self.emit("public String toStringTree() {", depth)
+        self.emit('StringBuffer sb = new StringBuffer("%s[");' % clsname,
+                    depth+1)
+        for f in fields:
+            self.emit('sb.append("%s=");' % f.name, depth+1)
+            self.emit("sb.append(this.%s);" % f.name, depth+1)
+        self.emit('sb.append("]");', depth+1)
+        self.emit("return sb.toString();", depth+1)
+        self.emit("}", depth)
+        self.emit("", 0)
+
         # The pickle() method
         #self.emit("public void pickle(DataOutputStream ostream) throws IOException {", depth)
         #self.emit("pickleThis(%s, ostream);" % type.index, depth+1);

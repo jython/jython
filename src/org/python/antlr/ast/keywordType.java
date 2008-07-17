@@ -34,6 +34,16 @@ public class keywordType extends PythonTree {
         return "keyword";
     }
 
+    public String toStringTree() {
+        StringBuffer sb = new StringBuffer("keyword[");
+        sb.append("arg=");
+        sb.append(this.arg);
+        sb.append("value=");
+        sb.append(this.value);
+        sb.append("]");
+        return sb.toString();
+    }
+
     public <R> R accept(VisitorIF<R> visitor) throws Exception {
         traverse(visitor);
         return null;

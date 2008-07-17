@@ -64,6 +64,16 @@ public class Dict extends exprType {
         return "Dict";
     }
 
+    public String toStringTree() {
+        StringBuffer sb = new StringBuffer("Dict[");
+        sb.append("keys=");
+        sb.append(this.keys);
+        sb.append("values=");
+        sb.append(this.values);
+        sb.append("]");
+        return sb.toString();
+    }
+
     public <R> R accept(VisitorIF<R> visitor) throws Exception {
         return visitor.visitDict(this);
     }

@@ -45,6 +45,14 @@ public class Delete extends stmtType {
         return "Delete";
     }
 
+    public String toStringTree() {
+        StringBuffer sb = new StringBuffer("Delete[");
+        sb.append("targets=");
+        sb.append(this.targets);
+        sb.append("]");
+        return sb.toString();
+    }
+
     public <R> R accept(VisitorIF<R> visitor) throws Exception {
         return visitor.visitDelete(this);
     }

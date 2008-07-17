@@ -30,6 +30,14 @@ public class Expr extends stmtType {
         return "Expr";
     }
 
+    public String toStringTree() {
+        StringBuffer sb = new StringBuffer("Expr[");
+        sb.append("value=");
+        sb.append(this.value);
+        sb.append("]");
+        return sb.toString();
+    }
+
     public <R> R accept(VisitorIF<R> visitor) throws Exception {
         return visitor.visitExpr(this);
     }

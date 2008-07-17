@@ -45,6 +45,14 @@ public class ExtSlice extends sliceType {
         return "ExtSlice";
     }
 
+    public String toStringTree() {
+        StringBuffer sb = new StringBuffer("ExtSlice[");
+        sb.append("dims=");
+        sb.append(this.dims);
+        sb.append("]");
+        return sb.toString();
+    }
+
     public <R> R accept(VisitorIF<R> visitor) throws Exception {
         return visitor.visitExtSlice(this);
     }

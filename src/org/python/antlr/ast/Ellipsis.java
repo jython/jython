@@ -26,6 +26,12 @@ public class Ellipsis extends sliceType {
         return "Ellipsis";
     }
 
+    public String toStringTree() {
+        StringBuffer sb = new StringBuffer("Ellipsis[");
+        sb.append("]");
+        return sb.toString();
+    }
+
     public <R> R accept(VisitorIF<R> visitor) throws Exception {
         return visitor.visitEllipsis(this);
     }

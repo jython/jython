@@ -65,6 +65,16 @@ public class TryFinally extends stmtType {
         return "TryFinally";
     }
 
+    public String toStringTree() {
+        StringBuffer sb = new StringBuffer("TryFinally[");
+        sb.append("body=");
+        sb.append(this.body);
+        sb.append("finalbody=");
+        sb.append(this.finalbody);
+        sb.append("]");
+        return sb.toString();
+    }
+
     public <R> R accept(VisitorIF<R> visitor) throws Exception {
         return visitor.visitTryFinally(this);
     }
