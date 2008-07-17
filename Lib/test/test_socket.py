@@ -1436,6 +1436,14 @@ class TestUDPAddressParameters(unittest.TestCase, TestAddressParameters):
     def setUp(self):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
+class UnicodeTest(ThreadedTCPSocketTest):
+
+    def testUnicodeHostname(self):
+        pass
+
+    def _testUnicodeHostname(self):
+        self.cli.connect((unicode(HOST), PORT))
+        
 def test_main():
     tests = [
         GeneralModuleTests, 
@@ -1457,7 +1465,8 @@ def test_main():
         PrivateFileObjectTestCase,
         UnbufferedFileObjectClassTestCase,
         LineBufferedFileObjectClassTestCase,
-        SmallBufferedFileObjectClassTestCase
+        SmallBufferedFileObjectClassTestCase,
+        UnicodeTest
     ]
     if hasattr(socket, "socketpair"):
         tests.append(BasicSocketPairTest)

@@ -639,11 +639,17 @@ def _unpack_address_tuple(address_tuple, for_tx=False):
     # which include flowinfo and scope_id.
     # To be upgraded in synch with getaddrinfo
     error_message = "Address must be a tuple of (hostname, port)"
-    if type(address_tuple) is not type( () ) \
-            or type(address_tuple[0]) is not type("") \
-            or type(address_tuple[1]) is not type(0):
+    if not isinstance(address_tuple, tuple) or \
+            not isinstance(address_tuple[0], basestring) or \
+            not isinstance(address_tuple[1], (int, long)):
         raise TypeError(error_message)
-    hostname = address_tuple[0].strip()
+    hostname = address_tuple[0]
+    if isinstance(hostname, unicode):
+        # XXX: Should be encode('idna') (See CPython
+        # socketmodule::getsockaddrarg), but Jython's idna support is
+        # currently broken
+        hostname = hostname.encode()
+    hostname = hostname.strip()
     if hostname == "<broadcast>":
         if for_tx:
             hostname = "255.255.255.255"
