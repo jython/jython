@@ -379,6 +379,14 @@ public class PySystemState extends PyObject
                 }
             }
         }
+        if (root != null) {
+            File rootFile = new File(root);
+            try {
+                root = rootFile.getCanonicalPath();
+            } catch (IOException ioe) {
+                root = rootFile.getAbsolutePath();
+            }
+        }
         return root;
     }
 
