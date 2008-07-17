@@ -33,9 +33,6 @@ defpath = ':/bin:/usr/bin'
 altsep = None
 devnull = '/dev/null'
 
-# XXX: There should be a global way of disabling native JNA posix
-native_posix = True
-
 # Normalize the case of a pathname.  Trivial in Posix, string.lower on Mac.
 # On MS-DOS this may also turn slashes into backslashes; however, other
 # normalizations (such as optimizing '../' away) are not allowed
@@ -218,7 +215,7 @@ def isfile(path):
 
 # Are two filenames really pointing to the same file?
 
-if not native_posix:
+if not os._native_posix:
     def samefile(f1, f2):
         """Test whether two pathnames reference the same actual file"""
         canon1 = java.io.File(_ensure_str(f1)).getCanonicalPath()
@@ -243,8 +240,10 @@ if os.name != 'java':
         s2 = os.fstat(fp2)
         return samestat(s1, s2)
 
+    __all__append("sameopenfile")
 
-if native_posix:
+
+if os._native_posix:
     # Are two stat buffers (obtained from stat, fstat or lstat)
     # describing the same file?
 
@@ -274,7 +273,7 @@ if native_posix:
             return True     # path/.. is the same i-node as path
         return False
 
-    __all__.extend(["sameopenfile", "samestat", "ismount"])
+    __all__.extend(["samestat", "ismount"])
 
 
 # Directory tree walk.
@@ -442,7 +441,7 @@ symbolic links encountered in the path."""
     return abspath(filename)
 
 
-if not native_posix:
+if not os._native_posix:
     def _resolve_link(path):
         """Internal helper function.  Takes a path and follows symlinks
         until we either arrive at something that isn't a symlink, or

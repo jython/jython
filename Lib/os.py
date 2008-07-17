@@ -93,16 +93,7 @@ name = 'java'
 # should *NOT* use it
 _name = get_os_type()
 
-if _name in ('nt', 'ce'):
-    import ntpath as path
-else:
-    import posixpath as path
-
-sys.modules['os.path'] = _path = path
-from os.path import curdir, pardir, sep, pathsep, defpath, extsep, altsep, devnull
-linesep = java.lang.System.getProperty('line.separator')
-
-from org.python.posix import POSIXHandler, POSIXFactory
+from org.python.posix import JavaPOSIX, POSIXHandler, POSIXFactory
 
 class PythonPOSIXHandler(POSIXHandler):
     def error(self, error, msg):
@@ -117,9 +108,9 @@ class PythonPOSIXHandler(POSIXHandler):
     def isVerbose(self):
         return False
     def getCurrentWorkingDirectory(self):
-        return getcwd()
+        return File(getcwd())
     def getEnv(self):
-        return environ
+        return ['%s=%s' % (key, val) for key, val in environ.iteritems()]
     def getInputStream(self):
         return getattr(java.lang.System, 'in') # XXX handle resetting
     def getOutputStream(self):
@@ -130,6 +121,16 @@ class PythonPOSIXHandler(POSIXHandler):
         return java.lang.System.err # XXX handle resetting
 
 _posix = POSIXFactory.getPOSIX(PythonPOSIXHandler(), True)
+_native_posix = not isinstance(_posix, JavaPOSIX)
+
+if _name in ('nt', 'ce'):
+    import ntpath as path
+else:
+    import posixpath as path
+
+sys.modules['os.path'] = _path = path
+from os.path import curdir, pardir, sep, pathsep, defpath, extsep, altsep, devnull
+linesep = java.lang.System.getProperty('line.separator')
 
 # open for reading only
 O_RDONLY = 0x0
@@ -187,6 +188,17 @@ class stat_result:
       raise TypeError("stat_result() takes an a  10-sequence")
     for (name, index) in stat_result._stat_members:
       self.__dict__[name] = results[index]
+
+  @classmethod
+  def from_jnastat(cls, s):
+      results = []
+      for meth in (s.mode, s.ino, s.dev, s.nlink, s.uid, s.gid, s.st_size,
+                   s.atime, s.mtime, s.ctime):
+          try:
+              results.append(meth())
+          except NotImplementedError:
+              results.append(0)
+      return cls(results)
 
   def __getitem__(self, i):
     if i < 0 or i > 9:
@@ -421,10 +433,7 @@ def stat(path):
     """
     abs_path = sys.getPath(path)
     try:
-        s = _posix.stat(abs_path)
-        return stat_result((s.mode(), s.ino(), s.dev(), s.nlink(),
-                            s.uid(), s.gid(), s.st_size(),
-                            s.atime(), s.mtime(), s.ctime()))
+        return stat_result.from_jnastat(_posix.stat(abs_path))
     except NotImplementedError:
         pass
     except:
@@ -452,10 +461,7 @@ def lstat(path):
     """
     abs_path = sys.getPath(path)
     try:
-        s = _posix.lstat(abs_path)
-        return stat_result((s.mode(), s.ino(), s.dev(), s.nlink(),
-                            s.uid(), s.gid(), s.st_size(),
-                            s.atime(), s.mtime(), s.ctime()))
+        return stat_result.from_jnastat(_posix.lstat(abs_path))
     except NotImplementedError:
         pass
     except:
@@ -639,7 +645,7 @@ def _handle_oserror(func, *args, **kwargs):
     except:
         raise OSError(errno.EBADF, errno.strerror(errno.EBADF))
 
-if _name == 'posix':
+if _name == 'posix' and _native_posix:
     def symlink(src, dst):
         """symlink(src, dst)
 
