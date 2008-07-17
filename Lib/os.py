@@ -283,7 +283,6 @@ def makedirs(path, mode='ignored'):
     just the rightmost) will be created if it does not exist.
     The optional parameter is currently ignored.
     """
-
     sys_path = sys.getPath(path)
     if File(sys_path).mkdirs():
         return
@@ -451,6 +450,16 @@ def lstat(path):
     
     Like stat(path), but do not follow symbolic links.
     """
+    abs_path = sys.getPath(path)
+    try:
+        s = _posix.lstat(abs_path)
+        return stat_result((s.mode(), s.ino(), s.dev(), s.nlink(),
+                            s.uid(), s.gid(), s.st_size(),
+                            s.atime(), s.mtime(), s.ctime()))
+    except NotImplementedError:
+        pass
+    except:
+        raise
     f = File(sys.getPath(path))
     abs_parent = f.getAbsoluteFile().getParentFile()
     if not abs_parent:
@@ -636,7 +645,15 @@ if _name == 'posix':
 
         Create a symbolic link pointing to src named dst.
         """
-        return _posix.symlink(src, dst)
+        _posix.symlink(src, sys.getPath(dst))
+
+    def readlink(path):
+        """readlink(path) -> path
+    
+        Return a string representing the path to which the symbolic link
+        points.
+        """
+        return _posix.readlink(sys.getPath(path))
 
 # Provide lazy popen*, and system objects
 # Do these lazily, as most jython programs don't need them,
