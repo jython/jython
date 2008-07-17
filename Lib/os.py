@@ -630,6 +630,14 @@ def _handle_oserror(func, *args, **kwargs):
     except:
         raise OSError(errno.EBADF, errno.strerror(errno.EBADF))
 
+if _name == 'posix':
+    def symlink(src, dst):
+        """symlink(src, dst)
+
+        Create a symbolic link pointing to src named dst.
+        """
+        return _posix.symlink(src, dst)
+
 # Provide lazy popen*, and system objects
 # Do these lazily, as most jython programs don't need them,
 # and they are very expensive to initialize
