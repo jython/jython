@@ -80,7 +80,7 @@ public class PyTraceback extends PyObject
             // Continue, we may have the line
         }
 
-        if (tb_lineno > 0 && i == tb_lineno) {
+        if (line != null && i == tb_lineno) {
             i = 0;
             while (i < line.length()) {
                 char c = line.charAt(i);
