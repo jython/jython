@@ -1163,9 +1163,17 @@ public class cPickle implements ClassDictInit {
         private void save_long(PyObject object) {
             if(protocol >= 2) {
                 BigInteger integer = ((PyLong)object).getValue();
+
+                if (integer.compareTo(BigInteger.ZERO) == 0) {
+                    // It's 0 -- an empty bytestring.
+                    file.write(LONG1);
+                    file.write((char)0);
+                    return;
+                }
+
                 byte[] bytes = integer.toByteArray();
                 int l = bytes.length;
-                if(l < 256) {
+                if (l < 256) {
                     file.write(LONG1);
                     file.write((char)l);
                 } else {
@@ -1938,6 +1946,10 @@ public class cPickle implements ClassDictInit {
 
         private void load_bin_long(int length) {
             int longLength = read_binint(length);
+            if (longLength == 0) {
+                push(new PyLong(BigInteger.ZERO));
+                return;
+            }
             String s = file.read(longLength);
             byte[] bytes = new byte[s.length()];
             // Write to the byte array in reverse order: pickle orders
