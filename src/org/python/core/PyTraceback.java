@@ -80,7 +80,7 @@ public class PyTraceback extends PyObject
             // Continue, we may have the line
         }
 
-        if (i == tb_lineno && line != null) {//FJW: XXX: added null check just to avoid NPE.
+        if (line != null && i == tb_lineno) {
             i = 0;
             while (i < line.length()) {
                 char c = line.charAt(i);
