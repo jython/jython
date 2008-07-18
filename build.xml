@@ -204,12 +204,6 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <condition property="os.family.windows">
             <os family="windows"/>
         </condition>
-        <condition property="os.unix-or-cygwin">
-            <or>
-                <os family="unix"/>
-                <equals arg1="${OSNAME}" arg2="cygwin"/>
-            </or>
-        </condition>
     </target>
 
     <target name="full-preinit">
@@ -732,20 +726,20 @@ The readme text for the next release will be like:
             </batchtest>
         </junit>
     </target>
-    <target name="launchertest" depends="developer-build">
+    <target name="launchertest" depends="developer-build" if="os.family.unix">
       <exec executable="${test.shell.dir}/test-jython.sh">
         <arg value="${dist.dir}"/>
       </exec>
     </target>
     <target name="regrtest" depends="developer-build,regrtest-unix,regrtest-windows"/>
-    <target name="regrtest-unix" if="os.unix-or-cygwin">
+    <target name="regrtest-unix" if="os.family.unix">
       <exec executable="${dist.dir}/bin/jython">
         <arg value="${dist.dir}/Lib/test/regrtest.py"/>
         <!-- Only run the tests that are expected to work on Jython -->
         <arg value="--expected"/>
       </exec>
     </target>
-    <target name="regrtest-windows" if="os.windows" unless="os.unix-or-cygwin">
+    <target name="regrtest-windows" if="os.family.windows">
       <exec executable="${dist.dir}/bin/jython.bat">
         <arg value="${dist.dir}/Lib/test/regrtest.py"/>
         <!-- Only run the tests that are expected to work on Jython -->
