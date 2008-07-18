@@ -204,7 +204,7 @@ public class ParserFacade {
 
 
     private static String readEncoding(InputStream stream) throws IOException {
-        stream.mark(10000);
+        stream.mark(100000);
         String encoding = null;
         BufferedReader br = new BufferedReader(new InputStreamReader(stream), 512);
         for (int i = 0; i < 2; i++) {
@@ -218,6 +218,8 @@ public class ParserFacade {
                 break;
             }
         }
+        // XXX: reset() can still raise an IOException if a line exceeds our large mark
+        // limit
         stream.reset();
         return encodingMap(encoding);
     }
