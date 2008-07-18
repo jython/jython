@@ -34,6 +34,15 @@ while [ -h "$PRG" ] ; do
   fi
 done
 
+if [ -z "$JAVA_HOME" ] ; then
+  JAVA_CMD=(java)
+else
+  if $cygwin; then
+    JAVA_HOME=`cygpath -u "$JAVA_HOME"`
+  fi
+  JAVA_CMD=("$JAVA_HOME/bin/java")
+fi
+
 if [ -z "$JYTHON_HOME" ] ; then
   JYTHON_HOME_1=`dirname "$PRG"`           # the ./bin dir
   JYTHON_HOME=`dirname "$JYTHON_HOME_1"`   # the . dir
@@ -43,34 +52,27 @@ if [ -z "$JYTHON_OPTS" ] ; then
   JYTHON_OPTS=""
 fi
 
-if [ -z "$JAVA_HOME" ] ; then
-  JAVA_CMD='java'
-else
-  if $cygwin; then
-    JAVA_HOME=`cygpath -u "$JAVA_HOME"`
-  fi
-  JAVA_CMD="$JAVA_HOME/bin/java"
-fi
-
 CP_DELIMITER=":"
 
 CP=$JYTHON_HOME/jython.jar
 
-if [ ! -f "$CP" ]; then
-  echo "$0: '$CP' does not exist." >&2
+if [ -f "$CP" ] ; then
+  # add necessary jars for command-line execution
+  for j in "$JYTHON_HOME"/javalib/*.jar; do
+    if [ "$CP" ]; then
+      CP="$CP$CP_DELIMITER$j"
+    else
+      CP="$j"
+    fi
+  done
+elif [ ! -f "$JYTHON_HOME"/jython-complete.jar ] ; then
+  echo "$0: $JYTHON_HOME contains neither jython.jar nor jython-complete.jar." >&2
   echo "Try running this script from the 'bin' directory of an installed Jython or " >&2
   echo 'setting $JYTHON_HOME.' >&2
   exit 1
+else
+  CP=$JYTHON_HOME/jython-complete.jar
 fi
-
-# add necessary jars for command-line execution
-for j in "$JYTHON_HOME"/javalib/*.jar; do
-  if [ "$CP" ]; then
-    CP="$CP$CP_DELIMITER$j"
-  else
-    CP="$j"
-  fi
-done
 
 if $cygwin; then
   CP=`cygpath -wp "$CP"`
@@ -119,12 +121,12 @@ while [ $# -gt 0 ] ; do
     # Run under JDB
     --jdb)
       if [ -z "$JAVA_HOME" ] ; then
-	JAVA_CMD='jdb'
+	JAVA_CMD=(jdb)
       else
 	if $cygwin; then
 	  JAVA_HOME=`cygpath -u "$JAVA_HOME"`
 	fi
-	JAVA_CMD="$JAVA_HOME/bin/jdb"
+	JAVA_CMD=("$JAVA_HOME/bin/jdb")
       fi
       ;;
     -h|--help)
@@ -172,12 +174,12 @@ if [ -n "$profile_requested" ] ; then
   java_args=("${java_args[@]}" -classpath "$CP$CP_DELIMITER$CLASSPATH")
 else
   if [ -z $help_requested ] ; then
-    JAVA_CMD="exec $JAVA_CMD"
+    JAVA_CMD=(exec "${JAVA_CMD[@]}")
   fi
   java_args=("${java_args[@]}" -Xbootclasspath/a:"$CP" -classpath "$CLASSPATH")
 fi
 
-$JAVA_CMD $JAVA_OPTS "${java_args[@]}" -Dpython.home="$JYTHON_HOME" \
+"${JAVA_CMD[@]}" $JAVA_OPTS "${java_args[@]}" -Dpython.home="$JYTHON_HOME" \
   -Dpython.executable="$PRG" org.python.util.jython $JYTHON_OPTS "$@"
 
 if [ -n "$profile_requested" ] ; then
