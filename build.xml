@@ -162,6 +162,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
 
         <available property="informix.present" classname="com.informix.jdbc.IfxDriver" classpath="${informix.jar}" />
         <available property="oracle.present" classname="oracle.jdbc.driver.OracleDriver" classpath="${oracle.jar}" />
+        <available property="cpythonlib.present" file="${jython.base.dir}/CPythonLib.includes"/>
 
         <path id="test.classpath">
             <path refid="main.classpath"/>
@@ -268,14 +269,13 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <echo>templates.dir      = '${templates.dir}'</echo>
         <echo>templates.lazy     = '${templates.lazy}'</echo>
         <echo>python.lib         = '${python.lib}'</echo>
-        <echo>javaccHome         = '${javaccHome}'</echo>
         <echo>build.compiler     = '${build.compiler}'</echo>
         <echo>jdk.target.version = '${jdk.target.version}'</echo>
         <echo>jdk.source.version = '${jdk.source.version}'</echo>
         <echo>deprecation        = '${deprecation}'</echo>
         <echo>debug              = '${debug}'</echo>
         <echo>nowarn             = '${nowarn}'</echo>
-        <echo>--- properties (used for full-build only ) ---</echo>
+        <echo>--- properties (used for full-build only) ---</echo>
         <echo>python.exe         = '${python.exe}'</echo>
         <echo>svn.main.dir       = '${svn.main.dir}'</echo>
         <echo>svn.revision       = '${svn.revision}'</echo>
@@ -438,7 +438,7 @@ The readme text for the next release will be like:
 
     </target>
  
-    <target name="compile" depends="init,antlr_gen,copy-antlr,jarjar,brand-version">
+    <target name="compile" depends="init,antlr_gen,jarjar,brand-version">
         <javac destdir="${compile.dir}"
                target="${jdk.target.version}"
                source="${jdk.source.version}"
@@ -585,13 +585,12 @@ The readme text for the next release will be like:
         </javadoc>
     </target>
 
-    <target name="copy-antlr" if="full-build">
-        <copy todir="${dist.dir}/src/java" preservelastmodified="true">
-            <fileset dir="${gensrc.dir}" />
-        </copy>
+    <target name="copy-license" if="do.checkout">
+        <echo>copy CPython LICENSE from ${svn.checkout.dir}/python</echo>
+        <copy file="${svn.checkout.dir}/python/LICENSE" tofile="${dist.dir}/LICENSE_CPython.txt" preservelastmodified="true" />
     </target>
 
-    <target name="copy-full" depends="copy-lib" if="full-build">
+    <target name="copy-full" depends="copy-lib, copy-license" if="full-build">
         <echo>copy misc files from ${jython.base.dir}</echo>
         <copy todir="${dist.dir}" preservelastmodified="true">
             <fileset dir="${jython.base.dir}"
@@ -599,18 +598,20 @@ The readme text for the next release will be like:
             />
         </copy>
 
-        <echo>copy CPython LICENSE from ${svn.checkout.dir}/python</echo>
-        <copy file="${svn.checkout.dir}/python/LICENSE" tofile="${dist.dir}/LICENSE_CPython.txt" preservelastmodified="true" />
-
         <!-- sources: todir has to correspond with installer/**/JarInstaller.java -->
         <echo>copy sources from ${jython.base.dir}</echo>
-        <copy todir="${dist.dir}/src/java" preservelastmodified="true">
+        <copy todir="${dist.dir}" preservelastmodified="true">
             <fileset dir="${jython.base.dir}">
               <include name="src/**/*.java" />
               <include name="src/com/**/*.properties" />
+              <include name="src/shell/*" />
+              <include name="src/templates/*" />
               <include name="Lib/jxxload_help/*.java" />
-              <include name="tests/java/**/*.java" />
               <include name="src/org/**/ucnhash.dat" />
+              <include name="grammar/*.g" />
+              <include name="extlibs/**/*.jar" />
+              <include name="tests/java/**/*.java" />
+              <include name="CoreExposed.includes" />
             </fileset>
         </copy>
 
@@ -629,18 +630,16 @@ The readme text for the next release will be like:
         </copy>
     </target>
 
-    <target name="copy-lib" depends="init">
+    <target name="copy-lib" depends="init, copy-javalib, copy-cpythonlib">
+        <!-- XXX untested and most likely broken in 2.5
         <copy todir="${dist.dir}" preservelastmodified="true">
             <fileset dir="${jython.base.dir}" includes="Tools/**/*.py" />
         </copy>
+        -->
 
         <copy todir="${dist.dir}/Lib">
             <fileset dir="${jython.base.dir}/Lib">
                 <exclude name="**/*.class"/>
-            </fileset>
-            <fileset dir="${python.lib}" excludes="**/*.pyc, **/*.pyo" includesfile="${jython.base.dir}/CPythonLib.includes">
-                <!-- The include file gets all of CPythonLib's test directory, but we only want the ones from Jython's Lib.   -->
-                <present present="srconly" targetdir="${jython.base.dir}/Lib"/>
             </fileset>
         </copy>
 
@@ -652,6 +651,18 @@ The readme text for the next release will be like:
             <fileset dir="${dist.dir}/bin" />
         </chmod>
 
+    </target>
+
+    <target name="copy-cpythonlib" if="cpythonlib.present">
+        <copy todir="${dist.dir}/Lib">
+            <fileset dir="${python.lib}" excludes="**/*.pyc, **/*.pyo" includesfile="${jython.base.dir}/CPythonLib.includes">
+                <!-- The include file gets all of CPythonLib's test directory, but we only want the ones from Jython's Lib.   -->
+                <present present="srconly" targetdir="${jython.base.dir}/Lib"/>
+            </fileset>
+        </copy>
+    </target>
+
+    <target name="copy-javalib" unless="full-build">
         <copy todir="${dist.dir}/javalib">
             <fileset dir="${jython.base.dir}/extlibs">
                 <exclude name="profile.properties"/>
@@ -663,8 +674,14 @@ The readme text for the next release will be like:
         </copy>
     </target>
 
+    <!-- if install called by itself, make sure all the dependent targets run;
+         otherwise, redundant with full-check -->
+    <target name="install-init">
+        <property name="full-build" value="true" />
+    </target>
+
     <!-- wrap the build into the installer -->
-    <target name="install" depends="brand-readme-version, jar-complete, javadoc, copy-full">
+    <target name="install" depends="brand-readme-version, install-init, jar-complete, javadoc, copy-full">
         <property name="install.src.dir" value="${jython.base.dir}/../installer25/src/java" />
         <echo>compiling installer from ${install.src.dir}</echo>
         <javac srcdir="${install.src.dir}"
