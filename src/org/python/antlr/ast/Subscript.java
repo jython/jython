@@ -42,14 +42,17 @@ public class Subscript extends exprType implements Context {
     }
 
     public String toStringTree() {
-        StringBuffer sb = new StringBuffer("Subscript[");
+        StringBuffer sb = new StringBuffer("Subscript(");
         sb.append("value=");
-        sb.append(this.value);
+        sb.append(dumpThis(value));
+        sb.append(",");
         sb.append("slice=");
-        sb.append(this.slice);
+        sb.append(dumpThis(slice));
+        sb.append(",");
         sb.append("ctx=");
-        sb.append(this.ctx);
-        sb.append("]");
+        sb.append(dumpThis(ctx));
+        sb.append(",");
+        sb.append(")");
         return sb.toString();
     }
 

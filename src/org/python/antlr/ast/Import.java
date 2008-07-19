@@ -46,10 +46,11 @@ public class Import extends stmtType {
     }
 
     public String toStringTree() {
-        StringBuffer sb = new StringBuffer("Import[");
+        StringBuffer sb = new StringBuffer("Import(");
         sb.append("names=");
-        sb.append(this.names);
-        sb.append("]");
+        sb.append(dumpThis(names));
+        sb.append(",");
+        sb.append(")");
         return sb.toString();
     }
 

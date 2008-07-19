@@ -31,10 +31,11 @@ public class Yield extends exprType {
     }
 
     public String toStringTree() {
-        StringBuffer sb = new StringBuffer("Yield[");
+        StringBuffer sb = new StringBuffer("Yield(");
         sb.append("value=");
-        sb.append(this.value);
-        sb.append("]");
+        sb.append(dumpThis(value));
+        sb.append(",");
+        sb.append(")");
         return sb.toString();
     }
 

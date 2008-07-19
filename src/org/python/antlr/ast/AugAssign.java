@@ -42,14 +42,17 @@ public class AugAssign extends stmtType {
     }
 
     public String toStringTree() {
-        StringBuffer sb = new StringBuffer("AugAssign[");
+        StringBuffer sb = new StringBuffer("AugAssign(");
         sb.append("target=");
-        sb.append(this.target);
+        sb.append(dumpThis(target));
+        sb.append(",");
         sb.append("op=");
-        sb.append(this.op);
+        sb.append(dumpThis(op));
+        sb.append(",");
         sb.append("value=");
-        sb.append(this.value);
-        sb.append("]");
+        sb.append(dumpThis(value));
+        sb.append(",");
+        sb.append(")");
         return sb.toString();
     }
 

@@ -61,14 +61,17 @@ public class Compare extends exprType {
     }
 
     public String toStringTree() {
-        StringBuffer sb = new StringBuffer("Compare[");
+        StringBuffer sb = new StringBuffer("Compare(");
         sb.append("left=");
-        sb.append(this.left);
+        sb.append(dumpThis(left));
+        sb.append(",");
         sb.append("ops=");
-        sb.append(this.ops);
+        sb.append(dumpThis(ops));
+        sb.append(",");
         sb.append("comparators=");
-        sb.append(this.comparators);
-        sb.append("]");
+        sb.append(dumpThis(comparators));
+        sb.append(",");
+        sb.append(")");
         return sb.toString();
     }
 

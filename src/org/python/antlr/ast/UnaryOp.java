@@ -35,12 +35,14 @@ public class UnaryOp extends exprType {
     }
 
     public String toStringTree() {
-        StringBuffer sb = new StringBuffer("UnaryOp[");
+        StringBuffer sb = new StringBuffer("UnaryOp(");
         sb.append("op=");
-        sb.append(this.op);
+        sb.append(dumpThis(op));
+        sb.append(",");
         sb.append("operand=");
-        sb.append(this.operand);
-        sb.append("]");
+        sb.append(dumpThis(operand));
+        sb.append(",");
+        sb.append(")");
         return sb.toString();
     }
 

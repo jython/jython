@@ -31,10 +31,11 @@ public class Num extends exprType {
     }
 
     public String toStringTree() {
-        StringBuffer sb = new StringBuffer("Num[");
+        StringBuffer sb = new StringBuffer("Num(");
         sb.append("n=");
-        sb.append(this.n);
-        sb.append("]");
+        sb.append(dumpThis(n));
+        sb.append(",");
+        sb.append(")");
         return sb.toString();
     }
 

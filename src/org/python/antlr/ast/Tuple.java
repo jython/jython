@@ -51,12 +51,14 @@ public class Tuple extends exprType implements Context {
     }
 
     public String toStringTree() {
-        StringBuffer sb = new StringBuffer("Tuple[");
+        StringBuffer sb = new StringBuffer("Tuple(");
         sb.append("elts=");
-        sb.append(this.elts);
+        sb.append(dumpThis(elts));
+        sb.append(",");
         sb.append("ctx=");
-        sb.append(this.ctx);
-        sb.append("]");
+        sb.append(dumpThis(ctx));
+        sb.append(",");
+        sb.append(")");
         return sb.toString();
     }
 

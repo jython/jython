@@ -35,12 +35,14 @@ public class keywordType extends PythonTree {
     }
 
     public String toStringTree() {
-        StringBuffer sb = new StringBuffer("keyword[");
+        StringBuffer sb = new StringBuffer("keyword(");
         sb.append("arg=");
-        sb.append(this.arg);
+        sb.append(dumpThis(arg));
+        sb.append(",");
         sb.append("value=");
-        sb.append(this.value);
-        sb.append("]");
+        sb.append(dumpThis(value));
+        sb.append(",");
+        sb.append(")");
         return sb.toString();
     }
 

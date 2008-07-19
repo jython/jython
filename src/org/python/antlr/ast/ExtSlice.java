@@ -46,10 +46,11 @@ public class ExtSlice extends sliceType {
     }
 
     public String toStringTree() {
-        StringBuffer sb = new StringBuffer("ExtSlice[");
+        StringBuffer sb = new StringBuffer("ExtSlice(");
         sb.append("dims=");
-        sb.append(this.dims);
-        sb.append("]");
+        sb.append(dumpThis(dims));
+        sb.append(",");
+        sb.append(")");
         return sb.toString();
     }
 

@@ -77,16 +77,20 @@ public class argumentsType extends PythonTree {
     }
 
     public String toStringTree() {
-        StringBuffer sb = new StringBuffer("arguments[");
+        StringBuffer sb = new StringBuffer("arguments(");
         sb.append("args=");
-        sb.append(this.args);
+        sb.append(dumpThis(args));
+        sb.append(",");
         sb.append("vararg=");
-        sb.append(this.vararg);
+        sb.append(dumpThis(vararg));
+        sb.append(",");
         sb.append("kwarg=");
-        sb.append(this.kwarg);
+        sb.append(dumpThis(kwarg));
+        sb.append(",");
         sb.append("defaults=");
-        sb.append(this.defaults);
-        sb.append("]");
+        sb.append(dumpThis(defaults));
+        sb.append(",");
+        sb.append(")");
         return sb.toString();
     }
 

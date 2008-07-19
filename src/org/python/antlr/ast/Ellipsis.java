@@ -27,8 +27,8 @@ public class Ellipsis extends sliceType {
     }
 
     public String toStringTree() {
-        StringBuffer sb = new StringBuffer("Ellipsis[");
-        sb.append("]");
+        StringBuffer sb = new StringBuffer("Ellipsis(");
+        sb.append(")");
         return sb.toString();
     }
 

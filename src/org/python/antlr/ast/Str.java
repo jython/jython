@@ -31,10 +31,11 @@ public class Str extends exprType {
     }
 
     public String toStringTree() {
-        StringBuffer sb = new StringBuffer("Str[");
+        StringBuffer sb = new StringBuffer("Str(");
         sb.append("s=");
-        sb.append(this.s);
-        sb.append("]");
+        sb.append(dumpThis(s));
+        sb.append(",");
+        sb.append(")");
         return sb.toString();
     }
 

@@ -42,14 +42,17 @@ public class Slice extends sliceType {
     }
 
     public String toStringTree() {
-        StringBuffer sb = new StringBuffer("Slice[");
+        StringBuffer sb = new StringBuffer("Slice(");
         sb.append("lower=");
-        sb.append(this.lower);
+        sb.append(dumpThis(lower));
+        sb.append(",");
         sb.append("upper=");
-        sb.append(this.upper);
+        sb.append(dumpThis(upper));
+        sb.append(",");
         sb.append("step=");
-        sb.append(this.step);
-        sb.append("]");
+        sb.append(dumpThis(step));
+        sb.append(",");
+        sb.append(")");
         return sb.toString();
     }
 

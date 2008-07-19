@@ -35,12 +35,14 @@ public class Assert extends stmtType {
     }
 
     public String toStringTree() {
-        StringBuffer sb = new StringBuffer("Assert[");
+        StringBuffer sb = new StringBuffer("Assert(");
         sb.append("test=");
-        sb.append(this.test);
+        sb.append(dumpThis(test));
+        sb.append(",");
         sb.append("msg=");
-        sb.append(this.msg);
-        sb.append("]");
+        sb.append(dumpThis(msg));
+        sb.append(",");
+        sb.append(")");
         return sb.toString();
     }
 

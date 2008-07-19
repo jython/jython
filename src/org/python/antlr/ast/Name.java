@@ -35,12 +35,14 @@ public class Name extends exprType implements Context {
     }
 
     public String toStringTree() {
-        StringBuffer sb = new StringBuffer("Name[");
+        StringBuffer sb = new StringBuffer("Name(");
         sb.append("id=");
-        sb.append(this.id);
+        sb.append(dumpThis(id));
+        sb.append(",");
         sb.append("ctx=");
-        sb.append(this.ctx);
-        sb.append("]");
+        sb.append(dumpThis(ctx));
+        sb.append(",");
+        sb.append(")");
         return sb.toString();
     }
 

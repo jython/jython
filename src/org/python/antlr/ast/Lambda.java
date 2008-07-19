@@ -35,12 +35,14 @@ public class Lambda extends exprType {
     }
 
     public String toStringTree() {
-        StringBuffer sb = new StringBuffer("Lambda[");
+        StringBuffer sb = new StringBuffer("Lambda(");
         sb.append("args=");
-        sb.append(this.args);
+        sb.append(dumpThis(args));
+        sb.append(",");
         sb.append("body=");
-        sb.append(this.body);
-        sb.append("]");
+        sb.append(dumpThis(body));
+        sb.append(",");
+        sb.append(")");
         return sb.toString();
     }
 

@@ -53,12 +53,14 @@ public class GeneratorExp extends exprType {
     }
 
     public String toStringTree() {
-        StringBuffer sb = new StringBuffer("GeneratorExp[");
+        StringBuffer sb = new StringBuffer("GeneratorExp(");
         sb.append("elt=");
-        sb.append(this.elt);
+        sb.append(dumpThis(elt));
+        sb.append(",");
         sb.append("generators=");
-        sb.append(this.generators);
-        sb.append("]");
+        sb.append(dumpThis(generators));
+        sb.append(",");
+        sb.append(")");
         return sb.toString();
     }
 

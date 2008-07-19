@@ -57,14 +57,17 @@ public class comprehensionType extends PythonTree {
     }
 
     public String toStringTree() {
-        StringBuffer sb = new StringBuffer("comprehension[");
+        StringBuffer sb = new StringBuffer("comprehension(");
         sb.append("target=");
-        sb.append(this.target);
+        sb.append(dumpThis(target));
+        sb.append(",");
         sb.append("iter=");
-        sb.append(this.iter);
+        sb.append(dumpThis(iter));
+        sb.append(",");
         sb.append("ifs=");
-        sb.append(this.ifs);
-        sb.append("]");
+        sb.append(dumpThis(ifs));
+        sb.append(",");
+        sb.append(")");
         return sb.toString();
     }
 

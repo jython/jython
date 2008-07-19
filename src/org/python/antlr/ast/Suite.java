@@ -46,10 +46,11 @@ public class Suite extends modType {
     }
 
     public String toStringTree() {
-        StringBuffer sb = new StringBuffer("Suite[");
+        StringBuffer sb = new StringBuffer("Suite(");
         sb.append("body=");
-        sb.append(this.body);
-        sb.append("]");
+        sb.append(dumpThis(body));
+        sb.append(",");
+        sb.append(")");
         return sb.toString();
     }
 

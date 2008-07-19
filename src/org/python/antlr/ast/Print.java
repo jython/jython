@@ -56,14 +56,17 @@ public class Print extends stmtType {
     }
 
     public String toStringTree() {
-        StringBuffer sb = new StringBuffer("Print[");
+        StringBuffer sb = new StringBuffer("Print(");
         sb.append("dest=");
-        sb.append(this.dest);
+        sb.append(dumpThis(dest));
+        sb.append(",");
         sb.append("values=");
-        sb.append(this.values);
+        sb.append(dumpThis(values));
+        sb.append(",");
         sb.append("nl=");
-        sb.append(this.nl);
-        sb.append("]");
+        sb.append(dumpThis(nl));
+        sb.append(",");
+        sb.append(")");
         return sb.toString();
     }
 

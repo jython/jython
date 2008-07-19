@@ -35,12 +35,14 @@ public class aliasType extends PythonTree {
     }
 
     public String toStringTree() {
-        StringBuffer sb = new StringBuffer("alias[");
+        StringBuffer sb = new StringBuffer("alias(");
         sb.append("name=");
-        sb.append(this.name);
+        sb.append(dumpThis(name));
+        sb.append(",");
         sb.append("asname=");
-        sb.append(this.asname);
-        sb.append("]");
+        sb.append(dumpThis(asname));
+        sb.append(",");
+        sb.append(")");
         return sb.toString();
     }
 

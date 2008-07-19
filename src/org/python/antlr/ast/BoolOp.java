@@ -50,12 +50,14 @@ public class BoolOp extends exprType {
     }
 
     public String toStringTree() {
-        StringBuffer sb = new StringBuffer("BoolOp[");
+        StringBuffer sb = new StringBuffer("BoolOp(");
         sb.append("op=");
-        sb.append(this.op);
+        sb.append(dumpThis(op));
+        sb.append(",");
         sb.append("values=");
-        sb.append(this.values);
-        sb.append("]");
+        sb.append(dumpThis(values));
+        sb.append(",");
+        sb.append(")");
         return sb.toString();
     }
 

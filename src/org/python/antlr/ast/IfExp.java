@@ -42,14 +42,17 @@ public class IfExp extends exprType {
     }
 
     public String toStringTree() {
-        StringBuffer sb = new StringBuffer("IfExp[");
+        StringBuffer sb = new StringBuffer("IfExp(");
         sb.append("test=");
-        sb.append(this.test);
+        sb.append(dumpThis(test));
+        sb.append(",");
         sb.append("body=");
-        sb.append(this.body);
+        sb.append(dumpThis(body));
+        sb.append(",");
         sb.append("orelse=");
-        sb.append(this.orelse);
-        sb.append("]");
+        sb.append(dumpThis(orelse));
+        sb.append(",");
+        sb.append(")");
         return sb.toString();
     }
 

@@ -42,14 +42,17 @@ public class Attribute extends exprType implements Context {
     }
 
     public String toStringTree() {
-        StringBuffer sb = new StringBuffer("Attribute[");
+        StringBuffer sb = new StringBuffer("Attribute(");
         sb.append("value=");
-        sb.append(this.value);
+        sb.append(dumpThis(value));
+        sb.append(",");
         sb.append("attr=");
-        sb.append(this.attr);
+        sb.append(dumpThis(attr));
+        sb.append(",");
         sb.append("ctx=");
-        sb.append(this.ctx);
-        sb.append("]");
+        sb.append(dumpThis(ctx));
+        sb.append(",");
+        sb.append(")");
         return sb.toString();
     }
 

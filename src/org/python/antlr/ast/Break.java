@@ -27,8 +27,8 @@ public class Break extends stmtType {
     }
 
     public String toStringTree() {
-        StringBuffer sb = new StringBuffer("Break[");
-        sb.append("]");
+        StringBuffer sb = new StringBuffer("Break(");
+        sb.append(")");
         return sb.toString();
     }
 

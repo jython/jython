@@ -83,13 +83,12 @@ public class PythonTree extends CommonTree implements AST {
 
     public String toStringTree() {
         if (children == null || children.size() == 0) {
-            // System.out.println("Where are my children? -- asks " + token.getText());
-            return this.toString() + "[" + this.info() + "]";
+            return this.toString();// + "[" + this.info() + "]";
         }
         StringBuffer buf = new StringBuffer();
         if (!isNil()) {
             buf.append("(");
-            buf.append(this.toString() + "[" + this.info() + "]");
+            buf.append(this.toString());// + "[" + this.info() + "]");
             buf.append(' ');
         }
         for (int i = 0; children != null && i < children.size(); i++) {
@@ -103,6 +102,34 @@ public class PythonTree extends CommonTree implements AST {
             buf.append(")");
         }
         return buf.toString();
+    }
+
+    protected String dumpThis(String s) {
+        return s;
+    }
+
+    protected String dumpThis(Object o) {
+        if (o instanceof PythonTree) {
+            return ((PythonTree)o).toStringTree();
+        }
+        return String.valueOf(o);
+    }
+
+    protected String dumpThis(Object[] s) {
+        StringBuffer sb = new StringBuffer();
+        if (s == null) {
+            sb.append("null");
+        } else {
+            sb.append("(");
+            for (int i = 0; i < s.length; i++) {
+                if (i > 0)
+                    sb.append(", ");
+                sb.append(dumpThis(s[i]));
+            }
+            sb.append(")");
+        }
+        
+        return sb.toString();
     }
 
     public <R> R accept(VisitorIF<R> visitor) throws Exception {

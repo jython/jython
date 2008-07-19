@@ -46,10 +46,11 @@ public class Interactive extends modType {
     }
 
     public String toStringTree() {
-        StringBuffer sb = new StringBuffer("Interactive[");
+        StringBuffer sb = new StringBuffer("Interactive(");
         sb.append("body=");
-        sb.append(this.body);
-        sb.append("]");
+        sb.append(dumpThis(body));
+        sb.append(",");
+        sb.append(")");
         return sb.toString();
     }
 

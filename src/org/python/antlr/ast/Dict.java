@@ -65,12 +65,14 @@ public class Dict extends exprType {
     }
 
     public String toStringTree() {
-        StringBuffer sb = new StringBuffer("Dict[");
+        StringBuffer sb = new StringBuffer("Dict(");
         sb.append("keys=");
-        sb.append(this.keys);
+        sb.append(dumpThis(keys));
+        sb.append(",");
         sb.append("values=");
-        sb.append(this.values);
-        sb.append("]");
+        sb.append(dumpThis(values));
+        sb.append(",");
+        sb.append(")");
         return sb.toString();
     }
 

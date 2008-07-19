@@ -52,12 +52,14 @@ public class ListComp extends exprType {
     }
 
     public String toStringTree() {
-        StringBuffer sb = new StringBuffer("ListComp[");
+        StringBuffer sb = new StringBuffer("ListComp(");
         sb.append("elt=");
-        sb.append(this.elt);
+        sb.append(dumpThis(elt));
+        sb.append(",");
         sb.append("generators=");
-        sb.append(this.generators);
-        sb.append("]");
+        sb.append(dumpThis(generators));
+        sb.append(",");
+        sb.append(")");
         return sb.toString();
     }
 

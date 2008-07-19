@@ -27,8 +27,8 @@ public class Continue extends stmtType {
     }
 
     public String toStringTree() {
-        StringBuffer sb = new StringBuffer("Continue[");
-        sb.append("]");
+        StringBuffer sb = new StringBuffer("Continue(");
+        sb.append(")");
         return sb.toString();
     }
 

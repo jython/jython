@@ -31,10 +31,11 @@ public class Unicode extends exprType {
     }
 
     public String toStringTree() {
-        StringBuffer sb = new StringBuffer("Unicode[");
+        StringBuffer sb = new StringBuffer("Unicode(");
         sb.append("s=");
-        sb.append(this.s);
-        sb.append("]");
+        sb.append(dumpThis(s));
+        sb.append(",");
+        sb.append(")");
         return sb.toString();
     }
 

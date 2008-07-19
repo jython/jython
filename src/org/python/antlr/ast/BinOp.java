@@ -41,14 +41,17 @@ public class BinOp extends exprType {
     }
 
     public String toStringTree() {
-        StringBuffer sb = new StringBuffer("BinOp[");
+        StringBuffer sb = new StringBuffer("BinOp(");
         sb.append("left=");
-        sb.append(this.left);
+        sb.append(dumpThis(left));
+        sb.append(",");
         sb.append("op=");
-        sb.append(this.op);
+        sb.append(dumpThis(op));
+        sb.append(",");
         sb.append("right=");
-        sb.append(this.right);
-        sb.append("]");
+        sb.append(dumpThis(right));
+        sb.append(",");
+        sb.append(")");
         return sb.toString();
     }
 

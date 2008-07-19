@@ -42,14 +42,17 @@ public class Exec extends stmtType {
     }
 
     public String toStringTree() {
-        StringBuffer sb = new StringBuffer("Exec[");
+        StringBuffer sb = new StringBuffer("Exec(");
         sb.append("body=");
-        sb.append(this.body);
+        sb.append(dumpThis(body));
+        sb.append(",");
         sb.append("globals=");
-        sb.append(this.globals);
+        sb.append(dumpThis(globals));
+        sb.append(",");
         sb.append("locals=");
-        sb.append(this.locals);
-        sb.append("]");
+        sb.append(dumpThis(locals));
+        sb.append(",");
+        sb.append(")");
         return sb.toString();
     }
 

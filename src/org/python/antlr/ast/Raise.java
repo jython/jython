@@ -41,14 +41,17 @@ public class Raise extends stmtType {
     }
 
     public String toStringTree() {
-        StringBuffer sb = new StringBuffer("Raise[");
+        StringBuffer sb = new StringBuffer("Raise(");
         sb.append("type=");
-        sb.append(this.type);
+        sb.append(dumpThis(type));
+        sb.append(",");
         sb.append("inst=");
-        sb.append(this.inst);
+        sb.append(dumpThis(inst));
+        sb.append(",");
         sb.append("tback=");
-        sb.append(this.tback);
-        sb.append("]");
+        sb.append(dumpThis(tback));
+        sb.append(",");
+        sb.append(")");
         return sb.toString();
     }
 

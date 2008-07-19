@@ -66,18 +66,23 @@ public class excepthandlerType extends PythonTree {
     }
 
     public String toStringTree() {
-        StringBuffer sb = new StringBuffer("excepthandler[");
+        StringBuffer sb = new StringBuffer("excepthandler(");
         sb.append("type=");
-        sb.append(this.type);
+        sb.append(dumpThis(type));
+        sb.append(",");
         sb.append("name=");
-        sb.append(this.name);
+        sb.append(dumpThis(name));
+        sb.append(",");
         sb.append("body=");
-        sb.append(this.body);
+        sb.append(dumpThis(body));
+        sb.append(",");
         sb.append("lineno=");
-        sb.append(this.lineno);
+        sb.append(dumpThis(lineno));
+        sb.append(",");
         sb.append("col_offset=");
-        sb.append(this.col_offset);
-        sb.append("]");
+        sb.append(dumpThis(col_offset));
+        sb.append(",");
+        sb.append(")");
         return sb.toString();
     }
 

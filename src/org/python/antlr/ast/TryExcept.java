@@ -88,14 +88,17 @@ public class TryExcept extends stmtType {
     }
 
     public String toStringTree() {
-        StringBuffer sb = new StringBuffer("TryExcept[");
+        StringBuffer sb = new StringBuffer("TryExcept(");
         sb.append("body=");
-        sb.append(this.body);
+        sb.append(dumpThis(body));
+        sb.append(",");
         sb.append("handlers=");
-        sb.append(this.handlers);
+        sb.append(dumpThis(handlers));
+        sb.append(",");
         sb.append("orelse=");
-        sb.append(this.orelse);
-        sb.append("]");
+        sb.append(dumpThis(orelse));
+        sb.append(",");
+        sb.append(")");
         return sb.toString();
     }
 

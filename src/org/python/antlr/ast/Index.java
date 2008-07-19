@@ -31,10 +31,11 @@ public class Index extends sliceType {
     }
 
     public String toStringTree() {
-        StringBuffer sb = new StringBuffer("Index[");
+        StringBuffer sb = new StringBuffer("Index(");
         sb.append("value=");
-        sb.append(this.value);
-        sb.append("]");
+        sb.append(dumpThis(value));
+        sb.append(",");
+        sb.append(")");
         return sb.toString();
     }
 

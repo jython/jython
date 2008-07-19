@@ -50,12 +50,14 @@ public class Assign extends stmtType {
     }
 
     public String toStringTree() {
-        StringBuffer sb = new StringBuffer("Assign[");
+        StringBuffer sb = new StringBuffer("Assign(");
         sb.append("targets=");
-        sb.append(this.targets);
+        sb.append(dumpThis(targets));
+        sb.append(",");
         sb.append("value=");
-        sb.append(this.value);
-        sb.append("]");
+        sb.append(dumpThis(value));
+        sb.append(",");
+        sb.append(")");
         return sb.toString();
     }
 

@@ -31,10 +31,11 @@ public class Global extends stmtType {
     }
 
     public String toStringTree() {
-        StringBuffer sb = new StringBuffer("Global[");
+        StringBuffer sb = new StringBuffer("Global(");
         sb.append("names=");
-        sb.append(this.names);
-        sb.append("]");
+        sb.append(dumpThis(names));
+        sb.append(",");
+        sb.append(")");
         return sb.toString();
     }
 

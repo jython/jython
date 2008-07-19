@@ -81,18 +81,23 @@ public class Call extends exprType {
     }
 
     public String toStringTree() {
-        StringBuffer sb = new StringBuffer("Call[");
+        StringBuffer sb = new StringBuffer("Call(");
         sb.append("func=");
-        sb.append(this.func);
+        sb.append(dumpThis(func));
+        sb.append(",");
         sb.append("args=");
-        sb.append(this.args);
+        sb.append(dumpThis(args));
+        sb.append(",");
         sb.append("keywords=");
-        sb.append(this.keywords);
+        sb.append(dumpThis(keywords));
+        sb.append(",");
         sb.append("starargs=");
-        sb.append(this.starargs);
+        sb.append(dumpThis(starargs));
+        sb.append(",");
         sb.append("kwargs=");
-        sb.append(this.kwargs);
-        sb.append("]");
+        sb.append(dumpThis(kwargs));
+        sb.append(",");
+        sb.append(")");
         return sb.toString();
     }
 

@@ -72,14 +72,17 @@ public class ClassDef extends stmtType {
     }
 
     public String toStringTree() {
-        StringBuffer sb = new StringBuffer("ClassDef[");
+        StringBuffer sb = new StringBuffer("ClassDef(");
         sb.append("name=");
-        sb.append(this.name);
+        sb.append(dumpThis(name));
+        sb.append(",");
         sb.append("bases=");
-        sb.append(this.bases);
+        sb.append(dumpThis(bases));
+        sb.append(",");
         sb.append("body=");
-        sb.append(this.body);
-        sb.append("]");
+        sb.append(dumpThis(body));
+        sb.append(",");
+        sb.append(")");
         return sb.toString();
     }
 

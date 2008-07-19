@@ -66,12 +66,14 @@ public class TryFinally extends stmtType {
     }
 
     public String toStringTree() {
-        StringBuffer sb = new StringBuffer("TryFinally[");
+        StringBuffer sb = new StringBuffer("TryFinally(");
         sb.append("body=");
-        sb.append(this.body);
+        sb.append(dumpThis(body));
+        sb.append(",");
         sb.append("finalbody=");
-        sb.append(this.finalbody);
-        sb.append("]");
+        sb.append(dumpThis(finalbody));
+        sb.append(",");
+        sb.append(")");
         return sb.toString();
     }
 

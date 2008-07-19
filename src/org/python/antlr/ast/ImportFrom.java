@@ -58,14 +58,17 @@ public class ImportFrom extends stmtType {
     }
 
     public String toStringTree() {
-        StringBuffer sb = new StringBuffer("ImportFrom[");
+        StringBuffer sb = new StringBuffer("ImportFrom(");
         sb.append("module=");
-        sb.append(this.module);
+        sb.append(dumpThis(module));
+        sb.append(",");
         sb.append("names=");
-        sb.append(this.names);
+        sb.append(dumpThis(names));
+        sb.append(",");
         sb.append("level=");
-        sb.append(this.level);
-        sb.append("]");
+        sb.append(dumpThis(level));
+        sb.append(",");
+        sb.append(")");
         return sb.toString();
     }
 

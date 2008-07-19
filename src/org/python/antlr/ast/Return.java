@@ -31,10 +31,11 @@ public class Return extends stmtType {
     }
 
     public String toStringTree() {
-        StringBuffer sb = new StringBuffer("Return[");
+        StringBuffer sb = new StringBuffer("Return(");
         sb.append("value=");
-        sb.append(this.value);
-        sb.append("]");
+        sb.append(dumpThis(value));
+        sb.append(",");
+        sb.append(")");
         return sb.toString();
     }
 

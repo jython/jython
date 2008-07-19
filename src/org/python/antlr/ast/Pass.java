@@ -27,8 +27,8 @@ public class Pass extends stmtType {
     }
 
     public String toStringTree() {
-        StringBuffer sb = new StringBuffer("Pass[");
-        sb.append("]");
+        StringBuffer sb = new StringBuffer("Pass(");
+        sb.append(")");
         return sb.toString();
     }
 

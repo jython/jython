@@ -77,16 +77,20 @@ public class For extends stmtType {
     }
 
     public String toStringTree() {
-        StringBuffer sb = new StringBuffer("For[");
+        StringBuffer sb = new StringBuffer("For(");
         sb.append("target=");
-        sb.append(this.target);
+        sb.append(dumpThis(target));
+        sb.append(",");
         sb.append("iter=");
-        sb.append(this.iter);
+        sb.append(dumpThis(iter));
+        sb.append(",");
         sb.append("body=");
-        sb.append(this.body);
+        sb.append(dumpThis(body));
+        sb.append(",");
         sb.append("orelse=");
-        sb.append(this.orelse);
-        sb.append("]");
+        sb.append(dumpThis(orelse));
+        sb.append(",");
+        sb.append(")");
         return sb.toString();
     }
 

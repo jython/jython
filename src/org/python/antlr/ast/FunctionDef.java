@@ -77,16 +77,20 @@ public class FunctionDef extends stmtType {
     }
 
     public String toStringTree() {
-        StringBuffer sb = new StringBuffer("FunctionDef[");
+        StringBuffer sb = new StringBuffer("FunctionDef(");
         sb.append("name=");
-        sb.append(this.name);
+        sb.append(dumpThis(name));
+        sb.append(",");
         sb.append("args=");
-        sb.append(this.args);
+        sb.append(dumpThis(args));
+        sb.append(",");
         sb.append("body=");
-        sb.append(this.body);
+        sb.append(dumpThis(body));
+        sb.append(",");
         sb.append("decorators=");
-        sb.append(this.decorators);
-        sb.append("]");
+        sb.append(dumpThis(decorators));
+        sb.append(",");
+        sb.append(")");
         return sb.toString();
     }
 

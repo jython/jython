@@ -46,10 +46,11 @@ public class Delete extends stmtType {
     }
 
     public String toStringTree() {
-        StringBuffer sb = new StringBuffer("Delete[");
+        StringBuffer sb = new StringBuffer("Delete(");
         sb.append("targets=");
-        sb.append(this.targets);
-        sb.append("]");
+        sb.append(dumpThis(targets));
+        sb.append(",");
+        sb.append(")");
         return sb.toString();
     }
 

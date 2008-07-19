@@ -58,14 +58,17 @@ public class With extends stmtType {
     }
 
     public String toStringTree() {
-        StringBuffer sb = new StringBuffer("With[");
+        StringBuffer sb = new StringBuffer("With(");
         sb.append("context_expr=");
-        sb.append(this.context_expr);
+        sb.append(dumpThis(context_expr));
+        sb.append(",");
         sb.append("optional_vars=");
-        sb.append(this.optional_vars);
+        sb.append(dumpThis(optional_vars));
+        sb.append(",");
         sb.append("body=");
-        sb.append(this.body);
-        sb.append("]");
+        sb.append(dumpThis(body));
+        sb.append(",");
+        sb.append(")");
         return sb.toString();
     }
 

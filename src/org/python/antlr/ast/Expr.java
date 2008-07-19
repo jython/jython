@@ -31,10 +31,11 @@ public class Expr extends stmtType {
     }
 
     public String toStringTree() {
-        StringBuffer sb = new StringBuffer("Expr[");
+        StringBuffer sb = new StringBuffer("Expr(");
         sb.append("value=");
-        sb.append(this.value);
-        sb.append("]");
+        sb.append(dumpThis(value));
+        sb.append(",");
+        sb.append(")");
         return sb.toString();
     }
 

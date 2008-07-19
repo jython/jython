@@ -46,10 +46,11 @@ public class Module extends modType {
     }
 
     public String toStringTree() {
-        StringBuffer sb = new StringBuffer("Module[");
+        StringBuffer sb = new StringBuffer("Module(");
         sb.append("body=");
-        sb.append(this.body);
-        sb.append("]");
+        sb.append(dumpThis(body));
+        sb.append(",");
+        sb.append(")");
         return sb.toString();
     }
 
