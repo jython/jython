@@ -191,9 +191,13 @@ public class PyTuple extends PySequenceList
         return repeat(count);
     }
 
+    public PyObject __iter__() {
+        return tuple___iter__();
+    }
+
     @ExposedMethod
     public PyObject tuple___iter__() {
-        return seq___iter__();
+        return new PyFastSequenceIter(this);
     }
 
     @ExposedMethod(defaults = "null")

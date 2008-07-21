@@ -380,9 +380,13 @@ public class PyList extends PySequenceList {
         return seq___nonzero__();
     }
 
+    public PyObject __iter__() {
+        return list___iter__();
+    }
+
     @ExposedMethod
     public PyObject list___iter__() {
-        return seq___iter__();
+        return new PyFastSequenceIter(this);
     }
 
     @ExposedMethod(defaults = "null")

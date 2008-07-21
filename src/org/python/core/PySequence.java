@@ -256,7 +256,11 @@ public abstract class PySequence extends PyObject {
         }
     }
 
-    public synchronized PyObject __finditem__(int index) {
+    public PyObject __finditem__(int index) {
+        return seq___finditem__(index);
+    }
+
+    final synchronized PyObject seq___finditem__(int index) {
         index = fixindex(index);
         if(index == -1) {
             return null;
@@ -271,7 +275,7 @@ public abstract class PySequence extends PyObject {
 
     final PyObject seq___finditem__(PyObject index) {
         if(index instanceof PyInteger || index instanceof PyLong) {
-            return __finditem__(index.asInt());
+            return seq___finditem__(index.asInt());
         } else if(index instanceof PySlice) {
             PySlice s = (PySlice)index;
             return __getslice__(s.start, s.stop, s.step);
