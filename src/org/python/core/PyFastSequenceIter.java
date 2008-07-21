@@ -2,21 +2,21 @@
 package org.python.core;
 
 /**
- * General sequence iterator.
+ * Sequence iterator specialized for accessing the underlying sequence directly.
  */
-public class PySequenceIter extends PyIterator {
+public class PyFastSequenceIter extends PyIterator {
 
-    private PyObject seq;
+    private PySequence seq;
 
     private int index = 0;
 
-    public PySequenceIter(PyObject seq) {
+    public PyFastSequenceIter(PySequence seq) {
         this.seq = seq;
     }
 
     public PyObject __iternext__() {
         try {
-            return seq.__finditem__(index++);
+            return seq.seq___finditem__(index++);
         } catch (PyException exc) {
             if (Py.matchException(exc, Py.StopIteration)) {
                 return null;
