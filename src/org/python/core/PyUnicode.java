@@ -245,12 +245,12 @@ public class PyUnicode extends PyString implements Iterable {
     }
 
     @ExposedMethod
-    public PyObject unicode___getitem__(PyObject index) {
-        return seq___finditem__(index);
+    final PyObject unicode___getitem__(PyObject index) {
+        return str___getitem__(index);
     }
 
     @ExposedMethod(defaults = "null")
-    public PyObject unicode___getslice__(PyObject start, PyObject stop, PyObject step) {
+    final PyObject unicode___getslice__(PyObject start, PyObject stop, PyObject step) {
         return seq___getslice__(start, stop, step);
     }
 

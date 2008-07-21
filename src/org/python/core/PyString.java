@@ -468,7 +468,11 @@ public class PyString extends PyBaseString
 
     @ExposedMethod
     final PyObject str___getitem__(PyObject index) {
-        return seq___finditem__(index);
+        PyObject ret = seq___finditem__(index);
+        if (ret == null) {
+            throw Py.IndexError("string index out of range");
+        }
+        return ret;
     }
     
     @ExposedMethod(defaults = "null")
