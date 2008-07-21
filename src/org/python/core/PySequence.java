@@ -143,7 +143,7 @@ public abstract class PySequence extends PyObject {
         if(i < 0) {
             return (i == -1) ? Py.True : Py.False;
         }
-        return __finditem__(i)._lt(o.__finditem__(i));
+        return seq___finditem__(i)._lt(((PySequence)o).seq___finditem__(i));
     }
 
     final synchronized PyObject seq___lt__(PyObject o) {
@@ -158,7 +158,7 @@ public abstract class PySequence extends PyObject {
         if(i < 0) {
             return (i == -1 || i == -2) ? Py.True : Py.False;
         }
-        return __finditem__(i)._le(o.__finditem__(i));
+        return seq___finditem__(i)._le(((PySequence)o).seq___finditem__(i));
     }
 
     final synchronized PyObject seq___le__(PyObject o) {
@@ -172,7 +172,7 @@ public abstract class PySequence extends PyObject {
         int i = cmp(this, -1, o, -1);
         if(i < 0)
             return (i == -3) ? Py.True : Py.False;
-        return __finditem__(i)._gt(o.__finditem__(i));
+        return seq___finditem__(i)._gt(((PySequence)o).seq___finditem__(i));
     }
 
     final synchronized PyObject seq___gt__(PyObject o) {
@@ -187,7 +187,7 @@ public abstract class PySequence extends PyObject {
         if(i < 0) {
             return (i == -3 || i == -2) ? Py.True : Py.False;
         }
-        return __finditem__(i)._ge(o.__finditem__(i));
+        return seq___finditem__(i)._ge(((PySequence)o).seq___finditem__(i));
     }
 
     final synchronized PyObject seq___ge__(PyObject o) {
@@ -289,7 +289,7 @@ public abstract class PySequence extends PyObject {
     }
 
     final PyObject seq___getitem__(PyObject index) {
-        PyObject ret = __finditem__(index);
+        PyObject ret = seq___finditem__(index);
         if(ret == null) {
             throw Py.IndexError("index out of range: " + index);
         }
