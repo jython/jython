@@ -17,7 +17,6 @@ import org.python.core.PyLong;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyTuple;
-import org.python.core.__builtin__;
 
 import java.math.BigInteger;
 
@@ -1034,7 +1033,7 @@ public class struct {
 
             e.doUnpack(str, num, res);
         }
-        return __builtin__.tuple(res);
+        return PyTuple.fromIterable(res);
     }
 
 

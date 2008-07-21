@@ -551,44 +551,118 @@ public class __builtin__ {
         execfile(name, null, null);
     }
 
-    public static PyObject filter(PyObject f, PyString s) {
-        if (f == Py.None) {
-            return s;
-        }
-        PyObject[] args = new PyObject[1];
-        char[] chars = s.toString().toCharArray();
-        int i;
-        int j;
-        int n = chars.length;
-        for (i = 0, j = 0; i < n; i++) {
-            args[0] = Py.makeCharacter(chars[i]);
-            if (!f.__call__(args).__nonzero__()) {
-                continue;
+    public static PyObject filter(PyObject func, PyObject seq) {
+        if (seq instanceof PyString) {
+            if (seq instanceof PyUnicode) {
+                return filterunicode(func, (PyUnicode)seq);
             }
-            chars[j++] = chars[i];
+            return filterstring(func, (PyString)seq);
         }
-        return new PyString(new String(chars, 0, j));
-    }
+        if (seq instanceof PyTuple) {
+            return filtertuple(func, (PyTuple)seq);
+        }
 
-    public static PyObject filter(PyObject f, PyObject l) {
-        if (l instanceof PyString) {
-            return filter(f, (PyString) l);
-        }
         PyList list = new PyList();
-        for (PyObject item : l.asIterable()) {
-            if (f == Py.None) {
+        for (PyObject item : seq.asIterable()) {
+            if (func == PyBoolean.TYPE || func == Py.None) {
                 if (!item.__nonzero__()) {
                     continue;
                 }
-            } else if (!f.__call__(item).__nonzero__()) {
+            } else if (!func.__call__(item).__nonzero__()) {
                 continue;
             }
             list.append(item);
         }
-        if (l instanceof PyTuple) {
-            return tuple(list);
-        }
         return list;
+    }
+
+    public static PyObject filterstring(PyObject func, PyString seq) {
+        if (func == Py.None && seq.getType() == PyString.TYPE) {
+            // If it's a real string we can return the original, as no character is ever
+            // false and __getitem__ does return this character. If it's a subclass we
+            // must go through the __getitem__ loop
+            return seq;
+        }
+
+        StringBuilder builder = new StringBuilder();
+        boolean ok;
+        for (PyObject item : seq.asIterable()) {
+            ok = false;
+            if (func == Py.None) {
+                if (item.__nonzero__()) {
+                    ok = true;
+                }
+            } else if (func.__call__(item).__nonzero__()) {
+                ok = true;
+            }
+            if (ok) {
+                if (!(item instanceof PyString) || item instanceof PyUnicode) {
+                    throw Py.TypeError("can't filter str to str: __getitem__ returned different "
+                                       + "type");
+                }
+                builder.append(item.toString());
+            }
+        }
+        return new PyString(builder.toString());
+    }
+
+    public static PyObject filterunicode(PyObject func, PyUnicode seq) {
+        if (func == Py.None && seq.getType() == PyUnicode.TYPE) {
+            // If it's a real string we can return the original, as no character is ever
+            // false and __getitem__ does return this character. If it's a subclass we
+            // must go through the __getitem__ loop
+            return seq;
+        }
+
+        StringBuilder builder = new StringBuilder();
+        boolean ok;
+        for (PyObject item : seq.asIterable()) {
+            ok = false;
+            if (func == Py.None) {
+                if (item.__nonzero__()) {
+                    ok = true;
+                }
+            } else if (func.__call__(item).__nonzero__()) {
+                ok = true;
+            }
+            if (ok) {
+                if (!(item instanceof PyUnicode)) {
+                    throw Py.TypeError("can't filter unicode to unicode: __getitem__ returned "
+                                       + "different type");
+                }
+                builder.append(item.toString());
+            }
+        }
+        return new PyUnicode(builder.toString());
+    }
+
+    public static PyObject filtertuple(PyObject func, PyTuple seq) {
+        int len = seq.__len__();
+        if (len == 0) {
+            if (seq.getType() != PyTuple.TYPE) {
+                seq = new PyTuple();
+            }
+            return seq;
+        }
+
+        PyList list = new PyList();
+        PyObject item;
+        boolean ok;
+        for (int i = 0; i < len; i++) {
+            ok = false;
+            item = seq.__finditem__(i);
+            if (func == Py.None) {
+                if (item.__nonzero__()) {
+                    ok = true;
+                }
+            } else if (func.__call__(item).__nonzero__()) {
+                ok = true;
+            }
+            if (ok) {
+                list.append(item);
+            }
+        }
+        return PyTuple.fromIterable(list);
     }
 
     public static PyObject getattr(PyObject obj, PyObject name) {
@@ -1025,22 +1099,6 @@ public class __builtin__ {
 
     public static PyObject sum(PyObject seq) {
         return sum(seq, Py.Zero);
-    }
-
-    public static PyTuple tuple(PyObject o) {
-        if (o instanceof PyTuple) {
-            return (PyTuple) o;
-        }
-        if (o instanceof PyList) {
-            // always make a copy, otherwise the tuple will share the
-            // underlying data structure with the list object, which
-            // renders the tuple mutable!
-            PyList l = (PyList) o;
-            PyObject[] a = new PyObject[l.size()];
-            System.arraycopy(l.getArray(), 0, a, 0, a.length);
-            return new PyTuple(a);
-        }
-        return new PyTuple(Py.make_array(o));
     }
 
     public static PyType type(PyObject o) {
