@@ -791,6 +791,20 @@ public class PyIntegerDerived extends PyInteger implements Slotted {
         return super.__finditem__(key);
     }
 
+    public PyObject __finditem__(int key) {
+        PyType self_type=getType();
+        PyObject impl=self_type.lookup("__getitem__");
+        if (impl!=null)
+            try {
+                return impl.__get__(this,self_type).__call__(new PyInteger(key));
+            } catch (PyException exc) {
+                if (Py.matchException(exc,Py.LookupError))
+                    return null;
+                throw exc;
+            }
+        return super.__finditem__(key);
+    }
+
     public PyObject __getitem__(PyObject key) {
         // Same as __finditem__, without swallowing LookupErrors. This allows
         // __getitem__ implementations written in Python to raise custom
