@@ -389,6 +389,7 @@ decorator [List decs]
             } else {
                 c = makeCall($Call, $dotted_attr.etype, $arglist.args, $arglist.keywords, $arglist.starargs, $arglist.kwargs);
             }
+            c.setCharStopIndex($Call.getCharStopIndex());
             decs.add(c);
         }
     }
@@ -470,6 +471,7 @@ call_expr returns [exprType etype, PythonTree marker]
         } else {
             c = makeCall($test.marker, $test.etype, $arglist.args, $arglist.keywords, $arglist.starargs, $arglist.kwargs);
         }
+        c.setCharStopIndex($Call.getCharStopIndex());
         $etype = c;
     }
     ;
@@ -814,7 +816,7 @@ try_stmt
 @init {
     List handlers = new ArrayList();
 }
-    : ^(TryExcept tok='try' ^(Body body=stmts) except_clause[handlers]+ (^(ORELSE orelse=stmts))? (^(FINALLY fin=stmts))?) {
+    : ^(TryExcept ^(Body body=stmts) except_clause[handlers]+ (^(ORELSE orelse=stmts))? (^(FINALLY fin=stmts))?) {
         List o = null;
         List f = null;
         if ($ORELSE != null) {
@@ -823,11 +825,11 @@ try_stmt
         if ($FINALLY != null) {
             f = $fin.stypes;
         }
-        stmtType te = makeTryExcept($tok, $body.stypes, handlers, o, f);
+        stmtType te = makeTryExcept($TryExcept, $body.stypes, handlers, o, f);
         $stmts::statements.add(te);
     }
-    | ^(TryFinally tok='try' ^(Body body=stmts) ^(FINALLY fin=stmts)) {
-        TryFinally tf = makeTryFinally($tok, $body.stypes, $fin.stypes);
+    | ^(TryFinally ^(Body body=stmts) ^(FINALLY fin=stmts)) {
+        TryFinally tf = makeTryFinally($TryFinally, $body.stypes, $fin.stypes);
         $stmts::statements.add(tf);
     }
     ;

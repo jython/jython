@@ -818,11 +818,11 @@ for_stmt : FOR exprlist[expr_contextType.Store] IN testlist[expr_contextType.Loa
 //           ['else' ':' suite]
 //           ['finally' ':' suite] |
 //           'finally' ':' suite))
-try_stmt : 'try' COLON trysuite=suite
+try_stmt : TRY COLON trysuite=suite
            ( (except_clause+ (ORELSE COLON elsesuite=suite)? (FINALLY COLON finalsuite=suite)?
-          -> ^(TryExcept 'try' ^(Body $trysuite) except_clause+ ^(ORELSE $elsesuite)? ^(FINALLY $finalsuite)?))
+          -> ^(TryExcept[$TRY] ^(Body $trysuite) except_clause+ ^(ORELSE $elsesuite)? ^(FINALLY $finalsuite)?))
            | (FINALLY COLON finalsuite=suite
-          -> ^(TryFinally 'try' ^(Body $trysuite) ^(FINALLY $finalsuite)))
+          -> ^(TryFinally[$TRY] ^(Body $trysuite) ^(FINALLY $finalsuite)))
            )
          ;
 
@@ -1158,6 +1158,7 @@ YIELD     : 'yield' ;
 ASSERT    : 'assert' ;
 FINALLY   : 'finally' ;
 DELETE    : 'del' ;
+TRY       : 'try' ;
 
 LPAREN    : '(' {implicitLineJoiningLevel++;} ;
 
