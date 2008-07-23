@@ -376,7 +376,7 @@ for_stmt : 'for' exprlist 'in' testlist COLON suite ('else' COLON suite)?
 try_stmt : 'try' COLON suite
            ( except_clause+ ('else' COLON suite)? ('finally' COLON suite)?
            | 'finally' COLON suite
-           )
+           )?
          ;
 
 with_stmt: 'with' test (with_var)? COLON suite
