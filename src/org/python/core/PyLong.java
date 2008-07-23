@@ -182,11 +182,11 @@ public class PyLong extends PyObject {
     }
 
 
-    private long getLong(long min, long max) {
+    public long getLong(long min, long max) {
         return getLong(min, max, "long int too large to convert");
     }
 
-    private long getLong(long min, long max, String overflowMsg) {
+    public long getLong(long min, long max, String overflowMsg) {
         if (value.compareTo(maxLong) <= 0 && value.compareTo(minLong) >= 0) {
             long v = value.longValue();
             if (v >= min && v <= max)

@@ -528,25 +528,6 @@ public class PyList extends PySequenceList {
         throw Py.ValueError(message);
     }
 
-    // This is closely related to fixindex in PySequence, but less strict
-    // fixindex returns -1 if index += length < 0 or if index >= length
-    // where this function returns 0 in former case and length in the latter.
-    // I think both are needed in different cases, but if this method turns
-    // out to be needed in other sequence subclasses, it should be moved to
-    // PySequence.
-    private int calculateIndex(int index) {
-        int length = size();
-        if(index < 0) {
-            index = index += length;
-            if(index < 0) {
-                index = 0;
-            }
-        } else if(index > length) {
-            index = length;
-        }
-        return index;
-    }
-
     /**
      * Insert the argument element into the list at the specified index. <br>
      * Same as <code>s[index:index] = [o] if index &gt;= 0</code>.

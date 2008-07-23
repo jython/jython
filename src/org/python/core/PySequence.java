@@ -256,6 +256,20 @@ public abstract class PySequence extends PyObject {
         }
     }
 
+    // XXX: more appropriate naming of this vs fixindex
+    protected int calculateIndex(int index) {
+        int length = __len__();
+        if(index < 0) {
+            index = index += length;
+            if(index < 0) {
+                index = 0;
+            }
+        } else if(index > length) {
+            index = length;
+        }
+        return index;
+    }
+
     public PyObject __finditem__(int index) {
         return seq___finditem__(index);
     }

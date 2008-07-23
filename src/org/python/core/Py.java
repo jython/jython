@@ -1441,8 +1441,8 @@ public final class Py {
         return makeCharacter(c, false);
     }
 
-    static final PyString makeCharacter(int codepoint, boolean explicitUnicode) {
-        if (explicitUnicode || codepoint > 255) {
+    static final PyString makeCharacter(int codepoint, boolean toUnicode) {
+        if (toUnicode) {
             return new PyUnicode(codepoint);
         }
 
