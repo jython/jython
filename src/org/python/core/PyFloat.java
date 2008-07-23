@@ -4,6 +4,7 @@ package org.python.core;
 import java.io.Serializable;
 import java.math.BigDecimal;
 
+import org.python.expose.ExposedClassMethod;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
@@ -577,6 +578,28 @@ public class PyFloat extends PyObject
 
     public PyTuple __getnewargs__() {
         return float___getnewargs__();
+    }
+
+    @ExposedClassMethod
+    public static String float___getformat__(PyType type, String typestr) {
+        if (!"double".equals(typestr) && !"float".equals(typestr)) {
+            throw Py.ValueError("__getformat__() argument 1 must be 'double' or 'float'");
+        }
+        return "unknown";
+    }
+
+    @ExposedClassMethod
+    public static void float___setformat__(PyType type, String typestr, String format) {
+        if (!"double".equals(typestr) && !"float".equals(typestr)) {
+            throw Py.ValueError("__setformat__() argument 1 must be 'double' or 'float'");
+        }
+        if ("IEEE, little-endian".equals(format) || "IEEE, big-endian".equals(format)) {
+            throw Py.ValueError(String.format("can only set %s format to 'unknown' or the "
+                                              + "detected platform value", typestr));
+        } else if (!"unknown".equals(format)) {
+            throw Py.ValueError("__setformat__() argument 2 must be 'unknown', "
+                                + "'IEEE, little-endian' or 'IEEE, big-endian'");
+        } 
     }
 
     public boolean isMappingType() { return false; }
