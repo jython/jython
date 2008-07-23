@@ -393,8 +393,7 @@ import java.util.Iterator;
     }
 
     Token extractStringToken(List s) {
-        //XXX: really we want the *last* one.
-        return (Token)s.get(0);
+        return (Token)s.get(s.size() - 1);
     }
 
  
@@ -956,7 +955,7 @@ atom : LPAREN
      | LONGINT -> ^(NumTok<Num>[$LONGINT, makeInt($LONGINT)])
      | FLOAT -> ^(NumTok<Num>[$FLOAT, makeFloat($FLOAT)])
      | COMPLEX -> ^(NumTok<Num>[$COMPLEX, makeComplex($COMPLEX)])
-     | (S+=STRING)+ {debug("S+: " + $S);} 
+     | (S+=STRING)+ 
     -> ^(StrTok<Str>[extractStringToken($S), extractStrings($S)])
      ;
 
@@ -1299,7 +1298,12 @@ STRING
         |   '"""' (options {greedy=false;}:TRIQUOTE)* '"""'
         |   '"' (ESC|~('\\'|'\n'|'"'))* '"'
         |   '\'' (ESC|~('\\'|'\n'|'\''))* '\''
-        )
+        ) {
+           if (state.tokenStartLine != input.getLine()) {
+               state.tokenStartLine = input.getLine();
+               state.tokenStartCharPositionInLine = -2;
+           }
+        }
     ;
 
 /** the two '"'? cause a warning -- is there a way to avoid that? */

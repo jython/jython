@@ -1,7 +1,7 @@
 package org.python.antlr;
 
 import org.antlr.runtime.tree.BaseTree;
-import org.antlr.runtime.tree.CommonTree;
+import org.antlr.runtime.tree.Tree;
 import org.antlr.runtime.CommonToken;
 import org.antlr.runtime.Token;
 
@@ -10,14 +10,27 @@ import java.io.IOException;
 
 import org.python.antlr.ast.VisitorIF;
 
-public class PythonTree extends CommonTree implements AST {
+public class PythonTree extends BaseTree implements AST {
 
     public boolean from_future_checked = false;
     private int charStartIndex = -1;
     private int charStopIndex = -1;
 
+	/** A single token is the payload */
+	public Token token;
+
+	/** What token indexes bracket all tokens associated with this node
+	 *  and below?
+	 */
+	protected int startIndex=-1, stopIndex=-1;
+
+	/** Who is the parent node of this node; if null, implies node is root */
+	public PythonTree parent;
+
+	/** What index is this node in the child list? Range: 0..n-1 */
+	public int childIndex = -1;
+
     public PythonTree(int ttype, Token t) {
-        super();
         CommonToken c = new CommonToken(ttype, t.getText());
         c.setLine(t.getLine());
         c.setTokenIndex(t.getTokenIndex());
@@ -28,15 +41,108 @@ public class PythonTree extends CommonTree implements AST {
         token = c;
     }
 
-    public PythonTree(Token token) {
-        super(token);
+    public PythonTree(Token t) {
+        this.token = t;
     }
 
     public PythonTree(PythonTree node) {
-        super(node);
+		super(node);
+		token = node.token;
+		startIndex = node.startIndex;
+		stopIndex = node.stopIndex;
         charStartIndex = node.getCharStartIndex();
         charStopIndex = node.getCharStopIndex();
     }
+	
+	public Token getToken() {
+		return token;
+	}
+
+	public Tree dupNode() {
+		return new PythonTree(this);
+	}
+
+	public boolean isNil() {
+		return token==null;
+	}
+
+	public int getType() {
+		if (token==null) {
+			return Token.INVALID_TOKEN_TYPE;
+		}
+		return token.getType();
+	}
+
+	public String getText() {
+		if (token==null) {
+			return null;
+		}
+		return token.getText();
+	}
+
+	public int getLine() {
+		if (token==null || token.getLine()==0) {
+			if ( getChildCount()>0 ) {
+				return getChild(0).getLine();
+			}
+			return 0;
+		}
+		return token.getLine();
+	}
+
+	public int getCharPositionInLine() {
+		if (token==null || token.getCharPositionInLine()==-1) {
+			if (getChildCount()>0) {
+				return getChild(0).getCharPositionInLine();
+			}
+			return 0;
+		} else if (token != null && token.getCharPositionInLine() == -2) {
+            //XXX: yucky fix because CPython's ast uses -1 as a real value
+            //     for char pos in certain circumstances (for example, the
+            //     char pos of multi-line strings.  I would just use -1,
+            //     but ANTLR is using -1 in special ways also.
+            return -1;
+        }
+		return token.getCharPositionInLine();
+	}
+
+	public int getTokenStartIndex() {
+		if ( startIndex==-1 && token!=null ) {
+			return token.getTokenIndex();
+		}
+		return startIndex;
+	}
+
+	public void setTokenStartIndex(int index) {
+		startIndex = index;
+	}
+
+	public int getTokenStopIndex() {
+		if ( stopIndex==-1 && token!=null ) {
+			return token.getTokenIndex();
+		}
+		return stopIndex;
+	}
+
+	public void setTokenStopIndex(int index) {
+		stopIndex = index;
+	}
+
+	public int getChildIndex() {
+		return childIndex;
+	}
+
+	public Tree getParent() {
+		return parent;
+	}
+
+	public void setParent(Tree t) {
+		this.parent = (PythonTree)t;
+	}
+
+	public void setChildIndex(int index) {
+		this.childIndex = index;
+	}
 
     public int getCharStartIndex() {
         if (charStartIndex == -1 && token != null) {
@@ -54,13 +160,23 @@ public class PythonTree extends CommonTree implements AST {
         charStartIndex  = index;
     }
 
+    /*
+     * Adding one to stopIndex from Tokens.  ANTLR defines the char position as
+     * being the array index of the actual characters. Most tools these days
+     * define document offsets as the positions between the characters.  If you
+     * imagine drawing little boxes around each character and think of the
+     * numbers as pointing to either the left or right side of a character's
+     * box, then 0 is before the first character - and in a Document of 10
+     * characters, position 10 is after the last character.
+     */
     public int getCharStopIndex() {
+
         if (charStopIndex == -1 && token != null) {
             if (token instanceof CommonToken) {
-                return ((CommonToken)token).getStopIndex();
+                return ((CommonToken)token).getStopIndex() + 1;
             }
             if (token instanceof ImaginaryToken) {
-                return ((ImaginaryToken)token).getStopIndex();
+                return ((ImaginaryToken)token).getStopIndex() + 1;
             }
         }
         return charStopIndex;
@@ -74,6 +190,13 @@ public class PythonTree extends CommonTree implements AST {
         if (isNil()) {
             return "None";
         }
+		if ( getType()==Token.INVALID_TOKEN_TYPE ) {
+			return "<errornode>";
+		}
+		if ( token==null ) {
+			return null;
+		}
+
         return token.getText() + "(" + this.getLine() + "," + this.getCharPositionInLine() + ")";
     }
 

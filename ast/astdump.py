@@ -29,9 +29,11 @@ def main(code_path, output_dir, testfile=False):
         pyfiles = [code_path]
 
     for pyfile in pyfiles:
-        print "%s to %s" % (pyfile, output_dir)
         import pprint
-        fh = open(makepath(os.path.join(output_dir, pyfile)), 'w')
+        path = pyfile.split(os.path.sep)
+        print "%s to %s: %s" % (pyfile, output_dir, os.path.join(output_dir, *path))
+        fh = open(makepath(os.path.join(output_dir, *path)), 'w')
+        print fh
         pprint.pprint(astview.tree(pyfile), fh)
 
 if __name__ == '__main__':
