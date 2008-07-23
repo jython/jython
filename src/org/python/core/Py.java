@@ -1444,6 +1444,11 @@ public final class Py {
     static final PyString makeCharacter(int codepoint, boolean toUnicode) {
         if (toUnicode) {
             return new PyUnicode(codepoint);
+        } else if (codepoint > 65536) {
+            throw new IllegalArgumentException(String.format("Codepoint > 65536 (%d) requires "
+                                                             + "toUnicode argument", codepoint));
+        } else if (codepoint > 256) {
+            return new PyString((char)codepoint);
         }
 
         if (letters == null) {

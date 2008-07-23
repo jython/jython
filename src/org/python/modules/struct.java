@@ -16,6 +16,7 @@ import org.python.core.PyList;
 import org.python.core.PyLong;
 import org.python.core.PyObject;
 import org.python.core.PyString;
+import org.python.core.PyStringMap;
 import org.python.core.PyTuple;
 
 import java.math.BigInteger;
@@ -257,7 +258,7 @@ public class struct {
      * Exception raised on various occasions; argument is a
      * string describing what is wrong.
      */
-    public static PyString error = new PyString("struct.error");
+    public static final PyObject error = Py.makeClass("error", Py.Exception, exceptionNamespace());
 
     public static String __doc__ =
         "Functions to convert between Python values and C structs.\n" +
@@ -330,8 +331,9 @@ public class struct {
         long get_long(PyObject value) {
             if (value instanceof PyLong){
                 Object v = value.__tojava__(Long.TYPE);
-                if (v == Py.NoConversion)
-                throw Py.OverflowError("long int too long to convert");
+                if (v == Py.NoConversion) {
+                    throw StructError("long int too long to convert");
+                }
                 return ((Long) v).longValue();
             } else
                 return get_int(value);
@@ -341,7 +343,7 @@ public class struct {
             if (value instanceof PyLong){
                 BigInteger v = (BigInteger)value.__tojava__(BigInteger.class);
                 if (v.compareTo(PyLong.maxULong) > 0){
-                    throw Py.OverflowError("unsigned long int too long to convert");
+                    throw StructError("unsigned long int too long to convert");
                 }
                 return v;
             } else
@@ -1040,5 +1042,11 @@ public class struct {
 
     private static PyException StructError(String explanation) {
         return new PyException(error, explanation);
+    }
+
+    private static PyObject exceptionNamespace() {
+        PyObject dict = new PyStringMap();
+        dict.__setitem__("__module__", new PyString("struct"));
+        return dict;
     }
 }
