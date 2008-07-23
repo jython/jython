@@ -9,6 +9,10 @@ from weakref import proxy
 import array, cStringIO, math
 from cPickle import loads, dumps
 
+if test_support.is_jython:
+    import operator
+    from test_weakref import extra_collect
+
 class ArraySubclass(array.array):
     pass
 
@@ -308,7 +312,10 @@ class BaseTest(unittest.TestCase):
             array.array(self.typecode)
         )
 
-        self.assertRaises(TypeError, a.__mul__, "bad")
+        if test_support.is_jython:
+            self.assertRaises(TypeError, operator.mul, a, "bad")
+        else:
+            self.assertRaises(TypeError, a.__mul__, "bad")
 
     def test_imul(self):
         a = array.array(self.typecode, self.example)
@@ -337,7 +344,10 @@ class BaseTest(unittest.TestCase):
         a *= -1
         self.assertEqual(a, array.array(self.typecode))
 
-        self.assertRaises(TypeError, a.__imul__, "bad")
+        if test_support.is_jython:
+            self.assertRaises(TypeError, operator.imul, a, "bad")
+        else:
+            self.assertRaises(TypeError, a.__imul__, "bad")
 
     def test_getitem(self):
         a = array.array(self.typecode, self.example)
@@ -690,6 +700,8 @@ class BaseTest(unittest.TestCase):
         p = proxy(s)
         self.assertEqual(p.tostring(), s.tostring())
         s = None
+        if test_support.is_jython:
+            extra_collect()
         self.assertRaises(ReferenceError, len, p)
 
     def test_bug_782369(self):
@@ -898,7 +910,13 @@ class UnsignedNumberTest(NumberTest):
     def test_overflow(self):
         a = array.array(self.typecode)
         lower = 0
-        upper = long(pow(2, a.itemsize * 8)) - 1L
+        itemsize = a.itemsize
+        if test_support.is_jython:
+            # XXX: unsigned itemsizes are larger than would be expected
+            # in CPython
+            itemsize /= 2
+        #upper = long(pow(2, a.itemsize * 8)) - 1L
+        upper = long(pow(2, itemsize * 8)) - 1L
         self.check_overflow(lower, upper)
 
 
@@ -979,6 +997,13 @@ tests.append(DoubleTest)
 
 def test_main(verbose=None):
     import sys
+
+    if test_support.is_jython:
+        # CPython specific; returns a memory address
+        del BaseTest.test_buffer_info
+
+        # No buffers in Jython
+        del BaseTest.test_buffer
 
     test_support.run_unittest(*tests)
 

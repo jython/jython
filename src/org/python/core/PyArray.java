@@ -27,88 +27,104 @@ import org.python.expose.MethodType;
  * <p>
  * See also the jarray module.
  */
-@ExposedType(name = "array", base = PyObject.class)
+@ExposedType(name = "array.array", base = PyObject.class)
 public class PyArray extends PySequence implements Cloneable {
 
     public static final PyType TYPE = PyType.fromClass(PyArray.class);
-    
+
+    /** The underlying Java array. */
     private Object data;
 
+    /** The Java array class. */
     private Class type;
 
+    /** The Python style typecode of the array. */
     private String typecode;
 
     private ArrayDelegate delegate;
 
-    // PyArray can't extend anymore, so delegate
-    private class ArrayDelegate extends AbstractArray {
-
-
-        private ArrayDelegate() {
-            super(data == null ? 0 : Array.getLength(data));
-        }
-
-        protected Object getArray() {
-            return data;
-        }
-
-        protected void setArray(Object array) {
-            data = array;
-        }
-
-        @Override
-        protected Object createArray(int size) {
-            Class baseType = data.getClass().getComponentType();
-            return Array.newInstance(baseType, size);
-        }
-    }
-    
-    public PyArray(PyType type){
+    public PyArray(PyType type) {
         super(type);
     }
 
-    public PyArray(PyArray toCopy) {
-        data = toCopy.delegate.copyArray();
-        delegate = new ArrayDelegate();
-        type = toCopy.type;
-    }
-
     public PyArray(Class type, Object data) {
-        this.type = type;
-        this.data = data;
-        delegate = new ArrayDelegate();
+        this(TYPE);
+        setup(type, data);
     }
 
     public PyArray(Class type, int n) {
         this(type, Array.newInstance(type, n));
     }
 
-    @ExposedMethod
+    public PyArray(PyArray toCopy) {
+        this(toCopy.type, toCopy.delegate.copyArray());
+        typecode = toCopy.typecode;
+    }
+
+    private void setup(Class type, Object data) {
+        this.type = type;
+        typecode = class2char(type);
+        if (data == null) {
+            this.data = Array.newInstance(type, 0);
+        } else {
+            this.data = data;
+        }
+        delegate = new ArrayDelegate();
+    }
+
     @ExposedNew
-    final void array_init(PyObject[] args, String[] kwds) {
-        ArgParser ap = new ArgParser("array", args, kwds, new String[] {"typecode", "seq"}, 1);
+    static final PyObject array_new(PyNewWrapper new_, boolean init, PyType subtype,
+                                   PyObject[] args, String[] keywords) {
+        if (new_.for_type != subtype && keywords.length > 0) {
+            int argc = args.length - keywords.length;
+            PyObject[] justArgs = new PyObject[argc];
+            System.arraycopy(args, 0, justArgs, 0, argc);
+            args = justArgs;
+        }
+        ArgParser ap = new ArgParser("array", args, Py.NoKeywords, new String[] {"typecode", "initializer"},
+                                     1);
+        ap.noKeywords();
         PyObject obj = ap.getPyObject(0);
-        if (obj instanceof PyString) {
-            String code = obj.toString();
-            if (code.length() != 1) {
+        PyObject initial = ap.getPyObject(1, null);
+
+        Class type;
+        String typecode;
+        if (obj instanceof PyString && !(obj instanceof PyUnicode)) {
+            if (obj.__len__() != 1) {
                 throw Py.TypeError("array() argument 1 must be char, not str");
             }
-            type = char2class(code.charAt(0));
-            typecode = code;
+            typecode = obj.toString();
+            type = char2class(typecode.charAt(0));
         } else if (obj instanceof PyJavaClass) {
             type = ((PyJavaClass)obj).proxyClass;
             typecode = type.getName();
         } else {
-            throw Py.TypeError("array() argument 1 must be char, not " +
-                               obj.getType().fastGetName());
+            throw Py.TypeError("array() argument 1 must be char, not " + obj.getType().fastGetName());
         }
-        data = Array.newInstance(type, 0);
-        delegate = new ArrayDelegate();
-        PyObject seq = ap.getPyObject(1, null);
-        if (seq == null) {
-            return;
+
+        PyArray self;
+        if (new_.for_type == subtype) {
+            self = new PyArray(subtype);
+        } else {
+            self = new PyArrayDerived(subtype);
         }
-        extendInternal(seq);
+        // Initialize the typecode (and validate type) before creating the backing Array
+        class2char(type);
+        self.setup(type, Array.newInstance(type, 0));
+        self.typecode = typecode;
+        if (initial == null) {
+            return self;
+        }
+        if (initial instanceof PyList) {
+            self.fromlist(initial);
+        } else if (initial instanceof PyString && !(initial instanceof PyUnicode)) {
+            self.fromstring(initial.toString());
+        } else if (initial instanceof PyUnicode && "u".equals(typecode)) {
+            self.fromunicode(initial.toString());
+        } else {
+            self.extendInternal(initial);
+        }
+        return self;
     }
 
     public static PyArray zeros(int n, char typecode) {
@@ -230,6 +246,74 @@ public class PyArray extends PySequence implements Cloneable {
         seq___delslice__(start, stop, step);
     }
 
+    public PyObject __imul__(PyObject o) {
+        return array___imul__(o);
+    }
+
+    @ExposedMethod(type = MethodType.BINARY)
+    final PyObject array___imul__(PyObject o) {
+        if(!(o instanceof PyInteger || o instanceof PyLong)) {
+            return null;
+        }
+        if (delegate.getSize() > 0) {
+            int count = o.asInt();
+            if (count <= 0) {
+                delegate.clear();
+                return this;
+            }
+            Object copy = delegate.copyArray();
+            delegate.ensureCapacity(delegate.getSize() * count);
+            for (int i = 1; i < count; i++) {
+                delegate.appendArray(copy);
+            }
+        }
+        return this;
+    }
+
+    public PyObject __mul__(PyObject o) {
+        return array___mul__(o);
+    }
+
+    @ExposedMethod(type = MethodType.BINARY)
+    final PyObject array___mul__(PyObject o) {
+        if(!(o instanceof PyInteger || o instanceof PyLong)) {
+            return null;
+        }
+        return repeat(o.asInt());
+    }
+
+    public PyObject __rmul__(PyObject o) {
+        return array___rmul__(o);
+    }
+
+    @ExposedMethod(type = MethodType.BINARY)
+    final PyObject array___rmul__(PyObject o) {
+        if(!(o instanceof PyInteger || o instanceof PyLong)) {
+            return null;
+        }
+        return repeat(o.asInt());
+    }
+
+    public PyObject __iadd__(PyObject other) {
+        return array___iadd__(other);
+    }
+
+    @ExposedMethod
+    final PyObject array___iadd__(PyObject other) {
+        PyArray otherArr = null;
+        if (!(other instanceof PyArray)) {
+            throw Py.TypeError(String.format("can only append array (not \"%.200s\") to array",
+                                             other.getType().fastGetName()));
+        }
+        otherArr = (PyArray)other;
+        if (!otherArr.typecode.equals(this.typecode)) {
+            throw Py.TypeError("can only append arrays of the same type, "
+                    + "expected '" + this.type + ", found " + otherArr.type);
+        }
+        delegate.appendArray(otherArr.delegate.copyArray());
+        return this;
+    }
+
     public PyObject __add__(PyObject other) {
         return array___add__(other);
     }
@@ -248,7 +332,7 @@ public class PyArray extends PySequence implements Cloneable {
             throw Py.TypeError("can only append another array to an array");
         }
         otherArr = (PyArray)other;
-        if(!otherArr.type.equals(this.type)) {
+        if(!otherArr.typecode.equals(this.typecode)) {
             throw Py.TypeError("can only append arrays of the same type, "
                     + "expected '" + this.type + ", found " + otherArr.type);
         }
@@ -266,23 +350,36 @@ public class PyArray extends PySequence implements Cloneable {
         return delegate.getSize();
     }
 
-    /**
-     * String representation of PyArray
-     * 
-     * @return string representation of PyArray
-     */
-    public PyString __repr__() {
-        StringBuffer buf = new StringBuffer(128);
-        buf.append("array(").append(class2char(type)).append(",[");
-        for(int i = 0; i < __len__() - 1; i++) {
-            buf.append(pyget(i).__repr__().toString());
-            buf.append(", ");
+    public PyObject __reduce__() {
+        return array___reduce__();
+    }
+
+    @ExposedMethod
+    final PyObject array___reduce__() {
+        PyObject dict = __findattr__("__dict__");
+        if (dict == null) {
+            dict = Py.None;
         }
-        if(__len__() > 0) {
-            buf.append(pyget(__len__() - 1).__repr__().toString());
+        if (__len__() > 0) {
+            return new PyTuple(getType(), new PyTuple(Py.newString(typecode),
+                                                      Py.newString(tostring())), dict);
+        } else {
+            return new PyTuple(getType(), new PyTuple(Py.newString(typecode)), dict);
         }
-        buf.append("]) ");
-        return new PyString(buf.toString());
+    }
+
+    @Override
+    public String toString() {
+        if (__len__() == 0) {
+            return String.format("array('%s')", typecode);
+        }
+        String value;
+        if ("c".equals(typecode)) {
+            value = tostring();
+        } else {
+            value = tolist().toString();
+        }
+        return String.format("array('%s', %s)", typecode, value);
     }
 
     /**
@@ -340,8 +437,7 @@ public class PyArray extends PySequence implements Cloneable {
      * written on a machine with a different byte order.
      */
     public void byteswap() {
-        // unknown type - throw RuntimeError
-        if(getItemsize() == 0) {
+        if (getItemsize() == 0) {
             throw Py.RuntimeError("don't know how to byteswap this array type");
         }
         ByteSwapper.swap(data);
@@ -431,7 +527,7 @@ public class PyArray extends PySequence implements Cloneable {
             case 'l':
                 return Long.TYPE;
             case 'L':
-                return PyLong.class;
+                return Long.TYPE;
             case 'f':
                 return Float.TYPE;
             case 'd':
@@ -443,21 +539,21 @@ public class PyArray extends PySequence implements Cloneable {
 
     private static String class2char(Class cls) {
         if(cls.equals(Boolean.TYPE))
-            return "'z'";
+            return "z";
         else if(cls.equals(Character.TYPE))
-            return "'c'";
+            return "c";
         else if(cls.equals(Byte.TYPE))
-            return "'b'";
+            return "b";
         else if(cls.equals(Short.TYPE))
-            return "'h'";
+            return "h";
         else if(cls.equals(Integer.TYPE))
-            return "'i'";
+            return "i";
         else if(cls.equals(Long.TYPE))
-            return "'l'";
+            return "l";
         else if(cls.equals(Float.TYPE))
-            return "'f'";
+            return "f";
         else if(cls.equals(Double.TYPE))
-            return "'d'";
+            return "d";
         else
             return cls.getName();
     }
@@ -508,15 +604,16 @@ public class PyArray extends PySequence implements Cloneable {
      *            stepping increment between start and stop
      */
     protected void delRange(int start, int stop, int step) {
-        // Now the AbstractArray can support this:
-        // throw Py.TypeError("can't remove from array");
-        if(step > 0 && stop < start)
-            stop = start;
-        if(step == 1) {
+        if (step == 1) {
             delegate.remove(start, stop);
-        } else {
-            int n = sliceLength(start, stop, step);
-            for(int i = start, j = 0; j < n; i += step, j++) {
+        } else if (step > 1) {
+            for (int i = start; i < stop; i += step) {
+                delegate.remove(i);
+                i--;
+                stop--;
+            }
+        } else if (step < 0) {
+            for (int i = start; i >= 0 && i >= stop; i += step) {
                 delegate.remove(i);
             }
         }
@@ -554,13 +651,13 @@ public class PyArray extends PySequence implements Cloneable {
      */
     private void extendInternal(PyObject iterable) {
         // string input
-        if(iterable instanceof PyString) {
+        if (iterable instanceof PyString) {
             fromstring(((PyString)iterable).toString());
             // PyArray input
-        } else if(iterable instanceof PyArray) {
+        } else if (iterable instanceof PyArray) {
             PyArray source = (PyArray)iterable;
-            if(!source.type.equals(this.type)) {
-                throw Py.TypeError("can only extend with an array of the same kind");
+            if (!source.typecode.equals(typecode)) {
+                throw Py.TypeError("can only extend with array of same kind");
             }
             delegate.appendArray(source.delegate.copyArray());
         } else {
@@ -647,9 +744,9 @@ public class PyArray extends PySequence implements Cloneable {
      *            input list object that will be appended to the array
      */
     public void fromlist(PyObject obj) {
-        // check for list
-        if(!(obj instanceof PyList))
-            throw Py.TypeError("expected list argument");
+        if(!(obj instanceof PyList)) {
+            throw Py.TypeError("arg must be list");
+        }
         // store the current size of the internal array
         int size = delegate.getSize();
         try {
@@ -714,7 +811,7 @@ public class PyArray extends PySequence implements Cloneable {
                 }
             } else if(type == Character.TYPE) {
                 for(int i = 0; i < count; i++, index++) {
-                    Array.setChar(data, index, (char)dis.readByte());
+                    Array.setChar(data, index, (char)(dis.readByte() & 0xff));
                     delegate.size++;
                 }
             } else if(type == Integer.TYPE) {
@@ -748,6 +845,10 @@ public class PyArray extends PySequence implements Cloneable {
         return (index - origsize);
     }
 
+    public void fromstring(String input) {
+        array_fromstring(input);
+    }
+
     /**
      * Appends items from the string, interpreting the string as an array of
      * machine values (as if it had been read from a file using the
@@ -756,7 +857,8 @@ public class PyArray extends PySequence implements Cloneable {
      * @param input
      *            string of bytes containing array data
      */
-    public void fromstring(String input) {
+    @ExposedMethod
+    final void array_fromstring(String input) {
         int itemsize = getItemsize();
         int strlen = input.length();
         if((strlen % itemsize) != 0) {
@@ -774,6 +876,18 @@ public class PyArray extends PySequence implements Cloneable {
             delegate.setSize(origsize);
             throw Py.IOError(e);
         }
+    }
+
+    public void fromunicode(String input) {
+        array_fromunicode(input);
+    }
+
+    @ExposedMethod
+    final void array_fromunicode(String input) {
+        if (!"u".equals(typecode)) {
+            throw Py.ValueError("fromunicode() may only be called on type 'u' arrays");
+        }
+        array_fromstring(input);
     }
 
     /**
@@ -888,15 +1002,18 @@ public class PyArray extends PySequence implements Cloneable {
      * @return A new PyArray object containing the described slice
      */
     protected PyObject getslice(int start, int stop, int step) {
-        if(step > 0 && stop < start)
+        if (step > 0 && stop < start) {
             stop = start;
+        }
         int n = sliceLength(start, stop, step);
         PyArray ret = new PyArray(type, n);
-        if(step == 1) {
+        // XXX:
+        ret.typecode = typecode;
+        if (step == 1) {
             System.arraycopy(data, start, ret.data, 0, n);
             return ret;
         }
-        for(int i = start, j = 0; j < n; i += step, j++) {
+        for (int i = start, j = 0; j < n; i += step, j++) {
             Array.set(ret.data, j, Array.get(data, i));
         }
         return ret;
@@ -969,6 +1086,7 @@ public class PyArray extends PySequence implements Cloneable {
      *            value to be inserted into array
      */
     public void insert(int index, PyObject value) {
+        index = calculateIndex(index);
         delegate.makeInsertSpace(index);
         Array.set(data, index, Py.tojava(value, type));
     }
@@ -997,8 +1115,13 @@ public class PyArray extends PySequence implements Cloneable {
      * @return array element popped from index
      */
     public PyObject pop(int index) {
-        // todo: python-style error handling
-        index = (index < 0) ? delegate.getSize() + index : index;
+        if (delegate.getSize() == 0) {
+            throw Py.IndexError("pop from empty array");
+        }
+        index = fixindex(index);
+        if (index == -1) {
+            throw Py.IndexError("pop index out of range");
+        }
         PyObject ret = Py.java2py(Array.get(data, index));
         delegate.remove(index);
         return ret;
@@ -1036,6 +1159,8 @@ public class PyArray extends PySequence implements Cloneable {
     protected PyObject repeat(int count) {
         Object arraycopy = delegate.copyArray();
         PyArray ret = new PyArray(type, 0);
+        // XXX:
+        ret.typecode = typecode;
         for(int i = 0; i < count; i++) {
             ret.delegate.appendArray(arraycopy);
         }
@@ -1085,9 +1210,9 @@ public class PyArray extends PySequence implements Cloneable {
             } catch(ClassCastException e) {
                 throw Py.TypeError("Type not compatible with array type");
             }
-            if(val < Byte.MIN_VALUE) {
+            if(val < (isSigned() ? 0 : Byte.MIN_VALUE)) {
                 throw Py.OverflowError("value too small for " + type.getName());
-            } else if(val > Byte.MAX_VALUE) {
+            } else if(val > (isSigned() ? Byte.MAX_VALUE * 2 + 1 : Byte.MAX_VALUE)) {
                 throw Py.OverflowError("value too large for " + type.getName());
             }
         } else if(type == Short.TYPE) {
@@ -1097,9 +1222,9 @@ public class PyArray extends PySequence implements Cloneable {
             } catch(ClassCastException e) {
                 throw Py.TypeError("Type not compatible with array type");
             }
-            if(val < Short.MIN_VALUE) {
+            if(val < (isSigned() ? 0 : Short.MIN_VALUE)) {
                 throw Py.OverflowError("value too small for " + type.getName());
-            } else if(val > Short.MAX_VALUE) {
+            } else if(val > (isSigned() ? Byte.MAX_VALUE * 2 + 1 : Short.MAX_VALUE)) {
                 throw Py.OverflowError("value too large for " + type.getName());
             }
         } else if(type == Integer.TYPE) {
@@ -1109,20 +1234,29 @@ public class PyArray extends PySequence implements Cloneable {
             } catch(ClassCastException e) {
                 throw Py.TypeError("Type not compatible with array type");
             }
-            if(val < Integer.MIN_VALUE) {
+            if(val < (isSigned() ? 0 : Integer.MIN_VALUE)) {
                 throw Py.OverflowError("value too small for " + type.getName());
-            } else if(val > Integer.MAX_VALUE) {
+            } else if(val > (isSigned() ? Short.MAX_VALUE * 2 + 1 : Integer.MAX_VALUE)) {
                 throw Py.OverflowError("value too large for " + type.getName());
             }
         } else if(type == Long.TYPE) {
-            Object o;
-            try {
-                o = value.__tojava__(Long.TYPE);
-            } catch(ClassCastException e) {
-                throw Py.TypeError("Type not compatible with array type");
-            }
-            if(o == Py.NoConversion) {
-                throw Py.OverflowError("value out of range for long");
+            if (isSigned() && value instanceof PyInteger) {
+                if (((PyInteger)value).getValue() < 0) {
+                    throw Py.OverflowError("value too small for " + type.getName());
+                }
+            } else if (value instanceof PyLong) {
+                ((PyLong)value).getLong(isSigned() ? 0 : Long.MIN_VALUE,
+                                        Long.MAX_VALUE);
+            } else {
+                Object o;
+                try {
+                    o = value.__tojava__(Long.TYPE);
+                } catch(ClassCastException e) {
+                    throw Py.TypeError("Type not compatible with array type");
+                }
+                if(o == Py.NoConversion) {
+                    throw Py.TypeError("Type not compatible with array type");
+                }
             }
         }
         Object o = Py.tojava(value, type);
@@ -1130,6 +1264,10 @@ public class PyArray extends PySequence implements Cloneable {
             throw Py.TypeError("Type not compatible with array type");
         }
         Array.set(data, i, o);
+    }
+
+    private boolean isSigned() {
+        return typecode.length() == 1 && typecode.equals(typecode.toUpperCase());
     }
 
     /**
@@ -1146,6 +1284,9 @@ public class PyArray extends PySequence implements Cloneable {
      *            stepping increment of the slice
      */
     protected void setslice(int start, int stop, int step, PyObject value) {
+        if (stop < start) {
+            stop = start;
+        }
         if(type == Character.TYPE && value instanceof PyString) {
             char[] chars = null;
             // if (value instanceof PyString) {
@@ -1153,20 +1294,7 @@ public class PyArray extends PySequence implements Cloneable {
                 throw Py.ValueError("invalid bounds for setting from string");
             }
             chars = value.toString().toCharArray();
-            // }
-            // else if (value instanceof PyArray &&
-            // ((PyArray)value).type == Character.TYPE) {
-            // PyArray other = (PyArray)value;
-            // chars = (char[])other.delegate.copyArray();
-            // }
-            int insertSpace = chars.length - (stop - start);
-            // adjust the array, either adding space or removing space
-            if(insertSpace > 0) {
-                delegate.makeInsertSpace(start, insertSpace);
-            } else if(insertSpace < 0) {
-                delegate.remove(start, -insertSpace + start - 1);
-            }
-            delegate.replaceSubArray(chars, start);
+            delegate.replaceSubArray(start, stop, chars, 0, chars.length);
         } else {
             if(value instanceof PyString && type == Byte.TYPE) {
                 byte[] chars = ((PyString)value).toBytes();
@@ -1177,22 +1305,40 @@ public class PyArray extends PySequence implements Cloneable {
                 }
             } else if(value instanceof PyArray) {
                 PyArray array = (PyArray)value;
-                int insertSpace = array.delegate.getSize() - (stop - start);
-                // adjust the array, either adding space or removing space
-                // ...snapshot in case "value" is "this"
-                Object arrayCopy = array.delegate.copyArray();
-                if(insertSpace > 0) {
-                    delegate.makeInsertSpace(start, insertSpace);
-                } else if(insertSpace < 0) {
-                    delegate.remove(start, -insertSpace + start - 1);
+                if (!array.typecode.equals(typecode)) {
+                    throw Py.TypeError("bad argument type for built-in operation|" + array.typecode + "|" + typecode);
                 }
-                try {
-                    delegate.replaceSubArray(arrayCopy, start);
-                } catch(IllegalArgumentException e) {
-                    throw Py.TypeError("Slice typecode '" + array.typecode
-                            + "' is not compatible with this array (typecode '"
-                            + this.typecode + "')");
+                if (step == 1) {
+                    Object arrayDelegate;
+                    if (array == this) {
+                        arrayDelegate = array.delegate.copyArray();
+                    } else {
+                        arrayDelegate = array.delegate.getArray();
+                    }
+                    try {
+                        delegate.replaceSubArray(start, stop, arrayDelegate, 0, array.delegate.getSize());
+                    } catch(IllegalArgumentException e) {
+                        throw Py.TypeError("Slice typecode '" + array.typecode
+                                           + "' is not compatible with this array (typecode '"
+                                           + this.typecode + "')");
+                    }
+                } else if (step > 1) {
+                    int len = array.__len__();
+                    for (int i = 0, j = 0; i < len; i++, j += step) {
+                        Array.set(data, j + start, Array.get(array.data, i));
+                    }
+                } else if (step < 0) {
+                    if (array == this) {
+                        array = (PyArray)array.clone();
+                    }
+                    int len = array.__len__();
+                    for (int i = 0, j = delegate.getSize() - 1; i < len; i++, j += step) {
+                        Array.set(data, j, Array.get(array.data, i));
+                    }
                 }
+            } else {
+                throw Py.TypeError(String.format("can only assign array (not \"%.200s\") to array "
+                                                 + "slice", value.getType().fastGetName()));
             }
         }
     }
@@ -1303,5 +1449,35 @@ public class PyArray extends PySequence implements Cloneable {
             throw Py.IOError(e);
         }
         return StringUtil.fromBytes(bos.toByteArray());
+    }
+
+    @ExposedMethod
+    public final PyObject array_tounicode() {
+        if (!"u".equals(typecode)) {
+            throw Py.ValueError("tounicode() may only be called on type 'u' arrays");
+        }
+        return new PyUnicode(tostring());
+    }
+
+    // PyArray can't extend anymore, so delegate
+    private class ArrayDelegate extends AbstractArray {
+
+        private ArrayDelegate() {
+            super(data == null ? 0 : Array.getLength(data));
+        }
+
+        protected Object getArray() {
+            return data;
+        }
+
+        protected void setArray(Object array) {
+            data = array;
+        }
+
+        @Override
+        protected Object createArray(int size) {
+            Class baseType = data.getClass().getComponentType();
+            return Array.newInstance(baseType, size);
+        }
     }
 }
