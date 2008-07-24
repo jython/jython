@@ -170,22 +170,20 @@ public class PatternObject extends PyObject {
             appended = true;
         }
 
-        // XXX - does this break derived types? anyway, following rule enumerated in
-        // test_re.test_bug_1140
-
+        // Follows rules enumerated in test_re.test_bug_1140
         PyString outstring;
-        if (__builtin__.isinstance(instring, PyString.TYPE) &&
-                (buf.length() == 0 || __builtin__.isinstance(template, PyString.TYPE))) {
-            outstring = new PyString(buf.toString());
-        }
-        else {
-            outstring = new PyUnicode(buf.toString());
+        if (buf.length() == 0) {
+            outstring = instring.createInstance(buf.toString());
+        } else if (template instanceof PyUnicode || instring instanceof PyUnicode) {
+            outstring = Py.newUnicode(buf.toString());
+        } else {
+            outstring = Py.newString(buf.toString());
         }
 
-        if (subn)
+        if (subn) {
             return new PyTuple(outstring, Py.newInteger(n));
-        else
-            return outstring;
+        }
+        return outstring;
     }
 
 
