@@ -397,7 +397,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         scope.dump();
         module.PyCode(new Suite(node, node.body), name, true,
                       className, false, false,
-                      node.getTokenStartIndex(), scope, cflags).get(code);
+                      node.getLine(), scope, cflags).get(code);
 
         getDocString(node.body);
 
@@ -1738,7 +1738,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         scope.setup_closure();
         scope.dump();
         module.PyCode(retSuite, name, true, className,
-                      false, false, node.getTokenStartIndex(), scope, cflags).get(code);
+                      false, false, node.getLine(), scope, cflags).get(code);
 
         if (!makeClosure(scope)) {
             code.invokespecial("org/python/core/PyFunction", "<init>", "(" + $pyObj + $pyObjArr + $pyCode + ")V");
@@ -1781,7 +1781,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         scope.dump();
         //Make code object out of suite
         module.PyCode(new Suite(node, node.body), name, false, name,
-                      true, false, node.getTokenStartIndex(), scope, cflags).get(code);
+                      true, false, node.getLine(), scope, cflags).get(code);
 
         //Get doc string (if there)
         getDocString(node.body);
@@ -1980,7 +1980,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
 
         module.PyCode(new Suite(node, new stmtType[]{n}), tmp_append, true,
                       className, false, false,
-                      node.getTokenStartIndex(), scope, cflags).get(code);
+                      node.getLine(), scope, cflags).get(code);
 
         code.aconst_null();
         if (!makeClosure(scope)) {
