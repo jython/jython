@@ -29,9 +29,9 @@ public class PythonTreeAdaptor extends CommonTreeAdaptor {
             //XXX: instanceof is necessary because of the use of ClassicToken
             //     for leading whitespace lexing.
             if (stopToken instanceof CommonToken) {
-                stopChar = ((CommonToken)stopToken).getStopIndex();
+                stopChar = ((CommonToken)stopToken).getStopIndex() + 1;
             } else if (stopToken instanceof ImaginaryToken) {
-                stopChar = ((ImaginaryToken)stopToken).getStopIndex();
+                stopChar = ((ImaginaryToken)stopToken).getStopIndex() + 1;
             }
         }
         PythonTree pt = (PythonTree)t;
