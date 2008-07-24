@@ -123,7 +123,6 @@ public class PatternObject extends PyObject {
         int n = 0;
         int i = 0;
 
-        boolean appended = false;
         while (count == 0 || n < count) {
             state.state_reset();
             state.ptr = state.start;
@@ -139,7 +138,6 @@ public class PatternObject extends PyObject {
             if (i < b) {
                 /* get segment before this match */
                 buf.append(string.substring(i, b));
-                appended = true;
             }
             if (! (i == b && i == e && n > 0)) {
                 PyObject item;
@@ -153,7 +151,6 @@ public class PatternObject extends PyObject {
     
                 if (item != Py.None) {
                     buf.append(item.toString());
-                    appended = true;
                 }
                 i = e;
                 n++;
@@ -167,7 +164,6 @@ public class PatternObject extends PyObject {
         }
         if (i < state.endpos) {
             buf.append(string.substring(i, state.endpos));
-            appended = true;
         }
 
         // Follows rules enumerated in test_re.test_bug_1140
