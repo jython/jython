@@ -154,7 +154,18 @@ public class FileIO extends RawIOBase {
         if (appending) {
             seek(0, 2);
         } else if (writable && !readable) {
-            truncate(0);
+            try {
+                fileChannel.truncate(0);
+            } catch (IOException ioe) {
+        	// On Solaris and Linux, ftruncate(3C) returns EINVAL
+        	// if not a regular file whereas, e.g.,
+        	// open("/dev/null", "w") works fine.  Because we have
+        	// to simulate the "w" mode in Java, we suppress the
+        	// exception.
+        	if (ioe.getMessage().equals("Invalid argument"))
+        	    return;
+                throw Py.IOError(ioe);
+            }
         }
     }
 
