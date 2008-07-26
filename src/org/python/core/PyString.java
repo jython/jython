@@ -2739,7 +2739,6 @@ final class StringFormatter
             }
             c = pop();
             if (c == '(') {
-                //System.out.println("( found");
                 if (dict == null)
                     throw Py.TypeError("format requires a mapping");
                 int parens = 1;
@@ -2753,7 +2752,6 @@ final class StringFormatter
                 }
                 String tmp = format.substring(keyStart, index-1);
                 this.args = dict.__getitem__(new PyString(tmp));
-                //System.out.println("args: "+args+", "+argIndex);
             } else {
                 push();
             }
@@ -2789,7 +2787,6 @@ final class StringFormatter
                 continue;
             }
             PyObject arg = getarg();
-            //System.out.println("args: "+args+", "+argIndex+", "+arg);
             char fill = ' ';
             String string=null;
             negative = false;
