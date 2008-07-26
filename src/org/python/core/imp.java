@@ -22,7 +22,7 @@ public class imp {
 
     private static final String UNKNOWN_SOURCEFILE = "<unknown>";
 
-    public static final int APIVersion = 12;
+    public static final int APIVersion = 13;
 
     /** A non-empty fromlist for __import__'ing sub-modules. */
     private static final PyObject nonEmptyFromlist = new PyTuple(Py.newString("__doc__"));
@@ -113,11 +113,13 @@ public class imp {
         byte[] data = readBytes(fp);
         int n = data.length;
 
-        //Need to find another way to check the api version -- probably using
-        //an Annotation instead of an Attribute makes sense.
-        /*
-        int api = (data[n - 4] << 24) + (data[n - 3] << 16)
-                + (data[n - 2] << 8) + data[n - 1];
+        int api;
+        try {
+            APIReader ar = new APIReader(data);
+            api = ar.getVersion();
+        } catch (IOException i) {
+            api = -1;
+        }
         if (api != APIVersion) {
             if (testing) {
                 return null;
@@ -126,7 +128,6 @@ public class imp {
                         + APIVersion + ") in: " + name);
             }
         }
-        */
         return data;
     }
     

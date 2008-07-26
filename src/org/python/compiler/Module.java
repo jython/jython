@@ -574,8 +574,6 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
         if (sfilename != null) {
             classfile.setSource(sfilename);
         }
-        //FIXME: switch to asm style.
-        //classfile.addAttribute(new APIVersion(org.python.core.imp.APIVersion));
         classfile.write(stream);
     }
 

@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.python.objectweb.asm.AnnotationVisitor;
 import org.python.objectweb.asm.Attribute;
 import org.python.objectweb.asm.ClassWriter;
 import org.python.objectweb.asm.FieldVisitor;
@@ -26,7 +27,6 @@ public class ClassFile
     String[] interfaces;
     List<MethodVisitor> methodVisitors;
     List<FieldVisitor> fieldVisitors;
-    List<Attribute> attributes;
 
     public static String fixName(String n) {
         if (n.indexOf('.') == -1)
@@ -53,7 +53,6 @@ public class ClassFile
 
         methodVisitors = Collections.synchronizedList(new ArrayList());
         fieldVisitors = Collections.synchronizedList(new ArrayList());
-        attributes = Collections.synchronizedList(new ArrayList());
     }
 
     public void setSource(String name) {
@@ -67,7 +66,6 @@ public class ClassFile
         interfaces = new_interfaces;
     }
 
-    //FIXME: Should really return a MethodVisitor
     public Code addMethod(String name, String type, int access)
         throws IOException
     {
@@ -82,14 +80,6 @@ public class ClassFile
     {
         FieldVisitor fv = cw.visitField(access, name, type, null, null);
         fieldVisitors.add(fv);
-    }
-
-    public void endAttributes()
-        throws IOException
-    {
-        for (Attribute attr : attributes) {
-            cw.visitAttribute(attr);
-        }
     }
 
     public void endFields()
@@ -110,17 +100,16 @@ public class ClassFile
         }
     }
 
-    public void addAttribute(Attribute attr) throws IOException {
-        //FIXME: Do nothing for now.
-        //attributes.add(attr);
-    }
-
     public void write(OutputStream stream) throws IOException {
         cw.visit(Opcodes.V1_5, Opcodes.ACC_PUBLIC + Opcodes.ACC_SUPER, this.name, null, this.superclass, interfaces);
+        AnnotationVisitor av = cw.visitAnnotation("Lorg/python/compiler/APIVersion;", true);
+        //XXX: should imp.java really house this value or should imp.java point into org.python.compiler?
+        av.visit("value", new Integer(org.python.core.imp.APIVersion));
+        av.visitEnd();
+
         if (sfilename != null) {
             cw.visitSource(sfilename, null);
         }
-        endAttributes();
         endFields();
         endMethods();
 
