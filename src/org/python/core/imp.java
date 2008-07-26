@@ -240,12 +240,12 @@ public class imp {
     }
     
     /**
-     * createFromCode returns a module with the given name whose contents are
-     * the results of running c. Sets __file__ on the module to be
-     * moduleLocation unless moduleLocation is null. If c comes from a local
-     * .py file or compiled $py.class class moduleLocation should be the result
-     * of running new File(moduleLocation).getAbsoultePath(). If c comes from a
-     * remote file or is a jar moduleLocation should be the full uri for c.
+     * Returns a module with the given name whose contents are the results of
+     * running c. Sets __file__ on the module to be moduleLocation unless
+     * moduleLocation is null. If c comes from a local .py file or compiled
+     * $py.class class moduleLocation should be the result of running new
+     * File(moduleLocation).getAbsoultePath(). If c comes from a remote file or
+     * is a jar moduleLocation should be the full uri for c.
      */
     public static PyObject createFromCode(String name, PyCode c, String moduleLocation) {
         PyModule module = addModule(name);
