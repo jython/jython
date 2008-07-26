@@ -858,12 +858,10 @@ public final class Py {
             return;
         }
 
-        //System.out.println("path: "+sys.path.__str__());
         PyObject mod;
         // ??pending: findClass or should avoid sys.path loading?
         Class modClass = Py.findClass(module+"$_PyInner");
         if (modClass != null) {
-            //System.err.println("found as class: "+modClass);
             PyCode code=null;
             try {
                 code = ((PyRunnable)modClass.newInstance()).getMain();
@@ -873,7 +871,6 @@ public final class Py {
             mod = imp.createFromCode(module, code);
         } else {
             mod = imp.importName(module.intern(), false);
-            //System.err.println("found as mod: "+mod);
         }
         PyClass pyc = (PyClass)mod.__getattr__(pyclass.intern());
 
@@ -1242,6 +1239,7 @@ public final class Py {
         ThreadState ts = getThreadState(newSystemState);
         PySystemState oldSystemState = ts.systemState;
         if (oldSystemState != newSystemState) {
+            //XXX: should we make this a real warning?
             //System.err.println("Warning: changing systemState "+
             //                   "for same thread!");
             ts.systemState = newSystemState;
@@ -1256,7 +1254,6 @@ public final class Py {
 
     /* Get and set the current frame */
     public static PyFrame getFrame() {
-        //System.out.println("getFrame");
         ThreadState ts = getThreadState();
         if (ts == null) {
             return null;
@@ -1265,7 +1262,6 @@ public final class Py {
     }
 
     public static void setFrame(PyFrame f) {
-        //System.out.println("setFrame");
         getThreadState().frame = f;
     }
 
@@ -1965,6 +1961,8 @@ class JavaCode extends PyCode {
     }
 
     public PyObject call(PyFrame frame, PyObject closure) {
+        //XXX: what the heck is this?  Looks like debug code, but it's
+        //     been here a long time...
         System.out.println("call #1");
         return Py.None;
     }
