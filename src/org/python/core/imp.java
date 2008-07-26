@@ -44,7 +44,6 @@ public class imp {
     }
 
     private imp() {
-        ;
     }
 
     /**
@@ -140,8 +139,7 @@ public class imp {
     }
 
     public static String makeCompiledFilename(String filename) {
-        return filename.substring(0, filename.length() - 3)
-                + "$py.class";
+        return filename.substring(0, filename.length() - 3) + "$py.class";
     }
     
     /**
@@ -241,13 +239,13 @@ public class imp {
         return createFromCode(name, c, null);
     }
     
-    /*
-     * Returns a module with the given name whose contents are the results of
-     * running c. Sets __file__ on the module to be moduleLocation unless
-     * moduleLocation is null. If c comes from a local .py file or compiled
-     * $py.class class moduleLocation should be the result of running new
-     * File(moduleLocation).getAbsoultePath(). If c comes from a remote file or
-     * is a jar moduleLocation should be the full uri for c.
+    /**
+     * createFromCode returns a module with the given name whose contents are
+     * the results of running c. Sets __file__ on the module to be
+     * moduleLocation unless moduleLocation is null. If c comes from a local
+     * .py file or compiled $py.class class moduleLocation should be the result
+     * of running new File(moduleLocation).getAbsoultePath(). If c comes from a
+     * remote file or is a jar moduleLocation should be the full uri for c.
      */
     public static PyObject createFromCode(String name, PyCode c, String moduleLocation) {
         PyModule module = addModule(name);
@@ -369,8 +367,6 @@ public class imp {
         path = path == null ? sys.path : path;
         for (int i = 0; i < path.__len__(); i++) {
             PyObject p = path.__getitem__(i);
-            // System.err.println("find_module (" + name + ", " + moduleName +
-            // ") Path: " + path);
             PyObject importer = getPathImporter(sys.path_importer_cache,
                     sys.path_hooks, p);
             if (importer != Py.None) {
@@ -427,7 +423,6 @@ public class imp {
     }
 
     static PyObject loadFromSource(PySystemState sys, String name, String modName, String entry) {
-        // System.err.println("load-from-source: "+name+" "+modName+" "+entry);
 
         String sourceName = "__init__.py";
         String compiledName = "__init__$py.class";
@@ -646,7 +641,6 @@ public class imp {
      */
     private static PyObject import_name(String name, boolean top,
             PyObject modDict, PyObject fromlist) {
-        // System.err.println("import_name " + name);
         if (name.length() == 0) {
             throw Py.ValueError("Empty module name");
         }
@@ -656,7 +650,6 @@ public class imp {
         if (modDict != null && !(modDict instanceof PyNone)) {
             pkgName = getParent(modDict);
             pkgMod = modules.__finditem__(pkgName);
-            // System.err.println("GetParent: " + pkgName + " => " + pkgMod);
             if (pkgMod != null && !(pkgMod instanceof PyModule)) {
                 pkgMod = null;
             }
@@ -740,14 +733,12 @@ public class imp {
      * executed.
      */
     public static PyObject importOne(String mod, PyFrame frame) {
-        // System.out.println("importOne(" + mod + ")");
         PyObject module = __builtin__.__import__(mod, frame.f_globals, frame
                 .getLocals(), Py.EmptyTuple);
         /*
          * int dot = mod.indexOf('.'); if (dot != -1) { mod = mod.substring(0,
          * dot).intern(); }
          */
-        // System.err.println("mod: "+mod+", "+dot);
         return module;
     }
 
@@ -756,7 +747,6 @@ public class imp {
      * foo" is executed.
      */
     public static PyObject importOneAs(String mod, PyFrame frame) {
-        // System.out.println("importOne(" + mod + ")");
         PyObject module = __builtin__.__import__(mod, frame.f_globals, frame
                 .getLocals(), getStarArg());
         // frame.setlocal(asname, module);
@@ -810,7 +800,6 @@ public class imp {
      * import *" is executed.
      */
     public static void importAll(String mod, PyFrame frame) {
-        // System.out.println("importAll(" + mod + ")");
         PyObject module = __builtin__.__import__(mod, frame.f_globals, frame
                 .getLocals(), getStarArg());
         PyObject names;
