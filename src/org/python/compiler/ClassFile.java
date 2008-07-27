@@ -118,7 +118,7 @@ public class ClassFile
         ByteArrayOutputStream baos = new ByteArrayOutputStream(ba.length);
         baos.write(ba, 0, ba.length);
         baos.writeTo(stream);
-        debug(baos);
+        //debug(baos);
         baos.close();
     }
     
