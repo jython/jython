@@ -646,6 +646,13 @@ def _handle_oserror(func, *args, **kwargs):
         raise OSError(errno.EBADF, errno.strerror(errno.EBADF))
 
 if _name == 'posix' and _native_posix:
+    def link(src, dst):
+        """link(src, dst)
+    
+        Create a hard link to a file.
+        """
+        _posix.link(sys.getPath(src), sys.getPath(dst))
+
     def symlink(src, dst):
         """symlink(src, dst)
 
