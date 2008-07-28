@@ -4,7 +4,7 @@ import unittest
 import inspect
 import datetime
 
-from test.test_support import TESTFN, run_unittest
+from test.test_support import TESTFN, run_unittest, is_jython
 
 from test import inspect_fodder as mod
 from test import inspect_fodder2 as mod2
@@ -28,6 +28,15 @@ except:
     tb = sys.exc_traceback
 
 git = mod.StupidGit()
+
+def na_for_jython(fn):
+    if is_jython:
+        def do_nothing(*args, **kw):
+            pass
+        return do_nothing
+    else:
+        return fn
+
 
 class IsTestBase(unittest.TestCase):
     predicates = set([inspect.isbuiltin, inspect.isclass, inspect.iscode,
@@ -115,6 +124,11 @@ class TestInterpreterStack(IsTestBase):
         self.assertEqual(inspect.formatargvalues(args, varargs, varkw, locals),
                          '(x=11, y=14)')
 
+    # TODO - test_previous_frame could be rewritten such that we could
+    # introspect on the previous frame but without a dependency on
+    # tuple unpacking
+
+    @na_for_jython
     def test_previous_frame(self):
         args, varargs, varkw, locals = inspect.getargvalues(mod.fr.f_back)
         self.assertEqual(args, ['a', 'b', 'c', 'd', ['e', ['f']]])
@@ -327,6 +341,7 @@ class TestClassesAndFunctions(unittest.TestCase):
             self.assertEqual(inspect.formatargspec(args, varargs, varkw, defaults),
                              formatted)
 
+    @na_for_jython
     def test_getargspec(self):
         self.assertArgSpecEquals(mod.eggs, ['x', 'y'], formatted = '(x, y)')
 
@@ -335,12 +350,14 @@ class TestClassesAndFunctions(unittest.TestCase):
                                  'g', 'h', (3, (4, (5,))),
                                  '(a, b, c, d=3, (e, (f,))=(4, (5,)), *g, **h)')
 
+    @na_for_jython
     def test_getargspec_method(self):
         class A(object):
             def m(self):
                 pass
         self.assertArgSpecEquals(A.m, ['self'])
 
+    @na_for_jython
     def test_getargspec_sublistofone(self):
         def sublistOfOne((foo,)): return 1
         self.assertArgSpecEquals(sublistOfOne, [['foo']])
