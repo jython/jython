@@ -190,7 +190,7 @@ public class PyList extends PySequenceList {
 
     protected void setsliceList(int start, int stop, int step, List value) {
         if(step != 1) {
-            throw Py.TypeError("setslice with java.util.List and step != 1 not " + "supported yet");
+            throw Py.TypeError("setslice with java.util.List and step != 1 not supported yet");
         }
         int n = value.size();
         list.ensureCapacity(start + n);
@@ -200,23 +200,16 @@ public class PyList extends PySequenceList {
     }
 
     protected void setsliceIterable(int start, int stop, int step, PyObject value) {
-        PyObject iter;
+        PyObject[] seq;
         try {
-            iter = value.__iter__();
-        } catch(PyException pye) {
-            if(Py.matchException(pye, Py.TypeError)) {
+            seq = Py.make_array(value);
+        } catch (PyException pye) {
+            if (Py.matchException(pye, Py.TypeError)) {
                 throw Py.TypeError("can only assign an iterable");
             }
             throw pye;
         }
-        PyObject next;
-        for(int j = 0; (next = iter.__iternext__()) != null; j += step) {
-            if(step < 0) {
-                list.pyset(start + j, next);
-            } else {
-                list.add(start + j, next);
-            }
-        }
+        setslicePySequence(start, stop, step, new PyList(seq));
     }
 
     protected PyObject repeat(int count) {

@@ -188,8 +188,9 @@ public class PySlice extends PyObject {
      */
     public static PyObject[] indices2(PyObject obj, PyObject start, PyObject stop) {
         PyObject[] indices = new PyObject[2];
-        int istart = start == null ? 0 : calculateSliceIndex(start);
-        int istop = stop == null ? PySystemState.maxint : calculateSliceIndex(stop);
+        int istart = (start == null || start == Py.None) ? 0 : calculateSliceIndex(start);
+        int istop = (stop == null || stop == Py.None)
+                ? PySystemState.maxint : calculateSliceIndex(stop);
         if (istart < 0 || istop < 0) {
             try {
                 int len = obj.__len__();
