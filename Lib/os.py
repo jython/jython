@@ -243,11 +243,12 @@ def chdir(path):
 
     Change the current working directory to the specified path.
     """
-    if not _path.exists(path):
+    realpath = _path.realpath(path)
+    if not _path.exists(realpath):
         raise OSError(errno.ENOENT, errno.strerror(errno.ENOENT), path)
-    if not _path.isdir(path):
+    if not _path.isdir(realpath):
         raise OSError(errno.ENOTDIR, errno.strerror(errno.ENOTDIR), path)
-    sys.setCurrentWorkingDir(_path.realpath(path))
+    sys.setCurrentWorkingDir(realpath)
 
 def listdir(path):
     """listdir(path) -> list_of_strings
