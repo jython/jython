@@ -150,6 +150,7 @@ urllib2.py
 urlparse.py
 user.py
 UserDict.py
+UserList.py
 UserString.py
 uu.py
 uuid.py
