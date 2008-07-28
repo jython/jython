@@ -836,6 +836,33 @@ public class PyLong extends PyObject {
         return long___getnewargs__();
     }
 
+    @Override
+    public PyObject __index__() {
+        return long___index__();
+    }
+
+    @ExposedMethod
+    final PyObject long___index__() {
+        return this;
+    }
+
+    @Override
+    public boolean isIndex() {
+        return true;
+    }
+
+    @Override
+    public int asIndex(PyObject err) {
+        boolean tooLow = value.compareTo(PyInteger.minInt) < 0;
+        boolean tooHigh = value.compareTo(PyInteger.maxInt) > 0;
+        if (tooLow || tooHigh) {
+            if (err != null) {
+                throw new PyException(err, "cannot fit 'long' into an index-sized integer");
+            }
+            return tooLow ? Integer.MIN_VALUE : Integer.MAX_VALUE;
+        }
+        return (int)value.longValue();
+    }
 
     public boolean isMappingType() { return false; }
     public boolean isSequenceType() { return false; }

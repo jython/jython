@@ -805,6 +805,26 @@ public class PyInteger extends PyObject {
         return int___getnewargs__();
     }
 
+    @Override
+    public PyObject __index__() {
+        return int___index__();
+    }
+
+    @ExposedMethod
+    final PyObject int___index__() {
+        return this;
+    }
+
+    @Override
+    public boolean isIndex() {
+        return true;
+    }
+
+    @Override
+    public int asIndex(PyObject err) {
+        return getValue();
+    }
+
     public boolean isMappingType() { return false; }
     public boolean isSequenceType() { return false; }
 

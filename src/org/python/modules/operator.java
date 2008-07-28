@@ -31,6 +31,7 @@ class OperatorFunctions extends PyBuiltinFunctionSet
         case 18: return Py.newBoolean(arg1.isNumberType());
         case 19: return Py.newBoolean(arg1.isSequenceType());
         case 32: return arg1.__invert__();
+        case 52: return arg1.__index__();
         default:
             throw info.unexpectedCall(1, false);
         }
@@ -253,6 +254,8 @@ public class operator implements ClassDictInit
         dict.__setitem__("itruediv", new OperatorFunctions("itruediv", 50, 2));
         dict.__setitem__("__ixor__", new OperatorFunctions("__ixor__", 51, 2));
         dict.__setitem__("ixor", new OperatorFunctions("ixor", 51, 2));
+        dict.__setitem__("__index__", new OperatorFunctions("__ixor__", 52, 1));
+        dict.__setitem__("index", new OperatorFunctions("ixor", 52, 1));
 
         dict.__setitem__("attrgetter", PyAttrGetter.TYPE);
         dict.__setitem__("itemgetter", PyItemGetter.TYPE);

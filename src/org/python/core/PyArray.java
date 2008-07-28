@@ -252,11 +252,11 @@ public class PyArray extends PySequence implements Cloneable {
 
     @ExposedMethod(type = MethodType.BINARY)
     final PyObject array___imul__(PyObject o) {
-        if(!(o instanceof PyInteger || o instanceof PyLong)) {
+        if (!o.isIndex()) {
             return null;
         }
         if (delegate.getSize() > 0) {
-            int count = o.asInt();
+            int count = o.asIndex(Py.OverflowError);
             if (count <= 0) {
                 delegate.clear();
                 return this;
@@ -276,10 +276,10 @@ public class PyArray extends PySequence implements Cloneable {
 
     @ExposedMethod(type = MethodType.BINARY)
     final PyObject array___mul__(PyObject o) {
-        if(!(o instanceof PyInteger || o instanceof PyLong)) {
+        if (!o.isIndex()) {
             return null;
         }
-        return repeat(o.asInt());
+        return repeat(o.asIndex(Py.OverflowError));
     }
 
     public PyObject __rmul__(PyObject o) {
@@ -288,10 +288,10 @@ public class PyArray extends PySequence implements Cloneable {
 
     @ExposedMethod(type = MethodType.BINARY)
     final PyObject array___rmul__(PyObject o) {
-        if(!(o instanceof PyInteger || o instanceof PyLong)) {
+        if (!o.isIndex()) {
             return null;
         }
-        return repeat(o.asInt());
+        return repeat(o.asIndex(Py.OverflowError));
     }
 
     public PyObject __iadd__(PyObject other) {

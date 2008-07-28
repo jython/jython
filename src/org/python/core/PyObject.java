@@ -418,6 +418,15 @@ n     **/
         return true;
     }
 
+    /**
+     * Determine if this object can act as an index (implements __index__).
+     *
+     * @return true if the object can act as an index
+     */
+    public boolean isIndex() {
+        return getType().lookup("__index__") != null;
+    }
+
     /* The basic functions to implement a mapping */
 
     /**
@@ -1587,6 +1596,17 @@ n     **/
      **/
     public PyObject __invert__() {
         throw Py.AttributeError("__invert__");
+    }
+
+    /**
+     * Equivalent to the standard Python __index__ method.
+     *
+     * @return a PyInteger or PyLong
+     * @throws a Py.TypeError if not supported
+     **/
+    public PyObject __index__() {
+        throw Py.TypeError(String.format("'%.200s' object cannot be interpreted as an index",
+                                         getType().fastGetName()));
     }
     
     /**
@@ -3775,7 +3795,29 @@ n     **/
     public long asLong(int index) throws ConversionException {
         throw new ConversionException(index);
     }
-    
+
+    /**
+     * Coerce this object into an index-sized integer.
+     *
+     * @return an index-sized int
+     */
+    public int asIndex() {
+        return asIndex(null);
+    }
+
+    /**
+     * Coerce this object into an index-sized integer.
+     *
+     * Throws a Python exception on Overflow if specified an exception type for err.
+     *
+     * @param err the Python exception to raise on OverflowErrors
+     * @return an index-sized int
+     */
+    public int asIndex(PyObject err) {
+        // OverflowErrors are handled in PyLong.asIndex
+        return __index__().asInt();
+    }
+
     static {
         for (Class unbootstrapped : Py.BOOTSTRAP_TYPES) {
             Py.writeWarning("init", "Bootstrap type wasn't encountered in bootstrapping[class="

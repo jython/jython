@@ -288,11 +288,11 @@ public abstract class PySequence extends PyObject {
     }
 
     final PyObject seq___finditem__(PyObject index) {
-        if(index instanceof PyInteger || index instanceof PyLong) {
-            return seq___finditem__(index.asInt());
-        } else if(index instanceof PySlice) {
+        if (index.isIndex()) {
+            return seq___finditem__(index.asIndex(Py.IndexError));
+        } else if (index instanceof PySlice) {
             PySlice s = (PySlice)index;
-            return __getslice__(s.start, s.stop, s.step);
+            return seq___getslice__(s.start, s.stop, s.step);
         } else {
             throw Py.TypeError(getType().fastGetName() + " indices must be integers");
         }
@@ -360,6 +360,10 @@ public abstract class PySequence extends PyObject {
     }
 
     public synchronized void __setitem__(int index, PyObject value) {
+        seq___setitem__(index, value);
+    }
+
+    final synchronized void seq___setitem__(int index, PyObject value) {
         int i = fixindex(index);
         if(i == -1) {
             throw Py.IndexError(getType().fastGetName() + " assignment index out of range");
@@ -372,11 +376,11 @@ public abstract class PySequence extends PyObject {
     }
 
     final void seq___setitem__(PyObject index, PyObject value) {
-        if(index instanceof PyInteger || index instanceof PyLong) {
-            __setitem__(index.asInt(), value);
-        } else if(index instanceof PySlice) {
+        if (index.isIndex()) {
+            seq___setitem__(index.asIndex(Py.IndexError), value);
+        } else if (index instanceof PySlice) {
             PySlice s = (PySlice)index;
-            __setslice__(s.start, s.stop, s.step, value);
+            seq___setslice__(s.start, s.stop, s.step, value);
         } else {
             throw Py.TypeError(getType().fastGetName() + " indices must be integers");
         }
@@ -387,15 +391,15 @@ public abstract class PySequence extends PyObject {
     }
 
     final synchronized void seq___delitem__(PyObject index) {
-        if(index instanceof PyInteger || index instanceof PyLong) {
-            int i = fixindex(index.asInt());
-            if(i == -1) {
+        if (index.isIndex()) {
+            int i = fixindex(index.asIndex(Py.IndexError));
+            if (i == -1) {
                 throw Py.IndexError(getType().fastGetName() + " assignment index out of range");
             }
             del(i);
-        } else if(index instanceof PySlice) {
+        } else if (index instanceof PySlice) {
             PySlice s = (PySlice)index;
-            __delslice__(s.start, s.stop, s.step);
+            seq___delslice__(s.start, s.stop, s.step);
         } else {
             throw Py.TypeError(getType().fastGetName() + " indices must be integers");
         }

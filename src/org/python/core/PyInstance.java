@@ -246,6 +246,11 @@ public class PyInstance extends PyObject
         return __findattr__("__call__") != null;
     }
 
+    @Override
+    public boolean isIndex() {
+        return __findattr__("__index__") != null;
+    }
+
     public PyObject invoke(String name) {
         PyObject f = ifindlocal(name);
         if (f == null) {
@@ -582,33 +587,19 @@ public class PyInstance extends PyObject
         return __finditem__(new PyInteger(key));
     }
 
-    private PyObject trySlice(PyObject key, String name, PyObject extraArg) {
-        if (!(key instanceof PySlice))
+    private PyObject trySlice(String name, PyObject start, PyObject stop) {
+        return trySlice(name, start, stop, null);
+    }
+
+    private PyObject trySlice(String name, PyObject start, PyObject stop, PyObject extraArg) {
+        PyObject func = __findattr__(name);
+        if (func == null) {
             return null;
-
-        PySlice slice = (PySlice)key;
-
-        if (slice.getStep() != Py.None && slice.getStep() != Py.One) {
-            if (slice.getStep() instanceof PyInteger) {
-                if (((PyInteger)slice.getStep()).getValue() != 1) {
-                    return null;
-                }
-            } else {
-                return null;
-            }
         }
 
-        PyObject func = __findattr__(name);
-        if (func == null)
-            return null;
-
-        PyObject start = slice.start;
-        PyObject stop = slice.stop;
-
-        if (start == Py.None)
-            start = Py.Zero;
-        if (stop == Py.None)
-            stop = new PyInteger(PySystemState.maxint);
+        PyObject[] indices = PySlice.indices2(this, start, stop);
+        start = indices[0];
+        stop = indices[1];
 
         if (extraArg == null) {
             return func.__call__(start, stop);
@@ -624,10 +615,6 @@ public class PyInstance extends PyObject
         }
 
         try {
-            PyObject ret = trySlice(key, "__getslice__", null);
-            if (ret != null)
-                return ret;
-
             return invoke("__getitem__", key);
         } catch (PyException e) {
             if (Py.matchException(e, Py.IndexError))
@@ -647,11 +634,6 @@ public class PyInstance extends PyObject
             }
             return ret;
         }
-
-        PyObject ret = trySlice(key, "__getslice__", null);
-        if (ret != null)
-            return ret;
-
         return invoke("__getitem__", key);
     }
 
@@ -661,9 +643,6 @@ public class PyInstance extends PyObject
             proxy.__setitem__(key, value);
             return;
         }
-        if (trySlice(key, "__setslice__", value) != null)
-            return;
-
         invoke("__setitem__", key, value);
     }
 
@@ -673,9 +652,34 @@ public class PyInstance extends PyObject
             proxy.__delitem__(key);
             return;
         }
-        if (trySlice(key, "__delslice__", null) != null)
-            return;
         invoke("__delitem__", key);
+    }
+
+    public PyObject __getslice__(PyObject start, PyObject stop, PyObject step) {
+        if (step != null) {
+            return __getitem__(new PySlice(start, stop, step));
+        }
+        PyObject ret = trySlice("__getslice__", start, stop);
+        if (ret != null) {
+            return ret;
+        }
+        return super.__getslice__(start, stop, step);
+    }
+
+    public void __setslice__(PyObject start, PyObject stop, PyObject step, PyObject value) {
+        if (step != null) {
+            __setitem__(new PySlice(start, stop, step), value);
+        } else if (trySlice("__setslice__", start, stop, value) == null) {
+            super.__setslice__(start, stop, step, value);
+        }
+    }
+
+    public void __delslice__(PyObject start, PyObject stop, PyObject step) {
+        if (step != null) {
+            __delitem__(new PySlice(start, stop, step));
+        } else if (trySlice("__delslice__", start, stop) == null) {
+            super.__delslice__(start, stop, step);
+        }
     }
 
     public PyObject __iter__() {
@@ -856,6 +860,27 @@ public class PyInstance extends PyObject
      **/
     public PyObject __invert__() {
         return invoke("__invert__");
+    }
+
+    /**
+     * Implements the __index__ method by looking it up
+     * in the instance's dictionary and calling it if it is found.
+     **/
+    public PyObject __index__() {
+        PyObject ret;
+        try {
+            ret = invoke("__index__");
+        } catch (PyException pye) {
+            if (!Py.matchException(pye, Py.AttributeError)) {
+                throw pye;
+            }
+            throw Py.TypeError("object cannot be interpreted as an index");
+        }
+        if (ret instanceof PyInteger || ret instanceof PyLong) {
+            return ret;
+        }
+        throw Py.TypeError(String.format("__index__ returned non-(int,long) (type %s)",
+                                         ret.getType().fastGetName()));
     }
 
     // Binary ops

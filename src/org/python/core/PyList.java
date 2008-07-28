@@ -267,11 +267,12 @@ public class PyList extends PySequenceList {
 
     @ExposedMethod(type = MethodType.BINARY)
     final PyObject list___imul__(PyObject o) {
-        if(!(o instanceof PyInteger || o instanceof PyLong)) {
+        if (!o.isIndex()) {
             return null;
         }
+        int count = o.asIndex(Py.OverflowError);
         int l = size();
-        int count = ((PyInteger)o.__int__()).getValue();
+        
         int newSize = l * count;
         list.setSize(newSize);
         PyObject[] array = getArray();
@@ -282,22 +283,30 @@ public class PyList extends PySequenceList {
         return this;
     }
 
+    @Override
+    public PyObject __mul__(PyObject o) {
+        return list___mul__(o);
+    }
+
     @ExposedMethod(type = MethodType.BINARY)
     final PyObject list___mul__(PyObject o) {
-        if(!(o instanceof PyInteger || o instanceof PyLong)) {
+        if (!o.isIndex()) {
             return null;
         }
-        int count = ((PyInteger)o.__int__()).getValue();
-        return repeat(count);
+        return repeat(o.asIndex(Py.OverflowError));
+    }
+
+    @Override
+    public PyObject __rmul__(PyObject o) {
+        return list___rmul__(o);
     }
 
     @ExposedMethod(type = MethodType.BINARY)
     final PyObject list___rmul__(PyObject o) {
-        if(!(o instanceof PyInteger || o instanceof PyLong)) {
+        if (!o.isIndex()) {
             return null;
         }
-        int count = ((PyInteger)o.__int__()).getValue();
-        return repeat(count);
+        return repeat(o.asIndex(Py.OverflowError));
     }
 
     public PyObject __add__(PyObject o) {

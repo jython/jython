@@ -175,20 +175,30 @@ public class PyTuple extends PySequenceList
         return sum;
     }
 
+    @Override
+    public PyObject __mul__(PyObject o) {
+        return tuple___mul__(o);
+    }
+
     @ExposedMethod(type = MethodType.BINARY)
     final PyObject tuple___mul__(PyObject o) {
-        if (!(o instanceof PyInteger || o instanceof PyLong))
+        if (!o.isIndex()) {
             return null;
-        int count = ((PyInteger)o.__int__()).getValue();
-        return repeat(count);
+        }
+        return repeat(o.asIndex(Py.OverflowError));
+    }
+
+    @Override
+    public PyObject __rmul__(PyObject o) {
+        return tuple___rmul__(o);
     }
 
     @ExposedMethod(type = MethodType.BINARY)
     final PyObject tuple___rmul__(PyObject o) {
-        if (!(o instanceof PyInteger || o instanceof PyLong))
+        if (!o.isIndex()) {
             return null;
-        int count = ((PyInteger)o.__int__()).getValue();
-        return repeat(count);
+        }
+        return repeat(o.asIndex(Py.OverflowError));
     }
 
     public PyObject __iter__() {

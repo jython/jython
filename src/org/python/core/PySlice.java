@@ -114,13 +114,7 @@ public class PySlice extends PyObject {
     
     @ExposedMethod
     public PyObject slice_indices(PyObject len) {
-        int ilen;
-        try {
-            ilen = len.asInt(0);
-        } catch(ConversionException e) {
-            throw Py.TypeError("length must be an int");
-        }
-        int[] slice = indices(ilen);
+        int[] slice = indices(len.asIndex(Py.OverflowError));
         PyInteger[] pyInts = new PyInteger[slice.length];
         for(int i = 0; i < pyInts.length; i++) {
             pyInts[i] = Py.newInteger(slice[i]);
@@ -128,23 +122,11 @@ public class PySlice extends PyObject {
         return new PyTuple(pyInts);
     }
 
-    private static int calculateSliceIndex(PyObject v) {
-        if(v instanceof PyInteger) {
-            return ((PyInteger)v).getValue();
-        } else if(v instanceof PyLong) {
-            try {
-                return v.asInt();
-            } catch (PyException exc) {
-                if (Py.matchException(exc, Py.OverflowError)) {
-                    if (new PyLong(0L).__cmp__(v) < 0) {
-                        return Integer.MAX_VALUE;
-                    }else {
-                        return 0;
-                    }
-                }
-            }
+    public static int calculateSliceIndex(PyObject v) {
+        if (v.isIndex()) {
+            return v.asIndex();
         }
-        throw Py.TypeError("slice indices must be integers or None");
+        throw Py.TypeError("slice indices must be integers or None or have an __index__ method");
     }
     
     /**
@@ -195,6 +177,39 @@ public class PySlice extends PyObject {
         }
         return slice;
     }
+
+    /**
+     * Calculate indices for the deprecated __get/set/delslice__ methods.
+     *
+     * @param obj the object being sliced
+     * @param start the slice operation's start
+     * @param stop the slice operation's stop
+     * @return an array with start at index 0 and stop at index 1
+     */
+    public static PyObject[] indices2(PyObject obj, PyObject start, PyObject stop) {
+        PyObject[] indices = new PyObject[2];
+        int istart = start == null ? 0 : calculateSliceIndex(start);
+        int istop = stop == null ? PySystemState.maxint : calculateSliceIndex(stop);
+        if (istart < 0 || istop < 0) {
+            try {
+                int len = obj.__len__();
+                if (istart < 0) {
+                    istart += len;
+                }
+                if (istop < 0) {
+                    istop += len;
+                }
+            } catch (PyException pye) {
+                if (!Py.matchException(pye, Py.AttributeError)) {
+                    throw pye;
+                }
+            }
+        }
+        indices[0] = Py.newInteger(istart);
+        indices[1] = Py.newInteger(istop);
+        return indices;
+    }
+
     private static final int START = 0, STOP = 1, STEP = 2;
 
     @ExposedGet

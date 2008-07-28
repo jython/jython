@@ -296,11 +296,11 @@ public class PyDeque extends PyObject {
 
     private Node getNode(PyObject index) {
         int pos = 0;
-        if (index instanceof PyInteger || index instanceof PyLong) {
-            pos = ((PyInteger)index.__int__()).getValue();
-        } else {
-            throw Py.TypeError("an integer is required");
+        if (!index.isIndex()) {
+            throw Py.TypeError(String.format("sequence index must be integer, not '%.200s'",
+                                             index.getType().fastGetName()));
         }
+        pos = index.asIndex(Py.IndexError);
 
         if (pos < 0) {
             pos += size;

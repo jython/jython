@@ -673,20 +673,30 @@ public class PyString extends PyBaseString
         return createInstance(new String(new_chars), true);
     }
 
+    @Override
+    public PyObject __mul__(PyObject o) {
+        return str___mul__(o);
+    }
+
     @ExposedMethod(type = MethodType.BINARY)
     final PyObject str___mul__(PyObject o) {
-        if (!(o instanceof PyInteger || o instanceof PyLong))
+        if (!o.isIndex()) {
             return null;
-        int count = ((PyInteger)o.__int__()).getValue();
-        return repeat(count);
+        }
+        return repeat(o.asIndex(Py.OverflowError));
     }
     
+    @Override
+    public PyObject __rmul__(PyObject o) {
+        return str___rmul__(o);
+    }
+
     @ExposedMethod(type = MethodType.BINARY)
     final PyObject str___rmul__(PyObject o) {
-        if (!(o instanceof PyInteger || o instanceof PyLong))
+        if (!o.isIndex()) {
             return null;
-        int count = ((PyInteger)o.__int__()).getValue();
-        return repeat(count);
+        }
+        return repeat(o.asIndex(Py.OverflowError));
     }
 
     public PyObject __add__(PyObject generic_other) {
