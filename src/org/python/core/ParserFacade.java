@@ -40,8 +40,9 @@ public class ParserFacade {
     private ParserFacade() {}
 
     static String getLine(BufferedReader reader, int line) {
-        if (reader == null)
+        if (reader == null) {
             return "";
+        }
         try {
             String text=null;
             for(int i=0; i < line; i++) {
@@ -68,8 +69,8 @@ public class ParserFacade {
         if (t instanceof ParseException) {
             ParseException e = (ParseException)t;
             PythonTree node = (PythonTree)e.node;
-            int line=0;
-            int col=0;
+            int line=e.line;
+            int col=e.charPositionInLine;
             if (node != null) {
                 line = node.getLine();
                 col = node.getCharPositionInLine();
@@ -103,7 +104,7 @@ public class ParserFacade {
         try {
             if (kind.equals("eval")) {
                 bufreader = prepBufreader(new LeadingSpaceSkippingStream(bstream), cflags, filename);
-                CharStream cs = new ANTLRReaderStream(bufreader);
+                CharStream cs = new NoCloseReaderStream(bufreader);
                 ExpressionParser e = new ExpressionParser(cs);
                 node = e.parse();
             } else if (kind.equals("single")) {
@@ -112,7 +113,7 @@ public class ParserFacade {
                 node = i.parse();
             } else if (kind.equals("exec")) {
                 bufreader = prepBufreader(bstream, cflags, filename);
-                CharStream cs = new ANTLRReaderStream(bufreader);
+                CharStream cs = new NoCloseReaderStream(bufreader);
                 ModuleParser g = new ModuleParser(cs);
                 node = g.file_input();
             } else {
@@ -120,6 +121,14 @@ public class ParserFacade {
             }
         } catch (Throwable t) {
             throw fixParseError(bufreader, t, filename);
+        } finally {
+            try {
+                if (bufreader != null) {
+                    bufreader.close();
+                }
+            } catch (IOException i) {
+                //XXX
+            }
         }
         return node;
     }
