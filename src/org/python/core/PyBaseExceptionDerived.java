@@ -830,6 +830,20 @@ public class PyBaseExceptionDerived extends PyBaseException implements Slotted {
         return super.__finditem__(key);
     }
 
+    public PyObject __finditem__(int key) {
+        PyType self_type=getType();
+        PyObject impl=self_type.lookup("__getitem__");
+        if (impl!=null)
+            try {
+                return impl.__get__(this,self_type).__call__(new PyInteger(key));
+            } catch (PyException exc) {
+                if (Py.matchException(exc,Py.LookupError))
+                    return null;
+                throw exc;
+            }
+        return super.__finditem__(key);
+    }
+
     public PyObject __getitem__(PyObject key) {
         // Same as __finditem__, without swallowing LookupErrors. This allows
         // __getitem__ implementations written in Python to raise custom
@@ -867,29 +881,43 @@ public class PyBaseExceptionDerived extends PyBaseException implements Slotted {
     }
 
     public PyObject __getslice__(PyObject start,PyObject stop,PyObject step) { // ???
+        if (step!=null) {
+            return __getitem__(new PySlice(start,stop,step));
+        }
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__getslice__");
         if (impl!=null) {
-            return impl.__get__(this,self_type).__call__(start,stop);
+            PyObject[]indices=PySlice.indices2(this,start,stop);
+            return impl.__get__(this,self_type).__call__(indices[0],indices[1]);
         }
         return super.__getslice__(start,stop,step);
     }
 
     public void __setslice__(PyObject start,PyObject stop,PyObject step,PyObject value) {
+        if (step!=null) {
+            __setitem__(new PySlice(start,stop,step),value);
+            return;
+        }
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__setslice__");
         if (impl!=null) {
-            impl.__get__(this,self_type).__call__(start,stop,value);
+            PyObject[]indices=PySlice.indices2(this,start,stop);
+            impl.__get__(this,self_type).__call__(indices[0],indices[1],value);
             return;
         }
         super.__setslice__(start,stop,step,value);
     }
 
     public void __delslice__(PyObject start,PyObject stop,PyObject step) {
+        if (step!=null) {
+            __delitem__(new PySlice(start,stop,step));
+            return;
+        }
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__delslice__");
         if (impl!=null) {
-            impl.__get__(this,self_type).__call__(start,stop);
+            PyObject[]indices=PySlice.indices2(this,start,stop);
+            impl.__get__(this,self_type).__call__(indices[0],indices[1]);
             return;
         }
         super.__delslice__(start,stop,step);
@@ -1027,6 +1055,19 @@ public class PyBaseExceptionDerived extends PyBaseException implements Slotted {
                 }
             }
         }
+    }
+
+    public PyObject __index__() {
+        PyType self_type=getType();
+        PyObject impl=self_type.lookup("__index__");
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,self_type).__call__();
+            if (res instanceof PyInteger||res instanceof PyLong) {
+                return res;
+            }
+            throw Py.TypeError(String.format("__index__ returned non-(int,long) (type %s)",res.getType().fastGetName()));
+        }
+        return super.__index__();
     }
 
     public Object __tojava__(Class c) {
