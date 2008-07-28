@@ -1406,7 +1406,6 @@ _expectations = {
         test_gdbm
         test_getargs2
         test_gl
-        test_grp
         test_hotshot
         test_imageop
         test_imgfile
@@ -1430,7 +1429,6 @@ _expectations = {
         test_poll
         test_profile
         test_pty
-        test_pwd
         test_pyexpat
         test_resource
         test_rgbimg
