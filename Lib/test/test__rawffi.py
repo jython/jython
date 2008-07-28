@@ -1,6 +1,14 @@
 import unittest
 from test import test_support
 
+# xxx - forces a skip in the case we haven't built ctypes_test module in ant (which is not yet a task as of now)
+
+try:        
+    import _rawffi
+    _rawffi.CDLL("ctypes_test")
+except:
+    raise ImportError
+
 class RawFFITestCase(unittest.TestCase):
 
     def setUp(self):
