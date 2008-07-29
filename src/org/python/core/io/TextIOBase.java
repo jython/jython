@@ -227,6 +227,10 @@ public abstract class TextIOBase extends IOBase {
         // Prepare the readahead for reading
         readahead.clear();
 
+        if (readahead.remaining() > CHUNK_SIZE) {
+            // Limit potential full reads on a resized readahead to CHUNK_SIZE
+            readahead.limit(readahead.position() + CHUNK_SIZE);
+        }
         bufferedIO.read1(readahead);
         readahead.flip();
 

@@ -27,13 +27,14 @@ class BaseTestCase(unittest.TestCase):
     data = CRLF_TEST
     write_mode = 'wb'
     mode = 'r'
+    bufsize = -1
 
     def setUp(self):
         self.filename = tempfile.mktemp()
-        self.write_fp = open(self.filename, self.write_mode)
+        self.write_fp = open(self.filename, self.write_mode, self.bufsize)
         self.write_fp.write(self.data)
         self.write_fp.flush()
-        self.fp = open(self.filename, self.mode)
+        self.fp = open(self.filename, self.mode, self.bufsize)
 
     def tearDown(self):
         if self.write_fp:
@@ -259,6 +260,17 @@ class TextCRAtReadheadBoundary2TestCase(TextCRAtReadheadBoundaryTestCase):
     read_data = data
 
 
+class UniversalCRAtReadaheadBoundaryTestCase(BaseTestCase):
+
+    mode = 'U'
+    bufsize = 0
+    data = ('-' * 1023) + '\r\n' + ('-' * 10233)
+
+    def test_read_cr_at_boundary(self):
+        # Used to raise a BufferOverflowException w/ bufsize of 0
+        read(self.fp, ('-' * 1023) + '\n', 1024)
+
+
 class WriteTextNewlinesTestCase(BaseTestCase):
 
     write_mode = 'w'
@@ -344,6 +356,7 @@ def test_main():
              UniversalReadaheadBoundary3TestCase,
              UniversalReadaheadBoundary4TestCase,
              UniversalReadaheadBoundary5TestCase,
+             UniversalCRAtReadaheadBoundaryTestCase,
              WriteTextNewlinesTestCase,
              ReadUniversalNewlinesTestCase,
              WriteUniversalNewlinesTestCase]
