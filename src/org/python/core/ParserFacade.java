@@ -15,6 +15,7 @@ import java.util.regex.Pattern;
 import org.antlr.runtime.ANTLRReaderStream;
 import org.antlr.runtime.CharStream;
 import org.antlr.runtime.CommonTokenStream;
+
 import org.python.antlr.ExpressionParser;
 import org.python.antlr.InteractiveParser;
 import org.python.antlr.LeadingSpaceSkippingStream;
@@ -23,12 +24,15 @@ import org.python.antlr.ModuleParser;
 import org.python.antlr.NoCloseReaderStream;
 import org.python.antlr.PythonParser;
 import org.python.antlr.PythonTree;
-import org.python.core.util.StringUtil;
 import org.python.antlr.PythonTree;
 import org.python.antlr.PythonPartialLexer;
 import org.python.antlr.PythonPartialParser;
 import org.python.antlr.PythonPartialTokenSource;
 import org.python.antlr.ast.modType;
+import org.python.core.io.StreamIO;
+import org.python.core.io.TextIOInputStream;
+import org.python.core.io.UniversalIOWrapper;
+import org.python.core.util.StringUtil;
 
 /**
  * Facade for the classes in the org.python.antlr package.
@@ -186,6 +190,13 @@ public class ParserFacade {
         if(encoding == null && cflags != null && cflags.encoding != null) {
             encoding = cflags.encoding;
         }
+
+        // Enable universal newlines mode on the input
+        StreamIO rawIO = new StreamIO(istream, true);
+        org.python.core.io.BufferedReader bufferedIO =
+                new org.python.core.io.BufferedReader(rawIO, 0);
+        UniversalIOWrapper textIO = new UniversalIOWrapper(bufferedIO);
+        istream = new TextIOInputStream(textIO);
 
         Reader reader;
         if(encoding != null) {

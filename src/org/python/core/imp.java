@@ -22,7 +22,7 @@ public class imp {
 
     private static final String UNKNOWN_SOURCEFILE = "<unknown>";
 
-    public static final int APIVersion = 13;
+    public static final int APIVersion = 14;
 
     /** A non-empty fromlist for __import__'ing sub-modules. */
     private static final PyObject nonEmptyFromlist = new PyTuple(Py.newString("__doc__"));
