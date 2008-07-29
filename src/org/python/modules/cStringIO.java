@@ -160,7 +160,7 @@ public class cStringIO {
          * Return the file position.
          * @returns     the position in the file.
          */
-        public long tell() {
+        public int tell() {
             _complain_ifclosed();
             return pos;
         }
