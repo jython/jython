@@ -24,7 +24,6 @@ import org.python.antlr.NoCloseReaderStream;
 import org.python.antlr.PythonParser;
 import org.python.antlr.PythonTree;
 import org.python.core.util.StringUtil;
-import org.python.antlr.IParserHost;
 import org.python.antlr.PythonTree;
 import org.python.antlr.PythonPartialLexer;
 import org.python.antlr.PythonPartialParser;
