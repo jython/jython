@@ -748,8 +748,13 @@ public class struct {
         }
 
         Object unpack(ByteStream buf) {
-            int v = LEreadInt(buf);
-            return Py.newFloat(Float.intBitsToFloat(v));
+            int bits = LEreadInt(buf);
+            float v = Float.intBitsToFloat(bits);
+            if (PyFloat.float_format == PyFloat.Format.UNKNOWN && (
+                    Float.isInfinite(v) || Float.isNaN(v))) {
+                throw Py.ValueError("can't unpack IEEE 754 special value on non-IEEE platform");
+            }
+            return Py.newFloat(v);
         }
     }
 
@@ -763,7 +768,12 @@ public class struct {
         Object unpack(ByteStream buf) {
             long bits = (LEreadInt(buf) & 0xFFFFFFFFL) +
                         (((long)LEreadInt(buf)) << 32);
-            return Py.newFloat(Double.longBitsToDouble(bits));
+            double v = Double.longBitsToDouble(bits);
+            if (PyFloat.double_format == PyFloat.Format.UNKNOWN &&
+                    (Double.isInfinite(v) || Double.isNaN(v))) {
+                throw Py.ValueError("can't unpack IEEE 754 special value on non-IEEE platform");
+            }
+            return Py.newFloat(v);
         }
     }
 
@@ -775,8 +785,13 @@ public class struct {
         }
 
         Object unpack(ByteStream buf) {
-            int v = BEreadInt(buf);
-            return Py.newFloat(Float.intBitsToFloat(v));
+            int bits = BEreadInt(buf);
+            float v = Float.intBitsToFloat(bits);
+            if (PyFloat.float_format == PyFloat.Format.UNKNOWN && (
+                    Float.isInfinite(v) || Float.isNaN(v))) {
+                throw Py.ValueError("can't unpack IEEE 754 special value on non-IEEE platform");
+            }
+            return Py.newFloat(v);
         }
     }
 
@@ -788,9 +803,14 @@ public class struct {
         }
 
         Object unpack(ByteStream buf) {
-            long bits = (((long)BEreadInt(buf)) << 32) +
-                        (BEreadInt(buf) & 0xFFFFFFFFL);
-            return Py.newFloat(Double.longBitsToDouble(bits));
+            long bits = (((long) BEreadInt(buf)) << 32) +
+                    (BEreadInt(buf) & 0xFFFFFFFFL);
+            double v = Double.longBitsToDouble(bits);
+            if (PyFloat.double_format == PyFloat.Format.UNKNOWN &&
+                    (Double.isInfinite(v) || Double.isNaN(v))) {
+                throw Py.ValueError("can't unpack IEEE 754 special value on non-IEEE platform");
+            }
+            return Py.newFloat(v);
         }
     }
 

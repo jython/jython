@@ -584,26 +584,58 @@ public class PyFloat extends PyObject
         return float___getnewargs__();
     }
 
+    // standard singleton issues apply here to __getformat__/__setformat__,
+    // but this is what Python demands
+    
+    public enum Format {
+        UNKNOWN ("unknown"),
+        BE ("IEEE, big-endian"),
+        LE ("IEEE, little-endian");
+        
+        private final String format;
+        Format(String format) {
+            this.format = format;
+        }
+        public String format() { return format; } 
+    }
+    
+    // subset of IEEE-754, the JVM is big-endian 
+    public static volatile Format double_format = Format.BE;
+    public static volatile Format float_format = Format.BE;
+    
     @ExposedClassMethod
     public static String float___getformat__(PyType type, String typestr) {
-        if (!"double".equals(typestr) && !"float".equals(typestr)) {
+        if ("double".equals(typestr)) {
+            return double_format.format();
+        } else if ("float".equals(typestr)) {
+            return float_format.format();
+        } else {
             throw Py.ValueError("__getformat__() argument 1 must be 'double' or 'float'");
         }
-        return "unknown";
     }
-
+    
     @ExposedClassMethod
     public static void float___setformat__(PyType type, String typestr, String format) {
+        Format new_format = null;
         if (!"double".equals(typestr) && !"float".equals(typestr)) {
             throw Py.ValueError("__setformat__() argument 1 must be 'double' or 'float'");
         }
-        if ("IEEE, little-endian".equals(format) || "IEEE, big-endian".equals(format)) {
-            throw Py.ValueError(String.format("can only set %s format to 'unknown' or the "
-                                              + "detected platform value", typestr));
-        } else if (!"unknown".equals(format)) {
-            throw Py.ValueError("__setformat__() argument 2 must be 'unknown', "
-                                + "'IEEE, little-endian' or 'IEEE, big-endian'");
-        } 
+        if (Format.LE.format().equals(format)) {
+            throw Py.ValueError(String.format("can only set %s format to 'unknown' or the " + "detected platform value", typestr));
+        } else if (Format.BE.format().equals(format)) {
+            new_format = Format.BE;
+        } else if (Format.UNKNOWN.format().equals(format)) {
+            new_format = Format.UNKNOWN;
+        } else {
+            throw Py.ValueError("__setformat__() argument 2 must be 'unknown', " + "'IEEE, little-endian' or 'IEEE, big-endian'");
+        }
+        if (new_format != null) {
+            if ("double".equals(typestr)) {
+                double_format = new_format;
+            } else {
+                float_format = new_format;
+            }
+        }
     }
 
     public boolean isMappingType() { return false; }

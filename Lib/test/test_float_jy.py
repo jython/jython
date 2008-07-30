@@ -7,7 +7,7 @@ import sys
 import unittest
 from test import test_support
 
-jython = sys.platform.startswith('java')
+jython = test_support.is_jython
 
 class FloatTestCase(unittest.TestCase):
 
@@ -67,14 +67,12 @@ class FloatTestCase(unittest.TestCase):
 
     def test_nan(self):
         self.assert_(type(float('NaN')), float)
-        # XXX: FIXME
-        #self.assert_(type(float('nan')), float)
+        self.assert_(type(float('nan')), float)
         self.assertEqual(long(float('NaN')), 0)
 
     def test_infinity(self):
         self.assert_(type(float('Infinity')), float)
-        # XXX: FIXME
-        #self.assert_(type(float('inf')), float)
+        self.assert_(type(float('inf')), float)
         self.assertRaises(OverflowError, long, float('Infinity'))
 
     def test_float_none(self):
