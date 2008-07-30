@@ -24,6 +24,7 @@ long.derived:org.python.core.PyLongDerived
 local.derived:org.python.modules.thread.PyLocalDerived
 module.derived:org.python.core.PyModuleDerived
 object.derived:org.python.core.PyObjectDerived
+partial.derived:org.python.modules._functools.PyPartialDerived
 property.derived:org.python.core.PyPropertyDerived
 random.derived:org.python.modules.random.PyRandomDerived
 set.derived:org.python.core.PySetDerived

@@ -54,6 +54,7 @@ public class Setup
         "zipimport:org.python.modules.zipimport.zipimport",
         "collections:org.python.modules.collections.Collections",
         "gc",
-        "_hashlib"
+        "_hashlib",
+        "_functools:org.python.modules._functools._functools"
     };
 }
