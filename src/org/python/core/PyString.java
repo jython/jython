@@ -1510,6 +1510,10 @@ public class PyString extends PyBaseString
         try {
             // Double.valueOf allows format specifier ("d" or "f") at the end
             String lowSval = sval.toLowerCase();
+            if (lowSval.equals("nan")) return Double.NaN;
+            else if (lowSval.equals("inf")) return Double.POSITIVE_INFINITY;
+            else if (lowSval.equals("-inf")) return Double.NEGATIVE_INFINITY;
+            
             if (lowSval.endsWith("d") || lowSval.endsWith("f")) {
                 throw new NumberFormatException("format specifiers not allowed");
             }

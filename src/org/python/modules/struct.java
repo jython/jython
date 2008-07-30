@@ -351,8 +351,6 @@ public class struct {
         }
 
         double get_float(PyObject value) {
-            if (!(value instanceof PyFloat))
-                throw StructError("required argument is not an float");
             return value.__float__().getValue();
         }
 

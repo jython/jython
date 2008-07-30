@@ -105,6 +105,10 @@ public class PyFloat extends PyObject
     }
 
     private String formatDouble(int precision) {
+        if (Double.isNaN(value)) {
+            return "nan";
+        }
+        
         String result = String.format("%%.%dg", precision);
         result = Py.newString(result).__mod__(this).toString();
 
