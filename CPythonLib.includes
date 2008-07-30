@@ -56,6 +56,7 @@ fnmatch.py
 formatter.py
 fpformat.py
 ftplib.py
+functools.py
 getopt.py
 gettext.py
 glob.py
