@@ -52,7 +52,10 @@ def settrace(func):
     global _trace_hook
     _trace_hook = func
 
-class RLock(object):
+def RLock(*args, **kwargs):
+    return _RLock(*args, **kwargs)
+
+class _RLock(object):
     def __init__(self):
         self._lock = ReentrantLock()
         self.__owner = None
@@ -84,7 +87,7 @@ class RLock(object):
     def _is_owned(self):
         return self._lock.isHeldByCurrentThread()
 
-Lock = RLock
+Lock = _RLock
 
 class Condition(object):
     def __init__(self, lock=None):
