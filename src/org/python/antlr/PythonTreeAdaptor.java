@@ -1,7 +1,9 @@
 package org.python.antlr;
 
 import org.antlr.runtime.CommonToken;
+import org.antlr.runtime.RecognitionException;
 import org.antlr.runtime.Token;
+import org.antlr.runtime.TokenStream;
 import org.antlr.runtime.tree.CommonTreeAdaptor;
 
 public class PythonTreeAdaptor extends CommonTreeAdaptor {
@@ -44,6 +46,14 @@ public class PythonTreeAdaptor extends CommonTreeAdaptor {
     public Object create(Token token) {
         return new PythonTree(token);
     }
+
+	public Object errorNode(TokenStream input, Token start, Token stop,
+							RecognitionException e)
+	{
+		PythonErrorNode t = new PythonErrorNode(input, start, stop, e);
+		//System.out.println("returning error node '"+t+"' @index="+input.index());
+		return t;
+	}
 
     public Object dupNode(Object t) {
         if (t == null) {

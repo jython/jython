@@ -17,21 +17,9 @@ import org.python.antlr.ast.modType;
 import org.python.antlr.ast.Module;
 import org.python.antlr.ast.stmtType;
 
-public class InteractiveParser {
+public class InteractiveParser extends BaseParser {
 
     private BufferedReader bufreader;
-
-    //Extract superclass from this and the other XParsers.
-    public static class PyLexer extends PythonLexer {
-        public PyLexer(CharStream lexer) {
-            super(lexer);
-        }
-
-        public Token nextToken() {
-            startPos = getCharPositionInLine();
-            return super.nextToken();
-        }
-    }
 
     public static class PPLexer extends PythonPartialLexer {
         public PPLexer(CharStream lexer) {
@@ -51,6 +39,7 @@ public class InteractiveParser {
     public modType parse() throws IOException {
         modType tree = null;
         PythonLexer lexer = new PyLexer(new NoCloseReaderStream(bufreader));
+        lexer.setErrorHandler(errorHandler);
         //XXX: Hopefully we can remove inSingle when we get PyCF_DONT_IMPLY_DEDENT support.
         lexer.inSingle = true;
         CommonTokenStream tokens = new CommonTokenStream(lexer);
@@ -58,6 +47,7 @@ public class InteractiveParser {
         PythonTokenSource indentedSource = new PythonTokenSource(tokens);
         tokens = new CommonTokenStream(indentedSource);
         PythonParser parser = new PythonParser(tokens);
+        parser.setErrorHandler(errorHandler);
         parser.inSingle = true;
         parser.setTreeAdaptor(new PythonTreeAdaptor());
 
@@ -66,6 +56,7 @@ public class InteractiveParser {
             CommonTreeNodeStream nodes = new CommonTreeNodeStream((Tree)r.tree);
             nodes.setTokenStream(tokens);
             PythonWalker walker = new PythonWalker(nodes);
+            walker.setErrorHandler(errorHandler);
             tree = walker.interactive();
         } catch (RecognitionException e) {
             //I am only throwing ParseExceptions, but "throws RecognitionException" still gets

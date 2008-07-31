@@ -165,7 +165,7 @@ public boolean eofWhileNested = false;
 				return state.token;
 			}
             catch (RecognitionException re) {
-                throw new ParseException(re);
+                throw new ParseException("failed partial", re);
             }
         }
     }

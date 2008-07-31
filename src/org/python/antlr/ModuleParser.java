@@ -14,22 +14,7 @@ import org.python.antlr.ast.modType;
 import org.python.antlr.ast.Module;
 import org.python.antlr.ast.stmtType;
 
-public class ModuleParser {
-    public static class PyLexer extends PythonLexer {
-        public PyLexer(CharStream lexer) {
-            super(lexer);
-        }
-
-        public Token nextToken() {
-            startPos = getCharPositionInLine();
-            return super.nextToken();
-        }
-    }
-
-
-    private CharStream charStream;
-    private boolean partial;
-
+public class ModuleParser extends BaseParser {
     public ModuleParser(CharStream cs) {
         this(cs, false);
     }
@@ -42,17 +27,20 @@ public class ModuleParser {
     public modType file_input() {
         modType tree = null;
         PythonLexer lexer = new PyLexer(this.charStream);
+        lexer.setErrorHandler(errorHandler);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         tokens.discardOffChannelTokens(true);
         PythonTokenSource indentedSource = new PythonTokenSource(tokens);
         tokens = new CommonTokenStream(indentedSource);
         PythonParser parser = new PythonParser(tokens);
+        parser.setErrorHandler(errorHandler);
         parser.setTreeAdaptor(new PythonTreeAdaptor());
         try {
             PythonParser.file_input_return r = parser.file_input();
             CommonTreeNodeStream nodes = new CommonTreeNodeStream((Tree)r.tree);
             nodes.setTokenStream(tokens);
             PythonWalker walker = new PythonWalker(nodes);
+            walker.setErrorHandler(errorHandler);
             tree = walker.module();
             if (tree == null) {
                 //XXX: seems like I should be able to get antlr to give me an empty Module instead
@@ -66,4 +54,5 @@ public class ModuleParser {
 
         return tree;
     }
+
 }

@@ -182,15 +182,18 @@ import java.util.Iterator;
 } 
 
 @members {
-    //If you want to use antlr's default error recovery mechanisms change this
-    //and the same one in the lexer to true.
-    public boolean antlrErrorHandling = false;
-
     //XXX: only used for single_input -- seems kludgy.
     public boolean inSingle = false;
-    private boolean seenSingleOuterSuite = false;
 
     boolean debugOn = false;
+
+    private ErrorHandler errorHandler;
+
+    private boolean seenSingleOuterSuite = false;
+
+    public void setErrorHandler(ErrorHandler eh) {
+        this.errorHandler = eh;
+    }
 
     private void debug(String message) {
         if (debugOn) {
@@ -398,7 +401,7 @@ import java.util.Iterator;
 
  
     protected void mismatch(IntStream input, int ttype, BitSet follow) throws RecognitionException {
-        if (antlrErrorHandling) {
+        if (errorHandler.isRecoverable()) {
             super.mismatch(input, ttype, follow);
         } else {
             throw new MismatchedTokenException(ttype, input);
@@ -408,7 +411,7 @@ import java.util.Iterator;
 	protected Object recoverFromMismatchedToken(IntStream input, int ttype, BitSet follow)
 		throws RecognitionException
 	{
-        if (antlrErrorHandling) {
+        if (errorHandler.isRecoverable()) {
             return super.recoverFromMismatchedToken(input, ttype, follow);
         }
         mismatch(input, ttype, follow);
@@ -419,13 +422,9 @@ import java.util.Iterator;
 
 @rulecatch {
 catch (RecognitionException re) {
-    if (antlrErrorHandling) {
-        reportError(re);
-        recover(input,re);
-    	retval.tree = (PythonTree)adaptor.errorNode(input, retval.start, input.LT(-1), re);
-    } else {
-        throw new ParseException(re);
-    }
+    errorHandler.reportError(this, re);
+    errorHandler.recover(this, input,re);
+	retval.tree = (PythonTree)adaptor.errorNode(input, retval.start, input.LT(-1), re);
 }
 }
 
@@ -440,44 +439,55 @@ package org.python.antlr;
  *       4]
  */
 
-//If you want to use antlr's default error recovery mechanisms change this
-//and the same one in the parser to true.
-public boolean antlrErrorHandling = false;
+//If you want to use another error recovery mechanisms change this
+//and the same one in the parser.
+private ErrorHandler errorHandler;
 
 //XXX: Hopefully we can remove inSingle when we get PyCF_DONT_IMPLY_DEDENT support.
 public boolean inSingle = false;
 int implicitLineJoiningLevel = 0;
 int startPos=-1;
 
-    public Token nextToken() {
-        if (antlrErrorHandling) {
-            return super.nextToken();
-        }
-        while (true) {
-            state.token = null;
-            state.channel = Token.DEFAULT_CHANNEL;
-            state.tokenStartCharIndex = input.index();
-            state.tokenStartCharPositionInLine = input.getCharPositionInLine();
-            state.tokenStartLine = input.getLine();
-            state.text = null;
-            if ( input.LA(1)==CharStream.EOF ) {
-                return Token.EOF_TOKEN;
-            }
-            try {
-                mTokens();
-                if ( state.token==null ) {
-                    emit();
-                }
-                else if ( state.token==Token.SKIP_TOKEN ) {
-                    continue;
-                }
-                return state.token;
-            }
-            catch (RecognitionException re) {
-                throw new ParseException(re);
-            }
-        }
+    public void setErrorHandler(ErrorHandler eh) {
+        this.errorHandler = eh;
     }
+
+	/** 
+	 *  Taken directly from antlr's Lexer.java -- needs to be re-integrated every time
+     *  we upgrade from Antlr (need to consider a Lexer subclass, though the issue would
+     *  remain).
+	 */
+	public Token nextToken() {
+		while (true) {
+			state.token = null;
+			state.channel = Token.DEFAULT_CHANNEL;
+			state.tokenStartCharIndex = input.index();
+			state.tokenStartCharPositionInLine = input.getCharPositionInLine();
+			state.tokenStartLine = input.getLine();
+			state.text = null;
+			if ( input.LA(1)==CharStream.EOF ) {
+				return Token.EOF_TOKEN;
+			}
+			try {
+				mTokens();
+				if ( state.token==null ) {
+					emit();
+				}
+				else if ( state.token==Token.SKIP_TOKEN ) {
+					continue;
+				}
+				return state.token;
+			}
+			catch (NoViableAltException nva) {
+				errorHandler.reportError(this, nva);
+				errorHandler.recover(this, nva); // throw out current char and try again
+			}
+			catch (RecognitionException re) {
+				errorHandler.reportError(this, re);
+				// match() routine has already called recover()
+			}
+		}
+	}
 }
 
 //single_input: NEWLINE | simple_stmt | compound_stmt NEWLINE

@@ -30,6 +30,12 @@ public class PythonTree extends BaseTree implements AST {
 	/** What index is this node in the child list? Range: 0..n-1 */
 	public int childIndex = -1;
 
+    /**
+     * The empty constructor is intended only for use by PythonErrorNode.
+     */
+    public PythonTree() {
+    }
+
     public PythonTree(int ttype, Token t) {
         CommonToken c = new CommonToken(ttype, t.getText());
         c.setLine(t.getLine());

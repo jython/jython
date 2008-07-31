@@ -90,6 +90,12 @@ import java.util.Set;
 } 
 @members {
     boolean debugOn = false;
+    private ErrorHandler errorHandler;
+
+    public void setErrorHandler(ErrorHandler eh) {
+        this.errorHandler = eh;
+    }
+
 
     public void debug(String message) {
         if (debugOn) {
@@ -283,8 +289,9 @@ import java.util.Set;
 }
 
 @rulecatch {
-catch (RecognitionException r) {
-    throw new ParseException(r);
+catch (RecognitionException re) {
+    errorHandler.reportError(this, re);
+    errorHandler.recover(this, input,re);
 }
 }
 
