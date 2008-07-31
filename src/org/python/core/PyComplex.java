@@ -490,6 +490,7 @@ public class PyComplex extends PyObject {
     }
 
     private static PyObject _mod(PyComplex value, PyComplex right) {
+        Py.warning(Py.DeprecationWarning, "complex divmod(), // and % are deprecated");
         PyComplex z = (PyComplex) _div(value, right);
 
         z.real = Math.floor(z.real);
@@ -521,6 +522,7 @@ public class PyComplex extends PyObject {
     }
 
     private static PyObject _divmod(PyComplex value, PyComplex right) {
+        Py.warning(Py.DeprecationWarning, "complex divmod(), // and % are deprecated");
         PyComplex z = (PyComplex) _div(value, right);
 
         z.real = Math.floor(z.real);
