@@ -992,6 +992,7 @@ public final class Py {
                 exceptHook.__call__(exc.type, exc.value, exc.traceback);
             } catch (PyException exc2) {
                 exc2.normalize();
+                flushLine();
                 stderr.println("Error in sys.excepthook:");
                 displayException(exc2.type, exc2.value, exc2.traceback, file);
                 stderr.println();
@@ -1006,12 +1007,13 @@ public final class Py {
         ts.exception = null;
     }
 
-    public static void displayException(PyObject type, PyObject value,
-            PyObject tb, PyObject file) {
+    public static void displayException(PyObject type, PyObject value, PyObject tb,
+                                        PyObject file) {
         StdoutWrapper stderr = Py.stderr;
         if (file != null) {
             stderr = new FixedFileWrapper(file);
         }
+        flushLine();
 
         if (tb instanceof PyTraceback) {
             stderr.print(((PyTraceback) tb).dumpStack());
@@ -1315,6 +1317,10 @@ public final class Py {
 
     public static void println() {
         stdout.println();
+    }
+
+    public static void flushLine() {
+        stdout.flushLine();
     }
 
     /*

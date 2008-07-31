@@ -342,6 +342,7 @@ public class PySystemState extends PyObject
                 Py.printException(exc);
             }
         }
+        Py.flushLine();
     }
 
     public ClassLoader getClassLoader() {

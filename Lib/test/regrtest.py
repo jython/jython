@@ -1493,7 +1493,6 @@ _failures = {
         test_pyclbr
         test_quopri
         test_random
-        test_softspace
         test_syntax
         test_trace
         test_ucn
