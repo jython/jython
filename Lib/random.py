@@ -38,6 +38,7 @@ General notes on the underlying Mersenne Twister core generator:
   a single Python step, and is, therefore, threadsafe.
 
 """
+import time
 from types import BuiltinMethodType as _BuiltinMethodType
 from math import log as _log, exp as _exp, pi as _pi, e as _e
 from math import sqrt as _sqrt, acos as _acos, cos as _cos, sin as _sin
@@ -96,7 +97,6 @@ class Random(_random.Random):
         """
 
         if a is None:
-            import time
             a = long(time.time() * 256) # use fractional seconds
         super(Random, self).seed(a)
         self.gauss_next = None

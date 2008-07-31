@@ -46,7 +46,8 @@ import time
 import stat as _stat
 import sys
 from java.io import File
-from org.python.core.io import FileDescriptors
+from org.python.core import PyFile
+from org.python.core.io import FileDescriptors, FileIO, IOBase
 
 # Mapping of: os._name: [name list, shell command list]
 _os_map = dict(nt=[
@@ -537,7 +538,6 @@ def fdopen(fd, mode='r', bufsize=-1):
     if rawio.closed():
         raise OSError(errno.EBADF, errno.strerror(errno.EBADF))
 
-    from org.python.core import PyFile
     try:
         fp = PyFile(rawio, '<fdopen>', mode, bufsize)
     except IOError:
@@ -588,7 +588,6 @@ def open(filename, flag, mode=0777):
         # Default to reading
         reading = True
 
-    from org.python.core.io import FileIO
     if truncating and not writing:
         # Explicitly truncate, writing will truncate anyway
         FileIO(filename, 'w').close()
@@ -965,8 +964,6 @@ def isatty(fileno):
 
     if isinstance(fileno, FileDescriptor):
         return _posix.isatty(fileno)
-
-    from org.python.core.io import IOBase
 
     if not isinstance(fileno, IOBase):
         print fileno
