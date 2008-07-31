@@ -153,10 +153,20 @@ template = comment + """\
         else {
             PyObject o1 = ((PyObject[])ctmp)[0];
             PyObject o2 = ((PyObject[])ctmp)[1];
-            if (this == o1) // Prevent recusion if __coerce__ return self
+            if (this == o1) {
+                // Prevent recusion if __coerce__ return self
                 return invoke_ex("__%(name)s__", o2);
-            else
-                return %(function)s;
+            }
+            else {
+                ThreadState ts = Py.getThreadState();
+                if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
+                    throw Py.RuntimeError("maximum recursion depth exceeded");
+                try {
+                    return %(function)s;
+                } finally {
+                    --ts.recursion_depth;
+                }
+            }
         }
     }
 

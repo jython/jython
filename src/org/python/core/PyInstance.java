@@ -896,10 +896,20 @@ public class PyInstance extends PyObject
         else {
             PyObject o1 = ((PyObject[])ctmp)[0];
             PyObject o2 = ((PyObject[])ctmp)[1];
-            if (this == o1) // Prevent recusion if __coerce__ return self
+            if (this == o1) {
+                // Prevent recusion if __coerce__ return self
                 return invoke_ex("__add__", o2);
-            else
-                return o1._add(o2);
+            }
+            else {
+                ThreadState ts = Py.getThreadState();
+                if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
+                    throw Py.RuntimeError("maximum recursion depth exceeded");
+                try {
+                    return o1._add(o2);
+                } finally {
+                    --ts.recursion_depth;
+                }
+            }
         }
     }
 
@@ -914,10 +924,20 @@ public class PyInstance extends PyObject
         else {
             PyObject o1 = ((PyObject[])ctmp)[0];
             PyObject o2 = ((PyObject[])ctmp)[1];
-            if (this == o1) // Prevent recusion if __coerce__ return self
+            if (this == o1) {
+                // Prevent recusion if __coerce__ return self
                 return invoke_ex("__radd__", o2);
-            else
-                return o2._add(o1);
+            }
+            else {
+                ThreadState ts = Py.getThreadState();
+                if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
+                    throw Py.RuntimeError("maximum recursion depth exceeded");
+                try {
+                    return o2._add(o1);
+                } finally {
+                    --ts.recursion_depth;
+                }
+            }
         }
     }
 
@@ -943,10 +963,20 @@ public class PyInstance extends PyObject
         else {
             PyObject o1 = ((PyObject[])ctmp)[0];
             PyObject o2 = ((PyObject[])ctmp)[1];
-            if (this == o1) // Prevent recusion if __coerce__ return self
+            if (this == o1) {
+                // Prevent recusion if __coerce__ return self
                 return invoke_ex("__sub__", o2);
-            else
-                return o1._sub(o2);
+            }
+            else {
+                ThreadState ts = Py.getThreadState();
+                if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
+                    throw Py.RuntimeError("maximum recursion depth exceeded");
+                try {
+                    return o1._sub(o2);
+                } finally {
+                    --ts.recursion_depth;
+                }
+            }
         }
     }
 
@@ -961,10 +991,20 @@ public class PyInstance extends PyObject
         else {
             PyObject o1 = ((PyObject[])ctmp)[0];
             PyObject o2 = ((PyObject[])ctmp)[1];
-            if (this == o1) // Prevent recusion if __coerce__ return self
+            if (this == o1) {
+                // Prevent recusion if __coerce__ return self
                 return invoke_ex("__rsub__", o2);
-            else
-                return o2._sub(o1);
+            }
+            else {
+                ThreadState ts = Py.getThreadState();
+                if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
+                    throw Py.RuntimeError("maximum recursion depth exceeded");
+                try {
+                    return o2._sub(o1);
+                } finally {
+                    --ts.recursion_depth;
+                }
+            }
         }
     }
 
@@ -990,10 +1030,20 @@ public class PyInstance extends PyObject
         else {
             PyObject o1 = ((PyObject[])ctmp)[0];
             PyObject o2 = ((PyObject[])ctmp)[1];
-            if (this == o1) // Prevent recusion if __coerce__ return self
+            if (this == o1) {
+                // Prevent recusion if __coerce__ return self
                 return invoke_ex("__mul__", o2);
-            else
-                return o1._mul(o2);
+            }
+            else {
+                ThreadState ts = Py.getThreadState();
+                if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
+                    throw Py.RuntimeError("maximum recursion depth exceeded");
+                try {
+                    return o1._mul(o2);
+                } finally {
+                    --ts.recursion_depth;
+                }
+            }
         }
     }
 
@@ -1008,10 +1058,20 @@ public class PyInstance extends PyObject
         else {
             PyObject o1 = ((PyObject[])ctmp)[0];
             PyObject o2 = ((PyObject[])ctmp)[1];
-            if (this == o1) // Prevent recusion if __coerce__ return self
+            if (this == o1) {
+                // Prevent recusion if __coerce__ return self
                 return invoke_ex("__rmul__", o2);
-            else
-                return o2._mul(o1);
+            }
+            else {
+                ThreadState ts = Py.getThreadState();
+                if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
+                    throw Py.RuntimeError("maximum recursion depth exceeded");
+                try {
+                    return o2._mul(o1);
+                } finally {
+                    --ts.recursion_depth;
+                }
+            }
         }
     }
 
@@ -1037,10 +1097,20 @@ public class PyInstance extends PyObject
         else {
             PyObject o1 = ((PyObject[])ctmp)[0];
             PyObject o2 = ((PyObject[])ctmp)[1];
-            if (this == o1) // Prevent recusion if __coerce__ return self
+            if (this == o1) {
+                // Prevent recusion if __coerce__ return self
                 return invoke_ex("__div__", o2);
-            else
-                return o1._div(o2);
+            }
+            else {
+                ThreadState ts = Py.getThreadState();
+                if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
+                    throw Py.RuntimeError("maximum recursion depth exceeded");
+                try {
+                    return o1._div(o2);
+                } finally {
+                    --ts.recursion_depth;
+                }
+            }
         }
     }
 
@@ -1055,10 +1125,20 @@ public class PyInstance extends PyObject
         else {
             PyObject o1 = ((PyObject[])ctmp)[0];
             PyObject o2 = ((PyObject[])ctmp)[1];
-            if (this == o1) // Prevent recusion if __coerce__ return self
+            if (this == o1) {
+                // Prevent recusion if __coerce__ return self
                 return invoke_ex("__rdiv__", o2);
-            else
-                return o2._div(o1);
+            }
+            else {
+                ThreadState ts = Py.getThreadState();
+                if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
+                    throw Py.RuntimeError("maximum recursion depth exceeded");
+                try {
+                    return o2._div(o1);
+                } finally {
+                    --ts.recursion_depth;
+                }
+            }
         }
     }
 
@@ -1084,10 +1164,20 @@ public class PyInstance extends PyObject
         else {
             PyObject o1 = ((PyObject[])ctmp)[0];
             PyObject o2 = ((PyObject[])ctmp)[1];
-            if (this == o1) // Prevent recusion if __coerce__ return self
+            if (this == o1) {
+                // Prevent recusion if __coerce__ return self
                 return invoke_ex("__floordiv__", o2);
-            else
-                return o1._floordiv(o2);
+            }
+            else {
+                ThreadState ts = Py.getThreadState();
+                if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
+                    throw Py.RuntimeError("maximum recursion depth exceeded");
+                try {
+                    return o1._floordiv(o2);
+                } finally {
+                    --ts.recursion_depth;
+                }
+            }
         }
     }
 
@@ -1102,10 +1192,20 @@ public class PyInstance extends PyObject
         else {
             PyObject o1 = ((PyObject[])ctmp)[0];
             PyObject o2 = ((PyObject[])ctmp)[1];
-            if (this == o1) // Prevent recusion if __coerce__ return self
+            if (this == o1) {
+                // Prevent recusion if __coerce__ return self
                 return invoke_ex("__rfloordiv__", o2);
-            else
-                return o2._floordiv(o1);
+            }
+            else {
+                ThreadState ts = Py.getThreadState();
+                if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
+                    throw Py.RuntimeError("maximum recursion depth exceeded");
+                try {
+                    return o2._floordiv(o1);
+                } finally {
+                    --ts.recursion_depth;
+                }
+            }
         }
     }
 
@@ -1131,10 +1231,20 @@ public class PyInstance extends PyObject
         else {
             PyObject o1 = ((PyObject[])ctmp)[0];
             PyObject o2 = ((PyObject[])ctmp)[1];
-            if (this == o1) // Prevent recusion if __coerce__ return self
+            if (this == o1) {
+                // Prevent recusion if __coerce__ return self
                 return invoke_ex("__truediv__", o2);
-            else
-                return o1._truediv(o2);
+            }
+            else {
+                ThreadState ts = Py.getThreadState();
+                if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
+                    throw Py.RuntimeError("maximum recursion depth exceeded");
+                try {
+                    return o1._truediv(o2);
+                } finally {
+                    --ts.recursion_depth;
+                }
+            }
         }
     }
 
@@ -1149,10 +1259,20 @@ public class PyInstance extends PyObject
         else {
             PyObject o1 = ((PyObject[])ctmp)[0];
             PyObject o2 = ((PyObject[])ctmp)[1];
-            if (this == o1) // Prevent recusion if __coerce__ return self
+            if (this == o1) {
+                // Prevent recusion if __coerce__ return self
                 return invoke_ex("__rtruediv__", o2);
-            else
-                return o2._truediv(o1);
+            }
+            else {
+                ThreadState ts = Py.getThreadState();
+                if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
+                    throw Py.RuntimeError("maximum recursion depth exceeded");
+                try {
+                    return o2._truediv(o1);
+                } finally {
+                    --ts.recursion_depth;
+                }
+            }
         }
     }
 
@@ -1178,10 +1298,20 @@ public class PyInstance extends PyObject
         else {
             PyObject o1 = ((PyObject[])ctmp)[0];
             PyObject o2 = ((PyObject[])ctmp)[1];
-            if (this == o1) // Prevent recusion if __coerce__ return self
+            if (this == o1) {
+                // Prevent recusion if __coerce__ return self
                 return invoke_ex("__mod__", o2);
-            else
-                return o1._mod(o2);
+            }
+            else {
+                ThreadState ts = Py.getThreadState();
+                if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
+                    throw Py.RuntimeError("maximum recursion depth exceeded");
+                try {
+                    return o1._mod(o2);
+                } finally {
+                    --ts.recursion_depth;
+                }
+            }
         }
     }
 
@@ -1196,10 +1326,20 @@ public class PyInstance extends PyObject
         else {
             PyObject o1 = ((PyObject[])ctmp)[0];
             PyObject o2 = ((PyObject[])ctmp)[1];
-            if (this == o1) // Prevent recusion if __coerce__ return self
+            if (this == o1) {
+                // Prevent recusion if __coerce__ return self
                 return invoke_ex("__rmod__", o2);
-            else
-                return o2._mod(o1);
+            }
+            else {
+                ThreadState ts = Py.getThreadState();
+                if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
+                    throw Py.RuntimeError("maximum recursion depth exceeded");
+                try {
+                    return o2._mod(o1);
+                } finally {
+                    --ts.recursion_depth;
+                }
+            }
         }
     }
 
@@ -1225,10 +1365,20 @@ public class PyInstance extends PyObject
         else {
             PyObject o1 = ((PyObject[])ctmp)[0];
             PyObject o2 = ((PyObject[])ctmp)[1];
-            if (this == o1) // Prevent recusion if __coerce__ return self
+            if (this == o1) {
+                // Prevent recusion if __coerce__ return self
                 return invoke_ex("__divmod__", o2);
-            else
-                return o1._divmod(o2);
+            }
+            else {
+                ThreadState ts = Py.getThreadState();
+                if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
+                    throw Py.RuntimeError("maximum recursion depth exceeded");
+                try {
+                    return o1._divmod(o2);
+                } finally {
+                    --ts.recursion_depth;
+                }
+            }
         }
     }
 
@@ -1243,10 +1393,20 @@ public class PyInstance extends PyObject
         else {
             PyObject o1 = ((PyObject[])ctmp)[0];
             PyObject o2 = ((PyObject[])ctmp)[1];
-            if (this == o1) // Prevent recusion if __coerce__ return self
+            if (this == o1) {
+                // Prevent recusion if __coerce__ return self
                 return invoke_ex("__rdivmod__", o2);
-            else
-                return o2._divmod(o1);
+            }
+            else {
+                ThreadState ts = Py.getThreadState();
+                if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
+                    throw Py.RuntimeError("maximum recursion depth exceeded");
+                try {
+                    return o2._divmod(o1);
+                } finally {
+                    --ts.recursion_depth;
+                }
+            }
         }
     }
 
@@ -1261,10 +1421,20 @@ public class PyInstance extends PyObject
         else {
             PyObject o1 = ((PyObject[])ctmp)[0];
             PyObject o2 = ((PyObject[])ctmp)[1];
-            if (this == o1) // Prevent recusion if __coerce__ return self
+            if (this == o1) {
+                // Prevent recusion if __coerce__ return self
                 return invoke_ex("__pow__", o2);
-            else
-                return o1._pow(o2);
+            }
+            else {
+                ThreadState ts = Py.getThreadState();
+                if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
+                    throw Py.RuntimeError("maximum recursion depth exceeded");
+                try {
+                    return o1._pow(o2);
+                } finally {
+                    --ts.recursion_depth;
+                }
+            }
         }
     }
 
@@ -1279,10 +1449,20 @@ public class PyInstance extends PyObject
         else {
             PyObject o1 = ((PyObject[])ctmp)[0];
             PyObject o2 = ((PyObject[])ctmp)[1];
-            if (this == o1) // Prevent recusion if __coerce__ return self
+            if (this == o1) {
+                // Prevent recusion if __coerce__ return self
                 return invoke_ex("__rpow__", o2);
-            else
-                return o2._pow(o1);
+            }
+            else {
+                ThreadState ts = Py.getThreadState();
+                if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
+                    throw Py.RuntimeError("maximum recursion depth exceeded");
+                try {
+                    return o2._pow(o1);
+                } finally {
+                    --ts.recursion_depth;
+                }
+            }
         }
     }
 
@@ -1308,10 +1488,20 @@ public class PyInstance extends PyObject
         else {
             PyObject o1 = ((PyObject[])ctmp)[0];
             PyObject o2 = ((PyObject[])ctmp)[1];
-            if (this == o1) // Prevent recusion if __coerce__ return self
+            if (this == o1) {
+                // Prevent recusion if __coerce__ return self
                 return invoke_ex("__lshift__", o2);
-            else
-                return o1._lshift(o2);
+            }
+            else {
+                ThreadState ts = Py.getThreadState();
+                if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
+                    throw Py.RuntimeError("maximum recursion depth exceeded");
+                try {
+                    return o1._lshift(o2);
+                } finally {
+                    --ts.recursion_depth;
+                }
+            }
         }
     }
 
@@ -1326,10 +1516,20 @@ public class PyInstance extends PyObject
         else {
             PyObject o1 = ((PyObject[])ctmp)[0];
             PyObject o2 = ((PyObject[])ctmp)[1];
-            if (this == o1) // Prevent recusion if __coerce__ return self
+            if (this == o1) {
+                // Prevent recusion if __coerce__ return self
                 return invoke_ex("__rlshift__", o2);
-            else
-                return o2._lshift(o1);
+            }
+            else {
+                ThreadState ts = Py.getThreadState();
+                if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
+                    throw Py.RuntimeError("maximum recursion depth exceeded");
+                try {
+                    return o2._lshift(o1);
+                } finally {
+                    --ts.recursion_depth;
+                }
+            }
         }
     }
 
@@ -1355,10 +1555,20 @@ public class PyInstance extends PyObject
         else {
             PyObject o1 = ((PyObject[])ctmp)[0];
             PyObject o2 = ((PyObject[])ctmp)[1];
-            if (this == o1) // Prevent recusion if __coerce__ return self
+            if (this == o1) {
+                // Prevent recusion if __coerce__ return self
                 return invoke_ex("__rshift__", o2);
-            else
-                return o1._rshift(o2);
+            }
+            else {
+                ThreadState ts = Py.getThreadState();
+                if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
+                    throw Py.RuntimeError("maximum recursion depth exceeded");
+                try {
+                    return o1._rshift(o2);
+                } finally {
+                    --ts.recursion_depth;
+                }
+            }
         }
     }
 
@@ -1373,10 +1583,20 @@ public class PyInstance extends PyObject
         else {
             PyObject o1 = ((PyObject[])ctmp)[0];
             PyObject o2 = ((PyObject[])ctmp)[1];
-            if (this == o1) // Prevent recusion if __coerce__ return self
+            if (this == o1) {
+                // Prevent recusion if __coerce__ return self
                 return invoke_ex("__rrshift__", o2);
-            else
-                return o2._rshift(o1);
+            }
+            else {
+                ThreadState ts = Py.getThreadState();
+                if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
+                    throw Py.RuntimeError("maximum recursion depth exceeded");
+                try {
+                    return o2._rshift(o1);
+                } finally {
+                    --ts.recursion_depth;
+                }
+            }
         }
     }
 
@@ -1402,10 +1622,20 @@ public class PyInstance extends PyObject
         else {
             PyObject o1 = ((PyObject[])ctmp)[0];
             PyObject o2 = ((PyObject[])ctmp)[1];
-            if (this == o1) // Prevent recusion if __coerce__ return self
+            if (this == o1) {
+                // Prevent recusion if __coerce__ return self
                 return invoke_ex("__and__", o2);
-            else
-                return o1._and(o2);
+            }
+            else {
+                ThreadState ts = Py.getThreadState();
+                if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
+                    throw Py.RuntimeError("maximum recursion depth exceeded");
+                try {
+                    return o1._and(o2);
+                } finally {
+                    --ts.recursion_depth;
+                }
+            }
         }
     }
 
@@ -1420,10 +1650,20 @@ public class PyInstance extends PyObject
         else {
             PyObject o1 = ((PyObject[])ctmp)[0];
             PyObject o2 = ((PyObject[])ctmp)[1];
-            if (this == o1) // Prevent recusion if __coerce__ return self
+            if (this == o1) {
+                // Prevent recusion if __coerce__ return self
                 return invoke_ex("__rand__", o2);
-            else
-                return o2._and(o1);
+            }
+            else {
+                ThreadState ts = Py.getThreadState();
+                if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
+                    throw Py.RuntimeError("maximum recursion depth exceeded");
+                try {
+                    return o2._and(o1);
+                } finally {
+                    --ts.recursion_depth;
+                }
+            }
         }
     }
 
@@ -1449,10 +1689,20 @@ public class PyInstance extends PyObject
         else {
             PyObject o1 = ((PyObject[])ctmp)[0];
             PyObject o2 = ((PyObject[])ctmp)[1];
-            if (this == o1) // Prevent recusion if __coerce__ return self
+            if (this == o1) {
+                // Prevent recusion if __coerce__ return self
                 return invoke_ex("__or__", o2);
-            else
-                return o1._or(o2);
+            }
+            else {
+                ThreadState ts = Py.getThreadState();
+                if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
+                    throw Py.RuntimeError("maximum recursion depth exceeded");
+                try {
+                    return o1._or(o2);
+                } finally {
+                    --ts.recursion_depth;
+                }
+            }
         }
     }
 
@@ -1467,10 +1717,20 @@ public class PyInstance extends PyObject
         else {
             PyObject o1 = ((PyObject[])ctmp)[0];
             PyObject o2 = ((PyObject[])ctmp)[1];
-            if (this == o1) // Prevent recusion if __coerce__ return self
+            if (this == o1) {
+                // Prevent recusion if __coerce__ return self
                 return invoke_ex("__ror__", o2);
-            else
-                return o2._or(o1);
+            }
+            else {
+                ThreadState ts = Py.getThreadState();
+                if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
+                    throw Py.RuntimeError("maximum recursion depth exceeded");
+                try {
+                    return o2._or(o1);
+                } finally {
+                    --ts.recursion_depth;
+                }
+            }
         }
     }
 
@@ -1496,10 +1756,20 @@ public class PyInstance extends PyObject
         else {
             PyObject o1 = ((PyObject[])ctmp)[0];
             PyObject o2 = ((PyObject[])ctmp)[1];
-            if (this == o1) // Prevent recusion if __coerce__ return self
+            if (this == o1) {
+                // Prevent recusion if __coerce__ return self
                 return invoke_ex("__xor__", o2);
-            else
-                return o1._xor(o2);
+            }
+            else {
+                ThreadState ts = Py.getThreadState();
+                if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
+                    throw Py.RuntimeError("maximum recursion depth exceeded");
+                try {
+                    return o1._xor(o2);
+                } finally {
+                    --ts.recursion_depth;
+                }
+            }
         }
     }
 
@@ -1514,10 +1784,20 @@ public class PyInstance extends PyObject
         else {
             PyObject o1 = ((PyObject[])ctmp)[0];
             PyObject o2 = ((PyObject[])ctmp)[1];
-            if (this == o1) // Prevent recusion if __coerce__ return self
+            if (this == o1) {
+                // Prevent recusion if __coerce__ return self
                 return invoke_ex("__rxor__", o2);
-            else
-                return o2._xor(o1);
+            }
+            else {
+                ThreadState ts = Py.getThreadState();
+                if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
+                    throw Py.RuntimeError("maximum recursion depth exceeded");
+                try {
+                    return o2._xor(o1);
+                } finally {
+                    --ts.recursion_depth;
+                }
+            }
         }
     }
 

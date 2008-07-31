@@ -435,7 +435,7 @@ public class PyComplex extends PyObject {
     }
 
     public PyObject __rfloordiv__(PyObject left) {
-        return complex___floordiv__(left);
+        return complex___rfloordiv__(left);
     }
 
     @ExposedMethod(type = MethodType.BINARY)
