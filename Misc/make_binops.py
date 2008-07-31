@@ -100,8 +100,8 @@ comment = """\
 template1 = comment + """\
     public %(ret)s __%(name)s__() {
         PyObject ret = invoke("__%(name)s__");
-        if (ret instanceof %(ret)s)
-            return (%(ret)s)ret;
+        if (%(checks)s)
+            return %(cast)sret;
         throw Py.TypeError("__%(name)s__() should return a %(retname)s");
     }
 
@@ -115,17 +115,33 @@ template2 = comment + """\
 
 string = 'PyString', 'string'
 ops = [('hex', string), ('oct', string), 
-		('int', ('PyInteger', 'int')), ('float', ('PyFloat', 'float')), 
-		('long', ('PyLong', 'long')), ('complex', ('PyComplex', 'complex')),
+		('int', ('PyObject', 'int'), ('PyLong', 'PyInteger')),
+		('float', ('PyFloat', 'float')), 
+		('long', ('PyObject', 'long'), ('PyLong', 'PyInteger')),
+		('complex', ('PyComplex', 'complex')),
 		('pos', None), ('neg', None), ('abs', None), ('invert', None)]
 	
 fp.write('    // Unary ops\n\n')	
-for name, ret in ops:
+for item in ops:
+        checks = None
+        if len(item) == 2:
+                name, ret = item
+        else:
+                name, ret, checks = item
 	if ret is None:
 		fp.write(template2 % {'name':name})
 	else:
 		ret, retname = ret
-		fp.write(template1 % {'name':name, 'ret':ret, 'retname':retname})
+		if checks:
+                        checks = ' || '.join(['ret instanceof %s' % check for check in checks])
+                else:
+                        checks = 'ret instanceof %s' % ret
+                if ret == 'PyObject':
+                        cast = ''
+                else:
+                        cast = '(%s)' % ret
+		fp.write(template1 % {'name':name, 'ret':ret, 'retname':retname,
+                                      'checks':checks, 'cast':cast})
 
 
 
