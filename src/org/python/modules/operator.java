@@ -85,8 +85,8 @@ class OperatorFunctions extends PyBuiltinFunctionSet
 
     public PyObject __call__(PyObject arg1, PyObject arg2, PyObject arg3) {
         switch (index) {
-        case 22: arg1.__delslice__(arg2, arg3); return Py.None;
-        case 24: return arg1.__getslice__(arg2, arg3);
+        case 22: arg1.__delslice__(arg2.__index__(), arg3.__index__()); return Py.None;
+        case 24: return arg1.__getslice__(arg2.__index__(), arg3.__index__());
         case 25: arg1.__setitem__(arg2, arg3); return Py.None;
         default:
             throw info.unexpectedCall(3, false);
@@ -98,7 +98,7 @@ class OperatorFunctions extends PyBuiltinFunctionSet
     {
         switch (index) {
         case 26:
-            arg1.__setslice__(arg2, arg3, arg4);
+            arg1.__setslice__(arg2.__index__(), arg3.__index__(), arg4);
             return Py.None;
         default:
             throw info.unexpectedCall(4, false);

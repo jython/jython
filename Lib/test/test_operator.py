@@ -122,7 +122,9 @@ class OperatorTestCase(unittest.TestCase):
         self.failUnless(operator.concat([1, 2], [3, 4]) == [1, 2, 3, 4])
         self.failUnless(operator.concat(Seq1([5, 6]), Seq1([7])) == [5, 6, 7])
         self.failUnless(operator.concat(Seq2([5, 6]), Seq2([7])) == [5, 6, 7])
-        self.failUnlessRaises(TypeError, operator.concat, 13, 29)
+        if not test_support.is_jython:
+            # Jython concat is add
+            self.failUnlessRaises(TypeError, operator.concat, 13, 29)
 
     def test_countOf(self):
         self.failUnlessRaises(TypeError, operator.countOf)
@@ -291,7 +293,9 @@ class OperatorTestCase(unittest.TestCase):
         self.failUnless(operator.repeat(a, 2) == [4, 5, 6, 4, 5, 6])
         self.failUnless(operator.repeat(a, 1) == [4, 5, 6])
         self.failUnless(operator.repeat(a, 0) == [])
-        self.failUnlessRaises(TypeError, operator.repeat, 6, 7)
+        if not test_support.is_jython:
+            # Jython repeat is mul
+            self.failUnlessRaises(TypeError, operator.repeat, 6, 7)
 
     def test_rshift(self):
         self.failUnlessRaises(TypeError, operator.rshift)
