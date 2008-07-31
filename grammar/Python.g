@@ -1051,17 +1051,14 @@ arglist : a1=argument[true] (COMMA a2+=argument[false])*
             | DOUBLESTAR kwargs=test[expr_contextType.Load]
             )?
           )? { if ($a2 != null) {
-                   if ($a1.gen) {
+                   if ($a1.tree.getType() == GenFor) {
                        throwGenExpNotSoleArg($a1.tree);
                    }
-                   //FIXME: not working in 3.1b2
-                   /*
                    for (int i=0;i<$a2.size();i++) {
-                       if (((argument_return)$a2.get(i)).gen) {
+                       if (((PythonTree)$a2.get(i)).getType() == GenFor) {
                            throwGenExpNotSoleArg(((argument_return)$a2.get(i)).tree);
                        }
                    }
-                   */
                }
              }
        -> ^(Args argument+) ^(StarArgs $starargs)? ^(KWArgs $kwargs)?
@@ -1072,13 +1069,12 @@ arglist : a1=argument[true] (COMMA a2+=argument[false])*
         ;
 
 //argument: test [gen_for] | test '=' test  # Really [keyword '='] test
-argument[boolean first] returns [boolean gen]
+argument[boolean first]
     : t1=test[expr_contextType.Load]
          ( (ASSIGN t2=test[expr_contextType.Load]) -> ^(Keyword ^(Arg $t1) ^(Value $t2)?)
          | gen_for { if (!first) {
                            throwGenExpNotSoleArg($gen_for.tree);
                      }
-                     $gen = true;
                    }
         -> ^(GenFor $t1 gen_for)
          | -> ^(Arg $t1)
