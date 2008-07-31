@@ -1044,11 +1044,14 @@ arglist : a1=argument[true] (COMMA a2+=argument[false])*
                    if ($a1.gen) {
                        throwGenExpNotSoleArg($a1.tree);
                    }
+                   //FIXME: not working in 3.1b2
+                   /*
                    for (int i=0;i<$a2.size();i++) {
                        if (((argument_return)$a2.get(i)).gen) {
                            throwGenExpNotSoleArg(((argument_return)$a2.get(i)).tree);
                        }
                    }
+                   */
                }
              }
        -> ^(Args argument+) ^(StarArgs $starargs)? ^(KWArgs $kwargs)?
