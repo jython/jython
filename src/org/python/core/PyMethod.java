@@ -127,16 +127,20 @@ public class PyMethod extends PyObject {
         if (!(other instanceof PyMethod)) {
             return -2;
         }
-        PyMethod mother = (PyMethod)other;
-        if (im_self != mother.im_self) {
-            return System.identityHashCode(im_self) <
-                    System.identityHashCode(mother.im_self) ? -1 : 1;
+        PyMethod otherMethod = (PyMethod)other;
+        int cmp = im_func._cmp(otherMethod.im_func);
+        if (cmp != 0) {
+            return cmp;
         }
-        if (im_func != mother.im_func) {
-            return System.identityHashCode(im_func) <
-                    System.identityHashCode(mother.im_func) ? -1 : 1;
+        if (im_self == otherMethod.im_self) {
+            return 0;
         }
-        return 0;
+        if (im_self == null || otherMethod.im_self == null) {
+            return System.identityHashCode(im_self) < System.identityHashCode(otherMethod.im_self)
+                    ? -1 : 1;
+        } else {
+            return im_self._cmp(otherMethod.im_self);
+        }
     }
 
     @Override

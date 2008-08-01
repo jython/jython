@@ -250,8 +250,8 @@ testme != 1
 
 del testme
 if sys.platform[:4] == 'java':
-    import java
-    java.lang.System.gc()
+    from test_weakref import extra_collect
+    extra_collect()
 
 # Interfering tests
 

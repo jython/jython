@@ -1469,7 +1469,6 @@ _failures = {
     'java':
         """
         test_ast
-        test_class
         test_codecencodings_cn
         test_codecencodings_hk
         test_codecencodings_jp
