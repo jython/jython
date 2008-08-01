@@ -6,7 +6,6 @@ import org.antlr.runtime.Lexer;
 import org.antlr.runtime.RecognitionException;
 
 public class ListErrorHandler implements ErrorHandler {
-    private BaseRecognizer recognizer;
 
     public void reportError(BaseRecognizer br, RecognitionException re) {
         br.reportError(re);

@@ -6,7 +6,6 @@ import org.antlr.runtime.Lexer;
 import org.antlr.runtime.RecognitionException;
 
 public class FailFastHandler implements ErrorHandler {
-    private BaseRecognizer recognizer;
 
     public void reportError(BaseRecognizer br, RecognitionException re) {
         throw new ParseException(message(br,re), re);
