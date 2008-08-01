@@ -703,12 +703,11 @@ public class PySystemState extends PyObject
 
     private static PyList initPath(Properties props, boolean standalone, String jarFileName) {
         PyList path = new PyList();
-        addPaths(path, props.getProperty("python.prepath", ""));
+        addPaths(path, props.getProperty("python.path", ""));
         if (prefix != null) {
             String libpath = new File(prefix, "Lib").toString();
             path.append(new PyString(libpath));
         }
-        addPaths(path, props.getProperty("python.path", ""));
         if (standalone) {
             // standalone jython: add the /Lib directory inside JYTHON_JAR to the path
             addPaths(path, jarFileName + "/Lib");
