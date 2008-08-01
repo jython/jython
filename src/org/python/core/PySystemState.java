@@ -636,7 +636,7 @@ public class PySystemState extends PyObject
      * @return a PyObject path string or Py.None
      */
     private static PyObject initExecutable(Properties props) {
-        String executable = (String)props.get("python.executable");
+        String executable = props.getProperty("python.executable");
         if (executable == null) {
             return Py.None;
         }
