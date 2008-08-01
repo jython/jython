@@ -54,7 +54,10 @@ public class jython
         //"-x       : skip first line of source, allowing use of non-Unix forms of #!cmd\n" +
         "file     : program read from script file\n" +
         "-        : program read from stdin (default; interactive mode if a tty)\n" +
-        "arg ...  : arguments passed to program in sys.argv[1:]";
+        "arg ...  : arguments passed to program in sys.argv[1:]\n" +
+        "Other environment variables:\n" +
+        "JYTHONPATH: '" + java.io.File.pathSeparator + "'-separated list of directories prefixed to the default module\n" +
+        "            search path.  The result is sys.path.";
 
     public static void runJar(String filename) {
         // TBD: this is kind of gross because a local called `zipfile' just

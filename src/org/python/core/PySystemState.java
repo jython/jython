@@ -440,13 +440,14 @@ public class PySystemState extends PyObject
             } catch (Exception exc) {
             }
         }
+	try {
+	    String jythonpath = System.getenv("JYTHONPATH");
+	    if (jythonpath != null)
+		registry.setProperty("python.path", jythonpath);
+	} catch (SecurityException e) {
+	}
         if (postProperties != null) {
-            for (Enumeration e=postProperties.keys(); e.hasMoreElements();)
-            {
-                String key = (String)e.nextElement();
-                String value = (String)postProperties.get(key);
-                registry.put(key, value);
-            }
+	    registry.putAll(postProperties);
         }
         if (standalone) {
             // set default standalone property (if not yet set)
