@@ -60,6 +60,8 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
                 return Py.newUnicode(__builtin__.unichr(Py.py2int(arg1, "unichr(): 1st arg can't be coerced to int")));
             case 7:
                 return __builtin__.abs(arg1);
+            case 9:
+                return __builtin__.apply(arg1);
             case 11:
                 return Py.newInteger(__builtin__.id(arg1));
             case 12:
@@ -335,7 +337,7 @@ public class __builtin__ {
         dict.__setitem__("__debug__", Py.One);
 
         dict.__setitem__("abs", new BuiltinFunctions("abs", 7, 1));
-        dict.__setitem__("apply", new BuiltinFunctions("apply", 9, 2, 3));
+        dict.__setitem__("apply", new BuiltinFunctions("apply", 9, 1, 3));
         dict.__setitem__("callable", new BuiltinFunctions("callable", 14, 1));
         dict.__setitem__("coerce", new BuiltinFunctions("coerce", 13, 2));
         dict.__setitem__("chr", new BuiltinFunctions("chr", 0, 1));
@@ -391,6 +393,10 @@ public class __builtin__ {
         throw Py.TypeError("bad operand type for abs()");
     }
 
+    public static PyObject apply(PyObject o) {
+	return o.__call__();
+    }
+    
     public static PyObject apply(PyObject o, PyObject args) {
         return o.__call__(Py.make_array(args));
     }
