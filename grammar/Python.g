@@ -1385,8 +1385,10 @@ LEADING_WS
             for (int i=0; i<spaces; i++) {
                 indentation[i] = ' ';
             }
-            String s = new String(indentation);
-            emit(new ClassicToken(LEADING_WS,new String(indentation)));
+            ClassicToken c = new ClassicToken(LEADING_WS,new String(indentation));
+            c.setLine(input.getLine());
+            c.setCharPositionInLine(input.getCharPositionInLine());
+            emit(c);
             }
             // kill trailing newline if present and then ignore
             ( ('\r')? '\n' {if (state.token!=null) state.token.setChannel(HIDDEN); else $channel=HIDDEN;})*

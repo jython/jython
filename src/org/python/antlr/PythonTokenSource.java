@@ -202,7 +202,7 @@ public class PythonTokenSource implements TokenSource {
         }
         else if (cpos < lastIndent) { // they dedented
             // how far back did we dedent?
-            int prevIndex = findPreviousIndent(cpos);
+            int prevIndex = findPreviousIndent(cpos, t);
             //System.out.println("dedented; prevIndex of cpos="+cpos+" is "+prevIndex);
             // generate DEDENTs for each indent level we backed up over
             for (int d = sp - 1; d >= prevIndex; d--) {
@@ -255,13 +255,20 @@ public class PythonTokenSource implements TokenSource {
     }
 
     /** Return the index on stack of previous indent level == i else -1 */
-    protected int findPreviousIndent(int i) {
+    protected int findPreviousIndent(int i, Token t) {
         for (int j = sp - 1; j >= 0; j--) {
             if (indentStack[j] == i) {
                 return j;
             }
         }
-        return FIRST_CHAR_POSITION;
+        //The -2 is for the special case of getCharPositionInLine in multiline str nodes.
+        if (i == -1 || i == -2) {
+            return FIRST_CHAR_POSITION;
+        }
+        ParseException p = new ParseException("unindent does not match any outer indentation level");
+        p.line = t.getLine();
+        p.charPositionInLine = t.getCharPositionInLine();
+        throw p;
     }
 
     public String stackString() {
