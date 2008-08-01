@@ -73,7 +73,7 @@ statement or the built-in function eval():
     >>> exec "x = 3; print x" in a
     3
     >>> print sorted(a.keys())
-    [1, 2, '__builtins__', 'x']
+    [1, 2, 'x']
     >>> print a['x']
     3
     >>>
@@ -199,10 +199,10 @@ Instead, you can get the same information from the list type:
      '__mul__',
      '__ne__',
      '__new__',
+     '__radd__',
      '__reduce__',
      '__reduce_ex__',
      '__repr__',
-     '__reversed__',
      '__rmul__',
      '__setattr__',
      '__setitem__',

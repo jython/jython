@@ -377,11 +377,6 @@ public class PyList extends PySequenceList {
         return ret;
     }
 
-    @ExposedMethod
-    final boolean list___nonzero__() {
-        return seq___nonzero__();
-    }
-
     public PyObject __iter__() {
         return list___iter__();
     }
