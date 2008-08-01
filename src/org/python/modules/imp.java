@@ -33,6 +33,7 @@ public class imp {
     public static final int PY_COMPILED = 2;
     public static final int C_EXTENSION = 3;
     public static final int PKG_DIRECTORY = 5;
+    public static final int C_BUILTIN = 6;
     public static final int PY_FROZEN = 7;
     public static final int IMP_HOOK = 9;
 

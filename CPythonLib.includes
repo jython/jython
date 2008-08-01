@@ -69,6 +69,7 @@ htmlentitydefs.py
 htmllib.py
 HTMLParser.py
 httplib.py
+ihooks.py
 imaplib.py
 imghdr.py
 inspect.py
