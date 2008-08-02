@@ -536,7 +536,7 @@ def run_doctest(module, verbosity=None):
 
 def threading_setup():
     import threading
-    return len(threading._active), len(threading._limbo)
+    return len(threading._active), 0
 
 def threading_cleanup(num_active, num_limbo):
     import threading
@@ -545,11 +545,6 @@ def threading_cleanup(num_active, num_limbo):
     _MAX_COUNT = 10
     count = 0
     while len(threading._active) != num_active and count < _MAX_COUNT:
-        count += 1
-        time.sleep(0.1)
-
-    count = 0
-    while len(threading._limbo) != num_limbo and count < _MAX_COUNT:
         count += 1
         time.sleep(0.1)
 
