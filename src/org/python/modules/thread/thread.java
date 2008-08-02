@@ -69,7 +69,13 @@ public class thread implements ClassDictInit {
                 return stack_size;
             case 1:
                 long old_stack_size = stack_size;
-                stack_size = ((PyInteger)args[0].__int__()).getValue();
+                int proposed_stack_size = ((PyInteger)args[0].__int__()).getValue();
+                if (proposed_stack_size != 0 && proposed_stack_size < 32768) {
+                    // as specified by Python, Java quietly ignores what
+                    // it considers are too small
+                    throw Py.ValueError("size not valid: " + proposed_stack_size + " bytes");
+                }
+                stack_size = proposed_stack_size;
                 return old_stack_size;
             default:
                 throw Py.TypeError("stack_size() takes at most 1 argument (" + args.length + "given)");
