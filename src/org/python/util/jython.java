@@ -144,6 +144,10 @@ public class jython
         // Decide if stdin is interactive
         if (!opts.fixInteractive && opts.interactive) {
             opts.interactive = ((PyFile)Py.defaultSystemState.stdin).isatty();
+            if (!opts.interactive) {
+                PySystemState systemState = Py.getSystemState();
+                systemState.ps1 = systemState.ps2 = new PyString();
+            }
         }
         
         // Print banner and copyright information (or not)
@@ -245,7 +249,7 @@ public class jython
             }
         }
 
-        if (opts.fixInteractive || opts.interactive) {
+        if (opts.fixInteractive || (opts.filename == null && opts.command == null)) {
             if (opts.encoding == null) {
                 opts.encoding = PySystemState.registry.getProperty(
                                 "python.console.encoding", null);
