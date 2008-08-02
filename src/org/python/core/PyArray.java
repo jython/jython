@@ -371,17 +371,22 @@ public class PyArray extends PySequence implements Cloneable {
     @Override
     public String toString() {
         if (__len__() == 0) {
-            return String.format("array('%s')", typecode);
+            return String.format("array(%s)", encodeTypecode(typecode));
         }
         String value;
         if ("c".equals(typecode)) {
-            value = tostring();
+            value = PyString.encode_UnicodeEscape(tostring(), true);
         } else {
             value = tolist().toString();
         }
-        return String.format("array('%s', %s)", typecode, value);
+        return String.format("array(%s, %s)", encodeTypecode(typecode), value);
     }
 
+    private String encodeTypecode(String typecode) {
+        if (typecode.length() > 1) return typecode;
+        else return "'" + typecode + "'";
+    }
+    
     /**
      * 
      * @param c
