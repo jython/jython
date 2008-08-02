@@ -387,10 +387,7 @@ public class __builtin__ {
     }
 
     public static PyObject abs(PyObject o) {
-        if (o.isNumberType()) {
-            return o.__abs__();
-        }
-        throw Py.TypeError("bad operand type for abs()");
+        return o.__abs__();
     }
 
     public static PyObject apply(PyObject o) {
@@ -725,14 +722,7 @@ public class __builtin__ {
     }
 
     public static PyString hex(PyObject o) {
-        try {
-            return o.__hex__();
-        } catch (PyException e) {
-            if (Py.matchException(e, Py.AttributeError)) {
-                throw Py.TypeError("hex() argument can't be converted to hex");
-            }
-            throw e;
-        }
+        return o.__hex__();
     }
 
     public static long id(PyObject o) {
@@ -856,14 +846,7 @@ public class __builtin__ {
     }
 
     public static PyString oct(PyObject o) {
-        try {
-            return o.__oct__();
-        } catch (PyException e) {
-            if (Py.matchException(e, Py.AttributeError)) {
-                throw Py.TypeError("oct() argument can't be converted to oct");
-            }
-            throw e;
-        }
+        return o.__oct__();
     }
 
     public static final int ord(PyObject c) {

@@ -2,9 +2,20 @@
 
 Made for Jython.
 """
-import test_support
 import types
 import unittest
+from test import test_support
+
+class Old:
+    pass
+
+
+class New(object):
+    pass
+
+
+old = Old()
+new = New()
 
 class TestDescrTestCase(unittest.TestCase):
 
@@ -255,10 +266,39 @@ class InPlaceTestCase(unittest.TestCase):
         self.assertEqual(foo, set([1]))
 
 
+class DescrExceptionsTestCase(unittest.TestCase):
+
+    def test_hex(self):
+        self._test(hex)
+
+    def test_oct(self):
+        self._test(oct)
+
+    def test_other(self):
+        for op in '-', '+', '~':
+            try:
+                eval('%s(old)' % op)
+            except AttributeError:
+                pass
+            else:
+                self._assert(False, 'Expected an AttributeError, op: %s' % op)
+            try:
+                eval('%s(new)' % op)
+            except TypeError:
+                pass
+            else:
+                self._assert(False, 'Expected a TypeError, op: %s' % op)
+
+    def _test(self, func):
+        self.assertRaises(AttributeError, func, old)
+        self.assertRaises(TypeError, func, new)
+
+
 def test_main():
     test_support.run_unittest(TestDescrTestCase,
                               SubclassDescrTestCase,
-                              InPlaceTestCase)
+                              InPlaceTestCase,
+                              DescrExceptionsTestCase)
 
 if __name__ == '__main__':
     test_main()

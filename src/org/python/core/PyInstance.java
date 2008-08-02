@@ -264,7 +264,7 @@ public class PyInstance extends PyObject
             }
         }
         if (f == null) f = ifindfunction(name);
-        if (f == null) throw Py.AttributeError(name);
+        if (f == null) noAttributeError(name);
         return f.__call__();
     }
 
@@ -281,7 +281,7 @@ public class PyInstance extends PyObject
             }
         }
         if (f == null) f = ifindfunction(name);
-        if (f == null) throw Py.AttributeError(name);
+        if (f == null) noAttributeError(name);
         return f.__call__(arg1);
     }
 
@@ -298,8 +298,13 @@ public class PyInstance extends PyObject
             }
         }
         if (f == null) f = ifindfunction(name);
-        if (f == null) throw Py.AttributeError(name);
+        if (f == null) noAttributeError(name);
         return f.__call__(arg1, arg2);
+    }
+
+    public void noAttributeError(String name) {
+        throw Py.AttributeError(String.format("%.50s instance has no attribute '%.400s'",
+                                              instclass.__name__, name));
     }
 
 

@@ -581,7 +581,8 @@ n     **/
      * @exception Py.KeyError if the key is not found in the container
      **/
     public void __delitem__(PyObject key) {
-        throw Py.AttributeError("__delitem__");
+        throw Py.TypeError(String.format("'%.200s' object doesn't support item deletion",
+                                         getType().fastGetName()));
     }
 
     /**
@@ -1504,7 +1505,7 @@ n     **/
      * @return a string representing this object as a hexadecimal number.
      **/
     public PyString __hex__() {
-        throw Py.AttributeError("__hex__");
+        throw Py.TypeError("hex() argument can't be converted to hex");
     }
 
     /**
@@ -1515,7 +1516,7 @@ n     **/
      * @return a string representing this object as an octal number.
      **/
     public PyString __oct__() {
-        throw Py.AttributeError("__oct__");
+        throw Py.TypeError("oct() argument can't be converted to oct");
     }
 
     /**
@@ -1568,7 +1569,8 @@ n     **/
      * @return +this.
      **/
     public PyObject __pos__() {
-        throw Py.AttributeError("__pos__");
+        throw Py.TypeError(String.format("bad operand type for unary +: '%.200s'",
+                                         getType().fastGetName()));
     }
 
     /**
@@ -1577,7 +1579,8 @@ n     **/
      * @return -this.
      **/
     public PyObject __neg__() {
-        throw Py.AttributeError("__neg__");
+        throw Py.TypeError(String.format("bad operand type for unary -: '%.200s'",
+                                         getType().fastGetName()));
     }
 
     /**
@@ -1586,7 +1589,8 @@ n     **/
      * @return abs(this).
      **/
     public PyObject __abs__() {
-        throw Py.AttributeError("__abs__");
+        throw Py.TypeError(String.format("bad operand type for abs(): '%.200s'",
+                                         getType().fastGetName()));
     }
 
     /**
@@ -1595,7 +1599,8 @@ n     **/
      * @return ~this.
      **/
     public PyObject __invert__() {
-        throw Py.AttributeError("__invert__");
+        throw Py.TypeError(String.format("bad operand type for unary ~: '%.200s'",
+                                         getType().fastGetName()));
     }
 
     /**
