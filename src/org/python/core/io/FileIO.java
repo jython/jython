@@ -40,6 +40,9 @@ public class FileIO extends RawIOBase {
     /** true if the file is in appending mode */
     private boolean appending = false;
 
+    /** true if the file is opened for reading and writing */
+    private boolean plus = false;
+
     /**
      * Construct a FileIO instance for the specified file name.
      *
@@ -56,13 +59,17 @@ public class FileIO extends RawIOBase {
         File fullPath = new RelativeFile(name);
         String rafMode = "r" + (writable ? "w" : "");
         try {
+	    if (plus && mode.charAt(0) == 'r' && !fullPath.isFile()) {
+		writable = false;
+		throw new FileNotFoundException("");
+	    }
             file = new RandomAccessFile(fullPath, rafMode);
             fileChannel = file.getChannel();
         } catch (FileNotFoundException fnfe) {
             if (fullPath.isDirectory()) {
                 throw Py.IOError(errno.EISDIR, "Is a directory");
             }
-            if ( (rafMode.equals("rw") && !fullPath.canWrite()) ||
+            if ( (writable && !fullPath.canWrite()) ||
         	    fnfe.getMessage().endsWith("(Permission denied)")) {
                 throw Py.IOError(errno.EACCES, "Permission denied: '" + name + "'");
             }
@@ -99,30 +106,29 @@ public class FileIO extends RawIOBase {
      */
     private void parseMode(String mode) {
         boolean rwa = false;
-        boolean plus = false;
 
         for (int i = 0; i < mode.length(); i++) {
             switch (mode.charAt(i)) {
             case 'r':
-                if (rwa) {
+                if (plus || rwa) {
                     badMode();
                 }
                 readable = rwa = true;
                 break;
             case 'w':
-                if (rwa) {
+                if (plus || rwa) {
                     badMode();
                 }
                 writable = rwa = true;
                 break;
             case 'a':
-                if (rwa) {
+                if (plus || rwa) {
                     badMode();
                 }
                 appending = writable = rwa = true;
                 break;
             case '+':
-                if (plus) {
+                if (plus || !rwa) {
                     badMode();
                 }
                 readable = writable = plus = true;
