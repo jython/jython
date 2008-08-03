@@ -59,10 +59,10 @@ public class FileIO extends RawIOBase {
         File fullPath = new RelativeFile(name);
         String rafMode = "r" + (writable ? "w" : "");
         try {
-	    if (plus && mode.charAt(0) == 'r' && !fullPath.isFile()) {
-		writable = false;
-		throw new FileNotFoundException("");
-	    }
+            if (plus && mode.charAt(0) == 'r' && !fullPath.isFile()) {
+                writable = false;
+                throw new FileNotFoundException("");
+            }
             file = new RandomAccessFile(fullPath, rafMode);
             fileChannel = file.getChannel();
         } catch (FileNotFoundException fnfe) {
@@ -70,7 +70,7 @@ public class FileIO extends RawIOBase {
                 throw Py.IOError(errno.EISDIR, "Is a directory");
             }
             if ( (writable && !fullPath.canWrite()) ||
-        	    fnfe.getMessage().endsWith("(Permission denied)")) {
+                    fnfe.getMessage().endsWith("(Permission denied)")) {
                 throw Py.IOError(errno.EACCES, "Permission denied: '" + name + "'");
             }
             throw Py.IOError(errno.ENOENT, "No such file or directory: '" + name + "'");
@@ -163,13 +163,13 @@ public class FileIO extends RawIOBase {
             try {
                 fileChannel.truncate(0);
             } catch (IOException ioe) {
-        	// On Solaris and Linux, ftruncate(3C) returns EINVAL
-        	// if not a regular file whereas, e.g.,
-        	// open("/dev/null", "w") works fine.  Because we have
-        	// to simulate the "w" mode in Java, we suppress the
-        	// exception.
-        	if (ioe.getMessage().equals("Invalid argument"))
-        	    return;
+                // On Solaris and Linux, ftruncate(3C) returns EINVAL
+                // if not a regular file whereas, e.g.,
+                // open("/dev/null", "w") works fine.  Because we have
+                // to simulate the "w" mode in Java, we suppress the
+                // exception.
+                if (ioe.getMessage().equals("Invalid argument"))
+                    return;
                 throw Py.IOError(ioe);
             }
         }
