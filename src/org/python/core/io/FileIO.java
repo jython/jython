@@ -69,8 +69,8 @@ public class FileIO extends RawIOBase {
             if (fullPath.isDirectory()) {
                 throw Py.IOError(errno.EISDIR, "Is a directory");
             }
-            if ( (writable && !fullPath.canWrite()) ||
-                    fnfe.getMessage().endsWith("(Permission denied)")) {
+            if ((writable && !fullPath.canWrite())
+                || fnfe.getMessage().endsWith("(Permission denied)")) {
                 throw Py.IOError(errno.EACCES, "Permission denied: '" + name + "'");
             }
             throw Py.IOError(errno.ENOENT, "No such file or directory: '" + name + "'");
@@ -178,10 +178,11 @@ public class FileIO extends RawIOBase {
     /** {@inheritDoc} */
     public boolean isatty() {
         checkClosed();
-        if (file == null) return false;
-        
+        if (file == null) {
+            return false;
+        }
         try {
-            return imp.load("os").__getattr__("isatty").__call__(Py.java2py(file.getFD())).__nonzero__();
+            return imp.load("os").invoke("isatty", Py.java2py(file.getFD())).__nonzero__();
         } catch (IOException e) {
             return false;
         }

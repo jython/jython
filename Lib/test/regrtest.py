@@ -1467,7 +1467,6 @@ _expectations['freebsd7'] = _expectations['freebsd4']
 _failures = {
     'java':
         """
-        test_ast
         test_codecencodings_cn
         test_codecencodings_hk
         test_codecencodings_jp
