@@ -508,9 +508,6 @@ def utime(path, times):
     if times is not None:
         # We don't use the access time, but typecheck it anyway
         long(times[0])
-        if times[0] is None: # XXX http://bugs.jython.org/issue1059
-            # CPython says the same, although it takes floats too
-            raise TypeError('an integer is required')
         mtime = times[1]
     else:
         mtime = time.time()
