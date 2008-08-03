@@ -62,6 +62,10 @@ public class PyUnicode extends PyString implements Iterable {
         this(TYPE, new String(new int[]{codepoint}, 0, 1));
     }
 
+    public PyUnicode(int[] codepoints) {
+        this(new String(codepoints, 0, codepoints.length));
+    }
+
     PyUnicode(StringBuilder buffer) {
         this(TYPE, new String(buffer));
     }
@@ -73,7 +77,7 @@ public class PyUnicode extends PyString implements Iterable {
         }
         return buffer;
     }
-
+    
     PyUnicode(Iterator<Integer> iter) {
         this(fromCodePoints(iter));
     }
