@@ -1432,7 +1432,6 @@ _expectations = {
         test_pyexpat
         test_resource
         test_rgbimg
-        test_robotparser
         test_rotor
         test_scriptpackages
         test_signal

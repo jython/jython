@@ -47,6 +47,7 @@ difflib.py
 dircache.py
 dircmp.py
 dis.py
+DocXMLRPCServer.py
 dospath.py
 dumbdbm.py
 exceptions.py
@@ -117,6 +118,7 @@ reconvert.py
 repr.py
 rfc822.py
 rlcompleter.py
+robotparser.py
 runpy.py
 sched.py
 sha.py
@@ -137,6 +139,7 @@ stat.py
 string.py
 StringIO.py
 symbol.py
+tabnanny.py
 this.py
 threading.py
 textwrap.py
