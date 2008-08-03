@@ -499,22 +499,22 @@ def utime(path, times):
     """utime(path, (atime, mtime))
     utime(path, None)
 
-    Set the access and modified time of the file to the given values.
-    If the second form is used, set the access and modified times to the
+    Set the access and modification time of the file to the given values.
+    If the second form is used, set the access and modification times to the
     current time.
 
-    Due to java limitations only the modification time is changed.
+    Due to Java limitations, on some platforms only the modification time
+    may be changed.
     """
-    if times is not None:
-        # We don't use the access time, but typecheck it anyway
-        long(times[0])
-        mtime = times[1]
-    else:
-        mtime = time.time()
     if path is None:
         raise TypeError('path must be specified, not None')
-    # Only the modification time is changed
-    File(sys.getPath(path)).setLastModified(long(mtime * 1000.0))
+
+    if times is not None:
+        atime, mtime = times
+    else:
+        atime = mtime = time.time()
+
+    _posix.utimes(path, long(atime * 1000), long(mtime * 1000))
 
 def close(fd):
     """close(fd)
