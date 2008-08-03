@@ -408,9 +408,9 @@ import java.util.Iterator;
         }
     }
 
-	protected Object recoverFromMismatchedToken(IntStream input, int ttype, BitSet follow)
-		throws RecognitionException
-	{
+    protected Object recoverFromMismatchedToken(IntStream input, int ttype, BitSet follow)
+        throws RecognitionException
+    {
         if (errorHandler.isRecoverable()) {
             return super.recoverFromMismatchedToken(input, ttype, follow);
         }
@@ -424,7 +424,7 @@ import java.util.Iterator;
 catch (RecognitionException re) {
     errorHandler.reportError(this, re);
     errorHandler.recover(this, input,re);
-	retval.tree = (PythonTree)adaptor.errorNode(input, retval.start, input.LT(-1), re);
+    retval.tree = (PythonTree)adaptor.errorNode(input, retval.start, input.LT(-1), re);
 }
 }
 
@@ -452,42 +452,40 @@ int startPos=-1;
         this.errorHandler = eh;
     }
 
-	/** 
-	 *  Taken directly from antlr's Lexer.java -- needs to be re-integrated every time
+    /** 
+     *  Taken directly from antlr's Lexer.java -- needs to be re-integrated every time
      *  we upgrade from Antlr (need to consider a Lexer subclass, though the issue would
      *  remain).
-	 */
-	public Token nextToken() {
-		while (true) {
-			state.token = null;
-			state.channel = Token.DEFAULT_CHANNEL;
-			state.tokenStartCharIndex = input.index();
-			state.tokenStartCharPositionInLine = input.getCharPositionInLine();
-			state.tokenStartLine = input.getLine();
-			state.text = null;
-			if ( input.LA(1)==CharStream.EOF ) {
-				return Token.EOF_TOKEN;
-			}
-			try {
-				mTokens();
-				if ( state.token==null ) {
-					emit();
-				}
-				else if ( state.token==Token.SKIP_TOKEN ) {
-					continue;
-				}
-				return state.token;
-			}
-			catch (NoViableAltException nva) {
-				errorHandler.reportError(this, nva);
-				errorHandler.recover(this, nva); // throw out current char and try again
-			}
-			catch (RecognitionException re) {
-				errorHandler.reportError(this, re);
-				// match() routine has already called recover()
-			}
-		}
-	}
+     */
+    public Token nextToken() {
+        while (true) {
+            state.token = null;
+            state.channel = Token.DEFAULT_CHANNEL;
+            state.tokenStartCharIndex = input.index();
+            state.tokenStartCharPositionInLine = input.getCharPositionInLine();
+            state.tokenStartLine = input.getLine();
+            state.text = null;
+            if ( input.LA(1)==CharStream.EOF ) {
+                return Token.EOF_TOKEN;
+            }
+            try {
+                mTokens();
+                if ( state.token==null ) {
+                    emit();
+                }
+                else if ( state.token==Token.SKIP_TOKEN ) {
+                    continue;
+                }
+                return state.token;
+            } catch (NoViableAltException nva) {
+                errorHandler.reportError(this, nva);
+                errorHandler.recover(this, nva); // throw out current char and try again
+            } catch (RecognitionException re) {
+                errorHandler.reportError(this, re);
+                // match() routine has already called recover()
+            }
+        }
+    }
 }
 
 //single_input: NEWLINE | simple_stmt | compound_stmt NEWLINE
@@ -1376,19 +1374,19 @@ LEADING_WS
 }
     :   {startPos==0}?=>
         (   {implicitLineJoiningLevel>0}? ( ' ' | '\t' )+ {$channel=HIDDEN;}
-           |    (     ' '  { spaces++; }
-            |    '\t' { spaces += 8; spaces -= (spaces \% 8); }
-               )+
+        |    (     ' '  { spaces++; }
+             |    '\t' { spaces += 8; spaces -= (spaces \% 8); }
+             )+
             {
-            // make a string of n spaces where n is column number - 1
-            char[] indentation = new char[spaces];
-            for (int i=0; i<spaces; i++) {
-                indentation[i] = ' ';
-            }
-            ClassicToken c = new ClassicToken(LEADING_WS,new String(indentation));
-            c.setLine(input.getLine());
-            c.setCharPositionInLine(input.getCharPositionInLine());
-            emit(c);
+               // make a string of n spaces where n is column number - 1
+               char[] indentation = new char[spaces];
+               for (int i=0; i<spaces; i++) {
+                   indentation[i] = ' ';
+               }
+               ClassicToken c = new ClassicToken(LEADING_WS,new String(indentation));
+               c.setLine(input.getLine());
+               c.setCharPositionInLine(input.getCharPositionInLine());
+               emit(c);
             }
             // kill trailing newline if present and then ignore
             ( ('\r')? '\n' {if (state.token!=null) state.token.setChannel(HIDDEN); else $channel=HIDDEN;})*
