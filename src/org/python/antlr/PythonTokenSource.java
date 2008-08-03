@@ -1,5 +1,7 @@
 package org.python.antlr;
 
+import org.python.core.Py;
+
 /*
  [The "BSD licence"]
  Copyright (c) 2004 Terence Parr and Loring Craymer
@@ -88,11 +90,14 @@ public class PythonTokenSource implements TokenSource {
 
     int lastTokenAddedIndex = -1;
 
+    String filename;
+
     public PythonTokenSource(PythonLexer lexer) {
     }
 
-    public PythonTokenSource(CommonTokenStream stream) {
+    public PythonTokenSource(CommonTokenStream stream, String filename) {
         this.stream = stream;
+        this.filename = filename;
         // "state" of indent level is FIRST_CHAR_POSITION
         push(FIRST_CHAR_POSITION);
     }
@@ -265,9 +270,8 @@ public class PythonTokenSource implements TokenSource {
         if (i == -1 || i == -2) {
             return FIRST_CHAR_POSITION;
         }
-        ParseException p = new ParseException("unindent does not match any outer indentation level");
-        p.line = t.getLine();
-        p.charPositionInLine = t.getCharPositionInLine();
+        ParseException p = new ParseException("unindent does not match any outer indentation level", t.getLine(), t.getCharPositionInLine());
+        p.setType(Py.IndentationError);
         throw p;
     }
 
@@ -282,7 +286,7 @@ public class PythonTokenSource implements TokenSource {
 
     //FIXME: needed this for the Antlr 3.1b interface change.
     public String getSourceName() {
-        return "XXX-need-real-name.py";
+        return filename;
     }
 
 }

@@ -28,6 +28,7 @@ public class BaseParser {
 
     protected CharStream charStream;
     protected boolean partial;
+    protected String filename;
     protected ErrorHandler errorHandler = new FailFastHandler();
 
     public void setAntlrErrorHandler(ErrorHandler eh) {

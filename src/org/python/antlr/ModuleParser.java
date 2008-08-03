@@ -15,13 +15,14 @@ import org.python.antlr.ast.Module;
 import org.python.antlr.ast.stmtType;
 
 public class ModuleParser extends BaseParser {
-    public ModuleParser(CharStream cs) {
-        this(cs, false);
+    public ModuleParser(CharStream cs, String filename) {
+        this(cs, filename, false);
     }
 
-    public ModuleParser(CharStream cs, boolean partial) {
+    public ModuleParser(CharStream cs, String filename, boolean partial) {
         this.partial = partial;
         this.charStream = cs;
+        this.filename = filename;
     }
 
     public modType file_input() {
@@ -30,7 +31,7 @@ public class ModuleParser extends BaseParser {
         lexer.setErrorHandler(errorHandler);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         tokens.discardOffChannelTokens(true);
-        PythonTokenSource indentedSource = new PythonTokenSource(tokens);
+        PythonTokenSource indentedSource = new PythonTokenSource(tokens, filename);
         tokens = new CommonTokenStream(indentedSource);
         PythonParser parser = new PythonParser(tokens);
         parser.setErrorHandler(errorHandler);

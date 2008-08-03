@@ -46,15 +46,15 @@ public class ParserFacade {
         if (reader == null) {
             return "";
         }
+        String text = null;
         try {
-            String text=null;
             for(int i=0; i < line; i++) {
                 text = reader.readLine();
             }
             return text;
         } catch (IOException ioe) {
-            return null;
         }
+        return text;
     }
 
     // if reader != null, reset it
@@ -80,11 +80,8 @@ public class ParserFacade {
             }
             String text=getLine(reader, line);
             String msg = e.getMessage();
-            if (msg == null) {
-                msg = "XXX: missing msg";
-            }
-            if (text == null) {
-                text = "XXX: missing text";
+            if (e.getType() == Py.IndentationError) {
+                return new PyIndentationError(msg, line, col, text, filename);
             }
             return new PySyntaxError(msg, line, col, text, filename);
         }
@@ -108,16 +105,16 @@ public class ParserFacade {
             if (kind.equals("eval")) {
                 bufreader = prepBufreader(new LeadingSpaceSkippingStream(bstream), cflags, filename);
                 CharStream cs = new NoCloseReaderStream(bufreader);
-                ExpressionParser e = new ExpressionParser(cs);
+                ExpressionParser e = new ExpressionParser(cs, filename);
                 node = e.parse();
             } else if (kind.equals("single")) {
                 bufreader = prepBufreader(bstream, cflags, filename);
-                InteractiveParser i = new InteractiveParser(bufreader);
+                InteractiveParser i = new InteractiveParser(bufreader, filename);
                 node = i.parse();
             } else if (kind.equals("exec")) {
                 bufreader = prepBufreader(bstream, cflags, filename);
                 CharStream cs = new NoCloseReaderStream(bufreader);
-                ModuleParser g = new ModuleParser(cs);
+                ModuleParser g = new ModuleParser(cs, filename);
                 node = g.file_input();
             } else {
                throw Py.ValueError("parse kind must be eval, exec, " + "or single");
@@ -150,7 +147,7 @@ public class ParserFacade {
                         StringUtil.toBytes(string));
                 BufferedInputStream bstream = bstream = new BufferedInputStream(bi);
                 bufreader = prepBufreader(bstream, cflags, filename);
-                InteractiveParser i = new InteractiveParser(bufreader);
+                InteractiveParser i = new InteractiveParser(bufreader, filename);
                 node = i.parse();
             } else {
                 throw Py.ValueError("parse kind must be eval, exec, " + "or single");

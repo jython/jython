@@ -32,8 +32,9 @@ public class InteractiveParser extends BaseParser {
         }
     }
 
-    public InteractiveParser(BufferedReader br) {
+    public InteractiveParser(BufferedReader br, String filename) {
         this.bufreader = br;
+        this.filename = filename;
     }
 
     public modType parse() throws IOException {
@@ -44,7 +45,7 @@ public class InteractiveParser extends BaseParser {
         lexer.inSingle = true;
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         tokens.discardOffChannelTokens(true);
-        PythonTokenSource indentedSource = new PythonTokenSource(tokens);
+        PythonTokenSource indentedSource = new PythonTokenSource(tokens, filename);
         tokens = new CommonTokenStream(indentedSource);
         PythonParser parser = new PythonParser(tokens);
         parser.setErrorHandler(errorHandler);

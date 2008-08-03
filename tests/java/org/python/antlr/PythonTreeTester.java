@@ -27,13 +27,17 @@ public class PythonTreeTester {
 
     public PythonTree parse(String[] args) throws Exception {
         PythonTree result = null;
+        //ErrorHandler eh = new ListErrorHandler();
+        ErrorHandler eh = new FailFastHandler();
         CharStream input = new ANTLRFileStream(args[0]);
         PythonLexer lexer = new ModuleParser.PyLexer(input);
+        lexer.setErrorHandler(eh);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         tokens.discardOffChannelTokens(true);
-        PythonTokenSource indentedSource = new PythonTokenSource(tokens);
+        PythonTokenSource indentedSource = new PythonTokenSource(tokens, args[0]);
         tokens = new CommonTokenStream(indentedSource);
         PythonParser parser = new PythonParser(tokens);
+        parser.setErrorHandler(eh);
         parser.setTreeAdaptor(new PythonTreeAdaptor());
         Tree r = null;
         switch (_block) {
@@ -54,6 +58,7 @@ public class PythonTreeTester {
             CommonTreeNodeStream nodes = new CommonTreeNodeStream(r);
             nodes.setTokenStream(tokens);
             PythonWalker walker = new PythonWalker(nodes);
+            walker.setErrorHandler(eh);
             switch (_block) {
             case MODULE :
                 result = walker.module();
