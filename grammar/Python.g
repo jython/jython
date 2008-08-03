@@ -1418,6 +1418,6 @@ COMMENT
     $channel=HIDDEN;
 }
     :    {startPos==0}?=> (' '|'\t')* '#' (~'\n')* '\n'+
-    |    {startPos>0}?=> '#' (~'\n')* // let NEWLINE handle \n unless char pos==0 for '#'
+    |    '#' (~'\n')* // let NEWLINE handle \n unless char pos==0 for '#'
     ;
 
