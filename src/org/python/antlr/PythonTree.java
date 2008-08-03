@@ -152,12 +152,7 @@ public class PythonTree extends BaseTree implements AST {
 
     public int getCharStartIndex() {
         if (charStartIndex == -1 && token != null) {
-            if (token instanceof CommonToken) {
-                return ((CommonToken)token).getStartIndex();
-            }
-            if (token instanceof ImaginaryToken) {
-                return ((ImaginaryToken)token).getStartIndex();
-            }
+            return ((CommonToken)token).getStartIndex();
         }
         return charStartIndex ;
     }
@@ -178,12 +173,7 @@ public class PythonTree extends BaseTree implements AST {
     public int getCharStopIndex() {
 
         if (charStopIndex == -1 && token != null) {
-            if (token instanceof CommonToken) {
-                return ((CommonToken)token).getStopIndex() + 1;
-            }
-            if (token instanceof ImaginaryToken) {
-                return ((ImaginaryToken)token).getStopIndex() + 1;
-            }
+            return ((CommonToken)token).getStopIndex() + 1;
         }
         return charStopIndex;
     }

@@ -18,23 +18,11 @@ public class PythonTreeAdaptor extends CommonTreeAdaptor {
         int stopChar = 0;
         if (startToken!=null) {
             start = startToken.getTokenIndex();
-            //XXX: instanceof is necessary because of the use of ClassicToken
-            //     for leading whitespace lexing.
-            if (startToken instanceof CommonToken) {
-                startChar = ((CommonToken)startToken).getStartIndex();
-            } else if (startToken instanceof ImaginaryToken) {
-                startChar = ((ImaginaryToken)startToken).getStartIndex();
-            }
+            startChar = ((CommonToken)startToken).getStartIndex();
         }
         if (stopToken!=null) {
             stop = stopToken.getTokenIndex();
-            //XXX: instanceof is necessary because of the use of ClassicToken
-            //     for leading whitespace lexing.
-            if (stopToken instanceof CommonToken) {
-                stopChar = ((CommonToken)stopToken).getStopIndex() + 1;
-            } else if (stopToken instanceof ImaginaryToken) {
-                stopChar = ((ImaginaryToken)stopToken).getStopIndex() + 1;
-            }
+            stopChar = ((CommonToken)stopToken).getStopIndex() + 1;
         }
         PythonTree pt = (PythonTree)t;
         pt.setTokenStartIndex(start);

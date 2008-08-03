@@ -83,7 +83,7 @@ public class PythonPartialTokenSource implements TokenSource {
         stream.consume();
         if ( t.getType()==Token.EOF ) {
             atEnd = true;
-            Token em = new ClassicToken(PythonPartialParser.ENDMARKER,"");
+            Token em = new CommonToken(PythonPartialParser.ENDMARKER,"");
             em.setCharPositionInLine(t.getCharPositionInLine());
             em.setLine(t.getLine());
             tokens.addElement(em);
@@ -123,7 +123,7 @@ public class PythonPartialTokenSource implements TokenSource {
         int cpos = t.getCharPositionInLine(); // column dictates indent/dedent
         if ( t.getType()==Token.EOF ) {
             atEnd = true;
-            Token em = new ClassicToken(PythonPartialParser.ENDMARKER,"");
+            Token em = new CommonToken(PythonPartialParser.ENDMARKER,"");
             em.setCharPositionInLine(t.getCharPositionInLine());
             em.setLine(t.getLine());
             tokens.addElement(em);
@@ -142,7 +142,7 @@ public class PythonPartialTokenSource implements TokenSource {
         if ( cpos > lastIndent ) { // they indented; track and gen INDENT
             push(cpos);
             //System.out.println("push("+cpos+"): "+stackString());
-            Token indent = new ClassicToken(PythonPartialParser.INDENT,"");
+            Token indent = new CommonToken(PythonPartialParser.INDENT,"");
             indent.setCharPositionInLine(t.getCharPositionInLine());
             indent.setLine(t.getLine());
             tokens.addElement(indent);
@@ -155,9 +155,9 @@ public class PythonPartialTokenSource implements TokenSource {
             for (int d=sp-1; d>=prevIndex; d--) {
                 Token tok;
                 if (atEnd) {
-                    tok = new ClassicToken(PythonPartialParser.ENDMARKER,"");
+                    tok = new CommonToken(PythonPartialParser.ENDMARKER,"");
                 } else {
-                    tok = new ClassicToken(PythonPartialParser.DEDENT,"");
+                    tok = new CommonToken(PythonPartialParser.DEDENT,"");
                 }
                 tok.setCharPositionInLine(t.getCharPositionInLine());
                 tok.setLine(t.getLine());

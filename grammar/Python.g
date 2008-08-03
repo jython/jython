@@ -1337,7 +1337,7 @@ ESC
  */
 CONTINUED_LINE
     :    '\\' ('\r')? '\n' (' '|'\t')*  { $channel=HIDDEN; }
-         ( nl=NEWLINE {emit(new ClassicToken(NEWLINE,nl.getText()));}
+         ( nl=NEWLINE {emit(new CommonToken(NEWLINE,nl.getText()));}
          |
          )
     ;
@@ -1383,7 +1383,7 @@ LEADING_WS
                for (int i=0; i<spaces; i++) {
                    indentation[i] = ' ';
                }
-               ClassicToken c = new ClassicToken(LEADING_WS,new String(indentation));
+               CommonToken c = new CommonToken(LEADING_WS,new String(indentation));
                c.setLine(input.getLine());
                c.setCharPositionInLine(input.getCharPositionInLine());
                emit(c);

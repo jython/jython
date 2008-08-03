@@ -200,7 +200,7 @@ public class PythonTokenSource implements TokenSource {
         if (cpos > lastIndent) { // they indented; track and gen INDENT
             push(cpos);
             //System.out.println("push("+cpos+"): "+stackString());
-            Token indent = new ImaginaryToken(PythonParser.INDENT,"");
+            Token indent = new CommonToken(PythonParser.INDENT,"");
             indent.setCharPositionInLine(t.getCharPositionInLine());
             indent.setLine(t.getLine());
             tokens.addElement(indent);
@@ -211,7 +211,7 @@ public class PythonTokenSource implements TokenSource {
             //System.out.println("dedented; prevIndex of cpos="+cpos+" is "+prevIndex);
             // generate DEDENTs for each indent level we backed up over
             for (int d = sp - 1; d >= prevIndex; d--) {
-                ImaginaryToken dedent = new ImaginaryToken(PythonParser.DEDENT,"");
+                CommonToken dedent = new CommonToken(PythonParser.DEDENT,"");
                 dedent.setCharPositionInLine(t.getCharPositionInLine());
                 dedent.setLine(t.getLine());
 
