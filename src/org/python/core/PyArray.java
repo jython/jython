@@ -1327,7 +1327,6 @@ public class PyArray extends PySequence implements Cloneable {
             return;
         }        
         
-        // check for overflow of the integral types
         if(type == Byte.TYPE) {
             long val;
             try {
@@ -1337,7 +1336,7 @@ public class PyArray extends PySequence implements Cloneable {
             }
             if(val < (isSigned() ? 0 : Byte.MIN_VALUE)) {
                 throw Py.OverflowError("value too small for " + type.getName());
-            } else if(val > (isSigned() ? Byte.MAX_VALUE * 2 + 1 : Byte.MAX_VALUE)) {
+            } else if(val > Byte.MAX_VALUE) {
                 throw Py.OverflowError("value too large for " + type.getName());
             }
         } else if(type == Short.TYPE) {
@@ -1349,7 +1348,7 @@ public class PyArray extends PySequence implements Cloneable {
             }
             if(val < (isSigned() ? 0 : Short.MIN_VALUE)) {
                 throw Py.OverflowError("value too small for " + type.getName());
-            } else if(val > (isSigned() ? Byte.MAX_VALUE * 2 + 1 : Short.MAX_VALUE)) {
+            } else if(val > Short.MAX_VALUE) {
                 throw Py.OverflowError("value too large for " + type.getName());
             }
         } else if(type == Integer.TYPE) {
@@ -1361,7 +1360,7 @@ public class PyArray extends PySequence implements Cloneable {
             }
             if(val < (isSigned() ? 0 : Integer.MIN_VALUE)) {
                 throw Py.OverflowError("value too small for " + type.getName());
-            } else if(val > (isSigned() ? Short.MAX_VALUE * 2 + 1 : Integer.MAX_VALUE)) {
+            } else if(val > Integer.MAX_VALUE) {
                 throw Py.OverflowError("value too large for " + type.getName());
             }
         } else if(type == Long.TYPE) {
