@@ -581,9 +581,11 @@ def open(filename, flag, mode=0777):
     if not creating and not path.exists(filename):
         raise OSError(errno.ENOENT, errno.strerror(errno.ENOENT), filename)
 
-    if not writing or updating:
-        # Default to reading
-        reading = True
+    if not writing:
+        if updating:
+            writing = True
+        else:
+            reading = True
 
     if truncating and not writing:
         # Explicitly truncate, writing will truncate anyway
