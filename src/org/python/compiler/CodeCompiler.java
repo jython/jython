@@ -1385,29 +1385,30 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         c.freeLocal(strings);
     }
     
-    public Object Invoke(Attribute node, PythonTree[] values)
+    public Object invokeNoKeywords(Attribute node, PythonTree[] values)
         throws Exception
     {
         String name = getName(node.attr);
         visit(node.value);
         code.ldc(name);
+        code.invokevirtual("org/python/core/PyObject", "__getattr__", "(" + $str + ")" + $pyObj);
 
         switch (values.length) {
         case 0:
-            code.invokevirtual("org/python/core/PyObject", "invoke", "(" + $str + ")" + $pyObj);
+            code.invokevirtual("org/python/core/PyObject", "__call__", "()" + $pyObj);
             break;
         case 1:
             visit(values[0]);
-            code.invokevirtual("org/python/core/PyObject", "invoke", "(" + $str + $pyObj + ")" + $pyObj);
+            code.invokevirtual("org/python/core/PyObject", "__call__", "(" + $pyObj + ")" + $pyObj);
             break;
         case 2:
             visit(values[0]);
             visit(values[1]);
-            code.invokevirtual("org/python/core/PyObject", "invoke", "(" + $str + $pyObj + $pyObj + ")" + $pyObj);
+            code.invokevirtual("org/python/core/PyObject", "__call__", "(" + $pyObj + $pyObj + ")" + $pyObj);
             break;
         default:
             makeArray(values);
-            code.invokevirtual("org/python/core/PyObject", "invoke", "(" + $str + $pyObjArr + ")" + $pyObj);
+            code.invokevirtual("org/python/core/PyObject", "__call__", "(" + $pyObjArr + ")" + $pyObj);
             break;
         }
         return null;
@@ -1425,11 +1426,10 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
             values[node.args.length + i] = node.keywords[i].value;
         }
 
-        // Detect a method invocation with no keywords
         if ((node.keywords == null || node.keywords.length == 0)&& node.starargs == null &&
             node.kwargs == null && node.func instanceof Attribute)
         {
-            return Invoke((Attribute) node.func, values);
+            return invokeNoKeywords((Attribute) node.func, values);
         }
 
         visit(node.func);
