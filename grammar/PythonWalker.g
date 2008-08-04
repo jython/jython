@@ -286,6 +286,12 @@ import java.util.Set;
         }
         return new UnaryOp(t, unaryopType.USub, o);
     }
+
+    private void checkAssign(exprType e) {
+        if (e instanceof Name && ((Name)e).id.equals("None")) {
+            throw new ParseException("assignment to None", e);
+        }
+    }
 }
 
 @rulecatch {
@@ -336,6 +342,7 @@ varargslist returns [argumentsType args]
 
 defparameter[List params, List defaults]
     : fpdef[expr_contextType.Param, null] (ASSIGN test[expr_contextType.Load])? {
+        checkAssign($fpdef.etype);
         params.add($fpdef.etype);
         if ($ASSIGN != null) {
             defaults.add($test.etype);
@@ -494,6 +501,7 @@ targets returns [List etypes]
 
 target[List etypes]
     : ^(Target atom[expr_contextType.Store]) {
+        checkAssign($atom.etype);
         etypes.add($atom.etype);
     }
     ;
@@ -1343,6 +1351,7 @@ argument[List arguments]
 
 keyword[List kws]
     : ^(Keyword ^(Arg arg=test[expr_contextType.Load]) ^(Value val=test[expr_contextType.Load])) {
+        checkAssign($arg.etype);
         kws.add(new keywordType($Keyword, $arg.text, $val.etype));
     }
     ;
