@@ -31,16 +31,16 @@ public class FileIO extends RawIOBase {
     /** The underlying file (if known) */
     private RandomAccessFile file;
 
-    /** true if the file is readable */
-    private boolean readable = false;
+    /** true if the file is opened for reading ('r') */
+    private boolean reading = false;
 
-    /** true if the file is writable */
-    private boolean writable = false;
+    /** true if the file is opened for writing ('w', 'a', or '+') */
+    private boolean writing = false;
 
-    /** true if the file is in appending mode */
+    /** true if the file is in appending mode ('a') */
     private boolean appending = false;
 
-    /** true if the file is opened for reading and writing */
+    /** true if the file is opened for reading and writing ('+') */
     private boolean plus = false;
 
     /**
@@ -57,10 +57,10 @@ public class FileIO extends RawIOBase {
         parseMode(mode);
 
         File fullPath = new RelativeFile(name);
-        String rafMode = "r" + (writable ? "w" : "");
+        String rafMode = "r" + (writing ? "w" : "");
         try {
-            if (plus && mode.charAt(0) == 'r' && !fullPath.isFile()) {
-                writable = false;
+            if (plus && reading && !fullPath.isFile()) {
+                writing = false; // suppress "permission denied"
                 throw new FileNotFoundException("");
             }
             file = new RandomAccessFile(fullPath, rafMode);
@@ -69,7 +69,7 @@ public class FileIO extends RawIOBase {
             if (fullPath.isDirectory()) {
                 throw Py.IOError(errno.EISDIR, "Is a directory");
             }
-            if ((writable && !fullPath.canWrite())
+            if ((writing && !fullPath.canWrite())
                 || fnfe.getMessage().endsWith("(Permission denied)")) {
                 throw Py.IOError(errno.EACCES, "Permission denied: '" + name + "'");
             }
@@ -113,25 +113,25 @@ public class FileIO extends RawIOBase {
                 if (plus || rwa) {
                     badMode();
                 }
-                readable = rwa = true;
+                reading = rwa = true;
                 break;
             case 'w':
                 if (plus || rwa) {
                     badMode();
                 }
-                writable = rwa = true;
+                writing = rwa = true;
                 break;
             case 'a':
                 if (plus || rwa) {
                     badMode();
                 }
-                appending = writable = rwa = true;
+                appending = writing = rwa = true;
                 break;
             case '+':
                 if (plus || !rwa) {
                     badMode();
                 }
-                readable = writable = plus = true;
+                writing = plus = true;
                 break;
             default:
                 throw Py.ValueError("invalid mode: '" + mode + "'");
@@ -153,13 +153,13 @@ public class FileIO extends RawIOBase {
     }
 
     /**
-     * Set the appropriate file position for writable/appending modes.
+     * Set the appropriate file position for writing/appending modes.
      *
      */
     private void initPosition() {
         if (appending) {
             seek(0, 2);
-        } else if (writable && !readable) {
+        } else if (writing && !reading) {
             try {
                 fileChannel.truncate(0);
             } catch (IOException ioe) {
@@ -335,9 +335,9 @@ public class FileIO extends RawIOBase {
 
     /** {@inheritDoc} */
     public Object __tojava__(Class cls) {
-        if (OutputStream.class.isAssignableFrom(cls) && writable) {
+        if (OutputStream.class.isAssignableFrom(cls) && writing) {
             return Channels.newOutputStream(fileChannel);
-        } else if (InputStream.class.isAssignableFrom(cls) && readable) {
+        } else if (InputStream.class.isAssignableFrom(cls) && readable()) {
             return Channels.newInputStream(fileChannel);
         }
         return super.__tojava__(cls);
@@ -345,12 +345,12 @@ public class FileIO extends RawIOBase {
 
     /** {@inheritDoc} */
     public boolean readable() {
-        return readable;
+        return reading || plus;
     }
 
     /** {@inheritDoc} */
     public boolean writable() {
-        return writable;
+        return writing;
     }
 
     /** {@inheritDoc} */
