@@ -179,8 +179,8 @@ public class PythonTokenSource implements TokenSource {
             newline = new CommonToken(PythonLexer.NEWLINE, "\n");
             newline.setLine(t.getLine());
             newline.setCharPositionInLine(t.getCharPositionInLine());
-            //XXX: should be moved to after DEDENTS are generated, but doesn't work yet.
-            tokens.addElement(newline);
+            //XXX: this is where lsoto had this...
+            //tokens.addElement(newline);
         }
 
         // compute cpos as the char pos of next non-WS token in line
@@ -223,13 +223,10 @@ public class PythonTokenSource implements TokenSource {
             }
             sp = prevIndex; // pop those off indent level
         }
-        /*
-        //XXX: I think this is really where this needs to be, but causes more problems than it
-        //     solves at the moment.
+        //XXX: make sure lsoto's stuff isn't broken by this...
         if (t.getType() == PythonLexer.EOF) {
             tokens.addElement(newline);
         }
-        */
 
         if (t.getType() != PythonLexer.LEADING_WS) { // discard WS
             tokens.addElement(t);

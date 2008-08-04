@@ -1383,10 +1383,14 @@ LEADING_WS
                for (int i=0; i<spaces; i++) {
                    indentation[i] = ' ';
                }
-               CommonToken c = new CommonToken(LEADING_WS,new String(indentation));
-               c.setLine(input.getLine());
-               c.setCharPositionInLine(input.getCharPositionInLine());
-               emit(c);
+               if (input.LA(1) != -1) {
+                   CommonToken c = new CommonToken(LEADING_WS,new String(indentation));
+                   c.setLine(input.getLine());
+                   c.setCharPositionInLine(input.getCharPositionInLine());
+                   emit(c);
+               } else {
+                   emit(new CommonToken(LEADING_WS,""));
+               }
             }
             // kill trailing newline if present and then ignore
             ( ('\r')? '\n' {if (state.token!=null) state.token.setChannel(HIDDEN); else $channel=HIDDEN;})*
