@@ -1,6 +1,6 @@
 import os, sys, string, random, tempfile, unittest
 
-from test.test_support import run_unittest
+from test.test_support import run_unittest, is_jython
 
 class TestImport(unittest.TestCase):
 
@@ -35,10 +35,16 @@ class TestImport(unittest.TestCase):
         self.remove_modules()
 
     def rewrite_file(self, contents):
-        for extension in "co":
-            compiled_path = self.module_path + extension
+        if is_jython:
+            compiled_path = self.module_path.replace(".", "$") + ".class"
             if os.path.exists(compiled_path):
                 os.remove(compiled_path)
+        else:
+            for extension in "co":
+                compiled_path = self.module_path + extension
+                if os.path.exists(compiled_path):
+                    os.remove(compiled_path)
+
         f = open(self.module_path, 'w')
         f.write(contents)
         f.close()
@@ -56,8 +62,9 @@ class TestImport(unittest.TestCase):
                      not hasattr(sys.modules[self.package_name], 'foo'))
 
         # ...make up a variable name that isn't bound in __builtins__
+        import __builtin__
         var = 'a'
-        while var in dir(__builtins__):
+        while var in dir(__builtin__):
             var += random.choose(string.letters)
 
         # ...make a module that just contains that
