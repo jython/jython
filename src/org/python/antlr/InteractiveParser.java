@@ -41,15 +41,12 @@ public class InteractiveParser extends BaseParser {
         modType tree = null;
         PythonLexer lexer = new PyLexer(new NoCloseReaderStream(bufreader));
         lexer.setErrorHandler(errorHandler);
-        //XXX: Hopefully we can remove inSingle when we get PyCF_DONT_IMPLY_DEDENT support.
-        lexer.inSingle = true;
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         tokens.discardOffChannelTokens(true);
-        PythonTokenSource indentedSource = new PythonTokenSource(tokens, filename);
+        PythonTokenSource indentedSource = new PythonTokenSource(tokens, filename, true);
         tokens = new CommonTokenStream(indentedSource);
         PythonParser parser = new PythonParser(tokens);
         parser.setErrorHandler(errorHandler);
-        parser.inSingle = true;
         parser.setTreeAdaptor(new PythonTreeAdaptor());
 
         try {

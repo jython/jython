@@ -182,9 +182,6 @@ import java.util.Iterator;
 } 
 
 @members {
-    //XXX: only used for single_input -- seems kludgy.
-    public boolean inSingle = false;
-
     boolean debugOn = false;
 
     private ErrorHandler errorHandler;
@@ -443,8 +440,6 @@ package org.python.antlr;
 //and the same one in the parser.
 private ErrorHandler errorHandler;
 
-//XXX: Hopefully we can remove inSingle when we get PyCF_DONT_IMPLY_DEDENT support.
-public boolean inSingle = false;
 int implicitLineJoiningLevel = 0;
 int startPos=-1;
 
@@ -489,7 +484,7 @@ int startPos=-1;
 }
 
 //single_input: NEWLINE | simple_stmt | compound_stmt NEWLINE
-single_input : NEWLINE -> ^(Interactive)
+single_input : NEWLINE? -> ^(Interactive)
              | simple_stmt -> ^(Interactive simple_stmt)
              | compound_stmt NEWLINE -> ^(Interactive compound_stmt)
              ;
@@ -1349,12 +1344,11 @@ CONTINUED_LINE
  *  Frank Wierzbicki added: Also ignore FORMFEEDS (\u000C).
  */
 NEWLINE
-    :   {inSingle}? => (('\u000C')?('\r')? '\n' )
-            {if (implicitLineJoiningLevel>0 )
-                $channel=HIDDEN;
-            }
-    |   (('\u000C')?('\r')? '\n' )+
-        {if ( startPos==0 || implicitLineJoiningLevel>0 )
+@init {
+    int newlines = 0;
+}
+    :   (('\u000C')?('\r')? '\n' {newlines++; } )+ {
+         if ( startPos==0 || implicitLineJoiningLevel>0 )
             $channel=HIDDEN;
         }
     ;
@@ -1371,30 +1365,42 @@ WS  :    {startPos>0}?=> (' '|'\t'|'\u000C')+ {$channel=HIDDEN;}
 LEADING_WS
 @init {
     int spaces = 0;
+    int newlines = 0;
 }
     :   {startPos==0}?=>
         (   {implicitLineJoiningLevel>0}? ( ' ' | '\t' )+ {$channel=HIDDEN;}
         |    (     ' '  { spaces++; }
              |    '\t' { spaces += 8; spaces -= (spaces \% 8); }
              )+
-            {
-               // make a string of n spaces where n is column number - 1
-               char[] indentation = new char[spaces];
-               for (int i=0; i<spaces; i++) {
-                   indentation[i] = ' ';
-               }
-               if (input.LA(1) != -1) {
-                   CommonToken c = new CommonToken(LEADING_WS,new String(indentation));
-                   c.setLine(input.getLine());
-                   c.setCharPositionInLine(input.getCharPositionInLine());
-                   emit(c);
-               } else {
-                   emit(new CommonToken(LEADING_WS,""));
-               }
-            }
-            // kill trailing newline if present and then ignore
-            ( ('\r')? '\n' {if (state.token!=null) state.token.setChannel(HIDDEN); else $channel=HIDDEN;})*
-           // {state.token.setChannel(99); }
+             ( ('\r')? '\n' {newlines++; }
+             )* {
+                   if (input.LA(1) != -1) {
+                       // make a string of n spaces where n is column number - 1
+                       char[] indentation = new char[spaces];
+                       for (int i=0; i<spaces; i++) {
+                           indentation[i] = ' ';
+                       }
+                       CommonToken c = new CommonToken(LEADING_WS,new String(indentation));
+                       c.setLine(input.getLine());
+                       c.setCharPositionInLine(input.getCharPositionInLine());
+                       emit(c);
+                       // kill trailing newline if present and then ignore
+                       if (newlines != 0) {
+                           if (state.token!=null) {
+                               state.token.setChannel(HIDDEN);
+                           } else {
+                               $channel=HIDDEN;
+                           }
+                       }
+                   } else {
+                       // make a string of n newlines
+                       char[] nls = new char[newlines];
+                       for (int i=0; i<newlines; i++) {
+                           nls[i] = '\n';
+                       }
+                       emit(new CommonToken(NEWLINE,new String(nls)));
+                   }
+                }
         )
     ;
 
