@@ -1040,7 +1040,7 @@ comp_op returns [cmpopType op]
     | LESSEQUAL {$op = cmpopType.LtE;}
     | ALT_NOTEQUAL {$op = cmpopType.NotEq;}
     | NOTEQUAL {$op = cmpopType.NotEq;}
-    | 'in' {$op = cmpopType.In;}
+    | IN {$op = cmpopType.In;}
     | NotIn {$op = cmpopType.NotIn;}
     | 'is' {$op = cmpopType.Is;}
     | IsNot {$op = cmpopType.IsNot;}

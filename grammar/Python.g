@@ -777,7 +777,7 @@ global_stmt : GLOBAL NAME (COMMA NAME)*
             ;
 
 //exec_stmt: 'exec' expr ['in' test [',' test]]
-exec_stmt : keyEXEC expr[expr_contextType.Load] ('in' t1=test[expr_contextType.Load] (COMMA t2=test[expr_contextType.Load])?)?
+exec_stmt : keyEXEC expr[expr_contextType.Load] (IN t1=test[expr_contextType.Load] (COMMA t2=test[expr_contextType.Load])?)?
          -> ^(keyEXEC expr ^(Globals $t1)? ^(Locals $t2)?)
           ;
 
@@ -886,8 +886,8 @@ comp_op : LESS
         | LESSEQUAL
         | ALT_NOTEQUAL
         | NOTEQUAL
-        | 'in'
-        | NOT 'in' -> NotIn
+        | IN
+        | NOT IN -> NotIn
         | 'is'
         | 'is' NOT -> IsNot
         ;
@@ -1126,7 +1126,7 @@ keyAS     : {input.LT(1).getText().equals("as")}? NAME ;
 keyEXEC   : {input.LT(1).getText().equals("exec")}? NAME ;
 //keyFROM   : {input.LT(1).getText().equals("from")}? NAME ;
 //keyGLOBAL : {input.LT(1).getText().equals("global")}? NAME ;
-//keyIN     : {input.LT(1).getText().equals("in")}? NAME ;
+keyIN     : {input.LT(1).getText().equals("in")}? NAME ;
 //keyIS     : {input.LT(1).getText().equals("is")}? NAME ;
 //keyLAMBDA : {input.LT(1).getText().equals("lambda")}? NAME ;
 //keyNOT    : {input.LT(1).getText().equals("not")}? NAME ;
