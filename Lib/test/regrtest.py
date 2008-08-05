@@ -1479,13 +1479,11 @@ _failures = {
         test_codecmaps_tw
         test_copy
         test_dis
-        test_descrtut
         test_eof
         test_frozen
         test_gc
         test_iterlen
         test_marshal
-        test_pkgimport
         test_profilehooks
         test_pyclbr
         test_quopri
