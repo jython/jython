@@ -420,10 +420,43 @@ dotted_attr returns [exprType etype, PythonTree marker]
     }
     ;
 
+//attr is here for Java  compatibility.  A Java foo.getIf() can be called from Jython as foo.if
+//     so we need to support any keyword as an attribute.
 attr
     : NAME
+    | AND
+    | AS
+    | ASSERT
+    | BREAK
+    | CLASS
+    | CONTINUE
+    | DEF
+    | DELETE
+    | ELIF
+    | EXCEPT
+    | EXEC
+    | FINALLY
+    | FROM
+    | FOR
+    | GLOBAL
+    | IF
+    | IMPORT
     | IN
+    | IS
+    | LAMBDA
+    | NOT
+    | OR
+    | ORELSE
+    | PASS
+    | PRINT
+    | RAISE
+    | RETURN
+    | TRY
+    | WHILE
+    | WITH
+    | YIELD
     ;
+
 stmts returns [List stypes]
 scope {
     List statements;
@@ -752,7 +785,7 @@ name_expr[List nms]
 
 //Using NAME instead of 'exec' for Java integration
 exec_stmt
-    : ^(ExecTok exec=test[expr_contextType.Load] (^(Globals globals=test[expr_contextType.Load]))? (^(Locals locals=test[expr_contextType.Load]))?) {
+    : ^(EXEC exec=test[expr_contextType.Load] (^(Globals globals=test[expr_contextType.Load]))? (^(Locals locals=test[expr_contextType.Load]))?) {
         exprType g = null;
         if ($Globals != null) {
             g = $globals.etype;
@@ -761,7 +794,7 @@ exec_stmt
         if ($Locals != null) {
             loc = $locals.etype;
         }
-        $stmts::statements.add(new Exec($ExecTok, $exec.etype, g, loc));
+        $stmts::statements.add(new Exec($EXEC, $exec.etype, g, loc));
     }
     ;
 
@@ -854,7 +887,7 @@ try_stmt
     ;
 
 except_clause[List handlers]
-    : ^(ExceptHandler 'except' (^(Type type=test[expr_contextType.Load]))? (^(Value name=test[expr_contextType.Store]))? ^(Body stmts)) {
+    : ^(EXCEPT (^(Type type=test[expr_contextType.Load]))? (^(Value name=test[expr_contextType.Store]))? ^(Body stmts)) {
         stmtType[] b;
         if ($stmts.start != null) {
             b = (stmtType[])$stmts.stypes.toArray(new stmtType[$stmts.stypes.size()]);
@@ -867,7 +900,7 @@ except_clause[List handlers]
         if ($Value != null) {
             n = $name.etype;
         }
-        handlers.add(new excepthandlerType($ExceptHandler, t, n, b, $ExceptHandler.getLine(), $ExceptHandler.getCharPositionInLine()));
+        handlers.add(new excepthandlerType($EXCEPT, t, n, b, $EXCEPT.getLine(), $EXCEPT.getCharPositionInLine()));
     }
     ;
 
@@ -880,7 +913,7 @@ with_stmt
 
 //using NAME because of Java integration for 'as'
 with_var returns [exprType etype]
-    : NAME test[expr_contextType.Store] {
+    : (AS | NAME) test[expr_contextType.Store] {
         $etype = $test.etype;
     }
     ;
@@ -1046,7 +1079,7 @@ comp_op returns [cmpopType op]
     | NOTEQUAL {$op = cmpopType.NotEq;}
     | IN {$op = cmpopType.In;}
     | NotIn {$op = cmpopType.NotIn;}
-    | 'is' {$op = cmpopType.Is;}
+    | IS {$op = cmpopType.Is;}
     | IsNot {$op = cmpopType.IsNot;}
     ;
 
@@ -1269,14 +1302,14 @@ subscript [List subs]
           ;
 
 classdef
-    : ^(ClassTok classname=NAME (^(Bases bases))? ^(Body stmts)) {
+    : ^(CLASS classname=NAME (^(Bases bases))? ^(Body stmts)) {
         List b;
         if ($Bases != null) {
             b = $bases.names;
         } else {
             b = new ArrayList();
         }
-        $stmts::statements.add(makeClassDef($ClassTok, $classname, b, $stmts.stypes));
+        $stmts::statements.add(makeClassDef($CLASS, $classname, b, $stmts.stypes));
     }
     ;
 

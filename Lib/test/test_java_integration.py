@@ -172,13 +172,50 @@ class VectorTest(unittest.TestCase):
 class ReservedNamesTest(unittest.TestCase):
     "Access to java names which are al reserved words"
 
-    def test_system_in(self):
+    def test_in(self):
         s = System.in
         self.assert_("java.io.BufferedInputStream" in str(s))
     
-    def test_runtime_exec(self):
+    def test_exec(self):
         e = Runtime.getRuntime().exec
         self.assert_(re.search("method .*exec", str(e)) is not None)
+
+    def test_class(self):
+        b = Byte(10)
+        self.assert_("java.lang.Byte" in str(b.class))
+
+    def test_print(self):
+        #XXX should find a better print test.
+        System.out.print("")
+
+    #TODO:
+    #and
+    #as
+    #assert
+    #break
+    #continue
+    #def
+    #del
+    #elif
+    #else
+    #except
+    #finally
+    #from
+    #for
+    #global
+    #if
+    #import
+    #is
+    #lambda
+    #pass
+    #print
+    #raise
+    #return
+    #try
+    #while
+    #with
+    #yield
+
 
 class ImportTest(unittest.TestCase):
     

@@ -82,9 +82,6 @@ tokens {
     Interactive;
     Expression;
     NameTok;
-    ExecTok;
-    InTok;
-    ClassTok;
     Test;
     Msg;
     Level;
@@ -506,10 +503,44 @@ dotted_attr
     : NAME (DOT^ attr)*
     ;
 
+//attr is here for Java  compatibility.  A Java foo.getIf() can be called from Jython as foo.if
+//     so we need to support any keyword as an attribute.
+
 attr
     : NAME
+    | AND
+    | AS
+    | ASSERT
+    | BREAK
+    | CLASS
+    | CONTINUE
+    | DEF
+    | DELETE
+    | ELIF
+    | EXCEPT
+    | EXEC
+    | FINALLY
+    | FROM
+    | FOR
+    | GLOBAL
+    | IF
+    | IMPORT
     | IN
+    | IS
+    | LAMBDA
+    | NOT
+    | OR
+    | ORELSE
+    | PASS
+    | PRINT
+    | RAISE
+    | RETURN
+    | TRY
+    | WHILE
+    | WITH
+    | YIELD
     ;
+
 //decorator: '@' dotted_name [ '(' [arglist] ')' ] NEWLINE
 decorator: AT dotted_attr 
            ( (LPAREN arglist? RPAREN) -> ^(AT dotted_attr ^(Call ^(Args arglist)?))
@@ -758,16 +789,13 @@ import_as_names : import_as_name (COMMA! import_as_name)* (COMMA!)?
                 ;
 
 //import_as_name: NAME [('as' | NAME) NAME]
-import_as_name : name=NAME (keyAS asname=NAME)?
+import_as_name : name=NAME (AS asname=NAME)?
               -> ^(Alias $name ^(Asname $asname)?)
                ;
 
-//XXX: when does CPython Grammar match "dotted_name NAME NAME"? This may be a big
-//       problem because of the keyAS rule, which matches NAME (needed to allow
-//       'as' to be a method name for Java integration).
-
+//XXX: when does CPython Grammar match "dotted_name NAME NAME"?
 //dotted_as_name: dotted_name [('as' | NAME) NAME]
-dotted_as_name : dotted_name (keyAS asname=NAME)?
+dotted_as_name : dotted_name (AS asname=NAME)?
               -> ^(Alias dotted_name ^(Asname NAME)?)
                ;
 
@@ -784,8 +812,8 @@ global_stmt : GLOBAL NAME (COMMA NAME)*
             ;
 
 //exec_stmt: 'exec' expr ['in' test [',' test]]
-exec_stmt : keyEXEC expr[expr_contextType.Load] (IN t1=test[expr_contextType.Load] (COMMA t2=test[expr_contextType.Load])?)?
-         -> ^(ExecTok[$keyEXEC.start] expr ^(Globals $t1)? ^(Locals $t2)?)
+exec_stmt : EXEC expr[expr_contextType.Load] (IN t1=test[expr_contextType.Load] (COMMA t2=test[expr_contextType.Load])?)?
+         -> ^(EXEC expr ^(Globals $t1)? ^(Locals $t2)?)
           ;
 
 //assert_stmt: 'assert' test [',' test]
@@ -842,14 +870,14 @@ with_stmt: WITH test[expr_contextType.Load] (with_var)? COLON suite
          ;
 
 //with_var: ('as' | NAME) expr
-with_var: (keyAS | NAME) expr[expr_contextType.Load]
+with_var: (AS | NAME) expr[expr_contextType.Load]
         ;
 
 //except_clause: 'except' [test [',' test]]
-except_clause : 'except' (t1=test[expr_contextType.Load] (COMMA t2=test[expr_contextType.Load])?)? COLON suite
+except_clause : EXCEPT (t1=test[expr_contextType.Load] (COMMA t2=test[expr_contextType.Load])?)? COLON suite
              //Note: passing the 'except' keyword on so we can pass the same offset
              //      as CPython.
-             -> ^(ExceptHandler 'except' ^(Type $t1)? ^(Value $t2)? ^(Body suite))
+             -> ^(EXCEPT ^(Type $t1)? ^(Value $t2)? ^(Body suite))
               ;
 
 //suite: simple_stmt | NEWLINE INDENT stmt+ DEDENT
@@ -895,8 +923,8 @@ comp_op : LESS
         | NOTEQUAL
         | IN
         | NOT IN -> NotIn
-        | 'is'
-        | 'is' NOT -> IsNot
+        | IS
+        | IS NOT -> IsNot
         ;
 
 //expr: xor_expr ('|' xor_expr)*
@@ -1040,8 +1068,8 @@ dictmaker : test[expr_contextType.Load] COLON test[expr_contextType.Load]
           ;
 
 //classdef: 'class' NAME ['(' [testlist] ')'] ':' suite
-classdef: keyCLASS NAME (LPAREN testlist[expr_contextType.Load]? RPAREN)? COLON suite
-    -> ^(ClassTok[$keyCLASS.start] NAME ^(Bases testlist)? ^(Body suite))
+classdef: CLASS NAME (LPAREN testlist[expr_contextType.Load]? RPAREN)? COLON suite
+    -> ^(CLASS NAME ^(Bases testlist)? ^(Body suite))
     ;
 
 //arglist: (argument ',')* (argument [',']| '*' test [',' '**' test] | '**' test)
@@ -1119,56 +1147,34 @@ yield_expr : YIELD testlist[expr_contextType.Load]?
 //XXX:
 //testlist1: test (',' test)*
 
-//These are all Python keywords that are not Java keywords
-//This means that Jython needs to support these as NAMEs
-//unlike CPython.  For now I have only done this for 'as'
-//and 'exec'.  A chat with Leo Soto on #jython has made me
-//realize I may need to do this for *all* keywords, since
-//a Java foo.getIf() can be called from Jython as foo.if
-
-//keyAND    : {input.LT(1).getText().equals("and")}? NAME ;
-keyAS       : {input.LT(1).getText().equals("as")}? NAME ;
-//keyDEF    : {input.LT(1).getText().equals("def")}? NAME ;
-//keyDEL    : {input.LT(1).getText().equals("del")}? NAME ;
-//keyELIF   : {input.LT(1).getText().equals("elif")}? NAME ;
-//keyEXCEPT : {input.LT(1).getText().equals("except")}? NAME ;
-keyEXEC   : {input.LT(1).getText().equals("exec")}? NAME ;
-//keyFROM   : {input.LT(1).getText().equals("from")}? NAME ;
-//keyGLOBAL : {input.LT(1).getText().equals("global")}? NAME ;
-keyCLASS    : {input.LT(1).getText().equals("class")}? NAME ;
-//keyIS     : {input.LT(1).getText().equals("is")}? NAME ;
-//keyLAMBDA : {input.LT(1).getText().equals("lambda")}? NAME ;
-//keyNOT    : {input.LT(1).getText().equals("not")}? NAME ;
-//keyOR     : {input.LT(1).getText().equals("or")}? NAME ;
-//keyPASS   : {input.LT(1).getText().equals("pass")}? NAME ;
-//keyPRINT  : {input.LT(1).getText().equals("print")}? NAME ;
-//keyRAISE  : {input.LT(1).getText().equals("raise")}? NAME ;
-//keyWITH   : {input.LT(1).getText().equals("with")}? NAME ;
-//keyYIELD  : {input.LT(1).getText().equals("yield")}? NAME ;
-
-DEF       : 'def' ;
-PRINT     : 'print' ;
+AS        : 'as' ;
+ASSERT    : 'assert' ;
 BREAK     : 'break' ;
+CLASS     : 'class' ;
 CONTINUE  : 'continue' ;
-RETURN    : 'return' ;
-RAISE     : 'raise' ;
-PASS      : 'pass'  ;
-IMPORT    : 'import' ;
+DEF       : 'def' ;
+DELETE    : 'del' ;
+ELIF      : 'elif' ;
+EXCEPT    : 'except' ;
+EXEC      : 'exec' ;
+FINALLY   : 'finally' ;
 FROM      : 'from' ;
 FOR       : 'for' ;
-ORELSE    : 'else' ;
-ELIF      : 'elif' ;
+GLOBAL    : 'global' ;
 IF        : 'if' ;
+IMPORT    : 'import' ;
+IN        : 'in' ;
+IS        : 'is' ;
+LAMBDA    : 'lambda' ;
+ORELSE    : 'else' ;
+PASS      : 'pass'  ;
+PRINT     : 'print' ;
+RAISE     : 'raise' ;
+RETURN    : 'return' ;
+TRY       : 'try' ;
 WHILE     : 'while' ;
 WITH      : 'with' ;
-LAMBDA    : 'lambda' ;
-GLOBAL    : 'global' ;
 YIELD     : 'yield' ;
-ASSERT    : 'assert' ;
-FINALLY   : 'finally' ;
-DELETE    : 'del' ;
-TRY       : 'try' ;
-IN        : 'in' ;
 
 LPAREN    : '(' {implicitLineJoiningLevel++;} ;
 
