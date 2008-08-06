@@ -313,8 +313,18 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         </delete>
     </target>
 
+    <target name="clean-if-antlr-needed" unless="antlr.notneeded">
+        <!-- this seems to be the only way I could get a clean when there has been a
+             change to grammar files.  If you are working on the grammars you might
+             want to comment this out, as a clean is really only needed if you change
+             the tokens defined in Python.g (and cleans make the build slow) -->
+        <antcall target="clean"/>
+    </target>
+
+    <target name ="prepare-output" depends="init,needed-check,clean-if-antlr-needed,make-output-dirs"/>
+
     <!-- create output directories -->
-    <target name ="prepare-output" depends="init">
+    <target name ="make-output-dirs" depends="init">
         <mkdir dir="${compile.dir}" />
         <mkdir dir="${jarjar.dir}" />
         <mkdir dir="${gensrc.dir}/org/python/antlr" />
@@ -415,7 +425,7 @@ The readme text for the next release will be like:
 		  lazy="${templates.lazy}"/>
     </target>
 
-    <target name="antlr_gen" depends="init,needed-check,prepare-output" unless="antlr.notneeded">
+    <target name="antlr_gen" depends="prepare-output" unless="antlr.notneeded">
         <java classname="org.antlr.Tool" failonerror="true" fork="true" dir="${jython.base.dir}">
             <arg value="-fo"/>
             <arg path="${work.dir}/build/gensrc/org/python/antlr"/>
