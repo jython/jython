@@ -82,6 +82,9 @@ tokens {
     Interactive;
     Expression;
     NameTok;
+    ExecTok;
+    InTok;
+    ClassTok;
     Test;
     Msg;
     Level;
@@ -777,8 +780,8 @@ global_stmt : GLOBAL NAME (COMMA NAME)*
             ;
 
 //exec_stmt: 'exec' expr ['in' test [',' test]]
-exec_stmt : keyEXEC expr[expr_contextType.Load] (IN t1=test[expr_contextType.Load] (COMMA t2=test[expr_contextType.Load])?)?
-         -> ^(keyEXEC expr ^(Globals $t1)? ^(Locals $t2)?)
+exec_stmt : keyEXEC expr[expr_contextType.Load] (keyIN t1=test[expr_contextType.Load] (COMMA t2=test[expr_contextType.Load])?)?
+         -> ^(ExecTok[$keyEXEC.start] expr ^(Globals $t1)? ^(Locals $t2)?)
           ;
 
 //assert_stmt: 'assert' test [',' test]
@@ -812,8 +815,8 @@ while_stmt : WHILE test[expr_contextType.Load] COLON s1=suite (ORELSE COLON s2=s
            ;
 
 //for_stmt: 'for' exprlist 'in' testlist ':' suite ['else' ':' suite]
-for_stmt : FOR exprlist[expr_contextType.Store] IN testlist[expr_contextType.Load] COLON s1=suite (ORELSE COLON s2=suite)?
-        -> ^(FOR ^(Target exprlist) ^(IN testlist) ^(Body $s1) ^(ORELSE $s2)?)
+for_stmt : FOR exprlist[expr_contextType.Store] keyIN testlist[expr_contextType.Load] COLON s1=suite (ORELSE COLON s2=suite)?
+        -> ^(FOR ^(Target exprlist) ^(InTok[$keyIN.start] testlist) ^(Body $s1) ^(ORELSE $s2)?)
          ;
 
 //try_stmt: ('try' ':' suite
@@ -886,8 +889,8 @@ comp_op : LESS
         | LESSEQUAL
         | ALT_NOTEQUAL
         | NOTEQUAL
-        | IN
-        | NOT IN -> NotIn
+        | keyIN -> InTok[$keyIN.start]
+        | NOT keyIN -> NotIn
         | 'is'
         | 'is' NOT -> IsNot
         ;
@@ -1033,8 +1036,8 @@ dictmaker : test[expr_contextType.Load] COLON test[expr_contextType.Load]
           ;
 
 //classdef: 'class' NAME ['(' [testlist] ')'] ':' suite
-classdef: CLASS NAME (LPAREN testlist[expr_contextType.Load]? RPAREN)? COLON suite
-    -> ^(CLASS NAME ^(Bases testlist)? ^(Body suite))
+classdef: keyCLASS NAME (LPAREN testlist[expr_contextType.Load]? RPAREN)? COLON suite
+    -> ^(ClassTok[$keyCLASS.start] NAME ^(Bases testlist)? ^(Body suite))
     ;
 
 //arglist: (argument ',')* (argument [',']| '*' test [',' '**' test] | '**' test)
@@ -1080,8 +1083,8 @@ list_iter : list_for
           ;
 
 //list_for: 'for' exprlist 'in' testlist_safe [list_iter]
-list_for : FOR exprlist[expr_contextType.Load] IN testlist[expr_contextType.Load] (list_iter)?
-        -> ^(ListFor ^(Target exprlist) ^(IN testlist) ^(Ifs list_iter)?)
+list_for : FOR exprlist[expr_contextType.Load] keyIN testlist[expr_contextType.Load] (list_iter)?
+        -> ^(ListFor ^(Target exprlist) ^(InTok[$keyIN.start] testlist) ^(Ifs list_iter)?)
          ;
 
 //list_if: 'if' test [list_iter]
@@ -1095,8 +1098,8 @@ gen_iter: gen_for
         ;
 
 //gen_for: 'for' exprlist 'in' or_test [gen_iter]
-gen_for: FOR exprlist[expr_contextType.Load] IN or_test[expr_contextType.Load] gen_iter?
-      -> ^(GenFor ^(Target exprlist) ^(IN or_test) ^(Ifs gen_iter)?)
+gen_for: FOR exprlist[expr_contextType.Load] keyIN or_test[expr_contextType.Load] gen_iter?
+      -> ^(GenFor ^(Target exprlist) ^(InTok[$keyIN.start] or_test) ^(Ifs gen_iter)?)
        ;
 
 //gen_if: 'if' old_test [gen_iter]
@@ -1118,7 +1121,7 @@ yield_expr : YIELD testlist[expr_contextType.Load]?
 //and 'exec'.
 
 //keyAND    : {input.LT(1).getText().equals("and")}? NAME ;
-keyAS     : {input.LT(1).getText().equals("as")}? NAME ;
+keyAS       : {input.LT(1).getText().equals("as")}? NAME ;
 //keyDEF    : {input.LT(1).getText().equals("def")}? NAME ;
 //keyDEL    : {input.LT(1).getText().equals("del")}? NAME ;
 //keyELIF   : {input.LT(1).getText().equals("elif")}? NAME ;
@@ -1126,7 +1129,8 @@ keyAS     : {input.LT(1).getText().equals("as")}? NAME ;
 keyEXEC   : {input.LT(1).getText().equals("exec")}? NAME ;
 //keyFROM   : {input.LT(1).getText().equals("from")}? NAME ;
 //keyGLOBAL : {input.LT(1).getText().equals("global")}? NAME ;
-keyIN     : {input.LT(1).getText().equals("in")}? NAME ;
+keyIN       : {input.LT(1).getText().equals("in")}? NAME ;
+keyCLASS    : {input.LT(1).getText().equals("class")}? NAME ;
 //keyIS     : {input.LT(1).getText().equals("is")}? NAME ;
 //keyLAMBDA : {input.LT(1).getText().equals("lambda")}? NAME ;
 //keyNOT    : {input.LT(1).getText().equals("not")}? NAME ;
@@ -1138,7 +1142,6 @@ keyIN     : {input.LT(1).getText().equals("in")}? NAME ;
 //keyYIELD  : {input.LT(1).getText().equals("yield")}? NAME ;
 
 DEF       : 'def' ;
-CLASS     : 'class' ;
 PRINT     : 'print' ;
 BREAK     : 'break' ;
 CONTINUE  : 'continue' ;
@@ -1150,7 +1153,6 @@ FROM      : 'from' ;
 FOR       : 'for' ;
 ORELSE    : 'else' ;
 ELIF      : 'elif' ;
-IN        : 'in' ;
 IF        : 'if' ;
 WHILE     : 'while' ;
 WITH      : 'with' ;

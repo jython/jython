@@ -748,7 +748,7 @@ name_expr[List nms]
 
 //Using NAME instead of 'exec' for Java integration
 exec_stmt
-    : ^(NAME exec=test[expr_contextType.Load] (^(Globals globals=test[expr_contextType.Load]))? (^(Locals locals=test[expr_contextType.Load]))?) {
+    : ^(ExecTok exec=test[expr_contextType.Load] (^(Globals globals=test[expr_contextType.Load]))? (^(Locals locals=test[expr_contextType.Load]))?) {
         exprType g = null;
         if ($Globals != null) {
             g = $globals.etype;
@@ -757,7 +757,7 @@ exec_stmt
         if ($Locals != null) {
             loc = $locals.etype;
         }
-        $stmts::statements.add(new Exec($NAME, $exec.etype, g, loc));
+        $stmts::statements.add(new Exec($ExecTok, $exec.etype, g, loc));
     }
     ;
 
@@ -817,7 +817,7 @@ while_stmt
     ;
 
 for_stmt
-    : ^(FOR ^(Target targ=test[expr_contextType.Store]) ^(IN iter=test[expr_contextType.Load]) ^(Body body=stmts) (^(ORELSE orelse=stmts))?) {
+    : ^(FOR ^(Target targ=test[expr_contextType.Store]) ^(InTok iter=test[expr_contextType.Load]) ^(Body body=stmts) (^(ORELSE orelse=stmts))?) {
         List o = null;
         if ($ORELSE != null) {
             o = $orelse.stypes;
@@ -1040,7 +1040,7 @@ comp_op returns [cmpopType op]
     | LESSEQUAL {$op = cmpopType.LtE;}
     | ALT_NOTEQUAL {$op = cmpopType.NotEq;}
     | NOTEQUAL {$op = cmpopType.NotEq;}
-    | IN {$op = cmpopType.In;}
+    | InTok {$op = cmpopType.In;}
     | NotIn {$op = cmpopType.NotIn;}
     | 'is' {$op = cmpopType.Is;}
     | IsNot {$op = cmpopType.IsNot;}
@@ -1265,14 +1265,14 @@ subscript [List subs]
           ;
 
 classdef
-    : ^(CLASS classname=NAME (^(Bases bases))? ^(Body stmts)) {
+    : ^(ClassTok classname=NAME (^(Bases bases))? ^(Body stmts)) {
         List b;
         if ($Bases != null) {
             b = $bases.names;
         } else {
             b = new ArrayList();
         }
-        $stmts::statements.add(makeClassDef($CLASS, $classname, b, $stmts.stypes));
+        $stmts::statements.add(makeClassDef($ClassTok, $classname, b, $stmts.stypes));
     }
     ;
 
@@ -1365,7 +1365,7 @@ list_iter [List gens] returns [exprType etype]
 
 list_for [List gens]
     :
-    ^(ListFor ^(Target targ=test[expr_contextType.Store]) ^(IN iter=test[expr_contextType.Load]) (^(Ifs list_iter[gens]))?) {
+    ^(ListFor ^(Target targ=test[expr_contextType.Store]) ^(InTok iter=test[expr_contextType.Load]) (^(Ifs list_iter[gens]))?) {
         debug("matched list_for");
         exprType[] e;
         if ($Ifs != null && $list_iter.etype != null) {
@@ -1391,7 +1391,7 @@ gen_iter [List gens] returns [exprType etype]
     ;
 
 gen_for [List gens]
-    : ^(GenFor ^(Target targ=test[expr_contextType.Store]+) ^(IN iter=test[expr_contextType.Load]) (^(Ifs gen_iter[gens]))?) {
+    : ^(GenFor ^(Target targ=test[expr_contextType.Store]+) ^(InTok iter=test[expr_contextType.Load]) (^(Ifs gen_iter[gens]))?) {
         debug("matched gen_for");
         exprType[] e;
         if ($Ifs != null && $gen_iter.etype != null) {
