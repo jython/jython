@@ -53,6 +53,7 @@ public class Setup
         "collections:org.python.modules.collections.Collections",
         "gc",
         "_hashlib",
-        "_functools:org.python.modules._functools._functools"
+        "_functools:org.python.modules._functools._functools",
+        "_csv:org.python.modules._csv._csv"
     };
 }

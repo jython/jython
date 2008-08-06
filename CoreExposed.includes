@@ -36,6 +36,9 @@ org/python/core/PyType.class
 org/python/core/PyUnicode.class
 org/python/core/PyXRange.class
 org/python/modules/_codecs$EncodingMap.class
+org/python/modules/_csv/PyDialect.class
+org/python/modules/_csv/PyReader.class
+org/python/modules/_csv/PyWriter.class
 org/python/modules/_functools/PyPartial.class
 org/python/modules/_weakref/CallableProxyType.class
 org/python/modules/_weakref/ReferenceType.class

@@ -13,6 +13,7 @@ classmethod.derived:org.python.core.PyClassMethodDerived
 complex.derived:org.python.core.PyComplexDerived
 defaultdict.derived:org.python.modules.collections.PyDefaultDictDerived
 deque.derived:org.python.modules.collections.PyDequeDerived
+dialect.derived:org.python.modules._csv.PyDialectDerived
 dict.derived:org.python.core.PyDictionaryDerived
 enumerate.derived:org.python.core.PyEnumerateDerived
 file.derived:org.python.core.PyFileDerived
