@@ -503,9 +503,13 @@ eval_input : (NEWLINE)* testlist[expr_contextType.Load] (NEWLINE)* -> ^(Expressi
 
 //not in CPython's Grammar file
 dotted_attr
-    : NAME (DOT^ NAME)*
+    : NAME (DOT^ attr)*
     ;
 
+attr
+    : NAME
+    | IN
+    ;
 //decorator: '@' dotted_name [ '(' [arglist] ')' ] NEWLINE
 decorator: AT dotted_attr 
            ( (LPAREN arglist? RPAREN) -> ^(AT dotted_attr ^(Call ^(Args arglist)?))
@@ -771,7 +775,7 @@ dotted_as_name : dotted_name (keyAS asname=NAME)?
 dotted_as_names : dotted_as_name (COMMA! dotted_as_name)*
                 ;
 //dotted_name: NAME ('.' NAME)*
-dotted_name : NAME (DOT NAME)*
+dotted_name : NAME (DOT attr)*
             ;
 
 //global_stmt: 'global' NAME (',' NAME)*
@@ -780,7 +784,7 @@ global_stmt : GLOBAL NAME (COMMA NAME)*
             ;
 
 //exec_stmt: 'exec' expr ['in' test [',' test]]
-exec_stmt : keyEXEC expr[expr_contextType.Load] (keyIN t1=test[expr_contextType.Load] (COMMA t2=test[expr_contextType.Load])?)?
+exec_stmt : keyEXEC expr[expr_contextType.Load] (IN t1=test[expr_contextType.Load] (COMMA t2=test[expr_contextType.Load])?)?
          -> ^(ExecTok[$keyEXEC.start] expr ^(Globals $t1)? ^(Locals $t2)?)
           ;
 
@@ -815,8 +819,8 @@ while_stmt : WHILE test[expr_contextType.Load] COLON s1=suite (ORELSE COLON s2=s
            ;
 
 //for_stmt: 'for' exprlist 'in' testlist ':' suite ['else' ':' suite]
-for_stmt : FOR exprlist[expr_contextType.Store] keyIN testlist[expr_contextType.Load] COLON s1=suite (ORELSE COLON s2=suite)?
-        -> ^(FOR ^(Target exprlist) ^(InTok[$keyIN.start] testlist) ^(Body $s1) ^(ORELSE $s2)?)
+for_stmt : FOR exprlist[expr_contextType.Store] IN testlist[expr_contextType.Load] COLON s1=suite (ORELSE COLON s2=suite)?
+        -> ^(FOR ^(Target exprlist) ^(IN testlist) ^(Body $s1) ^(ORELSE $s2)?)
          ;
 
 //try_stmt: ('try' ':' suite
@@ -889,8 +893,8 @@ comp_op : LESS
         | LESSEQUAL
         | ALT_NOTEQUAL
         | NOTEQUAL
-        | keyIN -> InTok[$keyIN.start]
-        | NOT keyIN -> NotIn
+        | IN
+        | NOT IN -> NotIn
         | 'is'
         | 'is' NOT -> IsNot
         ;
@@ -989,7 +993,7 @@ lambdef: LAMBDA (varargslist)? COLON test[expr_contextType.Load] {debug("parsed 
 //trailer: '(' [arglist] ')' | '[' subscriptlist ']' | '.' NAME
 trailer : LPAREN (arglist)? RPAREN -> ^(Call ^(Args arglist)?)
         | LBRACK subscriptlist RBRACK -> ^(SubscriptList subscriptlist)
-        | DOT^ NAME {debug("motched DOT^ NAME");}
+        | DOT^ attr {debug("motched DOT^ NAME");}
         ;
 
 //subscriptlist: subscript (',' subscript)* [',']
@@ -1083,8 +1087,8 @@ list_iter : list_for
           ;
 
 //list_for: 'for' exprlist 'in' testlist_safe [list_iter]
-list_for : FOR exprlist[expr_contextType.Load] keyIN testlist[expr_contextType.Load] (list_iter)?
-        -> ^(ListFor ^(Target exprlist) ^(InTok[$keyIN.start] testlist) ^(Ifs list_iter)?)
+list_for : FOR exprlist[expr_contextType.Load] IN testlist[expr_contextType.Load] (list_iter)?
+        -> ^(ListFor ^(Target exprlist) ^(IN testlist) ^(Ifs list_iter)?)
          ;
 
 //list_if: 'if' test [list_iter]
@@ -1098,8 +1102,8 @@ gen_iter: gen_for
         ;
 
 //gen_for: 'for' exprlist 'in' or_test [gen_iter]
-gen_for: FOR exprlist[expr_contextType.Load] keyIN or_test[expr_contextType.Load] gen_iter?
-      -> ^(GenFor ^(Target exprlist) ^(InTok[$keyIN.start] or_test) ^(Ifs gen_iter)?)
+gen_for: FOR exprlist[expr_contextType.Load] IN or_test[expr_contextType.Load] gen_iter?
+      -> ^(GenFor ^(Target exprlist) ^(IN or_test) ^(Ifs gen_iter)?)
        ;
 
 //gen_if: 'if' old_test [gen_iter]
@@ -1131,7 +1135,6 @@ keyAS       : {input.LT(1).getText().equals("as")}? NAME ;
 keyEXEC   : {input.LT(1).getText().equals("exec")}? NAME ;
 //keyFROM   : {input.LT(1).getText().equals("from")}? NAME ;
 //keyGLOBAL : {input.LT(1).getText().equals("global")}? NAME ;
-keyIN       : {input.LT(1).getText().equals("in")}? NAME ;
 keyCLASS    : {input.LT(1).getText().equals("class")}? NAME ;
 //keyIS     : {input.LT(1).getText().equals("is")}? NAME ;
 //keyLAMBDA : {input.LT(1).getText().equals("lambda")}? NAME ;
@@ -1165,6 +1168,7 @@ ASSERT    : 'assert' ;
 FINALLY   : 'finally' ;
 DELETE    : 'del' ;
 TRY       : 'try' ;
+IN        : 'in' ;
 
 LPAREN    : '(' {implicitLineJoiningLevel++;} ;
 

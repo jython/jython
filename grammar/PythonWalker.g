@@ -410,9 +410,9 @@ decorator [List decs]
     ;
 
 dotted_attr returns [exprType etype, PythonTree marker]
-    : NAME {
-        $etype = new Name($NAME, $NAME.text, expr_contextType.Load);
-        $marker = $NAME;
+    : attr {
+        $etype = new Name($attr.start, $attr.text, expr_contextType.Load);
+        $marker = $attr.start;
         debug("matched NAME in dotted_attr");}
     | ^(DOT n1=dotted_attr n2=dotted_attr) {
         $etype = new Attribute($n1.marker, $n1.etype, $n2.text, expr_contextType.Load);
@@ -420,6 +420,10 @@ dotted_attr returns [exprType etype, PythonTree marker]
     }
     ;
 
+attr
+    : NAME
+    | IN
+    ;
 stmts returns [List stypes]
 scope {
     List statements;
@@ -723,9 +727,9 @@ dotted_name returns [String result]
     ;
 
 dot_name [StringBuffer buf]
-    : DOT NAME {
+    : DOT attr {
         buf.append(".");
-        buf.append($NAME.text);
+        buf.append($attr.text);
         debug("matched dot_name " + buf);
     }
     ;
@@ -817,7 +821,7 @@ while_stmt
     ;
 
 for_stmt
-    : ^(FOR ^(Target targ=test[expr_contextType.Store]) ^(InTok iter=test[expr_contextType.Load]) ^(Body body=stmts) (^(ORELSE orelse=stmts))?) {
+    : ^(FOR ^(Target targ=test[expr_contextType.Store]) ^(IN iter=test[expr_contextType.Load]) ^(Body body=stmts) (^(ORELSE orelse=stmts))?) {
         List o = null;
         if ($ORELSE != null) {
             o = $orelse.stypes;
@@ -1040,7 +1044,7 @@ comp_op returns [cmpopType op]
     | LESSEQUAL {$op = cmpopType.LtE;}
     | ALT_NOTEQUAL {$op = cmpopType.NotEq;}
     | NOTEQUAL {$op = cmpopType.NotEq;}
-    | InTok {$op = cmpopType.In;}
+    | IN {$op = cmpopType.In;}
     | NotIn {$op = cmpopType.NotIn;}
     | 'is' {$op = cmpopType.Is;}
     | IsNot {$op = cmpopType.IsNot;}
@@ -1109,9 +1113,9 @@ atom[expr_contextType ctype] returns [exprType etype, PythonTree marker, boolean
                  $etype = new Name($NAME, $NAME.text, ctype);
                  $marker = $NAME;
     }
-    | ^(DOT NAME test[expr_contextType.Load]) {
-        debug("matched DOT in atom: " + $test.etype + "###" + $NAME.text);
-        $etype = new Attribute($test.marker, $test.etype, $NAME.text, ctype);
+    | ^(DOT attr test[expr_contextType.Load]) {
+        debug("matched DOT in atom: " + $test.etype + "###" + $attr.text);
+        $etype = new Attribute($test.marker, $test.etype, $attr.text, ctype);
         $marker = $test.marker;
     }
     | ^(SubscriptList subscriptlist test[expr_contextType.Load]) {
@@ -1365,7 +1369,7 @@ list_iter [List gens] returns [exprType etype]
 
 list_for [List gens]
     :
-    ^(ListFor ^(Target targ=test[expr_contextType.Store]) ^(InTok iter=test[expr_contextType.Load]) (^(Ifs list_iter[gens]))?) {
+    ^(ListFor ^(Target targ=test[expr_contextType.Store]) ^(IN iter=test[expr_contextType.Load]) (^(Ifs list_iter[gens]))?) {
         debug("matched list_for");
         exprType[] e;
         if ($Ifs != null && $list_iter.etype != null) {
@@ -1391,7 +1395,7 @@ gen_iter [List gens] returns [exprType etype]
     ;
 
 gen_for [List gens]
-    : ^(GenFor ^(Target targ=test[expr_contextType.Store]+) ^(InTok iter=test[expr_contextType.Load]) (^(Ifs gen_iter[gens]))?) {
+    : ^(GenFor ^(Target targ=test[expr_contextType.Store]+) ^(IN iter=test[expr_contextType.Load]) (^(Ifs gen_iter[gens]))?) {
         debug("matched gen_for");
         exprType[] e;
         if ($Ifs != null && $gen_iter.etype != null) {
