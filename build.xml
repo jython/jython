@@ -319,6 +319,8 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
              want to comment this out, as a clean is really only needed if you change
              the tokens defined in Python.g (and cleans make the build slow) -->
         <antcall target="clean"/>
+        <!-- force jarjar build -->
+        <property name="jarjar.needed" value="true" />
     </target>
 
     <target name ="prepare-output" depends="init,needed-check,clean-if-antlr-needed,make-output-dirs"/>
@@ -508,7 +510,7 @@ The readme text for the next release will be like:
             includesfile="${jython.base.dir}/CoreExposed.includes"/>
     </target>
 
-    <target name="jarjar" depends="init,needed-check" unless="jarjar.notneeded,antlr.notneeded">
+    <target name="jarjar" depends="init,needed-check" if="jarjar.needed" unless="jarjar.notneeded">
         <taskdef name="jarjar" classname="com.tonicsystems.jarjar.JarJarTask" classpath="extlibs/jarjar-0.7.jar"/>
         <jarjar destfile="${output.dir}/jarjar.jar">
             <zipfileset src="extlibs/antlr-runtime-3.1b2.jar"/>
