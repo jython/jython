@@ -44,10 +44,10 @@ public class Future {
                 continue;
             }
             if (feature.equals("braces")) {
-                throw new ParseException("not a chance");
+                throw new ParseException("not a chance", cand);
             }
             if (feature.equals("GIL") || feature.equals("global_interpreter_lock")) {
-                throw new ParseException("Never going to happen!");
+                throw new ParseException("Never going to happen!", cand);
             }
             throw new ParseException("future feature "+feature+
                                      " is not defined",cand);
