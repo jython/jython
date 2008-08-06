@@ -169,53 +169,150 @@ class VectorTest(unittest.TestCase):
         ht.put("a", fv)
         self.failUnless(fv is ht.get("a"))
 
-class ReservedNamesTest(unittest.TestCase):
-    "Access to java names which are al reserved words"
+class JavaReservedNamesTest(unittest.TestCase):
+    "Access to reserved words"
 
-    def test_in(self):
+    def test_system_in(self):
         s = System.in
         self.assert_("java.io.BufferedInputStream" in str(s))
-    
-    def test_exec(self):
+             
+    def test_runtime_exec(self):
         e = Runtime.getRuntime().exec
         self.assert_(re.search("method .*exec", str(e)) is not None)
-
-    def test_class(self):
+                       
+    def test_byte_class(self):
         b = Byte(10)
         self.assert_("java.lang.Byte" in str(b.class))
 
+class Keywords(object):
+    pass
+
+Keywords.in = lambda self: "in"
+Keywords.exec = lambda self: "exec"
+Keywords.class = lambda self: "class"
+Keywords.print = lambda self: "print"
+Keywords.and = lambda self: "and"
+Keywords.as = lambda self: "as"
+Keywords.assert = lambda self: "assert"
+Keywords.break = lambda self: "break"
+Keywords.continue = lambda self: "continue"
+Keywords.def = lambda self: "def"
+Keywords.del = lambda self: "del"
+Keywords.elif = lambda self: "elif"
+Keywords.else = lambda self: "else"
+Keywords.except = lambda self: "except"
+Keywords.finally = lambda self: "finally"
+Keywords.from = lambda self: "from"
+Keywords.for = lambda self: "for"
+Keywords.global = lambda self: "global"
+Keywords.if = lambda self: "if"
+Keywords.import = lambda self: "import"
+Keywords.is = lambda self: "is"
+Keywords.lambda = lambda self: "lambda"
+Keywords.pass = lambda self: "pass"
+Keywords.print = lambda self: "print"
+Keywords.raise = lambda self: "raise"
+Keywords.return = lambda self: "return"
+Keywords.try = lambda self: "try"
+Keywords.while = lambda self: "while"
+Keywords.with = lambda self: "with"
+Keywords.yield = lambda self: "yield"
+
+class PyReservedNamesTest(unittest.TestCase):
+    "Access to reserved words"
+
+    def setUp(self):
+        self.kws = Keywords()
+
+    def test_in(self):
+        self.assertEquals(self.kws.in(), "in")
+    
+    def test_exec(self):
+        self.assertEquals(self.kws.exec(), "exec")
+
+    def test_class(self):
+        self.assertEquals(self.kws.class(), "class")
+
     def test_print(self):
-        #XXX should find a better print test.
-        System.out.print("")
+        self.assertEquals(self.kws.print(), "print")
 
-    #TODO:
-    #and
-    #as
-    #assert
-    #break
-    #continue
-    #def
-    #del
-    #elif
-    #else
-    #except
-    #finally
-    #from
-    #for
-    #global
-    #if
-    #import
-    #is
-    #lambda
-    #pass
-    #print
-    #raise
-    #return
-    #try
-    #while
-    #with
-    #yield
+    def test_and(self):
+        self.assertEquals(self.kws.and(), "and")
 
+    def test_as(self):
+        self.assertEquals(self.kws.as(), "as")
+
+    def test_assert(self):
+        self.assertEquals(self.kws.assert(), "assert")
+
+    def test_break(self):
+        self.assertEquals(self.kws.break(), "break")
+
+    def test_continue(self):
+        self.assertEquals(self.kws.continue(), "continue")
+
+    def test_def(self):
+        self.assertEquals(self.kws.def(), "def")
+
+    def test_del(self):
+        self.assertEquals(self.kws.del(), "del")
+
+    def test_elif(self):
+        self.assertEquals(self.kws.elif(), "elif")
+
+    def test_else(self):
+        self.assertEquals(self.kws.else(), "else")
+
+    def test_except(self):
+        self.assertEquals(self.kws.except(), "except")
+
+    def test_finally(self):
+        self.assertEquals(self.kws.finally(), "finally")
+
+    def test_from(self):
+        self.assertEquals(self.kws.from(), "from")
+
+    def test_for(self):
+        self.assertEquals(self.kws.for(), "for")
+
+    def test_global(self):
+        self.assertEquals(self.kws.global(), "global")
+
+    def test_if(self):
+        self.assertEquals(self.kws.if(), "if")
+
+    def test_import(self):
+        self.assertEquals(self.kws.import(), "import")
+
+    def test_is(self):
+        self.assertEquals(self.kws.is(), "is")
+
+    def test_lambda(self):
+        self.assertEquals(self.kws.lambda(), "lambda")
+
+    def test_pass(self):
+        self.assertEquals(self.kws.pass(), "pass")
+
+    def test_print(self):
+        self.assertEquals(self.kws.print(), "print")
+
+    def test_raise(self):
+        self.assertEquals(self.kws.raise(), "raise")
+
+    def test_return(self):
+        self.assertEquals(self.kws.return(), "return")
+
+    def test_try(self):
+        self.assertEquals(self.kws.try(), "try")
+
+    def test_while(self):
+        self.assertEquals(self.kws.while(), "while")
+
+    def test_with(self):
+        self.assertEquals(self.kws.with(), "with")
+
+    def test_yield(self):
+        self.assertEquals(self.kws.yield(), "yield")
 
 class ImportTest(unittest.TestCase):
     
@@ -296,7 +393,8 @@ def test_main():
                               PyObjectCmpTest,
                               IOTest,
                               VectorTest,
-                              ReservedNamesTest,
+                              JavaReservedNamesTest,
+                              PyReservedNamesTest,
                               ImportTest,
                               ButtonTest,
                               ColorTest,
