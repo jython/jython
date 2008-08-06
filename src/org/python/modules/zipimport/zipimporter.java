@@ -417,11 +417,13 @@ public class zipimporter extends PyObject {
             }
             zipBundle.close();
 
-            imp.cacheCompiledSource(pathToEntry, null, codeBytes);
-            PyCode code = BytecodeLoader.makeCode(fullname + "$py", codeBytes, pathToEntry);
-            if (code == null) {
+            if (codeBytes == null) {
+                // bad magic number or non-matching mtime in byte code, try next
                 continue;
             }
+
+            imp.cacheCompiledSource(pathToEntry, null, codeBytes);
+            PyCode code = BytecodeLoader.makeCode(fullname + "$py", codeBytes, pathToEntry);
             return new ModuleCodeData(code, ispackage, pathToEntry);
         }
         return null;

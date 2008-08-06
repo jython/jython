@@ -212,7 +212,7 @@ public class imp {
                     m.__dict__.__setitem__("__path__",
                         new PyList(new PyObject[] { filename }));
                     m.__dict__.__setitem__("__file__", filename);
-                    ModuleInfo mi = findFromSource(name, filename.toString(), true, false);
+                    ModuleInfo mi = findFromSource(name, filename.toString(), true, true);
                     type = mi.type;
                     file = mi.file;
                     filename = new PyString(mi.filename);
