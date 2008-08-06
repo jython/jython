@@ -765,6 +765,26 @@ class WichmannHill(Random):
         y = (y + a) % 256 or 1
         z = (z + a) % 256 or 1
         self.__whseed(x, y, z)
+## --------------- Operating System Random Source  ------------------
+
+class SystemRandom(Random):
+    """
+    XXX: throw NotImplementedError for any attemt to use this for now.
+    """
+
+    def random(self):
+        self._notimplemented()
+
+    def getrandbits(self, k):
+        self._notimplemented()
+
+    def _stub(self, *args, **kwds):
+        self._notimplemented()
+
+    def _notimplemented(self, *args, **kwds):
+        raise NotImplementedError('SystemRandom not implemented on Jython.')
+    getstate = setstate = _notimplemented
+
 
 ## -------------------- test program --------------------
 
