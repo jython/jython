@@ -1118,7 +1118,9 @@ yield_expr : YIELD testlist[expr_contextType.Load]?
 //These are all Python keywords that are not Java keywords
 //This means that Jython needs to support these as NAMEs
 //unlike CPython.  For now I have only done this for 'as'
-//and 'exec'.
+//and 'exec'.  A chat with Leo Soto on #jython has made me
+//realize I may need to do this for *all* keywords, since
+//a Java foo.getIf() can be called from Jython as foo.if
 
 //keyAND    : {input.LT(1).getText().equals("and")}? NAME ;
 keyAS       : {input.LT(1).getText().equals("as")}? NAME ;
