@@ -1,6 +1,6 @@
 from java.util.concurrent import Semaphore, CyclicBarrier
 from java.util.concurrent.locks import ReentrantLock
-from org.python.core import FunctionThread
+from thread import _newFunctionThread
 from thread import _local as local
 import java.lang.Thread
 import weakref
@@ -227,7 +227,7 @@ class Thread(JavaThread):
         _threads[_thread.getId()] = self
 
     def _create_thread(self):
-        return FunctionThread(self.__bootstrap, ())
+        return _newFunctionThread(self.__bootstrap, ())
 
     def run(self):
         if self._target:

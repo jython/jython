@@ -1,6 +1,8 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
+import org.python.modules._systemrestart;
+
 /**
  * An implementation of PyCode where the actual executable content
  * is stored as a PyFunctionTable instance and an integer index.
@@ -226,6 +228,12 @@ public class PyTableCode extends PyCode
         ts.exception = previous_exception;
 
         ts.frame = ts.frame.f_back;
+
+        // Check for interruption, which is used for restarting the interpreter
+        // on Jython
+        if (Thread.currentThread().isInterrupted()) {
+            throw new PyException(_systemrestart.SystemRestart);
+        }
         return ret;
     }
 

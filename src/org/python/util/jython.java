@@ -15,12 +15,13 @@ import org.python.core.PyCode;
 import org.python.core.PyException;
 import org.python.core.PyFile;
 import org.python.core.PyModule;
-import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyStringMap;
 import org.python.core.PySystemState;
 import org.python.core.imp;
 import org.python.core.util.RelativeFile;
+import org.python.modules._systemrestart;
+import org.python.modules.thread.thread;
 
 public class jython
 {
@@ -58,6 +59,8 @@ public class jython
         "Other environment variables:\n" +
         "JYTHONPATH: '" + java.io.File.pathSeparator + "'-separated list of directories prefixed to the default module\n" +
         "            search path.  The result is sys.path.";
+
+    private static boolean shouldRestart;
 
     public static void runJar(String filename) {
         // TBD: this is kind of gross because a local called `zipfile' just
@@ -102,6 +105,13 @@ public class jython
     }
 
     public static void main(String[] args) {
+        do {
+            shouldRestart = false;
+            run(args);
+        } while (shouldRestart);
+    }
+
+    public static void run(String[] args) {
         // Parse the command line options
         CommandLineOptions opts = new CommandLineOptions();
         if (!opts.parse(args)) {
@@ -120,21 +130,7 @@ public class jython
                                  opts.properties, opts.argv);
 
         // Now create an interpreter
-        InteractiveConsole interp = null;
-        try {
-            String interpClass = PySystemState.registry.getProperty(
-                                    "python.console",
-                                    "org.python.util.InteractiveConsole");
-            interp = (InteractiveConsole)
-                             Class.forName(interpClass).newInstance();
-        } catch (Exception e) {
-            interp = new InteractiveConsole();
-        }
-
-        //System.err.println("interp");
-        PyModule mod = imp.addModule("__main__");
-        interp.setLocals(mod.__dict__);
-        //System.err.println("imp");
+        InteractiveConsole interp = newInterpreter();
 
         for (int i = 0; i < opts.warnoptions.size(); i++) {
             String wopt = (String) opts.warnoptions.elementAt(i);
@@ -224,10 +220,20 @@ public class jython
                        interp.execfile(file, opts.filename);
                    }
                 } catch(Throwable t) {
-                    Py.printException(t);
-                    if (!opts.interactive) {
-                        interp.cleanup();
-                        System.exit(-1);
+                    if (t instanceof PyException &&
+                            Py.matchException((PyException)t, _systemrestart.SystemRestart)) {
+                        // Stop current threads...
+                        thread.interruptAllThreads();
+                        // ..reset the state...
+                        Py.setSystemState(new PySystemState());
+                        // ...and start again
+                        shouldRestart = true;
+                    } else {
+                        Py.printException(t);
+                        if (!opts.interactive) {
+                            interp.cleanup();
+                            System.exit(-1);
+                        }
                     }
                 }
             }
@@ -272,6 +278,29 @@ public class jython
         if (opts.fixInteractive || opts.interactive) {
             System.exit(0);
         }
+    }
+
+    /**
+     * @return a new python interpreter, instantiating the right
+     * InteractiveConsole subclass for the configured <tt>python.console</tt>
+     */
+    private static InteractiveConsole newInterpreter() {
+        InteractiveConsole interp = null;
+        try {
+            String interpClass = PySystemState.registry.getProperty(
+                                    "python.console",
+                                    "org.python.util.InteractiveConsole");
+            interp = (InteractiveConsole)
+                             Class.forName(interpClass).newInstance();
+        } catch (Exception e) {
+            interp = new InteractiveConsole();
+}
+
+        //System.err.println("interp");
+        PyModule mod = imp.addModule("__main__");
+        interp.setLocals(mod.__dict__);
+        //System.err.println("imp");
+        return interp;
     }
 }
 
