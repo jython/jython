@@ -8,6 +8,7 @@ import sys
 import imp
 import os.path
 from types import ModuleType
+from org.python.core import imp as _imp, BytecodeLoader
 
 __all__ = [
     'get_importer', 'iter_importers', 'get_loader', 'find_loader',
@@ -15,18 +16,14 @@ __all__ = [
     'ImpImporter', 'ImpLoader', 'read_code', 'extend_path',
 ]
 
-def read_code(stream):
-    # This helper is needed in order for the PEP 302 emulation to
-    # correctly handle compiled files
-    import marshal
 
-    magic = stream.read(4)
-    if magic != imp.get_magic():
-        return None
+# equivalent to CPythonLib's pkgutil.read_code except that we need
+# diff args to pass into our underlying imp implementation, as
+# accessed by _imp here
 
-    stream.read(4) # Skip timestamp
-    return marshal.load(stream)
-
+def read_jython_code(fullname, file, filename):
+    data = _imp.unmarshalCode(filename, file, False)
+    return BytecodeLoader.makeCode(fullname + "$py", data, filename)
 
 def simplegeneric(func):
     """Make a trivial single-dispatch generic function"""
@@ -276,7 +273,7 @@ class ImpLoader:
             elif mod_type==imp.PY_COMPILED:
                 self._reopen()
                 try:
-                    self.code = read_code(self.file)
+                    self.code = read_jython_code(fullname, self.file, self.filename)
                 finally:
                     self.file.close()
             elif mod_type==imp.PKG_DIRECTORY:
@@ -451,6 +448,11 @@ def get_loader(module_or_name):
         if loader is not None:
             return loader
         fullname = module.__name__
+    elif module_or_name == sys: 
+        # Jython sys is not a real module; fake it here for now since
+        # making it a module requires a fair amount of decoupling from
+        # PySystemState
+        fullname = "sys"
     else:
         fullname = module_or_name
     return find_loader(fullname)
