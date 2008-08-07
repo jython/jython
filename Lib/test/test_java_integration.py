@@ -4,9 +4,11 @@ import sys
 import re
 
 from test import test_support
-from java.awt import Dimension, Component, Rectangle, Button, Color
+from java.awt import (Dimension, Component, Rectangle, Button, Color,
+                      HeadlessException)
 from java.util import Vector, Hashtable
-from java.io import FileOutputStream, FileWriter, OutputStreamWriter, UnsupportedEncodingException
+from java.io import (FileOutputStream, FileWriter, OutputStreamWriter,
+                     UnsupportedEncodingException)
 from java.lang import Runnable, Thread, ThreadGroup, System, Runtime, Math, Byte
 from javax.swing.tree import TreePath
 from java.math import BigDecimal
@@ -325,7 +327,10 @@ class ImportTest(unittest.TestCase):
 class ButtonTest(unittest.TestCase):
 
     def test_setLabel(self):
-        b = Button()
+        try:
+            b = Button()
+        except HeadlessException:
+            return # can't raise TestSkipped
         try:
             b.setLabel = 4
         except TypeError, e:
