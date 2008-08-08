@@ -1682,7 +1682,13 @@ public final class Py {
             String filename,
             String type,
             CompilerFlags cflags) {
-        return Py.compile_flags(new ByteArrayInputStream(StringUtil.toBytes(data + "\n\n")),
+        byte[] bytes;
+        if (cflags.dont_imply_dedent) {
+            bytes = StringUtil.toBytes(data + "\n");
+        } else {
+            bytes = StringUtil.toBytes(data + "\n\n");
+        }
+        return Py.compile_flags(new ByteArrayInputStream(bytes),
                 filename,
                 type,
                 cflags);
@@ -1696,6 +1702,7 @@ public final class Py {
         if (node == null) {
             return Py.None;
         }
+
         return Py.compile_flags(node, Py.getName(), filename, true, true,
                 cflags);
     }

@@ -192,6 +192,10 @@ single_input : NEWLINE
              | compound_stmt NEWLINE?
              ;
 
+//eval_input: testlist NEWLINE* ENDMARKER
+eval_input : (NEWLINE)* testlist? (NEWLINE)*
+           ;
+
 decorators: decorator+
           ;
 

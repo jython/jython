@@ -38,12 +38,13 @@ public class PyTableCode extends PyCode
     final public static int CO_FUTURE_ABSOLUTE_IMPORT = 0x4000;
     final public static int CO_WITH_STATEMENT    = 0x8000;
 
-    //XXX: I'm not positive that this is the right place for this constant.
-    final public static int PyCF_ONLY_AST        = 0x0400;
+    //XXX: I'm not positive that this is the right place for these constants.
+    final public static int PyCF_DONT_IMPLY_DEDENT = 0x0200;
+    final public static int PyCF_ONLY_AST          = 0x0400;
 
-    final public static int CO_ALL_FEATURES = PyCF_ONLY_AST|CO_NESTED|CO_GENERATOR_ALLOWED|
-                                              CO_FUTUREDIVISION|CO_FUTURE_ABSOLUTE_IMPORT|
-                                              CO_WITH_STATEMENT;
+    final public static int CO_ALL_FEATURES = PyCF_DONT_IMPLY_DEDENT|PyCF_ONLY_AST|CO_NESTED|
+                                              CO_GENERATOR_ALLOWED| CO_FUTUREDIVISION|
+                                              CO_FUTURE_ABSOLUTE_IMPORT|CO_WITH_STATEMENT;
 
     public PyTableCode(int argcount, String varnames[],
                        String filename, String name,
@@ -163,8 +164,8 @@ public class PyTableCode extends PyCode
             }
         }
         // nested scopes: setup env with closure
-	// this should only be done once, so let the frame take care of it
-	frame.setupEnv((PyTuple)closure);
+        // this should only be done once, so let the frame take care of it
+        frame.setupEnv((PyTuple)closure);
 
         ts.frame = frame;
 

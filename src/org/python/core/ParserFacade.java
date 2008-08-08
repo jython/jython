@@ -98,7 +98,7 @@ public class ParserFacade {
                                 String filename,
                                 CompilerFlags cflags) {
         BufferedInputStream bstream = new BufferedInputStream(stream);
-        //FIMXE: npe?
+        //FIXME: npe?
         BufferedReader bufreader = null;
         modType node = null;
         try {
@@ -138,23 +138,28 @@ public class ParserFacade {
                                        String filename,
                                        CompilerFlags cflags,
                                        boolean stdprompt) {
-        modType node = null;
-        //FIMXE: npe?
+        ByteArrayInputStream bi = new ByteArrayInputStream(
+                StringUtil.toBytes(string));
+        BufferedInputStream bstream = bstream = new BufferedInputStream(bi);
+        //FIXME: npe?
         BufferedReader bufreader = null;
+        modType node = null;
         try {
             if (kind.equals("single")) {
-                ByteArrayInputStream bi = new ByteArrayInputStream(
-                        StringUtil.toBytes(string));
-                BufferedInputStream bstream = bstream = new BufferedInputStream(bi);
                 bufreader = prepBufreader(bstream, cflags, filename);
                 InteractiveParser i = new InteractiveParser(bufreader, filename);
                 node = i.parse();
+            } else if (kind.equals("eval")) {
+                bufreader = prepBufreader(new LeadingSpaceSkippingStream(bstream), cflags, filename);
+                CharStream cs = new NoCloseReaderStream(bufreader);
+                ExpressionParser e = new ExpressionParser(cs, filename);
+                node = e.parse();
             } else {
                 throw Py.ValueError("parse kind must be eval, exec, " + "or single");
             }
         } catch (Throwable t) {
             PyException p = fixParseError(bufreader, t, filename);
-            if (validPartialSentence(bufreader)) {
+            if (validPartialSentence(bufreader, kind)) {
                 return null;
             }
             throw p;
@@ -162,7 +167,7 @@ public class ParserFacade {
         return node;
     }
 
-    private static boolean validPartialSentence(BufferedReader bufreader) {
+    private static boolean validPartialSentence(BufferedReader bufreader, String kind) {
         PythonPartialLexer lexer = null;
         try {
             bufreader.reset();
@@ -173,8 +178,16 @@ public class ParserFacade {
             PythonPartialTokenSource indentedSource = new PythonPartialTokenSource(tokens);
             tokens = new CommonTokenStream(indentedSource);
             PythonPartialParser parser = new PythonPartialParser(tokens);
-            parser.single_input();
+            if (kind.equals("single")) {
+                parser.single_input();
+            } else if (kind.equals("eval")) {
+                parser.eval_input();
+            } else {
+                return false;
+            }
+
         } catch (Exception e) {
+            System.out.println("valid sentence prob: " + e);
             return lexer.eofWhileNested;
         }
         return true;

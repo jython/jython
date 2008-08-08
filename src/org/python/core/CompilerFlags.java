@@ -7,6 +7,7 @@ public class CompilerFlags {
     public boolean division;
     public boolean generator_allowed = true;
     public boolean only_ast = false;
+    public boolean dont_imply_dedent = false;
     public boolean with_statement = false;
     public boolean absolute_import = false;
 
@@ -33,12 +34,16 @@ public class CompilerFlags {
         if ((co_flags & org.python.core.PyTableCode.PyCF_ONLY_AST) != 0) {
             this.only_ast = true;
         }
+        if ((co_flags & org.python.core.PyTableCode.PyCF_DONT_IMPLY_DEDENT) != 0) {
+            this.dont_imply_dedent = true;
+        }
     }
     
     public String toString() {
         return String.format("CompilerFlags[division=%s nested_scopes=%s generators=%s "
-                             + "with_statement=%s absolute_import=%s]", division, nested_scopes, generator_allowed,
-                             with_statement, absolute_import);
+                             + "with_statement=%s absolute_import=%s only_ast=%s "
+                             + "dont_imply_dedent=%s]", division, nested_scopes, generator_allowed,
+                             with_statement, absolute_import, only_ast, dont_imply_dedent);
     }
     
 }
