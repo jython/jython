@@ -187,7 +187,6 @@ public class ParserFacade {
             }
 
         } catch (Exception e) {
-            System.out.println("valid sentence prob: " + e);
             return lexer.eofWhileNested;
         }
         return true;
