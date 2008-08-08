@@ -188,6 +188,8 @@ import java.util.Iterator;
 
     private boolean seenSingleOuterSuite = false;
 
+    private GrammarActions actions = new GrammarActions();
+
     public void setErrorHandler(ErrorHandler eh) {
         this.errorHandler = eh;
     }
@@ -198,205 +200,6 @@ import java.util.Iterator;
         }
     }
 
-    private void throwGenExpNotSoleArg(PythonTree t) {
-        throw new ParseException("Generator expression must be parenthesized if not sole argument", t);
-    }
-
-    private exprType[] makeExprs(List exprs) {
-        return makeExprs(exprs, 0);
-    }
-
-    private exprType[] makeExprs(List exprs, int start) {
-        if (exprs != null) {
-            List<exprType> result = new ArrayList<exprType>();
-            for (int i=start; i<exprs.size(); i++) {
-                exprType e = (exprType)exprs.get(i);
-                result.add(e);
-            }
-            return (exprType[])result.toArray(new exprType[result.size()]);
-        }
-        return new exprType[0];
-    }
-
-    private stmtType[] makeStmts(List stmts) {
-        if (stmts != null) {
-            List<stmtType> result = new ArrayList<stmtType>();
-            for (int i=0; i<stmts.size(); i++) {
-                result.add((stmtType)stmts.get(i));
-            }
-            return (stmtType[])result.toArray(new stmtType[result.size()]);
-        }
-        return new stmtType[0];
-    }
-
-    private exprType makeDottedAttr(Token nameToken, List attrs) {
-        exprType current = new Name(nameToken, nameToken.getText(), expr_contextType.Load);
-        for (int i=attrs.size() - 1; i > -1; i--) {
-            Token t = ((PythonTree)attrs.get(i)).token;
-            current = new Attribute(t, current, t.getText(),
-                expr_contextType.Load);
-        }
-        return current;
-    }
-
-    private FunctionDef makeFunctionDef(PythonTree t, PythonTree nameToken, argumentsType args, List funcStatements, List decorators) {
-        argumentsType a;
-        debug("Matched FunctionDef");
-        if (args != null) {
-            a = args;
-        } else {
-            a = new argumentsType(t, new exprType[0], null, null, new exprType[0]); 
-        }
-        stmtType[] s = (stmtType[])funcStatements.toArray(new stmtType[funcStatements.size()]);
-        exprType[] d;
-        if (decorators != null) {
-            d = (exprType[])decorators.toArray(new exprType[decorators.size()]);
-        } else {
-            d = new exprType[0];
-        }
-        return new FunctionDef(t, nameToken.getText(), a, s, d);
-    }
-
-    private argumentsType makeArgumentsType(Token t, List params, Token snameToken,
-        Token knameToken, List defaults) {
-        debug("Matched Arguments");
-
-        exprType[] p = (exprType[])params.toArray(new exprType[params.size()]);
-        exprType[] d = (exprType[])defaults.toArray(new exprType[defaults.size()]);
-        String s;
-        String k;
-        if (snameToken == null) {
-            s = null;
-        } else {
-            s = snameToken.getText();
-        }
-        if (knameToken == null) {
-            k = null;
-        } else {
-            k = knameToken.getText();
-        }
-        return new argumentsType(t, p, s, k, d);
-    }
-
-
-
-    Object makeFloat(Token t) {
-        debug("makeFloat matched " + t.getText());
-        return Py.newFloat(Double.valueOf(t.getText()));
-    }
-
-    Object makeComplex(Token t) {
-        String s = t.getText();
-        s = s.substring(0, s.length() - 1);
-        return Py.newImaginary(Double.valueOf(s));
-    }
-
-    Object makeInt(Token t) {
-        debug("Num matched " + t.getText());
-        String s = t.getText();
-        int radix = 10;
-        if (s.startsWith("0x") || s.startsWith("0X")) {
-            radix = 16;
-            s = s.substring(2, s.length());
-        } else if (s.startsWith("0")) {
-            radix = 8;
-        }
-        if (s.endsWith("L") || s.endsWith("l")) {
-            s = s.substring(0, s.length()-1);
-            return Py.newLong(new BigInteger(s, radix));
-        }
-        int ndigits = s.length();
-        int i=0;
-        while (i < ndigits && s.charAt(i) == '0')
-            i++;
-        if ((ndigits - i) > 11) {
-            return Py.newLong(new BigInteger(s, radix));
-        }
-
-        long l = Long.valueOf(s, radix).longValue();
-        if (l > 0xffffffffl || (l > Integer.MAX_VALUE)) {
-            return Py.newLong(new BigInteger(s, radix));
-        }
-        return Py.newInteger((int) l);
-    }
-
-    class StringPair {
-        private String s;
-        private boolean unicode;
-
-        StringPair(String s, boolean unicode) {
-            this.s = s;
-            this.unicode = unicode;
-        }
-        String getString() {
-            return s;
-        }
-        
-        boolean isUnicode() {
-            return unicode;
-        }
-    }
-
-    PyString extractStrings(List s) {
-        boolean ustring = false;
-        Token last = null;
-        StringBuffer sb = new StringBuffer();
-        Iterator iter = s.iterator();
-        while (iter.hasNext()) {
-            last = (Token)iter.next();
-            StringPair sp = extractString(last);
-            if (sp.isUnicode()) {
-                ustring = true;
-            }
-            sb.append(sp.getString());
-        }
-        if (ustring) {
-            return new PyUnicode(sb.toString());
-        }
-        return new PyString(sb.toString());
-    }
-
-    StringPair extractString(Token t) {
-        String s = t.getText();
-        char quoteChar = s.charAt(0);
-        int start=0;
-        boolean ustring = false;
-        if (quoteChar == 'u' || quoteChar == 'U') {
-            ustring = true;
-            start++;
-        }
-        quoteChar = s.charAt(start);
-        boolean raw = false;
-        if (quoteChar == 'r' || quoteChar == 'R') {
-            raw = true;
-            start++;
-        }
-        int quotes = 3;
-        if (s.length() - start == 2) {
-            quotes = 1;
-        }
-        if (s.charAt(start) != s.charAt(start+1)) {
-            quotes = 1;
-        }
-
-        if (raw) {
-            return new StringPair(s.substring(quotes+start, s.length()-quotes), ustring);
-        } else {
-            StringBuffer sb = new StringBuffer(s.length());
-            char[] ca = s.toCharArray();
-            int n = ca.length-quotes;
-            int i=quotes+start;
-            int last_i=i;
-            return new StringPair(PyString.decode_UnicodeEscape(s, i, n, "strict", ustring), ustring);
-            //return decode_UnicodeEscape(s, i, n, "strict", ustring);
-        }
-    }
-
-    Token extractStringToken(List s) {
-        return (Token)s.get(s.size() - 1);
-    }
-
- 
     protected void mismatch(IntStream input, int ttype, BitSet follow) throws RecognitionException {
         if (errorHandler.isRecoverable()) {
             super.mismatch(input, ttype, follow);
@@ -989,12 +792,12 @@ atom : LPAREN
      | LCURLY (dictmaker)? RCURLY -> ^(Dict LCURLY ^(Elts dictmaker)?)
      | BACKQUOTE testlist[expr_contextType.Load] BACKQUOTE -> ^(Repr BACKQUOTE testlist)
      | NAME -> ^(NameTok NAME)
-     | INT -> ^(NumTok<Num>[$INT, makeInt($INT)])
-     | LONGINT -> ^(NumTok<Num>[$LONGINT, makeInt($LONGINT)])
-     | FLOAT -> ^(NumTok<Num>[$FLOAT, makeFloat($FLOAT)])
-     | COMPLEX -> ^(NumTok<Num>[$COMPLEX, makeComplex($COMPLEX)])
+     | INT -> ^(NumTok<Num>[$INT, actions.makeInt($INT)])
+     | LONGINT -> ^(NumTok<Num>[$LONGINT, actions.makeInt($LONGINT)])
+     | FLOAT -> ^(NumTok<Num>[$FLOAT, actions.makeFloat($FLOAT)])
+     | COMPLEX -> ^(NumTok<Num>[$COMPLEX, actions.makeComplex($COMPLEX)])
      | (S+=STRING)+ 
-    -> ^(StrTok<Str>[extractStringToken($S), extractStrings($S)])
+    -> ^(StrTok<Str>[actions.extractStringToken($S), actions.extractStrings($S)])
      ;
 
 //listmaker: test ( list_for | (',' test)* [','] )
@@ -1080,11 +883,11 @@ arglist : a1=argument[true] (COMMA a2+=argument[false])*
             )?
           )? { if ($a2 != null) {
                    if ($a1.tree.getType() == GenFor) {
-                       throwGenExpNotSoleArg($a1.tree);
+                       actions.throwGenExpNotSoleArg($a1.tree);
                    }
                    for (int i=0;i<$a2.size();i++) {
                        if (((PythonTree)$a2.get(i)).getType() == GenFor) {
-                           throwGenExpNotSoleArg(((argument_return)$a2.get(i)).tree);
+                           actions.throwGenExpNotSoleArg(((argument_return)$a2.get(i)).tree);
                        }
                    }
                }
@@ -1101,7 +904,7 @@ argument[boolean first]
     : t1=test[expr_contextType.Load]
          ( (ASSIGN t2=test[expr_contextType.Load]) -> ^(Keyword ^(Arg $t1) ^(Value $t2)?)
          | gen_for { if (!first) {
-                           throwGenExpNotSoleArg($gen_for.tree);
+                           actions.throwGenExpNotSoleArg($gen_for.tree);
                      }
                    }
         -> ^(GenFor $t1 gen_for)
