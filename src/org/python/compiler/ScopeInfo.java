@@ -54,6 +54,7 @@ public class ScopeInfo extends Object implements ScopeConstants {
     public boolean from_import_star;
     public boolean generator;
     public int yield_count;
+    public int max_with_count;
 
     public ArgListCompiler ac;
 

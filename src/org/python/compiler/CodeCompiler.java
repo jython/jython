@@ -137,6 +137,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
     public int bcfLevel = 0;
 
     int yield_count = 0;
+    int with_count = 0;
 
     public CodeCompiler(Module module, boolean print_results) {
         this.module = module;
@@ -261,6 +262,15 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
 
         tbl = scope.tbl;
         optimizeGlobals = fast_locals&&!scope.exec&&!scope.from_import_star;
+        
+        if (scope.max_with_count > 0) {
+            // allocate for all the with-exits we will have in the frame;
+            // this allows yield and with to happily co-exist
+            loadFrame();
+            code.iconst(scope.max_with_count);
+            code.anewarray("org/python/core/PyObject");
+            code.putfield("org/python/core/PyFrame", "f_exits", $pyObjArr);
+        }
 
         Object exit = visit(node);
 
@@ -2005,70 +2015,77 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         if (!module.getFutures().withStatementSupported()) {
             throw new ParseException("'with' will become a reserved keyword in Python 2.6", node);
         }
-        
-        int mgr_tmp = code.getLocal("org/python/core/PyObject");
-        int exit_tmp = code.getLocal("org/python/core/PyObject");
-        int value_tmp = code.getLocal("org/python/core/PyObject");
-        int exc_tmp = code.getLocal("java/lang/Throwable");
-        
+
+        int my_with_count = with_count;
+        with_count++;
+
         Label label_body_start = new Label();
         Label label_body_end = new Label();
         Label label_catch = new Label();
         Label label_finally = new Label();
         Label label_end = new Label();
-        
+
         Method getattr = Method.getMethod("org.python.core.PyObject __getattr__ (String)");
         Method call = Method.getMethod("org.python.core.PyObject __call__ ()");
         Method call3 = Method.getMethod("org.python.core.PyObject __call__ (org.python.core.PyObject,org.python.core.PyObject,org.python.core.PyObject)");
-        
-        setline(node);
-        
+
         // mgr = (EXPR)
         visit(node.context_expr);
+        int mgr_tmp = code.getLocal("org/python/core/PyObject");  
         code.astore(mgr_tmp);
-        
-        // exit = mgr.__exit__  # Not calling it yet
+
+        // exit = mgr.__exit__  # Not calling it yet, so storing in the frame    
+        loadFrame();
+        code.getfield("org/python/core/PyFrame", "f_exits", $pyObjArr);
+        code.iconst(my_with_count);
         code.aload(mgr_tmp);
         code.ldc("__exit__");
         code.invokevirtual(Type.getType(PyObject.class).getInternalName(), getattr.getName(), getattr.getDescriptor());
-        code.astore(exit_tmp);
+        code.aastore();
 
         // value = mgr.__enter__()
         code.aload(mgr_tmp);
+        code.freeLocal(mgr_tmp);
         code.ldc("__enter__");
         code.invokevirtual(Type.getType(PyObject.class).getInternalName(), getattr.getName(), getattr.getDescriptor());
         code.invokevirtual(Type.getType(PyObject.class).getInternalName(), call.getName(), call.getDescriptor());
+        int value_tmp = code.getLocal("org/python/core/PyObject");
         code.astore(value_tmp);
 
         // exc = True # not necessary, since we don't exec finally if exception
         // try-catch block here
         code.trycatch(label_body_start, label_body_end, label_catch, "java/lang/Throwable");
-        
+
         // VAR = value  # Only if "as VAR" is present
         code.label(label_body_start);
         if (node.optional_vars != null) {
-            set(node.optional_vars, value_tmp);         
+            set(node.optional_vars, value_tmp);
         }
+        code.freeLocal(value_tmp);
+        
         // BLOCK
         suite(node.body);
         code.goto_(label_finally);
         code.label(label_body_end);
-        
+
         // CATCH
         code.label(label_catch);
-        code.astore(exc_tmp);
- 
-        code.aload(exc_tmp);
+
         loadFrame();
         code.invokestatic("org/python/core/Py", "setException", "(" + $throwable + $pyFrame + ")" + $pyExc);
-        code.astore(exc_tmp);
-        
-        code.invokestatic("org/python/core/Py", "getThreadState", "()Lorg/python/core/ThreadState;"); 
+        code.pop();
+
+        code.invokestatic("org/python/core/Py", "getThreadState", "()Lorg/python/core/ThreadState;");
         code.getfield("org/python/core/ThreadState", "exception", $pyExc);
         int ts_tmp = storeTop();
 
+        // # The exceptional case is handled here
+        // exc = False # implicit
         // if not exit(*sys.exc_info()):
-        code.aload(exit_tmp); 
+        loadFrame();
+        code.getfield("org/python/core/PyFrame", "f_exits", $pyObjArr);
+        code.iconst(my_with_count);
+        code.aaload();
         code.aload(ts_tmp);
         code.getfield("org/python/core/PyException", "type", $pyObj);
         code.aload(ts_tmp);
@@ -2079,10 +2096,13 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         code.invokevirtual(Type.getType(PyObject.class).getInternalName(), call3.getName(), call3.getDescriptor());
         code.invokevirtual("org/python/core/PyObject", "__nonzero__", "()Z");
         code.ifne(label_end);
-        // raise
+        //    raise
+        // # The exception is swallowed if exit() returns true
         code.invokestatic("org/python/core/Py", "makeException", "()Lorg/python/core/PyException;");
         code.checkcast("java/lang/Throwable");
         code.athrow();
+        
+        code.freeLocal(ts_tmp);
 
         // FINALLY
         // ordinarily with a finally, we need to duplicate the code. that's not the case here
@@ -2091,24 +2111,20 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         //     exit(None, None, None)
 
         code.label(label_finally);
-        getNone();
-        int none_tmp = storeTop();
 
-        code.aload(exit_tmp);
-        code.aload(none_tmp);
-        code.aload(none_tmp);
-        code.aload(none_tmp);
+        loadFrame();
+        code.getfield("org/python/core/PyFrame", "f_exits", $pyObjArr);
+        code.iconst(my_with_count);
+        code.aaload();
+        getNone();
+        code.dup();
+        code.dup();
         code.invokevirtual(Type.getType(PyObject.class).getInternalName(), call3.getName(), call3.getDescriptor());
         code.pop();
 
         code.label(label_end);
+        with_count--;
 
-        code.freeLocal(ts_tmp);
-        code.freeLocal(exc_tmp);
-        code.freeLocal(value_tmp);
-        code.freeLocal(exit_tmp);
-        code.freeLocal(mgr_tmp);
-        
         return null;
     }
     

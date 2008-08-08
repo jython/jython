@@ -269,4 +269,11 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
         return null;
     }
 
+    public Object visitWith(With node) throws Exception {                
+        cur.max_with_count++;
+        traverse(node);
+        
+        return null;
+    }
+    
 }
