@@ -28,4 +28,15 @@ public class FunctionThread extends Thread
             Py.printException(exc);
         }
     }
+
+    @Override
+    public String toString() {
+        ThreadGroup group = getThreadGroup();
+        if (group != null) {
+            return String.format("FunctionThread[%s,%s,%s]", getName(), getPriority(),
+                                 group.getName());
+        } else {
+            return String.format("FunctionThread[%s,%s]", getName(), getPriority());
+        }
+    }
 }

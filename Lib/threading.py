@@ -1,3 +1,4 @@
+from java.util import Collections, WeakHashMap
 from java.util.concurrent import Semaphore, CyclicBarrier
 from java.util.concurrent.locks import ReentrantLock
 from thread import _newFunctionThread
@@ -160,6 +161,8 @@ ThreadStates = {
 class JavaThread(object):
     def __init__(self, thread):
         self._thread = thread
+        _jthread_to_pythread[thread] = self
+        _threads[thread.getId()] = self
 
     def __repr__(self):
         _thread = self._thread
@@ -209,10 +212,12 @@ class JavaThread(object):
 # relies on the fact that this is a CHM
 _threads = weakref.WeakValueDictionary()
 _active = _threads
-_jthread_to_pythread = weakref.WeakKeyDictionary()
+_jthread_to_pythread = Collections.synchronizedMap(WeakHashMap())
 
 class Thread(JavaThread):
     def __init__(self, group=None, target=None, name=None, args=None, kwargs=None):
+        _thread = self._create_thread()
+        JavaThread.__init__(self, _thread)
         if args is None:
             args = ()
         if kwargs is None:
@@ -220,11 +225,8 @@ class Thread(JavaThread):
         self._target = target
         self._args = args
         self._kwargs = kwargs
-        self._thread = _thread = self._create_thread()
         if name:
             self._thread.setName(name)
-        _jthread_to_pythread[_thread] = self
-        _threads[_thread.getId()] = self
 
     def _create_thread(self):
         return _newFunctionThread(self.__bootstrap, ())
@@ -314,10 +316,11 @@ def _pickSomeNonDaemonThread():
     return None
 
 def currentThread():
-    try:
-        return _jthread_to_pythread[java.lang.Thread.currentThread()]
-    except KeyError:
-        return JavaThread(java.lang.Thread.currentThread())
+    jthread = java.lang.Thread.currentThread()
+    pythread = _jthread_to_pythread[jthread]
+    if pythread is None:
+        pythread = JavaThread(jthread)
+    return pythread
 
 def activeCount():
     return len(_threads)
