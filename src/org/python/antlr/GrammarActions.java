@@ -84,9 +84,14 @@ import java.util.Map;
 import java.util.Set;
 
 public class GrammarActions {
+    private ErrorHandler errorHandler = null;
+
     public GrammarActions() {
     }
 
+    public void setErrorHandler(ErrorHandler eh) {
+        this.errorHandler = eh;
+    }
     void debug(String x) {
         if (false) {
             System.out.println(x);
@@ -135,11 +140,9 @@ public class GrammarActions {
     }
 
     stmtType makeFunctionDef(PythonTree t, PythonTree nameToken, argumentsType args, List funcStatements, List decorators) {
-        /*
-        if (nameToken == null || funcStatements == null || decorators == null) {
-            return new ErrorStmt(t);
+        if (nameToken == null) {
+            return errorHandler.errorStmt(t);
         }
-        */
         argumentsType a;
         debug("Matched FunctionDef");
         if (args != null) {
@@ -322,11 +325,9 @@ public class GrammarActions {
     }
 
     stmtType makeClassDef(PythonTree t, PythonTree nameToken, List bases, List body) {
-        /*
-        if (nameToken == null || bases == null || body == null) {
-            return new ErrorStmt(t);
+        if (nameToken == null) {
+            return errorHandler.errorStmt(t);
         }
-        */
         exprType[] b = (exprType[])bases.toArray(new exprType[bases.size()]);
         stmtType[] s = (stmtType[])body.toArray(new stmtType[body.size()]);
         return new ClassDef(t, nameToken.getText(), b, s);
@@ -378,7 +379,10 @@ public class GrammarActions {
         return new TryFinally(t, b, f);
     }
 
-    If makeIf(PythonTree t, exprType test, List body, List orelse) {
+    stmtType makeIf(PythonTree t, exprType test, List body, List orelse) {
+        if (test == null) {
+            return errorHandler.errorStmt(t);
+        }
         stmtType[] o;
         if (orelse != null) {
             o = (stmtType[])orelse.toArray(new stmtType[orelse.size()]);
@@ -395,7 +399,10 @@ public class GrammarActions {
     }
 
 
-    While makeWhile(PythonTree t, exprType test, List body, List orelse) {
+    stmtType makeWhile(PythonTree t, exprType test, List body, List orelse) {
+        if (test == null) {
+            return errorHandler.errorStmt(t);
+        }
         stmtType[] o;
         if (orelse != null) {
             o = (stmtType[])orelse.toArray(new stmtType[orelse.size()]);
@@ -406,7 +413,10 @@ public class GrammarActions {
         return new While(t, test, b, o);
     }
 
-    For makeFor(PythonTree t, exprType target, exprType iter, List body, List orelse) {
+    stmtType makeFor(PythonTree t, exprType target, exprType iter, List body, List orelse) {
+        if (target == null || iter == null) {
+            return errorHandler.errorStmt(t);
+        }
         stmtType[] o;
         if (orelse != null) {
             o = (stmtType[])orelse.toArray(new stmtType[orelse.size()]);
@@ -417,11 +427,14 @@ public class GrammarActions {
         return new For(t, target, iter, b, o);
     }
     
-    Call makeCall(PythonTree t, exprType func) {
+    exprType makeCall(PythonTree t, exprType func) {
         return makeCall(t, func, null, null, null, null);
     }
 
-    Call makeCall(PythonTree t, exprType func, List args, List keywords, exprType starargs, exprType kwargs) {
+    exprType makeCall(PythonTree t, exprType func, List args, List keywords, exprType starargs, exprType kwargs) {
+        if (func == null) {
+            return errorHandler.errorExpr(t);
+        }
         exprType[] a;
         keywordType[] k;
         if (args == null) {

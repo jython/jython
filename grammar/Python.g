@@ -192,6 +192,7 @@ import java.util.Iterator;
 
     public void setErrorHandler(ErrorHandler eh) {
         this.errorHandler = eh;
+        actions.setErrorHandler(eh);
     }
 
     private void debug(String message) {

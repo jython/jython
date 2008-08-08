@@ -95,6 +95,7 @@ import java.util.Set;
 
     public void setErrorHandler(ErrorHandler eh) {
         this.errorHandler = eh;
+        actions.setErrorHandler(eh);
     }
 
     public void debug(String message) {
@@ -225,7 +226,7 @@ decorator [List decs]
         if ($Call == null) {
             decs.add($dotted_attr.etype);
         } else {
-            Call c;
+            exprType c;
             if ($Args == null) {
                 c = actions.makeCall($Call, $dotted_attr.etype);
             } else {
@@ -344,7 +345,7 @@ expr_stmt
 
 call_expr returns [exprType etype, PythonTree marker]
     : ^(Call (^(Args arglist))? test[expr_contextType.Load]) {
-        Call c;
+        exprType c;
         if ($Args == null) {
             c = actions.makeCall($test.marker, $test.etype);
         } else {
@@ -676,7 +677,7 @@ while_stmt
         if ($ORELSE != null) {
             o = $orelse.stypes;
         }
-        While w = actions.makeWhile($WHILE, $test.etype, $body.stypes, o);
+        stmtType w = actions.makeWhile($WHILE, $test.etype, $body.stypes, o);
         $stmts::statements.add(w);
     }
     ;
@@ -687,7 +688,7 @@ for_stmt
         if ($ORELSE != null) {
             o = $orelse.stypes;
         }
-        For f = actions.makeFor($FOR, $targ.etype, $iter.etype, $body.stypes, o);
+        stmtType f = actions.makeFor($FOR, $targ.etype, $iter.etype, $body.stypes, o);
         $stmts::statements.add(f);
     }
     ;
