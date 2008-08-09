@@ -92,11 +92,6 @@ public class GrammarActions {
     public void setErrorHandler(ErrorHandler eh) {
         this.errorHandler = eh;
     }
-    void debug(String x) {
-        if (false) {
-            System.out.println(x);
-        }
-    }
 
     void throwGenExpNotSoleArg(PythonTree t) {
         throw new ParseException("Generator expression must be parenthesized if not sole argument", t);
@@ -144,7 +139,6 @@ public class GrammarActions {
             return errorHandler.errorStmt(t);
         }
         argumentsType a;
-        debug("Matched FunctionDef");
         if (args != null) {
             a = args;
         } else {
@@ -162,7 +156,6 @@ public class GrammarActions {
 
     argumentsType makeArgumentsType(Token t, List params, Token snameToken,
         Token knameToken, List defaults) {
-        debug("Matched Arguments");
 
         exprType[] p = (exprType[])params.toArray(new exprType[params.size()]);
         exprType[] d = (exprType[])defaults.toArray(new exprType[defaults.size()]);
@@ -184,7 +177,6 @@ public class GrammarActions {
 
 
     Object makeFloat(Token t) {
-        debug("makeFloat matched " + t.getText());
         return Py.newFloat(Double.valueOf(t.getText()));
     }
 
@@ -195,7 +187,6 @@ public class GrammarActions {
     }
 
     Object makeInt(Token t) {
-        debug("Num matched " + t.getText());
         String s = t.getText();
         int radix = 10;
         if (s.startsWith("0x") || s.startsWith("0X")) {
@@ -335,7 +326,6 @@ public class GrammarActions {
 
     argumentsType makeArgumentsType(PythonTree t, List params, PythonTree snameToken,
         PythonTree knameToken, List defaults) {
-        debug("Matched Arguments");
 
         exprType[] p = (exprType[])params.toArray(new exprType[params.size()]);
         exprType[] d = (exprType[])defaults.toArray(new exprType[defaults.size()]);
