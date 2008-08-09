@@ -17,7 +17,7 @@ public class ThreadState {
 
     public boolean tracing;
 
-    private Stack reprStack = null;
+    public PyList reprStack = null;
 
     // public PyInstance initializingProxy = null;
     private Stack initializingProxies = null;
@@ -69,11 +69,15 @@ public class ThreadState {
 
     public boolean enterRepr(PyObject obj) {
         if (reprStack == null) {
-            reprStack = new Stack();
-        } else if (reprStack.search(obj) > -1) {
-            return false;
+            reprStack = new PyList(new PyObject[] {obj});
+            return true;
         }
-        reprStack.push(obj);
+        for (int i = reprStack.size() - 1; i >= 0; i--) {
+            if (obj == reprStack.pyget(i)) {
+                return false;
+            }
+        }
+        reprStack.append(obj);
         return true;
     }
 
@@ -81,10 +85,11 @@ public class ThreadState {
         if (reprStack == null) {
             return;
         }
-        int index;
-        if ((index = reprStack.search(obj)) > -1) {
-            int size = reprStack.size();
-            reprStack.subList(size - index, size).clear();
+
+        for (int i = reprStack.size() - 1; i >= 0; i--) {
+            if (reprStack.pyget(i) == obj) {
+                reprStack.delRange(i, reprStack.size(), 1);
+            }
         }
     }
 
