@@ -2012,6 +2012,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
 
         visit(new Name(node, tmp_append, expr_contextType.Load));
         visit(iter);
+        code.invokevirtual("org/python/core/PyObject", "__iter__", "()Lorg/python/core/PyObject;");
         code.invokevirtual("org/python/core/PyObject", "__call__", "(" + $pyObj + ")" + $pyObj);
 
         visit(new Delete(n, new exprType[] { new Name(n, tmp_append, expr_contextType.Del) }));
