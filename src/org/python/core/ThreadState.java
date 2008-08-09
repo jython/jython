@@ -17,7 +17,7 @@ public class ThreadState {
 
     public boolean tracing;
 
-    public PyList reprStack = null;
+    private Stack reprStack = null;
 
     // public PyInstance initializingProxy = null;
     private Stack initializingProxies = null;
@@ -68,30 +68,23 @@ public class ThreadState {
     }
 
     public boolean enterRepr(PyObject obj) {
-        // if (reprStack == null) System.err.println("reprStack: null");
-        // else System.err.println("reprStack: "+reprStack.__len__());
-        if (this.reprStack == null) {
-            this.reprStack = new PyList(new PyObject[] { obj });
-            return true;
+        if (reprStack == null) {
+            reprStack = new Stack();
+        } else if (reprStack.search(obj) > -1) {
+            return false;
         }
-        for (int i = this.reprStack.size() - 1; i >= 0; i--) {
-            if (obj == this.reprStack.pyget(i)) {
-                return false;
-            }
-        }
-        this.reprStack.append(obj);
+        reprStack.push(obj);
         return true;
     }
 
     public void exitRepr(PyObject obj) {
-        if (this.reprStack == null) {
+        if (reprStack == null) {
             return;
         }
-
-        for (int i = this.reprStack.size() - 1; i >= 0; i--) {
-            if (this.reprStack.pyget(i) == obj) {
-                this.reprStack.delRange(i, this.reprStack.size(), 1);
-            }
+        int index;
+        if ((index = reprStack.search(obj)) > -1) {
+            int size = reprStack.size();
+            reprStack.subList(size - index, size).clear();
         }
     }
 
