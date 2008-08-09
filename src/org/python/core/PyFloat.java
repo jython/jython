@@ -185,8 +185,9 @@ public class PyFloat extends PyObject
             // with. If NaN, similarly.
             if (other instanceof PyInteger || other instanceof PyLong) {
                 j = 0.0;
+            } else {
+                return -2;
             }
-            return -2;
         } else if (other instanceof PyInteger) {
             j = ((PyInteger)other).getValue();
         } else if (other instanceof PyLong) {
