@@ -328,6 +328,7 @@ expr_stmt
         $stmts::statements.add(new Expr($test.marker, $test.etype));
     }
     | ^(augassign targ=test[expr_contextType.AugStore] value=test[expr_contextType.Load]) {
+        actions.checkAssign($targ.etype);
         AugAssign a = new AugAssign($targ.marker, $targ.etype, $augassign.op, $value.etype);
         $stmts::statements.add(a);
     }

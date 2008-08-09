@@ -456,6 +456,8 @@ public class GrammarActions {
     void checkAssign(exprType e) {
         if (e instanceof Name && ((Name)e).id.equals("None")) {
             throw new ParseException("assignment to None", e);
+        } else if (e instanceof GeneratorExp) {
+            throw new ParseException("can't assign to generator expression", e);
         }
     }
 }
