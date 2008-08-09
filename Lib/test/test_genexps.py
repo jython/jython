@@ -76,7 +76,7 @@ Test running gen when defining function is out of scope
 
 Verify that parenthesis are required in a statement
 
-    >>> def f(n):
+    >>> def f(n): #doctest: +IGNORE_EXCEPTION_DETAIL
     ...     return i*i for i in xrange(n)
     Traceback (most recent call last):
        ...
@@ -84,7 +84,7 @@ Verify that parenthesis are required in a statement
 
 Verify that parenthesis are required when used as a keyword argument value
 
-    >>> dict(a = i for i in xrange(10))
+    >>> dict(a = i for i in xrange(10)) #doctest: +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
        ...
     SyntaxError: invalid syntax
