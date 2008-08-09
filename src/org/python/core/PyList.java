@@ -153,20 +153,17 @@ public class PyList extends PySequenceList {
         if(step == 1) {
             PyObject[] otherArray;
             PyObject[] array = getArray();
-            if(value instanceof PySequenceList) {
-                PySequenceList seqList = (PySequenceList) value;
-                otherArray = seqList.getArray();
-                if(otherArray == array) {
-                    otherArray = otherArray.clone();
-                }
-                list.replaceSubArray(start, stop, otherArray, 0, seqList.size());
+
+            int n = value.__len__();
+            if (value instanceof PySequenceList) {
+                otherArray = ((PySequenceList)value).getArray();
             } else {
-                int n = value.__len__();
-                list.ensureCapacity(start + n);
-                for(int i = 0; i < n; i++) {
-                    list.add(i + start, value.pyget(i));
-                }
+                otherArray = Py.unpackSequence(value, value.__len__());
             }
+            if (otherArray == array) {
+                otherArray = otherArray.clone();
+            }
+            list.replaceSubArray(start, stop, otherArray, 0, n);
         } else if(step > 1) {
             int n = value.__len__();
             for(int i = 0, j = 0; i < n; i++, j += step) {
@@ -213,15 +210,21 @@ public class PyList extends PySequenceList {
     }
 
     protected PyObject repeat(int count) {
-        if(count < 0) {
+        if (count < 0) {
             count = 0;
         }
-        int l = size();
-        PyObject[] newList = new PyObject[l * count];
-        for(int i = 0; i < count; i++) {
-            System.arraycopy(getArray(), 0, newList, i * l, l);
+        int size = size();
+        int newSize = size * count;
+        if (count != 0 && newSize / count != size) {
+            throw Py.MemoryError("");
         }
-        return new PyList(newList);
+
+        PyObject[] array = getArray();
+        PyObject[] newArray = new PyObject[newSize];
+        for(int i = 0; i < count; i++) {
+            System.arraycopy(array, 0, newArray, i * size, size);
+        }
+        return new PyList(newArray);
     }
 
     @ExposedMethod(type = MethodType.BINARY)
@@ -264,16 +267,29 @@ public class PyList extends PySequenceList {
             return null;
         }
         int count = o.asIndex(Py.OverflowError);
-        int l = size();
-        
-        int newSize = l * count;
+
+        int size = size();
+        if (size == 0 || count == 1) {
+            return this;
+        }
+
+        if (count < 1) {
+            clear();
+            return this;
+        }
+
+        if (size > Integer.MAX_VALUE / count) {
+            throw Py.MemoryError("");
+        }
+
+        int newSize = size * count;
         list.setSize(newSize);
         PyObject[] array = getArray();
         for (int i = 1; i < count; i++) {
-            System.arraycopy(array, 0, array, i * l, l);
+            System.arraycopy(array, 0, array, i * size, size);
         }
         gListAllocatedStatus = __len__();
-        return this;
+        return this;        
     }
 
     @Override
@@ -486,22 +502,22 @@ public class PyList extends PySequenceList {
     }
 
     public int index(PyObject o, int start) {
-        return list_index(o, start, null);
+        return list_index(o, start, size());
     }
 
     public int index(PyObject o, int start, int stop) {
-        return list_index(o, start, Py.newInteger(stop));
+        return list_index(o, start, stop);
     }
 
-    @ExposedMethod(defaults = {"0", "null"})
-    final int list_index(PyObject o, int start, PyObject stop) {
-        int iStop;
-        if(stop == null) {
-            iStop = size();
-        } else {
-            iStop = stop.asInt();
-        }
-        return _index(o, "list.index(x): x not in list", start, iStop);
+    @ExposedMethod(defaults = {"null", "null"})
+    final int list_index(PyObject o, PyObject start, PyObject stop) {
+        int startInt = start == null ? 0 : PySlice.calculateSliceIndex(start);
+        int stopInt = stop == null ? size() : PySlice.calculateSliceIndex(stop);
+        return list_index(o, startInt, stopInt);
+    }
+
+    final int list_index(PyObject o, int start, int stop) {
+        return _index(o, "list.index(x): x not in list", start, stop);
     }
 
     final int list_index(PyObject o, int start) {

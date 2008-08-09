@@ -92,20 +92,26 @@ public class PyTuple extends PySequenceList
         if (count < 0) {
             count = 0;
         }
-        if (size() == 0 || count == 1) {
+        int size = size();
+        if (size == 0 || count == 1) {
             if (getType() == TYPE) {
                 // Since tuples are immutable, we can return a shared copy in this case
                 return this;
             }
-            if (size() == 0) {
+            if (size == 0) {
                 return new PyTuple();
             }
         }
+
+        int newSize = size * count;
+        if (newSize / size != count) {
+            throw Py.MemoryError("");
+        }
+
         PyObject[] array = getArray();
-        int l = size();
-        PyObject[] newArray = new PyObject[l*count];
-        for (int i=0; i<count; i++) {
-            System.arraycopy(array, 0, newArray, i*l, l);
+        PyObject[] newArray = new PyObject[newSize];
+        for (int i = 0; i < count; i++) {
+            System.arraycopy(array, 0, newArray, i * size, size);
         }
         return new PyTuple(newArray);
     }

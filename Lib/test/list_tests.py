@@ -461,7 +461,11 @@ class CommonTest(seq_tests.CommonTest):
         u += "eggs"
         self.assertEqual(u, self.type2test("spameggs"))
 
-        self.assertRaises(TypeError, u.__iadd__, None)
+        if not test_support.is_jython:
+            self.assertRaises(TypeError, u.__iadd__, None)
+        else:
+            import operator
+            self.assertRaises(TypeError, operator.__iadd__, u, None)
 
     def test_imul(self):
         u = self.type2test([0, 1])
@@ -512,7 +516,8 @@ class CommonTest(seq_tests.CommonTest):
         a[::2] = tuple(range(5))
         self.assertEqual(a, self.type2test([0, 1, 1, 3, 2, 5, 3, 7, 4, 9]))
 
-    def test_constructor_exception_handling(self):
+    # XXX: CPython specific, PyList doesn't len() during init
+    def _test_constructor_exception_handling(self):
         # Bug #1242657
         class F(object):
             def __iter__(self):
