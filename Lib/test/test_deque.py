@@ -476,7 +476,7 @@ class TestSubclass(unittest.TestCase):
         self.assertEqual(str(p), str(d))
         d = None
         if test_support.is_jython:
-            from test_weakref import extra_collect()
+            from test_weakref import extra_collect
             extra_collect()
         self.assertRaises(ReferenceError, str, p)
 
