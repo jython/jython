@@ -48,9 +48,7 @@ public class ClassFile
         this.interfaces = new String[0];
         this.access = access;
         
-        //XXX: can we do better than ASM for computing MAXS?
         cw = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
-
         methodVisitors = Collections.synchronizedList(new ArrayList());
         fieldVisitors = Collections.synchronizedList(new ArrayList());
     }

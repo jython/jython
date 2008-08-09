@@ -552,7 +552,15 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
             throw new ParseException("'yield' outside function", node);
         }
 
-        saveLocals();
+        loadFrame();
+        code.invokevirtual("org/python/core/PyFrame", "getGeneratorInput", "()" + $obj);
+        code.dup();
+        code.instanceof_("org/python/core/PyException");
+        Label done = new Label();
+        code.ifeq(done);
+        code.checkcast("java/lang/Throwable");
+        code.athrow();
+        code.label(done);
 
         if (node.value != null) {
             visit(node.value);
@@ -560,6 +568,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
             getNone();
         }
         setLastI(++yield_count);
+        saveLocals();
         code.areturn();
 
         Label restart = new Label();
@@ -568,10 +577,10 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         restoreLocals();
         
         loadFrame();
-        code.invokevirtual("org/python/core/PyFrame", "getGeneratorInput", "()" + $obj);
+        code.invokevirtual("org/python/core/PyFrame", "checkGeneratorInput", "()" + $obj);
         code.dup();
         code.instanceof_("org/python/core/PyException");
-        Label done = new Label();
+        done = new Label();
         code.ifeq(done);
         code.checkcast("java/lang/Throwable");
         code.athrow();
