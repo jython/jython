@@ -205,7 +205,7 @@ public class ArgParser {
      */
     public PyObject getPyObjectByType(int pos, PyType type) {
         PyObject arg = getRequiredArg(pos);
-        if (arg.getType() != type) {
+        if (!Py.isInstance(arg, type)) {
             throw Py.TypeError(String.format("argument %d must be %s, not %s", pos + 1,
                                              type.fastGetName(), arg.getType().fastGetName()));
         }
