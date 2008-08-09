@@ -377,7 +377,7 @@ public abstract class AbstractArray implements Serializable{
             }
             System.arraycopy(base, stop, base, start, this.size - stop);
             this.size = this.size - nRemove;
-            clearRangeInternal(this.size, this.size + nRemove - 1);
+            clearRangeInternal(this.size, this.size + nRemove);
             setArray(base);
             return;
         }
