@@ -938,7 +938,7 @@ class BuiltinTest(unittest.TestCase):
         self.assertEqual(list(''), [])
         self.assertEqual(list('spam'), ['s', 'p', 'a', 'm'])
 
-        if sys.maxint == 0x7fffffff:
+        if sys.maxint == 0x7fffffff and not test.test_support.is_jython:
             # This test can currently only work on 32-bit machines.
             # XXX If/when PySequence_Length() returns a ssize_t, it should be
             # XXX re-enabled.

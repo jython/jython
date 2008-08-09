@@ -1,4 +1,4 @@
-from test.test_support import verbose, have_unicode, TestFailed
+from test.test_support import verbose, have_unicode, TestFailed, is_jython
 import sys
 
 # test string formatting operator (I am not sure if this is being tested
@@ -243,7 +243,7 @@ test_exc(u'no format', u'1', TypeError,
 #test_exc('%o', Foobar(), TypeError,
 #         "expected string or Unicode object, long found")
 
-if sys.maxint == 2**31-1:
+if sys.maxint == 2**31-1 and not is_jython:
     # crashes 2.2.1 and earlier:
     try:
         "%*d"%(sys.maxint, -127)
