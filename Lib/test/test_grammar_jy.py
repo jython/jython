@@ -1,7 +1,7 @@
 """ Extra grammar tests for Jython.
 """
 
-import test_support
+from test import test_support
 import unittest
 
 class GrammarTest(unittest.TestCase):

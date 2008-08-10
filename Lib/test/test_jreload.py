@@ -5,7 +5,7 @@ the bug is present, if the load succeeds, the bug is fixed, if something else oc
 """
 
 import unittest
-import test_support
+from test import test_support
 
 from jreload import makeLoadSet
 from java.lang import System, ClassFormatError

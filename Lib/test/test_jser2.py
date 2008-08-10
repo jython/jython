@@ -1,4 +1,5 @@
-import test_support, unittest
+from test import test_support
+import unittest
 import java
 from org.python.util import PythonObjectInputStream
 
