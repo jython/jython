@@ -35,6 +35,7 @@ class DictCmpTest(unittest.TestCase):
         # With derived classes that doesn't override __cmp__, the behaviour
         # should be the same that with dicts:
         class derived_dict(dict): pass
+        self.assertEqual(derived_dict(), {})
         self.assertNotEqual(derived_dict(), '')
         self.assertRaises(TypeError, derived_dict().__cmp__, '')
         # But, if they *override* __cmp__ and raise TypeError from there, we
