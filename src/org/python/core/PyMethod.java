@@ -45,7 +45,7 @@ public class PyMethod extends PyObject {
         PyObject self = ap.getPyObject(1);
         PyObject classObj = ap.getPyObject(2, null);
 
-        if (!__builtin__.callable(func)) {
+        if (!func.isCallable()) {
             throw Py.TypeError("first argument must be callable");
         }
         if (self == Py.None && classObj == null) {

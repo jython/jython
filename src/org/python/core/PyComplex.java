@@ -53,7 +53,7 @@ public class PyComplex extends PyObject {
 
         PyComplex complexReal;
         PyComplex complexImag;
-        PyObject toFloat = null;
+        PyFloat toFloat = null;
         if (real instanceof PyComplex) {
             complexReal = (PyComplex)real;
         } else {
@@ -66,11 +66,7 @@ public class PyComplex extends PyObject {
                 }
                 throw pye;
             }
-            if (!(toFloat instanceof PyFloat)) {
-                throw Py.TypeError(String.format("__float__ returned non-float (type %.200s)",
-                                                 imag.getType().fastGetName()));
-            }
-            complexReal = new PyComplex(((PyFloat)toFloat).getValue());
+            complexReal = new PyComplex(toFloat.getValue());
         }
 
         if (imag == null) {
@@ -88,11 +84,7 @@ public class PyComplex extends PyObject {
                 }
                 throw pye;
             }
-            if (!(toFloat instanceof PyFloat)) {
-                throw Py.TypeError(String.format("__float__ returned non-float (type %.200s)",
-                                                 imag.getType().fastGetName()));
-            }
-            complexImag = new PyComplex(((PyFloat)toFloat).getValue());
+            complexImag = new PyComplex(toFloat.getValue());
         }
 
         complexReal.real -= complexImag.imag;
