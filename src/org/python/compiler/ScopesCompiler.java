@@ -250,7 +250,7 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
     }
 
     public Object visitGeneratorExp(GeneratorExp node) throws Exception {
-        String bound_exp = "x";
+        String bound_exp = "_(x)";
         String tmp ="_(" + node.getLine() + "_" + node.getCharPositionInLine() + ")";
         def(tmp);
         ArgListCompiler ac = new ArgListCompiler();

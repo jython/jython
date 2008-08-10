@@ -1964,7 +1964,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
     }
 
     public Object visitGeneratorExp(GeneratorExp node) throws Exception {
-        String bound_exp = "x";
+        String bound_exp = "_(x)";
         String tmp_append ="_(" + node.getLine() + "_" + node.getCharPositionInLine() + ")";
 
         setline(node);
