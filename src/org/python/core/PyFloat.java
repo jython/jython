@@ -201,6 +201,19 @@ public class PyFloat extends PyObject
     }
 
     public Object __coerce_ex__(PyObject other) {
+        return float___coerce_ex__(other);
+    }
+
+    @ExposedMethod
+    final PyObject float___coerce__(PyObject other) {
+        return adaptToCoerceTuple(float___coerce_ex__(other));
+    }
+
+    /** 
+     * Coercion logic for float. Implemented as a final method to avoid
+     * invocation of virtual methods from the exposed coerce. 
+     */ 
+    final Object float___coerce_ex__(PyObject other) {
         if (other instanceof PyFloat)
             return other;
         else {
@@ -211,6 +224,7 @@ public class PyFloat extends PyObject
             else
                 return Py.None;
         }
+        
     }
 
     private static final boolean canCoerce(PyObject other) {
@@ -502,11 +516,6 @@ public class PyFloat extends PyObject
         } else {
             return new PyFloat(modulo(ret, coerce(modulo)));
         }
-    }
-
-    @ExposedMethod
-    final PyObject float___coerce__(PyObject other) {
-        return __coerce__(other);
     }
 
     public PyObject __neg__() {

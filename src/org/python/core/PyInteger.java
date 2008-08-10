@@ -164,6 +164,19 @@ public class PyInteger extends PyObject {
     }
 
     public Object __coerce_ex__(PyObject other) {
+        return int___coerce_ex__(other);
+    }
+
+    @ExposedMethod
+    final PyObject int___coerce__(PyObject other) {
+        return adaptToCoerceTuple(int___coerce_ex__(other));
+    }
+
+    /** 
+     * Coercion logic for int. Implemented as a final method to avoid
+     * invocation of virtual methods from the exposed coerced. 
+     */     
+    final Object int___coerce_ex__(PyObject other) {
         if (other instanceof PyInteger)
             return other;
         else
@@ -689,12 +702,7 @@ public class PyInteger extends PyObject {
     
     @ExposedMethod(type = MethodType.BINARY)
     final PyObject int___ror__(PyObject left){
-    	return int___or__(left);
-    }
-
-    @ExposedMethod
-    final PyObject int___coerce__(PyObject other) {
-        return __coerce__(other);
+        return int___or__(left);
     }
 
     public PyObject __neg__() {

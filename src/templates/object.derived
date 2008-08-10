@@ -444,3 +444,18 @@ rest:
           return impl.__get__(this,self_type).__call__(Py.java2py(c)).__tojava__(Object.class);
       return super.__tojava__(c);
   }
+
+  public Object __coerce_ex__(PyObject o) {
+      PyType self_type=getType();
+      PyObject impl=self_type.lookup("__coerce__");
+      if (impl!=null) {
+          PyObject res=impl.__get__(this,self_type).__call__(o);
+          if (res == null || res == Py.None)
+              return res;
+          if (!(res instanceof PyTuple))
+              throw Py.TypeError("coercion should return None or 2-tuple");
+          return ((PyTuple)res).getArray();
+      }
+      return super.__coerce_ex__(o);
+  }
+

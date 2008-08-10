@@ -980,10 +980,14 @@ n     **/
      *
      * This method can not be overridden.
      * To implement __coerce__ functionality, override __coerce_ex__ instead.
+     * 
+     * Also, <b>do not</b> call this method from exposed 'coerce' methods. 
+     * Instead, Use adaptToCoerceTuple over the result of the overriden 
+     * __coerce_ex__.
      *
      * @param pyo the other object involved in the coercion.
      * @return a tuple of this object and pyo coerced to the same type
-     *         or Py.None if no coercion is possible.
+     *         or Py.NotImplemented if no coercion is possible.
      * @see org.python.core.PyObject#__coerce_ex__(org.python.core.PyObject)
      **/
     public final PyObject __coerce__(PyObject pyo) {
@@ -991,6 +995,21 @@ n     **/
         if (o == null) {
             throw Py.AttributeError("__coerce__");
         }
+        return adaptToCoerceTuple(o);
+    }
+
+    /**
+     * Adapts the result of __coerce_ex__ to a tuple of two elements, with the
+     * resulting coerced values, or to Py.NotImplemented, if o is Py.None. 
+     * 
+     * This is safe to be used from subclasses exposing '__coerce__' 
+     * (as opposed to {@link #__coerce__(PyObject)}, which calls the virtual
+     * method {@link #__coerce_ex__(PyObject)})
+     * 
+     * @param o either a PyObject[2] or a PyObject, as given by 
+     *        {@link #__coerce_ex__(PyObject)}.
+     */
+    protected final PyObject adaptToCoerceTuple(Object o) {
         if (o == Py.None) {
             return Py.NotImplemented;
         }
@@ -1000,8 +1019,6 @@ n     **/
             return new PyTuple(this, (PyObject) o );
         }
     }
-
-
 
     /* The basic comparision operations */
 
@@ -1155,29 +1172,40 @@ n     **/
         if (this == other)
             return 0;
 
-        int result;
-        result = this.__cmp__(other);
-        if (result != -2)
+        int result = _try__cmp__(other);
+        if (result != -2) {
             return result;
-
-        if (!(this instanceof PyInstance)) {
-            result = other.__cmp__(this);
-            if (result != -2)
-                return -result;
         }
-
         return this._default_cmp(other);
     }
 
     /*
      *  Like _cmp_unsafe but limited to ==/!= as 0/!=0,
-     *  avoids to invoke Py.id
+     *  thus it avoids to invoke _default_cmp.
      */
     private final int _cmpeq_unsafe(PyObject other) {
         // Shortcut for equal objects
         if (this == other)
             return 0;
 
+        int result = _try__cmp__(other);
+        if (result != -2) {
+            return result;
+        }
+
+        return this._is(other).__nonzero__()?0:1;
+    }
+
+    /**
+     * Tries a 3-way comparison, using __cmp__. It tries the following
+     * operations until one of them succeed:<ul>
+     *  <li>this.__cmp__(other)
+     *  <li>other.__cmp__(this)
+     *  <li>this._coerce(other) followed by coerced_this.__cmp__(coerced_other)</ul>
+     *
+     * @return -1, 0, -1 or -2, according to the {@link #__cmp__} protocol.
+     */
+    private int _try__cmp__(PyObject other) {
         int result;
         result = this.__cmp__(other);
         if (result != -2)
@@ -1188,8 +1216,23 @@ n     **/
             if (result != -2)
                 return -result;
         }
+        // Final attempt: coerce both arguments and compare that. We are doing
+        // this the same point where CPython 2.5 does. (See
+        // <http://svn.python.org/projects/python/tags/r252/Objects/object.c> at
+        // the end of try_3way_compare).
+        //
+        // This is not exactly was is specified on
+        // <http://docs.python.org/ref/coercion-rules.html>, where coercion is
+        // supposed to happen before trying __cmp__.
 
-        return this._is(other).__nonzero__()?0:1;
+        PyObject[] coerced = _coerce(other);
+        if (coerced != null) {
+            result = coerced[0].__cmp__(coerced[1]);
+            if (result != -2) {
+                return result;
+            }
+        }
+        return -2;
     }
 
 

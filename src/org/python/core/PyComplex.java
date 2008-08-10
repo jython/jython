@@ -266,12 +266,20 @@ public class PyComplex extends PyObject {
         return unsupported_comparison(other);
     }
 
+    public Object __coerce_ex__(PyObject other) {
+        return complex___coerce_ex__(other);
+    }
+    
     @ExposedMethod
     final PyObject complex___coerce__(PyObject other) {
-        return __coerce__(other);
+        return adaptToCoerceTuple(complex___coerce_ex__(other));
     }
 
-    public Object __coerce_ex__(PyObject other) {
+    /** 
+     * Coercion logic for complex. Implemented as a final method to avoid
+     * invocation of virtual methods from the exposed coerce. 
+     */ 
+    final PyObject complex___coerce_ex__(PyObject other) {
         if (other instanceof PyComplex)
             return other;
         if (other instanceof PyFloat)

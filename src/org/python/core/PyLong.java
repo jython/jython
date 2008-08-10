@@ -256,6 +256,19 @@ public class PyLong extends PyObject {
     }
 
     public Object __coerce_ex__(PyObject other) {
+        return long___coerce_ex__(other);
+    }
+
+    @ExposedMethod
+    final PyObject long___coerce__(PyObject other) {
+        return adaptToCoerceTuple(long___coerce_ex__(other));
+    }
+
+    /** 
+     * Coercion logic for long. Implemented as a final method to avoid
+     * invocation of virtual methods from the exposed coerce. 
+     */ 
+    final Object long___coerce_ex__(PyObject other) {
         if (other instanceof PyLong)
             return other;
         else
@@ -708,11 +721,6 @@ public class PyLong extends PyObject {
         if (!canCoerce(left))
             return null;
         return Py.newLong(coerce(left).or(value));
-    }
-
-    @ExposedMethod
-    final PyObject long___coerce__(PyObject other) {
-        return __coerce__(other);
     }
 
     public PyObject __neg__() {
