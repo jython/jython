@@ -14,8 +14,15 @@ class UnicodeDerivedCmp(unittest.TestCase):
         class B(unicode): pass
         self.assertEqual(A(), B())
 
+class LongDerivedCmp(unittest.TestCase):
+    def testCompareWithString(self):
+        class Test(long):
+            pass
+        self.assertNotEqual(Test(0), 'foo')
+        self.assertTrue('foo' in [Test(12), 'foo'])
+
 def test_main():
-    test_support.run_unittest(UnicodeDerivedCmp)
+    test_support.run_unittest(UnicodeDerivedCmp, LongDerivedCmp)
 
 if __name__ == '__main__':
     test_main()
