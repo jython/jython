@@ -96,22 +96,21 @@ public class ParserFacade {
                                 String kind,
                                 String filename,
                                 CompilerFlags cflags) {
-        BufferedInputStream bstream = new BufferedInputStream(stream);
         //FIXME: npe?
         BufferedReader bufreader = null;
         modType node = null;
         try {
             if (kind.equals("eval")) {
-                bufreader = prepBufreader(bstream, cflags, filename);
+                bufreader = prepBufreader(stream, cflags, filename);
                 CharStream cs = new NoCloseReaderStream(bufreader);
                 ExpressionParser e = new ExpressionParser(cs, filename);
                 node = e.parse();
             } else if (kind.equals("single")) {
-                bufreader = prepBufreader(bstream, cflags, filename);
+                bufreader = prepBufreader(stream, cflags, filename);
                 InteractiveParser i = new InteractiveParser(bufreader, filename);
                 node = i.parse();
             } else if (kind.equals("exec")) {
-                bufreader = prepBufreader(bstream, cflags, filename);
+                bufreader = prepBufreader(stream, cflags, filename);
                 CharStream cs = new NoCloseReaderStream(bufreader);
                 ModuleParser g = new ModuleParser(cs, filename);
                 node = g.file_input();
@@ -137,19 +136,18 @@ public class ParserFacade {
                                        String filename,
                                        CompilerFlags cflags,
                                        boolean stdprompt) {
-        ByteArrayInputStream bi = new ByteArrayInputStream(
+        ByteArrayInputStream istream = new ByteArrayInputStream(
                 StringUtil.toBytes(string));
-        BufferedInputStream bstream = bstream = new BufferedInputStream(bi);
         //FIXME: npe?
         BufferedReader bufreader = null;
         modType node = null;
         try {
             if (kind.equals("single")) {
-                bufreader = prepBufreader(bstream, cflags, filename);
+                bufreader = prepBufreader(istream, cflags, filename);
                 InteractiveParser i = new InteractiveParser(bufreader, filename);
                 node = i.parse();
             } else if (kind.equals("eval")) {
-                bufreader = prepBufreader(bstream, cflags, filename);
+                bufreader = prepBufreader(istream, cflags, filename);
                 CharStream cs = new NoCloseReaderStream(bufreader);
                 ExpressionParser e = new ExpressionParser(cs, filename);
                 node = e.parse();
@@ -194,29 +192,30 @@ public class ParserFacade {
     private static BufferedReader prepBufreader(InputStream istream,
                                                 CompilerFlags cflags,
                                                 String filename) throws IOException {
-        String encoding = readEncoding(istream);
+        InputStream bstream = new BufferedInputStream(istream);
+        String encoding = readEncoding(bstream);
         if(encoding == null && cflags != null && cflags.encoding != null) {
             encoding = cflags.encoding;
         }
 
         // Enable universal newlines mode on the input
-        StreamIO rawIO = new StreamIO(istream, true);
+        StreamIO rawIO = new StreamIO(bstream, true);
         org.python.core.io.BufferedReader bufferedIO =
                 new org.python.core.io.BufferedReader(rawIO, 0);
         UniversalIOWrapper textIO = new UniversalIOWrapper(bufferedIO);
-        istream = new TextIOInputStream(textIO);
+        bstream = new TextIOInputStream(textIO);
 
         Reader reader;
         if(encoding != null) {
             try {
-                reader = new InputStreamReader(istream, encoding);
+                reader = new InputStreamReader(bstream, encoding);
             } catch(UnsupportedEncodingException exc) {
                 throw new PySyntaxError("Encoding '" + encoding + "' isn't supported by this JVM.", 0, 0, "", filename);
             }
         } else {
             try {
                 // Default to ISO-8859-1 to get bytes off the input stream since it leaves their values alone.
-                reader = new InputStreamReader(istream, "ISO-8859-1");
+                reader = new InputStreamReader(bstream, "ISO-8859-1");
             } catch(UnsupportedEncodingException e) {
                 // This JVM is whacked, it doesn't even have iso-8859-1
                 throw Py.SystemError("Java couldn't find the ISO-8859-1 encoding");
