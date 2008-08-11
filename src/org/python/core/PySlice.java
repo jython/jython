@@ -114,12 +114,9 @@ public class PySlice extends PyObject {
     
     @ExposedMethod
     public PyObject slice_indices(PyObject len) {
-        int[] slice = indices(len.asIndex(Py.OverflowError));
-        PyInteger[] pyInts = new PyInteger[slice.length];
-        for(int i = 0; i < pyInts.length; i++) {
-            pyInts[i] = Py.newInteger(slice[i]);
-        }
-        return new PyTuple(pyInts);
+        int[] indices = indicesEx(len.asIndex(Py.OverflowError));
+        return new PyTuple(Py.newInteger(indices[0]), Py.newInteger(indices[1]),
+                           Py.newInteger(indices[2]));
     }
 
     public static int calculateSliceIndex(PyObject v) {
@@ -130,52 +127,66 @@ public class PySlice extends PyObject {
     }
     
     /**
-     * Calculates the actual indices of a slice with this slice's start, stop
-     * and step values for a sequence of length <code>len</code>.
+     * Calculates the actual indices of a slice with this slice's start, stop, step and
+     * slicelength values for a sequence of length <code>len</code>.
      * 
-     * @return an array with the start at index 0, stop at index 1 and step and
-     *         index 2.
+     * @return an array with the start at index 0, stop at index 1, step at index 2 and
+     *         slicelength at index 3
      */
-    public int[] indices(int len) {
-        int[] slice = new int[3];
+    public int[] indicesEx(int len) {
+        int start;
+        int stop;
+        int step;
+        int slicelength;
+
         if (getStep() == Py.None) {
-            slice[STEP] = 1;
+            step = 1;
         } else {
-            slice[STEP] = calculateSliceIndex(getStep());
-            if (slice[STEP] == 0) {
+            step = calculateSliceIndex(getStep());
+            if (step == 0) {
                 throw Py.ValueError("slice step cannot be zero");
             }
         }
 
         if (getStart() == Py.None) {
-            slice[START] = slice[STEP] < 0 ? len - 1 : 0;
+            start = step < 0 ? len - 1 : 0;
         } else {
-            slice[START] = calculateSliceIndex(getStart());
-            if(slice[START] < 0) {
-                slice[START] += len;
+            start = calculateSliceIndex(getStart());
+            if (start < 0) {
+                start += len;
             }
-            if(slice[START] < 0) {
-                slice[START] = slice[STEP] < 0 ? -1 : 0;
+            if (start < 0) {
+                start = step < 0 ? -1 : 0;
             }
-            if(slice[START] >= len) {
-                slice[START] = slice[STEP] < 0 ? len - 1 : len;
+            if (start >= len) {
+                start = step < 0 ? len - 1 : len;
             }
         }
-        if(getStop() == Py.None) {
-            slice[STOP] = slice[STEP] < 0 ? -1 : len;
+
+        if (getStop() == Py.None) {
+            stop = step < 0 ? -1 : len;
         } else {
-            slice[STOP] = calculateSliceIndex(getStop());
-            if(slice[STOP] < 0) {
-                slice[STOP] += len;
+            stop = calculateSliceIndex(getStop());
+            if (stop < 0) {
+                stop += len;
             }
-            if(slice[STOP] < 0) {
-                slice[STOP] = -1;
+            if (stop < 0) {
+                stop = -1;
             }
-            if(slice[STOP] > len) {
-                slice[STOP] = len;
+            if (stop > len) {
+                stop = len;
             }
         }
-        return slice;
+
+        if ((step < 0 && stop >= start) || (step > 0 && start >= stop)) {
+            slicelength = 0;
+        } else if (step < 0) {
+            slicelength = (stop - start + 1) / (step) + 1;
+        } else {
+            slicelength = (stop - start - 1) / (step) + 1;
+        }
+
+        return new int[] {start, stop, step, slicelength};
     }
 
     /**
@@ -210,8 +221,6 @@ public class PySlice extends PyObject {
         indices[1] = Py.newInteger(istop);
         return indices;
     }
-
-    private static final int START = 0, STOP = 1, STEP = 2;
 
     @ExposedGet
     public PyObject start = Py.None;

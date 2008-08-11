@@ -327,8 +327,8 @@ public abstract class PySequence extends PyObject {
     }
 
     final synchronized PyObject seq___getslice__(PyObject start, PyObject stop, PyObject step) {
-        int[] slice = new PySlice(start, stop, step).indices(__len__());
-        return getslice(slice[0], slice[1], slice[2]);
+        int[] indices = new PySlice(start, stop, step).indicesEx(__len__());
+        return getslice(indices[0], indices[1], indices[2]);
     }
 
     public synchronized void __setslice__(PyObject start,
@@ -346,8 +346,13 @@ public abstract class PySequence extends PyObject {
                                              PyObject stop,
                                              PyObject step,
                                              PyObject value) {
-        int[] slice = new PySlice(start, stop, step).indices(__len__());
-        setslice(slice[0], slice[1], slice[2], value);
+        PySlice slice = new PySlice(start, stop, step);
+        int[] indices = slice.indicesEx(__len__());
+        if ((slice.step != Py.None) && value.__len__() != indices[3]) {
+            throw Py.ValueError(String.format("attempt to assign sequence of size %d to extended "
+                                              + "slice of size %d", value.__len__(), indices[3]));
+        }
+        setslice(indices[0], indices[1], indices[2], value);
     }
 
     public synchronized void __delslice__(PyObject start, PyObject stop, PyObject step) {
@@ -355,8 +360,8 @@ public abstract class PySequence extends PyObject {
     }
 
     final synchronized void seq___delslice__(PyObject start, PyObject stop, PyObject step) {
-        int[] slice = new PySlice(start, stop, step).indices(__len__());
-        delRange(slice[0], slice[1], slice[2]);
+        int[] indices = new PySlice(start, stop, step).indicesEx(__len__());
+        delRange(indices[0], indices[1], indices[2]);
     }
 
     public synchronized void __setitem__(int index, PyObject value) {
