@@ -132,7 +132,7 @@ public class PyJavaPackage extends PyObject {
     }
 
 
-    public PyObject __findattr__(String name) {
+    public PyObject __findattr_ex__(String name) {
 
         PyObject ret = __dict__.__finditem__(name);
         if (ret != null) return ret;

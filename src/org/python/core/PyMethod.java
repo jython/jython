@@ -55,12 +55,26 @@ public class PyMethod extends PyObject {
     }
 
     @Override
-    public PyObject __findattr__(String name) {
-        PyObject ret = super.__findattr__(name);
+    public PyObject __findattr_ex__(String name) {
+        return instancemethod___findattr_ex__(name);
+    }
+ 
+    final PyObject instancemethod___findattr_ex__(String name) {
+        PyObject ret = super.__findattr_ex__(name);
         if (ret != null) {
             return ret;
         }
-        return im_func.__findattr__(name);
+        return im_func.__findattr_ex__(name);
+    }
+    
+    @ExposedMethod
+    final PyObject instancemethod___getattribute__(PyObject arg0) {
+        String name = asName(arg0);
+        PyObject ret = instancemethod___findattr_ex__(name);
+        if (ret == null) {
+            noAttributeError(name);
+        }
+        return ret;
     }
 
     @Override

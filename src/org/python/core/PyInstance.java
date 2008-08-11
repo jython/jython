@@ -200,7 +200,7 @@ public class PyInstance extends PyObject
         return __findattr__(name, true);
     }
 
-    public PyObject __findattr__(String name) {
+    public PyObject __findattr_ex__(String name) {
         return __findattr__(name, false);
     }
 

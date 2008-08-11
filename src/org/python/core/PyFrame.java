@@ -168,7 +168,7 @@ public class PyFrame extends PyObject
         // f_exc_traceback
     }
 
-    public PyObject __findattr__(String name) {
+    public PyObject __findattr_ex__(String name) {
         if (name == "f_locals") {
             return getLocals();
         } else if (name == "f_trace") {
@@ -177,7 +177,7 @@ public class PyFrame extends PyObject
             }
             return Py.None;
         }
-        return super.__findattr__(name);
+        return super.__findattr_ex__(name);
     }
 
     /**

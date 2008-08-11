@@ -734,11 +734,7 @@ n     **/
      * <code>__findattr__(name.internedString)</code> with the appropriate
      * args. 
      * 
-     * Classes that wish to implement __getattr__ should override this method
-     * instead (with the appropriate semantics.
-     * 
-     * @param name
-     *            the name to lookup in this namespace
+     * @param name the name to lookup in this namespace
      * 
      * @return the value corresponding to name or null if name is not found
      */
@@ -758,36 +754,58 @@ n     **/
      * @param name the name to lookup in this namespace
      * <b> must be an interned string </b>.
      * @return the value corresponding to name or null if name is not found
-     *
-     * @see #__findattr__(PyString)
      **/
-    public PyObject __findattr__(String name) {
+    public final PyObject __findattr__(String name) {
+        try {
+            return  __findattr_ex__(name);
+        } catch (PyException exc) {
+            if (Py.matchException(exc, Py.AttributeError)) {
+                return null;
+            }
+            throw exc;
+        } 
+    }
+    
+    /**
+     * Attribute lookup hook. If the attribute is not found, null may be 
+     * returned or a Py.AttributeError can be thrown, whatever is more 
+     * correct, efficient and/or convenient for the implementing class.
+     * 
+     * Client code should use {@link #__getattr__(String)} or 
+     * {@link #__findattr__(String)}. Both methods have a clear policy for 
+     * failed lookups. 
+     *  
+     * @return The looked up value. May return null if the attribute is not found 
+     * @throws PyException(AttributeError) if the attribute is not found. This
+     * is not mandatory, null can be returned if it fits the implementation  
+     * better, or for performance reasons. 
+     */
+    public PyObject __findattr_ex__(String name) {
         return object___findattr__(name);
     }
 
     /**
      * Equivalent to the standard Python __getattr__ method.
-     * This method can not be overridden.
-     * Override the <code>__findattr__</code> method instead.
+     *
+     * By default, this method will call
+     * <code>__getattr__(name.internedString)</code> with the appropriate
+     * args. 
      *
      * @param name the name to lookup in this namespace
      * @return the value corresponding to name
      * @exception Py.AttributeError if the name is not found.
      *
-     * @see #__findattr__(PyString)
+     * @see #__findattr_ex__(PyString)
      **/
     public final PyObject __getattr__(PyString name) {
-        PyObject ret = __findattr__(name);
-        if (ret == null)
-            noAttributeError(name.toString());
-        return ret;
+        return __getattr__(name.internedString());
     }
 
     /**
      * A variant of the __getattr__ method which accepts a Java
      * <code>String</code> as the name.
      * This method can not be overridden.
-     * Override the <code>__findattr__</code> method instead.
+     * Override the <code>__findattr_ex__</code> method instead.
      *
      * <b>Warning: name must be an interned string!!!!!!!!</b>
      *
@@ -799,7 +817,7 @@ n     **/
      * @see #__findattr__(java.lang.String)
      **/
     public final PyObject __getattr__(String name) {
-        PyObject ret = __findattr__(name);
+        PyObject ret = __findattr_ex__(name);
         if (ret == null)
             noAttributeError(name);
         return ret;
@@ -3475,8 +3493,8 @@ n     **/
     }
 
     public void setDict(PyObject newDict) {
-    	// fallback if setDict not implemented in subclass
-    	throw Py.TypeError("can't set attribute '__dict__' of instance of " + getType().fastGetName());
+        // fallback if setDict not implemented in subclass
+        throw Py.TypeError("can't set attribute '__dict__' of instance of " + getType().fastGetName());
     }
 
     public void delDict() {

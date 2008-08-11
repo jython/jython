@@ -196,7 +196,7 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
    * @param name
    * @return the attribute for the given name
    */
-  public PyObject __findattr__(String name) {
+  public PyObject __findattr_ex__(String name) {
 
     if ("arraysize".equals(name)) {
       return Py.newInteger(arraysize);
@@ -236,7 +236,7 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
       } catch (Throwable t) {}
     }
 
-    return super.__findattr__(name);
+    return super.__findattr_ex__(name);
   }
 
   /**

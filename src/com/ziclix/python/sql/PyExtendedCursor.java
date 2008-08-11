@@ -131,7 +131,7 @@ public class PyExtendedCursor extends PyCursor {
      * @param name the name of the attribute of interest
      * @return the value for the attribute of the specified name
      */
-    public PyObject __findattr__(String name) {
+    public PyObject __findattr_ex__(String name) {
 
         if ("__methods__".equals(name)) {
             return __methods__;
@@ -139,7 +139,7 @@ public class PyExtendedCursor extends PyCursor {
             return __members__;
         }
 
-        return super.__findattr__(name);
+        return super.__findattr_ex__(name);
     }
 
     /**

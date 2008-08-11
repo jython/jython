@@ -44,7 +44,7 @@ public class ProxyType extends AbstractReference {
         py().__delslice__(start, stop, step);
     }
 
-    public PyObject __findattr__(String name) { return py().__findattr__(name); }
+    public PyObject __findattr_ex__(String name) { return py().__findattr_ex__(name); }
     public void __setattr__(String name, PyObject value) { py().__setattr__(name, value); }
     public void __delattr__(String name) { py().__delattr__(name); }
 

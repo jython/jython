@@ -162,8 +162,8 @@ public class PySystemState extends PyObject
 
         // This isn't quite right...
         if(builtins == null){
-        	builtins = new PyStringMap();
-        	__builtin__.fillWithBuiltins(builtins);
+            builtins = new PyStringMap();
+            __builtin__.fillWithBuiltins(builtins);
         }
         PyModule __builtin__ = new PyModule("__builtin__", builtins);
         modules.__setitem__("__builtin__", __builtin__);
@@ -177,7 +177,7 @@ public class PySystemState extends PyObject
     }
 
     // xxx fix this accessors
-    public PyObject __findattr__(String name) {
+    public PyObject __findattr_ex__(String name) {
         if (name == "exc_value") {
             PyException exc = Py.getThreadState().exception;
             if (exc == null) return null;
@@ -199,7 +199,7 @@ public class PySystemState extends PyObject
             return warnoptions;
         }
 
-        PyObject ret = super.__findattr__(name);
+        PyObject ret = super.__findattr_ex__(name);
         if (ret != null) return ret;
 
         return __dict__.__finditem__(name);
@@ -440,14 +440,14 @@ public class PySystemState extends PyObject
             } catch (Exception exc) {
             }
         }
-	try {
-	    String jythonpath = System.getenv("JYTHONPATH");
-	    if (jythonpath != null)
-		registry.setProperty("python.path", jythonpath);
-	} catch (SecurityException e) {
-	}
+    try {
+        String jythonpath = System.getenv("JYTHONPATH");
+        if (jythonpath != null)
+        registry.setProperty("python.path", jythonpath);
+    } catch (SecurityException e) {
+    }
         if (postProperties != null) {
-	    registry.putAll(postProperties);
+        registry.putAll(postProperties);
         }
         if (standalone) {
             // set default standalone property (if not yet set)
@@ -694,7 +694,7 @@ public class PySystemState extends PyObject
         PyObject [] built_mod = new PyObject[n];        
         Enumeration keys = builtinNames.keys();
         for (int i=0; i<n; i++)
-        	built_mod[i] = Py.newString((String)keys.nextElement());
+            built_mod[i] = Py.newString((String)keys.nextElement());
         builtin_module_names = new PyTuple(built_mod);
     }
 
@@ -900,7 +900,7 @@ public class PySystemState extends PyObject
     }
 
     public static void exc_clear() {
-    	Py.getThreadState().exception = null;
+        Py.getThreadState().exception = null;
     }
 
     public static PyFrame _getframe() {

@@ -161,7 +161,7 @@ public class PyStatement extends PyObject {
      * @param name
      * @return the attribute for the given name
      */
-    public PyObject __findattr__(String name) {
+    public PyObject __findattr_ex__(String name) {
 
         if ("style".equals(name)) {
             return Py.newInteger(style);
@@ -175,7 +175,7 @@ public class PyStatement extends PyObject {
             return __members__;
         }
 
-        return super.__findattr__(name);
+        return super.__findattr_ex__(name);
     }
 
     /**

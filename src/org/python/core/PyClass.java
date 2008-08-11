@@ -228,7 +228,7 @@ public class PyClass extends PyObject {
         return result[0];
     }
 
-    public PyObject __findattr__(String name) {
+    public PyObject __findattr_ex__(String name) {
         if (name == "__dict__") {
             return __dict__;
         }
@@ -245,7 +245,7 @@ public class PyClass extends PyObject {
         PyObject[] result = lookupGivingClass(name, false);
 
         if (result[0] == null) {
-            return super.__findattr__(name);
+            return super.__findattr_ex__(name);
         }
         // xxx do we need to use result[1] (wherefound) for java cases for backw
         // comp?

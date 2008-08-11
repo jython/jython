@@ -133,12 +133,12 @@ public class PyTableCode extends PyCode
         return new PyTuple(pystr);
     }
 
-    public PyObject __findattr__(String name) {
+    public PyObject __findattr_ex__(String name) {
         // have to craft co_varnames specially
         if (name == "co_varnames") return toPyStringTuple(co_varnames);
         if (name == "co_cellvars") return toPyStringTuple(co_cellvars);
         if (name == "co_freevars") return toPyStringTuple(co_freevars);
-        return super.__findattr__(name);
+        return super.__findattr_ex__(name);
     }
 
     public PyObject call(PyFrame frame, PyObject closure) {

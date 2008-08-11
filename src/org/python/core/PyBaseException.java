@@ -101,7 +101,7 @@ public class PyBaseException extends PyObject {
         return Py.None;
     }
 
-    public PyObject __findattr__(String name) {
+    public PyObject __findattr_ex__(String name) {
         return BaseException___findattr__(name);
     }
 
@@ -113,7 +113,7 @@ public class PyBaseException extends PyObject {
             }
         }
 
-        return super.__findattr__(name);
+        return super.__findattr_ex__(name);
     }
 
     public void __setattr__(String name, PyObject value) {

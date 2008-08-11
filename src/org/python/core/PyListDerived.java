@@ -972,30 +972,44 @@ public class PyListDerived extends PyList implements Slotted {
         }
     }
 
-    public PyObject __findattr__(String name) {
+    public PyObject __findattr_ex__(String name) {
         PyType self_type=getType();
+        // TODO: We should speed this up. As the __getattribute__ slot almost never
+        //       changes, it is a good candidate for caching, as PyClass does with
+        //       __getattr__. See #1102.
         PyObject getattribute=self_type.lookup("__getattribute__");
         PyString py_name=null;
+        PyException firstAttributeError=null;
         try {
             if (getattribute!=null) {
-                return getattribute.__get__(this,self_type).__call__(py_name=PyString.fromInterned(name));
+                py_name=PyString.fromInterned(name);
+                return getattribute.__get__(this,self_type).__call__(py_name);
             } else {
-                return super.__findattr__(name);
+                Py.Warning(String.format("__getattribute__ not found on type %s",self_type.getName()));
+                PyObject ret=super.__findattr_ex__(name);
+                if (ret!=null) {
+                    return ret;
+                } // else: pass through to __getitem__ invocation
             }
         } catch (PyException e) {
-            if (Py.matchException(e,Py.AttributeError)) {
-                PyObject getattr=self_type.lookup("__getattr__");
-                if (getattr!=null)
-                    try {
-                        return getattr.__get__(this,self_type).__call__(py_name!=null?py_name:PyString.fromInterned(name));
-                    } catch (PyException e1) {
-                        if (!Py.matchException(e1,Py.AttributeError))
-                            throw e1;
-                    }
-                return null;
+            if (!Py.matchException(e,Py.AttributeError)) {
+                throw e;
+            } else {
+                firstAttributeError=e; // saved to avoid swallowing custom AttributeErrors
+            // and pass through to __getattr__ invocation.
             }
-            throw e;
         }
+        PyObject getattr=self_type.lookup("__getattr__");
+        if (getattr!=null) {
+            if (py_name==null) {
+                py_name=PyString.fromInterned(name);
+            }
+            return getattr.__get__(this,self_type).__call__(py_name);
+        }
+        if (firstAttributeError!=null) {
+            throw firstAttributeError;
+        }
+        return null;
     }
 
     public void __setattr__(String name,PyObject value) {

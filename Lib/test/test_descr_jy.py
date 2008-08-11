@@ -73,6 +73,29 @@ class TestDescrTestCase(unittest.TestCase):
         else:
             self.assert_(False, "should have raised TypeError")
 
+    def test_raising_custom_attribute_error(self):
+        class RaisesCustomMsg(object):
+            def __get__(self, instance, type):
+                raise AttributeError("Custom message")
+
+
+        class CustomAttributeError(AttributeError): pass
+
+        class RaisesCustomErr(object):
+            def __get__(self, instance, type):
+                raise CustomAttributeError
+
+        class Foo(object):
+            custom_msg = RaisesCustomMsg()
+            custom_err = RaisesCustomErr()
+
+        self.assertRaises(CustomAttributeError, lambda: Foo().custom_err)
+        try:
+            Foo().custom_msg
+            self.assert_(False) # Previous line should raise AttributteError
+        except AttributeError, e:
+            self.assertEquals("Custom message", str(e))
+
 class SubclassDescrTestCase(unittest.TestCase):
 
     def test_subclass_cmp_right_op(self):
@@ -144,7 +167,7 @@ class SubclassDescrTestCase(unittest.TestCase):
 
         # Test strs, unicode, lists and tuples
         mapping = []
-        
+
         # + binop
         mapping.append((lambda o: 'foo' + o,
                         TypeError, "cannot concatenate 'str' and 'B' objects",
@@ -293,12 +316,32 @@ class DescrExceptionsTestCase(unittest.TestCase):
         self.assertRaises(AttributeError, func, old)
         self.assertRaises(TypeError, func, new)
 
+class GetAttrTestCase(unittest.TestCase):
+    def test_raising_custom_attribute_error(self):
+        # Very similar to
+        # test_descr_jy.TestDescrTestCase.test_raising_custom_attribute_error
+        class BarAttributeError(AttributeError): pass
+
+        class Bar(object):
+            def __getattr__(self, name):
+                raise BarAttributeError
+
+        class Foo(object):
+            def __getattr__(self, name):
+                raise AttributeError("Custom message")
+        self.assertRaises(BarAttributeError, lambda: Bar().x)
+        try:
+            Foo().x
+            self.assert_(False) # Previous line should raise AttributteError
+        except AttributeError, e:
+            self.assertEquals("Custom message", str(e))
 
 def test_main():
     test_support.run_unittest(TestDescrTestCase,
                               SubclassDescrTestCase,
                               InPlaceTestCase,
-                              DescrExceptionsTestCase)
+                              DescrExceptionsTestCase,
+                              GetAttrTestCase)
 
 if __name__ == '__main__':
     test_main()
