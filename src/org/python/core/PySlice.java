@@ -7,103 +7,98 @@ import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 
 /**
- * A python slice object.
+ * The Python slice object.
  */
-
 @ExposedType(name = "slice")
 public class PySlice extends PyObject {
-    
+
     public static final PyType TYPE = PyType.fromClass(PySlice.class);
-    
+
+    @ExposedGet
+    public PyObject start = Py.None;
+
+    @ExposedGet
+    public PyObject stop = Py.None;
+
+    @ExposedGet
+    public PyObject step = Py.None;
+
+    public PySlice() {
+        this(TYPE);
+    }
+
+    public PySlice(PyType type) {
+        super(type);
+    }
+
+    public PySlice(PyObject start, PyObject stop, PyObject step) {
+        this(TYPE);
+        if (start != null) {
+            this.start = start;
+        }
+        if (stop != null) {
+            this.stop = stop;
+        }
+        if (step != null) {
+            this.step = step;
+        }
+    }
+
     @ExposedNew
     @ExposedMethod
     final void slice___init__(PyObject[] args, String[] keywords) {
-        if(args.length == 0) {
+        if (args.length == 0) {
             throw Py.TypeError("slice expected at least 1 arguments, got " + args.length);
-        } else if(args.length > 3) {
+        } else if (args.length > 3) {
             throw Py.TypeError("slice expected at most 3 arguments, got " + args.length);
         }
         ArgParser ap = new ArgParser("slice", args, keywords, "start", "stop", "step");
-        if(args.length == 1) {
+        if (args.length == 1) {
             stop = ap.getPyObject(0);
-        } else if(args.length == 2) {
+        } else if (args.length == 2) {
             start = ap.getPyObject(0);
             stop = ap.getPyObject(1);
-        } else if(args.length == 3) {
+        } else if (args.length == 3) {
             start = ap.getPyObject(0);
             stop = ap.getPyObject(1);
             step = ap.getPyObject(2);
         }
     }
 
-    public PySlice(PyObject start, PyObject stop, PyObject step) {
-        this(TYPE);
-        if(start != null) {
-            this.start = start;
-        }
-        if(stop != null) {
-            this.stop = stop;
-        }
-        if(step != null) {
-            this.step = step;
-        }
-    }
-
-    public PySlice(PyType type) {
-        super(type);
-    }
-    
-    public PySlice() {
-        this(TYPE);
-    }
-
-    public final PyObject getStart() {
-        return start;
-    }
-
-    public final PyObject getStop() {
-        return stop;
-    }
-
-    public final PyObject getStep() {
-        return step;
-    }
-
-    public int hashCode() { 
+    public int hashCode() {
         return slice___hash__();
     }
 
     @ExposedMethod
     final int slice___hash__() {
         throw Py.TypeError("unhashable type");
-    } 
+    }
 
     public PyString __str__() {
-        return new PyString(getStart().__repr__() + ":" + getStop().__repr__() + ":" +
-                getStep().__repr__());
+        return new PyString(getStart().__repr__() + ":" + getStop().__repr__() + ":"
+                            + getStep().__repr__());
     }
 
     public PyString __repr__() {
-        return new PyString("slice(" + getStart().__repr__() + ", " +
-                getStop().__repr__() + ", " +
-                getStep().__repr__() + ")");
+        return new PyString("slice(" + getStart().__repr__() + ", " + getStop().__repr__() + ", "
+                            + getStep().__repr__() + ")");
     }
 
     public PyObject __eq__(PyObject o) {
-        if(getType() != o.getType() && !(getType().isSubType(o.getType()))) {
+        if (getType() != o.getType() && !(getType().isSubType(o.getType()))) {
             return null;
         }
-        if(this == o) {
+        if (this == o) {
             return Py.True;
         }
         PySlice oSlice = (PySlice)o;
-        if(eq(getStart(), oSlice.getStart()) && eq(getStop(), oSlice.getStop())
-                && eq(getStep(), oSlice.getStep())) {
+        if (eq(getStart(), oSlice.getStart()) && eq(getStop(), oSlice.getStop())
+            && eq(getStep(), oSlice.getStep())) {
             return Py.True;
         }
         return Py.False;
     }
-    
+
     private static final boolean eq(PyObject o1, PyObject o2) {
         return o1._cmp(o2) == 0;
     }
@@ -111,25 +106,22 @@ public class PySlice extends PyObject {
     public PyObject __ne__(PyObject o) {
         return __eq__(o).__not__();
     }
-    
+
+    public PyObject indices(PyObject len) {
+        return slice_indices(len);
+    }
+
     @ExposedMethod
-    public PyObject slice_indices(PyObject len) {
+    final PyObject slice_indices(PyObject len) {
         int[] indices = indicesEx(len.asIndex(Py.OverflowError));
         return new PyTuple(Py.newInteger(indices[0]), Py.newInteger(indices[1]),
                            Py.newInteger(indices[2]));
     }
 
-    public static int calculateSliceIndex(PyObject v) {
-        if (v.isIndex()) {
-            return v.asIndex();
-        }
-        throw Py.TypeError("slice indices must be integers or None or have an __index__ method");
-    }
-    
     /**
      * Calculates the actual indices of a slice with this slice's start, stop, step and
      * slicelength values for a sequence of length <code>len</code>.
-     * 
+     *
      * @return an array with the start at index 0, stop at index 1, step at index 2 and
      *         slicelength at index 3
      */
@@ -222,12 +214,22 @@ public class PySlice extends PyObject {
         return indices;
     }
 
-    @ExposedGet
-    public PyObject start = Py.None;
+    public static int calculateSliceIndex(PyObject v) {
+        if (v.isIndex()) {
+            return v.asIndex();
+        }
+        throw Py.TypeError("slice indices must be integers or None or have an __index__ method");
+    }
 
-    @ExposedGet
-    public PyObject stop = Py.None;
+    public final PyObject getStart() {
+        return start;
+    }
 
-    @ExposedGet
-    public PyObject step = Py.None;
+    public final PyObject getStop() {
+        return stop;
+    }
+
+    public final PyObject getStep() {
+        return step;
+    }
 }
