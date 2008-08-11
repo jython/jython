@@ -629,15 +629,15 @@ n     **/
     }
 
     public PyObject __getslice__(PyObject start, PyObject stop) {
-        return __getslice__(start, stop, Py.One);
+        return __getslice__(start, stop, null);
     }
 
     public void __setslice__(PyObject start, PyObject stop, PyObject value) {
-        __setslice__(start, stop, Py.One, value);
+        __setslice__(start, stop, null, value);
     }
 
     public void __delslice__(PyObject start, PyObject stop) {
-        __delslice__(start, stop, Py.One);
+        __delslice__(start, stop, null);
     }
 
     /*The basic functions to implement an iterator */
