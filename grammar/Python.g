@@ -829,8 +829,9 @@ trailer : LPAREN (arglist)? RPAREN -> ^(Call ^(Args arglist)?)
         ;
 
 //subscriptlist: subscript (',' subscript)* [',']
-subscriptlist : subscript (options {greedy=true;}:COMMA subscript)* (COMMA)?
-             -> subscript+
+subscriptlist : subscript (options {greedy=true;}:c1=COMMA subscript)* (c2=COMMA)?
+             -> { $c1 != null || $c2 != null }? ^(Tuple ^(Elts subscript+))
+             -> subscript
               ;
 
 //subscript: '.' '.' '.' | test | [test] ':' [test] [sliceop]

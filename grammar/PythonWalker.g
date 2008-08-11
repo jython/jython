@@ -982,32 +982,36 @@ atom[expr_contextType ctype] returns [exprType etype, PythonTree marker, boolean
         $marker = $test.marker;
     }
     | ^(SubscriptList subscriptlist test[expr_contextType.Load]) {
-        //XXX: only handling one subscript for now.
-        sliceType s;
+        sliceType s = null;
         List sltypes = $subscriptlist.sltypes;
-        if (sltypes.size() == 0) {
-            s = null;
-        } else if (sltypes.size() == 1){
-            s = (sliceType)sltypes.get(0);
-        } else {
+        boolean extslice = false;
+        if ($subscriptlist.isTuple) {
             sliceType[] st;
-            //FIXME: here I am using ClassCastException to decide if sltypes is populated with Index
-            //       only.  Clearly this is not the best way to do this but it's late. Somebody do
-            //       something better please :) -- (hopefully a note to self)
-            try {
-                Iterator iter = sltypes.iterator();
-                List etypes = new ArrayList();
-                while (iter.hasNext()) {
-                    Index i = (Index)iter.next();
+            Iterator iter = sltypes.iterator();
+            List etypes = new ArrayList();
+            while (iter.hasNext()) {
+                Object o = iter.next();
+                if (o instanceof Index) {
+                    Index i = (Index)o;
                     etypes.add(i.value);
+                } else {
+                    extslice = true;
+                    break;
                 }
+            }
+            if (!extslice) {
                 exprType[] es = (exprType[])etypes.toArray(new exprType[etypes.size()]);
                 exprType t = new Tuple($SubscriptList, es, expr_contextType.Load);
                 s = new Index($SubscriptList, t);
-            } catch (ClassCastException cc) {
-                st = (sliceType[])sltypes.toArray(new sliceType[sltypes.size()]);
-                s = new ExtSlice($SubscriptList, st);
             }
+        } else if (sltypes.size() == 1) {
+            s = (sliceType)sltypes.get(0);
+        } else if (sltypes.size() != 0) {
+            extslice = true;
+        }
+        if (extslice) {
+            sliceType[] st = (sliceType[])sltypes.toArray(new sliceType[sltypes.size()]);
+            s = new ExtSlice($SubscriptList, st);
         }
         $etype = new Subscript($test.marker, $test.etype, s, ctype);
         $marker = $test.marker;
@@ -1082,12 +1086,17 @@ lambdef returns [exprType etype]
     }
     ;
 
-subscriptlist returns [List sltypes]
+subscriptlist returns [List sltypes, boolean isTuple]
 @init {
     List subs = new ArrayList();
 }
-    :   subscript[subs]+ {
+    : subscript[subs] {
         $sltypes = subs;
+        $isTuple = false;
+    }
+    | ^(Tuple ^(Elts subscript[subs]+)) {
+        $sltypes = subs;
+        $isTuple = true;
     }
     ;
 
