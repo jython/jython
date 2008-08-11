@@ -936,9 +936,10 @@ n     **/
      * Implements numeric coercion
      *
      * @param o the other object involved in the coercion
-     * @return null if no coercion is possible;
-     * a single PyObject to use to replace o if this is unchanged;
-     * or a PyObject[2] consisting of replacements for this and o.
+     * @return null if coercion is not implemented
+     *         Py.None if coercion was not possible
+     *         a single PyObject to use to replace o if this is unchanged;
+     *         or a PyObject[2] consisting of replacements for this and o.
      **/
     public Object __coerce_ex__(PyObject o) {
         return null;

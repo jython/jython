@@ -1094,10 +1094,10 @@ public class PyLocalDerived extends PyLocal implements Slotted {
         PyObject impl=self_type.lookup("__coerce__");
         if (impl!=null) {
             PyObject res=impl.__get__(this,self_type).__call__(o);
-            if (res==null||res==Py.None)
-                return res;
+            if (res==Py.NotImplemented)
+                return Py.None;
             if (!(res instanceof PyTuple))
-                throw Py.TypeError("coercion should return None or 2-tuple");
+                throw Py.TypeError("__coerce__ didn't return a 2-tuple");
             return((PyTuple)res).getArray();
         }
         return super.__coerce_ex__(o);
