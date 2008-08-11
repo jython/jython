@@ -768,6 +768,23 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         code.ldc(node.module);
         //Note: parser does not allow node.names.length == 0
         if (node.names.length == 1 && node.names[0].name.equals("*")) {
+            if (my_scope.func_level > 0) {
+                module.error("import * only allowed at module level", false, node);
+
+                if (my_scope.contains_ns_free_vars) {
+                    module.error("import * is not allowed in function '" +
+                            my_scope.scope_name +
+                            "' because it contains a nested function with free variables",
+                            true, node);
+                }
+            }
+            if (my_scope.func_level > 1) {
+                module.error("import * is not allowed in function '" +
+                        my_scope.scope_name +
+                        "' because it is a nested function",
+                        true, node);
+            }
+            
             loadFrame();
             code.invokestatic("org/python/core/imp", "importAll", "(" + $str + $pyFrame + ")V");
         } else {

@@ -52,6 +52,7 @@ public class ScopeInfo extends Object implements ScopeConstants {
     public boolean unqual_exec;
     public boolean exec;
     public boolean from_import_star;
+    public boolean contains_ns_free_vars;
     public boolean generator;
     public int yield_count;
     public int max_with_count;
@@ -179,6 +180,12 @@ public class ScopeInfo extends Object implements ScopeConstants {
                 names.addElement(purecells.elementAt(i));
             }
         }
+        
+        if (some_free && nested) {
+            up.contains_ns_free_vars = true;
+        }
+        // XXX - this doesn't catch all cases - may depend subtly
+        // on how visiting NOW works with antlr compared to javacc
         if ((unqual_exec || from_import_star)) {
             if(some_inner_free) dynastuff_trouble(true, ctxt);
             else if(func_level > 1 && some_free)
