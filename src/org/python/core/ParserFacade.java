@@ -18,7 +18,6 @@ import org.antlr.runtime.CommonTokenStream;
 
 import org.python.antlr.ExpressionParser;
 import org.python.antlr.InteractiveParser;
-import org.python.antlr.LeadingSpaceSkippingStream;
 import org.python.antlr.ParseException;
 import org.python.antlr.ModuleParser;
 import org.python.antlr.NoCloseReaderStream;
@@ -103,7 +102,7 @@ public class ParserFacade {
         modType node = null;
         try {
             if (kind.equals("eval")) {
-                bufreader = prepBufreader(new LeadingSpaceSkippingStream(bstream), cflags, filename);
+                bufreader = prepBufreader(bstream, cflags, filename);
                 CharStream cs = new NoCloseReaderStream(bufreader);
                 ExpressionParser e = new ExpressionParser(cs, filename);
                 node = e.parse();
@@ -117,7 +116,7 @@ public class ParserFacade {
                 ModuleParser g = new ModuleParser(cs, filename);
                 node = g.file_input();
             } else {
-               throw Py.ValueError("parse kind must be eval, exec, " + "or single");
+                throw Py.ValueError("parse kind must be eval, exec, or single");
             }
         } catch (Throwable t) {
             throw fixParseError(bufreader, t, filename);
@@ -150,12 +149,12 @@ public class ParserFacade {
                 InteractiveParser i = new InteractiveParser(bufreader, filename);
                 node = i.parse();
             } else if (kind.equals("eval")) {
-                bufreader = prepBufreader(new LeadingSpaceSkippingStream(bstream), cflags, filename);
+                bufreader = prepBufreader(bstream, cflags, filename);
                 CharStream cs = new NoCloseReaderStream(bufreader);
                 ExpressionParser e = new ExpressionParser(cs, filename);
                 node = e.parse();
             } else {
-                throw Py.ValueError("parse kind must be eval, exec, " + "or single");
+                throw Py.ValueError("parse kind must be eval, exec, or single");
             }
         } catch (Throwable t) {
             PyException p = fixParseError(bufreader, t, filename);
