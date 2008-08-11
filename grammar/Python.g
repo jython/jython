@@ -178,7 +178,6 @@ import org.python.core.PyString;
 import org.python.core.PyUnicode;
 
 import java.math.BigInteger;
-import java.util.Iterator;
 } 
 
 @members {

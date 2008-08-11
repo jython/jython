@@ -987,10 +987,8 @@ atom[expr_contextType ctype] returns [exprType etype, PythonTree marker, boolean
         boolean extslice = false;
         if ($subscriptlist.isTuple) {
             sliceType[] st;
-            Iterator iter = sltypes.iterator();
             List etypes = new ArrayList();
-            while (iter.hasNext()) {
-                Object o = iter.next();
+            for (Object o : sltypes) {
                 if (o instanceof Index) {
                     Index i = (Index)o;
                     etypes.add(i.value);
