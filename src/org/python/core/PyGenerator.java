@@ -46,8 +46,9 @@ public class PyGenerator extends PyIterator {
     }
 
     private PyObject raiseException(PyException ex) {
-        if (gi_frame == null)
-            return null;
+        if (gi_frame == null || gi_frame.f_lasti == 0) {
+            throw ex;
+        }
         gi_frame.setGeneratorInput(ex);
         return next();
     }

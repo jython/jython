@@ -728,14 +728,14 @@ Ye olde Fibonacci generator, tee style.
 
 syntax_tests = """
 
->>> def f():
+>>> def f(): #doctest: +IGNORE_EXCEPTION_DETAIL, +NORMALIZE_WHITESPACE
 ...     return 22
 ...     yield 1
 Traceback (most recent call last):
   ..
 SyntaxError: 'return' with argument inside generator (<doctest test.test_generators.__test__.syntax[0]>, line 3)
 
->>> def f():
+>>> def f(): #doctest: +IGNORE_EXCEPTION_DETAIL, +NORMALIZE_WHITESPACE
 ...     yield 1
 ...     return 22
 Traceback (most recent call last):
@@ -744,7 +744,7 @@ SyntaxError: 'return' with argument inside generator (<doctest test.test_generat
 
 "return None" is not the same as "return" in a generator:
 
->>> def f():
+>>> def f(): #doctest: +IGNORE_EXCEPTION_DETAIL, +NORMALIZE_WHITESPACE
 ...     yield 1
 ...     return None
 Traceback (most recent call last):
@@ -1522,17 +1522,17 @@ A yield expression with augmented assignment.
 
 Check some syntax errors for yield expressions:
 
->>> f=lambda: (yield 1),(yield 2)
+>>> f=lambda: (yield 1),(yield 2) #doctest: +IGNORE_EXCEPTION_DETAIL, +NORMALIZE_WHITESPACE
 Traceback (most recent call last):
   ...
 SyntaxError: 'yield' outside function (<doctest test.test_generators.__test__.coroutine[21]>, line 1)
 
->>> def f(): return lambda x=(yield): 1
+>>> def f(): return lambda x=(yield): 1 #doctest: +IGNORE_EXCEPTION_DETAIL, +NORMALIZE_WHITESPACE
 Traceback (most recent call last):
   ...
 SyntaxError: 'return' with argument inside generator (<doctest test.test_generators.__test__.coroutine[22]>, line 1)
 
->>> def f(): x = yield = y
+>>> def f(): x = yield = y #doctest: +IGNORE_EXCEPTION_DETAIL, +NORMALIZE_WHITESPACE
 Traceback (most recent call last):
   ...
 SyntaxError: assignment to yield expression not possible (<doctest test.test_generators.__test__.coroutine[23]>, line 1)
@@ -1580,7 +1580,7 @@ Traceback (most recent call last):
   ...
 TypeError: instance exception may not have a separate value
 
->>> g.throw(ValueError, "foo", 23)      # bad args
+>>> g.throw(ValueError, "foo", 23)      # bad args #doctest: +IGNORE_EXCEPTION_DETAIL
 Traceback (most recent call last):
   ...
 TypeError: throw() third argument must be a traceback object
@@ -1645,8 +1645,9 @@ exiting
 >>> g.next()
 >>> g.close()           # close normally
 
-And finalization:
-
+And finalization. But we have to force the timing of GC here, since we are running on Jython:
+>>> import gc
+>>> from time import sleep
 >>> def f():
 ...     try: yield
 ...     finally:
@@ -1654,7 +1655,7 @@ And finalization:
 
 >>> g = f()
 >>> g.next()
->>> del g
+>>> del g; gc.collect(); sleep(1); gc.collect()
 exiting
 
 
@@ -1679,9 +1680,9 @@ Our ill-behaved code should be invoked during GC:
 >>> old, sys.stderr = sys.stderr, StringIO.StringIO()
 >>> g = f()
 >>> g.next()
->>> del g
+>>> del g; gc.collect(); sleep(1); gc.collect()
 >>> sys.stderr.getvalue().startswith(
-...     "Exception exceptions.RuntimeError: 'generator ignored GeneratorExit' in "
+...     "Exception RuntimeError"
 ... )
 True
 >>> sys.stderr = old
@@ -1787,6 +1788,8 @@ printing warnings and to doublecheck that we actually tested what we wanted
 to test.
 
 >>> import sys, StringIO
+>>> from time import sleep
+>>> import gc
 >>> old = sys.stderr
 >>> try:
 ...     sys.stderr = StringIO.StringIO()
@@ -1795,10 +1798,10 @@ to test.
 ...             raise RuntimeError
 ...
 ...     l = Leaker()
-...     del l
+...     del l; gc.collect(); sleep(1); gc.collect()
 ...     err = sys.stderr.getvalue().strip()
 ...     err.startswith(
-...         "Exception exceptions.RuntimeError: RuntimeError() in <"
+...         "Exception RuntimeError in <"
 ...     )
 ...     err.endswith("> ignored")
 ...     len(err.splitlines())
