@@ -458,6 +458,8 @@ public class GrammarActions {
             throw new ParseException("assignment to None", e);
         } else if (e instanceof GeneratorExp) {
             throw new ParseException("can't assign to generator expression", e);
+        } else if (e instanceof Num) {
+            throw new ParseException("can't assign to number", e);
         }
     }
 }

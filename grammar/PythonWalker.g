@@ -171,7 +171,6 @@ varargslist returns [argumentsType args]
 
 defparameter[List params, List defaults]
     : fpdef[expr_contextType.Param, null] (ASSIGN test[expr_contextType.Load])? {
-        actions.checkAssign($fpdef.etype);
         params.add($fpdef.etype);
         if ($ASSIGN != null) {
             defaults.add($test.etype);
@@ -186,6 +185,7 @@ defparameter[List params, List defaults]
 fpdef [expr_contextType ctype, List nms] returns [exprType etype]
     : NAME {
         exprType e = new Name($NAME, $NAME.text, ctype);
+        actions.checkAssign(e);
         if (nms == null) {
             $etype = e;
         } else {
