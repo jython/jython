@@ -1444,6 +1444,19 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
             visit(values[1]);
             code.invokevirtual("org/python/core/PyObject", "__call__", "(" + $pyObj + $pyObj + ")" + $pyObj);
             break;
+        case 3:
+            visit(values[0]);
+            visit(values[1]);
+            visit(values[2]);
+            code.invokevirtual("org/python/core/PyObject", "__call__", "(" + $pyObj + $pyObj + $pyObj + ")" + $pyObj);
+            break;
+        case 4:
+            visit(values[0]);
+            visit(values[1]);
+            visit(values[2]);
+            visit(values[3]);
+            code.invokevirtual("org/python/core/PyObject", "__call__", "(" + $pyObj + $pyObj + $pyObj + $pyObj + ")" + $pyObj);
+            break;
         default:
             makeArray(values);
             code.invokevirtual("org/python/core/PyObject", "__call__", "(" + $pyObjArr + ")" + $pyObj);
