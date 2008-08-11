@@ -193,7 +193,7 @@ single_input : NEWLINE
              ;
 
 //eval_input: testlist NEWLINE* ENDMARKER
-eval_input : (NEWLINE)* testlist? (NEWLINE)*
+eval_input : LEADING_WS? (NEWLINE)* testlist? (NEWLINE)* ENDMARKER
            ;
 
 decorators: decorator+

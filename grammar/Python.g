@@ -298,7 +298,7 @@ file_input : (NEWLINE | stmt)* {debug("parsed file_input");}
            ;
 
 //eval_input: testlist NEWLINE* ENDMARKER
-eval_input : LEADING_WS? (NEWLINE)* testlist[expr_contextType.Load] (NEWLINE)* -> ^(Expression testlist)
+eval_input : LEADING_WS? (NEWLINE)* testlist[expr_contextType.Load] (NEWLINE)* EOF -> ^(Expression testlist)
            ;
 
 //not in CPython's Grammar file

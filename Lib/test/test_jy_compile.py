@@ -148,13 +148,10 @@ class CompileTests(unittest.TestCase):
         ai("a = 'a\\ ")
         ai("a = 'a\\\n")
 
-        #XXX: eval is hopelessly permissive right now -- but the rest of this
-        #     test_jy_compile is really important to me for flagging new bugs -
-        #     so commenting out some of these for now.
-        ###ai("a = 1","eval")
-        ###ai("a = (","eval")
+        ai("a = 1","eval")
+        ai("a = (","eval")
         ai("]","eval")
-        ###ai("())","eval")
+        ai("())","eval")
         ai("[}","eval")
         ai("9+","eval")
         ai("lambda z:","eval")
