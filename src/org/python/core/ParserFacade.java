@@ -199,13 +199,17 @@ public class ParserFacade {
         InputStream bstream = new BufferedInputStream(istream);
         bom = adjustForBOM(bstream);
         encoding = readEncoding(bstream);
-        if(encoding == null) {
+
+        if (encoding == null) {
             if (bom) {
                 encoding = "UTF-8";
             } else if (cflags != null && cflags.encoding != null) {
                 encoding = cflags.encoding;
             }
+        } else if (cflags.source_is_utf8) {
+            throw new ParseException("encoding declaration in Unicode string");
         }
+
         // Enable universal newlines mode on the input
         StreamIO rawIO = new StreamIO(bstream, true);
         org.python.core.io.BufferedReader bufferedIO =

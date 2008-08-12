@@ -32,17 +32,19 @@ public class PyTableCode extends PyCode
     final public static int CO_GENERATOR         = 0x0020;
     
     // these are defined in __future__.py
-    final public static int CO_NESTED            = 0x0010;
-    final public static int CO_GENERATOR_ALLOWED = 0x0;
-    final public static int CO_FUTUREDIVISION    = 0x2000;
+    final public static int CO_NESTED                 = 0x0010;
+    final public static int CO_GENERATOR_ALLOWED      = 0x0;
+    final public static int CO_FUTUREDIVISION         = 0x2000;
     final public static int CO_FUTURE_ABSOLUTE_IMPORT = 0x4000;
-    final public static int CO_WITH_STATEMENT    = 0x8000;
+    final public static int CO_WITH_STATEMENT         = 0x8000;
 
     //XXX: I'm not positive that this is the right place for these constants.
+    final public static int PyCF_SOURCE_IS_UTF8    = 0x0100;
     final public static int PyCF_DONT_IMPLY_DEDENT = 0x0200;
     final public static int PyCF_ONLY_AST          = 0x0400;
 
-    final public static int CO_ALL_FEATURES = PyCF_DONT_IMPLY_DEDENT|PyCF_ONLY_AST|CO_NESTED|
+    final public static int CO_ALL_FEATURES = PyCF_DONT_IMPLY_DEDENT|PyCF_ONLY_AST|
+                                              PyCF_SOURCE_IS_UTF8|CO_NESTED|
                                               CO_GENERATOR_ALLOWED| CO_FUTUREDIVISION|
                                               CO_FUTURE_ABSOLUTE_IMPORT|CO_WITH_STATEMENT;
 

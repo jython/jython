@@ -276,6 +276,9 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
                     dont_inherit = Py.py2boolean(args[4]);
                 }
 
+                if (args[0] instanceof PyUnicode) {
+                    flags += PyTableCode.PyCF_SOURCE_IS_UTF8;   
+                }
                 return __builtin__.compile(args[0].toString(), args[1].toString(), args[2].toString(), flags, dont_inherit);
             case 29:
                 return __builtin__.map(args);
