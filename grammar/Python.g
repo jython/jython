@@ -582,13 +582,13 @@ import_from: FROM (DOT* dotted_name | DOT+) IMPORT
              -> ^(FROM ^(Level DOT*)? ^(Value dotted_name)? ^(IMPORT STAR))
               | import_as_names
              -> ^(FROM ^(Level DOT*)? ^(Value dotted_name)? ^(IMPORT import_as_names))
-              | LPAREN import_as_names RPAREN
+              | LPAREN import_as_names COMMA? RPAREN
              -> ^(FROM ^(Level DOT*)? ^(Value dotted_name)? ^(IMPORT import_as_names))
               )
            ;
 
 //import_as_names: import_as_name (',' import_as_name)* [',']
-import_as_names : import_as_name (COMMA! import_as_name)* (COMMA!)?
+import_as_names : import_as_name (COMMA! import_as_name)*
                 ;
 
 //import_as_name: NAME [('as' | NAME) NAME]
