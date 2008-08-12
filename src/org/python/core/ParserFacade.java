@@ -39,6 +39,8 @@ import org.python.core.util.StringUtil;
 
 public class ParserFacade {
     
+    private static int MARK_LIMIT = 100000;
+
     private ParserFacade() {}
 
     static String getLine(BufferedReader reader, int line) {
@@ -192,12 +194,18 @@ public class ParserFacade {
     private static BufferedReader prepBufreader(InputStream istream,
                                                 CompilerFlags cflags,
                                                 String filename) throws IOException {
+        boolean bom = false;
+        String encoding = null;
         InputStream bstream = new BufferedInputStream(istream);
-        String encoding = readEncoding(bstream);
-        if(encoding == null && cflags != null && cflags.encoding != null) {
-            encoding = cflags.encoding;
+        bom = adjustForBOM(bstream);
+        encoding = readEncoding(bstream);
+        if(encoding == null) {
+            if (bom) {
+                encoding = "UTF-8";
+            } else if (cflags != null && cflags.encoding != null) {
+                encoding = cflags.encoding;
+            }
         }
-
         // Enable universal newlines mode on the input
         StreamIO rawIO = new StreamIO(bstream, true);
         org.python.core.io.BufferedReader bufferedIO =
@@ -224,13 +232,40 @@ public class ParserFacade {
         
         BufferedReader bufreader = new BufferedReader(reader);
         
-        bufreader.mark(100000);
+        bufreader.mark(MARK_LIMIT);
         return bufreader;
     }
 
+    /**
+     * Check for a BOM mark at the begginning of stream.  If there is a BOM
+     * mark, advance the stream passed it.  If not, reset() to start at the
+     * beginning of the stream again.
+     *
+     * Only checks for EF BB BF right now, since that is all that CPython 2.5
+     * Checks.
+     *
+     * @return true if a BOM was found and skipped.
+     * @throws ParseException if only part of a BOM is matched.
+     *
+     */
+    private static boolean adjustForBOM(InputStream stream) throws IOException {
+        stream.mark(3);
+        int ch = stream.read();
+        if (ch == 0xEF) {
+            if (stream.read() != 0xBB) {
+                throw new ParseException("Incomplete BOM at beginning of file");
+            }
+            if (stream.read() != 0xBF) {
+                throw new ParseException("Incomplete BOM at beginning of file");
+            }
+            return true;
+        }
+        stream.reset();
+        return false;
+	}
 
     private static String readEncoding(InputStream stream) throws IOException {
-        stream.mark(100000);
+        stream.mark(MARK_LIMIT);
         String encoding = null;
         BufferedReader br = new BufferedReader(new InputStreamReader(stream), 512);
         for (int i = 0; i < 2; i++) {
