@@ -1156,10 +1156,15 @@ class Popen(object):
             except java.lang.IllegalArgumentException, iae:
                 raise OSError(iae.getMessage() or iae)
 
-            if env is not None:
-                builder_env = builder.environment()
-                builder_env.clear()
-                builder_env.putAll(dict(env))
+            if env is None:
+                # This is for compatibility with the CPython implementation,
+                # that ends up calling os.execvp(). So os.environ is "inherited"
+                # there if env is not explicitly set.
+                env = os.environ
+
+            builder_env = builder.environment()
+            builder_env.clear()
+            builder_env.putAll(dict(env))
 
             if cwd is None:
                 cwd = os.getcwd()
