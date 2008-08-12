@@ -138,6 +138,7 @@ public class GrammarActions {
         if (nameToken == null) {
             return errorHandler.errorStmt(t);
         }
+        cantBeNone(nameToken);
         argumentsType a;
         if (args != null) {
             a = args;
@@ -319,6 +320,7 @@ public class GrammarActions {
         if (nameToken == null) {
             return errorHandler.errorStmt(t);
         }
+        cantBeNone(nameToken);
         exprType[] b = (exprType[])bases.toArray(new exprType[bases.size()]);
         stmtType[] s = (stmtType[])body.toArray(new stmtType[body.size()]);
         return new ClassDef(t, nameToken.getText(), b, s);
@@ -407,6 +409,7 @@ public class GrammarActions {
         if (target == null || iter == null) {
             return errorHandler.errorStmt(t);
         }
+        cantBeNone(target);
         stmtType[] o;
         if (orelse != null) {
             o = (stmtType[])orelse.toArray(new stmtType[orelse.size()]);
@@ -453,6 +456,12 @@ public class GrammarActions {
         return new UnaryOp(t, unaryopType.USub, o);
     }
 
+    void cantBeNone(PythonTree e) {
+        if (e.getText().equals("None")) {
+            throw new ParseException("can't be None", e);
+        }
+    }
+
     void checkAssign(exprType e) {
         if (e instanceof Name && ((Name)e).id.equals("None")) {
             throw new ParseException("assignment to None", e);
@@ -460,6 +469,12 @@ public class GrammarActions {
             throw new ParseException("can't assign to generator expression", e);
         } else if (e instanceof Num) {
             throw new ParseException("can't assign to number", e);
+        } else if (e instanceof Tuple) {
+            //XXX: performance problem?  Any way to do this better?
+            exprType[] elts = ((Tuple)e).elts;
+            for (int i=0;i<elts.length;i++) {
+                checkAssign(elts[i]);
+            }
         }
     }
 }

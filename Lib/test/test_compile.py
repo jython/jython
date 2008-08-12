@@ -80,6 +80,9 @@ class TestSpecifics(unittest.TestCase):
             exec 'z = b' in m
         except TypeError:
             pass
+        #XXX: Jython calls this a NameError
+        except NameError:
+            pass
         else:
             self.fail('Did not validate globals as a real dict')
 
@@ -90,6 +93,9 @@ class TestSpecifics(unittest.TestCase):
         try:
             exec 'z = a' in g, m
         except TypeError:
+            pass
+        #XXX: Jython calls this an AttributeError
+        except AttributeError:
             pass
         else:
             self.fail('Did not validate locals as a mapping')
@@ -261,7 +267,9 @@ if 1:
         stmts = [
             'None = 0',
             'None += 0',
-            '__builtins__.None = 0',
+            #XXX: None is specifically allowed as a dotted name for Java
+            #     integration purposes in Jython.
+            #'__builtins__.None = 0',
             'def None(): pass',
             'class None: pass',
             '(a, None) = 0, 0',
