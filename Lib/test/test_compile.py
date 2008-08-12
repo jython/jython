@@ -124,8 +124,10 @@ def f(x):
         # EXTENDED_ARG/JUMP_ABSOLUTE here
     return x
 ''' % ((longexpr,)*10)
-        exec code
-        self.assertEqual(f(5), 0)
+        #Exceeds 65535 byte limit on methods in the JVM.
+        if not test_support.is_jython:
+            exec code
+            self.assertEqual(f(5), 0)
 
     def test_complex_args(self):
 
