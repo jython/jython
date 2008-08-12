@@ -176,10 +176,11 @@ if 1:
     # the first line of code starts after 256, correct line numbers
     # in tracebacks are still produced.
     def test_leading_newlines(self):
-        s256 = "".join(["\n"] * 256 + ["spam"])
-        co = compile(s256, 'fn', 'exec')
-        self.assertEqual(co.co_firstlineno, 257)
-        self.assertEqual(co.co_lnotab, '')
+        if not test_support.is_jython:
+            s256 = "".join(["\n"] * 256 + ["spam"])
+            co = compile(s256, 'fn', 'exec')
+            self.assertEqual(co.co_firstlineno, 257)
+            self.assertEqual(co.co_lnotab, '')
 
     def test_literals_with_leading_zeroes(self):
         for arg in ["077787", "0xj", "0x.", "0e",  "090000000000000",
