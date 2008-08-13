@@ -2,7 +2,7 @@
 
 import test.test_support, unittest
 from test.test_support import fcmp, have_unicode, TESTFN, unlink, \
-                              run_unittest
+                              run_unittest, is_jython
 from operator import neg
 
 import sys, warnings, cStringIO, random, UserDict
@@ -548,12 +548,24 @@ class BuiltinTest(unittest.TestCase):
         self.assertEqual(float(314L), 314.0)
         self.assertEqual(float("  3.14  "), 3.14)
         self.assertRaises(ValueError, float, "  0x3.1  ")
-        self.assertRaises(ValueError, float, "  -0x3.p-1  ")
+        #XXX: Java can handle conversions of BinaryExponentIndicator (the p
+        #     below) as well as floating hex.  Thanks to Tobias Ivarsson for
+        #     noticing this in the Java Language Spec.  For us this is
+        #     cross-platform - and the comments for this checkin by Neal
+        #     Norwitz say this check is part of making things more platform
+        #     neutral.  I'm leaving this test out until we find out whether or
+        #     not this is an implementation detail of CPython
+        if not is_jython:
+            self.assertRaises(ValueError, float, "  -0x3.p-1  ")
         if have_unicode:
             self.assertEqual(float(unicode("  3.14  ")), 3.14)
             self.assertEqual(float(unicode("  \u0663.\u0661\u0664  ",'raw-unicode-escape')), 3.14)
             # Implementation limitation in PyFloat_FromString()
-            self.assertRaises(ValueError, float, unicode("1"*10000))
+            # XXX: but not in Jython.
+            if is_jython:
+                self.assertEquals(float(unicode("1"*10000)), float(unicode("1"*10000)))
+            else:
+                self.assertRaises(ValueError, float, unicode("1"*10000))
 
 #     @run_with_locale('LC_NUMERIC', 'fr_FR', 'de_DE')
 #     def test_float_with_comma(self):
