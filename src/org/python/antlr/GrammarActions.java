@@ -4,6 +4,10 @@ import org.antlr.runtime.CommonToken;
 import org.antlr.runtime.Token;
 
 import org.python.core.Py;
+import org.python.core.PyComplex;
+import org.python.core.PyFloat;
+import org.python.core.PyInteger;
+import org.python.core.PyLong;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyUnicode;
@@ -85,7 +89,6 @@ import java.util.Set;
 
 public class GrammarActions {
     private ErrorHandler errorHandler = null;
-
     public GrammarActions() {
     }
 
@@ -448,10 +451,31 @@ public class GrammarActions {
     exprType negate(PythonTree t, exprType o) {
         if (o instanceof Num) {
             Num num = (Num)o;
-            if (num.n instanceof PyObject) {
-                num.n = ((PyObject)num.n).__neg__();
+            if (num.n instanceof PyInteger) {
+                int v = ((PyInteger)num.n).getValue();
+                if (v > 0) {
+                    num.n = new PyInteger(-v);
+                    return num;
+                }
+            } else if (num.n instanceof PyLong) {
+                BigInteger v = ((PyLong)num.n).getValue();
+                if (v.compareTo(BigInteger.ZERO) == 1) {
+                    num.n = new PyLong(v.negate());
+                    return num;
+                }
+            } else if (num.n instanceof PyFloat) {
+                double v = ((PyFloat)num.n).getValue();
+                if (v > 0) {
+                    num.n = new PyFloat(-v);
+                    return num;
+                }
+            } else if (num.n instanceof PyComplex) {
+                double v = ((PyComplex)num.n).imag;
+                if (v > 0) {
+                    num.n = new PyComplex(0,-v);
+                    return num;
+                }
             }
-            return num;
         }
         return new UnaryOp(t, unaryopType.USub, o);
     }
