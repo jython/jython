@@ -828,8 +828,8 @@ public class struct {
         new LEUnsignedIntFormatDef()    .init('I', 4, 0),
         new LEIntFormatDef()            .init('l', 4, 0),
         new LEUnsignedIntFormatDef()    .init('L', 4, 0),
-        new LELongFormatDef()           .init('q', 8, 8),
-        new LEUnsignedLongFormatDef()   .init('Q', 8, 8),
+        new LELongFormatDef()           .init('q', 8, 0),
+        new LEUnsignedLongFormatDef()   .init('Q', 8, 0),
         new LEFloatFormatDef()          .init('f', 4, 0),
         new LEDoubleFormatDef()         .init('d', 8, 0),
     };
@@ -847,8 +847,8 @@ public class struct {
         new BEUnsignedIntFormatDef()    .init('I', 4, 0),
         new BEIntFormatDef()            .init('l', 4, 0),
         new BEUnsignedIntFormatDef()    .init('L', 4, 0),
-        new BELongFormatDef()           .init('q', 8, 8),
-        new BEUnsignedLongFormatDef()   .init('Q', 8, 8),
+        new BELongFormatDef()           .init('q', 8, 0),
+        new BEUnsignedLongFormatDef()   .init('Q', 8, 0),
         new BEFloatFormatDef()          .init('f', 4, 0),
         new BEDoubleFormatDef()         .init('d', 8, 0),
     };
