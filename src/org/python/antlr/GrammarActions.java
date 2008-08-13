@@ -446,8 +446,6 @@ public class GrammarActions {
         return new Call(t, func, a, k, starargs, kwargs);
     }
 
-    //FIXME: just calling __neg__ for now - can be better.  Also does not parse expressions like
-    //       --2 correctly (should give ^(USub -2) but gives 2).
     exprType negate(PythonTree t, exprType o) {
         if (o instanceof Num) {
             Num num = (Num)o;
