@@ -47,4 +47,8 @@ public class ListErrorHandler implements ErrorHandler {
         return new ErrorStmt(t);
     }
 
+    public void error(String message, PythonTree t) {
+        System.err.println(message);
+    }
+
 }

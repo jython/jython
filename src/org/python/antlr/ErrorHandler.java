@@ -20,4 +20,6 @@ interface ErrorHandler {
     sliceType errorSlice(PythonTree t);
     stmtType errorStmt(PythonTree t);
 
+    //exceptions
+    void error(String message, PythonTree t);
 }

@@ -47,6 +47,10 @@ public class FailFastHandler implements ErrorHandler {
         throw new ParseException("Bad Stmt Node", t);
     }
 
+    public void error(String message, PythonTree t) {
+        throw new ParseException(message, t);
+    }
+
     private String message(BaseRecognizer br, RecognitionException re) {
 		String hdr = br.getErrorHeader(re);
 		String msg = br.getErrorMessage(re, br.getTokenNames());

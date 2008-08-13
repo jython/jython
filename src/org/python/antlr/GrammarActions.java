@@ -97,7 +97,7 @@ public class GrammarActions {
     }
 
     void throwGenExpNotSoleArg(PythonTree t) {
-        throw new ParseException("Generator expression must be parenthesized if not sole argument", t);
+        errorHandler.error("Generator expression must be parenthesized if not sole argument", t);
     }
 
     exprType[] makeExprs(List exprs) {
@@ -482,17 +482,17 @@ public class GrammarActions {
 
     void cantBeNone(PythonTree e) {
         if (e.getText().equals("None")) {
-            throw new ParseException("can't be None", e);
+            errorHandler.error("can't be None", e);
         }
     }
 
     void checkAssign(exprType e) {
         if (e instanceof Name && ((Name)e).id.equals("None")) {
-            throw new ParseException("assignment to None", e);
+            errorHandler.error("assignment to None", e);
         } else if (e instanceof GeneratorExp) {
-            throw new ParseException("can't assign to generator expression", e);
+            errorHandler.error("can't assign to generator expression", e);
         } else if (e instanceof Num) {
-            throw new ParseException("can't assign to number", e);
+            errorHandler.error("can't assign to number", e);
         } else if (e instanceof Tuple) {
             //XXX: performance problem?  Any way to do this better?
             exprType[] elts = ((Tuple)e).elts;
