@@ -499,4 +499,13 @@ public class GrammarActions {
             }
         }
     }
+
+    void checkDelete(exprType[] exprs) {
+        for(int i=0;i<exprs.length;i++) {
+            if (exprs[i] instanceof Call) {
+                errorHandler.error("can't delete function call", exprs[i]);
+            }
+        }
+    }
+
 }

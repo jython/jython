@@ -424,27 +424,34 @@ from test import test_support
 
 class SyntaxTestCase(unittest.TestCase):
 
-    def _check_error(self, code, errtext,
+    def _check_error(self, code, errtext=None,
                      filename="<testcase>", mode="exec", subclass=None):
         """Check that compiling code raises SyntaxError with errtext.
 
         errtest is a regular expression that must be present in the
         test of the exception raised.  If subclass is specified it
         is the expected subclass of SyntaxError (e.g. IndentationError).
+
+        XXX: Made errtext optional, since the exact wording of exceptions
+             is implementation dependant.
         """
         try:
             compile(code, filename, mode)
         except SyntaxError, err:
             if subclass and not isinstance(err, subclass):
                 self.fail("SyntaxError is not a %s" % subclass.__name__)
-            mo = re.search(errtext, str(err))
-            if mo is None:
-                self.fail("SyntaxError did not contain '%r'" % (errtext,))
+            if errtext is not None:
+                mo = re.search(errtext, str(err))
+                if mo is None:
+                    self.fail("SyntaxError did not contain '%r'" % (errtext,))
         else:
             self.fail("compile() did not raise SyntaxError")
 
     def test_assign_call(self):
-        self._check_error("f() = 1", "assign")
+        if test_support.is_jython:
+            self._check_error("f() = 1")
+        else:
+            self._check_error("f() = 1", "assign")
 
     def test_assign_del(self):
         self._check_error("del f()", "delete")
@@ -489,7 +496,10 @@ class SyntaxTestCase(unittest.TestCase):
                           subclass=IndentationError)
 
     def test_kwargs_last(self):
-        self._check_error("int(base=10, '2')", "non-keyword arg")
+        if test_support.is_jython:
+            self._check_error("int(base=10, '2')")
+        else:
+            self._check_error("int(base=10, '2')", "non-keyword arg")
 
 def test_main():
     test_support.run_unittest(SyntaxTestCase)

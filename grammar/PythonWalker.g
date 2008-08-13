@@ -439,6 +439,7 @@ print_stmt
 del_stmt
     : ^(DELETE elts[expr_contextType.Del]) {
         exprType[] t = (exprType[])$elts.etypes.toArray(new exprType[$elts.etypes.size()]);
+        actions.checkDelete(t);
         $stmts::statements.add(new Delete($DELETE, t));
     }
     ;
