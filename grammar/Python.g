@@ -56,16 +56,13 @@
  *  REQUIRES ANTLR v3
  *
  *
- *  Baby step towards an antlr based Jython parser.
- *  Terence's Lexer is intact pretty much unchanged, the parser has
- *  been altered to produce an AST - the AST work started from tne newcompiler
- *  grammar from Jim Baker minus post-2.3 features.  The current parsing
- *  and compiling strategy looks like this:
+ *  Updated the original parser for Python 2.5 features. The parser has been
+ *  altered to produce an AST - the AST work started from tne newcompiler
+ *  grammar from Jim Baker.  The current parsing and compiling strategy looks
+ *  like this:
  *
  *  Python source->Python.g->simple antlr AST->PythonWalker.g->
  *  decorated AST (org/python/parser/ast/*)->CodeCompiler(ASM)->.class
- *
- *  for a very limited set of functionality.
  */
 
 grammar Python;
