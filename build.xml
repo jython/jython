@@ -156,7 +156,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
             <pathelement path="${extlibs.dir}/mysql-connector-java-5.1.6.jar" />
             <pathelement path="${extlibs.dir}/postgresql-8.3-603.jdbc4.jar" />
             <pathelement path="${extlibs.dir}/antlr-2.7.7.jar" />
-            <pathelement path="${extlibs.dir}/antlr-3.1b2.jar" />
+            <pathelement path="${extlibs.dir}/antlr-3.1.jar" />
             <pathelement path="${extlibs.dir}/stringtemplate-3.2.jar" />
         </path>
 
@@ -516,7 +516,7 @@ The readme text for the next release will be like:
     <target name="jarjar" depends="init,needed-check">
         <taskdef name="jarjar" classname="com.tonicsystems.jarjar.JarJarTask" classpath="extlibs/jarjar-0.7.jar"/>
         <jarjar destfile="${output.dir}/jarjar.jar">
-            <zipfileset src="extlibs/antlr-runtime-3.1b2.jar"/>
+            <zipfileset src="extlibs/antlr-runtime-3.1.jar"/>
             <zipfileset src="extlibs/asm-3.1.jar"/>
             <zipfileset src="extlibs/asm-commons-3.1.jar"/>
             <zipfileset src="extlibs/asm-util-3.1.jar"/>
