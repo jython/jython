@@ -293,7 +293,7 @@ single_input : NEWLINE? -> ^(Interactive)
              ;
 
 //file_input: (NEWLINE | stmt)* ENDMARKER
-file_input : (NEWLINE | stmt)* {debug("parsed file_input");}
+file_input : (NEWLINE | stmt)* EOF
           -> ^(Module stmt*)
            ;
 
