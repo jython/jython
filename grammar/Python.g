@@ -287,9 +287,9 @@ int startPos=-1;
 }
 
 //single_input: NEWLINE | simple_stmt | compound_stmt NEWLINE
-single_input : NEWLINE? -> ^(Interactive)
-             | simple_stmt -> ^(Interactive simple_stmt)
-             | compound_stmt NEWLINE -> ^(Interactive compound_stmt)
+single_input : NEWLINE* EOF -> ^(Interactive)
+             | simple_stmt NEWLINE* EOF -> ^(Interactive simple_stmt)
+             | compound_stmt NEWLINE+ EOF -> ^(Interactive compound_stmt)
              ;
 
 //file_input: (NEWLINE | stmt)* ENDMARKER
