@@ -55,7 +55,6 @@ public class Setup
         "_hashlib",
         "_functools:org.python.modules._functools._functools",
         "_csv:org.python.modules._csv._csv",
-        "_systemrestart",
-        "unicodedata"
+        "_systemrestart"
     };
 }
