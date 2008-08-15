@@ -491,6 +491,8 @@ public class GrammarActions {
             errorHandler.error("can't assign to generator expression", e);
         } else if (e instanceof Num) {
             errorHandler.error("can't assign to number", e);
+        } else if (e instanceof Yield) {
+            errorHandler.error("can't assign to yield expression", e);
         } else if (e instanceof Tuple) {
             //XXX: performance problem?  Any way to do this better?
             exprType[] elts = ((Tuple)e).elts;

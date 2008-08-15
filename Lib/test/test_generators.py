@@ -1537,12 +1537,12 @@ Traceback (most recent call last):
   ...
 SyntaxError: assignment to yield expression not possible (<doctest test.test_generators.__test__.coroutine[23]>, line 1)
 
->>> def f(): (yield bar) = y
+>>> def f(): (yield bar) = y #doctest: +IGNORE_EXCEPTION_DETAIL
 Traceback (most recent call last):
   ...
 SyntaxError: can't assign to yield expression (<doctest test.test_generators.__test__.coroutine[24]>, line 1)
 
->>> def f(): (yield bar) += y
+>>> def f(): (yield bar) += y #doctest: +IGNORE_EXCEPTION_DETAIL
 Traceback (most recent call last):
   ...
 SyntaxError: augmented assignment to yield expression not possible (<doctest test.test_generators.__test__.coroutine[25]>, line 1)
