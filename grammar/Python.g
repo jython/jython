@@ -888,11 +888,11 @@ arglist : a1=argument[true] (COMMA a2+=argument[false])*
             )?
           )? { if ($a2 != null) {
                    if ($a1.tree.getType() == GenFor) {
-                       actions.throwGenExpNotSoleArg($a1.tree);
+                       actions.errorGenExpNotSoleArg($a1.tree);
                    }
                    for (int i=0;i<$a2.size();i++) {
                        if (((PythonTree)$a2.get(i)).getType() == GenFor) {
-                           actions.throwGenExpNotSoleArg(((argument_return)$a2.get(i)).tree);
+                           actions.errorGenExpNotSoleArg(((argument_return)$a2.get(i)).tree);
                        }
                    }
                }
@@ -909,7 +909,7 @@ argument[boolean first]
     : t1=test[expr_contextType.Load]
          ( (ASSIGN t2=test[expr_contextType.Load]) -> ^(Keyword ^(Arg $t1) ^(Value $t2)?)
          | gen_for { if (!first) {
-                           actions.throwGenExpNotSoleArg($gen_for.tree);
+                           actions.errorGenExpNotSoleArg($gen_for.tree);
                      }
                    }
         -> ^(GenFor $t1 gen_for)

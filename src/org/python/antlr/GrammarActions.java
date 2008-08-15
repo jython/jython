@@ -96,7 +96,7 @@ public class GrammarActions {
         this.errorHandler = eh;
     }
 
-    void throwGenExpNotSoleArg(PythonTree t) {
+    void errorGenExpNotSoleArg(PythonTree t) {
         errorHandler.error("Generator expression must be parenthesized if not sole argument", t);
     }
 
