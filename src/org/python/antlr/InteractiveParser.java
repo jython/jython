@@ -21,17 +21,6 @@ public class InteractiveParser extends BaseParser {
 
     private BufferedReader bufreader;
 
-    public static class PPLexer extends PythonPartialLexer {
-        public PPLexer(CharStream lexer) {
-            super(lexer);
-        }
-
-        public Token nextToken() {
-            startPos = getCharPositionInLine();
-            return super.nextToken();
-        }
-    }
-
     public InteractiveParser(BufferedReader br, String filename) {
         this.bufreader = br;
         this.filename = filename;

@@ -236,12 +236,16 @@ package org.python.antlr;
  *       4]
  */
 
-//If you want to use another error recovery mechanisms change this
-//and the same one in the parser.
-private ErrorHandler errorHandler;
+//For use in partial parsing.
+public boolean eofWhileNested = false;
+public boolean partial = false;
 
 int implicitLineJoiningLevel = 0;
 int startPos=-1;
+
+//If you want to use another error recovery mechanisms change this
+//and the same one in the parser.
+private ErrorHandler errorHandler;
 
     public void setErrorHandler(ErrorHandler eh) {
         this.errorHandler = eh;
@@ -261,6 +265,9 @@ int startPos=-1;
             state.tokenStartLine = input.getLine();
             state.text = null;
             if ( input.LA(1)==CharStream.EOF ) {
+                if (implicitLineJoiningLevel > 0) {
+                    eofWhileNested = true;
+                }
                 return Token.EOF_TOKEN;
             }
             try {
@@ -1122,6 +1129,13 @@ STRING
                state.tokenStartCharPositionInLine = -2;
            }
         }
+    ;
+
+STRINGPART
+    : {partial}?=> ('r'|'u'|'ur'|'R'|'U'|'UR'|'uR'|'Ur')?
+        (   '\'\'\'' ~('\'\'\'')*
+        |   '"""' ~('"""')*
+        )
     ;
 
 /** the two '"'? cause a warning -- is there a way to avoid that? */

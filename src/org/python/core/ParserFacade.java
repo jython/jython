@@ -16,6 +16,7 @@ import org.antlr.runtime.ANTLRReaderStream;
 import org.antlr.runtime.CharStream;
 import org.antlr.runtime.CommonTokenStream;
 
+import org.python.antlr.BaseParser;
 import org.python.antlr.ExpressionParser;
 import org.python.antlr.InteractiveParser;
 import org.python.antlr.ParseException;
@@ -24,9 +25,9 @@ import org.python.antlr.NoCloseReaderStream;
 import org.python.antlr.PythonParser;
 import org.python.antlr.PythonTree;
 import org.python.antlr.PythonTree;
-import org.python.antlr.PythonPartialLexer;
+import org.python.antlr.PythonLexer;
 import org.python.antlr.PythonPartialParser;
-import org.python.antlr.PythonPartialTokenSource;
+import org.python.antlr.PythonTokenSource;
 import org.python.antlr.ast.modType;
 import org.python.core.io.StreamIO;
 import org.python.core.io.TextIOInputStream;
@@ -158,7 +159,7 @@ public class ParserFacade {
             }
         } catch (Throwable t) {
             PyException p = fixParseError(bufreader, t, filename);
-            if (validPartialSentence(bufreader, kind)) {
+            if (validPartialSentence(bufreader, kind, filename)) {
                 return null;
             }
             throw p;
@@ -166,15 +167,16 @@ public class ParserFacade {
         return node;
     }
 
-    private static boolean validPartialSentence(BufferedReader bufreader, String kind) {
-        PythonPartialLexer lexer = null;
+    private static boolean validPartialSentence(BufferedReader bufreader, String kind, String filename) {
+        PythonLexer lexer = null;
         try {
             bufreader.reset();
             CharStream cs = new NoCloseReaderStream(bufreader);
-            lexer = new InteractiveParser.PPLexer(cs);
+            lexer = new BaseParser.PyLexer(cs);
+            lexer.partial = true;
             CommonTokenStream tokens = new CommonTokenStream(lexer);
             tokens.discardOffChannelTokens(true);
-            PythonPartialTokenSource indentedSource = new PythonPartialTokenSource(tokens);
+            PythonTokenSource indentedSource = new PythonTokenSource(tokens, filename);
             tokens = new CommonTokenStream(indentedSource);
             PythonPartialParser parser = new PythonPartialParser(tokens);
             if (kind.equals("single")) {
