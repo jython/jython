@@ -168,11 +168,7 @@ public class PythonTokenSource implements TokenSource {
         } else if (t.getType() == PythonLexer.NEWLINE) {
             // save NEWLINE in the queue
             //System.out.println("found newline: "+t+" stack is "+stackString());
-            List hiddenTokens = stream.getTokens(lastTokenAddedIndex + 1,t.getTokenIndex() - 1);
-            if (hiddenTokens!=null) {
-                tokens.addAll(hiddenTokens);
-            }
-            lastTokenAddedIndex = t.getTokenIndex();
+            updateLastTokenAddedIndex(t);
             tokens.addElement(t);
             Token newline = t;
 
@@ -180,11 +176,7 @@ public class PythonTokenSource implements TokenSource {
             t = stream.LT(1);
             stream.consume();
 
-            hiddenTokens = stream.getTokens(lastTokenAddedIndex + 1,t.getTokenIndex() - 1);
-            if (hiddenTokens!=null) {
-                tokens.addAll(hiddenTokens);
-            }
-            lastTokenAddedIndex = t.getTokenIndex();
+            updateLastTokenAddedIndex(t);
 
             // compute cpos as the char pos of next non-WS token in line
             int cpos = t.getCharPositionInLine(); // column dictates indent/dedent
@@ -230,12 +222,16 @@ public class PythonTokenSource implements TokenSource {
     }
     
     private void enqueue(Token t) {
+        updateLastTokenAddedIndex(t);
+        tokens.addElement(t);
+    }
+
+    private void updateLastTokenAddedIndex(Token t) {
         List hiddenTokens = stream.getTokens(lastTokenAddedIndex + 1,t.getTokenIndex() - 1);
         if (hiddenTokens != null) {
             tokens.addAll(hiddenTokens);
         }
         lastTokenAddedIndex = t.getTokenIndex();
-        tokens.addElement(t);
     }
 
     private void handleIndents(int cpos, CommonToken t) {
