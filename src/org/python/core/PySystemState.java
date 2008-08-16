@@ -129,6 +129,8 @@ public class PySystemState extends PyObject
     public PyObject last_type = Py.None;
     public PyObject last_traceback = Py.None;
 
+    public PyObject __name__ = new PyString("sys");
+    
     public PyObject __dict__;
 
     private int recursionlimit = 1000;
@@ -168,12 +170,21 @@ public class PySystemState extends PyObject
         PyModule __builtin__ = new PyModule("__builtin__", builtins);
         modules.__setitem__("__builtin__", __builtin__);
 
-        if (getType() != null) {
-            __dict__ = new PyStringMap();
-            __dict__.invoke("update", getType().fastGetDict());
-            __dict__.__setitem__("displayhook", __displayhook__);
-            __dict__.__setitem__("excepthook", __excepthook__);
-        }
+        __dict__ = new PyStringMap();
+
+        // This isn't right either, because __dict__ can be directly
+        // accessed from Python, for example:
+        //
+        //    >>> sys.__dict__['settrace']
+        //    <java function settrace 81>
+
+        __dict__.invoke("update", getType().fastGetDict());
+        __dict__.__setitem__("displayhook", __displayhook__);
+        __dict__.__setitem__("excepthook", __excepthook__);
+    }
+    
+    void reload() throws PyIgnoreMethodTag {
+        __dict__.invoke("update", getType().fastGetDict());
     }
 
     // xxx fix this accessors
@@ -200,33 +211,43 @@ public class PySystemState extends PyObject
         }
 
         PyObject ret = super.__findattr_ex__(name);
-        if (ret != null) return ret;
+        if (ret != null) {
+            if (ret instanceof PyMethod) {
+        	if (__dict__.__finditem__(name) instanceof PyReflectedFunction)
+        	    return ret; // xxx hack
+            } else if (ret == PyAttributeDeleted.INSTANCE) {
+        	return null;
+            }
+            else return ret;
+        }
 
         return __dict__.__finditem__(name);
     }
 
     public void __setattr__(String name, PyObject value) {
-        PyType selftype = getType();
-        if (selftype == null)
+        if (name == "__dict__" || name == "__class__")
+            throw Py.TypeError("readonly attribute");
+        PyObject ret = getType().lookup(name); // xxx fix fix fix
+        if (ret != null && ret.jtryset(this, value)) {
             return;
-        PyObject ret = selftype.lookup(name); // xxx fix fix fix
-        if (ret != null) {
-            ret.jtryset(this, value);
-            return;
-        }
-        if (__dict__ == null) {
-            __dict__ = new PyStringMap();
         }
         __dict__.__setitem__(name, value);
-        //throw Py.AttributeError(name);
     }
 
     public void __delattr__(String name) {
-        if (__dict__ != null) {
-            __dict__.__delitem__(name);
-            return;
+        if (name == "__dict__" || name == "__class__")
+            throw Py.TypeError("readonly attribute");
+        PyObject ret = getType().lookup(name); // xxx fix fix fix
+        if (ret != null) {
+            ret.jtryset(this, PyAttributeDeleted.INSTANCE);
         }
-        throw Py.AttributeError("del '"+name+"'");
+        try {
+            __dict__.__delitem__(name);
+        } catch (PyException pye) { // KeyError
+            if (ret == null) {
+        	throw Py.AttributeError(name);
+            }
+        }
     }
 
     // xxx
@@ -235,7 +256,7 @@ public class PySystemState extends PyObject
     }
 
     public String toString() {
-        return "sys module";
+        return "<module '" + __name__ + "' (built-in)>";
     }
 
     public int getrecursionlimit() {
@@ -943,5 +964,24 @@ class PySystemStateFunctions extends PyBuiltinFunctionSet
         default:
             throw info.unexpectedCall(3, false);
         }
+    }
+}
+
+/**
+ * Value of a class or instance variable when the corresponding
+ * attribute is deleted.  Used only in PySystemState for now.
+ */
+class PyAttributeDeleted extends PyObject {
+    final static PyAttributeDeleted INSTANCE = new PyAttributeDeleted();
+    private PyAttributeDeleted() {}
+    public String toString() { return ""; }
+    public Object __tojava__(Class c) {
+        if (c == PyObject.class)
+            return this;
+        // we can't quite "delete" non-PyObject attributes; settle for
+        // null or nothing
+        if (c.isPrimitive())
+            return Py.NoConversion;
+        return null;
     }
 }

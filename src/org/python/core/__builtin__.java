@@ -1075,7 +1075,8 @@ public class __builtin__ {
     }
 
     public static PyObject reload(PySystemState o) {
-        // fake it like imp.reload(PyJavaClass) does
+	// reinitialize methods
+        o.reload();
         return o;
     }
 
