@@ -90,11 +90,6 @@ public class ParserFacade {
         else return Py.JavaError(t);
     }
 
-    public static PythonTree parse(String string, String kind) {
-        return parse(new ByteArrayInputStream(StringUtil.toBytes(string)),
-                     kind, "<string>", null);
-    }
-
     public static modType parse(InputStream stream,
                                 String kind,
                                 String filename,
