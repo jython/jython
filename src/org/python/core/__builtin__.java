@@ -1025,7 +1025,11 @@ public class __builtin__ {
     }
     
     public static String raw_input(PyObject prompt, PyObject file) {
-        Py.print(prompt);
+        PyObject stdout = Py.getSystemState().stdout;
+        if (stdout instanceof PyAttributeDeleted) {
+            throw Py.RuntimeError("[raw_]input: lost sys.stdout");
+        }
+        Py.print(stdout, prompt);
         String data = readline(file).toString();
         if (data.endsWith("\n")) {
             return data.substring(0, data.length() - 1);
@@ -1038,7 +1042,11 @@ public class __builtin__ {
     }
 
     public static String raw_input(PyObject prompt) {
-        return raw_input(prompt, Py.getSystemState().stdin);
+        PyObject stdin = Py.getSystemState().stdin;
+        if (stdin instanceof PyAttributeDeleted) {
+            throw Py.RuntimeError("[raw_]input: lost sys.stdin");
+        }
+        return raw_input(prompt, stdin);
     }
 
     public static String raw_input() {
