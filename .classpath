@@ -15,6 +15,6 @@
 	<classpathentry kind="lib" path="extlibs/servlet-api-2.5.jar"/>
 	<classpathentry kind="lib" path="build/jarjar"/>
 	<classpathentry kind="var" path="ANT_HOME/lib/ant.jar"/>
-	<classpathentry kind="lib" path="extlibs/antlr-runtime-3.1b2.jar"/>
+	<classpathentry kind="lib" path="extlibs/antlr-runtime-3.1.jar"/>
 	<classpathentry kind="output" path="bugtests/classes"/>
 </classpath>
