@@ -33,7 +33,6 @@ public class PythonTreeTester {
         PythonLexer lexer = new ModuleParser.PyLexer(input);
         lexer.setErrorHandler(eh);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
-        tokens.discardOffChannelTokens(true);
         PythonTokenSource indentedSource = new PythonTokenSource(tokens, args[0]);
         tokens = new CommonTokenStream(indentedSource);
         PythonParser parser = new PythonParser(tokens);

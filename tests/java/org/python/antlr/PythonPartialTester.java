@@ -16,7 +16,6 @@ public class PythonPartialTester {
             CharStream input = new ANTLRFileStream(args[0]);
             PythonLexer lexer = new BaseParser.PyLexer(input);
             CommonTokenStream tokens = new CommonTokenStream(lexer);
-            tokens.discardOffChannelTokens(true);
             //PythonTokenSource indentedSource = new PythonTokenSource(tokens);
             PythonTokenSource indentedSource = new PythonTokenSource(tokens, "<test>");
             tokens = new CommonTokenStream(indentedSource);

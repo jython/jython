@@ -31,7 +31,6 @@ public class InteractiveParser extends BaseParser {
         PythonLexer lexer = new PyLexer(new NoCloseReaderStream(bufreader));
         lexer.setErrorHandler(errorHandler);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
-        tokens.discardOffChannelTokens(true);
         PythonTokenSource indentedSource = new PythonTokenSource(tokens, filename, true);
         tokens = new CommonTokenStream(indentedSource);
         PythonParser parser = new PythonParser(tokens);

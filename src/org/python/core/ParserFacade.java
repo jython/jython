@@ -170,7 +170,6 @@ public class ParserFacade {
             lexer = new BaseParser.PyLexer(cs);
             lexer.partial = true;
             CommonTokenStream tokens = new CommonTokenStream(lexer);
-            tokens.discardOffChannelTokens(true);
             PythonTokenSource indentedSource = new PythonTokenSource(tokens, filename);
             tokens = new CommonTokenStream(indentedSource);
             PythonPartialParser parser = new PythonPartialParser(tokens);
