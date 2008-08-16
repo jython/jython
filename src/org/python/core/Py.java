@@ -1682,6 +1682,11 @@ public final class Py {
             String filename,
             String type,
             CompilerFlags cflags) {
+        
+        if (data.contains("\0")) {
+            throw Py.TypeError("compile() expected string without null bytes");
+        }
+        
         byte[] bytes;
         if (cflags.dont_imply_dedent) {
             bytes = StringUtil.toBytes(data + "\n");

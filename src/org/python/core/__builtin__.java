@@ -479,14 +479,12 @@ public class __builtin__ {
     public static PyObject dir() {
         PyObject l = locals();
         PyList ret;
-
-        if (l instanceof PyStringMap) {
-            ret = ((PyStringMap) l).keys();
-        } else if (l instanceof PyDictionary) {
-            ret = ((PyDictionary) l).keys();
+        PyObject retObj = l.invoke("keys");
+        try {
+            ret = (PyList) retObj;
+        } catch (ClassCastException e) {
+            throw Py.TypeError("Expected keys() to be a list, not '" + retObj.getType().fastGetName() + "'");
         }
-
-        ret = (PyList) l.invoke("keys");
         ret.sort();
         return ret;
     }
@@ -499,7 +497,25 @@ public class __builtin__ {
         return new PyEnumerate(seq);
     }
 
+    private static boolean PyMapping_check(PyObject o, boolean rw) {
+        return o == null ||
+               o == Py.None ||
+               (o instanceof PyDictionary) ||
+               (o.__findattr__("__getitem__") != null &&
+                (!rw || o.__findattr__("__setitem__") != null));
+    }
+    
+    private static void verify_mappings(PyObject globals, PyObject locals, boolean rw) {
+        if (!PyMapping_check(globals, rw)) {
+            throw Py.TypeError("globals must be a mapping");
+        } 
+        if (!PyMapping_check(locals, rw)) {
+            throw Py.TypeError("locals must be a mapping");
+        }
+    }
+    
     public static PyObject eval(PyObject o, PyObject globals, PyObject locals) {
+        verify_mappings(globals, locals, false);
         PyCode code;
         if (o instanceof PyCode) {
             code = (PyCode) o;
@@ -529,6 +545,7 @@ public class __builtin__ {
     }
 
     public static void execfile_flags(String name, PyObject globals, PyObject locals, CompilerFlags cflags) {
+        verify_mappings(globals, locals, true);
         java.io.FileInputStream file;
         try {
             file = new java.io.FileInputStream(new RelativeFile(name));
