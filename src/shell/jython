@@ -118,6 +118,10 @@ while [ $# -gt 0 ] ; do
       java_args=("${java_args[@]}" -javaagent:"$agent_path"
 	-Dprofile.properties="$props_path")
       ;;
+    # Don't put Jython on the boot classpath (enables the verifier)
+    --verify)
+      verify_requested=true
+      ;;
     # Run under JDB
     --jdb)
       if [ -z "$JAVA_HOME" ] ; then
@@ -169,8 +173,8 @@ if $cygwin; then
   fi
 fi
 
-if [ -n "$profile_requested" ] ; then
-  echo "Running with instrumented profiler"
+if [ -n "$profile_requested" -o -n "$verify_requested" ] ; then
+  [ -n "$profile_requested" ] && echo "Running with instrumented profiler"
   java_args=("${java_args[@]}" -classpath "$CP$CP_DELIMITER$CLASSPATH")
 else
   if [ -z $help_requested ] ; then
@@ -190,6 +194,7 @@ elif [ -n "$help_requested" ] ; then
   echo "-Jarg    : pass argument through to Java VM (e.g. -J-Xmx512m)" >&2
   echo "--jdb    : run under JDB" >&2
   echo "--profile: run with the Java Interactive Profiler (http://jiprof.sf.net)" >&2
+  echo "--verify : enable bytecode verifier for Jython classes (for development)" >&2
   echo "--       : pass remaining arguments through to Jython" >&2
   echo "Jython launcher environment variables:" >&2
   echo "JAVA_HOME  : Java installation directory" >&2
