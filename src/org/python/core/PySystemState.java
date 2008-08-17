@@ -214,7 +214,7 @@ public class PySystemState extends PyObject
         if (ret != null) {
             if (ret instanceof PyMethod) {
         	if (__dict__.__finditem__(name) instanceof PyReflectedFunction)
-        	    return ret; // xxx hack
+        	    return ret; // xxx depends on nonstandard __dict__
             } else if (ret == PyAttributeDeleted.INSTANCE) {
         	return null;
             }
