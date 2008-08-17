@@ -1178,15 +1178,15 @@ public final class Py {
     public static PyObject runCode(PyCode code, PyObject locals,
             PyObject globals) {
         PyFrame f;
-        if (locals == null) {
-            if (globals != null) {
+        if (locals == null || locals == Py.None) {
+            if (globals != null && globals != Py.None) {
                 locals = globals;
             } else {
                 locals = Py.getFrame().getLocals();
             }
         }
 
-        if (globals == null) {
+        if (globals == null || globals == Py.None) {
             globals = Py.getFrame().f_globals;
         }
 
