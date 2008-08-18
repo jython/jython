@@ -978,7 +978,10 @@ public class PyArray extends PySequence implements Cloneable {
     }
 
     @ExposedMethod
-    final void array_fromunicode(PyUnicode input) {
+    final void array_fromunicode(PyObject input) {
+        if (!(input instanceof PyUnicode)) {
+            throw Py.ValueError("fromunicode argument must be an unicode object");
+        }
         if (!"u".equals(typecode)) {
             throw Py.ValueError("fromunicode() may only be called on type 'u' arrays");
         }
