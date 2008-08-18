@@ -504,7 +504,8 @@ class Code implements MethodVisitor, Opcodes {
         if (cst instanceof String) {
             String value = (String) cst;
             final int len = value.length();
-            final int maxlen = 32767;
+            // 65535 / 4 (max utf-8 expansion for non BMP characters)
+            final int maxlen = 16000; 
 
             if (len > maxlen) {
                 new_("java/lang/StringBuilder");
