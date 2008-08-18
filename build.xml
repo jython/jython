@@ -766,6 +766,7 @@ The readme text for the next release will be like:
     <target name="regrtest" depends="developer-build,regrtest-unix,regrtest-windows"/>
     <target name="regrtest-unix" if="os.family.unix">
       <exec executable="${dist.dir}/bin/jython">
+        <arg value="--verify"/>
         <arg value="${dist.dir}/Lib/test/regrtest.py"/>
         <!-- Only run the tests that are expected to work on Jython -->
         <arg value="--expected"/>
