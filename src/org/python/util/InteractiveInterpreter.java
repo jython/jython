@@ -14,7 +14,6 @@ public class InteractiveInterpreter extends PythonInterpreter {
     }
         public InteractiveInterpreter(PyObject locals, PySystemState systemState) {
             super(locals, systemState);
-            cflags = new CompilerFlags();
         }
 
     /**

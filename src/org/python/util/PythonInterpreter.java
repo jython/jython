@@ -16,7 +16,7 @@ public class PythonInterpreter {
     protected PySystemState systemState;
     PyObject locals;
 
-    protected CompilerFlags cflags = null;
+    protected CompilerFlags cflags = new CompilerFlags();
 
     /**
      * Initializes the jython runtime. This should only be called once, and
