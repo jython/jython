@@ -129,21 +129,16 @@ public class binascii {
 
     public static String __doc__ = "Conversion between binary data and ASCII";
 
-    public static final PyObject Error = Py.makeClass("Error",
-            new PyObject[] { Py.Exception },
-            Py.newJavaCode(binascii.class, "empty__init__"),
-            Py.None);
+    public static final PyObject Error = Py.makeClass("Error", Py.Exception, exceptionNamespace());
 
-    public static PyObject empty__init__(PyObject[] arg, String[] kws) {
+    public static final PyObject Incomplete = Py.makeClass("Incomplete", Py.Exception,
+                                                           exceptionNamespace());
+
+    public static PyObject exceptionNamespace() {
         PyObject dict = new PyStringMap();
         dict.__setitem__("__module__", new PyString("binascii"));
         return dict;
     }
-
-    public static final PyObject Incomplete = Py.makeClass("Incomplete",
-            new PyObject[] { Py.Exception },
-            Py.newJavaCode(binascii.class, "empty__init__"),
-            Py.None);
 
     // hqx lookup table, ascii->binary.
     private static char RUNCHAR = 0x90;
@@ -281,6 +276,9 @@ public class binascii {
         int leftbits = 0;
         int leftchar = 0;
 
+        if (ascii_data.length() == 0)
+            return "";
+        
         StringBuffer bin_data = new StringBuffer();
 
         char this_ch;
@@ -903,7 +901,6 @@ static long[] crc_32_tab = new long[] {
         return sb;
     }
 
-    final private static Pattern WS = Pattern.compile("=\r?\n|[\t ]+$");
     final private static Pattern UNDERSCORE = Pattern.compile("_");
 
     final public static PyString __doc__a2b_qp = new PyString("Decode a string of qp-encoded data");
@@ -929,8 +926,6 @@ static long[] crc_32_tab = new long[] {
 
         if (header)
         	s = UNDERSCORE.matcher(s).replaceAll(" ");
-
-        s = WS.matcher(s).replaceAll("");
         
         for (int i=0, m=s.length(); i<m;) {
         	char c = s.charAt(i++);
@@ -939,6 +934,8 @@ static long[] crc_32_tab = new long[] {
         			c = s.charAt(i++);
         			if (c == '=') {
         				sb.append(c);
+                                } else if (c == ' ') {
+                                    sb.append("= ");     
         			} else if ((c >= '0' && c <= '9' || c >= 'A' && c <= 'F') && i < m) {
         				char nc = s.charAt(i++);
         				if ((nc >= '0' && nc <= '9' || nc >= 'A' && nc <= 'F')) {

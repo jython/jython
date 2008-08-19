@@ -171,6 +171,7 @@ def run_tests():
             assert to_tuple(ast_tree) == o
             test_order(ast_tree, (0, 0))
 
+# XXX: AugStore added for Jython.  Short term it is too hard to emit just "Store" as CPython does.
 #### EVERYTHING BELOW IS GENERATED #####
 exec_results = [
 ('Module', [('FunctionDef', (1, 0), 'f', ('arguments', [], None, None, []), [('Pass', (1, 9))], [])]),
@@ -178,7 +179,7 @@ exec_results = [
 ('Module', [('FunctionDef', (1, 0), 'f', ('arguments', [], None, None, []), [('Return', (1, 8), ('Num', (1, 15), 1))], [])]),
 ('Module', [('Delete', (1, 0), [('Name', (1, 4), 'v', ('Del',))])]),
 ('Module', [('Assign', (1, 0), [('Name', (1, 0), 'v', ('Store',))], ('Num', (1, 4), 1))]),
-('Module', [('AugAssign', (1, 0), ('Name', (1, 0), 'v', ('Store',)), ('Add',), ('Num', (1, 5), 1))]),
+('Module', [('AugAssign', (1, 0), ('Name', (1, 0), 'v', ('AugStore',)), ('Add',), ('Num', (1, 5), 1))]),
 ('Module', [('Print', (1, 0), ('Name', (1, 8), 'f', ('Load',)), [('Num', (1, 11), 1)], False)]),
 ('Module', [('For', (1, 0), ('Name', (1, 4), 'v', ('Store',)), ('Name', (1, 9), 'v', ('Load',)), [('Pass', (1, 11))], [])]),
 ('Module', [('While', (1, 0), ('Name', (1, 6), 'v', ('Load',)), [('Pass', (1, 8))], [])]),

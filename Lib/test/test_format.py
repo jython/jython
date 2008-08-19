@@ -1,4 +1,4 @@
-from test.test_support import verbose, have_unicode, TestFailed
+from test.test_support import verbose, have_unicode, TestFailed, is_jython
 import sys
 
 # test string formatting operator (I am not sure if this is being tested
@@ -183,12 +183,12 @@ testboth("%#X", 0, "0X0")
 testboth("%#X", 0L, "0X0")
 
 testboth("%x", 0x42, "42")
-# testboth("%x", -0x42, "ffffffbe") # specific to 32-bit boxes; see below
+testboth("%x", -0x42, "-42")
 testboth("%x", 0x42L, "42")
 testboth("%x", -0x42L, "-42")
 
 testboth("%o", 042, "42")
-# testboth("%o", -042, "37777777736") # specific to 32-bit boxes; see below
+testboth("%o", -042, "-42")
 testboth("%o", 042L, "42")
 testboth("%o", -042L, "-42")
 
@@ -218,11 +218,9 @@ test_exc('abc %a', 1, ValueError,
 if have_unicode:
     test_exc(unicode('abc %\u3000','raw-unicode-escape'), 1, ValueError,
              "unsupported format character '?' (0x3000) at index 5")
-# Jython transition 2.3
-# Passing a str as a numeric argument to format doesn't raise a TypeError
-# http://jython.org/bugs/1758325
-#test_exc('%d', '1', TypeError, "int argument required")
-#test_exc('%g', '1', TypeError, "float argument required")
+
+test_exc('%d', '1', TypeError, "int argument required")
+test_exc('%g', '1', TypeError, "float argument required")
 test_exc('no format', '1', TypeError,
          "not all arguments converted during string formatting")
 test_exc('no format', u'1', TypeError,
@@ -232,7 +230,20 @@ test_exc(u'no format', '1', TypeError,
 test_exc(u'no format', u'1', TypeError,
          "not all arguments converted during string formatting")
 
-if sys.maxint == 2**31-1:
+# for Jython, do we really need to support this? what's the use case
+# here!  the problem in a nutshell is that it changes __oct__, __hex__
+# such that they don't return a string, but later on the exception
+# will occur anyway. so seems like a lot of work for no value
+
+# class Foobar(long):
+#     def __oct__(self):
+#         # Returning a non-string should not blow up.
+#         return self + 1
+
+#test_exc('%o', Foobar(), TypeError,
+#         "expected string or Unicode object, long found")
+
+if sys.maxint == 2**31-1 and not is_jython:
     # crashes 2.2.1 and earlier:
     try:
         "%*d"%(sys.maxint, -127)
@@ -240,6 +251,3 @@ if sys.maxint == 2**31-1:
         pass
     else:
         raise TestFailed, '"%*d"%(sys.maxint, -127) should fail'
-    # (different things go wrong on a 64 bit box...)
-    testboth("%x", -0x42, "ffffffbe")
-    testboth("%o", -042, "37777777736")

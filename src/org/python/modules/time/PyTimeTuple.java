@@ -26,19 +26,22 @@ public class PyTimeTuple extends PyTuple {
     @ExposedGet
     public PyInteger tm_year, tm_mon, tm_mday, tm_hour, tm_min, tm_sec, tm_wday, tm_yday, tm_isdst;
 
+    @ExposedGet
+    public final int n_sequence_fields = 9, n_fields = 9, n_unnamed_fields = 0;
+    
     public static final PyType TYPE = PyType.fromClass(PyTimeTuple.class);
 
     PyTimeTuple(PyObject... vals) {
         super(TYPE, vals);
-        tm_year = (PyInteger)vals[0];
-        tm_mon = (PyInteger)vals[1];
-        tm_mday = (PyInteger)vals[2];
-        tm_hour = (PyInteger)vals[3];
-        tm_min = (PyInteger)vals[4];
-        tm_sec = (PyInteger)vals[5];
-        tm_wday = (PyInteger)vals[6];
-        tm_yday = (PyInteger)vals[7];
-        tm_isdst = (PyInteger)vals[8];
+        tm_year = (PyInteger)vals[0].__int__();
+        tm_mon =  (PyInteger)vals[1].__int__();
+        tm_mday = (PyInteger)vals[2].__int__();
+        tm_hour = (PyInteger)vals[3].__int__();
+        tm_min =  (PyInteger)vals[4].__int__();
+        tm_sec =  (PyInteger)vals[5].__int__();;
+        tm_wday = (PyInteger)vals[6].__int__();;
+        tm_yday = (PyInteger)vals[7].__int__();;
+        tm_isdst =(PyInteger)vals[8].__int__();;
     }
 
     @ExposedNew
@@ -52,14 +55,14 @@ public class PyTimeTuple extends PyTuple {
             }
             // tuples are immutable, so we can just use its underlying array
             return new PyTimeTuple(((PyTuple)obj).getArray());
-        } else if (obj instanceof PySequence) {
-            PySequence seq = (PySequence)obj;
+        }
+        else {
+            PyList seq = new PyList(obj);
             if (seq.__len__() != 9) {
                 throw Py.TypeError("time.struct_time() takes a 9-sequence (1-sequence given)");
-            }
-            return new PyTimeTuple((PyObject[])seq.__tojava__(PyObject[].class));
+            }        
+            return new PyTimeTuple((PyObject[])seq.__tojava__(PyObject[].class));            
         }
-        throw Py.TypeError("constructor requires a sequence");
     }
 
     public synchronized PyObject __eq__(PyObject o) {

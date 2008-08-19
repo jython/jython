@@ -2,7 +2,8 @@
  test compile. derived from test_codeop
 """
 import unittest
-from test_support import run_unittest
+from test import test_support
+from test.test_support import run_unittest
 
 
 def compile_(source,name="<input>",symbol="single"):

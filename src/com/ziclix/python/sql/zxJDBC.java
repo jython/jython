@@ -141,7 +141,6 @@ public class zxJDBC extends PyObject implements ClassDictInit {
         dict.__setitem__("_addSqlTypes", null);
         dict.__setitem__("_addConnectors", null);
         dict.__setitem__("_buildExceptions", null);
-        dict.__setitem__("_empty__init__", null);
         dict.__setitem__("buildClass", null);
         dict.__setitem__("createExceptionMessage", null);
         dict.__setitem__("resourceBundle", null);
@@ -236,22 +235,16 @@ public class zxJDBC extends PyObject implements ClassDictInit {
      */
     protected static void _buildExceptions(PyObject dict) {
 
-        Error = buildClass("Error", Py.StandardError, "_empty__init__");
-        Warning = buildClass("Warning", Py.StandardError, "_empty__init__");
-        InterfaceError = buildClass("InterfaceError", Error, "_empty__init__");
-        DatabaseError = buildClass("DatabaseError", Error, "_empty__init__");
-        InternalError = buildClass("InternalError", DatabaseError, "_empty__init__");
-        OperationalError = buildClass("OperationalError", DatabaseError, "_empty__init__");
-        ProgrammingError = buildClass("ProgrammingError", DatabaseError, "_empty__init__");
-        IntegrityError = buildClass("IntegrityError", DatabaseError, "_empty__init__");
-        DataError = buildClass("DataError", DatabaseError, "_empty__init__");
-        NotSupportedError = buildClass("NotSupportedError", DatabaseError, "_empty__init__");
-    }
-
-    public static PyObject _empty__init__(PyObject[] arg, String[] kws) {
-        PyObject dict = new PyStringMap();
-        dict.__setitem__("__module__", new PyString("zxJDBC"));
-        return dict;
+        Error = buildClass("Error", Py.StandardError);
+        Warning = buildClass("Warning", Py.StandardError);
+        InterfaceError = buildClass("InterfaceError", Error);
+        DatabaseError = buildClass("DatabaseError", Error);
+        InternalError = buildClass("InternalError", DatabaseError);
+        OperationalError = buildClass("OperationalError", DatabaseError);
+        ProgrammingError = buildClass("ProgrammingError", DatabaseError);
+        IntegrityError = buildClass("IntegrityError", DatabaseError);
+        DataError = buildClass("DataError", DatabaseError);
+        NotSupportedError = buildClass("NotSupportedError", DatabaseError);
     }
 
     /**
@@ -338,7 +331,22 @@ public class zxJDBC extends PyObject implements ClassDictInit {
      * @return PyException
      */
     public static PyException makeException(Throwable throwable) {
-        return makeException(Error, throwable);
+        PyObject type = Error;
+        if (throwable instanceof SQLException) {
+            String state = ((SQLException)throwable).getSQLState();
+            // The SQL standard is not freely available, but
+            // http://www.postgresql.org/docs/current/static/errcodes-appendix.html
+            // contains most of the SQLSTATES codes
+            if (state.length() == 5) { // Otherwise, the state is not following the standard.
+                if (state.startsWith("23")) { //Class 23 => Integrity Constraint Violation
+                    type = IntegrityError;
+                } else if (state.equals("40002")) {
+                    // 40002  => TRANSACTION INTEGRITY CONSTRAINT VIOLATION
+                    type = IntegrityError;
+                }
+            }
+        }
+        return makeException(type, throwable);
     }
 
     /**
@@ -349,15 +357,15 @@ public class zxJDBC extends PyObject implements ClassDictInit {
      * @return PyException
      */
     public static PyException makeException(PyObject type, Throwable t) {
-    	return makeException(type, t, -1);
+        return makeException(type, t, -1);
     }
-    
+
     /**
      * Return a newly instantiated PyException of the given type.
      *
      * @param type
      * @param t
-     * @param rowIndex		Row index where the error has happened.  Useful for diagnosing. 
+     * @param rowIndex		Row index where the error has happened.  Useful for diagnosing.
      * @return PyException
      */
     public static PyException makeException(PyObject type, Throwable t, int rowIndex) {
@@ -407,11 +415,11 @@ public class zxJDBC extends PyObject implements ClassDictInit {
      * @param classCodeName
      * @return PyObject
      */
-    protected static PyObject buildClass(String classname, PyObject superclass, String classCodeName) {
-        PyObject[] parents = (superclass == null) ? Py.EmptyObjects : new PyObject[]{superclass};
-        PyString doc = Py.newString(getString(classname));
-        PyObject cls = Py.makeClass(classname, parents, Py.newJavaCode(zxJDBC.class, classCodeName), doc);
-        return cls;
+    protected static PyObject buildClass(String classname, PyObject superclass) {
+        PyObject dict = new PyStringMap();
+        dict.__setitem__("__doc__", Py.newString(getString(classname)));
+        dict.__setitem__("__module__", Py.newString("zxJDBC"));
+        return Py.makeClass(classname, superclass, dict);
     }
 }
 

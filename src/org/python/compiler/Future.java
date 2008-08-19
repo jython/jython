@@ -2,14 +2,15 @@
 
 package org.python.compiler;
 
-import org.python.parser.*;
-import org.python.parser.ast.*;
-import org.python.parser.ast.Module;
+import org.python.antlr.*;
+import org.python.antlr.ast.*;
+import org.python.antlr.ast.Module;
 
-public class Future extends Object implements PythonGrammarTreeConstants {
+public class Future {
 
-    private boolean division;
-    private boolean generators;
+    private boolean division = false;
+    private boolean with_statement = false;
+    private boolean absolute_import = false;
 
     private static final String FUTURE = "__future__";
 
@@ -32,14 +33,21 @@ public class Future extends Object implements PythonGrammarTreeConstants {
                 continue;
             }
             if (feature.equals("generators")) {
-                generators = true;
+                continue;
+            }
+            if (feature.equals("with_statement")) {
+                with_statement = true;
+                continue;
+            }
+            if (feature.equals("absolute_import")) {
+                absolute_import = true;
                 continue;
             }
             if (feature.equals("braces")) {
-                throw new ParseException("not a chance");
+                throw new ParseException("not a chance", cand);
             }
             if (feature.equals("GIL") || feature.equals("global_interpreter_lock")) {
-                throw new ParseException("Never going to happen!");
+                throw new ParseException("Never going to happen!", cand);
             }
             throw new ParseException("future feature "+feature+
                                      " is not defined",cand);
@@ -78,10 +86,13 @@ public class Future extends Object implements PythonGrammarTreeConstants {
         }
 
         if (cflags != null) {
-            cflags.division      = cflags.division      ||  division;
+            cflags.division = cflags.division || division;
         }
         if (cflags != null) {
-            cflags.generator_allowed = cflags.generator_allowed || generators;
+            cflags.with_statement = cflags.with_statement || with_statement;
+        }
+        if (cflags != null) {
+            cflags.absolute_import = cflags.absolute_import || absolute_import;
         }
     }
 
@@ -98,6 +109,10 @@ public class Future extends Object implements PythonGrammarTreeConstants {
 
     public boolean areDivisionOn() {
         return division;
+    }
+    
+    public boolean withStatementSupported() {
+        return with_statement;
     }
 
 }

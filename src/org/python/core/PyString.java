@@ -5,7 +5,6 @@ import java.math.BigInteger;
 
 import org.python.core.util.ExtraMath;
 import org.python.core.util.StringUtil;
-
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
@@ -44,6 +43,10 @@ public class PyString extends PyBaseString
         this(TYPE,String.valueOf(c));
     }
 
+    PyString(StringBuilder buffer) {
+        this(TYPE, new String(buffer));
+    }
+    
     /**
      * Creates a PyString from an already interned String. Just means it won't
      * be reinterned if used in a place that requires interned Strings.
@@ -465,7 +468,11 @@ public class PyString extends PyBaseString
 
     @ExposedMethod
     final PyObject str___getitem__(PyObject index) {
-        return seq___finditem__(index);
+        PyObject ret = seq___finditem__(index);
+        if (ret == null) {
+            throw Py.IndexError("string index out of range");
+        }
+        return ret;
     }
     
     @ExposedMethod(defaults = "null")
@@ -622,7 +629,7 @@ public class PyString extends PyBaseString
             for (int i=start; j<n; i+=step)
                 new_chars[j++] = string.charAt(i);
 
-            return createInstance(new String(new_chars));
+            return createInstance(new String(new_chars), true);
         }
     }
 
@@ -630,6 +637,11 @@ public class PyString extends PyBaseString
         return new PyString(str);
     }
 
+    protected PyString createInstance(String str, boolean isBasic) {
+        // ignore isBasic, doesn't apply to PyString, just PyUnicode
+        return new PyString(str);
+    } 
+    
     public boolean __contains__(PyObject o) {
         return str___contains__(o);
     }
@@ -658,23 +670,33 @@ public class PyString extends PyBaseString
         for(int i = 0; i < count; i++) {
             string.getChars(0, s, new_chars, i * s);
         }
-        return createInstance(new String(new_chars));
+        return createInstance(new String(new_chars), true);
+    }
+
+    @Override
+    public PyObject __mul__(PyObject o) {
+        return str___mul__(o);
     }
 
     @ExposedMethod(type = MethodType.BINARY)
     final PyObject str___mul__(PyObject o) {
-        if (!(o instanceof PyInteger || o instanceof PyLong))
+        if (!o.isIndex()) {
             return null;
-        int count = ((PyInteger)o.__int__()).getValue();
-        return repeat(count);
+        }
+        return repeat(o.asIndex(Py.OverflowError));
     }
     
+    @Override
+    public PyObject __rmul__(PyObject o) {
+        return str___rmul__(o);
+    }
+
     @ExposedMethod(type = MethodType.BINARY)
     final PyObject str___rmul__(PyObject o) {
-        if (!(o instanceof PyInteger || o instanceof PyLong))
+        if (!o.isIndex()) {
             return null;
-        int count = ((PyInteger)o.__int__()).getValue();
-        return repeat(count);
+        }
+        return repeat(o.asIndex(Py.OverflowError));
     }
 
     public PyObject __add__(PyObject generic_other) {
@@ -689,7 +711,7 @@ public class PyString extends PyBaseString
             if (generic_other instanceof PyUnicode) {
                 return new PyUnicode(result);
             }
-            return createInstance(result);
+            return createInstance(result, true);
         }
         else return null;
     }
@@ -709,7 +731,7 @@ public class PyString extends PyBaseString
     
     @ExposedMethod
     public PyObject str___mod__(PyObject other){
-        StringFormatter fmt = new StringFormatter(string);
+        StringFormatter fmt = new StringFormatter(string, false);
         return fmt.format(other);
     }
 
@@ -1069,6 +1091,76 @@ public class PyString extends PyBaseString
         return list;
     }
 
+    public PyList rsplit() {
+        return str_rsplit(null, -1);
+    }
+
+    public PyList rsplit(String sep) {
+        return str_rsplit(sep, -1);
+    }
+
+    public PyList rsplit(String sep, int maxsplit) {
+        return str_rsplit(sep, maxsplit);
+    }
+
+    @ExposedMethod(defaults = {"null", "-1"})
+    final PyList str_rsplit(String sep, int maxsplit) {
+        if (sep != null) {
+            if (sep.length() == 0) {
+                throw Py.ValueError("empty separator");
+            }
+            PyList list = rsplitfields(sep, maxsplit);
+            list.reverse();
+            return list;
+        }
+
+        PyList list = new PyList();
+        char[] chars = string.toCharArray();
+
+        if (maxsplit < 0) {
+            maxsplit = chars.length;
+        }
+
+        int splits = 0;
+        int i = chars.length - 1;
+
+        while (i > -1 && Character.isWhitespace(chars[i])) {
+            i--;
+        }
+        if (i == -1) {
+            return list;
+        }
+
+        while (splits < maxsplit) {
+            while (i > -1 && Character.isWhitespace(chars[i])) {
+                i--;
+            }
+            if (i == -1) {
+                break;
+            }
+
+            int nextWsChar = i;
+            while (nextWsChar > -1 && !Character.isWhitespace(chars[nextWsChar])) {
+                nextWsChar--;
+            }
+            if (nextWsChar == -1) {
+                break;
+            }
+
+            splits++;
+            list.add(fromSubstring(nextWsChar + 1, i + 1));
+            i = nextWsChar;
+        }
+        while (i > -1 && Character.isWhitespace(chars[i])) {
+            i--;
+        }
+        if (i > -1) {
+            list.add(fromSubstring(0,i+1));
+        }
+        list.reverse();
+        return list;
+    }
+
     public PyTuple partition(PyObject sepObj) {
         return str_partition(sepObj);
     }
@@ -1203,6 +1295,37 @@ public class PyString extends PyBaseString
         return list;
     }
 
+    private PyList rsplitfields(String sep, int maxsplit) {
+        PyList list = new PyList();
+
+        int length = string.length();
+        if (maxsplit < 0) {
+            maxsplit = length + 1;
+        }
+
+        int lastbreak = length;
+        int splits = 0;
+        int index = length;
+        int sepLength = sep.length();
+
+        while (index > 0 && splits < maxsplit) {
+            int i = string.lastIndexOf(sep, index - sepLength);
+            if (i == index) {
+                i -= sepLength;
+            }
+            if (i < 0) {
+                break;
+            }
+            splits++;
+            list.append(fromSubstring(i + sepLength, lastbreak));
+            lastbreak = i;
+            index = i;
+
+        }
+        list.append(fromSubstring(0, lastbreak));
+        return list;
+    }
+
     public PyList splitlines() {
         return str_splitlines(false);
     }
@@ -1245,7 +1368,7 @@ public class PyString extends PyBaseString
     }
 
     protected PyString fromSubstring(int begin, int end) {
-        return createInstance(string.substring(begin, end));
+        return createInstance(string.substring(begin, end), true);
     }
 
     public int index(String sub) {
@@ -1305,6 +1428,9 @@ public class PyString extends PyBaseString
         int[] indices = translateIndices(start, end);
         int n = sub.length();
         if(n == 0) {
+            if (start > string.length()) {
+                return 0;
+            }
             return indices[1] - indices[0] + 1;
         }
         int count = 0;
@@ -1335,8 +1461,9 @@ public class PyString extends PyBaseString
     final int str_find(String sub, int start, PyObject end) {
         int[] indices = translateIndices(start, end);
         int index = string.indexOf(sub, indices[0]);
-        if (index > indices[1])
+        if (index < start || index > indices[1]) {
             return -1;
+        }
         return index;
     }
 
@@ -1356,8 +1483,9 @@ public class PyString extends PyBaseString
     final int str_rfind(String sub, int start, PyObject end) {
         int[] indices = translateIndices(start, end);
         int index = string.lastIndexOf(sub, indices[1] - sub.length());
-        if(index < indices[0])
+        if (index < start) {
             return -1;
+        }
         return index;
     }
 
@@ -1382,6 +1510,10 @@ public class PyString extends PyBaseString
         try {
             // Double.valueOf allows format specifier ("d" or "f") at the end
             String lowSval = sval.toLowerCase();
+            if (lowSval.equals("nan")) return Double.NaN;
+            else if (lowSval.equals("inf")) return Double.POSITIVE_INFINITY;
+            else if (lowSval.equals("-inf")) return Double.NEGATIVE_INFINITY;
+            
             if (lowSval.endsWith("d") || lowSval.endsWith("f")) {
                 throw new NumberFormatException("format specifiers not allowed");
             }
@@ -1450,9 +1582,9 @@ public class PyString extends PyBaseString
             }
             return bi.intValue();
         } catch (NumberFormatException exc) {
-            throw Py.ValueError("invalid literal for __int__: "+string);
+            throw Py.ValueError("invalid literal for int() with base " + base + ": " + string);
         } catch (StringIndexOutOfBoundsException exc) {
-            throw Py.ValueError("invalid literal for __int__: "+string);
+            throw Py.ValueError("invalid literal for int() with base " + base + ": " + string);
         }
     }
 
@@ -1470,8 +1602,7 @@ public class PyString extends PyBaseString
 
         while (e > b && Character.isWhitespace(str.charAt(e-1)))
             e--;
-        if (e > b && (str.charAt(e-1) == 'L' || str.charAt(e-1) == 'l'))
-            e--;
+
 
         char sign = 0;
         if (b < e) {
@@ -1501,9 +1632,13 @@ public class PyString extends PyBaseString
         if (base < 2 || base > 36)
             throw Py.ValueError("invalid base for long literal:" + base);
 
+        // if the base >= 22, then an 'l' or 'L' is a digit!
+        if (base < 22 && e > b && (str.charAt(e-1) == 'L' || str.charAt(e-1) == 'l'))
+            e--;
+        
         if (b > 0 || e < str.length())
             str = str.substring(b, e);
-
+        
         try {
             java.math.BigInteger bi = null;
             if (sign == '-')
@@ -1521,10 +1656,10 @@ public class PyString extends PyBaseString
                         0,0, "invalid decimal Unicode string");
             }
             else {
-                throw Py.ValueError("invalid literal for __long__: "+str);
+            throw Py.ValueError("invalid literal for long() with base " + base + ": " + string);
             }
         } catch (StringIndexOutOfBoundsException exc) {
-            throw Py.ValueError("invalid literal for __long__: "+str);
+            throw Py.ValueError("invalid literal for long() with base " + base + ": " + string);
         }
     }
 
@@ -1672,20 +1807,42 @@ public class PyString extends PyBaseString
         if(!(oldPiece instanceof PyString) || !(newPiece instanceof PyString)) {
             throw Py.TypeError("str or unicode required for replace");
         }
-        if(string.length() == 0) {
-            return createInstance(string);
-        }
-        int iMaxsplit;
-        if(maxsplit == null) {
-            if(oldPiece.__len__() == 0) {
-                iMaxsplit = string.length() + 1;
-            } else {
-                iMaxsplit = string.length();
+
+        return replace((PyString)oldPiece, (PyString)newPiece, maxsplit == null ? -1 : maxsplit.asInt());
+    }
+    
+    protected PyString replace(PyString oldPiece, PyString newPiece, int maxsplit) {
+        int len = string.length();
+        int old_len = oldPiece.string.length();
+        if (len == 0) {
+            if (maxsplit == -1 && old_len == 0) {
+                return createInstance(newPiece.string, true);
             }
-        } else {
-            iMaxsplit = maxsplit.asInt();
+            return createInstance(string, true);
         }
-        return ((PyString)newPiece).str_join(splitfields(((PyString)oldPiece).string, iMaxsplit));
+        
+        if (old_len == 0 && newPiece.string.length() != 0 && maxsplit !=0) {
+            // old="" and new != "", interleave new piece with each char in original, taking in effect maxsplit
+            StringBuilder buffer = new StringBuilder();
+            int i = 0;
+            buffer.append(newPiece.string);
+            for (; i < len && (i < maxsplit-1 || maxsplit == -1); i++) {
+                buffer.append(string.charAt(i));
+                buffer.append(newPiece.string);
+            }
+            buffer.append(string.substring(i));
+            return createInstance(buffer.toString(), true);
+        }
+       
+        if(maxsplit == -1) {
+            if(old_len == 0) {
+                maxsplit = len + 1;
+            } else {
+                maxsplit = len;
+            }
+        }
+        
+        return newPiece.str_join(splitfields(oldPiece.string, maxsplit));
     }
 
     public String join(PyObject seq) {
@@ -1693,72 +1850,134 @@ public class PyString extends PyBaseString
     }
 
     @ExposedMethod
-    final PyString str_join(PyObject seq) {
-        StringBuilder buf = new StringBuilder();
+    final PyString str_join(PyObject obj) {
+        // Similar to CPython's abstract::PySequence_Fast
+        PySequence seq;
+        if (obj instanceof PySequence) {
+            seq = (PySequence)obj;
+        } else {
+            seq = new PyList(obj.__iter__());
+        }
 
-        PyObject iter = seq.__iter__();
-        PyObject obj = null;
-        boolean needsUnicode = false;
-        for (int i = 0; (obj = iter.__iternext__()) != null; i++) {
-            if (!(obj instanceof PyString)){
-                 throw Py.TypeError(
-                        "sequence item " + i + ": expected string, " +
-                        obj.getType().fastGetName() + " found");
+        PyObject item;
+        int seqlen = seq.__len__();
+        if (seqlen == 0) {
+            return createInstance("", true);
+        }
+        if (seqlen == 1) {
+            item = seq.pyget(0);
+            if (item.getType() == PyUnicode.TYPE ||
+                (item.getType() == PyString.TYPE && getType() == PyString.TYPE)) {
+                return (PyString)item;
             }
-            if(obj instanceof PyUnicode){
+        }
+
+        boolean needsUnicode = false;
+        long joinedSize = 0;
+        StringBuilder buf = new StringBuilder();
+        for (int i = 0; i < seqlen; i++) {
+            item = seq.pyget(i);
+            if (!(item instanceof PyString)) {
+                throw Py.TypeError(String.format("sequence item %d: expected string, %.80s found",
+                                                 i, item.getType().fastGetName()));
+            }
+            if (item instanceof PyUnicode) {
                 needsUnicode = true;
             }
-            if (i > 0){
+            if (i > 0) {
                 buf.append(string);
+                joinedSize += string.length();
             }
-            buf.append(((PyString)obj).string);
+            String itemString = ((PyString)item).string;
+            buf.append(itemString);
+            joinedSize += itemString.length();
+            if (joinedSize > Integer.MAX_VALUE) {
+                throw Py.OverflowError("join() result is too long for a Python string");
+            }
         }
-        if(needsUnicode){
+
+        if (needsUnicode){
             return new PyUnicode(buf.toString());
         }
-        return createInstance(buf.toString());
+        return createInstance(buf.toString(), true);
     }
 
 
-    public boolean startswith(String prefix) {
+    public boolean startswith(PyObject prefix) {
         return str_startswith(prefix, 0, null);
     }
 
-    public boolean startswith(String prefix, int offset) {
+    public boolean startswith(PyObject prefix, int offset) {
         return str_startswith(prefix, offset, null);
     }
 
-    public boolean startswith(String prefix, int start, int end) {
+    public boolean startswith(PyObject prefix, int start, int end) {
         return str_startswith(prefix, start, Py.newInteger(end));
     }
 
     @ExposedMethod(defaults = {"0", "null"})
-    final boolean str_startswith(String prefix, int start, PyObject end) {
+    final boolean str_startswith(PyObject prefix, int start, PyObject end) {
         int[] indices = translateIndices(start, end);
-        if(indices[1] - indices[0] < prefix.length()){
-            return false;
+        
+        if (prefix instanceof PyString) {
+        	String strPrefix = ((PyString)prefix).string;
+            if (indices[1] - indices[0] < strPrefix.length())
+                return false;
+            
+        	return string.startsWith(strPrefix, indices[0]);
+        } else if (prefix instanceof PyTuple) {
+        	PyObject[] prefixes = ((PyTuple)prefix).getArray();
+        	
+        	for (int i = 0 ; i < prefixes.length ; i++) {
+        		if (!(prefixes[i] instanceof PyString))
+        			throw Py.TypeError("expected a character buffer object");
+
+        		String strPrefix = ((PyString)prefixes[i]).string;
+                if (indices[1] - indices[0] < strPrefix.length())
+                	continue;
+                
+        		if (string.startsWith(strPrefix, indices[0]))
+        			return true;
+        	}
+        	return false;
+        } else {
+        	throw Py.TypeError("expected a character buffer object or tuple");
         }
-        return string.startsWith(prefix, indices[0]);
     }
 
-    public boolean endswith(String suffix) {
+    public boolean endswith(PyObject suffix) {
         return str_endswith(suffix, 0, null);
     }
 
-    public boolean endswith(String suffix, int start) {
+    public boolean endswith(PyObject suffix, int start) {
         return str_endswith(suffix, start, null);
     }
 
-    public boolean endswith(String suffix, int start, int end) {
+    public boolean endswith(PyObject suffix, int start, int end) {
         return str_endswith(suffix, start, Py.newInteger(end));
     }
 
     @ExposedMethod(defaults = {"0", "null"})
-    final boolean str_endswith(String suffix, int start, PyObject end) {
+    final boolean str_endswith(PyObject suffix, int start, PyObject end) {
         int[] indices = translateIndices(start, end);
 
         String substr = string.substring(indices[0], indices[1]);
-        return substr.endsWith(suffix);
+        if (suffix instanceof PyString) {
+	        return substr.endsWith(((PyString)suffix).string);
+        } else if (suffix instanceof PyTuple) {
+        	PyObject[] suffixes = ((PyTuple)suffix).getArray();
+        	
+        	for (int i = 0 ; i < suffixes.length ; i++) {
+        		if (!(suffixes[i] instanceof PyString))
+        			throw Py.TypeError("expected a character buffer object");
+
+        		if (substr.endsWith(((PyString)suffixes[i]).string))
+        			return true;
+        	}
+        	return false;
+        } else {
+        	throw Py.TypeError("expected a character buffer object or tuple");
+        }
     } 
 
     /**
@@ -2280,9 +2499,22 @@ final class StringFormatter
         
     }
 
-    private String formatLong(PyString arg, char type, boolean altFlag) {
+    private String formatLong(PyObject arg, char type, boolean altFlag) {
+        PyString argAsString;
+        switch (type) {
+            case 'o':
+                argAsString = arg.__oct__();
+                break;
+            case 'x':
+            case 'X':
+                argAsString = arg.__hex__();
+                break;
+            default:
+                argAsString = arg.__str__();
+                break;
+        }
         checkPrecision("long");
-        String s = arg.toString();
+        String s = argAsString.toString();
         int end = s.length();
         int ptr = 0;
 
@@ -2327,24 +2559,52 @@ final class StringFormatter
             s = s.substring(ptr, end);
 
         switch (type) {
-        case 'x' :
-            s = s.toLowerCase();
+        case 'X' :
+            s = s.toUpperCase();
             break;
         }
         return s;
     }
 
-    private String formatInteger(PyObject arg, int radix, boolean unsigned) {
-        PyObject x;
+    /**
+     * Formats arg as an integer, with the specified radix
+     *
+     * type and altFlag are needed to be passed to {@link #formatLong(PyObject, char, boolean)}
+     * in case the result of <code>arg.__int__()</code> is a PyLong.
+     */
+    private String formatInteger(PyObject arg, int radix, boolean unsigned, char type, boolean altFlag) {
+        PyObject argAsInt;
+        if (arg instanceof PyInteger || arg instanceof PyLong) {
+            argAsInt = arg;
+        } else {
+            // use __int__ to get an int (or long)
+            if (arg instanceof PyFloat) {
+                // safe to call __int__:
+                argAsInt = arg.__int__();
+            } else {
+                // Same case noted on formatFloatDecimal:
+                // We can't simply call arg.__int__() because PyString implements
+                // it without exposing it to python (i.e, str instances has no
+                // __int__ attribute). So, we would support strings as arguments
+                // for %d format, which is forbidden by CPython tests (on
+                // test_format.py).
         try {
-            x = arg.__int__();
-        } catch (PyException pye) {
+                    argAsInt = arg.__getattr__("__int__").__call__();
+                } catch (PyException e) {
+                    // XXX: Swallow customs AttributeError throws from __float__ methods
+                    // No better alternative for the moment
+                    if (Py.matchException(e, Py.AttributeError)) {
             throw Py.TypeError("int argument required");
         }
-        if (!(x instanceof PyInteger)) {
-            throw Py.TypeError("int argument required");
+                    throw e;
         }
-        return formatInteger(((PyInteger)x).getValue(), radix, unsigned);
+    }
+        }
+        if (argAsInt instanceof PyInteger) {
+            return formatInteger(((PyInteger)argAsInt).getValue(), radix, unsigned);
+        } else { // must be a PyLong (as per __int__ contract)
+            return formatLong(argAsInt, type, altFlag);
+        }
     }
 
     private String formatInteger(long v, int radix, boolean unsigned) {
@@ -2366,7 +2626,34 @@ final class StringFormatter
     }
 
     private String formatFloatDecimal(PyObject arg, boolean truncate) {
-        return formatFloatDecimal(arg.__float__().getValue(), truncate);
+        PyFloat argAsFloat;
+        if (arg instanceof PyFloat) {
+            // Fast path
+            argAsFloat = (PyFloat)arg;
+        } else {
+            // Use __float__
+            if (arg instanceof PyInteger || arg instanceof PyLong) {
+                // Typical cases, safe to call __float__:
+                argAsFloat = arg.__float__();
+            } else  {
+                try {
+                    // We can't simply call arg.__float__() because PyString implements
+                    // it without exposing it to python (i.e, str instances has no
+                    // __float__ attribute). So, we would support strings as arguments
+                    // for %g format, which is forbidden by CPython tests (on
+                    // test_format.py).
+                    argAsFloat = (PyFloat)arg.__getattr__("__float__").__call__();
+                } catch (PyException e) {
+                    // XXX: Swallow customs AttributeError throws from __float__ methods
+                    // No better alternative for the moment
+                    if (Py.matchException(e, Py.AttributeError)) {
+            throw Py.TypeError("float argument required");
+        }
+                    throw e;
+    }
+            }
+        }
+        return formatFloatDecimal(argAsFloat.getValue(), truncate);
     }
 
     private String formatFloatDecimal(double v, boolean truncate) {
@@ -2433,7 +2720,7 @@ final class StringFormatter
     public PyString format(PyObject args) {
         PyObject dict = null;
         this.args = args;
-        boolean needUnicode = false;
+        boolean needUnicode = unicodeCoercion;
         if (args instanceof PyTuple) {
             argIndex = 0;
         } else {
@@ -2466,7 +2753,6 @@ final class StringFormatter
             }
             c = pop();
             if (c == '(') {
-                //System.out.println("( found");
                 if (dict == null)
                     throw Py.TypeError("format requires a mapping");
                 int parens = 1;
@@ -2480,7 +2766,6 @@ final class StringFormatter
                 }
                 String tmp = format.substring(keyStart, index-1);
                 this.args = dict.__getitem__(new PyString(tmp));
-                //System.out.println("args: "+args+", "+argIndex);
             } else {
                 push();
             }
@@ -2516,7 +2801,6 @@ final class StringFormatter
                 continue;
             }
             PyObject arg = getarg();
-            //System.out.println("args: "+args+", "+argIndex+", "+arg);
             char fill = ' ';
             String string=null;
             negative = false;
@@ -2528,8 +2812,11 @@ final class StringFormatter
             case 's':
             case 'r':
                 fill = ' ';
+                if (arg instanceof PyUnicode) {
+                    needUnicode = true;
+                }
                 if (c == 's')
-                    if (unicodeCoercion)
+                    if (needUnicode)
                         string = arg.__unicode__().toString();
                     else
                         string = arg.__str__().toString();
@@ -2538,55 +2825,56 @@ final class StringFormatter
                 if (precision >= 0 && string.length() > precision) {
                     string = string.substring(0, precision);
                 }
-                if (arg instanceof PyUnicode) {
-                    needUnicode = true;
-                }
+
                 break;
             case 'i':
             case 'd':
                 if (arg instanceof PyLong)
-                    string = formatLong(arg.__str__(), c, altFlag);
+                    string = formatLong(arg, c, altFlag);
                 else
-                    string = formatInteger(arg, 10, false);
+                    string = formatInteger(arg, 10, false, c, altFlag);
                 break;
             case 'u':
                 if (arg instanceof PyLong)
-                    string = formatLong(arg.__str__(), c, altFlag);
-                else
-                    string = formatInteger(arg, 10, true);
+                    string = formatLong(arg, c, altFlag);
+                else if (arg instanceof PyInteger || arg instanceof PyFloat)
+                    string = formatInteger(arg, 10, false, c, altFlag);
+                else throw Py.TypeError("int argument required");
                 break;
             case 'o':
                 if (arg instanceof PyLong)
-                    string = formatLong(arg.__oct__(), c, altFlag);
-                else {
-                    string = formatInteger(arg, 8, true);
+                    string = formatLong(arg, c, altFlag);
+                else if (arg instanceof PyInteger || arg instanceof PyFloat) {
+                    string = formatInteger(arg, 8, false, c, altFlag);
                     if (altFlag && string.charAt(0) != '0') {
                         string = "0" + string;
                     }
                 }
+                else throw Py.TypeError("int argument required");
                 break;
             case 'x':
                 if (arg instanceof PyLong)
-                    string = formatLong(arg.__hex__(), c, altFlag);
-                else {
-                    string = formatInteger(arg, 16, true);
+                    string = formatLong(arg, c, altFlag);
+                else if (arg instanceof PyInteger || arg instanceof PyFloat) {
+                    string = formatInteger(arg, 16, false, c, altFlag);
                     string = string.toLowerCase();
                     if (altFlag) {
                         string = "0x" + string;
                     }
                 }
+                else throw Py.TypeError("int argument required");
                 break;
             case 'X':
                 if (arg instanceof PyLong)
-                    string = formatLong(arg.__hex__(), c, altFlag);
-                else {
-                    string = formatInteger(arg, 16, true);
+                    string = formatLong(arg, c, altFlag);
+                else if (arg instanceof PyInteger || arg instanceof PyFloat) {
+                    string = formatInteger(arg, 16, false, c, altFlag);
                     string = string.toUpperCase();
                     if (altFlag) {
                         string = "0X" + string;
                    }
                 }
-
+                else throw Py.TypeError("int argument required");
                 break;
             case 'e':
             case 'E':
@@ -2627,6 +2915,11 @@ final class StringFormatter
                         }
                     }
                 } else {
+                    // Exponential precision is the number of digits after the decimal
+                    // point, whereas 'g' precision is the number of significant digits --
+                    // and expontential always provides one significant digit before the
+                    // decimal point
+                    precision--;
                     string = formatFloatExponential(arg, (char)(c-2), !altFlag);
                 }
                 break;
@@ -2726,9 +3019,9 @@ final class StringFormatter
             throw Py.TypeError("not all arguments converted during string formatting");
         }
         if (needUnicode) {
-            return new PyUnicode(buffer.toString());
+            return new PyUnicode(buffer);
         }
-        return new PyString(buffer.toString());
+        return new PyString(buffer);
     }
 
 }

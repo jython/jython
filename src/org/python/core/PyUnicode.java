@@ -37,6 +37,11 @@ public class PyUnicode extends PyString implements Iterable {
         this(TYPE, string);
     }
 
+    public PyUnicode(String string, boolean isBasic) {
+        this(TYPE, string);
+        plane = isBasic ? Plane.BASIC : Plane.UNKNOWN;  
+    }
+    
     public PyUnicode(PyType subtype, String string) {
         super(subtype, string);
     }
@@ -57,6 +62,10 @@ public class PyUnicode extends PyString implements Iterable {
         this(TYPE, new String(new int[]{codepoint}, 0, 1));
     }
 
+    public PyUnicode(int[] codepoints) {
+        this(new String(codepoints, 0, codepoints.length));
+    }
+
     PyUnicode(StringBuilder buffer) {
         this(TYPE, new String(buffer));
     }
@@ -68,7 +77,7 @@ public class PyUnicode extends PyString implements Iterable {
         }
         return buffer;
     }
-
+    
     PyUnicode(Iterator<Integer> iter) {
         this(fromCodePoints(iter));
     }
@@ -156,6 +165,9 @@ public class PyUnicode extends PyString implements Iterable {
                 return new PyUnicode(((PyUnicode) S).string);
             }
             if (S instanceof PyString) {
+                if (S.getType() != PyString.TYPE && encoding == null && errors == null) {
+                    return S.__unicode__();
+                }
                 PyObject decoded = codecs.decode((PyString) S, encoding, errors);
                 if (decoded instanceof PyUnicode) {
                     return new PyUnicode((PyUnicode) decoded);
@@ -182,6 +194,14 @@ public class PyUnicode extends PyString implements Iterable {
         return new PyUnicode(str);
     }
 
+    // Unicode ops consisting of basic strings can only produce basic strings;
+    // this may not be the case for astral ones - they also might be basic, in
+    // case of deletes. So optimize by providing a tainting mechanism.
+    @Override
+    protected PyString createInstance(String str, boolean isBasic) {
+        return new PyUnicode(str, isBasic);
+    }
+    
     @Override
     public PyObject __mod__(PyObject other) {
         return unicode___mod__(other);
@@ -190,7 +210,7 @@ public class PyUnicode extends PyString implements Iterable {
     @ExposedMethod
     final PyObject unicode___mod__(PyObject other) {
         StringFormatter fmt = new StringFormatter(string, true);
-        return fmt.format(other).__unicode__();
+        return fmt.format(other);
     }
 
     @ExposedMethod
@@ -229,17 +249,20 @@ public class PyUnicode extends PyString implements Iterable {
     }
 
     @ExposedMethod
-    public PyObject unicode___getitem__(PyObject index) {
-        return seq___finditem__(index);
+    final PyObject unicode___getitem__(PyObject index) {
+        return str___getitem__(index);
     }
 
     @ExposedMethod(defaults = "null")
-    public PyObject unicode___getslice__(PyObject start, PyObject stop, PyObject step) {
+    final PyObject unicode___getslice__(PyObject start, PyObject stop, PyObject step) {
         return seq___getslice__(start, stop, step);
     }
 
     @Override
     protected PyObject getslice(int start, int stop, int step) {
+        if (isBasicPlane()) {
+            return super.getslice(start, stop, step);
+        }
         if (step > 0 && stop < start) {
             stop = start;
         }
@@ -784,7 +807,7 @@ public class PyUnicode extends PyString implements Iterable {
             super(maxsplit);
             this.sep = sep;
         }
-
+        
         public PyUnicode next() {
             StringBuilder buffer = new StringBuilder();
 
@@ -834,7 +857,7 @@ public class PyUnicode extends PyString implements Iterable {
             return new SepSplitIterator(sep, maxsplit);
         }
     }
-
+    
     @ExposedMethod
     final PyTuple unicode_rpartition(PyObject sep) {
         return unicodeRpartition(sep);
@@ -843,16 +866,23 @@ public class PyUnicode extends PyString implements Iterable {
     @ExposedMethod(defaults = {"null", "-1"})
     final PyList unicode_split(PyObject sepObj, int maxsplit) {
         PyUnicode sep = coerceToUnicode(sepObj);
-        if (isBasicPlane() && (sep == null || sep.isBasicPlane())) {
-            if (sep != null) {
-                return str_split(sep.string, maxsplit);
-            } else {
-                return str_split(null, maxsplit);
-            }
+        if (sep != null) {
+            return str_split(sep.string, maxsplit);
+        } else {
+            return str_split(null, maxsplit);
         }
-        return new PyList(newSplitIterator(sep, maxsplit));
     }
 
+    @ExposedMethod(defaults = {"null", "-1"})
+    final PyList unicode_rsplit(PyObject sepObj, int maxsplit) {
+        PyUnicode sep = coerceToUnicode(sepObj);
+        if (sep != null) {
+            return str_rsplit(sep.string, maxsplit);
+        } else {
+            return str_rsplit(null, maxsplit);
+        }
+    }
+    
     @ExposedMethod(defaults = "false")
     final PyList unicode_splitlines(boolean keepends) {
         if (isBasicPlane()) {
@@ -1030,10 +1060,14 @@ public class PyUnicode extends PyString implements Iterable {
 
     @ExposedMethod(defaults = "-1")
     final PyObject unicode_replace(PyObject oldPieceObj, PyObject newPieceObj, int maxsplit) {
-        StringBuilder buffer = new StringBuilder();
         PyUnicode newPiece = coerceToUnicode(newPieceObj);
         PyUnicode oldPiece = coerceToUnicode(oldPieceObj);
-
+        if (isBasicPlane() && newPiece.isBasicPlane() && oldPiece.isBasicPlane()) {
+            return replace(oldPiece, newPiece, maxsplit);
+        }
+        
+        StringBuilder buffer = new StringBuilder();
+        
         if (oldPiece.getCodePointCount() == 0) {
             Iterator<Integer> iter = newSubsequenceIterator();
             for (int i = 1; (maxsplit == -1 || i < maxsplit) && iter.hasNext(); i++) {
@@ -1071,12 +1105,12 @@ public class PyUnicode extends PyString implements Iterable {
     }
 
     @ExposedMethod(defaults = {"0", "null"})
-    final boolean unicode_startswith(String prefix, int start, PyObject end) {
+    final boolean unicode_startswith(PyObject prefix, int start, PyObject end) {
         return str_startswith(prefix, start, end);
     }
 
     @ExposedMethod(defaults = {"0", "null"})
-    final boolean unicode_endswith(String suffix, int start, PyObject end) {
+    final boolean unicode_endswith(PyObject suffix, int start, PyObject end) {
         return str_endswith(suffix, start, end);
     }
 

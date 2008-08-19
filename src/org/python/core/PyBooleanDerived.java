@@ -553,104 +553,156 @@ public class PyBooleanDerived extends PyBoolean implements Slotted {
     public PyObject __iadd__(PyObject other) {
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__iadd__");
-        if (impl!=null)
-            return impl.__get__(this,self_type).__call__(other);
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,self_type).__call__(other);
+            if (res==Py.NotImplemented)
+                return null;
+            return res;
+        }
         return super.__iadd__(other);
     }
 
     public PyObject __isub__(PyObject other) {
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__isub__");
-        if (impl!=null)
-            return impl.__get__(this,self_type).__call__(other);
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,self_type).__call__(other);
+            if (res==Py.NotImplemented)
+                return null;
+            return res;
+        }
         return super.__isub__(other);
     }
 
     public PyObject __imul__(PyObject other) {
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__imul__");
-        if (impl!=null)
-            return impl.__get__(this,self_type).__call__(other);
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,self_type).__call__(other);
+            if (res==Py.NotImplemented)
+                return null;
+            return res;
+        }
         return super.__imul__(other);
     }
 
     public PyObject __idiv__(PyObject other) {
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__idiv__");
-        if (impl!=null)
-            return impl.__get__(this,self_type).__call__(other);
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,self_type).__call__(other);
+            if (res==Py.NotImplemented)
+                return null;
+            return res;
+        }
         return super.__idiv__(other);
     }
 
     public PyObject __ifloordiv__(PyObject other) {
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__ifloordiv__");
-        if (impl!=null)
-            return impl.__get__(this,self_type).__call__(other);
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,self_type).__call__(other);
+            if (res==Py.NotImplemented)
+                return null;
+            return res;
+        }
         return super.__ifloordiv__(other);
     }
 
     public PyObject __itruediv__(PyObject other) {
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__itruediv__");
-        if (impl!=null)
-            return impl.__get__(this,self_type).__call__(other);
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,self_type).__call__(other);
+            if (res==Py.NotImplemented)
+                return null;
+            return res;
+        }
         return super.__itruediv__(other);
     }
 
     public PyObject __imod__(PyObject other) {
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__imod__");
-        if (impl!=null)
-            return impl.__get__(this,self_type).__call__(other);
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,self_type).__call__(other);
+            if (res==Py.NotImplemented)
+                return null;
+            return res;
+        }
         return super.__imod__(other);
     }
 
     public PyObject __ipow__(PyObject other) {
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__ipow__");
-        if (impl!=null)
-            return impl.__get__(this,self_type).__call__(other);
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,self_type).__call__(other);
+            if (res==Py.NotImplemented)
+                return null;
+            return res;
+        }
         return super.__ipow__(other);
     }
 
     public PyObject __ilshift__(PyObject other) {
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__ilshift__");
-        if (impl!=null)
-            return impl.__get__(this,self_type).__call__(other);
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,self_type).__call__(other);
+            if (res==Py.NotImplemented)
+                return null;
+            return res;
+        }
         return super.__ilshift__(other);
     }
 
     public PyObject __irshift__(PyObject other) {
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__irshift__");
-        if (impl!=null)
-            return impl.__get__(this,self_type).__call__(other);
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,self_type).__call__(other);
+            if (res==Py.NotImplemented)
+                return null;
+            return res;
+        }
         return super.__irshift__(other);
     }
 
     public PyObject __iand__(PyObject other) {
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__iand__");
-        if (impl!=null)
-            return impl.__get__(this,self_type).__call__(other);
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,self_type).__call__(other);
+            if (res==Py.NotImplemented)
+                return null;
+            return res;
+        }
         return super.__iand__(other);
     }
 
     public PyObject __ior__(PyObject other) {
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__ior__");
-        if (impl!=null)
-            return impl.__get__(this,self_type).__call__(other);
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,self_type).__call__(other);
+            if (res==Py.NotImplemented)
+                return null;
+            return res;
+        }
         return super.__ior__(other);
     }
 
     public PyObject __ixor__(PyObject other) {
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__ixor__");
-        if (impl!=null)
-            return impl.__get__(this,self_type).__call__(other);
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,self_type).__call__(other);
+            if (res==Py.NotImplemented)
+                return null;
+            return res;
+        }
         return super.__ixor__(other);
     }
 
@@ -683,12 +735,17 @@ public class PyBooleanDerived extends PyBoolean implements Slotted {
         PyObject impl=self_type.lookup("__hash__");
         if (impl!=null) {
             PyObject res=impl.__get__(this,self_type).__call__();
-            if (res instanceof PyInteger)
+            if (res instanceof PyInteger) {
                 return((PyInteger)res).getValue();
+            } else
+                if (res instanceof PyLong) {
+                    return((PyLong)res).getValue().intValue();
+                }
             throw Py.TypeError("__hash__ should return a int");
         }
-        if (self_type.lookup("__eq__")!=null||self_type.lookup("__cmp__")!=null)
+        if (self_type.lookup("__eq__")!=null||self_type.lookup("__cmp__")!=null) {
             throw Py.TypeError("unhashable type");
+        }
         return super.hashCode();
     }
 
@@ -708,16 +765,22 @@ public class PyBooleanDerived extends PyBoolean implements Slotted {
 
     public int __cmp__(PyObject other) {
         PyType self_type=getType();
-        PyObject impl=self_type.lookup("__cmp__");
-        if (impl!=null) {
-            PyObject res=impl.__get__(this,self_type).__call__(other);
-            if (res instanceof PyInteger) {
-                int v=((PyInteger)res).getValue();
-                return v<0?-1:v>0?1:0;
-            }
-            throw Py.TypeError("__cmp__ should return a int");
+        PyType[]where_type=new PyType[1];
+        PyObject impl=self_type.lookup_where("__cmp__",where_type);
+        // Full Compatibility with CPython __cmp__:
+        // If the derived type don't override __cmp__, the
+        // *internal* super().__cmp__ should be called, not the
+        // exposed one. The difference is that the exposed __cmp__
+        // throws a TypeError if the argument is an instance of the same type.
+        if (impl==null||where_type[0]==TYPE||Py.isSubClass(TYPE,where_type[0])) {
+            return super.__cmp__(other);
         }
-        return super.__cmp__(other);
+        PyObject res=impl.__get__(this,self_type).__call__(other);
+        if (res instanceof PyInteger) {
+            int v=((PyInteger)res).getValue();
+            return v<0?-1:v>0?1:0;
+        }
+        throw Py.TypeError("__cmp__ should return a int");
     }
 
     public boolean __nonzero__() {
@@ -842,29 +905,43 @@ public class PyBooleanDerived extends PyBoolean implements Slotted {
     }
 
     public PyObject __getslice__(PyObject start,PyObject stop,PyObject step) { // ???
+        if (step!=null) {
+            return __getitem__(new PySlice(start,stop,step));
+        }
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__getslice__");
         if (impl!=null) {
-            return impl.__get__(this,self_type).__call__(start,stop);
+            PyObject[]indices=PySlice.indices2(this,start,stop);
+            return impl.__get__(this,self_type).__call__(indices[0],indices[1]);
         }
         return super.__getslice__(start,stop,step);
     }
 
     public void __setslice__(PyObject start,PyObject stop,PyObject step,PyObject value) {
+        if (step!=null) {
+            __setitem__(new PySlice(start,stop,step),value);
+            return;
+        }
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__setslice__");
         if (impl!=null) {
-            impl.__get__(this,self_type).__call__(start,stop,value);
+            PyObject[]indices=PySlice.indices2(this,start,stop);
+            impl.__get__(this,self_type).__call__(indices[0],indices[1],value);
             return;
         }
         super.__setslice__(start,stop,step,value);
     }
 
     public void __delslice__(PyObject start,PyObject stop,PyObject step) {
+        if (step!=null) {
+            __delitem__(new PySlice(start,stop,step));
+            return;
+        }
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__delslice__");
         if (impl!=null) {
-            impl.__get__(this,self_type).__call__(start,stop);
+            PyObject[]indices=PySlice.indices2(this,start,stop);
+            impl.__get__(this,self_type).__call__(indices[0],indices[1]);
             return;
         }
         super.__delslice__(start,stop,step);
@@ -895,30 +972,44 @@ public class PyBooleanDerived extends PyBoolean implements Slotted {
         }
     }
 
-    public PyObject __findattr__(String name) {
+    public PyObject __findattr_ex__(String name) {
         PyType self_type=getType();
+        // TODO: We should speed this up. As the __getattribute__ slot almost never
+        //       changes, it is a good candidate for caching, as PyClass does with
+        //       __getattr__. See #1102.
         PyObject getattribute=self_type.lookup("__getattribute__");
         PyString py_name=null;
+        PyException firstAttributeError=null;
         try {
             if (getattribute!=null) {
-                return getattribute.__get__(this,self_type).__call__(py_name=PyString.fromInterned(name));
+                py_name=PyString.fromInterned(name);
+                return getattribute.__get__(this,self_type).__call__(py_name);
             } else {
-                return super.__findattr__(name);
+                Py.Warning(String.format("__getattribute__ not found on type %s",self_type.getName()));
+                PyObject ret=super.__findattr_ex__(name);
+                if (ret!=null) {
+                    return ret;
+                } // else: pass through to __getitem__ invocation
             }
         } catch (PyException e) {
-            if (Py.matchException(e,Py.AttributeError)) {
-                PyObject getattr=self_type.lookup("__getattr__");
-                if (getattr!=null)
-                    try {
-                        return getattr.__get__(this,self_type).__call__(py_name!=null?py_name:PyString.fromInterned(name));
-                    } catch (PyException e1) {
-                        if (!Py.matchException(e1,Py.AttributeError))
-                            throw e1;
-                    }
-                return null;
+            if (!Py.matchException(e,Py.AttributeError)) {
+                throw e;
+            } else {
+                firstAttributeError=e; // saved to avoid swallowing custom AttributeErrors
+            // and pass through to __getattr__ invocation.
             }
-            throw e;
         }
+        PyObject getattr=self_type.lookup("__getattr__");
+        if (getattr!=null) {
+            if (py_name==null) {
+                py_name=PyString.fromInterned(name);
+            }
+            return getattr.__get__(this,self_type).__call__(py_name);
+        }
+        if (firstAttributeError!=null) {
+            throw firstAttributeError;
+        }
+        return null;
     }
 
     public void __setattr__(String name,PyObject value) {
@@ -1002,6 +1093,50 @@ public class PyBooleanDerived extends PyBoolean implements Slotted {
                 }
             }
         }
+    }
+
+    public PyObject __index__() {
+        PyType self_type=getType();
+        PyObject impl=self_type.lookup("__index__");
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,self_type).__call__();
+            if (res instanceof PyInteger||res instanceof PyLong) {
+                return res;
+            }
+            throw Py.TypeError(String.format("__index__ returned non-(int,long) (type %s)",res.getType().fastGetName()));
+        }
+        return super.__index__();
+    }
+
+    public Object __tojava__(Class c) {
+        // If we are not being asked by the "default" conversion to java, then
+        // we can provide this as the result, as long as it is a instance of the
+        // specified class. Without this, derived.__tojava__(PyObject.class)
+        // would broke. (And that's not pure speculation: PyReflectedFunction's
+        // ReflectedArgs asks for things like that).
+        if ((c!=Object.class)&&(c.isInstance(this))) {
+            return this;
+        }
+        // Otherwise, we call the derived __tojava__, if it exists:
+        PyType self_type=getType();
+        PyObject impl=self_type.lookup("__tojava__");
+        if (impl!=null)
+            return impl.__get__(this,self_type).__call__(Py.java2py(c)).__tojava__(Object.class);
+        return super.__tojava__(c);
+    }
+
+    public Object __coerce_ex__(PyObject o) {
+        PyType self_type=getType();
+        PyObject impl=self_type.lookup("__coerce__");
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,self_type).__call__(o);
+            if (res==Py.NotImplemented)
+                return Py.None;
+            if (!(res instanceof PyTuple))
+                throw Py.TypeError("__coerce__ didn't return a 2-tuple");
+            return((PyTuple)res).getArray();
+        }
+        return super.__coerce_ex__(o);
     }
 
     public String toString() {

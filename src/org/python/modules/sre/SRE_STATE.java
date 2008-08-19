@@ -21,7 +21,7 @@ import org.python.core.PyString;
 public class SRE_STATE {
     
     /*
-     * Generated from Python-2.3.5 like 'python headerToJava.py < Modules/sre_constants.h'
+     * Generated from Python-2.4.5 like 'python headerToJava.py < Modules/sre_constants.h'
      * where headerToJava.py contains the following code 
 import sys
 for line in sys.stdin:
@@ -31,7 +31,7 @@ for line in sys.stdin:
        print '%s = %s;' % (' '.join(segs[:-1]), segs[-1])                                                          
      */
     //BEGIN generated code
-    public static final int SRE_MAGIC = 20030419;
+    public static final int SRE_MAGIC = 20031017;
     public static final int SRE_OP_FAILURE = 0;
     public static final int SRE_OP_SUCCESS = 1;
     public static final int SRE_OP_ANY = 2;
@@ -45,24 +45,25 @@ for line in sys.stdin:
     public static final int SRE_OP_CHARSET = 10;
     public static final int SRE_OP_BIGCHARSET = 11;
     public static final int SRE_OP_GROUPREF = 12;
-    public static final int SRE_OP_GROUPREF_IGNORE = 13;
-    public static final int SRE_OP_IN = 14;
-    public static final int SRE_OP_IN_IGNORE = 15;
-    public static final int SRE_OP_INFO = 16;
-    public static final int SRE_OP_JUMP = 17;
-    public static final int SRE_OP_LITERAL = 18;
-    public static final int SRE_OP_LITERAL_IGNORE = 19;
-    public static final int SRE_OP_MARK = 20;
-    public static final int SRE_OP_MAX_UNTIL = 21;
-    public static final int SRE_OP_MIN_UNTIL = 22;
-    public static final int SRE_OP_NOT_LITERAL = 23;
-    public static final int SRE_OP_NOT_LITERAL_IGNORE = 24;
-    public static final int SRE_OP_NEGATE = 25;
-    public static final int SRE_OP_RANGE = 26;
-    public static final int SRE_OP_REPEAT = 27;
-    public static final int SRE_OP_REPEAT_ONE = 28;
-    public static final int SRE_OP_SUBPATTERN = 29;
-    public static final int SRE_OP_MIN_REPEAT_ONE = 30;
+    public static final int SRE_OP_GROUPREF_EXISTS = 13;
+    public static final int SRE_OP_GROUPREF_IGNORE = 14;
+    public static final int SRE_OP_IN = 15;
+    public static final int SRE_OP_IN_IGNORE = 16;
+    public static final int SRE_OP_INFO = 17;
+    public static final int SRE_OP_JUMP = 18;
+    public static final int SRE_OP_LITERAL = 19;
+    public static final int SRE_OP_LITERAL_IGNORE = 20;
+    public static final int SRE_OP_MARK = 21;
+    public static final int SRE_OP_MAX_UNTIL = 22;
+    public static final int SRE_OP_MIN_UNTIL = 23;
+    public static final int SRE_OP_NOT_LITERAL = 24;
+    public static final int SRE_OP_NOT_LITERAL_IGNORE = 25;
+    public static final int SRE_OP_NEGATE = 26;
+    public static final int SRE_OP_RANGE = 27;
+    public static final int SRE_OP_REPEAT = 28;
+    public static final int SRE_OP_REPEAT_ONE = 29;
+    public static final int SRE_OP_SUBPATTERN = 30;
+    public static final int SRE_OP_MIN_REPEAT_ONE = 31;
     public static final int SRE_AT_BEGINNING = 0;
     public static final int SRE_AT_BEGINNING_LINE = 1;
     public static final int SRE_AT_BEGINNING_STRING = 2;
@@ -241,12 +242,12 @@ for line in sys.stdin:
         return false;
     }
 
-    private void mark_fini() {
+    private void mark_fini() { // XXX => data_stack_dealloc in 2.4
         mark_stack = null;
         mark_stack_size = mark_stack_base = 0;
     }
 
-    private int mark_save(int lo, int hi) {
+    private int mark_save(int lo, int hi) { // XXX => data_stack_grow in 2.4
         if (hi <= lo)
             return mark_stack_base;
 
@@ -263,13 +264,13 @@ for line in sys.stdin:
                 newsize = 512;
                 if (newsize < minsize)
                     newsize = minsize;
-                //TRACE(0, ptr, "allocate stack " + newsize);
+                TRACE(0, ptr, "allocate stack " + newsize);
                 stack = new int[newsize];
             } else {
                 /* grow the stack */
                 while (newsize < minsize)
                     newsize += newsize;
-                //TRACE(0, ptr, "grow stack to " + newsize);
+                TRACE(0, ptr, "grow stack to " + newsize);
                 stack = new int[newsize];
                 System.arraycopy(mark_stack, 0, stack, 0, mark_stack.length);
             }
@@ -277,7 +278,7 @@ for line in sys.stdin:
             mark_stack_size = newsize;
         }
 
-        //TRACE(0, ptr, "copy " + lo + ":" + hi + " to " + mark_stack_base + " (" + size + ")");
+        TRACE(0, ptr, "copy " + lo + ":" + hi + " to " + mark_stack_base + " (" + size + ")");
 
         System.arraycopy(mark, lo, mark_stack, mark_stack_base, size);
 
@@ -294,7 +295,7 @@ for line in sys.stdin:
 
         this.mark_stack_base = mark_stack_base - size;
 
-        //TRACE(0, ptr, "copy " + lo + ":" + hi +  " from " + mark_stack_base);
+        TRACE(0, ptr, "copy " + lo + ":" + hi +  " from " + mark_stack_base);
 
         System.arraycopy(mark_stack, this.mark_stack_base, mark, lo, size);
     }
@@ -302,7 +303,7 @@ for line in sys.stdin:
     final boolean SRE_AT(int ptr, int at) {
         /* check if pointer is at given position. */
 
-        boolean thiS, that;
+        boolean thisp, thatp;
 
         switch (at) {
         case SRE_AT_BEGINNING:
@@ -325,34 +326,34 @@ for line in sys.stdin:
             /* word boundary */
             if (beginning == end)
                 return false;
-            that = (ptr > beginning) ? SRE_IS_WORD(str[ptr-1]) : false;
-            thiS = (ptr < end) ? SRE_IS_WORD(str[ptr]) : false;
-            return thiS != that;
+            thatp = (ptr > beginning) ? SRE_IS_WORD(str[ptr-1]) : false;
+            thisp = (ptr < end) ? SRE_IS_WORD(str[ptr]) : false;
+            return thisp != thatp;
 
         case SRE_AT_NON_BOUNDARY:
             /* word non-boundary */
             if (beginning == end)
                 return false;
-            that = (ptr > beginning) ? SRE_IS_WORD(str[ptr-1]) : false;
-            thiS = (ptr < end) ? SRE_IS_WORD(str[ptr]) : false;
-            return thiS == that;
+            thatp = (ptr > beginning) ? SRE_IS_WORD(str[ptr-1]) : false;
+            thisp = (ptr < end) ? SRE_IS_WORD(str[ptr]) : false;
+            return thisp == thatp;
 
         case SRE_AT_LOC_BOUNDARY:
         case SRE_AT_UNI_BOUNDARY:
             if (beginning == end)
                 return false;
-            that = (ptr > beginning) ? SRE_LOC_IS_WORD(str[ptr-1]) : false;
-            thiS = (ptr < end) ? SRE_LOC_IS_WORD(str[ptr]) : false;
-            return thiS != that;
+            thatp = (ptr > beginning) ? SRE_LOC_IS_WORD(str[ptr-1]) : false;
+            thisp = (ptr < end) ? SRE_LOC_IS_WORD(str[ptr]) : false;
+            return thisp != thatp;
 
         case SRE_AT_LOC_NON_BOUNDARY:
         case SRE_AT_UNI_NON_BOUNDARY:
             /* word non-boundary */
             if (beginning == end)
                 return false;
-            that = (ptr > beginning) ? SRE_LOC_IS_WORD(str[ptr-1]) : false;
-            thiS = (ptr < end) ? SRE_LOC_IS_WORD(str[ptr]) : false;
-            return thiS == that;
+            thatp = (ptr > beginning) ? SRE_LOC_IS_WORD(str[ptr-1]) : false;
+            thisp = (ptr < end) ? SRE_LOC_IS_WORD(str[ptr]) : false;
+            return thisp == thatp;
         }
 
         return false;
@@ -364,73 +365,81 @@ for line in sys.stdin:
         boolean ok = true;
 
         for (;;) {
-            switch (set[setidx++]) {
+            switch ((int)set[setidx++]) {
 
+            case SRE_OP_FAILURE:
+                TRACE(setidx, ch, "CHARSET FAILURE");
+                return !ok;
+                
             case SRE_OP_LITERAL:
-                //TRACE(setidx, ch, "CHARSET LITERAL " + (int) set[setidx]);
+                TRACE(setidx, ch, "CHARSET LITERAL " + (int) set[setidx]);
                 /* <LITERAL> <code> */
                 if (ch == set[setidx])
                     return ok;
                 setidx++;
                 break;
+                
+            case SRE_OP_CATEGORY:
+                /* <CATEGORY> <code> */
+                TRACE(setidx, ch, "CHARSET CHARSET " + (int) set[setidx]);
+                if (sre_category((int)set[setidx], ch))
+                    return ok;
+                setidx++;
+                break;
 
+            case SRE_OP_CHARSET:
+                TRACE(setidx, ch, "CHARSET CHARSET ");
+                /* <CHARSET> <bitmap> (16 bits per code word) */
+//                if (ch < 256 &&
+//                            (set[setidx + (ch >> 4)] & (1 << (ch & 15))) != 0)
+//                    return ok;
+//                setidx += 16;
+                
+                /* <CHARSET> <bitmap> (32 bits per code word) */
+                if (ch < 256 && (set[setidx + (ch >> 5)] & (1 << (ch & 31))) != 0)
+                    return ok;
+                setidx += 8;
+                break;
+                
             case SRE_OP_RANGE:
                 /* <RANGE> <lower> <upper> */
-                //TRACE(setidx, ch, "CHARSET RANGE " + (int) set[setidx] + " " + (int) set[setidx+1]);
+                TRACE(setidx, ch, "CHARSET RANGE " + (int) set[setidx] + " " + (int) set[setidx+1]);
                 if (set[setidx] <= ch && ch <= set[setidx+1])
                     return ok;
                 setidx += 2;
                 break;
 
-            case SRE_OP_CHARSET:
-                //TRACE(setidx, ch, "CHARSET CHARSET ");
-                /* <CHARSET> <bitmap> (16 bits per code word) */
-                if (ch < 256 &&
-                            (set[setidx + (ch >> 4)] & (1 << (ch & 15))) != 0)
-                    return ok;
-                setidx += 16;
-                break;
-
-            case SRE_OP_BIGCHARSET:
-                /* <BIGCHARSET> <blockcount> <256 blockindices> <blocks> */
-                // TRACE(setidx, ch, "CHARSET BIGCHARSET ");              
-                int count = set[setidx++];
-                int shift = ((ch >> 8) & 1) == 0 ? 8 : 0;
-                int block = (set[setidx + (ch >> 8) / 2] >> shift) & 0xFF;
-                setidx += 128;
-                int idx = block*16 + ((ch & 255)>>4);
-                if ((set[setidx + idx] & (1 << (ch & 15))) != 0)
-                    return ok;
-                setidx += count*16;
-
-                // this is a rewriting of what is in _sre.c in python 2.5;
-                // however we need a corresponding setting of the blocks
-//                int count = set[setidx++];
-//                int block = ch < 65536 ? set[ch >> 8] : -1;
-//                setidx += 64;
-//                int idx = block*8 + ((ch & 255)>>5);
-//                if (block >=0 &&
-//                    ((set[setidx + idx] & (1 << (ch & 31))) != 0))
-//                    return ok;
-//                setidx += count*8;
-                break;
-
-            case SRE_OP_CATEGORY:
-                /* <CATEGORY> <code> */
-                //TRACE(setidx, ch, "CHARSET CHARSET " + (int) set[setidx]);
-                if (sre_category(set[setidx], ch))
-                    return ok;
-                setidx++;
-                break;
-
             case SRE_OP_NEGATE:
-                //TRACE(setidx, ch, "CHARSET NEGATE");
+                TRACE(setidx, ch, "CHARSET NEGATE");
                 ok = !ok;
                 break;
-
-            case SRE_OP_FAILURE:
-                //TRACE(setidx, ch, "CHARSET FAILURE");
-                return !ok;
+                
+            case SRE_OP_BIGCHARSET:
+                /* <BIGCHARSET> <blockcount> <256 blockindices> <blocks> */
+                TRACE(setidx, ch, "CHARSET BIGCHARSET ");
+                
+//                count = *(set++);
+//                if (!(ch & ~65535))
+//                    block = ((unsigned char*)set)[ch >> 8];
+//                else
+//                    block = -1;
+//                set += 64;
+//                if (block >=0 &&
+//                    (set[block*8 + ((ch & 255)>>5)] & (1 << (ch & 31))))
+//                    return ok;
+//                set += count*8;
+  
+                int count = set[setidx++];
+                int block;
+                if (ch < 65536)
+                    block = set[setidx + ch >> 8];
+                else
+                    block = -1;
+                setidx += 64;
+                if (block >= 0 && (set[setidx + block*8 + ((ch & 255)>>5)] & (1 << (ch & 31))) != 0)
+                    return ok;
+                setidx += count * 8; 
+                break;
 
             default:
                 // TRACE(setidx, ch, "CHARSET default (internal error)");
@@ -453,24 +462,31 @@ for line in sys.stdin:
 
         switch (pattern[pidx]) {
 
+        case SRE_OP_IN:
+            /* repeated set */
+            TRACE(pidx, ptr, "COUNT IN");
+            while (ptr < end && SRE_CHARSET(pattern, pidx + 2, str[ptr]))
+                ptr++;
+            break;
+            
         case SRE_OP_ANY:
             /* repeated dot wildcard. */
-            //TRACE(pidx, ptr, "COUNT ANY");
+            TRACE(pidx, ptr, "COUNT ANY");
             while (ptr < end && !SRE_IS_LINEBREAK(str[ptr]))
                 ptr++;
             break;
 
         case SRE_OP_ANY_ALL:
-            /* repeated dot wildcare.  skip to the end of the target
+            /* repeated dot wildcard.  skip to the end of the target
                string, and backtrack from there */
-            //TRACE(pidx, ptr, "COUNT ANY_ALL");
+            TRACE(pidx, ptr, "COUNT ANY_ALL");
             ptr = end;
             break;
 
         case SRE_OP_LITERAL:
             /* repeated literal */
             chr = pattern[pidx+1];
-            //TRACE(pidx, ptr, "COUNT LITERAL " + chr);
+            TRACE(pidx, ptr, "COUNT LITERAL " + chr);
             while (ptr < end && str[ptr] == chr)
                 ptr++;
             break;
@@ -478,7 +494,7 @@ for line in sys.stdin:
         case SRE_OP_LITERAL_IGNORE:
             /* repeated literal */
             chr = pattern[pidx+1];
-            //TRACE(pidx, ptr, "COUNT LITERAL_IGNORE " + (int) chr);
+            TRACE(pidx, ptr, "COUNT LITERAL_IGNORE " + (int) chr);
             while (ptr < end && lower(str[ptr]) == chr)
                 ptr++;
             break;
@@ -486,7 +502,7 @@ for line in sys.stdin:
         case SRE_OP_NOT_LITERAL:
             /* repeated non-literal */
             chr = pattern[pidx+1];
-            //TRACE(pidx, ptr, "COUNT NOT_LITERAL " + (int) chr);
+            TRACE(pidx, ptr, "COUNT NOT_LITERAL " + (int) chr);
             while (ptr < end && str[ptr] != chr)
                 ptr++;
             break;
@@ -494,21 +510,15 @@ for line in sys.stdin:
         case SRE_OP_NOT_LITERAL_IGNORE:
             /* repeated non-literal */
             chr = pattern[pidx+1];
-            //TRACE(pidx, ptr, "COUNT NOT_LITERAL_IGNORE " + (int) chr);
+            TRACE(pidx, ptr, "COUNT NOT_LITERAL_IGNORE " + (int) chr);
             while (ptr < end && lower(str[ptr]) != chr)
                 ptr++;
             break;
 
-        case SRE_OP_IN:
-            /* repeated set */
-            //TRACE(pidx, ptr, "COUNT IN");
-            while (ptr < end && SRE_CHARSET(pattern, pidx + 2, str[ptr]))
-                ptr++;
-            break;
 
         default:
             /* repeated single character pattern */
-            //TRACE(pidx, ptr, "COUNT SUBPATTERN");
+            TRACE(pidx, ptr, "COUNT SUBPATTERN");
             while (this.ptr < end) {
                 i = SRE_MATCH(pattern, pidx, level);
                 if (i < 0)
@@ -532,7 +542,7 @@ for line in sys.stdin:
 
         int lastmark, lastindex, mark_stack_base = 0;
 
-        //TRACE(pidx, ptr, "ENTER " + level);
+        TRACE(pidx, ptr, "ENTER " + level);
 
         if (level > USE_RECURSION_LIMIT)
            return SRE_ERROR_RECURSION_LIMIT;
@@ -551,42 +561,23 @@ for line in sys.stdin:
 
             switch (pattern[pidx++]) {
 
-            case SRE_OP_FAILURE:
-                /* immediate failure */
-                //TRACE(pidx, ptr, "FAILURE");
-                return 0;
-
-            case SRE_OP_SUCCESS:
-                /* end of pattern */
-                //TRACE(pidx, ptr, "SUCCESS");
-                this.ptr = ptr;
-                return 1;
-
-            case SRE_OP_AT:
-                /* match at given position */
-                /* <AT> <code> */
-                //TRACE(pidx, ptr, "AT " + (int) pattern[pidx]);
-                if (!SRE_AT(ptr, pattern[pidx]))
-                    return 0;
+            case SRE_OP_MARK:
+                /* set mark */
+                /* <MARK> <gid> */
+                TRACE(pidx, ptr, "MARK " + (int) pattern[pidx]);
+                i = (int)pattern[pidx];
+                if ((i & 1) != 0)
+                    this.lastindex = i / 2 + 1;
+                if (i > this.lastmark)
+                    this.lastmark = i;
+                mark[i] = ptr;
                 pidx++;
-                break;
-
-            case SRE_OP_CATEGORY:
-                /* match at given category */
-                /* <CATEGORY> <code> */
-                //TRACE(pidx, ptr, "CATEGORY " + (int)pattern[pidx]);
-
-                if (ptr >= end || !sre_category(pattern[pidx], str[ptr]))
-                    return 0;
-
-                pidx++;
-                ptr++;
                 break;
 
             case SRE_OP_LITERAL:
                 /* match literal character */
                 /* <LITERAL> <code> */
-                //TRACE(pidx, ptr, "LITERAL " + (int) pattern[pidx]);
+                TRACE(pidx, ptr, "LITERAL " + (int) pattern[pidx]);
 
                 if (ptr >= end || str[ptr] != pattern[pidx])
                     return 0;
@@ -597,16 +588,43 @@ for line in sys.stdin:
             case SRE_OP_NOT_LITERAL:
                 /* match anything that is not literal character */
                 /* args: <code> */
-                //TRACE(pidx, ptr, "NOT_LITERAL " + (int) pattern[pidx]);
+                TRACE(pidx, ptr, "NOT_LITERAL " + (int) pattern[pidx]);
                 if (ptr >= end || str[ptr] == pattern[pidx])
                     return 0;
+                pidx++;
+                ptr++;
+                break;
+               
+            case SRE_OP_SUCCESS:
+                /* end of pattern */
+                TRACE(pidx, ptr, "SUCCESS");
+                this.ptr = ptr;
+                return 1;
+
+            case SRE_OP_AT:
+                /* match at given position */
+                /* <AT> <code> */
+                TRACE(pidx, ptr, "AT " + (int) pattern[pidx]);
+                if (!SRE_AT(ptr, (int)pattern[pidx]))
+                    return 0;
+                pidx++;
+                break;
+
+            case SRE_OP_CATEGORY:
+                /* match at given category */
+                /* <CATEGORY> <code> */
+                TRACE(pidx, ptr, "CATEGORY " + (int)pattern[pidx]);
+
+                if (ptr >= end || !sre_category((int)pattern[pidx], str[ptr]))
+                    return 0;
+
                 pidx++;
                 ptr++;
                 break;
 
             case SRE_OP_ANY:
                 /* match anything */
-                //TRACE(pidx, ptr, "ANY");
+                TRACE(pidx, ptr, "ANY");
                 if (ptr >= end || SRE_IS_LINEBREAK(str[ptr]))
                     return 0;
                 ptr++;
@@ -615,7 +633,7 @@ for line in sys.stdin:
             case SRE_OP_ANY_ALL:
                 /* match anything */
                 /* <ANY_ALL> */
-                //TRACE(pidx, ptr, "ANY_ALL");
+                TRACE(pidx, ptr, "ANY_ALL");
                 if (ptr >= end)
                     return 0;
                 ptr++;
@@ -624,49 +642,15 @@ for line in sys.stdin:
             case SRE_OP_IN:
                 /* match set member (or non_member) */
                 /* <IN> <skip> <set> */
-                //TRACE(pidx, ptr, "IN");
+                TRACE(pidx, ptr, "IN");
                 if (ptr >= end || !SRE_CHARSET(pattern, pidx + 1, str[ptr]))
                     return 0;
                 pidx += pattern[pidx];
                 ptr++;
                 break;
 
-            case SRE_OP_GROUPREF:
-                /* match backreference */
-                i = pattern[pidx];
-                //TRACE(pidx, ptr, "GROUPREF " + i);
-                int p = mark[i+i];
-                int e = mark[i+i+1];
-                if (p == -1 || e == -1 || e < p)
-                    return 0;
-                while (p < e) {
-                    if (ptr >= end || str[ptr] != str[p])
-                        return 0;
-                    p++;
-                    ptr++;
-                }
-                pidx++;
-                break;
-
-            case SRE_OP_GROUPREF_IGNORE:
-                /* match backreference */
-                i = pattern[pidx];
-                //TRACE(pidx, ptr, "GROUPREF_IGNORE " + i);
-                p = mark[i+i];
-                e = mark[i+i+1];
-                if (p == -1 || e == -1 || e < p)
-                    return 0;
-                while (p < e) {
-                    if (ptr >= end || lower(str[ptr]) != lower(str[p]))
-                        return 0;
-                    p++;
-                    ptr++;
-                }
-                pidx++;
-                break;
-
             case SRE_OP_LITERAL_IGNORE:
-                //TRACE(pidx, ptr, "LITERAL_IGNORE " + (int) pattern[pidx]);
+                TRACE(pidx, ptr, "LITERAL_IGNORE " + (int) pattern[pidx]);
                 if (ptr >= end || lower(str[ptr]) != lower(pattern[pidx]))
                     return 0;
                 pidx++;
@@ -674,7 +658,7 @@ for line in sys.stdin:
                 break;
 
             case SRE_OP_NOT_LITERAL_IGNORE:
-                //TRACE(pidx, ptr, "NOT_LITERAL_IGNORE " + (int) pattern[pidx]);
+                TRACE(pidx, ptr, "NOT_LITERAL_IGNORE " + (int) pattern[pidx]);
                 if (ptr >= end || lower(str[ptr]) == lower(pattern[pidx]))
                     return 0;
                 pidx++;
@@ -682,7 +666,7 @@ for line in sys.stdin:
                 break;
 
             case SRE_OP_IN_IGNORE:
-                //TRACE(pidx, ptr, "IN_IGNORE");
+                TRACE(pidx, ptr, "IN_IGNORE");
                 if (ptr >= end ||
                         !SRE_CHARSET(pattern, pidx + 1, lower(str[ptr])))
                     return 0;
@@ -690,53 +674,12 @@ for line in sys.stdin:
                 ptr++;
                 break;
 
-            case SRE_OP_MARK:
-                /* set mark */
-                /* <MARK> <gid> */
-                //TRACE(pidx, ptr, "MARK " + (int) pattern[pidx]);
-                i = pattern[pidx];
-                if ((i & 1) != 0)
-                    this.lastindex = i / 2 + 1;
-                if (i > this.lastmark)
-                    this.lastmark = i;
-                mark[i] = ptr;
-                pidx++;
-                break;
 
             case SRE_OP_JUMP:
             case SRE_OP_INFO:
                 /* jump forward */
                 /* <JUMP> <offset> */
-                //TRACE(pidx, ptr, "JUMP " + (int) pattern[pidx]);
-                pidx += pattern[pidx];
-                break;
-
-            case SRE_OP_ASSERT:
-                /* assert subpattern */
-                /* args: <skip> <back> <pattern> */
-                //TRACE(pidx, ptr, "ASSERT " + (int) pattern[pidx+1]);
-
-                this.ptr = ptr - pattern[pidx + 1];
-                if (this.ptr < this.beginning)
-                    return 0;
-                i = SRE_MATCH(pattern, pidx + 2, level + 1);
-                if (i <= 0)
-                    return i;
-                pidx += pattern[pidx];
-                break;
-
-            case SRE_OP_ASSERT_NOT:
-                /* assert not subpattern */
-                /* args: <skip> <pattern> */
-                //TRACE(pidx, ptr, "ASSERT_NOT " + (int) pattern[pidx]);
-                this.ptr = ptr - pattern[pidx + 1];
-                if (this.ptr >= this.beginning) {
-                    i = SRE_MATCH(pattern, pidx + 2, level + 1);
-                    if (i < 0)
-                        return i;
-                    if (i != 0)
-                        return 0;
-                }
+                TRACE(pidx, ptr, "JUMP " + (int) pattern[pidx]);
                 pidx += pattern[pidx];
                 break;
 
@@ -781,7 +724,7 @@ for line in sys.stdin:
 
                 int mincount = pattern[pidx+1];
 
-                //TRACE(pidx, ptr, "REPEAT_ONE " + mincount + " " + (int)pattern[pidx+2]);
+                TRACE(pidx, ptr, "REPEAT_ONE " + mincount + " " + (int)pattern[pidx+2]);
                 if (ptr + mincount > end)
                     return 0; /* cannot match */
 
@@ -859,7 +802,7 @@ for line in sys.stdin:
                 /* <MIN_REPEAT_ONE> <skip> <1=min> <2=max> item <SUCCESS> tail */
 
 
-                //TRACE(pidx, ptr, "MIN_REPEAT_ONE");
+                TRACE(pidx, ptr, "MIN_REPEAT_ONE");
 
                 if (ptr + pattern[pidx+1] > end)
                     return 0; /* cannot match */
@@ -917,7 +860,7 @@ for line in sys.stdin:
                    by the UNTIL operator (MAX_UNTIL, MIN_UNTIL) */
                 /* <REPEAT> <skip> <1=min> <2=max> item <UNTIL> tail */
 
-                //TRACE(pidx, ptr, "REPEAT " + (int)pattern[pidx+1] + " " + (int)pattern[pidx+2]);
+                TRACE(pidx, ptr, "REPEAT " + (int)pattern[pidx+1] + " " + (int)pattern[pidx+2]);
 
                 SRE_REPEAT rep = new SRE_REPEAT(repeat);
                 rep.count = -1;
@@ -929,8 +872,6 @@ for line in sys.stdin:
 
                 repeat = rep.prev;
                 return i;
-
-
 
             case SRE_OP_MAX_UNTIL:
                 /* maximizing repeat */
@@ -947,7 +888,7 @@ for line in sys.stdin:
 
                 count = rp.count + 1;
 
-                //TRACE(pidx, ptr, "MAX_UNTIL " + count);
+                TRACE(pidx, ptr, "MAX_UNTIL " + count);
 
                 if (count < pattern[rp.pidx + 1]) {
                     /* not enough matches */
@@ -1002,7 +943,7 @@ for line in sys.stdin:
 
                 count = rp.count + 1;
 
-               //TRACE(pidx, ptr, "MIN_UNTIL " + count + " " + rp.pidx);
+               TRACE(pidx, ptr, "MIN_UNTIL " + count + " " + rp.pidx);
 
                 if (count < pattern[rp.pidx + 1]) {
                     /* not enough matches */
@@ -1042,9 +983,89 @@ for line in sys.stdin:
                 this.ptr = ptr;
                 return 0;
 
+                
+            case SRE_OP_GROUPREF:
+                /* match backreference */
+                i = pattern[pidx];
+                TRACE(pidx, ptr, "GROUPREF " + i);
+                int p = mark[i+i];
+                int e = mark[i+i+1];
+                if (p == -1 || e == -1 || e < p)
+                    return 0;
+                while (p < e) {
+                    if (ptr >= end || str[ptr] != str[p])
+                        return 0;
+                    p++;
+                    ptr++;
+                }
+                pidx++;
+                break;
+
+            case SRE_OP_GROUPREF_IGNORE:
+                /* match backreference */
+                i = pattern[pidx];
+                TRACE(pidx, ptr, "GROUPREF_IGNORE " + i);
+                p = mark[i+i];
+                e = mark[i+i+1];
+                if (p == -1 || e == -1 || e < p)
+                    return 0;
+                while (p < e) {
+                    if (ptr >= end || lower(str[ptr]) != lower(str[p]))
+                        return 0;
+                    p++;
+                    ptr++;
+                }
+                pidx++;
+                break;
+                
+            case SRE_OP_GROUPREF_EXISTS:
+                i = pattern[pidx];
+                TRACE(pidx, ptr, "GROUPREF_EXISTS " + i);
+                p = mark[i+i];
+                e = mark[i+i+1];
+                if (p == -1 || e == -1 || e < p) {
+                    pidx += pattern[pidx + 1];
+                    break;
+                }
+                pidx += 2;
+                break;
+                
+            case SRE_OP_ASSERT:
+                /* assert subpattern */
+                /* args: <skip> <back> <pattern> */
+                TRACE(pidx, ptr, "ASSERT " + (int) pattern[pidx+1]);
+
+                this.ptr = ptr - pattern[pidx + 1];
+                if (this.ptr < this.beginning)
+                    return 0;
+                i = SRE_MATCH(pattern, pidx + 2, level + 1);
+                if (i <= 0)
+                    return i;
+                pidx += pattern[pidx];
+                break;
+
+            case SRE_OP_ASSERT_NOT:
+                /* assert not subpattern */
+                /* args: <skip> <pattern> */
+                TRACE(pidx, ptr, "ASSERT_NOT " + (int) pattern[pidx]);
+                this.ptr = ptr - pattern[pidx + 1];
+                if (this.ptr >= this.beginning) {
+                    i = SRE_MATCH(pattern, pidx + 2, level + 1);
+                    if (i < 0)
+                        return i;
+                    if (i != 0)
+                        return 0;
+                }
+                pidx += pattern[pidx];
+                break;
+                
+            case SRE_OP_FAILURE:
+                /* immediate failure */
+                TRACE(pidx, ptr, "FAILURE");
+                return 0;
 
             default:
-                //TRACE(pidx, ptr, "UNKNOWN " + (int) pattern[pidx-1]);
+                TRACE(pidx, ptr, "UNKNOWN " + (int) pattern[pidx-1]);
                 return SRE_ERROR_ILLEGAL;
             }
         }
@@ -1118,7 +1139,7 @@ for line in sys.stdin:
                     } else {
                         if (++i == prefix_len) {
                             /* found a potential match */
-                            //TRACE(pidx, ptr, "SEARCH SCAN " + prefix_skip + " " + prefix_len);
+                            TRACE(pidx, ptr, "SEARCH SCAN " + prefix_skip + " " + prefix_len);
                             this.start = ptr + 1 - prefix_len;
                             this.ptr = ptr + 1 - prefix_len + prefix_skip;
                             if ((flags & SRE_INFO_LITERAL) != 0)
@@ -1148,7 +1169,7 @@ for line in sys.stdin:
                     ptr++;
                 if (ptr == end)
                     return 0;
-                //TRACE(pidx, ptr, "SEARCH LITERAL");
+                TRACE(pidx, ptr, "SEARCH LITERAL");
                 this.start = ptr;
                 this.ptr = ++ptr;
                 if ((flags & SRE_INFO_LITERAL) != 0)
@@ -1166,7 +1187,7 @@ for line in sys.stdin:
                     ptr++;
                 if (ptr == end)
                     return 0;
-                //TRACE(pidx, ptr, "SEARCH CHARSET");
+                TRACE(pidx, ptr, "SEARCH CHARSET");
                 this.start = ptr;
                 this.ptr = ptr;
                 status = SRE_MATCH(pattern, pidx, 1);
@@ -1178,7 +1199,7 @@ for line in sys.stdin:
         } else {
             /* general case */
             while (ptr <= end) {
-                //TRACE(pidx, ptr, "SEARCH");
+                TRACE(pidx, ptr, "SEARCH");
                 this.start = this.ptr = ptr++;
                 status = SRE_MATCH(pattern, pidx, 1);
                 if (status != 0)
@@ -1224,9 +1245,6 @@ for line in sys.stdin:
     /* duplicated from the PatternObject */
     int flags;
 
-
-
-
     public SRE_STATE(PyString str, int start, int end, int flags) {
         this.str = str.toCodePoints();
         int size = str.__len__();
@@ -1263,6 +1281,8 @@ for line in sys.stdin:
         return ((ch) < 128 ? (char)sre_char_lower[ch] : ch);
     }
 
+    // XXX - this is not UTF-16 compliant; also depends on whether from PyString or PyUnicode
+    
     String getslice(int index, String string, boolean empty) {
         int i, j;
 
@@ -1296,7 +1316,12 @@ for line in sys.stdin:
         mark_fini();
     }
 
+    // XXX - this should get hot-spotted out, but for now useful for doing further optimization
+    // of this code (by comparing to CPython 2.5.2)
+    private static final boolean do_trace = false;
     private void TRACE(int pidx, int ptr, String string) {
-        System.out.println("      |" + pidx + "|" + Integer.toHexString(ptr) + ": " + string);
+        if (do_trace) {
+            System.out.println("      |" + pidx + "|" + Integer.toHexString(ptr) + ": " + string);
+        }
     }
 }

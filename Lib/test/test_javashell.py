@@ -1,5 +1,5 @@
 import unittest
-import test_support
+from test import test_support
 
 from org.python.core import PyFile
 import re

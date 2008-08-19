@@ -26,7 +26,14 @@ public class PyObject implements Serializable {
     
     @ExposedNew
     @ExposedMethod
-    final void object___init__(PyObject[] args, String[] keywords) {}
+    final void object___init__(PyObject[] args, String[] keywords) {
+// XXX: attempted fix for object(foo=1), etc        
+// XXX: this doesn't work for metaclasses, for some reason        
+//        if (args.length > 0) {
+//            throw Py.TypeError("default __new__ takes no parameters");
+//        }
+    
+    }
 
     private PyType objtype;
 
@@ -274,7 +281,7 @@ public class PyObject implements Serializable {
      *
      * @param arg0     the first argument to the function.
      * @param arg1     the second argument to the function.
-     **/
+n     **/
     public PyObject __call__(PyObject arg0, PyObject arg1) {
         return __call__(new PyObject[] { arg0, arg1 }, Py.NoKeywords);
     }
@@ -409,6 +416,15 @@ public class PyObject implements Serializable {
     }
     public boolean isSequenceType() {
         return true;
+    }
+
+    /**
+     * Determine if this object can act as an index (implements __index__).
+     *
+     * @return true if the object can act as an index
+     */
+    public boolean isIndex() {
+        return getType().lookup("__index__") != null;
     }
 
     /* The basic functions to implement a mapping */
@@ -565,7 +581,8 @@ public class PyObject implements Serializable {
      * @exception Py.KeyError if the key is not found in the container
      **/
     public void __delitem__(PyObject key) {
-        throw Py.AttributeError("__delitem__");
+        throw Py.TypeError(String.format("'%.200s' object doesn't support item deletion",
+                                         getType().fastGetName()));
     }
 
     /**
@@ -612,15 +629,15 @@ public class PyObject implements Serializable {
     }
 
     public PyObject __getslice__(PyObject start, PyObject stop) {
-        return __getslice__(start, stop, Py.One);
+        return __getslice__(start, stop, null);
     }
 
     public void __setslice__(PyObject start, PyObject stop, PyObject value) {
-        __setslice__(start, stop, Py.One, value);
+        __setslice__(start, stop, null, value);
     }
 
     public void __delslice__(PyObject start, PyObject stop) {
-        __delslice__(start, stop, Py.One);
+        __delslice__(start, stop, null);
     }
 
     /*The basic functions to implement an iterator */
@@ -717,11 +734,7 @@ public class PyObject implements Serializable {
      * <code>__findattr__(name.internedString)</code> with the appropriate
      * args. 
      * 
-     * Classes that wish to implement __getattr__ should override this method
-     * instead (with the appropriate semantics.
-     * 
-     * @param name
-     *            the name to lookup in this namespace
+     * @param name the name to lookup in this namespace
      * 
      * @return the value corresponding to name or null if name is not found
      */
@@ -741,36 +754,58 @@ public class PyObject implements Serializable {
      * @param name the name to lookup in this namespace
      * <b> must be an interned string </b>.
      * @return the value corresponding to name or null if name is not found
-     *
-     * @see #__findattr__(PyString)
      **/
-    public PyObject __findattr__(String name) {
+    public final PyObject __findattr__(String name) {
+        try {
+            return  __findattr_ex__(name);
+        } catch (PyException exc) {
+            if (Py.matchException(exc, Py.AttributeError)) {
+                return null;
+            }
+            throw exc;
+        } 
+    }
+    
+    /**
+     * Attribute lookup hook. If the attribute is not found, null may be 
+     * returned or a Py.AttributeError can be thrown, whatever is more 
+     * correct, efficient and/or convenient for the implementing class.
+     * 
+     * Client code should use {@link #__getattr__(String)} or 
+     * {@link #__findattr__(String)}. Both methods have a clear policy for 
+     * failed lookups. 
+     *  
+     * @return The looked up value. May return null if the attribute is not found 
+     * @throws PyException(AttributeError) if the attribute is not found. This
+     * is not mandatory, null can be returned if it fits the implementation  
+     * better, or for performance reasons. 
+     */
+    public PyObject __findattr_ex__(String name) {
         return object___findattr__(name);
     }
 
     /**
      * Equivalent to the standard Python __getattr__ method.
-     * This method can not be overridden.
-     * Override the <code>__findattr__</code> method instead.
+     *
+     * By default, this method will call
+     * <code>__getattr__(name.internedString)</code> with the appropriate
+     * args. 
      *
      * @param name the name to lookup in this namespace
      * @return the value corresponding to name
      * @exception Py.AttributeError if the name is not found.
      *
-     * @see #__findattr__(PyString)
+     * @see #__findattr_ex__(PyString)
      **/
     public final PyObject __getattr__(PyString name) {
-        PyObject ret = __findattr__(name);
-        if (ret == null)
-            noAttributeError(name.toString());
-        return ret;
+        return __getattr__(name.internedString());
     }
 
     /**
      * A variant of the __getattr__ method which accepts a Java
      * <code>String</code> as the name.
      * This method can not be overridden.
-     * Override the <code>__findattr__</code> method instead.
+     * Override the <code>__findattr_ex__</code> method instead.
      *
      * <b>Warning: name must be an interned string!!!!!!!!</b>
      *
@@ -782,7 +817,7 @@ public class PyObject implements Serializable {
      * @see #__findattr__(java.lang.String)
      **/
     public final PyObject __getattr__(String name) {
-        PyObject ret = __findattr__(name);
+        PyObject ret = __findattr_ex__(name);
         if (ret == null)
             noAttributeError(name);
         return ret;
@@ -919,9 +954,10 @@ public class PyObject implements Serializable {
      * Implements numeric coercion
      *
      * @param o the other object involved in the coercion
-     * @return null if no coercion is possible;
-     * a single PyObject to use to replace o if this is unchanged;
-     * or a PyObject[2] consisting of replacements for this and o.
+     * @return null if coercion is not implemented
+     *         Py.None if coercion was not possible
+     *         a single PyObject to use to replace o if this is unchanged;
+     *         or a PyObject[2] consisting of replacements for this and o.
      **/
     public Object __coerce_ex__(PyObject o) {
         return null;
@@ -963,10 +999,14 @@ public class PyObject implements Serializable {
      *
      * This method can not be overridden.
      * To implement __coerce__ functionality, override __coerce_ex__ instead.
+     * 
+     * Also, <b>do not</b> call this method from exposed 'coerce' methods. 
+     * Instead, Use adaptToCoerceTuple over the result of the overriden 
+     * __coerce_ex__.
      *
      * @param pyo the other object involved in the coercion.
      * @return a tuple of this object and pyo coerced to the same type
-     *         or Py.None if no coercion is possible.
+     *         or Py.NotImplemented if no coercion is possible.
      * @see org.python.core.PyObject#__coerce_ex__(org.python.core.PyObject)
      **/
     public final PyObject __coerce__(PyObject pyo) {
@@ -974,6 +1014,21 @@ public class PyObject implements Serializable {
         if (o == null) {
             throw Py.AttributeError("__coerce__");
         }
+        return adaptToCoerceTuple(o);
+    }
+
+    /**
+     * Adapts the result of __coerce_ex__ to a tuple of two elements, with the
+     * resulting coerced values, or to Py.NotImplemented, if o is Py.None. 
+     * 
+     * This is safe to be used from subclasses exposing '__coerce__' 
+     * (as opposed to {@link #__coerce__(PyObject)}, which calls the virtual
+     * method {@link #__coerce_ex__(PyObject)})
+     * 
+     * @param o either a PyObject[2] or a PyObject, as given by 
+     *        {@link #__coerce_ex__(PyObject)}.
+     */
+    protected final PyObject adaptToCoerceTuple(Object o) {
         if (o == Py.None) {
             return Py.NotImplemented;
         }
@@ -983,8 +1038,6 @@ public class PyObject implements Serializable {
             return new PyTuple(this, (PyObject) o );
         }
     }
-
-
 
     /* The basic comparision operations */
 
@@ -1138,29 +1191,40 @@ public class PyObject implements Serializable {
         if (this == other)
             return 0;
 
-        int result;
-        result = this.__cmp__(other);
-        if (result != -2)
+        int result = _try__cmp__(other);
+        if (result != -2) {
             return result;
-
-        if (!(this instanceof PyInstance)) {
-            result = other.__cmp__(this);
-            if (result != -2)
-                return -result;
         }
-
         return this._default_cmp(other);
     }
 
     /*
      *  Like _cmp_unsafe but limited to ==/!= as 0/!=0,
-     *  avoids to invoke Py.id
+     *  thus it avoids to invoke _default_cmp.
      */
     private final int _cmpeq_unsafe(PyObject other) {
         // Shortcut for equal objects
         if (this == other)
             return 0;
 
+        int result = _try__cmp__(other);
+        if (result != -2) {
+            return result;
+        }
+
+        return this._is(other).__nonzero__()?0:1;
+    }
+
+    /**
+     * Tries a 3-way comparison, using __cmp__. It tries the following
+     * operations until one of them succeed:<ul>
+     *  <li>this.__cmp__(other)
+     *  <li>other.__cmp__(this)
+     *  <li>this._coerce(other) followed by coerced_this.__cmp__(coerced_other)</ul>
+     *
+     * @return -1, 0, -1 or -2, according to the {@link #__cmp__} protocol.
+     */
+    private int _try__cmp__(PyObject other) {
         int result;
         result = this.__cmp__(other);
         if (result != -2)
@@ -1171,8 +1235,23 @@ public class PyObject implements Serializable {
             if (result != -2)
                 return -result;
         }
+        // Final attempt: coerce both arguments and compare that. We are doing
+        // this the same point where CPython 2.5 does. (See
+        // <http://svn.python.org/projects/python/tags/r252/Objects/object.c> at
+        // the end of try_3way_compare).
+        //
+        // This is not exactly was is specified on
+        // <http://docs.python.org/ref/coercion-rules.html>, where coercion is
+        // supposed to happen before trying __cmp__.
 
-        return this._is(other).__nonzero__()?0:1;
+        PyObject[] coerced = _coerce(other);
+        if (coerced != null) {
+            result = coerced[0].__cmp__(coerced[1]);
+            if (result != -2) {
+                return result;
+            }
+        }
+        return -2;
     }
 
 
@@ -1488,7 +1567,7 @@ public class PyObject implements Serializable {
      * @return a string representing this object as a hexadecimal number.
      **/
     public PyString __hex__() {
-        throw Py.AttributeError("__hex__");
+        throw Py.TypeError("hex() argument can't be converted to hex");
     }
 
     /**
@@ -1499,7 +1578,7 @@ public class PyObject implements Serializable {
      * @return a string representing this object as an octal number.
      **/
     public PyString __oct__() {
-        throw Py.AttributeError("__oct__");
+        throw Py.TypeError("oct() argument can't be converted to oct");
     }
 
     /**
@@ -1552,7 +1631,8 @@ public class PyObject implements Serializable {
      * @return +this.
      **/
     public PyObject __pos__() {
-        throw Py.AttributeError("__pos__");
+        throw Py.TypeError(String.format("bad operand type for unary +: '%.200s'",
+                                         getType().fastGetName()));
     }
 
     /**
@@ -1561,7 +1641,8 @@ public class PyObject implements Serializable {
      * @return -this.
      **/
     public PyObject __neg__() {
-        throw Py.AttributeError("__neg__");
+        throw Py.TypeError(String.format("bad operand type for unary -: '%.200s'",
+                                         getType().fastGetName()));
     }
 
     /**
@@ -1570,7 +1651,8 @@ public class PyObject implements Serializable {
      * @return abs(this).
      **/
     public PyObject __abs__() {
-        throw Py.AttributeError("__abs__");
+        throw Py.TypeError(String.format("bad operand type for abs(): '%.200s'",
+                                         getType().fastGetName()));
     }
 
     /**
@@ -1579,7 +1661,19 @@ public class PyObject implements Serializable {
      * @return ~this.
      **/
     public PyObject __invert__() {
-        throw Py.AttributeError("__invert__");
+        throw Py.TypeError(String.format("bad operand type for unary ~: '%.200s'",
+                                         getType().fastGetName()));
+    }
+
+    /**
+     * Equivalent to the standard Python __index__ method.
+     *
+     * @return a PyInteger or PyLong
+     * @throws a Py.TypeError if not supported
+     **/
+    public PyObject __index__() {
+        throw Py.TypeError(String.format("'%.200s' object cannot be interpreted as an index",
+                                         getType().fastGetName()));
     }
     
     /**
@@ -1732,11 +1826,11 @@ public class PyObject implements Serializable {
      * Equivalent to the standard Python __iadd__ method
      * @param     other the object to perform this binary operation with
      *            (the right-hand operand).
-     * @return    the result of the add, or null if this operation
+     * @return    the result of the iadd, or null if this operation
      *            is not defined
      **/
     public PyObject __iadd__(PyObject other) {
-        return _add(other);
+        return null;
     }
 
     /**
@@ -1765,12 +1859,55 @@ public class PyObject implements Serializable {
      **/
     final PyObject _basic_add(PyObject o2) {
         PyObject x=__add__(o2);
-        if (x!=null)
+        if (x!=null) {
             return x;
+        }
         x=o2.__radd__(this);
-        if (x!=null)
+        if (x!=null) {
             return x;
+        }
         throw Py.TypeError(_unsupportedop("+",o2));
+    }
+
+    /**
+      * Implements the Python expression <code>this += o2</code>
+      * @param     o2 the object to perform this inplace binary
+      *            operation with.
+      * @return    the result of the iadd.
+      * @exception Py.TypeError if this operation can't be performed
+      *            with these operands.
+      **/
+    public final PyObject _iadd(PyObject o2) {
+        PyType t1=this.getType();
+        PyType t2=o2.getType();
+        if (t1==t2||t1.builtin&&t2.builtin) {
+            return this._basic_iadd(o2);
+        }
+        PyObject impl=t1.lookup("__iadd__");
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,t1).__call__(o2);
+            if (res!=Py.NotImplemented) {
+                return res;
+            }
+        }
+        return _binop_rule(t1,o2,t2,"__add__","__radd__","+");
+    }
+
+    /**
+     * Implements the Python expression <code>this += o2</code>
+     * when this and o2 have the same type or are builtin types.
+     * @param     o2 the object to perform this inplace binary
+     *            operation with.
+     * @return    the result of the iadd.
+     * @exception Py.TypeError if this operation can't be performed
+     *            with these operands.
+     **/
+    final PyObject _basic_iadd(PyObject o2) {
+        PyObject x=__iadd__(o2);
+        if (x!=null) {
+            return x;
+        }
+        return this._basic_add(o2);
     }
 
     /**
@@ -1799,11 +1936,11 @@ public class PyObject implements Serializable {
      * Equivalent to the standard Python __isub__ method
      * @param     other the object to perform this binary operation with
      *            (the right-hand operand).
-     * @return    the result of the sub, or null if this operation
+     * @return    the result of the isub, or null if this operation
      *            is not defined
      **/
     public PyObject __isub__(PyObject other) {
-        return _sub(other);
+        return null;
     }
 
     /**
@@ -1832,12 +1969,55 @@ public class PyObject implements Serializable {
      **/
     final PyObject _basic_sub(PyObject o2) {
         PyObject x=__sub__(o2);
-        if (x!=null)
+        if (x!=null) {
             return x;
+        }
         x=o2.__rsub__(this);
-        if (x!=null)
+        if (x!=null) {
             return x;
+        }
         throw Py.TypeError(_unsupportedop("-",o2));
+    }
+
+    /**
+      * Implements the Python expression <code>this -= o2</code>
+      * @param     o2 the object to perform this inplace binary
+      *            operation with.
+      * @return    the result of the isub.
+      * @exception Py.TypeError if this operation can't be performed
+      *            with these operands.
+      **/
+    public final PyObject _isub(PyObject o2) {
+        PyType t1=this.getType();
+        PyType t2=o2.getType();
+        if (t1==t2||t1.builtin&&t2.builtin) {
+            return this._basic_isub(o2);
+        }
+        PyObject impl=t1.lookup("__isub__");
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,t1).__call__(o2);
+            if (res!=Py.NotImplemented) {
+                return res;
+            }
+        }
+        return _binop_rule(t1,o2,t2,"__sub__","__rsub__","-");
+    }
+
+    /**
+     * Implements the Python expression <code>this -= o2</code>
+     * when this and o2 have the same type or are builtin types.
+     * @param     o2 the object to perform this inplace binary
+     *            operation with.
+     * @return    the result of the isub.
+     * @exception Py.TypeError if this operation can't be performed
+     *            with these operands.
+     **/
+    final PyObject _basic_isub(PyObject o2) {
+        PyObject x=__isub__(o2);
+        if (x!=null) {
+            return x;
+        }
+        return this._basic_sub(o2);
     }
 
     /**
@@ -1866,11 +2046,11 @@ public class PyObject implements Serializable {
      * Equivalent to the standard Python __imul__ method
      * @param     other the object to perform this binary operation with
      *            (the right-hand operand).
-     * @return    the result of the mul, or null if this operation
+     * @return    the result of the imul, or null if this operation
      *            is not defined
      **/
     public PyObject __imul__(PyObject other) {
-        return _mul(other);
+        return null;
     }
 
     /**
@@ -1899,12 +2079,55 @@ public class PyObject implements Serializable {
      **/
     final PyObject _basic_mul(PyObject o2) {
         PyObject x=__mul__(o2);
-        if (x!=null)
+        if (x!=null) {
             return x;
+        }
         x=o2.__rmul__(this);
-        if (x!=null)
+        if (x!=null) {
             return x;
+        }
         throw Py.TypeError(_unsupportedop("*",o2));
+    }
+
+    /**
+      * Implements the Python expression <code>this *= o2</code>
+      * @param     o2 the object to perform this inplace binary
+      *            operation with.
+      * @return    the result of the imul.
+      * @exception Py.TypeError if this operation can't be performed
+      *            with these operands.
+      **/
+    public final PyObject _imul(PyObject o2) {
+        PyType t1=this.getType();
+        PyType t2=o2.getType();
+        if (t1==t2||t1.builtin&&t2.builtin) {
+            return this._basic_imul(o2);
+        }
+        PyObject impl=t1.lookup("__imul__");
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,t1).__call__(o2);
+            if (res!=Py.NotImplemented) {
+                return res;
+            }
+        }
+        return _binop_rule(t1,o2,t2,"__mul__","__rmul__","*");
+    }
+
+    /**
+     * Implements the Python expression <code>this *= o2</code>
+     * when this and o2 have the same type or are builtin types.
+     * @param     o2 the object to perform this inplace binary
+     *            operation with.
+     * @return    the result of the imul.
+     * @exception Py.TypeError if this operation can't be performed
+     *            with these operands.
+     **/
+    final PyObject _basic_imul(PyObject o2) {
+        PyObject x=__imul__(o2);
+        if (x!=null) {
+            return x;
+        }
+        return this._basic_mul(o2);
     }
 
     /**
@@ -1933,11 +2156,11 @@ public class PyObject implements Serializable {
      * Equivalent to the standard Python __idiv__ method
      * @param     other the object to perform this binary operation with
      *            (the right-hand operand).
-     * @return    the result of the div, or null if this operation
+     * @return    the result of the idiv, or null if this operation
      *            is not defined
      **/
     public PyObject __idiv__(PyObject other) {
-        return _div(other);
+        return null;
     }
 
     /**
@@ -1968,12 +2191,57 @@ public class PyObject implements Serializable {
      **/
     final PyObject _basic_div(PyObject o2) {
         PyObject x=__div__(o2);
-        if (x!=null)
+        if (x!=null) {
             return x;
+        }
         x=o2.__rdiv__(this);
-        if (x!=null)
+        if (x!=null) {
             return x;
+        }
         throw Py.TypeError(_unsupportedop("/",o2));
+    }
+
+    /**
+      * Implements the Python expression <code>this /= o2</code>
+      * @param     o2 the object to perform this inplace binary
+      *            operation with.
+      * @return    the result of the idiv.
+      * @exception Py.TypeError if this operation can't be performed
+      *            with these operands.
+      **/
+    public final PyObject _idiv(PyObject o2) {
+        if (Options.Qnew)
+            return _itruediv(o2);
+        PyType t1=this.getType();
+        PyType t2=o2.getType();
+        if (t1==t2||t1.builtin&&t2.builtin) {
+            return this._basic_idiv(o2);
+        }
+        PyObject impl=t1.lookup("__idiv__");
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,t1).__call__(o2);
+            if (res!=Py.NotImplemented) {
+                return res;
+            }
+        }
+        return _binop_rule(t1,o2,t2,"__div__","__rdiv__","/");
+    }
+
+    /**
+     * Implements the Python expression <code>this /= o2</code>
+     * when this and o2 have the same type or are builtin types.
+     * @param     o2 the object to perform this inplace binary
+     *            operation with.
+     * @return    the result of the idiv.
+     * @exception Py.TypeError if this operation can't be performed
+     *            with these operands.
+     **/
+    final PyObject _basic_idiv(PyObject o2) {
+        PyObject x=__idiv__(o2);
+        if (x!=null) {
+            return x;
+        }
+        return this._basic_div(o2);
     }
 
     /**
@@ -2002,11 +2270,11 @@ public class PyObject implements Serializable {
      * Equivalent to the standard Python __ifloordiv__ method
      * @param     other the object to perform this binary operation with
      *            (the right-hand operand).
-     * @return    the result of the floordiv, or null if this operation
+     * @return    the result of the ifloordiv, or null if this operation
      *            is not defined
      **/
     public PyObject __ifloordiv__(PyObject other) {
-        return _floordiv(other);
+        return null;
     }
 
     /**
@@ -2035,12 +2303,55 @@ public class PyObject implements Serializable {
      **/
     final PyObject _basic_floordiv(PyObject o2) {
         PyObject x=__floordiv__(o2);
-        if (x!=null)
+        if (x!=null) {
             return x;
+        }
         x=o2.__rfloordiv__(this);
-        if (x!=null)
+        if (x!=null) {
             return x;
+        }
         throw Py.TypeError(_unsupportedop("//",o2));
+    }
+
+    /**
+      * Implements the Python expression <code>this //= o2</code>
+      * @param     o2 the object to perform this inplace binary
+      *            operation with.
+      * @return    the result of the ifloordiv.
+      * @exception Py.TypeError if this operation can't be performed
+      *            with these operands.
+      **/
+    public final PyObject _ifloordiv(PyObject o2) {
+        PyType t1=this.getType();
+        PyType t2=o2.getType();
+        if (t1==t2||t1.builtin&&t2.builtin) {
+            return this._basic_ifloordiv(o2);
+        }
+        PyObject impl=t1.lookup("__ifloordiv__");
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,t1).__call__(o2);
+            if (res!=Py.NotImplemented) {
+                return res;
+            }
+        }
+        return _binop_rule(t1,o2,t2,"__floordiv__","__rfloordiv__","//");
+    }
+
+    /**
+     * Implements the Python expression <code>this //= o2</code>
+     * when this and o2 have the same type or are builtin types.
+     * @param     o2 the object to perform this inplace binary
+     *            operation with.
+     * @return    the result of the ifloordiv.
+     * @exception Py.TypeError if this operation can't be performed
+     *            with these operands.
+     **/
+    final PyObject _basic_ifloordiv(PyObject o2) {
+        PyObject x=__ifloordiv__(o2);
+        if (x!=null) {
+            return x;
+        }
+        return this._basic_floordiv(o2);
     }
 
     /**
@@ -2069,11 +2380,11 @@ public class PyObject implements Serializable {
      * Equivalent to the standard Python __itruediv__ method
      * @param     other the object to perform this binary operation with
      *            (the right-hand operand).
-     * @return    the result of the truediv, or null if this operation
+     * @return    the result of the itruediv, or null if this operation
      *            is not defined
      **/
     public PyObject __itruediv__(PyObject other) {
-        return _truediv(other);
+        return null;
     }
 
     /**
@@ -2102,12 +2413,55 @@ public class PyObject implements Serializable {
      **/
     final PyObject _basic_truediv(PyObject o2) {
         PyObject x=__truediv__(o2);
-        if (x!=null)
+        if (x!=null) {
             return x;
+        }
         x=o2.__rtruediv__(this);
-        if (x!=null)
+        if (x!=null) {
             return x;
+        }
         throw Py.TypeError(_unsupportedop("/",o2));
+    }
+
+    /**
+      * Implements the Python expression <code>this /= o2</code>
+      * @param     o2 the object to perform this inplace binary
+      *            operation with.
+      * @return    the result of the itruediv.
+      * @exception Py.TypeError if this operation can't be performed
+      *            with these operands.
+      **/
+    public final PyObject _itruediv(PyObject o2) {
+        PyType t1=this.getType();
+        PyType t2=o2.getType();
+        if (t1==t2||t1.builtin&&t2.builtin) {
+            return this._basic_itruediv(o2);
+        }
+        PyObject impl=t1.lookup("__itruediv__");
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,t1).__call__(o2);
+            if (res!=Py.NotImplemented) {
+                return res;
+            }
+        }
+        return _binop_rule(t1,o2,t2,"__truediv__","__rtruediv__","/");
+    }
+
+    /**
+     * Implements the Python expression <code>this /= o2</code>
+     * when this and o2 have the same type or are builtin types.
+     * @param     o2 the object to perform this inplace binary
+     *            operation with.
+     * @return    the result of the itruediv.
+     * @exception Py.TypeError if this operation can't be performed
+     *            with these operands.
+     **/
+    final PyObject _basic_itruediv(PyObject o2) {
+        PyObject x=__itruediv__(o2);
+        if (x!=null) {
+            return x;
+        }
+        return this._basic_truediv(o2);
     }
 
     /**
@@ -2136,11 +2490,11 @@ public class PyObject implements Serializable {
      * Equivalent to the standard Python __imod__ method
      * @param     other the object to perform this binary operation with
      *            (the right-hand operand).
-     * @return    the result of the mod, or null if this operation
+     * @return    the result of the imod, or null if this operation
      *            is not defined
      **/
     public PyObject __imod__(PyObject other) {
-        return _mod(other);
+        return null;
     }
 
     /**
@@ -2169,12 +2523,55 @@ public class PyObject implements Serializable {
      **/
     final PyObject _basic_mod(PyObject o2) {
         PyObject x=__mod__(o2);
-        if (x!=null)
+        if (x!=null) {
             return x;
+        }
         x=o2.__rmod__(this);
-        if (x!=null)
+        if (x!=null) {
             return x;
+        }
         throw Py.TypeError(_unsupportedop("%",o2));
+    }
+
+    /**
+      * Implements the Python expression <code>this %= o2</code>
+      * @param     o2 the object to perform this inplace binary
+      *            operation with.
+      * @return    the result of the imod.
+      * @exception Py.TypeError if this operation can't be performed
+      *            with these operands.
+      **/
+    public final PyObject _imod(PyObject o2) {
+        PyType t1=this.getType();
+        PyType t2=o2.getType();
+        if (t1==t2||t1.builtin&&t2.builtin) {
+            return this._basic_imod(o2);
+        }
+        PyObject impl=t1.lookup("__imod__");
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,t1).__call__(o2);
+            if (res!=Py.NotImplemented) {
+                return res;
+            }
+        }
+        return _binop_rule(t1,o2,t2,"__mod__","__rmod__","%");
+    }
+
+    /**
+     * Implements the Python expression <code>this %= o2</code>
+     * when this and o2 have the same type or are builtin types.
+     * @param     o2 the object to perform this inplace binary
+     *            operation with.
+     * @return    the result of the imod.
+     * @exception Py.TypeError if this operation can't be performed
+     *            with these operands.
+     **/
+    final PyObject _basic_imod(PyObject o2) {
+        PyObject x=__imod__(o2);
+        if (x!=null) {
+            return x;
+        }
+        return this._basic_mod(o2);
     }
 
     /**
@@ -2203,11 +2600,11 @@ public class PyObject implements Serializable {
      * Equivalent to the standard Python __idivmod__ method
      * @param     other the object to perform this binary operation with
      *            (the right-hand operand).
-     * @return    the result of the divmod, or null if this operation
+     * @return    the result of the idivmod, or null if this operation
      *            is not defined
      **/
     public PyObject __idivmod__(PyObject other) {
-        return _divmod(other);
+        return null;
     }
 
     /**
@@ -2236,12 +2633,55 @@ public class PyObject implements Serializable {
      **/
     final PyObject _basic_divmod(PyObject o2) {
         PyObject x=__divmod__(o2);
-        if (x!=null)
+        if (x!=null) {
             return x;
+        }
         x=o2.__rdivmod__(this);
-        if (x!=null)
+        if (x!=null) {
             return x;
+        }
         throw Py.TypeError(_unsupportedop("divmod",o2));
+    }
+
+    /**
+      * Implements the Python expression <code>this divmod= o2</code>
+      * @param     o2 the object to perform this inplace binary
+      *            operation with.
+      * @return    the result of the idivmod.
+      * @exception Py.TypeError if this operation can't be performed
+      *            with these operands.
+      **/
+    public final PyObject _idivmod(PyObject o2) {
+        PyType t1=this.getType();
+        PyType t2=o2.getType();
+        if (t1==t2||t1.builtin&&t2.builtin) {
+            return this._basic_idivmod(o2);
+        }
+        PyObject impl=t1.lookup("__idivmod__");
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,t1).__call__(o2);
+            if (res!=Py.NotImplemented) {
+                return res;
+            }
+        }
+        return _binop_rule(t1,o2,t2,"__divmod__","__rdivmod__","divmod");
+    }
+
+    /**
+     * Implements the Python expression <code>this divmod= o2</code>
+     * when this and o2 have the same type or are builtin types.
+     * @param     o2 the object to perform this inplace binary
+     *            operation with.
+     * @return    the result of the idivmod.
+     * @exception Py.TypeError if this operation can't be performed
+     *            with these operands.
+     **/
+    final PyObject _basic_idivmod(PyObject o2) {
+        PyObject x=__idivmod__(o2);
+        if (x!=null) {
+            return x;
+        }
+        return this._basic_divmod(o2);
     }
 
     /**
@@ -2270,11 +2710,11 @@ public class PyObject implements Serializable {
      * Equivalent to the standard Python __ipow__ method
      * @param     other the object to perform this binary operation with
      *            (the right-hand operand).
-     * @return    the result of the pow, or null if this operation
+     * @return    the result of the ipow, or null if this operation
      *            is not defined
      **/
     public PyObject __ipow__(PyObject other) {
-        return _pow(other);
+        return null;
     }
 
     /**
@@ -2303,12 +2743,55 @@ public class PyObject implements Serializable {
      **/
     final PyObject _basic_pow(PyObject o2) {
         PyObject x=__pow__(o2);
-        if (x!=null)
+        if (x!=null) {
             return x;
+        }
         x=o2.__rpow__(this);
-        if (x!=null)
+        if (x!=null) {
             return x;
+        }
         throw Py.TypeError(_unsupportedop("**",o2));
+    }
+
+    /**
+      * Implements the Python expression <code>this **= o2</code>
+      * @param     o2 the object to perform this inplace binary
+      *            operation with.
+      * @return    the result of the ipow.
+      * @exception Py.TypeError if this operation can't be performed
+      *            with these operands.
+      **/
+    public final PyObject _ipow(PyObject o2) {
+        PyType t1=this.getType();
+        PyType t2=o2.getType();
+        if (t1==t2||t1.builtin&&t2.builtin) {
+            return this._basic_ipow(o2);
+        }
+        PyObject impl=t1.lookup("__ipow__");
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,t1).__call__(o2);
+            if (res!=Py.NotImplemented) {
+                return res;
+            }
+        }
+        return _binop_rule(t1,o2,t2,"__pow__","__rpow__","**");
+    }
+
+    /**
+     * Implements the Python expression <code>this **= o2</code>
+     * when this and o2 have the same type or are builtin types.
+     * @param     o2 the object to perform this inplace binary
+     *            operation with.
+     * @return    the result of the ipow.
+     * @exception Py.TypeError if this operation can't be performed
+     *            with these operands.
+     **/
+    final PyObject _basic_ipow(PyObject o2) {
+        PyObject x=__ipow__(o2);
+        if (x!=null) {
+            return x;
+        }
+        return this._basic_pow(o2);
     }
 
     /**
@@ -2337,11 +2820,11 @@ public class PyObject implements Serializable {
      * Equivalent to the standard Python __ilshift__ method
      * @param     other the object to perform this binary operation with
      *            (the right-hand operand).
-     * @return    the result of the lshift, or null if this operation
+     * @return    the result of the ilshift, or null if this operation
      *            is not defined
      **/
     public PyObject __ilshift__(PyObject other) {
-        return _lshift(other);
+        return null;
     }
 
     /**
@@ -2370,12 +2853,55 @@ public class PyObject implements Serializable {
      **/
     final PyObject _basic_lshift(PyObject o2) {
         PyObject x=__lshift__(o2);
-        if (x!=null)
+        if (x!=null) {
             return x;
+        }
         x=o2.__rlshift__(this);
-        if (x!=null)
+        if (x!=null) {
             return x;
+        }
         throw Py.TypeError(_unsupportedop("<<",o2));
+    }
+
+    /**
+      * Implements the Python expression <code>this <<= o2</code>
+      * @param     o2 the object to perform this inplace binary
+      *            operation with.
+      * @return    the result of the ilshift.
+      * @exception Py.TypeError if this operation can't be performed
+      *            with these operands.
+      **/
+    public final PyObject _ilshift(PyObject o2) {
+        PyType t1=this.getType();
+        PyType t2=o2.getType();
+        if (t1==t2||t1.builtin&&t2.builtin) {
+            return this._basic_ilshift(o2);
+        }
+        PyObject impl=t1.lookup("__ilshift__");
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,t1).__call__(o2);
+            if (res!=Py.NotImplemented) {
+                return res;
+            }
+        }
+        return _binop_rule(t1,o2,t2,"__lshift__","__rlshift__","<<");
+    }
+
+    /**
+     * Implements the Python expression <code>this <<= o2</code>
+     * when this and o2 have the same type or are builtin types.
+     * @param     o2 the object to perform this inplace binary
+     *            operation with.
+     * @return    the result of the ilshift.
+     * @exception Py.TypeError if this operation can't be performed
+     *            with these operands.
+     **/
+    final PyObject _basic_ilshift(PyObject o2) {
+        PyObject x=__ilshift__(o2);
+        if (x!=null) {
+            return x;
+        }
+        return this._basic_lshift(o2);
     }
 
     /**
@@ -2404,11 +2930,11 @@ public class PyObject implements Serializable {
      * Equivalent to the standard Python __irshift__ method
      * @param     other the object to perform this binary operation with
      *            (the right-hand operand).
-     * @return    the result of the rshift, or null if this operation
+     * @return    the result of the irshift, or null if this operation
      *            is not defined
      **/
     public PyObject __irshift__(PyObject other) {
-        return _rshift(other);
+        return null;
     }
 
     /**
@@ -2437,12 +2963,55 @@ public class PyObject implements Serializable {
      **/
     final PyObject _basic_rshift(PyObject o2) {
         PyObject x=__rshift__(o2);
-        if (x!=null)
+        if (x!=null) {
             return x;
+        }
         x=o2.__rrshift__(this);
-        if (x!=null)
+        if (x!=null) {
             return x;
+        }
         throw Py.TypeError(_unsupportedop(">>",o2));
+    }
+
+    /**
+      * Implements the Python expression <code>this >>= o2</code>
+      * @param     o2 the object to perform this inplace binary
+      *            operation with.
+      * @return    the result of the irshift.
+      * @exception Py.TypeError if this operation can't be performed
+      *            with these operands.
+      **/
+    public final PyObject _irshift(PyObject o2) {
+        PyType t1=this.getType();
+        PyType t2=o2.getType();
+        if (t1==t2||t1.builtin&&t2.builtin) {
+            return this._basic_irshift(o2);
+        }
+        PyObject impl=t1.lookup("__irshift__");
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,t1).__call__(o2);
+            if (res!=Py.NotImplemented) {
+                return res;
+            }
+        }
+        return _binop_rule(t1,o2,t2,"__rshift__","__rrshift__",">>");
+    }
+
+    /**
+     * Implements the Python expression <code>this >>= o2</code>
+     * when this and o2 have the same type or are builtin types.
+     * @param     o2 the object to perform this inplace binary
+     *            operation with.
+     * @return    the result of the irshift.
+     * @exception Py.TypeError if this operation can't be performed
+     *            with these operands.
+     **/
+    final PyObject _basic_irshift(PyObject o2) {
+        PyObject x=__irshift__(o2);
+        if (x!=null) {
+            return x;
+        }
+        return this._basic_rshift(o2);
     }
 
     /**
@@ -2471,11 +3040,11 @@ public class PyObject implements Serializable {
      * Equivalent to the standard Python __iand__ method
      * @param     other the object to perform this binary operation with
      *            (the right-hand operand).
-     * @return    the result of the and, or null if this operation
+     * @return    the result of the iand, or null if this operation
      *            is not defined
      **/
     public PyObject __iand__(PyObject other) {
-        return _and(other);
+        return null;
     }
 
     /**
@@ -2504,12 +3073,55 @@ public class PyObject implements Serializable {
      **/
     final PyObject _basic_and(PyObject o2) {
         PyObject x=__and__(o2);
-        if (x!=null)
+        if (x!=null) {
             return x;
+        }
         x=o2.__rand__(this);
-        if (x!=null)
+        if (x!=null) {
             return x;
+        }
         throw Py.TypeError(_unsupportedop("&",o2));
+    }
+
+    /**
+      * Implements the Python expression <code>this &= o2</code>
+      * @param     o2 the object to perform this inplace binary
+      *            operation with.
+      * @return    the result of the iand.
+      * @exception Py.TypeError if this operation can't be performed
+      *            with these operands.
+      **/
+    public final PyObject _iand(PyObject o2) {
+        PyType t1=this.getType();
+        PyType t2=o2.getType();
+        if (t1==t2||t1.builtin&&t2.builtin) {
+            return this._basic_iand(o2);
+        }
+        PyObject impl=t1.lookup("__iand__");
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,t1).__call__(o2);
+            if (res!=Py.NotImplemented) {
+                return res;
+            }
+        }
+        return _binop_rule(t1,o2,t2,"__and__","__rand__","&");
+    }
+
+    /**
+     * Implements the Python expression <code>this &= o2</code>
+     * when this and o2 have the same type or are builtin types.
+     * @param     o2 the object to perform this inplace binary
+     *            operation with.
+     * @return    the result of the iand.
+     * @exception Py.TypeError if this operation can't be performed
+     *            with these operands.
+     **/
+    final PyObject _basic_iand(PyObject o2) {
+        PyObject x=__iand__(o2);
+        if (x!=null) {
+            return x;
+        }
+        return this._basic_and(o2);
     }
 
     /**
@@ -2538,11 +3150,11 @@ public class PyObject implements Serializable {
      * Equivalent to the standard Python __ior__ method
      * @param     other the object to perform this binary operation with
      *            (the right-hand operand).
-     * @return    the result of the or, or null if this operation
+     * @return    the result of the ior, or null if this operation
      *            is not defined
      **/
     public PyObject __ior__(PyObject other) {
-        return _or(other);
+        return null;
     }
 
     /**
@@ -2571,12 +3183,55 @@ public class PyObject implements Serializable {
      **/
     final PyObject _basic_or(PyObject o2) {
         PyObject x=__or__(o2);
-        if (x!=null)
+        if (x!=null) {
             return x;
+        }
         x=o2.__ror__(this);
-        if (x!=null)
+        if (x!=null) {
             return x;
+        }
         throw Py.TypeError(_unsupportedop("|",o2));
+    }
+
+    /**
+      * Implements the Python expression <code>this |= o2</code>
+      * @param     o2 the object to perform this inplace binary
+      *            operation with.
+      * @return    the result of the ior.
+      * @exception Py.TypeError if this operation can't be performed
+      *            with these operands.
+      **/
+    public final PyObject _ior(PyObject o2) {
+        PyType t1=this.getType();
+        PyType t2=o2.getType();
+        if (t1==t2||t1.builtin&&t2.builtin) {
+            return this._basic_ior(o2);
+        }
+        PyObject impl=t1.lookup("__ior__");
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,t1).__call__(o2);
+            if (res!=Py.NotImplemented) {
+                return res;
+            }
+        }
+        return _binop_rule(t1,o2,t2,"__or__","__ror__","|");
+    }
+
+    /**
+     * Implements the Python expression <code>this |= o2</code>
+     * when this and o2 have the same type or are builtin types.
+     * @param     o2 the object to perform this inplace binary
+     *            operation with.
+     * @return    the result of the ior.
+     * @exception Py.TypeError if this operation can't be performed
+     *            with these operands.
+     **/
+    final PyObject _basic_ior(PyObject o2) {
+        PyObject x=__ior__(o2);
+        if (x!=null) {
+            return x;
+        }
+        return this._basic_or(o2);
     }
 
     /**
@@ -2605,11 +3260,11 @@ public class PyObject implements Serializable {
      * Equivalent to the standard Python __ixor__ method
      * @param     other the object to perform this binary operation with
      *            (the right-hand operand).
-     * @return    the result of the xor, or null if this operation
+     * @return    the result of the ixor, or null if this operation
      *            is not defined
      **/
     public PyObject __ixor__(PyObject other) {
-        return _xor(other);
+        return null;
     }
 
     /**
@@ -2638,12 +3293,55 @@ public class PyObject implements Serializable {
      **/
     final PyObject _basic_xor(PyObject o2) {
         PyObject x=__xor__(o2);
-        if (x!=null)
+        if (x!=null) {
             return x;
+        }
         x=o2.__rxor__(this);
-        if (x!=null)
+        if (x!=null) {
             return x;
+        }
         throw Py.TypeError(_unsupportedop("^",o2));
+    }
+
+    /**
+      * Implements the Python expression <code>this ^= o2</code>
+      * @param     o2 the object to perform this inplace binary
+      *            operation with.
+      * @return    the result of the ixor.
+      * @exception Py.TypeError if this operation can't be performed
+      *            with these operands.
+      **/
+    public final PyObject _ixor(PyObject o2) {
+        PyType t1=this.getType();
+        PyType t2=o2.getType();
+        if (t1==t2||t1.builtin&&t2.builtin) {
+            return this._basic_ixor(o2);
+        }
+        PyObject impl=t1.lookup("__ixor__");
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,t1).__call__(o2);
+            if (res!=Py.NotImplemented) {
+                return res;
+            }
+        }
+        return _binop_rule(t1,o2,t2,"__xor__","__rxor__","^");
+    }
+
+    /**
+     * Implements the Python expression <code>this ^= o2</code>
+     * when this and o2 have the same type or are builtin types.
+     * @param     o2 the object to perform this inplace binary
+     *            operation with.
+     * @return    the result of the ixor.
+     * @exception Py.TypeError if this operation can't be performed
+     *            with these operands.
+     **/
+    final PyObject _basic_ixor(PyObject o2) {
+        PyObject x=__ixor__(o2);
+        if (x!=null) {
+            return x;
+        }
+        return this._basic_xor(o2);
     }
 
     // Generated by make_binops.py (End)
@@ -2795,8 +3493,8 @@ public class PyObject implements Serializable {
     }
 
     public void setDict(PyObject newDict) {
-    	// fallback if setDict not implemented in subclass
-    	throw Py.TypeError("can't set attribute '__dict__' of instance of " + getType().fastGetName());
+        // fallback if setDict not implemented in subclass
+        throw Py.TypeError("can't set attribute '__dict__' of instance of " + getType().fastGetName());
     }
 
     public void delDict() {
@@ -3164,7 +3862,29 @@ public class PyObject implements Serializable {
     public long asLong(int index) throws ConversionException {
         throw new ConversionException(index);
     }
-    
+
+    /**
+     * Coerce this object into an index-sized integer.
+     *
+     * @return an index-sized int
+     */
+    public int asIndex() {
+        return asIndex(null);
+    }
+
+    /**
+     * Coerce this object into an index-sized integer.
+     *
+     * Throws a Python exception on Overflow if specified an exception type for err.
+     *
+     * @param err the Python exception to raise on OverflowErrors
+     * @return an index-sized int
+     */
+    public int asIndex(PyObject err) {
+        // OverflowErrors are handled in PyLong.asIndex
+        return __index__().asInt();
+    }
+
     static {
         for (Class unbootstrapped : Py.BOOTSTRAP_TYPES) {
             Py.writeWarning("init", "Bootstrap type wasn't encountered in bootstrapping[class="

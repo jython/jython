@@ -128,21 +128,6 @@ public class PyModule extends PyObject {
         return null;
     }
 
-    public PyObject __findattr__(String name) {
-        return module___findattr__(name);
-    }
-
-    final PyObject module___findattr__(String name) {
-        if (__dict__ != null) {
-            PyObject attr = __dict__.__finditem__(name);
-            if (attr != null) {
-                return attr;
-            }
-        }
-
-        return super.__findattr__(name);
-    }
-
     public void __setattr__(String name, PyObject value) {
         module___setattr__(name, value);
     }

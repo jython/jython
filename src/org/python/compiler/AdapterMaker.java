@@ -4,7 +4,12 @@ package org.python.compiler;
 
 import java.io.OutputStream;
 import java.lang.reflect.Method;
+import java.util.Set;
 import java.util.HashSet;
+
+import org.python.objectweb.asm.Label;
+import org.python.objectweb.asm.MethodVisitor;
+import org.python.objectweb.asm.Opcodes;
 
 
 public class AdapterMaker extends ProxyMaker
@@ -16,7 +21,7 @@ public class AdapterMaker extends ProxyMaker
     public void build() throws Exception {
         names = new HashSet<String>();
 
-        int access = ClassFile.PUBLIC | ClassFile.SYNCHRONIZED;
+        int access = Opcodes.ACC_PUBLIC | Opcodes.ACC_SYNCHRONIZED;
         classfile = new ClassFile(myClass, "java/lang/Object", access);
 
         classfile.addInterface(mapClass(interfaces[0]));
@@ -27,7 +32,7 @@ public class AdapterMaker extends ProxyMaker
     }
 
 
-    public static String makeAdapter(Class<?> interfac, OutputStream ostream)
+    public static String makeAdapter(Class interfac, OutputStream ostream)
         throws Exception
     {
         AdapterMaker pm = new AdapterMaker(interfac);
@@ -38,7 +43,7 @@ public class AdapterMaker extends ProxyMaker
 
     public void doConstants() throws Exception {
         for (String name : names) {
-            classfile.addField(name, "Lorg/python/core/PyObject;", ClassFile.PUBLIC);
+            classfile.addField(name, "Lorg/python/core/PyObject;", Opcodes.ACC_PUBLIC);
         }
     }
 
@@ -50,16 +55,15 @@ public class AdapterMaker extends ProxyMaker
         String name = method.getName();
         names.add(name);
 
-        Code code = classfile.addMethod(name, sig, ClassFile.PUBLIC);
+        Code code = classfile.addMethod(name, sig, Opcodes.ACC_PUBLIC);
 
         code.aload(0);
-        int pyfunc = code.pool.Fieldref(classfile.name, name, "Lorg/python/core/PyObject;");
-        code.getfield(pyfunc);
+        code.getfield(classfile.name, name, "Lorg/python/core/PyObject;");
         code.dup();
-        Label returnNull = code.getLabel();
+        Label returnNull = new Label();
         code.ifnull(returnNull);
         callMethod(code, name, parameters, ret, method.getExceptionTypes());
-        returnNull.setPosition();
+        code.label(returnNull);
         doNullReturn(code, ret);
     }
 }

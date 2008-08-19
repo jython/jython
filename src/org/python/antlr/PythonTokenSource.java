@@ -1,5 +1,7 @@
 package org.python.antlr;
 
+import org.python.core.Py;
+
 /*
  [The "BSD licence"]
  Copyright (c) 2004 Terence Parr and Loring Craymer
@@ -72,187 +74,259 @@ import java.util.*;
  February 2004
  */
 public class PythonTokenSource implements TokenSource {
-	public static final int MAX_INDENTS = 100;
-	public static final int FIRST_CHAR_POSITION = 0;
+    public static final int MAX_INDENTS = 100;
+    public static final int FIRST_CHAR_POSITION = 0;
 
-	/** The stack of indent levels (column numbers) */
-	int[] indentStack = new int[MAX_INDENTS];
-	/** stack pointer */
-	int sp=-1; // grow upwards
+    /** The stack of indent levels (column numbers) */
+    int[] indentStack = new int[MAX_INDENTS];
+    /** stack pointer */
+    int sp=-1; // grow upwards
 
-	/** The queue of tokens */
-	Vector tokens = new Vector();
+    /** The queue of tokens */
+    Vector tokens = new Vector();
 
-	/** We pull real tokens from this lexer */
-	CommonTokenStream stream;
+    /** We pull real tokens from this lexer */
+    CommonTokenStream stream;
 
-	int lastTokenAddedIndex = -1;
+    int lastTokenAddedIndex = -1;
 
-	public PythonTokenSource(PythonLexer lexer) {
-	}
+    String filename;
+    boolean inSingle;
 
-	public PythonTokenSource(CommonTokenStream stream) {
-		this.stream = stream;
-		// "state" of indent level is FIRST_CHAR_POSITION
-		push(FIRST_CHAR_POSITION);
-	}
+    public PythonTokenSource(PythonLexer lexer) {
+    }
 
-	/** From http://www.python.org/doc/2.2.3/ref/indentation.html
 
-	 "Before the first line of the file is read, a single zero is
-	 pushed on the stack; this will never be popped off again. The
-	 numbers pushed on the stack will always be strictly increasing
-	 from bottom to top. At the beginning of each logical line, the
-	 line's indentation level is compared to the top of the
-	 stack. If it is equal, nothing happens. If it is larger, it is
-	 pushed on the stack, and one INDENT token is generated. If it
-	 is smaller, it must be one of the numbers occurring on the
-	 stack; all numbers on the stack that are larger are popped
-	 off, and for each number popped off a DEDENT token is
-	 generated. At the end of the file, a DEDENT token is generated
-	 for each number remaining on the stack that is larger than
-	 zero."
+    public PythonTokenSource(CommonTokenStream stream, String filename) {
+        this(stream, filename, false);
+    }
 
-	 I use char position in line 0..n-1 instead.
+    public PythonTokenSource(CommonTokenStream stream, String filename, boolean single) {
+        this.stream = stream;
+        this.filename = filename;
+        this.inSingle = single;
+        // "state" of indent level is FIRST_CHAR_POSITION
+        push(FIRST_CHAR_POSITION);
+    }
 
-	 The DEDENTS possibly needed at EOF are gracefully handled by forcing
-	 EOF to have char pos 0 even though with UNIX it's hard to get EOF
-	 at a non left edge.
-	 */
-	public Token nextToken() {
-		// if something in queue, just remove and return it
-		if ( tokens.size()>0 ) {
-			Token t = (Token)tokens.firstElement();
-			tokens.removeElementAt(0);
-			// System.out.println(t);
-			return t;
-		}
+    /** From http://www.python.org/doc/2.2.3/ref/indentation.html
 
-		insertImaginaryIndentDedentTokens();
+     "Before the first line of the file is read, a single zero is
+     pushed on the stack; this will never be popped off again. The
+     numbers pushed on the stack will always be strictly increasing
+     from bottom to top. At the beginning of each logical line, the
+     line's indentation level is compared to the top of the
+     stack. If it is equal, nothing happens. If it is larger, it is
+     pushed on the stack, and one INDENT token is generated. If it
+     is smaller, it must be one of the numbers occurring on the
+     stack; all numbers on the stack that are larger are popped
+     off, and for each number popped off a DEDENT token is
+     generated. At the end of the file, a DEDENT token is generated
+     for each number remaining on the stack that is larger than
+     zero."
 
-		return nextToken();
-	}
+     I use char position in line 0..n-1 instead.
 
-	protected void insertImaginaryIndentDedentTokens()
-	{
-		Token t = stream.LT(1);
-		stream.consume();
+     The DEDENTS possibly needed at EOF are gracefully handled by forcing
+     EOF to have char pos 0 even though with UNIX it's hard to get EOF
+     at a non left edge.
+     */
+    public Token nextToken() {
+        // if something in queue, just remove and return it
+        if (tokens.size() > 0) {
+            Token t = (Token)tokens.firstElement();
+            tokens.removeElementAt(0);
+            //System.out.println(filename + t);
+            return t;
+        }
 
-		// if not a NEWLINE, doesn't signal indent/dedent work; just enqueue
-		if ( t.getType()!=PythonLexer.NEWLINE ) {
-			List hiddenTokens = stream.getTokens(lastTokenAddedIndex+1,t.getTokenIndex()-1);
-			if ( hiddenTokens!=null ) {
-				tokens.addAll(hiddenTokens);
-			}
-			lastTokenAddedIndex = t.getTokenIndex();
-			tokens.addElement(t);
-			return;
-		}
+        insertImaginaryIndentDedentTokens();
 
-		// save NEWLINE in the queue
-		//System.out.println("found newline: "+t+" stack is "+stackString());
-		List hiddenTokens = stream.getTokens(lastTokenAddedIndex+1,t.getTokenIndex()-1);
-		if ( hiddenTokens!=null ) {
-			tokens.addAll(hiddenTokens);
-		}
-		lastTokenAddedIndex = t.getTokenIndex();
-		tokens.addElement(t);
+        return nextToken();
+    }
 
-		// grab first token of next line
-		t = stream.LT(1);
-		stream.consume();
+    private void generateNewline(Token t) {
+        CommonToken newline = new CommonToken(PythonLexer.NEWLINE, "\n");
+        newline.setLine(t.getLine());
+        newline.setCharPositionInLine(t.getCharPositionInLine());
+        tokens.addElement(newline);
+    }
 
-		hiddenTokens = stream.getTokens(lastTokenAddedIndex+1,t.getTokenIndex()-1);
-		if ( hiddenTokens!=null ) {
-			tokens.addAll(hiddenTokens);
-		}
-		lastTokenAddedIndex = t.getTokenIndex();
+    protected void insertImaginaryIndentDedentTokens() {
+        Token t = stream.LT(1);
+        stream.consume();
 
-		// compute cpos as the char pos of next non-WS token in line
-		int cpos = t.getCharPositionInLine(); // column dictates indent/dedent
-		if ( t.getType()==Token.EOF ) {
-			cpos = -1; // pretend EOF always happens at left edge
-		}
-		else if ( t.getType()==PythonLexer.LEADING_WS ) {
-			cpos = t.getText().length();
-		}
+        if (t.getType() == Token.EOF) {
+            if (!inSingle) {
+                Token prev = stream.LT(-1);
+                if (prev == null || prev.getType() != PythonLexer.NEWLINE) {
+                    generateNewline(t);
+                }
+            }
 
-		//System.out.println("next token is: "+t);
+            handleDedents(-1, (CommonToken)t);
+            enqueue(t);
+        } else if (t.getType() == PythonLexer.NEWLINE) {
+            // save NEWLINE in the queue
+            //System.out.println("found newline: "+t+" stack is "+stackString());
+            enqueueHiddens(t);
+            tokens.addElement(t);
+            Token newline = t;
 
-		// compare to last indent level
-		int lastIndent = peek();
-		//System.out.println("cpos, lastIndent = "+cpos+", "+lastIndent);
-		if ( cpos > lastIndent ) { // they indented; track and gen INDENT
-			push(cpos);
-			//System.out.println("push("+cpos+"): "+stackString());
-			Token indent = new ClassicToken(PythonParser.INDENT,"");
-			indent.setCharPositionInLine(t.getCharPositionInLine());
-			indent.setLine(t.getLine());
-			tokens.addElement(indent);
-		}
-		else if ( cpos < lastIndent ) { // they dedented
-			// how far back did we dedent?
-			int prevIndex = findPreviousIndent(cpos);
-			//System.out.println("dedented; prevIndex of cpos="+cpos+" is "+prevIndex);
-			// generate DEDENTs for each indent level we backed up over
-			for (int d=sp-1; d>=prevIndex; d--) {
-				Token dedent = new ClassicToken(PythonParser.DEDENT,"");
-				dedent.setCharPositionInLine(t.getCharPositionInLine());
-				dedent.setLine(t.getLine());
-				tokens.addElement(dedent);
-			}
-			sp = prevIndex; // pop those off indent level
-		}
-		if ( t.getType()!=PythonLexer.LEADING_WS ) { // discard WS
-			tokens.addElement(t);
-		}
-	}
+            // grab first token of next line
+            t = stream.LT(1);
+            stream.consume();
 
-	//  T O K E N  S T A C K  M E T H O D S
+            enqueueHiddens(t);
 
-	protected void push(int i) {
-		if (sp>=MAX_INDENTS) {
-			throw new IllegalStateException("stack overflow");
-		}
-		sp++;
-		indentStack[sp] = i;
-	}
+            // compute cpos as the char pos of next non-WS token in line
+            int cpos = t.getCharPositionInLine(); // column dictates indent/dedent
+            if (t.getType() == Token.EOF) {
+                cpos = -1; // pretend EOF always happens at left edge
+            }
+            else if (t.getType() == PythonLexer.LEADING_WS) {
+                Token next = stream.LT(1);
+                if (next != null && next.getType() == Token.EOF) {
+                    stream.consume();
+                    return;
+                } else {
+                    cpos = t.getText().length();
+                }
+            }
 
-	protected int pop() {
-		if (sp<0) {
-			throw new IllegalStateException("stack underflow");
-		}
-		int top = indentStack[sp];
-		sp--;
-		return top;
-	}
+            //System.out.println("next token is: "+t);
 
-	protected int peek() {
-		return indentStack[sp];
-	}
+            // compare to last indent level
+            int lastIndent = peek();
+            //System.out.println("cpos, lastIndent = "+cpos+", "+lastIndent);
+            if (cpos > lastIndent) { // they indented; track and gen INDENT
+                handleIndents(cpos, (CommonToken)t);
+            }
+            else if (cpos < lastIndent) { // they dedented
+                handleDedents(cpos, (CommonToken)t);
+            }
 
-	/** Return the index on stack of previous indent level == i else -1 */
-	protected int findPreviousIndent(int i) {
-		for (int j=sp-1; j>=0; j--) {
-			if ( indentStack[j]==i ) {
-				return j;
-			}
-		}
-		return FIRST_CHAR_POSITION;
-	}
+            if (t.getType() == Token.EOF && inSingle) {
+                String newlines = newline.getText();
+                for(int i=1;i<newlines.length();i++) {
+                    generateNewline(newline);
+                }
+            }
 
-	public String stackString() {
-		StringBuffer buf = new StringBuffer();
-		for (int j=sp; j>=0; j--) {
-			buf.append(" ");
-			buf.append(indentStack[j]);
-		}
-		return buf.toString();
-	}
+            if (t.getType() != PythonLexer.LEADING_WS) { // discard WS
+                tokens.addElement(t);
+            }
+
+        } else {
+            enqueue(t);
+        }
+    }
+    
+    private void enqueue(Token t) {
+        enqueueHiddens(t);
+        tokens.addElement(t);
+    }
+
+    private void enqueueHiddens(Token t) {
+        if (inSingle && t.getType() == Token.EOF) {
+            if (stream.size() > lastTokenAddedIndex + 1) {
+                Token hidden = stream.get(lastTokenAddedIndex + 1);
+                if (hidden.getType() == PythonLexer.COMMENT) {
+                    String text = hidden.getText();
+                    int i = text.indexOf("\n");
+                    while(i != -1) {
+                        generateNewline(hidden);
+                        i = text.indexOf("\n", i + 1);
+                    }
+                }
+            }
+        }
+        List hiddenTokens = stream.getTokens(lastTokenAddedIndex + 1,t.getTokenIndex() - 1);
+        if (hiddenTokens != null) {
+            tokens.addAll(hiddenTokens);
+        }
+        lastTokenAddedIndex = t.getTokenIndex();
+    }
+
+    private void handleIndents(int cpos, CommonToken t) {
+        push(cpos);
+        //System.out.println("push("+cpos+"): "+stackString());
+        Token indent = new CommonToken(PythonParser.INDENT,"");
+        indent.setCharPositionInLine(t.getCharPositionInLine());
+        indent.setLine(t.getLine());
+        tokens.addElement(indent);
+    }
+
+    private void handleDedents(int cpos, CommonToken t) {
+        // how far back did we dedent?
+        int prevIndex = findPreviousIndent(cpos, t);
+        //System.out.println("dedented; prevIndex of cpos="+cpos+" is "+prevIndex);
+        // generate DEDENTs for each indent level we backed up over
+        for (int d = sp - 1; d >= prevIndex; d--) {
+            CommonToken dedent = new CommonToken(PythonParser.DEDENT,"");
+            dedent.setCharPositionInLine(t.getCharPositionInLine());
+            dedent.setLine(t.getLine());
+
+            //XXX: this will get messed up by comments.
+            dedent.setStartIndex(t.getStartIndex());
+            dedent.setStopIndex(t.getStopIndex());
+
+            tokens.addElement(dedent);
+        }
+        sp = prevIndex; // pop those off indent level
+    }
+
+    //  T O K E N  S T A C K  M E T H O D S
+
+    protected void push(int i) {
+        if (sp >= MAX_INDENTS) {
+            throw new IllegalStateException("stack overflow");
+        }
+        sp++;
+        indentStack[sp] = i;
+    }
+
+    protected int pop() {
+        if (sp<0) {
+            throw new IllegalStateException("stack underflow");
+        }
+        int top = indentStack[sp];
+        sp--;
+        return top;
+    }
+
+    protected int peek() {
+        return indentStack[sp];
+    }
+
+    /** Return the index on stack of previous indent level == i else -1 */
+    protected int findPreviousIndent(int i, Token t) {
+        for (int j = sp - 1; j >= 0; j--) {
+            if (indentStack[j] == i) {
+                return j;
+            }
+        }
+        //The -2 is for the special case of getCharPositionInLine in multiline str nodes.
+        if (i == -1 || i == -2) {
+            return FIRST_CHAR_POSITION;
+        }
+        ParseException p = new ParseException("unindent does not match any outer indentation level", t.getLine(), t.getCharPositionInLine());
+        p.setType(Py.IndentationError);
+        throw p;
+    }
+
+    public String stackString() {
+        StringBuffer buf = new StringBuffer();
+        for (int j = sp; j >= 0; j--) {
+            buf.append(" ");
+            buf.append(indentStack[j]);
+        }
+        return buf.toString();
+    }
 
     //FIXME: needed this for the Antlr 3.1b interface change.
     public String getSourceName() {
-        return "XXX-need-real-name.py";
+        return filename;
     }
 
 }

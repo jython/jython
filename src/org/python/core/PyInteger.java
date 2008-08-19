@@ -118,15 +118,6 @@ public class PyInteger extends PyObject {
         return getValue();
     }
 
-    private static void err_ovf(String msg) {
-        try {
-            Py.OverflowWarning(msg);
-        } catch (PyException exc) {
-            if (Py.matchException(exc, Py.OverflowWarning))
-                throw Py.OverflowError(msg);
-        }
-    }
-
     public boolean __nonzero__() {
         return int___nonzero__();
     }
@@ -173,6 +164,19 @@ public class PyInteger extends PyObject {
     }
 
     public Object __coerce_ex__(PyObject other) {
+        return int___coerce_ex__(other);
+    }
+
+    @ExposedMethod
+    final PyObject int___coerce__(PyObject other) {
+        return adaptToCoerceTuple(int___coerce_ex__(other));
+    }
+
+    /** 
+     * Coercion logic for int. Implemented as a final method to avoid
+     * invocation of virtual methods from the exposed coerced. 
+     */     
+    final Object int___coerce_ex__(PyObject other) {
         if (other instanceof PyInteger)
             return other;
         else
@@ -205,7 +209,6 @@ public class PyInteger extends PyObject {
         int x = a + b;
         if ((x^a) >= 0 || (x^b) >= 0)
             return Py.newInteger(x);
-        err_ovf("integer addition");
         return new PyLong((long) a + (long)b);
     }
 
@@ -222,7 +225,6 @@ public class PyInteger extends PyObject {
         int x = a - b;
         if ((x^a) >= 0 || (x^~b) >= 0)
             return Py.newInteger(x);
-        err_ovf("integer subtraction");
         return new PyLong((long) a - (long)b);
     }
 
@@ -268,7 +270,6 @@ public class PyInteger extends PyObject {
 
         if (x <= Integer.MAX_VALUE && x >= Integer.MIN_VALUE)
             return Py.newInteger((int)x);
-        err_ovf("integer multiplication");
         return __long__().__mul__(right);
     }
 
@@ -283,21 +284,20 @@ public class PyInteger extends PyObject {
 
     // Getting signs correct for integer division
     // This convention makes sense when you consider it in tandem with modulo
-    private static int divide(int x, int y) {
-        if (y == 0)
+    private static long divide(long x, long y) {
+        if (y == 0) {
             throw Py.ZeroDivisionError("integer division or modulo by zero");
-
-        if (y == -1 && x < 0 && x == -x) {
-            err_ovf("integer division: "+x+" + "+y);
         }
-        int xdivy = x / y;
-        int xmody = x - xdivy * y;
+        long xdivy = x / y;
+        long xmody = x - xdivy * y;
+        
         /* If the signs of x and y differ, and the remainder is non-0,
          * C89 doesn't define whether xdivy is now the floor or the
          * ceiling of the infinitely precise quotient.  We want the floor,
          * and we have it iff the remainder's sign matches y's.
          */
-        if (xmody != 0 && ((y ^ xmody) < 0) /* i.e. and signs differ */) {
+        
+        if (xmody != 0 && ((y < 0 && xmody > 0) || (y > 0 && xmody < 0))) {
             xmody += y;
             --xdivy;
             //assert(xmody && ((y ^ xmody) >= 0));
@@ -305,6 +305,7 @@ public class PyInteger extends PyObject {
         return xdivy;
     }
 
+    @Override
     public PyObject __div__(PyObject right) {
         return int___div__(right);
     }
@@ -381,7 +382,7 @@ public class PyInteger extends PyObject {
             return null;
     }
 
-    private static int modulo(int x, int y, int xdivy) {
+    private static long modulo(long x, long y, long xdivy) {
         return x - xdivy*y;
     }
 
@@ -422,7 +423,7 @@ public class PyInteger extends PyObject {
         int rightv = coerce(right);
 
         int v = getValue();
-        int xdivy = divide(v, rightv);
+        long xdivy = divide(v, rightv);
         return new PyTuple(Py.newInteger(xdivy), Py.newInteger(modulo(v, rightv, xdivy)));
     }
     
@@ -433,7 +434,7 @@ public class PyInteger extends PyObject {
         int leftv = coerce(left);
 
         int v = getValue();
-        int xdivy = divide(leftv, v);
+        long xdivy = divide(leftv, v);
         return new PyTuple(Py.newInteger(xdivy), Py.newInteger(modulo(leftv, v, xdivy)));
     }
 
@@ -501,7 +502,6 @@ public class PyInteger extends PyObject {
                 }
 
                 if (result > Integer.MAX_VALUE) {
-                    err_ovf("integer exponentiation");
                     return left.__long__().__pow__(right, modulo);
                 }
             }
@@ -515,20 +515,18 @@ public class PyInteger extends PyObject {
             }
 
             if (tmp > Integer.MAX_VALUE) {
-                err_ovf("integer exponentiation");
                 return left.__long__().__pow__(right, modulo);
             }
         }
 
-        int ret = (int)result;
         if (neg)
-            ret = -ret;
+            result = -result;
 
         // Cleanup result of modulo
         if (mod != 0) {
-            ret = modulo(ret, mod, divide(ret, mod));
+            result = modulo(result, mod, divide(result, mod));
         }
-        return Py.newInteger(ret);
+        return Py.newInteger(result);
     }
 
     public PyObject __lshift__(PyObject right) {
@@ -704,12 +702,7 @@ public class PyInteger extends PyObject {
     
     @ExposedMethod(type = MethodType.BINARY)
     final PyObject int___ror__(PyObject left){
-    	return int___or__(left);
-    }
-
-    @ExposedMethod
-    final PyObject int___coerce__(PyObject other) {
-        return __coerce__(other);
+        return int___or__(left);
     }
 
     public PyObject __neg__() {
@@ -718,9 +711,7 @@ public class PyInteger extends PyObject {
 
     @ExposedMethod
     final PyObject int___neg__() {
-        int x = -getValue();
-        if (getValue() < 0 && x < 0)
-            err_ovf("integer negation");
+        long x = -getValue();
         return Py.newInteger(x);
     }
 
@@ -792,12 +783,11 @@ public class PyInteger extends PyObject {
     @ExposedMethod
     final PyString int___oct__() {
         if (getValue() < 0) {
-            return new PyString(
-                "0"+Long.toString(0x100000000l+getValue(), 8));
-        } else if (getValue() > 0) {
-            return new PyString("0"+Integer.toString(getValue(), 8));
-        } else
-            return new PyString("0");
+            return new PyString("-0" + Integer.toString(getValue() * -1, 8));
+        }
+        else {
+            return new PyString("0" + Integer.toString(getValue(), 8));
+        }
     }
 
     public PyString __hex__() {
@@ -807,10 +797,10 @@ public class PyInteger extends PyObject {
     @ExposedMethod
     final PyString int___hex__() {
         if (getValue() < 0) {
-            return new PyString(
-                "0x"+Long.toString(0x100000000l+getValue(), 16));
-        } else {
-            return new PyString("0x"+Integer.toString(getValue(), 16));
+            return new PyString("-0x" + Integer.toString(getValue() * -1, 16));
+        }
+        else {
+            return new PyString("0x" + Integer.toString(getValue(), 16));
         }
     }
     
@@ -821,6 +811,26 @@ public class PyInteger extends PyObject {
 
     public PyTuple __getnewargs__() {
         return int___getnewargs__();
+    }
+
+    @Override
+    public PyObject __index__() {
+        return int___index__();
+    }
+
+    @ExposedMethod
+    final PyObject int___index__() {
+        return this;
+    }
+
+    @Override
+    public boolean isIndex() {
+        return true;
+    }
+
+    @Override
+    public int asIndex(PyObject err) {
+        return getValue();
     }
 
     public boolean isMappingType() { return false; }

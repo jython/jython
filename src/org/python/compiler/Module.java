@@ -2,15 +2,23 @@
 
 package org.python.compiler;
 
-import java.io.*;
-import java.util.*;
-import org.python.parser.*;
-import org.python.parser.ast.*;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.Enumeration;
+import java.util.Hashtable;
+import java.util.Vector;
+
+import org.python.objectweb.asm.Label;
+import org.python.objectweb.asm.Opcodes;
 import org.python.core.CompilerFlags;
 import org.python.core.Py;
 import org.python.core.PyException;
+import org.python.antlr.ParseException;
+import org.python.antlr.PythonTree;
+import org.python.antlr.ast.Suite;
+import org.python.antlr.ast.modType;
 
-class PyIntegerConstant extends Constant implements ClassConstants
+class PyIntegerConstant extends Constant implements ClassConstants, Opcodes
 {
     int value;
 
@@ -25,11 +33,7 @@ class PyIntegerConstant extends Constant implements ClassConstants
     public void put(Code c) throws IOException {
         module.classfile.addField(name, $pyInteger, access);
         c.iconst(value);
-        int mref_newInteger = c.pool.Methodref(
-            "org/python/core/Py",
-            "newInteger",
-            "(I)" + $pyInteger);
-        c.invokestatic(mref_newInteger);
+        c.invokestatic("org/python/core/Py", "newInteger", "(I)" + $pyInteger);
         c.putstatic(module.classfile.name, name, $pyInteger);
     }
 
@@ -45,7 +49,7 @@ class PyIntegerConstant extends Constant implements ClassConstants
     }
 }
 
-class PyFloatConstant extends Constant implements ClassConstants
+class PyFloatConstant extends Constant implements ClassConstants, Opcodes
 {
     double value;
 
@@ -59,11 +63,8 @@ class PyFloatConstant extends Constant implements ClassConstants
 
     public void put(Code c) throws IOException {
         module.classfile.addField(name, $pyFloat, access);
-        c.ldc(c.pool.Double(value));
-        int mref_newFloat = c.pool.Methodref("org/python/core/Py",
-                                             "newFloat",
-                                             "(D)" + $pyFloat);
-        c.invokestatic(mref_newFloat);
+        c.ldc(new Double(value));
+        c.invokestatic("org/python/core/Py", "newFloat", "(D)" + $pyFloat);
         c.putstatic(module.classfile.name, name, $pyFloat);
     }
 
@@ -79,7 +80,7 @@ class PyFloatConstant extends Constant implements ClassConstants
     }
 }
 
-class PyComplexConstant extends Constant implements ClassConstants
+class PyComplexConstant extends Constant implements ClassConstants, Opcodes
 {
     double value;
 
@@ -93,12 +94,8 @@ class PyComplexConstant extends Constant implements ClassConstants
 
     public void put(Code c) throws IOException {
         module.classfile.addField(name, $pyComplex, access);
-        c.ldc(c.pool.Double(value));
-        int mref_newImaginary = c.pool.Methodref(
-            "org/python/core/Py",
-            "newImaginary",
-            "(D)" + $pyComplex);
-        c.invokestatic(mref_newImaginary);
+        c.ldc(new Double(value));
+        c.invokestatic("org/python/core/Py", "newImaginary", "(D)" + $pyComplex);
         c.putstatic(module.classfile.name, name, $pyComplex);
     }
 
@@ -114,7 +111,7 @@ class PyComplexConstant extends Constant implements ClassConstants
     }
 }
 
-class PyStringConstant extends Constant implements ClassConstants
+class PyStringConstant extends Constant implements ClassConstants, Opcodes
 {
     String value;
 
@@ -129,9 +126,7 @@ class PyStringConstant extends Constant implements ClassConstants
     public void put(Code c) throws IOException {
         module.classfile.addField(name, $pyStr, access);
         c.ldc(value);
-        int mref_newString = c.pool.Methodref("org/python/core/PyString", "fromInterned", "("
-                + $str + ")" + $pyStr);
-        c.invokestatic(mref_newString);
+        c.invokestatic("org/python/core/PyString", "fromInterned", "(" + $str + ")" + $pyStr);
         c.putstatic(module.classfile.name, name, $pyStr);
     }
 
@@ -147,7 +142,7 @@ class PyStringConstant extends Constant implements ClassConstants
     }
 }
 
-class PyUnicodeConstant extends Constant implements ClassConstants
+class PyUnicodeConstant extends Constant implements ClassConstants, Opcodes
 {
     String value;
 
@@ -162,9 +157,7 @@ class PyUnicodeConstant extends Constant implements ClassConstants
     public void put(Code c) throws IOException {
         module.classfile.addField(name, $pyUnicode, access);
         c.ldc(value);
-        int mref_newUni = c.pool.Methodref("org/python/core/PyUnicode", "fromInterned", "("
-                + $str + ")" + $pyUnicode);
-        c.invokestatic(mref_newUni);
+        c.invokestatic("org/python/core/PyUnicode", "fromInterned", "(" + $str + ")" + $pyUnicode);
         c.putstatic(module.classfile.name, name, $pyUnicode);
     }
 
@@ -180,7 +173,7 @@ class PyUnicodeConstant extends Constant implements ClassConstants
     }
 }
 
-class PyLongConstant extends Constant implements ClassConstants
+class PyLongConstant extends Constant implements ClassConstants, Opcodes
 {
     String value;
 
@@ -195,11 +188,7 @@ class PyLongConstant extends Constant implements ClassConstants
     public void put(Code c) throws IOException {
         module.classfile.addField(name, $pyLong, access);
         c.ldc(value);
-        int mref_newLong = c.pool.Methodref(
-            "org/python/core/Py",
-            "newLong",
-            "(" + $str + ")" + $pyLong);
-        c.invokestatic(mref_newLong);
+        c.invokestatic("org/python/core/Py", "newLong", "(" + $str + ")" + $pyLong);
         c.putstatic(module.classfile.name, name, $pyLong);
     }
 
@@ -214,7 +203,7 @@ class PyLongConstant extends Constant implements ClassConstants
     }
 }
 
-class PyCodeConstant extends Constant implements ClassConstants
+class PyCodeConstant extends Constant implements ClassConstants, Opcodes
 {
     public String co_name;
     public int argcount;
@@ -248,7 +237,6 @@ class PyCodeConstant extends Constant implements ClassConstants
         } else { // classdef
              CodeCompiler.makeStrings(c, null, 0);
         }
-
         c.aload(1);
         c.ldc(co_name);
         c.iconst(co_firstlineno);
@@ -256,11 +244,7 @@ class PyCodeConstant extends Constant implements ClassConstants
         c.iconst(arglist ? 1 : 0);
         c.iconst(keywordlist ? 1 : 0);
 
-        int mref_self = c.pool.Fieldref(module.classfile.name,
-                                        "self",
-                                        "L"+module.classfile.name+";");
-        c.getstatic(mref_self);
-        //c.aconst_null();
+        c.getstatic(module.classfile.name, "self", "L"+module.classfile.name+";");
 
         c.iconst(id);
 
@@ -277,19 +261,12 @@ class PyCodeConstant extends Constant implements ClassConstants
 
         c.iconst(moreflags);
 
-        int mref_newCode = c.pool.Methodref(
-            "org/python/core/Py",
-            "newCode",
-            "(I" + $strArr + $str + $str + "IZZ" + $pyFuncTbl + "I" +
-                $strArr + $strArr + "II)" + $pyCode);
-
-        c.invokestatic(mref_newCode);
-        //c.aconst_null();
+        c.invokestatic("org/python/core/Py", "newCode", "(I" + $strArr + $str + $str + "IZZ" + $pyFuncTbl + "I" + $strArr + $strArr + "II)" + $pyCode);
         c.putstatic(module.classfile.name, name, $pyCode);
     }
 }
 
-public class Module implements ClassConstants, CompilationContext
+public class Module implements Opcodes, ClassConstants, CompilationContext
 {
     ClassFile classfile;
     Constant filename;
@@ -303,7 +280,7 @@ public class Module implements ClassConstants, CompilationContext
     public Module(String name, String filename, boolean linenumbers) {
         this.linenumbers = linenumbers;
         classfile = new ClassFile(name, "org/python/core/PyFunctionTable",
-                                  ClassFile.SYNCHRONIZED | ClassFile.PUBLIC);
+                                  ACC_SYNCHRONIZED | ACC_PUBLIC);
         constants = new Hashtable();
         sfilename = filename;
         if (filename != null)
@@ -356,28 +333,6 @@ public class Module implements ClassConstants, CompilationContext
         return findConstant(new PyLongConstant(value));
     }
 
-    /*public PyCodeConstant PyCode(SimpleNode tree, String name,
-      ArgListCompiler ac,
-      boolean fast_locals, boolean class_body)
-      throws Exception {
-      return PyCode(tree, name, ac, fast_locals, class_body, false, 0);
-      }
-      public PyCodeConstant PyCode(SimpleNode tree, String name,
-      ArgListCompiler ac,
-      boolean fast_locals, boolean class_body,
-      int firstlineno)
-      throws Exception {
-      return PyCode(tree, name, ac, fast_locals, class_body, false,
-                    firstlineno);
-      }
-      public PyCodeConstant PyCode(SimpleNode tree, String name,
-      ArgListCompiler ac,
-      boolean fast_locals, boolean class_body,
-      boolean printResults)
-      throws Exception {
-      return PyCode(tree, name, ac, fast_locals, class_body, printResults, 0);
-      }*/
-
     Vector codes;
     private boolean isJavaIdentifier(String s) {
         char[] chars = s.toCharArray();
@@ -400,7 +355,6 @@ public class Module implements ClassConstants, CompilationContext
         names.copyInto(nameArray);
         return nameArray;
     }
-
 
     private int to_cell;
 
@@ -447,16 +401,16 @@ public class Module implements ClassConstants, CompilationContext
         Code c = classfile.addMethod(
             code.fname,
             "(" + $pyFrame + ")" + $pyObj,
-            ClassFile.PUBLIC);
+            ACC_PUBLIC);
 
         CodeCompiler compiler = new CodeCompiler(this, printResults);
 
-        Label genswitch = c.getLabel();
+        Label genswitch = new Label();
         if (scope.generator) {
             c.goto_(genswitch);
         }
-        Label start = c.getLabel();
-        start.setPosition();
+        Label start = new Label();
+        c.label(start);
 
         //Do something to add init_code to tree
         if (ac != null && ac.init_code.size() > 0) {
@@ -464,9 +418,6 @@ public class Module implements ClassConstants, CompilationContext
         }
         int nparamcell = scope.jy_paramcells.size();
         if(nparamcell > 0) {
-            if(to_cell == 0) {
-                to_cell = classfile.pool.Methodref("org/python/core/PyFrame", "to_cell", "(II)V");
-            }
             Hashtable tbl = scope.tbl;
             Vector paramcells = scope.jy_paramcells;
             for(int i = 0; i < nparamcell; i++) {
@@ -474,30 +425,27 @@ public class Module implements ClassConstants, CompilationContext
                 SymInfo syminf = (SymInfo)tbl.get(paramcells.elementAt(i));
                 c.iconst(syminf.locals_index);
                 c.iconst(syminf.env_index);
-                c.invokevirtual(to_cell);
+                c.invokevirtual("org/python/core/PyFrame", "to_cell", "(II)V");
             }
         }
 
         compiler.parse(tree, c, fast_locals, className, classBody,
                        scope, cflags);
 
+        
+        // similar to visitResume code in pyasm.py
         if (scope.generator) {
-            genswitch.setPosition();
+            c.label(genswitch);
+            
             c.aload(1);
-            if (compiler.f_lasti == 0) {
-                compiler.f_lasti = c.pool.Fieldref(
-                        "org/python/core/PyFrame", "f_lasti", "I"); 
-            }
-            c.getfield(compiler.f_lasti);
-
+            c.getfield("org/python/core/PyFrame", "f_lasti", "I"); 
             Label[] yields = new Label[compiler.yields.size()+1];
 
             yields[0] = start;
             for (int i = 1; i < yields.length; i++) {
                 yields[i] = (Label) compiler.yields.elementAt(i-1);
             }
-            c.tableswitch(start, 0, yields);
-            // XXX: Generate an error
+            c.tableswitch(0, yields.length - 1, start, yields);
         }
 
         // !classdef only
@@ -529,43 +477,35 @@ public class Module implements ClassConstants, CompilationContext
 
     //This block of code writes out the various standard methods
     public void addInit() throws IOException {
-        Code c = classfile.addMethod("<init>", "(Ljava/lang/String;)V", ClassFile.PUBLIC);
+        Code c = classfile.addMethod("<init>", "(Ljava/lang/String;)V", ACC_PUBLIC);
         c.aload(0);
-        c.invokespecial(c.pool.Methodref("org/python/core/PyFunctionTable",
-                                         "<init>",
-                                         "()V"));
+        c.invokespecial("org/python/core/PyFunctionTable", "<init>", "()V");
         addConstants(c);
     }
 
     public void addRunnable() throws IOException {
-        Code c = classfile.addMethod("getMain",
-                                     "()" + $pyCode,
-                                     ClassFile.PUBLIC);
+        Code c = classfile.addMethod("getMain", "()" + $pyCode, ACC_PUBLIC);
         mainCode.get(c);
         c.areturn();
     }
 
     public void addMain() throws IOException {
         Code c = classfile.addMethod("main", "(" + $strArr + ")V",
-                ClassFile.PUBLIC | ClassFile.STATIC);
-        c.new_(c.pool.Class(classfile.name));
+                ACC_PUBLIC | ACC_STATIC);
+        c.new_(classfile.name);
         c.dup();
         c.ldc(classfile.name);
-        c.invokespecial(c.pool.Methodref(classfile.name, "<init>", "(" + $str + ")V"));
+        c.invokespecial(classfile.name, "<init>", "(" + $str + ")V");
         c.aload(0);
-        c.invokestatic(c.pool.Methodref("org/python/core/Py", "runMain", "("
-                + $pyRunnable + $strArr + ")V"));
+        c.invokestatic("org/python/core/Py", "runMain", "(" + $pyRunnable + $strArr + ")V");
         c.return_();
     }
 
     public void addConstants(Code c) throws IOException {
         classfile.addField("self", "L"+classfile.name+";",
-                           ClassFile.STATIC|ClassFile.FINAL);
+                           ACC_STATIC|ACC_FINAL);
         c.aload(0);
-        c.putstatic(c.pool.Fieldref(classfile.name,
-                                    "self",
-                                    "L"+classfile.name+";"));
-
+        c.putstatic(classfile.name, "self", "L"+classfile.name+";");
         Enumeration e = constants.elements();
 
         while (e.hasMoreElements()) {
@@ -585,35 +525,29 @@ public class Module implements ClassConstants, CompilationContext
         Code code = classfile.addMethod(
             "call_function",
             "(I" + $pyFrame + ")" + $pyObj,
-            ClassFile.PUBLIC);
+            ACC_PUBLIC);
 
         code.aload(0);
         code.aload(2);
-        Label def = code.getLabel();
+        Label def = new Label();
         Label[] labels = new Label[codes.size()];
         int i;
         for(i=0; i<labels.length; i++)
-            labels[i] = code.getLabel();
+            labels[i] = new Label();
 
         //Get index for function to call
         code.iload(1);
-
-        code.tableswitch(def, 0, labels);
+        code.tableswitch(0, labels.length - 1, def, labels);
         for(i=0; i<labels.length; i++) {
-            labels[i].setPosition();
-            code.invokevirtual(
-                classfile.name,
-                ((PyCodeConstant)codes.elementAt(i)).fname,
-                "(" + $pyFrame + ")" + $pyObj);
+            code.label(labels[i]);
+            code.invokevirtual(classfile.name, ((PyCodeConstant)codes.elementAt(i)).fname, "(" + $pyFrame + ")" + $pyObj);
             code.areturn();
-            code.stack += 2;
         }
-        def.setPosition();
+        code.label(def);
 
         //Should probably throw internal exception here
         code.aconst_null();
         code.areturn();
-
     }
 
     public void write(OutputStream stream) throws IOException {
@@ -625,10 +559,8 @@ public class Module implements ClassConstants, CompilationContext
 
         classfile.addInterface("org/python/core/PyRunnable");
         if (sfilename != null) {
-            classfile.addAttribute(new SourceFile(sfilename, classfile.pool));
+            classfile.setSource(sfilename);
         }
-        classfile.addAttribute(new APIVersion(org.python.core.imp.APIVersion,
-                                              classfile.pool));
         classfile.write(stream);
     }
 
@@ -637,18 +569,18 @@ public class Module implements ClassConstants, CompilationContext
 
     public String getFilename() { return sfilename; }
 
-    public ScopeInfo getScopeInfo(SimpleNode node) {
+    public ScopeInfo getScopeInfo(PythonTree node) {
         return (ScopeInfo) scopes.get(node);
     }
 
-    public void error(String msg,boolean err,SimpleNode node)
+    public void error(String msg,boolean err,PythonTree node)
         throws Exception
     {
         if (!err) {
             try {
                 Py.warning(Py.SyntaxWarning, msg,
                            (sfilename != null) ? sfilename : "?",
-                           node.beginLine ,null, Py.None);
+                           node.getLine() ,null, Py.None);
                 return;
             } catch(PyException e) {
                 if (!Py.matchException(e, Py.SyntaxWarning))

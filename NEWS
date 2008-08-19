@@ -2,6 +2,7 @@ Jython NEWS
 
 Jython 2.5
   Incompatible Changes
+    - The python.prepath property has been removed; use python.path instead.
     - To implement the Java Map interface, PyDictionary.values now returns a
     Collection instead of a PyList
     - The -E codec command line option (use a different codec when reading from

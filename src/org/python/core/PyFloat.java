@@ -4,6 +4,7 @@ package org.python.core;
 import java.io.Serializable;
 import java.math.BigDecimal;
 
+import org.python.expose.ExposedClassMethod;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
@@ -104,6 +105,10 @@ public class PyFloat extends PyObject
     }
 
     private String formatDouble(int precision) {
+        if (Double.isNaN(value)) {
+            return "nan";
+        }
+        
         String result = String.format("%%.%dg", precision);
         result = Py.newString(result).__mod__(this).toString();
 
@@ -180,8 +185,9 @@ public class PyFloat extends PyObject
             // with. If NaN, similarly.
             if (other instanceof PyInteger || other instanceof PyLong) {
                 j = 0.0;
+            } else {
+                return -2;
             }
-            return -2;
         } else if (other instanceof PyInteger) {
             j = ((PyInteger)other).getValue();
         } else if (other instanceof PyLong) {
@@ -195,6 +201,19 @@ public class PyFloat extends PyObject
     }
 
     public Object __coerce_ex__(PyObject other) {
+        return float___coerce_ex__(other);
+    }
+
+    @ExposedMethod
+    final PyObject float___coerce__(PyObject other) {
+        return adaptToCoerceTuple(float___coerce_ex__(other));
+    }
+
+    /** 
+     * Coercion logic for float. Implemented as a final method to avoid
+     * invocation of virtual methods from the exposed coerce. 
+     */ 
+    final Object float___coerce_ex__(PyObject other) {
         if (other instanceof PyFloat)
             return other;
         else {
@@ -205,6 +224,7 @@ public class PyFloat extends PyObject
             else
                 return Py.None;
         }
+        
     }
 
     private static final boolean canCoerce(PyObject other) {
@@ -498,11 +518,6 @@ public class PyFloat extends PyObject
         }
     }
 
-    @ExposedMethod
-    final PyObject float___coerce__(PyObject other) {
-        return __coerce__(other);
-    }
-
     public PyObject __neg__() {
         return float___neg__();
     }
@@ -577,6 +592,60 @@ public class PyFloat extends PyObject
 
     public PyTuple __getnewargs__() {
         return float___getnewargs__();
+    }
+
+    // standard singleton issues apply here to __getformat__/__setformat__,
+    // but this is what Python demands
+    
+    public enum Format {
+        UNKNOWN ("unknown"),
+        BE ("IEEE, big-endian"),
+        LE ("IEEE, little-endian");
+        
+        private final String format;
+        Format(String format) {
+            this.format = format;
+        }
+        public String format() { return format; } 
+    }
+    
+    // subset of IEEE-754, the JVM is big-endian 
+    public static volatile Format double_format = Format.BE;
+    public static volatile Format float_format = Format.BE;
+    
+    @ExposedClassMethod
+    public static String float___getformat__(PyType type, String typestr) {
+        if ("double".equals(typestr)) {
+            return double_format.format();
+        } else if ("float".equals(typestr)) {
+            return float_format.format();
+        } else {
+            throw Py.ValueError("__getformat__() argument 1 must be 'double' or 'float'");
+        }
+    }
+    
+    @ExposedClassMethod
+    public static void float___setformat__(PyType type, String typestr, String format) {
+        Format new_format = null;
+        if (!"double".equals(typestr) && !"float".equals(typestr)) {
+            throw Py.ValueError("__setformat__() argument 1 must be 'double' or 'float'");
+        }
+        if (Format.LE.format().equals(format)) {
+            throw Py.ValueError(String.format("can only set %s format to 'unknown' or the " + "detected platform value", typestr));
+        } else if (Format.BE.format().equals(format)) {
+            new_format = Format.BE;
+        } else if (Format.UNKNOWN.format().equals(format)) {
+            new_format = Format.UNKNOWN;
+        } else {
+            throw Py.ValueError("__setformat__() argument 2 must be 'unknown', " + "'IEEE, little-endian' or 'IEEE, big-endian'");
+        }
+        if (new_format != null) {
+            if ("double".equals(typestr)) {
+                double_format = new_format;
+            } else {
+                float_format = new_format;
+            }
+        }
     }
 
     public boolean isMappingType() { return false; }

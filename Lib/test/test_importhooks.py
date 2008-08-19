@@ -2,7 +2,7 @@ import sys
 import imp
 import os
 import unittest
-import test_support
+from test import test_support
 
 
 test_src = """\

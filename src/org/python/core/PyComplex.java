@@ -53,7 +53,7 @@ public class PyComplex extends PyObject {
 
         PyComplex complexReal;
         PyComplex complexImag;
-        PyObject toFloat = null;
+        PyFloat toFloat = null;
         if (real instanceof PyComplex) {
             complexReal = (PyComplex)real;
         } else {
@@ -66,11 +66,7 @@ public class PyComplex extends PyObject {
                 }
                 throw pye;
             }
-            if (!(toFloat instanceof PyFloat)) {
-                throw Py.TypeError(String.format("__float__ returned non-float (type %.200s)",
-                                                 imag.getType().fastGetName()));
-            }
-            complexReal = new PyComplex(((PyFloat)toFloat).getValue());
+            complexReal = new PyComplex(toFloat.getValue());
         }
 
         if (imag == null) {
@@ -88,11 +84,7 @@ public class PyComplex extends PyObject {
                 }
                 throw pye;
             }
-            if (!(toFloat instanceof PyFloat)) {
-                throw Py.TypeError(String.format("__float__ returned non-float (type %.200s)",
-                                                 imag.getType().fastGetName()));
-            }
-            complexImag = new PyComplex(((PyFloat)toFloat).getValue());
+            complexImag = new PyComplex(toFloat.getValue());
         }
 
         complexReal.real -= complexImag.imag;
@@ -266,12 +258,20 @@ public class PyComplex extends PyObject {
         return unsupported_comparison(other);
     }
 
+    public Object __coerce_ex__(PyObject other) {
+        return complex___coerce_ex__(other);
+    }
+    
     @ExposedMethod
     final PyObject complex___coerce__(PyObject other) {
-        return __coerce__(other);
+        return adaptToCoerceTuple(complex___coerce_ex__(other));
     }
 
-    public Object __coerce_ex__(PyObject other) {
+    /** 
+     * Coercion logic for complex. Implemented as a final method to avoid
+     * invocation of virtual methods from the exposed coerce. 
+     */ 
+    final PyObject complex___coerce_ex__(PyObject other) {
         if (other instanceof PyComplex)
             return other;
         if (other instanceof PyFloat)
@@ -435,7 +435,7 @@ public class PyComplex extends PyObject {
     }
 
     public PyObject __rfloordiv__(PyObject left) {
-        return complex___floordiv__(left);
+        return complex___rfloordiv__(left);
     }
 
     @ExposedMethod(type = MethodType.BINARY)
@@ -490,6 +490,7 @@ public class PyComplex extends PyObject {
     }
 
     private static PyObject _mod(PyComplex value, PyComplex right) {
+        Py.warning(Py.DeprecationWarning, "complex divmod(), // and % are deprecated");
         PyComplex z = (PyComplex) _div(value, right);
 
         z.real = Math.floor(z.real);
@@ -521,6 +522,7 @@ public class PyComplex extends PyObject {
     }
 
     private static PyObject _divmod(PyComplex value, PyComplex right) {
+        Py.warning(Py.DeprecationWarning, "complex divmod(), // and % are deprecated");
         PyComplex z = (PyComplex) _div(value, right);
 
         z.real = Math.floor(z.real);

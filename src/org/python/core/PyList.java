@@ -153,20 +153,17 @@ public class PyList extends PySequenceList {
         if(step == 1) {
             PyObject[] otherArray;
             PyObject[] array = getArray();
-            if(value instanceof PySequenceList) {
-                PySequenceList seqList = (PySequenceList) value;
-                otherArray = seqList.getArray();
-                if(otherArray == array) {
-                    otherArray = otherArray.clone();
-                }
-                list.replaceSubArray(start, stop, otherArray, 0, seqList.size());
+
+            int n = value.__len__();
+            if (value instanceof PySequenceList) {
+                otherArray = ((PySequenceList)value).getArray();
             } else {
-                int n = value.__len__();
-                list.ensureCapacity(start + n);
-                for(int i = 0; i < n; i++) {
-                    list.add(i + start, value.pyget(i));
-                }
+                otherArray = Py.unpackSequence(value, value.__len__());
             }
+            if (otherArray == array) {
+                otherArray = otherArray.clone();
+            }
+            list.replaceSubArray(start, stop, otherArray, 0, n);
         } else if(step > 1) {
             int n = value.__len__();
             for(int i = 0, j = 0; i < n; i++, j += step) {
@@ -190,7 +187,7 @@ public class PyList extends PySequenceList {
 
     protected void setsliceList(int start, int stop, int step, List value) {
         if(step != 1) {
-            throw Py.TypeError("setslice with java.util.List and step != 1 not " + "supported yet");
+            throw Py.TypeError("setslice with java.util.List and step != 1 not supported yet");
         }
         int n = value.size();
         list.ensureCapacity(start + n);
@@ -200,35 +197,34 @@ public class PyList extends PySequenceList {
     }
 
     protected void setsliceIterable(int start, int stop, int step, PyObject value) {
-        PyObject iter;
+        PyObject[] seq;
         try {
-            iter = value.__iter__();
-        } catch(PyException pye) {
-            if(Py.matchException(pye, Py.TypeError)) {
+            seq = Py.make_array(value);
+        } catch (PyException pye) {
+            if (Py.matchException(pye, Py.TypeError)) {
                 throw Py.TypeError("can only assign an iterable");
             }
             throw pye;
         }
-        PyObject next;
-        for(int j = 0; (next = iter.__iternext__()) != null; j += step) {
-            if(step < 0) {
-                list.pyset(start + j, next);
-            } else {
-                list.add(start + j, next);
-            }
-        }
+        setslicePySequence(start, stop, step, new PyList(seq));
     }
 
     protected PyObject repeat(int count) {
-        if(count < 0) {
+        if (count < 0) {
             count = 0;
         }
-        int l = size();
-        PyObject[] newList = new PyObject[l * count];
-        for(int i = 0; i < count; i++) {
-            System.arraycopy(getArray(), 0, newList, i * l, l);
+        int size = size();
+        int newSize = size * count;
+        if (count != 0 && newSize / count != size) {
+            throw Py.MemoryError("");
         }
-        return new PyList(newList);
+
+        PyObject[] array = getArray();
+        PyObject[] newArray = new PyObject[newSize];
+        for(int i = 0; i < count; i++) {
+            System.arraycopy(array, 0, newArray, i * size, size);
+        }
+        return new PyList(newArray);
     }
 
     @ExposedMethod(type = MethodType.BINARY)
@@ -262,53 +258,64 @@ public class PyList extends PySequenceList {
     }
 
     public PyObject __imul__(PyObject o) {
-        PyObject result = list___imul__(o);
-        if(result == null) {
-            // We can't perform an in-place multiplication on o's
-            // type, so let o try to rmul this list. A new list will
-            // be created instead of modifying this one, but that's
-            // preferable to just blowing up on this operation.
-            result = o.__rmul__(this);
-            if(result == null) {
-                throw Py.TypeError(_unsupportedop("*", o));
-            }
-        }
-        return result;
+        return list___imul__(o);
     }
 
-    @ExposedMethod
+    @ExposedMethod(type = MethodType.BINARY)
     final PyObject list___imul__(PyObject o) {
-        if(!(o instanceof PyInteger || o instanceof PyLong)) {
+        if (!o.isIndex()) {
             return null;
         }
-        int l = size();
-        int count = ((PyInteger)o.__int__()).getValue();
-        int newSize = l * count;
+        int count = o.asIndex(Py.OverflowError);
+
+        int size = size();
+        if (size == 0 || count == 1) {
+            return this;
+        }
+
+        if (count < 1) {
+            clear();
+            return this;
+        }
+
+        if (size > Integer.MAX_VALUE / count) {
+            throw Py.MemoryError("");
+        }
+
+        int newSize = size * count;
         list.setSize(newSize);
         PyObject[] array = getArray();
         for (int i = 1; i < count; i++) {
-            System.arraycopy(array, 0, array, i * l, l);
+            System.arraycopy(array, 0, array, i * size, size);
         }
         gListAllocatedStatus = __len__();
-        return this;
+        return this;        
+    }
+
+    @Override
+    public PyObject __mul__(PyObject o) {
+        return list___mul__(o);
     }
 
     @ExposedMethod(type = MethodType.BINARY)
     final PyObject list___mul__(PyObject o) {
-        if(!(o instanceof PyInteger || o instanceof PyLong)) {
+        if (!o.isIndex()) {
             return null;
         }
-        int count = ((PyInteger)o.__int__()).getValue();
-        return repeat(count);
+        return repeat(o.asIndex(Py.OverflowError));
+    }
+
+    @Override
+    public PyObject __rmul__(PyObject o) {
+        return list___rmul__(o);
     }
 
     @ExposedMethod(type = MethodType.BINARY)
     final PyObject list___rmul__(PyObject o) {
-        if(!(o instanceof PyInteger || o instanceof PyLong)) {
+        if (!o.isIndex()) {
             return null;
         }
-        int count = ((PyInteger)o.__int__()).getValue();
-        return repeat(count);
+        return repeat(o.asIndex(Py.OverflowError));
     }
 
     public PyObject __add__(PyObject o) {
@@ -384,11 +391,6 @@ public class PyList extends PySequenceList {
             throw Py.IndexError("index out of range: " + o);
         }
         return ret;
-    }
-
-    @ExposedMethod
-    final boolean list___nonzero__() {
-        return seq___nonzero__();
     }
 
     public PyObject __iter__() {
@@ -500,22 +502,22 @@ public class PyList extends PySequenceList {
     }
 
     public int index(PyObject o, int start) {
-        return list_index(o, start, null);
+        return list_index(o, start, size());
     }
 
     public int index(PyObject o, int start, int stop) {
-        return list_index(o, start, Py.newInteger(stop));
+        return list_index(o, start, stop);
     }
 
-    @ExposedMethod(defaults = {"0", "null"})
-    final int list_index(PyObject o, int start, PyObject stop) {
-        int iStop;
-        if(stop == null) {
-            iStop = size();
-        } else {
-            iStop = stop.asInt();
-        }
-        return _index(o, "list.index(x): x not in list", start, iStop);
+    @ExposedMethod(defaults = {"null", "null"})
+    final int list_index(PyObject o, PyObject start, PyObject stop) {
+        int startInt = start == null ? 0 : PySlice.calculateSliceIndex(start);
+        int stopInt = stop == null ? size() : PySlice.calculateSliceIndex(stop);
+        return list_index(o, startInt, stopInt);
+    }
+
+    final int list_index(PyObject o, int start, int stop) {
+        return _index(o, "list.index(x): x not in list", start, stop);
     }
 
     final int list_index(PyObject o, int start) {
@@ -537,25 +539,6 @@ public class PyList extends PySequenceList {
             }
         }
         throw Py.ValueError(message);
-    }
-
-    // This is closely related to fixindex in PySequence, but less strict
-    // fixindex returns -1 if index += length < 0 or if index >= length
-    // where this function returns 0 in former case and length in the latter.
-    // I think both are needed in different cases, but if this method turns
-    // out to be needed in other sequence subclasses, it should be moved to
-    // PySequence.
-    private int calculateIndex(int index) {
-        int length = size();
-        if(index < 0) {
-            index = index += length;
-            if(index < 0) {
-                index = 0;
-            }
-        } else if(index > length) {
-            index = length;
-        }
-        return index;
     }
 
     /**
@@ -680,10 +663,24 @@ public class PyList extends PySequenceList {
         return list___iadd__(o);
     }
 
-    @ExposedMethod
+    @ExposedMethod(type = MethodType.BINARY)
     final PyObject list___iadd__(PyObject o) {
-        extend(fastSequence(o, "argument to += must be a sequence"));
+        PyType oType = o.getType();
+        if (oType == TYPE || oType == PyTuple.TYPE || this == o) {
+            extend(fastSequence(o, "argument must be iterable"));
+            return this;
+        }
 
+        PyObject it;
+        try {
+            it = o.__iter__();
+        } catch (PyException pye) {
+            if (!Py.matchException(pye, Py.TypeError)) {
+                throw pye;
+            }
+            return null;
+        }
+        extend(it);
         return this;
     }
 

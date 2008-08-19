@@ -12,7 +12,9 @@ import java.nio.channels.Channel;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 
+import org.python.core.imp;
 import org.python.core.Py;
+import org.python.core.PyObject;
 import org.python.core.util.RelativeFile;
 import org.python.modules.errno;
 
@@ -23,17 +25,23 @@ import org.python.modules.errno;
  */
 public class FileIO extends RawIOBase {
 
-    /** The underlying file */
+    /** The underlying file channel */
     private FileChannel fileChannel;
+    
+    /** The underlying file (if known) */
+    private RandomAccessFile file;
 
-    /** true if the file is readable */
-    private boolean readable = false;
+    /** true if the file is opened for reading ('r') */
+    private boolean reading = false;
 
-    /** true if the file is writable */
-    private boolean writable = false;
+    /** true if the file is opened for writing ('w', 'a', or '+') */
+    private boolean writing = false;
 
-    /** true if the file is in appending mode */
+    /** true if the file is in appending mode ('a') */
     private boolean appending = false;
+
+    /** true if the file is opened for reading and writing ('+') */
+    private boolean plus = false;
 
     /**
      * Construct a FileIO instance for the specified file name.
@@ -49,14 +57,20 @@ public class FileIO extends RawIOBase {
         parseMode(mode);
 
         File fullPath = new RelativeFile(name);
-        String rafMode = "r" + (writable ? "w" : "");
+        String rafMode = "r" + (writing ? "w" : "");
         try {
-            fileChannel = new RandomAccessFile(fullPath, rafMode).getChannel();
+            if (plus && reading && !fullPath.isFile()) {
+                writing = false; // suppress "permission denied"
+                throw new FileNotFoundException("");
+            }
+            file = new RandomAccessFile(fullPath, rafMode);
+            fileChannel = file.getChannel();
         } catch (FileNotFoundException fnfe) {
             if (fullPath.isDirectory()) {
                 throw Py.IOError(errno.EISDIR, "Is a directory");
             }
-            if (rafMode.equals("rw") && !fullPath.canWrite()) {
+            if ((writing && !fullPath.canWrite())
+                || fnfe.getMessage().endsWith("(Permission denied)")) {
                 throw Py.IOError(errno.EACCES, "Permission denied: '" + name + "'");
             }
             throw Py.IOError(errno.ENOENT, "No such file or directory: '" + name + "'");
@@ -92,33 +106,32 @@ public class FileIO extends RawIOBase {
      */
     private void parseMode(String mode) {
         boolean rwa = false;
-        boolean plus = false;
 
         for (int i = 0; i < mode.length(); i++) {
             switch (mode.charAt(i)) {
             case 'r':
-                if (rwa) {
+                if (plus || rwa) {
                     badMode();
                 }
-                readable = rwa = true;
+                reading = rwa = true;
                 break;
             case 'w':
-                if (rwa) {
+                if (plus || rwa) {
                     badMode();
                 }
-                writable = rwa = true;
+                writing = rwa = true;
                 break;
             case 'a':
-                if (rwa) {
+                if (plus || rwa) {
                     badMode();
                 }
-                appending = writable = rwa = true;
+                appending = writing = rwa = true;
                 break;
             case '+':
-                if (plus) {
+                if (plus || !rwa) {
                     badMode();
                 }
-                readable = writable = plus = true;
+                writing = plus = true;
                 break;
             default:
                 throw Py.ValueError("invalid mode: '" + mode + "'");
@@ -140,14 +153,38 @@ public class FileIO extends RawIOBase {
     }
 
     /**
-     * Set the appropriate file position for writable/appending modes.
+     * Set the appropriate file position for writing/appending modes.
      *
      */
     private void initPosition() {
         if (appending) {
             seek(0, 2);
-        } else if (writable && !readable) {
-            truncate(0);
+        } else if (writing && !reading) {
+            try {
+                fileChannel.truncate(0);
+            } catch (IOException ioe) {
+                // On Solaris and Linux, ftruncate(3C) returns EINVAL
+                // if not a regular file whereas, e.g.,
+                // open("/dev/null", "w") works fine.  Because we have
+                // to simulate the "w" mode in Java, we suppress the
+                // exception.
+                if (ioe.getMessage().equals("Invalid argument"))
+                    return;
+                throw Py.IOError(ioe);
+            }
+        }
+    }
+
+    /** {@inheritDoc} */
+    public boolean isatty() {
+        checkClosed();
+        if (file == null) {
+            return false;
+        }
+        try {
+            return imp.load("os").invoke("isatty", Py.java2py(file.getFD())).__nonzero__();
+        } catch (IOException e) {
+            return false;
         }
     }
 
@@ -298,9 +335,9 @@ public class FileIO extends RawIOBase {
 
     /** {@inheritDoc} */
     public Object __tojava__(Class cls) {
-        if (OutputStream.class.isAssignableFrom(cls) && writable) {
+        if (OutputStream.class.isAssignableFrom(cls) && writing) {
             return Channels.newOutputStream(fileChannel);
-        } else if (InputStream.class.isAssignableFrom(cls) && readable) {
+        } else if (InputStream.class.isAssignableFrom(cls) && readable()) {
             return Channels.newInputStream(fileChannel);
         }
         return super.__tojava__(cls);
@@ -308,12 +345,12 @@ public class FileIO extends RawIOBase {
 
     /** {@inheritDoc} */
     public boolean readable() {
-        return readable;
+        return reading || plus;
     }
 
     /** {@inheritDoc} */
     public boolean writable() {
-        return writable;
+        return writing;
     }
 
     /** {@inheritDoc} */

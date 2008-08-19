@@ -16,8 +16,8 @@ import org.python.core.PyList;
 import org.python.core.PyLong;
 import org.python.core.PyObject;
 import org.python.core.PyString;
+import org.python.core.PyStringMap;
 import org.python.core.PyTuple;
-import org.python.core.__builtin__;
 
 import java.math.BigInteger;
 
@@ -258,7 +258,7 @@ public class struct {
      * Exception raised on various occasions; argument is a
      * string describing what is wrong.
      */
-    public static PyString error = new PyString("struct.error");
+    public static final PyObject error = Py.makeClass("error", Py.Exception, exceptionNamespace());
 
     public static String __doc__ =
         "Functions to convert between Python values and C structs.\n" +
@@ -331,8 +331,9 @@ public class struct {
         long get_long(PyObject value) {
             if (value instanceof PyLong){
                 Object v = value.__tojava__(Long.TYPE);
-                if (v == Py.NoConversion)
-                throw Py.OverflowError("long int too long to convert");
+                if (v == Py.NoConversion) {
+                    throw StructError("long int too long to convert");
+                }
                 return ((Long) v).longValue();
             } else
                 return get_int(value);
@@ -342,7 +343,7 @@ public class struct {
             if (value instanceof PyLong){
                 BigInteger v = (BigInteger)value.__tojava__(BigInteger.class);
                 if (v.compareTo(PyLong.maxULong) > 0){
-                    throw Py.OverflowError("unsigned long int too long to convert");
+                    throw StructError("unsigned long int too long to convert");
                 }
                 return v;
             } else
@@ -350,8 +351,6 @@ public class struct {
         }
 
         double get_float(PyObject value) {
-            if (!(value instanceof PyFloat))
-                throw StructError("required argument is not an float");
             return value.__float__().getValue();
         }
 
@@ -749,8 +748,13 @@ public class struct {
         }
 
         Object unpack(ByteStream buf) {
-            int v = LEreadInt(buf);
-            return Py.newFloat(Float.intBitsToFloat(v));
+            int bits = LEreadInt(buf);
+            float v = Float.intBitsToFloat(bits);
+            if (PyFloat.float_format == PyFloat.Format.UNKNOWN && (
+                    Float.isInfinite(v) || Float.isNaN(v))) {
+                throw Py.ValueError("can't unpack IEEE 754 special value on non-IEEE platform");
+            }
+            return Py.newFloat(v);
         }
     }
 
@@ -764,7 +768,12 @@ public class struct {
         Object unpack(ByteStream buf) {
             long bits = (LEreadInt(buf) & 0xFFFFFFFFL) +
                         (((long)LEreadInt(buf)) << 32);
-            return Py.newFloat(Double.longBitsToDouble(bits));
+            double v = Double.longBitsToDouble(bits);
+            if (PyFloat.double_format == PyFloat.Format.UNKNOWN &&
+                    (Double.isInfinite(v) || Double.isNaN(v))) {
+                throw Py.ValueError("can't unpack IEEE 754 special value on non-IEEE platform");
+            }
+            return Py.newFloat(v);
         }
     }
 
@@ -776,8 +785,13 @@ public class struct {
         }
 
         Object unpack(ByteStream buf) {
-            int v = BEreadInt(buf);
-            return Py.newFloat(Float.intBitsToFloat(v));
+            int bits = BEreadInt(buf);
+            float v = Float.intBitsToFloat(bits);
+            if (PyFloat.float_format == PyFloat.Format.UNKNOWN && (
+                    Float.isInfinite(v) || Float.isNaN(v))) {
+                throw Py.ValueError("can't unpack IEEE 754 special value on non-IEEE platform");
+            }
+            return Py.newFloat(v);
         }
     }
 
@@ -789,9 +803,14 @@ public class struct {
         }
 
         Object unpack(ByteStream buf) {
-            long bits = (((long)BEreadInt(buf)) << 32) +
-                        (BEreadInt(buf) & 0xFFFFFFFFL);
-            return Py.newFloat(Double.longBitsToDouble(bits));
+            long bits = (((long) BEreadInt(buf)) << 32) +
+                    (BEreadInt(buf) & 0xFFFFFFFFL);
+            double v = Double.longBitsToDouble(bits);
+            if (PyFloat.double_format == PyFloat.Format.UNKNOWN &&
+                    (Double.isInfinite(v) || Double.isNaN(v))) {
+                throw Py.ValueError("can't unpack IEEE 754 special value on non-IEEE platform");
+            }
+            return Py.newFloat(v);
         }
     }
 
@@ -809,8 +828,8 @@ public class struct {
         new LEUnsignedIntFormatDef()    .init('I', 4, 0),
         new LEIntFormatDef()            .init('l', 4, 0),
         new LEUnsignedIntFormatDef()    .init('L', 4, 0),
-        new LELongFormatDef()           .init('q', 8, 8),
-        new LEUnsignedLongFormatDef()   .init('Q', 8, 8),
+        new LELongFormatDef()           .init('q', 8, 0),
+        new LEUnsignedLongFormatDef()   .init('Q', 8, 0),
         new LEFloatFormatDef()          .init('f', 4, 0),
         new LEDoubleFormatDef()         .init('d', 8, 0),
     };
@@ -828,8 +847,8 @@ public class struct {
         new BEUnsignedIntFormatDef()    .init('I', 4, 0),
         new BEIntFormatDef()            .init('l', 4, 0),
         new BEUnsignedIntFormatDef()    .init('L', 4, 0),
-        new BELongFormatDef()           .init('q', 8, 8),
-        new BEUnsignedLongFormatDef()   .init('Q', 8, 8),
+        new BELongFormatDef()           .init('q', 8, 0),
+        new BEUnsignedLongFormatDef()   .init('Q', 8, 0),
         new BEFloatFormatDef()          .init('f', 4, 0),
         new BEDoubleFormatDef()         .init('d', 8, 0),
     };
@@ -1034,12 +1053,18 @@ public class struct {
 
             e.doUnpack(str, num, res);
         }
-        return __builtin__.tuple(res);
+        return PyTuple.fromIterable(res);
     }
 
 
 
     private static PyException StructError(String explanation) {
         return new PyException(error, explanation);
+    }
+
+    private static PyObject exceptionNamespace() {
+        PyObject dict = new PyStringMap();
+        dict.__setitem__("__module__", new PyString("struct"));
+        return dict;
     }
 }

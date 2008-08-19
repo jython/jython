@@ -155,10 +155,12 @@ public class PySet extends BaseSet {
         return set___ior__(other);
     }
 
-    @ExposedMethod
+    @ExposedMethod(type = MethodType.BINARY)
     final PyObject set___ior__(PyObject other) {
-        BaseSet bs = _binary_sanity_check(other);
-        _set.addAll(bs._set);
+        if (!(other instanceof BaseSet)) {
+            return null;
+        }
+        _set.addAll(((BaseSet)other)._set);
         return this;
     }
 
@@ -168,7 +170,9 @@ public class PySet extends BaseSet {
 
     @ExposedMethod(type = MethodType.BINARY)
     final PyObject set___ixor__(PyObject other) {
-        _binary_sanity_check(other);
+        if (!(other instanceof BaseSet)) {
+            return null;
+        }
         set_symmetric_difference_update(other);
         return this;
     }
@@ -179,8 +183,10 @@ public class PySet extends BaseSet {
 
     @ExposedMethod(type = MethodType.BINARY)  
     final PyObject set___iand__(PyObject other) {
-        BaseSet bs = _binary_sanity_check(other);
-        _set = ((BaseSet)__and__(bs))._set;
+        if (!(other instanceof BaseSet)) {
+            return null;
+        }
+        _set = ((BaseSet)__and__(other))._set;
         return this;
     }
 
@@ -190,8 +196,10 @@ public class PySet extends BaseSet {
 
     @ExposedMethod(type = MethodType.BINARY)
     final PyObject set___isub__(PyObject other) {
-        BaseSet bs = _binary_sanity_check(other);
-        _set.removeAll(bs._set);
+        if (!(other instanceof BaseSet)) {
+            return null;
+        }
+        _set.removeAll(((BaseSet)other)._set);
         return this;
     }
 

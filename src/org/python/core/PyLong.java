@@ -182,11 +182,11 @@ public class PyLong extends PyObject {
     }
 
 
-    private long getLong(long min, long max) {
+    public long getLong(long min, long max) {
         return getLong(min, max, "long int too large to convert");
     }
 
-    private long getLong(long min, long max, String overflowMsg) {
+    public long getLong(long min, long max, String overflowMsg) {
         if (value.compareTo(maxLong) <= 0 && value.compareTo(minLong) >= 0) {
             long v = value.longValue();
             if (v >= min && v <= max)
@@ -256,6 +256,19 @@ public class PyLong extends PyObject {
     }
 
     public Object __coerce_ex__(PyObject other) {
+        return long___coerce_ex__(other);
+    }
+
+    @ExposedMethod
+    final PyObject long___coerce__(PyObject other) {
+        return adaptToCoerceTuple(long___coerce_ex__(other));
+    }
+
+    /** 
+     * Coercion logic for long. Implemented as a final method to avoid
+     * invocation of virtual methods from the exposed coerce. 
+     */ 
+    final Object long___coerce_ex__(PyObject other) {
         if (other instanceof PyLong)
             return other;
         else
@@ -710,11 +723,6 @@ public class PyLong extends PyObject {
         return Py.newLong(coerce(left).or(value));
     }
 
-    @ExposedMethod
-    final PyObject long___coerce__(PyObject other) {
-        return __coerce__(other);
-    }
-
     public PyObject __neg__() {
         return long___neg__();
     }
@@ -812,7 +820,7 @@ public class PyLong extends PyObject {
 
     @ExposedMethod
     final PyString long___hex__() {
-        String s = value.toString(16).toUpperCase();
+        String s = value.toString(16);
         if (s.startsWith("-"))
             return new PyString("-0x"+s.substring(1, s.length())+"L");
         else
@@ -836,6 +844,33 @@ public class PyLong extends PyObject {
         return long___getnewargs__();
     }
 
+    @Override
+    public PyObject __index__() {
+        return long___index__();
+    }
+
+    @ExposedMethod
+    final PyObject long___index__() {
+        return this;
+    }
+
+    @Override
+    public boolean isIndex() {
+        return true;
+    }
+
+    @Override
+    public int asIndex(PyObject err) {
+        boolean tooLow = value.compareTo(PyInteger.minInt) < 0;
+        boolean tooHigh = value.compareTo(PyInteger.maxInt) > 0;
+        if (tooLow || tooHigh) {
+            if (err != null) {
+                throw new PyException(err, "cannot fit 'long' into an index-sized integer");
+            }
+            return tooLow ? Integer.MIN_VALUE : Integer.MAX_VALUE;
+        }
+        return (int)value.longValue();
+    }
 
     public boolean isMappingType() { return false; }
     public boolean isSequenceType() { return false; }

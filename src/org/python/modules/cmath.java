@@ -28,7 +28,18 @@ public class cmath {
         try{
             return(in.__complex__());
         } catch(PyException e){
-            if(e.type == Py.AttributeError) {
+            if(e.type == Py.AttributeError || e.type == Py.ValueError) {
+                throw Py.TypeError("a float is required");
+            }
+            throw e;
+        }
+    }
+    
+    private static double doubleFromPyObject(PyObject in) {
+        try{
+            return(in.__float__().getValue());
+        } catch(PyException e){
+            if(e.type == Py.AttributeError || e.type == Py.ValueError) {
                 throw Py.TypeError("a float is required");
             }
             throw e;
@@ -131,6 +142,19 @@ public class cmath {
         double l = hypot(x.real, x.imag);
         r.imag = Math.atan2(x.imag, x.real) / Math.log(10.0);
         r.real = math.log10(new PyFloat(l));
+        return (r);
+    }
+                    
+    public static PyComplex log(PyObject in, PyObject base) {
+        return log(complexFromPyObject(in), doubleFromPyObject(base));
+    }
+    
+    public static PyComplex log(PyComplex x, double base) {
+        PyComplex r = new PyComplex(0.0, 0.0);
+        double l = hypot(x.real, x.imag);
+        double log_base = Math.log(base);
+        r.imag = Math.atan2(x.imag, x.real) / log_base;
+        r.real = math.log(new PyFloat(l)) / log_base;
         return (r);
     }
 

@@ -14,8 +14,10 @@ import java.util.Map;
 import java.util.Set;
 
 import org.python.core.Py;
+import org.python.objectweb.asm.Label;
+import org.python.objectweb.asm.Opcodes;
 
-public class ProxyMaker implements ClassConstants 
+public class ProxyMaker implements ClassConstants, Opcodes
 {
     public static final int tBoolean=0;
     public static final int tByte=1;
@@ -173,19 +175,19 @@ public class ProxyMaker implements ClassConstants
         case tByte:
         case tShort:
         case tInteger:
-            code.iconst(0);
+            code.iconst_0();
             code.ireturn();
             break;
         case tLong:
-            code.ldc(code.pool.Long(0));
+            code.lconst_0();
             code.lreturn();
             break;
         case tFloat:
-            code.ldc(code.pool.Float((float)0.));
+            code.fconst_0();
             code.freturn();
             break;
         case tDouble:
-            code.ldc(code.pool.Double(0.));
+            code.dconst_0();
             code.dreturn();
             break;
         case tVoid:
@@ -203,9 +205,8 @@ public class ProxyMaker implements ClassConstants
                           String superclass,
                           Class<?>[] parameters,
                           Class<?> ret,
-                          String sig)
-        throws Exception
-    {
+                          String sig) throws Exception {
+
         code.aload(0);
         int local_index;
         int i;
@@ -237,8 +238,8 @@ public class ProxyMaker implements ClassConstants
                 break;
             }
         }
-        int meth = code.pool.Methodref(superclass, name, sig);
-        code.invokespecial(meth);
+        code.invokespecial(superclass, name, sig);
+
         doReturn(code, ret);
     }
 
@@ -246,22 +247,18 @@ public class ProxyMaker implements ClassConstants
                           String jcallName)
         throws Exception
     {
-        int jcall = code.pool.Methodref("org/python/core/PyObject", jcallName, "(" + $objArr + ")"
-                + $pyObj);
-        int py2j = code.pool.Methodref("org/python/core/Py", "py2" + name, "(" + $pyObj + ")"
-                + type);
-        code.invokevirtual(jcall);
-        code.invokestatic(py2j);
+        code.invokevirtual("org/python/core/PyObject", jcallName, "(" + $objArr + ")" + $pyObj);
+        code.invokestatic("org/python/core/Py", "py2"+name, "(" + $pyObj + ")"+type);
     }
 
 
     public void getArgs(Code code, Class<?>[] parameters) throws Exception {
         if (parameters.length == 0) {
-            int EmptyObjects = code.pool.Fieldref("org/python/core/Py", "EmptyObjects", $pyObjArr);
-            code.getstatic(EmptyObjects);
+            code.getstatic("org/python/core/Py", "EmptyObjects", $pyObjArr);
         } else {
             code.iconst(parameters.length);
-            code.anewarray(code.pool.Class("java/lang/Object"));
+            code.anewarray("java/lang/Object");
+
             int array = code.getLocal("[org/python/core/PyObject");
             code.astore(array);
 
@@ -278,46 +275,27 @@ public class ProxyMaker implements ClassConstants
                 case tInteger:
                     code.iload(local_index);
                     local_index += 1;
-
-                    int newInteger = code.pool.Methodref(
-                        "org/python/core/Py",
-                        "newInteger", "(I)" + $pyInteger);
-                    code.invokestatic(newInteger);
+                    code.invokestatic("org/python/core/Py", "newInteger", "(I)" + $pyInteger);
                     break;
                 case tLong:
                     code.lload(local_index);
                     local_index += 2;
-
-                    int newInteger1 = code.pool.Methodref(
-                        "org/python/core/Py",
-                        "newInteger", "(J)" + $pyObj);
-                    code.invokestatic(newInteger1);
+                    code.invokestatic("org/python/core/Py", "newInteger", "(J)" + $pyObj);
                     break;
                 case tFloat:
                     code.fload(local_index);
                     local_index += 1;
-
-                    int newFloat = code.pool.Methodref(
-                        "org/python/core/Py",
-                        "newFloat", "(F)" + $pyFloat);
-                    code.invokestatic(newFloat);
+                    code.invokestatic("org/python/core/Py", "newFloat", "(F)" + $pyFloat);
                     break;
                 case tDouble:
                     code.dload(local_index);
                     local_index += 2;
-
-                    int newFloat1 = code.pool.Methodref(
-                        "org/python/core/Py",
-                        "newFloat", "(D)" + $pyFloat);
-                    code.invokestatic(newFloat1);
+                    code.invokestatic("org/python/core/Py", "newFloat", "(D)" + $pyFloat);
                     break;
                 case tCharacter:
                     code.iload(local_index);
                     local_index += 1;
-                    int newString = code.pool.Methodref(
-                        "org/python/core/Py",
-                        "newString", "(C)" + $pyStr);
-                    code.invokestatic(newString);
+                    code.invokestatic("org/python/core/Py", "newString", "(C)" + $pyStr);
                     break;
                 default:
                     code.aload(local_index);
@@ -337,17 +315,17 @@ public class ProxyMaker implements ClassConstants
                            Class<?>[] exceptions) throws Exception {
         Label start = null;
         Label end = null;
-
+        
         String jcallName = "_jcall";
         int instLocal = 0;
 
         if (exceptions.length > 0) {
-            start = code.getLabel();
-            end = code.getLabel();
+            start = new Label();
+            end = new Label();
             jcallName = "_jcallexc";
             instLocal = code.getLocal("org/python/core/PyObject");
             code.astore(instLocal);
-            start.setPosition();
+            code.label(start);
             code.aload(instLocal);
         }
 
@@ -378,24 +356,17 @@ public class ProxyMaker implements ClassConstants
             doJavaCall(code, "void", "V", jcallName);
             break;
         default:
-            int jcall = code.pool.Methodref("org/python/core/PyObject", jcallName, "("
-                        + $objArr + ")" + $pyObj);
-            code.invokevirtual(jcall);
-
-            int forname = code.pool.Methodref("java/lang/Class", "forName", "(" + $str + ")"
-                        + $clss);
+            code.invokevirtual("org/python/core/PyObject", jcallName, "(" + $objArr + ")" + $pyObj);
             code.ldc(ret.getName());
-            code.invokestatic(forname);
-
-            int tojava = code.pool.Methodref("org/python/core/Py", "tojava", "(" + $pyObj
-                        + $clss + ")" + $obj);
-            code.invokestatic(tojava);
+            code.invokestatic("java/lang/Class","forName", "(" + $str + ")" + $clss);
+            code.invokestatic("org/python/core/Py", "tojava", "(" + $pyObj + $clss + ")" + $obj);
             // I guess I need this checkcast to keep the verifier happy
-            code.checkcast(code.pool.Class(mapClass(ret)));
+            code.checkcast(mapClass(ret));
             break;
         }
-        if (end != null)
-            end.setPosition();
+        if (end != null) {
+            code.label(end);
+        }
 
         doReturn(code, ret);
 
@@ -404,17 +375,15 @@ public class ProxyMaker implements ClassConstants
 
             Label handlerStart = null;
             for (int i = 0; i < exceptions.length; i++) {
-                handlerStart = code.getLabel();
-                handlerStart.setPosition();
-                code.stack = 1;
+                handlerStart = new Label();
+                code.label(handlerStart);
                 int excLocal = code.getLocal("java/lang/Throwable");
                 code.astore(excLocal);
 
                 code.aload(excLocal);
                 code.athrow();
 
-                code.addExceptionHandler(start, end, handlerStart,
-                                 code.pool.Class(mapClass(exceptions[i])));
+                code.visitTryCatchBlock(start, end, handlerStart, mapClass(exceptions[i]));
                 doNullReturn(code, ret);
 
                 code.freeLocal(excLocal);
@@ -424,21 +393,16 @@ public class ProxyMaker implements ClassConstants
 
             if (!throwableFound) {
                 // The final catch (Throwable)
-                handlerStart = code.getLabel();
-                handlerStart.setPosition();
-                code.stack = 1;
+                handlerStart = new Label();
+                code.label(handlerStart);
                 int excLocal = code.getLocal("java/lang/Throwable");
                 code.astore(excLocal);
                 code.aload(instLocal);
                 code.aload(excLocal);
 
-                int jthrow = code.pool.Methodref(
-                    "org/python/core/PyObject", "_jthrow",
-                    "(" + $throwable + ")V");
-                code.invokevirtual(jthrow);
+                code.invokevirtual("org/python/core/PyObject", "_jthrow", "(" + $throwable + ")V");
+                code.visitTryCatchBlock(start, end, handlerStart, "java/lang/Throwable");
 
-                code.addExceptionHandler(start, end, handlerStart,
-                                     code.pool.Class("java/lang/Throwable"));
                 code.freeLocal(excLocal);
                 doNullReturn(code, ret);
             }
@@ -460,7 +424,6 @@ public class ProxyMaker implements ClassConstants
         String sig = makeSignature(parameters, ret);
 
         String name = method.getName();
-//         System.out.println(name+": "+sig);
         names.add(name);
 
         Code code = classfile.addMethod(name, sig, access);
@@ -470,42 +433,34 @@ public class ProxyMaker implements ClassConstants
 
         if (!isAbstract) {
             int tmp = code.getLocal("org/python/core/PyObject");
-            int jfindattr = code.pool.Methodref("org/python/core/Py", "jfindattr", "(" + $pyProxy
-                    + $str + ")" + $pyObj);
-            code.invokestatic(jfindattr);
-
+            code.invokestatic("org/python/core/Py", "jfindattr", "(" + $pyProxy + $str + ")" + $pyObj);
             code.astore(tmp);
             code.aload(tmp);
 
-            Label callPython = code.getLabel();
-
+            Label callPython = new Label();
             code.ifnonnull(callPython);
 
             String superclass = mapClass(method.getDeclaringClass());
 
             callSuper(code, name, superclass, parameters, ret, sig);
-            callPython.setPosition();
+            code.label(callPython);
             code.aload(tmp);
             callMethod(code, name, parameters, ret, method.getExceptionTypes());
 
             addSuperMethod("super__"+name, name, superclass, parameters,
                            ret, sig, access);
-        }
-        else {
+        } else {
             if (!isAdapter) {
-                int jgetattr = code.pool.Methodref("org/python/core/Py", "jgetattr", "(" + $pyProxy
-                        + $str + ")" + $pyObj);
-                code.invokestatic(jgetattr);
+                code.invokestatic("org/python/core/Py", "jgetattr", "(" + $pyProxy + $str + ")" + $pyObj);
                 callMethod(code, name, parameters, ret, method.getExceptionTypes());
             } else {
-                int jfindattr = code.pool.Methodref("org/python/core/Py", "jfindattr", "("
-                        + $pyProxy + $str + ")" + $pyObj);
-                code.invokestatic(jfindattr);
+                code.invokestatic("org/python/core/Py", "jfindattr", "(" + $pyProxy + $str + ")" + $pyObj);
                 code.dup();
-                Label returnNull = code.getLabel();
+                Label returnNull = new Label();
                 code.ifnull(returnNull);
+
                 callMethod(code, name, parameters, ret, method.getExceptionTypes());
-                returnNull.setPosition();
+                code.label(returnNull);
                 code.pop();
                 doNullReturn(code, ret);
             }
@@ -547,8 +502,7 @@ public class ProxyMaker implements ClassConstants
                     addSuperMethod(methods[i], access);
                     continue;
                 }
-            }
-            else if (Modifier.isFinal(access)) {
+            } else if (Modifier.isFinal(access)) {
                 continue;
             }
             addMethod(methods[i], access);
@@ -615,14 +569,17 @@ public class ProxyMaker implements ClassConstants
             methodName = "super__" + superName;
             access &= ~Modifier.FINAL;
         }
-        addSuperMethod(methodName, superName, superclass, parameters, ret, sig, access);
+        addSuperMethod(methodName, superName, superclass, parameters,
+                       ret, sig, access);
     }
 
-    public void addSuperMethod(String methodName, String superName,
-                               String declClass, Class<?>[] parameters,
-                               Class<?> ret, String sig, int access)
-        throws Exception
-    {
+    public void addSuperMethod(String methodName,
+                               String superName,
+                               String declClass,
+                               Class<?>[] parameters,
+                               Class<?> ret,
+                               String sig,
+                               int access) throws Exception {
         if (methodName.startsWith("super__")) {
             /* rationale: JC java-class, P proxy-class subclassing JC
                in order to avoid infinite recursion P should define super__foo
@@ -645,16 +602,15 @@ public class ProxyMaker implements ClassConstants
 
     public void addProxy() throws Exception {
         // implement PyProxy interface
-        classfile.addField("__proxy", "Lorg/python/core/PyInstance;", Modifier.PROTECTED);
+        classfile.addField("__proxy", "Lorg/python/core/PyInstance;",
+                           Modifier.PROTECTED);
         // setProxy methods
         Code code = classfile.addMethod("_setPyInstance",
                                         "(Lorg/python/core/PyInstance;)V",
                                         Modifier.PUBLIC);
-
-        int field = code.pool.Fieldref(classfile.name, "__proxy", "Lorg/python/core/PyInstance;");
         code.aload(0);
         code.aload(1);
-        code.putfield(field);
+        code.putfield(classfile.name, "__proxy", "Lorg/python/core/PyInstance;");
         code.return_();
 
         // getProxy method
@@ -662,23 +618,22 @@ public class ProxyMaker implements ClassConstants
                                    "()Lorg/python/core/PyInstance;",
                                    Modifier.PUBLIC);
         code.aload(0);
-        code.getfield(field);
+        code.getfield(classfile.name, "__proxy", "Lorg/python/core/PyInstance;");
         code.areturn();
 
         // implement PyProxy interface
-        classfile.addField("__systemState", "Lorg/python/core/PySystemState;", Modifier.PROTECTED
-                | Modifier.TRANSIENT);
+        classfile.addField("__systemState",
+                           "Lorg/python/core/PySystemState;",
+                           Modifier.PROTECTED | Modifier.TRANSIENT);
 
         // setProxy method
         code = classfile.addMethod("_setPySystemState",
                                    "(Lorg/python/core/PySystemState;)V",
                                    Modifier.PUBLIC);
 
-        field = code.pool.Fieldref(classfile.name, "__systemState",
-                                   "Lorg/python/core/PySystemState;");
         code.aload(0);
         code.aload(1);
-        code.putfield(field);
+        code.putfield(classfile.name, "__systemState", "Lorg/python/core/PySystemState;");
         code.return_();
 
         // getProxy method
@@ -686,7 +641,7 @@ public class ProxyMaker implements ClassConstants
                                    "()Lorg/python/core/PySystemState;",
                                    Modifier.PUBLIC);
         code.aload(0);
-        code.getfield(field);
+        code.getfield(classfile.name, "__systemState", "Lorg/python/core/PySystemState;");
         code.areturn();
     }
 
@@ -703,14 +658,9 @@ public class ProxyMaker implements ClassConstants
 
         String[] names = supernames.toArray(new String[n]);
         CodeCompiler.makeStrings(code, names, n);
-        int j2py = code.pool.Methodref("org/python/core/Py", "java2py", "(" + $obj + ")" + $pyObj);
-        code.invokestatic(j2py);
-
-        int setitem = code.pool.Methodref("org/python/core/PyObject", "__setitem__", "(" + $str
-                + $pyObj + ")V");
-        code.invokevirtual(setitem);
+        code.invokestatic("org/python/core/Py", "java2py", "(" + $obj + ")" + $pyObj);
+        code.invokevirtual("org/python/core/PyObject", "__setitem__", "(" + $str + $pyObj + ")V");
         code.return_();
-
     }
 
     public void build() throws Exception {

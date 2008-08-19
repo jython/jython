@@ -1,7 +1,7 @@
+from java.util import Collections, WeakHashMap
 from java.util.concurrent import Semaphore, CyclicBarrier
 from java.util.concurrent.locks import ReentrantLock
-from org.python.core import FunctionThread
-from java.lang import Thread
+from thread import _newFunctionThread
 from thread import _local as local
 import java.lang.Thread
 import weakref
@@ -12,7 +12,7 @@ from traceback import print_exc as _print_exc
 # Rename some stuff so "from threading import *" is safe
 __all__ = ['activeCount', 'Condition', 'currentThread', 'enumerate', 'Event',
            'Lock', 'RLock', 'Semaphore', 'BoundedSemaphore', 'Thread',
-           'Timer', 'setprofile', 'settrace', 'local']
+           'Timer', 'setprofile', 'settrace', 'local', 'stack_size']
 
 _VERBOSE = False
 
@@ -53,28 +53,42 @@ def settrace(func):
     global _trace_hook
     _trace_hook = func
 
-class RLock(object):
+def RLock(*args, **kwargs):
+    return _RLock(*args, **kwargs)
+
+class _RLock(object):
     def __init__(self):
         self._lock = ReentrantLock()
+        self.__owner = None
 
     def acquire(self, blocking=1):
         if blocking:
             self._lock.lock()
+            self.__owner = currentThread()
             return True
         else:
             return self._lock.tryLock()
 
-    __enter__ = acquire
+    def __enter__(self):
+        self.acquire()
+        return self
 
     def release(self):
         assert self._lock.isHeldByCurrentThread(), \
             "release() of un-acquire()d lock"
+        self.__owner = None
         self._lock.unlock()
 
     def __exit__(self, t, v, tb):
         self.release()
 
-Lock = RLock
+    def locked(self):
+        return self._lock.isLocked()
+
+    def _is_owned(self):
+        return self._lock.isHeldByCurrentThread()
+
+Lock = _RLock
 
 class Condition(object):
     def __init__(self, lock=None):
@@ -85,9 +99,16 @@ class Condition(object):
 
     def acquire(self):
         return self._lock.acquire()
+
+    def __enter__(self):
+        self.acquire()
+        return self
     
     def release(self):
         return self._lock.release()
+
+    def __exit__(self, t, v, tb):
+        self.release()
 
     def wait(self, timeout=None):
         if timeout:
@@ -100,6 +121,9 @@ class Condition(object):
 
     def notifyAll(self):
         return self._condition.signalAll()
+
+    def _is_owned(self):
+        return self._lock._lock.isHeldByCurrentThread()
 
 class Semaphore(object):
     def __init__(self, value=1):
@@ -114,22 +138,31 @@ class Semaphore(object):
         else:
             return self._semaphore.tryAcquire()
 
+    def __enter__(self):
+        self.acquire()
+        return self
+
     def release(self):
         self._semaphore.release()
 
+    def __exit__(self, t, v, tb):
+        self.release()
+
 
 ThreadStates = {
-    Thread.State.NEW : 'initial',
-    Thread.State.RUNNABLE: 'runnable',
-    Thread.State.BLOCKED: 'blocked',
-    Thread.State.WAITING: 'waiting',
-    Thread.State.TIMED_WAITING: 'timed_waiting',
-    Thread.State.TERMINATED: 'stopped',
+    java.lang.Thread.State.NEW : 'initial',
+    java.lang.Thread.State.RUNNABLE: 'runnable',
+    java.lang.Thread.State.BLOCKED: 'blocked',
+    java.lang.Thread.State.WAITING: 'waiting',
+    java.lang.Thread.State.TIMED_WAITING: 'timed_waiting',
+    java.lang.Thread.State.TERMINATED: 'stopped',
 }
 
 class JavaThread(object):
     def __init__(self, thread):
         self._thread = thread
+        _jthread_to_pythread[thread] = self
+        _threads[thread.getId()] = self
 
     def __repr__(self):
         _thread = self._thread
@@ -178,10 +211,13 @@ class JavaThread(object):
 
 # relies on the fact that this is a CHM
 _threads = weakref.WeakValueDictionary()
-
+_active = _threads
+_jthread_to_pythread = Collections.synchronizedMap(WeakHashMap())
 
 class Thread(JavaThread):
     def __init__(self, group=None, target=None, name=None, args=None, kwargs=None):
+        _thread = self._create_thread()
+        JavaThread.__init__(self, _thread)
         if args is None:
             args = ()
         if kwargs is None:
@@ -189,10 +225,11 @@ class Thread(JavaThread):
         self._target = target
         self._args = args
         self._kwargs = kwargs
-        self._thread = _thread = FunctionThread(self.__bootstrap, ())
         if name:
             self._thread.setName(name)
-        _threads[_thread.getId()] = self
+
+    def _create_thread(self):
+        return _newFunctionThread(self.__bootstrap, ())
 
     def run(self):
         if self._target:
@@ -259,10 +296,14 @@ class _MainThread(Thread):
         import atexit
         atexit.register(self.__exitfunc)
 
+    def _create_thread(self):
+        return java.lang.Thread.currentThread()
+
     def _set_daemon(self):
         return False
 
     def __exitfunc(self):
+        del _threads[self._thread.getId()]
         t = _pickSomeNonDaemonThread()
         while t:
             t.join()
@@ -275,17 +316,20 @@ def _pickSomeNonDaemonThread():
     return None
 
 def currentThread():
-    id = java.lang.Thread.currentThread().getId()
-    try:
-        return _threads[id]
-    except KeyError:
-        return JavaThread(java.lang.Thread.currentThread())
+    jthread = java.lang.Thread.currentThread()
+    pythread = _jthread_to_pythread[jthread]
+    if pythread is None:
+        pythread = JavaThread(jthread)
+    return pythread
 
 def activeCount():
     return len(_threads)
 
 def enumerate():
     return _threads.values()
+
+from thread import stack_size
+
 
 _MainThread()
 
@@ -374,10 +418,17 @@ class _BoundedSemaphore(_Semaphore):
         _Semaphore.__init__(self, value, verbose)
         self._initial_value = value
 
+    def __enter__(self):
+        self.acquire()
+        return self
+
     def release(self):
         if self._Semaphore__value >= self._initial_value:
             raise ValueError, "Semaphore released too many times"
         return _Semaphore.release(self)
+
+    def __exit__(self, t, v, tb):
+        self.release()
 
 
 def Event(*args, **kwargs):

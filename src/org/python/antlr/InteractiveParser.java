@@ -1,5 +1,8 @@
 package org.python.antlr;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+
 import org.antlr.runtime.CharStream;
 import org.antlr.runtime.CommonToken;
 import org.antlr.runtime.CommonTokenStream;
@@ -14,76 +17,38 @@ import org.python.antlr.ast.modType;
 import org.python.antlr.ast.Module;
 import org.python.antlr.ast.stmtType;
 
-public class InteractiveParser {
+public class InteractiveParser extends BaseParser {
 
-    private CharStream charStream;
+    private BufferedReader bufreader;
 
-    //Extract superclass from this and the other XParsers.
-    public static class PyLexer extends PythonLexer {
-        public PyLexer(CharStream lexer) {
-            super(lexer);
-        }
-
-        public Token nextToken() {
-            startPos = getCharPositionInLine();
-            return super.nextToken();
-        }
+    public InteractiveParser(BufferedReader br, String filename) {
+        this.bufreader = br;
+        this.filename = filename;
     }
 
-    public static TreeAdaptor pyadaptor = new CommonTreeAdaptor() {
-        public Object create(Token token) {
-            return new PythonTree(token);
-        }
-
-        public Object dupNode(Object t) {
-            if (t == null) {
-                return null;
-            }
-            return create(((PythonTree) t).token);
-        }
-    };
-
-    public InteractiveParser(CharStream cs) {
-        this.charStream = cs;
-    }
-
-    public modType partialParse() {
-        /*
-        CPython codeop exploits that with CPython parser adding newlines
-        to a partial valid sentence move the reported error position,
-        this is not true for our parser, so we need a different approach:
-        we check whether all sentence tokens have been consumed or
-        the remaining ones fullfill lookahead expectations. See:
-        PythonGrammar.partial_valid_sentence (def in python.jjt)
-
-        FJW: the above comment needs to be changed when the current partial
-        parse strategy gels.
-        */
-        try {
-            return parse();
-        } catch (RecognitionException e) {
-            //FIXME: This needs plenty of tuning, this just calls all errors
-            //partial matches.
-            return null;
-        }
-    }
-            
-    public modType parse() throws RecognitionException {
+    public modType parse() throws IOException {
         modType tree = null;
-        PythonLexer lexer = new PyLexer(this.charStream);
+        PythonLexer lexer = new PyLexer(new NoCloseReaderStream(bufreader));
+        lexer.setErrorHandler(errorHandler);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
-        tokens.discardOffChannelTokens(true);
-        PythonTokenSource indentedSource = new PythonTokenSource(tokens);
+        PythonTokenSource indentedSource = new PythonTokenSource(tokens, filename, true);
         tokens = new CommonTokenStream(indentedSource);
         PythonParser parser = new PythonParser(tokens);
-        parser.setTreeAdaptor(pyadaptor);
+        parser.setErrorHandler(errorHandler);
+        parser.setTreeAdaptor(new PythonTreeAdaptor());
 
-        Object rx = parser.single_input();
-        PythonParser.single_input_return r = (PythonParser.single_input_return)rx;
-        CommonTreeNodeStream nodes = new CommonTreeNodeStream((Tree)r.tree);
-        nodes.setTokenStream(tokens);
-        PythonWalker walker = new PythonWalker(nodes);
-        tree = walker.interactive();
+        try {
+            PythonParser.single_input_return r = parser.single_input();
+            CommonTreeNodeStream nodes = new CommonTreeNodeStream((Tree)r.tree);
+            nodes.setTokenStream(tokens);
+            PythonWalker walker = new PythonWalker(nodes);
+            walker.setErrorHandler(errorHandler);
+            tree = walker.interactive();
+        } catch (RecognitionException e) {
+            //I am only throwing ParseExceptions, but "throws RecognitionException" still gets
+            //into the generated code.
+            System.err.println("FIXME: pretty sure this can't happen -- but needs to be checked");
+        }
         return tree;
-    } 
+    }
 }

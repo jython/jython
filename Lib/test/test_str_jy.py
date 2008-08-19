@@ -1,4 +1,4 @@
-import test_support
+from test import test_support
 import unittest
 
 class WrappedStrCmpTest(unittest.TestCase):
@@ -23,13 +23,13 @@ class WrappedStrCmpTest(unittest.TestCase):
         self.assertEquals(1, d[ABC])
 
 class IntToStrTest(unittest.TestCase):
-    
+
     def test_int_to_string_format(self):
         # 0.001 comes out as 0.0010
         self.assertEquals(str(0.001), "0.001")
 
 class StringSlicingTest(unittest.TestCase):
-    
+
     def test_out_of_bounds(self):
         try:
             "a"[10:]
@@ -37,7 +37,7 @@ class StringSlicingTest(unittest.TestCase):
             self.fail("str slice threw StringOutOfBoundsError")
 
 class FormatTest(unittest.TestCase):
-    
+
     def test_add_zeros(self):
         # 2 "%012d" % -4 displays '0000000000-4'
         s = "%012d" % -4
@@ -51,7 +51,7 @@ class FormatTest(unittest.TestCase):
         self.assertEquals("%e" % 1e-6, "1.000000e-06")
         self.assertEquals("%+f" % -5, "-5.000000")
         self.assertEquals("%+f" % 5, "+5.000000")
- 
+
 
     def test_argument_count_exception(self):
         "exception thrown when too many or too few arguments for format string"
@@ -69,6 +69,35 @@ class FormatTest(unittest.TestCase):
             s = '%d%d' % (1,)
         except TypeError, e:
             self.failUnless("not enough arguments for format string" in str(e))
+
+    def test_unicode_arg(self):
+        # When the right-side operand is a unicode, the result should be unicode
+        # too
+        self.assertEquals("%s" % u"foo", u"foo")
+        self.assertEquals("%s" % u"\u00e7", u"\u00e7")
+
+    def test_unicode_in_args(self):
+        # When at least one of the right-side operands is a unicode, the result
+        # should be unicode too
+        self.assertEquals("%s %s" % (u"foo", "bar"), u"foo bar")
+        self.assertEquals("%s %s" % ("foo", u"bar"), u"foo bar")
+
+        class S(object):
+            def __str__(self): return "str"
+            def __unicode__(self): return "unicode"
+
+        # Also, once a unicode has been found, next args should be __unicode__'d
+        self.assertEquals("%s %s %s" % ("foo", u"bar", S()), u"foo bar unicode")
+        # But, args found before the first unicode should not be __unicode__'d
+        self.assertEquals("%s %s %s" % (S(), u"bar", S()), u"str bar unicode")
+
+    def test_non_ascii_unicode_mod_str(self):
+        # Regression test for a problem on the formatting logic: when no unicode
+        # args were found, Jython stored the resulting buffer on a PyString,
+        # decoding it later to make a PyUnicode. That crashed when the left side
+        # of % was a unicode containing non-ascii chars
+        self.assertEquals(u"\u00e7%s" % "foo", u"\u00e7foo")
+
 
 class DisplayTest(unittest.TestCase):
 

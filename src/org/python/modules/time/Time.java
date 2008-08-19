@@ -13,11 +13,13 @@
 package org.python.modules.time;
 
 import java.text.DateFormatSymbols;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 import java.text.ParseException;
@@ -31,7 +33,7 @@ import org.python.core.PyInteger;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyTuple;
-import org.python.core.PyType;
+import org.python.core.__builtin__;
 
 class TimeFunctions extends PyBuiltinFunctionSet
 {
@@ -134,12 +136,12 @@ public class Time implements ClassDictInit
         // rather than a value of initialClock since the initial call to
         // System.nanoTime can yield anything and that could lead to initialTime
         // being set twice.
-        if(!clockInitialized) { 
+        if(!clockInitialized) {
             initialClock = System.nanoTime();
             clockInitialized = true;
             return 0;
         }
-        return (System.nanoTime() - initialClock) / NANOS_PER_SECOND; 
+        return (System.nanoTime() - initialClock) / NANOS_PER_SECOND;
     }
     private static final double NANOS_PER_SECOND = 1000000000.0;
     private static long initialClock;
@@ -577,7 +579,7 @@ public class Time implements ClassDictInit
                 // weekday as decimal (0=Sunday-6)
                 // tuple format has monday=0
                 j = (items[6] + 1) % 7;
-                s = s + _twodigit(j);
+                s = s + j;
                 break;
             case 'W':
                 // week of year (monday is first day) (00-53).  all days in
@@ -662,12 +664,19 @@ public class Time implements ClassDictInit
         }
     }
 
-
-    // from patch by Tristan.King@jcu.edu.au
-    // NOTE: these functions have not been roubustly tested, but that's what unit
-    // tests are for. works with Django. please verify before merging into trunk.
     public static PyTuple strptime(String data_string) {
         return strptime(data_string, DEFAULT_FORMAT_PY);
+    }
+
+    /**
+     * Calls _strptime.strptime(), for cases that our SimpleDateFormat backed
+     * strptime can't handle.
+     */
+    private static PyTuple pystrptime(String data_string, String format) {
+        return (PyTuple) __builtin__.__import__("_strptime")
+                                    .__getattr__("strptime")
+                                    .__call__(Py.newUnicode(data_string),
+                                              Py.newUnicode(format));
     }
 
     public static PyTuple strptime(String data_string, String format) {
@@ -677,6 +686,10 @@ public class Time implements ClassDictInit
             throw Py.TypeError("expected string of buffer");
         }
         String jformat = py2java_format(format);
+        if (jformat == null) {
+            // Format not translatable to java, fallback to _strptime
+            return pystrptime(data_string, format);
+        }
         SimpleDateFormat d = new SimpleDateFormat(jformat);
         Calendar cal = Calendar.getInstance();
         try {
@@ -702,7 +715,6 @@ public class Time implements ClassDictInit
     }
 
     private static final String DEFAULT_FORMAT_PY = "%a %b %d %H:%M:%S %Y";
-    private static final String DEFAULT_FORMAT_JA = "EEE MMM dd HH:mm:ss zzz yyyy";
     private static final HashMap<Character, String> py2java = new HashMap<Character, String>() {{
         put('a', "EEE");
         put('A', "EEEE");
@@ -711,14 +723,13 @@ public class Time implements ClassDictInit
         put('c', "EEE MMM dd HH:mm:ss yyyy");
         put('d', "dd");
         put('H', "HH");
-        put('I', "kk");
+        put('I', "hh");
         put('j', "DDD");
         put('m', "MM");
         put('M', "mm");
         put('p', "a");
         put('S', "ss");
         put('U', "ww");
-        put('w', "0"); // unsupported in java
         put('W', "ww"); // same as U ??
         put('x', "MM/dd/yy");
         put('X', "HH:mm:ss");
@@ -726,8 +737,19 @@ public class Time implements ClassDictInit
         put('Y', "yyyy");
         put('Z', "zzz");
         put('%', "%");
-        }};
+    }};
 
+    // strptime formats not supported by SimpleDateFormat:
+    private static final List<Character> notSupported = new ArrayList<Character>() {{
+        add('w');
+    }};
+
+
+    /**
+     * @return the {@link SimpleDateFormat} format string equivalent to the
+     * strptime format string supplied as parameter, or <b>null</b> if there is
+     * no equivalent for SimpleDateFormat.
+     */
     private static String py2java_format(String format) {
         StringBuilder builder = new StringBuilder();
         boolean directive = false;
@@ -758,6 +780,9 @@ public class Time implements ClassDictInit
             }
 
             String translated = py2java.get(charAt);
+            if (translated == null && notSupported.contains(charAt)) {
+                return null;
+            }
             builder.append(translated != null ? translated : charAt);
             directive = false;
         }

@@ -2,9 +2,20 @@
 
 Made for Jython.
 """
-import test_support
 import types
 import unittest
+from test import test_support
+
+class Old:
+    pass
+
+
+class New(object):
+    pass
+
+
+old = Old()
+new = New()
 
 class TestDescrTestCase(unittest.TestCase):
 
@@ -61,6 +72,29 @@ class TestDescrTestCase(unittest.TestCase):
             pass
         else:
             self.assert_(False, "should have raised TypeError")
+
+    def test_raising_custom_attribute_error(self):
+        class RaisesCustomMsg(object):
+            def __get__(self, instance, type):
+                raise AttributeError("Custom message")
+
+
+        class CustomAttributeError(AttributeError): pass
+
+        class RaisesCustomErr(object):
+            def __get__(self, instance, type):
+                raise CustomAttributeError
+
+        class Foo(object):
+            custom_msg = RaisesCustomMsg()
+            custom_err = RaisesCustomErr()
+
+        self.assertRaises(CustomAttributeError, lambda: Foo().custom_err)
+        try:
+            Foo().custom_msg
+            self.assert_(False) # Previous line should raise AttributteError
+        except AttributeError, e:
+            self.assertEquals("Custom message", str(e))
 
 class SubclassDescrTestCase(unittest.TestCase):
 
@@ -133,7 +167,7 @@ class SubclassDescrTestCase(unittest.TestCase):
 
         # Test strs, unicode, lists and tuples
         mapping = []
-        
+
         # + binop
         mapping.append((lambda o: 'foo' + o,
                         TypeError, "cannot concatenate 'str' and 'B' objects",
@@ -175,9 +209,139 @@ class SubclassDescrTestCase(unittest.TestCase):
             self.assertEqual(func(C()), cresult)
 
 
+class InPlaceTestCase(unittest.TestCase):
+
+    def test_iadd(self):
+        class Foo(object):
+            def __add__(self, other):
+                return 1
+            def __radd__(self, other):
+                return 2
+        class Bar(object):
+            pass
+        class Baz(object):
+            def __iadd__(self, other):
+                return NotImplemented
+        foo = Foo()
+        foo += Bar()
+        self.assertEqual(foo, 1)
+        bar = Bar()
+        bar += Foo()
+        self.assertEqual(bar, 2)
+        baz = Baz()
+        baz += Foo()
+        self.assertEqual(baz, 2)
+
+    def test_imul(self):
+        class FooInplace(list):
+            def __imul__(self, other):
+                return [1]
+        class Bar(FooInplace):
+            def __mul__(self, other):
+                return [2]
+        foo = FooInplace()
+        foo *= 3
+        self.assertEqual(foo, [1])
+        foo = Bar([3])
+        foo *= 3
+        self.assertEqual(foo, [1])
+
+        class Baz(FooInplace):
+            def __mul__(self, other):
+                return [3]
+        baz = Baz()
+        baz *= 3
+        self.assertEqual(baz, [1])
+
+    def test_list(self):
+        class Foo(list):
+            def __mul__(self, other):
+                return [1]
+        foo = Foo([2])
+        foo *= 3
+        if test_support.is_jython:
+            self.assertEqual(foo, [2, 2, 2])
+        else:
+            # CPython ignores list.__imul__ on a subclass with __mul__
+            # (unlike Jython and PyPy)
+            self.assertEqual(foo, [1])
+
+        class Bar(object):
+            def __radd__(self, other):
+                return 1
+            def __rmul__(self, other):
+                return 2
+        l = []
+        l += Bar()
+        self.assertEqual(l, 1)
+        l = []
+        l *= Bar()
+        self.assertEqual(l, 2)
+
+    def test_iand(self):
+        # Jython's set __iand__ (as well as isub, ixor, etc) was
+        # previously broken
+        class Foo(set):
+            def __and__(self, other):
+                return set([1])
+        foo = Foo()
+        foo &= 3
+        self.assertEqual(foo, set([1]))
+
+
+class DescrExceptionsTestCase(unittest.TestCase):
+
+    def test_hex(self):
+        self._test(hex)
+
+    def test_oct(self):
+        self._test(oct)
+
+    def test_other(self):
+        for op in '-', '+', '~':
+            try:
+                eval('%s(old)' % op)
+            except AttributeError:
+                pass
+            else:
+                self._assert(False, 'Expected an AttributeError, op: %s' % op)
+            try:
+                eval('%s(new)' % op)
+            except TypeError:
+                pass
+            else:
+                self._assert(False, 'Expected a TypeError, op: %s' % op)
+
+    def _test(self, func):
+        self.assertRaises(AttributeError, func, old)
+        self.assertRaises(TypeError, func, new)
+
+class GetAttrTestCase(unittest.TestCase):
+    def test_raising_custom_attribute_error(self):
+        # Very similar to
+        # test_descr_jy.TestDescrTestCase.test_raising_custom_attribute_error
+        class BarAttributeError(AttributeError): pass
+
+        class Bar(object):
+            def __getattr__(self, name):
+                raise BarAttributeError
+
+        class Foo(object):
+            def __getattr__(self, name):
+                raise AttributeError("Custom message")
+        self.assertRaises(BarAttributeError, lambda: Bar().x)
+        try:
+            Foo().x
+            self.assert_(False) # Previous line should raise AttributteError
+        except AttributeError, e:
+            self.assertEquals("Custom message", str(e))
+
 def test_main():
     test_support.run_unittest(TestDescrTestCase,
-                              SubclassDescrTestCase)
+                              SubclassDescrTestCase,
+                              InPlaceTestCase,
+                              DescrExceptionsTestCase,
+                              GetAttrTestCase)
 
 if __name__ == '__main__':
     test_main()

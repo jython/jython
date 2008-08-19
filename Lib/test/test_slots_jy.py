@@ -2,7 +2,7 @@
 
 Made for Jython.
 """
-import test_support
+from test import test_support
 import unittest
 
 # The strict tests fail on PyPy (but work on CPython and Jython).

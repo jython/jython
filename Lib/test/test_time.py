@@ -99,11 +99,13 @@ class TimeTestCase(unittest.TestCase):
         # Make sure that using all zeros uses the proper default values.
         # No test for daylight savings since strftime() does not change output
         # based on its value.
-        # XXX: Java's SimpleDateFormat does 2 digit weekdays
         if not test_support.is_jython:
             expected = "2000 01 01 00 00 00 1 001"
         else:
-            expected = "0000 01 01 00 00 00 01 001"
+            # XXX: Jython doesn't support the "two digits years" hack (turned
+            #      on/off by time.accept2dyears), so year 0 means exactly that
+            #      and it is not converted to 2000.
+            expected = "0000 01 01 00 00 00 1 001"
         result = time.strftime("%Y %m %d %H %M %S %w %j", (0,)*9)
         self.assertEquals(expected, result)
 

@@ -475,6 +475,9 @@ class TestSubclass(unittest.TestCase):
         p = proxy(d)
         self.assertEqual(str(p), str(d))
         d = None
+        if test_support.is_jython:
+            from test_weakref import extra_collect
+            extra_collect()
         self.assertRaises(ReferenceError, str, p)
 
     def test_strange_subclass(self):
@@ -563,7 +566,7 @@ deque(['a', 'b', 'd', 'e', 'f'])
 
 
 >>> def roundrobin(*iterables):
-...     pending = deque([iter(i) for i in iterables])
+...     pending = deque(iter(i) for i in iterables)
 ...     while pending:
 ...         task = pending.popleft()
 ...         try:
@@ -611,13 +614,6 @@ def test_main(verbose=None):
         TestSubclass,
         TestSubclassWithKwargs,
     )
-
-    if test_support.is_jython:
-      # Jython doesn't weakref things immediately
-      del TestSubclass.test_weakref
-
-      # Needs 2.5 seq_tests
-      del TestVariousIteratorArgs.test_constructor
 
     test_support.run_unittest(*test_classes)
 

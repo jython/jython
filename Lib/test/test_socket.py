@@ -1,11 +1,9 @@
-from __future__ import nested_scopes
-
 """
 AMAK: 20050515: This module is the test_socket.py from cpython 2.4, ported to jython.
 """
 
 import unittest
-import test_support
+from test import test_support
 
 import errno
 import Queue

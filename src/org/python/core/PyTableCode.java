@@ -1,6 +1,8 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
+import org.python.modules._systemrestart;
+
 /**
  * An implementation of PyCode where the actual executable content
  * is stored as a PyFunctionTable instance and an integer index.
@@ -29,15 +31,22 @@ public class PyTableCode extends PyCode
     final public static int CO_VARKEYWORDS       = 0x0008;
     final public static int CO_GENERATOR         = 0x0020;
     
-    final public static int CO_NESTED            = 0x0010;
-    final public static int CO_GENERATOR_ALLOWED = 0x1000;
-    final public static int CO_FUTUREDIVISION    = 0x2000;
+    // these are defined in __future__.py
+    final public static int CO_NESTED                 = 0x0010;
+    final public static int CO_GENERATOR_ALLOWED      = 0x0;
+    final public static int CO_FUTUREDIVISION         = 0x2000;
+    final public static int CO_FUTURE_ABSOLUTE_IMPORT = 0x4000;
+    final public static int CO_WITH_STATEMENT         = 0x8000;
 
-    //XXX: I'm not positive that this is the right place for this constant.
-    final public static int PyCF_ONLY_AST        = 0x0400;
+    //XXX: I'm not positive that this is the right place for these constants.
+    final public static int PyCF_SOURCE_IS_UTF8    = 0x0100;
+    final public static int PyCF_DONT_IMPLY_DEDENT = 0x0200;
+    final public static int PyCF_ONLY_AST          = 0x0400;
 
-    final public static int CO_ALL_FEATURES = PyCF_ONLY_AST|CO_NESTED|CO_GENERATOR_ALLOWED|
-                                              CO_FUTUREDIVISION;
+    final public static int CO_ALL_FEATURES = PyCF_DONT_IMPLY_DEDENT|PyCF_ONLY_AST|
+                                              PyCF_SOURCE_IS_UTF8|CO_NESTED|
+                                              CO_GENERATOR_ALLOWED| CO_FUTUREDIVISION|
+                                              CO_FUTURE_ABSOLUTE_IMPORT|CO_WITH_STATEMENT;
 
     public PyTableCode(int argcount, String varnames[],
                        String filename, String name,
@@ -126,12 +135,12 @@ public class PyTableCode extends PyCode
         return new PyTuple(pystr);
     }
 
-    public PyObject __findattr__(String name) {
+    public PyObject __findattr_ex__(String name) {
         // have to craft co_varnames specially
         if (name == "co_varnames") return toPyStringTuple(co_varnames);
         if (name == "co_cellvars") return toPyStringTuple(co_cellvars);
         if (name == "co_freevars") return toPyStringTuple(co_freevars);
-        return super.__findattr__(name);
+        return super.__findattr_ex__(name);
     }
 
     public PyObject call(PyFrame frame, PyObject closure) {
@@ -157,8 +166,8 @@ public class PyTableCode extends PyCode
             }
         }
         // nested scopes: setup env with closure
-	// this should only be done once, so let the frame take care of it
-	frame.setupEnv((PyTuple)closure);
+        // this should only be done once, so let the frame take care of it
+        frame.setupEnv((PyTuple)closure);
 
         ts.frame = frame;
 
@@ -222,6 +231,12 @@ public class PyTableCode extends PyCode
         ts.exception = previous_exception;
 
         ts.frame = ts.frame.f_back;
+
+        // Check for interruption, which is used for restarting the interpreter
+        // on Jython
+        if (Thread.currentThread().isInterrupted()) {
+            throw new PyException(_systemrestart.SystemRestart);
+        }
         return ret;
     }
 

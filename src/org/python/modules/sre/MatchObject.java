@@ -39,7 +39,7 @@ public class MatchObject extends PyObject {
         if(args.length == 0) {
             throw Py.TypeError("expand() takes exactly 1 argument (0 given)");
         }
-        PyObject mod = imp.importName("sre", true);
+        PyObject mod = imp.importName("re", true);
         PyObject func = mod.__getattr__("_expand");
         return func.__call__(new PyObject[] {pattern, this, args[0]});
     }
@@ -182,7 +182,7 @@ public class MatchObject extends PyObject {
 
     }
 
-    public PyObject __findattr__(String key) {
+    public PyObject __findattr_ex__(String key) {
         //System.out.println("__findattr__:" + key);
         if (key == "flags")
             return Py.newInteger(pattern.flags);
@@ -204,6 +204,6 @@ public class MatchObject extends PyObject {
         if ( key == "regs" ){
             return regs();
         }
-        return super.__findattr__(key);
+        return super.__findattr_ex__(key);
     }
 }

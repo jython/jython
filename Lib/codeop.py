@@ -58,6 +58,7 @@ Compile():
 
 # import internals, not guaranteed interface
 from org.python.core import Py,CompilerFlags
+from org.python.core.PyTableCode import PyCF_DONT_IMPLY_DEDENT
 
 # public interface
 

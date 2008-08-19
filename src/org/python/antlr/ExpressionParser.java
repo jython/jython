@@ -14,55 +14,35 @@ import org.python.antlr.ast.modType;
 import org.python.antlr.ast.Module;
 import org.python.antlr.ast.stmtType;
 
-public class ExpressionParser {
+public class ExpressionParser extends BaseParser {
 
-    private CharStream charStream;
-
-    //Extract superclass from this and the other XParsers.
-    public static class PyLexer extends PythonLexer {
-        public PyLexer(CharStream lexer) {
-            super(lexer);
-        }
-
-        public Token nextToken() {
-            startPos = getCharPositionInLine();
-            return super.nextToken();
-        }
-    }
-
-    public static TreeAdaptor pyadaptor = new CommonTreeAdaptor() {
-        public Object create(Token token) {
-            return new PythonTree(token);
-        }
-
-        public Object dupNode(Object t) {
-            if (t == null) {
-                return null;
-            }
-            return create(((PythonTree) t).token);
-        }
-    };
-
-    public ExpressionParser(CharStream cs) {
+    public ExpressionParser(CharStream cs, String filename) {
         this.charStream = cs;
+        this.filename = filename;
     }
 
-    public modType parse() throws RecognitionException {
+    public modType parse() {
         modType tree = null;
         PythonLexer lexer = new PyLexer(this.charStream);
+        lexer.setErrorHandler(errorHandler);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
-        tokens.discardOffChannelTokens(true);
-        PythonTokenSource indentedSource = new PythonTokenSource(tokens);
+        PythonTokenSource indentedSource = new PythonTokenSource(tokens, filename);
         tokens = new CommonTokenStream(indentedSource);
         PythonParser parser = new PythonParser(tokens);
-        parser.setTreeAdaptor(pyadaptor);
+        parser.setErrorHandler(errorHandler);
+        parser.setTreeAdaptor(new PythonTreeAdaptor());
 
-        Object rx = parser.eval_input();
-        PythonParser.eval_input_return r = (PythonParser.eval_input_return)rx;
-        CommonTreeNodeStream nodes = new CommonTreeNodeStream((Tree)r.tree);
-        nodes.setTokenStream(tokens);
-        PythonWalker walker = new PythonWalker(nodes);
-        tree = walker.expression();
+        try {
+            PythonParser.eval_input_return r = parser.eval_input();
+            CommonTreeNodeStream nodes = new CommonTreeNodeStream((Tree)r.tree);
+            nodes.setTokenStream(tokens);
+            PythonWalker walker = new PythonWalker(nodes);
+            walker.setErrorHandler(errorHandler);
+            tree = walker.expression();
+        } catch (RecognitionException e) {
+            //XXX: this can't happen.  Need to strip the throws from antlr
+            //     generated code.
+        }
         return tree;
     }
 }

@@ -4,7 +4,7 @@ AMAK: 20050515: This module is a brand new test_select module, which gives much 
 
 import errno
 import time
-import test_support
+from test import test_support
 import unittest
 
 import socket

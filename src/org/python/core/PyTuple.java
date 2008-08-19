@@ -92,20 +92,26 @@ public class PyTuple extends PySequenceList
         if (count < 0) {
             count = 0;
         }
-        if (size() == 0 || count == 1) {
+        int size = size();
+        if (size == 0 || count == 1) {
             if (getType() == TYPE) {
                 // Since tuples are immutable, we can return a shared copy in this case
                 return this;
             }
-            if (size() == 0) {
+            if (size == 0) {
                 return new PyTuple();
             }
         }
+
+        int newSize = size * count;
+        if (newSize / size != count) {
+            throw Py.MemoryError("");
+        }
+
         PyObject[] array = getArray();
-        int l = size();
-        PyObject[] newArray = new PyObject[l*count];
-        for (int i=0; i<count; i++) {
-            System.arraycopy(array, 0, newArray, i*l, l);
+        PyObject[] newArray = new PyObject[newSize];
+        for (int i = 0; i < count; i++) {
+            System.arraycopy(array, 0, newArray, i * size, size);
         }
         return new PyTuple(newArray);
     }
@@ -175,20 +181,30 @@ public class PyTuple extends PySequenceList
         return sum;
     }
 
+    @Override
+    public PyObject __mul__(PyObject o) {
+        return tuple___mul__(o);
+    }
+
     @ExposedMethod(type = MethodType.BINARY)
     final PyObject tuple___mul__(PyObject o) {
-        if (!(o instanceof PyInteger || o instanceof PyLong))
+        if (!o.isIndex()) {
             return null;
-        int count = ((PyInteger)o.__int__()).getValue();
-        return repeat(count);
+        }
+        return repeat(o.asIndex(Py.OverflowError));
+    }
+
+    @Override
+    public PyObject __rmul__(PyObject o) {
+        return tuple___rmul__(o);
     }
 
     @ExposedMethod(type = MethodType.BINARY)
     final PyObject tuple___rmul__(PyObject o) {
-        if (!(o instanceof PyInteger || o instanceof PyLong))
+        if (!o.isIndex()) {
             return null;
-        int count = ((PyInteger)o.__int__()).getValue();
-        return repeat(count);
+        }
+        return repeat(o.asIndex(Py.OverflowError));
     }
 
     public PyObject __iter__() {

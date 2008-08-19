@@ -950,18 +950,24 @@ _socketmethods = (
     'sendall', 'setblocking',
     'settimeout', 'gettimeout', 'shutdown', 'getchannel')
 
+# All the method names that must be delegated to either the real socket
+# object or the _closedsocket object.
+_delegate_methods = ("recv", "recvfrom", "recv_into", "recvfrom_into",
+                     "send", "sendto")
+
 class _closedsocket(object):
     __slots__ = []
     def _dummy(*args):
         raise error(errno.EBADF, 'Bad file descriptor')
-    send = recv = sendto = recvfrom = __getattr__ = _dummy
+    # All _delegate_methods must also be initialized here.
+    send = recv = recv_into = sendto = recvfrom = recvfrom_into = _dummy
+    __getattr__ = _dummy
 
 class _socketobject(object):
 
     __doc__ = _realsocket.__doc__
 
-    __slots__ = ["_sock", "send", "recv", "sendto", "recvfrom",
-                 "__weakref__"]
+    __slots__ = ["_sock", "__weakref__"] + list(_delegate_methods)
 
     def __init__(self, family=AF_INET, type=SOCK_STREAM, proto=0, _sock=None):
         if _sock is None:
@@ -970,11 +976,10 @@ class _socketobject(object):
         elif isinstance(_sock, _nonblocking_api_mixin):
             _sock.reference_count += 1
         self._sock = _sock
-        self.send = self._sock.send
-        self.recv = self._sock.recv
-        if hasattr(self._sock, 'sendto'):
-            self.sendto = self._sock.sendto
-        self.recvfrom = self._sock.recvfrom
+        for method in _delegate_methods:
+            meth = getattr(_sock, method, None)
+            if meth:
+                setattr(self, method, meth)
 
     def close(self):
         _sock = self._sock
@@ -985,6 +990,9 @@ class _socketobject(object):
                 if not _sock.reference_count:
                     _sock.close()
                 self._sock = _closedsocket()
+                dummy = self._sock._dummy
+                for method in _delegate_methods:
+                    setattr(self, method, dummy)
                 self.send = self.recv = self.sendto = self.recvfrom = \
                     self._sock._dummy
             finally:
@@ -1027,6 +1035,10 @@ class _socketobject(object):
             _sock.close_lock.release()
         return fileobject
 
+    family = property(lambda self: self._sock.family, doc="the socket family")
+    type = property(lambda self: self._sock.type, doc="the socket type")
+    proto = property(lambda self: self._sock.proto, doc="the socket protocol")
+
     _s = ("def %s(self, *args): return self._sock.%s(*args)\n\n"
           #"%s.__doc__ = _realsocket.%s.__doc__\n")
           )
@@ -1048,7 +1060,7 @@ class _fileobject(object):
                  "_sock", "_rbufsize", "_wbufsize", "_rbuf", "_wbuf",
                  "_close"]
 
-    def __init__(self, sock, mode='rb', bufsize=-1):
+    def __init__(self, sock, mode='rb', bufsize=-1, close=False):
         self._sock = sock
         if isinstance(sock, _nonblocking_api_mixin):
             sock.reference_count += 1
@@ -1066,6 +1078,7 @@ class _fileobject(object):
         self._wbufsize = bufsize
         self._rbuf = "" # A string
         self._wbuf = [] # A list of strings
+        self._close = close
 
     def _getclosed(self):
         return self._sock is None
@@ -1078,7 +1091,7 @@ class _fileobject(object):
         finally:
             if self._sock and isinstance(self._sock, _nonblocking_api_mixin):
                 self._sock.reference_count -= 1
-                if not self._sock.reference_count:
+                if not self._sock.reference_count or self._close:
                     self._sock.close()
             self._sock = None
 
@@ -1152,7 +1165,7 @@ class _fileobject(object):
             self._rbuf = ""
             while True:
                 left = size - buf_len
-                recv_size = max(self._rbufsize, left)
+                recv_size = min(self._rbufsize, left)
                 data = self._sock.recv(recv_size)
                 if not data:
                     break

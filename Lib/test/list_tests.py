@@ -1,4 +1,3 @@
-# From Python 2.4.4
 """
 Tests common to list and UserList.UserList
 """
@@ -67,8 +66,7 @@ class CommonTest(seq_tests.CommonTest):
         a = self.type2test(range(20))
         self.assertRaises(ValueError, a.__setitem__, slice(0, 10, 0), [1,2,3])
         self.assertRaises(TypeError, a.__setitem__, slice(0, 10), 1)
-        # XXX: Need Slice bounds checking (equiv to CPython's PySlice_GetIndicesEx)
-        #self.assertRaises(ValueError, a.__setitem__, slice(0, 10, 2), [1,2])
+        self.assertRaises(ValueError, a.__setitem__, slice(0, 10, 2), [1,2])
         self.assertRaises(TypeError, a.__getitem__, 'x', 1)
         a[slice(2,10,3)] = [1,2,3]
         self.assertEqual(a, self.type2test([0, 1, 1, 3, 4, 2, 6, 7, 3,
@@ -271,8 +269,6 @@ class CommonTest(seq_tests.CommonTest):
         self.assertRaises(TypeError, a.insert)
 
     def test_pop(self):
-        # XXX: no decimal module in 2.3
-        #from decimal import Decimal
         a = self.type2test([-1, 0, 1])
         a.pop()
         self.assertEqual(a, [-1, 0])
@@ -283,9 +279,7 @@ class CommonTest(seq_tests.CommonTest):
         self.assertEqual(a, [])
         self.assertRaises(IndexError, a.pop)
         self.assertRaises(TypeError, a.pop, 42, 42)
-        #a = self.type2test([0, 10, 20, 30, 40])
-        #self.assertEqual(a.pop(Decimal(2)), 20)
-        #self.assertRaises(IndexError, a.pop, Decimal(25))
+        a = self.type2test([0, 10, 20, 30, 40])
 
     def test_remove(self):
         a = self.type2test([0, 0, 1])
@@ -311,6 +305,26 @@ class CommonTest(seq_tests.CommonTest):
 
         a = self.type2test([0, 1, 2, 3])
         self.assertRaises(BadExc, a.remove, BadCmp())
+
+        class BadCmp2:
+            def __eq__(self, other):
+                raise BadExc()
+
+        d = self.type2test('abcdefghcij')
+        d.remove('c')
+        self.assertEqual(d, self.type2test('abdefghcij'))
+        d.remove('c')
+        self.assertEqual(d, self.type2test('abdefghij'))
+        self.assertRaises(ValueError, d.remove, 'c')
+        self.assertEqual(d, self.type2test('abdefghij'))
+
+        # Handle comparison errors
+        d = self.type2test(['a', 'b', BadCmp2(), 'c'])
+        e = self.type2test(d)
+        self.assertRaises(BadExc, d.remove, 'c')
+        for x, y in zip(d, e):
+            # verify that original order and values are retained.
+            self.assert_(x is y)
 
     def test_count(self):
         a = self.type2test([0, 1, 2])*3
@@ -369,10 +383,8 @@ class CommonTest(seq_tests.CommonTest):
         self.assertEqual(a.index(0, -3), 3)
         self.assertEqual(a.index(0, 3, 4), 3)
         self.assertEqual(a.index(0, -3, -2), 3)
-        # XXX: CPython takes start/stop as objects, and does bounds checking
-        # via _PyEval_SliceIndex
-        #self.assertEqual(a.index(0, -4*sys.maxint, 4*sys.maxint), 2)
-        #self.assertRaises(ValueError, a.index, 0, 4*sys.maxint,-4*sys.maxint)
+        self.assertEqual(a.index(0, -4*sys.maxint, 4*sys.maxint), 2)
+        self.assertRaises(ValueError, a.index, 0, 4*sys.maxint,-4*sys.maxint)
         self.assertRaises(ValueError, a.index, 2, 0, -10)
         a.remove(0)
         self.assertRaises(ValueError, a.index, 2, 0, 4)
@@ -433,8 +445,7 @@ class CommonTest(seq_tests.CommonTest):
 
         self.assertRaises(TypeError, z.sort, 42, 42, 42, 42)
 
-    # XXX: there are currently some slice bugs in Jython
-    def _test_slice(self):
+    def test_slice(self):
         u = self.type2test("spam")
         u[:2] = "h"
         self.assertEqual(u, list("ham"))
@@ -450,7 +461,11 @@ class CommonTest(seq_tests.CommonTest):
         u += "eggs"
         self.assertEqual(u, self.type2test("spameggs"))
 
-        self.assertRaises(TypeError, u.__iadd__, None)
+        if not test_support.is_jython:
+            self.assertRaises(TypeError, u.__iadd__, None)
+        else:
+            import operator
+            self.assertRaises(TypeError, operator.__iadd__, u, None)
 
     def test_imul(self):
         u = self.type2test([0, 1])

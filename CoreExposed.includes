@@ -1,5 +1,6 @@
 org/python/core/PyArray.class
 org/python/core/PyBaseString.class
+org/python/core/PyBaseException.class
 org/python/core/PyBoolean.class
 org/python/core/PyBuiltinFunction.class
 org/python/core/PyCell.class
@@ -34,9 +35,15 @@ org/python/core/PyTuple.class
 org/python/core/PyType.class
 org/python/core/PyUnicode.class
 org/python/core/PyXRange.class
+org/python/modules/_codecs$EncodingMap.class
+org/python/modules/_csv/PyDialect.class
+org/python/modules/_csv/PyReader.class
+org/python/modules/_csv/PyWriter.class
+org/python/modules/_functools/PyPartial.class
 org/python/modules/_weakref/CallableProxyType.class
 org/python/modules/_weakref/ReferenceType.class
 org/python/modules/_weakref/ProxyType.class
+org/python/modules/_hashlib$Hash.class
 org/python/modules/collections/PyDefaultDict.class
 org/python/modules/collections/PyDeque.class
 org/python/modules/operator$PyAttrGetter.class

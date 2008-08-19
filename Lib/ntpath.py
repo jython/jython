@@ -13,7 +13,7 @@ import sys
 __all__ = ["normcase","isabs","join","splitdrive","split","splitext",
            "basename","dirname","commonprefix","getsize","getmtime",
            "getatime","getctime", "islink","exists","lexists","isdir","isfile",
-           "walk","expanduser","expandvars","normpath","abspath",
+           "ismount","walk","expanduser","expandvars","normpath","abspath",
            "splitunc","curdir","pardir","sep","pathsep","defpath","altsep",
            "extsep","devnull","realpath","supports_unicode_filenames"]
 
@@ -287,19 +287,16 @@ def isfile(path):
     return stat.S_ISREG(st.st_mode)
 
 
-if os.name != 'java':
-    # Is a path a mount point?  Either a root (with or without drive letter)
-    # or an UNC path with at most a / or \ after the mount point.
+# Is a path a mount point?  Either a root (with or without drive letter)
+# or an UNC path with at most a / or \ after the mount point.
 
-    def ismount(path):
-        """Test whether a path is a mount point (defined as root of drive)"""
-        unc, rest = splitunc(path)
-        if unc:
-            return rest in ("", "/", "\\")
-        p = splitdrive(path)[1]
-        return len(p) == 1 and p[0] in '/\\'
-
-    __all__.append("ismount")
+def ismount(path):
+    """Test whether a path is a mount point (defined as root of drive)"""
+    unc, rest = splitunc(path)
+    if unc:
+        return rest in ("", "/", "\\")
+    p = splitdrive(path)[1]
+    return len(p) == 1 and p[0] in '/\\'
 
 
 # Directory tree walk.

@@ -44,6 +44,7 @@ import org.python.antlr.ast.Continue;
 import org.python.antlr.ast.Delete;
 import org.python.antlr.ast.Dict;
 import org.python.antlr.ast.Ellipsis;
+import org.python.antlr.ast.ErrorStmt;
 import org.python.antlr.ast.Exec;
 import org.python.antlr.ast.Expr;
 import org.python.antlr.ast.Expression;
@@ -75,11 +76,9 @@ import org.python.antlr.ast.Repr;
 import org.python.antlr.ast.Return;
 import org.python.antlr.ast.Str;
 import org.python.antlr.ast.UnaryOp;
-import org.python.antlr.ast.Unicode;
 import org.python.antlr.ast.With;
 import org.python.antlr.ast.While;
 import org.python.antlr.ast.Yield;
-
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collections;
@@ -91,6 +90,13 @@ import java.util.Set;
 } 
 @members {
     boolean debugOn = false;
+    private ErrorHandler errorHandler;
+    private GrammarActions actions = new GrammarActions();
+
+    public void setErrorHandler(ErrorHandler eh) {
+        this.errorHandler = eh;
+        actions.setErrorHandler(eh);
+    }
 
     public void debug(String message) {
         if (debugOn) {
@@ -106,7 +112,6 @@ import java.util.Set;
         throw e;
     }
 
-
     String name = "Test";
 
     //XXX: Not sure I need any below...
@@ -116,280 +121,35 @@ import java.util.Set;
     boolean printResults = false;
     //CompilerFlags cflags = Py.getCompilerFlags();
 
-    private modType makeMod(PythonTree t, List stmts) {
-        stmtType[] s;
-        if (stmts != null) {
-            s = (stmtType[])stmts.toArray(new stmtType[stmts.size()]);
-        } else {
-            s = new stmtType[0];
-        }
-        return new Module(t, s);
-    }
-
-    private modType makeExpression(PythonTree t, exprType e) {
-        return new Expression(t, e);
-    }
-
-    private modType makeInteractive(PythonTree t, List stmts) {
-        stmtType[] s = (stmtType[])stmts.toArray(new stmtType[stmts.size()]);
-        return new Interactive(t, s);
-    }
-
-    private ClassDef makeClassDef(PythonTree t, PythonTree nameToken, List bases, List body) {
-        exprType[] b = (exprType[])bases.toArray(new exprType[bases.size()]);
-        stmtType[] s = (stmtType[])body.toArray(new stmtType[body.size()]);
-        return new ClassDef(t, nameToken.getText(), b, s);
-    }
-
-    private FunctionDef makeFunctionDef(PythonTree t, PythonTree nameToken, argumentsType args, List funcStatements, List decorators) {
-        argumentsType a;
-        debug("Matched FunctionDef");
-        if (args != null) {
-            a = args;
-        } else {
-            a = new argumentsType(t, new exprType[0], null, null, new exprType[0]); 
-        }
-        stmtType[] s = (stmtType[])funcStatements.toArray(new stmtType[funcStatements.size()]);
-        exprType[] d;
-        if (decorators != null) {
-            d = (exprType[])decorators.toArray(new exprType[decorators.size()]);
-        } else {
-            d = new exprType[0];
-        }
-        return new FunctionDef(t, nameToken.getText(), a, s, d);
-    }
-
-    private argumentsType makeArgumentsType(PythonTree t, List params, PythonTree snameToken,
-        PythonTree knameToken, List defaults) {
-        debug("Matched Arguments");
-
-        exprType[] p = (exprType[])params.toArray(new exprType[params.size()]);
-        exprType[] d = (exprType[])defaults.toArray(new exprType[defaults.size()]);
-        String s;
-        String k;
-        if (snameToken == null) {
-            s = null;
-        } else {
-            s = snameToken.getText();
-        }
-        if (knameToken == null) {
-            k = null;
-        } else {
-            k = knameToken.getText();
-        }
-        return new argumentsType(t, p, s, k, d);
-    }
-
-    class StringPair {
-        private String s;
-        private boolean unicode;
-
-        StringPair(String s, boolean unicode) {
-            this.s = s;
-            this.unicode = unicode;
-        }
-        String getString() {
-            return s;
-        }
-        
-        boolean isUnicode() {
-            return unicode;
-        }
-    }
-
-    StringPair extractStrings(List s) {
-        boolean ustring = false;
-        StringBuffer sb = new StringBuffer();
-        Iterator iter = s.iterator();
-        while (iter.hasNext()) {
-            StringPair sp = extractString((String)iter.next());
-            if (sp.isUnicode()) {
-                ustring = true;
-            }
-            sb.append(sp.getString());
-        }
-        return new StringPair(sb.toString(), ustring);
-    }
-
-    StringPair extractString(String s) {
-        char quoteChar = s.charAt(0);
-        int start=0;
-        boolean ustring = false;
-        if (quoteChar == 'u' || quoteChar == 'U') {
-            ustring = true;
-            start++;
-        }
-        quoteChar = s.charAt(start);
-        boolean raw = false;
-        if (quoteChar == 'r' || quoteChar == 'R') {
-            raw = true;
-            start++;
-        }
-        int quotes = 3;
-        if (s.length() - start == 2) {
-            quotes = 1;
-        }
-        if (s.charAt(start) != s.charAt(start+1)) {
-            quotes = 1;
-        }
-
-        if (raw) {
-            return new StringPair(s.substring(quotes+start, s.length()-quotes), ustring);
-        } else {
-            StringBuffer sb = new StringBuffer(s.length());
-            char[] ca = s.toCharArray();
-            int n = ca.length-quotes;
-            int i=quotes+start;
-            int last_i=i;
-            return new StringPair(PyString.decode_UnicodeEscape(s, i, n, "strict", ustring), ustring);
-            //return decode_UnicodeEscape(s, i, n, "strict", ustring);
-        }
-    }
-
-    Num makeFloat(PythonTree t) {
-        debug("makeFloat matched " + t.getText());
-        return new Num(t, Py.newFloat(Double.valueOf(t.getText())));
-    }
-
-    Num makeComplex(PythonTree t) {
-        String s = t.getText();
-        s = s.substring(0, s.length() - 1);
-        return new Num(t, Py.newImaginary(Double.valueOf(s)));
-    }
-
-    Num makeInt(PythonTree t) {
-        debug("Num matched " + t.getText());
-        String s = t.getText();
-        int radix = 10;
-        if (s.startsWith("0x") || s.startsWith("0X")) {
-            radix = 16;
-            s = s.substring(2, s.length());
-        } else if (s.startsWith("0")) {
-            radix = 8;
-        }
-        if (s.endsWith("L") || s.endsWith("l")) {
-            s = s.substring(0, s.length()-1);
-            return new Num(t, Py.newLong(new BigInteger(s, radix)));
-        }
-        int ndigits = s.length();
-        int i=0;
-        while (i < ndigits && s.charAt(i) == '0')
-            i++;
-        if ((ndigits - i) > 11) {
-            return new Num(t, Py.newLong(new BigInteger(s, radix)));
-        }
-
-        long l = Long.valueOf(s, radix).longValue();
-        if (l > 0xffffffffl || (radix == 10 && l > Integer.MAX_VALUE)) {
-            return new Num(t, Py.newLong(new BigInteger(s, radix)));
-        }
-        return new Num(t, Py.newInteger((int) l));
-    }
-
-    private stmtType makeTryExcept(PythonTree t, List body, List handlers, List orelse, List finBody) {
-        stmtType[] b = (stmtType[])body.toArray(new stmtType[body.size()]);
-        excepthandlerType[] e = (excepthandlerType[])handlers.toArray(new excepthandlerType[handlers.size()]);
-        stmtType[] o;
-        if (orelse != null) {
-            o = (stmtType[])orelse.toArray(new stmtType[orelse.size()]);
-        } else {
-            o = new stmtType[0];
-        }
- 
-        stmtType te = new TryExcept(t, b, e, o);
-        if (finBody == null) {
-            return te;
-        }
-        stmtType[] f = (stmtType[])finBody.toArray(new stmtType[finBody.size()]);
-        stmtType[] mainBody = new stmtType[]{te};
-        return new TryFinally(t, mainBody, f);
-    }
-
-    private TryFinally makeTryFinally(PythonTree t,  List body, List finBody) {
-        stmtType[] b = (stmtType[])body.toArray(new stmtType[body.size()]);
-        stmtType[] f = (stmtType[])finBody.toArray(new stmtType[finBody.size()]);
-        return new TryFinally(t, b, f);
-    }
-
-    private If makeIf(PythonTree t, exprType test, List body, List orelse) {
-        stmtType[] o;
-        if (orelse != null) {
-            o = (stmtType[])orelse.toArray(new stmtType[orelse.size()]);
-        } else {
-            o = new stmtType[0];
-        }
-        stmtType[] b;
-        if (body != null) {
-            b = (stmtType[])body.toArray(new stmtType[body.size()]);
-        } else {
-            b = new stmtType[0];
-        }
-        return new If(t, test, b, o);
-    }
-
-
-    private While makeWhile(PythonTree t, exprType test, List body, List orelse) {
-        stmtType[] o;
-        if (orelse != null) {
-            o = (stmtType[])orelse.toArray(new stmtType[orelse.size()]);
-        } else {
-            o = new stmtType[0];
-        }
-        stmtType[] b = (stmtType[])body.toArray(new stmtType[body.size()]);
-        return new While(t, test, b, o);
-    }
-
-    private For makeFor(PythonTree t, exprType target, exprType iter, List body, List orelse) {
-        stmtType[] o;
-        if (orelse != null) {
-            o = (stmtType[])orelse.toArray(new stmtType[orelse.size()]);
-        } else {
-            o = new stmtType[0];
-        }
-        stmtType[] b = (stmtType[])body.toArray(new stmtType[body.size()]);
-        return new For(t, target, iter, b, o);
-    }
-    
-    //FIXME: just calling __neg__ for now - can be better.  Also does not parse expressions like
-    //       --2 correctly (should give ^(USub -2) but gives 2).
-    private exprType negate(PythonTree t, exprType o) {
-        if (o instanceof Num) {
-            Num num = (Num)o;
-            if (num.n instanceof PyObject) {
-                num.n = ((PyObject)num.n).__neg__();
-            }
-            return num;
-        }
-        return new UnaryOp(t, unaryopType.USub, o);
-    }
 }
 
 @rulecatch {
-catch (RecognitionException e) {
-    throw e;
+catch (RecognitionException re) {
+    errorHandler.reportError(this, re);
+    errorHandler.recover(this, input,re);
 }
 }
 
 
 expression returns [modType mod]
-    : ^(Expression test[expr_contextType.Load]) { $mod = makeExpression($Expression, $test.etype); }
+    : ^(Expression test[expr_contextType.Load]) { $mod = actions.makeExpression($Expression, $test.etype); }
     ;
 
 interactive returns [modType mod]
-    : ^(Interactive stmts) { $mod = makeInteractive($Interactive, $stmts.stypes); }
+    : ^(Interactive stmts?) { $mod = actions.makeInteractive($Interactive, $stmts.stypes); }
     ;
 
 module returns [modType mod]
     : ^(Module
-        ( stmts {$mod = makeMod($Module, $stmts.stypes); }
-        | {$mod = makeMod($Module, null);}
+        ( stmts {$mod = actions.makeMod($Module, $stmts.stypes); }
+        | {$mod = actions.makeMod($Module, null);}
         )
     )
     ;
 
 funcdef
-    : ^(FunctionDef tok='def' ^(Name NAME) ^(Arguments varargslist?) ^(Body stmts) ^(Decorators decorators?)) {
-        $stmts::statements.add(makeFunctionDef($tok, $NAME, $varargslist.args, $stmts.stypes, $decorators.etypes));
+    : ^(DEF NAME ^(Arguments varargslist?) ^(Body stmts) ^(Decorators decorators?)) {
+        $stmts::statements.add(actions.makeFunctionDef($DEF, $NAME, $varargslist.args, $stmts.stypes, $decorators.etypes));
     }
     ;
 
@@ -399,13 +159,13 @@ varargslist returns [argumentsType args]
     List defaults = new ArrayList();
 }
     : ^(Args defparameter[params, defaults]+) (^(StarArgs sname=NAME))? (^(KWArgs kname=NAME))? {
-        $args = makeArgumentsType($Args, params, $sname, $kname, defaults);
+        $args = actions.makeArgumentsType($Args, params, $sname, $kname, defaults);
     }
     | ^(StarArgs sname=NAME) (^(KWArgs kname=NAME))? {
-        $args = makeArgumentsType($StarArgs,params, $sname, $kname, defaults);
+        $args = actions.makeArgumentsType($StarArgs,params, $sname, $kname, defaults);
     }
     | ^(KWArgs NAME) {
-        $args = makeArgumentsType($KWArgs, params, null, $NAME, defaults);
+        $args = actions.makeArgumentsType($KWArgs, params, null, $NAME, defaults);
     }
     ;
 
@@ -425,6 +185,7 @@ defparameter[List params, List defaults]
 fpdef [expr_contextType ctype, List nms] returns [exprType etype]
     : NAME {
         exprType e = new Name($NAME, $NAME.text, ctype);
+        actions.checkAssign(e);
         if (nms == null) {
             $etype = e;
         } else {
@@ -461,38 +222,68 @@ decorators returns [List etypes]
     ;
 
 decorator [List decs]
-    : ^(Decorator dotted_attr (^(Call (^(Args arglist))?))?) {
+    : ^(AT dotted_attr (^(Call (^(Args arglist))?))?) {
         if ($Call == null) {
             decs.add($dotted_attr.etype);
         } else {
-            exprType[] args;
-            keywordType[] keywords;
-            exprType starargs = null;
-            exprType kwargs = null;
-            if ($Args != null) {
-                args = (exprType[])$arglist.args.toArray(new exprType[$arglist.args.size()]);
-                keywords = (keywordType[])$arglist.keywords.toArray(new keywordType[$arglist.keywords.size()]);
-                starargs = $arglist.starargs;
-                kwargs = $arglist.kwargs;
+            exprType c;
+            if ($Args == null) {
+                c = actions.makeCall($Call, $dotted_attr.etype);
             } else {
-                args = new exprType[0];
-                keywords = new keywordType[0];
+                c = actions.makeCall($Call, $dotted_attr.etype, $arglist.args, $arglist.keywords, $arglist.starargs, $arglist.kwargs);
             }
-            Call c = new Call($Call, $dotted_attr.etype, args, keywords, starargs, kwargs);
+            c.setCharStopIndex($Call.getCharStopIndex());
             decs.add(c);
         }
     }
     ;
 
 dotted_attr returns [exprType etype, PythonTree marker]
-    : NAME {
-        $etype = new Name($NAME, $NAME.text, expr_contextType.Load);
-        $marker = $NAME;
+    : attr {
+        $etype = new Name($attr.start, $attr.text, expr_contextType.Load);
+        $marker = $attr.start;
         debug("matched NAME in dotted_attr");}
     | ^(DOT n1=dotted_attr n2=dotted_attr) {
         $etype = new Attribute($n1.marker, $n1.etype, $n2.text, expr_contextType.Load);
         $marker = $n1.marker;
     }
+    ;
+
+//attr is here for Java  compatibility.  A Java foo.getIf() can be called from Jython as foo.if
+//     so we need to support any keyword as an attribute.
+attr
+    : NAME
+    | AND
+    | AS
+    | ASSERT
+    | BREAK
+    | CLASS
+    | CONTINUE
+    | DEF
+    | DELETE
+    | ELIF
+    | EXCEPT
+    | EXEC
+    | FINALLY
+    | FROM
+    | FOR
+    | GLOBAL
+    | IF
+    | IMPORT
+    | IN
+    | IS
+    | LAMBDA
+    | NOT
+    | OR
+    | ORELSE
+    | PASS
+    | PRINT
+    | RAISE
+    | RETURN
+    | TRY
+    | WHILE
+    | WITH
+    | YIELD
     ;
 
 stmts returns [List stypes]
@@ -536,7 +327,8 @@ expr_stmt
         debug("matched expr_stmt:test " + $test.etype);
         $stmts::statements.add(new Expr($test.marker, $test.etype));
     }
-    | ^(augassign targ=test[expr_contextType.Store] value=test[expr_contextType.Load]) {
+    | ^(augassign targ=test[expr_contextType.AugStore] value=test[expr_contextType.Load]) {
+        actions.checkAssign($targ.etype);
         AugAssign a = new AugAssign($targ.marker, $targ.etype, $augassign.op, $value.etype);
         $stmts::statements.add(a);
     }
@@ -554,16 +346,13 @@ expr_stmt
 
 call_expr returns [exprType etype, PythonTree marker]
     : ^(Call (^(Args arglist))? test[expr_contextType.Load]) {
-        Call c;
+        exprType c;
         if ($Args == null) {
-            c = new Call($test.marker, $test.etype, new exprType[0], new keywordType[0], null, null);
-            debug("Matched Call site no args");
+            c = actions.makeCall($test.marker, $test.etype);
         } else {
-            debug("Matched Call w/ args");
-            exprType[] args = (exprType[])$arglist.args.toArray(new exprType[$arglist.args.size()]);
-            keywordType[] keywords = (keywordType[])$arglist.keywords.toArray(new keywordType[$arglist.keywords.size()]);
-            c = new Call($test.marker, $test.etype, args, keywords, $arglist.starargs, $arglist.kwargs);
+            c = actions.makeCall($test.marker, $test.etype, $arglist.args, $arglist.keywords, $arglist.starargs, $arglist.kwargs);
         }
+        c.setCharStopIndex($Call.getCharStopIndex());
         $etype = c;
     }
     ;
@@ -579,6 +368,7 @@ targets returns [List etypes]
 
 target[List etypes]
     : ^(Target atom[expr_contextType.Store]) {
+        actions.checkAssign($atom.etype);
         etypes.add($atom.etype);
     }
     ;
@@ -615,7 +405,7 @@ binop returns [operatorType op]
 
 
 print_stmt
-    : ^(Print tok='print' (^(Dest RIGHTSHIFT))? (^(Values ^(Elts elts[expr_contextType.Load])))? (Newline)?) {
+    : ^(PRINT (^(Dest RIGHTSHIFT))? (^(Values ^(Elts elts[expr_contextType.Load])))? (Newline)?) {
         exprType[] values;
 
         exprType dest = null;
@@ -641,22 +431,23 @@ print_stmt
         } else {
             values = new exprType[0];
         }
-        Print p = new Print($tok, dest, values, newline);
+        Print p = new Print($PRINT, dest, values, newline);
         $stmts::statements.add(p);
     }
     ;
 
 del_stmt
-    : ^(Delete tok='del' elts[expr_contextType.Del]) {
+    : ^(DELETE elts[expr_contextType.Del]) {
         exprType[] t = (exprType[])$elts.etypes.toArray(new exprType[$elts.etypes.size()]);
-        $stmts::statements.add(new Delete($tok, t));
+        actions.checkDelete(t);
+        $stmts::statements.add(new Delete($DELETE, t));
     }
     ;
 
 pass_stmt
-    : ^(Pass tok='pass') {
+    : PASS {
         debug("Matched Pass");
-        $stmts::statements.add(new Pass($tok));
+        $stmts::statements.add(new Pass($PASS));
     }
     ;
 
@@ -668,39 +459,39 @@ flow_stmt
     ;
 
 break_stmt
-    : ^(Break tok='break') {
-        $stmts::statements.add(new Break($tok));
+    : BREAK {
+        $stmts::statements.add($BREAK);
     }
     ;
 
 continue_stmt
-    : ^(Continue tok='continue') {
-        $stmts::statements.add(new Continue($tok));
+    : CONTINUE {
+        $stmts::statements.add($CONTINUE);
     }
     ;
 
 return_stmt
-    : ^(Return tok='return' (^(Value test[expr_contextType.Load]))?) {
+    : ^(RETURN (^(Value test[expr_contextType.Load]))?) {
         exprType v = null;
         if ($Value != null) {
             v = $test.etype;
         }
-        $stmts::statements.add(new Return($tok, v));
+        $stmts::statements.add(new Return($RETURN, v));
     }
     ;
 
 yield_expr returns [exprType etype]
-    : ^(Yield tok='yield' (^(Value test[expr_contextType.Load]))?) {
+    : ^(YIELD (^(Value test[expr_contextType.Load]))?) {
         exprType v = null;
         if ($Value != null) {
             v = $test.etype; 
         }
-        $etype = new Yield($tok, v);
+        $etype = new Yield($YIELD, v);
     }
     ;
 
 raise_stmt
-    : ^(Raise tok='raise' (^(Type type=test[expr_contextType.Load]))? (^(Inst inst=test[expr_contextType.Load]))? (^(Tback tback=test[expr_contextType.Load]))?) {
+    : ^(RAISE (^(Type type=test[expr_contextType.Load]))? (^(Inst inst=test[expr_contextType.Load]))? (^(Tback tback=test[expr_contextType.Load]))?) {
         exprType t = null;
         if ($Type != null) {
             t = $type.etype;
@@ -714,7 +505,7 @@ raise_stmt
             b = $tback.etype;
         }
 
-        $stmts::statements.add(new Raise($tok, t, i, b));
+        $stmts::statements.add(new Raise($RAISE, t, i, b));
     }
     ;
 
@@ -722,13 +513,13 @@ import_stmt
 @init {
     List nms = new ArrayList();
 }
-    : ^(Import tok='import' dotted_as_name[nms]+) {
+    : ^(IMPORT dotted_as_name[nms]+) {
         aliasType[] n = (aliasType[])nms.toArray(new aliasType[nms.size()]);
-        $stmts::statements.add(new Import($tok, n));
+        $stmts::statements.add(new Import($IMPORT, n));
     }
-    | ^(ImportFrom tok='from' (^(Level dots))? (^(Name dotted_name))? ^(Import STAR)) {
+    | ^(FROM (^(Level dots))? (^(Value dotted_name))? ^(IMPORT STAR)) {
         String name = "";
-        if ($Name != null) {
+        if ($Value != null) {
             name = $dotted_name.result;
         }
         int level = 0;
@@ -736,11 +527,11 @@ import_stmt
             level = $dots.level;
         }
         aliasType[] n = (aliasType[])nms.toArray(new aliasType[nms.size()]);
-        $stmts::statements.add(new ImportFrom($tok, name, new aliasType[]{new aliasType($STAR, "*", null)}, level));
+        $stmts::statements.add(new ImportFrom($FROM, name, new aliasType[]{new aliasType($STAR, "*", null)}, level));
     }
-    | ^(ImportFrom tok='from' (^(Level dots))? (^(Name dotted_name))? ^(Import import_as_name[nms]+)) {
+    | ^(FROM (^(Level dots))? (^(Value dotted_name))? ^(IMPORT import_as_name[nms]+)) {
         String name = "";
-        if ($Name != null) {
+        if ($Value != null) {
             name = $dotted_name.result;
         }
         int level = 0;
@@ -748,7 +539,7 @@ import_stmt
             level = $dots.level;
         }
         aliasType[] n = (aliasType[])nms.toArray(new aliasType[nms.size()]);
-        $stmts::statements.add(new ImportFrom($tok, name, n, level));
+        $stmts::statements.add(new ImportFrom($FROM, name, n, level));
     }
     ;
 
@@ -800,9 +591,9 @@ dotted_name returns [String result]
     ;
 
 dot_name [StringBuffer buf]
-    : DOT NAME {
+    : DOT attr {
         buf.append(".");
-        buf.append($NAME.text);
+        buf.append($attr.text);
         debug("matched dot_name " + buf);
     }
     ;
@@ -811,9 +602,9 @@ global_stmt
 @init {
     List nms = new ArrayList();
 }
-    : ^(Global tok='global' name_expr[nms]+) {
+    : ^(GLOBAL name_expr[nms]+) {
         String[] n = (String[])nms.toArray(new String[nms.size()]);
-        $stmts::statements.add(new Global($tok, n));
+        $stmts::statements.add(new Global($GLOBAL, n));
     }
     ;
 
@@ -823,9 +614,9 @@ name_expr[List nms]
     }
     ;
 
-//Using tok=NAME instead of tok='exec' for Java integration
+//Using NAME instead of 'exec' for Java integration
 exec_stmt
-    : ^(Exec tok=NAME exec=test[expr_contextType.Load] (^(Globals globals=test[expr_contextType.Load]))? (^(Locals locals=test[expr_contextType.Load]))?) {
+    : ^(EXEC exec=test[expr_contextType.Load] (^(Globals globals=test[expr_contextType.Load]))? (^(Locals locals=test[expr_contextType.Load]))?) {
         exprType g = null;
         if ($Globals != null) {
             g = $globals.etype;
@@ -834,17 +625,17 @@ exec_stmt
         if ($Locals != null) {
             loc = $locals.etype;
         }
-        $stmts::statements.add(new Exec($tok, $exec.etype, g, loc));
+        $stmts::statements.add(new Exec($EXEC, $exec.etype, g, loc));
     }
     ;
 
 assert_stmt
-    : ^(Assert tok='assert' ^(Test tst=test[expr_contextType.Load]) (^(Msg msg=test[expr_contextType.Load]))?) {
+    : ^(ASSERT ^(Test tst=test[expr_contextType.Load]) (^(Msg msg=test[expr_contextType.Load]))?) {
         exprType m = null;
         if ($Msg != null) {
             m = $msg.etype;
         }
-        $stmts::statements.add(new Assert($tok, $tst.etype, m));
+        $stmts::statements.add(new Assert($ASSERT, $tst.etype, m));
     }
     ;
 
@@ -853,9 +644,9 @@ if_stmt
     List elifs = new ArrayList();
 }
 
-    : ^(If tok='if' test[expr_contextType.Load] body=stmts elif_clause[elifs]* (^(OrElse orelse=stmts))?) {
+    : ^(IF test[expr_contextType.Load] body=stmts elif_clause[elifs]* (^(ORELSE orelse=stmts))?) {
         stmtType[] o;
-        if ($OrElse != null) {
+        if ($ORELSE != null) {
             o = (stmtType[])$orelse.stypes.toArray(new stmtType[$orelse.stypes.size()]);
         } else {
             o = new stmtType[0];
@@ -867,13 +658,13 @@ if_stmt
             elif.orelse = o;
             o = new stmtType[]{elif};
         }
-        If i = new If($tok, $test.etype, b, o);
+        If i = new If($IF, $test.etype, b, o);
         $stmts::statements.add(i);
     }
     ;
 
 elif_clause[List elifs]
-    : ^(Elif test[expr_contextType.Load] stmts) {
+    : ^(ELIF test[expr_contextType.Load] stmts) {
         debug("matched elif");
         stmtType[] b = (stmtType[])$stmts.stypes.toArray(new stmtType[$stmts.stypes.size()]);
         //the stmtType[0] is intended to be replaced in the iterator of the if_stmt rule.
@@ -883,23 +674,23 @@ elif_clause[List elifs]
     ;
 
 while_stmt
-    : ^(While tok='while' test[expr_contextType.Load] ^(Body body=stmts) (^(OrElse orelse=stmts))?) {
+    : ^(WHILE test[expr_contextType.Load] ^(Body body=stmts) (^(ORELSE orelse=stmts))?) {
         List o = null;
-        if ($OrElse != null) {
+        if ($ORELSE != null) {
             o = $orelse.stypes;
         }
-        While w = makeWhile($tok, $test.etype, $body.stypes, o);
+        stmtType w = actions.makeWhile($WHILE, $test.etype, $body.stypes, o);
         $stmts::statements.add(w);
     }
     ;
 
 for_stmt
-    : ^(For tok='for' ^(Target targ=test[expr_contextType.Store]) ^(Iter iter=test[expr_contextType.Load]) ^(Body body=stmts) (^(OrElse orelse=stmts))?) {
+    : ^(FOR ^(Target targ=test[expr_contextType.Store]) ^(IN iter=test[expr_contextType.Load]) ^(Body body=stmts) (^(ORELSE orelse=stmts))?) {
         List o = null;
-        if ($OrElse != null) {
+        if ($ORELSE != null) {
             o = $orelse.stypes;
         }
-        For f = makeFor($tok, $targ.etype, $iter.etype, $body.stypes, o);
+        stmtType f = actions.makeFor($FOR, $targ.etype, $iter.etype, $body.stypes, o);
         $stmts::statements.add(f);
     }
     ;
@@ -908,26 +699,26 @@ try_stmt
 @init {
     List handlers = new ArrayList();
 }
-    : ^(TryExcept tok='try' ^(Body body=stmts) except_clause[handlers]+ (^(OrElse orelse=stmts))? (^(FinalBody 'finally' fin=stmts))?) {
+    : ^(TryExcept ^(Body body=stmts) except_clause[handlers]+ (^(ORELSE orelse=stmts))? (^(FINALLY fin=stmts))?) {
         List o = null;
         List f = null;
-        if ($OrElse != null) {
+        if ($ORELSE != null) {
             o = $orelse.stypes;
         }
-        if ($FinalBody != null) {
+        if ($FINALLY != null) {
             f = $fin.stypes;
         }
-        stmtType te = makeTryExcept($tok, $body.stypes, handlers, o, f);
+        stmtType te = actions.makeTryExcept($TryExcept, $body.stypes, handlers, o, f);
         $stmts::statements.add(te);
     }
-    | ^(TryFinally tok='try' ^(Body body=stmts) ^(FinalBody fin=stmts)) {
-        TryFinally tf = makeTryFinally($tok, $body.stypes, $fin.stypes);
+    | ^(TryFinally ^(Body body=stmts) ^(FINALLY fin=stmts)) {
+        TryFinally tf = actions.makeTryFinally($TryFinally, $body.stypes, $fin.stypes);
         $stmts::statements.add(tf);
     }
     ;
 
 except_clause[List handlers]
-    : ^(ExceptHandler 'except' (^(Type type=test[expr_contextType.Load]))? (^(Name name=test[expr_contextType.Store]))? ^(Body stmts)) {
+    : ^(EXCEPT (^(Type type=test[expr_contextType.Load]))? (^(Value name=test[expr_contextType.Store]))? ^(Body stmts)) {
         stmtType[] b;
         if ($stmts.start != null) {
             b = (stmtType[])$stmts.stypes.toArray(new stmtType[$stmts.stypes.size()]);
@@ -937,23 +728,23 @@ except_clause[List handlers]
             t = $type.etype;
         }
         exprType n = null;
-        if ($Name != null) {
+        if ($Value != null) {
             n = $name.etype;
         }
-        handlers.add(new excepthandlerType($ExceptHandler, t, n, b, $ExceptHandler.getLine(), $ExceptHandler.getCharPositionInLine()));
+        handlers.add(new excepthandlerType($EXCEPT, t, n, b, $EXCEPT.getLine(), $EXCEPT.getCharPositionInLine()));
     }
     ;
 
 with_stmt
-    : ^(With test[expr_contextType.Load] with_var? ^(Body stmts)) {
+    : ^(WITH test[expr_contextType.Load] with_var? ^(Body stmts)) {
         stmtType[] b = (stmtType[])$stmts.stypes.toArray(new stmtType[$stmts.stypes.size()]);
-        $stmts::statements.add(new With($With, $test.etype, $with_var.etype, b));
+        $stmts::statements.add(new With($WITH, $test.etype, $with_var.etype, b));
     }
     ;
 
 //using NAME because of Java integration for 'as'
 with_var returns [exprType etype]
-    : NAME test[expr_contextType.Store] {
+    : (AS | NAME) test[expr_contextType.Store] {
         $etype = $test.etype;
     }
     ;
@@ -1091,7 +882,7 @@ test[expr_contextType ctype] returns [exprType etype, PythonTree marker, boolean
         $etype = $lambdef.etype;
         $marker = $lambdef.start;
     }
-    | ^(IfExp ^(Test t1=test[ctype]) ^(Body t2=test[ctype]) ^(OrElse t3=test[ctype])) {
+    | ^(IfExp ^(Test t1=test[ctype]) ^(Body t2=test[ctype]) ^(ORELSE t3=test[ctype])) {
         $etype = new IfExp($IfExp, $t1.etype, $t2.etype, $t3.etype);
         $marker = $IfExp;
     }
@@ -1099,7 +890,15 @@ test[expr_contextType ctype] returns [exprType etype, PythonTree marker, boolean
         $etype = $yield_expr.etype;
         $marker = $yield_expr.start;
     }
-    ;
+    | NumTok {
+        $etype = (Num)$NumTok;
+        $marker = (Num)$NumTok;
+    }
+    | StrTok {
+        $etype = (Str)$StrTok;
+        $marker = (Str)$StrTok;
+    }
+     ;
 
 comp_op returns [cmpopType op]
     : LESS {$op = cmpopType.Lt;}
@@ -1109,9 +908,9 @@ comp_op returns [cmpopType op]
     | LESSEQUAL {$op = cmpopType.LtE;}
     | ALT_NOTEQUAL {$op = cmpopType.NotEq;}
     | NOTEQUAL {$op = cmpopType.NotEq;}
-    | 'in' {$op = cmpopType.In;}
+    | IN {$op = cmpopType.In;}
     | NotIn {$op = cmpopType.NotIn;}
-    | 'is' {$op = cmpopType.Is;}
+    | IS {$op = cmpopType.Is;}
     | IsNot {$op = cmpopType.IsNot;}
     ;
 
@@ -1173,77 +972,52 @@ atom[expr_contextType ctype] returns [exprType etype, PythonTree marker, boolean
         $etype = new Repr($BACKQUOTE, $test.etype);
         $marker = $BACKQUOTE;
     }
-    | ^(Name NAME) {
-        debug("matched Name " + $NAME.text);
-        $etype = new Name($NAME, $NAME.text, ctype);
-        $marker = $NAME;
+    | ^(NameTok NAME) {
+         debug("matched Name " + $NAME.text);
+                 $etype = new Name($NAME, $NAME.text, ctype);
+                 $marker = $NAME;
     }
-    | ^(DOT NAME test[expr_contextType.Load]) {
-        debug("matched DOT in atom: " + $test.etype + "###" + $NAME.text);
-        $etype = new Attribute($test.marker, $test.etype, $NAME.text, ctype);
+    | ^(DOT attr test[expr_contextType.Load]) {
+        debug("matched DOT in atom: " + $test.etype + "###" + $attr.text);
+        $etype = new Attribute($test.marker, $test.etype, $attr.text, ctype);
         $marker = $test.marker;
     }
     | ^(SubscriptList subscriptlist test[expr_contextType.Load]) {
-        //XXX: only handling one subscript for now.
-        sliceType s;
+        sliceType s = null;
         List sltypes = $subscriptlist.sltypes;
-        if (sltypes.size() == 0) {
-            s = null;
-        } else if (sltypes.size() == 1){
-            s = (sliceType)sltypes.get(0);
-        } else {
+        boolean extslice = false;
+        if ($subscriptlist.isTuple) {
             sliceType[] st;
-            //FIXME: here I am using ClassCastException to decide if sltypes is populated with Index
-            //       only.  Clearly this is not the best way to do this but it's late. Somebody do
-            //       something better please :) -- (hopefully a note to self)
-            try {
-                Iterator iter = sltypes.iterator();
-                List etypes = new ArrayList();
-                while (iter.hasNext()) {
-                    Index i = (Index)iter.next();
+            List etypes = new ArrayList();
+            for (Object o : sltypes) {
+                if (o instanceof Index) {
+                    Index i = (Index)o;
                     etypes.add(i.value);
+                } else {
+                    extslice = true;
+                    break;
                 }
+            }
+            if (!extslice) {
                 exprType[] es = (exprType[])etypes.toArray(new exprType[etypes.size()]);
                 exprType t = new Tuple($SubscriptList, es, expr_contextType.Load);
                 s = new Index($SubscriptList, t);
-            } catch (ClassCastException cc) {
-                st = (sliceType[])sltypes.toArray(new sliceType[sltypes.size()]);
-                s = new ExtSlice($SubscriptList, st);
             }
+        } else if (sltypes.size() == 1) {
+            s = (sliceType)sltypes.get(0);
+        } else if (sltypes.size() != 0) {
+            extslice = true;
+        }
+        if (extslice) {
+            sliceType[] st = (sliceType[])sltypes.toArray(new sliceType[sltypes.size()]);
+            s = new ExtSlice($SubscriptList, st);
         }
         $etype = new Subscript($test.marker, $test.etype, s, ctype);
         $marker = $test.marker;
     }
-    | ^(Num INT) {
-        $etype = makeInt($INT);
-        $marker = $INT;
-        debug("makeInt output: " + $etype);
-    }
-    | ^(Num LONGINT) {
-        $etype = makeInt($LONGINT);
-        $marker = $LONGINT;
-    }
-    | ^(Num FLOAT) {
-        $etype = makeFloat($FLOAT);
-        debug("float matched" + $etype);
-        $marker = $FLOAT;
-    }
-    | ^(Num COMPLEX) {
-        $etype = makeComplex($COMPLEX);
-        $marker = $COMPLEX;
-    }
-    | stringlist {
-        StringPair sp = extractStrings($stringlist.strings);
-        if (sp.isUnicode()) {
-            $etype = new Unicode($stringlist.marker, sp.getString());
-        } else {
-            $etype = new Str($stringlist.marker, sp.getString());
-        }
-        $marker = $stringlist.marker;
-    }
     | ^(USub tok=MINUS test[ctype]) {
         debug("USub matched " + $test.etype);
-        $etype = negate($tok, $test.etype);
+        $etype = actions.negate($tok, $test.etype);
         $marker = $tok;
     }
     | ^(UAdd tok=PLUS test[ctype]) {
@@ -1301,33 +1075,27 @@ comprehension[expr_contextType ctype] returns [exprType etype, PythonTree marker
     }
     ;
 
-stringlist returns [PythonTree marker, List strings]
-@init {
-    List strs = new ArrayList();
-}
-    : ^(Str string[strs]+) {$strings = strs; $marker = $string.start;}
-    ;
-
-string[List strs]
-    : STRING {strs.add($STRING.text);}
-    ;
-
 lambdef returns [exprType etype]
-    : ^(Lambda tok='lambda' varargslist? ^(Body test[expr_contextType.Load])) {
+    : ^(LAMBDA varargslist? ^(Body test[expr_contextType.Load])) {
         argumentsType a = $varargslist.args;
         if (a == null) {
-            a = new argumentsType($Lambda, new exprType[0], null, null, new exprType[0]);
+            a = new argumentsType($LAMBDA, new exprType[0], null, null, new exprType[0]);
         }
-        $etype = new Lambda($tok, a, $test.etype);
+        $etype = new Lambda($LAMBDA, a, $test.etype);
     }
     ;
 
-subscriptlist returns [List sltypes]
+subscriptlist returns [List sltypes, boolean isTuple]
 @init {
     List subs = new ArrayList();
 }
-    :   subscript[subs]+ {
+    : subscript[subs] {
         $sltypes = subs;
+        $isTuple = false;
+    }
+    | ^(Tuple ^(Elts subscript[subs]+)) {
+        $sltypes = subs;
+        $isTuple = true;
     }
     ;
 
@@ -1372,14 +1140,14 @@ subscript [List subs]
           ;
 
 classdef
-    : ^(ClassDef tok='class' ^(Name classname=NAME) (^(Bases bases))? ^(Body stmts)) {
+    : ^(CLASS classname=NAME (^(Bases bases))? ^(Body stmts)) {
         List b;
         if ($Bases != null) {
             b = $bases.names;
         } else {
             b = new ArrayList();
         }
-        $stmts::statements.add(makeClassDef($tok, $classname, b, $stmts.stypes));
+        $stmts::statements.add(actions.makeClassDef($CLASS, $classname, b, $stmts.stypes));
     }
     ;
 
@@ -1458,6 +1226,7 @@ argument[List arguments]
 
 keyword[List kws]
     : ^(Keyword ^(Arg arg=test[expr_contextType.Load]) ^(Value val=test[expr_contextType.Load])) {
+        actions.checkAssign($arg.etype);
         kws.add(new keywordType($Keyword, $arg.text, $val.etype));
     }
     ;
@@ -1471,7 +1240,7 @@ list_iter [List gens] returns [exprType etype]
 
 list_for [List gens]
     :
-    ^(ListFor ^(Target targ=test[expr_contextType.Store]) ^(Iter iter=test[expr_contextType.Load]) (^(Ifs list_iter[gens]))?) {
+    ^(ListFor ^(Target targ=test[expr_contextType.Store]) ^(IN iter=test[expr_contextType.Load]) (^(Ifs list_iter[gens]))?) {
         debug("matched list_for");
         exprType[] e;
         if ($Ifs != null && $list_iter.etype != null) {
@@ -1497,7 +1266,7 @@ gen_iter [List gens] returns [exprType etype]
     ;
 
 gen_for [List gens]
-    : ^(GenFor ^(Target targ=test[expr_contextType.Store]+) ^(Iter iter=test[expr_contextType.Load]) (^(Ifs gen_iter[gens]))?) {
+    : ^(GenFor ^(Target targ=test[expr_contextType.Store]+) ^(IN iter=test[expr_contextType.Load]) (^(Ifs gen_iter[gens]))?) {
         debug("matched gen_for");
         exprType[] e;
         if ($Ifs != null && $gen_iter.etype != null) {

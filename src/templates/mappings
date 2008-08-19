@@ -6,12 +6,14 @@
 # will map str.expose to org.python.core.PyString.  Many classes will have 2
 # lines; one for their expose, and one for their derived class.
 
+BaseException.derived:org.python.core.PyBaseExceptionDerived
 array.derived:org.python.core.PyArrayDerived
 bool.derived:org.python.core.PyBooleanDerived
 classmethod.derived:org.python.core.PyClassMethodDerived
 complex.derived:org.python.core.PyComplexDerived
 defaultdict.derived:org.python.modules.collections.PyDefaultDictDerived
 deque.derived:org.python.modules.collections.PyDequeDerived
+dialect.derived:org.python.modules._csv.PyDialectDerived
 dict.derived:org.python.core.PyDictionaryDerived
 enumerate.derived:org.python.core.PyEnumerateDerived
 file.derived:org.python.core.PyFileDerived
@@ -23,6 +25,7 @@ long.derived:org.python.core.PyLongDerived
 local.derived:org.python.modules.thread.PyLocalDerived
 module.derived:org.python.core.PyModuleDerived
 object.derived:org.python.core.PyObjectDerived
+partial.derived:org.python.modules._functools.PyPartialDerived
 property.derived:org.python.core.PyPropertyDerived
 random.derived:org.python.modules.random.PyRandomDerived
 set.derived:org.python.core.PySetDerived

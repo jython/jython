@@ -2,8 +2,8 @@
 
 package org.python.compiler;
 
-import org.python.parser.*;
-import org.python.parser.ast.*;
+import org.python.antlr.*;
+import org.python.antlr.ast.*;
 import java.util.*;
 
 public class ScopesCompiler extends Visitor implements ScopeConstants {
@@ -25,7 +25,7 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
         scopes = new Stack();
     }
 
-    public void beginScope(String name, int kind, SimpleNode node,
+    public void beginScope(String name, int kind, PythonTree node,
                            ArgListCompiler ac)
     {
         if (cur != null) {
@@ -53,11 +53,11 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
         cur = up;
     }
 
-    public void parse(SimpleNode node) throws Exception {
+    public void parse(PythonTree node) throws Exception {
         try {
             visit(node);
         } catch(Throwable t) {
-            throw org.python.core.parser.fixParseError(null, t,
+            throw org.python.core.ParserFacade.fixParseError(null, t,
                     code_compiler.getFilename());
         }
     }
@@ -69,7 +69,7 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
         return null;
     }
 
-    public Object visitModule(org.python.parser.ast.Module node)
+    public Object visitModule(org.python.antlr.ast.Module node)
         throws Exception
     {
         beginScope("<file-top>", TOPSCOPE, node, null);
@@ -80,7 +80,7 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
 
     public Object visitExpression(Expression node) throws Exception {
         beginScope("<eval-top>", TOPSCOPE, node, null);
-        visit(new Return(node.body));
+        visit(new Return(node, node.body));
         endScope();
         return null;
     }
@@ -118,7 +118,7 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
         ArgListCompiler ac = new ArgListCompiler();
         ac.visitArgs(node.args);
 
-        SimpleNode[] defaults = ac.getDefaults();
+        PythonTree[] defaults = ac.getDefaults();
         int defc = defaults.length;
         for (int i = 0; i < defc; i++) {
             visit(defaults[i]);
@@ -202,7 +202,7 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
     }
 
 /*
-    private static void illassign(SimpleNode node) throws Exception {
+    private static void illassign(PythonTree node) throws Exception {
         String target = "operator";
         if (node.id == PythonGrammarTreeConstants.JJTCALL_OP) {
             target = "function call";
@@ -236,12 +236,11 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
     }
 
     public Object visitListComp(ListComp node) throws Exception {
-        String tmp ="_[" + node.beginLine + "_" + node.beginColumn + "]";
+        String tmp ="_[" + node.getLine() + "_" + node.getCharPositionInLine() + "]";
         cur.addBound(tmp);
         traverse(node);
         return null;
     }
-
 
     public Object visitYield(Yield node) throws Exception {
         cur.generator = true;
@@ -249,4 +248,32 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
         traverse(node);
         return null;
     }
+
+    public Object visitGeneratorExp(GeneratorExp node) throws Exception {
+        String bound_exp = "_(x)";
+        String tmp ="_(" + node.getLine() + "_" + node.getCharPositionInLine() + ")";
+        def(tmp);
+        ArgListCompiler ac = new ArgListCompiler();
+        ac.visitArgs(new argumentsType(node, new exprType[]{new Name(node.token, bound_exp,
+                        expr_contextType.Param)}, null, null, new exprType[0]));
+        beginScope(tmp, FUNCSCOPE, node, ac);
+        cur.addParam(bound_exp);
+        cur.markFromParam();
+
+        //yield stuff
+        cur.generator = true;
+        cur.yield_count++;
+        traverse(node);
+
+        endScope();
+        return null;
+    }
+
+    public Object visitWith(With node) throws Exception {                
+        cur.max_with_count++;
+        traverse(node);
+        
+        return null;
+    }
+    
 }

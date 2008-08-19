@@ -14,13 +14,12 @@ public class PyGenerator extends PyIterator {
         this.gi_running = false;
         // Create an exception instance while we have a frame to create it from.
         // When the GC runs it doesn't have any associated thread state.
+        // this is necessary for finalize calling close on the generator
         this.generatorExit = Py.makeException(Py.GeneratorExit);
     }
 
     private static final String[] __members__ = {
-        "gi_frame", "gi_running", "next",
-	//"close", "send", "throw", // keep these hidden untill Jython is mature
-	// Throwing and closing doesn't work without newcompiler anyway
+        "close", "gi_frame", "gi_running", "next", "send", "throw"
     };
 
     public PyObject __dir__() {
@@ -36,6 +35,9 @@ public class PyGenerator extends PyIterator {
     }
 
     public PyObject send(PyObject value) {
+        if (gi_frame == null) {
+            throw Py.StopIteration("");
+        }
         if (gi_frame.f_lasti == 0 && value != Py.None) {
             throw Py.TypeError("can't send non-None value to a just-started generator");
         }
@@ -44,6 +46,9 @@ public class PyGenerator extends PyIterator {
     }
 
     private PyObject raiseException(PyException ex) {
+        if (gi_frame == null || gi_frame.f_lasti == 0) {
+            throw ex;
+        }
         gi_frame.setGeneratorInput(ex);
         return next();
     }
@@ -72,46 +77,47 @@ public class PyGenerator extends PyIterator {
         return Py.None;
     }
 
-    /*
     protected void finalize() throws Throwable {
-        //if (gi_frame.f_lasti == -1) // Generator already closed.
-        //    return; // this is pure optimization
+        if (gi_frame == null || gi_frame.f_lasti == -1) 
+            return;
         try {
-            close(); // close doesn't work without newcompiler, so ignore the exception
+            close();
         } catch (Throwable e) {
-            // e.printStackTrace();
-            // Py.println(Py.getSystemState().stderr, new PyString("Exception "
-            //         + e + " in " + this + " ignored."));
         } finally {
             super.finalize();
         }
     }
-    */
 
     public PyObject __iternext__() {
         if (gi_running)
             throw Py.ValueError("generator already executing");
-        if (gi_frame.f_lasti == -1)
+        if (gi_frame == null) {
             return null;
+        }
+            
+        if (gi_frame.f_lasti == -1) {
+            gi_frame = null;
+            return null;
+        }
         gi_running = true;
         PyObject result = null;
         try {
             result = gi_frame.f_code.call(gi_frame, closure);
         } catch(PyException e) {
-            if(!e.type.equals(Py.StopIteration)) {
+            if (!(e.type == Py.StopIteration || e.type == Py.GeneratorExit)) {
+                gi_frame = null;
                 throw e;
             } else {
                 stopException = e;
+                gi_frame = null;
                 return null;
             }
         } finally {
             gi_running = false;
         }
-//        System.out.println("lasti:" + gi_frame.f_lasti);
-//if (result == Py.None)
-//    new Exception().printStackTrace();
-        if (result == Py.None && gi_frame.f_lasti == -1)
+        if (result == Py.None && gi_frame.f_lasti == -1) {
             return null;
+        }
         return result;
     }
 }

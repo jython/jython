@@ -118,10 +118,14 @@ class decompressobj:
         
         return inflated
 
-    def flush(self):
+    def flush(self, length=None):
         if self._ended:
             raise error("decompressobj may not be used after flush()")
-        last = _get_inflate_data(self.inflater)
+        if length is None:
+            length = 0
+        elif length <= 0:
+            raise ValueError('length must be greater than zero')
+        last = _get_inflate_data(self.inflater, length)
         self.inflater.end()
         return last
 

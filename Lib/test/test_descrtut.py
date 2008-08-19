@@ -8,7 +8,7 @@
 # of much interest anymore), and a few were fiddled to make the output
 # deterministic.
 
-from test_support import sortdict
+from test.test_support import sortdict
 import pprint
 
 class defaultdict(dict):
@@ -37,18 +37,18 @@ test_1 = """
 Here's the new type at work:
 
     >>> print defaultdict               # show our type
-    <class 'test_descrtut.defaultdict'>
+    <class 'test.test_descrtut.defaultdict'>
     >>> print type(defaultdict)         # its metatype
     <type 'type'>
     >>> a = defaultdict(default=0.0)    # create an instance
     >>> print a                         # show the instance
     {}
     >>> print type(a)                   # show its type
-    <class 'test_descrtut.defaultdict'>
+    <class 'test.test_descrtut.defaultdict'>
     >>> print a.__class__               # show its class
-    <class 'test_descrtut.defaultdict'>
+    <class 'test.test_descrtut.defaultdict'>
     >>> print type(a) is a.__class__    # its type is its class
-    1
+    True
     >>> a[1] = 3.25                     # modify the instance
     >>> print a                         # show the new value
     {1: 3.25}
@@ -78,12 +78,6 @@ statement or the built-in function eval():
     3
     >>>
 
-This work in Jython
-
-    >>> exec "print foo" in a
-    0.0
-    >>>
-
 Now I'll show that defaultdict instances have dynamic instance variables,
 just like classic classes:
 
@@ -94,14 +88,14 @@ just like classic classes:
     >>> print a["noway"]
     -1000
     >>> 'default' in dir(a)
-    1
+    True
     >>> a.x1 = 100
     >>> a.x2 = 200
     >>> print a.x1
     100
     >>> d = dir(a)
     >>> 'default' in d and 'x1' in d and 'x2' in d
-    1
+    True
     >>> print sortdict(a.__dict__)
     {'default': -1000, 'x1': 100, 'x2': 200}
     >>>
@@ -163,11 +157,11 @@ For instance of built-in types, x.__class__ is now the same as type(x):
     >>> list
     <type 'list'>
     >>> isinstance([], list)
-    1
+    True
     >>> isinstance([], dict)
-    0
+    False
     >>> isinstance([], object)
-    1
+    True
     >>>
 
 Under the new proposal, the __methods__ attribute no longer exists:
@@ -198,22 +192,22 @@ Instead, you can get the same information from the list type:
      '__iadd__',
      '__imul__',
      '__init__',
+     '__iter__',
      '__le__',
      '__len__',
      '__lt__',
      '__mul__',
      '__ne__',
      '__new__',
-     '__nonzero__',
      '__radd__',
      '__reduce__',
+     '__reduce_ex__',
      '__repr__',
      '__rmul__',
      '__setattr__',
      '__setitem__',
      '__setslice__',
      '__str__',
-     '__unicode__',
      'append',
      'count',
      'extend',
@@ -223,7 +217,6 @@ Instead, you can get the same information from the list type:
      'remove',
      'reverse',
      'sort']
-
 
 The new introspection API gives more information than the old one:  in
 addition to the regular methods, it also shows the methods that are
@@ -253,9 +246,9 @@ static methods in C++ or Java. Here's an example:
 
     >>> class C:
     ...
+    ...     @staticmethod
     ...     def foo(x, y):
     ...         print "staticmethod", x, y
-    ...     foo = staticmethod(foo)
 
     >>> C.foo(1, 2)
     staticmethod 1 2
@@ -267,24 +260,24 @@ Class methods use a similar pattern to declare methods that receive an
 implicit first argument that is the *class* for which they are invoked.
 
     >>> class C:
+    ...     @classmethod
     ...     def foo(cls, y):
     ...         print "classmethod", cls, y
-    ...     foo = classmethod(foo)
 
     >>> C.foo(1)
-    classmethod test_descrtut.C 1
+    classmethod test.test_descrtut.C 1
     >>> c = C()
     >>> c.foo(1)
-    classmethod test_descrtut.C 1
+    classmethod test.test_descrtut.C 1
 
     >>> class D(C):
     ...     pass
 
     >>> D.foo(1)
-    classmethod test_descrtut.D 1
+    classmethod test.test_descrtut.D 1
     >>> d = D()
     >>> d.foo(1)
-    classmethod test_descrtut.D 1
+    classmethod test.test_descrtut.D 1
 
 This prints "classmethod __main__.D 1" both times; in other words, the
 class passed as the first argument of foo() is the class involved in the
@@ -293,18 +286,18 @@ call, not the class involved in the definition of foo().
 But notice this:
 
     >>> class E(C):
+    ...     @classmethod
     ...     def foo(cls, y): # override C.foo
     ...         print "E.foo() called"
     ...         C.foo(y)
-    ...     foo = classmethod(foo)
 
     >>> E.foo(1)
     E.foo() called
-    classmethod test_descrtut.C 1
+    classmethod test.test_descrtut.C 1
     >>> e = E()
     >>> e.foo(1)
     E.foo() called
-    classmethod test_descrtut.C 1
+    classmethod test.test_descrtut.C 1
 
 In this example, the call to C.foo() from E.foo() will see class C as its
 first argument, not class E. This is to be expected, since the call
@@ -475,7 +468,7 @@ called A.foo()
 """
 
 __test__ = {"tut1": test_1,
-            #"tut2": test_2, no slots right now
+            "tut2": test_2,
             "tut3": test_3,
             "tut4": test_4,
             "tut5": test_5,
@@ -493,7 +486,7 @@ def test_main(verbose=None):
     # into the doctest examples, and unless the full test.test_descrtut
     # business is used the name can change depending on how the test is
     # invoked.
-    import test_support, test_descrtut
+    from test import test_support, test_descrtut
     test_support.run_doctest(test_descrtut, verbose)
 
 # This part isn't needed for regrtest, but for running the test directly.

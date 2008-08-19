@@ -10,7 +10,6 @@ package com.ziclix.python.sql;
 
 import org.python.core.Py;
 import org.python.core.PyFile;
-import org.python.core.PyLong;
 import org.python.core.PyObject;
 import org.python.core.PyList;
 import org.python.core.PyString;
@@ -151,7 +150,6 @@ public class DataHandler {
      * @throws SQLException
      */
     public void setJDBCObject(PreparedStatement stmt, int index, PyObject object, int type) throws SQLException {
-
         try {
             if (checkNull(stmt, index, object, type)) {
                 return;
@@ -236,7 +234,7 @@ public class DataHandler {
             case Types.VARCHAR:
                 String string = set.getString(col);
 
-                obj = (string == null) ? Py.None : Py.newString(string);
+                obj = (string == null) ? Py.None : Py.newUnicode(string);
                 break;
 
             case Types.LONGVARCHAR:
@@ -251,7 +249,7 @@ public class DataHandler {
                         byte[] bytes = DataHandler.read(longvarchar);
 
                         if (bytes != null) {
-                            obj = Py.newString(StringUtil.fromBytes(bytes));
+                            obj = Py.newUnicode(StringUtil.fromBytes(bytes));
                         }
                     } finally {
                         try {
@@ -263,19 +261,12 @@ public class DataHandler {
 
             case Types.NUMERIC:
             case Types.DECIMAL:
-                BigDecimal bd = null;
-
-                try {
-                    bd = set.getBigDecimal(col, set.getMetaData().getPrecision(col));
-                } catch (Throwable t) {
-                    bd = set.getBigDecimal(col, 10);
-                }
-
+                BigDecimal bd = set.getBigDecimal(col);
                 obj = (bd == null) ? Py.None : Py.newFloat(bd.doubleValue());
                 break;
 
             case Types.BIT:
-                obj = set.getBoolean(col) ? Py.One : Py.Zero;
+                obj = set.getBoolean(col) ? Py.True : Py.False;
                 break;
 
             case Types.INTEGER:
@@ -285,7 +276,7 @@ public class DataHandler {
                 break;
 
             case Types.BIGINT:
-                obj = new PyLong(set.getLong(col));
+                obj = Py.newLong(set.getLong(col));
                 break;
 
             case Types.FLOAT:
@@ -298,15 +289,15 @@ public class DataHandler {
                 break;
 
             case Types.TIME:
-                obj = Py.java2py(set.getTime(col));
+                obj = Py.newTime(set.getTime(col));
                 break;
 
             case Types.TIMESTAMP:
-                obj = Py.java2py(set.getTimestamp(col));
+                obj = Py.newDatetime(set.getTimestamp(col));
                 break;
 
             case Types.DATE:
-                obj = Py.java2py(set.getDate(col));
+                obj = Py.newDate(set.getDate(col));
                 break;
 
             case Types.NULL:
@@ -353,18 +344,18 @@ public class DataHandler {
             case Types.LONGVARCHAR:
                 String string = stmt.getString(col);
 
-                obj = (string == null) ? Py.None : Py.newString(string);
+                obj = (string == null) ? Py.None : Py.newUnicode(string);
                 break;
 
             case Types.NUMERIC:
             case Types.DECIMAL:
-                BigDecimal bd = stmt.getBigDecimal(col, 10);
+                BigDecimal bd = stmt.getBigDecimal(col);
 
                 obj = (bd == null) ? Py.None : Py.newFloat(bd.doubleValue());
                 break;
 
             case Types.BIT:
-                obj = stmt.getBoolean(col) ? Py.One : Py.Zero;
+                obj = stmt.getBoolean(col) ? Py.True : Py.False;
                 break;
 
             case Types.INTEGER:
@@ -374,7 +365,7 @@ public class DataHandler {
                 break;
 
             case Types.BIGINT:
-                obj = new PyLong(stmt.getLong(col));
+                obj = Py.newLong(stmt.getLong(col));
                 break;
 
             case Types.FLOAT:
@@ -387,15 +378,15 @@ public class DataHandler {
                 break;
 
             case Types.TIME:
-                obj = Py.java2py(stmt.getTime(col));
+                obj = Py.newTime(stmt.getTime(col));
                 break;
 
             case Types.TIMESTAMP:
-                obj = Py.java2py(stmt.getTimestamp(col));
+                obj = Py.newDatetime(stmt.getTimestamp(col));
                 break;
 
             case Types.DATE:
-                obj = Py.java2py(stmt.getDate(col));
+                obj = Py.newDate(stmt.getDate(col));
                 break;
 
             case Types.NULL:

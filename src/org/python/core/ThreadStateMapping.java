@@ -1,7 +1,7 @@
 package org.python.core;
 
 class ThreadStateMapping {
-    private static ThreadLocal<ThreadState> cachedThreadState = new ThreadLocal<ThreadState>();
+    private static final ThreadLocal<ThreadState> cachedThreadState = new ThreadLocal<ThreadState>();
 
     public ThreadState getThreadState(PySystemState newSystemState) {
         ThreadState ts = cachedThreadState.get();

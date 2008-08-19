@@ -43,19 +43,11 @@ public class Connectx extends PyObject {
     public Connectx() {
     }
 
-    /**
-     * Method __findattr__
-     *
-     * @param String name
-     * @return PyObject
-     */
-    public PyObject __findattr__(String name) {
-
+    public PyObject __findattr_ex__(String name) {
         if ("__doc__".equals(name)) {
             return doc;
         }
-
-        return super.__findattr__(name);
+        return super.__findattr_ex__(name);
     }
 
     /**

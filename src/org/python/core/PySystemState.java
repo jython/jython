@@ -129,6 +129,8 @@ public class PySystemState extends PyObject
     public PyObject last_type = Py.None;
     public PyObject last_traceback = Py.None;
 
+    public PyObject __name__ = new PyString("sys");
+    
     public PyObject __dict__;
 
     private int recursionlimit = 1000;
@@ -162,22 +164,31 @@ public class PySystemState extends PyObject
 
         // This isn't quite right...
         if(builtins == null){
-        	builtins = new PyStringMap();
-        	__builtin__.fillWithBuiltins(builtins);
+            builtins = new PyStringMap();
+            __builtin__.fillWithBuiltins(builtins);
         }
         PyModule __builtin__ = new PyModule("__builtin__", builtins);
         modules.__setitem__("__builtin__", __builtin__);
 
-        if (getType() != null) {
-            __dict__ = new PyStringMap();
-            __dict__.invoke("update", getType().fastGetDict());
-            __dict__.__setitem__("displayhook", __displayhook__);
-            __dict__.__setitem__("excepthook", __excepthook__);
-        }
+        __dict__ = new PyStringMap();
+
+        // This isn't right either, because __dict__ can be directly
+        // accessed from Python, for example:
+        //
+        //    >>> sys.__dict__['settrace']
+        //    <java function settrace 81>
+
+        __dict__.invoke("update", getType().fastGetDict());
+        __dict__.__setitem__("displayhook", __displayhook__);
+        __dict__.__setitem__("excepthook", __excepthook__);
+    }
+    
+    void reload() throws PyIgnoreMethodTag {
+        __dict__.invoke("update", getType().fastGetDict());
     }
 
     // xxx fix this accessors
-    public PyObject __findattr__(String name) {
+    public PyObject __findattr_ex__(String name) {
         if (name == "exc_value") {
             PyException exc = Py.getThreadState().exception;
             if (exc == null) return null;
@@ -199,34 +210,44 @@ public class PySystemState extends PyObject
             return warnoptions;
         }
 
-        PyObject ret = super.__findattr__(name);
-        if (ret != null) return ret;
+        PyObject ret = super.__findattr_ex__(name);
+        if (ret != null) {
+            if (ret instanceof PyMethod) {
+        	if (__dict__.__finditem__(name) instanceof PyReflectedFunction)
+        	    return ret; // xxx depends on nonstandard __dict__
+            } else if (ret == PyAttributeDeleted.INSTANCE) {
+        	return null;
+            }
+            else return ret;
+        }
 
         return __dict__.__finditem__(name);
     }
 
     public void __setattr__(String name, PyObject value) {
-        PyType selftype = getType();
-        if (selftype == null)
+        if (name == "__dict__" || name == "__class__")
+            throw Py.TypeError("readonly attribute");
+        PyObject ret = getType().lookup(name); // xxx fix fix fix
+        if (ret != null && ret.jtryset(this, value)) {
             return;
-        PyObject ret = selftype.lookup(name); // xxx fix fix fix
-        if (ret != null) {
-            ret.jtryset(this, value);
-            return;
-        }
-        if (__dict__ == null) {
-            __dict__ = new PyStringMap();
         }
         __dict__.__setitem__(name, value);
-        //throw Py.AttributeError(name);
     }
 
     public void __delattr__(String name) {
-        if (__dict__ != null) {
-            __dict__.__delitem__(name);
-            return;
+        if (name == "__dict__" || name == "__class__")
+            throw Py.TypeError("readonly attribute");
+        PyObject ret = getType().lookup(name); // xxx fix fix fix
+        if (ret != null) {
+            ret.jtryset(this, PyAttributeDeleted.INSTANCE);
         }
-        throw Py.AttributeError("del '"+name+"'");
+        try {
+            __dict__.__delitem__(name);
+        } catch (PyException pye) { // KeyError
+            if (ret == null) {
+        	throw Py.AttributeError(name);
+            }
+        }
     }
 
     // xxx
@@ -235,7 +256,7 @@ public class PySystemState extends PyObject
     }
 
     public String toString() {
-        return "sys module";
+        return "<module '" + __name__ + "' (built-in)>";
     }
 
     public int getrecursionlimit() {
@@ -273,6 +294,10 @@ public class PySystemState extends PyObject
 
     public void setdefaultencoding(String encoding) {
         codecs.setDefaultEncoding(encoding);
+    }
+
+    public PyObject getfilesystemencoding() {
+        return Py.None;
     }
 
     /**
@@ -338,6 +363,7 @@ public class PySystemState extends PyObject
                 Py.printException(exc);
             }
         }
+        Py.flushLine();
     }
 
     public ClassLoader getClassLoader() {
@@ -435,13 +461,14 @@ public class PySystemState extends PyObject
             } catch (Exception exc) {
             }
         }
+    try {
+        String jythonpath = System.getenv("JYTHONPATH");
+        if (jythonpath != null)
+        registry.setProperty("python.path", jythonpath);
+    } catch (SecurityException e) {
+    }
         if (postProperties != null) {
-            for (Enumeration e=postProperties.keys(); e.hasMoreElements();)
-            {
-                String key = (String)e.nextElement();
-                String value = (String)postProperties.get(key);
-                registry.put(key, value);
-            }
+        registry.putAll(postProperties);
         }
         if (standalone) {
             // set default standalone property (if not yet set)
@@ -631,7 +658,7 @@ public class PySystemState extends PyObject
      * @return a PyObject path string or Py.None
      */
     private static PyObject initExecutable(Properties props) {
-        String executable = (String)props.get("python.executable");
+        String executable = props.getProperty("python.executable");
         if (executable == null) {
             return Py.None;
         }
@@ -688,7 +715,7 @@ public class PySystemState extends PyObject
         PyObject [] built_mod = new PyObject[n];        
         Enumeration keys = builtinNames.keys();
         for (int i=0; i<n; i++)
-        	built_mod[i] = Py.newString((String)keys.nextElement());
+            built_mod[i] = Py.newString((String)keys.nextElement());
         builtin_module_names = new PyTuple(built_mod);
     }
 
@@ -698,12 +725,11 @@ public class PySystemState extends PyObject
 
     private static PyList initPath(Properties props, boolean standalone, String jarFileName) {
         PyList path = new PyList();
-        addPaths(path, props.getProperty("python.prepath", ""));
+        addPaths(path, props.getProperty("python.path", ""));
         if (prefix != null) {
             String libpath = new File(prefix, "Lib").toString();
             path.append(new PyString(libpath));
         }
-        addPaths(path, props.getProperty("python.path", ""));
         if (standalone) {
             // standalone jython: add the /Lib directory inside JYTHON_JAR to the path
             addPaths(path, jarFileName + "/Lib");
@@ -895,7 +921,7 @@ public class PySystemState extends PyObject
     }
 
     public static void exc_clear() {
-    	Py.getThreadState().exception = null;
+        Py.getThreadState().exception = null;
     }
 
     public static PyFrame _getframe() {
@@ -938,5 +964,24 @@ class PySystemStateFunctions extends PyBuiltinFunctionSet
         default:
             throw info.unexpectedCall(3, false);
         }
+    }
+}
+
+/**
+ * Value of a class or instance variable when the corresponding
+ * attribute is deleted.  Used only in PySystemState for now.
+ */
+class PyAttributeDeleted extends PyObject {
+    final static PyAttributeDeleted INSTANCE = new PyAttributeDeleted();
+    private PyAttributeDeleted() {}
+    public String toString() { return ""; }
+    public Object __tojava__(Class c) {
+        if (c == PyObject.class)
+            return this;
+        // we can't quite "delete" non-PyObject attributes; settle for
+        // null or nothing
+        if (c.isPrimitive())
+            return Py.NoConversion;
+        return null;
     }
 }

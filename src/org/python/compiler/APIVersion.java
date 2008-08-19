@@ -1,20 +1,13 @@
-// Copyright (c) Corporation for National Research Initiatives
-
+/*
+ * Copyright (c) 2008 Jython Developers
+ * Licensed to PSF under a Contributor Agreement.
+ */
 package org.python.compiler;
-import java.io.*;
 
-public class APIVersion extends Attribute {
-    int attName;
-    int version;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 
-    public APIVersion(int version, ConstantPool pool) throws IOException {
-        attName = pool.UTF8("org.python.APIVersion");
-        this.version = version;
-    }
-
-    public void write(DataOutputStream stream) throws IOException {
-        stream.writeShort(attName);
-        stream.writeInt(4);
-        stream.writeInt(version);
-    }
+@Retention(RetentionPolicy.RUNTIME)
+public @interface APIVersion {
+    int value();
 }

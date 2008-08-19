@@ -128,7 +128,7 @@ public class BCP extends PyObject implements ClassDictInit {
      * @param name
      * @return the attribute for the given name
      */
-    public PyObject __findattr__(String name) {
+    public PyObject __findattr_ex__(String name) {
 
         if ("destinationDataHandler".equals(name)) {
             return Py.java2py(this.destDH);
@@ -140,7 +140,7 @@ public class BCP extends PyObject implements ClassDictInit {
             return Py.newInteger(this.queuesize);
         }
 
-        return super.__findattr__(name);
+        return super.__findattr_ex__(name);
     }
 
     /**

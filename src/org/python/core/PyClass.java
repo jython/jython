@@ -162,14 +162,11 @@ public class PyClass extends PyObject {
             for (java.util.Iterator iter = super__methods.entrySet().iterator(); iter
                     .hasNext();) {
                 java.util.Map.Entry entry = (java.util.Map.Entry) iter.next();
-                // System.out.println(entry.getKey()); // debug
                 entry.setValue(((java.util.ArrayList) entry.getValue())
                         .toArray(empty_methods));
             }
         }
 
-        // System.out.println("proxyClasses: "+proxyClasses+", "+
-        // proxyClasses[0]);
         if (dict.__finditem__("__doc__") == null) {
             dict.__setitem__("__doc__", Py.None);
         }
@@ -186,7 +183,6 @@ public class PyClass extends PyObject {
     protected void findModule(PyObject dict) {
         PyObject module = dict.__finditem__("__module__");
         if (module == null || module == Py.None) {
-            // System.out.println("in PyClass getFrame: "+__name__.string);
             PyFrame f = Py.getFrame();
             if (f != null) {
                 PyObject nm = f.f_globals.__finditem__("__name__");
@@ -232,7 +228,7 @@ public class PyClass extends PyObject {
         return result[0];
     }
 
-    public PyObject __findattr__(String name) {
+    public PyObject __findattr_ex__(String name) {
         if (name == "__dict__") {
             return __dict__;
         }
@@ -249,7 +245,7 @@ public class PyClass extends PyObject {
         PyObject[] result = lookupGivingClass(name, false);
 
         if (result[0] == null) {
-            return super.__findattr__(name);
+            return super.__findattr_ex__(name);
         }
         // xxx do we need to use result[1] (wherefound) for java cases for backw
         // comp?

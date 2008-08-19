@@ -5,7 +5,7 @@ Made for Jython.
 import array
 import cStringIO
 import tempfile
-import test_support
+from test import test_support
 import unittest
 import StringIO
 

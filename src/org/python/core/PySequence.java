@@ -143,7 +143,7 @@ public abstract class PySequence extends PyObject {
         if(i < 0) {
             return (i == -1) ? Py.True : Py.False;
         }
-        return seq___finditem__(i)._lt(((PySequence)o).seq___finditem__(i));
+        return __finditem__(i)._lt(o.__finditem__(i));
     }
 
     final synchronized PyObject seq___lt__(PyObject o) {
@@ -158,7 +158,7 @@ public abstract class PySequence extends PyObject {
         if(i < 0) {
             return (i == -1 || i == -2) ? Py.True : Py.False;
         }
-        return seq___finditem__(i)._le(((PySequence)o).seq___finditem__(i));
+        return __finditem__(i)._le(o.__finditem__(i));
     }
 
     final synchronized PyObject seq___le__(PyObject o) {
@@ -172,7 +172,7 @@ public abstract class PySequence extends PyObject {
         int i = cmp(this, -1, o, -1);
         if(i < 0)
             return (i == -3) ? Py.True : Py.False;
-        return seq___finditem__(i)._gt(((PySequence)o).seq___finditem__(i));
+        return __finditem__(i)._gt(o.__finditem__(i));
     }
 
     final synchronized PyObject seq___gt__(PyObject o) {
@@ -187,7 +187,7 @@ public abstract class PySequence extends PyObject {
         if(i < 0) {
             return (i == -3 || i == -2) ? Py.True : Py.False;
         }
-        return seq___finditem__(i)._ge(((PySequence)o).seq___finditem__(i));
+        return __finditem__(i)._ge(o.__finditem__(i));
     }
 
     final synchronized PyObject seq___ge__(PyObject o) {
@@ -256,6 +256,20 @@ public abstract class PySequence extends PyObject {
         }
     }
 
+    // XXX: more appropriate naming of this vs fixindex
+    protected int calculateIndex(int index) {
+        int length = __len__();
+        if(index < 0) {
+            index = index += length;
+            if(index < 0) {
+                index = 0;
+            }
+        } else if(index > length) {
+            index = length;
+        }
+        return index;
+    }
+
     public PyObject __finditem__(int index) {
         return seq___finditem__(index);
     }
@@ -274,11 +288,11 @@ public abstract class PySequence extends PyObject {
     }
 
     final PyObject seq___finditem__(PyObject index) {
-        if(index instanceof PyInteger || index instanceof PyLong) {
-            return seq___finditem__(index.asInt());
-        } else if(index instanceof PySlice) {
+        if (index.isIndex()) {
+            return seq___finditem__(index.asIndex(Py.IndexError));
+        } else if (index instanceof PySlice) {
             PySlice s = (PySlice)index;
-            return __getslice__(s.start, s.stop, s.step);
+            return seq___getslice__(s.start, s.stop, s.step);
         } else {
             throw Py.TypeError(getType().fastGetName() + " indices must be integers");
         }
@@ -289,7 +303,7 @@ public abstract class PySequence extends PyObject {
     }
 
     final PyObject seq___getitem__(PyObject index) {
-        PyObject ret = seq___finditem__(index);
+        PyObject ret = __finditem__(index);
         if(ret == null) {
             throw Py.IndexError("index out of range: " + index);
         }
@@ -313,8 +327,8 @@ public abstract class PySequence extends PyObject {
     }
 
     final synchronized PyObject seq___getslice__(PyObject start, PyObject stop, PyObject step) {
-        int[] slice = new PySlice(start, stop, step).indices(__len__());
-        return getslice(slice[0], slice[1], slice[2]);
+        int[] indices = new PySlice(start, stop, step).indicesEx(__len__());
+        return getslice(indices[0], indices[1], indices[2]);
     }
 
     public synchronized void __setslice__(PyObject start,
@@ -332,8 +346,13 @@ public abstract class PySequence extends PyObject {
                                              PyObject stop,
                                              PyObject step,
                                              PyObject value) {
-        int[] slice = new PySlice(start, stop, step).indices(__len__());
-        setslice(slice[0], slice[1], slice[2], value);
+        PySlice slice = new PySlice(start, stop, step);
+        int[] indices = slice.indicesEx(__len__());
+        if ((slice.step != Py.None) && value.__len__() != indices[3]) {
+            throw Py.ValueError(String.format("attempt to assign sequence of size %d to extended "
+                                              + "slice of size %d", value.__len__(), indices[3]));
+        }
+        setslice(indices[0], indices[1], indices[2], value);
     }
 
     public synchronized void __delslice__(PyObject start, PyObject stop, PyObject step) {
@@ -341,11 +360,15 @@ public abstract class PySequence extends PyObject {
     }
 
     final synchronized void seq___delslice__(PyObject start, PyObject stop, PyObject step) {
-        int[] slice = new PySlice(start, stop, step).indices(__len__());
-        delRange(slice[0], slice[1], slice[2]);
+        int[] indices = new PySlice(start, stop, step).indicesEx(__len__());
+        delRange(indices[0], indices[1], indices[2]);
     }
 
     public synchronized void __setitem__(int index, PyObject value) {
+        seq___setitem__(index, value);
+    }
+
+    final synchronized void seq___setitem__(int index, PyObject value) {
         int i = fixindex(index);
         if(i == -1) {
             throw Py.IndexError(getType().fastGetName() + " assignment index out of range");
@@ -358,11 +381,11 @@ public abstract class PySequence extends PyObject {
     }
 
     final void seq___setitem__(PyObject index, PyObject value) {
-        if(index instanceof PyInteger || index instanceof PyLong) {
-            __setitem__(index.asInt(), value);
-        } else if(index instanceof PySlice) {
+        if (index.isIndex()) {
+            seq___setitem__(index.asIndex(Py.IndexError), value);
+        } else if (index instanceof PySlice) {
             PySlice s = (PySlice)index;
-            __setslice__(s.start, s.stop, s.step, value);
+            seq___setslice__(s.start, s.stop, s.step, value);
         } else {
             throw Py.TypeError(getType().fastGetName() + " indices must be integers");
         }
@@ -373,15 +396,15 @@ public abstract class PySequence extends PyObject {
     }
 
     final synchronized void seq___delitem__(PyObject index) {
-        if(index instanceof PyInteger || index instanceof PyLong) {
-            int i = fixindex(index.asInt());
-            if(i == -1) {
+        if (index.isIndex()) {
+            int i = fixindex(index.asIndex(Py.IndexError));
+            if (i == -1) {
                 throw Py.IndexError(getType().fastGetName() + " assignment index out of range");
             }
             del(i);
-        } else if(index instanceof PySlice) {
+        } else if (index instanceof PySlice) {
             PySlice s = (PySlice)index;
-            __delslice__(s.start, s.stop, s.step);
+            seq___delslice__(s.start, s.stop, s.step);
         } else {
             throw Py.TypeError(getType().fastGetName() + " indices must be integers");
         }

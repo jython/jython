@@ -178,7 +178,7 @@ public class PyConnection extends PyObject implements ClassDictInit {
      * @param name the name of the attribute of interest
      * @return the value for the attribute of the specified name
      */
-    public PyObject __findattr__(String name) {
+    public PyObject __findattr_ex__(String name) {
 
         if ("autocommit".equals(name)) {
             try {
@@ -230,7 +230,7 @@ public class PyConnection extends PyObject implements ClassDictInit {
             return Py.newBoolean(closed);
         }
 
-        return super.__findattr__(name);
+        return super.__findattr_ex__(name);
     }
 
     /**

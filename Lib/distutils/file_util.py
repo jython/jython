@@ -3,9 +3,9 @@
 Utility functions for operating on single files.
 """
 
-# This module should be kept compatible with Python 1.5.2.
+# This module should be kept compatible with Python 2.1.
 
-__revision__ = "$Id: file_util.py 29762 2002-11-19 13:12:28Z akuchling $"
+__revision__ = "$Id: file_util.py 37828 2004-11-10 22:23:15Z loewis $"
 
 import os
 from distutils.errors import DistutilsFileError
@@ -42,7 +42,7 @@ def _copy_file_contents (src, dst, buffer_size=16*1024):
             except os.error, (errno, errstr):
                 raise DistutilsFileError, \
                       "could not delete '%s': %s" % (dst, errstr)
-        
+
         try:
             fdst = open(dst, 'wb')
         except os.error, (errno, errstr):

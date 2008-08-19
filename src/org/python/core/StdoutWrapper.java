@@ -46,7 +46,11 @@ public class StdoutWrapper extends OutputStream {
         if (obj instanceof PyFile) {
             ((PyFile) obj).flush();
         } else {
-            obj.invoke("flush");
+            try {
+                obj.invoke("flush");
+            } catch (PyException pye) {
+                // ok
+            }
         }
     }
 
@@ -68,7 +72,7 @@ public class StdoutWrapper extends OutputStream {
         write(StringUtil.fromBytes(data, off, len));
     }
 
-    public void clearSoftspace() {
+    public void flushLine() {
         PyObject obj = myFile();
 
         if (obj instanceof PyFile) {
@@ -83,45 +87,63 @@ public class StdoutWrapper extends OutputStream {
             if (ss != null && ss.__nonzero__()) {
                 obj.invoke("write", Py.Newline);
             }
-            obj.invoke("flush");
+            try {
+                obj.invoke("flush");
+            } catch (PyException pye) {
+                // ok
+            }
             obj.__setattr__("softspace", Py.Zero);
         }
     }
 
     public void print(PyObject o, boolean space, boolean newline) {
-        PyString string = o.__str__();
         PyObject obj = myFile();
 
         if (obj instanceof PyFile) {
-            PyFile file = (PyFile) obj;
-            String s = string.toString();
-            if (newline) {
-                s = s + "\n";
-            }
+            PyFile file = (PyFile)obj;
             if (file.softspace) {
-                s = " " + s;
+                file.write(" ");
+                file.softspace = false;
             }
+            PyString string = o.__str__();
+            String s = string.toString();
+            int len = s.length();
             file.write(s);
-            file.flush();
-            if (space && s.endsWith("\n")) {
-                space = false;
+            if (o instanceof PyString) {
+                if (len == 0 || !Character.isWhitespace(s.charAt(len - 1))
+                    || s.charAt(len - 1) == ' ') {
+                    file.softspace = space;
+                }
+            } else {
+                file.softspace = space;
             }
-            file.softspace = space;
+            if (newline) {
+                file.write("\n");
+                file.softspace = false;
+            }
+            file.flush();
         } else {
             PyObject ss = obj.__findattr__("softspace");
             if (ss != null && ss.__nonzero__()) {
                 obj.invoke("write", Py.Space);
+                obj.__setattr__("softspace", Py.Zero);
             }
+            PyString string = o.__str__();
+            String s = o.toString();
+            int len = s.length();
             obj.invoke("write", string);
+            if (o instanceof PyString) {
+                if (len == 0 || !Character.isWhitespace(s.charAt(len - 1))
+                    || s.charAt(len - 1) == ' ') {
+                    obj.__setattr__("softspace", space ? Py.One : Py.Zero);
+                }
+            } else {
+                obj.__setattr__("softspace", space ? Py.One : Py.Zero);
+            }
             if (newline) {
                 obj.invoke("write", Py.Newline);
+                obj.__setattr__("softspace", Py.Zero);
             }
-            // obj.invoke("flush");
-
-            if (space && string.toString().endsWith("\n")) {
-                space = false;
-            }
-            obj.__setattr__("softspace", space ? Py.One : Py.Zero);
         }
     }
 

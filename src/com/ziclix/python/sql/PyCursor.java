@@ -196,7 +196,7 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
    * @param name
    * @return the attribute for the given name
    */
-  public PyObject __findattr__(String name) {
+  public PyObject __findattr_ex__(String name) {
 
     if ("arraysize".equals(name)) {
       return Py.newInteger(arraysize);
@@ -236,7 +236,7 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
       } catch (Throwable t) {}
     }
 
-    return super.__findattr__(name);
+    return super.__findattr_ex__(name);
   }
 
   /**
@@ -506,7 +506,11 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
    * @param maxRows
    */
   public void executemany(PyObject sql, PyObject params, PyObject bindings, PyObject maxRows) {
-    execute(sql, params, bindings, maxRows);
+      if (isSeq(params) && params.__len__() == 0) {
+          //executemany with an empty params tuple is a no-op
+          return;
+      }
+      execute(sql, params, bindings, maxRows);
   }
 
   /**

@@ -10,7 +10,7 @@
  *
  * Portions of this engine have been developed in cooperation with
  * CNRI.  Hewlett-Packard provided funding for 1.6 integration and
- * other compatibility work.
+ ther compatibility work.
  */
 
 
@@ -95,7 +95,7 @@ public class PatternObject extends PyObject {
     private PyObject subx(PyObject template, PyString instring, int count,
                           boolean subn)
     {
-        final PyString string = instring;
+        final PyString string = instring; 
         PyObject filter = null;
         boolean filter_is_callable = false;
         if (template.isCallable()) {
@@ -110,7 +110,7 @@ public class PatternObject extends PyObject {
                 filter = template;
                 filter_is_callable = false;
             } else {
-                filter = call("sre", "_subx", new PyObject[] {
+                filter = call("re", "_subx", new PyObject[] {
                     this, template});
                 filter_is_callable = filter.isCallable();
             }
@@ -123,7 +123,6 @@ public class PatternObject extends PyObject {
         int n = 0;
         int i = 0;
 
-        boolean appended = false;
         while (count == 0 || n < count) {
             state.state_reset();
             state.ptr = state.start;
@@ -139,7 +138,6 @@ public class PatternObject extends PyObject {
             if (i < b) {
                 /* get segment before this match */
                 buf.append(string.substring(i, b));
-                appended = true;
             }
             if (! (i == b && i == e && n > 0)) {
                 PyObject item;
@@ -153,7 +151,6 @@ public class PatternObject extends PyObject {
     
                 if (item != Py.None) {
                     buf.append(item.toString());
-                    appended = true;
                 }
                 i = e;
                 n++;
@@ -167,18 +164,22 @@ public class PatternObject extends PyObject {
         }
         if (i < state.endpos) {
             buf.append(string.substring(i, state.endpos));
-            appended = true;
         }
 
-        if (!appended) {
-            return pattern == null ? Py.EmptyString :
-                    pattern.__getslice__(Py.newInteger(0), Py.newInteger(0));
+        // Follows rules enumerated in test_re.test_bug_1140
+        PyString outstring;
+        if (buf.length() == 0) {
+            outstring = instring.createInstance(buf.toString());
+        } else if (template instanceof PyUnicode || instring instanceof PyUnicode) {
+            outstring = Py.newUnicode(buf.toString());
+        } else {
+            outstring = Py.newString(buf.toString());
         }
 
-        if (subn)
-            return new PyTuple(instring.createInstance(buf.toString()), Py.newInteger(n));
-        else
-            return instring.createInstance(buf.toString());
+        if (subn) {
+            return new PyTuple(outstring, Py.newInteger(n));
+        }
+        return outstring;
     }
 
 
@@ -367,9 +368,12 @@ public class PatternObject extends PyObject {
     private static PyString extractPyString(ArgParser ap, int pos){
         PyObject obj = ap.getPyObject(pos);
         if(!(obj instanceof PyString)){
+            if (obj instanceof PyArray) {
+                return new PyString(obj.toString());
+            }
             throw Py.TypeError("expected str or unicode but got " + obj.getType());
         }
-        return (PyString)ap.getPyObject(pos);
+        return (PyString)obj;
     }
 }
 

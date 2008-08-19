@@ -96,23 +96,23 @@ public class PySuper extends PyObject {
         throw Py.TypeError("super(type, obj): obj must be an instance or subtype of type");
     }
 
-    public PyObject __findattr__(String name) {
-        return super___findattr__(name);
+    public PyObject __findattr_ex__(String name) {
+        return super___findattr_ex__(name);
     }
 
-    final PyObject super___findattr__(String name) {
+    final PyObject super___findattr_ex__(String name) {
         if (objType != null && name != "__class__") {
             PyObject descr = objType.super_lookup(superType, name);
             if (descr != null) {
                 return descr.__get__(objType == obj ? null : obj, objType);
             }
         }
-        return super.__findattr__(name);
+        return super.__findattr_ex__(name);
     }
 
     @ExposedMethod
     final PyObject super___getattribute__(PyObject name) {
-        PyObject ret = super___findattr__(asName(name));
+        PyObject ret = super___findattr_ex__(asName(name));
         if (ret == null) {
             noAttributeError(asName(name));
         }

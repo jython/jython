@@ -14,7 +14,6 @@ import org.python.core.PyInteger;
 import org.python.core.PyList;
 import org.python.core.PyObject;
 import org.python.core.PyTuple;
-import org.python.core.__builtin__;
 
 import java.sql.CallableStatement;
 import java.sql.DatabaseMetaData;
@@ -401,7 +400,7 @@ abstract public class Fetch {
 
         PyList ret = new PyList();
 
-        ret.append(__builtin__.tuple(results));
+        ret.append(PyTuple.fromIterable(results));
 
         return ret;
     }

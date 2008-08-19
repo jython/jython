@@ -29,12 +29,14 @@ __all__ = ["altsep", "curdir", "pardir", "sep", "pathsep", "linesep",
 __all__.extend(['EX_OK', 'F_OK', 'O_APPEND', 'O_CREAT', 'O_EXCL', 'O_RDONLY',
                 'O_RDWR', 'O_SYNC', 'O_TRUNC', 'O_WRONLY', 'R_OK', 'SEEK_CUR',
                 'SEEK_END', 'SEEK_SET', 'W_OK', 'X_OK', '_exit', 'access',
-                'altsep', 'chdir', 'close', 'curdir', 'defpath', 'environ',
-                'error', 'fdopen', 'getcwd', 'getenv', 'getlogin', 'linesep',
-                'listdir', 'lseek', 'lstat', 'makedirs', 'mkdir', 'name',
-                'open', 'pardir', 'path', 'pathsep', 'popen', 'popen2',
-                'popen3', 'popen4', 'putenv', 'read', 'remove', 'removedirs',
-                'rename', 'renames', 'rmdir', 'sep', 'stat', 'stat_result',
+                'altsep', 'chdir', 'chmod', 'close', 'curdir', 'defpath',
+                'environ', 'error', 'fdopen', 'getcwd', 'getegid', 'getenv',
+                'geteuid', 'getgid', 'getlogin', 'getlogin', 'getpgrp',
+                'getpid', 'getppid', 'getuid', 'isatty', 'linesep', 'listdir',
+                'lseek', 'lstat', 'makedirs', 'mkdir', 'name', 'open', 'pardir',
+                'path', 'pathsep', 'popen', 'popen2', 'popen3', 'popen4',
+                'putenv', 'read', 'remove', 'removedirs', 'rename', 'renames',
+                'rmdir', 'sep', 'setpgrp', 'setsid', 'stat', 'stat_result',
                 'strerror', 'system', 'unlink', 'unsetenv', 'utime', 'walk',
                 'write'])
 
@@ -44,7 +46,8 @@ import time
 import stat as _stat
 import sys
 from java.io import File
-from org.python.core.io import FileDescriptors
+from org.python.core import PyFile
+from org.python.core.io import FileDescriptors, FileIO, IOBase
 
 # Mapping of: os._name: [name list, shell command list]
 _os_map = dict(nt=[
@@ -91,13 +94,43 @@ name = 'java'
 # should *NOT* use it
 _name = get_os_type()
 
+from org.python.posix import JavaPOSIX, POSIXHandler, POSIXFactory
+
+class PythonPOSIXHandler(POSIXHandler):
+    def error(self, error, msg):
+        err = getattr(errno, error.name(), None)
+        if err is None:
+            raise OSError('%s: %s' % (error, msg))
+        raise OSError(err, errno.strerror(err), msg)
+    def unimplementedError(self, method_name):
+        raise NotImplementedError(method_name)
+    def warn(self, warning_id, msg, rest):
+        pass # XXX implement
+    def isVerbose(self):
+        return False
+    def getCurrentWorkingDirectory(self):
+        return File(getcwd())
+    def getEnv(self):
+        return ['%s=%s' % (key, val) for key, val in environ.iteritems()]
+    def getInputStream(self):
+        return getattr(java.lang.System, 'in') # XXX handle resetting
+    def getOutputStream(self):
+        return java.lang.System.out # XXX handle resetting
+    def getPID(self):
+        return 0
+    def getErrorStream(self):
+        return java.lang.System.err # XXX handle resetting
+
+_posix = POSIXFactory.getPOSIX(PythonPOSIXHandler(), True)
+_native_posix = not isinstance(_posix, JavaPOSIX)
+
 if _name in ('nt', 'ce'):
     import ntpath as path
 else:
     import posixpath as path
 
 sys.modules['os.path'] = _path = path
-from os.path import curdir, pardir, sep, pathsep, defpath, extsep, altsep
+from os.path import curdir, pardir, sep, pathsep, defpath, extsep, altsep, devnull
 linesep = java.lang.System.getProperty('line.separator')
 
 # open for reading only
@@ -157,6 +190,17 @@ class stat_result:
     for (name, index) in stat_result._stat_members:
       self.__dict__[name] = results[index]
 
+  @classmethod
+  def from_jnastat(cls, s):
+      results = []
+      for meth in (s.mode, s.ino, s.dev, s.nlink, s.uid, s.gid, s.st_size,
+                   s.atime, s.mtime, s.ctime):
+          try:
+              results.append(meth())
+          except NotImplementedError:
+              results.append(0)
+      return cls(results)
+
   def __getitem__(self, i):
     if i < 0 or i > 9:
       raise IndexError(i)
@@ -200,11 +244,12 @@ def chdir(path):
 
     Change the current working directory to the specified path.
     """
-    if not _path.exists(path):
+    realpath = _path.realpath(path)
+    if not _path.exists(realpath):
         raise OSError(errno.ENOENT, errno.strerror(errno.ENOENT), path)
-    if not _path.isdir(path):
+    if not _path.isdir(realpath):
         raise OSError(errno.ENOTDIR, errno.strerror(errno.ENOTDIR), path)
-    sys.setCurrentWorkingDir(_path.realpath(path))
+    sys.setCurrentWorkingDir(realpath)
 
 def listdir(path):
     """listdir(path) -> list_of_strings
@@ -220,6 +265,18 @@ def listdir(path):
     if l is None:
         raise OSError(0, 'No such directory', path)
     return list(l)
+
+def chmod(path, mode):
+    """chmod(path, mode)
+
+    Change the access permissions of a file.
+    """
+    # XXX no error handling for chmod in jna-posix
+    # catch not found errors explicitly here, for now
+    abs_path = sys.getPath(path)
+    if not File(abs_path).exists():
+        raise OSError(errno.ENOENT, errno.strerror(errno.ENOENT), path)
+    _posix.chmod(abs_path, mode)
 
 def mkdir(path, mode='ignored'):
     """mkdir(path [, mode=0777])
@@ -240,8 +297,21 @@ def makedirs(path, mode='ignored'):
     just the rightmost) will be created if it does not exist.
     The optional parameter is currently ignored.
     """
-    if not File(sys.getPath(path)).mkdirs():
-        raise OSError(0, "couldn't make directories", path)
+    sys_path = sys.getPath(path)
+    if File(sys_path).mkdirs():
+        return
+
+    # if making a /x/y/z/., java.io.File#mkdirs inexplicably fails. So we need
+    # to force it
+    
+    # need to use _path instead of path, because param is hiding
+    # os.path module in namespace!
+    head, tail = _path.split(sys_path)
+    if tail == curdir:
+        if File(_path.join(head)).mkdirs():
+            return
+                
+    raise OSError(0, "couldn't make directories", path)
 
 def remove(path):
     """remove(path)
@@ -363,7 +433,14 @@ def stat(path):
     The Java stat implementation only returns a small subset of
     the standard fields: size, modification time and change time.
     """
-    f = File(sys.getPath(path))
+    abs_path = sys.getPath(path)
+    try:
+        return stat_result.from_jnastat(_posix.stat(abs_path))
+    except NotImplementedError:
+        pass
+    except:
+        raise
+    f = File(abs_path)
     if not f.exists():
         raise OSError(errno.ENOENT, errno.strerror(errno.ENOENT), path)
     size = f.length()
@@ -384,6 +461,13 @@ def lstat(path):
     
     Like stat(path), but do not follow symbolic links.
     """
+    abs_path = sys.getPath(path)
+    try:
+        return stat_result.from_jnastat(_posix.lstat(abs_path))
+    except NotImplementedError:
+        pass
+    except:
+        raise
     f = File(sys.getPath(path))
     abs_parent = f.getAbsoluteFile().getParentFile()
     if not abs_parent:
@@ -415,18 +499,22 @@ def utime(path, times):
     """utime(path, (atime, mtime))
     utime(path, None)
 
-    Set the access and modified time of the file to the given values.
-    If the second form is used, set the access and modified times to the
+    Set the access and modification time of the file to the given values.
+    If the second form is used, set the access and modification times to the
     current time.
 
-    Due to java limitations only the modification time is changed.
+    Due to Java limitations, on some platforms only the modification time
+    may be changed.
     """
+    if path is None:
+        raise TypeError('path must be specified, not None')
+
     if times is not None:
-        mtime = times[1]
+        atime, mtime = times
     else:
-        mtime = time.time()
-    # Only the modification time is changed
-    File(sys.getPath(path)).setLastModified(long(mtime * 1000.0))
+        atime = mtime = time.time()
+
+    _posix.utimes(path, long(atime * 1000), long(mtime * 1000))
 
 def close(fd):
     """close(fd)
@@ -447,7 +535,6 @@ def fdopen(fd, mode='r', bufsize=-1):
     if rawio.closed():
         raise OSError(errno.EBADF, errno.strerror(errno.EBADF))
 
-    from org.python.core import PyFile
     try:
         fp = PyFile(rawio, '<fdopen>', mode, bufsize)
     except IOError:
@@ -494,11 +581,12 @@ def open(filename, flag, mode=0777):
     if not creating and not path.exists(filename):
         raise OSError(errno.ENOENT, errno.strerror(errno.ENOENT), filename)
 
-    if not writing or updating:
-        # Default to reading
-        reading = True
+    if not writing:
+        if updating:
+            writing = True
+        else:
+            reading = True
 
-    from org.python.core.io import FileIO
     if truncating and not writing:
         # Explicitly truncate, writing will truncate anyway
         FileIO(filename, 'w').close()
@@ -555,6 +643,29 @@ def _handle_oserror(func, *args, **kwargs):
         return func(*args, **kwargs)
     except:
         raise OSError(errno.EBADF, errno.strerror(errno.EBADF))
+
+if _name == 'posix' and _native_posix:
+    def link(src, dst):
+        """link(src, dst)
+    
+        Create a hard link to a file.
+        """
+        _posix.link(sys.getPath(src), sys.getPath(dst))
+
+    def symlink(src, dst):
+        """symlink(src, dst)
+
+        Create a symbolic link pointing to src named dst.
+        """
+        _posix.symlink(src, sys.getPath(dst))
+
+    def readlink(path):
+        """readlink(path) -> path
+    
+        Return a string representing the path to which the symbolic link
+        points.
+        """
+        return _posix.readlink(sys.getPath(path))
 
 # Provide lazy popen*, and system objects
 # Do these lazily, as most jython programs don't need them,
@@ -769,3 +880,105 @@ def getenv(key, default=None):
     """Get an environment variable, return None if it doesn't exist.
     The optional second argument can specify an alternate default."""
     return environ.get(key, default)
+
+def getegid():
+    """getegid() -> egid
+
+    Return the current process's effective group id."""
+    return _posix.getegid()
+
+def geteuid():
+    """geteuid() -> euid
+
+    Return the current process's effective user id."""
+    return _posix.geteuid()
+
+def getgid():
+    """getgid() -> gid
+
+    Return the current process's group id."""
+    return _posix.getgid()
+
+def getlogin():
+    """getlogin() -> string
+
+    Return the actual login name."""
+    return _posix.getlogin()
+
+def getpgrp():
+    """getpgrp() -> pgrp
+
+    Return the current process group id."""
+    return _posix.getpgrp()
+
+def getpid():
+    """getpid() -> pid
+
+    Return the current process id."""
+    return _posix.getpid()
+
+def getppid():
+    """getppid() -> ppid
+
+    Return the parent's process id."""
+    return _posix.getppid()
+
+def getuid():
+    """getuid() -> uid
+
+    Return the current process's user id."""
+    return _posix.getuid()
+
+def setpgrp():
+    """setpgrp()
+
+    Make this process a session leader."""
+    return _posix.setpgrp()
+
+def setsid():
+    """setsid()
+
+    Call the system call setsid()."""
+    return _posix.setsid()
+
+def isatty(fileno):
+    """isatty(fd) -> bool
+
+    Return True if the file descriptor 'fd' is an open file descriptor
+    connected to the slave end of a terminal."""
+    from java.io import FileDescriptor
+
+    if isinstance(fileno, int):
+        if fileno == 0:
+            fd = getattr(FileDescriptor, 'in')
+        elif fileno == 1:
+            fd = FileDescriptor.out
+        elif fileno == 2:
+            fd = FileDescriptor.err
+        else:
+            raise NotImplemented('Integer file descriptor compatibility only '
+                                 'available for stdin, stdout and stderr (0-2)')
+
+        return _posix.isatty(fd)
+
+    if isinstance(fileno, FileDescriptor):
+        return _posix.isatty(fileno)
+
+    if not isinstance(fileno, IOBase):
+        print fileno
+        raise TypeError('a file descriptor is required')
+
+    return fileno.isatty()
+
+
+import jarray
+from java.security import SecureRandom
+urandom_source = None
+
+def urandom(n):
+    global urandom_source
+    if urandom_source is None:
+        urandom_source = SecureRandom()
+    buffer = jarray.zeros(n, 'b')
+    urandom_source.nextBytes(buffer)
+    return buffer.tostring()

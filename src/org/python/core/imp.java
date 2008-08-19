@@ -22,7 +22,7 @@ public class imp {
 
     private static final String UNKNOWN_SOURCEFILE = "<unknown>";
 
-    public static final int APIVersion = 12;
+    public static final int APIVersion = 15;
 
     /** A non-empty fromlist for __import__'ing sub-modules. */
     private static final PyObject nonEmptyFromlist = new PyTuple(Py.newString("__doc__"));
@@ -44,7 +44,6 @@ public class imp {
     }
 
     private imp() {
-        ;
     }
 
     /**
@@ -113,8 +112,13 @@ public class imp {
         byte[] data = readBytes(fp);
         int n = data.length;
 
-        int api = (data[n - 4] << 24) + (data[n - 3] << 16)
-                + (data[n - 2] << 8) + data[n - 1];
+        int api;
+        try {
+            APIReader ar = new APIReader(data);
+            api = ar.getVersion();
+        } catch (IOException i) {
+            api = -1;
+        }
         if (api != APIVersion) {
             if (testing) {
                 return null;
@@ -135,8 +139,7 @@ public class imp {
     }
 
     public static String makeCompiledFilename(String filename) {
-        return filename.substring(0, filename.length() - 3)
-                + "$py.class";
+        return filename.substring(0, filename.length() - 3) + "$py.class";
     }
     
     /**
@@ -192,9 +195,9 @@ public class imp {
             if(filename == null) {
                 filename = UNKNOWN_SOURCEFILE;
             }
-            org.python.parser.ast.modType node;
+            org.python.antlr.ast.modType node;
             try {
-                node = parser.parse(fp, "exec", filename, new CompilerFlags());
+                node = ParserFacade.parse(fp, "exec", filename, new CompilerFlags());
             } finally {
                 fp.close();
             }
@@ -208,7 +211,7 @@ public class imp {
                                                null);
             return ofp.toByteArray();
         } catch(Throwable t) {
-            throw parser.fixParseError(null, t, filename);
+            throw ParserFacade.fixParseError(null, t, filename);
         }
     }
 
@@ -236,7 +239,7 @@ public class imp {
         return createFromCode(name, c, null);
     }
     
-    /*
+    /**
      * Returns a module with the given name whose contents are the results of
      * running c. Sets __file__ on the module to be moduleLocation unless
      * moduleLocation is null. If c comes from a local .py file or compiled
@@ -364,8 +367,6 @@ public class imp {
         path = path == null ? sys.path : path;
         for (int i = 0; i < path.__len__(); i++) {
             PyObject p = path.__getitem__(i);
-            // System.err.println("find_module (" + name + ", " + moduleName +
-            // ") Path: " + path);
             PyObject importer = getPathImporter(sys.path_importer_cache,
                     sys.path_hooks, p);
             if (importer != Py.None) {
@@ -422,7 +423,6 @@ public class imp {
     }
 
     static PyObject loadFromSource(PySystemState sys, String name, String modName, String entry) {
-        // System.err.println("load-from-source: "+name+" "+modName+" "+entry);
 
         String sourceName = "__init__.py";
         String compiledName = "__init__$py.class";
@@ -641,7 +641,6 @@ public class imp {
      */
     private static PyObject import_name(String name, boolean top,
             PyObject modDict, PyObject fromlist) {
-        // System.err.println("import_name " + name);
         if (name.length() == 0) {
             throw Py.ValueError("Empty module name");
         }
@@ -651,7 +650,6 @@ public class imp {
         if (modDict != null && !(modDict instanceof PyNone)) {
             pkgName = getParent(modDict);
             pkgMod = modules.__finditem__(pkgName);
-            // System.err.println("GetParent: " + pkgName + " => " + pkgMod);
             if (pkgMod != null && !(pkgMod instanceof PyModule)) {
                 pkgMod = null;
             }
@@ -735,14 +733,12 @@ public class imp {
      * executed.
      */
     public static PyObject importOne(String mod, PyFrame frame) {
-        // System.out.println("importOne(" + mod + ")");
         PyObject module = __builtin__.__import__(mod, frame.f_globals, frame
                 .getLocals(), Py.EmptyTuple);
         /*
          * int dot = mod.indexOf('.'); if (dot != -1) { mod = mod.substring(0,
          * dot).intern(); }
          */
-        // System.err.println("mod: "+mod+", "+dot);
         return module;
     }
 
@@ -751,7 +747,6 @@ public class imp {
      * foo" is executed.
      */
     public static PyObject importOneAs(String mod, PyFrame frame) {
-        // System.out.println("importOne(" + mod + ")");
         PyObject module = __builtin__.__import__(mod, frame.f_globals, frame
                 .getLocals(), getStarArg());
         // frame.setlocal(asname, module);
@@ -759,7 +754,7 @@ public class imp {
     }
 
     /**
-     * Called from jython generated code when a stamenet like "from spam.eggs
+     * Called from jython generated code when a statement like "from spam.eggs
      * import foo, bar" is executed.
      */
     public static PyObject[] importFrom(String mod, String[] names,
@@ -805,7 +800,6 @@ public class imp {
      * import *" is executed.
      */
     public static void importAll(String mod, PyFrame frame) {
-        // System.out.println("importAll(" + mod + ")");
         PyObject module = __builtin__.__import__(mod, frame.f_globals, frame
                 .getLocals(), getStarArg());
         PyObject names;

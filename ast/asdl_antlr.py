@@ -57,6 +57,7 @@ class EmitVisitor(asdl.VisitorBase):
         print >> self.file, 'package org.python.antlr.ast;'
         if refersToPythonTree:
             print >> self.file, 'import org.python.antlr.PythonTree;'
+            print >> self.file, 'import org.antlr.runtime.CommonToken;'
             print >> self.file, 'import org.antlr.runtime.Token;'
         if useDataOutput:
             print >> self.file, 'import java.io.DataOutputStream;'
@@ -158,10 +159,17 @@ class JavaVisitor(EmitVisitor):
         self.open("%sType" % name)
         self.emit("public abstract class %(name)sType extends PythonTree {" %
                     locals(), depth)
-        #self.emit("public %(name)sType(Token token) {" % locals(), depth+1)
-        #self.emit("super(token);", depth+2)
-        #self.emit("}", depth+1)
-        #self.emit("", 0)
+        self.emit("", 0)
+
+        self.emit("public %(name)sType(int ttype, Token token) {" % locals(), depth+1)
+        self.emit("super(ttype, token);", depth+2)
+        self.emit("}", depth+1)
+        self.emit("", 0)
+
+        self.emit("public %(name)sType(Token token) {" % locals(), depth+1)
+        self.emit("super(token);", depth+2)
+        self.emit("}", depth+1)
+        self.emit("", 0)
 
         self.emit("public %(name)sType(PythonTree node) {" % locals(), depth+1)
         self.emit("super(node);", depth+2)
@@ -197,16 +205,16 @@ class JavaVisitor(EmitVisitor):
 
     def visitConstructor(self, cons, name, depth):
         self.open(cons.name, useDataOutput=1)
-        enums = []
+        ifaces = []
         for f in cons.fields:
-            if f.typedef and f.typedef.simple:
-                enums.append("%sType" % f.type)
-        #if enums:
-        #    s = "implements %s " % ", ".join(enums)
-        #else:
-        #    s = ""
-        self.emit("public class %s extends %sType {" %
-                    (cons.name, name), depth)
+            if str(f.type) == "expr_context":
+                ifaces.append("Context")
+        if ifaces:
+            s = "implements %s " % ", ".join(ifaces)
+        else:
+            s = ""
+        self.emit("public class %s extends %sType %s{" %
+                    (cons.name, name, s), depth)
         for f in cons.fields:
             self.visit(f, depth + 1)
         self.emit("", depth)
@@ -220,6 +228,12 @@ class JavaVisitor(EmitVisitor):
         self.emit("", 0)
 
         self.javaMethods(cons, cons.name, cons.name, cons.fields, depth+1)
+
+        if "Context" in ifaces:
+            self.emit("public void setContext(expr_contextType c) {", depth + 1)
+            self.emit('this.ctx = c;', depth + 2)
+            self.emit("}", depth + 1)
+            self.emit("", 0)
 
         if str(name) in ('stmt', 'expr'):
             # The lineno property
@@ -255,15 +269,24 @@ class JavaVisitor(EmitVisitor):
 
     def javaMethods(self, type, clsname, ctorname, fields, depth):
         # The java ctors
+
         token = asdl.Field('Token', 'token')
         token.typedef = False
         fpargs = ", ".join([self.fieldDef(f) for f in [token] + fields])
+        self.emit("public %s(%s) {" % (ctorname, fpargs), depth)
+        self.emit("super(token);", depth+1)
+        self.javaConstructorHelper(fields, depth)
+        self.emit("}", depth)
+        self.emit("", 0)
 
-        #self.emit("public %s(%s) {" % (ctorname, fpargs), depth)
-        #self.emit("super(token);", depth+1)
-        #self.javaConstructorHelper(fields, depth)
-        #self.emit("}", depth)
-        #self.emit("", 0)
+        ttype = asdl.Field('int', 'ttype')
+        ttype.typedef = False
+        fpargs = ", ".join([self.fieldDef(f) for f in [ttype, token] + fields])
+        self.emit("public %s(%s) {" % (ctorname, fpargs), depth)
+        self.emit("super(ttype, token);", depth+1)
+        self.javaConstructorHelper(fields, depth)
+        self.emit("}", depth)
+        self.emit("", 0)
 
         tree = asdl.Field('PythonTree', 'tree')
         tree.typedef = False
@@ -280,6 +303,19 @@ class JavaVisitor(EmitVisitor):
         # The toString() method
         self.emit("public String toString() {", depth)
         self.emit('return "%s";' % clsname, depth+1)
+        self.emit("}", depth)
+        self.emit("", 0)
+
+        # The toStringTree() method
+        self.emit("public String toStringTree() {", depth)
+        self.emit('StringBuffer sb = new StringBuffer("%s(");' % clsname,
+                    depth+1)
+        for f in fields:
+            self.emit('sb.append("%s=");' % f.name, depth+1)
+            self.emit("sb.append(dumpThis(%s));" % f.name, depth+1)
+            self.emit('sb.append(",");', depth+1)
+        self.emit('sb.append(")");', depth+1)
+        self.emit("return sb.toString();", depth+1)
         self.emit("}", depth)
         self.emit("", 0)
 
@@ -333,7 +369,7 @@ class JavaVisitor(EmitVisitor):
         'int' : 'int',
         'bool' : 'boolean',
         'identifier' : 'String',
-        'string' : 'String',
+        'string' : 'Object',
         'object' : 'Object', # was PyObject
         'Token'  : 'Token', # to get antlr token type through
         'PythonTree'  : 'PythonTree', # also for antlr type

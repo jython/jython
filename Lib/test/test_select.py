@@ -13,7 +13,7 @@ import socket
 
 import os
 import sys
-import test_support
+from test import test_support
 import unittest
 
 class SelectWrapper:

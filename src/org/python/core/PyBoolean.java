@@ -76,25 +76,24 @@ public class PyBoolean extends PyInteger {
     }
 
     public Object __tojava__(Class c) {
-        if (c == Integer.TYPE || c == Number.class ||
-            c == Object.class || c == Integer.class ||
-            c == Serializable.class)
-        {
-            return new Integer(value ? 1 : 0);
+        if (c == Boolean.TYPE || c == Boolean.class ||
+            c == Object.class ) {
+            return Boolean.valueOf(value);
         }
-
-        if (c == Boolean.TYPE || c == Boolean.class)
-            return new Boolean(value);
+        if (c == Integer.TYPE || c == Number.class ||
+            c == Integer.class) {
+            return Integer.valueOf(value ? 1 : 0);
+        }
         if (c == Byte.TYPE || c == Byte.class)
-            return new Byte((byte)(value ? 1 : 0));
+            return Byte.valueOf((byte)(value ? 1 : 0));
         if (c == Short.TYPE || c == Short.class)
-            return new Short((short)(value ? 1 : 0));
+            return Short.valueOf((short)(value ? 1 : 0));
         if (c == Long.TYPE || c == Long.class)
-            return new Long(value ? 1 : 0);
+            return Long.valueOf(value ? 1 : 0);
         if (c == Float.TYPE || c == Float.class)
-            return new Float(value ? 1 : 0);
+            return Float.valueOf(value ? 1 : 0);
         if (c == Double.TYPE || c == Double.class)
-            return new Double(value ? 1 : 0);
+            return Double.valueOf(value ? 1 : 0);
         return super.__tojava__(c);
     }
 

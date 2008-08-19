@@ -1,12 +1,7 @@
 # Test iterators.
 
-'''
-Commented out features specific to the JVM platform.
- - reference counting
-'''
-
 import unittest
-from test_support import run_unittest, TESTFN, unlink, have_unicode
+from test.test_support import run_unittest, TESTFN, unlink, have_unicode
 
 # Test result of triple loop (too big to inline)
 TRIPLETS = [(0, 0, 0), (0, 0, 1), (0, 0, 2),
@@ -274,7 +269,7 @@ class TestCase(unittest.TestCase):
         try:
             self.assertEqual(list(f), ["0\n", "1\n", "2\n", "3\n", "4\n"])
             f.seek(0, 0)
-            self.assertEqual(list(f.xreadlines()),
+            self.assertEqual(list(f),
                              ["0\n", "1\n", "2\n", "3\n", "4\n"])
         finally:
             f.close()
@@ -307,7 +302,7 @@ class TestCase(unittest.TestCase):
         try:
             self.assertEqual(tuple(f), ("0\n", "1\n", "2\n", "3\n", "4\n"))
             f.seek(0, 0)
-            self.assertEqual(tuple(f.xreadlines()),
+            self.assertEqual(tuple(f),
                              ("0\n", "1\n", "2\n", "3\n", "4\n"))
         finally:
             f.close()
@@ -334,8 +329,8 @@ class TestCase(unittest.TestCase):
                 self.truth = truth
             def __nonzero__(self):
                 return self.truth
-        True = Boolean(1)
-        False = Boolean(0)
+        bTrue = Boolean(1)
+        bFalse = Boolean(0)
 
         class Seq:
             def __init__(self, *args):
@@ -356,9 +351,9 @@ class TestCase(unittest.TestCase):
                             raise StopIteration
                 return SeqIter(self.vals)
 
-        seq = Seq(*([True, False] * 25))
-        self.assertEqual(filter(lambda x: not x, seq), [False]*25)
-        self.assertEqual(filter(lambda x: not x, iter(seq)), [False]*25)
+        seq = Seq(*([bTrue, bFalse] * 25))
+        self.assertEqual(filter(lambda x: not x, seq), [bFalse]*25)
+        self.assertEqual(filter(lambda x: not x, iter(seq)), [bFalse]*25)
 
     # Test max() and min()'s use of iterators.
     def test_builtin_max_min(self):
@@ -428,8 +423,10 @@ class TestCase(unittest.TestCase):
 
     # Test zip()'s use of iterators.
     def test_builtin_zip(self):
-        # no longer true as of 2.4
-        # self.assertRaises(TypeError, zip)
+        self.assertEqual(zip(), [])
+        self.assertEqual(zip(*[]), [])
+        self.assertEqual(zip(*[(1, 2), 'ab']), [(1, 'a'), (2, 'b')])
+
         self.assertRaises(TypeError, zip, None)
         self.assertRaises(TypeError, zip, range(10), 42)
         self.assertRaises(TypeError, zip, range(10), zip)
@@ -472,6 +469,34 @@ class TestCase(unittest.TestCase):
                 unlink(TESTFN)
             except OSError:
                 pass
+
+        self.assertEqual(zip(xrange(5)), [(i,) for i in range(5)])
+
+        # Classes that lie about their lengths.
+        class NoGuessLen5:
+            def __getitem__(self, i):
+                if i >= 5:
+                    raise IndexError
+                return i
+
+        class Guess3Len5(NoGuessLen5):
+            def __len__(self):
+                return 3
+
+        class Guess30Len5(NoGuessLen5):
+            def __len__(self):
+                return 30
+
+        self.assertEqual(len(Guess3Len5()), 3)
+        self.assertEqual(len(Guess30Len5()), 30)
+        self.assertEqual(zip(NoGuessLen5()), zip(range(5)))
+        self.assertEqual(zip(Guess3Len5()), zip(range(5)))
+        self.assertEqual(zip(Guess30Len5()), zip(range(5)))
+
+        expected = [(i, i) for i in range(5)]
+        for x in NoGuessLen5(), Guess3Len5(), Guess30Len5():
+            for y in NoGuessLen5(), Guess3Len5(), Guess30Len5():
+                self.assertEqual(zip(x, y), expected)
 
     # Test reduces()'s use of iterators.
     def test_builtin_reduce(self):
@@ -755,27 +780,110 @@ class TestCase(unittest.TestCase):
 
         # Test reference count behavior
 
-        class C(object):
+        # XXX: Jython new style objects don't support __del__ yet
+        from test_weakref import extra_collect
+        #class C(object):
+        class C:
             count = 0
-            def __new__(cls):
+            #def __new__(cls):
+            def __init__(self):
+                cls = C
                 cls.count += 1
-                return object.__new__(cls)
+                #return object.__new__(cls)
             def __del__(self):
                 cls = self.__class__
                 assert cls.count > 0
                 cls.count -= 1
-        #x = C()
-        #self.assertEqual(C.count, 1)
-        #del x
-        #self.assertEqual(C.count, 0)
-        #l = [C(), C(), C()]
-        #self.assertEqual(C.count, 3)
-        #try:
-        #    a, b = iter(l)
-        #except ValueError:
-        #    pass
-        #del l
-        #self.assertEqual(C.count, 0)
+        x = C()
+        self.assertEqual(C.count, 1)
+        del x
+        extra_collect()
+        self.assertEqual(C.count, 0)
+        l = [C(), C(), C()]
+        self.assertEqual(C.count, 3)
+        try:
+            a, b = iter(l)
+        except ValueError:
+            pass
+        del l
+        extra_collect()
+        self.assertEqual(C.count, 0)
+
+
+    # Make sure StopIteration is a "sink state".
+    # This tests various things that weren't sink states in Python 2.2.1,
+    # plus various things that always were fine.
+
+    def test_sinkstate_list(self):
+        # This used to fail
+        a = range(5)
+        b = iter(a)
+        self.assertEqual(list(b), range(5))
+        a.extend(range(5, 10))
+        self.assertEqual(list(b), [])
+
+    def test_sinkstate_tuple(self):
+        a = (0, 1, 2, 3, 4)
+        b = iter(a)
+        self.assertEqual(list(b), range(5))
+        self.assertEqual(list(b), [])
+
+    def test_sinkstate_string(self):
+        a = "abcde"
+        b = iter(a)
+        self.assertEqual(list(b), ['a', 'b', 'c', 'd', 'e'])
+        self.assertEqual(list(b), [])
+
+    def test_sinkstate_sequence(self):
+        # This used to fail
+        a = SequenceClass(5)
+        b = iter(a)
+        self.assertEqual(list(b), range(5))
+        a.n = 10
+        self.assertEqual(list(b), [])
+
+    def test_sinkstate_callable(self):
+        # This used to fail
+        def spam(state=[0]):
+            i = state[0]
+            state[0] = i+1
+            if i == 10:
+                raise AssertionError, "shouldn't have gotten this far"
+            return i
+        b = iter(spam, 5)
+        self.assertEqual(list(b), range(5))
+        self.assertEqual(list(b), [])
+
+    def test_sinkstate_dict(self):
+        # XXX For a more thorough test, see towards the end of:
+        # http://mail.python.org/pipermail/python-dev/2002-July/026512.html
+        a = {1:1, 2:2, 0:0, 4:4, 3:3}
+        for b in iter(a), a.iterkeys(), a.iteritems(), a.itervalues():
+            b = iter(a)
+            self.assertEqual(len(list(b)), 5)
+            self.assertEqual(list(b), [])
+
+    def test_sinkstate_yield(self):
+        def gen():
+            for i in range(5):
+                yield i
+        b = gen()
+        self.assertEqual(list(b), range(5))
+        self.assertEqual(list(b), [])
+
+    def test_sinkstate_range(self):
+        a = xrange(5)
+        b = iter(a)
+        self.assertEqual(list(b), range(5))
+        self.assertEqual(list(b), [])
+
+    def test_sinkstate_enumerate(self):
+        a = range(5)
+        e = enumerate(a)
+        b = iter(e)
+        self.assertEqual(list(b), zip(range(5), range(5)))
+        self.assertEqual(list(b), [])
+
 
 def test_main():
     run_unittest(TestCase)

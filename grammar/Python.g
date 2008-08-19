@@ -56,16 +56,13 @@
  *  REQUIRES ANTLR v3
  *
  *
- *  Baby step towards an antlr based Jython parser.
- *  Terence's Lexer is intact pretty much unchanged, the parser has
- *  been altered to produce an AST - the AST work started from tne newcompiler
- *  grammar from Jim Baker minus post-2.3 features.  The current parsing
- *  and compiling strategy looks like this:
+ *  Updated the original parser for Python 2.5 features. The parser has been
+ *  altered to produce an AST - the AST work started from tne newcompiler
+ *  grammar from Jim Baker.  The current parsing and compiling strategy looks
+ *  like this:
  *
  *  Python source->Python.g->simple antlr AST->PythonWalker.g->
  *  decorated AST (org/python/parser/ast/*)->CodeCompiler(ASM)->.class
- *
- *  for a very limited set of functionality.
  */
 
 grammar Python;
@@ -77,20 +74,16 @@ options {
 tokens {
     INDENT;
     DEDENT;
-    
+
     Module;
     Interactive;
     Expression;
+    NameTok;
     Test;
     Msg;
-    Import;
-    ImportFrom;
     Level;
-    Name;
     Body;
-    ClassDef;
     Bases; 
-    FunctionDef;
     Arguments;
     Args;
     Arg;
@@ -99,78 +92,47 @@ tokens {
     KWArgs;
     Assign;
     AugAssign;
-    Compare;
-    Expr;
     Tuple;
     List;
     Dict;
-    If;
     IfExp;
-    OrElse;
-    Elif;
-    While; 
-    Pass;
-    Break;
-    Continue;
-    Print;
     TryExcept;
     TryFinally;
     ExceptHandler;
-    For;
-    Return;
-    Yield;
-    Str;
-    Num;
+    StrTok;
+    NumTok;
     IsNot;
-    In;
     NotIn;
-    Raise;
     Type;
     Inst;
     Tback;
-    Global;
-    Exec;
     Globals;
     Locals;
-    Assert;
     Ellipsis;
-    Comprehension;
     ListComp;
-    Lambda;
     Repr;
-    BinOp;
     Subscript;
     SubscriptList;
     Index;
     Target;
-    Targets;
     Value;
     Lower;
     Upper;
     Step;
-    UnaryOp;
     UAdd;
     USub;
     Invert;
-    Delete;
-    Default;
     Alias;
     Asname;
-    Decorator;
     Decorators;
-    With;
     GeneratorExp;
-    Id;
-    Iter;
     Ifs;
     Elts;
-    Ctx;
-    Attr;
     Call;
     Dest;
     Values;
     Newline;
-    //The tokens below are not represented in the 2.5 Python.asdl
+
     FpList;
     StepOp;
     UpperOp;
@@ -179,20 +141,55 @@ tokens {
     GenIf;
     ListFor;
     ListIf;
-    FinalBody;
     Parens;
     Brackets;
 }
 
-@header { 
+@header {
 package org.python.antlr;
+
+import org.antlr.runtime.CommonToken;
 
 import org.python.antlr.ParseException;
 import org.python.antlr.PythonTree;
+import org.python.antlr.ast.argumentsType;
+import org.python.antlr.ast.Attribute;
+import org.python.antlr.ast.Break;
+import org.python.antlr.ast.Context;
+import org.python.antlr.ast.Continue;
+import org.python.antlr.ast.Expr;
+import org.python.antlr.ast.exprType;
+import org.python.antlr.ast.expr_contextType;
+import org.python.antlr.ast.FunctionDef;
+import org.python.antlr.ast.modType;
+import org.python.antlr.ast.Module;
+import org.python.antlr.ast.Name;
+import org.python.antlr.ast.Num;
+import org.python.antlr.ast.Pass;
+import org.python.antlr.ast.Print;
+import org.python.antlr.ast.Return;
+import org.python.antlr.ast.stmtType;
+import org.python.antlr.ast.Str;
+import org.python.core.Py;
+import org.python.core.PyString;
+import org.python.core.PyUnicode;
+
+import java.math.BigInteger;
 } 
 
 @members {
     boolean debugOn = false;
+
+    private ErrorHandler errorHandler;
+
+    private boolean seenSingleOuterSuite = false;
+
+    private GrammarActions actions = new GrammarActions();
+
+    public void setErrorHandler(ErrorHandler eh) {
+        this.errorHandler = eh;
+        actions.setErrorHandler(eh);
+    }
 
     private void debug(String message) {
         if (debugOn) {
@@ -201,55 +198,36 @@ import org.python.antlr.PythonTree;
     }
 
     protected void mismatch(IntStream input, int ttype, BitSet follow) throws RecognitionException {
-        throw new MismatchedTokenException(ttype, input);
+        if (errorHandler.isRecoverable()) {
+            super.mismatch(input, ttype, follow);
+        } else {
+            throw new MismatchedTokenException(ttype, input);
+        }
     }
 
-    protected void mismatch(IntStream input, RecognitionException e, BitSet follow) throws RecognitionException {
-        throw e;
-    }
-
-    /**
-     * A list holding the error message(s) encountered during parse.
-     */
-    private List<String> _errors = new ArrayList<String>();
-
-    /**
-     * @return <code>true</code> if the parser collected one or more error messages,
-     *         <code>false</code> otherwise.
-     */
-    public boolean hasErrors() {
-      return getErrors().size() > 0;
-    }
-
-    /**
-     * @return A list of the error message(s) collected during parse.
-     */
-    public List<String> getErrors() {
-        return _errors;
-    }
-
-    /**
-     * Overridden to be able to collect error messages.
-     * <p>
-     * Since we do not want to lose the recovery mechanism and the verbose messages.
-     */
-    @Override
-    public void emitErrorMessage(String msg) {
-       super.emitErrorMessage(msg);
-       getErrors().add(msg);
+    protected Object recoverFromMismatchedToken(IntStream input, int ttype, BitSet follow)
+        throws RecognitionException
+    {
+        if (errorHandler.isRecoverable()) {
+            return super.recoverFromMismatchedToken(input, ttype, follow);
+        }
+        mismatch(input, ttype, follow);
+        return null;
     }
 
 }
 
 @rulecatch {
-catch (RecognitionException e) {
-    throw e;
+catch (RecognitionException re) {
+    errorHandler.reportError(this, re);
+    errorHandler.recover(this, input,re);
+    retval.tree = (PythonTree)adaptor.errorNode(input, retval.start, input.LT(-1), re);
 }
 }
 
 @lexer::header { 
 package org.python.antlr;
-} 
+}
 
 @lexer::members {
 /** Handles context-sensitive lexing of implicit line joining such as
@@ -257,73 +235,133 @@ package org.python.antlr;
  *  a = [3,
  *       4]
  */
+
+//For use in partial parsing.
+public boolean eofWhileNested = false;
+public boolean partial = false;
+
 int implicitLineJoiningLevel = 0;
 int startPos=-1;
 
+//If you want to use another error recovery mechanisms change this
+//and the same one in the parser.
+private ErrorHandler errorHandler;
+
+    public void setErrorHandler(ErrorHandler eh) {
+        this.errorHandler = eh;
+    }
+
+    /** 
+     *  Taken directly from antlr's Lexer.java -- needs to be re-integrated every time
+     *  we upgrade from Antlr (need to consider a Lexer subclass, though the issue would
+     *  remain).
+     */
     public Token nextToken() {
-		while (true) {
-			state.token = null;
-			state.channel = Token.DEFAULT_CHANNEL;
-			state.tokenStartCharIndex = input.index();
-			state.tokenStartCharPositionInLine = input.getCharPositionInLine();
-			state.tokenStartLine = input.getLine();
-			state.text = null;
-			if ( input.LA(1)==CharStream.EOF ) {
-				return Token.EOF_TOKEN;
-			}
-			try {
-				mTokens();
-				if ( state.token==null ) {
-					emit();
-				}
-				else if ( state.token==Token.SKIP_TOKEN ) {
-					continue;
-				}
-				return state.token;
-			}
-            catch (RecognitionException re) {
-                throw new ParseException(getErrorMessage(re, this.getTokenNames()));
+        while (true) {
+            state.token = null;
+            state.channel = Token.DEFAULT_CHANNEL;
+            state.tokenStartCharIndex = input.index();
+            state.tokenStartCharPositionInLine = input.getCharPositionInLine();
+            state.tokenStartLine = input.getLine();
+            state.text = null;
+            if ( input.LA(1)==CharStream.EOF ) {
+                if (implicitLineJoiningLevel > 0) {
+                    eofWhileNested = true;
+                }
+                return Token.EOF_TOKEN;
+            }
+            try {
+                mTokens();
+                if ( state.token==null ) {
+                    emit();
+                }
+                else if ( state.token==Token.SKIP_TOKEN ) {
+                    continue;
+                }
+                return state.token;
+            } catch (NoViableAltException nva) {
+                errorHandler.reportError(this, nva);
+                errorHandler.recover(this, nva); // throw out current char and try again
+            } catch (RecognitionException re) {
+                errorHandler.reportError(this, re);
+                // match() routine has already called recover()
             }
         }
     }
 }
 
 //single_input: NEWLINE | simple_stmt | compound_stmt NEWLINE
-//XXX: I don't know why, but in "compound_stmt NEWLINE"
-//     Jython chokes on the NEWLINE every time -- so I made
-//     it optional for now.
-single_input : NEWLINE
-             | simple_stmt -> ^(Interactive simple_stmt)
-             | compound_stmt NEWLINE? -> ^(Interactive compound_stmt)
+single_input : NEWLINE* EOF -> ^(Interactive)
+             | simple_stmt NEWLINE* EOF -> ^(Interactive simple_stmt)
+             | compound_stmt NEWLINE+ EOF -> ^(Interactive compound_stmt)
              ;
 
 //file_input: (NEWLINE | stmt)* ENDMARKER
-file_input : (NEWLINE | stmt)* {debug("parsed file_input");}
+file_input : (NEWLINE | stmt)* EOF
           -> ^(Module stmt*)
            ;
 
 //eval_input: testlist NEWLINE* ENDMARKER
-eval_input : (NEWLINE)* testlist (NEWLINE)* -> ^(Expression testlist)
+eval_input : LEADING_WS? (NEWLINE)* testlist[expr_contextType.Load] (NEWLINE)* EOF -> ^(Expression testlist)
            ;
+
+//not in CPython's Grammar file
+dotted_attr
+    : NAME (DOT^ attr)*
+    ;
+
+//attr is here for Java  compatibility.  A Java foo.getIf() can be called from Jython as foo.if
+//     so we need to support any keyword as an attribute.
+
+attr
+    : NAME
+    | AND
+    | AS
+    | ASSERT
+    | BREAK
+    | CLASS
+    | CONTINUE
+    | DEF
+    | DELETE
+    | ELIF
+    | EXCEPT
+    | EXEC
+    | FINALLY
+    | FROM
+    | FOR
+    | GLOBAL
+    | IF
+    | IMPORT
+    | IN
+    | IS
+    | LAMBDA
+    | NOT
+    | OR
+    | ORELSE
+    | PASS
+    | PRINT
+    | RAISE
+    | RETURN
+    | TRY
+    | WHILE
+    | WITH
+    | YIELD
+    ;
+
+//decorator: '@' dotted_name [ '(' [arglist] ')' ] NEWLINE
+decorator: AT dotted_attr 
+           ( (LPAREN arglist? RPAREN) -> ^(AT dotted_attr ^(Call ^(Args arglist)?))
+           | -> ^(AT dotted_attr)
+           ) NEWLINE
+         ;
 
 //decorators: decorator+
 decorators: decorator+
           ;
 
-//decorator: '@' dotted_name [ '(' [arglist] ')' ] NEWLINE
-decorator: AT dotted_attr 
-           ( (LPAREN arglist? RPAREN) -> ^(Decorator dotted_attr ^(Call ^(Args arglist)?))
-           | -> ^(Decorator dotted_attr)
-           ) NEWLINE
-         ;
-
-dotted_attr
-    : NAME (DOT^ NAME)*
-    ;
-
 //funcdef: [decorators] 'def' NAME parameters ':' suite
-funcdef : decorators? 'def' NAME parameters COLON suite
-       -> ^(FunctionDef 'def' ^(Name NAME) parameters ^(Body suite) ^(Decorators decorators?))
+funcdef : decorators? DEF NAME parameters COLON suite
+       -> ^(DEF NAME parameters ^(Body suite) ^(Decorators decorators?))
         ;
 
 //parameters: '(' [varargslist] ')'
@@ -334,7 +372,13 @@ parameters : LPAREN
              RPAREN
            ;
 
-//varargslist: (fpdef ['=' test] ',')* ('*' NAME [',' '**' NAME] | '**' NAME) | fpdef ['=' test] (',' fpdef ['=' test])* [',']
+//not in CPython's Grammar file
+defparameter : fpdef (ASSIGN test[expr_contextType.Load])? {debug("parsed defparameter");}
+             ;
+
+//varargslist: ((fpdef ['=' test] ',')*
+//              ('*' NAME [',' '**' NAME] | '**' NAME) |
+//              fpdef ['=' test] (',' fpdef ['=' test])* [','])
 varargslist : defparameter (options {greedy=true;}:COMMA defparameter)*
               (COMMA
                   ( STAR starargs=NAME (COMMA DOUBLESTAR kwargs=NAME)?
@@ -348,14 +392,12 @@ varargslist : defparameter (options {greedy=true;}:COMMA defparameter)*
            -> ^(KWArgs $kwargs)
             ;
 
-//not in CPython's Grammar file
-defparameter : fpdef (ASSIGN test)? {debug("parsed defparameter");}
-             ;
-
 //fpdef: NAME | '(' fplist ')'
 fpdef : NAME {debug("parsed fpdef NAME");}
-      | LPAREN fplist RPAREN {debug("parsed fpdef:fplist");}
+      | (LPAREN fpdef COMMA) => LPAREN fplist RPAREN
      -> ^(FpList fplist)
+      | LPAREN fplist RPAREN
+     -> fplist
       ;
 
 //fplist: fpdef (',' fpdef)* [',']
@@ -373,8 +415,8 @@ stmt : simple_stmt
 simple_stmt : small_stmt (options {greedy=true;}:SEMI small_stmt)* (SEMI)? NEWLINE
            -> small_stmt+
             ;
-
-//small_stmt: expr_stmt | print_stmt  | del_stmt | pass_stmt | flow_stmt | import_stmt | global_stmt | exec_stmt | assert_stmt
+//small_stmt: (expr_stmt | print_stmt  | del_stmt | pass_stmt | flow_stmt |
+//             import_stmt | global_stmt | exec_stmt | assert_stmt)
 small_stmt : expr_stmt
            | print_stmt
            | del_stmt
@@ -386,10 +428,11 @@ small_stmt : expr_stmt
            | assert_stmt
            ;
 
-//expr_stmt: testlist (augassign testlist | ('=' testlist)*)
-expr_stmt : lhs=testlist
+//expr_stmt: testlist (augassign (yield_expr|testlist) |
+//                     ('=' (yield_expr|testlist))*)
+expr_stmt : lhs=testlist[expr_contextType.Store]
             ( (augassign yield_expr -> ^(augassign $lhs yield_expr))
-            | (augassign rhs=testlist -> ^(augassign $lhs $rhs))
+            | (augassign rhs=testlist[expr_contextType.Load] -> ^(augassign $lhs $rhs))
             | ((assigns) {debug("matched assigns");} -> ^(Assign ^(Target $lhs) assigns))
             | -> $lhs
             )
@@ -400,20 +443,27 @@ assigns
     @after {
         PythonTree pt = ((PythonTree)$assigns.tree);
         int children = pt.getChildCount();
+        PythonTree child;
         if (children == 1) {
+            child = pt;
             pt.token = new CommonToken(Value, "Value");
         } else {
-            PythonTree c = (PythonTree)pt.getChild(children - 1);
-            c.token = new CommonToken(Value, "Value");
+            child = (PythonTree)pt.getChild(children - 1);
+            child.token = new CommonToken(Value, "Value");
         }
-    }
+        child.token = new CommonToken(Value, "Value");
+        PythonTree targ = (PythonTree)child.getChild(0);
+        if (targ instanceof Context) {
+            ((Context)targ).setContext(expr_contextType.Load);
+        }
+}
     : assign_testlist+
     | assign_yield+
     ;
 
 //not in CPython's Grammar file
 assign_testlist
-       : ASSIGN testlist -> ^(Target testlist)
+       : ASSIGN testlist[expr_contextType.Store] -> ^(Target testlist)
        ;
 
 //not in CPython's Grammar file
@@ -421,7 +471,8 @@ assign_yield
     : ASSIGN yield_expr -> ^(Value yield_expr)
     ;
 
-//augassign: '+=' | '-=' | '*=' | '/=' | '%=' | '&=' | '|=' | '^=' | '<<=' | '>>=' | '**=' | '//='
+//augassign: ('+=' | '-=' | '*=' | '/=' | '%=' | '&=' | '|=' | '^=' |
+//            '<<=' | '>>=' | '**=' | '//=')
 augassign : PLUSEQUAL
           | MINUSEQUAL
           | STAREQUAL
@@ -436,19 +487,20 @@ augassign : PLUSEQUAL
           | DOUBLESLASHEQUAL
           ;
 
-//print_stmt: 'print' ( [ test (',' test)* [','] ] | '>>' test [ (',' test)+ [','] ] )
-print_stmt : 'print'
-             ( t1=printlist -> {$t1.newline}? ^(Print 'print' ^(Values $t1) ^(Newline))
-                            -> ^(Print 'print' ^(Values $t1))
-             | RIGHTSHIFT t2=printlist2 -> {$t2.newline}? ^(Print 'print' ^(Dest RIGHTSHIFT) ^(Values $t2) ^(Newline))
-                                       -> ^(Print 'print' ^(Dest RIGHTSHIFT) ^(Values $t2))
-             | -> ^(Print 'print' ^(Newline))
+//print_stmt: 'print' ( [ test (',' test)* [','] ] |
+//                      '>>' test [ (',' test)+ [','] ] )
+print_stmt : PRINT
+             ( t1=printlist -> {$t1.newline}? ^(PRINT ^(Values $t1) ^(Newline))
+                            -> ^(PRINT ^(Values $t1))
+             | RIGHTSHIFT t2=printlist2 -> {$t2.newline}? ^(PRINT ^(Dest RIGHTSHIFT) ^(Values $t2) ^(Newline))
+                                       -> ^(PRINT ^(Dest RIGHTSHIFT) ^(Values $t2))
+             | -> ^(PRINT ^(Newline))
              )
            ;
 
 //not in CPython's Grammar file
 printlist returns [boolean newline]
-    : (test COMMA) => test (options {k=2;}: COMMA test)* (trailcomma=COMMA)?
+    : (test[expr_contextType.Load] COMMA) => test[expr_contextType.Load] (options {k=2;}: COMMA test[expr_contextType.Load])* (trailcomma=COMMA)?
     { if ($trailcomma == null) {
           $newline = true;
       } else {
@@ -456,13 +508,13 @@ printlist returns [boolean newline]
       }
     }
    -> ^(Elts test+)
-    | test {$newline = true;}
+    | test[expr_contextType.Load] {$newline = true;}
    -> ^(Elts test)
     ;
 
 //not in CPython's Grammar file
 printlist2 returns [boolean newline]
-    : (test COMMA test) => test (options {k=2;}: COMMA test)* (trailcomma=COMMA)?
+    : (test[expr_contextType.Load] COMMA test[expr_contextType.Load]) => test[expr_contextType.Load] (options {k=2;}: COMMA test[expr_contextType.Load])* (trailcomma=COMMA)?
     { if ($trailcomma == null) {
           $newline = true;
       } else {
@@ -470,19 +522,19 @@ printlist2 returns [boolean newline]
       }
     }
    -> ^(Elts test+)
-    | test {$newline = true;}
+    | test[expr_contextType.Load] {$newline = true;}
    -> ^(Elts test)
     ;
 
 
 //del_stmt: 'del' exprlist
-del_stmt : 'del' exprlist2
-        -> ^(Delete 'del' exprlist2)
+del_stmt : DELETE exprlist2
+        -> ^(DELETE exprlist2)
          ;
 
 //pass_stmt: 'pass'
-pass_stmt : 'pass'
-         -> ^(Pass 'pass')
+pass_stmt : PASS 
+         -> ^(PASS)
           ;
 
 //flow_stmt: break_stmt | continue_stmt | return_stmt | raise_stmt | yield_stmt
@@ -494,18 +546,18 @@ flow_stmt : break_stmt
           ;
 
 //break_stmt: 'break'
-break_stmt : 'break'
-          -> ^(Break 'break')
+break_stmt : BREAK
+          -> ^(BREAK<Break>[$BREAK])
            ;
 
 //continue_stmt: 'continue'
-continue_stmt : 'continue'
-             -> ^(Continue 'continue')
+continue_stmt : CONTINUE
+             -> ^(CONTINUE<Continue>[$CONTINUE])
               ;
 
 //return_stmt: 'return' [testlist]
-return_stmt : 'return' (testlist)?
-          -> ^(Return 'return' ^(Value testlist)?)
+return_stmt : RETURN (testlist[expr_contextType.Load])?
+          -> ^(RETURN ^(Value testlist)?)
             ;
 
 //yield_stmt: yield_expr
@@ -513,8 +565,8 @@ yield_stmt : yield_expr
            ;
 
 //raise_stmt: 'raise' [test [',' test [',' test]]]
-raise_stmt: 'raise' (t1=test (COMMA t2=test (COMMA t3=test)?)?)?
-          -> ^(Raise 'raise' ^(Type $t1)? ^(Inst $t2)? ^(Tback $t3)?)
+raise_stmt: RAISE (t1=test[expr_contextType.Load] (COMMA t2=test[expr_contextType.Load] (COMMA t3=test[expr_contextType.Load])?)?)?
+          -> ^(RAISE ^(Type $t1)? ^(Inst $t2)? ^(Tback $t3)?)
           ;
 
 //import_stmt: import_name | import_from
@@ -523,37 +575,34 @@ import_stmt : import_name
             ;
 
 //import_name: 'import' dotted_as_names
-import_name : 'import' dotted_as_names
-           -> ^(Import 'import' dotted_as_names)
+import_name : IMPORT dotted_as_names
+           -> ^(IMPORT dotted_as_names)
             ;
 
 //import_from: ('from' ('.'* dotted_name | '.'+)
 //              'import' ('*' | '(' import_as_names ')' | import_as_names))
-import_from: 'from' (DOT* dotted_name | DOT+) 'import'
+import_from: FROM (DOT* dotted_name | DOT+) IMPORT 
               (STAR
-             -> ^(ImportFrom 'from' ^(Level DOT*)? ^(Name dotted_name)? ^(Import STAR))
+             -> ^(FROM ^(Level DOT*)? ^(Value dotted_name)? ^(IMPORT STAR))
               | import_as_names
-             -> ^(ImportFrom 'from' ^(Level DOT*)? ^(Name dotted_name)? ^(Import import_as_names))
-              | LPAREN import_as_names RPAREN
-             -> ^(ImportFrom 'from' ^(Level DOT*)? ^(Name dotted_name)? ^(Import import_as_names))
+             -> ^(FROM ^(Level DOT*)? ^(Value dotted_name)? ^(IMPORT import_as_names))
+              | LPAREN import_as_names COMMA? RPAREN
+             -> ^(FROM ^(Level DOT*)? ^(Value dotted_name)? ^(IMPORT import_as_names))
               )
            ;
 
 //import_as_names: import_as_name (',' import_as_name)* [',']
-import_as_names : import_as_name (COMMA! import_as_name)* (COMMA!)?
+import_as_names : import_as_name (COMMA! import_as_name)*
                 ;
 
 //import_as_name: NAME [('as' | NAME) NAME]
-import_as_name : name=NAME (keyAS asname=NAME)?
+import_as_name : name=NAME (AS asname=NAME)?
               -> ^(Alias $name ^(Asname $asname)?)
                ;
 
-//XXX: when does Grammar match "dotted_name NAME NAME"? This may be a big
-//       problem because of the keyAS rule, which matches NAME (needed to allow
-//       'as' to be a method name for Java integration).
-
+//XXX: when does CPython Grammar match "dotted_name NAME NAME"?
 //dotted_as_name: dotted_name [('as' | NAME) NAME]
-dotted_as_name : dotted_name (keyAS asname=NAME)?
+dotted_as_name : dotted_name (AS asname=NAME)?
               -> ^(Alias dotted_name ^(Asname NAME)?)
                ;
 
@@ -561,22 +610,22 @@ dotted_as_name : dotted_name (keyAS asname=NAME)?
 dotted_as_names : dotted_as_name (COMMA! dotted_as_name)*
                 ;
 //dotted_name: NAME ('.' NAME)*
-dotted_name : NAME (DOT NAME)*
+dotted_name : NAME (DOT attr)*
             ;
 
 //global_stmt: 'global' NAME (',' NAME)*
-global_stmt : 'global' NAME (COMMA NAME)*
-           -> ^(Global 'global' NAME+)
+global_stmt : GLOBAL NAME (COMMA NAME)*
+           -> ^(GLOBAL NAME+)
             ;
 
 //exec_stmt: 'exec' expr ['in' test [',' test]]
-exec_stmt : keyEXEC expr ('in' t1=test (COMMA t2=test)?)?
-         -> ^(Exec keyEXEC expr ^(Globals $t1)? ^(Locals $t2)?)
+exec_stmt : EXEC expr[expr_contextType.Load] (IN t1=test[expr_contextType.Load] (COMMA t2=test[expr_contextType.Load])?)?
+         -> ^(EXEC expr ^(Globals $t1)? ^(Locals $t2)?)
           ;
 
 //assert_stmt: 'assert' test [',' test]
-assert_stmt : 'assert' t1=test (COMMA t2=test)?
-           -> ^(Assert 'assert' ^(Test $t1) ^(Msg $t2)?)
+assert_stmt : ASSERT t1=test[expr_contextType.Load] (COMMA t2=test[expr_contextType.Load])?
+           -> ^(ASSERT ^(Test $t1) ^(Msg $t2)?)
             ;
 
 //compound_stmt: if_stmt | while_stmt | for_stmt | try_stmt | funcdef | classdef
@@ -590,84 +639,86 @@ compound_stmt : if_stmt
               ;
 
 //if_stmt: 'if' test ':' suite ('elif' test ':' suite)* ['else' ':' suite]
-if_stmt: 'if' test COLON ifsuite=suite elif_clause*  ('else' COLON elsesuite=suite)?
-      -> ^(If 'if' test $ifsuite elif_clause* ^(OrElse $elsesuite)?)
+if_stmt: IF test[expr_contextType.Load] COLON ifsuite=suite elif_clause*  (ORELSE COLON elsesuite=suite)?
+      -> ^(IF test $ifsuite elif_clause* ^(ORELSE $elsesuite)?)
        ;
 
 //not in CPython's Grammar file
-elif_clause : 'elif' test COLON suite
-           -> ^(Elif test suite)
+elif_clause : ELIF test[expr_contextType.Load] COLON suite
+           -> ^(ELIF test suite)
             ;
 
 //while_stmt: 'while' test ':' suite ['else' ':' suite]
-while_stmt : 'while' test COLON s1=suite ('else' COLON s2=suite)?
-          -> ^(While 'while' test ^(Body $s1) ^(OrElse $s2)?)
+while_stmt : WHILE test[expr_contextType.Load] COLON s1=suite (ORELSE COLON s2=suite)?
+          -> ^(WHILE test ^(Body $s1) ^(ORELSE $s2)?)
            ;
 
 //for_stmt: 'for' exprlist 'in' testlist ':' suite ['else' ':' suite]
-for_stmt : 'for' exprlist 'in' testlist COLON s1=suite ('else' COLON s2=suite)?
-        -> ^(For 'for' ^(Target exprlist) ^(Iter testlist) ^(Body $s1) ^(OrElse $s2)?)
+for_stmt : FOR exprlist[expr_contextType.Store] IN testlist[expr_contextType.Load] COLON s1=suite (ORELSE COLON s2=suite)?
+        -> ^(FOR ^(Target exprlist) ^(IN testlist) ^(Body $s1) ^(ORELSE $s2)?)
          ;
 
 //try_stmt: ('try' ':' suite
 //           ((except_clause ':' suite)+
-//	    ['else' ':' suite]
-//	    ['finally' ':' suite] |
-//	   'finally' ':' suite))
-try_stmt : 'try' COLON trysuite=suite
-           ( (except_clause+ ('else' COLON elsesuite=suite)? ('finally' COLON finalsuite=suite)?
-          -> ^(TryExcept 'try' ^(Body $trysuite) except_clause+ ^(OrElse $elsesuite)? ^(FinalBody 'finally' $finalsuite)?))
-           | ('finally' COLON finalsuite=suite
-          -> ^(TryFinally 'try' ^(Body $trysuite) ^(FinalBody $finalsuite)))
+//           ['else' ':' suite]
+//           ['finally' ':' suite] |
+//           'finally' ':' suite))
+try_stmt : TRY COLON trysuite=suite
+           ( (except_clause+ (ORELSE COLON elsesuite=suite)? (FINALLY COLON finalsuite=suite)?
+          -> ^(TryExcept[$TRY] ^(Body $trysuite) except_clause+ ^(ORELSE $elsesuite)? ^(FINALLY $finalsuite)?))
+           | (FINALLY COLON finalsuite=suite
+          -> ^(TryFinally[$TRY] ^(Body $trysuite) ^(FINALLY $finalsuite)))
            )
          ;
 
 //with_stmt: 'with' test [ with_var ] ':' suite
-with_stmt: 'with' test (with_var)? COLON suite
-        -> ^(With test with_var? ^(Body suite))
+with_stmt: WITH test[expr_contextType.Load] (with_var)? COLON suite
+        -> ^(WITH test with_var? ^(Body suite))
          ;
 
 //with_var: ('as' | NAME) expr
-with_var: (keyAS | NAME) expr
+with_var: (AS | NAME) expr[expr_contextType.Load]
         ;
 
 //except_clause: 'except' [test [',' test]]
-except_clause : 'except' (t1=test (COMMA t2=test)?)? COLON suite
+except_clause : EXCEPT (t1=test[expr_contextType.Load] (COMMA t2=test[expr_contextType.Load])?)? COLON suite
              //Note: passing the 'except' keyword on so we can pass the same offset
              //      as CPython.
-             -> ^(ExceptHandler 'except' ^(Type $t1)? ^(Name $t2)? ^(Body suite))
+             -> ^(EXCEPT ^(Type $t1)? ^(Value $t2)? ^(Body suite))
               ;
 
 //suite: simple_stmt | NEWLINE INDENT stmt+ DEDENT
-suite : simple_stmt
-      | NEWLINE! INDENT (stmt)+ DEDENT
-      ;
+suite
+    : simple_stmt
+    | NEWLINE! INDENT (stmt)+ DEDENT
+    ;
 
 //test: or_test ['if' or_test 'else' test] | lambdef
-test: o1=or_test
-    ( ('if' or_test 'else') => 'if' o2=or_test 'else' test
-      -> ^(IfExp ^(Test $o2) ^(Body $o1) ^(OrElse test))
+test[expr_contextType ctype]
+    :o1=or_test[ctype]
+    ( (IF or_test[expr_contextType.Load] ORELSE) => IF o2=or_test[ctype] ORELSE test[expr_contextType.Load]
+      -> ^(IfExp ^(Test $o2) ^(Body $o1) ^(ORELSE test))
     | -> or_test
     )
     | lambdef {debug("parsed lambdef");}
     ;
 
 //or_test: and_test ('or' and_test)*
-or_test : and_test (OR^ and_test)*
+or_test[expr_contextType ctype] : and_test[ctype] (OR^ and_test[ctype])*
         ;
 
 //and_test: not_test ('and' not_test)*
-and_test : not_test (AND^ not_test)*
+and_test[expr_contextType ctype] : not_test[ctype] (AND^ not_test[ctype])*
          ;
 
 //not_test: 'not' not_test | comparison
-not_test : NOT^ not_test
-         | comparison
+not_test[expr_contextType ctype] : NOT^ not_test[ctype]
+         | comparison[ctype]
          ;
 
 //comparison: expr (comp_op expr)*
-comparison: expr (comp_op^ expr)*
-	;
+comparison[expr_contextType ctype]: expr[ctype] (comp_op^ expr[ctype])*
+    ;
 
 //comp_op: '<'|'>'|'=='|'>='|'<='|'<>'|'!='|'in'|'not' 'in'|'is'|'is' 'not'
 comp_op : LESS
@@ -677,15 +728,23 @@ comp_op : LESS
         | LESSEQUAL
         | ALT_NOTEQUAL
         | NOTEQUAL
-        | 'in'
-        | NOT 'in' -> NotIn
-        | 'is'
-        | 'is' NOT -> IsNot
+        | IN
+        | NOT IN -> NotIn
+        | IS
+        | IS NOT -> IsNot
         ;
 
 //expr: xor_expr ('|' xor_expr)*
-expr : xor_expr (VBAR^ xor_expr)*
-     ;
+expr[expr_contextType ect]
+scope {
+    expr_contextType ctype;
+}
+@init {
+    $expr::ctype = ect;
+}
+
+    : xor_expr (VBAR^ xor_expr)*
+    ;
 
 //xor_expr: and_expr ('^' and_expr)*
 xor_expr : and_expr (CIRCUMFLEX^ and_expr)*
@@ -701,7 +760,7 @@ shift_expr : arith_expr ((LEFTSHIFT^|RIGHTSHIFT^) arith_expr)*
 
 //arith_expr: term (('+'|'-') term)*
 arith_expr: term ((PLUS^|MINUS^) term)*
-	;
+    ;
 
 //term: factor (('*'|'/'|'%'|'//') factor)*
 term : factor ((STAR^ | SLASH^ | PERCENT^ | DOUBLESLASH^ ) factor)*
@@ -735,25 +794,26 @@ atom : LPAREN
        )
        RBRACK
      | LCURLY (dictmaker)? RCURLY -> ^(Dict LCURLY ^(Elts dictmaker)?)
-     | BACKQUOTE testlist BACKQUOTE -> ^(Repr BACKQUOTE testlist)
-     | NAME {debug("parsed NAME");} -> ^(Name NAME)
-     | INT -> ^(Num INT)
-     | LONGINT -> ^(Num LONGINT)
-     | FLOAT -> ^(Num FLOAT)
-     | COMPLEX -> ^(Num COMPLEX)
-     | (STRING)+ -> ^(Str STRING+)
+     | BACKQUOTE testlist[expr_contextType.Load] BACKQUOTE -> ^(Repr BACKQUOTE testlist)
+     | NAME -> ^(NameTok NAME)
+     | INT -> ^(NumTok<Num>[$INT, actions.makeInt($INT)])
+     | LONGINT -> ^(NumTok<Num>[$LONGINT, actions.makeInt($LONGINT)])
+     | FLOAT -> ^(NumTok<Num>[$FLOAT, actions.makeFloat($FLOAT)])
+     | COMPLEX -> ^(NumTok<Num>[$COMPLEX, actions.makeComplex($COMPLEX)])
+     | (S+=STRING)+ 
+    -> ^(StrTok<Str>[actions.extractStringToken($S), actions.extractStrings($S)])
      ;
 
 //listmaker: test ( list_for | (',' test)* [','] )
-listmaker : test 
+listmaker : test[expr_contextType.Load] 
             ( list_for -> ^(ListComp test list_for)
-            | (options {greedy=true;}:COMMA test)* -> ^(List ^(Elts test+))
+            | (options {greedy=true;}:COMMA test[expr_contextType.Load])* -> ^(List ^(Elts test+))
             ) (COMMA)?
           ;
 
 //testlist_gexp: test ( gen_for | (',' test)* [','] )
 testlist_gexp
-    : test ( ((options {k=2;}: c1=COMMA test)* (c2=COMMA)? -> { $c1 != null || $c2 != null }? ^(Tuple ^(Elts test+))
+    : test[expr_contextType.Load] ( ((options {k=2;}: c1=COMMA test[expr_contextType.Load])* (c2=COMMA)? -> { $c1 != null || $c2 != null }? ^(Tuple ^(Elts test+))
                                                            -> test
              )
            | ( gen_for -> ^(GeneratorExp test gen_for))
@@ -761,46 +821,47 @@ testlist_gexp
     ;
 
 //lambdef: 'lambda' [varargslist] ':' test
-lambdef: 'lambda' (varargslist)? COLON test {debug("parsed lambda");}
-      -> ^(Lambda 'lambda' varargslist? ^(Body test))
+lambdef: LAMBDA (varargslist)? COLON test[expr_contextType.Load] {debug("parsed lambda");}
+      -> ^(LAMBDA varargslist? ^(Body test))
        ;
 
 //trailer: '(' [arglist] ')' | '[' subscriptlist ']' | '.' NAME
 trailer : LPAREN (arglist)? RPAREN -> ^(Call ^(Args arglist)?)
         | LBRACK subscriptlist RBRACK -> ^(SubscriptList subscriptlist)
-        | DOT^ NAME {debug("motched DOT^ NAME");}
+        | DOT^ attr {debug("motched DOT^ NAME");}
         ;
 
 //subscriptlist: subscript (',' subscript)* [',']
-subscriptlist : subscript (options {greedy=true;}:COMMA subscript)* (COMMA)?
-             -> subscript+
+subscriptlist : subscript (options {greedy=true;}:c1=COMMA subscript)* (c2=COMMA)?
+             -> { $c1 != null || $c2 != null }? ^(Tuple ^(Elts subscript+))
+             -> subscript
               ;
 
 //subscript: '.' '.' '.' | test | [test] ':' [test] [sliceop]
 subscript : DOT DOT DOT -> Ellipsis
-          | (test COLON) => t1=test (COLON (t2=test)? (sliceop)?)? -> ^(Subscript ^(Lower $t1) ^(Upper COLON ^(UpperOp $t2)?)? sliceop?)
-          | (COLON) => COLON (test)? (sliceop)? -> ^(Subscript ^(Upper COLON ^(UpperOp test)?)? sliceop?)
-          | test -> ^(Index test)
+          | (test[expr_contextType.Load] COLON) => t1=test[expr_contextType.Load] (COLON (t2=test[expr_contextType.Load])? (sliceop)?)? -> ^(Subscript ^(Lower $t1) ^(Upper COLON ^(UpperOp $t2)?)? sliceop?)
+          | (COLON) => COLON (test[expr_contextType.Load])? (sliceop)? -> ^(Subscript ^(Upper COLON ^(UpperOp test)?)? sliceop?)
+          | test[expr_contextType.Load] -> ^(Index test)
           ;
 
 //sliceop: ':' [test]
-sliceop : COLON (test)? -> ^(Step COLON ^(StepOp test)?)
+sliceop : COLON (test[expr_contextType.Load])? -> ^(Step COLON ^(StepOp test)?)
         ;
 
 //exprlist: expr (',' expr)* [',']
-exprlist : (expr COMMA) => expr (options {k=2;}: COMMA expr)* (COMMA)? -> ^(Tuple ^(Elts expr+))
-         | expr
+exprlist[expr_contextType ctype]: (expr[expr_contextType.Load] COMMA) => expr[ctype] (options {k=2;}: COMMA expr[ctype])* (COMMA)? -> ^(Tuple ^(Elts expr+))
+         | expr[ctype]
          ;
 
 //XXX: I'm hoping I can get rid of this -- but for now I need an exprlist that does not produce tuples
 //     at least for del_stmt
-exprlist2 : expr (options {k=2;}: COMMA expr)* (COMMA)?
+exprlist2 : expr[expr_contextType.Load] (options {k=2;}: COMMA expr[expr_contextType.Load])* (COMMA)?
          -> expr+
           ;
 
 //testlist: test (',' test)* [',']
-testlist
-    : test (options {k=2;}: c1=COMMA test)* (c2=COMMA)?
+testlist[expr_contextType ctype]
+    : test[ctype] (options {k=2;}: c1=COMMA test[ctype])* (c2=COMMA)?
      -> { $c1 != null || $c2 != null }? ^(Tuple ^(Elts test+))
      -> test
     ;
@@ -809,34 +870,49 @@ testlist
 //testlist_safe: test [(',' test)+ [',']]
 
 //dictmaker: test ':' test (',' test ':' test)* [',']
-dictmaker : test COLON test
-            (options {k=2;}:COMMA test COLON test)* (COMMA)?
+dictmaker : test[expr_contextType.Load] COLON test[expr_contextType.Load]
+            (options {k=2;}:COMMA test[expr_contextType.Load] COLON test[expr_contextType.Load])* (COMMA)?
          -> test+
           ;
 
 //classdef: 'class' NAME ['(' [testlist] ')'] ':' suite
-classdef: 'class' NAME (LPAREN testlist? RPAREN)? COLON suite
-    -> ^(ClassDef 'class' ^(Name NAME) ^(Bases testlist)? ^(Body suite))
+classdef: CLASS NAME (LPAREN testlist[expr_contextType.Load]? RPAREN)? COLON suite
+    -> ^(CLASS NAME ^(Bases testlist)? ^(Body suite))
     ;
 
 //arglist: (argument ',')* (argument [',']| '*' test [',' '**' test] | '**' test)
-arglist : argument (COMMA argument)*
+arglist : a1=argument[true] (COMMA a2+=argument[false])*
           ( COMMA
-            ( STAR starargs=test (COMMA DOUBLESTAR kwargs=test)?
-            | DOUBLESTAR kwargs=test
+            ( STAR starargs=test[expr_contextType.Load] (COMMA DOUBLESTAR kwargs=test[expr_contextType.Load])?
+            | DOUBLESTAR kwargs=test[expr_contextType.Load]
             )?
-          )?
+          )? { if ($a2 != null) {
+                   if ($a1.tree.getType() == GenFor) {
+                       actions.errorGenExpNotSoleArg($a1.tree);
+                   }
+                   for (int i=0;i<$a2.size();i++) {
+                       if (((PythonTree)$a2.get(i)).getType() == GenFor) {
+                           actions.errorGenExpNotSoleArg(((argument_return)$a2.get(i)).tree);
+                       }
+                   }
+               }
+             }
        -> ^(Args argument+) ^(StarArgs $starargs)? ^(KWArgs $kwargs)?
-        |   STAR starargs=test (COMMA DOUBLESTAR kwargs=test)?
+        |   STAR starargs=test[expr_contextType.Load] (COMMA DOUBLESTAR kwargs=test[expr_contextType.Load])?
        -> ^(StarArgs $starargs) ^(KWArgs $kwargs)?
-        |   DOUBLESTAR kwargs=test
+        |   DOUBLESTAR kwargs=test[expr_contextType.Load]
        -> ^(KWArgs $kwargs)
         ;
 
 //argument: test [gen_for] | test '=' test  # Really [keyword '='] test
-argument : t1=test
-         ( (ASSIGN t2=test) -> ^(Keyword ^(Arg $t1) ^(Value $t2)?)
-         | gen_for -> ^(GenFor $t1 gen_for)
+argument[boolean first]
+    : t1=test[expr_contextType.Load]
+         ( (ASSIGN t2=test[expr_contextType.Load]) -> ^(Keyword ^(Arg $t1) ^(Value $t2)?)
+         | gen_for { if (!first) {
+                           actions.errorGenExpNotSoleArg($gen_for.tree);
+                     }
+                   }
+        -> ^(GenFor $t1 gen_for)
          | -> ^(Arg $t1)
          )
          ;
@@ -847,12 +923,12 @@ list_iter : list_for
           ;
 
 //list_for: 'for' exprlist 'in' testlist_safe [list_iter]
-list_for : 'for' exprlist 'in' testlist (list_iter)?
-        -> ^(ListFor ^(Target exprlist) ^(Iter testlist) ^(Ifs list_iter)?)
+list_for : FOR exprlist[expr_contextType.Load] IN testlist[expr_contextType.Load] (list_iter)?
+        -> ^(ListFor ^(Target exprlist) ^(IN testlist) ^(Ifs list_iter)?)
          ;
 
 //list_if: 'if' test [list_iter]
-list_if : 'if' test (list_iter)?
+list_if : IF test[expr_contextType.Load] (list_iter)?
        -> ^(ListIf ^(Target test) (Ifs list_iter)?)
         ;
 
@@ -862,48 +938,51 @@ gen_iter: gen_for
         ;
 
 //gen_for: 'for' exprlist 'in' or_test [gen_iter]
-gen_for: 'for' exprlist 'in' or_test gen_iter?
-      -> ^(GenFor ^(Target exprlist) ^(Iter or_test) ^(Ifs gen_iter)?)
+gen_for: FOR exprlist[expr_contextType.Load] IN or_test[expr_contextType.Load] gen_iter?
+      -> ^(GenFor ^(Target exprlist) ^(IN or_test) ^(Ifs gen_iter)?)
        ;
 
 //gen_if: 'if' old_test [gen_iter]
-gen_if: 'if' test gen_iter?
+gen_if: IF test[expr_contextType.Load] gen_iter?
      -> ^(GenIf ^(Target test) ^(Ifs gen_iter)?)
       ;
 
 //yield_expr: 'yield' [testlist]
-yield_expr : 'yield' testlist?
-          -> ^(Yield 'yield' ^(Value testlist)?)
+yield_expr : YIELD testlist[expr_contextType.Load]?
+          -> ^(YIELD ^(Value testlist)?)
            ;
 
 //XXX:
 //testlist1: test (',' test)*
 
-//These are all Python keywords that are not Java keywords
-//This means that Jython needs to support these as NAMEs
-//unlike CPython.  For now I have only done this for 'as'
-//and 'exec'.
-
-//keyAND    : {input.LT(1).getText().equals("and")}? NAME ;
-keyAS     : {input.LT(1).getText().equals("as")}? NAME ;
-//keyDEF    : {input.LT(1).getText().equals("def")}? NAME ;
-//keyDEL    : {input.LT(1).getText().equals("del")}? NAME ;
-//keyELIF   : {input.LT(1).getText().equals("elif")}? NAME ;
-//keyEXCEPT : {input.LT(1).getText().equals("except")}? NAME ;
-keyEXEC   : {input.LT(1).getText().equals("exec")}? NAME ;
-//keyFROM   : {input.LT(1).getText().equals("from")}? NAME ;
-//keyGLOBAL : {input.LT(1).getText().equals("global")}? NAME ;
-//keyIN     : {input.LT(1).getText().equals("in")}? NAME ;
-//keyIS     : {input.LT(1).getText().equals("is")}? NAME ;
-//keyLAMBDA : {input.LT(1).getText().equals("lambda")}? NAME ;
-//keyNOT    : {input.LT(1).getText().equals("not")}? NAME ;
-//keyOR     : {input.LT(1).getText().equals("or")}? NAME ;
-//keyPASS   : {input.LT(1).getText().equals("pass")}? NAME ;
-//keyPRINT  : {input.LT(1).getText().equals("print")}? NAME ;
-//keyRAISE  : {input.LT(1).getText().equals("raise")}? NAME ;
-//keyWITH   : {input.LT(1).getText().equals("with")}? NAME ;
-//keyYIELD  : {input.LT(1).getText().equals("yield")}? NAME ;
-
+AS        : 'as' ;
+ASSERT    : 'assert' ;
+BREAK     : 'break' ;
+CLASS     : 'class' ;
+CONTINUE  : 'continue' ;
+DEF       : 'def' ;
+DELETE    : 'del' ;
+ELIF      : 'elif' ;
+EXCEPT    : 'except' ;
+EXEC      : 'exec' ;
+FINALLY   : 'finally' ;
+FROM      : 'from' ;
+FOR       : 'for' ;
+GLOBAL    : 'global' ;
+IF        : 'if' ;
+IMPORT    : 'import' ;
+IN        : 'in' ;
+IS        : 'is' ;
+LAMBDA    : 'lambda' ;
+ORELSE    : 'else' ;
+PASS      : 'pass'  ;
+PRINT     : 'print' ;
+RAISE     : 'raise' ;
+RETURN    : 'return' ;
+TRY       : 'try' ;
+WHILE     : 'while' ;
+WITH      : 'with' ;
+YIELD     : 'yield' ;
 
 LPAREN    : '(' {implicitLineJoiningLevel++;} ;
 
@@ -1044,6 +1123,18 @@ STRING
         |   '"""' (options {greedy=false;}:TRIQUOTE)* '"""'
         |   '"' (ESC|~('\\'|'\n'|'"'))* '"'
         |   '\'' (ESC|~('\\'|'\n'|'\''))* '\''
+        ) {
+           if (state.tokenStartLine != input.getLine()) {
+               state.tokenStartLine = input.getLine();
+               state.tokenStartCharPositionInLine = -2;
+           }
+        }
+    ;
+
+STRINGPART
+    : {partial}?=> ('r'|'u'|'ur'|'R'|'U'|'UR'|'uR'|'Ur')?
+        (   '\'\'\'' ~('\'\'\'')*
+        |   '"""' ~('"""')*
         )
     ;
 
@@ -1070,7 +1161,7 @@ ESC
  */
 CONTINUED_LINE
     :    '\\' ('\r')? '\n' (' '|'\t')*  { $channel=HIDDEN; }
-         ( nl=NEWLINE {emit(new ClassicToken(NEWLINE,nl.getText()));}
+         ( nl=NEWLINE {emit(new CommonToken(NEWLINE,nl.getText()));}
          |
          )
     ;
@@ -1082,8 +1173,11 @@ CONTINUED_LINE
  *  Frank Wierzbicki added: Also ignore FORMFEEDS (\u000C).
  */
 NEWLINE
-    :   (('\u000C')?('\r')? '\n' )+
-        {if ( startPos==0 || implicitLineJoiningLevel>0 )
+@init {
+    int newlines = 0;
+}
+    :   (('\u000C')?('\r')? '\n' {newlines++; } )+ {
+         if ( startPos==0 || implicitLineJoiningLevel>0 )
             $channel=HIDDEN;
         }
     ;
@@ -1100,24 +1194,42 @@ WS  :    {startPos>0}?=> (' '|'\t'|'\u000C')+ {$channel=HIDDEN;}
 LEADING_WS
 @init {
     int spaces = 0;
+    int newlines = 0;
 }
     :   {startPos==0}?=>
         (   {implicitLineJoiningLevel>0}? ( ' ' | '\t' )+ {$channel=HIDDEN;}
-           |    (     ' '  { spaces++; }
-            |    '\t' { spaces += 8; spaces -= (spaces \% 8); }
-               )+
-            {
-            // make a string of n spaces where n is column number - 1
-            char[] indentation = new char[spaces];
-            for (int i=0; i<spaces; i++) {
-                indentation[i] = ' ';
-            }
-            String s = new String(indentation);
-            emit(new ClassicToken(LEADING_WS,new String(indentation)));
-            }
-            // kill trailing newline if present and then ignore
-            ( ('\r')? '\n' {if (state.token!=null) state.token.setChannel(HIDDEN); else $channel=HIDDEN;})*
-           // {state.token.setChannel(99); }
+        |    (     ' '  { spaces++; }
+             |    '\t' { spaces += 8; spaces -= (spaces \% 8); }
+             )+
+             ( ('\r')? '\n' {newlines++; }
+             )* {
+                   if (input.LA(1) != -1) {
+                       // make a string of n spaces where n is column number - 1
+                       char[] indentation = new char[spaces];
+                       for (int i=0; i<spaces; i++) {
+                           indentation[i] = ' ';
+                       }
+                       CommonToken c = new CommonToken(LEADING_WS,new String(indentation));
+                       c.setLine(input.getLine());
+                       c.setCharPositionInLine(input.getCharPositionInLine());
+                       emit(c);
+                       // kill trailing newline if present and then ignore
+                       if (newlines != 0) {
+                           if (state.token!=null) {
+                               state.token.setChannel(HIDDEN);
+                           } else {
+                               $channel=HIDDEN;
+                           }
+                       }
+                   } else {
+                       // make a string of n newlines
+                       char[] nls = new char[newlines];
+                       for (int i=0; i<newlines; i++) {
+                           nls[i] = '\n';
+                       }
+                       emit(new CommonToken(NEWLINE,new String(nls)));
+                   }
+                }
         )
     ;
 
@@ -1143,6 +1255,6 @@ COMMENT
     $channel=HIDDEN;
 }
     :    {startPos==0}?=> (' '|'\t')* '#' (~'\n')* '\n'+
-    |    {startPos>0}?=> '#' (~'\n')* // let NEWLINE handle \n unless char pos==0 for '#'
+    |    '#' (~'\n')* // let NEWLINE handle \n unless char pos==0 for '#'
     ;
 

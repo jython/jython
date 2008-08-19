@@ -24,13 +24,13 @@ public class ArrayModule implements ClassDictInit {
         "    'z'         boolean            1 \n" +
         "    'c'         character          1 \n" +
         "    'b'         signed integer     1 \n" +
-      //"    'B'         unsigned integer   1 \n" +
+        "    'B'         unsigned integer   1 \n" +
         "    'h'         signed integer     2 \n" +
-      //"    'H'         unsigned integer   2 \n" +
+        "    'H'         unsigned integer   2 \n" +
         "    'i'         signed integer     2 \n" +
-      //"    'I'         unsigned integer   2 \n" +
+        "    'I'         unsigned integer   2 \n" +
         "    'l'         signed integer     4 \n" +
-      //"    'L'         unsigned integer   4 \n" +
+        "    'L'         unsigned integer   4 \n" +
         "    'f'         floating point     4 \n" +
         "    'd'         floating point     8 \n" +
         "\n" +

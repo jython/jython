@@ -753,7 +753,7 @@ public class PyJavaClass extends PyClass
     }
 
     private PyStringMap missingAttributes = null;
-    public PyObject __findattr__(String name) {
+    public PyObject __findattr_ex__(String name) {
         if (name == "__dict__") {
             if (__dict__ == null)
                 initialize();

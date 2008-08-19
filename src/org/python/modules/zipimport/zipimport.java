@@ -7,6 +7,7 @@ import org.python.core.PyDictionary;
 import org.python.core.PyException;
 import org.python.core.PyObject;
 import org.python.core.PyString;
+import org.python.core.PyStringMap;
 import org.python.core.PyType;
 import org.python.core.exceptions;
 
@@ -58,7 +59,9 @@ public class zipimport implements ClassDictInit {
      */
     public static void initClassExceptions(PyObject exceptions) {
         PyObject ImportError = exceptions.__finditem__("ImportError");
-        ZipImportError = Py.makeClass("ZipImportError", new PyObject[] {ImportError},
-                                      Py.newJavaCode(exceptions.class, "empty__init__"), null);
+        ZipImportError = Py.makeClass("zipimport.ZipImportError", ImportError,
+                                      new PyStringMap() {{
+                                          __setitem__("__module__", Py.newString("zipimport"));
+                                      }});
     }
 }

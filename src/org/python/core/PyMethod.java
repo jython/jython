@@ -45,7 +45,7 @@ public class PyMethod extends PyObject {
         PyObject self = ap.getPyObject(1);
         PyObject classObj = ap.getPyObject(2, null);
 
-        if (!__builtin__.callable(func)) {
+        if (!func.isCallable()) {
             throw Py.TypeError("first argument must be callable");
         }
         if (self == Py.None && classObj == null) {
@@ -55,12 +55,26 @@ public class PyMethod extends PyObject {
     }
 
     @Override
-    public PyObject __findattr__(String name) {
-        PyObject ret = super.__findattr__(name);
+    public PyObject __findattr_ex__(String name) {
+        return instancemethod___findattr_ex__(name);
+    }
+ 
+    final PyObject instancemethod___findattr_ex__(String name) {
+        PyObject ret = super.__findattr_ex__(name);
         if (ret != null) {
             return ret;
         }
-        return im_func.__findattr__(name);
+        return im_func.__findattr_ex__(name);
+    }
+    
+    @ExposedMethod
+    final PyObject instancemethod___getattribute__(PyObject arg0) {
+        String name = asName(arg0);
+        PyObject ret = instancemethod___findattr_ex__(name);
+        if (ret == null) {
+            noAttributeError(name);
+        }
+        return ret;
     }
 
     @Override
@@ -127,16 +141,20 @@ public class PyMethod extends PyObject {
         if (!(other instanceof PyMethod)) {
             return -2;
         }
-        PyMethod mother = (PyMethod)other;
-        if (im_self != mother.im_self) {
-            return System.identityHashCode(im_self) <
-                    System.identityHashCode(mother.im_self) ? -1 : 1;
+        PyMethod otherMethod = (PyMethod)other;
+        int cmp = im_func._cmp(otherMethod.im_func);
+        if (cmp != 0) {
+            return cmp;
         }
-        if (im_func != mother.im_func) {
-            return System.identityHashCode(im_func) <
-                    System.identityHashCode(mother.im_func) ? -1 : 1;
+        if (im_self == otherMethod.im_self) {
+            return 0;
         }
-        return 0;
+        if (im_self == null || otherMethod.im_self == null) {
+            return System.identityHashCode(im_self) < System.identityHashCode(otherMethod.im_self)
+                    ? -1 : 1;
+        } else {
+            return im_self._cmp(otherMethod.im_self);
+        }
     }
 
     @Override

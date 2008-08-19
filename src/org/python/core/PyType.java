@@ -1095,15 +1095,20 @@ public class PyType extends PyObject implements Serializable {
 
     @ExposedMethod
     final PyObject type___getattribute__(PyObject name) {
-        return type___findattr__(asName(name));
+        String n = asName(name);
+        PyObject ret = type___findattr_ex__(n);
+        if (ret == null) {
+            noAttributeError(n);
+        }
+        return ret;
     }
 
-    public PyObject __findattr__(String name) {
-        return type___findattr__(name);
+    public PyObject __findattr_ex__(String name) {
+        return type___findattr_ex__(name);
     }
 
     // name must be interned
-    final PyObject type___findattr__(String name) {
+    final PyObject type___findattr_ex__(String name) {
         PyType metatype = getType();
 
         PyObject metaattr = metatype.lookup(name);
@@ -1290,13 +1295,13 @@ public class PyType extends PyObject implements Serializable {
     @ExposedSet(name = "__dict__")
     public void setDict(PyObject newDict) {
         // Analogous to CPython's descrobject:getset_set
-    	throw Py.AttributeError(String.format("attribute '__dict__' of '%s' objects is not "
+        throw Py.AttributeError(String.format("attribute '__dict__' of '%s' objects is not "
                                               + "writable", getType().fastGetName()));
     }
 
     @ExposedDelete(name = "__dict__")
     public void delDict() {
-    	setDict(null);
+        setDict(null);
     }
 
     /**

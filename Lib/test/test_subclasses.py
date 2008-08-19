@@ -1,4 +1,5 @@
-import test_support, unittest
+from test import test_support
+import unittest
 import pickle
     
 #myint and its test taken from pickletester, the other "my" classes and tests

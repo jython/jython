@@ -135,8 +135,9 @@ public class codecs {
 
         /* Shortcut for ascii encoding */
         if (encoding.equals("ascii")) {
-            return new PyUnicode(PyUnicode_DecodeASCII(v.toString(),
-                    v.__len__(), errors));
+            return new PyUnicode(
+                    PyUnicode_DecodeASCII(v.toString(), v.__len__(), errors),
+                    true);
         }
 
         /* Decode via the codec registry */
@@ -1198,7 +1199,7 @@ public class codecs {
                 start,
                 end,
                 reason);
-        exc.instantiate();
+        exc.normalize();
         PyObject replacement = errorHandler.__call__(new PyObject[]{exc.value});
         checkErrorHandlerReturn(errors, replacement);
         return replacement;
@@ -1245,7 +1246,7 @@ public class codecs {
                 start,
                 end,
                 reason);
-        exc.instantiate();
+        exc.normalize();
         return errorHandler.__call__(new PyObject[]{exc.value});
     }
 

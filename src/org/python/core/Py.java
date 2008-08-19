@@ -12,6 +12,10 @@ import java.io.PrintStream;
 import java.io.Serializable;
 import java.io.StreamCorruptedException;
 import java.lang.reflect.InvocationTargetException;
+import java.sql.Date;
+import java.sql.Time;
+import java.sql.Timestamp;
+import java.util.Calendar;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -20,7 +24,7 @@ import org.python.core.adapter.ClassicPyObjectAdapter;
 import org.python.core.adapter.ExtensiblePyObjectAdapter;
 import org.python.core.util.StringUtil;
 import org.python.modules.errno;
-import org.python.parser.ast.modType;
+import org.python.antlr.ast.modType;
 
 public final class Py {
 
@@ -212,11 +216,8 @@ public final class Py {
     static void maybeSystemExit(PyException exc) {
         if (Py.matchException(exc, Py.SystemExit)) {
             PyObject value = exc.value;
-            if (value instanceof PyInstance) {
-                PyObject tmp = value.__findattr__("code");
-                if (tmp != null) {
-                    value = tmp;
-                }
+            if (PyException.isExceptionInstance(exc.value)) {
+                value = value.__findattr__("code");
             }
             Py.getSystemState().callExitFunc();
             if (value instanceof PyInteger) {
@@ -226,7 +227,8 @@ public final class Py {
                     try {
                         Py.println(value);
                         System.exit(1);
-                    } catch (Throwable t0) {
+                    } catch (Throwable t) {
+                        // continue
                     }
                 }
                 System.exit(0);
@@ -289,7 +291,7 @@ public final class Py {
             int end,
             String reason) {
         return new PyException(Py.UnicodeEncodeError, new PyTuple(new PyString(encoding),
-                new PyString(object),
+                new PyUnicode(object),
                 new PyInteger(start),
                 new PyInteger(end),
                 new PyString(reason)));
@@ -314,6 +316,8 @@ public final class Py {
     public static PyObject LookupError;
     public static PyObject StandardError;
     public static PyObject Exception;
+    public static PyObject BaseException;
+
     public static PyObject Warning;
 
     public static void Warning(String message) {
@@ -339,11 +343,6 @@ public final class Py {
     public static void SyntaxWarning(String message) {
         warning(SyntaxWarning, message);
     }
-    public static PyObject OverflowWarning;
-
-    public static void OverflowWarning(String message) {
-        warning(OverflowWarning, message);
-    }
     public static PyObject RuntimeWarning;
 
     public static void RuntimeWarning(String message) {
@@ -354,6 +353,17 @@ public final class Py {
     public static void FutureWarning(String message) {
         warning(FutureWarning, message);
     }
+    
+    public static PyObject ImportWarning;
+    public static void ImportWarning(String message) {
+    	warning(ImportWarning, message);
+    }
+
+    public static PyObject UnicodeWarning;
+    public static void UnicodeWarning(String message) {
+        warning(UnicodeWarning, message);
+    }
+
     private static PyObject warnings_mod;
 
     private static PyObject importWarnings() {
@@ -565,9 +575,61 @@ public final class Py {
     public static PyUnicode newUnicode(String s) {
         return new PyUnicode(s);
     }
-
+    
+    public static PyUnicode newUnicode(String s, boolean isBasic) {
+        return new PyUnicode(s, isBasic);
+    }
+    
     public static PyBoolean newBoolean(boolean t) {
         return t ? Py.True : Py.False;
+    }
+
+    public static PyObject newDate(Date date) {
+        if (date == null) {
+            return Py.None;
+        }
+        PyObject datetimeModule = __builtin__.__import__("datetime");
+        PyObject dateClass = datetimeModule.__getattr__("date");
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(date);
+
+        return dateClass.__call__(newInteger(cal.get(Calendar.YEAR)),
+                                  newInteger(cal.get(Calendar.MONTH) + 1),
+                                  newInteger(cal.get(Calendar.DAY_OF_MONTH)));
+
+    }
+
+    public static PyObject newTime(Time time) {
+        if (time == null) {
+            return Py.None;
+        }
+        PyObject datetimeModule = __builtin__.__import__("datetime");
+        PyObject timeClass = datetimeModule.__getattr__("time");
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(time);
+        return timeClass.__call__(newInteger(cal.get(Calendar.HOUR_OF_DAY)),
+                                  newInteger(cal.get(Calendar.MINUTE)),
+                                  newInteger(cal.get(Calendar.SECOND)),
+                                  newInteger(cal.get(Calendar.MILLISECOND) *
+                                             1000));
+    }
+
+    public static PyObject newDatetime(Timestamp timestamp) {
+        if (timestamp == null) {
+            return Py.None;
+        }
+        PyObject datetimeModule = __builtin__.__import__("datetime");
+        PyObject datetimeClass = datetimeModule.__getattr__("datetime");
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(timestamp);
+        return datetimeClass.__call__(new PyObject[] {
+                                      newInteger(cal.get(Calendar.YEAR)),
+                                      newInteger(cal.get(Calendar.MONTH) + 1),
+                                      newInteger(cal.get(Calendar.DAY_OF_MONTH)),
+                                      newInteger(cal.get(Calendar.HOUR_OF_DAY)),
+                                      newInteger(cal.get(Calendar.MINUTE)),
+                                      newInteger(cal.get(Calendar.SECOND)),
+                                      newInteger(timestamp.getNanos() / 1000)});
     }
 
     public static PyCode newCode(int argcount, String varnames[],
@@ -640,6 +702,7 @@ public final class Py {
     static void initClassExceptions(PyObject dict) {
         PyObject exc = imp.load("exceptions");
 
+        BaseException = initExc("BaseException", exc, dict);
         Exception = initExc("Exception", exc, dict);
         SystemExit = initExc("SystemExit", exc, dict);
         StopIteration = initExc("StopIteration", exc, dict);
@@ -681,9 +744,10 @@ public final class Py {
         DeprecationWarning = initExc("DeprecationWarning", exc, dict);
         PendingDeprecationWarning = initExc("PendingDeprecationWarning", exc, dict);
         SyntaxWarning = initExc("SyntaxWarning", exc, dict);
-        OverflowWarning = initExc("OverflowWarning", exc, dict);
         RuntimeWarning = initExc("RuntimeWarning", exc, dict);
         FutureWarning = initExc("FutureWarning", exc, dict);
+        ImportWarning = initExc("ImportWarning", exc, dict);
+        UnicodeWarning = initExc("UnicodeWarning", exc, dict);
 
         // Pre-initialize the PyJavaClass for OutOfMemoryError so when we need
         // it it creating the pieces for it won't cause an additional out of
@@ -794,12 +858,10 @@ public final class Py {
             return;
         }
 
-        //System.out.println("path: "+sys.path.__str__());
         PyObject mod;
         // ??pending: findClass or should avoid sys.path loading?
         Class modClass = Py.findClass(module+"$_PyInner");
         if (modClass != null) {
-            //System.err.println("found as class: "+modClass);
             PyCode code=null;
             try {
                 code = ((PyRunnable)modClass.newInstance()).getMain();
@@ -809,7 +871,6 @@ public final class Py {
             mod = imp.createFromCode(module, code);
         } else {
             mod = imp.importName(module.intern(), false);
-            //System.err.println("found as mod: "+mod);
         }
         PyClass pyc = (PyClass)mod.__getattr__(pyclass.intern());
 
@@ -930,6 +991,8 @@ public final class Py {
             try {
                 exceptHook.__call__(exc.type, exc.value, exc.traceback);
             } catch (PyException exc2) {
+                exc2.normalize();
+                flushLine();
                 stderr.println("Error in sys.excepthook:");
                 displayException(exc2.type, exc2.value, exc2.traceback, file);
                 stderr.println();
@@ -944,12 +1007,13 @@ public final class Py {
         ts.exception = null;
     }
 
-    public static void displayException(PyObject type, PyObject value,
-            PyObject tb, PyObject file) {
+    public static void displayException(PyObject type, PyObject value, PyObject tb,
+                                        PyObject file) {
         StdoutWrapper stderr = Py.stderr;
         if (file != null) {
             stderr = new FixedFileWrapper(file);
         }
+        flushLine();
 
         if (tb instanceof PyTraceback) {
             stderr.print(((PyTraceback) tb).dumpStack());
@@ -982,18 +1046,36 @@ public final class Py {
     static String formatException(PyObject type, PyObject value, PyObject tb) {
         StringBuffer buf = new StringBuffer();
 
-        if (type instanceof PyClass) {
-            buf.append(((PyClass) type).__name__);
+        if (PyException.isExceptionClass(type)) {
+            String className = PyException.exceptionClassName(type);
+            int lastDot = className.lastIndexOf('.');
+            if (lastDot != -1) {
+                className = className.substring(lastDot + 1);
+            }
+            PyObject moduleName = type.__findattr__("__module__");
+            if (moduleName == null) {
+                // XXX: Workaround the fact that PyClass lacks __module__
+                if (!(type instanceof PyClass)) {
+                    buf.append("<unknown>");
+                }
+            } else {
+                String moduleStr = moduleName.toString();
+                if (!moduleStr.equals("exceptions")) {
+                    buf.append(moduleStr);
+                    buf.append(".");
+                }
+            }
+            buf.append(className);
         } else {
             buf.append(type.__str__());
         }
         if (value != Py.None) {
-            buf.append(": ");
-            if (__builtin__.isinstance(value, Py.SyntaxError)) {
-                buf.append(value.__getitem__(0).__str__());
-            } else {
-                buf.append(value.__str__());
+            // only print colon if the str() of the object is not the empty string
+            PyObject s = value.__str__();
+            if (!(s instanceof PyString) || s.__len__() != 0) {
+                buf.append(": ");
             }
+            buf.append(s);
         }
         return buf.toString();
     }
@@ -1023,7 +1105,7 @@ public final class Py {
     /* Helpers to implement except clauses */
     public static PyException setException(Throwable t, PyFrame frame) {
         PyException pye = Py.JavaError(t);
-        pye.instantiate();
+        pye.normalize();
 
         // attach catching frame
         if (frame != null && pye.traceback.tb_frame != frame && pye.traceback.tb_frame.f_back != null) {
@@ -1037,109 +1119,74 @@ public final class Py {
         return pye;
     }
 
-    public static boolean matchException(PyException pye, PyObject e) {
-        pye.instantiate();
+    public static boolean matchException(PyException pye, PyObject exc) {
+        if (exc instanceof PyTuple) {
+            for (PyObject item : ((PyTuple)exc).getArray()) {
+                if (matchException(pye, item)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        pye.normalize();
         // FIXME, see bug 737978
         //
         // A special case for IOError's to allow them to also match
         // java.io.IOExceptions.  This is a hack for 1.0.x until I can do
         // it right in 1.1
-        if (e == Py.IOError) {
-            if (__builtin__.isinstance(pye.value,
-                    PyJavaClass.lookup(java.io.IOException.class))) {
+        if (exc == Py.IOError) {
+            if (__builtin__.isinstance(pye.value, PyJavaClass.lookup(java.io.IOException.class))) {
                 return true;
             }
         }
         // FIXME too, same approach for OutOfMemoryError
-        if (e == Py.MemoryError) {
+        if (exc == Py.MemoryError) {
             if (__builtin__.isinstance(pye.value,
-                    PyJavaClass.lookup(java.lang.OutOfMemoryError.class))) {
+                                      PyJavaClass.lookup(java.lang.OutOfMemoryError.class))) {
                 return true;
             }
         }
-        if (e instanceof PyClass) {
-            return __builtin__.isinstance(pye.value, e);
-        } else {
-            if (e == pye.type) {
-                return true;
-            }
-            if (e instanceof PyTuple) {
-                PyObject[] l = ((PyTuple) e).getArray();
-                for (int i = 0; i < l.length; i++) {
-                    if (matchException(pye, l[i])) {
-                        return true;
-                    }
-                }
-            }
-            return false;
+
+        if (PyException.isExceptionClass(pye.type) && PyException.isExceptionClass(exc)) {
+            return isSubClass(pye.type, exc);
         }
+
+        return pye.type == exc;
     }
 
-    /* Implement the raise statement */
-    // reraise the current exception
-    public static PyException makeException() {
-        ThreadState ts = getThreadState();
-        if (ts.exception == null) {
-            throw Py.ValueError("no exception to reraise");
-        }
-        return ts.exception;
-    }
 
-    public static PyException makeException(PyObject type) {
-        if (type instanceof PyInstance) {
-            return new PyException(type.fastGetClass(), type);
-        } else {
-            return makeException(type, Py.None);
-        }
+    // XXX: the following 4 are backwards compat. for the
+    // oldcompiler. newcompiler should just call doRaise instead
+    public static PyException makeException(PyObject type, PyObject value,
+                                            PyObject traceback) {
+        return PyException.doRaise(type, value, traceback);
     }
 
     public static PyException makeException(PyObject type, PyObject value) {
-        if (type instanceof PyInstance) {
-            if (value != Py.None) {
-                throw TypeError("instance exceptions may not have " +
-                        "a separate value");
-            } else {
-                return new PyException(type.fastGetClass(), type);
-            }
-        }
-        PyException exc = new PyException(type, value);
-        exc.instantiate();
-        return exc;
+        return makeException(type, value, null);
     }
 
-    public static PyException makeException(PyObject type, PyObject value,
-            PyObject traceback) {
-        if (type instanceof PyInstance) {
-            if (value != Py.None) {
-                throw TypeError("instance exceptions may not have " +
-                        "a separate value");
-            } else {
-                type = type.fastGetClass();
-            }
-        }
+    public static PyException makeException(PyObject type) {
+        return makeException(type, null);
+    }
 
-        if (traceback == None) {
-            return new PyException(type, value);
-        }
-        if (!(traceback instanceof PyTraceback)) {
-            throw TypeError("raise 3rd arg must be traceback or None");
-        }
-
-        return new PyException(type, value, (PyTraceback) traceback);
+    public static PyException makeException() {
+        return makeException(null);
     }
 
     public static PyObject runCode(PyCode code, PyObject locals,
             PyObject globals) {
         PyFrame f;
-        if (locals == null) {
-            if (globals != null) {
+        if (locals == null || locals == Py.None) {
+            if (globals != null && globals != Py.None) {
                 locals = globals;
             } else {
                 locals = Py.getFrame().getLocals();
             }
         }
 
-        if (globals == null) {
+        if (globals == null || globals == Py.None) {
             globals = Py.getFrame().f_globals;
         }
 
@@ -1179,20 +1226,14 @@ public final class Py {
         }
         Py.runCode(code, locals, globals);
     }
-    private static ThreadStateMapping threadStateMapping = null;
+    
+    private final static ThreadStateMapping threadStateMapping = new ThreadStateMapping();
 
     public static final ThreadState getThreadState() {
         return getThreadState(null);
     }
 
     public static final ThreadState getThreadState(PySystemState newSystemState) {
-        if (threadStateMapping == null) {
-            synchronized (Py.class) {
-                if (threadStateMapping == null) {
-                    threadStateMapping = new ThreadStateMapping();
-                }
-            }
-        }
         return threadStateMapping.getThreadState(newSystemState);
     }
 
@@ -1200,6 +1241,7 @@ public final class Py {
         ThreadState ts = getThreadState(newSystemState);
         PySystemState oldSystemState = ts.systemState;
         if (oldSystemState != newSystemState) {
+            //XXX: should we make this a real warning?
             //System.err.println("Warning: changing systemState "+
             //                   "for same thread!");
             ts.systemState = newSystemState;
@@ -1214,7 +1256,6 @@ public final class Py {
 
     /* Get and set the current frame */
     public static PyFrame getFrame() {
-        //System.out.println("getFrame");
         ThreadState ts = getThreadState();
         if (ts == null) {
             return null;
@@ -1223,7 +1264,6 @@ public final class Py {
     }
 
     public static void setFrame(PyFrame f) {
-        //System.out.println("setFrame");
         getThreadState().frame = f;
     }
 
@@ -1277,6 +1317,10 @@ public final class Py {
 
     public static void println() {
         stdout.println();
+    }
+
+    public static void flushLine() {
+        stdout.flushLine();
     }
 
     /*
@@ -1399,9 +1443,14 @@ public final class Py {
         return makeCharacter(c, false);
     }
 
-    static final PyString makeCharacter(int codepoint, boolean explicitUnicode) {
-        if (explicitUnicode || codepoint > 255) {
+    static final PyString makeCharacter(int codepoint, boolean toUnicode) {
+        if (toUnicode) {
             return new PyUnicode(codepoint);
+        } else if (codepoint > 65536) {
+            throw new IllegalArgumentException(String.format("Codepoint > 65536 (%d) requires "
+                                                             + "toUnicode argument", codepoint));
+        } else if (codepoint > 256) {
+            return new PyString((char)codepoint);
         }
 
         if (letters == null) {
@@ -1445,40 +1494,53 @@ public final class Py {
      */
     private static ExtensiblePyObjectAdapter adapter;
 
-    public static PyObject makeClass(String name, PyObject[] bases,
-            PyCode code, PyObject doc) {
-        return makeClass(name, bases, code, doc, null, null);
-    }
-
-    public static PyObject makeClass(String name, PyObject[] bases,
-            PyCode code, PyObject doc,
-            PyObject[] closure_cells) {
-        return makeClass(name, bases, code, doc, null, closure_cells);
-    }
-
-    public static PyObject makeClass(String name, PyObject[] bases,
-            PyCode code, PyObject doc,
-            Class proxyClass) {
-        return makeClass(name, bases, code, doc, proxyClass, null);
-    }
     private static Class[] pyClassCtrSignature = {
         String.class, PyTuple.class, PyObject.class, Class.class
     };
+
     static private final PyType CLASS_TYPE = PyType.fromClass(PyClass.class);
 
+    // XXX: The following two makeClass overrides are *only* for the
+    // old compiler, they should be removed when the newcompiler hits
     public static PyObject makeClass(String name, PyObject[] bases,
-            PyCode code, PyObject doc,
-            Class proxyClass,
-            PyObject[] closure_cells) {
-        PyFrame frame = getFrame();
-        PyObject globals = frame.f_globals;
+                                     PyCode code, PyObject doc) {
+        return makeClass(name, bases, code, doc, null);
+    }
 
-        PyObject dict = code.call(Py.EmptyObjects, Py.NoKeywords,
-                globals, Py.EmptyObjects,
-                new PyTuple(closure_cells));
+    public static PyObject makeClass(String name, PyObject[] bases,
+                                     PyCode code, PyObject doc,
+                                     PyObject[] closure_cells) {
+        PyObject globals = getFrame().f_globals;
+        PyObject dict = code.call(Py.EmptyObjects, Py.NoKeywords, globals, Py.EmptyObjects,
+                                  new PyTuple(closure_cells));
         if (doc != null && dict.__finditem__("__doc__") == null) {
             dict.__setitem__("__doc__", doc);
         }
+        return makeClass(name, bases, dict, null);
+    }
+
+    public static PyObject makeClass(String name, PyObject base, PyObject dict) {
+        PyObject[] bases = base == null ? EmptyObjects : new PyObject[] {base};
+        return makeClass(name, bases, dict);
+    }
+
+    public static PyObject makeClass(String name, PyObject[] bases, PyObject dict) {
+        return makeClass(name, bases, dict, null);
+    }
+
+    /**
+     * Create a new Python class.
+     * 
+     * @param name the String name of the class
+     * @param bases an array of PyObject base classes
+     * @param dict the class's namespace, containing the class body
+     * definition
+     * @param proxyClass an optional underlying Java class
+     * @return a new Python Class PyObject
+     */
+    public static PyObject makeClass(String name, PyObject[] bases, PyObject dict,
+                                     Class proxyClass) {
+        PyFrame frame = getFrame();
 
         if (dict.__finditem__("__module__") == null) {
             PyObject module = frame.getglobal("__name__");
@@ -1487,36 +1549,35 @@ public final class Py {
             }
         }
 
-        PyObject metaclass;
-
-        metaclass = dict.__finditem__("__metaclass__");
+        PyObject metaclass = dict.__finditem__("__metaclass__");
 
         if (metaclass == null) {
             if (bases.length != 0) {
-                PyObject base = bases[0];       
+                PyObject base = bases[0];
                 metaclass = base.__findattr__("__class__");
                 if (metaclass == null) {
                     metaclass = base.getType();
                 }
             } else {
+                PyObject globals = frame.f_globals;
                 if (globals != null) {
                     metaclass = globals.__finditem__("__metaclass__");
                 }
             }
         }
-        if (metaclass == null
-                || metaclass == CLASS_TYPE
-                || (metaclass instanceof PyJavaClass && 
-                        ((PyJavaClass)metaclass).proxyClass == Class.class)) {
-            boolean more_general = false;
-            for (int i = 0; i < bases.length; i++) {
-                if (!(bases[i] instanceof PyClass)) {
-                    metaclass = bases[i].getType();
-                    more_general = true;
+
+        if (metaclass == null || metaclass == CLASS_TYPE ||
+            (metaclass instanceof PyJavaClass &&
+             ((PyJavaClass)metaclass).proxyClass == Class.class)) {
+            boolean moreGeneral = false;
+            for (PyObject base : bases) {
+                if (!(base instanceof PyClass)) {
+                    metaclass = base.getType();
+                    moreGeneral = true;
                     break;
                 }
             }
-            if (!more_general) {
+            if (!moreGeneral) {
                 return new PyClass(name, new PyTuple(bases), dict, proxyClass);
             }
         }
@@ -1525,7 +1586,16 @@ public final class Py {
             throw Py.TypeError("the meta-class cannot handle java subclassing");
         }
 
-        return metaclass.__call__(new PyString(name), new PyTuple(bases), dict);
+        try {
+            return metaclass.__call__(new PyString(name), new PyTuple(bases), dict);
+        } catch (PyException pye) {
+            if (!matchException(pye, TypeError)) {
+                throw pye;
+            }
+            pye.value = Py.newString(String.format("Error when calling the metaclass bases\n    "
+                                                   + "%s", pye.value.__str__().toString()));
+            throw pye;
+        }
     }
     private static int nameindex = 0;
 
@@ -1589,31 +1659,41 @@ public final class Py {
 
             return BytecodeLoader.makeCode(name, ostream.toByteArray(), filename);
         } catch (Throwable t) {
-            throw parser.fixParseError(null, t, filename);
+            throw ParserFacade.fixParseError(null, t, filename);
         }
     }
 
     public static PyObject compile_flags(InputStream istream, String filename,
                                  String type,CompilerFlags cflags)
     {
+        modType node = ParserFacade.parse(istream, type, filename, cflags);
         if (cflags != null && cflags.only_ast) {
-            org.python.antlr.ast.modType node = antlr.parse(istream, type, filename, cflags);
             return Py.java2py(node);
         }
 
-        modType node = parser.parse(istream, type, filename, cflags);
         boolean printResults = false;
-        if (type.equals("single"))
+        if (type.equals("single")) {
             printResults = true;
-        return Py.compile_flags(node, getName(), filename, true, printResults,
-                                cflags);
+        }
+        return Py.compile_flags(node, getName(), filename, true, printResults, cflags);
     }
 
     public static PyObject compile_flags(String data,
             String filename,
             String type,
             CompilerFlags cflags) {
-        return Py.compile_flags(new ByteArrayInputStream(StringUtil.toBytes(data + "\n\n")),
+        
+        if (data.contains("\0")) {
+            throw Py.TypeError("compile() expected string without null bytes");
+        }
+        
+        byte[] bytes;
+        if (cflags.dont_imply_dedent) {
+            bytes = StringUtil.toBytes(data + "\n");
+        } else {
+            bytes = StringUtil.toBytes(data + "\n\n");
+        }
+        return Py.compile_flags(new ByteArrayInputStream(bytes),
                 filename,
                 type,
                 cflags);
@@ -1621,46 +1701,36 @@ public final class Py {
 
     public static PyObject compile_command_flags(String string,
             String filename, String kind, CompilerFlags cflags, boolean stdprompt) {
-        modType node = parser.partialParse(string + "\n", kind, filename,
+        modType node = ParserFacade.partialParse(string + "\n", kind, filename,
                 cflags, stdprompt);
 
         if (node == null) {
             return Py.None;
         }
+
         return Py.compile_flags(node, Py.getName(), filename, true, true,
                 cflags);
     }
 
-    public static PyObject[] unpackSequence(PyObject o, int length) {
-        if (o instanceof PyTuple) {
-            PyTuple tup = (PyTuple) o;
-            //System.err.println("unpack tuple");
-            if (tup.__len__() == length) {
-                return tup.getArray();
-            }
-            throw Py.ValueError("unpack tuple of wrong size");
+    public static PyObject[] unpackSequence(PyObject obj, int length) {
+        if (obj instanceof PyTuple && obj.__len__() == length) {
+            // optimization
+            return ((PyTuple)obj).getArray();
         }
 
         PyObject[] ret = new PyObject[length];
-        PyObject iter = o.__iter__();
-        try {
-            for (int i = 0; i < length; i++) {
-                PyObject tmp = iter.__iternext__();
-                if (tmp == null) {
-                    throw Py.ValueError("unpack sequence too short");
-                }
-                ret[i] = tmp;
+        PyObject iter = obj.__iter__();
+        for (int i = 0; i < length; i++) {
+            PyObject tmp = iter.__iternext__();
+            if (tmp == null) {
+                throw Py.ValueError(String.format("need more than %d value%s to unpack", i,
+                                                  i == 1 ? "" : "s"));
             }
-        } catch (PyException exc) {
-            if (Py.matchException(exc, Py.AttributeError)) {
-                throw Py.TypeError("unpack non-sequence");
-            } else {
-                throw exc;
-            }
+            ret[i] = tmp;
         }
 
         if (iter.__iternext__() != null) {
-            throw Py.ValueError("unpack sequence too long");
+            throw Py.ValueError("too many values to unpack");
         }
         return ret;
     }
@@ -1909,6 +1979,8 @@ class JavaCode extends PyCode {
     }
 
     public PyObject call(PyFrame frame, PyObject closure) {
+        //XXX: what the heck is this?  Looks like debug code, but it's
+        //     been here a long time...
         System.out.println("call #1");
         return Py.None;
     }

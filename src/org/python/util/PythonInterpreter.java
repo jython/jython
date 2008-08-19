@@ -16,7 +16,7 @@ public class PythonInterpreter {
     protected PySystemState systemState;
     PyObject locals;
 
-    protected CompilerFlags cflags = null;
+    protected CompilerFlags cflags = new CompilerFlags();
 
     /**
      * Initializes the jython runtime. This should only be called once, and
@@ -121,6 +121,7 @@ public class PythonInterpreter {
         setState();
         Py.exec(Py.compile_flags(s, "<string>", "exec",cflags),
                 locals, locals);
+        Py.flushLine();
     }
 
     /**
@@ -131,6 +132,7 @@ public class PythonInterpreter {
     public void exec(PyObject code) {
         setState();
         Py.exec(code, locals, locals);
+        Py.flushLine();
     }
 
     /**
@@ -141,6 +143,7 @@ public class PythonInterpreter {
     public void execfile(String s) {
         setState();
         __builtin__.execfile_flags(s, locals, locals, cflags);
+        Py.flushLine();
     }
 
     public void execfile(java.io.InputStream s) {
@@ -150,6 +153,7 @@ public class PythonInterpreter {
     public void execfile(java.io.InputStream s, String name) {
         setState();
         Py.runCode((PyCode)Py.compile_flags(s, name, "exec",cflags), locals, locals);
+        Py.flushLine();
     }
 
     // Getting and setting the locals dictionary

@@ -11,6 +11,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 
 import org.python.core.Py;
+import org.python.core.PyDictionary;
 import org.python.core.PyInteger;
 import org.python.core.PyNone;
 import org.python.core.PyObject;
@@ -19,6 +20,7 @@ import org.python.core.PySystemState;
 import org.python.core.PyTuple;
 import org.python.core.PyUnicode;
 import org.python.core.codecs;
+import org.python.expose.ExposedType;
 
 public class _codecs {
 
@@ -36,6 +38,10 @@ public class _codecs {
 
     public static void register_error(String name, PyObject errorHandler) {
         codecs.register_error(name, errorHandler);
+    }
+
+    public static PyObject charmap_build(PyUnicode map) {
+        return EncodingMap.buildEncodingMap(map);
     }
 
     private static PyTuple decode_tuple(String s, int len) {
@@ -247,11 +253,21 @@ public class _codecs {
             PyObject mapping,
             StringBuilder v,
             boolean letLookupHandleError) {
+        EncodingMap encodingMap = mapping instanceof EncodingMap ? (EncodingMap)mapping : null;
         int size = str.length();
         for (int i = 0; i < size; i++) {
             char ch = str.charAt(i);
-            PyObject w = Py.newInteger(ch);
-            PyObject x = mapping.__finditem__(w);
+            PyObject x;
+            if (encodingMap != null) {
+                int result = encodingMap.lookup(ch);
+                if (result == -1) {
+                    x = null;
+                } else {
+                    x = Py.newInteger(result);
+                }
+            } else {
+                x = mapping.__finditem__(Py.newInteger(ch));
+            }
             if (x == null) {
                 if (letLookupHandleError) {
                     i = handleBadMapping(str, errors, mapping, v, size, i);
@@ -625,6 +641,156 @@ public class _codecs {
 
     public static PyTuple unicode_internal_decode(String str, String errors) {
         return decode_tuple(str, str.length());
+    }
+
+    /**
+     * Optimized charmap encoder mapping.
+     *
+     * Uses a trie structure instead of a dictionary; the speedup primarily comes from not
+     * creating integer objects in the process. The trie is created by inverting the
+     * encoding map.
+     */
+    @ExposedType(name = "EncodingMap")
+    public static class EncodingMap extends PyObject {
+
+        char[] level1;
+
+        char[] level23;
+
+        int count2;
+
+        int count3;
+
+        private EncodingMap(char[] level1, char[] level23, int count2, int count3) {
+            this.level1 = level1;
+            this.level23 = level23;
+            this.count2 = count2;
+            this.count3 = count3;
+        }
+
+        /**
+         * Create and populate an EncodingMap from a 256 length PyUnicode char. Returns a
+         * PyDictionary if the mapping isn't easily optimized.
+         *
+         * @param string a 256 length unicode mapping
+         * @return an encoder mapping
+         */
+        public static PyObject buildEncodingMap(PyObject string) {
+            if (!(string instanceof PyUnicode) || string.__len__() != 256) {
+                throw Py.TypeError("bad argument type for built-in operation");
+            }
+
+            boolean needDict = false;
+            char[] level1 = new char[32];
+            char[] level23 = new char[512];
+            int i;
+            int count2 = 0;
+            int count3 = 0;
+            String decode = string.toString();
+            for (i = 0; i < level1.length; i++) {
+                level1[i] = 0xFF;
+            }
+            for (i = 0; i < level23.length; i++) {
+                level23[i] = 0xFF;
+            }
+            if (decode.charAt(0) != 0) {
+                needDict = true;
+            }
+            for (i = 1; i < 256; i++) {
+                int l1, l2;
+                char charAt = decode.charAt(i);
+                if (charAt == 0) {
+                    needDict = true;
+                }
+                if (charAt == 0xFFFE) {
+                    // unmapped character
+                    continue;
+                }
+                l1 = charAt >> 11;
+                l2 = charAt >> 7;
+                if (level1[l1] == 0xFF) {
+                    level1[l1] = (char)count2++;
+                }
+                if (level23[l2] == 0xFF) {
+                    level23[l2] = (char)count3++;
+                }
+            }
+
+            if (count2 > 0xFF || count3 > 0xFF) {
+                needDict = true;
+            }
+
+            if (needDict) {
+                PyObject result = new PyDictionary();
+                for (i = 0; i < 256; i++) {
+                    result.__setitem__(Py.newInteger(decode.charAt(i)), Py.newInteger(i));
+                }
+                return result;
+            }
+
+            // Create a three-level trie
+            int length2 = 16 * count2;
+            int length3 = 128 * count3;
+            level23 = new char[length2 + length3];
+            PyObject result = new EncodingMap(level1, level23, count2, count3);
+            for (i = 0; i < length2; i++) {
+                level23[i] = 0xFF;
+            }
+            for (i = length2; i < length2 + length3; i++) {
+                level23[i] = 0;
+            }
+            count3 = 0;
+            for (i = 1; i < 256; i++) {
+                int o1, o2, o3, i2, i3;
+                char charAt = decode.charAt(i);
+                if (charAt == 0xFFFE) {
+                    // unmapped character
+                    continue;
+                }
+                o1 = charAt >> 11;
+                o2 = (charAt >> 7) & 0xF;
+                i2 = 16 * level1[o1] + o2;
+                if (level23[i2] == 0xFF) {
+                    level23[i2] = (char)count3++;
+                }
+                o3 = charAt & 0x7F;
+                i3 = 128 * level23[i2] + o3;
+                level23[length2 + i3] = (char)i;
+            }
+            return result;
+        }
+
+        /**
+         * Lookup a char in the EncodingMap.
+         *
+         * @param c a char
+         * @return an int, -1 for failure
+         */
+        public int lookup(char c) {
+            int l1 = c >> 11;
+            int l2 = (c >> 7) & 0xF;
+            int l3 = c & 0x7F;
+            int i;
+            if (c == 0) {
+                return 0;
+            }
+            // level 1
+            i = level1[l1];
+            if (i == 0xFF) {
+                return -1;
+            }
+            // level 2
+            i = level23[16 * i + l2];
+            if (i == 0xFF) {
+                return -1;
+            }
+            // level 3
+            i = level23[16 * count2 + 128 * i + l3];
+            if (i == 0) {
+                return -1;
+            }
+            return i;
+        }
     }
 }
 

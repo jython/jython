@@ -90,6 +90,11 @@ public class PyTraceback extends PyObject
                 i++;
             }
             line = line.substring(i);
+            if (!line.endsWith("\n")) {
+                line += "\n";
+            }
+        } else {
+            line = null;
         }
         return line;
     }

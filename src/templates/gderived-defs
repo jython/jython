@@ -36,8 +36,12 @@ define: (ClassBodyDeclarations)ibinary
   public PyObject `binary(PyObject other) {
     PyType self_type = getType();
     PyObject impl = self_type.lookup(`strfy`(`binary));
-    if (impl != null)
-      return impl.__get__(this,self_type).__call__(other);
+    if (impl != null) {
+      PyObject res = impl.__get__(this,self_type).__call__(other);
+      if (res == Py.NotImplemented)
+	return null;
+      return res;
+    }
     return super.`binary(other);
   }
 define: (ClassBodyDeclarations)unary

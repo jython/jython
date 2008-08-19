@@ -43,6 +43,7 @@ import org.python.core.PyType;
 import org.python.core.PyUnicode;
 import org.python.core.__builtin__;
 import org.python.core.codecs;
+import org.python.core.exceptions;
 import org.python.core.imp;
 
 /**
@@ -506,77 +507,43 @@ public class cPickle implements ClassDictInit {
         extension_registry = (PyDictionary)copyreg.__getattr__("_extension_registry");
         inverted_registry = (PyDictionary)copyreg.__getattr__("_inverted_registry");
 
-        PickleError       = buildClass("PickleError", Py.Exception,
-                                       "_PickleError", "");
-        PicklingError     = buildClass("PicklingError", PickleError,
-                                       "_empty__init__", "");
-        UnpickleableError = buildClass("UnpickleableError", PicklingError,
-                                       "_UnpickleableError", "");
-        UnpicklingError   = buildClass("UnpicklingError", PickleError,
-                                       "_empty__init__", "");
+        PickleError = Py.makeClass("PickleError", Py.Exception, _PickleError());
+        PicklingError = Py.makeClass("PicklingError", PickleError, exceptionNamespace());
+        UnpickleableError = Py.makeClass("UnpickleableError", PicklingError, _UnpickleableError());
+        UnpicklingError = Py.makeClass("UnpicklingError", PickleError, exceptionNamespace());
     }
 
-    // An empty __init__ method
-    public static PyObject _empty__init__(PyObject[] arg, String[] kws) {
+    public static PyObject exceptionNamespace() {
         PyObject dict = new PyStringMap();
         dict.__setitem__("__module__", new PyString("cPickle"));
         return dict;
     }
 
-    public static PyObject _PickleError(PyObject[] arg, String[] kws) {
-        PyObject dict = _empty__init__(arg, kws);
-        dict.__setitem__("__init__", getJavaFunc("_PickleError__init__"));
-        dict.__setitem__("__str__", getJavaFunc("_PickleError__str__"));
+    public static PyObject _PickleError() {
+        dict = exceptionNamespace();
+        dict.__setitem__("__str__", getJavaFunc("__str__", "_PickleError__str__"));
         return dict;
     }
 
-    public static void _PickleError__init__(PyObject[] arg, String[] kws) {
-        ArgParser ap = new ArgParser("__init__", arg, kws, "self", "args");
-        PyObject self = ap.getPyObject(0);
-        PyObject args = ap.getList(1);
-
-        self.__setattr__("args", args);
-    }
-
-    public static PyString _PickleError__str__(PyObject[] arg, String[] kws) {
-        ArgParser ap = new ArgParser("__str__", arg, kws, "self");
-        PyObject self = ap.getPyObject(0);
-
-        PyObject args = self.__getattr__("args");
-        if (args.__len__() > 0 && args.__getitem__(0).__len__()  > 0)
-            return args.__getitem__(0).__str__();
-        else
+    public static PyString _PickleError__str__(PyObject self, PyObject[] args, String[] kwargs) {
+        PyObject selfArgs = self.__getattr__("args");
+        if (selfArgs.__len__() > 0 && selfArgs.__getitem__(0).__len__()  > 0) {
+            return selfArgs.__getitem__(0).__str__();
+        } else {
             return new PyString("(what)");
+        }
     }
 
-    public static PyObject _UnpickleableError(PyObject[] arg, String[] kws) {
-        PyObject dict = _empty__init__(arg, kws);
-        dict.__setitem__("__init__",
-                                getJavaFunc("_UnpickleableError__init__"));
-        dict.__setitem__("__str__",
-                                getJavaFunc("_UnpickleableError__str__"));
+    public static PyObject _UnpickleableError() {
+        dict = exceptionNamespace();
+        dict.__setitem__("__str__", getJavaFunc("__str__", "_UnpickleableError__str__"));
         return dict;
     }
 
-    public static void _UnpickleableError__init__(PyObject[] arg,
-                                                  String[] kws)
-    {
-        ArgParser ap = new ArgParser("__init__", arg, kws, "self", "args");
-        PyObject self = ap.getPyObject(0);
-        PyObject args = ap.getList(1);
-
-        self.__setattr__("args", args);
-    }
-
-    public static PyString _UnpickleableError__str__(PyObject[] arg,
-                                                     String[] kws)
-    {
-        ArgParser ap = new ArgParser("__str__", arg, kws, "self");
-        PyObject self = ap.getPyObject(0);
-
-        PyObject args = self.__getattr__("args");
-        PyObject a = args.__len__() > 0 ? args.__getitem__(0) :
-                                new PyString("(what)");
+    public static PyString _UnpickleableError__str__(PyObject self, PyObject[] args,
+                                                     String[] kwargs) {
+        PyObject selfArgs = self.__getattr__("args");
+        PyObject a = selfArgs.__len__() > 0 ? selfArgs.__getitem__(0) : new PyString("(what)");
         return new PyString("Cannot pickle %s objects").__mod__(a).__str__();
     }
 
@@ -2409,21 +2376,7 @@ public class cPickle implements ClassDictInit {
         return __builtin__.__import__(name, null, null, fromlist);
     }
 
-    private static PyObject getJavaFunc(String name) {
-        return Py.newJavaFunc(cPickle.class, name);
-    }
-
-    private static PyObject buildClass(String classname,
-                                       PyObject superclass,
-                                       String classCodeName,
-                                       String doc) {
-        PyObject[] sclass = Py.EmptyObjects;
-        if (superclass != null)
-             sclass = new PyObject[] { superclass };
-        PyObject cls = Py.makeClass(
-                            classname, sclass,
-                            Py.newJavaCode(cPickle.class, classCodeName),
-                            new PyString(doc));
-        return cls;
+    private static PyObject getJavaFunc(String name, String methodName) {
+        return exceptions.bindStaticJavaMethod(name, cPickle.class, methodName);
     }
 }
