@@ -38,22 +38,23 @@ public class PythonTreeTester {
         PythonParser parser = new PythonParser(tokens);
         parser.setErrorHandler(eh);
         parser.setTreeAdaptor(new PythonTreeAdaptor());
-        Tree r = null;
+        PythonTree r = null;
         switch (_block) {
         case MODULE :
-            r = (Tree)parser.file_input().tree;
+            r = (PythonTree)parser.file_input().tree;
             break;
         case INTERACTIVE :
-            r = (Tree)parser.single_input().tree;
+            r = (PythonTree)parser.single_input().tree;
             break;
         case EXPRESSION :
-            r = (Tree)parser.eval_input().tree;
+            r = (PythonTree)parser.eval_input().tree;
                 break;
         }
         if (args.length > 1) {
-            System.out.println((r).toStringTree());
+            System.out.println(r.toStringTree());
         }
         if (!isParseOnly()) {
+            /*
             CommonTreeNodeStream nodes = new CommonTreeNodeStream(r);
             nodes.setTokenStream(tokens);
             PythonWalker walker = new PythonWalker(nodes);
@@ -73,6 +74,7 @@ public class PythonTreeTester {
             if (args.length > 1) {
                 System.out.println(result.toStringTree());
             }
+            */
         }
         return result;
     }

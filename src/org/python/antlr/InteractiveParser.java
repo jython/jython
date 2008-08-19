@@ -39,11 +39,11 @@ public class InteractiveParser extends BaseParser {
 
         try {
             PythonParser.single_input_return r = parser.single_input();
-            CommonTreeNodeStream nodes = new CommonTreeNodeStream((Tree)r.tree);
-            nodes.setTokenStream(tokens);
-            PythonWalker walker = new PythonWalker(nodes);
-            walker.setErrorHandler(errorHandler);
-            tree = walker.interactive();
+            //CommonTreeNodeStream nodes = new CommonTreeNodeStream((Tree)r.tree);
+            //nodes.setTokenStream(tokens);
+            //PythonWalker walker = new PythonWalker(nodes);
+            //walker.setErrorHandler(errorHandler);
+            //tree = (modType)walker.interactive();
         } catch (RecognitionException e) {
             //I am only throwing ParseExceptions, but "throws RecognitionException" still gets
             //into the generated code.

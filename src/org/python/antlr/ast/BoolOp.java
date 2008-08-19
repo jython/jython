@@ -12,6 +12,10 @@ public class BoolOp extends exprType {
 
     public static final String[] _fields = new String[] {"op","values"};
 
+    public BoolOp(Token token) {
+        super(token);
+    }
+
     public BoolOp(Token token, boolopType op, exprType[] values) {
         super(token);
         this.op = op;

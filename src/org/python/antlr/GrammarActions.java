@@ -16,6 +16,7 @@ import org.python.antlr.ast.aliasType;
 import org.python.antlr.ast.argumentsType;
 import org.python.antlr.ast.boolopType;
 import org.python.antlr.ast.comprehensionType;
+import org.python.antlr.ast.Context;
 import org.python.antlr.ast.cmpopType;
 import org.python.antlr.ast.excepthandlerType;
 import org.python.antlr.ast.exprType;
@@ -96,6 +97,55 @@ public class GrammarActions {
         this.errorHandler = eh;
     }
 
+    String makeFromText(List dots, String name) {
+        StringBuffer d = new StringBuffer();
+        if (dots != null) {
+            for (int i=0;i<dots.size();i++) {
+                d.append(".");
+            }
+        }
+        if (name != null) {
+            d.append(name);
+        }
+        return d.toString();
+    }
+
+    int makeLevel(List lev) {
+        if (lev == null) {
+            return 0;
+        }
+        return lev.size();
+    }
+
+    aliasType[] makeStarAlias(Token t) {
+        return new aliasType[]{new aliasType(t, "*", null)};
+    }
+
+    aliasType[] makeAliases(aliasType[] atypes) {
+        if (atypes == null) {
+            return new aliasType[0];
+        }
+        return atypes;
+    }
+
+    exprType[] makeBases(exprType etype) {
+        if (etype != null) {
+            if (etype instanceof Tuple) {
+                return ((Tuple)etype).elts;
+            }
+            return new exprType[]{etype};
+        }
+        return new exprType[0];
+    }
+
+    String[] makeNames(List names) {
+        List<String> s = new ArrayList<String>();
+        for(int i=0;i<names.size();i++) {
+            s.add(((Token)names.get(i)).getText());
+        }
+        return s.toArray(new String[s.size()]);
+    }
+
     void errorGenExpNotSoleArg(PythonTree t) {
         errorHandler.error("Generator expression must be parenthesized if not sole argument", t);
     }
@@ -108,19 +158,42 @@ public class GrammarActions {
         if (exprs != null) {
             List<exprType> result = new ArrayList<exprType>();
             for (int i=start; i<exprs.size(); i++) {
-                exprType e = (exprType)exprs.get(i);
-                result.add(e);
+                Object o = exprs.get(i);
+                if (o instanceof exprType) {
+                    result.add((exprType)o);
+                } else if (o instanceof PythonParser.test_return) {
+                    result.add((exprType)((PythonParser.test_return)o).tree);
+                }
             }
-            return (exprType[])result.toArray(new exprType[result.size()]);
+            return result.toArray(new exprType[result.size()]);
         }
         return new exprType[0];
+    }
+    
+    stmtType[] makeElses(List elseSuite, List elifs) {
+        stmtType[] o;
+        o = makeStmts(elseSuite);
+        if (elifs != null) {
+            ListIterator iter = elifs.listIterator(elifs.size());
+            while (iter.hasPrevious()) {
+                If elif = (If)iter.previous();
+                elif.orelse = o;
+                o = new stmtType[]{elif};
+            }
+        }
+        return o;
     }
 
     stmtType[] makeStmts(List stmts) {
         if (stmts != null) {
             List<stmtType> result = new ArrayList<stmtType>();
             for (int i=0; i<stmts.size(); i++) {
-                result.add((stmtType)stmts.get(i));
+                Object o = stmts.get(i);
+                if (o instanceof stmtType) {
+                    result.add((stmtType)o);
+                } else {
+                    result.add((stmtType)((PythonParser.stmt_return)o).tree);
+                }
             }
             return (stmtType[])result.toArray(new stmtType[result.size()]);
         }
@@ -137,6 +210,50 @@ public class GrammarActions {
         return current;
     }
 
+    stmtType makeWhile(Token t, exprType test, List body, List orelse) {
+        if (test == null) {
+            return errorHandler.errorStmt(new PythonTree(t));
+        }
+        stmtType[] o = makeStmts(orelse);
+        stmtType[] b = makeStmts(body);
+        return new While(t, test, b, o);
+    }
+
+    stmtType makeFor(Token t, exprType target, exprType iter, List body, List orelse) {
+        if (target == null || iter == null) {
+            return errorHandler.errorStmt(new PythonTree(t));
+        }
+
+        stmtType[] o = makeStmts(orelse);
+        stmtType[] b = makeStmts(body);
+        return new For(t, target, iter, b, o);
+    }
+
+    stmtType makeTryExcept(Token t, List body, List handlers, List orelse, List finBody) {
+        stmtType[] b = (stmtType[])body.toArray(new stmtType[body.size()]);
+        excepthandlerType[] e = (excepthandlerType[])handlers.toArray(new excepthandlerType[handlers.size()]);
+        stmtType[] o;
+        if (orelse != null) {
+            o = (stmtType[])orelse.toArray(new stmtType[orelse.size()]);
+        } else {
+            o = new stmtType[0];
+        }
+ 
+        stmtType te = new TryExcept(t, b, e, o);
+        if (finBody == null) {
+            return te;
+        }
+        stmtType[] f = (stmtType[])finBody.toArray(new stmtType[finBody.size()]);
+        stmtType[] mainBody = new stmtType[]{te};
+        return new TryFinally(t, mainBody, f);
+    }
+
+    TryFinally makeTryFinally(Token t,  List body, List finBody) {
+        stmtType[] b = (stmtType[])body.toArray(new stmtType[body.size()]);
+        stmtType[] f = (stmtType[])finBody.toArray(new stmtType[finBody.size()]);
+        return new TryFinally(t, b, f);
+    }
+ 
     stmtType makeFunctionDef(PythonTree t, PythonTree nameToken, argumentsType args, List funcStatements, List decorators) {
         if (nameToken == null) {
             return errorHandler.errorStmt(t);
@@ -158,10 +275,41 @@ public class GrammarActions {
         return new FunctionDef(t, nameToken.getText(), a, s, d);
     }
 
+    exprType[] makeAssignTargets(exprType lhs, List rhs) {
+        exprType[] e = new exprType[rhs.size()];
+        e[0] = lhs;
+        for(int i=0;i<rhs.size() - 1;i++) {
+            Object o = rhs.get(i);
+            if (o instanceof PythonParser.testlist_return) {
+                //XXX: Check to see if this is really happening anymore
+                PythonParser.testlist_return r = (PythonParser.testlist_return)o;
+                e[i] = (exprType)r.getTree();
+            } else {
+                e[i] = (exprType)o;
+            }
+        }
+        return e;
+    }
+
+    exprType makeAssignValue(List rhs) {
+        exprType value = (exprType)rhs.get(rhs.size() -1);
+
+        if (value instanceof Context) {
+            //XXX: for Tuples, etc -- will need to recursively set to expr_contextType.Load.
+            ((Context)value).setContext(expr_contextType.Load);
+        }
+        return value;
+    }
+
     argumentsType makeArgumentsType(Token t, List params, Token snameToken,
         Token knameToken, List defaults) {
 
-        exprType[] p = (exprType[])params.toArray(new exprType[params.size()]);
+        exprType[] p;
+        if (params == null) {
+            p = new exprType[0];
+        } else {
+            p = (exprType[])params.toArray(new exprType[params.size()]);
+        }
         exprType[] d = (exprType[])defaults.toArray(new exprType[defaults.size()]);
         String s;
         String k;
@@ -178,7 +326,25 @@ public class GrammarActions {
         return new argumentsType(t, p, s, k, d);
     }
 
+    exprType[] extractArgs(List args) {
+        if (args == null) {
+            return new exprType[0];
+        }
+        return (exprType[])args.toArray(new exprType[args.size()]);
+    }
 
+    keywordType[] makeKeywords(List args) {
+        List<keywordType> k = new ArrayList<keywordType>();
+        if (args != null) {
+            for(int i=0;i<args.size();i++) {
+                exprType[] e = (exprType[])args.get(i);
+                Name arg = (Name)e[0];
+                k.add(new keywordType(arg, arg.id, e[1]));
+            }
+            return k.toArray(new keywordType[k.size()]);
+        }
+        return new keywordType[0];
+    }
 
     Object makeFloat(Token t) {
         return Py.newFloat(Double.valueOf(t.getText()));
@@ -393,7 +559,6 @@ public class GrammarActions {
         return new If(t, test, b, o);
     }
 
-
     stmtType makeWhile(PythonTree t, exprType test, List body, List orelse) {
         if (test == null) {
             return errorHandler.errorStmt(t);
@@ -444,6 +609,10 @@ public class GrammarActions {
             k = (keywordType[])keywords.toArray(new keywordType[keywords.size()]);
         }
         return new Call(t, func, a, k, starargs, kwargs);
+    }
+
+    exprType negate(Token t, exprType o) {
+        return negate(new PythonTree(t), o);
     }
 
     exprType negate(PythonTree t, exprType o) {
@@ -510,4 +679,49 @@ public class GrammarActions {
         }
     }
 
+    sliceType makeSubscript(PythonTree lower, Token colon, PythonTree upper, PythonTree sliceop) {
+            boolean isSlice = false;
+        exprType s = null;
+        exprType e = null;
+        exprType o = null;
+        if (lower != null) {
+            s = (exprType)lower;
+        }
+        if (colon != null) {
+            isSlice = true;
+            if (upper != null) {
+                e = (exprType)upper;
+            }
+        }
+        if (sliceop != null) {
+            isSlice = true;
+            if (sliceop != null) {
+                o = (exprType)sliceop;
+            } else {
+                o = new Name(sliceop, "None", expr_contextType.Load);
+            }
+        }
+
+        PythonTree tok = lower;
+        if (lower == null) {
+            tok = new PythonTree(colon);
+        }
+        if (isSlice) {
+           return new Slice(tok, s, e, o);
+        }
+        else {
+           return new Index(tok, s);
+        }
+    }
+
+    cmpopType[] makeCmpOps(List cmps) {
+        if (cmps != null) {
+            List<cmpopType> result = new ArrayList<cmpopType>();
+            for (Object o: cmps) {
+                result.add((cmpopType)o);
+            }
+            return result.toArray(new cmpopType[result.size()]);
+        }
+        return new cmpopType[0];
+    }
 }
