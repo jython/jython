@@ -281,7 +281,7 @@ public class PyObject implements Serializable {
      *
      * @param arg0     the first argument to the function.
      * @param arg1     the second argument to the function.
-n     **/
+     **/
     public PyObject __call__(PyObject arg0, PyObject arg1) {
         return __call__(new PyObject[] { arg0, arg1 }, Py.NoKeywords);
     }

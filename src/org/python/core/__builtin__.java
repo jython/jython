@@ -1410,7 +1410,7 @@ class MaxFunction extends PyObject {
     
     @Override
     public String toString() {
-        return "<built-in function min>";
+        return "<built-in function max>";
     }
     
     private static PyObject max(PyObject o, PyObject key) {
