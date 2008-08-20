@@ -78,17 +78,7 @@ tokens {
     PYNODE;
     Interactive;
     Expression;
-    Ellipsis;
-    ListComp;
-    Target;
     GeneratorExp;
-    Ifs;
-    Elts;
-
-    GenFor;
-    GenIf;
-    ListIf;
-
 }
 
 @header {
@@ -133,6 +123,7 @@ import org.python.antlr.ast.Import;
 import org.python.antlr.ast.ImportFrom;
 import org.python.antlr.ast.Index;
 import org.python.antlr.ast.keywordType;
+import org.python.antlr.ast.ListComp;
 import org.python.antlr.ast.Lambda;
 import org.python.antlr.ast.modType;
 import org.python.antlr.ast.Module;
@@ -162,6 +153,7 @@ import org.python.core.PyString;
 import org.python.core.PyUnicode;
 
 import java.math.BigInteger;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.ListIterator;
 } 
@@ -1011,26 +1003,37 @@ atom : LPAREN
      ;
 
 //listmaker: test ( list_for | (',' test)* [','] )
-listmaker returns [exprType etype]
+listmaker
+@init {
+    List gens = new ArrayList();
+    exprType etype = null;
+}
 @after {
-   $listmaker.tree = $etype;
+   $listmaker.tree = etype;
 }
     : t+=test[expr_contextType.Load] 
-            ( list_for -> ^(ListComp test list_for)
+            ( list_for[gens] {
+                Collections.reverse(gens);
+                comprehensionType[] c = (comprehensionType[])gens.toArray(new comprehensionType[gens.size()]);
+                etype = new ListComp($listmaker.start, (exprType)$t.get(0), c);
+            }
             | (options {greedy=true;}:COMMA t+=test[expr_contextType.Load])* {
-                $etype = new org.python.antlr.ast.List($listmaker.start, actions.makeExprs($t), $expr::ctype);
+                etype = new org.python.antlr.ast.List($listmaker.start, actions.makeExprs($t), $expr::ctype);
             }
             ) (COMMA)?
           ;
 
 //testlist_gexp: test ( gen_for | (',' test)* [','] )
 testlist_gexp
+@init {
+    List gens = new ArrayList();
+}
     : t+=test[expr_contextType.Load]
         ( ((options {k=2;}: c1=COMMA t+=test[expr_contextType.Load])* (c2=COMMA)?
          -> { $c1 != null || $c2 != null }? ^(PYNODE<Tuple>[$testlist_gexp.start, actions.makeExprs($t), $expr::ctype])
          -> test
           )
-        | ( gen_for -> ^(GeneratorExp test gen_for)
+        | ( gen_for[gens] -> ^(GeneratorExp test gen_for)
           )
         )
     ;
@@ -1194,44 +1197,73 @@ arglist returns [List args, List keywords, exprType starargs, exprType kwargs]
 
 //argument: test [gen_for] | test '=' test  # Really [keyword '='] test
 argument[List arguments, List kws]
+@init {
+    List gens = new ArrayList();
+}
     : t1=test[expr_contextType.Load]
         ( (ASSIGN t2=test[expr_contextType.Load]) {
             $kws.add(new exprType[]{(exprType)$t1.tree, (exprType)$t2.tree});
         }
-        | gen_for //FIXME
+        | gen_for[gens] //FIXME
         | {$arguments.add($t1.tree);}
         )
     ;
 
 //list_iter: list_for | list_if
-list_iter : list_for
-          | list_if
-          ;
+list_iter [List gens] returns [exprType etype]
+    : list_for[gens]
+    | list_if[gens] {
+        $etype = $list_if.etype;
+    }
+    ;
 
 //list_for: 'for' exprlist 'in' testlist_safe [list_iter]
-list_for : FOR exprlist[expr_contextType.Load] IN testlist[expr_contextType.Load] (list_iter)?
-        -> ^(FOR<comprehensionType>[$FOR, $exprlist.etype, (exprType)$testlist.tree, null])
-         ;
+list_for [List gens]
+    : FOR exprlist[expr_contextType.Load] IN testlist[expr_contextType.Load] (list_iter[gens])? {
+        exprType[] e;
+        if ($list_iter.etype != null) {
+            e = new exprType[]{$list_iter.etype};
+        } else {
+            e = new exprType[0];
+        }
+        gens.add(new comprehensionType($FOR, $exprlist.etype, (exprType)$testlist.tree, e));
+    }
+    ;
 
 //list_if: 'if' test [list_iter]
-list_if : IF test[expr_contextType.Load] (list_iter)?
-       -> ^(ListIf ^(Target test) (Ifs list_iter)?)
-        ;
+list_if[List gens] returns [exprType etype]
+    : IF test[expr_contextType.Load] (list_iter[gens])? {
+        $etype = (exprType)$test.tree;
+    }
+    ;
 
 //gen_iter: gen_for | gen_if
-gen_iter: gen_for
-        | gen_if
-        ;
+gen_iter [List gens] returns [exprType etype]
+    : gen_for[gens]
+    | gen_if[gens] {
+        $etype = $gen_if.etype;
+    }
+    ;
 
 //gen_for: 'for' exprlist 'in' or_test [gen_iter]
-gen_for: FOR exprlist[expr_contextType.Load] IN or_test[expr_contextType.Load] gen_iter?
-      -> ^(GenFor ^(Target exprlist) ^(IN or_test) ^(Ifs gen_iter)?)
+gen_for [List gens]
+    :FOR exprlist[expr_contextType.Load] IN or_test[expr_contextType.Load] gen_iter[gens]? {
+        exprType[] e;
+        if ($gen_iter.etype != null) {
+            e = new exprType[]{$gen_iter.etype};
+        } else {
+            e = new exprType[0];
+        }
+        gens.add(new comprehensionType($FOR, $exprlist.etype, (exprType)$or_test.tree, e));
+    }
        ;
 
 //gen_if: 'if' old_test [gen_iter]
-gen_if: IF test[expr_contextType.Load] gen_iter?
-     -> ^(GenIf ^(Target test) ^(Ifs gen_iter)?)
-      ;
+gen_if[List gens] returns [exprType etype]
+    : IF test[expr_contextType.Load] gen_iter[gens]? {
+        $etype = (exprType)$test.tree;
+    }
+    ;
 
 //yield_expr: 'yield' [testlist]
 yield_expr : YIELD testlist[expr_contextType.Load]?

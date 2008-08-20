@@ -318,9 +318,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
              change to grammar files.  If you are working on the grammars you might
              want to comment this out, as a clean is really only needed if you change
              the tokens defined in Python.g (and cleans make the build slow) -->
-        <antcall target="clean"/>
         <!-- force jarjar build -->
-        <property name="jarjar.needed" value="true" />
     </target>
 
     <target name ="prepare-output" depends="init,needed-check,clean-if-antlr-needed,make-output-dirs"/>
