@@ -24,7 +24,7 @@ if not "%JAVA_HOME%" == "" (
 set _JYTHON_HOME=%JYTHON_HOME%
 if not "%JYTHON_HOME%" == "" goto gotHome
 pushd "%~dp0%\.."
-set _JYTHON_HOME=%CD%
+set _JYTHON_HOME="%CD%"
 popd
 
 :gotHome
