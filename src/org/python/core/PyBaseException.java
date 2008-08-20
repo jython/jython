@@ -166,23 +166,20 @@ public class PyBaseException extends PyObject {
         }
     }
 
+    @Override
     public String toString() {
-        return __repr__().toString();
-    }
-        
-    public PyString __repr__() {
-        return BaseException___repr__();
+        return BaseException_toString();
     }
 
-    @ExposedMethod
-    final PyString BaseException___repr__() {
+    @ExposedMethod(names = ("__repr__"))
+    final String BaseException_toString() {
         PyObject reprSuffix = args.__repr__();
         String name = getType().fastGetName();
         int lastDot = name.lastIndexOf('.');
         if (lastDot != -1) {
             name = name.substring(lastDot + 1);
         }
-        return Py.newString(name + reprSuffix.toString());
+        return name + reprSuffix.toString();
     }
 
     @ExposedSet(name = "args")

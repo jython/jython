@@ -117,6 +117,7 @@ import org.python.antlr.ast.Context;
 import org.python.antlr.ast.Continue;
 import org.python.antlr.ast.Delete;
 import org.python.antlr.ast.Dict;
+import org.python.antlr.ast.Ellipsis;
 import org.python.antlr.ast.excepthandlerType;
 import org.python.antlr.ast.Exec;
 import org.python.antlr.ast.Expr;
@@ -1092,7 +1093,7 @@ subscript returns [sliceType sltype]
         $subscript.tree = $sltype;
     }
 }
-    : DOT DOT DOT -> Ellipsis
+    : d1=DOT DOT DOT -> DOT<Ellipsis>[$d1]
     | (test[expr_contextType.Load] COLON) => lower=test[expr_contextType.Load] (c1=COLON (upper1=test[expr_contextType.Load])? (sliceop)?)? {
         $sltype = actions.makeSubscript($lower.tree, $c1, $upper1.tree, $sliceop.tree);
     }
