@@ -80,7 +80,6 @@ tokens {
     Expression;
     Ellipsis;
     ListComp;
-    Repr;
     Target;
     GeneratorExp;
     Ifs;
@@ -88,7 +87,6 @@ tokens {
 
     GenFor;
     GenIf;
-    ListFor;
     ListIf;
 
 }
@@ -139,10 +137,11 @@ import org.python.antlr.ast.modType;
 import org.python.antlr.ast.Module;
 import org.python.antlr.ast.Name;
 import org.python.antlr.ast.Num;
+import org.python.antlr.ast.operatorType;
 import org.python.antlr.ast.Pass;
 import org.python.antlr.ast.Print;
 import org.python.antlr.ast.Raise;
-import org.python.antlr.ast.operatorType;
+import org.python.antlr.ast.Repr;
 import org.python.antlr.ast.Return;
 import org.python.antlr.ast.Slice;
 import org.python.antlr.ast.sliceType;
@@ -775,7 +774,7 @@ suite returns [List stmts]
 //test: or_test ['if' or_test 'else' test] | lambdef
 test[expr_contextType ctype]
     :o1=or_test[ctype]
-    ( (IF or_test[expr_contextType.Load] ORELSE) => IF o2=or_test[expr_contextType.Load] ORELSE e=test[expr_contextType.Load]
+    ( (IF or_test[expr_contextType.Load] ORELSE) => IF o2=or_test[ctype] ORELSE e=test[expr_contextType.Load]
       -> ^(IF<IfExp>[$IF, (exprType)$o2.tree, (exprType)$o1.tree, (exprType)$e.tree])
     | -> or_test
     )
@@ -1000,7 +999,7 @@ atom : LPAREN
        | -> ^(LCURLY<Dict>[$LCURLY, new exprType[0\], new exprType[0\]])
        )
        RCURLY
-     | BACKQUOTE testlist[expr_contextType.Load] BACKQUOTE -> ^(Repr BACKQUOTE testlist)
+     | lb=BACKQUOTE testlist[expr_contextType.Load] rb=BACKQUOTE -> ^(BACKQUOTE<Repr>[$lb, (exprType)$testlist.tree])
      | NAME -> ^(PYNODE<Name>[$NAME, $NAME.text, $expr::ctype])
      | INT -> ^(PYNODE<Num>[$INT, actions.makeInt($INT)])
      | LONGINT -> ^(PYNODE<Num>[$LONGINT, actions.makeInt($LONGINT)])
