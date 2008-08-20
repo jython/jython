@@ -87,7 +87,7 @@ public class imp {
 
     static PyObject createFromPyClass(String name, InputStream fp,
             boolean testing, String fileName) {
-        byte[] data = unmarshalCode(name, fp, testing);
+        byte[] data = readCode(name, fp, testing);
         if (testing && data == null) {
             return null;
         }
@@ -107,8 +107,7 @@ public class imp {
         return createFromCode(name, code, fileName);
     }
     
-    public static byte[] unmarshalCode(String name, InputStream fp,
-            boolean testing) {
+    public static byte[] readCode(String name, InputStream fp, boolean testing) {
         byte[] data = readBytes(fp);
         int n = data.length;
 

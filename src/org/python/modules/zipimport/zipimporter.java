@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.EnumSet;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -51,19 +52,22 @@ public class zipimporter extends PyObject {
 
     /** zip_searchorder defines how we search for a module in the Zip
      * archive */
-    static final int IS_SOURCE = 0;
-    static final int IS_BYTECODE = 1;
-    static final int IS_PACKAGE = 2;
+    static enum EntryType {
+        IS_SOURCE, IS_BYTECODE, IS_PACKAGE
+    };
     static final SearchOrderEntry[] zip_searchorder = new SearchOrderEntry[] {
-        new SearchOrderEntry(File.separator + "__init__$py.class", IS_PACKAGE | IS_BYTECODE),
-        new SearchOrderEntry(File.separator + "__init__.py", IS_PACKAGE | IS_SOURCE),
-        new SearchOrderEntry("$py.class", IS_BYTECODE),
-        new SearchOrderEntry(".py", IS_SOURCE),
-        new SearchOrderEntry("", 0)
+        new SearchOrderEntry(File.separator + "__init__$py.class",
+                             EnumSet.of(EntryType.IS_PACKAGE, EntryType.IS_BYTECODE)),
+        new SearchOrderEntry(File.separator + "__init__.py",
+                             EnumSet.of(EntryType.IS_PACKAGE, EntryType.IS_SOURCE)),
+        new SearchOrderEntry("$py.class", EnumSet.of(EntryType.IS_BYTECODE)),
+        new SearchOrderEntry(".py", EnumSet.of(EntryType.IS_SOURCE)),
     };
 
     /** Module information */
-    static enum ModuleInfo {ERROR, NOT_FOUND, MODULE, PACKAGE};
+    static enum ModuleInfo {
+        ERROR, NOT_FOUND, MODULE, PACKAGE
+    };
 
     /** Pathname of the Zip archive */
     @ExposedGet
@@ -366,7 +370,7 @@ public class zipimporter extends PyObject {
             if (tocEntry == null)
                 continue;
 
-            if ((entry.type & IS_PACKAGE) == IS_PACKAGE) {
+            if (entry.type.contains(EntryType.IS_PACKAGE)) {
                 return ModuleInfo.PACKAGE;
             }
             return ModuleInfo.MODULE;
@@ -399,8 +403,8 @@ public class zipimporter extends PyObject {
                 continue;
             }
 
-            boolean ispackage = (entry.type & IS_PACKAGE) == IS_PACKAGE;
-            boolean isbytecode = (entry.type & IS_BYTECODE) == IS_BYTECODE;
+            boolean ispackage = entry.type.contains(EntryType.IS_PACKAGE);
+            boolean isbytecode = entry.type.contains(EntryType.IS_BYTECODE);
 
             if (isbytecode && isOutdatedBytecode(searchPath, tocEntry)) {
                 continue;
@@ -410,7 +414,7 @@ public class zipimporter extends PyObject {
             ZipBundle zipBundle = getDataStream(searchPath);
             byte[] codeBytes;
             if (isbytecode) {
-                codeBytes = imp.unmarshalCode(fullname, zipBundle.inputStream, true);
+                codeBytes = imp.readCode(fullname, zipBundle.inputStream, true);
             }
             else {
                 codeBytes = imp.compileSource(fullname, zipBundle.inputStream, pathToEntry);
@@ -422,7 +426,6 @@ public class zipimporter extends PyObject {
                 continue;
             }
 
-            imp.cacheCompiledSource(pathToEntry, null, codeBytes);
             PyCode code = BytecodeLoader.makeCode(fullname + "$py", codeBytes, pathToEntry);
             return new ModuleCodeData(code, ispackage, pathToEntry);
         }
@@ -661,9 +664,9 @@ public class zipimporter extends PyObject {
      */
     protected static class SearchOrderEntry {
         public String suffix;
-        public int type;
+        public EnumSet type;
 
-        public SearchOrderEntry(String suffix, int type) {
+        public SearchOrderEntry(String suffix, EnumSet type) {
             this.suffix = suffix;
             this.type = type;
         }

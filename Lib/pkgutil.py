@@ -22,7 +22,7 @@ __all__ = [
 # accessed by _imp here
 
 def read_jython_code(fullname, file, filename):
-    data = _imp.unmarshalCode(filename, file, False)
+    data = _imp.readCode(filename, file, False)
     return BytecodeLoader.makeCode(fullname + "$py", data, filename)
 
 def simplegeneric(func):
