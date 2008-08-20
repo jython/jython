@@ -78,7 +78,6 @@ tokens {
     PYNODE;
     Interactive;
     Expression;
-    GeneratorExp;
 }
 
 @header {
@@ -116,6 +115,7 @@ import org.python.antlr.ast.expr_contextType;
 import org.python.antlr.ast.ExtSlice;
 import org.python.antlr.ast.For;
 import org.python.antlr.ast.FunctionDef;
+import org.python.antlr.ast.GeneratorExp;
 import org.python.antlr.ast.Global;
 import org.python.antlr.ast.If;
 import org.python.antlr.ast.IfExp;
@@ -1026,14 +1026,24 @@ listmaker
 //testlist_gexp: test ( gen_for | (',' test)* [','] )
 testlist_gexp
 @init {
+    exprType etype = null;
     List gens = new ArrayList();
+}
+@after {
+    if (etype != null) {
+        $testlist_gexp.tree = etype;
+    }
 }
     : t+=test[expr_contextType.Load]
         ( ((options {k=2;}: c1=COMMA t+=test[expr_contextType.Load])* (c2=COMMA)?
          -> { $c1 != null || $c2 != null }? ^(PYNODE<Tuple>[$testlist_gexp.start, actions.makeExprs($t), $expr::ctype])
          -> test
           )
-        | ( gen_for[gens] -> ^(GeneratorExp test gen_for)
+        | ( gen_for[gens] {
+                Collections.reverse(gens);
+                comprehensionType[] c = (comprehensionType[])gens.toArray(new comprehensionType[gens.size()]);
+                etype = new GeneratorExp($gen_for.start, (exprType)$t.get(0), c);
+            }
           )
         )
     ;
@@ -1219,7 +1229,7 @@ list_iter [List gens] returns [exprType etype]
 
 //list_for: 'for' exprlist 'in' testlist_safe [list_iter]
 list_for [List gens]
-    : FOR exprlist[expr_contextType.Load] IN testlist[expr_contextType.Load] (list_iter[gens])? {
+    : FOR exprlist[expr_contextType.Store] IN testlist[expr_contextType.Load] (list_iter[gens])? {
         exprType[] e;
         if ($list_iter.etype != null) {
             e = new exprType[]{$list_iter.etype};
@@ -1247,7 +1257,7 @@ gen_iter [List gens] returns [exprType etype]
 
 //gen_for: 'for' exprlist 'in' or_test [gen_iter]
 gen_for [List gens]
-    :FOR exprlist[expr_contextType.Load] IN or_test[expr_contextType.Load] gen_iter[gens]? {
+    :FOR exprlist[expr_contextType.Store] IN or_test[expr_contextType.Load] gen_iter[gens]? {
         exprType[] e;
         if ($gen_iter.etype != null) {
             e = new exprType[]{$gen_iter.etype};
