@@ -78,10 +78,6 @@ tokens {
     PYNODE;
     Interactive;
     Expression;
-    Test;
-    Body;
-    Dict;
-    IfExp;
     Ellipsis;
     ListComp;
     Repr;
@@ -133,6 +129,7 @@ import org.python.antlr.ast.For;
 import org.python.antlr.ast.FunctionDef;
 import org.python.antlr.ast.Global;
 import org.python.antlr.ast.If;
+import org.python.antlr.ast.IfExp;
 import org.python.antlr.ast.Import;
 import org.python.antlr.ast.ImportFrom;
 import org.python.antlr.ast.Index;
@@ -778,8 +775,8 @@ suite returns [List stmts]
 //test: or_test ['if' or_test 'else' test] | lambdef
 test[expr_contextType ctype]
     :o1=or_test[ctype]
-    ( (IF or_test[expr_contextType.Load] ORELSE) => IF o2=or_test[ctype] ORELSE test[expr_contextType.Load]
-      -> ^(IfExp ^(Test $o2) ^(Body $o1) ^(ORELSE test))
+    ( (IF or_test[expr_contextType.Load] ORELSE) => IF o2=or_test[expr_contextType.Load] ORELSE e=test[expr_contextType.Load]
+      -> ^(IF<IfExp>[$IF, (exprType)$o2.tree, (exprType)$o1.tree, (exprType)$e.tree])
     | -> or_test
     )
     | lambdef {debug("parsed lambdef");}
