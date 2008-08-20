@@ -547,8 +547,8 @@ printlist2 returns [boolean newline, List elts]
 
 
 //del_stmt: 'del' exprlist
-del_stmt : DELETE exprlist2
-        -> ^(DELETE<Delete>[$DELETE, actions.makeExprs($exprlist2.etypes)])
+del_stmt : DELETE del_list
+        -> ^(DELETE<Delete>[$DELETE, actions.makeExprs($del_list.etypes)])
          ;
 
 //pass_stmt: 'pass'
@@ -1115,10 +1115,10 @@ exprlist[expr_contextType ctype] returns [exprType etype]
     }
     ;
 
-//XXX: I'm hoping I can get rid of this -- but for now I need an exprlist that does not produce tuples
+//XXX: I'm hoping I can get rid of this and merge it back with exprlist -- but for now I need an exprlist that does not produce tuples
 //     at least for del_stmt
-exprlist2 returns [List etypes]
-    : e+=expr[expr_contextType.Load] (options {k=2;}: COMMA e+=expr[expr_contextType.Load])* (COMMA)?
+del_list returns [List etypes]
+    : e+=expr[expr_contextType.Del] (options {k=2;}: COMMA e+=expr[expr_contextType.Del])* (COMMA)?
     {$etypes = $e;}
     ;
 
