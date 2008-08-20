@@ -282,6 +282,20 @@ public class PyFrame extends PyObject
         throw Py.NameError(String.format(NAME_ERROR_MSG, index));
     }
 
+    public PyObject getname_or_null(String index) {
+        PyObject ret;
+        if (f_locals == null || f_locals == f_globals) {
+            ret = doGetglobal(index);
+        } else {
+            ret = f_locals.__finditem__(index);
+            if (ret != null) {
+                return ret;
+            }
+            ret = doGetglobal(index);
+        }
+        return ret;
+    }
+    
     public PyObject getglobal(String index) {
         PyObject ret = doGetglobal(index);
         if (ret != null) {
