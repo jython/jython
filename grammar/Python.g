@@ -122,6 +122,7 @@ import org.python.antlr.ast.comprehensionType;
 import org.python.antlr.ast.Context;
 import org.python.antlr.ast.Continue;
 import org.python.antlr.ast.Delete;
+import org.python.antlr.ast.Dict;
 import org.python.antlr.ast.excepthandlerType;
 import org.python.antlr.ast.Exec;
 import org.python.antlr.ast.Expr;
@@ -997,7 +998,11 @@ atom : LPAREN
        | -> ^(LBRACK<org.python.antlr.ast.List>[$LBRACK, new exprType[0\], $expr::ctype])
        )
        RBRACK
-     | LCURLY (dictmaker)? RCURLY -> ^(Dict LCURLY ^(Elts dictmaker)?)
+     | LCURLY 
+       (dictmaker ->  ^(LCURLY<Dict>[$LCURLY, actions.makeExprs($dictmaker.keys), actions.makeExprs($dictmaker.values)])
+       | -> ^(LCURLY<Dict>[$LCURLY, new exprType[0\], new exprType[0\]])
+       )
+       RCURLY
      | BACKQUOTE testlist[expr_contextType.Load] BACKQUOTE -> ^(Repr BACKQUOTE testlist)
      | NAME -> ^(PYNODE<Name>[$NAME, $NAME.text, $expr::ctype])
      | INT -> ^(PYNODE<Num>[$INT, actions.makeInt($INT)])
@@ -1123,15 +1128,18 @@ del_list returns [List etypes]
     ;
 
 //testlist: test (',' test)* [',']
-testlist[expr_contextType ctype] returns [exprType etype]
+testlist[expr_contextType ctype]
+@init {
+    exprType etype = null;
+}
 @after {
-   $testlist.tree = $etype;
+    $testlist.tree = etype;
 }
     : (test[expr_contextType.Load] COMMA) => t+=test[ctype] (options {k=2;}: c1=COMMA t+=test[ctype])* (c2=COMMA)? {
-          $etype = new Tuple($testlist.start, actions.makeExprs($t), ctype);
+          etype = new Tuple($testlist.start, actions.makeExprs($t), ctype);
     }
     | test[ctype] {
-          $etype = (exprType)$test.tree;
+          etype = (exprType)$test.tree;
     }
     ;
 
@@ -1139,10 +1147,14 @@ testlist[expr_contextType ctype] returns [exprType etype]
 //testlist_safe: test [(',' test)+ [',']]
 
 //dictmaker: test ':' test (',' test ':' test)* [',']
-dictmaker : test[expr_contextType.Load] COLON test[expr_contextType.Load]
-            (options {k=2;}:COMMA test[expr_contextType.Load] COLON test[expr_contextType.Load])* (COMMA)?
-         -> test+
-          ;
+dictmaker returns [List keys, List values]
+    : k+=test[expr_contextType.Load] COLON v+=test[expr_contextType.Load]
+      (options {k=2;}:COMMA k+=test[expr_contextType.Load] COLON v+=test[expr_contextType.Load])*
+      (COMMA)? {
+          $keys = $k;
+          $values= $v;
+      }
+    ;
 
 //classdef: 'class' NAME ['(' [testlist] ')'] ':' suite
 classdef
@@ -1153,7 +1165,7 @@ classdef
    $classdef.tree = stype;
 }
     :CLASS NAME (LPAREN testlist[expr_contextType.Load]? RPAREN)? COLON suite {
-        stype = new ClassDef($CLASS, $NAME.getText(), actions.makeBases($testlist.etype), actions.makeStmts($suite.stmts));
+        stype = new ClassDef($CLASS, $NAME.getText(), actions.makeBases((exprType)$testlist.tree), actions.makeStmts($suite.stmts));
     }
     ;
 
@@ -1201,7 +1213,7 @@ list_iter : list_for
 
 //list_for: 'for' exprlist 'in' testlist_safe [list_iter]
 list_for : FOR exprlist[expr_contextType.Load] IN testlist[expr_contextType.Load] (list_iter)?
-        -> ^(FOR<comprehensionType>[$FOR, $exprlist.etype, $testlist.etype, null])
+        -> ^(FOR<comprehensionType>[$FOR, $exprlist.etype, (exprType)$testlist.tree, null])
          ;
 
 //list_if: 'if' test [list_iter]
@@ -1226,7 +1238,7 @@ gen_if: IF test[expr_contextType.Load] gen_iter?
 
 //yield_expr: 'yield' [testlist]
 yield_expr : YIELD testlist[expr_contextType.Load]?
-          -> ^(YIELD<Yield>[$YIELD, $testlist.etype])
+          -> ^(YIELD<Yield>[$YIELD, (exprType)$testlist.tree])
            ;
 
 //XXX:
