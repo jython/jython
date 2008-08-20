@@ -776,52 +776,6 @@ suite returns [List stmts]
 
 //test: or_test ['if' or_test 'else' test] | lambdef
 test[expr_contextType ctype]
-@after {
-    if ($test.tree instanceof BoolOp) {
-        BoolOp b = (BoolOp)$test.tree;
-        List values = new ArrayList();
-
-        exprType left = (exprType)b.getChild(0);
-        exprType right = (exprType)b.getChild(1);
-
-        exprType[] e;
-        if (left.getType() == b.getType() && right.getType() == b.getType()) {
-            BoolOp leftB = (BoolOp)left;
-            BoolOp rightB = (BoolOp)right;
-            int lenL = leftB.values.length;
-            int lenR = rightB.values.length;
-            e = new exprType[lenL + lenR];
-            System.arraycopy(leftB.values, 0, e, 0, lenL - 1);
-            System.arraycopy(rightB.values, 0, e, lenL - 1, lenL + lenR);
-        } else if (left.getType() == b.getType()) {
-            BoolOp leftB = (BoolOp)left;
-            e = new exprType[leftB.values.length + 1];
-            System.arraycopy(leftB.values, 0, e, 0, leftB.values.length);
-            e[e.length - 1] = right;
-        } else if (right.getType() == b.getType()) {
-            BoolOp rightB = (BoolOp)right;
-            e = new exprType[rightB.values.length + 1];
-            System.arraycopy(rightB.values, 0, e, 0, rightB.values.length);
-            e[e.length - 1] = left;
-        } else {
-            e = new exprType[2];
-            e[0] = left;
-            e[1] = right;
-        }
-        b.values = e;
-        switch (b.getType()) {
-        case AND:
-            b.op = boolopType.And;
-            break;
-        case OR:
-            b.op = boolopType.Or;
-            break;
-        default:
-            b.op = boolopType.UNDEFINED;
-        }
-    }
-}
-
     :o1=or_test[ctype]
     ( (IF or_test[expr_contextType.Load] ORELSE) => IF o2=or_test[ctype] ORELSE test[expr_contextType.Load]
       -> ^(IfExp ^(Test $o2) ^(Body $o1) ^(ORELSE test))
@@ -831,12 +785,32 @@ test[expr_contextType ctype]
     ;
 
 //or_test: and_test ('or' and_test)*
-or_test[expr_contextType ctype] : and_test[ctype] (OR<BoolOp>^ and_test[ctype])*
-        ;
+or_test[expr_contextType ctype]
+@after {
+    if ($or != null) {
+        $or_test.tree = actions.makeBoolOp($left.tree, boolopType.Or, $right);
+    }
+}
+    : left=and_test[ctype]
+        ( (or=OR right+=and_test[ctype]
+          )+
+        | -> $left
+        )
+    ;
 
 //and_test: not_test ('and' not_test)*
-and_test[expr_contextType ctype] : not_test[ctype] (AND<BoolOp>^ not_test[ctype])*
-         ;
+and_test[expr_contextType ctype]
+@after {
+    if ($and != null) {
+        $and_test.tree = actions.makeBoolOp($left.tree, boolopType.And, $right); 
+    }
+}
+    : left=not_test[ctype]
+        ( (and=AND right+=not_test[ctype]
+          )+
+        |
+        ) -> $left
+    ;
 
 //not_test: 'not' not_test | comparison
 not_test[expr_contextType ctype] returns [exprType etype]
@@ -850,7 +824,6 @@ not_test[expr_contextType ctype] returns [exprType etype]
     ;
 
 //comparison: expr (comp_op expr)*
-//comp_op: '<'|'>'|'=='|'>='|'<='|'<>'|'!='|'in'|'not' 'in'|'is'|'is' 'not'
 comparison[expr_contextType ctype]
 @init {
     List cmps = new ArrayList();

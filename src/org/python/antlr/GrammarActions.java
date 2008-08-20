@@ -724,4 +724,11 @@ public class GrammarActions {
         }
         return new cmpopType[0];
     }
+    
+    BoolOp makeBoolOp(PythonTree left, boolopType op, List right) {
+        List values = new ArrayList();
+        values.add(left);
+        values.addAll(right);
+        return new BoolOp(left, op, makeExprs(values));
+    }
 }
