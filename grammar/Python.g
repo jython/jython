@@ -411,7 +411,7 @@ varargslist returns [argumentsType args]
 //fpdef: NAME | '(' fplist ')'
 fpdef[expr_contextType ctype] : NAME 
      -> ^(PYNODE<Name>[$NAME, $NAME.text, ctype])
-      | (LPAREN fpdef[expr_contextType.Load] COMMA) => LPAREN fplist RPAREN
+      | (LPAREN fpdef[null] COMMA) => LPAREN fplist RPAREN
      -> fplist
       | LPAREN fplist RPAREN
      -> ^(LPAREN<Tuple>[$fplist.start, actions.makeExprs($fplist.etypes), expr_contextType.Store])
@@ -458,11 +458,11 @@ expr_stmt
 }
 
     :
-    ((testlist[expr_contextType.Load] augassign) => lhs=testlist[expr_contextType.AugStore]
+    ((testlist[null] augassign) => lhs=testlist[expr_contextType.AugStore]
         ( (aay=augassign y1=yield_expr {stype = new AugAssign($lhs.tree, (exprType)$lhs.tree, $aay.op, (exprType)$y1.tree);})
         | (aat=augassign rhs=testlist[expr_contextType.Load] {stype = new AugAssign($lhs.tree, (exprType)$lhs.tree, $aat.op, (exprType)$rhs.tree);})
         )
-    |(testlist[expr_contextType.Load] ASSIGN) => lhs=testlist[expr_contextType.Store]
+    |(testlist[null] ASSIGN) => lhs=testlist[expr_contextType.Store]
         (
         | ((at=ASSIGN t+=testlist[expr_contextType.Store])+ -> ^(PYNODE<Assign>[$at, actions.makeAssignTargets((exprType)$lhs.tree, $t), actions.makeAssignValue($t)]))
         | ((ay=ASSIGN y2+=yield_expr)+ -> ^(PYNODE<Assign>[$ay, actions.makeAssignTargets((exprType)$lhs.tree, $y2), actions.makeAssignValue($y2)]))
@@ -502,7 +502,7 @@ print_stmt : PRINT
 
 //not in CPython's Grammar file
 printlist returns [boolean newline, List elts]
-    : (test[expr_contextType.Load] COMMA) =>
+    : (test[null] COMMA) =>
     t+=test[expr_contextType.Load] (options {k=2;}: COMMA t+=test[expr_contextType.Load])* (trailcomma=COMMA)?
     { $elts=$t;
          if ($trailcomma == null) {
@@ -520,7 +520,7 @@ printlist returns [boolean newline, List elts]
 //XXX: would be nice if printlist and printlist2 could be merged.
 //not in CPython's Grammar file
 printlist2 returns [boolean newline, List elts]
-    : (test[expr_contextType.Load] COMMA test[expr_contextType.Load]) =>
+    : (test[null] COMMA test[null]) =>
     t+=test[expr_contextType.Load] (options {k=2;}: COMMA t+=test[expr_contextType.Load])* (trailcomma=COMMA)?
     { $elts=$t;
          if ($trailcomma == null) {
@@ -767,7 +767,7 @@ suite returns [List stmts]
 //test: or_test ['if' or_test 'else' test] | lambdef
 test[expr_contextType ctype]
     :o1=or_test[ctype]
-    ( (IF or_test[expr_contextType.Load] ORELSE) => IF o2=or_test[ctype] ORELSE e=test[expr_contextType.Load]
+    ( (IF or_test[null] ORELSE) => IF o2=or_test[ctype] ORELSE e=test[expr_contextType.Load]
       -> ^(IF<IfExp>[$IF, (exprType)$o2.tree, (exprType)$o1.tree, (exprType)$e.tree])
     | -> or_test
     )
@@ -1034,14 +1034,18 @@ testlist_gexp
         $testlist_gexp.tree = etype;
     }
 }
-    : t+=test[expr_contextType.Load]
-        ( ((options {k=2;}: c1=COMMA t+=test[expr_contextType.Load])* (c2=COMMA)?
+    : t+=test[$expr::ctype]
+        ( ((options {k=2;}: c1=COMMA t+=test[$expr::ctype])* (c2=COMMA)?
          -> { $c1 != null || $c2 != null }? ^(PYNODE<Tuple>[$testlist_gexp.start, actions.makeExprs($t), $expr::ctype])
          -> test
           )
         | ( gen_for[gens] {
                 Collections.reverse(gens);
                 comprehensionType[] c = (comprehensionType[])gens.toArray(new comprehensionType[gens.size()]);
+                exprType e = (exprType)$t.get(0);
+                if (e instanceof Context) {
+                    ((Context)e).setContext(expr_contextType.Load);
+                }
                 etype = new GeneratorExp($gen_for.start, (exprType)$t.get(0), c);
             }
           )
@@ -1107,7 +1111,7 @@ subscript returns [sliceType sltype]
     }
 }
     : d1=DOT DOT DOT -> DOT<Ellipsis>[$d1]
-    | (test[expr_contextType.Load] COLON) => lower=test[expr_contextType.Load] (c1=COLON (upper1=test[expr_contextType.Load])? (sliceop)?)? {
+    | (test[null] COLON) => lower=test[expr_contextType.Load] (c1=COLON (upper1=test[expr_contextType.Load])? (sliceop)?)? {
         $sltype = actions.makeSubscript($lower.tree, $c1, $upper1.tree, $sliceop.tree);
     }
     | (COLON) => c2=COLON (upper2=test[expr_contextType.Load])? (sliceop)? {
@@ -1122,8 +1126,8 @@ sliceop : COLON (test[expr_contextType.Load])? -> test
 
 //exprlist: expr (',' expr)* [',']
 exprlist[expr_contextType ctype] returns [exprType etype]
-    : (expr[expr_contextType.Load] COMMA) => e+=expr[ctype] (options {k=2;}: COMMA e+=expr[ctype])* (COMMA)? {
-     $etype = new Tuple($exprlist.start, actions.makeExprs($e), ctype);
+    : (expr[null] COMMA) => e+=expr[ctype] (options {k=2;}: COMMA e+=expr[ctype])* (COMMA)? {
+        $etype = new Tuple($exprlist.start, actions.makeExprs($e), ctype);
     }
     | expr[ctype] {
         $etype = (exprType)$expr.tree;
@@ -1145,7 +1149,7 @@ testlist[expr_contextType ctype]
 @after {
     $testlist.tree = etype;
 }
-    : (test[expr_contextType.Load] COMMA) => t+=test[ctype] (options {k=2;}: c1=COMMA t+=test[ctype])* (c2=COMMA)? {
+    : (test[null] COMMA) => t+=test[ctype] (options {k=2;}: c1=COMMA t+=test[ctype])* (c2=COMMA)? {
           etype = new Tuple($testlist.start, actions.makeExprs($t), ctype);
     }
     | test[ctype] {
@@ -1214,7 +1218,11 @@ argument[List arguments, List kws]
         ( (ASSIGN t2=test[expr_contextType.Load]) {
             $kws.add(new exprType[]{(exprType)$t1.tree, (exprType)$t2.tree});
         }
-        | gen_for[gens] //FIXME
+        | gen_for[gens] {
+            Collections.reverse(gens);
+            comprehensionType[] c = (comprehensionType[])gens.toArray(new comprehensionType[gens.size()]);
+            arguments.add(new GeneratorExp($gen_for.start, (exprType)$t1.tree, c));
+        }
         | {$arguments.add($t1.tree);}
         )
     ;
