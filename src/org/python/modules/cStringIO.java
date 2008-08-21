@@ -16,6 +16,7 @@ import org.python.core.PyIterator;
 import org.python.core.PyList;
 import org.python.core.PyObject;
 import org.python.core.PyString;
+import org.python.core.PyType;
 
 /**
  * This module implements a file-like class, StringIO, that reads and
@@ -37,6 +38,9 @@ public class cStringIO {
         public static final int SEEK_CUR = 1;
         public static final int SEEK_END = 2;
     }
+
+    public static PyType InputType = PyType.fromClass(StringIO.class);
+    public static PyType OutputType = PyType.fromClass(StringIO.class);
     
     public static StringIO StringIO() {
         return new StringIO();
@@ -133,7 +137,7 @@ public class cStringIO {
          * @param       pos the position in the file.
          * @param       mode; 0=from the start, 1=relative, 2=from the end.
          */
-        public void seek(long pos, int mode) {
+        public synchronized void seek(long pos, int mode) {
             _complain_ifclosed();
             switch (mode) {
                 case os.SEEK_CUR:
@@ -152,7 +156,7 @@ public class cStringIO {
         /**
          * Reset the file position to the beginning of the file.
          */
-        public void reset() {
+        public synchronized void reset() {
             pos = 0;
         }
 
@@ -160,7 +164,7 @@ public class cStringIO {
          * Return the file position.
          * @returns     the position in the file.
          */
-        public int tell() {
+        public synchronized int tell() {
             _complain_ifclosed();
             return pos;
         }
@@ -186,7 +190,7 @@ public class cStringIO {
          * @returns     A string containing the data read.
          */
                
-        public String read(long size) {
+        public synchronized String read(long size) {
             _complain_ifclosed();
             int size_int = _convert_to_int(size);
             int len = buf.length();
@@ -225,7 +229,7 @@ public class cStringIO {
          * returned.
          * @returns data from the file up to and including the newline.
          */
-        public String readline(long size) {
+        public synchronized String readline(long size) {
             _complain_ifclosed();
             int size_int = _convert_to_int(size);
             int len = buf.length();
@@ -247,7 +251,7 @@ public class cStringIO {
          * Read and return a line without the trailing newline.
          * Usind by cPickle as an optimization.
          */
-        public String readlineNoNl() {
+        public synchronized String readlineNoNl() {
             _complain_ifclosed();
             int len = buf.length();
             int i = buf.indexOf("\n", pos);
@@ -303,7 +307,7 @@ public class cStringIO {
         /**
          * truncate the file at the position pos.
          */
-        public void truncate(long pos) {
+        public synchronized void truncate(long pos) {
             int pos_int = _convert_to_int(pos);
             if (pos_int < 0)
                 pos_int = this.pos;
@@ -320,7 +324,7 @@ public class cStringIO {
             write(obj.toString());
         }
 
-        public void write(String s) {
+        public synchronized void write(String s) {
             _complain_ifclosed();
             buf.setLength(pos);
             int newpos = pos + s.length();
@@ -332,7 +336,7 @@ public class cStringIO {
          * Write a char to the file. Used by cPickle as an optimization.
          * @param ch    The data to write.
          */
-        public void writeChar(char ch) {
+        public synchronized void writeChar(char ch) {
             int len = buf.length();
             if (len <= pos)
                 buf.setLength(pos + 1);
@@ -363,7 +367,7 @@ public class cStringIO {
          * before the StringIO object's close() method is called.
          * @return      the contents of the StringIO.
          */
-        public String getvalue() {
+        public synchronized String getvalue() {
             return buf.toString();
         }
 
