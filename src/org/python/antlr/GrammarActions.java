@@ -2,6 +2,7 @@ package org.python.antlr;
 
 import org.antlr.runtime.CommonToken;
 import org.antlr.runtime.Token;
+import org.antlr.runtime.tree.Tree;
 
 import org.python.core.Py;
 import org.python.core.PyComplex;
@@ -293,20 +294,17 @@ public class GrammarActions {
 
     exprType makeAssignValue(List rhs) {
         exprType value = (exprType)rhs.get(rhs.size() -1);
-        maybeSetContext(value, expr_contextType.Load);
-        if (value instanceof Tuple) {
-            exprType[] elts = ((Tuple)value).elts;
-            for (int i=0;i<elts.length;i++) {
-                maybeSetContext(elts[i], expr_contextType.Load);
-            }                 
-        }
+        recurseSetContext(value, expr_contextType.Load);
         return value;
     }
 
-    void maybeSetContext(PythonTree tree, expr_contextType context) {
+    void recurseSetContext(Tree tree, expr_contextType context) {
         if (tree instanceof Context) {
             //XXX: for Tuples, etc -- will need to recursively set to expr_contextType.Load.
             ((Context)tree).setContext(context);
+        }
+        for (int i=0; i<tree.getChildCount(); i++) {
+                recurseSetContext(tree.getChild(i), context);
         }
     }
 

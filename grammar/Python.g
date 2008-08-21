@@ -754,7 +754,7 @@ with_var returns [exprType etype]
     ;
 
 //except_clause: 'except' [test [',' test]]
-except_clause : EXCEPT (t1=test[expr_contextType.Load] (COMMA t2=test[expr_contextType.Load])?)? COLON suite
+except_clause : EXCEPT (t1=test[expr_contextType.Load] (COMMA t2=test[expr_contextType.Store])?)? COLON suite
              -> ^(EXCEPT<excepthandlerType>[$EXCEPT, (exprType)$t1.tree, (exprType)$t2.tree, actions.makeStmts($suite.stmts), $EXCEPT.getLine(), $EXCEPT.getCharPositionInLine()])
               ;
 
