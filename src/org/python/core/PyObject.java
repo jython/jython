@@ -829,6 +829,9 @@ public class PyObject implements Serializable {
     }
 
     public void readonlyAttributeError(String name) {
+        // XXX: Should be an AttributeError but CPython throws TypeError for read only
+        // member descriptors (in structmember.c::PyMember_SetOne), which is expected by a
+        // few tests. fixed in py3k: http://bugs.python.org/issue1687163
         throw Py.TypeError("readonly attribute");
     }
 
