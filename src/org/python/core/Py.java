@@ -1641,8 +1641,8 @@ public final class Py {
     }
 
     public static PyObject compile(InputStream istream, String filename,
-            String type) {
-        return compile_flags(istream, filename, type, null);
+            String kind) {
+        return compile_flags(istream, filename, kind, null);
     }
 
     // with compiler-flags
@@ -1664,15 +1664,15 @@ public final class Py {
     }
 
     public static PyObject compile_flags(InputStream istream, String filename,
-                                 String type,CompilerFlags cflags)
+                                 String kind,CompilerFlags cflags)
     {
-        modType node = ParserFacade.parse(istream, type, filename, cflags);
+        modType node = ParserFacade.parse(istream, kind, filename, cflags);
         if (cflags != null && cflags.only_ast) {
             return Py.java2py(node);
         }
 
         boolean printResults = false;
-        if (type.equals("single")) {
+        if (kind.equals("single")) {
             printResults = true;
         }
         return Py.compile_flags(node, getName(), filename, true, printResults, cflags);
@@ -1680,7 +1680,7 @@ public final class Py {
 
     public static PyObject compile_flags(String data,
             String filename,
-            String type,
+            String kind,
             CompilerFlags cflags) {
         
         if (data.contains("\0")) {
@@ -1695,7 +1695,7 @@ public final class Py {
         }
         return Py.compile_flags(new ByteArrayInputStream(bytes),
                 filename,
-                type,
+                kind,
                 cflags);
     }
 

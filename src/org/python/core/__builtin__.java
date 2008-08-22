@@ -455,15 +455,15 @@ public class __builtin__ {
         throw Py.TypeError("number coercion failed");
     }
 
-    public static PyObject compile(String data, String filename, String type) {
-        return Py.compile_flags(data, filename, type, Py.getCompilerFlags());
+    public static PyObject compile(String data, String filename, String kind) {
+        return Py.compile_flags(data, filename, kind, Py.getCompilerFlags());
     }
 
-    public static PyObject compile(String data, String filename, String type, int flags, boolean dont_inherit) {
+    public static PyObject compile(String data, String filename, String kind, int flags, boolean dont_inherit) {
         if ((flags & ~PyTableCode.CO_ALL_FEATURES) != 0) {
             throw Py.ValueError("compile(): unrecognised flags");
         }
-        return Py.compile_flags(data, filename, type, Py.getCompilerFlags(flags, dont_inherit));
+        return Py.compile_flags(data, filename, kind, Py.getCompilerFlags(flags, dont_inherit));
     }
 
     public static void delattr(PyObject o, String n) {
