@@ -284,9 +284,9 @@ public class GrammarActions {
             if (o instanceof PythonParser.testlist_return) {
                 //XXX: Check to see if this is really happening anymore
                 PythonParser.testlist_return r = (PythonParser.testlist_return)o;
-                e[i] = (exprType)r.getTree();
+                e[i + 1] = (exprType)r.getTree();
             } else {
-                e[i] = (exprType)o;
+                e[i + 1] = (exprType)o;
             }
         }
         return e;
@@ -300,7 +300,6 @@ public class GrammarActions {
 
     void recurseSetContext(Tree tree, expr_contextType context) {
         if (tree instanceof Context) {
-            //XXX: for Tuples, etc -- will need to recursively set to expr_contextType.Load.
             ((Context)tree).setContext(context);
         }
         for (int i=0; i<tree.getChildCount(); i++) {
