@@ -201,10 +201,19 @@ public class PyInstance extends PyObject
     }
 
     public PyObject __findattr_ex__(String name) {
-        return __findattr__(name, false);
+        return __findattr_ex__(name, false);
     }
 
     public PyObject __findattr__(String name, boolean stopAtJava) {
+        try {
+            return __findattr_ex__(name, stopAtJava);
+        } catch (PyException exc) {
+            if (Py.matchException(exc, Py.AttributeError)) return null;
+            throw exc;
+        }
+    }
+
+    protected PyObject __findattr_ex__(String name, boolean stopAtJava) {
         PyObject result = ifindlocal(name);
         if (result != null)
             return result;
@@ -234,12 +243,7 @@ public class PyInstance extends PyObject
         if (getter == null)
             return null;
 
-        try {
-            return getter.__call__(this, new PyString(name));
-        } catch (PyException exc) {
-            if (Py.matchException(exc, Py.AttributeError)) return null;
-            throw exc;
-        }
+        return getter.__call__(this, new PyString(name));
     }
 
     public boolean isCallable() {

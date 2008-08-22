@@ -118,7 +118,7 @@ public class PatternObject extends PyObject {
 
         SRE_STATE state = new SRE_STATE(string, 0, Integer.MAX_VALUE, flags);
 
-        StringBuilder buf = new StringBuilder();
+        PyList list = new PyList();
 
         int n = 0;
         int i = 0;
@@ -137,7 +137,7 @@ public class PatternObject extends PyObject {
 
             if (i < b) {
                 /* get segment before this match */
-                buf.append(string.substring(i, b));
+                list.append(string.__getslice__(Py.newInteger(i), Py.newInteger(b)));
             }
             if (! (i == b && i == e && n > 0)) {
                 PyObject item;
@@ -150,7 +150,7 @@ public class PatternObject extends PyObject {
                 }
     
                 if (item != Py.None) {
-                    buf.append(item.toString());
+                    list.append(item);
                 }
                 i = e;
                 n++;
@@ -163,25 +163,23 @@ public class PatternObject extends PyObject {
                 state.start = state.ptr;
         }
         if (i < state.endpos) {
-            buf.append(string.substring(i, state.endpos));
+            list.append(string.__getslice__(Py.newInteger(i), Py.newInteger(state.endpos)));
         }
 
-        // Follows rules enumerated in test_re.test_bug_1140
-        PyString outstring;
-        if (buf.length() == 0) {
-            outstring = instring.createInstance(buf.toString());
-        } else if (template instanceof PyUnicode || instring instanceof PyUnicode) {
-            outstring = Py.newUnicode(buf.toString());
-        } else {
-            outstring = Py.newString(buf.toString());
-        }
-
+        PyObject outstring = join_list(list, string);
         if (subn) {
             return new PyTuple(outstring, Py.newInteger(n));
         }
         return outstring;
     }
 
+    private PyObject join_list(PyList list, PyString string) {
+        PyObject joiner = string.__getslice__(Py.Zero, Py.Zero);
+        if (list.size() == 0) {
+            return joiner;
+        }
+        return joiner.__getattr__("join").__call__(list);
+    }
 
     public PyObject split(PyObject[] args, String[] kws) {
         ArgParser ap = new ArgParser("split", args, kws,

@@ -670,7 +670,7 @@ public class PyString extends PyBaseString
         for(int i = 0; i < count; i++) {
             string.getChars(0, s, new_chars, i * s);
         }
-        return createInstance(new String(new_chars), true);
+        return createInstance(new String(new_chars));
     }
 
     @Override
@@ -711,7 +711,7 @@ public class PyString extends PyBaseString
             if (generic_other instanceof PyUnicode) {
                 return new PyUnicode(result);
             }
-            return createInstance(result, true);
+            return createInstance(result);
         }
         else return null;
     }

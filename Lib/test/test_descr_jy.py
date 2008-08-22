@@ -326,15 +326,33 @@ class GetAttrTestCase(unittest.TestCase):
             def __getattr__(self, name):
                 raise BarAttributeError
 
+        class BarClassic:
+            def __getattr__(self, name):
+                raise BarAttributeError
+
         class Foo(object):
             def __getattr__(self, name):
                 raise AttributeError("Custom message")
+
+        class FooClassic:
+            def __getattr__(self, name):
+                raise AttributeError("Custom message")
+
         self.assertRaises(BarAttributeError, lambda: Bar().x)
+        self.assertRaises(BarAttributeError, lambda: BarClassic().x)
+
         try:
             Foo().x
             self.assert_(False) # Previous line should raise AttributteError
         except AttributeError, e:
             self.assertEquals("Custom message", str(e))
+
+        try:
+            FooClassic().x
+            self.assert_(False) # Previous line should raise AttributteError
+        except AttributeError, e:
+            self.assertEquals("Custom message", str(e))
+
 
 def test_main():
     test_support.run_unittest(TestDescrTestCase,
