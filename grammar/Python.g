@@ -464,8 +464,8 @@ expr_stmt
         )
     |(testlist[null] ASSIGN) => lhs=testlist[expr_contextType.Store]
         (
-        | ((at=ASSIGN t+=testlist[expr_contextType.Store])+ -> ^(PYNODE<Assign>[$at, actions.makeAssignTargets((exprType)$lhs.tree, $t), actions.makeAssignValue($t)]))
-        | ((ay=ASSIGN y2+=yield_expr)+ -> ^(PYNODE<Assign>[$ay, actions.makeAssignTargets((exprType)$lhs.tree, $y2), actions.makeAssignValue($y2)]))
+        | ((at=ASSIGN t+=testlist[expr_contextType.Store])+ -> ^(PYNODE<Assign>[$lhs.start, actions.makeAssignTargets((exprType)$lhs.tree, $t), actions.makeAssignValue($t)]))
+        | ((ay=ASSIGN y2+=yield_expr)+ -> ^(PYNODE<Assign>[$lhs.start, actions.makeAssignTargets((exprType)$lhs.tree, $y2), actions.makeAssignValue($y2)]))
         )
     | lhs=testlist[expr_contextType.Load] -> PYNODE<Expr>[$lhs.start, (exprType)$lhs.tree]
     )
@@ -1022,7 +1022,7 @@ atom : LPAREN
        )
        RPAREN
      | LBRACK
-       (listmaker -> listmaker
+       (listmaker[$LBRACK] -> listmaker
        | -> ^(LBRACK<org.python.antlr.ast.List>[$LBRACK, new exprType[0\], $expr::ctype])
        )
        RBRACK
@@ -1042,7 +1042,7 @@ atom : LPAREN
      ;
 
 //listmaker: test ( list_for | (',' test)* [','] )
-listmaker
+listmaker[Token lbrack]
 @init {
     List gens = new ArrayList();
     exprType etype = null;
@@ -1054,10 +1054,10 @@ listmaker
             ( list_for[gens] {
                 Collections.reverse(gens);
                 comprehensionType[] c = (comprehensionType[])gens.toArray(new comprehensionType[gens.size()]);
-                etype = new ListComp($listmaker.start, (exprType)$t.get(0), c);
+                etype = new ListComp($lbrack, (exprType)$t.get(0), c);
             }
             | (options {greedy=true;}:COMMA t+=test[expr_contextType.Load])* {
-                etype = new org.python.antlr.ast.List($listmaker.start, actions.makeExprs($t), $expr::ctype);
+                etype = new org.python.antlr.ast.List($lbrack, actions.makeExprs($t), $expr::ctype);
             }
             ) (COMMA)?
           ;
