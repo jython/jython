@@ -14,16 +14,19 @@ public class Expr extends stmtType {
     public Expr(Token token, exprType value) {
         super(token);
         this.value = value;
+        addChild(value);
     }
 
     public Expr(int ttype, Token token, exprType value) {
         super(ttype, token);
         this.value = value;
+        addChild(value);
     }
 
     public Expr(PythonTree tree, exprType value) {
         super(tree);
         this.value = value;
+        addChild(value);
     }
 
     public String toString() {

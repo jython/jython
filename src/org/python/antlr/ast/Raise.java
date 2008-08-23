@@ -16,24 +16,33 @@ public class Raise extends stmtType {
     public Raise(Token token, exprType type, exprType inst, exprType tback) {
         super(token);
         this.type = type;
+        addChild(type);
         this.inst = inst;
+        addChild(inst);
         this.tback = tback;
+        addChild(tback);
     }
 
     public Raise(int ttype, Token token, exprType type, exprType inst, exprType
     tback) {
         super(ttype, token);
         this.type = type;
+        addChild(type);
         this.inst = inst;
+        addChild(inst);
         this.tback = tback;
+        addChild(tback);
     }
 
     public Raise(PythonTree tree, exprType type, exprType inst, exprType tback)
     {
         super(tree);
         this.type = type;
+        addChild(type);
         this.inst = inst;
+        addChild(inst);
         this.tback = tback;
+        addChild(tback);
     }
 
     public String toString() {

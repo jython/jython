@@ -17,24 +17,33 @@ public class Slice extends sliceType {
     public Slice(Token token, exprType lower, exprType upper, exprType step) {
         super(token);
         this.lower = lower;
+        addChild(lower);
         this.upper = upper;
+        addChild(upper);
         this.step = step;
+        addChild(step);
     }
 
     public Slice(int ttype, Token token, exprType lower, exprType upper,
     exprType step) {
         super(ttype, token);
         this.lower = lower;
+        addChild(lower);
         this.upper = upper;
+        addChild(upper);
         this.step = step;
+        addChild(step);
     }
 
     public Slice(PythonTree tree, exprType lower, exprType upper, exprType
     step) {
         super(tree);
         this.lower = lower;
+        addChild(lower);
         this.upper = upper;
+        addChild(upper);
         this.step = step;
+        addChild(step);
     }
 
     public String toString() {

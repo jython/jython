@@ -16,6 +16,7 @@ public class Print extends stmtType {
     public Print(Token token, exprType dest, exprType[] values, boolean nl) {
         super(token);
         this.dest = dest;
+        addChild(dest);
         this.values = values;
         if (values != null) {
             for(int ivalues=0;ivalues<values.length;ivalues++) {
@@ -29,6 +30,7 @@ public class Print extends stmtType {
     boolean nl) {
         super(ttype, token);
         this.dest = dest;
+        addChild(dest);
         this.values = values;
         if (values != null) {
             for(int ivalues=0;ivalues<values.length;ivalues++) {
@@ -42,6 +44,7 @@ public class Print extends stmtType {
     {
         super(tree);
         this.dest = dest;
+        addChild(dest);
         this.values = values;
         if (values != null) {
             for(int ivalues=0;ivalues<values.length;ivalues++) {

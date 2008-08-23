@@ -17,24 +17,33 @@ public class Exec extends stmtType {
     public Exec(Token token, exprType body, exprType globals, exprType locals) {
         super(token);
         this.body = body;
+        addChild(body);
         this.globals = globals;
+        addChild(globals);
         this.locals = locals;
+        addChild(locals);
     }
 
     public Exec(int ttype, Token token, exprType body, exprType globals,
     exprType locals) {
         super(ttype, token);
         this.body = body;
+        addChild(body);
         this.globals = globals;
+        addChild(globals);
         this.locals = locals;
+        addChild(locals);
     }
 
     public Exec(PythonTree tree, exprType body, exprType globals, exprType
     locals) {
         super(tree);
         this.body = body;
+        addChild(body);
         this.globals = globals;
+        addChild(globals);
         this.locals = locals;
+        addChild(locals);
     }
 
     public String toString() {

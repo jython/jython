@@ -17,6 +17,7 @@ public class Attribute extends exprType implements Context {
     ctx) {
         super(token);
         this.value = value;
+        addChild(value);
         this.attr = attr;
         this.ctx = ctx;
     }
@@ -25,6 +26,7 @@ public class Attribute extends exprType implements Context {
     expr_contextType ctx) {
         super(ttype, token);
         this.value = value;
+        addChild(value);
         this.attr = attr;
         this.ctx = ctx;
     }
@@ -33,6 +35,7 @@ public class Attribute extends exprType implements Context {
     expr_contextType ctx) {
         super(tree);
         this.value = value;
+        addChild(value);
         this.attr = attr;
         this.ctx = ctx;
     }

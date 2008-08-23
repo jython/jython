@@ -17,24 +17,30 @@ public class AugAssign extends stmtType {
     value) {
         super(token);
         this.target = target;
+        addChild(target);
         this.op = op;
         this.value = value;
+        addChild(value);
     }
 
     public AugAssign(int ttype, Token token, exprType target, operatorType op,
     exprType value) {
         super(ttype, token);
         this.target = target;
+        addChild(target);
         this.op = op;
         this.value = value;
+        addChild(value);
     }
 
     public AugAssign(PythonTree tree, exprType target, operatorType op,
     exprType value) {
         super(tree);
         this.target = target;
+        addChild(target);
         this.op = op;
         this.value = value;
+        addChild(value);
     }
 
     public String toString() {

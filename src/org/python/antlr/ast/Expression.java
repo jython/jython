@@ -14,16 +14,19 @@ public class Expression extends modType {
     public Expression(Token token, exprType body) {
         super(token);
         this.body = body;
+        addChild(body);
     }
 
     public Expression(int ttype, Token token, exprType body) {
         super(ttype, token);
         this.body = body;
+        addChild(body);
     }
 
     public Expression(PythonTree tree, exprType body) {
         super(tree);
         this.body = body;
+        addChild(body);
     }
 
     public String toString() {

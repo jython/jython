@@ -14,16 +14,19 @@ public class Return extends stmtType {
     public Return(Token token, exprType value) {
         super(token);
         this.value = value;
+        addChild(value);
     }
 
     public Return(int ttype, Token token, exprType value) {
         super(ttype, token);
         this.value = value;
+        addChild(value);
     }
 
     public Return(PythonTree tree, exprType value) {
         super(tree);
         this.value = value;
+        addChild(value);
     }
 
     public String toString() {

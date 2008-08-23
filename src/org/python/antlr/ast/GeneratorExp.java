@@ -16,6 +16,7 @@ public class GeneratorExp extends exprType {
     generators) {
         super(token);
         this.elt = elt;
+        addChild(elt);
         this.generators = generators;
         if (generators != null) {
             for(int igenerators=0;igenerators<generators.length;igenerators++) {
@@ -28,6 +29,7 @@ public class GeneratorExp extends exprType {
     comprehensionType[] generators) {
         super(ttype, token);
         this.elt = elt;
+        addChild(elt);
         this.generators = generators;
         if (generators != null) {
             for(int igenerators=0;igenerators<generators.length;igenerators++) {
@@ -40,6 +42,7 @@ public class GeneratorExp extends exprType {
     generators) {
         super(tree);
         this.elt = elt;
+        addChild(elt);
         this.generators = generators;
         if (generators != null) {
             for(int igenerators=0;igenerators<generators.length;igenerators++) {

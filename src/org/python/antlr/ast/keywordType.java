@@ -16,18 +16,21 @@ public class keywordType extends PythonTree {
         super(token);
         this.arg = arg;
         this.value = value;
+        addChild(value);
     }
 
     public keywordType(int ttype, Token token, String arg, exprType value) {
         super(ttype, token);
         this.arg = arg;
         this.value = value;
+        addChild(value);
     }
 
     public keywordType(PythonTree tree, String arg, exprType value) {
         super(tree);
         this.arg = arg;
         this.value = value;
+        addChild(value);
     }
 
     public String toString() {

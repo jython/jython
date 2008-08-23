@@ -260,12 +260,15 @@ class JavaVisitor(EmitVisitor):
             if f.typedef is not None and f.typedef.simple:
                 not_simple = False
             #For now ignoring String -- will want to revisit
-            if f.seq and  not_simple and not fparg.startswith("String"):
-                self.emit("if (%s != null) {" % f.name, depth+1);
-                self.emit("for(int i%(name)s=0;i%(name)s<%(name)s.length;i%(name)s++) {" % {"name":f.name}, depth+2)
-                self.emit("addChild(%s[i%s]);" % (f.name, f.name), depth+3)
-                self.emit("}", depth+2)
-                self.emit("}", depth+1)
+            if not_simple and not fparg.startswith("String"):
+                if f.seq:
+                    self.emit("if (%s != null) {" % f.name, depth+1);
+                    self.emit("for(int i%(name)s=0;i%(name)s<%(name)s.length;i%(name)s++) {" % {"name":f.name}, depth+2)
+                    self.emit("addChild(%s[i%s]);" % (f.name, f.name), depth+3)
+                    self.emit("}", depth+2)
+                    self.emit("}", depth+1)
+                elif str(f.type) == "expr":
+                    self.emit("addChild(%s);" % (f.name), depth+1)
 
     def javaMethods(self, type, clsname, ctorname, fields, depth):
         # The java ctors

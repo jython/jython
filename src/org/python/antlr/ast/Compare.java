@@ -18,6 +18,7 @@ public class Compare extends exprType {
     comparators) {
         super(token);
         this.left = left;
+        addChild(left);
         this.ops = ops;
         this.comparators = comparators;
         if (comparators != null) {
@@ -32,6 +33,7 @@ public class Compare extends exprType {
     exprType[] comparators) {
         super(ttype, token);
         this.left = left;
+        addChild(left);
         this.ops = ops;
         this.comparators = comparators;
         if (comparators != null) {
@@ -46,6 +48,7 @@ public class Compare extends exprType {
     comparators) {
         super(tree);
         this.left = left;
+        addChild(left);
         this.ops = ops;
         this.comparators = comparators;
         if (comparators != null) {

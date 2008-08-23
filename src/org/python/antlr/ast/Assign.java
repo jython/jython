@@ -21,6 +21,7 @@ public class Assign extends stmtType {
             }
         }
         this.value = value;
+        addChild(value);
     }
 
     public Assign(int ttype, Token token, exprType[] targets, exprType value) {
@@ -32,6 +33,7 @@ public class Assign extends stmtType {
             }
         }
         this.value = value;
+        addChild(value);
     }
 
     public Assign(PythonTree tree, exprType[] targets, exprType value) {
@@ -43,6 +45,7 @@ public class Assign extends stmtType {
             }
         }
         this.value = value;
+        addChild(value);
     }
 
     public String toString() {

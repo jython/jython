@@ -303,7 +303,7 @@ public class GrammarActions {
             ((Context)tree).setContext(context);
         }
         for (int i=0; i<tree.getChildCount(); i++) {
-                recurseSetContext(tree.getChild(i), context);
+            recurseSetContext(tree.getChild(i), context);
         }
     }
 
