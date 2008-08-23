@@ -737,4 +737,23 @@ public class GrammarActions {
         values.addAll(right);
         return new BoolOp(left, op, makeExprs(values));
     }
+
+    BinOp makeBinOp(PythonTree left, operatorType op, List rights) {
+        BinOp current = new BinOp(left, (exprType)left, op, (exprType)rights.get(0));
+        for (int i = 1; i< rights.size(); i++) {
+            exprType right = (exprType)rights.get(i);
+            current = new BinOp(left, current, op, right);
+        }
+        return current;
+    }
+
+    BinOp makeBinOp(PythonTree left, List ops, List rights) {
+        BinOp current = new BinOp(left, (exprType)left, (operatorType)ops.get(0), (exprType)rights.get(0));
+        for (int i = 1; i< rights.size(); i++) {
+            exprType right = (exprType)rights.get(i);
+            operatorType op = (operatorType)ops.get(i);
+            current = new BinOp(left, current, op, right);
+        }
+        return current;
+    }
 }

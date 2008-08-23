@@ -855,74 +855,113 @@ scope {
     $expr::ctype = ect;
 }
 @after {
-    if ($expr.tree instanceof BinOp) {
-        BinOp b = (BinOp)$expr.tree;
-        b.left = (exprType)b.getChild(0);
-        b.right = (exprType)b.getChild(1);
-        switch (b.getType()) {
-        case PLUS:
-            b.op = operatorType.Add;
-            break;
-        case MINUS:
-            b.op = operatorType.Sub;
-            break;
-        case STAR:
-            b.op = operatorType.Mult;
-            break;
-        case SLASH:
-            b.op = operatorType.Div;
-            break;
-        case PERCENT:
-            b.op = operatorType.Mod;
-            break;
-        case DOUBLESLASH:
-            b.op = operatorType.FloorDiv;
-            break;
-        case AMPER:
-            b.op = operatorType.BitAnd;
-            break;
-        case VBAR:
-            b.op = operatorType.BitOr;
-            break;
-        case CIRCUMFLEX:
-            b.op = operatorType.BitXor;
-            break;
-        case LEFTSHIFT:
-            b.op = operatorType.LShift;
-            break;
-        case RIGHTSHIFT:
-            b.op = operatorType.RShift;
-            break;
-        case DOUBLESTAR:
-            b.op = operatorType.Pow;
-            break;
-        }
+    if ($op != null) {
+        $expr.tree = actions.makeBinOp($left.tree, operatorType.BitOr, $right); 
     }
 }
-    : xor_expr (VBAR<BinOp>^ xor_expr)*
+    : left=xor_expr
+        ( (op=VBAR right+=xor_expr
+          )+
+        | -> $left
+        )
     ;
 
+
 //xor_expr: and_expr ('^' and_expr)*
-xor_expr : and_expr (CIRCUMFLEX<BinOp>^ and_expr)*
-         ;
+xor_expr
+@after {
+    if ($op != null) {
+        $xor_expr.tree = actions.makeBinOp($left.tree, operatorType.BitXor, $right); 
+    }
+}
+    : left=and_expr
+        ( (op=CIRCUMFLEX right+=and_expr
+          )+
+        | -> $left
+        )
+    ;
 
 //and_expr: shift_expr ('&' shift_expr)*
-and_expr : shift_expr (AMPER<BinOp>^ shift_expr)*
-         ;
+and_expr
+@after {
+    if ($op != null) {
+        $and_expr.tree = actions.makeBinOp($left.tree, operatorType.BitAnd, $right); 
+    }
+}
+    : left=shift_expr
+        ( (op=AMPER right+=shift_expr
+          )+
+        | -> $left
+        )
+    ;
 
 //shift_expr: arith_expr (('<<'|'>>') arith_expr)*
-shift_expr : arith_expr ((LEFTSHIFT<BinOp>^|RIGHTSHIFT<BinOp>^) arith_expr)*
-           ;
+shift_expr
+@init {
+    List ops = new ArrayList();
+}
+@after {
+    if (!ops.isEmpty()) {
+        $shift_expr.tree = actions.makeBinOp($left.tree, ops, $right); 
+    }
+}
+    : left=arith_expr
+        ( ( shift_op right+=arith_expr {ops.add($shift_op.op);}
+          )+
+        | -> $left
+        )
+    ;
+
+shift_op returns [operatorType op]
+    : LEFTSHIFT {$op = operatorType.LShift;}
+    | RIGHTSHIFT {$op = operatorType.RShift;}
+    ;
 
 //arith_expr: term (('+'|'-') term)*
-
 arith_expr
-    :term ((PLUS<BinOp>^|MINUS<BinOp>^) term)*
+@init {
+    List ops = new ArrayList();
+}
+@after {
+    if (!ops.isEmpty()) {
+        $arith_expr.tree = actions.makeBinOp($left.tree, ops, $right);
+    }
+}
+    : left=term
+        ( (arith_op right+=term {ops.add($arith_op.op);}
+          )+
+        | -> $left
+        )
+    ;
+
+arith_op returns [operatorType op]
+    : PLUS {$op = operatorType.Add;}
+    | MINUS {$op = operatorType.Sub;}
     ;
 
 //term: factor (('*'|'/'|'%'|'//') factor)*
-term : factor ((STAR<BinOp>^ | SLASH<BinOp>^ | PERCENT<BinOp>^ | DOUBLESLASH<BinOp>^ ) factor)*
-     ;
+term
+@init {
+    List ops = new ArrayList();
+}
+@after {
+    if (!ops.isEmpty()) {
+        $term.tree = actions.makeBinOp($left.tree, ops, $right);
+    }
+}
+    : left=factor
+        ( (term_op right+=factor {ops.add($term_op.op);}
+          )+
+        | -> $left
+        )
+    ;
+
+term_op returns [operatorType op]
+    :STAR {$op = operatorType.Mult;}
+    |SLASH {$op = operatorType.Div;}
+    |PERCENT {$op = operatorType.Mod;}
+    |DOUBLESLASH {$op = operatorType.FloorDiv;}
+    ;
 
 //factor: ('+'|'-'|'~') factor | power
 factor returns [exprType etype]
