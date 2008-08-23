@@ -981,7 +981,7 @@ power returns [exprType etype]
         $power.tree = $etype;
     }
 }
-    : atom (t+=trailer)* (options {greedy=true;}:DOUBLESTAR factor)? {
+    : atom (t+=trailer[$atom.start])* (options {greedy=true;}:DOUBLESTAR factor)? {
         if ($t != null) {
             exprType current = (exprType)$atom.tree;
             //for(int i = $t.size() - 1; i > -1; i--) {
@@ -1054,7 +1054,7 @@ listmaker[Token lbrack]
             ( list_for[gens] {
                 Collections.reverse(gens);
                 comprehensionType[] c = (comprehensionType[])gens.toArray(new comprehensionType[gens.size()]);
-                etype = new ListComp($lbrack, (exprType)$t.get(0), c);
+                etype = new ListComp($listmaker.start, (exprType)$t.get(0), c);
             }
             | (options {greedy=true;}:COMMA t+=test[expr_contextType.Load])* {
                 etype = new org.python.antlr.ast.List($lbrack, actions.makeExprs($t), $expr::ctype);
@@ -1097,17 +1097,17 @@ lambdef: LAMBDA (varargslist)? COLON test[expr_contextType.Load] {debug("parsed 
        ;
 
 //trailer: '(' [arglist] ')' | '[' subscriptlist ']' | '.' NAME
-trailer : LPAREN (arglist ->  ^(LPAREN<Call>[$LPAREN, null, actions.makeExprs($arglist.args), actions.makeKeywords($arglist.keywords), $arglist.starargs, $arglist.kwargs])
+trailer [Token begin]: LPAREN (arglist ->  ^(LPAREN<Call>[$begin, null, actions.makeExprs($arglist.args), actions.makeKeywords($arglist.keywords), $arglist.starargs, $arglist.kwargs])
                  | -> ^(LPAREN<Call>[$LPAREN, null, new exprType[0\], new keywordType[0\], null, null])
                  )
           RPAREN
-        | LBRACK s=subscriptlist RBRACK -> $s
-        | DOT attr -> ^(DOT<Attribute>[$DOT, null, $attr.text, $expr::ctype])
+        | LBRACK s=subscriptlist[begin] RBRACK -> $s
+        | DOT attr -> ^(DOT<Attribute>[$begin, null, $attr.text, $expr::ctype])
         ;
 
 //subscriptlist: subscript (',' subscript)* [',']
 //FIXME: tuples not always created when commas are present.
-subscriptlist returns [exprType etype]
+subscriptlist[Token begin] returns [exprType etype]
 @after {
    $subscriptlist.tree = $etype;
 }
@@ -1138,7 +1138,7 @@ subscriptlist returns [exprType etype]
                 s = new ExtSlice($subscriptlist.start, st);
             }
         }
-        $etype = new Subscript($subscriptlist.start, null, s, $expr::ctype);
+        $etype = new Subscript($begin, null, s, $expr::ctype);
     }
     ;
 
@@ -1169,7 +1169,10 @@ exprlist[expr_contextType ctype] returns [exprType etype]
         $etype = new Tuple($exprlist.start, actions.makeExprs($e), ctype);
     }
     | expr[ctype] {
+        //System.out.println("expecting " + ctype);
         $etype = (exprType)$expr.tree;
+        //System.out.println("got " + ((Name)$etype).ctx);
+        
     }
     ;
 
