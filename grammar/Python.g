@@ -1092,9 +1092,21 @@ testlist_gexp
     ;
 
 //lambdef: 'lambda' [varargslist] ':' test
-lambdef: LAMBDA (varargslist)? COLON test[expr_contextType.Load] {debug("parsed lambda");}
-      -> ^(LAMBDA<Lambda>[$LAMBDA, $varargslist.args, (exprType)$test.tree])
-       ;
+lambdef
+@init {
+    exprType etype = null;
+}
+@after {
+    $lambdef.tree = etype;
+}
+    : LAMBDA (varargslist)? COLON test[expr_contextType.Load] {
+        argumentsType a = $varargslist.args;
+        if (a == null) {
+            a = new argumentsType($LAMBDA, new exprType[0], null, null, new exprType[0]);
+        }
+        etype = new Lambda($LAMBDA, a, (exprType)$test.tree);
+    }
+    ;
 
 //trailer: '(' [arglist] ')' | '[' subscriptlist ']' | '.' NAME
 trailer [Token begin]: LPAREN (arglist ->  ^(LPAREN<Call>[$begin, null, actions.makeExprs($arglist.args), actions.makeKeywords($arglist.keywords), $arglist.starargs, $arglist.kwargs])
