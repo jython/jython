@@ -192,6 +192,11 @@ public class GrammarActions {
                 Object o = stmts.get(i);
                 if (o instanceof stmtType) {
                     result.add((stmtType)o);
+                } else if (o instanceof PythonTree) {
+                    PythonTree t = (PythonTree)o;
+                    for (int j=0; j<t.getChildCount(); j++) {
+                        result.add((stmtType)t.getChild(i));
+                    }
                 } else {
                     result.add((stmtType)((PythonParser.stmt_return)o).tree);
                 }
