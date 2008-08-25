@@ -358,7 +358,7 @@ decorators returns [List etypes]
 
 //funcdef: [decorators] 'def' NAME parameters ':' suite
 funcdef : decorators? DEF NAME parameters COLON suite
-       -> ^(DEF<FunctionDef>[$DEF, $NAME.text, $parameters.args, actions.makeStmts($suite.stmts),
+       -> ^(DEF<FunctionDef>[$DEF, $NAME.text, $parameters.args, actions.makeStmts($suite.stypes),
             actions.makeExprs($decorators.etypes)])
         ;
 
@@ -677,12 +677,12 @@ compound_stmt : if_stmt
 
 //if_stmt: 'if' test ':' suite ('elif' test ':' suite)* ['else' ':' suite]
 if_stmt: IF test[expr_contextType.Load] COLON ifsuite=suite elifs+=elif_clause*  (ORELSE COLON elsesuite=suite)?
-      -> ^(IF<If>[$IF, (exprType)$test.tree, actions.makeStmts($ifsuite.stmts), actions.makeElses($elsesuite.stmts, $elifs)])
+      -> ^(IF<If>[$IF, (exprType)$test.tree, actions.makeStmts($ifsuite.stypes), actions.makeElses($elsesuite.stypes, $elifs)])
        ;
 
 //not in CPython's Grammar file
 elif_clause : ELIF test[expr_contextType.Load] COLON suite
-           -> ^(ELIF<If>[$ELIF, (exprType)$test.tree, actions.makeStmts($suite.stmts), new stmtType[0\]])
+           -> ^(ELIF<If>[$ELIF, (exprType)$test.tree, actions.makeStmts($suite.stypes), new stmtType[0\]])
             ;
 
 //while_stmt: 'while' test ':' suite ['else' ':' suite]
@@ -694,7 +694,7 @@ while_stmt
    $while_stmt.tree = stype;
 }
     : WHILE test[expr_contextType.Load] COLON s1=suite (ORELSE COLON s2=suite)? {
-        stype = actions.makeWhile($WHILE, (exprType)$test.tree, $s1.stmts, $s2.stmts);
+        stype = actions.makeWhile($WHILE, (exprType)$test.tree, $s1.stypes, $s2.stypes);
     }
     ;
 
@@ -707,7 +707,7 @@ for_stmt
    $for_stmt.tree = stype;
 }
     : FOR exprlist[expr_contextType.Store] IN testlist[expr_contextType.Load] COLON s1=suite (ORELSE COLON s2=suite)? {
-        stype = actions.makeFor($FOR, $exprlist.etype, (exprType)$testlist.tree, $s1.stmts, $s2.stmts);
+        stype = actions.makeFor($FOR, $exprlist.etype, (exprType)$testlist.tree, $s1.stypes, $s2.stypes);
     }
     ;
 
@@ -725,10 +725,10 @@ try_stmt
 }
     : TRY COLON trysuite=suite
         ( e+=except_clause+ (ORELSE COLON elsesuite=suite)? (FINALLY COLON finalsuite=suite)? {
-            stype = actions.makeTryExcept($TRY, $trysuite.stmts, $e, $elsesuite.stmts, $finalsuite.stmts);
+            stype = actions.makeTryExcept($TRY, $trysuite.stypes, $e, $elsesuite.stypes, $finalsuite.stypes);
         }
         | FINALLY COLON finalsuite=suite {
-            stype = actions.makeTryFinally($TRY, $trysuite.stmts, $finalsuite.stmts);
+            stype = actions.makeTryFinally($TRY, $trysuite.stypes, $finalsuite.stypes);
         }
         )
         ;
@@ -742,7 +742,7 @@ with_stmt
    $with_stmt.tree = stype;
 }
     :WITH test[expr_contextType.Load] (with_var)? COLON suite {
-        stype = new With($WITH, (exprType)$test.tree, $with_var.etype, actions.makeStmts($suite.stmts));
+        stype = new With($WITH, (exprType)$test.tree, $with_var.etype, actions.makeStmts($suite.stypes));
     }
     ;
 
@@ -755,13 +755,13 @@ with_var returns [exprType etype]
 
 //except_clause: 'except' [test [',' test]]
 except_clause : EXCEPT (t1=test[expr_contextType.Load] (COMMA t2=test[expr_contextType.Store])?)? COLON suite
-             -> ^(EXCEPT<excepthandlerType>[$EXCEPT, (exprType)$t1.tree, (exprType)$t2.tree, actions.makeStmts($suite.stmts), $EXCEPT.getLine(), $EXCEPT.getCharPositionInLine()])
+             -> ^(EXCEPT<excepthandlerType>[$EXCEPT, (exprType)$t1.tree, (exprType)$t2.tree, actions.makeStmts($suite.stypes), $EXCEPT.getLine(), $EXCEPT.getCharPositionInLine()])
               ;
 
 //suite: simple_stmt | NEWLINE INDENT stmt+ DEDENT
-suite returns [List stmts]
-    : ss+=simple_stmt {$stmts = $ss;}
-    | NEWLINE! INDENT (s+=stmt)+ DEDENT {$stmts = $s;}
+suite returns [List stypes]
+    : ss+=simple_stmt {$stypes = $ss;}
+    | NEWLINE! INDENT (s+=stmt)+ DEDENT {$stypes = $s;}
     ;
 
 //test: or_test ['if' or_test 'else' test] | lambdef
@@ -1085,7 +1085,7 @@ testlist_gexp
                 if (e instanceof Context) {
                     ((Context)e).setContext(expr_contextType.Load);
                 }
-                etype = new GeneratorExp($gen_for.start, (exprType)$t.get(0), c);
+                etype = new GeneratorExp($testlist_gexp.start, (exprType)$t.get(0), c);
             }
           )
         )
@@ -1233,7 +1233,7 @@ classdef
    $classdef.tree = stype;
 }
     :CLASS NAME (LPAREN testlist[expr_contextType.Load]? RPAREN)? COLON suite {
-        stype = new ClassDef($CLASS, $NAME.getText(), actions.makeBases((exprType)$testlist.tree), actions.makeStmts($suite.stmts));
+        stype = new ClassDef($CLASS, $NAME.getText(), actions.makeBases((exprType)$testlist.tree), actions.makeStmts($suite.stypes));
     }
     ;
 
