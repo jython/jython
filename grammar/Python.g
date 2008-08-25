@@ -1021,35 +1021,38 @@ factor returns [exprType etype]
 //power: atom trailer* ['**' factor]
 power returns [exprType etype]
 @after {
-    if ($etype != null) {
-        $power.tree = $etype;
-    }
+    $power.tree = $etype;
 }
-    : atom (t+=trailer[$atom.start])* (options {greedy=true;}:DOUBLESTAR factor)? {
+    : atom (t+=trailer[$atom.start])* (options {greedy=true;}:d=DOUBLESTAR factor)? {
+        //System.out.println("??? " + $d + " ??? " + $factor.tree);
+        $etype = (exprType)$atom.tree;
         if ($t != null) {
-            exprType current = (exprType)$atom.tree;
             //for(int i = $t.size() - 1; i > -1; i--) {
             for(int i = 0; i < $t.size(); i++) {
                 Object o = $t.get(i);
-                if (current instanceof Context) {
-                    ((Context)current).setContext(expr_contextType.Load);
+                if ($etype instanceof Context) {
+                    ((Context)$etype).setContext(expr_contextType.Load);
                 }
                 //XXX: good place for an interface to avoid all of this instanceof
                 if (o instanceof Call) {
                     Call c = (Call)o;
-                    c.func = current;
-                    current = c;
+                    c.func = $etype;
+                    $etype = c;
                 } else if (o instanceof Subscript) {
                     Subscript c = (Subscript)o;
-                    c.value = current;
-                    current = c;
+                    c.value = $etype;
+                    $etype = c;
                 } else if (o instanceof Attribute) {
                     Attribute c = (Attribute)o;
-                    c.value = current;
-                    current = c;
+                    c.value = $etype;
+                    $etype = c;
                 }
             }
-            $etype = (exprType)current;
+        }
+        if ($d != null) {
+            List right = new ArrayList();
+            right.add($factor.tree);
+            $etype = actions.makeBinOp($etype, operatorType.Pow, right);
         }
     }
     ;
