@@ -279,8 +279,18 @@ single_input : NEWLINE* EOF -> ^(Interactive)
 
 //file_input: (NEWLINE | stmt)* ENDMARKER
 file_input
-    : (NEWLINE | s+=stmt)+ -> ^(PYNODE<Module>[$file_input.start, actions.makeStmts($s)])
-    | -> ^(PYNODE<Module>[$file_input.start, new stmtType[0\]])
+@init {
+    modType mtype = null;
+    List stypes = new ArrayList();
+}
+@after {
+    $file_input.tree = mtype;
+}
+    : (NEWLINE
+      | stmt {stypes.addAll($stmt.stypes);}
+      )* {
+        mtype = new Module($file_input.start, actions.makeStmts(stypes));
+    }
     ;
 
 //eval_input: testlist NEWLINE* ENDMARKER
@@ -424,14 +434,21 @@ fplist returns [List etypes]
     ;
 
 //stmt: simple_stmt | compound_stmt
-stmt : simple_stmt
-     | compound_stmt
-     ;
+stmt returns [List stypes]
+    : simple_stmt {$stypes = $simple_stmt.stypes;}
+    | compound_stmt {
+        $stypes = new ArrayList();
+        $stypes.add($compound_stmt.tree);
+    }
+    ;
 
 //simple_stmt: small_stmt (';' small_stmt)* [';'] NEWLINE
-simple_stmt : small_stmt (options {greedy=true;}:SEMI small_stmt)* (SEMI)? NEWLINE
-           -> small_stmt+
-            ;
+simple_stmt returns [List stypes]
+    : s+=small_stmt (options {greedy=true;}:SEMI s+=small_stmt)* (SEMI)? NEWLINE {
+        $stypes = $s;
+    }
+    ;
+
 //small_stmt: (expr_stmt | print_stmt  | del_stmt | pass_stmt | flow_stmt |
 //             import_stmt | global_stmt | exec_stmt | assert_stmt)
 small_stmt : expr_stmt
@@ -760,8 +777,13 @@ except_clause : EXCEPT (t1=test[expr_contextType.Load] (COMMA t2=test[expr_conte
 
 //suite: simple_stmt | NEWLINE INDENT stmt+ DEDENT
 suite returns [List stypes]
-    : ss+=simple_stmt {$stypes = $ss;}
-    | NEWLINE! INDENT (s+=stmt)+ DEDENT {$stypes = $s;}
+@init {
+    $stypes = new ArrayList();
+}
+    : simple_stmt {$stypes = $simple_stmt.stypes;}
+    | NEWLINE! INDENT
+      (stmt {$stypes.addAll($stmt.stypes);}
+      )+ DEDENT
     ;
 
 //test: or_test ['if' or_test 'else' test] | lambdef

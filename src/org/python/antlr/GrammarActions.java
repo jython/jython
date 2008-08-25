@@ -296,8 +296,11 @@ public class GrammarActions {
         if (tree instanceof Context) {
             ((Context)tree).setContext(context);
         }
-        for (int i=0; i<tree.getChildCount(); i++) {
-            if (!(tree instanceof ListComp) && !(tree instanceof GeneratorExp)) {
+        if (tree instanceof GeneratorExp) {
+            GeneratorExp g = (GeneratorExp)tree;
+            recurseSetContext(g.elt, context);
+        } else if (!(tree instanceof ListComp)) {
+            for (int i=0; i<tree.getChildCount(); i++) {
                 recurseSetContext(tree.getChild(i), context);
             }
         }
