@@ -34,6 +34,7 @@ public class ExpressionParser extends BaseParser {
 
         try {
             PythonParser.eval_input_return r = parser.eval_input();
+            tree = (modType)r.tree;
             //CommonTreeNodeStream nodes = new CommonTreeNodeStream((Tree)r.tree);
             //nodes.setTokenStream(tokens);
             //PythonWalker walker = new PythonWalker(nodes);

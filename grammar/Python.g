@@ -76,8 +76,6 @@ tokens {
     DEDENT;
 
     PYNODE;
-    Interactive;
-    Expression;
 }
 
 @header {
@@ -110,6 +108,7 @@ import org.python.antlr.ast.Ellipsis;
 import org.python.antlr.ast.excepthandlerType;
 import org.python.antlr.ast.Exec;
 import org.python.antlr.ast.Expr;
+import org.python.antlr.ast.Expression;
 import org.python.antlr.ast.exprType;
 import org.python.antlr.ast.expr_contextType;
 import org.python.antlr.ast.ExtSlice;
@@ -122,6 +121,7 @@ import org.python.antlr.ast.IfExp;
 import org.python.antlr.ast.Import;
 import org.python.antlr.ast.ImportFrom;
 import org.python.antlr.ast.Index;
+import org.python.antlr.ast.Interactive;
 import org.python.antlr.ast.keywordType;
 import org.python.antlr.ast.ListComp;
 import org.python.antlr.ast.Lambda;
@@ -272,10 +272,23 @@ private ErrorHandler errorHandler;
 }
 
 //single_input: NEWLINE | simple_stmt | compound_stmt NEWLINE
-single_input : NEWLINE* EOF -> ^(Interactive)
-             | simple_stmt NEWLINE* EOF -> ^(Interactive simple_stmt)
-             | compound_stmt NEWLINE+ EOF -> ^(Interactive compound_stmt)
-             ;
+single_input
+@init {
+    modType mtype = null;
+}
+@after {
+    $single_input.tree = mtype;
+}
+    : NEWLINE* EOF {
+        mtype = new Interactive($single_input.start, new stmtType[0]);
+    }
+    | simple_stmt NEWLINE* EOF {
+        mtype = new Interactive($single_input.start, actions.makeStmts($simple_stmt.stypes));
+    }
+    | compound_stmt NEWLINE+ EOF {
+        mtype = new Interactive($single_input.start, actions.makeStmts($compound_stmt.tree));
+    }
+    ;
 
 //file_input: (NEWLINE | stmt)* ENDMARKER
 file_input
@@ -294,8 +307,17 @@ file_input
     ;
 
 //eval_input: testlist NEWLINE* ENDMARKER
-eval_input : LEADING_WS? (NEWLINE)* testlist[expr_contextType.Load] (NEWLINE)* EOF -> ^(Expression testlist)
-           ;
+eval_input
+@init {
+    modType mtype = null;
+}
+@after {
+    $eval_input.tree = mtype;
+}
+    : LEADING_WS? (NEWLINE)* testlist[expr_contextType.Load] (NEWLINE)* EOF {
+        mtype = new Expression($eval_input.start, (exprType)$testlist.tree);
+    }
+    ;
 
 //not in CPython's Grammar file
 dotted_attr returns [exprType etype]
@@ -422,9 +444,9 @@ varargslist returns [argumentsType args]
 fpdef[expr_contextType ctype] : NAME 
      -> ^(PYNODE<Name>[$NAME, $NAME.text, ctype])
       | (LPAREN fpdef[null] COMMA) => LPAREN fplist RPAREN
-     -> fplist
-      | LPAREN fplist RPAREN
      -> ^(LPAREN<Tuple>[$fplist.start, actions.makeExprs($fplist.etypes), expr_contextType.Store])
+      | LPAREN fplist RPAREN
+     -> fplist
       ;
 
 //fplist: fpdef (',' fpdef)* [',']
@@ -673,7 +695,7 @@ exec_stmt
    $exec_stmt.tree = stype;
 }
     : EXEC expr[expr_contextType.Load] (IN t1=test[expr_contextType.Load] (COMMA t2=test[expr_contextType.Load])?)? {
-         stype = new Exec($expr.start, (exprType)$expr.tree, (exprType)$t1.tree, (exprType)$t2.tree);
+         stype = new Exec($EXEC, (exprType)$expr.tree, (exprType)$t1.tree, (exprType)$t2.tree);
     }
     ;
 
@@ -1142,37 +1164,49 @@ trailer [Token begin]: LPAREN (arglist ->  ^(LPAREN<Call>[$begin, null, actions.
 //subscriptlist: subscript (',' subscript)* [',']
 //FIXME: tuples not always created when commas are present.
 subscriptlist[Token begin] returns [exprType etype]
-@after {
-   $subscriptlist.tree = $etype;
+@init {
+    exprType etype = null;
 }
-    : sub+=subscript (options {greedy=true;}:COMMA sub+=subscript)* (COMMA)? {
-        sliceType s;
-        List sltypes = $sub;
-        if (sltypes.size() == 0) {
-            s = null;
-        } else if (sltypes.size() == 1){
-            s = (sliceType)sltypes.get(0);
-        } else {
-            sliceType[] st;
-            //FIXME: here I am using ClassCastException to decide if sltypes is populated with Index
-            //       only.  Clearly this is not the best way to do this but it's late. Somebody do
-            //       something better please :) -- (hopefully a note to self)
-            try {
-                Iterator iter = sltypes.iterator();
-                List etypes = new ArrayList();
-                while (iter.hasNext()) {
-                    Index i = (Index)iter.next();
-                    etypes.add(i.value);
-                }
-                exprType[] es = (exprType[])etypes.toArray(new exprType[etypes.size()]);
-                exprType t = new Tuple($subscriptlist.start, es, expr_contextType.Load);
-                s = new Index($subscriptlist.start, t);
-            } catch (ClassCastException cc) {
-                st = (sliceType[])sltypes.toArray(new sliceType[sltypes.size()]);
-                s = new ExtSlice($subscriptlist.start, st);
-            }
+@after {
+   $subscriptlist.tree = etype;
+}
+    : sub+=subscript (options {greedy=true;}:c1=COMMA sub+=subscript)* (c2=COMMA)? {
+        boolean isTuple = false;
+        if ($c1 != null || $c2 != null) {
+            isTuple = true;
         }
-        $etype = new Subscript($begin, null, s, $expr::ctype);
+        sliceType s = null;
+        List sltypes = $sub;
+        boolean extslice = false;
+
+        //NEW LOGIC
+        if (isTuple) {
+            sliceType[] st;
+            List etypes = new ArrayList();
+            for (Object o : sltypes) {
+                if (o instanceof Index) {
+                    Index i = (Index)o;
+                    etypes.add(i.value);
+                } else {
+                    extslice = true;
+                    break;
+                }
+            }
+            if (!extslice) {
+                exprType[] es = (exprType[])etypes.toArray(new exprType[etypes.size()]);
+                exprType t = new Tuple($begin, es, expr_contextType.Load);
+                s = new Index($begin, t);
+            }
+        } else if (sltypes.size() == 1) {
+            s = (sliceType)sltypes.get(0);
+        } else if (sltypes.size() != 0) {
+            extslice = true;
+        }
+        if (extslice) {
+            sliceType[] st = (sliceType[])sltypes.toArray(new sliceType[sltypes.size()]);
+            s = new ExtSlice($begin, st);
+        }
+        etype = new Subscript($begin, null, s, $expr::ctype);
     }
     ;
 
@@ -1194,7 +1228,8 @@ subscript returns [sliceType sltype]
     ;
 
 //sliceop: ':' [test]
-sliceop : COLON (test[expr_contextType.Load])? -> test
+sliceop : COLON (test[expr_contextType.Load] -> test
+                )?
         ;
 
 //exprlist: expr (',' expr)* [',']

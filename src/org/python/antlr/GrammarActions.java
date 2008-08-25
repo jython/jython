@@ -185,6 +185,10 @@ public class GrammarActions {
         return o;
     }
 
+    stmtType[] makeStmts(PythonTree t) {
+        return new stmtType[]{(stmtType)t};
+    }
+
     stmtType[] makeStmts(List stmts) {
         if (stmts != null) {
             List<stmtType> result = new ArrayList<stmtType>();
