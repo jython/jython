@@ -236,27 +236,21 @@ public class GrammarActions {
     }
 
     stmtType makeTryExcept(Token t, List body, List handlers, List orelse, List finBody) {
-        stmtType[] b = (stmtType[])body.toArray(new stmtType[body.size()]);
+        stmtType[] b = makeStmts(body);
         excepthandlerType[] e = (excepthandlerType[])handlers.toArray(new excepthandlerType[handlers.size()]);
-        stmtType[] o;
-        if (orelse != null) {
-            o = (stmtType[])orelse.toArray(new stmtType[orelse.size()]);
-        } else {
-            o = new stmtType[0];
-        }
- 
+        stmtType[] o = makeStmts(orelse);
         stmtType te = new TryExcept(t, b, e, o);
         if (finBody == null) {
             return te;
         }
-        stmtType[] f = (stmtType[])finBody.toArray(new stmtType[finBody.size()]);
+        stmtType[] f = makeStmts(finBody);
         stmtType[] mainBody = new stmtType[]{te};
         return new TryFinally(t, mainBody, f);
     }
 
     TryFinally makeTryFinally(Token t,  List body, List finBody) {
-        stmtType[] b = (stmtType[])body.toArray(new stmtType[body.size()]);
-        stmtType[] f = (stmtType[])finBody.toArray(new stmtType[finBody.size()]);
+        stmtType[] b = makeStmts(body);
+        stmtType[] f = makeStmts(finBody);
         return new TryFinally(t, b, f);
     }
  
@@ -271,13 +265,8 @@ public class GrammarActions {
         } else {
             a = new argumentsType(t, new exprType[0], null, null, new exprType[0]); 
         }
-        stmtType[] s = (stmtType[])funcStatements.toArray(new stmtType[funcStatements.size()]);
-        exprType[] d;
-        if (decorators != null) {
-            d = (exprType[])decorators.toArray(new exprType[decorators.size()]);
-        } else {
-            d = new exprType[0];
-        }
+        stmtType[] s = makeStmts(funcStatements);
+        exprType[] d = makeExprs(decorators);
         return new FunctionDef(t, nameToken.getText(), a, s, d);
     }
 
@@ -317,13 +306,8 @@ public class GrammarActions {
     argumentsType makeArgumentsType(Token t, List params, Token snameToken,
         Token knameToken, List defaults) {
 
-        exprType[] p;
-        if (params == null) {
-            p = new exprType[0];
-        } else {
-            p = (exprType[])params.toArray(new exprType[params.size()]);
-        }
-        exprType[] d = (exprType[])defaults.toArray(new exprType[defaults.size()]);
+        exprType[] p = makeExprs(params);
+        exprType[] d = makeExprs(defaults);
         String s;
         String k;
         if (snameToken == null) {
@@ -340,10 +324,7 @@ public class GrammarActions {
     }
 
     exprType[] extractArgs(List args) {
-        if (args == null) {
-            return new exprType[0];
-        }
-        return (exprType[])args.toArray(new exprType[args.size()]);
+        return makeExprs(args);
     }
 
     keywordType[] makeKeywords(List args) {
@@ -475,12 +456,7 @@ public class GrammarActions {
 
     //FROM Walker:
     modType makeMod(PythonTree t, List stmts) {
-        stmtType[] s;
-        if (stmts != null) {
-            s = (stmtType[])stmts.toArray(new stmtType[stmts.size()]);
-        } else {
-            s = new stmtType[0];
-        }
+        stmtType[] s = makeStmts(stmts);
         return new Module(t, s);
     }
 
@@ -489,12 +465,7 @@ public class GrammarActions {
     }
 
     modType makeInteractive(PythonTree t, List stmts) {
-        stmtType[] s;
-        if (stmts == null) {
-            s = new stmtType[0];
-        } else {
-            s = (stmtType[])stmts.toArray(new stmtType[stmts.size()]);
-        }
+        stmtType[] s = makeStmts(stmts);
         return new Interactive(t, s);
     }
 
@@ -503,16 +474,16 @@ public class GrammarActions {
             return errorHandler.errorStmt(t);
         }
         cantBeNone(nameToken);
-        exprType[] b = (exprType[])bases.toArray(new exprType[bases.size()]);
-        stmtType[] s = (stmtType[])body.toArray(new stmtType[body.size()]);
+        exprType[] b = makeExprs(bases);
+        stmtType[] s = makeStmts(body);
         return new ClassDef(t, nameToken.getText(), b, s);
     }
 
     argumentsType makeArgumentsType(PythonTree t, List params, PythonTree snameToken,
         PythonTree knameToken, List defaults) {
 
-        exprType[] p = (exprType[])params.toArray(new exprType[params.size()]);
-        exprType[] d = (exprType[])defaults.toArray(new exprType[defaults.size()]);
+        exprType[] p = makeExprs(params);
+        exprType[] d = makeExprs(defaults);
         String s;
         String k;
         if (snameToken == null) {
@@ -529,27 +500,22 @@ public class GrammarActions {
     }
 
     stmtType makeTryExcept(PythonTree t, List body, List handlers, List orelse, List finBody) {
-        stmtType[] b = (stmtType[])body.toArray(new stmtType[body.size()]);
+        stmtType[] b = makeStmts(body);
         excepthandlerType[] e = (excepthandlerType[])handlers.toArray(new excepthandlerType[handlers.size()]);
-        stmtType[] o;
-        if (orelse != null) {
-            o = (stmtType[])orelse.toArray(new stmtType[orelse.size()]);
-        } else {
-            o = new stmtType[0];
-        }
+        stmtType[] o = makeStmts(orelse);
  
         stmtType te = new TryExcept(t, b, e, o);
         if (finBody == null) {
             return te;
         }
-        stmtType[] f = (stmtType[])finBody.toArray(new stmtType[finBody.size()]);
+        stmtType[] f = makeStmts(finBody);
         stmtType[] mainBody = new stmtType[]{te};
         return new TryFinally(t, mainBody, f);
     }
 
     TryFinally makeTryFinally(PythonTree t,  List body, List finBody) {
-        stmtType[] b = (stmtType[])body.toArray(new stmtType[body.size()]);
-        stmtType[] f = (stmtType[])finBody.toArray(new stmtType[finBody.size()]);
+        stmtType[] b = makeStmts(body);
+        stmtType[] f = makeStmts(finBody);
         return new TryFinally(t, b, f);
     }
 
@@ -557,18 +523,8 @@ public class GrammarActions {
         if (test == null) {
             return errorHandler.errorStmt(t);
         }
-        stmtType[] o;
-        if (orelse != null) {
-            o = (stmtType[])orelse.toArray(new stmtType[orelse.size()]);
-        } else {
-            o = new stmtType[0];
-        }
-        stmtType[] b;
-        if (body != null) {
-            b = (stmtType[])body.toArray(new stmtType[body.size()]);
-        } else {
-            b = new stmtType[0];
-        }
+        stmtType[] o = makeStmts(orelse);
+        stmtType[] b = makeStmts(body);
         return new If(t, test, b, o);
     }
 
@@ -576,13 +532,8 @@ public class GrammarActions {
         if (test == null) {
             return errorHandler.errorStmt(t);
         }
-        stmtType[] o;
-        if (orelse != null) {
-            o = (stmtType[])orelse.toArray(new stmtType[orelse.size()]);
-        } else {
-            o = new stmtType[0];
-        }
-        stmtType[] b = (stmtType[])body.toArray(new stmtType[body.size()]);
+        stmtType[] o = makeStmts(orelse);
+        stmtType[] b = makeStmts(body);
         return new While(t, test, b, o);
     }
 
@@ -591,13 +542,8 @@ public class GrammarActions {
             return errorHandler.errorStmt(t);
         }
         cantBeNone(target);
-        stmtType[] o;
-        if (orelse != null) {
-            o = (stmtType[])orelse.toArray(new stmtType[orelse.size()]);
-        } else {
-            o = new stmtType[0];
-        }
-        stmtType[] b = (stmtType[])body.toArray(new stmtType[body.size()]);
+        stmtType[] o = makeStmts(orelse);
+        stmtType[] b = makeStmts(body);
         return new For(t, target, iter, b, o);
     }
     
@@ -609,18 +555,8 @@ public class GrammarActions {
         if (func == null) {
             return errorHandler.errorExpr(t);
         }
-        exprType[] a;
-        keywordType[] k;
-        if (args == null) {
-            a = new exprType[0];
-        } else {
-            a = (exprType[])args.toArray(new exprType[args.size()]);
-        }
-        if (keywords == null) {
-            k = new keywordType[0];
-        } else {
-            k = (keywordType[])keywords.toArray(new keywordType[keywords.size()]);
-        }
+        keywordType[] k = makeKeywords(keywords);
+        exprType[] a = makeExprs(args);
         return new Call(t, func, a, k, starargs, kwargs);
     }
 
