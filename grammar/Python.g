@@ -1193,7 +1193,7 @@ listmaker[Token lbrack]
 @after {
    $listmaker.tree = etype;
 }
-    : t+=test[expr_contextType.Load] 
+    : t+=test[$expr::ctype] 
         (list_for[gens]
           {
               Collections.reverse(gens);
@@ -1201,7 +1201,7 @@ listmaker[Token lbrack]
                   (comprehensionType[])gens.toArray(new comprehensionType[gens.size()]);
               etype = new ListComp($listmaker.start, (exprType)$t.get(0), c);
           }
-        | (options {greedy=true;}:COMMA t+=test[expr_contextType.Load])*
+        | (options {greedy=true;}:COMMA t+=test[$expr::ctype])*
           {
               etype = new org.python.antlr.ast.List($lbrack, actions.makeExprs($t), $expr::ctype);
           }
