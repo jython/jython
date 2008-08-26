@@ -1105,7 +1105,7 @@ power returns [exprType etype]
 @after {
     $power.tree = $etype;
 }
-    : atom (t+=trailer[$atom.start])* (options {greedy=true;}:d=DOUBLESTAR factor)?
+    : atom (t+=trailer[$atom.start, $atom.tree])* (options {greedy=true;}:d=DOUBLESTAR factor)?
       {
           $etype = (exprType)$atom.tree;
           if ($t != null) {
@@ -1258,33 +1258,32 @@ lambdef
     ;
 
 //trailer: '(' [arglist] ')' | '[' subscriptlist ']' | '.' NAME
-trailer [Token begin]
+trailer [Token begin, PythonTree tree]
     : LPAREN 
         (arglist
-       -> ^(LPAREN<Call>[$begin, null, actions.makeExprs($arglist.args),
+       -> ^(LPAREN<Call>[$begin, (exprType)$tree, actions.makeExprs($arglist.args),
                actions.makeKeywords($arglist.keywords), $arglist.starargs, $arglist.kwargs])
         |
-       -> ^(LPAREN<Call>[$LPAREN, null, new exprType[0\], new keywordType[0\], null, null])
+       -> ^(LPAREN<Call>[$LPAREN, (exprType)$tree, new exprType[0\], new keywordType[0\], null, null])
         )
       RPAREN
-    | LBRACK s=subscriptlist[begin] RBRACK
-   -> $s
+    | LBRACK subscriptlist[$begin] RBRACK
+   -> ^(LBRACK<Subscript>[$begin, (exprType)$tree, (sliceType)$subscriptlist.tree, $expr::ctype])
     | DOT attr
-   -> ^(DOT<Attribute>[$begin, null, $attr.text, $expr::ctype])
+   -> ^(DOT<Attribute>[$begin, (exprType)$tree, $attr.text, $expr::ctype])
     ;
 
 //subscriptlist: subscript (',' subscript)* [',']
-subscriptlist[Token begin] returns [exprType etype]
+subscriptlist[Token begin]
 @init {
-    exprType etype = null;
+    sliceType sltype = null;
 }
 @after {
-   $subscriptlist.tree = etype;
+   $subscriptlist.tree = sltype;
 }
     : sub+=subscript (options {greedy=true;}:c1=COMMA sub+=subscript)* (c2=COMMA)?
       {
-          sliceType s = actions.makeSliceType($begin, $c1, $c2, $sub);
-          etype = new Subscript($begin, null, s, $expr::ctype);
+          sltype = actions.makeSliceType($begin, $c1, $c2, $sub);
       }
     ;
 
