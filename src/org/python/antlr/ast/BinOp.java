@@ -13,10 +13,6 @@ public class BinOp extends exprType {
 
     public static final String[] _fields = new String[] {"left","op","right"};
 
-    public BinOp(Token token) {
-        super(token);
-    }
-
     public BinOp(Token token, exprType left, operatorType op, exprType right) {
         super(token);
         this.left = left;

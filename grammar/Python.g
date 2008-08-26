@@ -1261,7 +1261,7 @@ lambdef
 trailer [Token begin]
     : LPAREN 
         (arglist
-       ->  ^(LPAREN<Call>[$begin, null, actions.makeExprs($arglist.args),
+       -> ^(LPAREN<Call>[$begin, null, actions.makeExprs($arglist.args),
                actions.makeKeywords($arglist.keywords), $arglist.starargs, $arglist.kwargs])
         |
        -> ^(LPAREN<Call>[$LPAREN, null, new exprType[0\], new keywordType[0\], null, null])
