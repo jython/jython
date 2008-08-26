@@ -276,16 +276,12 @@ public class GrammarActions {
 
     exprType[] makeAssignTargets(exprType lhs, List rhs) {
         exprType[] e = new exprType[rhs.size()];
+        checkAssign(lhs);
         e[0] = lhs;
         for(int i=0;i<rhs.size() - 1;i++) {
-            Object o = rhs.get(i);
-            if (o instanceof PythonParser.testlist_return) {
-                //XXX: Check to see if this is really happening anymore
-                PythonParser.testlist_return r = (PythonParser.testlist_return)o;
-                e[i + 1] = (exprType)r.getTree();
-            } else {
-                e[i + 1] = (exprType)o;
-            }
+            exprType r = (exprType)rhs.get(i);
+            checkAssign(r);
+            e[i + 1] = r;
         }
         return e;
     }
@@ -339,6 +335,7 @@ public class GrammarActions {
         if (args != null) {
             for(int i=0;i<args.size();i++) {
                 exprType[] e = (exprType[])args.get(i);
+                checkAssign(e[0]);
                 Name arg = (Name)e[0];
                 k.add(new keywordType(arg, arg.id, e[1]));
             }
@@ -618,6 +615,8 @@ public class GrammarActions {
             errorHandler.error("can't assign to number", e);
         } else if (e instanceof Yield) {
             errorHandler.error("can't assign to yield expression", e);
+        } else if (e instanceof BinOp) {
+            errorHandler.error("can't assign to operator", e);
         } else if (e instanceof Tuple) {
             //XXX: performance problem?  Any way to do this better?
             exprType[] elts = ((Tuple)e).elts;

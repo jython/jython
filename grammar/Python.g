@@ -433,6 +433,9 @@ varargslist returns [argumentsType args]
 
 //fpdef: NAME | '(' fplist ')'
 fpdef[expr_contextType ctype]
+@after {
+    actions.checkAssign((exprType)$fpdef.tree);
+}
     : NAME 
    -> ^(NAME<Name>[$NAME, $NAME.text, ctype])
     | (LPAREN fpdef[null] COMMA) => LPAREN fplist RPAREN
@@ -498,11 +501,13 @@ expr_stmt
     : ((testlist[null] augassign) => lhs=testlist[expr_contextType.AugStore]
         ( (aay=augassign y1=yield_expr 
             {
+                actions.checkAssign((exprType)$lhs.tree);
                 stype = new AugAssign($lhs.tree, (exprType)$lhs.tree, $aay.op, (exprType)$y1.tree);
             }
           )
         | (aat=augassign rhs=testlist[expr_contextType.Load]
             {
+                actions.checkAssign((exprType)$lhs.tree);
                 stype = new AugAssign($lhs.tree, (exprType)$lhs.tree, $aat.op, (exprType)$rhs.tree);
             }
           )
