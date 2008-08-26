@@ -1274,7 +1274,6 @@ trailer [Token begin]
     ;
 
 //subscriptlist: subscript (',' subscript)* [',']
-//FIXME: tuples not always created when commas are present.
 subscriptlist[Token begin] returns [exprType etype]
 @init {
     exprType etype = null;
@@ -1284,40 +1283,7 @@ subscriptlist[Token begin] returns [exprType etype]
 }
     : sub+=subscript (options {greedy=true;}:c1=COMMA sub+=subscript)* (c2=COMMA)?
       {
-          boolean isTuple = false;
-          if ($c1 != null || $c2 != null) {
-              isTuple = true;
-          }
-          sliceType s = null;
-          List sltypes = $sub;
-          boolean extslice = false;
-
-          if (isTuple) {
-              sliceType[] st;
-              List etypes = new ArrayList();
-              for (Object o : sltypes) {
-                  if (o instanceof Index) {
-                      Index i = (Index)o;
-                      etypes.add(i.value);
-                  } else {
-                      extslice = true;
-                      break;
-                  }
-              }
-              if (!extslice) {
-                  exprType[] es = (exprType[])etypes.toArray(new exprType[etypes.size()]);
-                  exprType t = new Tuple($begin, es, expr_contextType.Load);
-                  s = new Index($begin, t);
-              }
-          } else if (sltypes.size() == 1) {
-              s = (sliceType)sltypes.get(0);
-          } else if (sltypes.size() != 0) {
-              extslice = true;
-          }
-          if (extslice) {
-              sliceType[] st = (sliceType[])sltypes.toArray(new sliceType[sltypes.size()]);
-              s = new ExtSlice($begin, st);
-          }
+          sliceType s = actions.makeSliceType($begin, $c1, $c2, $sub);
           etype = new Subscript($begin, null, s, $expr::ctype);
       }
     ;
