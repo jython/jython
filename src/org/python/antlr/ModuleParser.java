@@ -34,28 +34,14 @@ public class ModuleParser extends BaseParser {
         tokens = new CommonTokenStream(indentedSource);
         PythonParser parser = new PythonParser(tokens);
         parser.setErrorHandler(errorHandler);
-        //PythonTreeAdaptor pta = new PythonTreeAdaptor();
         parser.setTreeAdaptor(new PythonTreeAdaptor());
         try {
             PythonParser.file_input_return r = parser.file_input();
             tree = (modType)r.tree;
-            //CommonTreeNodeStream nodes = new CommonTreeNodeStream(new PythonTreeAdaptor(), (Tree)r.tree);
-            //nodes.setTokenStream(tokens);
-            //PythonWalker walker = new PythonWalker(nodes);
-            //walker.setTreeAdaptor(new PythonTreeAdaptor());
-            //walker.setErrorHandler(errorHandler);
-            //tree = (modType)walker.module().tree;
-            if (tree == null) {
-                //XXX: seems like I should be able to get antlr to give me an empty Module instead
-                //     of null so I wouldn't need to build an empty Module by hand here...
-                return new Module(new PythonTree(new CommonToken(PyLexer.PYNODE)), new stmtType[0]);
-            }
         } catch (RecognitionException e) {
             //XXX: this can't happen.  Need to strip the throws from antlr
             //     generated code.
         }
-
         return tree;
     }
-
 }
