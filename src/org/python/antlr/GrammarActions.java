@@ -299,6 +299,9 @@ public class GrammarActions {
         if (tree instanceof GeneratorExp) {
             GeneratorExp g = (GeneratorExp)tree;
             recurseSetContext(g.elt, context);
+        } else if (tree instanceof ListComp) {
+            ListComp lc = (ListComp)tree;
+            recurseSetContext(lc.elt, context);
         } else if (!(tree instanceof ListComp)) {
             for (int i=0; i<tree.getChildCount(); i++) {
                 recurseSetContext(tree.getChild(i), context);
@@ -617,6 +620,8 @@ public class GrammarActions {
             errorHandler.error("can't assign to yield expression", e);
         } else if (e instanceof BinOp) {
             errorHandler.error("can't assign to operator", e);
+        } else if (e instanceof Lambda) {
+            errorHandler.error("can't assign to lambda", e);
         } else if (e instanceof Tuple) {
             //XXX: performance problem?  Any way to do this better?
             exprType[] elts = ((Tuple)e).elts;

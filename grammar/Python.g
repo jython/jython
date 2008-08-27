@@ -851,7 +851,7 @@ with_stmt
 
 //with_var: ('as' | NAME) expr
 with_var returns [exprType etype]
-    : (AS | NAME) expr[expr_contextType.Load]
+    : (AS | NAME) expr[expr_contextType.Store]
       {
           $etype = (exprType)$expr.tree;
       }
@@ -1397,14 +1397,18 @@ arglist returns [List args, List keywords, exprType starargs, exprType kwargs]
 @init {
     List arguments = new ArrayList();
     List kws = new ArrayList();
+    List gens = new ArrayList();
 }
-    : argument[arguments, kws] (COMMA argument[arguments, kws])*
+    : argument[arguments, kws, gens, true] (COMMA argument[arguments, kws, gens, false])*
           (COMMA
               ( STAR s=test[expr_contextType.Load] (COMMA DOUBLESTAR k=test[expr_contextType.Load])?
               | DOUBLESTAR k=test[expr_contextType.Load]
               )?
           )?
       {
+          if (arguments.size() > 1 && gens.size() > 0) {
+              actions.errorGenExpNotSoleArg(new PythonTree($arglist.start));
+          }
           $args=arguments;
           $keywords=kws;
           $starargs=(exprType)$s.tree;
@@ -1422,19 +1426,20 @@ arglist returns [List args, List keywords, exprType starargs, exprType kwargs]
     ;
 
 //argument: test [gen_for] | test '=' test  # Really [keyword '='] test
-argument[List arguments, List kws]
-@init {
-    List gens = new ArrayList();
-}
+argument[List arguments, List kws, List gens, boolean first] returns [boolean genarg]
     : t1=test[expr_contextType.Load]
         ((ASSIGN t2=test[expr_contextType.Load])
           {
               $kws.add(new exprType[]{(exprType)$t1.tree, (exprType)$t2.tree});
           }
-        | gen_for[gens]
+        | gen_for[$gens]
           {
-              Collections.reverse(gens);
-              comprehensionType[] c = (comprehensionType[])gens.toArray(new comprehensionType[gens.size()]);
+              if (!first) {
+                  actions.errorGenExpNotSoleArg($gen_for.tree);
+              }
+              $genarg = true;
+              Collections.reverse($gens);
+              comprehensionType[] c = (comprehensionType[])$gens.toArray(new comprehensionType[$gens.size()]);
               arguments.add(new GeneratorExp($gen_for.start, (exprType)$t1.tree, c));
           }
         | {
