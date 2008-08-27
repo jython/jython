@@ -358,15 +358,16 @@ decorator returns [exprType etype]
    $decorator.tree = $etype;
 }
     : AT dotted_attr 
-    ( LPAREN (arglist
-              {
-                  $etype = actions.makeCall($LPAREN, $dotted_attr.etype, $arglist.args,
-                           $arglist.keywords, $arglist.starargs, $arglist.kwargs);
-              }
-             |{
-                  $etype = actions.makeCall($LPAREN, $dotted_attr.etype);
-              }
-             )
+    ( LPAREN
+      ( arglist
+        {
+            $etype = actions.makeCall($LPAREN, $dotted_attr.etype, $arglist.args, $arglist.keywords,
+                     $arglist.starargs, $arglist.kwargs);
+        }
+      | {
+            $etype = actions.makeCall($LPAREN, $dotted_attr.etype);
+        }
+      )
       RPAREN
     | {
           $etype = $dotted_attr.etype;
