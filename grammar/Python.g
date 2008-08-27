@@ -941,16 +941,9 @@ and_test[expr_contextType ctype]
     ;
 
 //not_test: 'not' not_test | comparison
-not_test[expr_contextType ctype] returns [exprType etype]
-@after {
-    if ($etype != null) {
-        $not_test.tree = $etype;
-    }
-}
+not_test[expr_contextType ctype]
     : NOT nt=not_test[ctype]
-      {
-          $etype = new UnaryOp($NOT, unaryopType.Not, (exprType)$nt.tree);
-      }
+   -> ^(NOT<UnaryOp>[$NOT, unaryopType.Not, (exprType)$nt.tree])
     | comparison[ctype]
     ;
 
