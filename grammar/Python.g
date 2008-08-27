@@ -1346,8 +1346,8 @@ exprlist[expr_contextType ctype] returns [exprType etype]
       }
     ;
 
-//XXX: I'm hoping I can get rid of this and merge it back with exprlist -- but for now I need an exprlist that does not produce tuples
-//     at least for del_stmt
+//not in CPython's Grammar file
+//Needed as an exprlist that does not produce tuples for del_stmt.
 del_list returns [List etypes]
     : e+=expr[expr_contextType.Del] (options {k=2;}: COMMA e+=expr[expr_contextType.Del])* (COMMA)?
       {
@@ -1364,7 +1364,7 @@ testlist[expr_contextType ctype]
     $testlist.tree = etype;
 }
     : (test[null] COMMA)
-   => t+=test[ctype] (options {k=2;}: c1=COMMA t+=test[ctype])* (c2=COMMA)?
+   => t+=test[ctype] (options {k=2;}: COMMA t+=test[ctype])* (COMMA)?
       {
           etype = new Tuple($testlist.start, actions.makeExprs($t), ctype);
       }
@@ -1373,9 +1373,6 @@ testlist[expr_contextType ctype]
           etype = (exprType)$test.tree;
       }
     ;
-
-//XXX:
-//testlist_safe: test [(',' test)+ [',']]
 
 //dictmaker: test ':' test (',' test ':' test)* [',']
 dictmaker returns [List keys, List values]
@@ -1528,9 +1525,6 @@ yield_expr
     : YIELD testlist[expr_contextType.Load]?
    -> ^(YIELD<Yield>[$YIELD, (exprType)$testlist.tree])
     ;
-
-//XXX:
-//testlist1: test (',' test)*
 
 AS        : 'as' ;
 ASSERT    : 'assert' ;
