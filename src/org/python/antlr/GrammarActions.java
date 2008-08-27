@@ -233,6 +233,7 @@ public class GrammarActions {
         if (target == null || iter == null) {
             return errorHandler.errorStmt(new PythonTree(t));
         }
+        cantBeNone(target);
 
         stmtType[] o = makeStmts(orelse);
         stmtType[] b = makeStmts(body);
@@ -258,9 +259,9 @@ public class GrammarActions {
         return new TryFinally(t, b, f);
     }
  
-    stmtType makeFunctionDef(PythonTree t, PythonTree nameToken, argumentsType args, List funcStatements, List decorators) {
+    stmtType makeFuncdef(Token t, Token nameToken, argumentsType args, List funcStatements, List decorators) {
         if (nameToken == null) {
-            return errorHandler.errorStmt(t);
+            return errorHandler.errorStmt(new PythonTree(t));
         }
         cantBeNone(nameToken);
         argumentsType a;
@@ -554,13 +555,13 @@ public class GrammarActions {
         return new For(t, target, iter, b, o);
     }
     
-    exprType makeCall(PythonTree t, exprType func) {
+    exprType makeCall(Token t, exprType func) {
         return makeCall(t, func, null, null, null, null);
     }
 
-    exprType makeCall(PythonTree t, exprType func, List args, List keywords, exprType starargs, exprType kwargs) {
+    exprType makeCall(Token t, exprType func, List args, List keywords, exprType starargs, exprType kwargs) {
         if (func == null) {
-            return errorHandler.errorExpr(t);
+            return errorHandler.errorExpr(new PythonTree(t));
         }
         keywordType[] k = makeKeywords(keywords);
         exprType[] a = makeExprs(args);
@@ -601,6 +602,13 @@ public class GrammarActions {
             }
         }
         return new UnaryOp(t, unaryopType.USub, o);
+    }
+
+    String cantBeNone(Token t) {
+        if (t == null || t.getText().equals("None")) {
+            errorHandler.error("can't be None", new PythonTree(t));
+        }
+        return t.getText();
     }
 
     void cantBeNone(PythonTree e) {

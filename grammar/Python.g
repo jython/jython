@@ -359,25 +359,42 @@ decorator returns [exprType etype]
 }
     : AT dotted_attr 
     ( LPAREN (arglist
-        {$etype = new Call($LPAREN, $dotted_attr.etype, actions.makeExprs($arglist.args),
-                  actions.makeKeywords($arglist.keywords), $arglist.starargs, $arglist.kwargs);}
-             | {$etype = $dotted_attr.etype;}
+              {
+                  $etype = actions.makeCall($LPAREN, $dotted_attr.etype, $arglist.args,
+                           $arglist.keywords, $arglist.starargs, $arglist.kwargs);
+              }
+             |{
+                  $etype = actions.makeCall($LPAREN, $dotted_attr.etype);
+              }
              )
       RPAREN
-    | { $etype = $dotted_attr.etype; }
+    | {
+          $etype = $dotted_attr.etype;
+      }
     ) NEWLINE
     ;
 
 //decorators: decorator+
 decorators returns [List etypes]
-    : d+=decorator+ {$etypes = $d;}
+    : d+=decorator+
+      {
+          $etypes = $d;
+      }
     ;
 
 //funcdef: [decorators] 'def' NAME parameters ':' suite
-funcdef : decorators? DEF NAME parameters COLON suite
-       -> ^(DEF<FunctionDef>[$DEF, $NAME.text, $parameters.args, actions.makeStmts($suite.stypes),
-            actions.makeExprs($decorators.etypes)])
-        ;
+funcdef
+@init { stmtType stype = null; }
+@after { $funcdef.tree = stype; }
+    : decorators? DEF NAME parameters COLON suite
+    {
+        Token t = $DEF;
+        if ($decorators.start != null) {
+            t = $decorators.start;
+        }
+        stype = actions.makeFuncdef(t, $NAME, $parameters.args, $suite.stypes, $decorators.etypes);
+    }
+    ;
 
 //parameters: '(' [varargslist] ')'
 parameters returns [argumentsType args]
@@ -1387,7 +1404,7 @@ classdef
 }
     : CLASS NAME (LPAREN testlist[expr_contextType.Load]? RPAREN)? COLON suite
       {
-          stype = new ClassDef($CLASS, $NAME.getText(), actions.makeBases((exprType)$testlist.tree),
+          stype = new ClassDef($CLASS, actions.cantBeNone($NAME), actions.makeBases((exprType)$testlist.tree),
               actions.makeStmts($suite.stypes));
       }
     ;
@@ -1443,6 +1460,9 @@ argument[List arguments, List kws, List gens, boolean first] returns [boolean ge
               arguments.add(new GeneratorExp($gen_for.start, (exprType)$t1.tree, c));
           }
         | {
+              if (kws.size() > 0) {
+                  errorHandler.error("non-keyword arg after keyword arg", $t1.tree);
+              }
               $arguments.add($t1.tree);
           }
         )
