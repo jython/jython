@@ -1123,6 +1123,7 @@ power returns [exprType etype]
 }
     : atom (t+=trailer[$atom.start, $atom.tree])* (options {greedy=true;}:d=DOUBLESTAR factor)?
       {
+          //XXX: This could be better.
           $etype = (exprType)$atom.tree;
           if ($t != null) {
               for(int i = 0; i < $t.size(); i++) {
@@ -1130,7 +1131,6 @@ power returns [exprType etype]
                   if ($etype instanceof Context) {
                       ((Context)$etype).setContext(expr_contextType.Load);
                   }
-                  //XXX: good place for an interface to avoid all of this instanceof
                   if (o instanceof Call) {
                       Call c = (Call)o;
                       c.func = $etype;
