@@ -1357,21 +1357,10 @@ del_list returns [List etypes]
 
 //testlist: test (',' test)* [',']
 testlist[expr_contextType ctype]
-@init {
-    exprType etype = null;
-}
-@after {
-    $testlist.tree = etype;
-}
     : (test[null] COMMA)
    => t+=test[ctype] (options {k=2;}: COMMA t+=test[ctype])* (COMMA)?
-      {
-          etype = new Tuple($testlist.start, actions.makeExprs($t), ctype);
-      }
+   -> ^(COMMA<Tuple>[$testlist.start, actions.makeExprs($t), ctype])
     | test[ctype]
-      {
-          etype = (exprType)$test.tree;
-      }
     ;
 
 //dictmaker: test ':' test (',' test ':' test)* [',']
