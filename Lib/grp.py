@@ -1,5 +1,5 @@
 """
-"Access to the Unix group database.
+Access to the Unix group database.
 
 Group entries are reported as 4-tuples containing the following fields
 from the group database, in order:
@@ -45,7 +45,7 @@ def getgrgid(uid):
     """
     getgrgid(id) -> tuple
     Return the group database entry for the given numeric group ID.  If
-    id is not valid, raise KeyError."},
+    id is not valid, raise KeyError.
     """
     try:
         return struct_group(_posix.getgrgid(uid))
