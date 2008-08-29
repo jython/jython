@@ -8,6 +8,7 @@ from test.test_support import TESTFN, run_unittest, is_jython
 
 from test import inspect_fodder as mod
 from test import inspect_fodder2 as mod2
+from test import test_support
 
 # Functions tested in this suite:
 # ismodule, isclass, ismethod, isfunction, istraceback, isframe, iscode,
@@ -59,7 +60,10 @@ class TestPredicates(IsTestBase):
         self.assertEqual(count, expected, err_msg)
 
     def test_excluding_predicates(self):
-        self.istest(inspect.isbuiltin, 'sys.exit')
+        #XXX: Jython's PySystemState needs more work before this
+        #will be doable.
+        if not test_support.is_jython:
+            self.istest(inspect.isbuiltin, 'sys.exit')
         self.istest(inspect.isbuiltin, '[].append')
         self.istest(inspect.isclass, 'mod.StupidGit')
         self.istest(inspect.iscode, 'mod.spam.func_code')
@@ -74,7 +78,8 @@ class TestPredicates(IsTestBase):
         if hasattr(types, 'GetSetDescriptorType'):
             self.istest(inspect.isgetsetdescriptor,
                         'type(tb.tb_frame).f_locals')
-        else:
+        #XXX: This detail of PyFrames is not yet supported in Jython
+        elif not test_support.is_jython:
             self.failIf(inspect.isgetsetdescriptor(type(tb.tb_frame).f_locals))
         if hasattr(types, 'MemberDescriptorType'):
             self.istest(inspect.ismemberdescriptor, 'datetime.timedelta.days')
