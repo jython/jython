@@ -65,13 +65,17 @@ def _do_cmp(f1, f2):
     bufsize = BUFSIZE
     fp1 = open(f1, 'rb')
     fp2 = open(f2, 'rb')
-    while True:
-        b1 = fp1.read(bufsize)
-        b2 = fp2.read(bufsize)
-        if b1 != b2:
-            return False
-        if not b1:
-            return True
+    try:
+        while True:
+            b1 = fp1.read(bufsize)
+            b2 = fp2.read(bufsize)
+            if b1 != b2:
+                return False
+            if not b1:
+                return True
+    finally:
+        fp1.close()
+        fp2.close()
 
 # Directory comparison class.
 #
