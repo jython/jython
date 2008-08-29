@@ -313,7 +313,10 @@ public class FileIO extends RawIOBase {
         checkClosed();
         checkWritable();
         try {
+            long oldPosition = fileChannel.position();
             fileChannel.truncate(size);
+            // seek necessary on Windows only, see <http://bugs.python.org/issue801631>
+            fileChannel.position(oldPosition);
         } catch (IOException ioe) {
             throw Py.IOError(ioe);
         }
