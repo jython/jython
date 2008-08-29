@@ -10,8 +10,11 @@ is raised if the entry asked for cannot be found.
 
 __all__ = ['getpwuid', 'getpwnam', 'getpwall']
 
-from os import _posix
+from os import _name, _posix
 from java.lang import NullPointerException
+
+if _name == 'nt':
+    raise ImportError, 'pwd module not supported on Windows'
 
 class struct_passwd(tuple):
     """

@@ -17,8 +17,11 @@ complete membership information.)
 
 __all__ = ['getgrgid', 'getgrnam', 'getgrall']
 
-from os import _posix
+from os import _name, _posix
 from java.lang import NullPointerException
+
+if _name == 'nt':
+    raise ImportError, 'grp module not supported on Windows'
 
 class struct_group(tuple):
     """
