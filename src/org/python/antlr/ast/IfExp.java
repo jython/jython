@@ -17,24 +17,33 @@ public class IfExp extends exprType {
     public IfExp(Token token, exprType test, exprType body, exprType orelse) {
         super(token);
         this.test = test;
+        addChild(test);
         this.body = body;
+        addChild(body);
         this.orelse = orelse;
+        addChild(orelse);
     }
 
     public IfExp(int ttype, Token token, exprType test, exprType body, exprType
     orelse) {
         super(ttype, token);
         this.test = test;
+        addChild(test);
         this.body = body;
+        addChild(body);
         this.orelse = orelse;
+        addChild(orelse);
     }
 
     public IfExp(PythonTree tree, exprType test, exprType body, exprType
     orelse) {
         super(tree);
         this.test = test;
+        addChild(test);
         this.body = body;
+        addChild(body);
         this.orelse = orelse;
+        addChild(orelse);
     }
 
     public String toString() {

@@ -16,18 +16,21 @@ public class Lambda extends exprType {
         super(token);
         this.args = args;
         this.body = body;
+        addChild(body);
     }
 
     public Lambda(int ttype, Token token, argumentsType args, exprType body) {
         super(ttype, token);
         this.args = args;
         this.body = body;
+        addChild(body);
     }
 
     public Lambda(PythonTree tree, argumentsType args, exprType body) {
         super(tree);
         this.args = args;
         this.body = body;
+        addChild(body);
     }
 
     public String toString() {

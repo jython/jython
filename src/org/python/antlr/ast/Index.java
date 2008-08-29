@@ -14,16 +14,19 @@ public class Index extends sliceType {
     public Index(Token token, exprType value) {
         super(token);
         this.value = value;
+        addChild(value);
     }
 
     public Index(int ttype, Token token, exprType value) {
         super(ttype, token);
         this.value = value;
+        addChild(value);
     }
 
     public Index(PythonTree tree, exprType value) {
         super(tree);
         this.value = value;
+        addChild(value);
     }
 
     public String toString() {

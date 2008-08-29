@@ -20,7 +20,9 @@ public class excepthandlerType extends PythonTree {
     stmtType[] body, int lineno, int col_offset) {
         super(token);
         this.type = type;
+        addChild(type);
         this.name = name;
+        addChild(name);
         this.body = body;
         if (body != null) {
             for(int ibody=0;ibody<body.length;ibody++) {
@@ -35,7 +37,9 @@ public class excepthandlerType extends PythonTree {
     name, stmtType[] body, int lineno, int col_offset) {
         super(ttype, token);
         this.type = type;
+        addChild(type);
         this.name = name;
+        addChild(name);
         this.body = body;
         if (body != null) {
             for(int ibody=0;ibody<body.length;ibody++) {
@@ -50,7 +54,9 @@ public class excepthandlerType extends PythonTree {
     stmtType[] body, int lineno, int col_offset) {
         super(tree);
         this.type = type;
+        addChild(type);
         this.name = name;
+        addChild(name);
         this.body = body;
         if (body != null) {
             for(int ibody=0;ibody<body.length;ibody++) {

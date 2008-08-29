@@ -18,6 +18,7 @@ public class While extends stmtType {
     orelse) {
         super(token);
         this.test = test;
+        addChild(test);
         this.body = body;
         if (body != null) {
             for(int ibody=0;ibody<body.length;ibody++) {
@@ -36,6 +37,7 @@ public class While extends stmtType {
     stmtType[] orelse) {
         super(ttype, token);
         this.test = test;
+        addChild(test);
         this.body = body;
         if (body != null) {
             for(int ibody=0;ibody<body.length;ibody++) {
@@ -54,6 +56,7 @@ public class While extends stmtType {
     orelse) {
         super(tree);
         this.test = test;
+        addChild(test);
         this.body = body;
         if (body != null) {
             for(int ibody=0;ibody<body.length;ibody++) {

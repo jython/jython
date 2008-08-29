@@ -14,16 +14,19 @@ public class Yield extends exprType {
     public Yield(Token token, exprType value) {
         super(token);
         this.value = value;
+        addChild(value);
     }
 
     public Yield(int ttype, Token token, exprType value) {
         super(ttype, token);
         this.value = value;
+        addChild(value);
     }
 
     public Yield(PythonTree tree, exprType value) {
         super(tree);
         this.value = value;
+        addChild(value);
     }
 
     public String toString() {

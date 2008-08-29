@@ -2,6 +2,7 @@ package org.python.antlr;
 
 import org.antlr.runtime.CommonToken;
 import org.antlr.runtime.Token;
+import org.antlr.runtime.tree.Tree;
 
 import org.python.core.Py;
 import org.python.core.PyComplex;
@@ -16,6 +17,7 @@ import org.python.antlr.ast.aliasType;
 import org.python.antlr.ast.argumentsType;
 import org.python.antlr.ast.boolopType;
 import org.python.antlr.ast.comprehensionType;
+import org.python.antlr.ast.Context;
 import org.python.antlr.ast.cmpopType;
 import org.python.antlr.ast.excepthandlerType;
 import org.python.antlr.ast.exprType;
@@ -96,6 +98,55 @@ public class GrammarActions {
         this.errorHandler = eh;
     }
 
+    String makeFromText(List dots, String name) {
+        StringBuffer d = new StringBuffer();
+        if (dots != null) {
+            for (int i=0;i<dots.size();i++) {
+                d.append(".");
+            }
+        }
+        if (name != null) {
+            d.append(name);
+        }
+        return d.toString();
+    }
+
+    int makeLevel(List lev) {
+        if (lev == null) {
+            return 0;
+        }
+        return lev.size();
+    }
+
+    aliasType[] makeStarAlias(Token t) {
+        return new aliasType[]{new aliasType(t, "*", null)};
+    }
+
+    aliasType[] makeAliases(aliasType[] atypes) {
+        if (atypes == null) {
+            return new aliasType[0];
+        }
+        return atypes;
+    }
+
+    exprType[] makeBases(exprType etype) {
+        if (etype != null) {
+            if (etype instanceof Tuple) {
+                return ((Tuple)etype).elts;
+            }
+            return new exprType[]{etype};
+        }
+        return new exprType[0];
+    }
+
+    String[] makeNames(List names) {
+        List<String> s = new ArrayList<String>();
+        for(int i=0;i<names.size();i++) {
+            s.add(((Token)names.get(i)).getText());
+        }
+        return s.toArray(new String[s.size()]);
+    }
+
     void errorGenExpNotSoleArg(PythonTree t) {
         errorHandler.error("Generator expression must be parenthesized if not sole argument", t);
     }
@@ -108,19 +159,51 @@ public class GrammarActions {
         if (exprs != null) {
             List<exprType> result = new ArrayList<exprType>();
             for (int i=start; i<exprs.size(); i++) {
-                exprType e = (exprType)exprs.get(i);
-                result.add(e);
+                Object o = exprs.get(i);
+                if (o instanceof exprType) {
+                    result.add((exprType)o);
+                } else if (o instanceof PythonParser.test_return) {
+                    result.add((exprType)((PythonParser.test_return)o).tree);
+                }
             }
-            return (exprType[])result.toArray(new exprType[result.size()]);
+            return result.toArray(new exprType[result.size()]);
         }
         return new exprType[0];
+    }
+    
+    stmtType[] makeElses(List elseSuite, List elifs) {
+        stmtType[] o;
+        o = makeStmts(elseSuite);
+        if (elifs != null) {
+            ListIterator iter = elifs.listIterator(elifs.size());
+            while (iter.hasPrevious()) {
+                If elif = (If)iter.previous();
+                elif.orelse = o;
+                o = new stmtType[]{elif};
+            }
+        }
+        return o;
+    }
+
+    stmtType[] makeStmts(PythonTree t) {
+        return new stmtType[]{(stmtType)t};
     }
 
     stmtType[] makeStmts(List stmts) {
         if (stmts != null) {
             List<stmtType> result = new ArrayList<stmtType>();
             for (int i=0; i<stmts.size(); i++) {
-                result.add((stmtType)stmts.get(i));
+                Object o = stmts.get(i);
+                if (o instanceof stmtType) {
+                    result.add((stmtType)o);
+                } else if (o instanceof PythonTree) {
+                    PythonTree t = (PythonTree)o;
+                    for (int j=0; j<t.getChildCount(); j++) {
+                        result.add((stmtType)t.getChild(i));
+                    }
+                } else {
+                    result.add((stmtType)((PythonParser.stmt_return)o).tree);
+                }
             }
             return (stmtType[])result.toArray(new stmtType[result.size()]);
         }
@@ -137,9 +220,48 @@ public class GrammarActions {
         return current;
     }
 
-    stmtType makeFunctionDef(PythonTree t, PythonTree nameToken, argumentsType args, List funcStatements, List decorators) {
+    stmtType makeWhile(Token t, exprType test, List body, List orelse) {
+        if (test == null) {
+            return errorHandler.errorStmt(new PythonTree(t));
+        }
+        stmtType[] o = makeStmts(orelse);
+        stmtType[] b = makeStmts(body);
+        return new While(t, test, b, o);
+    }
+
+    stmtType makeFor(Token t, exprType target, exprType iter, List body, List orelse) {
+        if (target == null || iter == null) {
+            return errorHandler.errorStmt(new PythonTree(t));
+        }
+        cantBeNone(target);
+
+        stmtType[] o = makeStmts(orelse);
+        stmtType[] b = makeStmts(body);
+        return new For(t, target, iter, b, o);
+    }
+
+    stmtType makeTryExcept(Token t, List body, List handlers, List orelse, List finBody) {
+        stmtType[] b = makeStmts(body);
+        excepthandlerType[] e = (excepthandlerType[])handlers.toArray(new excepthandlerType[handlers.size()]);
+        stmtType[] o = makeStmts(orelse);
+        stmtType te = new TryExcept(t, b, e, o);
+        if (finBody == null) {
+            return te;
+        }
+        stmtType[] f = makeStmts(finBody);
+        stmtType[] mainBody = new stmtType[]{te};
+        return new TryFinally(t, mainBody, f);
+    }
+
+    TryFinally makeTryFinally(Token t,  List body, List finBody) {
+        stmtType[] b = makeStmts(body);
+        stmtType[] f = makeStmts(finBody);
+        return new TryFinally(t, b, f);
+    }
+ 
+    stmtType makeFuncdef(Token t, Token nameToken, argumentsType args, List funcStatements, List decorators) {
         if (nameToken == null) {
-            return errorHandler.errorStmt(t);
+            return errorHandler.errorStmt(new PythonTree(t));
         }
         cantBeNone(nameToken);
         argumentsType a;
@@ -148,21 +270,51 @@ public class GrammarActions {
         } else {
             a = new argumentsType(t, new exprType[0], null, null, new exprType[0]); 
         }
-        stmtType[] s = (stmtType[])funcStatements.toArray(new stmtType[funcStatements.size()]);
-        exprType[] d;
-        if (decorators != null) {
-            d = (exprType[])decorators.toArray(new exprType[decorators.size()]);
-        } else {
-            d = new exprType[0];
-        }
+        stmtType[] s = makeStmts(funcStatements);
+        exprType[] d = makeExprs(decorators);
         return new FunctionDef(t, nameToken.getText(), a, s, d);
+    }
+
+    exprType[] makeAssignTargets(exprType lhs, List rhs) {
+        exprType[] e = new exprType[rhs.size()];
+        checkAssign(lhs);
+        e[0] = lhs;
+        for(int i=0;i<rhs.size() - 1;i++) {
+            exprType r = (exprType)rhs.get(i);
+            checkAssign(r);
+            e[i + 1] = r;
+        }
+        return e;
+    }
+
+    exprType makeAssignValue(List rhs) {
+        exprType value = (exprType)rhs.get(rhs.size() -1);
+        recurseSetContext(value, expr_contextType.Load);
+        return value;
+    }
+
+    void recurseSetContext(Tree tree, expr_contextType context) {
+        if (tree instanceof Context) {
+            ((Context)tree).setContext(context);
+        }
+        if (tree instanceof GeneratorExp) {
+            GeneratorExp g = (GeneratorExp)tree;
+            recurseSetContext(g.elt, context);
+        } else if (tree instanceof ListComp) {
+            ListComp lc = (ListComp)tree;
+            recurseSetContext(lc.elt, context);
+        } else if (!(tree instanceof ListComp)) {
+            for (int i=0; i<tree.getChildCount(); i++) {
+                recurseSetContext(tree.getChild(i), context);
+            }
+        }
     }
 
     argumentsType makeArgumentsType(Token t, List params, Token snameToken,
         Token knameToken, List defaults) {
 
-        exprType[] p = (exprType[])params.toArray(new exprType[params.size()]);
-        exprType[] d = (exprType[])defaults.toArray(new exprType[defaults.size()]);
+        exprType[] p = makeExprs(params);
+        exprType[] d = makeExprs(defaults);
         String s;
         String k;
         if (snameToken == null) {
@@ -178,7 +330,23 @@ public class GrammarActions {
         return new argumentsType(t, p, s, k, d);
     }
 
+    exprType[] extractArgs(List args) {
+        return makeExprs(args);
+    }
 
+    keywordType[] makeKeywords(List args) {
+        List<keywordType> k = new ArrayList<keywordType>();
+        if (args != null) {
+            for(int i=0;i<args.size();i++) {
+                exprType[] e = (exprType[])args.get(i);
+                checkAssign(e[0]);
+                Name arg = (Name)e[0];
+                k.add(new keywordType(arg, arg.id, e[1]));
+            }
+            return k.toArray(new keywordType[k.size()]);
+        }
+        return new keywordType[0];
+    }
 
     Object makeFloat(Token t) {
         return Py.newFloat(Double.valueOf(t.getText()));
@@ -296,12 +464,7 @@ public class GrammarActions {
 
     //FROM Walker:
     modType makeMod(PythonTree t, List stmts) {
-        stmtType[] s;
-        if (stmts != null) {
-            s = (stmtType[])stmts.toArray(new stmtType[stmts.size()]);
-        } else {
-            s = new stmtType[0];
-        }
+        stmtType[] s = makeStmts(stmts);
         return new Module(t, s);
     }
 
@@ -310,12 +473,7 @@ public class GrammarActions {
     }
 
     modType makeInteractive(PythonTree t, List stmts) {
-        stmtType[] s;
-        if (stmts == null) {
-            s = new stmtType[0];
-        } else {
-            s = (stmtType[])stmts.toArray(new stmtType[stmts.size()]);
-        }
+        stmtType[] s = makeStmts(stmts);
         return new Interactive(t, s);
     }
 
@@ -324,16 +482,16 @@ public class GrammarActions {
             return errorHandler.errorStmt(t);
         }
         cantBeNone(nameToken);
-        exprType[] b = (exprType[])bases.toArray(new exprType[bases.size()]);
-        stmtType[] s = (stmtType[])body.toArray(new stmtType[body.size()]);
+        exprType[] b = makeExprs(bases);
+        stmtType[] s = makeStmts(body);
         return new ClassDef(t, nameToken.getText(), b, s);
     }
 
     argumentsType makeArgumentsType(PythonTree t, List params, PythonTree snameToken,
         PythonTree knameToken, List defaults) {
 
-        exprType[] p = (exprType[])params.toArray(new exprType[params.size()]);
-        exprType[] d = (exprType[])defaults.toArray(new exprType[defaults.size()]);
+        exprType[] p = makeExprs(params);
+        exprType[] d = makeExprs(defaults);
         String s;
         String k;
         if (snameToken == null) {
@@ -350,27 +508,22 @@ public class GrammarActions {
     }
 
     stmtType makeTryExcept(PythonTree t, List body, List handlers, List orelse, List finBody) {
-        stmtType[] b = (stmtType[])body.toArray(new stmtType[body.size()]);
+        stmtType[] b = makeStmts(body);
         excepthandlerType[] e = (excepthandlerType[])handlers.toArray(new excepthandlerType[handlers.size()]);
-        stmtType[] o;
-        if (orelse != null) {
-            o = (stmtType[])orelse.toArray(new stmtType[orelse.size()]);
-        } else {
-            o = new stmtType[0];
-        }
+        stmtType[] o = makeStmts(orelse);
  
         stmtType te = new TryExcept(t, b, e, o);
         if (finBody == null) {
             return te;
         }
-        stmtType[] f = (stmtType[])finBody.toArray(new stmtType[finBody.size()]);
+        stmtType[] f = makeStmts(finBody);
         stmtType[] mainBody = new stmtType[]{te};
         return new TryFinally(t, mainBody, f);
     }
 
     TryFinally makeTryFinally(PythonTree t,  List body, List finBody) {
-        stmtType[] b = (stmtType[])body.toArray(new stmtType[body.size()]);
-        stmtType[] f = (stmtType[])finBody.toArray(new stmtType[finBody.size()]);
+        stmtType[] b = makeStmts(body);
+        stmtType[] f = makeStmts(finBody);
         return new TryFinally(t, b, f);
     }
 
@@ -378,33 +531,17 @@ public class GrammarActions {
         if (test == null) {
             return errorHandler.errorStmt(t);
         }
-        stmtType[] o;
-        if (orelse != null) {
-            o = (stmtType[])orelse.toArray(new stmtType[orelse.size()]);
-        } else {
-            o = new stmtType[0];
-        }
-        stmtType[] b;
-        if (body != null) {
-            b = (stmtType[])body.toArray(new stmtType[body.size()]);
-        } else {
-            b = new stmtType[0];
-        }
+        stmtType[] o = makeStmts(orelse);
+        stmtType[] b = makeStmts(body);
         return new If(t, test, b, o);
     }
-
 
     stmtType makeWhile(PythonTree t, exprType test, List body, List orelse) {
         if (test == null) {
             return errorHandler.errorStmt(t);
         }
-        stmtType[] o;
-        if (orelse != null) {
-            o = (stmtType[])orelse.toArray(new stmtType[orelse.size()]);
-        } else {
-            o = new stmtType[0];
-        }
-        stmtType[] b = (stmtType[])body.toArray(new stmtType[body.size()]);
+        stmtType[] o = makeStmts(orelse);
+        stmtType[] b = makeStmts(body);
         return new While(t, test, b, o);
     }
 
@@ -413,37 +550,26 @@ public class GrammarActions {
             return errorHandler.errorStmt(t);
         }
         cantBeNone(target);
-        stmtType[] o;
-        if (orelse != null) {
-            o = (stmtType[])orelse.toArray(new stmtType[orelse.size()]);
-        } else {
-            o = new stmtType[0];
-        }
-        stmtType[] b = (stmtType[])body.toArray(new stmtType[body.size()]);
+        stmtType[] o = makeStmts(orelse);
+        stmtType[] b = makeStmts(body);
         return new For(t, target, iter, b, o);
     }
     
-    exprType makeCall(PythonTree t, exprType func) {
+    exprType makeCall(Token t, exprType func) {
         return makeCall(t, func, null, null, null, null);
     }
 
-    exprType makeCall(PythonTree t, exprType func, List args, List keywords, exprType starargs, exprType kwargs) {
+    exprType makeCall(Token t, exprType func, List args, List keywords, exprType starargs, exprType kwargs) {
         if (func == null) {
-            return errorHandler.errorExpr(t);
+            return errorHandler.errorExpr(new PythonTree(t));
         }
-        exprType[] a;
-        keywordType[] k;
-        if (args == null) {
-            a = new exprType[0];
-        } else {
-            a = (exprType[])args.toArray(new exprType[args.size()]);
-        }
-        if (keywords == null) {
-            k = new keywordType[0];
-        } else {
-            k = (keywordType[])keywords.toArray(new keywordType[keywords.size()]);
-        }
+        keywordType[] k = makeKeywords(keywords);
+        exprType[] a = makeExprs(args);
         return new Call(t, func, a, k, starargs, kwargs);
+    }
+
+    exprType negate(Token t, exprType o) {
+        return negate(new PythonTree(t), o);
     }
 
     exprType negate(PythonTree t, exprType o) {
@@ -478,6 +604,13 @@ public class GrammarActions {
         return new UnaryOp(t, unaryopType.USub, o);
     }
 
+    String cantBeNone(Token t) {
+        if (t == null || t.getText().equals("None")) {
+            errorHandler.error("can't be None", new PythonTree(t));
+        }
+        return t.getText();
+    }
+
     void cantBeNone(PythonTree e) {
         if (e.getText().equals("None")) {
             errorHandler.error("can't be None", e);
@@ -493,6 +626,10 @@ public class GrammarActions {
             errorHandler.error("can't assign to number", e);
         } else if (e instanceof Yield) {
             errorHandler.error("can't assign to yield expression", e);
+        } else if (e instanceof BinOp) {
+            errorHandler.error("can't assign to operator", e);
+        } else if (e instanceof Lambda) {
+            errorHandler.error("can't assign to lambda", e);
         } else if (e instanceof Tuple) {
             //XXX: performance problem?  Any way to do this better?
             exprType[] elts = ((Tuple)e).elts;
@@ -508,6 +645,115 @@ public class GrammarActions {
                 errorHandler.error("can't delete function call", exprs[i]);
             }
         }
+    }
+
+    sliceType makeSubscript(PythonTree lower, Token colon, PythonTree upper, PythonTree sliceop) {
+            boolean isSlice = false;
+        exprType s = null;
+        exprType e = null;
+        exprType o = null;
+        if (lower != null) {
+            s = (exprType)lower;
+        }
+        if (colon != null) {
+            isSlice = true;
+            if (upper != null) {
+                e = (exprType)upper;
+            }
+        }
+        if (sliceop != null) {
+            isSlice = true;
+            if (sliceop != null) {
+                o = (exprType)sliceop;
+            } else {
+                o = new Name(sliceop, "None", expr_contextType.Load);
+            }
+        }
+
+        PythonTree tok = lower;
+        if (lower == null) {
+            tok = new PythonTree(colon);
+        }
+        if (isSlice) {
+           return new Slice(tok, s, e, o);
+        }
+        else {
+           return new Index(tok, s);
+        }
+    }
+
+    cmpopType[] makeCmpOps(List cmps) {
+        if (cmps != null) {
+            List<cmpopType> result = new ArrayList<cmpopType>();
+            for (Object o: cmps) {
+                result.add((cmpopType)o);
+            }
+            return result.toArray(new cmpopType[result.size()]);
+        }
+        return new cmpopType[0];
+    }
+    
+    BoolOp makeBoolOp(PythonTree left, boolopType op, List right) {
+        List values = new ArrayList();
+        values.add(left);
+        values.addAll(right);
+        return new BoolOp(left, op, makeExprs(values));
+    }
+
+    BinOp makeBinOp(PythonTree left, operatorType op, List rights) {
+        BinOp current = new BinOp(left, (exprType)left, op, (exprType)rights.get(0));
+        for (int i = 1; i< rights.size(); i++) {
+            exprType right = (exprType)rights.get(i);
+            current = new BinOp(left, current, op, right);
+        }
+        return current;
+    }
+
+    BinOp makeBinOp(PythonTree left, List ops, List rights) {
+        BinOp current = new BinOp(left, (exprType)left, (operatorType)ops.get(0), (exprType)rights.get(0));
+        for (int i = 1; i< rights.size(); i++) {
+            exprType right = (exprType)rights.get(i);
+            operatorType op = (operatorType)ops.get(i);
+            current = new BinOp(left, current, op, right);
+        }
+        return current;
+    }
+
+    sliceType makeSliceType(Token begin, Token c1, Token c2, List sltypes) {
+        boolean isTuple = false;
+        if (c1 != null || c2 != null) {
+            isTuple = true;
+        }
+        sliceType s = null;
+        boolean extslice = false;
+
+        if (isTuple) {
+            sliceType[] st;
+            List etypes = new ArrayList();
+            for (Object o : sltypes) {
+                if (o instanceof Index) {
+                    Index i = (Index)o;
+                    etypes.add(i.value);
+                } else {
+                    extslice = true;
+                    break;
+                }
+            }
+            if (!extslice) {
+                exprType[] es = (exprType[])etypes.toArray(new exprType[etypes.size()]);
+                exprType t = new Tuple(begin, es, expr_contextType.Load);
+                s = new Index(begin, t);
+            }
+        } else if (sltypes.size() == 1) {
+            s = (sliceType)sltypes.get(0);
+        } else if (sltypes.size() != 0) {
+            extslice = true;
+        }
+        if (extslice) {
+            sliceType[] st = (sliceType[])sltypes.toArray(new sliceType[sltypes.size()]);
+            s = new ExtSlice(begin, st);
+        }
+        return s;
     }
 
 }

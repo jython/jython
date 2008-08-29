@@ -212,7 +212,7 @@ public class jython
                    } catch (java.io.FileNotFoundException e) {
                        throw Py.IOError(e);
                    }
-                   if (imp.load("os").__getattr__("isatty").__call__(Py.java2py(file.getFD())).__nonzero__()) {
+                   if (false) {//(imp.load("os").__getattr__("isatty").__call__(Py.java2py(file.getFD())).__nonzero__()) {
                        opts.interactive = true;
                        interp.interact(null, new PyFile(file));
                        System.exit(0);

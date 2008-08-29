@@ -17,7 +17,9 @@ public class comprehensionType extends PythonTree {
     exprType[] ifs) {
         super(token);
         this.target = target;
+        addChild(target);
         this.iter = iter;
+        addChild(iter);
         this.ifs = ifs;
         if (ifs != null) {
             for(int iifs=0;iifs<ifs.length;iifs++) {
@@ -30,7 +32,9 @@ public class comprehensionType extends PythonTree {
     iter, exprType[] ifs) {
         super(ttype, token);
         this.target = target;
+        addChild(target);
         this.iter = iter;
+        addChild(iter);
         this.ifs = ifs;
         if (ifs != null) {
             for(int iifs=0;iifs<ifs.length;iifs++) {
@@ -43,7 +47,9 @@ public class comprehensionType extends PythonTree {
     exprType[] ifs) {
         super(tree);
         this.target = target;
+        addChild(target);
         this.iter = iter;
+        addChild(iter);
         this.ifs = ifs;
         if (ifs != null) {
             for(int iifs=0;iifs<ifs.length;iifs++) {

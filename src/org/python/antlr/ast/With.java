@@ -18,7 +18,9 @@ public class With extends stmtType {
     stmtType[] body) {
         super(token);
         this.context_expr = context_expr;
+        addChild(context_expr);
         this.optional_vars = optional_vars;
+        addChild(optional_vars);
         this.body = body;
         if (body != null) {
             for(int ibody=0;ibody<body.length;ibody++) {
@@ -31,7 +33,9 @@ public class With extends stmtType {
     optional_vars, stmtType[] body) {
         super(ttype, token);
         this.context_expr = context_expr;
+        addChild(context_expr);
         this.optional_vars = optional_vars;
+        addChild(optional_vars);
         this.body = body;
         if (body != null) {
             for(int ibody=0;ibody<body.length;ibody++) {
@@ -44,7 +48,9 @@ public class With extends stmtType {
     stmtType[] body) {
         super(tree);
         this.context_expr = context_expr;
+        addChild(context_expr);
         this.optional_vars = optional_vars;
+        addChild(optional_vars);
         this.body = body;
         if (body != null) {
             for(int ibody=0;ibody<body.length;ibody++) {

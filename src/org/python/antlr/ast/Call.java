@@ -20,6 +20,7 @@ public class Call extends exprType {
     keywords, exprType starargs, exprType kwargs) {
         super(token);
         this.func = func;
+        addChild(func);
         this.args = args;
         if (args != null) {
             for(int iargs=0;iargs<args.length;iargs++) {
@@ -33,13 +34,16 @@ public class Call extends exprType {
             }
         }
         this.starargs = starargs;
+        addChild(starargs);
         this.kwargs = kwargs;
+        addChild(kwargs);
     }
 
     public Call(int ttype, Token token, exprType func, exprType[] args,
     keywordType[] keywords, exprType starargs, exprType kwargs) {
         super(ttype, token);
         this.func = func;
+        addChild(func);
         this.args = args;
         if (args != null) {
             for(int iargs=0;iargs<args.length;iargs++) {
@@ -53,13 +57,16 @@ public class Call extends exprType {
             }
         }
         this.starargs = starargs;
+        addChild(starargs);
         this.kwargs = kwargs;
+        addChild(kwargs);
     }
 
     public Call(PythonTree tree, exprType func, exprType[] args, keywordType[]
     keywords, exprType starargs, exprType kwargs) {
         super(tree);
         this.func = func;
+        addChild(func);
         this.args = args;
         if (args != null) {
             for(int iargs=0;iargs<args.length;iargs++) {
@@ -73,7 +80,9 @@ public class Call extends exprType {
             }
         }
         this.starargs = starargs;
+        addChild(starargs);
         this.kwargs = kwargs;
+        addChild(kwargs);
     }
 
     public String toString() {

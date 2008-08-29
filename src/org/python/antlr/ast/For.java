@@ -19,7 +19,9 @@ public class For extends stmtType {
     stmtType[] orelse) {
         super(token);
         this.target = target;
+        addChild(target);
         this.iter = iter;
+        addChild(iter);
         this.body = body;
         if (body != null) {
             for(int ibody=0;ibody<body.length;ibody++) {
@@ -38,7 +40,9 @@ public class For extends stmtType {
     stmtType[] body, stmtType[] orelse) {
         super(ttype, token);
         this.target = target;
+        addChild(target);
         this.iter = iter;
+        addChild(iter);
         this.body = body;
         if (body != null) {
             for(int ibody=0;ibody<body.length;ibody++) {
@@ -57,7 +61,9 @@ public class For extends stmtType {
     body, stmtType[] orelse) {
         super(tree);
         this.target = target;
+        addChild(target);
         this.iter = iter;
+        addChild(iter);
         this.body = body;
         if (body != null) {
             for(int ibody=0;ibody<body.length;ibody++) {

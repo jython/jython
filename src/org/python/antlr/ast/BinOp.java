@@ -16,24 +16,30 @@ public class BinOp extends exprType {
     public BinOp(Token token, exprType left, operatorType op, exprType right) {
         super(token);
         this.left = left;
+        addChild(left);
         this.op = op;
         this.right = right;
+        addChild(right);
     }
 
     public BinOp(int ttype, Token token, exprType left, operatorType op,
     exprType right) {
         super(ttype, token);
         this.left = left;
+        addChild(left);
         this.op = op;
         this.right = right;
+        addChild(right);
     }
 
     public BinOp(PythonTree tree, exprType left, operatorType op, exprType
     right) {
         super(tree);
         this.left = left;
+        addChild(left);
         this.op = op;
         this.right = right;
+        addChild(right);
     }
 
     public String toString() {

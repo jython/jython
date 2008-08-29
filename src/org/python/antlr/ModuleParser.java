@@ -37,22 +37,11 @@ public class ModuleParser extends BaseParser {
         parser.setTreeAdaptor(new PythonTreeAdaptor());
         try {
             PythonParser.file_input_return r = parser.file_input();
-            CommonTreeNodeStream nodes = new CommonTreeNodeStream((Tree)r.tree);
-            nodes.setTokenStream(tokens);
-            PythonWalker walker = new PythonWalker(nodes);
-            walker.setErrorHandler(errorHandler);
-            tree = walker.module();
-            if (tree == null) {
-                //XXX: seems like I should be able to get antlr to give me an empty Module instead
-                //     of null so I wouldn't need to build an empty Module by hand here...
-                return new Module(new PythonTree(new CommonToken(PyLexer.Module)), new stmtType[0]);
-            }
+            tree = (modType)r.tree;
         } catch (RecognitionException e) {
             //XXX: this can't happen.  Need to strip the throws from antlr
             //     generated code.
         }
-
         return tree;
     }
-
 }

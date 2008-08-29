@@ -14,16 +14,19 @@ public class Repr extends exprType {
     public Repr(Token token, exprType value) {
         super(token);
         this.value = value;
+        addChild(value);
     }
 
     public Repr(int ttype, Token token, exprType value) {
         super(ttype, token);
         this.value = value;
+        addChild(value);
     }
 
     public Repr(PythonTree tree, exprType value) {
         super(tree);
         this.value = value;
+        addChild(value);
     }
 
     public String toString() {

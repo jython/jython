@@ -15,19 +15,25 @@ public class Assert extends stmtType {
     public Assert(Token token, exprType test, exprType msg) {
         super(token);
         this.test = test;
+        addChild(test);
         this.msg = msg;
+        addChild(msg);
     }
 
     public Assert(int ttype, Token token, exprType test, exprType msg) {
         super(ttype, token);
         this.test = test;
+        addChild(test);
         this.msg = msg;
+        addChild(msg);
     }
 
     public Assert(PythonTree tree, exprType test, exprType msg) {
         super(tree);
         this.test = test;
+        addChild(test);
         this.msg = msg;
+        addChild(msg);
     }
 
     public String toString() {

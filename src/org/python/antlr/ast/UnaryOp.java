@@ -16,18 +16,21 @@ public class UnaryOp extends exprType {
         super(token);
         this.op = op;
         this.operand = operand;
+        addChild(operand);
     }
 
     public UnaryOp(int ttype, Token token, unaryopType op, exprType operand) {
         super(ttype, token);
         this.op = op;
         this.operand = operand;
+        addChild(operand);
     }
 
     public UnaryOp(PythonTree tree, unaryopType op, exprType operand) {
         super(tree);
         this.op = op;
         this.operand = operand;
+        addChild(operand);
     }
 
     public String toString() {
