@@ -26,11 +26,12 @@ import org.python.modules.thread.thread;
 public class jython
 {
     private static final String COPYRIGHT =
-            "Type \"help\", \"copyright\", \"credits\" or \"license\" for more information.";
+        "Type \"help\", \"copyright\", \"credits\" or \"license\" for more information.";
 
-    private static final String usage =
-        // "usage: jython [option] ... [-c cmd | -m mod | file | -] [arg] ...\n" +
-        "usage: jython [option] ... [-c cmd | file | -] [arg] ...\n" +
+    static final String usageHeader = 
+        "usage: jython [option] ... [-c cmd | -m mod | file | -] [arg] ...\n";
+
+    private static final String usage = usageHeader + 
         "Options and arguments:\n" + //(and corresponding environment variables):\n" +
         "-c cmd   : program passed in as string (terminates option list)\n" +
         //"-d       : debug output from parser (also PYTHONDEBUG=x)\n" +
@@ -120,7 +121,10 @@ public class jython
                 System.err.println(InteractiveConsole.getDefaultBanner());
                 System.exit(0);
             }
-            System.err.println(usage);
+            if (!opts.runModule) {
+                System.err.println(usage);
+            }
+
             int exitcode = opts.help ? 0 : -1;
             System.exit(exitcode);
         }
@@ -147,14 +151,14 @@ public class jython
         }
         
         // Print banner and copyright information (or not)
-        if (opts.interactive && opts.notice) {
+        if (opts.interactive && opts.notice && !opts.runModule) {
             System.err.println(InteractiveConsole.getDefaultBanner());
         }
 
         if (Options.importSite) {
             try {
                 imp.load("site");
-                if (opts.interactive && opts.notice) {
+                if (opts.interactive && opts.notice && !opts.runModule) {
                     System.err.println(COPYRIGHT);
                 }
             } catch (PyException pye) {
@@ -253,6 +257,21 @@ public class jython
                     Py.printException(t);
                 }
             }
+
+            if (opts.moduleName != null) {
+                // PEP 338 - Execute module as a script
+                try {
+                    interp.exec("import runpy");
+                    interp.set("name", Py.newString(opts.moduleName));
+                    interp.exec("runpy.run_module(name, run_name='__main__', alter_sys=True)");
+                    interp.cleanup();
+                    System.exit(0);
+                } catch (Throwable t) {
+                    Py.printException(t);
+                    interp.cleanup();
+                    System.exit(0);
+                }
+            }
         }
 
         if (opts.fixInteractive || (opts.filename == null && opts.command == null)) {
@@ -308,6 +327,7 @@ class CommandLineOptions
 {
     public String filename;
     public boolean jar, interactive, notice;
+    public boolean runModule; 
     public boolean fixInteractive;
     public boolean help, version;
     public String[] argv;
@@ -316,11 +336,13 @@ class CommandLineOptions
     public java.util.Vector warnoptions = new java.util.Vector();
     public String encoding;
     public String division;
+    public String moduleName;
 
     public CommandLineOptions() {
         filename = null;
         jar = fixInteractive = false;
         interactive = notice = true;
+        runModule = false;
         properties = new java.util.Properties();
         help = version = false;
     }
@@ -411,6 +433,20 @@ class CommandLineOptions
                     division = arg.substring(2);
                 else
                     division = args[++index];
+            }
+            else if (arg.startsWith("-m")) {
+                runModule = true;
+                if ((index + 1) < args.length) {
+                    moduleName = args[++index];
+                } else {
+                    System.err.println("Argument expected for the -m option");
+                    System.err.print(jython.usageHeader);
+                    System.err.println("Try `jython -h' for more information.");
+                    return false;
+                }
+                if (!fixInteractive) {
+                    interactive = false;
+                }
             }
             else {
                 String opt = args[index];
