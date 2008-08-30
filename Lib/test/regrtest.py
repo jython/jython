@@ -1451,7 +1451,6 @@ _expectations = {
         test_timing
         test_transformer
         test_unicode_file
-        test_unicodedata
         test_wait3
         test_wait4
         test_wave

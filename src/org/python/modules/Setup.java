@@ -50,7 +50,7 @@ public class Setup
         "cmath",
         "itertools",
         "zipimport:org.python.modules.zipimport.zipimport",
-        "collections:org.python.modules.collections.Collections",
+        "_collections:org.python.modules._collections.Collections",
         "gc",
         "_hashlib",
         "_functools:org.python.modules._functools._functools",

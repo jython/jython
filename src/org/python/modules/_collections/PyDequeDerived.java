@@ -1,5 +1,5 @@
 /* Generated file, do not modify.  See jython/src/templates/gderived.py. */
-package org.python.modules.collections;
+package org.python.modules._collections;
 
 import org.python.core.*;
 

@@ -1,4 +1,4 @@
-package org.python.modules.collections;
+package org.python.modules._collections;
 
 import java.util.Map;
 

@@ -122,6 +122,11 @@ public class PyString extends PyBaseString
         return string;
     }
 
+    @ExposedMethod
+    final String str_toString() {
+        return toString();
+    }
+    
     public String internedString() {
         if (interned)
             return string;

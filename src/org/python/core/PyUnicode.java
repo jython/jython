@@ -1311,4 +1311,9 @@ public class PyUnicode extends PyString implements Iterable {
     public Iterator<Integer> iterator() {
         return newSubsequenceIterator();
     }
+    
+    @ExposedMethod
+    final String unicode_toString() {
+        return toString();
+    }
 }
