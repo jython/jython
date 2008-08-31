@@ -93,6 +93,9 @@ class CompileTests(unittest.TestCase):
         # this failed under 2.2.1
         av("def f():\n try: pass\n finally: [x for x in (1,2)]")
 
+        # Failed for Jython 2.5a2.  See http://bugs.jython.org/issue1116.
+        av("@a.b.c\ndef f():\n pass") 
+
     def test_incomplete(self):
         ai = self.assertIncomplete
 
