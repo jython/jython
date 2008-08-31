@@ -309,8 +309,8 @@ eval_input
 //not in CPython's Grammar file
 dotted_attr returns [exprType etype]
     : n1=NAME
-      ( (DOT n2+=dotted_attr)+ { $etype = actions.makeDottedAttr($n1, $n2); }
-      | { $etype = new Name($NAME, $NAME.text, expr_contextType.Load); }
+      ( (DOT n2+=NAME)+ { $etype = actions.makeDottedAttr($n1, $n2); }
+      | { $etype = new Name($n1, $n1.text, expr_contextType.Load); }
       )
     ;
 

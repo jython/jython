@@ -212,8 +212,8 @@ public class GrammarActions {
 
     exprType makeDottedAttr(Token nameToken, List attrs) {
         exprType current = new Name(nameToken, nameToken.getText(), expr_contextType.Load);
-        for (int i=attrs.size() - 1; i > -1; i--) {
-            Token t = ((PythonTree)attrs.get(i)).token;
+        for (Object o: attrs) {
+            Token t = (Token)o;
             current = new Attribute(t, current, t.getText(),
                 expr_contextType.Load);
         }
