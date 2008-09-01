@@ -1677,7 +1677,16 @@ public final class Py {
         }
         return Py.compile_flags(node, getName(), filename, true, printResults, cflags);
     }
-
+   
+    public static PyObject compile_flags(modType node, String filename, 
+            String kind, CompilerFlags cflags) {
+        boolean printResults = false;
+        if (kind.equals("single")) {
+            printResults = true;
+        }
+        return Py.compile_flags(node, getName(), filename, true, printResults, cflags);
+    }
+    
     public static PyObject compile_flags(String data,
             String filename,
             String kind,
@@ -1941,7 +1950,6 @@ public final class Py {
         return (PyObject[]) objs.getArray();
     }
 }
-
 /** @deprecated */
  class FixedFileWrapper extends StdoutWrapper {
 

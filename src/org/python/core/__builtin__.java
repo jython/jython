@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.python.antlr.ast.modType;
 import org.python.core.util.RelativeFile;
 import org.python.expose.ExposedGet;
 
@@ -459,11 +460,22 @@ public class __builtin__ {
         return Py.compile_flags(data, filename, kind, Py.getCompilerFlags());
     }
 
+    public static PyObject compile(modType node, String filename, String kind) {
+        return Py.compile_flags(node, filename, kind, Py.getCompilerFlags());
+    }
+            
     public static PyObject compile(String data, String filename, String kind, int flags, boolean dont_inherit) {
         if ((flags & ~PyTableCode.CO_ALL_FEATURES) != 0) {
             throw Py.ValueError("compile(): unrecognised flags");
         }
         return Py.compile_flags(data, filename, kind, Py.getCompilerFlags(flags, dont_inherit));
+    }
+
+    public static PyObject compile(modType node, String filename, String kind, int flags, boolean dont_inherit) {
+        if ((flags & ~PyTableCode.CO_ALL_FEATURES) != 0) {
+            throw Py.ValueError("compile(): unrecognised flags");
+        }
+        return Py.compile_flags(node, filename, kind, Py.getCompilerFlags(flags, dont_inherit));
     }
 
     public static void delattr(PyObject o, String n) {
