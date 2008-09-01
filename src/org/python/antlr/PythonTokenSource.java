@@ -324,7 +324,6 @@ public class PythonTokenSource implements TokenSource {
         return buf.toString();
     }
 
-    //FIXME: needed this for the Antlr 3.1b interface change.
     public String getSourceName() {
         return filename;
     }

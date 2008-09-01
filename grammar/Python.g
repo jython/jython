@@ -288,7 +288,7 @@ file_input
 }
     : (NEWLINE
       | stmt {stypes.addAll($stmt.stypes);}
-      )* {
+      )* EOF {
         mtype = new Module($file_input.start, actions.makeStmts(stypes));
     }
     ;
