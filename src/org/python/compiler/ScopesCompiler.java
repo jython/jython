@@ -53,7 +53,7 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
             referenceable = ((ScopeInfo)scopes.get(i));
         }
         cur.cook(referenceable, dist, code_compiler);
-        //cur.dump(); // debug
+        cur.dump(); // debug
         cur = up;
     }
 
