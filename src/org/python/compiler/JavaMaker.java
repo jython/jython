@@ -4,7 +4,6 @@ package org.python.compiler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
-import org.python.objectweb.asm.Opcodes;
 import org.python.core.PyObject;
 
 public class JavaMaker extends ProxyMaker implements ClassConstants {
@@ -25,6 +24,7 @@ public class JavaMaker extends ProxyMaker implements ClassConstants {
         this.methods = methods;
     }
 
+    @Override
     public void addConstructor(String name,
                                Class<?>[] parameters,
                                Class<?> ret,
@@ -40,6 +40,7 @@ public class JavaMaker extends ProxyMaker implements ClassConstants {
         code.visitInsn(RETURN);
     }
 
+    @Override
     public void addProxy() throws Exception {
         if (methods != null)
             super.addProxy();
@@ -58,6 +59,7 @@ public class JavaMaker extends ProxyMaker implements ClassConstants {
 
     }
 
+    @Override
     public void addMethod(Method method, int access) throws Exception {
         if (Modifier.isAbstract(access)) {
             // Maybe throw an exception here???

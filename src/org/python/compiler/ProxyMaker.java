@@ -34,17 +34,17 @@ public class ProxyMaker implements ClassConstants, Opcodes
     public static Map<Class<?>, Integer> types=fillTypes();
 
     public static Map<Class<?>, Integer> fillTypes() {
-        Map<Class<?>, Integer> types = new HashMap<Class<?>, Integer>();
-        types.put(Boolean.TYPE, tBoolean);
-        types.put(Byte.TYPE, tByte);
-        types.put(Short.TYPE, tShort);
-        types.put(Integer.TYPE, tInteger);
-        types.put(Long.TYPE, tLong);
-        types.put(Float.TYPE, tFloat);
-        types.put(Double.TYPE, tDouble);
-        types.put(Character.TYPE, tCharacter);
-        types.put(Void.TYPE, tVoid);
-        return types;
+        Map<Class<?>, Integer> typeMap = new HashMap<Class<?>, Integer>();
+        typeMap.put(Boolean.TYPE, tBoolean);
+        typeMap.put(Byte.TYPE, tByte);
+        typeMap.put(Short.TYPE, tShort);
+        typeMap.put(Integer.TYPE, tInteger);
+        typeMap.put(Long.TYPE, tLong);
+        typeMap.put(Float.TYPE, tFloat);
+        typeMap.put(Double.TYPE, tDouble);
+        typeMap.put(Character.TYPE, tCharacter);
+        typeMap.put(Void.TYPE, tVoid);
+        return typeMap;
     }
 
     public static int getType(Class<?> c) {
@@ -440,14 +440,14 @@ public class ProxyMaker implements ClassConstants, Opcodes
             Label callPython = new Label();
             code.ifnonnull(callPython);
 
-            String superclass = mapClass(method.getDeclaringClass());
+            String superClass = mapClass(method.getDeclaringClass());
 
-            callSuper(code, name, superclass, parameters, ret, sig);
+            callSuper(code, name, superClass, parameters, ret, sig);
             code.label(callPython);
             code.aload(tmp);
             callMethod(code, name, parameters, ret, method.getExceptionTypes());
 
-            addSuperMethod("super__"+name, name, superclass, parameters,
+            addSuperMethod("super__"+name, name, superClass, parameters,
                            ret, sig, access);
         } else {
             if (!isAdapter) {
@@ -512,9 +512,9 @@ public class ProxyMaker implements ClassConstants, Opcodes
         if (sc != null)
             addMethods(sc, t);
 
-        Class<?>[] interfaces = c.getInterfaces();
-        for (int j=0; j<interfaces.length; j++) {
-            addMethods(interfaces[j], t);
+        Class<?>[] ifaces = c.getInterfaces();
+        for (int j=0; j<ifaces.length; j++) {
+            addMethods(ifaces[j], t);
         }
     }
 
@@ -562,14 +562,14 @@ public class ProxyMaker implements ClassConstants, Opcodes
         Class<?>[] parameters = method.getParameterTypes();
         Class<?> ret = method.getReturnType();
         String sig = makeSignature(parameters, ret);
-        String superclass = mapClass(method.getDeclaringClass());
+        String superClass = mapClass(method.getDeclaringClass());
         String superName = method.getName();
         String methodName = superName;
         if (Modifier.isFinal(access)) {
             methodName = "super__" + superName;
             access &= ~Modifier.FINAL;
         }
-        addSuperMethod(methodName, superName, superclass, parameters,
+        addSuperMethod(methodName, superName, superClass, parameters,
                        ret, sig, access);
     }
 
@@ -656,8 +656,8 @@ public class ProxyMaker implements ClassConstants, Opcodes
         code.aload(0);
         code.ldc("__supernames__");
 
-        String[] names = supernames.toArray(new String[n]);
-        CodeCompiler.makeStrings(code, names, n);
+        String[] nameArray = supernames.toArray(new String[n]);
+        CodeCompiler.makeStrings(code, nameArray, n);
         code.invokestatic("org/python/core/Py", "java2py", "(" + $obj + ")" + $pyObj);
         code.invokevirtual("org/python/core/PyObject", "__setitem__", "(" + $str + $pyObj + ")V");
         code.return_();

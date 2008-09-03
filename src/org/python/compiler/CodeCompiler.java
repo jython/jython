@@ -69,12 +69,9 @@ import org.python.antlr.ast.TryExcept;
 import org.python.antlr.ast.TryFinally;
 import org.python.antlr.ast.Tuple;
 import org.python.antlr.ast.UnaryOp;
-import org.python.antlr.ast.Unicode;
 import org.python.antlr.ast.While;
 import org.python.antlr.ast.With;
 import org.python.antlr.ast.Yield;
-import org.python.antlr.ast.aliasType;
-import org.python.antlr.ast.argumentsType;
 import org.python.antlr.ast.cmpopType;
 import org.python.antlr.ast.comprehensionType;
 import org.python.antlr.ast.excepthandlerType;
@@ -83,10 +80,7 @@ import org.python.antlr.ast.expr_contextType;
 import org.python.antlr.ast.keywordType;
 import org.python.antlr.ast.modType;
 import org.python.antlr.ast.operatorType;
-import org.python.antlr.ast.sliceType;
 import org.python.antlr.ast.stmtType;
-import org.python.antlr.ast.unaryopType;
-import org.python.core.PyFrame;
 
 public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //, PythonGrammarTreeConstants
 {
@@ -288,11 +282,13 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         }
     }
 
+    @Override
     public Object visitInteractive(Interactive node) throws Exception {
         traverse(node);
         return null;
     }
 
+    @Override
     public Object visitModule(org.python.antlr.ast.Module suite)
         throws Exception
     {
@@ -315,6 +311,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         return null;
     }
 
+    @Override
     public Object visitExpression(Expression node) throws Exception {
         if (my_scope.generator && node.body != null) {
             module.error("'return' with argument inside generator",
@@ -389,6 +386,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         return true;
     }
 
+    @Override
     public Object visitFunctionDef(FunctionDef node) throws Exception {
         String name = getName(node.name);
 
@@ -788,15 +786,15 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
             loadFrame();
             code.invokestatic("org/python/core/imp", "importAll", "(" + $str + $pyFrame + ")V");
         } else {
-            String[] names = new String[node.names.length];
+            String[] fromNames = new String[node.names.length];
             String[] asnames = new String[node.names.length];
             for (int i = 0; i < node.names.length; i++) {
-                names[i] = node.names[i].name;
+                fromNames[i] = node.names[i].name;
                 asnames[i] = node.names[i].asname;
                 if (asnames[i] == null)
-                    asnames[i] = names[i];
+                    asnames[i] = fromNames[i];
             }
-            makeStrings(code, names, names.length);
+            makeStrings(code, fromNames, fromNames.length);
 
             loadFrame();
             code.invokestatic("org/python/core/imp", "importFrom", "(" + $str + $strArr + $pyFrame + ")" + $pyObjArr);
@@ -1353,6 +1351,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         return null;
     }
     
+    @Override
     public Object visitUnaryOp(UnaryOp node) throws Exception {
         visit(node.operand);
         String name = null;
@@ -1366,6 +1365,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         return null;
     }
 
+    @Override
     public Object visitAugAssign(AugAssign node) throws Exception {
         setline(node);
 
@@ -1466,6 +1466,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
     }
 
 
+    @Override
     public Object visitCall(Call node) throws Exception {
         String[] keys = new String[node.keywords.length];
         exprType[] values = new exprType[node.args.length + keys.length];
@@ -1582,6 +1583,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
 
     }
 
+    @Override
     public Object visitSubscript(Subscript node) throws Exception {
         if (node.slice instanceof Slice) {
             return Slice(node, (Slice) node.slice);
@@ -1617,11 +1619,13 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         return null;
     }
 
+    @Override
     public Object visitIndex(Index node) throws Exception {
         traverse(node);
         return null;
     }
 
+    @Override
     public Object visitExtSlice(ExtSlice node) throws Exception {
         code.new_("org/python/core/PyTuple");
         code.dup();
@@ -1630,6 +1634,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         return null;
     }
 
+    @Override
     public Object visitAttribute(Attribute node) throws Exception {
 
         expr_contextType ctx = node.ctx;
@@ -1688,6 +1693,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         return null;
     }
 
+    @Override
     public Object visitTuple(Tuple node) throws Exception {
         /* if (mode ==AUGSET)
             throw new ParseException(
@@ -1703,6 +1709,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         return null;
     }
 
+    @Override
     public Object visitList(List node) throws Exception {
         if (node.ctx == expr_contextType.Store) return seqSet(node.elts);
         if (node.ctx == expr_contextType.Del) return seqDel(node.elts);
@@ -1714,6 +1721,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         return null;
     }
 
+    @Override
     public Object visitListComp(ListComp node) throws Exception {
         code.new_("org/python/core/PyList");
 
@@ -1747,6 +1755,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         return null;
     }
 
+    @Override
     public Object visitDict(Dict node) throws Exception {
         code.new_("org/python/core/PyDictionary");
 
@@ -1761,12 +1770,14 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         return null;
     }
 
+    @Override
     public Object visitRepr(Repr node) throws Exception {
         visit(node.value);
         code.invokevirtual("org/python/core/PyObject", "__repr__", "()" + $pyStr);
         return null;
     }
 
+    @Override
     public Object visitLambda(Lambda node) throws Exception {
         String name = "<lambda>";
 
@@ -1801,11 +1812,13 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
     }
 
 
+    @Override
     public Object visitEllipsis(Ellipsis node) throws Exception {
         code.getstatic("org/python/core/Py", "Ellipsis", "Lorg/python/core/PyObject;");
         return null;
     }
 
+    @Override
     public Object visitSlice(Slice node) throws Exception {
         code.new_("org/python/core/PySlice");
 
@@ -1817,6 +1830,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         return null;
     }
 
+    @Override
     public Object visitClassDef(ClassDef node) throws Exception {
         setline(node);
 
@@ -1881,6 +1895,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         code.invokevirtual("org/python/core/PyFrame", "getglobal", "(" + $str + ")" + $pyObj);
     }
 
+    @Override
     public Object visitName(Name node) throws Exception {
         String name;
         if (fast_locals)
@@ -1985,6 +2000,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         return null;
     }
 
+    @Override
     public Object visitStr(Str node) throws Exception {
         PyString s = (PyString)node.s;
         if (s instanceof PyUnicode) {
@@ -1995,6 +2011,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         return null;
     }
 
+    @Override
     public Object visitGeneratorExp(GeneratorExp node) throws Exception {
         String bound_exp = "_(x)";
         String tmp_append ="_(" + node.getLine() + "_" + node.getCharPositionInLine() + ")";
@@ -2170,6 +2187,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         return null;
     }
     
+    @Override
     protected Object unhandled_node(PythonTree node) throws Exception {
         throw new Exception("Unhandled node " + node);
     }

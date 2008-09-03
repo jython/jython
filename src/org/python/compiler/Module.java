@@ -37,10 +37,12 @@ class PyIntegerConstant extends Constant implements ClassConstants, Opcodes
         c.putstatic(module.classfile.name, name, $pyInteger);
     }
 
+    @Override
     public int hashCode() {
         return value;
     }
 
+    @Override
     public boolean equals(Object o) {
         if (o instanceof PyIntegerConstant)
             return ((PyIntegerConstant)o).value == value;
@@ -68,10 +70,12 @@ class PyFloatConstant extends Constant implements ClassConstants, Opcodes
         c.putstatic(module.classfile.name, name, $pyFloat);
     }
 
+    @Override
     public int hashCode() {
         return (int)value;
     }
 
+    @Override
     public boolean equals(Object o) {
         if (o instanceof PyFloatConstant)
             return ((PyFloatConstant)o).value == value;
@@ -99,10 +103,12 @@ class PyComplexConstant extends Constant implements ClassConstants, Opcodes
         c.putstatic(module.classfile.name, name, $pyComplex);
     }
 
+    @Override
     public int hashCode() {
         return (int)value;
     }
 
+    @Override
     public boolean equals(Object o) {
         if (o instanceof PyComplexConstant)
             return ((PyComplexConstant)o).value == value;
@@ -130,10 +136,12 @@ class PyStringConstant extends Constant implements ClassConstants, Opcodes
         c.putstatic(module.classfile.name, name, $pyStr);
     }
 
+    @Override
     public int hashCode() {
         return value.hashCode();
     }
 
+    @Override
     public boolean equals(Object o) {
         if (o instanceof PyStringConstant)
             return ((PyStringConstant)o).value.equals(value);
@@ -161,10 +169,12 @@ class PyUnicodeConstant extends Constant implements ClassConstants, Opcodes
         c.putstatic(module.classfile.name, name, $pyUnicode);
     }
 
+    @Override
     public int hashCode() {
         return value.hashCode();
     }
 
+    @Override
     public boolean equals(Object o) {
         if (o instanceof PyUnicodeConstant)
             return ((PyUnicodeConstant)o).value.equals(value);
@@ -192,10 +202,12 @@ class PyLongConstant extends Constant implements ClassConstants, Opcodes
         c.putstatic(module.classfile.name, name, $pyLong);
     }
 
+    @Override
     public int hashCode() {
         return value.hashCode();
     }
 
+    @Override
     public boolean equals(Object o) {
         if (o instanceof PyLongConstant)
             return ((PyLongConstant)o).value.equals(value);
@@ -220,7 +232,7 @@ class PyCodeConstant extends Constant implements ClassConstants, Opcodes
 
     public int moreflags;
 
-    public PyCodeConstant() { ;
+    public PyCodeConstant() {
     }
 
     public void get(Code c) throws IOException {

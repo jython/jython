@@ -2,7 +2,9 @@
 
 package org.python.compiler;
 
-import java.util.*;
+import java.util.Enumeration;
+import java.util.Hashtable;
+import java.util.Vector;
 import org.python.antlr.PythonTree;
 
 public class ScopeInfo extends Object implements ScopeConstants {
@@ -257,6 +259,7 @@ public class ScopeInfo extends Object implements ScopeConstants {
 
     }
 
+    @Override
     public String toString() {
         return "ScopeInfo[" + scope_name + " " + kind + "]@" +
                 System.identityHashCode(this);

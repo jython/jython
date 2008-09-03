@@ -4,7 +4,6 @@ package org.python.compiler;
 
 import java.io.IOException;
 
-import org.python.objectweb.asm.MethodVisitor;
 import org.python.objectweb.asm.Opcodes;
 
 abstract class Constant implements Opcodes{

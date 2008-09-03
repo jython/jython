@@ -4,11 +4,9 @@ package org.python.compiler;
 
 import java.io.OutputStream;
 import java.lang.reflect.Method;
-import java.util.Set;
 import java.util.HashSet;
 
 import org.python.objectweb.asm.Label;
-import org.python.objectweb.asm.MethodVisitor;
 import org.python.objectweb.asm.Opcodes;
 
 
@@ -41,12 +39,14 @@ public class AdapterMaker extends ProxyMaker
         return pm.myClass;
     }
 
+    @Override
     public void doConstants() throws Exception {
         for (String name : names) {
             classfile.addField(name, "Lorg/python/core/PyObject;", Opcodes.ACC_PUBLIC);
         }
     }
 
+    @Override
     public void addMethod(Method method, int access) throws Exception {
         Class<?>[] parameters = method.getParameterTypes();
         Class<?> ret = method.getReturnType();

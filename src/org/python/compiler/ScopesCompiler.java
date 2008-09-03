@@ -66,6 +66,7 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
         }
     }
 
+    @Override
     public Object visitInteractive(Interactive node) throws Exception {
         beginScope("<single-top>", TOPSCOPE, node, null);
         suite(node.body);
@@ -73,6 +74,7 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
         return null;
     }
 
+    @Override
     public Object visitModule(org.python.antlr.ast.Module node)
         throws Exception
     {
@@ -82,6 +84,7 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
         return null;
     }
 
+    @Override
     public Object visitExpression(Expression node) throws Exception {
         beginScope("<eval-top>", TOPSCOPE, node, null);
         visit(new Return(node, node.body));
@@ -93,6 +96,7 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
         cur.addBound(name);
     }
 
+    @Override
     public Object visitFunctionDef(FunctionDef node) throws Exception {
         def(node.name);
         ArgListCompiler ac = new ArgListCompiler();
@@ -117,6 +121,7 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
         return null;
     }
 
+    @Override
     public Object visitLambda(Lambda node) throws Exception {
         ArgListCompiler ac = new ArgListCompiler();
         ac.visitArgs(node.args);
@@ -144,6 +149,7 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
             visit(stmts[i]);
     }
 
+    @Override
     public Object visitImport(Import node) throws Exception {
         for (int i = 0; i < node.names.length; i++) {
             if (node.names[i].asname != null) {
@@ -159,6 +165,7 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
         return null;
     }
 
+    @Override
     public Object visitImportFrom(ImportFrom node) throws Exception {
         Future.checkFromFuture(node); // future stmt support
         int n = node.names.length;
@@ -176,6 +183,7 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
         return null;
     }
 
+    @Override
     public Object visitGlobal(Global node) throws Exception {
         int n = node.names.length;
         for (int i = 0; i < n; i++) {
@@ -202,6 +210,7 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
         return null;
     }
 
+    @Override
     public Object visitExec(Exec node) throws Exception {
         cur.exec = true;
         if (node.globals == null && node.locals == null) {
@@ -211,6 +220,7 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
         return null;
     }
 
+    @Override
     public Object visitClassDef(ClassDef node) throws Exception {
         def(node.name);
         int n = node.bases.length;
@@ -223,6 +233,7 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
         return null;
     }
 
+    @Override
     public Object visitName(Name node) throws Exception {
         String name = node.id;
         if (node.ctx != expr_contextType.Load) {
@@ -236,6 +247,7 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
         return null;
     }
 
+    @Override
     public Object visitListComp(ListComp node) throws Exception {
         String tmp ="_[" + node.getLine() + "_" + node.getCharPositionInLine() + "]";
         cur.addBound(tmp);
@@ -243,6 +255,7 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
         return null;
     }
 
+    @Override
     public Object visitYield(Yield node) throws Exception {
         cur.generator = true;
         cur.yield_count++;
@@ -250,6 +263,7 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
         return null;
     }
 
+    @Override
     public Object visitGeneratorExp(GeneratorExp node) throws Exception {
         String bound_exp = "_(x)";
         String tmp ="_(" + node.getLine() + "_" + node.getCharPositionInLine() + ")";
@@ -269,6 +283,7 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
         return null;
     }
 
+    @Override
     public Object visitWith(With node) throws Exception {                
         cur.max_with_count++;
         traverse(node);

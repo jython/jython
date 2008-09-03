@@ -2,7 +2,6 @@
 
 package org.python.compiler;
 import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -11,7 +10,6 @@ import java.util.Collections;
 import java.util.List;
 
 import org.python.objectweb.asm.AnnotationVisitor;
-import org.python.objectweb.asm.Attribute;
 import org.python.objectweb.asm.ClassWriter;
 import org.python.objectweb.asm.FieldVisitor;
 import org.python.objectweb.asm.MethodVisitor;

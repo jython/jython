@@ -211,7 +211,7 @@ class Code implements MethodVisitor, Opcodes {
                 }
                 break;
             case 'L':
-                while (c[++i] != ';') {;}
+                while (c[++i] != ';') {}
             default:
                 if (ret) stack++;
                 else stack--;
