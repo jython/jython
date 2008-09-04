@@ -157,14 +157,18 @@ public class PythonTokenSource implements TokenSource {
         stream.consume();
 
         if (t.getType() == Token.EOF) {
+            Token prev = stream.LT(-1);
             if (!inSingle) {
-                Token prev = stream.LT(-1);
                 if (prev == null || prev.getType() != PythonLexer.NEWLINE) {
                     generateNewline(t);
                 }
             }
-
-            handleDedents(-1, (CommonToken)t);
+            if (prev != null) {
+                ((CommonToken)t).setStopIndex(((CommonToken)prev).getStopIndex());
+                handleDedents(-1, (CommonToken)prev);
+            } else {
+                handleDedents(-1, (CommonToken)t);
+            }
             enqueue(t);
         } else if (t.getType() == PythonLexer.NEWLINE) {
             // save NEWLINE in the queue
@@ -203,7 +207,12 @@ public class PythonTokenSource implements TokenSource {
                 handleIndents(cpos, (CommonToken)t);
             }
             else if (cpos < lastIndent) { // they dedented
-                handleDedents(cpos, (CommonToken)t);
+                Token prev = stream.LT(-1);
+                if (prev != null) {
+                    handleDedents(cpos, (CommonToken)prev);
+                } else {
+                    handleDedents(cpos, (CommonToken)t);
+                }
             }
 
             if (t.getType() == Token.EOF && inSingle) {

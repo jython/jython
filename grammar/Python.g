@@ -284,6 +284,12 @@ file_input
     List stypes = new ArrayList();
 }
 @after {
+    if (!stypes.isEmpty()) {
+        //The EOF token messes up the end offsets, so set them manually.
+        PythonTree stop = (PythonTree)stypes.get(stypes.size() -1);
+        mtype.setCharStopIndex(stop.getCharStopIndex());
+        mtype.setTokenStopIndex(stop.getTokenStopIndex());
+    }
     $file_input.tree = mtype;
 }
     : (NEWLINE

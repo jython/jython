@@ -12,6 +12,8 @@ public class PythonTreeAdaptor extends CommonTreeAdaptor {
         if (t==null) {
             return;
         }
+		//System.out.println("setting boundries on '"+t+"' with start: '" + startToken + "' and '" +
+        //        stopToken + "'");
         int start = 0;
         int stop = 0;
         int startChar = 0;
