@@ -208,11 +208,7 @@ public class PythonTokenSource implements TokenSource {
             }
             else if (cpos < lastIndent) { // they dedented
                 Token prev = stream.LT(-1);
-                if (prev != null) {
-                    handleDedents(cpos, (CommonToken)prev);
-                } else {
-                    handleDedents(cpos, (CommonToken)t);
-                }
+                handleDedents(cpos, (CommonToken)newline);
             }
 
             if (t.getType() == Token.EOF && inSingle) {
