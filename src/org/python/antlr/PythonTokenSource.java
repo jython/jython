@@ -152,23 +152,25 @@ public class PythonTokenSource implements TokenSource {
         tokens.addElement(newline);
     }
 
+    private void handleEOF(CommonToken eof, CommonToken prev) {
+        if (prev != null) {
+            eof.setStopIndex(prev.getStopIndex());
+        }
+    }
+
     protected void insertImaginaryIndentDedentTokens() {
         Token t = stream.LT(1);
         stream.consume();
 
         if (t.getType() == Token.EOF) {
             Token prev = stream.LT(-1);
+            handleEOF((CommonToken)t, (CommonToken)prev);
             if (!inSingle) {
                 if (prev == null || prev.getType() != PythonLexer.NEWLINE) {
                     generateNewline(t);
                 }
             }
-            if (prev != null) {
-                ((CommonToken)t).setStopIndex(((CommonToken)prev).getStopIndex());
-                handleDedents(-1, (CommonToken)prev);
-            } else {
-                handleDedents(-1, (CommonToken)t);
-            }
+            handleDedents(-1, (CommonToken)t);
             enqueue(t);
         } else if (t.getType() == PythonLexer.NEWLINE) {
             // save NEWLINE in the queue
@@ -186,6 +188,7 @@ public class PythonTokenSource implements TokenSource {
             // compute cpos as the char pos of next non-WS token in line
             int cpos = t.getCharPositionInLine(); // column dictates indent/dedent
             if (t.getType() == Token.EOF) {
+                handleEOF((CommonToken)t, (CommonToken)newline);
                 cpos = -1; // pretend EOF always happens at left edge
             }
             else if (t.getType() == PythonLexer.LEADING_WS) {
@@ -207,8 +210,7 @@ public class PythonTokenSource implements TokenSource {
                 handleIndents(cpos, (CommonToken)t);
             }
             else if (cpos < lastIndent) { // they dedented
-                Token prev = stream.LT(-1);
-                handleDedents(cpos, (CommonToken)newline);
+                handleDedents(cpos, (CommonToken)t);
             }
 
             if (t.getType() == Token.EOF && inSingle) {

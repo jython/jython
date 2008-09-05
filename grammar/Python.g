@@ -286,10 +286,14 @@ file_input
 @after {
     if (!stypes.isEmpty()) {
         //The EOF token messes up the end offsets, so set them manually.
+        //XXX: this may no longer be true now that PythonTokenSource is
+        //     adjusting EOF offsets -- but needs testing before I remove
+        //     this.
         PythonTree stop = (PythonTree)stypes.get(stypes.size() -1);
         mtype.setCharStopIndex(stop.getCharStopIndex());
         mtype.setTokenStopIndex(stop.getTokenStopIndex());
     }
+
     $file_input.tree = mtype;
 }
     : (NEWLINE
@@ -1778,6 +1782,8 @@ LEADING_WS
                        CommonToken c = new CommonToken(LEADING_WS,new String(indentation));
                        c.setLine(input.getLine());
                        c.setCharPositionInLine(input.getCharPositionInLine());
+                       c.setStartIndex(input.index() - 1);
+                       c.setStopIndex(input.index() - 1);
                        emit(c);
                        // kill trailing newline if present and then ignore
                        if (newlines != 0) {
@@ -1793,7 +1799,12 @@ LEADING_WS
                        for (int i=0; i<newlines; i++) {
                            nls[i] = '\n';
                        }
-                       emit(new CommonToken(NEWLINE,new String(nls)));
+                       CommonToken c = new CommonToken(NEWLINE,new String(nls));
+                       c.setLine(input.getLine());
+                       c.setCharPositionInLine(input.getCharPositionInLine());
+                       c.setStartIndex(input.index() - 1);
+                       c.setStopIndex(input.index() - 1);
+                       emit(c);
                    }
                 }
         )
