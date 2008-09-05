@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -14,6 +16,7 @@ import org.python.core.Py;
 import org.python.core.PyCode;
 import org.python.core.PyException;
 import org.python.core.PyFile;
+import org.python.core.PyList;
 import org.python.core.PyModule;
 import org.python.core.PyString;
 import org.python.core.PyStringMap;
@@ -136,8 +139,8 @@ public class jython
         // Now create an interpreter
         InteractiveConsole interp = newInterpreter();
 
-        for (int i = 0; i < opts.warnoptions.size(); i++) {
-            String wopt = (String) opts.warnoptions.elementAt(i);
+        PySystemState.warnoptions = new PyList();
+        for (String wopt : opts.warnoptions) {
             PySystemState.warnoptions.append(new PyString(wopt));
         }
 
@@ -333,7 +336,7 @@ class CommandLineOptions
     public String[] argv;
     public java.util.Properties properties;
     public String command;
-    public java.util.Vector warnoptions = new java.util.Vector();
+    public List<String> warnoptions = new ArrayList<String>();
     public String encoding;
     public String division;
     public String moduleName;
@@ -403,7 +406,7 @@ class CommandLineOptions
                 break;
             }
             else if (arg.equals("-W")) {
-                warnoptions.addElement(args[++index]);
+                warnoptions.add(args[++index]);
             }
             else if (arg.equals("-C")) {
                 encoding = args[++index];
