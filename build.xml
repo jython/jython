@@ -219,7 +219,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <!-- predefined main directory for checkout -->
         <property name="svn.main.dir" value="branches" />
         <property name="svn.code.dir" value="asm" />
-        <property name="svn.installer.dir" value="installer25" />
+        <property name="svn.installer.dir" value="installer" />
 
         <!-- properties work.dir and jython.base.dir are also definied in init, 
              so full-preinit must run first to work -->
@@ -696,7 +696,7 @@ The readme text for the next release will be like:
 
     <!-- wrap the build into the installer -->
     <target name="install" depends="brand-readme-version, install-init, jar-complete, javadoc, copy-full">
-        <property name="install.src.dir" value="${jython.base.dir}/../installer25/src/java" />
+        <property name="install.src.dir" value="${jython.base.dir}/../installer/src/java" />
         <echo>compiling installer from ${install.src.dir}</echo>
         <javac srcdir="${install.src.dir}"
                includes="org/**"
