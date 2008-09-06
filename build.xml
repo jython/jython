@@ -217,8 +217,8 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <property name="full-build" value="true" />
 
         <!-- predefined main directory for checkout -->
-        <property name="svn.main.dir" value="branches" />
-        <property name="svn.code.dir" value="asm" />
+        <property name="svn.main.dir" value="trunk" />
+        <property name="svn.code.dir" value="jython" />
         <property name="svn.installer.dir" value="installer" />
 
         <!-- properties work.dir and jython.base.dir are also definied in init, 
