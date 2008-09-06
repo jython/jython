@@ -806,7 +806,7 @@ if_stmt
 //not in CPython's Grammar file
 elif_clause
     : ELIF test[expr_contextType.Load] COLON suite
-   -> ^(ELIF<If>[$ELIF, (exprType)$test.tree, actions.makeStmts($suite.stypes), new stmtType[0\]])
+   -> ^(ELIF<If>[$test.start, (exprType)$test.tree, actions.makeStmts($suite.stypes), new stmtType[0\]])
     ;
 
 //while_stmt: 'while' test ':' suite ['else' ':' suite]
@@ -913,7 +913,7 @@ suite returns [List stypes]
 test[expr_contextType ctype]
     :o1=or_test[ctype]
       ( (IF or_test[null] ORELSE) => IF o2=or_test[ctype] ORELSE e=test[expr_contextType.Load]
-     -> ^(IF<IfExp>[$IF, (exprType)$o2.tree, (exprType)$o1.tree, (exprType)$e.tree])
+     -> ^(IF<IfExp>[$o1.start, (exprType)$o2.tree, (exprType)$o1.tree, (exprType)$e.tree])
       |
      -> or_test
       )
@@ -964,7 +964,7 @@ comparison[expr_contextType ctype]
 }
 @after {
     if (!cmps.isEmpty()) {
-        $comparison.tree = new Compare($left.tree, (exprType)$left.tree, actions.makeCmpOps(cmps),
+        $comparison.tree = new Compare($left.start, (exprType)$left.tree, actions.makeCmpOps(cmps),
             actions.makeExprs($right));
     }
 }
@@ -1136,8 +1136,7 @@ power returns [exprType etype]
           //XXX: This could be better.
           $etype = (exprType)$atom.tree;
           if ($t != null) {
-              for(int i = 0; i < $t.size(); i++) {
-                  Object o = $t.get(i);
+              for(Object o : $t) {
                   if ($etype instanceof Context) {
                       ((Context)$etype).setContext(expr_contextType.Load);
                   }
@@ -1249,7 +1248,7 @@ testlist_gexp
         ( ((options {k=2;}: c1=COMMA t+=test[$expr::ctype])* (c2=COMMA)?
          -> { $c1 != null || $c2 != null }?
                 ^(COMMA<Tuple>[$testlist_gexp.start, actions.makeExprs($t), $expr::ctype])
-                -> test
+         -> test
           )
         | (gen_for[gens]
            {
@@ -1290,7 +1289,7 @@ trailer [Token begin, PythonTree tree]
        -> ^(LPAREN<Call>[$begin, (exprType)$tree, actions.makeExprs($arglist.args),
                actions.makeKeywords($arglist.keywords), $arglist.starargs, $arglist.kwargs])
         |
-       -> ^(LPAREN<Call>[$LPAREN, (exprType)$tree, new exprType[0\], new keywordType[0\], null, null])
+       -> ^(LPAREN<Call>[$begin, (exprType)$tree, new exprType[0\], new keywordType[0\], null, null])
         )
       RPAREN
     | LBRACK subscriptlist[$begin] RBRACK
@@ -1447,7 +1446,7 @@ argument[List arguments, List kws, List gens, boolean first] returns [boolean ge
               $genarg = true;
               Collections.reverse($gens);
               comprehensionType[] c = (comprehensionType[])$gens.toArray(new comprehensionType[$gens.size()]);
-              arguments.add(new GeneratorExp($gen_for.start, (exprType)$t1.tree, c));
+              arguments.add(new GeneratorExp($t1.start, (exprType)$t1.tree, c));
           }
         | {
               if (kws.size() > 0) {

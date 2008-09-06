@@ -459,7 +459,8 @@ public class GrammarActions {
     }
 
     Token extractStringToken(List s) {
-        return (Token)s.get(s.size() - 1);
+        return (Token)s.get(0);
+        //return (Token)s.get(s.size() - 1);
     }
 
     //FROM Walker:

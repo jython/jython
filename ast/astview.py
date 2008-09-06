@@ -25,6 +25,10 @@ if sys.platform.startswith('java'):
                 "org.python.antlr.ast.cmpopType",
                 "org.python.antlr.ast.operatorType"):
             result = str(t)
+            if result == "AugLoad":
+                result = "Load"
+            elif result == "AugStore":
+                result = "Store"
         else:
             result = result.split(".")[-1]
             if result.endswith("Type"):
