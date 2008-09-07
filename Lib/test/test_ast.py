@@ -5,12 +5,12 @@ import _ast
 def get_class_name(t):
     result = t.__class__.__name__
     if os.name.startswith('java'):
-        if result in ("org.python.antlr.ast.expr_contextType",
-                "org.python.antlr.ast.boolopType",
-                "org.python.antlr.ast.unaryopType",
-                "org.python.antlr.ast.cmpopType",
-                "org.python.antlr.ast.operatorType"):
-            result = str(t)
+        if result in ("expr_contextType",
+                "boolopType",
+                "unaryopType",
+                "cmpopType",
+                "operatorType"):
+            result = t.name()
         else:
             result = result.split(".")[-1]
             if result.endswith("Type"):

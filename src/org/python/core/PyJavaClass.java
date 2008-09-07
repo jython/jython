@@ -75,8 +75,30 @@ public class PyJavaClass extends PyClass
         init(c);
     }
 
-    protected PyJavaClass(String name,PackageManager mgr) {
-        __name__ = name;
+    public String __module__;
+    /**
+     * Set the full name of this class.
+     */
+    private void setName(String name) {
+        int dotIndex = name.lastIndexOf(".");
+        if (dotIndex == -1) {
+            __name__ = name;
+            __module__ = "";
+        } else {
+            __name__ = name.substring(name.lastIndexOf(".")+1, name.length());
+            __module__ = name.substring(0, name.lastIndexOf("."));
+        }
+    }
+
+    private String fullName() {
+        if (__module__ == "")
+            return __name__;
+        else
+            return __module__ + "." + __name__;
+    }
+
+    protected PyJavaClass(String name, PackageManager mgr) {
+        setName(name);
         this.__mgr__ = mgr;
     }
 
@@ -97,7 +119,7 @@ public class PyJavaClass extends PyClass
     }
 
     private static final void initLazy(PyJavaClass jc) {
-        Class c = jc.__mgr__.findClass(null,jc.__name__,"lazy java class");
+        Class c = jc.__mgr__.findClass(null,jc.fullName(),"lazy java class");
         check_lazy_allowed(c); // xxx
         jc.init(c);
         tbl.putCanonical(jc.proxyClass,jc);
@@ -209,7 +231,7 @@ public class PyJavaClass extends PyClass
 
     private void init(Class c)  {
         proxyClass = c;
-        __name__ = c.getName();
+        setName(c.getName());
     }
 
     /**
@@ -761,6 +783,8 @@ public class PyJavaClass extends PyClass
         }
         if (name == "__name__")
             return new PyString(__name__);
+        if (name == "__module__")
+            return new PyString(__module__);
         if (name == "__bases__") {
             if (__bases__ == null)
                 initialize();
@@ -851,11 +875,11 @@ public class PyJavaClass extends PyClass
         if (PyObject.class.isAssignableFrom(proxyClass)) {
             if (Modifier.isAbstract(proxyClass.getModifiers())) {
                             throw Py.TypeError("can't instantiate abstract class ("+
-                                               __name__+")");
+                                               fullName()+")");
             }
             if (__init__ == null) {
                 throw Py.TypeError("no public constructors for "+
-                                   __name__);
+                                   fullName());
             }
             return __init__.make(args,keywords);
         }
@@ -871,7 +895,19 @@ public class PyJavaClass extends PyClass
         return super.__tojava__(c);
     }
 
+    public int __cmp__(PyObject other) {
+        if (!(other instanceof PyJavaClass)) {
+            return -2;
+        }
+        int c = fullName().compareTo(((PyJavaClass) other).fullName());
+        return c < 0 ? -1 : c > 0 ? 1 : 0;
+    }
+
+    public PyString __str__() {
+        return new PyString(fullName());
+    }
+
     public String toString()  {
-        return "<jclass "+__name__+" "+Py.idstr(this)+">";
+        return "<jclass "+fullName()+" "+Py.idstr(this)+">";
     }
 }

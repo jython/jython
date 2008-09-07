@@ -273,12 +273,29 @@ class IsDescendentTestCase(unittest.TestCase):
         self.assert_(isinstance(retro, OldStyle))
 
 
+class JavaClassNamingTestCase(unittest.TestCase):
+    """
+    Tests for PyJavaClass naming.
+    """
+
+    def test_java_class_name(self):
+        """
+        The __name__ and __module__ attributes of Java classes should be set
+        according to the same convention that Python uses.
+        """
+        from java.lang import String
+        self.assertEqual(String.__name__, "String")
+        self.assertEqual(String.__module__, "java.lang")
+
+
+
 def test_main():
     test_support.run_unittest(ClassGeneralTestCase,
                               ClassNamelessModuleTestCase,
                               BrokenNameTestCase,
                               ClassLocalsTestCase,
-                              IsDescendentTestCase)
+                              IsDescendentTestCase,
+                              JavaClassNamingTestCase)
 
 
 if __name__ == "__main__":
