@@ -17,12 +17,12 @@ setlocal enabledelayedexpansion
 rem ----- Verify and set required environment variables -----------------------
 
 set _JAVA_CMD=java
-if not "%JAVA_HOME%" == "" (
+if not [%JAVA_HOME%] == [] (
    set _JAVA_CMD="%JAVA_HOME:"=%\bin\java"
 )
 
 set _JYTHON_HOME=%JYTHON_HOME%
-if not "%JYTHON_HOME%" == "" goto gotHome
+if not [%JYTHON_HOME%] == [] goto gotHome
 pushd "%~dp0%\.."
 set _JYTHON_HOME="%CD%"
 popd
@@ -84,7 +84,7 @@ REM NOTE: use the quoted value: --do_stuff -> --do_Ustuff
 if ["%_CMP%"] == ["--"] goto argsDone
 
 if ["%_CMP%"] == ["--jdb"] (
-   if "%JAVA_HOME%" == "" (
+   if [%JAVA_HOME%] == [] (
       set _JAVA_CMD=jdb
    ) else (
       set _JAVA_CMD="%_JAVA_HOME:"=%\bin\jdb"
