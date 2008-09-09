@@ -25,10 +25,12 @@ class FileTests(unittest.TestCase):
 
     def test_rename(self):
         path = unicode(test_support.TESTFN)
-        old = sys.getrefcount(path)
+        if not test_support.is_jython:
+            old = sys.getrefcount(path)
         self.assertRaises(TypeError, os.rename, path, 0)
-        new = sys.getrefcount(path)
-        self.assertEqual(old, new)
+        if not test_support.is_jython:
+            new = sys.getrefcount(path)
+            self.assertEqual(old, new)
 
 
 class TemporaryFileTests(unittest.TestCase):
