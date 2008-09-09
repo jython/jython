@@ -154,6 +154,7 @@ public class PythonTokenSource implements TokenSource {
 
     private void handleEOF(CommonToken eof, CommonToken prev) {
         if (prev != null) {
+            eof.setStartIndex(prev.getStopIndex());
             eof.setStopIndex(prev.getStopIndex());
         }
     }
@@ -258,9 +259,11 @@ public class PythonTokenSource implements TokenSource {
     private void handleIndents(int cpos, CommonToken t) {
         push(cpos);
         //System.out.println("push("+cpos+"): "+stackString());
-        Token indent = new CommonToken(PythonParser.INDENT,"");
+        CommonToken indent = new CommonToken(PythonParser.INDENT,"");
         indent.setCharPositionInLine(t.getCharPositionInLine());
         indent.setLine(t.getLine());
+        indent.setStartIndex(t.getStartIndex() - 1);
+        indent.setStopIndex(t.getStartIndex() - 1);
         tokens.addElement(indent);
     }
 
@@ -274,9 +277,8 @@ public class PythonTokenSource implements TokenSource {
             dedent.setCharPositionInLine(t.getCharPositionInLine());
             dedent.setLine(t.getLine());
 
-            //XXX: this will get messed up by comments.
-            dedent.setStartIndex(t.getStartIndex());
-            dedent.setStopIndex(t.getStopIndex());
+            dedent.setStartIndex(t.getStartIndex() - 1);
+            dedent.setStopIndex(t.getStartIndex() - 1);
 
             tokens.addElement(dedent);
         }
