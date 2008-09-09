@@ -533,9 +533,9 @@ The readme text for the next release will be like:
     </target>
 
     <target name="jar-complete" depends="compile,expose,jarjar">
-       <jar destfile="${dist.dir}/jython-complete.jar">
-          <fileset dir="${compile.dir}"/>   
+       <jar destfile="${dist.dir}/jython-complete.jar" duplicate="preserve">
           <fileset dir="${exposed.dir}"/>
+          <fileset dir="${compile.dir}"/>   
           <fileset dir="${jarjar.dir}">
           </fileset>
           <manifest>
@@ -557,9 +557,9 @@ The readme text for the next release will be like:
     </target>
 
     <target name="jar" depends="compile,expose,jarjar">
-       <jar destfile="${dist.dir}/jython.jar">
-          <fileset dir="${compile.dir}"/>   
+       <jar destfile="${dist.dir}/jython.jar" duplicate="preserve">
           <fileset dir="${exposed.dir}"/>
+          <fileset dir="${compile.dir}"/>   
           <fileset dir="${jarjar.dir}">
               <include name="org/python/objectweb/asm/ClassReader.class" />
           </fileset>
