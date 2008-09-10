@@ -151,6 +151,17 @@ public class GrammarActions {
         errorHandler.error("Generator expression must be parenthesized if not sole argument", t);
     }
 
+    exprType makeExpr(Object o) {
+        if (o instanceof exprType) {
+            return (exprType)o;
+        }
+        if (o instanceof PythonTree) {
+            return errorHandler.errorExpr((PythonTree)o);
+        }
+        return null;
+    }
+
+
     exprType[] makeExprs(List exprs) {
         return makeExprs(exprs, 0);
     }
@@ -280,7 +291,7 @@ public class GrammarActions {
         checkAssign(lhs);
         e[0] = lhs;
         for(int i=0;i<rhs.size() - 1;i++) {
-            exprType r = (exprType)rhs.get(i);
+            exprType r = makeExpr(rhs.get(i));
             checkAssign(r);
             e[i + 1] = r;
         }
@@ -288,7 +299,7 @@ public class GrammarActions {
     }
 
     exprType makeAssignValue(List rhs) {
-        exprType value = (exprType)rhs.get(rhs.size() -1);
+        exprType value = makeExpr(rhs.get(rhs.size() -1));
         recurseSetContext(value, expr_contextType.Load);
         return value;
     }
@@ -654,18 +665,18 @@ public class GrammarActions {
         exprType e = null;
         exprType o = null;
         if (lower != null) {
-            s = (exprType)lower;
+            s = makeExpr(lower);
         }
         if (colon != null) {
             isSlice = true;
             if (upper != null) {
-                e = (exprType)upper;
+                e = makeExpr(upper);
             }
         }
         if (sliceop != null) {
             isSlice = true;
             if (sliceop != null) {
-                o = (exprType)sliceop;
+                o = makeExpr(sliceop);
             } else {
                 o = new Name(sliceop, "None", expr_contextType.Load);
             }
@@ -702,18 +713,18 @@ public class GrammarActions {
     }
 
     BinOp makeBinOp(PythonTree left, operatorType op, List rights) {
-        BinOp current = new BinOp(left, (exprType)left, op, (exprType)rights.get(0));
+        BinOp current = new BinOp(left, makeExpr(left), op, makeExpr(rights.get(0)));
         for (int i = 1; i< rights.size(); i++) {
-            exprType right = (exprType)rights.get(i);
+            exprType right = makeExpr(rights.get(i));
             current = new BinOp(left, current, op, right);
         }
         return current;
     }
 
     BinOp makeBinOp(PythonTree left, List ops, List rights) {
-        BinOp current = new BinOp(left, (exprType)left, (operatorType)ops.get(0), (exprType)rights.get(0));
+        BinOp current = new BinOp(left, makeExpr(left), (operatorType)ops.get(0), makeExpr(rights.get(0)));
         for (int i = 1; i< rights.size(); i++) {
-            exprType right = (exprType)rights.get(i);
+            exprType right = makeExpr(rights.get(i));
             operatorType op = (operatorType)ops.get(i);
             current = new BinOp(left, current, op, right);
         }
