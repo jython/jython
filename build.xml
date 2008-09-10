@@ -225,14 +225,12 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <property name="work.dir" value="${basedir}/../full_build/work" />
         <property name="svn.checkout.dir" value="${work.dir}/checkout" />
         <property name="jython.base.dir" value="${svn.checkout.dir}/${svn.code.dir}" />
-        <property name="has.repositories.connection" value="true" />
         <property name="python.exe" value="${python.home}/python" />
-        <property name="do.checkout" value="false" />
-        <!--
+    	<!-- set has.repositories.connection to false in ant.properties if you want to skip checkout -->
+        <property name="has.repositories.connection" value="true" />
         <condition property="do.checkout" value="true">
             <istrue value="${has.repositories.connection}" />
         </condition>
-        -->
 
         <!-- classpath for svn ant task -->
         <path id="svn.classpath">
