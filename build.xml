@@ -162,7 +162,6 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
 
         <available property="informix.present" classname="com.informix.jdbc.IfxDriver" classpath="${informix.jar}" />
         <available property="oracle.present" classname="oracle.jdbc.driver.OracleDriver" classpath="${oracle.jar}" />
-        <available property="cpythonlib.present" file="${jython.base.dir}/CPythonLib.includes"/>
 
         <path id="test.classpath">
             <path refid="main.classpath"/>
@@ -667,7 +666,7 @@ The readme text for the next release will be like:
 
     </target>
 
-    <target name="copy-cpythonlib" if="cpythonlib.present">
+    <target name="copy-cpythonlib">
         <copy todir="${dist.dir}/Lib">
             <fileset dir="${python.lib}" excludes="**/*.pyc, **/*.pyo" includesfile="${jython.base.dir}/CPythonLib.includes">
                 <!-- The include file gets all of CPythonLib's test directory, but we only want the ones from Jython's Lib.   -->
