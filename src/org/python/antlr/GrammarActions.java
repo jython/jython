@@ -191,6 +191,17 @@ public class GrammarActions {
         return new stmtType[]{(stmtType)elif};
     }
 
+    stmtType makeStmt(Object o) {
+        if (o instanceof stmtType) {
+            return (stmtType)o;
+        } else if (o instanceof PythonParser.stmt_return) {
+            return (stmtType)((PythonParser.stmt_return)o).tree;
+        } else if (o instanceof PythonTree) {
+            return errorHandler.errorStmt((PythonTree)o);
+        }
+        return null;
+    }
+
     stmtType[] makeStmts(PythonTree t) {
         return new stmtType[]{(stmtType)t};
     }
@@ -198,18 +209,8 @@ public class GrammarActions {
     stmtType[] makeStmts(List stmts) {
         if (stmts != null) {
             List<stmtType> result = new ArrayList<stmtType>();
-            for (int i=0; i<stmts.size(); i++) {
-                Object o = stmts.get(i);
-                if (o instanceof stmtType) {
-                    result.add((stmtType)o);
-                } else if (o instanceof PythonTree) {
-                    PythonTree t = (PythonTree)o;
-                    for (int j=0; j<t.getChildCount(); j++) {
-                        result.add((stmtType)t.getChild(i));
-                    }
-                } else {
-                    result.add((stmtType)((PythonParser.stmt_return)o).tree);
-                }
+            for (Object o:stmts) {
+                result.add(makeStmt(o));
             }
             return (stmtType[])result.toArray(new stmtType[result.size()]);
         }
