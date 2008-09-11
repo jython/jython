@@ -797,16 +797,29 @@ compound_stmt
 
 //if_stmt: 'if' test ':' suite ('elif' test ':' suite)* ['else' ':' suite]
 if_stmt
-    : IF test[expr_contextType.Load] COLON ifsuite=suite elifs+=elif_clause*
-        (ORELSE COLON elsesuite=suite)?
+    : IF test[expr_contextType.Load] COLON ifsuite=suite elif_clause[$test.start]?
    -> ^(IF<If>[$IF, actions.makeExpr($test.tree), actions.makeStmts($ifsuite.stypes),
-         actions.makeElses($elsesuite.stypes, $elifs)])
+         actions.makeElse($elif_clause.stypes, $elif_clause.tree)])
     ;
 
 //not in CPython's Grammar file
-elif_clause
-    : ELIF test[expr_contextType.Load] COLON suite
-   -> ^(ELIF<If>[$test.start, actions.makeExpr($test.tree), actions.makeStmts($suite.stypes), new stmtType[0\]])
+elif_clause [Token iftest] returns [List stypes]
+    : else_clause {
+        $stypes = $else_clause.stypes;
+    }
+    | ELIF test[expr_contextType.Load] COLON suite
+        (e2=elif_clause[$iftest]
+       -> ^(ELIF<If>[$iftest, actions.makeExpr($test.tree), actions.makeStmts($suite.stypes), actions.makeElse($e2.stypes, $e2.tree)])
+        |
+       -> ^(ELIF<If>[$iftest, actions.makeExpr($test.tree), actions.makeStmts($suite.stypes), new stmtType[0\]])
+        )
+    ;
+
+//not in CPython's Grammar file
+else_clause returns [List stypes]
+    : ORELSE COLON elsesuite=suite {
+        $stypes = $suite.stypes;
+    }
     ;
 
 //while_stmt: 'while' test ':' suite ['else' ':' suite]

@@ -182,18 +182,13 @@ public class GrammarActions {
         return new exprType[0];
     }
     
-    stmtType[] makeElses(List elseSuite, List elifs) {
-        stmtType[] o;
-        o = makeStmts(elseSuite);
-        if (elifs != null) {
-            ListIterator iter = elifs.listIterator(elifs.size());
-            while (iter.hasPrevious()) {
-                If elif = (If)iter.previous();
-                elif.orelse = o;
-                o = new stmtType[]{elif};
-            }
+    stmtType[] makeElse(List elseSuite, PythonTree elif) {
+        if (elseSuite != null) {
+            return makeStmts(elseSuite);
+        } else if (elif == null) {
+            return new stmtType[0];
         }
-        return o;
+        return new stmtType[]{(stmtType)elif};
     }
 
     stmtType[] makeStmts(PythonTree t) {
