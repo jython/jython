@@ -288,6 +288,16 @@ class JavaClassNamingTestCase(unittest.TestCase):
         self.assertEqual(String.__module__, "java.lang")
 
 
+module_name = __name__
+
+class ClassDefinesDunderModule(unittest.TestCase):
+    """Verifies http://bugs.jython.org/issue1022 is fixed"""
+    def test_dundermodule_in_classdef(self):
+        class Foo:
+            self.assertEqual(__module__, module_name)
+        class Bar(object):
+            self.assertEqual(__module__, module_name)
+
 
 def test_main():
     test_support.run_unittest(ClassGeneralTestCase,
@@ -295,7 +305,9 @@ def test_main():
                               BrokenNameTestCase,
                               ClassLocalsTestCase,
                               IsDescendentTestCase,
-                              JavaClassNamingTestCase)
+                              JavaClassNamingTestCase,
+                              ClassDefinesDunderModule,
+                              )
 
 
 if __name__ == "__main__":
