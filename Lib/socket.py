@@ -254,7 +254,7 @@ class _nio_impl:
         try:
             self.jsocket.shutdownInput()
         except AttributeError, ax:
-            raise error(errno.ENOTCONN, "Transport endpoint is not connected") 
+            pass # Fail silently server sockets
         except java.lang.Exception, jlx:
             raise _map_exception(jlx)
 
@@ -262,7 +262,7 @@ class _nio_impl:
         try:
             self.jsocket.shutdownOutput()
         except AttributeError, ax:
-            raise error(errno.ENOTCONN, "Transport endpoint is not connected") 
+            pass # Fail silently server sockets
         except java.lang.Exception, jlx:
             raise _map_exception(jlx)
 

@@ -1466,12 +1466,10 @@ class TestInvalidUsage(unittest.TestCase):
         self.socket.listen() # socket is now a server socket
         try:
             self.socket.shutdown(socket.SHUT_RDWR)
-        except socket.error, se:
-            self.failUnlessEqual(se[0], errno.ENOTCONN, "Shutdown on listening socket should have raised errno.ENOTCONN, not %s" % str(se[0]))
         except Exception, x:
-            self.fail("Shutdown on listening socket should have raised socket exception, not %s" % str(x))
+            self.fail("Shutdown on listening socket should not have raised socket exception, not %s" % str(x))
         else:
-            self.fail("Shutdown on listening socket should have raised socket exception")
+            pass
 
     def testShutdownOnUnconnectedSocket(self):
         try:
