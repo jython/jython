@@ -1,5 +1,3 @@
-from __future__ import nested_scopes
-
 """
 AMAK: 20050515: This module is the test_socket.py from cpython 2.4, ported to jython.
 """
@@ -569,8 +567,10 @@ class TestSocketOptions(unittest.TestCase):
                 else:
                     self.fail("Setting unsupported option should have raised an exception")
 
+class TestSupportedOptions(TestSocketOptions):
+
     def testSO_BROADCAST(self):
-        self.test_udp = 1 ; 
+        self.test_udp = 1
         self._testOption(socket.SO_BROADCAST, [0, 1])
 
     def testSO_KEEPALIVE(self):
@@ -614,27 +614,48 @@ class TestSocketOptions(unittest.TestCase):
         self.test_tcp_client = 1
         self._testOption(socket.TCP_NODELAY, [0, 1])
 
-class AsYetUnsupportedOptions:
+class TestUnsupportedOptions(TestSocketOptions):
 
-    def testSO_ACCEPTCONN(self): pass
-    def testSO_DEBUG(self): pass
-    def testSO_DONTROUTE(self): pass
-    def testSO_ERROR(self): pass
+    def testSO_ACCEPTCONN(self):
+        self.failUnless(hasattr(socket, 'SO_ACCEPTCONN'))
+
+    def testSO_DEBUG(self):
+        self.failUnless(hasattr(socket, 'SO_DEBUG'))
+
+    def testSO_DONTROUTE(self):
+        self.failUnless(hasattr(socket, 'SO_DONTROUTE'))
+
+    def testSO_ERROR(self):
+        self.failUnless(hasattr(socket, 'SO_ERROR'))
+
     def testSO_EXCLUSIVEADDRUSE(self):
         # this is an MS specific option that will not be appearing on java
         # http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6421091
         # http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6402335
-        pass
-    def testSO_RCVLOWAT(self): pass
-    def testSO_RCVTIMEO(self): pass
+        self.failUnless(hasattr(socket, 'SO_EXCLUSIVEADDRUSE'))
+
+    def testSO_RCVLOWAT(self):
+        self.failUnless(hasattr(socket, 'SO_RCVLOWAT'))
+
+    def testSO_RCVTIMEO(self):
+        self.failUnless(hasattr(socket, 'SO_RCVTIMEO'))
+
     def testSO_REUSEPORT(self):
         # not yet supported on java
         # http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6432031
-        pass
-    def testSO_SNDLOWAT(self): pass
-    def testSO_SNDTIMEO(self): pass
-    def testSO_TYPE(self): pass
-    def testSO_USELOOPBACK(self): pass
+        self.failUnless(hasattr(socket, 'SO_REUSEPORT'))
+
+    def testSO_SNDLOWAT(self):
+        self.failUnless(hasattr(socket, 'SO_SNDLOWAT'))
+
+    def testSO_SNDTIMEO(self):
+        self.failUnless(hasattr(socket, 'SO_SNDTIMEO'))
+
+    def testSO_TYPE(self):
+        self.failUnless(hasattr(socket, 'SO_TYPE'))
+
+    def testSO_USELOOPBACK(self):
+        self.failUnless(hasattr(socket, 'SO_USELOOPBACK'))
 
 class BasicTCPTest(SocketConnectedTest):
 
@@ -1436,14 +1457,42 @@ class TestUDPAddressParameters(unittest.TestCase, TestAddressParameters):
     def setUp(self):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
+class TestInvalidUsage(unittest.TestCase):
+
+    def setUp(self):
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    def testShutdownIOOnListener(self):
+        self.socket.listen() # socket is now a server socket
+        try:
+            self.socket.shutdown(socket.SHUT_RDWR)
+        except socket.error, se:
+            self.failUnlessEqual(se[0], errno.ENOTCONN, "Shutdown on listening socket should have raised errno.ENOTCONN, not %s" % str(se[0]))
+        except Exception, x:
+            self.fail("Shutdown on listening socket should have raised socket exception, not %s" % str(x))
+        else:
+            self.fail("Shutdown on listening socket should have raised socket exception")
+
+    def testShutdownOnUnconnectedSocket(self):
+        try:
+            self.socket.shutdown(socket.SHUT_RDWR)
+        except socket.error, se:
+            self.failUnlessEqual(se[0], errno.ENOTCONN, "Shutdown on unconnected socket should have raised errno.ENOTCONN, not %s" % str(se[0]))
+        except Exception, x:
+            self.fail("Shutdown on unconnected socket should have raised socket exception, not %s" % str(x))
+        else:
+            self.fail("Shutdown on unconnected socket should have raised socket exception")
+
 def test_main():
     tests = [
         GeneralModuleTests, 
-        TestSocketOptions,
+        TestSupportedOptions,
+        TestUnsupportedOptions,
         BasicTCPTest, 
         TCPTimeoutTest, 
         TCPClientTimeoutTest,
         TestExceptions,
+        TestInvalidUsage,
         TestTCPAddressParameters,
         TestUDPAddressParameters,
         BasicUDPTest,
@@ -1457,7 +1506,7 @@ def test_main():
         PrivateFileObjectTestCase,
         UnbufferedFileObjectClassTestCase,
         LineBufferedFileObjectClassTestCase,
-        SmallBufferedFileObjectClassTestCase
+        SmallBufferedFileObjectClassTestCase,
     ]
     if hasattr(socket, "socketpair"):
         tests.append(BasicSocketPairTest)
