@@ -149,7 +149,7 @@ SHUT_RDWR = 2
 
 __all__ = ['AF_UNSPEC', 'AF_INET', 'AF_INET6', 'AI_PASSIVE', 'SOCK_DGRAM',
         'SOCK_RAW', 'SOCK_RDM', 'SOCK_SEQPACKET', 'SOCK_STREAM', 'SOL_SOCKET',
-        'SO_BROADCAST', 'SO_KEEPALIVE', 'SO_LINGER', 'SO_OOBINLINE',
+        'SO_BROADCAST', 'SO_ERROR', 'SO_KEEPALIVE', 'SO_LINGER', 'SO_OOBINLINE',
         'SO_RCVBUF', 'SO_REUSEADDR', 'SO_SNDBUF', 'SO_TIMEOUT', 'TCP_NODELAY',
         'SocketType', 'error', 'herror', 'gaierror', 'timeout',
         'getfqdn', 'gethostbyaddr', 'gethostbyname', 'gethostname',
@@ -182,6 +182,23 @@ SO_SNDBUF      = 64
 SO_TIMEOUT     = 128
 
 TCP_NODELAY    = 256
+
+# Options with negative constants are not supported
+# They are being added here so that code that refers to them
+# will not break with an AttributeError
+
+SO_ACCEPTCONN       = -1
+SO_DEBUG            = -2
+SO_DONTROUTE        = -4
+SO_ERROR            = -8
+SO_EXCLUSIVEADDRUSE = -16
+SO_RCVLOWAT         = -32
+SO_RCVTIMEO         = -64
+SO_REUSEPORT        = -128
+SO_SNDLOWAT         = -256
+SO_SNDTIMEO         = -512
+SO_TYPE             = -1024
+SO_USELOOPBACK      = -2048
 
 class _nio_impl:
 
@@ -240,12 +257,16 @@ class _nio_impl:
     def shutdownInput(self):
         try:
             self.jsocket.shutdownInput()
+        except AttributeError, ax:
+            raise error(errno.ENOTCONN, "Transport endpoint is not connected") 
         except java.lang.Exception, jlx:
             raise _map_exception(jlx)
 
     def shutdownOutput(self):
         try:
             self.jsocket.shutdownOutput()
+        except AttributeError, ax:
+            raise error(errno.ENOTCONN, "Transport endpoint is not connected") 
         except java.lang.Exception, jlx:
             raise _map_exception(jlx)
 
@@ -806,8 +827,9 @@ class _tcpsocket(_nonblocking_api_mixin):
             raise _map_exception(jlx)
 
     def shutdown(self, how):
+        if not self.sock_impl:
+            raise error(errno.ENOTCONN, "Transport endpoint is not connected") 
         assert how in (SHUT_RD, SHUT_WR, SHUT_RDWR)
-        assert self.sock_impl
         if how in (SHUT_RD, SHUT_RDWR):
             self.sock_impl.shutdownInput()
         if how in (SHUT_WR, SHUT_RDWR):
