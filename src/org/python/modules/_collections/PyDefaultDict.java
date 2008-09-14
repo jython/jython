@@ -61,16 +61,6 @@ public class PyDefaultDict extends PyDictionary {
         }
     }
 
-    @ExposedGet(name = "default_factory")
-    public PyObject getDefaultFactory() {
-        return default_factory;
-    }
-
-    @ExposedSet(name = "default_factory")
-    public void setDefaultFactory(PyObject value) {
-        default_factory = value;
-    }
-
     public PyObject __finditem__(PyObject key) {
         return dict___getitem__(key);
     }
@@ -96,6 +86,7 @@ public class PyDefaultDict extends PyDictionary {
     public PyObject __reduce__() {
         return defaultdict___reduce__();
     }
+
     @ExposedMethod
     final PyObject defaultdict___reduce__() {
         PyTuple args = null;
@@ -105,8 +96,7 @@ public class PyDefaultDict extends PyDictionary {
             PyObject[] ob = {default_factory};
             args = new PyTuple(ob);
         }	
-        return new PyTuple(new PyObject[]{this.getType(), args, Py.None, 
-                Py.None, this.items()});
+        return new PyTuple(getType(), args, Py.None, Py.None, items());
     }
 
     public PyDictionary copy() {
@@ -128,8 +118,19 @@ public class PyDefaultDict extends PyDictionary {
     public String toString() {
         return defaultdict_toString();
     }
-    @ExposedMethod(names="__str__")
+
+    @ExposedMethod(names = "__repr__")
     final String defaultdict_toString() {
-        return "defaultdict(" + default_factory  +", " + super.toString() + ")";
+        return String.format("defaultdict(%s, %s)", default_factory, super.toString());
+    }
+
+    @ExposedGet(name = "default_factory")
+    public PyObject getDefaultFactory() {
+        return default_factory;
+    }
+
+    @ExposedSet(name = "default_factory")
+    public void setDefaultFactory(PyObject value) {
+        default_factory = value;
     }
 }
