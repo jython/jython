@@ -1476,19 +1476,13 @@ _failures = {
         test_codecmaps_jp
         test_codecmaps_kr
         test_codecmaps_tw
-        test_copy
         test_dis
         test_eof
         test_frozen
         test_gc
         test_iterlen
         test_marshal
-        test_profilehooks
         test_pyclbr
-        test_quopri
-        test_random
-        test_syntax
-        test_trace
         test_ucn
         test_xml_etree
         test_zipimport
