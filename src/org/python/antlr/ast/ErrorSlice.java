@@ -29,4 +29,12 @@ public class ErrorSlice extends sliceType {
         return getCharPositionInLine();
     }
 
+    public <R> R accept(VisitorIF<R> visitor) {
+        return null;
+    }
+
+    public void traverse(VisitorIF visitor) throws Exception {
+        //no op.
+    }
+
 }
