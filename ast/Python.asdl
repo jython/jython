@@ -68,7 +68,6 @@ module Python version "$Revision: 53731 $"
 	     | Repr(expr value)
 	     | Num(object n) -- a number as a PyObject.
 	     | Str(string s) -- need to specify raw, unicode, etc?
-	     | Unicode(string s) -- need to specify raw, unicode, etc?
 	     -- other literals? bools?
 
 	     -- the following expression can appear in assignment context

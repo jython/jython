@@ -251,12 +251,6 @@ public abstract class VisitorBase<R> implements VisitorIF<R> {
         return ret;
     }
 
-    public R visitUnicode(Unicode node) throws Exception {
-        R ret = unhandled_node(node);
-        traverse(node);
-        return ret;
-    }
-
     public R visitAttribute(Attribute node) throws Exception {
         R ret = unhandled_node(node);
         traverse(node);

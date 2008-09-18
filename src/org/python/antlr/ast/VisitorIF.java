@@ -43,7 +43,6 @@ public interface VisitorIF<R> {
     public R visitRepr(Repr node) throws Exception;
     public R visitNum(Num node) throws Exception;
     public R visitStr(Str node) throws Exception;
-    public R visitUnicode(Unicode node) throws Exception;
     public R visitAttribute(Attribute node) throws Exception;
     public R visitSubscript(Subscript node) throws Exception;
     public R visitName(Name node) throws Exception;
