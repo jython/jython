@@ -167,11 +167,18 @@ public class PythonTokenSource implements TokenSource {
             Token prev = stream.LT(-1);
             handleEOF((CommonToken)t, (CommonToken)prev);
             if (!inSingle) {
-                if (prev == null || prev.getType() != PythonLexer.NEWLINE) {
+                if (prev == null) {
                     generateNewline(t);
+                } else if (prev.getType() == PythonLexer.LEADING_WS) {
+                    handleDedents(-1, (CommonToken)t);
+                    generateNewline(t);
+                } else if (prev.getType() != PythonLexer.NEWLINE) {
+                    generateNewline(t);
+                    handleDedents(-1, (CommonToken)t);
                 }
+            } else {
+                handleDedents(-1, (CommonToken)t);
             }
-            handleDedents(-1, (CommonToken)t);
             enqueue(t);
         } else if (t.getType() == PythonLexer.NEWLINE) {
             // save NEWLINE in the queue

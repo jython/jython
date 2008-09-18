@@ -1785,7 +1785,7 @@ LEADING_WS
              )+
              ( ('\r')? '\n' {newlines++; }
              )* {
-                   if (input.LA(1) != -1) {
+                   if (input.LA(1) != -1 || newlines == 0) {
                        // make a string of n spaces where n is column number - 1
                        char[] indentation = new char[spaces];
                        for (int i=0; i<spaces; i++) {
