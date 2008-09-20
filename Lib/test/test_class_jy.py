@@ -298,6 +298,17 @@ class ClassDefinesDunderModule(unittest.TestCase):
         class Bar(object):
             self.assertEqual(__module__, module_name)
 
+class ClassMetaclassRepr(unittest.TestCase):
+    """Verifies #1131 is fixed"""
+    def test_repr_with_metaclass(self):
+        class FooMetaclass(type):
+            def __new__(cls, name, bases, attrs):
+                return super(FooMetaclass, cls).__new__(cls, name, bases, attrs)
+
+        class Foo(object):
+            __metaclass__ = FooMetaclass
+        self.assertEqual("<class '%s.Foo'>" % __name__, repr(Foo))
+
 
 def test_main():
     test_support.run_unittest(ClassGeneralTestCase,
@@ -307,6 +318,7 @@ def test_main():
                               IsDescendentTestCase,
                               JavaClassNamingTestCase,
                               ClassDefinesDunderModule,
+                              ClassMetaclassRepr,
                               )
 
 

@@ -1344,7 +1344,8 @@ public class PyType extends PyObject implements Serializable {
         return numSlots;
     }
 
-    public String toString() {
+    @ExposedMethod(names = {"__repr__", "__str__"})
+    public String type_toString() {
         String kind;
         if (!builtin) {
             kind = "class";
@@ -1356,6 +1357,10 @@ public class PyType extends PyObject implements Serializable {
             return String.format("<%s '%s.%s'>", kind, module.toString(), getName());
         }
         return String.format("<%s '%s'>", kind, getName());
+    }
+
+    public String toString() {
+        return type_toString();
     }
 
     /**
