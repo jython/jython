@@ -411,10 +411,6 @@ public class PyFile extends PyObject {
         }
     }
 
-    public void write(PyObject o) {
-        file_write(o);
-    }
-
     final synchronized void file_write(String s) {
         checkClosed();
         softspace = false;
