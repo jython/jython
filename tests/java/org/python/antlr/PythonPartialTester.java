@@ -19,7 +19,7 @@ public class PythonPartialTester {
             //PythonTokenSource indentedSource = new PythonTokenSource(tokens);
             PythonTokenSource indentedSource = new PythonTokenSource(tokens, "<test>");
             tokens = new CommonTokenStream(indentedSource);
-            PythonPartialParser parser = new PythonPartialParser(tokens);
+            PythonPartial parser = new PythonPartial(tokens);
             parser.single_input();
             System.out.println("SUCCEED");
         } catch (ParseException e) {

@@ -26,7 +26,7 @@ import org.python.antlr.PythonParser;
 import org.python.antlr.PythonTree;
 import org.python.antlr.PythonTree;
 import org.python.antlr.PythonLexer;
-import org.python.antlr.PythonPartialParser;
+import org.python.antlr.PythonPartial;
 import org.python.antlr.PythonTokenSource;
 import org.python.antlr.ast.modType;
 import org.python.core.io.StreamIO;
@@ -172,7 +172,7 @@ public class ParserFacade {
             CommonTokenStream tokens = new CommonTokenStream(lexer);
             PythonTokenSource indentedSource = new PythonTokenSource(tokens, filename);
             tokens = new CommonTokenStream(indentedSource);
-            PythonPartialParser parser = new PythonPartialParser(tokens);
+            PythonPartial parser = new PythonPartial(tokens);
             if (kind.equals("single")) {
                 parser.single_input();
             } else if (kind.equals("eval")) {

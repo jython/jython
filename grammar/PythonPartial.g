@@ -62,7 +62,7 @@
  *  an indent but no dedent.
  */
 
-grammar PythonPartial;
+parser grammar PythonPartial;
 
 options {
     tokenVocab=Python;
@@ -122,67 +122,6 @@ package org.python.antlr;
 catch (RecognitionException e) {
     throw e;
 }
-}
-
-
-@lexer::header { 
-package org.python.antlr;
-} 
-
-@lexer::members {
-/** Handles context-sensitive lexing of implicit line joining such as
- *  the case where newline is ignored in cases like this:
- *  a = [3,
- *       4]
- */
-int implicitLineJoiningLevel = 0;
-int startPos=-1;
-public boolean eofWhileNested = false;
-    public Token nextToken() {
-		while (true) {
-			state.token = null;
-			state.channel = Token.DEFAULT_CHANNEL;
-			state.tokenStartCharIndex = input.index();
-			state.tokenStartCharPositionInLine = input.getCharPositionInLine();
-			state.tokenStartLine = input.getLine();
-			state.text = null;
-			if ( input.LA(1)==CharStream.EOF ) {
-                if (implicitLineJoiningLevel > 0) {
-                    eofWhileNested = true;
-                }
-				return Token.EOF_TOKEN;
-			}
-			try {
-				mTokens();
-				if ( state.token==null ) {
-					emit();
-				}
-				else if ( state.token==Token.SKIP_TOKEN ) {
-					continue;
-				}
-				return state.token;
-			}
-            catch (RecognitionException re) {
-                throw new ParseException("failed partial", re);
-            }
-        }
-    }
-
-	public void reportError(RecognitionException e) {
-		System.err.print("[LEXER REPORTING] ");
-		// if we've already reported an error and have not matched a token
-		// yet successfully, don't report any errors.
-		if ( state.errorRecovery ) {
-			System.err.print("[SPURIOUS] ");
-			return;
-		}
-		state.syntaxErrors++; // don't count spurious
-		state.errorRecovery = true;
-
-		displayRecognitionError(this.getTokenNames(), e);
-	}
-
-
 }
 
 single_input : NEWLINE
