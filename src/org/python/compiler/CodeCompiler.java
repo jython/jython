@@ -2090,7 +2090,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
 
         // mgr = (EXPR)
         visit(node.context_expr);
-        int mgr_tmp = code.getLocal("org/python/core/PyObject");  
+        int mgr_tmp = code.getLocal("org/python/core/PyObject");
         code.astore(mgr_tmp);
 
         // exit = mgr.__exit__  # Not calling it yet, so storing in the frame    
@@ -2113,7 +2113,10 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
 
         // exc = True # not necessary, since we don't exec finally if exception
         // try-catch block here
-        code.trycatch(label_body_start, label_body_end, label_catch, "java/lang/Throwable");
+        //code.trycatch(label_body_start, label_body_end, label_catch, "java/lang/Throwable");
+        ExceptionHandler handler = new ExceptionHandler();
+        handler.exceptionStarts.addElement(label_body_start);
+        exceptionHandlers.push(handler);
 
         // VAR = value  # Only if "as VAR" is present
         code.label(label_body_start);
@@ -2124,8 +2127,10 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         
         // BLOCK
         suite(node.body);
+        exceptionHandlers.pop();
         code.goto_(label_finally);
         code.label(label_body_end);
+        handler.exceptionEnds.addElement(label_body_end);
 
         // CATCH
         code.label(label_catch);
@@ -2162,6 +2167,8 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         code.athrow();
         
         code.freeLocal(ts_tmp);
+        
+        handler.addExceptionHandlers(label_catch);
 
         // FINALLY
         // ordinarily with a finally, we need to duplicate the code. that's not the case here
