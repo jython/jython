@@ -105,11 +105,10 @@ public class StdoutWrapper extends OutputStream {
                 file.write(" ");
                 file.softspace = false;
             }
-            PyString string = o.__str__();
-            String s = string.toString();
-            int len = s.length();
-            file.write(s);
+            file.write(o);
             if (o instanceof PyString) {
+                String s = o.toString();
+                int len = s.length();
                 if (len == 0 || !Character.isWhitespace(s.charAt(len - 1))
                     || s.charAt(len - 1) == ' ') {
                     file.softspace = space;
@@ -128,11 +127,10 @@ public class StdoutWrapper extends OutputStream {
                 obj.invoke("write", Py.Space);
                 obj.__setattr__("softspace", Py.Zero);
             }
-            PyString string = o.__str__();
-            String s = o.toString();
-            int len = s.length();
-            obj.invoke("write", string);
+            obj.invoke("write", o);
             if (o instanceof PyString) {
+                String s = o.toString();
+                int len = s.length();
                 if (len == 0 || !Character.isWhitespace(s.charAt(len - 1))
                     || s.charAt(len - 1) == ' ') {
                     obj.__setattr__("softspace", space ? Py.One : Py.Zero);
