@@ -31,7 +31,7 @@ membercount = 13
 def tarname(comp=""):
     if not comp:
         return testtar
-    return os.path.join(tempdir, "%s%s%s" % (testtar, os.extsep, comp))
+    return os.path.join(dirname(), "%s%s%s" % (testtar, os.extsep, comp))
 
 def dirname():
     if not os.path.exists(tempdir):
@@ -279,8 +279,13 @@ class ReadDetectFileobjTest(ReadTest):
 
     def setUp(self):
         name = tarname(self.comp)
+        self.fileobj = open(name, "rb")
         self.tar = tarfile.open(name, mode=self.mode,
-                                fileobj=open(name, "rb"))
+                                fileobj=self.fileobj)
+
+    def tearDown(self):
+        self.tar.close()
+        self.fileobj.close()
 
 class ReadAsteriskTest(ReadTest):
 
@@ -529,6 +534,7 @@ class WriteGNULongTest(unittest.TestCase):
         self.assert_(tarinfo.name == member.name and \
                      tarinfo.linkname == member.linkname, \
                      "unable to read longname member")
+        tar.close()
 
     def test_longname_1023(self):
         self._test(("longnam/" * 127) + "longnam")
