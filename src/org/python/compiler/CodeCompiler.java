@@ -331,15 +331,17 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         if (n == 0) {
             code.getstatic("org/python/core/Py", "EmptyObjects", $pyObjArr);
         } else {
-            int tmp = code.getLocal("[org/python/core/PyObject");
+            int tmp = code.getLocal("[Lorg/python/core/PyObject;");
             code.iconst(n);
             code.anewarray("org/python/core/PyObject");
             code.astore(tmp);
 
             for(int i=0; i<n; i++) {
-                code.aload(tmp);
-                code.iconst(i);
                 visit(nodes[i]);
+                code.aload(tmp);
+                code.swap();
+                code.iconst(i);
+                code.swap();
                 code.aastore();
             }
             code.aload(tmp);
@@ -1787,15 +1789,19 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
 
         setline(node);
 
-        code.new_("org/python/core/PyFunction");
-
-        code.dup();
-        loadFrame();
-        code.getfield("org/python/core/PyFrame", "f_globals", $pyObj);
-
         ScopeInfo scope = module.getScopeInfo(node);
 
         makeArray(scope.ac.getDefaults());
+
+        code.new_("org/python/core/PyFunction");
+        
+        code.dup_x1();
+        code.swap();
+
+        loadFrame();
+        code.getfield("org/python/core/PyFrame", "f_globals", $pyObj);
+        
+        code.swap();
 
         scope.setup_closure();
         scope.dump();
