@@ -250,6 +250,10 @@ private ErrorHandler errorHandler;
             } catch (NoViableAltException nva) {
                 errorHandler.reportError(this, nva);
                 errorHandler.recover(this, nva); // throw out current char and try again
+            } catch (FailedPredicateException fp) {
+                //XXX: added this for failed STRINGPART
+                errorHandler.reportError(this, fp);
+                errorHandler.recover(this, fp); // throw out current char and try again
             } catch (RecognitionException re) {
                 errorHandler.reportError(this, re);
                 // match() routine has already called recover()
