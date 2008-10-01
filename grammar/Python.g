@@ -251,7 +251,9 @@ private ErrorHandler errorHandler;
                 errorHandler.reportError(this, nva);
                 errorHandler.recover(this, nva); // throw out current char and try again
             } catch (FailedPredicateException fp) {
-                //XXX: added this for failed STRINGPART
+                //XXX: added this for failed STRINGPART -- the FailedPredicateException
+                //     hides a NoViableAltException.  This should be the only
+                //     FailedPredicateException that gets thrown by the lexer.
                 errorHandler.reportError(this, fp);
                 errorHandler.recover(this, fp); // throw out current char and try again
             } catch (RecognitionException re) {
@@ -274,10 +276,10 @@ single_input
         mtype = new Interactive($single_input.start, new stmtType[0]);
     }
     | simple_stmt NEWLINE* EOF {
-        mtype = new Interactive($single_input.start, actions.makeStmts($simple_stmt.stypes));
+        mtype = new Interactive($single_input.start, actions.castStmts($simple_stmt.stypes));
     }
     | compound_stmt NEWLINE+ EOF {
-        mtype = new Interactive($single_input.start, actions.makeStmts($compound_stmt.tree));
+        mtype = new Interactive($single_input.start, actions.castStmts($compound_stmt.tree));
     }
     ;
 
@@ -303,7 +305,7 @@ file_input
     : (NEWLINE
       | stmt {stypes.addAll($stmt.stypes);}
       )* EOF {
-        mtype = new Module($file_input.start, actions.makeStmts(stypes));
+        mtype = new Module($file_input.start, actions.castStmts(stypes));
     }
     ;
 
@@ -316,7 +318,7 @@ eval_input
     $eval_input.tree = mtype;
 }
     : LEADING_WS? (NEWLINE)* testlist[expr_contextType.Load] (NEWLINE)* EOF {
-        mtype = new Expression($eval_input.start, actions.makeExpr($testlist.tree));
+        mtype = new Expression($eval_input.start, actions.castExpr($testlist.tree));
     }
     ;
 
@@ -428,7 +430,7 @@ defparameter[List defaults] returns [exprType etype]
 }
     : fpdef[expr_contextType.Param] (ASSIGN test[expr_contextType.Load])?
       {
-          $etype = actions.makeExpr($fpdef.tree);
+          $etype = actions.castExpr($fpdef.tree);
           if ($ASSIGN != null) {
               defaults.add($test.tree);
           } else if (!defaults.isEmpty()) {
@@ -466,12 +468,12 @@ varargslist returns [argumentsType args]
 //fpdef: NAME | '(' fplist ')'
 fpdef[expr_contextType ctype]
 @after {
-    actions.checkAssign(actions.makeExpr($fpdef.tree));
+    actions.checkAssign(actions.castExpr($fpdef.tree));
 }
     : NAME 
    -> ^(NAME<Name>[$NAME, $NAME.text, ctype])
     | (LPAREN fpdef[null] COMMA) => LPAREN fplist RPAREN
-   -> ^(LPAREN<Tuple>[$fplist.start, actions.makeExprs($fplist.etypes), expr_contextType.Store])
+   -> ^(LPAREN<Tuple>[$fplist.start, actions.castExprs($fplist.etypes), expr_contextType.Store])
     | LPAREN fplist RPAREN
    -> fplist
     ;
@@ -533,31 +535,31 @@ expr_stmt
     : ((testlist[null] augassign) => lhs=testlist[expr_contextType.AugStore]
         ( (aay=augassign y1=yield_expr 
             {
-                actions.checkAssign(actions.makeExpr($lhs.tree));
-                stype = new AugAssign($lhs.tree, actions.makeExpr($lhs.tree), $aay.op, actions.makeExpr($y1.tree));
+                actions.checkAssign(actions.castExpr($lhs.tree));
+                stype = new AugAssign($lhs.tree, actions.castExpr($lhs.tree), $aay.op, actions.castExpr($y1.tree));
             }
           )
         | (aat=augassign rhs=testlist[expr_contextType.Load]
             {
-                actions.checkAssign(actions.makeExpr($lhs.tree));
-                stype = new AugAssign($lhs.tree, actions.makeExpr($lhs.tree), $aat.op, actions.makeExpr($rhs.tree));
+                actions.checkAssign(actions.castExpr($lhs.tree));
+                stype = new AugAssign($lhs.tree, actions.castExpr($lhs.tree), $aat.op, actions.castExpr($rhs.tree));
             }
           )
         )
     | (testlist[null] ASSIGN) => lhs=testlist[expr_contextType.Store]
         (
         | ((at=ASSIGN t+=testlist[expr_contextType.Store])+
-       -> ^(ASSIGN<Assign>[$lhs.start, actions.makeAssignTargets(actions.makeExpr($lhs.tree), $t),
+       -> ^(ASSIGN<Assign>[$lhs.start, actions.makeAssignTargets(actions.castExpr($lhs.tree), $t),
             actions.makeAssignValue($t)])
           )
         | ((ay=ASSIGN y2+=yield_expr)+
-       -> ^(ASSIGN<Assign>[$lhs.start, actions.makeAssignTargets(actions.makeExpr($lhs.tree), $y2),
+       -> ^(ASSIGN<Assign>[$lhs.start, actions.makeAssignTargets(actions.castExpr($lhs.tree), $y2),
             actions.makeAssignValue($y2)])
           )
         )
     | lhs=testlist[expr_contextType.Load]
       {
-          stype = new Expr($lhs.start, actions.makeExpr($lhs.tree));
+          stype = new Expr($lhs.start, actions.castExpr($lhs.tree));
       }
     )
     ;
@@ -584,9 +586,9 @@ augassign returns [operatorType op]
 print_stmt
     : PRINT 
       (t1=printlist
-     -> ^(PRINT<Print>[$PRINT, null, actions.makeExprs($t1.elts), $t1.newline])
+     -> ^(PRINT<Print>[$PRINT, null, actions.castExprs($t1.elts), $t1.newline])
       | RIGHTSHIFT t2=printlist2
-     -> ^(PRINT<Print>[$PRINT, actions.makeExpr($t2.elts.get(0)), actions.makeExprs($t2.elts, 1), $t2.newline])
+     -> ^(PRINT<Print>[$PRINT, actions.castExpr($t2.elts.get(0)), actions.castExprs($t2.elts, 1), $t2.newline])
       |
      -> ^(PRINT<Print>[$PRINT, null, new exprType[0\], false])
       )
@@ -636,7 +638,7 @@ printlist2 returns [boolean newline, List elts]
 //del_stmt: 'del' exprlist
 del_stmt
     : DELETE del_list
-   -> ^(DELETE<Delete>[$DELETE, actions.makeExprs($del_list.etypes)])
+   -> ^(DELETE<Delete>[$DELETE, actions.castExprs($del_list.etypes)])
     ;
 
 //pass_stmt: 'pass'
@@ -670,7 +672,7 @@ continue_stmt
 return_stmt
     : RETURN 
       (testlist[expr_contextType.Load]
-     -> ^(RETURN<Return>[$RETURN, actions.makeExpr($testlist.tree)])
+     -> ^(RETURN<Return>[$RETURN, actions.castExpr($testlist.tree)])
       |
      -> ^(RETURN<Return>[$RETURN, null])
       )
@@ -678,14 +680,14 @@ return_stmt
 
 //yield_stmt: yield_expr
 yield_stmt
-    : yield_expr -> ^(YIELD<Expr>[$yield_expr.start, actions.makeExpr($yield_expr.tree)])
+    : yield_expr -> ^(YIELD<Expr>[$yield_expr.start, actions.castExpr($yield_expr.tree)])
     ;
 
 //raise_stmt: 'raise' [test [',' test [',' test]]]
 raise_stmt
     : RAISE (t1=test[expr_contextType.Load] (COMMA t2=test[expr_contextType.Load]
         (COMMA t3=test[expr_contextType.Load])?)?)?
-   -> ^(RAISE<Raise>[$RAISE, actions.makeExpr($t1.tree), actions.makeExpr($t2.tree), actions.makeExpr($t3.tree)])
+   -> ^(RAISE<Raise>[$RAISE, actions.castExpr($t1.tree), actions.castExpr($t2.tree), actions.castExpr($t3.tree)])
     ;
 
 //import_stmt: import_name | import_from
@@ -778,14 +780,14 @@ exec_stmt
     : EXEC expr[expr_contextType.Load] (IN t1=test[expr_contextType.Load]
         (COMMA t2=test[expr_contextType.Load])?)?
       {
-         stype = new Exec($EXEC, actions.makeExpr($expr.tree), actions.makeExpr($t1.tree), actions.makeExpr($t2.tree));
+         stype = new Exec($EXEC, actions.castExpr($expr.tree), actions.castExpr($t1.tree), actions.castExpr($t2.tree));
       }
     ;
 
 //assert_stmt: 'assert' test [',' test]
 assert_stmt
     : ASSERT t1=test[expr_contextType.Load] (COMMA t2=test[expr_contextType.Load])?
-   -> ^(ASSERT<Assert>[$ASSERT, actions.makeExpr($t1.tree), actions.makeExpr($t2.tree)])
+   -> ^(ASSERT<Assert>[$ASSERT, actions.castExpr($t1.tree), actions.castExpr($t2.tree)])
     ;
 
 //compound_stmt: if_stmt | while_stmt | for_stmt | try_stmt | funcdef | classdef
@@ -802,7 +804,7 @@ compound_stmt
 //if_stmt: 'if' test ':' suite ('elif' test ':' suite)* ['else' ':' suite]
 if_stmt
     : IF test[expr_contextType.Load] COLON ifsuite=suite elif_clause[$test.start]?
-   -> ^(IF<If>[$IF, actions.makeExpr($test.tree), actions.makeStmts($ifsuite.stypes),
+   -> ^(IF<If>[$IF, actions.castExpr($test.tree), actions.castStmts($ifsuite.stypes),
          actions.makeElse($elif_clause.stypes, $elif_clause.tree)])
     ;
 
@@ -813,9 +815,9 @@ elif_clause [Token iftest] returns [List stypes]
     }
     | ELIF test[expr_contextType.Load] COLON suite
         (e2=elif_clause[$iftest]
-       -> ^(ELIF<If>[$iftest, actions.makeExpr($test.tree), actions.makeStmts($suite.stypes), actions.makeElse($e2.stypes, $e2.tree)])
+       -> ^(ELIF<If>[$iftest, actions.castExpr($test.tree), actions.castStmts($suite.stypes), actions.makeElse($e2.stypes, $e2.tree)])
         |
-       -> ^(ELIF<If>[$iftest, actions.makeExpr($test.tree), actions.makeStmts($suite.stypes), new stmtType[0\]])
+       -> ^(ELIF<If>[$iftest, actions.castExpr($test.tree), actions.castStmts($suite.stypes), new stmtType[0\]])
         )
     ;
 
@@ -836,7 +838,7 @@ while_stmt
 }
     : WHILE test[expr_contextType.Load] COLON s1=suite (ORELSE COLON s2=suite)?
     {
-        stype = actions.makeWhile($WHILE, actions.makeExpr($test.tree), $s1.stypes, $s2.stypes);
+        stype = actions.makeWhile($WHILE, actions.castExpr($test.tree), $s1.stypes, $s2.stypes);
     }
     ;
 
@@ -851,7 +853,7 @@ for_stmt
     : FOR exprlist[expr_contextType.Store] IN testlist[expr_contextType.Load] COLON s1=suite
         (ORELSE COLON s2=suite)?
       {
-          stype = actions.makeFor($FOR, $exprlist.etype, actions.makeExpr($testlist.tree), $s1.stypes, $s2.stypes);
+          stype = actions.makeFor($FOR, $exprlist.etype, actions.castExpr($testlist.tree), $s1.stypes, $s2.stypes);
       }
     ;
 
@@ -889,8 +891,8 @@ with_stmt
 }
     : WITH test[expr_contextType.Load] (with_var)? COLON suite
       {
-          stype = new With($WITH, actions.makeExpr($test.tree), $with_var.etype,
-              actions.makeStmts($suite.stypes));
+          stype = new With($WITH, actions.castExpr($test.tree), $with_var.etype,
+              actions.castStmts($suite.stypes));
       }
     ;
 
@@ -898,15 +900,15 @@ with_stmt
 with_var returns [exprType etype]
     : (AS | NAME) expr[expr_contextType.Store]
       {
-          $etype = actions.makeExpr($expr.tree);
+          $etype = actions.castExpr($expr.tree);
       }
     ;
 
 //except_clause: 'except' [test [',' test]]
 except_clause
     : EXCEPT (t1=test[expr_contextType.Load] (COMMA t2=test[expr_contextType.Store])?)? COLON suite
-   -> ^(EXCEPT<excepthandlerType>[$EXCEPT, actions.makeExpr($t1.tree), actions.makeExpr($t2.tree),
-          actions.makeStmts($suite.stypes), $EXCEPT.getLine(), $EXCEPT.getCharPositionInLine()])
+   -> ^(EXCEPT<excepthandlerType>[$EXCEPT, actions.castExpr($t1.tree), actions.castExpr($t2.tree),
+          actions.castStmts($suite.stypes), $EXCEPT.getLine(), $EXCEPT.getCharPositionInLine()])
     ;
 
 //suite: simple_stmt | NEWLINE INDENT stmt+ DEDENT
@@ -930,7 +932,7 @@ suite returns [List stypes]
 test[expr_contextType ctype]
     :o1=or_test[ctype]
       ( (IF or_test[null] ORELSE) => IF o2=or_test[ctype] ORELSE e=test[expr_contextType.Load]
-     -> ^(IF<IfExp>[$o1.start, actions.makeExpr($o2.tree), actions.makeExpr($o1.tree), actions.makeExpr($e.tree)])
+     -> ^(IF<IfExp>[$o1.start, actions.castExpr($o2.tree), actions.castExpr($o1.tree), actions.castExpr($e.tree)])
       |
      -> or_test
       )
@@ -970,7 +972,7 @@ and_test[expr_contextType ctype]
 //not_test: 'not' not_test | comparison
 not_test[expr_contextType ctype]
     : NOT nt=not_test[ctype]
-   -> ^(NOT<UnaryOp>[$NOT, unaryopType.Not, actions.makeExpr($nt.tree)])
+   -> ^(NOT<UnaryOp>[$NOT, unaryopType.Not, actions.castExpr($nt.tree)])
     | comparison[ctype]
     ;
 
@@ -981,8 +983,8 @@ comparison[expr_contextType ctype]
 }
 @after {
     if (!cmps.isEmpty()) {
-        $comparison.tree = new Compare($left.start, actions.makeExpr($left.tree), actions.makeCmpOps(cmps),
-            actions.makeExprs($right));
+        $comparison.tree = new Compare($left.start, actions.castExpr($left.tree), actions.makeCmpOps(cmps),
+            actions.castExprs($right));
     }
 }
     : left=expr[ctype]
@@ -1140,7 +1142,7 @@ factor returns [exprType etype]
     : PLUS p=factor {$etype = new UnaryOp($PLUS, unaryopType.UAdd, $p.etype);}
     | MINUS m=factor {$etype = actions.negate($MINUS, $m.etype);}
     | TILDE t=factor {$etype = new UnaryOp($TILDE, unaryopType.Invert, $t.etype);}
-    | power {$etype = actions.makeExpr($power.tree);}
+    | power {$etype = actions.castExpr($power.tree);}
     ;
 
 //power: atom trailer* ['**' factor]
@@ -1151,7 +1153,7 @@ power returns [exprType etype]
     : atom (t+=trailer[$atom.start, $atom.tree])* (options {greedy=true;}:d=DOUBLESTAR factor)?
       {
           //XXX: This could be better.
-          $etype = actions.makeExpr($atom.tree);
+          $etype = actions.castExpr($atom.tree);
           if ($t != null) {
               for(Object o : $t) {
                   if ($etype instanceof Context) {
@@ -1204,14 +1206,14 @@ atom
       RBRACK
     | LCURLY 
        (dictmaker
-      -> ^(LCURLY<Dict>[$LCURLY, actions.makeExprs($dictmaker.keys),
-              actions.makeExprs($dictmaker.values)])
+      -> ^(LCURLY<Dict>[$LCURLY, actions.castExprs($dictmaker.keys),
+              actions.castExprs($dictmaker.values)])
        |
       -> ^(LCURLY<Dict>[$LCURLY, new exprType[0\], new exprType[0\]])
        )
        RCURLY
      | lb=BACKQUOTE testlist[expr_contextType.Load] rb=BACKQUOTE
-    -> ^(BACKQUOTE<Repr>[$lb, actions.makeExpr($testlist.tree)])
+    -> ^(BACKQUOTE<Repr>[$lb, actions.castExpr($testlist.tree)])
      | NAME
     -> ^(NAME<Name>[$NAME, $NAME.text, $expr::ctype])
      | INT
@@ -1241,11 +1243,11 @@ listmaker[Token lbrack]
               Collections.reverse(gens);
               comprehensionType[] c =
                   (comprehensionType[])gens.toArray(new comprehensionType[gens.size()]);
-              etype = new ListComp($listmaker.start, actions.makeExpr($t.get(0)), c);
+              etype = new ListComp($listmaker.start, actions.castExpr($t.get(0)), c);
           }
         | (options {greedy=true;}:COMMA t+=test[$expr::ctype])*
           {
-              etype = new org.python.antlr.ast.List($lbrack, actions.makeExprs($t), $expr::ctype);
+              etype = new org.python.antlr.ast.List($lbrack, actions.castExprs($t), $expr::ctype);
           }
         ) (COMMA)?
           ;
@@ -1264,18 +1266,18 @@ testlist_gexp
     : t+=test[$expr::ctype]
         ( ((options {k=2;}: c1=COMMA t+=test[$expr::ctype])* (c2=COMMA)?
          -> { $c1 != null || $c2 != null }?
-                ^(COMMA<Tuple>[$testlist_gexp.start, actions.makeExprs($t), $expr::ctype])
+                ^(COMMA<Tuple>[$testlist_gexp.start, actions.castExprs($t), $expr::ctype])
          -> test
           )
         | (gen_for[gens]
            {
                Collections.reverse(gens);
                comprehensionType[] c = (comprehensionType[])gens.toArray(new comprehensionType[gens.size()]);
-               exprType e = actions.makeExpr($t.get(0));
+               exprType e = actions.castExpr($t.get(0));
                if (e instanceof Context) {
                    ((Context)e).setContext(expr_contextType.Load);
                }
-               etype = new GeneratorExp($testlist_gexp.start, actions.makeExpr($t.get(0)), c);
+               etype = new GeneratorExp($testlist_gexp.start, actions.castExpr($t.get(0)), c);
            }
           )
         )
@@ -1295,7 +1297,7 @@ lambdef
           if (a == null) {
               a = new argumentsType($LAMBDA, new exprType[0], null, null, new exprType[0]);
           }
-          etype = new Lambda($LAMBDA, a, actions.makeExpr($test.tree));
+          etype = new Lambda($LAMBDA, a, actions.castExpr($test.tree));
       }
     ;
 
@@ -1303,16 +1305,16 @@ lambdef
 trailer [Token begin, PythonTree tree]
     : LPAREN 
         (arglist
-       -> ^(LPAREN<Call>[$begin, actions.makeExpr($tree), actions.makeExprs($arglist.args),
+       -> ^(LPAREN<Call>[$begin, actions.castExpr($tree), actions.castExprs($arglist.args),
                actions.makeKeywords($arglist.keywords), $arglist.starargs, $arglist.kwargs])
         |
-       -> ^(LPAREN<Call>[$begin, actions.makeExpr($tree), new exprType[0\], new keywordType[0\], null, null])
+       -> ^(LPAREN<Call>[$begin, actions.castExpr($tree), new exprType[0\], new keywordType[0\], null, null])
         )
       RPAREN
     | LBRACK subscriptlist[$begin] RBRACK
-   -> ^(LBRACK<Subscript>[$begin, actions.makeExpr($tree), (sliceType)$subscriptlist.tree, $expr::ctype])
+   -> ^(LBRACK<Subscript>[$begin, actions.castExpr($tree), actions.castSlice($subscriptlist.tree), $expr::ctype])
     | DOT attr
-   -> ^(DOT<Attribute>[$begin, actions.makeExpr($tree), $attr.text, $expr::ctype])
+   -> ^(DOT<Attribute>[$begin, actions.castExpr($tree), $attr.text, $expr::ctype])
     ;
 
 //subscriptlist: subscript (',' subscript)* [',']
@@ -1349,7 +1351,7 @@ subscript returns [sliceType sltype]
           $sltype = actions.makeSubscript(null, $c2, $upper2.tree, $sliceop.tree);
       }
     | test[expr_contextType.Load]
-   -> ^(LPAREN<Index>[$test.start, actions.makeExpr($test.tree)])
+   -> ^(LPAREN<Index>[$test.start, actions.castExpr($test.tree)])
     ;
 
 //sliceop: ':' [test]
@@ -1364,11 +1366,11 @@ sliceop
 exprlist[expr_contextType ctype] returns [exprType etype]
     : (expr[null] COMMA) => e+=expr[ctype] (options {k=2;}: COMMA e+=expr[ctype])* (COMMA)?
       {
-          $etype = new Tuple($exprlist.start, actions.makeExprs($e), ctype);
+          $etype = new Tuple($exprlist.start, actions.castExprs($e), ctype);
       }
     | expr[ctype]
       {
-        $etype = actions.makeExpr($expr.tree);
+        $etype = actions.castExpr($expr.tree);
       }
     ;
 
@@ -1385,7 +1387,7 @@ del_list returns [List etypes]
 testlist[expr_contextType ctype]
     : (test[null] COMMA)
    => t+=test[ctype] (options {k=2;}: COMMA t+=test[ctype])* (COMMA)?
-   -> ^(COMMA<Tuple>[$testlist.start, actions.makeExprs($t), ctype])
+   -> ^(COMMA<Tuple>[$testlist.start, actions.castExprs($t), ctype])
     | test[ctype]
     ;
 
@@ -1410,8 +1412,8 @@ classdef
 }
     : CLASS NAME (LPAREN testlist[expr_contextType.Load]? RPAREN)? COLON suite
       {
-          stype = new ClassDef($CLASS, actions.cantBeNone($NAME), actions.makeBases(actions.makeExpr($testlist.tree)),
-              actions.makeStmts($suite.stypes));
+          stype = new ClassDef($CLASS, actions.cantBeNone($NAME), actions.makeBases(actions.castExpr($testlist.tree)),
+              actions.castStmts($suite.stypes));
       }
     ;
 
@@ -1434,17 +1436,17 @@ arglist returns [List args, List keywords, exprType starargs, exprType kwargs]
           }
           $args=arguments;
           $keywords=kws;
-          $starargs=actions.makeExpr($s.tree);
-          $kwargs=actions.makeExpr($k.tree);
+          $starargs=actions.castExpr($s.tree);
+          $kwargs=actions.castExpr($k.tree);
       }
     | STAR s=test[expr_contextType.Load] (COMMA DOUBLESTAR k=test[expr_contextType.Load])?
       {
-          $starargs=actions.makeExpr($s.tree);
-            $kwargs=actions.makeExpr($k.tree);
+          $starargs=actions.castExpr($s.tree);
+            $kwargs=actions.castExpr($k.tree);
       }
     | DOUBLESTAR k=test[expr_contextType.Load]
       {
-            $kwargs=actions.makeExpr($k.tree);
+            $kwargs=actions.castExpr($k.tree);
       }
     ;
 
@@ -1453,7 +1455,7 @@ argument[List arguments, List kws, List gens, boolean first] returns [boolean ge
     : t1=test[expr_contextType.Load]
         ((ASSIGN t2=test[expr_contextType.Load])
           {
-              $kws.add(new exprType[]{actions.makeExpr($t1.tree), actions.makeExpr($t2.tree)});
+              $kws.add(new exprType[]{actions.castExpr($t1.tree), actions.castExpr($t2.tree)});
           }
         | gen_for[$gens]
           {
@@ -1463,7 +1465,7 @@ argument[List arguments, List kws, List gens, boolean first] returns [boolean ge
               $genarg = true;
               Collections.reverse($gens);
               comprehensionType[] c = (comprehensionType[])$gens.toArray(new comprehensionType[$gens.size()]);
-              arguments.add(new GeneratorExp($t1.start, actions.makeExpr($t1.tree), c));
+              arguments.add(new GeneratorExp($t1.start, actions.castExpr($t1.tree), c));
           }
         | {
               if (kws.size() > 0) {
@@ -1492,7 +1494,7 @@ list_for [List gens]
           } else {
               e = new exprType[0];
           }
-          gens.add(new comprehensionType($FOR, $exprlist.etype, actions.makeExpr($testlist.tree), e));
+          gens.add(new comprehensionType($FOR, $exprlist.etype, actions.castExpr($testlist.tree), e));
       }
     ;
 
@@ -1500,7 +1502,7 @@ list_for [List gens]
 list_if[List gens] returns [exprType etype]
     : IF test[expr_contextType.Load] (list_iter[gens])?
     {
-        $etype = actions.makeExpr($test.tree);
+        $etype = actions.castExpr($test.tree);
     }
     ;
 
@@ -1523,7 +1525,7 @@ gen_for [List gens]
           } else {
               e = new exprType[0];
           }
-          gens.add(new comprehensionType($FOR, $exprlist.etype, actions.makeExpr($or_test.tree), e));
+          gens.add(new comprehensionType($FOR, $exprlist.etype, actions.castExpr($or_test.tree), e));
       }
     ;
 
@@ -1531,14 +1533,14 @@ gen_for [List gens]
 gen_if[List gens] returns [exprType etype]
     : IF test[expr_contextType.Load] gen_iter[gens]?
       {
-          $etype = actions.makeExpr($test.tree);
+          $etype = actions.castExpr($test.tree);
       }
     ;
 
 //yield_expr: 'yield' [testlist]
 yield_expr
     : YIELD testlist[expr_contextType.Load]?
-   -> ^(YIELD<Yield>[$YIELD, actions.makeExpr($testlist.tree)])
+   -> ^(YIELD<Yield>[$YIELD, actions.castExpr($testlist.tree)])
     ;
 
 AS        : 'as' ;

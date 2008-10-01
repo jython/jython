@@ -151,7 +151,7 @@ public class GrammarActions {
         errorHandler.error("Generator expression must be parenthesized if not sole argument", t);
     }
 
-    exprType makeExpr(Object o) {
+    exprType castExpr(Object o) {
         if (o instanceof exprType) {
             return (exprType)o;
         }
@@ -162,11 +162,11 @@ public class GrammarActions {
     }
 
 
-    exprType[] makeExprs(List exprs) {
-        return makeExprs(exprs, 0);
+    exprType[] castExprs(List exprs) {
+        return castExprs(exprs, 0);
     }
 
-    exprType[] makeExprs(List exprs, int start) {
+    exprType[] castExprs(List exprs, int start) {
         if (exprs != null) {
             List<exprType> result = new ArrayList<exprType>();
             for (int i=start; i<exprs.size(); i++) {
@@ -184,14 +184,14 @@ public class GrammarActions {
     
     stmtType[] makeElse(List elseSuite, PythonTree elif) {
         if (elseSuite != null) {
-            return makeStmts(elseSuite);
+            return castStmts(elseSuite);
         } else if (elif == null) {
             return new stmtType[0];
         }
         return new stmtType[]{(stmtType)elif};
     }
 
-    stmtType makeStmt(Object o) {
+    stmtType castStmt(Object o) {
         if (o instanceof stmtType) {
             return (stmtType)o;
         } else if (o instanceof PythonParser.stmt_return) {
@@ -202,15 +202,15 @@ public class GrammarActions {
         return null;
     }
 
-    stmtType[] makeStmts(PythonTree t) {
+    stmtType[] castStmts(PythonTree t) {
         return new stmtType[]{(stmtType)t};
     }
 
-    stmtType[] makeStmts(List stmts) {
+    stmtType[] castStmts(List stmts) {
         if (stmts != null) {
             List<stmtType> result = new ArrayList<stmtType>();
             for (Object o:stmts) {
-                result.add(makeStmt(o));
+                result.add(castStmt(o));
             }
             return (stmtType[])result.toArray(new stmtType[result.size()]);
         }
@@ -231,8 +231,8 @@ public class GrammarActions {
         if (test == null) {
             return errorHandler.errorStmt(new PythonTree(t));
         }
-        stmtType[] o = makeStmts(orelse);
-        stmtType[] b = makeStmts(body);
+        stmtType[] o = castStmts(orelse);
+        stmtType[] b = castStmts(body);
         return new While(t, test, b, o);
     }
 
@@ -242,27 +242,27 @@ public class GrammarActions {
         }
         cantBeNone(target);
 
-        stmtType[] o = makeStmts(orelse);
-        stmtType[] b = makeStmts(body);
+        stmtType[] o = castStmts(orelse);
+        stmtType[] b = castStmts(body);
         return new For(t, target, iter, b, o);
     }
 
     stmtType makeTryExcept(Token t, List body, List handlers, List orelse, List finBody) {
-        stmtType[] b = makeStmts(body);
+        stmtType[] b = castStmts(body);
         excepthandlerType[] e = (excepthandlerType[])handlers.toArray(new excepthandlerType[handlers.size()]);
-        stmtType[] o = makeStmts(orelse);
+        stmtType[] o = castStmts(orelse);
         stmtType te = new TryExcept(t, b, e, o);
         if (finBody == null) {
             return te;
         }
-        stmtType[] f = makeStmts(finBody);
+        stmtType[] f = castStmts(finBody);
         stmtType[] mainBody = new stmtType[]{te};
         return new TryFinally(t, mainBody, f);
     }
 
     TryFinally makeTryFinally(Token t,  List body, List finBody) {
-        stmtType[] b = makeStmts(body);
-        stmtType[] f = makeStmts(finBody);
+        stmtType[] b = castStmts(body);
+        stmtType[] f = castStmts(finBody);
         return new TryFinally(t, b, f);
     }
  
@@ -277,8 +277,8 @@ public class GrammarActions {
         } else {
             a = new argumentsType(t, new exprType[0], null, null, new exprType[0]); 
         }
-        stmtType[] s = makeStmts(funcStatements);
-        exprType[] d = makeExprs(decorators);
+        stmtType[] s = castStmts(funcStatements);
+        exprType[] d = castExprs(decorators);
         return new FunctionDef(t, nameToken.getText(), a, s, d);
     }
 
@@ -287,7 +287,7 @@ public class GrammarActions {
         checkAssign(lhs);
         e[0] = lhs;
         for(int i=0;i<rhs.size() - 1;i++) {
-            exprType r = makeExpr(rhs.get(i));
+            exprType r = castExpr(rhs.get(i));
             checkAssign(r);
             e[i + 1] = r;
         }
@@ -295,7 +295,7 @@ public class GrammarActions {
     }
 
     exprType makeAssignValue(List rhs) {
-        exprType value = makeExpr(rhs.get(rhs.size() -1));
+        exprType value = castExpr(rhs.get(rhs.size() -1));
         recurseSetContext(value, expr_contextType.Load);
         return value;
     }
@@ -320,8 +320,8 @@ public class GrammarActions {
     argumentsType makeArgumentsType(Token t, List params, Token snameToken,
         Token knameToken, List defaults) {
 
-        exprType[] p = makeExprs(params);
-        exprType[] d = makeExprs(defaults);
+        exprType[] p = castExprs(params);
+        exprType[] d = castExprs(defaults);
         String s;
         String k;
         if (snameToken == null) {
@@ -338,7 +338,7 @@ public class GrammarActions {
     }
 
     exprType[] extractArgs(List args) {
-        return makeExprs(args);
+        return castExprs(args);
     }
 
     keywordType[] makeKeywords(List args) {
@@ -472,7 +472,7 @@ public class GrammarActions {
 
     //FROM Walker:
     modType makeMod(PythonTree t, List stmts) {
-        stmtType[] s = makeStmts(stmts);
+        stmtType[] s = castStmts(stmts);
         return new Module(t, s);
     }
 
@@ -481,7 +481,7 @@ public class GrammarActions {
     }
 
     modType makeInteractive(PythonTree t, List stmts) {
-        stmtType[] s = makeStmts(stmts);
+        stmtType[] s = castStmts(stmts);
         return new Interactive(t, s);
     }
 
@@ -490,16 +490,16 @@ public class GrammarActions {
             return errorHandler.errorStmt(t);
         }
         cantBeNone(nameToken);
-        exprType[] b = makeExprs(bases);
-        stmtType[] s = makeStmts(body);
+        exprType[] b = castExprs(bases);
+        stmtType[] s = castStmts(body);
         return new ClassDef(t, nameToken.getText(), b, s);
     }
 
     argumentsType makeArgumentsType(PythonTree t, List params, PythonTree snameToken,
         PythonTree knameToken, List defaults) {
 
-        exprType[] p = makeExprs(params);
-        exprType[] d = makeExprs(defaults);
+        exprType[] p = castExprs(params);
+        exprType[] d = castExprs(defaults);
         String s;
         String k;
         if (snameToken == null) {
@@ -516,22 +516,22 @@ public class GrammarActions {
     }
 
     stmtType makeTryExcept(PythonTree t, List body, List handlers, List orelse, List finBody) {
-        stmtType[] b = makeStmts(body);
+        stmtType[] b = castStmts(body);
         excepthandlerType[] e = (excepthandlerType[])handlers.toArray(new excepthandlerType[handlers.size()]);
-        stmtType[] o = makeStmts(orelse);
+        stmtType[] o = castStmts(orelse);
  
         stmtType te = new TryExcept(t, b, e, o);
         if (finBody == null) {
             return te;
         }
-        stmtType[] f = makeStmts(finBody);
+        stmtType[] f = castStmts(finBody);
         stmtType[] mainBody = new stmtType[]{te};
         return new TryFinally(t, mainBody, f);
     }
 
     TryFinally makeTryFinally(PythonTree t,  List body, List finBody) {
-        stmtType[] b = makeStmts(body);
-        stmtType[] f = makeStmts(finBody);
+        stmtType[] b = castStmts(body);
+        stmtType[] f = castStmts(finBody);
         return new TryFinally(t, b, f);
     }
 
@@ -539,8 +539,8 @@ public class GrammarActions {
         if (test == null) {
             return errorHandler.errorStmt(t);
         }
-        stmtType[] o = makeStmts(orelse);
-        stmtType[] b = makeStmts(body);
+        stmtType[] o = castStmts(orelse);
+        stmtType[] b = castStmts(body);
         return new If(t, test, b, o);
     }
 
@@ -548,8 +548,8 @@ public class GrammarActions {
         if (test == null) {
             return errorHandler.errorStmt(t);
         }
-        stmtType[] o = makeStmts(orelse);
-        stmtType[] b = makeStmts(body);
+        stmtType[] o = castStmts(orelse);
+        stmtType[] b = castStmts(body);
         return new While(t, test, b, o);
     }
 
@@ -558,8 +558,8 @@ public class GrammarActions {
             return errorHandler.errorStmt(t);
         }
         cantBeNone(target);
-        stmtType[] o = makeStmts(orelse);
-        stmtType[] b = makeStmts(body);
+        stmtType[] o = castStmts(orelse);
+        stmtType[] b = castStmts(body);
         return new For(t, target, iter, b, o);
     }
     
@@ -572,7 +572,7 @@ public class GrammarActions {
             return errorHandler.errorExpr(new PythonTree(t));
         }
         keywordType[] k = makeKeywords(keywords);
-        exprType[] a = makeExprs(args);
+        exprType[] a = castExprs(args);
         return new Call(t, func, a, k, starargs, kwargs);
     }
 
@@ -661,18 +661,18 @@ public class GrammarActions {
         exprType e = null;
         exprType o = null;
         if (lower != null) {
-            s = makeExpr(lower);
+            s = castExpr(lower);
         }
         if (colon != null) {
             isSlice = true;
             if (upper != null) {
-                e = makeExpr(upper);
+                e = castExpr(upper);
             }
         }
         if (sliceop != null) {
             isSlice = true;
             if (sliceop != null) {
-                o = makeExpr(sliceop);
+                o = castExpr(sliceop);
             } else {
                 o = new Name(sliceop, "None", expr_contextType.Load);
             }
@@ -705,26 +705,44 @@ public class GrammarActions {
         List values = new ArrayList();
         values.add(left);
         values.addAll(right);
-        return new BoolOp(left, op, makeExprs(values));
+        return new BoolOp(left, op, castExprs(values));
     }
 
     BinOp makeBinOp(PythonTree left, operatorType op, List rights) {
-        BinOp current = new BinOp(left, makeExpr(left), op, makeExpr(rights.get(0)));
+        BinOp current = new BinOp(left, castExpr(left), op, castExpr(rights.get(0)));
         for (int i = 1; i< rights.size(); i++) {
-            exprType right = makeExpr(rights.get(i));
+            exprType right = castExpr(rights.get(i));
             current = new BinOp(left, current, op, right);
         }
         return current;
     }
 
     BinOp makeBinOp(PythonTree left, List ops, List rights) {
-        BinOp current = new BinOp(left, makeExpr(left), (operatorType)ops.get(0), makeExpr(rights.get(0)));
+        BinOp current = new BinOp(left, castExpr(left), (operatorType)ops.get(0), castExpr(rights.get(0)));
         for (int i = 1; i< rights.size(); i++) {
-            exprType right = makeExpr(rights.get(i));
+            exprType right = castExpr(rights.get(i));
             operatorType op = (operatorType)ops.get(i);
             current = new BinOp(left, current, op, right);
         }
         return current;
+    }
+
+    sliceType[] castSlices(List slices) {
+        if (slices != null) {
+            List<sliceType> result = new ArrayList<sliceType>();
+            for (Object o:slices) {
+                result.add(castSlice(o));
+            }
+            return (sliceType[])result.toArray(new sliceType[result.size()]);
+        }
+        return new sliceType[0];
+    }
+ 
+    sliceType castSlice(Object o) {
+        if (o instanceof sliceType) {
+            return (sliceType)o;
+        }
+        return errorHandler.errorSlice((PythonTree)o);
     }
 
     sliceType makeSliceType(Token begin, Token c1, Token c2, List sltypes) {
@@ -753,12 +771,12 @@ public class GrammarActions {
                 s = new Index(begin, t);
             }
         } else if (sltypes.size() == 1) {
-            s = (sliceType)sltypes.get(0);
+            s = castSlice(sltypes.get(0));
         } else if (sltypes.size() != 0) {
             extslice = true;
         }
         if (extslice) {
-            sliceType[] st = (sliceType[])sltypes.toArray(new sliceType[sltypes.size()]);
+            sliceType[] st = castSlices(sltypes);//.toArray(new sliceType[sltypes.size()]);
             s = new ExtSlice(begin, st);
         }
         return s;
