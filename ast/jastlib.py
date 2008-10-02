@@ -20,8 +20,6 @@ def lispify_ast2(node):
     name = s.split(".")[-1]
     if name.endswith("Type"):
         name = name[:-4]
-    if name == "Unicode":
-        name = "Str"
     yield name
     try:
         for field in node._fields:
@@ -54,8 +52,6 @@ def lispify_field(field, child, parent):
                         yield node
                 except Exception, why:
                     print "error parsing 'n': %s" % why
-            elif fname == "s" and parent.__class__.__name__ == 'org.python.antlr.ast.Unicode':
-                yield unicode(node)
             else:
                 yield node
 

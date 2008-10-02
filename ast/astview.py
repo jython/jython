@@ -33,8 +33,6 @@ if sys.platform.startswith('java'):
             result = result.split(".")[-1]
             if result.endswith("Type"):
                 result = result[:-4]
-            if result == "Unicode":
-                result = "Str"
         return result
 
 else:
