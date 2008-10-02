@@ -20,10 +20,10 @@ if sys.platform.startswith('java'):
     def get_class_name(t):
         result = t.__class__.__name__
         if result in ("expr_contextType",
-                "boolopType",
-                "unaryopType",
-                "cmpopType",
-                "operatorType"):
+                      "boolopType",
+                      "unaryopType",
+                      "cmpopType",
+                      "operatorType"):
             result = str(t)
             if result == "AugLoad":
                 result = "Load"
