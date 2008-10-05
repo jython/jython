@@ -5,6 +5,12 @@ import asyncore, asynchat, socket, threading, time
 import unittest
 from test import test_support
 
+import platform
+os_name = platform.java_ver()[3][0]
+if os_name == 'Mac OS X' or 'BSD' in os_name:
+    raise test_support.TestSkipped('test_asynchat deadlocks on Jython/BSD: '
+                                   'http://bugs.jython.org/issue1064')
+
 HOST = "127.0.0.1"
 PORT = 54322
 

@@ -1379,7 +1379,6 @@ _expectations = {
         test_aepack
         test_al
         test_applesingle
-        test_asynchat
         test_audioop
         test_bsddb
         test_bsddb185
@@ -1529,8 +1528,13 @@ class _ExpectedSkips:
                 for skip in WIN_ONLY:
                     self.expected.add(skip)
 
-            if test_support.is_jython and os._name != 'posix':
-                self.expected.add('test_mhlib')
+            if test_support.is_jython:
+                if os._name != 'posix':
+                    self.expected.add('test_mhlib')
+                import platform
+                os_name = platform.java_ver()[3][0]
+                if os_name == 'Mac OS X' or 'BSD' in os_name:
+                    self.expected.add('test_asynchat')
 
             self.valid = True
 
