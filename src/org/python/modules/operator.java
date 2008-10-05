@@ -254,8 +254,8 @@ public class operator implements ClassDictInit
         dict.__setitem__("itruediv", new OperatorFunctions("itruediv", 50, 2));
         dict.__setitem__("__ixor__", new OperatorFunctions("__ixor__", 51, 2));
         dict.__setitem__("ixor", new OperatorFunctions("ixor", 51, 2));
-        dict.__setitem__("__index__", new OperatorFunctions("__ixor__", 52, 1));
-        dict.__setitem__("index", new OperatorFunctions("ixor", 52, 1));
+        dict.__setitem__("__index__", new OperatorFunctions("__index__", 52, 1));
+        dict.__setitem__("index", new OperatorFunctions("index", 52, 1));
 
         dict.__setitem__("attrgetter", PyAttrGetter.TYPE);
         dict.__setitem__("itemgetter", PyItemGetter.TYPE);
