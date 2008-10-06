@@ -7,6 +7,7 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -439,7 +440,10 @@ class CommandLineOptions
             }
             else if (arg.startsWith("-m")) {
                 runModule = true;
-                if ((index + 1) < args.length) {
+                if (arg.length() > 2) {
+                    moduleName = arg.substring(2);
+                }
+                else if ((index + 1) < args.length) {
                     moduleName = args[++index];
                 } else {
                     System.err.println("Argument expected for the -m option");
@@ -450,6 +454,15 @@ class CommandLineOptions
                 if (!fixInteractive) {
                     interactive = false;
                 }
+
+                index++;    
+                int n = args.length-index+1;
+                argv = new String[n];
+                argv[0] = moduleName;
+                for (int i = 1; index < args.length; i++, index++) {
+                    argv[i] = args[index];
+                }
+                return true;
             }
             else {
                 String opt = args[index];

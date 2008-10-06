@@ -984,12 +984,25 @@ static long[] crc_32_tab = new long[] {
         int count = 0;
         for (int i=0, m=s.length(); i<m; i++) {
         	char c = s.charAt(i);
-        	if (('!' <= c && c <= '<')
+                
+                // RFC 1521 requires that the line ending in a space or tab must have
+                // that trailing character encoded.
+                if (lineEnding(s, lineEnd, i)) {
+                    count = 0;
+                    sb.append(lineEnd);
+                    if (lineEnd.length() > 1) i++;
+                }
+                else if ((c == '\t' || c == ' ' ) && endOfLine(s, lineEnd, i + 1)) {
+                    count += 3;
+                    qpEscape(sb, c);
+                }
+                else if (('!' <= c && c <= '<')
         		|| ('>' <= c && c <= '^')
         		|| ('`' <= c && c <= '~')
         		|| (c == '_' && !header)
         		|| (c == '\n' || c == '\r' && istext)) {
-        		if (count == 75) {
+//        		if (count == 75 && i < s.length() - 1) {
+                        if (count == 75 && !endOfLine(s, lineEnd, i + 1)) {
         			sb.append("=").append(lineEnd);
         			count = 0;
         		}
@@ -1023,7 +1036,16 @@ static long[] crc_32_tab = new long[] {
         }
     	return sb.toString();
     }
-
+    
+    private static boolean endOfLine(String s, String lineEnd, int i) {
+        return (s.length() == i || lineEnding(s, lineEnd, i));
+    }
+    
+    private static boolean lineEnding(String s, String lineEnd, int i) {
+        return 
+            (s.length() > i && s.substring(i).startsWith(lineEnd));
+    }
+    
 /*
     public static void main(String[] args) {
         String l = b2a_uu("Hello");
