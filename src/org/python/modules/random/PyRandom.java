@@ -5,6 +5,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.math.BigInteger;
 import java.util.Random;
 
 import org.python.core.Py;
@@ -45,7 +46,9 @@ public class PyRandom extends PyObject {
             seed = new PyLong(System.currentTimeMillis());
         }
         if (seed instanceof PyLong) {
-            this.javaRandom.setSeed(((PyLong)seed).asLong(0));
+            PyLong max = new PyLong(Long.MAX_VALUE);
+            PyLong seed_modulus = (PyLong)(seed.__mod__(max));
+            this.javaRandom.setSeed(((PyLong)seed_modulus).asLong(0));
         } else if (seed instanceof PyInteger) {
             this.javaRandom.setSeed(((PyInteger)seed).getValue());
         } else {
@@ -136,5 +139,10 @@ public class PyRandom extends PyObject {
         long b=this.javaRandom.nextInt()>>>6;
         double ret=(a*67108864.0+b)*(1.0/9007199254740992.0);
         return new PyFloat(ret);
+    }
+    
+    @ExposedMethod
+    public PyLong Random_getrandbits(int k) {
+        return new PyLong(new BigInteger(k, javaRandom));
     }
 }

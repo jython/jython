@@ -530,6 +530,12 @@ def test_main(verbose=None):
                       TestDistributions,
                       TestModule]
 
+    if test_support.is_jython:
+        del MersenneTwister_TestBasicOps.test_genrandbits
+        del MersenneTwister_TestBasicOps.test_referenceImplementation 
+        del MersenneTwister_TestBasicOps.test_setstate_middle_arg
+        del MersenneTwister_TestBasicOps.test_strong_reference_implementation
+
     try:
         random.SystemRandom().random()
     except NotImplementedError:
