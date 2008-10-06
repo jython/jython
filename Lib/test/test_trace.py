@@ -1,3 +1,21 @@
+# Tracing in Jython works somewhat similarly to CPython, with the following exceptions:
+#
+# - No support for jump. Can't do that without dynamic bytecode
+#   rewriting OR at least until we support a Python bytecode
+#   interpreter
+#
+# - Some differences in how we compile, which results in different
+#   trace orders. This is of course an implementation detail. For
+#   example, we do not bother to dead-code while 0: loops because the
+#   JVM does a good job of that (and more aggressively than CPython
+#   for example, it should be to see comparable things like while
+#   False).
+#
+# - Related to this, we record f.setlineno in too many places in our
+#   code and not at all in the try, since this doesn't correspond to a
+#   bytecode on the JVM. The latter records events separately.
+#
+
 # Testing the line trace facility.
 
 from test import test_support
@@ -715,11 +733,25 @@ class JumpTestCase(unittest.TestCase):
         no_jump_without_trace_function()
 
 def test_main():
-    test_support.run_unittest(
-        TraceTestCase,
-        RaisingTraceFuncTestCase,
-        JumpTestCase
-    )
+    tests = [TraceTestCase,
+             RaisingTraceFuncTestCase]
+
+    if not test_support.is_jython:
+        tests.append(JumpTestCase)
+    else:
+        del TraceTestCase.test_02_arigo
+        del TraceTestCase.test_05_no_pop_tops 
+        del TraceTestCase.test_07_raise 
+        del TraceTestCase.test_09_settrace_and_raise
+        del TraceTestCase.test_10_ireturn 
+        del TraceTestCase.test_11_tightloop
+        del TraceTestCase.test_12_tighterloop
+        del TraceTestCase.test_13_genexp
+        del TraceTestCase.test_14_onliner_if
+        del TraceTestCase.test_15_loops
+
+    print tests
+    test_support.run_unittest(*tests)
 
 if __name__ == "__main__":
     test_main()
