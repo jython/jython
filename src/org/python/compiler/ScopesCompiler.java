@@ -106,6 +106,11 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
             visit(defaults[i]);
         }
 
+        exprType[] decs = node.decorators;
+        for (int i = decs.length - 1; i >= 0; i--) {
+            visit(decs[i]);
+        }
+
         beginScope(node.name, FUNCSCOPE, node, ac);
         int n = ac.names.size();
         for (int i = 0; i < n; i++) {
