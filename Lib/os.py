@@ -205,15 +205,15 @@ class stat_result:
     if i < 0 or i > 9:
       raise IndexError(i)
     return getattr(self, stat_result._stat_members[i][0])
-  
+
   def __setitem__(self, x, value):
     raise TypeError("object doesn't support item assignment")
-  
+
   def __setattr__(self, name, value):
     if name in [x[0] for x in stat_result._stat_members]:
       raise TypeError(name)
     raise AttributeError("readonly attribute")
-  
+
   def __len__(self):
     return 10
 
@@ -303,14 +303,14 @@ def makedirs(path, mode='ignored'):
 
     # if making a /x/y/z/., java.io.File#mkdirs inexplicably fails. So we need
     # to force it
-    
+
     # need to use _path instead of path, because param is hiding
     # os.path module in namespace!
     head, tail = _path.split(sys_path)
     if tail == curdir:
         if File(_path.join(head)).mkdirs():
             return
-                
+
     raise OSError(0, "couldn't make directories", path)
 
 def remove(path):
@@ -362,7 +362,12 @@ def rmdir(path):
     """rmdir(path)
 
     Remove a directory."""
-    if not File(sys.getPath(path)).delete():
+    f = File(sys.getPath(path))
+    if not f.exists():
+        raise OSError(errno.ENOENT, errno.strerror(errno.ENOENT), path)
+    elif not f.isDirectory():
+        raise OSError(errno.ENOTDIR, errno.strerror(errno.ENOTDIR), path)
+    elif not f.delete():
         raise OSError(0, "couldn't delete directory", path)
 
 #XXX: copied from CPython 2.5.1
@@ -392,7 +397,7 @@ __all__.extend(['makedirs', 'renames', 'removedirs'])
 
 def strerror(code):
     """strerror(code) -> string
-    
+
     Translate an error code to a message string.
     """
     if not isinstance(code, (int, long)):
@@ -404,7 +409,7 @@ def strerror(code):
 
 def access(path, mode):
     """access(path, mode) -> True if granted, False otherwise
-        
+
     Use the real uid/gid to test for access to a path.  Note that most
     operations will use the effective uid/gid, therefore this routine can
     be used in a suid/sgid environment to test if the invoking user has the
@@ -458,7 +463,7 @@ def stat(path):
 
 def lstat(path):
     """lstat(path) -> stat result
-    
+
     Like stat(path), but do not follow symbolic links.
     """
     abs_path = sys.getPath(path)
@@ -545,7 +550,7 @@ def ftruncate(fd, length):
     """ftruncate(fd, length)
 
     Truncate a file to a specified length.
-    """    
+    """
     rawio = FileDescriptors.get(fd)
     try:
         rawio.truncate(length)
@@ -647,7 +652,7 @@ def _handle_oserror(func, *args, **kwargs):
 if _name == 'posix' and _native_posix:
     def link(src, dst):
         """link(src, dst)
-    
+
         Create a hard link to a file.
         """
         _posix.link(sys.getPath(src), sys.getPath(dst))
@@ -661,7 +666,7 @@ if _name == 'posix' and _native_posix:
 
     def readlink(path):
         """readlink(path) -> path
-    
+
         Return a string representing the path to which the symbolic link
         points.
         """
@@ -863,7 +868,7 @@ if _name in ('os2', 'nt'):  # Where Env Var Names Must Be UPPERCASE
 
 def putenv(key, value):
     """putenv(key, value)
-        
+
     Change or add an environment variable.
     """
     environ[key] = value
