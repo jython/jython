@@ -8,6 +8,8 @@ import java.util.Map;
 import org.python.antlr.ast.modType;
 import org.python.core.util.RelativeFile;
 import org.python.expose.ExposedGet;
+import org.python.expose.ExposedNew;
+import org.python.expose.ExposedType;
 
 class BuiltinFunctions extends PyBuiltinFunctionSet {
 
@@ -371,23 +373,23 @@ public class __builtin__ {
         dict.__setitem__("iter", new BuiltinFunctions("iter", 27, 1, 2));
         dict.__setitem__("locals", new BuiltinFunctions("locals", 28, 0));
         dict.__setitem__("map", new BuiltinFunctions("map", 29, 2, -1));
-        dict.__setitem__("max", new MaxFunction());
-        dict.__setitem__("min", new MinFunction());
+        dict.__setitem__("max", MaxFunction.INSTANCE);
+        dict.__setitem__("min", MinFunction.INSTANCE);
         dict.__setitem__("oct", new BuiltinFunctions("oct", 32, 1));
         dict.__setitem__("pow", new BuiltinFunctions("pow", 33, 2, 3));
         dict.__setitem__("raw_input", new BuiltinFunctions("raw_input", 34, 0, 1));
         dict.__setitem__("reduce", new BuiltinFunctions("reduce", 35, 2, 3));
         dict.__setitem__("reload", new BuiltinFunctions("reload", 36, 1));
         dict.__setitem__("repr", new BuiltinFunctions("repr", 37, 1));
-        dict.__setitem__("round", new RoundFunction());
+        dict.__setitem__("round", RoundFunction.INSTANCE);
         dict.__setitem__("setattr", new BuiltinFunctions("setattr", 39, 3));
         dict.__setitem__("vars", new BuiltinFunctions("vars", 41, 0, 1));
         dict.__setitem__("zip", new BuiltinFunctions("zip", 43, 0, -1));
         dict.__setitem__("reversed", new BuiltinFunctions("reversed", 45, 1));
-        dict.__setitem__("__import__", new ImportFunction());
-        dict.__setitem__("sorted", new SortedFunction());
-        dict.__setitem__("all", new AllFunction());
-        dict.__setitem__("any", new AnyFunction());        
+        dict.__setitem__("__import__", ImportFunction.INSTANCE);
+        dict.__setitem__("sorted", SortedFunction.INSTANCE);
+        dict.__setitem__("all", AllFunction.INSTANCE);
+        dict.__setitem__("any", AnyFunction.INSTANCE);        
     }
 
     public static PyObject abs(PyObject o) {
@@ -1227,7 +1229,24 @@ public class __builtin__ {
     }
 }
 
-class ImportFunction extends PyObject {
+// simulates a PyBuiltinFunction for functions not using the PyBuiltinFunctionSet approach of above
+abstract class ExtendedBuiltinFunction extends PyObject {
+    public static final PyType TYPE = PyType.fromClass(PyBuiltinFunction.class);
+    @ExposedGet(name = "__class__")
+    public PyType getType() {
+        return TYPE;
+    }
+}
+
+class ImportFunction extends ExtendedBuiltinFunction {
+    static final ImportFunction INSTANCE = new ImportFunction();
+
+    private ImportFunction() {}
+    
+    @ExposedNew
+    public static PyObject __new__(PyObject[] args, String[] keyword) {
+        return INSTANCE;
+    }   
     
     @ExposedGet(name = "__doc__")
     public PyObject getDoc() {
@@ -1276,8 +1295,16 @@ class ImportFunction extends PyObject {
     
 }
 
-class SortedFunction extends PyObject {
+class SortedFunction extends ExtendedBuiltinFunction {
+    static final SortedFunction INSTANCE = new SortedFunction();
 
+    private SortedFunction() {}
+    
+    @ExposedNew
+    public static PyObject __new__(PyObject[] args, String[] keyword) {
+        return INSTANCE;
+    }   
+    
     @ExposedGet(name = "__doc__")
     @Override
     public PyObject getDoc() {
@@ -1317,8 +1344,16 @@ class SortedFunction extends PyObject {
     }
 }
 
-class AllFunction extends PyObject {
+class AllFunction extends ExtendedBuiltinFunction {
+    static final AllFunction INSTANCE = new AllFunction();
 
+    private AllFunction() {}
+    
+    @ExposedNew
+    public static PyObject __new__(PyObject[] args, String[] keyword) {
+        return INSTANCE;
+    }   
+    
     @ExposedGet(name = "__doc__")
     @Override
     public PyObject getDoc() {
@@ -1348,8 +1383,16 @@ class AllFunction extends PyObject {
     }
 }
 
-class AnyFunction extends PyObject {
+class AnyFunction extends ExtendedBuiltinFunction {
+    static final AnyFunction INSTANCE = new AnyFunction();
 
+    private AnyFunction() {}
+    
+    @ExposedNew
+    public static PyObject __new__(PyObject[] args, String[] keyword) {
+        return INSTANCE;
+    }   
+    
     @ExposedGet(name = "__doc__")
     @Override
     public PyObject getDoc() {
@@ -1379,9 +1422,15 @@ class AnyFunction extends PyObject {
     }
 }
 
-
-
-class MaxFunction extends PyObject {
+class MaxFunction extends ExtendedBuiltinFunction {
+    static final MaxFunction INSTANCE = new MaxFunction();
+   
+    private MaxFunction() {}
+  
+    @ExposedNew
+    public static PyObject __new__(PyObject[] args, String[] keyword) {
+        return INSTANCE;
+    }  
 
     @ExposedGet(name = "__doc__")
     @Override
@@ -1418,7 +1467,7 @@ class MaxFunction extends PyObject {
         else {
             return max(args[0], key);
         }
-    }
+    }    
     
     @Override
     public String toString() {
@@ -1446,10 +1495,20 @@ class MaxFunction extends PyObject {
         }
         return max;
     }
+
 }
 
-class MinFunction extends PyObject {
-
+class MinFunction extends ExtendedBuiltinFunction {
+    static final MinFunction INSTANCE = new MinFunction();
+    
+    private MinFunction() {}
+   
+    @ExposedNew
+    public static PyObject __new__(PyObject[] args, String[] keyword) {
+        return INSTANCE;
+    }     
+    
+    
     @ExposedGet(name = "__doc__")
     @Override
     public PyObject getDoc() {
@@ -1515,9 +1574,15 @@ class MinFunction extends PyObject {
     }
 }
 
-
-class RoundFunction extends PyObject {
-
+class RoundFunction extends ExtendedBuiltinFunction {
+    static final RoundFunction INSTANCE = new RoundFunction();
+    private RoundFunction() {}
+    
+    @ExposedNew
+    public static PyObject __new__(PyObject[] args, String[] keyword) {
+        return INSTANCE;
+    }     
+    
     @ExposedGet(name = "__doc__")
     @Override
     public PyObject getDoc() {
@@ -1526,7 +1591,12 @@ class RoundFunction extends PyObject {
                 "Round a number to a given precision in decimal digits (default 0 digits).\n" +
                 "This always returns a floating point number.  Precision may be negative.");
     }
-
+    
+    @Override
+    public String toString() {
+        return "<built-in function round>";
+    }
+    
     @Override
     public PyObject __call__(PyObject args[], String kwds[]) {
         ArgParser ap = new ArgParser("round", args, kwds, new String[]{"number", "ndigits"}, 0);

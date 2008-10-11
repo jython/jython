@@ -268,11 +268,12 @@ class TestCopy(unittest.TestCase):
         self.assert_(x is not y)
         self.assert_(x[0] is not y[0])
 
+    # modified for Jython
     def test_deepcopy_reflexive_list(self):
         x = []
         x.append(x)
         y = copy.deepcopy(x)
-        self.assertRaises(RuntimeError, cmp, y, x)
+        self.assertEqual(y, x)
         self.assert_(y is not x)
         self.assert_(y[0] is y)
         self.assertEqual(len(y), 1)
@@ -284,11 +285,12 @@ class TestCopy(unittest.TestCase):
         self.assert_(x is not y)
         self.assert_(x[0] is not y[0])
 
+    # modified for Jython
     def test_deepcopy_reflexive_tuple(self):
         x = ([],)
         x[0].append(x)
         y = copy.deepcopy(x)
-        self.assertRaises(RuntimeError, cmp, y, x)
+        self.assertEqual(y, x)
         self.assert_(y is not x)
         self.assert_(y[0] is not x[0])
         self.assert_(y[0][0] is y)
@@ -300,11 +302,12 @@ class TestCopy(unittest.TestCase):
         self.assert_(x is not y)
         self.assert_(x["foo"] is not y["foo"])
 
+    # modified for Jython
     def test_deepcopy_reflexive_dict(self):
         x = {}
         x['foo'] = x
         y = copy.deepcopy(x)
-        self.assertRaises(RuntimeError, cmp, y, x)
+        self.assertEqual(y, x)
         self.assert_(y is not x)
         self.assert_(y['foo'] is y)
         self.assertEqual(len(y), 1)
