@@ -152,6 +152,16 @@ class ClassGeneralTestCase(unittest.TestCase):
         keys.sort()
         self.assertEqual(str(keys), "['__doc__', '__module__', 'moo']")
 
+    def test_metaclass_and_slotted_base(self):
+        class Meta(type):
+            pass
+        class SlottedBase(object):
+            __slots__ = 'foo'
+        # A regression up until 2.5a3: Defining Bar would cause a
+        # TypeError "mro() returned base with unsuitable layout ('Bar')"
+        class Bar(SlottedBase):
+            __metaclass__ = Meta
+
 
 class ClassNamelessModuleTestCase(unittest.TestCase):
 
@@ -297,6 +307,7 @@ class ClassDefinesDunderModule(unittest.TestCase):
             self.assertEqual(__module__, module_name)
         class Bar(object):
             self.assertEqual(__module__, module_name)
+
 
 class ClassMetaclassRepr(unittest.TestCase):
     """Verifies #1131 is fixed"""

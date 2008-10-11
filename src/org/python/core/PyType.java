@@ -47,7 +47,7 @@ public class PyType extends PyObject implements Serializable {
     private PyObject dict;
 
     /** __mro__, the method resolution. order */
-    private PyObject[] mro = new PyObject[0];
+    private PyObject[] mro = null;
 
     /** __flags__, the type's options. */
     private long tp_flags;
@@ -645,7 +645,7 @@ public class PyType extends PyObject implements Serializable {
 
     @ExposedGet(name = "__mro__")
     public PyTuple getMro() {
-        return new PyTuple(mro);
+        return mro == null ? Py.EmptyTuple : new PyTuple(mro);
     }
 
     @ExposedGet(name = "__flags__")
@@ -929,11 +929,24 @@ public class PyType extends PyObject implements Serializable {
 
     public boolean isSubType(PyType supertype) {
         PyObject[] mro = this.mro;
-        for (int i = 0; i < mro.length; i++) {
-            if (mro[i] == supertype)
-                return true;
+        if (mro != null) {
+            for (PyObject base : mro) {
+                if (base == supertype) {
+                    return true;
+                }
+            }
+            return false;
         }
-        return false;
+
+        // we're not completely initilized yet; follow tp_base
+        PyType type = this;
+        do {
+            if (type == supertype) {
+                return true;
+            }
+            type = type.base;
+        } while (type != null);
+        return supertype == PyObject.TYPE;
     }
 
     /**
@@ -945,6 +958,9 @@ public class PyType extends PyObject implements Serializable {
      */
     public PyObject lookup(String name) {
         PyObject[] mro = this.mro;
+        if (mro == null) {
+            return null;
+        }
         for (int i = 0; i < mro.length; i++) {
             PyObject dict = mro[i].fastGetDict();
             if (dict != null) {
@@ -958,6 +974,9 @@ public class PyType extends PyObject implements Serializable {
 
     public PyObject lookup_where(String name, PyObject[] where) {
         PyObject[] mro = this.mro;
+        if (mro == null) {
+            return null;
+        }
         for (int i = 0; i < mro.length; i++) {
             PyObject t = mro[i];
             PyObject dict = t.fastGetDict();
@@ -974,6 +993,9 @@ public class PyType extends PyObject implements Serializable {
 
     public PyObject super_lookup(PyType ref, String name) {
         PyObject[] mro = this.mro;
+        if (mro == null) {
+            return null;
+        }
         int i;
         for (i = 0; i < mro.length; i++) {
             if (mro[i] == ref)
@@ -1235,6 +1257,9 @@ public class PyType extends PyObject implements Serializable {
 
     protected void __rawdir__(PyDictionary accum) {
         PyObject[] mro = this.mro;
+        if (mro == null) {
+            return;
+        }
         for (int i = 0; i < mro.length; i++) {
             mro[i].addKeys(accum, "__dict__");
         }
