@@ -1966,7 +1966,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
                     code.invokevirtual("org/python/core/PyFrame", "setlocal", "(" + $str + $pyObj + ")V");
                 } else {
                     if (syminf == null) {
-                        System.err.println("internal compiler error: "+node);
+                        throw new ParseException("internal compiler error", node);
                     }
                     if ((syminf.flags&ScopeInfo.CELL) != 0) {
                         code.iconst(syminf.env_index);
@@ -1991,7 +1991,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
                     code.invokevirtual("org/python/core/PyFrame", "dellocal", "(" + $str + ")V");
                 } else {
                     if (syminf == null) {
-                        System.err.println("internal compiler error: "+node);
+                        throw new ParseException("internal compiler error", node);
                     }
                     if ((syminf.flags&ScopeInfo.CELL) != 0) {
                         module.error("can not delete variable '"+name+
