@@ -753,12 +753,30 @@ public class imp {
     }
 
     /**
+     * replaced by importFrom with level param.  Kept for backwards compatibility.
+     * @deprecated use importFrom with level param.
+     */
+    public static PyObject[] importFrom(String mod, String[] names,
+            PyFrame frame) {
+        return importFromAs(mod, names, null, frame, 0);
+    }
+
+    /**
      * Called from jython generated code when a statement like "from spam.eggs
      * import foo, bar" is executed.
      */
     public static PyObject[] importFrom(String mod, String[] names,
+            PyFrame frame, int level) {
+        return importFromAs(mod, names, null, frame, level);
+    }
+
+    /**
+     * replaced by importFromAs with level param.  Kept for backwards compatibility.
+     * @deprecated use importFromAs with level param.
+     */
+    public static PyObject[] importFromAs(String mod, String[] names,
             PyFrame frame) {
-        return importFromAs(mod, names, null, frame);
+        return importFromAs(mod, names, null, frame, 0);
     }
 
     /**
@@ -766,7 +784,7 @@ public class imp {
      * import foo as spam" is executed.
      */
     public static PyObject[] importFromAs(String mod, String[] names,
-            String[] asnames, PyFrame frame) {
+            String[] asnames, PyFrame frame, int level) {
         PyObject[] pyNames = new PyObject[names.length];
         for (int i = 0; i < names.length; i++) {
             pyNames[i] = Py.newString(names[i]);

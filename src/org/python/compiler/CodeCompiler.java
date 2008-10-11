@@ -768,6 +768,9 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         code.ldc(node.module);
         //Note: parser does not allow node.names.length == 0
         if (node.names.length == 1 && node.names[0].name.equals("*")) {
+            if (node.level > 0) {
+                throw new ParseException("'import *' not allowed with 'from .'", node);
+            }
             if (my_scope.func_level > 0) {
                 module.error("import * only allowed at module level", false, node);
 
@@ -799,7 +802,8 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
             makeStrings(code, fromNames, fromNames.length);
 
             loadFrame();
-            code.invokestatic("org/python/core/imp", "importFrom", "(" + $str + $strArr + $pyFrame + ")" + $pyObjArr);
+            code.iconst(node.level);
+            code.invokestatic("org/python/core/imp", "importFrom", "(" + $str + $strArr + $pyFrame + "I" + ")" + $pyObjArr);
             int tmp = storeTop();
             for (int i = 0; i < node.names.length; i++) {
                 code.aload(tmp);
