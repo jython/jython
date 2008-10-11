@@ -1475,6 +1475,7 @@ _failures = {
         test_codecmaps_jp
         test_codecmaps_kr
         test_codecmaps_tw
+        test_compiler
         test_dis
         test_eof
         test_frozen
