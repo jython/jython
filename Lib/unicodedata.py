@@ -56,7 +56,7 @@ def init(path):
             elif name.find('Last') >= 0:
                 _segments.append((start, (start, codepoint), data))
             else:
-                _names[name] = codepoint
+                _names[name] = unichr(codepoint)
                 _codepoints[codepoint] = data
 
 def init_east_asian_width(path):
