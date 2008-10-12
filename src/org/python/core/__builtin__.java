@@ -1233,6 +1233,7 @@ public class __builtin__ {
 abstract class ExtendedBuiltinFunction extends PyObject {
     public static final PyType TYPE = PyType.fromClass(PyBuiltinFunction.class);
     @ExposedGet(name = "__class__")
+    @Override
     public PyType getType() {
         return TYPE;
     }

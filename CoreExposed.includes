@@ -52,4 +52,5 @@ org/python/modules/random/PyRandom.class
 org/python/modules/thread/PyLocal.class
 org/python/modules/time/PyTimeTuple.class
 org/python/modules/zipimport/zipimporter.class
+org/python/modules/PyStruct.class
 org/python/modules/PyTeeIterator.class

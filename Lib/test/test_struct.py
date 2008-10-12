@@ -1,8 +1,14 @@
-from test.test_support import TestFailed, verbose, verify, vereq
+from test.test_support import TestFailed, verbose, verify, vereq, is_jython
 import test.test_support
 import struct
 import array
 import warnings
+
+if is_jython:
+    # currently no buffer type, but this will work fine for this testing
+    def buffer(s):
+        return str(s)
+
 
 import sys
 ISBIGENDIAN = sys.byteorder == "big"

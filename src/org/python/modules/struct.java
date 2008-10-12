@@ -20,6 +20,13 @@ import org.python.core.PyStringMap;
 import org.python.core.PyTuple;
 
 import java.math.BigInteger;
+import java.util.Arrays;
+import org.python.core.ClassDictInit;
+import org.python.core.PyArray;
+import org.python.core.PyType;
+import org.python.expose.ExposedGet;
+import org.python.expose.ExposedNew;
+import org.python.expose.ExposedType;
 
 /**
  * This module performs conversions between Python values and C
@@ -399,11 +406,17 @@ public class struct {
         }
 
         ByteStream(String s) {
-            int l = s.length();
+            this(s, 0);
+        }
+        
+        ByteStream(String s, int offset) {
+            int l = s.length() - offset;
             data = new char[l];
-            s.getChars(0, l, data, 0);
+            s.getChars(offset, s.length(), data, 0);
             len = l;
             pos = 0;
+            
+//            System.out.println("s.length()=" + s.length() + ",offset=" + offset + ",l=" + l + ",data=" + Arrays.toString(data));
         }
 
         int readByte() {
@@ -874,7 +887,7 @@ public class struct {
 
 
 
-    private static FormatDef[] whichtable(String pfmt) {
+    static FormatDef[] whichtable(String pfmt) {
         char c = pfmt.charAt(0);
         switch (c) {
         case '<' :
@@ -913,7 +926,7 @@ public class struct {
 
 
 
-    private static int calcsize(String format, FormatDef[] f) {
+    static int calcsize(String format, FormatDef[] f) {
         int size = 0;
 
         int len = format.length();
@@ -973,10 +986,43 @@ public class struct {
 
         FormatDef[] f = whichtable(format);
         int size = calcsize(format, f);
+        
+        return pack(format, f, size, 1, args).toString();
+    }
+    
+    // xxx - may need to consider doing a generic arg parser here
+    static public void pack_into(PyObject[] args) {
+        if (args.length < 3)
+            Py.TypeError("illegal argument type for built-in operation");
+        String format = args[0].toString();
+        FormatDef[] f = whichtable(format);
+        int size = calcsize(format, f);
+        pack_into(format, f, size, 1, args);
+    }
+    
+    static void pack_into(String format, FormatDef[] f, int size, int argstart, PyObject[] args) {
+        if (args.length - argstart < 2)
+            Py.TypeError("illegal argument type for built-in operation");
+        if (!(args[argstart] instanceof PyArray)) {
+            throw Py.TypeError("pack_into takes an array arg"); // as well as a buffer, what else?
+        }
+        PyArray buffer = (PyArray)args[argstart];
+        int offset = args[argstart + 1].__int__().asInt();
 
+        ByteStream res = pack(format, f, size, argstart + 2, args);
+        if (res.pos > buffer.__len__()) {
+            throw StructError("pack_into requires a buffer of at least " + res.pos + " bytes, got " + buffer.__len__());
+        }
+        for (int i = 0; i < res.pos; i++, offset++) {
+            char val = res.data[i];
+            buffer.set(offset, val);
+        }
+    }
+    
+    static ByteStream pack(String format, FormatDef[] f, int size, int start, PyObject[] args) {
         ByteStream res = new ByteStream();
 
-        int i = 1;
+        int i = start;
         int len = format.length();
         for (int j = 0; j < len; j++) {
             char c = format.charAt(j);
@@ -995,7 +1041,7 @@ public class struct {
 
             FormatDef e = getentry(c, f);
 
-            // Fill padd bytes with zeros
+            // Fill pad bytes with zeros
             int nres = align(res.size(), e) - res.size();
             while (nres-- > 0)
                 res.writeByte(0);
@@ -1005,7 +1051,7 @@ public class struct {
         if (i < args.length)
             throw StructError("too many arguments for pack format");
 
-        return res.toString();
+        return res;
     }
 
 
@@ -1017,19 +1063,41 @@ public class struct {
      * The string must contain exactly the amount of data required by
      * the format (i.e. len(string) must equal calcsize(fmt)).
      */
+   
     public static PyTuple unpack(String format, String string) {
-        int len = string.length();
-
         FormatDef[] f = whichtable(format);
         int size = calcsize(format, f);
-
-        if (size != len)
+        int len = string.length();
+        if (size != len) 
             throw StructError("unpack str size does not match format");
-
+         return unpack(f, size, format, new ByteStream(string));
+    }
+    
+    public static PyTuple unpack(String format, PyArray buffer) {
+        String string = buffer.tostring();
+        FormatDef[] f = whichtable(format);
+        int size = calcsize(format, f);
+        int len = string.length();
+        if (size != len) 
+            throw StructError("unpack str size does not match format");
+         return unpack(f, size, format, new ByteStream(string));
+    }
+    
+    public static PyTuple unpack_from(String format, String string) {
+        return unpack_from(format, string, 0);   
+    }
+        
+    public static PyTuple unpack_from(String format, String string, int offset) {
+        FormatDef[] f = whichtable(format);
+        int size = calcsize(format, f);
+        int len = string.length();
+        if (size >= (len - offset + 1))
+            throw StructError("unpack_from str size does not match format");
+        return unpack(f, size, format, new ByteStream(string, offset));
+    }
+    
+    static PyTuple unpack(FormatDef[] f, int size, String format, ByteStream str) {
         PyList res = new PyList();
-
-        ByteStream str = new ByteStream(string);
-
         int flen = format.length();
         for (int j = 0; j < flen; j++) {
             char c = format.charAt(j);
@@ -1057,8 +1125,7 @@ public class struct {
     }
 
 
-
-    private static PyException StructError(String explanation) {
+    static PyException StructError(String explanation) {
         return new PyException(error, explanation);
     }
 
@@ -1067,4 +1134,9 @@ public class struct {
         dict.__setitem__("__module__", new PyString("struct"));
         return dict;
     }
+    
+    public static PyStruct Struct(PyObject[] args, String[] keywords) {
+        return new PyStruct(args, keywords);
+    }
 }
+

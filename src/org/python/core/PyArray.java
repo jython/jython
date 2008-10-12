@@ -1393,6 +1393,23 @@ public class PyArray extends PySequence implements Cloneable {
         Array.set(data, i, o);
     }
 
+    // xxx - add more efficient comparable typecode lookup via an enumset, and expand
+    public void set(int i, int value) {
+        if ("u".equals(typecode) || type == Integer.TYPE || type == Long.TYPE) {
+            Array.setInt(data, i, value);
+        } else {
+            throw Py.TypeError("Type not compatible with array type");
+        }
+    }
+    
+    public void set(int i, char value) {
+        if ("c".equals(typecode) || type == Integer.TYPE || type == Long.TYPE) {
+            Array.setChar(data, i, value);
+        } else {
+            throw Py.TypeError("Type not compatible with array type");
+        } 
+    }
+    
     private boolean isSigned() {
         return typecode.length() == 1 && typecode.equals(typecode.toUpperCase());
     }
