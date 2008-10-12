@@ -24,6 +24,9 @@ public class imp {
 
     public static final int APIVersion = 15;
 
+    //This should change to 0 for Python 2.7 and 3.0 see PEP 328
+    public static final int DEFAULT_LEVEL = -1;
+
     /** A non-empty fromlist for __import__'ing sub-modules. */
     private static final PyObject nonEmptyFromlist = new PyTuple(Py.newString("__doc__"));
 
@@ -518,9 +521,14 @@ public class imp {
      * 'a.b.c' would return 'a.b'.
      * 
      * @param dict the __dict__ of a loaded module
+     * @param level used for relative and absolute imports.  -1 means try both,
+     *              0 means absolute only, positive ints represent the level to
+     *              look upward for a relative path.  See PEP 328 at
+     *              http://www.python.org/dev/peps/pep-0328/
+     *              
      * @return the parent name for a module
      */
-    private static String getParent(PyObject dict) {
+    private static String getParent(PyObject dict, int level) {
         PyObject tmp = dict.__finditem__("__name__");
         if (tmp == null) {
             return null;
@@ -639,7 +647,7 @@ public class imp {
      * @return a module
      */
     private static PyObject import_name(String name, boolean top,
-            PyObject modDict, PyObject fromlist) {
+            PyObject modDict, PyObject fromlist, int level) {
         if (name.length() == 0) {
             throw Py.ValueError("Empty module name");
         }
@@ -647,7 +655,7 @@ public class imp {
         PyObject pkgMod = null;
         String pkgName = null;
         if (modDict != null && !(modDict instanceof PyNone)) {
-            pkgName = getParent(modDict);
+            pkgName = getParent(modDict, level);
             pkgMod = modules.__finditem__(pkgName);
             if (pkgMod != null && !(pkgMod instanceof PyModule)) {
                 pkgMod = null;
@@ -705,7 +713,7 @@ public class imp {
      * @return an imported module (Java or Python)
      */
     public static PyObject importName(String name, boolean top) {
-        return import_name(name, top, null, null);
+        return import_name(name, top, null, null, DEFAULT_LEVEL);
     }
 
     /**
@@ -718,10 +726,10 @@ public class imp {
      * @return an imported module (Java or Python)
      */
     public static PyObject importName(String name, boolean top, 
-            PyObject modDict, PyObject fromlist) {
+            PyObject modDict, PyObject fromlist, int level) {
         importLock.lock();
         try {
-            return import_name(name, top, modDict, fromlist);
+            return import_name(name, top, modDict, fromlist, level);
         } finally {
             importLock.unlock();
         }
@@ -758,7 +766,7 @@ public class imp {
      */
     public static PyObject[] importFrom(String mod, String[] names,
             PyFrame frame) {
-        return importFromAs(mod, names, null, frame, 0);
+        return importFromAs(mod, names, null, frame, DEFAULT_LEVEL);
     }
 
     /**
@@ -776,7 +784,7 @@ public class imp {
      */
     public static PyObject[] importFromAs(String mod, String[] names,
             PyFrame frame) {
-        return importFromAs(mod, names, null, frame, 0);
+        return importFromAs(mod, names, null, frame, DEFAULT_LEVEL);
     }
 
     /**
@@ -791,7 +799,7 @@ public class imp {
         }
 
         PyObject module = __builtin__.__import__(mod, frame.f_globals, frame.getLocals(),
-                                                 new PyTuple(pyNames));
+                                                 new PyTuple(pyNames), level);
         PyObject[] submods = new PyObject[names.length];
         for (int i = 0; i < names.length; i++) {
             PyObject submod = module.__findattr__(names[i]);

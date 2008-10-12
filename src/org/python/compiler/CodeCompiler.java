@@ -802,7 +802,16 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
             makeStrings(code, fromNames, fromNames.length);
 
             loadFrame();
-            code.iconst(node.level);
+
+            if (node.level == 0) {
+                if (module.getFutures().isAbsoluteImportOn()) {
+                    code.iconst_0();
+                } else {
+                    code.iconst_m1();
+                }
+            } else {
+                code.iconst(node.level);
+            }
             code.invokestatic("org/python/core/imp", "importFrom", "(" + $str + $strArr + $pyFrame + "I" + ")" + $pyObjArr);
             int tmp = storeTop();
             for (int i = 0; i < node.names.length; i++) {

@@ -115,4 +115,8 @@ public class Future {
         return with_statement;
     }
 
+    public boolean isAbsoluteImportOn() {
+        return absolute_import;
+    }
+
 }

@@ -1198,18 +1198,22 @@ public class __builtin__ {
     }
 
     public static PyObject __import__(String name) {
-        return __import__(name, null, null, null);
+        return __import__(name, null, null, null, imp.DEFAULT_LEVEL);
     }
 
     public static PyObject __import__(String name, PyObject globals) {
-        return __import__(name, globals, null, null);
+        return __import__(name, globals, null, null, imp.DEFAULT_LEVEL);
     }
 
     public static PyObject __import__(String name, PyObject globals, PyObject locals) {
-        return __import__(name, globals, locals, null);
+        return __import__(name, globals, locals, null, imp.DEFAULT_LEVEL);
     }
 
     public static PyObject __import__(String name, PyObject globals, PyObject locals, PyObject fromlist) {
+        return __import__(name, globals, locals, fromlist, imp.DEFAULT_LEVEL);
+    }
+
+    public static PyObject __import__(String name, PyObject globals, PyObject locals, PyObject fromlist, int level) {
         PyFrame frame = Py.getFrame();
         if (frame == null) {
             return null;
@@ -1224,7 +1228,7 @@ public class __builtin__ {
             return null;
         }
 
-        PyObject module = __import__.__call__(new PyObject[]{Py.newString(name), globals, locals, fromlist});
+        PyObject module = __import__.__call__(new PyObject[]{Py.newString(name), globals, locals, fromlist, Py.newInteger(level)});
         return module;
     }
 }
@@ -1280,12 +1284,13 @@ class ImportFunction extends ExtendedBuiltinFunction {
 
         PyObject globals = (argc > 1 && args[1] != null) ? args[1] : null;
         PyObject fromlist = (argc > 3 && args[3] != null) ? args[3] : Py.EmptyTuple;
+        int level = (argc > 4 && args[4] != null) ? Py.py2int(args[4]) : imp.DEFAULT_LEVEL;
 
-        return load(module, globals, fromlist);
+        return load(module, globals, fromlist, level);
     }
 
-    private PyObject load(String module, PyObject globals, PyObject fromlist) {
-        PyObject mod = imp.importName(module.intern(), fromlist.__len__() == 0, globals, fromlist);
+    private PyObject load(String module, PyObject globals, PyObject fromlist, int level) {
+        PyObject mod = imp.importName(module.intern(), fromlist.__len__() == 0, globals, fromlist, level);
         return mod;
     }
 
