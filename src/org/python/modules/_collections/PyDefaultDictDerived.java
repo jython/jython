@@ -746,7 +746,7 @@ public class PyDefaultDictDerived extends PyDefaultDict implements Slotted {
             throw Py.TypeError("__hash__ should return a int");
         }
         if (self_type.lookup("__eq__")!=null||self_type.lookup("__cmp__")!=null) {
-            throw Py.TypeError("unhashable type");
+            throw Py.TypeError(String.format("unhashable type: '%.200s'",getType().fastGetName()));
         }
         return super.hashCode();
     }
