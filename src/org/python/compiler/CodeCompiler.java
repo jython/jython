@@ -1604,6 +1604,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
             return Slice(node, (Slice) node.slice);
         }
 
+        int value = temporary;
         expr_contextType ctx = node.ctx;
         if (node.ctx == expr_contextType.AugStore && augmode == expr_contextType.Store) {
             restoreAugTmps(node, 2);
@@ -1627,7 +1628,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
             return null;
         case Param:
         case Store:
-            code.aload(temporary);
+            code.aload(value);
             code.invokevirtual("org/python/core/PyObject", "__setitem__", "(" + $pyObj + $pyObj + ")V");
             return null;
         }
