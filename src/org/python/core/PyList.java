@@ -730,7 +730,7 @@ public class PyList extends PySequenceList {
 
     @ExposedMethod
     final int list___hash__() {
-        throw Py.TypeError("unhashable type");
+        throw Py.TypeError(String.format("unhashable type: '%.200s'", getType().fastGetName()));
     }
 
     public PyTuple __getnewargs__() {

@@ -71,7 +71,7 @@ public class PySlice extends PyObject {
 
     @ExposedMethod
     final int slice___hash__() {
-        throw Py.TypeError("unhashable type");
+        throw Py.TypeError(String.format("unhashable type: '%.200s'", getType().fastGetName()));
     }
 
     public PyString __str__() {
