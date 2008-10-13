@@ -1,6 +1,9 @@
 Jython NEWS
 
 Jython 2.5
+  Bugs fixed (new numbering due to move to Roundup)
+    - [ 1111 ] keyword arguments not supported on __import__
+
   Incompatible Changes
     - The python.prepath property has been removed; use python.path instead.
     - To implement the Java Map interface, PyDictionary.values now returns a

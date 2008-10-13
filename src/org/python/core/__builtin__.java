@@ -1268,23 +1268,13 @@ class ImportFunction extends ExtendedBuiltinFunction {
                 "is the number of parent directories to search relative to the current module.");
     }
 
-//    public ImportFunction() {
-//    }
-
     public PyObject __call__(PyObject args[], String keywords[]) {
-        if (!(args.length < 1 || args[0] instanceof PyString)) {
-            throw Py.TypeError("first argument must be a string");
-        }
-        if (keywords.length > 0) {
-            throw Py.TypeError("__import__() takes no keyword arguments");
-        }
+        ArgParser ap = new ArgParser("__import__", args, keywords, new String[]{"name", "globals", "locals", "fromlist", "level"}, 1);
 
-        int argc = args.length;
-        String module = args[0].__str__().toString();
-
-        PyObject globals = (argc > 1 && args[1] != null) ? args[1] : null;
-        PyObject fromlist = (argc > 3 && args[3] != null) ? args[3] : Py.EmptyTuple;
-        int level = (argc > 4 && args[4] != null) ? Py.py2int(args[4]) : imp.DEFAULT_LEVEL;
+        String module = ap.getString(0);
+        PyObject globals = ap.getPyObject(1, null);
+        PyObject fromlist = ap.getPyObject(3, Py.EmptyTuple);
+        int level = ap.getInt(4, imp.DEFAULT_LEVEL);
 
         return load(module, globals, fromlist, level);
     }
