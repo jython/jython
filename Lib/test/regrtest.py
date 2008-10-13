@@ -1388,9 +1388,6 @@ _expectations = {
         test_capi
         test_cd
         test_cl
-        test_code
-        test_codeccallbacks
-        test_codeop
         test_commands
         test_crypt
         test_ctypes
@@ -1417,28 +1414,23 @@ _expectations = {
         test_macfs
         test_macostools
         test_mmap
-        test_mpz
         test_nis
         test_normalization
         test_openpty
         test_ossaudiodev
         test_parser
-        test_peepholer
         test_plistlib
         test_poll
-        test_profile
         test_pty
         test_pyexpat
         test_resource
         test_rgbimg
-        test_rotor
         test_scriptpackages
         test_signal
         test_socket_ssl
         test_socketserver
         test_sqlite
         test_startfile
-        test_stringprep
         test_strop
         test_structmembers
         test_sunaudiodev
@@ -1447,8 +1439,6 @@ _expectations = {
         test_tcl
         test_threadsignals
         test_timeout
-        test_timing
-        test_transformer
         test_unicode_file
         test_wait3
         test_wait4
@@ -1482,6 +1472,8 @@ _failures = {
         test_gc
         test_iterlen
         test_marshal
+        test_peepholer
+        test_profile
         test_pyclbr
         test_transformer
         test_ucn
