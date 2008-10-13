@@ -1483,6 +1483,7 @@ _failures = {
         test_iterlen
         test_marshal
         test_pyclbr
+        test_transformer
         test_ucn
         test_xml_etree
         test_zipimport
