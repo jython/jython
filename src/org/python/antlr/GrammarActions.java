@@ -327,12 +327,12 @@ public class GrammarActions {
         if (snameToken == null) {
             s = null;
         } else {
-            s = snameToken.getText();
+            s = cantBeNone(snameToken);
         }
         if (knameToken == null) {
             k = null;
         } else {
-            k = knameToken.getText();
+            k = cantBeNone(knameToken);
         }
         return new argumentsType(t, p, s, k, d);
     }
@@ -347,8 +347,12 @@ public class GrammarActions {
             for(int i=0;i<args.size();i++) {
                 exprType[] e = (exprType[])args.get(i);
                 checkAssign(e[0]);
-                Name arg = (Name)e[0];
-                k.add(new keywordType(arg, arg.id, e[1]));
+                if (e[0] instanceof Name) {
+                    Name arg = (Name)e[0];
+                    k.add(new keywordType(arg, arg.id, e[1]));
+                } else {
+                    errorHandler.error("keyword must be a name", e[0]);
+                }
             }
             return k.toArray(new keywordType[k.size()]);
         }
@@ -495,26 +499,6 @@ public class GrammarActions {
         return new ClassDef(t, nameToken.getText(), b, s);
     }
 
-    argumentsType makeArgumentsType(PythonTree t, List params, PythonTree snameToken,
-        PythonTree knameToken, List defaults) {
-
-        exprType[] p = castExprs(params);
-        exprType[] d = castExprs(defaults);
-        String s;
-        String k;
-        if (snameToken == null) {
-            s = null;
-        } else {
-            s = snameToken.getText();
-        }
-        if (knameToken == null) {
-            k = null;
-        } else {
-            k = knameToken.getText();
-        }
-        return new argumentsType(t, p, s, k, d);
-    }
-
     stmtType makeTryExcept(PythonTree t, List body, List handlers, List orelse, List finBody) {
         stmtType[] b = castStmts(body);
         excepthandlerType[] e = (excepthandlerType[])handlers.toArray(new excepthandlerType[handlers.size()]);
@@ -632,27 +616,46 @@ public class GrammarActions {
             errorHandler.error("can't assign to generator expression", e);
         } else if (e instanceof Num) {
             errorHandler.error("can't assign to number", e);
+        } else if (e instanceof Str) {
+            errorHandler.error("can't assign to string", e);
         } else if (e instanceof Yield) {
             errorHandler.error("can't assign to yield expression", e);
         } else if (e instanceof BinOp) {
             errorHandler.error("can't assign to operator", e);
         } else if (e instanceof Lambda) {
             errorHandler.error("can't assign to lambda", e);
+        } else if (e instanceof Call) {
+            errorHandler.error("can't assign to function call", e);
+        } else if (e instanceof Repr) {
+            errorHandler.error("can't assign to repr", e);
+        } else if (e instanceof IfExp) {
+            errorHandler.error("can't assign to conditional expression", e);
         } else if (e instanceof Tuple) {
             //XXX: performance problem?  Any way to do this better?
             exprType[] elts = ((Tuple)e).elts;
+            if (elts.length == 0) {
+                errorHandler.error("can't assign to ()", e);
+            }
+            for (int i=0;i<elts.length;i++) {
+                checkAssign(elts[i]);
+            }
+        } else if (e instanceof org.python.antlr.ast.List) {
+            //XXX: performance problem?  Any way to do this better?
+            exprType[] elts = ((org.python.antlr.ast.List)e).elts;
             for (int i=0;i<elts.length;i++) {
                 checkAssign(elts[i]);
             }
         }
     }
 
-    void checkDelete(exprType[] exprs) {
+    exprType[] makeDeleteList(List e) {
+        exprType[] exprs = castExprs(e);
         for(int i=0;i<exprs.length;i++) {
             if (exprs[i] instanceof Call) {
                 errorHandler.error("can't delete function call", exprs[i]);
             }
         }
+        return exprs;
     }
 
     sliceType makeSubscript(PythonTree lower, Token colon, PythonTree upper, PythonTree sliceop) {

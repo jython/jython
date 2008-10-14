@@ -110,7 +110,6 @@ import org.python.antlr.ast.exprType;
 import org.python.antlr.ast.expr_contextType;
 import org.python.antlr.ast.ExtSlice;
 import org.python.antlr.ast.For;
-import org.python.antlr.ast.FunctionDef;
 import org.python.antlr.ast.GeneratorExp;
 import org.python.antlr.ast.Global;
 import org.python.antlr.ast.If;
@@ -638,7 +637,7 @@ printlist2 returns [boolean newline, List elts]
 //del_stmt: 'del' exprlist
 del_stmt
     : DELETE del_list
-   -> ^(DELETE<Delete>[$DELETE, actions.castExprs($del_list.etypes)])
+   -> ^(DELETE<Delete>[$DELETE, $del_list.etypes])
     ;
 
 //pass_stmt: 'pass'
@@ -1376,10 +1375,10 @@ exprlist[expr_contextType ctype] returns [exprType etype]
 
 //not in CPython's Grammar file
 //Needed as an exprlist that does not produce tuples for del_stmt.
-del_list returns [List etypes]
+del_list returns [exprType[\] etypes]
     : e+=expr[expr_contextType.Del] (options {k=2;}: COMMA e+=expr[expr_contextType.Del])* (COMMA)?
       {
-          $etypes = $e;
+          $etypes = actions.makeDeleteList($e);
       }
     ;
 
