@@ -402,7 +402,7 @@ decorators returns [List etypes]
 funcdef
 @init { stmtType stype = null; }
 @after { $funcdef.tree = stype; }
-    : decorators? DEF NAME parameters COLON suite
+    : decorators? DEF NAME parameters COLON suite[false]
     {
         Token t = $DEF;
         if ($decorators.start != null) {
@@ -663,7 +663,11 @@ break_stmt
 
 //continue_stmt: 'continue'
 continue_stmt
-    : CONTINUE
+    : CONTINUE {
+        if (!$suite.isEmpty() && $suite::continueIllegal) {
+            errorHandler.error("'continue' not supported inside 'finally' clause", new PythonTree($continue_stmt.start));
+        }
+    }
    -> ^(CONTINUE<Continue>[$CONTINUE])
     ;
 
@@ -802,7 +806,7 @@ compound_stmt
 
 //if_stmt: 'if' test ':' suite ('elif' test ':' suite)* ['else' ':' suite]
 if_stmt
-    : IF test[expr_contextType.Load] COLON ifsuite=suite elif_clause[$test.start]?
+    : IF test[expr_contextType.Load] COLON ifsuite=suite[false] elif_clause[$test.start]?
    -> ^(IF<If>[$IF, actions.castExpr($test.tree), actions.castStmts($ifsuite.stypes),
          actions.makeElse($elif_clause.stypes, $elif_clause.tree)])
     ;
@@ -812,7 +816,7 @@ elif_clause [Token iftest] returns [List stypes]
     : else_clause {
         $stypes = $else_clause.stypes;
     }
-    | ELIF test[expr_contextType.Load] COLON suite
+    | ELIF test[expr_contextType.Load] COLON suite[false]
         (e2=elif_clause[$iftest]
        -> ^(ELIF<If>[$iftest, actions.castExpr($test.tree), actions.castStmts($suite.stypes), actions.makeElse($e2.stypes, $e2.tree)])
         |
@@ -822,7 +826,7 @@ elif_clause [Token iftest] returns [List stypes]
 
 //not in CPython's Grammar file
 else_clause returns [List stypes]
-    : ORELSE COLON elsesuite=suite {
+    : ORELSE COLON elsesuite=suite[false] {
         $stypes = $suite.stypes;
     }
     ;
@@ -835,7 +839,7 @@ while_stmt
 @after {
    $while_stmt.tree = stype;
 }
-    : WHILE test[expr_contextType.Load] COLON s1=suite (ORELSE COLON s2=suite)?
+    : WHILE test[expr_contextType.Load] COLON s1=suite[false] (ORELSE COLON s2=suite[false])?
     {
         stype = actions.makeWhile($WHILE, actions.castExpr($test.tree), $s1.stypes, $s2.stypes);
     }
@@ -849,8 +853,8 @@ for_stmt
 @after {
    $for_stmt.tree = stype;
 }
-    : FOR exprlist[expr_contextType.Store] IN testlist[expr_contextType.Load] COLON s1=suite
-        (ORELSE COLON s2=suite)?
+    : FOR exprlist[expr_contextType.Store] IN testlist[expr_contextType.Load] COLON s1=suite[false]
+        (ORELSE COLON s2=suite[false])?
       {
           stype = actions.makeFor($FOR, $exprlist.etype, actions.castExpr($testlist.tree), $s1.stypes, $s2.stypes);
       }
@@ -868,12 +872,12 @@ try_stmt
 @after {
    $try_stmt.tree = stype;
 }
-    : TRY COLON trysuite=suite
-      ( e+=except_clause+ (ORELSE COLON elsesuite=suite)? (FINALLY COLON finalsuite=suite)?
+    : TRY COLON trysuite=suite[!$suite.isEmpty() && $suite::continueIllegal]
+      ( e+=except_clause+ (ORELSE COLON elsesuite=suite[!$suite.isEmpty() && $suite::continueIllegal])? (FINALLY COLON finalsuite=suite[true])?
         {
             stype = actions.makeTryExcept($TRY, $trysuite.stypes, $e, $elsesuite.stypes, $finalsuite.stypes);
         }
-      | FINALLY COLON finalsuite=suite
+      | FINALLY COLON finalsuite=suite[true]
         {
             stype = actions.makeTryFinally($TRY, $trysuite.stypes, $finalsuite.stypes);
         }
@@ -888,7 +892,7 @@ with_stmt
 @after {
    $with_stmt.tree = stype;
 }
-    : WITH test[expr_contextType.Load] (with_var)? COLON suite
+    : WITH test[expr_contextType.Load] (with_var)? COLON suite[false]
       {
           stype = new With($WITH, actions.castExpr($test.tree), $with_var.etype,
               actions.castStmts($suite.stypes));
@@ -905,14 +909,22 @@ with_var returns [exprType etype]
 
 //except_clause: 'except' [test [',' test]]
 except_clause
-    : EXCEPT (t1=test[expr_contextType.Load] (COMMA t2=test[expr_contextType.Store])?)? COLON suite
+    : EXCEPT (t1=test[expr_contextType.Load] (COMMA t2=test[expr_contextType.Store])?)? COLON suite[!$suite.isEmpty() && $suite::continueIllegal]
    -> ^(EXCEPT<excepthandlerType>[$EXCEPT, actions.castExpr($t1.tree), actions.castExpr($t2.tree),
           actions.castStmts($suite.stypes), $EXCEPT.getLine(), $EXCEPT.getCharPositionInLine()])
     ;
 
 //suite: simple_stmt | NEWLINE INDENT stmt+ DEDENT
-suite returns [List stypes]
+suite[boolean fromFinally] returns [List stypes]
+scope {
+    boolean continueIllegal;
+}
 @init {
+    if ($suite::continueIllegal || fromFinally) {
+        $suite::continueIllegal = true;
+    } else {
+        $suite::continueIllegal = false;
+    }
     $stypes = new ArrayList();
 }
     : simple_stmt
@@ -1409,7 +1421,7 @@ classdef
 @after {
    $classdef.tree = stype;
 }
-    : CLASS NAME (LPAREN testlist[expr_contextType.Load]? RPAREN)? COLON suite
+    : CLASS NAME (LPAREN testlist[expr_contextType.Load]? RPAREN)? COLON suite[false]
       {
           stype = new ClassDef($CLASS, actions.cantBeNone($NAME), actions.makeBases(actions.castExpr($testlist.tree)),
               actions.castStmts($suite.stypes));
