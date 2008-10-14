@@ -274,8 +274,10 @@ class GeneralModuleTests(unittest.TestCase):
     def testHostnameRes(self):
         # Testing hostname resolution mechanisms
         hostname = socket.gethostname()
+        self.assert_(isinstance(hostname, str))
         try:
             ip = socket.gethostbyname(hostname)
+            self.assert_(isinstance(ip, str))
         except socket.error:
             # Probably name lookup wasn't set up right; skip this test
             self.fail("Probably name lookup wasn't set up right; skip testHostnameRes.gethostbyname")
@@ -283,14 +285,34 @@ class GeneralModuleTests(unittest.TestCase):
         self.assert_(ip.find('.') >= 0, "Error resolving host to ip.")
         try:
             hname, aliases, ipaddrs = socket.gethostbyaddr(ip)
+            self.assert_(isinstance(hname, str))
+            for hosts in aliases, ipaddrs:
+                self.assert_(all(isinstance(host, str) for host in hosts))
         except socket.error:
             # Probably a similar problem as above; skip this test
             self.fail("Probably name lookup wasn't set up right; skip testHostnameRes.gethostbyaddr")
             return
         all_host_names = [hostname, hname] + aliases
         fqhn = socket.getfqdn()
+        self.assert_(isinstance(fqhn, str))
         if not fqhn in all_host_names:
             self.fail("Error testing host resolution mechanisms.")
+
+    def testGetAddrInfo(self):
+        try:
+            socket.getaddrinfo(HOST, PORT, 9999)
+        except socket.gaierror, gaix:
+            self.failUnlessEqual(gaix[0], errno.EIO)
+        except Exception, x:
+            self.fail("getaddrinfo with bad family raised wrong exception: %s" % x)
+        else:
+            self.fail("getaddrinfo with bad family should have raised exception")
+            
+        addrinfos = socket.getaddrinfo(HOST, PORT)
+        for addrinfo in addrinfos:
+            family, socktype, proto, canonname, sockaddr = addrinfo
+            self.assert_(isinstance(canonname, str))
+            self.assert_(isinstance(sockaddr[0], str))
 
     def testRefCountGetNameInfo(self):
         # Testing reference count for getnameinfo

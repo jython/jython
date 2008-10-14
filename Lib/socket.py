@@ -81,6 +81,7 @@ import javax.net.ssl.SSLSocketFactory
 import org.python.core.io.DatagramSocketIO
 import org.python.core.io.ServerSocketIO
 import org.python.core.io.SocketIO
+from org.python.core.util.StringUtil import asPyString
 
 class error(Exception): pass
 class herror(error): pass
@@ -464,8 +465,8 @@ def _gethostbyaddr(name):
     names = []
     addrs = []
     for addr in addresses:
-      names.append(addr.getHostName())
-      addrs.append(addr.getHostAddress())
+      names.append(asPyString(addr.getHostName()))
+      addrs.append(asPyString(addr.getHostAddress()))
     return (names, addrs)
 
 def getfqdn(name=None):
@@ -487,13 +488,13 @@ def getfqdn(name=None):
 
 def gethostname():
     try:
-        return java.net.InetAddress.getLocalHost().getHostName()
+        return asPyString(java.net.InetAddress.getLocalHost().getHostName())
     except java.lang.Exception, jlx:
         raise _map_exception(jlx)
 
 def gethostbyname(name):
     try:
-        return java.net.InetAddress.getByName(name).getHostAddress()
+        return asPyString(java.net.InetAddress.getByName(name).getHostAddress())
     except java.lang.Exception, jlx:
         raise _map_exception(jlx)
 
@@ -523,10 +524,10 @@ def _realsocket(family = AF_INET, type = SOCK_STREAM, flags=0):
     else:
         return _udpsocket()
 
-def getaddrinfo(host, port, family=None, socktype=None, proto=0, flags=None):
+def getaddrinfo(host, port, family=AF_INET, socktype=None, proto=0, flags=None):
     try:
         if not family in [AF_INET, AF_INET6, AF_UNSPEC]:
-            raise NotSupportedError()
+            raise gaierror(errno.EIO, 'ai_family not supported')
         filter_fns = []
         filter_fns.append({
             AF_INET:   lambda x: isinstance(x, java.net.Inet4Address),
@@ -541,7 +542,9 @@ def getaddrinfo(host, port, family=None, socktype=None, proto=0, flags=None):
             if len([f for f in filter_fns if f(a)]):
                 family = {java.net.Inet4Address: AF_INET, java.net.Inet6Address: AF_INET6}[a.getClass()]
                 # TODO: Include flowinfo and scopeid in a 4-tuple for IPv6 addresses
-                results.append( (family, socktype, proto, a.getCanonicalHostName(), (a.getHostAddress(), port)) )
+                canonname = asPyString(a.getCanonicalHostName())
+                sockname = asPyString(a.getHostAddress())
+                results.append((family, socktype, proto, canonname, (sockname, port)))
         return results
     except java.lang.Exception, jlx:
         raise _map_exception(jlx)
