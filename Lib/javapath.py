@@ -20,6 +20,8 @@ import java.io.IOException
 from java.lang import System
 import os
 
+from org.python.core.util.StringUtil import asPyString
+
 
 def _tostr(s, method):
     if isinstance(s, basestring):
@@ -40,7 +42,7 @@ def _type_name(obj):
 def dirname(path):
     """Return the directory component of a pathname"""
     path = _tostr(path, "dirname")
-    result = File(path).getParent()
+    result = asPyString(File(path).getParent())
     if not result:
         if isabs(path):
             result = path # Must be root
@@ -51,7 +53,7 @@ def dirname(path):
 def basename(path):
     """Return the final component of a pathname"""
     path = _tostr(path, "basename")
-    return File(path).getName()
+    return asPyString(File(path).getName())
 
 def split(path):
     """Split a pathname.
@@ -128,7 +130,7 @@ def join(path, *args):
             if a == "":
                 a = os.sep
             f = File(f, a)
-    return f.getPath()
+    return asPyString(f.getPath())
 
 def normcase(path):
     """Normalize case of pathname.
@@ -137,7 +139,7 @@ def normcase(path):
 
     """
     path = _tostr(path, "normcase")
-    return File(path).getPath()
+    return asPyString(File(path).getPath())
 
 def commonprefix(m):
     "Given a list of pathnames, return the longest common leading component"
@@ -197,7 +199,7 @@ def expanduser(path):
         if not c:
             return gethome()
         if c == os.sep:
-            return File(gethome(), path[2:]).getPath()
+            return asPyString(File(gethome(), path[2:]).getPath())
     return path
 
 def getuser():
@@ -252,7 +254,7 @@ def abspath(path):
 def _abspath(path):
     # Must use normpath separately because getAbsolutePath doesn't normalize
     # and getCanonicalPath would eliminate symlinks.
-    return normpath(File(sys.getPath(path)).getAbsolutePath())
+    return normpath(asPyString(File(sys.getPath(path)).getAbsolutePath()))
 
 def realpath(path):
     """Return an absolute path normalized and symbolic links eliminated"""
@@ -261,7 +263,7 @@ def realpath(path):
     
 def _realpath(path):
     try:
-        return File(sys.getPath(path)).getCanonicalPath()
+        return asPyString(File(sys.getPath(path)).getCanonicalPath())
     except java.io.IOException:
         return _abspath(path)
 

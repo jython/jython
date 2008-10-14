@@ -48,6 +48,7 @@ import sys
 from java.io import File
 from org.python.core import PyFile
 from org.python.core.io import FileDescriptors, FileIO, IOBase
+from org.python.core.util.StringUtil import asPyString
 
 # Mapping of: os._name: [name list, shell command list]
 _os_map = dict(nt=[
@@ -264,7 +265,7 @@ def listdir(path):
     l = File(sys.getPath(path)).list()
     if l is None:
         raise OSError(0, 'No such directory', path)
-    return list(l)
+    return [asPyString(entry) for entry in l]
 
 def chmod(path, mode):
     """chmod(path, mode)
@@ -629,7 +630,7 @@ def read(fd, buffersize):
     from org.python.core.util import StringUtil
     rawio = FileDescriptors.get(fd)
     buf = _handle_oserror(rawio.read, buffersize)
-    return str(StringUtil.fromBytes(buf))
+    return asPyString(StringUtil.fromBytes(buf))
 
 def write(fd, string):
     """write(fd, string) -> byteswritten

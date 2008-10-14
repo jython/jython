@@ -308,11 +308,11 @@ public class Time implements ClassDictInit
         return _timefields(parseTimeDoubleArg(arg), TimeZone.getTimeZone("GMT"));
     }
 
-    public static String ctime() {
+    public static PyString ctime() {
         return ctime(Py.None);
     }
 
-    public static String ctime(PyObject secs) {
+    public static PyString ctime(PyObject secs) {
         return asctime(localtime(secs));
     }
 
@@ -405,11 +405,11 @@ public class Time implements ClassDictInit
         return yearstr.substring(yearstr.length()-2, yearstr.length());
     }
 
-    public static String asctime() {
+    public static PyString asctime() {
         return asctime(localtime());
     }
 
-    public static String asctime(PyTuple tup) {
+    public static PyString asctime(PyTuple tup) {
         StringBuffer buf = new StringBuffer(25);
         buf.append(enshortdays[item(tup, 6)]).append(' ');
         buf.append(enshortmonths[item(tup, 1)]).append(' ');
@@ -421,7 +421,7 @@ public class Time implements ClassDictInit
         buf.append(_twodigit(item(tup, 3))).append(':');
         buf.append(_twodigit(item(tup, 4))).append(':');
         buf.append(_twodigit(item(tup, 5))).append(' ');
-        return buf.append(item(tup, 0)).toString();
+        return new PyString(buf.append(item(tup, 0)).toString());
     }
 
     public static String locale_asctime(PyTuple tup) {
@@ -454,11 +454,11 @@ public class Time implements ClassDictInit
     // writable but ignore its value?
     public static final int accept2dyear = 0;
 
-    public static String strftime(String format) {
+    public static PyString strftime(String format) {
         return strftime(format, localtime());
     }
 
-    public static String strftime(String format, PyTuple tup) {
+    public static PyString strftime(String format, PyTuple tup) {
         checkLocale();
 
         // Immediately validate the tuple
@@ -651,7 +651,18 @@ public class Time implements ClassDictInit
             lastc = i+1;
             i++;
         }
-        return s;
+        // FIXME: This have problems with localized data:
+        //        $ LANG=es_ES.UTF-8 jythont -c "import time; print time.strftime('%A')"
+        //        s?bado
+        //
+        //        On the other hand, returning unicode would break some doctests
+        //        and will give problems when the return value of strftime is
+        //        mixed with other strings and then the final result is stored
+        //        on places which only support str and not unicode (such as
+        //        os.environ)
+        //
+        // TODO:  Check how CPython deals with this problem.
+        return new PyString(s);
     }
 
 

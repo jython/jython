@@ -111,7 +111,7 @@ public class PostgresqlDataHandler extends RowIdHandler {
         String varchar;
         // Postgresql driver can't handle the setCharacterStream() method so use setObject() instead
         if (object instanceof PyFile) {
-          varchar = ((PyFile) object).read();
+          varchar = ((PyFile) object).read().asString();
         } else {
           varchar = (String) object.__tojava__(String.class);
         }

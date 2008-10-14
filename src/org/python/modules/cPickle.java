@@ -614,7 +614,7 @@ public class cPickle implements ClassDictInit {
      * @param object    a data object which should be pickled.
      * @returns         a string representing the pickled object.
      */
-    public static String dumps(PyObject object) {
+    public static PyString dumps(PyObject object) {
         return dumps(object, 0);
     }
 
@@ -625,7 +625,7 @@ public class cPickle implements ClassDictInit {
      * @param protocol  pickle protocol version (0 - text, 1 - pre-2.3 binary, 2 - 2.3)
      * @returns         a string representing the pickled object.
      */
-    public static String dumps(PyObject object, int protocol) {
+    public static PyString dumps(PyObject object, int protocol) {
         cStringIO.StringIO file = cStringIO.StringIO();
         dump(object, file, protocol);
         return file.getvalue();
@@ -705,11 +705,11 @@ public class cPickle implements ClassDictInit {
         public void flush() {}
 
         public String read(int len) {
-            return file.read(len);
+            return file.read(len).asString();
         }
 
         public String readlineNoNl() {
-            return file.readlineNoNl();
+            return file.readlineNoNl().asString();
         }
     }
 

@@ -978,7 +978,7 @@ public class struct {
      * to the given format. The arguments must match the
      * values required by the format exactly.
      */
-    static public String pack(PyObject[] args) {
+    static public PyString pack(PyObject[] args) {
         if (args.length < 1)
             Py.TypeError("illegal argument type for built-in operation");
 
@@ -987,7 +987,7 @@ public class struct {
         FormatDef[] f = whichtable(format);
         int size = calcsize(format, f);
         
-        return pack(format, f, size, 1, args).toString();
+        return new PyString(pack(format, f, size, 1, args).toString());
     }
     
     // xxx - may need to consider doing a generic arg parser here

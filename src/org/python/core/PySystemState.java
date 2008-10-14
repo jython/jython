@@ -41,7 +41,7 @@ public class PySystemState extends PyObject
     private static final String JAR_URL_PREFIX = "jar:file:";
     private static final String JAR_SEPARATOR = "!";
 
-    public static String version = Version.getVersion();
+    public static PyString version = new PyString(Version.getVersion());
     public static int hexversion = ((Version.PY_MAJOR_VERSION << 24) |
                                     (Version.PY_MINOR_VERSION << 16) |
                                     (Version.PY_MICRO_VERSION <<  8) |
@@ -101,8 +101,8 @@ public class PySystemState extends PyObject
     public PyList path_hooks;
     public PyObject path_importer_cache;
 
-    public static String platform = "java";
-    public static String byteorder = "big";
+    public static PyString platform = new PyString("java");
+    public static PyString byteorder = new PyString("big");
 
     public PyObject ps1 = new PyString(">>> ");
     public PyObject ps2 = new PyString("... ");
@@ -288,8 +288,8 @@ public class PySystemState extends PyObject
         }
     }
 
-    public String getdefaultencoding() {
-        return codecs.getDefaultEncoding();
+    public PyString getdefaultencoding() {
+        return new PyString(codecs.getDefaultEncoding());
     }
 
     public void setdefaultencoding(String encoding) {
@@ -431,7 +431,7 @@ public class PySystemState extends PyObject
         if (version.equals("12")) {
             version = "1.2";
         }
-        platform = "java" + version;
+        platform = new PyString("java" + version);
     }
 
     private static void initRegistry(Properties preProperties, Properties postProperties, 

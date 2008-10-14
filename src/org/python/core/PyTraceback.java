@@ -62,11 +62,12 @@ public class PyTraceback extends PyObject
             return null;
         }
 
+
         String line = null;
         int i = 0;
         try {
             for (i = 0; i < tb_lineno; i++) {
-                line = pyFile.readline();
+                line = pyFile.readline().asString();
                 if (line.equals("")) {
                     break;
                 }

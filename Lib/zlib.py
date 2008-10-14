@@ -1,7 +1,9 @@
 import jarray, binascii
 
 from java.util.zip import Adler32, Deflater, Inflater
-from java.lang import Long, String, StringBuffer
+from java.lang import Long, String
+
+from cStringIO import StringIO
 
 class error(Exception):
     pass
@@ -132,18 +134,19 @@ class decompressobj:
 
 def _get_deflate_data(deflater):
     buf = jarray.zeros(1024, 'b')
-    sb = StringBuffer()
+    s = StringIO()
     while not deflater.finished():
         l = deflater.deflate(buf)
         if l == 0:
             break
-        sb.append(String(buf, 0, 0, l))
-    return sb.toString()
+        s.write(String(buf, 0, 0, l))
+    s.seek(0)
+    return s.read()
 
         
 def _get_inflate_data(inflater, max_length=0):
     buf = jarray.zeros(1024, 'b')
-    sb = StringBuffer()
+    s = StringIO()
     total = 0
     while not inflater.finished():
         if max_length:
@@ -154,7 +157,8 @@ def _get_inflate_data(inflater, max_length=0):
             break
 
         total += l
-        sb.append(String(buf, 0, 0, l))
+        s.write(String(buf, 0, 0, l))
         if max_length and total == max_length:
             break
-    return sb.toString()
+    s.seek(0)
+    return s.read()

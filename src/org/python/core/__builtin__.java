@@ -1028,7 +1028,7 @@ public class __builtin__ {
 
     private static PyString readline(PyObject file) {
         if (file instanceof PyFile) {
-            return new PyString(((PyFile) file).readline());
+            return ((PyFile) file).readline();
         } else {
             PyObject ret = file.invoke("readline");
             if (!(ret instanceof PyString)) {

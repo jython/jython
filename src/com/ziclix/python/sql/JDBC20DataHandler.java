@@ -62,7 +62,7 @@ public class JDBC20DataHandler extends FilterDataHandler {
 
             case Types.CLOB:
                 if (object instanceof PyFile) {
-                    object = new PyString(((PyFile) object).read());
+                    object = ((PyFile) object).read();
                 }
 
                 String clob = (String) object.__tojava__(String.class);

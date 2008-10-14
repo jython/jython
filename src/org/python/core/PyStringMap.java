@@ -141,7 +141,9 @@ public class PyStringMap extends PyObject {
         for (Entry<Object, PyObject> entry : table.entrySet()) {
             Object key = entry.getKey();
             if (key instanceof String) {
-                buf.append(Py.java2py(key).__repr__().toString());
+                // This is a bit complicated, but prevents us to duplicate
+                // PyString#__repr__ logic here.
+                buf.append(new PyString((String)key).__repr__().toString());
             } else {
                 buf.append(((PyObject)key).__repr__().toString());
             }

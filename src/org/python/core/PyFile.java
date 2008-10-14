@@ -286,16 +286,16 @@ public class PyFile extends PyObject {
     }
 
     @ExposedMethod(defaults = {"-1"})
-    final synchronized String file_read(int n) {
+    final synchronized PyString file_read(int n) {
         checkClosed();
-        return file.read(n);
+        return new PyString(file.read(n));
     }
 
-    public String read(int n) {
+    public PyString read(int n) {
         return file_read(n);
     }
 
-    public String read() {
+    public PyString read() {
         return file_read(-1);
     }
 
@@ -310,16 +310,16 @@ public class PyFile extends PyObject {
     }
 
     @ExposedMethod(defaults = {"-1"})
-    final synchronized String file_readline(int max) {
+    final synchronized PyString file_readline(int max) {
         checkClosed();
-        return file.readline(max);
+        return new PyString(file.readline(max));
     }
 
-    public String readline(int max) {
+    public PyString readline(int max) {
         return file_readline(max);
     }
 
-    public String readline() {
+    public PyString readline() {
         return file_readline(-1);
     }
 

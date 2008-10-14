@@ -177,7 +177,7 @@ public class DataHandler {
 
                 case Types.LONGVARCHAR:
                     if (object instanceof PyFile) {
-                        object = new PyString(((PyFile) object).read());
+                        object = ((PyFile) object).read();
                     }
 
                     String varchar = (String) object.__tojava__(String.class);
@@ -192,7 +192,7 @@ public class DataHandler {
 
                 default :
                     if (object instanceof PyFile) {
-                        object = new PyString(((PyFile) object).read());
+                        object = ((PyFile) object).read();
                     }
 
                     stmt.setObject(index, object.__tojava__(Object.class), type);

@@ -143,13 +143,13 @@ public class PyFunction extends PyObject {
     }
 
     @ExposedGet(name = "func_name")
-    public String getFuncName() {
-        return __name__;
+    public PyString getFuncName() {
+        return new PyString(__name__);
     }
 
     @ExposedSet(name = "func_name")
-    public void setFuncName(String func_name) {
-        __name__ = func_name;
+    public void setFuncName(PyString func_name) {
+        __name__ = func_name.asString();
     }
 
     @ExposedGet(name = "func_doc")

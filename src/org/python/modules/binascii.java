@@ -272,12 +272,12 @@ public class binascii {
      * binary data. Lines normally contain 45 (binary) bytes, except for the
      * last line. Line data may be followed by whitespace.
      */
-    public static String a2b_uu(String ascii_data) {
+    public static PyString a2b_uu(String ascii_data) {
         int leftbits = 0;
         int leftchar = 0;
 
         if (ascii_data.length() == 0)
-            return "";
+            return new PyString("");
         
         StringBuffer bin_data = new StringBuffer();
 
@@ -331,7 +331,7 @@ public class binascii {
         for (; i<bin_len; i++)
         	bin_data.append((char)0);
         
-        return bin_data.toString();
+        return new PyString(bin_data.toString());
     }
 
 
@@ -346,7 +346,7 @@ public class binascii {
      * is the converted line, including a newline char. The length of
      * <i>data</i> should be at most 45.
      */
-    public static String b2a_uu(String bin_data) {
+    public static PyString b2a_uu(String bin_data) {
         int leftbits = 0;
         char this_ch;
         int leftchar = 0;
@@ -379,7 +379,7 @@ public class binascii {
         }
         ascii_data.append('\n'); // Append a courtesy newline
 
-        return ascii_data.toString();
+        return new PyString(ascii_data.toString());
     }
 
 
@@ -417,7 +417,7 @@ public class binascii {
      * Convert a block of base64 data back to binary and return the
      * binary data. More than one line may be passed at a time.
      */
-    public static String a2b_base64(String ascii_data) {
+    public static PyString a2b_base64(String ascii_data) {
         int leftbits = 0;
         char this_ch;
         int leftchar = 0;
@@ -468,7 +468,7 @@ public class binascii {
         if (leftbits != 0) {
             throw new PyException(Error, "Incorrect padding");
         }
-        return bin_data.toString();
+        return new PyString(bin_data.toString());
     }
 
 
@@ -482,7 +482,7 @@ public class binascii {
      * Convert binary data to a line of ASCII characters in base64 coding.
      * The return value is the converted line, including a newline char.
      */
-    public static String b2a_base64(String bin_data) {
+    public static PyString b2a_base64(String bin_data) {
         int leftbits = 0;
         char this_ch;
         int leftchar = 0;
@@ -516,7 +516,7 @@ public class binascii {
         }
         ascii_data.append('\n');  // Append a courtesy newline
 
-        return ascii_data.toString();
+        return new PyString(ascii_data.toString());
     }
 
 
@@ -625,7 +625,7 @@ public class binascii {
      * resulting string. The argument should already be RLE-coded, and have a
      * length divisible by 3 (except possibly the last fragment).
      */
-    public static String b2a_hqx(String bin_data) {
+    public static PyString b2a_hqx(String bin_data) {
         int leftbits = 0;
         char this_ch;
         int leftchar = 0;
@@ -649,7 +649,7 @@ public class binascii {
             leftchar <<= (6-leftbits);
             ascii_data.append((char) table_b2a_hqx[leftchar & 0x3f]);
         }
-        return ascii_data.toString();
+        return new PyString(ascii_data.toString());
     }
 
 
@@ -834,7 +834,7 @@ static long[] crc_32_tab = new long[] {
         "This function is also available as \"hexlify()\"."
     );
 
-    public static String b2a_hex(String argbuf) {
+    public static PyString b2a_hex(String argbuf) {
         int arglen = argbuf.length();
 
         StringBuffer retbuf = new StringBuffer(arglen*2);
@@ -845,12 +845,12 @@ static long[] crc_32_tab = new long[] {
             retbuf.append(hexdigit[(ch >>> 4) & 0xF]);
             retbuf.append(hexdigit[ch & 0xF]);
         }
-        return retbuf.toString();
+        return new PyString(retbuf.toString());
 
     }
 
 
-    public static String hexlify(String argbuf) {
+    public static PyString hexlify(String argbuf) {
         return b2a_hex(argbuf);
     }
 
@@ -864,7 +864,7 @@ static long[] crc_32_tab = new long[] {
     );
 
 
-    public static String a2b_hex(String argbuf) {
+    public static PyString a2b_hex(String argbuf) {
         int arglen = argbuf.length();
 
         /* XXX What should we do about strings with an odd length?  Should
@@ -883,11 +883,11 @@ static long[] crc_32_tab = new long[] {
                 throw Py.TypeError("Non-hexadecimal digit found");
             retbuf.append((char) ((top << 4) + bot));
         }
-        return retbuf.toString();
+        return new PyString(retbuf.toString());
     }
 
 
-    public static String unhexlify(String argbuf) {
+    public static PyString unhexlify(String argbuf) {
         return a2b_hex(argbuf);
     }
 
@@ -917,7 +917,7 @@ static long[] crc_32_tab = new long[] {
         return val;
     }
 
-    public static String a2b_qp(PyObject[] arg, String[] kws)
+    public static PyString a2b_qp(PyObject[] arg, String[] kws)
     {
         ArgParser ap = new ArgParser("a2b_qp", arg, kws, new String[] {"s", "header"});
         String s = ap.getString(0);
@@ -951,8 +951,7 @@ static long[] crc_32_tab = new long[] {
         		sb.append(c);
         	}
         }
-
-        return sb.toString();
+        return new PyString(sb.toString());
     }
 
     final private static Pattern RN_TO_N = Pattern.compile("\r\n");
@@ -964,7 +963,7 @@ static long[] crc_32_tab = new long[] {
     		+ "space at end of lines is.  When istext is not set, \r and \n (CR/LF) are\n"
     		+ "both encoded.  When quotetabs is set, space and tabs are encoded.");
 
-    public static String b2a_qp(PyObject[] arg, String[] kws) {
+    public static PyString b2a_qp(PyObject[] arg, String[] kws) {
         ArgParser ap = new ArgParser("b2a_qp", arg, kws, new String[] {"s", "quotetabs", "istext", "header"});
         String s = ap.getString(0);
         boolean quotetabs = getIntFlagAsBool(ap, 1, 0, "an integer is required");
@@ -1034,7 +1033,7 @@ static long[] crc_32_tab = new long[] {
         		qpEscape(sb, c);
         	}
         }
-    	return sb.toString();
+        return new PyString(sb.toString());
     }
     
     private static boolean endOfLine(String s, String lineEnd, int i) {

@@ -99,10 +99,10 @@ public class cStringIO {
 
         public PyObject __iternext__() {
             _complain_ifclosed();
-            String r = readline();
-            if(r.equals(""))
+            PyString r = readline();
+            if (r.__len__() == 0)
                 return null;
-            return new PyString(r);
+            return r;
         }
 
         /**
@@ -176,7 +176,7 @@ public class cStringIO {
          * An empty string is returned when EOF is encountered immediately.
          * @returns     A string containing the data.
          */
-        public String read() {
+        public PyString read() {
             return read(-1);
         }
 
@@ -190,7 +190,7 @@ public class cStringIO {
          * @returns     A string containing the data read.
          */
                
-        public synchronized String read(long size) {
+        public synchronized PyString read(long size) {
             _complain_ifclosed();
             int size_int = _convert_to_int(size);
             int len = buf.length();
@@ -204,9 +204,8 @@ public class cStringIO {
                 substr = buf.substring(pos, newpos);
                 pos = newpos;
             }
-            return substr;
+            return new PyString(substr);
         }
-
 
         /**
          * Read one entire line from the file. A trailing newline character
@@ -215,7 +214,7 @@ public class cStringIO {
          * An empty string is returned when EOF is hit immediately.
          * @returns data from the file up to and including the newline.
          */
-        public String readline() {
+        public PyString readline() {
             return readline(-1);
         }
 
@@ -229,12 +228,12 @@ public class cStringIO {
          * returned.
          * @returns data from the file up to and including the newline.
          */
-        public synchronized String readline(long size) {
+        public synchronized PyString readline(long size) {
             _complain_ifclosed();
             int size_int = _convert_to_int(size);
             int len = buf.length();
             if (pos == len) {
-                return "";
+                return new PyString("");
             }
             int i = buf.indexOf("\n", pos);
             int newpos = (i < 0) ? len : i + 1;
@@ -243,7 +242,7 @@ public class cStringIO {
             }
             String r = buf.substring(pos, newpos);
             pos = newpos;
-            return r;
+            return new PyString(r);
         }
 
 
@@ -251,7 +250,7 @@ public class cStringIO {
          * Read and return a line without the trailing newline.
          * Usind by cPickle as an optimization.
          */
-        public synchronized String readlineNoNl() {
+        public synchronized PyString readlineNoNl() {
             _complain_ifclosed();
             int len = buf.length();
             int i = buf.indexOf("\n", pos);
@@ -260,7 +259,7 @@ public class cStringIO {
             pos = newpos;
             if (pos  < len) // Skip the newline
                 pos++;
-            return r;
+            return new PyString(r);
         }
 
 
@@ -286,10 +285,10 @@ public class cStringIO {
             int sizehint_int = (int)sizehint;
             int total = 0;
             PyList lines = new PyList();
-            String line = readline();
-            while (line.length() > 0) {
-                lines.append(new PyString(line));
-                total += line.length();
+            PyString line = readline();
+            while (line.__len__() > 0) {
+                lines.append(line);
+                total += line.__len__();
                 if (0 < sizehint_int  && sizehint_int <= total)
                     break;
                 line = readline();
@@ -367,8 +366,8 @@ public class cStringIO {
          * before the StringIO object's close() method is called.
          * @return      the contents of the StringIO.
          */
-        public synchronized String getvalue() {
-            return buf.toString();
+        public synchronized PyString getvalue() {
+            return new PyString(buf.toString());
         }
 
     }

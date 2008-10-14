@@ -9,8 +9,8 @@ import org.python.core.PyJavaInstance;
 import org.python.core.PyLong;
 import org.python.core.PyObject;
 import org.python.core.PyProxy;
-import org.python.core.PyString;
 import org.python.core.PyType;
+import org.python.core.PyUnicode;
 
 /**
  * Implements the algorithm originally used in {@link Py#java2py} to adapt objects.
@@ -60,7 +60,7 @@ public class ClassicPyObjectAdapter extends ExtensiblePyObjectAdapter {
 		add(new ClassAdapter(String.class) {
 
 			public PyObject adapt(Object o) {
-				return new PyString((String) o);
+                return new PyUnicode((String) o);
 			}
 
 		});

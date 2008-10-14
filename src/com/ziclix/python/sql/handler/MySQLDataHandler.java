@@ -54,17 +54,19 @@ public class MySQLDataHandler extends RowIdHandler {
     switch (type) {
 
       case Types.LONGVARCHAR:
-        String varchar;
+          // XXX: Only works with ASCII data!
+          byte[] bytes;
         if (object instanceof PyFile) {
-          varchar = ((PyFile) object).read();
+              bytes = ((PyFile) object).read().toBytes();
         } else {
-          varchar = (String) object.__tojava__(String.class);
+              String varchar = (String) object.__tojava__(String.class);
+              bytes = StringUtil.toBytes(varchar);
         }
-        InputStream stream = new ByteArrayInputStream(StringUtil.toBytes(varchar));
+          InputStream stream = new ByteArrayInputStream(bytes);
 
         stream = new BufferedInputStream(stream);
 
-        stmt.setAsciiStream(index, stream, varchar.length());
+          stmt.setAsciiStream(index, stream, bytes.length);
         break;
 
       default :
