@@ -1,16 +1,18 @@
+import sys
+is_jython = sys.platform[:4] == "java"
 
 import re, exceptions, thread, os, shutil
-import jarray
-
 import support_config as cfg
 
-from java.io import FileInputStream
-from java.io import FileOutputStream
-from java.util.jar import JarEntry
-from java.util.jar import JarFile
-from java.util.jar import JarInputStream
-from java.util.jar import JarOutputStream
-from java.util.jar import Manifest
+if is_jython:
+    import jarray
+    from java.io import FileInputStream
+    from java.io import FileOutputStream
+    from java.util.jar import JarEntry
+    from java.util.jar import JarFile
+    from java.util.jar import JarInputStream
+    from java.util.jar import JarOutputStream
+    from java.util.jar import Manifest
 
 UNIX = os.pathsep == ":"
 WIN  = os.pathsep == ";"
