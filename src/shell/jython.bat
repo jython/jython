@@ -17,12 +17,18 @@ setlocal enabledelayedexpansion
 rem ----- Verify and set required environment variables -----------------------
 
 set _JAVA_CMD=java
-if not [%JAVA_HOME%] == [] (
+rem remove surrounding quotes from java home, to be able to safely empty-test it
+set _TRIMMED_JAVA_HOME=%JAVA_HOME%
+for /f "useback tokens=*" %%a in ('%_TRIMMED_JAVA_HOME%') do set _TRIMMED_JAVA_HOME=%%~a
+if not "%_TRIMMED_JAVA_HOME%"=="" (
    set _JAVA_CMD="%JAVA_HOME:"=%\bin\java"
 )
 
 set _JYTHON_HOME=%JYTHON_HOME%
-if not [%JYTHON_HOME%] == [] goto gotHome
+rem remove surrounding quotes from jython home, to be able to safely empty-test it
+set _TRIMMED_JYTHON_HOME=%JYTHON_HOME%
+for /f "useback tokens=*" %%a in ('%_TRIMMED_JYTHON_HOME%') do set _TRIMMED_JYTHON_HOME=%%~a
+if not "%_TRIMMED_JYTHON_HOME%"=="" goto gotHome
 pushd "%~dp0%\.."
 set _JYTHON_HOME="%CD%"
 popd
@@ -84,7 +90,7 @@ REM NOTE: use the quoted value: --do_stuff -> --do_Ustuff
 if ["%_CMP%"] == ["--"] goto argsDone
 
 if ["%_CMP%"] == ["--jdb"] (
-   if [%JAVA_HOME%] == [] (
+   if "%_TRIMMED_JAVA_HOME%"=="" (
       set _JAVA_CMD=jdb
    ) else (
       set _JAVA_CMD="%JAVA_HOME:"=%\bin\jdb"
@@ -145,6 +151,8 @@ set _JAVA_CMD=
 set _JAVA_OPTS=
 set _JAVA_STACK=
 set _JYTHON_HOME=
+set _TRIMMED_JAVA_HOME=
+set _TRIMMED_JYTHON_HOME=
 
 :finish
 exit /b %E%
