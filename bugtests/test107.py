@@ -53,7 +53,7 @@ class Bar:
 g = getinfo()
 support.compare(g[0], "(__main__|test107)")
 support.compare(g[1], "None")
-support.compare(g[2], "\\?")
+support.compare(g[2], "<module>")
 
 foo()
 Bar().baz()
