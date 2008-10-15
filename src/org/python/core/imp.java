@@ -529,6 +529,9 @@ public class imp {
      * @return the parent name for a module
      */
     private static String getParent(PyObject dict, int level) {
+        if (dict == null || level == 0) {
+            return null;
+        }
         PyObject tmp = dict.__finditem__("__name__");
         if (tmp == null) {
             return null;
@@ -538,13 +541,23 @@ public class imp {
         tmp = dict.__finditem__("__path__");
         if (tmp != null && tmp instanceof PyList) {
             return name.intern();
-        } else {
-            int dot = name.lastIndexOf('.');
-            if (dot == -1) {
-                return null;
-            }
-            return name.substring(0, dot).intern();
         }
+        int dot = name.lastIndexOf('.');
+        if (dot == -1) {
+            if (level > 0) {
+                throw Py.ValueError("Attempted relative import in non-package");
+            }
+            return null;
+        }
+        name = name.substring(0, dot);
+        while (--level > 0) {
+            dot = name.lastIndexOf('.');
+            if (dot == -1) {
+                throw Py.ValueError("Attempted relative import beyond toplevel package");
+            }
+            name = name.substring(0, dot);
+        }
+        return name.intern();
     }
 
     /**
