@@ -87,7 +87,7 @@ if ["%_CMP%"] == ["--jdb"] (
    if [%JAVA_HOME%] == [] (
       set _JAVA_CMD=jdb
    ) else (
-      set _JAVA_CMD="%_JAVA_HOME:"=%\bin\jdb"
+      set _JAVA_CMD="%JAVA_HOME:"=%\bin\jdb"
    )
    goto :nextArg
 )
