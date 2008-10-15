@@ -79,7 +79,7 @@ public class InformixDataHandler extends FilterDataHandler {
                 String varchar;
                 // Ifx driver can't handle the setCharacterStream() method so use setObject() instead
                 if (object instanceof PyFile) {
-                    varchar = ((PyFile) object).read();
+                    varchar = ((PyFile) object).read().toString();
                 } else {
                     varchar = (String) object.__tojava__(String.class);
                 }
