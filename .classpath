@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="lib" path="build/exposed"/>
 	<classpathentry excluding="com/ziclix/python/sql/handler/InformixDataHandler.java|com/ziclix/python/sql/handler/OracleDataHandler.java" kind="src" output="build/classes" path="src"/>
 	<classpathentry kind="src" output="build/classes" path="build/gensrc"/>
 	<classpathentry kind="src" output="build/classes" path="tests/java"/>
