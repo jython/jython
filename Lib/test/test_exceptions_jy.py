@@ -13,6 +13,18 @@ class ExceptionsTestCase(unittest.TestCase):
         self.assertEquals(str(KeyError('')), "''")
         self.assertEquals(str(KeyError('', '')), "('', '')")
 
+    #From bugtests/test076.py
+    def test_raise_no_arg(self):
+        r = None
+        try:
+            try:
+                raise RuntimeError("dummy")
+            except RuntimeError:
+                raise
+        except RuntimeError, e:
+            r = str(e)
+
+        self.assertEquals(r, "dummy")
 
 def test_main():
     test_support.run_unittest(ExceptionsTestCase)
