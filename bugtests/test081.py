@@ -23,19 +23,3 @@ mkspam("foo")
 import test081j
 spam1 = test081j.spam()
 support.compare(spam1, "foo")
-
-#
-# Test removed. Reloading java classes are not supposed to work.
-#
-#mkspam("bar")
-#
-#test081j = reload(test081j)
-#spam2 = test081j.spam()
-#support.compare(spam2, "bar")
-#
-#mkspam("baz")
-#
-#test081j = reload(test081j)
-#spam2 = test081j.spam()
-#support.compare(spam2, "baz")
-
