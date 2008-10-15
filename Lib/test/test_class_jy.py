@@ -162,6 +162,18 @@ class ClassGeneralTestCase(unittest.TestCase):
         class Bar(SlottedBase):
             __metaclass__ = Meta
 
+    def test_slotted_diamond_problem_bug(self):
+        class A(object):
+            __slots__ = 'foo'
+        class B(A):
+            pass
+        class C(A):
+            pass
+        # used to raise TypeError: multiple bases have instance lay-out
+        # conflict
+        class D(B, C):
+            pass
+        
 
 class ClassNamelessModuleTestCase(unittest.TestCase):
 

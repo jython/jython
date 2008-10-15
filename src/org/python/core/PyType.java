@@ -823,7 +823,8 @@ public class PyType extends PyObject implements Serializable {
     }
 
     /**
-     * Finds the parent of type with an underlying_class or with slots.
+     * Finds the parent of type with an underlying_class or with slots sans a __dict__
+     * slot.
      */
     private static PyType solid_base(PyType type) {
         do {
@@ -836,7 +837,7 @@ public class PyType extends PyObject implements Serializable {
     }
 
     private static boolean isSolidBase(PyType type) {
-        return type.underlying_class != null || type.numSlots != 0;
+        return type.underlying_class != null || (type.numSlots != 0 && !type.needs_userdict);
     }
 
     /**
