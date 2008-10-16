@@ -159,6 +159,7 @@ class CompileTests(unittest.TestCase):
         ai("9+","eval")
         ai("lambda z:","eval")
         ai("a b","eval")
+        ai("return 2.3")
 
     def test_filename(self):
         self.assertEquals(compile_("a = 1\n", "abc").co_filename,
