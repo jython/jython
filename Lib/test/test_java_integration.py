@@ -399,7 +399,7 @@ class InterfaceTest(unittest.TestCase):
 
 class JavaStringTest(unittest.TestCase):
     
-    def test_override(self):
+    def test_string_not_iterable(self):
         from java import lang
         x = lang.String('test')
         try:
