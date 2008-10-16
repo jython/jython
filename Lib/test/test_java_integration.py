@@ -397,6 +397,17 @@ class InterfaceTest(unittest.TestCase):
 
         self.assertEquals(s, "Foo!!!", "toString not overridden in interface")
 
+class JavaStringTest(unittest.TestCase):
+    
+    def test_override(self):
+        from java import lang
+        x = lang.String('test')
+        try:
+            list(x)
+        except TypeError:
+            pass
+        else:
+            self.fail("Should have raised TypeError")
 
 def test_main():
     test_support.run_unittest(AbstractOnSyspathTest,
@@ -416,7 +427,9 @@ def test_main():
                               TreePathTest,
                               BigDecimalTest,
                               MethodInvTest,
-                              InterfaceTest)
+                              InterfaceTest,
+                              JavaStringTest,
+                              )
 
 if __name__ == "__main__":
     test_main()
