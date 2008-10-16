@@ -7,8 +7,8 @@ from test import test_support
 from java.awt import (Dimension, Component, Rectangle, Button, Color,
                       HeadlessException)
 from java.util import Vector, Hashtable
-from java.io import (FileOutputStream, FileWriter, OutputStreamWriter,
-                     UnsupportedEncodingException)
+from java.io import FileOutputStream, FileWriter, OutputStreamWriter
+                     
 from java.lang import Runnable, Thread, ThreadGroup, System, Runtime, Math, Byte
 from javax.swing.tree import TreePath
 from java.math import BigDecimal
@@ -149,12 +149,22 @@ class IOTest(unittest.TestCase):
 
     def test_io_errors(self):
         "Check that IOException isn't mangled into an IOError"
+        from java.io import UnsupportedEncodingException
         try:
-           x = OutputStreamWriter(System.out, "garbage")
+            x = OutputStreamWriter(System.out, "garbage")
         except UnsupportedEncodingException:
-           pass
+            pass
         else:
-           raise self.fail("Should have raised java.io.UnsupportedEncodingException")
+            self.fail("Should have raised java.io.UnsupportedEncodingException")
+    
+    def test_fileio_error(self):
+        from java.io import FileInputStream, IOException
+        try:
+            stream = FileInputStream("garbage")
+        except IOException:
+            pass
+        else:
+            self.fail("Should raise java.io.IOException")
 
 class VectorTest(unittest.TestCase):
 
