@@ -130,10 +130,7 @@ class AutoSuperTest(unittest.TestCase):
         self.assertRaises(TypeError, A)
         
     def test_no_public_constructors(self):
-        try:
-           Math() 
-        except TypeError, e:
-            self.assert_("no public constructors for" in str(e))
+        self.assertRaises(TypeError, Math)
 
 class PyObjectCmpTest(unittest.TestCase):
 
@@ -150,21 +147,12 @@ class IOTest(unittest.TestCase):
     def test_io_errors(self):
         "Check that IOException isn't mangled into an IOError"
         from java.io import UnsupportedEncodingException
-        try:
-            x = OutputStreamWriter(System.out, "garbage")
-        except UnsupportedEncodingException:
-            pass
-        else:
-            self.fail("Should have raised java.io.UnsupportedEncodingException")
+        self.assertRaises(UnsupportedEncodingException, OutputStreamWriter, 
+                System.out, "garbage")
     
     def test_fileio_error(self):
-        from java.io import FileInputStream, IOException
-        try:
-            stream = FileInputStream("garbage")
-        except IOException:
-            pass
-        else:
-            self.fail("Should raise java.io.IOException")
+        from java.io import FileInputStream, FileNotFoundException
+        self.assertRaises(FileNotFoundException, FileInputStream, "garbage")
 
 class VectorTest(unittest.TestCase):
 
@@ -329,11 +317,8 @@ class PyReservedNamesTest(unittest.TestCase):
 class ImportTest(unittest.TestCase):
     
     def test_bad_input_exception(self):
-        try:
-            __import__('')
-        except ValueError, e:
-            self.assert_("Empty module name" in str(e))
-        
+        self.assertRaises(ValueError, __import__, '')
+
 class ButtonTest(unittest.TestCase):
 
     def test_setLabel(self):
@@ -402,12 +387,7 @@ class JavaStringTest(unittest.TestCase):
     def test_string_not_iterable(self):
         from java import lang
         x = lang.String('test')
-        try:
-            list(x)
-        except TypeError:
-            pass
-        else:
-            self.fail("Should have raised TypeError")
+        self.assertRaises(TypeError, list, x)
 
 def test_main():
     test_support.run_unittest(AbstractOnSyspathTest,
