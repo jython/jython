@@ -141,6 +141,19 @@ class DatetimeTypeMappingTest(unittest.TestCase):
         self.assertEquals(datetime.datetime(2008, 5, 29, 16, 50, 1, 1),
                           Py.newDatetime(Timestamp(108, 4, 29, 16, 50, 1, 1000)))
 
+class IdTest(unittest.TestCase):
+    def test_unique_ids(self):
+        d = {}
+        cnt = 0
+
+        for i in xrange(100000):
+            s = "test" + repr(i)
+            j = id(s)
+            if d.has_key(j):
+                cnt = cnt + 1
+            d[j] = s
+
+        self.assertEquals(cnt, 0)
 
 def test_main():
     test_suite = unittest.TestSuite()
@@ -151,6 +164,7 @@ def test_main():
     suite_add(LongAsScaledDoubleValueTests)
     suite_add(ExtraMathTests)
     suite_add(DatetimeTypeMappingTest)
+    suite_add(IdTest)
     run_suite(test_suite)
 
 if __name__ == "__main__":
