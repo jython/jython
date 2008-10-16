@@ -25,7 +25,7 @@ class DictInitTest(unittest.TestCase):
 
     def testUnhashableKeys(self):
         try:
-            a = {1:2}
+            a = {[1]:2}
         except TypeError:
             pass
         else:
