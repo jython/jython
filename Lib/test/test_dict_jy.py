@@ -23,6 +23,21 @@ class DictInitTest(unittest.TestCase):
         s[7] = 'called'
         self.assertEquals('called', s.createdInInit)
 
+    def testUnhashableKeys(self):
+        try:
+            a = {1:2}
+        except TypeError:
+            pass
+        else:
+            self.fail("list as dict key should raise TypeError")
+
+        try:
+            a = {{1:2}:3}
+        except TypeError:
+            pass
+        else:
+            self.fail("dict as dict key should raise TypeError")
+
 class DictCmpTest(unittest.TestCase):
     "Test for http://bugs.jython.org/issue1031"
     def testDictCmp(self):
