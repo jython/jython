@@ -21,8 +21,23 @@ class LongDerivedCmp(unittest.TestCase):
         self.assertNotEqual(Test(0), 'foo')
         self.assertTrue('foo' in [Test(12), 'foo'])
 
+class IntStrCmp(unittest.TestCase):
+    def testIntStrCompares(self):
+        assert not (-1 > 'a')
+        assert (-1 < 'a')
+        assert not (4 > 'a')
+        assert (4 < 'a')
+        assert not (-2 > 'a')
+        assert (-2 < 'a')
+        assert not (-1 == 'a')
+
+
 def test_main():
-    test_support.run_unittest(UnicodeDerivedCmp, LongDerivedCmp)
+    test_support.run_unittest(
+            UnicodeDerivedCmp,
+            LongDerivedCmp,
+            IntStrCmp,
+            )
 
 if __name__ == '__main__':
     test_main()
