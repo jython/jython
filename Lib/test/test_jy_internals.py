@@ -155,6 +155,23 @@ class IdTest(unittest.TestCase):
 
         self.assertEquals(cnt, 0)
 
+class FrameTest(unittest.TestCase):
+    def test_stack_frame_locals(self):
+        def h():
+            a = 1
+            b = 2
+            raise AttributeError("spam")
+
+        try:
+            h()
+        except:
+            import sys
+            tb = sys.exc_info()[2]
+            while tb.tb_next is not None:
+                tb = tb.tb_next
+            vars = tb.tb_frame.f_locals
+            self.assertEquals(sorted(vars.items()), [('a',1), ('b',2)])
+
 def test_main():
     test_suite = unittest.TestSuite()
     test_loader = unittest.TestLoader()
@@ -165,6 +182,7 @@ def test_main():
     suite_add(ExtraMathTests)
     suite_add(DatetimeTypeMappingTest)
     suite_add(IdTest)
+    suite_add(FrameTest)
     run_suite(test_suite)
 
 if __name__ == "__main__":
