@@ -137,9 +137,21 @@ public class PyTableCode extends PyCode
 
     public PyObject __findattr_ex__(String name) {
         // have to craft co_varnames specially
-        if (name == "co_varnames") return toPyStringTuple(co_varnames);
-        if (name == "co_cellvars") return toPyStringTuple(co_cellvars);
-        if (name == "co_freevars") return toPyStringTuple(co_freevars);
+        if (name == "co_varnames") {
+            return toPyStringTuple(co_varnames);
+        }
+        if (name == "co_cellvars") {
+            return toPyStringTuple(co_cellvars);
+        }
+        if (name == "co_freevars") {
+            return toPyStringTuple(co_freevars);
+        }
+        if (name == "co_filename") {
+            return new PyString(co_filename);
+        }
+        if (name == "co_name") {
+            return new PyString(co_name);
+        }
         return super.__findattr_ex__(name);
     }
 
