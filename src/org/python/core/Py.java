@@ -1697,7 +1697,7 @@ public final class Py {
         }
         
         byte[] bytes;
-        if (cflags.dont_imply_dedent) {
+        if (cflags != null && cflags.dont_imply_dedent) {
             bytes = StringUtil.toBytes(data + "\n");
         } else {
             bytes = StringUtil.toBytes(data + "\n\n");
