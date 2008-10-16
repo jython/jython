@@ -226,6 +226,17 @@ class FrameTest(unittest.TestCase):
         foo()
         Bar().baz()
 
+class ModuleTest(unittest.TestCase):
+    def test_create_module(self):
+        from org.python.core import PyModule, PyInstance
+        test = PyModule("test", {})
+        exec "a = 2" in test.__dict__
+        self.assertEquals(len(test.__dict__), 3)
+
+        #test = PyInstance.__tojava__(test, PyModule)
+        exec "b = 3" in test.__dict__
+        self.assertEquals(len(test.__dict__), 4)
+
 def test_main():
     test_suite = unittest.TestSuite()
     test_loader = unittest.TestLoader()
@@ -237,6 +248,7 @@ def test_main():
     suite_add(DatetimeTypeMappingTest)
     suite_add(IdTest)
     suite_add(FrameTest)
+    suite_add(ModuleTest)
     run_suite(test_suite)
 
 if __name__ == "__main__":
