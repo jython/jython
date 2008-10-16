@@ -421,15 +421,17 @@ def access(path, mode):
         raise TypeError('an integer is required')
 
     f = File(sys.getPath(path))
+    result = True
     if not f.exists():
-      return False
+        result = False
     if mode & R_OK and not f.canRead():
-        return False
+        result = False
     if mode & W_OK and not f.canWrite():
-        return False
-    if mode & X_OK:
-        return False
-    return True
+        result = False
+    if mode & X_OK and not (stat(path).st_mode & _stat.S_IEXEC):
+        # NOTE: always False without jna-posix stat
+        result = False
+    return result
 
 def stat(path):
     """stat(path) -> stat result
