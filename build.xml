@@ -171,6 +171,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
             <pathelement path="${exposed.dir}" />
             <pathelement path="${compile.dir}" />
         </path>
+        <property name="regrtest.Xmx" value="-Xmx96m" />
     </target>
 
     <target name="version-init">
@@ -757,6 +758,7 @@ The readme text for the next release will be like:
     <target name="regrtest-unix" if="os.family.unix">
       <exec executable="${dist.dir}/bin/jython">
         <arg value="--verify"/>
+        <arg value="-J${regrtest.Xmx}"/>
         <arg value="${dist.dir}/Lib/test/regrtest.py"/>
         <!-- Only run the tests that are expected to work on Jython -->
         <arg value="--expected"/>
@@ -764,6 +766,7 @@ The readme text for the next release will be like:
     </target>
     <target name="regrtest-windows" if="os.family.windows">
       <exec executable="${dist.dir}/bin/jython.bat">
+        <arg value="-J${regrtest.Xmx}"/>
         <arg value="${dist.dir}/Lib/test/regrtest.py"/>
         <!-- Only run the tests that are expected to work on Jython -->
         <arg value="--expected"/>
