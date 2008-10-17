@@ -750,7 +750,6 @@ def test_main():
         del TraceTestCase.test_14_onliner_if
         del TraceTestCase.test_15_loops
 
-    print tests
     test_support.run_unittest(*tests)
 
 if __name__ == "__main__":
