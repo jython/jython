@@ -271,9 +271,9 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
     @Override
     public Object visitGeneratorExp(GeneratorExp node) throws Exception {
         // The first iterator is evaluated in the outer scope
-        /*if (node.generators != null && node.generators.length > 0) {
+        if (node.generators != null && node.generators.length > 0) {
             visit(node.generators[0].iter);
-        }*/
+        }
         String bound_exp = "_(x)";
         String tmp = "_(" + node.getLine() + "_" + node.getCharPositionInLine()
                 + ")";
@@ -289,7 +289,7 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
         cur.generator = true;
         cur.yield_count++;
         // The reset of the iterators are evaluated in the inner scope
-        /*if (node.elt != null) {
+        if (node.elt != null) {
             visit(node.elt);
         }
         if (node.generators != null) {
@@ -310,9 +310,6 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
                 }
             }
         }
-        /*/
-        traverse(node);
-        //*/
 
         endScope();
         return null;

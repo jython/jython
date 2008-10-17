@@ -555,13 +555,16 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
             throw new ParseException("'yield' outside function", node);
         }
 
+        int stackState = saveStack();
+        
         if (node.value != null) {
             visit(node.value);
         } else {
             getNone();
         }
+        
         setLastI(++yield_count);
-        int stackState = saveStack();
+        
         saveLocals();
         code.areturn();
 
