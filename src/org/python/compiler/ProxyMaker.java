@@ -657,7 +657,9 @@ public class ProxyMaker implements ClassConstants, Opcodes
         code.ldc("__supernames__");
 
         String[] nameArray = supernames.toArray(new String[n]);
-        CodeCompiler.makeStrings(code, nameArray, n);
+        int strArray = CodeCompiler.makeStrings(code, nameArray, n);
+        code.aload(strArray);
+        code.freeLocal(strArray);
         code.invokestatic("org/python/core/Py", "java2py", "(" + $obj + ")" + $pyObj);
         code.invokevirtual("org/python/core/PyObject", "__setitem__", "(" + $str + $pyObj + ")V");
         code.return_();

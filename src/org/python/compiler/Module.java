@@ -244,11 +244,14 @@ class PyCodeConstant extends Constant implements ClassConstants, Opcodes
         c.iconst(argcount);
 
         //Make all names
+        int nameArray;
         if (names != null) {
-            CodeCompiler.makeStrings(c, names, names.length);
+            nameArray = CodeCompiler.makeStrings(c, names, names.length);
         } else { // classdef
-             CodeCompiler.makeStrings(c, null, 0);
+            nameArray = CodeCompiler.makeStrings(c, null, 0);
         }
+        c.aload(nameArray);
+        c.freeLocal(nameArray);
         c.aload(1);
         c.ldc(co_name);
         c.iconst(co_firstlineno);
@@ -260,13 +263,17 @@ class PyCodeConstant extends Constant implements ClassConstants, Opcodes
 
         c.iconst(id);
 
-        if (cellvars != null)
-            CodeCompiler.makeStrings(c, cellvars, cellvars.length);
-        else
+        if (cellvars != null) {
+            int strArray = CodeCompiler.makeStrings(c, cellvars, cellvars.length);
+            c.aload(strArray);
+            c.freeLocal(strArray);
+        } else
             c.aconst_null();
-        if (freevars != null)
-            CodeCompiler.makeStrings(c, freevars, freevars.length);
-        else
+        if (freevars != null) {
+            int strArray = CodeCompiler.makeStrings(c, freevars, freevars.length);
+            c.aload(strArray);
+            c.freeLocal(strArray);
+        } else
             c.aconst_null();
 
         c.iconst(jy_npurecell);
