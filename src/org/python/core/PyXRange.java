@@ -120,7 +120,7 @@ public class PyXRange extends PySequence {
 
     @Override
     protected PyObject pyget(int i) {
-        return new PyInteger(start + (i % len) * step);
+        return Py.newInteger(start + (i % len) * step);
     }
 
     @Override
