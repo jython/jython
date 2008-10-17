@@ -1,10 +1,8 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
@@ -95,11 +93,7 @@ public class PyStringMap extends PyObject {
 
     public void __setitem__(PyObject key, PyObject value) {
         if (value == null) {
-            if (key instanceof PyString) {
-                table.remove(((PyString)key).internedString());
-            } else {
-                table.remove(key);
-            }
+            table.remove(pyToKey(key));
         } else if (key instanceof PyString) {
             __setitem__(((PyString)key).internedString(), value);
         } else {
@@ -205,15 +199,12 @@ public class PyStringMap extends PyObject {
     }
 
     public boolean has_key(PyObject key) {
-        if (key instanceof PyString) {
-            return has_key(((PyString)key).internedString());
-        }
-        return table.containsKey(key);
+        return table.containsKey(pyToKey(key));
     }
 
     /**
      * Return this[key] if the key exists in the mapping, default_object is returned otherwise.
-     * 
+     *
      * @param key
      *            the key to lookup in the mapping.
      * @param default_object
@@ -230,7 +221,7 @@ public class PyStringMap extends PyObject {
 
     /**
      * Return this[key] if the key exists in the mapping, None is returned otherwise.
-     * 
+     *
      * @param key
      *            the key to lookup in the mapping.
      */
@@ -263,7 +254,7 @@ public class PyStringMap extends PyObject {
         }
         for (int i = 0; i < keywords.length; i++) {
             __setitem__(keywords[i], args[nargs + i]);
-        }        
+        }
     }
 
     /**
@@ -325,7 +316,7 @@ public class PyStringMap extends PyObject {
 
     /**
      * Return this[key] if the key exist, otherwise insert key with a None value and return None.
-     * 
+     *
      * @param key
      *            the key to lookup in the mapping.
      */
@@ -336,7 +327,7 @@ public class PyStringMap extends PyObject {
     /**
      * Return this[key] if the key exist, otherwise insert key with the value of failobj and return
      * failobj
-     * 
+     *
      * @param key
      *            the key to lookup in the mapping.
      * @param failobj
@@ -354,19 +345,11 @@ public class PyStringMap extends PyObject {
      * Return a random (key, value) tuple pair and remove the pair from the mapping.
      */
     public PyObject popitem() {
-        Iterator it = table.entrySet().iterator();
+        Iterator<Entry<Object, PyObject>> it = table.entrySet().iterator();
         if (!it.hasNext()) {
             throw Py.KeyError("popitem(): dictionary is empty");
         }
-        Entry entry = (Entry)it.next();
-        Object objKey = entry.getKey();
-        PyObject value = (PyObject)entry.getValue();
-        PyTuple tuple;
-        if (objKey instanceof String) {
-            tuple = new PyTuple(new PyString((String)objKey), value);
-        } else {
-            tuple = new PyTuple((PyObject)objKey, value);
-        }
+        PyTuple tuple = itemTuple(it.next());
         it.remove();
         return tuple;
     }
@@ -380,13 +363,7 @@ public class PyStringMap extends PyObject {
     }
 
     public PyObject pop(PyObject key, PyObject failobj) {
-        Object objKey;
-        if (key instanceof PyString) {
-            objKey = ((PyString)key).internedString();
-        } else {
-            objKey = key;
-        }
-        PyObject value = table.remove(objKey);
+        PyObject value = table.remove(pyToKey(key));
         if (value == null) {
             if (failobj == null) {
                 throw Py.KeyError(key.__repr__().toString());
@@ -401,22 +378,11 @@ public class PyStringMap extends PyObject {
      * Return a copy of the mappings list of (key, value) tuple pairs.
      */
     public PyList items() {
-        List<PyObject> list = new ArrayList<PyObject>(table.size());
-        for (Entry<Object, PyObject> entry : table.entrySet()) {
-            list.add(itemTuple(entry));
-        }
-        return new PyList(list);
+        return new PyList(iteritems());
     }
 
     private PyTuple itemTuple(Entry<Object, PyObject> entry) {
-        Object key = entry.getKey();
-        PyObject pyKey;
-        if (key instanceof String) {
-            pyKey = PyString.fromInterned((String)key);
-        } else {
-            pyKey = (PyObject)key;
-        }
-        return new PyTuple(pyKey, entry.getValue());
+        return new PyTuple(keyToPy(entry.getKey()), entry.getValue());
     }
 
     /**
@@ -424,16 +390,12 @@ public class PyStringMap extends PyObject {
      * storing String or PyObject objects
      */
     public PyList keys() {
-        List<PyObject> list = new ArrayList<PyObject>(table.size());
-        for (Iterator it = table.keySet().iterator(); it.hasNext();) {
-            Object obj = it.next();
-            if (obj instanceof String) {
-                list.add(PyString.fromInterned((String)obj));
-            } else {
-                list.add((PyObject)obj);
-            }
+        PyObject[] keyArray = new PyObject[table.size()];
+        int i = 0;
+        for (Object key : table.keySet()) {
+            keyArray[i++] = keyToPy(key);
         }
-        return new PyList(list);
+        return new PyList(keyArray);
     }
 
     /**
@@ -466,13 +428,13 @@ public class PyStringMap extends PyObject {
         return new ValuesIter(table.values());
     }
 
-    private class ValuesIter extends PyIterator {
+    private abstract class StringMapIter<T> extends PyIterator {
 
-        private final Iterator<PyObject> iterator;
+        protected final Iterator<T> iterator;
 
         private final int size;
 
-        public ValuesIter(Collection<PyObject> c) {
+        public StringMapIter(Collection<T> c) {
             iterator = c.iterator();
             size = c.size();
         }
@@ -484,58 +446,58 @@ public class PyStringMap extends PyObject {
             if (!iterator.hasNext()) {
                 return null;
             }
+            return stringMapNext();
+        }
+
+        protected abstract PyObject stringMapNext();
+    }
+
+    private class ValuesIter extends StringMapIter<PyObject> {
+
+        public ValuesIter(Collection<PyObject> c) {
+            super(c);
+        }
+
+        public PyObject stringMapNext() {
             return iterator.next();
         }
     }
 
-    private class KeysIter extends PyIterator {
+    private class KeysIter extends StringMapIter<Object> {
 
-        private final Iterator iterator;
-
-        private final int size;
-
-        public KeysIter(Set s) {
-            iterator = s.iterator();
-            size = s.size();
+        public KeysIter(Set<Object> s) {
+            super(s);
         }
 
-        public PyObject __iternext__() {
-            if (table.size() != size) {
-                throw Py.RuntimeError("dictionary changed size during iteration");
-            }
-            if (!iterator.hasNext()) {
-                return null;
-            }
-            Object objKey = iterator.next();
-            PyObject key = null;
-            if (objKey instanceof String) {
-                key = PyString.fromInterned((String)objKey);
-            } else {
-                key = (PyObject)objKey;
-            }
-            return key;
+        protected PyObject stringMapNext() {
+            return keyToPy(iterator.next());
         }
     }
 
-    private class ItemsIter extends PyIterator {
-
-        private final Iterator<Entry<Object, PyObject>> iterator;
-
-        private final int size;
+    private class ItemsIter extends StringMapIter<Entry<Object, PyObject>> {
 
         public ItemsIter(Set<Entry<Object, PyObject>> s) {
-            iterator = s.iterator();
-            size = s.size();
+            super(s);
         }
 
-        public PyObject __iternext__() {
-            if (table.size() != size) {
-                throw Py.RuntimeError("dictionary changed size during iteration");
-            }
-            if (!iterator.hasNext()) {
-                return null;
-            }
+        public PyObject stringMapNext() {
             return itemTuple(iterator.next());
+        }
+    }
+
+    private static PyObject keyToPy(Object objKey){
+        if (objKey instanceof String) {
+            return PyString.fromInterned((String)objKey);
+        } else {
+            return (PyObject)objKey;
+        }
+    }
+
+    private static Object pyToKey(PyObject pyKey) {
+        if (pyKey instanceof PyString) {
+            return ((PyString)pyKey).internedString();
+        } else {
+            return pyKey;
         }
     }
 }
