@@ -4,6 +4,7 @@ package org.python.compiler;
 
 import org.python.antlr.*;
 import org.python.antlr.ast.*;
+
 import java.util.*;
 
 public class ScopesCompiler extends Visitor implements ScopeConstants {
@@ -262,8 +263,17 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
 
     @Override
     public Object visitYield(Yield node) throws Exception {
-        cur.generator = true;
+        cur.defineAsGenerator(node);
         cur.yield_count++;
+        traverse(node);
+        return null;
+    }
+    
+    @Override
+    public Object visitReturn(Return node) throws Exception {
+        if (node.value != null) {
+            cur.noteReturnValue(node);
+        }
         traverse(node);
         return null;
     }
@@ -286,7 +296,7 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
         cur.addParam(bound_exp);
         cur.markFromParam();
 
-        cur.generator = true;
+        cur.defineAsGenerator(node);
         cur.yield_count++;
         // The reset of the iterators are evaluated in the inner scope
         if (node.elt != null) {

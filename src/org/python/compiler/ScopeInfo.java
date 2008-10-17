@@ -5,7 +5,11 @@ package org.python.compiler;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Vector;
+
+import org.python.antlr.ParseException;
 import org.python.antlr.PythonTree;
+import org.python.antlr.ast.Return;
+import org.python.antlr.ast.exprType;
 
 public class ScopeInfo extends Object implements ScopeConstants {
 
@@ -56,6 +60,7 @@ public class ScopeInfo extends Object implements ScopeConstants {
     public boolean from_import_star;
     public boolean contains_ns_free_vars;
     public boolean generator;
+    private boolean hasReturnWithValue;
     public int yield_count;
     public int max_with_count;
 
@@ -263,5 +268,21 @@ public class ScopeInfo extends Object implements ScopeConstants {
     public String toString() {
         return "ScopeInfo[" + scope_name + " " + kind + "]@" +
                 System.identityHashCode(this);
+    }
+
+    public void defineAsGenerator(exprType node) {
+        generator = true;
+        if (hasReturnWithValue) {
+            throw new ParseException("'return' with argument " +
+                    "inside generator", node);
+        }
+    }
+
+    public void noteReturnValue(Return node) {
+        if (generator) {
+            throw new ParseException("'return' with argument " +
+                    "inside generator", node);
+        }
+        hasReturnWithValue = true;
     }
 }
