@@ -428,9 +428,12 @@ def access(path, mode):
         result = False
     if mode & W_OK and not f.canWrite():
         result = False
-    if mode & X_OK and not (stat(path).st_mode & _stat.S_IEXEC):
+    if mode & X_OK:
         # NOTE: always False without jna-posix stat
-        result = False
+        try:
+            result = (stat(path).st_mode & _stat.S_IEXEC) != 0
+        except OSError:
+            result = False
     return result
 
 def stat(path):
