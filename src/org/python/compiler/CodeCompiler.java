@@ -4,6 +4,7 @@ package org.python.compiler;
 
 import java.io.IOException;
 import java.util.Hashtable;
+import java.util.Map;
 import java.util.Stack;
 import java.util.Vector;
 
@@ -109,7 +110,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
 
     public boolean fast_locals, print_results;
 
-    public Hashtable tbl;
+    public Map<String, SymInfo> tbl;
     public ScopeInfo my_scope;
 
     boolean optimizeGlobals = true;
@@ -369,7 +370,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         code.iconst(n);
         code.anewarray("org/python/core/PyObject");
         code.astore(tmp);
-        Hashtable upTbl = scope.up.tbl;
+        Map<String, SymInfo> upTbl = scope.up.tbl;
         for(int i=0; i<n; i++) {
             code.aload(tmp);
             code.iconst(i);
@@ -377,7 +378,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
             for(int j = 1; j < scope.distance; j++) {
                 loadf_back();
             }
-            SymInfo symInfo = (SymInfo)upTbl.get(scope.freevars.elementAt(i));
+            SymInfo symInfo = upTbl.get(scope.freevars.elementAt(i));
             code.iconst(symInfo.env_index);
             code.invokevirtual("org/python/core/PyFrame", "getclosure", "(I)" + $pyObj);
             code.aastore();
@@ -2044,7 +2045,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         else
             name = getName(node.id);
 
-        SymInfo syminf = (SymInfo)tbl.get(name);
+        SymInfo syminf = tbl.get(name);
 
         expr_contextType ctx = node.ctx;
         if (ctx == expr_contextType.AugStore) {

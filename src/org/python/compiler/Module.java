@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Enumeration;
 import java.util.Hashtable;
+import java.util.Map;
 import java.util.Vector;
 
 import org.python.objectweb.asm.Label;
@@ -460,11 +461,11 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
         }
         int nparamcell = scope.jy_paramcells.size();
         if(nparamcell > 0) {
-            Hashtable tbl = scope.tbl;
+            Map<String, SymInfo> tbl = scope.tbl;
             Vector paramcells = scope.jy_paramcells;
             for(int i = 0; i < nparamcell; i++) {
                 c.aload(1);
-                SymInfo syminf = (SymInfo)tbl.get(paramcells.elementAt(i));
+                SymInfo syminf = tbl.get(paramcells.elementAt(i));
                 c.iconst(syminf.locals_index);
                 c.iconst(syminf.env_index);
                 c.invokevirtual("org/python/core/PyFrame", "to_cell", "(II)V");

@@ -3,6 +3,8 @@
 package org.python.compiler;
 
 import java.util.Enumeration;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Hashtable;
 import java.util.Vector;
 
@@ -24,9 +26,9 @@ public class ScopeInfo extends Object implements ScopeConstants {
         for(int i=0; i<level; i++) System.err.print(' ');
         System.err.print(((kind != CLASSSCOPE)?scope_name:"class "+
                          scope_name)+": ");
-        for (Enumeration e = tbl.keys(); e.hasMoreElements(); ) {
-            String name = (String)e.nextElement();
-            SymInfo info = (SymInfo)tbl.get(name);
+        for (Map.Entry<String, SymInfo> entry : tbl.entrySet()) {
+            String name = entry.getKey();
+            SymInfo info = entry.getValue();
             int flags = info.flags;
             System.err.print(name);
             if ((flags&BOUND) != 0) System.err.print('=');
@@ -66,13 +68,13 @@ public class ScopeInfo extends Object implements ScopeConstants {
 
     public ArgListCompiler ac;
 
-    public Hashtable tbl = new Hashtable();
+    public Map<String, SymInfo> tbl = new LinkedHashMap<String, SymInfo>();
     public Vector names = new Vector();
 
     public int addGlobal(String name) {
         // global kind = func vs. class
         int global = kind==CLASSSCOPE?CLASS_GLOBAL:NGLOBAL;
-        SymInfo info = (SymInfo)tbl.get(name);
+        SymInfo info = tbl.get(name);
         if (info == null) {
             tbl.put(name,new SymInfo(global|BOUND));
             return -1;
@@ -91,14 +93,13 @@ public class ScopeInfo extends Object implements ScopeConstants {
     }
 
     public void markFromParam() {
-        for (Enumeration e=tbl.elements(); e.hasMoreElements(); ) {
-            SymInfo info = (SymInfo)e.nextElement();
+        for (SymInfo info : tbl.values()) {
             info.flags |= FROM_PARAM;
         }
     }
 
     public void addBound(String name) {
-        SymInfo info = (SymInfo)tbl.get(name);
+        SymInfo info = tbl.get(name);
         if (info == null) {
             tbl.put(name, new SymInfo(BOUND));
             return;
@@ -140,7 +141,7 @@ public class ScopeInfo extends Object implements ScopeConstants {
 
         for (Enumeration e = inner_free.keys(); e.hasMoreElements(); ) {
             String name = (String)e.nextElement();
-            SymInfo info = (SymInfo)tbl.get(name);
+            SymInfo info = tbl.get(name);
             if (info == null) {
                 tbl.put(name,new SymInfo(FREE));
                 continue;
@@ -164,9 +165,9 @@ public class ScopeInfo extends Object implements ScopeConstants {
         boolean some_free = false;
 
         boolean nested = up.kind != TOPSCOPE;
-        for (Enumeration e = tbl.keys(); e.hasMoreElements(); ) {
-            String name = (String)e.nextElement();
-            SymInfo info = (SymInfo)tbl.get(name);
+        for (Map.Entry<String, SymInfo> entry : tbl.entrySet()) {
+            String name = entry.getKey();
+            SymInfo info = entry.getValue();
             int flags = info.flags;
             if (nested && (flags&FREE) != 0) up.inner_free.put(name,PRESENT);
             if ((flags&(GLOBAL|PARAM|CELL)) == 0) {
@@ -236,14 +237,14 @@ public class ScopeInfo extends Object implements ScopeConstants {
      */
     public void setup_closure(ScopeInfo up){
         int free = cell; // env = cell...,free...
-        Hashtable up_tbl = up.tbl;
+        Map<String, SymInfo> up_tbl = up.tbl;
         boolean nested = up.kind != TOPSCOPE;
-        for (Enumeration e = tbl.keys(); e.hasMoreElements(); ) {
-            String name = (String)e.nextElement();
-            SymInfo info = (SymInfo)tbl.get(name);
+        for (Map.Entry<String, SymInfo> entry : tbl.entrySet()) {
+            String name = entry.getKey();
+            SymInfo info = entry.getValue();
             int flags = info.flags;
             if ((flags&FREE) != 0) {
-                SymInfo up_info = (SymInfo)up_tbl.get(name);
+                SymInfo up_info = up_tbl.get(name);
                 // ?? differs from CPython -- what is the intended behaviour?
                 if (up_info != null) {
                     int up_flags = up_info.flags;
