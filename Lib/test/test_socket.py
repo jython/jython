@@ -292,6 +292,22 @@ class GeneralModuleTests(unittest.TestCase):
         if not fqhn in all_host_names:
             self.fail("Error testing host resolution mechanisms.")
 
+    def testGetAddrInfo(self):
+        try:
+            socket.getaddrinfo(HOST, PORT, 9999)
+        except socket.gaierror, gaix:
+            self.failUnlessEqual(gaix[0], errno.EIO)
+        except Exception, x:
+            self.fail("getaddrinfo with bad family raised wrong exception: %s" % x)
+        else:
+            self.fail("getaddrinfo with bad family should have raised exception")
+            
+        addrinfos = socket.getaddrinfo(HOST, PORT)
+        for addrinfo in addrinfos:
+            family, socktype, proto, canonname, sockaddr = addrinfo
+            self.assert_(isinstance(canonname, str))
+            self.assert_(isinstance(sockaddr[0], str))
+
     def testRefCountGetNameInfo(self):
         # Testing reference count for getnameinfo
         import sys
@@ -668,6 +684,16 @@ class BasicTCPTest(SocketConnectedTest):
         self.assertEqual(msg, MSG)
 
     def _testRecv(self):
+        self.serv_conn.send(MSG)
+
+    def testRecvTimeoutMode(self):
+        # Do this test in timeout mode, because the code path is different
+        self.cli_conn.settimeout(10)
+        msg = self.cli_conn.recv(1024)
+        self.assertEqual(msg, MSG)
+
+    def _testRecvTimeoutMode(self):
+        self.serv_conn.settimeout(10)
         self.serv_conn.send(MSG)
 
     def testOverFlowRecv(self):
@@ -1226,14 +1252,14 @@ class SmallBufferedFileObjectClassTestCase(FileObjectClassTestCase):
 
     bufsize = 2 # Exercise the buffering code
 
-class TCPTimeoutTest(SocketTCPTest):
+class TCPServerTimeoutTest(SocketTCPTest):
 
-    def testTCPTimeout(self):
+    def testAcceptTimeout(self):
         def raise_timeout(*args, **kwargs):
             self.serv.settimeout(1.0)
             self.serv.accept()
         self.failUnlessRaises(socket.timeout, raise_timeout,
-                              "Error generating a timeout exception (TCP)")
+                              "TCP socket accept failed to generate a timeout exception (TCP)")
 
     def testTimeoutZero(self):
         ok = False
@@ -1249,9 +1275,9 @@ class TCPTimeoutTest(SocketTCPTest):
         if not ok:
             self.fail("accept() returned success when we did not expect it")
 
-class TCPClientTimeoutTest(unittest.TestCase):
+class TCPClientTimeoutTest(SocketTCPTest):
 
-    def testClientTimeout(self):
+    def testConnectTimeout(self):
         cli = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         cli.settimeout(0.1)
         host = '192.168.192.168'
@@ -1266,7 +1292,44 @@ class TCPClientTimeoutTest(unittest.TestCase):
 socket.timeout.  This tries to connect to %s in the assumption that it isn't
 used, but if it is on your network this failure is bogus.''' % host)
 
-        
+    def testRecvTimeout(self):
+        def raise_timeout(*args, **kwargs):
+            cli_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            cli_sock.connect( (HOST, PORT) )
+            cli_sock.settimeout(1)
+            cli_sock.recv(1024)
+        self.failUnlessRaises(socket.timeout, raise_timeout,
+                              "TCP socket recv failed to generate a timeout exception (TCP)")
+
+    # Disable this test, but leave it present for documentation purposes 
+    # socket timeouts only work for read and accept, not for write
+    # http://java.sun.com/j2se/1.4.2/docs/api/java/net/SocketTimeoutException.html
+    def estSendTimeout(self):
+        def raise_timeout(*args, **kwargs):
+            cli_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            cli_sock.connect( (HOST, PORT) )
+            # First fill the socket
+            cli_sock.settimeout(1)
+            sent = 0
+            while True:
+                bytes_sent = cli_sock.send(MSG)
+                sent += bytes_sent
+        self.failUnlessRaises(socket.timeout, raise_timeout,
+                              "TCP socket send failed to generate a timeout exception (TCP)")
+
+    def testSwitchModes(self):
+        cli_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        cli_sock.connect( (HOST, PORT) )
+        # set non-blocking mode
+        cli_sock.setblocking(0)
+        # then set timeout mode
+        cli_sock.settimeout(1)
+        try:
+            cli_sock.send(MSG)
+        except Exception, x:
+            self.fail("Switching mode from non-blocking to timeout raised exception: %s" % x)
+        else:
+            pass
 
 #
 # AMAK: 20070307
@@ -1487,7 +1550,7 @@ def test_main():
         TestSupportedOptions,
         TestUnsupportedOptions,
         BasicTCPTest, 
-        TCPTimeoutTest, 
+        TCPServerTimeoutTest, 
         TCPClientTimeoutTest,
         TestExceptions,
         TestInvalidUsage,

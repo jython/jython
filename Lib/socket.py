@@ -6,8 +6,6 @@ The primary extra it provides is non-blocking support.
 XXX Restrictions:
 
 - Only INET sockets
-- No asynchronous behavior
-- No socket options
 - Can't do a very good gethostbyaddr() right...
 AMAK: 20050527: added socket timeouts
 AMAK: 20070515: Added non-blocking (asynchronous) support
@@ -201,16 +199,6 @@ class _nio_impl:
     timeout = None
     mode = MODE_BLOCKING
 
-    def read(self, buf):
-        bytebuf = java.nio.ByteBuffer.wrap(buf)
-        count = self.jchannel.read(bytebuf)
-        return count
-
-    def write(self, buf):
-        bytebuf = java.nio.ByteBuffer.wrap(buf)
-        count = self.jchannel.write(bytebuf)
-        return count
-
     def getpeername(self):
         return (self.jsocket.getInetAddress().getHostName(), self.jsocket.getPort() )
 
@@ -221,6 +209,7 @@ class _nio_impl:
         if self.mode == MODE_NONBLOCKING:
             self.jchannel.configureBlocking(0)
         if self.mode == MODE_TIMEOUT:
+            self.jchannel.configureBlocking(1)
             self._timeout_millis = int(timeout*1000)
             self.jsocket.setSoTimeout(self._timeout_millis)
 
@@ -309,6 +298,36 @@ class _client_socket_impl(_nio_impl):
 
     def finish_connect(self):
         return self.jchannel.finishConnect()
+
+    def _do_read_net(self, buf):
+        # Need two separate implementations because the java.nio APIs do not support timeouts
+        return self.jsocket.getInputStream().read(buf)
+
+    def _do_read_nio(self, buf):
+        bytebuf = java.nio.ByteBuffer.wrap(buf)
+        count = self.jchannel.read(bytebuf)
+        return count
+
+    def _do_write_net(self, buf):
+        self.jsocket.getOutputStream().write(buf)
+        return len(buf)
+
+    def _do_write_nio(self, buf):
+        bytebuf = java.nio.ByteBuffer.wrap(buf)
+        count = self.jchannel.write(bytebuf)
+        return count
+
+    def read(self, buf):
+        if self.mode == MODE_TIMEOUT:
+            return self._do_read_net(buf)
+        else:
+            return self._do_read_nio(buf)
+
+    def write(self, buf):
+        if self.mode == MODE_TIMEOUT:
+            return self._do_write_net(buf)
+        else:
+            return self._do_write_nio(buf)
 
 class _server_socket_impl(_nio_impl):
 
@@ -515,10 +534,10 @@ def _realsocket(family = AF_INET, type = SOCK_STREAM, flags=0):
     else:
         return _udpsocket()
 
-def getaddrinfo(host, port, family=None, socktype=None, proto=0, flags=None):
+def getaddrinfo(host, port, family=AF_INET, socktype=None, proto=0, flags=None):
     try:
         if not family in [AF_INET, AF_INET6, AF_UNSPEC]:
-            raise NotSupportedError()
+            raise gaierror(errno.EIO, 'ai_family not supported')
         filter_fns = []
         filter_fns.append({
             AF_INET:   lambda x: isinstance(x, java.net.Inet4Address),
@@ -736,9 +755,12 @@ class _tcpsocket(_nonblocking_api_mixin):
 
     def connect_ex(self, addr):
         "This signifies a client socket"
-        self._do_connect(addr)
+        if not self.sock_impl:
+            self._do_connect(addr)
         if self.sock_impl.finish_connect():
             self._setup()
+            if self.mode == MODE_NONBLOCKING:
+                return errno.EISCONN
             return 0
         return errno.EINPROGRESS
 
@@ -775,6 +797,8 @@ class _tcpsocket(_nonblocking_api_mixin):
             if self.sock_impl.jchannel.isConnectionPending():
                 self.sock_impl.jchannel.finishConnect()
             numwritten = self.sock_impl.write(s)
+            if numwritten == 0 and self.mode == MODE_NONBLOCKING:
+                raise would_block_error()
             return numwritten
         except java.lang.Exception, jlx:
             raise _map_exception(jlx)
@@ -861,8 +885,11 @@ class _udpsocket(_nonblocking_api_mixin):
         self._do_connect(addr)
 
     def connect_ex(self, addr):
-        self._do_connect(addr)
+        if not self.sock_impl:
+            self._do_connect(addr)
         if self.sock_impl.finish_connect():
+            if self.mode == MODE_NONBLOCKING:
+                return errno.EISCONN
             return 0
         return errno.EINPROGRESS
 
@@ -1151,7 +1178,7 @@ class _fileobject(object):
             self._rbuf = ""
             while True:
                 left = size - buf_len
-                recv_size = max(self._rbufsize, left)
+                recv_size = min(self._rbufsize, left)
                 data = self._sock.recv(recv_size)
                 if not data:
                     break
