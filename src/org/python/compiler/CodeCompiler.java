@@ -1374,15 +1374,15 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         code.swap();
         visitCmpop(node.ops[n-1]);
 
-        code.aconst_null();
-        code.astore(last);
-        code.freeLocal(last);
-
         if (n > 1) {
             code.astore(result);
             code.label(end);
             code.aload(result);
         }
+
+        code.aconst_null();
+        code.astore(last);
+        code.freeLocal(last);
         code.freeLocal(result);
         return null;
     }
