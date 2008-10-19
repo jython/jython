@@ -661,7 +661,7 @@ public class exceptions implements ClassDictInit {
             this.javaMethod = javaMethod;
         }
 
-        public PyBuiltinFunction bind(PyObject self) {
+        public PyBuiltinCallable bind(PyObject self) {
             return new BoundStaticJavaMethod(getType(), self, info, javaMethod);
         }
 

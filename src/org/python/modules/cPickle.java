@@ -15,11 +15,10 @@ package org.python.modules;
 import java.math.BigInteger;
 import java.util.Hashtable;
 
-import org.python.core.ArgParser;
 import org.python.core.ClassDictInit;
 import org.python.core.Py;
 import org.python.core.PyBoolean;
-import org.python.core.PyBuiltinFunction;
+import org.python.core.PyBuiltinCallable;
 import org.python.core.PyClass;
 import org.python.core.PyDictionary;
 import org.python.core.PyException;
@@ -450,7 +449,7 @@ public class cPickle implements ClassDictInit {
     private static PyDictionary inverted_registry;
 
 
-    private static PyType BuiltinFunctionType = PyType.fromClass(PyBuiltinFunction.class);
+    private static PyType BuiltinCallableType = PyType.fromClass(PyBuiltinCallable.class);
 
     private static PyType ReflectedFunctionType = PyType.fromClass(PyReflectedFunction.class);
 
@@ -1068,7 +1067,7 @@ public class cPickle implements ClassDictInit {
                 save_global(object);
             else if (type == FunctionType)
                 save_global(object);
-            else if (type == BuiltinFunctionType)
+            else if (type == BuiltinCallableType)
                 save_global(object);
             else if (type == ReflectedFunctionType)
                 save_global(object);
@@ -2298,7 +2297,7 @@ public class cPickle implements ClassDictInit {
                     value = temp.__getitem__(0);
                     slotstate = temp.__getitem__(1);
                 }
-                
+
                 PyObject dict;
                 if(inst instanceof PyInstance) {
                     dict = ((PyInstance)inst).__dict__;

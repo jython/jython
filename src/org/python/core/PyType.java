@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import org.python.core.util.StringUtil;
 import org.python.expose.ExposeAsSuperclass;
@@ -260,8 +261,7 @@ public class PyType extends PyObject implements Serializable {
         newtype.has_delete = newtype.lookup("__delete__") != null;
         newtype.needs_finalizer = newtype.lookup("__del__") != null;
 
-        for (int i = 0; i < bases_list.length; i++) {
-            PyObject cur = bases_list[i];
+        for (PyObject cur : bases_list) {
             if (cur instanceof PyType)
                 ((PyType)cur).attachSubclass(newtype);
         }
@@ -338,10 +338,9 @@ public class PyType extends PyObject implements Serializable {
             // BOOTSTRAP_TYPES will be filled in by addBuilder later
             return;
         }
-        HashMap<String, Object> propnames = new HashMap<String, Object>();
+        Map<String, Object> propnames = new HashMap<String, Object>();
         Method[] methods = c.getMethods();
-        for (int i = 0; i < methods.length; i++) {
-            Method meth = methods[i];
+        for (Method meth : methods) {
             Class declaring = meth.getDeclaringClass();
             if (declaring != base && base.isAssignableFrom(declaring) && !ignore(meth)) {
                 String methname = meth.getName();
@@ -369,8 +368,7 @@ public class PyType extends PyObject implements Serializable {
                 }
             }
         }
-        for (int i = 0; i < methods.length; i++) {
-            Method meth = methods[i];
+        for (Method meth : methods) {
             String nmethname = normalize_name(meth.getName());
             PyReflectedFunction reflfunc = (PyReflectedFunction)dict.__finditem__(nmethname);
             if (reflfunc != null) {
@@ -378,8 +376,7 @@ public class PyType extends PyObject implements Serializable {
             }
         }
         Field[] fields = c.getFields();
-        for (int i = 0; i < fields.length; i++) {
-            Field field = fields[i];
+        for (Field field : fields) {
             Class declaring = field.getDeclaringClass();
             if (declaring != base && base.isAssignableFrom(declaring)) {
                 String fldname = field.getName();
@@ -404,8 +401,7 @@ public class PyType extends PyObject implements Serializable {
                 dict.__setitem__(normalize_name(fldname), new PyReflectedField(field));
             }
         }
-        for (Iterator iter = propnames.keySet().iterator(); iter.hasNext();) {
-            String propname = (String)iter.next();
+        for (String propname : propnames.keySet()) {
             String npropname = normalize_name(StringUtil.decapitalize(propname));
             PyObject prev = dict.__finditem__(npropname);
             if (prev != null && prev instanceof PyReflectedFunction) {
@@ -437,8 +433,8 @@ public class PyType extends PyObject implements Serializable {
         Constructor[] ctrs = c.getConstructors();
         if (ctrs.length != 0) {
             final PyReflectedConstructor reflctr = new PyReflectedConstructor("_new_impl");
-            for (int i = 0; i < ctrs.length; i++) {
-                reflctr.addConstructor(ctrs[i]);
+            for (Constructor ctr : ctrs) {
+                reflctr.addConstructor(ctr);
             }
             PyObject new_ = new PyNewWrapper(c, "__new__", -1, -1) {
                 public PyObject new_impl(boolean init, PyType subtype, PyObject[] args,
@@ -557,14 +553,14 @@ public class PyType extends PyObject implements Serializable {
             base = newBase;
             mro_internal();
             mro_subclasses(savedSubMros);
-            for (int i = 0; i < savedBases.length; i++) {
-                if (savedBases[i] instanceof PyType) {
-                    ((PyType)savedBases[i]).detachSubclass(this);
+            for (PyObject saved : savedBases) {
+                if (saved instanceof PyType) {
+                    ((PyType)saved).detachSubclass(this);
                 }
             }
-            for (int i = 0; i < newBases.length; i++) {
-                if (newBases[i] instanceof PyType) {
-                    ((PyType)newBases[i]).attachSubclass(this);
+            for (PyObject newb : newBases) {
+                if (newb instanceof PyType) {
+                    ((PyType)newb).attachSubclass(this);
                 }
             }
         } catch (PyException t) {
@@ -703,8 +699,8 @@ public class PyType extends PyObject implements Serializable {
             acc.add(classic_cl);
         }
         PyObject[] bases = classic_cl.__bases__.getArray();
-        for (int i = 0; i < bases.length; i++) {
-            fill_classic_mro(acc,(PyClass)bases[i]);
+        for (PyObject base : bases) {
+            fill_classic_mro(acc,(PyClass)base);
         }
     }
 
@@ -850,24 +846,22 @@ public class PyType extends PyObject implements Serializable {
         PyType winner = null;
         PyType candidate = null;
         PyType best = null;
-        for (int i = 0; i < bases.length; i++) {
-            PyObject base_proto = bases[i];
-            if (base_proto instanceof PyClass) {
+        for (PyObject base : bases) {
+            if (base instanceof PyClass) {
                 continue;
             }
-            if (!(base_proto instanceof PyType)) {
+            if (!(base instanceof PyType)) {
                 throw Py.TypeError("bases must be types");
             }
-            PyType base = (PyType)base_proto;
-            candidate = solid_base(base);
+            candidate = solid_base((PyType)base);
             if (winner == null) {
                 winner = candidate;
-                best = base;
+                best = (PyType)base;
             } else if (winner.isSubType(candidate)) {
                 ;
             } else if (candidate.isSubType(winner)) {
                 winner = candidate;
-                best = base;
+                best = (PyType)base;
             } else {
                 throw Py.TypeError("multiple bases have instance lay-out conflict");
             }
@@ -889,18 +883,17 @@ public class PyType extends PyObject implements Serializable {
      */
     private static PyType findMostDerivedMetatype(PyObject[] bases_list, PyType initialMetatype) {
         PyType winner = initialMetatype;
-        for (int i = 0; i < bases_list.length; i++) {
-            PyObject bases_i = bases_list[i];
-            if (bases_i instanceof PyJavaClass) {
+        for (PyObject base : bases_list) {
+            if (base instanceof PyJavaClass) {
                 throw Py.TypeError("can't mix new-style and java classes");
             }
-            if (bases_i instanceof PyClass) {
-                if (((PyClass)bases_i).proxyClass != null) {
+            if (base instanceof PyClass) {
+                if (((PyClass)base).proxyClass != null) {
                     throw Py.TypeError("can't mix new-style and java classes");
                 }
                 continue;
             }
-            PyType curtype = bases_i.getType();
+            PyType curtype = base.getType();
             if (winner.isSubType(curtype)) {
                 continue;
             }
@@ -962,8 +955,8 @@ public class PyType extends PyObject implements Serializable {
         if (mro == null) {
             return null;
         }
-        for (int i = 0; i < mro.length; i++) {
-            PyObject dict = mro[i].fastGetDict();
+        for (PyObject element : mro) {
+            PyObject dict = element.fastGetDict();
             if (dict != null) {
                 PyObject obj = dict.__finditem__(name);
                 if (obj != null)
@@ -978,8 +971,7 @@ public class PyType extends PyObject implements Serializable {
         if (mro == null) {
             return null;
         }
-        for (int i = 0; i < mro.length; i++) {
-            PyObject t = mro[i];
+        for (PyObject t : mro) {
             PyObject dict = t.fastGetDict();
             if (dict != null) {
                 PyObject obj = dict.__finditem__(name);
@@ -1047,8 +1039,8 @@ public class PyType extends PyObject implements Serializable {
 
     private static boolean ignore(Method meth) {
         Class[] exceptions = meth.getExceptionTypes();
-        for (int j = 0; j < exceptions.length; j++) {
-            if (exceptions[j] == PyIgnoreMethodTag.class) {
+        for (Class exception : exceptions) {
+            if (exception == PyIgnoreMethodTag.class) {
                 return true;
             }
         }
@@ -1261,8 +1253,8 @@ public class PyType extends PyObject implements Serializable {
         if (mro == null) {
             return;
         }
-        for (int i = 0; i < mro.length; i++) {
-            mro[i].addKeys(accum, "__dict__");
+        for (PyObject element : mro) {
+            element.addKeys(accum, "__dict__");
         }
     }
 

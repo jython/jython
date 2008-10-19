@@ -1,7 +1,11 @@
 
 package org.python.modules;
 
-import org.python.core.*;
+import org.python.core.ClassDictInit;
+import org.python.core.Py;
+import org.python.core.PyBuiltinFunctionSet;
+import org.python.core.PyJavaClass;
+import org.python.core.PyObject;
 
 class JythonInternalFunctions extends PyBuiltinFunctionSet
 {

@@ -332,8 +332,8 @@ public class PyObject implements Serializable {
         String name;
         if (this instanceof PyFunction) {
             name = ((PyFunction) this).__name__ + "() ";
-        } else if (this instanceof PyBuiltinFunction) {
-            name = ((PyBuiltinFunction)this).fastGetName().toString() + "() ";
+        } else if (this instanceof PyBuiltinCallable) {
+            name = ((PyBuiltinCallable)this).fastGetName().toString() + "() ";
         } else {
             name = getType().fastGetName() + " ";
         }

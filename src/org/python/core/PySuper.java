@@ -34,8 +34,8 @@ public class PySuper extends PyObject {
     @ExposedMethod
     @ExposedNew
     public void super___init__(PyObject[] args, String[] keywords) {
-        if (keywords.length != 0 || !PyBuiltinFunction.DefaultInfo.check(args.length, 1, 2)) {
-            throw PyBuiltinFunction.DefaultInfo.unexpectedCall(args.length, keywords.length != 0,
+        if (keywords.length != 0 || !PyBuiltinCallable.DefaultInfo.check(args.length, 1, 2)) {
+            throw PyBuiltinCallable.DefaultInfo.unexpectedCall(args.length, keywords.length != 0,
                                                                "super", 1, 2);
         }
         if (!(args[0] instanceof PyType)) {

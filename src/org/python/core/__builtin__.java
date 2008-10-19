@@ -1,15 +1,11 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
 
 import org.python.antlr.ast.modType;
 import org.python.core.util.RelativeFile;
-import org.python.expose.ExposedGet;
-import org.python.expose.ExposedNew;
-import org.python.expose.ExposedType;
 
 class BuiltinFunctions extends PyBuiltinFunctionSet {
 
@@ -236,7 +232,7 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
 
     /**
      * @param intern - should the resulting string be interned
-     * @return arg as a String, or throws TypeError with message if asString throws a ConversionException.  
+     * @return arg as a String, or throws TypeError with message if asString throws a ConversionException.
      */
     private String asString(PyObject arg, String message, boolean intern) {
 
@@ -280,7 +276,7 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
                 }
 
                 if (args[0] instanceof PyUnicode) {
-                    flags += PyTableCode.PyCF_SOURCE_IS_UTF8;   
+                    flags += PyTableCode.PyCF_SOURCE_IS_UTF8;
                 }
                 return __builtin__.compile(args[0].toString(), args[1].toString(), args[2].toString(), flags, dont_inherit);
             case 29:
@@ -373,23 +369,23 @@ public class __builtin__ {
         dict.__setitem__("iter", new BuiltinFunctions("iter", 27, 1, 2));
         dict.__setitem__("locals", new BuiltinFunctions("locals", 28, 0));
         dict.__setitem__("map", new BuiltinFunctions("map", 29, 2, -1));
-        dict.__setitem__("max", MaxFunction.INSTANCE);
-        dict.__setitem__("min", MinFunction.INSTANCE);
+        dict.__setitem__("max", new MaxFunction());
+        dict.__setitem__("min", new MinFunction());
         dict.__setitem__("oct", new BuiltinFunctions("oct", 32, 1));
         dict.__setitem__("pow", new BuiltinFunctions("pow", 33, 2, 3));
         dict.__setitem__("raw_input", new BuiltinFunctions("raw_input", 34, 0, 1));
         dict.__setitem__("reduce", new BuiltinFunctions("reduce", 35, 2, 3));
         dict.__setitem__("reload", new BuiltinFunctions("reload", 36, 1));
         dict.__setitem__("repr", new BuiltinFunctions("repr", 37, 1));
-        dict.__setitem__("round", RoundFunction.INSTANCE);
+        dict.__setitem__("round", new RoundFunction());
         dict.__setitem__("setattr", new BuiltinFunctions("setattr", 39, 3));
         dict.__setitem__("vars", new BuiltinFunctions("vars", 41, 0, 1));
         dict.__setitem__("zip", new BuiltinFunctions("zip", 43, 0, -1));
         dict.__setitem__("reversed", new BuiltinFunctions("reversed", 45, 1));
-        dict.__setitem__("__import__", ImportFunction.INSTANCE);
-        dict.__setitem__("sorted", SortedFunction.INSTANCE);
-        dict.__setitem__("all", AllFunction.INSTANCE);
-        dict.__setitem__("any", AnyFunction.INSTANCE);        
+        dict.__setitem__("__import__", new ImportFunction());
+        dict.__setitem__("sorted", new SortedFunction());
+        dict.__setitem__("all", new AllFunction());
+        dict.__setitem__("any", new AnyFunction());
     }
 
     public static PyObject abs(PyObject o) {
@@ -399,7 +395,7 @@ public class __builtin__ {
     public static PyObject apply(PyObject o) {
 	return o.__call__();
     }
-    
+
     public static PyObject apply(PyObject o, PyObject args) {
         return o.__call__(Py.make_array(args));
     }
@@ -465,7 +461,7 @@ public class __builtin__ {
     public static PyObject compile(modType node, String filename, String kind) {
         return Py.compile_flags(node, filename, kind, Py.getCompilerFlags());
     }
-            
+
     public static PyObject compile(String data, String filename, String kind, int flags, boolean dont_inherit) {
         if ((flags & ~PyTableCode.CO_ALL_FEATURES) != 0) {
             throw Py.ValueError("compile(): unrecognised flags");
@@ -518,16 +514,16 @@ public class __builtin__ {
                (o.__findattr__("__getitem__") != null &&
                 (!rw || o.__findattr__("__setitem__") != null));
     }
-    
+
     private static void verify_mappings(PyObject globals, PyObject locals, boolean rw) {
         if (!PyMapping_check(globals, rw)) {
             throw Py.TypeError("globals must be a mapping");
-        } 
+        }
         if (!PyMapping_check(locals, rw)) {
             throw Py.TypeError("locals must be a mapping");
         }
     }
-    
+
     public static PyObject eval(PyObject o, PyObject globals, PyObject locals) {
         verify_mappings(globals, locals, false);
         PyCode code;
@@ -900,7 +896,7 @@ public class __builtin__ {
         throw Py.TypeError("ord() expected a character, but string of length " +
                 length + " found");
     }
-    
+
     public static PyObject pow(PyObject x, PyObject y) {
         return x._pow(y);
     }
@@ -1037,7 +1033,7 @@ public class __builtin__ {
             return (PyString) ret;
         }
     }
-    
+
     public static String raw_input(PyObject prompt, PyObject file) {
         PyObject stdout = Py.getSystemState().stdout;
         if (stdout instanceof PyAttributeDeleted) {
@@ -1157,7 +1153,7 @@ public class __builtin__ {
     public static PyObject zip() {
         return new PyList();
     }
-    
+
     public static PyObject zip(PyObject[] argstar) {
         int itemsize = argstar.length;
 
@@ -1233,80 +1229,39 @@ public class __builtin__ {
     }
 }
 
-// simulates a PyBuiltinFunction for functions not using the PyBuiltinFunctionSet approach of above
-abstract class ExtendedBuiltinFunction extends PyObject {
-    public static final PyType TYPE = PyType.fromClass(PyBuiltinFunction.class);
-    @ExposedGet(name = "__class__")
-    @Override
-    public PyType getType() {
-        return TYPE;
-    }
-}
-
-class ImportFunction extends ExtendedBuiltinFunction {
-    static final ImportFunction INSTANCE = new ImportFunction();
-
-    private ImportFunction() {}
-    
-    @ExposedNew
-    public static PyObject __new__(PyObject[] args, String[] keyword) {
-        return INSTANCE;
-    }   
-    
-    @ExposedGet(name = "__doc__")
-    public PyObject getDoc() {
-        return new PyString("__import__(name, globals={}, locals={}, fromlist=[], level=-1) -> module\n\n" +
-                "Import a module.  The globals are only used to determine the context;\n" +
-                "they are not modified.  The locals are currently unused.  The fromlist\n" +
-                "should be a list of names to emulate ``from name import ...'', or an\n" +
-                "empty list to emulate ``import name''.\n" +
-                "When importing a module from a package, note that __import__('A.B', ...)\n" + 
-                "returns package A when fromlist is empty, but its submodule B when\n" +
-                "fromlist is not empty.  Level is used to determine whether to perform \n" +
-                "absolute or relative imports.  -1 is the original strategy of attempting\n" +
-                "both absolute and relative imports, 0 is absolute, a positive number\n" +
-                "is the number of parent directories to search relative to the current module.");
+class ImportFunction extends PyBuiltinFunction {
+    ImportFunction() {
+        super("__import__",
+              "__import__(name, globals={}, locals={}, fromlist=[], level=-1) -> module\n\n" +
+              "Import a module.  The globals are only used to determine the context;\n" +
+              "they are not modified.  The locals are currently unused.  The fromlist\n" +
+              "should be a list of names to emulate ``from name import ...'', or an\n" +
+              "empty list to emulate ``import name''.\n" +
+              "When importing a module from a package, note that __import__('A.B', ...)\n" +
+              "returns package A when fromlist is empty, but its submodule B when\n" +
+              "fromlist is not empty.  Level is used to determine whether to perform \n" +
+              "absolute or relative imports.  -1 is the original strategy of attempting\n" +
+              "both absolute and relative imports, 0 is absolute, a positive number\n" +
+              "is the number of parent directories to search relative to the current module.");
     }
 
     public PyObject __call__(PyObject args[], String keywords[]) {
-        ArgParser ap = new ArgParser("__import__", args, keywords, new String[]{"name", "globals", "locals", "fromlist", "level"}, 1);
-
+        ArgParser ap = new ArgParser("__import__", args, keywords,
+                                     new String[]{"name", "globals", "locals", "fromlist", "level"},
+                                     1);
         String module = ap.getString(0);
         PyObject globals = ap.getPyObject(1, null);
         PyObject fromlist = ap.getPyObject(3, Py.EmptyTuple);
         int level = ap.getInt(4, imp.DEFAULT_LEVEL);
-
-        return load(module, globals, fromlist, level);
+        return imp.importName(module.intern(), fromlist.__len__() == 0, globals, fromlist, level);
     }
-
-    private PyObject load(String module, PyObject globals, PyObject fromlist, int level) {
-        PyObject mod = imp.importName(module.intern(), fromlist.__len__() == 0, globals, fromlist, level);
-        return mod;
-    }
-
-    public String toString() {
-        return "<built-in function __import__>";
-    }
-    
-    
 }
 
-class SortedFunction extends ExtendedBuiltinFunction {
-    static final SortedFunction INSTANCE = new SortedFunction();
-
-    private SortedFunction() {}
-    
-    @ExposedNew
-    public static PyObject __new__(PyObject[] args, String[] keyword) {
-        return INSTANCE;
-    }   
-    
-    @ExposedGet(name = "__doc__")
-    @Override
-    public PyObject getDoc() {
-        return new PyString("sorted(iterable, cmp=None, key=None, reverse=False) --> new sorted list");
+class SortedFunction extends PyBuiltinFunction {
+    SortedFunction() {
+        super("sorted", "sorted(iterable, cmp=None, key=None, reverse=False) --> new sorted list");
     }
-    
+
     @Override
     public PyObject __call__(PyObject args[], String kwds[]) {
         if (args.length == 0) {
@@ -1333,37 +1288,20 @@ class SortedFunction extends ExtendedBuiltinFunction {
         seq.sort(cmp, key, reverse);
         return seq;
     }
-
-    @Override
-    public String toString() {
-        return "<built-in function sorted>";
-    }
 }
 
-class AllFunction extends ExtendedBuiltinFunction {
-    static final AllFunction INSTANCE = new AllFunction();
-
-    private AllFunction() {}
-    
-    @ExposedNew
-    public static PyObject __new__(PyObject[] args, String[] keyword) {
-        return INSTANCE;
-    }   
-    
-    @ExposedGet(name = "__doc__")
-    @Override
-    public PyObject getDoc() {
-        return new PyString("all(iterable) -> bool\n\nReturn True if bool(x) is True for all values x in the iterable.");
+class AllFunction extends PyBuiltinFunctionNarrow {
+    AllFunction() {
+        super("all", 1, 1,
+              "all(iterable) -> bool\n\n" +
+              "Return True if bool(x) is True for all values x in the iterable.");
     }
 
     @Override
-    public PyObject __call__(PyObject args[], String kwds[]) {
-        if (args.length !=1) {
-            throw Py.TypeError(" all() takes exactly one argument (" + args.length + " given)");
-        }
-        PyObject iter = args[0].__iter__();
+    public PyObject __call__(PyObject arg) {
+        PyObject iter = arg.__iter__();
         if (iter == null) {
-            throw Py.TypeError("'" + args[0].getType().fastGetName() + "' object is not iterable");
+            throw Py.TypeError("'" + arg.getType().fastGetName() + "' object is not iterable");
         }
         for (PyObject item : iter.asIterable()) {
             if (!item.__nonzero__()) {
@@ -1372,78 +1310,44 @@ class AllFunction extends ExtendedBuiltinFunction {
         }
         return Py.True;
     }
-    
-    @Override
-    public String toString() {
-        return "<built-in function all>";
-    }
 }
 
-class AnyFunction extends ExtendedBuiltinFunction {
-    static final AnyFunction INSTANCE = new AnyFunction();
-
-    private AnyFunction() {}
-    
-    @ExposedNew
-    public static PyObject __new__(PyObject[] args, String[] keyword) {
-        return INSTANCE;
-    }   
-    
-    @ExposedGet(name = "__doc__")
-    @Override
-    public PyObject getDoc() {
-        return new PyString("any(iterable) -> bool\n\nReturn True if bool(x) is True for any x in the iterable.");
+class AnyFunction extends PyBuiltinFunctionNarrow {
+    AnyFunction() {
+        super("any", 1, 1,
+              "any(iterable) -> bool\n\nReturn True if bool(x) is True for any x in the iterable.");
     }
 
     @Override
-    public PyObject __call__(PyObject args[], String kwds[]) {
-        if (args.length !=1) {
-            throw Py.TypeError(" any() takes exactly one argument (" + args.length + " given)");
-        }
-        PyObject iter = args[0].__iter__();
+    public PyObject __call__(PyObject arg) {
+        PyObject iter = arg.__iter__();
         if (iter == null) {
-            throw Py.TypeError("'" + args[0].getType().fastGetName() + "' object is not iterable");
+            throw Py.TypeError("'" + arg.getType().fastGetName() + "' object is not iterable");
         }
         for (PyObject item : iter.asIterable()) {
             if (item.__nonzero__()) {
                 return Py.True;
             }
         }
-        return Py.False;     
-    }
-    
-    @Override
-    public String toString() {
-        return "<built-in function any>";
+        return Py.False;
     }
 }
 
-class MaxFunction extends ExtendedBuiltinFunction {
-    static final MaxFunction INSTANCE = new MaxFunction();
-   
-    private MaxFunction() {}
-  
-    @ExposedNew
-    public static PyObject __new__(PyObject[] args, String[] keyword) {
-        return INSTANCE;
-    }  
-
-    @ExposedGet(name = "__doc__")
-    @Override
-    public PyObject getDoc() {
-        return new PyString(
-                "max(iterable[, key=func]) -> value\nmax(a, b, c, ...[, key=func]) -> value\n\n" +
-                "With a single iterable argument, return its largest item.\n" + 
-                "With two or more arguments, return the largest argument.");
+class MaxFunction extends PyBuiltinFunction {
+    MaxFunction() {
+        super("max",
+              "max(iterable[, key=func]) -> value\nmax(a, b, c, ...[, key=func]) -> value\n\n" +
+              "With a single iterable argument, return its largest item.\n" +
+              "With two or more arguments, return the largest argument.");
     }
 
     @Override
     public PyObject __call__(PyObject args[], String kwds[]) {
         int argslen = args.length;
         PyObject key = null;
-        
+
         if (args.length - kwds.length == 0) {
-            throw Py.TypeError(" max() expected 1 arguments, got 0");
+            throw Py.TypeError("max() expected 1 arguments, got 0");
         }
         if (kwds.length > 0) {
             if (kwds[0].equals("key")) {
@@ -1453,23 +1357,18 @@ class MaxFunction extends ExtendedBuiltinFunction {
                 args = newargs;
             }
             else {
-                throw Py.TypeError(" max() got an unexpected keyword argument");
+                throw Py.TypeError("max() got an unexpected keyword argument");
             }
         }
-        
+
         if (args.length > 1) {
             return max(new PyTuple(args), key);
         }
         else {
             return max(args[0], key);
         }
-    }    
-    
-    @Override
-    public String toString() {
-        return "<built-in function max>";
     }
-    
+
     private static PyObject max(PyObject o, PyObject key) {
         PyObject max = null;
         PyObject maxKey = null;
@@ -1494,31 +1393,19 @@ class MaxFunction extends ExtendedBuiltinFunction {
 
 }
 
-class MinFunction extends ExtendedBuiltinFunction {
-    static final MinFunction INSTANCE = new MinFunction();
-    
-    private MinFunction() {}
-   
-    @ExposedNew
-    public static PyObject __new__(PyObject[] args, String[] keyword) {
-        return INSTANCE;
-    }     
-    
-    
-    @ExposedGet(name = "__doc__")
-    @Override
-    public PyObject getDoc() {
-        return new PyString(
-                "min(iterable[, key=func]) -> value\nmin(a, b, c, ...[, key=func]) -> value\n\n" +
-                "With a single iterable argument, return its smallest item.\n" +
-                "With two or more arguments, return the smallest argument.'");
+class MinFunction extends PyBuiltinFunction {
+    MinFunction() {
+        super("min",
+              "min(iterable[, key=func]) -> value\nmin(a, b, c, ...[, key=func]) -> value\n\n" +
+              "With a single iterable argument, return its smallest item.\n" +
+              "With two or more arguments, return the smallest argument.'");
     }
 
     @Override
     public PyObject __call__(PyObject args[], String kwds[]) {
         int argslen = args.length;
         PyObject key = null;
-        
+
         if (args.length - kwds.length == 0) {
             throw Py.TypeError(" min() expected 1 arguments, got 0");
         }
@@ -1530,10 +1417,10 @@ class MinFunction extends ExtendedBuiltinFunction {
                 args = newargs;
             }
             else {
-                throw Py.TypeError(" min() got an unexpected keyword argument");
+                throw Py.TypeError("min() got an unexpected keyword argument");
             }
         }
-        
+
         if (args.length > 1) {
             return min(new PyTuple(args), key);
         }
@@ -1541,12 +1428,7 @@ class MinFunction extends ExtendedBuiltinFunction {
             return min(args[0], key);
         }
     }
-    
-    @Override
-    public String toString() {
-        return "<built-in function min>";
-    }
-    
+
     private static PyObject min(PyObject o, PyObject key) {
         PyObject min = null;
         PyObject minKey = null;
@@ -1570,37 +1452,20 @@ class MinFunction extends ExtendedBuiltinFunction {
     }
 }
 
-class RoundFunction extends ExtendedBuiltinFunction {
-    static final RoundFunction INSTANCE = new RoundFunction();
-    private RoundFunction() {}
-    
-    @ExposedNew
-    public static PyObject __new__(PyObject[] args, String[] keyword) {
-        return INSTANCE;
-    }     
-    
-    @ExposedGet(name = "__doc__")
-    @Override
-    public PyObject getDoc() {
-        return new PyString(
-                "round(number[, ndigits]) -> floating point number\n\n" +
-                "Round a number to a given precision in decimal digits (default 0 digits).\n" +
-                "This always returns a floating point number.  Precision may be negative.");
+class RoundFunction extends PyBuiltinFunction {
+    RoundFunction() {
+        super("round", "round(number[, ndigits]) -> floating point number\n\n" +
+              "Round a number to a given precision in decimal digits (default 0 digits).\n" +
+              "This always returns a floating point number.  Precision may be negative.");
     }
-    
-    @Override
-    public String toString() {
-        return "<built-in function round>";
-    }
-    
-    @Override
+
     public PyObject __call__(PyObject args[], String kwds[]) {
-        ArgParser ap = new ArgParser("round", args, kwds, new String[]{"number", "ndigits"}, 0);
+        ArgParser ap = new ArgParser("round", args, kwds, new String[] {"number", "ndigits"}, 0);
         PyObject number = ap.getPyObject(0);
         int ndigits = ap.getInt(1, 0);
         return round(Py.py2double(number), ndigits);
     }
-    
+
     private static PyFloat round(double f, int digits) {
         boolean neg = f < 0;
         double multiple = Math.pow(10., digits);

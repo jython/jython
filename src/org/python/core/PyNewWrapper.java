@@ -29,7 +29,7 @@ public abstract class PyNewWrapper extends PyBuiltinMethod {
                                       PyObject[] args,
                                       String[] keywords);
     
-    public PyBuiltinFunction bind(PyObject self) {
+    public PyBuiltinCallable bind(PyObject self) {
         throw Py.SystemError("__new__ wrappers are already bound");
     }
     

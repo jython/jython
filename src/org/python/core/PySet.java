@@ -30,7 +30,7 @@ public class PySet extends BaseSet {
     final void set___init__(PyObject[] args, String[] kwds) {
         int nargs = args.length - kwds.length;
         if (nargs > 1) {
-            throw PyBuiltinFunction.DefaultInfo.unexpectedCall(nargs, false, "Set", 0, 1);
+            throw PyBuiltinCallable.DefaultInfo.unexpectedCall(nargs, false, "Set", 0, 1);
         }
         if (nargs == 0) {
             return;

@@ -112,9 +112,9 @@ public class ArgParser {
         this(funcname, args, kws);
         this.params = paramnames;
         check();
-        if (!PyBuiltinFunction.DefaultInfo.check(args.length, minargs,
+        if (!PyBuiltinCallable.DefaultInfo.check(args.length, minargs,
                 this.params.length)) {
-            throw PyBuiltinFunction.DefaultInfo.unexpectedCall(args.length,
+            throw PyBuiltinCallable.DefaultInfo.unexpectedCall(args.length,
                     false, funcname, minargs, this.params.length);
         }
     }

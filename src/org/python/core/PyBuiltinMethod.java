@@ -2,7 +2,7 @@ package org.python.core;
 
 import org.python.expose.ExposeAsSuperclass;
 
-public abstract class PyBuiltinMethod extends PyBuiltinFunction implements ExposeAsSuperclass  {
+public abstract class PyBuiltinMethod extends PyBuiltinCallable implements ExposeAsSuperclass  {
 
     protected PyObject self;
 

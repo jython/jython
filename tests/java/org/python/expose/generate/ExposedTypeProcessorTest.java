@@ -6,7 +6,7 @@ import java.io.InputStream;
 import junit.framework.TestCase;
 
 import org.python.core.BytecodeLoader;
-import org.python.core.PyBuiltinFunction;
+import org.python.core.PyBuiltinCallable;
 import org.python.core.PyDataDescr;
 import org.python.core.PyObject;
 import org.python.core.PyType;
@@ -37,8 +37,8 @@ public class ExposedTypeProcessorTest extends TestCase {
         Class doctoredSimple = loader.loadClassFromBytes("org.python.expose.generate.SimpleExposed",
                                                          ice.getBytecode());
         PyObject simp = (PyObject)doctoredSimple.newInstance();
-        PyBuiltinFunction func = MethodExposerTest.instantiate(simple_method, "invisible");
-        PyBuiltinFunction bound = func.bind(simp);
+        PyBuiltinCallable func = MethodExposerTest.instantiate(simple_method, "invisible");
+        PyBuiltinCallable bound = func.bind(simp);
         bound.__call__();
         PyDataDescr desc = (PyDataDescr)tostringDesc.newInstance();
         assertEquals(doctoredSimple.getField("toStringVal").get(simp),

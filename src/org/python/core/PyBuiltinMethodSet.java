@@ -25,7 +25,7 @@ public class PyBuiltinMethodSet extends PyBuiltinFunctionSet implements
         return this;
     }
 
-    public PyBuiltinFunction bind(PyObject bindTo) {
+    public PyBuiltinCallable bind(PyObject bindTo) {
         if(__self__ == Py.None) {
             PyBuiltinMethodSet bindable;
             try {

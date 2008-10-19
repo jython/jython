@@ -12,12 +12,12 @@ public class PyInstance extends PyObject
 {
     // xxx doc, final name
     public transient PyClass instclass;
-    
+
     // xxx
     public PyObject fastGetClass() {
         return instclass;
     }
-    
+
     //This field is only used by Python subclasses of Java classes
     Object javaProxy;
 
@@ -31,7 +31,7 @@ public class PyInstance extends PyObject
         throws java.io.IOException, ClassNotFoundException
     {
         in.defaultReadObject();
-        
+
         String module = in.readUTF();
         String name = in.readUTF();
 
@@ -153,9 +153,8 @@ public class PyInstance extends PyObject
             return javaProxy;
 
         if (instclass.__tojava__ != null) {
-            //try {
-            PyObject ret =
-                instclass.__tojava__.__call__(this, PyJavaClass.lookup(c));
+            // try {
+            PyObject ret = instclass.__tojava__.__call__(this, PyJavaClass.lookup(c));
 
             if (ret == Py.None)
                 return Py.NoConversion;
@@ -221,8 +220,8 @@ public class PyInstance extends PyObject
         PyObject[] result2 = instclass.lookupGivingClass(name, stopAtJava);
         if (result2[0] != null)
             // xxx do we need to use result2[1] (wherefound) for java cases for backw comp?
-            return result2[0].__get__(this, instclass); 
-            // xxx do we need to use 
+            return result2[0].__get__(this, instclass);
+            // xxx do we need to use
         return ifindfunction(name);
     }
 
@@ -429,7 +428,7 @@ public class PyInstance extends PyObject
                 smod = ((PyString)mod).toString() + '.';
             }
         }
-        return new PyString("<" + smod + instclass.__name__ + " instance at " + 
+        return new PyString("<" + smod + instclass.__name__ + " instance at " +
                             Py.idstr(this) + ">");
     }
 
@@ -483,8 +482,8 @@ public class PyInstance extends PyObject
         if (coerced != null) {
             v = coerced[0];
             w = coerced[1];
-            if (!(v instanceof PyInstance) && 
-                !(w instanceof PyInstance)) 
+            if (!(v instanceof PyInstance) &&
+                !(w instanceof PyInstance))
                 return v._cmp(w);
         } else {
             v = this;
@@ -497,8 +496,8 @@ public class PyInstance extends PyObject
                     int result = ((PyInteger)ret).getValue();
                     return result < 0 ? -1 : result > 0 ? 1 : 0;
                 }
-                throw Py.TypeError("__cmp__() must return int");                
-            }           
+                throw Py.TypeError("__cmp__() must return int");
+            }
         }
         if (w instanceof PyInstance) {
             ret = ((PyInstance)w).invoke_ex("__cmp__",v);
@@ -507,9 +506,9 @@ public class PyInstance extends PyObject
                     int result = ((PyInteger)ret).getValue();
                     return -(result < 0 ? -1 : result > 0 ? 1 : 0);
                 }
-                throw Py.TypeError("__cmp__() must return int");                
-            }           
-            
+                throw Py.TypeError("__cmp__() must return int");
+            }
+
         }
         return -2;
     }

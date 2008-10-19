@@ -86,7 +86,7 @@ public final class Py {
     static {
         BOOTSTRAP_TYPES.add(PyObject.class);
         BOOTSTRAP_TYPES.add(PyType.class);
-        BOOTSTRAP_TYPES.add(PyBuiltinFunction.class);
+        BOOTSTRAP_TYPES.add(PyBuiltinCallable.class);
         BOOTSTRAP_TYPES.add(PyDataDescr.class);
     }
 

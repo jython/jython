@@ -51,7 +51,7 @@ public class PyEnumerate extends PyIterator {
     public final static PyObject enumerate_new(PyNewWrapper new_, boolean init, PyType subtype,
                                                PyObject[] args, String[] keywords) {
         if (args.length != 1) {
-            throw PyBuiltinFunction.DefaultInfo.unexpectedCall(args.length, false, "enumerate", 0,
+            throw PyBuiltinCallable.DefaultInfo.unexpectedCall(args.length, false, "enumerate", 0,
                                                                1);
         }
         if (new_.for_type == subtype) {

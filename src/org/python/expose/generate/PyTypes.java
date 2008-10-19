@@ -3,7 +3,7 @@ package org.python.expose.generate;
 import org.python.objectweb.asm.Type;
 import org.python.core.Py;
 import org.python.core.PyBoolean;
-import org.python.core.PyBuiltinFunction;
+import org.python.core.PyBuiltinCallable;
 import org.python.core.PyBuiltinMethod;
 import org.python.core.PyBuiltinMethodNarrow;
 import org.python.core.PyDataDescr;
@@ -61,15 +61,15 @@ public interface PyTypes {
 
     public static final Type BUILTIN_METHOD_NARROW = Type.getType(PyBuiltinMethodNarrow.class);
 
-    public static final Type BUILTIN_FUNCTION = Type.getType(PyBuiltinFunction.class);
+    public static final Type BUILTIN_FUNCTION = Type.getType(PyBuiltinCallable.class);
 
-    public static final Type ABUILTIN_FUNCTION = Type.getType(PyBuiltinFunction[].class);
+    public static final Type ABUILTIN_FUNCTION = Type.getType(PyBuiltinCallable[].class);
 
     public static final Type DATA_DESCR = Type.getType(PyDataDescr.class);
 
     public static final Type ADATA_DESCR = Type.getType(PyDataDescr[].class);
 
-    public static final Type BUILTIN_INFO = Type.getType(PyBuiltinFunction.Info.class);
+    public static final Type BUILTIN_INFO = Type.getType(PyBuiltinCallable.Info.class);
 
     // Exposer Jython types
     public static final Type EXPOSED_TYPE = Type.getType(ExposedType.class);

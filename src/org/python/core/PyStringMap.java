@@ -242,7 +242,7 @@ public class PyStringMap extends PyObject {
     public void update(PyObject[] args, String[] keywords) {
         int nargs = args.length - keywords.length;
         if (nargs > 1) {
-            throw PyBuiltinFunction.DefaultInfo.unexpectedCall(nargs, false, "update", 0, 1);
+            throw PyBuiltinCallable.DefaultInfo.unexpectedCall(nargs, false, "update", 0, 1);
         }
         if (nargs == 1) {
             PyObject arg = args[0];

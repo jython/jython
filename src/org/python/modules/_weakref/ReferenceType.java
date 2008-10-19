@@ -3,7 +3,7 @@ package org.python.modules._weakref;
 
 import org.python.core.ArgParser;
 import org.python.core.Py;
-import org.python.core.PyBuiltinFunction;
+import org.python.core.PyBuiltinCallable;
 import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
 import org.python.core.PyType;

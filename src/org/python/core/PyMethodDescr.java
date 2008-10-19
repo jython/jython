@@ -5,13 +5,13 @@ import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedType;
 
 @ExposedType(name = "method_descriptor", base = PyObject.class)
-public class PyMethodDescr extends PyDescriptor implements PyBuiltinFunction.Info {
+public class PyMethodDescr extends PyDescriptor implements PyBuiltinCallable.Info {
 
     protected int minargs, maxargs;
 
-    protected PyBuiltinFunction meth;
+    protected PyBuiltinCallable meth;
 
-    public PyMethodDescr(PyType t, PyBuiltinFunction func) {
+    public PyMethodDescr(PyType t, PyBuiltinCallable func) {
         name = func.info.getName();
         dtype = t;
         minargs = func.info.getMinargs();
@@ -50,7 +50,7 @@ public class PyMethodDescr extends PyDescriptor implements PyBuiltinFunction.Inf
     }
 
     public PyException unexpectedCall(int nargs, boolean keywords) {
-        return PyBuiltinFunction.DefaultInfo.unexpectedCall(nargs, keywords, name, minargs,
+        return PyBuiltinCallable.DefaultInfo.unexpectedCall(nargs, keywords, name, minargs,
                                                             maxargs);
     }
 

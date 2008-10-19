@@ -11,7 +11,7 @@ import org.python.core.PyInteger;
 import org.python.core.PyLong;
 import org.python.core.PyNewWrapper;
 import org.python.core.PyMethodDescr;
-import org.python.core.PyBuiltinFunction;
+import org.python.core.PyBuiltinCallable;
 import org.python.core.PyBuiltinMethod;
 import org.python.core.PyBuiltinMethodNarrow;
 import org.python.core.PyString;
@@ -60,7 +60,7 @@ public class PyDeque extends PyObject {
         }
         int nargs = args.length;
         if (nargs > 1) {
-            throw PyBuiltinFunction.DefaultInfo.unexpectedCall(nargs, false, "deque", 0, 1);
+            throw PyBuiltinCallable.DefaultInfo.unexpectedCall(nargs, false, "deque", 0, 1);
         } 
         if (nargs == 0) {
             return;

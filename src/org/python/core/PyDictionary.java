@@ -422,7 +422,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
     private void updateCommon(PyObject[] args, String[] keywords, String methName) {
         int nargs = args.length - keywords.length;
         if (nargs > 1) {
-            throw PyBuiltinFunction.DefaultInfo.unexpectedCall(nargs, false, methName, 0, 1);
+            throw PyBuiltinCallable.DefaultInfo.unexpectedCall(nargs, false, methName, 0, 1);
         }
         if (nargs == 1) {
             PyObject arg = args[0];

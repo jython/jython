@@ -8,7 +8,7 @@ public class PyClassMethodDescr extends PyMethodDescr {
 
     public static final PyType TYPE = PyType.fromClass(PyClassMethodDescr.class);
 
-    PyClassMethodDescr(PyType t, PyBuiltinFunction meth) {
+    PyClassMethodDescr(PyType t, PyBuiltinCallable meth) {
         super(t, meth);
     }
 

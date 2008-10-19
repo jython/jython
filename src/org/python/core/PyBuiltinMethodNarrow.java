@@ -1,7 +1,5 @@
 package org.python.core;
 
-import org.python.core.PyBuiltinFunction.DefaultInfo;
-
 public abstract class PyBuiltinMethodNarrow extends PyBuiltinMethod {
 
     protected PyBuiltinMethodNarrow(String name, int minArgs, int maxArgs) {
