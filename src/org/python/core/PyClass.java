@@ -2,6 +2,7 @@
 package org.python.core;
 
 import java.io.Serializable;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,7 +33,7 @@ public class PyClass extends PyObject {
 
     // Holds the classes for which this is a proxy
     // Only used when subclassing from a Java class
-    protected Class proxyClass;
+    protected Class<?> proxyClass;
 
     // xxx map 'super__*' names -> array of methods
     protected java.util.HashMap super__methods;
@@ -43,12 +44,12 @@ public class PyClass extends PyObject {
 
     /**
      * Create a python class.
-     * 
+     *
      * @param name name of the class.
      * @param bases A list of base classes.
      * @param dict The class dict. Normally this dict is returned by the class
      *            code object.
-     * 
+     *
      * @see org.python.core.Py#makeClass(String, PyObject[], PyCode, PyObject)
      */
     public PyClass(String name, PyTuple bases, PyObject dict) {
@@ -60,12 +61,12 @@ public class PyClass extends PyObject {
      * already have generated a proxyclass. If we do not have a pre-generated
      * proxyclass, the class initialization method will create such a proxyclass
      * if bases contain a java class.
-     * 
+     *
      * @param name name of the class.
      * @param bases A list of base classes.
      * @param dict The class dict. Normally this dict is returned by the class
      *            code object.
-     * 
+     *
      * @see org.python.core.Py#makeClass(String, PyObject[], PyCode, PyObject,
      *      Class)
      */
@@ -144,8 +145,7 @@ public class PyClass extends PyObject {
 
             super__methods = new java.util.HashMap();
 
-            for (int i = 0; i < proxy_methods.length; i++) {
-                java.lang.reflect.Method meth = proxy_methods[i];
+            for (Method meth : proxy_methods) {
                 String meth_name = meth.getName();
                 if (meth_name.startsWith("super__")) {
                     java.util.ArrayList samename = (java.util.ArrayList) super__methods
@@ -193,7 +193,7 @@ public class PyClass extends PyObject {
         }
     }
 
-    public Object __tojava__(Class c) {
+    public Object __tojava__(Class<?> c) {
         if ((c == Object.class || c == Class.class || c == Serializable.class)
                 && proxyClass != null) {
             return proxyClass;
@@ -208,9 +208,8 @@ public class PyClass extends PyObject {
         if (result == null && __bases__ != null) {
             int n = __bases__.__len__();
             for (int i = 0; i < n; i++) {
-                resolvedClass = (PyClass) (__bases__.__getitem__(i));
-                PyObject[] res = resolvedClass.lookupGivingClass(name,
-                        stop_at_java);
+                resolvedClass = (PyClass)(__bases__.__getitem__(i));
+                PyObject[] res = resolvedClass.lookupGivingClass(name, stop_at_java);
                 if (res[0] != null) {
                     return res;
                 }
@@ -284,8 +283,8 @@ public class PyClass extends PyObject {
     public void __rawdir__(PyDictionary accum) {
         addKeys(accum, "__dict__");
         PyObject[] bases = __bases__.getArray();
-        for (int i = 0; i < bases.length; i++) {
-            bases[i].__rawdir__(accum);
+        for (PyObject base : bases) {
+            base.__rawdir__(accum);
         }
     }
 

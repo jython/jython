@@ -1,6 +1,6 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
-import java.lang.reflect.*;
+import java.lang.reflect.Method;
 
 public class PyBeanEvent extends PyObject {
     public Method addMethod;
@@ -34,7 +34,7 @@ public class PyBeanEvent extends PyObject {
     }
 
     public String toString() {
-        return "<beanEvent "+__name__+" for event "+
-            eventClass.toString()+" "+Py.idstr(this)+">";
+        return "<beanEvent " + __name__ + " for event " + eventClass.toString() + " "
+                + Py.idstr(this) + ">";
     }
 }
