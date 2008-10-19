@@ -82,7 +82,23 @@ public class PyGenerator extends PyIterator {
             return;
         try {
             close();
+        } catch (PyException e) {
+            // PEP 342 specifies that if an exception is raised by close,
+            // we output to stderr and then forget about it;           
+            String className =  PyException.exceptionClassName(e.type);
+            int lastDot = className.lastIndexOf('.');
+            if (lastDot != -1) {
+                className = className.substring(lastDot + 1);
+            }
+            PyString m = Py.newString(
+                    String.format("Exception %s: %s in %s",
+                    className,
+                    e.value.__repr__().toString(),
+                    this.__repr__().toString()));
+            Py.println(Py.getSystemState().stderr, m);
         } catch (Throwable e) {
+            // but we currently ignore any Java exception completely. perhaps we
+            // can also output something meaningful too?
         } finally {
             super.finalize();
         }

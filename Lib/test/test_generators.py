@@ -867,7 +867,7 @@ These are fine:
 <type 'generator'>
 
 
->>> def f():
+>>> def f(): #doctest: +IGNORE_EXCEPTION_DETAIL, +NORMALIZE_WHITESPACE
 ...     if 0:
 ...         lambda x:  x        # shouldn't trigger here
 ...         return              # or here
@@ -1646,8 +1646,6 @@ exiting
 >>> g.close()           # close normally
 
 And finalization. But we have to force the timing of GC here, since we are running on Jython:
->>> import gc
->>> from time import sleep
 >>> def f():
 ...     try: yield
 ...     finally:
@@ -1655,7 +1653,7 @@ And finalization. But we have to force the timing of GC here, since we are runni
 
 >>> g = f()
 >>> g.next()
->>> del g; gc.collect(); sleep(1); gc.collect()
+>>> del g; extra_collect()
 exiting
 
 
@@ -1680,7 +1678,7 @@ Our ill-behaved code should be invoked during GC:
 >>> old, sys.stderr = sys.stderr, StringIO.StringIO()
 >>> g = f()
 >>> g.next()
->>> del g; gc.collect(); sleep(1); gc.collect()
+>>> del g; extra_collect()
 >>> sys.stderr.getvalue().startswith(
 ...     "Exception RuntimeError"
 ... )
@@ -1789,7 +1787,6 @@ to test.
 
 >>> import sys, StringIO
 >>> from time import sleep
->>> import gc
 >>> old = sys.stderr
 >>> try:
 ...     sys.stderr = StringIO.StringIO()
@@ -1798,7 +1795,7 @@ to test.
 ...             raise RuntimeError
 ...
 ...     l = Leaker()
-...     del l; gc.collect(); sleep(1); gc.collect()
+...     del l; extra_collect()
 ...     err = sys.stderr.getvalue().strip()
 ...     err.startswith(
 ...         "Exception RuntimeError in <"
@@ -1836,6 +1833,13 @@ __test__ = {"tut":      tutorial_tests,
 def test_main(verbose=None):
     from test import test_support, test_generators
     test_support.run_doctest(test_generators, verbose)
+
+def extra_collect():
+    import gc
+    from time import sleep
+
+    gc.collect(); sleep(1); gc.collect(); sleep(0.1); gc.collect()
+
 
 # This part isn't needed for regrtest, but for running the test directly.
 if __name__ == "__main__":
