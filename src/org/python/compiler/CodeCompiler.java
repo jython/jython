@@ -1589,6 +1589,8 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
             
             code.aload(argArray);
             code.aload(strArray);
+            code.freeLocal(argArray);
+            code.freeLocal(strArray);
             code.dup2_x2();
             code.pop2();
             
