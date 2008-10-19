@@ -20,7 +20,7 @@ import java.io.IOException
 from java.lang import System
 import os
 
-from org.python.core.util.StringUtil import asPyString
+from org.python.core.Py import newString as asPyString
 
 
 def _tostr(s, method):

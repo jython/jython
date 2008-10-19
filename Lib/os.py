@@ -48,7 +48,7 @@ import sys
 from java.io import File
 from org.python.core import PyFile
 from org.python.core.io import FileDescriptors, FileIO, IOBase
-from org.python.core.util.StringUtil import asPyString
+from org.python.core.Py import newString as asPyString
 
 # Mapping of: os._name: [name list, shell command list]
 _os_map = dict(nt=[

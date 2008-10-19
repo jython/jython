@@ -5,7 +5,6 @@ import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 
 import org.python.core.Py;
-import org.python.core.PyString;
 
 /**
  * String Utility methods.
@@ -84,8 +83,4 @@ public class StringUtil {
         chars[0] = Character.toLowerCase(c0);
         return new String(chars);
     }
-
-    public static PyString asPyString(String string) {
-        return new PyString(string);
-}
 }

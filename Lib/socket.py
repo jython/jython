@@ -81,7 +81,7 @@ import javax.net.ssl.SSLSocketFactory
 import org.python.core.io.DatagramSocketIO
 import org.python.core.io.ServerSocketIO
 import org.python.core.io.SocketIO
-from org.python.core.util.StringUtil import asPyString
+from org.python.core.Py import newString as asPyString
 
 class error(Exception): pass
 class herror(error): pass
