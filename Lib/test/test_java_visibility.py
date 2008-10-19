@@ -8,15 +8,21 @@ class VisibilityTest(unittest.TestCase):
         self.assertEquals([], dir(Invisible))
 
     def test_protected_from_python_subclass(self):
-        class SubInvisible(Invisible):
-            pass
+        class SubVisible(Visible):
+            def __init__(self, publicValue=None):
+                if publicValue is not None:
+                    Visible.__init__(self, publicValue)
+                else:
+                    Visible.__init__(self)
         # TODO - protectedStaticMethod, protectedStaticField, and protectedField should
         # be here
-        s = SubInvisible()
+        s = SubVisible()
         self.assertEquals(Results.PROTECTED_METHOD, s.protectedMethod(0))
+        self.assertEquals(Results.OVERLOADED_PROTECTED_METHOD, s.protectedMethod('foo'))
+        self.assertEquals(Results.UNUSED, SubVisible(Results.UNUSED).visibleField)
 
     def test_visible(self):
-        self.assertEquals(4, len(dir(Visible)))
+        self.assertEquals(5, len(dir(Visible)))
 
         v = Visible()
         self.assertEquals(Results.PUBLIC_FIELD, v.visibleField)
