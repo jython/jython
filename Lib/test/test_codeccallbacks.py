@@ -589,7 +589,7 @@ class CodecCallbackTest(unittest.TestCase):
                 ("ascii", "\xff"),
                 ("utf-8", "\xff"),
                 ("utf-7", "+x-"),
-                ("unicode-internal", "\x00"),
+                # ("unicode-internal", "\x00"), - not valid for Jython because PyUnicode/PyString share internal representation
             ):
                 self.assertRaises(
                     TypeError,
@@ -794,6 +794,9 @@ class CodecCallbackTest(unittest.TestCase):
             text.translate(charmap)
 
 def test_main():
+    if test.test_support.is_jython:
+        del CodecCallbackTest.test_decodeunicodeinternal # PyUnicode/PyString share the same internal rep, so n/a
+
     test.test_support.run_unittest(CodecCallbackTest)
 
 if __name__ == "__main__":

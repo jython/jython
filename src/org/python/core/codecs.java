@@ -243,9 +243,17 @@ public class codecs {
         ArgParser ap = new ArgParser("replace_errors", args, kws, "exc");
         PyObject exc = ap.getPyObject(0);
         if (Py.isInstance(exc, Py.UnicodeDecodeError)) {
+            PyObject object = exc.__getattr__("object");
+            if (!Py.isInstance(object, PyString.TYPE) || Py.isInstance(object, PyUnicode.TYPE)) {
+                throw Py.TypeError("object attribute must be str");        
+            }
             PyObject end = exc.__getattr__("end");
             return new PyTuple(new PyUnicode(Py_UNICODE_REPLACEMENT_CHARACTER), end);
         } else if (Py.isInstance(exc, Py.UnicodeEncodeError)) {
+            PyObject object = exc.__getattr__("object");
+            if (!Py.isInstance(object, PyUnicode.TYPE)) {
+                throw Py.TypeError("object attribute must be unicode");        
+            }
             PyObject end = exc.__getattr__("end");
             return new PyTuple(Py.java2py("?"), end);
         } else if (Py.isInstance(exc, Py.UnicodeTranslateError)) {
@@ -343,9 +351,9 @@ public class codecs {
     }
 
     private static void backslashreplace_internal(int start, int end, String object, StringBuilder replacement) {
-        for (int i = start; i < end; i++) {
+        for (Iterator<Integer> iter = new StringSubsequenceIterator(object, start, end, 1); iter.hasNext();) {
+            int c = iter.next();
             replacement.append('\\');
-            char c = object.charAt(i);
             if (c >= 0x00010000) {
                 replacement.append('U');
                 replacement.append(hexdigits[(c >> 28) & 0xf]);
@@ -1255,5 +1263,77 @@ public class codecs {
         if (!(replacement instanceof PyTuple) || replacement.__len__() != 2 || !(replacement.__getitem__(0) instanceof PyBaseString) || !(replacement.__getitem__(1) instanceof PyInteger)) {
             throw new PyException(Py.TypeError, "error_handler " + errors + " must return a tuple of (replacement, new position)");
         }
+    }
+}
+
+
+class StringSubsequenceIterator implements Iterator {
+
+    private final String s;
+    private int current,  k,  start,  stop,  step;
+
+    StringSubsequenceIterator(String s, int start, int stop, int step) {
+//        System.out.println("s=" + s.length() + ",start=" + start + ",stop=" + stop);
+        this.s = s;
+        k = 0;
+        current = start;
+        this.start = start;
+        this.stop = stop;
+        this.step = step;
+      
+        // this bounds checking is necessary to convert between use of code units elsewhere, and codepoints here
+        // it would be nice if it were unnecessary!
+        int count = getCodePointCount(s);
+        if (start >= count) {
+            this.stop = -1;
+        }
+        else if (stop >= count) {
+            this.stop = count;
+        }
+        
+        for (int i = 0; i < start; i++) {
+            nextCodePoint();
+        }
+    }
+
+    StringSubsequenceIterator(String s) {
+        this(s, 0, getCodePointCount(s), 1);
+    }
+
+    private static int getCodePointCount(String s) {
+        return s.codePointCount(0, s.length());
+    }
+    
+    public boolean hasNext() {
+        return current < stop;
+    }
+
+    public Object next() {
+        int codePoint = nextCodePoint();
+        current += 1;
+        for (int j = 1; j < step && hasNext(); j++) {
+            nextCodePoint();
+            current += 1;
+        }
+        return codePoint;
+    }
+
+    private int nextCodePoint() {
+        int U;
+//        System.out.println("k=" + k);
+        int W1 = s.charAt(k);
+        if (W1 >= 0xD800 && W1 < 0xDC00) {
+            int W2 = s.charAt(k + 1);
+            U = (((W1 & 0x3FF) << 10) | (W2 & 0x3FF)) + 0x10000;
+            k += 2;
+        } else {
+            U = W1;
+            k += 1;
+        }
+        return U;
+    }
+
+    public void remove() {
+        throw new UnsupportedOperationException("Not supported on String objects (immutable)");
     }
 }

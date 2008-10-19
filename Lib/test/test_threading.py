@@ -1,7 +1,7 @@
 # Very rudimentary test of threading module
 
 import test.test_support
-from test.test_support import verbose
+from test.test_support import verbose, is_jython
 import random
 import sys
 import threading
@@ -118,7 +118,7 @@ class ThreadTests(unittest.TestCase):
     # 3. This behavior doesn't make sense for Jython since any foreign
     #    Java threads can use the same underlying locks, etc
 
-    def na_for_jython_test_foreign_thread(self):
+    def test_foreign_thread(self):
         # Check that a "foreign" thread can use the threading module.
         def f(mutex):
             # Acquiring an RLock forces an entry for the foreign
@@ -208,7 +208,7 @@ class ThreadTests(unittest.TestCase):
             t.join()
         # else the thread is still running, and we have no way to kill it
 
-    def na_for_jython_test_enumerate_after_join(self):
+    def test_enumerate_after_join(self):
         # Try hard to trigger #1703448: a thread is still returned in
         # threading.enumerate() after it has been join()ed.
         enum = threading.enumerate
@@ -225,6 +225,10 @@ class ThreadTests(unittest.TestCase):
         finally:
             sys.setcheckinterval(old_interval)
 
+if is_jython:
+    del ThreadTests.test_enumerate_after_join
+    del ThreadTests.test_foreign_thread
+    del ThreadTests.test_PyThreadState_SetAsyncExc
 
 def test_main():
     test.test_support.run_unittest(ThreadTests)

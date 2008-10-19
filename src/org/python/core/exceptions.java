@@ -381,7 +381,7 @@ public class exceptions implements ClassDictInit {
         if (end == (start + 1)) {
             PyObject object = self.__getattr__("object");
             int badByte = (object.toString().charAt(start)) & 0xff;
-            result = String.format("'%.400s' codec can't decode byte 0x%s in position %d: %.400s",
+            result = String.format("'%.400s' codec can't decode byte 0x%x in position %d: %.400s",
                                    encoding, badByte, start, reason);
         } else {
             result = String.format("'%.400s' codec can't decode bytes in position %d-%d: %.400s",
@@ -413,7 +413,7 @@ public class exceptions implements ClassDictInit {
         String result;
         if (end == (start + 1)) {
             PyObject object = self.__getattr__("object");
-            int badchar = object.toString().charAt(start);
+            int badchar = object.toString().codePointAt(start);
             String badcharStr;
             if (badchar <= 0xff) {
                 badcharStr = String.format("x%02x", badchar);
@@ -460,7 +460,7 @@ public class exceptions implements ClassDictInit {
 
         String result;
         if (end == (start + 1)) {
-            int badchar = (self.__getattr__("object").toString().charAt(start));
+            int badchar = (self.__getattr__("object").toString().codePointAt(start));
             String badCharStr;
             if (badchar <= 0xff) {
                 badCharStr = String.format("x%02x", badchar);

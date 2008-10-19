@@ -41,6 +41,10 @@ def init(path):
             cols = row.split(';')
             codepoint = int(cols[0], 16)
             name = cols[1]
+            if name == '<CJK Ideograph, Last>':
+                lookup_name = 'CJK UNIFIED IDEOGRAPH'
+            else:
+                lookup_name = name
             data = (
                 cols[2],
                 get_int(cols[3]),
@@ -49,7 +53,9 @@ def init(path):
                 get_int(cols[6]),
                 get_int(cols[7]),
                 get_numeric(cols[8]),
-                get_yn(cols[9]))
+                get_yn(cols[9]),
+                lookup_name,
+                )
 
             if name.find('First') >= 0:
                 start = codepoint
@@ -86,14 +92,26 @@ my_path = os.path.dirname(__file__)
 init(my_path)
 init_east_asian_width(my_path)
 
+# xxx - need to normalize the segments, so
+# <CJK Ideograph, Last> ==> CJK UNIFIED IDEOGRAPH;
+# may need to do some sort of analysis against CPython for the normalization!
+
 def name(unichr, default=None):
-    try:
-        return _codepoints[ord(unichr)].name
-    except KeyError:
-        if default is not None:
+    codepoint = get_codepoint(unichr, "name")
+    v = _codepoints.get(codepoint, None)
+    if v is None:
+        v = check_segments(codepoint, _segments)
+        if v is not None:
+            return "%s-%X" % (v[8], codepoint) 
+
+    if v is None:
+        if default is not Nonesuch:
             return default
-        else:
-            raise ValueError()
+        raise ValueError()
+    return v[8]
+
+# xxx - also need to add logic here so that if it's CJK UNIFIED
+# IDEOGRAPH-8000, we go against the segment to verify the prefix
 
 def lookup(name):
     return _names[name]
