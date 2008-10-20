@@ -800,7 +800,7 @@ compound_stmt
     | for_stmt
     | try_stmt
     | with_stmt
-    | funcdef
+    | (decorators? DEF) => funcdef
     | classdef
     ;
 
@@ -1421,10 +1421,16 @@ classdef
 @after {
    $classdef.tree = stype;
 }
-    : CLASS NAME (LPAREN testlist[expr_contextType.Load]? RPAREN)? COLON suite[false]
+    : decorators? CLASS NAME (LPAREN testlist[expr_contextType.Load]? RPAREN)? COLON suite[false]
       {
-          stype = new ClassDef($CLASS, actions.cantBeNone($NAME), actions.makeBases(actions.castExpr($testlist.tree)),
-              actions.castStmts($suite.stypes));
+          Token t = $CLASS;
+          if ($decorators.start != null) {
+              t = $decorators.start;
+          }
+          stype = new ClassDef(t, actions.cantBeNone($NAME),
+              actions.makeBases(actions.castExpr($testlist.tree)),
+              actions.castStmts($suite.stypes),
+              actions.castExprs($decorators.etypes));
       }
     ;
 

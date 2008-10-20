@@ -489,14 +489,15 @@ public class GrammarActions {
         return new Interactive(t, s);
     }
 
-    stmtType makeClassDef(PythonTree t, PythonTree nameToken, List bases, List body) {
+    stmtType makeClassDef(PythonTree t, PythonTree nameToken, List bases, List body, List decorators) {
         if (nameToken == null) {
             return errorHandler.errorStmt(t);
         }
         cantBeNone(nameToken);
         exprType[] b = castExprs(bases);
         stmtType[] s = castStmts(body);
-        return new ClassDef(t, nameToken.getText(), b, s);
+	exprType[] d = castExprs(decorators);
+        return new ClassDef(t, nameToken.getText(), b, s, d);
     }
 
     stmtType makeTryExcept(PythonTree t, List body, List handlers, List orelse, List finBody) {

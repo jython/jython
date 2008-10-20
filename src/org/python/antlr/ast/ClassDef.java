@@ -10,11 +10,13 @@ public class ClassDef extends stmtType {
     public String name;
     public exprType[] bases;
     public stmtType[] body;
+    public exprType[] decorators;
 
-    public static final String[] _fields = new String[] {"name","bases","body"};
+    public static final String[] _fields = new String[]
+    {"name","bases","body","decorators"};
 
     public ClassDef(Token token, String name, exprType[] bases, stmtType[]
-    body) {
+    body, exprType[] decorators) {
         super(token);
         this.name = name;
         this.bases = bases;
@@ -29,10 +31,16 @@ public class ClassDef extends stmtType {
                 addChild(body[ibody]);
             }
         }
+        this.decorators = decorators;
+        if (decorators != null) {
+            for(int idecorators=0;idecorators<decorators.length;idecorators++) {
+                addChild(decorators[idecorators]);
+            }
+        }
     }
 
     public ClassDef(int ttype, Token token, String name, exprType[] bases,
-    stmtType[] body) {
+    stmtType[] body, exprType[] decorators) {
         super(ttype, token);
         this.name = name;
         this.bases = bases;
@@ -47,10 +55,16 @@ public class ClassDef extends stmtType {
                 addChild(body[ibody]);
             }
         }
+        this.decorators = decorators;
+        if (decorators != null) {
+            for(int idecorators=0;idecorators<decorators.length;idecorators++) {
+                addChild(decorators[idecorators]);
+            }
+        }
     }
 
     public ClassDef(PythonTree tree, String name, exprType[] bases, stmtType[]
-    body) {
+    body, exprType[] decorators) {
         super(tree);
         this.name = name;
         this.bases = bases;
@@ -63,6 +77,12 @@ public class ClassDef extends stmtType {
         if (body != null) {
             for(int ibody=0;ibody<body.length;ibody++) {
                 addChild(body[ibody]);
+            }
+        }
+        this.decorators = decorators;
+        if (decorators != null) {
+            for(int idecorators=0;idecorators<decorators.length;idecorators++) {
+                addChild(decorators[idecorators]);
             }
         }
     }
@@ -81,6 +101,9 @@ public class ClassDef extends stmtType {
         sb.append(",");
         sb.append("body=");
         sb.append(dumpThis(body));
+        sb.append(",");
+        sb.append("decorators=");
+        sb.append(dumpThis(decorators));
         sb.append(",");
         sb.append(")");
         return sb.toString();
@@ -101,6 +124,12 @@ public class ClassDef extends stmtType {
             for (int i = 0; i < body.length; i++) {
                 if (body[i] != null)
                     body[i].accept(visitor);
+            }
+        }
+        if (decorators != null) {
+            for (int i = 0; i < decorators.length; i++) {
+                if (decorators[i] != null)
+                    decorators[i].accept(visitor);
             }
         }
     }

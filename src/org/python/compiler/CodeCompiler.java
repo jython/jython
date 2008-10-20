@@ -422,19 +422,18 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         }
 
         set(new Name(node, node.name, expr_contextType.Store));
-        doDecorators(node);
+        doDecorators(node, node.decorators, node.name);
         return null;
     }
 
-    private void doDecorators(FunctionDef func) throws Exception {
-        if (func.decorators.length > 0) {
-            exprType currentExpr = new Name(func, func.name, expr_contextType.Load);
-            exprType[] decs = func.decorators;
+    private void doDecorators(stmtType node, exprType[] decs, String name) throws Exception {
+        if (decs.length > 0) {
+            exprType currentExpr = new Name(node, name, expr_contextType.Load);
             for (int i=decs.length - 1;i > -1;i--) {
-                currentExpr = new Call(func, decs[i], new exprType[]{currentExpr}, new keywordType[0], null, null);
+                currentExpr = new Call(node, decs[i], new exprType[]{currentExpr}, new keywordType[0], null, null);
             }
             visit(currentExpr);
-            set(new Name(func, func.name, expr_contextType.Store));
+            set(new Name(node, name, expr_contextType.Store));
         }
     }
 
@@ -2007,6 +2006,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
 
         //Assign this new class to the given name
         set(new Name(node, node.name, expr_contextType.Store));
+        doDecorators(node, node.decorators, node.name);
         return null;
     }
 

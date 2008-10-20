@@ -168,14 +168,15 @@ def run_tests():
                                 (eval_tests, eval_results, "eval")):
         for i, o in itertools.izip(input, output):
             ast_tree = compile(i, "?", kind, 0x400)
-            assert to_tuple(ast_tree) == o
+            assert to_tuple(ast_tree) == o, "expected %s, got %s" % (
+                o, to_tuple(ast_tree))
             test_order(ast_tree, (0, 0))
 
 # XXX: AugStore added for Jython.  Short term it is too hard to emit just "Store" as CPython does.
 #### EVERYTHING BELOW IS GENERATED #####
 exec_results = [
 ('Module', [('FunctionDef', (1, 0), 'f', ('arguments', [], None, None, []), [('Pass', (1, 9))], [])]),
-('Module', [('ClassDef', (1, 0), 'C', [], [('Pass', (1, 8))])]),
+('Module', [('ClassDef', (1, 0), 'C', [], [('Pass', (1, 8))],[])]),
 ('Module', [('FunctionDef', (1, 0), 'f', ('arguments', [], None, None, []), [('Return', (1, 8), ('Num', (1, 15), 1))], [])]),
 ('Module', [('Delete', (1, 0), [('Name', (1, 4), 'v', ('Del',))])]),
 ('Module', [('Assign', (1, 0), [('Name', (1, 0), 'v', ('Store',))], ('Num', (1, 4), 1))]),
