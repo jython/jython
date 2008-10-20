@@ -5,6 +5,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectStreamException;
 import java.io.OutputStream;
@@ -19,12 +20,12 @@ import java.util.Calendar;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.python.antlr.ast.modType;
 import org.python.compiler.Module;
 import org.python.core.adapter.ClassicPyObjectAdapter;
 import org.python.core.adapter.ExtensiblePyObjectAdapter;
 import org.python.core.util.StringUtil;
 import org.python.modules.errno;
-import org.python.antlr.ast.modType;
 
 public final class Py {
 
@@ -80,7 +81,7 @@ public final class Py {
     public static PyString Space;
     /** Set if the type object is dynamically allocated */
     public static long TPFLAGS_HEAPTYPE;
-    
+
     /** Builtin types that are used to setup PyObject. */
     static final Set<Class> BOOTSTRAP_TYPES = new HashSet<Class>(4);
     static {
@@ -353,7 +354,7 @@ public final class Py {
     public static void FutureWarning(String message) {
         warning(FutureWarning, message);
     }
-    
+
     public static PyObject ImportWarning;
     public static void ImportWarning(String message) {
     	warning(ImportWarning, message);
@@ -569,17 +570,17 @@ public final class Py {
     }
 
     static PyObject newUnicode(int codepoint) {
-        return (PyUnicode) makeCharacter(codepoint, true);
+        return makeCharacter(codepoint, true);
     }
 
     public static PyUnicode newUnicode(String s) {
         return new PyUnicode(s);
     }
-    
+
     public static PyUnicode newUnicode(String s, boolean isBasic) {
         return new PyUnicode(s, isBasic);
     }
-    
+
     public static PyBoolean newBoolean(boolean t) {
         return t ? Py.True : Py.False;
     }
@@ -752,7 +753,7 @@ public final class Py {
         // Pre-initialize the PyJavaClass for OutOfMemoryError so when we need
         // it it creating the pieces for it won't cause an additional out of
         // memory error.  Fix for bug #1654484
-        PyJavaClass.lookup(java.lang.OutOfMemoryError.class);
+        PyJavaClass.lookup(OutOfMemoryError.class);
     }
     public static PySystemState defaultSystemState;
     // This is a hack to get initializations to work in proper order
@@ -889,11 +890,11 @@ public final class Py {
         }
         instance.__init__(pargs, Py.NoKeywords);
     }
-    
+
     /**
      * Initializes a default PythonInterpreter and runs the code from
      * {@link PyRunnable#getMain} as __main__
-     * 
+     *
      * Called by the code generated in {@link Module#addMain()}
      */
     public static void runMain(PyRunnable main, String[] args) throws Exception {
@@ -1136,14 +1137,14 @@ public final class Py {
         // java.io.IOExceptions.  This is a hack for 1.0.x until I can do
         // it right in 1.1
         if (exc == Py.IOError) {
-            if (__builtin__.isinstance(pye.value, PyJavaClass.lookup(java.io.IOException.class))) {
+            if (__builtin__.isinstance(pye.value, PyJavaClass.lookup(IOException.class))) {
                 return true;
             }
         }
         // FIXME too, same approach for OutOfMemoryError
         if (exc == Py.MemoryError) {
             if (__builtin__.isinstance(pye.value,
-                                      PyJavaClass.lookup(java.lang.OutOfMemoryError.class))) {
+                                      PyJavaClass.lookup(OutOfMemoryError.class))) {
                 return true;
             }
         }
@@ -1226,7 +1227,7 @@ public final class Py {
         }
         Py.runCode(code, locals, globals);
     }
-    
+
     private final static ThreadStateMapping threadStateMapping = new ThreadStateMapping();
 
     public static final ThreadState getThreadState() {
@@ -1464,7 +1465,7 @@ public final class Py {
 
     /**
      * Uses the PyObjectAdapter passed to {@link PySystemState#initialize} to turn o into a PyObject.
-     * 
+     *
      * @see ClassicPyObjectAdapter - default PyObjectAdapter type
      */
     public static PyObject java2py(Object o) {
@@ -1483,7 +1484,7 @@ public final class Py {
 
     /**
      * Set the ExtensiblePyObjectAdapter used by java2py.
-     * 
+     *
      * @param adapter The new ExtensiblePyObjectAdapter
      */
     protected static void setAdapter(ExtensiblePyObjectAdapter adapter) {
@@ -1530,7 +1531,7 @@ public final class Py {
 
     /**
      * Create a new Python class.
-     * 
+     *
      * @param name the String name of the class
      * @param bases an array of PyObject base classes
      * @param dict the class's namespace, containing the class body
@@ -1677,8 +1678,8 @@ public final class Py {
         }
         return Py.compile_flags(node, getName(), filename, true, printResults, cflags);
     }
-   
-    public static PyObject compile_flags(modType node, String filename, 
+
+    public static PyObject compile_flags(modType node, String filename,
             String kind, CompilerFlags cflags) {
         boolean printResults = false;
         if (kind.equals("single")) {
@@ -1686,16 +1687,16 @@ public final class Py {
         }
         return Py.compile_flags(node, getName(), filename, true, printResults, cflags);
     }
-    
+
     public static PyObject compile_flags(String data,
             String filename,
             String kind,
             CompilerFlags cflags) {
-        
+
         if (data.contains("\0")) {
             throw Py.TypeError("compile() expected string without null bytes");
         }
-        
+
         byte[] bytes;
         if (cflags != null && cflags.dont_imply_dedent) {
             bytes = StringUtil.toBytes(data + "\n");
@@ -1894,7 +1895,7 @@ public final class Py {
             return abstract_issubclass(icls, cls);
         }
     }
-    
+
     public static boolean isSubClass(PyObject derived,PyObject cls) {
         return isSubClass(derived, cls, 0);
     }

@@ -27,7 +27,6 @@ import org.python.expose.TypeBuilder;
 
 /**
  * The Python Type object implementation.
- *
  */
 @ExposedType(name = "type")
 public class PyType extends PyObject implements Serializable {
@@ -54,7 +53,7 @@ public class PyType extends PyObject implements Serializable {
     private long tp_flags;
 
     /** The underlying java class or null. */
-    private Class underlying_class;
+    private Class<?> underlying_class;
 
     /** Whether it's a builtin type. */
     boolean builtin = false;
@@ -79,20 +78,23 @@ public class PyType extends PyObject implements Serializable {
     private ReferenceQueue<PyType> subclasses_refq = new ReferenceQueue<PyType>();
     private HashSet<WeakReference<PyType>> subclasses = new HashSet<WeakReference<PyType>>();
 
-    private final static Class[] O = {PyObject.class};
-    private final static Class[] OO = {PyObject.class, PyObject.class};
+    private final static Class<?>[] O = {PyObject.class};
+    private final static Class<?>[] OO = {PyObject.class, PyObject.class};
 
     /** Mapping of Java classes to their PyTypes. */
-    private static HashMap<Class, PyType> class_to_type;
+    private static Map<Class<?>, PyType> class_to_type;
 
     /** Mapping of Java classes to their TypeBuilders. */
-    private static HashMap<Class, TypeBuilder> classToBuilder;
+    private static Map<Class<?>, TypeBuilder> classToBuilder;
 
-    private PyType() {
-    }
+    private PyType() {}
 
-    private PyType(boolean dummy) {
-        super(true);
+    /**
+     * Creates the PyType instance for type itself. The argument just exists to make the constructor
+     * distinct.
+     */
+    private PyType(boolean ignored) {
+        super(ignored);
     }
 
     PyType(PyType subtype) {
@@ -288,7 +290,7 @@ public class PyType extends PyObject implements Serializable {
         return newobj;
     }
 
-    private static void fillFromClass(PyType newtype, String name, Class c, Class base,
+    private static void fillFromClass(PyType newtype, String name, Class<?> c, Class<?> base,
                                       TypeBuilder tb) {
         if (base == null) {
             base = c.getSuperclass();
@@ -333,7 +335,7 @@ public class PyType extends PyObject implements Serializable {
         newtype.dict = dict;
     }
 
-    private static void fillInClassic(Class c, Class<?> base, PyObject dict) {
+    private static void fillInClassic(Class<?> c, Class<?> base, PyObject dict) {
         if (Py.BOOTSTRAP_TYPES.contains(c)) {
             // BOOTSTRAP_TYPES will be filled in by addBuilder later
             return;
@@ -341,7 +343,7 @@ public class PyType extends PyObject implements Serializable {
         Map<String, Object> propnames = new HashMap<String, Object>();
         Method[] methods = c.getMethods();
         for (Method meth : methods) {
-            Class declaring = meth.getDeclaringClass();
+            Class<?> declaring = meth.getDeclaringClass();
             if (declaring != base && base.isAssignableFrom(declaring) && !ignore(meth)) {
                 String methname = meth.getName();
                 String nmethname = normalize_name(methname);
@@ -377,11 +379,11 @@ public class PyType extends PyObject implements Serializable {
         }
         Field[] fields = c.getFields();
         for (Field field : fields) {
-            Class declaring = field.getDeclaringClass();
+            Class<?> declaring = field.getDeclaringClass();
             if (declaring != base && base.isAssignableFrom(declaring)) {
                 String fldname = field.getName();
                 int fldmods = field.getModifiers();
-                Class fldtype = field.getType();
+                Class<?> fldtype = field.getType();
                 if (Modifier.isStatic(fldmods)) {
                     if (fldname.startsWith("__doc__") && fldname.length() > 7
                             && fldtype == PyString.class) {
@@ -409,7 +411,7 @@ public class PyType extends PyObject implements Serializable {
             }
             Method getter = null;
             Method setter = null;
-            Class proptype = null;
+            Class<?> proptype = null;
             getter = get_non_static_method(c, "get" + propname, new Class[] {});
             if (getter == null)
                 getter = get_non_static_method(c, "is" + propname, new Class[] {});
@@ -430,10 +432,10 @@ public class PyType extends PyObject implements Serializable {
                 // XXX error
             }
         }
-        Constructor[] ctrs = c.getConstructors();
+        Constructor<?>[] ctrs = c.getConstructors();
         if (ctrs.length != 0) {
             final PyReflectedConstructor reflctr = new PyReflectedConstructor("_new_impl");
-            for (Constructor ctr : ctrs) {
+            for (Constructor<?> ctr : ctrs) {
                 reflctr.addConstructor(ctr);
             }
             PyObject new_ = new PyNewWrapper(c, "__new__", -1, -1) {
@@ -446,16 +448,15 @@ public class PyType extends PyObject implements Serializable {
         }
         if (ClassDictInit.class.isAssignableFrom(c) && c != ClassDictInit.class) {
             try {
-                @SuppressWarnings("unchecked")
                 Method m = c.getMethod("classDictInit", PyObject.class);
-                m.invoke(null, new Object[] {dict});
+                m.invoke(null, dict);
             } catch (Exception exc) {
                 throw error(exc);
             }
         }
     }
 
-    private static void fillInMRO(PyType type, Class base) {
+    private static void fillInMRO(PyType type, Class<?> base) {
         PyType[] mro;
         if (base == Object.class) {
             mro = new PyType[] {type};
@@ -564,7 +565,7 @@ public class PyType extends PyObject implements Serializable {
                 }
             }
         } catch (PyException t) {
-            for (Iterator it = savedSubMros.iterator(); it.hasNext();) {
+            for (Iterator<Object> it = savedSubMros.iterator(); it.hasNext();) {
                 PyType subtype = (PyType)it.next();
                 PyObject[] subtypeSavedMro = (PyObject[])it.next();
                 subtype.mro = subtypeSavedMro;
@@ -633,7 +634,7 @@ public class PyType extends PyObject implements Serializable {
     }
 
     private void cleanup_subclasses() {
-        Reference ref;
+        Reference<?> ref;
         while ((ref = subclasses_refq.poll()) != null) {
             subclasses.remove(ref);
         }
@@ -1017,7 +1018,7 @@ public class PyType extends PyObject implements Serializable {
         return Py.JavaError(e);
     }
 
-    private static Method get_non_static_method(Class<?> c, String name, Class[] parmtypes) {
+    private static Method get_non_static_method(Class<?> c, String name, Class<?>[] parmtypes) {
         try {
             Method meth = c.getMethod(name, parmtypes);
             if (!Modifier.isStatic(meth.getModifiers())) {
@@ -1029,7 +1030,7 @@ public class PyType extends PyObject implements Serializable {
         return null;
     }
 
-    private static Method get_descr_method(Class c, String name, Class[] parmtypes) {
+    private static Method get_descr_method(Class<?> c, String name, Class<?>[] parmtypes) {
         Method meth = get_non_static_method(c, name, parmtypes);
         if (meth != null && meth.getDeclaringClass() != PyObject.class) {
             return meth;
@@ -1038,8 +1039,8 @@ public class PyType extends PyObject implements Serializable {
     }
 
     private static boolean ignore(Method meth) {
-        Class[] exceptions = meth.getExceptionTypes();
-        for (Class exception : exceptions) {
+        Class<?>[] exceptions = meth.getExceptionTypes();
+        for (Class<?> exception : exceptions) {
             if (exception == PyIgnoreMethodTag.class) {
                 return true;
             }
@@ -1047,9 +1048,9 @@ public class PyType extends PyObject implements Serializable {
         return false;
     }
 
-    public static void addBuilder(Class forClass, TypeBuilder builder) {
+    public static void addBuilder(Class<?> forClass, TypeBuilder builder) {
         if (classToBuilder == null) {
-            classToBuilder = new HashMap<Class, TypeBuilder>();
+            classToBuilder = new HashMap<Class<?>, TypeBuilder>();
         }
         classToBuilder.put(forClass, builder);
 
@@ -1063,7 +1064,7 @@ public class PyType extends PyObject implements Serializable {
             PyType objType = fromClass(builder.getTypeClass());
             objType.name = builder.getName();
             objType.dict = builder.getDict(objType);
-            Class base = builder.getBase();
+            Class<?> base = builder.getBase();
             if (base == Object.class) {
                 base = forClass.getSuperclass();
             }
@@ -1072,13 +1073,13 @@ public class PyType extends PyObject implements Serializable {
         }
     }
 
-    private static PyType addFromClass(Class c) {
+    private static PyType addFromClass(Class<?> c) {
         if (ExposeAsSuperclass.class.isAssignableFrom(c)) {
             PyType exposedAs = fromClass(c.getSuperclass());
             class_to_type.put(c, exposedAs);
             return exposedAs;
         }
-        Class base = null;
+        Class<?> base = null;
         String name = null;
         TypeBuilder tb = classToBuilder == null ? null : classToBuilder.get(c);
         if (tb != null) {
@@ -1089,16 +1090,16 @@ public class PyType extends PyObject implements Serializable {
         }
         PyType newtype = class_to_type.get(c);
         if (newtype == null) {
-            newtype = c == PyType.class ? new PyType(true) : new PyType();
+            newtype = c == PyType.class ? new PyType(false) : new PyType();
             class_to_type.put(c, newtype);
             fillFromClass(newtype, name, c, base, tb);
         }
         return newtype;
     }
 
-    public static synchronized PyType fromClass(Class c) {
+    public static synchronized PyType fromClass(Class<?> c) {
         if (class_to_type == null) {
-            class_to_type = new HashMap<Class, PyType>();
+            class_to_type = new HashMap<Class<?>, PyType>();
             addFromClass(PyType.class);
         }
         PyType type = class_to_type.get(c);
@@ -1333,7 +1334,7 @@ public class PyType extends PyObject implements Serializable {
         return doc;
     }
 
-    public Object __tojava__(Class c) {
+    public Object __tojava__(Class<?> c) {
         if (underlying_class != null && (c == Object.class || c == Class.class ||
                                          c == Serializable.class)) {
             return underlying_class;
@@ -1429,19 +1430,20 @@ public class PyType extends PyObject implements Serializable {
         return new TypeResolver(underlying_class, getModule().toString(), name);
     }
 
-    public static interface Newstyle {
-    }
-
     private interface OnType {
+
         boolean onType(PyType type);
     }
 
     static class TypeResolver implements Serializable {
-        private Class underlying_class;
-        private String module;
+
+        private Class<?> underlying_class;
+
+        String module;
+
         private String name;
 
-        TypeResolver(Class underlying_class, String module, String name) {
+        TypeResolver(Class<?> underlying_class, String module, String name) {
             this.underlying_class = underlying_class;
             this.module = module;
             this.name = name;

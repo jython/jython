@@ -21,18 +21,18 @@ import org.python.expose.ExposedType;
  */
 @ExposedType(name = "object")
 public class PyObject implements Serializable {
-    
+
     public static final PyType TYPE = PyType.fromClass(PyObject.class);
-    
+
     @ExposedNew
     @ExposedMethod
     final void object___init__(PyObject[] args, String[] keywords) {
-// XXX: attempted fix for object(foo=1), etc        
-// XXX: this doesn't work for metaclasses, for some reason        
+// XXX: attempted fix for object(foo=1), etc
+// XXX: this doesn't work for metaclasses, for some reason
 //        if (args.length > 0) {
 //            throw Py.TypeError("default __new__ takes no parameters");
 //        }
-    
+
     }
 
     private PyType objtype;
@@ -77,16 +77,17 @@ public class PyObject implements Serializable {
         this.objtype = objtype;
     }
 
-    // A package private constructor used by PyJavaClass
-    // xxx will need variants for PyType of PyType and still PyJavaClass of PyJavaClass
-    PyObject(boolean dummy) {
-        objtype = (PyType) this;
+    /**
+     * Creates the PyObject for the base type. The argument only exists to make the constructor
+     * distinct.
+     */
+    PyObject(boolean ignored) {
+        objtype = (PyType)this;
     }
 
     /**
-     * The standard constructor for a <code>PyObject</code>.  It will set
-     * the <code>objtype</code> field to correspond to the specific
-     * subclass of <code>PyObject</code> being instantiated.
+     * The standard constructor for a <code>PyObject</code>. It will set the <code>objtype</code>
+     * field to correspond to the specific subclass of <code>PyObject</code> being instantiated.
      **/
     public PyObject() {
         objtype = PyType.fromClass(getClass());
@@ -145,7 +146,7 @@ public class PyObject implements Serializable {
     public PyUnicode __unicode__() {
         return new PyUnicode(__str__());
     }
- 
+
     /**
      * Equivalent to the standard Python __hash__ method.  This method can
      * not be overridden.  Instead, you should override the standard Java
@@ -342,13 +343,13 @@ public class PyObject implements Serializable {
             if(keys == null)
                 throw Py.TypeError(name
                         + "argument after ** must be a mapping");
-            for (int i = 0; i < keywords.length; i++)
-                if (kwargs.__finditem__(keywords[i]) != null)
+            for (String keyword : keywords)
+                if (kwargs.__finditem__(keyword) != null)
                     throw Py.TypeError(
                         name
                             + "got multiple values for "
                             + "keyword argument '"
-                            + keywords[i]
+                            + keyword
                             + "'");
             argslen += kwargs.__len__();
         }
@@ -648,21 +649,21 @@ public class PyObject implements Serializable {
      * <p>
      * If a PyObject subclass should support iteration based in the __finditem__() method, it must
      * supply an implementation of __iter__() like this:
-     * 
+     *
      * <pre>
      * public PyObject __iter__() {
      *     return new PySequenceIter(this);
      * }
      * </pre>
-     * 
+     *
      * When iterating over a python sequence from java code, it should be done with code like this:
-     * 
+     *
      * <pre>
      * for (PyObject item : seq.asIterable()) {
      *     // Do somting with item
      * }
      * </pre>
-     * 
+     *
      * @since 2.2
      */
     public PyObject __iter__() {
@@ -729,13 +730,13 @@ public class PyObject implements Serializable {
      * Very similar to the standard Python __getattr__ method. Instead of
      * throwing a AttributeError if the item isn't found, this just returns
      * null.
-     * 
+     *
      * By default, this method will call
      * <code>__findattr__(name.internedString)</code> with the appropriate
-     * args. 
-     * 
+     * args.
+     *
      * @param name the name to lookup in this namespace
-     * 
+     *
      * @return the value corresponding to name or null if name is not found
      */
     public final PyObject __findattr__(PyString name) {
@@ -748,7 +749,7 @@ public class PyObject implements Serializable {
     /**
      * A variant of the __findattr__ method which accepts a Java
      * <code>String</code> as the name.
-     * 
+     *
      * <b>Warning: name must be an interned string!</b>
      *
      * @param name the name to lookup in this namespace
@@ -763,22 +764,22 @@ public class PyObject implements Serializable {
                 return null;
             }
             throw exc;
-        } 
+        }
     }
-    
+
     /**
-     * Attribute lookup hook. If the attribute is not found, null may be 
-     * returned or a Py.AttributeError can be thrown, whatever is more 
+     * Attribute lookup hook. If the attribute is not found, null may be
+     * returned or a Py.AttributeError can be thrown, whatever is more
      * correct, efficient and/or convenient for the implementing class.
-     * 
-     * Client code should use {@link #__getattr__(String)} or 
-     * {@link #__findattr__(String)}. Both methods have a clear policy for 
-     * failed lookups. 
-     *  
-     * @return The looked up value. May return null if the attribute is not found 
+     *
+     * Client code should use {@link #__getattr__(String)} or
+     * {@link #__findattr__(String)}. Both methods have a clear policy for
+     * failed lookups.
+     *
+     * @return The looked up value. May return null if the attribute is not found
      * @throws PyException(AttributeError) if the attribute is not found. This
-     * is not mandatory, null can be returned if it fits the implementation  
-     * better, or for performance reasons. 
+     * is not mandatory, null can be returned if it fits the implementation
+     * better, or for performance reasons.
      */
     public PyObject __findattr_ex__(String name) {
         return object___findattr__(name);
@@ -789,7 +790,7 @@ public class PyObject implements Serializable {
      *
      * By default, this method will call
      * <code>__getattr__(name.internedString)</code> with the appropriate
-     * args. 
+     * args.
      *
      * @param name the name to lookup in this namespace
      * @return the value corresponding to name
@@ -1002,9 +1003,9 @@ public class PyObject implements Serializable {
      *
      * This method can not be overridden.
      * To implement __coerce__ functionality, override __coerce_ex__ instead.
-     * 
-     * Also, <b>do not</b> call this method from exposed 'coerce' methods. 
-     * Instead, Use adaptToCoerceTuple over the result of the overriden 
+     *
+     * Also, <b>do not</b> call this method from exposed 'coerce' methods.
+     * Instead, Use adaptToCoerceTuple over the result of the overriden
      * __coerce_ex__.
      *
      * @param pyo the other object involved in the coercion.
@@ -1022,13 +1023,13 @@ public class PyObject implements Serializable {
 
     /**
      * Adapts the result of __coerce_ex__ to a tuple of two elements, with the
-     * resulting coerced values, or to Py.NotImplemented, if o is Py.None. 
-     * 
-     * This is safe to be used from subclasses exposing '__coerce__' 
+     * resulting coerced values, or to Py.NotImplemented, if o is Py.None.
+     *
+     * This is safe to be used from subclasses exposing '__coerce__'
      * (as opposed to {@link #__coerce__(PyObject)}, which calls the virtual
      * method {@link #__coerce_ex__(PyObject)})
-     * 
-     * @param o either a PyObject[2] or a PyObject, as given by 
+     *
+     * @param o either a PyObject[2] or a PyObject, as given by
      *        {@link #__coerce_ex__(PyObject)}.
      */
     protected final PyObject adaptToCoerceTuple(Object o) {
@@ -1292,7 +1293,7 @@ public class PyObject implements Serializable {
         PyObject token = null;
         PyType t1 = this.getType();
         PyType t2 = o.getType();
-        
+
         if (t1 != t2 && t2.isSubType(t1)) {
             return o._eq(this);
         }
@@ -1331,7 +1332,7 @@ public class PyObject implements Serializable {
         PyObject token = null;
         PyType t1 = this.getType();
         PyType t2 = o.getType();
-        
+
         if (t1 != t2 && t2.isSubType(t1)) {
             return o._ne(this);
         }
@@ -1365,7 +1366,7 @@ public class PyObject implements Serializable {
         PyObject token = null;
         PyType t1 = this.getType();
         PyType t2 = o.getType();
-        
+
         if (t1 != t2 && t2.isSubType(t1)) {
             return o._ge(this);
         }
@@ -1399,7 +1400,7 @@ public class PyObject implements Serializable {
         PyObject token = null;
         PyType t1 = this.getType();
         PyType t2 = o.getType();
-        
+
         if (t1 != t2 && t2.isSubType(t1)) {
             return o._gt(this);
         }
@@ -1433,7 +1434,7 @@ public class PyObject implements Serializable {
         PyObject token = null;
         PyType t1 = this.getType();
         PyType t2 = o.getType();
-        
+
         if (t1 != t2 && t2.isSubType(t1)) {
             return o._le(this);
         }
@@ -1467,7 +1468,7 @@ public class PyObject implements Serializable {
         PyObject token = null;
         PyType t1 = this.getType();
         PyType t2 = o.getType();
-        
+
         if (t1 != t2 && t2.isSubType(t1)) {
             return o._lt(this);
         }
@@ -1678,7 +1679,7 @@ public class PyObject implements Serializable {
         throw Py.TypeError(String.format("'%.200s' object cannot be interpreted as an index",
                                          getType().fastGetName()));
     }
-    
+
     /**
      * @param op the String form of the op (e.g. "+")
      * @param o2 the right operand
@@ -1705,7 +1706,7 @@ public class PyObject implements Serializable {
     protected String unsupportedopMessage(String op, PyObject o2) {
         return null;
     }
-    
+
     /**
      * Should return an error message suitable for substitution where.
      *
@@ -3523,7 +3524,7 @@ public class PyObject implements Serializable {
     // backward comp impls.
     /**
      * Get descriptor for this PyObject.
-     * 
+     *
      * @param obj -
      *            the instance accessing this descriptor. Can be null if this is
      *            being accessed by a type.
@@ -3544,7 +3545,7 @@ public class PyObject implements Serializable {
     public void __delete__(PyObject obj) {
         throw Py.AttributeError("object internal __delete__ impl is abstract");
     }
-    
+
     @ExposedMethod
     final PyObject object___getattribute__(PyObject arg0) {
         String name = asName(arg0);
@@ -3553,7 +3554,7 @@ public class PyObject implements Serializable {
             noAttributeError(name);
         return ret;
     }
-    
+
     // name must be interned
     final PyObject object___findattr__(String name) {
 
@@ -3581,12 +3582,12 @@ public class PyObject implements Serializable {
 
         return null;
     }
-    
+
     @ExposedMethod
     final void object___setattr__(PyObject name, PyObject value) {
         object___setattr__(asName(name), value);
     }
-    
+
     private final void object___setattr__(String name, PyObject value) {
         PyObject descr = objtype.lookup(name);
 
@@ -3616,7 +3617,7 @@ public class PyObject implements Serializable {
 
         noAttributeError(name);
     }
-    
+
     @ExposedMethod
     final void object___delattr__(PyObject name) {
         object___delattr__(asName(name));
@@ -3684,7 +3685,7 @@ public class PyObject implements Serializable {
     /** Used for pickling.  If the subclass specifies __reduce__, it will
      * override __reduce_ex__ in the base-class, even if __reduce_ex__ was
      * called with an argument.
-     * 
+     *
      * @param arg PyInteger specifying reduce algorithm (method without this
      * argument defaults to 0).
      * @return a tuple of (class, tuple)
@@ -3853,7 +3854,7 @@ public class PyObject implements Serializable {
         throw new ConversionException(index);
     }
 
-    // TODO - remove when all generated users are migrated to @Exposed and asInt()  
+    // TODO - remove when all generated users are migrated to @Exposed and asInt()
     public int asInt(int index) throws ConversionException {
         throw new ConversionException(index);
     }
