@@ -543,7 +543,7 @@ class TestSocketOptions(unittest.TestCase):
             # First listen on a server socket, so that the connection won't be refused.
             server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             server_sock.bind( (HOST, PORT) )
-            server_sock.listen()
+            server_sock.listen(50)
             # Now do the tests
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self._testSetAndGetOption(sock, option, values)
@@ -564,7 +564,7 @@ class TestSocketOptions(unittest.TestCase):
             self._testSetAndGetOption(sock, option, values)
             # now bind and listen on the socket i.e. cause the implementation socket to be created
             sock.bind( (HOST, PORT) )
-            sock.listen()
+            sock.listen(50)
             self.failUnlessEqual(sock.getsockopt(socket.SOL_SOCKET, option), values[-1], \
                  "Option value '%s'='%s' did not propagate to implementation socket" % (option, values[-1]))
             self._testSetAndGetOption(sock, option, values)
@@ -1410,12 +1410,12 @@ class TestJythonTCPExceptions(TestJythonExceptionsShared, unittest.TestCase):
     def testBindException(self):
         # First bind to the target port
         self.s.bind( (HOST, PORT) )
-        self.s.listen()
+        self.s.listen(50)
         try:
             # And then try to bind again
             t = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             t.bind( (HOST, PORT) )
-            t.listen()
+            t.listen(50)
         except socket.error, se:
             self.failUnlessEqual(se[0], errno.EADDRINUSE)
         except Exception, x:
@@ -1493,7 +1493,7 @@ class TestInvalidUsage(unittest.TestCase):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     def testShutdownIOOnListener(self):
-        self.socket.listen() # socket is now a server socket
+        self.socket.listen(50) # socket is now a server socket
         try:
             self.socket.shutdown(socket.SHUT_RDWR)
         except Exception, x:

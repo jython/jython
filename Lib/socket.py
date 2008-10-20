@@ -699,7 +699,7 @@ class _tcpsocket(_nonblocking_api_mixin):
         _unpack_address_tuple(addr)
         self.local_addr = addr
 
-    def listen(self, backlog=50):
+    def listen(self, backlog):
         "This signifies a server socket"
         try:
             assert not self.sock_impl
