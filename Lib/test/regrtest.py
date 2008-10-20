@@ -168,6 +168,7 @@ if sys.platform == 'darwin':
         newsoft = min(hard, max(soft, 1024*2048))
         resource.setrlimit(resource.RLIMIT_STACK, (newsoft, hard))
 
+import test as _test
 from test import test_support
 
 RESOURCE_NAMES = ('audio', 'curses', 'largefile', 'network', 'bsddb',
@@ -416,6 +417,9 @@ def main(tests=None, testdir=None, verbose=0, quiet=False, generate=False,
         for module in sys.modules.keys():
             if module not in save_modules and module.startswith("test."):
                 test_support.unload(module)
+                module = module[5:]
+                if hasattr(_test, module):
+                    delattr(_test, module)
 
     # The lists won't be sorted if running with -r
     good.sort()
