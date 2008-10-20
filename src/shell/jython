@@ -13,12 +13,10 @@
 # -----------------------------------------------------------------------------
 
 cygwin=false
-solaris=false
 
 # ----- Identify OS we are running under --------------------------------------
 case "`uname`" in
-  CYGWIN*) cygwin=true;;
-  SunOS*) solaris=true;;
+  CYGWIN*) cygwin=true
 esac
 
 # ----- Verify and set required environment variables -------------------------
@@ -83,12 +81,11 @@ fi
 
 # ----- Execute the requested command -----------------------------------------
 
-# stack size value determined by the minimum requirement for
-# test_cpickle
-if $solaris; then
-  JAVA_STACK=-Xss768k
-else
-  JAVA_STACK=-Xss512k
+if [ -z "$JAVA_STACK" ]; then
+   # 32 bit Java 6 needs the stack increased to at least 512k for
+   # test_cpickle to pass, but we don't want to shrink 64 bit Java's
+   # default of 1024k
+  JAVA_STACK=-Xss1024k
 fi
 
 # Split out any -J argument for passing to the JVM.
