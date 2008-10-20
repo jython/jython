@@ -1114,9 +1114,12 @@ class _fileobject(object):
             if self._sock:
                 self.flush()
         finally:
-            if self._sock and isinstance(self._sock, _nonblocking_api_mixin):
-                self._sock.reference_count -= 1
-                if not self._sock.reference_count or self._close:
+            if self._sock:
+                if isinstance(self._sock, _nonblocking_api_mixin):
+                    self._sock.reference_count -= 1
+                    if not self._sock.reference_count or self._close:
+                        self._sock.close()
+                elif self._close:
                     self._sock.close()
             self._sock = None
 
