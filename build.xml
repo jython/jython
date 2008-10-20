@@ -549,9 +549,17 @@ The readme text for the next release will be like:
     </target>
 
     <target name="jar" depends="compile,expose,jarjar">
-       <jar destfile="${dist.dir}/jython.jar" duplicate="preserve">
-          <fileset dir="${exposed.dir}"/>
-          <fileset dir="${compile.dir}"/>   
+       <typedef name="nameunion" classname="org.python.util.NameUnionAntType">
+           <classpath>
+               <path refid="main.classpath" />
+               <pathelement path="${compile.dir}" />
+           </classpath>
+       </typedef>
+       <jar destfile="${dist.dir}/jython.jar" duplicate="fail">
+          <nameunion>
+             <fileset dir="${exposed.dir}"/>
+             <fileset dir="${compile.dir}"/>   
+          </nameunion>
           <fileset dir="${jarjar.dir}">
               <include name="org/python/objectweb/asm/ClassReader.class" />
           </fileset>
