@@ -349,16 +349,6 @@ public class PyFile extends PyObject {
         return file_readlines(0);
     }
 
-    public PyObject __iter__() {
-        return file___iter__();
-    }
-
-    @ExposedMethod
-    final PyObject file___iter__() {
-        checkClosed();
-        return this;
-    }
-
     public PyObject __iternext__() {
         return file___iternext__();
     }
@@ -385,13 +375,17 @@ public class PyFile extends PyObject {
         return file_next();
     }
 
-    @ExposedMethod(names = {"__enter__", "xreadlines"})
+    @ExposedMethod(names = {"__enter__", "__iter__", "xreadlines"})
     final PyObject file_self() {
         checkClosed();
         return this;
     }
 
     public PyObject __enter__() {
+        return file_self();
+    }
+
+    public PyObject __iter__() {
         return file_self();
     }
 
