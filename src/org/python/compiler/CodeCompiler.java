@@ -457,13 +457,13 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         visit(node.value);
         if (node.targets.length == 1) {
             set(node.targets[0]);
-            return null;
+        } else {
+            int tmp = storeTop();
+            for (exprType target : node.targets) {
+                set(target, tmp);
+            }
+            code.freeLocal(tmp);
         }
-        int tmp = storeTop();
-        for (int i=node.targets.length-1; i>=0; i--) {
-            set(node.targets[i], tmp);
-        }
-        code.freeLocal(tmp);
         return null;
     }
 
