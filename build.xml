@@ -558,7 +558,7 @@ The readme text for the next release will be like:
        <jar destfile="${dist.dir}/jython.jar" duplicate="fail">
           <nameunion>
              <fileset dir="${exposed.dir}"/>
-             <fileset dir="${compile.dir}"/>   
+             <fileset dir="${compile.dir}" excludes="org/python/expose/generate/**"/>   
           </nameunion>
           <fileset dir="${jarjar.dir}">
               <include name="org/python/objectweb/asm/ClassReader.class" />
