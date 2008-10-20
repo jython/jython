@@ -13,10 +13,12 @@
 # -----------------------------------------------------------------------------
 
 cygwin=false
+solaris=false
 
 # ----- Identify OS we are running under --------------------------------------
 case "`uname`" in
-  CYGWIN*) cygwin=true
+  CYGWIN*) cygwin=true;;
+  SunOS*) solaris=true;;
 esac
 
 # ----- Verify and set required environment variables -------------------------
@@ -81,7 +83,13 @@ fi
 
 # ----- Execute the requested command -----------------------------------------
 
-JAVA_STACK=-Xss512k # minimum requirement for test_cpickle
+# stack size value determined by the minimum requirement for
+# test_cpickle
+if $solaris; then
+  JAVA_STACK=-Xss768k
+else
+  JAVA_STACK=-Xss512k
+fi
 
 # Split out any -J argument for passing to the JVM.
 # Scanning for args is aborted by '--'.
