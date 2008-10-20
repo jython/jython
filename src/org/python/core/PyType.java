@@ -8,12 +8,12 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.python.core.util.StringUtil;
 import org.python.expose.ExposeAsSuperclass;
@@ -24,6 +24,7 @@ import org.python.expose.ExposedNew;
 import org.python.expose.ExposedSet;
 import org.python.expose.ExposedType;
 import org.python.expose.TypeBuilder;
+import org.python.util.Generic;
 
 /**
  * The Python Type object implementation.
@@ -76,7 +77,7 @@ public class PyType extends PyObject implements Serializable {
     private int numSlots;
 
     private ReferenceQueue<PyType> subclasses_refq = new ReferenceQueue<PyType>();
-    private HashSet<WeakReference<PyType>> subclasses = new HashSet<WeakReference<PyType>>();
+    private Set<WeakReference<PyType>> subclasses = Generic.set();
 
     private final static Class<?>[] O = {PyObject.class};
     private final static Class<?>[] OO = {PyObject.class, PyObject.class};
@@ -548,7 +549,7 @@ public class PyType extends PyObject implements Serializable {
         PyObject[] savedBases = bases;
         PyType savedBase = base;
         PyObject[] savedMro = mro;
-        List<Object> savedSubMros = new ArrayList<Object>();
+        List<Object> savedSubMros = Generic.list();
         try {
             bases = newBases;
             base = newBase;
@@ -695,7 +696,7 @@ public class PyType extends PyObject implements Serializable {
         }
     }
 
-    private static void fill_classic_mro(ArrayList<PyObject> acc, PyClass classic_cl) {
+    private static void fill_classic_mro(List<PyObject> acc, PyClass classic_cl) {
         if (!acc.contains(classic_cl)) {
             acc.add(classic_cl);
         }
@@ -706,7 +707,7 @@ public class PyType extends PyObject implements Serializable {
     }
 
     private static PyObject[] classic_mro(PyClass classic_cl) {
-        ArrayList<PyObject> acc = new ArrayList<PyObject>();
+        List<PyObject> acc = Generic.list();
         fill_classic_mro(acc, classic_cl);
         return acc.toArray(new PyObject[acc.size()]);
     }
@@ -785,7 +786,7 @@ public class PyType extends PyObject implements Serializable {
         to_merge[n] = bases;
         remain[n] = 0;
 
-        ArrayList<PyObject> acc = new ArrayList<PyObject>();
+        List<PyObject> acc = Generic.list();
         acc.add(this);
 
         int empty_cnt = 0;
@@ -1050,7 +1051,7 @@ public class PyType extends PyObject implements Serializable {
 
     public static void addBuilder(Class<?> forClass, TypeBuilder builder) {
         if (classToBuilder == null) {
-            classToBuilder = new HashMap<Class<?>, TypeBuilder>();
+            classToBuilder = Generic.map();
         }
         classToBuilder.put(forClass, builder);
 
@@ -1099,7 +1100,7 @@ public class PyType extends PyObject implements Serializable {
 
     public static synchronized PyType fromClass(Class<?> c) {
         if (class_to_type == null) {
-            class_to_type = new HashMap<Class<?>, PyType>();
+            class_to_type = Generic.map();
             addFromClass(PyType.class);
         }
         PyType type = class_to_type.get(c);

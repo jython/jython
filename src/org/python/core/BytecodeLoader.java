@@ -2,10 +2,10 @@
 package org.python.core;
 
 import java.security.SecureClassLoader;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.python.objectweb.asm.ClassReader;
+import org.python.util.Generic;
 
 /**
  * Utility class for loading of compiled python modules and java classes defined in python modules.
@@ -14,7 +14,7 @@ public class BytecodeLoader {
 
     /**
      * Turn the java byte code in data into a java class.
-     * 
+     *
      * @param name
      *            the name of the class
      * @param data
@@ -24,9 +24,9 @@ public class BytecodeLoader {
      */
     public static Class<?> makeClass(String name, byte[] data, Class<?>... referents) {
         Loader loader = new Loader();
-        for (int i = 0; i < referents.length; i++) {
+        for (Class<?> referent : referents) {
             try {
-                ClassLoader cur = referents[i].getClassLoader();
+                ClassLoader cur = referent.getClassLoader();
                 if (cur != null) {
                     loader.addParent(cur);
                 }
@@ -37,7 +37,7 @@ public class BytecodeLoader {
 
     /**
      * Turn the java byte code in data into a java class.
-     * 
+     *
      * @param name
      *            the name of the class
      * @param referents
@@ -54,7 +54,7 @@ public class BytecodeLoader {
 
     /**
      * Turn the java byte code for a compiled python module into a java class.
-     * 
+     *
      * @param name
      *            the name of the class
      * @param data
@@ -73,7 +73,7 @@ public class BytecodeLoader {
 
     public static class Loader extends SecureClassLoader {
 
-        private List<ClassLoader> parents = new ArrayList<ClassLoader>();
+        private List<ClassLoader> parents = Generic.list();
 
         public Loader() {
             parents.add(imp.getSyspathJavaLoader());
@@ -85,6 +85,7 @@ public class BytecodeLoader {
             }
         }
 
+        @Override
         protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
             Class<?> c = findLoadedClass(name);
             if (c != null) {

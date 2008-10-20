@@ -8,14 +8,13 @@ import java.io.OutputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 import org.python.core.Py;
 import org.python.objectweb.asm.Label;
 import org.python.objectweb.asm.Opcodes;
+import org.python.util.Generic;
 
 public class ProxyMaker implements ClassConstants, Opcodes
 {
@@ -34,7 +33,7 @@ public class ProxyMaker implements ClassConstants, Opcodes
     public static Map<Class<?>, Integer> types=fillTypes();
 
     public static Map<Class<?>, Integer> fillTypes() {
-        Map<Class<?>, Integer> typeMap = new HashMap<Class<?>, Integer>();
+        Map<Class<?>, Integer> typeMap = Generic.map();
         typeMap.put(Boolean.TYPE, tBoolean);
         typeMap.put(Byte.TYPE, tByte);
         typeMap.put(Short.TYPE, tShort);
@@ -57,7 +56,7 @@ public class ProxyMaker implements ClassConstants, Opcodes
     Class<?> superclass;
     Class<?>[] interfaces;
     Set<String> names;
-    Set<String> supernames = new HashSet<String>();
+    Set<String> supernames = Generic.set();
     public ClassFile classfile;
     public String myClass;
     public boolean isAdapter=false;
@@ -123,8 +122,8 @@ public class ProxyMaker implements ClassConstants, Opcodes
     public static String makeSignature(Class<?>[] sig, Class<?> ret) {
         StringBuffer buf=new StringBuffer();
         buf.append("(");
-        for (int i=0; i<sig.length; i++) {
-            buf.append(mapType(sig[i]));
+        for (Class<?> element : sig) {
+            buf.append(mapType(element));
         }
         buf.append(")");
         buf.append(mapType(ret));
@@ -315,7 +314,7 @@ public class ProxyMaker implements ClassConstants, Opcodes
                            Class<?>[] exceptions) throws Exception {
         Label start = null;
         Label end = null;
-        
+
         String jcallName = "_jcall";
         int instLocal = 0;
 
@@ -374,7 +373,7 @@ public class ProxyMaker implements ClassConstants, Opcodes
             boolean throwableFound = false;
 
             Label handlerStart = null;
-            for (int i = 0; i < exceptions.length; i++) {
+            for (Class<?> exception : exceptions) {
                 handlerStart = new Label();
                 code.label(handlerStart);
                 int excLocal = code.getLocal("java/lang/Throwable");
@@ -383,11 +382,11 @@ public class ProxyMaker implements ClassConstants, Opcodes
                 code.aload(excLocal);
                 code.athrow();
 
-                code.visitTryCatchBlock(start, end, handlerStart, mapClass(exceptions[i]));
+                code.visitTryCatchBlock(start, end, handlerStart, mapClass(exception));
                 doNullReturn(code, ret);
 
                 code.freeLocal(excLocal);
-                if (exceptions[i] == Throwable.class)
+                if (exception == Throwable.class)
                     throwableFound = true;
             }
 
@@ -471,8 +470,8 @@ public class ProxyMaker implements ClassConstants, Opcodes
         StringBuffer buf = new StringBuffer(m.getName());
         buf.append(":");
         Class<?>[] params = m.getParameterTypes();
-        for (int i = 0; i < params.length; i++) {
-            buf.append(params[i].getName());
+        for (Class<?> param : params) {
+            buf.append(param.getName());
             buf.append(",");
         }
         return buf.toString();
@@ -480,8 +479,7 @@ public class ProxyMaker implements ClassConstants, Opcodes
 
     protected void addMethods(Class<?> c, Set<String> t) throws Exception {
         Method[] methods = c.getDeclaredMethods();
-        for (int i=0; i<methods.length; i++) {
-            Method method = methods[i];
+        for (Method method : methods) {
             String s = methodString(method);
             if (t.contains(s))
                 continue;
@@ -499,13 +497,13 @@ public class ProxyMaker implements ClassConstants, Opcodes
             if (Modifier.isProtected(access)) {
                 access = (access & ~Modifier.PROTECTED) | Modifier.PUBLIC;
                 if (Modifier.isFinal(access)) {
-                    addSuperMethod(methods[i], access);
+                    addSuperMethod(method, access);
                     continue;
                 }
             } else if (Modifier.isFinal(access)) {
                 continue;
             }
-            addMethod(methods[i], access);
+            addMethod(method, access);
         }
 
         Class<?> sc = c.getSuperclass();
@@ -513,8 +511,8 @@ public class ProxyMaker implements ClassConstants, Opcodes
             addMethods(sc, t);
 
         Class<?>[] ifaces = c.getInterfaces();
-        for (int j=0; j<ifaces.length; j++) {
-            addMethods(ifaces[j], t);
+        for (Class<?> iface : ifaces) {
+            addMethods(iface, t);
         }
     }
 
@@ -530,15 +528,15 @@ public class ProxyMaker implements ClassConstants, Opcodes
     public void addConstructors(Class<?> c) throws Exception {
         Constructor<?>[] constructors = c.getDeclaredConstructors();
         String name = mapClass(c);
-        for (int i = 0; i < constructors.length; i++) {
-            int access = constructors[i].getModifiers();
+        for (Constructor<?> constructor : constructors) {
+            int access = constructor.getModifiers();
             if (Modifier.isPrivate(access))
                 continue;
             if (Modifier.isNative(access))
                 access = access & ~Modifier.NATIVE;
             if (Modifier.isProtected(access))
                 access = access & ~Modifier.PROTECTED | Modifier.PUBLIC;
-            Class<?>[] parameters = constructors[i].getParameterTypes();
+            Class<?>[] parameters = constructor.getParameterTypes();
             String sig = makeSignature(parameters, Void.TYPE);
             addConstructor(name, parameters, Void.TYPE, sig, access);
         }
@@ -666,7 +664,7 @@ public class ProxyMaker implements ClassConstants, Opcodes
     }
 
     public void build() throws Exception {
-        names = new HashSet<String>();
+        names = Generic.set();
         int access = superclass.getModifiers();
         if ((access & Modifier.FINAL) != 0) {
             throw new InstantiationException("can't subclass final class");
@@ -678,17 +676,17 @@ public class ProxyMaker implements ClassConstants, Opcodes
         addConstructors(superclass);
         classfile.addInterface("org/python/core/PyProxy");
 
-        Set<String> seenmethods = new HashSet<String>();
+        Set<String> seenmethods = Generic.set();
         addMethods(superclass, seenmethods);
-        for (int i=0; i<interfaces.length; i++) {
-            if (interfaces[i].isAssignableFrom(superclass)) {
+        for (Class<?> iface : interfaces) {
+            if (iface.isAssignableFrom(superclass)) {
                 Py.writeWarning("compiler",
                                 "discarding redundant interface: "+
-                                interfaces[i].getName());
+                                iface.getName());
                 continue;
             }
-            classfile.addInterface(mapClass(interfaces[i]));
-            addMethods(interfaces[i], seenmethods);
+            classfile.addInterface(mapClass(iface));
+            addMethods(iface, seenmethods);
         }
         doConstants();
         addClassDictInit();

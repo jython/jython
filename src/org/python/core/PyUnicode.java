@@ -1,18 +1,18 @@
 package org.python.core;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 import org.python.expose.MethodType;
 import org.python.modules._codecs;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import org.python.util.Generic;
 
 /**
  * a builtin python unicode string.
@@ -39,9 +39,9 @@ public class PyUnicode extends PyString implements Iterable {
 
     public PyUnicode(String string, boolean isBasic) {
         this(TYPE, string);
-        plane = isBasic ? Plane.BASIC : Plane.UNKNOWN;  
+        plane = isBasic ? Plane.BASIC : Plane.UNKNOWN;
     }
-    
+
     public PyUnicode(PyType subtype, String string) {
         super(subtype, string);
     }
@@ -77,7 +77,7 @@ public class PyUnicode extends PyString implements Iterable {
         }
         return buffer;
     }
-    
+
     PyUnicode(Iterator<Integer> iter) {
         this(fromCodePoints(iter));
     }
@@ -96,18 +96,18 @@ public class PyUnicode extends PyString implements Iterable {
         }
         return codePoints;
     }
-    
+
     // modified to know something about codepoints; we just need to return the
     // corresponding substring; darn UTF16!
     // TODO: we could avoid doing this unnecessary copy
     @Override
     public String substring(int start, int end) {
         if (isBasicPlane()) {
-            return super.substring(start, end);                 
+            return super.substring(start, end);
         }
         return new PyUnicode(newSubsequenceIterator(start, end, 1)).string;
     }
-    
+
     /**
      * Creates a PyUnicode from an already interned String. Just means it won't
      * be reinterned if used in a place that requires interned Strings.
@@ -132,9 +132,9 @@ public class PyUnicode extends PyString implements Iterable {
 //    public boolean isBasicPlane() {
 //        return false;
 //    }
-    
+
 // END RETAIN
-    
+
     public int getCodePointCount() {
         if (codePointCount >= 0) {
             return codePointCount;
@@ -201,7 +201,7 @@ public class PyUnicode extends PyString implements Iterable {
     protected PyString createInstance(String str, boolean isBasic) {
         return new PyUnicode(str, isBasic);
     }
-    
+
     @Override
     public PyObject __mod__(PyObject other) {
         return unicode___mod__(other);
@@ -304,7 +304,6 @@ public class PyUnicode extends PyString implements Iterable {
         while (i > 0) {
             int W1 = string.charAt(k);
             if (W1 >= 0xD800 && W1 < 0xDC00) {
-                int W2 = string.charAt(k + 1);
                 k += 2;
             } else {
                 k += 1;
@@ -524,7 +523,7 @@ public class PyUnicode extends PyString implements Iterable {
         public StripIterator(PyUnicode sep, Iterator<Integer> iter) {
             this.iter = iter;
             if (sep != null) {
-                Set<Integer> sepSet = new HashSet<Integer>();
+                Set<Integer> sepSet = Generic.set();
                 for (Iterator<Integer> sepIter = sep.newSubsequenceIterator(); sepIter.hasNext();) {
                     sepSet.add(sepIter.next());
                 }
@@ -732,7 +731,7 @@ public class PyUnicode extends PyString implements Iterable {
 
     private class ReversedIterator<T> implements Iterator {
 
-        private final List<T> reversed = new ArrayList<T>();
+        private final List<T> reversed = Generic.list();
         private final Iterator<T> iter;
 
         ReversedIterator(Iterator<T> iter) {
@@ -807,7 +806,7 @@ public class PyUnicode extends PyString implements Iterable {
             super(maxsplit);
             this.sep = sep;
         }
-        
+
         public PyUnicode next() {
             StringBuilder buffer = new StringBuilder();
 
@@ -857,7 +856,7 @@ public class PyUnicode extends PyString implements Iterable {
             return new SepSplitIterator(sep, maxsplit);
         }
     }
-    
+
     @ExposedMethod
     final PyTuple unicode_rpartition(PyObject sep) {
         return unicodeRpartition(sep);
@@ -882,7 +881,7 @@ public class PyUnicode extends PyString implements Iterable {
             return str_rsplit(null, maxsplit);
         }
     }
-    
+
     @ExposedMethod(defaults = "false")
     final PyList unicode_splitlines(boolean keepends) {
         if (isBasicPlane()) {
@@ -957,8 +956,8 @@ public class PyUnicode extends PyString implements Iterable {
             throw Py.TypeError(function + "() argument 2 must be char, not str");
         }
         return fillchar.codePointAt(0);
-    }   
-    
+    }
+
     @ExposedMethod(defaults="null")
     final PyObject unicode_ljust(int width, String padding) {
         int n = width - getCodePointCount();
@@ -1065,20 +1064,20 @@ public class PyUnicode extends PyString implements Iterable {
         if (isBasicPlane() && newPiece.isBasicPlane() && oldPiece.isBasicPlane()) {
             return replace(oldPiece, newPiece, maxsplit);
         }
-        
+
         StringBuilder buffer = new StringBuilder();
-        
+
         if (oldPiece.getCodePointCount() == 0) {
             Iterator<Integer> iter = newSubsequenceIterator();
             for (int i = 1; (maxsplit == -1 || i < maxsplit) && iter.hasNext(); i++) {
                 if (i == 1) {
                     buffer.append(newPiece.string);
                 }
-                buffer.appendCodePoint((Integer) iter.next());
+                buffer.appendCodePoint(iter.next());
                 buffer.append(newPiece.string);
             }
             while (iter.hasNext()) {
-                buffer.appendCodePoint((Integer) iter.next());
+                buffer.appendCodePoint(iter.next());
             }
             return new PyUnicode(buffer);
         } else {
@@ -1311,7 +1310,7 @@ public class PyUnicode extends PyString implements Iterable {
     public Iterator<Integer> iterator() {
         return newSubsequenceIterator();
     }
-    
+
     @ExposedMethod
     final String unicode_toString() {
         return toString();

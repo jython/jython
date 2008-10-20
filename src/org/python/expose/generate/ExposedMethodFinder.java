@@ -1,14 +1,14 @@
 package org.python.expose.generate;
 
-import java.util.ArrayList;
 import java.util.List;
 
+import org.python.expose.MethodType;
 import org.python.objectweb.asm.AnnotationVisitor;
 import org.python.objectweb.asm.MethodAdapter;
 import org.python.objectweb.asm.MethodVisitor;
 import org.python.objectweb.asm.Opcodes;
 import org.python.objectweb.asm.Type;
-import org.python.expose.MethodType;
+import org.python.util.Generic;
 
 /**
  * Visits a method passing all calls through to its delegate. If an ExposedNew or ExposedMethod
@@ -131,7 +131,7 @@ public abstract class ExposedMethodFinder extends MethodAdapter implements PyTyp
 
         public abstract void handleResult(String[] result);
 
-        List<String> vals = new ArrayList<String>();
+        List<String> vals = Generic.list();
     }
 
     class ExposedMethodVisitor extends RestrictiveAnnotationVisitor {

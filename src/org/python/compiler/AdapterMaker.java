@@ -8,6 +8,7 @@ import java.util.HashSet;
 
 import org.python.objectweb.asm.Label;
 import org.python.objectweb.asm.Opcodes;
+import org.python.util.Generic;
 
 
 public class AdapterMaker extends ProxyMaker
@@ -17,7 +18,7 @@ public class AdapterMaker extends ProxyMaker
     }
 
     public void build() throws Exception {
-        names = new HashSet<String>();
+        names = Generic.set();
 
         int access = Opcodes.ACC_PUBLIC | Opcodes.ACC_SYNCHRONIZED;
         classfile = new ClassFile(myClass, "java/lang/Object", access);

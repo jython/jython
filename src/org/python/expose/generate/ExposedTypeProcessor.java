@@ -2,9 +2,7 @@ package org.python.expose.generate;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -19,6 +17,7 @@ import org.python.objectweb.asm.MethodAdapter;
 import org.python.objectweb.asm.MethodVisitor;
 import org.python.objectweb.asm.Opcodes;
 import org.python.objectweb.asm.Type;
+import org.python.util.Generic;
 
 /**
  * Processes the bytecode of a Java class that has the {@link ExposedType} annotation on it and
@@ -26,9 +25,9 @@ import org.python.objectweb.asm.Type;
  */
 public class ExposedTypeProcessor implements Opcodes, PyTypes {
 
-    private List<MethodExposer> methodExposers = new ArrayList<MethodExposer>();
+    private List<MethodExposer> methodExposers = Generic.list();
 
-    private Map<String, DescriptorExposer> descExposers = new HashMap<String, DescriptorExposer>();
+    private Map<String, DescriptorExposer> descExposers = Generic.map();
 
     private Exposer newExposer;
 
@@ -276,7 +275,7 @@ public class ExposedTypeProcessor implements Opcodes, PyTypes {
                     @Override
                     public void handleResult(ClassMethodExposer exposer) {
                         methodExposers.add(exposer);
-                        
+
                     }
                 };
             }

@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.tools.ant.BuildException;
@@ -13,6 +12,7 @@ import org.apache.tools.ant.types.Path;
 import org.apache.tools.ant.util.GlobPatternMapper;
 import org.apache.tools.ant.util.SourceFileScanner;
 import org.python.objectweb.asm.ClassWriter;
+import org.python.util.Generic;
 
 public class ExposeTask extends MatchingTask {
 
@@ -20,7 +20,7 @@ public class ExposeTask extends MatchingTask {
 
     private File destDir;
 
-    private Set<File> toExpose = new HashSet<File>();
+    private Set<File> toExpose = Generic.set();
 
     /**
      * Set the source directories to find the class files to be exposed.
@@ -42,7 +42,7 @@ public class ExposeTask extends MatchingTask {
 
     /**
      * Set the destination directory into which the Java source files should be compiled.
-     * 
+     *
      * @param destDir
      *            the destination director
      */
@@ -52,7 +52,7 @@ public class ExposeTask extends MatchingTask {
 
     /**
      * Gets the destination directory into which the java source files should be compiled.
-     * 
+     *
      * @return the destination directory
      */
     public File getDestdir() {

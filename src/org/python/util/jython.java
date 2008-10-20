@@ -6,8 +6,6 @@ import java.io.IOException;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -32,10 +30,10 @@ public class jython
     private static final String COPYRIGHT =
         "Type \"help\", \"copyright\", \"credits\" or \"license\" for more information.";
 
-    static final String usageHeader = 
+    static final String usageHeader =
         "usage: jython [option] ... [-c cmd | -m mod | file | -] [arg] ...\n";
 
-    private static final String usage = usageHeader + 
+    private static final String usage = usageHeader +
         "Options and arguments:\n" + //(and corresponding environment variables):\n" +
         "-c cmd   : program passed in as string (terminates option list)\n" +
         //"-d       : debug output from parser (also PYTHONDEBUG=x)\n" +
@@ -84,15 +82,15 @@ public class jython
                 throw Py.ValueError("jar file missing '__run__.py'");
 
             PyStringMap locals = new PyStringMap();
-            
-            // Stripping the stuff before the last File.separator fixes Bug 
-            // #931129 by keeping illegal characters out of the generated 
-            // proxy class name 
+
+            // Stripping the stuff before the last File.separator fixes Bug
+            // #931129 by keeping illegal characters out of the generated
+            // proxy class name
             int beginIndex;
             if ((beginIndex = filename.lastIndexOf(File.separator)) != -1) {
                 filename = filename.substring(beginIndex + 1);
             }
-            
+
             locals.__setitem__("__name__", new PyString(filename));
             locals.__setitem__("zipfile", Py.java2py(zip));
 
@@ -153,7 +151,7 @@ public class jython
                 systemState.ps1 = systemState.ps2 = new PyString();
             }
         }
-        
+
         // Print banner and copyright information (or not)
         if (opts.interactive && opts.notice && !opts.runModule) {
             System.err.println(InteractiveConsole.getDefaultBanner());
@@ -331,13 +329,13 @@ class CommandLineOptions
 {
     public String filename;
     public boolean jar, interactive, notice;
-    public boolean runModule; 
+    public boolean runModule;
     public boolean fixInteractive;
     public boolean help, version;
     public String[] argv;
     public java.util.Properties properties;
     public String command;
-    public List<String> warnoptions = new ArrayList<String>();
+    public List<String> warnoptions = Generic.list();
     public String encoding;
     public String division;
     public String moduleName;
@@ -455,7 +453,7 @@ class CommandLineOptions
                     interactive = false;
                 }
 
-                index++;    
+                index++;
                 int n = args.length-index+1;
                 argv = new String[n];
                 argv[0] = moduleName;

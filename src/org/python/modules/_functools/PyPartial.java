@@ -1,14 +1,12 @@
 /* Copyright (c) Jython Developers */
 package org.python.modules._functools;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import org.python.core.Py;
 import org.python.core.PyDictionary;
 import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
-import org.python.core.PyString;
 import org.python.core.PyStringMap;
 import org.python.core.PyTuple;
 import org.python.core.PyType;
@@ -17,6 +15,7 @@ import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedSet;
 import org.python.expose.ExposedType;
+import org.python.util.Generic;
 
 @ExposedType(name = "_functools.partial")
 public class PyPartial extends PyObject {
@@ -93,7 +92,7 @@ public class PyPartial extends PyObject {
             kwAppl = this.keywords;
         } else {
             // first merge keywords to determine the keyword count
-            HashMap<String, PyObject> merged = new HashMap<String, PyObject>();
+            Map<String, PyObject> merged = Generic.map();
             int i;
             for (i = 0; i < this.keywords.length; i++) {
                 String keyword = this.keywords[i];
@@ -149,12 +148,14 @@ public class PyPartial extends PyObject {
         return kwDict;
     }
 
+    @Override
     @ExposedGet(name = "__dict__")
     public PyObject getDict() {
         ensureDict();
         return __dict__;
     }
 
+    @Override
     @ExposedSet(name = "__dict__")
     public void setDict(PyObject val) {
         if (!(val instanceof PyStringMap) && !(val instanceof PyDictionary)) {

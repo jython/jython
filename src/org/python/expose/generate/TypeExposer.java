@@ -1,14 +1,14 @@
 package org.python.expose.generate;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Set;
 
-import org.python.objectweb.asm.Type;
 import org.python.core.BytecodeLoader;
 import org.python.expose.BaseTypeBuilder;
 import org.python.expose.ExposedType;
 import org.python.expose.TypeBuilder;
+import org.python.objectweb.asm.Type;
+import org.python.util.Generic;
 
 /**
  * Generates a subclass of TypeBuilder to expose a class with the {@link ExposedType} annotation as
@@ -42,7 +42,7 @@ public class TypeExposer extends Exposer {
         this.name = name;
         this.methods = methods;
         this.descriptors = descriptors;
-        Set<String> names = new HashSet<String>();
+        Set<String> names = Generic.set();
         for(DescriptorExposer exposer : descriptors) {
             if(!names.add(exposer.getName())) {
                 throwDupe(exposer.getName());
