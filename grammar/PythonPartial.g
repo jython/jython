@@ -455,7 +455,8 @@ testlist
 dictmaker : test COLON test (options {k=2;}:COMMA test COLON test)* (COMMA)?
           ;
 
-classdef: decorators? CLASS NAME (LPAREN testlist? RPAREN)? COLON suite
+classdef: decorators (CLASS NAME (LPAREN testlist? RPAREN)? COLON suite)?
+        | CLASS NAME (LPAREN testlist? RPAREN)? COLON suite
         ;
 
 arglist : argument (COMMA argument)*
