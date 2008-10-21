@@ -1137,7 +1137,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
             } else {
                 if (i != node.handlers.length-1) {
                     throw new ParseException(
-                        "bare except must be last except clause", handler.type);
+                        "default 'except:' must be last", handler);
                 }
             }
 
