@@ -130,6 +130,12 @@ class DisplayTest(unittest.TestCase):
         self.assertEqual(repr(test2), '"\'bar"')
         self.assertEqual(repr(unicode(test2)), 'u"\'bar"')
 
+    def test_startswith(self):
+        #from bugtests -- maybe making sure methods are case sensative?
+        msg = 'This is a test.'
+        self.assertRaises(AttributeError, getattr, msg, "startsWith")
+        assert msg.startswith('This')
+
 def test_main():
     test_support.run_unittest(WrappedStrCmpTest,
         IntToStrTest,
