@@ -1,8 +1,10 @@
 package org.python.antlr;
 
 import org.antlr.runtime.BaseRecognizer;
+import org.antlr.runtime.BitSet;
 import org.antlr.runtime.IntStream;
 import org.antlr.runtime.Lexer;
+import org.antlr.runtime.MismatchedTokenException;
 import org.antlr.runtime.RecognitionException;
 import org.python.antlr.ast.ErrorMod;
 import org.python.antlr.ast.exprType;
@@ -27,8 +29,15 @@ public class FailFastHandler implements ErrorHandler {
         throw new ParseException(message(br,re), re);
     }
 
-    public boolean isRecoverable() {
-        return false;
+    public boolean mismatch(BaseRecognizer br, IntStream input, int ttype, BitSet follow)
+        throws RecognitionException {
+
+        throw new MismatchedTokenException(ttype, input);
+    }
+
+    public Object recoverFromMismatchedToken(BaseRecognizer br, IntStream input, int ttype,
+            BitSet follow) throws RecognitionException {
+        throw new MismatchedTokenException(ttype, input);
     }
 
     public exprType errorExpr(PythonTree t) {

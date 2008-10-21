@@ -165,21 +165,19 @@ import java.util.ListIterator;
     }
 
     protected void mismatch(IntStream input, int ttype, BitSet follow) throws RecognitionException {
-        if (errorHandler.isRecoverable()) {
+        if (errorHandler.mismatch(this, input, ttype, follow)) {
             super.mismatch(input, ttype, follow);
-        } else {
-            throw new MismatchedTokenException(ttype, input);
         }
     }
 
     protected Object recoverFromMismatchedToken(IntStream input, int ttype, BitSet follow)
-        throws RecognitionException
-    {
-        if (errorHandler.isRecoverable()) {
-            return super.recoverFromMismatchedToken(input, ttype, follow);
+        throws RecognitionException {
+
+        Object o = errorHandler.recoverFromMismatchedToken(this, input, ttype, follow);
+        if (o != null) {
+            return o;
         }
-        mismatch(input, ttype, follow);
-        return null;
+        return super.recoverFromMismatchedToken(input, ttype, follow);
     }
 
 }

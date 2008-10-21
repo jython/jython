@@ -1,6 +1,7 @@
 package org.python.antlr;
 
 import org.antlr.runtime.BaseRecognizer;
+import org.antlr.runtime.BitSet;
 import org.antlr.runtime.IntStream;
 import org.antlr.runtime.Lexer;
 import org.antlr.runtime.RecognitionException;
@@ -27,8 +28,12 @@ public class ListErrorHandler implements ErrorHandler {
         br.recover(input, re);
     }
 
-    public boolean isRecoverable() {
+    public boolean mismatch(BaseRecognizer br, IntStream input, int ttype, BitSet follow) {
         return true;
+    }
+
+    public Object recoverFromMismatchedToken(BaseRecognizer br, IntStream input, int ttype, BitSet follow) {
+        return null;
     }
 
     public exprType errorExpr(PythonTree t) {
