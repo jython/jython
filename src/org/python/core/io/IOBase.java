@@ -210,6 +210,6 @@ public abstract class IOBase {
     protected void unsupported(String methodName) {
         String qualifiedName = getClass().getName();
         String className = qualifiedName.substring(qualifiedName.lastIndexOf('.') + 1);
-        throw Py.TypeError(String.format("%s.%s() not supported", className, methodName));
+        throw Py.IOError(String.format("%s.%s() not supported", className, methodName));
     }
 }

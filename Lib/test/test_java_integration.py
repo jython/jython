@@ -154,6 +154,10 @@ class IOTest(unittest.TestCase):
         from java.io import FileInputStream, FileNotFoundException
         self.assertRaises(FileNotFoundException, FileInputStream, "garbage")
 
+    def test_unsupported(self):
+        fp = open(System.out)
+        self.assertRaises(IOError, fp.tell)
+
 class VectorTest(unittest.TestCase):
 
     def test_looping(self):
