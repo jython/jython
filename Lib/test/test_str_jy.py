@@ -131,7 +131,7 @@ class DisplayTest(unittest.TestCase):
         self.assertEqual(repr(unicode(test2)), 'u"\'bar"')
 
     def test_startswith(self):
-        #from bugtests -- maybe making sure methods are case sensative?
+        #from bugtests -- maybe making sure methods are case sensitive?
         msg = 'This is a test.'
         self.assertRaises(AttributeError, getattr, msg, "startsWith")
         assert msg.startswith('This')
