@@ -286,8 +286,15 @@ def mkdir(path, mode='ignored'):
 
     The optional parameter is currently ignored.
     """
-    if not File(sys.getPath(path)).mkdir():
-        raise OSError(0, "couldn't make directory", path)
+    # XXX: use _posix.mkdir when we can get the real errno upon failure
+    fp = File(sys.getPath(path))
+    if not fp.mkdir():
+        if fp.isDirectory() or fp.isFile():
+            err = errno.EEXIST
+        else:
+            err = 0
+        msg = errno.strerror(err) if err else "couldn't make directory"
+        raise OSError(err, msg, path)
 
 def makedirs(path, mode='ignored'):
     """makedirs(path [, mode=0777])
