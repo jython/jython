@@ -3539,7 +3539,9 @@ public class PyObject implements Serializable {
     }
 
     public void __set__(PyObject obj, PyObject value) {
-        throw Py.AttributeError("object internal __set__ impl is abstract");
+        if (!_doset(obj, value)) {
+            throw Py.AttributeError("object internal __set__ impl is abstract");
+        }
     }
 
     public void __delete__(PyObject obj) {

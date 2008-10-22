@@ -2,7 +2,6 @@ package org.python.expose.generate;
 
 import org.python.objectweb.asm.Type;
 import org.python.core.PyBuiltinClassMethodNarrow;
-import org.python.core.PyBuiltinMethodNarrow;
 
 public class ClassMethodExposer extends MethodExposer {
 
@@ -14,7 +13,8 @@ public class ClassMethodExposer extends MethodExposer {
                               String desc,
                               String typeName,
                               String[] asNames,
-                              String[] defaults) {
+                              String[] defaults,
+                              String doc) {
         super(onType,
               methodName,
               getArgs(onType, methodName, desc),
@@ -22,7 +22,8 @@ public class ClassMethodExposer extends MethodExposer {
               typeName,
               asNames,
               defaults,
-              PyBuiltinClassMethodNarrow.class);
+              PyBuiltinClassMethodNarrow.class,
+              doc);
         actualArgs = Type.getArgumentTypes(desc);
     }
 

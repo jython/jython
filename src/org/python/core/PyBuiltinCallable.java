@@ -9,6 +9,8 @@ public abstract class PyBuiltinCallable extends PyObject {
 
     protected Info info;
 
+    protected String doc;
+
     protected PyBuiltinCallable(PyType type, Info info) {
         super(type);
         this.info = info;
@@ -29,8 +31,8 @@ public abstract class PyBuiltinCallable extends PyObject {
     }
 
     @ExposedGet(name = "__doc__")
-    public PyObject fastGetDoc() {
-        return Py.None;
+    public String fastGetDoc() {
+        return doc;
     }
 
     @ExposedGet(name = "__module__")

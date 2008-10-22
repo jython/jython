@@ -137,6 +137,15 @@ public abstract class ExposedMethodFinder extends MethodAdapter implements PyTyp
     class ExposedMethodVisitor extends RestrictiveAnnotationVisitor {
 
         @Override
+        public void visit(String name, Object value) {
+            if (name.equals("doc")) {
+                doc = (String)value;
+            } else {
+                super.visit(name, value);
+            }
+        }
+
+        @Override
         public AnnotationVisitor visitArray(String name) {
             if(name.equals("names")) {
                 return new StringArrayBuilder() {
@@ -173,6 +182,8 @@ public abstract class ExposedMethodFinder extends MethodAdapter implements PyTyp
         private String[] defaults = new String[0];
 
         private MethodType type = MethodType.DEFAULT;
+
+        private String doc = "";
     }
 
     @Override
@@ -185,7 +196,8 @@ public abstract class ExposedMethodFinder extends MethodAdapter implements PyTyp
                                            typeName,
                                            methVisitor.names,
                                            methVisitor.defaults,
-                                           methVisitor.type));
+                                           methVisitor.type,
+                                           methVisitor.doc));
         }
         if(newExp != null) {
             handleNewExposer(newExp);
@@ -197,7 +209,8 @@ public abstract class ExposedMethodFinder extends MethodAdapter implements PyTyp
                                                 methodDesc,
                                                 typeName,
                                                 classMethVisitor.names,
-                                                classMethVisitor.defaults));
+                                                classMethVisitor.defaults,
+                                                classMethVisitor.doc));
         }
         super.visitEnd();
     }

@@ -4,19 +4,13 @@ import org.python.expose.ExposeAsSuperclass;
 
 public class PyBuiltinFunction extends PyBuiltinCallable implements ExposeAsSuperclass {
 
-    private PyString doc;
-
     protected PyBuiltinFunction(String name, String doc) {
         this(name, -1, -1, doc);
     }
 
     protected PyBuiltinFunction(String name, int minargs, int maxargs, String doc) {
         super(new DefaultInfo(name, minargs, maxargs));
-        this.doc = doc == null ? null : Py.newString(doc);
-    }
-
-    public PyObject fastGetDoc() {
-        return doc;
+        this.doc = doc == null ? null : doc;
     }
 
     public boolean isMappingType() {

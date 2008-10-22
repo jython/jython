@@ -6,7 +6,6 @@ import org.python.core.BytecodeLoader;
 import org.python.core.Py;
 import org.python.core.PyBuiltinCallable;
 import org.python.core.PyException;
-import org.python.core.PyObject;
 import org.python.expose.MethodType;
 
 public class MethodExposerTest extends InterpTestCase implements Opcodes, PyTypes {
@@ -167,7 +166,8 @@ public class MethodExposerTest extends InterpTestCase implements Opcodes, PyType
                                       "simpleexposed",
                                       new String[0],
                                       new String[] {"X"},
-                                      MethodType.DEFAULT);
+                                      MethodType.DEFAULT,
+                                      "");
             fail("Shouldn't be able to create the exposer with a default value");
         } catch (InvalidExposingException ite) {}
     }
@@ -197,7 +197,8 @@ public class MethodExposerTest extends InterpTestCase implements Opcodes, PyType
                                                                                  new Type[] {PYTYPE}),
                                                         "simpleexposed",
                                                         new String[0],
-                                                        new String[0]);
+                                                        new String[0],
+                                                        "");
         PyBuiltinCallable bound = createBound(exp);
         assertEquals("a", bound.__call__().toString());
     }
@@ -212,7 +213,8 @@ public class MethodExposerTest extends InterpTestCase implements Opcodes, PyType
                                                                                              PYOBJ}),
                                                         "simpleexposed",
                                                         new String[0],
-                                                        new String[] {"null", "Py.None"});
+                                                        new String[] {"null", "Py.None"},
+                                                        "");
         PyBuiltinCallable bound = createBound(exp);
         assertEquals(0, bound.__call__().asInt());
         assertEquals(1, bound.__call__(Py.newString("hello")).asInt());

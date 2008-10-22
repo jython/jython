@@ -1,12 +1,11 @@
 package org.python.expose.generate;
 
 import org.python.objectweb.asm.Type;
-import org.python.expose.MethodType;
 
 public abstract class MethodExposer extends Exposer {
 
     protected String[] defaults;
-    
+
     protected final String[] asNames;
 
     protected final String prefix, typeName;
@@ -17,6 +16,8 @@ public abstract class MethodExposer extends Exposer {
 
     protected final Type onType, returnType;
 
+    protected final String doc;
+
     public MethodExposer(Type onType,
                          String methodName,
                          Type[] args,
@@ -24,12 +25,14 @@ public abstract class MethodExposer extends Exposer {
                          String typeName,
                          String[] asNames,
                          String[] defaults,
-                         Class superClass) {
+                         Class superClass,
+                         String doc) {
         super(superClass, onType.getClassName() + "$" + methodName + "_exposer");
         this.onType = onType;
         this.methodName = methodName;
         this.args = args;
         this.typeName = typeName;
+        this.doc = doc;
         String prefix = typeName;
         int lastDot = prefix.lastIndexOf('.');
         if (lastDot != -1) {
@@ -64,7 +67,7 @@ public abstract class MethodExposer extends Exposer {
         }
         return asNames;
     }
-    
+
     protected void generate() {
         generateNamedConstructor();
         generateFullConstructor();
@@ -85,6 +88,12 @@ public abstract class MethodExposer extends Exposer {
         mv.visitVarInsn(ALOAD, 2);
         mv.visitVarInsn(ALOAD, 3);
         superConstructor(PYTYPE, PYOBJ, BUILTIN_INFO);
+        mv.visitVarInsn(ALOAD, 0);
+        mv.visitLdcInsn(doc);
+        mv.visitFieldInsn(PUTFIELD,
+                          BUILTIN_FUNCTION.getInternalName(),
+                          "doc",
+                          STRING.getDescriptor());
         endConstructor();
     }
 
@@ -99,6 +108,12 @@ public abstract class MethodExposer extends Exposer {
             mv.visitLdcInsn(args.length + 1);
             superConstructor(STRING, INT, INT);
         }
+        mv.visitVarInsn(ALOAD, 0);
+        mv.visitLdcInsn(doc);
+        mv.visitFieldInsn(PUTFIELD,
+                          BUILTIN_FUNCTION.getInternalName(),
+                          "doc",
+                          STRING.getDescriptor());
         endConstructor();
     }
 
@@ -126,7 +141,7 @@ public abstract class MethodExposer extends Exposer {
         toPy(returnType);
         endMethod(ARETURN);
     }
-    
+
     private boolean hasDefault(int argIndex) {
         return defaults.length - args.length + argIndex >= 0;
     }

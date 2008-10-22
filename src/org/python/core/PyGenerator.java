@@ -1,39 +1,33 @@
-// Copyright 2002 Finn Bock
-
 package org.python.core;
 
+import org.python.expose.ExposedGet;
+import org.python.expose.ExposedMethod;
+import org.python.expose.ExposedType;
+
+@ExposedType(name="generator", base=PyObject.class)
 public class PyGenerator extends PyIterator {
-    public PyFrame gi_frame;
-    PyObject closure;
-    public boolean gi_running;
+
+    @ExposedGet
+    protected PyFrame gi_frame;
+
+    @ExposedGet
+    protected boolean gi_running;
+
     private PyException generatorExit;
 
+    private PyObject closure;
+
     public PyGenerator(PyFrame frame, PyObject closure) {
-        this.gi_frame = frame;
+        gi_frame = frame;
         this.closure = closure;
-        this.gi_running = false;
-        // Create an exception instance while we have a frame to create it from.
-        // When the GC runs it doesn't have any associated thread state.
-        // this is necessary for finalize calling close on the generator
-        this.generatorExit = Py.makeException(Py.GeneratorExit);
+
+        // Create an exception instance while we have a frame to create it from. When the GC runs it
+        // doesn't have any associated thread state. this is necessary for finalize calling close on
+        // the generator
+        generatorExit = Py.makeException(Py.GeneratorExit);
     }
 
-    private static final String[] __members__ = {
-        "close", "gi_frame", "gi_running", "next", "send", "throw"
-    };
-
-    public PyObject __dir__() {
-        PyString members[] = new PyString[__members__.length];
-        for (int i = 0; i < __members__.length; i++)
-            members[i] = new PyString(__members__[i]);
-        PyList ret = new PyList(members);
-        PyDictionary accum = new PyDictionary();
-        addKeys(accum, "__dict__");
-        ret.extend(accum.keys());
-        ret.sort();
-        return ret;
-    }
-
+    @ExposedMethod
     public PyObject send(PyObject value) {
         if (gi_frame == null) {
             throw Py.StopIteration("");
@@ -45,26 +39,12 @@ public class PyGenerator extends PyIterator {
         return next();
     }
 
-    private PyObject raiseException(PyException ex) {
-        if (gi_frame == null || gi_frame.f_lasti == 0) {
-            throw ex;
-        }
-        gi_frame.setGeneratorInput(ex);
-        return next();
-    }
-
-    public PyObject throw$(PyObject type) {
-        return raiseException(Py.makeException(type));
-    }
-
-    public PyObject throw$(PyObject type, PyObject value) {
-        return raiseException(Py.makeException(type, value));
-    }
-
+    @ExposedMethod(names="throw", defaults={"null", "null"})
     public PyObject throw$(PyObject type, PyObject value, PyTraceback tb) {
         return raiseException(Py.makeException(type, value, tb));
     }
 
+    @ExposedMethod
     public PyObject close() {
         try {
             raiseException(generatorExit);
@@ -77,25 +57,43 @@ public class PyGenerator extends PyIterator {
         return Py.None;
     }
 
+    @Override
+    @ExposedMethod(doc="x.next() -> the next value, or raise StopIteration")
+    public PyObject next() {
+        return super.next();
+    }
+
+    @Override
+    @ExposedMethod
+    public PyObject __iter__() {
+        return this;
+    }
+
+    private PyObject raiseException(PyException ex) {
+        if (gi_frame == null || gi_frame.f_lasti == 0) {
+            throw ex;
+        }
+        gi_frame.setGeneratorInput(ex);
+        return next();
+    }
+
+    @Override
     protected void finalize() throws Throwable {
-        if (gi_frame == null || gi_frame.f_lasti == -1) 
+        if (gi_frame == null || gi_frame.f_lasti == -1)
             return;
         try {
             close();
         } catch (PyException e) {
             // PEP 342 specifies that if an exception is raised by close,
-            // we output to stderr and then forget about it;           
+            // we output to stderr and then forget about it;
             String className =  PyException.exceptionClassName(e.type);
             int lastDot = className.lastIndexOf('.');
             if (lastDot != -1) {
                 className = className.substring(lastDot + 1);
             }
-            PyString m = Py.newString(
-                    String.format("Exception %s: %s in %s",
-                    className,
-                    e.value.__repr__().toString(),
-                    this.__repr__().toString()));
-            Py.println(Py.getSystemState().stderr, m);
+            String msg = String.format("Exception %s: %s in %s", className, e.value.__repr__()
+                    .toString(), __repr__().toString());
+            Py.println(Py.getSystemState().stderr, Py.newString(msg));
         } catch (Throwable e) {
             // but we currently ignore any Java exception completely. perhaps we
             // can also output something meaningful too?
@@ -110,7 +108,7 @@ public class PyGenerator extends PyIterator {
         if (gi_frame == null) {
             return null;
         }
-            
+
         if (gi_frame.f_lasti == -1) {
             gi_frame = null;
             return null;

@@ -27,7 +27,8 @@ public class InstanceMethodExposer extends MethodExposer {
              typeName,
              new String[0],
              new String[0],
-             MethodType.DEFAULT);
+             MethodType.DEFAULT,
+             null);
     }
 
     public InstanceMethodExposer(Type onType,
@@ -37,7 +38,8 @@ public class InstanceMethodExposer extends MethodExposer {
                                  String typeName,
                                  String[] asNames,
                                  String[] defaults,
-                                 MethodType type) {
+                                 MethodType type,
+                                 String doc) {
         super(onType,
               methodName,
               Type.getArgumentTypes(desc),
@@ -45,7 +47,8 @@ public class InstanceMethodExposer extends MethodExposer {
               typeName,
               asNames,
               defaults,
-              isWide(desc) ? PyBuiltinMethod.class : PyBuiltinMethodNarrow.class);
+              isWide(desc) ? PyBuiltinMethod.class : PyBuiltinMethodNarrow.class,
+              doc);
         if ((access & ACC_STATIC) != 0) {
             throwInvalid("@ExposedMethod can't be applied to static methods");
         }

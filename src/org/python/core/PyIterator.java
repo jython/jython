@@ -28,9 +28,8 @@ public abstract class PyIterator extends PyObject {
         return this;
     }
 
-    public static PyString __doc__next = new PyString(
-        "x.next() -> the next value, or raise StopIteration"
-    );
+    public static PyString __doc__next =
+        new PyString("x.next() -> the next value, or raise StopIteration");
 
     /**
      * The exposed next method.
