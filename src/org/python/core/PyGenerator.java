@@ -40,7 +40,12 @@ public class PyGenerator extends PyIterator {
     }
 
     @ExposedMethod(names="throw", defaults={"null", "null"})
-    public PyObject throw$(PyObject type, PyObject value, PyTraceback tb) {
+    public PyObject throw$(PyObject type, PyObject value, PyObject tb) {
+        if (tb == Py.None) {
+            tb = null;
+        } else if (tb != null && !(tb instanceof PyTraceback)) {
+            throw Py.TypeError("throw() third argument must be a traceback object");
+        }
         return raiseException(Py.makeException(type, value, tb));
     }
 
