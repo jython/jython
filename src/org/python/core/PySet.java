@@ -3,6 +3,7 @@ package org.python.core;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+import org.python.core.util.ConcurrentHashSet;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
@@ -14,15 +15,15 @@ public class PySet extends BaseSet {
     public static final PyType TYPE = PyType.fromClass(PySet.class);
     
     public PySet() {
-        super();
+        super(new ConcurrentHashSet<PyObject>());
     }
 
     public PySet(PyType type) {
-        super(type);
+        super(type, new ConcurrentHashSet<PyObject>());
     }
 
     public PySet(PyObject data) {
-        super(data);
+        super(update(new ConcurrentHashSet<PyObject>(), data));
     }
     
     @ExposedNew
@@ -37,8 +38,7 @@ public class PySet extends BaseSet {
         }
 
         _set.clear();
-        PyObject o = args[0];
-        _update(o);
+        _update(args[0]);
     }
     
     @ExposedMethod(type = MethodType.BINARY)
@@ -245,11 +245,11 @@ public class PySet extends BaseSet {
     final PyObject set_pop() {
         Iterator iterator = _set.iterator();
         try {
-                Object first = iterator.next();
+            Object first = iterator.next();
             _set.remove(first);
-            return (PyObject) first;
+            return (PyObject)first;
         } catch (NoSuchElementException e) {
-                throw new PyException(Py.KeyError, "pop from an empty set");
+            throw new PyException(Py.KeyError, "pop from an empty set");
         }
     }
 

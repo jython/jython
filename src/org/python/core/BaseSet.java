@@ -8,34 +8,25 @@ import java.util.Set;
 
 public abstract class BaseSet extends PyObject implements Set {
 
-    /**
-     * The underlying container.  HashSet is used rather than Set because
-     * clone is protected on Object and I didn't want to cast.
-     */
-    protected HashSet _set;
+    /** The underlying Set. */
+    protected Set _set;
 
     /**
-     * Create a new, empty set instance.
-     */
-    public BaseSet() {
-        super();
-        _set = new HashSet();
-    }
-
-    /**
-     * Create a new set instance from the values of the iterable object.
+     * Create a new Python set instance from the specified Set object.
      *
-     * @param data An iterable instance.
+     * @param set An Set object.
      */
-    public BaseSet(PyObject data) {
-        super();
-        _set = new HashSet();
-        _update(data);
+    protected BaseSet(Set set) {
+        _set = set;
     }
 
-    public BaseSet(PyType type) {
+    protected BaseSet(PyType type, Set set) {
         super(type);
-        _set = new HashSet();
+        _set = set;
+    }
+
+    protected void _update(PyObject data) throws PyIgnoreMethodTag {
+        update(_set, data);
     }
 
     /**
@@ -44,15 +35,19 @@ public abstract class BaseSet extends PyObject implements Set {
      * @param data An iterable instance.
      * @throws PyIgnoreMethodTag Ignore.
      */
-    protected void _update(PyObject data) throws PyIgnoreMethodTag {
+    protected static Set update(Set set, PyObject data) throws PyIgnoreMethodTag {
+        if (data == null) {
+            return set;
+        }
         if (data instanceof BaseSet) {
             // Skip the iteration if both are sets
-            _set.addAll(((BaseSet)data)._set);
-            return;
+            set.addAll(((BaseSet)data)._set);
+            return set;
         }
         for (PyObject item : data.asIterable()) {
-            _set.add(item);
+            set.add(item);
         }
+        return set;
     }
 
     /**
@@ -458,16 +453,14 @@ public abstract class BaseSet extends PyObject implements Set {
     protected static BaseSet makeNewSet(PyType type, PyObject iterable) {
         BaseSet so;
         if (type == PySet.TYPE) {
-            so = new PySet();
+            so = new PySet(iterable);
         } else if (type == PyFrozenSet.TYPE) {
-            so = new PyFrozenSet();
+            so = new PyFrozenSet(iterable);
         } else if (Py.isSubClass(type, PySet.TYPE)) {
             so = new PySetDerived(type);
-        } else {
-            so = new PyFrozenSetDerived(type);
-        }
-        if (iterable != null) {
             so._update(iterable);
+        } else {
+            so = new PyFrozenSetDerived(type, iterable);
         }
         return so;
     }

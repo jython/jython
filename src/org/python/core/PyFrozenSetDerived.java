@@ -36,8 +36,8 @@ public class PyFrozenSetDerived extends PyFrozenSet implements Slotted {
         dict=new PyStringMap();
     }
 
-    public PyFrozenSetDerived(PyType subtype) {
-        super(subtype);
+    public PyFrozenSetDerived(PyType subtype,PyObject data) {
+        super(subtype,data);
         slots=new PyObject[subtype.getNumSlots()];
         dict=subtype.instDict();
     }

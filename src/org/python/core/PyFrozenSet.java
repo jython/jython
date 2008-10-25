@@ -1,5 +1,9 @@
 package org.python.core;
 
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
@@ -11,15 +15,15 @@ public class PyFrozenSet extends BaseSet {
     public static final PyType TYPE = PyType.fromClass(PyFrozenSet.class);
     
     public PyFrozenSet() {
-        super();
-    }
-
-    public PyFrozenSet(PyType type) {
-        super(type);
+        super(new HashSet<PyObject>());
     }
 
     public PyFrozenSet(PyObject data) {
-        super(data);
+        super(update(new HashSet<PyObject>(), data));
+    }
+
+    public PyFrozenSet(PyType type, PyObject data) {
+        super(type, update(new HashSet<PyObject>(), data));
     }
 
     @ExposedNew
@@ -32,7 +36,7 @@ public class PyFrozenSet extends BaseSet {
         if (new_.for_type == subtype) {
             if (iterable == null) {
                 fset = Py.EmptyFrozenSet;
-            } else if (iterable.getClass() == PyFrozenSet.class) {
+            } else if (iterable.getType() == TYPE) {
                 fset = (PyFrozenSet)iterable;
             } else {
                 fset = new PyFrozenSet(iterable);
@@ -41,10 +45,7 @@ public class PyFrozenSet extends BaseSet {
                 }
             }
         } else {
-            fset = new PyFrozenSetDerived(subtype);
-            if (iterable != null) {
-                fset._update(iterable);
-            }
+            fset = new PyFrozenSetDerived(subtype, iterable);
         }
 
         return fset;
@@ -176,5 +177,45 @@ public class PyFrozenSet extends BaseSet {
 
     public int hashCode() {
         return frozenset___hash__();
+    }
+
+    public void clear() {
+        throw new UnsupportedOperationException();
+    }
+
+    public boolean add(Object o) {
+        throw new UnsupportedOperationException();
+    }
+
+    public boolean remove(Object o) {
+        throw new UnsupportedOperationException();
+    }
+
+    public boolean addAll(Collection c) {
+        throw new UnsupportedOperationException();
+    }
+
+    public boolean removeAll(Collection c) {
+        throw new UnsupportedOperationException();
+    }
+
+    public boolean retainAll(Collection c) {
+        throw new UnsupportedOperationException();
+    }
+
+    public Iterator iterator() {
+        return new Iterator() {
+            Iterator i = _set.iterator();
+
+            public boolean hasNext() {
+                return i.hasNext();
+            }
+            public Object next() {
+                return i.next();
+            }
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+        };
     }
 }
