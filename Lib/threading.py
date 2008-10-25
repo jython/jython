@@ -1,6 +1,8 @@
+from java.lang import InterruptedException
 from java.util import Collections, WeakHashMap
 from java.util.concurrent import Semaphore, CyclicBarrier
 from java.util.concurrent.locks import ReentrantLock
+from org.python.util import jython
 from thread import _newFunctionThread
 from thread import _local as local
 import java.lang.Thread
@@ -245,6 +247,11 @@ class Thread(JavaThread):
                 self.run()
             except SystemExit:
                 pass
+            except InterruptedException:
+                # Quiet InterruptedExceptions if they're caused by
+                # _systemrestart
+                if not jython.shouldRestart:
+                    raise
             except:
                 # If sys.stderr is no more (most likely from interpreter
                 # shutdown) use self.__stderr.  Otherwise still use sys (as in

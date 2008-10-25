@@ -63,7 +63,7 @@ public class jython
         "JYTHONPATH: '" + java.io.File.pathSeparator + "'-separated list of directories prefixed to the default module\n" +
         "            search path.  The result is sys.path.";
 
-    private static boolean shouldRestart;
+    public static boolean shouldRestart;
 
     public static void runJar(String filename) {
         // TBD: this is kind of gross because a local called `zipfile' just
@@ -228,12 +228,12 @@ public class jython
                 } catch(Throwable t) {
                     if (t instanceof PyException &&
                             Py.matchException((PyException)t, _systemrestart.SystemRestart)) {
-                        // Stop current threads...
-                        thread.interruptAllThreads();
+                        // Shutdown this instance...
+                        shouldRestart = true;
+                        shutdownInterpreter();
                         // ..reset the state...
                         Py.setSystemState(new PySystemState());
                         // ...and start again
-                        shouldRestart = true;
                     } else {
                         Py.printException(t);
                         if (!opts.interactive) {
@@ -322,6 +322,21 @@ public class jython
         interp.setLocals(mod.__dict__);
         //System.err.println("imp");
         return interp;
+    }
+
+    /**
+     * Run any finalizations on the current interpreter in preparation for a SytemRestart.
+     */
+    public static void shutdownInterpreter() {
+        // Stop all the active threads
+        thread.interruptAllThreads();
+        // Close all sockets -- not all of their operations are stopped by
+        // Thread.interrupt (in particular pre-nio sockets)
+        try {
+            imp.load("socket").__findattr__("_closeActiveSockets").__call__();
+        } catch (PyException pye) {
+            // continue
+        }
     }
 }
 

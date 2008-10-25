@@ -988,6 +988,16 @@ class _closedsocket(object):
     send = recv = recv_into = sendto = recvfrom = recvfrom_into = _dummy
     __getattr__ = _dummy
 
+_active_sockets = set()
+
+def _closeActiveSockets():
+    for socket in _active_sockets.copy():
+        try:
+            socket.close()
+        except error:
+            msg = 'Problem closing socket: %s: %r' % (socket, sys.exc_info())
+            print >> sys.stderr, msg
+
 class _socketobject(object):
 
     __doc__ = _realsocket.__doc__
@@ -1005,8 +1015,13 @@ class _socketobject(object):
             meth = getattr(_sock, method, None)
             if meth:
                 setattr(self, method, meth)
+        _active_sockets.add(self)
 
     def close(self):
+        try:
+            _active_sockets.remove(self)
+        except KeyError:
+            pass
         _sock = self._sock
         if isinstance(_sock, _nonblocking_api_mixin):
             _sock.close_lock.acquire()
