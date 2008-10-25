@@ -23,7 +23,7 @@ public class PySet extends BaseSet {
     }
 
     public PySet(PyObject data) {
-        super(update(new ConcurrentHashSet<PyObject>(), data));
+        super(_update(new ConcurrentHashSet<PyObject>(), data));
     }
     
     @ExposedNew

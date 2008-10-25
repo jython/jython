@@ -19,11 +19,11 @@ public class PyFrozenSet extends BaseSet {
     }
 
     public PyFrozenSet(PyObject data) {
-        super(update(new HashSet<PyObject>(), data));
+        super(_update(new HashSet<PyObject>(), data));
     }
 
     public PyFrozenSet(PyType type, PyObject data) {
-        super(type, update(new HashSet<PyObject>(), data));
+        super(type, _update(new HashSet<PyObject>(), data));
     }
 
     @ExposedNew

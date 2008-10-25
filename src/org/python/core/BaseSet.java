@@ -26,7 +26,7 @@ public abstract class BaseSet extends PyObject implements Set {
     }
 
     protected void _update(PyObject data) throws PyIgnoreMethodTag {
-        update(_set, data);
+        _update(_set, data);
     }
 
     /**
@@ -35,7 +35,7 @@ public abstract class BaseSet extends PyObject implements Set {
      * @param data An iterable instance.
      * @throws PyIgnoreMethodTag Ignore.
      */
-    protected static Set update(Set set, PyObject data) throws PyIgnoreMethodTag {
+    protected static Set _update(Set set, PyObject data) throws PyIgnoreMethodTag {
         if (data == null) {
             return set;
         }
