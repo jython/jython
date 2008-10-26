@@ -2,13 +2,31 @@
 package org.python.core.util;
 
 import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+import org.python.core.PyFile;
 
 /**
  * Utility methods for Java file handling.
  */
 public class FileUtil {
+
+    /**
+     * Creates a PyFile that reads from the given <code>InputStream</code>.
+     */
+    public static PyFile wrap(InputStream is) {
+        return new PyFile(is);
+    }
+
+    /**
+     * Creates a PyFile that writes to the given <code>OutputStream</code>.
+     */
+    public static PyFile wrap(OutputStream os) {
+        return new PyFile(os);
+    }
+
     /**
      * Read all bytes from the input stream. <p/> Note that using this method to
      * read very large streams could cause out-of-memory exceptions and/or block

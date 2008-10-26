@@ -46,7 +46,6 @@ import time
 import stat as _stat
 import sys
 from java.io import File
-from org.python.core import PyFile
 from org.python.core.io import FileDescriptors, FileIO, IOBase
 from org.python.core.Py import newString as asPyString
 
@@ -554,7 +553,7 @@ def fdopen(fd, mode='r', bufsize=-1):
         raise OSError(errno.EBADF, errno.strerror(errno.EBADF))
 
     try:
-        fp = PyFile(rawio, '<fdopen>', mode, bufsize)
+        fp = FileDescriptors.wrap(rawio, mode, bufsize)
     except IOError:
         raise OSError(errno.EINVAL, errno.strerror(errno.EINVAL))
     return fp

@@ -455,13 +455,13 @@ public final class Py {
     @param o the <code>PyObject</code> to convert.
     @param c the class to convert it to.
      **/
-    public static Object tojava(PyObject o, Class c) {
+    public static <T> T tojava(PyObject o, Class<T> c) {
         Object obj = o.__tojava__(c);
         if (obj == Py.NoConversion) {
             throw Py.TypeError("can't convert " + o.__repr__() + " to " +
                     c.getName());
         }
-        return obj;
+        return (T)obj;
     }
 
     // ??pending: was @deprecated but is actually used by proxie code.
@@ -1963,7 +1963,7 @@ public final class Py {
         if (file instanceof PyJavaInstance) {
             Object tojava = file.__tojava__(OutputStream.class);
             if (tojava != null && tojava != Py.NoConversion) {
-                this.file = new PyFile((OutputStream) tojava, "<java OutputStream>");
+                this.file = new PyFile((OutputStream) tojava);
             }
         }
     }

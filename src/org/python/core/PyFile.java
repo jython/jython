@@ -3,7 +3,6 @@ package org.python.core;
 
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.RandomAccessFile;
 import java.util.LinkedList;
 
 import org.python.core.io.BinaryIOWrapper;
@@ -20,13 +19,13 @@ import org.python.core.io.StreamIO;
 import org.python.core.io.TextIOBase;
 import org.python.core.io.TextIOWrapper;
 import org.python.core.io.UniversalIOWrapper;
+import org.python.core.util.FileUtil;
 import org.python.expose.ExposedDelete;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedSet;
 import org.python.expose.ExposedType;
-import org.python.expose.MethodType;
 
 /**
  * A python file wrapper around a java stream, reader/writer or file.
@@ -35,7 +34,7 @@ import org.python.expose.MethodType;
 public class PyFile extends PyObject {
 
     public static final PyType TYPE = PyType.fromClass(PyFile.class);
-    
+
     /** The filename */
     @ExposedGet
     public PyObject name;
@@ -75,14 +74,13 @@ public class PyFile extends PyObject {
     private Closer closer;
 
     /** All PyFiles' closers */
-    private static LinkedList closers = new LinkedList();
+    private static LinkedList<Closer> closers = new LinkedList<Closer>();
 
     static {
         initCloser();
     }
 
-    public PyFile() {
-    }
+    public PyFile() {}
 
     public PyFile(PyType subType) {
         super(subType);
@@ -93,63 +91,34 @@ public class PyFile extends PyObject {
         file___init__(raw, name, mode, bufsize);
     }
 
-    public PyFile(InputStream istream, String name, String mode, int bufsize,
-                  boolean closefd) {
+    PyFile(InputStream istream, String name, String mode, int bufsize, boolean closefd) {
         parseMode(mode);
         file___init__(new StreamIO(istream, closefd), name, mode, bufsize);
     }
 
-    public PyFile(InputStream istream, String name, String mode, int bufsize) {
-        this(istream, name, mode, -1, true);
-    }
-
-    public PyFile(InputStream istream, String name, String mode) {
-        this(istream, name, mode, -1);
-    }
-
-    public PyFile(InputStream istream, String name) {
-        this(istream, name, "r");
-    }
-
+    /**
+     * Creates a file object wrapping the given <code>InputStream</code>. The builtin methods
+     * <code>file</code> and <code>open</code> don't expose this functionality as it isn't available
+     * to regular Python code. To wrap an InputStream in a file from Python, use
+     * {@link FileUtil#wrap(InputStream)}
+     */
     public PyFile(InputStream istream) {
-        this(istream, "<???>", "r");
+        this(istream, "<Java InputStream '" + istream + "' as file>", "r", -1, true);
     }
 
-    public PyFile(OutputStream ostream, String name, String mode, int bufsize, boolean closefd) {
+    PyFile(OutputStream ostream, String name, String mode, int bufsize, boolean closefd) {
         parseMode(mode);
         file___init__(new StreamIO(ostream, closefd), name, mode, bufsize);
     }
 
-    public PyFile(OutputStream ostream, String name, String mode, int bufsize) {
-        this(ostream, name, mode, -1, true);
-    }
-
-    public PyFile(OutputStream ostream, String name, String mode) {
-        this(ostream, name, mode, -1);
-    }
-
-    public PyFile(OutputStream ostream, String name) {
-        this(ostream, name, "w");
-    }
-
+    /**
+     * Creates a file object wrapping the given <code>OutputStream</code>. The builtin methods
+     * <code>file</code> and <code>open</code> don't expose this functionality as it isn't available
+     * to regular Python code. To wrap an OutputStream in a file from Python, use
+     * {@link FileUtil#wrap(OutputStream)}
+     */
     public PyFile(OutputStream ostream) {
-        this(ostream, "<???>", "w");
-    }
-
-    public PyFile(RandomAccessFile file, String name, String mode, int bufsize) {
-        file___init__(new FileIO(file.getChannel(), parseMode(mode)), name, mode, bufsize);
-    }
-
-    public PyFile(RandomAccessFile file, String name, String mode) {
-        this(file, name, mode, -1);
-    }
-
-    public PyFile(RandomAccessFile file, String name) {
-        this(file, name, "r+");
-    }
-
-    public PyFile(RandomAccessFile file) {
-        this(file, "<???>", "r+");
+        this(ostream, "<Java OutputStream '" + ostream + "' as file>", "w", -1, true);
     }
 
     public PyFile(String name, String mode, int bufsize) {
@@ -157,36 +126,6 @@ public class PyFile extends PyObject {
     }
 
     @ExposedNew
-    static final PyObject file_new(PyNewWrapper new_, boolean init, PyType subtype,
-                                   PyObject[] args, String[] keywords) {
-        PyFile newFile;
-        if (new_.for_type == subtype) {
-            if (init) {
-                if (args.length - keywords.length == 0) {
-                    newFile = new PyFile();
-                    newFile.file___init__(args, keywords);
-                } else if (args[0] instanceof PyString ||
-                           (args[0] instanceof PyJavaInstance &&
-                            ((PyJavaInstance)args[0]).javaProxy == String.class)) {
-                    // If first arg is a PyString or String, assume
-                    // its being called as a builtin.
-                    newFile = new PyFile();
-                    newFile.file___init__(args, keywords);
-                    newFile.closer = new Closer(newFile.file);
-                } else {
-                    // assume it's being called as a java class
-                    PyJavaClass pjc = new PyJavaClass(PyFile.class);
-                    newFile = (PyFile)pjc.__call__(args, keywords);
-                }
-            } else {
-                newFile = new PyFile();
-            }
-        } else {
-            newFile = new PyFileDerived(subtype);
-        }
-        return newFile;
-    }
-
     @ExposedMethod
     final void file___init__(PyObject[] args, String[] kwds) {
         ArgParser ap = new ArgParser("file", args, kwds, new String[] {"name", "mode", "bufsize"},
@@ -199,6 +138,7 @@ public class PyFile extends PyObject {
         String mode = ap.getString(1, "r");
         int bufsize = ap.getInt(2, -1);
         file___init__(new FileIO(name.toString(), parseMode(mode)), name, mode, bufsize);
+        closer = new Closer(file);
     }
 
     private void file___init__(RawIOBase raw, String name, String mode, int bufsize) {
@@ -613,18 +553,15 @@ public class PyFile extends PyObject {
     }
 
     /**
-     * A mechanism to make sure PyFiles are closed on exit. On
-     * creation Closer adds itself to a list of Closers that will be
-     * run by PyFileCloser on JVM shutdown. When a PyFile's close or
-     * finalize methods are called, PyFile calls its Closer.close
-     * which clears Closer out of the shutdown queue.
+     * A mechanism to make sure PyFiles are closed on exit. On creation Closer adds itself to a list
+     * of Closers that will be run by PyFileCloser on JVM shutdown. When a PyFile's close or
+     * finalize methods are called, PyFile calls its Closer.close which clears Closer out of the
+     * shutdown queue.
      *
-     * We use a regular object here rather than WeakReferences and
-     * their ilk as they may be collected before the shutdown hook
-     * runs. There's no guarantee that finalize will be called during
-     * shutdown, so we can't use it. It's vital that this Closer has
-     * no reference to the PyFile it's closing so the PyFile remains
-     * garbage collectable.
+     * We use a regular object here rather than WeakReferences and their ilk as they may be
+     * collected before the shutdown hook runs. There's no guarantee that finalize will be called
+     * during shutdown, so we can't use it. It's vital that this Closer has no reference to the
+     * PyFile it's closing so the PyFile remains garbage collectable.
      */
     private static class Closer {
 
@@ -667,7 +604,7 @@ public class PyFile extends PyObject {
             synchronized (closers) {
                 while (closers.size() > 0) {
                     try {
-                        ((Closer)closers.removeFirst()).doClose();
+                        closers.removeFirst().doClose();
                     } catch (PyException e) {
                         // continue
                     }

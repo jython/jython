@@ -27,8 +27,9 @@ from java.io import BufferedOutputStream
 from java.io import BufferedInputStream
 from java.io import PipedOutputStream
 from java.io import PipedInputStream
-from org.python.core import PyFile
 from javashell import shellexecute
+from org.python.core.util import FileUtil
+
 
 __all__ = ["popen", "popen2", "popen3", "popen4", "Popen3", "Popen4"]
 
@@ -43,7 +44,7 @@ class _ProcessFile:
     the close method.
     """
     def __init__(self, stream, process, name):
-        self._file = PyFile(stream, "'%s'" % name)
+        self._file = FileUtil.wrap(stream)
         self._process = process
 
     def __getattr__(self, name):
@@ -92,10 +93,10 @@ class Popen3:
                     bufsize
                     )
                 
-        self.tochild = PyFile( self._tochild )
-        self.fromchild = PyFile( self._fromchild )
+        self.tochild = FileUtil.wrap(self._tochild)
+        self.fromchild = FileUtil.wrap(self._fromchild)
         if self._childerr:
-            self.childerr = PyFile( self._childerr )
+            self.childerr = FileUtil.wrap(self._childerr)
 
     def _startChildWaiter(self):
         """Start a subthread that waits for the child process to exit."""
@@ -197,7 +198,7 @@ class Popen4(Popen3):
             "%s-stderr" % self.process,
             self._close
             )
-        return PyFile( joinedStream )
+        return FileUtil.wrap(joinedStream)
 
     def _close( self ):
         """Must be closed twice (once for each of the two joined pipes)"""

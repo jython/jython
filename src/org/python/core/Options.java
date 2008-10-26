@@ -22,7 +22,7 @@ public class Options {
      * considerably.
      */
     public static boolean includeJavaStackInExceptions = false;
-    
+
     /**
      * When true, python exception raised in overriden methods will be shown on
      * stderr. This option is remarkably useful when python is used for
@@ -123,7 +123,7 @@ public class Options {
         // Set the more unusual options
         Options.showJavaExceptions = getBooleanOption(
                 "options.showJavaExceptions", Options.showJavaExceptions);
-        
+
         Options.includeJavaStackInExceptions = getBooleanOption(
         	"options.includeJavaStackInExceptions", Options.includeJavaStackInExceptions);
 

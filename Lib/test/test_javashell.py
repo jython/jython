@@ -1,11 +1,11 @@
 import unittest
 from test import test_support
 
-from org.python.core import PyFile
 import re
 
 import os
 import javashell
+from org.python.core.util import FileUtil
 
 # testCmds is a list of (command, expectedOutput)
 # each command is executed twice, once in unitialized environment and
@@ -73,7 +73,7 @@ class JavaShellTest(unittest.TestCase):
         for cmd, pattern in testCmds:
             dprint( "\nExecuting '%s' with %s environment" % (cmd, whichEnv))
             p = javashell.shellexecute(cmd)
-            line = PyFile( p.getInputStream() ).readlines()[0]
+            line = FileUtil.wrap(p.getInputStream()).readlines()[0]
             assert re.match( pattern, line ), \
                     "expected match for %s, got %s" % ( pattern, line )
             dprint( "waiting for", cmd, "to complete")

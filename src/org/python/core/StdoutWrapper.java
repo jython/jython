@@ -31,7 +31,7 @@ public class StdoutWrapper extends OutputStream {
 
             Object tojava = obj.__tojava__(OutputStream.class);
             if (tojava != null && tojava != Py.NoConversion) {
-                f = new PyFile((OutputStream)tojava, "<java OutputStream>");
+                f = new PyFile((OutputStream)tojava);
             }
             if (f != null) {
                 setObject(ss, f);

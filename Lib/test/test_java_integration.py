@@ -155,7 +155,8 @@ class IOTest(unittest.TestCase):
         self.assertRaises(FileNotFoundException, FileInputStream, "garbage")
 
     def test_unsupported(self):
-        fp = open(System.out)
+        from org.python.core.util import FileUtil
+        fp = FileUtil.wrap(System.out)
         self.assertRaises(IOError, fp.tell)
 
 class VectorTest(unittest.TestCase):
