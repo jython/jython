@@ -1,6 +1,6 @@
 #Taken and modified from CPython's release25-maint branch, revision 62446.
 import sys,os, itertools
-import _ast
+import ast
 
 def get_class_name(t):
     result = t.__class__.__name__
@@ -146,11 +146,11 @@ if __name__=='__main__' and sys.argv[1:] == ['-g']:
 
 def test_order(ast_node, parent_pos):
 
-    if (not isinstance(ast_node, _ast.AST)
+    if (not isinstance(ast_node, ast.AST)
         or not hasattr(ast_node, '_fields')
         or ast_node._fields == None):
             return
-    if isinstance(ast_node, (_ast.expr, _ast.stmt, _ast.excepthandler)):
+    if isinstance(ast_node, (ast.expr, ast.stmt, ast.excepthandler)):
         node_pos = (ast_node.lineno, ast_node.col_offset)
         assert node_pos >= parent_pos, (node_pos, parent_pos)
         parent_pos = (ast_node.lineno, ast_node.col_offset)
