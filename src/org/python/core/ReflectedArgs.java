@@ -101,7 +101,7 @@ class ReflectedArgs {
         }
 
         // Make error messages clearer
-        callData.errArg = -1;
+        callData.errArg = ReflectedCallData.UNABLE_TO_CONVERT_SELF;
 
         if (self != null) {
             Object tmp = self.__tojava__(this.declaringClass);
@@ -199,7 +199,7 @@ class ReflectedArgs {
                     return cmp > 0 ? +1 : -1;
                 }
             }
-        } 
+        }
         return p1 > p2 ? +2 : (p1 == p2 ? 0 : -2);
     }
 
@@ -261,8 +261,8 @@ class ReflectedArgs {
         String s = "" + this.declaringClass + ", " + this.isStatic + ", " + this.flags + ", "
                 + this.data + "\n";
         s = s + "\t(";
-        for (int j = 0; j < this.args.length; j++) {
-            s += this.args[j].getName() + ", ";
+        for (Class arg : this.args) {
+            s += arg.getName() + ", ";
         }
         s += ")";
         return s;

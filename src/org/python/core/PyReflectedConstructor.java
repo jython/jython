@@ -9,7 +9,7 @@ import java.lang.InstantiationException;
 
 public class PyReflectedConstructor extends PyReflectedFunction
 {
-    
+
     public PyReflectedConstructor(String name) {
         super(name);
         __name__ = name;
@@ -38,16 +38,15 @@ public class PyReflectedConstructor extends PyReflectedFunction
     // xxx temporary solution, type ctr will go through __new__ ...
     PyObject make(PyObject[] args,String[] keywords) {
         ReflectedArgs[] argsl = argslist;
-                
+
         ReflectedCallData callData = new ReflectedCallData();
         Object method=null;
         boolean consumes_keywords = false;
-        int n = nargs;
         int nkeywords = keywords.length;
         PyObject[] allArgs = null;
-        
+
         // Check for a matching constructor to call
-        if (n > 0) { // PyArgsKeywordsCall signature, if present, is the first 
+        if (nargs > 0) { // PyArgsKeywordsCall signature, if present, is the first
             if (argsl[0].matches(null, args, keywords, callData)) {
                 method = argsl[0].data;
                 consumes_keywords = argsl[0].flags == ReflectedArgs.PyArgsKeywordsCall;
@@ -55,15 +54,16 @@ public class PyReflectedConstructor extends PyReflectedFunction
                 allArgs = args;
                 int i = 1;
                 if (nkeywords > 0) {
-                    args = new PyObject[allArgs.length-nkeywords];
+                    args = new PyObject[allArgs.length - nkeywords];
                     System.arraycopy(allArgs, 0, args, 0, args.length);
                     i = 0;
                 }
-                for (; i < n; i++) {
+                for (; i < nargs; i++) {
                     ReflectedArgs rargs = argsl[i];
-                        if (rargs
-                            .matches(null, args, Py.NoKeywords, callData)) {
-                        method = rargs.data; break; }
+                    if (rargs.matches(null, args, Py.NoKeywords, callData)) {
+                        method = rargs.data;
+                        break;
+                    }
                 }
             }
         }
@@ -82,14 +82,14 @@ public class PyReflectedConstructor extends PyReflectedFunction
         catch (Throwable t) {
             throw Py.JavaError(t);
         }
-        
+
         if (!consumes_keywords) {
             int offset = args.length;
-            for (int i=0; i<nkeywords; i++) {
-                obj.__setattr__(keywords[i], allArgs[i+offset]);
-            }            
+            for (int i = 0; i < nkeywords; i++) {
+                obj.__setattr__(keywords[i], allArgs[i + offset]);
+            }
         }
-    
+
         return obj;
     }
 

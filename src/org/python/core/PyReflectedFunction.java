@@ -3,8 +3,9 @@ package org.python.core;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.Enumeration;
-import java.util.Hashtable;
+import java.util.Set;
+
+import org.python.util.Generic;
 
 
 public class PyReflectedFunction extends PyObject
@@ -136,11 +137,11 @@ public class PyReflectedFunction extends PyObject
         }
 
         Object cself = callData.self;
-        Method m = (Method)method;        
+        Method m = (Method)method;
         // Check to see if we should be using a super__ method instead
         // This is probably a bit inefficient...
         if (self == null && cself != null && cself instanceof PyProxy &&
-                   !__name__.startsWith("super__")) {                       
+                   !__name__.startsWith("super__")) {
             PyInstance iself = ((PyProxy)cself)._getPyInstance();
             if (argslist[0].declaringClass != iself.instclass.proxyClass) {
                 String mname = ("super__"+__name__);
@@ -148,9 +149,9 @@ public class PyReflectedFunction extends PyObject
                 Method[] super__methods = (Method[])iself.instclass.super__methods.get(mname);
                 if (super__methods != null) {
                     Class[] msig = m.getParameterTypes();
-                    for (int i=0; i<super__methods.length;i++) {
-                        if (java.util.Arrays.equals(msig,super__methods[i].getParameterTypes())) {
-                            m = super__methods[i];
+                    for (Method super__method : super__methods) {
+                        if (java.util.Arrays.equals(msig,super__method.getParameterTypes())) {
+                            m = super__method;
                             break;
                         }
                     }
@@ -264,64 +265,40 @@ public class PyReflectedFunction extends PyObject
     }
 
     protected void throwBadArgError(int errArg, int nArgs, boolean self) {
-        Hashtable table = new Hashtable();
-        ReflectedArgs[] argsl = argslist;
-        int n = nargs;
-        for(int i=0; i<n; i++) {
-            ReflectedArgs rargs = argsl[i];
-            Class[] args = rargs.args;
-            int len = args.length;
-            /*if (!args.isStatic && !self) {
-              len = len-1;
-              }*/
+        Set<Class<?>> argTypes = Generic.set();
+        for (int i = 0; i < nargs; i++) {
+            // if (!args.isStatic && !self) { len = len-1; }
             // This check works almost all the time.
             // I'm still a little worried about non-static methods
             // called with an explict self...
-            if (len == nArgs) {
-                if (errArg == -1) {
-                    table.put(rargs.declaringClass, rargs.declaringClass);
+            if (argslist[i].args.length == nArgs) {
+                if (errArg == ReflectedCallData.UNABLE_TO_CONVERT_SELF) {
+                    argTypes.add(argslist[i].declaringClass);
                 } else {
-                    table.put(args[errArg], args[errArg]);
+                    argTypes.add(argslist[i].args[errArg]);
                 }
             }
         }
-
-        StringBuffer buf = new StringBuffer();
-        Enumeration keys = table.keys();
-        while (keys.hasMoreElements()) {
-            Class arg = (Class)keys.nextElement();
-            String name = niceName(arg);
-            if (keys.hasMoreElements()) {
-                buf.append(name);
-                buf.append(", ");
-            } else {
-                if (buf.length() > 2) {
-                    buf.setLength(buf.length()-2);
-                    buf.append(" or ");
-                }
-                buf.append(name);
-            }
+        StringBuilder buf = new StringBuilder();
+        for (Class<?> arg : argTypes) {
+            buf.append(niceName(arg));
+            buf.append(", ");
+        }
+        if(buf.length() > 2) {
+            buf.setLength(buf.length() - 2);
         }
 
-        throwError(ordinal(errArg)+" arg can't be coerced to "+buf);
+        throwError(ordinal(errArg) + " arg can't be coerced to " + buf);
     }
 
-    protected void throwError(int errArg, int nArgs, boolean self,
-                              boolean keywords)
-    {
-        if (keywords) throwError("takes no keyword arguments");
-
-        if (errArg == -2) {
+    protected void throwError(int errArg, int nArgs, boolean self, boolean keywords) {
+        if (keywords) {
+            throwError("takes no keyword arguments");
+        } else if (errArg == ReflectedCallData.BAD_ARG_COUNT) {
             throwArgCountError(nArgs, self);
+        } else {
+            throwBadArgError(errArg, nArgs, self);
         }
-
-        /*if (errArg == -1) {
-          throwBadArgError(-1);
-          throwError("bad self argument");
-          // Bad declared class
-          }*/
-
-        throwBadArgError(errArg, nArgs, self);
     }
 
     // Included only for debugging purposes...
