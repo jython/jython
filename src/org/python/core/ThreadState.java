@@ -40,14 +40,14 @@ public class ThreadState {
         if (initializingProxies == null) {
             initializingProxies = new LinkedList<PyInstance>();
         }
-        initializingProxies.push(proxy);
+        initializingProxies.addFirst(proxy);
     }
 
     public void popInitializingProxy() {
         if (initializingProxies == null || initializingProxies.isEmpty()) {
             throw Py.RuntimeError("invalid initializing proxies state");
         }
-        initializingProxies.pop();
+        initializingProxies.removeFirst();
     }
 
     public ThreadState(Thread t, PySystemState systemState) {
