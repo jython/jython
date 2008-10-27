@@ -279,7 +279,7 @@ public class PyType extends PyObject implements Serializable {
         return newobj;
     }
 
-    protected void fillDict(Class<?> base) {
+    protected void fillDict() {
         if (Py.BOOTSTRAP_TYPES.contains(underlying_class)) {
             return;
         }
@@ -295,8 +295,13 @@ public class PyType extends PyObject implements Serializable {
 
     private static void fillInMRO(PyType type, Class<?> base) {
         PyType[] mro;
-        if (base == Object.class) {
-            mro = new PyType[] {type};
+
+        if (base == Object.class || base == null) {
+            if (type.underlying_class == Object.class) {
+                mro = new PyType[] {type, PyObject.TYPE};
+            } else {
+                mro = new PyType[] {type};
+            }
         } else {
             PyType baseType = fromClass(base);
             mro = new PyType[baseType.mro.length + 1];
@@ -923,7 +928,7 @@ public class PyType extends PyObject implements Serializable {
         newtype.underlying_class = c;
         newtype.builtin = true;
         fillInMRO(newtype, base); // basic mro, base, bases
-        newtype.fillDict(base);
+        newtype.fillDict();
         return newtype;
     }
 

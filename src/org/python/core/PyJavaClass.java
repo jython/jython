@@ -740,16 +740,6 @@ public class PyJavaClass extends PyClass {
     public PyObject __call__(PyObject[] args, String[] keywords) {
         if (!constructorsInitialized)
             initConstructors();
-        // xxx instantiation of PyObject subclass, still needed?
-        if (PyObject.class.isAssignableFrom(proxyClass)) {
-            if (Modifier.isAbstract(proxyClass.getModifiers())) {
-                throw Py.TypeError("can't instantiate abstract class (" + fullName() + ")");
-            }
-            if (__init__ == null) {
-                throw Py.TypeError("no public constructors for " + fullName());
-            }
-            return __init__.make(args, keywords);
-        }
         PyInstance inst = new PyJavaInstance(this);
         inst.__init__(args, keywords);
         return inst;

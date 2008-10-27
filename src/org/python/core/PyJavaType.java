@@ -19,13 +19,15 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
     }
 
     @Override
-    protected void fillDict(Class<?> base) {
+    protected void fillDict() {
         dict = new PyStringMap();
         Map<String, Object> propnames = new HashMap<String, Object>();
+        Class<?> base = underlying_class.getSuperclass();
         Method[] methods = underlying_class.getMethods();
         for (Method meth : methods) {
             Class<?> declaring = meth.getDeclaringClass();
-            if (declaring != base && base.isAssignableFrom(declaring) && !ignore(meth)) {
+            if (base == null ||
+                    (declaring != base && base.isAssignableFrom(declaring) && !ignore(meth))) {
                 String methname = meth.getName();
                 String nmethname = normalize_name(methname);
                 PyReflectedFunction reflfunc = (PyReflectedFunction)dict.__finditem__(nmethname);
@@ -118,16 +120,20 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
             for (Constructor<?> ctr : ctrs) {
                 reflctr.addConstructor(ctr);
             }
-            PyObject new_ = new PyNewWrapper(underlying_class, "__new__", -1, -1) {
+            if (PyObject.class.isAssignableFrom(underlying_class)) {
+                PyObject new_ = new PyNewWrapper(underlying_class, "__new__", -1, -1) {
 
-                public PyObject new_impl(boolean init,
-                                         PyType subtype,
-                                         PyObject[] args,
-                                         String[] keywords) {
-                    return reflctr.make(args, keywords);
-                }
-            };
-            dict.__setitem__("__new__", new_);
+                    public PyObject new_impl(boolean init,
+                                             PyType subtype,
+                                             PyObject[] args,
+                                             String[] keywords) {
+                        return reflctr.make(args, keywords);
+                    }
+                };
+                dict.__setitem__("__new__", new_);
+            } else {
+                dict.__setitem__("__init__", reflctr);
+            }
         }
         if (ClassDictInit.class.isAssignableFrom(underlying_class)
                 && underlying_class != ClassDictInit.class) {

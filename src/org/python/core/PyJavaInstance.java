@@ -66,8 +66,7 @@ public class PyJavaInstance extends PyInstance
 
         PyReflectedConstructor init = ((PyJavaClass)instclass).__init__;
         if (init == null) {
-            throw Py.TypeError("no public constructors for "+
-                               instclass.__name__);
+            throw Py.TypeError("no public constructors for " + instclass.__name__);
         }
         init.__call__(this, args, keywords);
     }

@@ -35,6 +35,10 @@ public class PyObject implements Serializable {
 
     }
 
+    // This field is only filled on Python wrappers for Java objects and for Python subclasses of
+    // Java classes.
+    Object javaProxy;
+
     private PyType objtype;
 
     @ExposedGet(name = "__class__")

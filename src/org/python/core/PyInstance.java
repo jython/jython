@@ -18,9 +18,6 @@ public class PyInstance extends PyObject
         return instclass;
     }
 
-    //This field is only used by Python subclasses of Java classes
-    Object javaProxy;
-
     /**
        The namespace of this instance.  Contains all instance attributes.
     **/
