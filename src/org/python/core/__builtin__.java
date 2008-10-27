@@ -296,15 +296,15 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
     }
 
     /**
-     * @returns modType if obj is a wrapper around an AST modType
+     * @returns modType if obj is a wrapper around an AST modType else returns
+     *          null
      *
-     * XXX: Reaches deep into implementation details -- needs to be reviewed if
-     * PyInstance is significantly changed.
+     * XXX: Reaches into implementation details -- needs to be reviewed if our
+     *      java integration changes.
      */
     private static modType py2node(PyObject obj) {
-        if (obj != null && obj instanceof PyInstance && ((PyInstance)obj).javaProxy
-                instanceof modType) {
-            return (modType)((PyInstance)obj).javaProxy;
+        if (obj != null && obj.javaProxy instanceof modType) {
+            return (modType)obj.javaProxy;
         }
         return null;
     }
