@@ -303,10 +303,11 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
      *      java integration changes.
      */
     private static modType py2node(PyObject obj) {
-        if (obj != null && obj.javaProxy instanceof modType) {
-            return (modType)obj.javaProxy;
+        Object node = obj.__tojava__(modType.class);
+        if (node == Py.NoConversion) {
+            return null;
         }
-        return null;
+        return (modType)node;
     }
 
 }
