@@ -274,7 +274,10 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
                 if (args.length > 4) {
                     dont_inherit = Py.py2boolean(args[4]);
                 }
-
+                modType ast = py2node(args[0]);
+                if (ast != null) {
+                    return __builtin__.compile(ast, args[1].toString(), args[2].toString(), flags, dont_inherit);
+                }
                 if (args[0] instanceof PyUnicode) {
                     flags += PyTableCode.PyCF_SOURCE_IS_UTF8;
                 }
@@ -291,6 +294,21 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
     public PyObject getModule() {
         return module;
     }
+
+    /**
+     * @returns modType if obj is a wrapper around an AST modType
+     *
+     * XXX: Reaches deep into implementation details -- needs to be reviewed if
+     * PyInstance is significantly changed.
+     */
+    private static modType py2node(PyObject obj) {
+        if (obj != null && obj instanceof PyInstance && ((PyInstance)obj).javaProxy
+                instanceof modType) {
+            return (modType)((PyInstance)obj).javaProxy;
+        }
+        return null;
+    }
+
 }
 
 /**
