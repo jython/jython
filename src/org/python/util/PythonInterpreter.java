@@ -22,7 +22,7 @@ public class PythonInterpreter {
      * Initializes the jython runtime. This should only be called once, and
      * should be called before any other python objects are created (including a
      * PythonInterpreter).
-     * 
+     *
      * @param preProperties
      *            A set of properties. Typically System.getProperties() is used.
      * @param postProperties
@@ -188,7 +188,7 @@ public class PythonInterpreter {
 
     /**
      * Get the value of a variable in the local namespace
-     * 
+     *
      * @param name
      *            the name of the variable
      * @return the value of the variable, or null if that name isn't assigned
@@ -202,7 +202,7 @@ public class PythonInterpreter {
      * as an instance of the given Java class.
      * <code>interp.get("foo", Object.class)</code> will return the most
      * appropriate generic Java object.
-     * 
+     *
      * @param name
      *            the name of the variable
      * @param javaclass
@@ -210,7 +210,7 @@ public class PythonInterpreter {
      * @return the value of the variable as the given class, or null if that
      *         name isn't assigned
      */
-    public Object get(String name, Class javaclass) {
+    public <T> T get(String name, Class<T> javaclass) {
         PyObject val = locals.__finditem__(name.intern());
         if(val == null) {
             return null;
