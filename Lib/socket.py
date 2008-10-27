@@ -588,6 +588,33 @@ def htonl(x): return x
 def ntohs(x): return x
 def ntohl(x): return x
 
+def inet_pton(family, ip_string):
+    try:
+        ia = java.net.InetAddress.getByName(ip_string)
+        bytes = []
+        for byte in ia.getAddress():
+            if byte < 0:
+                bytes.append(byte+256)
+            else:
+                bytes.append(byte)
+        return "".join([chr(byte) for byte in bytes])
+    except java.lang.Exception, jlx:
+        raise _map_exception(jlx)
+
+def inet_ntop(family, packed_ip):
+    try:
+        jByteArray = jarray.array(packed_ip, 'b')
+        ia = java.net.InetAddress.getByAddress(jByteArray)
+        return ia.getHostAddress()
+    except java.lang.Exception, jlx:
+        raise _map_exception(jlx)
+
+def inet_aton(ip_string):
+    return inet_pton(AF_INET, ip_string)
+
+def inet_ntoa(packed_ip):
+    return inet_ntop(AF_INET, packed_ip)
+
 class _nonblocking_api_mixin:
 
     timeout = _defaulttimeout
