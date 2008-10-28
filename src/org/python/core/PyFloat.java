@@ -468,7 +468,7 @@ public class PyFloat extends PyObject
         return float___pow__(right, modulo);
     }
 
-    @ExposedMethod(defaults = "null")
+    @ExposedMethod(type = MethodType.BINARY, defaults = "null")
     final PyObject float___pow__(PyObject right, PyObject modulo) {
         if (!canCoerce(right))
             return null;

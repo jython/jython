@@ -11,6 +11,13 @@ class ComplexTest(unittest.TestCase):
         self.assertEqual(complex.__coerce__(1+1j, None), NotImplemented)
         self.assertRaises(TypeError, complex.__coerce__, None, 1+2j)
 
+    def test_pow(self):
+        class Foo(object):
+            def __rpow__(self, other):
+                return other ** 2
+        # regression in 2.5 alphas
+        self.assertEqual((4+0j) ** Foo(), (16+0j))
+
 
 def test_main():
     test_support.run_unittest(ComplexTest)

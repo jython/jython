@@ -78,6 +78,13 @@ class FloatTestCase(unittest.TestCase):
     def test_float_none(self):
         self.assertRaises(TypeError, float, None)
 
+    def test_pow(self):
+        class Foo(object):
+            def __rpow__(self, other):
+                return other ** 2
+        # regression in 2.5 alphas
+        self.assertEqual(4.0 ** Foo(), 16.0)
+
 
 def test_main():
     test_support.run_unittest(FloatTestCase)

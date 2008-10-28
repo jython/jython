@@ -569,7 +569,7 @@ public class PyComplex extends PyObject {
         return complex___pow__(right, modulo);
     }
 
-    @ExposedMethod(defaults = "null")
+    @ExposedMethod(type = MethodType.BINARY, defaults = "null")
     final PyObject complex___pow__(PyObject right, PyObject modulo) {
         if (modulo != null) {
             throw Py.ValueError("complex modulo");
