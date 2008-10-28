@@ -14,7 +14,7 @@ class VisibilityTest(unittest.TestCase):
                     Visible.__init__(self, publicValue)
                 else:
                     Visible.__init__(self)
-        # TODO - protectedStaticMethod, protectedStaticField, and protectedField should
+        # TODO - protectedStaticMethod, protectedStaticField, StaticInner, and protectedField should
         # be here
         s = SubVisible()
         self.assertEquals(Results.PROTECTED_METHOD, s.protectedMethod(0))
@@ -37,6 +37,7 @@ class VisibilityTest(unittest.TestCase):
                 v.visibleStatic('a'))
         self.assertEquals(Results.EXTRA_ARG_PUBLIC_STATIC_METHOD,
                 v.visibleStatic(0, 'a'))
+        self.assertEquals(Results.PUBLIC_STATIC_FIELD, Visible.StaticInner.visibleStaticField)
 
         # Ensure that the visibleInstance method from SubVisible that takes a double doesn't
         # leak through to the parent
@@ -57,6 +58,8 @@ class VisibilityTest(unittest.TestCase):
         # Java methods don't allow direct calling of the superclass method, so it should 
         # return the subclass value here.
         self.assertEquals(Results.SUBCLASS_OVERRIDE, Visible.visibleInstance(s, 3))
+        self.assertEquals(Results.PUBLIC_STATIC_FIELD, SubVisible.StaticInner.visibleStaticField)
+
 
     def test_in_dict(self):
         for c in Visible, SubVisible, VisibleOverride:

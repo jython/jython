@@ -12,6 +12,11 @@ public class Visible extends Invisible {
 
     public static int visibleStatic = PUBLIC_STATIC_METHOD_FIELD;
 
+    public static class StaticInner {
+
+        public static int visibleStaticField = PUBLIC_STATIC_FIELD;
+    }
+
     public Visible() {
         this(PUBLIC_FIELD);
     }

@@ -762,20 +762,6 @@ public final class Py {
         return true;
     }
 
-    public static Class relFindClass(Class home, String name) {
-        try {
-            ClassLoader loader = home.getClassLoader();
-            if (loader != null) {
-                return loader.loadClass(name);
-            } else {
-                return Class.forName(name);
-            }
-        } catch (ClassNotFoundException exc) {
-            return null;
-        } catch (Throwable t) {
-            throw Py.JavaError(t);
-        }
-    }
     private static boolean secEnv = false;
 
     public static Class findClass(String name) {

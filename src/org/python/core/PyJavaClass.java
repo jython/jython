@@ -709,10 +709,16 @@ public class PyJavaClass extends PyClass {
     }
 
     private PyObject findInnerClass(String name) {
-        Class p = getProxyClass();
-        Class innerClass = Py.relFindClass(p, p.getName() + "$" + name);
-        if (innerClass == null)
+        Class<?> innerClass = null;
+        for (Class<?> inner : getProxyClass().getClasses()) {
+            if(inner.getSimpleName().equals(name)) {
+                innerClass = inner;
+                break;
+            }
+        }
+        if (innerClass == null) {
             return null;
+        }
         PyObject jinner = Py.java2py(innerClass); // xxx lookup(innerClass);
         __dict__.__setitem__(name, jinner);
         return jinner;
