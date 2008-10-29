@@ -157,26 +157,26 @@ public class math implements ClassDictInit {
         return new PyTuple(new PyFloat(w), new PyFloat(v));
     }
 
-    public static PyTuple frexp(double v) {
-        int i = 0;
-        if (v != 0.0) {
-            int sign = 1;
-            if (v < 0) {
+    public static PyTuple frexp(double x) {
+        int exponent = 0;
+
+        if (Double.isNaN(x) || Double.isInfinite(x) || x == 0.0) {
+            exponent = 0;
+        } else {
+            short sign = 1;
+
+            if (x < 0.0) {
+                x = -x;
                 sign = -1;
-                v = -v;
             }
-            // slow...
-            while (v < 0.5) {
-                v = v*2.0;
-                i = i-1;
-            }
-            while (v >= 1.0) {
-                v = v*0.5;
-                i = i+1;
-            }
-            v = v*sign;
+
+            for (; x < 0.5; x *= 2.0, exponent--);
+
+            for (; x >= 1.0; x *= 0.5, exponent++);
+
+            x *= sign;
         }
-        return new PyTuple(new PyFloat(v), new PyInteger(i));
+        return new PyTuple(new PyFloat(x), new PyInteger(exponent));
     }
 
     public static double ldexp(double v, int w) {

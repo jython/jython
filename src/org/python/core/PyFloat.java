@@ -168,6 +168,22 @@ public class PyFloat extends PyObject
         return super.__tojava__(c);
     }
 
+    public PyObject __eq__(PyObject other) {
+        // preclude _cmp_unsafe's this == other shortcut because NaN != anything, even
+        // itself
+        if (Double.isNaN(value)) {
+            return Py.False;
+        }
+        return null;
+    }
+
+    public PyObject __ne__(PyObject other) {
+        if (Double.isNaN(value)) {
+            return Py.True;
+        }
+        return null;
+    }
+
     public int __cmp__(PyObject other) {
         return float___cmp__(other);
     }
@@ -197,7 +213,17 @@ public class PyFloat extends PyObject
         } else {
             return -2;
         }
-        return i < j ? -1 : i > j ? 1 : 0;
+
+        if (i < j) {
+            return -1;
+        } else if (i > j) {
+            return 1;
+        } else if (i == j) {
+            return 0;
+        } else {
+            // at least one side is NaN
+            return Double.isNaN(i) ? (Double.isNaN(j) ? 1 : -1) : 1;
+        }
     }
 
     public Object __coerce_ex__(PyObject other) {

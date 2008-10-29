@@ -66,9 +66,22 @@ class FloatTestCase(unittest.TestCase):
         self.assertNotEqual(0.1, shuge_int)
 
     def test_nan(self):
-        self.assert_(type(float('NaN')), float)
-        self.assert_(type(float('nan')), float)
-        self.assertEqual(long(float('NaN')), 0)
+        nan = float('nan')
+        self.assert_(type(nan), float)
+        if jython:
+            # support Java syntax
+            self.assert_(type(float('NaN')), float)
+
+        # CPython 2.4/2.5 allow this
+        self.assertEqual(long(nan), 0)
+
+        self.assertNotEqual(nan, float('nan'))
+        self.assertNotEqual(nan, nan)
+        self.assertEqual(cmp(nan, float('nan')), 1)
+        self.assertEqual(cmp(nan, nan), 0)
+        for i in (-1, 1, -1.0, 1.0):
+            self.assertEqual(cmp(nan, i), -1)
+            self.assertEqual(cmp(i, nan), 1)
 
     def test_infinity(self):
         self.assert_(type(float('Infinity')), float)
