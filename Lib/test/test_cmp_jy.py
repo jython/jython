@@ -31,12 +31,37 @@ class IntStrCmp(unittest.TestCase):
         assert (-2 < 'a')
         assert not (-1 == 'a')
 
+class CustomCmp(unittest.TestCase):
+    def test___cmp___returns(self):
+        class Foo(object):
+            def __int__(self):
+                return 0
+        class Bar(object):
+            def __int__(self):
+                raise ValueError('doh')
+        class Baz(object):
+            def __cmp__(self, other):
+                return self.cmp(other)
+        baz = Baz()
+        baz.cmp = lambda other : Foo()
+        self.assertEqual(cmp(100, baz), 0)
+        baz.cmp = lambda other : NotImplemented
+        self.assertEqual(cmp(100, baz), 1)
+        baz.cmp = lambda other: Bar()
+        self.assertRaises(ValueError, cmp, 100, baz)
+        baz.cmp = lambda other: 1 / 0
+        self.assertRaises(ZeroDivisionError, cmp, 100, baz)
+        del Baz.__cmp__
+        # CPython handles numbers differently than other types in
+        # object.c:default_3way_compare, and gets 1 here. we don't care
+        self.assert_(cmp(100, baz) in (-1, 1))
 
 def test_main():
     test_support.run_unittest(
             UnicodeDerivedCmp,
             LongDerivedCmp,
             IntStrCmp,
+            CustomCmp
             )
 
 if __name__ == '__main__':
