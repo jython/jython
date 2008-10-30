@@ -19,7 +19,6 @@ import org.python.core.io.StreamIO;
 import org.python.core.io.TextIOBase;
 import org.python.core.io.TextIOWrapper;
 import org.python.core.io.UniversalIOWrapper;
-import org.python.core.util.FileUtil;
 import org.python.expose.ExposedDelete;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
@@ -529,7 +528,7 @@ public class PyFile extends PyObject {
         throw Py.TypeError("can't delete numeric/char attribute");
     }
 
-    public Object __tojava__(Class cls) {
+    public Object __tojava__(Class<?> cls) {
         Object o = file.__tojava__(cls);
         if (o == null) {
             o = super.__tojava__(cls);

@@ -498,8 +498,9 @@ public class zipimporter extends PyObject {
         }
 
         PyObject files = new PyDictionary();
-        for (Enumeration zipEntries = zipFile.entries(); zipEntries.hasMoreElements();) {
-            ZipEntry zipEntry = (ZipEntry)zipEntries.nextElement();
+        for (Enumeration<? extends ZipEntry> zipEntries = zipFile.entries();
+             zipEntries.hasMoreElements();) {
+            ZipEntry zipEntry = zipEntries.nextElement();
             String name = zipEntry.getName().replace('/', File.separatorChar);
 
             PyObject __file__ = new PyString(archive + File.separator + name);
@@ -664,9 +665,9 @@ public class zipimporter extends PyObject {
      */
     protected static class SearchOrderEntry {
         public String suffix;
-        public EnumSet type;
+        public EnumSet<EntryType> type;
 
-        public SearchOrderEntry(String suffix, EnumSet type) {
+        public SearchOrderEntry(String suffix, EnumSet<EntryType> type) {
             this.suffix = suffix;
             this.type = type;
         }
