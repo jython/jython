@@ -1,6 +1,9 @@
 /* Copyright (c) Jython Developers */
 package org.python.core.util;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
 import java.util.AbstractSet;
 import java.util.Collection;
 import java.util.Iterator;
@@ -10,10 +13,10 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * A Set backed by ConcurrentHashMap.
  */
-public class ConcurrentHashSet<E> extends AbstractSet<E> {
+public class ConcurrentHashSet<E> extends AbstractSet<E> implements Serializable {
 
     /** The backing Map. */
-    private ConcurrentHashMap<E, Object> map;
+    private final ConcurrentHashMap<E, Object> map;
 
     /** Backing's KeySet. */
     private transient Set<E> keySet;
@@ -86,5 +89,10 @@ public class ConcurrentHashSet<E> extends AbstractSet<E> {
 
     public int hashCode() {
         return keySet.hashCode();
+    }
+
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        keySet = map.keySet();
     }
 }
