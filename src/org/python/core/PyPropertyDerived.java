@@ -776,11 +776,11 @@ public class PyPropertyDerived extends PyProperty implements Slotted {
             return super.__cmp__(other);
         }
         PyObject res=impl.__get__(this,self_type).__call__(other);
-        if (res instanceof PyInteger) {
-            int v=((PyInteger)res).getValue();
-            return v<0?-1:v>0?1:0;
+        if (res==Py.NotImplemented) {
+            return-2;
         }
-        throw Py.TypeError("__cmp__ should return a int");
+        int c=res.asInt();
+        return c<0?-1:c>0?1:0;
     }
 
     public boolean __nonzero__() {
