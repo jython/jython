@@ -3866,7 +3866,20 @@ public class PyObject implements Serializable {
     }
 
     public int asInt() {
-        throw Py.TypeError("an integer is required");
+        PyObject intObj;
+        try {
+            intObj = __int__();
+        } catch (PyException pye) {
+            if (Py.matchException(pye, Py.AttributeError)) {
+                throw Py.TypeError("an integer is required");
+            }
+            throw pye;
+        }
+        if (!(intObj instanceof PyInteger) && !(intObj instanceof PyLong)) {
+            // Shouldn't happen except with buggy builtin types
+            throw Py.TypeError("nb_int should return int object");
+        }
+        return intObj.asInt();
     }
 
     public long asLong(int index) throws ConversionException {

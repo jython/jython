@@ -102,6 +102,19 @@ class CallableTest(unittest.TestCase):
                 return None
         self.assert_(not callable(Baz()))
 
+class RangeTest(unittest.TestCase):
+
+    class Foo(object):
+        def __int__(self):
+            return 3
+    foo = Foo()
+
+    def test_range_non_int(self):
+        self.assertEqual(range(self.foo), [0, 1, 2])
+
+    def test_xrange_non_int(self):
+        self.assertEqual(list(xrange(self.foo)), [0, 1, 2])
+
 def test_main():
     test.test_support.run_unittest(BuiltinTest,
                                    LoopTest,
@@ -110,7 +123,8 @@ def test_main():
                                    ChrTest,
                                    ReturnTest,
                                    ReprTest,
-                                   CallableTest)
+                                   CallableTest,
+                                   RangeTest)
 
 if __name__ == "__main__":
     test_main()

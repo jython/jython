@@ -77,7 +77,7 @@ public class PyXRange extends PySequence {
      * @param step int value (> 0)
      * @return int length of range
      */
-    private int getLenOfRange(int lo, int hi, int step) {
+    static int getLenOfRange(int lo, int hi, int step) {
         int n = 0;
         if (lo < hi) {
             // the base difference may be > Integer.MAX_VALUE

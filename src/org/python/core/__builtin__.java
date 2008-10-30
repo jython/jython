@@ -989,48 +989,36 @@ public class __builtin__ {
     }
 
     public static PyObject range(PyObject start, PyObject stop, PyObject step) {
-        // Check that step is valid.
-        int stepCmp = step.__cmp__(Py.Zero);
-        if (stepCmp == -2) {
-            throw Py.TypeError("non-integer type for step in range()");
-        } else if (stepCmp == 0) {
-            throw Py.ValueError("zero step for range()");
+        int ilow = 0;
+        int ihigh = 0;
+        int istep = 1;
+        int n;
+
+        try {
+            ilow = start.asInt();
+            ihigh = stop.asInt();
+            istep = step.asInt();
+        } catch (PyException pye) {
+            return handleRangeLongs(start, stop, step);
         }
 
-        // Calculate the number of values in the range.
-        PyObject n = stop.__sub__(start);
-        if (n == null) {
-            throw Py.TypeError("non-integer type for start or stop in range()");
+        if (istep == 0) {
+            throw Py.ValueError("range() step argument must not be zero");
         }
-        n = n.__add__(step);
-        if (stepCmp == 1) { // step is positive
-            n = n.__sub__(Py.One).__div__(step);
-        } else { // step is negative
-            n = n.__add__(Py.One).__div__(step);
+        if (istep > 0) {
+            n = PyXRange.getLenOfRange(ilow, ihigh, istep);
+        } else {
+            n = PyXRange.getLenOfRange(ihigh, ilow, -istep);
         }
-
-        // Check that the number of values is valid.
-        if (n.__cmp__(Py.Zero) <= 0) {
-            return new PyList();
-        }
-        Object nAsInteger = n.__tojava__(Integer.TYPE);
-        if (nAsInteger == Py.NoConversion) {
-            if (n instanceof PyLong) {
-                throw Py.OverflowError("Can't use range for more than " + Integer.MAX_VALUE + " items.  Try xrange instead.");
-            } else {
-                throw Py.TypeError("non-integer type for start or stop in range()");
-            }
+        if (n < 0) {
+            throw Py.OverflowError("range() result has too many items");
         }
 
-        // Fill in the range.
-        int nAsInt = ((Integer) nAsInteger).intValue();
-        PyObject j = start;
-        PyObject[] objs = new PyObject[nAsInt];
-        for (int i = 0; i < nAsInt; i++) {
-            objs[i] = j;
-            j = j.__add__(step);
+        PyObject[] range = new PyObject[n];
+        for (int i = 0; i < n; i++, ilow += istep) {
+            range[i] = Py.newInteger(ilow);
         }
-        return new PyList(objs);
+        return new PyList(range);
     }
 
     public static PyObject range(PyObject n) {
@@ -1039,6 +1027,70 @@ public class __builtin__ {
 
     public static PyObject range(PyObject start, PyObject stop) {
         return range(start, stop, Py.One);
+    }
+
+    /**
+     * Handle range() when PyLong arguments (that OverFlow ints) are given.
+     */
+    private static PyObject handleRangeLongs(PyObject ilow, PyObject ihigh, PyObject istep) {
+        if (!(ilow instanceof PyInteger) && !(ilow instanceof PyLong)) {
+            throw Py.TypeError(String.format("range() integer start argument expected, got %s.",
+                                             ilow.getType().fastGetName()));
+        }
+        if (!(ihigh instanceof PyInteger) && !(ihigh instanceof PyLong)) {
+            throw Py.TypeError(String.format("range() integer end argument expected, got %s.",
+                                             ihigh.getType().fastGetName()));
+        }
+        if (!(istep instanceof PyInteger) && !(istep instanceof PyLong)) {
+            throw Py.TypeError(String.format("range() integer step argument expected, got %s.",
+                                             istep.getType().fastGetName()));
+        }
+
+        int n;
+        int cmpResult = istep._cmp(Py.Zero);
+        if (cmpResult == 0) {
+            throw Py.ValueError("range() step argument must not be zero");
+        }
+        if (cmpResult > 0) {
+            n = getLenOfRangeLongs(ilow, ihigh, istep);
+        } else {
+            n = getLenOfRangeLongs(ihigh, ilow, istep.__neg__());
+        }
+        if (n < 0) {
+            throw Py.OverflowError("range() result has too many items");
+        }
+
+        PyObject[] range = new PyObject[n];
+        for (int i = 0; i < n; i++) {
+            range[i] = ilow.__long__();
+            ilow = ilow.__add__(istep);
+        }
+        return new PyList(range);
+    }
+
+    /**
+     * Return number of items in range (lo, hi, step), when arguments are PyInteger or
+     * PyLong objects. step > 0 required. Return a value < 0 if & only if the true value
+     * is too large to fit in an int, or there is an error.
+     *
+     * @param lo PyInteger or PyLong value
+     * @param hi PyInteger or PyLong value
+     * @param step PyInteger or PyLong value (> 0)
+     * @return int length of range
+     */
+    private static int getLenOfRangeLongs(PyObject lo, PyObject hi, PyObject step) {
+        // if (lo >= hi), return length of 0
+        if (lo._cmp(hi) >= 0) {
+            return 0;
+        }
+        try {
+            // See PyXRange.getLenOfRange for the primitive version
+            PyObject diff = hi.__sub__(lo).__sub__(Py.One);
+            PyObject n = diff.__floordiv__(step).__add__(Py.One);
+            return n.asInt();
+        } catch (PyException pye) {
+            return -1;
+        }
     }
 
     private static PyString readline(PyObject file) {

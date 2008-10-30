@@ -2400,6 +2400,17 @@ public class PyString extends PyBaseString
         return string;
     }
 
+    @Override
+    public int asInt() {
+        // We have to override asInt because we override __int__, but generally don't want
+        // implicit atoi conversions for the base types. blah
+        PyType type = getType();
+        if (type == PyString.TYPE || type == PyUnicode.TYPE || type.lookup("__int__") == null) {
+            throw Py.TypeError("an integer is required");
+        }
+        return super.asInt();
+    }
+
     public String asName(int index) throws PyObject.ConversionException {
         return internedString();
     }
