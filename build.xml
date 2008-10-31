@@ -626,6 +626,7 @@ The readme text for the next release will be like:
               <include name="src/org/**/ucnhash.dat" />
               <include name="grammar/*.g" />
               <include name="extlibs/**/*.jar" />
+              <include name="extlibs/**/*.zip" />
               <include name="tests/java/**/*.java" />
               <include name="CoreExposed.includes" />
             </fileset>
