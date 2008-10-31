@@ -22,7 +22,7 @@ public class imp {
 
     private static final String UNKNOWN_SOURCEFILE = "<unknown>";
 
-    public static final int APIVersion = 15;
+    public static final int APIVersion = 16;
 
     //This should change to 0 for Python 2.7 and 3.0 see PEP 328
     public static final int DEFAULT_LEVEL = -1;
