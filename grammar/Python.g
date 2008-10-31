@@ -1178,6 +1178,7 @@ power returns [exprType etype]
                       $etype = c;
                   } else if (o instanceof Attribute) {
                       Attribute c = (Attribute)o;
+                      c.setCharStartIndex($etype.getCharStartIndex());
                       c.value = $etype;
                       $etype = c;
                   }
