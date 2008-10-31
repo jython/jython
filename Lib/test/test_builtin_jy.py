@@ -102,11 +102,13 @@ class CallableTest(unittest.TestCase):
                 return None
         self.assert_(not callable(Baz()))
 
-class RangeTest(unittest.TestCase):
+class ConversionTest(unittest.TestCase):
 
     class Foo(object):
         def __int__(self):
             return 3
+        def __float__(self):
+            return 3.14
     foo = Foo()
 
     def test_range_non_int(self):
@@ -114,6 +116,9 @@ class RangeTest(unittest.TestCase):
 
     def test_xrange_non_int(self):
         self.assertEqual(list(xrange(self.foo)), [0, 1, 2])
+
+    def test_round_non_float(self):
+        self.assertEqual(round(self.Foo(), 1), 3.1)
 
 def test_main():
     test.test_support.run_unittest(BuiltinTest,
@@ -124,7 +129,7 @@ def test_main():
                                    ReturnTest,
                                    ReprTest,
                                    CallableTest,
-                                   RangeTest)
+                                   ConversionTest)
 
 if __name__ == "__main__":
     test_main()

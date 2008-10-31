@@ -620,6 +620,10 @@ public class PyFloat extends PyObject
         return float___getnewargs__();
     }
 
+    public double asDouble() {
+        return value;
+    }
+
     // standard singleton issues apply here to __getformat__/__setformat__,
     // but this is what Python demands
     

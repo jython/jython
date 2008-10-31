@@ -3887,7 +3887,25 @@ public class PyObject implements Serializable {
     }
 
     /**
-     * Coerce this object into an index-sized integer.
+     * Convert this object into a double. Throws a PyException on failure.
+     *
+     * @return a double value
+     */
+    public double asDouble() {
+        PyFloat floatObj;
+        try {
+            floatObj = __float__();
+        } catch (PyException pye) {
+            if (Py.matchException(pye, Py.AttributeError)) {
+                throw Py.TypeError("a float is required");
+            }
+            throw pye;
+        }
+        return floatObj.asDouble();
+    }
+
+    /**
+     * Convert this object into an index-sized integer. Throws a PyException on failure.
      *
      * @return an index-sized int
      */
@@ -3896,7 +3914,7 @@ public class PyObject implements Serializable {
     }
 
     /**
-     * Coerce this object into an index-sized integer.
+     * Convert this object into an index-sized integer.
      *
      * Throws a Python exception on Overflow if specified an exception type for err.
      *
