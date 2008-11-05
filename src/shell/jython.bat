@@ -24,11 +24,13 @@ if not "%_TRIMMED_JAVA_HOME%"=="" (
    set _JAVA_CMD="%JAVA_HOME:"=%\bin\java"
 )
 
-set _JYTHON_HOME=%JYTHON_HOME%
 rem remove surrounding quotes from jython home, to be able to safely empty-test it
 set _TRIMMED_JYTHON_HOME=%JYTHON_HOME%
 for /f "useback tokens=*" %%a in ('%_TRIMMED_JYTHON_HOME%') do set _TRIMMED_JYTHON_HOME=%%~a
-if not "%_TRIMMED_JYTHON_HOME%"=="" goto gotHome
+if not "%_TRIMMED_JYTHON_HOME%"=="" (
+   set _JYTHON_HOME="%_TRIMMED_JYTHON_HOME%"
+   goto gotHome
+)
 pushd "%~dp0%\.."
 set _JYTHON_HOME="%CD%"
 popd
