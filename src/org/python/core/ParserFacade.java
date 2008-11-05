@@ -165,7 +165,7 @@ public class ParserFacade {
             return parse(reader, kind, filename, cflags);
         } catch (Throwable t) {
             PyException p = fixParseError(reader, t, filename);
-            if (validPartialSentence(reader, kind, filename)) {
+            if (reader != null && validPartialSentence(reader, kind, filename)) {
                 return null;
             }
             throw p;
