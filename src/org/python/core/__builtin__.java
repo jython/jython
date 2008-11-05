@@ -1,6 +1,8 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -281,7 +283,7 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
                 if (args[0] instanceof PyUnicode) {
                     flags += PyTableCode.PyCF_SOURCE_IS_UTF8;
                 }
-                return __builtin__.compile(args[0].toString(), args[1].toString(), args[2].toString(), flags, dont_inherit);
+                return __builtin__.compile((PyString)args[0], args[1].toString(), args[2].toString(), flags, dont_inherit);
             case 29:
                 return __builtin__.map(args);
             case 43:
@@ -412,7 +414,7 @@ public class __builtin__ {
     }
 
     public static PyObject apply(PyObject o) {
-	return o.__call__();
+    return o.__call__();
     }
 
     public static PyObject apply(PyObject o, PyObject args) {
@@ -473,19 +475,29 @@ public class __builtin__ {
         throw Py.TypeError("number coercion failed");
     }
 
-    public static PyObject compile(String data, String filename, String kind) {
-        return Py.compile_flags(data, filename, kind, Py.getCompilerFlags());
+    public static PyObject compile(PyString data, String filename, String kind) {
+        if (data instanceof PyUnicode) {
+            return Py.compile_flags(data.toString(), filename, kind, Py.getCompilerFlags());
+        } else {
+            return Py.compile_flags(data.toBytes(), filename, kind,  Py.getCompilerFlags());
+        }
     }
 
     public static PyObject compile(modType node, String filename, String kind) {
         return Py.compile_flags(node, filename, kind, Py.getCompilerFlags());
     }
 
-    public static PyObject compile(String data, String filename, String kind, int flags, boolean dont_inherit) {
+    public static PyObject compile(PyString data, String filename, String kind, int flags, boolean dont_inherit) {
         if ((flags & ~PyTableCode.CO_ALL_FEATURES) != 0) {
             throw Py.ValueError("compile(): unrecognised flags");
         }
-        return Py.compile_flags(data, filename, kind, Py.getCompilerFlags(flags, dont_inherit));
+        if (data instanceof PyUnicode) {
+            return Py.compile_flags(data.toString(), filename, kind,
+                                    Py.getCompilerFlags(flags, dont_inherit));
+        } else {
+            return Py.compile_flags(data.toBytes(), filename, kind,
+                                    Py.getCompilerFlags(flags, dont_inherit));
+        }
     }
 
     public static PyObject compile(modType node, String filename, String kind, int flags, boolean dont_inherit) {
@@ -550,7 +562,7 @@ public class __builtin__ {
             code = (PyCode) o;
         } else {
             if (o instanceof PyString) {
-                code = (PyCode)compile(o.toString(), "<string>", "eval");
+                code = (PyCode)compile((PyString)o, "<string>", "eval");
             } else {
                 throw Py.TypeError("eval: argument 1 must be string or code object");
             }
@@ -1164,7 +1176,7 @@ public class __builtin__ {
     }
 
     public static PyObject reload(PySystemState o) {
-	// reinitialize methods
+    // reinitialize methods
         o.reload();
         return o;
     }

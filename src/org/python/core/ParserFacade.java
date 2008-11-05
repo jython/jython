@@ -7,7 +7,9 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.LineNumberReader;
 import java.io.Reader;
+import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -32,14 +34,13 @@ import org.python.antlr.ast.modType;
 import org.python.core.io.StreamIO;
 import org.python.core.io.TextIOInputStream;
 import org.python.core.io.UniversalIOWrapper;
-import org.python.core.util.StringUtil;
 
 /**
  * Facade for the classes in the org.python.antlr package.
  */
 
 public class ParserFacade {
-    
+
     private static int MARK_LIMIT = 100000;
 
     private ParserFacade() {}
@@ -70,7 +71,7 @@ public class ParserFacade {
                 reader = null;
             }
         }
-        
+
         if (t instanceof ParseException) {
             ParseException e = (ParseException)t;
             PythonTree node = (PythonTree)e.node;
@@ -90,43 +91,66 @@ public class ParserFacade {
         else return Py.JavaError(t);
     }
 
+    /**
+     * Internal parser entry point.
+     *
+     * Users of this method should call fixParseError on any Throwable thrown
+     * from it, to translate ParserExceptions into PySyntaxErrors or
+     * PyIndentationErrors.
+     */
+    private static modType parse(BufferedReader reader,
+                                String kind,
+                                String filename,
+                                CompilerFlags cflags) throws Throwable {
+        reader.mark(MARK_LIMIT); // We need the ability to move back on the
+                                 // reader, for the benefit of fixParseError and
+                                 // validPartialSentence
+        if (kind.equals("eval")) {
+            CharStream cs = new NoCloseReaderStream(reader);
+            ExpressionParser e = new ExpressionParser(cs, filename);
+            return e.parse();
+        } else if (kind.equals("single")) {
+            InteractiveParser i = new InteractiveParser(reader, filename);
+            return i.parse();
+        } else if (kind.equals("exec")) {
+            CharStream cs = new NoCloseReaderStream(reader);
+            ModuleParser g = new ModuleParser(cs, filename);
+            return g.file_input();
+        } else {
+            throw Py.ValueError("parse kind must be eval, exec, or single");
+        }
+    }
+
     public static modType parse(InputStream stream,
                                 String kind,
                                 String filename,
                                 CompilerFlags cflags) {
-        //FIXME: npe?
-        BufferedReader bufreader = null;
-        modType node = null;
+        BufferedReader bufReader = null;
         try {
-            if (kind.equals("eval")) {
-                bufreader = prepBufreader(stream, cflags, filename);
-                CharStream cs = new NoCloseReaderStream(bufreader);
-                ExpressionParser e = new ExpressionParser(cs, filename);
-                node = e.parse();
-            } else if (kind.equals("single")) {
-                bufreader = prepBufreader(stream, cflags, filename);
-                InteractiveParser i = new InteractiveParser(bufreader, filename);
-                node = i.parse();
-            } else if (kind.equals("exec")) {
-                bufreader = prepBufreader(stream, cflags, filename);
-                CharStream cs = new NoCloseReaderStream(bufreader);
-                ModuleParser g = new ModuleParser(cs, filename);
-                node = g.file_input();
-            } else {
-                throw Py.ValueError("parse kind must be eval, exec, or single");
-            }
+            // prepBufReader takes care of encoding detection and universal
+            // newlines:
+            bufReader = prepBufreader(stream, cflags, filename);
+            return parse(bufReader, kind, filename, cflags );
         } catch (Throwable t) {
-            throw fixParseError(bufreader, t, filename);
+            throw fixParseError(bufReader, t, filename);
         } finally {
-            try {
-                if (bufreader != null) {
-                    bufreader.close();
-                }
-            } catch (IOException i) {
-                //XXX
-            }
+            close(bufReader);
         }
-        return node;
+    }
+
+    public static modType parse(String string,
+                                String kind,
+                                String filename,
+                                CompilerFlags cflags) {
+        BufferedReader bufReader = null;
+        try {
+            bufReader = prepBufReader(string);
+            return parse(bufReader, kind, filename, cflags);
+        } catch (Throwable t) {
+            throw fixParseError(bufReader, t, filename);
+        } finally {
+            close(bufReader);
+        }
     }
 
     public static modType partialParse(String string,
@@ -134,32 +158,20 @@ public class ParserFacade {
                                        String filename,
                                        CompilerFlags cflags,
                                        boolean stdprompt) {
-        ByteArrayInputStream istream = new ByteArrayInputStream(
-                StringUtil.toBytes(string));
-        //FIXME: npe?
-        BufferedReader bufreader = null;
-        modType node = null;
+        // XXX: What's the idea of the stdprompt argument?
+        BufferedReader reader = null;
         try {
-            if (kind.equals("single")) {
-                bufreader = prepBufreader(istream, cflags, filename);
-                InteractiveParser i = new InteractiveParser(bufreader, filename);
-                node = i.parse();
-            } else if (kind.equals("eval")) {
-                bufreader = prepBufreader(istream, cflags, filename);
-                CharStream cs = new NoCloseReaderStream(bufreader);
-                ExpressionParser e = new ExpressionParser(cs, filename);
-                node = e.parse();
-            } else {
-                throw Py.ValueError("parse kind must be eval, exec, or single");
-            }
+            reader = prepBufReader(string);
+            return parse(reader, kind, filename, cflags);
         } catch (Throwable t) {
-            PyException p = fixParseError(bufreader, t, filename);
-            if (validPartialSentence(bufreader, kind, filename)) {
+            PyException p = fixParseError(reader, t, filename);
+            if (validPartialSentence(reader, kind, filename)) {
                 return null;
             }
             throw p;
+        } finally {
+            close(reader);
         }
-        return node;
     }
 
     private static boolean validPartialSentence(BufferedReader bufreader, String kind, String filename) {
@@ -182,6 +194,7 @@ public class ParserFacade {
             }
 
         } catch (Exception e) {
+            System.out.println(e);
             return lexer.eofWhileNested;
         }
         return true;
@@ -202,8 +215,6 @@ public class ParserFacade {
             } else if (cflags != null && cflags.encoding != null) {
                 encoding = cflags.encoding;
             }
-        } else if (cflags.source_is_utf8) {
-            throw new ParseException("encoding declaration in Unicode string");
         }
 
         // Enable universal newlines mode on the input
@@ -229,12 +240,28 @@ public class ParserFacade {
                 throw Py.SystemError("Java couldn't find the ISO-8859-1 encoding");
             }
         }
-        
+
         BufferedReader bufreader = new BufferedReader(reader);
-        
-        bufreader.mark(MARK_LIMIT);
         return bufreader;
     }
+
+    private static BufferedReader prepBufReader(String string) throws IOException {
+        BufferedReader bufReader;
+
+        // LineNumberReader takes care of universal newlines
+        bufReader = new LineNumberReader(new StringReader(string));
+
+        // If the input is a decoded string (implied from the String argument
+        // for prepBufReader), it can't have an encoding declaration.
+        bufReader.mark(MARK_LIMIT);
+        if (findEncoding(bufReader) != null) {
+            throw new ParseException("encoding declaration in Unicode string");
+        }
+        bufReader.reset();
+
+        return bufReader;
+    }
+
 
     /**
      * Check for a BOM mark at the begginning of stream.  If there is a BOM
@@ -262,12 +289,31 @@ public class ParserFacade {
         }
         stream.reset();
         return false;
-	}
+    }
 
     private static String readEncoding(InputStream stream) throws IOException {
         stream.mark(MARK_LIMIT);
         String encoding = null;
         BufferedReader br = new BufferedReader(new InputStreamReader(stream), 512);
+        encoding = findEncoding(br);
+        // XXX: reset() can still raise an IOException if a line exceeds our large mark
+        // limit
+        stream.reset();
+        return encodingMap(encoding);
+    }
+
+    /**
+     * Reads the first two lines of the reader, searching for an encoding
+     * declaration.
+     *
+     * Note that reseting the reader (if needed) is responsibility of the caller.
+     *
+     * @return The declared encoding, or null if no encoding declaration is
+     *         found
+     */
+    private static String findEncoding(BufferedReader br)
+            throws IOException {
+        String encoding = null;
         for (int i = 0; i < 2; i++) {
             String strLine = br.readLine();
             if (strLine == null) {
@@ -279,10 +325,7 @@ public class ParserFacade {
                 break;
             }
         }
-        // XXX: reset() can still raise an IOException if a line exceeds our large mark
-        // limit
-        stream.reset();
-        return encodingMap(encoding);
+        return encoding;
     }
 
     private static String encodingMap(String encoding) {
@@ -306,6 +349,16 @@ public class ParserFacade {
             return groupStr;
         }
         return null;
+    }
+
+    private static void close(BufferedReader reader) {
+        try {
+            if (reader != null) {
+                reader.close();
+            }
+        } catch (IOException i) {
+            // XXX: Log the error?
+        }
     }
 
 }
