@@ -721,8 +721,12 @@ The readme text for the next release will be like:
         <copy file="${install.src.dir}/org/apache/LICENSE.txt" tofile="${dist.dir}/LICENSE_Apache.txt" preservelastmodified="true" />
         <echo>copy installer icon to ${dist.dir}</echo>
         <copy todir="${dist.dir}" preservelastmodified="true">
-            <!-- check no /bin directory -->
-            <fileset dir="${install.src.dir}" includes="**/*.png" excludes="bin/**" />
+            <fileset dir="${install.src.dir}">
+                <include name="**/*.png" />
+                <include name="**/*.template" />
+                <!-- check no /bin directory -->
+                <exclude name="bin/**" />
+            </fileset>
         </copy>
         <echo>building installer .jar file</echo>
         <jar destfile="${work.dir}/jython_installer-${jython.version.noplus}.jar" basedir="${dist.dir}" update="true">
