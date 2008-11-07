@@ -50,6 +50,14 @@ class UnicodeTestCase(unittest.TestCase):
         self.assertEqual(ord(bar[2]), 92)
         self.assertEqual(ord(bar[3]), 110)
 
+    def test_encode_decimal(self):
+        self.assertEqual(int(u'\u0039\u0032'), 92)
+        self.assertEqual(int(u'\u0660'), 0)
+        self.assertEqual(int(u' \u001F\u0966\u096F\u0039'), 99)
+        self.assertEqual(long(u'\u0663'), 3)
+        self.assertEqual(float(u'\u0663.\u0661'), 3.1)
+        self.assertEqual(complex(u'\u0663.\u0661'), 3.1+0j)
+
 
 def test_main():
     test_support.run_unittest(UnicodeTestCase)

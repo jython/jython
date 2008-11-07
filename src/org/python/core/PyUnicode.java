@@ -1311,6 +1311,93 @@ public class PyUnicode extends PyString implements Iterable {
         return newSubsequenceIterator();
     }
 
+    @Override
+    public PyComplex __complex__() {
+        return new PyString(encodeDecimal()).__complex__();
+    }
+
+    @Override
+    public int atoi(int base) {
+        return new PyString(encodeDecimal()).atoi(base);
+    }
+
+    @Override
+    public PyLong atol(int base) {
+        return new PyString(encodeDecimal()).atol(base);
+    }
+
+    @Override
+    public double atof() {
+        return new PyString(encodeDecimal()).atof();
+    }
+
+    /**
+     * Encode unicode into a valid decimal String. Throws a UnicodeEncodeError on invalid
+     * characters.
+     *
+     * @return a valid decimal as an encoded String
+     */
+    private String encodeDecimal() {
+        if (isBasicPlane()) {
+            return encodeDecimalBasic();
+        }
+
+        int digit;
+        StringBuilder sb = new StringBuilder();
+        int i = 0;
+        for (Iterator<Integer> iter = newSubsequenceIterator(); iter.hasNext(); i++) {
+            int codePoint = iter.next();
+            if (Character.isWhitespace(codePoint)) {
+                sb.append(' ');
+                continue;
+            }
+            digit = Character.digit(codePoint, 10);
+            if (digit >= 0) {
+                sb.append(digit);
+                continue;
+            }
+            if (0 < codePoint && codePoint < 256) {
+                sb.appendCodePoint(codePoint);
+                continue;
+            }
+            // All other characters are considered unencodable
+            codecs.encoding_error("strict", "decimal", string, i, i + 1,
+                                  "invalid decimal Unicode string");
+        }
+        return sb.toString();
+    }
+
+    /**
+     * Encode unicode in the basic plane into a valid decimal String. Throws a
+     * UnicodeEncodeError on invalid characters.
+     *
+     * @return a valid decimal as an encoded String
+     */
+    private String encodeDecimalBasic() {
+        int digit;
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < string.length(); i++) {
+            char ch = string.charAt(i);
+            if (Character.isWhitespace(ch)) {
+                sb.append(' ');
+                continue;
+            }
+            digit = Character.digit(ch, 10);
+            if (digit >= 0) {
+                sb.append(digit);
+                continue;
+            }
+            if (0 < ch && ch < 256) {
+                sb.append(ch);
+                continue;
+            }
+            // All other characters are considered unencodable
+            codecs.encoding_error("strict", "decimal", string, i, i + 1,
+                                  "invalid decimal Unicode string");
+        }
+        return sb.toString();
+    }
+
     @ExposedMethod
     final String unicode_toString() {
         return toString();
