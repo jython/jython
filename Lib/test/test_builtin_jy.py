@@ -2,6 +2,7 @@
 import sys
 import unittest
 import test.test_support
+from codecs import BOM_UTF8
 
 class BuiltinTest(unittest.TestCase):
         
@@ -123,19 +124,17 @@ class ConversionTest(unittest.TestCase):
 
 class ExecEvalTest(unittest.TestCase):
 
-    bom = '\xef\xbb\xbf'
-    
     def test_eval_bom(self):
-        self.assertEqual(eval(self.bom + '"foo"'), 'foo')
+        self.assertEqual(eval(BOM_UTF8 + '"foo"'), 'foo')
         # Actual BOM ignored, so causes a SyntaxError
         self.assertRaises(SyntaxError, eval,
-                          self.bom.decode('iso-8859-1') + '"foo"')
+                          BOM_UTF8.decode('iso-8859-1') + '"foo"')
 
     def test_parse_str_eval(self):
         foo = 'föö'
         for code in ("'%s'" % foo.decode('utf-8'),
                      "# coding: utf-8\n'%s'" % foo,
-                     "%s'%s'" % (self.bom, foo)):
+                     "%s'%s'" % (BOM_UTF8, foo)):
             mod = compile(code, 'foo.py', 'eval')
             bar = eval(mod)
             self.assertEqual(foo, bar)
@@ -146,7 +145,7 @@ class ExecEvalTest(unittest.TestCase):
         foo = 'föö'
         for code in ("a = '%s'" % foo.decode('utf-8'),
                      "# coding: utf-8\na = '%s'" % foo,
-                     "%sa = '%s'" % (self.bom, foo)):
+                     "%sa = '%s'" % (BOM_UTF8, foo)):
             ns = {}
             exec code in ns
             self.assertEqual(foo, ns['a'])
