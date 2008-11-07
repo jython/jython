@@ -3,10 +3,7 @@ package org.python.core;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FilterInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.security.AccessControlException;
@@ -56,7 +53,7 @@ public class PySystemState extends PyObject
      * The copyright notice for this release.
      */
     // TBD: should we use \u00a9 Unicode c-inside-circle?
-    public static String copyright =
+    public static PyObject copyright = Py.newString(
         "Copyright (c) 2000-2008, Jython Developers\n" +
         "All rights reserved.\n\n" +
 
@@ -72,7 +69,7 @@ public class PySystemState extends PyObject
 
         "Copyright (c) 1991-1995 Stichting Mathematisch Centrum, " +
         "Amsterdam.\n" +
-        "All Rights Reserved.\n\n";
+        "All Rights Reserved.\n\n");
 
     private static Hashtable builtinNames;
     public static PyTuple builtin_module_names = null;
@@ -85,8 +82,8 @@ public class PySystemState extends PyObject
     private static PyObject defaultExecutable;
 
     public static Properties registry; // = init_registry();
-    public static String prefix;
-    public static String exec_prefix="";
+    public static PyObject prefix;
+    public static PyObject exec_prefix = Py.EmptyString;
 
     private static boolean initialized = false;
     
@@ -446,7 +443,8 @@ public class PySystemState extends PyObject
         }
 
         registry = preProperties;
-        prefix = exec_prefix = findRoot(preProperties, postProperties, jarFileName);
+        String prefix = findRoot(preProperties, postProperties, jarFileName);
+        String exec_prefix = prefix;
 
         // Load the default registry
         if (prefix != null) {
@@ -461,14 +459,17 @@ public class PySystemState extends PyObject
             } catch (Exception exc) {
             }
         }
-    try {
-        String jythonpath = System.getenv("JYTHONPATH");
-        if (jythonpath != null)
-        registry.setProperty("python.path", jythonpath);
-    } catch (SecurityException e) {
-    }
+        PySystemState.prefix = Py.newString(prefix);
+        PySystemState.exec_prefix = Py.newString(exec_prefix);
+        try {
+            String jythonpath = System.getenv("JYTHONPATH");
+            if (jythonpath != null) {
+                registry.setProperty("python.path", jythonpath);
+            }
+        } catch (SecurityException e) {
+        }
         if (postProperties != null) {
-        registry.putAll(postProperties);
+            registry.putAll(postProperties);
         }
         if (standalone) {
             // set default standalone property (if not yet set)
@@ -625,7 +626,7 @@ public class PySystemState extends PyObject
         }
         cachedir = new File(props.getProperty(PYTHON_CACHEDIR, CACHEDIR_DEFAULT_NAME));
         if (!cachedir.isAbsolute()) {
-            cachedir = new File(PySystemState.prefix, cachedir.getPath());
+            cachedir = new File(prefix.toString(), cachedir.getPath());
         }
     }
 
@@ -727,7 +728,7 @@ public class PySystemState extends PyObject
         PyList path = new PyList();
         addPaths(path, props.getProperty("python.path", ""));
         if (prefix != null) {
-            String libpath = new File(prefix, "Lib").toString();
+            String libpath = new File(prefix.toString(), "Lib").toString();
             path.append(new PyString(libpath));
         }
         if (standalone) {
