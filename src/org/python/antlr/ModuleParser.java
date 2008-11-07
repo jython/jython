@@ -1,18 +1,9 @@
 package org.python.antlr;
 
 import org.antlr.runtime.CharStream;
-import org.antlr.runtime.CommonToken;
 import org.antlr.runtime.CommonTokenStream;
 import org.antlr.runtime.RecognitionException;
-import org.antlr.runtime.Token;
-import org.antlr.runtime.tree.CommonTree;
-import org.antlr.runtime.tree.CommonTreeAdaptor;
-import org.antlr.runtime.tree.CommonTreeNodeStream;
-import org.antlr.runtime.tree.Tree;
-import org.antlr.runtime.tree.TreeAdaptor;
 import org.python.antlr.ast.modType;
-import org.python.antlr.ast.Module;
-import org.python.antlr.ast.stmtType;
 
 public class ModuleParser extends BaseParser {
     public ModuleParser(CharStream cs, String filename, String encoding) {

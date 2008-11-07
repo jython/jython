@@ -12,7 +12,6 @@ import java.io.UnsupportedEncodingException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.antlr.runtime.ANTLRReaderStream;
 import org.antlr.runtime.CharStream;
 import org.antlr.runtime.CommonTokenStream;
 
@@ -22,8 +21,6 @@ import org.python.antlr.InteractiveParser;
 import org.python.antlr.ParseException;
 import org.python.antlr.ModuleParser;
 import org.python.antlr.NoCloseReaderStream;
-import org.python.antlr.PythonParser;
-import org.python.antlr.PythonTree;
 import org.python.antlr.PythonTree;
 import org.python.antlr.PythonLexer;
 import org.python.antlr.PythonPartial;

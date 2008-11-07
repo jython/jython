@@ -5,9 +5,6 @@ import org.antlr.runtime.tree.Tree;
 import org.antlr.runtime.CommonToken;
 import org.antlr.runtime.Token;
 
-import java.io.DataOutputStream;
-import java.io.IOException;
-
 import org.python.antlr.ast.VisitorIF;
 
 public class PythonTree extends BaseTree implements AST {
