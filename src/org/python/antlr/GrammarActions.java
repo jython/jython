@@ -437,7 +437,9 @@ public class GrammarActions {
         String string = t.getText();
         char quoteChar = string.charAt(0);
         int start = 0;
+        int end;
         boolean ustring = false;
+
         if (quoteChar == 'u' || quoteChar == 'U') {
             ustring = true;
             start++;
@@ -456,28 +458,27 @@ public class GrammarActions {
             quotes = 1;
         }
 
-        // string is properly decoded according to the source encoding
-        String result;
-        int end = string.length() - quotes;
         start = quotes + start;
+        end = string.length() - quotes;
+        // string is properly decoded according to the source encoding
         // XXX: No need to re-encode when the encoding is iso-8859-1, but ParserFacade
         // needs to normalize the encoding name
         if (!ustring && encoding != null) {
-            // Plain strs with a specified encoding: First re-encode them back out
-            result = new PyUnicode(string.substring(start, end)).encode(encoding);
+            // str with a specified encoding: first re-encode back out
+            string = new PyUnicode(string.substring(start, end)).encode(encoding);
             if (!raw) {
                 // Handle escapes in non-raw strs
-                result = PyString.decode_UnicodeEscape(result, 0, result.length(), "strict",
+                string = PyString.decode_UnicodeEscape(string, 0, string.length(), "strict",
                                                        ustring);
             }
         } else if (raw) {
-            // Raw str/unicode without an encoding (ascii): simply passthru
-            result = string.substring(start, end);
+            // Raw str without an encoding or raw unicode: simply passthru
+            string = string.substring(start, end);
         } else {
             // Plain unicode: already decoded, just handle escapes
-            result = PyString.decode_UnicodeEscape(string, start, end, "strict", ustring);
+            string = PyString.decode_UnicodeEscape(string, start, end, "strict", ustring);
         }
-        return new StringPair(result, ustring);
+        return new StringPair(string, ustring);
     }
 
     Token extractStringToken(List s) {
