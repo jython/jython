@@ -21,9 +21,10 @@ public class InteractiveParser extends BaseParser {
 
     private BufferedReader bufreader;
 
-    public InteractiveParser(BufferedReader br, String filename) {
+    public InteractiveParser(BufferedReader br, String filename, String encoding) {
         this.bufreader = br;
         this.filename = filename;
+        this.encoding = encoding;
     }
 
     public modType parse() throws IOException {
@@ -33,7 +34,7 @@ public class InteractiveParser extends BaseParser {
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         PythonTokenSource indentedSource = new PythonTokenSource(tokens, filename, true);
         tokens = new CommonTokenStream(indentedSource);
-        PythonParser parser = new PythonParser(tokens);
+        PythonParser parser = new PythonParser(tokens, encoding);
         parser.setErrorHandler(errorHandler);
         parser.setTreeAdaptor(new PythonTreeAdaptor());
 

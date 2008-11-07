@@ -1,8 +1,6 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -264,26 +262,6 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
 
     public PyObject fancyCall(PyObject[] args) {
         switch (this.index) {
-            case 44:
-                if (args.length > 5) {
-                    throw info.unexpectedCall(args.length, false);
-                }
-                int flags = 0;
-                if (args.length > 3) {
-                    flags = Py.py2int(args[3]);
-                }
-                boolean dont_inherit = false;
-                if (args.length > 4) {
-                    dont_inherit = Py.py2boolean(args[4]);
-                }
-                modType ast = py2node(args[0]);
-                if (ast != null) {
-                    return __builtin__.compile(ast, args[1].toString(), args[2].toString(), flags, dont_inherit);
-                }
-                if (args[0] instanceof PyUnicode) {
-                    flags += PyTableCode.PyCF_SOURCE_IS_UTF8;
-                }
-                return __builtin__.compile((PyString)args[0], args[1].toString(), args[2].toString(), flags, dont_inherit);
             case 29:
                 return __builtin__.map(args);
             case 43:
@@ -296,22 +274,6 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
     public PyObject getModule() {
         return module;
     }
-
-    /**
-     * @returns modType if obj is a wrapper around an AST modType else returns
-     *          null
-     *
-     * XXX: Reaches into implementation details -- needs to be reviewed if our
-     *      java integration changes.
-     */
-    private static modType py2node(PyObject obj) {
-        Object node = obj.__tojava__(modType.class);
-        if (node == Py.NoConversion) {
-            return null;
-        }
-        return (modType)node;
-    }
-
 }
 
 /**
@@ -374,7 +336,6 @@ public class __builtin__ {
         dict.__setitem__("range", new BuiltinFunctions("range", 2, 1, 3));
         dict.__setitem__("sum", new BuiltinFunctions("sum", 12, 1, 2));
         dict.__setitem__("unichr", new BuiltinFunctions("unichr", 6, 1));
-        dict.__setitem__("compile", new BuiltinFunctions("compile", 44, 3, -1));
         dict.__setitem__("delattr", new BuiltinFunctions("delattr", 15, 2));
         dict.__setitem__("dir", new BuiltinFunctions("dir", 16, 0, 1));
         dict.__setitem__("divmod", new BuiltinFunctions("divmod", 17, 2));
@@ -402,6 +363,7 @@ public class __builtin__ {
         dict.__setitem__("setattr", new BuiltinFunctions("setattr", 39, 3));
         dict.__setitem__("vars", new BuiltinFunctions("vars", 41, 0, 1));
         dict.__setitem__("zip", new BuiltinFunctions("zip", 43, 0, -1));
+        dict.__setitem__("compile", new CompileFunction());
         dict.__setitem__("reversed", new BuiltinFunctions("reversed", 45, 1));
         dict.__setitem__("__import__", new ImportFunction());
         dict.__setitem__("sorted", new SortedFunction());
@@ -475,38 +437,6 @@ public class __builtin__ {
         throw Py.TypeError("number coercion failed");
     }
 
-    public static PyObject compile(PyString data, String filename, String kind) {
-        if (data instanceof PyUnicode) {
-            return Py.compile_flags(data.toString(), filename, kind, Py.getCompilerFlags());
-        } else {
-            return Py.compile_flags(data.toBytes(), filename, kind,  Py.getCompilerFlags());
-        }
-    }
-
-    public static PyObject compile(modType node, String filename, String kind) {
-        return Py.compile_flags(node, filename, kind, Py.getCompilerFlags());
-    }
-
-    public static PyObject compile(PyString data, String filename, String kind, int flags, boolean dont_inherit) {
-        if ((flags & ~PyTableCode.CO_ALL_FEATURES) != 0) {
-            throw Py.ValueError("compile(): unrecognised flags");
-        }
-        if (data instanceof PyUnicode) {
-            return Py.compile_flags(data.toString(), filename, kind,
-                                    Py.getCompilerFlags(flags, dont_inherit));
-        } else {
-            return Py.compile_flags(data.toBytes(), filename, kind,
-                                    Py.getCompilerFlags(flags, dont_inherit));
-        }
-    }
-
-    public static PyObject compile(modType node, String filename, String kind, int flags, boolean dont_inherit) {
-        if ((flags & ~PyTableCode.CO_ALL_FEATURES) != 0) {
-            throw Py.ValueError("compile(): unrecognised flags");
-        }
-        return Py.compile_flags(node, filename, kind, Py.getCompilerFlags(flags, dont_inherit));
-    }
-
     public static void delattr(PyObject o, String n) {
         o.__delattr__(n);
     }
@@ -562,7 +492,7 @@ public class __builtin__ {
             code = (PyCode) o;
         } else {
             if (o instanceof PyString) {
-                code = (PyCode)compile((PyString)o, "<string>", "eval");
+                code = (PyCode)CompileFunction.compile((PyString)o, "<string>", "eval");
             } else {
                 throw Py.TypeError("eval: argument 1 must be string or code object");
             }
@@ -1560,5 +1490,79 @@ class RoundFunction extends PyBuiltinFunction {
             tmp = -tmp;
         }
         return new PyFloat(tmp / multiple);
+    }
+}
+
+class CompileFunction extends PyBuiltinFunction {
+    CompileFunction() {
+        super("compile",
+              "compile(source, filename, mode[, flags[, dont_inherit]]) -> code object\n\n"
+              + "Compile the source string (a Python module, statement or expression)\n"
+              + "into a code object that can be executed by the exec statement or eval().\n"
+              + "The filename will be used for run-time error messages.\n"
+              + "The mode must be 'exec' to compile a module, 'single' to compile a\n"
+              + "single (interactive) statement, or 'eval' to compile an expression.\n"
+              + "The flags argument, if present, controls which future statements influence\n"
+              + "the compilation of the code.\n"
+              + "The dont_inherit argument, if non-zero, stops the compilation inheriting\n"
+              + "the effects of any future statements in effect in the code calling\n"
+              + "compile; if absent or zero these statements do influence the compilation,\n"
+              + "in addition to any features explicitly specified.");
+    }
+
+    public PyObject __call__(PyObject args[], String kwds[]) {
+        ArgParser ap = new ArgParser("compile", args, kwds,
+                                     new String[] {"source", "filename", "mode", "flags",
+                                                   "dont_inherit"},
+                                     3);
+        PyObject source = ap.getPyObject(0);
+        String filename = ap.getString(1);
+        String mode = ap.getString(2);
+        int flags = ap.getInt(3, 0);
+        boolean dont_inherit = ap.getPyObject(4, Py.False).__nonzero__();
+        return compile(source, filename, mode, flags, dont_inherit);
+    }
+
+    public static PyObject compile(PyObject source, String filename, String mode) {
+        return compile(source, filename, mode, 0, false);
+    }
+
+    public static PyObject compile(PyObject source, String filename, String mode, int flags,
+                                   boolean dont_inherit) {
+        if ((flags & ~PyTableCode.CO_ALL_FEATURES) != 0) {
+            throw Py.ValueError("compile(): unrecognised flags");
+        }
+        if (!mode.equals("exec") && !mode.equals("eval") && !mode.equals("single")) {
+            throw Py.ValueError("compile() arg 3 must be 'exec' or 'eval' or 'single'");
+        }
+
+        modType ast = py2node(source);
+        if (ast != null) {
+            return Py.compile_flags(ast, filename, mode, Py.getCompilerFlags(flags, dont_inherit));
+        }
+
+        if (!(source instanceof PyString)) {
+            throw Py.TypeError("expected a readable buffer object");
+        }
+        if (source instanceof PyUnicode) {
+            flags |= PyTableCode.PyCF_SOURCE_IS_UTF8;
+        }
+        return Py.compile_flags(((PyString)source).toString(), filename, mode,
+                                Py.getCompilerFlags(flags, dont_inherit));
+    }
+
+    /**
+     * @returns modType if obj is a wrapper around an AST modType else returns
+     *          null
+     *
+     * XXX: Reaches into implementation details -- needs to be reviewed if our
+     *      java integration changes.
+     */
+    private static modType py2node(PyObject obj) {
+        Object node = obj.__tojava__(modType.class);
+        if (node == Py.NoConversion) {
+            return null;
+        }
+        return (modType)node;
     }
 }

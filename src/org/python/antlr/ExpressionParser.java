@@ -16,9 +16,10 @@ import org.python.antlr.ast.stmtType;
 
 public class ExpressionParser extends BaseParser {
 
-    public ExpressionParser(CharStream cs, String filename) {
+    public ExpressionParser(CharStream cs, String filename, String encoding) {
         this.charStream = cs;
         this.filename = filename;
+        this.encoding = encoding;
     }
 
     public modType parse() {
@@ -28,7 +29,7 @@ public class ExpressionParser extends BaseParser {
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         PythonTokenSource indentedSource = new PythonTokenSource(tokens, filename);
         tokens = new CommonTokenStream(indentedSource);
-        PythonParser parser = new PythonParser(tokens);
+        PythonParser parser = new PythonParser(tokens, encoding);
         parser.setErrorHandler(errorHandler);
         parser.setTreeAdaptor(new PythonTreeAdaptor());
 

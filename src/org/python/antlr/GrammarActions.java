@@ -414,14 +414,14 @@ public class GrammarActions {
         }
     }
 
-    PyString extractStrings(List s) {
+    PyString extractStrings(List s, String encoding) {
         boolean ustring = false;
         Token last = null;
         StringBuffer sb = new StringBuffer();
         Iterator iter = s.iterator();
         while (iter.hasNext()) {
             last = (Token)iter.next();
-            StringPair sp = extractString(last);
+            StringPair sp = extractString(last, encoding);
             if (sp.isUnicode()) {
                 ustring = true;
             }
@@ -433,40 +433,51 @@ public class GrammarActions {
         return new PyString(sb.toString());
     }
 
-    StringPair extractString(Token t) {
-        String s = t.getText();
-        char quoteChar = s.charAt(0);
-        int start=0;
+    StringPair extractString(Token t, String encoding) {
+        String string = t.getText();
+        char quoteChar = string.charAt(0);
+        int start = 0;
         boolean ustring = false;
         if (quoteChar == 'u' || quoteChar == 'U') {
             ustring = true;
             start++;
         }
-        quoteChar = s.charAt(start);
+        quoteChar = string.charAt(start);
         boolean raw = false;
         if (quoteChar == 'r' || quoteChar == 'R') {
             raw = true;
             start++;
         }
         int quotes = 3;
-        if (s.length() - start == 2) {
+        if (string.length() - start == 2) {
             quotes = 1;
         }
-        if (s.charAt(start) != s.charAt(start+1)) {
+        if (string.charAt(start) != string.charAt(start+1)) {
             quotes = 1;
         }
 
-        if (raw) {
-            return new StringPair(s.substring(quotes+start, s.length()-quotes), ustring);
+        // string is properly decoded according to the source encoding
+        String result;
+        int end = string.length() - quotes;
+        start = quotes + start;
+        // XXX: No need to re-encode when the encoding is iso-8859-1, but ParserFacade
+        // needs to normalize the encoding name
+        if (!ustring && encoding != null) {
+            // Plain strs with a specified encoding: First re-encode them back out
+            result = new PyUnicode(string.substring(start, end)).encode(encoding);
+            if (!raw) {
+                // Handle escapes in non-raw strs
+                result = PyString.decode_UnicodeEscape(result, 0, result.length(), "strict",
+                                                       ustring);
+            }
+        } else if (raw) {
+            // Raw str/unicode without an encoding (ascii): simply passthru
+            result = string.substring(start, end);
         } else {
-            StringBuffer sb = new StringBuffer(s.length());
-            char[] ca = s.toCharArray();
-            int n = ca.length-quotes;
-            int i=quotes+start;
-            int last_i=i;
-            return new StringPair(PyString.decode_UnicodeEscape(s, i, n, "strict", ustring), ustring);
-            //return decode_UnicodeEscape(s, i, n, "strict", ustring);
+            // Plain unicode: already decoded, just handle escapes
+            result = PyString.decode_UnicodeEscape(string, start, end, "strict", ustring);
         }
+        return new StringPair(result, ustring);
     }
 
     Token extractStringToken(List s) {

@@ -7,9 +7,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.LineNumberReader;
 import java.io.Reader;
-import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -34,11 +32,11 @@ import org.python.antlr.ast.modType;
 import org.python.core.io.StreamIO;
 import org.python.core.io.TextIOInputStream;
 import org.python.core.io.UniversalIOWrapper;
+import org.python.core.util.StringUtil;
 
 /**
  * Facade for the classes in the org.python.antlr package.
  */
-
 public class ParserFacade {
 
     private static int MARK_LIMIT = 100000;
@@ -107,14 +105,14 @@ public class ParserFacade {
                                  // validPartialSentence
         if (kind.equals("eval")) {
             CharStream cs = new NoCloseReaderStream(reader);
-            ExpressionParser e = new ExpressionParser(cs, filename);
+            ExpressionParser e = new ExpressionParser(cs, filename, cflags.encoding);
             return e.parse();
         } else if (kind.equals("single")) {
-            InteractiveParser i = new InteractiveParser(reader, filename);
+            InteractiveParser i = new InteractiveParser(reader, filename, cflags.encoding);
             return i.parse();
         } else if (kind.equals("exec")) {
             CharStream cs = new NoCloseReaderStream(reader);
-            ModuleParser g = new ModuleParser(cs, filename);
+            ModuleParser g = new ModuleParser(cs, filename, cflags.encoding);
             return g.file_input();
         } else {
             throw Py.ValueError("parse kind must be eval, exec, or single");
@@ -129,7 +127,7 @@ public class ParserFacade {
         try {
             // prepBufReader takes care of encoding detection and universal
             // newlines:
-            bufReader = prepBufreader(stream, cflags, filename);
+            bufReader = prepBufReader(stream, cflags, filename);
             return parse(bufReader, kind, filename, cflags );
         } catch (Throwable t) {
             throw fixParseError(bufReader, t, filename);
@@ -144,7 +142,7 @@ public class ParserFacade {
                                 CompilerFlags cflags) {
         BufferedReader bufReader = null;
         try {
-            bufReader = prepBufReader(string);
+            bufReader = prepBufReader(string, cflags, filename);
             return parse(bufReader, kind, filename, cflags);
         } catch (Throwable t) {
             throw fixParseError(bufReader, t, filename);
@@ -161,7 +159,7 @@ public class ParserFacade {
         // XXX: What's the idea of the stdprompt argument?
         BufferedReader reader = null;
         try {
-            reader = prepBufReader(string);
+            reader = prepBufReader(string, cflags, filename);
             return parse(reader, kind, filename, cflags);
         } catch (Throwable t) {
             PyException p = fixParseError(reader, t, filename);
@@ -194,74 +192,61 @@ public class ParserFacade {
             }
 
         } catch (Exception e) {
-            System.out.println(e);
             return lexer.eofWhileNested;
         }
         return true;
     }
 
-    private static BufferedReader prepBufreader(InputStream istream,
-                                                CompilerFlags cflags,
+    private static BufferedReader prepBufReader(InputStream input, CompilerFlags cflags,
                                                 String filename) throws IOException {
-        boolean bom = false;
-        String encoding = null;
-        InputStream bstream = new BufferedInputStream(istream);
-        bom = adjustForBOM(bstream);
-        encoding = readEncoding(bstream);
+        input = new BufferedInputStream(input);
+        boolean bom = adjustForBOM(input);
+        String encoding = readEncoding(input);
 
         if (encoding == null) {
             if (bom) {
-                encoding = "UTF-8";
+                encoding = "utf-8";
             } else if (cflags != null && cflags.encoding != null) {
                 encoding = cflags.encoding;
             }
         }
+        if (cflags.source_is_utf8) {
+            if (encoding != null) {
+                throw new ParseException("encoding declaration in Unicode string");
+            }
+            encoding = "utf-8";
+        }
+        cflags.encoding = encoding;
 
         // Enable universal newlines mode on the input
-        StreamIO rawIO = new StreamIO(bstream, true);
+        StreamIO rawIO = new StreamIO(input, true);
         org.python.core.io.BufferedReader bufferedIO =
                 new org.python.core.io.BufferedReader(rawIO, 0);
         UniversalIOWrapper textIO = new UniversalIOWrapper(bufferedIO);
-        bstream = new TextIOInputStream(textIO);
+        input = new TextIOInputStream(textIO);
 
         Reader reader;
-        if(encoding != null) {
-            try {
-                reader = new InputStreamReader(bstream, encoding);
-            } catch(UnsupportedEncodingException exc) {
-                throw new PySyntaxError("Encoding '" + encoding + "' isn't supported by this JVM.", 0, 0, "", filename);
-            }
-        } else {
-            try {
-                // Default to ISO-8859-1 to get bytes off the input stream since it leaves their values alone.
-                reader = new InputStreamReader(bstream, "ISO-8859-1");
-            } catch(UnsupportedEncodingException e) {
-                // This JVM is whacked, it doesn't even have iso-8859-1
-                throw Py.SystemError("Java couldn't find the ISO-8859-1 encoding");
-            }
+        try {
+            // Using iso-8859-1 for the raw bytes when no encoding was specified
+            reader = new InputStreamReader(input, encoding == null ? "iso-8859-1" : encoding);
+        } catch (UnsupportedEncodingException exc) {
+            throw new PySyntaxError("Unknown encoding: " + encoding, 1, 0, "", filename);
         }
-
-        BufferedReader bufreader = new BufferedReader(reader);
-        return bufreader;
+        return new BufferedReader(reader);
     }
 
-    private static BufferedReader prepBufReader(String string) throws IOException {
-        BufferedReader bufReader;
-
-        // LineNumberReader takes care of universal newlines
-        bufReader = new LineNumberReader(new StringReader(string));
-
-        // If the input is a decoded string (implied from the String argument
-        // for prepBufReader), it can't have an encoding declaration.
-        bufReader.mark(MARK_LIMIT);
-        if (findEncoding(bufReader) != null) {
-            throw new ParseException("encoding declaration in Unicode string");
+    private static BufferedReader prepBufReader(String string, CompilerFlags cflags,
+                                                String filename) throws IOException {
+        if (cflags.source_is_utf8) {
+            // Passed unicode, re-encode the String to raw bytes
+            // NOTE: This could be more efficient if we duplicate
+            // prepBufReader/adjustForBOM/readEncoding to work on Readers, instead of
+            // encoding
+            string = new PyUnicode(string).encode("utf-8");
         }
-        bufReader.reset();
-
-        return bufReader;
+        InputStream input = new ByteArrayInputStream(StringUtil.toBytes(string));
+        return prepBufReader(input, cflags, filename);
     }
-
 
     /**
      * Check for a BOM mark at the begginning of stream.  If there is a BOM

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import sys
 import unittest
 import test.test_support
@@ -120,6 +121,36 @@ class ConversionTest(unittest.TestCase):
     def test_round_non_float(self):
         self.assertEqual(round(self.Foo(), 1), 3.1)
 
+class ExecEvalTest(unittest.TestCase):
+
+    bom = '\xef\xbb\xbf'
+    
+    def test_eval_bom(self):
+        self.assertEqual(eval(self.bom + '"foo"'), 'foo')
+        # Actual BOM ignored, so causes a SyntaxError
+        self.assertRaises(SyntaxError, eval,
+                          self.bom.decode('iso-8859-1') + '"foo"')
+
+    def test_parse_str_eval(self):
+        foo = 'föö'
+        for code in ("'%s'" % foo.decode('utf-8'),
+                     "# coding: utf-8\n'%s'" % foo,
+                     "%s'%s'" % (self.bom, foo)):
+            mod = compile(code, 'foo.py', 'eval')
+            bar = eval(mod)
+            self.assertEqual(foo, bar)
+            bar = eval(code)
+            self.assertEqual(foo, bar)
+
+    def test_parse_str_exec(self):
+        foo = 'föö'
+        for code in ("a = '%s'" % foo.decode('utf-8'),
+                     "# coding: utf-8\na = '%s'" % foo,
+                     "%sa = '%s'" % (self.bom, foo)):
+            ns = {}
+            exec code in ns
+            self.assertEqual(foo, ns['a'])
+
 def test_main():
     test.test_support.run_unittest(BuiltinTest,
                                    LoopTest,
@@ -129,7 +160,8 @@ def test_main():
                                    ReturnTest,
                                    ReprTest,
                                    CallableTest,
-                                   ConversionTest)
+                                   ConversionTest,
+                                   ExecEvalTest)
 
 if __name__ == "__main__":
     test_main()

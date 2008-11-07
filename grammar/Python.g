@@ -159,6 +159,8 @@ import java.util.ListIterator;
 
     private GrammarActions actions = new GrammarActions();
 
+    private String encoding;
+
     public void setErrorHandler(ErrorHandler eh) {
         this.errorHandler = eh;
         actions.setErrorHandler(eh);
@@ -178,6 +180,11 @@ import java.util.ListIterator;
             return o;
         }
         return super.recoverFromMismatchedToken(input, ttype, follow);
+    }
+
+    public PythonParser(TokenStream input, String encoding) {
+        this(input);
+        this.encoding = encoding;
     }
 
 }
@@ -1235,7 +1242,7 @@ atom
      | COMPLEX
     -> ^(COMPLEX<Num>[$COMPLEX, actions.makeComplex($COMPLEX)])
      | (S+=STRING)+ 
-    -> ^(STRING<Str>[actions.extractStringToken($S), actions.extractStrings($S)])
+    -> ^(STRING<Str>[actions.extractStringToken($S), actions.extractStrings($S, encoding)])
      ;
 
 //listmaker: test ( list_for | (',' test)* [','] )

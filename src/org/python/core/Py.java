@@ -1190,6 +1190,7 @@ public final class Py {
 
     public static void exec(PyObject o, PyObject globals, PyObject locals) {
         PyCode code;
+        int flags = 0;
         if (o instanceof PyCode) {
             code = (PyCode) o;
             if (locals == null && o instanceof PyTableCode && ((PyTableCode) o).hasFreevars()) {
@@ -1198,6 +1199,9 @@ public final class Py {
         } else {
             String contents = null;
             if (o instanceof PyString) {
+                if (o instanceof PyUnicode) {
+                    flags |= PyTableCode.PyCF_SOURCE_IS_UTF8;
+                }
                 contents = o.toString();
             } else if (o instanceof PyFile) {
                 PyFile fp = (PyFile) o;
@@ -1210,7 +1214,7 @@ public final class Py {
                         "exec: argument 1 must be string, code or file object");
             }
             code = (PyCode)Py.compile_flags(contents, "<string>", "exec",
-                    Py.getCompilerFlags());
+                                            getCompilerFlags(flags, false));
         }
         Py.runCode(code, locals, globals);
     }
@@ -1680,31 +1684,6 @@ public final class Py {
             data += "\n\n";
         }
         modType node = ParserFacade.parse(data, kind, filename, cflags);
-        return Py.compile_flags(node, filename, kind, cflags);
-    }
-
-    /**
-     * Compiles python source code coming from bytestrings
-     */
-    public static PyObject compile_flags(byte[] bytes, String filename,
-                                         String kind, CompilerFlags cflags) {
-        for(int i = 0; i < bytes.length; i++) {
-            if (bytes[i] == 0) {
-                throw Py.TypeError("compile() expected string without null bytes");
-            }
-        }
-        byte[] data;
-        if (cflags != null && cflags.dont_imply_dedent) {
-            data = new byte[bytes.length + 1];
-            System.arraycopy(bytes, 0, data, 0, bytes.length);
-            data[data.length - 1] = '\n';
-        } else {
-            data = new byte[bytes.length + 2];
-            System.arraycopy(bytes, 0, data, 0, bytes.length);
-            data[data.length - 1] = data[data.length - 2] = '\n';
-        }
-        modType node = ParserFacade.parse(new ByteArrayInputStream(data), kind,
-                                          filename, cflags);
         return Py.compile_flags(node, filename, kind, cflags);
     }
 

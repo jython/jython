@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from test import test_support
 import unittest
 
@@ -130,12 +131,47 @@ class DisplayTest(unittest.TestCase):
         self.assertEqual(repr(test2), '"\'bar"')
         self.assertEqual(repr(unicode(test2)), 'u"\'bar"')
 
+
+class ParserTest(unittest.TestCase):
+
+    def test_parse_str(self):
+        foo = 'ą\n'
+        self.assertEqual(len(foo), 3, repr(foo))
+        self.assertEqual(repr(foo), "'\\xc4\\x85\\n'")
+        self.assertEqual(ord(foo[0]), 196)
+        self.assertEqual(ord(foo[1]), 133)
+        self.assertEqual(ord(foo[2]), 10)
+
+        bar = foo.decode('utf-8')
+        self.assertEqual(len(bar), 2)
+        self.assertEqual(repr(bar), "u'\\u0105\\n'")
+        self.assertEqual(ord(bar[0]), 261)
+        self.assertEqual(ord(bar[1]), 10)
+
+    def test_parse_raw_str(self):
+        foo = r'ą\n'
+        self.assertEqual(len(foo), 4, repr(foo))
+        self.assertEqual(repr(foo), "'\\xc4\\x85\\\\n'")
+        self.assertEqual(ord(foo[0]), 196)
+        self.assertEqual(ord(foo[1]), 133)
+        self.assertEqual(ord(foo[2]), 92)
+        self.assertEqual(ord(foo[3]), 110)
+
+        bar = foo.decode('utf-8')
+        self.assertEqual(len(bar), 3)
+        self.assertEqual(repr(bar), "u'\\u0105\\\\n'")
+        self.assertEqual(ord(bar[0]), 261)
+        self.assertEqual(ord(bar[1]), 92)
+        self.assertEqual(ord(bar[2]), 110)
+
 def test_main():
-    test_support.run_unittest(WrappedStrCmpTest,
+    test_support.run_unittest(
+        WrappedStrCmpTest,
         IntToStrTest,
         StringSlicingTest,
         FormatTest,
-        DisplayTest)
+        DisplayTest,
+        ParserTest)
 
 if __name__ == '__main__':
     test_main()
