@@ -136,6 +136,10 @@ public abstract class PySequence extends PyObject {
     }
 
     public synchronized PyObject __lt__(PyObject o) {
+        return seq___lt__(o);
+    }
+
+    final synchronized PyObject seq___lt__(PyObject o) {
         if(!(getType() == o.getType()) && !(getType().isSubType(o.getType()))) {
             return null;
         }
@@ -146,11 +150,11 @@ public abstract class PySequence extends PyObject {
         return __finditem__(i)._lt(o.__finditem__(i));
     }
 
-    final synchronized PyObject seq___lt__(PyObject o) {
-        return __lt__(o);
+    public synchronized PyObject __le__(PyObject o) {
+        return seq___le__(o);
     }
 
-    public synchronized PyObject __le__(PyObject o) {
+    final synchronized PyObject seq___le__(PyObject o) {
         if(!(getType() == o.getType()) && !(getType().isSubType(o.getType()))) {
             return null;
         }
@@ -161,11 +165,11 @@ public abstract class PySequence extends PyObject {
         return __finditem__(i)._le(o.__finditem__(i));
     }
 
-    final synchronized PyObject seq___le__(PyObject o) {
-        return __le__(o);
+    public synchronized PyObject __gt__(PyObject o) {
+        return seq___gt__(o);
     }
 
-    public synchronized PyObject __gt__(PyObject o) {
+    final synchronized PyObject seq___gt__(PyObject o) {
         if(!(getType() == o.getType()) && !(getType().isSubType(o.getType()))) {
             return null;
         }
@@ -175,11 +179,11 @@ public abstract class PySequence extends PyObject {
         return __finditem__(i)._gt(o.__finditem__(i));
     }
 
-    final synchronized PyObject seq___gt__(PyObject o) {
-        return __gt__(o);
+    public synchronized PyObject __ge__(PyObject o) {
+        return seq___ge__(o);
     }
 
-    public synchronized PyObject __ge__(PyObject o) {
+    final synchronized PyObject seq___ge__(PyObject o) {
         if(!(getType() == o.getType()) && !(getType().isSubType(o.getType()))) {
             return null;
         }
@@ -188,10 +192,6 @@ public abstract class PySequence extends PyObject {
             return (i == -3 || i == -2) ? Py.True : Py.False;
         }
         return __finditem__(i)._ge(o.__finditem__(i));
-    }
-
-    final synchronized PyObject seq___ge__(PyObject o) {
-        return __ge__(o);
     }
 
     // Return value >= 0 is the index where the sequences differs.
