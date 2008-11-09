@@ -109,13 +109,20 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
     <target name="full-build" depends="full-check, install" description="a full build with svn checkout" />
 
     <target name="needed-check" unless="full-build">
-        <uptodate property="jarjar.notneeded" targetfile="${output.dir}/jarjar.jar">
-            <srcfiles dir="extlibs" includes="*" />
+        <uptodate property="antlr.notneeded" targetfile="${output.dir}/jarjar.jar">
             <srcfiles dir="grammar" includes="*.g" />
         </uptodate>
-        <uptodate property="antlr.notneeded" targetfile="${dist.dir}/jython.jar">
-            <srcfiles dir="grammar" includes="*.g" />
-        </uptodate>
+        <!-- When antlr.notneeded isn't set, a clean is run after this, so jarjar's running depends
+             on both that and its own jar -->
+        <condition property="jarjar.notneeded">
+            <and>
+                <isset property="antlr.notneeded"/>
+                <uptodate targetfile="${output.dir}/jarjar.jar">
+                    <srcfiles dir="extlibs" includes="*" />
+                    <srcfiles dir="grammar" includes="*.g" />
+                </uptodate>
+            </and>
+        </condition>
     </target>
 
     <target name="init" depends="version-init">
