@@ -16,7 +16,6 @@ import org.python.core.PyCode;
 import org.python.core.PyException;
 import org.python.core.PyFile;
 import org.python.core.PyList;
-import org.python.core.PyModule;
 import org.python.core.PyString;
 import org.python.core.PyStringMap;
 import org.python.core.PySystemState;
@@ -302,26 +301,17 @@ public class jython
     }
 
     /**
-     * @return a new python interpreter, instantiating the right
-     * InteractiveConsole subclass for the configured <tt>python.console</tt>
+     * Returns a new python interpreter using the InteractiveConsole subclass from the
+     * <tt>python.console</tt> registry key.
      */
     private static InteractiveConsole newInterpreter() {
-        InteractiveConsole interp = null;
         try {
-            String interpClass = PySystemState.registry.getProperty(
-                                    "python.console",
-                                    "org.python.util.InteractiveConsole");
-            interp = (InteractiveConsole)
-                             Class.forName(interpClass).newInstance();
+            String interpClass = PySystemState.registry.getProperty("python.console",
+                                                                    "org.python.util.InteractiveConsole");
+            return (InteractiveConsole)Class.forName(interpClass).newInstance();
         } catch (Exception e) {
-            interp = new InteractiveConsole();
-}
-
-        //System.err.println("interp");
-        PyModule mod = imp.addModule("__main__");
-        interp.setLocals(mod.__dict__);
-        //System.err.println("imp");
-        return interp;
+            return new InteractiveConsole();
+        }
     }
 
     /**
