@@ -149,13 +149,6 @@ class JavaVisitor(EmitVisitor):
 
         self.attributes(sum, depth, True);
 
-        #self.emit("", 0)
-        #self.emit("public static final String[] %sTypeNames = new String[] {" % 
-        #            name, depth+1)
-        #self.emit('"<undef>",', depth+2)
-        #for type in sum.types:
-        #    self.emit('"%s",' % type.name, depth+2)
-        #self.emit("};", depth+1)
         self.emit("}", depth)
         self.close()
 
@@ -298,6 +291,8 @@ class JavaVisitor(EmitVisitor):
                 elif str(f.type) == "expr":
                     self.emit("addChild(%s);" % (f.name), depth+1)
 
+    #XXX: this method used to emit a pickle(DataOutputStream ostream) for cPickle support.
+    #     If we want to re-add it, see Jython 2.2's pickle method in its ast nodes.
     def javaMethods(self, type, clsname, ctorname, fields, depth):
         # The java ctors
 
@@ -356,14 +351,6 @@ class JavaVisitor(EmitVisitor):
         self.emit("}", depth)
         self.emit("", 0)
 
-        # The pickle() method
-        #self.emit("public void pickle(DataOutputStream ostream) throws IOException {", depth)
-        #self.emit("pickleThis(%s, ostream);" % type.index, depth+1);
-        #for f in fields:
-        #    self.emit("pickleThis(this.%s, ostream);" % f.name, depth+1)
-        #self.emit("}", depth)
-        #self.emit("", 0)
-
         # The accept() method
         self.emit("public <R> R accept(VisitorIF<R> visitor) throws Exception {", depth)
         if clsname == ctorname:
@@ -395,10 +382,6 @@ class JavaVisitor(EmitVisitor):
         self.emit('}', depth)
         self.emit("", 0)
 
-        #self.emit('}', depth)
-        #self.emit("", 0)
-
-
     def visitField(self, field, depth):
         self.emit("public %s;" % self.fieldDef(field), depth)
 
@@ -414,9 +397,6 @@ class JavaVisitor(EmitVisitor):
 
     def fieldDef(self, field):
         jtype = str(field.type)
-        #if field.typedef and field.typedef.simple:
-        #    jtype = 'int'
-        #else:
         jtype = self.bltinnames.get(jtype, jtype + 'Type')
         name = field.name
         seq = field.seq and "[]" or ""
