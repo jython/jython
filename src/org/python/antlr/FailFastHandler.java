@@ -57,9 +57,7 @@ public class FailFastHandler implements ErrorHandler {
     }
 
     private String message(BaseRecognizer br, RecognitionException re) {
-		String hdr = br.getErrorHeader(re);
-		String msg = br.getErrorMessage(re, br.getTokenNames());
-        return hdr+" "+msg;
+        return br.getErrorMessage(re, br.getTokenNames());
     }
 
 }
