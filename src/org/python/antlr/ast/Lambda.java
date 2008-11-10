@@ -67,12 +67,28 @@ public class Lambda extends exprType {
             body.accept(visitor);
     }
 
+    private int lineno = -1;
     public int getLineno() {
+        if (lineno != -1) {
+            return lineno;
+        }
         return getLine();
     }
 
+    public void setLineno(int num) {
+        lineno = num;
+    }
+
+    private int col_offset = -1;
     public int getCol_offset() {
+        if (col_offset != -1) {
+            return col_offset;
+        }
         return getCharPositionInLine();
+    }
+
+    public void setCol_offset(int num) {
+        col_offset = num;
     }
 
 }

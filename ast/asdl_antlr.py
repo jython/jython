@@ -258,14 +258,30 @@ class JavaVisitor(EmitVisitor):
 
         if str(name) in ('stmt', 'expr'):
             # The lineno property
+            self.emit("private int lineno = -1;", depth + 1)
             self.emit("public int getLineno() {", depth + 1)
+            self.emit("if (lineno != -1) {", depth + 2);
+            self.emit("return lineno;", depth + 3);
+            self.emit("}", depth + 2)
             self.emit('return getLine();', depth + 2)
+            self.emit("}", depth + 1)
+            self.emit("", 0)
+            self.emit("public void setLineno(int num) {", depth + 1)
+            self.emit("lineno = num;", depth + 2);
             self.emit("}", depth + 1)
             self.emit("", 0)
 
             # The col_offset property
+            self.emit("private int col_offset = -1;", depth + 1)
             self.emit("public int getCol_offset() {", depth + 1)
+            self.emit("if (col_offset != -1) {", depth + 2);
+            self.emit("return col_offset;", depth + 3);
+            self.emit("}", depth + 2)
             self.emit('return getCharPositionInLine();', depth + 2)
+            self.emit("}", depth + 1)
+            self.emit("", 0)
+            self.emit("public void setCol_offset(int num) {", depth + 1)
+            self.emit("col_offset = num;", depth + 2);
             self.emit("}", depth + 1)
             self.emit("", 0)
 
