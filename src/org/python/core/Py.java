@@ -1007,17 +1007,22 @@ public final class Py {
             stderr.print(((PyTraceback) tb).dumpStack());
         }
         if (__builtin__.isinstance(value, Py.SyntaxError)) {
-            stderr.println("  File \"" + value.__findattr__("filename") +
-                    "\", line " + value.__findattr__("lineno"));
+            PyObject filename = value.__findattr__("filename");
             PyObject text = value.__findattr__("text");
-            if (text != Py.None && text.__len__() != 0) {
-                stderr.println("\t" + text);
-                String space = "\t";
-                int col = ((PyInteger) value.__findattr__("offset").__int__()).getValue();
-                for (int j = 1; j < col; j++) {
-                    space = space + " ";
-                }
-                stderr.println(space + "^");
+            PyObject lineno = value.__findattr__("lineno");
+            stderr.print("  File \"");
+            stderr.print(filename == Py.None || filename == null ?
+                         "<string>" : filename.toString());
+            stderr.print("\", line ");
+            stderr.print(lineno == null ? Py.newString("0") : lineno);
+            stderr.print("\n");
+            if (text != Py.None && text != null && text.__len__() != 0) {
+                printSyntaxErrorText(stderr, value.__findattr__("offset").asInt(),
+                                     text.toString());
+            }
+            value = value.__findattr__("msg");
+            if (value == null) {
+                value = Py.None;
             }
         }
 
@@ -1029,6 +1034,56 @@ public final class Py {
             }
         }
         stderr.println(formatException(type, value, tb));
+    }
+
+    /**
+     * Print the two lines showing where a SyntaxError was caused.
+     *
+     * @param out StdoutWrapper to print to
+     * @param offset the offset into text
+     * @param text a source code String line
+     */
+    private static void printSyntaxErrorText(StdoutWrapper out, int offset, String text) {
+        if (offset >= 0) {
+            if (offset > 0 && offset == text.length()) {
+                offset--;
+            }
+
+            // Eat lines if the offset is on a subsequent line
+            while (true) {
+                int nl = text.indexOf("\n");
+                if (nl == -1 || nl >= offset) {
+                    break;
+                }
+                offset -= nl + 1;
+                text = text.substring(nl + 1, text.length());
+            }
+
+            // lstrip
+            int i = 0;
+            for (; i < text.length(); i++) {
+                char c = text.charAt(i);
+                if (c != ' ' && c != '\t') {
+                    break;
+                }
+                offset--;
+            }
+            text = text.substring(i, text.length());
+        }
+
+        out.print("    ");
+        out.print(text);
+        if (text.length() == 0 || !text.endsWith("\n")) {
+            out.print("\n");
+        }
+        if (offset == -1) {
+            return;
+        }
+        out.print("    ");
+        for (offset--; offset > 0; offset--) {
+            out.print(" ");
+        }
+        out.print("^\n");
     }
 
     static String formatException(PyObject type, PyObject value, PyObject tb) {

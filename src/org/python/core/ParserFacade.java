@@ -40,16 +40,16 @@ public class ParserFacade {
 
     private ParserFacade() {}
 
-    static String getLine(BufferedReader reader, int line) {
+    private static String getLine(BufferedReader reader, int line) {
         if (reader == null) {
             return "";
         }
         String text = null;
         try {
-            for(int i=0; i < line; i++) {
+            for (int i = 0; i < line; i++) {
                 text = reader.readLine();
             }
-            return text;
+            return text == null ? text : text + "\n";
         } catch (IOException ioe) {
         }
         return text;

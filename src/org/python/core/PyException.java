@@ -44,14 +44,17 @@ public class PyException extends RuntimeException
         this.type = type;
         this.value = value;
 
-        if (traceback == null) {
+        if (traceback != null) {
+            this.traceback = traceback;
+        } else {
             PyFrame frame = Py.getFrame();
-            traceback = new PyTraceback(frame);
-            if (frame != null && frame.tracefunc != null) {
-                frame.tracefunc = frame.tracefunc.traceException(frame, this);
+            if (frame != null) {
+                this.traceback = new PyTraceback(frame);
+                if (frame.tracefunc != null) {
+                    frame.tracefunc = frame.tracefunc.traceException(frame, this);
+                }
             }
         }
-        this.traceback = traceback;
     }
 
     public PyException(PyObject type, String value) {
