@@ -151,6 +151,9 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
                 dict.__setitem__("__init__", reflctr);
             }
         }
+        for (Class<?> inner : underlying_class.getClasses()) {
+            dict.__setitem__(inner.getSimpleName(), PyType.fromClass(inner));
+        }
         if (ClassDictInit.class.isAssignableFrom(underlying_class)
                 && underlying_class != ClassDictInit.class) {
             try {
