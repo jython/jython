@@ -4,6 +4,7 @@
 Made for Jython.
 """
 import re
+import sys
 import unittest
 from test import test_support
 
@@ -57,6 +58,19 @@ class UnicodeTestCase(unittest.TestCase):
         self.assertEqual(long(u'\u0663'), 3)
         self.assertEqual(float(u'\u0663.\u0661'), 3.1)
         self.assertEqual(complex(u'\u0663.\u0661'), 3.1+0j)
+
+    def test_formatchar(self):
+        self.assertEqual('%c' % 255, '\xff')
+        self.assertRaises(OverflowError, '%c'.__mod__, 256)
+
+        result = u'%c' % 256
+        self.assert_(isinstance(result, unicode))
+        self.assertEqual(result, u'\u0100')
+        if sys.maxunicode == 0xffff:
+            self.assertEqual(u'%c' % sys.maxunicode, u'\uffff')
+        else:
+            self.assertEqual(u'%c' % sys.maxunicode, u'\U0010ffff')
+        self.assertRaises(OverflowError, '%c'.__mod__, sys.maxunicode + 1)
 
 
 def test_main():

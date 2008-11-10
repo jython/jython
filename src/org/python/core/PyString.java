@@ -2960,12 +2960,16 @@ final class StringFormatter
                     }
                     throw e;
                 }
-                if (val < 0) {
-                    throw Py.OverflowError("unsigned byte integer is less than minimum");
-                } else if (val > 255) {
-                    throw Py.OverflowError("unsigned byte integer is greater than maximum");
+                if (!needUnicode) {
+                    if (val < 0) {
+                        throw Py.OverflowError("unsigned byte integer is less than minimum");
+                    } else if (val > 255) {
+                        throw Py.OverflowError("unsigned byte integer is greater than maximum");
+                    }
+                } else if (val < 0 || val > PySystemState.maxunicode) {
+                    throw Py.OverflowError("%c arg not in range(0x110000) (wide Python build)");
                 }
-                string = new Character((char)val).toString();
+                string = new String(new int[] {val}, 0, 1);
                 break;
 
             default:
