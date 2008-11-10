@@ -12,8 +12,27 @@ public class argumentsType extends PythonTree {
     public String kwarg;
     public exprType[] defaults;
 
-    public static final String[] _fields = new String[]
-    {"args","vararg","kwarg","defaults"};
+    private final static String[] fields = new String[] {"args", "vararg",
+                                                          "kwarg", "defaults"};
+    public String[] get_fields() { return fields; }
+
+    public argumentsType(exprType[] args, String vararg, String kwarg,
+    exprType[] defaults) {
+        this.args = args;
+        if (args != null) {
+            for(int iargs=0;iargs<args.length;iargs++) {
+                addChild(args[iargs]);
+            }
+        }
+        this.vararg = vararg;
+        this.kwarg = kwarg;
+        this.defaults = defaults;
+        if (defaults != null) {
+            for(int idefaults=0;idefaults<defaults.length;idefaults++) {
+                addChild(defaults[idefaults]);
+            }
+        }
+    }
 
     public argumentsType(Token token, exprType[] args, String vararg, String
     kwarg, exprType[] defaults) {

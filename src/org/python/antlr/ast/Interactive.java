@@ -9,7 +9,17 @@ import java.io.IOException;
 public class Interactive extends modType {
     public stmtType[] body;
 
-    public static final String[] _fields = new String[] {"body"};
+    private final static String[] fields = new String[] {"body"};
+    public String[] get_fields() { return fields; }
+
+    public Interactive(stmtType[] body) {
+        this.body = body;
+        if (body != null) {
+            for(int ibody=0;ibody<body.length;ibody++) {
+                addChild(body[ibody]);
+            }
+        }
+    }
 
     public Interactive(Token token, stmtType[] body) {
         super(token);

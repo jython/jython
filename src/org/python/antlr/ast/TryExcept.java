@@ -11,8 +11,31 @@ public class TryExcept extends stmtType {
     public excepthandlerType[] handlers;
     public stmtType[] orelse;
 
-    public static final String[] _fields = new String[]
-    {"body","handlers","orelse"};
+    private final static String[] fields = new String[] {"body", "handlers",
+                                                          "orelse"};
+    public String[] get_fields() { return fields; }
+
+    public TryExcept(stmtType[] body, excepthandlerType[] handlers, stmtType[]
+    orelse) {
+        this.body = body;
+        if (body != null) {
+            for(int ibody=0;ibody<body.length;ibody++) {
+                addChild(body[ibody]);
+            }
+        }
+        this.handlers = handlers;
+        if (handlers != null) {
+            for(int ihandlers=0;ihandlers<handlers.length;ihandlers++) {
+                addChild(handlers[ihandlers]);
+            }
+        }
+        this.orelse = orelse;
+        if (orelse != null) {
+            for(int iorelse=0;iorelse<orelse.length;iorelse++) {
+                addChild(orelse[iorelse]);
+            }
+        }
+    }
 
     public TryExcept(Token token, stmtType[] body, excepthandlerType[]
     handlers, stmtType[] orelse) {

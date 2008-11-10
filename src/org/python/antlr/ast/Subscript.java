@@ -11,7 +11,16 @@ public class Subscript extends exprType implements Context {
     public sliceType slice;
     public expr_contextType ctx;
 
-    public static final String[] _fields = new String[] {"value","slice","ctx"};
+    private final static String[] fields = new String[] {"value", "slice",
+                                                          "ctx"};
+    public String[] get_fields() { return fields; }
+
+    public Subscript(exprType value, sliceType slice, expr_contextType ctx) {
+        this.value = value;
+        addChild(value);
+        this.slice = slice;
+        this.ctx = ctx;
+    }
 
     public Subscript(Token token, exprType value, sliceType slice,
     expr_contextType ctx) {

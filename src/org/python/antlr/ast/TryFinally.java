@@ -10,7 +10,23 @@ public class TryFinally extends stmtType {
     public stmtType[] body;
     public stmtType[] finalbody;
 
-    public static final String[] _fields = new String[] {"body","finalbody"};
+    private final static String[] fields = new String[] {"body", "finalbody"};
+    public String[] get_fields() { return fields; }
+
+    public TryFinally(stmtType[] body, stmtType[] finalbody) {
+        this.body = body;
+        if (body != null) {
+            for(int ibody=0;ibody<body.length;ibody++) {
+                addChild(body[ibody]);
+            }
+        }
+        this.finalbody = finalbody;
+        if (finalbody != null) {
+            for(int ifinalbody=0;ifinalbody<finalbody.length;ifinalbody++) {
+                addChild(finalbody[ifinalbody]);
+            }
+        }
+    }
 
     public TryFinally(Token token, stmtType[] body, stmtType[] finalbody) {
         super(token);

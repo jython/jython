@@ -10,7 +10,15 @@ public class Assert extends stmtType {
     public exprType test;
     public exprType msg;
 
-    public static final String[] _fields = new String[] {"test","msg"};
+    private final static String[] fields = new String[] {"test", "msg"};
+    public String[] get_fields() { return fields; }
+
+    public Assert(exprType test, exprType msg) {
+        this.test = test;
+        addChild(test);
+        this.msg = msg;
+        addChild(msg);
+    }
 
     public Assert(Token token, exprType test, exprType msg) {
         super(token);

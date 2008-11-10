@@ -10,7 +10,18 @@ public class List extends exprType implements Context {
     public exprType[] elts;
     public expr_contextType ctx;
 
-    public static final String[] _fields = new String[] {"elts","ctx"};
+    private final static String[] fields = new String[] {"elts", "ctx"};
+    public String[] get_fields() { return fields; }
+
+    public List(exprType[] elts, expr_contextType ctx) {
+        this.elts = elts;
+        if (elts != null) {
+            for(int ielts=0;ielts<elts.length;ielts++) {
+                addChild(elts[ielts]);
+            }
+        }
+        this.ctx = ctx;
+    }
 
     public List(Token token, exprType[] elts, expr_contextType ctx) {
         super(token);

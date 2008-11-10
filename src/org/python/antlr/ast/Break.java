@@ -8,7 +8,8 @@ import java.io.IOException;
 
 public class Break extends stmtType {
 
-    public static final String[] _fields = new String[] {};
+    public Break() {
+    }
 
     public Break(Token token) {
         super(token);

@@ -11,8 +11,18 @@ public class Slice extends sliceType {
     public exprType upper;
     public exprType step;
 
-    public static final String[] _fields = new String[]
-    {"lower","upper","step"};
+    private final static String[] fields = new String[] {"lower", "upper",
+                                                          "step"};
+    public String[] get_fields() { return fields; }
+
+    public Slice(exprType lower, exprType upper, exprType step) {
+        this.lower = lower;
+        addChild(lower);
+        this.upper = upper;
+        addChild(upper);
+        this.step = step;
+        addChild(step);
+    }
 
     public Slice(Token token, exprType lower, exprType upper, exprType step) {
         super(token);

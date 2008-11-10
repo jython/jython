@@ -9,7 +9,17 @@ import java.io.IOException;
 public class Import extends stmtType {
     public aliasType[] names;
 
-    public static final String[] _fields = new String[] {"names"};
+    private final static String[] fields = new String[] {"names"};
+    public String[] get_fields() { return fields; }
+
+    public Import(aliasType[] names) {
+        this.names = names;
+        if (names != null) {
+            for(int inames=0;inames<names.length;inames++) {
+                addChild(names[inames]);
+            }
+        }
+    }
 
     public Import(Token token, aliasType[] names) {
         super(token);

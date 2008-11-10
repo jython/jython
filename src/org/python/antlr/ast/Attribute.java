@@ -11,7 +11,16 @@ public class Attribute extends exprType implements Context {
     public String attr;
     public expr_contextType ctx;
 
-    public static final String[] _fields = new String[] {"value","attr","ctx"};
+    private final static String[] fields = new String[] {"value", "attr",
+                                                          "ctx"};
+    public String[] get_fields() { return fields; }
+
+    public Attribute(exprType value, String attr, expr_contextType ctx) {
+        this.value = value;
+        addChild(value);
+        this.attr = attr;
+        this.ctx = ctx;
+    }
 
     public Attribute(Token token, exprType value, String attr, expr_contextType
     ctx) {

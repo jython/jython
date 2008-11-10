@@ -6,6 +6,13 @@ import org.antlr.runtime.Token;
 
 public abstract class stmtType extends PythonTree {
 
+    private final static String[] attributes = new String[] {"lineno",
+                                                              "col_offset"};
+    public String[] get_attributes() { return attributes; }
+
+    public stmtType() {
+    }
+
     public stmtType(int ttype, Token token) {
         super(ttype, token);
     }

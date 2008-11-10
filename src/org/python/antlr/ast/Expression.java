@@ -9,7 +9,13 @@ import java.io.IOException;
 public class Expression extends modType {
     public exprType body;
 
-    public static final String[] _fields = new String[] {"body"};
+    private final static String[] fields = new String[] {"body"};
+    public String[] get_fields() { return fields; }
+
+    public Expression(exprType body) {
+        this.body = body;
+        addChild(body);
+    }
 
     public Expression(Token token, exprType body) {
         super(token);

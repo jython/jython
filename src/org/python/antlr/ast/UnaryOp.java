@@ -10,7 +10,14 @@ public class UnaryOp extends exprType {
     public unaryopType op;
     public exprType operand;
 
-    public static final String[] _fields = new String[] {"op","operand"};
+    private final static String[] fields = new String[] {"op", "operand"};
+    public String[] get_fields() { return fields; }
+
+    public UnaryOp(unaryopType op, exprType operand) {
+        this.op = op;
+        this.operand = operand;
+        addChild(operand);
+    }
 
     public UnaryOp(Token token, unaryopType op, exprType operand) {
         super(token);

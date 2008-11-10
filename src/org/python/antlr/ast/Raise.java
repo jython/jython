@@ -11,7 +11,18 @@ public class Raise extends stmtType {
     public exprType inst;
     public exprType tback;
 
-    public static final String[] _fields = new String[] {"type","inst","tback"};
+    private final static String[] fields = new String[] {"type", "inst",
+                                                          "tback"};
+    public String[] get_fields() { return fields; }
+
+    public Raise(exprType type, exprType inst, exprType tback) {
+        this.type = type;
+        addChild(type);
+        this.inst = inst;
+        addChild(inst);
+        this.tback = tback;
+        addChild(tback);
+    }
 
     public Raise(Token token, exprType type, exprType inst, exprType tback) {
         super(token);

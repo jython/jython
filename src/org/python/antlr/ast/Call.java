@@ -13,8 +13,32 @@ public class Call extends exprType {
     public exprType starargs;
     public exprType kwargs;
 
-    public static final String[] _fields = new String[]
-    {"func","args","keywords","starargs","kwargs"};
+    private final static String[] fields = new String[] {"func", "args",
+                                                          "keywords",
+                                                          "starargs", "kwargs"};
+    public String[] get_fields() { return fields; }
+
+    public Call(exprType func, exprType[] args, keywordType[] keywords,
+    exprType starargs, exprType kwargs) {
+        this.func = func;
+        addChild(func);
+        this.args = args;
+        if (args != null) {
+            for(int iargs=0;iargs<args.length;iargs++) {
+                addChild(args[iargs]);
+            }
+        }
+        this.keywords = keywords;
+        if (keywords != null) {
+            for(int ikeywords=0;ikeywords<keywords.length;ikeywords++) {
+                addChild(keywords[ikeywords]);
+            }
+        }
+        this.starargs = starargs;
+        addChild(starargs);
+        this.kwargs = kwargs;
+        addChild(kwargs);
+    }
 
     public Call(Token token, exprType func, exprType[] args, keywordType[]
     keywords, exprType starargs, exprType kwargs) {

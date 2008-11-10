@@ -10,7 +10,14 @@ public class Lambda extends exprType {
     public argumentsType args;
     public exprType body;
 
-    public static final String[] _fields = new String[] {"args","body"};
+    private final static String[] fields = new String[] {"args", "body"};
+    public String[] get_fields() { return fields; }
+
+    public Lambda(argumentsType args, exprType body) {
+        this.args = args;
+        this.body = body;
+        addChild(body);
+    }
 
     public Lambda(Token token, argumentsType args, exprType body) {
         super(token);

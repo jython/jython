@@ -10,7 +10,19 @@ public class GeneratorExp extends exprType {
     public exprType elt;
     public comprehensionType[] generators;
 
-    public static final String[] _fields = new String[] {"elt","generators"};
+    private final static String[] fields = new String[] {"elt", "generators"};
+    public String[] get_fields() { return fields; }
+
+    public GeneratorExp(exprType elt, comprehensionType[] generators) {
+        this.elt = elt;
+        addChild(elt);
+        this.generators = generators;
+        if (generators != null) {
+            for(int igenerators=0;igenerators<generators.length;igenerators++) {
+                addChild(generators[igenerators]);
+            }
+        }
+    }
 
     public GeneratorExp(Token token, exprType elt, comprehensionType[]
     generators) {

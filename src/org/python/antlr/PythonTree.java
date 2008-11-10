@@ -27,9 +27,6 @@ public class PythonTree extends BaseTree implements AST {
 	/** What index is this node in the child list? Range: 0..n-1 */
 	public int childIndex = -1;
 
-    /**
-     * The empty constructor is intended only for use by PythonErrorNode.
-     */
     public PythonTree() {
     }
 
@@ -254,5 +251,13 @@ public class PythonTree extends BaseTree implements AST {
     
     public void traverse(VisitorIF visitor) throws Exception {
         throw new RuntimeException("Cannot traverse node: " + this);
+    }
+
+    public String[] get_fields() {
+        return emptyStringArray;
+    }
+
+    public String[] get_attributes() {
+        return emptyStringArray;
     }
 }

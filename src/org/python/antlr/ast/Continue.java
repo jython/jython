@@ -8,7 +8,8 @@ import java.io.IOException;
 
 public class Continue extends stmtType {
 
-    public static final String[] _fields = new String[] {};
+    public Continue() {
+    }
 
     public Continue(Token token) {
         super(token);

@@ -10,7 +10,19 @@ public class Assign extends stmtType {
     public exprType[] targets;
     public exprType value;
 
-    public static final String[] _fields = new String[] {"targets","value"};
+    private final static String[] fields = new String[] {"targets", "value"};
+    public String[] get_fields() { return fields; }
+
+    public Assign(exprType[] targets, exprType value) {
+        this.targets = targets;
+        if (targets != null) {
+            for(int itargets=0;itargets<targets.length;itargets++) {
+                addChild(targets[itargets]);
+            }
+        }
+        this.value = value;
+        addChild(value);
+    }
 
     public Assign(Token token, exprType[] targets, exprType value) {
         super(token);

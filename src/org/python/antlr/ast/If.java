@@ -11,8 +11,26 @@ public class If extends stmtType {
     public stmtType[] body;
     public stmtType[] orelse;
 
-    public static final String[] _fields = new String[]
-    {"test","body","orelse"};
+    private final static String[] fields = new String[] {"test", "body",
+                                                          "orelse"};
+    public String[] get_fields() { return fields; }
+
+    public If(exprType test, stmtType[] body, stmtType[] orelse) {
+        this.test = test;
+        addChild(test);
+        this.body = body;
+        if (body != null) {
+            for(int ibody=0;ibody<body.length;ibody++) {
+                addChild(body[ibody]);
+            }
+        }
+        this.orelse = orelse;
+        if (orelse != null) {
+            for(int iorelse=0;iorelse<orelse.length;iorelse++) {
+                addChild(orelse[iorelse]);
+            }
+        }
+    }
 
     public If(Token token, exprType test, stmtType[] body, stmtType[] orelse) {
         super(token);

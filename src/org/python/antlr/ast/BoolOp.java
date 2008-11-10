@@ -10,7 +10,18 @@ public class BoolOp extends exprType {
     public boolopType op;
     public exprType[] values;
 
-    public static final String[] _fields = new String[] {"op","values"};
+    private final static String[] fields = new String[] {"op", "values"};
+    public String[] get_fields() { return fields; }
+
+    public BoolOp(boolopType op, exprType[] values) {
+        this.op = op;
+        this.values = values;
+        if (values != null) {
+            for(int ivalues=0;ivalues<values.length;ivalues++) {
+                addChild(values[ivalues]);
+            }
+        }
+    }
 
     public BoolOp(Token token, boolopType op, exprType[] values) {
         super(token);

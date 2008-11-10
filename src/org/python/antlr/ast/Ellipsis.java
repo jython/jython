@@ -8,7 +8,8 @@ import java.io.IOException;
 
 public class Ellipsis extends sliceType {
 
-    public static final String[] _fields = new String[] {};
+    public Ellipsis() {
+    }
 
     public Ellipsis(Token token) {
         super(token);

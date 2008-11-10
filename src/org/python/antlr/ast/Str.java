@@ -9,7 +9,12 @@ import java.io.IOException;
 public class Str extends exprType {
     public Object s;
 
-    public static final String[] _fields = new String[] {"s"};
+    private final static String[] fields = new String[] {"s"};
+    public String[] get_fields() { return fields; }
+
+    public Str(Object s) {
+        this.s = s;
+    }
 
     public Str(Token token, Object s) {
         super(token);

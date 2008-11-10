@@ -10,7 +10,13 @@ public class aliasType extends PythonTree {
     public String name;
     public String asname;
 
-    public static final String[] _fields = new String[] {"name","asname"};
+    private final static String[] fields = new String[] {"name", "asname"};
+    public String[] get_fields() { return fields; }
+
+    public aliasType(String name, String asname) {
+        this.name = name;
+        this.asname = asname;
+    }
 
     public aliasType(Token token, String name, String asname) {
         super(token);

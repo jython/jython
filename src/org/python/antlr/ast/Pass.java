@@ -8,7 +8,8 @@ import java.io.IOException;
 
 public class Pass extends stmtType {
 
-    public static final String[] _fields = new String[] {};
+    public Pass() {
+    }
 
     public Pass(Token token) {
         super(token);

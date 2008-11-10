@@ -11,7 +11,21 @@ public class Print extends stmtType {
     public exprType[] values;
     public boolean nl;
 
-    public static final String[] _fields = new String[] {"dest","values","nl"};
+    private final static String[] fields = new String[] {"dest", "values",
+                                                          "nl"};
+    public String[] get_fields() { return fields; }
+
+    public Print(exprType dest, exprType[] values, boolean nl) {
+        this.dest = dest;
+        addChild(dest);
+        this.values = values;
+        if (values != null) {
+            for(int ivalues=0;ivalues<values.length;ivalues++) {
+                addChild(values[ivalues]);
+            }
+        }
+        this.nl = nl;
+    }
 
     public Print(Token token, exprType dest, exprType[] values, boolean nl) {
         super(token);

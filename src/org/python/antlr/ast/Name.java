@@ -10,7 +10,13 @@ public class Name extends exprType implements Context {
     public String id;
     public expr_contextType ctx;
 
-    public static final String[] _fields = new String[] {"id","ctx"};
+    private final static String[] fields = new String[] {"id", "ctx"};
+    public String[] get_fields() { return fields; }
+
+    public Name(String id, expr_contextType ctx) {
+        this.id = id;
+        this.ctx = ctx;
+    }
 
     public Name(Token token, String id, expr_contextType ctx) {
         super(token);

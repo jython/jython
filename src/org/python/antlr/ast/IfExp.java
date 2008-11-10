@@ -11,8 +11,18 @@ public class IfExp extends exprType {
     public exprType body;
     public exprType orelse;
 
-    public static final String[] _fields = new String[]
-    {"test","body","orelse"};
+    private final static String[] fields = new String[] {"test", "body",
+                                                          "orelse"};
+    public String[] get_fields() { return fields; }
+
+    public IfExp(exprType test, exprType body, exprType orelse) {
+        this.test = test;
+        addChild(test);
+        this.body = body;
+        addChild(body);
+        this.orelse = orelse;
+        addChild(orelse);
+    }
 
     public IfExp(Token token, exprType test, exprType body, exprType orelse) {
         super(token);

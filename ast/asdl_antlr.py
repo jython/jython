@@ -142,9 +142,13 @@ class JavaVisitor(EmitVisitor):
         self.emit('', 0)
         self.emit("public enum %(name)sType implements AST {" % locals(), depth)
         self.emit("UNDEFINED,", depth + 1)
-        for i in range(len(sum.types)):
+        for i in range(len(sum.types) - 1):
             type = sum.types[i]
             self.emit("%s," % type.name, depth + 1)
+        self.emit("%s;" % sum.types[len(sum.types) - 1].name, depth + 1)
+
+        self.attributes(sum, depth, True);
+
         #self.emit("", 0)
         #self.emit("public static final String[] %sTypeNames = new String[] {" % 
         #            name, depth+1)
@@ -154,11 +158,47 @@ class JavaVisitor(EmitVisitor):
         #self.emit("};", depth+1)
         self.emit("}", depth)
         self.close()
+
+    def attributes(self, obj, depth, always_emit=False):
+        field_list = []
+        if hasattr(obj, "fields"):
+            for f in obj.fields:
+                field_list.append('"%s"' % f.name)
+        if len(field_list) > 0:
+            self.emit("private final static String[] fields = new String[] {%s};" % 
+                    ", ".join(field_list), depth+1)
+            self.emit("public String[] get_fields() { return fields; }", depth+1)
+            self.emit("", 0)
+        elif always_emit:
+            self.emit("private final static String[] fields = new String[0];", depth+1)
+            self.emit("public String[] get_fields() { return fields; }", depth+1)
+            self.emit("", 0)
+
+        att_list = []
+        if hasattr(obj, "attributes"):
+            for a in obj.attributes:
+                att_list.append('"%s"' % a.name)
+        if len(att_list) > 0:
+            self.emit("private final static String[] attributes = new String[] {%s};" % 
+                    ", ".join(att_list), depth+1)
+            self.emit("public String[] get_attributes() { return attributes; }", depth+1)
+            self.emit("", 0)
+        elif always_emit:
+            self.emit("private final static String[] attributes = new String[0];", depth+1)
+            self.emit("public String[] get_attributes() { return attributes; }", depth+1)
+            self.emit("", 0)
    
     def sum_with_constructor(self, sum, name, depth):
         self.open("%sType" % name)
+
         self.emit("public abstract class %(name)sType extends PythonTree {" %
                     locals(), depth)
+        self.emit("", 0)
+
+        self.attributes(sum, depth);
+
+        self.emit("public %(name)sType() {" % locals(), depth+1)
+        self.emit("}", depth+1)
         self.emit("", 0)
 
         self.emit("public %(name)sType(int ttype, Token token) {" % locals(), depth+1)
@@ -189,13 +229,7 @@ class JavaVisitor(EmitVisitor):
             self.visit(f, depth + 1)
         self.emit("", depth)
 
-        ##XXX: extract
-        field_list = []
-        for f in product.fields:
-            field_list.append('"%s"' % f.name)
-        self.emit("public static final String[] _fields = new String[] {%s};" % 
-                    ",".join(field_list), depth+1)
-        self.emit("", 0)
+        self.attributes(product, depth)
 
         self.javaMethods(product, name, "%sType" % name, product.fields,
                          depth+1)
@@ -219,13 +253,7 @@ class JavaVisitor(EmitVisitor):
             self.visit(f, depth + 1)
         self.emit("", depth)
 
-        ##XXX: extract
-        field_list = []
-        for f in cons.fields:
-            field_list.append('"%s"' % f.name)
-        self.emit("public static final String[] _fields = new String[] {%s};" % 
-                    ",".join(field_list), depth+1)
-        self.emit("", 0)
+        self.attributes(cons, depth)
 
         self.javaMethods(cons, cons.name, cons.name, cons.fields, depth+1)
 
@@ -272,6 +300,12 @@ class JavaVisitor(EmitVisitor):
 
     def javaMethods(self, type, clsname, ctorname, fields, depth):
         # The java ctors
+
+        fpargs = ", ".join([self.fieldDef(f) for f in fields])
+        self.emit("public %s(%s) {" % (ctorname, fpargs), depth)
+        self.javaConstructorHelper(fields, depth)
+        self.emit("}", depth)
+        self.emit("", 0)
 
         token = asdl.Field('Token', 'token')
         token.typedef = False
@@ -427,7 +461,6 @@ class VisitorVisitor(EmitVisitor):
         if not sum.simple:
             for t in sum.types:
                 self.visit(t, name, depth)
-
     def visitProduct(self, product, name, depth):
         pass
 

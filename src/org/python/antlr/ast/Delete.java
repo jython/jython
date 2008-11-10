@@ -9,7 +9,17 @@ import java.io.IOException;
 public class Delete extends stmtType {
     public exprType[] targets;
 
-    public static final String[] _fields = new String[] {"targets"};
+    private final static String[] fields = new String[] {"targets"};
+    public String[] get_fields() { return fields; }
+
+    public Delete(exprType[] targets) {
+        this.targets = targets;
+        if (targets != null) {
+            for(int itargets=0;itargets<targets.length;itargets++) {
+                addChild(targets[itargets]);
+            }
+        }
+    }
 
     public Delete(Token token, exprType[] targets) {
         super(token);

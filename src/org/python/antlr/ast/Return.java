@@ -9,7 +9,13 @@ import java.io.IOException;
 public class Return extends stmtType {
     public exprType value;
 
-    public static final String[] _fields = new String[] {"value"};
+    private final static String[] fields = new String[] {"value"};
+    public String[] get_fields() { return fields; }
+
+    public Return(exprType value) {
+        this.value = value;
+        addChild(value);
+    }
 
     public Return(Token token, exprType value) {
         super(token);

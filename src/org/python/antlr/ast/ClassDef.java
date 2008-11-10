@@ -12,8 +12,32 @@ public class ClassDef extends stmtType {
     public stmtType[] body;
     public exprType[] decorators;
 
-    public static final String[] _fields = new String[]
-    {"name","bases","body","decorators"};
+    private final static String[] fields = new String[] {"name", "bases",
+                                                          "body", "decorators"};
+    public String[] get_fields() { return fields; }
+
+    public ClassDef(String name, exprType[] bases, stmtType[] body, exprType[]
+    decorators) {
+        this.name = name;
+        this.bases = bases;
+        if (bases != null) {
+            for(int ibases=0;ibases<bases.length;ibases++) {
+                addChild(bases[ibases]);
+            }
+        }
+        this.body = body;
+        if (body != null) {
+            for(int ibody=0;ibody<body.length;ibody++) {
+                addChild(body[ibody]);
+            }
+        }
+        this.decorators = decorators;
+        if (decorators != null) {
+            for(int idecorators=0;idecorators<decorators.length;idecorators++) {
+                addChild(decorators[idecorators]);
+            }
+        }
+    }
 
     public ClassDef(Token token, String name, exprType[] bases, stmtType[]
     body, exprType[] decorators) {

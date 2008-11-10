@@ -7,8 +7,6 @@ import java.io.IOException;
 
 public class ErrorStmt extends stmtType {
 
-    public static final String[] _fields = new String[] {};
-
     public ErrorStmt(PythonTree tree) {
         super(tree);
     }

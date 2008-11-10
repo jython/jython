@@ -11,7 +11,16 @@ public class BinOp extends exprType {
     public operatorType op;
     public exprType right;
 
-    public static final String[] _fields = new String[] {"left","op","right"};
+    private final static String[] fields = new String[] {"left", "op", "right"};
+    public String[] get_fields() { return fields; }
+
+    public BinOp(exprType left, operatorType op, exprType right) {
+        this.left = left;
+        addChild(left);
+        this.op = op;
+        this.right = right;
+        addChild(right);
+    }
 
     public BinOp(Token token, exprType left, operatorType op, exprType right) {
         super(token);

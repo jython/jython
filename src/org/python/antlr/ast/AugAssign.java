@@ -11,7 +11,17 @@ public class AugAssign extends stmtType {
     public operatorType op;
     public exprType value;
 
-    public static final String[] _fields = new String[] {"target","op","value"};
+    private final static String[] fields = new String[] {"target", "op",
+                                                          "value"};
+    public String[] get_fields() { return fields; }
+
+    public AugAssign(exprType target, operatorType op, exprType value) {
+        this.target = target;
+        addChild(target);
+        this.op = op;
+        this.value = value;
+        addChild(value);
+    }
 
     public AugAssign(Token token, exprType target, operatorType op, exprType
     value) {

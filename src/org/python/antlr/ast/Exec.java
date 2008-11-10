@@ -11,8 +11,18 @@ public class Exec extends stmtType {
     public exprType globals;
     public exprType locals;
 
-    public static final String[] _fields = new String[]
-    {"body","globals","locals"};
+    private final static String[] fields = new String[] {"body", "globals",
+                                                          "locals"};
+    public String[] get_fields() { return fields; }
+
+    public Exec(exprType body, exprType globals, exprType locals) {
+        this.body = body;
+        addChild(body);
+        this.globals = globals;
+        addChild(globals);
+        this.locals = locals;
+        addChild(locals);
+    }
 
     public Exec(Token token, exprType body, exprType globals, exprType locals) {
         super(token);

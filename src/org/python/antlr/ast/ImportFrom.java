@@ -11,8 +11,20 @@ public class ImportFrom extends stmtType {
     public aliasType[] names;
     public int level;
 
-    public static final String[] _fields = new String[]
-    {"module","names","level"};
+    private final static String[] fields = new String[] {"module", "names",
+                                                          "level"};
+    public String[] get_fields() { return fields; }
+
+    public ImportFrom(String module, aliasType[] names, int level) {
+        this.module = module;
+        this.names = names;
+        if (names != null) {
+            for(int inames=0;inames<names.length;inames++) {
+                addChild(names[inames]);
+            }
+        }
+        this.level = level;
+    }
 
     public ImportFrom(Token token, String module, aliasType[] names, int level)
     {

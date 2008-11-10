@@ -9,7 +9,12 @@ import java.io.IOException;
 public class Global extends stmtType {
     public String[] names;
 
-    public static final String[] _fields = new String[] {"names"};
+    private final static String[] fields = new String[] {"names"};
+    public String[] get_fields() { return fields; }
+
+    public Global(String[] names) {
+        this.names = names;
+    }
 
     public Global(Token token, String[] names) {
         super(token);

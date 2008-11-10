@@ -12,8 +12,27 @@ public class FunctionDef extends stmtType {
     public stmtType[] body;
     public exprType[] decorators;
 
-    public static final String[] _fields = new String[]
-    {"name","args","body","decorators"};
+    private final static String[] fields = new String[] {"name", "args",
+                                                          "body", "decorators"};
+    public String[] get_fields() { return fields; }
+
+    public FunctionDef(String name, argumentsType args, stmtType[] body,
+    exprType[] decorators) {
+        this.name = name;
+        this.args = args;
+        this.body = body;
+        if (body != null) {
+            for(int ibody=0;ibody<body.length;ibody++) {
+                addChild(body[ibody]);
+            }
+        }
+        this.decorators = decorators;
+        if (decorators != null) {
+            for(int idecorators=0;idecorators<decorators.length;idecorators++) {
+                addChild(decorators[idecorators]);
+            }
+        }
+    }
 
     public FunctionDef(Token token, String name, argumentsType args, stmtType[]
     body, exprType[] decorators) {

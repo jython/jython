@@ -9,7 +9,12 @@ import java.io.IOException;
 public class Num extends exprType {
     public Object n;
 
-    public static final String[] _fields = new String[] {"n"};
+    private final static String[] fields = new String[] {"n"};
+    public String[] get_fields() { return fields; }
+
+    public Num(Object n) {
+        this.n = n;
+    }
 
     public Num(Token token, Object n) {
         super(token);
