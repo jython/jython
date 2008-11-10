@@ -2,13 +2,10 @@
 
 package org.python.core;
 
-import java.lang.reflect.Method;
-import java.util.Collection;
 import java.util.Dictionary;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Vector;
 
 class CollectionIter{
     PyObject findCollection(Object object) {
@@ -30,7 +27,7 @@ class CollectionIter{
 
         return null;
     }
-    
+
 }
 
 class EnumerationIter extends PyIterator {

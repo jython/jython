@@ -2,7 +2,6 @@
 
 package org.python.core;
 
-import java.util.Collection;
 import java.util.Dictionary;
 import java.util.Enumeration;
 import java.util.Iterator;
@@ -16,15 +15,15 @@ class CollectionProxy {
     public static CollectionProxy findCollection(Object object) {
         if (object == null)
             return NoProxy;
-        
+
         if (object instanceof List) {
             return new ListProxy(((List) object));
         }
         if (object instanceof Map) {
             return new MapProxy(((Map) object));
         }
-        if (object instanceof Collection) {
-            return new IteratorProxy(((Collection) object).iterator());
+        if (object instanceof Iterable) {
+            return new IteratorProxy(((Iterable) object).iterator());
         }
         if (object instanceof Iterator) {
             return new IteratorProxy(((Iterator) object));
@@ -44,7 +43,7 @@ class CollectionProxy {
         return NoProxy;
     }
 
-    /** The basic functions to implement a mapping* */
+    /** The basic functions to implement a mapping */
     public int __len__() {
         throw Py.AttributeError("__len__");
     }
@@ -92,8 +91,7 @@ class EnumerationProxy extends CollectionProxy {
 
     public PyObject __finditem__(int key) {
         if (key != this.counter) {
-            throw Py
-                    .ValueError("enumeration indices must be consecutive ints starting at 0");
+            throw Py.ValueError("enumeration indices must be consecutive ints starting at 0");
         }
         this.counter++;
         if (this.proxy.hasMoreElements()) {
@@ -141,8 +139,7 @@ class VectorProxy extends CollectionProxy {
 
     public void __setitem__(PyObject key, PyObject value) {
         if (key instanceof PyInteger) {
-            this.proxy.setElementAt(Py.tojava(value, Object.class),
-                    ((PyInteger) key).getValue());
+            this.proxy.setElementAt(Py.tojava(value, Object.class), ((PyInteger)key).getValue());
         } else {
             throw Py.TypeError("only integer keys accepted");
         }
@@ -278,8 +275,7 @@ class IteratorProxy extends CollectionProxy {
 
     public PyObject __finditem__(int key) {
         if (key != this.counter) {
-            throw Py
-                    .ValueError("iterator indices must be consecutive ints starting at 0");
+            throw Py.ValueError("iterator indices must be consecutive ints starting at 0");
         }
         this.counter++;
         if (this.proxy.hasNext()) {

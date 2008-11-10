@@ -4,18 +4,21 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.python.core.util.StringUtil;
 import org.python.expose.ExposeAsSuperclass;
+import org.python.util.Generic;
 
 public class PyJavaType extends PyType implements ExposeAsSuperclass {
 
     private final static Class<?>[] OO = {PyObject.class, PyObject.class};
 
     public static PyObject wrapJavaObject(Object o) {
-        PyObject obj = new PyObject(PyType.fromClass(o.getClass()));
+        PyObject obj = new PyObjectDerived(PyType.fromClass(o.getClass()));
         obj.javaProxy = o;
         return obj;
     }
@@ -154,6 +157,13 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
         for (Class<?> inner : underlying_class.getClasses()) {
             dict.__setitem__(inner.getSimpleName(), PyType.fromClass(inner));
         }
+        for (Map.Entry<Class<?>, PyBuiltinMethod[]> entry : _collectionProxies.entrySet()) {
+            if (entry.getKey().isAssignableFrom(underlying_class)) {
+                for (PyBuiltinMethod meth : entry.getValue()) {
+                    dict.__setitem__(meth.info.getName(), new PyMethodDescr(this, meth));
+                }
+            }
+        }
         if (ClassDictInit.class.isAssignableFrom(underlying_class)
                 && underlying_class != ClassDictInit.class) {
             try {
@@ -210,5 +220,195 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
 
     private static PyException error(Exception e) {
         return Py.JavaError(e);
+    }
+
+    protected static class LenProxy extends PyBuiltinMethodNarrow {
+        public LenProxy() {
+            super("__len__", 0, 0);
+        }
+
+        protected LenProxy(PyType type, PyObject self, Info info) {
+            super(type, self, info);
+        }
+
+        @Override
+        public PyBuiltinCallable bind(PyObject self) {
+            return new LenProxy(getType(), self, info);
+        }
+
+        @Override
+        public PyObject __call__() {
+            return Py.newInteger(((Collection<?>)self.javaProxy).size());
+        }
+    }
+
+    protected static class MapGetProxy extends PyBuiltinMethodNarrow {
+        public MapGetProxy() {
+            super("__getitem__", 1, 1);
+        }
+
+        protected MapGetProxy(PyType type, PyObject self, Info info) {
+            super(type, self, info);
+        }
+
+        @Override
+        public PyBuiltinCallable bind(PyObject self) {
+            return new MapGetProxy(getType(), self, info);
+        }
+
+        @Override
+        public PyObject __call__(PyObject key) {
+            return Py.java2py(((Map<?, ?>)self.javaProxy).get(Py.tojava(key, Object.class)));
+        }
+    }
+
+    protected static class MapPutProxy extends PyBuiltinMethodNarrow {
+        public MapPutProxy() {
+            super("__setitem__", 2, 2);
+        }
+
+        protected MapPutProxy(PyType type, PyObject self, Info info) {
+            super(type, self, info);
+        }
+
+        @Override
+        public PyBuiltinCallable bind(PyObject self) {
+            return new MapPutProxy(getType(), self, info);
+        }
+
+        @Override
+        public PyObject __call__(PyObject key, PyObject value) {
+            return Py.java2py(((Map<Object, Object>)self.javaProxy).put(Py.tojava(key, Object.class),
+                                                                        Py.tojava(value,
+                                                                                  Object.class)));
+        }
+    }
+
+    protected static class MapRemoveProxy extends PyBuiltinMethodNarrow {
+
+        public MapRemoveProxy() {
+            super("__delitem__", 1, 1);
+        }
+
+        protected MapRemoveProxy(PyType type, PyObject self, Info info) {
+            super(type, self, info);
+        }
+
+        @Override
+        public PyBuiltinCallable bind(PyObject self) {
+            return new MapRemoveProxy(getType(), self, info);
+        }
+
+        @Override
+        public PyObject __call__(PyObject key, PyObject value) {
+            return Py.java2py(((Map<?, ?>)self.javaProxy).remove(Py.tojava(key, Object.class)));
+        }
+    }
+
+    protected static class ListGetProxy extends PyBuiltinMethodNarrow {
+        public ListGetProxy() {
+            super("__getitem__", 1, 1);
+        }
+
+        protected ListGetProxy(PyType type, PyObject self, Info info) {
+            super(type, self, info);
+        }
+
+        @Override
+        public PyBuiltinCallable bind(PyObject self) {
+            return new ListGetProxy(getType(), self, info);
+        }
+
+        @Override
+        public PyObject __call__(PyObject key) {
+            if (key instanceof PyInteger) {
+                return Py.java2py(((List<?>)self.javaProxy).get(((PyInteger)key).getValue()));
+            } else {
+                throw Py.TypeError("only integer keys accepted");
+            }
+        }
+    }
+
+    protected static class ListSetProxy extends PyBuiltinMethodNarrow {
+        public ListSetProxy() {
+            super("__setitem__", 2, 2);
+        }
+
+        protected ListSetProxy(PyType type, PyObject self, Info info) {
+            super(type, self, info);
+        }
+
+        @Override
+        public PyBuiltinCallable bind(PyObject self) {
+            return new ListSetProxy(getType(), self, info);
+        }
+
+        @Override
+        public PyObject __call__(PyObject key, PyObject value) {
+            if (key instanceof PyInteger) {
+                ((List<Object>)self.javaProxy).set(((PyInteger)key).getValue(),
+                                                   Py.tojava(value, Object.class));
+            } else {
+                throw Py.TypeError("only integer keys accepted");
+            }
+            return Py.None;
+        }
+    }
+
+    protected static class ListRemoveProxy extends PyBuiltinMethodNarrow {
+        public ListRemoveProxy() {
+            super("__delitem__", 1, 1);
+        }
+
+        protected ListRemoveProxy(PyType type, PyObject self, Info info) {
+            super(type, self, info);
+        }
+
+        @Override
+        public PyBuiltinCallable bind(PyObject self) {
+            return new ListRemoveProxy(getType(), self, info);
+        }
+
+        @Override
+        public PyObject __call__(PyObject key, PyObject value) {
+            if (key instanceof PyInteger) {
+                return Py.java2py(((List<Object>)self.javaProxy).remove(((PyInteger)key).getValue()));
+            } else {
+                throw Py.TypeError("only integer keys accepted");
+            }
+        }
+    }
+
+    public static class IterableProxy extends PyBuiltinMethodNarrow {
+
+        public IterableProxy() {
+            super("__iter__", 0, 0);
+        }
+
+        protected IterableProxy(PyType type, PyObject self, Info info) {
+            super(type, self, info);
+        }
+
+        @Override
+        public PyBuiltinCallable bind(PyObject self) {
+            return new IterableProxy(getType(), self, info);
+        }
+
+        @Override
+        public PyObject __call__() {
+            return new IteratorIter(((Iterable)self.javaProxy).iterator());
+        }
+    }
+
+    static Map<Class<?>, PyBuiltinMethod[]> _collectionProxies = Generic.map();
+    static {
+        _collectionProxies.put(Iterable.class, new PyBuiltinMethod[] {new IterableProxy()});
+        _collectionProxies.put(Collection.class, new PyBuiltinMethod[] {new LenProxy()});
+        _collectionProxies.put(Map.class, new PyBuiltinMethod[] {new MapGetProxy(),
+                                                                 new MapPutProxy(),
+                                                                 new MapRemoveProxy()});
+        _collectionProxies.put(List.class, new PyBuiltinMethod[] {new ListGetProxy(),
+                                                                  new ListSetProxy(),
+                                                                  new ListRemoveProxy()});
     }
 }

@@ -547,6 +547,7 @@ public class PyObject implements Serializable {
      * @param value the value to set this key to
      **/
     public void __setitem__(PyObject key, PyObject value) {
+        Thread.dumpStack();
         throw Py.TypeError(String.format("'%.200s' object does not support item assignment",
                                          getType().fastGetName()));
     }

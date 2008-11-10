@@ -21,7 +21,7 @@ public abstract class PyBuiltinCallable extends PyObject {
     }
 
     /**
-     * @return a new instance of this type of PyBuiltinFunction bound to self
+     * Returns a new instance of this type of PyBuiltinFunction bound to self
      */
     abstract public PyBuiltinCallable bind(PyObject self);
 
