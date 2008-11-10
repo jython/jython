@@ -14,8 +14,19 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
 
     private final static Class<?>[] OO = {PyObject.class, PyObject.class};
 
+    public static PyObject wrapJavaObject(Object o) {
+        PyObject obj = new PyObject(PyType.fromClass(o.getClass()));
+        obj.javaProxy = o;
+        return obj;
+    }
+
     public PyJavaType() {
         super(TYPE == null ? fromClass(PyType.class) : TYPE);
+    }
+
+    @Override
+    public Class<?> getProxyType() {
+        return underlying_class;
     }
 
     @Override
@@ -83,10 +94,15 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
                         }
                     }
                 }
-                dict.__setitem__(normalize_name(fldname), new PyReflectedField(field));
+                if (dict.__finditem__(normalize_name(fldname)) == null) {
+                    dict.__setitem__(normalize_name(fldname), new PyReflectedField(field));
+                }
             }
         }
         for (String propname : propnames.keySet()) {
+            if(propname.equals("")) {
+                continue;
+            }
             String npropname = normalize_name(StringUtil.decapitalize(propname));
             PyObject prev = dict.__finditem__(npropname);
             if (prev != null && prev instanceof PyReflectedFunction) {

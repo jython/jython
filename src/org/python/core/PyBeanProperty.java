@@ -4,12 +4,10 @@ import java.lang.reflect.*;
 
 public class PyBeanProperty extends PyReflectedField {
     public Method getMethod, setMethod;
-    public Class myType;
+    public Class<?> myType;
     String __name__;
 
-    public PyBeanProperty(String name, Class myType,
-                          Method getMethod, Method setMethod)
-    {
+    public PyBeanProperty(String name, Class<?> myType, Method getMethod, Method setMethod) {
         __name__ = name;
         this.getMethod = getMethod;
         this.setMethod = setMethod;
@@ -56,7 +54,7 @@ public class PyBeanProperty extends PyReflectedField {
         if (value instanceof PyTuple) {
             try {
                 PyTuple vtup = (PyTuple)value;
-                value = PyJavaClass.lookup(myType).__call__(vtup.getArray()); // xxx PyObject subclasses
+                value = Py.java2py(myType).__call__(vtup.getArray()); // xxx PyObject subclasses
             } catch (Throwable t) {
                 // If something goes wrong ignore it?
             }

@@ -66,8 +66,6 @@ class VisibilityTest(unittest.TestCase):
             self.failUnless('visibleInstance' in c.__dict__,
                     'visibleInstance expected in %s __dict__' % c)
 
-
-
 def test_main():
     test_support.run_unittest(VisibilityTest)
 

@@ -4,7 +4,7 @@ package org.python.core;
 /**
  * A class with static fields for each of the settable options. The options from
  * registry and command line is copied into the fields here and the rest of
- * Jyhton checks these fields.
+ * Jython checks these fields.
  */
 public class Options {
     // Jython options. Some of these can be set from the command line
@@ -24,7 +24,7 @@ public class Options {
     public static boolean includeJavaStackInExceptions = false;
 
     /**
-     * When true, python exception raised in overriden methods will be shown on
+     * When true, python exception raised in overridden methods will be shown on
      * stderr. This option is remarkably useful when python is used for
      * implementing CORBA server. Some CORBA servers will turn python exception
      * (say a NameError) into an anonymous user exception without any

@@ -90,18 +90,12 @@ public class PyReflectedConstructor extends PyReflectedFunction {
         if (self instanceof PyInstance) {
             javaClass = ((PyInstance)self).instclass.proxyClass;
         } else {
-            javaClass = self.getType().underlying_class;
+            javaClass = self.getType().getProxyType();
         }
 
         Class<?> declaringClass = argslist[0].declaringClass;
         if (!declaringClass.isAssignableFrom(javaClass)) {
             throw Py.TypeError("self invalid - must implement: " + declaringClass.getName());
-        }
-
-        if (!PyProxy.class.isAssignableFrom(declaringClass) && !(self instanceof PyJavaInstance)) {
-            PyJavaClass jc = PyJavaClass.lookup(javaClass);
-            jc.initConstructors();
-            return jc.__init__.__call__(self, args, keywords);
         }
 
         if (self.javaProxy != null) {
@@ -158,9 +152,7 @@ public class PyReflectedConstructor extends PyReflectedFunction {
         Object jself = null;
         ThreadState ts = Py.getThreadState();
         try {
-            if (obj instanceof PyInstance) {
-                ts.pushInitializingProxy((PyInstance)obj);
-            }
+            ts.pushInitializingProxy(obj);
             try {
                 jself = ctor.newInstance(args);
             } catch (InvocationTargetException e) {
@@ -177,9 +169,7 @@ public class PyReflectedConstructor extends PyReflectedFunction {
                 throw Py.JavaError(t);
             }
         } finally {
-            if (obj instanceof PyInstance) {
-                ts.popInitializingProxy();
-            }
+            ts.popInitializingProxy();
         }
         obj.javaProxy = jself;
     }

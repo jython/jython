@@ -109,7 +109,7 @@ public class PyInstance extends PyObject
             // The javaProxy can be initialized in Py.jfindattr()
             throw Py.TypeError("Proxy instance already initialized");
         }
-        PyInstance proxyInstance = proxy._getPyInstance();
+        PyObject proxyInstance = proxy._getPyInstance();
         if (proxyInstance != null && proxyInstance != this) {
             // The proxy was initialized to another instance!!
             throw Py.TypeError("Proxy initialization conflict");

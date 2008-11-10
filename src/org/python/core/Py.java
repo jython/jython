@@ -1,7 +1,6 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -16,7 +15,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.sql.Date;
 import java.sql.Time;
 import java.sql.Timestamp;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashSet;
 import java.util.Set;
@@ -25,7 +23,6 @@ import org.python.antlr.ast.modType;
 import org.python.compiler.Module;
 import org.python.core.adapter.ClassicPyObjectAdapter;
 import org.python.core.adapter.ExtensiblePyObjectAdapter;
-import org.python.core.util.StringUtil;
 import org.python.modules.errno;
 
 public final class Py {
@@ -84,7 +81,7 @@ public final class Py {
     public static long TPFLAGS_HEAPTYPE;
 
     /** Builtin types that are used to setup PyObject. */
-    static final Set<Class> BOOTSTRAP_TYPES = new HashSet<Class>(4);
+    static final Set<Class<?>> BOOTSTRAP_TYPES = new HashSet<Class<?>>(4);
     static {
         BOOTSTRAP_TYPES.add(PyObject.class);
         BOOTSTRAP_TYPES.add(PyType.class);
@@ -476,35 +473,6 @@ public final class Py {
     }
     /* Helper functions for PyProxy's */
 
-    /** @deprecated */
-    public static PyObject jfindattr(PyProxy proxy, String name) {
-        PyObject ret = getInstance(proxy, name);
-        if (ret == null)
-            return null;
-        Py.setSystemState(proxy._getPySystemState());
-        return ret;
-    }
-
-
-    /** @deprecated */
-    public static PyObject jgetattr(PyProxy proxy, String name) {
-        PyObject ret = getInstance(proxy, name);
-        if (ret == null)
-            throw Py.AttributeError("abstract method '" + name + "' not implemented");
-        Py.setSystemState(proxy._getPySystemState());
-        return ret;
-    }
-
-    private static PyObject getInstance(PyProxy proxy, String name) {
-        PyInstance o = proxy._getPyInstance();
-        if (o == null) {
-            proxy.__initProxy__(new Object[0]);
-            o = proxy._getPyInstance();
-        }
-        PyObject ret = o.__jfindattr__(name);
-        return ret;
-    }
-
     /* Convenience methods to create new constants without using "new" */
     private static PyInteger[] integerCache = null;
 
@@ -836,36 +804,20 @@ public final class Py {
         if (proxy._getPyInstance() != null)
             return;
         ThreadState ts = getThreadState();
-        PyInstance instance = ts.getInitializingProxy();
+        PyObject instance = ts.getInitializingProxy();
         if (instance != null) {
-            if (instance.javaProxy != null)
+            if (instance.javaProxy != null) {
                 throw Py.TypeError("Proxy instance reused");
+            }
             instance.javaProxy = proxy;
             proxy._setPyInstance(instance);
             proxy._setPySystemState(ts.systemState);
             return;
         }
 
-        PyObject mod;
-        // ??pending: findClass or should avoid sys.path loading?
-        Class modClass = Py.findClass(module+"$_PyInner");
-        if (modClass != null) {
-            PyCode code=null;
-            try {
-                code = ((PyRunnable)modClass.newInstance()).getMain();
-            } catch (Throwable t) {
-                throw Py.JavaError(t);
-            }
-            mod = imp.createFromCode(module, code);
-        } else {
-            mod = imp.importName(module.intern(), false);
-        }
-        PyClass pyc = (PyClass)mod.__getattr__(pyclass.intern());
+        PyObject mod = imp.importName(module.intern(), false);
+        PyType pyc = (PyType)mod.__getattr__(pyclass.intern());
 
-        instance = new PyInstance(pyc);
-        instance.javaProxy = proxy;
-        proxy._setPyInstance(instance);
-        proxy._setPySystemState(ts.systemState);
 
         PyObject[] pargs;
         if (args == null || args.length == 0) {
@@ -875,7 +827,10 @@ public final class Py {
             for(int i=0; i<args.length; i++)
                 pargs[i] = Py.java2py(args[i]);
         }
-        instance.__init__(pargs, Py.NoKeywords);
+        instance = pyc.__call__(pargs);
+        instance.javaProxy = proxy;
+        proxy._setPyInstance(instance);
+        proxy._setPySystemState(ts.systemState);
     }
 
     /**

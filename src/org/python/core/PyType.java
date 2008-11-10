@@ -133,6 +133,26 @@ public class PyType extends PyObject implements Serializable {
         if (bases_list.length == 0) {
             bases_list = new PyObject[] {object_type};
         }
+        List<Class<?>> interfaces = Generic.list();
+        Class<?> baseClass = null;
+        for (PyObject base : bases_list) {
+            if (!(base instanceof PyType)) {
+                continue;
+            }
+            Class<?> proxy = ((PyType)base).getProxyType();
+            if (proxy == null) {
+                continue;
+            }
+            if (proxy.isInterface()) {
+                interfaces.add(proxy);
+            } else {
+                if (baseClass != null) {
+                    throw Py.TypeError("no multiple inheritance for Java classes: "
+                            + proxy.getName() + " and " + baseClass.getName());
+                }
+                baseClass = proxy;
+            }
+        }
 
         // XXX can be subclassed ?
         if (dict.__finditem__("__module__") == null) {
@@ -147,6 +167,33 @@ public class PyType extends PyObject implements Serializable {
         }
         // XXX also __doc__ __module__
 
+
+        if (baseClass != null || interfaces.size() != 0) {
+            String proxyName = name;
+            PyObject module = dict.__finditem__("__module__");
+            if (module != null) {
+                proxyName = module.toString() + "$" + proxyName;
+            }
+            Class<?> proxyClass = MakeProxies.makeProxy(baseClass,
+                                                        interfaces,
+                                                        name,
+                                                        proxyName,
+                                                        dict);
+            PyType proxyType = PyType.fromClass(proxyClass);
+            List<PyObject> cleanedBases = Generic.list();
+            boolean addedProxyType = false;
+            for (PyObject base : bases_list) {
+                if (base instanceof PyJavaType) {
+                    if (!addedProxyType) {
+                        cleanedBases.add(proxyType);
+                        addedProxyType = true;
+                    }
+                } else {
+                    cleanedBases.add(base);
+                }
+            }
+            bases_list = cleanedBases.toArray(new PyObject[cleanedBases.size()]);
+        }
         PyType newtype;
         if (new_.for_type == metatype) {
             newtype = new PyType(); // XXX set metatype
@@ -294,23 +341,19 @@ public class PyType extends PyObject implements Serializable {
     }
 
     private static void fillInMRO(PyType type, Class<?> base) {
-        PyType[] mro;
-
         if (base == Object.class || base == null) {
-            if (type.underlying_class == Object.class) {
-                mro = new PyType[] {type, PyObject.TYPE};
-            } else {
-                mro = new PyType[] {type};
+            if (type.underlying_class == PyObject.class) {
+                type.mro = new PyType[] {type};
+                return;
             }
-        } else {
-            PyType baseType = fromClass(base);
-            mro = new PyType[baseType.mro.length + 1];
-            System.arraycopy(baseType.mro, 0, mro, 1, baseType.mro.length);
-            mro[0] = type;
-            type.base = baseType;
-            type.bases = new PyObject[] {baseType};
+            base = PyObject.class;
         }
-        type.mro = mro;
+        PyType baseType = fromClass(base);
+        type.mro = new PyType[baseType.mro.length + 1];
+        System.arraycopy(baseType.mro, 0, type.mro, 1, baseType.mro.length);
+        type.mro[0] = type;
+        type.base = baseType;
+        type.bases = new PyObject[] {baseType};
     }
 
     public PyObject getStatic() {
@@ -417,7 +460,6 @@ public class PyType extends PyObject implements Serializable {
             mro = savedMro;
             throw t;
         }
-
     }
 
     private void mro_internal() {
@@ -502,6 +544,21 @@ public class PyType extends PyObject implements Serializable {
             result.append(subtype);
         }
         return result;
+    }
+
+    /**
+     * Returns the Java Class that this type inherits from, or null if this type is Python-only.
+     */
+    public Class<?> getProxyType() {
+        for (PyObject base : bases) {
+            if (base instanceof PyType) {
+                Class<?> javaType = ((PyType)base).getProxyType();
+                if (javaType != null) {
+                    return javaType;
+                }
+            }
+        }
+        return null;
     }
 
     private synchronized void attachSubclass(PyType subtype) {
