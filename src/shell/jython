@@ -44,8 +44,15 @@ else
 fi
 
 if [ -z "$JYTHON_HOME" ] ; then
-  JYTHON_HOME_1=`dirname "$PRG"`           # the ./bin dir
-  JYTHON_HOME=`dirname "$JYTHON_HOME_1"`   # the . dir
+  if [ "$PRG" = "./jython" ] ; then
+    # current dir is /bin dir
+    JYTHON_HOME_1=`pwd`                      # the ./bin dir
+    JYTHON_HOME=`dirname "$JYTHON_HOME_1"`   # the . dir
+  else
+    # current dir is not /bin dir
+    JYTHON_HOME_1=`dirname "$PRG"`           # the ./bin dir
+    JYTHON_HOME=`dirname "$JYTHON_HOME_1"`   # the . dir
+  fi
 fi
 
 if [ -z "$JYTHON_OPTS" ] ; then
