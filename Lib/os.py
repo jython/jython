@@ -237,7 +237,7 @@ def getcwd():
 
     Return a string representing the current working directory.
     """
-    return sys.getCurrentWorkingDir()
+    return asPyString(sys.getCurrentWorkingDir())
 
 def chdir(path):
     """chdir(path)

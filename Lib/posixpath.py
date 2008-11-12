@@ -14,6 +14,7 @@ import java.io.File
 import java.io.IOException
 import os
 import stat
+from org.python.core.Py import newString
 
 __all__ = ["normcase","isabs","join","splitdrive","split","splitext",
            "basename","dirname","commonprefix","getsize","getmtime",
@@ -218,8 +219,8 @@ def isfile(path):
 if not os._native_posix:
     def samefile(f1, f2):
         """Test whether two pathnames reference the same actual file"""
-        canon1 = java.io.File(_ensure_str(f1)).getCanonicalPath()
-        canon2 = java.io.File(_ensure_str(f2)).getCanonicalPath()
+        canon1 = newString(java.io.File(_ensure_str(f1)).getCanonicalPath())
+        canon2 = newString(java.io.File(_ensure_str(f2)).getCanonicalPath())
         return canon1 == canon2
 else:
     def samefile(f1, f2):
@@ -448,7 +449,7 @@ if not os._native_posix:
         encounter a path we've seen before (meaning that there's a loop).
         """
         try:
-            return str(java.io.File(abspath(path)).getCanonicalPath())
+            return newString(java.io.File(abspath(path)).getCanonicalPath())
         except java.io.IOException:
             return None
 else:

@@ -9,6 +9,7 @@ import java.io.File
 import os
 import stat
 import sys
+from org.python.core.Py import newString
 
 __all__ = ["normcase","isabs","join","splitdrive","split","splitext",
            "basename","dirname","commonprefix","getsize","getmtime",
@@ -493,7 +494,8 @@ except ImportError: # not running on Windows - mock up something sensible
         if not splitunc(path)[0] and not splitdrive(path)[0]:
             # cwd lacks a UNC mount point, so it should have a drive
             # letter (but lacks one): determine it
-            drive = splitdrive(java.io.File(path).getCanonicalPath())[0]
+            canon_path = newString(java.io.File(path).getCanonicalPath())
+            drive = splitdrive(canon_path)[0]
             path = join(drive, path)
         return normpath(path)
 
