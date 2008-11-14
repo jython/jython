@@ -241,7 +241,7 @@ if os.name != 'java':
         s2 = os.fstat(fp2)
         return samestat(s1, s2)
 
-    __all__append("sameopenfile")
+    __all__.append("sameopenfile")
 
 
 if os._native_posix:
