@@ -754,7 +754,7 @@ public class imp {
      */
     public static PyObject importOne(String mod, PyFrame frame) {
         PyObject module = __builtin__.__import__(mod, frame.f_globals, frame
-                .getLocals(), Py.EmptyTuple);
+                .getLocals(), Py.None);
         return module;
     }
 
@@ -764,7 +764,19 @@ public class imp {
      */
     public static PyObject importOneAs(String mod, PyFrame frame) {
         PyObject module = __builtin__.__import__(mod, frame.f_globals, frame
-                .getLocals(), getStarArg());
+                .getLocals(), Py.None);
+        int dot = mod.indexOf('.');
+        while (dot != -1) {
+            int dot2 = mod.indexOf('.', dot + 1);
+            String name;
+            if (dot2 == -1) {
+                name = mod.substring(dot + 1);
+            } else {
+                name = mod.substring(dot + 1, dot2);
+            }
+            module = module.__getattr__(name);
+            dot = dot2;
+        }
         return module;
     }
 

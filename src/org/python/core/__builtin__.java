@@ -1266,7 +1266,8 @@ class ImportFunction extends PyBuiltinFunction {
         PyObject globals = ap.getPyObject(1, null);
         PyObject fromlist = ap.getPyObject(3, Py.EmptyTuple);
         int level = ap.getInt(4, imp.DEFAULT_LEVEL);
-        return imp.importName(module.intern(), fromlist.__len__() == 0, globals, fromlist, level);
+        return imp.importName(module.intern(), fromlist == Py.None || fromlist.__len__() == 0,
+                globals, fromlist, level);
     }
 }
 
