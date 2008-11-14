@@ -755,10 +755,6 @@ public class imp {
     public static PyObject importOne(String mod, PyFrame frame) {
         PyObject module = __builtin__.__import__(mod, frame.f_globals, frame
                 .getLocals(), Py.EmptyTuple);
-        /*
-         * int dot = mod.indexOf('.'); if (dot != -1) { mod = mod.substring(0,
-         * dot).intern(); }
-         */
         return module;
     }
 
@@ -769,7 +765,6 @@ public class imp {
     public static PyObject importOneAs(String mod, PyFrame frame) {
         PyObject module = __builtin__.__import__(mod, frame.f_globals, frame
                 .getLocals(), getStarArg());
-        // frame.setlocal(asname, module);
         return module;
     }
 
@@ -923,9 +918,6 @@ public class imp {
             path = (PyList) pkg.__getattr__("__path__");
             name = name.substring(dot + 1, name.length()).intern();
         }
-
-        // This should be better "protected"
-        // ((PyStringMap)nm.__dict__).clear();
 
         nm.__setattr__("__name__", new PyString(modName));
         PyObject ret = find_module(name, modName, path);
