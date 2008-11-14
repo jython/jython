@@ -4,6 +4,7 @@ package org.python.core;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,11 +23,11 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.python.antlr.ast.modType;
+import org.python.constantine.platform.Errno;
 import org.python.compiler.Module;
 import org.python.core.adapter.ClassicPyObjectAdapter;
 import org.python.core.adapter.ExtensiblePyObjectAdapter;
 import org.python.core.util.StringUtil;
-import org.python.modules.errno;
 
 public final class Py {
 
@@ -144,14 +145,15 @@ public final class Py {
     }
     public static PyObject IOError;
 
-    public static PyException IOError(java.io.IOException ioe) {
+    public static PyException IOError(IOException ioe) {
         String message = ioe.getMessage();
         if (message == null) {
             message = ioe.getClass().getName();
         }
-        if (ioe instanceof java.io.FileNotFoundException) {
-            message = "File not found - " + message;
-            return IOError(errno.ENOENT, message);
+        if (ioe instanceof FileNotFoundException) {
+            PyTuple args = new PyTuple(Py.newInteger(Errno.ENOENT.value()),
+                                       Py.newString("File not found - " + message));
+            return new PyException(Py.IOError, args);
         }
         return new PyException(Py.IOError, message);
     }
@@ -160,10 +162,18 @@ public final class Py {
         return new PyException(Py.IOError, message);
     }
 
-    public static PyException IOError(int errno, String message) {
-        PyTuple args = new PyTuple(new PyInteger(errno), new PyString(message));
+    public static PyException IOError(Errno errno) {
+        PyObject args = new PyTuple(Py.newInteger(errno.value()),
+                                    Py.newString(errno.description()));
         return new PyException(Py.IOError, args);
     }
+
+    public static PyException IOError(Errno errno, String filename) {
+        PyObject args = new PyTuple(Py.newInteger(errno.value()),
+                                    Py.newString(errno.description()), Py.newString(filename));
+        return new PyException(Py.IOError, args);
+    }
+
     public static PyObject KeyError;
 
     public static PyException KeyError(String message) {

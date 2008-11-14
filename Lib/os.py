@@ -46,6 +46,7 @@ import time
 import stat as _stat
 import sys
 from java.io import File
+from org.python.constantine.platform import Errno
 from org.python.core.io import FileDescriptors, FileIO, IOBase
 from org.python.core.Py import newString as asPyString
 
@@ -101,7 +102,7 @@ class PythonPOSIXHandler(POSIXHandler):
         err = getattr(errno, error.name(), None)
         if err is None:
             raise OSError('%s: %s' % (error, msg))
-        raise OSError(err, errno.strerror(err), msg)
+        raise OSError(err, strerror(err), msg)
     def unimplementedError(self, method_name):
         raise NotImplementedError(method_name)
     def warn(self, warning_id, msg, rest):
@@ -246,9 +247,9 @@ def chdir(path):
     """
     realpath = _path.realpath(path)
     if not _path.exists(realpath):
-        raise OSError(errno.ENOENT, errno.strerror(errno.ENOENT), path)
+        raise OSError(errno.ENOENT, strerror(errno.ENOENT), path)
     if not _path.isdir(realpath):
-        raise OSError(errno.ENOTDIR, errno.strerror(errno.ENOTDIR), path)
+        raise OSError(errno.ENOTDIR, strerror(errno.ENOTDIR), path)
     sys.setCurrentWorkingDir(realpath)
 
 def listdir(path):
@@ -275,7 +276,7 @@ def chmod(path, mode):
     # catch not found errors explicitly here, for now
     abs_path = sys.getPath(path)
     if not File(abs_path).exists():
-        raise OSError(errno.ENOENT, errno.strerror(errno.ENOENT), path)
+        raise OSError(errno.ENOENT, strerror(errno.ENOENT), path)
     _posix.chmod(abs_path, mode)
 
 def mkdir(path, mode='ignored'):
@@ -292,7 +293,7 @@ def mkdir(path, mode='ignored'):
             err = errno.EEXIST
         else:
             err = 0
-        msg = errno.strerror(err) if err else "couldn't make directory"
+        msg = strerror(err) if err else "couldn't make directory"
         raise OSError(err, msg, path)
 
 def makedirs(path, mode='ignored'):
@@ -371,9 +372,9 @@ def rmdir(path):
     Remove a directory."""
     f = File(sys.getPath(path))
     if not f.exists():
-        raise OSError(errno.ENOENT, errno.strerror(errno.ENOENT), path)
+        raise OSError(errno.ENOENT, strerror(errno.ENOENT), path)
     elif not f.isDirectory():
-        raise OSError(errno.ENOTDIR, errno.strerror(errno.ENOTDIR), path)
+        raise OSError(errno.ENOTDIR, strerror(errno.ENOTDIR), path)
     elif not f.delete():
         raise OSError(0, "couldn't delete directory", path)
 
@@ -409,10 +410,17 @@ def strerror(code):
     """
     if not isinstance(code, (int, long)):
         raise TypeError('an integer is required')
-    try:
-        return errno.strerror(code)
-    except KeyError:
+    constant = Errno.valueOf(code)
+    if constant is Errno.__UNKNOWN_CONSTANT__:
         return 'Unknown error: %d' % code
+    if constant.name() == constant.description():
+        # XXX: have constantine handle this fallback
+        # Fake constant or just lacks a description, fallback to Linux's
+        from org.python.constantine.platform.linux import Errno as LinuxErrno
+        constant = getattr(LinuxErrno, constant.name(), None)
+        if not constant:
+            return 'Unknown error: %d' % code
+    return asPyString(constant.toString())
 
 def access(path, mode):
     """access(path, mode) -> True if granted, False otherwise
@@ -459,7 +467,7 @@ def stat(path):
         raise
     f = File(abs_path)
     if not f.exists():
-        raise OSError(errno.ENOENT, errno.strerror(errno.ENOENT), path)
+        raise OSError(errno.ENOENT, strerror(errno.ENOENT), path)
     size = f.length()
     mtime = f.lastModified() / 1000.0
     mode = 0
@@ -509,7 +517,7 @@ def lstat(path):
     # Not a link, only now can we determine if it exists (because
     # File.exists() returns False for dead links)
     if not f.exists():
-        raise OSError(errno.ENOENT, errno.strerror(errno.ENOENT), path)
+        raise OSError(errno.ENOENT, strerror(errno.ENOENT), path)
     return stat(path)
 
 def utime(path, times):
@@ -550,12 +558,12 @@ def fdopen(fd, mode='r', bufsize=-1):
     if (len(mode) and mode[0] or '') not in 'rwa':
         raise ValueError("invalid file mode '%s'" % mode)
     if rawio.closed():
-        raise OSError(errno.EBADF, errno.strerror(errno.EBADF))
+        raise OSError(errno.EBADF, strerror(errno.EBADF))
 
     try:
         fp = FileDescriptors.wrap(rawio, mode, bufsize)
     except IOError:
-        raise OSError(errno.EINVAL, errno.strerror(errno.EINVAL))
+        raise OSError(errno.EINVAL, strerror(errno.EINVAL))
     return fp
 
 def ftruncate(fd, length):
@@ -567,7 +575,7 @@ def ftruncate(fd, length):
     try:
         rawio.truncate(length)
     except Exception, e:
-        raise IOError(errno.EBADF, errno.strerror(errno.EBADF))
+        raise IOError(errno.EBADF, strerror(errno.EBADF))
 
 def lseek(fd, pos, how):
     """lseek(fd, pos, how) -> newpos
@@ -593,10 +601,10 @@ def open(filename, flag, mode=0777):
     appending = flag & O_APPEND
 
     if updating and writing:
-        raise OSError(errno.EINVAL, errno.strerror(errno.EINVAL), filename)
+        raise OSError(errno.EINVAL, strerror(errno.EINVAL), filename)
 
     if not creating and not path.exists(filename):
-        raise OSError(errno.ENOENT, errno.strerror(errno.ENOENT), filename)
+        raise OSError(errno.ENOENT, strerror(errno.ENOENT), filename)
 
     if not writing:
         if updating:
@@ -611,7 +619,7 @@ def open(filename, flag, mode=0777):
     if exclusive and creating:
         try:
             if not File(sys.getPath(filename)).createNewFile():
-                raise OSError(errno.EEXIST, errno.strerror(errno.EEXIST),
+                raise OSError(errno.EEXIST, strerror(errno.EEXIST),
                               filename)
         except java.io.IOException, ioe:
             raise OSError(ioe)
@@ -627,8 +635,8 @@ def open(filename, flag, mode=0777):
             fchannel = RandomAccessFile(sys.getPath(filename), 'rws').getChannel()
         except FileNotFoundException, fnfe:
             if path.isdir(filename):
-                raise OSError(errno.EISDIR, errno.strerror(errno.EISDIR))
-            raise OSError(errno.ENOENT, errno.strerror(errno.ENOENT), filename)
+                raise OSError(errno.EISDIR, strerror(errno.EISDIR))
+            raise OSError(errno.ENOENT, strerror(errno.ENOENT), filename)
         return FileIO(fchannel, mode)
 
     return FileIO(filename, mode)
@@ -659,7 +667,7 @@ def _handle_oserror(func, *args, **kwargs):
     try:
         return func(*args, **kwargs)
     except:
-        raise OSError(errno.EBADF, errno.strerror(errno.EBADF))
+        raise OSError(errno.EBADF, strerror(errno.EBADF))
 
 if _name == 'posix' and _native_posix:
     def link(src, dst):

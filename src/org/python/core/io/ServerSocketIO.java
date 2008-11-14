@@ -6,8 +6,8 @@ import java.nio.ByteBuffer;
 import java.nio.channels.Channel;
 import java.nio.channels.ServerSocketChannel;
 
+import org.python.constantine.platform.Errno;
 import org.python.core.Py;
-import org.python.modules.errno;
 
 /**
  * Raw I/O implementation for server sockets.
@@ -34,14 +34,14 @@ public class ServerSocketIO extends SocketIOBase {
     public int readinto(ByteBuffer buf) {
         checkClosed();
         checkReadable();
-        throw Py.IOError(errno.ENOTCONN, "Socket is not connected");
+        throw Py.IOError(Errno.ENOTCONN);
     }
 
     /** {@inheritDoc} */
     public int write(ByteBuffer buf) {
         checkClosed();
         checkWritable();
-        throw Py.IOError(errno.EBADF, "Bad file descriptor");
+        throw Py.IOError(Errno.EBADF);
     }
 
     /** {@inheritDoc} */

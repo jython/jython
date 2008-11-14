@@ -177,10 +177,11 @@ class ChdirTestCase(BaseChdirTestCase):
 
     def test_invalid_chdir(self):
         raises(OSError,
-               '[Errno 2] No such file or directory: %r' % self.filename1,
+               '[Errno 2] %s: %r' % (os.strerror(2), self.filename1),
                os.chdir, self.filename1)
         open(self.filename1, 'w').close()
-        raises(OSError, '[Errno 20] Not a directory: %r' % self.filename1,
+        raises(OSError,
+               '[Errno 20] %s: %r' % (os.strerror(20), self.filename1),
                os.chdir, self.filename1)
 
 

@@ -525,6 +525,8 @@ The readme text for the next release will be like:
             <zipfileset src="extlibs/jna-posix.jar"/>
             <!-- <rule pattern="com.sun.jna.**" result="org.python.jna.@1"/> -->
             <rule pattern="org.jruby.ext.posix.**" result="org.python.posix.@1"/>
+            <zipfileset src="extlibs/constantine.jar"/>
+            <rule pattern="com.kenai.constantine.**" result="org.python.constantine.@1"/>
         </jarjar>
         <unjar src="${output.dir}/jarjar.jar" dest="${jarjar.dir}">
             <patternset>
