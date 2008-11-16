@@ -208,6 +208,21 @@ class SubclassDescrTestCase(unittest.TestCase):
             raises(bexc, bexc_msg, lambda : func(B()))
             self.assertEqual(func(C()), cresult)
 
+    def test_overriding_base_binop(self):
+        class MulBase(object):
+            def __init__(self, value):
+                self.value = value
+            def __mul__(self, other):
+                return self.value * other.value
+            def __rmul__(self, other):
+                return other.value * self.value
+        class DoublerBase(MulBase):
+            def __mul__(self, other):
+                return 2 * (self.value * other.value)
+        class AnotherDoubler(DoublerBase):
+            pass
+        self.assertEquals(DoublerBase(2) * AnotherDoubler(3), 12)
+
 
 class InPlaceTestCase(unittest.TestCase):
 

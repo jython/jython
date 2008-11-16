@@ -1771,14 +1771,14 @@ public class PyObject implements Serializable {
          * test_descr.subclass_right_op.
          */
         PyObject o1 = this;
-        PyObject[] where = new PyObject[1];
-        PyObject where1 = null, where2 = null;
-        PyObject impl1 = t1.lookup_where(left, where);
+        int[] where = new int[1];
+        int where1, where2;
+        PyObject impl1 = t1.lookup_where_index(left, where);
         where1 = where[0];
-        PyObject impl2 = t2.lookup_where(right, where);
+        PyObject impl2 = t2.lookup_where_index(right, where);
         where2 = where[0];
-        if (impl2 != null && where1 != where2 && (t2.isSubType(t1) ||
-                                                  isStrUnicodeSpecialCase(t1, t2, op))) {
+        if (impl2 != null && where1 < where2 && (t2.isSubType(t1) ||
+                                                 isStrUnicodeSpecialCase(t1, t2, op))) {
             PyObject tmp = o1;
             o1 = o2;
             o2 = tmp;

@@ -825,6 +825,34 @@ public class PyType extends PyObject implements Serializable {
         return null;
     }
 
+    /**
+     * Like lookup but also provides (in where[0]) the index of the type in the reversed
+     * mro -- that is, how many subtypes away from the base object the type is.
+     *
+     * @param name attribute name (must be interned)
+     * @param where an int[] with a length of at least 1
+     * @return found PyObject or null
+     */
+    public PyObject lookup_where_index(String name, int[] where) {
+        PyObject[] mro = this.mro;
+        if (mro == null) {
+            return null;
+        }
+        int i = mro.length;
+        for (PyObject t : mro) {
+            i--;
+            PyObject dict = t.fastGetDict();
+            if (dict != null) {
+                PyObject obj = dict.__finditem__(name);
+                if (obj != null) {
+                    where[0] = i;
+                    return obj;
+                }
+            }
+        }
+        return null;
+    }
+
     public PyObject super_lookup(PyType ref, String name) {
         PyObject[] mro = this.mro;
         if (mro == null) {
