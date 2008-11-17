@@ -1,20 +1,17 @@
 """
 AMAK: 20050515: This module is the test_select.py from cpython 2.4, ported to jython + unittest
 """
-
-try:
-    object
-except NameError:
-    class object: pass
-
 import errno
+import os
 import select
 import socket
-
-import os
 import sys
-from test import test_support
+import test_socket
 import unittest
+from test import test_support
+
+HOST = test_socket.HOST
+PORT = test_socket.PORT + 100
 
 class SelectWrapper:
 
@@ -140,10 +137,10 @@ class TestPollClientSocket(unittest.TestCase):
 #
 # using the test_socket thread based server/client management, for convenience.
 #
-
-import test_socket
-
 class ThreadedPollClientSocket(test_socket.ThreadedTCPSocketTest):
+
+    HOST = HOST
+    PORT = PORT
 
     def testSocketRegisteredBeforeConnected(self):
         self.cli_conn = self.serv.accept()
@@ -158,7 +155,7 @@ class ThreadedPollClientSocket(test_socket.ThreadedTCPSocketTest):
         self.failIf(self.cli in result_sockets, "Unconnected client socket should not have been selectable")
         # Now connect the socket, but DO NOT register it again
         self.cli.setblocking(0)
-        self.cli.connect( (test_socket.HOST, test_socket.PORT) )
+        self.cli.connect( (self.HOST, self.PORT) )
         # Now poll again, to check that the poll object has recognised that the socket is now connected
         result_list = poll_object.poll(timeout)
         result_sockets = [r[0] for r in result_list]
@@ -169,7 +166,7 @@ class ThreadedPollClientSocket(test_socket.ThreadedTCPSocketTest):
 
     def _testSocketMustBeNonBlocking(self):
         self.cli.setblocking(1)
-        self.cli.connect( (test_socket.HOST, test_socket.PORT) )
+        self.cli.connect( (self.HOST, self.PORT) )
         timeout = 1000 # milliseconds
         poll_object = select.poll()
         try:
