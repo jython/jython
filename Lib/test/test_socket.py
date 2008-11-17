@@ -7,6 +7,7 @@ from test import test_support
 
 import errno
 import Queue
+import platform
 import select
 import socket
 import struct
@@ -20,6 +21,8 @@ PORT = 50007
 HOST = 'localhost'
 MSG = 'Michael Gilfix was here\n'
 EIGHT_BIT_MSG = 'Bh\xed Al\xe1in \xd3 Cinn\xe9ide anseo\n'
+os_name = platform.java_ver()[3][0]
+is_bsd = os_name == 'Mac OS X' or 'BSD' in os_name
 
 try:
     True
@@ -548,6 +551,7 @@ class TestSocketOptions(unittest.TestCase):
             sock.close()
 
     def _testTCPClientOption(self, option, values):
+        sock = None
         try:
             # First listen on a server socket, so that the connection won't be refused.
             server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -560,12 +564,21 @@ class TestSocketOptions(unittest.TestCase):
             # First bind, so that the SO_REUSEADDR setting propagates
             sock.bind( (HOST, PORT+1) )
             sock.connect( (HOST, PORT) )
-            self.failUnlessEqual(sock.getsockopt(socket.SOL_SOCKET, option), values[-1], \
-                 "Option value '%s'='%s' did not propagate to implementation socket" % (option, values[-1]))
+            msg = "Option value '%s'='%s' did not propagate to implementation socket" % (option, values[-1])
+            if is_bsd and option in (socket.SO_RCVBUF, socket.SO_SNDBUF):
+                # XXX: there's no guarantee that bufsize will be the
+                # exact setsockopt value, particularly after
+                # establishing a connection. seems it will be *at least*
+                # the values we test (which are rather small) on
+                # BSDs. may need to relax this on other platforms also
+                self.assert_(sock.getsockopt(socket.SOL_SOCKET, option) >= values[-1], msg)
+            else:
+                self.failUnlessEqual(sock.getsockopt(socket.SOL_SOCKET, option), values[-1], msg)
             self._testSetAndGetOption(sock, option, values)
         finally:
             server_sock.close()
-            sock.close()
+            if sock:
+                sock.close()
 
     def _testTCPServerOption(self, option, values):
         try:
