@@ -7,50 +7,53 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class List extends exprType implements Context {
-    public exprType[] elts;
+    public java.util.List<exprType> elts;
     public expr_contextType ctx;
 
     private final static String[] fields = new String[] {"elts", "ctx"};
     public String[] get_fields() { return fields; }
 
-    public List(exprType[] elts, expr_contextType ctx) {
+    public List(java.util.List<exprType> elts, expr_contextType ctx) {
         this.elts = elts;
         if (elts != null) {
-            for(int ielts=0;ielts<elts.length;ielts++) {
-                addChild(elts[ielts]);
+            for(PythonTree t : elts) {
+                addChild(t);
             }
         }
         this.ctx = ctx;
     }
 
-    public List(Token token, exprType[] elts, expr_contextType ctx) {
+    public List(Token token, java.util.List<exprType> elts, expr_contextType
+    ctx) {
         super(token);
         this.elts = elts;
         if (elts != null) {
-            for(int ielts=0;ielts<elts.length;ielts++) {
-                addChild(elts[ielts]);
+            for(PythonTree t : elts) {
+                addChild(t);
             }
         }
         this.ctx = ctx;
     }
 
-    public List(int ttype, Token token, exprType[] elts, expr_contextType ctx) {
+    public List(int ttype, Token token, java.util.List<exprType> elts,
+    expr_contextType ctx) {
         super(ttype, token);
         this.elts = elts;
         if (elts != null) {
-            for(int ielts=0;ielts<elts.length;ielts++) {
-                addChild(elts[ielts]);
+            for(PythonTree t : elts) {
+                addChild(t);
             }
         }
         this.ctx = ctx;
     }
 
-    public List(PythonTree tree, exprType[] elts, expr_contextType ctx) {
+    public List(PythonTree tree, java.util.List<exprType> elts,
+    expr_contextType ctx) {
         super(tree);
         this.elts = elts;
         if (elts != null) {
-            for(int ielts=0;ielts<elts.length;ielts++) {
-                addChild(elts[ielts]);
+            for(PythonTree t : elts) {
+                addChild(t);
             }
         }
         this.ctx = ctx;
@@ -78,9 +81,9 @@ public class List extends exprType implements Context {
 
     public void traverse(VisitorIF visitor) throws Exception {
         if (elts != null) {
-            for (int i = 0; i < elts.length; i++) {
-                if (elts[i] != null)
-                    elts[i].accept(visitor);
+            for (PythonTree t : elts) {
+                if (t != null)
+                    t.accept(visitor);
             }
         }
     }

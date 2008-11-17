@@ -7,26 +7,26 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class Global extends stmtType {
-    public String[] names;
+    public java.util.List<String> names;
 
     private final static String[] fields = new String[] {"names"};
     public String[] get_fields() { return fields; }
 
-    public Global(String[] names) {
+    public Global(java.util.List<String> names) {
         this.names = names;
     }
 
-    public Global(Token token, String[] names) {
+    public Global(Token token, java.util.List<String> names) {
         super(token);
         this.names = names;
     }
 
-    public Global(int ttype, Token token, String[] names) {
+    public Global(int ttype, Token token, java.util.List<String> names) {
         super(ttype, token);
         this.names = names;
     }
 
-    public Global(PythonTree tree, String[] names) {
+    public Global(PythonTree tree, java.util.List<String> names) {
         super(tree);
         this.names = names;
     }

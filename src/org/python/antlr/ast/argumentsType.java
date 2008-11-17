@@ -7,86 +7,86 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class argumentsType extends PythonTree {
-    public exprType[] args;
+    public java.util.List<exprType> args;
     public String vararg;
     public String kwarg;
-    public exprType[] defaults;
+    public java.util.List<exprType> defaults;
 
     private final static String[] fields = new String[] {"args", "vararg",
                                                           "kwarg", "defaults"};
     public String[] get_fields() { return fields; }
 
-    public argumentsType(exprType[] args, String vararg, String kwarg,
-    exprType[] defaults) {
+    public argumentsType(java.util.List<exprType> args, String vararg, String
+    kwarg, java.util.List<exprType> defaults) {
         this.args = args;
         if (args != null) {
-            for(int iargs=0;iargs<args.length;iargs++) {
-                addChild(args[iargs]);
+            for(PythonTree t : args) {
+                addChild(t);
             }
         }
         this.vararg = vararg;
         this.kwarg = kwarg;
         this.defaults = defaults;
         if (defaults != null) {
-            for(int idefaults=0;idefaults<defaults.length;idefaults++) {
-                addChild(defaults[idefaults]);
+            for(PythonTree t : defaults) {
+                addChild(t);
             }
         }
     }
 
-    public argumentsType(Token token, exprType[] args, String vararg, String
-    kwarg, exprType[] defaults) {
+    public argumentsType(Token token, java.util.List<exprType> args, String
+    vararg, String kwarg, java.util.List<exprType> defaults) {
         super(token);
         this.args = args;
         if (args != null) {
-            for(int iargs=0;iargs<args.length;iargs++) {
-                addChild(args[iargs]);
+            for(PythonTree t : args) {
+                addChild(t);
             }
         }
         this.vararg = vararg;
         this.kwarg = kwarg;
         this.defaults = defaults;
         if (defaults != null) {
-            for(int idefaults=0;idefaults<defaults.length;idefaults++) {
-                addChild(defaults[idefaults]);
+            for(PythonTree t : defaults) {
+                addChild(t);
             }
         }
     }
 
-    public argumentsType(int ttype, Token token, exprType[] args, String
-    vararg, String kwarg, exprType[] defaults) {
+    public argumentsType(int ttype, Token token, java.util.List<exprType> args,
+    String vararg, String kwarg, java.util.List<exprType> defaults) {
         super(ttype, token);
         this.args = args;
         if (args != null) {
-            for(int iargs=0;iargs<args.length;iargs++) {
-                addChild(args[iargs]);
+            for(PythonTree t : args) {
+                addChild(t);
             }
         }
         this.vararg = vararg;
         this.kwarg = kwarg;
         this.defaults = defaults;
         if (defaults != null) {
-            for(int idefaults=0;idefaults<defaults.length;idefaults++) {
-                addChild(defaults[idefaults]);
+            for(PythonTree t : defaults) {
+                addChild(t);
             }
         }
     }
 
-    public argumentsType(PythonTree tree, exprType[] args, String vararg,
-    String kwarg, exprType[] defaults) {
+    public argumentsType(PythonTree tree, java.util.List<exprType> args, String
+    vararg, String kwarg, java.util.List<exprType> defaults) {
         super(tree);
         this.args = args;
         if (args != null) {
-            for(int iargs=0;iargs<args.length;iargs++) {
-                addChild(args[iargs]);
+            for(PythonTree t : args) {
+                addChild(t);
             }
         }
         this.vararg = vararg;
         this.kwarg = kwarg;
         this.defaults = defaults;
         if (defaults != null) {
-            for(int idefaults=0;idefaults<defaults.length;idefaults++) {
-                addChild(defaults[idefaults]);
+            for(PythonTree t : defaults) {
+                addChild(t);
             }
         }
     }
@@ -120,15 +120,15 @@ public class argumentsType extends PythonTree {
 
     public void traverse(VisitorIF visitor) throws Exception {
         if (args != null) {
-            for (int i = 0; i < args.length; i++) {
-                if (args[i] != null)
-                    args[i].accept(visitor);
+            for (PythonTree t : args) {
+                if (t != null)
+                    t.accept(visitor);
             }
         }
         if (defaults != null) {
-            for (int i = 0; i < defaults.length; i++) {
-                if (defaults[i] != null)
-                    defaults[i].accept(visitor);
+            for (PythonTree t : defaults) {
+                if (t != null)
+                    t.accept(visitor);
             }
         }
     }

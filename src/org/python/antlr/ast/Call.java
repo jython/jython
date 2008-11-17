@@ -8,8 +8,8 @@ import java.io.IOException;
 
 public class Call extends exprType {
     public exprType func;
-    public exprType[] args;
-    public keywordType[] keywords;
+    public java.util.List<exprType> args;
+    public java.util.List<keywordType> keywords;
     public exprType starargs;
     public exprType kwargs;
 
@@ -18,20 +18,20 @@ public class Call extends exprType {
                                                           "starargs", "kwargs"};
     public String[] get_fields() { return fields; }
 
-    public Call(exprType func, exprType[] args, keywordType[] keywords,
-    exprType starargs, exprType kwargs) {
+    public Call(exprType func, java.util.List<exprType> args,
+    java.util.List<keywordType> keywords, exprType starargs, exprType kwargs) {
         this.func = func;
         addChild(func);
         this.args = args;
         if (args != null) {
-            for(int iargs=0;iargs<args.length;iargs++) {
-                addChild(args[iargs]);
+            for(PythonTree t : args) {
+                addChild(t);
             }
         }
         this.keywords = keywords;
         if (keywords != null) {
-            for(int ikeywords=0;ikeywords<keywords.length;ikeywords++) {
-                addChild(keywords[ikeywords]);
+            for(PythonTree t : keywords) {
+                addChild(t);
             }
         }
         this.starargs = starargs;
@@ -40,21 +40,21 @@ public class Call extends exprType {
         addChild(kwargs);
     }
 
-    public Call(Token token, exprType func, exprType[] args, keywordType[]
-    keywords, exprType starargs, exprType kwargs) {
+    public Call(Token token, exprType func, java.util.List<exprType> args,
+    java.util.List<keywordType> keywords, exprType starargs, exprType kwargs) {
         super(token);
         this.func = func;
         addChild(func);
         this.args = args;
         if (args != null) {
-            for(int iargs=0;iargs<args.length;iargs++) {
-                addChild(args[iargs]);
+            for(PythonTree t : args) {
+                addChild(t);
             }
         }
         this.keywords = keywords;
         if (keywords != null) {
-            for(int ikeywords=0;ikeywords<keywords.length;ikeywords++) {
-                addChild(keywords[ikeywords]);
+            for(PythonTree t : keywords) {
+                addChild(t);
             }
         }
         this.starargs = starargs;
@@ -63,21 +63,22 @@ public class Call extends exprType {
         addChild(kwargs);
     }
 
-    public Call(int ttype, Token token, exprType func, exprType[] args,
-    keywordType[] keywords, exprType starargs, exprType kwargs) {
+    public Call(int ttype, Token token, exprType func, java.util.List<exprType>
+    args, java.util.List<keywordType> keywords, exprType starargs, exprType
+    kwargs) {
         super(ttype, token);
         this.func = func;
         addChild(func);
         this.args = args;
         if (args != null) {
-            for(int iargs=0;iargs<args.length;iargs++) {
-                addChild(args[iargs]);
+            for(PythonTree t : args) {
+                addChild(t);
             }
         }
         this.keywords = keywords;
         if (keywords != null) {
-            for(int ikeywords=0;ikeywords<keywords.length;ikeywords++) {
-                addChild(keywords[ikeywords]);
+            for(PythonTree t : keywords) {
+                addChild(t);
             }
         }
         this.starargs = starargs;
@@ -86,21 +87,21 @@ public class Call extends exprType {
         addChild(kwargs);
     }
 
-    public Call(PythonTree tree, exprType func, exprType[] args, keywordType[]
-    keywords, exprType starargs, exprType kwargs) {
+    public Call(PythonTree tree, exprType func, java.util.List<exprType> args,
+    java.util.List<keywordType> keywords, exprType starargs, exprType kwargs) {
         super(tree);
         this.func = func;
         addChild(func);
         this.args = args;
         if (args != null) {
-            for(int iargs=0;iargs<args.length;iargs++) {
-                addChild(args[iargs]);
+            for(PythonTree t : args) {
+                addChild(t);
             }
         }
         this.keywords = keywords;
         if (keywords != null) {
-            for(int ikeywords=0;ikeywords<keywords.length;ikeywords++) {
-                addChild(keywords[ikeywords]);
+            for(PythonTree t : keywords) {
+                addChild(t);
             }
         }
         this.starargs = starargs;
@@ -142,15 +143,15 @@ public class Call extends exprType {
         if (func != null)
             func.accept(visitor);
         if (args != null) {
-            for (int i = 0; i < args.length; i++) {
-                if (args[i] != null)
-                    args[i].accept(visitor);
+            for (PythonTree t : args) {
+                if (t != null)
+                    t.accept(visitor);
             }
         }
         if (keywords != null) {
-            for (int i = 0; i < keywords.length; i++) {
-                if (keywords[i] != null)
-                    keywords[i].accept(visitor);
+            for (PythonTree t : keywords) {
+                if (t != null)
+                    t.accept(visitor);
             }
         }
         if (starargs != null)

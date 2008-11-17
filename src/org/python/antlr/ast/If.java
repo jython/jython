@@ -8,82 +8,84 @@ import java.io.IOException;
 
 public class If extends stmtType {
     public exprType test;
-    public stmtType[] body;
-    public stmtType[] orelse;
+    public java.util.List<stmtType> body;
+    public java.util.List<stmtType> orelse;
 
     private final static String[] fields = new String[] {"test", "body",
                                                           "orelse"};
     public String[] get_fields() { return fields; }
 
-    public If(exprType test, stmtType[] body, stmtType[] orelse) {
+    public If(exprType test, java.util.List<stmtType> body,
+    java.util.List<stmtType> orelse) {
         this.test = test;
         addChild(test);
         this.body = body;
         if (body != null) {
-            for(int ibody=0;ibody<body.length;ibody++) {
-                addChild(body[ibody]);
+            for(PythonTree t : body) {
+                addChild(t);
             }
         }
         this.orelse = orelse;
         if (orelse != null) {
-            for(int iorelse=0;iorelse<orelse.length;iorelse++) {
-                addChild(orelse[iorelse]);
+            for(PythonTree t : orelse) {
+                addChild(t);
             }
         }
     }
 
-    public If(Token token, exprType test, stmtType[] body, stmtType[] orelse) {
+    public If(Token token, exprType test, java.util.List<stmtType> body,
+    java.util.List<stmtType> orelse) {
         super(token);
         this.test = test;
         addChild(test);
         this.body = body;
         if (body != null) {
-            for(int ibody=0;ibody<body.length;ibody++) {
-                addChild(body[ibody]);
+            for(PythonTree t : body) {
+                addChild(t);
             }
         }
         this.orelse = orelse;
         if (orelse != null) {
-            for(int iorelse=0;iorelse<orelse.length;iorelse++) {
-                addChild(orelse[iorelse]);
+            for(PythonTree t : orelse) {
+                addChild(t);
             }
         }
     }
 
-    public If(int ttype, Token token, exprType test, stmtType[] body,
-    stmtType[] orelse) {
+    public If(int ttype, Token token, exprType test, java.util.List<stmtType>
+    body, java.util.List<stmtType> orelse) {
         super(ttype, token);
         this.test = test;
         addChild(test);
         this.body = body;
         if (body != null) {
-            for(int ibody=0;ibody<body.length;ibody++) {
-                addChild(body[ibody]);
+            for(PythonTree t : body) {
+                addChild(t);
             }
         }
         this.orelse = orelse;
         if (orelse != null) {
-            for(int iorelse=0;iorelse<orelse.length;iorelse++) {
-                addChild(orelse[iorelse]);
+            for(PythonTree t : orelse) {
+                addChild(t);
             }
         }
     }
 
-    public If(PythonTree tree, exprType test, stmtType[] body, stmtType[]
-    orelse) {
+    public If(PythonTree tree, exprType test, java.util.List<stmtType> body,
+    java.util.List<stmtType> orelse) {
         super(tree);
         this.test = test;
         addChild(test);
         this.body = body;
         if (body != null) {
-            for(int ibody=0;ibody<body.length;ibody++) {
-                addChild(body[ibody]);
+            for(PythonTree t : body) {
+                addChild(t);
             }
         }
         this.orelse = orelse;
         if (orelse != null) {
-            for(int iorelse=0;iorelse<orelse.length;iorelse++) {
-                addChild(orelse[iorelse]);
+            for(PythonTree t : orelse) {
+                addChild(t);
             }
         }
     }
@@ -115,15 +117,15 @@ public class If extends stmtType {
         if (test != null)
             test.accept(visitor);
         if (body != null) {
-            for (int i = 0; i < body.length; i++) {
-                if (body[i] != null)
-                    body[i].accept(visitor);
+            for (PythonTree t : body) {
+                if (t != null)
+                    t.accept(visitor);
             }
         }
         if (orelse != null) {
-            for (int i = 0; i < orelse.length; i++) {
-                if (orelse[i] != null)
-                    orelse[i].accept(visitor);
+            for (PythonTree t : orelse) {
+                if (t != null)
+                    t.accept(visitor);
             }
         }
     }

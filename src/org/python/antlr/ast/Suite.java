@@ -7,46 +7,46 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class Suite extends modType {
-    public stmtType[] body;
+    public java.util.List<stmtType> body;
 
     private final static String[] fields = new String[] {"body"};
     public String[] get_fields() { return fields; }
 
-    public Suite(stmtType[] body) {
+    public Suite(java.util.List<stmtType> body) {
         this.body = body;
         if (body != null) {
-            for(int ibody=0;ibody<body.length;ibody++) {
-                addChild(body[ibody]);
+            for(PythonTree t : body) {
+                addChild(t);
             }
         }
     }
 
-    public Suite(Token token, stmtType[] body) {
+    public Suite(Token token, java.util.List<stmtType> body) {
         super(token);
         this.body = body;
         if (body != null) {
-            for(int ibody=0;ibody<body.length;ibody++) {
-                addChild(body[ibody]);
+            for(PythonTree t : body) {
+                addChild(t);
             }
         }
     }
 
-    public Suite(int ttype, Token token, stmtType[] body) {
+    public Suite(int ttype, Token token, java.util.List<stmtType> body) {
         super(ttype, token);
         this.body = body;
         if (body != null) {
-            for(int ibody=0;ibody<body.length;ibody++) {
-                addChild(body[ibody]);
+            for(PythonTree t : body) {
+                addChild(t);
             }
         }
     }
 
-    public Suite(PythonTree tree, stmtType[] body) {
+    public Suite(PythonTree tree, java.util.List<stmtType> body) {
         super(tree);
         this.body = body;
         if (body != null) {
-            for(int ibody=0;ibody<body.length;ibody++) {
-                addChild(body[ibody]);
+            for(PythonTree t : body) {
+                addChild(t);
             }
         }
     }
@@ -70,9 +70,9 @@ public class Suite extends modType {
 
     public void traverse(VisitorIF visitor) throws Exception {
         if (body != null) {
-            for (int i = 0; i < body.length; i++) {
-                if (body[i] != null)
-                    body[i].accept(visitor);
+            for (PythonTree t : body) {
+                if (t != null)
+                    t.accept(visitor);
             }
         }
     }

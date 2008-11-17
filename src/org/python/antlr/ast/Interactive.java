@@ -7,46 +7,46 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class Interactive extends modType {
-    public stmtType[] body;
+    public java.util.List<stmtType> body;
 
     private final static String[] fields = new String[] {"body"};
     public String[] get_fields() { return fields; }
 
-    public Interactive(stmtType[] body) {
+    public Interactive(java.util.List<stmtType> body) {
         this.body = body;
         if (body != null) {
-            for(int ibody=0;ibody<body.length;ibody++) {
-                addChild(body[ibody]);
+            for(PythonTree t : body) {
+                addChild(t);
             }
         }
     }
 
-    public Interactive(Token token, stmtType[] body) {
+    public Interactive(Token token, java.util.List<stmtType> body) {
         super(token);
         this.body = body;
         if (body != null) {
-            for(int ibody=0;ibody<body.length;ibody++) {
-                addChild(body[ibody]);
+            for(PythonTree t : body) {
+                addChild(t);
             }
         }
     }
 
-    public Interactive(int ttype, Token token, stmtType[] body) {
+    public Interactive(int ttype, Token token, java.util.List<stmtType> body) {
         super(ttype, token);
         this.body = body;
         if (body != null) {
-            for(int ibody=0;ibody<body.length;ibody++) {
-                addChild(body[ibody]);
+            for(PythonTree t : body) {
+                addChild(t);
             }
         }
     }
 
-    public Interactive(PythonTree tree, stmtType[] body) {
+    public Interactive(PythonTree tree, java.util.List<stmtType> body) {
         super(tree);
         this.body = body;
         if (body != null) {
-            for(int ibody=0;ibody<body.length;ibody++) {
-                addChild(body[ibody]);
+            for(PythonTree t : body) {
+                addChild(t);
             }
         }
     }
@@ -70,9 +70,9 @@ public class Interactive extends modType {
 
     public void traverse(VisitorIF visitor) throws Exception {
         if (body != null) {
-            for (int i = 0; i < body.length; i++) {
-                if (body[i] != null)
-                    body[i].accept(visitor);
+            for (PythonTree t : body) {
+                if (t != null)
+                    t.accept(visitor);
             }
         }
     }

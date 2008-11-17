@@ -7,101 +7,105 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class TryExcept extends stmtType {
-    public stmtType[] body;
-    public excepthandlerType[] handlers;
-    public stmtType[] orelse;
+    public java.util.List<stmtType> body;
+    public java.util.List<excepthandlerType> handlers;
+    public java.util.List<stmtType> orelse;
 
     private final static String[] fields = new String[] {"body", "handlers",
                                                           "orelse"};
     public String[] get_fields() { return fields; }
 
-    public TryExcept(stmtType[] body, excepthandlerType[] handlers, stmtType[]
+    public TryExcept(java.util.List<stmtType> body,
+    java.util.List<excepthandlerType> handlers, java.util.List<stmtType>
     orelse) {
         this.body = body;
         if (body != null) {
-            for(int ibody=0;ibody<body.length;ibody++) {
-                addChild(body[ibody]);
+            for(PythonTree t : body) {
+                addChild(t);
             }
         }
         this.handlers = handlers;
         if (handlers != null) {
-            for(int ihandlers=0;ihandlers<handlers.length;ihandlers++) {
-                addChild(handlers[ihandlers]);
+            for(PythonTree t : handlers) {
+                addChild(t);
             }
         }
         this.orelse = orelse;
         if (orelse != null) {
-            for(int iorelse=0;iorelse<orelse.length;iorelse++) {
-                addChild(orelse[iorelse]);
+            for(PythonTree t : orelse) {
+                addChild(t);
             }
         }
     }
 
-    public TryExcept(Token token, stmtType[] body, excepthandlerType[]
-    handlers, stmtType[] orelse) {
+    public TryExcept(Token token, java.util.List<stmtType> body,
+    java.util.List<excepthandlerType> handlers, java.util.List<stmtType>
+    orelse) {
         super(token);
         this.body = body;
         if (body != null) {
-            for(int ibody=0;ibody<body.length;ibody++) {
-                addChild(body[ibody]);
+            for(PythonTree t : body) {
+                addChild(t);
             }
         }
         this.handlers = handlers;
         if (handlers != null) {
-            for(int ihandlers=0;ihandlers<handlers.length;ihandlers++) {
-                addChild(handlers[ihandlers]);
+            for(PythonTree t : handlers) {
+                addChild(t);
             }
         }
         this.orelse = orelse;
         if (orelse != null) {
-            for(int iorelse=0;iorelse<orelse.length;iorelse++) {
-                addChild(orelse[iorelse]);
+            for(PythonTree t : orelse) {
+                addChild(t);
             }
         }
     }
 
-    public TryExcept(int ttype, Token token, stmtType[] body,
-    excepthandlerType[] handlers, stmtType[] orelse) {
+    public TryExcept(int ttype, Token token, java.util.List<stmtType> body,
+    java.util.List<excepthandlerType> handlers, java.util.List<stmtType>
+    orelse) {
         super(ttype, token);
         this.body = body;
         if (body != null) {
-            for(int ibody=0;ibody<body.length;ibody++) {
-                addChild(body[ibody]);
+            for(PythonTree t : body) {
+                addChild(t);
             }
         }
         this.handlers = handlers;
         if (handlers != null) {
-            for(int ihandlers=0;ihandlers<handlers.length;ihandlers++) {
-                addChild(handlers[ihandlers]);
+            for(PythonTree t : handlers) {
+                addChild(t);
             }
         }
         this.orelse = orelse;
         if (orelse != null) {
-            for(int iorelse=0;iorelse<orelse.length;iorelse++) {
-                addChild(orelse[iorelse]);
+            for(PythonTree t : orelse) {
+                addChild(t);
             }
         }
     }
 
-    public TryExcept(PythonTree tree, stmtType[] body, excepthandlerType[]
-    handlers, stmtType[] orelse) {
+    public TryExcept(PythonTree tree, java.util.List<stmtType> body,
+    java.util.List<excepthandlerType> handlers, java.util.List<stmtType>
+    orelse) {
         super(tree);
         this.body = body;
         if (body != null) {
-            for(int ibody=0;ibody<body.length;ibody++) {
-                addChild(body[ibody]);
+            for(PythonTree t : body) {
+                addChild(t);
             }
         }
         this.handlers = handlers;
         if (handlers != null) {
-            for(int ihandlers=0;ihandlers<handlers.length;ihandlers++) {
-                addChild(handlers[ihandlers]);
+            for(PythonTree t : handlers) {
+                addChild(t);
             }
         }
         this.orelse = orelse;
         if (orelse != null) {
-            for(int iorelse=0;iorelse<orelse.length;iorelse++) {
-                addChild(orelse[iorelse]);
+            for(PythonTree t : orelse) {
+                addChild(t);
             }
         }
     }
@@ -131,21 +135,21 @@ public class TryExcept extends stmtType {
 
     public void traverse(VisitorIF visitor) throws Exception {
         if (body != null) {
-            for (int i = 0; i < body.length; i++) {
-                if (body[i] != null)
-                    body[i].accept(visitor);
+            for (PythonTree t : body) {
+                if (t != null)
+                    t.accept(visitor);
             }
         }
         if (handlers != null) {
-            for (int i = 0; i < handlers.length; i++) {
-                if (handlers[i] != null)
-                    handlers[i].accept(visitor);
+            for (PythonTree t : handlers) {
+                if (t != null)
+                    t.accept(visitor);
             }
         }
         if (orelse != null) {
-            for (int i = 0; i < orelse.length; i++) {
-                if (orelse[i] != null)
-                    orelse[i].accept(visitor);
+            for (PythonTree t : orelse) {
+                if (t != null)
+                    t.accept(visitor);
             }
         }
     }

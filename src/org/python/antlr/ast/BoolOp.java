@@ -8,50 +8,52 @@ import java.io.IOException;
 
 public class BoolOp extends exprType {
     public boolopType op;
-    public exprType[] values;
+    public java.util.List<exprType> values;
 
     private final static String[] fields = new String[] {"op", "values"};
     public String[] get_fields() { return fields; }
 
-    public BoolOp(boolopType op, exprType[] values) {
+    public BoolOp(boolopType op, java.util.List<exprType> values) {
         this.op = op;
         this.values = values;
         if (values != null) {
-            for(int ivalues=0;ivalues<values.length;ivalues++) {
-                addChild(values[ivalues]);
+            for(PythonTree t : values) {
+                addChild(t);
             }
         }
     }
 
-    public BoolOp(Token token, boolopType op, exprType[] values) {
+    public BoolOp(Token token, boolopType op, java.util.List<exprType> values) {
         super(token);
         this.op = op;
         this.values = values;
         if (values != null) {
-            for(int ivalues=0;ivalues<values.length;ivalues++) {
-                addChild(values[ivalues]);
+            for(PythonTree t : values) {
+                addChild(t);
             }
         }
     }
 
-    public BoolOp(int ttype, Token token, boolopType op, exprType[] values) {
+    public BoolOp(int ttype, Token token, boolopType op,
+    java.util.List<exprType> values) {
         super(ttype, token);
         this.op = op;
         this.values = values;
         if (values != null) {
-            for(int ivalues=0;ivalues<values.length;ivalues++) {
-                addChild(values[ivalues]);
+            for(PythonTree t : values) {
+                addChild(t);
             }
         }
     }
 
-    public BoolOp(PythonTree tree, boolopType op, exprType[] values) {
+    public BoolOp(PythonTree tree, boolopType op, java.util.List<exprType>
+    values) {
         super(tree);
         this.op = op;
         this.values = values;
         if (values != null) {
-            for(int ivalues=0;ivalues<values.length;ivalues++) {
-                addChild(values[ivalues]);
+            for(PythonTree t : values) {
+                addChild(t);
             }
         }
     }
@@ -78,9 +80,9 @@ public class BoolOp extends exprType {
 
     public void traverse(VisitorIF visitor) throws Exception {
         if (values != null) {
-            for (int i = 0; i < values.length; i++) {
-                if (values[i] != null)
-                    values[i].accept(visitor);
+            for (PythonTree t : values) {
+                if (t != null)
+                    t.accept(visitor);
             }
         }
     }

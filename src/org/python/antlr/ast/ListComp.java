@@ -8,56 +8,58 @@ import java.io.IOException;
 
 public class ListComp extends exprType {
     public exprType elt;
-    public comprehensionType[] generators;
+    public java.util.List<comprehensionType> generators;
 
     private final static String[] fields = new String[] {"elt", "generators"};
     public String[] get_fields() { return fields; }
 
-    public ListComp(exprType elt, comprehensionType[] generators) {
+    public ListComp(exprType elt, java.util.List<comprehensionType> generators)
+    {
         this.elt = elt;
         addChild(elt);
         this.generators = generators;
         if (generators != null) {
-            for(int igenerators=0;igenerators<generators.length;igenerators++) {
-                addChild(generators[igenerators]);
+            for(PythonTree t : generators) {
+                addChild(t);
             }
         }
     }
 
-    public ListComp(Token token, exprType elt, comprehensionType[] generators) {
+    public ListComp(Token token, exprType elt,
+    java.util.List<comprehensionType> generators) {
         super(token);
         this.elt = elt;
         addChild(elt);
         this.generators = generators;
         if (generators != null) {
-            for(int igenerators=0;igenerators<generators.length;igenerators++) {
-                addChild(generators[igenerators]);
+            for(PythonTree t : generators) {
+                addChild(t);
             }
         }
     }
 
-    public ListComp(int ttype, Token token, exprType elt, comprehensionType[]
-    generators) {
+    public ListComp(int ttype, Token token, exprType elt,
+    java.util.List<comprehensionType> generators) {
         super(ttype, token);
         this.elt = elt;
         addChild(elt);
         this.generators = generators;
         if (generators != null) {
-            for(int igenerators=0;igenerators<generators.length;igenerators++) {
-                addChild(generators[igenerators]);
+            for(PythonTree t : generators) {
+                addChild(t);
             }
         }
     }
 
-    public ListComp(PythonTree tree, exprType elt, comprehensionType[]
-    generators) {
+    public ListComp(PythonTree tree, exprType elt,
+    java.util.List<comprehensionType> generators) {
         super(tree);
         this.elt = elt;
         addChild(elt);
         this.generators = generators;
         if (generators != null) {
-            for(int igenerators=0;igenerators<generators.length;igenerators++) {
-                addChild(generators[igenerators]);
+            for(PythonTree t : generators) {
+                addChild(t);
             }
         }
     }
@@ -86,9 +88,9 @@ public class ListComp extends exprType {
         if (elt != null)
             elt.accept(visitor);
         if (generators != null) {
-            for (int i = 0; i < generators.length; i++) {
-                if (generators[i] != null)
-                    generators[i].accept(visitor);
+            for (PythonTree t : generators) {
+                if (t != null)
+                    t.accept(visitor);
             }
         }
     }

@@ -7,72 +7,75 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class TryFinally extends stmtType {
-    public stmtType[] body;
-    public stmtType[] finalbody;
+    public java.util.List<stmtType> body;
+    public java.util.List<stmtType> finalbody;
 
     private final static String[] fields = new String[] {"body", "finalbody"};
     public String[] get_fields() { return fields; }
 
-    public TryFinally(stmtType[] body, stmtType[] finalbody) {
+    public TryFinally(java.util.List<stmtType> body, java.util.List<stmtType>
+    finalbody) {
         this.body = body;
         if (body != null) {
-            for(int ibody=0;ibody<body.length;ibody++) {
-                addChild(body[ibody]);
+            for(PythonTree t : body) {
+                addChild(t);
             }
         }
         this.finalbody = finalbody;
         if (finalbody != null) {
-            for(int ifinalbody=0;ifinalbody<finalbody.length;ifinalbody++) {
-                addChild(finalbody[ifinalbody]);
+            for(PythonTree t : finalbody) {
+                addChild(t);
             }
         }
     }
 
-    public TryFinally(Token token, stmtType[] body, stmtType[] finalbody) {
+    public TryFinally(Token token, java.util.List<stmtType> body,
+    java.util.List<stmtType> finalbody) {
         super(token);
         this.body = body;
         if (body != null) {
-            for(int ibody=0;ibody<body.length;ibody++) {
-                addChild(body[ibody]);
+            for(PythonTree t : body) {
+                addChild(t);
             }
         }
         this.finalbody = finalbody;
         if (finalbody != null) {
-            for(int ifinalbody=0;ifinalbody<finalbody.length;ifinalbody++) {
-                addChild(finalbody[ifinalbody]);
+            for(PythonTree t : finalbody) {
+                addChild(t);
             }
         }
     }
 
-    public TryFinally(int ttype, Token token, stmtType[] body, stmtType[]
-    finalbody) {
+    public TryFinally(int ttype, Token token, java.util.List<stmtType> body,
+    java.util.List<stmtType> finalbody) {
         super(ttype, token);
         this.body = body;
         if (body != null) {
-            for(int ibody=0;ibody<body.length;ibody++) {
-                addChild(body[ibody]);
+            for(PythonTree t : body) {
+                addChild(t);
             }
         }
         this.finalbody = finalbody;
         if (finalbody != null) {
-            for(int ifinalbody=0;ifinalbody<finalbody.length;ifinalbody++) {
-                addChild(finalbody[ifinalbody]);
+            for(PythonTree t : finalbody) {
+                addChild(t);
             }
         }
     }
 
-    public TryFinally(PythonTree tree, stmtType[] body, stmtType[] finalbody) {
+    public TryFinally(PythonTree tree, java.util.List<stmtType> body,
+    java.util.List<stmtType> finalbody) {
         super(tree);
         this.body = body;
         if (body != null) {
-            for(int ibody=0;ibody<body.length;ibody++) {
-                addChild(body[ibody]);
+            for(PythonTree t : body) {
+                addChild(t);
             }
         }
         this.finalbody = finalbody;
         if (finalbody != null) {
-            for(int ifinalbody=0;ifinalbody<finalbody.length;ifinalbody++) {
-                addChild(finalbody[ifinalbody]);
+            for(PythonTree t : finalbody) {
+                addChild(t);
             }
         }
     }
@@ -99,15 +102,15 @@ public class TryFinally extends stmtType {
 
     public void traverse(VisitorIF visitor) throws Exception {
         if (body != null) {
-            for (int i = 0; i < body.length; i++) {
-                if (body[i] != null)
-                    body[i].accept(visitor);
+            for (PythonTree t : body) {
+                if (t != null)
+                    t.accept(visitor);
             }
         }
         if (finalbody != null) {
-            for (int i = 0; i < finalbody.length; i++) {
-                if (finalbody[i] != null)
-                    finalbody[i].accept(visitor);
+            for (PythonTree t : finalbody) {
+                if (t != null)
+                    t.accept(visitor);
             }
         }
     }

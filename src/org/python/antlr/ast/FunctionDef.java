@@ -9,84 +9,84 @@ import java.io.IOException;
 public class FunctionDef extends stmtType {
     public String name;
     public argumentsType args;
-    public stmtType[] body;
-    public exprType[] decorators;
+    public java.util.List<stmtType> body;
+    public java.util.List<exprType> decorators;
 
     private final static String[] fields = new String[] {"name", "args",
                                                           "body", "decorators"};
     public String[] get_fields() { return fields; }
 
-    public FunctionDef(String name, argumentsType args, stmtType[] body,
-    exprType[] decorators) {
+    public FunctionDef(String name, argumentsType args,
+    java.util.List<stmtType> body, java.util.List<exprType> decorators) {
         this.name = name;
         this.args = args;
         this.body = body;
         if (body != null) {
-            for(int ibody=0;ibody<body.length;ibody++) {
-                addChild(body[ibody]);
+            for(PythonTree t : body) {
+                addChild(t);
             }
         }
         this.decorators = decorators;
         if (decorators != null) {
-            for(int idecorators=0;idecorators<decorators.length;idecorators++) {
-                addChild(decorators[idecorators]);
+            for(PythonTree t : decorators) {
+                addChild(t);
             }
         }
     }
 
-    public FunctionDef(Token token, String name, argumentsType args, stmtType[]
-    body, exprType[] decorators) {
+    public FunctionDef(Token token, String name, argumentsType args,
+    java.util.List<stmtType> body, java.util.List<exprType> decorators) {
         super(token);
         this.name = name;
         this.args = args;
         this.body = body;
         if (body != null) {
-            for(int ibody=0;ibody<body.length;ibody++) {
-                addChild(body[ibody]);
+            for(PythonTree t : body) {
+                addChild(t);
             }
         }
         this.decorators = decorators;
         if (decorators != null) {
-            for(int idecorators=0;idecorators<decorators.length;idecorators++) {
-                addChild(decorators[idecorators]);
+            for(PythonTree t : decorators) {
+                addChild(t);
             }
         }
     }
 
     public FunctionDef(int ttype, Token token, String name, argumentsType args,
-    stmtType[] body, exprType[] decorators) {
+    java.util.List<stmtType> body, java.util.List<exprType> decorators) {
         super(ttype, token);
         this.name = name;
         this.args = args;
         this.body = body;
         if (body != null) {
-            for(int ibody=0;ibody<body.length;ibody++) {
-                addChild(body[ibody]);
+            for(PythonTree t : body) {
+                addChild(t);
             }
         }
         this.decorators = decorators;
         if (decorators != null) {
-            for(int idecorators=0;idecorators<decorators.length;idecorators++) {
-                addChild(decorators[idecorators]);
+            for(PythonTree t : decorators) {
+                addChild(t);
             }
         }
     }
 
     public FunctionDef(PythonTree tree, String name, argumentsType args,
-    stmtType[] body, exprType[] decorators) {
+    java.util.List<stmtType> body, java.util.List<exprType> decorators) {
         super(tree);
         this.name = name;
         this.args = args;
         this.body = body;
         if (body != null) {
-            for(int ibody=0;ibody<body.length;ibody++) {
-                addChild(body[ibody]);
+            for(PythonTree t : body) {
+                addChild(t);
             }
         }
         this.decorators = decorators;
         if (decorators != null) {
-            for(int idecorators=0;idecorators<decorators.length;idecorators++) {
-                addChild(decorators[idecorators]);
+            for(PythonTree t : decorators) {
+                addChild(t);
             }
         }
     }
@@ -121,15 +121,15 @@ public class FunctionDef extends stmtType {
         if (args != null)
             args.accept(visitor);
         if (body != null) {
-            for (int i = 0; i < body.length; i++) {
-                if (body[i] != null)
-                    body[i].accept(visitor);
+            for (PythonTree t : body) {
+                if (t != null)
+                    t.accept(visitor);
             }
         }
         if (decorators != null) {
-            for (int i = 0; i < decorators.length; i++) {
-                if (decorators[i] != null)
-                    decorators[i].accept(visitor);
+            for (PythonTree t : decorators) {
+                if (t != null)
+                    t.accept(visitor);
             }
         }
     }

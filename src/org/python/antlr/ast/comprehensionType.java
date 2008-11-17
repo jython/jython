@@ -9,27 +9,28 @@ import java.io.IOException;
 public class comprehensionType extends PythonTree {
     public exprType target;
     public exprType iter;
-    public exprType[] ifs;
+    public java.util.List<exprType> ifs;
 
     private final static String[] fields = new String[] {"target", "iter",
                                                           "ifs"};
     public String[] get_fields() { return fields; }
 
-    public comprehensionType(exprType target, exprType iter, exprType[] ifs) {
+    public comprehensionType(exprType target, exprType iter,
+    java.util.List<exprType> ifs) {
         this.target = target;
         addChild(target);
         this.iter = iter;
         addChild(iter);
         this.ifs = ifs;
         if (ifs != null) {
-            for(int iifs=0;iifs<ifs.length;iifs++) {
-                addChild(ifs[iifs]);
+            for(PythonTree t : ifs) {
+                addChild(t);
             }
         }
     }
 
     public comprehensionType(Token token, exprType target, exprType iter,
-    exprType[] ifs) {
+    java.util.List<exprType> ifs) {
         super(token);
         this.target = target;
         addChild(target);
@@ -37,14 +38,14 @@ public class comprehensionType extends PythonTree {
         addChild(iter);
         this.ifs = ifs;
         if (ifs != null) {
-            for(int iifs=0;iifs<ifs.length;iifs++) {
-                addChild(ifs[iifs]);
+            for(PythonTree t : ifs) {
+                addChild(t);
             }
         }
     }
 
     public comprehensionType(int ttype, Token token, exprType target, exprType
-    iter, exprType[] ifs) {
+    iter, java.util.List<exprType> ifs) {
         super(ttype, token);
         this.target = target;
         addChild(target);
@@ -52,14 +53,14 @@ public class comprehensionType extends PythonTree {
         addChild(iter);
         this.ifs = ifs;
         if (ifs != null) {
-            for(int iifs=0;iifs<ifs.length;iifs++) {
-                addChild(ifs[iifs]);
+            for(PythonTree t : ifs) {
+                addChild(t);
             }
         }
     }
 
     public comprehensionType(PythonTree tree, exprType target, exprType iter,
-    exprType[] ifs) {
+    java.util.List<exprType> ifs) {
         super(tree);
         this.target = target;
         addChild(target);
@@ -67,8 +68,8 @@ public class comprehensionType extends PythonTree {
         addChild(iter);
         this.ifs = ifs;
         if (ifs != null) {
-            for(int iifs=0;iifs<ifs.length;iifs++) {
-                addChild(ifs[iifs]);
+            for(PythonTree t : ifs) {
+                addChild(t);
             }
         }
     }
@@ -103,9 +104,9 @@ public class comprehensionType extends PythonTree {
         if (iter != null)
             iter.accept(visitor);
         if (ifs != null) {
-            for (int i = 0; i < ifs.length; i++) {
-                if (ifs[i] != null)
-                    ifs[i].accept(visitor);
+            for (PythonTree t : ifs) {
+                if (t != null)
+                    t.accept(visitor);
             }
         }
     }

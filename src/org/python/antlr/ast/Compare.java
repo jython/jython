@@ -8,67 +8,64 @@ import java.io.IOException;
 
 public class Compare extends exprType {
     public exprType left;
-    public cmpopType[] ops;
-    public exprType[] comparators;
+    public java.util.List<cmpopType> ops;
+    public java.util.List<exprType> comparators;
 
     private final static String[] fields = new String[] {"left", "ops",
                                                           "comparators"};
     public String[] get_fields() { return fields; }
 
-    public Compare(exprType left, cmpopType[] ops, exprType[] comparators) {
+    public Compare(exprType left, java.util.List<cmpopType> ops,
+    java.util.List<exprType> comparators) {
         this.left = left;
         addChild(left);
         this.ops = ops;
         this.comparators = comparators;
         if (comparators != null) {
-            for(int
-            icomparators=0;icomparators<comparators.length;icomparators++) {
-                addChild(comparators[icomparators]);
+            for(PythonTree t : comparators) {
+                addChild(t);
             }
         }
     }
 
-    public Compare(Token token, exprType left, cmpopType[] ops, exprType[]
-    comparators) {
+    public Compare(Token token, exprType left, java.util.List<cmpopType> ops,
+    java.util.List<exprType> comparators) {
         super(token);
         this.left = left;
         addChild(left);
         this.ops = ops;
         this.comparators = comparators;
         if (comparators != null) {
-            for(int
-            icomparators=0;icomparators<comparators.length;icomparators++) {
-                addChild(comparators[icomparators]);
+            for(PythonTree t : comparators) {
+                addChild(t);
             }
         }
     }
 
-    public Compare(int ttype, Token token, exprType left, cmpopType[] ops,
-    exprType[] comparators) {
+    public Compare(int ttype, Token token, exprType left,
+    java.util.List<cmpopType> ops, java.util.List<exprType> comparators) {
         super(ttype, token);
         this.left = left;
         addChild(left);
         this.ops = ops;
         this.comparators = comparators;
         if (comparators != null) {
-            for(int
-            icomparators=0;icomparators<comparators.length;icomparators++) {
-                addChild(comparators[icomparators]);
+            for(PythonTree t : comparators) {
+                addChild(t);
             }
         }
     }
 
-    public Compare(PythonTree tree, exprType left, cmpopType[] ops, exprType[]
-    comparators) {
+    public Compare(PythonTree tree, exprType left, java.util.List<cmpopType>
+    ops, java.util.List<exprType> comparators) {
         super(tree);
         this.left = left;
         addChild(left);
         this.ops = ops;
         this.comparators = comparators;
         if (comparators != null) {
-            for(int
-            icomparators=0;icomparators<comparators.length;icomparators++) {
-                addChild(comparators[icomparators]);
+            for(PythonTree t : comparators) {
+                addChild(t);
             }
         }
     }
@@ -100,9 +97,9 @@ public class Compare extends exprType {
         if (left != null)
             left.accept(visitor);
         if (comparators != null) {
-            for (int i = 0; i < comparators.length; i++) {
-                if (comparators[i] != null)
-                    comparators[i].accept(visitor);
+            for (PythonTree t : comparators) {
+                if (t != null)
+                    t.accept(visitor);
             }
         }
     }

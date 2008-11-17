@@ -7,53 +7,56 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class Assign extends stmtType {
-    public exprType[] targets;
+    public java.util.List<exprType> targets;
     public exprType value;
 
     private final static String[] fields = new String[] {"targets", "value"};
     public String[] get_fields() { return fields; }
 
-    public Assign(exprType[] targets, exprType value) {
+    public Assign(java.util.List<exprType> targets, exprType value) {
         this.targets = targets;
         if (targets != null) {
-            for(int itargets=0;itargets<targets.length;itargets++) {
-                addChild(targets[itargets]);
+            for(PythonTree t : targets) {
+                addChild(t);
             }
         }
         this.value = value;
         addChild(value);
     }
 
-    public Assign(Token token, exprType[] targets, exprType value) {
+    public Assign(Token token, java.util.List<exprType> targets, exprType
+    value) {
         super(token);
         this.targets = targets;
         if (targets != null) {
-            for(int itargets=0;itargets<targets.length;itargets++) {
-                addChild(targets[itargets]);
+            for(PythonTree t : targets) {
+                addChild(t);
             }
         }
         this.value = value;
         addChild(value);
     }
 
-    public Assign(int ttype, Token token, exprType[] targets, exprType value) {
+    public Assign(int ttype, Token token, java.util.List<exprType> targets,
+    exprType value) {
         super(ttype, token);
         this.targets = targets;
         if (targets != null) {
-            for(int itargets=0;itargets<targets.length;itargets++) {
-                addChild(targets[itargets]);
+            for(PythonTree t : targets) {
+                addChild(t);
             }
         }
         this.value = value;
         addChild(value);
     }
 
-    public Assign(PythonTree tree, exprType[] targets, exprType value) {
+    public Assign(PythonTree tree, java.util.List<exprType> targets, exprType
+    value) {
         super(tree);
         this.targets = targets;
         if (targets != null) {
-            for(int itargets=0;itargets<targets.length;itargets++) {
-                addChild(targets[itargets]);
+            for(PythonTree t : targets) {
+                addChild(t);
             }
         }
         this.value = value;
@@ -82,9 +85,9 @@ public class Assign extends stmtType {
 
     public void traverse(VisitorIF visitor) throws Exception {
         if (targets != null) {
-            for (int i = 0; i < targets.length; i++) {
-                if (targets[i] != null)
-                    targets[i].accept(visitor);
+            for (PythonTree t : targets) {
+                if (t != null)
+                    t.accept(visitor);
             }
         }
         if (value != null)

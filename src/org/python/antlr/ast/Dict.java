@@ -7,71 +7,75 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class Dict extends exprType {
-    public exprType[] keys;
-    public exprType[] values;
+    public java.util.List<exprType> keys;
+    public java.util.List<exprType> values;
 
     private final static String[] fields = new String[] {"keys", "values"};
     public String[] get_fields() { return fields; }
 
-    public Dict(exprType[] keys, exprType[] values) {
+    public Dict(java.util.List<exprType> keys, java.util.List<exprType> values)
+    {
         this.keys = keys;
         if (keys != null) {
-            for(int ikeys=0;ikeys<keys.length;ikeys++) {
-                addChild(keys[ikeys]);
+            for(PythonTree t : keys) {
+                addChild(t);
             }
         }
         this.values = values;
         if (values != null) {
-            for(int ivalues=0;ivalues<values.length;ivalues++) {
-                addChild(values[ivalues]);
+            for(PythonTree t : values) {
+                addChild(t);
             }
         }
     }
 
-    public Dict(Token token, exprType[] keys, exprType[] values) {
+    public Dict(Token token, java.util.List<exprType> keys,
+    java.util.List<exprType> values) {
         super(token);
         this.keys = keys;
         if (keys != null) {
-            for(int ikeys=0;ikeys<keys.length;ikeys++) {
-                addChild(keys[ikeys]);
+            for(PythonTree t : keys) {
+                addChild(t);
             }
         }
         this.values = values;
         if (values != null) {
-            for(int ivalues=0;ivalues<values.length;ivalues++) {
-                addChild(values[ivalues]);
+            for(PythonTree t : values) {
+                addChild(t);
             }
         }
     }
 
-    public Dict(int ttype, Token token, exprType[] keys, exprType[] values) {
+    public Dict(int ttype, Token token, java.util.List<exprType> keys,
+    java.util.List<exprType> values) {
         super(ttype, token);
         this.keys = keys;
         if (keys != null) {
-            for(int ikeys=0;ikeys<keys.length;ikeys++) {
-                addChild(keys[ikeys]);
+            for(PythonTree t : keys) {
+                addChild(t);
             }
         }
         this.values = values;
         if (values != null) {
-            for(int ivalues=0;ivalues<values.length;ivalues++) {
-                addChild(values[ivalues]);
+            for(PythonTree t : values) {
+                addChild(t);
             }
         }
     }
 
-    public Dict(PythonTree tree, exprType[] keys, exprType[] values) {
+    public Dict(PythonTree tree, java.util.List<exprType> keys,
+    java.util.List<exprType> values) {
         super(tree);
         this.keys = keys;
         if (keys != null) {
-            for(int ikeys=0;ikeys<keys.length;ikeys++) {
-                addChild(keys[ikeys]);
+            for(PythonTree t : keys) {
+                addChild(t);
             }
         }
         this.values = values;
         if (values != null) {
-            for(int ivalues=0;ivalues<values.length;ivalues++) {
-                addChild(values[ivalues]);
+            for(PythonTree t : values) {
+                addChild(t);
             }
         }
     }
@@ -98,15 +102,15 @@ public class Dict extends exprType {
 
     public void traverse(VisitorIF visitor) throws Exception {
         if (keys != null) {
-            for (int i = 0; i < keys.length; i++) {
-                if (keys[i] != null)
-                    keys[i].accept(visitor);
+            for (PythonTree t : keys) {
+                if (t != null)
+                    t.accept(visitor);
             }
         }
         if (values != null) {
-            for (int i = 0; i < values.length; i++) {
-                if (values[i] != null)
-                    values[i].accept(visitor);
+            for (PythonTree t : values) {
+                if (t != null)
+                    t.accept(visitor);
             }
         }
     }

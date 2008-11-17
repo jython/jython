@@ -8,58 +8,59 @@ import java.io.IOException;
 
 public class ImportFrom extends stmtType {
     public String module;
-    public aliasType[] names;
+    public java.util.List<aliasType> names;
     public int level;
 
     private final static String[] fields = new String[] {"module", "names",
                                                           "level"};
     public String[] get_fields() { return fields; }
 
-    public ImportFrom(String module, aliasType[] names, int level) {
+    public ImportFrom(String module, java.util.List<aliasType> names, int
+    level) {
         this.module = module;
         this.names = names;
         if (names != null) {
-            for(int inames=0;inames<names.length;inames++) {
-                addChild(names[inames]);
+            for(PythonTree t : names) {
+                addChild(t);
             }
         }
         this.level = level;
     }
 
-    public ImportFrom(Token token, String module, aliasType[] names, int level)
-    {
+    public ImportFrom(Token token, String module, java.util.List<aliasType>
+    names, int level) {
         super(token);
         this.module = module;
         this.names = names;
         if (names != null) {
-            for(int inames=0;inames<names.length;inames++) {
-                addChild(names[inames]);
+            for(PythonTree t : names) {
+                addChild(t);
             }
         }
         this.level = level;
     }
 
-    public ImportFrom(int ttype, Token token, String module, aliasType[] names,
-    int level) {
+    public ImportFrom(int ttype, Token token, String module,
+    java.util.List<aliasType> names, int level) {
         super(ttype, token);
         this.module = module;
         this.names = names;
         if (names != null) {
-            for(int inames=0;inames<names.length;inames++) {
-                addChild(names[inames]);
+            for(PythonTree t : names) {
+                addChild(t);
             }
         }
         this.level = level;
     }
 
-    public ImportFrom(PythonTree tree, String module, aliasType[] names, int
-    level) {
+    public ImportFrom(PythonTree tree, String module, java.util.List<aliasType>
+    names, int level) {
         super(tree);
         this.module = module;
         this.names = names;
         if (names != null) {
-            for(int inames=0;inames<names.length;inames++) {
-                addChild(names[inames]);
+            for(PythonTree t : names) {
+                addChild(t);
             }
         }
         this.level = level;
@@ -90,9 +91,9 @@ public class ImportFrom extends stmtType {
 
     public void traverse(VisitorIF visitor) throws Exception {
         if (names != null) {
-            for (int i = 0; i < names.length; i++) {
-                if (names[i] != null)
-                    names[i].accept(visitor);
+            for (PythonTree t : names) {
+                if (t != null)
+                    t.accept(visitor);
             }
         }
     }

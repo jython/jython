@@ -8,105 +8,106 @@ import java.io.IOException;
 
 public class ClassDef extends stmtType {
     public String name;
-    public exprType[] bases;
-    public stmtType[] body;
-    public exprType[] decorators;
+    public java.util.List<exprType> bases;
+    public java.util.List<stmtType> body;
+    public java.util.List<exprType> decorators;
 
     private final static String[] fields = new String[] {"name", "bases",
                                                           "body", "decorators"};
     public String[] get_fields() { return fields; }
 
-    public ClassDef(String name, exprType[] bases, stmtType[] body, exprType[]
-    decorators) {
+    public ClassDef(String name, java.util.List<exprType> bases,
+    java.util.List<stmtType> body, java.util.List<exprType> decorators) {
         this.name = name;
         this.bases = bases;
         if (bases != null) {
-            for(int ibases=0;ibases<bases.length;ibases++) {
-                addChild(bases[ibases]);
+            for(PythonTree t : bases) {
+                addChild(t);
             }
         }
         this.body = body;
         if (body != null) {
-            for(int ibody=0;ibody<body.length;ibody++) {
-                addChild(body[ibody]);
+            for(PythonTree t : body) {
+                addChild(t);
             }
         }
         this.decorators = decorators;
         if (decorators != null) {
-            for(int idecorators=0;idecorators<decorators.length;idecorators++) {
-                addChild(decorators[idecorators]);
+            for(PythonTree t : decorators) {
+                addChild(t);
             }
         }
     }
 
-    public ClassDef(Token token, String name, exprType[] bases, stmtType[]
-    body, exprType[] decorators) {
+    public ClassDef(Token token, String name, java.util.List<exprType> bases,
+    java.util.List<stmtType> body, java.util.List<exprType> decorators) {
         super(token);
         this.name = name;
         this.bases = bases;
         if (bases != null) {
-            for(int ibases=0;ibases<bases.length;ibases++) {
-                addChild(bases[ibases]);
+            for(PythonTree t : bases) {
+                addChild(t);
             }
         }
         this.body = body;
         if (body != null) {
-            for(int ibody=0;ibody<body.length;ibody++) {
-                addChild(body[ibody]);
+            for(PythonTree t : body) {
+                addChild(t);
             }
         }
         this.decorators = decorators;
         if (decorators != null) {
-            for(int idecorators=0;idecorators<decorators.length;idecorators++) {
-                addChild(decorators[idecorators]);
+            for(PythonTree t : decorators) {
+                addChild(t);
             }
         }
     }
 
-    public ClassDef(int ttype, Token token, String name, exprType[] bases,
-    stmtType[] body, exprType[] decorators) {
+    public ClassDef(int ttype, Token token, String name,
+    java.util.List<exprType> bases, java.util.List<stmtType> body,
+    java.util.List<exprType> decorators) {
         super(ttype, token);
         this.name = name;
         this.bases = bases;
         if (bases != null) {
-            for(int ibases=0;ibases<bases.length;ibases++) {
-                addChild(bases[ibases]);
+            for(PythonTree t : bases) {
+                addChild(t);
             }
         }
         this.body = body;
         if (body != null) {
-            for(int ibody=0;ibody<body.length;ibody++) {
-                addChild(body[ibody]);
+            for(PythonTree t : body) {
+                addChild(t);
             }
         }
         this.decorators = decorators;
         if (decorators != null) {
-            for(int idecorators=0;idecorators<decorators.length;idecorators++) {
-                addChild(decorators[idecorators]);
+            for(PythonTree t : decorators) {
+                addChild(t);
             }
         }
     }
 
-    public ClassDef(PythonTree tree, String name, exprType[] bases, stmtType[]
-    body, exprType[] decorators) {
+    public ClassDef(PythonTree tree, String name, java.util.List<exprType>
+    bases, java.util.List<stmtType> body, java.util.List<exprType> decorators) {
         super(tree);
         this.name = name;
         this.bases = bases;
         if (bases != null) {
-            for(int ibases=0;ibases<bases.length;ibases++) {
-                addChild(bases[ibases]);
+            for(PythonTree t : bases) {
+                addChild(t);
             }
         }
         this.body = body;
         if (body != null) {
-            for(int ibody=0;ibody<body.length;ibody++) {
-                addChild(body[ibody]);
+            for(PythonTree t : body) {
+                addChild(t);
             }
         }
         this.decorators = decorators;
         if (decorators != null) {
-            for(int idecorators=0;idecorators<decorators.length;idecorators++) {
-                addChild(decorators[idecorators]);
+            for(PythonTree t : decorators) {
+                addChild(t);
             }
         }
     }
@@ -139,21 +140,21 @@ public class ClassDef extends stmtType {
 
     public void traverse(VisitorIF visitor) throws Exception {
         if (bases != null) {
-            for (int i = 0; i < bases.length; i++) {
-                if (bases[i] != null)
-                    bases[i].accept(visitor);
+            for (PythonTree t : bases) {
+                if (t != null)
+                    t.accept(visitor);
             }
         }
         if (body != null) {
-            for (int i = 0; i < body.length; i++) {
-                if (body[i] != null)
-                    body[i].accept(visitor);
+            for (PythonTree t : body) {
+                if (t != null)
+                    t.accept(visitor);
             }
         }
         if (decorators != null) {
-            for (int i = 0; i < decorators.length; i++) {
-                if (decorators[i] != null)
-                    decorators[i].accept(visitor);
+            for (PythonTree t : decorators) {
+                if (t != null)
+                    t.accept(visitor);
             }
         }
     }

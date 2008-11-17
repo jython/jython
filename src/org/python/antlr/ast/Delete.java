@@ -7,46 +7,46 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class Delete extends stmtType {
-    public exprType[] targets;
+    public java.util.List<exprType> targets;
 
     private final static String[] fields = new String[] {"targets"};
     public String[] get_fields() { return fields; }
 
-    public Delete(exprType[] targets) {
+    public Delete(java.util.List<exprType> targets) {
         this.targets = targets;
         if (targets != null) {
-            for(int itargets=0;itargets<targets.length;itargets++) {
-                addChild(targets[itargets]);
+            for(PythonTree t : targets) {
+                addChild(t);
             }
         }
     }
 
-    public Delete(Token token, exprType[] targets) {
+    public Delete(Token token, java.util.List<exprType> targets) {
         super(token);
         this.targets = targets;
         if (targets != null) {
-            for(int itargets=0;itargets<targets.length;itargets++) {
-                addChild(targets[itargets]);
+            for(PythonTree t : targets) {
+                addChild(t);
             }
         }
     }
 
-    public Delete(int ttype, Token token, exprType[] targets) {
+    public Delete(int ttype, Token token, java.util.List<exprType> targets) {
         super(ttype, token);
         this.targets = targets;
         if (targets != null) {
-            for(int itargets=0;itargets<targets.length;itargets++) {
-                addChild(targets[itargets]);
+            for(PythonTree t : targets) {
+                addChild(t);
             }
         }
     }
 
-    public Delete(PythonTree tree, exprType[] targets) {
+    public Delete(PythonTree tree, java.util.List<exprType> targets) {
         super(tree);
         this.targets = targets;
         if (targets != null) {
-            for(int itargets=0;itargets<targets.length;itargets++) {
-                addChild(targets[itargets]);
+            for(PythonTree t : targets) {
+                addChild(t);
             }
         }
     }
@@ -70,9 +70,9 @@ public class Delete extends stmtType {
 
     public void traverse(VisitorIF visitor) throws Exception {
         if (targets != null) {
-            for (int i = 0; i < targets.length; i++) {
-                if (targets[i] != null)
-                    targets[i].accept(visitor);
+            for (PythonTree t : targets) {
+                if (t != null)
+                    t.accept(visitor);
             }
         }
     }

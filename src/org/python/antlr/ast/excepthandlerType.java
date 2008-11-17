@@ -9,7 +9,7 @@ import java.io.IOException;
 public class excepthandlerType extends PythonTree {
     public exprType type;
     public exprType name;
-    public stmtType[] body;
+    public java.util.List<stmtType> body;
     public int lineno;
     public int col_offset;
 
@@ -18,16 +18,16 @@ public class excepthandlerType extends PythonTree {
                                                           "col_offset"};
     public String[] get_fields() { return fields; }
 
-    public excepthandlerType(exprType type, exprType name, stmtType[] body, int
-    lineno, int col_offset) {
+    public excepthandlerType(exprType type, exprType name,
+    java.util.List<stmtType> body, int lineno, int col_offset) {
         this.type = type;
         addChild(type);
         this.name = name;
         addChild(name);
         this.body = body;
         if (body != null) {
-            for(int ibody=0;ibody<body.length;ibody++) {
-                addChild(body[ibody]);
+            for(PythonTree t : body) {
+                addChild(t);
             }
         }
         this.lineno = lineno;
@@ -35,7 +35,7 @@ public class excepthandlerType extends PythonTree {
     }
 
     public excepthandlerType(Token token, exprType type, exprType name,
-    stmtType[] body, int lineno, int col_offset) {
+    java.util.List<stmtType> body, int lineno, int col_offset) {
         super(token);
         this.type = type;
         addChild(type);
@@ -43,8 +43,8 @@ public class excepthandlerType extends PythonTree {
         addChild(name);
         this.body = body;
         if (body != null) {
-            for(int ibody=0;ibody<body.length;ibody++) {
-                addChild(body[ibody]);
+            for(PythonTree t : body) {
+                addChild(t);
             }
         }
         this.lineno = lineno;
@@ -52,7 +52,7 @@ public class excepthandlerType extends PythonTree {
     }
 
     public excepthandlerType(int ttype, Token token, exprType type, exprType
-    name, stmtType[] body, int lineno, int col_offset) {
+    name, java.util.List<stmtType> body, int lineno, int col_offset) {
         super(ttype, token);
         this.type = type;
         addChild(type);
@@ -60,8 +60,8 @@ public class excepthandlerType extends PythonTree {
         addChild(name);
         this.body = body;
         if (body != null) {
-            for(int ibody=0;ibody<body.length;ibody++) {
-                addChild(body[ibody]);
+            for(PythonTree t : body) {
+                addChild(t);
             }
         }
         this.lineno = lineno;
@@ -69,7 +69,7 @@ public class excepthandlerType extends PythonTree {
     }
 
     public excepthandlerType(PythonTree tree, exprType type, exprType name,
-    stmtType[] body, int lineno, int col_offset) {
+    java.util.List<stmtType> body, int lineno, int col_offset) {
         super(tree);
         this.type = type;
         addChild(type);
@@ -77,8 +77,8 @@ public class excepthandlerType extends PythonTree {
         addChild(name);
         this.body = body;
         if (body != null) {
-            for(int ibody=0;ibody<body.length;ibody++) {
-                addChild(body[ibody]);
+            for(PythonTree t : body) {
+                addChild(t);
             }
         }
         this.lineno = lineno;
@@ -121,9 +121,9 @@ public class excepthandlerType extends PythonTree {
         if (name != null)
             name.accept(visitor);
         if (body != null) {
-            for (int i = 0; i < body.length; i++) {
-                if (body[i] != null)
-                    body[i].accept(visitor);
+            for (PythonTree t : body) {
+                if (t != null)
+                    t.accept(visitor);
             }
         }
     }

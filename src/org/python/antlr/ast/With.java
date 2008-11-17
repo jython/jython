@@ -9,29 +9,29 @@ import java.io.IOException;
 public class With extends stmtType {
     public exprType context_expr;
     public exprType optional_vars;
-    public stmtType[] body;
+    public java.util.List<stmtType> body;
 
     private final static String[] fields = new String[] {"context_expr",
                                                           "optional_vars",
                                                           "body"};
     public String[] get_fields() { return fields; }
 
-    public With(exprType context_expr, exprType optional_vars, stmtType[] body)
-    {
+    public With(exprType context_expr, exprType optional_vars,
+    java.util.List<stmtType> body) {
         this.context_expr = context_expr;
         addChild(context_expr);
         this.optional_vars = optional_vars;
         addChild(optional_vars);
         this.body = body;
         if (body != null) {
-            for(int ibody=0;ibody<body.length;ibody++) {
-                addChild(body[ibody]);
+            for(PythonTree t : body) {
+                addChild(t);
             }
         }
     }
 
     public With(Token token, exprType context_expr, exprType optional_vars,
-    stmtType[] body) {
+    java.util.List<stmtType> body) {
         super(token);
         this.context_expr = context_expr;
         addChild(context_expr);
@@ -39,14 +39,14 @@ public class With extends stmtType {
         addChild(optional_vars);
         this.body = body;
         if (body != null) {
-            for(int ibody=0;ibody<body.length;ibody++) {
-                addChild(body[ibody]);
+            for(PythonTree t : body) {
+                addChild(t);
             }
         }
     }
 
     public With(int ttype, Token token, exprType context_expr, exprType
-    optional_vars, stmtType[] body) {
+    optional_vars, java.util.List<stmtType> body) {
         super(ttype, token);
         this.context_expr = context_expr;
         addChild(context_expr);
@@ -54,14 +54,14 @@ public class With extends stmtType {
         addChild(optional_vars);
         this.body = body;
         if (body != null) {
-            for(int ibody=0;ibody<body.length;ibody++) {
-                addChild(body[ibody]);
+            for(PythonTree t : body) {
+                addChild(t);
             }
         }
     }
 
     public With(PythonTree tree, exprType context_expr, exprType optional_vars,
-    stmtType[] body) {
+    java.util.List<stmtType> body) {
         super(tree);
         this.context_expr = context_expr;
         addChild(context_expr);
@@ -69,8 +69,8 @@ public class With extends stmtType {
         addChild(optional_vars);
         this.body = body;
         if (body != null) {
-            for(int ibody=0;ibody<body.length;ibody++) {
-                addChild(body[ibody]);
+            for(PythonTree t : body) {
+                addChild(t);
             }
         }
     }
@@ -104,9 +104,9 @@ public class With extends stmtType {
         if (optional_vars != null)
             optional_vars.accept(visitor);
         if (body != null) {
-            for (int i = 0; i < body.length; i++) {
-                if (body[i] != null)
-                    body[i].accept(visitor);
+            for (PythonTree t : body) {
+                if (t != null)
+                    t.accept(visitor);
             }
         }
     }

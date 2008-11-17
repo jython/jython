@@ -7,46 +7,46 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class Import extends stmtType {
-    public aliasType[] names;
+    public java.util.List<aliasType> names;
 
     private final static String[] fields = new String[] {"names"};
     public String[] get_fields() { return fields; }
 
-    public Import(aliasType[] names) {
+    public Import(java.util.List<aliasType> names) {
         this.names = names;
         if (names != null) {
-            for(int inames=0;inames<names.length;inames++) {
-                addChild(names[inames]);
+            for(PythonTree t : names) {
+                addChild(t);
             }
         }
     }
 
-    public Import(Token token, aliasType[] names) {
+    public Import(Token token, java.util.List<aliasType> names) {
         super(token);
         this.names = names;
         if (names != null) {
-            for(int inames=0;inames<names.length;inames++) {
-                addChild(names[inames]);
+            for(PythonTree t : names) {
+                addChild(t);
             }
         }
     }
 
-    public Import(int ttype, Token token, aliasType[] names) {
+    public Import(int ttype, Token token, java.util.List<aliasType> names) {
         super(ttype, token);
         this.names = names;
         if (names != null) {
-            for(int inames=0;inames<names.length;inames++) {
-                addChild(names[inames]);
+            for(PythonTree t : names) {
+                addChild(t);
             }
         }
     }
 
-    public Import(PythonTree tree, aliasType[] names) {
+    public Import(PythonTree tree, java.util.List<aliasType> names) {
         super(tree);
         this.names = names;
         if (names != null) {
-            for(int inames=0;inames<names.length;inames++) {
-                addChild(names[inames]);
+            for(PythonTree t : names) {
+                addChild(t);
             }
         }
     }
@@ -70,9 +70,9 @@ public class Import extends stmtType {
 
     public void traverse(VisitorIF visitor) throws Exception {
         if (names != null) {
-            for (int i = 0; i < names.length; i++) {
-                if (names[i] != null)
-                    names[i].accept(visitor);
+            for (PythonTree t : names) {
+                if (t != null)
+                    t.accept(visitor);
             }
         }
     }

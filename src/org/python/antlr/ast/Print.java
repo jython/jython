@@ -8,61 +8,62 @@ import java.io.IOException;
 
 public class Print extends stmtType {
     public exprType dest;
-    public exprType[] values;
+    public java.util.List<exprType> values;
     public boolean nl;
 
     private final static String[] fields = new String[] {"dest", "values",
                                                           "nl"};
     public String[] get_fields() { return fields; }
 
-    public Print(exprType dest, exprType[] values, boolean nl) {
+    public Print(exprType dest, java.util.List<exprType> values, boolean nl) {
         this.dest = dest;
         addChild(dest);
         this.values = values;
         if (values != null) {
-            for(int ivalues=0;ivalues<values.length;ivalues++) {
-                addChild(values[ivalues]);
+            for(PythonTree t : values) {
+                addChild(t);
             }
         }
         this.nl = nl;
     }
 
-    public Print(Token token, exprType dest, exprType[] values, boolean nl) {
+    public Print(Token token, exprType dest, java.util.List<exprType> values,
+    boolean nl) {
         super(token);
         this.dest = dest;
         addChild(dest);
         this.values = values;
         if (values != null) {
-            for(int ivalues=0;ivalues<values.length;ivalues++) {
-                addChild(values[ivalues]);
+            for(PythonTree t : values) {
+                addChild(t);
             }
         }
         this.nl = nl;
     }
 
-    public Print(int ttype, Token token, exprType dest, exprType[] values,
-    boolean nl) {
+    public Print(int ttype, Token token, exprType dest,
+    java.util.List<exprType> values, boolean nl) {
         super(ttype, token);
         this.dest = dest;
         addChild(dest);
         this.values = values;
         if (values != null) {
-            for(int ivalues=0;ivalues<values.length;ivalues++) {
-                addChild(values[ivalues]);
+            for(PythonTree t : values) {
+                addChild(t);
             }
         }
         this.nl = nl;
     }
 
-    public Print(PythonTree tree, exprType dest, exprType[] values, boolean nl)
-    {
+    public Print(PythonTree tree, exprType dest, java.util.List<exprType>
+    values, boolean nl) {
         super(tree);
         this.dest = dest;
         addChild(dest);
         this.values = values;
         if (values != null) {
-            for(int ivalues=0;ivalues<values.length;ivalues++) {
-                addChild(values[ivalues]);
+            for(PythonTree t : values) {
+                addChild(t);
             }
         }
         this.nl = nl;
@@ -95,9 +96,9 @@ public class Print extends stmtType {
         if (dest != null)
             dest.accept(visitor);
         if (values != null) {
-            for (int i = 0; i < values.length; i++) {
-                if (values[i] != null)
-                    values[i].accept(visitor);
+            for (PythonTree t : values) {
+                if (t != null)
+                    t.accept(visitor);
             }
         }
     }

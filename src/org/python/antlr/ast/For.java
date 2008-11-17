@@ -9,35 +9,35 @@ import java.io.IOException;
 public class For extends stmtType {
     public exprType target;
     public exprType iter;
-    public stmtType[] body;
-    public stmtType[] orelse;
+    public java.util.List<stmtType> body;
+    public java.util.List<stmtType> orelse;
 
     private final static String[] fields = new String[] {"target", "iter",
                                                           "body", "orelse"};
     public String[] get_fields() { return fields; }
 
-    public For(exprType target, exprType iter, stmtType[] body, stmtType[]
-    orelse) {
+    public For(exprType target, exprType iter, java.util.List<stmtType> body,
+    java.util.List<stmtType> orelse) {
         this.target = target;
         addChild(target);
         this.iter = iter;
         addChild(iter);
         this.body = body;
         if (body != null) {
-            for(int ibody=0;ibody<body.length;ibody++) {
-                addChild(body[ibody]);
+            for(PythonTree t : body) {
+                addChild(t);
             }
         }
         this.orelse = orelse;
         if (orelse != null) {
-            for(int iorelse=0;iorelse<orelse.length;iorelse++) {
-                addChild(orelse[iorelse]);
+            for(PythonTree t : orelse) {
+                addChild(t);
             }
         }
     }
 
-    public For(Token token, exprType target, exprType iter, stmtType[] body,
-    stmtType[] orelse) {
+    public For(Token token, exprType target, exprType iter,
+    java.util.List<stmtType> body, java.util.List<stmtType> orelse) {
         super(token);
         this.target = target;
         addChild(target);
@@ -45,20 +45,20 @@ public class For extends stmtType {
         addChild(iter);
         this.body = body;
         if (body != null) {
-            for(int ibody=0;ibody<body.length;ibody++) {
-                addChild(body[ibody]);
+            for(PythonTree t : body) {
+                addChild(t);
             }
         }
         this.orelse = orelse;
         if (orelse != null) {
-            for(int iorelse=0;iorelse<orelse.length;iorelse++) {
-                addChild(orelse[iorelse]);
+            for(PythonTree t : orelse) {
+                addChild(t);
             }
         }
     }
 
     public For(int ttype, Token token, exprType target, exprType iter,
-    stmtType[] body, stmtType[] orelse) {
+    java.util.List<stmtType> body, java.util.List<stmtType> orelse) {
         super(ttype, token);
         this.target = target;
         addChild(target);
@@ -66,20 +66,20 @@ public class For extends stmtType {
         addChild(iter);
         this.body = body;
         if (body != null) {
-            for(int ibody=0;ibody<body.length;ibody++) {
-                addChild(body[ibody]);
+            for(PythonTree t : body) {
+                addChild(t);
             }
         }
         this.orelse = orelse;
         if (orelse != null) {
-            for(int iorelse=0;iorelse<orelse.length;iorelse++) {
-                addChild(orelse[iorelse]);
+            for(PythonTree t : orelse) {
+                addChild(t);
             }
         }
     }
 
-    public For(PythonTree tree, exprType target, exprType iter, stmtType[]
-    body, stmtType[] orelse) {
+    public For(PythonTree tree, exprType target, exprType iter,
+    java.util.List<stmtType> body, java.util.List<stmtType> orelse) {
         super(tree);
         this.target = target;
         addChild(target);
@@ -87,14 +87,14 @@ public class For extends stmtType {
         addChild(iter);
         this.body = body;
         if (body != null) {
-            for(int ibody=0;ibody<body.length;ibody++) {
-                addChild(body[ibody]);
+            for(PythonTree t : body) {
+                addChild(t);
             }
         }
         this.orelse = orelse;
         if (orelse != null) {
-            for(int iorelse=0;iorelse<orelse.length;iorelse++) {
-                addChild(orelse[iorelse]);
+            for(PythonTree t : orelse) {
+                addChild(t);
             }
         }
     }
@@ -131,15 +131,15 @@ public class For extends stmtType {
         if (iter != null)
             iter.accept(visitor);
         if (body != null) {
-            for (int i = 0; i < body.length; i++) {
-                if (body[i] != null)
-                    body[i].accept(visitor);
+            for (PythonTree t : body) {
+                if (t != null)
+                    t.accept(visitor);
             }
         }
         if (orelse != null) {
-            for (int i = 0; i < orelse.length; i++) {
-                if (orelse[i] != null)
-                    orelse[i].accept(visitor);
+            for (PythonTree t : orelse) {
+                if (t != null)
+                    t.accept(visitor);
             }
         }
     }

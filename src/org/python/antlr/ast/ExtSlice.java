@@ -7,46 +7,46 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class ExtSlice extends sliceType {
-    public sliceType[] dims;
+    public java.util.List<sliceType> dims;
 
     private final static String[] fields = new String[] {"dims"};
     public String[] get_fields() { return fields; }
 
-    public ExtSlice(sliceType[] dims) {
+    public ExtSlice(java.util.List<sliceType> dims) {
         this.dims = dims;
         if (dims != null) {
-            for(int idims=0;idims<dims.length;idims++) {
-                addChild(dims[idims]);
+            for(PythonTree t : dims) {
+                addChild(t);
             }
         }
     }
 
-    public ExtSlice(Token token, sliceType[] dims) {
+    public ExtSlice(Token token, java.util.List<sliceType> dims) {
         super(token);
         this.dims = dims;
         if (dims != null) {
-            for(int idims=0;idims<dims.length;idims++) {
-                addChild(dims[idims]);
+            for(PythonTree t : dims) {
+                addChild(t);
             }
         }
     }
 
-    public ExtSlice(int ttype, Token token, sliceType[] dims) {
+    public ExtSlice(int ttype, Token token, java.util.List<sliceType> dims) {
         super(ttype, token);
         this.dims = dims;
         if (dims != null) {
-            for(int idims=0;idims<dims.length;idims++) {
-                addChild(dims[idims]);
+            for(PythonTree t : dims) {
+                addChild(t);
             }
         }
     }
 
-    public ExtSlice(PythonTree tree, sliceType[] dims) {
+    public ExtSlice(PythonTree tree, java.util.List<sliceType> dims) {
         super(tree);
         this.dims = dims;
         if (dims != null) {
-            for(int idims=0;idims<dims.length;idims++) {
-                addChild(dims[idims]);
+            for(PythonTree t : dims) {
+                addChild(t);
             }
         }
     }
@@ -70,9 +70,9 @@ public class ExtSlice extends sliceType {
 
     public void traverse(VisitorIF visitor) throws Exception {
         if (dims != null) {
-            for (int i = 0; i < dims.length; i++) {
-                if (dims[i] != null)
-                    dims[i].accept(visitor);
+            for (PythonTree t : dims) {
+                if (t != null)
+                    t.accept(visitor);
             }
         }
     }
