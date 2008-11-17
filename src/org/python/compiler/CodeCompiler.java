@@ -4,6 +4,8 @@ package org.python.compiler;
 
 import java.io.IOException;
 import java.util.Hashtable;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Stack;
 import java.util.Vector;
@@ -60,6 +62,7 @@ import org.python.antlr.ast.UnaryOp;
 import org.python.antlr.ast.While;
 import org.python.antlr.ast.With;
 import org.python.antlr.ast.Yield;
+import org.python.antlr.ast.aliasType;
 import org.python.antlr.ast.cmpopType;
 import org.python.antlr.ast.comprehensionType;
 import org.python.antlr.ast.excepthandlerType;
@@ -294,13 +297,13 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
     public Object visitModule(org.python.antlr.ast.Module suite)
         throws Exception
     {
-        if (suite.body.length > 0 &&
-            suite.body[0] instanceof Expr &&
-            ((Expr)suite.body[0]).value instanceof Str)
+        if (suite.body.size() > 0 &&
+            suite.body.get(0) instanceof Expr &&
+            ((Expr)suite.body.get(0)).value instanceof Str)
         {
             loadFrame();
             code.ldc("__doc__");
-            visit(((Expr) suite.body[0]).value);
+            visit(((Expr) suite.body.get(0)).value);
             code.invokevirtual("org/python/core/PyFrame", "setglobal", "(" +$str + $pyObj + ")V");
         }
         if (module.setFile) {
@@ -322,13 +325,13 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         return visitReturn(new Return(node, node.body), true);
     }
 
-    public int makeArray(PythonTree[] nodes) throws Exception {
+    public int makeArray(java.util.List<? extends PythonTree> nodes) throws Exception {
         int n;
 
         if (nodes == null)
             n = 0;
         else
-            n = nodes.length;
+            n = nodes.size();
 
         int array = code.getLocal("[Lorg/python/core/PyObject;");
         if (n == 0) {
@@ -340,7 +343,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
             code.astore(array);
 
             for(int i=0; i<n; i++) {
-                visit(nodes[i]);
+                visit(nodes.get(i));
                 code.aload(array);
                 code.swap();
                 code.iconst(i);
@@ -351,11 +354,11 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         return array;
     }
 
-    public void getDocString(stmtType[] suite) throws Exception {
-        if (suite.length > 0 && suite[0] instanceof Expr &&
-            ((Expr) suite[0]).value instanceof Str)
+    public void getDocString(java.util.List<stmtType> suite) throws Exception {
+        if (suite.size() > 0 && suite.get(0) instanceof Expr &&
+            ((Expr) suite.get(0)).value instanceof Str)
         {
-            visit(((Expr) suite[0]).value);
+            visit(((Expr) suite.get(0)).value);
         } else {
             code.aconst_null();
         }
@@ -426,11 +429,13 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         return null;
     }
 
-    private void doDecorators(stmtType node, exprType[] decs, String name) throws Exception {
-        if (decs.length > 0) {
+    private void doDecorators(stmtType node, java.util.List<exprType> decs, String name) throws Exception {
+        if (decs.size() > 0) {
             exprType currentExpr = new Name(node, name, expr_contextType.Load);
-            for (int i=decs.length - 1;i > -1;i--) {
-                currentExpr = new Call(node, decs[i], new exprType[]{currentExpr}, new keywordType[0], null, null);
+            for (int i=decs.size() - 1;i > -1;i--) {
+                java.util.List args = new ArrayList();
+                args.add(currentExpr);
+                currentExpr = new Call(node, decs.get(i), args, new ArrayList<keywordType>(), null, null);
             }
             visit(currentExpr);
             set(new Name(node, name, expr_contextType.Store));
@@ -454,8 +459,8 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
     public Object visitAssign(Assign node) throws Exception  {
         setline(node);
         visit(node.value);
-        if (node.targets.length == 1) {
-            set(node.targets[0]);
+        if (node.targets.size() == 1) {
+            set(node.targets.get(0));
         } else {
             int tmp = storeTop();
             for (exprType target : node.targets) {
@@ -475,7 +480,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
             visit(node.dest);
             tmp = storeTop();
         }
-        if (node.values == null || node.values.length == 0) {
+        if (node.values == null || node.values.size() == 0) {
             if (node.dest != null) {
                 code.aload(tmp);
                 code.invokestatic("org/python/core/Py", "printlnv", "(" + $pyObj + ")V");
@@ -483,18 +488,18 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
                 code.invokestatic("org/python/core/Py", "println", "()V");
             }
         } else {
-            for (int i = 0; i < node.values.length; i++) {
+            for (int i = 0; i < node.values.size(); i++) {
                 if (node.dest != null) {
                     code.aload(tmp);
-                    visit(node.values[i]);
-                    if (node.nl && i == node.values.length - 1) {
+                    visit(node.values.get(i));
+                    if (node.nl && i == node.values.size() - 1) {
                         code.invokestatic("org/python/core/Py", "println", "(" + $pyObj + $pyObj + ")V");
                     } else {
                         code.invokestatic("org/python/core/Py", "printComma", "(" + $pyObj + $pyObj + ")V");
                     }
                 } else {
-                    visit(node.values[i]);
-                    if (node.nl && i == node.values.length - 1) {
+                    visit(node.values.get(i));
+                    if (node.nl && i == node.values.size() - 1) {
                         code.invokestatic("org/python/core/Py", "println", "(" + $pyObj + ")V");
                     } else {
                         code.invokestatic("org/python/core/Py", "printComma", "(" + $pyObj + ")V");
@@ -786,16 +791,16 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
     @Override
     public Object visitImport(Import node) throws Exception {
         setline(node);
-        for (int i = 0; i < node.names.length; i++) {
+        for (aliasType alias : node.names) {
             String asname = null;
-            if (node.names[i].asname != null) {
-                String name = node.names[i].name;
-                asname = node.names[i].asname;
+            if (alias.asname != null) {
+                String name = alias.name;
+                asname = alias.asname;
                 code.ldc(name);
                 loadFrame();
                 code.invokestatic("org/python/core/imp", "importOneAs", "(" + $str + $pyFrame + ")" + $pyObj);
             } else {
-                String name = node.names[i].name;
+                String name = alias.name;
                 asname = name;
                 if (asname.indexOf('.') > 0)
                     asname = asname.substring(0, asname.indexOf('.'));
@@ -803,7 +808,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
                 loadFrame();
                 code.invokestatic("org/python/core/imp", "importOne", "(" + $str + $pyFrame + ")" + $pyObj);
             }
-            set(new Name(node.names[i], asname, expr_contextType.Store));
+            set(new Name(alias, asname, expr_contextType.Store));
         }
         return null;
     }
@@ -814,8 +819,10 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         Future.checkFromFuture(node); // future stmt support
         setline(node);
         code.ldc(node.module);
-        //Note: parser does not allow node.names.length == 0
-        if (node.names.length == 1 && node.names[0].name.equals("*")) {
+        java.util.List<aliasType> names = node.names;
+        if (names == null || names.size() == 0) {
+            throw new ParseException("Internel parser error", node);
+        } else if (names.size() == 1 && names.get(0).name.equals("*")) {
             if (node.level > 0) {
                 throw new ParseException("'import *' not allowed with 'from .'", node);
             }
@@ -839,15 +846,15 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
             loadFrame();
             code.invokestatic("org/python/core/imp", "importAll", "(" + $str + $pyFrame + ")V");
         } else {
-            String[] fromNames = new String[node.names.length];
-            String[] asnames = new String[node.names.length];
-            for (int i = 0; i < node.names.length; i++) {
-                fromNames[i] = node.names[i].name;
-                asnames[i] = node.names[i].asname;
-                if (asnames[i] == null)
-                    asnames[i] = fromNames[i];
+            java.util.List<String> fromNames = new ArrayList<String>();//[names.size()];
+            java.util.List<String> asnames = new ArrayList<String>();//[names.size()];
+            for (int i = 0; i < names.size(); i++) {
+                fromNames.add(names.get(i).name);
+                asnames.add(names.get(i).asname);
+                if (asnames.get(i) == null)
+                    asnames.set(i, fromNames.get(i));
             }
-            int strArray = makeStrings(code, fromNames, fromNames.length);
+            int strArray = makeStrings(code, fromNames);
             code.aload(strArray);
             code.freeLocal(strArray);
 
@@ -864,11 +871,11 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
             }
             code.invokestatic("org/python/core/imp", "importFrom", "(" + $str + $strArr + $pyFrame + "I" + ")" + $pyObjArr);
             int tmp = storeTop();
-            for (int i = 0; i < node.names.length; i++) {
+            for (int i = 0; i < names.size(); i++) {
                 code.aload(tmp);
                 code.iconst(i);
                 code.aaload();
-                set(new Name(node.names[i], asnames[i], expr_contextType.Store));
+                set(new Name(names.get(i), asnames.get(i), expr_contextType.Store));
             }
             code.freeLocal(tmp);
         }
@@ -1122,8 +1129,8 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
                               TryExcept node, int index)
         throws Exception
     {
-        for (int i = 0; i < node.handlers.length; i++) {
-            excepthandlerType handler = node.handlers[i];
+        for (int i = 0; i < node.handlers.size(); i++) {
+            excepthandlerType handler = node.handlers.get(i);
 
             //setline(name);
             Label end_of_self = new Label();
@@ -1135,7 +1142,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
                 code.invokestatic("org/python/core/Py", "matchException", "(" + $pyExc + $pyObj + ")Z");
                 code.ifeq(end_of_self);
             } else {
-                if (i != node.handlers.length-1) {
+                if (i != node.handlers.size()-1) {
                     throw new ParseException(
                         "default 'except:' must be last", handler);
                 }
@@ -1312,10 +1319,9 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         return suite(node.body);
     }
 
-    public Object suite(stmtType[] stmts) throws Exception {
-        int n = stmts.length;
-        for(int i = 0; i < n; i++) {
-            Object exit = visit(stmts[i]);
+    public Object suite(java.util.List<stmtType> stmts) throws Exception {
+        for(stmtType s: stmts) {
+            Object exit = visit(s);
             if (exit != null)
                 return Exit;
         }
@@ -1325,8 +1331,8 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
     @Override
     public Object visitBoolOp(BoolOp node) throws Exception {
         Label end = new Label();
-        visit(node.values[0]);
-        for (int i = 1; i < node.values.length; i++) {
+        visit(node.values.get(0));
+        for (int i = 1; i < node.values.size(); i++) {
             code.dup();
             code.invokevirtual("org/python/core/PyObject", "__nonzero__", "()Z");
             switch (node.op) {
@@ -1338,7 +1344,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
                 break;
             }
             code.pop();
-            visit(node.values[i]);
+            visit(node.values.get(i));
         }
         code.label(end);
         return null;
@@ -1354,24 +1360,24 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         visit(node.left);
         code.astore(last);
 
-        int n = node.ops.length;
+        int n = node.ops.size();
         for(int i = 0; i < n - 1; i++) {
-            visit(node.comparators[i]);
+            visit(node.comparators.get(i));
             code.aload(last);
             code.swap();
             code.dup();
             code.astore(last);
-            visitCmpop(node.ops[i]);
+            visitCmpop(node.ops.get(i));
             code.dup();
             code.astore(result);
             code.invokevirtual("org/python/core/PyObject", "__nonzero__", "()Z");
             code.ifeq(end);
         }
 
-        visit(node.comparators[n-1]);
+        visit(node.comparators.get(n-1));
         code.aload(last);
         code.swap();
-        visitCmpop(node.ops[n-1]);
+        visitCmpop(node.ops.get(n-1));
 
         if (n > 1) {
             code.astore(result);
@@ -1488,23 +1494,32 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
     }
 
 
-    public static int makeStrings(Code c, String[] names, int n)
+    public static int makeStrings(Code c, Collection<String> names)
         throws IOException
     {
-        c.iconst(n);
+        int n = 0;
+        if (names != null) {
+            c.iconst(names.size());
+        } else {
+            c.iconst_0();
+        }
         c.anewarray("java/lang/String");
         int strings = c.getLocal("[Ljava/lang/String;");
         c.astore(strings);
-        for (int i=0; i<n; i++) {
-            c.aload(strings);
-            c.iconst(i);
-            c.ldc(names[i]);
-            c.aastore();
+        if (names != null) {
+            int i = 0;
+            for (String name : names) {
+                c.aload(strings);
+                c.iconst(i);
+                c.ldc(name);
+                c.aastore();
+                i++;
+            }
         }
         return strings;
     }
     
-    public Object invokeNoKeywords(Attribute node, PythonTree[] values)
+    public Object invokeNoKeywords(Attribute node, java.util.List<exprType> values)
         throws Exception
     {
         String name = getName(node.attr);
@@ -1512,34 +1527,34 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         code.ldc(name);
         code.invokevirtual("org/python/core/PyObject", "__getattr__", "(" + $str + ")" + $pyObj);
 
-        switch (values.length) {
+        switch (values.size()) {
         case 0:
             stackConsume(); // target
             code.invokevirtual("org/python/core/PyObject", "__call__", "()" + $pyObj);
             break;
         case 1:
-            visit(values[0]);
+            visit(values.get(0));
             stackConsume(); // target
             code.invokevirtual("org/python/core/PyObject", "__call__", "(" + $pyObj + ")" + $pyObj);
             break;
         case 2:
-            visit(values[0]); stackProduce();
-            visit(values[1]);
+            visit(values.get(0)); stackProduce();
+            visit(values.get(1));
             stackConsume(2); // target + arguments
             code.invokevirtual("org/python/core/PyObject", "__call__", "(" + $pyObj + $pyObj + ")" + $pyObj);
             break;
         case 3:
-            visit(values[0]); stackProduce();
-            visit(values[1]); stackProduce();
-            visit(values[2]);
+            visit(values.get(0)); stackProduce();
+            visit(values.get(1)); stackProduce();
+            visit(values.get(2));
             stackConsume(3); // target + arguments
             code.invokevirtual("org/python/core/PyObject", "__call__", "(" + $pyObj + $pyObj + $pyObj + ")" + $pyObj);
             break;
         case 4:
-            visit(values[0]); stackProduce();
-            visit(values[1]); stackProduce();
-            visit(values[2]); stackProduce();
-            visit(values[3]);
+            visit(values.get(0)); stackProduce();
+            visit(values.get(1)); stackProduce();
+            visit(values.get(2)); stackProduce();
+            visit(values.get(3));
             stackConsume(4); // target + arguments
             code.invokevirtual("org/python/core/PyObject", "__call__", "(" + $pyObj + $pyObj + $pyObj + $pyObj + ")" + $pyObj);
             break;
@@ -1557,17 +1572,17 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
 
     @Override
     public Object visitCall(Call node) throws Exception {
-        String[] keys = new String[node.keywords.length];
-        exprType[] values = new exprType[node.args.length + keys.length];
-        for (int i = 0; i < node.args.length; i++) {
-            values[i] = node.args[i];
+        java.util.List<String> keys = new ArrayList<String>();//[node.keywords.size()];
+        java.util.List<exprType> values = new ArrayList<exprType>();//[node.args.size() + keys.size()];
+        for (int i = 0; i < node.args.size(); i++) {
+            values.add(node.args.get(i));
         }
-        for (int i = 0; i < node.keywords.length; i++) {
-            keys[i] = node.keywords[i].arg;
-            values[node.args.length + i] = node.keywords[i].value;
+        for (int i = 0; i < node.keywords.size(); i++) {
+            keys.add(node.keywords.get(i).arg);
+            values.add(node.keywords.get(i).value);
         }
 
-        if ((node.keywords == null || node.keywords.length == 0)&& node.starargs == null &&
+        if ((node.keywords == null || node.keywords.size() == 0)&& node.starargs == null &&
             node.kwargs == null && node.func instanceof Attribute)
         {
             return invokeNoKeywords((Attribute) node.func, values);
@@ -1577,7 +1592,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
 
         if (node.starargs != null || node.kwargs != null) {
             int argArray = makeArray(values);
-            int strArray = makeStrings(code, keys, keys.length);
+            int strArray = makeStrings(code, keys);
             if (node.starargs == null)
                 code.aconst_null();
             else
@@ -1599,9 +1614,9 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
             stackConsume(3); // target + starargs + kwargs
 
             code.invokevirtual("org/python/core/PyObject", "_callextra", "(" + $pyObjArr + $strArr + $pyObj + $pyObj + ")" + $pyObj);
-        } else if (keys.length > 0) {
+        } else if (keys.size() > 0) {
             int argArray = makeArray(values);
-            int strArray = makeStrings(code, keys, keys.length);
+            int strArray = makeStrings(code, keys);
             code.aload(argArray);
             code.aload(strArray);
             code.freeLocal(argArray);
@@ -1609,34 +1624,34 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
             stackConsume(); // target
             code.invokevirtual("org/python/core/PyObject", "__call__", "(" + $pyObjArr + $strArr + ")" + $pyObj);
         } else {
-            switch (values.length) {
+            switch (values.size()) {
             case 0:
                 stackConsume(); // target
                 code.invokevirtual("org/python/core/PyObject", "__call__", "()" + $pyObj);
                 break;
             case 1:
-                visit(values[0]);
+                visit(values.get(0));
                 stackConsume(); // target
                 code.invokevirtual("org/python/core/PyObject", "__call__", "(" + $pyObj + ")" + $pyObj);
                 break;
             case 2:
-                visit(values[0]); stackProduce();
-                visit(values[1]);
+                visit(values.get(0)); stackProduce();
+                visit(values.get(1));
                 stackConsume(2); // target + arguments
                 code.invokevirtual("org/python/core/PyObject", "__call__", "(" + $pyObj + $pyObj + ")" + $pyObj);
                 break;
             case 3:
-                visit(values[0]); stackProduce();
-                visit(values[1]); stackProduce();
-                visit(values[2]);
+                visit(values.get(0)); stackProduce();
+                visit(values.get(1)); stackProduce();
+                visit(values.get(2));
                 stackConsume(3); // target + arguments
                 code.invokevirtual("org/python/core/PyObject", "__call__", "(" + $pyObj + $pyObj + $pyObj + ")" + $pyObj);
                 break;
             case 4:
-                visit(values[0]); stackProduce();
-                visit(values[1]); stackProduce();
-                visit(values[2]); stackProduce();
-                visit(values[3]);
+                visit(values.get(0)); stackProduce();
+                visit(values.get(1)); stackProduce();
+                visit(values.get(2)); stackProduce();
+                visit(values.get(3));
                 stackConsume(4); // target + arguments
                 code.invokevirtual("org/python/core/PyObject", "__call__", "(" + $pyObj + $pyObj + $pyObj + $pyObj + ")" + $pyObj);
                 break;
@@ -1789,28 +1804,28 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         return null;
     }
 
-    public Object seqSet(exprType[] nodes) throws Exception {
+    public Object seqSet(java.util.List<exprType> nodes) throws Exception {
         code.aload(temporary);
-        code.iconst(nodes.length);
+        code.iconst(nodes.size());
         code.invokestatic("org/python/core/Py", "unpackSequence", "(" + $pyObj + "I)" + $pyObjArr);
 
         int tmp = code.getLocal("[org/python/core/PyObject");
         code.astore(tmp);
 
-        for (int i = 0; i < nodes.length; i++) {
+        for (int i = 0; i < nodes.size(); i++) {
             code.aload(tmp);
             code.iconst(i);
             code.aaload();
-            set(nodes[i]);
+            set(nodes.get(i));
         }
         code.freeLocal(tmp);
 
         return null;
     }
 
-    public Object seqDel(exprType[] nodes) throws Exception {
-        for (int i = 0; i < nodes.length; i++) {
-            visit(nodes[i]);
+    public Object seqDel(java.util.List<exprType> nodes) throws Exception {
+        for (exprType e: nodes) {
+            visit(e);
         }
         return null;
     }
@@ -1866,29 +1881,37 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
 
         set(new Name(node, tmp_append, expr_contextType.Store));
 
+        java.util.List<exprType> args = new ArrayList<exprType>();
+        args.add(node.elt);
         stmtType n = new Expr(node, new Call(node, new Name(node, tmp_append, expr_contextType.Load), 
-                                       new exprType[] { node.elt },
-                                       new keywordType[0], null, null));
+                                       args,
+                                       new ArrayList<keywordType>(), null, null));
 
-        for (int i = node.generators.length - 1; i >= 0; i--) {
-            comprehensionType lc = node.generators[i];
-            for (int j = lc.ifs.length - 1; j >= 0; j--) {
-                n = new If(lc.ifs[j], lc.ifs[j], new stmtType[] { n }, new stmtType[0]);
+        for (int i = node.generators.size() - 1; i >= 0; i--) {
+            comprehensionType lc = node.generators.get(i);
+            for (int j = lc.ifs.size() - 1; j >= 0; j--) {
+                java.util.List<stmtType> body = new ArrayList<stmtType>();
+                body.add(n);
+                n = new If(lc.ifs.get(j), lc.ifs.get(j), body, new ArrayList<stmtType>());
             }
-            n = new For(lc, lc.target, lc.iter, new stmtType[] { n }, new stmtType[0]);
+            java.util.List<stmtType> body = new ArrayList<stmtType>();
+            body.add(n);
+            n = new For(lc, lc.target, lc.iter, body, new ArrayList<stmtType>());
         }
         visit(n);
-        visit(new Delete(n, new exprType[] { new Name(n, tmp_append, expr_contextType.Del) }));
+        java.util.List<exprType> targets = new ArrayList<exprType>();
+        targets.add(new Name(n, tmp_append, expr_contextType.Del));
+        visit(new Delete(n, targets));
 
         return null;
     }
 
     @Override
     public Object visitDict(Dict node) throws Exception {
-        PythonTree[] elts = new PythonTree[node.keys.length * 2];
-        for (int i = 0; i < node.keys.length; i++) {
-            elts[i * 2] = node.keys[i];
-            elts[i * 2 + 1] = node.values[i];
+        java.util.List<PythonTree> elts = new ArrayList<PythonTree>();
+        for (int i = 0; i < node.keys.size(); i++) {
+            elts.add(node.keys.get(i));
+            elts.add(node.values.get(i));
         }
         int content = makeArray(elts);
         
@@ -1912,8 +1935,9 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         String name = "<lambda>";
 
         //Add a return node onto the outside of suite;
-        modType retSuite = new Suite(node, new stmtType[] {
-            new Return(node, node.body) });
+        java.util.List<stmtType> bod = new ArrayList<stmtType>();
+        bod.add(new Return(node, node.body));
+        modType retSuite = new Suite(node, bod);
 
         setline(node);
 
@@ -2172,7 +2196,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
 
         ScopeInfo scope = module.getScopeInfo(node);
 
-        int emptyArray = makeArray(new exprType[0]);
+        int emptyArray = makeArray(new ArrayList<exprType>());
         code.aload(emptyArray);
         code.freeLocal(emptyArray);
 
@@ -2182,20 +2206,26 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         stmtType n = new Expr(node, new Yield(node, node.elt));
 
         exprType iter = null;
-        for (int i = node.generators.length - 1; i >= 0; i--) {
-            comprehensionType comp = node.generators[i];
-            for (int j = comp.ifs.length - 1; j >= 0; j--) {
-                n = new If(comp.ifs[j], comp.ifs[j], new stmtType[] { n }, new stmtType[0]);
+        for (int i = node.generators.size() - 1; i >= 0; i--) {
+            comprehensionType comp = node.generators.get(i);
+            for (int j = comp.ifs.size() - 1; j >= 0; j--) {
+                java.util.List<stmtType> bod = new ArrayList<stmtType>();
+                bod.add(n);
+                n = new If(comp.ifs.get(j), comp.ifs.get(j), bod, new ArrayList<stmtType>());
             }
+            java.util.List<stmtType> bod = new ArrayList<stmtType>();
+            bod.add(n);
             if (i != 0) {
-                n = new For(comp, comp.target, comp.iter, new stmtType[] { n }, new stmtType[0]);
+                n = new For(comp, comp.target, comp.iter, bod, new ArrayList<stmtType>());
             } else {
-                n = new For(comp, comp.target, new Name(node, bound_exp, expr_contextType.Load), new stmtType[] { n }, new stmtType[0]);
+                n = new For(comp, comp.target, new Name(node, bound_exp, expr_contextType.Load), bod, new ArrayList<stmtType>());
                 iter = comp.iter;
             }
         }
 
-        module.PyCode(new Suite(node, new stmtType[]{n}), tmp_append, true,
+        java.util.List<stmtType> bod = new ArrayList<stmtType>();
+        bod.add(n);
+        module.PyCode(new Suite(node, bod), tmp_append, true,
                       className, false, false,
                       node.getLine(), scope, cflags).get(code);
 
@@ -2214,7 +2244,9 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         code.invokevirtual("org/python/core/PyObject", "__iter__", "()Lorg/python/core/PyObject;");
         code.invokevirtual("org/python/core/PyObject", "__call__", "(" + $pyObj + ")" + $pyObj);
 
-        visit(new Delete(n, new exprType[] { new Name(n, tmp_append, expr_contextType.Del) }));
+        java.util.List<exprType> targets = new ArrayList<exprType>();
+        targets.add(new Name(n, tmp_append, expr_contextType.Del));
+        visit(new Delete(n, targets));
 
         return null;
     }

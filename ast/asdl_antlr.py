@@ -292,16 +292,16 @@ class JavaVisitor(EmitVisitor):
         for f in fields:
             self.emit("this.%s = %s;" % (f.name, f.name), depth+1)
             fparg = self.fieldDef(f)
-            #if field.typedef and field.typedef.simple:
+
             not_simple = True
             if f.typedef is not None and f.typedef.simple:
                 not_simple = False
             #For now ignoring String -- will want to revisit
-            if not_simple and not fparg.startswith("String"):
+            if not_simple and fparg.find("String") == -1:
                 if f.seq:
                     self.emit("if (%s != null) {" % f.name, depth+1);
-                    self.emit("for(int i%(name)s=0;i%(name)s<%(name)s.length;i%(name)s++) {" % {"name":f.name}, depth+2)
-                    self.emit("addChild(%s[i%s]);" % (f.name, f.name), depth+3)
+                    self.emit("for(PythonTree t : %(name)s) {" % {"name":f.name}, depth+2)
+                    self.emit("addChild(t);", depth+3)
                     self.emit("}", depth+2)
                     self.emit("}", depth+1)
                 elif str(f.type) == "expr":
@@ -386,10 +386,10 @@ class JavaVisitor(EmitVisitor):
                 continue
             if f.seq:
                 self.emit('if (%s != null) {' % f.name, depth+1)
-                self.emit('for (int i = 0; i < %s.length; i++) {' % f.name,
+                self.emit('for (PythonTree t : %s) {' % f.name,
                         depth+2)
-                self.emit('if (%s[i] != null)' % f.name, depth+3)
-                self.emit('%s[i].accept(visitor);' % f.name, depth+4)
+                self.emit('if (t != null)', depth+3)
+                self.emit('t.accept(visitor);', depth+4)
                 self.emit('}', depth+2)
                 self.emit('}', depth+1)
             else:
@@ -415,8 +415,9 @@ class JavaVisitor(EmitVisitor):
         jtype = str(field.type)
         jtype = self.bltinnames.get(jtype, jtype + 'Type')
         name = field.name
-        seq = field.seq and "[]" or ""
-        return "%(jtype)s%(seq)s %(name)s" % locals()
+        if field.seq:
+            return "java.util.List<%(jtype)s> %(name)s" % locals()
+        return "%(jtype)s %(name)s" % locals()
 
 class VisitorVisitor(EmitVisitor):
     def __init__(self, dir):
