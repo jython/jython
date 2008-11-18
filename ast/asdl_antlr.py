@@ -412,12 +412,16 @@ class JavaVisitor(EmitVisitor):
     }
 
     def fieldDef(self, field):
+        jtype = self.javaType(field)
+        name = field.name
+        return "%s %s" % (jtype, name)
+
+    def javaType(self, field):
         jtype = str(field.type)
         jtype = self.bltinnames.get(jtype, jtype + 'Type')
-        name = field.name
         if field.seq:
-            return "java.util.List<%(jtype)s> %(name)s" % locals()
-        return "%(jtype)s %(name)s" % locals()
+            return "java.util.List<%s>" % jtype
+        return jtype
 
 class VisitorVisitor(EmitVisitor):
     def __init__(self, dir):
