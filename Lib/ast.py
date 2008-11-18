@@ -30,9 +30,9 @@ from _ast import *
 from _ast import __version__
 
 if sys.platform.startswith('java'):
-    import array
+    import java.util.List
 
-    ast_list = array.ArrayType
+    ast_list = java.util.List
         
     def get_class_name(t):
         result = t.__class__.__name__
