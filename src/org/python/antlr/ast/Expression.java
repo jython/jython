@@ -7,7 +7,14 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class Expression extends modType {
-    public exprType body;
+    private exprType body;
+    public exprType getBody() {
+        return body;
+    }
+    public void setBody(exprType body) {
+        this.body = body;
+    }
+
 
     private final static String[] fields = new String[] {"body"};
     public String[] get_fields() { return fields; }

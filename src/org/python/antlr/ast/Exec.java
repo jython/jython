@@ -7,9 +7,30 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class Exec extends stmtType {
-    public exprType body;
-    public exprType globals;
-    public exprType locals;
+    private exprType body;
+    public exprType getBody() {
+        return body;
+    }
+    public void setBody(exprType body) {
+        this.body = body;
+    }
+
+    private exprType globals;
+    public exprType getGlobals() {
+        return globals;
+    }
+    public void setGlobals(exprType globals) {
+        this.globals = globals;
+    }
+
+    private exprType locals;
+    public exprType getLocals() {
+        return locals;
+    }
+    public void setLocals(exprType locals) {
+        this.locals = locals;
+    }
+
 
     private final static String[] fields = new String[] {"body", "globals",
                                                           "locals"};

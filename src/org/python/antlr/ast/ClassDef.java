@@ -7,10 +7,38 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class ClassDef extends stmtType {
-    public String name;
-    public java.util.List<exprType> bases;
-    public java.util.List<stmtType> body;
-    public java.util.List<exprType> decorators;
+    private String name;
+    public String getName() {
+        return name;
+    }
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    private java.util.List<exprType> bases;
+    public java.util.List<exprType> getBases() {
+        return bases;
+    }
+    public void setBases(java.util.List<exprType> bases) {
+        this.bases = bases;
+    }
+
+    private java.util.List<stmtType> body;
+    public java.util.List<stmtType> getBody() {
+        return body;
+    }
+    public void setBody(java.util.List<stmtType> body) {
+        this.body = body;
+    }
+
+    private java.util.List<exprType> decorators;
+    public java.util.List<exprType> getDecorators() {
+        return decorators;
+    }
+    public void setDecorators(java.util.List<exprType> decorators) {
+        this.decorators = decorators;
+    }
+
 
     private final static String[] fields = new String[] {"name", "bases",
                                                           "body", "decorators"};

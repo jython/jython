@@ -29,7 +29,7 @@ module Python version "$Revision: 53731 $"
 	      | With(expr context_expr, expr? optional_vars, stmt* body)
 
 	      -- 'type' is a bad name
-	      | Raise(expr? type, expr? inst, expr? tback)
+	      | Raise(expr? excepttype, expr? inst, expr? tback)
 	      | TryExcept(stmt* body, excepthandler* handlers, stmt* orelse)
 	      | TryFinally(stmt* body, stmt* finalbody)
 	      | Assert(expr test, expr? msg)
@@ -102,7 +102,7 @@ module Python version "$Revision: 53731 $"
 	-- TODO(jhylton): Figure out if there is a better way to handle
 	--                lineno and col_offset fields, particularly when
         --                ast is exposed to Python.
-	excepthandler = (expr? type, expr? name, stmt* body, int lineno,
+	excepthandler = (expr? excepttype, expr? name, stmt* body, int lineno,
 	                 int col_offset)
 
 	arguments = (expr* args, identifier? vararg, 

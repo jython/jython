@@ -1189,16 +1189,16 @@ power returns [exprType etype]
                   }
                   if (o instanceof Call) {
                       Call c = (Call)o;
-                      c.func = $etype;
+                      c.setFunc($etype);
                       $etype = c;
                   } else if (o instanceof Subscript) {
                       Subscript c = (Subscript)o;
-                      c.value = $etype;
+                      c.setValue($etype);
                       $etype = c;
                   } else if (o instanceof Attribute) {
                       Attribute c = (Attribute)o;
                       c.setCharStartIndex($etype.getCharStartIndex());
-                      c.value = $etype;
+                      c.setValue($etype);
                       $etype = c;
                   }
               }

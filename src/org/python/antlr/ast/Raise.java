@@ -7,49 +7,71 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class Raise extends stmtType {
-    public exprType type;
-    public exprType inst;
-    public exprType tback;
+    private exprType excepttype;
+    public exprType getExcepttype() {
+        return excepttype;
+    }
+    public void setExcepttype(exprType excepttype) {
+        this.excepttype = excepttype;
+    }
 
-    private final static String[] fields = new String[] {"type", "inst",
+    private exprType inst;
+    public exprType getInst() {
+        return inst;
+    }
+    public void setInst(exprType inst) {
+        this.inst = inst;
+    }
+
+    private exprType tback;
+    public exprType getTback() {
+        return tback;
+    }
+    public void setTback(exprType tback) {
+        this.tback = tback;
+    }
+
+
+    private final static String[] fields = new String[] {"excepttype", "inst",
                                                           "tback"};
     public String[] get_fields() { return fields; }
 
-    public Raise(exprType type, exprType inst, exprType tback) {
-        this.type = type;
-        addChild(type);
+    public Raise(exprType excepttype, exprType inst, exprType tback) {
+        this.excepttype = excepttype;
+        addChild(excepttype);
         this.inst = inst;
         addChild(inst);
         this.tback = tback;
         addChild(tback);
     }
 
-    public Raise(Token token, exprType type, exprType inst, exprType tback) {
-        super(token);
-        this.type = type;
-        addChild(type);
-        this.inst = inst;
-        addChild(inst);
-        this.tback = tback;
-        addChild(tback);
-    }
-
-    public Raise(int ttype, Token token, exprType type, exprType inst, exprType
+    public Raise(Token token, exprType excepttype, exprType inst, exprType
     tback) {
-        super(ttype, token);
-        this.type = type;
-        addChild(type);
+        super(token);
+        this.excepttype = excepttype;
+        addChild(excepttype);
         this.inst = inst;
         addChild(inst);
         this.tback = tback;
         addChild(tback);
     }
 
-    public Raise(PythonTree tree, exprType type, exprType inst, exprType tback)
-    {
+    public Raise(int ttype, Token token, exprType excepttype, exprType inst,
+    exprType tback) {
+        super(ttype, token);
+        this.excepttype = excepttype;
+        addChild(excepttype);
+        this.inst = inst;
+        addChild(inst);
+        this.tback = tback;
+        addChild(tback);
+    }
+
+    public Raise(PythonTree tree, exprType excepttype, exprType inst, exprType
+    tback) {
         super(tree);
-        this.type = type;
-        addChild(type);
+        this.excepttype = excepttype;
+        addChild(excepttype);
         this.inst = inst;
         addChild(inst);
         this.tback = tback;
@@ -62,8 +84,8 @@ public class Raise extends stmtType {
 
     public String toStringTree() {
         StringBuffer sb = new StringBuffer("Raise(");
-        sb.append("type=");
-        sb.append(dumpThis(type));
+        sb.append("excepttype=");
+        sb.append(dumpThis(excepttype));
         sb.append(",");
         sb.append("inst=");
         sb.append(dumpThis(inst));
@@ -80,8 +102,8 @@ public class Raise extends stmtType {
     }
 
     public void traverse(VisitorIF visitor) throws Exception {
-        if (type != null)
-            type.accept(visitor);
+        if (excepttype != null)
+            excepttype.accept(visitor);
         if (inst != null)
             inst.accept(visitor);
         if (tback != null)

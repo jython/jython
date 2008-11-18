@@ -7,8 +7,22 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class Assert extends stmtType {
-    public exprType test;
-    public exprType msg;
+    private exprType test;
+    public exprType getTest() {
+        return test;
+    }
+    public void setTest(exprType test) {
+        this.test = test;
+    }
+
+    private exprType msg;
+    public exprType getMsg() {
+        return msg;
+    }
+    public void setMsg(exprType msg) {
+        this.msg = msg;
+    }
+
 
     private final static String[] fields = new String[] {"test", "msg"};
     public String[] get_fields() { return fields; }

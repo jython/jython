@@ -7,9 +7,30 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class Subscript extends exprType implements Context {
-    public exprType value;
-    public sliceType slice;
-    public expr_contextType ctx;
+    private exprType value;
+    public exprType getValue() {
+        return value;
+    }
+    public void setValue(exprType value) {
+        this.value = value;
+    }
+
+    private sliceType slice;
+    public sliceType getSlice() {
+        return slice;
+    }
+    public void setSlice(sliceType slice) {
+        this.slice = slice;
+    }
+
+    private expr_contextType ctx;
+    public expr_contextType getCtx() {
+        return ctx;
+    }
+    public void setCtx(expr_contextType ctx) {
+        this.ctx = ctx;
+    }
+
 
     private final static String[] fields = new String[] {"value", "slice",
                                                           "ctx"};

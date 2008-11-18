@@ -7,7 +7,14 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class Str extends exprType {
-    public Object s;
+    private Object s;
+    public Object getS() {
+        return s;
+    }
+    public void setS(Object s) {
+        this.s = s;
+    }
+
 
     private final static String[] fields = new String[] {"s"};
     public String[] get_fields() { return fields; }

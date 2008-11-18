@@ -7,7 +7,14 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class ExtSlice extends sliceType {
-    public java.util.List<sliceType> dims;
+    private java.util.List<sliceType> dims;
+    public java.util.List<sliceType> getDims() {
+        return dims;
+    }
+    public void setDims(java.util.List<sliceType> dims) {
+        this.dims = dims;
+    }
+
 
     private final static String[] fields = new String[] {"dims"};
     public String[] get_fields() { return fields; }

@@ -7,8 +7,22 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class List extends exprType implements Context {
-    public java.util.List<exprType> elts;
-    public expr_contextType ctx;
+    private java.util.List<exprType> elts;
+    public java.util.List<exprType> getElts() {
+        return elts;
+    }
+    public void setElts(java.util.List<exprType> elts) {
+        this.elts = elts;
+    }
+
+    private expr_contextType ctx;
+    public expr_contextType getCtx() {
+        return ctx;
+    }
+    public void setCtx(expr_contextType ctx) {
+        this.ctx = ctx;
+    }
+
 
     private final static String[] fields = new String[] {"elts", "ctx"};
     public String[] get_fields() { return fields; }

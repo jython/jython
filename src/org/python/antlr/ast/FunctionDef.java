@@ -7,10 +7,38 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class FunctionDef extends stmtType {
-    public String name;
-    public argumentsType args;
-    public java.util.List<stmtType> body;
-    public java.util.List<exprType> decorators;
+    private String name;
+    public String getName() {
+        return name;
+    }
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    private argumentsType args;
+    public argumentsType getArgs() {
+        return args;
+    }
+    public void setArgs(argumentsType args) {
+        this.args = args;
+    }
+
+    private java.util.List<stmtType> body;
+    public java.util.List<stmtType> getBody() {
+        return body;
+    }
+    public void setBody(java.util.List<stmtType> body) {
+        this.body = body;
+    }
+
+    private java.util.List<exprType> decorators;
+    public java.util.List<exprType> getDecorators() {
+        return decorators;
+    }
+    public void setDecorators(java.util.List<exprType> decorators) {
+        this.decorators = decorators;
+    }
+
 
     private final static String[] fields = new String[] {"name", "args",
                                                           "body", "decorators"};

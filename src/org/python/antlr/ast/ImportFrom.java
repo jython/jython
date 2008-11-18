@@ -7,9 +7,30 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class ImportFrom extends stmtType {
-    public String module;
-    public java.util.List<aliasType> names;
-    public int level;
+    private String module;
+    public String getModule() {
+        return module;
+    }
+    public void setModule(String module) {
+        this.module = module;
+    }
+
+    private java.util.List<aliasType> names;
+    public java.util.List<aliasType> getNames() {
+        return names;
+    }
+    public void setNames(java.util.List<aliasType> names) {
+        this.names = names;
+    }
+
+    private int level;
+    public int getLevel() {
+        return level;
+    }
+    public void setLevel(int level) {
+        this.level = level;
+    }
+
 
     private final static String[] fields = new String[] {"module", "names",
                                                           "level"};

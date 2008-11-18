@@ -7,9 +7,30 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class Print extends stmtType {
-    public exprType dest;
-    public java.util.List<exprType> values;
-    public boolean nl;
+    private exprType dest;
+    public exprType getDest() {
+        return dest;
+    }
+    public void setDest(exprType dest) {
+        this.dest = dest;
+    }
+
+    private java.util.List<exprType> values;
+    public java.util.List<exprType> getValues() {
+        return values;
+    }
+    public void setValues(java.util.List<exprType> values) {
+        this.values = values;
+    }
+
+    private boolean nl;
+    public boolean getNl() {
+        return nl;
+    }
+    public void setNl(boolean nl) {
+        this.nl = nl;
+    }
+
 
     private final static String[] fields = new String[] {"dest", "values",
                                                           "nl"};

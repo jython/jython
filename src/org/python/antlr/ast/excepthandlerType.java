@@ -7,21 +7,56 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class excepthandlerType extends PythonTree {
-    public exprType type;
-    public exprType name;
-    public java.util.List<stmtType> body;
-    public int lineno;
-    public int col_offset;
+    private exprType excepttype;
+    public exprType getExcepttype() {
+        return excepttype;
+    }
+    public void setExcepttype(exprType excepttype) {
+        this.excepttype = excepttype;
+    }
 
-    private final static String[] fields = new String[] {"type", "name",
+    private exprType name;
+    public exprType getName() {
+        return name;
+    }
+    public void setName(exprType name) {
+        this.name = name;
+    }
+
+    private java.util.List<stmtType> body;
+    public java.util.List<stmtType> getBody() {
+        return body;
+    }
+    public void setBody(java.util.List<stmtType> body) {
+        this.body = body;
+    }
+
+    private int lineno;
+    public int getLineno() {
+        return lineno;
+    }
+    public void setLineno(int lineno) {
+        this.lineno = lineno;
+    }
+
+    private int col_offset;
+    public int getCol_offset() {
+        return col_offset;
+    }
+    public void setCol_offset(int col_offset) {
+        this.col_offset = col_offset;
+    }
+
+
+    private final static String[] fields = new String[] {"excepttype", "name",
                                                           "body", "lineno",
                                                           "col_offset"};
     public String[] get_fields() { return fields; }
 
-    public excepthandlerType(exprType type, exprType name,
+    public excepthandlerType(exprType excepttype, exprType name,
     java.util.List<stmtType> body, int lineno, int col_offset) {
-        this.type = type;
-        addChild(type);
+        this.excepttype = excepttype;
+        addChild(excepttype);
         this.name = name;
         addChild(name);
         this.body = body;
@@ -34,11 +69,11 @@ public class excepthandlerType extends PythonTree {
         this.col_offset = col_offset;
     }
 
-    public excepthandlerType(Token token, exprType type, exprType name,
+    public excepthandlerType(Token token, exprType excepttype, exprType name,
     java.util.List<stmtType> body, int lineno, int col_offset) {
         super(token);
-        this.type = type;
-        addChild(type);
+        this.excepttype = excepttype;
+        addChild(excepttype);
         this.name = name;
         addChild(name);
         this.body = body;
@@ -51,11 +86,11 @@ public class excepthandlerType extends PythonTree {
         this.col_offset = col_offset;
     }
 
-    public excepthandlerType(int ttype, Token token, exprType type, exprType
-    name, java.util.List<stmtType> body, int lineno, int col_offset) {
+    public excepthandlerType(int ttype, Token token, exprType excepttype,
+    exprType name, java.util.List<stmtType> body, int lineno, int col_offset) {
         super(ttype, token);
-        this.type = type;
-        addChild(type);
+        this.excepttype = excepttype;
+        addChild(excepttype);
         this.name = name;
         addChild(name);
         this.body = body;
@@ -68,11 +103,11 @@ public class excepthandlerType extends PythonTree {
         this.col_offset = col_offset;
     }
 
-    public excepthandlerType(PythonTree tree, exprType type, exprType name,
-    java.util.List<stmtType> body, int lineno, int col_offset) {
+    public excepthandlerType(PythonTree tree, exprType excepttype, exprType
+    name, java.util.List<stmtType> body, int lineno, int col_offset) {
         super(tree);
-        this.type = type;
-        addChild(type);
+        this.excepttype = excepttype;
+        addChild(excepttype);
         this.name = name;
         addChild(name);
         this.body = body;
@@ -91,8 +126,8 @@ public class excepthandlerType extends PythonTree {
 
     public String toStringTree() {
         StringBuffer sb = new StringBuffer("excepthandler(");
-        sb.append("type=");
-        sb.append(dumpThis(type));
+        sb.append("excepttype=");
+        sb.append(dumpThis(excepttype));
         sb.append(",");
         sb.append("name=");
         sb.append(dumpThis(name));
@@ -116,8 +151,8 @@ public class excepthandlerType extends PythonTree {
     }
 
     public void traverse(VisitorIF visitor) throws Exception {
-        if (type != null)
-            type.accept(visitor);
+        if (excepttype != null)
+            excepttype.accept(visitor);
         if (name != null)
             name.accept(visitor);
         if (body != null) {

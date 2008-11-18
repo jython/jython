@@ -7,9 +7,30 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class Compare extends exprType {
-    public exprType left;
-    public java.util.List<cmpopType> ops;
-    public java.util.List<exprType> comparators;
+    private exprType left;
+    public exprType getLeft() {
+        return left;
+    }
+    public void setLeft(exprType left) {
+        this.left = left;
+    }
+
+    private java.util.List<cmpopType> ops;
+    public java.util.List<cmpopType> getOps() {
+        return ops;
+    }
+    public void setOps(java.util.List<cmpopType> ops) {
+        this.ops = ops;
+    }
+
+    private java.util.List<exprType> comparators;
+    public java.util.List<exprType> getComparators() {
+        return comparators;
+    }
+    public void setComparators(java.util.List<exprType> comparators) {
+        this.comparators = comparators;
+    }
+
 
     private final static String[] fields = new String[] {"left", "ops",
                                                           "comparators"};

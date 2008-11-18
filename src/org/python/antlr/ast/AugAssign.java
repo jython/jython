@@ -7,9 +7,30 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class AugAssign extends stmtType {
-    public exprType target;
-    public operatorType op;
-    public exprType value;
+    private exprType target;
+    public exprType getTarget() {
+        return target;
+    }
+    public void setTarget(exprType target) {
+        this.target = target;
+    }
+
+    private operatorType op;
+    public operatorType getOp() {
+        return op;
+    }
+    public void setOp(operatorType op) {
+        this.op = op;
+    }
+
+    private exprType value;
+    public exprType getValue() {
+        return value;
+    }
+    public void setValue(exprType value) {
+        this.value = value;
+    }
+
 
     private final static String[] fields = new String[] {"target", "op",
                                                           "value"};

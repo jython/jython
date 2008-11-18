@@ -7,7 +7,14 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class Repr extends exprType {
-    public exprType value;
+    private exprType value;
+    public exprType getValue() {
+        return value;
+    }
+    public void setValue(exprType value) {
+        this.value = value;
+    }
+
 
     private final static String[] fields = new String[] {"value"};
     public String[] get_fields() { return fields; }

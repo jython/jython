@@ -7,9 +7,30 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class Attribute extends exprType implements Context {
-    public exprType value;
-    public String attr;
-    public expr_contextType ctx;
+    private exprType value;
+    public exprType getValue() {
+        return value;
+    }
+    public void setValue(exprType value) {
+        this.value = value;
+    }
+
+    private String attr;
+    public String getAttr() {
+        return attr;
+    }
+    public void setAttr(String attr) {
+        this.attr = attr;
+    }
+
+    private expr_contextType ctx;
+    public expr_contextType getCtx() {
+        return ctx;
+    }
+    public void setCtx(expr_contextType ctx) {
+        this.ctx = ctx;
+    }
+
 
     private final static String[] fields = new String[] {"value", "attr",
                                                           "ctx"};

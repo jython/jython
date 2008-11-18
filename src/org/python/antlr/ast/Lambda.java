@@ -7,8 +7,22 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class Lambda extends exprType {
-    public argumentsType args;
-    public exprType body;
+    private argumentsType args;
+    public argumentsType getArgs() {
+        return args;
+    }
+    public void setArgs(argumentsType args) {
+        this.args = args;
+    }
+
+    private exprType body;
+    public exprType getBody() {
+        return body;
+    }
+    public void setBody(exprType body) {
+        this.body = body;
+    }
+
 
     private final static String[] fields = new String[] {"args", "body"};
     public String[] get_fields() { return fields; }

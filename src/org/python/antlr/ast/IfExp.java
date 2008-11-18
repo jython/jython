@@ -7,9 +7,30 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class IfExp extends exprType {
-    public exprType test;
-    public exprType body;
-    public exprType orelse;
+    private exprType test;
+    public exprType getTest() {
+        return test;
+    }
+    public void setTest(exprType test) {
+        this.test = test;
+    }
+
+    private exprType body;
+    public exprType getBody() {
+        return body;
+    }
+    public void setBody(exprType body) {
+        this.body = body;
+    }
+
+    private exprType orelse;
+    public exprType getOrelse() {
+        return orelse;
+    }
+    public void setOrelse(exprType orelse) {
+        this.orelse = orelse;
+    }
+
 
     private final static String[] fields = new String[] {"test", "body",
                                                           "orelse"};

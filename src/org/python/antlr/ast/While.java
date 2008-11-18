@@ -7,9 +7,30 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class While extends stmtType {
-    public exprType test;
-    public java.util.List<stmtType> body;
-    public java.util.List<stmtType> orelse;
+    private exprType test;
+    public exprType getTest() {
+        return test;
+    }
+    public void setTest(exprType test) {
+        this.test = test;
+    }
+
+    private java.util.List<stmtType> body;
+    public java.util.List<stmtType> getBody() {
+        return body;
+    }
+    public void setBody(java.util.List<stmtType> body) {
+        this.body = body;
+    }
+
+    private java.util.List<stmtType> orelse;
+    public java.util.List<stmtType> getOrelse() {
+        return orelse;
+    }
+    public void setOrelse(java.util.List<stmtType> orelse) {
+        this.orelse = orelse;
+    }
+
 
     private final static String[] fields = new String[] {"test", "body",
                                                           "orelse"};

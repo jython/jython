@@ -7,8 +7,22 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class aliasType extends PythonTree {
-    public String name;
-    public String asname;
+    private String name;
+    public String getName() {
+        return name;
+    }
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    private String asname;
+    public String getAsname() {
+        return asname;
+    }
+    public void setAsname(String asname) {
+        this.asname = asname;
+    }
+
 
     private final static String[] fields = new String[] {"name", "asname"};
     public String[] get_fields() { return fields; }

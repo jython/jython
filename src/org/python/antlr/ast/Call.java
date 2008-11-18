@@ -7,11 +7,46 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class Call extends exprType {
-    public exprType func;
-    public java.util.List<exprType> args;
-    public java.util.List<keywordType> keywords;
-    public exprType starargs;
-    public exprType kwargs;
+    private exprType func;
+    public exprType getFunc() {
+        return func;
+    }
+    public void setFunc(exprType func) {
+        this.func = func;
+    }
+
+    private java.util.List<exprType> args;
+    public java.util.List<exprType> getArgs() {
+        return args;
+    }
+    public void setArgs(java.util.List<exprType> args) {
+        this.args = args;
+    }
+
+    private java.util.List<keywordType> keywords;
+    public java.util.List<keywordType> getKeywords() {
+        return keywords;
+    }
+    public void setKeywords(java.util.List<keywordType> keywords) {
+        this.keywords = keywords;
+    }
+
+    private exprType starargs;
+    public exprType getStarargs() {
+        return starargs;
+    }
+    public void setStarargs(exprType starargs) {
+        this.starargs = starargs;
+    }
+
+    private exprType kwargs;
+    public exprType getKwargs() {
+        return kwargs;
+    }
+    public void setKwargs(exprType kwargs) {
+        this.kwargs = kwargs;
+    }
+
 
     private final static String[] fields = new String[] {"func", "args",
                                                           "keywords",

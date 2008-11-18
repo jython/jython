@@ -7,9 +7,30 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class With extends stmtType {
-    public exprType context_expr;
-    public exprType optional_vars;
-    public java.util.List<stmtType> body;
+    private exprType context_expr;
+    public exprType getContext_expr() {
+        return context_expr;
+    }
+    public void setContext_expr(exprType context_expr) {
+        this.context_expr = context_expr;
+    }
+
+    private exprType optional_vars;
+    public exprType getOptional_vars() {
+        return optional_vars;
+    }
+    public void setOptional_vars(exprType optional_vars) {
+        this.optional_vars = optional_vars;
+    }
+
+    private java.util.List<stmtType> body;
+    public java.util.List<stmtType> getBody() {
+        return body;
+    }
+    public void setBody(java.util.List<stmtType> body) {
+        this.body = body;
+    }
+
 
     private final static String[] fields = new String[] {"context_expr",
                                                           "optional_vars",

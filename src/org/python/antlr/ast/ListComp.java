@@ -7,8 +7,22 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class ListComp extends exprType {
-    public exprType elt;
-    public java.util.List<comprehensionType> generators;
+    private exprType elt;
+    public exprType getElt() {
+        return elt;
+    }
+    public void setElt(exprType elt) {
+        this.elt = elt;
+    }
+
+    private java.util.List<comprehensionType> generators;
+    public java.util.List<comprehensionType> getGenerators() {
+        return generators;
+    }
+    public void setGenerators(java.util.List<comprehensionType> generators) {
+        this.generators = generators;
+    }
+
 
     private final static String[] fields = new String[] {"elt", "generators"};
     public String[] get_fields() { return fields; }

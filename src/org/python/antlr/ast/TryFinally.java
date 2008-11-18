@@ -7,8 +7,22 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class TryFinally extends stmtType {
-    public java.util.List<stmtType> body;
-    public java.util.List<stmtType> finalbody;
+    private java.util.List<stmtType> body;
+    public java.util.List<stmtType> getBody() {
+        return body;
+    }
+    public void setBody(java.util.List<stmtType> body) {
+        this.body = body;
+    }
+
+    private java.util.List<stmtType> finalbody;
+    public java.util.List<stmtType> getFinalbody() {
+        return finalbody;
+    }
+    public void setFinalbody(java.util.List<stmtType> finalbody) {
+        this.finalbody = finalbody;
+    }
+
 
     private final static String[] fields = new String[] {"body", "finalbody"};
     public String[] get_fields() { return fields; }

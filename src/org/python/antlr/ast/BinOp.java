@@ -7,9 +7,30 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class BinOp extends exprType {
-    public exprType left;
-    public operatorType op;
-    public exprType right;
+    private exprType left;
+    public exprType getLeft() {
+        return left;
+    }
+    public void setLeft(exprType left) {
+        this.left = left;
+    }
+
+    private operatorType op;
+    public operatorType getOp() {
+        return op;
+    }
+    public void setOp(operatorType op) {
+        this.op = op;
+    }
+
+    private exprType right;
+    public exprType getRight() {
+        return right;
+    }
+    public void setRight(exprType right) {
+        this.right = right;
+    }
+
 
     private final static String[] fields = new String[] {"left", "op", "right"};
     public String[] get_fields() { return fields; }

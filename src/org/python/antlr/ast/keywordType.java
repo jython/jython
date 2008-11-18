@@ -7,8 +7,22 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class keywordType extends PythonTree {
-    public String arg;
-    public exprType value;
+    private String arg;
+    public String getArg() {
+        return arg;
+    }
+    public void setArg(String arg) {
+        this.arg = arg;
+    }
+
+    private exprType value;
+    public exprType getValue() {
+        return value;
+    }
+    public void setValue(exprType value) {
+        this.value = value;
+    }
+
 
     private final static String[] fields = new String[] {"arg", "value"};
     public String[] get_fields() { return fields; }

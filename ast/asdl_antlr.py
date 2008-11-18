@@ -399,7 +399,16 @@ class JavaVisitor(EmitVisitor):
         self.emit("", 0)
 
     def visitField(self, field, depth):
-        self.emit("public %s;" % self.fieldDef(field), depth)
+        self.emit("private %s;" % self.fieldDef(field), depth)
+        self.emit("public %s get%s() {" % (self.javaType(field),
+            str(field.name).capitalize()), depth)
+        self.emit("return %s;" % field.name, depth+1)
+        self.emit("}", depth)
+        self.emit("public void set%s(%s) {" % (str(field.name).capitalize(),
+            self.fieldDef(field)), depth)
+        self.emit("this.%s = %s;" % (field.name, field.name), depth+1)
+        self.emit("}", depth)
+        self.emit("", 0)
 
     bltinnames = {
         'int' : 'int',

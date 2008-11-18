@@ -7,8 +7,22 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class Assign extends stmtType {
-    public java.util.List<exprType> targets;
-    public exprType value;
+    private java.util.List<exprType> targets;
+    public java.util.List<exprType> getTargets() {
+        return targets;
+    }
+    public void setTargets(java.util.List<exprType> targets) {
+        this.targets = targets;
+    }
+
+    private exprType value;
+    public exprType getValue() {
+        return value;
+    }
+    public void setValue(exprType value) {
+        this.value = value;
+    }
+
 
     private final static String[] fields = new String[] {"targets", "value"};
     public String[] get_fields() { return fields; }

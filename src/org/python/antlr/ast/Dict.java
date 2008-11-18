@@ -7,8 +7,22 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class Dict extends exprType {
-    public java.util.List<exprType> keys;
-    public java.util.List<exprType> values;
+    private java.util.List<exprType> keys;
+    public java.util.List<exprType> getKeys() {
+        return keys;
+    }
+    public void setKeys(java.util.List<exprType> keys) {
+        this.keys = keys;
+    }
+
+    private java.util.List<exprType> values;
+    public java.util.List<exprType> getValues() {
+        return values;
+    }
+    public void setValues(java.util.List<exprType> values) {
+        this.values = values;
+    }
+
 
     private final static String[] fields = new String[] {"keys", "values"};
     public String[] get_fields() { return fields; }

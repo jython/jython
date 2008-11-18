@@ -7,9 +7,30 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class Slice extends sliceType {
-    public exprType lower;
-    public exprType upper;
-    public exprType step;
+    private exprType lower;
+    public exprType getLower() {
+        return lower;
+    }
+    public void setLower(exprType lower) {
+        this.lower = lower;
+    }
+
+    private exprType upper;
+    public exprType getUpper() {
+        return upper;
+    }
+    public void setUpper(exprType upper) {
+        this.upper = upper;
+    }
+
+    private exprType step;
+    public exprType getStep() {
+        return step;
+    }
+    public void setStep(exprType step) {
+        this.step = step;
+    }
+
 
     private final static String[] fields = new String[] {"lower", "upper",
                                                           "step"};

@@ -7,9 +7,30 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class comprehensionType extends PythonTree {
-    public exprType target;
-    public exprType iter;
-    public java.util.List<exprType> ifs;
+    private exprType target;
+    public exprType getTarget() {
+        return target;
+    }
+    public void setTarget(exprType target) {
+        this.target = target;
+    }
+
+    private exprType iter;
+    public exprType getIter() {
+        return iter;
+    }
+    public void setIter(exprType iter) {
+        this.iter = iter;
+    }
+
+    private java.util.List<exprType> ifs;
+    public java.util.List<exprType> getIfs() {
+        return ifs;
+    }
+    public void setIfs(java.util.List<exprType> ifs) {
+        this.ifs = ifs;
+    }
+
 
     private final static String[] fields = new String[] {"target", "iter",
                                                           "ifs"};

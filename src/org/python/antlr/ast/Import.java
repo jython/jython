@@ -7,7 +7,14 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class Import extends stmtType {
-    public java.util.List<aliasType> names;
+    private java.util.List<aliasType> names;
+    public java.util.List<aliasType> getNames() {
+        return names;
+    }
+    public void setNames(java.util.List<aliasType> names) {
+        this.names = names;
+    }
+
 
     private final static String[] fields = new String[] {"names"};
     public String[] get_fields() { return fields; }

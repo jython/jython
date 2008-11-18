@@ -7,7 +7,14 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class Delete extends stmtType {
-    public java.util.List<exprType> targets;
+    private java.util.List<exprType> targets;
+    public java.util.List<exprType> getTargets() {
+        return targets;
+    }
+    public void setTargets(java.util.List<exprType> targets) {
+        this.targets = targets;
+    }
+
 
     private final static String[] fields = new String[] {"targets"};
     public String[] get_fields() { return fields; }

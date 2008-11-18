@@ -7,7 +7,14 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class Global extends stmtType {
-    public java.util.List<String> names;
+    private java.util.List<String> names;
+    public java.util.List<String> getNames() {
+        return names;
+    }
+    public void setNames(java.util.List<String> names) {
+        this.names = names;
+    }
+
 
     private final static String[] fields = new String[] {"names"};
     public String[] get_fields() { return fields; }

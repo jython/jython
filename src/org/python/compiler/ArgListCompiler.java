@@ -40,11 +40,11 @@ public class ArgListCompiler extends Visitor
     }
 
     public void appendInitCode(Suite node) {
-        int n = node.body.size();
+        int n = node.getBody().size();
         List<stmtType> newtree = new ArrayList<stmtType>();
         newtree.addAll(init_code);
-        newtree.addAll(node.body);
-        node.body = newtree;
+        newtree.addAll(node.getBody());
+        node.setBody(newtree);
     }
 
     public List<exprType> getDefaults() {
@@ -52,60 +52,60 @@ public class ArgListCompiler extends Visitor
     }
 
     public void visitArgs(argumentsType args) throws Exception {
-        for (int i = 0; i < args.args.size(); i++) {
-            String name = (String) visit(args.args.get(i));
+        for (int i = 0; i < args.getArgs().size(); i++) {
+            String name = (String) visit(args.getArgs().get(i));
             names.add(name);
-            if (args.args.get(i) instanceof Tuple) {
+            if (args.getArgs().get(i) instanceof Tuple) {
                 List<exprType> targets = new ArrayList<exprType>();
-                targets.add(args.args.get(i));
-                Assign ass = new Assign(args.args.get(i),
+                targets.add(args.getArgs().get(i));
+                Assign ass = new Assign(args.getArgs().get(i),
                     targets,
-                    new Name(args.args.get(i), name, expr_contextType.Load));
+                    new Name(args.getArgs().get(i), name, expr_contextType.Load));
                 init_code.add(ass);
             }
         }
-        if (args.vararg != null) {
+        if (args.getVararg() != null) {
             arglist = true;
-            names.add(args.vararg);
+            names.add(args.getVararg());
         }
-        if (args.kwarg != null) {
+        if (args.getKwarg() != null) {
             keywordlist = true;
-            names.add(args.kwarg);
+            names.add(args.getKwarg());
         }
         
-        defaults = args.defaults;
+        defaults = args.getDefaults();
         for (int i = 0; i < defaults.size(); i++) {
             if (defaults.get(i) == null)
                 throw new ParseException(
                     "non-default argument follows default argument",
-                    args.args.get(args.args.size() - defaults.size() + i));
+                    args.getArgs().get(args.getArgs().size() - defaults.size() + i));
         }
     }
 
     @Override
     public Object visitName(Name node) throws Exception {
         //FIXME: do we need Store and Param, or just Param?
-        if (node.ctx != expr_contextType.Store && node.ctx != expr_contextType.Param) {
+        if (node.getCtx() != expr_contextType.Store && node.getCtx() != expr_contextType.Param) {
             return null;
         } 
 
-        if (fpnames.contains(node.id)) {
+        if (fpnames.contains(node.getId())) {
             throw new ParseException("duplicate argument name found: " +
-                                     node.id, node);
+                                     node.getId(), node);
         }
-        fpnames.add(node.id);
-        return node.id;
+        fpnames.add(node.getId());
+        return node.getId();
     }
 
     @Override
     public Object visitTuple(Tuple node) throws Exception {
         StringBuffer name = new StringBuffer("(");
-        int n = node.elts.size();
+        int n = node.getElts().size();
         for (int i = 0; i < n-1; i++) {
-            name.append(visit(node.elts.get(i)));
+            name.append(visit(node.getElts().get(i)));
             name.append(", ");
         }
-        name.append(visit(node.elts.get(n - 1)));
+        name.append(visit(node.getElts().get(n - 1)));
         name.append(")");
         return name.toString();
     }

@@ -7,7 +7,14 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class Num extends exprType {
-    public Object n;
+    private Object n;
+    public Object getN() {
+        return n;
+    }
+    public void setN(Object n) {
+        this.n = n;
+    }
+
 
     private final static String[] fields = new String[] {"n"};
     public String[] get_fields() { return fields; }

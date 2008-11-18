@@ -7,9 +7,30 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class TryExcept extends stmtType {
-    public java.util.List<stmtType> body;
-    public java.util.List<excepthandlerType> handlers;
-    public java.util.List<stmtType> orelse;
+    private java.util.List<stmtType> body;
+    public java.util.List<stmtType> getBody() {
+        return body;
+    }
+    public void setBody(java.util.List<stmtType> body) {
+        this.body = body;
+    }
+
+    private java.util.List<excepthandlerType> handlers;
+    public java.util.List<excepthandlerType> getHandlers() {
+        return handlers;
+    }
+    public void setHandlers(java.util.List<excepthandlerType> handlers) {
+        this.handlers = handlers;
+    }
+
+    private java.util.List<stmtType> orelse;
+    public java.util.List<stmtType> getOrelse() {
+        return orelse;
+    }
+    public void setOrelse(java.util.List<stmtType> orelse) {
+        this.orelse = orelse;
+    }
+
 
     private final static String[] fields = new String[] {"body", "handlers",
                                                           "orelse"};

@@ -7,10 +7,38 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class argumentsType extends PythonTree {
-    public java.util.List<exprType> args;
-    public String vararg;
-    public String kwarg;
-    public java.util.List<exprType> defaults;
+    private java.util.List<exprType> args;
+    public java.util.List<exprType> getArgs() {
+        return args;
+    }
+    public void setArgs(java.util.List<exprType> args) {
+        this.args = args;
+    }
+
+    private String vararg;
+    public String getVararg() {
+        return vararg;
+    }
+    public void setVararg(String vararg) {
+        this.vararg = vararg;
+    }
+
+    private String kwarg;
+    public String getKwarg() {
+        return kwarg;
+    }
+    public void setKwarg(String kwarg) {
+        this.kwarg = kwarg;
+    }
+
+    private java.util.List<exprType> defaults;
+    public java.util.List<exprType> getDefaults() {
+        return defaults;
+    }
+    public void setDefaults(java.util.List<exprType> defaults) {
+        this.defaults = defaults;
+    }
+
 
     private final static String[] fields = new String[] {"args", "vararg",
                                                           "kwarg", "defaults"};

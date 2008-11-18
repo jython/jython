@@ -7,7 +7,14 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class Suite extends modType {
-    public java.util.List<stmtType> body;
+    private java.util.List<stmtType> body;
+    public java.util.List<stmtType> getBody() {
+        return body;
+    }
+    public void setBody(java.util.List<stmtType> body) {
+        this.body = body;
+    }
+
 
     private final static String[] fields = new String[] {"body"};
     public String[] get_fields() { return fields; }

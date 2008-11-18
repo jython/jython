@@ -7,8 +7,22 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class Name extends exprType implements Context {
-    public String id;
-    public expr_contextType ctx;
+    private String id;
+    public String getId() {
+        return id;
+    }
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    private expr_contextType ctx;
+    public expr_contextType getCtx() {
+        return ctx;
+    }
+    public void setCtx(expr_contextType ctx) {
+        this.ctx = ctx;
+    }
+
 
     private final static String[] fields = new String[] {"id", "ctx"};
     public String[] get_fields() { return fields; }

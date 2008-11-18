@@ -7,10 +7,38 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class For extends stmtType {
-    public exprType target;
-    public exprType iter;
-    public java.util.List<stmtType> body;
-    public java.util.List<stmtType> orelse;
+    private exprType target;
+    public exprType getTarget() {
+        return target;
+    }
+    public void setTarget(exprType target) {
+        this.target = target;
+    }
+
+    private exprType iter;
+    public exprType getIter() {
+        return iter;
+    }
+    public void setIter(exprType iter) {
+        this.iter = iter;
+    }
+
+    private java.util.List<stmtType> body;
+    public java.util.List<stmtType> getBody() {
+        return body;
+    }
+    public void setBody(java.util.List<stmtType> body) {
+        this.body = body;
+    }
+
+    private java.util.List<stmtType> orelse;
+    public java.util.List<stmtType> getOrelse() {
+        return orelse;
+    }
+    public void setOrelse(java.util.List<stmtType> orelse) {
+        this.orelse = orelse;
+    }
+
 
     private final static String[] fields = new String[] {"target", "iter",
                                                           "body", "orelse"};

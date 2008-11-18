@@ -7,8 +7,22 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class UnaryOp extends exprType {
-    public unaryopType op;
-    public exprType operand;
+    private unaryopType op;
+    public unaryopType getOp() {
+        return op;
+    }
+    public void setOp(unaryopType op) {
+        this.op = op;
+    }
+
+    private exprType operand;
+    public exprType getOperand() {
+        return operand;
+    }
+    public void setOperand(exprType operand) {
+        this.operand = operand;
+    }
+
 
     private final static String[] fields = new String[] {"op", "operand"};
     public String[] get_fields() { return fields; }

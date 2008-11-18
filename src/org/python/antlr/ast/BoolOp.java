@@ -7,8 +7,22 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class BoolOp extends exprType {
-    public boolopType op;
-    public java.util.List<exprType> values;
+    private boolopType op;
+    public boolopType getOp() {
+        return op;
+    }
+    public void setOp(boolopType op) {
+        this.op = op;
+    }
+
+    private java.util.List<exprType> values;
+    public java.util.List<exprType> getValues() {
+        return values;
+    }
+    public void setValues(java.util.List<exprType> values) {
+        this.values = values;
+    }
+
 
     private final static String[] fields = new String[] {"op", "values"};
     public String[] get_fields() { return fields; }
