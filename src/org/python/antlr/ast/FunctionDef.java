@@ -49,13 +49,13 @@ public class FunctionDef extends stmtType {
     java.util.List<stmtType> body, java.util.List<exprType> decorators) {
         this.name = name;
         this.args = args;
-        this.body = body;
+        this.body = new ListWrapper<stmtType>(body);
         if (body != null) {
             for(PythonTree t : body) {
                 addChild(t);
             }
         }
-        this.decorators = decorators;
+        this.decorators = new ListWrapper<exprType>(decorators);
         if (decorators != null) {
             for(PythonTree t : decorators) {
                 addChild(t);
@@ -68,13 +68,13 @@ public class FunctionDef extends stmtType {
         super(token);
         this.name = name;
         this.args = args;
-        this.body = body;
+        this.body = new ListWrapper<stmtType>(body);
         if (body != null) {
             for(PythonTree t : body) {
                 addChild(t);
             }
         }
-        this.decorators = decorators;
+        this.decorators = new ListWrapper<exprType>(decorators);
         if (decorators != null) {
             for(PythonTree t : decorators) {
                 addChild(t);
@@ -87,13 +87,13 @@ public class FunctionDef extends stmtType {
         super(ttype, token);
         this.name = name;
         this.args = args;
-        this.body = body;
+        this.body = new ListWrapper<stmtType>(body);
         if (body != null) {
             for(PythonTree t : body) {
                 addChild(t);
             }
         }
-        this.decorators = decorators;
+        this.decorators = new ListWrapper<exprType>(decorators);
         if (decorators != null) {
             for(PythonTree t : decorators) {
                 addChild(t);
@@ -106,13 +106,13 @@ public class FunctionDef extends stmtType {
         super(tree);
         this.name = name;
         this.args = args;
-        this.body = body;
+        this.body = new ListWrapper<stmtType>(body);
         if (body != null) {
             for(PythonTree t : body) {
                 addChild(t);
             }
         }
-        this.decorators = decorators;
+        this.decorators = new ListWrapper<exprType>(decorators);
         if (decorators != null) {
             for(PythonTree t : decorators) {
                 addChild(t);

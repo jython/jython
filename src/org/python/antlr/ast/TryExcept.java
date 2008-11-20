@@ -40,19 +40,19 @@ public class TryExcept extends stmtType {
     public TryExcept(java.util.List<stmtType> body,
     java.util.List<excepthandlerType> handlers, java.util.List<stmtType>
     orelse) {
-        this.body = body;
+        this.body = new ListWrapper<stmtType>(body);
         if (body != null) {
             for(PythonTree t : body) {
                 addChild(t);
             }
         }
-        this.handlers = handlers;
+        this.handlers = new ListWrapper<excepthandlerType>(handlers);
         if (handlers != null) {
             for(PythonTree t : handlers) {
                 addChild(t);
             }
         }
-        this.orelse = orelse;
+        this.orelse = new ListWrapper<stmtType>(orelse);
         if (orelse != null) {
             for(PythonTree t : orelse) {
                 addChild(t);
@@ -64,19 +64,19 @@ public class TryExcept extends stmtType {
     java.util.List<excepthandlerType> handlers, java.util.List<stmtType>
     orelse) {
         super(token);
-        this.body = body;
+        this.body = new ListWrapper<stmtType>(body);
         if (body != null) {
             for(PythonTree t : body) {
                 addChild(t);
             }
         }
-        this.handlers = handlers;
+        this.handlers = new ListWrapper<excepthandlerType>(handlers);
         if (handlers != null) {
             for(PythonTree t : handlers) {
                 addChild(t);
             }
         }
-        this.orelse = orelse;
+        this.orelse = new ListWrapper<stmtType>(orelse);
         if (orelse != null) {
             for(PythonTree t : orelse) {
                 addChild(t);
@@ -88,19 +88,19 @@ public class TryExcept extends stmtType {
     java.util.List<excepthandlerType> handlers, java.util.List<stmtType>
     orelse) {
         super(ttype, token);
-        this.body = body;
+        this.body = new ListWrapper<stmtType>(body);
         if (body != null) {
             for(PythonTree t : body) {
                 addChild(t);
             }
         }
-        this.handlers = handlers;
+        this.handlers = new ListWrapper<excepthandlerType>(handlers);
         if (handlers != null) {
             for(PythonTree t : handlers) {
                 addChild(t);
             }
         }
-        this.orelse = orelse;
+        this.orelse = new ListWrapper<stmtType>(orelse);
         if (orelse != null) {
             for(PythonTree t : orelse) {
                 addChild(t);
@@ -112,19 +112,19 @@ public class TryExcept extends stmtType {
     java.util.List<excepthandlerType> handlers, java.util.List<stmtType>
     orelse) {
         super(tree);
-        this.body = body;
+        this.body = new ListWrapper<stmtType>(body);
         if (body != null) {
             for(PythonTree t : body) {
                 addChild(t);
             }
         }
-        this.handlers = handlers;
+        this.handlers = new ListWrapper<excepthandlerType>(handlers);
         if (handlers != null) {
             for(PythonTree t : handlers) {
                 addChild(t);
             }
         }
-        this.orelse = orelse;
+        this.orelse = new ListWrapper<stmtType>(orelse);
         if (orelse != null) {
             for(PythonTree t : orelse) {
                 addChild(t);

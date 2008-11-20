@@ -21,7 +21,7 @@ public class Delete extends stmtType {
     public String[] get_fields() { return fields; }
 
     public Delete(java.util.List<exprType> targets) {
-        this.targets = targets;
+        this.targets = new ListWrapper<exprType>(targets);
         if (targets != null) {
             for(PythonTree t : targets) {
                 addChild(t);
@@ -31,7 +31,7 @@ public class Delete extends stmtType {
 
     public Delete(Token token, java.util.List<exprType> targets) {
         super(token);
-        this.targets = targets;
+        this.targets = new ListWrapper<exprType>(targets);
         if (targets != null) {
             for(PythonTree t : targets) {
                 addChild(t);
@@ -41,7 +41,7 @@ public class Delete extends stmtType {
 
     public Delete(int ttype, Token token, java.util.List<exprType> targets) {
         super(ttype, token);
-        this.targets = targets;
+        this.targets = new ListWrapper<exprType>(targets);
         if (targets != null) {
             for(PythonTree t : targets) {
                 addChild(t);
@@ -51,7 +51,7 @@ public class Delete extends stmtType {
 
     public Delete(PythonTree tree, java.util.List<exprType> targets) {
         super(tree);
-        this.targets = targets;
+        this.targets = new ListWrapper<exprType>(targets);
         if (targets != null) {
             for(PythonTree t : targets) {
                 addChild(t);

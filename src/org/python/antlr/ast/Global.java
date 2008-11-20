@@ -21,22 +21,22 @@ public class Global extends stmtType {
     public String[] get_fields() { return fields; }
 
     public Global(java.util.List<String> names) {
-        this.names = names;
+        this.names = new ListWrapper<String>(names);
     }
 
     public Global(Token token, java.util.List<String> names) {
         super(token);
-        this.names = names;
+        this.names = new ListWrapper<String>(names);
     }
 
     public Global(int ttype, Token token, java.util.List<String> names) {
         super(ttype, token);
-        this.names = names;
+        this.names = new ListWrapper<String>(names);
     }
 
     public Global(PythonTree tree, java.util.List<String> names) {
         super(tree);
-        this.names = names;
+        this.names = new ListWrapper<String>(names);
     }
 
     public String toString() {

@@ -21,7 +21,7 @@ public class Import extends stmtType {
     public String[] get_fields() { return fields; }
 
     public Import(java.util.List<aliasType> names) {
-        this.names = names;
+        this.names = new ListWrapper<aliasType>(names);
         if (names != null) {
             for(PythonTree t : names) {
                 addChild(t);
@@ -31,7 +31,7 @@ public class Import extends stmtType {
 
     public Import(Token token, java.util.List<aliasType> names) {
         super(token);
-        this.names = names;
+        this.names = new ListWrapper<aliasType>(names);
         if (names != null) {
             for(PythonTree t : names) {
                 addChild(t);
@@ -41,7 +41,7 @@ public class Import extends stmtType {
 
     public Import(int ttype, Token token, java.util.List<aliasType> names) {
         super(ttype, token);
-        this.names = names;
+        this.names = new ListWrapper<aliasType>(names);
         if (names != null) {
             for(PythonTree t : names) {
                 addChild(t);
@@ -51,7 +51,7 @@ public class Import extends stmtType {
 
     public Import(PythonTree tree, java.util.List<aliasType> names) {
         super(tree);
-        this.names = names;
+        this.names = new ListWrapper<aliasType>(names);
         if (names != null) {
             for(PythonTree t : names) {
                 addChild(t);

@@ -48,19 +48,19 @@ public class ClassDef extends stmtType {
     public ClassDef(String name, java.util.List<exprType> bases,
     java.util.List<stmtType> body, java.util.List<exprType> decorators) {
         this.name = name;
-        this.bases = bases;
+        this.bases = new ListWrapper<exprType>(bases);
         if (bases != null) {
             for(PythonTree t : bases) {
                 addChild(t);
             }
         }
-        this.body = body;
+        this.body = new ListWrapper<stmtType>(body);
         if (body != null) {
             for(PythonTree t : body) {
                 addChild(t);
             }
         }
-        this.decorators = decorators;
+        this.decorators = new ListWrapper<exprType>(decorators);
         if (decorators != null) {
             for(PythonTree t : decorators) {
                 addChild(t);
@@ -72,19 +72,19 @@ public class ClassDef extends stmtType {
     java.util.List<stmtType> body, java.util.List<exprType> decorators) {
         super(token);
         this.name = name;
-        this.bases = bases;
+        this.bases = new ListWrapper<exprType>(bases);
         if (bases != null) {
             for(PythonTree t : bases) {
                 addChild(t);
             }
         }
-        this.body = body;
+        this.body = new ListWrapper<stmtType>(body);
         if (body != null) {
             for(PythonTree t : body) {
                 addChild(t);
             }
         }
-        this.decorators = decorators;
+        this.decorators = new ListWrapper<exprType>(decorators);
         if (decorators != null) {
             for(PythonTree t : decorators) {
                 addChild(t);
@@ -97,19 +97,19 @@ public class ClassDef extends stmtType {
     java.util.List<exprType> decorators) {
         super(ttype, token);
         this.name = name;
-        this.bases = bases;
+        this.bases = new ListWrapper<exprType>(bases);
         if (bases != null) {
             for(PythonTree t : bases) {
                 addChild(t);
             }
         }
-        this.body = body;
+        this.body = new ListWrapper<stmtType>(body);
         if (body != null) {
             for(PythonTree t : body) {
                 addChild(t);
             }
         }
-        this.decorators = decorators;
+        this.decorators = new ListWrapper<exprType>(decorators);
         if (decorators != null) {
             for(PythonTree t : decorators) {
                 addChild(t);
@@ -121,19 +121,19 @@ public class ClassDef extends stmtType {
     bases, java.util.List<stmtType> body, java.util.List<exprType> decorators) {
         super(tree);
         this.name = name;
-        this.bases = bases;
+        this.bases = new ListWrapper<exprType>(bases);
         if (bases != null) {
             for(PythonTree t : bases) {
                 addChild(t);
             }
         }
-        this.body = body;
+        this.body = new ListWrapper<stmtType>(body);
         if (body != null) {
             for(PythonTree t : body) {
                 addChild(t);
             }
         }
-        this.decorators = decorators;
+        this.decorators = new ListWrapper<exprType>(decorators);
         if (decorators != null) {
             for(PythonTree t : decorators) {
                 addChild(t);

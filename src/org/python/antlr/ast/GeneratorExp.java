@@ -32,7 +32,7 @@ public class GeneratorExp extends exprType {
     generators) {
         this.elt = elt;
         addChild(elt);
-        this.generators = generators;
+        this.generators = new ListWrapper<comprehensionType>(generators);
         if (generators != null) {
             for(PythonTree t : generators) {
                 addChild(t);
@@ -45,7 +45,7 @@ public class GeneratorExp extends exprType {
         super(token);
         this.elt = elt;
         addChild(elt);
-        this.generators = generators;
+        this.generators = new ListWrapper<comprehensionType>(generators);
         if (generators != null) {
             for(PythonTree t : generators) {
                 addChild(t);
@@ -58,7 +58,7 @@ public class GeneratorExp extends exprType {
         super(ttype, token);
         this.elt = elt;
         addChild(elt);
-        this.generators = generators;
+        this.generators = new ListWrapper<comprehensionType>(generators);
         if (generators != null) {
             for(PythonTree t : generators) {
                 addChild(t);
@@ -71,7 +71,7 @@ public class GeneratorExp extends exprType {
         super(tree);
         this.elt = elt;
         addChild(elt);
-        this.generators = generators;
+        this.generators = new ListWrapper<comprehensionType>(generators);
         if (generators != null) {
             for(PythonTree t : generators) {
                 addChild(t);

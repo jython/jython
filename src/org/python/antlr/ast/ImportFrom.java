@@ -40,7 +40,7 @@ public class ImportFrom extends stmtType {
     public ImportFrom(String module, java.util.List<aliasType> names, int
     level) {
         this.module = module;
-        this.names = names;
+        this.names = new ListWrapper<aliasType>(names);
         if (names != null) {
             for(PythonTree t : names) {
                 addChild(t);
@@ -53,7 +53,7 @@ public class ImportFrom extends stmtType {
     names, int level) {
         super(token);
         this.module = module;
-        this.names = names;
+        this.names = new ListWrapper<aliasType>(names);
         if (names != null) {
             for(PythonTree t : names) {
                 addChild(t);
@@ -66,7 +66,7 @@ public class ImportFrom extends stmtType {
     java.util.List<aliasType> names, int level) {
         super(ttype, token);
         this.module = module;
-        this.names = names;
+        this.names = new ListWrapper<aliasType>(names);
         if (names != null) {
             for(PythonTree t : names) {
                 addChild(t);
@@ -79,7 +79,7 @@ public class ImportFrom extends stmtType {
     names, int level) {
         super(tree);
         this.module = module;
-        this.names = names;
+        this.names = new ListWrapper<aliasType>(names);
         if (names != null) {
             for(PythonTree t : names) {
                 addChild(t);

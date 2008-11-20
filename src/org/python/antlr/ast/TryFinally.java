@@ -30,13 +30,13 @@ public class TryFinally extends stmtType {
 
     public TryFinally(java.util.List<stmtType> body, java.util.List<stmtType>
     finalbody) {
-        this.body = body;
+        this.body = new ListWrapper<stmtType>(body);
         if (body != null) {
             for(PythonTree t : body) {
                 addChild(t);
             }
         }
-        this.finalbody = finalbody;
+        this.finalbody = new ListWrapper<stmtType>(finalbody);
         if (finalbody != null) {
             for(PythonTree t : finalbody) {
                 addChild(t);
@@ -47,13 +47,13 @@ public class TryFinally extends stmtType {
     public TryFinally(Token token, java.util.List<stmtType> body,
     java.util.List<stmtType> finalbody) {
         super(token);
-        this.body = body;
+        this.body = new ListWrapper<stmtType>(body);
         if (body != null) {
             for(PythonTree t : body) {
                 addChild(t);
             }
         }
-        this.finalbody = finalbody;
+        this.finalbody = new ListWrapper<stmtType>(finalbody);
         if (finalbody != null) {
             for(PythonTree t : finalbody) {
                 addChild(t);
@@ -64,13 +64,13 @@ public class TryFinally extends stmtType {
     public TryFinally(int ttype, Token token, java.util.List<stmtType> body,
     java.util.List<stmtType> finalbody) {
         super(ttype, token);
-        this.body = body;
+        this.body = new ListWrapper<stmtType>(body);
         if (body != null) {
             for(PythonTree t : body) {
                 addChild(t);
             }
         }
-        this.finalbody = finalbody;
+        this.finalbody = new ListWrapper<stmtType>(finalbody);
         if (finalbody != null) {
             for(PythonTree t : finalbody) {
                 addChild(t);
@@ -81,13 +81,13 @@ public class TryFinally extends stmtType {
     public TryFinally(PythonTree tree, java.util.List<stmtType> body,
     java.util.List<stmtType> finalbody) {
         super(tree);
-        this.body = body;
+        this.body = new ListWrapper<stmtType>(body);
         if (body != null) {
             for(PythonTree t : body) {
                 addChild(t);
             }
         }
-        this.finalbody = finalbody;
+        this.finalbody = new ListWrapper<stmtType>(finalbody);
         if (finalbody != null) {
             for(PythonTree t : finalbody) {
                 addChild(t);

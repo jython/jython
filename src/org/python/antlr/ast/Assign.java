@@ -29,7 +29,7 @@ public class Assign extends stmtType {
     public String[] get_fields() { return fields; }
 
     public Assign(java.util.List<exprType> targets, exprType value) {
-        this.targets = targets;
+        this.targets = new ListWrapper<exprType>(targets);
         if (targets != null) {
             for(PythonTree t : targets) {
                 addChild(t);
@@ -42,7 +42,7 @@ public class Assign extends stmtType {
     public Assign(Token token, java.util.List<exprType> targets, exprType
     value) {
         super(token);
-        this.targets = targets;
+        this.targets = new ListWrapper<exprType>(targets);
         if (targets != null) {
             for(PythonTree t : targets) {
                 addChild(t);
@@ -55,7 +55,7 @@ public class Assign extends stmtType {
     public Assign(int ttype, Token token, java.util.List<exprType> targets,
     exprType value) {
         super(ttype, token);
-        this.targets = targets;
+        this.targets = new ListWrapper<exprType>(targets);
         if (targets != null) {
             for(PythonTree t : targets) {
                 addChild(t);
@@ -68,7 +68,7 @@ public class Assign extends stmtType {
     public Assign(PythonTree tree, java.util.List<exprType> targets, exprType
     value) {
         super(tree);
-        this.targets = targets;
+        this.targets = new ListWrapper<exprType>(targets);
         if (targets != null) {
             for(PythonTree t : targets) {
                 addChild(t);

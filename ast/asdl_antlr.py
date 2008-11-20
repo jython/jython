@@ -291,8 +291,15 @@ class JavaVisitor(EmitVisitor):
 
     def javaConstructorHelper(self, fields, depth):
         for f in fields:
-            self.emit("this.%s = %s;" % (f.name, f.name), depth+1)
-            #self.emit("set%s(%s);" % (str(f.name).capitalize(), f.name), depth+1)
+            #XXX: old version:
+            #self.emit("this.%s = %s;" % (f.name, f.name), depth+1)
+            #XXX: code cut and pasted from visitField
+            if f.seq:
+                self.emit("this.%s = new %s(%s);" % (f.name,
+                    self.javaType(f, True), f.name), depth+1)
+            else:
+                self.emit("this.%s = %s;" % (f.name, f.name), depth+1)
+
             fparg = self.fieldDef(f)
 
             not_simple = True

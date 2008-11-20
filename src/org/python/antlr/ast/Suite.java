@@ -21,7 +21,7 @@ public class Suite extends modType {
     public String[] get_fields() { return fields; }
 
     public Suite(java.util.List<stmtType> body) {
-        this.body = body;
+        this.body = new ListWrapper<stmtType>(body);
         if (body != null) {
             for(PythonTree t : body) {
                 addChild(t);
@@ -31,7 +31,7 @@ public class Suite extends modType {
 
     public Suite(Token token, java.util.List<stmtType> body) {
         super(token);
-        this.body = body;
+        this.body = new ListWrapper<stmtType>(body);
         if (body != null) {
             for(PythonTree t : body) {
                 addChild(t);
@@ -41,7 +41,7 @@ public class Suite extends modType {
 
     public Suite(int ttype, Token token, java.util.List<stmtType> body) {
         super(ttype, token);
-        this.body = body;
+        this.body = new ListWrapper<stmtType>(body);
         if (body != null) {
             for(PythonTree t : body) {
                 addChild(t);
@@ -51,7 +51,7 @@ public class Suite extends modType {
 
     public Suite(PythonTree tree, java.util.List<stmtType> body) {
         super(tree);
-        this.body = body;
+        this.body = new ListWrapper<stmtType>(body);
         if (body != null) {
             for(PythonTree t : body) {
                 addChild(t);

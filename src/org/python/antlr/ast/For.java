@@ -51,13 +51,13 @@ public class For extends stmtType {
         addChild(target);
         this.iter = iter;
         addChild(iter);
-        this.body = body;
+        this.body = new ListWrapper<stmtType>(body);
         if (body != null) {
             for(PythonTree t : body) {
                 addChild(t);
             }
         }
-        this.orelse = orelse;
+        this.orelse = new ListWrapper<stmtType>(orelse);
         if (orelse != null) {
             for(PythonTree t : orelse) {
                 addChild(t);
@@ -72,13 +72,13 @@ public class For extends stmtType {
         addChild(target);
         this.iter = iter;
         addChild(iter);
-        this.body = body;
+        this.body = new ListWrapper<stmtType>(body);
         if (body != null) {
             for(PythonTree t : body) {
                 addChild(t);
             }
         }
-        this.orelse = orelse;
+        this.orelse = new ListWrapper<stmtType>(orelse);
         if (orelse != null) {
             for(PythonTree t : orelse) {
                 addChild(t);
@@ -93,13 +93,13 @@ public class For extends stmtType {
         addChild(target);
         this.iter = iter;
         addChild(iter);
-        this.body = body;
+        this.body = new ListWrapper<stmtType>(body);
         if (body != null) {
             for(PythonTree t : body) {
                 addChild(t);
             }
         }
-        this.orelse = orelse;
+        this.orelse = new ListWrapper<stmtType>(orelse);
         if (orelse != null) {
             for(PythonTree t : orelse) {
                 addChild(t);
@@ -114,13 +114,13 @@ public class For extends stmtType {
         addChild(target);
         this.iter = iter;
         addChild(iter);
-        this.body = body;
+        this.body = new ListWrapper<stmtType>(body);
         if (body != null) {
             for(PythonTree t : body) {
                 addChild(t);
             }
         }
-        this.orelse = orelse;
+        this.orelse = new ListWrapper<stmtType>(orelse);
         if (orelse != null) {
             for(PythonTree t : orelse) {
                 addChild(t);

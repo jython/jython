@@ -30,7 +30,7 @@ public class BoolOp extends exprType {
 
     public BoolOp(boolopType op, java.util.List<exprType> values) {
         this.op = op;
-        this.values = values;
+        this.values = new ListWrapper<exprType>(values);
         if (values != null) {
             for(PythonTree t : values) {
                 addChild(t);
@@ -41,7 +41,7 @@ public class BoolOp extends exprType {
     public BoolOp(Token token, boolopType op, java.util.List<exprType> values) {
         super(token);
         this.op = op;
-        this.values = values;
+        this.values = new ListWrapper<exprType>(values);
         if (values != null) {
             for(PythonTree t : values) {
                 addChild(t);
@@ -53,7 +53,7 @@ public class BoolOp extends exprType {
     java.util.List<exprType> values) {
         super(ttype, token);
         this.op = op;
-        this.values = values;
+        this.values = new ListWrapper<exprType>(values);
         if (values != null) {
             for(PythonTree t : values) {
                 addChild(t);
@@ -65,7 +65,7 @@ public class BoolOp extends exprType {
     values) {
         super(tree);
         this.op = op;
-        this.values = values;
+        this.values = new ListWrapper<exprType>(values);
         if (values != null) {
             for(PythonTree t : values) {
                 addChild(t);

@@ -44,7 +44,7 @@ public class With extends stmtType {
         addChild(context_expr);
         this.optional_vars = optional_vars;
         addChild(optional_vars);
-        this.body = body;
+        this.body = new ListWrapper<stmtType>(body);
         if (body != null) {
             for(PythonTree t : body) {
                 addChild(t);
@@ -59,7 +59,7 @@ public class With extends stmtType {
         addChild(context_expr);
         this.optional_vars = optional_vars;
         addChild(optional_vars);
-        this.body = body;
+        this.body = new ListWrapper<stmtType>(body);
         if (body != null) {
             for(PythonTree t : body) {
                 addChild(t);
@@ -74,7 +74,7 @@ public class With extends stmtType {
         addChild(context_expr);
         this.optional_vars = optional_vars;
         addChild(optional_vars);
-        this.body = body;
+        this.body = new ListWrapper<stmtType>(body);
         if (body != null) {
             for(PythonTree t : body) {
                 addChild(t);
@@ -89,7 +89,7 @@ public class With extends stmtType {
         addChild(context_expr);
         this.optional_vars = optional_vars;
         addChild(optional_vars);
-        this.body = body;
+        this.body = new ListWrapper<stmtType>(body);
         if (body != null) {
             for(PythonTree t : body) {
                 addChild(t);

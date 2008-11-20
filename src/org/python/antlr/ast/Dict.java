@@ -30,13 +30,13 @@ public class Dict extends exprType {
 
     public Dict(java.util.List<exprType> keys, java.util.List<exprType> values)
     {
-        this.keys = keys;
+        this.keys = new ListWrapper<exprType>(keys);
         if (keys != null) {
             for(PythonTree t : keys) {
                 addChild(t);
             }
         }
-        this.values = values;
+        this.values = new ListWrapper<exprType>(values);
         if (values != null) {
             for(PythonTree t : values) {
                 addChild(t);
@@ -47,13 +47,13 @@ public class Dict extends exprType {
     public Dict(Token token, java.util.List<exprType> keys,
     java.util.List<exprType> values) {
         super(token);
-        this.keys = keys;
+        this.keys = new ListWrapper<exprType>(keys);
         if (keys != null) {
             for(PythonTree t : keys) {
                 addChild(t);
             }
         }
-        this.values = values;
+        this.values = new ListWrapper<exprType>(values);
         if (values != null) {
             for(PythonTree t : values) {
                 addChild(t);
@@ -64,13 +64,13 @@ public class Dict extends exprType {
     public Dict(int ttype, Token token, java.util.List<exprType> keys,
     java.util.List<exprType> values) {
         super(ttype, token);
-        this.keys = keys;
+        this.keys = new ListWrapper<exprType>(keys);
         if (keys != null) {
             for(PythonTree t : keys) {
                 addChild(t);
             }
         }
-        this.values = values;
+        this.values = new ListWrapper<exprType>(values);
         if (values != null) {
             for(PythonTree t : values) {
                 addChild(t);
@@ -81,13 +81,13 @@ public class Dict extends exprType {
     public Dict(PythonTree tree, java.util.List<exprType> keys,
     java.util.List<exprType> values) {
         super(tree);
-        this.keys = keys;
+        this.keys = new ListWrapper<exprType>(keys);
         if (keys != null) {
             for(PythonTree t : keys) {
                 addChild(t);
             }
         }
-        this.values = values;
+        this.values = new ListWrapper<exprType>(values);
         if (values != null) {
             for(PythonTree t : values) {
                 addChild(t);

@@ -21,7 +21,7 @@ public class ExtSlice extends sliceType {
     public String[] get_fields() { return fields; }
 
     public ExtSlice(java.util.List<sliceType> dims) {
-        this.dims = dims;
+        this.dims = new ListWrapper<sliceType>(dims);
         if (dims != null) {
             for(PythonTree t : dims) {
                 addChild(t);
@@ -31,7 +31,7 @@ public class ExtSlice extends sliceType {
 
     public ExtSlice(Token token, java.util.List<sliceType> dims) {
         super(token);
-        this.dims = dims;
+        this.dims = new ListWrapper<sliceType>(dims);
         if (dims != null) {
             for(PythonTree t : dims) {
                 addChild(t);
@@ -41,7 +41,7 @@ public class ExtSlice extends sliceType {
 
     public ExtSlice(int ttype, Token token, java.util.List<sliceType> dims) {
         super(ttype, token);
-        this.dims = dims;
+        this.dims = new ListWrapper<sliceType>(dims);
         if (dims != null) {
             for(PythonTree t : dims) {
                 addChild(t);
@@ -51,7 +51,7 @@ public class ExtSlice extends sliceType {
 
     public ExtSlice(PythonTree tree, java.util.List<sliceType> dims) {
         super(tree);
-        this.dims = dims;
+        this.dims = new ListWrapper<sliceType>(dims);
         if (dims != null) {
             for(PythonTree t : dims) {
                 addChild(t);

@@ -29,7 +29,7 @@ public class List extends exprType implements Context {
     public String[] get_fields() { return fields; }
 
     public List(java.util.List<exprType> elts, expr_contextType ctx) {
-        this.elts = elts;
+        this.elts = new ListWrapper<exprType>(elts);
         if (elts != null) {
             for(PythonTree t : elts) {
                 addChild(t);
@@ -41,7 +41,7 @@ public class List extends exprType implements Context {
     public List(Token token, java.util.List<exprType> elts, expr_contextType
     ctx) {
         super(token);
-        this.elts = elts;
+        this.elts = new ListWrapper<exprType>(elts);
         if (elts != null) {
             for(PythonTree t : elts) {
                 addChild(t);
@@ -53,7 +53,7 @@ public class List extends exprType implements Context {
     public List(int ttype, Token token, java.util.List<exprType> elts,
     expr_contextType ctx) {
         super(ttype, token);
-        this.elts = elts;
+        this.elts = new ListWrapper<exprType>(elts);
         if (elts != null) {
             for(PythonTree t : elts) {
                 addChild(t);
@@ -65,7 +65,7 @@ public class List extends exprType implements Context {
     public List(PythonTree tree, java.util.List<exprType> elts,
     expr_contextType ctx) {
         super(tree);
-        this.elts = elts;
+        this.elts = new ListWrapper<exprType>(elts);
         if (elts != null) {
             for(PythonTree t : elts) {
                 addChild(t);

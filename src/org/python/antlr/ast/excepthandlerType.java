@@ -60,7 +60,7 @@ public class excepthandlerType extends PythonTree {
         addChild(excepttype);
         this.name = name;
         addChild(name);
-        this.body = body;
+        this.body = new ListWrapper<stmtType>(body);
         if (body != null) {
             for(PythonTree t : body) {
                 addChild(t);
@@ -77,7 +77,7 @@ public class excepthandlerType extends PythonTree {
         addChild(excepttype);
         this.name = name;
         addChild(name);
-        this.body = body;
+        this.body = new ListWrapper<stmtType>(body);
         if (body != null) {
             for(PythonTree t : body) {
                 addChild(t);
@@ -94,7 +94,7 @@ public class excepthandlerType extends PythonTree {
         addChild(excepttype);
         this.name = name;
         addChild(name);
-        this.body = body;
+        this.body = new ListWrapper<stmtType>(body);
         if (body != null) {
             for(PythonTree t : body) {
                 addChild(t);
@@ -111,7 +111,7 @@ public class excepthandlerType extends PythonTree {
         addChild(excepttype);
         this.name = name;
         addChild(name);
-        this.body = body;
+        this.body = new ListWrapper<stmtType>(body);
         if (body != null) {
             for(PythonTree t : body) {
                 addChild(t);

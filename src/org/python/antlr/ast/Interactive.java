@@ -21,7 +21,7 @@ public class Interactive extends modType {
     public String[] get_fields() { return fields; }
 
     public Interactive(java.util.List<stmtType> body) {
-        this.body = body;
+        this.body = new ListWrapper<stmtType>(body);
         if (body != null) {
             for(PythonTree t : body) {
                 addChild(t);
@@ -31,7 +31,7 @@ public class Interactive extends modType {
 
     public Interactive(Token token, java.util.List<stmtType> body) {
         super(token);
-        this.body = body;
+        this.body = new ListWrapper<stmtType>(body);
         if (body != null) {
             for(PythonTree t : body) {
                 addChild(t);
@@ -41,7 +41,7 @@ public class Interactive extends modType {
 
     public Interactive(int ttype, Token token, java.util.List<stmtType> body) {
         super(ttype, token);
-        this.body = body;
+        this.body = new ListWrapper<stmtType>(body);
         if (body != null) {
             for(PythonTree t : body) {
                 addChild(t);
@@ -51,7 +51,7 @@ public class Interactive extends modType {
 
     public Interactive(PythonTree tree, java.util.List<stmtType> body) {
         super(tree);
-        this.body = body;
+        this.body = new ListWrapper<stmtType>(body);
         if (body != null) {
             for(PythonTree t : body) {
                 addChild(t);

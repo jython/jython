@@ -41,8 +41,8 @@ public class Compare extends exprType {
     java.util.List<exprType> comparators) {
         this.left = left;
         addChild(left);
-        this.ops = ops;
-        this.comparators = comparators;
+        this.ops = new ListWrapper<cmpopType>(ops);
+        this.comparators = new ListWrapper<exprType>(comparators);
         if (comparators != null) {
             for(PythonTree t : comparators) {
                 addChild(t);
@@ -55,8 +55,8 @@ public class Compare extends exprType {
         super(token);
         this.left = left;
         addChild(left);
-        this.ops = ops;
-        this.comparators = comparators;
+        this.ops = new ListWrapper<cmpopType>(ops);
+        this.comparators = new ListWrapper<exprType>(comparators);
         if (comparators != null) {
             for(PythonTree t : comparators) {
                 addChild(t);
@@ -69,8 +69,8 @@ public class Compare extends exprType {
         super(ttype, token);
         this.left = left;
         addChild(left);
-        this.ops = ops;
-        this.comparators = comparators;
+        this.ops = new ListWrapper<cmpopType>(ops);
+        this.comparators = new ListWrapper<exprType>(comparators);
         if (comparators != null) {
             for(PythonTree t : comparators) {
                 addChild(t);
@@ -83,8 +83,8 @@ public class Compare extends exprType {
         super(tree);
         this.left = left;
         addChild(left);
-        this.ops = ops;
-        this.comparators = comparators;
+        this.ops = new ListWrapper<cmpopType>(ops);
+        this.comparators = new ListWrapper<exprType>(comparators);
         if (comparators != null) {
             for(PythonTree t : comparators) {
                 addChild(t);

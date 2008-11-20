@@ -40,7 +40,7 @@ public class Print extends stmtType {
     public Print(exprType dest, java.util.List<exprType> values, boolean nl) {
         this.dest = dest;
         addChild(dest);
-        this.values = values;
+        this.values = new ListWrapper<exprType>(values);
         if (values != null) {
             for(PythonTree t : values) {
                 addChild(t);
@@ -54,7 +54,7 @@ public class Print extends stmtType {
         super(token);
         this.dest = dest;
         addChild(dest);
-        this.values = values;
+        this.values = new ListWrapper<exprType>(values);
         if (values != null) {
             for(PythonTree t : values) {
                 addChild(t);
@@ -68,7 +68,7 @@ public class Print extends stmtType {
         super(ttype, token);
         this.dest = dest;
         addChild(dest);
-        this.values = values;
+        this.values = new ListWrapper<exprType>(values);
         if (values != null) {
             for(PythonTree t : values) {
                 addChild(t);
@@ -82,7 +82,7 @@ public class Print extends stmtType {
         super(tree);
         this.dest = dest;
         addChild(dest);
-        this.values = values;
+        this.values = new ListWrapper<exprType>(values);
         if (values != null) {
             for(PythonTree t : values) {
                 addChild(t);

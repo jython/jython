@@ -58,13 +58,13 @@ public class Call extends exprType {
     java.util.List<keywordType> keywords, exprType starargs, exprType kwargs) {
         this.func = func;
         addChild(func);
-        this.args = args;
+        this.args = new ListWrapper<exprType>(args);
         if (args != null) {
             for(PythonTree t : args) {
                 addChild(t);
             }
         }
-        this.keywords = keywords;
+        this.keywords = new ListWrapper<keywordType>(keywords);
         if (keywords != null) {
             for(PythonTree t : keywords) {
                 addChild(t);
@@ -81,13 +81,13 @@ public class Call extends exprType {
         super(token);
         this.func = func;
         addChild(func);
-        this.args = args;
+        this.args = new ListWrapper<exprType>(args);
         if (args != null) {
             for(PythonTree t : args) {
                 addChild(t);
             }
         }
-        this.keywords = keywords;
+        this.keywords = new ListWrapper<keywordType>(keywords);
         if (keywords != null) {
             for(PythonTree t : keywords) {
                 addChild(t);
@@ -105,13 +105,13 @@ public class Call extends exprType {
         super(ttype, token);
         this.func = func;
         addChild(func);
-        this.args = args;
+        this.args = new ListWrapper<exprType>(args);
         if (args != null) {
             for(PythonTree t : args) {
                 addChild(t);
             }
         }
-        this.keywords = keywords;
+        this.keywords = new ListWrapper<keywordType>(keywords);
         if (keywords != null) {
             for(PythonTree t : keywords) {
                 addChild(t);
@@ -128,13 +128,13 @@ public class Call extends exprType {
         super(tree);
         this.func = func;
         addChild(func);
-        this.args = args;
+        this.args = new ListWrapper<exprType>(args);
         if (args != null) {
             for(PythonTree t : args) {
                 addChild(t);
             }
         }
-        this.keywords = keywords;
+        this.keywords = new ListWrapper<keywordType>(keywords);
         if (keywords != null) {
             for(PythonTree t : keywords) {
                 addChild(t);

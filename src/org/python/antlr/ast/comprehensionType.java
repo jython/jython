@@ -43,7 +43,7 @@ public class comprehensionType extends PythonTree {
         addChild(target);
         this.iter = iter;
         addChild(iter);
-        this.ifs = ifs;
+        this.ifs = new ListWrapper<exprType>(ifs);
         if (ifs != null) {
             for(PythonTree t : ifs) {
                 addChild(t);
@@ -58,7 +58,7 @@ public class comprehensionType extends PythonTree {
         addChild(target);
         this.iter = iter;
         addChild(iter);
-        this.ifs = ifs;
+        this.ifs = new ListWrapper<exprType>(ifs);
         if (ifs != null) {
             for(PythonTree t : ifs) {
                 addChild(t);
@@ -73,7 +73,7 @@ public class comprehensionType extends PythonTree {
         addChild(target);
         this.iter = iter;
         addChild(iter);
-        this.ifs = ifs;
+        this.ifs = new ListWrapper<exprType>(ifs);
         if (ifs != null) {
             for(PythonTree t : ifs) {
                 addChild(t);
@@ -88,7 +88,7 @@ public class comprehensionType extends PythonTree {
         addChild(target);
         this.iter = iter;
         addChild(iter);
-        this.ifs = ifs;
+        this.ifs = new ListWrapper<exprType>(ifs);
         if (ifs != null) {
             for(PythonTree t : ifs) {
                 addChild(t);

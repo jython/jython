@@ -47,7 +47,7 @@ public class argumentsType extends PythonTree {
 
     public argumentsType(java.util.List<exprType> args, String vararg, String
     kwarg, java.util.List<exprType> defaults) {
-        this.args = args;
+        this.args = new ListWrapper<exprType>(args);
         if (args != null) {
             for(PythonTree t : args) {
                 addChild(t);
@@ -55,7 +55,7 @@ public class argumentsType extends PythonTree {
         }
         this.vararg = vararg;
         this.kwarg = kwarg;
-        this.defaults = defaults;
+        this.defaults = new ListWrapper<exprType>(defaults);
         if (defaults != null) {
             for(PythonTree t : defaults) {
                 addChild(t);
@@ -66,7 +66,7 @@ public class argumentsType extends PythonTree {
     public argumentsType(Token token, java.util.List<exprType> args, String
     vararg, String kwarg, java.util.List<exprType> defaults) {
         super(token);
-        this.args = args;
+        this.args = new ListWrapper<exprType>(args);
         if (args != null) {
             for(PythonTree t : args) {
                 addChild(t);
@@ -74,7 +74,7 @@ public class argumentsType extends PythonTree {
         }
         this.vararg = vararg;
         this.kwarg = kwarg;
-        this.defaults = defaults;
+        this.defaults = new ListWrapper<exprType>(defaults);
         if (defaults != null) {
             for(PythonTree t : defaults) {
                 addChild(t);
@@ -85,7 +85,7 @@ public class argumentsType extends PythonTree {
     public argumentsType(int ttype, Token token, java.util.List<exprType> args,
     String vararg, String kwarg, java.util.List<exprType> defaults) {
         super(ttype, token);
-        this.args = args;
+        this.args = new ListWrapper<exprType>(args);
         if (args != null) {
             for(PythonTree t : args) {
                 addChild(t);
@@ -93,7 +93,7 @@ public class argumentsType extends PythonTree {
         }
         this.vararg = vararg;
         this.kwarg = kwarg;
-        this.defaults = defaults;
+        this.defaults = new ListWrapper<exprType>(defaults);
         if (defaults != null) {
             for(PythonTree t : defaults) {
                 addChild(t);
@@ -104,7 +104,7 @@ public class argumentsType extends PythonTree {
     public argumentsType(PythonTree tree, java.util.List<exprType> args, String
     vararg, String kwarg, java.util.List<exprType> defaults) {
         super(tree);
-        this.args = args;
+        this.args = new ListWrapper<exprType>(args);
         if (args != null) {
             for(PythonTree t : args) {
                 addChild(t);
@@ -112,7 +112,7 @@ public class argumentsType extends PythonTree {
         }
         this.vararg = vararg;
         this.kwarg = kwarg;
-        this.defaults = defaults;
+        this.defaults = new ListWrapper<exprType>(defaults);
         if (defaults != null) {
             for(PythonTree t : defaults) {
                 addChild(t);
