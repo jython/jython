@@ -57,6 +57,7 @@ class EmitVisitor(asdl.VisitorBase):
         print >> self.file, 'package org.python.antlr.ast;'
         if refersToPythonTree:
             print >> self.file, 'import org.python.antlr.PythonTree;'
+            print >> self.file, 'import org.python.antlr.ListWrapper;'
             print >> self.file, 'import org.antlr.runtime.CommonToken;'
             print >> self.file, 'import org.antlr.runtime.Token;'
         if useDataOutput:
@@ -291,6 +292,7 @@ class JavaVisitor(EmitVisitor):
     def javaConstructorHelper(self, fields, depth):
         for f in fields:
             self.emit("this.%s = %s;" % (f.name, f.name), depth+1)
+            #self.emit("set%s(%s);" % (str(f.name).capitalize(), f.name), depth+1)
             fparg = self.fieldDef(f)
 
             not_simple = True
@@ -399,14 +401,18 @@ class JavaVisitor(EmitVisitor):
         self.emit("", 0)
 
     def visitField(self, field, depth):
-        self.emit("private %s;" % self.fieldDef(field), depth)
-        self.emit("public %s get%s() {" % (self.javaType(field),
+        self.emit("private %s;" % self.fieldDef(field, True), depth)
+        self.emit("public %s get%s() {" % (self.javaType(field, True),
             str(field.name).capitalize()), depth)
         self.emit("return %s;" % field.name, depth+1)
         self.emit("}", depth)
         self.emit("public void set%s(%s) {" % (str(field.name).capitalize(),
             self.fieldDef(field)), depth)
-        self.emit("this.%s = %s;" % (field.name, field.name), depth+1)
+        if field.seq:
+            self.emit("this.%s = new %s(%s);" % (field.name,
+                self.javaType(field, True), field.name), depth+1)
+        else:
+            self.emit("this.%s = %s;" % (field.name, field.name), depth+1)
         self.emit("}", depth)
         self.emit("", 0)
 
@@ -420,16 +426,20 @@ class JavaVisitor(EmitVisitor):
         'PythonTree'  : 'PythonTree', # also for antlr type
     }
 
-    def fieldDef(self, field):
-        jtype = self.javaType(field)
+    def fieldDef(self, field, wrapper=False):
+        jtype = self.javaType(field, wrapper)
         name = field.name
         return "%s %s" % (jtype, name)
 
-    def javaType(self, field):
+    def javaType(self, field, wrapper=False):
         jtype = str(field.type)
         jtype = self.bltinnames.get(jtype, jtype + 'Type')
         if field.seq:
-            return "java.util.List<%s>" % jtype
+            if wrapper:
+                return "ListWrapper<%s>" % jtype
+            else:
+                return "java.util.List<%s>" % jtype
+
         return jtype
 
 class VisitorVisitor(EmitVisitor):
