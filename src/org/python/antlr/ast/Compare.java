@@ -9,7 +9,7 @@ import java.io.IOException;
 
 public class Compare extends exprType {
     private exprType left;
-    public exprType getLeft() {
+    public exprType getInternalLeft() {
         return left;
     }
     public void setLeft(exprType left) {
@@ -17,7 +17,7 @@ public class Compare extends exprType {
     }
 
     private ListWrapper<cmpopType> ops;
-    public ListWrapper<cmpopType> getOps() {
+    public ListWrapper<cmpopType> getInternalOps() {
         return ops;
     }
     public void setOps(java.util.List<cmpopType> ops) {
@@ -25,7 +25,7 @@ public class Compare extends exprType {
     }
 
     private ListWrapper<exprType> comparators;
-    public ListWrapper<exprType> getComparators() {
+    public ListWrapper<exprType> getInternalComparators() {
         return comparators;
     }
     public void setComparators(java.util.List<exprType> comparators) {

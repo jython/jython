@@ -9,7 +9,7 @@ import java.io.IOException;
 
 public class Global extends stmtType {
     private ListWrapper<String> names;
-    public ListWrapper<String> getNames() {
+    public ListWrapper<String> getInternalNames() {
         return names;
     }
     public void setNames(java.util.List<String> names) {

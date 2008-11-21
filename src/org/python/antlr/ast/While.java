@@ -9,7 +9,7 @@ import java.io.IOException;
 
 public class While extends stmtType {
     private exprType test;
-    public exprType getTest() {
+    public exprType getInternalTest() {
         return test;
     }
     public void setTest(exprType test) {
@@ -17,7 +17,7 @@ public class While extends stmtType {
     }
 
     private ListWrapper<stmtType> body;
-    public ListWrapper<stmtType> getBody() {
+    public ListWrapper<stmtType> getInternalBody() {
         return body;
     }
     public void setBody(java.util.List<stmtType> body) {
@@ -25,7 +25,7 @@ public class While extends stmtType {
     }
 
     private ListWrapper<stmtType> orelse;
-    public ListWrapper<stmtType> getOrelse() {
+    public ListWrapper<stmtType> getInternalOrelse() {
         return orelse;
     }
     public void setOrelse(java.util.List<stmtType> orelse) {

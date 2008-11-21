@@ -9,7 +9,7 @@ import java.io.IOException;
 
 public class Subscript extends exprType implements Context {
     private exprType value;
-    public exprType getValue() {
+    public exprType getInternalValue() {
         return value;
     }
     public void setValue(exprType value) {
@@ -17,7 +17,7 @@ public class Subscript extends exprType implements Context {
     }
 
     private sliceType slice;
-    public sliceType getSlice() {
+    public sliceType getInternalSlice() {
         return slice;
     }
     public void setSlice(sliceType slice) {
@@ -25,7 +25,7 @@ public class Subscript extends exprType implements Context {
     }
 
     private expr_contextType ctx;
-    public expr_contextType getCtx() {
+    public expr_contextType getInternalCtx() {
         return ctx;
     }
     public void setCtx(expr_contextType ctx) {

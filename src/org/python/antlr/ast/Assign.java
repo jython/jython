@@ -9,7 +9,7 @@ import java.io.IOException;
 
 public class Assign extends stmtType {
     private ListWrapper<exprType> targets;
-    public ListWrapper<exprType> getTargets() {
+    public ListWrapper<exprType> getInternalTargets() {
         return targets;
     }
     public void setTargets(java.util.List<exprType> targets) {
@@ -17,7 +17,7 @@ public class Assign extends stmtType {
     }
 
     private exprType value;
-    public exprType getValue() {
+    public exprType getInternalValue() {
         return value;
     }
     public void setValue(exprType value) {

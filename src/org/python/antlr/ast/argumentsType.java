@@ -9,7 +9,7 @@ import java.io.IOException;
 
 public class argumentsType extends PythonTree {
     private ListWrapper<exprType> args;
-    public ListWrapper<exprType> getArgs() {
+    public ListWrapper<exprType> getInternalArgs() {
         return args;
     }
     public void setArgs(java.util.List<exprType> args) {
@@ -17,7 +17,7 @@ public class argumentsType extends PythonTree {
     }
 
     private String vararg;
-    public String getVararg() {
+    public String getInternalVararg() {
         return vararg;
     }
     public void setVararg(String vararg) {
@@ -25,7 +25,7 @@ public class argumentsType extends PythonTree {
     }
 
     private String kwarg;
-    public String getKwarg() {
+    public String getInternalKwarg() {
         return kwarg;
     }
     public void setKwarg(String kwarg) {
@@ -33,7 +33,7 @@ public class argumentsType extends PythonTree {
     }
 
     private ListWrapper<exprType> defaults;
-    public ListWrapper<exprType> getDefaults() {
+    public ListWrapper<exprType> getInternalDefaults() {
         return defaults;
     }
     public void setDefaults(java.util.List<exprType> defaults) {

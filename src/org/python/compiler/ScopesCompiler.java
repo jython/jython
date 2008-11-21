@@ -93,7 +93,7 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
     @Override
     public Object visitInteractive(Interactive node) throws Exception {
         beginScope("<single-top>", TOPSCOPE, node, null);
-        suite(node.getBody());
+        suite(node.getInternalBody());
         endScope();
         return null;
     }
@@ -102,7 +102,7 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
     public Object visitModule(org.python.antlr.ast.Module node)
             throws Exception {
         beginScope("<file-top>", TOPSCOPE, node, null);
-        suite(node.getBody());
+        suite(node.getInternalBody());
         endScope();
         return null;
     }
@@ -110,7 +110,7 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
     @Override
     public Object visitExpression(Expression node) throws Exception {
         beginScope("<eval-top>", TOPSCOPE, node, null);
-        visit(new Return(node,node.getBody()));
+        visit(new Return(node,node.getInternalBody()));
         endScope();
         return null;
     }
@@ -121,21 +121,21 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
 
     @Override
     public Object visitFunctionDef(FunctionDef node) throws Exception {
-        def(node.getName());
+        def(node.getInternalName());
         ArgListCompiler ac = new ArgListCompiler();
-        ac.visitArgs(node.getArgs());
+        ac.visitArgs(node.getInternalArgs());
 
         List<exprType> defaults = ac.getDefaults();
         for (int i = 0; i < defaults.size(); i++) {
             visit(defaults.get(i));
         }
 
-        List<exprType> decs = node.getDecorators();
+        List<exprType> decs = node.getInternalDecorators();
         for (int i = decs.size() - 1; i >= 0; i--) {
             visit(decs.get(i));
         }
 
-        beginScope(node.getName(), FUNCSCOPE, node, ac);
+        beginScope(node.getInternalName(), FUNCSCOPE, node, ac);
         int n = ac.names.size();
         for (int i = 0; i < n; i++) {
             cur.addParam((String) ac.names.get(i));
@@ -144,7 +144,7 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
             visit((stmtType) ac.init_code.get(i));
         }
         cur.markFromParam();
-        suite(node.getBody());
+        suite(node.getInternalBody());
         endScope();
         return null;
     }
@@ -152,7 +152,7 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
     @Override
     public Object visitLambda(Lambda node) throws Exception {
         ArgListCompiler ac = new ArgListCompiler();
-        ac.visitArgs(node.getArgs());
+        ac.visitArgs(node.getInternalArgs());
 
         List<? extends PythonTree> defaults = ac.getDefaults();
         for (int i = 0; i < defaults.size(); i++) {
@@ -167,7 +167,7 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
             visit((stmtType) o);
         }
         cur.markFromParam();
-        visit(node.getBody());
+        visit(node.getInternalBody());
         endScope();
         return null;
     }
@@ -179,11 +179,11 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
 
     @Override
     public Object visitImport(Import node) throws Exception {
-        for (int i = 0; i < node.getNames().size(); i++) {
-            if (node.getNames().get(i).getAsname() != null) {
-                cur.addBound(node.getNames().get(i).getAsname());
+        for (int i = 0; i < node.getInternalNames().size(); i++) {
+            if (node.getInternalNames().get(i).getInternalAsname() != null) {
+                cur.addBound(node.getInternalNames().get(i).getInternalAsname());
             } else {
-                String name = node.getNames().get(i).getName();
+                String name = node.getInternalNames().get(i).getInternalName();
                 if (name.indexOf('.') > 0) {
                     name = name.substring(0, name.indexOf('.'));
                 }
@@ -196,16 +196,16 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
     @Override
     public Object visitImportFrom(ImportFrom node) throws Exception {
         Future.checkFromFuture(node); // future stmt support
-        int n = node.getNames().size();
+        int n = node.getInternalNames().size();
         if (n == 0) {
             cur.from_import_star = true;
             return null;
         }
         for (int i = 0; i < n; i++) {
-            if (node.getNames().get(i).getAsname() != null) {
-                cur.addBound(node.getNames().get(i).getAsname());
+            if (node.getInternalNames().get(i).getInternalAsname() != null) {
+                cur.addBound(node.getInternalNames().get(i).getInternalAsname());
             } else {
-                cur.addBound(node.getNames().get(i).getName());
+                cur.addBound(node.getInternalNames().get(i).getInternalName());
             }
         }
         return null;
@@ -213,9 +213,9 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
 
     @Override
     public Object visitGlobal(Global node) throws Exception {
-        int n = node.getNames().size();
+        int n = node.getInternalNames().size();
         for (int i = 0; i < n; i++) {
-            String name = node.getNames().get(i);
+            String name = node.getInternalNames().get(i);
             int prev = cur.addGlobal(name);
             if (prev >= 0) {
                 if ((prev & FROM_PARAM) != 0) {
@@ -241,7 +241,7 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
     @Override
     public Object visitExec(Exec node) throws Exception {
         cur.exec = true;
-        if (node.getGlobals() == null && node.getLocals() == null) {
+        if (node.getInternalGlobals() == null && node.getInternalLocals() == null) {
             cur.unqual_exec = true;
         }
         traverse(node);
@@ -250,21 +250,21 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
 
     @Override
     public Object visitClassDef(ClassDef node) throws Exception {
-        def(node.getName());
-        int n = node.getBases().size();
+        def(node.getInternalName());
+        int n = node.getInternalBases().size();
         for (int i = 0; i < n; i++) {
-            visit(node.getBases().get(i));
+            visit(node.getInternalBases().get(i));
         }
-        beginScope(node.getName(), CLASSSCOPE, node, null);
-        suite(node.getBody());
+        beginScope(node.getInternalName(), CLASSSCOPE, node, null);
+        suite(node.getInternalBody());
         endScope();
         return null;
     }
 
     @Override
     public Object visitName(Name node) throws Exception {
-        String name = node.getId();
-        if (node.getCtx() != expr_contextType.Load) {
+        String name = node.getInternalId();
+        if (node.getInternalCtx() != expr_contextType.Load) {
             if (name.equals("__debug__")) {
                 code_compiler.error("can not assign to __debug__", true, node);
             }
@@ -294,7 +294,7 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
     
     @Override
     public Object visitReturn(Return node) throws Exception {
-        if (node.getValue() != null) {
+        if (node.getInternalValue() != null) {
             cur.noteReturnValue(node);
         }
         traverse(node);
@@ -304,8 +304,8 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
     @Override
     public Object visitGeneratorExp(GeneratorExp node) throws Exception {
         // The first iterator is evaluated in the outer scope
-        if (node.getGenerators() != null && node.getGenerators().size() > 0) {
-            visit(node.getGenerators().get(0).getIter());
+        if (node.getInternalGenerators() != null && node.getInternalGenerators().size() > 0) {
+            visit(node.getInternalGenerators().get(0).getInternalIter());
         }
         String bound_exp = "_(x)";
         String tmp = "_(" + node.getLine() + "_" + node.getCharPositionInLine()
@@ -322,23 +322,23 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
         cur.defineAsGenerator(node);
         cur.yield_count++;
         // The reset of the iterators are evaluated in the inner scope
-        if (node.getElt() != null) {
-            visit(node.getElt());
+        if (node.getInternalElt() != null) {
+            visit(node.getInternalElt());
         }
-        if (node.getGenerators() != null) {
-            for (int i = 0; i < node.getGenerators().size(); i++) {
-                if (node.getGenerators().get(i) != null) {
+        if (node.getInternalGenerators() != null) {
+            for (int i = 0; i < node.getInternalGenerators().size(); i++) {
+                if (node.getInternalGenerators().get(i) != null) {
                     if (i == 0) {
-                        visit(node.getGenerators().get(i).getTarget());
-                        if (node.getGenerators().get(i).getIfs() != null) {
-                            for (exprType cond : node.getGenerators().get(i).getIfs()) {
+                        visit(node.getInternalGenerators().get(i).getInternalTarget());
+                        if (node.getInternalGenerators().get(i).getInternalIfs() != null) {
+                            for (exprType cond : node.getInternalGenerators().get(i).getInternalIfs()) {
                                 if (cond != null) {
                                     visit(cond);
                                 }
                             }
                         }
                     } else {
-                        visit(node.getGenerators().get(i));
+                        visit(node.getInternalGenerators().get(i));
                     }
                 }
             }

@@ -9,7 +9,7 @@ import java.io.IOException;
 
 public class Raise extends stmtType {
     private exprType excepttype;
-    public exprType getExcepttype() {
+    public exprType getInternalExcepttype() {
         return excepttype;
     }
     public void setExcepttype(exprType excepttype) {
@@ -17,7 +17,7 @@ public class Raise extends stmtType {
     }
 
     private exprType inst;
-    public exprType getInst() {
+    public exprType getInternalInst() {
         return inst;
     }
     public void setInst(exprType inst) {
@@ -25,7 +25,7 @@ public class Raise extends stmtType {
     }
 
     private exprType tback;
-    public exprType getTback() {
+    public exprType getInternalTback() {
         return tback;
     }
     public void setTback(exprType tback) {

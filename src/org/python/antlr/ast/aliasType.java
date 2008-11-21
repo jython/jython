@@ -9,7 +9,7 @@ import java.io.IOException;
 
 public class aliasType extends PythonTree {
     private String name;
-    public String getName() {
+    public String getInternalName() {
         return name;
     }
     public void setName(String name) {
@@ -17,7 +17,7 @@ public class aliasType extends PythonTree {
     }
 
     private String asname;
-    public String getAsname() {
+    public String getInternalAsname() {
         return asname;
     }
     public void setAsname(String asname) {

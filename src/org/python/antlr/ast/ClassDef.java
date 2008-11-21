@@ -9,7 +9,7 @@ import java.io.IOException;
 
 public class ClassDef extends stmtType {
     private String name;
-    public String getName() {
+    public String getInternalName() {
         return name;
     }
     public void setName(String name) {
@@ -17,7 +17,7 @@ public class ClassDef extends stmtType {
     }
 
     private ListWrapper<exprType> bases;
-    public ListWrapper<exprType> getBases() {
+    public ListWrapper<exprType> getInternalBases() {
         return bases;
     }
     public void setBases(java.util.List<exprType> bases) {
@@ -25,7 +25,7 @@ public class ClassDef extends stmtType {
     }
 
     private ListWrapper<stmtType> body;
-    public ListWrapper<stmtType> getBody() {
+    public ListWrapper<stmtType> getInternalBody() {
         return body;
     }
     public void setBody(java.util.List<stmtType> body) {
@@ -33,7 +33,7 @@ public class ClassDef extends stmtType {
     }
 
     private ListWrapper<exprType> decorators;
-    public ListWrapper<exprType> getDecorators() {
+    public ListWrapper<exprType> getInternalDecorators() {
         return decorators;
     }
     public void setDecorators(java.util.List<exprType> decorators) {

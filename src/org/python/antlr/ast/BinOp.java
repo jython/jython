@@ -9,7 +9,7 @@ import java.io.IOException;
 
 public class BinOp extends exprType {
     private exprType left;
-    public exprType getLeft() {
+    public exprType getInternalLeft() {
         return left;
     }
     public void setLeft(exprType left) {
@@ -17,7 +17,7 @@ public class BinOp extends exprType {
     }
 
     private operatorType op;
-    public operatorType getOp() {
+    public operatorType getInternalOp() {
         return op;
     }
     public void setOp(operatorType op) {
@@ -25,7 +25,7 @@ public class BinOp extends exprType {
     }
 
     private exprType right;
-    public exprType getRight() {
+    public exprType getInternalRight() {
         return right;
     }
     public void setRight(exprType right) {

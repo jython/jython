@@ -9,7 +9,7 @@ import java.io.IOException;
 
 public class Print extends stmtType {
     private exprType dest;
-    public exprType getDest() {
+    public exprType getInternalDest() {
         return dest;
     }
     public void setDest(exprType dest) {
@@ -17,7 +17,7 @@ public class Print extends stmtType {
     }
 
     private ListWrapper<exprType> values;
-    public ListWrapper<exprType> getValues() {
+    public ListWrapper<exprType> getInternalValues() {
         return values;
     }
     public void setValues(java.util.List<exprType> values) {
@@ -25,7 +25,7 @@ public class Print extends stmtType {
     }
 
     private boolean nl;
-    public boolean getNl() {
+    public boolean getInternalNl() {
         return nl;
     }
     public void setNl(boolean nl) {

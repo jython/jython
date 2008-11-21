@@ -9,7 +9,7 @@ import java.io.IOException;
 
 public class AugAssign extends stmtType {
     private exprType target;
-    public exprType getTarget() {
+    public exprType getInternalTarget() {
         return target;
     }
     public void setTarget(exprType target) {
@@ -17,7 +17,7 @@ public class AugAssign extends stmtType {
     }
 
     private operatorType op;
-    public operatorType getOp() {
+    public operatorType getInternalOp() {
         return op;
     }
     public void setOp(operatorType op) {
@@ -25,7 +25,7 @@ public class AugAssign extends stmtType {
     }
 
     private exprType value;
-    public exprType getValue() {
+    public exprType getInternalValue() {
         return value;
     }
     public void setValue(exprType value) {

@@ -9,7 +9,7 @@ import java.io.IOException;
 
 public class Import extends stmtType {
     private ListWrapper<aliasType> names;
-    public ListWrapper<aliasType> getNames() {
+    public ListWrapper<aliasType> getInternalNames() {
         return names;
     }
     public void setNames(java.util.List<aliasType> names) {

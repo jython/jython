@@ -9,7 +9,7 @@ import java.io.IOException;
 
 public class Dict extends exprType {
     private ListWrapper<exprType> keys;
-    public ListWrapper<exprType> getKeys() {
+    public ListWrapper<exprType> getInternalKeys() {
         return keys;
     }
     public void setKeys(java.util.List<exprType> keys) {
@@ -17,7 +17,7 @@ public class Dict extends exprType {
     }
 
     private ListWrapper<exprType> values;
-    public ListWrapper<exprType> getValues() {
+    public ListWrapper<exprType> getInternalValues() {
         return values;
     }
     public void setValues(java.util.List<exprType> values) {

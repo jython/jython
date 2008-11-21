@@ -9,7 +9,7 @@ import java.io.IOException;
 
 public class GeneratorExp extends exprType {
     private exprType elt;
-    public exprType getElt() {
+    public exprType getInternalElt() {
         return elt;
     }
     public void setElt(exprType elt) {
@@ -17,7 +17,7 @@ public class GeneratorExp extends exprType {
     }
 
     private ListWrapper<comprehensionType> generators;
-    public ListWrapper<comprehensionType> getGenerators() {
+    public ListWrapper<comprehensionType> getInternalGenerators() {
         return generators;
     }
     public void setGenerators(java.util.List<comprehensionType> generators) {

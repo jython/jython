@@ -9,7 +9,7 @@ import java.io.IOException;
 
 public class Assert extends stmtType {
     private exprType test;
-    public exprType getTest() {
+    public exprType getInternalTest() {
         return test;
     }
     public void setTest(exprType test) {
@@ -17,7 +17,7 @@ public class Assert extends stmtType {
     }
 
     private exprType msg;
-    public exprType getMsg() {
+    public exprType getInternalMsg() {
         return msg;
     }
     public void setMsg(exprType msg) {

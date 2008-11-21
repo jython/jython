@@ -9,7 +9,7 @@ import java.io.IOException;
 
 public class Name extends exprType implements Context {
     private String id;
-    public String getId() {
+    public String getInternalId() {
         return id;
     }
     public void setId(String id) {
@@ -17,7 +17,7 @@ public class Name extends exprType implements Context {
     }
 
     private expr_contextType ctx;
-    public expr_contextType getCtx() {
+    public expr_contextType getInternalCtx() {
         return ctx;
     }
     public void setCtx(expr_contextType ctx) {

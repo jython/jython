@@ -9,7 +9,7 @@ import java.io.IOException;
 
 public class For extends stmtType {
     private exprType target;
-    public exprType getTarget() {
+    public exprType getInternalTarget() {
         return target;
     }
     public void setTarget(exprType target) {
@@ -17,7 +17,7 @@ public class For extends stmtType {
     }
 
     private exprType iter;
-    public exprType getIter() {
+    public exprType getInternalIter() {
         return iter;
     }
     public void setIter(exprType iter) {
@@ -25,7 +25,7 @@ public class For extends stmtType {
     }
 
     private ListWrapper<stmtType> body;
-    public ListWrapper<stmtType> getBody() {
+    public ListWrapper<stmtType> getInternalBody() {
         return body;
     }
     public void setBody(java.util.List<stmtType> body) {
@@ -33,7 +33,7 @@ public class For extends stmtType {
     }
 
     private ListWrapper<stmtType> orelse;
-    public ListWrapper<stmtType> getOrelse() {
+    public ListWrapper<stmtType> getInternalOrelse() {
         return orelse;
     }
     public void setOrelse(java.util.List<stmtType> orelse) {

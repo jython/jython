@@ -409,7 +409,7 @@ class JavaVisitor(EmitVisitor):
 
     def visitField(self, field, depth):
         self.emit("private %s;" % self.fieldDef(field, True), depth)
-        self.emit("public %s get%s() {" % (self.javaType(field, True),
+        self.emit("public %s getInternal%s() {" % (self.javaType(field, True),
             str(field.name).capitalize()), depth)
         self.emit("return %s;" % field.name, depth+1)
         self.emit("}", depth)

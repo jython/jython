@@ -9,7 +9,7 @@ import java.io.IOException;
 
 public class Call extends exprType {
     private exprType func;
-    public exprType getFunc() {
+    public exprType getInternalFunc() {
         return func;
     }
     public void setFunc(exprType func) {
@@ -17,7 +17,7 @@ public class Call extends exprType {
     }
 
     private ListWrapper<exprType> args;
-    public ListWrapper<exprType> getArgs() {
+    public ListWrapper<exprType> getInternalArgs() {
         return args;
     }
     public void setArgs(java.util.List<exprType> args) {
@@ -25,7 +25,7 @@ public class Call extends exprType {
     }
 
     private ListWrapper<keywordType> keywords;
-    public ListWrapper<keywordType> getKeywords() {
+    public ListWrapper<keywordType> getInternalKeywords() {
         return keywords;
     }
     public void setKeywords(java.util.List<keywordType> keywords) {
@@ -33,7 +33,7 @@ public class Call extends exprType {
     }
 
     private exprType starargs;
-    public exprType getStarargs() {
+    public exprType getInternalStarargs() {
         return starargs;
     }
     public void setStarargs(exprType starargs) {
@@ -41,7 +41,7 @@ public class Call extends exprType {
     }
 
     private exprType kwargs;
-    public exprType getKwargs() {
+    public exprType getInternalKwargs() {
         return kwargs;
     }
     public void setKwargs(exprType kwargs) {

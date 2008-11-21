@@ -9,7 +9,7 @@ import java.io.IOException;
 
 public class With extends stmtType {
     private exprType context_expr;
-    public exprType getContext_expr() {
+    public exprType getInternalContext_expr() {
         return context_expr;
     }
     public void setContext_expr(exprType context_expr) {
@@ -17,7 +17,7 @@ public class With extends stmtType {
     }
 
     private exprType optional_vars;
-    public exprType getOptional_vars() {
+    public exprType getInternalOptional_vars() {
         return optional_vars;
     }
     public void setOptional_vars(exprType optional_vars) {
@@ -25,7 +25,7 @@ public class With extends stmtType {
     }
 
     private ListWrapper<stmtType> body;
-    public ListWrapper<stmtType> getBody() {
+    public ListWrapper<stmtType> getInternalBody() {
         return body;
     }
     public void setBody(java.util.List<stmtType> body) {

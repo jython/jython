@@ -9,7 +9,7 @@ import java.io.IOException;
 
 public class keywordType extends PythonTree {
     private String arg;
-    public String getArg() {
+    public String getInternalArg() {
         return arg;
     }
     public void setArg(String arg) {
@@ -17,7 +17,7 @@ public class keywordType extends PythonTree {
     }
 
     private exprType value;
-    public exprType getValue() {
+    public exprType getInternalValue() {
         return value;
     }
     public void setValue(exprType value) {

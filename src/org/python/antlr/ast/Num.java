@@ -9,7 +9,7 @@ import java.io.IOException;
 
 public class Num extends exprType {
     private Object n;
-    public Object getN() {
+    public Object getInternalN() {
         return n;
     }
     public void setN(Object n) {

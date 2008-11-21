@@ -9,7 +9,7 @@ import java.io.IOException;
 
 public class ExtSlice extends sliceType {
     private ListWrapper<sliceType> dims;
-    public ListWrapper<sliceType> getDims() {
+    public ListWrapper<sliceType> getInternalDims() {
         return dims;
     }
     public void setDims(java.util.List<sliceType> dims) {

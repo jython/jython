@@ -9,7 +9,7 @@ import java.io.IOException;
 
 public class UnaryOp extends exprType {
     private unaryopType op;
-    public unaryopType getOp() {
+    public unaryopType getInternalOp() {
         return op;
     }
     public void setOp(unaryopType op) {
@@ -17,7 +17,7 @@ public class UnaryOp extends exprType {
     }
 
     private exprType operand;
-    public exprType getOperand() {
+    public exprType getInternalOperand() {
         return operand;
     }
     public void setOperand(exprType operand) {

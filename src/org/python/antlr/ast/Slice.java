@@ -9,7 +9,7 @@ import java.io.IOException;
 
 public class Slice extends sliceType {
     private exprType lower;
-    public exprType getLower() {
+    public exprType getInternalLower() {
         return lower;
     }
     public void setLower(exprType lower) {
@@ -17,7 +17,7 @@ public class Slice extends sliceType {
     }
 
     private exprType upper;
-    public exprType getUpper() {
+    public exprType getInternalUpper() {
         return upper;
     }
     public void setUpper(exprType upper) {
@@ -25,7 +25,7 @@ public class Slice extends sliceType {
     }
 
     private exprType step;
-    public exprType getStep() {
+    public exprType getInternalStep() {
         return step;
     }
     public void setStep(exprType step) {

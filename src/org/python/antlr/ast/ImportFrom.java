@@ -9,7 +9,7 @@ import java.io.IOException;
 
 public class ImportFrom extends stmtType {
     private String module;
-    public String getModule() {
+    public String getInternalModule() {
         return module;
     }
     public void setModule(String module) {
@@ -17,7 +17,7 @@ public class ImportFrom extends stmtType {
     }
 
     private ListWrapper<aliasType> names;
-    public ListWrapper<aliasType> getNames() {
+    public ListWrapper<aliasType> getInternalNames() {
         return names;
     }
     public void setNames(java.util.List<aliasType> names) {
@@ -25,7 +25,7 @@ public class ImportFrom extends stmtType {
     }
 
     private int level;
-    public int getLevel() {
+    public int getInternalLevel() {
         return level;
     }
     public void setLevel(int level) {

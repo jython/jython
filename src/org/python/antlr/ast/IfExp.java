@@ -9,7 +9,7 @@ import java.io.IOException;
 
 public class IfExp extends exprType {
     private exprType test;
-    public exprType getTest() {
+    public exprType getInternalTest() {
         return test;
     }
     public void setTest(exprType test) {
@@ -17,7 +17,7 @@ public class IfExp extends exprType {
     }
 
     private exprType body;
-    public exprType getBody() {
+    public exprType getInternalBody() {
         return body;
     }
     public void setBody(exprType body) {
@@ -25,7 +25,7 @@ public class IfExp extends exprType {
     }
 
     private exprType orelse;
-    public exprType getOrelse() {
+    public exprType getInternalOrelse() {
         return orelse;
     }
     public void setOrelse(exprType orelse) {

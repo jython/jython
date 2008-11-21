@@ -9,7 +9,7 @@ import java.io.IOException;
 
 public class comprehensionType extends PythonTree {
     private exprType target;
-    public exprType getTarget() {
+    public exprType getInternalTarget() {
         return target;
     }
     public void setTarget(exprType target) {
@@ -17,7 +17,7 @@ public class comprehensionType extends PythonTree {
     }
 
     private exprType iter;
-    public exprType getIter() {
+    public exprType getInternalIter() {
         return iter;
     }
     public void setIter(exprType iter) {
@@ -25,7 +25,7 @@ public class comprehensionType extends PythonTree {
     }
 
     private ListWrapper<exprType> ifs;
-    public ListWrapper<exprType> getIfs() {
+    public ListWrapper<exprType> getInternalIfs() {
         return ifs;
     }
     public void setIfs(java.util.List<exprType> ifs) {

@@ -9,7 +9,7 @@ import java.io.IOException;
 
 public class Attribute extends exprType implements Context {
     private exprType value;
-    public exprType getValue() {
+    public exprType getInternalValue() {
         return value;
     }
     public void setValue(exprType value) {
@@ -17,7 +17,7 @@ public class Attribute extends exprType implements Context {
     }
 
     private String attr;
-    public String getAttr() {
+    public String getInternalAttr() {
         return attr;
     }
     public void setAttr(String attr) {
@@ -25,7 +25,7 @@ public class Attribute extends exprType implements Context {
     }
 
     private expr_contextType ctx;
-    public expr_contextType getCtx() {
+    public expr_contextType getInternalCtx() {
         return ctx;
     }
     public void setCtx(expr_contextType ctx) {

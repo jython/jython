@@ -9,7 +9,7 @@ import java.io.IOException;
 
 public class Exec extends stmtType {
     private exprType body;
-    public exprType getBody() {
+    public exprType getInternalBody() {
         return body;
     }
     public void setBody(exprType body) {
@@ -17,7 +17,7 @@ public class Exec extends stmtType {
     }
 
     private exprType globals;
-    public exprType getGlobals() {
+    public exprType getInternalGlobals() {
         return globals;
     }
     public void setGlobals(exprType globals) {
@@ -25,7 +25,7 @@ public class Exec extends stmtType {
     }
 
     private exprType locals;
-    public exprType getLocals() {
+    public exprType getInternalLocals() {
         return locals;
     }
     public void setLocals(exprType locals) {

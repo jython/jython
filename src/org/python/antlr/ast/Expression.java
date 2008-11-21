@@ -9,7 +9,7 @@ import java.io.IOException;
 
 public class Expression extends modType {
     private exprType body;
-    public exprType getBody() {
+    public exprType getInternalBody() {
         return body;
     }
     public void setBody(exprType body) {

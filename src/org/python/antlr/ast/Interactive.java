@@ -9,7 +9,7 @@ import java.io.IOException;
 
 public class Interactive extends modType {
     private ListWrapper<stmtType> body;
-    public ListWrapper<stmtType> getBody() {
+    public ListWrapper<stmtType> getInternalBody() {
         return body;
     }
     public void setBody(java.util.List<stmtType> body) {

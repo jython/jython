@@ -22,15 +22,15 @@ public class Future {
     private static final String FUTURE = "__future__";
 
     private boolean check(ImportFrom cand) throws Exception {
-        if (!cand.getModule().equals(FUTURE))
+        if (!cand.getInternalModule().equals(FUTURE))
             return false;
-        int n = cand.getNames().size();
+        int n = cand.getInternalNames().size();
         if (n == 0) {
             throw new ParseException(
                     "future statement does not support import *",cand);
         }
         for (int i = 0; i < n; i++) {
-            String feature = cand.getNames().get(i).getName();
+            String feature = cand.getInternalNames().get(i).getInternalName();
             // *known* features
             if (feature.equals("nested_scopes")) {
                 continue;
@@ -72,13 +72,13 @@ public class Future {
         int beg = 0;
         List<stmtType> suite = null;
         if (node instanceof Module) {
-            suite = ((Module) node).getBody();
+            suite = ((Module) node).getInternalBody();
             if (suite.size() > 0 && suite.get(0) instanceof Expr &&
-                            ((Expr) suite.get(0)).getValue() instanceof Str) {
+                            ((Expr) suite.get(0)).getInternalValue() instanceof Str) {
                 beg++;
             }
         } else if (node instanceof Interactive) {
-            suite = ((Interactive) node).getBody();
+            suite = ((Interactive) node).getInternalBody();
         } else {
             return;
         }
@@ -107,7 +107,7 @@ public class Future {
     public static void checkFromFuture(ImportFrom node) throws Exception {
         if (node.from_future_checked)
             return;
-        if (node.getModule().equals(FUTURE)) {
+        if (node.getInternalModule().equals(FUTURE)) {
             throw new ParseException("from __future__ imports must occur " +
                                      "at the beginning of the file",node);
         }

@@ -9,7 +9,7 @@ import java.io.IOException;
 
 public class Repr extends exprType {
     private exprType value;
-    public exprType getValue() {
+    public exprType getInternalValue() {
         return value;
     }
     public void setValue(exprType value) {

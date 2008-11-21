@@ -9,7 +9,7 @@ import java.io.IOException;
 
 public class Str extends exprType {
     private Object s;
-    public Object getS() {
+    public Object getInternalS() {
         return s;
     }
     public void setS(Object s) {

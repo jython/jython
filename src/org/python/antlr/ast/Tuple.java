@@ -9,7 +9,7 @@ import java.io.IOException;
 
 public class Tuple extends exprType implements Context {
     private ListWrapper<exprType> elts;
-    public ListWrapper<exprType> getElts() {
+    public ListWrapper<exprType> getInternalElts() {
         return elts;
     }
     public void setElts(java.util.List<exprType> elts) {
@@ -17,7 +17,7 @@ public class Tuple extends exprType implements Context {
     }
 
     private expr_contextType ctx;
-    public expr_contextType getCtx() {
+    public expr_contextType getInternalCtx() {
         return ctx;
     }
     public void setCtx(expr_contextType ctx) {

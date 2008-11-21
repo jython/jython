@@ -135,7 +135,7 @@ public class GrammarActions {
         List<exprType> result = new ArrayList<exprType>();
         if (etype != null) {
             if (etype instanceof Tuple) {
-                return ((Tuple)etype).getElts();
+                return ((Tuple)etype).getInternalElts();
             }
             result.add(etype);
         }
@@ -314,10 +314,10 @@ public class GrammarActions {
         }
         if (tree instanceof GeneratorExp) {
             GeneratorExp g = (GeneratorExp)tree;
-            recurseSetContext(g.getElt(), context);
+            recurseSetContext(g.getInternalElt(), context);
         } else if (tree instanceof ListComp) {
             ListComp lc = (ListComp)tree;
-            recurseSetContext(lc.getElt(), context);
+            recurseSetContext(lc.getInternalElt(), context);
         } else if (!(tree instanceof ListComp)) {
             for (int i=0; i<tree.getChildCount(); i++) {
                 recurseSetContext(tree.getChild(i), context);
@@ -357,7 +357,7 @@ public class GrammarActions {
                 checkAssign(castExpr(e.get(0)));
                 if (e.get(0) instanceof Name) {
                     Name arg = (Name)e.get(0);
-                    k.add(new keywordType(arg, arg.getId(), castExpr(e.get(1))));
+                    k.add(new keywordType(arg, arg.getInternalId(), castExpr(e.get(1))));
                 } else {
                     errorHandler.error("keyword must be a name", (PythonTree)e.get(0));
                 }
@@ -588,26 +588,26 @@ public class GrammarActions {
     exprType negate(PythonTree t, exprType o) {
         if (o instanceof Num) {
             Num num = (Num)o;
-            if (num.getN() instanceof PyInteger) {
-                int v = ((PyInteger)num.getN()).getValue();
+            if (num.getInternalN() instanceof PyInteger) {
+                int v = ((PyInteger)num.getInternalN()).getValue();
                 if (v > 0) {
                     num.setN(new PyInteger(-v));
                     return num;
                 }
-            } else if (num.getN() instanceof PyLong) {
-                BigInteger v = ((PyLong)num.getN()).getValue();
+            } else if (num.getInternalN() instanceof PyLong) {
+                BigInteger v = ((PyLong)num.getInternalN()).getValue();
                 if (v.compareTo(BigInteger.ZERO) == 1) {
                     num.setN(new PyLong(v.negate()));
                     return num;
                 }
-            } else if (num.getN() instanceof PyFloat) {
-                double v = ((PyFloat)num.getN()).getValue();
+            } else if (num.getInternalN() instanceof PyFloat) {
+                double v = ((PyFloat)num.getInternalN()).getValue();
                 if (v > 0) {
                     num.setN(new PyFloat(-v));
                     return num;
                 }
-            } else if (num.getN() instanceof PyComplex) {
-                double v = ((PyComplex)num.getN()).imag;
+            } else if (num.getInternalN() instanceof PyComplex) {
+                double v = ((PyComplex)num.getInternalN()).imag;
                 if (v > 0) {
                     num.setN(new PyComplex(0,-v));
                     return num;
@@ -631,7 +631,7 @@ public class GrammarActions {
     }
 
     void checkAssign(exprType e) {
-        if (e instanceof Name && ((Name)e).getId().equals("None")) {
+        if (e instanceof Name && ((Name)e).getInternalId().equals("None")) {
             errorHandler.error("assignment to None", e);
         } else if (e instanceof GeneratorExp) {
             errorHandler.error("can't assign to generator expression", e);
@@ -653,7 +653,7 @@ public class GrammarActions {
             errorHandler.error("can't assign to conditional expression", e);
         } else if (e instanceof Tuple) {
             //XXX: performance problem?  Any way to do this better?
-            List<exprType> elts = ((Tuple)e).getElts();
+            List<exprType> elts = ((Tuple)e).getInternalElts();
             if (elts.size() == 0) {
                 errorHandler.error("can't assign to ()", e);
             }
@@ -662,7 +662,7 @@ public class GrammarActions {
             }
         } else if (e instanceof org.python.antlr.ast.List) {
             //XXX: performance problem?  Any way to do this better?
-            List<exprType> elts = ((org.python.antlr.ast.List)e).getElts();
+            List<exprType> elts = ((org.python.antlr.ast.List)e).getInternalElts();
             for (int i=0;i<elts.size();i++) {
                 checkAssign(elts.get(i));
             }
@@ -781,7 +781,7 @@ public class GrammarActions {
             for (Object o : sltypes) {
                 if (o instanceof Index) {
                     Index i = (Index)o;
-                    etypes.add(i.getValue());
+                    etypes.add(i.getInternalValue());
                 } else {
                     extslice = true;
                     break;

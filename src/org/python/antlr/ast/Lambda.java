@@ -9,7 +9,7 @@ import java.io.IOException;
 
 public class Lambda extends exprType {
     private argumentsType args;
-    public argumentsType getArgs() {
+    public argumentsType getInternalArgs() {
         return args;
     }
     public void setArgs(argumentsType args) {
@@ -17,7 +17,7 @@ public class Lambda extends exprType {
     }
 
     private exprType body;
-    public exprType getBody() {
+    public exprType getInternalBody() {
         return body;
     }
     public void setBody(exprType body) {

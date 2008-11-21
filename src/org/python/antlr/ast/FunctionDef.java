@@ -9,7 +9,7 @@ import java.io.IOException;
 
 public class FunctionDef extends stmtType {
     private String name;
-    public String getName() {
+    public String getInternalName() {
         return name;
     }
     public void setName(String name) {
@@ -17,7 +17,7 @@ public class FunctionDef extends stmtType {
     }
 
     private argumentsType args;
-    public argumentsType getArgs() {
+    public argumentsType getInternalArgs() {
         return args;
     }
     public void setArgs(argumentsType args) {
@@ -25,7 +25,7 @@ public class FunctionDef extends stmtType {
     }
 
     private ListWrapper<stmtType> body;
-    public ListWrapper<stmtType> getBody() {
+    public ListWrapper<stmtType> getInternalBody() {
         return body;
     }
     public void setBody(java.util.List<stmtType> body) {
@@ -33,7 +33,7 @@ public class FunctionDef extends stmtType {
     }
 
     private ListWrapper<exprType> decorators;
-    public ListWrapper<exprType> getDecorators() {
+    public ListWrapper<exprType> getInternalDecorators() {
         return decorators;
     }
     public void setDecorators(java.util.List<exprType> decorators) {

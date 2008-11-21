@@ -9,7 +9,7 @@ import java.io.IOException;
 
 public class TryExcept extends stmtType {
     private ListWrapper<stmtType> body;
-    public ListWrapper<stmtType> getBody() {
+    public ListWrapper<stmtType> getInternalBody() {
         return body;
     }
     public void setBody(java.util.List<stmtType> body) {
@@ -17,7 +17,7 @@ public class TryExcept extends stmtType {
     }
 
     private ListWrapper<excepthandlerType> handlers;
-    public ListWrapper<excepthandlerType> getHandlers() {
+    public ListWrapper<excepthandlerType> getInternalHandlers() {
         return handlers;
     }
     public void setHandlers(java.util.List<excepthandlerType> handlers) {
@@ -25,7 +25,7 @@ public class TryExcept extends stmtType {
     }
 
     private ListWrapper<stmtType> orelse;
-    public ListWrapper<stmtType> getOrelse() {
+    public ListWrapper<stmtType> getInternalOrelse() {
         return orelse;
     }
     public void setOrelse(java.util.List<stmtType> orelse) {

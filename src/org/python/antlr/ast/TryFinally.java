@@ -9,7 +9,7 @@ import java.io.IOException;
 
 public class TryFinally extends stmtType {
     private ListWrapper<stmtType> body;
-    public ListWrapper<stmtType> getBody() {
+    public ListWrapper<stmtType> getInternalBody() {
         return body;
     }
     public void setBody(java.util.List<stmtType> body) {
@@ -17,7 +17,7 @@ public class TryFinally extends stmtType {
     }
 
     private ListWrapper<stmtType> finalbody;
-    public ListWrapper<stmtType> getFinalbody() {
+    public ListWrapper<stmtType> getInternalFinalbody() {
         return finalbody;
     }
     public void setFinalbody(java.util.List<stmtType> finalbody) {

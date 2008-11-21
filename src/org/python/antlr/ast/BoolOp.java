@@ -9,7 +9,7 @@ import java.io.IOException;
 
 public class BoolOp extends exprType {
     private boolopType op;
-    public boolopType getOp() {
+    public boolopType getInternalOp() {
         return op;
     }
     public void setOp(boolopType op) {
@@ -17,7 +17,7 @@ public class BoolOp extends exprType {
     }
 
     private ListWrapper<exprType> values;
-    public ListWrapper<exprType> getValues() {
+    public ListWrapper<exprType> getInternalValues() {
         return values;
     }
     public void setValues(java.util.List<exprType> values) {

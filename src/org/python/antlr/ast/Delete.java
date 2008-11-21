@@ -9,7 +9,7 @@ import java.io.IOException;
 
 public class Delete extends stmtType {
     private ListWrapper<exprType> targets;
-    public ListWrapper<exprType> getTargets() {
+    public ListWrapper<exprType> getInternalTargets() {
         return targets;
     }
     public void setTargets(java.util.List<exprType> targets) {

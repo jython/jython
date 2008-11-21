@@ -9,7 +9,7 @@ import java.io.IOException;
 
 public class excepthandlerType extends PythonTree {
     private exprType excepttype;
-    public exprType getExcepttype() {
+    public exprType getInternalExcepttype() {
         return excepttype;
     }
     public void setExcepttype(exprType excepttype) {
@@ -17,7 +17,7 @@ public class excepthandlerType extends PythonTree {
     }
 
     private exprType name;
-    public exprType getName() {
+    public exprType getInternalName() {
         return name;
     }
     public void setName(exprType name) {
@@ -25,7 +25,7 @@ public class excepthandlerType extends PythonTree {
     }
 
     private ListWrapper<stmtType> body;
-    public ListWrapper<stmtType> getBody() {
+    public ListWrapper<stmtType> getInternalBody() {
         return body;
     }
     public void setBody(java.util.List<stmtType> body) {
@@ -33,7 +33,7 @@ public class excepthandlerType extends PythonTree {
     }
 
     private int lineno;
-    public int getLineno() {
+    public int getInternalLineno() {
         return lineno;
     }
     public void setLineno(int lineno) {
@@ -41,7 +41,7 @@ public class excepthandlerType extends PythonTree {
     }
 
     private int col_offset;
-    public int getCol_offset() {
+    public int getInternalCol_offset() {
         return col_offset;
     }
     public void setCol_offset(int col_offset) {
