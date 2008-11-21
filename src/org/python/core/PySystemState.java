@@ -459,8 +459,12 @@ public class PySystemState extends PyObject
             } catch (Exception exc) {
             }
         }
-        PySystemState.prefix = Py.newString(prefix);
-        PySystemState.exec_prefix = Py.newString(exec_prefix);
+        if (prefix != null) {
+            PySystemState.prefix = Py.newString(prefix);
+        }
+        if (exec_prefix != null) {
+            PySystemState.exec_prefix = Py.newString(exec_prefix);
+        }
         try {
             String jythonpath = System.getenv("JYTHONPATH");
             if (jythonpath != null) {
@@ -626,7 +630,7 @@ public class PySystemState extends PyObject
         }
         cachedir = new File(props.getProperty(PYTHON_CACHEDIR, CACHEDIR_DEFAULT_NAME));
         if (!cachedir.isAbsolute()) {
-            cachedir = new File(prefix.toString(), cachedir.getPath());
+            cachedir = new File(prefix == null ? null : prefix.toString(), cachedir.getPath());
         }
     }
 
