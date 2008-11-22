@@ -183,7 +183,7 @@ def classify_class_attrs(object):
 def ispackage(path):
     """Guess whether a path refers to a package directory."""
     if os.path.isdir(path):
-        for ext in ('.py', '.pyc', '.pyo'):
+        for ext in ('.py', '.pyc', '.pyo', '$py.class'):
             if os.path.isfile(os.path.join(path, '__init__' + ext)):
                 return True
     return False
@@ -1300,6 +1300,8 @@ def pager(text):
 
 def getpager():
     """Decide what method to use for paging through text."""
+    if sys.platform.startswith('java'):
+        return plainpager
     if type(sys.stdout) is not types.FileType:
         return plainpager
     if not sys.stdin.isatty() or not sys.stdout.isatty():
