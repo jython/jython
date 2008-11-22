@@ -1675,7 +1675,6 @@ public final class Py {
             if (frame != null && frame.f_code != null) {
                 cflags = new CompilerFlags(frame.f_code.co_flags | flags);
             } else {
-                //XXX: should this really pass flags or not?
                 cflags = new CompilerFlags(flags);
             }
         }
