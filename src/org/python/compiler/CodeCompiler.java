@@ -303,12 +303,6 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
             visit(((Expr) suite.body[0]).value);
             code.invokevirtual("org/python/core/PyFrame", "setglobal", "(" +$str + $pyObj + ")V");
         }
-        if (module.setFile) {
-            loadFrame();
-            code.ldc("__file__");
-            module.filename.get(code);
-            code.invokevirtual("org/python/core/PyFrame", "setglobal", "(" +$str + $pyObj + ")V");
-        }
         traverse(suite);
         return null;
     }

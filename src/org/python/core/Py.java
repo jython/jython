@@ -1708,8 +1708,7 @@ public final class Py {
                 return Py.java2py(node);
             }
             ByteArrayOutputStream ostream = new ByteArrayOutputStream();
-            Module.compile(node, ostream, name, filename, linenumbers,
-                    printResults, false, cflags);
+            Module.compile(node, ostream, name, filename, linenumbers, printResults, cflags);
 
             saveClassFile(name, ostream);
 

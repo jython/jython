@@ -383,6 +383,8 @@ def getsourcefile(object):
     filename = getfile(object)
     if string.lower(filename[-4:]) in ('.pyc', '.pyo'):
         filename = filename[:-4] + '.py'
+    elif filename.endswith('$py.class'):
+        filename = filename[:-9] + '.py'
     for suffix, mode, kind in imp.get_suffixes():
         if 'b' in mode and string.lower(filename[-len(suffix):]) == suffix:
             # Looks like a binary file.  We want to only return a text file.
