@@ -180,7 +180,7 @@ public class imp {
     public static PyObject load_module(String name, PyObject file, PyObject filename, PyTuple data) {
         PyObject mod = Py.None;
         PySystemState sys = Py.getSystemState();
-        int type = ((PyInteger)data.__getitem__(2).__int__()).getValue();
+        int type = data.__getitem__(2).asInt();
         while(mod == Py.None) {
             Object o = file.__tojava__(InputStream.class);
             if (o == Py.NoConversion) {
