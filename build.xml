@@ -152,6 +152,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <property name="gensrc.dir" value="${output.dir}/gensrc" />
         <property name="dist.dir" value="${work.dir}/dist" />
         <property name="apidoc.dir" value="${dist.dir}/Doc/javadoc" />
+        <property name="junit.reports" value="${dist.dir}/testreports" />
 
         <!-- classpaths -->
         <path id="main.classpath">
@@ -761,11 +762,17 @@ The readme text for the next release will be like:
         </jar>
     </target>
 
-    <target name="test" depends="javatest,launchertest,regrtest"/>
+    <target name="test" depends="prepare-test,javatest,launchertest,regrtest"/>
+    <target name="prepare-test" depends="init">
+        <!-- Clean any old test output -->
+        <delete dir="${junit.reports}"/>
+    </target>
     <target name="javatest" depends="compile,expose">
+        <mkdir dir="${junit.reports}"/>
         <junit fork="true" printsummary="true">
+            <formatter type="xml"/>
             <classpath refid="test.classpath"/>
-            <batchtest todir="${dist.dir}/testreports">
+            <batchtest todir="${junit.reports}">
                 <fileset dir="${test.source.dir}" includes="**/*Test*.java">
                     <exclude name="javatests/**/*" />
                     <exclude name="**/InterpTestCase.java" />
@@ -787,6 +794,8 @@ The readme text for the next release will be like:
         <arg value="${dist.dir}/Lib/test/regrtest.py"/>
         <!-- Only run the tests that are expected to work on Jython -->
         <arg value="--expected"/>
+        <arg value="-j"/>
+        <arg value="${junit.reports}"/>
       </exec>
     </target>
     <target name="regrtest-windows" if="os.family.windows">
@@ -795,6 +804,8 @@ The readme text for the next release will be like:
         <arg value="${dist.dir}/Lib/test/regrtest.py"/>
         <!-- Only run the tests that are expected to work on Jython -->
         <arg value="--expected"/>
+        <arg value="-j"/>
+        <arg value="${junit.reports}"/>
       </exec>
     </target>
 
