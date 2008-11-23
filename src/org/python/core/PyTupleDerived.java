@@ -1093,6 +1093,7 @@ public class PyTupleDerived extends PyTuple implements Slotted {
                 }
             }
         }
+        proxyInit();
     }
 
     public PyObject __index__() {

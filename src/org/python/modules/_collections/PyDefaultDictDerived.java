@@ -1095,6 +1095,7 @@ public class PyDefaultDictDerived extends PyDefaultDict implements Slotted {
                 }
             }
         }
+        proxyInit();
     }
 
     public PyObject __index__() {

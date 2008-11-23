@@ -1093,6 +1093,7 @@ public class PyFileDerived extends PyFile implements Slotted {
                 }
             }
         }
+        proxyInit();
     }
 
     public PyObject __index__() {

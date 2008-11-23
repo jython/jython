@@ -1093,6 +1093,7 @@ public class PyArrayDerived extends PyArray implements Slotted {
                 }
             }
         }
+        proxyInit();
     }
 
     public PyObject __index__() {

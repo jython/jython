@@ -1093,6 +1093,7 @@ public class PyIntegerDerived extends PyInteger implements Slotted {
                 }
             }
         }
+        proxyInit();
     }
 
     public PyObject __index__() {

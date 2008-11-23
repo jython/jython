@@ -1093,6 +1093,7 @@ public class PyEnumerateDerived extends PyEnumerate implements Slotted {
                 }
             }
         }
+        proxyInit();
     }
 
     public PyObject __index__() {

@@ -1071,6 +1071,7 @@ public class PyLocalDerived extends PyLocal implements Slotted {
                 }
             }
         }
+        proxyInit();
     }
 
     public PyObject __index__() {

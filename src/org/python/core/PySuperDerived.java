@@ -1093,6 +1093,7 @@ public class PySuperDerived extends PySuper implements Slotted {
                 }
             }
         }
+        proxyInit();
     }
 
     public PyObject __index__() {

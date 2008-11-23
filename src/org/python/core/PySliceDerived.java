@@ -1093,6 +1093,7 @@ public class PySliceDerived extends PySlice implements Slotted {
                 }
             }
         }
+        proxyInit();
     }
 
     public PyObject __index__() {

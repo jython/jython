@@ -1093,6 +1093,7 @@ public class PyFrozenSetDerived extends PyFrozenSet implements Slotted {
                 }
             }
         }
+        proxyInit();
     }
 
     public PyObject __index__() {

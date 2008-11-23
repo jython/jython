@@ -29,7 +29,7 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
 
     @Override
     public Class<?> getProxyType() {
-        return underlying_class;
+        return PyObject.class.isAssignableFrom(underlying_class) ? null : underlying_class;
     }
 
     @Override

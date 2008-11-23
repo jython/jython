@@ -1071,6 +1071,7 @@ public class zipimporterDerived extends zipimporter implements Slotted {
                 }
             }
         }
+        proxyInit();
     }
 
     public PyObject __index__() {

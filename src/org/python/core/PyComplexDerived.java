@@ -1093,6 +1093,7 @@ public class PyComplexDerived extends PyComplex implements Slotted {
                 }
             }
         }
+        proxyInit();
     }
 
     public PyObject __index__() {

@@ -1071,6 +1071,7 @@ public class PyPartialDerived extends PyPartial implements Slotted {
                 }
             }
         }
+        proxyInit();
     }
 
     public PyObject __index__() {

@@ -1093,6 +1093,7 @@ public class PyDictionaryDerived extends PyDictionary implements Slotted {
                 }
             }
         }
+        proxyInit();
     }
 
     public PyObject __index__() {

@@ -101,8 +101,48 @@ public class PyObject implements Serializable {
      * Dispatch __init__ behavior
      */
     public void dispatch__init__(PyType type,PyObject[] args,String[] keywords) {
+        proxyInit();
     }
 
+    /**
+     * Attempts to automatically initialize our Java proxy if we have one and it wasn't initialized
+     * by our __init__.
+     */
+    protected void proxyInit() {
+        if (javaProxy != null || getType().getProxyType() == null) {
+            return;
+        }
+        Class<?> c = getType().getProxyType();
+        PyProxy proxy;
+        ThreadState ts = Py.getThreadState();
+        try {
+            ts.pushInitializingProxy(this);
+            try {
+                proxy = (PyProxy)c.newInstance();
+            } catch (java.lang.InstantiationException e) {
+                Class<?> sup = c.getSuperclass();
+                String msg = "Default constructor failed for Java superclass";
+                if (sup != null) {
+                    msg += " " + sup.getName();
+                }
+                throw Py.TypeError(msg);
+            } catch (NoSuchMethodError nsme) {
+                throw Py.TypeError("constructor requires arguments");
+            } catch (Exception exc) {
+                throw Py.JavaError(exc);
+            }
+        } finally {
+            ts.popInitializingProxy();
+        }
+        if (javaProxy != null && javaProxy != proxy) {
+            throw Py.TypeError("Proxy instance already initialized");
+        }
+        PyObject proxyInstance = proxy._getPyInstance();
+        if (proxyInstance != null && proxyInstance != this) {
+            throw Py.TypeError("Proxy initialized with another instance");
+        }
+        javaProxy = proxy;
+    }
 
     /**
      * Equivalent to the standard Python __repr__ method.  This method

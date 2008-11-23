@@ -1093,6 +1093,7 @@ public class PyFloatDerived extends PyFloat implements Slotted {
                 }
             }
         }
+        proxyInit();
     }
 
     public PyObject __index__() {

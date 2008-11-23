@@ -1093,6 +1093,7 @@ public class PyLongDerived extends PyLong implements Slotted {
                 }
             }
         }
+        proxyInit();
     }
 
     public PyObject __index__() {

@@ -1093,6 +1093,7 @@ public class PyBooleanDerived extends PyBoolean implements Slotted {
                 }
             }
         }
+        proxyInit();
     }
 
     public PyObject __index__() {

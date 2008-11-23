@@ -1095,6 +1095,7 @@ public class PyDequeDerived extends PyDeque implements Slotted {
                 }
             }
         }
+        proxyInit();
     }
 
     public PyObject __index__() {

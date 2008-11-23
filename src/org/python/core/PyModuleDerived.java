@@ -1069,6 +1069,7 @@ public class PyModuleDerived extends PyModule implements Slotted {
                 }
             }
         }
+        proxyInit();
     }
 
     public PyObject __index__() {

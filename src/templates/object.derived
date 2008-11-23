@@ -428,6 +428,7 @@ rest:
            }
          }
        }
+       proxyInit();
   }
 
   public PyObject __index__() {

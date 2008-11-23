@@ -1093,6 +1093,7 @@ public class PyListDerived extends PyList implements Slotted {
                 }
             }
         }
+        proxyInit();
     }
 
     public PyObject __index__() {

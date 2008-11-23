@@ -1093,6 +1093,7 @@ public class PyObjectDerived extends PyObject implements Slotted {
                 }
             }
         }
+        proxyInit();
     }
 
     public PyObject __index__() {

@@ -1095,6 +1095,7 @@ public class PyRandomDerived extends PyRandom implements Slotted {
                 }
             }
         }
+        proxyInit();
     }
 
     public PyObject __index__() {

@@ -1095,6 +1095,7 @@ public class ReferenceTypeDerived extends ReferenceType implements Slotted {
                 }
             }
         }
+        proxyInit();
     }
 
     public PyObject __index__() {

@@ -1069,6 +1069,7 @@ public class PyTypeDerived extends PyType implements Slotted {
                 }
             }
         }
+        proxyInit();
     }
 
     public PyObject __index__() {

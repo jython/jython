@@ -1071,6 +1071,7 @@ public class PyDialectDerived extends PyDialect implements Slotted {
                 }
             }
         }
+        proxyInit();
     }
 
     public PyObject __index__() {

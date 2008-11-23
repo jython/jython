@@ -1069,6 +1069,7 @@ public class PyBaseExceptionDerived extends PyBaseException implements Slotted {
                 }
             }
         }
+        proxyInit();
     }
 
     public PyObject __index__() {

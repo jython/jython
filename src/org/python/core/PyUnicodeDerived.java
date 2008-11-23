@@ -1093,6 +1093,7 @@ public class PyUnicodeDerived extends PyUnicode implements Slotted {
                 }
             }
         }
+        proxyInit();
     }
 
     public PyObject __index__() {
