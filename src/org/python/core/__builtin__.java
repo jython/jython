@@ -1,6 +1,8 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -305,7 +307,6 @@ public class __builtin__ {
         dict.__setitem__("unicode", PyUnicode.TYPE);
         dict.__setitem__("basestring", PyBaseString.TYPE);
         dict.__setitem__("file", PyFile.TYPE);
-        dict.__setitem__("open", PyFile.TYPE);
         dict.__setitem__("slice", PySlice.TYPE);
         dict.__setitem__("xrange", PyXRange.TYPE);
 
@@ -364,6 +365,7 @@ public class __builtin__ {
         dict.__setitem__("vars", new BuiltinFunctions("vars", 41, 0, 1));
         dict.__setitem__("zip", new BuiltinFunctions("zip", 43, 0, -1));
         dict.__setitem__("compile", new CompileFunction());
+        dict.__setitem__("open", new OpenFunction());
         dict.__setitem__("reversed", new BuiltinFunctions("reversed", 45, 1));
         dict.__setitem__("__import__", new ImportFunction());
         dict.__setitem__("sorted", new SortedFunction());
@@ -1565,5 +1567,33 @@ class CompileFunction extends PyBuiltinFunction {
             return null;
         }
         return (modType)node;
+    }
+}
+
+class OpenFunction extends PyBuiltinFunction {
+    OpenFunction() {
+        super("open", "Open a file using the file() type, returns a file object.  This is the\n"
+              + "preferred way to open a file.");
+    }
+
+    private static final String warning =
+            "Passing an Input/OutputStream to open is deprecated, use "
+            + "org.python.core.util.FileUtil.wrap(stream[, bufsize]) instead.";
+
+    public PyObject __call__(PyObject args[], String kwds[]) {
+        ArgParser ap = new ArgParser("file", args, kwds, new String[] {"name", "mode", "bufsize"},
+                                     1);
+        PyObject obj = ap.getPyObject(0);
+        if (obj instanceof PyJavaInstance) {
+            int bufsize = ap.getInt(2, -1);
+            if (obj.javaProxy instanceof InputStream) {
+                Py.warning(Py.DeprecationWarning, warning);
+                return new PyFile((InputStream)obj.javaProxy, bufsize);
+            } else if (obj.javaProxy instanceof OutputStream) {
+                Py.warning(Py.DeprecationWarning, warning);
+                return new PyFile((OutputStream)obj.javaProxy, bufsize);
+            }
+        }
+        return PyFile.TYPE.__call__(args, kwds);
     }
 }

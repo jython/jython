@@ -96,13 +96,19 @@ public class PyFile extends PyObject {
     }
 
     /**
-     * Creates a file object wrapping the given <code>InputStream</code>. The builtin methods
-     * <code>file</code> and <code>open</code> don't expose this functionality as it isn't available
-     * to regular Python code. To wrap an InputStream in a file from Python, use
+     * Creates a file object wrapping the given <code>InputStream</code>. The builtin
+     * method <code>file</code> doesn't expose this functionality (<code>open</code> does
+     * albeit deprecated) as it isn't available to regular Python code. To wrap an
+     * InputStream in a file from Python, use
+     * {@link FileUtil#wrap(InputStream, int)}
      * {@link FileUtil#wrap(InputStream)}
      */
+    public PyFile(InputStream istream, int bufsize) {
+        this(istream, "<Java InputStream '" + istream + "' as file>", "r", bufsize, true);
+    }
+
     public PyFile(InputStream istream) {
-        this(istream, "<Java InputStream '" + istream + "' as file>", "r", -1, true);
+        this(istream, -1);
     }
 
     PyFile(OutputStream ostream, String name, String mode, int bufsize, boolean closefd) {
@@ -111,13 +117,19 @@ public class PyFile extends PyObject {
     }
 
     /**
-     * Creates a file object wrapping the given <code>OutputStream</code>. The builtin methods
-     * <code>file</code> and <code>open</code> don't expose this functionality as it isn't available
-     * to regular Python code. To wrap an OutputStream in a file from Python, use
+     * Creates a file object wrapping the given <code>OutputStream</code>. The builtin
+     * method <code>file</code> doesn't expose this functionality (<code>open</code> does
+     * albeit deprecated) as it isn't available to regular Python code. To wrap an
+     * OutputStream in a file from Python, use
+     * {@link FileUtil#wrap(OutputStream, int)}
      * {@link FileUtil#wrap(OutputStream)}
      */
+    public PyFile(OutputStream ostream, int bufsize) {
+        this(ostream, "<Java OutputStream '" + ostream + "' as file>", "w", bufsize, true);
+    }
+
     public PyFile(OutputStream ostream) {
-        this(ostream, "<Java OutputStream '" + ostream + "' as file>", "w", -1, true);
+        this(ostream, -1);
     }
 
     public PyFile(String name, String mode, int bufsize) {
