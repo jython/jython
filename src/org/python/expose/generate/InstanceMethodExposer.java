@@ -28,7 +28,7 @@ public class InstanceMethodExposer extends MethodExposer {
              new String[0],
              new String[0],
              MethodType.DEFAULT,
-             null);
+             "");
     }
 
     public InstanceMethodExposer(Type onType,

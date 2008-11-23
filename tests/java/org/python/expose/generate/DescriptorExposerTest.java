@@ -33,7 +33,9 @@ public class DescriptorExposerTest extends InterpTestCase implements PyTypes {
         DescriptorExposer de = new DescriptorExposer(ASM_TYPE, name);
         setup.setup(de);
         Class descriptor = de.load(new BytecodeLoader.Loader());
-        return (PyDataDescr)descriptor.newInstance();
+        PyDataDescr descr = (PyDataDescr)descriptor.newInstance();
+        descr.setType(PY_TYPE);
+        return descr;
     }
 
     public PyDataDescr makeDescriptor(DescSetup setup) throws Exception {
