@@ -473,7 +473,7 @@ public class PyFile extends PyObject {
 
     @ExposedMethod
     final PyObject file_fileno() {
-        return new PyJavaInstance(file.fileno());
+        return PyJavaType.wrapJavaObject(file.fileno());
     }
 
     @ExposedMethod(names = {"__str__", "__repr__"})

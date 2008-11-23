@@ -85,20 +85,15 @@ public class PyJavaPackage extends PyObject {
         else return p;
     }
 
-    public PyObject addClass(String name,Class c) {
-        // xxx what to do with PyObject subclasses?
-        //PyObject ret = PyJavaClass.lookup(c);  // xxx java2py?
-        // perhaps introduce class2py
+    public PyObject addClass(String name, Class<?> c) {
         PyObject ret = Py.java2py(c);
         __dict__.__setitem__(name.intern(), ret);
         return ret;
     }
 
     public PyObject addLazyClass(String name) {
-        // xxx what to do with PyObject subclasses? this now fails on them
-        PyObject ret = PyJavaClass.lookup(__name__+'.'+name,__mgr__);
-        __dict__.__setitem__(name.intern(), ret);
-        return ret;
+        // TODO - make lazy PyJavaType
+        return null;
     }
 
     /** Add statically known classes.
@@ -159,7 +154,7 @@ public class PyJavaPackage extends PyObject {
 
     public void __setattr__(String attr, PyObject value) {
         if (attr == "__mgr__") {
-            PackageManager newMgr = (PackageManager)Py.tojava(value,
+            PackageManager newMgr = Py.tojava(value,
                                                        PackageManager.class);
             if (newMgr == null) {
                 throw Py.TypeError("cannot set java package __mgr__ to None");

@@ -30,7 +30,7 @@ public class cStringIO {
      * Create an empty StringIO object
      * @return          a new StringIO object.
      */
-    
+
     // would be nicer if we directly imported from os, but crazy to do so
     // since in python code itself
     private class os {
@@ -41,7 +41,7 @@ public class cStringIO {
 
     public static PyType InputType = PyType.fromClass(StringIO.class);
     public static PyType OutputType = PyType.fromClass(StringIO.class);
-    
+
     public static StringIO StringIO() {
         return new StringIO();
     }
@@ -68,12 +68,12 @@ public class cStringIO {
 
         private final StringBuilder buf;
 
-        StringIO() {
+        public StringIO() {
             buf = new StringBuilder();
         }
 
 
-        StringIO(String buffer) {
+        public StringIO(String buffer) {
             buf = new StringBuilder(buffer);
         }
 
@@ -81,7 +81,7 @@ public class cStringIO {
             if (closed)
                 throw Py.ValueError("I/O operation on closed file");
         }
-        
+
         private int _convert_to_int(long val) {
             if (val > Integer.MAX_VALUE) {
                 throw Py.OverflowError("long int too large to convert to int");
@@ -189,10 +189,10 @@ public class cStringIO {
          * @param size  the number of characters to read.
          * @returns     A string containing the data read.
          */
-               
+
         public synchronized PyString read(long size) {
             _complain_ifclosed();
-            int size_int = _convert_to_int(size);
+            _convert_to_int(size);
             int len = buf.length();
             String substr;
             if (size < 0) {
@@ -230,7 +230,7 @@ public class cStringIO {
          */
         public synchronized PyString readline(long size) {
             _complain_ifclosed();
-            int size_int = _convert_to_int(size);
+            _convert_to_int(size);
             int len = buf.length();
             if (pos == len) {
                 return new PyString("");
@@ -371,7 +371,7 @@ public class cStringIO {
         }
 
     }
-    
+
     private static String[] strings = new String[256];
     static String getString(char ch) {
         if (ch > 255) {

@@ -1,15 +1,9 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
-import java.io.Serializable;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * A python class.
  */
-
 public class PyClass extends PyObject {
     /**
      * Holds the namespace for this class
@@ -31,13 +25,6 @@ public class PyClass extends PyObject {
     PyObject __getattr__, __setattr__, __delattr__, __tojava__, __del__,
             __contains__;
 
-    // Holds the classes for which this is a proxy
-    // Only used when subclassing from a Java class
-    protected Class<?> proxyClass;
-
-    // xxx map 'super__*' names -> array of methods
-    protected java.util.HashMap super__methods;
-
     protected PyClass() {
         super();
     }
@@ -53,119 +40,11 @@ public class PyClass extends PyObject {
      * @see org.python.core.Py#makeClass(String, PyObject[], PyCode, PyObject)
      */
     public PyClass(String name, PyTuple bases, PyObject dict) {
-        this(name, bases, dict, null);
-    }
-
-    /**
-     * Create a python class which inherits from a java class and where we
-     * already have generated a proxyclass. If we do not have a pre-generated
-     * proxyclass, the class initialization method will create such a proxyclass
-     * if bases contain a java class.
-     *
-     * @param name name of the class.
-     * @param bases A list of base classes.
-     * @param dict The class dict. Normally this dict is returned by the class
-     *            code object.
-     *
-     * @see org.python.core.Py#makeClass(String, PyObject[], PyCode, PyObject,
-     *      Class)
-     */
-    public PyClass(String name, PyTuple bases, PyObject dict, Class proxyClass) {
-        this.proxyClass = proxyClass;
-        init(name, bases, dict);
-    }
-
-    protected Class<?> getProxyClass() {
-        return proxyClass;
-    }
-
-    void init(String name, PyTuple bases, PyObject dict) {
         __name__ = name;
         __bases__ = bases;
         __dict__ = dict;
 
         findModule(dict);
-
-        if (proxyClass == null) {
-            List<Class<?>> interfaces = new ArrayList<Class<?>>();
-            Class<?> baseClass = null;
-            for (int i = 0; i < bases.size(); i++) {
-                Object base = bases.pyget(i);
-                if (base instanceof PyType) {
-                    // xxx this works in CPython, which checks for a callable here
-                    throw Py.TypeError("can't transmogrify old-style class into new-style "
-                            + "class inheriting from " + ((PyType)base).getName());
-                } else if (!(base instanceof PyClass)) {
-                    throw Py.TypeError("base must be a class");
-                }
-                Class<?> proxy = ((PyClass) base).getProxyClass();
-                if (proxy != null) {
-                    if (proxy.isInterface()) {
-                        interfaces.add(proxy);
-                    } else {
-                        if (baseClass != null) {
-                            throw Py.TypeError("no multiple inheritance for Java classes: "
-                                    + proxy.getName() + " and " + baseClass.getName());
-                        }
-                        baseClass = proxy;
-                    }
-                }
-            }
-            if (baseClass != null || interfaces.size() != 0) {
-                String proxyName = __name__;
-                PyObject module = dict.__finditem__("__module__");
-                if (module != null) {
-                    proxyName = module.toString() + "$" + __name__;
-                }
-                proxyClass = MakeProxies.makeProxy(baseClass, interfaces,
-                        __name__, proxyName, __dict__);
-            }
-        }
-
-        if (proxyClass != null) {
-            // xxx more efficient way without going through a PyJavaClass?
-            PyObject superDict = PyJavaClass.lookup(proxyClass).__findattr__(
-                    "__dict__"); // xxx getDict perhaps?
-            // This code will add in the needed super__ methods to the class
-            PyObject snames = superDict.__finditem__("__supernames__");
-            if (snames != null) {
-                for (PyObject item : snames.asIterable()) {
-                    if (__dict__.__finditem__(item) == null) {
-                        PyObject superFunc = superDict.__finditem__(item);
-                        if (superFunc != null) {
-                            __dict__.__setitem__(item, superFunc);
-                        }
-                    }
-                }
-            }
-
-            // xxx populate super__methods, experiment.
-
-            java.lang.reflect.Method proxy_methods[] = proxyClass.getMethods();
-
-            super__methods = new java.util.HashMap();
-
-            for (Method meth : proxy_methods) {
-                String meth_name = meth.getName();
-                if (meth_name.startsWith("super__")) {
-                    java.util.ArrayList samename = (java.util.ArrayList) super__methods
-                            .get(meth_name);
-                    if (samename == null) {
-                        samename = new java.util.ArrayList();
-                        super__methods.put(meth_name, samename);
-                    }
-                    samename.add(meth);
-                }
-            }
-
-            java.lang.reflect.Method[] empty_methods = new java.lang.reflect.Method[0];
-            for (java.util.Iterator iter = super__methods.entrySet().iterator(); iter
-                    .hasNext();) {
-                java.util.Map.Entry entry = (java.util.Map.Entry) iter.next();
-                entry.setValue(((java.util.ArrayList) entry.getValue())
-                        .toArray(empty_methods));
-            }
-        }
 
         if (dict.__finditem__("__doc__") == null) {
             dict.__setitem__("__doc__", Py.None);
@@ -191,14 +70,6 @@ public class PyClass extends PyObject {
                 }
             }
         }
-    }
-
-    public Object __tojava__(Class<?> c) {
-        if ((c == Object.class || c == Class.class || c == Serializable.class)
-                && proxyClass != null) {
-            return proxyClass;
-        }
-        return super.__tojava__(c);
     }
 
     // returns [PyObject, PyClass]
@@ -347,11 +218,6 @@ public class PyClass extends PyObject {
     public boolean isSubClass(PyClass superclass) {
         if (this == superclass) {
             return true;
-        }
-        if (getProxyClass() != null && superclass.getProxyClass() != null) {
-            if (superclass.proxyClass.isAssignableFrom(this.proxyClass)) {
-                return true;
-            }
         }
         if (this.__bases__ == null || superclass.__bases__ == null) {
             return false;

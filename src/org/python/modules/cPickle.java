@@ -27,7 +27,6 @@ import org.python.core.PyFloat;
 import org.python.core.PyFunction;
 import org.python.core.PyInstance;
 import org.python.core.PyInteger;
-import org.python.core.PyJavaInstance;
 import org.python.core.PyList;
 import org.python.core.PyLong;
 import org.python.core.PyModule;
@@ -1391,10 +1390,6 @@ public class cPickle implements ClassDictInit {
 
 
         final private void save_inst(PyInstance object) {
-            if (object instanceof PyJavaInstance)
-                throw new PyException(PicklingError,
-                            "Unable to pickle java objects.");
-
             PyClass cls = object.instclass;
 
             PySequence args = null;

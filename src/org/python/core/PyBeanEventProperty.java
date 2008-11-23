@@ -1,8 +1,13 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.Map;
+import java.util.WeakHashMap;
+
+import org.python.util.Generic;
 
 public class PyBeanEventProperty extends PyReflectedField
 {
@@ -51,22 +56,40 @@ public class PyBeanEventProperty extends PyReflectedField
     }
 
     private synchronized static Class<?> getAdapterClass(Class<?> c) {
-        InternalTables tbl = PyJavaClass.getInternalTables();
-        Class<?> o = tbl.getAdapterClass(c);
-        if (o != null)
-            return o;
         Class<?> pc = Py.findClass("org.python.proxies." + c.getName() + "$Adapter");
         if (pc == null) {
             pc = MakeProxies.makeAdapter(c);
         }
-        tbl.putAdapterClass(c, pc);
         return pc;
     }
 
+    protected Map<Object, Map<String, WeakReference<Object>>> adapters =
+        new WeakHashMap<Object, Map<String, WeakReference<Object>>>();
+
+    protected Object getAdapter(Object o, String evc) {
+        Map<String, WeakReference<Object>> ads = adapters.get(o);
+        if (ads == null) {
+            return null;
+        }
+        WeakReference<Object> adw = ads.get(evc);
+        if (adw == null) {
+            return null;
+        }
+        return adw.get();
+    }
+
+    protected void putAdapter(Object o, String evc, Object ad) {
+        Map<String, WeakReference<Object>> ads = adapters.get(o);
+        if(ads == null) {
+            ads = Generic.map();
+            adapters.put(o, ads);
+        }
+        ads.put(evc, new WeakReference<Object>(ad));
+    }
+
     private synchronized Object getAdapter(Object self) {
-        InternalTables tbl = PyJavaClass.getInternalTables();
         String eventClassName = eventClass.getName();
-        Object adapter = tbl.getAdapter(self, eventClassName);
+        Object adapter = getAdapter(self, eventClassName);
         if (adapter != null)
             return adapter;
         try {
@@ -75,7 +98,7 @@ public class PyBeanEventProperty extends PyReflectedField
         } catch (Exception e) {
             throw Py.JavaError(e);
         }
-        tbl.putAdapter(self, eventClassName, adapter);
+        putAdapter(self, eventClassName, adapter);
         return adapter;
     }
 

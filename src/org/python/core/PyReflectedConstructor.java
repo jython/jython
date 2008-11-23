@@ -86,12 +86,7 @@ public class PyReflectedConstructor extends PyReflectedFunction {
         if (self == null) {
             throw Py.TypeError("invalid self argument to constructor");
         }
-        Class<?> javaClass;
-        if (self instanceof PyInstance) {
-            javaClass = ((PyInstance)self).instclass.proxyClass;
-        } else {
-            javaClass = self.getType().getProxyType();
-        }
+        Class<?> javaClass = self.getType().getProxyType();
 
         Class<?> declaringClass = argslist[0].declaringClass;
         if (!declaringClass.isAssignableFrom(javaClass)) {

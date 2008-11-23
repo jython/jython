@@ -435,8 +435,8 @@ public final class Py {
         } else if (t instanceof OutOfMemoryError) {
             memory_error((OutOfMemoryError) t);
         }
-        PyJavaInstance exc = new PyJavaInstance(t);
-        PyException pyex = new PyException(exc.instclass, exc);
+        PyObject exc = PyJavaType.wrapJavaObject(t);
+        PyException pyex = new PyException(exc.getType(), exc);
         // Set the cause to the original throwable to preserve
         // the exception chain.
         pyex.initCause(t);
@@ -722,7 +722,7 @@ public final class Py {
         // Pre-initialize the PyJavaClass for OutOfMemoryError so when we need
         // it it creating the pieces for it won't cause an additional out of
         // memory error.  Fix for bug #1654484
-        PyJavaClass.lookup(OutOfMemoryError.class);
+        PyType.fromClass(OutOfMemoryError.class);
     }
     public static PySystemState defaultSystemState;
     // This is a hack to get initializations to work in proper order
@@ -981,7 +981,7 @@ public final class Py {
             }
         }
 
-        if (value instanceof PyJavaInstance) {
+        if (value.getType() instanceof PyJavaType) {
             Object javaError = value.__tojava__(Throwable.class);
 
             if (javaError != null && javaError != Py.NoConversion) {
@@ -1134,14 +1134,14 @@ public final class Py {
         // java.io.IOExceptions.  This is a hack for 1.0.x until I can do
         // it right in 1.1
         if (exc == Py.IOError) {
-            if (__builtin__.isinstance(pye.value, PyJavaClass.lookup(IOException.class))) {
+            if (__builtin__.isinstance(pye.value, PyType.fromClass(IOException.class))) {
                 return true;
             }
         }
         // FIXME too, same approach for OutOfMemoryError
         if (exc == Py.MemoryError) {
             if (__builtin__.isinstance(pye.value,
-                                      PyJavaClass.lookup(OutOfMemoryError.class))) {
+                                       PyType.fromClass(OutOfMemoryError.class))) {
                 return true;
             }
         }
@@ -1518,16 +1518,12 @@ public final class Py {
         if (doc != null && dict.__finditem__("__doc__") == null) {
             dict.__setitem__("__doc__", doc);
         }
-        return makeClass(name, bases, dict, null);
+        return makeClass(name, bases, dict);
     }
 
     public static PyObject makeClass(String name, PyObject base, PyObject dict) {
         PyObject[] bases = base == null ? EmptyObjects : new PyObject[] {base};
         return makeClass(name, bases, dict);
-    }
-
-    public static PyObject makeClass(String name, PyObject[] bases, PyObject dict) {
-        return makeClass(name, bases, dict, null);
     }
 
     /**
@@ -1537,11 +1533,9 @@ public final class Py {
      * @param bases an array of PyObject base classes
      * @param dict the class's namespace, containing the class body
      * definition
-     * @param proxyClass an optional underlying Java class
      * @return a new Python Class PyObject
      */
-    public static PyObject makeClass(String name, PyObject[] bases, PyObject dict,
-                                     Class proxyClass) {
+    public static PyObject makeClass(String name, PyObject[] bases, PyObject dict) {
         PyFrame frame = getFrame();
 
         if (dict.__finditem__("__module__") == null) {
@@ -1568,9 +1562,7 @@ public final class Py {
             }
         }
 
-        if (metaclass == null || metaclass == CLASS_TYPE ||
-            (metaclass instanceof PyJavaClass &&
-             ((PyJavaClass)metaclass).proxyClass == Class.class)) {
+        if (metaclass == null || metaclass == CLASS_TYPE) {
             boolean moreGeneral = false;
             for (PyObject base : bases) {
                 if (!(base instanceof PyClass)) {
@@ -1580,12 +1572,8 @@ public final class Py {
                 }
             }
             if (!moreGeneral) {
-                return new PyClass(name, new PyTuple(bases), dict, proxyClass);
+                return new PyClass(name, new PyTuple(bases), dict);
             }
-        }
-
-        if (proxyClass != null) {
-            throw Py.TypeError("the meta-class cannot handle java subclassing");
         }
 
         try {
@@ -1946,7 +1934,7 @@ public final class Py {
         name = "fixed file";
         this.file = file;
 
-        if (file instanceof PyJavaInstance) {
+        if (file.getType() instanceof PyJavaType) {
             Object tojava = file.__tojava__(OutputStream.class);
             if (tojava != null && tojava != Py.NoConversion) {
                 this.file = new PyFile((OutputStream) tojava);

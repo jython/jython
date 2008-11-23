@@ -93,14 +93,10 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
             case 36:
                 Object o = arg1.__tojava__(PyModule.class);
                 if (o == Py.NoConversion) {
-                    o = arg1.__tojava__(PyJavaClass.class);
-                    if (o == Py.NoConversion) {
-                        if (arg1 instanceof PySystemState) {
-                            return __builtin__.reload((PySystemState)arg1);
-                        }
-                        throw Py.TypeError("reload() argument must be a module");
+                    if (arg1 instanceof PySystemState) {
+                        return __builtin__.reload((PySystemState)arg1);
                     }
-                    return __builtin__.reload((PyJavaClass) o);
+                    throw Py.TypeError("reload() argument must be a module");
                 }
                 return __builtin__.reload((PyModule) o);
             case 37:
@@ -492,7 +488,7 @@ public class __builtin__ {
             code = (PyCode) o;
         } else {
             if (o instanceof PyString) {
-                code = (PyCode)CompileFunction.compile((PyString)o, "<string>", "eval");
+                code = (PyCode)CompileFunction.compile(o, "<string>", "eval");
             } else {
                 throw Py.TypeError("eval: argument 1 must be string or code object");
             }
@@ -1098,10 +1094,6 @@ public class __builtin__ {
     }
 
     public static PyObject reload(PyModule o) {
-        return imp.reload(o);
-    }
-
-    public static PyObject reload(PyJavaClass o) {
         return imp.reload(o);
     }
 

@@ -3373,7 +3373,7 @@ public class PyObject implements Serializable {
             }
             return __call__(pargs);
         } catch (PyException e) {
-            if (e.value instanceof PyJavaInstance) {
+            if (e.value.getType() instanceof PyJavaType) {
                 Object t = e.value.__tojava__(Throwable.class);
                 if (t != null && t != Py.NoConversion) {
                     throw (Throwable) t;

@@ -783,13 +783,7 @@ public class PyType extends PyObject implements Serializable {
     private static PyType findMostDerivedMetatype(PyObject[] bases_list, PyType initialMetatype) {
         PyType winner = initialMetatype;
         for (PyObject base : bases_list) {
-            if (base instanceof PyJavaClass) {
-                throw Py.TypeError("can't mix new-style and java classes");
-            }
             if (base instanceof PyClass) {
-                if (((PyClass)base).proxyClass != null) {
-                    throw Py.TypeError("can't mix new-style and java classes");
-                }
                 continue;
             }
             PyType curtype = base.getType();
