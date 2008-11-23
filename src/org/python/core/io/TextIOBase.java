@@ -1,6 +1,8 @@
 /* Copyright (c) 2007 Jython Developers */
 package org.python.core.io;
 
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 
 import org.python.core.Py;
@@ -188,9 +190,14 @@ public abstract class TextIOBase extends IOBase {
         return bufferedIO.closed();
     }
 
-    /** {@inheritDoc} */
-    public Object __tojava__(Class cls) {
-        return bufferedIO.__tojava__(cls);
+    @Override
+    public InputStream asInputStream() {
+        return bufferedIO.asInputStream();
+    }
+
+    @Override
+    public OutputStream asOutputStream() {
+        return bufferedIO.asOutputStream();
     }
 
     /**

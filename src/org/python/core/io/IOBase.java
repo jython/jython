@@ -1,6 +1,9 @@
 /* Copyright (c) 2007 Jython Developers */
 package org.python.core.io;
 
+import java.io.InputStream;
+import java.io.OutputStream;
+
 import org.python.core.Py;
 import org.python.core.PyException;
 import org.python.modules.errno;
@@ -191,13 +194,16 @@ public abstract class IOBase {
     }
 
     /**
-     * Coerce this Python object (the parent PyFile) into a java
-     * object.
-     *
-     * @param cls the desired Class to coerce the object to
-     * @return the desired object or null
+     * Coerce this into an OutputStream if possible, or return null.
      */
-    public Object __tojava__(Class cls) {
+    public OutputStream asOutputStream() {
+        return null;
+    }
+
+    /**
+     * Coerce this into an InputStream if possible, or return null.
+     */
+    public InputStream asInputStream() {
         return null;
     }
 
