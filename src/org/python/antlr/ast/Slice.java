@@ -12,24 +12,33 @@ public class Slice extends sliceType {
     public exprType getInternalLower() {
         return lower;
     }
-    public void setLower(exprType lower) {
-        this.lower = lower;
+    public Object getLower() {
+        return lower;
+    }
+    public void setLower(Object lower) {
+        this.lower = (exprType)lower;
     }
 
     private exprType upper;
     public exprType getInternalUpper() {
         return upper;
     }
-    public void setUpper(exprType upper) {
-        this.upper = upper;
+    public Object getUpper() {
+        return upper;
+    }
+    public void setUpper(Object upper) {
+        this.upper = (exprType)upper;
     }
 
     private exprType step;
     public exprType getInternalStep() {
         return step;
     }
-    public void setStep(exprType step) {
-        this.step = step;
+    public Object getStep() {
+        return step;
+    }
+    public void setStep(Object step) {
+        this.step = (exprType)step;
     }
 
 
@@ -56,7 +65,7 @@ public class Slice extends sliceType {
         addChild(step);
     }
 
-    public Slice(int ttype, Token token, exprType lower, exprType upper,
+    public Slice(Integer ttype, Token token, exprType lower, exprType upper,
     exprType step) {
         super(ttype, token);
         this.lower = lower;

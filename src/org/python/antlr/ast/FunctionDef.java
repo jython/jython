@@ -12,32 +12,46 @@ public class FunctionDef extends stmtType {
     public String getInternalName() {
         return name;
     }
-    public void setName(String name) {
-        this.name = name;
+    public Object getName() {
+        return name;
+    }
+    public void setName(Object name) {
+        this.name = (String)name;
     }
 
     private argumentsType args;
     public argumentsType getInternalArgs() {
         return args;
     }
-    public void setArgs(argumentsType args) {
-        this.args = args;
+    public Object getArgs() {
+        return args;
+    }
+    public void setArgs(Object args) {
+        this.args = (argumentsType)args;
     }
 
     private ListWrapper<stmtType> body;
     public ListWrapper<stmtType> getInternalBody() {
         return body;
     }
-    public void setBody(java.util.List<stmtType> body) {
-        this.body = new ListWrapper<stmtType>(body);
+    public Object getBody() {
+        return body;
+    }
+    public void setBody(Object body) {
+        this.body = new ListWrapper<stmtType>(
+            (java.util.List<stmtType>)body);
     }
 
     private ListWrapper<exprType> decorators;
     public ListWrapper<exprType> getInternalDecorators() {
         return decorators;
     }
-    public void setDecorators(java.util.List<exprType> decorators) {
-        this.decorators = new ListWrapper<exprType>(decorators);
+    public Object getDecorators() {
+        return decorators;
+    }
+    public void setDecorators(Object decorators) {
+        this.decorators = new ListWrapper<exprType>(
+            (java.util.List<exprType>)decorators);
     }
 
 
@@ -82,8 +96,8 @@ public class FunctionDef extends stmtType {
         }
     }
 
-    public FunctionDef(int ttype, Token token, String name, argumentsType args,
-    java.util.List<stmtType> body, java.util.List<exprType> decorators) {
+    public FunctionDef(Integer ttype, Token token, String name, argumentsType
+    args, java.util.List<stmtType> body, java.util.List<exprType> decorators) {
         super(ttype, token);
         this.name = name;
         this.args = args;

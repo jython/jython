@@ -16,7 +16,7 @@ public class Pass extends stmtType {
         super(token);
     }
 
-    public Pass(int ttype, Token token) {
+    public Pass(Integer ttype, Token token) {
         super(ttype, token);
     }
 

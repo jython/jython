@@ -12,32 +12,46 @@ public class For extends stmtType {
     public exprType getInternalTarget() {
         return target;
     }
-    public void setTarget(exprType target) {
-        this.target = target;
+    public Object getTarget() {
+        return target;
+    }
+    public void setTarget(Object target) {
+        this.target = (exprType)target;
     }
 
     private exprType iter;
     public exprType getInternalIter() {
         return iter;
     }
-    public void setIter(exprType iter) {
-        this.iter = iter;
+    public Object getIter() {
+        return iter;
+    }
+    public void setIter(Object iter) {
+        this.iter = (exprType)iter;
     }
 
     private ListWrapper<stmtType> body;
     public ListWrapper<stmtType> getInternalBody() {
         return body;
     }
-    public void setBody(java.util.List<stmtType> body) {
-        this.body = new ListWrapper<stmtType>(body);
+    public Object getBody() {
+        return body;
+    }
+    public void setBody(Object body) {
+        this.body = new ListWrapper<stmtType>(
+            (java.util.List<stmtType>)body);
     }
 
     private ListWrapper<stmtType> orelse;
     public ListWrapper<stmtType> getInternalOrelse() {
         return orelse;
     }
-    public void setOrelse(java.util.List<stmtType> orelse) {
-        this.orelse = new ListWrapper<stmtType>(orelse);
+    public Object getOrelse() {
+        return orelse;
+    }
+    public void setOrelse(Object orelse) {
+        this.orelse = new ListWrapper<stmtType>(
+            (java.util.List<stmtType>)orelse);
     }
 
 
@@ -86,7 +100,7 @@ public class For extends stmtType {
         }
     }
 
-    public For(int ttype, Token token, exprType target, exprType iter,
+    public For(Integer ttype, Token token, exprType target, exprType iter,
     java.util.List<stmtType> body, java.util.List<stmtType> orelse) {
         super(ttype, token);
         this.target = target;

@@ -12,16 +12,22 @@ public class Lambda extends exprType {
     public argumentsType getInternalArgs() {
         return args;
     }
-    public void setArgs(argumentsType args) {
-        this.args = args;
+    public Object getArgs() {
+        return args;
+    }
+    public void setArgs(Object args) {
+        this.args = (argumentsType)args;
     }
 
     private exprType body;
     public exprType getInternalBody() {
         return body;
     }
-    public void setBody(exprType body) {
-        this.body = body;
+    public Object getBody() {
+        return body;
+    }
+    public void setBody(Object body) {
+        this.body = (exprType)body;
     }
 
 
@@ -41,7 +47,8 @@ public class Lambda extends exprType {
         addChild(body);
     }
 
-    public Lambda(int ttype, Token token, argumentsType args, exprType body) {
+    public Lambda(Integer ttype, Token token, argumentsType args, exprType
+    body) {
         super(ttype, token);
         this.args = args;
         this.body = body;

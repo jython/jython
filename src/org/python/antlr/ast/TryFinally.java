@@ -12,16 +12,24 @@ public class TryFinally extends stmtType {
     public ListWrapper<stmtType> getInternalBody() {
         return body;
     }
-    public void setBody(java.util.List<stmtType> body) {
-        this.body = new ListWrapper<stmtType>(body);
+    public Object getBody() {
+        return body;
+    }
+    public void setBody(Object body) {
+        this.body = new ListWrapper<stmtType>(
+            (java.util.List<stmtType>)body);
     }
 
     private ListWrapper<stmtType> finalbody;
     public ListWrapper<stmtType> getInternalFinalbody() {
         return finalbody;
     }
-    public void setFinalbody(java.util.List<stmtType> finalbody) {
-        this.finalbody = new ListWrapper<stmtType>(finalbody);
+    public Object getFinalbody() {
+        return finalbody;
+    }
+    public void setFinalbody(Object finalbody) {
+        this.finalbody = new ListWrapper<stmtType>(
+            (java.util.List<stmtType>)finalbody);
     }
 
 
@@ -61,8 +69,8 @@ public class TryFinally extends stmtType {
         }
     }
 
-    public TryFinally(int ttype, Token token, java.util.List<stmtType> body,
-    java.util.List<stmtType> finalbody) {
+    public TryFinally(Integer ttype, Token token, java.util.List<stmtType>
+    body, java.util.List<stmtType> finalbody) {
         super(ttype, token);
         this.body = new ListWrapper<stmtType>(body);
         if (body != null) {

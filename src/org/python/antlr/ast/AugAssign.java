@@ -12,24 +12,33 @@ public class AugAssign extends stmtType {
     public exprType getInternalTarget() {
         return target;
     }
-    public void setTarget(exprType target) {
-        this.target = target;
+    public Object getTarget() {
+        return target;
+    }
+    public void setTarget(Object target) {
+        this.target = (exprType)target;
     }
 
     private operatorType op;
     public operatorType getInternalOp() {
         return op;
     }
-    public void setOp(operatorType op) {
-        this.op = op;
+    public Object getOp() {
+        return op;
+    }
+    public void setOp(Object op) {
+        this.op = (operatorType)op;
     }
 
     private exprType value;
     public exprType getInternalValue() {
         return value;
     }
-    public void setValue(exprType value) {
-        this.value = value;
+    public Object getValue() {
+        return value;
+    }
+    public void setValue(Object value) {
+        this.value = (exprType)value;
     }
 
 
@@ -55,8 +64,8 @@ public class AugAssign extends stmtType {
         addChild(value);
     }
 
-    public AugAssign(int ttype, Token token, exprType target, operatorType op,
-    exprType value) {
+    public AugAssign(Integer ttype, Token token, exprType target, operatorType
+    op, exprType value) {
         super(ttype, token);
         this.target = target;
         addChild(target);

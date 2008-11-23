@@ -12,24 +12,34 @@ public class ImportFrom extends stmtType {
     public String getInternalModule() {
         return module;
     }
-    public void setModule(String module) {
-        this.module = module;
+    public Object getModule() {
+        return module;
+    }
+    public void setModule(Object module) {
+        this.module = (String)module;
     }
 
     private ListWrapper<aliasType> names;
     public ListWrapper<aliasType> getInternalNames() {
         return names;
     }
-    public void setNames(java.util.List<aliasType> names) {
-        this.names = new ListWrapper<aliasType>(names);
+    public Object getNames() {
+        return names;
+    }
+    public void setNames(Object names) {
+        this.names = new ListWrapper<aliasType>(
+            (java.util.List<aliasType>)names);
     }
 
-    private int level;
-    public int getInternalLevel() {
+    private Integer level;
+    public Integer getInternalLevel() {
         return level;
     }
-    public void setLevel(int level) {
-        this.level = level;
+    public Object getLevel() {
+        return level;
+    }
+    public void setLevel(Object level) {
+        this.level = (Integer)level;
     }
 
 
@@ -37,7 +47,7 @@ public class ImportFrom extends stmtType {
                                                           "level"};
     public String[] get_fields() { return fields; }
 
-    public ImportFrom(String module, java.util.List<aliasType> names, int
+    public ImportFrom(String module, java.util.List<aliasType> names, Integer
     level) {
         this.module = module;
         this.names = new ListWrapper<aliasType>(names);
@@ -50,7 +60,7 @@ public class ImportFrom extends stmtType {
     }
 
     public ImportFrom(Token token, String module, java.util.List<aliasType>
-    names, int level) {
+    names, Integer level) {
         super(token);
         this.module = module;
         this.names = new ListWrapper<aliasType>(names);
@@ -62,8 +72,8 @@ public class ImportFrom extends stmtType {
         this.level = level;
     }
 
-    public ImportFrom(int ttype, Token token, String module,
-    java.util.List<aliasType> names, int level) {
+    public ImportFrom(Integer ttype, Token token, String module,
+    java.util.List<aliasType> names, Integer level) {
         super(ttype, token);
         this.module = module;
         this.names = new ListWrapper<aliasType>(names);
@@ -76,7 +86,7 @@ public class ImportFrom extends stmtType {
     }
 
     public ImportFrom(PythonTree tree, String module, java.util.List<aliasType>
-    names, int level) {
+    names, Integer level) {
         super(tree);
         this.module = module;
         this.names = new ListWrapper<aliasType>(names);

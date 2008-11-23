@@ -12,24 +12,33 @@ public class Exec extends stmtType {
     public exprType getInternalBody() {
         return body;
     }
-    public void setBody(exprType body) {
-        this.body = body;
+    public Object getBody() {
+        return body;
+    }
+    public void setBody(Object body) {
+        this.body = (exprType)body;
     }
 
     private exprType globals;
     public exprType getInternalGlobals() {
         return globals;
     }
-    public void setGlobals(exprType globals) {
-        this.globals = globals;
+    public Object getGlobals() {
+        return globals;
+    }
+    public void setGlobals(Object globals) {
+        this.globals = (exprType)globals;
     }
 
     private exprType locals;
     public exprType getInternalLocals() {
         return locals;
     }
-    public void setLocals(exprType locals) {
-        this.locals = locals;
+    public Object getLocals() {
+        return locals;
+    }
+    public void setLocals(Object locals) {
+        this.locals = (exprType)locals;
     }
 
 
@@ -56,7 +65,7 @@ public class Exec extends stmtType {
         addChild(locals);
     }
 
-    public Exec(int ttype, Token token, exprType body, exprType globals,
+    public Exec(Integer ttype, Token token, exprType body, exprType globals,
     exprType locals) {
         super(ttype, token);
         this.body = body;

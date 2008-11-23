@@ -12,40 +12,57 @@ public class Call extends exprType {
     public exprType getInternalFunc() {
         return func;
     }
-    public void setFunc(exprType func) {
-        this.func = func;
+    public Object getFunc() {
+        return func;
+    }
+    public void setFunc(Object func) {
+        this.func = (exprType)func;
     }
 
     private ListWrapper<exprType> args;
     public ListWrapper<exprType> getInternalArgs() {
         return args;
     }
-    public void setArgs(java.util.List<exprType> args) {
-        this.args = new ListWrapper<exprType>(args);
+    public Object getArgs() {
+        return args;
+    }
+    public void setArgs(Object args) {
+        this.args = new ListWrapper<exprType>(
+            (java.util.List<exprType>)args);
     }
 
     private ListWrapper<keywordType> keywords;
     public ListWrapper<keywordType> getInternalKeywords() {
         return keywords;
     }
-    public void setKeywords(java.util.List<keywordType> keywords) {
-        this.keywords = new ListWrapper<keywordType>(keywords);
+    public Object getKeywords() {
+        return keywords;
+    }
+    public void setKeywords(Object keywords) {
+        this.keywords = new ListWrapper<keywordType>(
+            (java.util.List<keywordType>)keywords);
     }
 
     private exprType starargs;
     public exprType getInternalStarargs() {
         return starargs;
     }
-    public void setStarargs(exprType starargs) {
-        this.starargs = starargs;
+    public Object getStarargs() {
+        return starargs;
+    }
+    public void setStarargs(Object starargs) {
+        this.starargs = (exprType)starargs;
     }
 
     private exprType kwargs;
     public exprType getInternalKwargs() {
         return kwargs;
     }
-    public void setKwargs(exprType kwargs) {
-        this.kwargs = kwargs;
+    public Object getKwargs() {
+        return kwargs;
+    }
+    public void setKwargs(Object kwargs) {
+        this.kwargs = (exprType)kwargs;
     }
 
 
@@ -99,9 +116,9 @@ public class Call extends exprType {
         addChild(kwargs);
     }
 
-    public Call(int ttype, Token token, exprType func, java.util.List<exprType>
-    args, java.util.List<keywordType> keywords, exprType starargs, exprType
-    kwargs) {
+    public Call(Integer ttype, Token token, exprType func,
+    java.util.List<exprType> args, java.util.List<keywordType> keywords,
+    exprType starargs, exprType kwargs) {
         super(ttype, token);
         this.func = func;
         addChild(func);

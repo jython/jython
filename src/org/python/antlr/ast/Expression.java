@@ -12,8 +12,11 @@ public class Expression extends modType {
     public exprType getInternalBody() {
         return body;
     }
-    public void setBody(exprType body) {
-        this.body = body;
+    public Object getBody() {
+        return body;
+    }
+    public void setBody(Object body) {
+        this.body = (exprType)body;
     }
 
 
@@ -31,7 +34,7 @@ public class Expression extends modType {
         addChild(body);
     }
 
-    public Expression(int ttype, Token token, exprType body) {
+    public Expression(Integer ttype, Token token, exprType body) {
         super(ttype, token);
         this.body = body;
         addChild(body);

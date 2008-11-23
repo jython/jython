@@ -12,24 +12,33 @@ public class Raise extends stmtType {
     public exprType getInternalExcepttype() {
         return excepttype;
     }
-    public void setExcepttype(exprType excepttype) {
-        this.excepttype = excepttype;
+    public Object getExcepttype() {
+        return excepttype;
+    }
+    public void setExcepttype(Object excepttype) {
+        this.excepttype = (exprType)excepttype;
     }
 
     private exprType inst;
     public exprType getInternalInst() {
         return inst;
     }
-    public void setInst(exprType inst) {
-        this.inst = inst;
+    public Object getInst() {
+        return inst;
+    }
+    public void setInst(Object inst) {
+        this.inst = (exprType)inst;
     }
 
     private exprType tback;
     public exprType getInternalTback() {
         return tback;
     }
-    public void setTback(exprType tback) {
-        this.tback = tback;
+    public Object getTback() {
+        return tback;
+    }
+    public void setTback(Object tback) {
+        this.tback = (exprType)tback;
     }
 
 
@@ -57,8 +66,8 @@ public class Raise extends stmtType {
         addChild(tback);
     }
 
-    public Raise(int ttype, Token token, exprType excepttype, exprType inst,
-    exprType tback) {
+    public Raise(Integer ttype, Token token, exprType excepttype, exprType
+    inst, exprType tback) {
         super(ttype, token);
         this.excepttype = excepttype;
         addChild(excepttype);

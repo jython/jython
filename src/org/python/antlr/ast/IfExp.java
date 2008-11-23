@@ -12,24 +12,33 @@ public class IfExp extends exprType {
     public exprType getInternalTest() {
         return test;
     }
-    public void setTest(exprType test) {
-        this.test = test;
+    public Object getTest() {
+        return test;
+    }
+    public void setTest(Object test) {
+        this.test = (exprType)test;
     }
 
     private exprType body;
     public exprType getInternalBody() {
         return body;
     }
-    public void setBody(exprType body) {
-        this.body = body;
+    public Object getBody() {
+        return body;
+    }
+    public void setBody(Object body) {
+        this.body = (exprType)body;
     }
 
     private exprType orelse;
     public exprType getInternalOrelse() {
         return orelse;
     }
-    public void setOrelse(exprType orelse) {
-        this.orelse = orelse;
+    public Object getOrelse() {
+        return orelse;
+    }
+    public void setOrelse(Object orelse) {
+        this.orelse = (exprType)orelse;
     }
 
 
@@ -56,8 +65,8 @@ public class IfExp extends exprType {
         addChild(orelse);
     }
 
-    public IfExp(int ttype, Token token, exprType test, exprType body, exprType
-    orelse) {
+    public IfExp(Integer ttype, Token token, exprType test, exprType body,
+    exprType orelse) {
         super(ttype, token);
         this.test = test;
         addChild(test);

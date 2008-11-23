@@ -12,32 +12,46 @@ public class argumentsType extends PythonTree {
     public ListWrapper<exprType> getInternalArgs() {
         return args;
     }
-    public void setArgs(java.util.List<exprType> args) {
-        this.args = new ListWrapper<exprType>(args);
+    public Object getArgs() {
+        return args;
+    }
+    public void setArgs(Object args) {
+        this.args = new ListWrapper<exprType>(
+            (java.util.List<exprType>)args);
     }
 
     private String vararg;
     public String getInternalVararg() {
         return vararg;
     }
-    public void setVararg(String vararg) {
-        this.vararg = vararg;
+    public Object getVararg() {
+        return vararg;
+    }
+    public void setVararg(Object vararg) {
+        this.vararg = (String)vararg;
     }
 
     private String kwarg;
     public String getInternalKwarg() {
         return kwarg;
     }
-    public void setKwarg(String kwarg) {
-        this.kwarg = kwarg;
+    public Object getKwarg() {
+        return kwarg;
+    }
+    public void setKwarg(Object kwarg) {
+        this.kwarg = (String)kwarg;
     }
 
     private ListWrapper<exprType> defaults;
     public ListWrapper<exprType> getInternalDefaults() {
         return defaults;
     }
-    public void setDefaults(java.util.List<exprType> defaults) {
-        this.defaults = new ListWrapper<exprType>(defaults);
+    public Object getDefaults() {
+        return defaults;
+    }
+    public void setDefaults(Object defaults) {
+        this.defaults = new ListWrapper<exprType>(
+            (java.util.List<exprType>)defaults);
     }
 
 
@@ -82,8 +96,8 @@ public class argumentsType extends PythonTree {
         }
     }
 
-    public argumentsType(int ttype, Token token, java.util.List<exprType> args,
-    String vararg, String kwarg, java.util.List<exprType> defaults) {
+    public argumentsType(Integer ttype, Token token, java.util.List<exprType>
+    args, String vararg, String kwarg, java.util.List<exprType> defaults) {
         super(ttype, token);
         this.args = new ListWrapper<exprType>(args);
         if (args != null) {

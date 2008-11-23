@@ -12,8 +12,11 @@ public class Str extends exprType {
     public Object getInternalS() {
         return s;
     }
+    public Object getS() {
+        return s;
+    }
     public void setS(Object s) {
-        this.s = s;
+        this.s = (Object)s;
     }
 
 
@@ -29,7 +32,7 @@ public class Str extends exprType {
         this.s = s;
     }
 
-    public Str(int ttype, Token token, Object s) {
+    public Str(Integer ttype, Token token, Object s) {
         super(ttype, token);
         this.s = s;
     }

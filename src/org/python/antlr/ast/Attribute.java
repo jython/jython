@@ -12,24 +12,33 @@ public class Attribute extends exprType implements Context {
     public exprType getInternalValue() {
         return value;
     }
-    public void setValue(exprType value) {
-        this.value = value;
+    public Object getValue() {
+        return value;
+    }
+    public void setValue(Object value) {
+        this.value = (exprType)value;
     }
 
     private String attr;
     public String getInternalAttr() {
         return attr;
     }
-    public void setAttr(String attr) {
-        this.attr = attr;
+    public Object getAttr() {
+        return attr;
+    }
+    public void setAttr(Object attr) {
+        this.attr = (String)attr;
     }
 
     private expr_contextType ctx;
     public expr_contextType getInternalCtx() {
         return ctx;
     }
-    public void setCtx(expr_contextType ctx) {
-        this.ctx = ctx;
+    public Object getCtx() {
+        return ctx;
+    }
+    public void setCtx(Object ctx) {
+        this.ctx = (expr_contextType)ctx;
     }
 
 
@@ -53,7 +62,7 @@ public class Attribute extends exprType implements Context {
         this.ctx = ctx;
     }
 
-    public Attribute(int ttype, Token token, exprType value, String attr,
+    public Attribute(Integer ttype, Token token, exprType value, String attr,
     expr_contextType ctx) {
         super(ttype, token);
         this.value = value;

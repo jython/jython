@@ -12,8 +12,12 @@ public class ExtSlice extends sliceType {
     public ListWrapper<sliceType> getInternalDims() {
         return dims;
     }
-    public void setDims(java.util.List<sliceType> dims) {
-        this.dims = new ListWrapper<sliceType>(dims);
+    public Object getDims() {
+        return dims;
+    }
+    public void setDims(Object dims) {
+        this.dims = new ListWrapper<sliceType>(
+            (java.util.List<sliceType>)dims);
     }
 
 
@@ -39,7 +43,8 @@ public class ExtSlice extends sliceType {
         }
     }
 
-    public ExtSlice(int ttype, Token token, java.util.List<sliceType> dims) {
+    public ExtSlice(Integer ttype, Token token, java.util.List<sliceType> dims)
+    {
         super(ttype, token);
         this.dims = new ListWrapper<sliceType>(dims);
         if (dims != null) {

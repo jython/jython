@@ -12,8 +12,12 @@ public class Delete extends stmtType {
     public ListWrapper<exprType> getInternalTargets() {
         return targets;
     }
-    public void setTargets(java.util.List<exprType> targets) {
-        this.targets = new ListWrapper<exprType>(targets);
+    public Object getTargets() {
+        return targets;
+    }
+    public void setTargets(Object targets) {
+        this.targets = new ListWrapper<exprType>(
+            (java.util.List<exprType>)targets);
     }
 
 
@@ -39,7 +43,8 @@ public class Delete extends stmtType {
         }
     }
 
-    public Delete(int ttype, Token token, java.util.List<exprType> targets) {
+    public Delete(Integer ttype, Token token, java.util.List<exprType> targets)
+    {
         super(ttype, token);
         this.targets = new ListWrapper<exprType>(targets);
         if (targets != null) {

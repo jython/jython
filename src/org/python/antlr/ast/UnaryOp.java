@@ -12,16 +12,22 @@ public class UnaryOp extends exprType {
     public unaryopType getInternalOp() {
         return op;
     }
-    public void setOp(unaryopType op) {
-        this.op = op;
+    public Object getOp() {
+        return op;
+    }
+    public void setOp(Object op) {
+        this.op = (unaryopType)op;
     }
 
     private exprType operand;
     public exprType getInternalOperand() {
         return operand;
     }
-    public void setOperand(exprType operand) {
-        this.operand = operand;
+    public Object getOperand() {
+        return operand;
+    }
+    public void setOperand(Object operand) {
+        this.operand = (exprType)operand;
     }
 
 
@@ -41,7 +47,8 @@ public class UnaryOp extends exprType {
         addChild(operand);
     }
 
-    public UnaryOp(int ttype, Token token, unaryopType op, exprType operand) {
+    public UnaryOp(Integer ttype, Token token, unaryopType op, exprType
+    operand) {
         super(ttype, token);
         this.op = op;
         this.operand = operand;

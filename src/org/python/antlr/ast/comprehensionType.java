@@ -12,24 +12,34 @@ public class comprehensionType extends PythonTree {
     public exprType getInternalTarget() {
         return target;
     }
-    public void setTarget(exprType target) {
-        this.target = target;
+    public Object getTarget() {
+        return target;
+    }
+    public void setTarget(Object target) {
+        this.target = (exprType)target;
     }
 
     private exprType iter;
     public exprType getInternalIter() {
         return iter;
     }
-    public void setIter(exprType iter) {
-        this.iter = iter;
+    public Object getIter() {
+        return iter;
+    }
+    public void setIter(Object iter) {
+        this.iter = (exprType)iter;
     }
 
     private ListWrapper<exprType> ifs;
     public ListWrapper<exprType> getInternalIfs() {
         return ifs;
     }
-    public void setIfs(java.util.List<exprType> ifs) {
-        this.ifs = new ListWrapper<exprType>(ifs);
+    public Object getIfs() {
+        return ifs;
+    }
+    public void setIfs(Object ifs) {
+        this.ifs = new ListWrapper<exprType>(
+            (java.util.List<exprType>)ifs);
     }
 
 
@@ -66,8 +76,8 @@ public class comprehensionType extends PythonTree {
         }
     }
 
-    public comprehensionType(int ttype, Token token, exprType target, exprType
-    iter, java.util.List<exprType> ifs) {
+    public comprehensionType(Integer ttype, Token token, exprType target,
+    exprType iter, java.util.List<exprType> ifs) {
         super(ttype, token);
         this.target = target;
         addChild(target);

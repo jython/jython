@@ -12,16 +12,23 @@ public class Assign extends stmtType {
     public ListWrapper<exprType> getInternalTargets() {
         return targets;
     }
-    public void setTargets(java.util.List<exprType> targets) {
-        this.targets = new ListWrapper<exprType>(targets);
+    public Object getTargets() {
+        return targets;
+    }
+    public void setTargets(Object targets) {
+        this.targets = new ListWrapper<exprType>(
+            (java.util.List<exprType>)targets);
     }
 
     private exprType value;
     public exprType getInternalValue() {
         return value;
     }
-    public void setValue(exprType value) {
-        this.value = value;
+    public Object getValue() {
+        return value;
+    }
+    public void setValue(Object value) {
+        this.value = (exprType)value;
     }
 
 
@@ -52,7 +59,7 @@ public class Assign extends stmtType {
         addChild(value);
     }
 
-    public Assign(int ttype, Token token, java.util.List<exprType> targets,
+    public Assign(Integer ttype, Token token, java.util.List<exprType> targets,
     exprType value) {
         super(ttype, token);
         this.targets = new ListWrapper<exprType>(targets);

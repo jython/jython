@@ -12,8 +12,11 @@ public class Num extends exprType {
     public Object getInternalN() {
         return n;
     }
+    public Object getN() {
+        return n;
+    }
     public void setN(Object n) {
-        this.n = n;
+        this.n = (Object)n;
     }
 
 
@@ -29,7 +32,7 @@ public class Num extends exprType {
         this.n = n;
     }
 
-    public Num(int ttype, Token token, Object n) {
+    public Num(Integer ttype, Token token, Object n) {
         super(ttype, token);
         this.n = n;
     }

@@ -12,16 +12,23 @@ public class BoolOp extends exprType {
     public boolopType getInternalOp() {
         return op;
     }
-    public void setOp(boolopType op) {
-        this.op = op;
+    public Object getOp() {
+        return op;
+    }
+    public void setOp(Object op) {
+        this.op = (boolopType)op;
     }
 
     private ListWrapper<exprType> values;
     public ListWrapper<exprType> getInternalValues() {
         return values;
     }
-    public void setValues(java.util.List<exprType> values) {
-        this.values = new ListWrapper<exprType>(values);
+    public Object getValues() {
+        return values;
+    }
+    public void setValues(Object values) {
+        this.values = new ListWrapper<exprType>(
+            (java.util.List<exprType>)values);
     }
 
 
@@ -49,7 +56,7 @@ public class BoolOp extends exprType {
         }
     }
 
-    public BoolOp(int ttype, Token token, boolopType op,
+    public BoolOp(Integer ttype, Token token, boolopType op,
     java.util.List<exprType> values) {
         super(ttype, token);
         this.op = op;

@@ -12,8 +12,12 @@ public class Global extends stmtType {
     public ListWrapper<String> getInternalNames() {
         return names;
     }
-    public void setNames(java.util.List<String> names) {
-        this.names = new ListWrapper<String>(names);
+    public Object getNames() {
+        return names;
+    }
+    public void setNames(Object names) {
+        this.names = new ListWrapper<String>(
+            (java.util.List<String>)names);
     }
 
 
@@ -29,7 +33,7 @@ public class Global extends stmtType {
         this.names = new ListWrapper<String>(names);
     }
 
-    public Global(int ttype, Token token, java.util.List<String> names) {
+    public Global(Integer ttype, Token token, java.util.List<String> names) {
         super(ttype, token);
         this.names = new ListWrapper<String>(names);
     }

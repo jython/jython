@@ -12,24 +12,33 @@ public class Subscript extends exprType implements Context {
     public exprType getInternalValue() {
         return value;
     }
-    public void setValue(exprType value) {
-        this.value = value;
+    public Object getValue() {
+        return value;
+    }
+    public void setValue(Object value) {
+        this.value = (exprType)value;
     }
 
     private sliceType slice;
     public sliceType getInternalSlice() {
         return slice;
     }
-    public void setSlice(sliceType slice) {
-        this.slice = slice;
+    public Object getSlice() {
+        return slice;
+    }
+    public void setSlice(Object slice) {
+        this.slice = (sliceType)slice;
     }
 
     private expr_contextType ctx;
     public expr_contextType getInternalCtx() {
         return ctx;
     }
-    public void setCtx(expr_contextType ctx) {
-        this.ctx = ctx;
+    public Object getCtx() {
+        return ctx;
+    }
+    public void setCtx(Object ctx) {
+        this.ctx = (expr_contextType)ctx;
     }
 
 
@@ -53,8 +62,8 @@ public class Subscript extends exprType implements Context {
         this.ctx = ctx;
     }
 
-    public Subscript(int ttype, Token token, exprType value, sliceType slice,
-    expr_contextType ctx) {
+    public Subscript(Integer ttype, Token token, exprType value, sliceType
+    slice, expr_contextType ctx) {
         super(ttype, token);
         this.value = value;
         addChild(value);

@@ -2,6 +2,7 @@
 package org.python.antlr.ast;
 import org.python.antlr.PythonTree;
 import org.python.antlr.ListWrapper;
+import org.python.core.PyInteger;
 import org.antlr.runtime.CommonToken;
 import org.antlr.runtime.Token;
 import java.io.DataOutputStream;
@@ -12,26 +13,43 @@ public class BinOp extends exprType {
     public exprType getInternalLeft() {
         return left;
     }
-    public void setLeft(exprType left) {
-        this.left = left;
+    public Object getLeft() {
+        return left;
     }
+    public void setLeft(Object left) {
+        if (left instanceof exprType) {
+            this.left = (exprType)left;
+        } else if (left instanceof Integer) {
+            this.left = new Num(new PyInteger((Integer)left));
+        }
+    }
+
 
     private operatorType op;
     public operatorType getInternalOp() {
         return op;
     }
-    public void setOp(operatorType op) {
-        this.op = op;
+    public Object getOp() {
+        return op;
+    }
+    public void setOp(Object op) {
+        this.op = (operatorType)op;
     }
 
     private exprType right;
     public exprType getInternalRight() {
         return right;
     }
-    public void setRight(exprType right) {
-        this.right = right;
+    public Object getRight() {
+        return right;
     }
-
+    public void setRight(Object right) {
+        if (right instanceof exprType) {
+            this.right = (exprType)right;
+        } else if (right instanceof Integer) {
+            this.right = new Num(new PyInteger((Integer)right));
+        }
+    }
 
     private final static String[] fields = new String[] {"left", "op", "right"};
     public String[] get_fields() { return fields; }
@@ -44,6 +62,15 @@ public class BinOp extends exprType {
         addChild(right);
     }
 
+    public BinOp() {
+    }
+
+    public BinOp(Object left, operatorType op, Object right) {
+        setLeft(left);
+        setOp(op);
+        setRight(right);
+    }
+
     public BinOp(Token token, exprType left, operatorType op, exprType right) {
         super(token);
         this.left = left;
@@ -53,7 +80,7 @@ public class BinOp extends exprType {
         addChild(right);
     }
 
-    public BinOp(int ttype, Token token, exprType left, operatorType op,
+    public BinOp(Integer ttype, Token token, exprType left, operatorType op,
     exprType right) {
         super(ttype, token);
         this.left = left;

@@ -12,24 +12,36 @@ public class TryExcept extends stmtType {
     public ListWrapper<stmtType> getInternalBody() {
         return body;
     }
-    public void setBody(java.util.List<stmtType> body) {
-        this.body = new ListWrapper<stmtType>(body);
+    public Object getBody() {
+        return body;
+    }
+    public void setBody(Object body) {
+        this.body = new ListWrapper<stmtType>(
+            (java.util.List<stmtType>)body);
     }
 
     private ListWrapper<excepthandlerType> handlers;
     public ListWrapper<excepthandlerType> getInternalHandlers() {
         return handlers;
     }
-    public void setHandlers(java.util.List<excepthandlerType> handlers) {
-        this.handlers = new ListWrapper<excepthandlerType>(handlers);
+    public Object getHandlers() {
+        return handlers;
+    }
+    public void setHandlers(Object handlers) {
+        this.handlers = new ListWrapper<excepthandlerType>(
+            (java.util.List<excepthandlerType>)handlers);
     }
 
     private ListWrapper<stmtType> orelse;
     public ListWrapper<stmtType> getInternalOrelse() {
         return orelse;
     }
-    public void setOrelse(java.util.List<stmtType> orelse) {
-        this.orelse = new ListWrapper<stmtType>(orelse);
+    public Object getOrelse() {
+        return orelse;
+    }
+    public void setOrelse(Object orelse) {
+        this.orelse = new ListWrapper<stmtType>(
+            (java.util.List<stmtType>)orelse);
     }
 
 
@@ -84,7 +96,7 @@ public class TryExcept extends stmtType {
         }
     }
 
-    public TryExcept(int ttype, Token token, java.util.List<stmtType> body,
+    public TryExcept(Integer ttype, Token token, java.util.List<stmtType> body,
     java.util.List<excepthandlerType> handlers, java.util.List<stmtType>
     orelse) {
         super(ttype, token);

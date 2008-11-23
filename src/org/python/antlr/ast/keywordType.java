@@ -12,16 +12,22 @@ public class keywordType extends PythonTree {
     public String getInternalArg() {
         return arg;
     }
-    public void setArg(String arg) {
-        this.arg = arg;
+    public Object getArg() {
+        return arg;
+    }
+    public void setArg(Object arg) {
+        this.arg = (String)arg;
     }
 
     private exprType value;
     public exprType getInternalValue() {
         return value;
     }
-    public void setValue(exprType value) {
-        this.value = value;
+    public Object getValue() {
+        return value;
+    }
+    public void setValue(Object value) {
+        this.value = (exprType)value;
     }
 
 
@@ -41,7 +47,7 @@ public class keywordType extends PythonTree {
         addChild(value);
     }
 
-    public keywordType(int ttype, Token token, String arg, exprType value) {
+    public keywordType(Integer ttype, Token token, String arg, exprType value) {
         super(ttype, token);
         this.arg = arg;
         this.value = value;

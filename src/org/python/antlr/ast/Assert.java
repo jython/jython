@@ -12,16 +12,22 @@ public class Assert extends stmtType {
     public exprType getInternalTest() {
         return test;
     }
-    public void setTest(exprType test) {
-        this.test = test;
+    public Object getTest() {
+        return test;
+    }
+    public void setTest(Object test) {
+        this.test = (exprType)test;
     }
 
     private exprType msg;
     public exprType getInternalMsg() {
         return msg;
     }
-    public void setMsg(exprType msg) {
-        this.msg = msg;
+    public Object getMsg() {
+        return msg;
+    }
+    public void setMsg(Object msg) {
+        this.msg = (exprType)msg;
     }
 
 
@@ -43,7 +49,7 @@ public class Assert extends stmtType {
         addChild(msg);
     }
 
-    public Assert(int ttype, Token token, exprType test, exprType msg) {
+    public Assert(Integer ttype, Token token, exprType test, exprType msg) {
         super(ttype, token);
         this.test = test;
         addChild(test);

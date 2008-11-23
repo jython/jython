@@ -12,24 +12,35 @@ public class Compare extends exprType {
     public exprType getInternalLeft() {
         return left;
     }
-    public void setLeft(exprType left) {
-        this.left = left;
+    public Object getLeft() {
+        return left;
+    }
+    public void setLeft(Object left) {
+        this.left = (exprType)left;
     }
 
     private ListWrapper<cmpopType> ops;
     public ListWrapper<cmpopType> getInternalOps() {
         return ops;
     }
-    public void setOps(java.util.List<cmpopType> ops) {
-        this.ops = new ListWrapper<cmpopType>(ops);
+    public Object getOps() {
+        return ops;
+    }
+    public void setOps(Object ops) {
+        this.ops = new ListWrapper<cmpopType>(
+            (java.util.List<cmpopType>)ops);
     }
 
     private ListWrapper<exprType> comparators;
     public ListWrapper<exprType> getInternalComparators() {
         return comparators;
     }
-    public void setComparators(java.util.List<exprType> comparators) {
-        this.comparators = new ListWrapper<exprType>(comparators);
+    public Object getComparators() {
+        return comparators;
+    }
+    public void setComparators(Object comparators) {
+        this.comparators = new ListWrapper<exprType>(
+            (java.util.List<exprType>)comparators);
     }
 
 
@@ -64,7 +75,7 @@ public class Compare extends exprType {
         }
     }
 
-    public Compare(int ttype, Token token, exprType left,
+    public Compare(Integer ttype, Token token, exprType left,
     java.util.List<cmpopType> ops, java.util.List<exprType> comparators) {
         super(ttype, token);
         this.left = left;

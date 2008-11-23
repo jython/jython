@@ -16,7 +16,7 @@ public class Ellipsis extends sliceType {
         super(token);
     }
 
-    public Ellipsis(int ttype, Token token) {
+    public Ellipsis(Integer ttype, Token token) {
         super(ttype, token);
     }
 

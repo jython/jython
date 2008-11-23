@@ -16,7 +16,7 @@ public class Continue extends stmtType {
         super(token);
     }
 
-    public Continue(int ttype, Token token) {
+    public Continue(Integer ttype, Token token) {
         super(ttype, token);
     }
 

@@ -12,16 +12,22 @@ public class aliasType extends PythonTree {
     public String getInternalName() {
         return name;
     }
-    public void setName(String name) {
-        this.name = name;
+    public Object getName() {
+        return name;
+    }
+    public void setName(Object name) {
+        this.name = (String)name;
     }
 
     private String asname;
     public String getInternalAsname() {
         return asname;
     }
-    public void setAsname(String asname) {
-        this.asname = asname;
+    public Object getAsname() {
+        return asname;
+    }
+    public void setAsname(Object asname) {
+        this.asname = (String)asname;
     }
 
 
@@ -39,7 +45,7 @@ public class aliasType extends PythonTree {
         this.asname = asname;
     }
 
-    public aliasType(int ttype, Token token, String name, String asname) {
+    public aliasType(Integer ttype, Token token, String name, String asname) {
         super(ttype, token);
         this.name = name;
         this.asname = asname;

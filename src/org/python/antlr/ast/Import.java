@@ -12,8 +12,12 @@ public class Import extends stmtType {
     public ListWrapper<aliasType> getInternalNames() {
         return names;
     }
-    public void setNames(java.util.List<aliasType> names) {
-        this.names = new ListWrapper<aliasType>(names);
+    public Object getNames() {
+        return names;
+    }
+    public void setNames(Object names) {
+        this.names = new ListWrapper<aliasType>(
+            (java.util.List<aliasType>)names);
     }
 
 
@@ -39,7 +43,7 @@ public class Import extends stmtType {
         }
     }
 
-    public Import(int ttype, Token token, java.util.List<aliasType> names) {
+    public Import(Integer ttype, Token token, java.util.List<aliasType> names) {
         super(ttype, token);
         this.names = new ListWrapper<aliasType>(names);
         if (names != null) {

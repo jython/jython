@@ -413,19 +413,22 @@ class JavaVisitor(EmitVisitor):
             str(field.name).capitalize()), depth)
         self.emit("return %s;" % field.name, depth+1)
         self.emit("}", depth)
-        self.emit("public void set%s(%s) {" % (str(field.name).capitalize(),
-            self.fieldDef(field)), depth)
+        self.emit("public Object get%s() {" % (str(field.name).capitalize()), depth)
+        self.emit("return %s;" % field.name, depth+1)
+        self.emit("}", depth)
+        self.emit("public void set%s(Object %s) {" % (str(field.name).capitalize(),
+            field.name), depth)
         if field.seq:
-            self.emit("this.%s = new %s(%s);" % (field.name,
-                self.javaType(field, True), field.name), depth+1)
+            self.emit("this.%s = new %s(" % (field.name, self.javaType(field, True)), depth+1)
+            self.emit("(%s)%s);" % (self.javaType(field), field.name), depth+2)
         else:
-            self.emit("this.%s = %s;" % (field.name, field.name), depth+1)
+            self.emit("this.%s = (%s)%s;" % (field.name, self.javaType(field), field.name), depth+1)
         self.emit("}", depth)
         self.emit("", 0)
 
     bltinnames = {
-        'int' : 'int',
-        'bool' : 'boolean',
+        'int' : 'Integer',
+        'bool' : 'Boolean',
         'identifier' : 'String',
         'string' : 'Object',
         'object' : 'Object', # was PyObject

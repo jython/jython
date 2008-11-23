@@ -12,24 +12,35 @@ public class While extends stmtType {
     public exprType getInternalTest() {
         return test;
     }
-    public void setTest(exprType test) {
-        this.test = test;
+    public Object getTest() {
+        return test;
+    }
+    public void setTest(Object test) {
+        this.test = (exprType)test;
     }
 
     private ListWrapper<stmtType> body;
     public ListWrapper<stmtType> getInternalBody() {
         return body;
     }
-    public void setBody(java.util.List<stmtType> body) {
-        this.body = new ListWrapper<stmtType>(body);
+    public Object getBody() {
+        return body;
+    }
+    public void setBody(Object body) {
+        this.body = new ListWrapper<stmtType>(
+            (java.util.List<stmtType>)body);
     }
 
     private ListWrapper<stmtType> orelse;
     public ListWrapper<stmtType> getInternalOrelse() {
         return orelse;
     }
-    public void setOrelse(java.util.List<stmtType> orelse) {
-        this.orelse = new ListWrapper<stmtType>(orelse);
+    public Object getOrelse() {
+        return orelse;
+    }
+    public void setOrelse(Object orelse) {
+        this.orelse = new ListWrapper<stmtType>(
+            (java.util.List<stmtType>)orelse);
     }
 
 
@@ -74,7 +85,7 @@ public class While extends stmtType {
         }
     }
 
-    public While(int ttype, Token token, exprType test,
+    public While(Integer ttype, Token token, exprType test,
     java.util.List<stmtType> body, java.util.List<stmtType> orelse) {
         super(ttype, token);
         this.test = test;

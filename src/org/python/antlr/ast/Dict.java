@@ -12,16 +12,24 @@ public class Dict extends exprType {
     public ListWrapper<exprType> getInternalKeys() {
         return keys;
     }
-    public void setKeys(java.util.List<exprType> keys) {
-        this.keys = new ListWrapper<exprType>(keys);
+    public Object getKeys() {
+        return keys;
+    }
+    public void setKeys(Object keys) {
+        this.keys = new ListWrapper<exprType>(
+            (java.util.List<exprType>)keys);
     }
 
     private ListWrapper<exprType> values;
     public ListWrapper<exprType> getInternalValues() {
         return values;
     }
-    public void setValues(java.util.List<exprType> values) {
-        this.values = new ListWrapper<exprType>(values);
+    public Object getValues() {
+        return values;
+    }
+    public void setValues(Object values) {
+        this.values = new ListWrapper<exprType>(
+            (java.util.List<exprType>)values);
     }
 
 
@@ -61,7 +69,7 @@ public class Dict extends exprType {
         }
     }
 
-    public Dict(int ttype, Token token, java.util.List<exprType> keys,
+    public Dict(Integer ttype, Token token, java.util.List<exprType> keys,
     java.util.List<exprType> values) {
         super(ttype, token);
         this.keys = new ListWrapper<exprType>(keys);

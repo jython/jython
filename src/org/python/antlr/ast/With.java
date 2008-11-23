@@ -12,24 +12,34 @@ public class With extends stmtType {
     public exprType getInternalContext_expr() {
         return context_expr;
     }
-    public void setContext_expr(exprType context_expr) {
-        this.context_expr = context_expr;
+    public Object getContext_expr() {
+        return context_expr;
+    }
+    public void setContext_expr(Object context_expr) {
+        this.context_expr = (exprType)context_expr;
     }
 
     private exprType optional_vars;
     public exprType getInternalOptional_vars() {
         return optional_vars;
     }
-    public void setOptional_vars(exprType optional_vars) {
-        this.optional_vars = optional_vars;
+    public Object getOptional_vars() {
+        return optional_vars;
+    }
+    public void setOptional_vars(Object optional_vars) {
+        this.optional_vars = (exprType)optional_vars;
     }
 
     private ListWrapper<stmtType> body;
     public ListWrapper<stmtType> getInternalBody() {
         return body;
     }
-    public void setBody(java.util.List<stmtType> body) {
-        this.body = new ListWrapper<stmtType>(body);
+    public Object getBody() {
+        return body;
+    }
+    public void setBody(Object body) {
+        this.body = new ListWrapper<stmtType>(
+            (java.util.List<stmtType>)body);
     }
 
 
@@ -67,7 +77,7 @@ public class With extends stmtType {
         }
     }
 
-    public With(int ttype, Token token, exprType context_expr, exprType
+    public With(Integer ttype, Token token, exprType context_expr, exprType
     optional_vars, java.util.List<stmtType> body) {
         super(ttype, token);
         this.context_expr = context_expr;

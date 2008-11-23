@@ -12,8 +12,11 @@ public class Expr extends stmtType {
     public exprType getInternalValue() {
         return value;
     }
-    public void setValue(exprType value) {
-        this.value = value;
+    public Object getValue() {
+        return value;
+    }
+    public void setValue(Object value) {
+        this.value = (exprType)value;
     }
 
 
@@ -31,7 +34,7 @@ public class Expr extends stmtType {
         addChild(value);
     }
 
-    public Expr(int ttype, Token token, exprType value) {
+    public Expr(Integer ttype, Token token, exprType value) {
         super(ttype, token);
         this.value = value;
         addChild(value);

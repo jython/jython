@@ -16,7 +16,7 @@ public class Break extends stmtType {
         super(token);
     }
 
-    public Break(int ttype, Token token) {
+    public Break(Integer ttype, Token token) {
         super(ttype, token);
     }
 

@@ -12,40 +12,56 @@ public class excepthandlerType extends PythonTree {
     public exprType getInternalExcepttype() {
         return excepttype;
     }
-    public void setExcepttype(exprType excepttype) {
-        this.excepttype = excepttype;
+    public Object getExcepttype() {
+        return excepttype;
+    }
+    public void setExcepttype(Object excepttype) {
+        this.excepttype = (exprType)excepttype;
     }
 
     private exprType name;
     public exprType getInternalName() {
         return name;
     }
-    public void setName(exprType name) {
-        this.name = name;
+    public Object getName() {
+        return name;
+    }
+    public void setName(Object name) {
+        this.name = (exprType)name;
     }
 
     private ListWrapper<stmtType> body;
     public ListWrapper<stmtType> getInternalBody() {
         return body;
     }
-    public void setBody(java.util.List<stmtType> body) {
-        this.body = new ListWrapper<stmtType>(body);
+    public Object getBody() {
+        return body;
+    }
+    public void setBody(Object body) {
+        this.body = new ListWrapper<stmtType>(
+            (java.util.List<stmtType>)body);
     }
 
-    private int lineno;
-    public int getInternalLineno() {
+    private Integer lineno;
+    public Integer getInternalLineno() {
         return lineno;
     }
-    public void setLineno(int lineno) {
-        this.lineno = lineno;
+    public Object getLineno() {
+        return lineno;
+    }
+    public void setLineno(Object lineno) {
+        this.lineno = (Integer)lineno;
     }
 
-    private int col_offset;
-    public int getInternalCol_offset() {
+    private Integer col_offset;
+    public Integer getInternalCol_offset() {
         return col_offset;
     }
-    public void setCol_offset(int col_offset) {
-        this.col_offset = col_offset;
+    public Object getCol_offset() {
+        return col_offset;
+    }
+    public void setCol_offset(Object col_offset) {
+        this.col_offset = (Integer)col_offset;
     }
 
 
@@ -55,7 +71,7 @@ public class excepthandlerType extends PythonTree {
     public String[] get_fields() { return fields; }
 
     public excepthandlerType(exprType excepttype, exprType name,
-    java.util.List<stmtType> body, int lineno, int col_offset) {
+    java.util.List<stmtType> body, Integer lineno, Integer col_offset) {
         this.excepttype = excepttype;
         addChild(excepttype);
         this.name = name;
@@ -71,7 +87,7 @@ public class excepthandlerType extends PythonTree {
     }
 
     public excepthandlerType(Token token, exprType excepttype, exprType name,
-    java.util.List<stmtType> body, int lineno, int col_offset) {
+    java.util.List<stmtType> body, Integer lineno, Integer col_offset) {
         super(token);
         this.excepttype = excepttype;
         addChild(excepttype);
@@ -87,8 +103,9 @@ public class excepthandlerType extends PythonTree {
         this.col_offset = col_offset;
     }
 
-    public excepthandlerType(int ttype, Token token, exprType excepttype,
-    exprType name, java.util.List<stmtType> body, int lineno, int col_offset) {
+    public excepthandlerType(Integer ttype, Token token, exprType excepttype,
+    exprType name, java.util.List<stmtType> body, Integer lineno, Integer
+    col_offset) {
         super(ttype, token);
         this.excepttype = excepttype;
         addChild(excepttype);
@@ -105,7 +122,7 @@ public class excepthandlerType extends PythonTree {
     }
 
     public excepthandlerType(PythonTree tree, exprType excepttype, exprType
-    name, java.util.List<stmtType> body, int lineno, int col_offset) {
+    name, java.util.List<stmtType> body, Integer lineno, Integer col_offset) {
         super(tree);
         this.excepttype = excepttype;
         addChild(excepttype);

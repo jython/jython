@@ -12,24 +12,34 @@ public class Print extends stmtType {
     public exprType getInternalDest() {
         return dest;
     }
-    public void setDest(exprType dest) {
-        this.dest = dest;
+    public Object getDest() {
+        return dest;
+    }
+    public void setDest(Object dest) {
+        this.dest = (exprType)dest;
     }
 
     private ListWrapper<exprType> values;
     public ListWrapper<exprType> getInternalValues() {
         return values;
     }
-    public void setValues(java.util.List<exprType> values) {
-        this.values = new ListWrapper<exprType>(values);
+    public Object getValues() {
+        return values;
+    }
+    public void setValues(Object values) {
+        this.values = new ListWrapper<exprType>(
+            (java.util.List<exprType>)values);
     }
 
-    private boolean nl;
-    public boolean getInternalNl() {
+    private Boolean nl;
+    public Boolean getInternalNl() {
         return nl;
     }
-    public void setNl(boolean nl) {
-        this.nl = nl;
+    public Object getNl() {
+        return nl;
+    }
+    public void setNl(Object nl) {
+        this.nl = (Boolean)nl;
     }
 
 
@@ -37,7 +47,7 @@ public class Print extends stmtType {
                                                           "nl"};
     public String[] get_fields() { return fields; }
 
-    public Print(exprType dest, java.util.List<exprType> values, boolean nl) {
+    public Print(exprType dest, java.util.List<exprType> values, Boolean nl) {
         this.dest = dest;
         addChild(dest);
         this.values = new ListWrapper<exprType>(values);
@@ -50,7 +60,7 @@ public class Print extends stmtType {
     }
 
     public Print(Token token, exprType dest, java.util.List<exprType> values,
-    boolean nl) {
+    Boolean nl) {
         super(token);
         this.dest = dest;
         addChild(dest);
@@ -63,8 +73,8 @@ public class Print extends stmtType {
         this.nl = nl;
     }
 
-    public Print(int ttype, Token token, exprType dest,
-    java.util.List<exprType> values, boolean nl) {
+    public Print(Integer ttype, Token token, exprType dest,
+    java.util.List<exprType> values, Boolean nl) {
         super(ttype, token);
         this.dest = dest;
         addChild(dest);
@@ -78,7 +88,7 @@ public class Print extends stmtType {
     }
 
     public Print(PythonTree tree, exprType dest, java.util.List<exprType>
-    values, boolean nl) {
+    values, Boolean nl) {
         super(tree);
         this.dest = dest;
         addChild(dest);

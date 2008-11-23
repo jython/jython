@@ -12,16 +12,22 @@ public class Name extends exprType implements Context {
     public String getInternalId() {
         return id;
     }
-    public void setId(String id) {
-        this.id = id;
+    public Object getId() {
+        return id;
+    }
+    public void setId(Object id) {
+        this.id = (String)id;
     }
 
     private expr_contextType ctx;
     public expr_contextType getInternalCtx() {
         return ctx;
     }
-    public void setCtx(expr_contextType ctx) {
-        this.ctx = ctx;
+    public Object getCtx() {
+        return ctx;
+    }
+    public void setCtx(Object ctx) {
+        this.ctx = (expr_contextType)ctx;
     }
 
 
@@ -39,7 +45,7 @@ public class Name extends exprType implements Context {
         this.ctx = ctx;
     }
 
-    public Name(int ttype, Token token, String id, expr_contextType ctx) {
+    public Name(Integer ttype, Token token, String id, expr_contextType ctx) {
         super(ttype, token);
         this.id = id;
         this.ctx = ctx;

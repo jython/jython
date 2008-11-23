@@ -12,16 +12,23 @@ public class List extends exprType implements Context {
     public ListWrapper<exprType> getInternalElts() {
         return elts;
     }
-    public void setElts(java.util.List<exprType> elts) {
-        this.elts = new ListWrapper<exprType>(elts);
+    public Object getElts() {
+        return elts;
+    }
+    public void setElts(Object elts) {
+        this.elts = new ListWrapper<exprType>(
+            (java.util.List<exprType>)elts);
     }
 
     private expr_contextType ctx;
     public expr_contextType getInternalCtx() {
         return ctx;
     }
-    public void setCtx(expr_contextType ctx) {
-        this.ctx = ctx;
+    public Object getCtx() {
+        return ctx;
+    }
+    public void setCtx(Object ctx) {
+        this.ctx = (expr_contextType)ctx;
     }
 
 
@@ -50,7 +57,7 @@ public class List extends exprType implements Context {
         this.ctx = ctx;
     }
 
-    public List(int ttype, Token token, java.util.List<exprType> elts,
+    public List(Integer ttype, Token token, java.util.List<exprType> elts,
     expr_contextType ctx) {
         super(ttype, token);
         this.elts = new ListWrapper<exprType>(elts);

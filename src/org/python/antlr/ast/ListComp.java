@@ -12,16 +12,23 @@ public class ListComp extends exprType {
     public exprType getInternalElt() {
         return elt;
     }
-    public void setElt(exprType elt) {
-        this.elt = elt;
+    public Object getElt() {
+        return elt;
+    }
+    public void setElt(Object elt) {
+        this.elt = (exprType)elt;
     }
 
     private ListWrapper<comprehensionType> generators;
     public ListWrapper<comprehensionType> getInternalGenerators() {
         return generators;
     }
-    public void setGenerators(java.util.List<comprehensionType> generators) {
-        this.generators = new ListWrapper<comprehensionType>(generators);
+    public Object getGenerators() {
+        return generators;
+    }
+    public void setGenerators(Object generators) {
+        this.generators = new ListWrapper<comprehensionType>(
+            (java.util.List<comprehensionType>)generators);
     }
 
 
@@ -53,7 +60,7 @@ public class ListComp extends exprType {
         }
     }
 
-    public ListComp(int ttype, Token token, exprType elt,
+    public ListComp(Integer ttype, Token token, exprType elt,
     java.util.List<comprehensionType> generators) {
         super(ttype, token);
         this.elt = elt;
