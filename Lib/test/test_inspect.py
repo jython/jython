@@ -20,6 +20,8 @@ from test import test_support
 modfile = mod.__file__
 if modfile.endswith(('c', 'o')):
     modfile = modfile[:-1]
+elif modfile.endswith('$py.class'):
+    modfile = modfile[:-9] + '.py'
 
 import __builtin__
 

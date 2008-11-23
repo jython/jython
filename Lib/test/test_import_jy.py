@@ -73,14 +73,8 @@ class MislabeledImportTestCase(unittest.TestCase):
         fp.close()
         module_obj = __import__('foo.test')
         self.assertEquals(module_obj.test.baz, 'testtest')
-        # XXX: Jython's import has a bug where it doesn't use the
-        # $py.class filename when it exists along with the .py file
-        if sys.platform.startswith('java'):
-            self.assertEqual(module_obj.test.init_file,
-                             os.path.join('foo', '__init__.py'))
-        else:
-            self.assertEqual(module_obj.test.init_file,
-                             os.path.join('foo', '__init__' + COMPILED_SUFFIX))
+        self.assertEqual(module_obj.test.init_file,
+                         os.path.join('foo', '__init__' + COMPILED_SUFFIX))
 
         # Ensure a recompile of __init__$py.class wasn't triggered to
         # satisfy the abnormal import

@@ -180,19 +180,19 @@ public class imp {
     public static PyObject load_module(String name, PyObject file, PyObject filename, PyTuple data) {
         PyObject mod = Py.None;
         PySystemState sys = Py.getSystemState();
-        int type = ((PyInteger)data.__getitem__(2).__int__()).getValue();
+        int type = data.__getitem__(2).asInt();
         while(mod == Py.None) {
             Object o = file.__tojava__(InputStream.class);
             if (o == Py.NoConversion) {
                 throw Py.TypeError("must be a file-like object");
             }
+            String compiledName;
             switch (type) {
                 case PY_SOURCE:
                     // XXX: This should load the accompanying byte
                     // code file instead, if it exists
                     String resolvedFilename = sys.getPath(filename.toString());
-                    String compiledName =
-                            org.python.core.imp.makeCompiledFilename(resolvedFilename);
+                    compiledName = org.python.core.imp.makeCompiledFilename(resolvedFilename);
                     if (name.endsWith(".__init__")) {
                         name = name.substring(0, name.length() - ".__init__".length());
                     } else if (name.equals("__init__")) {
@@ -204,8 +204,15 @@ public class imp {
                                                                compiledName);
                     break;
                 case PY_COMPILED:
+                    compiledName = filename.toString();
+                    // XXX: Ideally we wouldn't care about sourceName here (see
+                    // http://bugs.jython.org/issue1605847 msg3805)
+                    String sourceName = compiledName;
+                    if (compiledName.endsWith("$py.class")) {
+                        sourceName = compiledName.substring(0, compiledName.length() - 9) + ".py";
+                    }
                     mod = org.python.core.imp.loadFromCompiled(
-                        name.intern(), (InputStream)o, filename.toString());
+                        name.intern(), (InputStream)o, sourceName, filename.toString());
                     break;
                 case PKG_DIRECTORY:
                     PyModule m = org.python.core.imp.addModule(name);

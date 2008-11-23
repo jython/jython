@@ -4424,9 +4424,6 @@ def test_main():
             # Lack __basicsize__: http://bugs.jython.org/issue1017
             slotmultipleinheritance,
 
-            # Carlo hacked us: http://bugs.jython.org/issue1058
-            carloverre,
-
             # Jython lacks CPython method-wrappers (though maybe this
             # should pass anyway?)
             methodwrapper,

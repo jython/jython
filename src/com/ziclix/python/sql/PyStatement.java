@@ -300,7 +300,7 @@ public class PyStatement extends PyObject {
 
                 if (binding != null) {
                     try {
-                        int bindingValue = ((PyInteger)binding.__int__()).getValue();
+                        int bindingValue = binding.asInt();
 
                         datahandler.setJDBCObject(preparedStatement, column, param, bindingValue);
                     } catch (PyException e) {

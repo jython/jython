@@ -3591,6 +3591,7 @@ public class PyObject implements Serializable {
 
     @ExposedMethod
     final void object___setattr__(PyObject name, PyObject value) {
+        hackCheck("__setattr__");
         object___setattr__(asName(name), value);
     }
 
@@ -3626,6 +3627,7 @@ public class PyObject implements Serializable {
 
     @ExposedMethod
     final void object___delattr__(PyObject name) {
+        hackCheck("__delattr__");
         object___delattr__(asName(name));
     }
 
@@ -3672,6 +3674,19 @@ public class PyObject implements Serializable {
         }
 
         noAttributeError(name);
+    }
+
+    /**
+     * Helper to check for object.__setattr__ or __delattr__ applied to a type (The Carlo
+     * Verre hack).
+     *
+     * @param what String method name to check for
+     */
+    private void hackCheck(String what) {
+        if (this instanceof PyType && ((PyType)this).builtin) {
+            throw Py.TypeError(String.format("can't apply this %s to %s object", what,
+                                             objtype.fastGetName()));
+        }
     }
 
     /**

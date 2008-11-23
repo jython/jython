@@ -294,7 +294,6 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
     String sfilename;
     public Constant mainCode;
     public boolean linenumbers;
-    public boolean setFile=true;
     Future futures;
     Hashtable scopes;
 
@@ -638,12 +637,10 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
     public static void compile(modType node, OutputStream ostream,
                                String name, String filename,
                                boolean linenumbers, boolean printResults,
-                               boolean setFile,
                                org.python.core.CompilerFlags cflags)
         throws Exception
     {
         Module module = new Module(name, filename, linenumbers);
-        module.setFile = setFile;
         if (cflags == null) {
             cflags = new CompilerFlags();
         }
@@ -651,7 +648,6 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
         new ScopesCompiler(module, module.scopes).parse(node);
 
         //Add __doc__ if it exists
-        //Add __file__ for filename (if it exists?)
 
         Constant main = module.PyCode(node, "<module>", false, null, false,
                                       printResults, 0,

@@ -53,7 +53,7 @@ public class _codecs {
     }
 
     private static PyTuple encode_tuple(String s, int len) {
-        return new PyTuple(Py.java2py(s), Py.newInteger(len));
+        return new PyTuple(new PyString(s), Py.newInteger(len));
     }
 
 

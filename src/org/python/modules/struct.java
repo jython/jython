@@ -329,7 +329,7 @@ public class struct {
 
         int get_int(PyObject value) {
             try {
-                return ((PyInteger)value.__int__()).getValue();
+                return value.asInt();
             } catch (PyException ex) {
                 throw StructError("required argument is not an integer");
             }

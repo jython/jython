@@ -180,9 +180,9 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
   public void __setattr__(String name, PyObject value) {
 
     if ("arraysize".equals(name)) {
-      this.arraysize = ((PyInteger)value.__int__()).getValue();
+      this.arraysize = value.asInt();
     } else if ("softspace".equals(name)) {
-      this.softspace = ((PyInteger)value.__int__()).getValue();
+      this.softspace = value.asInt();
     } else if ("datahandler".equals(name)) {
       this.datahandler = (DataHandler)value.__tojava__(DataHandler.class);
     } else {
@@ -398,8 +398,8 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
             sqlStatement = this.connection.connection.createStatement();
           }
         } else {
-          int t = ((PyInteger)this.rsType.__int__()).getValue();
-          int c = ((PyInteger)this.rsConcur.__int__()).getValue();
+          int t = this.rsType.asInt();
+          int c = this.rsConcur.asInt();
 
           if (prepared) {
             sqlStatement = this.connection.connection.prepareStatement(sqlString, t, c);
@@ -414,7 +414,7 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
       }
 
       if (maxRows != Py.None) {
-        stmt.statement.setMaxRows(((PyInteger)maxRows.__int__()).getValue());
+        stmt.statement.setMaxRows(maxRows.asInt());
       }
     } catch (AbstractMethodError e) {
       throw zxJDBC.makeException(zxJDBC.NotSupportedError, zxJDBC.getString("nodynamiccursors"));
@@ -457,7 +457,7 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
         Statement stmt = procedure.prepareCall(this.rsType, this.rsConcur);
 
         if (maxRows != Py.None) {
-          stmt.setMaxRows(((PyInteger)maxRows.__int__()).getValue());
+          stmt.setMaxRows(maxRows.asInt());
         }
 
         // get the bindings per the stored proc spec
@@ -897,7 +897,7 @@ class CursorFunc extends PyBuiltinMethodSet {
     PyCursor cursor = (PyCursor)__self__;
     switch (index) {
       case 0 :
-        return cursor.fetchmany(((PyInteger)arg.__int__()).getValue());
+        return cursor.fetchmany(arg.asInt());
       case 5 :
         cursor.execute(arg, Py.None, Py.None, Py.None);
         return Py.None;
@@ -911,7 +911,7 @@ class CursorFunc extends PyBuiltinMethodSet {
         cursor.executemany(arg, Py.None, Py.None, Py.None);
         return Py.None;
       case 10 :
-        cursor.scroll(((PyInteger)arg.__int__()).getValue(), "relative");
+        cursor.scroll(arg.asInt(), "relative");
         return Py.None;
       case 11 :
         cursor.execute(arg, Py.None, Py.None, Py.None);
@@ -938,7 +938,7 @@ class CursorFunc extends PyBuiltinMethodSet {
         cursor.executemany(arga, argb, Py.None, Py.None);
         return Py.None;
       case 10 :
-        cursor.scroll(((PyInteger)arga.__int__()).getValue(), argb.toString());
+        cursor.scroll(arga.asInt(), argb.toString());
         return Py.None;
       default :
         throw info.unexpectedCall(2, false);

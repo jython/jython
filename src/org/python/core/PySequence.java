@@ -4,12 +4,12 @@ package org.python.core;
 /**
  * The abstract superclass of PyObjects that implements a Sequence. Minimize the work in creating
  * such objects.
- * 
+ *
  * Method names are designed to make it possible for subclasses of PySequence to implement
  * java.util.List.
- * 
+ *
  * Subclasses must also implement get, getslice, and repeat methods.
- * 
+ *
  * Subclasses that are mutable should also implement: set, setslice, del, and delRange.
  */
 public abstract class PySequence extends PyObject {
@@ -19,7 +19,7 @@ public abstract class PySequence extends PyObject {
      */
     public PySequence() {}
     public int gListAllocatedStatus = -1;
-    
+
     protected PySequence(PyType type) {
         super(type);
     }
@@ -34,7 +34,7 @@ public abstract class PySequence extends PyObject {
 
     /**
      * Returns a range of elements from the sequence.
-     * 
+     *
      * @param start
      *            the position of the first element.
      * @param stop
@@ -47,7 +47,7 @@ public abstract class PySequence extends PyObject {
 
     /**
      * Repeats the given sequence.
-     * 
+     *
      * @param count
      *            the number of times to repeat the sequence.
      * @return this sequence repeated count times.
@@ -57,7 +57,7 @@ public abstract class PySequence extends PyObject {
     // These methods only apply to mutable sequences
     /**
      * Sets the given element of the sequence.
-     * 
+     *
      * @param index
      *            index of the element to set.
      * @param value
@@ -217,9 +217,9 @@ public abstract class PySequence extends PyObject {
     }
 
     // Return a copy of a sequence where the __len__() method is
-    // telling the thruth.
+    // telling the truth.
     protected static PyObject fastSequence(PyObject seq, String msg) {
-        if(seq instanceof PyList || seq instanceof PyTuple) {
+        if(seq instanceof PySequence) {
             return seq;
         }
         PyList list = new PyList();
@@ -430,7 +430,7 @@ public abstract class PySequence extends PyObject {
 
     /**
      * Return sequence-specific error messages suitable for substitution.
-     * 
+     *
      * {0} is the op name. {1} is the left operand type. {2} is the right operand type.
      */
     protected String unsupportedopMessage(String op, PyObject o2) {
@@ -442,7 +442,7 @@ public abstract class PySequence extends PyObject {
 
     /**
      * Return sequence-specific error messages suitable for substitution.
-     * 
+     *
      * {0} is the op name. {1} is the left operand type. {2} is the right operand type.
      */
     protected String runsupportedopMessage(String op, PyObject o2) {

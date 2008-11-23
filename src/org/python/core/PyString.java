@@ -2953,7 +2953,9 @@ final class StringFormatter
                 }
                 int val;
                 try {
-                    val = ((PyInteger)arg.__int__()).getValue();
+                    // Explicitly __int__ so we can look for an AttributeError (which is
+                    // less invasive to mask than a TypeError)
+                    val = arg.__int__().asInt();
                 } catch (PyException e){
                     if (Py.matchException(e, Py.AttributeError)) {
                         throw Py.TypeError("%c requires int or char");

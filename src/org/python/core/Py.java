@@ -1674,6 +1674,8 @@ public final class Py {
             PyFrame frame = Py.getFrame();
             if (frame != null && frame.f_code != null) {
                 cflags = new CompilerFlags(frame.f_code.co_flags | flags);
+            } else {
+                cflags = new CompilerFlags(flags);
             }
         }
         return cflags;
@@ -1706,8 +1708,7 @@ public final class Py {
                 return Py.java2py(node);
             }
             ByteArrayOutputStream ostream = new ByteArrayOutputStream();
-            Module.compile(node, ostream, name, filename, linenumbers,
-                    printResults, false, cflags);
+            Module.compile(node, ostream, name, filename, linenumbers, printResults, cflags);
 
             saveClassFile(name, ostream);
 
