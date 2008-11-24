@@ -93,6 +93,13 @@ public class PyReflectedConstructor extends PyReflectedFunction {
             throw Py.TypeError("self invalid - must implement: " + declaringClass.getName());
         }
 
+        // If the declaring class is a pure Java type but we're instantiating a Python proxy,
+        // grab the proxy version of the constructor to instantiate the proper type
+        if (!PyProxy.class.isAssignableFrom(declaringClass)
+                && !(self.getType() instanceof PyJavaType)) {
+            return PyType.fromClass(javaClass).lookup("__init__").__call__(self, args, keywords);
+        }
+
         if (self.javaProxy != null) {
             Class<?> sup = javaClass;
             if (PyProxy.class.isAssignableFrom(sup)) {
