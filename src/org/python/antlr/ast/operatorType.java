@@ -23,4 +23,5 @@ public enum operatorType implements AST {
     private final static String[] attributes = new String[0];
     public String[] get_attributes() { return attributes; }
 
+    public operatorType __call__() { return this; }
 }

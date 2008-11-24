@@ -15,4 +15,5 @@ public enum unaryopType implements AST {
     private final static String[] attributes = new String[0];
     public String[] get_attributes() { return attributes; }
 
+    public unaryopType __call__() { return this; }
 }

@@ -174,20 +174,20 @@ class AST_Tests(unittest.TestCase):
                 self._assert_order(ast_tree, (0, 0))
 
     def test_nodeclasses(self):
-        x = ast.BinOp(1, 2, 3, lineno=0)
-        self.assertEquals(x.left, 1)
-        self.assertEquals(x.op, 2)
-        self.assertEquals(x.right, 3)
+        x = ast.BinOp(1, ast.Add, 3, lineno=0)
+        self.assertEquals(x.left.n, 1)
+        self.assertEquals(x.op, ast.Add)
+        self.assertEquals(x.right.n, 3)
         self.assertEquals(x.lineno, 0)
 
         # node raises exception when not given enough arguments
         self.assertRaises(TypeError, ast.BinOp, 1, 2)
 
         # can set attributes through kwargs too
-        x = ast.BinOp(left=1, op=2, right=3, lineno=0)
-        self.assertEquals(x.left, 1)
-        self.assertEquals(x.op, 2)
-        self.assertEquals(x.right, 3)
+        x = ast.BinOp(left=1, op=ast.Add, right=3, lineno=0)
+        self.assertEquals(x.left.n, 1)
+        self.assertEquals(x.op, ast.Add)
+        self.assertEquals(x.right.n, 3)
         self.assertEquals(x.lineno, 0)
 
         # this used to fail because Sub._fields was None
