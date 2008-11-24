@@ -8,6 +8,42 @@ import org.python.core.*;
  */
 public class AstAdapter {
 
+    public static java.util.List<aliasType> to_aliasList(Object o) {
+        return null;
+    }
+
+    public static java.util.List<cmpopType> to_cmpopList(Object o) {
+        return null;
+    }
+
+    public static java.util.List<comprehensionType> to_comprehensionList(Object o) {
+        return null;
+    }
+
+    public static java.util.List<excepthandlerType> to_excepthandlerList(Object o) {
+        return null;
+    }
+
+    public static java.util.List<exprType> to_exprList(Object o) {
+        return null;
+    }
+
+    public static java.util.List<String> to_identifierList(Object o) {
+        return null;
+    }
+
+    public static java.util.List<keywordType> to_keywordList(Object o) {
+        return null;
+    }
+
+    public static java.util.List<sliceType> to_sliceList(Object o) {
+        return null;
+    }
+
+    public static java.util.List<stmtType> to_stmtList(Object o) {
+        return null;
+    }
+
     public static exprType to_expr(Object o) {
         if (o == null || o instanceof exprType) {
             return (exprType)o;

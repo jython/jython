@@ -40,11 +40,7 @@ public class ArgListCompiler extends Visitor
     }
 
     public void appendInitCode(Suite node) {
-        int n = node.getInternalBody().size();
-        List<stmtType> newtree = new ArrayList<stmtType>();
-        newtree.addAll(init_code);
-        newtree.addAll(node.getInternalBody());
-        node.setBody(newtree);
+        node.getInternalBody().addAll(0, init_code);
     }
 
     public List<exprType> getDefaults() {
