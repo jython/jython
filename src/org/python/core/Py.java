@@ -82,7 +82,9 @@ public final class Py {
     /** A Python string containing ' ' **/
     public static PyString Space;
     /** Set if the type object is dynamically allocated */
-    public static long TPFLAGS_HEAPTYPE;
+    public static long TPFLAGS_HEAPTYPE = 1L << 9;
+    /** Set if the type allows subclassing */
+    public static long TPFLAGS_BASETYPE = 1L << 10;
 
     /** Builtin types that are used to setup PyObject. */
     static final Set<Class> BOOTSTRAP_TYPES = new HashSet<Class>(4);

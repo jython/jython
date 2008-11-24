@@ -18,6 +18,8 @@ public class TypeExposer extends Exposer {
 
     private Type baseType;
 
+    private boolean isBaseType;
+
     private Type onType;
 
     private String name;
@@ -32,12 +34,14 @@ public class TypeExposer extends Exposer {
 
     public TypeExposer(Type onType,
                        Type baseType,
+                       boolean isBaseType,
                        String name,
                        Collection<MethodExposer> methods,
                        Collection<DescriptorExposer> descriptors,
                        Exposer ne) {
         super(BaseTypeBuilder.class, makeGeneratedName(onType));
         this.baseType = baseType;
+        this.isBaseType = isBaseType;
         this.onType = onType;
         this.name = name;
         this.methods = methods;
@@ -101,6 +105,7 @@ public class TypeExposer extends Exposer {
         mv.visitLdcInsn(getName());
         mv.visitLdcInsn(onType);
         mv.visitLdcInsn(baseType);
+        mv.visitLdcInsn(isBaseType);
         mv.visitLdcInsn(numNames);
         mv.visitTypeInsn(ANEWARRAY, BUILTIN_METHOD.getInternalName());
         mv.visitVarInsn(ASTORE, 1);
@@ -135,7 +140,8 @@ public class TypeExposer extends Exposer {
         } else {
             mv.visitInsn(ACONST_NULL);
         }
-        superConstructor(STRING, CLASS, CLASS, ABUILTIN_METHOD, ADATA_DESCR, PYNEWWRAPPER);
+        superConstructor(STRING, CLASS, CLASS, BOOLEAN, ABUILTIN_METHOD, ADATA_DESCR,
+                         PYNEWWRAPPER);
         endConstructor();
     }
 }

@@ -15,7 +15,7 @@ import org.python.expose.ExposedSet;
 import org.python.expose.ExposedType;
 import org.python.expose.MethodType;
 
-@ExposedType(name = "simpleexposed")
+@ExposedType(name = "simpleexposed", isBaseType = false)
 public class SimpleExposed extends PyObject {
 
     public void method() {}

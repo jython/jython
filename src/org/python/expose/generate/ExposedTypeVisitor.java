@@ -13,6 +13,8 @@ public abstract class ExposedTypeVisitor extends RestrictiveAnnotationVisitor {
 
     private Type base = Type.getType(Object.class);
 
+    private boolean isBaseType = true;
+
     public ExposedTypeVisitor(Type onType) {
         this.onType = onType;
     }
@@ -23,6 +25,8 @@ public abstract class ExposedTypeVisitor extends RestrictiveAnnotationVisitor {
             typeName = (String)value;
         } else if(name.equals("base")) {
             base = (Type)value;
+        } else if(name.equals("isBaseType")) {
+            isBaseType = (Boolean)value;
         } else {
             super.visit(name, value);
         }
@@ -36,9 +40,12 @@ public abstract class ExposedTypeVisitor extends RestrictiveAnnotationVisitor {
         }
         handleResult(typeName);
         handleResult(base);
+        handleResult(isBaseType);
     }
 
     public abstract void handleResult(Type base);
+
+    public abstract void handleResult(boolean isBaseType);
 
     /**
      * @param name -

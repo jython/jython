@@ -20,6 +20,11 @@ public class ExposedTypeVisitorTest extends TestCase {
             public void handleResult(Type base) {
                 baseResult = base;
             }
+
+            @Override
+            public void handleResult(boolean isBaseType) {
+                isBaseTypeResult = isBaseType;
+            }
         };
     }
 
@@ -32,9 +37,11 @@ public class ExposedTypeVisitorTest extends TestCase {
     public void testNamedType() {
         etv.visit("name", "different");
         etv.visit("base", Type.getType(PyObject.class));
+        etv.visit("isBaseType", false);
         etv.visitEnd();
         assertEquals("different", result);
         assertEquals(Type.getType(PyObject.class), baseResult);
+        assertEquals(false, isBaseTypeResult);
     }
 
     ExposedTypeVisitor etv;
@@ -42,4 +49,6 @@ public class ExposedTypeVisitorTest extends TestCase {
     private String result;
     
     private Type baseResult;
+
+    private boolean isBaseTypeResult;
 }
