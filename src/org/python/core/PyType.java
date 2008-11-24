@@ -962,13 +962,14 @@ public class PyType extends PyObject implements Serializable {
         if (base == null) {
             base = c.getSuperclass();
         }
+        newtype.underlying_class = c;
         if (name == null) {
             name = c.getName();
             // Strip the java fully qualified class name (specifically remove org.python.core.Py or
             // fallback to stripping to the last dot)
             if (name.startsWith("org.python.core.Py")) {
                 name = name.substring("org.python.core.Py".length()).toLowerCase();
-            } else {
+            } else if(newtype.getProxyType() == null) {
                 int lastDot = name.lastIndexOf('.');
                 if (lastDot != -1) {
                     name = name.substring(lastDot + 1);
@@ -976,7 +977,6 @@ public class PyType extends PyObject implements Serializable {
             }
         }
         newtype.name = name;
-        newtype.underlying_class = c;
         newtype.builtin = true;
         fillInMRO(newtype, base); // basic mro, base, bases
         newtype.fillDict();
