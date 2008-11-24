@@ -9,8 +9,7 @@ import org.python.expose.ExposedType;
 /**
  * ProxyType with __call__.
  */
-// XXX: not subclassable
-@ExposedType(name = "weakcallableproxy")
+@ExposedType(name = "weakcallableproxy", isBaseType = false)
 public class CallableProxyType extends ProxyType {
 
     public static final PyType TYPE = PyType.fromClass(CallableProxyType.class);

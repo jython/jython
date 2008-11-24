@@ -286,8 +286,7 @@ public class operator implements ClassDictInit
     /**
      * The attrgetter type.
      */
-    // XXX: not subclassable
-    @ExposedType(name = "operator.attrgetter")
+    @ExposedType(name = "operator.attrgetter", isBaseType = false)
     static class PyAttrGetter extends PyObject {
         
         public static final PyType TYPE = PyType.fromClass(PyAttrGetter.class);
@@ -350,8 +349,7 @@ public class operator implements ClassDictInit
     /**
      * The itemgetter type.
      */
-    // XXX: not subclassable
-    @ExposedType(name = "operator.itemgetter")
+    @ExposedType(name = "operator.itemgetter", isBaseType = false)
     static class PyItemGetter extends PyObject {
         
         public static final PyType TYPE = PyType.fromClass(PyItemGetter.class);

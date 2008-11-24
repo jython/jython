@@ -12,7 +12,7 @@ import org.python.expose.ExposedType;
  * those methods, their respective implementsDescr* methods should be overriden
  * as well.
  */
-@ExposedType(name = "getset_descriptor", base = PyObject.class)
+@ExposedType(name = "getset_descriptor", base = PyObject.class, isBaseType = false)
 public abstract class PyDataDescr extends PyDescriptor {
 
     protected Class ofType;

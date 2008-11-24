@@ -6,6 +6,7 @@ import org.python.core.util.RelativeFile;
 /**
  * A python traceback object.
  */
+// XXX: isBaseType = false
 public class PyTraceback extends PyObject
 {
     public PyObject tb_next;

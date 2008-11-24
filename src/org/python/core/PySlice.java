@@ -9,7 +9,7 @@ import org.python.expose.ExposedType;
 /**
  * The Python slice object.
  */
-@ExposedType(name = "slice")
+@ExposedType(name = "slice", isBaseType = false)
 public class PySlice extends PyObject {
 
     public static final PyType TYPE = PyType.fromClass(PySlice.class);

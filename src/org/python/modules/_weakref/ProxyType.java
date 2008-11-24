@@ -1,10 +1,8 @@
 /* Copyright (c) Jython Developers */
 package org.python.modules._weakref;
 
-import org.python.core.Py;
 import org.python.core.PyComplex;
 import org.python.core.PyFloat;
-import org.python.core.PyLong;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyType;
@@ -13,8 +11,7 @@ import org.python.expose.ExposedType;
 /**
  * A weak reference proxy object.
  */
-// XXX: not subclassable
-@ExposedType(name = "weakproxy")
+@ExposedType(name = "weakproxy", isBaseType = false)
 public class ProxyType extends AbstractReference {
 
     public static final PyType TYPE = PyType.fromClass(ProxyType.class);
