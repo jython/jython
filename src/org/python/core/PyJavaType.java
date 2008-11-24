@@ -77,7 +77,7 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
         Field[] fields = underlying_class.getFields();
         for (Field field : fields) {
             Class<?> declaring = field.getDeclaringClass();
-            if (declaring != base && base.isAssignableFrom(declaring)) {
+            if (base == null || (declaring != base && base.isAssignableFrom(declaring))) {
                 String fldname = field.getName();
                 int fldmods = field.getModifiers();
                 Class<?> fldtype = field.getType();
