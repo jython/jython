@@ -9,7 +9,7 @@ import zipfile, os, unittest, sys, shutil
 from StringIO import StringIO
 from tempfile import TemporaryFile
 
-from test.test_support import TESTFN, run_unittest
+from test.test_support import TESTFN, is_jython, run_unittest
 
 TESTFN2 = TESTFN + "2"
 
@@ -245,12 +245,17 @@ class PyZipFileTests(unittest.TestCase):
         fn = __file__
         if fn.endswith('.pyc') or fn.endswith('.pyo'):
             fn = fn[:-1]
+        elif fn.endswith('$py.class'):
+            fn = fn[:-9] + '.py'
 
         zipfp.writepy(fn)
 
         bn = os.path.basename(fn)
         self.assert_(bn not in zipfp.namelist())
-        self.assert_(bn + 'o' in zipfp.namelist() or bn + 'c' in zipfp.namelist())
+        if not is_jython:
+            self.assert_(bn + 'o' in zipfp.namelist() or bn + 'c' in zipfp.namelist())
+        else:
+            self.assert_(bn[:-3] + '$py.class' in zipfp.namelist())
         zipfp.close()
 
 
@@ -258,12 +263,17 @@ class PyZipFileTests(unittest.TestCase):
         fn = __file__
         if fn.endswith('.pyc') or fn.endswith('.pyo'):
             fn = fn[:-1]
+        elif fn.endswith('$py.class'):
+            fn = fn[:-9] + '.py'
 
         zipfp.writepy(fn, "testpackage")
 
         bn = "%s/%s"%("testpackage", os.path.basename(fn))
         self.assert_(bn not in zipfp.namelist())
-        self.assert_(bn + 'o' in zipfp.namelist() or bn + 'c' in zipfp.namelist())
+        if not is_jython:
+            self.assert_(bn + 'o' in zipfp.namelist() or bn + 'c' in zipfp.namelist())
+        else:
+            self.assert_(bn[:-3] + '$py.class' in zipfp.namelist())
         zipfp.close()
 
     def testWritePythonPackage(self):
@@ -275,8 +285,12 @@ class PyZipFileTests(unittest.TestCase):
 
         # Check for a couple of modules at different levels of the hieararchy
         names = zipfp.namelist()
-        self.assert_('email/__init__.pyo' in names or 'email/__init__.pyc' in names)
-        self.assert_('email/mime/text.pyo' in names or 'email/mime/text.pyc' in names)
+        if not is_jython:
+            self.assert_('email/__init__.pyo' in names or 'email/__init__.pyc' in names)
+            self.assert_('email/mime/text.pyo' in names or 'email/mime/text.pyc' in names)
+        else:
+            self.assert_('email/__init__$py.class' in names)
+            self.assert_('email/mime/text$py.class' in names)
 
     def testWritePythonDirectory(self):
         os.mkdir(TESTFN2)
@@ -297,8 +311,12 @@ class PyZipFileTests(unittest.TestCase):
             zipfp.writepy(TESTFN2)
 
             names = zipfp.namelist()
-            self.assert_('mod1.pyc' in names or 'mod1.pyo' in names)
-            self.assert_('mod2.pyc' in names or 'mod2.pyo' in names)
+            if not is_jython:
+                self.assert_('mod1.pyc' in names or 'mod1.pyo' in names)
+                self.assert_('mod2.pyc' in names or 'mod2.pyo' in names)
+            else:
+                self.assert_('mod1$py.class' in names)
+                self.assert_('mod2$py.class' in names)
             self.assert_('mod2.txt' not in names)
 
         finally:

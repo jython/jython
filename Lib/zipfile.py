@@ -12,6 +12,8 @@ except ImportError:
 __all__ = ["BadZipfile", "error", "ZIP_STORED", "ZIP_DEFLATED", "is_zipfile",
            "ZipInfo", "ZipFile", "PyZipFile", "LargeZipFile" ]
 
+is_jython = sys.platform.startswith('java')
+
 class BadZipfile(Exception):
     pass
 
@@ -800,7 +802,7 @@ class PyZipFile(ZipFile):
         /python/lib/string, return (/python/lib/string.pyc, string).
         """
         file_py  = pathname + ".py"
-        file_pyc = pathname + ".pyc"
+        file_pyc = pathname + (".pyc" if not is_jython else "$py.class")
         file_pyo = pathname + ".pyo"
         if os.path.isfile(file_pyo) and \
                             os.stat(file_pyo).st_mtime >= os.stat(file_py).st_mtime:
