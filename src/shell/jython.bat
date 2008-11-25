@@ -31,9 +31,22 @@ if not "%_TRIMMED_JYTHON_HOME%"=="" (
    set _JYTHON_HOME="%_TRIMMED_JYTHON_HOME%"
    goto gotHome
 )
+
+rem try to dynamically determine jython home
+rem (this script typically resides in jython home, or in the /bin subdirectory)
+pushd "%~dp0%"
+set _JYTHON_HOME="%CD%"
+popd
+if exist %_JYTHON_HOME%\jython.jar goto gotHome
+if exist %_JYTHON_HOME%\jython-complete.jar goto gotHome
 pushd "%~dp0%\.."
 set _JYTHON_HOME="%CD%"
 popd
+if exist %_JYTHON_HOME%\jython.jar goto gotHome
+if exist %_JYTHON_HOME%\jython-complete.jar goto gotHome
+rem jython home fallback (if all else fails)
+rem if present, %JYTHON_HOME_FALLBACK% is already quoted
+set _JYTHON_HOME=%JYTHON_HOME_FALLBACK%
 
 :gotHome
 if not exist %_JYTHON_HOME%\jython.jar goto tryComplete
@@ -49,7 +62,7 @@ set _CP=%_JYTHON_HOME%\jython-complete.jar
 if exist %_JYTHON_HOME%/jython-complete.jar goto run
 
 echo Cannot find jython.jar or jython-complete.jar in %_JYTHON_HOME%
-echo Try running this batch file from the 'bin' directory of an installed Jython
+echo Try running this batch file from the 'bin' directory of an installed Jython,
 echo or setting JYTHON_HOME.
 goto cleanup
 

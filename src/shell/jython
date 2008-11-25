@@ -43,15 +43,23 @@ else
   JAVA_CMD=("$JAVA_HOME/bin/java")
 fi
 
+# try to dynamically determine jython home
+# (this script typically resides in jython home, or in the /bin subdirectory)
 if [ -z "$JYTHON_HOME" ] ; then
   if [ "$PRG" = "./jython" ] ; then
-    # current dir is /bin dir
-    JYTHON_HOME_1=`pwd`                      # the ./bin dir
-    JYTHON_HOME=`dirname "$JYTHON_HOME_1"`   # the . dir
+    # current dir is the script dir
+    JYTHON_HOME_1=`pwd`
   else
-    # current dir is not /bin dir
-    JYTHON_HOME_1=`dirname "$PRG"`           # the ./bin dir
-    JYTHON_HOME=`dirname "$JYTHON_HOME_1"`   # the . dir
+    # current dir is not the script dir
+    JYTHON_HOME_1=`dirname "$PRG"`
+  fi
+  if [ -f "$JYTHON_HOME_1"/jython-complete.jar -o -f "$JYTHON_HOME_1"/jython.jar ] ; then
+    JYTHON_HOME="$JYTHON_HOME_1"
+  else
+    JYTHON_HOME=`dirname "$JYTHON_HOME_1"`
+  fi
+  if [ ! -f "$JYTHON_HOME"/jython-complete.jar -a ! -f "$JYTHON_HOME"/jython.jar ] ; then
+    JYTHON_HOME="$JYTHON_HOME_FALLBACK"
   fi
 fi
 
@@ -189,7 +197,7 @@ if [ -n "$profile_requested" -o -n "$verify_requested" ] ; then
   [ -n "$profile_requested" ] && echo "Running with instrumented profiler"
   java_args=("${java_args[@]}" -classpath "$CP$CP_DELIMITER$CLASSPATH")
 else
-  if [ -z $help_requested ] ; then
+  if [ -z "$help_requested" ] ; then
     JAVA_CMD=(exec "${JAVA_CMD[@]}")
   fi
   java_args=("${java_args[@]}" -Xbootclasspath/a:"$CP" -classpath "$CLASSPATH")
