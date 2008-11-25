@@ -1,4 +1,4 @@
-package org.python.antlr;
+package org.python.antlr.adapter;
 
 import java.util.ArrayList;
 import java.util.Collection;

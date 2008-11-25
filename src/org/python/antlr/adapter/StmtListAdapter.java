@@ -1,4 +1,4 @@
-package org.python.antlr;
+package org.python.antlr.adapter;
 
 import org.python.antlr.ast.stmtType;
 

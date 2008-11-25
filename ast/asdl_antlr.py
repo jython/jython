@@ -57,9 +57,9 @@ class EmitVisitor(asdl.VisitorBase):
         print >> self.file, 'package org.python.antlr.ast;'
         if refersToPythonTree:
             print >> self.file, 'import java.util.ArrayList;'
-            print >> self.file, 'import org.python.antlr.AstAdapters;'
             print >> self.file, 'import org.python.antlr.PythonTree;'
-            print >> self.file, 'import org.python.antlr.ListWrapper;'
+            print >> self.file, 'import org.python.antlr.adapter.AstAdapters;'
+            print >> self.file, 'import org.python.antlr.adapter.ListWrapper;'
             print >> self.file, 'import org.antlr.runtime.CommonToken;'
             print >> self.file, 'import org.antlr.runtime.Token;'
         if useDataOutput:
