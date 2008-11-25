@@ -6,7 +6,7 @@ import org.python.core.*;
 /**
  * AstAdapter turns Python and Java objects into ast nodes.
  */
-public class AstAdapter {
+public class AstAdapters {
 
     public static java.util.List<aliasType> to_aliasList(Object o) {
         return null;
@@ -84,6 +84,17 @@ public class AstAdapter {
         }
         //FIXME: investigate the right exception
         throw Py.TypeError("Can't convert " + o.getClass().getName() + " to slice node");
+    }
+
+    public static stmtType to_stmt(Object o) {
+        if (o instanceof PyJavaInstance) {
+            o = ((PyJavaInstance)o).__tojava__(stmtType.class);
+        }
+        if (o == null || o instanceof stmtType) {
+            return (stmtType)o;
+        }
+        //FIXME: investigate the right exception
+        throw Py.TypeError("Can't convert " + o.getClass().getName() + " to stmt node");
     }
 
     public static String to_string(Object o) {

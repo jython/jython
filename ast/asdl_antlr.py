@@ -57,7 +57,7 @@ class EmitVisitor(asdl.VisitorBase):
         print >> self.file, 'package org.python.antlr.ast;'
         if refersToPythonTree:
             print >> self.file, 'import java.util.ArrayList;'
-            print >> self.file, 'import org.python.antlr.AstAdapter;'
+            print >> self.file, 'import org.python.antlr.AstAdapters;'
             print >> self.file, 'import org.python.antlr.PythonTree;'
             print >> self.file, 'import org.python.antlr.ListWrapper;'
             print >> self.file, 'import org.antlr.runtime.CommonToken;'
@@ -430,9 +430,9 @@ class JavaVisitor(EmitVisitor):
             field.name), depth)
         if field.seq:
             #self.emit("this.%s = new %s(" % (field.name, self.javaType(field)), depth+1)
-            self.emit("this.%s = AstAdapter.to_%sList(%s);" % (field.name, str(field.type), field.name), depth+1)
+            self.emit("this.%s = AstAdapters.to_%sList(%s);" % (field.name, str(field.type), field.name), depth+1)
         else:
-            self.emit("this.%s = AstAdapter.to_%s(%s);" % (field.name, str(field.type), field.name), depth+1)
+            self.emit("this.%s = AstAdapters.to_%s(%s);" % (field.name, str(field.type), field.name), depth+1)
         self.emit("}", depth)
         self.emit("", 0)
 

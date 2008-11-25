@@ -7,11 +7,17 @@ import java.util.List;
 import java.util.ListIterator;
 import org.python.core.PyObject;
 
-public class ListWrapper<E> implements List<E> {
+public class ListWrapper implements List {
 
-    private List<E> list;
+    private List list;
+    private AstObjectAdapter adapter;
 
-    public ListWrapper(List<E> list) {
+    public ListWrapper(List list) {
+        this.list = list;
+    }
+
+    public ListWrapper(List list, AstObjectAdapter adapter) {
+        this.adapter = adapter;
         this.list = list;
     }
 
@@ -27,11 +33,11 @@ public class ListWrapper<E> implements List<E> {
         return list.retainAll(c);
     }
 
-    public boolean add(E e) {
+    public boolean add(Object e) {
         return list.add(e);
     }
 
-    public void add(int index, E e) {
+    public void add(int index, Object e) {
         list.add(index, e);
     }
 
@@ -51,7 +57,7 @@ public class ListWrapper<E> implements List<E> {
         return list.contains(elem);
     }
 
-    public E get(int index) {
+    public Object get(int index) {
         return list.get(index);
     }
 
@@ -67,7 +73,7 @@ public class ListWrapper<E> implements List<E> {
         return list.lastIndexOf(elem);
     }
 
-    public E remove(int index) {
+    public Object remove(int index) {
         return list.remove(index);
     }
 
@@ -75,7 +81,7 @@ public class ListWrapper<E> implements List<E> {
         return list.remove(o);
     }
 
-    public E set(int index, E element) {
+    public Object set(int index, Object element) {
         return list.set(index, element);
     }
 
@@ -147,7 +153,7 @@ public class ListWrapper<E> implements List<E> {
     }
 
     public void append(PyObject o) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        list.add(adapter.adapt(o));
     }
 
     public int count(PyObject o) {
