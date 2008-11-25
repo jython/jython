@@ -650,7 +650,7 @@ public class _codecs {
      * creating integer objects in the process. The trie is created by inverting the
      * encoding map.
      */
-    @ExposedType(name = "EncodingMap")
+    @ExposedType(name = "EncodingMap", isBaseType = false)
     public static class EncodingMap extends PyObject {
 
         char[] level1;

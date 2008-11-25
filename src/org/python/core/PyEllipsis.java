@@ -8,8 +8,7 @@ import org.python.expose.ExposedType;
 /**
  * A class representing the singleton Ellipsis <code>...</code> object.
  */
-// XXX: not subclassable
-@ExposedType(name = "ellipsis", base = PyObject.class)
+@ExposedType(name = "ellipsis", base = PyObject.class, isBaseType = false)
 public class PyEllipsis extends PySingleton implements Serializable {
 
     public static final PyType TYPE = PyType.fromClass(PyEllipsis.class);

@@ -10,7 +10,7 @@ import org.python.expose.MethodType;
 /**
  * A Python method.
  */
-@ExposedType(name = "instancemethod")
+@ExposedType(name = "instancemethod", isBaseType = false)
 public class PyMethod extends PyObject {
 
     public static final PyType TYPE = PyType.fromClass(PyMethod.class);

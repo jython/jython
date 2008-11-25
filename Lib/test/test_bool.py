@@ -343,9 +343,6 @@ class BoolTest(unittest.TestCase):
 # StackOverflow if __nonzero__ returns self
 # http://jython.org/bugs/1758318
 del BoolTest.test_convert_to_bool
-# bool should not be subclassable
-# http://jython.org/bugs/1758319
-del BoolTest.test_subclass
 
 def test_main():
     test_support.run_unittest(BoolTest)

@@ -26,4 +26,9 @@ public @interface ExposedType {
      *         unspecified, the base is set to object, or PyObject.class.
      */
     Class base() default Object.class;
+
+    /**
+     * @return Whether this type allows subclassing.
+     */
+    boolean isBaseType() default true;
 }

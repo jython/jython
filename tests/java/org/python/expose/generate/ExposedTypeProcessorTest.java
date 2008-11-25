@@ -11,7 +11,7 @@ import org.python.core.PyDataDescr;
 import org.python.core.PyObject;
 import org.python.core.PyType;
 
-public class ExposedTypeProcessorTest extends TestCase {
+public class ExposedTypeProcessorTest extends InterpTestCase {
 
     public void testDetectType() throws Exception {
         InputStream in = getClass().getClassLoader()
@@ -41,6 +41,7 @@ public class ExposedTypeProcessorTest extends TestCase {
         PyBuiltinCallable bound = func.bind(simp);
         bound.__call__();
         PyDataDescr desc = (PyDataDescr)tostringDesc.newInstance();
+        desc.setType(simp.getType());
         assertEquals(doctoredSimple.getField("toStringVal").get(simp),
                      desc.__get__(simp, PyType.fromClass(doctoredSimple)).toString());
     }

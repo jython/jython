@@ -589,8 +589,6 @@ public class PySystemState extends PyObject
         Py.Newline = new PyString("\n");
         Py.Space = new PyString(" ");
 
-        Py.TPFLAGS_HEAPTYPE = (1L<<9);
-
         // Setup standard wrappers for stdout and stderr...
         Py.stderr = new StderrWrapper();
         Py.stdout = new StdoutWrapper();

@@ -3,11 +3,9 @@ package org.python.modules.time;
 
 import org.python.core.ArgParser;
 import org.python.core.Py;
-import org.python.core.PyInteger;
 import org.python.core.PyList;
 import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
-import org.python.core.PySequence;
 import org.python.core.PyTuple;
 import org.python.core.PyType;
 import org.python.expose.ExposedGet;
@@ -20,7 +18,7 @@ import org.python.expose.MethodType;
  * struct_time of the time module.
  *
  */
-@ExposedType(name = "time.struct_time")
+@ExposedType(name = "time.struct_time", isBaseType = false)
 public class PyTimeTuple extends PyTuple {
 
     @ExposedGet

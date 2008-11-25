@@ -4,7 +4,7 @@ import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedType;
 
-@ExposedType(name = "member_descriptor", base = PyObject.class)
+@ExposedType(name = "member_descriptor", base = PyObject.class, isBaseType = false)
 public class PySlot extends PyDescriptor {
 
     private int index;

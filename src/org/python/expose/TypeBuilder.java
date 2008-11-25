@@ -15,4 +15,6 @@ public interface TypeBuilder {
     public Class getTypeClass();
 
     public Class getBase();
+
+    public boolean getIsBaseType();
 }
