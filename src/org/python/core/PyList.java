@@ -114,7 +114,9 @@ public class PyList extends PySequenceList {
 
     protected void delRange(int start, int stop, int step) {
         if(step == 1) {
-            remove(start, stop);
+            if ( stop > start ) {
+                remove(start, stop);
+            }
         } else if(step > 1) {
             for(int i = start; i < stop; i += step) {
                 remove(i);
@@ -164,13 +166,7 @@ public class PyList extends PySequenceList {
                 otherArray = otherArray.clone();
             }
             list.replaceSubArray(start, stop, otherArray, 0, n);
-        } else if(step > 1) {
-            int n = value.__len__();
-            for(int i = 0, j = 0; i < n; i++, j += step) {
-                list.pyset(j + start, value.pyget(i));
-            }
-        } else if(step < 0) {
-            int n = value.__len__();
+        } else if(step != 0) {
             if(value == this) {
                 PyList newseq = new PyList();
                 PyObject iter = value.__iter__();
@@ -179,7 +175,8 @@ public class PyList extends PySequenceList {
                 }
                 value = newseq;
             }
-            for(int i = 0, j = list.size() - 1; i < n; i++, j += step) {
+            int n = value.__len__();
+            for (int i = 0, j = start; i < n; i++, j += step) {
                 list.pyset(j, value.pyget(i));
             }
         }

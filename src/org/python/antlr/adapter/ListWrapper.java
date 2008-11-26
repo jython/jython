@@ -8,6 +8,7 @@ import java.util.ListIterator;
 
 import org.python.core.Py;
 import org.python.core.PyObject;
+import org.python.core.PySequence;
 
 public class ListWrapper implements List {
 
@@ -15,15 +16,15 @@ public class ListWrapper implements List {
     private AstAdapter adapter;
 
     public ListWrapper(List list) {
+        this(list, null);
+    }
+
+    public ListWrapper(List list, AstAdapter adapter) {
         if (list == null) {
             throw Py.TypeError("AST list can't be None");
         }
         this.list = list;
-    }
-
-    public ListWrapper(List list, AstAdapter adapter) {
         this.adapter = adapter;
-        this.list = list;
     }
 
     public boolean containsAll(Collection c) {
@@ -118,15 +119,12 @@ public class ListWrapper implements List {
         return list.subList(fromIndex, toIndex);
     }
 
+    /*
     public ListWrapper __add__(Object o) {
         List newList = new ArrayList();
         newList.addAll(list);
         newList.add(o);
         return new ListWrapper(newList);
-    }
-
-    public void __iadd__(PyObject o) {
-        extend(o);
     }
 
     public int __len__() {
@@ -138,87 +136,91 @@ public class ListWrapper implements List {
     }
 
     public PyObject __imul__(PyObject o) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        throw new UnsupportedOperationException("1 Not supported yet.");
     }
 
     public PyObject __iter__() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        throw new UnsupportedOperationException("2 Not supported yet.");
     }
 
     public PyObject __mul__(PyObject o) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        throw new UnsupportedOperationException("3 Not supported yet.");
     }
 
     public PyObject __radd__(PyObject o) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        throw new UnsupportedOperationException("4 Not supported yet.");
     }
 
     public PyObject __rmul__(PyObject o) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        throw new UnsupportedOperationException("5 Not supported yet.");
     }
+    */
 
     public void append(PyObject o) {
         list.add(adapter.adapt(o));
     }
 
     public int count(PyObject o) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        throw new UnsupportedOperationException("6 Not supported yet.");
     }
 
     protected void del(int i) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        throw new UnsupportedOperationException("7 Not supported yet.");
     }
 
     protected void delRange(int start, int stop, int step) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        throw new UnsupportedOperationException("8 Not supported yet.");
     }
 
     public void extend(PyObject o) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        throw new UnsupportedOperationException("9 Not supported yet.");
     }
 
     public int index(PyObject o) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        throw new UnsupportedOperationException("10 Not supported yet.");
     }
 
     public int index(PyObject o, int start) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        throw new UnsupportedOperationException("11 Not supported yet.");
     }
 
     public int index(PyObject o, int start, int stop) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        throw new UnsupportedOperationException("12 Not supported yet.");
     }
 
     public void insert(int index, PyObject o) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        throw new UnsupportedOperationException("13 Not supported yet.");
     }
 
     public PyObject pop() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        throw new UnsupportedOperationException("14 Not supported yet.");
     }
 
     public PyObject pop(int n) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        throw new UnsupportedOperationException("15 Not supported yet.");
     }
 
     public void remove(PyObject o) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        throw new UnsupportedOperationException("16 Not supported yet.");
     }
 
     public void reverse() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        throw new UnsupportedOperationException("17 Not supported yet.");
     }
 
     public void sort(PyObject compare) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        throw new UnsupportedOperationException("18 Not supported yet.");
     }
 
     public void sort() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        throw new UnsupportedOperationException("19 Not supported yet.");
     }
 
     public void sort(PyObject cmp, PyObject key, PyObject reverse) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        throw new UnsupportedOperationException("20 Not supported yet.");
     }
-
+    
+    public String toString() {
+        return list.toString();
+    }
 }

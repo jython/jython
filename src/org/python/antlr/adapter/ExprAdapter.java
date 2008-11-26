@@ -2,10 +2,12 @@ package org.python.antlr.adapter;
 
 import org.python.core.Py;
 import org.python.core.PyInteger;
+import org.python.core.PyString;
 import org.python.core.PyJavaInstance;
 
 import org.python.antlr.ast.exprType;
 import org.python.antlr.ast.Num;
+import org.python.antlr.ast.Str;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,6 +25,8 @@ public class ExprAdapter implements AstAdapter {
             return o;
         } else if (o instanceof Integer) {
             return new Num(new PyInteger((Integer)o));
+        } else if (o instanceof String) {
+            return new Str(new PyString((String)o));
         }
 
         //FIXME: investigate the right exception

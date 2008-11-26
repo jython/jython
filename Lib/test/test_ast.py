@@ -34,7 +34,7 @@ def to_tuple(t):
         return t
     elif isinstance(t, ast_list):
         return [to_tuple(e) for e in t]
-    result = [t.__class__.__name__]
+    result = [get_class_name(t)]
     if hasattr(t, 'lineno') and hasattr(t, 'col_offset'):
         result.append((t.lineno, t.col_offset))
     if t._fields is None:
@@ -219,17 +219,17 @@ class ASTHelpers_Test(unittest.TestCase):
     def test_dump(self):
         node = ast.parse('spam(eggs, "and cheese")')
         self.assertEqual(ast.dump(node),
-            "Module(body=[Expr(value=Call(func=Name(id='spam', ctx=Load()), "
-            "args=[Name(id='eggs', ctx=Load()), Str(s='and cheese')], "
+            u"Module(body=[Expr(value=Call(func=Name(id=u'spam', ctx=Load()), "
+            "args=[Name(id=u'eggs', ctx=Load()), Str(s='and cheese')], "
             "keywords=[], starargs=None, kwargs=None))])"
         )
         self.assertEqual(ast.dump(node, annotate_fields=False),
-            "Module([Expr(Call(Name('spam', Load()), [Name('eggs', Load()), "
+            "Module([Expr(Call(Name(u'spam', Load()), [Name(u'eggs', Load()), "
             "Str('and cheese')], [], None, None))])"
         )
         self.assertEqual(ast.dump(node, include_attributes=True),
-            "Module(body=[Expr(value=Call(func=Name(id='spam', ctx=Load(), "
-            "lineno=1, col_offset=0), args=[Name(id='eggs', ctx=Load(), "
+            "Module(body=[Expr(value=Call(func=Name(id=u'spam', ctx=Load(), "
+            "lineno=1, col_offset=0), args=[Name(id=u'eggs', ctx=Load(), "
             "lineno=1, col_offset=5), Str(s='and cheese', lineno=1, "
             "col_offset=11)], keywords=[], starargs=None, kwargs=None, "
             "lineno=1, col_offset=0), lineno=1, col_offset=0)])"
