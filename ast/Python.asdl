@@ -1,6 +1,6 @@
 -- ASDL's five builtin types are identifier, int, string, object, bool
 
-module Python version "$Revision: 53731 $"
+module Python version "$Revision: 62047 $"
 {
 	mod = Module(stmt* body)
 	    | Interactive(stmt* body)
@@ -10,9 +10,8 @@ module Python version "$Revision: 53731 $"
 	    | Suite(stmt* body)
 
 	stmt = FunctionDef(identifier name, arguments args, 
-                           stmt* body, expr* decorators)
-	      | ClassDef(identifier name, expr* bases,
-                         stmt* body, expr* decorators)
+                            stmt* body, expr* decorator_list)
+	      | ClassDef(identifier name, expr* bases, stmt* body, expr *decorator_list)
 	      | Return(expr? value)
 
 	      | Delete(expr* targets)
@@ -29,6 +28,7 @@ module Python version "$Revision: 53731 $"
 	      | With(expr context_expr, expr? optional_vars, stmt* body)
 
 	      -- 'type' is a bad name
+          -- changed to 'type' to excepttype for Jython
 	      | Raise(expr? excepttype, expr? inst, expr? tback)
 	      | TryExcept(stmt* body, excepthandler* handlers, stmt* orelse)
 	      | TryFinally(stmt* body, stmt* finalbody)
@@ -99,11 +99,9 @@ module Python version "$Revision: 53731 $"
 	comprehension = (expr target, expr iter, expr* ifs)
 
 	-- not sure what to call the first argument for raise and except
-	-- TODO(jhylton): Figure out if there is a better way to handle
-	--                lineno and col_offset fields, particularly when
-        --                ast is exposed to Python.
-	excepthandler = (expr? excepttype, expr? name, stmt* body, int lineno,
-	                 int col_offset)
+    -- changed to 'type' to excepttype for Jython
+	excepthandler = ExceptHandler(expr? excepttype, expr? name, stmt* body)
+	                attributes (int lineno, int col_offset)
 
 	arguments = (expr* args, identifier? vararg, 
 		     identifier? kwarg, expr* defaults)

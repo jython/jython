@@ -130,7 +130,7 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
             visit(defaults.get(i));
         }
 
-        List<exprType> decs = node.getInternalDecorators();
+        List<exprType> decs = node.getInternalDecorator_list();
         for (int i = decs.size() - 1; i >= 0; i--) {
             visit(decs.get(i));
         }

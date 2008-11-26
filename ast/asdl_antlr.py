@@ -134,7 +134,7 @@ class JavaVisitor(EmitVisitor):
         self.visit(type.value, type.name, depth)
 
     def visitSum(self, sum, name, depth):
-        if sum.simple:
+        if sum.simple and not name == "excepthandler":
             self.simple_sum(sum, name, depth)
         else:
             self.sum_with_constructor(sum, name, depth)
@@ -261,7 +261,7 @@ class JavaVisitor(EmitVisitor):
             self.emit("}", depth + 1)
             self.emit("", 0)
 
-        if str(name) in ('stmt', 'expr'):
+        if str(name) in ('stmt', 'expr', 'excepthandler'):
             # The lineno property
             self.emit("private int lineno = -1;", depth + 1)
             self.emit("public int getLineno() {", depth + 1)
@@ -289,6 +289,7 @@ class JavaVisitor(EmitVisitor):
             self.emit("col_offset = num;", depth + 2);
             self.emit("}", depth + 1)
             self.emit("", 0)
+
 
         self.emit("}", depth)
         self.close()

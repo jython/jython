@@ -27,6 +27,7 @@ import org.python.antlr.ast.Continue;
 import org.python.antlr.ast.Delete;
 import org.python.antlr.ast.Dict;
 import org.python.antlr.ast.Ellipsis;
+import org.python.antlr.ast.ExceptHandler;
 import org.python.antlr.ast.Exec;
 import org.python.antlr.ast.Expr;
 import org.python.antlr.ast.Expression;
@@ -419,7 +420,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         }
 
         set(new Name(node,node.getInternalName(), expr_contextType.Store));
-        doDecorators(node,node.getInternalDecorators(), node.getInternalName());
+        doDecorators(node,node.getInternalDecorator_list(), node.getInternalName());
         return null;
     }
 
@@ -1124,7 +1125,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         throws Exception
     {
         for (int i = 0; i < node.getInternalHandlers().size(); i++) {
-            excepthandlerType handler = node.getInternalHandlers().get(i);
+            ExceptHandler handler = (ExceptHandler)node.getInternalHandlers().get(i);
 
             //setline(name);
             Label end_of_self = new Label();
@@ -2024,7 +2025,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
 
         //Assign this new class to the given name
         set(new Name(node,node.getInternalName(), expr_contextType.Store));
-        doDecorators(node,node.getInternalDecorators(), node.getInternalName());
+        doDecorators(node,node.getInternalDecorator_list(), node.getInternalName());
         return null;
     }
 

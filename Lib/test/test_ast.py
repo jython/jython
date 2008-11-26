@@ -250,12 +250,12 @@ class ASTHelpers_Test(unittest.TestCase):
                                           [ast.Str('eggs')], [], None, None)))
         self.assertEqual(src, ast.fix_missing_locations(src))
         self.assertEqual(ast.dump(src, include_attributes=True),
-            "Module(body=[Expr(value=Call(func=Name(id='write', ctx=Load(), "
+            u"Module(body=[Expr(value=Call(func=Name(id=u'write', ctx=Load(), "
             "lineno=1, col_offset=0), args=[Str(s='spam', lineno=1, "
             "col_offset=6)], keywords=[], starargs=None, kwargs=None, "
             "lineno=1, col_offset=0), lineno=1, col_offset=0), "
-            "Expr(value=Call(func=Name(id='spam', ctx=Load(), lineno=1, "
-            "col_offset=0), args=[Str(s='eggs', lineno=1, col_offset=0)], "
+            "Expr(value=Call(func=Name(id=u'spam', ctx=Load(), lineno=1, "
+            "col_offset=0), args=[Str(s=u'eggs', lineno=1, col_offset=0)], "
             "keywords=[], starargs=None, kwargs=None, lineno=1, "
             "col_offset=0), lineno=1, col_offset=0)])"
         )
@@ -280,11 +280,11 @@ class ASTHelpers_Test(unittest.TestCase):
         node = ast.parse("spam(23, 42, eggs='leek')", mode='eval')
         self.assertEqual(len(list(ast.iter_child_nodes(node.body))), 4)
         iterator = ast.iter_child_nodes(node.body)
-        self.assertEqual(next(iterator).id, 'spam')
-        self.assertEqual(next(iterator).n, 23)
-        self.assertEqual(next(iterator).n, 42)
-        self.assertEqual(ast.dump(next(iterator)),
-            "keyword(arg='eggs', value=Str(s='leek'))"
+        self.assertEqual(iterator.next().id, 'spam')
+        self.assertEqual(iterator.next().n, 23)
+        self.assertEqual(iterator.next().n, 42)
+        self.assertEqual(ast.dump(iterator.next()),
+            u"keyword(arg=u'eggs', value=Str(s='leek'))"
         )
 
     def test_get_docstring(self):

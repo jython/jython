@@ -308,6 +308,12 @@ public abstract class VisitorBase<R> implements VisitorIF<R> {
         return ret;
     }
 
+    public R visitExceptHandler(ExceptHandler node) throws Exception {
+        R ret = unhandled_node(node);
+        traverse(node);
+        return ret;
+    }
+
     abstract protected R unhandled_node(PythonTree node) throws Exception;
     abstract public void traverse(PythonTree node) throws Exception;
 }

@@ -6,177 +6,26 @@ import org.python.antlr.adapter.AstAdapters;
 import org.python.antlr.adapter.ListWrapper;
 import org.antlr.runtime.CommonToken;
 import org.antlr.runtime.Token;
-import java.io.DataOutputStream;
-import java.io.IOException;
 
-public class excepthandlerType extends PythonTree {
-    private exprType excepttype;
-    public exprType getInternalExcepttype() {
-        return excepttype;
-    }
-    public Object getExcepttype() {
-        return excepttype;
-    }
-    public void setExcepttype(Object excepttype) {
-        this.excepttype = AstAdapters.to_expr(excepttype);
+public abstract class excepthandlerType extends PythonTree {
+
+    private final static String[] attributes = new String[] {"lineno",
+                                                              "col_offset"};
+    public String[] get_attributes() { return attributes; }
+
+    public excepthandlerType() {
     }
 
-    private exprType name;
-    public exprType getInternalName() {
-        return name;
-    }
-    public Object getName() {
-        return name;
-    }
-    public void setName(Object name) {
-        this.name = AstAdapters.to_expr(name);
-    }
-
-    private java.util.List<stmtType> body;
-    public java.util.List<stmtType> getInternalBody() {
-        return body;
-    }
-    public Object getBody() {
-        return new ListWrapper(body, AstAdapters.stmtAdapter);
-    }
-    public void setBody(Object body) {
-        this.body = AstAdapters.to_stmtList(body);
-    }
-
-    private Integer lineno;
-    public Integer getInternalLineno() {
-        return lineno;
-    }
-    public Object getLineno() {
-        return lineno;
-    }
-    public void setLineno(Object lineno) {
-        this.lineno = AstAdapters.to_int(lineno);
-    }
-
-    private Integer col_offset;
-    public Integer getInternalCol_offset() {
-        return col_offset;
-    }
-    public Object getCol_offset() {
-        return col_offset;
-    }
-    public void setCol_offset(Object col_offset) {
-        this.col_offset = AstAdapters.to_int(col_offset);
-    }
-
-
-    private final static String[] fields = new String[] {"excepttype", "name",
-                                                          "body", "lineno",
-                                                          "col_offset"};
-    public String[] get_fields() { return fields; }
-
-    public excepthandlerType() {}
-    public excepthandlerType(Object excepttype, Object name, Object body,
-    Object lineno, Object col_offset) {
-        setExcepttype(excepttype);
-        setName(name);
-        setBody(body);
-        setLineno(lineno);
-        setCol_offset(col_offset);
-    }
-
-    public excepthandlerType(Token token, exprType excepttype, exprType name,
-    java.util.List<stmtType> body, Integer lineno, Integer col_offset) {
-        super(token);
-        this.excepttype = excepttype;
-        addChild(excepttype);
-        this.name = name;
-        addChild(name);
-        this.body = body;
-        if (body == null) {
-            this.body = new ArrayList<stmtType>();
-        }
-        for(PythonTree t : this.body) {
-            addChild(t);
-        }
-        this.lineno = lineno;
-        this.col_offset = col_offset;
-    }
-
-    public excepthandlerType(Integer ttype, Token token, exprType excepttype,
-    exprType name, java.util.List<stmtType> body, Integer lineno, Integer
-    col_offset) {
+    public excepthandlerType(int ttype, Token token) {
         super(ttype, token);
-        this.excepttype = excepttype;
-        addChild(excepttype);
-        this.name = name;
-        addChild(name);
-        this.body = body;
-        if (body == null) {
-            this.body = new ArrayList<stmtType>();
-        }
-        for(PythonTree t : this.body) {
-            addChild(t);
-        }
-        this.lineno = lineno;
-        this.col_offset = col_offset;
     }
 
-    public excepthandlerType(PythonTree tree, exprType excepttype, exprType
-    name, java.util.List<stmtType> body, Integer lineno, Integer col_offset) {
-        super(tree);
-        this.excepttype = excepttype;
-        addChild(excepttype);
-        this.name = name;
-        addChild(name);
-        this.body = body;
-        if (body == null) {
-            this.body = new ArrayList<stmtType>();
-        }
-        for(PythonTree t : this.body) {
-            addChild(t);
-        }
-        this.lineno = lineno;
-        this.col_offset = col_offset;
+    public excepthandlerType(Token token) {
+        super(token);
     }
 
-    public String toString() {
-        return "excepthandler";
-    }
-
-    public String toStringTree() {
-        StringBuffer sb = new StringBuffer("excepthandler(");
-        sb.append("excepttype=");
-        sb.append(dumpThis(excepttype));
-        sb.append(",");
-        sb.append("name=");
-        sb.append(dumpThis(name));
-        sb.append(",");
-        sb.append("body=");
-        sb.append(dumpThis(body));
-        sb.append(",");
-        sb.append("lineno=");
-        sb.append(dumpThis(lineno));
-        sb.append(",");
-        sb.append("col_offset=");
-        sb.append(dumpThis(col_offset));
-        sb.append(",");
-        sb.append(")");
-        return sb.toString();
-    }
-
-    public <R> R accept(VisitorIF<R> visitor) throws Exception {
-        traverse(visitor);
-        return null;
-    }
-
-    public void traverse(VisitorIF visitor) throws Exception {
-        if (excepttype != null)
-            excepttype.accept(visitor);
-        if (name != null)
-            name.accept(visitor);
-        if (body != null) {
-            for (PythonTree t : body) {
-                if (t != null)
-                    t.accept(visitor);
-            }
-        }
+    public excepthandlerType(PythonTree node) {
+        super(node);
     }
 
 }

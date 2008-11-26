@@ -3,7 +3,7 @@ package org.python.antlr.adapter;
 import org.python.core.Py;
 import org.python.core.PyJavaInstance;
 
-import org.python.antlr.ast.excepthandlerType;
+import org.python.antlr.ast.ExceptHandler;
 import org.python.antlr.ast.Num;
 
 import java.util.ArrayList;
@@ -16,9 +16,9 @@ public class ExcepthandlerAdapter implements AstAdapter {
             return o;
         }
         if (o instanceof PyJavaInstance) {
-            o = ((PyJavaInstance)o).__tojava__(excepthandlerType.class);
+            o = ((PyJavaInstance)o).__tojava__(ExceptHandler.class);
         }
-        if (o instanceof excepthandlerType) {
+        if (o instanceof ExceptHandler) {
             return o;
         }
 
@@ -27,9 +27,9 @@ public class ExcepthandlerAdapter implements AstAdapter {
     }
 
     public Object adaptIter(Object iter) {
-        List<excepthandlerType> excepthandlers = new ArrayList<excepthandlerType>();
+        List<ExceptHandler> excepthandlers = new ArrayList<ExceptHandler>();
         for(Object o : (Iterable)iter) {
-            excepthandlers.add((excepthandlerType)adapt(o));
+            excepthandlers.add((ExceptHandler)adapt(o));
         }
         return excepthandlers;
     }

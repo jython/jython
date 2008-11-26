@@ -102,7 +102,7 @@ import org.python.antlr.ast.Continue;
 import org.python.antlr.ast.Delete;
 import org.python.antlr.ast.Dict;
 import org.python.antlr.ast.Ellipsis;
-import org.python.antlr.ast.excepthandlerType;
+import org.python.antlr.ast.ExceptHandler;
 import org.python.antlr.ast.Exec;
 import org.python.antlr.ast.Expr;
 import org.python.antlr.ast.Expression;
@@ -918,8 +918,8 @@ with_var returns [exprType etype]
 //except_clause: 'except' [test [',' test]]
 except_clause
     : EXCEPT (t1=test[expr_contextType.Load] (COMMA t2=test[expr_contextType.Store])?)? COLON suite[!$suite.isEmpty() && $suite::continueIllegal]
-   -> ^(EXCEPT<excepthandlerType>[$EXCEPT, actions.castExpr($t1.tree), actions.castExpr($t2.tree),
-          actions.castStmts($suite.stypes), $EXCEPT.getLine(), $EXCEPT.getCharPositionInLine()])
+   -> ^(EXCEPT<ExceptHandler>[$EXCEPT, actions.castExpr($t1.tree), actions.castExpr($t2.tree),
+          actions.castStmts($suite.stypes)])
     ;
 
 //suite: simple_stmt | NEWLINE INDENT stmt+ DEDENT
