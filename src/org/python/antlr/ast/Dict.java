@@ -15,7 +15,7 @@ public class Dict extends exprType {
         return keys;
     }
     public Object getKeys() {
-        return new ListWrapper(keys);
+        return new ListWrapper(keys, AstAdapters.exprAdapter);
     }
     public void setKeys(Object keys) {
         this.keys = AstAdapters.to_exprList(keys);
@@ -26,7 +26,7 @@ public class Dict extends exprType {
         return values;
     }
     public Object getValues() {
-        return new ListWrapper(values);
+        return new ListWrapper(values, AstAdapters.exprAdapter);
     }
     public void setValues(Object values) {
         this.values = AstAdapters.to_exprList(values);

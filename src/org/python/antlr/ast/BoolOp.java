@@ -26,7 +26,7 @@ public class BoolOp extends exprType {
         return values;
     }
     public Object getValues() {
-        return new ListWrapper(values);
+        return new ListWrapper(values, AstAdapters.exprAdapter);
     }
     public void setValues(Object values) {
         this.values = AstAdapters.to_exprList(values);

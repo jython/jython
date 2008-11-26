@@ -26,7 +26,7 @@ public class Compare extends exprType {
         return ops;
     }
     public Object getOps() {
-        return new ListWrapper(ops);
+        return new ListWrapper(ops, AstAdapters.cmpopAdapter);
     }
     public void setOps(Object ops) {
         this.ops = AstAdapters.to_cmpopList(ops);
@@ -37,7 +37,7 @@ public class Compare extends exprType {
         return comparators;
     }
     public Object getComparators() {
-        return new ListWrapper(comparators);
+        return new ListWrapper(comparators, AstAdapters.exprAdapter);
     }
     public void setComparators(Object comparators) {
         this.comparators = AstAdapters.to_exprList(comparators);

@@ -422,7 +422,7 @@ class JavaVisitor(EmitVisitor):
         self.emit("}", depth)
         self.emit("public Object get%s() {" % (str(field.name).capitalize()), depth)
         if field.seq:
-            self.emit("return new ListWrapper(%s);" % field.name, depth+1)
+            self.emit("return new ListWrapper(%s, AstAdapters.%sAdapter);" % (field.name, field.type), depth+1)
         else:
             self.emit("return %s;" % field.name, depth+1)
         self.emit("}", depth)

@@ -15,7 +15,7 @@ public class Delete extends stmtType {
         return targets;
     }
     public Object getTargets() {
-        return new ListWrapper(targets);
+        return new ListWrapper(targets, AstAdapters.exprAdapter);
     }
     public void setTargets(Object targets) {
         this.targets = AstAdapters.to_exprList(targets);

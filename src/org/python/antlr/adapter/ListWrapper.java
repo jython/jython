@@ -5,18 +5,23 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
+
+import org.python.core.Py;
 import org.python.core.PyObject;
 
 public class ListWrapper implements List {
 
     private List list;
-    private AstObjectAdapter adapter;
+    private AstAdapter adapter;
 
     public ListWrapper(List list) {
+        if (list == null) {
+            throw Py.TypeError("AST list can't be None");
+        }
         this.list = list;
     }
 
-    public ListWrapper(List list, AstObjectAdapter adapter) {
+    public ListWrapper(List list, AstAdapter adapter) {
         this.adapter = adapter;
         this.list = list;
     }

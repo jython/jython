@@ -15,7 +15,7 @@ public class ExtSlice extends sliceType {
         return dims;
     }
     public Object getDims() {
-        return new ListWrapper(dims);
+        return new ListWrapper(dims, AstAdapters.sliceAdapter);
     }
     public void setDims(Object dims) {
         this.dims = AstAdapters.to_sliceList(dims);

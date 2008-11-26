@@ -26,7 +26,7 @@ public class ClassDef extends stmtType {
         return bases;
     }
     public Object getBases() {
-        return new ListWrapper(bases);
+        return new ListWrapper(bases, AstAdapters.exprAdapter);
     }
     public void setBases(Object bases) {
         this.bases = AstAdapters.to_exprList(bases);
@@ -37,7 +37,7 @@ public class ClassDef extends stmtType {
         return body;
     }
     public Object getBody() {
-        return new ListWrapper(body);
+        return new ListWrapper(body, AstAdapters.stmtAdapter);
     }
     public void setBody(Object body) {
         this.body = AstAdapters.to_stmtList(body);
@@ -48,7 +48,7 @@ public class ClassDef extends stmtType {
         return decorators;
     }
     public Object getDecorators() {
-        return new ListWrapper(decorators);
+        return new ListWrapper(decorators, AstAdapters.exprAdapter);
     }
     public void setDecorators(Object decorators) {
         this.decorators = AstAdapters.to_exprList(decorators);

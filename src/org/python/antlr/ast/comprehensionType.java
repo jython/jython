@@ -37,7 +37,7 @@ public class comprehensionType extends PythonTree {
         return ifs;
     }
     public Object getIfs() {
-        return new ListWrapper(ifs);
+        return new ListWrapper(ifs, AstAdapters.exprAdapter);
     }
     public void setIfs(Object ifs) {
         this.ifs = AstAdapters.to_exprList(ifs);

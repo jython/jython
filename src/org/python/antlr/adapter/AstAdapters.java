@@ -3,55 +3,59 @@ package org.python.antlr.adapter;
 import org.python.antlr.ast.*;
 import org.python.core.*;
 
+import java.util.ArrayList;
 /**
  * AstAdapter turns Python and Java objects into ast nodes.
  */
 public class AstAdapters {
+    public static AliasAdapter aliasAdapter = new AliasAdapter();
+    public static CmpopAdapter cmpopAdapter = new CmpopAdapter();
+    public static ComprehensionAdapter comprehensionAdapter = new ComprehensionAdapter();
+    public static ExcepthandlerAdapter excepthandlerAdapter = new ExcepthandlerAdapter();
+    public static ExprAdapter exprAdapter = new ExprAdapter();
+    public static IdentifierAdapter identifierAdapter = new IdentifierAdapter();
+    public static KeywordAdapter keywordAdapter = new KeywordAdapter();
+    public static SliceAdapter sliceAdapter = new SliceAdapter();
+    public static StmtAdapter stmtAdapter = new StmtAdapter();
 
     public static java.util.List<aliasType> to_aliasList(Object o) {
-        return null;
+        return (java.util.List<aliasType>)aliasAdapter.adaptIter(o);
     }
 
     public static java.util.List<cmpopType> to_cmpopList(Object o) {
-        return null;
+        return (java.util.List<cmpopType>)cmpopAdapter.adaptIter(o);
     }
 
     public static java.util.List<comprehensionType> to_comprehensionList(Object o) {
-        return null;
+        return (java.util.List<comprehensionType>)comprehensionAdapter.adaptIter(o);
     }
 
     public static java.util.List<excepthandlerType> to_excepthandlerList(Object o) {
-        return null;
+        return (java.util.List<excepthandlerType>)excepthandlerAdapter.adaptIter(o);
     }
 
     public static java.util.List<exprType> to_exprList(Object o) {
-        return null;
+        return (java.util.List<exprType>)exprAdapter.adaptIter(o);
     }
 
     public static java.util.List<String> to_identifierList(Object o) {
-        return null;
+        return (java.util.List<String>)identifierAdapter.adaptIter(o);
     }
 
     public static java.util.List<keywordType> to_keywordList(Object o) {
-        return null;
+        return (java.util.List<keywordType>)keywordAdapter.adaptIter(o);
     }
 
     public static java.util.List<sliceType> to_sliceList(Object o) {
-        return null;
+        return (java.util.List<sliceType>)sliceAdapter.adaptIter(o);
     }
 
     public static java.util.List<stmtType> to_stmtList(Object o) {
-        return null;
+        return (java.util.List<stmtType>)stmtAdapter.adaptIter(o);
     }
 
     public static exprType to_expr(Object o) {
-        if (o == null || o instanceof exprType) {
-            return (exprType)o;
-        } else if (o instanceof Integer) {
-            return new Num(new PyInteger((Integer)o));
-        }
-        //FIXME: investigate the right exception
-        throw Py.TypeError("Can't convert " + o.getClass().getName() + " to expr node");
+        return (exprType)exprAdapter.adapt(o);
     }
 
     public static int to_int(Object o) {
@@ -63,11 +67,7 @@ public class AstAdapters {
     }
 
     public static String to_identifier(Object o) {
-        if (o == null || o instanceof String) {
-            return (String)o;
-        }
-        //FIXME: investigate the right exception
-        throw Py.TypeError("Can't convert " + o.getClass().getName() + " to identifier node");
+        return (String)identifierAdapter.adapt(o);
     }
 
     public static expr_contextType to_expr_context(Object o) {
@@ -79,22 +79,11 @@ public class AstAdapters {
     }
 
     public static sliceType to_slice(Object o) {
-        if (o == null || o instanceof sliceType) {
-            return (sliceType)o;
-        }
-        //FIXME: investigate the right exception
-        throw Py.TypeError("Can't convert " + o.getClass().getName() + " to slice node");
+        return (sliceType)sliceAdapter.adapt(o);
     }
 
     public static stmtType to_stmt(Object o) {
-        if (o instanceof PyJavaInstance) {
-            o = ((PyJavaInstance)o).__tojava__(stmtType.class);
-        }
-        if (o == null || o instanceof stmtType) {
-            return (stmtType)o;
-        }
-        //FIXME: investigate the right exception
-        throw Py.TypeError("Can't convert " + o.getClass().getName() + " to stmt node");
+        return (stmtType)stmtAdapter.adapt(o);
     }
 
     public static String to_string(Object o) {
@@ -129,12 +118,9 @@ public class AstAdapters {
         throw Py.TypeError("Can't convert " + o.getClass().getName() + " to arguments node");
     }
 
+    //XXX: clearly this isn't necessary -- need to adjust the code generation.
     public static Object to_object(Object o) {
-        if (o == null || o instanceof Object) {
-            return (Object)o;
-        }
-        //FIXME: investigate the right exception
-        throw Py.TypeError("Can't convert " + o.getClass().getName() + " to object node");
+        return o;
     }
 
     public static Boolean to_bool(Object o) {

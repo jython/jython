@@ -85,7 +85,7 @@ public class PythonTree extends BaseTree implements AST {
 			if ( getChildCount()>0 ) {
 				return getChild(0).getLine();
 			}
-			return 0;
+			return 1;
 		}
 		return token.getLine();
 	}

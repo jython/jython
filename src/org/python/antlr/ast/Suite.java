@@ -15,7 +15,7 @@ public class Suite extends modType {
         return body;
     }
     public Object getBody() {
-        return new ListWrapper(body);
+        return new ListWrapper(body, AstAdapters.stmtAdapter);
     }
     public void setBody(Object body) {
         this.body = AstAdapters.to_stmtList(body);

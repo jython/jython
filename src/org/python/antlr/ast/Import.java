@@ -15,7 +15,7 @@ public class Import extends stmtType {
         return names;
     }
     public Object getNames() {
-        return new ListWrapper(names);
+        return new ListWrapper(names, AstAdapters.aliasAdapter);
     }
     public void setNames(Object names) {
         this.names = AstAdapters.to_aliasList(names);

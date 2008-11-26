@@ -26,7 +26,7 @@ public class Call extends exprType {
         return args;
     }
     public Object getArgs() {
-        return new ListWrapper(args);
+        return new ListWrapper(args, AstAdapters.exprAdapter);
     }
     public void setArgs(Object args) {
         this.args = AstAdapters.to_exprList(args);
@@ -37,7 +37,7 @@ public class Call extends exprType {
         return keywords;
     }
     public Object getKeywords() {
-        return new ListWrapper(keywords);
+        return new ListWrapper(keywords, AstAdapters.keywordAdapter);
     }
     public void setKeywords(Object keywords) {
         this.keywords = AstAdapters.to_keywordList(keywords);

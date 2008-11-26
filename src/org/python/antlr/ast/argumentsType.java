@@ -15,7 +15,7 @@ public class argumentsType extends PythonTree {
         return args;
     }
     public Object getArgs() {
-        return new ListWrapper(args);
+        return new ListWrapper(args, AstAdapters.exprAdapter);
     }
     public void setArgs(Object args) {
         this.args = AstAdapters.to_exprList(args);
@@ -48,7 +48,7 @@ public class argumentsType extends PythonTree {
         return defaults;
     }
     public Object getDefaults() {
-        return new ListWrapper(defaults);
+        return new ListWrapper(defaults, AstAdapters.exprAdapter);
     }
     public void setDefaults(Object defaults) {
         this.defaults = AstAdapters.to_exprList(defaults);

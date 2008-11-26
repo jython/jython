@@ -15,7 +15,7 @@ public class TryFinally extends stmtType {
         return body;
     }
     public Object getBody() {
-        return new ListWrapper(body);
+        return new ListWrapper(body, AstAdapters.stmtAdapter);
     }
     public void setBody(Object body) {
         this.body = AstAdapters.to_stmtList(body);
@@ -26,7 +26,7 @@ public class TryFinally extends stmtType {
         return finalbody;
     }
     public Object getFinalbody() {
-        return new ListWrapper(finalbody);
+        return new ListWrapper(finalbody, AstAdapters.stmtAdapter);
     }
     public void setFinalbody(Object finalbody) {
         this.finalbody = AstAdapters.to_stmtList(finalbody);

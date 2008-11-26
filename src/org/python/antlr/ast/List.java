@@ -15,7 +15,7 @@ public class List extends exprType implements Context {
         return elts;
     }
     public Object getElts() {
-        return new ListWrapper(elts);
+        return new ListWrapper(elts, AstAdapters.exprAdapter);
     }
     public void setElts(Object elts) {
         this.elts = AstAdapters.to_exprList(elts);

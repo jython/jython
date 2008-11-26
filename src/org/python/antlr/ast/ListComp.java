@@ -26,7 +26,7 @@ public class ListComp extends exprType {
         return generators;
     }
     public Object getGenerators() {
-        return new ListWrapper(generators);
+        return new ListWrapper(generators, AstAdapters.comprehensionAdapter);
     }
     public void setGenerators(Object generators) {
         this.generators = AstAdapters.to_comprehensionList(generators);

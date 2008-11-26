@@ -15,7 +15,7 @@ public class Global extends stmtType {
         return names;
     }
     public Object getNames() {
-        return new ListWrapper(names);
+        return new ListWrapper(names, AstAdapters.identifierAdapter);
     }
     public void setNames(Object names) {
         this.names = AstAdapters.to_identifierList(names);

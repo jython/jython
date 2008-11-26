@@ -15,7 +15,7 @@ public class TryExcept extends stmtType {
         return body;
     }
     public Object getBody() {
-        return new ListWrapper(body);
+        return new ListWrapper(body, AstAdapters.stmtAdapter);
     }
     public void setBody(Object body) {
         this.body = AstAdapters.to_stmtList(body);
@@ -26,7 +26,7 @@ public class TryExcept extends stmtType {
         return handlers;
     }
     public Object getHandlers() {
-        return new ListWrapper(handlers);
+        return new ListWrapper(handlers, AstAdapters.excepthandlerAdapter);
     }
     public void setHandlers(Object handlers) {
         this.handlers = AstAdapters.to_excepthandlerList(handlers);
@@ -37,7 +37,7 @@ public class TryExcept extends stmtType {
         return orelse;
     }
     public Object getOrelse() {
-        return new ListWrapper(orelse);
+        return new ListWrapper(orelse, AstAdapters.stmtAdapter);
     }
     public void setOrelse(Object orelse) {
         this.orelse = AstAdapters.to_stmtList(orelse);
