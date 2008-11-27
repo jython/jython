@@ -2,7 +2,6 @@ package org.python.antlr;
 
 import org.antlr.runtime.CommonToken;
 import org.antlr.runtime.Token;
-import org.antlr.runtime.tree.Tree;
 
 import org.python.core.Py;
 import org.python.core.PyComplex;
@@ -300,7 +299,7 @@ public class GrammarActions {
         return value;
     }
 
-    void recurseSetContext(Tree tree, expr_contextType context) {
+    void recurseSetContext(PythonTree tree, expr_contextType context) {
         if (tree instanceof Context) {
             ((Context)tree).setContext(context);
         }
