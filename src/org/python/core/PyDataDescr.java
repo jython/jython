@@ -75,9 +75,12 @@ public abstract class PyDataDescr extends PyDescriptor {
     @ExposedMethod
     public void getset_descriptor___set__(PyObject obj, PyObject value) {
         checkGetterType(obj.getType());
+        // XXX: We may want to special case value being PyUnicode and ofType being String
+        // (then explicitly value.encode() first)
         Object converted = value.__tojava__(ofType);
         if(converted == Py.NoConversion) {
-            throw Py.TypeError(""); // xxx
+            throw Py.TypeError(String.format("unsupported type for assignment to %s: '%.200s'",
+                                             name, value.getType().fastGetName()));
         }
         invokeSet(obj, converted);
     }

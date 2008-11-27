@@ -139,7 +139,7 @@ public class DescriptorExposer extends Exposer {
         mv.visitVarInsn(ALOAD, 1);
         mv.visitTypeInsn(CHECKCAST, onType.getInternalName());
         call(onType, getterMethodName, ofType);
-        if(PRIMITIVES.containsKey(ofType)) {
+        if(PRIMITIVES.containsKey(ofType) || ofType.equals(STRING)) {
             toPy(ofType);
         }
         endMethod(ARETURN);
@@ -153,7 +153,7 @@ public class DescriptorExposer extends Exposer {
                           onType.getInternalName(),
                           getterFieldName,
                           ofType.getDescriptor());
-        if(PRIMITIVES.containsKey(ofType)) {
+        if(PRIMITIVES.containsKey(ofType) || ofType.equals(STRING)) {
             toPy(ofType);
         }
         endMethod(ARETURN);
