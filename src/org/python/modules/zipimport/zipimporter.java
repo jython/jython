@@ -50,12 +50,12 @@ public class zipimporter extends PyObject {
         "a zipfile. ZipImportError is raised if 'archivepath' doesn't point to\n" +
         "a valid Zip archive.");
 
-    /** zip_searchorder defines how we search for a module in the Zip
+    /** zipSearchOrder defines how we search for a module in the Zip
      * archive */
     static enum EntryType {
         IS_SOURCE, IS_BYTECODE, IS_PACKAGE
     };
-    static final SearchOrderEntry[] zip_searchorder = new SearchOrderEntry[] {
+    static final SearchOrderEntry[] zipSearchOrder = new SearchOrderEntry[] {
         new SearchOrderEntry(File.separator + "__init__$py.class",
                              EnumSet.of(EntryType.IS_PACKAGE, EntryType.IS_BYTECODE)),
         new SearchOrderEntry(File.separator + "__init__.py",
@@ -126,9 +126,7 @@ public class zipimporter extends PyObject {
                 break;
             }
 
-            String childFile = pathFile.getPath();
-            prefix = childFile.substring(childFile.lastIndexOf(File.separator) + 1)
-                    + File.separator + prefix;
+            prefix = pathFile.getName() + File.separator + prefix;
             pathFile = parentFile;
         }
 
@@ -364,8 +362,7 @@ public class zipimporter extends PyObject {
     private ModuleInfo getModuleInfo(String fullname) {
         String path = makeFilename(prefix, getSubname(fullname));
 
-        for (int i = 0; i < zip_searchorder.length; i++) {
-            SearchOrderEntry entry = zip_searchorder[i];
+        for (SearchOrderEntry entry : zipSearchOrder) {
             PyObject tocEntry = files.__finditem__(path + entry.suffix);
             if (tocEntry == null)
                 continue;
@@ -392,8 +389,7 @@ public class zipimporter extends PyObject {
             return null;
         }
 
-        for (int i = 0; i < zip_searchorder.length; i++) {
-            SearchOrderEntry entry = zip_searchorder[i];
+        for (SearchOrderEntry entry : zipSearchOrder) {
             String suffix = entry.suffix;
             String searchPath = path + suffix;
 
@@ -606,7 +602,12 @@ public class zipimporter extends PyObject {
 
     @ExposedMethod(names = "__repr__")
     final String zipimporter_toString() {
-        return "<zipimporter object \"" + archive + "\">";
+        String displayArchive = archive != null ? archive : "???";
+        if (prefix != null && !"".equals(prefix)) {
+            return String.format("<zipimporter object \"%.300s%c%.150s\">",
+                                 displayArchive, File.separatorChar, prefix);
+        }
+        return String.format("<zipimporter object \"%.300s\">", displayArchive);
     }
 
     /**
