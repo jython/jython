@@ -7,6 +7,7 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 
 import org.python.expose.ExposedDelete;
@@ -15,6 +16,7 @@ import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedSet;
 import org.python.expose.ExposedType;
+import org.python.util.Generic;
 
 /**
  * All objects known to the Jython runtime system are represented by an instance
@@ -253,10 +255,28 @@ public class PyObject implements Serializable {
         if (c.isInstance(this)) {
             return this;
         }
+        if (c.isPrimitive()) {
+            Class<?> tmp = primitiveMap.get(c);
+            if (tmp != null) {
+                c = tmp;
+            }
+        }
         if (c.isInstance(javaProxy)) {
             return javaProxy;
         }
         return Py.NoConversion;
+    }
+
+    protected static final Map<Class<?>, Class<?>> primitiveMap = Generic.map();
+    static {
+        primitiveMap.put(Character.TYPE, Character.class);
+        primitiveMap.put(Boolean.TYPE, Boolean.class);
+        primitiveMap.put(Byte.TYPE, Byte.class);
+        primitiveMap.put(Short.TYPE, Short.class);
+        primitiveMap.put(Integer.TYPE, Integer.class);
+        primitiveMap.put(Long.TYPE, Long.class);
+        primitiveMap.put(Float.TYPE, Float.class);
+        primitiveMap.put(Double.TYPE, Double.class);
     }
 
     /**

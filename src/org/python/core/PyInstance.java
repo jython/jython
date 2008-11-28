@@ -82,23 +82,6 @@ public class PyInstance extends PyObject
         if (c.isInstance(this))
             return this;
 
-        if (c.isPrimitive()) {
-            if (primitiveMap == null) {
-                primitiveMap = new Hashtable();
-                primitiveMap.put(Character.TYPE, Character.class);
-                primitiveMap.put(Boolean.TYPE, Boolean.class);
-                primitiveMap.put(Byte.TYPE, Byte.class);
-                primitiveMap.put(Short.TYPE, Short.class);
-                primitiveMap.put(Integer.TYPE, Integer.class);
-                primitiveMap.put(Long.TYPE, Long.class);
-                primitiveMap.put(Float.TYPE, Float.class);
-                primitiveMap.put(Double.TYPE, Double.class);
-            }
-            Class tmp = (Class)primitiveMap.get(c);
-            if (tmp != null)
-                c = tmp;
-        }
-
         if (instclass.__tojava__ != null) {
             // try {
             PyObject ret = instclass.__tojava__.__call__(this, PyType.fromClass(c));
