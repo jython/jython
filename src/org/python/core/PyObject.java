@@ -267,7 +267,7 @@ public class PyObject implements Serializable {
         return Py.NoConversion;
     }
 
-    protected static final Map<Class<?>, Class<?>> primitiveMap = Generic.map();
+    private static final Map<Class<?>, Class<?>> primitiveMap = Generic.map();
     static {
         primitiveMap.put(Character.TYPE, Character.class);
         primitiveMap.put(Boolean.TYPE, Boolean.class);

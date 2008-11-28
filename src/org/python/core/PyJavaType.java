@@ -100,12 +100,13 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
             }
         }
         for (String propname : propnames.keySet()) {
-            if(propname.equals("")) {
+            if (propname.equals("")) {
                 continue;
             }
             String npropname = normalize_name(StringUtil.decapitalize(propname));
             PyObject prev = dict.__finditem__(npropname);
-            if (prev != null && prev instanceof PyReflectedFunction) {
+            if (prev != null && (!(prev instanceof PyReflectedField) ||
+                    !Modifier.isStatic(((PyReflectedField)prev).field.getModifiers()))) {
                 continue;
             }
             Method getter = null;
@@ -125,7 +126,11 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
                 }
             }
             if (setter != null || getter != null) {
-                dict.__setitem__(npropname, new PyBeanProperty(npropname, proptype, getter, setter));
+                PyBeanProperty prop = new PyBeanProperty(npropname, proptype, getter, setter);
+                if (prev != null) {
+                    prop.field = ((PyReflectedField)prev).field;
+                }
+                dict.__setitem__(npropname, prop);
             } else {
                 // XXX error
             }

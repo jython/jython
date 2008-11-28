@@ -55,9 +55,6 @@ class AbstractOnSyspathTest(unittest.TestCase):
         A()
 
 class InstantiationTest(unittest.TestCase):
-    def test_cant_create_abstract(self):
-        self.assertRaises(TypeError, Component)
-
     def test_can_subclass_abstract(self):
         class A(Component):
             pass
@@ -339,8 +336,11 @@ class ButtonTest(unittest.TestCase):
 class ColorTest(unittest.TestCase):
 
     def test_static_fields(self):
-        Color.red
-        Color.blue
+        self.assertEquals(Color(255, 0, 0), Color.RED)
+        # The bean accessor for getRed should be active on instances, but the static field red 
+        # should be visible on the class
+        self.assertEquals(255, Color.red.red)
+        self.assertEquals(Color(0, 0, 255), Color.blue)
 
     def test_is_operator(self):
         red = Color.red
@@ -363,7 +363,7 @@ class BigDecimalTest(unittest.TestCase):
         y = BigDecimalTest().asBigDecimal()
 
         self.assertEqual(type(x), type(y), "BigDecimal coerced")
-        self.assertEqual(x, y, "BigDecimal coerced")
+        self.assertEqual(x, y, "coerced BigDecimal not equal to directly created version")
 
 class MethodInvTest(unittest.TestCase):
     
