@@ -5,10 +5,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import org.python.core.util.StringUtil;
 import org.python.expose.ExposeAsSuperclass;
 import org.python.util.Generic;
@@ -35,7 +33,7 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
     @Override
     protected void fillDict() {
         dict = new PyStringMap();
-        Map<String, Object> propnames = new HashMap<String, Object>();
+        Map<String, PyBeanProperty> props = Generic.map();
         Class<?> base = underlying_class.getSuperclass();
         Method[] methods = underlying_class.getMethods();
         for (Method meth : methods) {
@@ -53,13 +51,29 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
                 if (!Modifier.isStatic(meth.getModifiers())) {
                     // check for xxxX.*
                     int n = meth.getParameterTypes().length;
-                    if (methname.startsWith("get") && n == 0) {
-                        propnames.put(methname.substring(3), "getter");
-                    } else if (methname.startsWith("is") && n == 0
+                    String name = null;
+                    boolean get = true;
+                    if (methname.startsWith("get") && methname.length() > 3 && n == 0) {
+                        name = methname.substring(3);
+                    } else if (methname.startsWith("is")  && methname.length() > 2 && n == 0
                             && meth.getReturnType() == Boolean.TYPE) {
-                        propnames.put(methname.substring(2), "getter");
-                    } else if (methname.startsWith("set") && n == 1) {
-                        propnames.put(methname.substring(3), meth);
+                        name = methname.substring(2);
+                    } else if (methname.startsWith("set")  && methname.length() > 3 && n == 1) {
+                        name = methname.substring(3);
+                        get = false;
+                    }
+                    if (name != null) {
+                        name = normalize_name(StringUtil.decapitalize(name));
+                        PyBeanProperty prop = props.get(name);
+                        if (prop == null) {
+                            prop = new PyBeanProperty(name, underlying_class, null, null);
+                            props.put(name, prop);
+                        }
+                        if (get) {
+                            prop.getMethod = meth;
+                        } else {
+                            prop.setMethod = meth;
+                        }
                     }
                 }
             }
@@ -99,41 +113,20 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
                 }
             }
         }
-        for (String propname : propnames.keySet()) {
-            if (propname.equals("")) {
+        for (PyBeanProperty prop : props.values()) {
+            PyObject prev = dict.__finditem__(prop.__name__);
+            if (prev != null && (!(prev instanceof PyReflectedField)
+                    || !Modifier.isStatic(((PyReflectedField)prev).field.getModifiers()))) {
                 continue;
             }
-            String npropname = normalize_name(StringUtil.decapitalize(propname));
-            PyObject prev = dict.__finditem__(npropname);
-            if (prev != null && (!(prev instanceof PyReflectedField) ||
-                    !Modifier.isStatic(((PyReflectedField)prev).field.getModifiers()))) {
-                continue;
+            if (prev != null) {
+                prop.field = ((PyReflectedField)prev).field;
             }
-            Method getter = null;
-            Method setter = null;
-            Class<?> proptype = null;
-            getter = get_non_static_method(underlying_class, "get" + propname);
-            if (getter == null)
-                getter = get_non_static_method(underlying_class, "is" + propname);
-            if (getter != null) {
-                proptype = getter.getReturnType();
-                setter = get_non_static_method(underlying_class, "set" + propname, proptype);
-            } else {
-                Object o = propnames.get(propname);
-                if (o instanceof Method) {
-                    setter = (Method)o;
-                    proptype = setter.getParameterTypes()[0];
-                }
+            if (prop.getMethod != null && prop.setMethod != null
+                    && prop.getMethod.getReturnType() != prop.setMethod.getReturnType()) {
+                prop.setMethod = null;
             }
-            if (setter != null || getter != null) {
-                PyBeanProperty prop = new PyBeanProperty(npropname, proptype, getter, setter);
-                if (prev != null) {
-                    prop.field = ((PyReflectedField)prev).field;
-                }
-                dict.__setitem__(npropname, prop);
-            } else {
-                // XXX error
-            }
+            dict.__setitem__(prop.__name__, prop);
         }
         Constructor<?>[] ctrs = underlying_class.getConstructors();
         if (ctrs.length != 0) {
