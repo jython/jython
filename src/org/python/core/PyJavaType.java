@@ -45,15 +45,12 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
                 String methname = meth.getName();
                 String nmethname = normalize_name(methname);
                 PyReflectedFunction reflfunc = (PyReflectedFunction)dict.__finditem__(nmethname);
-                boolean added = false;
                 if (reflfunc == null) {
                     dict.__setitem__(nmethname, new PyReflectedFunction(meth));
-                    added = true;
                 } else {
                     reflfunc.addMethod(meth);
-                    added = true;
                 }
-                if (added && !Modifier.isStatic(meth.getModifiers())) {
+                if (!Modifier.isStatic(meth.getModifiers())) {
                     // check for xxxX.*
                     int n = meth.getParameterTypes().length;
                     if (methname.startsWith("get") && n == 0) {
@@ -164,6 +161,7 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
                 }
             }
         }
+        dict.__setitem__("__eq__", new PyMethodDescr(this, EQUALS_PROXY));
         if (ClassDictInit.class.isAssignableFrom(underlying_class)
                 && underlying_class != ClassDictInit.class) {
             try {
@@ -222,103 +220,42 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
         return Py.JavaError(e);
     }
 
-    protected static class LenProxy extends PyBuiltinMethodNarrow {
-        public LenProxy() {
-            super("__len__", 0, 0);
-        }
-
-        protected LenProxy(PyType type, PyObject self, Info info) {
-            super(type, self, info);
-        }
-
-        @Override
-        public PyBuiltinCallable bind(PyObject self) {
-            return new LenProxy(getType(), self, info);
-        }
-
+    protected static  final PyBuiltinMethodNarrow LEN_PROXY =
+        new PyBuiltinMethodNarrow("__len__", 0, 0) {
         @Override
         public PyObject __call__() {
             return Py.newInteger(((Collection<?>)self.javaProxy).size());
         }
-    }
+    };
 
-    protected static class MapGetProxy extends PyBuiltinMethodNarrow {
-        public MapGetProxy() {
-            super("__getitem__", 1, 1);
-        }
-
-        protected MapGetProxy(PyType type, PyObject self, Info info) {
-            super(type, self, info);
-        }
-
-        @Override
-        public PyBuiltinCallable bind(PyObject self) {
-            return new MapGetProxy(getType(), self, info);
-        }
-
+    protected static final PyBuiltinMethodNarrow MAP_GET_PROXY =
+        new PyBuiltinMethodNarrow("__getitem__", 1, 1) {
         @Override
         public PyObject __call__(PyObject key) {
             return Py.java2py(((Map<?, ?>)self.javaProxy).get(Py.tojava(key, Object.class)));
         }
-    }
+    };
 
-    protected static class MapPutProxy extends PyBuiltinMethodNarrow {
-        public MapPutProxy() {
-            super("__setitem__", 2, 2);
-        }
-
-        protected MapPutProxy(PyType type, PyObject self, Info info) {
-            super(type, self, info);
-        }
-
-        @Override
-        public PyBuiltinCallable bind(PyObject self) {
-            return new MapPutProxy(getType(), self, info);
-        }
-
+    protected static final PyBuiltinMethodNarrow MAP_PUT_PROXY =
+        new PyBuiltinMethodNarrow("__setitem__", 2, 2) {
         @Override
         public PyObject __call__(PyObject key, PyObject value) {
             return Py.java2py(((Map<Object, Object>)self.javaProxy).put(Py.tojava(key, Object.class),
                                                                         Py.tojava(value,
                                                                                   Object.class)));
         }
-    }
+    };
 
-    protected static class MapRemoveProxy extends PyBuiltinMethodNarrow {
-
-        public MapRemoveProxy() {
-            super("__delitem__", 1, 1);
-        }
-
-        protected MapRemoveProxy(PyType type, PyObject self, Info info) {
-            super(type, self, info);
-        }
-
-        @Override
-        public PyBuiltinCallable bind(PyObject self) {
-            return new MapRemoveProxy(getType(), self, info);
-        }
-
+    protected static final PyBuiltinMethodNarrow MAP_REMOVE_PROXY =
+        new PyBuiltinMethodNarrow("__delitem__", 1, 1) {
         @Override
         public PyObject __call__(PyObject key, PyObject value) {
             return Py.java2py(((Map<?, ?>)self.javaProxy).remove(Py.tojava(key, Object.class)));
         }
-    }
+    };
 
-    protected static class ListGetProxy extends PyBuiltinMethodNarrow {
-        public ListGetProxy() {
-            super("__getitem__", 1, 1);
-        }
-
-        protected ListGetProxy(PyType type, PyObject self, Info info) {
-            super(type, self, info);
-        }
-
-        @Override
-        public PyBuiltinCallable bind(PyObject self) {
-            return new ListGetProxy(getType(), self, info);
-        }
-
+    protected static final PyBuiltinMethodNarrow LIST_GET_PROXY =
+        new PyBuiltinMethodNarrow("__getitem__", 1, 1){
         @Override
         public PyObject __call__(PyObject key) {
             if (key instanceof PyInteger) {
@@ -327,22 +264,10 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
                 throw Py.TypeError("only integer keys accepted");
             }
         }
-    }
+    };
 
-    protected static class ListSetProxy extends PyBuiltinMethodNarrow {
-        public ListSetProxy() {
-            super("__setitem__", 2, 2);
-        }
-
-        protected ListSetProxy(PyType type, PyObject self, Info info) {
-            super(type, self, info);
-        }
-
-        @Override
-        public PyBuiltinCallable bind(PyObject self) {
-            return new ListSetProxy(getType(), self, info);
-        }
-
+    protected static final PyBuiltinMethodNarrow LIST_SET_PROXY =
+        new PyBuiltinMethodNarrow("__setitem__", 2, 2) {
         @Override
         public PyObject __call__(PyObject key, PyObject value) {
             if (key instanceof PyInteger) {
@@ -353,23 +278,11 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
             }
             return Py.None;
         }
-    }
+    };
 
-    protected static class ListRemoveProxy extends PyBuiltinMethodNarrow {
-        public ListRemoveProxy() {
-            super("__delitem__", 1, 1);
-        }
-
-        protected ListRemoveProxy(PyType type, PyObject self, Info info) {
-            super(type, self, info);
-        }
-
-        @Override
-        public PyBuiltinCallable bind(PyObject self) {
-            return new ListRemoveProxy(getType(), self, info);
-        }
-
-        @Override
+    protected static final PyBuiltinMethodNarrow LIST_REMOVE_PROXY =
+        new PyBuiltinMethodNarrow("__delitem__", 1, 1) {
+         @Override
         public PyObject __call__(PyObject key, PyObject value) {
             if (key instanceof PyInteger) {
                 return Py.java2py(((List<Object>)self.javaProxy).remove(((PyInteger)key).getValue()));
@@ -377,38 +290,33 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
                 throw Py.TypeError("only integer keys accepted");
             }
         }
-    }
+    };
 
-    public static class IterableProxy extends PyBuiltinMethodNarrow {
-
-        public IterableProxy() {
-            super("__iter__", 0, 0);
-        }
-
-        protected IterableProxy(PyType type, PyObject self, Info info) {
-            super(type, self, info);
-        }
-
-        @Override
-        public PyBuiltinCallable bind(PyObject self) {
-            return new IterableProxy(getType(), self, info);
-        }
-
-        @Override
+    public static final PyBuiltinMethodNarrow ITERABLE_PROXY =
+        new PyBuiltinMethodNarrow("__iter__", 0, 0) {
         public PyObject __call__() {
             return new IteratorIter(((Iterable)self.javaProxy).iterator());
         }
-    }
+    };
+
+    public static final PyBuiltinMethodNarrow EQUALS_PROXY =
+        new PyBuiltinMethodNarrow("__eq__", 1, 1) {
+        @Override
+        public PyObject __call__(PyObject o) {
+            return self.javaProxy.equals(o.__tojava__(self.javaProxy.getClass())) ? Py.True
+                    : Py.False;
+        }
+    };
 
     static Map<Class<?>, PyBuiltinMethod[]> _collectionProxies = Generic.map();
     static {
-        _collectionProxies.put(Iterable.class, new PyBuiltinMethod[] {new IterableProxy()});
-        _collectionProxies.put(Collection.class, new PyBuiltinMethod[] {new LenProxy()});
-        _collectionProxies.put(Map.class, new PyBuiltinMethod[] {new MapGetProxy(),
-                                                                 new MapPutProxy(),
-                                                                 new MapRemoveProxy()});
-        _collectionProxies.put(List.class, new PyBuiltinMethod[] {new ListGetProxy(),
-                                                                  new ListSetProxy(),
-                                                                  new ListRemoveProxy()});
+        _collectionProxies.put(Iterable.class, new PyBuiltinMethod[] {ITERABLE_PROXY});
+        _collectionProxies.put(Collection.class, new PyBuiltinMethod[] {LEN_PROXY});
+        _collectionProxies.put(Map.class, new PyBuiltinMethod[] {MAP_GET_PROXY,
+                                                                 MAP_PUT_PROXY,
+                                                                 MAP_REMOVE_PROXY});
+        _collectionProxies.put(List.class, new PyBuiltinMethod[] {LIST_GET_PROXY,
+                                                                  LIST_SET_PROXY,
+                                                                  LIST_REMOVE_PROXY});
     }
 }
