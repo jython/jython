@@ -2,6 +2,7 @@
 package org.python.core;
 
 import java.io.Serializable;
+import java.lang.reflect.Modifier;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -109,10 +110,16 @@ public class PyObject implements Serializable {
      * by our __init__.
      */
     protected void proxyInit() {
-        if (javaProxy != null || getType().getProxyType() == null) {
+        Class<?> c = getType().getProxyType();
+        if (javaProxy != null || c == null) {
             return;
         }
-        Class<?> c = getType().getProxyType();
+        int mods = c.getModifiers();
+        if (Modifier.isInterface(mods)) {
+            throw Py.TypeError("can't instantiate interface (" + c.getName() + ")");
+        } else if (Modifier.isAbstract(mods)) {
+            throw Py.TypeError("can't instantiate abstract class (" + c.getName() + ")");
+        }
         PyProxy proxy;
         ThreadState ts = Py.getThreadState();
         try {
