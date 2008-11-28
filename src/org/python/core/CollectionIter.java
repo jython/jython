@@ -1,3 +1,4 @@
+// Copyright (c) Finn Bock
 package org.python.core;
 
 import java.util.Enumeration;
