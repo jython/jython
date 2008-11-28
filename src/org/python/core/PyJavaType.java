@@ -2,6 +2,7 @@ package org.python.core;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Collection;
@@ -33,95 +34,103 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
     @Override
     protected void fillDict() {
         dict = new PyStringMap();
-        Map<String, PyBeanProperty> props = Generic.map();
         Class<?> base = underlying_class.getSuperclass();
-        Method[] methods = underlying_class.getMethods();
-        for (Method meth : methods) {
-            Class<?> declaring = meth.getDeclaringClass();
-            if (base == null ||
-                    (declaring != base && base.isAssignableFrom(declaring) && !ignore(meth))) {
-                String methname = meth.getName();
-                String nmethname = normalize_name(methname);
-                PyReflectedFunction reflfunc = (PyReflectedFunction)dict.__finditem__(nmethname);
-                if (reflfunc == null) {
-                    dict.__setitem__(nmethname, new PyReflectedFunction(meth));
-                } else {
-                    reflfunc.addMethod(meth);
+
+        // Add methods and determine bean properties declared on this class
+        Map<String, PyBeanProperty> props = Generic.map();
+        for (Method meth : underlying_class.getMethods()) {
+            if (!declaredOnMember(base, meth) || ignore(meth)) {
+                continue;
+            }
+            String methname = meth.getName();
+            String nmethname = normalize(methname);
+            PyReflectedFunction reflfunc = (PyReflectedFunction)dict.__finditem__(nmethname);
+            if (reflfunc == null) {
+                dict.__setitem__(nmethname, new PyReflectedFunction(meth));
+            } else {
+                reflfunc.addMethod(meth);
+            }
+            if (!Modifier.isStatic(meth.getModifiers())) {
+                // check for xxxX.*
+                int n = meth.getParameterTypes().length;
+                String name = null;
+                boolean get = true;
+                if (methname.startsWith("get") && methname.length() > 3 && n == 0) {
+                    name = methname.substring(3);
+                } else if (methname.startsWith("is") && methname.length() > 2 && n == 0
+                        && meth.getReturnType() == Boolean.TYPE) {
+                    name = methname.substring(2);
+                } else if (methname.startsWith("set") && methname.length() > 3 && n == 1) {
+                    name = methname.substring(3);
+                    get = false;
                 }
-                if (!Modifier.isStatic(meth.getModifiers())) {
-                    // check for xxxX.*
-                    int n = meth.getParameterTypes().length;
-                    String name = null;
-                    boolean get = true;
-                    if (methname.startsWith("get") && methname.length() > 3 && n == 0) {
-                        name = methname.substring(3);
-                    } else if (methname.startsWith("is")  && methname.length() > 2 && n == 0
-                            && meth.getReturnType() == Boolean.TYPE) {
-                        name = methname.substring(2);
-                    } else if (methname.startsWith("set")  && methname.length() > 3 && n == 1) {
-                        name = methname.substring(3);
-                        get = false;
+                if (name != null) {
+                    name = normalize(StringUtil.decapitalize(name));
+                    PyBeanProperty prop = props.get(name);
+                    if (prop == null) {
+                        prop = new PyBeanProperty(name, underlying_class, null, null);
+                        props.put(name, prop);
                     }
-                    if (name != null) {
-                        name = normalize_name(StringUtil.decapitalize(name));
-                        PyBeanProperty prop = props.get(name);
-                        if (prop == null) {
-                            prop = new PyBeanProperty(name, underlying_class, null, null);
-                            props.put(name, prop);
-                        }
-                        if (get) {
-                            prop.getMethod = meth;
-                        } else {
-                            prop.setMethod = meth;
-                        }
+                    if (get) {
+                        prop.getMethod = meth;
+                    } else {
+                        prop.setMethod = meth;
                     }
                 }
             }
         }
-        for (Method meth : methods) {
-            String nmethname = normalize_name(meth.getName());
+
+        // Add arguments for superclass methods with the same names as methods declared on this type
+        for (Method meth : underlying_class.getMethods()) {
+            String nmethname = normalize(meth.getName());
             PyReflectedFunction reflfunc = (PyReflectedFunction)dict.__finditem__(nmethname);
             if (reflfunc != null) {
                 reflfunc.addMethod(meth);
             }
         }
-        Field[] fields = underlying_class.getFields();
-        for (Field field : fields) {
-            Class<?> declaring = field.getDeclaringClass();
-            if (base == null || (declaring != base && base.isAssignableFrom(declaring))) {
-                String fldname = field.getName();
-                int fldmods = field.getModifiers();
-                Class<?> fldtype = field.getType();
-                if (Modifier.isStatic(fldmods)) {
-                    if (fldname.startsWith("__doc__") && fldname.length() > 7
-                            && fldtype == PyString.class) {
-                        String fname = fldname.substring(7).intern();
-                        PyObject memb = dict.__finditem__(fname);
-                        if (memb != null && memb instanceof PyReflectedFunction) {
-                            PyString doc = null;
-                            try {
-                                doc = (PyString)field.get(null);
-                            } catch (IllegalAccessException e) {
-                                throw error(e);
-                            }
-                            ((PyReflectedFunction)memb).__doc__ = doc;
-                        }
-                    }
-                }
-                if (dict.__finditem__(normalize_name(fldname)) == null) {
-                    dict.__setitem__(normalize_name(fldname), new PyReflectedField(field));
-                }
-            }
-        }
-        for (PyBeanProperty prop : props.values()) {
-            PyObject prev = dict.__finditem__(prop.__name__);
-            if (prev != null && (!(prev instanceof PyReflectedField)
-                    || !Modifier.isStatic(((PyReflectedField)prev).field.getModifiers()))) {
+
+        // Add fields declared on this type
+        for (Field field : underlying_class.getFields()) {
+            if (!declaredOnMember(base, field)) {
                 continue;
             }
-            if (prev != null) {
-                prop.field = ((PyReflectedField)prev).field;
+            String fldname = field.getName();
+            if (Modifier.isStatic(field.getModifiers())) {
+                if (fldname.startsWith("__doc__") && fldname.length() > 7
+                        && field.getType() == PyString.class) {
+                    String fname = fldname.substring(7).intern();
+                    PyObject memb = dict.__finditem__(fname);
+                    if (memb != null && memb instanceof PyReflectedFunction) {
+                        PyString doc = null;
+                        try {
+                            doc = (PyString)field.get(null);
+                        } catch (IllegalAccessException e) {
+                            throw Py.JavaError(e);
+                        }
+                        ((PyReflectedFunction)memb).__doc__ = doc;
+                    }
+                }
             }
+            if (dict.__finditem__(normalize(fldname)) == null) {
+                dict.__setitem__(normalize(fldname), new PyReflectedField(field));
+            }
+        }
+
+        // Fill in the bean properties picked up while going through the methods
+        for (PyBeanProperty prop : props.values()) {
+            PyObject prev = dict.__finditem__(prop.__name__);
+            if (prev != null) {
+                if (!(prev instanceof PyReflectedField)
+                        || !Modifier.isStatic(((PyReflectedField)prev).field.getModifiers())) {
+                    // Any methods or non-static fields take precedence over the bean property
+                    continue;
+                } else {
+                    // Must've been a static field, so add it to the property
+                    prop.field = ((PyReflectedField)prev).field;
+                }
+            }
+            // If the return types on the set and get methods for a property don't agree, the get
+            // get method takes precedence
             if (prop.getMethod != null && prop.setMethod != null
                     && prop.getMethod.getReturnType() != prop.setMethod.getReturnType()) {
                 prop.setMethod = null;
@@ -166,39 +175,37 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
                 Method m = underlying_class.getMethod("classDictInit", PyObject.class);
                 m.invoke(null, dict);
             } catch (Exception exc) {
-                throw error(exc);
+                throw Py.JavaError(exc);
             }
         }
         if (base != Object.class) {
-            has_set = get_descr_method(underlying_class, "__set__", OO) != null
-                    || get_descr_method(underlying_class, "_doset", OO) != null;
-            has_delete = get_descr_method(underlying_class, "__delete__", PyObject.class) != null
-                    || get_descr_method(underlying_class, "_dodel", PyObject.class) != null;
+            has_set = getDescrMethod(underlying_class, "__set__", OO) != null
+                    || getDescrMethod(underlying_class, "_doset", OO) != null;
+            has_delete = getDescrMethod(underlying_class, "__delete__", PyObject.class) != null
+                    || getDescrMethod(underlying_class, "_dodel", PyObject.class) != null;
         }
     }
 
-    private static String normalize_name(String name) {
+    private static boolean declaredOnMember(Class<?> base, Member declaring) {
+        return base == null || (declaring.getDeclaringClass() != base &&
+                base.isAssignableFrom(declaring.getDeclaringClass()));
+    }
+
+    private static String normalize(String name) {
         if (name.endsWith("$")) {
             name = name.substring(0, name.length() - 1);
         }
         return name.intern();
     }
 
-    private static Method get_non_static_method(Class<?> c, String name, Class<?>... parmtypes) {
+    private static Method getDescrMethod(Class<?> c, String name, Class<?>... parmtypes) {
+        Method meth;
         try {
-            Method meth = c.getMethod(name, parmtypes);
-            if (!Modifier.isStatic(meth.getModifiers())) {
-                return meth;
-            }
+            meth = c.getMethod(name, parmtypes);
         } catch (NoSuchMethodException e) {
-            // ok
+            return null;
         }
-        return null;
-    }
-
-    private static Method get_descr_method(Class<?> c, String name, Class<?>... parmtypes) {
-        Method meth = get_non_static_method(c, name, parmtypes);
-        if (meth != null && meth.getDeclaringClass() != PyObject.class) {
+        if (!Modifier.isStatic(meth.getModifiers()) && meth.getDeclaringClass() != PyObject.class) {
             return meth;
         }
         return null;
@@ -214,11 +221,7 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
         return false;
     }
 
-    private static PyException error(Exception e) {
-        return Py.JavaError(e);
-    }
-
-    protected static  final PyBuiltinMethodNarrow LEN_PROXY =
+    private static final PyBuiltinMethodNarrow LEN_PROXY =
         new PyBuiltinMethodNarrow("__len__", 0, 0) {
         @Override
         public PyObject __call__() {
@@ -226,7 +229,7 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
         }
     };
 
-    protected static final PyBuiltinMethodNarrow MAP_GET_PROXY =
+    private static final PyBuiltinMethodNarrow MAP_GET_PROXY =
         new PyBuiltinMethodNarrow("__getitem__", 1, 1) {
         @Override
         public PyObject __call__(PyObject key) {
@@ -234,7 +237,7 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
         }
     };
 
-    protected static final PyBuiltinMethodNarrow MAP_PUT_PROXY =
+    private static final PyBuiltinMethodNarrow MAP_PUT_PROXY =
         new PyBuiltinMethodNarrow("__setitem__", 2, 2) {
         @Override
         public PyObject __call__(PyObject key, PyObject value) {
@@ -244,7 +247,7 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
         }
     };
 
-    protected static final PyBuiltinMethodNarrow MAP_REMOVE_PROXY =
+    private static final PyBuiltinMethodNarrow MAP_REMOVE_PROXY =
         new PyBuiltinMethodNarrow("__delitem__", 1, 1) {
         @Override
         public PyObject __call__(PyObject key, PyObject value) {
@@ -252,7 +255,7 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
         }
     };
 
-    protected static final PyBuiltinMethodNarrow LIST_GET_PROXY =
+    private static final PyBuiltinMethodNarrow LIST_GET_PROXY =
         new PyBuiltinMethodNarrow("__getitem__", 1, 1){
         @Override
         public PyObject __call__(PyObject key) {
@@ -264,7 +267,7 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
         }
     };
 
-    protected static final PyBuiltinMethodNarrow LIST_SET_PROXY =
+    private static final PyBuiltinMethodNarrow LIST_SET_PROXY =
         new PyBuiltinMethodNarrow("__setitem__", 2, 2) {
         @Override
         public PyObject __call__(PyObject key, PyObject value) {
@@ -278,7 +281,7 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
         }
     };
 
-    protected static final PyBuiltinMethodNarrow LIST_REMOVE_PROXY =
+    private static final PyBuiltinMethodNarrow LIST_REMOVE_PROXY =
         new PyBuiltinMethodNarrow("__delitem__", 1, 1) {
          @Override
         public PyObject __call__(PyObject key, PyObject value) {
@@ -290,14 +293,14 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
         }
     };
 
-    public static final PyBuiltinMethodNarrow ITERABLE_PROXY =
+    private static final PyBuiltinMethodNarrow ITERABLE_PROXY =
         new PyBuiltinMethodNarrow("__iter__", 0, 0) {
         public PyObject __call__() {
             return new IteratorIter(((Iterable)self.javaProxy).iterator());
         }
     };
 
-    public static final PyBuiltinMethodNarrow EQUALS_PROXY =
+    private static final PyBuiltinMethodNarrow EQUALS_PROXY =
         new PyBuiltinMethodNarrow("__eq__", 1, 1) {
         @Override
         public PyObject __call__(PyObject o) {
