@@ -66,7 +66,7 @@ public class IdImpl {
 
     public long id(PyObject o) {
         if (o.getType() instanceof PyJavaType) {
-            return java_obj_id(o.javaProxy);
+            return java_obj_id(o.getJavaProxy());
         } else {
             return java_obj_id(o);
         }

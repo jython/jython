@@ -70,11 +70,12 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
                     name = normalize(StringUtil.decapitalize(name));
                     PyBeanProperty prop = props.get(name);
                     if (prop == null) {
-                        prop = new PyBeanProperty(name, underlying_class, null, null);
+                        prop = new PyBeanProperty(name, null, null, null);
                         props.put(name, prop);
                     }
                     if (get) {
                         prop.getMethod = meth;
+                        prop.myType = meth.getReturnType();
                     } else {
                         prop.setMethod = meth;
                     }
@@ -134,7 +135,7 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
             // If the return types on the set and get methods for a property don't agree, the get
             // get method takes precedence
             if (prop.getMethod != null && prop.setMethod != null
-                    && prop.getMethod.getReturnType() != prop.setMethod.getReturnType()) {
+                    && prop.myType != prop.setMethod.getParameterTypes()[0]) {
                 prop.setMethod = null;
             }
             dict.__setitem__(prop.__name__, prop);
@@ -225,7 +226,7 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
         new PyBuiltinMethodNarrow("__len__", 0, 0) {
         @Override
         public PyObject __call__() {
-            return Py.newInteger(((Collection<?>)self.javaProxy).size());
+            return Py.newInteger(((Collection<?>)self.getJavaProxy()).size());
         }
     };
 
@@ -233,7 +234,7 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
         new PyBuiltinMethodNarrow("__getitem__", 1, 1) {
         @Override
         public PyObject __call__(PyObject key) {
-            return Py.java2py(((Map<?, ?>)self.javaProxy).get(Py.tojava(key, Object.class)));
+            return Py.java2py(((Map<?, ?>)self.getJavaProxy()).get(Py.tojava(key, Object.class)));
         }
     };
 
@@ -241,7 +242,7 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
         new PyBuiltinMethodNarrow("__setitem__", 2, 2) {
         @Override
         public PyObject __call__(PyObject key, PyObject value) {
-            return Py.java2py(((Map<Object, Object>)self.javaProxy).put(Py.tojava(key, Object.class),
+            return Py.java2py(((Map<Object, Object>)self.getJavaProxy()).put(Py.tojava(key, Object.class),
                                                                         Py.tojava(value,
                                                                                   Object.class)));
         }
@@ -251,7 +252,7 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
         new PyBuiltinMethodNarrow("__delitem__", 1, 1) {
         @Override
         public PyObject __call__(PyObject key, PyObject value) {
-            return Py.java2py(((Map<?, ?>)self.javaProxy).remove(Py.tojava(key, Object.class)));
+            return Py.java2py(((Map<?, ?>)self.getJavaProxy()).remove(Py.tojava(key, Object.class)));
         }
     };
 
@@ -260,7 +261,7 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
         @Override
         public PyObject __call__(PyObject key) {
             if (key instanceof PyInteger) {
-                return Py.java2py(((List<?>)self.javaProxy).get(((PyInteger)key).getValue()));
+                return Py.java2py(((List<?>)self.getJavaProxy()).get(((PyInteger)key).getValue()));
             } else {
                 throw Py.TypeError("only integer keys accepted");
             }
@@ -272,7 +273,7 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
         @Override
         public PyObject __call__(PyObject key, PyObject value) {
             if (key instanceof PyInteger) {
-                ((List<Object>)self.javaProxy).set(((PyInteger)key).getValue(),
+                ((List<Object>)self.getJavaProxy()).set(((PyInteger)key).getValue(),
                                                    Py.tojava(value, Object.class));
             } else {
                 throw Py.TypeError("only integer keys accepted");
@@ -286,7 +287,7 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
          @Override
         public PyObject __call__(PyObject key, PyObject value) {
             if (key instanceof PyInteger) {
-                return Py.java2py(((List<Object>)self.javaProxy).remove(((PyInteger)key).getValue()));
+                return Py.java2py(((List<Object>)self.getJavaProxy()).remove(((PyInteger)key).getValue()));
             } else {
                 throw Py.TypeError("only integer keys accepted");
             }
@@ -322,7 +323,7 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
     private static final PyBuiltinMethodNarrow ITERABLE_PROXY =
         new PyBuiltinMethodNarrow("__iter__", 0, 0) {
         public PyObject __call__() {
-            return new IteratorIter(((Iterable)self.javaProxy).iterator());
+            return new IteratorIter(((Iterable)self.getJavaProxy()).iterator());
         }
     };
 
@@ -330,8 +331,8 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
         new PyBuiltinMethodNarrow("__eq__", 1, 1) {
         @Override
         public PyObject __call__(PyObject o) {
-            return self.javaProxy.equals(o.__tojava__(self.javaProxy.getClass())) ? Py.True
-                    : Py.False;
+            return self.getJavaProxy().equals(o.__tojava__(self.getJavaProxy().getClass())) ?
+                    Py.True : Py.False;
         }
     };
 

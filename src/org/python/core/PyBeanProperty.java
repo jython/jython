@@ -62,7 +62,7 @@ public class PyBeanProperty extends PyReflectedField {
         Object jvalue = Py.tojava(value, myType);
 
         try {
-            setMethod.invoke(iself, new Object[] {jvalue});
+            setMethod.invoke(iself, jvalue);
         } catch (Exception e) {
             throw Py.JavaError(e);
         }

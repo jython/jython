@@ -37,9 +37,12 @@ public class PyObject implements Serializable {
 
     }
 
-    // This field is only filled on Python wrappers for Java objects and for Python subclasses of
-    // Java classes.
-    Object javaProxy;
+    /**
+     * An underlying Java instance that this object is wrapping or is a subclass of. Anything
+     * attempting to use the proxy should go through {@link #getJavaProxy()} which ensures that it's
+     * initialized.
+     */
+    protected Object javaProxy;
 
     private PyType objtype;
 
@@ -243,7 +246,7 @@ public class PyObject implements Serializable {
      * @param c the Class to convert this <code>PyObject</code> to.
      **/
     public Object __tojava__(Class<?> c) {
-        if ((c == Object.class || c == Serializable.class) && javaProxy != null) {
+        if ((c == Object.class || c == Serializable.class) && getJavaProxy() != null) {
             return javaProxy;
         }
         if (c.isInstance(this)) {
@@ -255,10 +258,17 @@ public class PyObject implements Serializable {
                 c = tmp;
             }
         }
-        if (c.isInstance(javaProxy)) {
+        if (c.isInstance(getJavaProxy())) {
             return javaProxy;
         }
         return Py.NoConversion;
+    }
+
+    protected Object getJavaProxy() {
+        if (javaProxy == null) {
+            proxyInit();
+        }
+        return javaProxy;
     }
 
     private static final Map<Class<?>, Class<?>> primitiveMap = Generic.map();
@@ -1573,6 +1583,8 @@ public class PyObject implements Serializable {
      * @return the result of the comparison
      **/
     public PyObject _is(PyObject o) {
+        // Access javaProxy directly here as is is for object identity, and at best getJavaProxy
+        // will initialize a new object with a different identity
         return this == o || (javaProxy != null && javaProxy == o.javaProxy) ? Py.True : Py.False;
     }
 
@@ -1583,6 +1595,8 @@ public class PyObject implements Serializable {
      * @return the result of the comparison
      **/
     public PyObject _isnot(PyObject o) {
+        // Access javaProxy directly here as is is for object identity, and at best getJavaProxy
+        // will initialize a new object with a different identity
         return this != o || javaProxy != o.javaProxy ? Py.True : Py.False;
     }
 
