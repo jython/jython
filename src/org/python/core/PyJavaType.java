@@ -6,6 +6,8 @@ import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Collection;
+import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import org.python.core.util.StringUtil;
@@ -137,26 +139,24 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
             }
             dict.__setitem__(prop.__name__, prop);
         }
-        Constructor<?>[] ctrs = underlying_class.getConstructors();
-        if (ctrs.length != 0) {
-            final PyReflectedConstructor reflctr = new PyReflectedConstructor("_new_impl");
-            for (Constructor<?> ctr : ctrs) {
-                reflctr.addConstructor(ctr);
-            }
-            if (PyObject.class.isAssignableFrom(underlying_class)) {
-                PyObject new_ = new PyNewWrapper(underlying_class, "__new__", -1, -1) {
 
-                    public PyObject new_impl(boolean init,
-                                             PyType subtype,
-                                             PyObject[] args,
-                                             String[] keywords) {
-                        return reflctr.make(args, keywords);
-                    }
-                };
-                dict.__setitem__("__new__", new_);
-            } else {
-                dict.__setitem__("__init__", reflctr);
-            }
+        final PyReflectedConstructor reflctr = new PyReflectedConstructor("_new_impl");
+        for (Constructor<?> ctr : underlying_class.getConstructors()) {
+            reflctr.addConstructor(ctr);
+        }
+        if (PyObject.class.isAssignableFrom(underlying_class)) {
+            PyObject new_ = new PyNewWrapper(underlying_class, "__new__", -1, -1) {
+
+                public PyObject new_impl(boolean init,
+                                         PyType subtype,
+                                         PyObject[] args,
+                                         String[] keywords) {
+                    return reflctr.make(args, keywords);
+                }
+            };
+            dict.__setitem__("__new__", new_);
+        } else {
+            dict.__setitem__("__init__", reflctr);
         }
         for (Class<?> inner : underlying_class.getClasses()) {
             dict.__setitem__(inner.getSimpleName(), PyType.fromClass(inner));
@@ -292,6 +292,32 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
             }
         }
     };
+    class EnumerationIter extends PyIterator {
+
+        private Enumeration<Object> proxy;
+
+        public EnumerationIter(Enumeration<Object> proxy) {
+            this.proxy = proxy;
+        }
+
+        public PyObject __iternext__() {
+            return proxy.hasMoreElements() ? Py.java2py(proxy.nextElement()) : null;
+        }
+    }
+
+    private static class IteratorIter extends PyIterator {
+
+        private Iterator<Object> proxy;
+
+        public IteratorIter(Iterator<Object> proxy) {
+            this.proxy = proxy;
+        }
+
+        public PyObject __iternext__() {
+            return proxy.hasNext() ? Py.java2py(proxy.next()) : null;
+        }
+    }
+
 
     private static final PyBuiltinMethodNarrow ITERABLE_PROXY =
         new PyBuiltinMethodNarrow("__iter__", 0, 0) {

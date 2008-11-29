@@ -1069,9 +1069,9 @@ public class PyDialectDerived extends PyDialect implements Slotted {
                 if (res!=Py.None) {
                     throw Py.TypeError(String.format("__init__() should return None, not '%.200s'",res.getType().fastGetName()));
                 }
+                proxyInit();
             }
         }
-        proxyInit();
     }
 
     public PyObject __index__() {

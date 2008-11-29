@@ -7,23 +7,28 @@ import java.util.Set;
 
 import org.python.util.Generic;
 
+public class PyReflectedFunction extends PyObject {
 
-public class PyReflectedFunction extends PyObject
-{
     public String __name__;
+
     public PyObject __doc__ = Py.None;
-    public ReflectedArgs[] argslist;
+
+    public ReflectedArgs[] argslist = new ReflectedArgs[1];
+
     public int nargs;
 
-    public PyReflectedFunction(String name) {
+    protected PyReflectedFunction(String name) {
         __name__ = name;
-        argslist = new ReflectedArgs[1];
-        nargs = 0;
     }
 
     public PyReflectedFunction(Method method) {
         this(method.getName());
         addMethod(method);
+        if (nargs == 0) {
+            String msg = String.format("Attempted to make Java method visible, but it isn't "
+                    + "callable[method=%s, class=%s]", method.getName(), method.getDeclaringClass());
+            throw Py.SystemError(msg);
+        }
     }
 
     public PyObject _doget(PyObject container) {
@@ -31,13 +36,14 @@ public class PyReflectedFunction extends PyObject
     }
 
     public PyObject _doget(PyObject container, PyObject wherefound) {
-        if (container == null)
+        if (container == null) {
             return this;
+        }
         return new PyMethod(this, container, wherefound);
     }
 
     public boolean _doset(PyObject container) {
-        throw Py.TypeError("java function not settable: "+__name__);
+        throw Py.TypeError("java function not settable: " + __name__);
     }
 
     public PyObject getDoc() {
@@ -45,7 +51,8 @@ public class PyReflectedFunction extends PyObject
     }
 
     private ReflectedArgs makeArgs(Method m) {
-        return new ReflectedArgs(m, m.getParameterTypes(),
+        return new ReflectedArgs(m,
+                                 m.getParameterTypes(),
                                  m.getDeclaringClass(),
                                  Modifier.isStatic(m.getModifiers()));
     }
@@ -64,63 +71,54 @@ public class PyReflectedFunction extends PyObject
     }
 
     protected boolean handles(ReflectedArgs args) {
-        ReflectedArgs[] argsl = argslist;
-        int n = nargs;
-        for(int i=0; i<n; i++) {
-            int cmp = args.compareTo(argsl[i]);
-            if (cmp == 0)
+        for (int i = 0; i < nargs; i++) {
+            int cmp = args.compareTo(argslist[i]);
+            if (cmp == 0) {
                 return true;
-            if (cmp == +1)
+            } else if (cmp == 1) {
                 return false;
+            }
         }
         return false;
     }
 
     public void addMethod(Method m) {
-        int mods = m.getModifiers();
         // Only add public methods unless we're overriding
-        if (!Modifier.isPublic(mods) && Options.respectJavaAccessibility)
+        if (!Modifier.isPublic(m.getModifiers()) && Options.respectJavaAccessibility) {
             return;
+        }
         addArgs(makeArgs(m));
     }
 
     protected void addArgs(ReflectedArgs args) {
-        ReflectedArgs[] argsl = argslist;
-        int n = nargs;
         int i;
-        for(i=0; i<n; i++) {
-            int cmp = args.compareTo(argsl[i]);
-            if (cmp == 0)
+        for (i = 0; i < nargs; i++) {
+            int cmp = args.compareTo(argslist[i]);
+            if (cmp == 0) {
                 return;
-            if (cmp == ReflectedArgs.REPLACE) {
-                argsl[i] = args;
+            } else if (cmp == ReflectedArgs.REPLACE) {
+                argslist[i] = args;
                 return;
-            }
-            if (cmp == -1)
+            } else if (cmp == -1) {
                 break;
+            }
         }
-
-        int nn = n+1;
-        if (nn > argsl.length) {
-            argsl = new ReflectedArgs[nn+2];
-            System.arraycopy(argslist, 0, argsl, 0, n);
-            argslist = argsl;
+        int nn = nargs + 1;
+        if (nn > argslist.length) {
+            ReflectedArgs[] newargslist = new ReflectedArgs[nn + 2];
+            System.arraycopy(argslist, 0, newargslist, 0, nargs);
+            argslist = newargslist;
         }
-
-        for(int j=n; j>i; j--) {
-            argsl[j] = argsl[j-1];
+        for (int j = nargs; j > i; j--) {
+            argslist[j] = argslist[j - 1];
         }
-
-        argsl[i] = args;
+        argslist[i] = args;
         nargs = nn;
     }
 
-    public PyObject __call__(PyObject self, PyObject[] args,
-                             String[] keywords)
-    {
+    public PyObject __call__(PyObject self, PyObject[] args, String[] keywords) {
         ReflectedCallData callData = new ReflectedCallData();
         Object method = null;
-
         ReflectedArgs[] argsl = argslist;
         int n = nargs;
         for (int i = 0; i < n; i++) {
@@ -132,19 +130,17 @@ public class PyReflectedFunction extends PyObject
             }
         }
         if (method == null) {
-            throwError(callData.errArg, args.length, self != null,
-                       keywords.length != 0);
+            throwError(callData.errArg, args.length, self != null, keywords.length != 0);
         }
-
         Object cself = callData.self;
         Method m = (Method)method;
+        Object o;
         try {
-
-            Object o = m.invoke(cself, callData.getArgsArray());
-            return Py.java2py(o);
+            o = m.invoke(cself, callData.getArgsArray());
         } catch (Throwable t) {
             throw Py.JavaError(t);
         }
+        return Py.java2py(o);
     }
 
     public PyObject __call__(PyObject[] args, String[] keywords) {
@@ -152,59 +148,49 @@ public class PyReflectedFunction extends PyObject
     }
 
     // A bunch of code to make error handling prettier
-
-
     protected void throwError(String message) {
-        throw Py.TypeError(__name__+"(): "+message);
+        throw Py.TypeError(__name__ + "(): " + message);
     }
 
-    private static void addRange(StringBuffer buf, int min, int max,
-                                 String sep)
-    {
+    private static void addRange(StringBuilder buf, int min, int max, String sep) {
         if (buf.length() > 0) {
             buf.append(sep);
         }
         if (min < max) {
-            buf.append(Integer.toString(min)+"-"+max);
+            buf.append(Integer.toString(min)).append('-').append(max);
         } else {
             buf.append(min);
         }
     }
-
 
     protected void throwArgCountError(int nArgs, boolean self) {
         // Assume no argument lengths greater than 40...
         boolean[] legalArgs = new boolean[40];
         int maxArgs = -1;
         int minArgs = 40;
-
-        ReflectedArgs[] argsl = argslist;
-        int n = nargs;
-        for (int i=0; i<n; i++) {
-            ReflectedArgs rargs = argsl[i];
-
+        for (int i = 0; i < nargs; i++) {
+            ReflectedArgs rargs = argslist[i];
             int l = rargs.args.length;
             if (!self && !rargs.isStatic) {
                 l += 1;
             }
-
             legalArgs[l] = true;
-            if (l > maxArgs)
+            if (l > maxArgs) {
                 maxArgs = l;
-            if (l < minArgs)
+            }
+            if (l < minArgs) {
                 minArgs = l;
+            }
         }
-
-        StringBuffer buf = new StringBuffer();
-
+        StringBuilder buf = new StringBuilder();
         int startRange = minArgs;
-        int a = minArgs+1;
+        int a = minArgs + 1;
         while (a < maxArgs) {
             if (legalArgs[a]) {
                 a++;
                 continue;
             } else {
-                addRange(buf, startRange, a-1, ", ");
+                addRange(buf, startRange, a - 1, ", ");
                 a++;
                 while (a <= maxArgs) {
                     if (legalArgs[a]) {
@@ -216,21 +202,21 @@ public class PyReflectedFunction extends PyObject
             }
         }
         addRange(buf, startRange, maxArgs, " or ");
-        throwError("expected "+buf+" args; got "+nArgs);
+        throwError("expected " + buf + " args; got " + nArgs);
     }
 
     private static String ordinal(int n) {
-        switch(n+1) {
-        case 0:
-            return "self";
-        case 1:
-            return "1st";
-        case 2:
-            return "2nd";
-        case 3:
-            return "3rd";
-        default:
-            return Integer.toString(n+1)+"th";
+        switch(n + 1){
+            case 0:
+                return "self";
+            case 1:
+                return "1st";
+            case 2:
+                return "2nd";
+            case 3:
+                return "3rd";
+            default:
+                return Integer.toString(n + 1) + "th";
         }
     }
 
@@ -239,7 +225,7 @@ public class PyReflectedFunction extends PyObject
             return "String";
         }
         if (arg.isArray()) {
-            return niceName(arg.getComponentType())+"[]";
+            return niceName(arg.getComponentType()) + "[]";
         }
         return arg.getName();
     }
@@ -264,10 +250,9 @@ public class PyReflectedFunction extends PyObject
             buf.append(niceName(arg));
             buf.append(", ");
         }
-        if(buf.length() > 2) {
+        if (buf.length() > 2) {
             buf.setLength(buf.length() - 2);
         }
-
         throwError(ordinal(errArg) + " arg can't be coerced to " + buf);
     }
 
@@ -283,16 +268,15 @@ public class PyReflectedFunction extends PyObject
 
     // Included only for debugging purposes...
     public void printArgs() {
-        System.err.println("nargs: "+nargs);
-        for(int i=0; i<nargs; i++) {
+        System.err.println("nargs: " + nargs);
+        for (int i = 0; i < nargs; i++) {
             ReflectedArgs args = argslist[i];
             System.err.println(args.toString());
         }
     }
 
-
     public String toString() {
-        //printArgs();
-        return "<java function "+__name__+" "+Py.idstr(this)+">";
+        // printArgs();
+        return "<java function " + __name__ + " " + Py.idstr(this) + ">";
     }
 }

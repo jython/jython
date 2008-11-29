@@ -16,7 +16,6 @@ import java.sql.Date;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.Calendar;
-import java.util.HashSet;
 import java.util.Set;
 
 import org.python.antlr.ast.modType;
@@ -24,6 +23,7 @@ import org.python.compiler.Module;
 import org.python.core.adapter.ClassicPyObjectAdapter;
 import org.python.core.adapter.ExtensiblePyObjectAdapter;
 import org.python.modules.errno;
+import org.python.util.Generic;
 
 public final class Py {
 
@@ -81,12 +81,13 @@ public final class Py {
     public static long TPFLAGS_HEAPTYPE;
 
     /** Builtin types that are used to setup PyObject. */
-    static final Set<Class<?>> BOOTSTRAP_TYPES = new HashSet<Class<?>>(4);
+    static final Set<Class<?>> BOOTSTRAP_TYPES = Generic.set();
     static {
         BOOTSTRAP_TYPES.add(PyObject.class);
         BOOTSTRAP_TYPES.add(PyType.class);
         BOOTSTRAP_TYPES.add(PyBuiltinCallable.class);
         BOOTSTRAP_TYPES.add(PyDataDescr.class);
+        BOOTSTRAP_TYPES.add(PyMethodDescr.class);
     }
 
     /** A unique object to indicate no conversion is possible

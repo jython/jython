@@ -2,7 +2,6 @@
 package org.python.core;
 
 import java.io.Serializable;
-import java.lang.reflect.Modifier;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -103,9 +102,7 @@ public class PyObject implements Serializable {
     /**
      * Dispatch __init__ behavior
      */
-    public void dispatch__init__(PyType type,PyObject[] args,String[] keywords) {
-        proxyInit();
-    }
+    public void dispatch__init__(PyType type, PyObject[] args, String[] keywords) {}
 
     /**
      * Attempts to automatically initialize our Java proxy if we have one and it wasn't initialized
@@ -116,11 +113,8 @@ public class PyObject implements Serializable {
         if (javaProxy != null || c == null) {
             return;
         }
-        int mods = c.getModifiers();
-        if (Modifier.isInterface(mods)) {
-            throw Py.TypeError("can't instantiate interface (" + c.getName() + ")");
-        } else if (Modifier.isAbstract(mods)) {
-            throw Py.TypeError("can't instantiate abstract class (" + c.getName() + ")");
+        if (!PyProxy.class.isAssignableFrom(c)) {
+            throw Py.SystemError("Automatic proxy initialization should only occur on proxy classes");
         }
         PyProxy proxy;
         ThreadState ts = Py.getThreadState();
@@ -1579,7 +1573,7 @@ public class PyObject implements Serializable {
      * @return the result of the comparison
      **/
     public PyObject _is(PyObject o) {
-        return this == o ? Py.True : Py.False;
+        return this == o || (javaProxy != null && javaProxy == o.javaProxy) ? Py.True : Py.False;
     }
 
     /**
@@ -1589,7 +1583,7 @@ public class PyObject implements Serializable {
      * @return the result of the comparison
      **/
     public PyObject _isnot(PyObject o) {
-        return this != o ? Py.True : Py.False;
+        return this != o || javaProxy != o.javaProxy ? Py.True : Py.False;
     }
 
     /**
