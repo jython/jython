@@ -3,7 +3,7 @@ package org.python.antlr.ast;
 
 import org.python.antlr.AST;
 
-public enum expr_contextType implements AST {
+public enum expr_contextType {
     UNDEFINED,
     Load,
     Store,

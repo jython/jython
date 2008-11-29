@@ -3,7 +3,7 @@ package org.python.antlr.ast;
 
 import org.python.antlr.AST;
 
-public enum cmpopType implements AST {
+public enum cmpopType {
     UNDEFINED,
     Eq,
     NotEq,
@@ -16,10 +16,10 @@ public enum cmpopType implements AST {
     In,
     NotIn;
     private final static String[] fields = new String[0];
-    public String[] get_fields() { return fields; }
+    public static String[] get_fields() { return fields; }
 
     private final static String[] attributes = new String[0];
-    public String[] get_attributes() { return attributes; }
+    public static String[] get_attributes() { return attributes; }
 
     public cmpopType __call__() { return this; }
 }

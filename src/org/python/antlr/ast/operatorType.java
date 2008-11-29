@@ -3,7 +3,7 @@ package org.python.antlr.ast;
 
 import org.python.antlr.AST;
 
-public enum operatorType implements AST {
+public enum operatorType {
     UNDEFINED,
     Add,
     Sub,

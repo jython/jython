@@ -1,3 +1,5 @@
+org/python/antlr/AST.class
+org/python/antlr/ast/AsmModule.class
 org/python/core/PyArray.class
 org/python/core/PyBaseString.class
 org/python/core/PyBaseException.class

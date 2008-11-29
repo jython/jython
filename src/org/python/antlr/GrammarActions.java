@@ -308,7 +308,7 @@ public class GrammarActions {
         return value;
     }
 
-    void recurseSetContext(Tree tree, expr_contextType context) {
+    void recurseSetContext(PythonTree tree, expr_contextType context) {
         if (tree instanceof Context) {
             ((Context)tree).setContext(context);
         }

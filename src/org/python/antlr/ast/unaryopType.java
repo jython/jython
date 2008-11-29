@@ -3,7 +3,7 @@ package org.python.antlr.ast;
 
 import org.python.antlr.AST;
 
-public enum unaryopType implements AST {
+public enum unaryopType {
     UNDEFINED,
     Invert,
     Not,

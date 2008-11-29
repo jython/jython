@@ -38,7 +38,7 @@ public class ParseException extends RuntimeException {
     public ParseException(String message, PythonTree n) {
         this(message, n.getLine(), n.getCharPositionInLine());
         this.node = n;
-        this.token = n.token;
+        this.token = n.getToken();
     }
 
     public ParseException(String message, RecognitionException r) {

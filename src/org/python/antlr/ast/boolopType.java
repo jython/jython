@@ -3,7 +3,7 @@ package org.python.antlr.ast;
 
 import org.python.antlr.AST;
 
-public enum boolopType implements AST {
+public enum boolopType {
     UNDEFINED,
     And,
     Or;
