@@ -9,16 +9,29 @@ import java.util.WeakHashMap;
 
 import org.python.util.Generic;
 
-public class PyBeanEventProperty extends PyReflectedField
-{
+public class PyBeanEventProperty extends PyReflectedField {
+
+    private static Map<String, Class<?>> adapterClasses = Generic.map();
+
+    private static Map<Object, Map<String, WeakReference<Object>>> adapters =
+        new WeakHashMap<Object, Map<String, WeakReference<Object>>>();
+
     public Method addMethod;
+
     public String eventName;
-    public Class eventClass;
+
+    public Class<?> eventClass;
+
     public String __name__;
 
-    public PyBeanEventProperty(String eventName, Class eventClass,
-                               Method addMethod, Method eventMethod)
-    {
+    private Field adapterField;
+
+    private Class<?> adapterClass;
+
+    public PyBeanEventProperty(String eventName,
+                               Class<?> eventClass,
+                               Method addMethod,
+                               Method eventMethod) {
         __name__ = eventMethod.getName().intern();
         this.addMethod = addMethod;
         this.eventName = eventName;
@@ -26,47 +39,50 @@ public class PyBeanEventProperty extends PyReflectedField
     }
 
     public PyObject _doget(PyObject self) {
-        if (self == null)
+        if (self == null) {
             return this;
-
+        }
         initAdapter();
-
         Object jself = Py.tojava(self, addMethod.getDeclaringClass());
-
         Object field;
         try {
             field = adapterField.get(getAdapter(jself));
         } catch (Exception exc) {
             throw Py.JavaError(exc);
         }
-
         PyCompoundCallable func;
         if (field == null) {
             func = new PyCompoundCallable();
             setFunction(jself, func);
             return func;
         }
-        if (field instanceof PyCompoundCallable)
+        if (field instanceof PyCompoundCallable) {
             return (PyCompoundCallable)field;
-
+        }
         func = new PyCompoundCallable();
         setFunction(jself, func);
         func.append((PyObject)field);
         return func;
     }
 
-    private synchronized static Class<?> getAdapterClass(Class<?> c) {
-        Class<?> pc = Py.findClass("org.python.proxies." + c.getName() + "$Adapter");
-        if (pc == null) {
-            pc = MakeProxies.makeAdapter(c);
+    public boolean _doset(PyObject self, PyObject value) {
+        Object jself = Py.tojava(self, addMethod.getDeclaringClass());
+        if (!(value instanceof PyCompoundCallable)) {
+            PyCompoundCallable func = new PyCompoundCallable();
+            setFunction(jself, func);
+            func.append(value);
+        } else {
+            setFunction(jself, value);
         }
-        return pc;
+        return true;
     }
 
-    protected Map<Object, Map<String, WeakReference<Object>>> adapters =
-        new WeakHashMap<Object, Map<String, WeakReference<Object>>>();
+    public String toString() {
+        return "<beanEventProperty " + __name__ + " for event " + eventClass.toString() + " "
+                + Py.idstr(this) + ">";
+    }
 
-    protected Object getAdapter(Object o, String evc) {
+    private Object getAdapter(Object o, String evc) {
         Map<String, WeakReference<Object>> ads = adapters.get(o);
         if (ads == null) {
             return null;
@@ -78,9 +94,9 @@ public class PyBeanEventProperty extends PyReflectedField
         return adw.get();
     }
 
-    protected void putAdapter(Object o, String evc, Object ad) {
+    private void putAdapter(Object o, String evc, Object ad) {
         Map<String, WeakReference<Object>> ads = adapters.get(o);
-        if(ads == null) {
+        if (ads == null) {
             ads = Generic.map();
             adapters.put(o, ads);
         }
@@ -90,11 +106,12 @@ public class PyBeanEventProperty extends PyReflectedField
     private synchronized Object getAdapter(Object self) {
         String eventClassName = eventClass.getName();
         Object adapter = getAdapter(self, eventClassName);
-        if (adapter != null)
+        if (adapter != null) {
             return adapter;
+        }
         try {
             adapter = adapterClass.newInstance();
-            addMethod.invoke(self, new Object[] {adapter});
+            addMethod.invoke(self, adapter);
         } catch (Exception e) {
             throw Py.JavaError(e);
         }
@@ -102,14 +119,9 @@ public class PyBeanEventProperty extends PyReflectedField
         return adapter;
     }
 
-    private Field adapterField;
-    private Class adapterClass;
-
     private void initAdapter() {
         if (adapterClass == null) {
             adapterClass = getAdapterClass(eventClass);
-        }
-        if (adapterField == null) {
             try {
                 adapterField = adapterClass.getField(__name__);
             } catch (NoSuchFieldException exc) {
@@ -127,20 +139,16 @@ public class PyBeanEventProperty extends PyReflectedField
         }
     }
 
-    public boolean _doset(PyObject self, PyObject value) {
-        Object jself = Py.tojava(self, addMethod.getDeclaringClass());
-        if (!(value instanceof PyCompoundCallable)) {
-            PyCompoundCallable func = new PyCompoundCallable();
-            setFunction(jself, func);
-            func.append(value);
-        } else {
-            setFunction(jself, value);
+    private synchronized static Class<?> getAdapterClass(Class<?> c) {
+        String name = "org.python.proxies." + c.getName() + "$Adapter";
+        Class<?> pc = Py.findClass(name);
+        if (pc == null) {
+            pc = adapterClasses.get(name);
+            if (pc == null) {
+                pc = MakeProxies.makeAdapter(c);
+                adapterClasses.put(name, pc);
+            }
         }
-        return true;
-    }
-
-    public String toString() {
-        return "<beanEventProperty "+__name__+" for event "+
-            eventClass.toString()+" "+Py.idstr(this)+">";
+        return pc;
     }
 }

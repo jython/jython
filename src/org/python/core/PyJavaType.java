@@ -7,6 +7,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Collection;
 import java.util.Enumeration;
+import java.util.EventListener;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -18,137 +19,7 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
 
     private final static Class<?>[] OO = {PyObject.class, PyObject.class};
 
-
-    class EnumerationIter extends PyIterator {
-
-        private Enumeration<Object> proxy;
-
-        public EnumerationIter(Enumeration<Object> proxy) {
-            this.proxy = proxy;
-        }
-
-        public PyObject __iternext__() {
-            return proxy.hasMoreElements() ? Py.java2py(proxy.nextElement()) : null;
-        }
-    }
-
-    private static class IteratorIter extends PyIterator {
-
-        private Iterator<Object> proxy;
-
-        public IteratorIter(Iterator<Object> proxy) {
-            this.proxy = proxy;
-        }
-
-        public PyObject __iternext__() {
-            return proxy.hasNext() ? Py.java2py(proxy.next()) : null;
-        }
-    }
-
-    static Map<Class<?>, PyBuiltinMethod[]> _collectionProxies;
-
-    protected static class ListMethod extends PyBuiltinMethodNarrow {
-        protected ListMethod(String name, int minArgs, int maxArgs) {
-            super(name, minArgs, maxArgs);
-        }
-
-        protected List<Object> asList(){
-            return (List<Object>)self.getJavaProxy();
-        }
-    }
-    protected static class MapMethod extends PyBuiltinMethodNarrow {
-        protected MapMethod(String name, int minArgs, int maxArgs) {
-            super(name, minArgs, maxArgs);
-        }
-
-        protected Map<Object, Object> asMap(){
-            return (Map<Object, Object>)self.getJavaProxy();
-        }
-    }
-
-    public static Map<Class<?>, PyBuiltinMethod[]> getCollectionProxies() {
-        if (_collectionProxies == null) {
-            _collectionProxies = Generic.map();
-
-            PyBuiltinMethodNarrow lenProxy = new PyBuiltinMethodNarrow("__len__", 0, 0) {
-                @Override
-                public PyObject __call__() {
-                    return Py.newInteger(((Collection<?>)self.getJavaProxy()).size());
-                }
-            };
-
-            PyBuiltinMethodNarrow mapGetProxy = new MapMethod("__getitem__", 1, 1) {
-                @Override
-                public PyObject __call__(PyObject key) {
-                    return Py.java2py(asMap().get(Py.tojava(key, Object.class)));
-                }
-            };
-
-            PyBuiltinMethodNarrow mapPutProxy = new MapMethod("__setitem__", 2, 2) {
-                @Override
-                public PyObject __call__(PyObject key, PyObject value) {
-                    return Py.java2py(asMap().put(Py.tojava(key, Object.class),
-                                                  Py.tojava(value, Object.class)));
-                }
-            };
-
-            PyBuiltinMethodNarrow mapRemoveProxy = new MapMethod("__delitem__", 1, 1) {
-                @Override
-                public PyObject __call__(PyObject key, PyObject value) {
-                    return Py.java2py(asMap().remove(Py.tojava(key, Object.class)));
-                }
-            };
-
-            PyBuiltinMethodNarrow listGetProxy = new ListMethod("__getitem__", 1, 1) {
-                @Override
-                public PyObject __call__(PyObject key) {
-                    if (key instanceof PyInteger) {
-                        return Py.java2py(asList().get(((PyInteger)key).getValue()));
-                    } else {
-                        throw Py.TypeError("only integer keys accepted");
-                    }
-                }
-            };
-
-            PyBuiltinMethodNarrow listSetProxy = new ListMethod("__setitem__", 2, 2) {
-                @Override
-                public PyObject __call__(PyObject key, PyObject value) {
-                    if (key instanceof PyInteger) {
-                        asList().set(((PyInteger)key).getValue(), Py.tojava(value, Object.class));
-                    } else {
-                        throw Py.TypeError("only integer keys accepted");
-                    }
-                    return Py.None;
-                }
-            };
-
-            PyBuiltinMethodNarrow listRemoveProxy = new ListMethod("__delitem__", 1, 1) {
-                 @Override
-                public PyObject __call__(PyObject key, PyObject value) {
-                    if (key instanceof PyInteger) {
-                        return Py.java2py(asList().remove(((PyInteger)key).getValue()));
-                    } else {
-                        throw Py.TypeError("only integer keys accepted");
-                    }
-                }
-            };
-
-            PyBuiltinMethodNarrow iterableProxy = new PyBuiltinMethodNarrow("__iter__", 0, 0) {
-                public PyObject __call__() {
-                    return new IteratorIter(((Iterable)self.getJavaProxy()).iterator());
-                }
-            };
-            _collectionProxies.put(Iterable.class, new PyBuiltinMethod[] {iterableProxy});
-            _collectionProxies.put(Collection.class, new PyBuiltinMethod[] {lenProxy});
-            _collectionProxies.put(Map.class, new PyBuiltinMethod[] {mapGetProxy,
-                                                                     mapPutProxy,
-                                                                     mapRemoveProxy});
-            _collectionProxies.put(List.class, new PyBuiltinMethod[] {listGetProxy,
-                                                                      listSetProxy,
-                                                                      listRemoveProxy});
-        }
-        return _collectionProxies;
-    }
+    private static Map<Class<?>, PyBuiltinMethod[]> collectionProxies;
 
     public static PyObject wrapJavaObject(Object o) {
         PyObject obj = new PyObjectDerived(PyType.fromClass(o.getClass()));
@@ -172,6 +43,7 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
 
         // Add methods and determine bean properties declared on this class
         Map<String, PyBeanProperty> props = Generic.map();
+        Map<String, PyBeanEvent> events = Generic.map();
         for (Method meth : underlying_class.getMethods()) {
             if (!declaredOnMember(base, meth) || ignore(meth)) {
                 continue;
@@ -184,33 +56,53 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
             } else {
                 reflfunc.addMethod(meth);
             }
-            if (!Modifier.isStatic(meth.getModifiers())) {
-                // check for xxxX.*
-                int n = meth.getParameterTypes().length;
-                String name = null;
-                boolean get = true;
-                if (methname.startsWith("get") && methname.length() > 3 && n == 0) {
-                    name = methname.substring(3);
-                } else if (methname.startsWith("is") && methname.length() > 2 && n == 0
-                        && meth.getReturnType() == Boolean.TYPE) {
-                    name = methname.substring(2);
-                } else if (methname.startsWith("set") && methname.length() > 3 && n == 1) {
-                    name = methname.substring(3);
-                    get = false;
+
+            // Now check if this is a bean method, for which it must be an instance method
+            if (Modifier.isStatic(meth.getModifiers())) {
+                continue;
+            }
+
+            // First check if this is a bean event addition method
+            int n = meth.getParameterTypes().length;
+            if ((methname.startsWith("add") || methname.startsWith("set"))
+                    && methname.endsWith("Listener") && n == 1 &&
+                    meth.getReturnType() == Void.TYPE &&
+                    EventListener.class.isAssignableFrom(meth.getParameterTypes()[0])) {
+                Class<?> eventClass = meth.getParameterTypes()[0];
+                String ename = eventClass.getName();
+                int idot = ename.lastIndexOf('.');
+                if (idot != -1) {
+                    ename = ename.substring(idot + 1);
                 }
-                if (name != null) {
-                    name = normalize(StringUtil.decapitalize(name));
-                    PyBeanProperty prop = props.get(name);
-                    if (prop == null) {
-                        prop = new PyBeanProperty(name, null, null, null);
-                        props.put(name, prop);
-                    }
-                    if (get) {
-                        prop.getMethod = meth;
-                        prop.myType = meth.getReturnType();
-                    } else {
-                        prop.setMethod = meth;
-                    }
+                ename = normalize(StringUtil.decapitalize(ename));
+                events.put(ename, new PyBeanEvent(name, eventClass, meth));
+                continue;
+            }
+
+            // Now check if it's a bean property accessor
+            String name = null;
+            boolean get = true;
+            if (methname.startsWith("get") && methname.length() > 3 && n == 0) {
+                name = methname.substring(3);
+            } else if (methname.startsWith("is") && methname.length() > 2 && n == 0
+                    && meth.getReturnType() == Boolean.TYPE) {
+                name = methname.substring(2);
+            } else if (methname.startsWith("set") && methname.length() > 3 && n == 1) {
+                name = methname.substring(3);
+                get = false;
+            }
+            if (name != null) {
+                name = normalize(StringUtil.decapitalize(name));
+                PyBeanProperty prop = props.get(name);
+                if (prop == null) {
+                    prop = new PyBeanProperty(name, null, null, null);
+                    props.put(name, prop);
+                }
+                if (get) {
+                    prop.getMethod = meth;
+                    prop.myType = meth.getReturnType();
+                } else {
+                    prop.setMethod = meth;
                 }
             }
         }
@@ -248,6 +140,23 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
             }
             if (dict.__finditem__(normalize(fldname)) == null) {
                 dict.__setitem__(normalize(fldname), new PyReflectedField(field));
+            }
+        }
+
+        for (PyBeanEvent ev : events.values()) {
+            if (dict.__finditem__(ev.__name__) == null) {
+                dict.__setitem__(ev.__name__, ev);
+            }
+
+            for (Method meth : ev.eventClass.getMethods()) {
+                String name = meth.getName().intern();
+                if (dict.__finditem__(name) != null) {
+                    continue;
+                }
+                dict.__setitem__(name, new PyBeanEventProperty(name,
+                                                               ev.eventClass,
+                                                               ev.addMethod,
+                                                               meth));
             }
         }
 
@@ -361,5 +270,135 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
             }
         }
         return false;
+    }
+
+    private class EnumerationIter extends PyIterator {
+
+        private Enumeration<Object> proxy;
+
+        public EnumerationIter(Enumeration<Object> proxy) {
+            this.proxy = proxy;
+        }
+
+        public PyObject __iternext__() {
+            return proxy.hasMoreElements() ? Py.java2py(proxy.nextElement()) : null;
+        }
+    }
+
+    private static class IteratorIter extends PyIterator {
+
+        private Iterator<Object> proxy;
+
+        public IteratorIter(Iterator<Object> proxy) {
+            this.proxy = proxy;
+        }
+
+        public PyObject __iternext__() {
+            return proxy.hasNext() ? Py.java2py(proxy.next()) : null;
+        }
+    }
+
+    private static class ListMethod extends PyBuiltinMethodNarrow {
+        protected ListMethod(String name, int minArgs, int maxArgs) {
+            super(name, minArgs, maxArgs);
+        }
+
+        protected List<Object> asList(){
+            return (List<Object>)self.getJavaProxy();
+        }
+    }
+
+    private static class MapMethod extends PyBuiltinMethodNarrow {
+        protected MapMethod(String name, int minArgs, int maxArgs) {
+            super(name, minArgs, maxArgs);
+        }
+
+        protected Map<Object, Object> asMap(){
+            return (Map<Object, Object>)self.getJavaProxy();
+        }
+    }
+
+    private static Map<Class<?>, PyBuiltinMethod[]> getCollectionProxies() {
+        if (collectionProxies == null) {
+            collectionProxies = Generic.map();
+
+            PyBuiltinMethodNarrow lenProxy = new PyBuiltinMethodNarrow("__len__", 0, 0) {
+                @Override
+                public PyObject __call__() {
+                    return Py.newInteger(((Collection<?>)self.getJavaProxy()).size());
+                }
+            };
+
+            PyBuiltinMethodNarrow mapGetProxy = new MapMethod("__getitem__", 1, 1) {
+                @Override
+                public PyObject __call__(PyObject key) {
+                    return Py.java2py(asMap().get(Py.tojava(key, Object.class)));
+                }
+            };
+
+            PyBuiltinMethodNarrow mapPutProxy = new MapMethod("__setitem__", 2, 2) {
+                @Override
+                public PyObject __call__(PyObject key, PyObject value) {
+                    return Py.java2py(asMap().put(Py.tojava(key, Object.class),
+                                                  Py.tojava(value, Object.class)));
+                }
+            };
+
+            PyBuiltinMethodNarrow mapRemoveProxy = new MapMethod("__delitem__", 1, 1) {
+                @Override
+                public PyObject __call__(PyObject key, PyObject value) {
+                    return Py.java2py(asMap().remove(Py.tojava(key, Object.class)));
+                }
+            };
+
+            PyBuiltinMethodNarrow listGetProxy = new ListMethod("__getitem__", 1, 1) {
+                @Override
+                public PyObject __call__(PyObject key) {
+                    if (key instanceof PyInteger) {
+                        return Py.java2py(asList().get(((PyInteger)key).getValue()));
+                    } else {
+                        throw Py.TypeError("only integer keys accepted");
+                    }
+                }
+            };
+
+            PyBuiltinMethodNarrow listSetProxy = new ListMethod("__setitem__", 2, 2) {
+                @Override
+                public PyObject __call__(PyObject key, PyObject value) {
+                    if (key instanceof PyInteger) {
+                        asList().set(((PyInteger)key).getValue(), Py.tojava(value, Object.class));
+                    } else {
+                        throw Py.TypeError("only integer keys accepted");
+                    }
+                    return Py.None;
+                }
+            };
+
+            PyBuiltinMethodNarrow listRemoveProxy = new ListMethod("__delitem__", 1, 1) {
+                 @Override
+                public PyObject __call__(PyObject key, PyObject value) {
+                    if (key instanceof PyInteger) {
+                        return Py.java2py(asList().remove(((PyInteger)key).getValue()));
+                    } else {
+                        throw Py.TypeError("only integer keys accepted");
+                    }
+                }
+            };
+
+            PyBuiltinMethodNarrow iterableProxy = new PyBuiltinMethodNarrow("__iter__", 0, 0) {
+                public PyObject __call__() {
+                    return new IteratorIter(((Iterable)self.getJavaProxy()).iterator());
+                }
+            };
+            collectionProxies.put(Iterable.class, new PyBuiltinMethod[] {iterableProxy});
+            collectionProxies.put(Collection.class, new PyBuiltinMethod[] {lenProxy});
+            collectionProxies.put(Map.class, new PyBuiltinMethod[] {mapGetProxy,
+                                                                     mapPutProxy,
+                                                                     mapRemoveProxy});
+            collectionProxies.put(List.class, new PyBuiltinMethod[] {listGetProxy,
+                                                                      listSetProxy,
+                                                                      listRemoveProxy});
+        }
+        return collectionProxies;
     }
 }
