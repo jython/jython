@@ -341,11 +341,11 @@ public class PyType extends PyObject implements Serializable {
     }
 
     private static void fillInMRO(PyType type, Class<?> base) {
-        if (base == Object.class || base == null) {
-            if (type.underlying_class == PyObject.class) {
-                type.mro = new PyType[] {type};
-                return;
-            }
+        if (type.underlying_class == PyObject.class) {
+            type.mro = new PyType[] {type};
+            return;
+        }
+        if (base == null) {
             base = PyObject.class;
         }
         PyType baseType = fromClass(base);
@@ -824,7 +824,7 @@ public class PyType extends PyObject implements Serializable {
             return false;
         }
 
-        // we're not completely initilized yet; follow tp_base
+        // we're not completely initialized yet; follow tp_base
         PyType type = this;
         do {
             if (type == supertype) {
@@ -958,6 +958,13 @@ public class PyType extends PyObject implements Serializable {
         } else {
             newtype = new PyJavaType();
         }
+
+        // If filling in the type above filled the type under creation, use that one
+        PyType type = class_to_type.get(c);
+        if (type != null) {
+            return type;
+        }
+
         class_to_type.put(c, newtype);
         if (base == null) {
             base = c.getSuperclass();

@@ -53,10 +53,9 @@ public class PyBeanProperty extends PyReflectedField {
         // Special handling of tuples - try to call a class constructor
         if (value instanceof PyTuple) {
             try {
-                PyTuple vtup = (PyTuple)value;
-                value = Py.java2py(myType).__call__(vtup.getArray()); // xxx PyObject subclasses
+                value = Py.java2py(myType).__call__(((PyTuple)value).getArray());
             } catch (Throwable t) {
-                // If something goes wrong ignore it?
+                throw Py.JavaError(t);
             }
         }
         Object jvalue = Py.tojava(value, myType);
