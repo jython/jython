@@ -11,6 +11,8 @@ import java.util.EventListener;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
 import org.python.core.util.StringUtil;
 import org.python.expose.ExposeAsSuperclass;
 import org.python.util.Generic;
@@ -37,15 +39,56 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
     }
 
     @Override
-    protected void fillDict() {
+    protected void init() {
+        name = underlying_class.getName();
+        // Strip the java fully qualified class name from Py classes in core
+        if (name.startsWith("org.python.core.Py")) {
+            name = name.substring("org.python.core.Py".length()).toLowerCase();
+        }
         dict = new PyStringMap();
-        Class<?> base = underlying_class.getSuperclass();
+        Class<?> baseClass = underlying_class.getSuperclass();
+        if (PyObject.class.isAssignableFrom(underlying_class)) {
+            // Non-exposed subclasses of PyObject use a simple linear mro to PyObject that ignores
+            // their interfaces
+            computeLinearMro(baseClass);
+        } else {
+            // Wrapped Java types fill in their mro first using their base class and then all of
+            // their interfaces.
+            if (baseClass == null) {
+                base = PyType.fromClass(PyObject.class);
+            } else {
+                base = PyType.fromClass(baseClass);
+            }
+            bases = new PyObject[1 + underlying_class.getInterfaces().length];
+            bases[0] = base;
+            for (int i = 1; i < bases.length; i++) {
+                bases[i] = PyType.fromClass(underlying_class.getInterfaces()[i - 1]);
+            }
+            Set<PyObject> seen = Generic.set();
+            List<PyObject> mros = Generic.list();
+            mros.add(this);
+            for (PyObject obj : bases) {
+                for (PyObject mroObj : ((PyType)obj).mro) {
+                    if (seen.add(mroObj)) {
+                        mros.add(mroObj);
+                    }
+                }
+            }
+            mro = mros.toArray(new PyObject[mros.size()]);
+        }
+
+        // PyReflected* can't call or access anything from non-public classes that aren't in
+        // org.python.core
+        if (!Modifier.isPublic(underlying_class.getModifiers()) &&
+                !name.startsWith("org.python.core")) {
+            return;
+        }
 
         // Add methods and determine bean properties declared on this class
         Map<String, PyBeanProperty> props = Generic.map();
         Map<String, PyBeanEvent> events = Generic.map();
         for (Method meth : underlying_class.getMethods()) {
-            if (!declaredOnMember(base, meth) || ignore(meth)) {
+            if (!declaredOnMember(baseClass, meth) || ignore(meth)) {
                 continue;
             }
             String methname = meth.getName();
@@ -75,7 +118,7 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
                     ename = ename.substring(idot + 1);
                 }
                 ename = normalize(StringUtil.decapitalize(ename));
-                events.put(ename, new PyBeanEvent(name, eventClass, meth));
+                events.put(ename, new PyBeanEvent(ename, eventClass, meth));
                 continue;
             }
 
@@ -118,7 +161,7 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
 
         // Add fields declared on this type
         for (Field field : underlying_class.getFields()) {
-            if (!declaredOnMember(base, field)) {
+            if (!declaredOnMember(baseClass, field)) {
                 continue;
             }
             String fldname = field.getName();
@@ -219,7 +262,7 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
                 throw Py.JavaError(exc);
             }
         }
-        if (base != Object.class) {
+        if (baseClass != Object.class) {
             has_set = getDescrMethod(underlying_class, "__set__", OO) != null
                     || getDescrMethod(underlying_class, "_doset", OO) != null;
             has_delete = getDescrMethod(underlying_class, "__delete__", PyObject.class) != null
