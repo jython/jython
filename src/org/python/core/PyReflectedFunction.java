@@ -21,12 +21,16 @@ public class PyReflectedFunction extends PyObject {
         __name__ = name;
     }
 
-    public PyReflectedFunction(Method method) {
-        this(method.getName());
-        addMethod(method);
+    public PyReflectedFunction(Method... methods) {
+        this(methods[0].getName());
+        for (Method meth : methods) {
+            addMethod(meth);
+        }
         if (nargs == 0) {
             String msg = String.format("Attempted to make Java method visible, but it isn't "
-                    + "callable[method=%s, class=%s]", method.getName(), method.getDeclaringClass());
+                                               + "callable[method=%s, class=%s]",
+                                       methods[0].getName(),
+                                       methods[0].getDeclaringClass());
             throw Py.SystemError(msg);
         }
     }

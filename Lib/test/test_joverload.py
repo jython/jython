@@ -11,9 +11,7 @@ from org.python.core import PyReflectedFunction
 class PyReflFuncEnvl:
 
     def __init__(self,name,meths):
-        self.reflfunc = PyReflectedFunction(meths[0])
-        for meth in meths[1:]:
-            self.reflfunc.addMethod(meth)
+        self.reflfunc = PyReflectedFunction(meths)
             
     def __call__(self,inst,args):
         return self.reflfunc(inst,*args)
