@@ -500,4 +500,8 @@ public class PyStringMap extends PyObject {
             return pyKey;
         }
     }
+
+    public int hashCode() {
+        throw Py.TypeError(String.format("unhashable type: '%.200s'", getType().fastGetName()));
+    }
 }
