@@ -24,7 +24,7 @@ public class PythonErrorNode extends PythonTree {
         return errorNode.isNil();
     }
 
-    public int getType() {
+    public int getAntlrType() {
         return errorNode.getType();
     }
 

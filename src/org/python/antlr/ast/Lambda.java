@@ -10,7 +10,14 @@ public class Lambda extends exprType {
     public argumentsType args;
     public exprType body;
 
-    public static final String[] _fields = new String[] {"args","body"};
+    private final static String[] fields = new String[] {"args", "body"};
+    public String[] get_fields() { return fields; }
+
+    public Lambda(argumentsType args, exprType body) {
+        this.args = args;
+        this.body = body;
+        addChild(body);
+    }
 
     public Lambda(Token token, argumentsType args, exprType body) {
         super(token);
@@ -60,12 +67,28 @@ public class Lambda extends exprType {
             body.accept(visitor);
     }
 
+    private int lineno = -1;
     public int getLineno() {
+        if (lineno != -1) {
+            return lineno;
+        }
         return getLine();
     }
 
+    public void setLineno(int num) {
+        lineno = num;
+    }
+
+    private int col_offset = -1;
     public int getCol_offset() {
+        if (col_offset != -1) {
+            return col_offset;
+        }
         return getCharPositionInLine();
+    }
+
+    public void setCol_offset(int num) {
+        col_offset = num;
     }
 
 }

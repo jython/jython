@@ -14,17 +14,31 @@ import org.python.core.PyFile;
 public class FileUtil {
 
     /**
+     * Creates a PyFile that reads from the given <code>InputStream</code> with bufsize.
+     */
+    public static PyFile wrap(InputStream is, int bufsize) {
+        return new PyFile(is, bufsize);
+    }
+
+    /**
      * Creates a PyFile that reads from the given <code>InputStream</code>.
      */
     public static PyFile wrap(InputStream is) {
-        return new PyFile(is);
+        return wrap(is, -1);
+    }
+
+    /**
+     * Creates a PyFile that writes to the given <code>OutputStream</code> with bufsize.
+     */
+    public static PyFile wrap(OutputStream os, int bufsize) {
+        return new PyFile(os, bufsize);
     }
 
     /**
      * Creates a PyFile that writes to the given <code>OutputStream</code>.
      */
     public static PyFile wrap(OutputStream os) {
-        return new PyFile(os);
+        return wrap(os, -1);
     }
 
     /**

@@ -9,8 +9,7 @@ import org.python.expose.ExposedType;
 /**
  * A class representing the singleton None object,
  */
-// XXX: not subclassable
-@ExposedType(name = "NoneType")
+@ExposedType(name = "NoneType", isBaseType = false)
 public class PyNone extends PyObject implements Serializable
 {
 

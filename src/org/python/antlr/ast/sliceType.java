@@ -6,6 +6,9 @@ import org.antlr.runtime.Token;
 
 public abstract class sliceType extends PythonTree {
 
+    public sliceType() {
+    }
+
     public sliceType(int ttype, Token token) {
         super(ttype, token);
     }

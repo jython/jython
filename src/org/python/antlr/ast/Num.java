@@ -9,7 +9,12 @@ import java.io.IOException;
 public class Num extends exprType {
     public Object n;
 
-    public static final String[] _fields = new String[] {"n"};
+    private final static String[] fields = new String[] {"n"};
+    public String[] get_fields() { return fields; }
+
+    public Num(Object n) {
+        this.n = n;
+    }
 
     public Num(Token token, Object n) {
         super(token);
@@ -46,12 +51,28 @@ public class Num extends exprType {
     public void traverse(VisitorIF visitor) throws Exception {
     }
 
+    private int lineno = -1;
     public int getLineno() {
+        if (lineno != -1) {
+            return lineno;
+        }
         return getLine();
     }
 
+    public void setLineno(int num) {
+        lineno = num;
+    }
+
+    private int col_offset = -1;
     public int getCol_offset() {
+        if (col_offset != -1) {
+            return col_offset;
+        }
         return getCharPositionInLine();
+    }
+
+    public void setCol_offset(int num) {
+        col_offset = num;
     }
 
 }

@@ -9,7 +9,7 @@ import org.python.expose.MethodType;
  * Readonly proxy for dictionaries (actually any mapping).
  *
  */
-@ExposedType(name = "dictproxy")
+@ExposedType(name = "dictproxy", isBaseType = false)
 public class PyDictProxy extends PyObject {
 
     /** The dict proxied to. */

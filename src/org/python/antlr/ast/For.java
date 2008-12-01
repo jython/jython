@@ -12,8 +12,29 @@ public class For extends stmtType {
     public stmtType[] body;
     public stmtType[] orelse;
 
-    public static final String[] _fields = new String[]
-    {"target","iter","body","orelse"};
+    private final static String[] fields = new String[] {"target", "iter",
+                                                          "body", "orelse"};
+    public String[] get_fields() { return fields; }
+
+    public For(exprType target, exprType iter, stmtType[] body, stmtType[]
+    orelse) {
+        this.target = target;
+        addChild(target);
+        this.iter = iter;
+        addChild(iter);
+        this.body = body;
+        if (body != null) {
+            for(int ibody=0;ibody<body.length;ibody++) {
+                addChild(body[ibody]);
+            }
+        }
+        this.orelse = orelse;
+        if (orelse != null) {
+            for(int iorelse=0;iorelse<orelse.length;iorelse++) {
+                addChild(orelse[iorelse]);
+            }
+        }
+    }
 
     public For(Token token, exprType target, exprType iter, stmtType[] body,
     stmtType[] orelse) {
@@ -123,12 +144,28 @@ public class For extends stmtType {
         }
     }
 
+    private int lineno = -1;
     public int getLineno() {
+        if (lineno != -1) {
+            return lineno;
+        }
         return getLine();
     }
 
+    public void setLineno(int num) {
+        lineno = num;
+    }
+
+    private int col_offset = -1;
     public int getCol_offset() {
+        if (col_offset != -1) {
+            return col_offset;
+        }
         return getCharPositionInLine();
+    }
+
+    public void setCol_offset(int num) {
+        col_offset = num;
     }
 
 }

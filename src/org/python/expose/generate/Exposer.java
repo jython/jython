@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.python.objectweb.asm.ClassVisitor;
 import org.python.objectweb.asm.ClassWriter;
+import org.python.objectweb.asm.Label;
 import org.python.objectweb.asm.MethodVisitor;
 import org.python.objectweb.asm.Opcodes;
 import org.python.objectweb.asm.Type;
@@ -228,7 +229,16 @@ public abstract class Exposer implements Opcodes, PyTypes {
         if(inputType.equals(VOID)) {
             getStatic(PY, "None", PYOBJ);
         } else if(inputType.equals(STRING)) {
+            Label newString = new Label();
+            Label end = new Label();
+            mv.visitInsn(DUP);
+            mv.visitJumpInsn(IFNONNULL, newString);
+            mv.visitInsn(POP);
+            getStatic(PY, "None", PYOBJ);
+            mv.visitJumpInsn(GOTO, end);
+            mv.visitLabel(newString);
             callStatic(PY, "newString", PYSTR, STRING);
+            mv.visitLabel(end);
         } else if(inputType.equals(BOOLEAN)) {
             callStatic(PY, "newBoolean", PYBOOLEAN, BOOLEAN);
         } else if(inputType.equals(INT) || inputType.equals(BYTE) || inputType.equals(SHORT)) {

@@ -13,8 +13,26 @@ public class excepthandlerType extends PythonTree {
     public int lineno;
     public int col_offset;
 
-    public static final String[] _fields = new String[]
-    {"type","name","body","lineno","col_offset"};
+    private final static String[] fields = new String[] {"type", "name",
+                                                          "body", "lineno",
+                                                          "col_offset"};
+    public String[] get_fields() { return fields; }
+
+    public excepthandlerType(exprType type, exprType name, stmtType[] body, int
+    lineno, int col_offset) {
+        this.type = type;
+        addChild(type);
+        this.name = name;
+        addChild(name);
+        this.body = body;
+        if (body != null) {
+            for(int ibody=0;ibody<body.length;ibody++) {
+                addChild(body[ibody]);
+            }
+        }
+        this.lineno = lineno;
+        this.col_offset = col_offset;
+    }
 
     public excepthandlerType(Token token, exprType type, exprType name,
     stmtType[] body, int lineno, int col_offset) {

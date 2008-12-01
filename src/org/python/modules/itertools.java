@@ -161,20 +161,14 @@ public class itertools implements ClassDictInit {
             int iteratorIndex = 0;
 
             public PyObject __iternext__() {
-                if (iteratorIndex >= iterators.length) {
-                    return null;
-                }
-                PyObject obj = nextElement(iterators[iteratorIndex]);
-
-                if (obj == null) {
-                    // increase the iteratorIndex and see if we have more
-                    // iterators to work with
-                    iteratorIndex++;
-                    if (iteratorIndex < iterators.length) {
-                        obj = nextElement(iterators[iteratorIndex]);
+                PyObject next = null;
+                for (; iteratorIndex < iterators.length; iteratorIndex++) {
+                    next = nextElement(iterators[iteratorIndex]);
+                    if (next != null) {
+                        break;
                     }
                 }
-                return obj;
+                return next;
             }
 
         };

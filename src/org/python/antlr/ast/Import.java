@@ -9,7 +9,17 @@ import java.io.IOException;
 public class Import extends stmtType {
     public aliasType[] names;
 
-    public static final String[] _fields = new String[] {"names"};
+    private final static String[] fields = new String[] {"names"};
+    public String[] get_fields() { return fields; }
+
+    public Import(aliasType[] names) {
+        this.names = names;
+        if (names != null) {
+            for(int inames=0;inames<names.length;inames++) {
+                addChild(names[inames]);
+            }
+        }
+    }
 
     public Import(Token token, aliasType[] names) {
         super(token);
@@ -67,12 +77,28 @@ public class Import extends stmtType {
         }
     }
 
+    private int lineno = -1;
     public int getLineno() {
+        if (lineno != -1) {
+            return lineno;
+        }
         return getLine();
     }
 
+    public void setLineno(int num) {
+        lineno = num;
+    }
+
+    private int col_offset = -1;
     public int getCol_offset() {
+        if (col_offset != -1) {
+            return col_offset;
+        }
         return getCharPositionInLine();
+    }
+
+    public void setCol_offset(int num) {
+        col_offset = num;
     }
 
 }

@@ -3,8 +3,6 @@ import org.python.antlr.PythonTree;
 
 public class ErrorExpr extends exprType {
 
-    public static final String[] _fields = new String[] {};
-
     public ErrorExpr(PythonTree tree) {
         super(tree);
     }

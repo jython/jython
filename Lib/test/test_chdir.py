@@ -177,10 +177,11 @@ class ChdirTestCase(BaseChdirTestCase):
 
     def test_invalid_chdir(self):
         raises(OSError,
-               '[Errno 2] No such file or directory: %r' % self.filename1,
+               '[Errno 2] %s: %r' % (os.strerror(2), self.filename1),
                os.chdir, self.filename1)
         open(self.filename1, 'w').close()
-        raises(OSError, '[Errno 20] Not a directory: %r' % self.filename1,
+        raises(OSError,
+               '[Errno 20] %s: %r' % (os.strerror(20), self.filename1),
                os.chdir, self.filename1)
 
 
@@ -360,13 +361,7 @@ class PyCompileTestCase(BaseImportTestCase):
         __import__(self.mod_name)
         self.assert_(self.mod_name in sys.modules)
         mod = sys.modules[self.mod_name]
-
-        # XXX: Jython's import has a bug where it doesn't use the
-        # $py.class filename when it exists along with the .py file
-        if sys.platform.startswith('java'):
-            self.assertEqual(mod.__file__, self.mod_name + '.py')
-        else:
-            self.assertEqual(mod.__file__, self.mod_name + COMPILED_SUFFIX)
+        self.assertEqual(mod.__file__, self.mod_name + COMPILED_SUFFIX)
 
     def test_compile_dest(self):
         py_compile.compile(self.basename1,

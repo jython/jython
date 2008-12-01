@@ -4,9 +4,9 @@ package org.python.core.io;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import org.python.constantine.platform.Errno;
 import org.python.core.Py;
 import org.python.core.PyException;
-import org.python.modules.errno;
 
 /**
  * Base class for all I/O classes.
@@ -151,7 +151,7 @@ public abstract class IOBase {
      */
     public void checkReadable() {
         if (!readable()) {
-            throw Py.IOError(errno.EBADF, "Bad file descriptor");
+            throw Py.IOError(Errno.EBADF);
         }
     }
 
@@ -170,7 +170,7 @@ public abstract class IOBase {
      */
     public void checkWritable() {
         if (!writable()) {
-            throw Py.IOError(errno.EBADF, "Bad file descriptor");
+            throw Py.IOError(Errno.EBADF);
         }
     }
 

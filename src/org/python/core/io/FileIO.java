@@ -12,10 +12,10 @@ import java.nio.channels.Channel;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 
+import org.python.constantine.platform.Errno;
 import org.python.core.imp;
 import org.python.core.Py;
 import org.python.core.util.RelativeFile;
-import org.python.modules.errno;
 
 /**
  * Raw I/O implementation for OS files.
@@ -66,13 +66,13 @@ public class FileIO extends RawIOBase {
             fileChannel = file.getChannel();
         } catch (FileNotFoundException fnfe) {
             if (fullPath.isDirectory()) {
-                throw Py.IOError(errno.EISDIR, "Is a directory");
+                throw Py.IOError(Errno.EISDIR, name);
             }
             if ((writing && !fullPath.canWrite())
                 || fnfe.getMessage().endsWith("(Permission denied)")) {
-                throw Py.IOError(errno.EACCES, "Permission denied: '" + name + "'");
+                throw Py.IOError(Errno.EACCES, name);
             }
-            throw Py.IOError(errno.ENOENT, "No such file or directory: '" + name + "'");
+            throw Py.IOError(Errno.ENOENT, name);
         }
 
         initPosition();
@@ -288,7 +288,7 @@ public class FileIO extends RawIOBase {
                 pos += fileChannel.size();
                 break;
             default:
-                throw Py.IOError(errno.EINVAL, "invalid whence value");
+                throw Py.IOError(Errno.EINVAL);
             }
             fileChannel.position(pos);
             return pos;

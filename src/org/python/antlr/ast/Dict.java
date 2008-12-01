@@ -10,7 +10,23 @@ public class Dict extends exprType {
     public exprType[] keys;
     public exprType[] values;
 
-    public static final String[] _fields = new String[] {"keys","values"};
+    private final static String[] fields = new String[] {"keys", "values"};
+    public String[] get_fields() { return fields; }
+
+    public Dict(exprType[] keys, exprType[] values) {
+        this.keys = keys;
+        if (keys != null) {
+            for(int ikeys=0;ikeys<keys.length;ikeys++) {
+                addChild(keys[ikeys]);
+            }
+        }
+        this.values = values;
+        if (values != null) {
+            for(int ivalues=0;ivalues<values.length;ivalues++) {
+                addChild(values[ivalues]);
+            }
+        }
+    }
 
     public Dict(Token token, exprType[] keys, exprType[] values) {
         super(token);
@@ -95,12 +111,28 @@ public class Dict extends exprType {
         }
     }
 
+    private int lineno = -1;
     public int getLineno() {
+        if (lineno != -1) {
+            return lineno;
+        }
         return getLine();
     }
 
+    public void setLineno(int num) {
+        lineno = num;
+    }
+
+    private int col_offset = -1;
     public int getCol_offset() {
+        if (col_offset != -1) {
+            return col_offset;
+        }
         return getCharPositionInLine();
+    }
+
+    public void setCol_offset(int num) {
+        col_offset = num;
     }
 
 }

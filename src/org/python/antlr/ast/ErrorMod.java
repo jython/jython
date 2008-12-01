@@ -3,8 +3,6 @@ import org.python.antlr.PythonTree;
 
 public class ErrorMod extends modType {
 
-    public static final String[] _fields = new String[] {};
-
     public ErrorMod(PythonTree tree) {
         super(tree);
     }

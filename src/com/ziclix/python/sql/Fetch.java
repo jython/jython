@@ -304,7 +304,7 @@ abstract public class Fetch {
 
         for (int i = 0, len = procedure.columns.__len__(); i < len; i++) {
             PyObject column = procedure.columns.__getitem__(i);
-            int colType = ((PyInteger)column.__getitem__(Procedure.COLUMN_TYPE).__int__()).getValue();
+            int colType = column.__getitem__(Procedure.COLUMN_TYPE).asInt();
 
             switch (colType) {
 
@@ -316,7 +316,7 @@ abstract public class Fetch {
                     a[2] = Py.newInteger(-1);
                     a[3] = column.__getitem__(Procedure.LENGTH);
 
-                    switch (((PyInteger)a[1].__int__()).getValue()) {
+                    switch (a[1].asInt()) {
 
                         case Types.BIGINT:
                         case Types.BIT:
@@ -335,7 +335,7 @@ abstract public class Fetch {
                             break;
                     }
 
-                    int nullable = ((PyInteger)column.__getitem__(Procedure.NULLABLE).__int__()).getValue();
+                    int nullable = column.__getitem__(Procedure.NULLABLE).asInt();
 
                     a[6] = (nullable == DatabaseMetaData.procedureNullable) ? Py.One : Py.Zero;
 
@@ -363,8 +363,8 @@ abstract public class Fetch {
         for (int i = 0, j = 0, len = procedure.columns.__len__(); i < len; i++) {
             PyObject obj = Py.None;
             PyObject column = procedure.columns.__getitem__(i);
-            int colType = ((PyInteger)column.__getitem__(Procedure.COLUMN_TYPE).__int__()).getValue();
-            int dataType = ((PyInteger)column.__getitem__(Procedure.DATA_TYPE).__int__()).getValue();
+            int colType = column.__getitem__(Procedure.COLUMN_TYPE).asInt();
+            int dataType = column.__getitem__(Procedure.DATA_TYPE).asInt();
 
             switch (colType) {
 

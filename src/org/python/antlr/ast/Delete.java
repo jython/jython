@@ -9,7 +9,17 @@ import java.io.IOException;
 public class Delete extends stmtType {
     public exprType[] targets;
 
-    public static final String[] _fields = new String[] {"targets"};
+    private final static String[] fields = new String[] {"targets"};
+    public String[] get_fields() { return fields; }
+
+    public Delete(exprType[] targets) {
+        this.targets = targets;
+        if (targets != null) {
+            for(int itargets=0;itargets<targets.length;itargets++) {
+                addChild(targets[itargets]);
+            }
+        }
+    }
 
     public Delete(Token token, exprType[] targets) {
         super(token);
@@ -67,12 +77,28 @@ public class Delete extends stmtType {
         }
     }
 
+    private int lineno = -1;
     public int getLineno() {
+        if (lineno != -1) {
+            return lineno;
+        }
         return getLine();
     }
 
+    public void setLineno(int num) {
+        lineno = num;
+    }
+
+    private int col_offset = -1;
     public int getCol_offset() {
+        if (col_offset != -1) {
+            return col_offset;
+        }
         return getCharPositionInLine();
+    }
+
+    public void setCol_offset(int num) {
+        col_offset = num;
     }
 
 }

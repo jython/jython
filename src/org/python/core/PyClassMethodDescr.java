@@ -3,7 +3,7 @@ package org.python.core;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedType;
 
-@ExposedType(name = "classmethod_descriptor")
+@ExposedType(name = "classmethod_descriptor", isBaseType = false)
 public class PyClassMethodDescr extends PyMethodDescr {
 
     public static final PyType TYPE = PyType.fromClass(PyClassMethodDescr.class);

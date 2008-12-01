@@ -19,9 +19,9 @@ public class imp {
 
     private static final String UNKNOWN_SOURCEFILE = "<unknown>";
 
-    public static final int APIVersion = 16;
+    public static final int APIVersion = 17;
 
-    //This should change to 0 for Python 2.7 and 3.0 see PEP 328
+    // This should change to 0 for Python 2.7 and 3.0 see PEP 328
     public static final int DEFAULT_LEVEL = -1;
 
     /** A non-empty fromlist for __import__'ing sub-modules. */
@@ -85,15 +85,15 @@ public class imp {
         }
     }
 
-    static PyObject createFromPyClass(String name, InputStream fp,
-            boolean testing, String fileName) {
+    static PyObject createFromPyClass(String name, InputStream fp, boolean testing,
+                                      String sourceName, String compiledName) {
         byte[] data = readCode(name, fp, testing);
         if (testing && data == null) {
             return null;
         }
         PyCode code;
         try {
-            code = BytecodeLoader.makeCode(name + "$py", data, fileName);
+            code = BytecodeLoader.makeCode(name + "$py", data, sourceName);
         } catch (Throwable t) {
             if (testing) {
                 return null;
@@ -102,9 +102,10 @@ public class imp {
             }
         }
 
-        Py.writeComment(IMPORT_LOG, "'" + name + "' as " + fileName);
+        Py.writeComment(IMPORT_LOG, String.format("import %s # precompiled from %s", name,
+                                                  compiledName));
 
-        return createFromCode(name, code, fileName);
+        return createFromCode(name, code, compiledName);
     }
 
     public static byte[] readCode(String name, InputStream fp, boolean testing) {
@@ -204,7 +205,6 @@ public class imp {
                                                filename,
                                                true,
                                                false,
-                                               true,
                                                null);
             return ofp.toByteArray();
         } catch(Throwable t) {
@@ -251,18 +251,21 @@ public class imp {
         if (c instanceof PyTableCode) {
             code = (PyTableCode) c;
         }
+
+        if (moduleLocation != null) {
+            module.__setattr__("__file__", new PyString(moduleLocation));
+        } else if (module.__findattr__("__file__") == null) {
+            // Should probably never happen (but maybe with an odd custom builtins, or
+            // Java Integration)
+            Py.writeDebug(IMPORT_LOG, String.format("Warning: %s __file__ is unknown", name));
+        }
+
         try {
             PyFrame f = new PyFrame(code, module.__dict__, module.__dict__, null);
             code.call(f);
         } catch (RuntimeException t) {
             Py.getSystemState().modules.__delitem__(name.intern());
             throw t;
-        }
-        if(moduleLocation != null) {
-            module.__setattr__("__file__",
-                               new PyString(moduleLocation));
-        }else{
-            Py.writeDebug(IMPORT_LOG, "No fileName known to set __file__ for " + name + ".");
         }
         return module;
     }
@@ -413,23 +416,25 @@ public class imp {
         return load_module.__call__(new PyObject[] { new PyString(name) });
     }
 
-    public static PyObject loadFromCompiled(String name, InputStream stream,
-            String filename) {
-        return createFromPyClass(name, stream, false, filename);
+    public static PyObject loadFromCompiled(String name, InputStream stream, String sourceName,
+                                            String compiledName) {
+        return createFromPyClass(name, stream, false, sourceName, compiledName);
     }
 
     static PyObject loadFromSource(PySystemState sys, String name, String modName, String entry) {
-
+        String dirName = sys.getPath(entry);
         String sourceName = "__init__.py";
         String compiledName = "__init__$py.class";
-        String directoryName = sys.getPath(entry);
-        // displayDirName is for identification purposes (e.g.
-        // __file__): when null it forces java.io.File to be a
-        // relative path (e.g. foo/bar.py instead of /tmp/foo/bar.py)
+        // display names are for identification purposes (e.g. __file__): when entry is
+        // null it forces java.io.File to be a relative path (e.g. foo/bar.py instead of
+        // /tmp/foo/bar.py)
         String displayDirName = entry.equals("") ? null : entry.toString();
+        String displaySourceName = new File(new File(displayDirName, name), sourceName).getPath();
+        String displayCompiledName = new File(new File(displayDirName, name),
+                                              compiledName).getPath();
 
         // First check for packages
-        File dir = new File(directoryName, name);
+        File dir = new File(dirName, name);
         File sourceFile = new File(dir, sourceName);
         File compiledFile = new File(dir, compiledName);
 
@@ -439,48 +444,38 @@ public class imp {
             Py.writeDebug(IMPORT_LOG, "trying source " + dir.getPath());
             sourceName = name + ".py";
             compiledName = name + "$py.class";
-            sourceFile = new File(directoryName, sourceName);
-            compiledFile = new File(directoryName, compiledName);
+            displaySourceName = new File(displayDirName, sourceName).getPath();
+            displayCompiledName = new File(displayDirName, compiledName).getPath();
+            sourceFile = new File(dirName, sourceName);
+            compiledFile = new File(dirName, compiledName);
         } else {
             PyModule m = addModule(modName);
             PyObject filename = new PyString(new File(displayDirName, name).getPath());
-            m.__dict__.__setitem__("__path__", new PyList(
-                    new PyObject[] { filename }));
-            m.__dict__.__setitem__("__file__", filename);
+            m.__dict__.__setitem__("__path__", new PyList(new PyObject[] {filename}));
         }
 
         if (sourceFile.isFile() && caseok(sourceFile, sourceName)) {
-            String filename;
-            if (pkg) {
-                filename = new File(new File(displayDirName, name), sourceName).getPath();
-            } else {
-                filename = new File(displayDirName, sourceName).getPath();
-            }
-            if(compiledFile.isFile() && caseok(compiledFile, compiledName)) {
-                Py.writeDebug(IMPORT_LOG, "trying precompiled "
-                        + compiledFile.getPath());
+            if (compiledFile.isFile() && caseok(compiledFile, compiledName)) {
+                Py.writeDebug(IMPORT_LOG, "trying precompiled " + compiledFile.getPath());
                 long pyTime = sourceFile.lastModified();
                 long classTime = compiledFile.lastModified();
-                if(classTime >= pyTime) {
-                    // XXX: filename should use compiledName here (not
-                    // sourceName), but this currently breaks source
-                    // code printed out in tracebacks
-                    PyObject ret = createFromPyClass(modName, makeStream(compiledFile),
-                                                     true, filename);
-                    if(ret != null) {
+                if (classTime >= pyTime) {
+                    PyObject ret = createFromPyClass(modName, makeStream(compiledFile), true,
+                                                     displaySourceName, displayCompiledName);
+                    if (ret != null) {
                         return ret;
                     }
                 }
             }
-            return createFromSource(modName, makeStream(sourceFile), filename,
+            return createFromSource(modName, makeStream(sourceFile), displaySourceName,
                                     compiledFile.getPath());
         }
+
         // If no source, try loading precompiled
-        Py.writeDebug(IMPORT_LOG, "trying precompiled with no source "
-                + compiledFile.getPath());
-        if(compiledFile.isFile() && caseok(compiledFile, compiledName)) {
-            String filename = new File(displayDirName, compiledName).getPath();
-            return createFromPyClass(modName, makeStream(compiledFile), true, filename);
+        Py.writeDebug(IMPORT_LOG, "trying precompiled with no source " + compiledFile.getPath());
+        if (compiledFile.isFile() && caseok(compiledFile, compiledName)) {
+            return createFromPyClass(modName, makeStream(compiledFile), true, displaySourceName,
+                                     displayCompiledName);
         }
         return null;
     }
@@ -748,11 +743,7 @@ public class imp {
      */
     public static PyObject importOne(String mod, PyFrame frame) {
         PyObject module = __builtin__.__import__(mod, frame.f_globals, frame
-                .getLocals(), Py.EmptyTuple);
-        /*
-         * int dot = mod.indexOf('.'); if (dot != -1) { mod = mod.substring(0,
-         * dot).intern(); }
-         */
+                .getLocals(), Py.None);
         return module;
     }
 
@@ -762,8 +753,19 @@ public class imp {
      */
     public static PyObject importOneAs(String mod, PyFrame frame) {
         PyObject module = __builtin__.__import__(mod, frame.f_globals, frame
-                .getLocals(), getStarArg());
-        // frame.setlocal(asname, module);
+                .getLocals(), Py.None);
+        int dot = mod.indexOf('.');
+        while (dot != -1) {
+            int dot2 = mod.indexOf('.', dot + 1);
+            String name;
+            if (dot2 == -1) {
+                name = mod.substring(dot + 1);
+            } else {
+                name = mod.substring(dot + 1, dot2);
+            }
+            module = module.__getattr__(name);
+            dot = dot2;
+        }
         return module;
     }
 
@@ -909,9 +911,6 @@ public class imp {
             path = (PyList) pkg.__getattr__("__path__");
             name = name.substring(dot + 1, name.length()).intern();
         }
-
-        // This should be better "protected"
-        // ((PyStringMap)nm.__dict__).clear();
 
         nm.__setattr__("__name__", new PyString(modName));
         PyObject ret = find_module(name, modName, path);

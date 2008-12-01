@@ -14,5 +14,11 @@ public enum cmpopType implements AST {
     Is,
     IsNot,
     In,
-    NotIn,
+    NotIn;
+    private final static String[] fields = new String[0];
+    public String[] get_fields() { return fields; }
+
+    private final static String[] attributes = new String[0];
+    public String[] get_attributes() { return attributes; }
+
 }

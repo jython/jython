@@ -6,6 +6,9 @@ import org.antlr.runtime.Token;
 
 public abstract class modType extends PythonTree {
 
+    public modType() {
+    }
+
     public modType(int ttype, Token token) {
         super(ttype, token);
     }

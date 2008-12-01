@@ -11,8 +11,18 @@ public class IfExp extends exprType {
     public exprType body;
     public exprType orelse;
 
-    public static final String[] _fields = new String[]
-    {"test","body","orelse"};
+    private final static String[] fields = new String[] {"test", "body",
+                                                          "orelse"};
+    public String[] get_fields() { return fields; }
+
+    public IfExp(exprType test, exprType body, exprType orelse) {
+        this.test = test;
+        addChild(test);
+        this.body = body;
+        addChild(body);
+        this.orelse = orelse;
+        addChild(orelse);
+    }
 
     public IfExp(Token token, exprType test, exprType body, exprType orelse) {
         super(token);
@@ -78,12 +88,28 @@ public class IfExp extends exprType {
             orelse.accept(visitor);
     }
 
+    private int lineno = -1;
     public int getLineno() {
+        if (lineno != -1) {
+            return lineno;
+        }
         return getLine();
     }
 
+    public void setLineno(int num) {
+        lineno = num;
+    }
+
+    private int col_offset = -1;
     public int getCol_offset() {
+        if (col_offset != -1) {
+            return col_offset;
+        }
         return getCharPositionInLine();
+    }
+
+    public void setCol_offset(int num) {
+        col_offset = num;
     }
 
 }

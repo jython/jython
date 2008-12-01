@@ -9,7 +9,17 @@ import java.io.IOException;
 public class ExtSlice extends sliceType {
     public sliceType[] dims;
 
-    public static final String[] _fields = new String[] {"dims"};
+    private final static String[] fields = new String[] {"dims"};
+    public String[] get_fields() { return fields; }
+
+    public ExtSlice(sliceType[] dims) {
+        this.dims = dims;
+        if (dims != null) {
+            for(int idims=0;idims<dims.length;idims++) {
+                addChild(dims[idims]);
+            }
+        }
+    }
 
     public ExtSlice(Token token, sliceType[] dims) {
         super(token);

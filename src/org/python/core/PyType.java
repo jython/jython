@@ -58,6 +58,9 @@ public class PyType extends PyObject implements Serializable {
     boolean has_set;
     boolean has_delete;
 
+    /** Whether this type allows subclassing. */
+    private boolean isBaseType = true;
+
     /** Whether finalization is required for this type's instances (implements __del__). */
     private boolean needs_finalizer;
 
@@ -154,7 +157,6 @@ public class PyType extends PyObject implements Serializable {
             }
         }
 
-        // XXX can be subclassed ?
         if (dict.__finditem__("__module__") == null) {
            PyFrame frame = Py.getFrame();
            if (frame != null) {
@@ -211,6 +213,11 @@ public class PyType extends PyObject implements Serializable {
         newtype.numSlots = newtype.base.numSlots;
         newtype.bases = bases_list;
 
+        if (!newtype.base.isBaseType) {
+            throw Py.TypeError(String.format("type '%.100s' is not an acceptable base type",
+                                             newtype.base.name));
+        }
+
         PyObject slots = dict.__finditem__("__slots__");
         boolean needsDictDescr = false;
         if (slots == null) {
@@ -256,7 +263,7 @@ public class PyType extends PyObject implements Serializable {
             }
         }
 
-        newtype.tp_flags = Py.TPFLAGS_HEAPTYPE;
+        newtype.tp_flags = Py.TPFLAGS_HEAPTYPE | Py.TPFLAGS_BASETYPE;
 
         // special case __new__, if function => static method
         PyObject tmp = dict.__finditem__("__new__");
@@ -460,6 +467,11 @@ public class PyType extends PyObject implements Serializable {
             mro = savedMro;
             throw t;
         }
+    }
+
+    private void setIsBaseType(boolean isBaseType) {
+        this.isBaseType = isBaseType;
+        tp_flags = isBaseType ? tp_flags | Py.TPFLAGS_BASETYPE : tp_flags & ~Py.TPFLAGS_BASETYPE;
     }
 
     private void mro_internal() {
@@ -876,6 +888,34 @@ public class PyType extends PyObject implements Serializable {
         return null;
     }
 
+    /**
+     * Like lookup but also provides (in where[0]) the index of the type in the reversed
+     * mro -- that is, how many subtypes away from the base object the type is.
+     *
+     * @param name attribute name (must be interned)
+     * @param where an int[] with a length of at least 1
+     * @return found PyObject or null
+     */
+    public PyObject lookup_where_index(String name, int[] where) {
+        PyObject[] mro = this.mro;
+        if (mro == null) {
+            return null;
+        }
+        int i = mro.length;
+        for (PyObject t : mro) {
+            i--;
+            PyObject dict = t.fastGetDict();
+            if (dict != null) {
+                PyObject obj = dict.__finditem__(name);
+                if (obj != null) {
+                    where[0] = i;
+                    return obj;
+                }
+            }
+        }
+        return null;
+    }
+
     public PyObject super_lookup(PyType ref, String name) {
         PyObject[] mro = this.mro;
         if (mro == null) {
@@ -914,6 +954,7 @@ public class PyType extends PyObject implements Serializable {
             PyType objType = fromClass(builder.getTypeClass());
             objType.name = builder.getName();
             objType.dict = builder.getDict(objType);
+            objType.setIsBaseType(builder.getIsBaseType());
             Class<?> base = builder.getBase();
             if (base == Object.class) {
                 base = forClass.getSuperclass();
@@ -930,17 +971,19 @@ public class PyType extends PyObject implements Serializable {
             return exposedAs;
         }
         Class<?> base = null;
+        boolean isBaseType = true;
         String name = null;
         TypeBuilder tb = getBuilder(c);
         if (tb != null) {
             name = tb.getName();
+            isBaseType = tb.getIsBaseType();
             if (!tb.getBase().equals(Object.class)) {
                 base = tb.getBase();
             }
         }
         PyType type = class_to_type.get(c);
         if (type == null) {
-            type = createType(c, base, name);
+            type = createType(c, base, name, isBaseType);
         }
         return type;
     }
@@ -949,7 +992,7 @@ public class PyType extends PyObject implements Serializable {
         return classToBuilder == null ? null : classToBuilder.get(c);
     }
 
-    private static PyType createType(Class<?> c, Class<?> base, String name) {
+    private static PyType createType(Class<?> c, Class<?> base, String name, boolean isBaseType) {
         PyType newtype;
         if (c == PyType.class) {
             newtype = new PyType(false);
@@ -985,6 +1028,7 @@ public class PyType extends PyObject implements Serializable {
         }
         newtype.name = name;
         newtype.builtin = true;
+        newtype.setIsBaseType(isBaseType);
         fillInMRO(newtype, base); // basic mro, base, bases
         newtype.fillDict();
         return newtype;

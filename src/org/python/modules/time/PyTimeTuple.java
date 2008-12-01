@@ -3,11 +3,9 @@ package org.python.modules.time;
 
 import org.python.core.ArgParser;
 import org.python.core.Py;
-import org.python.core.PyInteger;
 import org.python.core.PyList;
 import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
-import org.python.core.PySequence;
 import org.python.core.PyTuple;
 import org.python.core.PyType;
 import org.python.expose.ExposedGet;
@@ -20,11 +18,11 @@ import org.python.expose.MethodType;
  * struct_time of the time module.
  *
  */
-@ExposedType(name = "time.struct_time")
+@ExposedType(name = "time.struct_time", isBaseType = false)
 public class PyTimeTuple extends PyTuple {
 
     @ExposedGet
-    public PyInteger tm_year, tm_mon, tm_mday, tm_hour, tm_min, tm_sec, tm_wday, tm_yday, tm_isdst;
+    public PyObject tm_year, tm_mon, tm_mday, tm_hour, tm_min, tm_sec, tm_wday, tm_yday, tm_isdst;
 
     @ExposedGet
     public final int n_sequence_fields = 9, n_fields = 9, n_unnamed_fields = 0;
@@ -33,15 +31,15 @@ public class PyTimeTuple extends PyTuple {
 
     PyTimeTuple(PyObject... vals) {
         super(TYPE, vals);
-        tm_year = (PyInteger)vals[0].__int__();
-        tm_mon =  (PyInteger)vals[1].__int__();
-        tm_mday = (PyInteger)vals[2].__int__();
-        tm_hour = (PyInteger)vals[3].__int__();
-        tm_min =  (PyInteger)vals[4].__int__();
-        tm_sec =  (PyInteger)vals[5].__int__();;
-        tm_wday = (PyInteger)vals[6].__int__();;
-        tm_yday = (PyInteger)vals[7].__int__();;
-        tm_isdst =(PyInteger)vals[8].__int__();;
+        tm_year = vals[0];
+        tm_mon =  vals[1];
+        tm_mday = vals[2];
+        tm_hour = vals[3];
+        tm_min =  vals[4];
+        tm_sec =  vals[5];
+        tm_wday = vals[6];
+        tm_yday = vals[7];
+        tm_isdst =vals[8];
     }
 
     @ExposedNew

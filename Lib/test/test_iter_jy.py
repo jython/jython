@@ -2,6 +2,7 @@
 
 Made for Jython.
 """
+import itertools
 from test import test_support
 import unittest
 
@@ -22,6 +23,9 @@ class IterTestCase(unittest.TestCase):
             def __getitem__(self, index):
                 return str(index) + '!'
         self.assertEqual(iter(MyStr('ab')).next(), '0!')
+
+    def test_chain(self):
+        self.assertEqual(list(itertools.chain([], [], ['foo'])), ['foo'])
 
 
 def test_main():

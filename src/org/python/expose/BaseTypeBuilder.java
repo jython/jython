@@ -22,14 +22,18 @@ public class BaseTypeBuilder implements TypeBuilder {
 
     private String name;
 
+    private boolean isBaseType;
+
     public BaseTypeBuilder(String name,
                            Class typeClass,
                            Class baseClass,
+                           boolean isBaseType,
                            PyBuiltinMethod[] meths,
                            PyDataDescr[] descrs,
                            PyNewWrapper newWrapper) {
         this.typeClass = typeClass;
         this.baseClass = baseClass;
+        this.isBaseType = isBaseType;
         this.name = name;
         this.descrs = descrs;
         this.meths = meths;
@@ -63,5 +67,9 @@ public class BaseTypeBuilder implements TypeBuilder {
 
     public Class getBase() {
         return baseClass;
+    }
+
+    public boolean getIsBaseType() {
+        return isBaseType;
     }
 }

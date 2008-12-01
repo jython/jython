@@ -10,7 +10,14 @@ public class keywordType extends PythonTree {
     public String arg;
     public exprType value;
 
-    public static final String[] _fields = new String[] {"arg","value"};
+    private final static String[] fields = new String[] {"arg", "value"};
+    public String[] get_fields() { return fields; }
+
+    public keywordType(String arg, exprType value) {
+        this.arg = arg;
+        this.value = value;
+        addChild(value);
+    }
 
     public keywordType(Token token, String arg, exprType value) {
         super(token);

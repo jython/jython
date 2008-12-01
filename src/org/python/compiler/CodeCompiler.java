@@ -303,12 +303,6 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
             visit(((Expr) suite.body[0]).value);
             code.invokevirtual("org/python/core/PyFrame", "setglobal", "(" +$str + $pyObj + ")V");
         }
-        if (module.setFile) {
-            loadFrame();
-            code.ldc("__file__");
-            module.filename.get(code);
-            code.invokevirtual("org/python/core/PyFrame", "setglobal", "(" +$str + $pyObj + ")V");
-        }
         traverse(suite);
         return null;
     }
@@ -2161,7 +2155,6 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
     @Override
     public Object visitGeneratorExp(GeneratorExp node) throws Exception {
         String bound_exp = "_(x)";
-        String tmp_append ="_(" + node.getLine() + "_" + node.getCharPositionInLine() + ")";
 
         setline(node);
 
@@ -2195,7 +2188,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
             }
         }
 
-        module.PyCode(new Suite(node, new stmtType[]{n}), tmp_append, true,
+        module.PyCode(new Suite(node, new stmtType[]{n}), "<genexpr>", true,
                       className, false, false,
                       node.getLine(), scope, cflags).get(code);
 
@@ -2205,16 +2198,14 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         } else {
             code.invokespecial( "org/python/core/PyFunction", "<init>", "(" + $pyObj + $pyObjArr + $pyCode + $pyObj + $pyObjArr + ")V");
         }
-
-        set(new Name(node, tmp_append, expr_contextType.Store));
+        int genExp = storeTop();
 
         visit(iter);
-        visit(new Name(node, tmp_append, expr_contextType.Load));
+        code.aload(genExp);
+        code.freeLocal(genExp);
         code.swap();
         code.invokevirtual("org/python/core/PyObject", "__iter__", "()Lorg/python/core/PyObject;");
         code.invokevirtual("org/python/core/PyObject", "__call__", "(" + $pyObj + ")" + $pyObj);
-
-        visit(new Delete(n, new exprType[] { new Name(n, tmp_append, expr_contextType.Del) }));
 
         return null;
     }

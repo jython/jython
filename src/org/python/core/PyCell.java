@@ -10,7 +10,7 @@ import org.python.expose.ExposedType;
  * Cells are used to implement variables referenced by multiple
  * scopes.
  */
-@ExposedType(name = "cell")
+@ExposedType(name = "cell", isBaseType = false)
 public class PyCell extends PyObject {
 
     /** The underlying content of the cell, or null. */

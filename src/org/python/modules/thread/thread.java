@@ -101,7 +101,7 @@ public class thread implements ClassDictInit {
                 return stack_size;
             case 1:
                 long old_stack_size = stack_size;
-                int proposed_stack_size = ((PyInteger)args[0].__int__()).getValue();
+                int proposed_stack_size = args[0].asInt();
                 if (proposed_stack_size != 0 && proposed_stack_size < 32768) {
                     // as specified by Python, Java quietly ignores what
                     // it considers are too small

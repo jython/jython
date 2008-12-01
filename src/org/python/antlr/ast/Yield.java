@@ -9,7 +9,13 @@ import java.io.IOException;
 public class Yield extends exprType {
     public exprType value;
 
-    public static final String[] _fields = new String[] {"value"};
+    private final static String[] fields = new String[] {"value"};
+    public String[] get_fields() { return fields; }
+
+    public Yield(exprType value) {
+        this.value = value;
+        addChild(value);
+    }
 
     public Yield(Token token, exprType value) {
         super(token);
@@ -51,12 +57,28 @@ public class Yield extends exprType {
             value.accept(visitor);
     }
 
+    private int lineno = -1;
     public int getLineno() {
+        if (lineno != -1) {
+            return lineno;
+        }
         return getLine();
     }
 
+    public void setLineno(int num) {
+        lineno = num;
+    }
+
+    private int col_offset = -1;
     public int getCol_offset() {
+        if (col_offset != -1) {
+            return col_offset;
+        }
         return getCharPositionInLine();
+    }
+
+    public void setCol_offset(int num) {
+        col_offset = num;
     }
 
 }

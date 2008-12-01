@@ -44,7 +44,7 @@ class _ProcessFile:
     the close method.
     """
     def __init__(self, stream, process, name):
-        self._file = FileUtil.wrap(stream)
+        self._file = FileUtil.wrap(stream, 0)
         self._process = process
 
     def __getattr__(self, name):
@@ -93,10 +93,10 @@ class Popen3:
                     bufsize
                     )
                 
-        self.tochild = FileUtil.wrap(self._tochild)
-        self.fromchild = FileUtil.wrap(self._fromchild)
+        self.tochild = FileUtil.wrap(self._tochild, 0)
+        self.fromchild = FileUtil.wrap(self._fromchild, 0)
         if self._childerr:
-            self.childerr = FileUtil.wrap(self._childerr)
+            self.childerr = FileUtil.wrap(self._childerr, 0)
 
     def _startChildWaiter(self):
         """Start a subthread that waits for the child process to exit."""
@@ -198,7 +198,7 @@ class Popen4(Popen3):
             "%s-stderr" % self.process,
             self._close
             )
-        return FileUtil.wrap(joinedStream)
+        return FileUtil.wrap(joinedStream, 0)
 
     def _close( self ):
         """Must be closed twice (once for each of the two joined pipes)"""

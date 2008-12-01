@@ -1169,9 +1169,9 @@ class Popen(object):
             if cwd is None:
                 cwd = os.getcwd()
             elif not os.path.exists(cwd):
-                raise OSError(errno.ENOENT, errno.strerror(errno.ENOENT), cwd)
+                raise OSError(errno.ENOENT, os.strerror(errno.ENOENT), cwd)
             elif not os.path.isdir(cwd):
-                raise OSError(errno.ENOTDIR, errno.strerror(errno.ENOENT), cwd)
+                raise OSError(errno.ENOTDIR, os.strerror(errno.ENOENT), cwd)
             builder.directory(java.io.File(cwd))
 
             # Let Java manage redirection of stderr to stdout (it's more

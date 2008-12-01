@@ -33,7 +33,9 @@ public class DescriptorExposerTest extends InterpTestCase implements PyTypes {
         DescriptorExposer de = new DescriptorExposer(ASM_TYPE, name);
         setup.setup(de);
         Class descriptor = de.load(new BytecodeLoader.Loader());
-        return (PyDataDescr)descriptor.newInstance();
+        PyDataDescr descr = (PyDataDescr)descriptor.newInstance();
+        descr.setType(PY_TYPE);
+        return descr;
     }
 
     public PyDataDescr makeDescriptor(DescSetup setup) throws Exception {
@@ -73,6 +75,16 @@ public class DescriptorExposerTest extends InterpTestCase implements PyTypes {
                 .toString());
         assertFalse(instance.implementsDescrSet());
         assertFalse(instance.implementsDescrDelete());
+    }
+    
+    public void testNullReturns() throws Exception {
+        PyDataDescr instance = makeDescriptor(new DescSetup() {
+
+            public void setup(DescriptorExposer de) {
+                de.addFieldGetter("nullString", STRING);
+            }
+        });
+        assertEquals(Py.None, instance.__get__(se, PY_TYPE));
     }
 
     public void testMethodSetter() throws Exception {
@@ -222,5 +234,7 @@ public class DescriptorExposerTest extends InterpTestCase implements PyTypes {
         public boolean bool;
 
         public String toStringVal = SimpleExposed.TO_STRING_RETURN;
+        
+        public String nullString = null;
     }
 }

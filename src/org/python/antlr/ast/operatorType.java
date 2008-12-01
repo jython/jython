@@ -16,5 +16,11 @@ public enum operatorType implements AST {
     BitOr,
     BitXor,
     BitAnd,
-    FloorDiv,
+    FloorDiv;
+    private final static String[] fields = new String[0];
+    public String[] get_fields() { return fields; }
+
+    private final static String[] attributes = new String[0];
+    public String[] get_attributes() { return attributes; }
+
 }

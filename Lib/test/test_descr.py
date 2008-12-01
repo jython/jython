@@ -4404,11 +4404,6 @@ def test_main():
             classmethods_in_c,
             staticmethods_in_c,
 
-            # Jython allows subclassing of classes it shouldn't (like
-            # builtin_function_or_method):
-            # http://bugs.jython.org/issue1758319
-            errors,
-
             # CPython's unicode.__cmp__ is derived from type (and only
             # takes 1 arg)
             specials,
@@ -4423,9 +4418,6 @@ def test_main():
 
             # Lack __basicsize__: http://bugs.jython.org/issue1017
             slotmultipleinheritance,
-
-            # Carlo hacked us: http://bugs.jython.org/issue1058
-            carloverre,
 
             # Jython lacks CPython method-wrappers (though maybe this
             # should pass anyway?)

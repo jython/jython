@@ -1,7 +1,5 @@
 package org.python.core;
 
-import java.io.Serializable;
-
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
@@ -10,7 +8,7 @@ import org.python.expose.MethodType;
 /**
  * A builtin python bool. 
  */
-@ExposedType(name = "bool")
+@ExposedType(name = "bool", isBaseType = false)
 public class PyBoolean extends PyInteger {
     
     public static final PyType TYPE = PyType.fromClass(PyBoolean.class);

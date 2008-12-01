@@ -3,6 +3,7 @@ package org.python.modules;
 
 import java.io.File;
 
+import org.python.constantine.platform.Errno;
 import org.python.core.Py;
 import org.python.core.PyList;
 import org.python.core.PyString;
@@ -20,7 +21,7 @@ public class _py_compile {
         
         File file = new File(filename);
         if (!file.exists()) {
-            throw Py.IOError(errno.ENOENT,  "No such file or directory: '" + filename + "'");
+            throw Py.IOError(Errno.ENOENT, filename);
         }
         String name = file.getName();
         int dot = name.lastIndexOf('.');

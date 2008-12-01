@@ -11,8 +11,22 @@ public class Compare extends exprType {
     public cmpopType[] ops;
     public exprType[] comparators;
 
-    public static final String[] _fields = new String[]
-    {"left","ops","comparators"};
+    private final static String[] fields = new String[] {"left", "ops",
+                                                          "comparators"};
+    public String[] get_fields() { return fields; }
+
+    public Compare(exprType left, cmpopType[] ops, exprType[] comparators) {
+        this.left = left;
+        addChild(left);
+        this.ops = ops;
+        this.comparators = comparators;
+        if (comparators != null) {
+            for(int
+            icomparators=0;icomparators<comparators.length;icomparators++) {
+                addChild(comparators[icomparators]);
+            }
+        }
+    }
 
     public Compare(Token token, exprType left, cmpopType[] ops, exprType[]
     comparators) {
@@ -93,12 +107,28 @@ public class Compare extends exprType {
         }
     }
 
+    private int lineno = -1;
     public int getLineno() {
+        if (lineno != -1) {
+            return lineno;
+        }
         return getLine();
     }
 
+    public void setLineno(int num) {
+        lineno = num;
+    }
+
+    private int col_offset = -1;
     public int getCol_offset() {
+        if (col_offset != -1) {
+            return col_offset;
+        }
         return getCharPositionInLine();
+    }
+
+    public void setCol_offset(int num) {
+        col_offset = num;
     }
 
 }

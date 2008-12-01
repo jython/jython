@@ -438,7 +438,7 @@ public class PyArray extends PySequence implements Cloneable {
             return s.toString().charAt(0);
         }
         else if (obj.__nonzero__()) {
-            return ((PyInteger)obj.__int__()).getValue();
+            return obj.asInt();
         }
         else {
             return -1;

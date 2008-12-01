@@ -31,8 +31,7 @@ class TestFilenoTestCase(unittest.TestCase):
         self.assertEqual(os.path.getsize(self.filename), 0)
 
         self.fp.close()
-        raises(IOError, '[Errno 9] Bad file descriptor',
-               os.ftruncate, self.fd, 0)
+        raises(IOError, 9, os.ftruncate, self.fd, 0)
 
     def test_lseek(self):
         self.assertEqual(os.lseek(self.fd, 0, 1), 0)
@@ -40,8 +39,7 @@ class TestFilenoTestCase(unittest.TestCase):
         os.lseek(self.fd, 7, 0)
         self.assertEqual(os.read(self.fd, 7), 'filenos')
         self.fp.close()
-        raises(OSError, '[Errno 9] Bad file descriptor',
-               os.lseek, self.fd, 0, 1)
+        raises(OSError, 9, os.lseek, self.fd, 0, 1)
 
     def test_read(self):
         self.fp.write('jython filenos')
@@ -50,16 +48,14 @@ class TestFilenoTestCase(unittest.TestCase):
         self.assertEqual(os.read(self.fd, 7), 'jython ')
         self.assertEqual(os.read(self.fd, 99), 'filenos')
         self.fp.close()
-        raises(OSError, '[Errno 9] Bad file descriptor',
-               os.read, self.fd, 1)
+        raises(OSError, 9, os.read, self.fd, 1)
 
     def test_write(self):
         os.write(self.fd, 'jython filenos')
         self.fp.seek(0)
         self.assertEqual(self.fp.read(), 'jython filenos')
         self.fp.close()
-        raises(OSError, '[Errno 9] Bad file descriptor',
-               os.write, self.fd, 'The Larch')
+        raises(OSError, 9, os.write, self.fd, 'The Larch')
 
 
 class TestOsOpenTestCase(unittest.TestCase):
@@ -96,8 +92,7 @@ class TestOsOpenTestCase(unittest.TestCase):
 
         # falls back to read only without O_WRONLY/O_RDWR
         self.fd = os.open(self.filename, os.O_APPEND)
-        raises(OSError, '[Errno 9] Bad file descriptor',
-               os.write, self.fd, 'new')
+        raises(OSError, 9, os.write, self.fd, 'new')
         # Acts as append on windows (seeks to the end)
         os.lseek(self.fd, 0, 0)
         self.assertEquals(os.read(self.fd, len('jython filenos')), 'jython filenos')
@@ -105,8 +100,7 @@ class TestOsOpenTestCase(unittest.TestCase):
 
         # falls back to read only without O_WRONLY/O_RDWR
         self.fd = os.open(self.filename, os.O_CREAT)
-        raises(OSError, '[Errno 9] Bad file descriptor',
-               os.write, self.fd, 'new')
+        raises(OSError, 9, os.write, self.fd, 'new')
         self.assertEquals(os.read(self.fd, len('jython filenos')), 'jython filenos')
         os.close(self.fd)
 
@@ -133,8 +127,7 @@ class TestOsOpenTestCase(unittest.TestCase):
         self.fd = os.open(self.filename, os.O_TRUNC | os.O_WRONLY)
         self.assertEquals(os.path.getsize(self.filename), 0)
         os.write(self.fd, 'write only truncated')
-        raises(OSError, '[Errno 9] Bad file descriptor',
-               os.read, self.fd, 99)
+        raises(OSError, 9, os.read, self.fd, 99)
         os.close(self.fd)
 
         fd = open(self.filename)
@@ -146,8 +139,7 @@ class TestOsOpenTestCase(unittest.TestCase):
         # falls back to read only without O_WRONLY/O_RDWR, but truncates
         self.fd = os.open(self.filename, os.O_TRUNC)
         self.assertEquals(os.path.getsize(self.filename), 0)
-        raises(OSError, '[Errno 9] Bad file descriptor',
-               os.write, self.fd, 'new')
+        raises(OSError, 9, os.write, self.fd, 'new')
         self.assertEquals(os.read(self.fd, 99), '')
         os.close(self.fd)
 
@@ -159,8 +151,7 @@ class TestOsOpenTestCase(unittest.TestCase):
         # append with no write falls back to read, but still truncates
         self.fd = os.open(self.filename, os.O_TRUNC | os.O_APPEND)
         self.assertEquals(os.path.getsize(self.filename), 0)
-        raises(OSError, '[Errno 9] Bad file descriptor',
-               os.write, self.fd, 'new')
+        raises(OSError, 9, os.write, self.fd, 'new')
         os.close(self.fd)
 
         fp = open(self.filename, 'w')
@@ -172,26 +163,23 @@ class TestOsOpenTestCase(unittest.TestCase):
     def test_open_exclusive(self):
         self.assert_(not os.path.exists(self.filename))
         # fails without O_CREAT
-        raises(OSError, '[Errno 2] No such file or directory: %r' % \
-                   self.filename,
-               os.open, self.filename, os.O_EXCL)
+        raises(OSError, (2, self.filename), os.open, self.filename, os.O_EXCL)
         self.assert_(not os.path.exists(self.filename))
 
         # creates, read only
         self.fd = os.open(self.filename, os.O_EXCL | os.O_CREAT)
         self.assert_(os.path.exists(self.filename))
-        raises(OSError, '[Errno 9] Bad file descriptor',
-               os.write, self.fd, 'jython')
+        raises(OSError, 9, os.write, self.fd, 'jython')
         self.assertEquals(os.read(self.fd, 99), '')
         os.close(self.fd)
 
         # not exclusive unless creating
         os.close(os.open(self.filename, os.O_EXCL))
-        raises(OSError, '[Errno 17] File exists: %r' % self.filename,
+        raises(OSError, (17, self.filename),
                os.open, self.filename, os.O_CREAT | os.O_EXCL)
-        raises(OSError, '[Errno 17] File exists: %r' % self.filename,
+        raises(OSError, (17, self.filename),
                os.open, self.filename, os.O_CREAT | os.O_WRONLY | os.O_EXCL)
-        raises(OSError, '[Errno 17] File exists: %r' % self.filename,
+        raises(OSError, (17, self.filename),
                os.open, self.filename, os.O_CREAT | os.O_RDWR | os.O_EXCL)
 
         os.remove(self.filename)
@@ -208,8 +196,7 @@ class TestOsOpenTestCase(unittest.TestCase):
         self.fd = os.open(self.filename, os.O_SYNC | os.O_WRONLY | os.O_CREAT)
         self.assert_(os.path.exists(self.filename))
         os.write(self.fd, 'jython')
-        raises(OSError, '[Errno 9] Bad file descriptor',
-               os.read, self.fd, 99)
+        raises(OSError, 9, os.read, self.fd, 99)
         os.close(self.fd)
         os.remove(self.filename)
 
@@ -232,12 +219,11 @@ class TestOsOpenTestCase(unittest.TestCase):
 
     def test_bad_open(self):
         for mode in (os.O_WRONLY, os.O_WRONLY, os.O_RDWR):
-            raises(OSError, '[Errno 2] No such file or directory: %r' % \
-                       self.filename, os.open, self.filename, mode)
+            raises(OSError, (2, self.filename), os.open, self.filename, mode)
 
         open(self.filename, 'w').close()
 
-        raises(OSError, '[Errno 22] Invalid argument: %r' % self.filename,
+        raises(OSError, (22, self.filename),
                os.open, self.filename, os.O_WRONLY | os.O_RDWR)
 
 
@@ -321,12 +307,26 @@ class TestOsFdopenTestCase(unittest.TestCase):
 
 
 def raises(exc, expected, callable, *args):
+    """Ensure the specified call raises exc.
+
+    expected is compared against the exception message if not None. It
+    can be a str, an errno or a 2 item tuple of errno/filename. The
+    latter two being for comparison against EnvironmentErrors.
+    """
+    if expected:
+        if isinstance(expected, str):
+            msg = expected
+        else:
+            errno = expected[0] if isinstance(expected, tuple) else expected
+            msg = '[Errno %d] %s' % (errno, os.strerror(errno))
+            if isinstance(expected, tuple):
+                msg += ': %r' % expected[1]
     try:
         callable(*args)
-    except exc, msg:
-        if expected is not None and str(msg) != expected:
+    except exc, val:
+        if expected and str(val) != msg:
             raise test_support.TestFailed(
-                "Message %r, expected %r" % (str(msg), expected))
+                "Message %r, expected %r" % (str(value), msg))
     else:
         raise test_support.TestFailed("Expected %s" % exc)
 

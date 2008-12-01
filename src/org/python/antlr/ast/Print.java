@@ -11,7 +11,21 @@ public class Print extends stmtType {
     public exprType[] values;
     public boolean nl;
 
-    public static final String[] _fields = new String[] {"dest","values","nl"};
+    private final static String[] fields = new String[] {"dest", "values",
+                                                          "nl"};
+    public String[] get_fields() { return fields; }
+
+    public Print(exprType dest, exprType[] values, boolean nl) {
+        this.dest = dest;
+        addChild(dest);
+        this.values = values;
+        if (values != null) {
+            for(int ivalues=0;ivalues<values.length;ivalues++) {
+                addChild(values[ivalues]);
+            }
+        }
+        this.nl = nl;
+    }
 
     public Print(Token token, exprType dest, exprType[] values, boolean nl) {
         super(token);
@@ -88,12 +102,28 @@ public class Print extends stmtType {
         }
     }
 
+    private int lineno = -1;
     public int getLineno() {
+        if (lineno != -1) {
+            return lineno;
+        }
         return getLine();
     }
 
+    public void setLineno(int num) {
+        lineno = num;
+    }
+
+    private int col_offset = -1;
     public int getCol_offset() {
+        if (col_offset != -1) {
+            return col_offset;
+        }
         return getCharPositionInLine();
+    }
+
+    public void setCol_offset(int num) {
+        col_offset = num;
     }
 
 }

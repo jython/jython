@@ -11,8 +11,24 @@ public class With extends stmtType {
     public exprType optional_vars;
     public stmtType[] body;
 
-    public static final String[] _fields = new String[]
-    {"context_expr","optional_vars","body"};
+    private final static String[] fields = new String[] {"context_expr",
+                                                          "optional_vars",
+                                                          "body"};
+    public String[] get_fields() { return fields; }
+
+    public With(exprType context_expr, exprType optional_vars, stmtType[] body)
+    {
+        this.context_expr = context_expr;
+        addChild(context_expr);
+        this.optional_vars = optional_vars;
+        addChild(optional_vars);
+        this.body = body;
+        if (body != null) {
+            for(int ibody=0;ibody<body.length;ibody++) {
+                addChild(body[ibody]);
+            }
+        }
+    }
 
     public With(Token token, exprType context_expr, exprType optional_vars,
     stmtType[] body) {
@@ -95,12 +111,28 @@ public class With extends stmtType {
         }
     }
 
+    private int lineno = -1;
     public int getLineno() {
+        if (lineno != -1) {
+            return lineno;
+        }
         return getLine();
     }
 
+    public void setLineno(int num) {
+        lineno = num;
+    }
+
+    private int col_offset = -1;
     public int getCol_offset() {
+        if (col_offset != -1) {
+            return col_offset;
+        }
         return getCharPositionInLine();
+    }
+
+    public void setCol_offset(int num) {
+        col_offset = num;
     }
 
 }

@@ -3,6 +3,7 @@ package org.python.core;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,10 +20,10 @@ import java.util.Calendar;
 import java.util.Set;
 
 import org.python.antlr.ast.modType;
+import org.python.constantine.platform.Errno;
 import org.python.compiler.Module;
 import org.python.core.adapter.ClassicPyObjectAdapter;
 import org.python.core.adapter.ExtensiblePyObjectAdapter;
-import org.python.modules.errno;
 import org.python.util.Generic;
 
 public final class Py {
@@ -78,7 +79,9 @@ public final class Py {
     /** A Python string containing ' ' **/
     public static PyString Space;
     /** Set if the type object is dynamically allocated */
-    public static long TPFLAGS_HEAPTYPE;
+    public static long TPFLAGS_HEAPTYPE = 1L << 9;
+    /** Set if the type allows subclassing */
+    public static long TPFLAGS_BASETYPE = 1L << 10;
 
     /** Builtin types that are used to setup PyObject. */
     static final Set<Class<?>> BOOTSTRAP_TYPES = Generic.set();
@@ -142,14 +145,15 @@ public final class Py {
     }
     public static PyObject IOError;
 
-    public static PyException IOError(java.io.IOException ioe) {
+    public static PyException IOError(IOException ioe) {
         String message = ioe.getMessage();
         if (message == null) {
             message = ioe.getClass().getName();
         }
-        if (ioe instanceof java.io.FileNotFoundException) {
-            message = "File not found - " + message;
-            return IOError(errno.ENOENT, message);
+        if (ioe instanceof FileNotFoundException) {
+            PyTuple args = new PyTuple(Py.newInteger(Errno.ENOENT.value()),
+                                       Py.newString("File not found - " + message));
+            return new PyException(Py.IOError, args);
         }
         return new PyException(Py.IOError, message);
     }
@@ -158,10 +162,18 @@ public final class Py {
         return new PyException(Py.IOError, message);
     }
 
-    public static PyException IOError(int errno, String message) {
-        PyTuple args = new PyTuple(new PyInteger(errno), new PyString(message));
+    public static PyException IOError(Errno errno) {
+        PyObject args = new PyTuple(Py.newInteger(errno.value()),
+                                    Py.newString(errno.description()));
         return new PyException(Py.IOError, args);
     }
+
+    public static PyException IOError(Errno errno, String filename) {
+        PyObject args = new PyTuple(Py.newInteger(errno.value()),
+                                    Py.newString(errno.description()), Py.newString(filename));
+        return new PyException(Py.IOError, args);
+    }
+
     public static PyObject KeyError;
 
     public static PyException KeyError(String message) {
@@ -1608,6 +1620,8 @@ public final class Py {
             PyFrame frame = Py.getFrame();
             if (frame != null && frame.f_code != null) {
                 cflags = new CompilerFlags(frame.f_code.co_flags | flags);
+            } else {
+                cflags = new CompilerFlags(flags);
             }
         }
         return cflags;
@@ -1640,8 +1654,7 @@ public final class Py {
                 return Py.java2py(node);
             }
             ByteArrayOutputStream ostream = new ByteArrayOutputStream();
-            Module.compile(node, ostream, name, filename, linenumbers,
-                    printResults, false, cflags);
+            Module.compile(node, ostream, name, filename, linenumbers, printResults, cflags);
 
             saveClassFile(name, ostream);
 

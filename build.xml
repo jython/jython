@@ -152,6 +152,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <property name="gensrc.dir" value="${output.dir}/gensrc" />
         <property name="dist.dir" value="${work.dir}/dist" />
         <property name="apidoc.dir" value="${dist.dir}/Doc/javadoc" />
+        <property name="junit.reports" value="${dist.dir}/testreports" />
 
         <!-- classpaths -->
         <path id="main.classpath">
@@ -164,7 +165,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
             <pathelement path="${extlibs.dir}/mysql-connector-java-5.1.6.jar" />
             <pathelement path="${extlibs.dir}/postgresql-8.3-603.jdbc4.jar" />
             <pathelement path="${extlibs.dir}/antlr-2.7.7.jar" />
-            <pathelement path="${extlibs.dir}/antlr-3.1.jar" />
+            <pathelement path="${extlibs.dir}/antlr-3.1.1.jar" />
             <pathelement path="${extlibs.dir}/stringtemplate-3.2.jar" />
         </path>
 
@@ -516,7 +517,7 @@ The readme text for the next release will be like:
     <target name="jarjar" depends="init,needed-check" unless="jarjar.notneeded">
         <taskdef name="jarjar" classname="com.tonicsystems.jarjar.JarJarTask" classpath="extlibs/jarjar-0.7.jar"/>
         <jarjar destfile="${output.dir}/jarjar.jar">
-            <zipfileset src="extlibs/antlr-runtime-3.1.jar"/>
+            <zipfileset src="extlibs/antlr-3.1.1-runtime.jar"/>
             <zipfileset src="extlibs/asm-3.1.jar"/>
             <zipfileset src="extlibs/asm-commons-3.1.jar"/>
             <zipfileset src="extlibs/asm-util-3.1.jar"/>
@@ -525,6 +526,8 @@ The readme text for the next release will be like:
             <zipfileset src="extlibs/jna-posix.jar"/>
             <!-- <rule pattern="com.sun.jna.**" result="org.python.jna.@1"/> -->
             <rule pattern="org.jruby.ext.posix.**" result="org.python.posix.@1"/>
+            <zipfileset src="extlibs/constantine-0.4.jar"/>
+            <rule pattern="com.kenai.constantine.**" result="org.python.constantine.@1"/>
         </jarjar>
         <unjar src="${output.dir}/jarjar.jar" dest="${jarjar.dir}">
             <patternset>
@@ -759,14 +762,21 @@ The readme text for the next release will be like:
         </jar>
     </target>
 
-    <target name="test" depends="javatest,launchertest,regrtest"/>
+    <target name="test" depends="prepare-test,javatest,launchertest,regrtest"/>
+    <target name="prepare-test" depends="init">
+        <!-- Clean any old test output -->
+        <delete dir="${junit.reports}"/>
+    </target>
     <target name="javatest" depends="compile,expose">
+        <mkdir dir="${junit.reports}"/>
         <junit fork="true" printsummary="true">
+            <formatter type="xml"/>
             <classpath refid="test.classpath"/>
-            <batchtest todir="${dist.dir}/testreports">
+            <batchtest todir="${junit.reports}">
                 <fileset dir="${test.source.dir}" includes="**/*Test*.java">
                     <exclude name="javatests/**/*" />
                     <exclude name="**/InterpTestCase.java" />
+                    <exclude name="org/python/antlr/**" />
                 </fileset>
             </batchtest>
         </junit>
@@ -784,6 +794,8 @@ The readme text for the next release will be like:
         <arg value="${dist.dir}/Lib/test/regrtest.py"/>
         <!-- Only run the tests that are expected to work on Jython -->
         <arg value="--expected"/>
+        <arg value="-j"/>
+        <arg value="${junit.reports}"/>
       </exec>
     </target>
     <target name="regrtest-windows" if="os.family.windows">
@@ -792,6 +804,8 @@ The readme text for the next release will be like:
         <arg value="${dist.dir}/Lib/test/regrtest.py"/>
         <!-- Only run the tests that are expected to work on Jython -->
         <arg value="--expected"/>
+        <arg value="-j"/>
+        <arg value="${junit.reports}"/>
       </exec>
     </target>
 

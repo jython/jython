@@ -307,7 +307,10 @@ file_input
     $file_input.tree = mtype;
 }
     : (NEWLINE
-      | stmt {stypes.addAll($stmt.stypes);}
+      | stmt {
+          if ($stmt.stypes != null)
+                 {stypes.addAll($stmt.stypes);}
+      }
       )* EOF {
         mtype = new Module($file_input.start, actions.castStmts(stypes));
     }
@@ -937,10 +940,11 @@ scope {
           $stypes = $simple_stmt.stypes;
       }
     | NEWLINE INDENT
-      (stmt
-          {
+      (stmt {
+          if ($stmt.stypes != null) {
               $stypes.addAll($stmt.stypes);
           }
+      }
       )+ DEDENT
     ;
 
@@ -1119,6 +1123,14 @@ arith_expr
        -> $left
         )
     ;
+    // This only happens when Antlr is allowed to do error recovery (for example if ListErrorHandler
+    // is used.  It is at least possible that this is a bug in Antlr itself, so this needs further
+    // investigation.  To reproduce, set errorHandler to ListErrorHandler and try to parse "[".
+    catch [RewriteCardinalityException rce] {
+        PythonTree badNode = (PythonTree)adaptor.errorNode(input, retval.start, input.LT(-1), null);
+        retval.tree = badNode;
+        errorHandler.error("Internal Parser Error", badNode);
+    }
 
 arith_op returns [operatorType op]
     : PLUS {$op = operatorType.Add;}

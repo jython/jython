@@ -290,7 +290,7 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
         def(tmp);
         ArgListCompiler ac = new ArgListCompiler();
         ac.visitArgs(new argumentsType(node, new exprType[] { new Name(
-                node.token, bound_exp, expr_contextType.Param) }, null, null,
+                node.getToken(), bound_exp, expr_contextType.Param) }, null, null,
                 new exprType[0]));
         beginScope(tmp, FUNCSCOPE, node, ac);
         cur.addParam(bound_exp);

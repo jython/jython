@@ -189,6 +189,10 @@ public class MethodExposerTest extends InterpTestCase implements Opcodes, PyType
         assertEquals("a", createBound("charReturn", CHAR).__call__().toString());
     }
 
+    public void testNullReturns() throws Exception {
+        assertEquals(Py.None, createBound("stringReturnNull", STRING).__call__());
+    }
+
     public void testClassMethod() throws Exception {
         ClassMethodExposer exp = new ClassMethodExposer(Type.getType(SimpleExposed.class),
                                                         Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,

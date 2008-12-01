@@ -7,8 +7,6 @@ import java.io.IOException;
 
 public class ErrorSlice extends sliceType {
 
-    public static final String[] _fields = new String[] {};
-
     public ErrorSlice(PythonTree tree) {
         super(tree);
     }

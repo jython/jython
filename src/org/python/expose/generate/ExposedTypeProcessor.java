@@ -109,6 +109,8 @@ public class ExposedTypeProcessor implements Opcodes, PyTypes {
 
         private Type baseType = OBJECT;
 
+        private boolean isBaseType = true;
+
         private boolean generatedStaticBlock;
 
         private TypeProcessor(ClassVisitor cv) {
@@ -140,6 +142,10 @@ public class ExposedTypeProcessor implements Opcodes, PyTypes {
                     public void handleResult(Type base) {
                         baseType = base;
                     }
+
+                    public void handleResult(boolean boolIsBaseType) {
+                        isBaseType = boolIsBaseType;
+                    }
                 };
             }
             return super.visitAnnotation(desc, visible);
@@ -158,6 +164,7 @@ public class ExposedTypeProcessor implements Opcodes, PyTypes {
             }
             typeExposer = new TypeExposer(onType,
                                           baseType,
+                                          isBaseType,
                                           getName(),
                                           methodExposers,
                                           descExposers.values(),

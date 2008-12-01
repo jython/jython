@@ -8,8 +8,7 @@ import org.python.expose.ExposedType;
 /**
  * The builtin xrange type.
  */
-// XXX: Not subclassable
-@ExposedType(name = "xrange", base = PyObject.class)
+@ExposedType(name = "xrange", base = PyObject.class, isBaseType = false)
 public class PyXRange extends PySequence {
 
     public static final PyType TYPE = PyType.fromClass(PyXRange.class);

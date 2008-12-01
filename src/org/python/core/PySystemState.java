@@ -34,6 +34,7 @@ public class PySystemState extends PyObject
     protected static final String CACHEDIR_DEFAULT_NAME = "cachedir";
     
     public static final String JYTHON_JAR = "jython.jar";
+    public static final String JYTHON_COMPLETE_JAR = "jython-complete.jar";
 
     private static final String JAR_URL_PREFIX = "jar:file:";
     private static final String JAR_SEPARATOR = "!";
@@ -392,10 +393,14 @@ public class PySystemState extends PyObject
         if (root == null) {
             String classpath = preProperties.getProperty("java.class.path");
             if (classpath != null) {
-                int jpy = classpath.toLowerCase().indexOf(JYTHON_JAR);
-                if (jpy >= 0) {
-                    int start = classpath.lastIndexOf(java.io.File.pathSeparator, jpy) + 1;
-                    root = classpath.substring(start, jpy);
+                String lowerCaseClasspath = classpath.toLowerCase();
+                int jarIndex = lowerCaseClasspath.indexOf(JYTHON_COMPLETE_JAR);
+                if (jarIndex < 0) {
+                    jarIndex = lowerCaseClasspath.indexOf(JYTHON_JAR);
+                }
+                if (jarIndex >= 0) {
+                    int start = classpath.lastIndexOf(java.io.File.pathSeparator, jarIndex) + 1;
+                    root = classpath.substring(start, jarIndex);
                 } else {
                     // in case JYTHON_JAR is referenced from a MANIFEST inside another jar on the classpath
                     root = jarFileName;
@@ -459,8 +464,12 @@ public class PySystemState extends PyObject
             } catch (Exception exc) {
             }
         }
-        PySystemState.prefix = Py.newString(prefix);
-        PySystemState.exec_prefix = Py.newString(exec_prefix);
+        if (prefix != null) {
+            PySystemState.prefix = Py.newString(prefix);
+        }
+        if (exec_prefix != null) {
+            PySystemState.exec_prefix = Py.newString(exec_prefix);
+        }
         try {
             String jythonpath = System.getenv("JYTHONPATH");
             if (jythonpath != null) {
@@ -585,8 +594,6 @@ public class PySystemState extends PyObject
         Py.Newline = new PyString("\n");
         Py.Space = new PyString(" ");
 
-        Py.TPFLAGS_HEAPTYPE = (1L<<9);
-
         // Setup standard wrappers for stdout and stderr...
         Py.stderr = new StderrWrapper();
         Py.stdout = new StdoutWrapper();
@@ -626,7 +633,7 @@ public class PySystemState extends PyObject
         }
         cachedir = new File(props.getProperty(PYTHON_CACHEDIR, CACHEDIR_DEFAULT_NAME));
         if (!cachedir.isAbsolute()) {
-            cachedir = new File(prefix.toString(), cachedir.getPath());
+            cachedir = new File(prefix == null ? null : prefix.toString(), cachedir.getPath());
         }
     }
 

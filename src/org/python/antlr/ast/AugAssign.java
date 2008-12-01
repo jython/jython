@@ -11,7 +11,17 @@ public class AugAssign extends stmtType {
     public operatorType op;
     public exprType value;
 
-    public static final String[] _fields = new String[] {"target","op","value"};
+    private final static String[] fields = new String[] {"target", "op",
+                                                          "value"};
+    public String[] get_fields() { return fields; }
+
+    public AugAssign(exprType target, operatorType op, exprType value) {
+        this.target = target;
+        addChild(target);
+        this.op = op;
+        this.value = value;
+        addChild(value);
+    }
 
     public AugAssign(Token token, exprType target, operatorType op, exprType
     value) {
@@ -73,12 +83,28 @@ public class AugAssign extends stmtType {
             value.accept(visitor);
     }
 
+    private int lineno = -1;
     public int getLineno() {
+        if (lineno != -1) {
+            return lineno;
+        }
         return getLine();
     }
 
+    public void setLineno(int num) {
+        lineno = num;
+    }
+
+    private int col_offset = -1;
     public int getCol_offset() {
+        if (col_offset != -1) {
+            return col_offset;
+        }
         return getCharPositionInLine();
+    }
+
+    public void setCol_offset(int num) {
+        col_offset = num;
     }
 
 }

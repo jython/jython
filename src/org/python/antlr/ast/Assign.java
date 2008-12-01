@@ -10,7 +10,19 @@ public class Assign extends stmtType {
     public exprType[] targets;
     public exprType value;
 
-    public static final String[] _fields = new String[] {"targets","value"};
+    private final static String[] fields = new String[] {"targets", "value"};
+    public String[] get_fields() { return fields; }
+
+    public Assign(exprType[] targets, exprType value) {
+        this.targets = targets;
+        if (targets != null) {
+            for(int itargets=0;itargets<targets.length;itargets++) {
+                addChild(targets[itargets]);
+            }
+        }
+        this.value = value;
+        addChild(value);
+    }
 
     public Assign(Token token, exprType[] targets, exprType value) {
         super(token);
@@ -79,12 +91,28 @@ public class Assign extends stmtType {
             value.accept(visitor);
     }
 
+    private int lineno = -1;
     public int getLineno() {
+        if (lineno != -1) {
+            return lineno;
+        }
         return getLine();
     }
 
+    public void setLineno(int num) {
+        lineno = num;
+    }
+
+    private int col_offset = -1;
     public int getCol_offset() {
+        if (col_offset != -1) {
+            return col_offset;
+        }
         return getCharPositionInLine();
+    }
+
+    public void setCol_offset(int num) {
+        col_offset = num;
     }
 
 }

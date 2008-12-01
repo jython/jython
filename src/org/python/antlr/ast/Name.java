@@ -10,7 +10,13 @@ public class Name extends exprType implements Context {
     public String id;
     public expr_contextType ctx;
 
-    public static final String[] _fields = new String[] {"id","ctx"};
+    private final static String[] fields = new String[] {"id", "ctx"};
+    public String[] get_fields() { return fields; }
+
+    public Name(String id, expr_contextType ctx) {
+        this.id = id;
+        this.ctx = ctx;
+    }
 
     public Name(Token token, String id, expr_contextType ctx) {
         super(token);
@@ -57,12 +63,28 @@ public class Name extends exprType implements Context {
         this.ctx = c;
     }
 
+    private int lineno = -1;
     public int getLineno() {
+        if (lineno != -1) {
+            return lineno;
+        }
         return getLine();
     }
 
+    public void setLineno(int num) {
+        lineno = num;
+    }
+
+    private int col_offset = -1;
     public int getCol_offset() {
+        if (col_offset != -1) {
+            return col_offset;
+        }
         return getCharPositionInLine();
+    }
+
+    public void setCol_offset(int num) {
+        col_offset = num;
     }
 
 }
