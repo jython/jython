@@ -98,7 +98,8 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
                     if (arg1 instanceof PySystemState) {
                         return __builtin__.reload((PySystemState)arg1);
                     } else if(arg1 instanceof PyJavaType) {
-                        return __builtin__.reload((PyJavaType)arg1);
+                        // This has always been a no-op.  Should be disabled in py3k.
+                        return arg1;
                     }
                     throw Py.TypeError("reload() argument must be a module");
                 }
@@ -1104,12 +1105,6 @@ public class __builtin__ {
     public static PyObject reload(PySystemState o) {
     // reinitialize methods
         o.reload();
-        return o;
-    }
-
-    public static PyObject reload(PyJavaType o) {
-        // Reset the contents of our dict to the state from our class
-        o.init();
         return o;
     }
 
