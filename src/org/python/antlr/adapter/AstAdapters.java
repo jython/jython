@@ -18,44 +18,44 @@ public class AstAdapters {
     public static SliceAdapter sliceAdapter = new SliceAdapter();
     public static StmtAdapter stmtAdapter = new StmtAdapter();
 
-    public static java.util.List<aliasType> to_aliasList(Object o) {
-        return (java.util.List<aliasType>)aliasAdapter.adaptIter(o);
+    public static java.util.List<aliasType> to_aliasList(PyObject o) {
+        return (java.util.List<aliasType>)aliasAdapter.iter2ast(o);
     }
 
-    public static java.util.List<cmpopType> to_cmpopList(Object o) {
-        return (java.util.List<cmpopType>)cmpopAdapter.adaptIter(o);
+    public static java.util.List<cmpopType> to_cmpopList(PyObject o) {
+        return (java.util.List<cmpopType>)cmpopAdapter.iter2ast(o);
     }
 
-    public static java.util.List<comprehensionType> to_comprehensionList(Object o) {
-        return (java.util.List<comprehensionType>)comprehensionAdapter.adaptIter(o);
+    public static java.util.List<comprehensionType> to_comprehensionList(PyObject o) {
+        return (java.util.List<comprehensionType>)comprehensionAdapter.iter2ast(o);
     }
 
-    public static java.util.List<excepthandlerType> to_excepthandlerList(Object o) {
-        return (java.util.List<excepthandlerType>)excepthandlerAdapter.adaptIter(o);
+    public static java.util.List<excepthandlerType> to_excepthandlerList(PyObject o) {
+        return (java.util.List<excepthandlerType>)excepthandlerAdapter.iter2ast(o);
     }
 
-    public static java.util.List<exprType> to_exprList(Object o) {
-        return (java.util.List<exprType>)exprAdapter.adaptIter(o);
+    public static java.util.List<exprType> to_exprList(PyObject o) {
+        return (java.util.List<exprType>)exprAdapter.iter2ast(o);
     }
 
-    public static java.util.List<String> to_identifierList(Object o) {
-        return (java.util.List<String>)identifierAdapter.adaptIter(o);
+    public static java.util.List<String> to_identifierList(PyObject o) {
+        return (java.util.List<String>)identifierAdapter.iter2ast(o);
     }
 
-    public static java.util.List<keywordType> to_keywordList(Object o) {
-        return (java.util.List<keywordType>)keywordAdapter.adaptIter(o);
+    public static java.util.List<keywordType> to_keywordList(PyObject o) {
+        return (java.util.List<keywordType>)keywordAdapter.iter2ast(o);
     }
 
-    public static java.util.List<sliceType> to_sliceList(Object o) {
-        return (java.util.List<sliceType>)sliceAdapter.adaptIter(o);
+    public static java.util.List<sliceType> to_sliceList(PyObject o) {
+        return (java.util.List<sliceType>)sliceAdapter.iter2ast(o);
     }
 
-    public static java.util.List<stmtType> to_stmtList(Object o) {
-        return (java.util.List<stmtType>)stmtAdapter.adaptIter(o);
+    public static java.util.List<stmtType> to_stmtList(PyObject o) {
+        return (java.util.List<stmtType>)stmtAdapter.iter2ast(o);
     }
 
-    public static exprType to_expr(Object o) {
-        return (exprType)exprAdapter.adapt(o);
+    public static exprType to_expr(PyObject o) {
+        return (exprType)exprAdapter.py2ast(o);
     }
 
     public static int to_int(Object o) {
@@ -66,8 +66,8 @@ public class AstAdapters {
         throw Py.TypeError("Can't convert " + o.getClass().getName() + " to int node");
     }
 
-    public static String to_identifier(Object o) {
-        return (String)identifierAdapter.adapt(o);
+    public static String to_identifier(PyObject o) {
+        return (String)identifierAdapter.py2ast(o);
     }
 
     public static expr_contextType to_expr_context(Object o) {
@@ -78,12 +78,12 @@ public class AstAdapters {
         throw Py.TypeError("Can't convert " + o.getClass().getName() + " to expr_context node");
     }
 
-    public static sliceType to_slice(Object o) {
-        return (sliceType)sliceAdapter.adapt(o);
+    public static sliceType to_slice(PyObject o) {
+        return (sliceType)sliceAdapter.py2ast(o);
     }
 
-    public static stmtType to_stmt(Object o) {
-        return (stmtType)stmtAdapter.adapt(o);
+    public static stmtType to_stmt(PyObject o) {
+        return (stmtType)stmtAdapter.py2ast(o);
     }
 
     public static String to_string(Object o) {

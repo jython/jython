@@ -1,6 +1,7 @@
 package org.python.antlr.adapter;
 
 import org.python.core.Py;
+import org.python.core.PyObject;
 import org.python.core.PyJavaInstance;
 
 import org.python.antlr.ast.comprehensionType;
@@ -10,12 +11,9 @@ import java.util.List;
 
 public class ComprehensionAdapter implements AstAdapter {
 
-    public Object adapt(Object o) {
+    public Object py2ast(PyObject o) {
         if (o == null) {
             return o;
-        }
-        if (o instanceof PyJavaInstance) {
-            o = ((PyJavaInstance)o).__tojava__(comprehensionType.class);
         }
         if (o instanceof comprehensionType) {
             return o;
@@ -24,10 +22,14 @@ public class ComprehensionAdapter implements AstAdapter {
         throw Py.TypeError("Can't convert " + o.getClass().getName() + " to comprehension node");
     }
 
-    public Object adaptIter(Object iter) {
+    public PyObject ast2py(Object o) {
+        return (PyObject)o;
+    }
+
+    public List iter2ast(PyObject iter) {
         List<comprehensionType> comprehensions = new ArrayList<comprehensionType>();
         for(Object o : (Iterable)iter) {
-            comprehensions.add((comprehensionType)adapt(o));
+            comprehensions.add((comprehensionType)py2ast((PyObject)o));
         }
         return comprehensions;
     }

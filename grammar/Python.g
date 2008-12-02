@@ -145,6 +145,7 @@ import org.python.antlr.ast.While;
 import org.python.antlr.ast.With;
 import org.python.antlr.ast.Yield;
 import org.python.core.Py;
+import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyUnicode;
 
@@ -1189,16 +1190,16 @@ power returns [exprType etype]
                   }
                   if (o instanceof Call) {
                       Call c = (Call)o;
-                      c.setFunc($etype);
+                      c.setFunc((PyObject)$etype);
                       $etype = c;
                   } else if (o instanceof Subscript) {
                       Subscript c = (Subscript)o;
-                      c.setValue($etype);
+                      c.setValue((PyObject)$etype);
                       $etype = c;
                   } else if (o instanceof Attribute) {
                       Attribute c = (Attribute)o;
                       c.setCharStartIndex($etype.getCharStartIndex());
-                      c.setValue($etype);
+                      c.setValue((PyObject)$etype);
                       $etype = c;
                   }
               }
