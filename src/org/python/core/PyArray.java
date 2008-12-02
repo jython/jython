@@ -239,10 +239,7 @@ public class PyArray extends PySequence implements Cloneable {
 
     @ExposedMethod(defaults = "null")
     final void array___setslice__(PyObject start, PyObject stop, PyObject step, PyObject value) {
-        if(value == null) {
-            value = step;
-            step = null;
-        }
+
         seq___setslice__(start, stop, step, value);
     }
 
@@ -656,30 +653,15 @@ public class PyArray extends PySequence implements Cloneable {
     }
 
     /**
-     * Delete the slice defined by <em>start</em>, <em>stop</em> and
-     * <em>step</em> from the array.
+     * Delete the slice defined by <em>start</em> to <em>stop</em> from the array.
      *
      * @param start
      *            starting index of slice
      * @param stop
      *            finishing index of slice
-     * @param step
-     *            stepping increment between start and stop
      */
-    protected void delRange(int start, int stop, int step) {
-        if (step == 1) {
-            delegate.remove(start, stop);
-        } else if (step > 1) {
-            for (int i = start; i < stop; i += step) {
-                delegate.remove(i);
-                i--;
-                stop--;
-            }
-        } else if (step < 0) {
-            for (int i = start; i >= 0 && i >= stop; i += step) {
-                delegate.remove(i);
-            }
-        }
+    protected void delRange(int start, int stop) {
+        delegate.remove(start, stop);
     }
 
     @ExposedMethod
@@ -1198,7 +1180,7 @@ public class PyArray extends PySequence implements Cloneable {
      *            value to be inserted into array
      */
     public void insert(int index, PyObject value) {
-        index = calculateIndex(index);
+        index = boundToSequence(index);
         if ("u".equals(typecode)) {
             int codepoint = getCodePoint(value);
             delegate.makeInsertSpace(index);
@@ -1241,7 +1223,7 @@ public class PyArray extends PySequence implements Cloneable {
         if (delegate.getSize() == 0) {
             throw Py.IndexError("pop from empty array");
         }
-        index = fixindex(index);
+        index = delegator.fixindex(index);
         if (index == -1) {
             throw Py.IndexError("pop index out of range");
         }

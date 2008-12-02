@@ -80,9 +80,10 @@ public abstract class PySequence extends PyObject {
                                          getType().fastGetName()));
     }
 
-    protected void delRange(int start, int stop, int step) {
+    protected void delRange(int start, int stop) {
         throw Py.TypeError(String.format("'%s' object does not support item deletion",
                                          getType().fastGetName()));
+
     }
 
     public boolean __nonzero__() {
@@ -244,20 +245,11 @@ public abstract class PySequence extends PyObject {
         return ret;
     }
 
-    protected int fixindex(int index) {
-        int l = __len__();
-        if(index < 0) {
-            index += l;
-        }
-        if(index < 0 || index >= l) {
-            return -1;
-        } else {
-            return index;
-        }
-    }
-
-    // XXX: more appropriate naming of this vs fixindex
-    protected int calculateIndex(int index) {
+    /**
+     * Adjusts <code>index</code> such that it's >= 0 and <= __len__. If <code>index</code> starts
+     * off negative, it's treated as an index from the end of the sequence going back to the start.
+     */
+    protected int boundToSequence(int index) {
         int length = __len__();
         if(index < 0) {
             index = index += length;
@@ -275,12 +267,7 @@ public abstract class PySequence extends PyObject {
     }
 
     final synchronized PyObject seq___finditem__(int index) {
-        index = fixindex(index);
-        if(index == -1) {
-            return null;
-        } else {
-            return pyget(index);
-        }
+        return delegator.checkIdxAndFindItem(index);
     }
 
     public PyObject __finditem__(PyObject index) {
@@ -288,14 +275,7 @@ public abstract class PySequence extends PyObject {
     }
 
     final PyObject seq___finditem__(PyObject index) {
-        if (index.isIndex()) {
-            return seq___finditem__(index.asIndex(Py.IndexError));
-        } else if (index instanceof PySlice) {
-            PySlice s = (PySlice)index;
-            return seq___getslice__(s.start, s.stop, s.step);
-        } else {
-            throw Py.TypeError(getType().fastGetName() + " indices must be integers");
-        }
+        return delegator.checkIdxAndFindItem(index);
     }
 
     public PyObject __getitem__(PyObject index) {
@@ -303,11 +283,7 @@ public abstract class PySequence extends PyObject {
     }
 
     final PyObject seq___getitem__(PyObject index) {
-        PyObject ret = __finditem__(index);
-        if(ret == null) {
-            throw Py.IndexError("index out of range: " + index);
-        }
-        return ret;
+        return delegator.checkIdxAndGetItem(index);
     }
 
     public boolean isMappingType() throws PyIgnoreMethodTag {
@@ -322,13 +298,8 @@ public abstract class PySequence extends PyObject {
         return seq___getslice__(start, stop, step);
     }
 
-    final synchronized PyObject seq___getslice__(PyObject start, PyObject stop) {
-        return seq___getslice__(start, stop, null);
-    }
-
     final synchronized PyObject seq___getslice__(PyObject start, PyObject stop, PyObject step) {
-        int[] indices = new PySlice(start, stop, step).indicesEx(__len__());
-        return getslice(indices[0], indices[1], indices[2]);
+        return delegator.getSlice(new PySlice(start, stop, step));
     }
 
     public synchronized void __setslice__(PyObject start,
@@ -338,21 +309,15 @@ public abstract class PySequence extends PyObject {
         seq___setslice__(start, stop, step, value);
     }
 
-    final synchronized void seq___setslice__(PyObject start, PyObject stop, PyObject value) {
-        seq___setslice__(start, stop, null, value);
-    }
-
     final synchronized void seq___setslice__(PyObject start,
                                              PyObject stop,
                                              PyObject step,
                                              PyObject value) {
-        PySlice slice = new PySlice(start, stop, step);
-        int[] indices = slice.indicesEx(__len__());
-        if ((slice.step != Py.None) && value.__len__() != indices[3]) {
-            throw Py.ValueError(String.format("attempt to assign sequence of size %d to extended "
-                                              + "slice of size %d", value.__len__(), indices[3]));
+        if (value == null) {
+            value = step;
+            step = null;
         }
-        setslice(indices[0], indices[1], indices[2], value);
+        delegator.checkIdxAndSetSlice(new PySlice(start, stop, step), value);
     }
 
     public synchronized void __delslice__(PyObject start, PyObject stop, PyObject step) {
@@ -360,20 +325,11 @@ public abstract class PySequence extends PyObject {
     }
 
     final synchronized void seq___delslice__(PyObject start, PyObject stop, PyObject step) {
-        int[] indices = new PySlice(start, stop, step).indicesEx(__len__());
-        delRange(indices[0], indices[1], indices[2]);
+        delegator.checkIdxAndDelItem(new PySlice(start, stop, step));
     }
 
     public synchronized void __setitem__(int index, PyObject value) {
-        seq___setitem__(index, value);
-    }
-
-    final synchronized void seq___setitem__(int index, PyObject value) {
-        int i = fixindex(index);
-        if(i == -1) {
-            throw Py.IndexError(getType().fastGetName() + " assignment index out of range");
-        }
-        set(i, value);
+        delegator.checkIdxAndSetItem(index, value);
     }
 
     public void __setitem__(PyObject index, PyObject value) {
@@ -381,14 +337,7 @@ public abstract class PySequence extends PyObject {
     }
 
     final void seq___setitem__(PyObject index, PyObject value) {
-        if (index.isIndex()) {
-            seq___setitem__(index.asIndex(Py.IndexError), value);
-        } else if (index instanceof PySlice) {
-            PySlice s = (PySlice)index;
-            seq___setslice__(s.start, s.stop, s.step, value);
-        } else {
-            throw Py.TypeError(getType().fastGetName() + " indices must be integers");
-        }
+        delegator.checkIdxAndSetItem(index, value);
     }
 
     public synchronized void __delitem__(PyObject index) {
@@ -396,18 +345,7 @@ public abstract class PySequence extends PyObject {
     }
 
     final synchronized void seq___delitem__(PyObject index) {
-        if (index.isIndex()) {
-            int i = fixindex(index.asIndex(Py.IndexError));
-            if (i == -1) {
-                throw Py.IndexError(getType().fastGetName() + " assignment index out of range");
-            }
-            del(i);
-        } else if (index instanceof PySlice) {
-            PySlice s = (PySlice)index;
-            seq___delslice__(s.start, s.stop, s.step);
-        } else {
-            throw Py.TypeError(getType().fastGetName() + " indices must be integers");
-        }
+        delegator.checkIdxAndDelItem(index);
     }
 
     public synchronized Object __tojava__(Class c) throws PyIgnoreMethodTag {
@@ -451,4 +389,48 @@ public abstract class PySequence extends PyObject {
         }
         return null;
     }
+
+    protected final SequenceIndexDelegate delegator = new SequenceIndexDelegate() {
+
+        @Override
+        public String getTypeName() {
+            return getType().fastGetName();
+        }
+
+        @Override
+        public void setItem(int idx, PyObject value) {
+            set(idx, value);
+        }
+
+        @Override
+        public void setSlice(int start, int stop, int step, PyObject value) {
+            setslice(start, stop, step, value);
+        }
+
+        @Override
+        public int len() {
+            return __len__();
+        }
+
+        @Override
+        public void delItem(int idx) {
+            del(idx);
+        }
+
+        @Override
+        public void delItems(int start, int stop) {
+            delRange(start, stop);
+        }
+
+
+        @Override
+        public PyObject getItem(int idx) {
+            return pyget(idx);
+        }
+
+        @Override
+        public PyObject getSlice(int start, int stop, int step) {
+            return getslice(start, stop, step);
+        }
+    };
 }

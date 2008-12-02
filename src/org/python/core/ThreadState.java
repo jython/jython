@@ -75,7 +75,7 @@ public class ThreadState {
         }
         for (int i = reprStack.size() - 1; i >= 0; i--) {
             if (reprStack.pyget(i) == obj) {
-                reprStack.delRange(i, reprStack.size(), 1);
+                reprStack.delRange(i, reprStack.size());
             }
         }
     }

@@ -5,6 +5,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.EventListener;
@@ -445,32 +446,21 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
             PyBuiltinMethodNarrow listGetProxy = new ListMethod("__getitem__", 1, 1) {
                 @Override
                 public PyObject __call__(PyObject key) {
-                    if (key instanceof PyInteger) {
-                        return Py.java2py(asList().get(((PyInteger)key).getValue()));
-                    } else {
-                        throw Py.TypeError("only integer keys accepted");
-                    }
+                    return new ListIndexDelegate(asList()).checkIdxAndGetItem(key);
                 }
             };
             PyBuiltinMethodNarrow listSetProxy = new ListMethod("__setitem__", 2, 2) {
                 @Override
                 public PyObject __call__(PyObject key, PyObject value) {
-                    if (key instanceof PyInteger) {
-                        asList().set(((PyInteger)key).getValue(), Py.tojava(value, Object.class));
-                    } else {
-                        throw Py.TypeError("only integer keys accepted");
-                    }
+                    new ListIndexDelegate(asList()).checkIdxAndSetItem(key, value);
                     return Py.None;
                 }
             };
             PyBuiltinMethodNarrow listRemoveProxy = new ListMethod("__delitem__", 1, 1) {
                  @Override
                 public PyObject __call__(PyObject key) {
-                    if (key instanceof PyInteger) {
-                        return Py.java2py(asList().remove(((PyInteger)key).getValue()));
-                    } else {
-                        throw Py.TypeError("only integer keys accepted");
-                    }
+                     new ListIndexDelegate(asList()).checkIdxAndDelItem(key);
+                     return Py.None;
                 }
             };
             collectionProxies.put(List.class, new PyBuiltinMethod[] {listGetProxy,
@@ -478,5 +468,87 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
                                                                      listRemoveProxy});
         }
         return collectionProxies;
+    }
+
+    protected static class ListIndexDelegate extends SequenceIndexDelegate {
+
+        private final List list;
+
+        public ListIndexDelegate(List list) {
+            this.list = list;
+        }
+        @Override
+        public void delItem(int idx) {
+            list.remove(idx);
+        }
+
+        @Override
+        public PyObject getItem(int idx) {
+            return Py.java2py(list.get(idx));
+        }
+
+        @Override
+        public PyObject getSlice(int start, int stop, int step) {
+            if (step > 0 && stop < start) {
+                stop = start;
+            }
+            int n = PySequence.sliceLength(start, stop, step);
+            List<Object> newList;
+             try {
+                newList = list.getClass().newInstance();
+            } catch (Exception e) {
+                throw Py.JavaError(e);
+            }
+            int j = 0;
+            for (int i = start; j < n; i += step) {
+                newList.add(list.get(i));
+            }
+            return Py.java2py(newList);
+        }
+
+        @Override
+        public String getTypeName() {
+            return list.getClass().getName();
+        }
+
+        @Override
+        public int len() {
+            return list.size();
+        }
+
+        @Override
+        public void setItem(int idx, PyObject value) {
+            list.set(idx, value.__tojava__(Object.class));
+        }
+
+        @Override
+        public void setSlice(int start, int stop, int step, PyObject value) {
+            if (stop < start) {
+                stop = start;
+            }
+            if (step == 0) {
+                return;
+            }
+            if (value.javaProxy == this) {
+                List newseq = new ArrayList(len());
+                for (Object object : ((List)value.javaProxy)) {
+                    newseq.add(object);
+                }
+                value = Py.java2py(newseq);
+            }
+            int j = start;
+            for (PyObject obj : value.asIterable()) {
+                setItem(j, obj);
+                j += step;
+            }
+        }
+
+        @Override
+        public void delItems(int start, int stop) {
+            int n = stop - start;
+            while (n-- > 0) {
+                delItem(start);
+            }
+        }
     }
 }
