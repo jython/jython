@@ -31,7 +31,7 @@ public static final PyType TYPE = PyType.fromClass(ExtSlice.class);
     }
     @ExposedSet(name = "dims")
     public void setDims(PyObject dims) {
-        this.dims = AstAdapters.to_sliceList(dims);
+        this.dims = AstAdapters.py2sliceList(dims);
     }
 
 

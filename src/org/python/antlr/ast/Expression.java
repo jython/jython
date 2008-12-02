@@ -31,7 +31,7 @@ public static final PyType TYPE = PyType.fromClass(Expression.class);
     }
     @ExposedSet(name = "body")
     public void setBody(PyObject body) {
-        this.body = AstAdapters.to_expr(body);
+        this.body = AstAdapters.py2expr(body);
     }
 
 

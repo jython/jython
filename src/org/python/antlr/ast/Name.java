@@ -32,7 +32,7 @@ public static final PyType TYPE = PyType.fromClass(Name.class);
     }
     @ExposedSet(name = "id")
     public void setId(PyObject id) {
-        this.id = AstAdapters.to_identifier(id);
+        this.id = AstAdapters.py2identifier(id);
     }
 
     private expr_contextType ctx;
@@ -41,11 +41,11 @@ public static final PyType TYPE = PyType.fromClass(Name.class);
     }
     @ExposedGet(name = "ctx")
     public PyObject getCtx() {
-        return Py.None;//(ctx);
+        return AstAdapters.ctx2py(ctx);
     }
     @ExposedSet(name = "ctx")
     public void setCtx(PyObject ctx) {
-        this.ctx = AstAdapters.to_expr_context(ctx);
+        this.ctx = AstAdapters.py2expr_context(ctx);
     }
 
 

@@ -31,7 +31,7 @@ public static final PyType TYPE = PyType.fromClass(With.class);
     }
     @ExposedSet(name = "context_expr")
     public void setContext_expr(PyObject context_expr) {
-        this.context_expr = AstAdapters.to_expr(context_expr);
+        this.context_expr = AstAdapters.py2expr(context_expr);
     }
 
     private exprType optional_vars;
@@ -44,7 +44,7 @@ public static final PyType TYPE = PyType.fromClass(With.class);
     }
     @ExposedSet(name = "optional_vars")
     public void setOptional_vars(PyObject optional_vars) {
-        this.optional_vars = AstAdapters.to_expr(optional_vars);
+        this.optional_vars = AstAdapters.py2expr(optional_vars);
     }
 
     private java.util.List<stmtType> body;
@@ -57,7 +57,7 @@ public static final PyType TYPE = PyType.fromClass(With.class);
     }
     @ExposedSet(name = "body")
     public void setBody(PyObject body) {
-        this.body = AstAdapters.to_stmtList(body);
+        this.body = AstAdapters.py2stmtList(body);
     }
 
 

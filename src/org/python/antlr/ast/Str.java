@@ -31,7 +31,7 @@ public static final PyType TYPE = PyType.fromClass(Str.class);
     }
     @ExposedSet(name = "s")
     public void setS(PyObject s) {
-        this.s = AstAdapters.to_string(s);
+        this.s = AstAdapters.py2string(s);
     }
 
 

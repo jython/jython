@@ -13,6 +13,6 @@ public class Div extends AST {
         return asIndex(null);
     }
     public int asIndex(PyObject error) {
-        return 3;
+        return 4;
     }
 }

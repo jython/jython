@@ -31,7 +31,7 @@ public static final PyType TYPE = PyType.fromClass(BinOp.class);
     }
     @ExposedSet(name = "left")
     public void setLeft(PyObject left) {
-        this.left = AstAdapters.to_expr(left);
+        this.left = AstAdapters.py2expr(left);
     }
 
     private operatorType op;
@@ -40,11 +40,11 @@ public static final PyType TYPE = PyType.fromClass(BinOp.class);
     }
     @ExposedGet(name = "op")
     public PyObject getOp() {
-        return Py.None;//(op);
+        return AstAdapters.op2py(op);
     }
     @ExposedSet(name = "op")
     public void setOp(PyObject op) {
-        this.op = AstAdapters.to_operator(op);
+        this.op = AstAdapters.py2operator(op);
     }
 
     private exprType right;
@@ -57,7 +57,7 @@ public static final PyType TYPE = PyType.fromClass(BinOp.class);
     }
     @ExposedSet(name = "right")
     public void setRight(PyObject right) {
-        this.right = AstAdapters.to_expr(right);
+        this.right = AstAdapters.py2expr(right);
     }
 
 

@@ -31,7 +31,7 @@ public class comprehensionType extends PythonTree {
     }
     @ExposedSet(name = "target")
     public void setTarget(PyObject target) {
-        this.target = AstAdapters.to_expr(target);
+        this.target = AstAdapters.py2expr(target);
     }
 
     private exprType iter;
@@ -44,7 +44,7 @@ public class comprehensionType extends PythonTree {
     }
     @ExposedSet(name = "iter")
     public void setIter(PyObject iter) {
-        this.iter = AstAdapters.to_expr(iter);
+        this.iter = AstAdapters.py2expr(iter);
     }
 
     private java.util.List<exprType> ifs;
@@ -57,7 +57,7 @@ public class comprehensionType extends PythonTree {
     }
     @ExposedSet(name = "ifs")
     public void setIfs(PyObject ifs) {
-        this.ifs = AstAdapters.to_exprList(ifs);
+        this.ifs = AstAdapters.py2exprList(ifs);
     }
 
 

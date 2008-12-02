@@ -31,7 +31,7 @@ public class argumentsType extends PythonTree {
     }
     @ExposedSet(name = "args")
     public void setArgs(PyObject args) {
-        this.args = AstAdapters.to_exprList(args);
+        this.args = AstAdapters.py2exprList(args);
     }
 
     private String vararg;
@@ -45,7 +45,7 @@ public class argumentsType extends PythonTree {
     }
     @ExposedSet(name = "vararg")
     public void setVararg(PyObject vararg) {
-        this.vararg = AstAdapters.to_identifier(vararg);
+        this.vararg = AstAdapters.py2identifier(vararg);
     }
 
     private String kwarg;
@@ -59,7 +59,7 @@ public class argumentsType extends PythonTree {
     }
     @ExposedSet(name = "kwarg")
     public void setKwarg(PyObject kwarg) {
-        this.kwarg = AstAdapters.to_identifier(kwarg);
+        this.kwarg = AstAdapters.py2identifier(kwarg);
     }
 
     private java.util.List<exprType> defaults;
@@ -72,7 +72,7 @@ public class argumentsType extends PythonTree {
     }
     @ExposedSet(name = "defaults")
     public void setDefaults(PyObject defaults) {
-        this.defaults = AstAdapters.to_exprList(defaults);
+        this.defaults = AstAdapters.py2exprList(defaults);
     }
 
 

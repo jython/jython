@@ -31,7 +31,7 @@ public static final PyType TYPE = PyType.fromClass(TryFinally.class);
     }
     @ExposedSet(name = "body")
     public void setBody(PyObject body) {
-        this.body = AstAdapters.to_stmtList(body);
+        this.body = AstAdapters.py2stmtList(body);
     }
 
     private java.util.List<stmtType> finalbody;
@@ -44,7 +44,7 @@ public static final PyType TYPE = PyType.fromClass(TryFinally.class);
     }
     @ExposedSet(name = "finalbody")
     public void setFinalbody(PyObject finalbody) {
-        this.finalbody = AstAdapters.to_stmtList(finalbody);
+        this.finalbody = AstAdapters.py2stmtList(finalbody);
     }
 
 

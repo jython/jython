@@ -32,7 +32,7 @@ public static final PyType TYPE = PyType.fromClass(FunctionDef.class);
     }
     @ExposedSet(name = "name")
     public void setName(PyObject name) {
-        this.name = AstAdapters.to_identifier(name);
+        this.name = AstAdapters.py2identifier(name);
     }
 
     private argumentsType args;
@@ -45,7 +45,7 @@ public static final PyType TYPE = PyType.fromClass(FunctionDef.class);
     }
     @ExposedSet(name = "args")
     public void setArgs(PyObject args) {
-        this.args = AstAdapters.to_arguments(args);
+        this.args = AstAdapters.py2arguments(args);
     }
 
     private java.util.List<stmtType> body;
@@ -58,7 +58,7 @@ public static final PyType TYPE = PyType.fromClass(FunctionDef.class);
     }
     @ExposedSet(name = "body")
     public void setBody(PyObject body) {
-        this.body = AstAdapters.to_stmtList(body);
+        this.body = AstAdapters.py2stmtList(body);
     }
 
     private java.util.List<exprType> decorator_list;
@@ -71,7 +71,7 @@ public static final PyType TYPE = PyType.fromClass(FunctionDef.class);
     }
     @ExposedSet(name = "decorator_list")
     public void setDecorator_list(PyObject decorator_list) {
-        this.decorator_list = AstAdapters.to_exprList(decorator_list);
+        this.decorator_list = AstAdapters.py2exprList(decorator_list);
     }
 
 

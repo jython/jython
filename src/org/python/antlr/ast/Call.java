@@ -31,7 +31,7 @@ public static final PyType TYPE = PyType.fromClass(Call.class);
     }
     @ExposedSet(name = "func")
     public void setFunc(PyObject func) {
-        this.func = AstAdapters.to_expr(func);
+        this.func = AstAdapters.py2expr(func);
     }
 
     private java.util.List<exprType> args;
@@ -44,7 +44,7 @@ public static final PyType TYPE = PyType.fromClass(Call.class);
     }
     @ExposedSet(name = "args")
     public void setArgs(PyObject args) {
-        this.args = AstAdapters.to_exprList(args);
+        this.args = AstAdapters.py2exprList(args);
     }
 
     private java.util.List<keywordType> keywords;
@@ -57,7 +57,7 @@ public static final PyType TYPE = PyType.fromClass(Call.class);
     }
     @ExposedSet(name = "keywords")
     public void setKeywords(PyObject keywords) {
-        this.keywords = AstAdapters.to_keywordList(keywords);
+        this.keywords = AstAdapters.py2keywordList(keywords);
     }
 
     private exprType starargs;
@@ -70,7 +70,7 @@ public static final PyType TYPE = PyType.fromClass(Call.class);
     }
     @ExposedSet(name = "starargs")
     public void setStarargs(PyObject starargs) {
-        this.starargs = AstAdapters.to_expr(starargs);
+        this.starargs = AstAdapters.py2expr(starargs);
     }
 
     private exprType kwargs;
@@ -83,7 +83,7 @@ public static final PyType TYPE = PyType.fromClass(Call.class);
     }
     @ExposedSet(name = "kwargs")
     public void setKwargs(PyObject kwargs) {
-        this.kwargs = AstAdapters.to_expr(kwargs);
+        this.kwargs = AstAdapters.py2expr(kwargs);
     }
 
 

@@ -31,7 +31,7 @@ public static final PyType TYPE = PyType.fromClass(Slice.class);
     }
     @ExposedSet(name = "lower")
     public void setLower(PyObject lower) {
-        this.lower = AstAdapters.to_expr(lower);
+        this.lower = AstAdapters.py2expr(lower);
     }
 
     private exprType upper;
@@ -44,7 +44,7 @@ public static final PyType TYPE = PyType.fromClass(Slice.class);
     }
     @ExposedSet(name = "upper")
     public void setUpper(PyObject upper) {
-        this.upper = AstAdapters.to_expr(upper);
+        this.upper = AstAdapters.py2expr(upper);
     }
 
     private exprType step;
@@ -57,7 +57,7 @@ public static final PyType TYPE = PyType.fromClass(Slice.class);
     }
     @ExposedSet(name = "step")
     public void setStep(PyObject step) {
-        this.step = AstAdapters.to_expr(step);
+        this.step = AstAdapters.py2expr(step);
     }
 
 

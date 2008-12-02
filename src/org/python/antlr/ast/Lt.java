@@ -13,6 +13,6 @@ public class Lt extends AST {
         return asIndex(null);
     }
     public int asIndex(PyObject error) {
-        return 2;
+        return 3;
     }
 }

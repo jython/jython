@@ -13,6 +13,6 @@ public class LShift extends AST {
         return asIndex(null);
     }
     public int asIndex(PyObject error) {
-        return 6;
+        return 7;
     }
 }

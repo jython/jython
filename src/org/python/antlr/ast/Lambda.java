@@ -31,7 +31,7 @@ public static final PyType TYPE = PyType.fromClass(Lambda.class);
     }
     @ExposedSet(name = "args")
     public void setArgs(PyObject args) {
-        this.args = AstAdapters.to_arguments(args);
+        this.args = AstAdapters.py2arguments(args);
     }
 
     private exprType body;
@@ -44,7 +44,7 @@ public static final PyType TYPE = PyType.fromClass(Lambda.class);
     }
     @ExposedSet(name = "body")
     public void setBody(PyObject body) {
-        this.body = AstAdapters.to_expr(body);
+        this.body = AstAdapters.py2expr(body);
     }
 
 

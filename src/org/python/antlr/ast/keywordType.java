@@ -32,7 +32,7 @@ public class keywordType extends PythonTree {
     }
     @ExposedSet(name = "arg")
     public void setArg(PyObject arg) {
-        this.arg = AstAdapters.to_identifier(arg);
+        this.arg = AstAdapters.py2identifier(arg);
     }
 
     private exprType value;
@@ -45,7 +45,7 @@ public class keywordType extends PythonTree {
     }
     @ExposedSet(name = "value")
     public void setValue(PyObject value) {
-        this.value = AstAdapters.to_expr(value);
+        this.value = AstAdapters.py2expr(value);
     }
 
 

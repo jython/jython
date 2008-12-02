@@ -13,6 +13,6 @@ public class IsNot extends AST {
         return asIndex(null);
     }
     public int asIndex(PyObject error) {
-        return 7;
+        return 8;
     }
 }

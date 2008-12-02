@@ -27,11 +27,11 @@ public static final PyType TYPE = PyType.fromClass(BoolOp.class);
     }
     @ExposedGet(name = "op")
     public PyObject getOp() {
-        return Py.None;//(op);
+        return AstAdapters.op2py(op);
     }
     @ExposedSet(name = "op")
     public void setOp(PyObject op) {
-        this.op = AstAdapters.to_boolop(op);
+        this.op = AstAdapters.py2boolop(op);
     }
 
     private java.util.List<exprType> values;
@@ -44,7 +44,7 @@ public static final PyType TYPE = PyType.fromClass(BoolOp.class);
     }
     @ExposedSet(name = "values")
     public void setValues(PyObject values) {
-        this.values = AstAdapters.to_exprList(values);
+        this.values = AstAdapters.py2exprList(values);
     }
 
 

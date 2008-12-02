@@ -31,7 +31,7 @@ public static final PyType TYPE = PyType.fromClass(Raise.class);
     }
     @ExposedSet(name = "excepttype")
     public void setExcepttype(PyObject excepttype) {
-        this.excepttype = AstAdapters.to_expr(excepttype);
+        this.excepttype = AstAdapters.py2expr(excepttype);
     }
 
     private exprType inst;
@@ -44,7 +44,7 @@ public static final PyType TYPE = PyType.fromClass(Raise.class);
     }
     @ExposedSet(name = "inst")
     public void setInst(PyObject inst) {
-        this.inst = AstAdapters.to_expr(inst);
+        this.inst = AstAdapters.py2expr(inst);
     }
 
     private exprType tback;
@@ -57,7 +57,7 @@ public static final PyType TYPE = PyType.fromClass(Raise.class);
     }
     @ExposedSet(name = "tback")
     public void setTback(PyObject tback) {
-        this.tback = AstAdapters.to_expr(tback);
+        this.tback = AstAdapters.py2expr(tback);
     }
 
 

@@ -31,7 +31,7 @@ public static final PyType TYPE = PyType.fromClass(Dict.class);
     }
     @ExposedSet(name = "keys")
     public void setKeys(PyObject keys) {
-        this.keys = AstAdapters.to_exprList(keys);
+        this.keys = AstAdapters.py2exprList(keys);
     }
 
     private java.util.List<exprType> values;
@@ -44,7 +44,7 @@ public static final PyType TYPE = PyType.fromClass(Dict.class);
     }
     @ExposedSet(name = "values")
     public void setValues(PyObject values) {
-        this.values = AstAdapters.to_exprList(values);
+        this.values = AstAdapters.py2exprList(values);
     }
 
 

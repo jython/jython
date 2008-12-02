@@ -32,7 +32,7 @@ public static final PyType TYPE = PyType.fromClass(ImportFrom.class);
     }
     @ExposedSet(name = "module")
     public void setModule(PyObject module) {
-        this.module = AstAdapters.to_identifier(module);
+        this.module = AstAdapters.py2identifier(module);
     }
 
     private java.util.List<aliasType> names;
@@ -45,7 +45,7 @@ public static final PyType TYPE = PyType.fromClass(ImportFrom.class);
     }
     @ExposedSet(name = "names")
     public void setNames(PyObject names) {
-        this.names = AstAdapters.to_aliasList(names);
+        this.names = AstAdapters.py2aliasList(names);
     }
 
     private Integer level;
@@ -58,7 +58,7 @@ public static final PyType TYPE = PyType.fromClass(ImportFrom.class);
     }
     @ExposedSet(name = "level")
     public void setLevel(PyObject level) {
-        this.level = AstAdapters.to_int(level);
+        this.level = AstAdapters.py2int(level);
     }
 
 

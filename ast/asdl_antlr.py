@@ -170,7 +170,7 @@ class JavaVisitor(EmitVisitor):
         self.close()
 
     def simple_sum_wrappers(self, sum, name, depth):
-        for i in range(len(sum.types) - 1):
+        for i in range(len(sum.types)):
             type = sum.types[i]
             self.open("%s" % type.name, refersToPythonTree=0)
             self.emit('import org.python.antlr.AST;', depth)
@@ -187,7 +187,7 @@ class JavaVisitor(EmitVisitor):
             self.emit("}", depth + 1)
 
             self.emit('public int asIndex(PyObject error) {', depth + 1)
-            self.emit('return %s;' % str(i), depth + 2)
+            self.emit('return %s;' % str(i + 1), depth + 2)
             self.emit("}", depth + 1)
 
             self.emit("}", depth)
@@ -503,7 +503,7 @@ class JavaVisitor(EmitVisitor):
             elif str(field.type) == 'int':
                 self.emit("return Py.newInteger(%s);" % field.name, depth+1)
             elif field.typedef.simple:
-                self.emit("return Py.None;//(%s);" % field.name, depth+1)
+                self.emit("return AstAdapters.%s2py(%s);" % (field.name, field.name), depth+1)
             else:
                 self.emit("return %s;" % field.name, depth+1)
             #self.emit("return Py.None;", depth+1)
@@ -513,9 +513,9 @@ class JavaVisitor(EmitVisitor):
             field.name), depth)
         if field.seq:
             #self.emit("this.%s = new %s(" % (field.name, self.javaType(field)), depth+1)
-            self.emit("this.%s = AstAdapters.to_%sList(%s);" % (field.name, str(field.type), field.name), depth+1)
+            self.emit("this.%s = AstAdapters.py2%sList(%s);" % (field.name, str(field.type), field.name), depth+1)
         else:
-            self.emit("this.%s = AstAdapters.to_%s(%s);" % (field.name, str(field.type), field.name), depth+1)
+            self.emit("this.%s = AstAdapters.py2%s(%s);" % (field.name, str(field.type), field.name), depth+1)
         self.emit("}", depth)
         self.emit("", 0)
 

@@ -31,7 +31,7 @@ public static final PyType TYPE = PyType.fromClass(Exec.class);
     }
     @ExposedSet(name = "body")
     public void setBody(PyObject body) {
-        this.body = AstAdapters.to_expr(body);
+        this.body = AstAdapters.py2expr(body);
     }
 
     private exprType globals;
@@ -44,7 +44,7 @@ public static final PyType TYPE = PyType.fromClass(Exec.class);
     }
     @ExposedSet(name = "globals")
     public void setGlobals(PyObject globals) {
-        this.globals = AstAdapters.to_expr(globals);
+        this.globals = AstAdapters.py2expr(globals);
     }
 
     private exprType locals;
@@ -57,7 +57,7 @@ public static final PyType TYPE = PyType.fromClass(Exec.class);
     }
     @ExposedSet(name = "locals")
     public void setLocals(PyObject locals) {
-        this.locals = AstAdapters.to_expr(locals);
+        this.locals = AstAdapters.py2expr(locals);
     }
 
 

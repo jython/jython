@@ -27,11 +27,11 @@ public static final PyType TYPE = PyType.fromClass(UnaryOp.class);
     }
     @ExposedGet(name = "op")
     public PyObject getOp() {
-        return Py.None;//(op);
+        return AstAdapters.op2py(op);
     }
     @ExposedSet(name = "op")
     public void setOp(PyObject op) {
-        this.op = AstAdapters.to_unaryop(op);
+        this.op = AstAdapters.py2unaryop(op);
     }
 
     private exprType operand;
@@ -44,7 +44,7 @@ public static final PyType TYPE = PyType.fromClass(UnaryOp.class);
     }
     @ExposedSet(name = "operand")
     public void setOperand(PyObject operand) {
-        this.operand = AstAdapters.to_expr(operand);
+        this.operand = AstAdapters.py2expr(operand);
     }
 
 

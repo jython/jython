@@ -31,7 +31,7 @@ public static final PyType TYPE = PyType.fromClass(IfExp.class);
     }
     @ExposedSet(name = "test")
     public void setTest(PyObject test) {
-        this.test = AstAdapters.to_expr(test);
+        this.test = AstAdapters.py2expr(test);
     }
 
     private exprType body;
@@ -44,7 +44,7 @@ public static final PyType TYPE = PyType.fromClass(IfExp.class);
     }
     @ExposedSet(name = "body")
     public void setBody(PyObject body) {
-        this.body = AstAdapters.to_expr(body);
+        this.body = AstAdapters.py2expr(body);
     }
 
     private exprType orelse;
@@ -57,7 +57,7 @@ public static final PyType TYPE = PyType.fromClass(IfExp.class);
     }
     @ExposedSet(name = "orelse")
     public void setOrelse(PyObject orelse) {
-        this.orelse = AstAdapters.to_expr(orelse);
+        this.orelse = AstAdapters.py2expr(orelse);
     }
 
 

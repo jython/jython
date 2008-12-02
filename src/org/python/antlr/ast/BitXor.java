@@ -13,6 +13,6 @@ public class BitXor extends AST {
         return asIndex(null);
     }
     public int asIndex(PyObject error) {
-        return 9;
+        return 10;
     }
 }

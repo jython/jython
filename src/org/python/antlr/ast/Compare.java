@@ -31,7 +31,7 @@ public static final PyType TYPE = PyType.fromClass(Compare.class);
     }
     @ExposedSet(name = "left")
     public void setLeft(PyObject left) {
-        this.left = AstAdapters.to_expr(left);
+        this.left = AstAdapters.py2expr(left);
     }
 
     private java.util.List<cmpopType> ops;
@@ -44,7 +44,7 @@ public static final PyType TYPE = PyType.fromClass(Compare.class);
     }
     @ExposedSet(name = "ops")
     public void setOps(PyObject ops) {
-        this.ops = AstAdapters.to_cmpopList(ops);
+        this.ops = AstAdapters.py2cmpopList(ops);
     }
 
     private java.util.List<exprType> comparators;
@@ -57,7 +57,7 @@ public static final PyType TYPE = PyType.fromClass(Compare.class);
     }
     @ExposedSet(name = "comparators")
     public void setComparators(PyObject comparators) {
-        this.comparators = AstAdapters.to_exprList(comparators);
+        this.comparators = AstAdapters.py2exprList(comparators);
     }
 
 

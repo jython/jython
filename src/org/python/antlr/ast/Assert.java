@@ -31,7 +31,7 @@ public static final PyType TYPE = PyType.fromClass(Assert.class);
     }
     @ExposedSet(name = "test")
     public void setTest(PyObject test) {
-        this.test = AstAdapters.to_expr(test);
+        this.test = AstAdapters.py2expr(test);
     }
 
     private exprType msg;
@@ -44,7 +44,7 @@ public static final PyType TYPE = PyType.fromClass(Assert.class);
     }
     @ExposedSet(name = "msg")
     public void setMsg(PyObject msg) {
-        this.msg = AstAdapters.to_expr(msg);
+        this.msg = AstAdapters.py2expr(msg);
     }
 
 

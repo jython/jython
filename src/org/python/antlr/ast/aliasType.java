@@ -32,7 +32,7 @@ public class aliasType extends PythonTree {
     }
     @ExposedSet(name = "name")
     public void setName(PyObject name) {
-        this.name = AstAdapters.to_identifier(name);
+        this.name = AstAdapters.py2identifier(name);
     }
 
     private String asname;
@@ -46,7 +46,7 @@ public class aliasType extends PythonTree {
     }
     @ExposedSet(name = "asname")
     public void setAsname(PyObject asname) {
-        this.asname = AstAdapters.to_identifier(asname);
+        this.asname = AstAdapters.py2identifier(asname);
     }
 
 

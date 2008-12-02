@@ -31,7 +31,7 @@ public static final PyType TYPE = PyType.fromClass(Print.class);
     }
     @ExposedSet(name = "dest")
     public void setDest(PyObject dest) {
-        this.dest = AstAdapters.to_expr(dest);
+        this.dest = AstAdapters.py2expr(dest);
     }
 
     private java.util.List<exprType> values;
@@ -44,7 +44,7 @@ public static final PyType TYPE = PyType.fromClass(Print.class);
     }
     @ExposedSet(name = "values")
     public void setValues(PyObject values) {
-        this.values = AstAdapters.to_exprList(values);
+        this.values = AstAdapters.py2exprList(values);
     }
 
     private Boolean nl;
@@ -58,7 +58,7 @@ public static final PyType TYPE = PyType.fromClass(Print.class);
     }
     @ExposedSet(name = "nl")
     public void setNl(PyObject nl) {
-        this.nl = AstAdapters.to_bool(nl);
+        this.nl = AstAdapters.py2bool(nl);
     }
 
 

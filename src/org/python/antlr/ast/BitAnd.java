@@ -13,6 +13,6 @@ public class BitAnd extends AST {
         return asIndex(null);
     }
     public int asIndex(PyObject error) {
-        return 10;
+        return 11;
     }
 }

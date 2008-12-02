@@ -31,7 +31,7 @@ public static final PyType TYPE = PyType.fromClass(Tuple.class);
     }
     @ExposedSet(name = "elts")
     public void setElts(PyObject elts) {
-        this.elts = AstAdapters.to_exprList(elts);
+        this.elts = AstAdapters.py2exprList(elts);
     }
 
     private expr_contextType ctx;
@@ -40,11 +40,11 @@ public static final PyType TYPE = PyType.fromClass(Tuple.class);
     }
     @ExposedGet(name = "ctx")
     public PyObject getCtx() {
-        return Py.None;//(ctx);
+        return AstAdapters.ctx2py(ctx);
     }
     @ExposedSet(name = "ctx")
     public void setCtx(PyObject ctx) {
-        this.ctx = AstAdapters.to_expr_context(ctx);
+        this.ctx = AstAdapters.py2expr_context(ctx);
     }
 
 

@@ -102,4 +102,17 @@ org/python/antlr/ast/ListComp.class
 org/python/antlr/ast/TryFinally.class
 org/python/antlr/ast/If.class
 org/python/antlr/ast/ImportFrom.class
+org/python/antlr/ast/FunctionDef.class
+org/python/antlr/ast/argumentsType.class
+org/python/antlr/ast/List.class
+org/python/antlr/ast/Interactive.class
+org/python/antlr/ast/ExtSlice.class
+org/python/antlr/ast/Compare.class
+org/python/antlr/ast/While.class
+org/python/antlr/ast/Call.class
+org/python/antlr/ast/Assign.class
+org/python/antlr/ast/For.class
+org/python/antlr/ast/Suite.class
+org/python/antlr/ast/BoolOp.class
+org/python/antlr/ast/Print.class
 

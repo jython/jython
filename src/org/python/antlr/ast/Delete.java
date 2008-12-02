@@ -31,7 +31,7 @@ public static final PyType TYPE = PyType.fromClass(Delete.class);
     }
     @ExposedSet(name = "targets")
     public void setTargets(PyObject targets) {
-        this.targets = AstAdapters.to_exprList(targets);
+        this.targets = AstAdapters.py2exprList(targets);
     }
 
 

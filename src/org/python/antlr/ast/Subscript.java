@@ -31,7 +31,7 @@ public static final PyType TYPE = PyType.fromClass(Subscript.class);
     }
     @ExposedSet(name = "value")
     public void setValue(PyObject value) {
-        this.value = AstAdapters.to_expr(value);
+        this.value = AstAdapters.py2expr(value);
     }
 
     private sliceType slice;
@@ -44,7 +44,7 @@ public static final PyType TYPE = PyType.fromClass(Subscript.class);
     }
     @ExposedSet(name = "slice")
     public void setSlice(PyObject slice) {
-        this.slice = AstAdapters.to_slice(slice);
+        this.slice = AstAdapters.py2slice(slice);
     }
 
     private expr_contextType ctx;
@@ -53,11 +53,11 @@ public static final PyType TYPE = PyType.fromClass(Subscript.class);
     }
     @ExposedGet(name = "ctx")
     public PyObject getCtx() {
-        return Py.None;//(ctx);
+        return AstAdapters.ctx2py(ctx);
     }
     @ExposedSet(name = "ctx")
     public void setCtx(PyObject ctx) {
-        this.ctx = AstAdapters.to_expr_context(ctx);
+        this.ctx = AstAdapters.py2expr_context(ctx);
     }
 
 

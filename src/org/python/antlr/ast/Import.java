@@ -31,7 +31,7 @@ public static final PyType TYPE = PyType.fromClass(Import.class);
     }
     @ExposedSet(name = "names")
     public void setNames(PyObject names) {
-        this.names = AstAdapters.to_aliasList(names);
+        this.names = AstAdapters.py2aliasList(names);
     }
 
 

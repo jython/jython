@@ -31,7 +31,7 @@ public static final PyType TYPE = PyType.fromClass(AugAssign.class);
     }
     @ExposedSet(name = "target")
     public void setTarget(PyObject target) {
-        this.target = AstAdapters.to_expr(target);
+        this.target = AstAdapters.py2expr(target);
     }
 
     private operatorType op;
@@ -40,11 +40,11 @@ public static final PyType TYPE = PyType.fromClass(AugAssign.class);
     }
     @ExposedGet(name = "op")
     public PyObject getOp() {
-        return Py.None;//(op);
+        return AstAdapters.op2py(op);
     }
     @ExposedSet(name = "op")
     public void setOp(PyObject op) {
-        this.op = AstAdapters.to_operator(op);
+        this.op = AstAdapters.py2operator(op);
     }
 
     private exprType value;
@@ -57,7 +57,7 @@ public static final PyType TYPE = PyType.fromClass(AugAssign.class);
     }
     @ExposedSet(name = "value")
     public void setValue(PyObject value) {
-        this.value = AstAdapters.to_expr(value);
+        this.value = AstAdapters.py2expr(value);
     }
 
 

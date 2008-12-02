@@ -31,7 +31,7 @@ public static final PyType TYPE = PyType.fromClass(Num.class);
     }
     @ExposedSet(name = "n")
     public void setN(PyObject n) {
-        this.n = AstAdapters.to_object(n);
+        this.n = AstAdapters.py2object(n);
     }
 
 

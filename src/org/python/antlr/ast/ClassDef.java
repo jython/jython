@@ -32,7 +32,7 @@ public static final PyType TYPE = PyType.fromClass(ClassDef.class);
     }
     @ExposedSet(name = "name")
     public void setName(PyObject name) {
-        this.name = AstAdapters.to_identifier(name);
+        this.name = AstAdapters.py2identifier(name);
     }
 
     private java.util.List<exprType> bases;
@@ -45,7 +45,7 @@ public static final PyType TYPE = PyType.fromClass(ClassDef.class);
     }
     @ExposedSet(name = "bases")
     public void setBases(PyObject bases) {
-        this.bases = AstAdapters.to_exprList(bases);
+        this.bases = AstAdapters.py2exprList(bases);
     }
 
     private java.util.List<stmtType> body;
@@ -58,7 +58,7 @@ public static final PyType TYPE = PyType.fromClass(ClassDef.class);
     }
     @ExposedSet(name = "body")
     public void setBody(PyObject body) {
-        this.body = AstAdapters.to_stmtList(body);
+        this.body = AstAdapters.py2stmtList(body);
     }
 
     private java.util.List<exprType> decorator_list;
@@ -71,7 +71,7 @@ public static final PyType TYPE = PyType.fromClass(ClassDef.class);
     }
     @ExposedSet(name = "decorator_list")
     public void setDecorator_list(PyObject decorator_list) {
-        this.decorator_list = AstAdapters.to_exprList(decorator_list);
+        this.decorator_list = AstAdapters.py2exprList(decorator_list);
     }
 
 

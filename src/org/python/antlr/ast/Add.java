@@ -13,6 +13,6 @@ public class Add extends AST {
         return asIndex(null);
     }
     public int asIndex(PyObject error) {
-        return 0;
+        return 1;
     }
 }

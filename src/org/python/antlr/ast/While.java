@@ -31,7 +31,7 @@ public static final PyType TYPE = PyType.fromClass(While.class);
     }
     @ExposedSet(name = "test")
     public void setTest(PyObject test) {
-        this.test = AstAdapters.to_expr(test);
+        this.test = AstAdapters.py2expr(test);
     }
 
     private java.util.List<stmtType> body;
@@ -44,7 +44,7 @@ public static final PyType TYPE = PyType.fromClass(While.class);
     }
     @ExposedSet(name = "body")
     public void setBody(PyObject body) {
-        this.body = AstAdapters.to_stmtList(body);
+        this.body = AstAdapters.py2stmtList(body);
     }
 
     private java.util.List<stmtType> orelse;
@@ -57,7 +57,7 @@ public static final PyType TYPE = PyType.fromClass(While.class);
     }
     @ExposedSet(name = "orelse")
     public void setOrelse(PyObject orelse) {
-        this.orelse = AstAdapters.to_stmtList(orelse);
+        this.orelse = AstAdapters.py2stmtList(orelse);
     }
 
 

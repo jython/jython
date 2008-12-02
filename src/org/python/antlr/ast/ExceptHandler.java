@@ -31,7 +31,7 @@ public static final PyType TYPE = PyType.fromClass(ExceptHandler.class);
     }
     @ExposedSet(name = "excepttype")
     public void setExcepttype(PyObject excepttype) {
-        this.excepttype = AstAdapters.to_expr(excepttype);
+        this.excepttype = AstAdapters.py2expr(excepttype);
     }
 
     private exprType name;
@@ -44,7 +44,7 @@ public static final PyType TYPE = PyType.fromClass(ExceptHandler.class);
     }
     @ExposedSet(name = "name")
     public void setName(PyObject name) {
-        this.name = AstAdapters.to_expr(name);
+        this.name = AstAdapters.py2expr(name);
     }
 
     private java.util.List<stmtType> body;
@@ -57,7 +57,7 @@ public static final PyType TYPE = PyType.fromClass(ExceptHandler.class);
     }
     @ExposedSet(name = "body")
     public void setBody(PyObject body) {
-        this.body = AstAdapters.to_stmtList(body);
+        this.body = AstAdapters.py2stmtList(body);
     }
 
 

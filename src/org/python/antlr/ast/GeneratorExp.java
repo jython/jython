@@ -31,7 +31,7 @@ public static final PyType TYPE = PyType.fromClass(GeneratorExp.class);
     }
     @ExposedSet(name = "elt")
     public void setElt(PyObject elt) {
-        this.elt = AstAdapters.to_expr(elt);
+        this.elt = AstAdapters.py2expr(elt);
     }
 
     private java.util.List<comprehensionType> generators;
@@ -44,7 +44,7 @@ public static final PyType TYPE = PyType.fromClass(GeneratorExp.class);
     }
     @ExposedSet(name = "generators")
     public void setGenerators(PyObject generators) {
-        this.generators = AstAdapters.to_comprehensionList(generators);
+        this.generators = AstAdapters.py2comprehensionList(generators);
     }
 
 

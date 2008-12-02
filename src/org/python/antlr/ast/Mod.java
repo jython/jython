@@ -13,6 +13,6 @@ public class Mod extends AST {
         return asIndex(null);
     }
     public int asIndex(PyObject error) {
-        return 4;
+        return 5;
     }
 }

@@ -13,6 +13,6 @@ public class GtE extends AST {
         return asIndex(null);
     }
     public int asIndex(PyObject error) {
-        return 5;
+        return 6;
     }
 }
