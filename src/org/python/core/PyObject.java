@@ -754,9 +754,9 @@ public class PyObject implements Serializable {
     }
 
     /**
-     * @return an Iterable over the Python iterator returned by __iter__ on this object. If this
-     *         object doesn't support __iter__, a TypeException will be raised when iterator is
-     *         called on the returned Iterable.
+     * Returns an Iterable over the Python iterator returned by __iter__ on this object. If this
+     * object doesn't support __iter__, a TypeException will be raised when iterator is called on
+     * the returned Iterable.
      */
     public Iterable<PyObject> asIterable() {
         return new Iterable<PyObject>() {

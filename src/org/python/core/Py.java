@@ -90,7 +90,6 @@ public final class Py {
         BOOTSTRAP_TYPES.add(PyType.class);
         BOOTSTRAP_TYPES.add(PyBuiltinCallable.class);
         BOOTSTRAP_TYPES.add(PyDataDescr.class);
-        BOOTSTRAP_TYPES.add(PyMethodDescr.class);
     }
 
     /** A unique object to indicate no conversion is possible

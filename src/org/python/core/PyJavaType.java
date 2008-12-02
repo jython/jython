@@ -247,7 +247,7 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
             dict.__setitem__(inner.getSimpleName(), PyType.fromClass(inner));
         }
         for (Map.Entry<Class<?>, PyBuiltinMethod[]> entry : getCollectionProxies().entrySet()) {
-            if (entry.getKey().isAssignableFrom(underlying_class)) {
+            if (entry.getKey() == underlying_class) {
                 for (PyBuiltinMethod meth : entry.getValue()) {
                     dict.__setitem__(meth.info.getName(), new PyMethodDescr(this, meth));
                 }
@@ -268,7 +268,7 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
             has_delete = getDescrMethod(underlying_class, "__delete__", PyObject.class) != null
                     || getDescrMethod(underlying_class, "_dodel", PyObject.class) != null;
         } else {
-            // Pass __eq__ through to subclasses of Object
+            // Pass __eq__ and __repr__ through to subclasses of Object
             PyBuiltinCallable equals = new PyBuiltinMethodNarrow("__eq__", 1, 1) {
                 @Override
                 public PyObject __call__(PyObject o) {
@@ -277,6 +277,13 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
                 }
             };
             dict.__setitem__("__eq__", new PyMethodDescr(this, equals));
+            PyBuiltinCallable repr = new PyBuiltinMethodNarrow("__repr__", 0, 0) {
+                @Override
+                public PyObject __call__() {
+                    return Py.newString(self.getJavaProxy().toString());
+                }
+            };
+            dict.__setitem__("__repr__", new PyMethodDescr(this, repr));
         }
     }
 
@@ -328,12 +335,12 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
         }
     }
 
-    private static class IteratorIter extends PyIterator {
+    private static class IterableIter extends PyIterator {
 
         private Iterator<Object> proxy;
 
-        public IteratorIter(Iterator<Object> proxy) {
-            this.proxy = proxy;
+        public IterableIter(Iterable<Object> proxy) {
+            this.proxy = proxy.iterator();
         }
 
         public PyObject __iternext__() {
@@ -365,6 +372,13 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
         if (collectionProxies == null) {
             collectionProxies = Generic.map();
 
+            PyBuiltinMethodNarrow iterableProxy = new PyBuiltinMethodNarrow("__iter__", 0, 0) {
+                public PyObject __call__() {
+                    return new IterableIter(((Iterable)self.getJavaProxy()));
+                }
+            };
+            collectionProxies.put(Iterable.class, new PyBuiltinMethod[] {iterableProxy});
+
             PyBuiltinMethodNarrow lenProxy = new PyBuiltinMethodNarrow("__len__", 0, 0) {
                 @Override
                 public PyObject __call__() {
@@ -372,13 +386,42 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
                 }
             };
 
+            PyBuiltinMethodNarrow containsProxy = new PyBuiltinMethodNarrow("__contains__", 1, 1) {
+                @Override
+                public PyObject __call__(PyObject obj) {
+                    Object other = obj.__tojava__(Object.class);
+                    boolean contained = ((Collection<?>)self.getJavaProxy()).contains(other);
+                    return contained ? Py.True : Py.False;
+                }
+            };
+            collectionProxies.put(Collection.class, new PyBuiltinMethod[] {lenProxy,
+                                                                           containsProxy});
+
+            // Map doesn't extend Collection, so it needs its own version of len, iter and contains
+            PyBuiltinMethodNarrow mapLenProxy = new MapMethod("__len__", 0, 0) {
+                @Override
+                public PyObject __call__() {
+                    return Py.java2py(asMap().size());
+                }
+            };
+            PyBuiltinMethodNarrow mapIterProxy = new MapMethod("__iter__", 0, 0) {
+                @Override
+                public PyObject __call__() {
+                    return new IterableIter(asMap().keySet());
+                }
+            };
+            PyBuiltinMethodNarrow mapContainsProxy = new MapMethod("__contains__", 1, 1) {
+                public PyObject __call__(PyObject obj) {
+                    Object other = obj.__tojava__(Object.class);
+                    return asMap().containsKey(other) ? Py.True : Py.False;
+                }
+            };
             PyBuiltinMethodNarrow mapGetProxy = new MapMethod("__getitem__", 1, 1) {
                 @Override
                 public PyObject __call__(PyObject key) {
                     return Py.java2py(asMap().get(Py.tojava(key, Object.class)));
                 }
             };
-
             PyBuiltinMethodNarrow mapPutProxy = new MapMethod("__setitem__", 2, 2) {
                 @Override
                 public PyObject __call__(PyObject key, PyObject value) {
@@ -386,13 +429,18 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
                                                   Py.tojava(value, Object.class)));
                 }
             };
-
             PyBuiltinMethodNarrow mapRemoveProxy = new MapMethod("__delitem__", 1, 1) {
                 @Override
-                public PyObject __call__(PyObject key, PyObject value) {
+                public PyObject __call__(PyObject key) {
                     return Py.java2py(asMap().remove(Py.tojava(key, Object.class)));
                 }
             };
+            collectionProxies.put(Map.class, new PyBuiltinMethod[] {mapLenProxy,
+                                                                    mapIterProxy,
+                                                                    mapContainsProxy,
+                                                                    mapGetProxy,
+                                                                    mapPutProxy,
+                                                                    mapRemoveProxy});
 
             PyBuiltinMethodNarrow listGetProxy = new ListMethod("__getitem__", 1, 1) {
                 @Override
@@ -404,7 +452,6 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
                     }
                 }
             };
-
             PyBuiltinMethodNarrow listSetProxy = new ListMethod("__setitem__", 2, 2) {
                 @Override
                 public PyObject __call__(PyObject key, PyObject value) {
@@ -416,10 +463,9 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
                     return Py.None;
                 }
             };
-
             PyBuiltinMethodNarrow listRemoveProxy = new ListMethod("__delitem__", 1, 1) {
                  @Override
-                public PyObject __call__(PyObject key, PyObject value) {
+                public PyObject __call__(PyObject key) {
                     if (key instanceof PyInteger) {
                         return Py.java2py(asList().remove(((PyInteger)key).getValue()));
                     } else {
@@ -427,20 +473,9 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
                     }
                 }
             };
-
-            PyBuiltinMethodNarrow iterableProxy = new PyBuiltinMethodNarrow("__iter__", 0, 0) {
-                public PyObject __call__() {
-                    return new IteratorIter(((Iterable)self.getJavaProxy()).iterator());
-                }
-            };
-            collectionProxies.put(Iterable.class, new PyBuiltinMethod[] {iterableProxy});
-            collectionProxies.put(Collection.class, new PyBuiltinMethod[] {lenProxy});
-            collectionProxies.put(Map.class, new PyBuiltinMethod[] {mapGetProxy,
-                                                                     mapPutProxy,
-                                                                     mapRemoveProxy});
             collectionProxies.put(List.class, new PyBuiltinMethod[] {listGetProxy,
-                                                                      listSetProxy,
-                                                                      listRemoveProxy});
+                                                                     listSetProxy,
+                                                                     listRemoveProxy});
         }
         return collectionProxies;
     }
