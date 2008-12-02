@@ -18,6 +18,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
+@ExposedType(name = "_ast.alias", base = PyObject.class)
 public class aliasType extends PythonTree {
     public static final PyType TYPE = PyType.fromClass(aliasType.class);
     private String name;
@@ -50,6 +51,7 @@ public class aliasType extends PythonTree {
 
 
     private final static String[] fields = new String[] {"name", "asname"};
+@ExposedGet(name = "_fields")
     public String[] get_fields() { return fields; }
 
     public aliasType() {
@@ -84,6 +86,7 @@ public class aliasType extends PythonTree {
         this.asname = asname;
     }
 
+    @ExposedGet(name = "repr")
     public String toString() {
         return "alias";
     }

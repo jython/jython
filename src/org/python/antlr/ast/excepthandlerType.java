@@ -15,11 +15,13 @@ import org.python.expose.ExposedNew;
 import org.python.expose.ExposedSet;
 import org.python.expose.ExposedType;
 
+@ExposedType(name = "_ast.excepthandler", base = PyObject.class)
 public abstract class excepthandlerType extends PythonTree {
 
     public static final PyType TYPE = PyType.fromClass(excepthandlerType.class);
     private final static String[] attributes = new String[] {"lineno",
                                                               "col_offset"};
+@ExposedGet(name = "_attributes")
     public String[] get_attributes() { return attributes; }
 
     public excepthandlerType() {

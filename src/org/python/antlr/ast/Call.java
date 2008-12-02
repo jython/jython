@@ -44,7 +44,7 @@ public static final PyType TYPE = PyType.fromClass(Call.class);
     }
     @ExposedSet(name = "args")
     public void setArgs(PyObject args) {
-        //FJW this.args = AstAdapters.to_exprList(args);
+        this.args = AstAdapters.to_exprList(args);
     }
 
     private java.util.List<keywordType> keywords;
@@ -57,7 +57,7 @@ public static final PyType TYPE = PyType.fromClass(Call.class);
     }
     @ExposedSet(name = "keywords")
     public void setKeywords(PyObject keywords) {
-        //FJW this.keywords = AstAdapters.to_keywordList(keywords);
+        this.keywords = AstAdapters.to_keywordList(keywords);
     }
 
     private exprType starargs;
@@ -90,6 +90,7 @@ public static final PyType TYPE = PyType.fromClass(Call.class);
     private final static String[] fields = new String[] {"func", "args",
                                                           "keywords",
                                                           "starargs", "kwargs"};
+@ExposedGet(name = "_fields")
     public String[] get_fields() { return fields; }
 
     public Call() {
@@ -186,6 +187,7 @@ public static final PyType TYPE = PyType.fromClass(Call.class);
         addChild(kwargs);
     }
 
+    @ExposedGet(name = "repr")
     public String toString() {
         return "Call";
     }
@@ -237,6 +239,7 @@ public static final PyType TYPE = PyType.fromClass(Call.class);
     }
 
     private int lineno = -1;
+@ExposedGet(name = "lineno")
     public int getLineno() {
         if (lineno != -1) {
             return lineno;
@@ -244,11 +247,13 @@ public static final PyType TYPE = PyType.fromClass(Call.class);
         return getLine();
     }
 
+@ExposedSet(name = "lineno")
     public void setLineno(int num) {
         lineno = num;
     }
 
     private int col_offset = -1;
+@ExposedGet(name = "col_offset")
     public int getCol_offset() {
         if (col_offset != -1) {
             return col_offset;
@@ -256,6 +261,7 @@ public static final PyType TYPE = PyType.fromClass(Call.class);
         return getCharPositionInLine();
     }
 
+@ExposedSet(name = "col_offset")
     public void setCol_offset(int num) {
         col_offset = num;
     }

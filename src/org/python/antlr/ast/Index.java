@@ -36,6 +36,7 @@ public static final PyType TYPE = PyType.fromClass(Index.class);
 
 
     private final static String[] fields = new String[] {"value"};
+@ExposedGet(name = "_fields")
     public String[] get_fields() { return fields; }
 
     public Index() {
@@ -69,6 +70,7 @@ public static final PyType TYPE = PyType.fromClass(Index.class);
         addChild(value);
     }
 
+    @ExposedGet(name = "repr")
     public String toString() {
         return "Index";
     }

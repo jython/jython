@@ -49,6 +49,7 @@ public static final PyType TYPE = PyType.fromClass(UnaryOp.class);
 
 
     private final static String[] fields = new String[] {"op", "operand"};
+@ExposedGet(name = "_fields")
     public String[] get_fields() { return fields; }
 
     public UnaryOp() {
@@ -87,6 +88,7 @@ public static final PyType TYPE = PyType.fromClass(UnaryOp.class);
         addChild(operand);
     }
 
+    @ExposedGet(name = "repr")
     public String toString() {
         return "UnaryOp";
     }
@@ -113,6 +115,7 @@ public static final PyType TYPE = PyType.fromClass(UnaryOp.class);
     }
 
     private int lineno = -1;
+@ExposedGet(name = "lineno")
     public int getLineno() {
         if (lineno != -1) {
             return lineno;
@@ -120,11 +123,13 @@ public static final PyType TYPE = PyType.fromClass(UnaryOp.class);
         return getLine();
     }
 
+@ExposedSet(name = "lineno")
     public void setLineno(int num) {
         lineno = num;
     }
 
     private int col_offset = -1;
+@ExposedGet(name = "col_offset")
     public int getCol_offset() {
         if (col_offset != -1) {
             return col_offset;
@@ -132,6 +137,7 @@ public static final PyType TYPE = PyType.fromClass(UnaryOp.class);
         return getCharPositionInLine();
     }
 
+@ExposedSet(name = "col_offset")
     public void setCol_offset(int num) {
         col_offset = num;
     }

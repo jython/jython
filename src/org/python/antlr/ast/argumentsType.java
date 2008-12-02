@@ -18,6 +18,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
+@ExposedType(name = "_ast.arguments", base = PyObject.class)
 public class argumentsType extends PythonTree {
     public static final PyType TYPE = PyType.fromClass(argumentsType.class);
     private java.util.List<exprType> args;
@@ -30,7 +31,7 @@ public class argumentsType extends PythonTree {
     }
     @ExposedSet(name = "args")
     public void setArgs(PyObject args) {
-        //FJW this.args = AstAdapters.to_exprList(args);
+        this.args = AstAdapters.to_exprList(args);
     }
 
     private String vararg;
@@ -71,12 +72,13 @@ public class argumentsType extends PythonTree {
     }
     @ExposedSet(name = "defaults")
     public void setDefaults(PyObject defaults) {
-        //FJW this.defaults = AstAdapters.to_exprList(defaults);
+        this.defaults = AstAdapters.to_exprList(defaults);
     }
 
 
     private final static String[] fields = new String[] {"args", "vararg",
                                                           "kwarg", "defaults"};
+@ExposedGet(name = "_fields")
     public String[] get_fields() { return fields; }
 
     public argumentsType() {
@@ -159,6 +161,7 @@ public class argumentsType extends PythonTree {
         }
     }
 
+    @ExposedGet(name = "repr")
     public String toString() {
         return "arguments";
     }

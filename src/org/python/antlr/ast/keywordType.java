@@ -18,6 +18,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
+@ExposedType(name = "_ast.keyword", base = PyObject.class)
 public class keywordType extends PythonTree {
     public static final PyType TYPE = PyType.fromClass(keywordType.class);
     private String arg;
@@ -49,6 +50,7 @@ public class keywordType extends PythonTree {
 
 
     private final static String[] fields = new String[] {"arg", "value"};
+@ExposedGet(name = "_fields")
     public String[] get_fields() { return fields; }
 
     public keywordType() {
@@ -86,6 +88,7 @@ public class keywordType extends PythonTree {
         addChild(value);
     }
 
+    @ExposedGet(name = "repr")
     public String toString() {
         return "keyword";
     }

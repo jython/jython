@@ -15,11 +15,13 @@ import org.python.expose.ExposedNew;
 import org.python.expose.ExposedSet;
 import org.python.expose.ExposedType;
 
+@ExposedType(name = "_ast.stmt", base = PyObject.class)
 public abstract class stmtType extends PythonTree {
 
     public static final PyType TYPE = PyType.fromClass(stmtType.class);
     private final static String[] attributes = new String[] {"lineno",
                                                               "col_offset"};
+@ExposedGet(name = "_attributes")
     public String[] get_attributes() { return attributes; }
 
     public stmtType() {

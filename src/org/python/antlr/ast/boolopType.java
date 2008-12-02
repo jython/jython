@@ -7,11 +7,5 @@ public enum boolopType {
     UNDEFINED,
     And,
     Or;
-    private final static String[] fields = new String[0];
-    public String[] get_fields() { return fields; }
-
-    private final static String[] attributes = new String[0];
-    public String[] get_attributes() { return attributes; }
-
     public boolopType __call__() { return this; }
 }

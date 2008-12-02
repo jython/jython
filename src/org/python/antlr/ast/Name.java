@@ -50,6 +50,7 @@ public static final PyType TYPE = PyType.fromClass(Name.class);
 
 
     private final static String[] fields = new String[] {"id", "ctx"};
+@ExposedGet(name = "_fields")
     public String[] get_fields() { return fields; }
 
     public Name() {
@@ -84,6 +85,7 @@ public static final PyType TYPE = PyType.fromClass(Name.class);
         this.ctx = ctx;
     }
 
+    @ExposedGet(name = "repr")
     public String toString() {
         return "Name";
     }
@@ -112,6 +114,7 @@ public static final PyType TYPE = PyType.fromClass(Name.class);
     }
 
     private int lineno = -1;
+@ExposedGet(name = "lineno")
     public int getLineno() {
         if (lineno != -1) {
             return lineno;
@@ -119,11 +122,13 @@ public static final PyType TYPE = PyType.fromClass(Name.class);
         return getLine();
     }
 
+@ExposedSet(name = "lineno")
     public void setLineno(int num) {
         lineno = num;
     }
 
     private int col_offset = -1;
+@ExposedGet(name = "col_offset")
     public int getCol_offset() {
         if (col_offset != -1) {
             return col_offset;
@@ -131,6 +136,7 @@ public static final PyType TYPE = PyType.fromClass(Name.class);
         return getCharPositionInLine();
     }
 
+@ExposedSet(name = "col_offset")
     public void setCol_offset(int num) {
         col_offset = num;
     }

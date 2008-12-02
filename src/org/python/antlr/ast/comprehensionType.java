@@ -18,6 +18,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
+@ExposedType(name = "_ast.comprehension", base = PyObject.class)
 public class comprehensionType extends PythonTree {
     public static final PyType TYPE = PyType.fromClass(comprehensionType.class);
     private exprType target;
@@ -56,12 +57,13 @@ public class comprehensionType extends PythonTree {
     }
     @ExposedSet(name = "ifs")
     public void setIfs(PyObject ifs) {
-        //FJW this.ifs = AstAdapters.to_exprList(ifs);
+        this.ifs = AstAdapters.to_exprList(ifs);
     }
 
 
     private final static String[] fields = new String[] {"target", "iter",
                                                           "ifs"};
+@ExposedGet(name = "_fields")
     public String[] get_fields() { return fields; }
 
     public comprehensionType() {
@@ -127,6 +129,7 @@ public class comprehensionType extends PythonTree {
         }
     }
 
+    @ExposedGet(name = "repr")
     public String toString() {
         return "comprehension";
     }

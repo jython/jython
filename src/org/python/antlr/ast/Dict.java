@@ -31,7 +31,7 @@ public static final PyType TYPE = PyType.fromClass(Dict.class);
     }
     @ExposedSet(name = "keys")
     public void setKeys(PyObject keys) {
-        //FJW this.keys = AstAdapters.to_exprList(keys);
+        this.keys = AstAdapters.to_exprList(keys);
     }
 
     private java.util.List<exprType> values;
@@ -44,11 +44,12 @@ public static final PyType TYPE = PyType.fromClass(Dict.class);
     }
     @ExposedSet(name = "values")
     public void setValues(PyObject values) {
-        //FJW this.values = AstAdapters.to_exprList(values);
+        this.values = AstAdapters.to_exprList(values);
     }
 
 
     private final static String[] fields = new String[] {"keys", "values"};
+@ExposedGet(name = "_fields")
     public String[] get_fields() { return fields; }
 
     public Dict() {
@@ -122,6 +123,7 @@ public static final PyType TYPE = PyType.fromClass(Dict.class);
         }
     }
 
+    @ExposedGet(name = "repr")
     public String toString() {
         return "Dict";
     }
@@ -158,6 +160,7 @@ public static final PyType TYPE = PyType.fromClass(Dict.class);
     }
 
     private int lineno = -1;
+@ExposedGet(name = "lineno")
     public int getLineno() {
         if (lineno != -1) {
             return lineno;
@@ -165,11 +168,13 @@ public static final PyType TYPE = PyType.fromClass(Dict.class);
         return getLine();
     }
 
+@ExposedSet(name = "lineno")
     public void setLineno(int num) {
         lineno = num;
     }
 
     private int col_offset = -1;
+@ExposedGet(name = "col_offset")
     public int getCol_offset() {
         if (col_offset != -1) {
             return col_offset;
@@ -177,6 +182,7 @@ public static final PyType TYPE = PyType.fromClass(Dict.class);
         return getCharPositionInLine();
     }
 
+@ExposedSet(name = "col_offset")
     public void setCol_offset(int num) {
         col_offset = num;
     }

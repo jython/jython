@@ -36,6 +36,7 @@ public static final PyType TYPE = PyType.fromClass(Expression.class);
 
 
     private final static String[] fields = new String[] {"body"};
+@ExposedGet(name = "_fields")
     public String[] get_fields() { return fields; }
 
     public Expression() {
@@ -69,6 +70,7 @@ public static final PyType TYPE = PyType.fromClass(Expression.class);
         addChild(body);
     }
 
+    @ExposedGet(name = "repr")
     public String toString() {
         return "Expression";
     }

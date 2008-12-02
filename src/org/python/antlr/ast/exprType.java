@@ -15,11 +15,13 @@ import org.python.expose.ExposedNew;
 import org.python.expose.ExposedSet;
 import org.python.expose.ExposedType;
 
+@ExposedType(name = "_ast.expr", base = PyObject.class)
 public abstract class exprType extends PythonTree {
 
     public static final PyType TYPE = PyType.fromClass(exprType.class);
     private final static String[] attributes = new String[] {"lineno",
                                                               "col_offset"};
+@ExposedGet(name = "_attributes")
     public String[] get_attributes() { return attributes; }
 
     public exprType() {

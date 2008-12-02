@@ -63,6 +63,7 @@ public static final PyType TYPE = PyType.fromClass(Slice.class);
 
     private final static String[] fields = new String[] {"lower", "upper",
                                                           "step"};
+@ExposedGet(name = "_fields")
     public String[] get_fields() { return fields; }
 
     public Slice() {
@@ -112,6 +113,7 @@ public static final PyType TYPE = PyType.fromClass(Slice.class);
         addChild(step);
     }
 
+    @ExposedGet(name = "repr")
     public String toString() {
         return "Slice";
     }

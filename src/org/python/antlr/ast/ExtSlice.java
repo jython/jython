@@ -31,11 +31,12 @@ public static final PyType TYPE = PyType.fromClass(ExtSlice.class);
     }
     @ExposedSet(name = "dims")
     public void setDims(PyObject dims) {
-        //FJW this.dims = AstAdapters.to_sliceList(dims);
+        this.dims = AstAdapters.to_sliceList(dims);
     }
 
 
     private final static String[] fields = new String[] {"dims"};
+@ExposedGet(name = "_fields")
     public String[] get_fields() { return fields; }
 
     public ExtSlice() {
@@ -85,6 +86,7 @@ public static final PyType TYPE = PyType.fromClass(ExtSlice.class);
         }
     }
 
+    @ExposedGet(name = "repr")
     public String toString() {
         return "ExtSlice";
     }

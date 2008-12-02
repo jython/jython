@@ -146,6 +146,7 @@ class JavaVisitor(EmitVisitor):
     def visitSum(self, sum, name, depth):
         if sum.simple and not name == "excepthandler":
             self.simple_sum(sum, name, depth)
+            self.simple_sum_wrappers(sum, name, depth)
         else:
             self.sum_with_constructor(sum, name, depth)
 
@@ -160,12 +161,38 @@ class JavaVisitor(EmitVisitor):
             self.emit("%s," % type.name, depth + 1)
         self.emit("%s;" % sum.types[len(sum.types) - 1].name, depth + 1)
 
-        self.attributes(sum, depth, True);
+        #XXX
+        #self.attributes(sum, depth, True);
 
         self.emit("public %sType __call__() { return this; }" % name, depth + 1)
 
         self.emit("}", depth)
         self.close()
+
+    def simple_sum_wrappers(self, sum, name, depth):
+        for i in range(len(sum.types) - 1):
+            type = sum.types[i]
+            self.open("%s" % type.name, refersToPythonTree=0)
+            self.emit('import org.python.antlr.AST;', depth)
+            self.emit('import org.python.core.PyObject;', depth)
+            self.emit('import org.python.core.PyType;', depth)
+            self.emit('import org.python.expose.ExposedType;', depth)
+            self.emit('', 0)
+            self.emit('@ExposedType(name = "_ast.%s", base = PyObject.class)' % type.name, depth)
+            self.emit("public class %s extends AST {" % type.name, depth)
+            self.emit('public static final PyType TYPE = PyType.fromClass(%s.class);' % type.name, depth + 1)
+
+            self.emit('public int asIndex() {', depth + 1)
+            self.emit('return asIndex(null);', depth + 2)
+            self.emit("}", depth + 1)
+
+            self.emit('public int asIndex(PyObject error) {', depth + 1)
+            self.emit('return %s;' % str(i), depth + 2)
+            self.emit("}", depth + 1)
+
+            self.emit("}", depth)
+            self.close()
+
 
     def attributes(self, obj, depth, always_emit=False):
         field_list = []
@@ -175,10 +202,12 @@ class JavaVisitor(EmitVisitor):
         if len(field_list) > 0:
             self.emit("private final static String[] fields = new String[] {%s};" % 
                     ", ".join(field_list), depth+1)
+            self.emit('@ExposedGet(name = "_fields")', depth)
             self.emit("public String[] get_fields() { return fields; }", depth+1)
             self.emit("", 0)
         elif always_emit:
             self.emit("private final static String[] fields = new String[0];", depth+1)
+            self.emit('@ExposedGet(name = "_fields")', depth)
             self.emit("public String[] get_fields() { return fields; }", depth+1)
             self.emit("", 0)
 
@@ -189,16 +218,19 @@ class JavaVisitor(EmitVisitor):
         if len(att_list) > 0:
             self.emit("private final static String[] attributes = new String[] {%s};" % 
                     ", ".join(att_list), depth+1)
+            self.emit('@ExposedGet(name = "_attributes")', depth)
             self.emit("public String[] get_attributes() { return attributes; }", depth+1)
             self.emit("", 0)
         elif always_emit:
             self.emit("private final static String[] attributes = new String[0];", depth+1)
+            self.emit('@ExposedGet(name = "_attributes")', depth)
             self.emit("public String[] get_attributes() { return attributes; }", depth+1)
             self.emit("", 0)
    
     def sum_with_constructor(self, sum, name, depth):
         self.open("%sType" % name)
 
+        self.emit('@ExposedType(name = "_ast.%s", base = PyObject.class)' % name, depth)
         self.emit("public abstract class %(name)sType extends PythonTree {" %
                     locals(), depth)
         self.emit("", 0)
@@ -237,6 +269,7 @@ class JavaVisitor(EmitVisitor):
     def visitProduct(self, product, name, depth):
 
         self.open("%sType" % name, useDataOutput=1)
+        self.emit('@ExposedType(name = "_ast.%s", base = PyObject.class)' % name, depth)
         self.emit("public class %(name)sType extends PythonTree {" % locals(), depth)
         self.emit("public static final PyType TYPE = PyType.fromClass(%sType.class);" % name, depth + 1);
         for f in product.fields:
@@ -282,6 +315,7 @@ class JavaVisitor(EmitVisitor):
         if str(name) in ('stmt', 'expr', 'excepthandler'):
             # The lineno property
             self.emit("private int lineno = -1;", depth + 1)
+            self.emit('@ExposedGet(name = "lineno")', depth)
             self.emit("public int getLineno() {", depth + 1)
             self.emit("if (lineno != -1) {", depth + 2);
             self.emit("return lineno;", depth + 3);
@@ -289,6 +323,7 @@ class JavaVisitor(EmitVisitor):
             self.emit('return getLine();', depth + 2)
             self.emit("}", depth + 1)
             self.emit("", 0)
+            self.emit('@ExposedSet(name = "lineno")', depth)
             self.emit("public void setLineno(int num) {", depth + 1)
             self.emit("lineno = num;", depth + 2);
             self.emit("}", depth + 1)
@@ -296,6 +331,7 @@ class JavaVisitor(EmitVisitor):
 
             # The col_offset property
             self.emit("private int col_offset = -1;", depth + 1)
+            self.emit('@ExposedGet(name = "col_offset")', depth)
             self.emit("public int getCol_offset() {", depth + 1)
             self.emit("if (col_offset != -1) {", depth + 2);
             self.emit("return col_offset;", depth + 3);
@@ -303,6 +339,7 @@ class JavaVisitor(EmitVisitor):
             self.emit('return getCharPositionInLine();', depth + 2)
             self.emit("}", depth + 1)
             self.emit("", 0)
+            self.emit('@ExposedSet(name = "col_offset")', depth)
             self.emit("public void setCol_offset(int num) {", depth + 1)
             self.emit("col_offset = num;", depth + 2);
             self.emit("}", depth + 1)
@@ -344,6 +381,7 @@ class JavaVisitor(EmitVisitor):
         self.javaConstructors(type, clsname, ctorname, fields, depth)
 
         # The toString() method
+        self.emit('@ExposedGet(name = "repr")', depth)
         self.emit("public String toString() {", depth)
         self.emit('return "%s";' % clsname, depth+1)
         self.emit("}", depth)
@@ -475,7 +513,7 @@ class JavaVisitor(EmitVisitor):
             field.name), depth)
         if field.seq:
             #self.emit("this.%s = new %s(" % (field.name, self.javaType(field)), depth+1)
-            self.emit("//FJW this.%s = AstAdapters.to_%sList(%s);" % (field.name, str(field.type), field.name), depth+1)
+            self.emit("this.%s = AstAdapters.to_%sList(%s);" % (field.name, str(field.type), field.name), depth+1)
         else:
             self.emit("this.%s = AstAdapters.to_%s(%s);" % (field.name, str(field.type), field.name), depth+1)
         self.emit("}", depth)

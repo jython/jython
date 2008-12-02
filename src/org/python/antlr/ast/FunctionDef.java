@@ -58,7 +58,7 @@ public static final PyType TYPE = PyType.fromClass(FunctionDef.class);
     }
     @ExposedSet(name = "body")
     public void setBody(PyObject body) {
-        //FJW this.body = AstAdapters.to_stmtList(body);
+        this.body = AstAdapters.to_stmtList(body);
     }
 
     private java.util.List<exprType> decorator_list;
@@ -71,13 +71,14 @@ public static final PyType TYPE = PyType.fromClass(FunctionDef.class);
     }
     @ExposedSet(name = "decorator_list")
     public void setDecorator_list(PyObject decorator_list) {
-        //FJW this.decorator_list = AstAdapters.to_exprList(decorator_list);
+        this.decorator_list = AstAdapters.to_exprList(decorator_list);
     }
 
 
     private final static String[] fields = new String[] {"name", "args",
                                                           "body",
                                                           "decorator_list"};
+@ExposedGet(name = "_fields")
     public String[] get_fields() { return fields; }
 
     public FunctionDef() {
@@ -161,6 +162,7 @@ public static final PyType TYPE = PyType.fromClass(FunctionDef.class);
         }
     }
 
+    @ExposedGet(name = "repr")
     public String toString() {
         return "FunctionDef";
     }
@@ -205,6 +207,7 @@ public static final PyType TYPE = PyType.fromClass(FunctionDef.class);
     }
 
     private int lineno = -1;
+@ExposedGet(name = "lineno")
     public int getLineno() {
         if (lineno != -1) {
             return lineno;
@@ -212,11 +215,13 @@ public static final PyType TYPE = PyType.fromClass(FunctionDef.class);
         return getLine();
     }
 
+@ExposedSet(name = "lineno")
     public void setLineno(int num) {
         lineno = num;
     }
 
     private int col_offset = -1;
+@ExposedGet(name = "col_offset")
     public int getCol_offset() {
         if (col_offset != -1) {
             return col_offset;
@@ -224,6 +229,7 @@ public static final PyType TYPE = PyType.fromClass(FunctionDef.class);
         return getCharPositionInLine();
     }
 
+@ExposedSet(name = "col_offset")
     public void setCol_offset(int num) {
         col_offset = num;
     }

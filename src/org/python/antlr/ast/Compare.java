@@ -44,7 +44,7 @@ public static final PyType TYPE = PyType.fromClass(Compare.class);
     }
     @ExposedSet(name = "ops")
     public void setOps(PyObject ops) {
-        //FJW this.ops = AstAdapters.to_cmpopList(ops);
+        this.ops = AstAdapters.to_cmpopList(ops);
     }
 
     private java.util.List<exprType> comparators;
@@ -57,12 +57,13 @@ public static final PyType TYPE = PyType.fromClass(Compare.class);
     }
     @ExposedSet(name = "comparators")
     public void setComparators(PyObject comparators) {
-        //FJW this.comparators = AstAdapters.to_exprList(comparators);
+        this.comparators = AstAdapters.to_exprList(comparators);
     }
 
 
     private final static String[] fields = new String[] {"left", "ops",
                                                           "comparators"};
+@ExposedGet(name = "_fields")
     public String[] get_fields() { return fields; }
 
     public Compare() {
@@ -125,6 +126,7 @@ public static final PyType TYPE = PyType.fromClass(Compare.class);
         }
     }
 
+    @ExposedGet(name = "repr")
     public String toString() {
         return "Compare";
     }
@@ -160,6 +162,7 @@ public static final PyType TYPE = PyType.fromClass(Compare.class);
     }
 
     private int lineno = -1;
+@ExposedGet(name = "lineno")
     public int getLineno() {
         if (lineno != -1) {
             return lineno;
@@ -167,11 +170,13 @@ public static final PyType TYPE = PyType.fromClass(Compare.class);
         return getLine();
     }
 
+@ExposedSet(name = "lineno")
     public void setLineno(int num) {
         lineno = num;
     }
 
     private int col_offset = -1;
+@ExposedGet(name = "col_offset")
     public int getCol_offset() {
         if (col_offset != -1) {
             return col_offset;
@@ -179,6 +184,7 @@ public static final PyType TYPE = PyType.fromClass(Compare.class);
         return getCharPositionInLine();
     }
 
+@ExposedSet(name = "col_offset")
     public void setCol_offset(int num) {
         col_offset = num;
     }

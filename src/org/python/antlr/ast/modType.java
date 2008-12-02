@@ -15,6 +15,7 @@ import org.python.expose.ExposedNew;
 import org.python.expose.ExposedSet;
 import org.python.expose.ExposedType;
 
+@ExposedType(name = "_ast.mod", base = PyObject.class)
 public abstract class modType extends PythonTree {
 
     public static final PyType TYPE = PyType.fromClass(modType.class);

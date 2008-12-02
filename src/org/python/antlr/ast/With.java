@@ -57,13 +57,14 @@ public static final PyType TYPE = PyType.fromClass(With.class);
     }
     @ExposedSet(name = "body")
     public void setBody(PyObject body) {
-        //FJW this.body = AstAdapters.to_stmtList(body);
+        this.body = AstAdapters.to_stmtList(body);
     }
 
 
     private final static String[] fields = new String[] {"context_expr",
                                                           "optional_vars",
                                                           "body"};
+@ExposedGet(name = "_fields")
     public String[] get_fields() { return fields; }
 
     public With() {
@@ -129,6 +130,7 @@ public static final PyType TYPE = PyType.fromClass(With.class);
         }
     }
 
+    @ExposedGet(name = "repr")
     public String toString() {
         return "With";
     }
@@ -166,6 +168,7 @@ public static final PyType TYPE = PyType.fromClass(With.class);
     }
 
     private int lineno = -1;
+@ExposedGet(name = "lineno")
     public int getLineno() {
         if (lineno != -1) {
             return lineno;
@@ -173,11 +176,13 @@ public static final PyType TYPE = PyType.fromClass(With.class);
         return getLine();
     }
 
+@ExposedSet(name = "lineno")
     public void setLineno(int num) {
         lineno = num;
     }
 
     private int col_offset = -1;
+@ExposedGet(name = "col_offset")
     public int getCol_offset() {
         if (col_offset != -1) {
             return col_offset;
@@ -185,6 +190,7 @@ public static final PyType TYPE = PyType.fromClass(With.class);
         return getCharPositionInLine();
     }
 
+@ExposedSet(name = "col_offset")
     public void setCol_offset(int num) {
         col_offset = num;
     }

@@ -34,6 +34,7 @@ public static final PyType TYPE = PyType.fromClass(Ellipsis.class);
         super(tree);
     }
 
+    @ExposedGet(name = "repr")
     public String toString() {
         return "Ellipsis";
     }

@@ -45,7 +45,7 @@ public static final PyType TYPE = PyType.fromClass(ImportFrom.class);
     }
     @ExposedSet(name = "names")
     public void setNames(PyObject names) {
-        //FJW this.names = AstAdapters.to_aliasList(names);
+        this.names = AstAdapters.to_aliasList(names);
     }
 
     private Integer level;
@@ -64,6 +64,7 @@ public static final PyType TYPE = PyType.fromClass(ImportFrom.class);
 
     private final static String[] fields = new String[] {"module", "names",
                                                           "level"};
+@ExposedGet(name = "_fields")
     public String[] get_fields() { return fields; }
 
     public ImportFrom() {
@@ -123,6 +124,7 @@ public static final PyType TYPE = PyType.fromClass(ImportFrom.class);
         this.level = level;
     }
 
+    @ExposedGet(name = "repr")
     public String toString() {
         return "ImportFrom";
     }
@@ -156,6 +158,7 @@ public static final PyType TYPE = PyType.fromClass(ImportFrom.class);
     }
 
     private int lineno = -1;
+@ExposedGet(name = "lineno")
     public int getLineno() {
         if (lineno != -1) {
             return lineno;
@@ -163,11 +166,13 @@ public static final PyType TYPE = PyType.fromClass(ImportFrom.class);
         return getLine();
     }
 
+@ExposedSet(name = "lineno")
     public void setLineno(int num) {
         lineno = num;
     }
 
     private int col_offset = -1;
+@ExposedGet(name = "col_offset")
     public int getCol_offset() {
         if (col_offset != -1) {
             return col_offset;
@@ -175,6 +180,7 @@ public static final PyType TYPE = PyType.fromClass(ImportFrom.class);
         return getCharPositionInLine();
     }
 
+@ExposedSet(name = "col_offset")
     public void setCol_offset(int num) {
         col_offset = num;
     }

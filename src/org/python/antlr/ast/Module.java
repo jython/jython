@@ -31,11 +31,12 @@ public static final PyType TYPE = PyType.fromClass(Module.class);
     }
     @ExposedSet(name = "body")
     public void setBody(PyObject body) {
-        //FJW this.body = AstAdapters.to_stmtList(body);
+        this.body = AstAdapters.to_stmtList(body);
     }
 
 
     private final static String[] fields = new String[] {"body"};
+@ExposedGet(name = "_fields")
     public String[] get_fields() { return fields; }
 
     public Module() {
@@ -84,6 +85,7 @@ public static final PyType TYPE = PyType.fromClass(Module.class);
         }
     }
 
+    @ExposedGet(name = "repr")
     public String toString() {
         return "Module";
     }

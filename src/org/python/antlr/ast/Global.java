@@ -31,11 +31,12 @@ public static final PyType TYPE = PyType.fromClass(Global.class);
     }
     @ExposedSet(name = "names")
     public void setNames(PyObject names) {
-        //FJW this.names = AstAdapters.to_identifierList(names);
+        this.names = AstAdapters.to_identifierList(names);
     }
 
 
     private final static String[] fields = new String[] {"names"};
+@ExposedGet(name = "_fields")
     public String[] get_fields() { return fields; }
 
     public Global() {
@@ -66,6 +67,7 @@ public static final PyType TYPE = PyType.fromClass(Global.class);
         this.names = names;
     }
 
+    @ExposedGet(name = "repr")
     public String toString() {
         return "Global";
     }
@@ -87,6 +89,7 @@ public static final PyType TYPE = PyType.fromClass(Global.class);
     }
 
     private int lineno = -1;
+@ExposedGet(name = "lineno")
     public int getLineno() {
         if (lineno != -1) {
             return lineno;
@@ -94,11 +97,13 @@ public static final PyType TYPE = PyType.fromClass(Global.class);
         return getLine();
     }
 
+@ExposedSet(name = "lineno")
     public void setLineno(int num) {
         lineno = num;
     }
 
     private int col_offset = -1;
+@ExposedGet(name = "col_offset")
     public int getCol_offset() {
         if (col_offset != -1) {
             return col_offset;
@@ -106,6 +111,7 @@ public static final PyType TYPE = PyType.fromClass(Global.class);
         return getCharPositionInLine();
     }
 
+@ExposedSet(name = "col_offset")
     public void setCol_offset(int num) {
         col_offset = num;
     }
