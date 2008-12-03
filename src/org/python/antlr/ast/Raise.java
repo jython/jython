@@ -2,6 +2,7 @@
 package org.python.antlr.ast;
 import org.antlr.runtime.CommonToken;
 import org.antlr.runtime.Token;
+import org.python.antlr.AST;
 import org.python.antlr.PythonTree;
 import org.python.antlr.adapter.AstAdapters;
 import org.python.core.AstList;
@@ -18,7 +19,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@ExposedType(name = "_ast.Raise", base = PyObject.class)
+@ExposedType(name = "_ast.Raise", base = AST.class)
 public class Raise extends stmtType {
 public static final PyType TYPE = PyType.fromClass(Raise.class);
     private exprType excepttype;
@@ -61,10 +62,14 @@ public static final PyType TYPE = PyType.fromClass(Raise.class);
     }
 
 
-    private final static String[] fields = new String[] {"excepttype", "inst",
-                                                          "tback"};
-@ExposedGet(name = "_fields")
-    public String[] get_fields() { return fields; }
+    private final static PyString[] fields =
+    new PyString[] {new PyString("excepttype"), new PyString("inst"), new PyString("tback")};
+    @ExposedGet(name = "_fields")
+    public PyString[] get_fields() { return fields; }
+
+    private final static PyString[] attributes = new PyString[0];
+    @ExposedGet(name = "_attributes")
+    public PyString[] get_attributes() { return attributes; }
 
     public Raise() {
         this(TYPE);
@@ -74,15 +79,14 @@ public static final PyType TYPE = PyType.fromClass(Raise.class);
     }
     @ExposedNew
     @ExposedMethod
-    public void Module___init__(PyObject[] args, String[] keywords) {}
+    public void Raise___init__(PyObject[] args, String[] keywords) {}
     public Raise(PyObject excepttype, PyObject inst, PyObject tback) {
         setExcepttype(excepttype);
         setInst(inst);
         setTback(tback);
     }
 
-    public Raise(Token token, exprType excepttype, exprType inst, exprType
-    tback) {
+    public Raise(Token token, exprType excepttype, exprType inst, exprType tback) {
         super(token);
         this.excepttype = excepttype;
         addChild(excepttype);
@@ -92,8 +96,7 @@ public static final PyType TYPE = PyType.fromClass(Raise.class);
         addChild(tback);
     }
 
-    public Raise(Integer ttype, Token token, exprType excepttype, exprType
-    inst, exprType tback) {
+    public Raise(Integer ttype, Token token, exprType excepttype, exprType inst, exprType tback) {
         super(ttype, token);
         this.excepttype = excepttype;
         addChild(excepttype);
@@ -103,8 +106,7 @@ public static final PyType TYPE = PyType.fromClass(Raise.class);
         addChild(tback);
     }
 
-    public Raise(PythonTree tree, exprType excepttype, exprType inst, exprType
-    tback) {
+    public Raise(PythonTree tree, exprType excepttype, exprType inst, exprType tback) {
         super(tree);
         this.excepttype = excepttype;
         addChild(excepttype);
@@ -148,7 +150,7 @@ public static final PyType TYPE = PyType.fromClass(Raise.class);
     }
 
     private int lineno = -1;
-@ExposedGet(name = "lineno")
+    @ExposedGet(name = "lineno")
     public int getLineno() {
         if (lineno != -1) {
             return lineno;
@@ -156,13 +158,13 @@ public static final PyType TYPE = PyType.fromClass(Raise.class);
         return getLine();
     }
 
-@ExposedSet(name = "lineno")
+    @ExposedSet(name = "lineno")
     public void setLineno(int num) {
         lineno = num;
     }
 
     private int col_offset = -1;
-@ExposedGet(name = "col_offset")
+    @ExposedGet(name = "col_offset")
     public int getCol_offset() {
         if (col_offset != -1) {
             return col_offset;
@@ -170,7 +172,7 @@ public static final PyType TYPE = PyType.fromClass(Raise.class);
         return getCharPositionInLine();
     }
 
-@ExposedSet(name = "col_offset")
+    @ExposedSet(name = "col_offset")
     public void setCol_offset(int num) {
         col_offset = num;
     }

@@ -2,6 +2,7 @@
 package org.python.antlr.ast;
 import org.antlr.runtime.CommonToken;
 import org.antlr.runtime.Token;
+import org.python.antlr.AST;
 import org.python.antlr.PythonTree;
 import org.python.antlr.adapter.AstAdapters;
 import org.python.core.AstList;
@@ -18,7 +19,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@ExposedType(name = "_ast.Attribute", base = PyObject.class)
+@ExposedType(name = "_ast.Attribute", base = AST.class)
 public class Attribute extends exprType implements Context {
 public static final PyType TYPE = PyType.fromClass(Attribute.class);
     private exprType value;
@@ -54,7 +55,7 @@ public static final PyType TYPE = PyType.fromClass(Attribute.class);
     }
     @ExposedGet(name = "ctx")
     public PyObject getCtx() {
-        return AstAdapters.ctx2py(ctx);
+        return AstAdapters.expr_context2py(ctx);
     }
     @ExposedSet(name = "ctx")
     public void setCtx(PyObject ctx) {
@@ -62,10 +63,14 @@ public static final PyType TYPE = PyType.fromClass(Attribute.class);
     }
 
 
-    private final static String[] fields = new String[] {"value", "attr",
-                                                          "ctx"};
-@ExposedGet(name = "_fields")
-    public String[] get_fields() { return fields; }
+    private final static PyString[] fields =
+    new PyString[] {new PyString("value"), new PyString("attr"), new PyString("ctx")};
+    @ExposedGet(name = "_fields")
+    public PyString[] get_fields() { return fields; }
+
+    private final static PyString[] attributes = new PyString[0];
+    @ExposedGet(name = "_attributes")
+    public PyString[] get_attributes() { return attributes; }
 
     public Attribute() {
         this(TYPE);
@@ -75,15 +80,14 @@ public static final PyType TYPE = PyType.fromClass(Attribute.class);
     }
     @ExposedNew
     @ExposedMethod
-    public void Module___init__(PyObject[] args, String[] keywords) {}
+    public void Attribute___init__(PyObject[] args, String[] keywords) {}
     public Attribute(PyObject value, PyObject attr, PyObject ctx) {
         setValue(value);
         setAttr(attr);
         setCtx(ctx);
     }
 
-    public Attribute(Token token, exprType value, String attr, expr_contextType
-    ctx) {
+    public Attribute(Token token, exprType value, String attr, expr_contextType ctx) {
         super(token);
         this.value = value;
         addChild(value);
@@ -91,8 +95,8 @@ public static final PyType TYPE = PyType.fromClass(Attribute.class);
         this.ctx = ctx;
     }
 
-    public Attribute(Integer ttype, Token token, exprType value, String attr,
-    expr_contextType ctx) {
+    public Attribute(Integer ttype, Token token, exprType value, String attr, expr_contextType ctx)
+    {
         super(ttype, token);
         this.value = value;
         addChild(value);
@@ -100,8 +104,7 @@ public static final PyType TYPE = PyType.fromClass(Attribute.class);
         this.ctx = ctx;
     }
 
-    public Attribute(PythonTree tree, exprType value, String attr,
-    expr_contextType ctx) {
+    public Attribute(PythonTree tree, exprType value, String attr, expr_contextType ctx) {
         super(tree);
         this.value = value;
         addChild(value);
@@ -143,7 +146,7 @@ public static final PyType TYPE = PyType.fromClass(Attribute.class);
     }
 
     private int lineno = -1;
-@ExposedGet(name = "lineno")
+    @ExposedGet(name = "lineno")
     public int getLineno() {
         if (lineno != -1) {
             return lineno;
@@ -151,13 +154,13 @@ public static final PyType TYPE = PyType.fromClass(Attribute.class);
         return getLine();
     }
 
-@ExposedSet(name = "lineno")
+    @ExposedSet(name = "lineno")
     public void setLineno(int num) {
         lineno = num;
     }
 
     private int col_offset = -1;
-@ExposedGet(name = "col_offset")
+    @ExposedGet(name = "col_offset")
     public int getCol_offset() {
         if (col_offset != -1) {
             return col_offset;
@@ -165,7 +168,7 @@ public static final PyType TYPE = PyType.fromClass(Attribute.class);
         return getCharPositionInLine();
     }
 
-@ExposedSet(name = "col_offset")
+    @ExposedSet(name = "col_offset")
     public void setCol_offset(int num) {
         col_offset = num;
     }

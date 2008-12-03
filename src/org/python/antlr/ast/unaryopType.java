@@ -9,5 +9,4 @@ public enum unaryopType {
     Not,
     UAdd,
     USub;
-    public unaryopType __call__() { return this; }
 }

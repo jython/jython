@@ -2,6 +2,7 @@
 package org.python.antlr.ast;
 import org.antlr.runtime.CommonToken;
 import org.antlr.runtime.Token;
+import org.python.antlr.AST;
 import org.python.antlr.PythonTree;
 import org.python.antlr.adapter.AstAdapters;
 import org.python.core.AstList;
@@ -18,7 +19,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@ExposedType(name = "_ast.Print", base = PyObject.class)
+@ExposedType(name = "_ast.Print", base = AST.class)
 public class Print extends stmtType {
 public static final PyType TYPE = PyType.fromClass(Print.class);
     private exprType dest;
@@ -62,10 +63,14 @@ public static final PyType TYPE = PyType.fromClass(Print.class);
     }
 
 
-    private final static String[] fields = new String[] {"dest", "values",
-                                                          "nl"};
-@ExposedGet(name = "_fields")
-    public String[] get_fields() { return fields; }
+    private final static PyString[] fields =
+    new PyString[] {new PyString("dest"), new PyString("values"), new PyString("nl")};
+    @ExposedGet(name = "_fields")
+    public PyString[] get_fields() { return fields; }
+
+    private final static PyString[] attributes = new PyString[0];
+    @ExposedGet(name = "_attributes")
+    public PyString[] get_attributes() { return attributes; }
 
     public Print() {
         this(TYPE);
@@ -75,15 +80,14 @@ public static final PyType TYPE = PyType.fromClass(Print.class);
     }
     @ExposedNew
     @ExposedMethod
-    public void Module___init__(PyObject[] args, String[] keywords) {}
+    public void Print___init__(PyObject[] args, String[] keywords) {}
     public Print(PyObject dest, PyObject values, PyObject nl) {
         setDest(dest);
         setValues(values);
         setNl(nl);
     }
 
-    public Print(Token token, exprType dest, java.util.List<exprType> values,
-    Boolean nl) {
+    public Print(Token token, exprType dest, java.util.List<exprType> values, Boolean nl) {
         super(token);
         this.dest = dest;
         addChild(dest);
@@ -97,8 +101,8 @@ public static final PyType TYPE = PyType.fromClass(Print.class);
         this.nl = nl;
     }
 
-    public Print(Integer ttype, Token token, exprType dest,
-    java.util.List<exprType> values, Boolean nl) {
+    public Print(Integer ttype, Token token, exprType dest, java.util.List<exprType> values,
+    Boolean nl) {
         super(ttype, token);
         this.dest = dest;
         addChild(dest);
@@ -112,8 +116,7 @@ public static final PyType TYPE = PyType.fromClass(Print.class);
         this.nl = nl;
     }
 
-    public Print(PythonTree tree, exprType dest, java.util.List<exprType>
-    values, Boolean nl) {
+    public Print(PythonTree tree, exprType dest, java.util.List<exprType> values, Boolean nl) {
         super(tree);
         this.dest = dest;
         addChild(dest);
@@ -163,7 +166,7 @@ public static final PyType TYPE = PyType.fromClass(Print.class);
     }
 
     private int lineno = -1;
-@ExposedGet(name = "lineno")
+    @ExposedGet(name = "lineno")
     public int getLineno() {
         if (lineno != -1) {
             return lineno;
@@ -171,13 +174,13 @@ public static final PyType TYPE = PyType.fromClass(Print.class);
         return getLine();
     }
 
-@ExposedSet(name = "lineno")
+    @ExposedSet(name = "lineno")
     public void setLineno(int num) {
         lineno = num;
     }
 
     private int col_offset = -1;
-@ExposedGet(name = "col_offset")
+    @ExposedGet(name = "col_offset")
     public int getCol_offset() {
         if (col_offset != -1) {
             return col_offset;
@@ -185,7 +188,7 @@ public static final PyType TYPE = PyType.fromClass(Print.class);
         return getCharPositionInLine();
     }
 
-@ExposedSet(name = "col_offset")
+    @ExposedSet(name = "col_offset")
     public void setCol_offset(int num) {
         col_offset = num;
     }

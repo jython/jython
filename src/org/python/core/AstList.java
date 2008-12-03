@@ -25,6 +25,12 @@ public class AstList extends PySequence implements Cloneable, List {
 
     public static final PyType TYPE = PyType.fromClass(AstList.class);
 
+    private final static PyString[] fields = new PyString[0];
+
+    @ExposedGet(name = "_fields")
+    public PyString[] get_fields() { return fields; }
+
+
     /** The underlying Java List. */
     private List data;
 

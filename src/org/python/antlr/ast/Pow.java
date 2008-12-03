@@ -2,17 +2,47 @@
 package org.python.antlr.ast;
 
 import org.python.antlr.AST;
+import org.python.antlr.PythonTree;
+import org.python.core.Py;
 import org.python.core.PyObject;
+import org.python.core.PyString;
 import org.python.core.PyType;
+import org.python.expose.ExposedGet;
+import org.python.expose.ExposedMethod;
+import org.python.expose.ExposedNew;
+import org.python.expose.ExposedSet;
 import org.python.expose.ExposedType;
 
-@ExposedType(name = "_ast.Pow", base = PyObject.class)
-public class Pow extends AST {
+@ExposedType(name = "_ast.Pow", base = AST.class)
+public class Pow extends PythonTree {
     public static final PyType TYPE = PyType.fromClass(Pow.class);
-    public int asIndex() {
-        return asIndex(null);
+
+public Pow() {
+}
+
+public Pow(PyType subType) {
+    super(subType);
+}
+
+@ExposedNew
+@ExposedMethod
+public void Pow___init__(PyObject[] args, String[] keywords) {}
+
+    private final static PyString[] fields = new PyString[0];
+    @ExposedGet(name = "_fields")
+    public PyString[] get_fields() { return fields; }
+
+    private final static PyString[] attributes = new PyString[0];
+    @ExposedGet(name = "_attributes")
+    public PyString[] get_attributes() { return attributes; }
+
+    @ExposedMethod
+    public PyObject __int__() {
+        return Pow___int__();
     }
-    public int asIndex(PyObject error) {
-        return 6;
+
+    final PyObject Pow___int__() {
+        return Py.newInteger(6);
     }
+
 }

@@ -90,48 +90,48 @@ public class AstModule implements ClassDictInit {
         dict.__setitem__("stmt", stmtType.TYPE);
         
         dict.__setitem__("operator", imp.importName("org.python.antlr.ast.operatorType", false));
-        dict.__setitem__("Add", imp.importName("org.python.antlr.ast.operatorType.Add", false));
-        dict.__setitem__("Sub", imp.importName("org.python.antlr.ast.operatorType.Sub", false));
-        dict.__setitem__("Mult", imp.importName("org.python.antlr.ast.operatorType.Mult", false));
-        dict.__setitem__("Div", imp.importName("org.python.antlr.ast.operatorType.Div", false));
-        dict.__setitem__("FloorDiv", imp.importName("org.python.antlr.ast.operatorType.FloorDiv", false));
-        dict.__setitem__("Mod", imp.importName("org.python.antlr.ast.operatorType.Mod", false));
-        dict.__setitem__("LShift", imp.importName("org.python.antlr.ast.operatorType.LShift", false));
-        dict.__setitem__("RShift", imp.importName("org.python.antlr.ast.operatorType.RShift", false));
-        dict.__setitem__("BitOr", imp.importName("org.python.antlr.ast.operatorType.BitOr", false));
-        dict.__setitem__("BitAnd", imp.importName("org.python.antlr.ast.operatorType.BitAnd", false));
-        dict.__setitem__("BitXor", imp.importName("org.python.antlr.ast.operatorType.BitXor", false));
-        dict.__setitem__("Pow", imp.importName("org.python.antlr.ast.operatorType.Pow", false));
+        dict.__setitem__("Add", Add.TYPE);
+        dict.__setitem__("Sub", Sub.TYPE);
+        dict.__setitem__("Mult", Mult.TYPE);
+        dict.__setitem__("Div", Div.TYPE);
+        dict.__setitem__("FloorDiv", FloorDiv.TYPE);
+        dict.__setitem__("Mod", Mod.TYPE);
+        dict.__setitem__("LShift", LShift.TYPE);
+        dict.__setitem__("RShift", RShift.TYPE);
+        dict.__setitem__("BitOr", BitOr.TYPE);
+        dict.__setitem__("BitAnd", BitAnd.TYPE);
+        dict.__setitem__("BitXor", BitXor.TYPE);
+        dict.__setitem__("Pow", Pow.TYPE);
        
         dict.__setitem__("boolop", imp.importName("org.python.antlr.ast.boolopType", false));
-        dict.__setitem__("And", imp.importName("org.python.antlr.ast.boolopType.And", false));
-        dict.__setitem__("Or", imp.importName("org.python.antlr.ast.boolopType.Or", false));
+        dict.__setitem__("And", And.TYPE);
+        dict.__setitem__("Or", Or.TYPE);
       
         dict.__setitem__("cmpop", imp.importName("org.python.antlr.ast.cmpopType", false));
-        dict.__setitem__("Eq", imp.importName("org.python.antlr.ast.cmpopType.Eq", false));
-        dict.__setitem__("Gt", imp.importName("org.python.antlr.ast.cmpopType.Gt", false));
-        dict.__setitem__("GtE", imp.importName("org.python.antlr.ast.cmpopType.GtE", false));
-        dict.__setitem__("In", imp.importName("org.python.antlr.ast.cmpopType.In", false));
-        dict.__setitem__("Is", imp.importName("org.python.antlr.ast.cmpopType.Is", false));
-        dict.__setitem__("IsNot", imp.importName("org.python.antlr.ast.cmpopType.IsNot", false));
-        dict.__setitem__("Lt", imp.importName("org.python.antlr.ast.cmpopType.Lt", false));
-        dict.__setitem__("LtE", imp.importName("org.python.antlr.ast.cmpopType.LtE", false));
-        dict.__setitem__("NotEq", imp.importName("org.python.antlr.ast.cmpopType.NotEq", false));
-        dict.__setitem__("NotIn", imp.importName("org.python.antlr.ast.cmpopType.NotIn", false));
+        dict.__setitem__("Eq", Eq.TYPE);
+        dict.__setitem__("Gt", Gt.TYPE);
+        dict.__setitem__("GtE", GtE.TYPE);
+        dict.__setitem__("In", In.TYPE);
+        dict.__setitem__("Is", Is.TYPE);
+        dict.__setitem__("IsNot", IsNot.TYPE);
+        dict.__setitem__("Lt", Lt.TYPE);
+        dict.__setitem__("LtE", LtE.TYPE);
+        dict.__setitem__("NotEq", NotEq.TYPE);
+        dict.__setitem__("NotIn", NotIn.TYPE);
        
         dict.__setitem__("expr_context", imp.importName("org.python.antlr.ast.expr_contextType", false));
-        dict.__setitem__("Load", imp.importName("org.python.antlr.ast.expr_contextType.Load", false));
-        dict.__setitem__("Store", imp.importName("org.python.antlr.ast.expr_contextType.Store", false));
-        dict.__setitem__("Del", imp.importName("org.python.antlr.ast.expr_contextType.Del", false));
-        dict.__setitem__("AugLoad", imp.importName("org.python.antlr.ast.expr_contextType.AugLoad", false));
-        dict.__setitem__("AugStore", imp.importName("org.python.antlr.ast.expr_contextType.AugStore", false));
-        dict.__setitem__("Param", imp.importName("org.python.antlr.ast.expr_contextType.Param", false));
+        dict.__setitem__("Load", Load.TYPE);
+        dict.__setitem__("Store", Store.TYPE);
+        dict.__setitem__("Del", Del.TYPE);
+        dict.__setitem__("AugLoad", AugLoad.TYPE);
+        dict.__setitem__("AugStore", AugStore.TYPE);
+        dict.__setitem__("Param", Param.TYPE);
        
         dict.__setitem__("unaryop", imp.importName("org.python.antlr.ast.unaryopType", false));
-        dict.__setitem__("Invert", imp.importName("org.python.antlr.ast.unaryopType.Invert", false));
-        dict.__setitem__("Not", imp.importName("org.python.antlr.ast.unaryopType.Not", false));
-        dict.__setitem__("UAdd", imp.importName("org.python.antlr.ast.unaryopType.UAdd", false));
-        dict.__setitem__("USub", imp.importName("org.python.antlr.ast.unaryopType.USub", false));
+        dict.__setitem__("Invert", Invert.TYPE);
+        dict.__setitem__("Not", Not.TYPE);
+        dict.__setitem__("UAdd", UAdd.TYPE);
+        dict.__setitem__("USub", USub.TYPE);
 
         dict.__setitem__("classDictInit", null);
     }

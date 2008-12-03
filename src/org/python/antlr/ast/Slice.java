@@ -2,6 +2,7 @@
 package org.python.antlr.ast;
 import org.antlr.runtime.CommonToken;
 import org.antlr.runtime.Token;
+import org.python.antlr.AST;
 import org.python.antlr.PythonTree;
 import org.python.antlr.adapter.AstAdapters;
 import org.python.core.AstList;
@@ -18,7 +19,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@ExposedType(name = "_ast.Slice", base = PyObject.class)
+@ExposedType(name = "_ast.Slice", base = AST.class)
 public class Slice extends sliceType {
 public static final PyType TYPE = PyType.fromClass(Slice.class);
     private exprType lower;
@@ -61,10 +62,14 @@ public static final PyType TYPE = PyType.fromClass(Slice.class);
     }
 
 
-    private final static String[] fields = new String[] {"lower", "upper",
-                                                          "step"};
-@ExposedGet(name = "_fields")
-    public String[] get_fields() { return fields; }
+    private final static PyString[] fields =
+    new PyString[] {new PyString("lower"), new PyString("upper"), new PyString("step")};
+    @ExposedGet(name = "_fields")
+    public PyString[] get_fields() { return fields; }
+
+    private final static PyString[] attributes = new PyString[0];
+    @ExposedGet(name = "_attributes")
+    public PyString[] get_attributes() { return attributes; }
 
     public Slice() {
         this(TYPE);
@@ -74,7 +79,7 @@ public static final PyType TYPE = PyType.fromClass(Slice.class);
     }
     @ExposedNew
     @ExposedMethod
-    public void Module___init__(PyObject[] args, String[] keywords) {}
+    public void Slice___init__(PyObject[] args, String[] keywords) {}
     public Slice(PyObject lower, PyObject upper, PyObject step) {
         setLower(lower);
         setUpper(upper);
@@ -91,8 +96,7 @@ public static final PyType TYPE = PyType.fromClass(Slice.class);
         addChild(step);
     }
 
-    public Slice(Integer ttype, Token token, exprType lower, exprType upper,
-    exprType step) {
+    public Slice(Integer ttype, Token token, exprType lower, exprType upper, exprType step) {
         super(ttype, token);
         this.lower = lower;
         addChild(lower);
@@ -102,8 +106,7 @@ public static final PyType TYPE = PyType.fromClass(Slice.class);
         addChild(step);
     }
 
-    public Slice(PythonTree tree, exprType lower, exprType upper, exprType
-    step) {
+    public Slice(PythonTree tree, exprType lower, exprType upper, exprType step) {
         super(tree);
         this.lower = lower;
         addChild(lower);

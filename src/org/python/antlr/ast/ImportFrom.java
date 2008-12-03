@@ -2,6 +2,7 @@
 package org.python.antlr.ast;
 import org.antlr.runtime.CommonToken;
 import org.antlr.runtime.Token;
+import org.python.antlr.AST;
 import org.python.antlr.PythonTree;
 import org.python.antlr.adapter.AstAdapters;
 import org.python.core.AstList;
@@ -18,7 +19,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@ExposedType(name = "_ast.ImportFrom", base = PyObject.class)
+@ExposedType(name = "_ast.ImportFrom", base = AST.class)
 public class ImportFrom extends stmtType {
 public static final PyType TYPE = PyType.fromClass(ImportFrom.class);
     private String module;
@@ -62,10 +63,14 @@ public static final PyType TYPE = PyType.fromClass(ImportFrom.class);
     }
 
 
-    private final static String[] fields = new String[] {"module", "names",
-                                                          "level"};
-@ExposedGet(name = "_fields")
-    public String[] get_fields() { return fields; }
+    private final static PyString[] fields =
+    new PyString[] {new PyString("module"), new PyString("names"), new PyString("level")};
+    @ExposedGet(name = "_fields")
+    public PyString[] get_fields() { return fields; }
+
+    private final static PyString[] attributes = new PyString[0];
+    @ExposedGet(name = "_attributes")
+    public PyString[] get_attributes() { return attributes; }
 
     public ImportFrom() {
         this(TYPE);
@@ -75,15 +80,14 @@ public static final PyType TYPE = PyType.fromClass(ImportFrom.class);
     }
     @ExposedNew
     @ExposedMethod
-    public void Module___init__(PyObject[] args, String[] keywords) {}
+    public void ImportFrom___init__(PyObject[] args, String[] keywords) {}
     public ImportFrom(PyObject module, PyObject names, PyObject level) {
         setModule(module);
         setNames(names);
         setLevel(level);
     }
 
-    public ImportFrom(Token token, String module, java.util.List<aliasType>
-    names, Integer level) {
+    public ImportFrom(Token token, String module, java.util.List<aliasType> names, Integer level) {
         super(token);
         this.module = module;
         this.names = names;
@@ -96,8 +100,8 @@ public static final PyType TYPE = PyType.fromClass(ImportFrom.class);
         this.level = level;
     }
 
-    public ImportFrom(Integer ttype, Token token, String module,
-    java.util.List<aliasType> names, Integer level) {
+    public ImportFrom(Integer ttype, Token token, String module, java.util.List<aliasType> names,
+    Integer level) {
         super(ttype, token);
         this.module = module;
         this.names = names;
@@ -110,8 +114,8 @@ public static final PyType TYPE = PyType.fromClass(ImportFrom.class);
         this.level = level;
     }
 
-    public ImportFrom(PythonTree tree, String module, java.util.List<aliasType>
-    names, Integer level) {
+    public ImportFrom(PythonTree tree, String module, java.util.List<aliasType> names, Integer
+    level) {
         super(tree);
         this.module = module;
         this.names = names;
@@ -158,7 +162,7 @@ public static final PyType TYPE = PyType.fromClass(ImportFrom.class);
     }
 
     private int lineno = -1;
-@ExposedGet(name = "lineno")
+    @ExposedGet(name = "lineno")
     public int getLineno() {
         if (lineno != -1) {
             return lineno;
@@ -166,13 +170,13 @@ public static final PyType TYPE = PyType.fromClass(ImportFrom.class);
         return getLine();
     }
 
-@ExposedSet(name = "lineno")
+    @ExposedSet(name = "lineno")
     public void setLineno(int num) {
         lineno = num;
     }
 
     private int col_offset = -1;
-@ExposedGet(name = "col_offset")
+    @ExposedGet(name = "col_offset")
     public int getCol_offset() {
         if (col_offset != -1) {
             return col_offset;
@@ -180,7 +184,7 @@ public static final PyType TYPE = PyType.fromClass(ImportFrom.class);
         return getCharPositionInLine();
     }
 
-@ExposedSet(name = "col_offset")
+    @ExposedSet(name = "col_offset")
     public void setCol_offset(int num) {
         col_offset = num;
     }

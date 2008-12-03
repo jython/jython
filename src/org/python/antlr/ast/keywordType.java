@@ -2,6 +2,7 @@
 package org.python.antlr.ast;
 import org.antlr.runtime.CommonToken;
 import org.antlr.runtime.Token;
+import org.python.antlr.AST;
 import org.python.antlr.PythonTree;
 import org.python.antlr.adapter.AstAdapters;
 import org.python.core.AstList;
@@ -18,7 +19,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@ExposedType(name = "_ast.keyword", base = PyObject.class)
+@ExposedType(name = "_ast.keyword", base = AST.class)
 public class keywordType extends PythonTree {
     public static final PyType TYPE = PyType.fromClass(keywordType.class);
     private String arg;
@@ -49,9 +50,14 @@ public class keywordType extends PythonTree {
     }
 
 
-    private final static String[] fields = new String[] {"arg", "value"};
-@ExposedGet(name = "_fields")
-    public String[] get_fields() { return fields; }
+    private final static PyString[] fields =
+    new PyString[] {new PyString("arg"), new PyString("value")};
+    @ExposedGet(name = "_fields")
+    public PyString[] get_fields() { return fields; }
+
+    private final static PyString[] attributes = new PyString[0];
+    @ExposedGet(name = "_attributes")
+    public PyString[] get_attributes() { return attributes; }
 
     public keywordType() {
         this(TYPE);
@@ -61,7 +67,7 @@ public class keywordType extends PythonTree {
     }
     @ExposedNew
     @ExposedMethod
-    public void Module___init__(PyObject[] args, String[] keywords) {}
+    public void keywordType___init__(PyObject[] args, String[] keywords) {}
     public keywordType(PyObject arg, PyObject value) {
         setArg(arg);
         setValue(value);

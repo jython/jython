@@ -2,6 +2,7 @@
 package org.python.antlr.ast;
 import org.antlr.runtime.CommonToken;
 import org.antlr.runtime.Token;
+import org.python.antlr.AST;
 import org.python.antlr.PythonTree;
 import org.python.antlr.adapter.AstAdapters;
 import org.python.core.AstList;
@@ -18,7 +19,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@ExposedType(name = "_ast.AugAssign", base = PyObject.class)
+@ExposedType(name = "_ast.AugAssign", base = AST.class)
 public class AugAssign extends stmtType {
 public static final PyType TYPE = PyType.fromClass(AugAssign.class);
     private exprType target;
@@ -40,7 +41,7 @@ public static final PyType TYPE = PyType.fromClass(AugAssign.class);
     }
     @ExposedGet(name = "op")
     public PyObject getOp() {
-        return AstAdapters.op2py(op);
+        return AstAdapters.operator2py(op);
     }
     @ExposedSet(name = "op")
     public void setOp(PyObject op) {
@@ -61,10 +62,14 @@ public static final PyType TYPE = PyType.fromClass(AugAssign.class);
     }
 
 
-    private final static String[] fields = new String[] {"target", "op",
-                                                          "value"};
-@ExposedGet(name = "_fields")
-    public String[] get_fields() { return fields; }
+    private final static PyString[] fields =
+    new PyString[] {new PyString("target"), new PyString("op"), new PyString("value")};
+    @ExposedGet(name = "_fields")
+    public PyString[] get_fields() { return fields; }
+
+    private final static PyString[] attributes = new PyString[0];
+    @ExposedGet(name = "_attributes")
+    public PyString[] get_attributes() { return attributes; }
 
     public AugAssign() {
         this(TYPE);
@@ -74,15 +79,14 @@ public static final PyType TYPE = PyType.fromClass(AugAssign.class);
     }
     @ExposedNew
     @ExposedMethod
-    public void Module___init__(PyObject[] args, String[] keywords) {}
+    public void AugAssign___init__(PyObject[] args, String[] keywords) {}
     public AugAssign(PyObject target, PyObject op, PyObject value) {
         setTarget(target);
         setOp(op);
         setValue(value);
     }
 
-    public AugAssign(Token token, exprType target, operatorType op, exprType
-    value) {
+    public AugAssign(Token token, exprType target, operatorType op, exprType value) {
         super(token);
         this.target = target;
         addChild(target);
@@ -91,8 +95,7 @@ public static final PyType TYPE = PyType.fromClass(AugAssign.class);
         addChild(value);
     }
 
-    public AugAssign(Integer ttype, Token token, exprType target, operatorType
-    op, exprType value) {
+    public AugAssign(Integer ttype, Token token, exprType target, operatorType op, exprType value) {
         super(ttype, token);
         this.target = target;
         addChild(target);
@@ -101,8 +104,7 @@ public static final PyType TYPE = PyType.fromClass(AugAssign.class);
         addChild(value);
     }
 
-    public AugAssign(PythonTree tree, exprType target, operatorType op,
-    exprType value) {
+    public AugAssign(PythonTree tree, exprType target, operatorType op, exprType value) {
         super(tree);
         this.target = target;
         addChild(target);
@@ -143,7 +145,7 @@ public static final PyType TYPE = PyType.fromClass(AugAssign.class);
     }
 
     private int lineno = -1;
-@ExposedGet(name = "lineno")
+    @ExposedGet(name = "lineno")
     public int getLineno() {
         if (lineno != -1) {
             return lineno;
@@ -151,13 +153,13 @@ public static final PyType TYPE = PyType.fromClass(AugAssign.class);
         return getLine();
     }
 
-@ExposedSet(name = "lineno")
+    @ExposedSet(name = "lineno")
     public void setLineno(int num) {
         lineno = num;
     }
 
     private int col_offset = -1;
-@ExposedGet(name = "col_offset")
+    @ExposedGet(name = "col_offset")
     public int getCol_offset() {
         if (col_offset != -1) {
             return col_offset;
@@ -165,7 +167,7 @@ public static final PyType TYPE = PyType.fromClass(AugAssign.class);
         return getCharPositionInLine();
     }
 
-@ExposedSet(name = "col_offset")
+    @ExposedSet(name = "col_offset")
     public void setCol_offset(int num) {
         col_offset = num;
     }

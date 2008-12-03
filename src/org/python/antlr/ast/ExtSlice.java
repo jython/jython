@@ -2,6 +2,7 @@
 package org.python.antlr.ast;
 import org.antlr.runtime.CommonToken;
 import org.antlr.runtime.Token;
+import org.python.antlr.AST;
 import org.python.antlr.PythonTree;
 import org.python.antlr.adapter.AstAdapters;
 import org.python.core.AstList;
@@ -18,7 +19,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@ExposedType(name = "_ast.ExtSlice", base = PyObject.class)
+@ExposedType(name = "_ast.ExtSlice", base = AST.class)
 public class ExtSlice extends sliceType {
 public static final PyType TYPE = PyType.fromClass(ExtSlice.class);
     private java.util.List<sliceType> dims;
@@ -35,9 +36,14 @@ public static final PyType TYPE = PyType.fromClass(ExtSlice.class);
     }
 
 
-    private final static String[] fields = new String[] {"dims"};
-@ExposedGet(name = "_fields")
-    public String[] get_fields() { return fields; }
+    private final static PyString[] fields =
+    new PyString[] {new PyString("dims")};
+    @ExposedGet(name = "_fields")
+    public PyString[] get_fields() { return fields; }
+
+    private final static PyString[] attributes = new PyString[0];
+    @ExposedGet(name = "_attributes")
+    public PyString[] get_attributes() { return attributes; }
 
     public ExtSlice() {
         this(TYPE);
@@ -47,7 +53,7 @@ public static final PyType TYPE = PyType.fromClass(ExtSlice.class);
     }
     @ExposedNew
     @ExposedMethod
-    public void Module___init__(PyObject[] args, String[] keywords) {}
+    public void ExtSlice___init__(PyObject[] args, String[] keywords) {}
     public ExtSlice(PyObject dims) {
         setDims(dims);
     }
@@ -63,8 +69,7 @@ public static final PyType TYPE = PyType.fromClass(ExtSlice.class);
         }
     }
 
-    public ExtSlice(Integer ttype, Token token, java.util.List<sliceType> dims)
-    {
+    public ExtSlice(Integer ttype, Token token, java.util.List<sliceType> dims) {
         super(ttype, token);
         this.dims = dims;
         if (dims == null) {

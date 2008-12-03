@@ -17,5 +17,4 @@ public enum operatorType {
     BitXor,
     BitAnd,
     FloorDiv;
-    public operatorType __call__() { return this; }
 }

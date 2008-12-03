@@ -15,5 +15,4 @@ public enum cmpopType {
     IsNot,
     In,
     NotIn;
-    public cmpopType __call__() { return this; }
 }

@@ -2,6 +2,7 @@
 package org.python.antlr.ast;
 import org.antlr.runtime.CommonToken;
 import org.antlr.runtime.Token;
+import org.python.antlr.AST;
 import org.python.antlr.PythonTree;
 import org.python.antlr.adapter.AstAdapters;
 import org.python.core.AstList;
@@ -15,10 +16,18 @@ import org.python.expose.ExposedNew;
 import org.python.expose.ExposedSet;
 import org.python.expose.ExposedType;
 
-@ExposedType(name = "_ast.slice", base = PyObject.class)
+@ExposedType(name = "_ast.slice", base = AST.class)
 public abstract class sliceType extends PythonTree {
 
     public static final PyType TYPE = PyType.fromClass(sliceType.class);
+    private final static PyString[] fields = new PyString[0];
+    @ExposedGet(name = "_fields")
+    public PyString[] get_fields() { return fields; }
+
+    private final static PyString[] attributes = new PyString[0];
+    @ExposedGet(name = "_attributes")
+    public PyString[] get_attributes() { return attributes; }
+
     public sliceType() {
     }
 

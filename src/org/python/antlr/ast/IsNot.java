@@ -2,17 +2,47 @@
 package org.python.antlr.ast;
 
 import org.python.antlr.AST;
+import org.python.antlr.PythonTree;
+import org.python.core.Py;
 import org.python.core.PyObject;
+import org.python.core.PyString;
 import org.python.core.PyType;
+import org.python.expose.ExposedGet;
+import org.python.expose.ExposedMethod;
+import org.python.expose.ExposedNew;
+import org.python.expose.ExposedSet;
 import org.python.expose.ExposedType;
 
-@ExposedType(name = "_ast.IsNot", base = PyObject.class)
-public class IsNot extends AST {
+@ExposedType(name = "_ast.IsNot", base = AST.class)
+public class IsNot extends PythonTree {
     public static final PyType TYPE = PyType.fromClass(IsNot.class);
-    public int asIndex() {
-        return asIndex(null);
+
+public IsNot() {
+}
+
+public IsNot(PyType subType) {
+    super(subType);
+}
+
+@ExposedNew
+@ExposedMethod
+public void IsNot___init__(PyObject[] args, String[] keywords) {}
+
+    private final static PyString[] fields = new PyString[0];
+    @ExposedGet(name = "_fields")
+    public PyString[] get_fields() { return fields; }
+
+    private final static PyString[] attributes = new PyString[0];
+    @ExposedGet(name = "_attributes")
+    public PyString[] get_attributes() { return attributes; }
+
+    @ExposedMethod
+    public PyObject __int__() {
+        return IsNot___int__();
     }
-    public int asIndex(PyObject error) {
-        return 8;
+
+    final PyObject IsNot___int__() {
+        return Py.newInteger(8);
     }
+
 }

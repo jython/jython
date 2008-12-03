@@ -11,5 +11,4 @@ public enum expr_contextType {
     AugLoad,
     AugStore,
     Param;
-    public expr_contextType __call__() { return this; }
 }

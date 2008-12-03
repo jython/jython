@@ -2,6 +2,7 @@
 package org.python.antlr.ast;
 import org.antlr.runtime.CommonToken;
 import org.antlr.runtime.Token;
+import org.python.antlr.AST;
 import org.python.antlr.PythonTree;
 import org.python.antlr.adapter.AstAdapters;
 import org.python.core.AstList;
@@ -18,7 +19,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@ExposedType(name = "_ast.Expression", base = PyObject.class)
+@ExposedType(name = "_ast.Expression", base = AST.class)
 public class Expression extends modType {
 public static final PyType TYPE = PyType.fromClass(Expression.class);
     private exprType body;
@@ -35,9 +36,14 @@ public static final PyType TYPE = PyType.fromClass(Expression.class);
     }
 
 
-    private final static String[] fields = new String[] {"body"};
-@ExposedGet(name = "_fields")
-    public String[] get_fields() { return fields; }
+    private final static PyString[] fields =
+    new PyString[] {new PyString("body")};
+    @ExposedGet(name = "_fields")
+    public PyString[] get_fields() { return fields; }
+
+    private final static PyString[] attributes = new PyString[0];
+    @ExposedGet(name = "_attributes")
+    public PyString[] get_attributes() { return attributes; }
 
     public Expression() {
         this(TYPE);
@@ -47,7 +53,7 @@ public static final PyType TYPE = PyType.fromClass(Expression.class);
     }
     @ExposedNew
     @ExposedMethod
-    public void Module___init__(PyObject[] args, String[] keywords) {}
+    public void Expression___init__(PyObject[] args, String[] keywords) {}
     public Expression(PyObject body) {
         setBody(body);
     }

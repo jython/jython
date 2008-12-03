@@ -2,6 +2,7 @@
 package org.python.antlr.ast;
 import org.antlr.runtime.CommonToken;
 import org.antlr.runtime.Token;
+import org.python.antlr.AST;
 import org.python.antlr.PythonTree;
 import org.python.antlr.adapter.AstAdapters;
 import org.python.core.AstList;
@@ -18,7 +19,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@ExposedType(name = "_ast.arguments", base = PyObject.class)
+@ExposedType(name = "_ast.arguments", base = AST.class)
 public class argumentsType extends PythonTree {
     public static final PyType TYPE = PyType.fromClass(argumentsType.class);
     private java.util.List<exprType> args;
@@ -76,10 +77,15 @@ public class argumentsType extends PythonTree {
     }
 
 
-    private final static String[] fields = new String[] {"args", "vararg",
-                                                          "kwarg", "defaults"};
-@ExposedGet(name = "_fields")
-    public String[] get_fields() { return fields; }
+    private final static PyString[] fields =
+    new PyString[] {new PyString("args"), new PyString("vararg"), new PyString("kwarg"), new
+                     PyString("defaults")};
+    @ExposedGet(name = "_fields")
+    public PyString[] get_fields() { return fields; }
+
+    private final static PyString[] attributes = new PyString[0];
+    @ExposedGet(name = "_attributes")
+    public PyString[] get_attributes() { return attributes; }
 
     public argumentsType() {
         this(TYPE);
@@ -89,17 +95,16 @@ public class argumentsType extends PythonTree {
     }
     @ExposedNew
     @ExposedMethod
-    public void Module___init__(PyObject[] args, String[] keywords) {}
-    public argumentsType(PyObject args, PyObject vararg, PyObject kwarg,
-    PyObject defaults) {
+    public void argumentsType___init__(PyObject[] args, String[] keywords) {}
+    public argumentsType(PyObject args, PyObject vararg, PyObject kwarg, PyObject defaults) {
         setArgs(args);
         setVararg(vararg);
         setKwarg(kwarg);
         setDefaults(defaults);
     }
 
-    public argumentsType(Token token, java.util.List<exprType> args, String
-    vararg, String kwarg, java.util.List<exprType> defaults) {
+    public argumentsType(Token token, java.util.List<exprType> args, String vararg, String kwarg,
+    java.util.List<exprType> defaults) {
         super(token);
         this.args = args;
         if (args == null) {
@@ -119,8 +124,8 @@ public class argumentsType extends PythonTree {
         }
     }
 
-    public argumentsType(Integer ttype, Token token, java.util.List<exprType>
-    args, String vararg, String kwarg, java.util.List<exprType> defaults) {
+    public argumentsType(Integer ttype, Token token, java.util.List<exprType> args, String vararg,
+    String kwarg, java.util.List<exprType> defaults) {
         super(ttype, token);
         this.args = args;
         if (args == null) {
@@ -140,8 +145,8 @@ public class argumentsType extends PythonTree {
         }
     }
 
-    public argumentsType(PythonTree tree, java.util.List<exprType> args, String
-    vararg, String kwarg, java.util.List<exprType> defaults) {
+    public argumentsType(PythonTree tree, java.util.List<exprType> args, String vararg, String
+    kwarg, java.util.List<exprType> defaults) {
         super(tree);
         this.args = args;
         if (args == null) {

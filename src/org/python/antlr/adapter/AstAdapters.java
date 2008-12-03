@@ -97,12 +97,19 @@ public class AstAdapters {
     public static operatorType py2operator(Object o) {
         if (o == null || o instanceof operatorType) {
             return (operatorType)o;
+        } else if (o instanceof PyObject) {
+            switch (((PyObject)o).asInt()) {
+                case 1:
+                    return operatorType.Add;
+                case 2:
+                    return operatorType.Sub;
+            }
         }
         //FIXME: investigate the right exception
         throw Py.TypeError("Can't convert " + o.getClass().getName() + " to operator node");
     }
 
-    public static PyObject op2py(operatorType o) {
+    public static PyObject operator2py(operatorType o) {
         switch (o) {
             case Add:
                 return new Add();
@@ -132,7 +139,7 @@ public class AstAdapters {
         return Py.None;
     }
 
-    public static PyObject op2py(boolopType o) {
+    public static PyObject boolop2py(boolopType o) {
         switch (o) {
             case And:
                 return new And();
@@ -142,11 +149,11 @@ public class AstAdapters {
         return Py.None;
     }
 
-    public static PyObject op2py(cmpopType o) {
+    public static PyObject cmpop2py(cmpopType o) {
         return cmpopAdapter.ast2py(o);
     }
 
-    public static PyObject op2py(unaryopType o) {
+    public static PyObject unaryop2py(unaryopType o) {
         switch (o) {
             case Invert:
                 return new Invert();
@@ -161,7 +168,7 @@ public class AstAdapters {
     }
 
 
-    public static PyObject ctx2py(expr_contextType o) {
+    public static PyObject expr_context2py(expr_contextType o) {
         switch (o) {
             case Load:
                 return new Load();

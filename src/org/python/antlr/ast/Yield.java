@@ -2,6 +2,7 @@
 package org.python.antlr.ast;
 import org.antlr.runtime.CommonToken;
 import org.antlr.runtime.Token;
+import org.python.antlr.AST;
 import org.python.antlr.PythonTree;
 import org.python.antlr.adapter.AstAdapters;
 import org.python.core.AstList;
@@ -18,7 +19,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@ExposedType(name = "_ast.Yield", base = PyObject.class)
+@ExposedType(name = "_ast.Yield", base = AST.class)
 public class Yield extends exprType {
 public static final PyType TYPE = PyType.fromClass(Yield.class);
     private exprType value;
@@ -35,9 +36,14 @@ public static final PyType TYPE = PyType.fromClass(Yield.class);
     }
 
 
-    private final static String[] fields = new String[] {"value"};
-@ExposedGet(name = "_fields")
-    public String[] get_fields() { return fields; }
+    private final static PyString[] fields =
+    new PyString[] {new PyString("value")};
+    @ExposedGet(name = "_fields")
+    public PyString[] get_fields() { return fields; }
+
+    private final static PyString[] attributes = new PyString[0];
+    @ExposedGet(name = "_attributes")
+    public PyString[] get_attributes() { return attributes; }
 
     public Yield() {
         this(TYPE);
@@ -47,7 +53,7 @@ public static final PyType TYPE = PyType.fromClass(Yield.class);
     }
     @ExposedNew
     @ExposedMethod
-    public void Module___init__(PyObject[] args, String[] keywords) {}
+    public void Yield___init__(PyObject[] args, String[] keywords) {}
     public Yield(PyObject value) {
         setValue(value);
     }
@@ -94,7 +100,7 @@ public static final PyType TYPE = PyType.fromClass(Yield.class);
     }
 
     private int lineno = -1;
-@ExposedGet(name = "lineno")
+    @ExposedGet(name = "lineno")
     public int getLineno() {
         if (lineno != -1) {
             return lineno;
@@ -102,13 +108,13 @@ public static final PyType TYPE = PyType.fromClass(Yield.class);
         return getLine();
     }
 
-@ExposedSet(name = "lineno")
+    @ExposedSet(name = "lineno")
     public void setLineno(int num) {
         lineno = num;
     }
 
     private int col_offset = -1;
-@ExposedGet(name = "col_offset")
+    @ExposedGet(name = "col_offset")
     public int getCol_offset() {
         if (col_offset != -1) {
             return col_offset;
@@ -116,7 +122,7 @@ public static final PyType TYPE = PyType.fromClass(Yield.class);
         return getCharPositionInLine();
     }
 
-@ExposedSet(name = "col_offset")
+    @ExposedSet(name = "col_offset")
     public void setCol_offset(int num) {
         col_offset = num;
     }

@@ -2,6 +2,7 @@
 package org.python.antlr.ast;
 import org.antlr.runtime.CommonToken;
 import org.antlr.runtime.Token;
+import org.python.antlr.AST;
 import org.python.antlr.PythonTree;
 import org.python.antlr.adapter.AstAdapters;
 import org.python.core.AstList;
@@ -18,7 +19,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@ExposedType(name = "_ast.Call", base = PyObject.class)
+@ExposedType(name = "_ast.Call", base = AST.class)
 public class Call extends exprType {
 public static final PyType TYPE = PyType.fromClass(Call.class);
     private exprType func;
@@ -87,11 +88,15 @@ public static final PyType TYPE = PyType.fromClass(Call.class);
     }
 
 
-    private final static String[] fields = new String[] {"func", "args",
-                                                          "keywords",
-                                                          "starargs", "kwargs"};
-@ExposedGet(name = "_fields")
-    public String[] get_fields() { return fields; }
+    private final static PyString[] fields =
+    new PyString[] {new PyString("func"), new PyString("args"), new PyString("keywords"), new
+                     PyString("starargs"), new PyString("kwargs")};
+    @ExposedGet(name = "_fields")
+    public PyString[] get_fields() { return fields; }
+
+    private final static PyString[] attributes = new PyString[0];
+    @ExposedGet(name = "_attributes")
+    public PyString[] get_attributes() { return attributes; }
 
     public Call() {
         this(TYPE);
@@ -101,9 +106,9 @@ public static final PyType TYPE = PyType.fromClass(Call.class);
     }
     @ExposedNew
     @ExposedMethod
-    public void Module___init__(PyObject[] args, String[] keywords) {}
-    public Call(PyObject func, PyObject args, PyObject keywords, PyObject
-    starargs, PyObject kwargs) {
+    public void Call___init__(PyObject[] args, String[] keywords) {}
+    public Call(PyObject func, PyObject args, PyObject keywords, PyObject starargs, PyObject
+    kwargs) {
         setFunc(func);
         setArgs(args);
         setKeywords(keywords);
@@ -136,9 +141,8 @@ public static final PyType TYPE = PyType.fromClass(Call.class);
         addChild(kwargs);
     }
 
-    public Call(Integer ttype, Token token, exprType func,
-    java.util.List<exprType> args, java.util.List<keywordType> keywords,
-    exprType starargs, exprType kwargs) {
+    public Call(Integer ttype, Token token, exprType func, java.util.List<exprType> args,
+    java.util.List<keywordType> keywords, exprType starargs, exprType kwargs) {
         super(ttype, token);
         this.func = func;
         addChild(func);
@@ -239,7 +243,7 @@ public static final PyType TYPE = PyType.fromClass(Call.class);
     }
 
     private int lineno = -1;
-@ExposedGet(name = "lineno")
+    @ExposedGet(name = "lineno")
     public int getLineno() {
         if (lineno != -1) {
             return lineno;
@@ -247,13 +251,13 @@ public static final PyType TYPE = PyType.fromClass(Call.class);
         return getLine();
     }
 
-@ExposedSet(name = "lineno")
+    @ExposedSet(name = "lineno")
     public void setLineno(int num) {
         lineno = num;
     }
 
     private int col_offset = -1;
-@ExposedGet(name = "col_offset")
+    @ExposedGet(name = "col_offset")
     public int getCol_offset() {
         if (col_offset != -1) {
             return col_offset;
@@ -261,7 +265,7 @@ public static final PyType TYPE = PyType.fromClass(Call.class);
         return getCharPositionInLine();
     }
 
-@ExposedSet(name = "col_offset")
+    @ExposedSet(name = "col_offset")
     public void setCol_offset(int num) {
         col_offset = num;
     }

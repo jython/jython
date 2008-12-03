@@ -2,6 +2,7 @@
 package org.python.antlr.ast;
 import org.antlr.runtime.CommonToken;
 import org.antlr.runtime.Token;
+import org.python.antlr.AST;
 import org.python.antlr.PythonTree;
 import org.python.antlr.adapter.AstAdapters;
 import org.python.core.AstList;
@@ -18,7 +19,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@ExposedType(name = "_ast.Lambda", base = PyObject.class)
+@ExposedType(name = "_ast.Lambda", base = AST.class)
 public class Lambda extends exprType {
 public static final PyType TYPE = PyType.fromClass(Lambda.class);
     private argumentsType args;
@@ -48,9 +49,14 @@ public static final PyType TYPE = PyType.fromClass(Lambda.class);
     }
 
 
-    private final static String[] fields = new String[] {"args", "body"};
-@ExposedGet(name = "_fields")
-    public String[] get_fields() { return fields; }
+    private final static PyString[] fields =
+    new PyString[] {new PyString("args"), new PyString("body")};
+    @ExposedGet(name = "_fields")
+    public PyString[] get_fields() { return fields; }
+
+    private final static PyString[] attributes = new PyString[0];
+    @ExposedGet(name = "_attributes")
+    public PyString[] get_attributes() { return attributes; }
 
     public Lambda() {
         this(TYPE);
@@ -60,7 +66,7 @@ public static final PyType TYPE = PyType.fromClass(Lambda.class);
     }
     @ExposedNew
     @ExposedMethod
-    public void Module___init__(PyObject[] args, String[] keywords) {}
+    public void Lambda___init__(PyObject[] args, String[] keywords) {}
     public Lambda(PyObject args, PyObject body) {
         setArgs(args);
         setBody(body);
@@ -73,8 +79,7 @@ public static final PyType TYPE = PyType.fromClass(Lambda.class);
         addChild(body);
     }
 
-    public Lambda(Integer ttype, Token token, argumentsType args, exprType
-    body) {
+    public Lambda(Integer ttype, Token token, argumentsType args, exprType body) {
         super(ttype, token);
         this.args = args;
         this.body = body;
@@ -117,7 +122,7 @@ public static final PyType TYPE = PyType.fromClass(Lambda.class);
     }
 
     private int lineno = -1;
-@ExposedGet(name = "lineno")
+    @ExposedGet(name = "lineno")
     public int getLineno() {
         if (lineno != -1) {
             return lineno;
@@ -125,13 +130,13 @@ public static final PyType TYPE = PyType.fromClass(Lambda.class);
         return getLine();
     }
 
-@ExposedSet(name = "lineno")
+    @ExposedSet(name = "lineno")
     public void setLineno(int num) {
         lineno = num;
     }
 
     private int col_offset = -1;
-@ExposedGet(name = "col_offset")
+    @ExposedGet(name = "col_offset")
     public int getCol_offset() {
         if (col_offset != -1) {
             return col_offset;
@@ -139,7 +144,7 @@ public static final PyType TYPE = PyType.fromClass(Lambda.class);
         return getCharPositionInLine();
     }
 
-@ExposedSet(name = "col_offset")
+    @ExposedSet(name = "col_offset")
     public void setCol_offset(int num) {
         col_offset = num;
     }

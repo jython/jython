@@ -2,6 +2,7 @@
 package org.python.antlr.ast;
 import org.antlr.runtime.CommonToken;
 import org.antlr.runtime.Token;
+import org.python.antlr.AST;
 import org.python.antlr.PythonTree;
 import org.python.antlr.adapter.AstAdapters;
 import org.python.core.AstList;
@@ -18,7 +19,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@ExposedType(name = "_ast.BoolOp", base = PyObject.class)
+@ExposedType(name = "_ast.BoolOp", base = AST.class)
 public class BoolOp extends exprType {
 public static final PyType TYPE = PyType.fromClass(BoolOp.class);
     private boolopType op;
@@ -27,7 +28,7 @@ public static final PyType TYPE = PyType.fromClass(BoolOp.class);
     }
     @ExposedGet(name = "op")
     public PyObject getOp() {
-        return AstAdapters.op2py(op);
+        return AstAdapters.boolop2py(op);
     }
     @ExposedSet(name = "op")
     public void setOp(PyObject op) {
@@ -48,9 +49,14 @@ public static final PyType TYPE = PyType.fromClass(BoolOp.class);
     }
 
 
-    private final static String[] fields = new String[] {"op", "values"};
-@ExposedGet(name = "_fields")
-    public String[] get_fields() { return fields; }
+    private final static PyString[] fields =
+    new PyString[] {new PyString("op"), new PyString("values")};
+    @ExposedGet(name = "_fields")
+    public PyString[] get_fields() { return fields; }
+
+    private final static PyString[] attributes = new PyString[0];
+    @ExposedGet(name = "_attributes")
+    public PyString[] get_attributes() { return attributes; }
 
     public BoolOp() {
         this(TYPE);
@@ -60,7 +66,7 @@ public static final PyType TYPE = PyType.fromClass(BoolOp.class);
     }
     @ExposedNew
     @ExposedMethod
-    public void Module___init__(PyObject[] args, String[] keywords) {}
+    public void BoolOp___init__(PyObject[] args, String[] keywords) {}
     public BoolOp(PyObject op, PyObject values) {
         setOp(op);
         setValues(values);
@@ -78,8 +84,7 @@ public static final PyType TYPE = PyType.fromClass(BoolOp.class);
         }
     }
 
-    public BoolOp(Integer ttype, Token token, boolopType op,
-    java.util.List<exprType> values) {
+    public BoolOp(Integer ttype, Token token, boolopType op, java.util.List<exprType> values) {
         super(ttype, token);
         this.op = op;
         this.values = values;
@@ -91,8 +96,7 @@ public static final PyType TYPE = PyType.fromClass(BoolOp.class);
         }
     }
 
-    public BoolOp(PythonTree tree, boolopType op, java.util.List<exprType>
-    values) {
+    public BoolOp(PythonTree tree, boolopType op, java.util.List<exprType> values) {
         super(tree);
         this.op = op;
         this.values = values;
@@ -135,7 +139,7 @@ public static final PyType TYPE = PyType.fromClass(BoolOp.class);
     }
 
     private int lineno = -1;
-@ExposedGet(name = "lineno")
+    @ExposedGet(name = "lineno")
     public int getLineno() {
         if (lineno != -1) {
             return lineno;
@@ -143,13 +147,13 @@ public static final PyType TYPE = PyType.fromClass(BoolOp.class);
         return getLine();
     }
 
-@ExposedSet(name = "lineno")
+    @ExposedSet(name = "lineno")
     public void setLineno(int num) {
         lineno = num;
     }
 
     private int col_offset = -1;
-@ExposedGet(name = "col_offset")
+    @ExposedGet(name = "col_offset")
     public int getCol_offset() {
         if (col_offset != -1) {
             return col_offset;
@@ -157,7 +161,7 @@ public static final PyType TYPE = PyType.fromClass(BoolOp.class);
         return getCharPositionInLine();
     }
 
-@ExposedSet(name = "col_offset")
+    @ExposedSet(name = "col_offset")
     public void setCol_offset(int num) {
         col_offset = num;
     }

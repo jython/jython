@@ -2,6 +2,7 @@
 package org.python.antlr.ast;
 import org.antlr.runtime.CommonToken;
 import org.antlr.runtime.Token;
+import org.python.antlr.AST;
 import org.python.antlr.PythonTree;
 import org.python.antlr.adapter.AstAdapters;
 import org.python.core.AstList;
@@ -18,7 +19,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@ExposedType(name = "_ast.BinOp", base = PyObject.class)
+@ExposedType(name = "_ast.BinOp", base = AST.class)
 public class BinOp extends exprType {
 public static final PyType TYPE = PyType.fromClass(BinOp.class);
     private exprType left;
@@ -40,7 +41,7 @@ public static final PyType TYPE = PyType.fromClass(BinOp.class);
     }
     @ExposedGet(name = "op")
     public PyObject getOp() {
-        return AstAdapters.op2py(op);
+        return AstAdapters.operator2py(op);
     }
     @ExposedSet(name = "op")
     public void setOp(PyObject op) {
@@ -61,9 +62,14 @@ public static final PyType TYPE = PyType.fromClass(BinOp.class);
     }
 
 
-    private final static String[] fields = new String[] {"left", "op", "right"};
-@ExposedGet(name = "_fields")
-    public String[] get_fields() { return fields; }
+    private final static PyString[] fields =
+    new PyString[] {new PyString("left"), new PyString("op"), new PyString("right")};
+    @ExposedGet(name = "_fields")
+    public PyString[] get_fields() { return fields; }
+
+    private final static PyString[] attributes = new PyString[0];
+    @ExposedGet(name = "_attributes")
+    public PyString[] get_attributes() { return attributes; }
 
     public BinOp() {
         this(TYPE);
@@ -73,7 +79,7 @@ public static final PyType TYPE = PyType.fromClass(BinOp.class);
     }
     @ExposedNew
     @ExposedMethod
-    public void Module___init__(PyObject[] args, String[] keywords) {}
+    public void BinOp___init__(PyObject[] args, String[] keywords) {}
     public BinOp(PyObject left, PyObject op, PyObject right) {
         setLeft(left);
         setOp(op);
@@ -89,8 +95,7 @@ public static final PyType TYPE = PyType.fromClass(BinOp.class);
         addChild(right);
     }
 
-    public BinOp(Integer ttype, Token token, exprType left, operatorType op,
-    exprType right) {
+    public BinOp(Integer ttype, Token token, exprType left, operatorType op, exprType right) {
         super(ttype, token);
         this.left = left;
         addChild(left);
@@ -99,8 +104,7 @@ public static final PyType TYPE = PyType.fromClass(BinOp.class);
         addChild(right);
     }
 
-    public BinOp(PythonTree tree, exprType left, operatorType op, exprType
-    right) {
+    public BinOp(PythonTree tree, exprType left, operatorType op, exprType right) {
         super(tree);
         this.left = left;
         addChild(left);
@@ -141,7 +145,7 @@ public static final PyType TYPE = PyType.fromClass(BinOp.class);
     }
 
     private int lineno = -1;
-@ExposedGet(name = "lineno")
+    @ExposedGet(name = "lineno")
     public int getLineno() {
         if (lineno != -1) {
             return lineno;
@@ -149,13 +153,13 @@ public static final PyType TYPE = PyType.fromClass(BinOp.class);
         return getLine();
     }
 
-@ExposedSet(name = "lineno")
+    @ExposedSet(name = "lineno")
     public void setLineno(int num) {
         lineno = num;
     }
 
     private int col_offset = -1;
-@ExposedGet(name = "col_offset")
+    @ExposedGet(name = "col_offset")
     public int getCol_offset() {
         if (col_offset != -1) {
             return col_offset;
@@ -163,7 +167,7 @@ public static final PyType TYPE = PyType.fromClass(BinOp.class);
         return getCharPositionInLine();
     }
 
-@ExposedSet(name = "col_offset")
+    @ExposedSet(name = "col_offset")
     public void setCol_offset(int num) {
         col_offset = num;
     }

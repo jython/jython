@@ -2,6 +2,7 @@
 package org.python.antlr.ast;
 import org.antlr.runtime.CommonToken;
 import org.antlr.runtime.Token;
+import org.python.antlr.AST;
 import org.python.antlr.PythonTree;
 import org.python.antlr.adapter.AstAdapters;
 import org.python.core.AstList;
@@ -18,7 +19,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@ExposedType(name = "_ast.UnaryOp", base = PyObject.class)
+@ExposedType(name = "_ast.UnaryOp", base = AST.class)
 public class UnaryOp extends exprType {
 public static final PyType TYPE = PyType.fromClass(UnaryOp.class);
     private unaryopType op;
@@ -27,7 +28,7 @@ public static final PyType TYPE = PyType.fromClass(UnaryOp.class);
     }
     @ExposedGet(name = "op")
     public PyObject getOp() {
-        return AstAdapters.op2py(op);
+        return AstAdapters.unaryop2py(op);
     }
     @ExposedSet(name = "op")
     public void setOp(PyObject op) {
@@ -48,9 +49,14 @@ public static final PyType TYPE = PyType.fromClass(UnaryOp.class);
     }
 
 
-    private final static String[] fields = new String[] {"op", "operand"};
-@ExposedGet(name = "_fields")
-    public String[] get_fields() { return fields; }
+    private final static PyString[] fields =
+    new PyString[] {new PyString("op"), new PyString("operand")};
+    @ExposedGet(name = "_fields")
+    public PyString[] get_fields() { return fields; }
+
+    private final static PyString[] attributes = new PyString[0];
+    @ExposedGet(name = "_attributes")
+    public PyString[] get_attributes() { return attributes; }
 
     public UnaryOp() {
         this(TYPE);
@@ -60,7 +66,7 @@ public static final PyType TYPE = PyType.fromClass(UnaryOp.class);
     }
     @ExposedNew
     @ExposedMethod
-    public void Module___init__(PyObject[] args, String[] keywords) {}
+    public void UnaryOp___init__(PyObject[] args, String[] keywords) {}
     public UnaryOp(PyObject op, PyObject operand) {
         setOp(op);
         setOperand(operand);
@@ -73,8 +79,7 @@ public static final PyType TYPE = PyType.fromClass(UnaryOp.class);
         addChild(operand);
     }
 
-    public UnaryOp(Integer ttype, Token token, unaryopType op, exprType
-    operand) {
+    public UnaryOp(Integer ttype, Token token, unaryopType op, exprType operand) {
         super(ttype, token);
         this.op = op;
         this.operand = operand;
@@ -115,7 +120,7 @@ public static final PyType TYPE = PyType.fromClass(UnaryOp.class);
     }
 
     private int lineno = -1;
-@ExposedGet(name = "lineno")
+    @ExposedGet(name = "lineno")
     public int getLineno() {
         if (lineno != -1) {
             return lineno;
@@ -123,13 +128,13 @@ public static final PyType TYPE = PyType.fromClass(UnaryOp.class);
         return getLine();
     }
 
-@ExposedSet(name = "lineno")
+    @ExposedSet(name = "lineno")
     public void setLineno(int num) {
         lineno = num;
     }
 
     private int col_offset = -1;
-@ExposedGet(name = "col_offset")
+    @ExposedGet(name = "col_offset")
     public int getCol_offset() {
         if (col_offset != -1) {
             return col_offset;
@@ -137,7 +142,7 @@ public static final PyType TYPE = PyType.fromClass(UnaryOp.class);
         return getCharPositionInLine();
     }
 
-@ExposedSet(name = "col_offset")
+    @ExposedSet(name = "col_offset")
     public void setCol_offset(int num) {
         col_offset = num;
     }

@@ -250,14 +250,6 @@ public class PythonTree extends AST {
         throw new RuntimeException("Cannot traverse node: " + this);
     }
 
-    public String[] get_fields() {
-        return emptyStringArray;
-    }
-
-    public String[] get_attributes() {
-        return emptyStringArray;
-    }
-
     //Copied from org.antlr.runtime.tree.BaseTree
 	protected List children;
 

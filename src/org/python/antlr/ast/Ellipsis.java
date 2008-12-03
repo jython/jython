@@ -2,6 +2,7 @@
 package org.python.antlr.ast;
 import org.antlr.runtime.CommonToken;
 import org.antlr.runtime.Token;
+import org.python.antlr.AST;
 import org.python.antlr.PythonTree;
 import org.python.antlr.adapter.AstAdapters;
 import org.python.core.AstList;
@@ -18,9 +19,17 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@ExposedType(name = "_ast.Ellipsis", base = PyObject.class)
+@ExposedType(name = "_ast.Ellipsis", base = AST.class)
 public class Ellipsis extends sliceType {
 public static final PyType TYPE = PyType.fromClass(Ellipsis.class);
+
+    private final static PyString[] fields = new PyString[0];
+    @ExposedGet(name = "_fields")
+    public PyString[] get_fields() { return fields; }
+
+    private final static PyString[] attributes = new PyString[0];
+    @ExposedGet(name = "_attributes")
+    public PyString[] get_attributes() { return attributes; }
 
     public Ellipsis(Token token) {
         super(token);

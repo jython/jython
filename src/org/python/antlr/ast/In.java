@@ -2,17 +2,47 @@
 package org.python.antlr.ast;
 
 import org.python.antlr.AST;
+import org.python.antlr.PythonTree;
+import org.python.core.Py;
 import org.python.core.PyObject;
+import org.python.core.PyString;
 import org.python.core.PyType;
+import org.python.expose.ExposedGet;
+import org.python.expose.ExposedMethod;
+import org.python.expose.ExposedNew;
+import org.python.expose.ExposedSet;
 import org.python.expose.ExposedType;
 
-@ExposedType(name = "_ast.In", base = PyObject.class)
-public class In extends AST {
+@ExposedType(name = "_ast.In", base = AST.class)
+public class In extends PythonTree {
     public static final PyType TYPE = PyType.fromClass(In.class);
-    public int asIndex() {
-        return asIndex(null);
+
+public In() {
+}
+
+public In(PyType subType) {
+    super(subType);
+}
+
+@ExposedNew
+@ExposedMethod
+public void In___init__(PyObject[] args, String[] keywords) {}
+
+    private final static PyString[] fields = new PyString[0];
+    @ExposedGet(name = "_fields")
+    public PyString[] get_fields() { return fields; }
+
+    private final static PyString[] attributes = new PyString[0];
+    @ExposedGet(name = "_attributes")
+    public PyString[] get_attributes() { return attributes; }
+
+    @ExposedMethod
+    public PyObject __int__() {
+        return In___int__();
     }
-    public int asIndex(PyObject error) {
-        return 9;
+
+    final PyObject In___int__() {
+        return Py.newInteger(9);
     }
+
 }

@@ -2,6 +2,7 @@
 package org.python.antlr.ast;
 import org.antlr.runtime.CommonToken;
 import org.antlr.runtime.Token;
+import org.python.antlr.AST;
 import org.python.antlr.PythonTree;
 import org.python.antlr.adapter.AstAdapters;
 import org.python.core.AstList;
@@ -18,7 +19,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@ExposedType(name = "_ast.comprehension", base = PyObject.class)
+@ExposedType(name = "_ast.comprehension", base = AST.class)
 public class comprehensionType extends PythonTree {
     public static final PyType TYPE = PyType.fromClass(comprehensionType.class);
     private exprType target;
@@ -61,10 +62,14 @@ public class comprehensionType extends PythonTree {
     }
 
 
-    private final static String[] fields = new String[] {"target", "iter",
-                                                          "ifs"};
-@ExposedGet(name = "_fields")
-    public String[] get_fields() { return fields; }
+    private final static PyString[] fields =
+    new PyString[] {new PyString("target"), new PyString("iter"), new PyString("ifs")};
+    @ExposedGet(name = "_fields")
+    public PyString[] get_fields() { return fields; }
+
+    private final static PyString[] attributes = new PyString[0];
+    @ExposedGet(name = "_attributes")
+    public PyString[] get_attributes() { return attributes; }
 
     public comprehensionType() {
         this(TYPE);
@@ -74,15 +79,15 @@ public class comprehensionType extends PythonTree {
     }
     @ExposedNew
     @ExposedMethod
-    public void Module___init__(PyObject[] args, String[] keywords) {}
+    public void comprehensionType___init__(PyObject[] args, String[] keywords) {}
     public comprehensionType(PyObject target, PyObject iter, PyObject ifs) {
         setTarget(target);
         setIter(iter);
         setIfs(ifs);
     }
 
-    public comprehensionType(Token token, exprType target, exprType iter,
-    java.util.List<exprType> ifs) {
+    public comprehensionType(Token token, exprType target, exprType iter, java.util.List<exprType>
+    ifs) {
         super(token);
         this.target = target;
         addChild(target);
@@ -97,8 +102,8 @@ public class comprehensionType extends PythonTree {
         }
     }
 
-    public comprehensionType(Integer ttype, Token token, exprType target,
-    exprType iter, java.util.List<exprType> ifs) {
+    public comprehensionType(Integer ttype, Token token, exprType target, exprType iter,
+    java.util.List<exprType> ifs) {
         super(ttype, token);
         this.target = target;
         addChild(target);

@@ -2,6 +2,7 @@
 package org.python.antlr.ast;
 import org.antlr.runtime.CommonToken;
 import org.antlr.runtime.Token;
+import org.python.antlr.AST;
 import org.python.antlr.PythonTree;
 import org.python.antlr.adapter.AstAdapters;
 import org.python.core.AstList;
@@ -18,7 +19,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@ExposedType(name = "_ast.Subscript", base = PyObject.class)
+@ExposedType(name = "_ast.Subscript", base = AST.class)
 public class Subscript extends exprType implements Context {
 public static final PyType TYPE = PyType.fromClass(Subscript.class);
     private exprType value;
@@ -53,7 +54,7 @@ public static final PyType TYPE = PyType.fromClass(Subscript.class);
     }
     @ExposedGet(name = "ctx")
     public PyObject getCtx() {
-        return AstAdapters.ctx2py(ctx);
+        return AstAdapters.expr_context2py(ctx);
     }
     @ExposedSet(name = "ctx")
     public void setCtx(PyObject ctx) {
@@ -61,10 +62,14 @@ public static final PyType TYPE = PyType.fromClass(Subscript.class);
     }
 
 
-    private final static String[] fields = new String[] {"value", "slice",
-                                                          "ctx"};
-@ExposedGet(name = "_fields")
-    public String[] get_fields() { return fields; }
+    private final static PyString[] fields =
+    new PyString[] {new PyString("value"), new PyString("slice"), new PyString("ctx")};
+    @ExposedGet(name = "_fields")
+    public PyString[] get_fields() { return fields; }
+
+    private final static PyString[] attributes = new PyString[0];
+    @ExposedGet(name = "_attributes")
+    public PyString[] get_attributes() { return attributes; }
 
     public Subscript() {
         this(TYPE);
@@ -74,15 +79,14 @@ public static final PyType TYPE = PyType.fromClass(Subscript.class);
     }
     @ExposedNew
     @ExposedMethod
-    public void Module___init__(PyObject[] args, String[] keywords) {}
+    public void Subscript___init__(PyObject[] args, String[] keywords) {}
     public Subscript(PyObject value, PyObject slice, PyObject ctx) {
         setValue(value);
         setSlice(slice);
         setCtx(ctx);
     }
 
-    public Subscript(Token token, exprType value, sliceType slice,
-    expr_contextType ctx) {
+    public Subscript(Token token, exprType value, sliceType slice, expr_contextType ctx) {
         super(token);
         this.value = value;
         addChild(value);
@@ -90,8 +94,8 @@ public static final PyType TYPE = PyType.fromClass(Subscript.class);
         this.ctx = ctx;
     }
 
-    public Subscript(Integer ttype, Token token, exprType value, sliceType
-    slice, expr_contextType ctx) {
+    public Subscript(Integer ttype, Token token, exprType value, sliceType slice, expr_contextType
+    ctx) {
         super(ttype, token);
         this.value = value;
         addChild(value);
@@ -99,8 +103,7 @@ public static final PyType TYPE = PyType.fromClass(Subscript.class);
         this.ctx = ctx;
     }
 
-    public Subscript(PythonTree tree, exprType value, sliceType slice,
-    expr_contextType ctx) {
+    public Subscript(PythonTree tree, exprType value, sliceType slice, expr_contextType ctx) {
         super(tree);
         this.value = value;
         addChild(value);
@@ -144,7 +147,7 @@ public static final PyType TYPE = PyType.fromClass(Subscript.class);
     }
 
     private int lineno = -1;
-@ExposedGet(name = "lineno")
+    @ExposedGet(name = "lineno")
     public int getLineno() {
         if (lineno != -1) {
             return lineno;
@@ -152,13 +155,13 @@ public static final PyType TYPE = PyType.fromClass(Subscript.class);
         return getLine();
     }
 
-@ExposedSet(name = "lineno")
+    @ExposedSet(name = "lineno")
     public void setLineno(int num) {
         lineno = num;
     }
 
     private int col_offset = -1;
-@ExposedGet(name = "col_offset")
+    @ExposedGet(name = "col_offset")
     public int getCol_offset() {
         if (col_offset != -1) {
             return col_offset;
@@ -166,7 +169,7 @@ public static final PyType TYPE = PyType.fromClass(Subscript.class);
         return getCharPositionInLine();
     }
 
-@ExposedSet(name = "col_offset")
+    @ExposedSet(name = "col_offset")
     public void setCol_offset(int num) {
         col_offset = num;
     }

@@ -2,6 +2,7 @@
 package org.python.antlr.ast;
 import org.antlr.runtime.CommonToken;
 import org.antlr.runtime.Token;
+import org.python.antlr.AST;
 import org.python.antlr.PythonTree;
 import org.python.antlr.adapter.AstAdapters;
 import org.python.core.AstList;
@@ -18,7 +19,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@ExposedType(name = "_ast.ClassDef", base = PyObject.class)
+@ExposedType(name = "_ast.ClassDef", base = AST.class)
 public class ClassDef extends stmtType {
 public static final PyType TYPE = PyType.fromClass(ClassDef.class);
     private String name;
@@ -75,11 +76,15 @@ public static final PyType TYPE = PyType.fromClass(ClassDef.class);
     }
 
 
-    private final static String[] fields = new String[] {"name", "bases",
-                                                          "body",
-                                                          "decorator_list"};
-@ExposedGet(name = "_fields")
-    public String[] get_fields() { return fields; }
+    private final static PyString[] fields =
+    new PyString[] {new PyString("name"), new PyString("bases"), new PyString("body"), new
+                     PyString("decorator_list")};
+    @ExposedGet(name = "_fields")
+    public PyString[] get_fields() { return fields; }
+
+    private final static PyString[] attributes = new PyString[0];
+    @ExposedGet(name = "_attributes")
+    public PyString[] get_attributes() { return attributes; }
 
     public ClassDef() {
         this(TYPE);
@@ -89,9 +94,8 @@ public static final PyType TYPE = PyType.fromClass(ClassDef.class);
     }
     @ExposedNew
     @ExposedMethod
-    public void Module___init__(PyObject[] args, String[] keywords) {}
-    public ClassDef(PyObject name, PyObject bases, PyObject body, PyObject
-    decorator_list) {
+    public void ClassDef___init__(PyObject[] args, String[] keywords) {}
+    public ClassDef(PyObject name, PyObject bases, PyObject body, PyObject decorator_list) {
         setName(name);
         setBases(bases);
         setBody(body);
@@ -125,9 +129,8 @@ public static final PyType TYPE = PyType.fromClass(ClassDef.class);
         }
     }
 
-    public ClassDef(Integer ttype, Token token, String name,
-    java.util.List<exprType> bases, java.util.List<stmtType> body,
-    java.util.List<exprType> decorator_list) {
+    public ClassDef(Integer ttype, Token token, String name, java.util.List<exprType> bases,
+    java.util.List<stmtType> body, java.util.List<exprType> decorator_list) {
         super(ttype, token);
         this.name = name;
         this.bases = bases;
@@ -153,9 +156,8 @@ public static final PyType TYPE = PyType.fromClass(ClassDef.class);
         }
     }
 
-    public ClassDef(PythonTree tree, String name, java.util.List<exprType>
-    bases, java.util.List<stmtType> body, java.util.List<exprType>
-    decorator_list) {
+    public ClassDef(PythonTree tree, String name, java.util.List<exprType> bases,
+    java.util.List<stmtType> body, java.util.List<exprType> decorator_list) {
         super(tree);
         this.name = name;
         this.bases = bases;
@@ -230,7 +232,7 @@ public static final PyType TYPE = PyType.fromClass(ClassDef.class);
     }
 
     private int lineno = -1;
-@ExposedGet(name = "lineno")
+    @ExposedGet(name = "lineno")
     public int getLineno() {
         if (lineno != -1) {
             return lineno;
@@ -238,13 +240,13 @@ public static final PyType TYPE = PyType.fromClass(ClassDef.class);
         return getLine();
     }
 
-@ExposedSet(name = "lineno")
+    @ExposedSet(name = "lineno")
     public void setLineno(int num) {
         lineno = num;
     }
 
     private int col_offset = -1;
-@ExposedGet(name = "col_offset")
+    @ExposedGet(name = "col_offset")
     public int getCol_offset() {
         if (col_offset != -1) {
             return col_offset;
@@ -252,7 +254,7 @@ public static final PyType TYPE = PyType.fromClass(ClassDef.class);
         return getCharPositionInLine();
     }
 
-@ExposedSet(name = "col_offset")
+    @ExposedSet(name = "col_offset")
     public void setCol_offset(int num) {
         col_offset = num;
     }

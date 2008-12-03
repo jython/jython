@@ -2,6 +2,7 @@
 package org.python.antlr.ast;
 import org.antlr.runtime.CommonToken;
 import org.antlr.runtime.Token;
+import org.python.antlr.AST;
 import org.python.antlr.PythonTree;
 import org.python.antlr.adapter.AstAdapters;
 import org.python.core.AstList;
@@ -18,7 +19,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@ExposedType(name = "_ast.alias", base = PyObject.class)
+@ExposedType(name = "_ast.alias", base = AST.class)
 public class aliasType extends PythonTree {
     public static final PyType TYPE = PyType.fromClass(aliasType.class);
     private String name;
@@ -50,9 +51,14 @@ public class aliasType extends PythonTree {
     }
 
 
-    private final static String[] fields = new String[] {"name", "asname"};
-@ExposedGet(name = "_fields")
-    public String[] get_fields() { return fields; }
+    private final static PyString[] fields =
+    new PyString[] {new PyString("name"), new PyString("asname")};
+    @ExposedGet(name = "_fields")
+    public PyString[] get_fields() { return fields; }
+
+    private final static PyString[] attributes = new PyString[0];
+    @ExposedGet(name = "_attributes")
+    public PyString[] get_attributes() { return attributes; }
 
     public aliasType() {
         this(TYPE);
@@ -62,7 +68,7 @@ public class aliasType extends PythonTree {
     }
     @ExposedNew
     @ExposedMethod
-    public void Module___init__(PyObject[] args, String[] keywords) {}
+    public void aliasType___init__(PyObject[] args, String[] keywords) {}
     public aliasType(PyObject name, PyObject asname) {
         setName(name);
         setAsname(asname);

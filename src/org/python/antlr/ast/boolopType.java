@@ -7,5 +7,4 @@ public enum boolopType {
     UNDEFINED,
     And,
     Or;
-    public boolopType __call__() { return this; }
 }
