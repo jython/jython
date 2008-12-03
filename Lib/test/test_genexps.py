@@ -1,9 +1,8 @@
-#From http://svn.python.org/projects/python/branches/release25-maint/Lib/test_genexps.py@51333
+# From http://svn.python.org/projects/python/branches/release25-maint/Lib/test_genexps.py@51333
 
-#Ignoring details of SyntaxError for now -- justified I think for "invalid
+# Ignoring details of SyntaxError for now -- justified I think for "invalid
 # syntax" since that #message has very little info, where Antlr provides more
-# detail.  The others really are #differences that should be addressed, but I
-# want to concentrate on the other errors for now.
+# detail.
 
 doctests = """
 

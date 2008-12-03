@@ -24,6 +24,13 @@ if not "%_TRIMMED_JAVA_HOME%"=="" (
    set _JAVA_CMD="%JAVA_HOME:"=%\bin\java"
 )
 
+rem remove surrounding quotes from jython opts, to be able to safely empty-test it
+set _TRIMMED_JYTHON_OPTS=%JYTHON_OPTS%
+for /f "useback tokens=*" %%a in ('%_TRIMMED_JYTHON_OPTS%') do set _TRIMMED_JYTHON_OPTS=%%~a
+if not "%_TRIMMED_JYTHON_OPTS%"=="" (
+   set _JYTHON_OPTS="%_TRIMMED_JYTHON_OPTS%"
+)
+
 rem remove surrounding quotes from jython home, to be able to safely empty-test it
 set _TRIMMED_JYTHON_HOME=%JYTHON_HOME%
 for /f "useback tokens=*" %%a in ('%_TRIMMED_JYTHON_HOME%') do set _TRIMMED_JYTHON_HOME=%%~a
@@ -31,9 +38,22 @@ if not "%_TRIMMED_JYTHON_HOME%"=="" (
    set _JYTHON_HOME="%_TRIMMED_JYTHON_HOME%"
    goto gotHome
 )
+
+rem try to dynamically determine jython home
+rem (this script typically resides in jython home, or in the /bin subdirectory)
+pushd "%~dp0%"
+set _JYTHON_HOME="%CD%"
+popd
+if exist %_JYTHON_HOME%\jython.jar goto gotHome
+if exist %_JYTHON_HOME%\jython-complete.jar goto gotHome
 pushd "%~dp0%\.."
 set _JYTHON_HOME="%CD%"
 popd
+if exist %_JYTHON_HOME%\jython.jar goto gotHome
+if exist %_JYTHON_HOME%\jython-complete.jar goto gotHome
+rem jython home fallback (if all else fails)
+rem if present, %JYTHON_HOME_FALLBACK% is already quoted
+set _JYTHON_HOME=%JYTHON_HOME_FALLBACK%
 
 :gotHome
 if not exist %_JYTHON_HOME%\jython.jar goto tryComplete
@@ -49,7 +69,7 @@ set _CP=%_JYTHON_HOME%\jython-complete.jar
 if exist %_JYTHON_HOME%/jython-complete.jar goto run
 
 echo Cannot find jython.jar or jython-complete.jar in %_JYTHON_HOME%
-echo Try running this batch file from the 'bin' directory of an installed Jython
+echo Try running this batch file from the 'bin' directory of an installed Jython,
 echo or setting JYTHON_HOME.
 goto cleanup
 
@@ -68,6 +88,7 @@ set _ARGS=%_ARGS:'=_S%
 set _ARGS=%_ARGS:"=_D%
 
 set _ARGS="%_ARGS%"
+set _JYTHON_ARGS=
 
 :scanArgs
 rem split args by spaces into first and rest
@@ -121,7 +142,7 @@ rem removing quote avoids a batch syntax error
 if "%_CMP2:"=\\%" == "-J" goto jvmArg
 
 :jythonArg
-set JYTHON_OPTS=%JYTHON_OPTS% %_CMP%
+set _JYTHON_ARGS=%_JYTHON_ARGS% %_CMP%
 goto nextArg
 
 :jvmArg
@@ -140,7 +161,7 @@ set _CMP=
 goto scanArgs
 
 :argsDone
-%_JAVA_CMD% %_JAVA_OPTS% %_JAVA_STACK% -Xbootclasspath/a:%_CP% -Dpython.home=%_JYTHON_HOME% -Dpython.executable="%~f0" -classpath "%CLASSPATH%" org.python.util.jython %JYTHON_OPTS% %_ARGS%
+%_JAVA_CMD% %_JAVA_OPTS% %_JAVA_STACK% -Xbootclasspath/a:%_CP% -Dpython.home=%_JYTHON_HOME% -Dpython.executable="%~f0" -classpath "%CLASSPATH%" org.python.util.jython %_JYTHON_OPTS% %_JYTHON_ARGS% %_ARGS%
 set E=%ERRORLEVEL%
 
 :cleanup
@@ -153,8 +174,11 @@ set _JAVA_CMD=
 set _JAVA_OPTS=
 set _JAVA_STACK=
 set _JYTHON_HOME=
+set _JYTHON_OPTS=
+set _JYTHON_ARGS=
 set _TRIMMED_JAVA_HOME=
 set _TRIMMED_JYTHON_HOME=
+set _TRIMMED_JYTHON_OPTS=
 
 :finish
 exit /b %E%

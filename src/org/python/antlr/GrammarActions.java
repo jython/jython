@@ -2,7 +2,6 @@ package org.python.antlr;
 
 import org.antlr.runtime.CommonToken;
 import org.antlr.runtime.Token;
-import org.antlr.runtime.tree.Tree;
 
 import org.python.core.Py;
 import org.python.core.PyComplex;

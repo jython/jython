@@ -2180,7 +2180,6 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
     @Override
     public Object visitGeneratorExp(GeneratorExp node) throws Exception {
         String bound_exp = "_(x)";
-        String tmp_append ="_(" + node.getLine() + "_" + node.getCharPositionInLine() + ")";
 
         setline(node);
 
@@ -2220,7 +2219,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
 
         java.util.List<stmtType> bod = new ArrayList<stmtType>();
         bod.add(n);
-        module.PyCode(new Suite(node, bod), tmp_append, true,
+        module.PyCode(new Suite(node, bod), "<genexpr>", true,
                       className, false, false,
                       node.getLine(), scope, cflags).get(code);
 
@@ -2230,18 +2229,14 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         } else {
             code.invokespecial( "org/python/core/PyFunction", "<init>", "(" + $pyObj + $pyObjArr + $pyCode + $pyObj + $pyObjArr + ")V");
         }
-
-        set(new Name(node, tmp_append, expr_contextType.Store));
+        int genExp = storeTop();
 
         visit(iter);
-        visit(new Name(node, tmp_append, expr_contextType.Load));
+        code.aload(genExp);
+        code.freeLocal(genExp);
         code.swap();
         code.invokevirtual("org/python/core/PyObject", "__iter__", "()Lorg/python/core/PyObject;");
         code.invokevirtual("org/python/core/PyObject", "__call__", "(" + $pyObj + ")" + $pyObj);
-
-        java.util.List<exprType> targets = new ArrayList<exprType>();
-        targets.add(new Name(n, tmp_append, expr_contextType.Del));
-        visit(new Delete(n, targets));
 
         return null;
     }

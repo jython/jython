@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PythonTree extends AST {
-
     public boolean from_future_checked = false;
     private int charStartIndex = -1;
     private int charStopIndex = -1;
@@ -449,5 +448,4 @@ public class PythonTree extends AST {
 			child.setParent(this);
 		}
 	}
-
 }

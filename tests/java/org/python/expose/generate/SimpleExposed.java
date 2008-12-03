@@ -123,6 +123,11 @@ public class SimpleExposed extends PyObject {
         return 'a';
     }
 
+    @ExposedMethod
+    public String stringReturnNull() {
+        return null;
+    }
+
     @ExposedClassMethod 
     public static char classmethod(PyType onType) {
         return 'a';
