@@ -5,6 +5,7 @@ import org.antlr.runtime.Token;
 import org.python.antlr.AST;
 import org.python.antlr.PythonTree;
 import org.python.antlr.adapter.AstAdapters;
+import org.python.core.ArgParser;
 import org.python.core.AstList;
 import org.python.core.Py;
 import org.python.core.PyObject;
@@ -67,7 +68,13 @@ public static final PyType TYPE = PyType.fromClass(TryFinally.class);
     }
     @ExposedNew
     @ExposedMethod
-    public void TryFinally___init__(PyObject[] args, String[] keywords) {}
+    public void TryFinally___init__(PyObject[] args, String[] keywords) {
+        ArgParser ap = new ArgParser("TryFinally", args, keywords, new String[]
+            {"body", "finalbody"}, 2);
+        setBody(ap.getPyObject(0));
+        setFinalbody(ap.getPyObject(1));
+    }
+
     public TryFinally(PyObject body, PyObject finalbody) {
         setBody(body);
         setFinalbody(finalbody);

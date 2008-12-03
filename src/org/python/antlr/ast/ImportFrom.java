@@ -5,6 +5,7 @@ import org.antlr.runtime.Token;
 import org.python.antlr.AST;
 import org.python.antlr.PythonTree;
 import org.python.antlr.adapter.AstAdapters;
+import org.python.core.ArgParser;
 import org.python.core.AstList;
 import org.python.core.Py;
 import org.python.core.PyObject;
@@ -81,7 +82,14 @@ public static final PyType TYPE = PyType.fromClass(ImportFrom.class);
     }
     @ExposedNew
     @ExposedMethod
-    public void ImportFrom___init__(PyObject[] args, String[] keywords) {}
+    public void ImportFrom___init__(PyObject[] args, String[] keywords) {
+        ArgParser ap = new ArgParser("ImportFrom", args, keywords, new String[]
+            {"module", "names", "level"}, 3);
+        setModule(ap.getPyObject(0));
+        setNames(ap.getPyObject(1));
+        setLevel(ap.getPyObject(2));
+    }
+
     public ImportFrom(PyObject module, PyObject names, PyObject level) {
         setModule(module);
         setNames(names);

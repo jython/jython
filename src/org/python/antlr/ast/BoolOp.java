@@ -5,6 +5,7 @@ import org.antlr.runtime.Token;
 import org.python.antlr.AST;
 import org.python.antlr.PythonTree;
 import org.python.antlr.adapter.AstAdapters;
+import org.python.core.ArgParser;
 import org.python.core.AstList;
 import org.python.core.Py;
 import org.python.core.PyObject;
@@ -67,7 +68,13 @@ public static final PyType TYPE = PyType.fromClass(BoolOp.class);
     }
     @ExposedNew
     @ExposedMethod
-    public void BoolOp___init__(PyObject[] args, String[] keywords) {}
+    public void BoolOp___init__(PyObject[] args, String[] keywords) {
+        ArgParser ap = new ArgParser("BoolOp", args, keywords, new String[]
+            {"op", "values"}, 2);
+        setOp(ap.getPyObject(0));
+        setValues(ap.getPyObject(1));
+    }
+
     public BoolOp(PyObject op, PyObject values) {
         setOp(op);
         setValues(values);

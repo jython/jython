@@ -5,6 +5,7 @@ import org.antlr.runtime.Token;
 import org.python.antlr.AST;
 import org.python.antlr.PythonTree;
 import org.python.antlr.adapter.AstAdapters;
+import org.python.core.ArgParser;
 import org.python.core.AstList;
 import org.python.core.Py;
 import org.python.core.PyObject;
@@ -81,7 +82,14 @@ public static final PyType TYPE = PyType.fromClass(Attribute.class);
     }
     @ExposedNew
     @ExposedMethod
-    public void Attribute___init__(PyObject[] args, String[] keywords) {}
+    public void Attribute___init__(PyObject[] args, String[] keywords) {
+        ArgParser ap = new ArgParser("Attribute", args, keywords, new String[]
+            {"value", "attr", "ctx"}, 3);
+        setValue(ap.getPyObject(0));
+        setAttr(ap.getPyObject(1));
+        setCtx(ap.getPyObject(2));
+    }
+
     public Attribute(PyObject value, PyObject attr, PyObject ctx) {
         setValue(value);
         setAttr(attr);

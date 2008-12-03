@@ -1,5 +1,6 @@
 package org.python.antlr.ast;
 
+import org.python.core.AstList;
 import org.python.core.ClassDictInit;
 import org.python.core.imp;
 import org.python.core.Py;
@@ -21,6 +22,8 @@ public class AstModule implements ClassDictInit {
         dict.__setitem__("__name__", new PyString("_ast"));
         dict.__setitem__("__version__", new PyString("62047"));
         dict.__setitem__("PyCF_ONLY_AST", new PyInteger(PyTableCode.PyCF_ONLY_AST));
+
+        dict.__setitem__("astlist", AstList.TYPE);
 
         dict.__setitem__("AST", AST.TYPE);
         dict.__setitem__("Module", Module.TYPE);

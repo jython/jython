@@ -5,6 +5,7 @@ import org.antlr.runtime.Token;
 import org.python.antlr.AST;
 import org.python.antlr.PythonTree;
 import org.python.antlr.adapter.AstAdapters;
+import org.python.core.ArgParser;
 import org.python.core.AstList;
 import org.python.core.Py;
 import org.python.core.PyObject;
@@ -81,7 +82,14 @@ public static final PyType TYPE = PyType.fromClass(With.class);
     }
     @ExposedNew
     @ExposedMethod
-    public void With___init__(PyObject[] args, String[] keywords) {}
+    public void With___init__(PyObject[] args, String[] keywords) {
+        ArgParser ap = new ArgParser("With", args, keywords, new String[]
+            {"context_expr", "optional_vars", "body"}, 3);
+        setContext_expr(ap.getPyObject(0));
+        setOptional_vars(ap.getPyObject(1));
+        setBody(ap.getPyObject(2));
+    }
+
     public With(PyObject context_expr, PyObject optional_vars, PyObject body) {
         setContext_expr(context_expr);
         setOptional_vars(optional_vars);

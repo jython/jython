@@ -5,6 +5,7 @@ import org.antlr.runtime.Token;
 import org.python.antlr.AST;
 import org.python.antlr.PythonTree;
 import org.python.antlr.adapter.AstAdapters;
+import org.python.core.ArgParser;
 import org.python.core.AstList;
 import org.python.core.Py;
 import org.python.core.PyObject;
@@ -80,7 +81,14 @@ public static final PyType TYPE = PyType.fromClass(Compare.class);
     }
     @ExposedNew
     @ExposedMethod
-    public void Compare___init__(PyObject[] args, String[] keywords) {}
+    public void Compare___init__(PyObject[] args, String[] keywords) {
+        ArgParser ap = new ArgParser("Compare", args, keywords, new String[]
+            {"left", "ops", "comparators"}, 3);
+        setLeft(ap.getPyObject(0));
+        setOps(ap.getPyObject(1));
+        setComparators(ap.getPyObject(2));
+    }
+
     public Compare(PyObject left, PyObject ops, PyObject comparators) {
         setLeft(left);
         setOps(ops);

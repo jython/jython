@@ -5,6 +5,7 @@ import org.antlr.runtime.Token;
 import org.python.antlr.AST;
 import org.python.antlr.PythonTree;
 import org.python.antlr.adapter.AstAdapters;
+import org.python.core.ArgParser;
 import org.python.core.AstList;
 import org.python.core.Py;
 import org.python.core.PyObject;
@@ -80,7 +81,14 @@ public static final PyType TYPE = PyType.fromClass(Exec.class);
     }
     @ExposedNew
     @ExposedMethod
-    public void Exec___init__(PyObject[] args, String[] keywords) {}
+    public void Exec___init__(PyObject[] args, String[] keywords) {
+        ArgParser ap = new ArgParser("Exec", args, keywords, new String[]
+            {"body", "globals", "locals"}, 3);
+        setBody(ap.getPyObject(0));
+        setGlobals(ap.getPyObject(1));
+        setLocals(ap.getPyObject(2));
+    }
+
     public Exec(PyObject body, PyObject globals, PyObject locals) {
         setBody(body);
         setGlobals(globals);

@@ -5,6 +5,7 @@ import org.antlr.runtime.Token;
 import org.python.antlr.AST;
 import org.python.antlr.PythonTree;
 import org.python.antlr.adapter.AstAdapters;
+import org.python.core.ArgParser;
 import org.python.core.AstList;
 import org.python.core.Py;
 import org.python.core.PyObject;
@@ -79,7 +80,14 @@ public class comprehensionType extends PythonTree {
     }
     @ExposedNew
     @ExposedMethod
-    public void comprehensionType___init__(PyObject[] args, String[] keywords) {}
+    public void comprehensionType___init__(PyObject[] args, String[] keywords) {
+        ArgParser ap = new ArgParser("comprehensionType", args, keywords, new String[]
+            {"target", "iter", "ifs"}, 3);
+        setTarget(ap.getPyObject(0));
+        setIter(ap.getPyObject(1));
+        setIfs(ap.getPyObject(2));
+    }
+
     public comprehensionType(PyObject target, PyObject iter, PyObject ifs) {
         setTarget(target);
         setIter(iter);

@@ -253,10 +253,10 @@ class ASTHelpers_Test(unittest.TestCase):
         node = ast.parse("spam(23, 42, eggs='leek')", mode='eval')
         self.assertEqual(len(list(ast.iter_child_nodes(node.body))), 4)
         iterator = ast.iter_child_nodes(node.body)
-        self.assertEqual(next(iterator).id, 'spam')
-        self.assertEqual(next(iterator).n, 23)
-        self.assertEqual(next(iterator).n, 42)
-        self.assertEqual(ast.dump(next(iterator)),
+        self.assertEqual(iterator.next().id, 'spam')
+        self.assertEqual(iterator.next().n, 23)
+        self.assertEqual(iterator.next().n, 42)
+        self.assertEqual(ast.dump(iterator.next()),
             "keyword(arg='eggs', value=Str(s='leek'))"
         )
 

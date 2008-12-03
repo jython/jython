@@ -50,6 +50,9 @@ public class AstList extends PySequence implements Cloneable, List {
 
     public AstList(PyType type, List data, AstAdapter adapter) {
         super(TYPE);
+        if (data == null) {
+            data = new ArrayList();
+        }
         this.data = data;
         this.adapter = adapter;
     }

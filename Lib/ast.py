@@ -32,7 +32,7 @@ from _ast import __version__
 if sys.platform.startswith('java'):
     import java.util.List
 
-    ast_list = java.util.List
+    ast_list = astlist
         
     def get_class_name(t):
         result = t.__class__.__name__

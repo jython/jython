@@ -5,6 +5,7 @@ import org.antlr.runtime.Token;
 import org.python.antlr.AST;
 import org.python.antlr.PythonTree;
 import org.python.antlr.adapter.AstAdapters;
+import org.python.core.ArgParser;
 import org.python.core.AstList;
 import org.python.core.Py;
 import org.python.core.PyObject;
@@ -80,7 +81,14 @@ public static final PyType TYPE = PyType.fromClass(Subscript.class);
     }
     @ExposedNew
     @ExposedMethod
-    public void Subscript___init__(PyObject[] args, String[] keywords) {}
+    public void Subscript___init__(PyObject[] args, String[] keywords) {
+        ArgParser ap = new ArgParser("Subscript", args, keywords, new String[]
+            {"value", "slice", "ctx"}, 3);
+        setValue(ap.getPyObject(0));
+        setSlice(ap.getPyObject(1));
+        setCtx(ap.getPyObject(2));
+    }
+
     public Subscript(PyObject value, PyObject slice, PyObject ctx) {
         setValue(value);
         setSlice(slice);

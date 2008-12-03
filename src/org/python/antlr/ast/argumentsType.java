@@ -5,6 +5,7 @@ import org.antlr.runtime.Token;
 import org.python.antlr.AST;
 import org.python.antlr.PythonTree;
 import org.python.antlr.adapter.AstAdapters;
+import org.python.core.ArgParser;
 import org.python.core.AstList;
 import org.python.core.Py;
 import org.python.core.PyObject;
@@ -95,7 +96,15 @@ public class argumentsType extends PythonTree {
     }
     @ExposedNew
     @ExposedMethod
-    public void argumentsType___init__(PyObject[] args, String[] keywords) {}
+    public void argumentsType___init__(PyObject[] args, String[] keywords) {
+        ArgParser ap = new ArgParser("argumentsType", args, keywords, new String[]
+            {"args", "vararg", "kwarg", "defaults"}, 4);
+        setArgs(ap.getPyObject(0));
+        setVararg(ap.getPyObject(1));
+        setKwarg(ap.getPyObject(2));
+        setDefaults(ap.getPyObject(3));
+    }
+
     public argumentsType(PyObject args, PyObject vararg, PyObject kwarg, PyObject defaults) {
         setArgs(args);
         setVararg(vararg);

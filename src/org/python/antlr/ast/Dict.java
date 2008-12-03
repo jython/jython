@@ -5,6 +5,7 @@ import org.antlr.runtime.Token;
 import org.python.antlr.AST;
 import org.python.antlr.PythonTree;
 import org.python.antlr.adapter.AstAdapters;
+import org.python.core.ArgParser;
 import org.python.core.AstList;
 import org.python.core.Py;
 import org.python.core.PyObject;
@@ -67,7 +68,13 @@ public static final PyType TYPE = PyType.fromClass(Dict.class);
     }
     @ExposedNew
     @ExposedMethod
-    public void Dict___init__(PyObject[] args, String[] keywords) {}
+    public void Dict___init__(PyObject[] args, String[] keywords) {
+        ArgParser ap = new ArgParser("Dict", args, keywords, new String[]
+            {"keys", "values"}, 2);
+        setKeys(ap.getPyObject(0));
+        setValues(ap.getPyObject(1));
+    }
+
     public Dict(PyObject keys, PyObject values) {
         setKeys(keys);
         setValues(values);

@@ -20,15 +20,14 @@ import java.util.List;
 public class ExprAdapter implements AstAdapter {
         
     public Object py2ast(PyObject o) {
-        if (o == null) {
-            return o;
-        }
-        if (o instanceof exprType) {
+        if (o == null || o instanceof exprType) {
             return o;
         } else if (o instanceof PyInteger || o instanceof PyLong || o instanceof PyFloat || o instanceof PyComplex) {
             return new Num(o);
         } else if (o instanceof PyString || o instanceof PyUnicode) {
             return new Str(o);
+        } else if (o == Py.None) {
+            return null;
         }
 
         //FIXME: investigate the right exception

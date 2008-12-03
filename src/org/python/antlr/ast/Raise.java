@@ -5,6 +5,7 @@ import org.antlr.runtime.Token;
 import org.python.antlr.AST;
 import org.python.antlr.PythonTree;
 import org.python.antlr.adapter.AstAdapters;
+import org.python.core.ArgParser;
 import org.python.core.AstList;
 import org.python.core.Py;
 import org.python.core.PyObject;
@@ -80,7 +81,14 @@ public static final PyType TYPE = PyType.fromClass(Raise.class);
     }
     @ExposedNew
     @ExposedMethod
-    public void Raise___init__(PyObject[] args, String[] keywords) {}
+    public void Raise___init__(PyObject[] args, String[] keywords) {
+        ArgParser ap = new ArgParser("Raise", args, keywords, new String[]
+            {"excepttype", "inst", "tback"}, 3);
+        setExcepttype(ap.getPyObject(0));
+        setInst(ap.getPyObject(1));
+        setTback(ap.getPyObject(2));
+    }
+
     public Raise(PyObject excepttype, PyObject inst, PyObject tback) {
         setExcepttype(excepttype);
         setInst(inst);

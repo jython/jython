@@ -5,6 +5,7 @@ import org.antlr.runtime.Token;
 import org.python.antlr.AST;
 import org.python.antlr.PythonTree;
 import org.python.antlr.adapter.AstAdapters;
+import org.python.core.ArgParser;
 import org.python.core.AstList;
 import org.python.core.Py;
 import org.python.core.PyObject;
@@ -107,7 +108,16 @@ public static final PyType TYPE = PyType.fromClass(Call.class);
     }
     @ExposedNew
     @ExposedMethod
-    public void Call___init__(PyObject[] args, String[] keywords) {}
+    public void Call___init__(PyObject[] args, String[] keywords) {
+        ArgParser ap = new ArgParser("Call", args, keywords, new String[]
+            {"func", "args", "keywords", "starargs", "kwargs"}, 5);
+        setFunc(ap.getPyObject(0));
+        setArgs(ap.getPyObject(1));
+        setKeywords(ap.getPyObject(2));
+        setStarargs(ap.getPyObject(3));
+        setKwargs(ap.getPyObject(4));
+    }
+
     public Call(PyObject func, PyObject args, PyObject keywords, PyObject starargs, PyObject
     kwargs) {
         setFunc(func);

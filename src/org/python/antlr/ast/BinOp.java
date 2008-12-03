@@ -5,6 +5,7 @@ import org.antlr.runtime.Token;
 import org.python.antlr.AST;
 import org.python.antlr.PythonTree;
 import org.python.antlr.adapter.AstAdapters;
+import org.python.core.ArgParser;
 import org.python.core.AstList;
 import org.python.core.Py;
 import org.python.core.PyObject;
@@ -80,7 +81,14 @@ public static final PyType TYPE = PyType.fromClass(BinOp.class);
     }
     @ExposedNew
     @ExposedMethod
-    public void BinOp___init__(PyObject[] args, String[] keywords) {}
+    public void BinOp___init__(PyObject[] args, String[] keywords) {
+        ArgParser ap = new ArgParser("BinOp", args, keywords, new String[]
+            {"left", "op", "right"}, 3);
+        setLeft(ap.getPyObject(0));
+        setOp(ap.getPyObject(1));
+        setRight(ap.getPyObject(2));
+    }
+
     public BinOp(PyObject left, PyObject op, PyObject right) {
         setLeft(left);
         setOp(op);

@@ -5,6 +5,7 @@ import org.antlr.runtime.Token;
 import org.python.antlr.AST;
 import org.python.antlr.PythonTree;
 import org.python.antlr.adapter.AstAdapters;
+import org.python.core.ArgParser;
 import org.python.core.AstList;
 import org.python.core.Py;
 import org.python.core.PyObject;
@@ -95,7 +96,15 @@ public static final PyType TYPE = PyType.fromClass(ClassDef.class);
     }
     @ExposedNew
     @ExposedMethod
-    public void ClassDef___init__(PyObject[] args, String[] keywords) {}
+    public void ClassDef___init__(PyObject[] args, String[] keywords) {
+        ArgParser ap = new ArgParser("ClassDef", args, keywords, new String[]
+            {"name", "bases", "body", "decorator_list"}, 4);
+        setName(ap.getPyObject(0));
+        setBases(ap.getPyObject(1));
+        setBody(ap.getPyObject(2));
+        setDecorator_list(ap.getPyObject(3));
+    }
+
     public ClassDef(PyObject name, PyObject bases, PyObject body, PyObject decorator_list) {
         setName(name);
         setBases(bases);

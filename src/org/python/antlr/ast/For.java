@@ -5,6 +5,7 @@ import org.antlr.runtime.Token;
 import org.python.antlr.AST;
 import org.python.antlr.PythonTree;
 import org.python.antlr.adapter.AstAdapters;
+import org.python.core.ArgParser;
 import org.python.core.AstList;
 import org.python.core.Py;
 import org.python.core.PyObject;
@@ -94,7 +95,15 @@ public static final PyType TYPE = PyType.fromClass(For.class);
     }
     @ExposedNew
     @ExposedMethod
-    public void For___init__(PyObject[] args, String[] keywords) {}
+    public void For___init__(PyObject[] args, String[] keywords) {
+        ArgParser ap = new ArgParser("For", args, keywords, new String[]
+            {"target", "iter", "body", "orelse"}, 4);
+        setTarget(ap.getPyObject(0));
+        setIter(ap.getPyObject(1));
+        setBody(ap.getPyObject(2));
+        setOrelse(ap.getPyObject(3));
+    }
+
     public For(PyObject target, PyObject iter, PyObject body, PyObject orelse) {
         setTarget(target);
         setIter(iter);

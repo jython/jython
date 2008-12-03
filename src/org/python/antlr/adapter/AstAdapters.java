@@ -101,11 +101,9 @@ public class AstAdapters {
         return (stmtType)stmtAdapter.py2ast(o);
     }
 
-    public static String py2string(Object o) {
-        if (o == null || o instanceof String) {
-            return (String)o;
-        } else if (o instanceof PyString) {
-            return ((PyObject)o).toString();
+    public static Object py2string(Object o) {
+        if (o == null || o instanceof PyString) {
+            return o;
         }
         //FIXME: investigate the right exception
         throw Py.TypeError("Can't convert " + o.getClass().getName() + " to string node");

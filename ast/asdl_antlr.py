@@ -61,6 +61,7 @@ class EmitVisitor(asdl.VisitorBase):
             print >> self.file, 'import org.python.antlr.AST;'
             print >> self.file, 'import org.python.antlr.PythonTree;'
             print >> self.file, 'import org.python.antlr.adapter.AstAdapters;'
+            print >> self.file, 'import org.python.core.ArgParser;'
             print >> self.file, 'import org.python.core.AstList;'
             print >> self.file, 'import org.python.core.Py;'
             print >> self.file, 'import org.python.core.PyObject;'
@@ -463,9 +464,19 @@ class JavaVisitor(EmitVisitor):
             self.emit("super(subType);", depth + 1)
             self.emit("}", depth)
 
+            fpargs = ", ".join(['"%s"' % f.name for f in fields])
             self.emit("@ExposedNew", depth)
             self.emit("@ExposedMethod", depth)
-            self.emit("public void %s___init__(PyObject[] args, String[] keywords) {}" % ctorname, depth)
+            self.emit("public void %s___init__(PyObject[] args, String[] keywords) {" % ctorname, depth)
+            self.emit('ArgParser ap = new ArgParser("%s", args, keywords, new String[]' % ctorname, depth + 1)
+            self.emit('{%s}, %s);' % (fpargs, len(fields)), depth + 2)
+            i = 0
+            for f in fields:
+                self.emit("set%s(ap.getPyObject(%s));" % (str(f.name).capitalize(),
+                    str(i)), depth+1)
+                i += 1
+            self.emit("}", depth)
+            self.emit("", 0)
 
             fpargs = ", ".join(["PyObject %s" % f.name for f in fields])
             self.emit("public %s(%s) {" % (ctorname, fpargs), depth)

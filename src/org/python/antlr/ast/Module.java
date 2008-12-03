@@ -5,6 +5,7 @@ import org.antlr.runtime.Token;
 import org.python.antlr.AST;
 import org.python.antlr.PythonTree;
 import org.python.antlr.adapter.AstAdapters;
+import org.python.core.ArgParser;
 import org.python.core.AstList;
 import org.python.core.Py;
 import org.python.core.PyObject;
@@ -53,7 +54,12 @@ public static final PyType TYPE = PyType.fromClass(Module.class);
     }
     @ExposedNew
     @ExposedMethod
-    public void Module___init__(PyObject[] args, String[] keywords) {}
+    public void Module___init__(PyObject[] args, String[] keywords) {
+        ArgParser ap = new ArgParser("Module", args, keywords, new String[]
+            {"body"}, 1);
+        setBody(ap.getPyObject(0));
+    }
+
     public Module(PyObject body) {
         setBody(body);
     }

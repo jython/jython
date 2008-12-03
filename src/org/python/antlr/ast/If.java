@@ -5,6 +5,7 @@ import org.antlr.runtime.Token;
 import org.python.antlr.AST;
 import org.python.antlr.PythonTree;
 import org.python.antlr.adapter.AstAdapters;
+import org.python.core.ArgParser;
 import org.python.core.AstList;
 import org.python.core.Py;
 import org.python.core.PyObject;
@@ -80,7 +81,14 @@ public static final PyType TYPE = PyType.fromClass(If.class);
     }
     @ExposedNew
     @ExposedMethod
-    public void If___init__(PyObject[] args, String[] keywords) {}
+    public void If___init__(PyObject[] args, String[] keywords) {
+        ArgParser ap = new ArgParser("If", args, keywords, new String[]
+            {"test", "body", "orelse"}, 3);
+        setTest(ap.getPyObject(0));
+        setBody(ap.getPyObject(1));
+        setOrelse(ap.getPyObject(2));
+    }
+
     public If(PyObject test, PyObject body, PyObject orelse) {
         setTest(test);
         setBody(body);

@@ -5,6 +5,7 @@ import org.antlr.runtime.Token;
 import org.python.antlr.AST;
 import org.python.antlr.PythonTree;
 import org.python.antlr.adapter.AstAdapters;
+import org.python.core.ArgParser;
 import org.python.core.AstList;
 import org.python.core.Py;
 import org.python.core.PyObject;
@@ -81,7 +82,14 @@ public static final PyType TYPE = PyType.fromClass(Print.class);
     }
     @ExposedNew
     @ExposedMethod
-    public void Print___init__(PyObject[] args, String[] keywords) {}
+    public void Print___init__(PyObject[] args, String[] keywords) {
+        ArgParser ap = new ArgParser("Print", args, keywords, new String[]
+            {"dest", "values", "nl"}, 3);
+        setDest(ap.getPyObject(0));
+        setValues(ap.getPyObject(1));
+        setNl(ap.getPyObject(2));
+    }
+
     public Print(PyObject dest, PyObject values, PyObject nl) {
         setDest(dest);
         setValues(values);

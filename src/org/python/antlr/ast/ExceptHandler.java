@@ -5,6 +5,7 @@ import org.antlr.runtime.Token;
 import org.python.antlr.AST;
 import org.python.antlr.PythonTree;
 import org.python.antlr.adapter.AstAdapters;
+import org.python.core.ArgParser;
 import org.python.core.AstList;
 import org.python.core.Py;
 import org.python.core.PyObject;
@@ -80,7 +81,14 @@ public static final PyType TYPE = PyType.fromClass(ExceptHandler.class);
     }
     @ExposedNew
     @ExposedMethod
-    public void ExceptHandler___init__(PyObject[] args, String[] keywords) {}
+    public void ExceptHandler___init__(PyObject[] args, String[] keywords) {
+        ArgParser ap = new ArgParser("ExceptHandler", args, keywords, new String[]
+            {"excepttype", "name", "body"}, 3);
+        setExcepttype(ap.getPyObject(0));
+        setName(ap.getPyObject(1));
+        setBody(ap.getPyObject(2));
+    }
+
     public ExceptHandler(PyObject excepttype, PyObject name, PyObject body) {
         setExcepttype(excepttype);
         setName(name);

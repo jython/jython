@@ -5,6 +5,7 @@ import org.antlr.runtime.Token;
 import org.python.antlr.AST;
 import org.python.antlr.PythonTree;
 import org.python.antlr.adapter.AstAdapters;
+import org.python.core.ArgParser;
 import org.python.core.AstList;
 import org.python.core.Py;
 import org.python.core.PyObject;
@@ -79,7 +80,14 @@ public static final PyType TYPE = PyType.fromClass(Slice.class);
     }
     @ExposedNew
     @ExposedMethod
-    public void Slice___init__(PyObject[] args, String[] keywords) {}
+    public void Slice___init__(PyObject[] args, String[] keywords) {
+        ArgParser ap = new ArgParser("Slice", args, keywords, new String[]
+            {"lower", "upper", "step"}, 3);
+        setLower(ap.getPyObject(0));
+        setUpper(ap.getPyObject(1));
+        setStep(ap.getPyObject(2));
+    }
+
     public Slice(PyObject lower, PyObject upper, PyObject step) {
         setLower(lower);
         setUpper(upper);
