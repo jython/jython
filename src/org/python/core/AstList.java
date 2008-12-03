@@ -515,7 +515,10 @@ public class AstList extends PySequence implements Cloneable, List {
     }
 
     public PyObject pyget(int index) {
-        return (PyObject)data.get(index);
+        if (adapter == null) {
+            return (PyObject)data.get(index);
+        }
+        return adapter.ast2py(data.get(index));
     }
 
     public PyObject pyset(int index, PyObject element) {

@@ -2,27 +2,12 @@
 import sys,os, itertools
 import ast
 
-def get_class_name(t):
-    result = t.__class__.__name__
-    if os.name.startswith('java'):
-        if result in ("expr_contextType",
-                "boolopType",
-                "unaryopType",
-                "cmpopType",
-                "operatorType"):
-            result = t.name()
-        else:
-            result = result.split(".")[-1]
-            if result.endswith("Type"):
-                result = result[:-4]
-    return result
-
 def to_tuple(t):
     if t is None or isinstance(t, (basestring, int, long, complex)):
         return t
     elif hasattr(t, '__iter__'):
         return [to_tuple(e) for e in t]
-    result = [get_class_name(t)]
+    result = [t.__class__.__name__]
     if hasattr(t, 'lineno') and hasattr(t, 'col_offset'):
         result.append((t.lineno, t.col_offset))
     if not hasattr(t, '_fields') or t._fields is None:
@@ -186,11 +171,11 @@ exec_results = [
 ('Module', [('While', (1, 0), ('Name', (1, 6), 'v', ('Load',)), [('Pass', (1, 8))], [])]),
 ('Module', [('If', (1, 0), ('Name', (1, 3), 'v', ('Load',)), [('Pass', (1, 5))], [])]),
 ('Module', [('Raise', (1, 0), ('Name', (1, 6), 'Exception', ('Load',)), ('Str', (1, 17), 'string'), None)]),
-('Module', [('TryExcept', (1, 0), [('Pass', (2, 2))], [('excepthandler', (3, 0), ('Name', (3, 7), 'Exception', ('Load',)), None, [('Pass', (4, 2))], 3, 0)], [])]),
+('Module', [('TryExcept', (1, 0), [('Pass', (2, 2))], [('ExceptHandler', (3, 0), ('Name', (3, 7), 'Exception', ('Load',)), None, [('Pass', (4, 2))])], [])]),
 ('Module', [('TryFinally', (1, 0), [('Pass', (2, 2))], [('Pass', (4, 2))])]),
 ('Module', [('Assert', (1, 0), ('Name', (1, 7), 'v', ('Load',)), None)]),
-('Module', [('Import', (1, 0), [('alias', 'sys', None)])]),
-('Module', [('ImportFrom', (1, 0), 'sys', [('alias', 'v', None)], 0)]),
+('Module', [('Import', (1, 0), [('aliasType', 'sys', None)])]),
+('Module', [('ImportFrom', (1, 0), 'sys', [('aliasType', 'v', None)], 0)]),
 ('Module', [('Exec', (1, 0), ('Str', (1, 5), 'v'), None, None)]),
 ('Module', [('Global', (1, 0), ['v'])]),
 ('Module', [('Expr', (1, 0), ('Num', (1, 0), 1))]),
@@ -210,7 +195,7 @@ eval_results = [
 ('Expression', ('ListComp', (1, 1), ('Name', (1, 1), 'a', ('Load',)), [('comprehension', ('Name', (1, 7), 'b', ('Store',)), ('Name', (1, 12), 'c', ('Load',)), [('Name', (1, 17), 'd', ('Load',))])])),
 ('Expression', ('GeneratorExp', (1, 1), ('Name', (1, 1), 'a', ('Load',)), [('comprehension', ('Name', (1, 7), 'b', ('Store',)), ('Name', (1, 12), 'c', ('Load',)), [('Name', (1, 17), 'd', ('Load',))])])),
 ('Expression', ('Compare', (1, 0), ('Num', (1, 0), 1), [('Lt',), ('Lt',)], [('Num', (1, 4), 2), ('Num', (1, 8), 3)])),
-('Expression', ('Call', (1, 0), ('Name', (1, 0), 'f', ('Load',)), [('Num', (1, 2), 1), ('Num', (1, 4), 2)], [('keyword', 'c', ('Num', (1, 8), 3))], ('Name', (1, 11), 'd', ('Load',)), ('Name', (1, 15), 'e', ('Load',)))),
+('Expression', ('Call', (1, 0), ('Name', (1, 0), 'f', ('Load',)), [('Num', (1, 2), 1), ('Num', (1, 4), 2)], [('keywordType', 'c', ('Num', (1, 8), 3))], ('Name', (1, 11), 'd', ('Load',)), ('Name', (1, 15), 'e', ('Load',)))),
 ('Expression', ('Repr', (1, 0), ('Name', (1, 1), 'v', ('Load',)))),
 ('Expression', ('Num', (1, 0), 10L)),
 ('Expression', ('Str', (1, 0), 'string')),

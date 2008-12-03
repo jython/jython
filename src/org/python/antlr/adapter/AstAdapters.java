@@ -142,6 +142,10 @@ public class AstAdapters {
         return Py.None;
     }
 
+    public static PyObject op2py(cmpopType o) {
+        return cmpopAdapter.ast2py(o);
+    }
+
     public static PyObject op2py(unaryopType o) {
         switch (o) {
             case Invert:

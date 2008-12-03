@@ -3,6 +3,7 @@ package org.python.antlr.adapter;
 import org.python.core.Py;
 import org.python.core.PyJavaInstance;
 import org.python.core.PyObject;
+import org.python.core.PyString;
 
 import org.python.antlr.ast.Num;
 
@@ -16,7 +17,7 @@ public class IdentifierAdapter implements AstAdapter {
     }
 
     public PyObject ast2py(Object o) {
-        return (PyObject)o;
+        return new PyString(o.toString());
     }
 
     public List iter2ast(PyObject iter) {
