@@ -202,7 +202,7 @@ class JavaVisitor(EmitVisitor):
             self.emit("public void %s___init__(PyObject[] args, String[] keywords) {}" % type.name, depth)
             self.emit('', 0)
 
-            self.attributes(type, depth);
+            self.attributes(type, name, depth);
 
             self.emit('@ExposedMethod', depth + 1)
             self.emit('public PyObject __int__() {', depth + 1)
@@ -219,7 +219,7 @@ class JavaVisitor(EmitVisitor):
             self.close()
 
 
-    def attributes(self, obj, depth):
+    def attributes(self, obj, name, depth):
         field_list = []
         if hasattr(obj, "fields"):
             for f in obj.fields:
@@ -236,11 +236,8 @@ class JavaVisitor(EmitVisitor):
             self.emit("public PyString[] get_fields() { return fields; }", depth+1)
             self.emit("", 0)
 
-        att_list = []
-        if hasattr(obj, "attributes"):
-            for a in obj.attributes:
-                att_list.append('new PyString("%s")' % a.name)
-        if len(att_list) > 0:
+        if str(name) in ('stmt', 'expr', 'excepthandler'):
+            att_list = ['new PyString("lineno")', 'new PyString("col_offset")']
             self.emit("private final static PyString[] attributes =", depth + 1)
             self.emit("new PyString[] {%s};" % ", ".join(att_list), depth + 1)
             self.emit('@ExposedGet(name = "_attributes")', depth + 1)
@@ -261,7 +258,7 @@ class JavaVisitor(EmitVisitor):
         self.emit("", 0)
         self.emit("public static final PyType TYPE = PyType.fromClass(%sType.class);" % name, depth + 1);
 
-        self.attributes(sum, depth);
+        self.attributes(sum, name, depth);
 
         self.emit("public %(name)sType() {" % locals(), depth+1)
         self.emit("}", depth+1)
@@ -301,7 +298,7 @@ class JavaVisitor(EmitVisitor):
             self.visit(f, depth + 1)
         self.emit("", depth)
 
-        self.attributes(product, depth)
+        self.attributes(product, name, depth)
 
         self.javaMethods(product, name, "%sType" % name, product.fields,
                          depth+1)
@@ -327,7 +324,7 @@ class JavaVisitor(EmitVisitor):
             self.visit(f, depth + 1)
         self.emit("", depth)
 
-        self.attributes(cons, depth)
+        self.attributes(cons, name, depth)
 
         self.javaMethods(cons, cons.name, cons.name, cons.fields, depth+1)
 

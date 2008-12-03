@@ -41,7 +41,8 @@ public static final PyType TYPE = PyType.fromClass(Expr.class);
     @ExposedGet(name = "_fields")
     public PyString[] get_fields() { return fields; }
 
-    private final static PyString[] attributes = new PyString[0];
+    private final static PyString[] attributes =
+    new PyString[] {new PyString("lineno"), new PyString("col_offset")};
     @ExposedGet(name = "_attributes")
     public PyString[] get_attributes() { return attributes; }
 

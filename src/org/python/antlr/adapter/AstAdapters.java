@@ -73,6 +73,21 @@ public class AstAdapters {
     public static expr_contextType py2expr_context(Object o) {
         if (o == null || o instanceof expr_contextType) {
             return (expr_contextType)o;
+        } else if (o instanceof PyObject) {
+            switch (((PyObject)o).asInt()) {
+                case 1:
+                    return expr_contextType.Load;
+                case 2:
+                    return expr_contextType.Store;
+                case 3:
+                    return expr_contextType.Del;
+                case 4:
+                    return expr_contextType.AugLoad;
+                case 5:
+                    return expr_contextType.AugStore;
+                case 6:
+                    return expr_contextType.Param;
+            }
         }
         //FIXME: investigate the right exception
         throw Py.TypeError("Can't convert " + o.getClass().getName() + " to expr_context node");
@@ -89,6 +104,8 @@ public class AstAdapters {
     public static String py2string(Object o) {
         if (o == null || o instanceof String) {
             return (String)o;
+        } else if (o instanceof PyString) {
+            return ((PyObject)o).toString();
         }
         //FIXME: investigate the right exception
         throw Py.TypeError("Can't convert " + o.getClass().getName() + " to string node");
@@ -103,6 +120,26 @@ public class AstAdapters {
                     return operatorType.Add;
                 case 2:
                     return operatorType.Sub;
+                case 3:
+                    return operatorType.Mult;
+                case 4:
+                    return operatorType.Div;
+                case 5:
+                    return operatorType.Mod;
+                case 6:
+                    return operatorType.Pow;
+                case 7:
+                    return operatorType.LShift;
+                case 8:
+                    return operatorType.RShift;
+                case 9:
+                    return operatorType.BitOr;
+                case 10:
+                    return operatorType.BitXor;
+                case 11:
+                    return operatorType.BitAnd;
+                case 12:
+                    return operatorType.FloorDiv;
             }
         }
         //FIXME: investigate the right exception
@@ -189,6 +226,13 @@ public class AstAdapters {
     public static boolopType py2boolop(Object o) {
         if (o == null || o instanceof boolopType) {
             return (boolopType)o;
+        } else if (o instanceof PyObject) {
+            switch (((PyObject)o).asInt()) {
+                case 1:
+                    return boolopType.And;
+                case 2:
+                    return boolopType.Or;
+            }
         }
         //FIXME: investigate the right exception
         throw Py.TypeError("Can't convert " + o.getClass().getName() + " to boolop node");

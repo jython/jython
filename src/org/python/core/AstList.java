@@ -20,7 +20,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
-@ExposedType(name = "_ast.astlist", base = PyObject.class)
+@ExposedType(name = "_ast.astlist", base = PyList.class)
 public class AstList extends PySequence implements Cloneable, List {
 
     public static final PyType TYPE = PyType.fromClass(AstList.class);
