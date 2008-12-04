@@ -349,12 +349,16 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
         }
     }
 
-    private static class IterableIter extends PyIterator {
+    private static class IteratorIter extends PyIterator {
 
         private Iterator<Object> proxy;
 
-        public IterableIter(Iterable<Object> proxy) {
-            this.proxy = proxy.iterator();
+        public IteratorIter(Iterable<Object> proxy) {
+            this(proxy.iterator());
+        }
+
+        public IteratorIter(Iterator<Object> proxy) {
+            this.proxy = proxy;
         }
 
         public PyObject __iternext__() {
@@ -388,7 +392,7 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
 
             PyBuiltinMethodNarrow iterableProxy = new PyBuiltinMethodNarrow("__iter__", 0, 0) {
                 public PyObject __call__() {
-                    return new IterableIter(((Iterable)self.getJavaProxy()));
+                    return new IteratorIter(((Iterable)self.getJavaProxy()));
                 }
             };
             collectionProxies.put(Iterable.class, new PyBuiltinMethod[] {iterableProxy});
@@ -411,6 +415,13 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
             collectionProxies.put(Collection.class, new PyBuiltinMethod[] {lenProxy,
                                                                            containsProxy});
 
+            PyBuiltinMethodNarrow iteratorProxy = new PyBuiltinMethodNarrow("__iter__", 0, 0) {
+                public PyObject __call__() {
+                    return new IteratorIter(((Iterator)self.getJavaProxy()));
+                }
+            };
+            collectionProxies.put(Iterator.class, new PyBuiltinMethod[] {iteratorProxy});
+
             // Map doesn't extend Collection, so it needs its own version of len, iter and contains
             PyBuiltinMethodNarrow mapLenProxy = new MapMethod("__len__", 0, 0) {
                 @Override
@@ -421,7 +432,7 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
             PyBuiltinMethodNarrow mapIterProxy = new MapMethod("__iter__", 0, 0) {
                 @Override
                 public PyObject __call__() {
-                    return new IterableIter(asMap().keySet());
+                    return new IteratorIter(asMap().keySet());
                 }
             };
             PyBuiltinMethodNarrow mapContainsProxy = new MapMethod("__contains__", 1, 1) {
