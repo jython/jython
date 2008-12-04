@@ -374,11 +374,10 @@ public class PyInstance extends PyObject
     public int hashCode() {
         PyObject ret;
         ret = invoke_ex("__hash__");
-
         if (ret == null) {
-            if (__findattr__("__eq__") != null ||
-                __findattr__("__cmp__") != null)
+            if (__findattr__("__eq__") != null || __findattr__("__cmp__") != null) {
                 throw Py.TypeError("unhashable instance");
+            }
             return super.hashCode();
         }
         if (ret instanceof PyInteger) {
@@ -399,9 +398,9 @@ public class PyInstance extends PyObject
         if (coerced != null) {
             v = coerced[0];
             w = coerced[1];
-            if (!(v instanceof PyInstance) &&
-                !(w instanceof PyInstance))
+            if (!(v instanceof PyInstance) && !(w instanceof PyInstance)) {
                 return v._cmp(w);
+            }
         } else {
             v = this;
             w = other;

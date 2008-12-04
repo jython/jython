@@ -1579,7 +1579,7 @@ class OpenFunction extends PyBuiltinFunction {
         ArgParser ap = new ArgParser("file", args, kwds, new String[] {"name", "mode", "bufsize"},
                                      1);
         PyObject obj = ap.getPyObject(0);
-        if (obj.getType() instanceof PyJavaType) {
+        if (obj.getJavaProxy() != null) {
             int bufsize = ap.getInt(2, -1);
             if (obj.javaProxy instanceof InputStream) {
                 Py.warning(Py.DeprecationWarning, warning);

@@ -993,7 +993,7 @@ public final class Py {
             }
         }
 
-        if (value.getType() instanceof PyJavaType) {
+        if (value.getJavaProxy() != null) {
             Object javaError = value.__tojava__(Throwable.class);
 
             if (javaError != null && javaError != Py.NoConversion) {
@@ -1947,7 +1947,7 @@ public final class Py {
         name = "fixed file";
         this.file = file;
 
-        if (file.getType() instanceof PyJavaType) {
+        if (file.getJavaProxy() != null) {
             Object tojava = file.__tojava__(OutputStream.class);
             if (tojava != null && tojava != Py.NoConversion) {
                 this.file = new PyFile((OutputStream) tojava);

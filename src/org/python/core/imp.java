@@ -281,7 +281,7 @@ public class imp {
                 throw Py.JavaError(e);
             }
         }
-        return PyJavaType.fromClass(c); // xxx?
+        return PyType.fromClass(c); // xxx?
     }
 
     static PyObject getPathImporter(PyObject cache, PyList hooks, PyObject p) {
