@@ -16,6 +16,7 @@ import java.util.Set;
 
 import org.python.core.util.StringUtil;
 import org.python.expose.ExposeAsSuperclass;
+import org.python.expose.ExposedType;
 import org.python.util.Generic;
 
 public class PyJavaType extends PyType implements ExposeAsSuperclass {
@@ -245,8 +246,17 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
             dict.__setitem__("__init__", reflctr);
         }
         for (Class<?> inner : underlying_class.getClasses()) {
-            // Only add the class if there isn't something else with that name
-            if (dict.__finditem__(inner.getSimpleName()) == null) {
+            // Only add the class if there isn't something else with that name and it came from this
+            // class
+            if (inner.getDeclaringClass() == underlying_class &&
+                    dict.__finditem__(inner.getSimpleName()) == null) {
+                // If this class is currently being loaded, any exposed types it contains won't have
+                // set their builder in PyType yet, so add them to BOOTSTRAP_TYPES so they're
+                // created as PyType instead of PyJavaType
+                if (inner.getAnnotation(ExposedType.class) != null
+                        || ExposeAsSuperclass.class.isAssignableFrom(inner)) {
+                    Py.BOOTSTRAP_TYPES.add(inner);
+                }
                 dict.__setitem__(inner.getSimpleName(), PyType.fromClass(inner));
             }
         }

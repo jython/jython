@@ -121,14 +121,16 @@ public class _hashlib implements ClassDictInit {
                 put("sha-512", 128);
             }};
 
-        public Hash(String name) {
-            super(TYPE);
-            this.name = name;
+        private static final MessageDigest getDigest(String name) {
             try {
-                digest = MessageDigest.getInstance(name);
+                return MessageDigest.getInstance(name);
             } catch (NoSuchAlgorithmException nsae) {
                 throw Py.ValueError("unsupported hash type");
             }
+        }
+
+        public Hash(String name) {
+            this(name, getDigest(name));
         }
 
         private Hash(String name, MessageDigest digest) {
@@ -192,10 +194,10 @@ public class _hashlib implements ClassDictInit {
             // Make hex version of the digest
             char[] hexDigest = new char[result.length * 2];
             for (int i = 0, j = 0; i < result.length; i++) {
-                int c = (int)((result[i] >> 4) & 0xf);
+                int c = ((result[i] >> 4) & 0xf);
                 c = c > 9 ? c + 'a' - 10 : c + '0';
                 hexDigest[j++] = (char)c;
-                c = (int)result[i] & 0xf;
+                c = result[i] & 0xf;
                 c = c > 9 ? c + 'a' - 10 : c + '0';
                 hexDigest[j++] = (char)c;
             }

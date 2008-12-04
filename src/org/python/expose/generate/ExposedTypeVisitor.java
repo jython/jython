@@ -1,5 +1,6 @@
 package org.python.expose.generate;
 
+import org.python.objectweb.asm.AnnotationVisitor;
 import org.python.objectweb.asm.Type;
 
 /**
@@ -15,8 +16,11 @@ public abstract class ExposedTypeVisitor extends RestrictiveAnnotationVisitor {
 
     private boolean isBaseType = true;
 
-    public ExposedTypeVisitor(Type onType) {
+    private final AnnotationVisitor passthrough;
+
+    public ExposedTypeVisitor(Type onType, AnnotationVisitor passthrough) {
         this.onType = onType;
+        this.passthrough = passthrough;
     }
 
     @Override
@@ -30,6 +34,9 @@ public abstract class ExposedTypeVisitor extends RestrictiveAnnotationVisitor {
         } else {
             super.visit(name, value);
         }
+        if (passthrough != null) {
+            passthrough.visit(name, value);
+        }
     }
 
     @Override
@@ -41,6 +48,9 @@ public abstract class ExposedTypeVisitor extends RestrictiveAnnotationVisitor {
         handleResult(typeName);
         handleResult(base);
         handleResult(isBaseType);
+        if (passthrough != null) {
+            passthrough.visitEnd();
+        }
     }
 
     public abstract void handleResult(Type base);

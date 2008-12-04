@@ -9,7 +9,7 @@ import org.python.expose.generate.ExposedTypeVisitor;
 public class ExposedTypeVisitorTest extends TestCase {
 
     public void setUp() {
-        etv = new ExposedTypeVisitor(Type.getType("Lsimpletype;")) {
+        etv = new ExposedTypeVisitor(Type.getType("Lsimpletype;"), null) {
 
             @Override
             public void handleResult(String name) {
@@ -47,7 +47,7 @@ public class ExposedTypeVisitorTest extends TestCase {
     ExposedTypeVisitor etv;
 
     private String result;
-    
+
     private Type baseResult;
 
     private boolean isBaseTypeResult;
