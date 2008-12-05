@@ -62,8 +62,18 @@ public static final PyType TYPE = PyType.fromClass(Global.class);
     @ExposedMethod
     public void Global___init__(PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("Global", args, keywords, new String[]
-            {"names"}, 1);
+            {"names", "lineno", "col_offset"}, 1);
         setNames(ap.getPyObject(0));
+        int lin = ap.getInt(1, -1);
+        if (lin != -1) {
+            setLineno(lin);
+        }
+
+        int col = ap.getInt(2, -1);
+        if (col != -1) {
+            setLineno(col);
+        }
+
     }
 
     public Global(PyObject names) {

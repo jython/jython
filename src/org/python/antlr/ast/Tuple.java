@@ -75,9 +75,19 @@ public static final PyType TYPE = PyType.fromClass(Tuple.class);
     @ExposedMethod
     public void Tuple___init__(PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("Tuple", args, keywords, new String[]
-            {"elts", "ctx"}, 2);
+            {"elts", "ctx", "lineno", "col_offset"}, 2);
         setElts(ap.getPyObject(0));
         setCtx(ap.getPyObject(1));
+        int lin = ap.getInt(2, -1);
+        if (lin != -1) {
+            setLineno(lin);
+        }
+
+        int col = ap.getInt(3, -1);
+        if (col != -1) {
+            setLineno(col);
+        }
+
     }
 
     public Tuple(PyObject elts, PyObject ctx) {

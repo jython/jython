@@ -1,0 +1,4 @@
+base_class: Or
+want_dict: true
+ctr
+incl: object

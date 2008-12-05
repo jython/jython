@@ -88,10 +88,20 @@ public static final PyType TYPE = PyType.fromClass(Raise.class);
     @ExposedMethod
     public void Raise___init__(PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("Raise", args, keywords, new String[]
-            {"excepttype", "inst", "tback"}, 3);
+            {"excepttype", "inst", "tback", "lineno", "col_offset"}, 3);
         setExcepttype(ap.getPyObject(0));
         setInst(ap.getPyObject(1));
         setTback(ap.getPyObject(2));
+        int lin = ap.getInt(3, -1);
+        if (lin != -1) {
+            setLineno(lin);
+        }
+
+        int col = ap.getInt(4, -1);
+        if (col != -1) {
+            setLineno(col);
+        }
+
     }
 
     public Raise(PyObject excepttype, PyObject inst, PyObject tback) {

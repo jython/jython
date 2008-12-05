@@ -75,9 +75,19 @@ public static final PyType TYPE = PyType.fromClass(Assert.class);
     @ExposedMethod
     public void Assert___init__(PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("Assert", args, keywords, new String[]
-            {"test", "msg"}, 2);
+            {"test", "msg", "lineno", "col_offset"}, 2);
         setTest(ap.getPyObject(0));
         setMsg(ap.getPyObject(1));
+        int lin = ap.getInt(2, -1);
+        if (lin != -1) {
+            setLineno(lin);
+        }
+
+        int col = ap.getInt(3, -1);
+        if (col != -1) {
+            setLineno(col);
+        }
+
     }
 
     public Assert(PyObject test, PyObject msg) {

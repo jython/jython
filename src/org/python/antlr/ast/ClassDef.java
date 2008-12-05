@@ -103,11 +103,21 @@ public static final PyType TYPE = PyType.fromClass(ClassDef.class);
     @ExposedMethod
     public void ClassDef___init__(PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("ClassDef", args, keywords, new String[]
-            {"name", "bases", "body", "decorator_list"}, 4);
+            {"name", "bases", "body", "decorator_list", "lineno", "col_offset"}, 4);
         setName(ap.getPyObject(0));
         setBases(ap.getPyObject(1));
         setBody(ap.getPyObject(2));
         setDecorator_list(ap.getPyObject(3));
+        int lin = ap.getInt(4, -1);
+        if (lin != -1) {
+            setLineno(lin);
+        }
+
+        int col = ap.getInt(5, -1);
+        if (col != -1) {
+            setLineno(col);
+        }
+
     }
 
     public ClassDef(PyObject name, PyObject bases, PyObject body, PyObject decorator_list) {

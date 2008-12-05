@@ -88,10 +88,20 @@ public static final PyType TYPE = PyType.fromClass(While.class);
     @ExposedMethod
     public void While___init__(PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("While", args, keywords, new String[]
-            {"test", "body", "orelse"}, 3);
+            {"test", "body", "orelse", "lineno", "col_offset"}, 3);
         setTest(ap.getPyObject(0));
         setBody(ap.getPyObject(1));
         setOrelse(ap.getPyObject(2));
+        int lin = ap.getInt(3, -1);
+        if (lin != -1) {
+            setLineno(lin);
+        }
+
+        int col = ap.getInt(4, -1);
+        if (col != -1) {
+            setLineno(col);
+        }
+
     }
 
     public While(PyObject test, PyObject body, PyObject orelse) {

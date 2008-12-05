@@ -1,0 +1,4 @@
+base_class: AugLoad
+want_dict: true
+ctr
+incl: object

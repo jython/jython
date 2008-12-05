@@ -89,10 +89,20 @@ public static final PyType TYPE = PyType.fromClass(Attribute.class);
     @ExposedMethod
     public void Attribute___init__(PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("Attribute", args, keywords, new String[]
-            {"value", "attr", "ctx"}, 3);
+            {"value", "attr", "ctx", "lineno", "col_offset"}, 3);
         setValue(ap.getPyObject(0));
         setAttr(ap.getPyObject(1));
         setCtx(ap.getPyObject(2));
+        int lin = ap.getInt(3, -1);
+        if (lin != -1) {
+            setLineno(lin);
+        }
+
+        int col = ap.getInt(4, -1);
+        if (col != -1) {
+            setLineno(col);
+        }
+
     }
 
     public Attribute(PyObject value, PyObject attr, PyObject ctx) {

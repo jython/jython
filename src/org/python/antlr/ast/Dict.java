@@ -75,9 +75,19 @@ public static final PyType TYPE = PyType.fromClass(Dict.class);
     @ExposedMethod
     public void Dict___init__(PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("Dict", args, keywords, new String[]
-            {"keys", "values"}, 2);
+            {"keys", "values", "lineno", "col_offset"}, 2);
         setKeys(ap.getPyObject(0));
         setValues(ap.getPyObject(1));
+        int lin = ap.getInt(2, -1);
+        if (lin != -1) {
+            setLineno(lin);
+        }
+
+        int col = ap.getInt(3, -1);
+        if (col != -1) {
+            setLineno(col);
+        }
+
     }
 
     public Dict(PyObject keys, PyObject values) {

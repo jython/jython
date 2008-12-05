@@ -75,9 +75,19 @@ public static final PyType TYPE = PyType.fromClass(UnaryOp.class);
     @ExposedMethod
     public void UnaryOp___init__(PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("UnaryOp", args, keywords, new String[]
-            {"op", "operand"}, 2);
+            {"op", "operand", "lineno", "col_offset"}, 2);
         setOp(ap.getPyObject(0));
         setOperand(ap.getPyObject(1));
+        int lin = ap.getInt(2, -1);
+        if (lin != -1) {
+            setLineno(lin);
+        }
+
+        int col = ap.getInt(3, -1);
+        if (col != -1) {
+            setLineno(col);
+        }
+
     }
 
     public UnaryOp(PyObject op, PyObject operand) {

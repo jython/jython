@@ -103,11 +103,21 @@ public static final PyType TYPE = PyType.fromClass(FunctionDef.class);
     @ExposedMethod
     public void FunctionDef___init__(PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("FunctionDef", args, keywords, new String[]
-            {"name", "args", "body", "decorator_list"}, 4);
+            {"name", "args", "body", "decorator_list", "lineno", "col_offset"}, 4);
         setName(ap.getPyObject(0));
         setArgs(ap.getPyObject(1));
         setBody(ap.getPyObject(2));
         setDecorator_list(ap.getPyObject(3));
+        int lin = ap.getInt(4, -1);
+        if (lin != -1) {
+            setLineno(lin);
+        }
+
+        int col = ap.getInt(5, -1);
+        if (col != -1) {
+            setLineno(col);
+        }
+
     }
 
     public FunctionDef(PyObject name, PyObject args, PyObject body, PyObject decorator_list) {

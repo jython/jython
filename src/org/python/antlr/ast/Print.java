@@ -89,10 +89,20 @@ public static final PyType TYPE = PyType.fromClass(Print.class);
     @ExposedMethod
     public void Print___init__(PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("Print", args, keywords, new String[]
-            {"dest", "values", "nl"}, 3);
+            {"dest", "values", "nl", "lineno", "col_offset"}, 3);
         setDest(ap.getPyObject(0));
         setValues(ap.getPyObject(1));
         setNl(ap.getPyObject(2));
+        int lin = ap.getInt(3, -1);
+        if (lin != -1) {
+            setLineno(lin);
+        }
+
+        int col = ap.getInt(4, -1);
+        if (col != -1) {
+            setLineno(col);
+        }
+
     }
 
     public Print(PyObject dest, PyObject values, PyObject nl) {

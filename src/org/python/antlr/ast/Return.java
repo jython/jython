@@ -62,8 +62,18 @@ public static final PyType TYPE = PyType.fromClass(Return.class);
     @ExposedMethod
     public void Return___init__(PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("Return", args, keywords, new String[]
-            {"value"}, 1);
+            {"value", "lineno", "col_offset"}, 1);
         setValue(ap.getPyObject(0));
+        int lin = ap.getInt(1, -1);
+        if (lin != -1) {
+            setLineno(lin);
+        }
+
+        int col = ap.getInt(2, -1);
+        if (col != -1) {
+            setLineno(col);
+        }
+
     }
 
     public Return(PyObject value) {

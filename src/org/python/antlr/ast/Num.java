@@ -62,8 +62,18 @@ public static final PyType TYPE = PyType.fromClass(Num.class);
     @ExposedMethod
     public void Num___init__(PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("Num", args, keywords, new String[]
-            {"n"}, 1);
+            {"n", "lineno", "col_offset"}, 1);
         setN(ap.getPyObject(0));
+        int lin = ap.getInt(1, -1);
+        if (lin != -1) {
+            setLineno(lin);
+        }
+
+        int col = ap.getInt(2, -1);
+        if (col != -1) {
+            setLineno(col);
+        }
+
     }
 
     public Num(PyObject n) {

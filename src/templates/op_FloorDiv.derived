@@ -1,0 +1,4 @@
+base_class: FloorDiv
+want_dict: true
+ctr
+incl: object

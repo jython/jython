@@ -308,7 +308,7 @@ class JavaVisitor(EmitVisitor):
 
         self.attributes(product, name, depth)
 
-        self.javaMethods(product, name, "%s" % name, product.fields,
+        self.javaMethods(product, name, name, True, product.fields,
                          depth+1)
 
         self.emit("}", depth)
@@ -334,7 +334,7 @@ class JavaVisitor(EmitVisitor):
 
         self.attributes(cons, name, depth)
 
-        self.javaMethods(cons, cons.name, cons.name, cons.fields, depth+1)
+        self.javaMethods(cons, name, cons.name, False, cons.fields, depth+1)
 
         if "Context" in ifaces:
             self.emit("public void setContext(expr_contextType c) {", depth + 1)
@@ -406,9 +406,9 @@ class JavaVisitor(EmitVisitor):
 
     #XXX: this method used to emit a pickle(DataOutputStream ostream) for cPickle support.
     #     If we want to re-add it, see Jython 2.2's pickle method in its ast nodes.
-    def javaMethods(self, type, clsname, ctorname, fields, depth):
+    def javaMethods(self, type, name, clsname, is_product, fields, depth):
 
-        self.javaConstructors(type, clsname, ctorname, fields, depth)
+        self.javaConstructors(type, name, clsname, is_product, fields, depth)
 
         # The toString() method
         self.emit('@ExposedGet(name = "repr")', depth)
@@ -432,11 +432,11 @@ class JavaVisitor(EmitVisitor):
 
         # The accept() method
         self.emit("public <R> R accept(VisitorIF<R> visitor) throws Exception {", depth)
-        if clsname == ctorname:
-            self.emit('return visitor.visit%s(this);' % clsname, depth+1)
-        else:
+        if is_product:
             self.emit('traverse(visitor);' % clsname, depth+1)
             self.emit('return null;' % clsname, depth+1)
+        else:
+            self.emit('return visitor.visit%s(this);' % clsname, depth+1)
         self.emit("}", depth)
         self.emit("", 0)
 
@@ -461,39 +461,39 @@ class JavaVisitor(EmitVisitor):
         self.emit('}', depth)
         self.emit("", 0)
 
-    def javaConstructors(self, type, clsname, ctorname, fields, depth):
-        self.emit("public %s(PyType subType) {" % (ctorname), depth)
+    def javaConstructors(self, type, name, clsname, is_product, fields, depth):
+        self.emit("public %s(PyType subType) {" % (clsname), depth)
         self.emit("super(subType);", depth + 1)
         self.emit("}", depth)
 
         if len(fields) > 0:
-            self.emit("public %s() {" % (ctorname), depth)
+            self.emit("public %s() {" % (clsname), depth)
             self.emit("this(TYPE);", depth + 1)
             self.emit("}", depth)
 
             fnames = ['"%s"' % f.name for f in fields]
-            if str(clsname) in ('stmt', 'expr', 'excepthandler'):
+            if str(name) in ('stmt', 'expr', 'excepthandler'):
                 fnames.extend(['"lineno"', '"col_offset"'])
             fpargs = ", ".join(fnames)
             self.emit("@ExposedNew", depth)
             self.emit("@ExposedMethod", depth)
-            self.emit("public void %s___init__(PyObject[] args, String[] keywords) {" % ctorname, depth)
-            self.emit('ArgParser ap = new ArgParser("%s", args, keywords, new String[]' % ctorname, depth + 1)
+            self.emit("public void %s___init__(PyObject[] args, String[] keywords) {" % clsname, depth)
+            self.emit('ArgParser ap = new ArgParser("%s", args, keywords, new String[]' % clsname, depth + 1)
             self.emit('{%s}, %s);' % (fpargs, len(fields)), depth + 2)
             i = 0
             for f in fields:
                 self.emit("set%s(ap.getPyObject(%s));" % (str(f.name).capitalize(),
                     str(i)), depth+1)
                 i += 1
-            if str(clsname) in ('stmt', 'expr', 'excepthandler'):
-                self.emit("PyObject lin = ap.getPyObject(%s, null);" % str(i), depth + 1) 
-                self.emit("if (lin != null) {", depth + 1) 
+            if str(name) in ('stmt', 'expr', 'excepthandler'):
+                self.emit("int lin = ap.getInt(%s, -1);" % str(i), depth + 1) 
+                self.emit("if (lin != -1) {", depth + 1) 
                 self.emit("setLineno(lin);", depth + 2) 
                 self.emit("}", depth + 1)
                 self.emit("", 0)
 
-                self.emit("PyObject col = ap.getPyObject(%s, null);" % str(i+1), depth + 1) 
-                self.emit("if (col != null) {", depth + 1) 
+                self.emit("int col = ap.getInt(%s, -1);" % str(i+1), depth + 1) 
+                self.emit("if (col != -1) {", depth + 1) 
                 self.emit("setLineno(col);", depth + 2) 
                 self.emit("}", depth + 1)
                 self.emit("", 0)
@@ -502,7 +502,7 @@ class JavaVisitor(EmitVisitor):
             self.emit("", 0)
 
             fpargs = ", ".join(["PyObject %s" % f.name for f in fields])
-            self.emit("public %s(%s) {" % (ctorname, fpargs), depth)
+            self.emit("public %s(%s) {" % (clsname, fpargs), depth)
             for f in fields:
                 self.emit("set%s(%s);" % (str(f.name).capitalize(),
                     f.name), depth+1)
@@ -512,7 +512,7 @@ class JavaVisitor(EmitVisitor):
         token = asdl.Field('Token', 'token')
         token.typedef = False
         fpargs = ", ".join([self.fieldDef(f) for f in [token] + fields])
-        self.emit("public %s(%s) {" % (ctorname, fpargs), depth)
+        self.emit("public %s(%s) {" % (clsname, fpargs), depth)
         self.emit("super(token);", depth+1)
         self.javaConstructorHelper(fields, depth)
         self.emit("}", depth)
@@ -521,7 +521,7 @@ class JavaVisitor(EmitVisitor):
         ttype = asdl.Field('int', 'ttype')
         ttype.typedef = False
         fpargs = ", ".join([self.fieldDef(f) for f in [ttype, token] + fields])
-        self.emit("public %s(%s) {" % (ctorname, fpargs), depth)
+        self.emit("public %s(%s) {" % (clsname, fpargs), depth)
         self.emit("super(ttype, token);", depth+1)
         self.javaConstructorHelper(fields, depth)
         self.emit("}", depth)
@@ -530,7 +530,7 @@ class JavaVisitor(EmitVisitor):
         tree = asdl.Field('PythonTree', 'tree')
         tree.typedef = False
         fpargs = ", ".join([self.fieldDef(f) for f in [tree] + fields])
-        self.emit("public %s(%s) {" % (ctorname, fpargs), depth)
+        self.emit("public %s(%s) {" % (clsname, fpargs), depth)
         self.emit("super(tree);", depth+1)
         self.javaConstructorHelper(fields, depth)
         self.emit("}", depth)
