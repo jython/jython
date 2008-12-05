@@ -291,6 +291,13 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
                 }
             };
             dict.__setitem__("__eq__", new PyMethodDescr(this, equals));
+            PyBuiltinCallable hash = new PyBuiltinMethodNarrow("__hash__", 0, 0) {
+                @Override
+                public PyObject __call__() {
+                    return Py.newInteger(self.getJavaProxy().hashCode());
+                }
+            };
+            dict.__setitem__("__hash__", new PyMethodDescr(this, hash));
             PyBuiltinCallable repr = new PyBuiltinMethodNarrow("__repr__", 0, 0) {
                 @Override
                 public PyObject __call__() {
