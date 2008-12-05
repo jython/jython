@@ -5,7 +5,10 @@ from org.python.tests import VisibilityResults as Results
 
 class VisibilityTest(unittest.TestCase):
     def test_invisible(self):
-        self.assertEquals([], dir(Invisible))
+        for item in dir(Invisible):
+            self.assert_(not item.startswith("package"))
+            self.assert_(not item.startswith("private"))
+            self.assert_(not item.startswith("protected"))
 
     def test_protected_from_python_subclass(self):
         class SubVisible(Visible):
@@ -22,8 +25,6 @@ class VisibilityTest(unittest.TestCase):
         self.assertEquals(Results.UNUSED, SubVisible(Results.UNUSED).visibleField)
 
     def test_visible(self):
-        self.assertEquals(5, len(dir(Visible)))
-
         v = Visible()
         self.assertEquals(Results.PUBLIC_FIELD, v.visibleField)
         self.assertEquals(Results.PUBLIC_STATIC_FIELD, Visible.visibleStaticField)
