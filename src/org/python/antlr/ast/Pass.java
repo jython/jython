@@ -38,6 +38,9 @@ public static final PyType TYPE = PyType.fromClass(Pass.class);
     @ExposedGet(name = "_attributes")
     public PyString[] get_attributes() { return attributes; }
 
+    public Pass(PyType subType) {
+        super(subType);
+    }
     public Pass(Token token) {
         super(token);
     }

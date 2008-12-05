@@ -52,11 +52,11 @@ public static final PyType TYPE = PyType.fromClass(Delete.class);
     @ExposedGet(name = "_attributes")
     public PyString[] get_attributes() { return attributes; }
 
-    public Delete() {
-        this(TYPE);
-    }
     public Delete(PyType subType) {
         super(subType);
+    }
+    public Delete() {
+        this(TYPE);
     }
     @ExposedNew
     @ExposedMethod

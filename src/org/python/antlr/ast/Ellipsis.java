@@ -37,6 +37,9 @@ public static final PyType TYPE = PyType.fromClass(Ellipsis.class);
     @ExposedGet(name = "_attributes")
     public PyString[] get_attributes() { return attributes; }
 
+    public Ellipsis(PyType subType) {
+        super(subType);
+    }
     public Ellipsis(Token token) {
         super(token);
     }

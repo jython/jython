@@ -78,11 +78,11 @@ public static final PyType TYPE = PyType.fromClass(BinOp.class);
     @ExposedGet(name = "_attributes")
     public PyString[] get_attributes() { return attributes; }
 
-    public BinOp() {
-        this(TYPE);
-    }
     public BinOp(PyType subType) {
         super(subType);
+    }
+    public BinOp() {
+        this(TYPE);
     }
     @ExposedNew
     @ExposedMethod

@@ -93,11 +93,11 @@ public class arguments extends PythonTree {
     @ExposedGet(name = "_attributes")
     public PyString[] get_attributes() { return attributes; }
 
-    public arguments() {
-        this(TYPE);
-    }
     public arguments(PyType subType) {
         super(subType);
+    }
+    public arguments() {
+        this(TYPE);
     }
     @ExposedNew
     @ExposedMethod

@@ -79,11 +79,11 @@ public static final PyType TYPE = PyType.fromClass(ImportFrom.class);
     @ExposedGet(name = "_attributes")
     public PyString[] get_attributes() { return attributes; }
 
-    public ImportFrom() {
-        this(TYPE);
-    }
     public ImportFrom(PyType subType) {
         super(subType);
+    }
+    public ImportFrom() {
+        this(TYPE);
     }
     @ExposedNew
     @ExposedMethod

@@ -77,11 +77,11 @@ public class comprehension extends PythonTree {
     @ExposedGet(name = "_attributes")
     public PyString[] get_attributes() { return attributes; }
 
-    public comprehension() {
-        this(TYPE);
-    }
     public comprehension(PyType subType) {
         super(subType);
+    }
+    public comprehension() {
+        this(TYPE);
     }
     @ExposedNew
     @ExposedMethod

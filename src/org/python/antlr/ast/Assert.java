@@ -65,11 +65,11 @@ public static final PyType TYPE = PyType.fromClass(Assert.class);
     @ExposedGet(name = "_attributes")
     public PyString[] get_attributes() { return attributes; }
 
-    public Assert() {
-        this(TYPE);
-    }
     public Assert(PyType subType) {
         super(subType);
+    }
+    public Assert() {
+        this(TYPE);
     }
     @ExposedNew
     @ExposedMethod

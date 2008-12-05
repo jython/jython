@@ -65,11 +65,11 @@ public static final PyType TYPE = PyType.fromClass(Tuple.class);
     @ExposedGet(name = "_attributes")
     public PyString[] get_attributes() { return attributes; }
 
-    public Tuple() {
-        this(TYPE);
-    }
     public Tuple(PyType subType) {
         super(subType);
+    }
+    public Tuple() {
+        this(TYPE);
     }
     @ExposedNew
     @ExposedMethod

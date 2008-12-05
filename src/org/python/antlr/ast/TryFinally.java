@@ -65,11 +65,11 @@ public static final PyType TYPE = PyType.fromClass(TryFinally.class);
     @ExposedGet(name = "_attributes")
     public PyString[] get_attributes() { return attributes; }
 
-    public TryFinally() {
-        this(TYPE);
-    }
     public TryFinally(PyType subType) {
         super(subType);
+    }
+    public TryFinally() {
+        this(TYPE);
     }
     @ExposedNew
     @ExposedMethod

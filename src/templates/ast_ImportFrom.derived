@@ -1,0 +1,4 @@
+base_class: ImportFrom
+want_dict: true
+ctr
+incl: object

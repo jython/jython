@@ -78,11 +78,11 @@ public static final PyType TYPE = PyType.fromClass(If.class);
     @ExposedGet(name = "_attributes")
     public PyString[] get_attributes() { return attributes; }
 
-    public If() {
-        this(TYPE);
-    }
     public If(PyType subType) {
         super(subType);
+    }
+    public If() {
+        this(TYPE);
     }
     @ExposedNew
     @ExposedMethod

@@ -78,11 +78,11 @@ public static final PyType TYPE = PyType.fromClass(AugAssign.class);
     @ExposedGet(name = "_attributes")
     public PyString[] get_attributes() { return attributes; }
 
-    public AugAssign() {
-        this(TYPE);
-    }
     public AugAssign(PyType subType) {
         super(subType);
+    }
+    public AugAssign() {
+        this(TYPE);
     }
     @ExposedNew
     @ExposedMethod

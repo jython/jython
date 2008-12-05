@@ -65,11 +65,11 @@ public static final PyType TYPE = PyType.fromClass(GeneratorExp.class);
     @ExposedGet(name = "_attributes")
     public PyString[] get_attributes() { return attributes; }
 
-    public GeneratorExp() {
-        this(TYPE);
-    }
     public GeneratorExp(PyType subType) {
         super(subType);
+    }
+    public GeneratorExp() {
+        this(TYPE);
     }
     @ExposedNew
     @ExposedMethod

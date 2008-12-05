@@ -1,0 +1,4 @@
+base_class: AugAssign
+want_dict: true
+ctr
+incl: object

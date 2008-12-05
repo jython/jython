@@ -65,11 +65,11 @@ public static final PyType TYPE = PyType.fromClass(BoolOp.class);
     @ExposedGet(name = "_attributes")
     public PyString[] get_attributes() { return attributes; }
 
-    public BoolOp() {
-        this(TYPE);
-    }
     public BoolOp(PyType subType) {
         super(subType);
+    }
+    public BoolOp() {
+        this(TYPE);
     }
     @ExposedNew
     @ExposedMethod

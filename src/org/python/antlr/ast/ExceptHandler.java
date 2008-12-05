@@ -78,11 +78,11 @@ public static final PyType TYPE = PyType.fromClass(ExceptHandler.class);
     @ExposedGet(name = "_attributes")
     public PyString[] get_attributes() { return attributes; }
 
-    public ExceptHandler() {
-        this(TYPE);
-    }
     public ExceptHandler(PyType subType) {
         super(subType);
+    }
+    public ExceptHandler() {
+        this(TYPE);
     }
     @ExposedNew
     @ExposedMethod

@@ -78,11 +78,11 @@ public static final PyType TYPE = PyType.fromClass(TryExcept.class);
     @ExposedGet(name = "_attributes")
     public PyString[] get_attributes() { return attributes; }
 
-    public TryExcept() {
-        this(TYPE);
-    }
     public TryExcept(PyType subType) {
         super(subType);
+    }
+    public TryExcept() {
+        this(TYPE);
     }
     @ExposedNew
     @ExposedMethod

@@ -77,11 +77,11 @@ public static final PyType TYPE = PyType.fromClass(Slice.class);
     @ExposedGet(name = "_attributes")
     public PyString[] get_attributes() { return attributes; }
 
-    public Slice() {
-        this(TYPE);
-    }
     public Slice(PyType subType) {
         super(subType);
+    }
+    public Slice() {
+        this(TYPE);
     }
     @ExposedNew
     @ExposedMethod

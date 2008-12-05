@@ -462,16 +462,19 @@ class JavaVisitor(EmitVisitor):
         self.emit("", 0)
 
     def javaConstructors(self, type, clsname, ctorname, fields, depth):
+        self.emit("public %s(PyType subType) {" % (ctorname), depth)
+        self.emit("super(subType);", depth + 1)
+        self.emit("}", depth)
+
         if len(fields) > 0:
             self.emit("public %s() {" % (ctorname), depth)
             self.emit("this(TYPE);", depth + 1)
             self.emit("}", depth)
 
-            self.emit("public %s(PyType subType) {" % (ctorname), depth)
-            self.emit("super(subType);", depth + 1)
-            self.emit("}", depth)
-
-            fpargs = ", ".join(['"%s"' % f.name for f in fields])
+            fnames = ['"%s"' % f.name for f in fields]
+            if str(clsname) in ('stmt', 'expr', 'excepthandler'):
+                fnames.extend(['"lineno"', '"col_offset"'])
+            fpargs = ", ".join(fnames)
             self.emit("@ExposedNew", depth)
             self.emit("@ExposedMethod", depth)
             self.emit("public void %s___init__(PyObject[] args, String[] keywords) {" % ctorname, depth)
@@ -482,6 +485,19 @@ class JavaVisitor(EmitVisitor):
                 self.emit("set%s(ap.getPyObject(%s));" % (str(f.name).capitalize(),
                     str(i)), depth+1)
                 i += 1
+            if str(clsname) in ('stmt', 'expr', 'excepthandler'):
+                self.emit("PyObject lin = ap.getPyObject(%s, null);" % str(i), depth + 1) 
+                self.emit("if (lin != null) {", depth + 1) 
+                self.emit("setLineno(lin);", depth + 2) 
+                self.emit("}", depth + 1)
+                self.emit("", 0)
+
+                self.emit("PyObject col = ap.getPyObject(%s, null);" % str(i+1), depth + 1) 
+                self.emit("if (col != null) {", depth + 1) 
+                self.emit("setLineno(col);", depth + 2) 
+                self.emit("}", depth + 1)
+                self.emit("", 0)
+
             self.emit("}", depth)
             self.emit("", 0)
 

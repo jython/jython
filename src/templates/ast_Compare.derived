@@ -1,0 +1,4 @@
+base_class: Compare
+want_dict: true
+ctr
+incl: object

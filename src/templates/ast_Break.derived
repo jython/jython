@@ -1,0 +1,4 @@
+base_class: Break
+want_dict: true
+ctr
+incl: object

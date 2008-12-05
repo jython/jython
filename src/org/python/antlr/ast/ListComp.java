@@ -65,11 +65,11 @@ public static final PyType TYPE = PyType.fromClass(ListComp.class);
     @ExposedGet(name = "_attributes")
     public PyString[] get_attributes() { return attributes; }
 
-    public ListComp() {
-        this(TYPE);
-    }
     public ListComp(PyType subType) {
         super(subType);
+    }
+    public ListComp() {
+        this(TYPE);
     }
     @ExposedNew
     @ExposedMethod

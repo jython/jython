@@ -52,11 +52,11 @@ public static final PyType TYPE = PyType.fromClass(Global.class);
     @ExposedGet(name = "_attributes")
     public PyString[] get_attributes() { return attributes; }
 
-    public Global() {
-        this(TYPE);
-    }
     public Global(PyType subType) {
         super(subType);
+    }
+    public Global() {
+        this(TYPE);
     }
     @ExposedNew
     @ExposedMethod

@@ -52,11 +52,11 @@ public static final PyType TYPE = PyType.fromClass(Yield.class);
     @ExposedGet(name = "_attributes")
     public PyString[] get_attributes() { return attributes; }
 
-    public Yield() {
-        this(TYPE);
-    }
     public Yield(PyType subType) {
         super(subType);
+    }
+    public Yield() {
+        this(TYPE);
     }
     @ExposedNew
     @ExposedMethod

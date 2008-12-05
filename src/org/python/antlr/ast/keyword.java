@@ -65,11 +65,11 @@ public class keyword extends PythonTree {
     @ExposedGet(name = "_attributes")
     public PyString[] get_attributes() { return attributes; }
 
-    public keyword() {
-        this(TYPE);
-    }
     public keyword(PyType subType) {
         super(subType);
+    }
+    public keyword() {
+        this(TYPE);
     }
     @ExposedNew
     @ExposedMethod

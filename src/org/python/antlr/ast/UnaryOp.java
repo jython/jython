@@ -65,11 +65,11 @@ public static final PyType TYPE = PyType.fromClass(UnaryOp.class);
     @ExposedGet(name = "_attributes")
     public PyString[] get_attributes() { return attributes; }
 
-    public UnaryOp() {
-        this(TYPE);
-    }
     public UnaryOp(PyType subType) {
         super(subType);
+    }
+    public UnaryOp() {
+        this(TYPE);
     }
     @ExposedNew
     @ExposedMethod

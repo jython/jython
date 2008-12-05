@@ -1,0 +1,4 @@
+base_class: Exec
+want_dict: true
+ctr
+incl: object

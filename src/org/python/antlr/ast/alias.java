@@ -66,11 +66,11 @@ public class alias extends PythonTree {
     @ExposedGet(name = "_attributes")
     public PyString[] get_attributes() { return attributes; }
 
-    public alias() {
-        this(TYPE);
-    }
     public alias(PyType subType) {
         super(subType);
+    }
+    public alias() {
+        this(TYPE);
     }
     @ExposedNew
     @ExposedMethod

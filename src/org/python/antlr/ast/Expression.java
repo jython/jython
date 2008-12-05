@@ -51,11 +51,11 @@ public static final PyType TYPE = PyType.fromClass(Expression.class);
     @ExposedGet(name = "_attributes")
     public PyString[] get_attributes() { return attributes; }
 
-    public Expression() {
-        this(TYPE);
-    }
     public Expression(PyType subType) {
         super(subType);
+    }
+    public Expression() {
+        this(TYPE);
     }
     @ExposedNew
     @ExposedMethod

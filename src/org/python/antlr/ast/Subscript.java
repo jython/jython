@@ -78,11 +78,11 @@ public static final PyType TYPE = PyType.fromClass(Subscript.class);
     @ExposedGet(name = "_attributes")
     public PyString[] get_attributes() { return attributes; }
 
-    public Subscript() {
-        this(TYPE);
-    }
     public Subscript(PyType subType) {
         super(subType);
+    }
+    public Subscript() {
+        this(TYPE);
     }
     @ExposedNew
     @ExposedMethod

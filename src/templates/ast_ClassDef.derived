@@ -1,0 +1,4 @@
+base_class: ClassDef
+want_dict: true
+ctr
+incl: object

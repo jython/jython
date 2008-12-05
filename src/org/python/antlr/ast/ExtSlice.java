@@ -51,11 +51,11 @@ public static final PyType TYPE = PyType.fromClass(ExtSlice.class);
     @ExposedGet(name = "_attributes")
     public PyString[] get_attributes() { return attributes; }
 
-    public ExtSlice() {
-        this(TYPE);
-    }
     public ExtSlice(PyType subType) {
         super(subType);
+    }
+    public ExtSlice() {
+        this(TYPE);
     }
     @ExposedNew
     @ExposedMethod

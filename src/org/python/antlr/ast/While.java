@@ -78,11 +78,11 @@ public static final PyType TYPE = PyType.fromClass(While.class);
     @ExposedGet(name = "_attributes")
     public PyString[] get_attributes() { return attributes; }
 
-    public While() {
-        this(TYPE);
-    }
     public While(PyType subType) {
         super(subType);
+    }
+    public While() {
+        this(TYPE);
     }
     @ExposedNew
     @ExposedMethod

@@ -65,11 +65,11 @@ public static final PyType TYPE = PyType.fromClass(Lambda.class);
     @ExposedGet(name = "_attributes")
     public PyString[] get_attributes() { return attributes; }
 
-    public Lambda() {
-        this(TYPE);
-    }
     public Lambda(PyType subType) {
         super(subType);
+    }
+    public Lambda() {
+        this(TYPE);
     }
     @ExposedNew
     @ExposedMethod

@@ -78,11 +78,11 @@ public static final PyType TYPE = PyType.fromClass(Compare.class);
     @ExposedGet(name = "_attributes")
     public PyString[] get_attributes() { return attributes; }
 
-    public Compare() {
-        this(TYPE);
-    }
     public Compare(PyType subType) {
         super(subType);
+    }
+    public Compare() {
+        this(TYPE);
     }
     @ExposedNew
     @ExposedMethod

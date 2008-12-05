@@ -1,0 +1,4 @@
+base_class: While
+want_dict: true
+ctr
+incl: object

@@ -52,11 +52,11 @@ public static final PyType TYPE = PyType.fromClass(Num.class);
     @ExposedGet(name = "_attributes")
     public PyString[] get_attributes() { return attributes; }
 
-    public Num() {
-        this(TYPE);
-    }
     public Num(PyType subType) {
         super(subType);
+    }
+    public Num() {
+        this(TYPE);
     }
     @ExposedNew
     @ExposedMethod

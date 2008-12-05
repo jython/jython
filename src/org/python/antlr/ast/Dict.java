@@ -65,11 +65,11 @@ public static final PyType TYPE = PyType.fromClass(Dict.class);
     @ExposedGet(name = "_attributes")
     public PyString[] get_attributes() { return attributes; }
 
-    public Dict() {
-        this(TYPE);
-    }
     public Dict(PyType subType) {
         super(subType);
+    }
+    public Dict() {
+        this(TYPE);
     }
     @ExposedNew
     @ExposedMethod

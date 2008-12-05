@@ -1,0 +1,4 @@
+base_class: Repr
+want_dict: true
+ctr
+incl: object

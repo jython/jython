@@ -1,0 +1,4 @@
+base_class: Subscript
+want_dict: true
+ctr
+incl: object

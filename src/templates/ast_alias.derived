@@ -1,0 +1,4 @@
+base_class: alias
+want_dict: true
+ctr
+incl: object
