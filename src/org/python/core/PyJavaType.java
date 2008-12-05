@@ -327,6 +327,10 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
     private void handleSuperMethodArgCollisions() {
         for (Class iface : underlying_class.getInterfaces()) {
             for (Method meth : iface.getMethods()) {
+                if (!Modifier.isPublic(meth.getDeclaringClass().getModifiers())) {
+                    // Ignore methods from non-public interfaces as they're similarly bugged
+                    continue;
+                }
                 String nmethname = normalize(meth.getName());
                 PyObject[] where = new PyObject[1];
                 PyObject obj = lookup_where(nmethname, where);
