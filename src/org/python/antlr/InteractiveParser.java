@@ -5,7 +5,7 @@ import java.io.IOException;
 
 import org.antlr.runtime.CommonTokenStream;
 import org.antlr.runtime.RecognitionException;
-import org.python.antlr.ast.modType;
+import org.python.antlr.base.mod;
 
 public class InteractiveParser extends BaseParser {
 
@@ -17,8 +17,8 @@ public class InteractiveParser extends BaseParser {
         this.encoding = encoding;
     }
 
-    public modType parse() throws IOException {
-        modType tree = null;
+    public mod parse() throws IOException {
+        mod tree = null;
         PythonLexer lexer = new PyLexer(new NoCloseReaderStream(bufreader));
         lexer.setErrorHandler(errorHandler);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
@@ -30,7 +30,7 @@ public class InteractiveParser extends BaseParser {
 
         try {
             PythonParser.single_input_return r = parser.single_input();
-            tree = (modType)r.tree;
+            tree = (mod)r.tree;
         } catch (RecognitionException e) {
             //I am only throwing ParseExceptions, but "throws RecognitionException" still gets
             //into the generated code.

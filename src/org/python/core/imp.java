@@ -194,7 +194,7 @@ public class imp {
             if(filename == null) {
                 filename = UNKNOWN_SOURCEFILE;
             }
-            org.python.antlr.ast.modType node;
+            org.python.antlr.base.mod node;
             try {
                 node = ParserFacade.parse(fp, "exec", filename, new CompilerFlags());
             } finally {

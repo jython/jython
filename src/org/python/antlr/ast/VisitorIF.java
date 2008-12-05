@@ -52,4 +52,5 @@ public interface VisitorIF<R> {
     public R visitSlice(Slice node) throws Exception;
     public R visitExtSlice(ExtSlice node) throws Exception;
     public R visitIndex(Index node) throws Exception;
+    public R visitExceptHandler(ExceptHandler node) throws Exception;
 }

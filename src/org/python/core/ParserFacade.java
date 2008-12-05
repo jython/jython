@@ -25,7 +25,7 @@ import org.python.antlr.PythonTree;
 import org.python.antlr.PythonLexer;
 import org.python.antlr.PythonPartial;
 import org.python.antlr.PythonTokenSource;
-import org.python.antlr.ast.modType;
+import org.python.antlr.base.mod;
 import org.python.core.io.StreamIO;
 import org.python.core.io.TextIOInputStream;
 import org.python.core.io.UniversalIOWrapper;
@@ -93,7 +93,7 @@ public class ParserFacade {
      * from it, to translate ParserExceptions into PySyntaxErrors or
      * PyIndentationErrors.
      */
-    private static modType parse(BufferedReader reader,
+    private static mod parse(BufferedReader reader,
                                 String kind,
                                 String filename,
                                 CompilerFlags cflags) throws Throwable {
@@ -116,7 +116,7 @@ public class ParserFacade {
         }
     }
 
-    public static modType parse(InputStream stream,
+    public static mod parse(InputStream stream,
                                 String kind,
                                 String filename,
                                 CompilerFlags cflags) {
@@ -133,7 +133,7 @@ public class ParserFacade {
         }
     }
 
-    public static modType parse(String string,
+    public static mod parse(String string,
                                 String kind,
                                 String filename,
                                 CompilerFlags cflags) {
@@ -148,7 +148,7 @@ public class ParserFacade {
         }
     }
 
-    public static modType partialParse(String string,
+    public static mod partialParse(String string,
                                        String kind,
                                        String filename,
                                        CompilerFlags cflags,

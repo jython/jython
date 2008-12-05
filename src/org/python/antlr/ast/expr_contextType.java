@@ -3,7 +3,7 @@ package org.python.antlr.ast;
 
 import org.python.antlr.AST;
 
-public enum expr_contextType implements AST {
+public enum expr_contextType {
     UNDEFINED,
     Load,
     Store,
@@ -11,10 +11,4 @@ public enum expr_contextType implements AST {
     AugLoad,
     AugStore,
     Param;
-    private final static String[] fields = new String[0];
-    public String[] get_fields() { return fields; }
-
-    private final static String[] attributes = new String[0];
-    public String[] get_attributes() { return attributes; }
-
 }

@@ -10,6 +10,10 @@ import java.io.Serializable;
 
 public class PyInstance extends PyObject
 {
+    // Collection proxy invoke no method found error code - return an error
+    // code instead of using slower exceptions
+    public static PyObject collectionProxyNoMethodError = new PyObject();
+    
     // xxx doc, final name
     public transient PyClass instclass;
 
@@ -251,6 +255,61 @@ public class PyInstance extends PyObject
         return __findattr__("__index__") != null;
     }
 
+
+    public PyObject iinvoke_collectionProxy(String name) {
+        PyObject f = ifindlocal(name);
+        if (f == null) {
+            f = ifindclass(name, false);
+            if (f != null) {
+                if (f instanceof PyFunction) {
+                    return f.__call__(this);
+                } else {
+                    f = f.__get__(this, instclass);
+                }
+            }
+        }
+        if (f == null) f = ifindfunction(name);
+        if (f == null) return collectionProxyNoMethodError;
+        return f.__call__();
+    }
+
+    public PyObject iinvoke_collectionProxy(String name, PyObject arg1) {
+        PyObject f = ifindlocal(name);
+        if (f == null) {
+            f = ifindclass(name, false);
+            if (f != null) {
+                if (f instanceof PyFunction) {
+                    return f.__call__(this, arg1);
+                } else {
+                    f = f.__get__(this, instclass);
+                }
+            }
+        }
+        if (f == null) f = ifindfunction(name);
+        if (f == null) return collectionProxyNoMethodError;
+        return f.__call__(arg1);
+    }
+
+    public PyObject iinvoke_collectionProxy(String name, PyObject arg1, PyObject arg2) {
+        PyObject f = ifindlocal(name);
+        if (f == null) {
+            f = ifindclass(name, false);
+            if (f != null) {
+                if (f instanceof PyFunction) {
+                    return f.__call__(this, arg1, arg2);
+                } else {
+                    f = f.__get__(this, instclass);
+                }
+            }
+        }
+        if (f == null) f = ifindfunction(name);
+        if (f == null) return collectionProxyNoMethodError;
+        return f.__call__(arg1, arg2);
+    }
+
+
+    
+    
     public PyObject invoke(String name) {
         PyObject f = ifindlocal(name);
         if (f == null) {
@@ -548,16 +607,18 @@ public class PyInstance extends PyObject
         } catch (PyException exc) { }
 
         if (meth == null) {
-            // Copied form __len__()
-            CollectionProxy proxy = getCollection();
-            if (proxy != CollectionProxy.NoProxy) {
-                return proxy.__len__() != 0 ? true : false;
-            }
             try {
                 meth = __findattr__("__len__");
             } catch (PyException exc) { }
-            if (meth == null)
-                return true;
+            if (meth == null) {
+                // Copied form __len__()
+                CollectionProxy proxy = getCollection();
+                if (proxy != CollectionProxy.NoProxy) {
+                    return proxy.__len__() != 0 ? true : false;
+                } else {
+                    return true;
+                }
+            }
         }
 
         PyObject ret = meth.__call__();
@@ -573,22 +634,21 @@ public class PyInstance extends PyObject
     }
 
     public int __len__() {
-        CollectionProxy proxy = getCollection();
-        if (proxy != CollectionProxy.NoProxy) {
-            return proxy.__len__();
+        PyObject ret = iinvoke_collectionProxy("__len__");
+        if (ret == collectionProxyNoMethodError) {
+            CollectionProxy proxy = getCollection();
+            if (proxy != CollectionProxy.NoProxy) {
+                return proxy.__len__();
+            } else {
+                noAttributeError("__len__");
+            }
         }
-
-        PyObject ret = invoke("__len__");
         if (ret instanceof PyInteger)
             return ((PyInteger)ret).getValue();
         throw Py.TypeError("__len__() should return an int");
     }
 
     public PyObject __finditem__(int key) {
-        CollectionProxy proxy = getCollection();
-        if (proxy != CollectionProxy.NoProxy) {
-            return proxy.__finditem__(key);
-        }
         return __finditem__(new PyInteger(key));
     }
 
@@ -614,13 +674,9 @@ public class PyInstance extends PyObject
     }
 
     public PyObject __finditem__(PyObject key) {
-        CollectionProxy proxy = getCollection();
-        if (proxy != CollectionProxy.NoProxy) {
-            return proxy.__finditem__(key);
-        }
-
+        PyObject ret = null;
         try {
-            return invoke("__getitem__", key);
+            ret = iinvoke_collectionProxy("__getitem__", key);
         } catch (PyException e) {
             if (Py.matchException(e, Py.IndexError))
                 return null;
@@ -628,36 +684,64 @@ public class PyInstance extends PyObject
                 return null;
             throw e;
         }
+        
+        if (ret == collectionProxyNoMethodError) {
+            CollectionProxy proxy = getCollection();
+            if (proxy != CollectionProxy.NoProxy) {
+                return proxy.__finditem__(key);
+            } else {
+                noAttributeError("__getitem__");
+            }
+        }
+        
+        return ret;
     }
 
     public PyObject __getitem__(PyObject key) {
-        CollectionProxy proxy = getCollection();
-        if (proxy != CollectionProxy.NoProxy) {
-            PyObject ret = proxy.__finditem__(key);
-            if (ret == null) {
-                throw Py.KeyError(key.toString());
+        PyObject ret = iinvoke_collectionProxy("__getitem__", key);
+        
+        if (ret == collectionProxyNoMethodError) {
+            CollectionProxy proxy = getCollection();
+            if (proxy != CollectionProxy.NoProxy) {
+                ret = proxy.__finditem__(key);
+                if (ret == null) {
+                    throw Py.KeyError(key.toString());
+                }
+                return ret;
+            } else {
+                noAttributeError("__getitem__");
             }
-            return ret;
         }
-        return invoke("__getitem__", key);
+
+        return ret;
     }
 
     public void __setitem__(PyObject key, PyObject value) {
-        CollectionProxy proxy = getCollection();
-        if (proxy != CollectionProxy.NoProxy) {
-            proxy.__setitem__(key, value);
-            return;
+        PyObject ret = iinvoke_collectionProxy("__setitem__", key, value);
+        
+        if (ret == collectionProxyNoMethodError) {
+            CollectionProxy proxy = getCollection();
+            if (proxy != CollectionProxy.NoProxy) {
+                proxy.__setitem__(key, value);
+                return;
+            } else {
+                noAttributeError("__setitem__");
+            }
         }
-        invoke("__setitem__", key, value);
     }
 
     public void __delitem__(PyObject key) {
-        CollectionProxy proxy = getCollection();
-        if (proxy != CollectionProxy.NoProxy) {
-            proxy.__delitem__(key);
-            return;
+        PyObject ret = iinvoke_collectionProxy("__delitem__", key);
+
+        if (ret == collectionProxyNoMethodError) {
+            CollectionProxy proxy = getCollection();
+            if (proxy != CollectionProxy.NoProxy) {
+                proxy.__delitem__(key);
+                return;
+            } else {
+                noAttributeError("__delitem__");
+            }
         }
-        invoke("__delitem__", key);
     }
 
     public PyObject __getslice__(PyObject start, PyObject stop, PyObject step) {
@@ -688,16 +772,18 @@ public class PyInstance extends PyObject
     }
 
     public PyObject __iter__() {
-        PyObject iter = getCollectionIter();
-        if (iter != null) {
-            return iter;
-        }
         PyObject func = __findattr__("__iter__");
         if (func != null)
             return func.__call__();
         func = __findattr__("__getitem__");
-        if (func == null)
-            return super.__iter__();
+        if (func == null) {
+            PyObject iter = getCollectionIter();
+            if (iter != null) {
+                return iter;
+            } else {
+                return super.__iter__();
+            }
+        }
         return new PySequenceIter(this);
     }
 

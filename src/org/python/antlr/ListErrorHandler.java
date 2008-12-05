@@ -6,13 +6,13 @@ import org.antlr.runtime.IntStream;
 import org.antlr.runtime.Lexer;
 import org.antlr.runtime.RecognitionException;
 import org.python.antlr.ast.ErrorMod;
-import org.python.antlr.ast.exprType;
 import org.python.antlr.ast.ErrorExpr;
 import org.python.antlr.ast.ErrorSlice;
 import org.python.antlr.ast.ErrorStmt;
-import org.python.antlr.ast.modType;
-import org.python.antlr.ast.sliceType;
-import org.python.antlr.ast.stmtType;
+import org.python.antlr.base.expr;
+import org.python.antlr.base.mod;
+import org.python.antlr.base.slice;
+import org.python.antlr.base.stmt;
 
 public class ListErrorHandler implements ErrorHandler {
 
@@ -36,19 +36,19 @@ public class ListErrorHandler implements ErrorHandler {
         return null;
     }
 
-    public exprType errorExpr(PythonTree t) {
+    public expr errorExpr(PythonTree t) {
         return new ErrorExpr(t);
     }
 
-    public modType errorMod(PythonTree t) {
+    public mod errorMod(PythonTree t) {
         return new ErrorMod(t);
     }
 
-    public sliceType errorSlice(PythonTree t) {
+    public slice errorSlice(PythonTree t) {
         return new ErrorSlice(t);
     }
 
-    public stmtType errorStmt(PythonTree t) {
+    public stmt errorStmt(PythonTree t) {
         return new ErrorStmt(t);
     }
 

@@ -383,7 +383,7 @@ public abstract class AbstractArray implements Serializable{
         }
 
         throw new IndexOutOfBoundsException("start and stop must follow: 0 <= start <= stop <= " +
-                (this.size - 1) + ", but found start= " + start + " and stop=" + stop);
+                this.size + ", but found start= " + start + " and stop=" + stop);
     }
 
     /**

@@ -1,7 +1,9 @@
 package org.python.antlr.ast;
-import org.python.antlr.PythonTree;
 
-public class ErrorExpr extends exprType {
+import org.python.antlr.PythonTree;
+import org.python.antlr.base.expr;
+
+public class ErrorExpr extends expr {
 
     public ErrorExpr(PythonTree tree) {
         super(tree);

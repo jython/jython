@@ -1,8 +1,18 @@
 package org.python.antlr;
 
-public interface AST {
-    public static String[] emptyStringArray = new String[0];
+import org.python.core.PyObject;
+import org.python.core.PyType;
+import org.python.expose.ExposedType;
 
-    public String[] get_attributes();
-    public String[] get_fields();
+@ExposedType(name = "_ast.AST", base = PyObject.class)
+public class AST extends PyObject {
+    public static final PyType TYPE = PyType.fromClass(AST.class);
+    
+    public AST() {
+    }
+
+    public AST(PyType objtype) {
+        super(objtype);
+    }
+
 }

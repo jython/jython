@@ -2,9 +2,16 @@
 
 package org.python.compiler;
 
-import org.python.antlr.*;
-import org.python.antlr.ast.*;
+import org.python.antlr.ParseException;
+import org.python.antlr.ast.ImportFrom;
+import org.python.antlr.ast.Expr;
+import org.python.antlr.ast.Interactive;
 import org.python.antlr.ast.Module;
+import org.python.antlr.ast.Str;
+import org.python.antlr.base.mod;
+import org.python.antlr.base.stmt;
+
+import java.util.List;
 
 public class Future {
 
@@ -15,15 +22,15 @@ public class Future {
     private static final String FUTURE = "__future__";
 
     private boolean check(ImportFrom cand) throws Exception {
-        if (!cand.module.equals(FUTURE))
+        if (!cand.getInternalModule().equals(FUTURE))
             return false;
-        int n = cand.names.length;
+        int n = cand.getInternalNames().size();
         if (n == 0) {
             throw new ParseException(
                     "future statement does not support import *",cand);
         }
         for (int i = 0; i < n; i++) {
-            String feature = cand.names[i].name;
+            String feature = cand.getInternalNames().get(i).getInternalName();
             // *known* features
             if (feature.equals("nested_scopes")) {
                 continue;
@@ -55,7 +62,7 @@ public class Future {
         return true;
     }
 
-    public void preprocessFutures(modType node,
+    public void preprocessFutures(mod node,
                                   org.python.core.CompilerFlags cflags)
         throws Exception
     {
@@ -63,25 +70,25 @@ public class Future {
             division = cflags.division;
         }
         int beg = 0;
-        stmtType[] suite = null;
+        List<stmt> suite = null;
         if (node instanceof Module) {
-            suite = ((Module) node).body;
-            if (suite.length > 0 && suite[0] instanceof Expr &&
-                            ((Expr) suite[0]).value instanceof Str) {
+            suite = ((Module) node).getInternalBody();
+            if (suite.size() > 0 && suite.get(0) instanceof Expr &&
+                            ((Expr) suite.get(0)).getInternalValue() instanceof Str) {
                 beg++;
             }
         } else if (node instanceof Interactive) {
-            suite = ((Interactive) node).body;
+            suite = ((Interactive) node).getInternalBody();
         } else {
             return;
         }
 
-        for (int i = beg; i < suite.length; i++) {
-            stmtType stmt = suite[i];
-            if (!(stmt instanceof ImportFrom))
+        for (int i = beg; i < suite.size(); i++) {
+            stmt s = suite.get(i);
+            if (!(s instanceof ImportFrom))
                 break;
-            stmt.from_future_checked = true;
-            if (!check((ImportFrom) stmt))
+            s.from_future_checked = true;
+            if (!check((ImportFrom) s))
                 break;
         }
 
@@ -100,7 +107,7 @@ public class Future {
     public static void checkFromFuture(ImportFrom node) throws Exception {
         if (node.from_future_checked)
             return;
-        if (node.module.equals(FUTURE)) {
+        if (node.getInternalModule().equals(FUTURE)) {
             throw new ParseException("from __future__ imports must occur " +
                                      "at the beginning of the file",node);
         }
