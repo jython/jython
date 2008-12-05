@@ -83,6 +83,7 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
         // org.python.core
         if (!Modifier.isPublic(underlying_class.getModifiers()) &&
                 !name.startsWith("org.python.core")) {
+            handleSuperMethodArgCollisions();
             return;
         }
 
@@ -305,6 +306,59 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
                 }
             };
             dict.__setitem__("__repr__", new PyMethodDescr(this, repr));
+        }
+    }
+
+    /**
+     * Private, protected or package protected classes that implement public interfaces or extend
+     * public classes can't have their implementations of the methods of their supertypes called
+     * through reflection due to Sun VM bug 4071957(http://tinyurl.com/le9vo). They can be called
+     * through the supertype version of the method though. Unfortunately we can't just let normal
+     * mro lookup of those methods handle routing the call to the correct version as a class can
+     * implement interfaces or classes that each have methods with the same name that takes
+     * different number or types of arguments. Instead this method goes through all interfaces
+     * implemented by this class, and combines same-named methods into a single PyReflectedFunction.
+     *
+     * Prior to Jython 2.5, this was handled in PyJavaClass.setMethods by setting methods in package
+     * protected classes accessible which made them callable through reflection. That had the
+     * drawback of failing when running in a security environment that didn't allow setting
+     * accessibility, so this method replaced it.
+     */
+    private void handleSuperMethodArgCollisions() {
+        for (Class iface : underlying_class.getInterfaces()) {
+            for (Method meth : iface.getMethods()) {
+                String nmethname = normalize(meth.getName());
+                PyObject[] where = new PyObject[1];
+                PyObject obj = lookup_where(nmethname, where);
+                if (obj == null) {
+                    // Nothing in our supertype hierarchy defines something with this name, so it
+                    // must not be visible there.
+                    continue;
+                } else if (where[0] == this) {
+                    // This method is the only thing defining items in this class' dict, so it must
+                    // be a PyReflectedFunction created here.  See if it needs the current method
+                    // added to it.
+                    if (!((PyReflectedFunction)obj).handles(meth)) {
+                        ((PyReflectedFunction)obj).addMethod(meth);
+                    }
+                } else {
+                    // There's something in a superclass with the same name. If this class extends a
+                    // class and doesn't just implement something, the extended class is first in
+                    // mro, so items defined on the extended class will show up here. Thanks to that
+                    // and copying the base function, we can get away with just looping over
+                    // interface methods.
+                    PyReflectedFunction func;
+                    if (obj instanceof PyReflectedFunction) {
+                        func = ((PyReflectedFunction)obj).copy();
+                        if (!func.handles(meth)) {
+                            func.addMethod(meth);
+                        }
+                    } else {
+                        func = new PyReflectedFunction(meth);
+                    }
+                    dict.__setitem__(nmethname, func);
+                }
+            }
         }
     }
 

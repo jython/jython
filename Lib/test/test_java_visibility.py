@@ -1,6 +1,6 @@
 import unittest
 from test import test_support
-from org.python.tests import Invisible, SubVisible, Visible, VisibleOverride
+from org.python.tests import InterfaceCombination, Invisible, SubVisible, Visible, VisibleOverride
 from org.python.tests import VisibilityResults as Results
 
 class VisibilityTest(unittest.TestCase):
@@ -66,6 +66,21 @@ class VisibilityTest(unittest.TestCase):
         for c in Visible, SubVisible, VisibleOverride:
             self.failUnless('visibleInstance' in c.__dict__,
                     'visibleInstance expected in %s __dict__' % c)
+
+    def test_interface_combination(self):
+        '''Checks that a private class that extends a public class and public interfaces has only the items
+           from the public bases visible'''
+        i = InterfaceCombination.newImplementation()
+        self.assertEquals(InterfaceCombination.NO_ARG_RESULT, i.getValue(),
+                "methods from IFace should be visible on Implementation")
+        self.assertEquals(InterfaceCombination.ONE_ARG_RESULT, i.getValue("one arg"),
+                "methods from IIFace should be visible on Implementation")
+        self.assertEquals(InterfaceCombination.TWO_ARG_RESULT, i.getValue("one arg", "two arg"),
+                "methods from Base should be visible on Implementation")
+        self.assertRaises(TypeError, i.getValue, "one arg", "two arg", "three arg", 
+                "methods defined solely on Implementation shouldn't be visible")
+        self.assertFalse(hasattr(i, "internalMethod"),
+                "methods from private interfaces shouldn't be visible on a private class")
 
 def test_main():
     test_support.run_unittest(VisibilityTest)
