@@ -7,8 +7,9 @@ from test import test_support
 
 import platform
 os_name = platform.java_ver()[3][0]
-if os_name == 'Mac OS X' or 'BSD' in os_name or 'Windows' in os_name:
-    raise test_support.TestSkipped('test_asynchat deadlocks on Jython/BSD: '
+if os_name == 'Mac OS X' or os_name == 'SunOS' or 'BSD' in os_name \
+        or 'Windows' in os_name:
+    raise test_support.TestSkipped('test_asynchat deadlocks on Jython: '
                                    'http://bugs.jython.org/issue1064')
 
 HOST = "127.0.0.1"
