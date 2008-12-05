@@ -43,6 +43,11 @@ public class IdImpl {
             }
         }
 
+        // Used by test_jy_internals
+        public int _internal_map_size() {
+            return objHashcodeToPyId.size();
+        }
+
         public void put(Object key, Object val) {
             cleanup();
             objHashcodeToPyId.put(new WeakIdKey(key), val);

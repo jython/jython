@@ -60,7 +60,7 @@ class LongAsScaledDoubleValueTests(unittest.TestCase):
         iarr = java.lang.Object.getClass(self.e)
         sdv = java.lang.Class.getMethod(long, 'scaledDoubleValue', [iarr])
         import org.python.core.PyReflectedFunction as ReflFunc
-        self.sdv = ReflFunc(sdv)
+        self.sdv = ReflFunc([sdv])
 
     def test_basic_roundtrip(self):
         e = self.e
