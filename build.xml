@@ -460,7 +460,8 @@ The readme text for the next release will be like:
                source="${jdk.source.version}"
                debug="${debug}"
                deprecation="${deprecation}"
-               nowarn="${nowarn}">
+               nowarn="${nowarn}"
+               fork="yes">
             <src path="${source.dir}"/>
             <src path="${gensrc.dir}"/>
 
