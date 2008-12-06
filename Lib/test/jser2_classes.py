@@ -1,4 +1,5 @@
-import java
+from java.io import Serializable
+from java.lang import Object
 
 class A:
     def __init__(self, a):
@@ -8,7 +9,7 @@ class A:
     def __ne__(self, other):
         return not (self == other)
 
-class AJ(java.lang.Object, java.io.Serializable):
+class AJ(Object, Serializable):
     def __init__(self, a):
         self.a = a
     def __eq__(self, other):

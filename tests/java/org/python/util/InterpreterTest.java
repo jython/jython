@@ -2,8 +2,9 @@ package org.python.util;
 
 import junit.framework.TestCase;
 
-import org.python.core.*;
-import org.python.util.*;
+import org.python.core.PyDictionary;
+import org.python.core.PyObject;
+import org.python.core.PyUnicode;
 
 public class InterpreterTest extends TestCase {
 
@@ -13,8 +14,7 @@ public class InterpreterTest extends TestCase {
     public void testBasicEval() throws Exception {
         PyDictionary test = new PyDictionary();
         test.__setitem__(new PyUnicode("one"), new PyUnicode("two"));
-        PythonInterpreter.initialize(System.getProperties(), null, new
-String[] {});
+        PythonInterpreter.initialize(System.getProperties(), null, new String[] {});
         PythonInterpreter interp = new PythonInterpreter();
         PyObject pyo = interp.eval("{u'one': u'two'}");
         assertEquals(test, pyo);
