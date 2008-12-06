@@ -9,6 +9,7 @@ import java.io.ObjectStreamClass;
 import org.python.core.Py;
 import org.python.core.PyObject;
 import org.python.core.PyTuple;
+import org.python.core.PyType;
 import org.python.core.__builtin__;
 
 public class PythonObjectInputStream extends ObjectInputStream {
@@ -29,11 +30,8 @@ public class PythonObjectInputStream extends ObjectInputStream {
                 String mod = clsName.substring(0, idx);
                 clsName = clsName.substring(idx + 1);
                 PyObject module = importModule(mod);
-                PyObject pycls = module.__getattr__(clsName.intern());
-                Object cls = pycls.__tojava__(Class.class);
-                if (cls != null && cls != Py.NoConversion) {
-                    return (Class<?>)cls;
-                }
+                PyType pycls = (PyType)module.__getattr__(clsName.intern());
+                return pycls.getProxyType();
             }
         }
         try {
