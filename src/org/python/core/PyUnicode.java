@@ -633,6 +633,10 @@ public class PyUnicode extends PyString implements Iterable {
                 new ReversedIterator(newSubsequenceIterator()))));
     }
 
+    public PyTuple partition(PyObject sep) {
+        return unicode_partition(sep);
+    }
+
     @ExposedMethod
     final PyTuple unicode_partition(PyObject sep) {
         return unicodePartition(sep);
@@ -867,6 +871,10 @@ public class PyUnicode extends PyString implements Iterable {
         } else {
             return new SepSplitIterator(sep, maxsplit);
         }
+    }
+
+    public PyTuple rpartition(PyObject sep) {
+        return unicode_rpartition(sep);
     }
 
     @ExposedMethod
