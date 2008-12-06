@@ -763,6 +763,16 @@ The readme text for the next release will be like:
     </target>
 
     <target name="test" depends="prepare-test,javatest,launchertest,regrtest"/>
+    <target name="singlejavatest" depends="compile,expose">
+        <junit haltonfailure="true" fork="true">
+            <formatter type="brief" usefile="false"/>
+            <sysproperty key="python.cachedir.skip" value="true"/>
+            <classpath refid="test.classpath"/>
+            <batchtest>
+                <fileset dir="${test.source.dir}" includes="**/${test}.java"/>
+            </batchtest>
+        </junit>
+    </target>
     <target name="prepare-test" depends="init">
         <!-- Clean any old test output -->
         <delete dir="${junit.reports}"/>
