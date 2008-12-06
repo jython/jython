@@ -1,9 +1,11 @@
 package org.python.core;
 
+import java.io.Serializable;
+
 /**
  * Handles all the index checking and manipulation for get, set and del operations on a sequence.
  */
-public abstract class SequenceIndexDelegate {
+public abstract class SequenceIndexDelegate implements Serializable {
 
     public abstract int len();
 
