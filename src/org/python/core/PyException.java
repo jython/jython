@@ -199,8 +199,17 @@ public class PyException extends RuntimeException
      * @return true if an exception
      */
     public static boolean isExceptionClass(PyObject obj) {
-        return obj instanceof PyClass
-                || (obj instanceof PyType && ((PyType)obj).isSubType((PyType)Py.BaseException));
+        if (obj instanceof PyClass) {
+            return true;
+        }
+        if (!(obj instanceof PyType)) {
+            return false;
+        }
+        PyType type = ((PyType)obj);
+        if(type.isSubType((PyType)Py.BaseException)){
+            return true;
+        }
+        return type.getProxyType() != null && Throwable.class.isAssignableFrom(type.getProxyType());
     }
 
     /**
@@ -210,7 +219,8 @@ public class PyException extends RuntimeException
      * @return true if an exception instance
      */
     public static boolean isExceptionInstance(PyObject obj) {
-        return obj instanceof PyInstance || obj instanceof PyBaseException;
+        return obj instanceof PyInstance || obj instanceof PyBaseException
+           || obj.getJavaProxy() instanceof Throwable;
     }
 
     /**
