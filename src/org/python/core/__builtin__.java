@@ -1221,11 +1221,10 @@ public class __builtin__ {
 
     public static PyObject __import__(String name, PyObject globals, PyObject locals, PyObject fromlist, int level) {
         PyFrame frame = Py.getFrame();
-        if (frame == null) {
-            return null;
-        }
-        PyObject builtins = frame.f_builtins;
-        if (builtins == null) {
+        PyObject builtins;
+        if (frame != null && frame.f_builtins != null) {
+            builtins = frame.f_builtins;
+        } else {
             builtins = PySystemState.builtins;
         }
 
