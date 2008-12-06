@@ -5,7 +5,7 @@ import ast
 def to_tuple(t):
     if t is None or isinstance(t, (basestring, int, long, complex)):
         return t
-    elif hasattr(t, "__iter__"):
+    elif isinstance(t, list):
         return [to_tuple(e) for e in t]
     result = [t.__class__.__name__]
     if hasattr(t, 'lineno') and hasattr(t, 'col_offset'):
@@ -131,7 +131,7 @@ class AST_Tests(unittest.TestCase):
             parent_pos = (ast_node.lineno, ast_node.col_offset)
         for name in ast_node._fields:
             value = getattr(ast_node, name)
-            if hasattr(value, "__iter__"):
+            if isinstance(value, list):
                 for child in value:
                     self._assert_order(child, parent_pos)
             elif value is not None:
