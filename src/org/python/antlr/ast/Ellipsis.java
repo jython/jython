@@ -40,6 +40,16 @@ public static final PyType TYPE = PyType.fromClass(Ellipsis.class);
     public Ellipsis(PyType subType) {
         super(subType);
     }
+    @ExposedNew
+    @ExposedMethod
+    public void Ellipsis___init__(PyObject[] args, String[] keywords) {
+        ArgParser ap = new ArgParser("Ellipsis", args, keywords, new String[]
+            {}, 0);
+    }
+
+    public Ellipsis() {
+    }
+
     public Ellipsis(Token token) {
         super(token);
     }

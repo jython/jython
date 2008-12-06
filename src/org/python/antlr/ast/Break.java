@@ -41,6 +41,26 @@ public static final PyType TYPE = PyType.fromClass(Break.class);
     public Break(PyType subType) {
         super(subType);
     }
+    @ExposedNew
+    @ExposedMethod
+    public void Break___init__(PyObject[] args, String[] keywords) {
+        ArgParser ap = new ArgParser("Break", args, keywords, new String[]
+            {"lineno", "col_offset"}, 0);
+        int lin = ap.getInt(0, -1);
+        if (lin != -1) {
+            setLineno(lin);
+        }
+
+        int col = ap.getInt(1, -1);
+        if (col != -1) {
+            setLineno(col);
+        }
+
+    }
+
+    public Break() {
+    }
+
     public Break(Token token) {
         super(token);
     }

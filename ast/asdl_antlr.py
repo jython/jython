@@ -470,44 +470,46 @@ class JavaVisitor(EmitVisitor):
             self.emit("public %s() {" % (clsname), depth)
             self.emit("this(TYPE);", depth + 1)
             self.emit("}", depth)
-
             fnames = ['"%s"' % f.name for f in fields]
-            if str(name) in ('stmt', 'expr', 'excepthandler'):
-                fnames.extend(['"lineno"', '"col_offset"'])
-            fpargs = ", ".join(fnames)
-            self.emit("@ExposedNew", depth)
-            self.emit("@ExposedMethod", depth)
-            self.emit("public void %s___init__(PyObject[] args, String[] keywords) {" % clsname, depth)
-            self.emit('ArgParser ap = new ArgParser("%s", args, keywords, new String[]' % clsname, depth + 1)
-            self.emit('{%s}, %s);' % (fpargs, len(fields)), depth + 2)
-            i = 0
-            for f in fields:
-                self.emit("set%s(ap.getPyObject(%s));" % (str(f.name).capitalize(),
-                    str(i)), depth+1)
-                i += 1
-            if str(name) in ('stmt', 'expr', 'excepthandler'):
-                self.emit("int lin = ap.getInt(%s, -1);" % str(i), depth + 1) 
-                self.emit("if (lin != -1) {", depth + 1) 
-                self.emit("setLineno(lin);", depth + 2) 
-                self.emit("}", depth + 1)
-                self.emit("", 0)
+        else:
+            fnames = []
 
-                self.emit("int col = ap.getInt(%s, -1);" % str(i+1), depth + 1) 
-                self.emit("if (col != -1) {", depth + 1) 
-                self.emit("setLineno(col);", depth + 2) 
-                self.emit("}", depth + 1)
-                self.emit("", 0)
-
-            self.emit("}", depth)
+        if str(name) in ('stmt', 'expr', 'excepthandler'):
+            fnames.extend(['"lineno"', '"col_offset"'])
+        fpargs = ", ".join(fnames)
+        self.emit("@ExposedNew", depth)
+        self.emit("@ExposedMethod", depth)
+        self.emit("public void %s___init__(PyObject[] args, String[] keywords) {" % clsname, depth)
+        self.emit('ArgParser ap = new ArgParser("%s", args, keywords, new String[]' % clsname, depth + 1)
+        self.emit('{%s}, %s);' % (fpargs, len(fields)), depth + 2)
+        i = 0
+        for f in fields:
+            self.emit("set%s(ap.getPyObject(%s));" % (str(f.name).capitalize(),
+                str(i)), depth+1)
+            i += 1
+        if str(name) in ('stmt', 'expr', 'excepthandler'):
+            self.emit("int lin = ap.getInt(%s, -1);" % str(i), depth + 1) 
+            self.emit("if (lin != -1) {", depth + 1) 
+            self.emit("setLineno(lin);", depth + 2) 
+            self.emit("}", depth + 1)
             self.emit("", 0)
 
-            fpargs = ", ".join(["PyObject %s" % f.name for f in fields])
-            self.emit("public %s(%s) {" % (clsname, fpargs), depth)
-            for f in fields:
-                self.emit("set%s(%s);" % (str(f.name).capitalize(),
-                    f.name), depth+1)
-            self.emit("}", depth)
+            self.emit("int col = ap.getInt(%s, -1);" % str(i+1), depth + 1) 
+            self.emit("if (col != -1) {", depth + 1) 
+            self.emit("setLineno(col);", depth + 2) 
+            self.emit("}", depth + 1)
             self.emit("", 0)
+
+        self.emit("}", depth)
+        self.emit("", 0)
+
+        fpargs = ", ".join(["PyObject %s" % f.name for f in fields])
+        self.emit("public %s(%s) {" % (clsname, fpargs), depth)
+        for f in fields:
+            self.emit("set%s(%s);" % (str(f.name).capitalize(),
+                f.name), depth+1)
+        self.emit("}", depth)
+        self.emit("", 0)
 
         token = asdl.Field('Token', 'token')
         token.typedef = False

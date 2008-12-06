@@ -455,9 +455,62 @@ public class AstList extends PySequence implements Cloneable, List {
     }
 
     protected void setslice(int start, int stop, int step, PyObject value) {
-        //FIXME
+        if(stop < start) {
+            stop = start;
+        }
+        if (value instanceof PySequence) {
+            PySequence sequence = (PySequence) value;
+            setslicePySequence(start, stop, step, sequence);
+        } else if (value instanceof List) {
+            List list = (List)value.__tojava__(List.class);
+            if(list != null && list != Py.NoConversion) {
+                setsliceList(start, stop, step, list);
+            }
+        } else {
+            setsliceIterable(start, stop, step, value);
+        }
     }
-    
+
+    protected void setslicePySequence(int start, int stop, int step, PySequence value) {
+        if (step != 0) {
+            if(value == this) {
+                PyList newseq = new PyList();
+                PyObject iter = value.__iter__();
+                for(PyObject item = null; (item = iter.__iternext__()) != null;) {
+                    newseq.append(item);
+                }
+                value = newseq;
+            }
+            int n = value.__len__();
+            for (int i = 0, j = start; i < n; i++, j += step) {
+                pyset(j, value.pyget(i));
+            }
+        }
+    }
+
+    protected void setsliceList(int start, int stop, int step, List value) {
+        if(step != 1) {
+            throw Py.TypeError("setslice with java.util.List and step != 1 not supported yet");
+        }
+        int n = value.size();
+        for(int i = 0; i < n; i++) {
+            data.add(i + start, value.get(i));
+        }
+    }
+
+    protected void setsliceIterable(int start, int stop, int step, PyObject value) {
+        PyObject[] seq;
+        try {
+            seq = Py.make_array(value);
+        } catch (PyException pye) {
+            if (Py.matchException(pye, Py.TypeError)) {
+                throw Py.TypeError("can only assign an iterable");
+            }
+            throw pye;
+        }
+        setslicePySequence(start, stop, step, new PyList(seq));
+    }
+
     public void add(int index, Object element) {
         data.add(index, element);
     }
