@@ -22,12 +22,31 @@ import java.util.List;
 public class CmpopAdapter implements AstAdapter {
 
     public Object py2ast(PyObject o) {
-        if (o == null) {
-            return o;
+        switch (((PyObject)o).asInt()) {
+            case 1:
+                return cmpopType.Eq;
+            case 2:
+                return cmpopType.NotEq;
+            case 3:
+                return cmpopType.Lt;
+            case 4:
+                return cmpopType.LtE;
+            case 5:
+                return cmpopType.Gt;
+            case 6:
+                return cmpopType.GtE;
+            case 7:
+                return cmpopType.Is;
+            case 8:
+                return cmpopType.IsNot;
+            case 9:
+                return cmpopType.In;
+            case 10:
+                return cmpopType.NotIn;
         }
-        return o;
+
         //FIXME: investigate the right exception
-        //throw Py.TypeError("Can't convert " + o.getClass().getName() + " to cmpop node");
+        throw Py.TypeError("Can't convert " + o.getClass().getName() + " to cmpop node");
     }
 
     public PyObject ast2py(Object o) {

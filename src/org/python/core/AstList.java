@@ -430,7 +430,12 @@ public class AstList extends PySequence implements Cloneable, List {
 
     @ExposedMethod(defaults = "-1")
     final PyObject astlist_pop(int n) {
-        return (PyObject)data.remove(n);
+        if (adapter == null) {
+            return (PyObject)data.remove(n);
+        }
+        Object element = data.remove(n);
+        return (PyObject)adapter.ast2py(element);
+
     }
 
     protected PyObject repeat(int count) {
@@ -584,7 +589,12 @@ public class AstList extends PySequence implements Cloneable, List {
     }
 
     public PyObject pyset(int index, PyObject element) {
-        return (PyObject)data.set(index, element);
+        if (adapter == null) {
+            return (PyObject)data.set(index, element);
+        }
+        Object o = adapter.py2ast(element);
+        data.set(index, o);
+        return element;
     }
 
     public Object remove(int index) {
