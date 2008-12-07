@@ -459,7 +459,7 @@ The readme text for the next release will be like:
                debug="${debug}"
                deprecation="${deprecation}"
                nowarn="${nowarn}"
-               memoryMaximumSize="128m"
+               memoryMaximumSize="192m"
                fork="true">
             <src path="${source.dir}"/>
             <src path="${gensrc.dir}"/>
