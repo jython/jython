@@ -103,6 +103,7 @@ public class AstAdapters {
         return (stmt)stmtAdapter.py2ast(o);
     }
 
+    //XXX: Unnecessary but needs to be fixed in the code generation of asdl_antlr.py
     public static Object py2string(Object o) {
         if (o == null || o instanceof PyString) {
             return o;
@@ -187,7 +188,29 @@ public class AstAdapters {
     }
 
     public static PyObject cmpop2py(cmpopType o) {
-        return cmpopAdapter.ast2py(o);
+        switch (o) {
+            case Eq:
+                return new Eq();
+            case NotEq: 
+                return new NotEq();
+            case Lt: 
+                return new Lt();
+            case LtE: 
+                return new LtE();
+            case Gt: 
+                return new Gt();
+            case GtE: 
+                return new GtE();
+            case Is: 
+                return new Is();
+            case IsNot: 
+                return new IsNot();
+            case In: 
+                return new In();
+            case NotIn: 
+                return new NotIn();
+        }
+        return Py.None;
     }
 
     public static PyObject unaryop2py(unaryopType o) {
@@ -262,6 +285,18 @@ public class AstAdapters {
     public static unaryopType py2unaryop(Object o) {
         if (o == null || o instanceof unaryopType) {
             return (unaryopType)o;
+        }
+        if (o instanceof PyObject) {
+            switch (((PyObject)o).asInt()) {
+                case 1:
+                    return unaryopType.Invert;
+                case 2:
+                    return unaryopType.Not;
+                case 3:
+                    return unaryopType.UAdd;
+                case 4:
+                    return unaryopType.USub;
+            }
         }
         //FIXME: investigate the right exception
         throw Py.TypeError("Can't convert " + o.getClass().getName() + " to unaryop node");
