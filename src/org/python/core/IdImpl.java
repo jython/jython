@@ -72,10 +72,8 @@ public class IdImpl {
         }            
     }
 
-    // XXX maybe should display both this id and identityHashCode
-    // XXX preserve the old "at ###" style?
     public String idstr(PyObject o) {
-        return Long.toString(id(o));
+        return String.format("0x%x", id(o));
     }
 
     public synchronized long java_obj_id(Object o) {
