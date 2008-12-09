@@ -1225,7 +1225,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
             // also exiting the try: portion of this particular finally
          }
         if (handler.isFinallyHandler()) {
-            suite(((TryFinally) handler.node).getInternalFinalbody());
+            handler.finalBody(this);
         }
     }
     
@@ -2245,15 +2245,14 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
             throw new ParseException("'with' will become a reserved keyword in Python 2.6", node);
         }
 
-        Label label_body_start = new Label();
-        Label label_body_end = new Label();
-        Label label_catch = new Label();
-        Label label_finally = new Label();
-        Label label_end = new Label();
+        final Label label_body_start = new Label();
+        final Label label_body_end = new Label();
+        final Label label_catch = new Label();
+        final Label label_end = new Label();
 
-        Method getattr = Method.getMethod("org.python.core.PyObject __getattr__ (String)");
-        Method call = Method.getMethod("org.python.core.PyObject __call__ ()");
-        Method call3 = Method.getMethod("org.python.core.PyObject __call__ (org.python.core.PyObject,org.python.core.PyObject,org.python.core.PyObject)");
+        final Method getattr = Method.getMethod("org.python.core.PyObject __getattr__ (String)");
+        final Method call = Method.getMethod("org.python.core.PyObject __call__ ()");
+        final Method call3 = Method.getMethod("org.python.core.PyObject __call__ (org.python.core.PyObject,org.python.core.PyObject,org.python.core.PyObject)");
 
         // mgr = (EXPR)
         visit(node.getInternalContext_expr());
@@ -2261,7 +2260,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         
         code.ldc("__exit__");
         code.invokevirtual(Type.getType(PyObject.class).getInternalName(), getattr.getName(), getattr.getDescriptor());
-        int __exit__ = code.getLocal("org/python/core/PyObject");
+        final int __exit__ = code.getLocal("org/python/core/PyObject");
         code.astore(__exit__);
 
         // value = mgr.__enter__()
@@ -2272,11 +2271,34 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         code.astore(value_tmp);
 
         // exc = True # not necessary, since we don't exec finally if exception
+
+        // FINALLY (preparation)
+        // ordinarily with a finally, we need to duplicate the code. that's not the case
+        // here
+        // # The normal and non-local-goto cases are handled here
+        // if exc: # implicit
+        //     exit(None, None, None)
+        ExceptionHandler normalExit = new ExceptionHandler() {
+            @Override
+            public boolean isFinallyHandler() { return true; }
+
+            @Override
+            public void finalBody(CodeCompiler compiler) throws Exception {
+                compiler.code.aload(__exit__);
+                compiler.getNone();
+                compiler.code.dup();
+                compiler.code.dup();
+                compiler.code.invokevirtual(Type.getType(PyObject.class).getInternalName(),
+                                            call3.getName(), call3.getDescriptor());
+                compiler.code.pop();
+            }
+        };
+        exceptionHandlers.push(normalExit);
+
         // try-catch block here
-        //code.trycatch(label_body_start, label_body_end, label_catch, "java/lang/Throwable");
         ExceptionHandler handler = new ExceptionHandler();
-        handler.exceptionStarts.addElement(label_body_start);
         exceptionHandlers.push(handler);
+        handler.exceptionStarts.addElement(label_body_start);
 
         // VAR = value  # Only if "as VAR" is present
         code.label(label_body_start);
@@ -2285,12 +2307,21 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         }
         code.freeLocal(value_tmp);
         
-        // BLOCK
-        suite(node.getInternalBody());
+        // BLOCK + FINALLY if non-local-goto
+        Object blockResult = suite(node.getInternalBody());
+        normalExit.bodyDone = true;
         exceptionHandlers.pop();
-        code.goto_(label_finally);
+        exceptionHandlers.pop();
         code.label(label_body_end);
         handler.exceptionEnds.addElement(label_body_end);
+
+        // FINALLY if *not* non-local-goto
+        if (blockResult == NoExit) {
+            // BLOCK would have generated FINALLY for us if it exited (due to a break,
+            // continue or return)
+            inlineFinally(normalExit);
+            code.goto_(label_end);
+        }
 
         // CATCH
         code.label(label_catch);
@@ -2322,29 +2353,12 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         code.invokestatic("org/python/core/Py", "makeException", "()Lorg/python/core/PyException;");
         code.checkcast("java/lang/Throwable");
         code.athrow();
-        
         code.freeLocal(ts_tmp);
-        
-        handler.addExceptionHandlers(label_catch);
-
-        // FINALLY
-        // ordinarily with a finally, we need to duplicate the code. that's not the case here
-        // # The normal and non-local-goto cases are handled here
-        // if exc: # implicit
-        //     exit(None, None, None)
-
-        code.label(label_finally);
-
-        code.aload(__exit__);
-        getNone();
-        code.dup();
-        code.dup();
-        code.invokevirtual(Type.getType(PyObject.class).getInternalName(), call3.getName(), call3.getDescriptor());
-        code.pop();
 
         code.label(label_end);
         code.freeLocal(__exit__);
 
+        handler.addExceptionHandlers(label_catch);
         return null;
     }
     
@@ -2403,6 +2417,12 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
                         handlerStart,
                         "java/lang/Throwable");
                 }
+            }
+        }
+
+        public void finalBody(CodeCompiler compiler) throws Exception {
+            if (node instanceof TryFinally) {
+                suite(((TryFinally)node).getInternalFinalbody());
             }
         }
     }
