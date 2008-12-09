@@ -633,17 +633,6 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         }
     }
 
-    private boolean inFinallyBody() {
-        for (int i = 0; i < exceptionHandlers.size(); ++i) {
-            ExceptionHandler handler = 
-                (ExceptionHandler)exceptionHandlers.elementAt(i);
-            if (handler.isFinallyHandler()) {
-                return true;
-            }
-        }
-        return false;
-    }
- 
     private void restoreLocals() throws Exception {
         endExceptionHandlers();
         
@@ -1490,7 +1479,6 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
     public static int makeStrings(Code c, Collection<String> names)
         throws IOException
     {
-        int n = 0;
         if (names != null) {
             c.iconst(names.size());
         } else {
