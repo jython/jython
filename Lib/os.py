@@ -494,6 +494,9 @@ def lstat(path):
     except:
         raise
     f = File(sys.getPath(path))
+    # XXX: jna-posix implements similar link detection in
+    # JavaFileStat.calculateSymlink, fallback to that instead when not
+    # native
     abs_parent = f.getAbsoluteFile().getParentFile()
     if not abs_parent:
       # root isn't a link
@@ -668,29 +671,6 @@ def _handle_oserror(func, *args, **kwargs):
         return func(*args, **kwargs)
     except:
         raise OSError(errno.EBADF, strerror(errno.EBADF))
-
-if _name == 'posix' and _native_posix:
-    def link(src, dst):
-        """link(src, dst)
-
-        Create a hard link to a file.
-        """
-        _posix.link(sys.getPath(src), sys.getPath(dst))
-
-    def symlink(src, dst):
-        """symlink(src, dst)
-
-        Create a symbolic link pointing to src named dst.
-        """
-        _posix.symlink(src, sys.getPath(dst))
-
-    def readlink(path):
-        """readlink(path) -> path
-
-        Return a string representing the path to which the symbolic link
-        points.
-        """
-        return _posix.readlink(sys.getPath(path))
 
 # Provide lazy popen*, and system objects
 # Do these lazily, as most jython programs don't need them,
@@ -906,65 +886,88 @@ def getenv(key, default=None):
     The optional second argument can specify an alternate default."""
     return environ.get(key, default)
 
-def getegid():
-    """getegid() -> egid
+if _name == 'posix':
+    def link(src, dst):
+        """link(src, dst)
 
-    Return the current process's effective group id."""
-    return _posix.getegid()
+        Create a hard link to a file.
+        """
+        _posix.link(sys.getPath(src), sys.getPath(dst))
 
-def geteuid():
-    """geteuid() -> euid
+    def symlink(src, dst):
+        """symlink(src, dst)
 
-    Return the current process's effective user id."""
-    return _posix.geteuid()
+        Create a symbolic link pointing to src named dst.
+        """
+        _posix.symlink(src, sys.getPath(dst))
 
-def getgid():
-    """getgid() -> gid
+    def readlink(path):
+        """readlink(path) -> path
 
-    Return the current process's group id."""
-    return _posix.getgid()
+        Return a string representing the path to which the symbolic link
+        points.
+        """
+        return _posix.readlink(sys.getPath(path))
 
-def getlogin():
-    """getlogin() -> string
+    def getegid():
+        """getegid() -> egid
 
-    Return the actual login name."""
-    return _posix.getlogin()
+        Return the current process's effective group id."""
+        return _posix.getegid()
 
-def getpgrp():
-    """getpgrp() -> pgrp
+    def geteuid():
+        """geteuid() -> euid
 
-    Return the current process group id."""
-    return _posix.getpgrp()
+        Return the current process's effective user id."""
+        return _posix.geteuid()
+
+    def getgid():
+        """getgid() -> gid
+
+        Return the current process's group id."""
+        return _posix.getgid()
+
+    def getlogin():
+        """getlogin() -> string
+
+        Return the actual login name."""
+        return _posix.getlogin()
+
+    def getpgrp():
+        """getpgrp() -> pgrp
+
+        Return the current process group id."""
+        return _posix.getpgrp()
+
+    def getppid():
+        """getppid() -> ppid
+
+        Return the parent's process id."""
+        return _posix.getppid()
+
+    def getuid():
+        """getuid() -> uid
+
+        Return the current process's user id."""
+        return _posix.getuid()
+
+    def setpgrp():
+        """setpgrp()
+
+        Make this process a session leader."""
+        return _posix.setpgrp()
+
+    def setsid():
+        """setsid()
+
+        Call the system call setsid()."""
+        return _posix.setsid()
 
 def getpid():
     """getpid() -> pid
 
     Return the current process id."""
     return _posix.getpid()
-
-def getppid():
-    """getppid() -> ppid
-
-    Return the parent's process id."""
-    return _posix.getppid()
-
-def getuid():
-    """getuid() -> uid
-
-    Return the current process's user id."""
-    return _posix.getuid()
-
-def setpgrp():
-    """setpgrp()
-
-    Make this process a session leader."""
-    return _posix.setpgrp()
-
-def setsid():
-    """setsid()
-
-    Call the system call setsid()."""
-    return _posix.setsid()
 
 def isatty(fileno):
     """isatty(fd) -> bool
