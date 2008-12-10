@@ -16,6 +16,13 @@ class BuiltinTest(unittest.TestCase):
                 raise TypeError()
         self.assert_(not hasattr(Foo(), 'bar'))
 
+    def test_dir(self):
+        # for http://bugs.jython.org/issue1063
+        class Foo(object):
+            def __getattribute__(self, name):
+                return name
+        self.assertEqual(dir(Foo()), [])
+
 class LoopTest(unittest.TestCase):
 
     def test_break(self):

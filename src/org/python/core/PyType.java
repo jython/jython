@@ -1129,13 +1129,7 @@ public class PyType extends PyObject implements Serializable {
     }
 
     protected void __rawdir__(PyDictionary accum) {
-        PyObject[] mro = this.mro;
-        if (mro == null) {
-            return;
-        }
-        for (PyObject element : mro) {
-            element.addKeys(accum, "__dict__");
-        }
+        mergeClassDict(accum, this);
     }
 
     public String fastGetName() {
