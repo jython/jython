@@ -1,8 +1,13 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.modules;
 
-import org.python.core.*;
-import java.lang.Math;
+import org.python.core.ClassDictInit;
+import org.python.core.Py;
+import org.python.core.PyFloat;
+import org.python.core.PyInteger;
+import org.python.core.PyLong;
+import org.python.core.PyObject;
+import org.python.core.PyTuple;
 
 public class math implements ClassDictInit {
     public static PyFloat pi = new PyFloat(Math.PI);
@@ -74,7 +79,7 @@ public class math implements ClassDictInit {
 
     private static double calculateLongLog(PyLong v) {
         int e[] = new int[1];
-        double x = ((PyLong)v).scaledDoubleValue(e);
+        double x = v.scaledDoubleValue(e);
         if (x <= 0.0) throw Py.ValueError("math domain error");
         return log(x) + (e[0]*8.0)*log(2.0);
     }
