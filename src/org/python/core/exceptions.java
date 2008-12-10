@@ -10,7 +10,7 @@ import org.python.modules.zipimport.zipimport;
  * The builtin exceptions module. The entire module should be imported from
  * python. None of the methods defined here should be called from java.
  */
-public class exceptions implements ClassDictInit {
+public class exceptions extends PyObject implements ClassDictInit {
 
     public static String __doc__ = "Python's standard exception class hierarchy.\n"
             + "\n"
@@ -138,7 +138,7 @@ public class exceptions implements ClassDictInit {
 
         buildClass(dict, "StopIteration", "Exception",
                    "Signal the end from iterator.next().");
-        
+
         buildClass(dict, "GeneratorExit", "Exception", "Request that a generator exit.");
 
         buildClass(dict, "Warning", "Exception", "Base class for warning categories.");
@@ -148,7 +148,7 @@ public class exceptions implements ClassDictInit {
 
         buildClass(dict, "DeprecationWarning", "Warning",
                    "Base class for warnings about deprecated features.");
-        
+
         buildClass(dict, "PendingDeprecationWarning", "Warning",
                    "Base class for warnings about features which will be deprecated\n"
                    + "in the future.");
@@ -342,7 +342,7 @@ public class exceptions implements ClassDictInit {
         // NOTE: UnicodeError doesn't actually use its own constructor
         return dict;
     }
-    
+
     public static void UnicodeError__init__(PyObject self, PyObject[] args, String[] kwargs,
                                             PyType objectType) {
         ArgParser ap = new ArgParser("__init__", args, kwargs,
@@ -363,7 +363,7 @@ public class exceptions implements ClassDictInit {
         dict.__setitem__("__str__", bindStaticJavaMethod("__str__", "UnicodeDecodeError__str__"));
         return dict;
     }
-    
+
     public static void UnicodeDecodeError__init__(PyObject self, PyObject[] args,
                                                   String[] kwargs) {
         PyBaseException.TYPE.invoke("__init__", self, args, kwargs);
@@ -397,7 +397,7 @@ public class exceptions implements ClassDictInit {
         dict.__setitem__("__str__", bindStaticJavaMethod("__str__", "UnicodeEncodeError__str__"));
         return dict;
     }
-    
+
     public static void UnicodeEncodeError__init__(PyObject self, PyObject[] args, String[] kwargs) {
         PyBaseException.TYPE.invoke("__init__", self, args, kwargs);
         UnicodeError__init__(self, args, kwargs, PyUnicode.TYPE);
