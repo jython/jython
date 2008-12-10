@@ -455,9 +455,21 @@ public class PyUnicode extends PyString implements Iterable {
         return str___rmul__(o);
     }
 
+    public PyObject __add__(PyObject other) {
+        return unicode___add__(other);
+    }
+    
     @ExposedMethod(type = MethodType.BINARY)
-    final PyObject unicode___add__(PyObject generic_other) {
-        return str___add__(generic_other);
+    final PyObject unicode___add__(PyObject other) {
+        PyUnicode otherUnicode;
+        if (other instanceof PyUnicode) {
+            otherUnicode = (PyUnicode)other;
+        } else if (other instanceof PyString) {
+            otherUnicode = (PyUnicode)((PyString)other).decode();
+        } else {
+            return null;
+        }
+        return new PyUnicode(string.concat(otherUnicode.string));
     }
 
     @ExposedMethod
@@ -619,6 +631,10 @@ public class PyUnicode extends PyString implements Iterable {
         }
         return new PyUnicode(new ReversedIterator(new StripIterator(sep,
                 new ReversedIterator(newSubsequenceIterator()))));
+    }
+
+    public PyTuple partition(PyObject sep) {
+        return unicode_partition(sep);
     }
 
     @ExposedMethod
@@ -855,6 +871,10 @@ public class PyUnicode extends PyString implements Iterable {
         } else {
             return new SepSplitIterator(sep, maxsplit);
         }
+    }
+
+    public PyTuple rpartition(PyObject sep) {
+        return unicode_rpartition(sep);
     }
 
     @ExposedMethod
@@ -1098,9 +1118,13 @@ public class PyUnicode extends PyString implements Iterable {
     }
 
     // end utf-16 aware
+    public PyString join(PyObject seq) {
+        return unicode_join(seq);
+    }
+
     @ExposedMethod
-    final PyString unicode_join(PyObject seq) {
-        return str_join(seq);
+    final PyUnicode unicode_join(PyObject seq) {
+        return unicodeJoin(seq);
     }
 
     @ExposedMethod(defaults = {"0", "null"})

@@ -72,6 +72,17 @@ class UnicodeTestCase(unittest.TestCase):
             self.assertEqual(u'%c' % sys.maxunicode, u'\U0010ffff')
         self.assertRaises(OverflowError, '%c'.__mod__, sys.maxunicode + 1)
 
+    def test_repr(self):
+        self.assert_(isinstance('%r' % u'foo', str))
+
+    def test_concat(self):
+        self.assertRaises(UnicodeDecodeError, lambda : u'' + '毛泽东')
+        self.assertRaises(UnicodeDecodeError, lambda : '毛泽东' + u'')
+
+    def test_join(self):
+        self.assertRaises(UnicodeDecodeError, u''.join, ['foo', '毛泽东'])
+        self.assertRaises(UnicodeDecodeError, '毛泽东'.join, [u'foo', u'bar'])
+
 
 def test_main():
     test_support.run_unittest(UnicodeTestCase)

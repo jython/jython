@@ -82,8 +82,8 @@ import org.antlr.runtime.CommonToken;
 
 import org.python.antlr.ParseException;
 import org.python.antlr.PythonTree;
-import org.python.antlr.ast.aliasType;
-import org.python.antlr.ast.argumentsType;
+import org.python.antlr.ast.alias;
+import org.python.antlr.ast.arguments;
 import org.python.antlr.ast.Assert;
 import org.python.antlr.ast.Assign;
 import org.python.antlr.ast.Attribute;
@@ -96,17 +96,16 @@ import org.python.antlr.ast.Call;
 import org.python.antlr.ast.ClassDef;
 import org.python.antlr.ast.cmpopType;
 import org.python.antlr.ast.Compare;
-import org.python.antlr.ast.comprehensionType;
+import org.python.antlr.ast.comprehension;
 import org.python.antlr.ast.Context;
 import org.python.antlr.ast.Continue;
 import org.python.antlr.ast.Delete;
 import org.python.antlr.ast.Dict;
 import org.python.antlr.ast.Ellipsis;
-import org.python.antlr.ast.excepthandlerType;
+import org.python.antlr.ast.ExceptHandler;
 import org.python.antlr.ast.Exec;
 import org.python.antlr.ast.Expr;
 import org.python.antlr.ast.Expression;
-import org.python.antlr.ast.exprType;
 import org.python.antlr.ast.expr_contextType;
 import org.python.antlr.ast.ExtSlice;
 import org.python.antlr.ast.For;
@@ -118,10 +117,9 @@ import org.python.antlr.ast.Import;
 import org.python.antlr.ast.ImportFrom;
 import org.python.antlr.ast.Index;
 import org.python.antlr.ast.Interactive;
-import org.python.antlr.ast.keywordType;
+import org.python.antlr.ast.keyword;
 import org.python.antlr.ast.ListComp;
 import org.python.antlr.ast.Lambda;
-import org.python.antlr.ast.modType;
 import org.python.antlr.ast.Module;
 import org.python.antlr.ast.Name;
 import org.python.antlr.ast.Num;
@@ -132,8 +130,6 @@ import org.python.antlr.ast.Raise;
 import org.python.antlr.ast.Repr;
 import org.python.antlr.ast.Return;
 import org.python.antlr.ast.Slice;
-import org.python.antlr.ast.sliceType;
-import org.python.antlr.ast.stmtType;
 import org.python.antlr.ast.Str;
 import org.python.antlr.ast.Subscript;
 import org.python.antlr.ast.TryExcept;
@@ -144,7 +140,13 @@ import org.python.antlr.ast.UnaryOp;
 import org.python.antlr.ast.While;
 import org.python.antlr.ast.With;
 import org.python.antlr.ast.Yield;
+import org.python.antlr.base.excepthandler;
+import org.python.antlr.base.expr;
+import org.python.antlr.base.mod;
+import org.python.antlr.base.slice;
+import org.python.antlr.base.stmt;
 import org.python.core.Py;
+import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyUnicode;
 
@@ -271,13 +273,13 @@ private ErrorHandler errorHandler;
 //single_input: NEWLINE | simple_stmt | compound_stmt NEWLINE
 single_input
 @init {
-    modType mtype = null;
+    mod mtype = null;
 }
 @after {
     $single_input.tree = mtype;
 }
     : NEWLINE* EOF {
-        mtype = new Interactive($single_input.start, new stmtType[0]);
+        mtype = new Interactive($single_input.start, new ArrayList<stmt>());
     }
     | simple_stmt NEWLINE* EOF {
         mtype = new Interactive($single_input.start, actions.castStmts($simple_stmt.stypes));
@@ -290,7 +292,7 @@ single_input
 //file_input: (NEWLINE | stmt)* ENDMARKER
 file_input
 @init {
-    modType mtype = null;
+    mod mtype = null;
     List stypes = new ArrayList();
 }
 @after {
@@ -319,7 +321,7 @@ file_input
 //eval_input: testlist NEWLINE* ENDMARKER
 eval_input
 @init {
-    modType mtype = null;
+    mod mtype = null;
 }
 @after {
     $eval_input.tree = mtype;
@@ -330,7 +332,7 @@ eval_input
     ;
 
 //not in CPython's Grammar file
-dotted_attr returns [exprType etype]
+dotted_attr returns [expr etype]
     : n1=NAME
       ( (DOT n2+=NAME)+ { $etype = actions.makeDottedAttr($n1, $n2); }
       | { $etype = new Name($n1, $n1.text, expr_contextType.Load); }
@@ -376,7 +378,7 @@ attr
     ;
 
 //decorator: '@' dotted_name [ '(' [arglist] ')' ] NEWLINE
-decorator returns [exprType etype]
+decorator returns [expr etype]
 @after {
    $decorator.tree = $etype;
 }
@@ -408,7 +410,7 @@ decorators returns [List etypes]
 
 //funcdef: [decorators] 'def' NAME parameters ':' suite
 funcdef
-@init { stmtType stype = null; }
+@init { stmt stype = null; }
 @after { $funcdef.tree = stype; }
     : decorators? DEF NAME parameters COLON suite[false]
     {
@@ -421,17 +423,17 @@ funcdef
     ;
 
 //parameters: '(' [varargslist] ')'
-parameters returns [argumentsType args]
+parameters returns [arguments args]
     : LPAREN 
       (varargslist {$args = $varargslist.args;}
-      | { $args = new argumentsType($parameters.start, new exprType[0], null, null, new exprType[0]);
+      | { $args = new arguments($parameters.start, new ArrayList<expr>(), null, null, new ArrayList<expr>());
         }
       )
       RPAREN
     ;
 
 //not in CPython's Grammar file
-defparameter[List defaults] returns [exprType etype]
+defparameter[List defaults] returns [expr etype]
 @after {
    $defparameter.tree = $etype;
 }
@@ -449,7 +451,7 @@ defparameter[List defaults] returns [exprType etype]
 //varargslist: ((fpdef ['=' test] ',')*
 //              ('*' NAME [',' '**' NAME] | '**' NAME) |
 //              fpdef ['=' test] (',' fpdef ['=' test])* [','])
-varargslist returns [argumentsType args]
+varargslist returns [arguments args]
 @init {
     List defaults = new ArrayList();
 }
@@ -532,7 +534,7 @@ small_stmt : expr_stmt
 //                     ('=' (yield_expr|testlist))*)
 expr_stmt 
 @init {
-    stmtType stype = null;
+    stmt stype = null;
 }
 @after {
     if (stype != null) {
@@ -597,7 +599,7 @@ print_stmt
       | RIGHTSHIFT t2=printlist2
      -> ^(PRINT<Print>[$PRINT, actions.castExpr($t2.elts.get(0)), actions.castExprs($t2.elts, 1), $t2.newline])
       |
-     -> ^(PRINT<Print>[$PRINT, null, new exprType[0\], false])
+     -> ^(PRINT<Print>[$PRINT, null, new ArrayList<expr>(), false])
       )
            ;
 
@@ -730,42 +732,42 @@ import_from
     ;
 
 //import_as_names: import_as_name (',' import_as_name)* [',']
-import_as_names returns [aliasType[\] atypes]
+import_as_names returns [List<alias> atypes]
     : n+=import_as_name (COMMA! n+=import_as_name)*
     {
-        $atypes = (aliasType[])$n.toArray(new aliasType[$n.size()]);
+        $atypes = $n;
     }
     ;
 
 //import_as_name: NAME [('as' | NAME) NAME]
-import_as_name returns [aliasType atype]
+import_as_name returns [alias atype]
 @after {
     $import_as_name.tree = $atype;
 }
     : name=NAME (AS asname=NAME)?
     {
-        $atype = new aliasType($name, $name.text, $asname.text);
+        $atype = new alias($name, $name.text, $asname.text);
     }
     ;
 
 //XXX: when does CPython Grammar match "dotted_name NAME NAME"?
 //dotted_as_name: dotted_name [('as' | NAME) NAME]
-dotted_as_name returns [aliasType atype]
+dotted_as_name returns [alias atype]
 @after {
     $dotted_as_name.tree = $atype;
 }
 
     : dotted_name (AS NAME)?
     {
-        $atype = new aliasType($NAME, $dotted_name.text, $NAME.text);
+        $atype = new alias($NAME, $dotted_name.text, $NAME.text);
     }
     ;
 
 //dotted_as_names: dotted_as_name (',' dotted_as_name)*
-dotted_as_names returns [aliasType[\] atypes]
+dotted_as_names returns [List<alias> atypes]
     : d+=dotted_as_name (COMMA! d+=dotted_as_name)*
     {
-        $atypes = (aliasType[])$d.toArray(new aliasType[$d.size()]);
+        $atypes = $d;
     }
     ;
 
@@ -783,7 +785,7 @@ global_stmt
 //exec_stmt: 'exec' expr ['in' test [',' test]]
 exec_stmt
 @init {
-    stmtType stype = null;
+    stmt stype = null;
 }
 @after {
    $exec_stmt.tree = stype;
@@ -828,7 +830,7 @@ elif_clause [Token iftest] returns [List stypes]
         (e2=elif_clause[$iftest]
        -> ^(ELIF<If>[$iftest, actions.castExpr($test.tree), actions.castStmts($suite.stypes), actions.makeElse($e2.stypes, $e2.tree)])
         |
-       -> ^(ELIF<If>[$iftest, actions.castExpr($test.tree), actions.castStmts($suite.stypes), new stmtType[0\]])
+       -> ^(ELIF<If>[$iftest, actions.castExpr($test.tree), actions.castStmts($suite.stypes), new ArrayList<stmt>()])
         )
     ;
 
@@ -842,7 +844,7 @@ else_clause returns [List stypes]
 //while_stmt: 'while' test ':' suite ['else' ':' suite]
 while_stmt
 @init {
-    stmtType stype = null;
+    stmt stype = null;
 }
 @after {
    $while_stmt.tree = stype;
@@ -856,7 +858,7 @@ while_stmt
 //for_stmt: 'for' exprlist 'in' testlist ':' suite ['else' ':' suite]
 for_stmt
 @init {
-    stmtType stype = null;
+    stmt stype = null;
 }
 @after {
    $for_stmt.tree = stype;
@@ -875,7 +877,7 @@ for_stmt
 //           'finally' ':' suite))
 try_stmt
 @init {
-    stmtType stype = null;
+    stmt stype = null;
 }
 @after {
    $try_stmt.tree = stype;
@@ -895,7 +897,7 @@ try_stmt
 //with_stmt: 'with' test [ with_var ] ':' suite
 with_stmt
 @init {
-    stmtType stype = null;
+    stmt stype = null;
 }
 @after {
    $with_stmt.tree = stype;
@@ -908,7 +910,7 @@ with_stmt
     ;
 
 //with_var: ('as' | NAME) expr
-with_var returns [exprType etype]
+with_var returns [expr etype]
     : (AS | NAME) expr[expr_contextType.Store]
       {
           $etype = actions.castExpr($expr.tree);
@@ -918,8 +920,8 @@ with_var returns [exprType etype]
 //except_clause: 'except' [test [',' test]]
 except_clause
     : EXCEPT (t1=test[expr_contextType.Load] (COMMA t2=test[expr_contextType.Store])?)? COLON suite[!$suite.isEmpty() && $suite::continueIllegal]
-   -> ^(EXCEPT<excepthandlerType>[$EXCEPT, actions.castExpr($t1.tree), actions.castExpr($t2.tree),
-          actions.castStmts($suite.stypes), $EXCEPT.getLine(), $EXCEPT.getCharPositionInLine()])
+   -> ^(EXCEPT<ExceptHandler>[$EXCEPT, actions.castExpr($t1.tree), actions.castExpr($t2.tree),
+          actions.castStmts($suite.stypes)])
     ;
 
 //suite: simple_stmt | NEWLINE INDENT stmt+ DEDENT
@@ -1163,7 +1165,7 @@ term_op returns [operatorType op]
     ;
 
 //factor: ('+'|'-'|'~') factor | power
-factor returns [exprType etype]
+factor returns [expr etype]
 @after {
     $factor.tree = $etype;
 }
@@ -1174,7 +1176,7 @@ factor returns [exprType etype]
     ;
 
 //power: atom trailer* ['**' factor]
-power returns [exprType etype]
+power returns [expr etype]
 @after {
     $power.tree = $etype;
 }
@@ -1189,16 +1191,16 @@ power returns [exprType etype]
                   }
                   if (o instanceof Call) {
                       Call c = (Call)o;
-                      c.func = $etype;
+                      c.setFunc((PyObject)$etype);
                       $etype = c;
                   } else if (o instanceof Subscript) {
                       Subscript c = (Subscript)o;
-                      c.value = $etype;
+                      c.setValue((PyObject)$etype);
                       $etype = c;
                   } else if (o instanceof Attribute) {
                       Attribute c = (Attribute)o;
                       c.setCharStartIndex($etype.getCharStartIndex());
-                      c.value = $etype;
+                      c.setValue((PyObject)$etype);
                       $etype = c;
                   }
               }
@@ -1223,14 +1225,14 @@ atom
       | testlist_gexp
      -> testlist_gexp
       |
-     -> ^(LPAREN<Tuple>[$LPAREN, new exprType[0\], $expr::ctype])
+     -> ^(LPAREN<Tuple>[$LPAREN, new ArrayList<expr>(), $expr::ctype])
       )
       RPAREN
     | LBRACK
       (listmaker[$LBRACK]
      -> listmaker
       |
-     -> ^(LBRACK<org.python.antlr.ast.List>[$LBRACK, new exprType[0\], $expr::ctype])
+     -> ^(LBRACK<org.python.antlr.ast.List>[$LBRACK, new ArrayList<expr>(), $expr::ctype])
       )
       RBRACK
     | LCURLY 
@@ -1238,7 +1240,7 @@ atom
       -> ^(LCURLY<Dict>[$LCURLY, actions.castExprs($dictmaker.keys),
               actions.castExprs($dictmaker.values)])
        |
-      -> ^(LCURLY<Dict>[$LCURLY, new exprType[0\], new exprType[0\]])
+      -> ^(LCURLY<Dict>[$LCURLY, new ArrayList<expr>(), new ArrayList<expr>()])
        )
        RCURLY
      | lb=BACKQUOTE testlist[expr_contextType.Load] rb=BACKQUOTE
@@ -1261,7 +1263,7 @@ atom
 listmaker[Token lbrack]
 @init {
     List gens = new ArrayList();
-    exprType etype = null;
+    expr etype = null;
 }
 @after {
    $listmaker.tree = etype;
@@ -1270,8 +1272,7 @@ listmaker[Token lbrack]
         (list_for[gens]
           {
               Collections.reverse(gens);
-              comprehensionType[] c =
-                  (comprehensionType[])gens.toArray(new comprehensionType[gens.size()]);
+              List<comprehension> c = gens;
               etype = new ListComp($listmaker.start, actions.castExpr($t.get(0)), c);
           }
         | (options {greedy=true;}:COMMA t+=test[$expr::ctype])*
@@ -1284,7 +1285,7 @@ listmaker[Token lbrack]
 //testlist_gexp: test ( gen_for | (',' test)* [','] )
 testlist_gexp
 @init {
-    exprType etype = null;
+    expr etype = null;
     List gens = new ArrayList();
 }
 @after {
@@ -1301,8 +1302,8 @@ testlist_gexp
         | (gen_for[gens]
            {
                Collections.reverse(gens);
-               comprehensionType[] c = (comprehensionType[])gens.toArray(new comprehensionType[gens.size()]);
-               exprType e = actions.castExpr($t.get(0));
+               List<comprehension> c = gens;
+               expr e = actions.castExpr($t.get(0));
                if (e instanceof Context) {
                    ((Context)e).setContext(expr_contextType.Load);
                }
@@ -1315,16 +1316,16 @@ testlist_gexp
 //lambdef: 'lambda' [varargslist] ':' test
 lambdef
 @init {
-    exprType etype = null;
+    expr etype = null;
 }
 @after {
     $lambdef.tree = etype;
 }
     : LAMBDA (varargslist)? COLON test[expr_contextType.Load]
       {
-          argumentsType a = $varargslist.args;
+          arguments a = $varargslist.args;
           if (a == null) {
-              a = new argumentsType($LAMBDA, new exprType[0], null, null, new exprType[0]);
+              a = new arguments($LAMBDA, new ArrayList<expr>(), null, null, new ArrayList<expr>());
           }
           etype = new Lambda($LAMBDA, a, actions.castExpr($test.tree));
       }
@@ -1337,7 +1338,7 @@ trailer [Token begin, PythonTree tree]
        -> ^(LPAREN<Call>[$begin, actions.castExpr($tree), actions.castExprs($arglist.args),
                actions.makeKeywords($arglist.keywords), $arglist.starargs, $arglist.kwargs])
         |
-       -> ^(LPAREN<Call>[$begin, actions.castExpr($tree), new exprType[0\], new keywordType[0\], null, null])
+       -> ^(LPAREN<Call>[$begin, actions.castExpr($tree), new ArrayList<expr>(), new ArrayList<keyword>(), null, null])
         )
       RPAREN
     | LBRACK subscriptlist[$begin] RBRACK
@@ -1349,7 +1350,7 @@ trailer [Token begin, PythonTree tree]
 //subscriptlist: subscript (',' subscript)* [',']
 subscriptlist[Token begin]
 @init {
-    sliceType sltype = null;
+    slice sltype = null;
 }
 @after {
    $subscriptlist.tree = sltype;
@@ -1361,7 +1362,7 @@ subscriptlist[Token begin]
     ;
 
 //subscript: '.' '.' '.' | test | [test] ':' [test] [sliceop]
-subscript returns [sliceType sltype]
+subscript returns [slice sltype]
 @after {
     if ($sltype != null) {
         $subscript.tree = $sltype;
@@ -1392,7 +1393,7 @@ sliceop
     ;
 
 //exprlist: expr (',' expr)* [',']
-exprlist[expr_contextType ctype] returns [exprType etype]
+exprlist[expr_contextType ctype] returns [expr etype]
     : (expr[null] COMMA) => e+=expr[ctype] (options {k=2;}: COMMA e+=expr[ctype])* (COMMA)?
       {
           $etype = new Tuple($exprlist.start, actions.castExprs($e), ctype);
@@ -1405,7 +1406,7 @@ exprlist[expr_contextType ctype] returns [exprType etype]
 
 //not in CPython's Grammar file
 //Needed as an exprlist that does not produce tuples for del_stmt.
-del_list returns [exprType[\] etypes]
+del_list returns [List<expr> etypes]
     : e+=expr[expr_contextType.Del] (options {k=2;}: COMMA e+=expr[expr_contextType.Del])* (COMMA)?
       {
           $etypes = actions.makeDeleteList($e);
@@ -1434,7 +1435,7 @@ dictmaker returns [List keys, List values]
 //classdef: 'class' NAME ['(' [testlist] ')'] ':' suite
 classdef
 @init {
-    stmtType stype = null;
+    stmt stype = null;
 }
 @after {
    $classdef.tree = stype;
@@ -1453,7 +1454,7 @@ classdef
     ;
 
 //arglist: (argument ',')* (argument [',']| '*' test [',' '**' test] | '**' test)
-arglist returns [List args, List keywords, exprType starargs, exprType kwargs]
+arglist returns [List args, List keywords, expr starargs, expr kwargs]
 @init {
     List arguments = new ArrayList();
     List kws = new ArrayList();
@@ -1490,7 +1491,10 @@ argument[List arguments, List kws, List gens, boolean first] returns [boolean ge
     : t1=test[expr_contextType.Load]
         ((ASSIGN t2=test[expr_contextType.Load])
           {
-              $kws.add(new exprType[]{actions.castExpr($t1.tree), actions.castExpr($t2.tree)});
+              List<expr> exprs = new ArrayList<expr>();
+              exprs.add(actions.castExpr($t1.tree));
+              exprs.add(actions.castExpr($t2.tree));
+              $kws.add(exprs);
           }
         | gen_for[$gens]
           {
@@ -1499,7 +1503,7 @@ argument[List arguments, List kws, List gens, boolean first] returns [boolean ge
               }
               $genarg = true;
               Collections.reverse($gens);
-              comprehensionType[] c = (comprehensionType[])$gens.toArray(new comprehensionType[$gens.size()]);
+              List<comprehension> c = $gens;
               arguments.add(new GeneratorExp($t1.start, actions.castExpr($t1.tree), c));
           }
         | {
@@ -1512,7 +1516,7 @@ argument[List arguments, List kws, List gens, boolean first] returns [boolean ge
     ;
 
 //list_iter: list_for | list_if
-list_iter [List gens] returns [exprType etype]
+list_iter [List gens] returns [expr etype]
     : list_for[gens]
     | list_if[gens] {
         $etype = $list_if.etype;
@@ -1523,18 +1527,16 @@ list_iter [List gens] returns [exprType etype]
 list_for [List gens]
     : FOR exprlist[expr_contextType.Store] IN testlist[expr_contextType.Load] (list_iter[gens])?
       {
-          exprType[] e;
+          List<expr> e = new ArrayList<expr>();
           if ($list_iter.etype != null) {
-              e = new exprType[]{$list_iter.etype};
-          } else {
-              e = new exprType[0];
+              e.add($list_iter.etype);
           }
-          gens.add(new comprehensionType($FOR, $exprlist.etype, actions.castExpr($testlist.tree), e));
+          gens.add(new comprehension($FOR, $exprlist.etype, actions.castExpr($testlist.tree), e));
       }
     ;
 
 //list_if: 'if' test [list_iter]
-list_if[List gens] returns [exprType etype]
+list_if[List gens] returns [expr etype]
     : IF test[expr_contextType.Load] (list_iter[gens])?
     {
         $etype = actions.castExpr($test.tree);
@@ -1542,7 +1544,7 @@ list_if[List gens] returns [exprType etype]
     ;
 
 //gen_iter: gen_for | gen_if
-gen_iter [List gens] returns [exprType etype]
+gen_iter [List gens] returns [expr etype]
     : gen_for[gens]
     | gen_if[gens]
       {
@@ -1554,18 +1556,16 @@ gen_iter [List gens] returns [exprType etype]
 gen_for [List gens]
     : FOR exprlist[expr_contextType.Store] IN or_test[expr_contextType.Load] gen_iter[gens]?
       {
-          exprType[] e;
+          List<expr> e = new ArrayList<expr>();
           if ($gen_iter.etype != null) {
-              e = new exprType[]{$gen_iter.etype};
-          } else {
-              e = new exprType[0];
+              e.add($gen_iter.etype);
           }
-          gens.add(new comprehensionType($FOR, $exprlist.etype, actions.castExpr($or_test.tree), e));
+          gens.add(new comprehension($FOR, $exprlist.etype, actions.castExpr($or_test.tree), e));
       }
     ;
 
 //gen_if: 'if' old_test [gen_iter]
-gen_if[List gens] returns [exprType etype]
+gen_if[List gens] returns [expr etype]
     : IF test[expr_contextType.Load] gen_iter[gens]?
       {
           $etype = actions.castExpr($test.tree);

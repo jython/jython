@@ -1,35 +1,21 @@
-#Taken and modified from CPython's release25-maint branch, revision 62446.
-import sys,os, itertools
+import sys, itertools, unittest
+from test import test_support
 import ast
-
-def get_class_name(t):
-    result = t.__class__.__name__
-    if os.name.startswith('java'):
-        if result in ("expr_contextType",
-                "boolopType",
-                "unaryopType",
-                "cmpopType",
-                "operatorType"):
-            result = t.name()
-        else:
-            result = result.split(".")[-1]
-            if result.endswith("Type"):
-                result = result[:-4]
-    return result
 
 def to_tuple(t):
     if t is None or isinstance(t, (basestring, int, long, complex)):
         return t
-    elif hasattr(t, '__iter__'):
+    elif isinstance(t, list):
         return [to_tuple(e) for e in t]
-    result = [get_class_name(t)]
+    result = [t.__class__.__name__]
     if hasattr(t, 'lineno') and hasattr(t, 'col_offset'):
         result.append((t.lineno, t.col_offset))
-    if not hasattr(t, '_fields') or t._fields is None:
+    if t._fields is None:
         return tuple(result)
     for f in t._fields:
         result.append(to_tuple(getattr(t, f)))
     return tuple(result)
+
 
 # These tests are compiled through "exec"
 # There should be atleast one test per statement
@@ -134,49 +120,192 @@ eval_tests = [
 # TODO: expr_context, slice, boolop, operator, unaryop, cmpop, comprehension
 # excepthandler, arguments, keywords, alias
 
-if __name__=='__main__' and sys.argv[1:] == ['-g']:
-    for statements, kind in ((exec_tests, "exec"), (single_tests, "single"),
-                             (eval_tests, "eval")):
-        print kind+"_results = ["
-        for s in statements:
-            print repr(to_tuple(compile(s, "?", kind, 0x400)))+","
-        print "]"
-    print "run_tests()"
-    raise SystemExit
+class AST_Tests(unittest.TestCase):
 
-def test_order(ast_node, parent_pos):
-
-    if (not isinstance(ast_node, ast.AST)
-        or not hasattr(ast_node, '_fields')
-        or ast_node._fields == None):
+    def _assert_order(self, ast_node, parent_pos):
+        if not isinstance(ast_node, ast.AST) or ast_node._fields is None:
             return
-    if isinstance(ast_node, (ast.expr, ast.stmt, ast.excepthandler)):
-        node_pos = (ast_node.lineno, ast_node.col_offset)
-        assert node_pos >= parent_pos, (node_pos, parent_pos)
-        parent_pos = (ast_node.lineno, ast_node.col_offset)
-    for name in ast_node._fields:
-        value = getattr(ast_node, name)
-        if hasattr(value, '__iter__'):
-            for child in value:
-                test_order(child, parent_pos)
-        elif value != None:
-            test_order(value, parent_pos)
+        if isinstance(ast_node, (ast.expr, ast.stmt, ast.excepthandler)):
+            node_pos = (ast_node.lineno, ast_node.col_offset)
+            self.assert_(node_pos >= parent_pos)
+            parent_pos = (ast_node.lineno, ast_node.col_offset)
+        for name in ast_node._fields:
+            value = getattr(ast_node, name)
+            if isinstance(value, list):
+                for child in value:
+                    self._assert_order(child, parent_pos)
+            elif value is not None:
+                self._assert_order(value, parent_pos)
 
-def run_tests():
-    for input, output, kind in ((exec_tests, exec_results, "exec"),
-                                (single_tests, single_results, "single"),
-                                (eval_tests, eval_results, "eval")):
-        for i, o in itertools.izip(input, output):
-            ast_tree = compile(i, "?", kind, 0x400)
-            assert to_tuple(ast_tree) == o, "expected %s, got %s" % (
-                o, to_tuple(ast_tree))
-            test_order(ast_tree, (0, 0))
+    def test_snippets(self):
+        for input, output, kind in ((exec_tests, exec_results, "exec"),
+                                    (single_tests, single_results, "single"),
+                                    (eval_tests, eval_results, "eval")):
+            for i, o in itertools.izip(input, output):
+                ast_tree = compile(i, "?", kind, ast.PyCF_ONLY_AST)
+                self.assertEquals(to_tuple(ast_tree), o)
+                self._assert_order(ast_tree, (0, 0))
 
-# XXX: AugStore added for Jython.  Short term it is too hard to emit just "Store" as CPython does.
+    def test_nodeclasses(self):
+        x = ast.BinOp(1, 2, 3, lineno=0)
+        self.assertEquals(x.left.n, 1)
+        self.assertEquals(int(x.op), 2)
+        self.assertEquals(x.right.n, 3)
+        self.assertEquals(x.lineno, 0)
+
+        # node raises exception when not given enough arguments
+        self.assertRaises(TypeError, ast.BinOp, 1, 2)
+
+        # can set attributes through kwargs too
+        x = ast.BinOp(left=1, op=2, right=3, lineno=0)
+        self.assertEquals(x.left.n, 1)
+        self.assertEquals(int(x.op), 2)
+        self.assertEquals(x.right.n, 3)
+        self.assertEquals(x.lineno, 0)
+
+        # this used to fail because Sub._fields was None
+        x = ast.Sub()
+
+    def test_pickling(self):
+        import pickle
+        mods = [pickle]
+        try:
+            import cPickle
+            mods.append(cPickle)
+        except ImportError:
+            pass
+        protocols = [0, 1, 2]
+        for mod in mods:
+            for protocol in protocols:
+                for ast in (compile(i, "?", "exec", 0x400) for i in exec_tests):
+                    ast2 = mod.loads(mod.dumps(ast, protocol))
+                    self.assertEquals(to_tuple(ast2), to_tuple(ast))
+
+
+class ASTHelpers_Test(unittest.TestCase):
+
+    def test_parse(self):
+        a = ast.parse('foo(1 + 1)')
+        b = compile('foo(1 + 1)', '<unknown>', 'exec', ast.PyCF_ONLY_AST)
+        self.assertEqual(ast.dump(a), ast.dump(b))
+
+    def test_dump(self):
+        node = ast.parse('spam(eggs, "and cheese")')
+        self.assertEqual(ast.dump(node),
+            "Module(body=[Expr(value=Call(func=Name(id='spam', ctx=Load()), "
+            "args=[Name(id='eggs', ctx=Load()), Str(s='and cheese')], "
+            "keywords=[], starargs=None, kwargs=None))])"
+        )
+        self.assertEqual(ast.dump(node, annotate_fields=False),
+            "Module([Expr(Call(Name('spam', Load()), [Name('eggs', Load()), "
+            "Str('and cheese')], [], None, None))])"
+        )
+        self.assertEqual(ast.dump(node, include_attributes=True),
+            "Module(body=[Expr(value=Call(func=Name(id='spam', ctx=Load(), "
+            "lineno=1, col_offset=0), args=[Name(id='eggs', ctx=Load(), "
+            "lineno=1, col_offset=5), Str(s='and cheese', lineno=1, "
+            "col_offset=11)], keywords=[], starargs=None, kwargs=None, "
+            "lineno=1, col_offset=0), lineno=1, col_offset=0)])"
+        )
+
+    def test_copy_location(self):
+        src = ast.parse('1 + 1', mode='eval')
+        src.body.right = ast.copy_location(ast.Num(2), src.body.right)
+        self.assertEqual(ast.dump(src, include_attributes=True),
+            'Expression(body=BinOp(left=Num(n=1, lineno=1, col_offset=0), '
+            'op=Add(), right=Num(n=2, lineno=1, col_offset=4), lineno=1, '
+            'col_offset=0))'
+        )
+
+    def test_fix_missing_locations(self):
+        src = ast.parse('write("spam")')
+        src.body.append(ast.Expr(ast.Call(ast.Name('spam', ast.Load()),
+                                          [ast.Str('eggs')], [], None, None)))
+        self.assertEqual(src, ast.fix_missing_locations(src))
+        self.assertEqual(ast.dump(src, include_attributes=True),
+            "Module(body=[Expr(value=Call(func=Name(id='write', ctx=Load(), "
+            "lineno=1, col_offset=0), args=[Str(s='spam', lineno=1, "
+            "col_offset=6)], keywords=[], starargs=None, kwargs=None, "
+            "lineno=1, col_offset=0), lineno=1, col_offset=0), "
+            "Expr(value=Call(func=Name(id='spam', ctx=Load(), lineno=1, "
+            "col_offset=0), args=[Str(s='eggs', lineno=1, col_offset=0)], "
+            "keywords=[], starargs=None, kwargs=None, lineno=1, "
+            "col_offset=0), lineno=1, col_offset=0)])"
+        )
+
+    def test_increment_lineno(self):
+        src = ast.parse('1 + 1', mode='eval')
+        self.assertEqual(ast.increment_lineno(src, n=3), src)
+        self.assertEqual(ast.dump(src, include_attributes=True),
+            'Expression(body=BinOp(left=Num(n=1, lineno=4, col_offset=0), '
+            'op=Add(), right=Num(n=1, lineno=4, col_offset=4), lineno=4, '
+            'col_offset=0))'
+        )
+
+    def test_iter_fields(self):
+        node = ast.parse('foo()', mode='eval')
+        d = dict(ast.iter_fields(node.body))
+        self.assertEqual(d.pop('func').id, 'foo')
+
+        #XXX: tests for equality between astlist and regular lists not
+        #     working, breaking this test up into its components.
+        #self.assertEqual(d, {'keywords': [], 'kwargs': None,
+        #                     'args': [], 'starargs': None})
+        assert len(d) == 4
+        assert d['keywords'] is not None
+        assert len(d['keywords']) == 0
+        assert d['args'] is not None
+        assert len(d['args']) == 0
+        assert d['kwargs'] is None
+        assert d['starargs'] is None
+
+    def test_iter_child_nodes(self):
+        node = ast.parse("spam(23, 42, eggs='leek')", mode='eval')
+        self.assertEqual(len(list(ast.iter_child_nodes(node.body))), 4)
+        iterator = ast.iter_child_nodes(node.body)
+        self.assertEqual(iterator.next().id, 'spam')
+        self.assertEqual(iterator.next().n, 23)
+        self.assertEqual(iterator.next().n, 42)
+        self.assertEqual(ast.dump(iterator.next()),
+            "keyword(arg='eggs', value=Str(s='leek'))"
+        )
+
+    def test_get_docstring(self):
+        node = ast.parse('def foo():\n  """line one\n  line two"""')
+        self.assertEqual(ast.get_docstring(node.body[0]),
+                         'line one\nline two')
+
+    def test_literal_eval(self):
+        self.assertEqual(ast.literal_eval('[1, 2, 3]'), [1, 2, 3])
+        self.assertEqual(ast.literal_eval('{"foo": 42}'), {"foo": 42})
+        self.assertEqual(ast.literal_eval('(True, False, None)'), (True, False, None))
+        self.assertRaises(ValueError, ast.literal_eval, 'foo()')
+
+
+def test_main():
+    #XXX: AST pickling is left as a TODO for now.
+    del AST_Tests.test_pickling
+
+    test_support.run_unittest(AST_Tests, ASTHelpers_Test)
+
+def main():
+    if __name__ != '__main__':
+        return
+    if sys.argv[1:] == ['-g']:
+        for statements, kind in ((exec_tests, "exec"), (single_tests, "single"),
+                                 (eval_tests, "eval")):
+            print kind+"_results = ["
+            for s in statements:
+                print repr(to_tuple(compile(s, "?", kind, 0x400)))+","
+                print "]"
+        print "main()"
+        raise SystemExit
+    test_main()
+
 #### EVERYTHING BELOW IS GENERATED #####
 exec_results = [
 ('Module', [('FunctionDef', (1, 0), 'f', ('arguments', [], None, None, []), [('Pass', (1, 9))], [])]),
-('Module', [('ClassDef', (1, 0), 'C', [], [('Pass', (1, 8))],[])]),
+('Module', [('ClassDef', (1, 0), 'C', [], [('Pass', (1, 8))], [])]),
 ('Module', [('FunctionDef', (1, 0), 'f', ('arguments', [], None, None, []), [('Return', (1, 8), ('Num', (1, 15), 1))], [])]),
 ('Module', [('Delete', (1, 0), [('Name', (1, 4), 'v', ('Del',))])]),
 ('Module', [('Assign', (1, 0), [('Name', (1, 0), 'v', ('Store',))], ('Num', (1, 4), 1))]),
@@ -186,7 +315,7 @@ exec_results = [
 ('Module', [('While', (1, 0), ('Name', (1, 6), 'v', ('Load',)), [('Pass', (1, 8))], [])]),
 ('Module', [('If', (1, 0), ('Name', (1, 3), 'v', ('Load',)), [('Pass', (1, 5))], [])]),
 ('Module', [('Raise', (1, 0), ('Name', (1, 6), 'Exception', ('Load',)), ('Str', (1, 17), 'string'), None)]),
-('Module', [('TryExcept', (1, 0), [('Pass', (2, 2))], [('excepthandler', (3, 0), ('Name', (3, 7), 'Exception', ('Load',)), None, [('Pass', (4, 2))], 3, 0)], [])]),
+('Module', [('TryExcept', (1, 0), [('Pass', (2, 2))], [('ExceptHandler', (3, 0), ('Name', (3, 7), 'Exception', ('Load',)), None, [('Pass', (4, 2))])], [])]),
 ('Module', [('TryFinally', (1, 0), [('Pass', (2, 2))], [('Pass', (4, 2))])]),
 ('Module', [('Assert', (1, 0), ('Name', (1, 7), 'v', ('Load',)), None)]),
 ('Module', [('Import', (1, 0), [('alias', 'sys', None)])]),
@@ -221,4 +350,4 @@ eval_results = [
 ('Expression', ('Tuple', (1, 0), [('Num', (1, 0), 1), ('Num', (1, 2), 2), ('Num', (1, 4), 3)], ('Load',))),
 ('Expression', ('Call', (1, 0), ('Attribute', (1, 0), ('Attribute', (1, 0), ('Attribute', (1, 0), ('Name', (1, 0), 'a', ('Load',)), 'b', ('Load',)), 'c', ('Load',)), 'd', ('Load',)), [('Subscript', (1, 8), ('Attribute', (1, 8), ('Name', (1, 8), 'a', ('Load',)), 'b', ('Load',)), ('Slice', ('Num', (1, 12), 1), ('Num', (1, 14), 2), None), ('Load',))], [], None, None)),
 ]
-run_tests()
+main()

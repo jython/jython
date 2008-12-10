@@ -2,7 +2,8 @@
 
 package org.python.compiler;
 
-import java.util.Vector;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.python.antlr.ParseException;
 import org.python.antlr.Visitor;
@@ -10,99 +11,97 @@ import org.python.antlr.ast.Assign;
 import org.python.antlr.ast.Name;
 import org.python.antlr.ast.Suite;
 import org.python.antlr.ast.Tuple;
-import org.python.antlr.ast.argumentsType;
+import org.python.antlr.ast.arguments;
 import org.python.antlr.ast.expr_contextType;
-import org.python.antlr.ast.exprType;
-import org.python.antlr.ast.stmtType;
+import org.python.antlr.base.expr;
+import org.python.antlr.base.stmt;
 
 public class ArgListCompiler extends Visitor
 {
     public boolean arglist, keywordlist;
-    public exprType[] defaults;
-    public Vector names;
-    public Vector fpnames;
-    public Vector init_code;
+    public List<expr> defaults;
+    public List<String> names;
+    public List<String> fpnames;
+    public List<stmt> init_code;
 
     public ArgListCompiler() {
         arglist = keywordlist = false;
         defaults = null;
-        names = new Vector();
-        fpnames = new Vector();
-        init_code = new Vector();
+        names = new ArrayList<String>();
+        fpnames = new ArrayList<String>();
+        init_code = new ArrayList<stmt>();
     }
 
     public void reset() {
         arglist = keywordlist = false;
         defaults = null;
-        names.removeAllElements();
-        init_code.removeAllElements();
+        names.clear();
+        init_code.clear();
     }
 
     public void appendInitCode(Suite node) {
-        int n = node.body.length;
-        stmtType[] newtree = new stmtType[init_code.size() + n];
-        init_code.copyInto(newtree);
-        System.arraycopy(node.body, 0, newtree, init_code.size(), n);
-        node.body = newtree;
+        node.getInternalBody().addAll(0, init_code);
     }
 
-    public exprType[] getDefaults() {
+    public List<expr> getDefaults() {
         return defaults;
     }
 
-    public void visitArgs(argumentsType args) throws Exception {
-        for (int i = 0; i < args.args.length; i++) {
-            String name = (String) visit(args.args[i]);
-            names.addElement(name);
-            if (args.args[i] instanceof Tuple) {
-                Assign ass = new Assign(args.args[i],
-                    new exprType[] { args.args[i] },
-                    new Name(args.args[i], name, expr_contextType.Load));
-                init_code.addElement(ass);
+    public void visitArgs(arguments args) throws Exception {
+        for (int i = 0; i < args.getInternalArgs().size(); i++) {
+            String name = (String) visit(args.getInternalArgs().get(i));
+            names.add(name);
+            if (args.getInternalArgs().get(i) instanceof Tuple) {
+                List<expr> targets = new ArrayList<expr>();
+                targets.add(args.getInternalArgs().get(i));
+                Assign ass = new Assign(args.getInternalArgs().get(i),
+                    targets,
+                    new Name(args.getInternalArgs().get(i), name, expr_contextType.Load));
+                init_code.add(ass);
             }
         }
-        if (args.vararg != null) {
+        if (args.getInternalVararg() != null) {
             arglist = true;
-            names.addElement(args.vararg);
+            names.add(args.getInternalVararg());
         }
-        if (args.kwarg != null) {
+        if (args.getInternalKwarg() != null) {
             keywordlist = true;
-            names.addElement(args.kwarg);
+            names.add(args.getInternalKwarg());
         }
         
-        defaults = args.defaults;
-        for (int i = 0; i < defaults.length; i++) {
-            if (defaults[i] == null)
+        defaults = args.getInternalDefaults();
+        for (int i = 0; i < defaults.size(); i++) {
+            if (defaults.get(i) == null)
                 throw new ParseException(
                     "non-default argument follows default argument",
-                    args.args[args.args.length - defaults.length + i]);
+                    args.getInternalArgs().get(args.getInternalArgs().size() - defaults.size() + i));
         }
     }
 
     @Override
     public Object visitName(Name node) throws Exception {
         //FIXME: do we need Store and Param, or just Param?
-        if (node.ctx != expr_contextType.Store && node.ctx != expr_contextType.Param) {
+        if (node.getInternalCtx() != expr_contextType.Store && node.getInternalCtx() != expr_contextType.Param) {
             return null;
         } 
 
-        if (fpnames.contains(node.id)) {
+        if (fpnames.contains(node.getInternalId())) {
             throw new ParseException("duplicate argument name found: " +
-                                     node.id, node);
+                                     node.getInternalId(), node);
         }
-        fpnames.addElement(node.id);
-        return node.id;
+        fpnames.add(node.getInternalId());
+        return node.getInternalId();
     }
 
     @Override
     public Object visitTuple(Tuple node) throws Exception {
         StringBuffer name = new StringBuffer("(");
-        int n = node.elts.length;
+        int n = node.getInternalElts().size();
         for (int i = 0; i < n-1; i++) {
-            name.append(visit(node.elts[i]));
+            name.append(visit(node.getInternalElts().get(i)));
             name.append(", ");
         }
-        name.append(visit(node.elts[n - 1]));
+        name.append(visit(node.getInternalElts().get(n - 1)));
         name.append(")");
         return name.toString();
     }

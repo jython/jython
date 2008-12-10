@@ -1,0 +1,4 @@
+base_class: BinOp
+want_dict: true
+ctr
+incl: object

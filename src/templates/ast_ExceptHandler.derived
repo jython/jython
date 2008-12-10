@@ -1,0 +1,4 @@
+base_class: ExceptHandler
+want_dict: true
+ctr
+incl: object

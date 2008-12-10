@@ -6,7 +6,7 @@ import java.io.OutputStream;
 import java.util.Iterator;
 import java.util.Map;
 
-import org.python.antlr.ast.modType;
+import org.python.antlr.base.mod;
 import org.python.core.util.RelativeFile;
 
 class BuiltinFunctions extends PyBuiltinFunctionSet {
@@ -1533,7 +1533,7 @@ class CompileFunction extends PyBuiltinFunction {
             throw Py.ValueError("compile() arg 3 must be 'exec' or 'eval' or 'single'");
         }
 
-        modType ast = py2node(source);
+        mod ast = py2node(source);
         if (ast != null) {
             return Py.compile_flags(ast, filename, mode, Py.getCompilerFlags(flags, dont_inherit));
         }
@@ -1549,18 +1549,18 @@ class CompileFunction extends PyBuiltinFunction {
     }
 
     /**
-     * @returns modType if obj is a wrapper around an AST modType else returns
+     * @returns mod if obj is a wrapper around an AST mod else returns
      *          null
      *
      * XXX: Reaches into implementation details -- needs to be reviewed if our
      *      java integration changes.
      */
-    private static modType py2node(PyObject obj) {
-        Object node = obj.__tojava__(modType.class);
+    private static mod py2node(PyObject obj) {
+        Object node = obj.__tojava__(mod.class);
         if (node == Py.NoConversion) {
             return null;
         }
-        return (modType)node;
+        return (mod)node;
     }
 }
 

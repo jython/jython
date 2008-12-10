@@ -1,0 +1,4 @@
+base_class: GeneratorExp
+want_dict: true
+ctr
+incl: object

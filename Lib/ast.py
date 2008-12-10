@@ -25,33 +25,8 @@
     :copyright: Copyright 2008 by Armin Ronacher.
     :license: Python License.
 """
-import sys
 from _ast import *
 from _ast import __version__
-
-if sys.platform.startswith('java'):
-    import array
-
-    ast_list = array.ArrayType
-        
-    def get_class_name(t):
-        result = t.__class__.__name__
-        if result in ("expr_contextType",
-                      "boolopType",
-                      "unaryopType",
-                      "cmpopType",
-                      "operatorType"):
-            result = str(t)
-            if result == "AugLoad":
-                result = "Load"
-            elif result == "AugStore":
-                result = "Store"
-        elif result.endswith("Type"):
-            result = result[:-4]
-        return result
-else:
-    ast_list = list
-    get_class_name = lambda node: node.__class__.__name__
 
 
 def parse(expr, filename='<unknown>', mode='exec'):
@@ -105,7 +80,7 @@ def dump(node, annotate_fields=True, include_attributes=False):
     def _format(node):
         if isinstance(node, AST):
             fields = [(a, _format(b)) for a, b in iter_fields(node)]
-            rv = '%s(%s' % (get_class_name(node), ', '.join(
+            rv = '%s(%s' % (node.__class__.__name__, ', '.join(
                 ('%s=%s' % field for field in fields)
                 if annotate_fields else
                 (b for a, b in fields)
@@ -115,11 +90,11 @@ def dump(node, annotate_fields=True, include_attributes=False):
                 rv += ', '.join('%s=%s' % (a, _format(getattr(node, a)))
                                 for a in node._attributes)
             return rv + ')'
-        elif isinstance(node, ast_list):
+        elif isinstance(node, list):
             return '[%s]' % ', '.join(_format(x) for x in node)
         return repr(node)
     if not isinstance(node, AST):
-        raise TypeError('expected AST, got %r' % get_class_name(node))
+        raise TypeError('expected AST, got %r' % node.__class__.__name__)
     return _format(node)
 
 
@@ -193,7 +168,7 @@ def iter_child_nodes(node):
     for name, field in iter_fields(node):
         if isinstance(field, AST):
             yield field
-        elif isinstance(field, ast_list):
+        elif isinstance(field, list):
             for item in field:
                 if isinstance(item, AST):
                     yield item
@@ -206,7 +181,7 @@ def get_docstring(node, clean=True):
     will be raised.
     """
     if not isinstance(node, (FunctionDef, ClassDef, Module)):
-        raise TypeError("%r can't have docstrings" % get_class_name(node))
+        raise TypeError("%r can't have docstrings" % node.__class__.__name__)
     if node.body and isinstance(node.body[0], Expr) and \
        isinstance(node.body[0].value, Str):
         if clean:
@@ -251,14 +226,14 @@ class NodeVisitor(object):
 
     def visit(self, node):
         """Visit a node."""
-        method = 'visit_' + get_class_name(node)
+        method = 'visit_' + node.__class__.__name__
         visitor = getattr(self, method, self.generic_visit)
         return visitor(node)
 
     def generic_visit(self, node):
         """Called if no explicit visitor function exists for a node."""
         for field, value in iter_fields(node):
-            if isinstance(value, ast_list):
+            if isinstance(value, list):
                 for item in value:
                     if isinstance(item, AST):
                         self.visit(item)
@@ -305,7 +280,7 @@ class NodeTransformer(NodeVisitor):
     def generic_visit(self, node):
         for field, old_value in iter_fields(node):
             old_value = getattr(node, field, None)
-            if isinstance(old_value, ast_list):
+            if isinstance(old_value, list):
                 new_values = []
                 for value in old_value:
                     if isinstance(value, AST):

@@ -1,0 +1,4 @@
+base_class: BitAnd
+want_dict: true
+ctr
+incl: object

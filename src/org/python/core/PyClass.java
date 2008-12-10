@@ -152,11 +152,7 @@ public class PyClass extends PyObject {
     }
 
     public void __rawdir__(PyDictionary accum) {
-        addKeys(accum, "__dict__");
-        PyObject[] bases = __bases__.getArray();
-        for (PyObject base : bases) {
-            base.__rawdir__(accum);
-        }
+        mergeClassDict(accum, this);
     }
 
     /**

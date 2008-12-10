@@ -62,7 +62,10 @@ class PyStringMapTest(StringMapTest):
         for i in r.keys():
             self.assert_(d.has_key(i))
             self.assert_(i in d)
-        
+
+        # Test unhashability
+        self.assertRaises(TypeError, hash, d)
+
     def test_stringmap_in_mapping(self):
         class A:
             def __init__(self):

@@ -1,7 +1,9 @@
 package org.python.antlr.ast;
-import org.python.antlr.PythonTree;
 
-public class ErrorMod extends modType {
+import org.python.antlr.PythonTree;
+import org.python.antlr.base.mod;
+
+public class ErrorMod extends mod {
 
     public ErrorMod(PythonTree tree) {
         super(tree);

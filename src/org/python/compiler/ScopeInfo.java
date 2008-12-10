@@ -11,7 +11,7 @@ import java.util.Vector;
 import org.python.antlr.ParseException;
 import org.python.antlr.PythonTree;
 import org.python.antlr.ast.Return;
-import org.python.antlr.ast.exprType;
+import org.python.antlr.base.expr;
 
 public class ScopeInfo extends Object implements ScopeConstants {
 
@@ -271,7 +271,7 @@ public class ScopeInfo extends Object implements ScopeConstants {
                 System.identityHashCode(this);
     }
 
-    public void defineAsGenerator(exprType node) {
+    public void defineAsGenerator(expr node) {
         generator = true;
         if (hasReturnWithValue) {
             throw new ParseException("'return' with argument " +

@@ -1,0 +1,4 @@
+base_class: USub
+want_dict: true
+ctr
+incl: object

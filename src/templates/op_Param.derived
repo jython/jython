@@ -1,0 +1,4 @@
+base_class: Param
+want_dict: true
+ctr
+incl: object

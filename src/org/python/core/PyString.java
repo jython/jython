@@ -704,21 +704,20 @@ public class PyString extends PyBaseString
         return repeat(o.asIndex(Py.OverflowError));
     }
 
-    public PyObject __add__(PyObject generic_other) {
-        return str___add__(generic_other);
+    public PyObject __add__(PyObject other) {
+        return str___add__(other);
     }
     
     @ExposedMethod(type = MethodType.BINARY)
-    final PyObject str___add__(PyObject generic_other) {
-        if (generic_other instanceof PyString) {
-            PyString other = (PyString)generic_other;
-            String result = string.concat(other.string);
-            if (generic_other instanceof PyUnicode) {
-                return new PyUnicode(result);
-            }
-            return createInstance(result);
+    final PyObject str___add__(PyObject other) {
+        if (other instanceof PyUnicode) {
+            return decode().__add__(other);
         }
-        else return null;
+        if (other instanceof PyString) {
+            PyString otherStr = (PyString)other;
+            return new PyString(string.concat(otherStr.string));
+        }
+        return null;
     }
 
     @ExposedMethod
@@ -1847,66 +1846,134 @@ public class PyString extends PyBaseString
             }
         }
         
-        return newPiece.str_join(splitfields(oldPiece.string, maxsplit));
+        return newPiece.join(splitfields(oldPiece.string, maxsplit));
     }
 
-    public String join(PyObject seq) {
-        return str_join(seq).string;
+    public PyString join(PyObject seq) {
+        return str_join(seq);
     }
 
     @ExposedMethod
     final PyString str_join(PyObject obj) {
-        // Similar to CPython's abstract::PySequence_Fast
-        PySequence seq;
-        if (obj instanceof PySequence) {
-            seq = (PySequence)obj;
-        } else {
-            seq = new PyList(obj.__iter__());
+        PySequence seq = fastSequence(obj, "");
+        int seqLen = seq.__len__();
+        if (seqLen == 0) {
+            return Py.EmptyString;
         }
 
         PyObject item;
-        int seqlen = seq.__len__();
-        if (seqlen == 0) {
-            return createInstance("", true);
-        }
-        if (seqlen == 1) {
+        if (seqLen == 1) {
             item = seq.pyget(0);
-            if (item.getType() == PyUnicode.TYPE ||
-                (item.getType() == PyString.TYPE && getType() == PyString.TYPE)) {
+            if (item.getType() == PyString.TYPE || item.getType() == PyUnicode.TYPE) {
                 return (PyString)item;
             }
         }
 
-        boolean needsUnicode = false;
-        long joinedSize = 0;
-        StringBuilder buf = new StringBuilder();
-        for (int i = 0; i < seqlen; i++) {
+        // There are at least two things to join, or else we have a subclass of the
+        // builtin types in the sequence. Do a pre-pass to figure out the total amount of
+        // space we'll need, see whether any argument is absurd, and defer to the Unicode
+        // join if appropriate
+        int i = 0;
+        long size = 0;
+        int sepLen = string.length();
+        for (; i < seqLen; i++) {
             item = seq.pyget(i);
             if (!(item instanceof PyString)) {
                 throw Py.TypeError(String.format("sequence item %d: expected string, %.80s found",
                                                  i, item.getType().fastGetName()));
             }
             if (item instanceof PyUnicode) {
-                needsUnicode = true;
+                // Defer to Unicode join. CAUTION: There's no gurantee that the original
+                // sequence can be iterated over again, so we must pass seq here
+                return unicodeJoin(seq);
             }
-            if (i > 0) {
-                buf.append(string);
-                joinedSize += string.length();
+
+            if (i != 0) {
+                size += sepLen;
             }
-            String itemString = ((PyString)item).string;
-            buf.append(itemString);
-            joinedSize += itemString.length();
-            if (joinedSize > Integer.MAX_VALUE) {
+            size += ((PyString)item).string.length();
+            if (size > Integer.MAX_VALUE) {
                 throw Py.OverflowError("join() result is too long for a Python string");
             }
         }
 
-        if (needsUnicode){
-            return new PyUnicode(buf.toString());
+        // Catenate everything
+        StringBuilder buf = new StringBuilder((int)size);
+        for (i = 0; i < seqLen; i++) {
+            item = seq.pyget(i);
+            if (i != 0) {
+                buf.append(string);
+            }
+            buf.append(((PyString)item).string);
         }
-        return createInstance(buf.toString(), true);
+        return new PyString(buf.toString());
     }
 
+    final PyUnicode unicodeJoin(PyObject obj) {
+        PySequence seq = fastSequence(obj, "");
+        // A codec may be invoked to convert str objects to Unicode, and so it's possible
+        // to call back into Python code during PyUnicode_FromObject(), and so it's
+        // possible for a sick codec to change the size of fseq (if seq is a list).
+        // Therefore we have to keep refetching the size -- can't assume seqlen is
+        // invariant.
+        int seqLen = seq.__len__();
+        // If empty sequence, return u""
+        if (seqLen == 0) {
+            return new PyUnicode();
+        }
+
+        // If singleton sequence with an exact Unicode, return that
+        PyObject item;
+        if (seqLen == 1) {
+            item = seq.pyget(0);
+            if (item.getType() == PyUnicode.TYPE) {
+                return (PyUnicode)item;
+            }
+        }
+
+        String sep = null;
+        if (seqLen > 1) {
+            if (this instanceof PyUnicode) {
+                sep = string;
+            } else {
+                sep = ((PyUnicode)decode()).string;
+                // In case decode()'s codec mutated seq
+                seqLen = seq.__len__();
+            }
+        }
+
+        // At least two items to join, or one that isn't exact Unicode
+        long size = 0;
+        int sepLen = string.length();
+        StringBuilder buf = new StringBuilder();
+        String itemString;
+        for (int i = 0; i < seqLen; i++) {
+            item = seq.pyget(i);
+            // Convert item to Unicode
+            if (!(item instanceof PyString)) {
+                throw Py.TypeError(String.format("sequence item %d: expected string or Unicode,"
+                                                 + " %.80s found",
+                                                 i, item.getType().fastGetName()));
+            }
+            if (!(item instanceof PyUnicode)) {
+                item = ((PyString)item).decode();
+                // In case decode()'s codec mutated seq
+                seqLen = seq.__len__();
+            }
+            itemString = ((PyUnicode)item).string;
+
+            if (i != 0) {
+                size += sepLen;
+                buf.append(sep);
+            }
+            size += itemString.length();
+            if (size > Integer.MAX_VALUE) {
+                throw Py.OverflowError("join() result is too long for a Python string");
+            }
+            buf.append(itemString);
+        }
+        return new PyUnicode(buf.toString());
+    }
 
     public boolean startswith(PyObject prefix) {
         return str_startswith(prefix, 0, null);
@@ -2826,11 +2893,11 @@ final class StringFormatter
                 fill = ' ';
             switch(c) {
             case 's':
-            case 'r':
-                fill = ' ';
                 if (arg instanceof PyUnicode) {
                     needUnicode = true;
                 }
+            case 'r':
+                fill = ' ';
                 if (c == 's')
                     if (needUnicode)
                         string = arg.__unicode__().toString();

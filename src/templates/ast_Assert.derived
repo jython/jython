@@ -1,0 +1,4 @@
+base_class: Assert
+want_dict: true
+ctr
+incl: object

@@ -981,24 +981,54 @@ public class PyObject implements Serializable {
         return __findattr__(name);
     }
 
-    protected void addKeys(PyDictionary accum, String attr) {
+    protected void mergeListAttr(PyDictionary accum, String attr) {
         PyObject obj = __findattr__(attr);
-        if (obj == null)
+        if (obj == null) {
             return;
+        }
         if (obj instanceof PyList) {
             for (PyObject name : obj.asIterable()) {
                 accum.__setitem__(name, Py.None);
             }
-        } else {
+        }
+    }
+
+    protected void mergeDictAttr(PyDictionary accum, String attr) {
+        PyObject obj = __findattr__(attr);
+        if (obj == null) {
+            return;
+        }
+        if (obj instanceof PyDictionary || obj instanceof PyStringMap
+            || obj instanceof PyDictProxy) {
             accum.update(obj);
         }
     }
 
+    protected void mergeClassDict(PyDictionary accum, PyObject aClass) {
+        // Merge in the type's dict (if any)
+        aClass.mergeDictAttr(accum, "__dict__");
+        
+        // Recursively merge in the base types' (if any) dicts
+        PyObject bases = aClass.__findattr__("__bases__");
+        if (bases == null) {
+            return;
+        }
+        // We have no guarantee that bases is a real tuple
+        int len = bases.__len__();
+        for (int i = 0; i < len; i++) {
+            mergeClassDict(accum, bases.__getitem__(i));
+        }
+    }
+
     protected void __rawdir__(PyDictionary accum) {
-        addKeys(accum, "__dict__");
-        addKeys(accum, "__methods__");
-        addKeys(accum, "__members__");
-        fastGetClass().__rawdir__(accum);
+        mergeDictAttr(accum, "__dict__");
+        mergeListAttr(accum, "__methods__");
+        mergeListAttr(accum, "__members__");
+        // Class dict is a slower, more manual merge to match CPython
+        PyObject itsClass = __findattr__("__class__");
+        if (itsClass != null) {
+            mergeClassDict(accum, itsClass);
+        }
     }
 
     /**

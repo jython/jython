@@ -79,7 +79,7 @@ public class IdImpl {
     }
 
     public String idstr(PyObject o) {
-        return Long.toString(id(o));
+        return String.format("0x%x", id(o));
     }
 
     public long java_obj_id(Object o) {

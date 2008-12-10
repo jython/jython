@@ -24,6 +24,13 @@ if not "%_TRIMMED_JAVA_HOME%"=="" (
    set _JAVA_CMD="%JAVA_HOME:"=%\bin\java"
 )
 
+rem remove surrounding quotes from jython opts, to be able to safely empty-test it
+set _TRIMMED_JYTHON_OPTS=%JYTHON_OPTS%
+for /f "useback tokens=*" %%a in ('%_TRIMMED_JYTHON_OPTS%') do set _TRIMMED_JYTHON_OPTS=%%~a
+if not "%_TRIMMED_JYTHON_OPTS%"=="" (
+   set _JYTHON_OPTS="%_TRIMMED_JYTHON_OPTS%"
+)
+
 rem remove surrounding quotes from jython home, to be able to safely empty-test it
 set _TRIMMED_JYTHON_HOME=%JYTHON_HOME%
 for /f "useback tokens=*" %%a in ('%_TRIMMED_JYTHON_HOME%') do set _TRIMMED_JYTHON_HOME=%%~a
@@ -81,6 +88,7 @@ set _ARGS=%_ARGS:'=_S%
 set _ARGS=%_ARGS:"=_D%
 
 set _ARGS="%_ARGS%"
+set _JYTHON_ARGS=
 
 :scanArgs
 rem split args by spaces into first and rest
@@ -134,7 +142,7 @@ rem removing quote avoids a batch syntax error
 if "%_CMP2:"=\\%" == "-J" goto jvmArg
 
 :jythonArg
-set JYTHON_OPTS=%JYTHON_OPTS% %_CMP%
+set _JYTHON_ARGS=%_JYTHON_ARGS% %_CMP%
 goto nextArg
 
 :jvmArg
@@ -153,7 +161,7 @@ set _CMP=
 goto scanArgs
 
 :argsDone
-%_JAVA_CMD% %_JAVA_OPTS% %_JAVA_STACK% -Xbootclasspath/a:%_CP% -Dpython.home=%_JYTHON_HOME% -Dpython.executable="%~f0" -classpath "%CLASSPATH%" org.python.util.jython %JYTHON_OPTS% %_ARGS%
+%_JAVA_CMD% %_JAVA_OPTS% %_JAVA_STACK% -Xbootclasspath/a:%_CP% -Dpython.home=%_JYTHON_HOME% -Dpython.executable="%~f0" -classpath "%CLASSPATH%" org.python.util.jython %_JYTHON_OPTS% %_JYTHON_ARGS% %_ARGS%
 set E=%ERRORLEVEL%
 
 :cleanup
@@ -166,8 +174,11 @@ set _JAVA_CMD=
 set _JAVA_OPTS=
 set _JAVA_STACK=
 set _JYTHON_HOME=
+set _JYTHON_OPTS=
+set _JYTHON_ARGS=
 set _TRIMMED_JAVA_HOME=
 set _TRIMMED_JYTHON_HOME=
+set _TRIMMED_JYTHON_OPTS=
 
 :finish
 exit /b %E%

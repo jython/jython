@@ -1,16 +1,16 @@
 package org.python.antlr;
 
-import org.python.core.PyObject;
 import org.antlr.runtime.CommonToken;
 import org.antlr.runtime.Token;
 import org.antlr.runtime.tree.CommonTree;
 
+import org.python.core.PyType;
 import org.python.antlr.ast.VisitorIF;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class PythonTree extends PyObject implements AST {
+public class PythonTree extends AST {
 
     public boolean from_future_checked = false;
     private int charStartIndex = -1;
@@ -33,6 +33,10 @@ public class PythonTree extends PyObject implements AST {
 	//private int childIndex = -1;
 
     public PythonTree() {
+        node = new CommonTree();
+    }
+
+    public PythonTree(PyType subType) {
         node = new CommonTree();
     }
 
@@ -82,7 +86,13 @@ public class PythonTree extends PyObject implements AST {
 	}
 
 	public int getLine() {
-		return node.getLine();
+		if (node.getToken()==null || node.getToken().getLine()==0) {
+			if ( getChildCount()>0 ) {
+				return getChild(0).getLine();
+			}
+			return 1;
+		}
+		return node.getToken().getLine();
 	}
 
 	public int getCharPositionInLine() {
@@ -238,16 +248,8 @@ public class PythonTree extends PyObject implements AST {
     public void traverse(VisitorIF visitor) throws Exception {
         throw new RuntimeException("Cannot traverse node: " + this);
     }
-
-    public String[] get_fields() {
-        return emptyStringArray;
-    }
-
-    public String[] get_attributes() {
-        return emptyStringArray;
-    }
-
-    //Copied from org.antlr.runtime.tree.BaseTree
+ 
+//XXX: From here down copied from org.antlr.runtime.tree.BaseTree
 	protected List children;
 
 	public PythonTree getChild(int i) {

@@ -1,0 +1,4 @@
+base_class: Global
+want_dict: true
+ctr
+incl: object

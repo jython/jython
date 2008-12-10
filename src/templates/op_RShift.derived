@@ -1,0 +1,4 @@
+base_class: RShift
+want_dict: true
+ctr
+incl: object

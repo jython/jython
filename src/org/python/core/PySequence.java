@@ -219,9 +219,9 @@ public abstract class PySequence extends PyObject {
 
     // Return a copy of a sequence where the __len__() method is
     // telling the truth.
-    protected static PyObject fastSequence(PyObject seq, String msg) {
-        if(seq instanceof PySequence) {
-            return seq;
+    protected static PySequence fastSequence(PyObject seq, String msg) {
+        if (seq instanceof PySequence) {
+            return (PySequence)seq;
         }
         PyList list = new PyList();
         PyObject iter = Py.iter(seq, msg);

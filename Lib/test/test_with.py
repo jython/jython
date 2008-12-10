@@ -506,59 +506,70 @@ class ExceptionalTestCase(unittest.TestCase, ContextmanagerAssertionMixin):
         self.assertRaises(GeneratorExit, shouldThrow)
 
 
-class NonLocalFlowControlTestCase(unittest.TestCase):
+class NonLocalFlowControlTestCase(unittest.TestCase,
+                                  ContextmanagerAssertionMixin):
 
     def testWithBreak(self):
+        mock = mock_contextmanager_generator()
         counter = 0
         while True:
             counter += 1
-            with mock_contextmanager_generator():
+            with mock:
                 counter += 10
                 break
             counter += 100 # Not reached
         self.assertEqual(counter, 11)
+        self.assertAfterWithManagerInvariantsNoError(mock)
 
     def testWithContinue(self):
+        mock = mock_contextmanager_generator()
         counter = 0
         while True:
             counter += 1
             if counter > 2:
                 break
-            with mock_contextmanager_generator():
+            with mock:
                 counter += 10
                 continue
             counter += 100 # Not reached
         self.assertEqual(counter, 12)
+        self.assertAfterWithManagerInvariantsNoError(mock)
 
     def testWithReturn(self):
+        mock = mock_contextmanager_generator()
         def foo():
             counter = 0
             while True:
                 counter += 1
-                with mock_contextmanager_generator():
+                with mock:
                     counter += 10
                     return counter
                 counter += 100 # Not reached
         self.assertEqual(foo(), 11)
+        self.assertAfterWithManagerInvariantsNoError(mock)
 
     def testWithYield(self):
+        mock = mock_contextmanager_generator()
         def gen():
-            with mock_contextmanager_generator():
+            with mock:
                 yield 12
                 yield 13
         x = list(gen())
         self.assertEqual(x, [12, 13])
+        self.assertAfterWithManagerInvariantsNoError(mock)
 
     def testWithRaise(self):
+        mock = mock_contextmanager_generator()
         counter = 0
         try:
             counter += 1
-            with mock_contextmanager_generator():
+            with mock:
                 counter += 10
                 raise RuntimeError
             counter += 100 # Not reached
         except RuntimeError:
             self.assertEqual(counter, 11)
+            self.assertAfterWithManagerInvariants(mock, sys.exc_info())
         else:
             self.fail("Didn't raise RuntimeError")
 

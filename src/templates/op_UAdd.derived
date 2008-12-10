@@ -1,0 +1,4 @@
+base_class: UAdd
+want_dict: true
+ctr
+incl: object

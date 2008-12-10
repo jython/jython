@@ -3,7 +3,7 @@ package org.python.antlr.ast;
 
 import org.python.antlr.AST;
 
-public enum operatorType implements AST {
+public enum operatorType {
     UNDEFINED,
     Add,
     Sub,
@@ -17,10 +17,4 @@ public enum operatorType implements AST {
     BitXor,
     BitAnd,
     FloorDiv;
-    private final static String[] fields = new String[0];
-    public String[] get_fields() { return fields; }
-
-    private final static String[] attributes = new String[0];
-    public String[] get_attributes() { return attributes; }
-
 }

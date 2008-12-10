@@ -58,7 +58,6 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
 #build.compiler=modern
 #jdk.target.version=1.5
 #debug=false
-#optimize=off
 #deprecation=off
 
 # - the svn main directory to build from; only needed for full-build
@@ -418,7 +417,6 @@ The readme text for the next release will be like:
                 target="${jdk.target.version}"
                 source="${jdk.source.version}"
                 debug="${debug}"
-                optimize="${optimize}"
                 deprecation="${deprecation}"
                 nowarn="${nowarn}">
             <include name="org/python/util/TemplateAntTask.java" />
@@ -460,7 +458,9 @@ The readme text for the next release will be like:
                source="${jdk.source.version}"
                debug="${debug}"
                deprecation="${deprecation}"
-               nowarn="${nowarn}">
+               nowarn="${nowarn}"
+               memoryMaximumSize="192m"
+               fork="true">
             <src path="${source.dir}"/>
             <src path="${gensrc.dir}"/>
 
@@ -475,7 +475,6 @@ The readme text for the next release will be like:
                target="${jdk.target.version}"
                source="${jdk.source.version}"
                debug="${debug}"
-               optimize="${optimize}"
                deprecation="${deprecation}"
                nowarn="${nowarn}"/>
 
@@ -485,7 +484,6 @@ The readme text for the next release will be like:
                target="${jdk.target.version}"
                source="${jdk.source.version}"
                debug="${debug}"
-               optimize="${optimize}"
                deprecation="${deprecation}"
                nowarn="${nowarn}"> 
             <classpath refid="test.classpath" />
@@ -554,7 +552,6 @@ The readme text for the next release will be like:
                   <attribute name="build-compiler" value="${build.compiler}" />
                   <attribute name="jdk-target-version" value="${jdk.target.version}" />
                   <attribute name="debug" value="${debug}" />
-                  <attribute name="optimize" value="${optimize}" />
               </section>
           </manifest>
         </jar>
@@ -587,7 +584,6 @@ The readme text for the next release will be like:
                   <attribute name="build-compiler" value="${build.compiler}" />
                   <attribute name="jdk-target-version" value="${jdk.target.version}" />
                   <attribute name="debug" value="${debug}" />
-                  <attribute name="optimize" value="${optimize}" />
               </section>
           </manifest>
         </jar>
@@ -717,7 +713,6 @@ The readme text for the next release will be like:
                target="${jdk.target.version}"
                source="${jdk.source.version}"
                debug="${debug}"
-               optimize="${optimize}"
                deprecation="${deprecation}"
                nowarn="${nowarn}"
         />
@@ -756,7 +751,6 @@ The readme text for the next release will be like:
                     <attribute name="build-compiler" value="${build.compiler}" />
                     <attribute name="jdk-target-version" value="${jdk.target.version}" />
                     <attribute name="debug" value="${debug}" />
-                    <attribute name="optimize" value="${optimize}" />
                 </section>
             </manifest>
         </jar>

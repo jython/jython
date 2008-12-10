@@ -4,10 +4,11 @@ package org.python.compiler;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.Map;
-import java.util.Vector;
 
 import org.python.objectweb.asm.Label;
 import org.python.objectweb.asm.Opcodes;
@@ -17,7 +18,7 @@ import org.python.core.PyException;
 import org.python.antlr.ParseException;
 import org.python.antlr.PythonTree;
 import org.python.antlr.ast.Suite;
-import org.python.antlr.ast.modType;
+import org.python.antlr.base.mod;
 
 class PyIntegerConstant extends Constant implements ClassConstants, Opcodes
 {
@@ -220,15 +221,15 @@ class PyCodeConstant extends Constant implements ClassConstants, Opcodes
 {
     public String co_name;
     public int argcount;
-    public String[] names;
+    public List<String> names;
     public int id;
     public int co_firstlineno;
     public boolean arglist, keywordlist;
     String fname;
 
     // for nested scopes
-    public String[] cellvars;
-    public String[] freevars;
+    public List<String> cellvars;
+    public List<String> freevars;
     public int jy_npurecell;
 
     public int moreflags;
@@ -247,9 +248,9 @@ class PyCodeConstant extends Constant implements ClassConstants, Opcodes
         //Make all names
         int nameArray;
         if (names != null) {
-            nameArray = CodeCompiler.makeStrings(c, names, names.length);
+            nameArray = CodeCompiler.makeStrings(c, names);
         } else { // classdef
-            nameArray = CodeCompiler.makeStrings(c, null, 0);
+            nameArray = CodeCompiler.makeStrings(c, null);
         }
         c.aload(nameArray);
         c.freeLocal(nameArray);
@@ -265,13 +266,13 @@ class PyCodeConstant extends Constant implements ClassConstants, Opcodes
         c.iconst(id);
 
         if (cellvars != null) {
-            int strArray = CodeCompiler.makeStrings(c, cellvars, cellvars.length);
+            int strArray = CodeCompiler.makeStrings(c, cellvars);
             c.aload(strArray);
             c.freeLocal(strArray);
         } else
             c.aconst_null();
         if (freevars != null) {
-            int strArray = CodeCompiler.makeStrings(c, freevars, freevars.length);
+            int strArray = CodeCompiler.makeStrings(c, freevars);
             c.aload(strArray);
             c.freeLocal(strArray);
         } else
@@ -306,7 +307,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
             this.filename = PyString(filename);
         else
             this.filename = null;
-        codes = new Vector();
+        codes = new ArrayList();
         futures = new Future();
         scopes = new Hashtable();
     }
@@ -352,7 +353,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
         return findConstant(new PyLongConstant(value));
     }
 
-    Vector codes;
+    List codes;
     private boolean isJavaIdentifier(String s) {
         char[] chars = s.toCharArray();
         if (chars.length == 0)
@@ -367,17 +368,18 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
         return true;
     }
 
-    private String[] toNameAr(Vector names,boolean nullok) {
+    //XXX: this can probably go away now that we can probably just copy the list.
+    private List<String> toNameAr(List names,boolean nullok) {
         int sz = names.size();
-        if (sz ==0 && nullok) return null;
-        String[] nameArray = new String[sz];
-        names.copyInto(nameArray);
+        if (sz == 0 && nullok) return null;
+        List<String> nameArray = new ArrayList<String>();
+        nameArray.addAll(names);
         return nameArray;
     }
 
     private int to_cell;
 
-    public PyCodeConstant PyCode(modType tree, String name,
+    public PyCodeConstant PyCode(mod tree, String name,
                                  boolean fast_locals, String className,
                                  boolean classBody, boolean printResults,
                                  int firstlineno, ScopeInfo scope)
@@ -388,7 +390,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
     }
 
 
-    public PyCodeConstant PyCode(modType tree, String name,
+    public PyCodeConstant PyCode(mod tree, String name,
                                  boolean fast_locals, String className,
                                  boolean classBody, boolean printResults,
                                  int firstlineno,
@@ -415,7 +417,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
         else
             code.fname = "f$"+code.id;
 
-        codes.addElement(code);
+        codes.add(code);
 
         Code c = classfile.addMethod(
             code.fname,
@@ -461,10 +463,10 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
         int nparamcell = scope.jy_paramcells.size();
         if(nparamcell > 0) {
             Map<String, SymInfo> tbl = scope.tbl;
-            Vector paramcells = scope.jy_paramcells;
+            List paramcells = scope.jy_paramcells;
             for(int i = 0; i < nparamcell; i++) {
                 c.aload(1);
-                SymInfo syminf = tbl.get(paramcells.elementAt(i));
+                SymInfo syminf = tbl.get(paramcells.get(i));
                 c.iconst(syminf.locals_index);
                 c.iconst(syminf.env_index);
                 c.invokevirtual("org/python/core/PyFrame", "to_cell", "(II)V");
@@ -485,7 +487,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
 
             yields[0] = start;
             for (int i = 1; i < yields.length; i++) {
-                yields[i] = (Label) compiler.yields.elementAt(i-1);
+                yields[i] = (Label) compiler.yields.get(i-1);
             }
             c.tableswitch(0, yields.length - 1, start, yields);
         }
@@ -556,7 +558,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
         }
 
         for(int i=0; i<codes.size(); i++) {
-            PyCodeConstant pyc = (PyCodeConstant)codes.elementAt(i);
+            PyCodeConstant pyc = (PyCodeConstant)codes.get(i);
             pyc.put(c);
         }
 
@@ -582,7 +584,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
         code.tableswitch(0, labels.length - 1, def, labels);
         for(i=0; i<labels.length; i++) {
             code.label(labels[i]);
-            code.invokevirtual(classfile.name, ((PyCodeConstant)codes.elementAt(i)).fname, "(" + $pyFrame + ")" + $pyObj);
+            code.invokevirtual(classfile.name, ((PyCodeConstant)codes.get(i)).fname, "(" + $pyFrame + ")" + $pyObj);
             code.areturn();
         }
         code.label(def);
@@ -632,7 +634,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
         throw new ParseException(msg,node);
     }
 
-    public static void compile(modType node, OutputStream ostream,
+    public static void compile(mod node, OutputStream ostream,
                                String name, String filename,
                                boolean linenumbers, boolean printResults,
                                org.python.core.CompilerFlags cflags)

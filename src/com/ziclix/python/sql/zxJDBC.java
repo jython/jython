@@ -336,8 +336,9 @@ public class zxJDBC extends PyObject implements ClassDictInit {
             String state = ((SQLException)throwable).getSQLState();
             // The SQL standard is not freely available, but
             // http://www.postgresql.org/docs/current/static/errcodes-appendix.html
-            // contains most of the SQLSTATES codes
-            if (state.length() == 5) { // Otherwise, the state is not following the standard.
+            // contains most of the SQLSTATES codes.
+            // Otherwise, the state is not following the standard.
+            if (state != null && state.length() == 5) {
                 if (state.startsWith("23")) { //Class 23 => Integrity Constraint Violation
                     type = IntegrityError;
                 } else if (state.equals("40002")) {

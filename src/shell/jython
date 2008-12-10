@@ -125,6 +125,10 @@ while [ $# -gt 0 ] ; do
     -D*)
       python_args=("${python_args[@]}" "$1")
       ;;
+    # Print the command, don't execute it
+    --print)
+      print_requested=true
+      ;;
     # Run with the instrumented profiler: http://jiprof.sourceforge.net/
     --profile)
       rm -f profile.txt # XXX do this?
@@ -197,10 +201,15 @@ if [ -n "$profile_requested" -o -n "$verify_requested" ] ; then
   [ -n "$profile_requested" ] && echo "Running with instrumented profiler"
   java_args=("${java_args[@]}" -classpath "$CP$CP_DELIMITER$CLASSPATH")
 else
-  if [ -z "$help_requested" ] ; then
+  if [ -z "$help_requested" -a -z "$print_requested" ] ; then
     JAVA_CMD=(exec "${JAVA_CMD[@]}")
   fi
-  java_args=("${java_args[@]}" -Xbootclasspath/a:"$CP" -classpath "$CLASSPATH")
+  java_args=("${java_args[@]}" -Xbootclasspath/a:"$CP")
+  [ -n "$CLASSPATH" ] && java_args=("${java_args[@]}" -classpath "$CLASSPATH")
+fi
+
+if [ -n "$print_requested" ] ; then
+  JAVA_CMD=(echo $JAVA_CMD)
 fi
 
 "${JAVA_CMD[@]}" $JAVA_OPTS "${java_args[@]}" -Dpython.home="$JYTHON_HOME" \
@@ -213,6 +222,7 @@ elif [ -n "$help_requested" ] ; then
   echo "Jython launcher options:" >&2
   echo "-Jarg    : pass argument through to Java VM (e.g. -J-Xmx512m)" >&2
   echo "--jdb    : run under JDB" >&2
+  echo "--print  : print the Java command instead of executing it" >&2
   echo "--profile: run with the Java Interactive Profiler (http://jiprof.sf.net)" >&2
   echo "--verify : enable bytecode verifier for Jython classes (for development)" >&2
   echo "--       : pass remaining arguments through to Jython" >&2

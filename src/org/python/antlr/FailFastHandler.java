@@ -6,10 +6,10 @@ import org.antlr.runtime.IntStream;
 import org.antlr.runtime.Lexer;
 import org.antlr.runtime.MismatchedTokenException;
 import org.antlr.runtime.RecognitionException;
-import org.python.antlr.ast.exprType;
-import org.python.antlr.ast.modType;
-import org.python.antlr.ast.sliceType;
-import org.python.antlr.ast.stmtType;
+import org.python.antlr.base.expr;
+import org.python.antlr.base.mod;
+import org.python.antlr.base.slice;
+import org.python.antlr.base.stmt;
 
 public class FailFastHandler implements ErrorHandler {
 
@@ -36,19 +36,19 @@ public class FailFastHandler implements ErrorHandler {
         throw new MismatchedTokenException(ttype, input);
     }
 
-    public exprType errorExpr(PythonTree t) {
+    public expr errorExpr(PythonTree t) {
         throw new ParseException("Bad Expr Node", t);
     }
 
-    public modType errorMod(PythonTree t) {
+    public mod errorMod(PythonTree t) {
         throw new ParseException("Bad Mod Node", t);
     }
 
-    public sliceType errorSlice(PythonTree t) {
+    public slice errorSlice(PythonTree t) {
         throw new ParseException("Bad Slice Node", t);
     }
 
-    public stmtType errorStmt(PythonTree t) {
+    public stmt errorStmt(PythonTree t) {
         throw new ParseException("Bad Stmt Node", t);
     }
 

@@ -470,8 +470,9 @@ public class PyInstance extends PyObject
             try {
                 meth = __findattr__("__len__");
             } catch (PyException exc) { }
-            if (meth == null)
+            if (meth == null) {
                 return true;
+            }
         }
 
         PyObject ret = meth.__call__();
@@ -566,8 +567,9 @@ public class PyInstance extends PyObject
         if (func != null)
             return func.__call__();
         func = __findattr__("__getitem__");
-        if (func == null)
+        if (func == null) {
             return super.__iter__();
+        }
         return new PySequenceIter(this);
     }
 

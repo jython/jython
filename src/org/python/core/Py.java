@@ -19,7 +19,7 @@ import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.Set;
 
-import org.python.antlr.ast.modType;
+import org.python.antlr.base.mod;
 import org.python.constantine.platform.Errno;
 import org.python.compiler.Module;
 import org.python.core.adapter.ClassicPyObjectAdapter;
@@ -1645,7 +1645,7 @@ public final class Py {
      * @param cflags Compiler flags
      * @return Code object for the compiled module
      */
-    public static PyObject compile_flags(modType node, String name, String filename,
+    public static PyObject compile_flags(mod node, String name, String filename,
                                          boolean linenumbers, boolean printResults,
                                          CompilerFlags cflags) {
         try {
@@ -1663,7 +1663,7 @@ public final class Py {
         }
     }
 
-    public static PyObject compile_flags(modType node, String filename,
+    public static PyObject compile_flags(mod node, String filename,
                                          String kind, CompilerFlags cflags) {
         return Py.compile_flags(node, getName(), filename, true,
                                 kind.equals("single"), cflags);
@@ -1674,7 +1674,7 @@ public final class Py {
      */
     public static PyObject compile_flags(InputStream istream, String filename,
                                          String kind, CompilerFlags cflags) {
-        modType node = ParserFacade.parse(istream, kind, filename, cflags);
+        mod node = ParserFacade.parse(istream, kind, filename, cflags);
         return Py.compile_flags(node, filename, kind, cflags);
     }
 
@@ -1694,13 +1694,13 @@ public final class Py {
         } else {
             data += "\n\n";
         }
-        modType node = ParserFacade.parse(data, kind, filename, cflags);
+        mod node = ParserFacade.parse(data, kind, filename, cflags);
         return Py.compile_flags(node, filename, kind, cflags);
     }
 
     public static PyObject compile_command_flags(String string, String filename,
             String kind, CompilerFlags cflags, boolean stdprompt) {
-        modType node = ParserFacade.partialParse(string + "\n", kind, filename,
+        mod node = ParserFacade.partialParse(string + "\n", kind, filename,
                                                  cflags, stdprompt);
         if (node == null) {
             return Py.None;
