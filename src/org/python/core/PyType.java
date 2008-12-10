@@ -1076,11 +1076,15 @@ public class PyType extends PyObject implements Serializable {
          type___setattr__(name, value);
     }
 
-    final void type___setattr__(String name, PyObject value) {
+    protected void checkSetattr() {
         if (builtin) {
             throw Py.TypeError(String.format("can't set attributes of built-in/extension type "
-                                             + "'%s'", this.name));
+                    + "'%s'", this.name));
         }
+    }
+
+    final void type___setattr__(String name, PyObject value) {
+        checkSetattr();
         super.__setattr__(name, value);
         if (name == "__set__") {
             if (!has_set && lookup("__set__") != null) {
@@ -1114,11 +1118,15 @@ public class PyType extends PyObject implements Serializable {
         type___delattr__(asName(name));
     }
 
-    final void type___delattr__(String name) {
+    protected void checkDelattr() {
         if (builtin) {
             throw Py.TypeError(String.format("can't set attributes of built-in/extension type "
-                                             + "'%s'", this.name));
+                    + "'%s'", this.name));
         }
+    }
+
+    final void type___delattr__(String name) {
+        checkDelattr();
         super.__delattr__(name);
         if (name == "__set__") {
             if (has_set && lookup("__set__") == null) {

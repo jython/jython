@@ -40,6 +40,14 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
         return PyObject.class.isAssignableFrom(underlying_class) ? null : underlying_class;
     }
 
+    // Java types are ok with things being added and removed from their dicts as long as there isn't
+    // something there, so let these checks through
+    @Override
+    protected void checkDelattr() {}
+
+    @Override
+    protected void checkSetattr() {}
+
     @Override
     protected void init() {
         name = underlying_class.getName();
