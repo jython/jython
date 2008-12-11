@@ -709,6 +709,10 @@ public class PySystemState extends PyObject
     private static void initBuiltins(Properties props) {
         builtinNames = new Hashtable();
 
+        // add the oddball builtins that are specially handled
+        builtinNames.put("__builtin__", "");
+        builtinNames.put("sys", "");
+
         // add builtins specified in the Setup.java file
         for (int i=0; i < Setup.builtinModules.length; i++)
             addBuiltin(Setup.builtinModules[i]);
@@ -727,7 +731,7 @@ public class PySystemState extends PyObject
         builtin_module_names = new PyTuple(built_mod);
     }
 
-    static String getBuiltin(String name) {
+    public static String getBuiltin(String name) {
         return (String)builtinNames.get(name);
     }
 

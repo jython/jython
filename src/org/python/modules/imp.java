@@ -129,10 +129,6 @@ public class imp {
         return null;
     }
 
-    public static PyObject find_module(String name) {
-        return find_module(name, null);
-    }
-
     public static PyObject load_source(String modname, String filename) {
         return load_source(modname, filename, null);
     }
@@ -158,11 +154,20 @@ public class imp {
         return mod;
     }
 
+    public static PyObject find_module(String name) {
+        return find_module(name, Py.None);
+    }
+
     public static PyObject find_module(String name, PyObject path) {
-        if (path == null || path == Py.None) {
-            path = Py.getSystemState().path;
+        if (path == Py.None && PySystemState.getBuiltin(name) != null) {
+            return new PyTuple(Py.None, Py.newString(name),
+                               new PyTuple(Py.EmptyString, Py.EmptyString,
+                                           Py.newInteger(C_BUILTIN)));
         }
 
+        if (path == Py.None) {
+            path = Py.getSystemState().path;
+        }
         for (PyObject p : path.asIterable()) {
             ModuleInfo mi = findFromSource(name, p.toString(), false, true);
             if(mi == null) {
