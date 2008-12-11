@@ -115,8 +115,10 @@ public class zipimporter extends PyObject {
         prefix = "";
         while (true) {
             File fullPathFile = new File(sys.getPath(pathFile.getPath()));
-            if (fullPathFile.isFile()) {
-                archive = pathFile.getPath();
+            if (fullPathFile.exists()) {
+                if (fullPathFile.isFile()) {
+                    archive = pathFile.getPath();
+                }
                 break;
             }
 
