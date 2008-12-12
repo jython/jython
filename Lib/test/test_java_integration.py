@@ -387,6 +387,22 @@ class InterfaceTest(unittest.TestCase):
 
         self.assertEquals(s, "Foo!!!", "toString not overridden in interface")
 
+    def test_java_calling_python_interface_implementation(self):
+        from org.python.tests import Callbacker
+        called = []
+        class PyCallback(Callbacker.Callback):
+            def call(self, extraarg=None):
+                called.append(extraarg)
+        Callbacker.callNoArg(PyCallback())
+        Callbacker.callOneArg(PyCallback(), "arg")
+        self.assertEquals(None, called[0])
+        self.assertEquals("arg", called[1])
+        class PyBadCallback(Callbacker.Callback):
+            def call(pyself, extraarg):
+                self.fail("Shouldn't be callable with a no args")
+        self.assertRaises(TypeError, Callbacker.callNoArg, PyBadCallback())
+
+
 class JavaStringTest(unittest.TestCase):
     
     def test_string_not_iterable(self):
