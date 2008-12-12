@@ -1,51 +1,50 @@
 // Copyright 2000 Finn Bock
-
 package org.python.util;
 
-import java.io.*;
-import org.python.core.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectStreamClass;
+
+import org.python.core.Py;
+import org.python.core.PyObject;
+import org.python.core.PyTuple;
+import org.python.core.PyType;
+import org.python.core.__builtin__;
 
 public class PythonObjectInputStream extends ObjectInputStream {
+
     public PythonObjectInputStream(InputStream istr) throws IOException {
         super(istr);
     }
 
-    protected Class resolveClass(ObjectStreamClass v)
-                      throws IOException, ClassNotFoundException {
+    protected Class<?> resolveClass(ObjectStreamClass v) throws IOException, ClassNotFoundException {
         String clsName = v.getName();
-        //System.out.println(clsName);
         if (clsName.startsWith("org.python.proxies")) {
             int idx = clsName.lastIndexOf('$');
-            if (idx > 19)
-               clsName = clsName.substring(19, idx);
-            //System.out.println("new:" + clsName);
-
+            if (idx > 19) {
+                clsName = clsName.substring(19, idx);
+            }
             idx = clsName.indexOf('$');
             if (idx >= 0) {
                 String mod = clsName.substring(0, idx);
-                clsName = clsName.substring(idx+1);
-
+                clsName = clsName.substring(idx + 1);
                 PyObject module = importModule(mod);
-                PyObject pycls = module.__getattr__(clsName.intern());
-                Object cls = pycls.__tojava__(Class.class);
-
-                if (cls != null && cls != Py.NoConversion)
-                    return (Class) cls;
+                PyType pycls = (PyType)module.__getattr__(clsName.intern());
+                return pycls.getProxyType();
             }
         }
         try {
             return super.resolveClass(v);
         } catch (ClassNotFoundException exc) {
             PyObject m = importModule(clsName);
-            //System.out.println("m:" + m);
             Object cls = m.__tojava__(Class.class);
-            //System.out.println("cls:" + cls);
-            if (cls != null && cls != Py.NoConversion)
-                return (Class) cls;
+            if (cls != null && cls != Py.NoConversion) {
+                return (Class<?>)cls;
+            }
             throw exc;
         }
     }
-
 
     private static PyObject importModule(String name) {
         PyObject fromlist = new PyTuple(Py.newString("__doc__"));

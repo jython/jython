@@ -1,13 +1,11 @@
 package org.python.antlr.adapter;
 
-import org.python.core.Py;
-import org.python.core.PyObject;
-import org.python.core.PyJavaInstance;
-
-import org.python.antlr.ast.alias;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import org.python.antlr.ast.alias;
+import org.python.core.Py;
+import org.python.core.PyObject;
 
 public class AliasAdapter implements AstAdapter {
 
@@ -29,7 +27,7 @@ public class AliasAdapter implements AstAdapter {
     public List iter2ast(PyObject iter) {
         List<alias> aliases = new ArrayList<alias>();
         for(Object o : (Iterable)iter) {
-            aliases.add((alias)py2ast((PyObject)(PyObject)o));
+            aliases.add((alias)py2ast((PyObject)o));
         }
         return aliases;
     }

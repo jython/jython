@@ -130,8 +130,9 @@ public class ExposedTypeProcessor implements Opcodes, PyTypes {
 
         @Override
         public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
+            AnnotationVisitor visitor = super.visitAnnotation(desc, visible);
             if(desc.equals(EXPOSED_TYPE.getDescriptor())) {
-                return new ExposedTypeVisitor(onType) {
+                return new ExposedTypeVisitor(onType, visitor) {
 
                     @Override
                     public void handleResult(String name) {
@@ -148,7 +149,7 @@ public class ExposedTypeProcessor implements Opcodes, PyTypes {
                     }
                 };
             }
-            return super.visitAnnotation(desc, visible);
+            return visitor;
         }
 
         private void throwInvalid(String msg) {

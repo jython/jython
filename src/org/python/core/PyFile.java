@@ -485,7 +485,7 @@ public class PyFile extends PyObject {
 
     @ExposedMethod
     final PyObject file_fileno() {
-        return new PyJavaInstance(file.fileno());
+        return PyJavaType.wrapJavaObject(file.fileno());
     }
 
     @ExposedMethod(names = {"__str__", "__repr__"})
@@ -541,7 +541,12 @@ public class PyFile extends PyObject {
     }
 
     public Object __tojava__(Class<?> cls) {
-        Object o = file.__tojava__(cls);
+        Object o = null;
+        if (InputStream.class.isAssignableFrom(cls)) {
+            o = file.asInputStream();
+        } else if (OutputStream.class.isAssignableFrom(cls)) {
+            o = file.asOutputStream();
+        }
         if (o == null) {
             o = super.__tojava__(cls);
         }

@@ -6,6 +6,7 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 
 import org.python.expose.ExposedDelete;
@@ -14,6 +15,7 @@ import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedSet;
 import org.python.expose.ExposedType;
+import org.python.util.Generic;
 
 /**
  * All objects known to the Jython runtime system are represented by an instance
@@ -35,9 +37,12 @@ public class PyObject implements Serializable {
 
     }
 
-    // This field is only filled on Python wrappers for Java objects and for Python subclasses of
-    // Java classes.
-    Object javaProxy;
+    /**
+     * An underlying Java instance that this object is wrapping or is a subclass of. Anything
+     * attempting to use the proxy should go through {@link #getJavaProxy()} which ensures that it's
+     * initialized.
+     */
+    protected Object javaProxy;
 
     private PyType objtype;
 
@@ -100,9 +105,50 @@ public class PyObject implements Serializable {
     /**
      * Dispatch __init__ behavior
      */
-    public void dispatch__init__(PyType type,PyObject[] args,String[] keywords) {
-    }
+    public void dispatch__init__(PyType type, PyObject[] args, String[] keywords) {}
 
+    /**
+     * Attempts to automatically initialize our Java proxy if we have one and it wasn't initialized
+     * by our __init__.
+     */
+    protected void proxyInit() {
+        Class<?> c = getType().getProxyType();
+        if (javaProxy != null || c == null) {
+            return;
+        }
+        if (!PyProxy.class.isAssignableFrom(c)) {
+            throw Py.SystemError("Automatic proxy initialization should only occur on proxy classes");
+        }
+        PyProxy proxy;
+        ThreadState ts = Py.getThreadState();
+        try {
+            ts.pushInitializingProxy(this);
+            try {
+                proxy = (PyProxy)c.newInstance();
+            } catch (java.lang.InstantiationException e) {
+                Class<?> sup = c.getSuperclass();
+                String msg = "Default constructor failed for Java superclass";
+                if (sup != null) {
+                    msg += " " + sup.getName();
+                }
+                throw Py.TypeError(msg);
+            } catch (NoSuchMethodError nsme) {
+                throw Py.TypeError("constructor requires arguments");
+            } catch (Exception exc) {
+                throw Py.JavaError(exc);
+            }
+        } finally {
+            ts.popInitializingProxy();
+        }
+        if (javaProxy != null && javaProxy != proxy) {
+            throw Py.TypeError("Proxy instance already initialized");
+        }
+        PyObject proxyInstance = proxy._getPyInstance();
+        if (proxyInstance != null && proxyInstance != this) {
+            throw Py.TypeError("Proxy initialized with another instance");
+        }
+        javaProxy = proxy;
+    }
 
     /**
      * Equivalent to the standard Python __repr__ method.  This method
@@ -200,9 +246,41 @@ public class PyObject implements Serializable {
      * @param c the Class to convert this <code>PyObject</code> to.
      **/
     public Object __tojava__(Class<?> c) {
-        if (c.isInstance(this))
+        if ((c == Object.class || c == Serializable.class) && getJavaProxy() != null) {
+            return javaProxy;
+        }
+        if (c.isInstance(this)) {
             return this;
+        }
+        if (c.isPrimitive()) {
+            Class<?> tmp = primitiveMap.get(c);
+            if (tmp != null) {
+                c = tmp;
+            }
+        }
+        if (c.isInstance(getJavaProxy())) {
+            return javaProxy;
+        }
         return Py.NoConversion;
+    }
+
+    protected Object getJavaProxy() {
+        if (javaProxy == null) {
+            proxyInit();
+        }
+        return javaProxy;
+    }
+
+    private static final Map<Class<?>, Class<?>> primitiveMap = Generic.map();
+    static {
+        primitiveMap.put(Character.TYPE, Character.class);
+        primitiveMap.put(Boolean.TYPE, Boolean.class);
+        primitiveMap.put(Byte.TYPE, Byte.class);
+        primitiveMap.put(Short.TYPE, Short.class);
+        primitiveMap.put(Integer.TYPE, Integer.class);
+        primitiveMap.put(Long.TYPE, Long.class);
+        primitiveMap.put(Float.TYPE, Float.class);
+        primitiveMap.put(Double.TYPE, Double.class);
     }
 
     /**
@@ -676,9 +754,9 @@ public class PyObject implements Serializable {
     }
 
     /**
-     * @return an Iterable over the Python iterator returned by __iter__ on this object. If this
-     *         object doesn't support __iter__, a TypeException will be raised when iterator is
-     *         called on the returned Iterable.
+     * Returns an Iterable over the Python iterator returned by __iter__ on this object. If this
+     * object doesn't support __iter__, a TypeException will be raised when iterator is called on
+     * the returned Iterable.
      */
     public Iterable<PyObject> asIterable() {
         return new Iterable<PyObject>() {
@@ -1534,7 +1612,9 @@ public class PyObject implements Serializable {
      * @return the result of the comparison
      **/
     public PyObject _is(PyObject o) {
-        return this == o ? Py.True : Py.False;
+        // Access javaProxy directly here as is is for object identity, and at best getJavaProxy
+        // will initialize a new object with a different identity
+        return this == o || (javaProxy != null && javaProxy == o.javaProxy) ? Py.True : Py.False;
     }
 
     /**
@@ -1544,7 +1624,9 @@ public class PyObject implements Serializable {
      * @return the result of the comparison
      **/
     public PyObject _isnot(PyObject o) {
-        return this != o ? Py.True : Py.False;
+        // Access javaProxy directly here as is is for object identity, and at best getJavaProxy
+        // will initialize a new object with a different identity
+        return this != o || javaProxy != o.javaProxy ? Py.True : Py.False;
     }
 
     /**
@@ -3384,22 +3466,18 @@ public class PyObject implements Serializable {
 
     // Generated by make_binops.py (End)
 
-    /* A convenience function for PyProxy's */
-    // Possibly add _jcall(), _jcall(Object, ...) as future optimization
     /**
-     * A convenience function for PyProxy's.
-     * @param args call arguments.
-     * @exception Throwable
+     * A convenience function for PyProxys.
      */
     public PyObject _jcallexc(Object[] args) throws Throwable {
         PyObject[] pargs = new PyObject[args.length];
         try {
-            int n = args.length;
-            for (int i = 0; i < n; i++)
+            for (int i = 0; i < args.length; i++) {
                 pargs[i] = Py.java2py(args[i]);
+            }
             return __call__(pargs);
         } catch (PyException e) {
-            if (e.value instanceof PyJavaInstance) {
+            if (e.value.getJavaProxy() != null) {
                 Object t = e.value.__tojava__(Throwable.class);
                 if (t != null && t != Py.NoConversion) {
                     throw (Throwable) t;
@@ -3972,12 +4050,11 @@ public class PyObject implements Serializable {
     }
 
     static {
-        for (Class unbootstrapped : Py.BOOTSTRAP_TYPES) {
+        for (Class<?> unbootstrapped : Py.BOOTSTRAP_TYPES) {
             Py.writeWarning("init", "Bootstrap type wasn't encountered in bootstrapping[class="
                     + unbootstrapped + "]");
         }
     }
-
 }
 
 /*

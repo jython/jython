@@ -26,7 +26,7 @@ public class StdoutWrapper extends OutputStream {
         if (obj == null) {
             throw Py.AttributeError("missing sys." + this.name);
         }
-        if (obj instanceof PyJavaInstance) {
+        if (obj.getJavaProxy() != null) {
             PyFile f = null;
 
             Object tojava = obj.__tojava__(OutputStream.class);

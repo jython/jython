@@ -6,7 +6,7 @@ import re
 from test import test_support
 from java.awt import (Dimension, Component, Rectangle, Button, Color,
                       HeadlessException)
-from java.util import Vector, Hashtable
+from java.util import ArrayList, Vector, HashMap, Hashtable
 from java.io import FileOutputStream, FileWriter, OutputStreamWriter
                      
 from java.lang import Runnable, Thread, ThreadGroup, System, Runtime, Math, Byte
@@ -55,9 +55,6 @@ class AbstractOnSyspathTest(unittest.TestCase):
         A()
 
 class InstantiationTest(unittest.TestCase):
-    def test_cant_create_abstract(self):
-        self.assertRaises(TypeError, Component)
-
     def test_can_subclass_abstract(self):
         class A(Component):
             pass
@@ -339,8 +336,11 @@ class ButtonTest(unittest.TestCase):
 class ColorTest(unittest.TestCase):
 
     def test_static_fields(self):
-        Color.red
-        Color.blue
+        self.assertEquals(Color(255, 0, 0), Color.RED)
+        # The bean accessor for getRed should be active on instances, but the static field red 
+        # should be visible on the class
+        self.assertEquals(255, Color.red.red)
+        self.assertEquals(Color(0, 0, 255), Color.blue)
 
     def test_is_operator(self):
         red = Color.red
@@ -363,7 +363,7 @@ class BigDecimalTest(unittest.TestCase):
         y = BigDecimalTest().asBigDecimal()
 
         self.assertEqual(type(x), type(y), "BigDecimal coerced")
-        self.assertEqual(x, y, "BigDecimal coerced")
+        self.assertEqual(x, y, "coerced BigDecimal not equal to directly created version")
 
 class MethodInvTest(unittest.TestCase):
     
@@ -394,6 +394,37 @@ class JavaStringTest(unittest.TestCase):
         x = lang.String('test')
         self.assertRaises(TypeError, list, x)
 
+class JavaDelegationTest(unittest.TestCase):
+    def test_list_delegation(self):
+        for c in ArrayList, Vector:
+            a = c()
+            a.add("blah")
+            self.assertTrue("blah" in a)
+            self.assertEquals(1, len(a))
+            n = 0
+            for i in a:
+                n += 1
+                self.assertEquals("blah", i)
+            self.assertEquals(1, n)
+            self.assertEquals("blah", a[0])
+            a[0] = "bleh"
+            del a[0]
+            self.assertEquals(0, len(a))
+
+    def test_map_delegation(self):
+        m = HashMap()
+        m["a"] = "b"
+        self.assertTrue("a" in m)
+        self.assertEquals("b", m["a"])
+        n = 0
+        for k in m:
+            n += 1
+            self.assertEquals("a", k)
+        self.assertEquals(1, n)
+        del m["a"]
+        self.assertEquals(0, len(m))
+
+
 def test_main():
     test_support.run_unittest(AbstractOnSyspathTest,
                               InstantiationTest, 
@@ -414,6 +445,7 @@ def test_main():
                               MethodInvTest,
                               InterfaceTest,
                               JavaStringTest,
+                              JavaDelegationTest,
                               )
 
 if __name__ == "__main__":

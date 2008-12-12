@@ -15,7 +15,6 @@ import java.nio.channels.FileChannel;
 import org.python.constantine.platform.Errno;
 import org.python.core.imp;
 import org.python.core.Py;
-import org.python.core.PyObject;
 import org.python.core.util.RelativeFile;
 
 /**
@@ -27,7 +26,7 @@ public class FileIO extends RawIOBase {
 
     /** The underlying file channel */
     private FileChannel fileChannel;
-    
+
     /** The underlying file (if known) */
     private RandomAccessFile file;
 
@@ -336,14 +335,14 @@ public class FileIO extends RawIOBase {
         super.close();
     }
 
-    /** {@inheritDoc} */
-    public Object __tojava__(Class cls) {
-        if (OutputStream.class.isAssignableFrom(cls) && writing) {
-            return Channels.newOutputStream(fileChannel);
-        } else if (InputStream.class.isAssignableFrom(cls) && readable()) {
-            return Channels.newInputStream(fileChannel);
-        }
-        return super.__tojava__(cls);
+    @Override
+    public OutputStream asOutputStream() {
+        return writing ? Channels.newOutputStream(fileChannel) : super.asOutputStream();
+    }
+
+    @Override
+    public InputStream asInputStream() {
+        return readable() ? Channels.newInputStream(fileChannel) : super.asInputStream();
     }
 
     /** {@inheritDoc} */

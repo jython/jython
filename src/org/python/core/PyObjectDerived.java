@@ -712,7 +712,7 @@ public class PyObjectDerived extends PyObject implements Slotted {
         if (impl!=null) {
             PyObject res=impl.__get__(this,self_type).__call__();
             if (res instanceof PyInteger||res instanceof PyLong)
-                return(PyObject)res;
+                return res;
             throw Py.TypeError("__int__"+" should return an integer");
         }
         return super.__int__();
@@ -1091,6 +1091,7 @@ public class PyObjectDerived extends PyObject implements Slotted {
                 if (res!=Py.None) {
                     throw Py.TypeError(String.format("__init__() should return None, not '%.200s'",res.getType().fastGetName()));
                 }
+                proxyInit();
             }
         }
     }

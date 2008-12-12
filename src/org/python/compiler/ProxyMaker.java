@@ -12,6 +12,9 @@ import java.util.Map;
 import java.util.Set;
 
 import org.python.core.Py;
+import org.python.core.PyJavaType;
+import org.python.core.PyObject;
+import org.python.core.PyProxy;
 import org.python.objectweb.asm.Label;
 import org.python.objectweb.asm.Opcodes;
 import org.python.util.Generic;
@@ -53,13 +56,40 @@ public class ProxyMaker implements ClassConstants, Opcodes
         else return ((Integer)i).intValue();
     }
 
+    /**
+     * Retrieves <code>name</code> from the PyObject in <code>proxy</code> if it's defined in
+     * Python.  This is a specialized helper function for internal PyProxy use.
+     */
+    public static PyObject findPython(PyProxy proxy, String name) {
+        PyObject o = proxy._getPyInstance();
+        if (o == null) {
+            proxy.__initProxy__(new Object[0]);
+            o = proxy._getPyInstance();
+        }
+        PyObject ret = null;
+        if (o.getDict() != null) {
+            ret = o.getDict().__finditem__(name);
+        }
+        if (ret == null) {
+            PyObject[] definedOn = new PyObject[1];
+            PyObject typeDefined = o.getType().lookup_where(name, definedOn);
+            if (!(definedOn[0] instanceof PyJavaType)) {
+                ret = typeDefined;
+            }
+        }
+        if (ret == null) {
+            return null;
+        }
+        Py.setSystemState(proxy._getPySystemState());
+        return ret.__get__(o, null);
+    }
+
     Class<?> superclass;
     Class<?>[] interfaces;
     Set<String> names;
     Set<String> supernames = Generic.set();
     public ClassFile classfile;
     public String myClass;
-    public boolean isAdapter=false;
 
     public ProxyMaker(String classname, Class<?> superclass) {
         this.myClass = "org.python.proxies."+classname;
@@ -432,7 +462,8 @@ public class ProxyMaker implements ClassConstants, Opcodes
 
         if (!isAbstract) {
             int tmp = code.getLocal("org/python/core/PyObject");
-            code.invokestatic("org/python/core/Py", "jfindattr", "(" + $pyProxy + $str + ")" + $pyObj);
+            code.invokestatic("org/python/compiler/ProxyMaker", "findPython", "(" + $pyProxy + $str
+                    + ")" + $pyObj);
             code.astore(tmp);
             code.aload(tmp);
 
@@ -449,20 +480,15 @@ public class ProxyMaker implements ClassConstants, Opcodes
             addSuperMethod("super__"+name, name, superClass, parameters,
                            ret, sig, access);
         } else {
-            if (!isAdapter) {
-                code.invokestatic("org/python/core/Py", "jgetattr", "(" + $pyProxy + $str + ")" + $pyObj);
-                callMethod(code, name, parameters, ret, method.getExceptionTypes());
-            } else {
-                code.invokestatic("org/python/core/Py", "jfindattr", "(" + $pyProxy + $str + ")" + $pyObj);
-                code.dup();
-                Label returnNull = new Label();
-                code.ifnull(returnNull);
-
-                callMethod(code, name, parameters, ret, method.getExceptionTypes());
-                code.label(returnNull);
-                code.pop();
-                doNullReturn(code, ret);
-            }
+            code.invokestatic("org/python/compiler/ProxyMaker", "findPython", "(" + $pyProxy + $str
+                    + ")" + $pyObj);
+            code.dup();
+            Label returnNull = new Label();
+            code.ifnull(returnNull);
+            callMethod(code, name, parameters, ret, method.getExceptionTypes());
+            code.label(returnNull);
+            code.pop();
+            doNullReturn(code, ret);
         }
     }
 
@@ -600,23 +626,23 @@ public class ProxyMaker implements ClassConstants, Opcodes
 
     public void addProxy() throws Exception {
         // implement PyProxy interface
-        classfile.addField("__proxy", "Lorg/python/core/PyInstance;",
+        classfile.addField("__proxy", "Lorg/python/core/PyObject;",
                            Modifier.PROTECTED);
         // setProxy methods
         Code code = classfile.addMethod("_setPyInstance",
-                                        "(Lorg/python/core/PyInstance;)V",
+                                        "(Lorg/python/core/PyObject;)V",
                                         Modifier.PUBLIC);
         code.aload(0);
         code.aload(1);
-        code.putfield(classfile.name, "__proxy", "Lorg/python/core/PyInstance;");
+        code.putfield(classfile.name, "__proxy", "Lorg/python/core/PyObject;");
         code.return_();
 
         // getProxy method
         code = classfile.addMethod("_getPyInstance",
-                                   "()Lorg/python/core/PyInstance;",
+                                   "()Lorg/python/core/PyObject;",
                                    Modifier.PUBLIC);
         code.aload(0);
-        code.getfield(classfile.name, "__proxy", "Lorg/python/core/PyInstance;");
+        code.getfield(classfile.name, "__proxy", "Lorg/python/core/PyObject;");
         code.areturn();
 
         // implement PyProxy interface

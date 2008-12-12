@@ -2,17 +2,20 @@
 package org.python.core.io;
 
 import org.python.constantine.platform.Errno;
+import java.io.InputStream;
+import java.io.OutputStream;
+
 import org.python.core.Py;
 import org.python.core.PyException;
 
 /**
  * Base class for all I/O classes.
  *
- * IOBase and its descendents in org.python.core.io are based off
- * Python 3's new io module (PEP 3116).
+ * IOBase and its descendents in org.python.core.io are based off Python 3's new io module (PEP
+ * 3116).
  *
- * This does not define read(), readinto() and write(), nor readline()
- * and friends, since their signatures vary per layer.
+ * This does not define read(), readinto() and write(), nor readline() and friends, since their
+ * signatures vary per layer.
  *
  * @author Philip Jenvey
  */
@@ -32,7 +35,8 @@ public abstract class IOBase {
      *
      * Returns the new absolute position.
      *
-     * @param pos a long position value
+     * @param pos
+     *            a long position value
      * @return a long position value seeked to
      */
     public long seek(long pos) {
@@ -40,16 +44,16 @@ public abstract class IOBase {
     }
 
     /**
-     * Seek to byte offset pos relative to position indicated by
-     * whence:
-     *   0 Start of stream (the default). pos should be >= 0;
-     *   1 Current position - whence may be negative;
-     *   2 End of stream - whence usually negative.
+     * Seek to byte offset pos relative to position indicated by whence: 0 Start of stream (the
+     * default). pos should be >= 0; 1 Current position - whence may be negative; 2 End of stream -
+     * whence usually negative.
      *
      * Returns the new absolute position.
      *
-     * @param pos a long position value
-     * @param whence an int whence value
+     * @param pos
+     *            a long position value
+     * @param whence
+     *            an int whence value
      * @return a long position value seeked to
      */
     public long seek(long pos, int whence) {
@@ -71,7 +75,8 @@ public abstract class IOBase {
      *
      * Returns the new size.
      *
-     * @param size a long size to truncate to
+     * @param size
+     *            a long size to truncate to
      * @return a long size value the file was truncated to
      */
     public long truncate(long size) {
@@ -85,14 +90,13 @@ public abstract class IOBase {
      * This is a no-op for read-only and non-blocking streams.
      *
      */
-    public void flush() {
-    }
+    public void flush() {}
 
     /**
      * Flushes and closes the IO object.
      *
-     * This must be idempotent. It should also set a flag for the
-     * 'closed' property (see below) to test.
+     * This must be idempotent. It should also set a flag for the 'closed' property (see below) to
+     * test.
      */
     public void close() {
         if (closed()) {
@@ -191,21 +195,24 @@ public abstract class IOBase {
     }
 
     /**
-     * Coerce this Python object (the parent PyFile) into a java
-     * object.
-     *
-     * @param cls the desired Class to coerce the object to
-     * @return the desired object or null
+     * Coerce this into an OutputStream if possible, or return null.
      */
-    public Object __tojava__(Class cls) {
+    public OutputStream asOutputStream() {
         return null;
     }
 
     /**
-     * Raise a TypeError indicating the specified operation is not
-     * supported.
+     * Coerce this into an InputStream if possible, or return null.
+     */
+    public InputStream asInputStream() {
+        return null;
+    }
+
+    /**
+     * Raise a TypeError indicating the specified operation is not supported.
      *
-     * @param methodName the String name of the operation
+     * @param methodName
+     *            the String name of the operation
      */
     protected void unsupported(String methodName) {
         String qualifiedName = getClass().getName();

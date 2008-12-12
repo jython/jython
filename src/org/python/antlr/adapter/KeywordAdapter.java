@@ -1,13 +1,11 @@
 package org.python.antlr.adapter;
 
-import org.python.core.Py;
-import org.python.core.PyJavaInstance;
-import org.python.core.PyObject;
-
-import org.python.antlr.ast.keyword;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import org.python.antlr.ast.keyword;
+import org.python.core.Py;
+import org.python.core.PyObject;
 
 public class KeywordAdapter implements AstAdapter {
 

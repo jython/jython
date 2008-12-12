@@ -1,13 +1,11 @@
 package org.python.antlr.adapter;
 
-import org.python.core.Py;
-import org.python.core.PyJavaInstance;
-import org.python.core.PyObject;
-
-import org.python.antlr.base.stmt;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import org.python.antlr.base.stmt;
+import org.python.core.Py;
+import org.python.core.PyObject;
 
 public class StmtAdapter implements AstAdapter {
 

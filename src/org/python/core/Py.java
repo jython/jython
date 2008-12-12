@@ -1,7 +1,6 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -17,9 +16,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.sql.Date;
 import java.sql.Time;
 import java.sql.Timestamp;
-import java.util.Arrays;
 import java.util.Calendar;
-import java.util.HashSet;
 import java.util.Set;
 
 import org.python.antlr.base.mod;
@@ -27,7 +24,7 @@ import org.python.constantine.platform.Errno;
 import org.python.compiler.Module;
 import org.python.core.adapter.ClassicPyObjectAdapter;
 import org.python.core.adapter.ExtensiblePyObjectAdapter;
-import org.python.core.util.StringUtil;
+import org.python.util.Generic;
 
 public final class Py {
 
@@ -87,7 +84,7 @@ public final class Py {
     public static long TPFLAGS_BASETYPE = 1L << 10;
 
     /** Builtin types that are used to setup PyObject. */
-    static final Set<Class> BOOTSTRAP_TYPES = new HashSet<Class>(4);
+    static final Set<Class<?>> BOOTSTRAP_TYPES = Generic.set();
     static {
         BOOTSTRAP_TYPES.add(PyObject.class);
         BOOTSTRAP_TYPES.add(PyType.class);
@@ -450,8 +447,8 @@ public final class Py {
         } else if (t instanceof OutOfMemoryError) {
             memory_error((OutOfMemoryError) t);
         }
-        PyJavaInstance exc = new PyJavaInstance(t);
-        PyException pyex = new PyException(exc.instclass, exc);
+        PyObject exc = PyJavaType.wrapJavaObject(t);
+        PyException pyex = new PyException(exc.getType(), exc);
         // Set the cause to the original throwable to preserve
         // the exception chain.
         pyex.initCause(t);
@@ -487,35 +484,6 @@ public final class Py {
         return tojava(o, c); // prev:Class.forName
     }
     /* Helper functions for PyProxy's */
-
-    /** @deprecated */
-    public static PyObject jfindattr(PyProxy proxy, String name) {
-        PyObject ret = getInstance(proxy, name);
-        if (ret == null)
-            return null;
-        Py.setSystemState(proxy._getPySystemState());
-        return ret;
-    }
-
-
-    /** @deprecated */
-    public static PyObject jgetattr(PyProxy proxy, String name) {
-        PyObject ret = getInstance(proxy, name);
-        if (ret == null)
-            throw Py.AttributeError("abstract method '" + name + "' not implemented");
-        Py.setSystemState(proxy._getPySystemState());
-        return ret;
-    }
-
-    private static PyObject getInstance(PyProxy proxy, String name) {
-        PyInstance o = proxy._getPyInstance();
-        if (o == null) {
-            proxy.__initProxy__(new Object[0]);
-            o = proxy._getPyInstance();
-        }
-        PyObject ret = o.__jfindattr__(name);
-        return ret;
-    }
 
     /* Convenience methods to create new constants without using "new" */
     private static PyInteger[] integerCache = null;
@@ -766,7 +734,7 @@ public final class Py {
         // Pre-initialize the PyJavaClass for OutOfMemoryError so when we need
         // it it creating the pieces for it won't cause an additional out of
         // memory error.  Fix for bug #1654484
-        PyJavaClass.lookup(OutOfMemoryError.class);
+        PyType.fromClass(OutOfMemoryError.class);
     }
     public static PySystemState defaultSystemState;
     // This is a hack to get initializations to work in proper order
@@ -848,36 +816,20 @@ public final class Py {
         if (proxy._getPyInstance() != null)
             return;
         ThreadState ts = getThreadState();
-        PyInstance instance = ts.getInitializingProxy();
+        PyObject instance = ts.getInitializingProxy();
         if (instance != null) {
-            if (instance.javaProxy != null)
+            if (instance.javaProxy != null) {
                 throw Py.TypeError("Proxy instance reused");
+            }
             instance.javaProxy = proxy;
             proxy._setPyInstance(instance);
             proxy._setPySystemState(ts.systemState);
             return;
         }
 
-        PyObject mod;
-        // ??pending: findClass or should avoid sys.path loading?
-        Class modClass = Py.findClass(module+"$_PyInner");
-        if (modClass != null) {
-            PyCode code=null;
-            try {
-                code = ((PyRunnable)modClass.newInstance()).getMain();
-            } catch (Throwable t) {
-                throw Py.JavaError(t);
-            }
-            mod = imp.createFromCode(module, code);
-        } else {
-            mod = imp.importName(module.intern(), false);
-        }
-        PyClass pyc = (PyClass)mod.__getattr__(pyclass.intern());
+        PyObject mod = imp.importName(module.intern(), false);
+        PyType pyc = (PyType)mod.__getattr__(pyclass.intern());
 
-        instance = new PyInstance(pyc);
-        instance.javaProxy = proxy;
-        proxy._setPyInstance(instance);
-        proxy._setPySystemState(ts.systemState);
 
         PyObject[] pargs;
         if (args == null || args.length == 0) {
@@ -887,7 +839,10 @@ public final class Py {
             for(int i=0; i<args.length; i++)
                 pargs[i] = Py.java2py(args[i]);
         }
-        instance.__init__(pargs, Py.NoKeywords);
+        instance = pyc.__call__(pargs);
+        instance.javaProxy = proxy;
+        proxy._setPyInstance(instance);
+        proxy._setPySystemState(ts.systemState);
     }
 
     /**
@@ -1038,7 +993,7 @@ public final class Py {
             }
         }
 
-        if (value instanceof PyJavaInstance) {
+        if (value.getJavaProxy() != null) {
             Object javaError = value.__tojava__(Throwable.class);
 
             if (javaError != null && javaError != Py.NoConversion) {
@@ -1191,14 +1146,14 @@ public final class Py {
         // java.io.IOExceptions.  This is a hack for 1.0.x until I can do
         // it right in 1.1
         if (exc == Py.IOError) {
-            if (__builtin__.isinstance(pye.value, PyJavaClass.lookup(IOException.class))) {
+            if (__builtin__.isinstance(pye.value, PyType.fromClass(IOException.class))) {
                 return true;
             }
         }
         // FIXME too, same approach for OutOfMemoryError
         if (exc == Py.MemoryError) {
             if (__builtin__.isinstance(pye.value,
-                                      PyJavaClass.lookup(OutOfMemoryError.class))) {
+                                       PyType.fromClass(OutOfMemoryError.class))) {
                 return true;
             }
         }
@@ -1575,16 +1530,12 @@ public final class Py {
         if (doc != null && dict.__finditem__("__doc__") == null) {
             dict.__setitem__("__doc__", doc);
         }
-        return makeClass(name, bases, dict, null);
+        return makeClass(name, bases, dict);
     }
 
     public static PyObject makeClass(String name, PyObject base, PyObject dict) {
         PyObject[] bases = base == null ? EmptyObjects : new PyObject[] {base};
         return makeClass(name, bases, dict);
-    }
-
-    public static PyObject makeClass(String name, PyObject[] bases, PyObject dict) {
-        return makeClass(name, bases, dict, null);
     }
 
     /**
@@ -1594,11 +1545,9 @@ public final class Py {
      * @param bases an array of PyObject base classes
      * @param dict the class's namespace, containing the class body
      * definition
-     * @param proxyClass an optional underlying Java class
      * @return a new Python Class PyObject
      */
-    public static PyObject makeClass(String name, PyObject[] bases, PyObject dict,
-                                     Class proxyClass) {
+    public static PyObject makeClass(String name, PyObject[] bases, PyObject dict) {
         PyFrame frame = getFrame();
 
         if (dict.__finditem__("__module__") == null) {
@@ -1625,9 +1574,7 @@ public final class Py {
             }
         }
 
-        if (metaclass == null || metaclass == CLASS_TYPE ||
-            (metaclass instanceof PyJavaClass &&
-             ((PyJavaClass)metaclass).proxyClass == Class.class)) {
+        if (metaclass == null || metaclass == CLASS_TYPE) {
             boolean moreGeneral = false;
             for (PyObject base : bases) {
                 if (!(base instanceof PyClass)) {
@@ -1637,12 +1584,8 @@ public final class Py {
                 }
             }
             if (!moreGeneral) {
-                return new PyClass(name, new PyTuple(bases), dict, proxyClass);
+                return new PyClass(name, new PyTuple(bases), dict);
             }
-        }
-
-        if (proxyClass != null) {
-            throw Py.TypeError("the meta-class cannot handle java subclassing");
         }
 
         try {
@@ -2004,7 +1947,7 @@ public final class Py {
         name = "fixed file";
         this.file = file;
 
-        if (file instanceof PyJavaInstance) {
+        if (file.getJavaProxy() != null) {
             Object tojava = file.__tojava__(OutputStream.class);
             if (tojava != null && tojava != Py.NoConversion) {
                 this.file = new PyFile((OutputStream) tojava);

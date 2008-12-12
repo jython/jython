@@ -1,8 +1,6 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 import java.util.Hashtable;
-import java.util.StringTokenizer;
-import java.io.Serializable;
 
 /**
  * A python class instance.
@@ -10,10 +8,6 @@ import java.io.Serializable;
 
 public class PyInstance extends PyObject
 {
-    // Collection proxy invoke no method found error code - return an error
-    // code instead of using slower exceptions
-    public static PyObject collectionProxyNoMethodError = new PyObject();
-    
     // xxx doc, final name
     public transient PyClass instclass;
 
@@ -42,8 +36,6 @@ public class PyInstance extends PyObject
         PyClass pyc = (PyClass)mod.__getattr__(name.intern());
 
         instclass = pyc;
-        if (javaProxy != null)
-            ((PyProxy) javaProxy)._setPySystemState(Py.getSystemState());
     }
 
     private void writeObject(java.io.ObjectOutputStream out)
@@ -86,76 +78,13 @@ public class PyInstance extends PyObject
 
     private static Hashtable primitiveMap;
 
-    protected void makeProxy() {
-        Class c = instclass.proxyClass;
-        PyProxy proxy;
-        ThreadState ts = Py.getThreadState();
-        try {
-            ts.pushInitializingProxy(this);
-            try {
-                proxy = (PyProxy)c.newInstance();
-            } catch (java.lang.InstantiationException e) {
-                Class sup = c.getSuperclass();
-                String msg = "Default constructor failed for Java superclass";
-                if (sup != null)
-                    msg += " " + sup.getName();
-                throw Py.TypeError(msg);
-            } catch (NoSuchMethodError nsme) {
-                throw Py.TypeError("constructor requires arguments");
-            } catch (Exception exc) {
-                throw Py.JavaError(exc);
-            }
-        } finally {
-            ts.popInitializingProxy();
-        }
-
-        if (javaProxy != null && javaProxy != proxy) {
-            // The javaProxy can be initialized in Py.jfindattr()
-            throw Py.TypeError("Proxy instance already initialized");
-        }
-        PyInstance proxyInstance = proxy._getPyInstance();
-        if (proxyInstance != null && proxyInstance != this) {
-            // The proxy was initialized to another instance!!
-            throw Py.TypeError("Proxy initialization conflict");
-        }
-
-        javaProxy = proxy;
-    }
-
     public Object __tojava__(Class c) {
-        if ((c == Object.class || c == Serializable.class) &&
-                                                    javaProxy != null) {
-            return javaProxy;
-        }
         if (c.isInstance(this))
             return this;
 
-        if (c.isPrimitive()) {
-            if (primitiveMap == null) {
-                primitiveMap = new Hashtable();
-                primitiveMap.put(Character.TYPE, Character.class);
-                primitiveMap.put(Boolean.TYPE, Boolean.class);
-                primitiveMap.put(Byte.TYPE, Byte.class);
-                primitiveMap.put(Short.TYPE, Short.class);
-                primitiveMap.put(Integer.TYPE, Integer.class);
-                primitiveMap.put(Long.TYPE, Long.class);
-                primitiveMap.put(Float.TYPE, Float.class);
-                primitiveMap.put(Double.TYPE, Double.class);
-            }
-            Class tmp = (Class)primitiveMap.get(c);
-            if (tmp != null)
-                c = tmp;
-        }
-
-        if (javaProxy == null && instclass.proxyClass != null) {
-            makeProxy();
-        }
-        if (c.isInstance(javaProxy))
-            return javaProxy;
-
         if (instclass.__tojava__ != null) {
             // try {
-            PyObject ret = instclass.__tojava__.__call__(this, PyJavaClass.lookup(c));
+            PyObject ret = instclass.__tojava__.__call__(this, PyType.fromClass(c));
 
             if (ret == Py.None)
                 return Py.NoConversion;
@@ -188,10 +117,6 @@ public class PyInstance extends PyObject
         }
         else if (ret != Py.None) {
             throw Py.TypeError("__init__() should return None");
-        }
-        // Now init all superclasses that haven't already been initialized
-        if (javaProxy == null && instclass.proxyClass != null) {
-            makeProxy();
         }
     }
 
@@ -255,61 +180,6 @@ public class PyInstance extends PyObject
         return __findattr__("__index__") != null;
     }
 
-
-    public PyObject iinvoke_collectionProxy(String name) {
-        PyObject f = ifindlocal(name);
-        if (f == null) {
-            f = ifindclass(name, false);
-            if (f != null) {
-                if (f instanceof PyFunction) {
-                    return f.__call__(this);
-                } else {
-                    f = f.__get__(this, instclass);
-                }
-            }
-        }
-        if (f == null) f = ifindfunction(name);
-        if (f == null) return collectionProxyNoMethodError;
-        return f.__call__();
-    }
-
-    public PyObject iinvoke_collectionProxy(String name, PyObject arg1) {
-        PyObject f = ifindlocal(name);
-        if (f == null) {
-            f = ifindclass(name, false);
-            if (f != null) {
-                if (f instanceof PyFunction) {
-                    return f.__call__(this, arg1);
-                } else {
-                    f = f.__get__(this, instclass);
-                }
-            }
-        }
-        if (f == null) f = ifindfunction(name);
-        if (f == null) return collectionProxyNoMethodError;
-        return f.__call__(arg1);
-    }
-
-    public PyObject iinvoke_collectionProxy(String name, PyObject arg1, PyObject arg2) {
-        PyObject f = ifindlocal(name);
-        if (f == null) {
-            f = ifindclass(name, false);
-            if (f != null) {
-                if (f instanceof PyFunction) {
-                    return f.__call__(this, arg1, arg2);
-                } else {
-                    f = f.__get__(this, instclass);
-                }
-            }
-        }
-        if (f == null) f = ifindfunction(name);
-        if (f == null) return collectionProxyNoMethodError;
-        return f.__call__(arg1, arg2);
-    }
-
-
-    
-    
     public PyObject invoke(String name) {
         PyObject f = ifindlocal(name);
         if (f == null) {
@@ -384,16 +254,7 @@ public class PyInstance extends PyObject
         if (setter != null) {
             setter.__call__(this, new PyString(name), value);
         } else {
-            if (instclass.getProxyClass() != null) {
-                PyObject field = instclass.lookup(name, false);
-                if (field == null) {
-                    noField(name, value);
-                } else if (!field.jtryset(this, value)) {
-                    unassignableField(name, value);
-                }
-            } else {
-                __dict__.__setitem__(name, value);
-            }
+            __dict__.__setitem__(name, value);
         }
     }
 
@@ -513,11 +374,10 @@ public class PyInstance extends PyObject
     public int hashCode() {
         PyObject ret;
         ret = invoke_ex("__hash__");
-
         if (ret == null) {
-            if (__findattr__("__eq__") != null ||
-                __findattr__("__cmp__") != null)
+            if (__findattr__("__eq__") != null || __findattr__("__cmp__") != null) {
                 throw Py.TypeError("unhashable instance");
+            }
             return super.hashCode();
         }
         if (ret instanceof PyInteger) {
@@ -538,9 +398,9 @@ public class PyInstance extends PyObject
         if (coerced != null) {
             v = coerced[0];
             w = coerced[1];
-            if (!(v instanceof PyInstance) &&
-                !(w instanceof PyInstance))
+            if (!(v instanceof PyInstance) && !(w instanceof PyInstance)) {
                 return v._cmp(w);
+            }
         } else {
             v = this;
             w = other;
@@ -611,13 +471,7 @@ public class PyInstance extends PyObject
                 meth = __findattr__("__len__");
             } catch (PyException exc) { }
             if (meth == null) {
-                // Copied form __len__()
-                CollectionProxy proxy = getCollection();
-                if (proxy != CollectionProxy.NoProxy) {
-                    return proxy.__len__() != 0 ? true : false;
-                } else {
-                    return true;
-                }
+                return true;
             }
         }
 
@@ -625,24 +479,8 @@ public class PyInstance extends PyObject
         return ret.__nonzero__();
     }
 
-    private CollectionProxy collectionProxy=null;
-
-    private CollectionProxy getCollection() {
-        if (collectionProxy == null)
-            collectionProxy = CollectionProxy.findCollection(javaProxy);
-        return collectionProxy;
-    }
-
     public int __len__() {
-        PyObject ret = iinvoke_collectionProxy("__len__");
-        if (ret == collectionProxyNoMethodError) {
-            CollectionProxy proxy = getCollection();
-            if (proxy != CollectionProxy.NoProxy) {
-                return proxy.__len__();
-            } else {
-                noAttributeError("__len__");
-            }
-        }
+        PyObject ret = invoke("__len__");
         if (ret instanceof PyInteger)
             return ((PyInteger)ret).getValue();
         throw Py.TypeError("__len__() should return an int");
@@ -674,9 +512,8 @@ public class PyInstance extends PyObject
     }
 
     public PyObject __finditem__(PyObject key) {
-        PyObject ret = null;
         try {
-            ret = iinvoke_collectionProxy("__getitem__", key);
+            return invoke("__getitem__", key);
         } catch (PyException e) {
             if (Py.matchException(e, Py.IndexError))
                 return null;
@@ -684,64 +521,18 @@ public class PyInstance extends PyObject
                 return null;
             throw e;
         }
-        
-        if (ret == collectionProxyNoMethodError) {
-            CollectionProxy proxy = getCollection();
-            if (proxy != CollectionProxy.NoProxy) {
-                return proxy.__finditem__(key);
-            } else {
-                noAttributeError("__getitem__");
-            }
-        }
-        
-        return ret;
     }
 
     public PyObject __getitem__(PyObject key) {
-        PyObject ret = iinvoke_collectionProxy("__getitem__", key);
-        
-        if (ret == collectionProxyNoMethodError) {
-            CollectionProxy proxy = getCollection();
-            if (proxy != CollectionProxy.NoProxy) {
-                ret = proxy.__finditem__(key);
-                if (ret == null) {
-                    throw Py.KeyError(key.toString());
-                }
-                return ret;
-            } else {
-                noAttributeError("__getitem__");
-            }
-        }
-
-        return ret;
+        return invoke("__getitem__", key);
     }
 
     public void __setitem__(PyObject key, PyObject value) {
-        PyObject ret = iinvoke_collectionProxy("__setitem__", key, value);
-        
-        if (ret == collectionProxyNoMethodError) {
-            CollectionProxy proxy = getCollection();
-            if (proxy != CollectionProxy.NoProxy) {
-                proxy.__setitem__(key, value);
-                return;
-            } else {
-                noAttributeError("__setitem__");
-            }
-        }
+        invoke("__setitem__", key, value);
     }
 
     public void __delitem__(PyObject key) {
-        PyObject ret = iinvoke_collectionProxy("__delitem__", key);
-
-        if (ret == collectionProxyNoMethodError) {
-            CollectionProxy proxy = getCollection();
-            if (proxy != CollectionProxy.NoProxy) {
-                proxy.__delitem__(key);
-                return;
-            } else {
-                noAttributeError("__delitem__");
-            }
-        }
+        invoke("__delitem__", key);
     }
 
     public PyObject __getslice__(PyObject start, PyObject stop, PyObject step) {
@@ -777,12 +568,7 @@ public class PyInstance extends PyObject
             return func.__call__();
         func = __findattr__("__getitem__");
         if (func == null) {
-            PyObject iter = getCollectionIter();
-            if (iter != null) {
-                return iter;
-            } else {
-                return super.__iter__();
-            }
+            return super.__iter__();
         }
         return new PySequenceIter(this);
     }
@@ -799,37 +585,6 @@ public class PyInstance extends PyObject
             }
         }
         throw Py.TypeError("instance has no next() method");
-    }
-
-    private static CollectionIter[] iterFactories;
-
-    private PyObject getCollectionIter() {
-        if (iterFactories == null)
-            initializeIterators();
-        for (int i = 0; iterFactories[i] != null; i++) {
-            PyObject iter = iterFactories[i].findCollection(javaProxy);
-            if (iter != null)
-                return iter;
-        }
-        return null;
-    }
-
-    private static synchronized void initializeIterators() {
-        if (iterFactories != null)
-            return;
-        String factories = PySystemState.registry.getProperty("python.collections", "");
-        int i = 0;
-        StringTokenizer st = new StringTokenizer(factories, ",");
-        iterFactories = new CollectionIter[st.countTokens() + 2];
-        iterFactories[0] = new CollectionIter();
-        while (st.hasMoreTokens()) {
-            String s = st.nextToken();
-            try {
-                Class factoryClass = Class.forName(s);
-                CollectionIter factory = (CollectionIter)factoryClass.newInstance();
-                iterFactories[i++] = factory;
-            } catch (Throwable t) { }
-        }
     }
 
     public boolean __contains__(PyObject o) {

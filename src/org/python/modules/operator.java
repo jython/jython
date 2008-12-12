@@ -1,8 +1,17 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.modules;
 
-import org.python.core.*;
-import org.python.expose.ExposedGet;
+import org.python.core.ArgParser;
+import org.python.core.ClassDictInit;
+import org.python.core.Py;
+import org.python.core.PyBuiltinFunctionSet;
+import org.python.core.PyIgnoreMethodTag;
+import org.python.core.PyNewWrapper;
+import org.python.core.PyObject;
+import org.python.core.PyString;
+import org.python.core.PyTuple;
+import org.python.core.PyType;
+import org.python.core.PyUnicode;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
@@ -106,7 +115,7 @@ class OperatorFunctions extends PyBuiltinFunctionSet
     }
 }
 
-public class operator implements ClassDictInit
+public class operator extends PyObject implements ClassDictInit
 {
     public static PyString __doc__ = new PyString(
         "Operator interface.\n"+
@@ -119,33 +128,28 @@ public class operator implements ClassDictInit
                 "are those\n"+
         "used for special class methods; variants without leading "+
                 "and trailing\n"+
-        "'__' are also provided for convenience.\n"
-    );
+        "'__' are also provided for convenience.\n");
 
     public static void classDictInit(PyObject dict) throws PyIgnoreMethodTag {
         dict.__setitem__("__add__", new OperatorFunctions("__add__", 0, 2));
         dict.__setitem__("add", new OperatorFunctions("add", 0, 2));
-        dict.__setitem__("__concat__",
-                         new OperatorFunctions("__concat__", 0, 2));
+        dict.__setitem__("__concat__", new OperatorFunctions("__concat__", 0, 2));
         dict.__setitem__("concat", new OperatorFunctions("concat", 0, 2));
         dict.__setitem__("__and__", new OperatorFunctions("__and__", 1, 2));
         dict.__setitem__("and_", new OperatorFunctions("and_", 1, 2));
         dict.__setitem__("__div__", new OperatorFunctions("__div__", 2, 2));
         dict.__setitem__("div", new OperatorFunctions("div", 2, 2));
-        dict.__setitem__("__lshift__",
-                         new OperatorFunctions("__lshift__", 3, 2));
+        dict.__setitem__("__lshift__", new OperatorFunctions("__lshift__", 3, 2));
         dict.__setitem__("lshift", new OperatorFunctions("lshift", 3, 2));
         dict.__setitem__("__mod__", new OperatorFunctions("__mod__", 4, 2));
         dict.__setitem__("mod", new OperatorFunctions("mod", 4, 2));
         dict.__setitem__("__mul__", new OperatorFunctions("__mul__", 5, 2));
         dict.__setitem__("mul", new OperatorFunctions("mul", 5, 2));
-        dict.__setitem__("__repeat__",
-                         new OperatorFunctions("__repeat__", 5, 2));
+        dict.__setitem__("__repeat__", new OperatorFunctions("__repeat__", 5, 2));
         dict.__setitem__("repeat", new OperatorFunctions("repeat", 5, 2));
         dict.__setitem__("__or__", new OperatorFunctions("__or__", 6, 2));
         dict.__setitem__("or_", new OperatorFunctions("or_", 6, 2));
-        dict.__setitem__("__rshift__",
-                         new OperatorFunctions("__rshift__", 7, 2));
+        dict.__setitem__("__rshift__", new OperatorFunctions("__rshift__", 7, 2));
         dict.__setitem__("rshift", new OperatorFunctions("rshift", 7, 2));
         dict.__setitem__("__sub__", new OperatorFunctions("__sub__", 8, 2));
         dict.__setitem__("sub", new OperatorFunctions("sub", 8, 2));
@@ -162,63 +166,43 @@ public class operator implements ClassDictInit
         dict.__setitem__("__pos__", new OperatorFunctions("__pos__", 14, 1));
         dict.__setitem__("pos", new OperatorFunctions("pos", 14, 1));
         dict.__setitem__("truth", new OperatorFunctions("truth", 15, 1));
-        dict.__setitem__("isCallable",
-                         new OperatorFunctions("isCallable", 16, 1));
-        dict.__setitem__("isMappingType",
-                         new OperatorFunctions("isMappingType", 17, 1));
-        dict.__setitem__("isNumberType",
-                         new OperatorFunctions("isNumberType", 18, 1));
-        dict.__setitem__("isSequenceType",
-                         new OperatorFunctions("isSequenceType", 19, 1));
-        dict.__setitem__("contains",
-                         new OperatorFunctions("contains", 20, 2));
-        dict.__setitem__("__contains__",
-                         new OperatorFunctions("__contains__", 20, 2));
-        dict.__setitem__("sequenceIncludes",
-                         new OperatorFunctions("sequenceIncludes", 20, 2));
-        dict.__setitem__("__delitem__",
-                         new OperatorFunctions("__delitem__", 21, 2));
+        dict.__setitem__("isCallable", new OperatorFunctions("isCallable", 16, 1));
+        dict.__setitem__("isMappingType", new OperatorFunctions("isMappingType", 17, 1));
+        dict.__setitem__("isNumberType", new OperatorFunctions("isNumberType", 18, 1));
+        dict.__setitem__("isSequenceType", new OperatorFunctions("isSequenceType", 19, 1));
+        dict.__setitem__("contains", new OperatorFunctions("contains", 20, 2));
+        dict.__setitem__("__contains__", new OperatorFunctions("__contains__", 20, 2));
+        dict.__setitem__("sequenceIncludes", new OperatorFunctions("sequenceIncludes", 20, 2));
+        dict.__setitem__("__delitem__", new OperatorFunctions("__delitem__", 21, 2));
         dict.__setitem__("delitem", new OperatorFunctions("delitem", 21, 2));
-        dict.__setitem__("__delslice__",
-                         new OperatorFunctions("__delslice__", 22, 3));
-        dict.__setitem__("delslice",
-                         new OperatorFunctions("delslice", 22, 3));
-        dict.__setitem__("__getitem__",
-                         new OperatorFunctions("__getitem__", 23, 2));
+        dict.__setitem__("__delslice__", new OperatorFunctions("__delslice__", 22, 3));
+        dict.__setitem__("delslice", new OperatorFunctions("delslice", 22, 3));
+        dict.__setitem__("__getitem__", new OperatorFunctions("__getitem__", 23, 2));
         dict.__setitem__("getitem", new OperatorFunctions("getitem", 23, 2));
-        dict.__setitem__("__getslice__",
-                         new OperatorFunctions("__getslice__", 24, 3));
-        dict.__setitem__("getslice",
-                         new OperatorFunctions("getslice", 24, 3));
-        dict.__setitem__("__setitem__",
-                         new OperatorFunctions("__setitem__", 25, 3));
+        dict.__setitem__("__getslice__", new OperatorFunctions("__getslice__", 24, 3));
+        dict.__setitem__("getslice", new OperatorFunctions("getslice", 24, 3));
+        dict.__setitem__("__setitem__", new OperatorFunctions("__setitem__", 25, 3));
         dict.__setitem__("setitem", new OperatorFunctions("setitem", 25, 3));
-        dict.__setitem__("__setslice__",
-                         new OperatorFunctions("__setslice__", 26, 4));
-        dict.__setitem__("setslice",
-                         new OperatorFunctions("setslice", 26, 4));
+        dict.__setitem__("__setslice__", new OperatorFunctions("__setslice__", 26, 4));
+        dict.__setitem__("setslice", new OperatorFunctions("setslice", 26, 4));
         dict.__setitem__("ge", new OperatorFunctions("ge", 27, 2));
         dict.__setitem__("__ge__", new OperatorFunctions("__ge__", 27, 2));
         dict.__setitem__("le", new OperatorFunctions("le", 28, 2));
         dict.__setitem__("__le__", new OperatorFunctions("__le__", 28, 2));
         dict.__setitem__("eq", new OperatorFunctions("eq", 29, 2));
         dict.__setitem__("__eq__", new OperatorFunctions("__eq__", 29, 2));
-        dict.__setitem__("floordiv",
-                        new OperatorFunctions("floordiv", 30, 2));
-        dict.__setitem__("__floordiv__",
-                        new OperatorFunctions("__floordiv__", 30, 2));
+        dict.__setitem__("floordiv", new OperatorFunctions("floordiv", 30, 2));
+        dict.__setitem__("__floordiv__", new OperatorFunctions("__floordiv__", 30, 2));
         dict.__setitem__("gt", new OperatorFunctions("gt", 31, 2));
         dict.__setitem__("__gt__", new OperatorFunctions("__gt__", 31, 2));
         dict.__setitem__("invert", new OperatorFunctions("invert", 32, 1));
-        dict.__setitem__("__invert__",
-                        new OperatorFunctions("__invert__", 32, 1));
+        dict.__setitem__("__invert__", new OperatorFunctions("__invert__", 32, 1));
         dict.__setitem__("lt", new OperatorFunctions("lt", 33, 2));
         dict.__setitem__("__lt__", new OperatorFunctions("__lt__", 33, 2));
         dict.__setitem__("ne", new OperatorFunctions("ne", 34, 2));
         dict.__setitem__("__ne__", new OperatorFunctions("__ne__", 34, 2));
         dict.__setitem__("truediv", new OperatorFunctions("truediv", 35, 2));
-        dict.__setitem__("__truediv__",
-                        new OperatorFunctions("__truediv__", 35, 2));
+        dict.__setitem__("__truediv__", new OperatorFunctions("__truediv__", 35, 2));
         dict.__setitem__("pow", new OperatorFunctions("pow", 36, 2));
         dict.__setitem__("__pow__", new OperatorFunctions("pow", 36, 2));
         dict.__setitem__("is_", new OperatorFunctions("is_", 37, 2));
@@ -288,7 +272,7 @@ public class operator implements ClassDictInit
      */
     @ExposedType(name = "operator.attrgetter", isBaseType = false)
     static class PyAttrGetter extends PyObject {
-        
+
         public static final PyType TYPE = PyType.fromClass(PyAttrGetter.class);
 
         public PyObject[] attrs;
@@ -296,7 +280,7 @@ public class operator implements ClassDictInit
         public PyAttrGetter(PyObject[] attrs) {
             this.attrs = attrs;
         }
-        
+
         @ExposedNew
         final static PyObject attrgetter___new__(PyNewWrapper new_, boolean init, PyType subtype,
                                                  PyObject[] args, String[] keywords) {
@@ -351,7 +335,7 @@ public class operator implements ClassDictInit
      */
     @ExposedType(name = "operator.itemgetter", isBaseType = false)
     static class PyItemGetter extends PyObject {
-        
+
         public static final PyType TYPE = PyType.fromClass(PyItemGetter.class);
 
         public PyObject[] items;
@@ -359,7 +343,7 @@ public class operator implements ClassDictInit
         public PyItemGetter(PyObject[] items) {
             this.items = items;
         }
-        
+
         @ExposedNew
         final static PyObject itemgetter___new__(PyNewWrapper new_, boolean init, PyType subtype,
                                                  PyObject[] args, String[] keywords) {

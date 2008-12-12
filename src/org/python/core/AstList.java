@@ -6,19 +6,18 @@
  */
 package org.python.core;
 
-import org.python.antlr.adapter.AstAdapter;
-import org.python.expose.ExposedGet;
-import org.python.expose.ExposedMethod;
-import org.python.expose.ExposedNew;
-import org.python.expose.ExposedType;
-import org.python.expose.MethodType;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
+
+import org.python.antlr.adapter.AstAdapter;
+import org.python.expose.ExposedGet;
+import org.python.expose.ExposedMethod;
+import org.python.expose.ExposedType;
+import org.python.expose.MethodType;
 
 @ExposedType(name = "_ast.astlist", base = PyList.class)
 public class AstList extends PySequence implements Cloneable, List {
@@ -269,7 +268,7 @@ public class AstList extends PySequence implements Cloneable, List {
     final String astlist_toString() {
         return data.toString();
     }
- 
+
     public void append(PyObject o) {
         astlist_append(o);
     }
@@ -331,8 +330,8 @@ public class AstList extends PySequence implements Cloneable, List {
 
     private int _index(PyObject o, String message, int start, int stop) {
         // Follow Python 2.3+ behavior
-        int validStop = calculateIndex(stop);
-        int validStart = calculateIndex(start);
+        int validStop = boundToSequence(stop);
+        int validStart = boundToSequence(start);
         for(int i = validStart; i < validStop && i < size(); i++) {
             if(data.get(i).equals(o)) {
                 return i;
@@ -358,7 +357,7 @@ public class AstList extends PySequence implements Cloneable, List {
             }
         }
     }
-    
+
     @ExposedMethod
     final void astlist_extend(PyObject iterable){
         int length = size();
@@ -401,7 +400,7 @@ public class AstList extends PySequence implements Cloneable, List {
         }
         data.add(index, o);
     }
-    
+
     @ExposedMethod
     final void astlist_remove(PyObject value){
         del(_index(value, "astlist.remove(x): x not in list", 0, size()));
@@ -434,7 +433,7 @@ public class AstList extends PySequence implements Cloneable, List {
             return (PyObject)data.remove(n);
         }
         Object element = data.remove(n);
-        return (PyObject)adapter.ast2py(element);
+        return adapter.ast2py(element);
 
     }
 
@@ -454,7 +453,7 @@ public class AstList extends PySequence implements Cloneable, List {
         }
         return new AstList(newList);
     }
-    
+
     protected void set(int i, PyObject value) {
         data.set(i, value);
     }

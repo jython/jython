@@ -1,24 +1,22 @@
 package org.python.antlr.adapter;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.python.antlr.ast.Num;
+import org.python.antlr.ast.Str;
+import org.python.antlr.base.expr;
 import org.python.core.Py;
 import org.python.core.PyComplex;
 import org.python.core.PyFloat;
 import org.python.core.PyInteger;
 import org.python.core.PyLong;
-import org.python.core.PyJavaInstance;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyUnicode;
 
-import org.python.antlr.base.expr;
-import org.python.antlr.ast.Num;
-import org.python.antlr.ast.Str;
-
-import java.util.ArrayList;
-import java.util.List;
-
 public class ExprAdapter implements AstAdapter {
-        
+
     public Object py2ast(PyObject o) {
         if (o == null || o instanceof expr) {
             return o;

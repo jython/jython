@@ -18,7 +18,6 @@ import java.nio.channels.WritableByteChannel;
 
 import org.python.core.imp;
 import org.python.core.Py;
-import org.python.core.PyObject;
 
 /**
  * Raw I/O implementation for simple streams.
@@ -158,7 +157,7 @@ public class StreamIO extends RawIOBase {
         }
         super.close();
     }
-    
+
     /** Unwrap one or more nested FilterInputStreams. */
     private static FileDescriptor getInputFileDescriptor(InputStream stream) throws IOException {
 	if (stream == null)
@@ -200,12 +199,12 @@ public class StreamIO extends RawIOBase {
 	}
 	return null;
     }
-    
+
     /** {@inheritDoc} */
-    
+
     public boolean isatty() {
         checkClosed();
-        
+
         FileDescriptor fd;
         try {
             if ( ((fd = getInputFileDescriptor(inputStream)) == null) &&
@@ -214,7 +213,7 @@ public class StreamIO extends RawIOBase {
         } catch (IOException e) {
             return false;
         }
-        
+
         return imp.load("os").__getattr__("isatty").__call__(Py.java2py(fd)).__nonzero__();
     }
 
@@ -228,20 +227,26 @@ public class StreamIO extends RawIOBase {
         return writeChannel != null;
     }
 
-    /** {@inheritDoc} */
-    public Object __tojava__(Class cls) {
-        if (OutputStream.class.isAssignableFrom(cls) && writable()) {
+    @Override
+    public OutputStream asOutputStream() {
+        if (writable()) {
             if (outputStream == null) {
                 return Channels.newOutputStream(writeChannel);
             }
             return outputStream;
-        } else if (InputStream.class.isAssignableFrom(cls) && readable()) {
+        }
+        return super.asOutputStream();
+    }
+
+    @Override
+    public InputStream asInputStream() {
+        if (readable()) {
             if (inputStream == null) {
                 return Channels.newInputStream(readChannel);
             }
             return inputStream;
         }
-        return super.__tojava__(cls);
+        return super.asInputStream();
     }
 
     /** {@inheritDoc} */

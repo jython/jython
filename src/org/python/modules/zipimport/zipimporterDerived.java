@@ -1069,6 +1069,7 @@ public class zipimporterDerived extends zipimporter implements Slotted {
                 if (res!=Py.None) {
                     throw Py.TypeError(String.format("__init__() should return None, not '%.200s'",res.getType().fastGetName()));
                 }
+                proxyInit();
             }
         }
     }

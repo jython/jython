@@ -10,53 +10,48 @@ public class PyReflectedConstructor extends PyReflectedFunction {
 
     public PyReflectedConstructor(String name) {
         super(name);
-        __name__ = name;
-        argslist = new ReflectedArgs[1];
-        nargs = 0;
     }
 
-    public PyReflectedConstructor(Constructor c) {
+    public PyReflectedConstructor(Constructor<?> c) {
         this(c.getDeclaringClass().getName());
         addConstructor(c);
     }
 
-    private ReflectedArgs makeArgs(Constructor m) {
+    private ReflectedArgs makeArgs(Constructor<?> m) {
         return new ReflectedArgs(m, m.getParameterTypes(), m.getDeclaringClass(), true);
     }
 
-    public void addConstructor(Constructor m) {
+    public void addConstructor(Constructor<?> m) {
         int mods = m.getModifiers();
         // Only add public methods unless we're overriding
-        if (!Modifier.isPublic(mods) && Options.respectJavaAccessibility)
+        if (!Modifier.isPublic(mods) && Options.respectJavaAccessibility) {
             return;
+        }
         addArgs(makeArgs(m));
     }
 
     // xxx temporary solution, type ctr will go through __new__ ...
     PyObject make(PyObject[] args, String[] keywords) {
-        ReflectedArgs[] argsl = argslist;
         ReflectedCallData callData = new ReflectedCallData();
         Object method = null;
         boolean consumes_keywords = false;
-        int nkeywords = keywords.length;
         PyObject[] allArgs = null;
         // Check for a matching constructor to call
         if (nargs > 0) { // PyArgsKeywordsCall signature, if present, is the first
-            if (argsl[0].matches(null, args, keywords, callData)) {
-                method = argsl[0].data;
-                consumes_keywords = argsl[0].flags == ReflectedArgs.PyArgsKeywordsCall;
+            if (argslist[0].matches(null, args, keywords, callData)) {
+                method = argslist[0].data;
+                consumes_keywords = argslist[0].flags == ReflectedArgs.PyArgsKeywordsCall;
             } else {
                 allArgs = args;
                 int i = 1;
-                if (nkeywords > 0) {
-                    args = new PyObject[allArgs.length - nkeywords];
+                if (keywords.length > 0) {
+                    args = new PyObject[allArgs.length - keywords.length];
                     System.arraycopy(allArgs, 0, args, 0, args.length);
                     i = 0;
                 }
                 for (; i < nargs; i++) {
-                    ReflectedArgs rargs = argsl[i];
-                    if (rargs.matches(null, args, Py.NoKeywords, callData)) {
-                        method = rargs.data;
+                    if (argslist[i].matches(null, args, Py.NoKeywords, callData)) {
+                        method = argslist[i].data;
                         break;
                     }
                 }
@@ -67,7 +62,7 @@ public class PyReflectedConstructor extends PyReflectedFunction {
             throwError(callData.errArg, args.length, true /* xxx? */, false);
         }
         // Do the actual constructor call
-        PyObject obj = null;
+        PyObject obj;
         try {
             obj = (PyObject)((Constructor<?>)method).newInstance(callData.getArgsArray());
         } catch (Throwable t) {
@@ -75,7 +70,7 @@ public class PyReflectedConstructor extends PyReflectedFunction {
         }
         if (!consumes_keywords) {
             int offset = args.length;
-            for (int i = 0; i < nkeywords; i++) {
+            for (int i = 0; i < keywords.length; i++) {
                 obj.__setattr__(keywords[i], allArgs[i + offset]);
             }
         }
@@ -86,24 +81,27 @@ public class PyReflectedConstructor extends PyReflectedFunction {
         if (self == null) {
             throw Py.TypeError("invalid self argument to constructor");
         }
-        Class<?> javaClass;
-        if (self instanceof PyInstance) {
-            javaClass = ((PyInstance)self).instclass.proxyClass;
-        } else {
-            javaClass = self.getType().underlying_class;
+        Class<?> javaClass = self.getType().getProxyType();
+        if (nargs == 0) {
+            throw Py.TypeError("No visible constructors for class (" + javaClass.getName() + ")");
         }
-
         Class<?> declaringClass = argslist[0].declaringClass;
         if (!declaringClass.isAssignableFrom(javaClass)) {
             throw Py.TypeError("self invalid - must implement: " + declaringClass.getName());
         }
-
-        if (!PyProxy.class.isAssignableFrom(declaringClass) && !(self instanceof PyJavaInstance)) {
-            PyJavaClass jc = PyJavaClass.lookup(javaClass);
-            jc.initConstructors();
-            return jc.__init__.__call__(self, args, keywords);
+        // If the declaring class is a pure Java type but we're instantiating a Python proxy,
+        // grab the proxy version of the constructor to instantiate the proper type
+        if (!PyProxy.class.isAssignableFrom(declaringClass)
+                && !(self.getType() instanceof PyJavaType)) {
+            return PyType.fromClass(javaClass).lookup("__init__").__call__(self, args, keywords);
         }
 
+        int mods = declaringClass.getModifiers();
+        if (Modifier.isInterface(mods)) {
+            throw Py.TypeError("can't instantiate interface (" + declaringClass.getName() + ")");
+        } else if (Modifier.isAbstract(mods)) {
+            throw Py.TypeError("can't instantiate abstract class (" + declaringClass.getName() + ")");
+        }
         if (self.javaProxy != null) {
             Class<?> sup = javaClass;
             if (PyProxy.class.isAssignableFrom(sup)) {
@@ -135,7 +133,6 @@ public class PyReflectedConstructor extends PyReflectedFunction {
         }
         // Do the actual constructor call
         constructProxy(self, (Constructor<?>)method, callData.getArgsArray(), javaClass);
-
         // Do setattr's for keyword args
         int offset = args.length;
         for (int i = 0; i < nkeywords; i++) {
@@ -158,9 +155,7 @@ public class PyReflectedConstructor extends PyReflectedFunction {
         Object jself = null;
         ThreadState ts = Py.getThreadState();
         try {
-            if (obj instanceof PyInstance) {
-                ts.pushInitializingProxy((PyInstance)obj);
-            }
+            ts.pushInitializingProxy(obj);
             try {
                 jself = ctor.newInstance(args);
             } catch (InvocationTargetException e) {
@@ -177,9 +172,7 @@ public class PyReflectedConstructor extends PyReflectedFunction {
                 throw Py.JavaError(t);
             }
         } finally {
-            if (obj instanceof PyInstance) {
-                ts.popInitializingProxy();
-            }
+            ts.popInitializingProxy();
         }
         obj.javaProxy = jself;
     }

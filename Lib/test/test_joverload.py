@@ -6,14 +6,12 @@
 import unittest
 
 import java
-import org.python.core
+from org.python.core import PyReflectedFunction
 
 class PyReflFuncEnvl:
 
     def __init__(self,name,meths):
-        self.reflfunc = org.python.core.PyReflectedFunction(name)
-        for meth in meths:
-            self.reflfunc.addMethod(meth)
+        self.reflfunc = PyReflectedFunction(meths)
             
     def __call__(self,inst,args):
         return self.reflfunc(inst,*args)

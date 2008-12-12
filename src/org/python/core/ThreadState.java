@@ -25,20 +25,20 @@ public class ThreadState {
 
     public TraceFunction profilefunc;
 
-    private LinkedList<PyInstance> initializingProxies;
+    private LinkedList<PyObject> initializingProxies;
 
     private PyDictionary compareStateDict;
 
-    public PyInstance getInitializingProxy() {
+    public PyObject getInitializingProxy() {
         if (initializingProxies == null) {
             return null;
         }
         return initializingProxies.peek();
     }
 
-    public void pushInitializingProxy(PyInstance proxy) {
+    public void pushInitializingProxy(PyObject proxy) {
         if (initializingProxies == null) {
-            initializingProxies = new LinkedList<PyInstance>();
+            initializingProxies = new LinkedList<PyObject>();
         }
         initializingProxies.addFirst(proxy);
     }
@@ -75,7 +75,7 @@ public class ThreadState {
         }
         for (int i = reprStack.size() - 1; i >= 0; i--) {
             if (reprStack.pyget(i) == obj) {
-                reprStack.delRange(i, reprStack.size(), 1);
+                reprStack.delRange(i, reprStack.size());
             }
         }
     }

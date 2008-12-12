@@ -1,28 +1,26 @@
 package org.python.antlr.adapter;
 
-import org.python.core.Py;
-import org.python.core.PyObject;
-import org.python.core.PyJavaInstance;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.python.antlr.ast.cmpopType;
 import org.python.antlr.op.Eq;
-import org.python.antlr.op.NotEq;
-import org.python.antlr.op.Lt;
-import org.python.antlr.op.LtE;
 import org.python.antlr.op.Gt;
 import org.python.antlr.op.GtE;
+import org.python.antlr.op.In;
 import org.python.antlr.op.Is;
 import org.python.antlr.op.IsNot;
-import org.python.antlr.op.In;
+import org.python.antlr.op.Lt;
+import org.python.antlr.op.LtE;
+import org.python.antlr.op.NotEq;
 import org.python.antlr.op.NotIn;
-
-import java.util.ArrayList;
-import java.util.List;
+import org.python.core.Py;
+import org.python.core.PyObject;
 
 public class CmpopAdapter implements AstAdapter {
 
     public Object py2ast(PyObject o) {
-        switch (((PyObject)o).asInt()) {
+        switch ((o).asInt()) {
             case 1:
                 return cmpopType.Eq;
             case 2:
@@ -53,23 +51,23 @@ public class CmpopAdapter implements AstAdapter {
         switch ((cmpopType)o) {
             case Eq:
                 return new Eq();
-            case NotEq: 
+            case NotEq:
                 return new NotEq();
-            case Lt: 
+            case Lt:
                 return new Lt();
-            case LtE: 
+            case LtE:
                 return new LtE();
-            case Gt: 
+            case Gt:
                 return new Gt();
-            case GtE: 
+            case GtE:
                 return new GtE();
-            case Is: 
+            case Is:
                 return new Is();
-            case IsNot: 
+            case IsNot:
                 return new IsNot();
-            case In: 
+            case In:
                 return new In();
-            case NotIn: 
+            case NotIn:
                 return new NotIn();
         }
         return Py.None;

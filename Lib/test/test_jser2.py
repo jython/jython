@@ -1,52 +1,41 @@
 from test import test_support
 import unittest
-import java
+from java.io import ByteArrayInputStream, ByteArrayOutputStream, ObjectInputStream, ObjectOutputStream
 from org.python.util import PythonObjectInputStream
 
-def serialize(o, special=0):
-    b = java.io.ByteArrayOutputStream()
-    objs = java.io.ObjectOutputStream(b)
+def serialize(o, special=False):
+    b = ByteArrayOutputStream()
+    objs = ObjectOutputStream(b)
     objs.writeObject(o)
     if not special:
-        OIS = java.io.ObjectInputStream
+        OIS = ObjectInputStream
     else:
         OIS = PythonObjectInputStream
-    objs = OIS(java.io.ByteArrayInputStream(b.toByteArray()))
+    objs = OIS(ByteArrayInputStream(b.toByteArray()))
     return objs.readObject()
 
 from jser2_classes import A, AJ, N, NL, NT
 
 class TestJavaSerialisation(unittest.TestCase):
 
+    def serialize_and_check(self, obj, special=False):
+        obj1 = serialize(obj, special)
+        self.assertEqual(obj, obj1)
+
     def test_list(self):
-        l = [1,"a", 3.0]
-        l1 = serialize(l)
-        self.assertEqual(l, l1)
+        self.serialize_and_check([1,"a", 3.0])
 
     def test_dict(self):
-        d = {'a': 3.0}
-        d1 = serialize(d)
-        self.assertEqual(d, d1)
+        self.serialize_and_check({'a': 3.0})
 
     def test_tuple(self):
-        t = (1, 'a')
-        t1 = serialize(t)
-        self.assertEqual(t, t1)
+        self.serialize_and_check((1, 'a'))
 
     def test_oldstyle(self):
-        a = A('x')
-        a1 = serialize(a)
-        self.assertEqual(a, a1)
-
-    # wasn't working in 2.1 either
-    #def test_oldstyle_cls(self):
-    #    A1 = serialize(A)
-    #    self.assert_(A is A1)
+        self.serialize_and_check(A('x'))
 
     def test_jsubcl(self):
-        aj = AJ('x')
-        aj1 = serialize(aj, special=1)
-        self.assertEqual(aj, aj1)
+        self.serialize_and_check(AJ('x'), special=True)
 
     def test_singletons(self):
         for v in (None, Ellipsis):
@@ -73,19 +62,13 @@ class TestJavaSerialisation(unittest.TestCase):
         self.assert_(N1 is N)
 
     def test_newstyle(self):
-        n = N('x')
-        n1 = serialize(n)
-        self.assertEqual(n, n1)
+        self.serialize_and_check(N('x'))
 
     def test_newstyle_list(self):
-        nl = NL('x',1,2,3)
-        nl1 = serialize(nl)
-        self.assertEqual(nl, nl1)
+        self.serialize_and_check(NL('x',1,2,3))
 
     def test_newstyle_tuple(self):
-        nt = NT('x',1,2,3)
-        nt1 = serialize(nt)
-        self.assertEqual(nt, nt1)
+        self.serialize_and_check(NT('x',1,2,3))
 
 def test_main():
     test_support.run_unittest(TestJavaSerialisation)

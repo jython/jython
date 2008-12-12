@@ -12,7 +12,7 @@ class ArrayJyTestCase(unittest.TestCase):
 
     def test_jarray(self): # until it is fully formally removed
 
-        # While jarray is still being phased out, just flex the initilaizers.
+        # While jarray is still being phased out, just flex the initializers.
         # The rest of the test for array will catch all the big problems.
         import jarray
         jarray.array(range(5), 'i')
@@ -23,7 +23,7 @@ class ArrayJyTestCase(unittest.TestCase):
     def test_java_object_arrays(self):
         jStringArr = array(String, [String("a"), String("b"), String("c")])
         self.assert_(
-            Arrays.equals(jStringArr.typecode, str(String)),
+            Arrays.equals(jStringArr.typecode, 'java.lang.String'),
                "String array typecode of wrong type, expected %s, found %s" % 
                (jStringArr.typecode, str(String)))
         self.assertEqual(zeros(String, 5), Array.newInstance(String, 5))

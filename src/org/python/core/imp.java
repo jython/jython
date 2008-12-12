@@ -107,10 +107,9 @@ public class imp {
 
         return createFromCode(name, code, compiledName);
     }
-    
+
     public static byte[] readCode(String name, InputStream fp, boolean testing) {
         byte[] data = readBytes(fp);
-
         int api;
         try {
             APIReader ar = new APIReader(data);
@@ -128,7 +127,7 @@ public class imp {
         }
         return data;
     }
-    
+
     public static byte[] compileSource(String name, File file, String sourceFilename,
             String compiledFilename) {
         if (sourceFilename == null) {
@@ -140,15 +139,15 @@ public class imp {
     public static String makeCompiledFilename(String filename) {
         return filename.substring(0, filename.length() - 3) + "$py.class";
     }
-    
+
     /**
      * Stores the bytes in compiledSource in compiledFilename.
-     * 
+     *
      * If compiledFilename is null it's set to the results of
      * makeCompiledFilename(sourcefileName)
-     * 
+     *
      * If sourceFilename is null or set to UNKNOWN_SOURCEFILE null is returned
-     * 
+     *
      * @return the compiledFilename eventually used or null if a
      *         compiledFilename couldn't be determined of if an error was thrown
      *         while writing to the cache file.
@@ -158,7 +157,7 @@ public class imp {
                                               byte[] compiledSource) {
         if(compiledFilename == null){
             if(sourceFilename == null || sourceFilename.equals(UNKNOWN_SOURCEFILE)){
-               return null; 
+               return null;
             }
             compiledFilename = makeCompiledFilename(sourceFilename);
         }
@@ -217,7 +216,7 @@ public class imp {
             String filename) {
         return createFromSource(name, fp, filename, null);
     }
-    
+
     public static PyObject createFromSource(String name, InputStream fp,
             String filename, String outFilename) {
         byte[] bytes = compileSource(name, fp, filename);
@@ -228,7 +227,7 @@ public class imp {
         PyCode code = BytecodeLoader.makeCode(name + "$py", bytes, filename);
         return createFromCode(name, code, filename);
     }
-    
+
     /**
      * Returns a module with the given name whose contents are the results of
      * running c. __file__ is set to whatever is in c.
@@ -236,7 +235,7 @@ public class imp {
     public static PyObject createFromCode(String name, PyCode c){
         return createFromCode(name, c, null);
     }
-    
+
     /**
      * Returns a module with the given name whose contents are the results of
      * running c. Sets __file__ on the module to be moduleLocation unless
@@ -271,19 +270,18 @@ public class imp {
         return module;
     }
 
-    static PyObject createFromClass(String name, Class c) {
+    static PyObject createFromClass(String name, Class<?> c) {
         // Two choices. c implements PyRunnable or c is Java package
-        if(PyRunnable.class.isAssignableFrom(c)) {
+        if (PyRunnable.class.isAssignableFrom(c)) {
             try {
-                return createFromCode(name,
-                                      ((PyRunnable)c.newInstance()).getMain());
-            } catch(InstantiationException e) {
+                return createFromCode(name, ((PyRunnable)c.newInstance()).getMain());
+            } catch (InstantiationException e) {
                 throw Py.JavaError(e);
-            } catch(IllegalAccessException e) {
+            } catch (IllegalAccessException e) {
                 throw Py.JavaError(e);
             }
         }
-        return PyJavaClass.lookup(c); // xxx?
+        return PyType.fromClass(c); // xxx?
     }
 
     static PyObject getPathImporter(PyObject cache, PyList hooks, PyObject p) {
@@ -500,7 +498,7 @@ public class imp {
     /**
      * Load the module by name. Upon loading the module it will be added to
      * sys.modules.
-     * 
+     *
      * @param name the name of the module to load
      * @return the loaded module
      */
@@ -513,13 +511,13 @@ public class imp {
      * the module then the parent is null. If __name__ does exist then the
      * __path__ is checked for the parent module. For example, the __name__
      * 'a.b.c' would return 'a.b'.
-     * 
+     *
      * @param dict the __dict__ of a loaded module
      * @param level used for relative and absolute imports.  -1 means try both,
      *              0 means absolute only, positive ints represent the level to
      *              look upward for a relative path.  See PEP 328 at
      *              http://www.python.org/dev/peps/pep-0328/
-     *              
+     *
      * @return the parent name for a module
      */
     private static String getParent(PyObject dict, int level) {
@@ -555,7 +553,7 @@ public class imp {
     }
 
     /**
-     * 
+     *
      * @param mod a previously loaded module
      * @param parentNameBuffer
      * @param name the name of the module to load
@@ -603,8 +601,8 @@ public class imp {
         }
         return ret;
     }
-    
-    
+
+
     private static PyObject import_first(String name, StringBuffer parentNameBuffer, String fullName, PyObject fromlist) {
         PyObject ret = import_next(null, parentNameBuffer, name, fullName, fromlist);
         if (ret == null || ret == Py.None) {
@@ -617,7 +615,7 @@ public class imp {
         }
         return ret;
     }
-    
+
 
     // Hierarchy-recursively search for dotted name in mod;
     // never returns null or None
@@ -647,7 +645,7 @@ public class imp {
 
     /**
      * Most similar to import.c:import_module_ex.
-     * 
+     *
      * @param name
      * @param top
      * @param modDict
@@ -678,7 +676,7 @@ public class imp {
         StringBuffer parentNameBuffer = new StringBuffer(pkgMod != null ? pkgName : "");
         PyObject topMod = import_next(pkgMod, parentNameBuffer, firstName, name, fromlist);
         if (topMod == Py.None || topMod == null) {
-            // Add None to sys.modules for submodule or subpackage names that aren't found, but 
+            // Add None to sys.modules for submodule or subpackage names that aren't found, but
             // leave top-level entries out.  This allows them to be tried again if another
             // import attempt is made after they've been added to sys.path.
             if (topMod == null && pkgMod != null) {
@@ -714,7 +712,7 @@ public class imp {
 
     /**
      * Import a module by name.
-     * 
+     *
      * @param name the name of the package to import
      * @param top if true, return the top module in the name, otherwise the last
      * @return an imported module (Java or Python)
@@ -726,13 +724,13 @@ public class imp {
     /**
      * Import a module by name. This is the default call for
      * __builtin__.__import__.
-     * 
+     *
      * @param name the name of the package to import
      * @param top if true, return the top module in the name, otherwise the last
      * @param modDict the __dict__ of an already imported module
      * @return an imported module (Java or Python)
      */
-    public static PyObject importName(String name, boolean top, 
+    public static PyObject importName(String name, boolean top,
             PyObject modDict, PyObject fromlist, int level) {
         importLock.lock();
         try {
@@ -861,7 +859,7 @@ public class imp {
     /**
      * From a module, load the attributes found in <code>names</code> into
      * locals.
-     * 
+     *
      * @param filter if true, if the name starts with an underscore '_' do not
      *            add it to locals
      * @param locals the namespace into which names will be loaded
@@ -891,14 +889,6 @@ public class imp {
                 }
             }
         }
-    }
-
-    /* Reloading */
-    static PyObject reload(PyJavaClass c) {
-        // This is a dummy placeholder for the feature that allow
-        // reloading of java classes. But this feature does not yet
-        // work.
-        return c;
     }
 
     static PyObject reload(PyModule m) {

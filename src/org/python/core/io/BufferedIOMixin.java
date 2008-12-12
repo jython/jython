@@ -1,6 +1,9 @@
 /* Copyright (c) 2007 Jython Developers */
 package org.python.core.io;
 
+import java.io.InputStream;
+import java.io.OutputStream;
+
 import org.python.core.Py;
 import org.python.core.PyException;
 
@@ -102,8 +105,13 @@ public abstract class BufferedIOMixin extends BufferedIOBase {
         return rawIO.closed();
     }
 
-    /** {@inheritDoc} */
-    public Object __tojava__(Class cls) {
-        return rawIO.__tojava__(cls);
+    @Override
+    public InputStream asInputStream() {
+        return rawIO.asInputStream();
+    }
+
+    @Override
+    public OutputStream asOutputStream() {
+        return rawIO.asOutputStream();
     }
 }

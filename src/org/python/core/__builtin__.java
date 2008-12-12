@@ -95,14 +95,13 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
             case 36:
                 Object o = arg1.__tojava__(PyModule.class);
                 if (o == Py.NoConversion) {
-                    o = arg1.__tojava__(PyJavaClass.class);
-                    if (o == Py.NoConversion) {
-                        if (arg1 instanceof PySystemState) {
-                            return __builtin__.reload((PySystemState)arg1);
-                        }
-                        throw Py.TypeError("reload() argument must be a module");
+                    if (arg1 instanceof PySystemState) {
+                        return __builtin__.reload((PySystemState)arg1);
+                    } else if(arg1 instanceof PyJavaType) {
+                        // This has always been a no-op.  Should be disabled in py3k.
+                        return arg1;
                     }
-                    return __builtin__.reload((PyJavaClass) o);
+                    throw Py.TypeError("reload() argument must be a module");
                 }
                 return __builtin__.reload((PyModule) o);
             case 37:
@@ -494,7 +493,7 @@ public class __builtin__ {
             code = (PyCode) o;
         } else {
             if (o instanceof PyString) {
-                code = (PyCode)CompileFunction.compile((PyString)o, "<string>", "eval");
+                code = (PyCode)CompileFunction.compile(o, "<string>", "eval");
             } else {
                 throw Py.TypeError("eval: argument 1 must be string or code object");
             }
@@ -1103,10 +1102,6 @@ public class __builtin__ {
         return imp.reload(o);
     }
 
-    public static PyObject reload(PyJavaClass o) {
-        return imp.reload(o);
-    }
-
     public static PyObject reload(PySystemState o) {
     // reinitialize methods
         o.reload();
@@ -1226,11 +1221,10 @@ public class __builtin__ {
 
     public static PyObject __import__(String name, PyObject globals, PyObject locals, PyObject fromlist, int level) {
         PyFrame frame = Py.getFrame();
-        if (frame == null) {
-            return null;
-        }
-        PyObject builtins = frame.f_builtins;
-        if (builtins == null) {
+        PyObject builtins;
+        if (frame != null && frame.f_builtins != null) {
+            builtins = frame.f_builtins;
+        } else {
             builtins = PySystemState.builtins;
         }
 
@@ -1584,7 +1578,7 @@ class OpenFunction extends PyBuiltinFunction {
         ArgParser ap = new ArgParser("file", args, kwds, new String[] {"name", "mode", "bufsize"},
                                      1);
         PyObject obj = ap.getPyObject(0);
-        if (obj instanceof PyJavaInstance) {
+        if (obj.getJavaProxy() != null) {
             int bufsize = ap.getInt(2, -1);
             if (obj.javaProxy instanceof InputStream) {
                 Py.warning(Py.DeprecationWarning, warning);

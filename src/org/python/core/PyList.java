@@ -49,9 +49,9 @@ public class PyList extends PySequenceList {
             append(item);
         }
     }
-    
+
     private static List<PyObject> listify(Iterator<PyObject> iter) {
-         final List<PyObject> list = new LinkedList<PyObject>();  
+         final List<PyObject> list = new LinkedList<PyObject>();
          while (iter.hasNext()) {
             list.add(iter.next());
          }
@@ -112,22 +112,8 @@ public class PyList extends PySequenceList {
         remove(i);
     }
 
-    protected void delRange(int start, int stop, int step) {
-        if(step == 1) {
-            if ( stop > start ) {
-                remove(start, stop);
-            }
-        } else if(step > 1) {
-            for(int i = start; i < stop; i += step) {
-                remove(i);
-                i--;
-                stop--;
-            }
-        } else if(step < 0) {
-            for(int i = start; i >= 0 && i >= stop; i += step) {
-                remove(i);
-            }
-        }
+    protected void delRange(int start, int stop) {
+        remove(start, stop);
     }
 
     protected void set(int i, PyObject value) {
@@ -286,7 +272,7 @@ public class PyList extends PySequenceList {
             System.arraycopy(array, 0, array, i * size, size);
         }
         gListAllocatedStatus = __len__();
-        return this;        
+        return this;
     }
 
     @Override
@@ -406,10 +392,6 @@ public class PyList extends PySequenceList {
 
     @ExposedMethod(defaults = "null")
     final void list___setslice__(PyObject start, PyObject stop, PyObject step, PyObject value) {
-        if(value == null) {
-            value = step;
-            step = null;
-        }
         seq___setslice__(start, stop, step, value);
     }
 
@@ -452,7 +434,7 @@ public class PyList extends PySequenceList {
 
     /**
      * Add a single element to the end of list.
-     * 
+     *
      * @param o
      *            the element to add.
      */
@@ -468,7 +450,7 @@ public class PyList extends PySequenceList {
 
     /**
      * Return the number elements in the list that equals the argument.
-     * 
+     *
      * @param o
      *            the argument to test for. Testing is done with the <code>==</code> operator.
      */
@@ -490,7 +472,7 @@ public class PyList extends PySequenceList {
 
     /**
      * return smallest index where an element in the list equals the argument.
-     * 
+     *
      * @param o
      *            the argument to test for. Testing is done with the <code>==</code> operator.
      */
@@ -527,8 +509,8 @@ public class PyList extends PySequenceList {
 
     private int _index(PyObject o, String message, int start, int stop) {
         // Follow Python 2.3+ behavior
-        int validStop = calculateIndex(stop);
-        int validStart = calculateIndex(start);
+        int validStop = boundToSequence(stop);
+        int validStart = boundToSequence(start);
         PyObject[] array = getArray();
         for(int i = validStart; i < validStop && i < size(); i++) {
             if(array[i].equals(o)) {
@@ -541,7 +523,7 @@ public class PyList extends PySequenceList {
     /**
      * Insert the argument element into the list at the specified index. <br>
      * Same as <code>s[index:index] = [o] if index &gt;= 0</code>.
-     * 
+     *
      * @param index
      *            the position where the element will be inserted.
      * @param o
@@ -567,7 +549,7 @@ public class PyList extends PySequenceList {
      * Remove the first occurence of the argument from the list. The elements arecompared with the
      * <code>==</code> operator. <br>
      * Same as <code>del s[s.index(x)]</code>
-     * 
+     *
      * @param o
      *            the element to search for and remove.
      */
@@ -613,7 +595,7 @@ public class PyList extends PySequenceList {
 
     /**
      * Removes and return the <code>n</code> indexed element in the list.
-     * 
+     *
      * @param n
      *            the index of the element to remove and return.
      */
@@ -641,7 +623,7 @@ public class PyList extends PySequenceList {
     /**
      * Append the elements in the argument sequence to the end of the list. <br>
      * Same as <code>s[len(s):len(s)] = o</code>.
-     * 
+     *
      * @param o
      *            the sequence of items to append to the list.
      */
@@ -688,11 +670,11 @@ public class PyList extends PySequenceList {
      * the sorting process down considerably; e.g. to sort a list in reverse order it is much faster
      * to use calls to the methods sort() and reverse() than to use the built-in function sort()
      * with a comparison function that reverses the ordering of the elements.
-     * 
+     *
      * @param compare
      *            the comparison function.
      */
-    
+
         /**
      * Sort the items of the list in place. Items is compared with the normal relative comparison
      * operators.
@@ -720,7 +702,7 @@ public class PyList extends PySequenceList {
         MergeState ms = new MergeState(this, cmp, key, reverse.__nonzero__());
         ms.sort();
     }
-  
+
     public int hashCode() {
         return list___hash__();
     }
