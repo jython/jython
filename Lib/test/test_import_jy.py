@@ -90,6 +90,7 @@ class MislabeledImportTestCase(unittest.TestCase):
         self.assertEquals(bytecode, read(init_compiled),
                           'bytecode was recompiled')
 
+
 class OverrideBuiltinsImportTestCase(unittest.TestCase):
     def test_override(self):
         tests = [
@@ -127,9 +128,19 @@ class OverrideBuiltinsImportTestCase(unittest.TestCase):
         finally:
             __builtin__.__import__ = oldimp
 
+class ImpTestCase(unittest.TestCase):
+
+    def test_imp_find_module_builtins(self):
+        self.assertEqual(imp.find_module('sys'), (None, 'sys', ('', '', 6)))
+        self.assertEqual(imp.find_module('__builtin__'),
+                         (None, '__builtin__', ('', '', 6)))
+        self.assertEqual(imp.find_module('imp'), (None, 'imp', ('', '', 6)))
+
+
 def test_main():
-    test_classes = [MislabeledImportTestCase, OverrideBuiltinsImportTestCase]
-    test_support.run_unittest(*test_classes)
+    test_support.run_unittest(MislabeledImportTestCase,
+                              OverrideBuiltinsImportTestCase,
+                              ImpTestCase)
 
 if __name__ == '__main__':
     test_main()

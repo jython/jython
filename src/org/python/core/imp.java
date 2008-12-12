@@ -387,9 +387,12 @@ public class imp {
 
     private static PyObject loadBuiltin(String name) {
         if (name == "sys") {
-            Py.writeComment(IMPORT_LOG, "'" + name + "' as sys in "
-                    + "builtin modules");
+            Py.writeComment(IMPORT_LOG, "'" + name + "' as sys in builtin modules");
             return Py.java2py(Py.getSystemState());
+        }
+        if (name == "__builtin__") {
+            Py.writeComment(IMPORT_LOG, "'" + name + "' as __builtin__ in builtin modules");
+            return new PyModule("__builtin__", PySystemState.builtins);
         }
         String mod = PySystemState.getBuiltin(name);
         if (mod != null) {
