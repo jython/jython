@@ -99,6 +99,16 @@ class ExtendJavaTest(unittest.TestCase):
                 return 'name'
         self.assertEquals('name', String.valueOf(A()))
 
+    def test_multiple_inheritance_prohibited(self):
+        try:
+            class MultiJava(Dimension, Color):
+                pass
+            self.fail("Shouldn't be able to subclass more than one concrete java class")
+        except TypeError:
+            pass
+
+
+
 class SysIntegrationTest(unittest.TestCase):
     def test_stdout_outputstream(self):
         out = FileOutputStream(test_support.TESTFN)
