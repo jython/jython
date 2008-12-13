@@ -175,7 +175,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
 
     public void setline(int line) throws Exception {
         if (module.linenumbers) {
-            //FJW code.setline(line);
+            code.setline(line);
             loadFrame();
             code.iconst(line);
             code.invokevirtual("org/python/core/PyFrame", "setline", "(I)V");
