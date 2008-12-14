@@ -101,8 +101,8 @@ class PythonPOSIXHandler(POSIXHandler):
     def error(self, error, msg):
         err = getattr(errno, error.name(), None)
         if err is None:
-            raise OSError('%s: %s' % (error, msg))
-        raise OSError(err, strerror(err), msg)
+            raise OSError('%s: %s' % (error, asPyString(msg)))
+        raise OSError(err, strerror(err), asPyString(msg))
     def unimplementedError(self, method_name):
         raise NotImplementedError(method_name)
     def warn(self, warning_id, msg, rest):
