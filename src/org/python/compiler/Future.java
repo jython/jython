@@ -68,6 +68,8 @@ public class Future {
     {
         if (cflags != null) {
             division = cflags.division;
+            with_statement = cflags.with_statement;
+            absolute_import = cflags.absolute_import;
         }
         int beg = 0;
         List<stmt> suite = null;
