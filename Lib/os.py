@@ -170,6 +170,9 @@ R_OK = 1<<2
 # successful termination
 EX_OK = 0
 
+# Java class representing the size of a time_t. internal use, lazily set
+_time_t = None
+
 class stat_result:
 
   _stat_members = (
@@ -537,12 +540,39 @@ def utime(path, times):
     if path is None:
         raise TypeError('path must be specified, not None')
 
-    if times is not None:
-        atime, mtime = times
+    if times is None:
+        atimeval = mtimeval = None
+    elif isinstance(times, tuple) and len(times) == 2:
+        atimeval = _to_timeval(times[0])
+        mtimeval = _to_timeval(times[1])
     else:
-        atime = mtime = time.time()
+        raise TypeError('utime() arg 2 must be a tuple (atime, mtime)')
 
-    _posix.utimes(path, long(atime * 1000), long(mtime * 1000))
+    _posix.utimes(path, atimeval, mtimeval)
+
+def _to_timeval(seconds):
+    """Convert seconds (with a fraction) from epoch to a 2 item tuple of
+    seconds, microseconds from epoch as longs
+    """
+    global _time_t
+    if _time_t is None:
+        from java.lang import Integer, Long
+        from org.python.posix.util import Platform
+        _time_t = Integer if Platform.IS_32_BIT else Long
+
+    try:
+        floor = long(seconds)
+    except TypeError:
+        raise TypeError('an integer is required')
+    if floor < _time_t.MIN_VALUE or floor > _time_t.MAX_VALUE:
+        raise OverflowError('long int too large to convert to int')
+
+    # usec can't exceed 1000000
+    usec = long((seconds - floor) * 1e6)
+    if usec < 0:
+        # If rounding gave us a negative number, truncate
+        usec = 0
+    return floor, usec
 
 def close(fd):
     """close(fd)
