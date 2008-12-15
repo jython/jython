@@ -791,7 +791,12 @@ public class PyListDerived extends PyList implements Slotted {
             if (impl==null)
                 return super.__nonzero__();
         }
-        return impl.__get__(this,self_type).__call__().__nonzero__();
+        PyObject o=impl.__get__(this,self_type).__call__();
+        Class c=o.getClass();
+        if (c!=PyInteger.class&&c!=PyBoolean.class) {
+            throw Py.TypeError(String.format("__nonzero__ should return bool or int, returned %s",self_type.getName()));
+        }
+        return o.__nonzero__();
     }
 
     public boolean __contains__(PyObject o) {
