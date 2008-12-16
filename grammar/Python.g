@@ -1516,60 +1516,55 @@ argument[List arguments, List kws, List gens, boolean first] returns [boolean ge
     ;
 
 //list_iter: list_for | list_if
-list_iter [List gens] returns [expr etype]
+list_iter [List gens, List ifs]
     : list_for[gens]
-    | list_if[gens] {
-        $etype = $list_if.etype;
-    }
+    | list_if[gens, ifs]
     ;
 
 //list_for: 'for' exprlist 'in' testlist_safe [list_iter]
 list_for [List gens]
-    : FOR exprlist[expr_contextType.Store] IN testlist[expr_contextType.Load] (list_iter[gens])?
+@init {
+    List ifs = new ArrayList();
+}
+    : FOR exprlist[expr_contextType.Store] IN testlist[expr_contextType.Load] (list_iter[gens, ifs])?
       {
-          List<expr> e = new ArrayList<expr>();
-          if ($list_iter.etype != null) {
-              e.add($list_iter.etype);
-          }
-          gens.add(new comprehension($FOR, $exprlist.etype, actions.castExpr($testlist.tree), e));
+          Collections.reverse(ifs);
+          gens.add(new comprehension($FOR, $exprlist.etype, actions.castExpr($testlist.tree), ifs));
       }
     ;
 
 //list_if: 'if' test [list_iter]
-list_if[List gens] returns [expr etype]
-    : IF test[expr_contextType.Load] (list_iter[gens])?
+list_if[List gens, List ifs]
+    : IF test[expr_contextType.Load] (list_iter[gens, ifs])?
     {
-        $etype = actions.castExpr($test.tree);
+        ifs.add(actions.castExpr($test.tree));
     }
     ;
 
 //gen_iter: gen_for | gen_if
-gen_iter [List gens] returns [expr etype]
+gen_iter [List gens, List ifs]
     : gen_for[gens]
-    | gen_if[gens]
-      {
-          $etype = $gen_if.etype;
-      }
+    | gen_if[gens, ifs]
     ;
 
 //gen_for: 'for' exprlist 'in' or_test [gen_iter]
 gen_for [List gens]
-    : FOR exprlist[expr_contextType.Store] IN or_test[expr_contextType.Load] gen_iter[gens]?
+@init {
+    List ifs = new ArrayList();
+}
+    : FOR exprlist[expr_contextType.Store] IN or_test[expr_contextType.Load] gen_iter[gens, ifs]?
       {
-          List<expr> e = new ArrayList<expr>();
-          if ($gen_iter.etype != null) {
-              e.add($gen_iter.etype);
-          }
-          gens.add(new comprehension($FOR, $exprlist.etype, actions.castExpr($or_test.tree), e));
+          Collections.reverse(ifs);
+          gens.add(new comprehension($FOR, $exprlist.etype, actions.castExpr($or_test.tree), ifs));
       }
     ;
 
 //gen_if: 'if' old_test [gen_iter]
-gen_if[List gens] returns [expr etype]
-    : IF test[expr_contextType.Load] gen_iter[gens]?
-      {
-          $etype = actions.castExpr($test.tree);
-      }
+gen_if[List gens, List ifs]
+    : IF test[expr_contextType.Load] gen_iter[gens, ifs]?
+    {
+        ifs.add(actions.castExpr($test.tree));
+    }
     ;
 
 //yield_expr: 'yield' [testlist]
