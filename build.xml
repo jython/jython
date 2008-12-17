@@ -178,9 +178,9 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
             <pathelement path="${exposed.dir}" />
             <pathelement path="${compile.dir}" />
         </path>
-        <!-- 64 bit Java 6 needs about 96m for regrtest on most platforms, but Apple's needs
-         144m -->
-        <property name="regrtest.Xmx" value="-Xmx144m" />
+        <!-- 64 bit Java 6 needs roughly 96m for regrtest on most platforms, but Apple's needs
+         more -->
+        <property name="regrtest.Xmx" value="-Xmx160m" />
     </target>
 
     <target name="version-init">
