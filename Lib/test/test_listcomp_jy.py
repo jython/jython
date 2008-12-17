@@ -5,12 +5,16 @@ class ListCompTestCase(unittest.TestCase):
 
     #http://bugs.jython.org/issue1205
     def test_long_listcomp(self):
-        r = 2
-        lc = [(x1**3+x2**3,(x1,x2),(y1,y2)) for x1 in range(4) for x2 in range(4)
-                if x1 < x2 for y1 in range(r) for y2 in range(r) if y1 < y2
-                if x1**3+x2**3 == y1**3+y2**3 ]
-        self.assertEquals(len(lc), 1)
-        self.assertEquals(lc, [(1, (0, 1), (0, 1))])
+        #for a long list comp, we compute the Hardy-Ramanujan number
+        #http://en.wikipedia.org/wiki/1729_(number)
+        res = [(x1**3+x2**3,(x1,x2),(y1,y2))
+              for x1 in range(20) for x2 in range(20) if x1 < x2 # x-Paare
+              for y1 in range(20) for y2 in range(20) if y1 < y2 # y-Paare
+              if x1**3+x2**3 == y1**3+y2**3 # gleiche Summe
+              if (x1,x2) < (y1,y2)
+              ]
+        self.assertEquals(1729, min(res)[0])
+        self.assertEquals(len(res), 2)
 
 def test_main():
     test_support.run_unittest(ListCompTestCase)
