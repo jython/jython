@@ -6,7 +6,7 @@ import re
 from test import test_support
 from java.awt import (Dimension, Component, Rectangle, Button, Color,
                       HeadlessException)
-from java.util import ArrayList, Vector, HashMap, Hashtable
+from java.util import ArrayList, HashMap, Hashtable, StringTokenizer, Vector
 from java.io import FileOutputStream, FileWriter, OutputStreamWriter
                      
 from java.lang import Runnable, Thread, ThreadGroup, System, Runtime, Math, Byte
@@ -449,6 +449,10 @@ class JavaDelegationTest(unittest.TestCase):
         self.assertEquals(1, n)
         del m["a"]
         self.assertEquals(0, len(m))
+
+    def test_enumerable_delegation(self):
+        tokenizer = StringTokenizer('foo bar')
+        self.assertEquals(list(iter(tokenizer)), ['foo', 'bar'])
 
 
 def test_main():

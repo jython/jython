@@ -409,7 +409,7 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
         return false;
     }
 
-    private class EnumerationIter extends PyIterator {
+    private static class EnumerationIter extends PyIterator {
 
         private Enumeration<Object> proxy;
 
@@ -494,6 +494,13 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
                 }
             };
             collectionProxies.put(Iterator.class, new PyBuiltinMethod[] {iteratorProxy});
+
+            PyBuiltinMethodNarrow enumerationProxy = new PyBuiltinMethodNarrow("__iter__", 0, 0) {
+                public PyObject __call__() {
+                    return new EnumerationIter(((Enumeration)self.getJavaProxy()));
+                }
+            };
+            collectionProxies.put(Enumeration.class, new PyBuiltinMethod[] {enumerationProxy});
 
             // Map doesn't extend Collection, so it needs its own version of len, iter and contains
             PyBuiltinMethodNarrow mapLenProxy = new MapMethod("__len__", 0, 0) {
