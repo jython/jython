@@ -1350,6 +1350,8 @@ class ssl:
 
     def __init__(self, plain_sock, keyfile=None, certfile=None):
         self.ssl_sock = self.make_ssl_socket(plain_sock)
+        self._in_buf = java.io.BufferedInputStream(self.ssl_sock.getInputStream())
+        self._out_buf = java.io.BufferedOutputStream(self.ssl_sock.getOutputStream())
 
     def make_ssl_socket(self, plain_socket, auto_close=0):
         java_net_socket = plain_socket._get_jsocket()
@@ -1363,10 +1365,8 @@ class ssl:
         return ssl_socket
 
     def read(self, n=4096):
-        # Probably needs some work on efficency
-        in_buf = java.io.BufferedInputStream(self.ssl_sock.getInputStream())
         data = jarray.zeros(n, 'b')
-        m = in_buf.read(data, 0, n)
+        m = self._in_buf.read(data, 0, n)
         if m <= 0:
             return ""
         if m < n:
@@ -1374,10 +1374,9 @@ class ssl:
         return data.tostring()
 
     def write(self, s):
-        # Probably needs some work on efficency
-        out = java.io.BufferedOutputStream(self.ssl_sock.getOutputStream())
-        out.write(s)
-        out.flush()
+        self._out_buf.write(s)
+        self._out_buf.flush()
+        return len(s)
 
     def _get_server_cert(self):
         return self.ssl_sock.getSession().getPeerCertificates()[0]
