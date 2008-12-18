@@ -181,6 +181,17 @@ class ThreadedPollClientSocket(test_socket.ThreadedTCPSocketTest):
         else:
             self.fail("Registering blocking socket should have raised select.error")
 
+    def testSelectOnSocketFileno(self):
+        self.cli_conn = self.serv.accept()
+
+    def _testSelectOnSocketFileno(self):
+        self.cli.connect( (test_socket.HOST, test_socket.PORT) )
+        self.cli.setblocking(0)
+        try:
+            rfd, wfd, xfd = select.select([self.cli.fileno()], [], [], 1)
+        except Exception, x:
+            self.fail("Selecting on socket.fileno() should not have raised exception: %s" % str(x))
+
 class TestPipes(unittest.TestCase):
 
     verbose = 1

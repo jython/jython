@@ -43,6 +43,8 @@ POLLHUP  = 16
 POLLNVAL = 32
 
 def _getselectable(selectable_object):
+    if isinstance(selectable_object, java.nio.channels.SelectableChannel):
+        return selectable_object
     for method in ['getchannel', 'fileno']:
         try:
             channel = getattr(selectable_object, method)()
