@@ -873,7 +873,7 @@ class UDPBroadcastTest(ThreadedUDPSocketTest):
         self.serv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
     def testBroadcast(self):
-        self.serv.bind( ("<broadcast>", self.PORT) )
+        self.serv.bind( ("", self.PORT) )
         msg = self.serv.recv(len(EIGHT_BIT_MSG))
         self.assertEqual(msg, EIGHT_BIT_MSG)
 

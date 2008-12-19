@@ -148,17 +148,6 @@ SHUT_RD   = 0
 SHUT_WR   = 1
 SHUT_RDWR = 2
 
-__all__ = ['AF_UNSPEC', 'AF_INET', 'AF_INET6', 'AI_PASSIVE', 'SOCK_DGRAM',
-        'SOCK_RAW', 'SOCK_RDM', 'SOCK_SEQPACKET', 'SOCK_STREAM', 'SOL_SOCKET',
-        'SO_BROADCAST', 'SO_ERROR', 'SO_KEEPALIVE', 'SO_LINGER', 'SO_OOBINLINE',
-        'SO_RCVBUF', 'SO_REUSEADDR', 'SO_SNDBUF', 'SO_TIMEOUT', 'TCP_NODELAY',
-        'SocketType', 'error', 'herror', 'gaierror', 'timeout',
-        'getfqdn', 'gethostbyaddr', 'gethostbyname', 'gethostname',
-        'socket', 'getaddrinfo', 'getdefaulttimeout', 'setdefaulttimeout',
-        'has_ipv6', 'htons', 'htonl', 'ntohs', 'ntohl',
-        'SHUT_RD', 'SHUT_WR', 'SHUT_RDWR',
-        ]
-
 AF_UNSPEC = 0
 AF_INET = 2
 AF_INET6 = 23
@@ -184,6 +173,9 @@ SO_TIMEOUT     = 128
 
 TCP_NODELAY    = 256
 
+INADDR_ANY = "0.0.0.0"
+INADDR_BROADCAST = "255.255.255.255"
+
 # Options with negative constants are not supported
 # They are being added here so that code that refers to them
 # will not break with an AttributeError
@@ -200,6 +192,18 @@ SO_SNDLOWAT         = -256
 SO_SNDTIMEO         = -512
 SO_TYPE             = -1024
 SO_USELOOPBACK      = -2048
+
+__all__ = ['AF_UNSPEC', 'AF_INET', 'AF_INET6', 'AI_PASSIVE', 'SOCK_DGRAM',
+        'SOCK_RAW', 'SOCK_RDM', 'SOCK_SEQPACKET', 'SOCK_STREAM', 'SOL_SOCKET',
+        'SO_BROADCAST', 'SO_ERROR', 'SO_KEEPALIVE', 'SO_LINGER', 'SO_OOBINLINE',
+        'SO_RCVBUF', 'SO_REUSEADDR', 'SO_SNDBUF', 'SO_TIMEOUT', 'TCP_NODELAY',
+        'INADDR_ANY', 'INADDR_BROADCAST',
+        'SocketType', 'error', 'herror', 'gaierror', 'timeout',
+        'getfqdn', 'gethostbyaddr', 'gethostbyname', 'gethostname',
+        'socket', 'getaddrinfo', 'getdefaulttimeout', 'setdefaulttimeout',
+        'has_ipv6', 'htons', 'htonl', 'ntohs', 'ntohl',
+        'SHUT_RD', 'SHUT_WR', 'SHUT_RDWR',
+        ]
 
 class _nio_impl:
 
@@ -685,7 +689,7 @@ class _nonblocking_api_mixin:
     def _get_jsocket(self):
         return self.sock_impl.jsocket
 
-def _unpack_address_tuple(address_tuple, for_tx=False):
+def _unpack_address_tuple(address_tuple):
     # TODO: Upgrade to support the 4-tuples used for IPv6 addresses
     # which include flowinfo and scope_id.
     # To be upgraded in synch with getaddrinfo
@@ -701,11 +705,6 @@ def _unpack_address_tuple(address_tuple, for_tx=False):
         # currently broken
         hostname = hostname.encode()
     hostname = hostname.strip()
-    if hostname == "<broadcast>":
-        if for_tx:
-            hostname = "255.255.255.255"
-        else:
-            hostname = "0.0.0.0"
     return hostname, address_tuple[1]
 
 class _tcpsocket(_nonblocking_api_mixin):
@@ -889,6 +888,8 @@ class _udpsocket(_nonblocking_api_mixin):
         try:
             assert not self.sock_impl
             host, port = _unpack_address_tuple(addr)
+            if host == "":
+                host = INADDR_ANY
             host_address = java.net.InetAddress.getByName(host)
             self.sock_impl = _datagram_socket_impl(port, host_address, self.pending_options[SO_REUSEADDR])
             self._config()
@@ -928,7 +929,9 @@ class _udpsocket(_nonblocking_api_mixin):
             if not self.sock_impl:
                 self.sock_impl = _datagram_socket_impl()
                 self._config()
-            host, port = _unpack_address_tuple(addr, True)
+            host, port = _unpack_address_tuple(addr)
+            if host == "<broadcast>":
+                host = INADDR_BROADCAST
             byte_array = java.lang.String(data).getBytes('iso-8859-1')
             result = self.sock_impl.sendto(byte_array, host, port, flags)
             return result
