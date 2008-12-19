@@ -129,6 +129,14 @@ public class imp {
         return null;
     }
 
+    public static PyObject load_dynamic(String name, String pathname) {
+        return load_dynamic(name, pathname, null);
+    }
+
+    public static PyObject load_dynamic(String name, String pathname, PyObject file) {
+        throw Py.ImportError("No module named " + name);
+    }
+
     public static PyObject load_source(String modname, String filename) {
         return load_source(modname, filename, null);
     }
