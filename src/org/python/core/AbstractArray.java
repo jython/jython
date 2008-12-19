@@ -533,7 +533,7 @@ public abstract class AbstractArray implements Serializable{
      * @see java.lang.Object#toString()
      */
     public String toString() {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         buf.append("[");
 
         Object base = getArray();

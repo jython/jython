@@ -651,7 +651,7 @@ public class PyType extends PyObject implements Serializable {
     }
 
     private static PyException mro_error(PyObject[][] to_merge, int[] remain) {
-        StringBuffer msg = new StringBuffer("Cannot create a consistent method resolution\n"
+        StringBuilder msg = new StringBuilder("Cannot create a consistent method resolution\n"
                                             + "order (MRO) for bases ");
         PyDictionary set = new PyDictionary();
         for (int i = 0; i < to_merge.length; i++) {

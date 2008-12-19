@@ -417,7 +417,7 @@ public class PyList extends PySequenceList {
         if(!ts.enterRepr(this)) {
             return "[...]";
         }
-        StringBuffer buf = new StringBuffer("[");
+        StringBuilder buf = new StringBuilder("[");
         int length = size();
         PyObject[] array = getArray();
         for(int i = 0; i < length - 1; i++) {

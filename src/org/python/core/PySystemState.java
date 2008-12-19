@@ -7,8 +7,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.security.AccessControlException;
-import java.util.Enumeration;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.StringTokenizer;
@@ -72,7 +71,7 @@ public class PySystemState extends PyObject
         "Amsterdam.\n" +
         "All Rights Reserved.\n\n");
 
-    private static Hashtable builtinNames;
+    private static Map<String,String> builtinNames;
     public static PyTuple builtin_module_names = null;
 
     public static PackageManager packageManager;
@@ -160,22 +159,13 @@ public class PySystemState extends PyObject
         __displayhook__ = new PySystemStateFunctions("displayhook", 10, 1, 1);
         __excepthook__ = new PySystemStateFunctions("excepthook", 30, 3, 3);
 
-        // This isn't quite right...
         if(builtins == null){
             builtins = new PyStringMap();
             __builtin__.fillWithBuiltins(builtins);
         }
         PyModule __builtin__ = new PyModule("__builtin__", builtins);
         modules.__setitem__("__builtin__", __builtin__);
-
         __dict__ = new PyStringMap();
-
-        // This isn't right either, because __dict__ can be directly
-        // accessed from Python, for example:
-        //
-        //    >>> sys.__dict__['settrace']
-        //    <java function settrace 81>
-
         __dict__.invoke("update", getType().fastGetDict());
         __dict__.__setitem__("displayhook", __displayhook__);
         __dict__.__setitem__("excepthook", __excepthook__);
@@ -707,7 +697,7 @@ public class PySystemState extends PyObject
     }
 
     private static void initBuiltins(Properties props) {
-        builtinNames = new Hashtable();
+        builtinNames = new HashMap<String,String>();
 
         // add the oddball builtins that are specially handled
         builtinNames.put("__builtin__", "");
@@ -724,10 +714,11 @@ public class PySystemState extends PyObject
             addBuiltin(tok.nextToken());
 
         int n = builtinNames.size();
-        PyObject [] built_mod = new PyObject[n];        
-        Enumeration keys = builtinNames.keys();
-        for (int i=0; i<n; i++)
-            built_mod[i] = Py.newString((String)keys.nextElement());
+        PyObject [] built_mod = new PyObject[n];
+        int i = 0;
+        for (String key : builtinNames.keySet()) {
+            built_mod[i++] = Py.newString(key);
+        }
         builtin_module_names = new PyTuple(built_mod);
     }
 

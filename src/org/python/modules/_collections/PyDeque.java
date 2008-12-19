@@ -228,7 +228,7 @@ public class PyDeque extends PyObject {
         if (!ts.enterRepr(this)) { 
             return "[...]";
         }
-        StringBuffer buf = new StringBuffer("deque").append("([");
+        StringBuilder buf = new StringBuilder("deque").append("([");
         for (Node tmp = header.right; tmp != header; tmp = tmp.right) {
             buf.append(tmp.data.__repr__().toString());
             if (tmp.right != header) {

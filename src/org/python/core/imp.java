@@ -503,7 +503,7 @@ public class imp {
      * @return the loaded module
      */
     public static PyObject load(String name) {
-        return import_first(name, new StringBuffer());
+        return import_first(name, new StringBuilder());
     }
 
     /**
@@ -560,7 +560,7 @@ public class imp {
      * @return null or None
      */
     private static PyObject import_next(PyObject mod,
-            StringBuffer parentNameBuffer, String name, String outerFullName, PyObject fromlist) {
+            StringBuilder parentNameBuffer, String name, String outerFullName, PyObject fromlist) {
         if (parentNameBuffer.length() > 0) {
             parentNameBuffer.append('.');
         }
@@ -594,7 +594,7 @@ public class imp {
 
     // never returns null or None
     private static PyObject import_first(String name,
-            StringBuffer parentNameBuffer) {
+            StringBuilder parentNameBuffer) {
         PyObject ret = import_next(null, parentNameBuffer, name, null, null);
         if (ret == null || ret == Py.None) {
             throw Py.ImportError("No module named " + name);
@@ -603,7 +603,7 @@ public class imp {
     }
 
 
-    private static PyObject import_first(String name, StringBuffer parentNameBuffer, String fullName, PyObject fromlist) {
+    private static PyObject import_first(String name, StringBuilder parentNameBuffer, String fullName, PyObject fromlist) {
         PyObject ret = import_next(null, parentNameBuffer, name, fullName, fromlist);
         if (ret == null || ret == Py.None) {
             if (JavaImportHelper.tryAddPackage(fullName, fromlist)) {
@@ -621,7 +621,7 @@ public class imp {
     // never returns null or None
     // ??pending: check if result is really a module/jpkg/jclass?
     private static PyObject import_logic(PyObject mod,
-            StringBuffer parentNameBuffer, String dottedName, String fullName, PyObject fromlist) {
+            StringBuilder parentNameBuffer, String dottedName, String fullName, PyObject fromlist) {
         int dot = 0;
         int last_dot = 0;
 
@@ -673,7 +673,7 @@ public class imp {
         } else {
             firstName = name.substring(0, dot);
         }
-        StringBuffer parentNameBuffer = new StringBuffer(pkgMod != null ? pkgName : "");
+        StringBuilder parentNameBuffer = new StringBuilder(pkgMod != null ? pkgName : "");
         PyObject topMod = import_next(pkgMod, parentNameBuffer, firstName, name, fromlist);
         if (topMod == Py.None || topMod == null) {
             // Add None to sys.modules for submodule or subpackage names that aren't found, but
@@ -682,7 +682,7 @@ public class imp {
             if (topMod == null && pkgMod != null) {
                 modules.__setitem__(parentNameBuffer.toString().intern(), Py.None);
             }
-            parentNameBuffer = new StringBuffer("");
+            parentNameBuffer = new StringBuilder("");
             // could throw ImportError
             topMod = import_first(firstName, parentNameBuffer, name, fromlist);
         }
@@ -697,7 +697,7 @@ public class imp {
         }
 
         if (fromlist != null && fromlist != Py.None) {
-            StringBuffer modNameBuffer = new StringBuffer(name);
+            StringBuilder modNameBuffer = new StringBuilder(name);
             for (PyObject submodName : fromlist.asIterable()) {
                 if (mod.__findattr__(submodName.toString()) != null
                     || submodName.toString().equals("*")) {

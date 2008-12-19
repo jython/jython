@@ -279,7 +279,7 @@ public class binascii {
         if (ascii_data.length() == 0)
             return new PyString("");
         
-        StringBuffer bin_data = new StringBuffer();
+        StringBuilder bin_data = new StringBuilder();
 
         char this_ch;
         int i;
@@ -357,7 +357,7 @@ public class binascii {
             throw new PyException(Error, "At most 45 bytes at once");
         }
 
-        StringBuffer ascii_data = new StringBuffer();
+        StringBuilder ascii_data = new StringBuilder();
 
         // Store the length */
         ascii_data.append((char)(' ' + (bin_len & 077)));
@@ -426,7 +426,7 @@ public class binascii {
         int ascii_len = ascii_data.length();
 
         int bin_len = 0;
-        StringBuffer bin_data = new StringBuffer();
+        StringBuilder bin_data = new StringBuilder();
 
         for(int i = 0; ascii_len > 0 ; ascii_len--, i++) {
             // Skip some punctuation
@@ -487,7 +487,7 @@ public class binascii {
         char this_ch;
         int leftchar = 0;
 
-        StringBuffer ascii_data = new StringBuffer();
+        StringBuilder ascii_data = new StringBuilder();
 
         int bin_len = bin_data.length();
         if (bin_len > BASE64_MAXBIN) {
@@ -539,7 +539,7 @@ public class binascii {
 
         int len = ascii_data.length();
 
-        StringBuffer bin_data = new StringBuffer();
+        StringBuilder bin_data = new StringBuilder();
 
         for(int i = 0; len > 0 ; len--, i++) {
             // Get the byte and look it up
@@ -585,7 +585,7 @@ public class binascii {
     static public String rlecode_hqx(String in_data) {
         int len = in_data.length();
 
-        StringBuffer out_data = new StringBuffer();
+        StringBuilder out_data = new StringBuilder();
 
         for (int in=0; in < len; in++) {
             char ch = in_data.charAt(in);
@@ -632,7 +632,7 @@ public class binascii {
 
         int len = bin_data.length();
 
-        StringBuffer ascii_data = new StringBuffer();
+        StringBuilder ascii_data = new StringBuilder();
 
         for(int i = 0; len > 0; len--, i++) {
             // Shift into our buffer, and output any 6bits ready
@@ -677,7 +677,7 @@ public class binascii {
         if (in_len == 0)
             return "";
 
-        StringBuffer out_data = new StringBuffer();
+        StringBuilder out_data = new StringBuilder();
 
         // Handle first byte separately (since we have to get angry
         // in case of an orphaned RLE code).
@@ -837,7 +837,7 @@ static long[] crc_32_tab = new long[] {
     public static PyString b2a_hex(String argbuf) {
         int arglen = argbuf.length();
 
-        StringBuffer retbuf = new StringBuffer(arglen*2);
+        StringBuilder retbuf = new StringBuilder(arglen*2);
 
         /* make hex version of string, taken from shamodule.c */
         for (int i = 0; i < arglen; i++) {
@@ -874,7 +874,7 @@ static long[] crc_32_tab = new long[] {
         if (arglen % 2 != 0)
             throw Py.TypeError("Odd-length string");
 
-        StringBuffer retbuf = new StringBuffer(arglen/2);
+        StringBuilder retbuf = new StringBuilder(arglen/2);
 
         for (int i = 0; i < arglen; i += 2) {
             int top = Character.digit(argbuf.charAt(i), 16);
@@ -893,7 +893,7 @@ static long[] crc_32_tab = new long[] {
 
     final private static char[] upper_hexdigit = "0123456789ABCDEF".toCharArray();
     
-    private static StringBuffer qpEscape(StringBuffer sb, char c)
+    private static StringBuilder qpEscape(StringBuilder sb, char c)
     {
     	sb.append('=');
         sb.append(upper_hexdigit[(c >>> 4) & 0xF]);
@@ -921,7 +921,7 @@ static long[] crc_32_tab = new long[] {
     {
         ArgParser ap = new ArgParser("a2b_qp", arg, kws, new String[] {"s", "header"});
         String s = ap.getString(0);
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         boolean header = getIntFlagAsBool(ap, 1, 0, "an integer is required");
 
         if (header)
@@ -979,7 +979,7 @@ static long[] crc_32_tab = new long[] {
         	lineEnd = "\n";
         	s = RN_TO_N.matcher(s).replaceAll("\n");
         }
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         int count = 0;
         for (int i=0, m=s.length(); i<m; i++) {
         	char c = s.charAt(i);

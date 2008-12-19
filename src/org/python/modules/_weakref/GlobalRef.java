@@ -4,9 +4,10 @@ package org.python.modules._weakref;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Vector;
+import java.util.List;
 
 import org.python.core.Py;
 import org.python.core.PyException;
@@ -20,7 +21,7 @@ public class GlobalRef extends WeakReference {
     /** Whether the hash value was calculated by the underlying object. */
     boolean realHash;
 
-    private Vector references = new Vector();
+    private List references = new ArrayList();
 
     private static ReferenceQueue referenceQueue = new ReferenceQueue();
 
@@ -59,11 +60,11 @@ public class GlobalRef extends WeakReference {
 
     public synchronized void add(AbstractReference ref) {
         Reference r = new WeakReference(ref);
-        references.addElement(r);
+        references.add(r);
     }
 
     private final AbstractReference getReferenceAt(int idx) {
-        WeakReference wref = (WeakReference)references.elementAt(idx);
+        WeakReference wref = (WeakReference)references.get(idx);
         return (AbstractReference)wref.get();
     }
 
@@ -75,7 +76,7 @@ public class GlobalRef extends WeakReference {
         for (int i = references.size() - 1; i >= 0; i--) {
             AbstractReference r = getReferenceAt(i);
             if (r == null) {
-                references.removeElementAt(i);
+                references.remove(i);
             } else if (r.callback == null && r.getClass() == cls) {
                 return r;
             }
@@ -90,7 +91,7 @@ public class GlobalRef extends WeakReference {
         for (int i = references.size() - 1; i >= 0; i--) {
             AbstractReference r = getReferenceAt(i);
             if (r == null) {
-                references.removeElementAt(i);
+                references.remove(i);
             } else {
                 r.call();
             }
@@ -101,20 +102,20 @@ public class GlobalRef extends WeakReference {
         for (int i = references.size() - 1; i >= 0; i--) {
             AbstractReference r = getReferenceAt(i);
             if (r == null) {
-                references.removeElementAt(i);
+                references.remove(i);
             }
         }
         return references.size();
     }
 
     synchronized public PyList refs() {
-        Vector list = new Vector();
+        List list = new ArrayList();
         for (int i = references.size() - 1; i >= 0; i--) {
             AbstractReference r = getReferenceAt(i);
             if (r == null) {
-                references.removeElementAt(i);
+                references.remove(i);
             } else {
-                list.addElement(r);
+                list.add(r);
             }
         }
         return new PyList(list);

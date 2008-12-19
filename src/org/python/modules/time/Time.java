@@ -411,7 +411,7 @@ public class Time implements ClassDictInit
     }
 
     public static PyString asctime(PyTuple tup) {
-        StringBuffer buf = new StringBuffer(25);
+        StringBuilder buf = new StringBuilder(25);
         buf.append(enshortdays[item(tup, 6)]).append(' ');
         buf.append(enshortmonths[item(tup, 1)]).append(' ');
         int dayOfMonth = item(tup, 2);

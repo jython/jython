@@ -1056,7 +1056,7 @@ public final class Py {
     }
 
     static String formatException(PyObject type, PyObject value, PyObject tb) {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
 
         if (PyException.isExceptionClass(type)) {
             String className = PyException.exceptionClassName(type);

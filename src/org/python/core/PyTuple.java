@@ -272,7 +272,7 @@ public class PyTuple extends PySequenceList
 
     @ExposedMethod
     final String tuple___repr__() {
-        StringBuffer buf = new StringBuffer("(");
+        StringBuilder buf = new StringBuilder("(");
         PyObject[] array = getArray();
         int arrayLen = size();
         for (int i = 0; i < arrayLen-1; i++) {

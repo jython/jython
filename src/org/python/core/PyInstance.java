@@ -1,6 +1,5 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
-import java.util.Hashtable;
 
 /**
  * A python class instance.
@@ -75,8 +74,6 @@ public class PyInstance extends PyObject
     }
 
     public PyInstance() {}
-
-    private static Hashtable primitiveMap;
 
     public Object __tojava__(Class c) {
         if (c.isInstance(this))

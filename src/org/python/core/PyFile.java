@@ -490,7 +490,7 @@ public class PyFile extends PyObject {
 
     @ExposedMethod(names = {"__str__", "__repr__"})
     final String file_toString() {
-        StringBuffer s = new StringBuffer("<");
+        StringBuilder s = new StringBuilder("<");
         if (file.closed()) {
             s.append("closed ");
         } else {

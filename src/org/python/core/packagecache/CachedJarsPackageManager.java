@@ -20,8 +20,11 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.security.AccessControlException;
 import java.util.Enumeration;
-import java.util.Hashtable;
-import java.util.Vector;
+import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -95,13 +98,13 @@ public abstract class CachedJarsPackageManager extends PackageManager {
 
     private boolean indexModified;
 
-    private Hashtable jarfiles;
+    private Map<String,JarXEntry> jarfiles;
 
-    private static String vectorToString(Vector vec) {
+    private static String vectorToString(List vec) {
         int n = vec.size();
-        StringBuffer ret = new StringBuffer();
+        StringBuilder ret = new StringBuilder();
         for (int i = 0; i < n; i++) {
-            ret.append((String) vec.elementAt(i));
+            ret.append((String) vec.get(i));
             if (i < n - 1) {
                 ret.append(",");
             }
@@ -111,7 +114,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
 
     // Add a single class from zipFile to zipPackages
     // Only add valid, public classes
-    private void addZipEntry(Hashtable zipPackages, ZipEntry entry,
+    private void addZipEntry(Map zipPackages, ZipEntry entry,
             ZipInputStream zip) throws IOException {
         String name = entry.getName();
         // System.err.println("entry: "+name);
@@ -139,22 +142,22 @@ public abstract class CachedJarsPackageManager extends PackageManager {
             return;
         }
 
-        Vector[] vec = (Vector[]) zipPackages.get(packageName);
+        List[] vec = (List[]) zipPackages.get(packageName);
         if (vec == null) {
-            vec = new Vector[] { new Vector(), new Vector() };
+            vec = new ArrayList[] { new ArrayList(), new ArrayList() };
             zipPackages.put(packageName, vec);
         }
         int access = checkAccess(zip);
         if ((access != -1) && !filterByAccess(name, access)) {
-            vec[0].addElement(className);
+            vec[0].add(className);
         } else {
-            vec[1].addElement(className);
+            vec[1].add(className);
         }
     }
 
     // Extract all of the packages in a single jarfile
-    private Hashtable getZipPackages(InputStream jarin) throws IOException {
-        Hashtable zipPackages = new Hashtable();
+    private Map getZipPackages(InputStream jarin) throws IOException {
+        Map zipPackages = new HashMap();
 
         ZipInputStream zip = new ZipInputStream(jarin);
 
@@ -165,9 +168,8 @@ public abstract class CachedJarsPackageManager extends PackageManager {
         }
 
         // Turn each vector into a comma-separated String
-        for (Enumeration e = zipPackages.keys(); e.hasMoreElements();) {
-            Object key = e.nextElement();
-            Vector[] vec = (Vector[]) zipPackages.get(key);
+        for (Object key : zipPackages.keySet()) {
+            List[] vec = (List[]) zipPackages.get(key);
             String classes = vectorToString(vec[0]);
             if (vec[1].size() > 0) {
                 classes += '@' + vectorToString(vec[1]);
@@ -245,7 +247,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
                 return;
             }
 
-            Hashtable zipPackages = null;
+            Map zipPackages = null;
 
             long mtime = 0;
             String jarcanon = null;
@@ -327,10 +329,10 @@ public abstract class CachedJarsPackageManager extends PackageManager {
 
     }
 
-    private void addPackages(Hashtable zipPackages, String jarfile) {
-        for (Enumeration e = zipPackages.keys(); e.hasMoreElements();) {
-            String pkg = (String) e.nextElement();
-            String classes = (String) zipPackages.get(pkg);
+    private void addPackages(Map<String,String> zipPackages, String jarfile) {
+        for (Entry<String,String> entry : zipPackages.entrySet()) {
+            String pkg = entry.getKey();
+            String classes = entry.getValue();
 
             int idx = classes.indexOf('@');
             if (idx >= 0 && Options.respectJavaAccessibility) {
@@ -343,7 +345,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
 
     // Read in cache file storing package info for a single .jar
     // Return null and delete this cachefile if it is invalid
-    private Hashtable readCacheFile(JarXEntry entry, String jarcanon) {
+    private Map readCacheFile(JarXEntry entry, String jarcanon) {
         String cachefile = entry.cachefile;
         long mtime = entry.mtime;
 
@@ -359,7 +361,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
                 deleteCacheFile(cachefile);
                 return null;
             }
-            Hashtable packs = new Hashtable();
+            Map packs = new HashMap();
             try {
                 while (true) {
                     String packageName = istream.readUTF();
@@ -380,16 +382,15 @@ public abstract class CachedJarsPackageManager extends PackageManager {
 
     // Write a cache file storing package info for a single .jar
     private void writeCacheFile(JarXEntry entry, String jarcanon,
-            Hashtable zipPackages, boolean brandNew) {
+            Map<String,String> zipPackages, boolean brandNew) {
         try {
             DataOutputStream ostream = outCreateCacheFile(entry, brandNew);
             ostream.writeUTF(jarcanon);
             ostream.writeLong(entry.mtime);
             comment("rewriting cachefile for '" + jarcanon + "'");
 
-            for (Enumeration e = zipPackages.keys(); e.hasMoreElements();) {
-                String packageName = (String) e.nextElement();
-                String classes = (String) zipPackages.get(packageName);
+            for (String packageName : zipPackages.keySet()) {
+                String classes = zipPackages.get(packageName);
                 ostream.writeUTF(packageName);
                 ostream.writeUTF(classes);
             }
@@ -405,7 +406,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
      */
     protected void initCache() {
         this.indexModified = false;
-        this.jarfiles = new Hashtable();
+        this.jarfiles = new HashMap();
 
         try {
             DataInputStream istream = inOpenIndex();
@@ -436,22 +437,22 @@ public abstract class CachedJarsPackageManager extends PackageManager {
      * outOpenIndex().
      */
     public void saveCache() {
-        if (this.jarfiles == null || !this.indexModified) {
+        if (jarfiles == null || !indexModified) {
             return;
         }
 
-        this.indexModified = false;
+        indexModified = false;
 
         comment("writing modified index file");
 
         try {
             DataOutputStream ostream = outOpenIndex();
-            for (Enumeration e = this.jarfiles.keys(); e.hasMoreElements();) {
-                String jarcanon = (String) e.nextElement();
-                JarXEntry entry = (JarXEntry) this.jarfiles.get(jarcanon);
+            for (Entry<String,JarXEntry> entry : jarfiles.entrySet()) {
+                String jarcanon = entry.getKey();
+                JarXEntry xentry = entry.getValue();
                 ostream.writeUTF(jarcanon);
-                ostream.writeUTF(entry.cachefile);
-                ostream.writeLong(entry.mtime);
+                ostream.writeUTF(xentry.cachefile);
+                ostream.writeLong(xentry.mtime);
             }
             ostream.close();
         } catch (IOException ioe) {

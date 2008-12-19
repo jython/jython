@@ -101,7 +101,7 @@ public class PyTraceback extends PyObject
         return line;
     }
 
-    public void dumpStack(StringBuffer buf) {
+    public void dumpStack(StringBuilder buf) {
         buf.append(tracebackInfo());
         if (tb_next != Py.None && tb_next != this) {
             ((PyTraceback)tb_next).dumpStack(buf);
@@ -111,7 +111,7 @@ public class PyTraceback extends PyObject
     }
 
     public String dumpStack() {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         buf.append("Traceback (most recent call last):\n");
         dumpStack(buf);
         return buf.toString();

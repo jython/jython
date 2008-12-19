@@ -187,7 +187,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
             return "{...}";
         }
 
-        StringBuffer buf = new StringBuffer("{");
+        StringBuilder buf = new StringBuilder("{");
 
         for (Entry<PyObject, PyObject> entry : table.entrySet()) {
             buf.append((entry.getKey()).__repr__().toString());

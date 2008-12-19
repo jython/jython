@@ -13,7 +13,8 @@
 package org.python.modules;
 
 import java.math.BigInteger;
-import java.util.Hashtable;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.python.core.ClassDictInit;
 import org.python.core.Py;
@@ -746,7 +747,7 @@ public class cPickle implements ClassDictInit {
     // Use any python object as a file.
     static class ObjectIOFile implements IOFile {
         char[] charr = new char[1];
-        StringBuffer buff = new StringBuffer();
+        StringBuilder buff = new StringBuilder();
         PyObject write;
         PyObject read;
         PyObject readline;
@@ -1514,12 +1515,12 @@ public class cPickle implements ClassDictInit {
 
 
 
-    private static Hashtable classmap = new Hashtable();
+    private static Map<PyObject,PyObject> classmap = new HashMap<PyObject,PyObject>();
 
     final private static PyObject whichmodule(PyObject cls,
                                               PyObject clsname)
     {
-        PyObject name = (PyObject)classmap.get(cls);
+        PyObject name = classmap.get(cls);
         if (name != null)
             return name;
 
@@ -1704,7 +1705,7 @@ public class cPickle implements ClassDictInit {
 
         private IOFile file;
 
-        public Hashtable memo = new Hashtable();
+        public Map<String,PyObject> memo = new HashMap<String,PyObject>();
 
         /**
          * For the benefit of persistency modules written using pickle,
@@ -2193,7 +2194,7 @@ public class cPickle implements ClassDictInit {
 
         final private void load_get() {
             String py_str = file.readlineNoNl();
-            PyObject value = (PyObject)memo.get(py_str);
+            PyObject value = memo.get(py_str);
             if (value == null)
                 throw new PyException(BadPickleGet, py_str);
             push(value);
@@ -2201,7 +2202,7 @@ public class cPickle implements ClassDictInit {
 
         final private void load_binget() {
             String py_key = String.valueOf((int)file.read(1).charAt(0));
-            PyObject value = (PyObject)memo.get(py_key);
+            PyObject value = memo.get(py_key);
             if (value == null)
                 throw new PyException(BadPickleGet, py_key);
             push(value);
@@ -2210,7 +2211,7 @@ public class cPickle implements ClassDictInit {
         final private void load_long_binget() {
             int i = read_binint();
             String py_key = String.valueOf(i);
-            PyObject value = (PyObject)memo.get(py_key);
+            PyObject value = memo.get(py_key);
             if (value == null)
                 throw new PyException(BadPickleGet, py_key);
             push(value);

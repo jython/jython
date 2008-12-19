@@ -387,7 +387,7 @@ public abstract class BaseSet extends PyObject implements Set {
         if (!ts.enterRepr(this)) {
             return name + "(...)";
         }
-        StringBuffer buf = new StringBuffer(name).append("([");
+        StringBuilder buf = new StringBuilder(name).append("([");
         for (Iterator i = _set.iterator(); i.hasNext();) {
             buf.append(((PyObject)i.next()).__repr__().toString());
             if (i.hasNext()) {
