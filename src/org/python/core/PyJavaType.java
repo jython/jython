@@ -281,6 +281,11 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
             try {
                 Method m = underlying_class.getMethod("classDictInit", PyObject.class);
                 m.invoke(null, dict);
+                // allow the class to override its name after it is loaded
+                PyObject nameSpecified = dict.__finditem__("__name__");
+                if (nameSpecified != null) {
+                    name = nameSpecified.toString();
+                }
             } catch (Exception exc) {
                 throw Py.JavaError(exc);
             }

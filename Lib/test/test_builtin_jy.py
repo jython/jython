@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+1# -*- coding: utf-8 -*-
 import sys
 import unittest
 import test.test_support
@@ -157,6 +157,18 @@ class ExecEvalTest(unittest.TestCase):
             exec code in ns
             self.assertEqual(foo, ns['a'])
 
+class ModuleNameTest(unittest.TestCase):
+    """Tests that the module when imported has the same __name__"""
+
+    def test_names(self):
+        for name in sys.builtin_module_names:
+            if name != '_jython' and name not in ('time', '_random', 'array', '_collections', '_ast'):
+                module = __import__(name)
+                self.assertEqual(name, module.__name__)
+
+
+
+
 def test_main():
     test.test_support.run_unittest(BuiltinTest,
                                    LoopTest,
@@ -167,7 +179,9 @@ def test_main():
                                    ReprTest,
                                    CallableTest,
                                    ConversionTest,
-                                   ExecEvalTest)
+                                   ExecEvalTest,
+                                   ModuleNameTest,
+                                   )
 
 if __name__ == "__main__":
     test_main()
