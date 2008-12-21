@@ -20,6 +20,11 @@ public class PyMethodDescr extends PyDescriptor implements PyBuiltinCallable.Inf
         meth.setInfo(this);
     }
 
+    @ExposedGet(name = "__doc__")
+    public String fastGetDoc() {
+        return meth.fastGetDoc();
+    }
+
     public int getMaxargs() {
         return maxargs;
     }
