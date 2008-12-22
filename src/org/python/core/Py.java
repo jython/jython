@@ -923,8 +923,7 @@ public final class Py {
             stderr.println("Java Traceback:");
             java.io.CharArrayWriter buf = new java.io.CharArrayWriter();
             if (t instanceof PyException) {
-                ((PyException) t).super__printStackTrace(
-                        new java.io.PrintWriter(buf));
+                ((PyException)t).super__printStackTrace(new java.io.PrintWriter(buf));
             } else {
                 t.printStackTrace(new java.io.PrintWriter(buf));
             }
@@ -1551,7 +1550,6 @@ public final class Py {
      */
     public static PyObject makeClass(String name, PyObject[] bases, PyObject dict) {
         PyFrame frame = getFrame();
-
         if (dict.__finditem__("__module__") == null) {
             PyObject module = frame.getglobal("__name__");
             if (module != null) {

@@ -133,6 +133,12 @@ public class PyType extends PyObject implements Serializable {
             }
             metatype = winner;
         }
+        // Use PyType as the metaclass for Python subclasses of Java classes rather than PyJavaType.
+        // Using PyJavaType as metaclass exposes the java.lang.Object methods on the type, which
+        // doesn't make sense for python subclasses.
+        if (metatype == PyType.fromClass(Class.class)) {
+            metatype = TYPE;
+        }
         if (bases_list.length == 0) {
             bases_list = new PyObject[] {object_type};
         }
@@ -997,6 +1003,7 @@ public class PyType extends PyObject implements Serializable {
             newtype = new PyJavaType();
         }
 
+
         // If filling in the type above filled the type under creation, use that one
         PyType type = class_to_type.get(c);
         if (type != null) {
@@ -1041,11 +1048,10 @@ public class PyType extends PyObject implements Serializable {
         PyType metatype = getType();
 
         PyObject metaattr = metatype.lookup(name);
-        PyObject res = null;
 
-        if (metaattr != null) {
+        if (metaattr != null && useMetatypeFirst(metaattr)) {
             if (metaattr.isDataDescr()) {
-                res = metaattr.__get__(this, metatype);
+                PyObject res = metaattr.__get__(this, metatype);
                 if (res != null)
                     return res;
             }
@@ -1054,7 +1060,7 @@ public class PyType extends PyObject implements Serializable {
         PyObject attr = lookup(name);
 
         if (attr != null) {
-            res = attr.__get__(null, this);
+            PyObject res = attr.__get__(null, this);
             if (res != null) {
                 return res;
             }
@@ -1065,6 +1071,14 @@ public class PyType extends PyObject implements Serializable {
         }
 
         return null;
+    }
+
+    /**
+     * Returns true if the given attribute retrieved from an object's metatype should be used before
+     * looking for the object on the actual object.
+     */
+    protected boolean useMetatypeFirst(PyObject attr) {
+        return true;
     }
 
     @ExposedMethod

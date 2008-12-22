@@ -44,7 +44,7 @@ public class PyObject implements Serializable {
      */
     protected Object javaProxy;
 
-    private PyType objtype;
+    PyType objtype;
 
     @ExposedGet(name = "__class__")
     public PyType getType() {
@@ -1007,7 +1007,7 @@ public class PyObject implements Serializable {
     protected void mergeClassDict(PyDictionary accum, PyObject aClass) {
         // Merge in the type's dict (if any)
         aClass.mergeDictAttr(accum, "__dict__");
-        
+
         // Recursively merge in the base types' (if any) dicts
         PyObject bases = aClass.__findattr__("__bases__");
         if (bases == null) {

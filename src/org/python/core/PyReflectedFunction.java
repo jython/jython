@@ -46,10 +46,6 @@ public class PyReflectedFunction extends PyObject {
         return new PyMethod(this, container, wherefound);
     }
 
-    public boolean _doset(PyObject container) {
-        throw Py.TypeError("java function not settable: " + __name__);
-    }
-
     public PyObject getDoc() {
         return __doc__;
     }

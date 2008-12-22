@@ -16,10 +16,12 @@ import java.util.Set;
 
 import org.python.core.util.StringUtil;
 import org.python.expose.ExposeAsSuperclass;
+import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedType;
 import org.python.util.Generic;
 
-public class PyJavaType extends PyType implements ExposeAsSuperclass {
+@ExposedType(name = "javatype")
+public class PyJavaType extends PyType {
 
     private final static Class<?>[] OO = {PyObject.class, PyObject.class};
 
@@ -35,6 +37,14 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
         super(TYPE == null ? fromClass(PyType.class) : TYPE);
     }
 
+    @ExposedMethod(defaults = "null")
+    final PyList javatype_mro(PyObject o) {
+        if (o == null) {
+            return new PyList(mro);
+        }
+        return new PyList(((PyJavaType)o).mro);
+    }
+
     @Override
     public Class<?> getProxyType() {
         return PyObject.class.isAssignableFrom(underlying_class) ? null : underlying_class;
@@ -47,6 +57,10 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
 
     @Override
     protected void checkSetattr() {}
+
+    protected boolean useMetatypeFirst(PyObject attr) {
+        return !(attr instanceof PyReflectedField || attr instanceof PyReflectedFunction);
+    }
 
     @Override
     protected void init() {
@@ -62,10 +76,14 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
             // their interfaces
             computeLinearMro(baseClass);
         } else {
+            javaProxy = underlying_class;
+            objtype = PyType.fromClass(Class.class);
             // Wrapped Java types fill in their mro first using their base class and then all of
             // their interfaces.
             if (baseClass == null) {
                 base = PyType.fromClass(PyObject.class);
+            } else if(underlying_class == Class.class) {
+                base = PyType.fromClass(PyType.class);
             } else {
                 base = PyType.fromClass(baseClass);
             }
@@ -300,8 +318,9 @@ public class PyJavaType extends PyType implements ExposeAsSuperclass {
             PyBuiltinCallable equals = new PyBuiltinMethodNarrow("__eq__", 1, 1) {
                 @Override
                 public PyObject __call__(PyObject o) {
-                    Object oAsJava = o.__tojava__(self.getJavaProxy().getClass());
-                    return self.getJavaProxy().equals(oAsJava) ? Py.True : Py.False;
+                    Object proxy = self.getJavaProxy();
+                    Object oAsJava = o.__tojava__(proxy.getClass());
+                    return proxy.equals(oAsJava) ? Py.True : Py.False;
                 }
             };
             dict.__setitem__("__eq__", new PyMethodDescr(this, equals));
