@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.security.AccessControlException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.StringTokenizer;
@@ -21,6 +20,7 @@ import org.python.core.packagecache.PackageManager;
 import org.python.core.packagecache.SysPackageManager;
 import org.python.modules.Setup;
 import org.python.modules.zipimport.zipimporter;
+import org.python.util.Generic;
 
 /**
  * The "sys" module.
@@ -31,7 +31,7 @@ public class PySystemState extends PyObject
     public static final String PYTHON_CACHEDIR = "python.cachedir";
     public static final String PYTHON_CACHEDIR_SKIP = "python.cachedir.skip";
     protected static final String CACHEDIR_DEFAULT_NAME = "cachedir";
-    
+
     public static final String JYTHON_JAR = "jython.jar";
     public static final String JYTHON_COMPLETE_JAR = "jython-complete.jar";
 
@@ -76,7 +76,7 @@ public class PySystemState extends PyObject
 
     public static PackageManager packageManager;
     public static File cachedir;
-    
+
     private static PyList defaultPath;
     private static PyList defaultArgv;
     private static PyObject defaultExecutable;
@@ -86,7 +86,7 @@ public class PySystemState extends PyObject
     public static PyObject exec_prefix = Py.EmptyString;
 
     private static boolean initialized = false;
-    
+
     /** The arguments passed to this program on the command line. */
     public PyList argv = new PyList();
 
@@ -127,7 +127,7 @@ public class PySystemState extends PyObject
     public PyObject last_traceback = Py.None;
 
     public PyObject __name__ = new PyString("sys");
-    
+
     public PyObject __dict__;
 
     private int recursionlimit = 1000;
@@ -170,7 +170,7 @@ public class PySystemState extends PyObject
         __dict__.__setitem__("displayhook", __displayhook__);
         __dict__.__setitem__("excepthook", __excepthook__);
     }
-    
+
     void reload() throws PyIgnoreMethodTag {
         __dict__.invoke("update", getType().fastGetDict());
     }
@@ -426,7 +426,7 @@ public class PySystemState extends PyObject
         platform = new PyString("java" + version);
     }
 
-    private static void initRegistry(Properties preProperties, Properties postProperties, 
+    private static void initRegistry(Properties preProperties, Properties postProperties,
                                        boolean standalone, String jarFileName)
     {
         if (registry != null) {
@@ -641,8 +641,8 @@ public class PySystemState extends PyObject
     private static PyList initArgv(String[] args) {
         PyList argv = new PyList();
         if (args != null) {
-            for (int i=0; i<args.length; i++) {
-                argv.append(new PyString(args[i]));
+            for (String arg : args) {
+                argv.append(new PyString(arg));
             }
         }
         return argv;
@@ -697,15 +697,15 @@ public class PySystemState extends PyObject
     }
 
     private static void initBuiltins(Properties props) {
-        builtinNames = new HashMap<String,String>();
+        builtinNames = Generic.map();
 
         // add the oddball builtins that are specially handled
         builtinNames.put("__builtin__", "");
         builtinNames.put("sys", "");
 
         // add builtins specified in the Setup.java file
-        for (int i=0; i < Setup.builtinModules.length; i++)
-            addBuiltin(Setup.builtinModules[i]);
+        for (String builtinModule : Setup.builtinModules)
+            addBuiltin(builtinModule);
 
         // add builtins specified in the registry file
         String builtinprop = props.getProperty("python.modules.builtin", "");
@@ -723,7 +723,7 @@ public class PySystemState extends PyObject
     }
 
     public static String getBuiltin(String name) {
-        return (String)builtinNames.get(name);
+        return builtinNames.get(name);
     }
 
     private static PyList initPath(Properties props, boolean standalone, String jarFileName) {
@@ -737,15 +737,15 @@ public class PySystemState extends PyObject
             // standalone jython: add the /Lib directory inside JYTHON_JAR to the path
             addPaths(path, jarFileName + "/Lib");
         }
-        
+
         return path;
     }
-    
+
     /**
      * Check if we are in standalone mode.
-     * 
+     *
      * @param jarFileName The name of the jar file
-     * 
+     *
      * @return <code>true</code> if we have a standalone .jar file, <code>false</code> otherwise.
      */
     private static boolean isStandalone(String jarFileName) {
@@ -888,7 +888,6 @@ public class PySystemState extends PyObject
         if (o == Py.None)
              return;
 
-        PySystemState sys = Py.getThreadState().systemState;
         PySystemState.builtins.__setitem__("_", Py.None);
         Py.stdout.println(o.__repr__());
         PySystemState.builtins.__setitem__("_", o);

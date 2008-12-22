@@ -5,7 +5,6 @@ import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
 
@@ -13,6 +12,7 @@ import org.python.core.Py;
 import org.python.core.PyException;
 import org.python.core.PyList;
 import org.python.core.PyObject;
+import org.python.util.Generic;
 
 public class GlobalRef extends WeakReference {
 
@@ -27,7 +27,7 @@ public class GlobalRef extends WeakReference {
 
     private static RefReaperThread reaperThread;
 
-    private static Map objects = new HashMap();
+    private static Map<GlobalRef, GlobalRef> objects = Generic.map();
 
     static {
         initReaperThread();
@@ -122,7 +122,7 @@ public class GlobalRef extends WeakReference {
     }
 
     public static GlobalRef newInstance(PyObject object) {
-        GlobalRef ref = (GlobalRef)objects.get(new GlobalRef(object));
+        GlobalRef ref = objects.get(new GlobalRef(object));
         if (ref == null) {
             ref = new GlobalRef(object);
             objects.put(ref, ref);

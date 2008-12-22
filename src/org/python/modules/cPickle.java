@@ -13,7 +13,6 @@
 package org.python.modules;
 
 import java.math.BigInteger;
-import java.util.HashMap;
 import java.util.Map;
 
 import org.python.core.ClassDictInit;
@@ -44,6 +43,7 @@ import org.python.core.__builtin__;
 import org.python.core.codecs;
 import org.python.core.exceptions;
 import org.python.core.imp;
+import org.python.util.Generic;
 
 /**
  *
@@ -1512,10 +1512,7 @@ public class cPickle implements ClassDictInit {
 
     }
 
-
-
-
-    private static Map<PyObject,PyObject> classmap = new HashMap<PyObject,PyObject>();
+    private static Map<PyObject,PyObject> classmap = Generic.map();
 
     final private static PyObject whichmodule(PyObject cls,
                                               PyObject clsname)
@@ -1705,7 +1702,7 @@ public class cPickle implements ClassDictInit {
 
         private IOFile file;
 
-        public Map<String,PyObject> memo = new HashMap<String,PyObject>();
+        public Map<String,PyObject> memo = Generic.map();
 
         /**
          * For the benefit of persistency modules written using pickle,

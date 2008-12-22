@@ -4,6 +4,7 @@
 package org.python.core.packagecache;
 
 import org.python.core.Options;
+import org.python.util.Generic;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -19,9 +20,6 @@ import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.net.URLConnection;
 import java.security.AccessControlException;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -37,7 +35,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
 
     /**
      * Message log method - hook. This default impl does nothing.
-     * 
+     *
      * @param msg message text
      */
     protected void message(String msg) {
@@ -45,7 +43,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
 
     /**
      * Warning log method - hook. This default impl does nothing.
-     * 
+     *
      * @param warn warning text
      */
     protected void warning(String warn) {
@@ -53,7 +51,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
 
     /**
      * Comment log method - hook. This default impl does nothing.
-     * 
+     *
      * @param msg message text
      */
     protected void comment(String msg) {
@@ -61,7 +59,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
 
     /**
      * Debug log method - hook. This default impl does nothing.
-     * 
+     *
      * @param msg message text
      */
     protected void debug(String msg) {
@@ -72,7 +70,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
      * by {@link #addJarToPackages} in order to filter out classes whose name
      * contains '$' (e.g. inner classes,...). Should be used or overriden by
      * derived classes too. Also to be used in {@link #doDir}.
-     * 
+     *
      * @param name class/pkg name
      * @param pkg if true, name refers to a pkg
      * @return true if name must be filtered out
@@ -87,7 +85,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
      * classes. Should be used or overriden by derived classes too. Also to be
      * used in {@link #doDir}. Access perms can be read with
      * {@link #checkAccess}.
-     * 
+     *
      * @param name class name
      * @param acc class access permissions as int
      * @return true if name must be filtered out
@@ -100,11 +98,11 @@ public abstract class CachedJarsPackageManager extends PackageManager {
 
     private Map<String,JarXEntry> jarfiles;
 
-    private static String vectorToString(List vec) {
-        int n = vec.size();
+    private static String listToString(List<String> list) {
+        int n = list.size();
         StringBuilder ret = new StringBuilder();
         for (int i = 0; i < n; i++) {
-            ret.append((String) vec.get(i));
+            ret.append(list.get(i));
             if (i < n - 1) {
                 ret.append(",");
             }
@@ -114,7 +112,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
 
     // Add a single class from zipFile to zipPackages
     // Only add valid, public classes
-    private void addZipEntry(Map zipPackages, ZipEntry entry,
+    private void addZipEntry(Map<String, List<String>[]> zipPackages, ZipEntry entry,
             ZipInputStream zip) throws IOException {
         String name = entry.getName();
         // System.err.println("entry: "+name);
@@ -142,9 +140,9 @@ public abstract class CachedJarsPackageManager extends PackageManager {
             return;
         }
 
-        List[] vec = (List[]) zipPackages.get(packageName);
+        List<String>[] vec = zipPackages.get(packageName);
         if (vec == null) {
-            vec = new ArrayList[] { new ArrayList(), new ArrayList() };
+            vec = new List[] { Generic.list(), Generic.list() };
             zipPackages.put(packageName, vec);
         }
         int access = checkAccess(zip);
@@ -156,8 +154,8 @@ public abstract class CachedJarsPackageManager extends PackageManager {
     }
 
     // Extract all of the packages in a single jarfile
-    private Map getZipPackages(InputStream jarin) throws IOException {
-        Map zipPackages = new HashMap();
+    private Map<String, String> getZipPackages(InputStream jarin) throws IOException {
+        Map<String, List<String>[]> zipPackages = Generic.map();
 
         ZipInputStream zip = new ZipInputStream(jarin);
 
@@ -168,16 +166,17 @@ public abstract class CachedJarsPackageManager extends PackageManager {
         }
 
         // Turn each vector into a comma-separated String
-        for (Object key : zipPackages.keySet()) {
-            List[] vec = (List[]) zipPackages.get(key);
-            String classes = vectorToString(vec[0]);
+        Map<String, String> transformed = Generic.map();
+        for (String key : zipPackages.keySet()) {
+            List<String>[] vec = zipPackages.get(key);
+            String classes = listToString(vec[0]);
             if (vec[1].size() > 0) {
-                classes += '@' + vectorToString(vec[1]);
+                classes += '@' + listToString(vec[1]);
             }
-            zipPackages.put(key, classes);
+            transformed.put(key, classes);
         }
 
-        return zipPackages;
+        return transformed;
     }
 
     /**
@@ -247,7 +246,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
                 return;
             }
 
-            Map zipPackages = null;
+            Map<String, String> zipPackages = null;
 
             long mtime = 0;
             String jarcanon = null;
@@ -264,7 +263,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
                     jarcanon = jarurl.toString();
                 }
 
-                entry = (JarXEntry) this.jarfiles.get(jarcanon);
+                entry = this.jarfiles.get(jarcanon);
 
                 if ((entry == null || !(new File(entry.cachefile).exists()))
                         && cache) {
@@ -345,7 +344,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
 
     // Read in cache file storing package info for a single .jar
     // Return null and delete this cachefile if it is invalid
-    private Map readCacheFile(JarXEntry entry, String jarcanon) {
+    private Map<String, String> readCacheFile(JarXEntry entry, String jarcanon) {
         String cachefile = entry.cachefile;
         long mtime = entry.mtime;
 
@@ -361,7 +360,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
                 deleteCacheFile(cachefile);
                 return null;
             }
-            Map packs = new HashMap();
+            Map<String, String> packs = Generic.map();
             try {
                 while (true) {
                     String packageName = istream.readUTF();
@@ -406,7 +405,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
      */
     protected void initCache() {
         this.indexModified = false;
-        this.jarfiles = new HashMap();
+        this.jarfiles = Generic.map();
 
         try {
             DataInputStream istream = inOpenIndex();
@@ -419,8 +418,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
                     String jarcanon = istream.readUTF();
                     String cachefile = istream.readUTF();
                     long mtime = istream.readLong();
-                    this.jarfiles
-                            .put(jarcanon, new JarXEntry(cachefile, mtime));
+                    this.jarfiles.put(jarcanon, new JarXEntry(cachefile, mtime));
                 }
             } catch (EOFException eof) {
                 ;
