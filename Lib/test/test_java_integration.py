@@ -331,19 +331,10 @@ class ImportTest(unittest.TestCase):
     def test_bad_input_exception(self):
         self.assertRaises(ValueError, __import__, '')
 
-class ButtonTest(unittest.TestCase):
-
-    def test_setLabel(self):
-        try:
-            b = Button()
-        except HeadlessException:
-            return # can't raise TestSkipped
-        try:
-            b.setLabel = 4
-        except TypeError, e:
-            self.failUnless("can't assign to this attribute in java instance: setLabel" in str(e))
-
 class ColorTest(unittest.TestCase):
+
+    def test_assigning_over_method(self):
+        self.assertRaises(TypeError, setattr, Color.RED, "getRGB", 4)
 
     def test_static_fields(self):
         self.assertEquals(Color(255, 0, 0), Color.RED)
@@ -468,7 +459,6 @@ def test_main():
                               JavaReservedNamesTest,
                               PyReservedNamesTest,
                               ImportTest,
-                              ButtonTest,
                               ColorTest,
                               TreePathTest,
                               BigDecimalTest,
