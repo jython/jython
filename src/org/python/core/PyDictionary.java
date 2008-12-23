@@ -80,7 +80,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
         }
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.dict___init___doc)
     @ExposedNew
     protected final void dict___init__(PyObject[] args, String[] keywords) {
         updateCommon(args, keywords, "dict");
@@ -107,7 +107,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
         return dict___len__();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.dict___len___doc)
     final int dict___len__() {
         return table.size();
     }
@@ -116,6 +116,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
         return dict___nonzero__();
     }
 
+    //XXX: CPython's dict does not define __nonzero__
     @ExposedMethod
     final boolean dict___nonzero__() {
         return table.size() != 0;
@@ -129,7 +130,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
         return table.get(key);
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.dict___getitem___doc)
     protected final PyObject dict___getitem__(PyObject key) {
         PyObject result = table.get(key);
         if (result != null) {
@@ -151,7 +152,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
         dict___setitem__(key,value);
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.dict___setitem___doc)
     final void dict___setitem__(PyObject key, PyObject value)  {
         table.put(key, value);
     }
@@ -160,7 +161,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
         dict___delitem__(key);
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.dict___delitem___doc)
     final void dict___delitem__(PyObject key) {
         Object ret = table.remove(key);
         if (ret == null)
@@ -171,7 +172,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
         return dict___iter__();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.dict___iter___doc)
     final PyObject dict___iter__() {
         return iterkeys();
     }
@@ -180,7 +181,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
         return dict_toString();
     }
 
-    @ExposedMethod(names = {"__repr__", "__str__"})
+    @ExposedMethod(names = {"__repr__", "__str__"}, doc = BuiltinDocs.dict___str___doc)
     final String dict_toString() {
         ThreadState ts = Py.getThreadState();
         if (!ts.enterRepr(this)) {
@@ -208,7 +209,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
         return dict___eq__(ob_other);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.dict___eq___doc)
     final PyObject dict___eq__(PyObject ob_other) {               
         PyType thisType = getType();
         PyType otherType = ob_other.getType();
@@ -239,14 +240,14 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
         return dict___ne__(ob_other);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.dict___ne___doc)
     final PyObject dict___ne__(PyObject ob_other) {
         PyObject eq_result = __eq__(ob_other);
         if (eq_result == null) return null;
         return eq_result.__not__();
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.dict___lt___doc)
     final PyObject dict___lt__(PyObject ob_other){
     	int result = __cmp__(ob_other);
     	if(result == -2){
@@ -255,7 +256,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
     	return result < 0 ? Py.True : Py.False;
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.dict___gt___doc)
     final PyObject dict___gt__(PyObject ob_other){
     	int result = __cmp__(ob_other);
     	if(result == -2){
@@ -264,7 +265,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
     	return result > 0 ? Py.True : Py.False;
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.dict___le___doc)
     final PyObject dict___le__(PyObject ob_other){
     	int result = __cmp__(ob_other);
     	if(result == -2){
@@ -273,7 +274,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
     	return result <= 0 ? Py.True : Py.False;
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.dict___ge___doc)
     final PyObject dict___ge__(PyObject ob_other){
     	int result = __cmp__(ob_other);
     	if(result == -2){
@@ -286,7 +287,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
         return dict___cmp__(ob_other);
     }
 
-    @ExposedMethod(type = MethodType.CMP)
+    @ExposedMethod(type = MethodType.CMP, doc = BuiltinDocs.dict___cmp___doc)
     final int dict___cmp__(PyObject ob_other) {
         PyType thisType = getType();
         PyType otherType = ob_other.getType();
@@ -337,7 +338,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
         return dict_has_key(key);
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.dict_has_key_doc)
     final boolean dict_has_key(PyObject key) {
         return table.containsKey(key);
     }
@@ -346,7 +347,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
         return dict___contains__(o);
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.dict___contains___doc)
     final boolean dict___contains__(PyObject o) {
         return dict_has_key(o);
     }
@@ -363,7 +364,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
         return dict_get(key,default_object);
     }
 
-    @ExposedMethod(defaults = "Py.None")
+    @ExposedMethod(defaults = "Py.None", doc = BuiltinDocs.dict_get_doc)
     final PyObject dict_get(PyObject key, PyObject default_object) {
         PyObject o = table.get(key);
         if (o == null)
@@ -389,7 +390,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
         return dict_copy();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.dict_copy_doc)
     final PyDictionary dict_copy() {
         return new PyDictionary(table); // no need to clone()
     }
@@ -401,7 +402,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
         dict_clear();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.dict_clear_doc)
     final void dict_clear() {
         table.clear();
     }
@@ -414,7 +415,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
         dict_update(new PyObject[] {other}, Py.NoKeywords);
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.dict_update_doc)
     final void dict_update(PyObject[] args, String[] keywords) {
         updateCommon(args, keywords, "update");
     }
@@ -516,6 +517,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
         return dict_setdefault(key,failobj);
     }
 
+    //XXX: needs __doc__ but CPython does not define setdefault
     @ExposedMethod(defaults = "Py.None")
     final PyObject dict_setdefault(PyObject key, PyObject failobj) {
         PyObject oldValue = table.putIfAbsent(key, failobj);
@@ -526,6 +528,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
         }
     }
 
+    //XXX: needs __doc__ but CPython does not define setifabsent
     @ExposedMethod(defaults = "Py.None")
     final PyObject dict_setifabsent(PyObject key, PyObject failobj) {
         PyObject oldValue = table.putIfAbsent(key, failobj);
@@ -553,7 +556,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
         return dict_pop(key, defaultValue);
     }
 
-    @ExposedMethod(defaults = "null")
+    @ExposedMethod(defaults = "null", doc = BuiltinDocs.dict_pop_doc)
     final PyObject dict_pop(PyObject key, PyObject defaultValue) {
         if (!table.containsKey(key)) {
             if (defaultValue == null) {
@@ -573,7 +576,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
         return dict_popitem();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.dict_popitem_doc)
     final PyObject dict_popitem() {
         Iterator it = table.entrySet().iterator();
         if (!it.hasNext())
@@ -593,7 +596,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
         return dict_items();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.dict_items_doc)
     final PyList dict_items() {
         List<PyObject> list = new ArrayList<PyObject>(table.size());
         for (Entry<PyObject, PyObject> entry : table.entrySet()) {
@@ -609,12 +612,12 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
         return dict_keys();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.dict_keys_doc)
     final PyList dict_keys() {
         return new PyList(new ArrayList<PyObject>(table.keySet()));
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.dict_values_doc)
     final PyList dict_values() {
         return new PyList(new ArrayList<PyObject>(table.values()));
     }
@@ -626,7 +629,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
         return dict_iteritems();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.dict_iteritems_doc)
     final PyObject dict_iteritems() {
         return new ItemsIter(table.entrySet());
     }
@@ -638,7 +641,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
         return dict_iterkeys();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.dict_iterkeys_doc)
     final PyObject dict_iterkeys() {
         return new ValuesIter(table.keySet());
     }
@@ -650,7 +653,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
         return dict_itervalues();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.dict_itervalues_doc)
     final PyObject dict_itervalues() {
         return new ValuesIter(table.values());
     }
@@ -659,7 +662,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
         return dict___hash__();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.dict___hash___doc)
     final int dict___hash__() {
         throw Py.TypeError(String.format("unhashable type: '%.200s'", getType().fastGetName()));
     }
