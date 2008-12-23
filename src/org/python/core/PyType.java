@@ -421,6 +421,7 @@ public class PyType extends PyObject implements Serializable {
         return base.getLayout();
     }
 
+    //XXX: needs __doc__
     @ExposedGet(name = "__base__")
     public PyObject getBase() {
         if (base == null)
@@ -428,6 +429,7 @@ public class PyType extends PyObject implements Serializable {
         return base;
     }
 
+    //XXX: needs __doc__
     @ExposedGet(name = "__bases__")
     public PyObject getBases() {
         return new PyTuple(bases);
@@ -570,7 +572,7 @@ public class PyType extends PyObject implements Serializable {
         return new PyLong(tp_flags);
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.type___subclasses___doc)
     public synchronized final PyObject type___subclasses__() {
         PyList result = new PyList();
         cleanup_subclasses();
@@ -681,7 +683,7 @@ public class PyType extends PyObject implements Serializable {
         return Py.TypeError(msg.toString());
     }
 
-    @ExposedMethod(defaults = "null")
+    @ExposedMethod(defaults = "null", doc = BuiltinDocs.type_mro_doc)
     final PyList type_mro(PyObject o) {
         if (o == null) {
             return new PyList(compute_mro());
@@ -1029,7 +1031,7 @@ public class PyType extends PyObject implements Serializable {
         return addFromClass(c);
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.type___getattribute___doc)
     final PyObject type___getattribute__(PyObject name) {
         String n = asName(name);
         PyObject ret = type___findattr_ex__(n);
@@ -1081,7 +1083,7 @@ public class PyType extends PyObject implements Serializable {
         return true;
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.type___setattr___doc)
     final void type___setattr__(PyObject name, PyObject value) {
         type___setattr__(asName(name), value);
     }
@@ -1127,7 +1129,7 @@ public class PyType extends PyObject implements Serializable {
         type___delattr__(name);
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.type___delattr___doc)
     final void type___delattr__(PyObject name) {
         type___delattr__(asName(name));
     }
@@ -1175,7 +1177,7 @@ public class PyType extends PyObject implements Serializable {
         return type___call__(args, keywords);
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.type___call___doc)
     final PyObject type___call__(PyObject[] args, String[] keywords) {
         PyObject new_ = lookup("__new__");
         if (!instantiable || new_ == null) {
@@ -1292,7 +1294,7 @@ public class PyType extends PyObject implements Serializable {
         return numSlots;
     }
 
-    @ExposedMethod(names = {"__repr__", "__str__"})
+    @ExposedMethod(names = {"__repr__", "__str__"}, doc = BuiltinDocs.type___str___doc)
     public String type_toString() {
         String kind;
         if (!builtin) {
