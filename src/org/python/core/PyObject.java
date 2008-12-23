@@ -26,8 +26,9 @@ public class PyObject implements Serializable {
 
     public static final PyType TYPE = PyType.fromClass(PyObject.class);
 
+    //XXX: in CPython object.__new__ has a doc string...
     @ExposedNew
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.object___init___doc)
     final void object___init__(PyObject[] args, String[] keywords) {
 // XXX: attempted fix for object(foo=1), etc
 // XXX: this doesn't work for metaclasses, for some reason
@@ -70,6 +71,7 @@ public class PyObject implements Serializable {
         return objtype;
     }
 
+    //XXX: needs doc
     @ExposedGet(name = "__doc__")
     public PyObject getDoc() {
         PyObject d = fastGetDict();
@@ -156,7 +158,10 @@ public class PyObject implements Serializable {
      * configure the string representation of a <code>PyObject</code> is to
      * override the standard Java <code>toString</code> method.
      **/
-    @ExposedMethod(names = "__str__")
+    // counter-intuitively exposing this as __str__, otherwise stack overflow
+    // occurs during regression testing.  XXX: more detail for this comment
+    // is needed.
+    @ExposedMethod(names = "__str__", doc = BuiltinDocs.object___str___doc)
     public PyString __repr__() {
         return new PyString(toString());
     }
@@ -165,7 +170,7 @@ public class PyObject implements Serializable {
         return object_toString();
     }
 
-    @ExposedMethod(names = "__repr__")
+    @ExposedMethod(names = "__repr__", doc = BuiltinDocs.object___repr___doc)
     final String object_toString() {
         if (getType() == null) {
             return "unknown object";
@@ -211,7 +216,7 @@ public class PyObject implements Serializable {
         return object___hash__();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.object___hash___doc)
     final int object___hash__() {
         return System.identityHashCode(this);
     }
@@ -3660,7 +3665,7 @@ public class PyObject implements Serializable {
         throw Py.AttributeError("object internal __delete__ impl is abstract");
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.object___getattribute___doc)
     final PyObject object___getattribute__(PyObject arg0) {
         String name = asName(arg0);
         PyObject ret = object___findattr__(name);
@@ -3697,7 +3702,7 @@ public class PyObject implements Serializable {
         return null;
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.object___setattr___doc)
     final void object___setattr__(PyObject name, PyObject value) {
         hackCheck("__setattr__");
         object___setattr__(asName(name), value);
@@ -3733,7 +3738,7 @@ public class PyObject implements Serializable {
         noAttributeError(name);
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.object___delattr___doc)
     final void object___delattr__(PyObject name) {
         hackCheck("__delattr__");
         object___delattr__(asName(name));
@@ -3806,7 +3811,7 @@ public class PyObject implements Serializable {
         return object___reduce__();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.object___reduce___doc)
     final PyObject object___reduce__() {
         return object___reduce_ex__(0);
     }
@@ -3826,7 +3831,7 @@ public class PyObject implements Serializable {
         return object___reduce_ex__(0);
     }
 
-    @ExposedMethod(defaults = "0")
+    @ExposedMethod(defaults = "0", doc = BuiltinDocs.object___reduce___doc)
     final PyObject object___reduce_ex__(int arg) {
         PyObject res;
 
