@@ -159,7 +159,7 @@ public class GrammarActions {
             return new ArrayList<stmt>();
         }
         List <stmt> s = new ArrayList<stmt>();
-        s.add((stmt)elif);
+        s.add(castStmt(elif));
         return s;
     }
 
