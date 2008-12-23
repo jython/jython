@@ -92,7 +92,7 @@ public class PyString extends PyBaseString
         return str___str__();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.str___str___doc) 
     final PyString str___str__() {
         if (getClass() == PyString.class) {
             return this;
@@ -104,6 +104,7 @@ public class PyString extends PyBaseString
         return str___unicode__();
     }
 
+    //XXX: need doc
     @ExposedMethod
     final PyUnicode str___unicode__() {
         return new PyUnicode(this);
@@ -113,7 +114,7 @@ public class PyString extends PyBaseString
         return str___len__();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.str___len___doc)
     final int str___len__() {
         return string.length();
     }
@@ -122,6 +123,7 @@ public class PyString extends PyBaseString
         return string;
     }
 
+    //XXX: need doc
     @ExposedMethod
     final String str_toString() {
         return toString();
@@ -141,7 +143,7 @@ public class PyString extends PyBaseString
         return str___repr__();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.str___repr___doc)
     final PyString str___repr__() {
         return new PyString(encode_UnicodeEscape(string, true));
     }
@@ -471,7 +473,7 @@ public class PyString extends PyBaseString
         return false;
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.str___getitem___doc)
     final PyObject str___getitem__(PyObject index) {
         PyObject ret = seq___finditem__(index);
         if (ret == null) {
@@ -480,6 +482,7 @@ public class PyString extends PyBaseString
         return ret;
     }
     
+    //XXX: need doc
     @ExposedMethod(defaults = "null")
     final PyObject str___getslice__(PyObject start, PyObject stop, PyObject step) {
         return seq___getslice__(start, stop, step);
@@ -502,7 +505,7 @@ public class PyString extends PyBaseString
         return str___eq__(other);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.str___eq___doc)
     final PyObject str___eq__(PyObject other) {
         String s = coerce(other);
         if (s == null)
@@ -514,7 +517,7 @@ public class PyString extends PyBaseString
         return str___ne__(other);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.str___ne___doc)
     final PyObject str___ne__(PyObject other) {
         String s = coerce(other);
         if (s == null)
@@ -526,7 +529,7 @@ public class PyString extends PyBaseString
         return str___lt__(other);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.str___lt___doc)
     final PyObject str___lt__(PyObject other){
         String s = coerce(other);
         if (s == null)
@@ -538,7 +541,7 @@ public class PyString extends PyBaseString
         return str___le__(other);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.str___le___doc)
     final PyObject str___le__(PyObject other){
         String s = coerce(other);
         if (s == null)
@@ -550,7 +553,7 @@ public class PyString extends PyBaseString
         return str___gt__(other);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.str___gt___doc)
     final PyObject str___gt__(PyObject other){
         String s = coerce(other);
         if (s == null)
@@ -562,7 +565,7 @@ public class PyString extends PyBaseString
         return str___ge__(other);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.str___ge___doc)
     final PyObject str___ge__(PyObject other){
         String s = coerce(other);
         if (s == null)
@@ -580,7 +583,7 @@ public class PyString extends PyBaseString
         return str___hash__();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.str___hash___doc)
     final int str___hash__() {
         if (cached_hashcode == 0)
             cached_hashcode = string.hashCode();
@@ -651,7 +654,7 @@ public class PyString extends PyBaseString
         return str___contains__(o);
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.str___contains___doc)
     final boolean str___contains__(PyObject o) {
         if (!(o instanceof PyString))
             throw Py.TypeError("'in <string>' requires string as left operand");
@@ -683,7 +686,7 @@ public class PyString extends PyBaseString
         return str___mul__(o);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.str___mul___doc)
     final PyObject str___mul__(PyObject o) {
         if (!o.isIndex()) {
             return null;
@@ -696,7 +699,7 @@ public class PyString extends PyBaseString
         return str___rmul__(o);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.str___rmul___doc)
     final PyObject str___rmul__(PyObject o) {
         if (!o.isIndex()) {
             return null;
@@ -708,7 +711,7 @@ public class PyString extends PyBaseString
         return str___add__(other);
     }
     
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.str___add___doc)
     final PyObject str___add__(PyObject other) {
         if (other instanceof PyUnicode) {
             return decode().__add__(other);
@@ -720,7 +723,7 @@ public class PyString extends PyBaseString
         return null;
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.str___getnewargs___doc)
     final PyTuple str___getnewargs__() {
         return new PyTuple(new PyString(this.string));
     }
@@ -733,7 +736,7 @@ public class PyString extends PyBaseString
         return str___mod__(other);
     }
     
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.str___mod___doc)
     public PyObject str___mod__(PyObject other){
         StringFormatter fmt = new StringFormatter(string, false);
         return fmt.format(other);
@@ -904,7 +907,7 @@ public class PyString extends PyBaseString
         return str_lower();
     }
     
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.str_lower_doc)
     final String str_lower() {
         return string.toLowerCase();
     }
@@ -913,7 +916,7 @@ public class PyString extends PyBaseString
         return str_upper();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.str_upper_doc)
     final String str_upper() {
         return string.toUpperCase();
     }
@@ -922,7 +925,7 @@ public class PyString extends PyBaseString
         return str_title();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.str_title_doc)
     final String str_title() {
         char[] chars = string.toCharArray();
         int n = chars.length;
@@ -949,7 +952,7 @@ public class PyString extends PyBaseString
         return str_swapcase();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.str_swapcase_doc)
     final String str_swapcase() {
         char[] chars = string.toCharArray();
         int n=chars.length;
@@ -973,7 +976,7 @@ public class PyString extends PyBaseString
         return str_strip(sep);
     }
 
-    @ExposedMethod(defaults = "null")
+    @ExposedMethod(defaults = "null", doc = BuiltinDocs.str_strip_doc)
     final String str_strip(String sep) {
         char[] chars = string.toCharArray();
         int n=chars.length;
@@ -1009,7 +1012,7 @@ public class PyString extends PyBaseString
         return str_lstrip(sep);
     }
 
-    @ExposedMethod(defaults = "null")
+    @ExposedMethod(defaults = "null", doc = BuiltinDocs.str_lstrip_doc)
     final String str_lstrip(String sep) {
         char[] chars = string.toCharArray();
         int n=chars.length;
@@ -1028,7 +1031,7 @@ public class PyString extends PyBaseString
         return str_rstrip(sep);
     }
     
-    @ExposedMethod(defaults = "null")
+    @ExposedMethod(defaults = "null", doc = BuiltinDocs.str_rstrip_doc)
     final String str_rstrip(String sep) {
         char[] chars = string.toCharArray();
         int n=chars.length;
@@ -1056,7 +1059,7 @@ public class PyString extends PyBaseString
         return str_split(sep, maxsplit);
     }
 
-    @ExposedMethod(defaults = {"null", "-1"})
+    @ExposedMethod(defaults = {"null", "-1"}, doc = BuiltinDocs.str_split_doc)
     final PyList str_split(String sep, int maxsplit) {
         if (sep != null) {
             if (sep.length() == 0) {
@@ -1107,7 +1110,7 @@ public class PyString extends PyBaseString
         return str_rsplit(sep, maxsplit);
     }
 
-    @ExposedMethod(defaults = {"null", "-1"})
+    @ExposedMethod(defaults = {"null", "-1"}, doc = BuiltinDocs.str_rsplit_doc)
     final PyList str_rsplit(String sep, int maxsplit) {
         if (sep != null) {
             if (sep.length() == 0) {
@@ -1169,7 +1172,7 @@ public class PyString extends PyBaseString
         return str_partition(sepObj);
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.str_partition_doc)
     final PyTuple str_partition(PyObject sepObj) {
         String sep;
 
@@ -1220,7 +1223,7 @@ public class PyString extends PyBaseString
         return str_rpartition(sepObj);
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.str_rpartition_doc)
     final PyTuple str_rpartition(PyObject sepObj) {
         String sep;
 
@@ -1338,7 +1341,7 @@ public class PyString extends PyBaseString
         return str_splitlines(keepends);
     }
 
-    @ExposedMethod(defaults = "false")
+    @ExposedMethod(defaults = "false", doc = BuiltinDocs.str_splitlines_doc)
     final PyList str_splitlines(boolean keepends) {
         PyList list = new PyList();
 
@@ -1387,7 +1390,7 @@ public class PyString extends PyBaseString
         return str_index(sub, start, Py.newInteger(end));
     }
 
-    @ExposedMethod(defaults = {"0", "null"})
+    @ExposedMethod(defaults = {"0", "null"}, doc = BuiltinDocs.str_index_doc)
     final int str_index(String sub, int start, PyObject end) {
         int index = str_find(sub, start, end);
         if (index == -1)
@@ -1407,7 +1410,7 @@ public class PyString extends PyBaseString
         return str_rindex(sub, start, Py.newInteger(end));
     }
 
-    @ExposedMethod(defaults = {"0", "null"})
+    @ExposedMethod(defaults = {"0", "null"}, doc = BuiltinDocs.str_rindex_doc)
     final int str_rindex(String sub, int start, PyObject end) {
         int index = str_rfind(sub, start, end);
         if(index == -1)
@@ -1427,7 +1430,7 @@ public class PyString extends PyBaseString
         return str_count(sub, start, Py.newInteger(end));
     }
     
-    @ExposedMethod(defaults = {"0", "null"})
+    @ExposedMethod(defaults = {"0", "null"}, doc = BuiltinDocs.str_count_doc)
     final int str_count(String sub, int start, PyObject end) {
         int[] indices = translateIndices(start, end);
         int n = sub.length();
@@ -1461,7 +1464,7 @@ public class PyString extends PyBaseString
         return str_find(sub, start, Py.newInteger(end));
     }
 
-    @ExposedMethod(defaults = {"0", "null"})
+    @ExposedMethod(defaults = {"0", "null"}, doc = BuiltinDocs.str_find_doc)
     final int str_find(String sub, int start, PyObject end) {
         int[] indices = translateIndices(start, end);
         int index = string.indexOf(sub, indices[0]);
@@ -1483,7 +1486,7 @@ public class PyString extends PyBaseString
         return str_rfind(sub, start, Py.newInteger(end));
     }
 
-    @ExposedMethod(defaults = {"0", "null"})
+    @ExposedMethod(defaults = {"0", "null"}, doc = BuiltinDocs.str_rfind_doc)
     final int str_rfind(String sub, int start, PyObject end) {
         int[] indices = translateIndices(start, end);
         int index = string.lastIndexOf(sub, indices[1] - sub.length());
@@ -1690,7 +1693,7 @@ public class PyString extends PyBaseString
         return str_ljust(width, padding);
     }
     
-    @ExposedMethod(defaults="null")
+    @ExposedMethod(defaults="null", doc = BuiltinDocs.str_ljust_doc)
     final String str_ljust(int width, String fillchar) {
         char pad = parse_fillchar("ljust", fillchar);
         int n = width-string.length();
@@ -1703,7 +1706,7 @@ public class PyString extends PyBaseString
         return str_rjust(width, null);
     }
 
-    @ExposedMethod(defaults="null")
+    @ExposedMethod(defaults="null", doc = BuiltinDocs.str_rjust_doc)
     final String str_rjust(int width, String fillchar) {
         char pad = parse_fillchar("rjust", fillchar);
         int n = width-string.length();
@@ -1716,7 +1719,7 @@ public class PyString extends PyBaseString
         return str_center(width, null);
     }
 
-    @ExposedMethod(defaults="null")
+    @ExposedMethod(defaults="null", doc = BuiltinDocs.str_center_doc)
     final String str_center(int width, String fillchar) {
         char pad = parse_fillchar("center", fillchar);
         int n = width-string.length();
@@ -1733,7 +1736,7 @@ public class PyString extends PyBaseString
         return str_zfill(width);
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.str_zfill_doc)
     final String str_zfill(int width) {
         String s = string;
         int n = s.length();
@@ -1767,7 +1770,7 @@ public class PyString extends PyBaseString
         return str_expandtabs(tabsize);
     }
 
-    @ExposedMethod(defaults = "8")
+    @ExposedMethod(defaults = "8", doc = BuiltinDocs.str_expandtabs_doc)
     final String str_expandtabs(int tabsize) {
         String s = string;
         StringBuilder buf = new StringBuilder((int)(s.length()*1.5));
@@ -1798,7 +1801,7 @@ public class PyString extends PyBaseString
         return str_capitalize();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.str_capitalize_doc)
     final String str_capitalize() {
         if (string.length() == 0)
             return string;
@@ -1806,7 +1809,7 @@ public class PyString extends PyBaseString
         return first.concat(string.substring(1).toLowerCase());
     }
 
-    @ExposedMethod(defaults = "null")
+    @ExposedMethod(defaults = "null", doc = BuiltinDocs.str_replace_doc)
     final PyString str_replace(PyObject oldPiece, PyObject newPiece, PyObject maxsplit) {
         if(!(oldPiece instanceof PyString) || !(newPiece instanceof PyString)) {
             throw Py.TypeError("str or unicode required for replace");
@@ -1853,7 +1856,7 @@ public class PyString extends PyBaseString
         return str_join(seq);
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.str_join_doc)
     final PyString str_join(PyObject obj) {
         PySequence seq = fastSequence(obj, "");
         int seqLen = seq.__len__();
@@ -1987,7 +1990,7 @@ public class PyString extends PyBaseString
         return str_startswith(prefix, start, Py.newInteger(end));
     }
 
-    @ExposedMethod(defaults = {"0", "null"})
+    @ExposedMethod(defaults = {"0", "null"}, doc = BuiltinDocs.str_startswith_doc)
     final boolean str_startswith(PyObject prefix, int start, PyObject end) {
         int[] indices = translateIndices(start, end);
         
@@ -2029,7 +2032,7 @@ public class PyString extends PyBaseString
         return str_endswith(suffix, start, Py.newInteger(end));
     }
 
-    @ExposedMethod(defaults = {"0", "null"})
+    @ExposedMethod(defaults = {"0", "null"}, doc = BuiltinDocs.str_endswith_doc)
     final boolean str_endswith(PyObject suffix, int start, PyObject end) {
         int[] indices = translateIndices(start, end);
 
@@ -2097,7 +2100,7 @@ public class PyString extends PyBaseString
         return str_translate(table, deletechars);
     }
 
-    @ExposedMethod(defaults = "null")
+    @ExposedMethod(defaults = "null", doc = BuiltinDocs.str_translate_doc)
     final String str_translate(String table, String deletechars) {
         if (table.length() != 256)
             throw Py.ValueError(
@@ -2161,7 +2164,7 @@ public class PyString extends PyBaseString
         return str_islower();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.str_islower_doc)
     final boolean str_islower() {
         int n = string.length();
 
@@ -2185,7 +2188,7 @@ public class PyString extends PyBaseString
         return str_isupper();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.str_isupper_doc)
     final boolean str_isupper() {
         int n = string.length();
 
@@ -2209,7 +2212,7 @@ public class PyString extends PyBaseString
         return str_isalpha();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.str_isalpha_doc)
     final boolean str_isalpha() {
         int n = string.length();
 
@@ -2233,7 +2236,7 @@ public class PyString extends PyBaseString
         return str_isalnum();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.str_isalnum_doc)
     final boolean str_isalnum() {
         int n = string.length();
 
@@ -2266,7 +2269,7 @@ public class PyString extends PyBaseString
         return str_isdecimal();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.unicode_isdecimal_doc)
     final boolean str_isdecimal() {
         int n = string.length();
 
@@ -2297,7 +2300,7 @@ public class PyString extends PyBaseString
         return str_isdigit();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.str_isdigit_doc)
     final boolean str_isdigit() {
         int n = string.length();
 
@@ -2321,7 +2324,7 @@ public class PyString extends PyBaseString
         return str_isnumeric();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.unicode_isnumeric_doc)
     final boolean str_isnumeric() {
         int n = string.length();
 
@@ -2351,7 +2354,7 @@ public class PyString extends PyBaseString
         return str_istitle();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.str_istitle_doc)
     final boolean str_istitle() {
         int n = string.length();
 
@@ -2387,7 +2390,7 @@ public class PyString extends PyBaseString
         return str_isspace();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.str_isspace_doc)
     final boolean str_isspace() {
         int n = string.length();
 
@@ -2411,7 +2414,8 @@ public class PyString extends PyBaseString
         return str_isunicode();
     }
 
-    @ExposedMethod
+    //XXX: need doc
+    @ExposedMethod/*(doc = BuiltinDocs.unicode_isunicode_doc)*/
     final boolean str_isunicode() {
         int n = string.length();
         for (int i = 0; i < n; i++) {
@@ -2434,7 +2438,7 @@ public class PyString extends PyBaseString
         return str_encode(encoding, errors);
     }
 
-    @ExposedMethod(defaults = {"null", "null"})
+    @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.str_encode_doc)
     final String str_encode(String encoding, String errors) {
         return codecs.encode(this, encoding, errors);
     }
@@ -2451,7 +2455,7 @@ public class PyString extends PyBaseString
         return str_decode(encoding, errors);
     }
 
-    @ExposedMethod(defaults = {"null", "null"})
+    @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.str_decode_doc)
     final PyObject str_decode(String encoding, String errors) {
         return codecs.decode(this, encoding, errors);
     }
