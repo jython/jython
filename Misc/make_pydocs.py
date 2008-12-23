@@ -47,6 +47,14 @@ file,
 complex,
 opt('bool'),
 classmethod,
+#buffer,
+# +
+type(f),
+type(m),
+type(f.func_code),
+type(sys._getframe()),
+type(tb),
+#type(slice),
 ]
 
 outfile = open("BuiltinDocs.java", "w")
