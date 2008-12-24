@@ -564,7 +564,7 @@ def _to_timeval(seconds):
         floor = long(seconds)
     except TypeError:
         raise TypeError('an integer is required')
-    if floor < _time_t.MIN_VALUE or floor > _time_t.MAX_VALUE:
+    if not _time_t.MIN_VALUE <= floor <= _time_t.MAX_VALUE:
         raise OverflowError('long int too large to convert to int')
 
     # usec can't exceed 1000000

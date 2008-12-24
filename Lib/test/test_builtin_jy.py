@@ -17,7 +17,7 @@ class BuiltinTest(unittest.TestCase):
         self.assert_(not hasattr(Foo(), 'bar'))
 
     def test_dir(self):
-        # for http://bugs.jython.org/issue1063
+        # for http://bugs.jython.org/issue1196
         class Foo(object):
             def __getattribute__(self, name):
                 return name
