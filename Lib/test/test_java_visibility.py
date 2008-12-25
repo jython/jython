@@ -91,9 +91,18 @@ class JavaClassTest(unittest.TestCase):
                 'java.lang.Class bean methods should be visible on instances')
         self.assertEquals(3, len(HashMap.getInterfaces()))
 
+class NumberCoercionTest(unittest.TestCase):
+    def test_int_coercion(self):
+        from org.python.tests import Coercions
+        c = Coercions()
+        self.assertEquals("5", c.takeInt(5))
+        self.assertEquals("15", c.takeInteger(15))
+        self.assertEquals("150", c.takeNumber(150))
+
 def test_main():
     test_support.run_unittest(VisibilityTest,
-            JavaClassTest)
+            JavaClassTest,
+            NumberCoercionTest)
 
 if __name__ == "__main__":
     test_main()

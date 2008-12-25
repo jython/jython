@@ -5,11 +5,13 @@ import re
 
 from test import test_support
 from java.awt import (Dimension, Component, Rectangle, Button, Color,
-                      HeadlessException)
+        HeadlessException)
 from java.util import ArrayList, HashMap, Hashtable, StringTokenizer, Vector
 from java.io import FileOutputStream, FileWriter, OutputStreamWriter
                      
-from java.lang import Runnable, Thread, ThreadGroup, System, Runtime, Math, Byte
+from java.lang import (Boolean, Integer, Object, String, Runnable,
+        Thread, ThreadGroup, System, Runtime, Math, Byte)
+from javax.swing.table import AbstractTableModel
 from javax.swing.tree import TreePath
 from java.math import BigDecimal
 
@@ -150,21 +152,21 @@ class PyObjectCmpTest(unittest.TestCase):
         v.indexOf(X())
 
 class IOTest(unittest.TestCase):
-
     def test_io_errors(self):
         "Check that IOException isn't mangled into an IOError"
         from java.io import UnsupportedEncodingException
-        self.assertRaises(UnsupportedEncodingException, OutputStreamWriter, 
-                System.out, "garbage")
-    
+        self.assertRaises(UnsupportedEncodingException, OutputStreamWriter, System.out, "garbage")
+        self.assertRaises(IOError, OutputStreamWriter, System.out, "garbage")
+
     def test_fileio_error(self):
         from java.io import FileInputStream, FileNotFoundException
         self.assertRaises(FileNotFoundException, FileInputStream, "garbage")
 
-    def test_unsupported(self):
+    def test_unsupported_tell(self):
         from org.python.core.util import FileUtil
         fp = FileUtil.wrap(System.out)
         self.assertRaises(IOError, fp.tell)
+
 
 class VectorTest(unittest.TestCase):
 
@@ -354,7 +356,34 @@ class TreePathTest(unittest.TestCase):
         treePath = TreePath([1,2,3])
         self.assertEquals(len(treePath.path), 3, "Object[] not passed correctly")
         self.assertEquals(TreePath(treePath.path).path, treePath.path, "Object[] not passed and returned correctly")
-            
+
+class TableModelTest(unittest.TestCase):
+    def test_column_classes(self):
+        class TableModel(AbstractTableModel):
+            columnNames = "First Name", "Last Name","Sport","# of Years","Vegetarian"
+            data = [("Mary", "Campione", "Snowboarding", 5, False)]
+
+            def getColumnCount(self):
+                return len(self.columnNames)
+                   
+            def getRowCount(self):
+                return len(self.data)
+                
+            def getColumnName(self, col):
+                return self.columnNames[col]
+
+            def getValueAt(self, row, col):
+                return self.data[row][col]
+                
+            def getColumnClass(self, c):
+                return Object.getClass(self.getValueAt(0, c))
+                
+            def isCellEditable(self, row, col):
+                return col >= 2
+        model = TableModel()
+        for i, expectedClass in enumerate([String, String, String, Integer, Boolean]):
+            self.assertEquals(expectedClass, model.getColumnClass(i))
+
 class BigDecimalTest(unittest.TestCase):
     
     def test_coerced_bigdecimal(self):
@@ -460,6 +489,7 @@ def test_main():
                               PyReservedNamesTest,
                               ImportTest,
                               ColorTest,
+                              TableModelTest,
                               TreePathTest,
                               BigDecimalTest,
                               MethodInvTest,
