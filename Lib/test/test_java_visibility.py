@@ -1,5 +1,6 @@
 import unittest
 from test import test_support
+from java.util import HashMap
 from org.python.tests import InterfaceCombination, Invisible, SubVisible, Visible, VisibleOverride
 from org.python.tests import VisibilityResults as Results
 
@@ -82,8 +83,17 @@ class VisibilityTest(unittest.TestCase):
         self.assertFalse(hasattr(i, "internalMethod"),
                 "methods from private interfaces shouldn't be visible on a private class")
 
+class JavaClassTest(unittest.TestCase):
+    def test_class_methods_visible(self):
+        self.assertFalse(HashMap.isInterface(),
+                'java.lang.Class methods should be visible on Class instances')
+        self.assertFalse(HashMap.interface,
+                'java.lang.Class bean methods should be visible on instances')
+        self.assertEquals(3, len(HashMap.getInterfaces()))
+
 def test_main():
-    test_support.run_unittest(VisibilityTest)
+    test_support.run_unittest(VisibilityTest,
+            JavaClassTest)
 
 if __name__ == "__main__":
     test_main()
