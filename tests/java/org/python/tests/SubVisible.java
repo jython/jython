@@ -1,7 +1,6 @@
 package org.python.tests;
 
 public class SubVisible extends Visible implements VisibleOverride {
-
     /**
      * Overrides {@link Visible#visibleStatic(int)}
      */

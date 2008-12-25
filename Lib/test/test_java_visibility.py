@@ -1,7 +1,8 @@
 import unittest
 from test import test_support
 from java.util import HashMap
-from org.python.tests import InterfaceCombination, Invisible, SubVisible, Visible, VisibleOverride
+from org.python.tests import (InterfaceCombination, Invisible, OnlySubclassable, SubVisible,
+        Visible, VisibleOverride)
 from org.python.tests import VisibilityResults as Results
 
 class VisibilityTest(unittest.TestCase):
@@ -10,6 +11,8 @@ class VisibilityTest(unittest.TestCase):
             self.assert_(not item.startswith("package"))
             self.assert_(not item.startswith("private"))
             self.assert_(not item.startswith("protected"))
+        self.assertRaises(TypeError, Invisible,
+                "Calling a Java class with package protected constructors should raise a TypeError")
 
     def test_protected_from_python_subclass(self):
         class SubVisible(Visible):
@@ -24,6 +27,16 @@ class VisibilityTest(unittest.TestCase):
         self.assertEquals(Results.PROTECTED_METHOD, s.protectedMethod(0))
         self.assertEquals(Results.OVERLOADED_PROTECTED_METHOD, s.protectedMethod('foo'))
         self.assertEquals(Results.UNUSED, SubVisible(Results.UNUSED).visibleField)
+        self.assertRaises(TypeError, OnlySubclassable,
+                "Calling a Java class with protected constructors should raise a TypeError")
+        class SubSubclassable(OnlySubclassable):
+            pass
+        sub = SubSubclassable()
+        self.assert_(not sub.filledInByConstructor == 0,
+                '''Creating SubSubclassable should call OnlySubclassable's constructor to fill in
+                filledInByConstructor''')
+
+
 
     def test_visible(self):
         v = Visible()

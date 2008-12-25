@@ -1,8 +1,11 @@
 package org.python.util;
 
+import java.util.concurrent.CountDownLatch;
 import junit.framework.TestCase;
 
+import org.python.core.Py;
 import org.python.core.PyDictionary;
+import org.python.core.PyInteger;
 import org.python.core.PyObject;
 import org.python.core.PyUnicode;
 
@@ -18,5 +21,29 @@ public class InterpreterTest extends TestCase {
         PythonInterpreter interp = new PythonInterpreter();
         PyObject pyo = interp.eval("{u'one': u'two'}");
         assertEquals(test, pyo);
+    }
+
+    public void testMultipleThreads() {
+        final CountDownLatch doneSignal = new CountDownLatch(10);
+        for (int i = 0; i < 10; i++) {
+            new Thread() {
+                @Override
+                public void run() {
+                    PythonInterpreter interp = new PythonInterpreter();
+                    interp.exec("import sys");
+                    interp.set("a", new PyInteger(41));
+                    int set = Py.tojava(interp.get("a"), Integer.class);
+                    assertEquals(41, set);
+                    interp.exec("x = 'hello ' + 'goodbye'");
+                    assertEquals("hello goodbye", Py.tojava(interp.get("x"), String.class));
+                    doneSignal.countDown();
+                }
+            }.start();
+        }
+        try {
+            doneSignal.await();
+        } catch (InterruptedException e) {
+            System.err.println("Interpreters in multiple threads test interrupted, bailing");
+        }
     }
 }
