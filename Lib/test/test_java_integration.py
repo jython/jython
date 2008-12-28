@@ -4,8 +4,7 @@ import sys
 import re
 
 from test import test_support
-from java.awt import (Dimension, Component, Rectangle, Button, Color,
-        HeadlessException)
+from java.awt import Dimension, Color, Component, Rectangle
 from java.util import ArrayList, HashMap, Hashtable, StringTokenizer, Vector
 from java.io import FileOutputStream, FileWriter, OutputStreamWriter
                      
@@ -95,7 +94,6 @@ class BeanTest(unittest.TestCase):
 
 class ExtendJavaTest(unittest.TestCase):
     def test_override_tostring(self):
-        from java.lang import Object, String
         class A(Object):
             def toString(self):
                 return 'name'
@@ -108,8 +106,6 @@ class ExtendJavaTest(unittest.TestCase):
             self.fail("Shouldn't be able to subclass more than one concrete java class")
         except TypeError:
             pass
-
-
 
 class SysIntegrationTest(unittest.TestCase):
     def test_stdout_outputstream(self):
@@ -124,7 +120,6 @@ class SysIntegrationTest(unittest.TestCase):
         sys.stdout = out
                 
 class AutoSuperTest(unittest.TestCase):
-        
     def test_auto_super(self):
         class R(Rectangle):
             def __init__(self):
@@ -142,7 +137,6 @@ class AutoSuperTest(unittest.TestCase):
         self.assertRaises(TypeError, Math)
 
 class PyObjectCmpTest(unittest.TestCase):
-
     def test_vect_cmp(self):
         "Check comparing a PyJavaClass with a Object."
         class X(Runnable):
@@ -169,7 +163,6 @@ class IOTest(unittest.TestCase):
 
 
 class VectorTest(unittest.TestCase):
-
     def test_looping(self):
         for i in Vector(): pass
 
@@ -432,12 +425,10 @@ class InterfaceTest(unittest.TestCase):
                 self.fail("Shouldn't be callable with a no args")
         self.assertRaises(TypeError, Callbacker.callNoArg, PyBadCallback())
 
-
 class JavaStringTest(unittest.TestCase):
     
     def test_string_not_iterable(self):
-        from java import lang
-        x = lang.String('test')
+        x = String('test')
         self.assertRaises(TypeError, list, x)
 
 class JavaDelegationTest(unittest.TestCase):

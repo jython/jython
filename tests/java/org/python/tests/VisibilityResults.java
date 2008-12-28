@@ -28,10 +28,12 @@ public interface VisibilityResults {
     public static final int EXTRA_ARG_PUBLIC_STATIC_METHOD = 109;
     public static final int PUBLIC_METHOD_FIELD = 110;
     public static final int PUBLIC_STATIC_METHOD_FIELD = 111;
+    public static final int VISIBLE_SHARED_NAME_FIELD = 112;
 
     // Returns for SubVisible.java
     public static final int SUBCLASS_OVERRIDE = 201;
     public static final int SUBCLASS_OVERLOAD = 202;
     public static final int SUBCLASS_STATIC_OVERRIDE = 203;
     public static final int SUBCLASS_STATIC_OVERLOAD = 204;
+    public static final int SUBVISIBLE_SHARED_NAME_FIELD = 205;
 }

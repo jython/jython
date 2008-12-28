@@ -6,6 +6,8 @@ package org.python.tests;
 public class Visible extends Invisible {
     public int visibleField;
 
+    public static final int sharedNameField = VISIBLE_SHARED_NAME_FIELD;
+
     public static int visibleStaticField = PUBLIC_STATIC_FIELD;
 
     public int visibleInstance = PUBLIC_METHOD_FIELD;
@@ -35,6 +37,10 @@ public class Visible extends Invisible {
 
     public int visibleInstance(int iinput, String input) {
         return EXTRA_ARG_PUBLIC_METHOD;
+    }
+
+    public int getSharedNameField() {
+        return sharedNameField * 10;
     }
 
     public static int visibleInstance(String sinput, String input) {

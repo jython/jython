@@ -1,8 +1,10 @@
+import array
 import unittest
 from test import test_support
-from java.util import HashMap
-from org.python.tests import (InterfaceCombination, Invisible, OnlySubclassable, SubVisible,
-        Visible, VisibleOverride)
+from java.lang import Class
+from java.util import HashMap, Observable, Observer 
+from org.python.tests import (Coercions, InterfaceCombination, Invisible, OnlySubclassable,
+        SubVisible, Visible, VisibleOverride)
 from org.python.tests import VisibilityResults as Results
 
 class VisibilityTest(unittest.TestCase):
@@ -21,14 +23,17 @@ class VisibilityTest(unittest.TestCase):
                     Visible.__init__(self, publicValue)
                 else:
                     Visible.__init__(self)
+        class SubSubVisible(SubVisible):
+            pass
         # TODO - protectedStaticMethod, protectedStaticField, StaticInner, and protectedField should
         # be here
-        s = SubVisible()
-        self.assertEquals(Results.PROTECTED_METHOD, s.protectedMethod(0))
-        self.assertEquals(Results.OVERLOADED_PROTECTED_METHOD, s.protectedMethod('foo'))
-        self.assertEquals(Results.UNUSED, SubVisible(Results.UNUSED).visibleField)
-        self.assertRaises(TypeError, OnlySubclassable,
-                "Calling a Java class with protected constructors should raise a TypeError")
+        for cls in SubVisible, SubSubVisible:
+            s = cls()
+            self.assertEquals(Results.PROTECTED_METHOD, s.protectedMethod(0))
+            self.assertEquals(Results.OVERLOADED_PROTECTED_METHOD, s.protectedMethod('foo'))
+            self.assertEquals(Results.UNUSED, SubVisible(Results.UNUSED).visibleField)
+            self.assertRaises(TypeError, OnlySubclassable,
+                    "Calling a Java class with protected constructors should raise a TypeError")
         class SubSubclassable(OnlySubclassable):
             pass
         sub = SubSubclassable()
@@ -36,7 +41,26 @@ class VisibilityTest(unittest.TestCase):
                 '''Creating SubSubclassable should call OnlySubclassable's constructor to fill in
                 filledInByConstructor''')
 
+        # Check that the protected setChanged method on Observable is visible and propogates
+        # properly from a python subclass
+        class TestObservable(Observable):
+            def __init__(self):
+                self.props = {}
+            def set(self, key, val):
+                self.props[key] = val
+                self.setChanged()
+                self.notifyObservers()
 
+        to = TestObservable()
+        self.updated = False
+        class TestObserver(Observer):
+            def update(observerself, observable, arg):
+                self.assertEquals(to, observable)
+                self.assertEquals(None, arg)
+                self.updated = True
+        to.addObserver(TestObserver())
+        to.set('k', 'v')
+        self.assert_(self.updated, "Calling set should notify the added observer")
 
     def test_visible(self):
         v = Visible()
@@ -74,6 +98,11 @@ class VisibilityTest(unittest.TestCase):
         # return the subclass value here.
         self.assertEquals(Results.SUBCLASS_OVERRIDE, Visible.visibleInstance(s, 3))
         self.assertEquals(Results.PUBLIC_STATIC_FIELD, SubVisible.StaticInner.visibleStaticField)
+        
+        self.assertEquals(Results.VISIBLE_SHARED_NAME_FIELD, Visible.sharedNameField)
+        self.assertEquals(Results.SUBVISIBLE_SHARED_NAME_FIELD, SubVisible.sharedNameField)
+        self.assertEquals(Results.VISIBLE_SHARED_NAME_FIELD * 10, Visible().sharedNameField)
+        self.assertEquals(Results.SUBVISIBLE_SHARED_NAME_FIELD * 10, s.sharedNameField)
 
 
     def test_in_dict(self):
@@ -104,13 +133,24 @@ class JavaClassTest(unittest.TestCase):
                 'java.lang.Class bean methods should be visible on instances')
         self.assertEquals(3, len(HashMap.getInterfaces()))
 
+    def test_python_fields(self):
+        self.assertEquals('java.util', HashMap.__module__)
+        self.assertEquals(Class, HashMap.__class__)
+        self.assertEquals(None, HashMap.__doc__)
+
 class NumberCoercionTest(unittest.TestCase):
     def test_int_coercion(self):
-        from org.python.tests import Coercions
         c = Coercions()
         self.assertEquals("5", c.takeInt(5))
         self.assertEquals("15", c.takeInteger(15))
         self.assertEquals("150", c.takeNumber(150))
+
+    def test_array_coercion(self):
+        self.assertEquals("double", Coercions.takeArray(array.zeros('d', 2)))
+        self.assertEquals("float", Coercions.takeArray(array.zeros('f', 2)))
+        self.assertEquals("4", Coercions.takePyObj(1, 2, 3, 4))
+        c = Coercions()
+        self.assertEquals("5", c.takePyObjInst(1, 2, 3, 4, 5))
 
 def test_main():
     test_support.run_unittest(VisibilityTest,

@@ -1,6 +1,7 @@
 package org.python.util;
 
 import java.util.concurrent.CountDownLatch;
+
 import junit.framework.TestCase;
 
 import org.python.core.Py;
@@ -44,6 +45,22 @@ public class InterpreterTest extends TestCase {
             doneSignal.await();
         } catch (InterruptedException e) {
             System.err.println("Interpreters in multiple threads test interrupted, bailing");
+        }
+    }
+
+    public void testCallInstancesFromJava() {
+        PythonInterpreter interp = new PythonInterpreter();
+        interp.exec("class Blah(object):\n" +
+                    "    def __init__(self, val):\n" +
+                    "        self.val = val\n" +
+                    "    def incval(self):\n" +
+                    "        self.val += 1\n" +
+                    "        return self.val");
+        PyObject blahClass = interp.get("Blah");
+        int base = 42;
+        PyObject blahInstance = blahClass.__call__(new PyInteger(base));
+        for (int i = 0; i < 4; i++) {
+            assertEquals(++base, blahInstance.invoke("incval").__tojava__(Integer.class));
         }
     }
 }

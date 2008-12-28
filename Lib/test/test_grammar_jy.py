@@ -5,6 +5,18 @@ from test import test_support
 import unittest
 
 class GrammarTest(unittest.TestCase):
+    def test_triple_quote_len(self):
+        s1 = r""" 
+        \""" 1.triple-quote
+        \""" 2.triple-quote
+        """
+
+        s2 = r''' 
+        \""" 1.triple-quote
+        \""" 2.triple-quote
+        '''
+        self.assert_(not '\r' in s1)
+        self.assertEquals(len(s1), len(s2))
 
     def testStringPrefixes(self):
         self.assertEquals(u"spam",U"spam")

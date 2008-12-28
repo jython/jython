@@ -1,6 +1,8 @@
 package org.python.tests;
 
 public class SubVisible extends Visible implements VisibleOverride {
+
+    public static final int sharedNameField = SUBVISIBLE_SHARED_NAME_FIELD;
     /**
      * Overrides {@link Visible#visibleStatic(int)}
      */
@@ -29,6 +31,10 @@ public class SubVisible extends Visible implements VisibleOverride {
      */
     public int visibleInstance(double input, String sinput) {
         return SUBCLASS_OVERLOAD;
+    }
+
+    public int getSharedNameField() {
+        return sharedNameField * 10;
     }
 
     /**

@@ -6,6 +6,7 @@ Made for Jython
 import __builtin__
 import new
 import unittest
+from java.lang import Object
 from test import test_support
 
 class ClassGeneralTestCase(unittest.TestCase):
@@ -24,11 +25,14 @@ class ClassGeneralTestCase(unittest.TestCase):
 
         class Bar(object):
             pass
-        self.assertEqual(Bar.__module__, __name__)
-        self.assertEqual(str(Bar), "<class '%s.Bar'>" % __name__)
-        self.assertEqual(repr(Bar), "<class '%s.Bar'>" % __name__)
-        bar = Bar()
-        self.assert_(str(bar).startswith('<%s.Bar object at' % __name__))
+        class Baz(Object):
+            pass
+        for cls in Bar, Baz:
+            self.assertEqual(cls.__module__, __name__)
+            self.assertEqual(str(cls), "<class '%s.%s'>" % (__name__, cls.__name__))
+            self.assertEqual(repr(cls), "<class '%s.%s'>" % (__name__, cls.__name__))
+        self.assert_(str(Bar()).startswith('<%s.Bar object at' % __name__))
+        self.assert_(str(Baz()).startswith("org.python.proxies.%s$Baz" % __name__))
 
 
     def test_builtin_attributes(self):
