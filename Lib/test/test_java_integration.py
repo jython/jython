@@ -8,8 +8,8 @@ from java.awt import Dimension, Color, Component, Rectangle
 from java.util import ArrayList, HashMap, Hashtable, StringTokenizer, Vector
 from java.io import FileOutputStream, FileWriter, OutputStreamWriter
                      
-from java.lang import (Boolean, ExceptionInInitializerError, Integer, Object, String, Runnable,
-        Thread, ThreadGroup, System, Runtime, Math, Byte)
+from java.lang import (Boolean, ClassLoader, ExceptionInInitializerError, Integer, Object, String,
+        Runnable, Thread, ThreadGroup, System, Runtime, Math, Byte)
 from javax.swing.table import AbstractTableModel
 from javax.swing.tree import TreePath
 from java.math import BigDecimal
@@ -51,6 +51,49 @@ class AbstractOnSyspathTest(unittest.TestCase):
         import Abstract
         
         class A(Abstract):
+            def method(self):
+                pass
+        A()
+
+"""
+public abstract class ContextAbstract {
+    public ContextAbstract() {
+        method();
+    }
+
+    public abstract void method();
+}
+"""
+# The following is the correspoding bytecode for ContextAbstract compiled with javac 1.5
+# Needs to be named differently than Abstract above so the class loader won't just use it
+CONTEXT_ABSTRACT = '''\
+eJxdjr1uwjAUhc8lbgIh/AVegA0YQJ1BlRBSp6gdWrE7wQKjEEvBVH0tFip14AF4KMQ17YSHc3yu
+vuPry/X3DOAZ3RACrRAe2gE6AWKCP9OFti8EbzBcEsTCrBShlehCvR12qSo/ZZrzJE5MJvOlLLXL
+/0NhN3pP6CQLU1j1befp3pYys1N+d6fsxqwI4Yc5lJl61a7QewDHW/klIzzBjxDB58UPAKHtkEku
+i/XkPd2qzIo+/1/AnQrIdVkDTlN2Yq+NfkCjEyrHO1JlbXLF3QV7lbXGKfqDEaIOCHL7ORMad7J5
+A7yvPDQ=
+'''.decode('base64').decode('zlib')
+class ContextClassloaderTest(unittest.TestCase):
+    '''Classes on the context classloader should be importable and subclassable.
+    
+    http://bugs.jython.org/issue1216'''
+    def setUp(self):
+        self.orig_context = Thread.currentThread().contextClassLoader
+        class AbstractLoader(ClassLoader):
+            def __init__(self):
+                ClassLoader.__init__(self)
+                c = self.super__defineClass("ContextAbstract", CONTEXT_ABSTRACT, 0,
+                        len(CONTEXT_ABSTRACT), ClassLoader.protectionDomain)
+                self.super__resolveClass(c)
+        Thread.currentThread().contextClassLoader = AbstractLoader()
+
+    def tearDown(self):
+        Thread.currentThread().contextClassLoader = self.orig_context
+
+    def test_can_subclass_abstract(self):
+        import ContextAbstract
+
+        class A(ContextAbstract):
             def method(self):
                 pass
         A()
@@ -470,6 +513,7 @@ class JavaDelegationTest(unittest.TestCase):
 
 def test_main():
     test_support.run_unittest(AbstractOnSyspathTest,
+                              ContextClassloaderTest,
                               InstantiationTest, 
                               BeanTest, 
                               ExtendJavaTest, 

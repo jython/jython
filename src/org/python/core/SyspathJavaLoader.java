@@ -17,7 +17,7 @@ import org.python.core.util.RelativeFile;
 public class SyspathJavaLoader extends ClassLoader {
 
     private static final char SLASH_CHAR = '/';
-    
+
     public InputStream getResourceAsStream(String res) {
         Py.writeDebug("resource", "trying resource: " + res);
         PySystemState sys = Py.getSystemState();
@@ -26,7 +26,7 @@ public class SyspathJavaLoader extends ClassLoader {
             return classLoader.getResourceAsStream(res);
         }
 
-        classLoader = this.getClass().getClassLoader();
+        classLoader = Thread.currentThread().getContextClassLoader();
 
         InputStream ret;
 
@@ -47,7 +47,7 @@ public class SyspathJavaLoader extends ClassLoader {
             res = res.replace(SLASH_CHAR, File.separatorChar);
             entryRes = entryRes.replace(File.separatorChar, SLASH_CHAR);
         }
-        
+
         PyList path = sys.path;
         for (int i = 0; i < path.__len__(); i++) {
             PyObject entry = path.__getitem__(i);
@@ -85,23 +85,23 @@ public class SyspathJavaLoader extends ClassLoader {
         if (classLoader != null) {
             return classLoader.loadClass(name);
         }
-        
+
         // Search the sys.path for a .class file matching the named class.
         try {
             return Class.forName(name);
         } catch(ClassNotFoundException e) {}
-        
+
         // The current class loader may be null (e.g., when Jython is loaded
         // from the boot classpath); try the system class loader.
         try {
             return Class.forName(name, true, ClassLoader.getSystemClassLoader());
         } catch(ClassNotFoundException e) {}
-        
+
         Class c = findLoadedClass(name);
         if(c != null) {
             return c;
         }
-        
+
         PyList path = sys.path;
         for(int i = 0; i < path.__len__(); i++) {
             InputStream fis = null;

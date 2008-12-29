@@ -761,11 +761,15 @@ public final class Py {
                     secEnv = true;
                 }
                 if (classLoader != null) {
-                    return classLoader.loadClass(name);
+                    try {
+                        return classLoader.loadClass(name);
+                    } catch (ClassNotFoundException cnfe) {
+                        // let the context classloader try
+                    }
                 }
             }
 
-            return Class.forName(name);
+            return Thread.currentThread().getContextClassLoader().loadClass(name);
 
         } catch (ClassNotFoundException e) {
             //             e.printStackTrace();
@@ -797,13 +801,17 @@ public final class Py {
                 if (classLoader != null) {
                     writeDebug("import", "trying " + name + " as " + reason +
                             " in syspath loader");
-                    return classLoader.loadClass(name);
+                    try {
+                        return classLoader.loadClass(name);
+                    } catch (ClassNotFoundException cnfe) {
+                        // let the context classloader try
+                    }
                 }
             }
 
             writeDebug("import", "trying " + name + " as " + reason +
                     " in Class.forName");
-            return Class.forName(name);
+            return Thread.currentThread().getContextClassLoader().loadClass(name);
         } catch (ClassNotFoundException e) {
             return null;
         } catch (IllegalArgumentException e) {

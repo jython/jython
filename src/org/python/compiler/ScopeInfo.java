@@ -125,7 +125,7 @@ public class ScopeInfo extends Object implements ScopeConstants {
     public int jy_npurecell;
 
     public int cell, distance;
-    
+
     public ScopeInfo up;
 
     //Resolve the names used in the given scope, and mark any freevars used in the up scope
@@ -188,7 +188,7 @@ public class ScopeInfo extends Object implements ScopeConstants {
                 names.addElement(purecells.elementAt(i));
             }
         }
-        
+
         if (some_free && nested) {
             up.contains_ns_free_vars = true;
         }
@@ -202,23 +202,25 @@ public class ScopeInfo extends Object implements ScopeConstants {
 
     }
 
-    private void dynastuff_trouble(boolean inner_free,
-                                   CompilationContext ctxt) throws Exception {
-        String illegal;
-        if (unqual_exec && from_import_star)
-            illegal = "function '"+scope_name+
-                      "' uses import * and bare exec, which are illegal";
-        else if (unqual_exec)
-            illegal = "unqualified exec is not allowed in function '"+
-                      scope_name+"'";
-        else
-            illegal = "import * is not allowed in function '"+scope_name+"'";
-        String why;
-        if (inner_free)
-            why = " because it contains a function with free variables";
-        else
-            why = " because it contains free variables";
-        ctxt.error(illegal + why, true, scope_node);
+    private void dynastuff_trouble(boolean inner_free, CompilationContext ctxt) throws Exception {
+        StringBuilder illegal = new StringBuilder();
+        if (unqual_exec && from_import_star) {
+            illegal.append("function '")
+                    .append(scope_name)
+                    .append("' uses import * and bare exec, which are illegal");
+        } else if (unqual_exec) {
+            illegal.append("unqualified exec is not allowed in function '")
+                    .append(scope_name)
+                    .append("'");
+        } else {
+            illegal.append("import * is not allowed in function '").append(scope_name).append("'");
+        }
+        if (inner_free) {
+            illegal.append(" because it contains a function with free variables");
+        } else {
+            illegal.append(" because it contains free variables");
+        }
+        ctxt.error(illegal.toString(), true, scope_node);
     }
 
     public Vector freevars = new Vector();
@@ -230,7 +232,7 @@ public class ScopeInfo extends Object implements ScopeConstants {
     public void setup_closure() {
         setup_closure(up);
     }
-    
+
     /**
      * setup the closure on this scope using the passed in scope. This is used
      * by jythonc to setup its closures.
