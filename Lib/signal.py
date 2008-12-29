@@ -35,13 +35,13 @@ try:
 except ImportError:
     raise ImportError("signal module requires sun.misc.Signal, which is not available on this platform")
 
-import java.util.concurrent
 import os
 import sun.misc.SignalHandler
 import sys
 import threading
 import time
 from java.lang import IllegalArgumentException
+from java.util.concurrent.atomic import AtomicReference
 
 debug = 0
 
@@ -182,7 +182,7 @@ def default_int_handler(sig, frame):
 def pause():
     raise NotImplementedError
 
-_alarm_timer_holder = java.util.concurrent.atomic.AtomicReference()
+_alarm_timer_holder = AtomicReference()
 
 def _alarm_handler(sig, frame):
     print "Alarm clock"
