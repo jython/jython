@@ -6,14 +6,14 @@ public class Callbacker {
 
         public void call();
 
-        public void call(String oneArg);
+        public void call(long oneArg);
     }
 
     public static void callNoArg(Callback c) {
         c.call();
     }
 
-    public static void callOneArg(Callback c, String arg) {
+    public static void callOneArg(Callback c, long arg) {
         c.call(arg);
     }
 }

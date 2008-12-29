@@ -1,1 +1,0 @@
-public class test208j2 extends test208j0 {}

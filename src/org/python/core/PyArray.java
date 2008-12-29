@@ -349,6 +349,11 @@ public class PyArray extends PySequence implements Cloneable {
      * @return number of elements in the array
      */
     public int __len__() {
+        return array___len__();
+    }
+
+    @ExposedMethod
+    final int array___len__() {
         return delegate.getSize();
     }
 

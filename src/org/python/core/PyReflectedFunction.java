@@ -87,7 +87,34 @@ public class PyReflectedFunction extends PyObject {
         if (!Modifier.isPublic(m.getModifiers()) && Options.respectJavaAccessibility) {
             return;
         }
+        if (isPackagedProtected(m.getDeclaringClass())) {
+            /*
+            * Set public methods on package protected classes accessible so that reflected calls to
+            * the method in subclasses of the package protected class will succeed. Yes, it's
+            * convoluted.
+            *
+            * This fails when done through reflection due to Sun JVM bug
+            * 4071957(http://tinyurl.com/le9vo). 4533479 actually describes the problem we're
+            * seeing, but there are a bevy of reflection bugs that stem from 4071957. Supposedly
+            * it'll be fixed in Dolphin but it's been promised in every version since Tiger
+            * so don't hold your breath.
+            */
+            try {
+                m.setAccessible(true);
+            } catch (SecurityException se) {
+                // This case is pretty far in the corner, so don't scream if we can't set the method
+                // accessible due to a security manager.  Any calls to it will fail with an
+                // IllegalAccessException, so it'll become visible there.  This way we don't spam
+                // people who aren't calling methods like this from Python with warnings if a
+                // library they're using happens to have a method like this.
+            }
+        }
         addArgs(makeArgs(m));
+    }
+
+    public static boolean isPackagedProtected(Class<?> c) {
+        int mods = c.getModifiers();
+        return !(Modifier.isPublic(mods) || Modifier.isPrivate(mods) || Modifier.isProtected(mods));
     }
 
     protected void addArgs(ReflectedArgs args) {

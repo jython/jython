@@ -24,6 +24,14 @@ class GrammarTest(unittest.TestCase):
         self.assertEquals(uR"spam", Ur"spam")
         self.assertEquals(ur"spam", UR"spam")
 
+    def testKeywordOperations(self):
+        def foo(a=1, b=2 + 4):
+            return b
+        self.assertEquals(6, foo())
+        self.assertEquals(6, foo(1))
+        self.assertEquals(7, foo(1, 7))
+        self.assertEquals(10, foo(b=10))
+
 def test_main():
     test_support.run_unittest(GrammarTest)
 

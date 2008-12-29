@@ -7,8 +7,7 @@ import pdb
 
 class P:
     def do_help(self, arg):
-        pass
-        #print "do_help", arg
+        print "do_help", arg
     #print do_help, id(do_help)
 
     def onecmd(self, cmd, arg):

@@ -917,7 +917,9 @@ class MixinStrUnicodeUserStringTest:
         self.checkequal(u'abc', 'abc', '__getitem__', slice(0, 3))
         self.checkequal(u'abc', 'abc', '__getitem__', slice(0, 1000))
         self.checkequal(u'a', 'abc', '__getitem__', slice(0, 1))
+        self.checkequal(u'a', 'abc', '__getitem__', slice(0, 1L))
         self.checkequal(u'', 'abc', '__getitem__', slice(0, 0))
+        self.checkequal(u'', 'abc', '__getitem__', slice(0L, 0L))
         # FIXME What about negative indices? This is handled differently by [] and __getitem__(slice)
 
         self.checkraises(TypeError, 'abc', '__getitem__', 'def')

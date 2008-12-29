@@ -8,7 +8,7 @@ from java.awt import Dimension, Color, Component, Rectangle
 from java.util import ArrayList, HashMap, Hashtable, StringTokenizer, Vector
 from java.io import FileOutputStream, FileWriter, OutputStreamWriter
                      
-from java.lang import (Boolean, Integer, Object, String, Runnable,
+from java.lang import (Boolean, ExceptionInInitializerError, Integer, Object, String, Runnable,
         Thread, ThreadGroup, System, Runtime, Math, Byte)
 from javax.swing.table import AbstractTableModel
 from javax.swing.tree import TreePath
@@ -322,9 +322,11 @@ class PyReservedNamesTest(unittest.TestCase):
         self.assertEquals(self.kws.yield(), "yield")
 
 class ImportTest(unittest.TestCase):
-    
     def test_bad_input_exception(self):
         self.assertRaises(ValueError, __import__, '')
+
+    def test_broken_static_initializer(self):
+        self.assertRaises(ExceptionInInitializerError, __import__, "org.python.tests.BadStaticInitializer")
 
 class ColorTest(unittest.TestCase):
 
@@ -417,9 +419,9 @@ class InterfaceTest(unittest.TestCase):
             def call(self, extraarg=None):
                 called.append(extraarg)
         Callbacker.callNoArg(PyCallback())
-        Callbacker.callOneArg(PyCallback(), "arg")
+        Callbacker.callOneArg(PyCallback(), 4294967295L)
         self.assertEquals(None, called[0])
-        self.assertEquals("arg", called[1])
+        self.assertEquals(4294967295L, called[1])
         class PyBadCallback(Callbacker.Callback):
             def call(pyself, extraarg):
                 self.fail("Shouldn't be callable with a no args")

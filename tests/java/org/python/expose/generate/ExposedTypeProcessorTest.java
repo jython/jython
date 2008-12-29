@@ -3,8 +3,6 @@ package org.python.expose.generate;
 import java.io.IOException;
 import java.io.InputStream;
 
-import junit.framework.TestCase;
-
 import org.python.core.BytecodeLoader;
 import org.python.core.PyBuiltinCallable;
 import org.python.core.PyDataDescr;

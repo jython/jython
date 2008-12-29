@@ -3,8 +3,8 @@ import unittest
 from test import test_support
 from java.lang import Class
 from java.util import HashMap, Observable, Observer 
-from org.python.tests import (Coercions, InterfaceCombination, Invisible, OnlySubclassable,
-        SubVisible, Visible, VisibleOverride)
+from org.python.tests import (Coercions, HiddenSuper, InterfaceCombination, Invisible, OnlySubclassable,
+        OtherSubVisible, SomePyMethods, SubVisible, Visible, VisibleOverride)
 from org.python.tests import VisibilityResults as Results
 
 class VisibilityTest(unittest.TestCase):
@@ -125,6 +125,10 @@ class VisibilityTest(unittest.TestCase):
         self.assertFalse(hasattr(i, "internalMethod"),
                 "methods from private interfaces shouldn't be visible on a private class")
 
+    def test_super_methods_visible(self):
+        '''Bug #222847 - Can't access public member of package private base class'''
+        self.assertEquals("hi", HiddenSuper().hi())
+
 class JavaClassTest(unittest.TestCase):
     def test_class_methods_visible(self):
         self.assertFalse(HashMap.isInterface(),
@@ -138,7 +142,13 @@ class JavaClassTest(unittest.TestCase):
         self.assertEquals(Class, HashMap.__class__)
         self.assertEquals(None, HashMap.__doc__)
 
-class NumberCoercionTest(unittest.TestCase):
+    def test_python_methods(self):
+        s = SomePyMethods()
+        self.assertEquals(6, s[3])
+        self.assertEquals(2, s.a, "Undefined attributes should go through to __getattr__")
+        self.assertEquals(3, s.b, "Defined fields should take precedence")
+
+class CoercionTest(unittest.TestCase):
     def test_int_coercion(self):
         c = Coercions()
         self.assertEquals("5", c.takeInt(5))
@@ -151,11 +161,13 @@ class NumberCoercionTest(unittest.TestCase):
         self.assertEquals("4", Coercions.takePyObj(1, 2, 3, 4))
         c = Coercions()
         self.assertEquals("5", c.takePyObjInst(1, 2, 3, 4, 5))
+        self.assertEquals("OtherSubVisible[]", c.takeArray([OtherSubVisible()]))
+        self.assertEquals("SubVisible[]", c.takeArray([SubVisible()]))
 
 def test_main():
     test_support.run_unittest(VisibilityTest,
             JavaClassTest,
-            NumberCoercionTest)
+            CoercionTest)
 
 if __name__ == "__main__":
     test_main()

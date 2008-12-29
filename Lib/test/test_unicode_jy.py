@@ -83,6 +83,31 @@ class UnicodeTestCase(unittest.TestCase):
         self.assertRaises(UnicodeDecodeError, u''.join, ['foo', '毛泽东'])
         self.assertRaises(UnicodeDecodeError, '毛泽东'.join, [u'foo', u'bar'])
 
+    def test_file_encoding(self):
+        '''Ensure file writing doesn't attempt to encode things by default and reading doesn't
+        decode things by default.  This was jython's behavior prior to 2.2.1'''
+        EURO_SIGN = u"\u20ac"
+        try:
+            EURO_SIGN.encode()
+        except UnicodeEncodeError:
+            # This default encoding can't handle the encoding the Euro sign.  Skip the test
+            return
+
+        f = open(test_support.TESTFN, "w")
+        self.assertRaises(UnicodeEncodeError, f, write, EURO_SIGN, 
+                "Shouldn't be able to write out a Euro sign without first encoding")
+        f.close()
+
+        f = open(test_support.TESTFN, "w")
+        f.write(EURO_SIGN.encode('utf-8'))
+        f.close()
+
+        f = open(test_support.TESTFN, "r")
+        encoded_euro = f.read()
+        f.close()
+        os.remove(test_support.TESTFN)
+        self.assertEquals('\xe2\x82\xac', encoded_euro)
+        self.assertEquals(EURO_SIGN, encoded_euro.decode('utf-8'))
 
 def test_main():
     test_support.run_unittest(UnicodeTestCase)

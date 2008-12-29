@@ -179,12 +179,21 @@ public class PyJavaType extends PyType {
             }
         }
 
-        // Add arguments for superclass methods with the same names as methods declared on this type
+        // Add superclass methods
         for (Method meth : underlying_class.getMethods()) {
             String nmethname = normalize(meth.getName());
             PyReflectedFunction reflfunc = (PyReflectedFunction)dict.__finditem__(nmethname);
             if (reflfunc != null) {
+                // The superclass method has the same name as one declared on this class, so add
+                // the superclass version's arguments
                 reflfunc.addMethod(meth);
+            } else if (PyReflectedFunction.isPackagedProtected(meth.getDeclaringClass())
+                    && lookup(nmethname) == null) {
+                // This method must be a public method from a package protected superclass.  It's
+                // visible from Java on this class, so do the same for Python here.  This is the
+                // flipside of what handleSuperMethodArgCollisions does for inherited public methods
+                // on package protected classes.
+                dict.__setitem__(nmethname, new PyReflectedFunction(meth));
             }
         }
 
