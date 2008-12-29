@@ -82,18 +82,18 @@ public class PyReflectedConstructor extends PyReflectedFunction {
             throw Py.TypeError("invalid self argument to constructor");
         }
         Class<?> javaClass = self.getType().getProxyType();
+        Class<?> declaringClass = argslist[0] == null ? null : argslist[0].declaringClass;
+        // If the declaring class is a pure Java type but we're instantiating a Python proxy,
+        // grab the proxy version of the constructor to instantiate the proper type
+        if ((declaringClass == null || !PyProxy.class.isAssignableFrom(declaringClass))
+                && !(self.getType() instanceof PyJavaType)) {
+            return PyType.fromClass(javaClass).lookup("__init__").__call__(self, args, keywords);
+        }
         if (nargs == 0) {
             throw Py.TypeError("No visible constructors for class (" + javaClass.getName() + ")");
         }
-        Class<?> declaringClass = argslist[0].declaringClass;
         if (!declaringClass.isAssignableFrom(javaClass)) {
             throw Py.TypeError("self invalid - must implement: " + declaringClass.getName());
-        }
-        // If the declaring class is a pure Java type but we're instantiating a Python proxy,
-        // grab the proxy version of the constructor to instantiate the proper type
-        if (!PyProxy.class.isAssignableFrom(declaringClass)
-                && !(self.getType() instanceof PyJavaType)) {
-            return PyType.fromClass(javaClass).lookup("__init__").__call__(self, args, keywords);
         }
 
         int mods = declaringClass.getModifiers();
