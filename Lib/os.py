@@ -41,6 +41,7 @@ __all__.extend(['EX_OK', 'F_OK', 'O_APPEND', 'O_CREAT', 'O_EXCL', 'O_RDONLY',
                 'write'])
 
 import errno
+import jarray
 import java.lang.System
 import time
 import stat as _stat
@@ -993,6 +994,45 @@ if _name == 'posix':
         Call the system call setsid()."""
         return _posix.setsid()
 
+    # This implementation of fork partially works on
+    # Jython. Diagnosing what works, what doesn't, and fixing it is
+    # left for another day. In any event, this would only be
+    # marginally useful.
+
+    # def fork():
+    #     """fork() -> pid
+    #     
+    #     Fork a child process.
+    #     Return 0 to child process and PID of child to parent process."""
+    #     return _posix.fork()
+
+    def kill(pid, sig):
+        """kill(pid, sig)
+
+        Kill a process with a signal."""
+        return _posix.kill(pid, sig)
+
+    def wait():
+        """wait() -> (pid, status)
+        
+        Wait for completion of a child process."""
+
+        status = jarray.zeros(1, 'i')
+        res_pid = _posix.wait(status)
+        if res_pid == -1:
+            raise OSError(status[0], strerror(status[0]))
+        return res_pid, status[0]
+
+    def waitpid(pid, options):
+        """waitpid(pid, options) -> (pid, status)
+
+        Wait for completion of a given child process."""
+        status = jarray.zeros(1, 'i')
+        res_pid = _posix.waitpid(pid, status, options)
+        if res_pid == -1:
+            raise OSError(status[0], strerror(status[0]))
+        return res_pid, status[0]
+
 def getpid():
     """getpid() -> pid
 
@@ -1029,7 +1069,6 @@ def isatty(fileno):
     return fileno.isatty()
 
 
-import jarray
 from java.security import SecureRandom
 urandom_source = None
 

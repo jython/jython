@@ -1430,7 +1430,6 @@ _expectations = {
         test_resource
         test_rgbimg
         test_scriptpackages
-        test_signal
         test_socket_ssl
         test_socketserver
         test_sqlite
