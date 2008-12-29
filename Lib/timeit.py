@@ -157,7 +157,10 @@ class Timer:
         else:
             it = [None] * number
         gcold = gc.isenabled()
-        gc.disable()
+        try:
+            gc.disable()
+        except NotImplementedError:
+            pass # ignore on platforms like Jython
         timing = self.inner(it, self.timer)
         if gcold:
             gc.enable()
