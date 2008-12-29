@@ -42,6 +42,9 @@ public class PyFile extends PyObject {
     @ExposedGet
     public String mode;
 
+    @ExposedGet
+    public String encoding;
+
     /** Indicator dictating whether a space should be written to this
      * file on the next print statement (not currently implemented in
      * print ) */

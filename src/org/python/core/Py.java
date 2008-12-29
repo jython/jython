@@ -1207,7 +1207,7 @@ public final class Py {
         }
 
         f = new PyFrame(tc, locals, globals,
-                PySystemState.builtins);
+                Py.getSystemState().getBuiltins());
         return code.call(f);
     }
 

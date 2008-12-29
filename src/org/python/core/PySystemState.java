@@ -25,7 +25,8 @@ import org.python.util.Generic;
 /**
  * The "sys" module.
  */
-// xxx this should really be a module!
+// xxx Many have lamented, this should really be a module!
+// but it will require some refactoring to see this wish come true.
 public class PySystemState extends PyObject
 {
     public static final String PYTHON_CACHEDIR = "python.cachedir";
@@ -38,8 +39,8 @@ public class PySystemState extends PyObject
     private static final String JAR_URL_PREFIX = "jar:file:";
     private static final String JAR_SEPARATOR = "!";
 
-    public static PyString version = new PyString(Version.getVersion());
-    public static int hexversion = ((Version.PY_MAJOR_VERSION << 24) |
+    public static final PyString version = new PyString(Version.getVersion());
+    public static final int hexversion = ((Version.PY_MAJOR_VERSION << 24) |
                                     (Version.PY_MINOR_VERSION << 16) |
                                     (Version.PY_MICRO_VERSION <<  8) |
                                     (Version.PY_RELEASE_LEVEL <<  4) |
@@ -52,8 +53,8 @@ public class PySystemState extends PyObject
     /**
      * The copyright notice for this release.
      */
-    // TBD: should we use \u00a9 Unicode c-inside-circle?
-    public static PyObject copyright = Py.newString(
+
+    public static final PyObject copyright = Py.newString(
         "Copyright (c) 2000-2008, Jython Developers\n" +
         "All rights reserved.\n\n" +
 
@@ -75,16 +76,24 @@ public class PySystemState extends PyObject
     public static PyTuple builtin_module_names = null;
 
     public static PackageManager packageManager;
-    public static File cachedir;
+    private static File cachedir;
 
     private static PyList defaultPath;
     private static PyList defaultArgv;
     private static PyObject defaultExecutable;
 
+    // XXX - from Jython code, these statics are immutable; we may wish to consider
+    // using the shadowing mechanism for them as well if in practice it makes
+    // sense for them to be changed
     public static Properties registry; // = init_registry();
     public static PyObject prefix;
     public static PyObject exec_prefix = Py.EmptyString;
+    public static PyString platform = new PyString("java");
 
+    public static final PyString byteorder = new PyString("big");
+    public static final int maxint = Integer.MAX_VALUE;
+    public static final int minint = Integer.MIN_VALUE;
+    
     private static boolean initialized = false;
 
     /** The arguments passed to this program on the command line. */
@@ -92,24 +101,19 @@ public class PySystemState extends PyObject
 
     public PyObject modules;
     public PyList path;
+    
+    // shadowed statics - don't use directly
+    public static PyList warnoptions = new PyList();
     public static PyObject builtins;
 
     public PyList meta_path;
     public PyList path_hooks;
     public PyObject path_importer_cache;
 
-    public static PyString platform = new PyString("java");
-    public static PyString byteorder = new PyString("big");
-
     public PyObject ps1 = new PyString(">>> ");
     public PyObject ps2 = new PyString("... ");
-
-    public static int maxint = Integer.MAX_VALUE;
-    public static int minint = Integer.MIN_VALUE;
-
+    
     public PyObject executable;
-
-    public static PyList warnoptions;
 
     private String currentWorkingDir;
 
@@ -153,18 +157,24 @@ public class PySystemState extends PyObject
         // Set up the initial standard ins and outs
         String mode = Options.unbuffered ? "b" : "";
         int buffering = Options.unbuffered ? 0 : 1;
-        __stdout__ = stdout = new PyFile(System.out, "<stdout>", "w" + mode, buffering, false);
-        __stderr__ = stderr = new PyFile(System.err, "<stderr>", "w" + mode, 0, false);
-        __stdin__ = stdin = new PyFile(System.in, "<stdin>", "r" + mode, buffering, false);
+        stdout = new PyFile(System.out, "<stdout>", "w" + mode, buffering, false);
+        stderr = new PyFile(System.err, "<stderr>", "w" + mode, 0, false);
+        stdin = new PyFile(System.in, "<stdin>", "r" + mode, buffering, false);
         __displayhook__ = new PySystemStateFunctions("displayhook", 10, 1, 1);
         __excepthook__ = new PySystemStateFunctions("excepthook", 30, 3, 3);
 
-        if(builtins == null){
-            builtins = new PyStringMap();
-            __builtin__.fillWithBuiltins(builtins);
+        String encoding = registry.getProperty("python.console.encoding", "US-ASCII");
+        ((PyFile)stdout).encoding = encoding;
+        ((PyFile)stderr).encoding = encoding;
+        ((PyFile)stdin).encoding = encoding;
+        __stdout__ = stdout;
+        __stderr__ = stderr;
+        __stdin__ = stdin;
+
+        if (builtins == null) {
+            builtins = getDefaultBuiltins();
         }
-        PyModule __builtin__ = new PyModule("__builtin__", builtins);
-        modules.__setitem__("__builtin__", __builtin__);
+        modules.__setitem__("__builtin__", new PyModule("__builtin__", getDefaultBuiltins()));
         __dict__ = new PyStringMap();
         __dict__.invoke("update", getType().fastGetDict());
         __dict__.__setitem__("displayhook", __displayhook__);
@@ -175,56 +185,150 @@ public class PySystemState extends PyObject
         __dict__.invoke("update", getType().fastGetDict());
     }
 
+    private static void checkReadOnly(String name) {
+        if (name == "__dict__" ||
+            name == "__class__" ||
+            name == "registry" ||
+            name == "exec_prefix" ||
+            name == "platform" ||
+            name == "packageManager") {
+            throw Py.TypeError("readonly attribute");
+        }
+    }
+
+    private static void checkMustExist(String name) {
+        if (name == "__dict__" ||
+            name == "__class__" ||
+            name == "registry" ||
+            name == "exec_prefix" ||
+            name == "platform" ||
+            name == "packageManager" ||
+            name == "builtins" ||
+            name == "warnoptions") {
+            throw Py.TypeError("readonly attribute");
+        }
+    }
+
+    // might be nice to have something general here, but for now these
+    // seem to be the only values that need to be explicitly shadowed
+    private Shadow shadowing;
+    public synchronized void shadow() {
+        if (shadowing == null) {
+            shadowing = new Shadow();
+        }
+    }
+
+    private static class DefaultBuiltinsHolder {
+        static final PyObject builtins = fillin();
+
+        static PyObject fillin() {
+            PyObject temp = new PyStringMap();
+            __builtin__.fillWithBuiltins(temp);
+            return temp;
+        }
+    }
+
+    public static PyObject getDefaultBuiltins() {
+        return DefaultBuiltinsHolder.builtins;
+    }
+
+    public synchronized PyObject getBuiltins() {
+        if (shadowing == null) {
+            return getDefaultBuiltins();
+        }
+        else {
+            return shadowing.builtins;
+        }
+    }
+    
+    public synchronized void setBuiltins(PyObject value) {
+        if (shadowing == null) {
+            builtins = value;
+        } else {
+            shadowing.builtins = value;
+        }
+        modules.__setitem__("__builtin__", new PyModule("__builtin__", value));
+    }
+
+    public synchronized PyObject getWarnoptions() {
+        if (shadowing == null) {
+            return warnoptions;
+        }
+        else {
+            return shadowing.warnoptions;
+        }
+    }
+
+    public synchronized void setWarnoptions(PyObject value) {
+        if (shadowing == null) {
+            warnoptions = new PyList(value);
+        } else {
+            shadowing.warnoptions = new PyList(value);
+        }
+    }
+
     // xxx fix this accessors
     public PyObject __findattr_ex__(String name) {
         if (name == "exc_value") {
             PyException exc = Py.getThreadState().exception;
-            if (exc == null) return null;
-            return exc.value;
-        }
-        if (name == "exc_type") {
-            PyException exc = Py.getThreadState().exception;
-            if (exc == null) return null;
-            return exc.type;
-        }
-        if (name == "exc_traceback") {
-            PyException exc = Py.getThreadState().exception;
-            if (exc == null) return null;
-            return exc.traceback;
-        }
-        if (name == "warnoptions") {
-            if (warnoptions == null)
-                warnoptions = new PyList();
-            return warnoptions;
-        }
-
-        PyObject ret = super.__findattr_ex__(name);
-        if (ret != null) {
-            if (ret instanceof PyMethod) {
-        	if (__dict__.__finditem__(name) instanceof PyReflectedFunction)
-        	    return ret; // xxx depends on nonstandard __dict__
-            } else if (ret == PyAttributeDeleted.INSTANCE) {
-        	return null;
+            if (exc == null) {
+                return null;
             }
-            else return ret;
-        }
+            return exc.value;
+        } else if (name == "exc_type") {
+            PyException exc = Py.getThreadState().exception;
+            if (exc == null) {
+                return null;
+            }
+            return exc.type;
+        } else if (name == "exc_traceback") {
+            PyException exc = Py.getThreadState().exception;
+            if (exc == null) {
+                return null;
+            }
+            return exc.traceback;
+        } else if (name == "warnoptions") {
+            return getWarnoptions();
+        } else if (name == "builtins") {
+            return getBuiltins();
+        } else {
+            PyObject ret = super.__findattr_ex__(name);
+            if (ret != null) {
+                if (ret instanceof PyMethod) {
+                    if (__dict__.__finditem__(name) instanceof PyReflectedFunction) {
+                        return ret; // xxx depends on nonstandard __dict__
+                    }
+                } else if (ret == PyAttributeDeleted.INSTANCE) {
+                    return null;
+                } else {
+                    return ret;
+                }
+            }
 
-        return __dict__.__finditem__(name);
+            return __dict__.__finditem__(name);
+        }
     }
 
     public void __setattr__(String name, PyObject value) {
-        if (name == "__dict__" || name == "__class__")
-            throw Py.TypeError("readonly attribute");
-        PyObject ret = getType().lookup(name); // xxx fix fix fix
-        if (ret != null && ret.jtryset(this, value)) {
-            return;
+        checkReadOnly(name);
+        if (name == "builtins") {
+            shadow();
+            setBuiltins(value);
         }
-        __dict__.__setitem__(name, value);
+        else if (name == "warnoptions") {
+            shadow();
+            setWarnoptions(value);
+        } else {
+            PyObject ret = getType().lookup(name); // xxx fix fix fix
+            if (ret != null && ret.jtryset(this, value)) {
+                return;
+            }
+            __dict__.__setitem__(name, value);
+        }
     }
 
     public void __delattr__(String name) {
-        if (name == "__dict__" || name == "__class__")
-            throw Py.TypeError("readonly attribute");
+        checkMustExist(name);
         PyObject ret = getType().lookup(name); // xxx fix fix fix
         if (ret != null) {
             ret.jtryset(this, PyAttributeDeleted.INSTANCE);
@@ -233,7 +337,7 @@ public class PySystemState extends PyObject
             __dict__.__delitem__(name);
         } catch (PyException pye) { // KeyError
             if (ret == null) {
-        	throw Py.AttributeError(name);
+                throw Py.AttributeError(name);
             }
         }
     }
@@ -558,7 +662,7 @@ public class PySystemState extends PyObject
         Py.setSystemState(Py.defaultSystemState);
         if (classLoader != null)
             Py.defaultSystemState.setClassLoader(classLoader);
-        Py.initClassExceptions(PySystemState.builtins);
+        Py.initClassExceptions(getDefaultBuiltins());
         // Make sure that Exception classes have been loaded
         new PySyntaxError("", 1, 1, "", "");
     }
@@ -888,9 +992,10 @@ public class PySystemState extends PyObject
         if (o == Py.None)
              return;
 
-        PySystemState.builtins.__setitem__("_", Py.None);
+        PyObject currentBuiltins = Py.getSystemState().getBuiltins();
+        currentBuiltins.__setitem__("_", Py.None);
         Py.stdout.println(o.__repr__());
-        PySystemState.builtins.__setitem__("_", o);
+        currentBuiltins.__setitem__("_", o);
     }
 
     static void excepthook(PyObject type, PyObject val, PyObject tb) {
@@ -985,5 +1090,15 @@ class PyAttributeDeleted extends PyObject {
         if (c.isPrimitive())
             return Py.NoConversion;
         return null;
+    }
+}
+
+class Shadow {
+    PyObject builtins;
+    PyList warnoptions;
+
+    Shadow() {
+        builtins = PySystemState.getDefaultBuiltins();
+        warnoptions = PySystemState.warnoptions;
     }
 }

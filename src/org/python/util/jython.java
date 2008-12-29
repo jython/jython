@@ -137,10 +137,11 @@ public class jython
         // Now create an interpreter
         InteractiveConsole interp = newInterpreter();
 
-        PySystemState.warnoptions = new PyList();
+        PyList warnoptions = new PyList();
         for (String wopt : opts.warnoptions) {
-            PySystemState.warnoptions.append(new PyString(wopt));
+            warnoptions.append(new PyString(wopt));
         }
+        Py.getSystemState().setWarnoptions(warnoptions);
 
         // Decide if stdin is interactive
         if (!opts.fixInteractive && opts.interactive) {

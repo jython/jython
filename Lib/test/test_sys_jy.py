@@ -62,8 +62,75 @@ class SysTest(unittest.TestCase):
         reload(sys)
         self.assert_(type(sys.getdefaultencoding) == type(gde))
 
+
+def exec_code_separately(function, sharing=False):
+    """Runs code in a separate context: (thread, PySystemState, PythonInterpreter)
+
+    A PySystemState is used in conjunction with its thread
+    context. This is not so desirable - at the very least it means
+    that a thread pool cannot be shared. But this is not the place to
+    revisit ancient design decisions."""
+
+    def function_context():
+        from org.python.core import Py
+        from org.python.util import PythonInterpreter
+        from org.python.core import PySystemState
+ 
+        ps = PySystemState()
+        pi = PythonInterpreter({}, ps)
+        if not sharing:
+            ps.shadow()
+            ps.builtins = ps.builtins.copy() 
+        pi.exec(function.func_code)
+
+    import threading
+    context = threading.Thread(target=function_context)
+    context.start()
+    context.join()
+
+
+def set_globally():
+    import sys
+    import test.sys_jy_test_module # used as a probe
+
+    # can't use 'foo', test_with wants to have that undefined
+    sys.builtins['test_sys_jy_foo'] = 42 
+
+
+def set_shadow():
+    import sys
+    sys.builtins['fum'] = 24
+
+class ShadowingTest(unittest.TestCase):
+
+    def setUp(self):
+        exec_code_separately(set_globally, sharing=True)
+        exec_code_separately(set_shadow)
+
+    def test_super_globals(self):
+        import sys, __builtin__
+
+        def get_sym(sym):
+            return sys.builtins.get(sym)
+        def get_sym_attr(sym):
+            return hasattr(__builtin__, sym)
+
+        self.assertEqual(test_sys_jy_foo, 42, "should be able to install a new builtin ('super global')")
+        self.assertEqual(get_sym('test_sys_jy_foo'), 42)
+        self.assertTrue(get_sym_attr('test_sys_jy_foo'))
+
+        def is_fum_there(): fum
+        self.assertRaises(NameError, is_fum_there) # shadowed global ('fum') should not be visible
+        self.assertEqual(get_sym('fum'), None)
+        self.assertTrue(not(get_sym_attr('fum')))
+
+    def test_sys_modules_per_instance(self):
+        import sys
+        self.assertTrue('sys_jy_test_module' not in sys.modules, "sys.modules should be per PySystemState instance")
+        
+
 def test_main():
-    test.test_support.run_unittest(SysTest)
+    test.test_support.run_unittest(SysTest, ShadowingTest)
 
 if __name__ == "__main__":
     test_main()
