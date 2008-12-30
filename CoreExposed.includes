@@ -34,6 +34,7 @@ org/python/core/PySlot.class
 org/python/core/PyStaticMethod.class
 org/python/core/PyString.class
 org/python/core/PySuper.class
+org/python/core/PyTraceback.class
 org/python/core/PyTuple.class
 org/python/core/PyType.class
 org/python/core/PyUnicode.class

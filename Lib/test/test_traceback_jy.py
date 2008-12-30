@@ -24,18 +24,15 @@ class TracebackTestCase(unittest.TestCase):
         try:
             EventQueue.invokeAndWait(PyRunnable())
         except TypeError:
-            # XXX:
-            """
             self.assertEqual(tb_info(),
                              [('test_tb_across_threads',
                                'EventQueue.invokeAndWait(PyRunnable())'),
                               ('run',
                                "raise TypeError('this is only a test')")])
-                               """
         else:
             self.fail('Expected TypeError')
 
-    def _test_reraise(self):
+    def test_reraise(self):
         def raiser():
             raise Exception(), None, tb
         try:

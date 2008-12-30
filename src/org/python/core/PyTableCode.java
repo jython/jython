@@ -198,37 +198,23 @@ public class PyTableCode extends PyCode
         try {
             ret = funcs.call_function(func_id, frame);
         } catch (Throwable t) {
-            //t.printStackTrace();
-            //Convert exceptions that occured in Java code to PyExceptions
-            PyException e = Py.JavaError(t);
-
-            //Add another traceback object to the exception if needed
-            if (e.traceback.tb_frame != frame) {
-                PyTraceback tb;
-                // If f_back is null, we've jumped threads so use the current
-                // threadstate's frame. Bug #1533624
-                if(e.traceback.tb_frame.f_back == null) {
-                    tb = new PyTraceback(ts.frame);
-                } else {
-                    tb = new PyTraceback(e.traceback.tb_frame.f_back);
-                }
-                tb.tb_next = e.traceback;
-                e.traceback = tb;
-            }
+            // Convert exceptions that occured in Java code to PyExceptions
+            PyException pye = Py.JavaError(t);
+            pye.tracebackHere(frame);
 
             frame.f_lasti = -1;
 
             if (frame.tracefunc != null) {
-                frame.tracefunc.traceException(frame, e);
+                frame.tracefunc.traceException(frame, pye);
             }
             if (ts.profilefunc != null) {
-                ts.profilefunc.traceException(frame, e);
+                ts.profilefunc.traceException(frame, pye);
             }
 
-            //Rethrow the exception to the next stack frame
+            // Rethrow the exception to the next stack frame
             ts.exception = previous_exception;
             ts.frame = ts.frame.f_back;
-            throw e;
+            throw pye;
         }
 
         if (frame.tracefunc != null) {

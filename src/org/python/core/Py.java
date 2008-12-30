@@ -1113,28 +1113,15 @@ public final class Py {
 
     /* Helpers to implement finally clauses */
     public static void addTraceback(Throwable t, PyFrame frame) {
-        PyException e = Py.JavaError(t);
-
-        //Add another traceback object to the exception if needed
-        if (e.traceback.tb_frame != frame && e.traceback.tb_frame.f_back != null) {
-            e.traceback = new PyTraceback(e.traceback);
-        }
+        Py.JavaError(t).tracebackHere(frame, true);
     }
 
     /* Helpers to implement except clauses */
     public static PyException setException(Throwable t, PyFrame frame) {
         PyException pye = Py.JavaError(t);
         pye.normalize();
-
-        // attach catching frame
-        if (frame != null && pye.traceback.tb_frame != frame && pye.traceback.tb_frame.f_back != null) {
-            pye.traceback = new PyTraceback(pye.traceback);
-        }
-
-        ThreadState ts = getThreadState();
-
-        ts.exception = pye;
-
+        pye.tracebackHere(frame);
+        getThreadState().exception = pye;
         return pye;
     }
 

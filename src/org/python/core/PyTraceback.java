@@ -2,31 +2,30 @@
 package org.python.core;
 
 import org.python.core.util.RelativeFile;
+import org.python.expose.ExposedGet;
+import org.python.expose.ExposedType;
 
 /**
  * A python traceback object.
  */
-// XXX: isBaseType = false
-public class PyTraceback extends PyObject
-{
+@ExposedType(name = "traceback", isBaseType = false)
+public class PyTraceback extends PyObject {
+    
+    public static final PyType TYPE = PyType.fromClass(PyTraceback.class);
+
+    @ExposedGet
     public PyObject tb_next;
+
+    @ExposedGet
     public PyFrame tb_frame;
+
+    @ExposedGet
     public int tb_lineno;
 
-    public PyTraceback(PyFrame frame) {
-        tb_frame = frame;
-        if (tb_frame != null) {
-            tb_lineno = tb_frame.getline();
-        }
-        tb_next = Py.None;
-    }
-
-    public PyTraceback(PyTraceback next) {
+    public PyTraceback(PyTraceback next, PyFrame frame) {
         tb_next = next;
-        if (next != null) {
-            tb_frame = next.tb_frame.f_back;
-            tb_lineno = tb_frame.getline();
-        }
+        tb_frame = frame;
+        tb_lineno = frame.getline();
     }
 
     private String tracebackInfo() {
@@ -103,7 +102,7 @@ public class PyTraceback extends PyObject
 
     public void dumpStack(StringBuilder buf) {
         buf.append(tracebackInfo());
-        if (tb_next != Py.None && tb_next != this) {
+        if (tb_next != null && tb_next != this) {
             ((PyTraceback)tb_next).dumpStack(buf);
         } else if (tb_next == this) {
             buf.append("circularity detected!"+this+tb_next);
