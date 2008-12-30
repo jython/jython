@@ -5,12 +5,10 @@ package org.python.core;
  */
 public class JavaImporter extends PyObject {
 
-    public JavaImporter() {
-        super();
-    }
-    
+    public static final String JAVA_IMPORT_PATH_ENTRY = "__classpath__";
+
     public PyObject __call__(PyObject args[], String keywords[]) {
-        if(args[0].toString().endsWith("__classpath__")){
+        if(args[0].toString().endsWith(JAVA_IMPORT_PATH_ENTRY)){
             return this;
         }
         throw Py.ImportError("unable to handle");
@@ -18,7 +16,7 @@ public class JavaImporter extends PyObject {
 
     /**
      * Find the module for the fully qualified name.
-     * 
+     *
      * @param name the fully qualified name of the module
      * @return a loader instance if this importer can load the module, None
      *         otherwise
@@ -29,7 +27,7 @@ public class JavaImporter extends PyObject {
 
     /**
      * Find the module for the fully qualified name.
-     * 
+     *
      * @param name the fully qualified name of the module
      * @param path if installed on the meta-path None or a module path
      * @return a loader instance if this importer can load the module, None
@@ -52,7 +50,7 @@ public class JavaImporter extends PyObject {
 
     /**
      * Returns a string representation of the object.
-     * 
+     *
      * @return a string representation of the object.
      */
     public String toString() {

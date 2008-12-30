@@ -1,4 +1,5 @@
 org/python/core/AstList.class
+org/python/core/ClasspathPyImporter.class
 org/python/core/PyArray.class
 org/python/core/PyBaseString.class
 org/python/core/PyBaseException.class

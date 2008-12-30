@@ -93,7 +93,7 @@ public class PySystemState extends PyObject
     public static final PyString byteorder = new PyString("big");
     public static final int maxint = Integer.MAX_VALUE;
     public static final int minint = Integer.MIN_VALUE;
-    
+
     private static boolean initialized = false;
 
     /** The arguments passed to this program on the command line. */
@@ -101,7 +101,7 @@ public class PySystemState extends PyObject
 
     public PyObject modules;
     public PyList path;
-    
+
     // shadowed statics - don't use directly
     public static PyList warnoptions = new PyList();
     public static PyObject builtins;
@@ -112,7 +112,7 @@ public class PySystemState extends PyObject
 
     public PyObject ps1 = new PyString(">>> ");
     public PyObject ps2 = new PyString("... ");
-    
+
     public PyObject executable;
 
     private String currentWorkingDir;
@@ -142,13 +142,15 @@ public class PySystemState extends PyObject
 
         argv = (PyList)defaultArgv.repeat(1);
         path = (PyList)defaultPath.repeat(1);
-        path.append(Py.newString("__classpath__"));
+        path.append(Py.newString(JavaImporter.JAVA_IMPORT_PATH_ENTRY));
+        path.append(Py.newString(ClasspathPyImporter.PYCLASSPATH_PREFIX));
         executable = defaultExecutable;
 
         meta_path = new PyList();
         path_hooks = new PyList();
         path_hooks.append(new JavaImporter());
         path_hooks.append(zipimporter.TYPE);
+        path_hooks.append(ClasspathPyImporter.TYPE);
         path_importer_cache = new PyDictionary();
 
         currentWorkingDir = new File("").getAbsolutePath();
@@ -240,7 +242,7 @@ public class PySystemState extends PyObject
             return shadowing.builtins;
         }
     }
-    
+
     public synchronized void setBuiltins(PyObject value) {
         if (shadowing == null) {
             builtins = value;

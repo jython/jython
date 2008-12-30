@@ -65,7 +65,7 @@ import __builtin__
 
 def makepath(*paths):
     dir = os.path.join(*paths)
-    if dir == '__classpath__':
+    if dir == '__classpath__' or dir.startswith('__pyclasspath__'):
         return dir, dir
     dir = os.path.abspath(dir)
     return dir, os.path.normcase(dir)

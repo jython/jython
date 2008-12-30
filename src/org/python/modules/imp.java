@@ -9,8 +9,6 @@ import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PySystemState;
 import org.python.core.PyTuple;
-import org.python.core.PyInteger;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -144,8 +142,7 @@ public class imp {
     public static PyObject load_source(String modname, String filename, PyObject file) {
         PyObject mod = Py.None;
         if (file == null) {
-            // XXX: This should load the accompanying byte code file
-            // instead, if it exists
+            // XXX: This should load the accompanying byte code file instead, if it exists
             file = new PyFile(filename, "r", 1024);
         }
         Object o = file.__tojava__(InputStream.class);
@@ -202,8 +199,7 @@ public class imp {
             String compiledName;
             switch (type) {
                 case PY_SOURCE:
-                    // XXX: This should load the accompanying byte
-                    // code file instead, if it exists
+                    // XXX: This should load the accompanying byte code file instead, if it exists
                     String resolvedFilename = sys.getPath(filename.toString());
                     compiledName = org.python.core.imp.makeCompiledFilename(resolvedFilename);
                     if (name.endsWith(".__init__")) {
@@ -229,8 +225,7 @@ public class imp {
                     break;
                 case PKG_DIRECTORY:
                     PyModule m = org.python.core.imp.addModule(name);
-                    m.__dict__.__setitem__("__path__",
-                        new PyList(new PyObject[] { filename }));
+                    m.__dict__.__setitem__("__path__", new PyList(new PyObject[] {filename}));
                     m.__dict__.__setitem__("__file__", filename);
                     ModuleInfo mi = findFromSource(name, filename.toString(), true, true);
                     type = mi.type;
