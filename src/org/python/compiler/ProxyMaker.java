@@ -670,8 +670,6 @@ public class ProxyMaker implements ClassConstants, Opcodes
     }
 
     public void addClassDictInit() throws Exception {
-        supernames.size();
-
         // classDictInit method
         classfile.addInterface(mapClass(org.python.core.ClassDictInit.class));
         Code code = classfile.addMethod("classDictInit",
