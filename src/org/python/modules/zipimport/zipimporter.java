@@ -418,7 +418,7 @@ public class zipimporter extends importer<PyObject> {
     }
 
     @Override
-    protected String makePkgPath(String fullname) {
+    protected String makePackagePath(String fullname) {
         return archive + File.separator + prefix + getSubname(fullname);
     }
 

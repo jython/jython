@@ -110,7 +110,7 @@ public class ClasspathPyImporter extends importer<String> {
     }
 
     @Override
-    protected String makePkgPath(String fullname) {
+    protected String makePackagePath(String fullname) {
         return path;
     }
 

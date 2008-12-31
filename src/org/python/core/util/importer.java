@@ -46,7 +46,7 @@ public abstract class importer<T> extends PyObject {
      * Returns the value to fill in __path__ on a module with the given full module name created by
      * this importer.
      */
-    protected abstract String makePkgPath(String fullname);
+    protected abstract String makePackagePath(String fullname);
 
     /**
      * Given a full module name, return the potential file path in the archive (without extension).
@@ -95,7 +95,7 @@ public abstract class importer<T> extends PyObject {
         if (moduleCodeData.ispackage) {
             // add __path__ to the module *before* the code gets executed
             PyList pkgpath = new PyList();
-            pkgpath.add(makePkgPath(fullname));
+            pkgpath.add(makePackagePath(fullname));
             mod.__dict__.__setitem__("__path__", pkgpath);
         }
         imp.createFromCode(fullname, moduleCodeData.code, moduleCodeData.path);
@@ -155,7 +155,7 @@ public abstract class importer<T> extends PyObject {
      */
     protected final ModuleCodeData getModuleCode(String fullname) {
         String path = makeFilename(fullname);
-        String fullPath = makePkgPath(fullname);
+        String fullPath = makePackagePath(fullname);
 
         if (path.length() < 0) {
             return null;
