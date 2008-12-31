@@ -454,10 +454,6 @@ public class AstList extends PySequence implements Cloneable, List {
         return new AstList(newList);
     }
 
-    protected void set(int i, PyObject value) {
-        data.set(i, value);
-    }
-
     protected void setslice(int start, int stop, int step, PyObject value) {
         if(stop < start) {
             stop = start;
@@ -587,13 +583,12 @@ public class AstList extends PySequence implements Cloneable, List {
         return adapter.ast2py(data.get(index));
     }
 
-    public PyObject pyset(int index, PyObject element) {
+    public void pyset(int index, PyObject element) {
         if (adapter == null) {
-            return (PyObject)data.set(index, element);
+            data.set(index, element);
         }
         Object o = adapter.py2ast(element);
         data.set(index, o);
-        return element;
     }
 
     public Object remove(int index) {

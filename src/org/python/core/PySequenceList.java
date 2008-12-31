@@ -99,8 +99,8 @@ public abstract class PySequenceList extends PySequence implements List {
         return list.pyget(index);
     }
 
-    public PyObject pyset(int index, PyObject element) {
-        return list.pyset(index, element);
+    public void pyset(int index, PyObject element) {
+        list.pyset(index, element);
     }
 
     public Object remove(int index) {

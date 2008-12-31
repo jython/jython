@@ -116,10 +116,6 @@ public class PyList extends PySequenceList {
         remove(start, stop);
     }
 
-    protected void set(int i, PyObject value) {
-        list.pyset(i, value);
-    }
-
     protected void setslice(int start, int stop, int step, PyObject value) {
         if(stop < start) {
             stop = start;

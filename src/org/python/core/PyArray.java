@@ -1312,6 +1312,10 @@ public class PyArray extends PySequence implements Cloneable {
      *            value to set the element to
      */
     public void set(int i, PyObject value) {
+        pyset(i, value);
+    }
+
+    protected void pyset(int i, PyObject value) {
         if ("u".equals(typecode)) {
             Array.setInt(data, i, getCodePoint(value));
             return;
