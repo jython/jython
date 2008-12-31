@@ -73,48 +73,23 @@ package org.python.antlr;
 } 
 
 @members {
-    boolean debugOn = false;
+    private ErrorHandler errorHandler = new FailFastHandler();
 
-    private void debug(String message) {
-        if (debugOn) {
-            System.out.println(message);
+    protected void mismatch(IntStream input, int ttype, BitSet follow) throws RecognitionException {
+        if (errorHandler.mismatch(this, input, ttype, follow)) {
+            super.mismatch(input, ttype, follow);
         }
     }
 
-    /*
-    protected void mismatch(IntStream input, int ttype, BitSet follow) throws RecognitionException {
-        throw new MismatchedTokenException(ttype, input);
+    protected Object recoverFromMismatchedToken(IntStream input, int ttype, BitSet follow)
+        throws RecognitionException {
+
+        Object o = errorHandler.recoverFromMismatchedToken(this, input, ttype, follow);
+        if (o != null) {
+            return o;
+        }
+        return super.recoverFromMismatchedToken(input, ttype, follow);
     }
-    protected void mismatch(IntStream input, RecognitionException e, BitSet follow) throws RecognitionException {
-        throw e;
-    }
-
-	protected Object recoverFromMismatchedToken(IntStream input, int ttype, BitSet follow)
-		throws RecognitionException
-	{
-        mismatch(input, ttype, follow);
-        return null;
-    }
-    */
-
-	public void emitErrorMessage(String msg) {
-		//System.err.print("[EMITTING] ");
-    }
-
-	public void reportError(RecognitionException e) {
-		//System.err.print("[REPORTING] ");
-		// if we've already reported an error and have not matched a token
-		// yet successfully, don't report any errors.
-		if ( state.errorRecovery ) {
-			System.err.print("[SPURIOUS] ");
-			return;
-		}
-		state.syntaxErrors++; // don't count spurious
-		state.errorRecovery = true;
-
-		displayRecognitionError(this.getTokenNames(), e);
-	}
-
 
 }
 
@@ -187,7 +162,7 @@ small_stmt : expr_stmt
            | assert_stmt
            ;
 
-expr_stmt : testlist {debug("matched expr_stmt");}
+expr_stmt : testlist
             ( augassign yield_expr
             | augassign testlist
             | assigns
@@ -338,12 +313,12 @@ suite : simple_stmt
                 )
       ;
 
-test: or_test {debug("matched test: or_test");} 
+test: or_test
     ( (IF or_test ELSE) => IF or_test ELSE test)?
     | lambdef
     ;
 
-or_test : and_test (OR and_test)* {debug("matched or_test");} 
+or_test : and_test (OR and_test)*
         ;
 
 and_test : not_test (AND not_test)*
@@ -369,7 +344,7 @@ comp_op : LESS
         | IS NOT
         ;
 
-expr : xor_expr (VBAR xor_expr)* {debug("matched expr");}
+expr : xor_expr (VBAR xor_expr)*
      ;
 
 xor_expr : and_expr (CIRCUMFLEX and_expr)*
@@ -391,6 +366,7 @@ factor : PLUS factor
        | MINUS factor
        | TILDE factor
        | power
+       | TRAILBACKSLASH
        ;
 
 power : atom (trailer)* (options {greedy=true;}:DOUBLESTAR factor)?
@@ -409,7 +385,7 @@ atom : LPAREN
      | LONGINT
      | FLOAT
      | COMPLEX
-     | (STRING)+ {debug("matched STRING");} 
+     | (STRING)+
      | STRINGPART
      ;
 
@@ -449,7 +425,7 @@ exprlist : expr (options {k=2;}: COMMA expr)* (COMMA)?
          ;
 
 testlist
-    : test (options {k=2;}: COMMA test)* (COMMA)? {debug("matched testlist");}
+    : test (options {k=2;}: COMMA test)* (COMMA)?
     ;
 
 dictmaker : test COLON test (options {k=2;}:COMMA test COLON test)* (COMMA)?

@@ -86,21 +86,11 @@ class CodeopTests(unittest.TestCase):
         av("def x():\n\n pass\n")
         av("def x():\n  pass\n  \n")
         av("def x():\n  pass\n \n")
-        ##next 4 added for Jython
-        av("\n\ndef x():\n  pass\n")
-        av("def x():\n\n pass\n") # failed under Jython 2.1
-        av("def x():\n  pass\n  \n")
-        av("def x():\n  pass\n \n")
-
-        # this failed under 2.2.1
-        av("def x():\n try: pass\n finally: [a for a in (1,2)]\n")
 
         av("pass\n")
         av("3**3\n")
 
         av("if 9==3:\n   pass\nelse:\n   pass\n")
-        av("if 1:\n pass\n if 1:\n  pass\n else:\n  pass\n")
-        #next 2 added for Jython
         av("if 1:\n pass\n if 1:\n  pass\n else:\n  pass\n")
 
         av("#a\n#b\na = 3\n")
@@ -132,7 +122,6 @@ class CodeopTests(unittest.TestCase):
         ai("if 9==3:\n   pass\nelse:")
         ai("if 9==3:\n   pass\nelse:\n")
         ai("if 9==3:\n   pass\nelse:\n   pass")
-
         ai("if 1:")
         ai("if 1:\n")
         ai("if 1:\n pass\n if 1:\n  pass\n else:")
@@ -148,7 +137,7 @@ class CodeopTests(unittest.TestCase):
         #ai("def x():\n  pass\n  ")
         ai("\n\ndef x():\n  pass")
 
-        #ai("a = 9+ \\")
+        ai("a = 9+ \\")
         #ai("a = 'a\\")
         ai("a = '''xy")
 
@@ -157,7 +146,7 @@ class CodeopTests(unittest.TestCase):
         ai("(","eval")
         ai("(\n\n\n","eval")
         ai("(9+","eval")
-        #ai("9+ \\","eval")
+        ai("9+ \\","eval")
         #ai("lambda z: \\","eval")
 
     def test_invalid(self):
@@ -175,21 +164,18 @@ class CodeopTests(unittest.TestCase):
 
         ai("\n\n if 1: pass\n\npass")
 
-        ai("a = 9+ \\\n")
+        #ai("a = 9+ \\\n")
         ai("a = 'a\\ ")
         ai("a = 'a\\\n")
 
-        #XXX: eval is hopelessly permissive right now -- but the rest of this
-        #     test_jy_compile is really important to me for flagging new bugs -
-        #     so commenting out these for now.
-        #ai("a = 1","eval")
+        ai("a = 1","eval")
         #ai("a = (","eval")
-        #ai("]","eval")
-        #ai("())","eval")
-        #ai("[}","eval")
-        #ai("9+","eval")
-        #ai("lambda z:","eval")
-        #ai("a b","eval")
+        ai("]","eval")
+        ai("())","eval")
+        ai("[}","eval")
+        ai("9+","eval")
+        ai("lambda z:","eval")
+        ai("a b","eval")
 
     def test_filename(self):
         self.assertEquals(compile_command("a = 1\n", "abc").co_filename,

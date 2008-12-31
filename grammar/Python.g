@@ -73,6 +73,7 @@ options {
 tokens {
     INDENT;
     DEDENT;
+    TRAILBACKSLASH; //For dangling backslashes when partial parsing.
 }
 
 @header {
@@ -1779,9 +1780,21 @@ ESC
  */
 CONTINUED_LINE
     :    '\\' ('\r')? '\n' (' '|'\t')*  { $channel=HIDDEN; }
-         ( nl=NEWLINE {emit(new CommonToken(NEWLINE,nl.getText()));}
+         ( nl=NEWLINE {
+                          if (!partial) {
+                              emit(new CommonToken(NEWLINE,nl.getText()));
+                          }
+                      }
          |
-         )
+         ) {
+               if (input.LA(1) == -1) {
+                   if (partial) {
+                       emit(new CommonToken(TRAILBACKSLASH,"\\"));
+                   } else {
+                       throw new ParseException("unexpected character after line continuation character");
+                   }
+               }
+           }
     ;
 
 /** Treat a sequence of blank lines as a single blank line.  If

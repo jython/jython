@@ -65,6 +65,12 @@ class CompileTests(unittest.TestCase):
         av("def x():\n  pass\n  \n")
         av("def x():\n  pass\n \n")
 
+        # this failed under 2.2.1
+        av("def x():\n try: pass\n finally: [a for a in (1,2)]\n")
+
+        av("if 9==3:\n   pass\nelse:\n   pass\n")
+        av("if 1:\n pass\n if 1:\n  pass\n else:\n  pass\n")
+
         av("pass\n")
         av("3**3\n")
 
@@ -160,6 +166,11 @@ class CompileTests(unittest.TestCase):
         ai("lambda z:","eval")
         ai("a b","eval")
         ai("return 2.3")
+        ai("del 1")
+        ai("del ()")
+        ai("del (1,)")
+        ai("del [1]")
+        ai("del '1'")
 
     def test_filename(self):
         self.assertEquals(compile_("a = 1\n", "abc").co_filename,

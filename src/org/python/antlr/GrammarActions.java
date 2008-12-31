@@ -637,14 +637,38 @@ public class GrammarActions {
         }
     }
 
-    List<expr> makeDeleteList(List e) {
-        List<expr> exprs = castExprs(e);
-        for(expr expr : exprs) {
-            if (expr instanceof Call) {
-                errorHandler.error("can't delete function call", expr);
-            }
+    List<expr> makeDeleteList(List deletes) {
+        List<expr> exprs = castExprs(deletes);
+        for(expr e : exprs) {
+            checkDelete(e);
         }
         return exprs;
+    }
+
+    void checkDelete(expr e) {
+        //System.out.println("trying to del " + e);
+        if (e instanceof Call) {
+            errorHandler.error("can't delete function call", e);
+        } else if (e instanceof Num) {
+            errorHandler.error("can't delete number", e);
+        } else if (e instanceof Str) {
+            errorHandler.error("can't delete string", e);
+        } else if (e instanceof Tuple) {
+            //XXX: performance problem?  Any way to do this better?
+            List<expr> elts = ((Tuple)e).getInternalElts();
+            if (elts.size() == 0) {
+                errorHandler.error("can't delete ()", e);
+            }
+            for (int i=0;i<elts.size();i++) {
+                checkDelete(elts.get(i));
+            }
+        } else if (e instanceof org.python.antlr.ast.List) {
+            //XXX: performance problem?  Any way to do this better?
+            List<expr> elts = ((org.python.antlr.ast.List)e).getInternalElts();
+            for (int i=0;i<elts.size();i++) {
+                checkDelete(elts.get(i));
+            }
+        }
     }
 
     slice makeSubscript(PythonTree lower, Token colon, PythonTree upper, PythonTree sliceop) {
