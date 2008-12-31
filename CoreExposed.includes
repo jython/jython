@@ -20,7 +20,6 @@ org/python/core/PyFrozenSet.class
 org/python/core/PyFunction.class
 org/python/core/PyGenerator.class
 org/python/core/PyInteger.class
-org/python/core/PyJavaType.class
 org/python/core/PyList.class
 org/python/core/PyLong.class
 org/python/core/PyMethod.class

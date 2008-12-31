@@ -691,7 +691,7 @@ public class PyType extends PyObject implements Serializable {
         return new PyList(((PyType)o).compute_mro());
     }
 
-    final PyObject[] compute_mro() {
+    PyObject[] compute_mro() {
         PyObject[] bases = this.bases;
         int n = bases.length;
         for (int i = 0; i < n; i++) {

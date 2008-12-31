@@ -141,6 +141,7 @@ class JavaClassTest(unittest.TestCase):
         self.assertEquals('java.util', HashMap.__module__)
         self.assertEquals(Class, HashMap.__class__)
         self.assertEquals(None, HashMap.__doc__)
+        self.assertEquals(list(HashMap.__mro__), HashMap.mro())
 
     def test_python_methods(self):
         s = SomePyMethods()

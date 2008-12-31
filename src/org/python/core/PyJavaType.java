@@ -16,11 +16,9 @@ import java.util.Set;
 
 import org.python.core.util.StringUtil;
 import org.python.expose.ExposeAsSuperclass;
-import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedType;
 import org.python.util.Generic;
 
-@ExposedType(name = "javatype")
 public class PyJavaType extends PyType {
 
     private final static Class<?>[] OO = {PyObject.class, PyObject.class};
@@ -35,14 +33,6 @@ public class PyJavaType extends PyType {
 
     public PyJavaType() {
         super(TYPE == null ? fromClass(PyType.class) : TYPE);
-    }
-
-    @ExposedMethod(defaults = "null")
-    final PyList javatype_mro(PyObject o) {
-        if (o == null) {
-            return new PyList(mro);
-        }
-        return new PyList(((PyJavaType)o).mro);
     }
 
     @Override
@@ -60,6 +50,10 @@ public class PyJavaType extends PyType {
 
     protected boolean useMetatypeFirst(PyObject attr) {
         return !(attr instanceof PyReflectedField || attr instanceof PyReflectedFunction);
+    }
+
+    PyObject[] compute_mro() {
+        return mro;
     }
 
     @Override
