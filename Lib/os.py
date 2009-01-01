@@ -1068,6 +1068,12 @@ def isatty(fileno):
 
     return fileno.isatty()
 
+def umask(new_mask):
+    """umask(new_mask) -> old_mask
+
+    Set the current numeric umask and return the previous umask."""
+    return _posix.umask(int(new_mask))
+
 
 from java.security import SecureRandom
 urandom_source = None
