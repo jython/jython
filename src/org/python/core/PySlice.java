@@ -69,7 +69,7 @@ public class PySlice extends PyObject {
         return slice___hash__();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.slice___hash___doc)
     final int slice___hash__() {
         throw Py.TypeError(String.format("unhashable type: '%.200s'", getType().fastGetName()));
     }
@@ -111,7 +111,7 @@ public class PySlice extends PyObject {
         return slice_indices(len);
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.slice_indices_doc)
     final PyObject slice_indices(PyObject len) {
         int[] indices = indicesEx(len.asIndex(Py.OverflowError));
         return new PyTuple(Py.newInteger(indices[0]), Py.newInteger(indices[1]),
