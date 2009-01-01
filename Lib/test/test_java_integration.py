@@ -8,7 +8,7 @@ from java.awt import Dimension, Color, Component, Rectangle
 from java.util import ArrayList, HashMap, Hashtable, StringTokenizer, Vector
 from java.io import FileOutputStream, FileWriter, OutputStreamWriter
                      
-from java.lang import (Boolean, ClassLoader, ExceptionInInitializerError, Integer, Object, String,
+from java.lang import (Boolean, Class, ClassLoader, ExceptionInInitializerError, Integer, Object, String,
         Runnable, Thread, ThreadGroup, System, Runtime, Math, Byte)
 from javax.swing.table import AbstractTableModel
 from javax.swing.tree import TreePath
@@ -93,10 +93,13 @@ class ContextClassloaderTest(unittest.TestCase):
     def test_can_subclass_abstract(self):
         import ContextAbstract
 
+        called = []
         class A(ContextAbstract):
             def method(self):
-                pass
+                called.append(True)
         A()
+        Class.newInstance(A)
+        self.assertEquals(len(called), 2)
 
 class InstantiationTest(unittest.TestCase):
     def test_can_subclass_abstract(self):
@@ -151,16 +154,20 @@ class ExtendJavaTest(unittest.TestCase):
             pass
 
 class SysIntegrationTest(unittest.TestCase):
+    def setUp(self):
+        self.orig_stdout = sys.stdout
+
+    def tearDown(self):
+        sys.stdout = self.orig_stdout
+
     def test_stdout_outputstream(self):
         out = FileOutputStream(test_support.TESTFN)
-        oldstdout = sys.stdout
         sys.stdout = out
         print 'hello',
         out.close()
         f = open(test_support.TESTFN)
         self.assertEquals('hello', f.read())
         f.close()
-        sys.stdout = out
                 
 class AutoSuperTest(unittest.TestCase):
     def test_auto_super(self):

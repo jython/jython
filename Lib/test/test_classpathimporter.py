@@ -1,9 +1,7 @@
 import unittest
 import sys
 from test import test_support
-from java.io import File
 from java.lang import Thread
-from java.net import URLClassLoader
 
 class ClasspathImporterTestCase(unittest.TestCase):
     def setUp(self):
@@ -21,8 +19,7 @@ class ClasspathImporterTestCase(unittest.TestCase):
             pass
 
     def setClassLoaderAndCheck(self, jar):
-        url = File(test_support.findfile(jar)).toURL()
-        Thread.currentThread().contextClassLoader = URLClassLoader([url])
+        Thread.currentThread().contextClassLoader = test_support.make_jar_classloader(jar)
         import flat_in_jar
         self.assertEquals(flat_in_jar.value, 7)
         import jar_pkg

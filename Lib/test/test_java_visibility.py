@@ -167,6 +167,18 @@ class CoercionTest(unittest.TestCase):
         self.assertEquals("OtherSubVisible[]", c.takeArray([OtherSubVisible()]))
         self.assertEquals("SubVisible[]", c.takeArray([SubVisible()]))
 
+    def test_class_coercion(self):
+        c = Coercions()
+        from java.util import Hashtable, HashMap
+        ht = Hashtable()
+        hm = HashMap()
+        ht['one'] = 'uno'
+        hm['zwei'] = 'two'
+        for obj, cls in ((ht, "java.util.Hashtable"), (hm, "java.util.HashMap"), ("abc", "java.lang.String"),
+                (1, "java.lang.Integer"), (1.2, "java.lang.Double"), (Hashtable, "java.lang.Class")):
+            self.assertEquals(c.tellClassNameSerializable(obj), "class " + cls)
+        self.assertEquals(c.tellClassNameObject(ht), "class java.util.Hashtable")
+
 class RespectJavaAccessibilityTest(unittest.TestCase):
     def run_accessibility_script(self, script, error=AttributeError):
         fn = test_support.findfile(script)
@@ -184,11 +196,23 @@ class RespectJavaAccessibilityTest(unittest.TestCase):
     def test_protected_class(self):
         self.run_accessibility_script("access_protected_class.py", TypeError)
 
+class ClassloaderTest(unittest.TestCase):
+    def test_loading_classes_without_import(self):
+        cl = test_support.make_jar_classloader("../callbacker_test.jar")
+        X = cl.loadClass("org.python.tests.Callbacker")
+        called = []
+        class Blah(X.Callback):
+            def call(self, arg=None):
+                called.append(arg)
+        X().callNoArg(Blah())
+        self.assertEquals(None, called[0])
+
 def test_main():
     test_support.run_unittest(VisibilityTest,
             JavaClassTest,
             CoercionTest,
-            RespectJavaAccessibilityTest)
+#            RespectJavaAccessibilityTest,
+            ClassloaderTest)
 
 if __name__ == "__main__":
     test_main()

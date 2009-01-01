@@ -145,6 +145,12 @@ except NameError:
     have_unicode = 0
 
 is_jython = sys.platform.startswith('java')
+if is_jython:
+    def make_jar_classloader(jar):
+        from java.io import File
+        from java.net import URLClassLoader
+        url = File(findfile(jar)).toURL()
+        return URLClassLoader([url])
 
 import os
 # Filename used for testing

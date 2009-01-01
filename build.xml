@@ -564,6 +564,9 @@ The readme text for the next release will be like:
                <pathelement path="${compile.dir}" />
            </classpath>
        </typedef>
+       <jar destfile="${dist.dir}/callbacker_test.jar">
+           <fileset dir="${compile.dir}" includes="org/python/tests/Callbacker*"/>
+       </jar>
        <jar destfile="${dist.dir}/jython.jar" duplicate="fail">
           <nameunion>
              <fileset dir="${exposed.dir}"/>

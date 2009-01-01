@@ -18,6 +18,7 @@ DERIVED_HEADER = """\
 /* Generated file, do not modify.  See jython/src/templates/gderived.py. */
 package org.python.%s;
 
+import java.io.Serializable;
 import org.python.core.*;"""
 
 modif_re = re.compile(r"(?:\((\w+)\))?(\w+)")

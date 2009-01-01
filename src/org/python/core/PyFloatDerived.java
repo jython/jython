@@ -1,6 +1,8 @@
 /* Generated file, do not modify.  See jython/src/templates/gderived.py. */
 package org.python.core;
 
+import java.io.Serializable;
+
 public class PyFloatDerived extends PyFloat implements Slotted {
 
     public PyObject getSlot(int index) {
@@ -1120,7 +1122,7 @@ public class PyFloatDerived extends PyFloat implements Slotted {
         // specified class. Without this, derived.__tojava__(PyObject.class)
         // would broke. (And that's not pure speculation: PyReflectedFunction's
         // ReflectedArgs asks for things like that).
-        if ((c!=Object.class)&&(c.isInstance(this))) {
+        if ((c!=Object.class)&&(c!=Serializable.class)&&(c.isInstance(this))) {
             return this;
         }
         // Otherwise, we call the derived __tojava__, if it exists:

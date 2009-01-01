@@ -1,5 +1,7 @@
 package org.python.tests;
 
+import java.io.Serializable;
+
 import org.python.core.PyObject;
 
 /**
@@ -56,5 +58,13 @@ public class Coercions {
 
     public static String takeArray(Visible[] vis) {
         return "Visible[]";
+    }
+
+    public String tellClassNameObject(Object o) {
+        return o.getClass().toString();
+    }
+
+    public String tellClassNameSerializable(Serializable o) {
+        return o.getClass().toString();
     }
 }

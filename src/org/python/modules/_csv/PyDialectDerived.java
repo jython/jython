@@ -1,6 +1,7 @@
 /* Generated file, do not modify.  See jython/src/templates/gderived.py. */
 package org.python.modules._csv;
 
+import java.io.Serializable;
 import org.python.core.*;
 
 public class PyDialectDerived extends PyDialect implements Slotted {
@@ -1098,7 +1099,7 @@ public class PyDialectDerived extends PyDialect implements Slotted {
         // specified class. Without this, derived.__tojava__(PyObject.class)
         // would broke. (And that's not pure speculation: PyReflectedFunction's
         // ReflectedArgs asks for things like that).
-        if ((c!=Object.class)&&(c.isInstance(this))) {
+        if ((c!=Object.class)&&(c!=Serializable.class)&&(c.isInstance(this))) {
             return this;
         }
         // Otherwise, we call the derived __tojava__, if it exists:
