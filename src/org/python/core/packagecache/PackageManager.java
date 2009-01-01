@@ -3,6 +3,7 @@
 
 package org.python.core.packagecache;
 
+import org.python.core.Py;
 import org.python.core.PyJavaPackage;
 import org.python.core.PyList;
 import org.python.core.PyObject;
@@ -33,7 +34,7 @@ public abstract class PackageManager extends Object {
     /**
      * Dynamically check if pkg.name exists as java pkg in the controlled
      * hierarchy. Should be overriden.
-     * 
+     *
      * @param pkg parent pkg name
      * @param name candidate name
      * @return true if pkg exists
@@ -43,7 +44,7 @@ public abstract class PackageManager extends Object {
     /**
      * Reports the specified package content names. Should be overriden. Used by
      * {@link PyJavaPackage#__dir__} and {@link PyJavaPackage#fillDir}.
-     * 
+     *
      * @return resulting list of names (PyList of PyString)
      * @param jpkg queried package
      * @param instantiate if true then instatiate reported names in package dict
@@ -55,7 +56,7 @@ public abstract class PackageManager extends Object {
     /**
      * Append a directory to the list of directories searched for java packages
      * and java classes.
-     * 
+     *
      * @param dir A directory.
      */
     public abstract void addDirectory(java.io.File dir);
@@ -63,7 +64,7 @@ public abstract class PackageManager extends Object {
     /**
      * Append a directory to the list of directories searched for java packages
      * and java classes.
-     * 
+     *
      * @param dir A directory name.
      */
     public abstract void addJarDir(String dir, boolean cache);
@@ -71,7 +72,7 @@ public abstract class PackageManager extends Object {
     /**
      * Append a jar file to the list of locations searched for java packages and
      * java classes.
-     * 
+     *
      * @param jarfile A directory name.
      */
     public abstract void addJar(String jarfile, boolean cache);
@@ -102,12 +103,12 @@ public abstract class PackageManager extends Object {
             return ret;
         }
 
-        PyList clsNames = cls.keys();
 
-        for (int i = 0; i < clsNames.__len__(); i++) {
-            PyObject name = clsNames.pyget(i);
-            if (!dict.has_key(name))
-                jpkg.addLazyClass(name.toString());
+        for (PyObject pyname : cls.keys().asIterable()) {
+            if (!dict.has_key(pyname)) {
+                String name = pyname.toString();
+                jpkg.addClass(name, Py.findClass(name));
+            }
         }
 
         return dict.keys();
@@ -149,7 +150,7 @@ public abstract class PackageManager extends Object {
      * Creates package/updates statically known classes info. Uses
      * {@link PyJavaPackage#addPackage(java.lang.String, java.lang.String) },
      * {@link PyJavaPackage#addPlaceholders}.
-     * 
+     *
      * @param name package name
      * @param classes comma-separated string
      * @param jarfile involved jarfile; can be null
@@ -184,11 +185,11 @@ public abstract class PackageManager extends Object {
             //Empty or 1 byte file.
             return -1;
         }
-        //int minor = 
+        //int minor =
         istream.readShort();
         //int major =
         istream.readShort();
-        
+
         // Check versions???
         // System.out.println("magic: "+magic+", "+major+", "+minor);
         int nconstants = istream.readShort();
