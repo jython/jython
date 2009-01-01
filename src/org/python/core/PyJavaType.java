@@ -102,7 +102,7 @@ public class PyJavaType extends PyType {
         // PyReflected* can't call or access anything from non-public classes that aren't in
         // org.python.core
         if (!Modifier.isPublic(underlying_class.getModifiers()) &&
-                !name.startsWith("org.python.core")) {
+                !name.startsWith("org.python.core") && Options.respectJavaAccessibility) {
             handleSuperMethodArgCollisions();
             return;
         }
@@ -110,7 +110,17 @@ public class PyJavaType extends PyType {
         // Add methods and determine bean properties declared on this class
         Map<String, PyBeanProperty> props = Generic.map();
         Map<String, PyBeanEvent> events = Generic.map();
-        for (Method meth : underlying_class.getMethods()) {
+        Method[] methods;
+        if (Options.respectJavaAccessibility) {
+            // returns just the public methods
+            methods = underlying_class.getMethods();
+        } else {
+            methods = underlying_class.getDeclaredMethods();
+            for (Method method : methods) {
+                method.setAccessible(true);
+            }
+        }
+        for (Method meth : methods) {
             if (!declaredOnMember(baseClass, meth) || ignore(meth)) {
                 continue;
             }
@@ -174,7 +184,7 @@ public class PyJavaType extends PyType {
         }
 
         // Add superclass methods
-        for (Method meth : underlying_class.getMethods()) {
+        for (Method meth : methods) {
             String nmethname = normalize(meth.getName());
             PyReflectedFunction reflfunc = (PyReflectedFunction)dict.__finditem__(nmethname);
             if (reflfunc != null) {
@@ -192,7 +202,17 @@ public class PyJavaType extends PyType {
         }
 
         // Add fields declared on this type
-        for (Field field : underlying_class.getFields()) {
+        Field[] fields;
+        if (Options.respectJavaAccessibility) {
+            // returns just the public fields
+            fields = underlying_class.getFields();
+        } else {
+            fields = underlying_class.getDeclaredFields();
+            for (Field field : fields) {
+                field.setAccessible(true);
+            }
+        }
+        for (Field field : fields) {
             if (!declaredOnMember(baseClass, field)) {
                 continue;
             }
@@ -258,7 +278,19 @@ public class PyJavaType extends PyType {
         }
 
         final PyReflectedConstructor reflctr = new PyReflectedConstructor("_new_impl");
-        for (Constructor<?> ctr : underlying_class.getConstructors()) {
+        Constructor<?>[] constructors;
+        // No matter the security manager, trying to set the constructor on class to accessible
+        // blows up
+        if (Options.respectJavaAccessibility || Class.class == underlying_class) {
+            // returns just the public constructors
+            constructors = underlying_class.getConstructors();
+        } else {
+            constructors = underlying_class.getDeclaredConstructors();
+            for (Constructor<?> ctr : constructors) {
+                ctr.setAccessible(true);
+            }
+        }
+        for (Constructor<?> ctr : constructors) {
             reflctr.addConstructor(ctr);
         }
         if (PyObject.class.isAssignableFrom(underlying_class)) {

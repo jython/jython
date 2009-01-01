@@ -1,5 +1,7 @@
 import array
 import unittest
+import subprocess
+import sys
 from test import test_support
 from java.lang import Class
 from java.util import HashMap, Observable, Observer 
@@ -165,10 +167,28 @@ class CoercionTest(unittest.TestCase):
         self.assertEquals("OtherSubVisible[]", c.takeArray([OtherSubVisible()]))
         self.assertEquals("SubVisible[]", c.takeArray([SubVisible()]))
 
+class RespectJavaAccessibilityTest(unittest.TestCase):
+    def run_accessibility_script(self, script, error=AttributeError):
+        fn = test_support.findfile(script)
+        self.assertRaises(error, execfile, fn)
+        self.assertEquals(subprocess.call([sys.executable, "-J-Dpython.cachedir.skip=true",
+            "-J-Dpython.security.respectJavaAccessibility=false", fn]),
+            0)
+
+    def test_method_access(self):
+        self.run_accessibility_script("call_protected_method.py")
+
+    def test_field_access(self):
+        self.run_accessibility_script("access_protected_field.py")
+
+    def test_protected_class(self):
+        self.run_accessibility_script("access_protected_class.py", TypeError)
+
 def test_main():
     test_support.run_unittest(VisibilityTest,
             JavaClassTest,
-            CoercionTest)
+            CoercionTest,
+            RespectJavaAccessibilityTest)
 
 if __name__ == "__main__":
     test_main()
