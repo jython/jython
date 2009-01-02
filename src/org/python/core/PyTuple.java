@@ -120,42 +120,42 @@ public class PyTuple extends PySequenceList
         return tuple___len__();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.tuple___len___doc)
     final int tuple___len__() {
         return size();
     }
     
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.tuple___contains___doc)
     final boolean tuple___contains__(PyObject o) {
         return super.__contains__(o);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.tuple___ne___doc)
     final PyObject tuple___ne__(PyObject o) {
         return super.__ne__(o);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.tuple___eq___doc)
     final PyObject tuple___eq__(PyObject o) {
         return super.__eq__(o);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.tuple___gt___doc)
     final PyObject tuple___gt__(PyObject o) {
         return super.__gt__(o);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.tuple___ge___doc)
     final PyObject tuple___ge__(PyObject o) {
         return super.__ge__(o);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.tuple___lt___doc)
     final PyObject tuple___lt__(PyObject o) {
         return super.__lt__(o);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.tuple___le___doc)
     final PyObject tuple___le__(PyObject o) {
         return super.__le__(o);
     }
@@ -164,7 +164,7 @@ public class PyTuple extends PySequenceList
         return tuple___add__(generic_other);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.tuple___add___doc)
     final PyObject tuple___add__(PyObject generic_other) {
         PyTuple sum = null;
         if (generic_other instanceof PyTuple) {
@@ -186,7 +186,7 @@ public class PyTuple extends PySequenceList
         return tuple___mul__(o);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.tuple___mul___doc)
     final PyObject tuple___mul__(PyObject o) {
         if (!o.isIndex()) {
             return null;
@@ -199,7 +199,7 @@ public class PyTuple extends PySequenceList
         return tuple___rmul__(o);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.tuple___rmul___doc)
     final PyObject tuple___rmul__(PyObject o) {
         if (!o.isIndex()) {
             return null;
@@ -211,17 +211,17 @@ public class PyTuple extends PySequenceList
         return tuple___iter__();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.tuple___iter___doc)
     public PyObject tuple___iter__() {
         return new PyFastSequenceIter(this);
     }
 
-    @ExposedMethod(defaults = "null")
+    @ExposedMethod(defaults = "null", doc = BuiltinDocs.tuple___getslice___doc)
     final PyObject tuple___getslice__(PyObject s_start, PyObject s_stop, PyObject s_step) {
         return seq___getslice__(s_start,s_stop,s_step);
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.tuple___getitem___doc)
     final PyObject tuple___getitem__(PyObject index) {
         PyObject ret = seq___finditem__(index);
         if(ret == null) {
@@ -230,7 +230,7 @@ public class PyTuple extends PySequenceList
         return ret;
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.tuple___getnewargs___doc)
     final PyTuple tuple___getnewargs__() {
         return new PyTuple(new PyTuple(list.getArray()));
     }
@@ -243,7 +243,7 @@ public class PyTuple extends PySequenceList
         return tuple___hash__();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.tuple___hash___doc)
     final int tuple___hash__() {
         // strengthened hash to avoid common collisions. from CPython
         // tupleobject.tuplehash. See http://bugs.python.org/issue942952
@@ -270,7 +270,7 @@ public class PyTuple extends PySequenceList
         return tuple___repr__();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.tuple___repr___doc)
     final String tuple___repr__() {
         StringBuilder buf = new StringBuilder("(");
         PyObject[] array = getArray();
