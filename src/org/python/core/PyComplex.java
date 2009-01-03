@@ -130,7 +130,7 @@ public class PyComplex extends PyObject {
         return complex_toString();
     }
 
-    @ExposedMethod(names = {"__repr__", "__str__"})
+    @ExposedMethod(names = {"__repr__", "__str__"}, doc = BuiltinDocs.complex___str___doc)
     final String complex_toString() {
         if (real == 0.) {
             return toString(imag)+"j";
@@ -147,7 +147,7 @@ public class PyComplex extends PyObject {
         return complex___hash__();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.complex___hash___doc)
     final int complex___hash__() {
         if (imag == 0) {
             return new PyFloat(real).hashCode();
@@ -162,7 +162,7 @@ public class PyComplex extends PyObject {
         return complex___nonzero__();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.complex___nonzero___doc)
     final boolean complex___nonzero__() {
         return real != 0 && imag != 0;
     }
@@ -193,7 +193,7 @@ public class PyComplex extends PyObject {
         return complex___eq__(other);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.complex___eq___doc)
     final PyObject complex___eq__(PyObject other) {
         if (!canCoerce(other))
             return null;
@@ -208,7 +208,7 @@ public class PyComplex extends PyObject {
         return complex___ne__(other);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.complex___ne___doc)
     final PyObject complex___ne__(PyObject other) {
         if (!canCoerce(other))
             return null;
@@ -226,7 +226,7 @@ public class PyComplex extends PyObject {
         return complex___ge__(other);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.complex___ge___doc)
     final PyObject complex___ge__(PyObject other) {
         return unsupported_comparison(other);
     }
@@ -235,7 +235,7 @@ public class PyComplex extends PyObject {
         return complex___gt__(other);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.complex___gt___doc)
     final PyObject complex___gt__(PyObject other) {
         return unsupported_comparison(other);
     }
@@ -244,7 +244,7 @@ public class PyComplex extends PyObject {
         return complex___le__(other);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.complex___le___doc)
     final PyObject complex___le__(PyObject other) {
         return unsupported_comparison(other);
     }
@@ -253,7 +253,7 @@ public class PyComplex extends PyObject {
         return complex___lt__(other);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.complex___lt___doc)
     final PyObject complex___lt__(PyObject other) {
         return unsupported_comparison(other);
     }
@@ -262,7 +262,7 @@ public class PyComplex extends PyObject {
         return complex___coerce_ex__(other);
     }
     
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.complex___coerce___doc)
     final PyObject complex___coerce__(PyObject other) {
         return adaptToCoerceTuple(complex___coerce_ex__(other));
     }
@@ -306,7 +306,7 @@ public class PyComplex extends PyObject {
         return complex___add__(right);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.complex___add___doc)
     final PyObject complex___add__(PyObject right) {
         if (!canCoerce(right))
             return null;
@@ -318,7 +318,7 @@ public class PyComplex extends PyObject {
         return complex___radd__(left);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.complex___radd___doc)
     final PyObject complex___radd__(PyObject left) {
         return __add__(left);
     }
@@ -331,7 +331,7 @@ public class PyComplex extends PyObject {
         return complex___sub__(right);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.complex___sub___doc)
     final PyObject complex___sub__(PyObject right) {
         if (!canCoerce(right))
             return null;
@@ -342,7 +342,7 @@ public class PyComplex extends PyObject {
         return complex___rsub__(left);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.complex___rsub___doc)
     final PyObject complex___rsub__(PyObject left) {
         if (!canCoerce(left))
             return null;
@@ -358,7 +358,7 @@ public class PyComplex extends PyObject {
         return complex___mul__(right);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.complex___mul___doc)
     final PyObject complex___mul__(PyObject right) {
         if (!canCoerce(right))
             return null;
@@ -369,7 +369,7 @@ public class PyComplex extends PyObject {
         return complex___rmul__(left);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.complex___rmul___doc)
     final PyObject complex___rmul__(PyObject left) {
         if (!canCoerce(left))
             return null;
@@ -401,7 +401,7 @@ public class PyComplex extends PyObject {
         return complex___div__(right);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.complex___div___doc)
     final PyObject complex___div__(PyObject right) {
         if (!canCoerce(right))
             return null;
@@ -414,7 +414,7 @@ public class PyComplex extends PyObject {
         return complex___rdiv__(left);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.complex___rdiv___doc)
     final PyObject complex___rdiv__(PyObject left) {
         if (!canCoerce(left))
             return null;
@@ -427,7 +427,7 @@ public class PyComplex extends PyObject {
         return complex___floordiv__(right);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.complex___floordiv___doc)
     final PyObject complex___floordiv__(PyObject right) {
         if (!canCoerce(right))
             return null;
@@ -438,7 +438,7 @@ public class PyComplex extends PyObject {
         return complex___rfloordiv__(left);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.complex___rfloordiv___doc)
     final PyObject complex___rfloordiv__(PyObject left) {
         if (!canCoerce(left))
             return null;
@@ -449,7 +449,7 @@ public class PyComplex extends PyObject {
         return complex___truediv__(right);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.complex___truediv___doc)
     final PyObject complex___truediv__(PyObject right) {
         if (!canCoerce(right))
             return null;
@@ -460,7 +460,7 @@ public class PyComplex extends PyObject {
         return complex___rtruediv__(left);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.complex___rtruediv___doc)
     final PyObject complex___rtruediv__(PyObject left) {
         if (!canCoerce(left))
             return null;
@@ -471,7 +471,7 @@ public class PyComplex extends PyObject {
         return complex___mod__(right);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.complex___mod___doc)
     final PyObject complex___mod__(PyObject right) {
         if (!canCoerce(right))
             return null;
@@ -482,7 +482,7 @@ public class PyComplex extends PyObject {
         return complex___rmod__(left);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.complex___rmod___doc)
     final PyObject complex___rmod__(PyObject left) {
         if (!canCoerce(left))
             return null;
@@ -503,7 +503,7 @@ public class PyComplex extends PyObject {
         return complex___divmod__(right);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.complex___divmod___doc)
     final PyObject complex___divmod__(PyObject right) {
         if (!canCoerce(right))
             return null;
@@ -514,7 +514,7 @@ public class PyComplex extends PyObject {
         return complex___rdivmod__(left);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.complex___rdivmod___doc)
     final PyObject complex___rdivmod__(PyObject left) {
         if (!canCoerce(left))
             return null;
@@ -569,7 +569,7 @@ public class PyComplex extends PyObject {
         return complex___pow__(right, modulo);
     }
 
-    @ExposedMethod(type = MethodType.BINARY, defaults = "null")
+    @ExposedMethod(type = MethodType.BINARY, defaults = "null", doc = BuiltinDocs.complex___pow___doc)
     final PyObject complex___pow__(PyObject right, PyObject modulo) {
         if (modulo != null) {
             throw Py.ValueError("complex modulo");
@@ -583,7 +583,7 @@ public class PyComplex extends PyObject {
         return complex___rpow__(left);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.complex___rpow___doc)
     final PyObject complex___rpow__(PyObject left) {
         if (!canCoerce(left))
             return null;
@@ -628,7 +628,7 @@ public class PyComplex extends PyObject {
         return complex___neg__();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.complex___neg___doc)
     final PyObject complex___neg__() {
         return new PyComplex(-real, -imag);
     }
@@ -637,7 +637,7 @@ public class PyComplex extends PyObject {
         return complex___pos__();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.complex___pos___doc)
     final PyObject complex___pos__() {
         return new PyComplex(real, imag);
     }
@@ -650,7 +650,7 @@ public class PyComplex extends PyObject {
         return complex___abs__();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.complex___abs___doc)
     final PyObject complex___abs__() {
         return new PyFloat(Math.hypot(real, imag));
     }
@@ -659,7 +659,7 @@ public class PyComplex extends PyObject {
         return complex___int__();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.complex___int___doc)
     final PyInteger complex___int__() {
         throw Py.TypeError(
             "can't convert complex to int; use e.g. int(abs(z))");
@@ -669,7 +669,7 @@ public class PyComplex extends PyObject {
         return complex___long__();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.complex___long___doc)
     final PyObject complex___long__() {
         throw Py.TypeError(
             "can't convert complex to long; use e.g. long(abs(z))");
@@ -679,7 +679,7 @@ public class PyComplex extends PyObject {
         return complex___float__();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.complex___float___doc)
     final PyFloat complex___float__() {
         throw Py.TypeError("can't convert complex to float; use e.g. abs(z)");
     }
@@ -692,12 +692,12 @@ public class PyComplex extends PyObject {
         return complex_conjugate();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.complex_conjugate_doc)
     final PyComplex complex_conjugate() {
         return new PyComplex(real, -imag);
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.complex___getnewargs___doc)
     final PyTuple complex___getnewargs__() {
         return new PyTuple(new PyComplex(real, imag));
     }
