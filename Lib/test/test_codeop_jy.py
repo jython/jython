@@ -172,6 +172,7 @@ class CompileTests(unittest.TestCase):
         ai("del [1]")
         ai("del '1'")
         ai("if (a == 1 and b = 2): pass")
+        ai("[i for i in range(10)] = (1, 2, 3)")
 
     def test_filename(self):
         self.assertEquals(compile_("a = 1\n", "abc").co_filename,

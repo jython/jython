@@ -619,6 +619,8 @@ public class GrammarActions {
             errorHandler.error("can't assign to repr", e);
         } else if (e instanceof IfExp) {
             errorHandler.error("can't assign to conditional expression", e);
+        } else if (e instanceof ListComp) {
+            errorHandler.error("can't assign to list comprehension", e);
         } else if (e instanceof Tuple) {
             //XXX: performance problem?  Any way to do this better?
             List<expr> elts = ((Tuple)e).getInternalElts();
