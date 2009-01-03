@@ -41,7 +41,7 @@ public class PyClassMethod extends PyObject {
         return classmethod___get__(obj, type);
     }
 
-    @ExposedMethod(defaults = "null")
+    @ExposedMethod(defaults = "null", doc = BuiltinDocs.classmethod___get___doc)
     final PyObject classmethod___get__(PyObject obj, PyObject type) {
         if(type == null) {
             type = obj.getType();

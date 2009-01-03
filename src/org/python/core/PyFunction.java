@@ -276,7 +276,7 @@ public class PyFunction extends PyObject {
         function___setattr__(name, value);
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.function___setattr___doc)
     final void function___setattr__(String name, PyObject value) {
         ensureDict();
         super.__setattr__(name, value);
@@ -292,7 +292,7 @@ public class PyFunction extends PyObject {
         return function___get__(obj, type);
     }
 
-    @ExposedMethod(defaults = "null")
+    @ExposedMethod(defaults = "null", doc = BuiltinDocs.function___get___doc)
     final PyObject function___get__(PyObject obj, PyObject type) {
         return new PyMethod(this, obj, type);
     }
@@ -323,7 +323,7 @@ public class PyFunction extends PyObject {
         return function___call__(args, keywords);
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.function___call___doc)
     final PyObject function___call__(PyObject[] args, String[] keywords) {
         return func_code.call(args, keywords, func_globals, func_defaults, func_closure);
     }

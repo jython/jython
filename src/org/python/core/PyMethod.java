@@ -67,7 +67,7 @@ public class PyMethod extends PyObject {
         return im_func.__findattr_ex__(name);
     }
     
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.instancemethod___getattribute___doc)
     final PyObject instancemethod___getattribute__(PyObject arg0) {
         String name = asName(arg0);
         PyObject ret = instancemethod___findattr_ex__(name);
@@ -82,7 +82,7 @@ public class PyMethod extends PyObject {
         return instancemethod___get__(obj, type);
     }
 
-    @ExposedMethod(defaults = "null")
+    @ExposedMethod(defaults = "null", doc = BuiltinDocs.instancemethod___get___doc)
     final PyObject instancemethod___get__(PyObject obj, PyObject type) {
         // Only if classes are compatible
         if (obj == null || im_self != null) {
@@ -99,7 +99,7 @@ public class PyMethod extends PyObject {
         return instancemethod___call__(args, keywords);
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.instancemethod___call___doc)
     final PyObject instancemethod___call__(PyObject[] args, String[] keywords) {
         PyObject self = im_self;
 
@@ -136,7 +136,7 @@ public class PyMethod extends PyObject {
         return instancemethod___cmp__(other);
     }
 
-    @ExposedMethod(type = MethodType.CMP)
+    @ExposedMethod(type = MethodType.CMP, doc = BuiltinDocs.instancemethod___cmp___doc)
     final int instancemethod___cmp__(PyObject other) {
         if (!(other instanceof PyMethod)) {
             return -2;

@@ -50,7 +50,7 @@ public class PyBoolean extends PyInteger {
         return bool_toString();
     }
 
-    @ExposedMethod(names = {"__str__", "__repr__"})
+    @ExposedMethod(names = {"__str__", "__repr__"}, doc = BuiltinDocs.bool___str___doc)
     final String bool_toString() {
         return value ? "True" : "False";
     }
@@ -59,7 +59,7 @@ public class PyBoolean extends PyInteger {
         return bool___hash__();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.bool___hash___doc)
     final int bool___hash__() {
         return value ? 1 : 0;
     }
@@ -68,7 +68,7 @@ public class PyBoolean extends PyInteger {
         return bool___nonzero__();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.bool___nonzero___doc)
     final boolean bool___nonzero__() {
         return value;
     }
@@ -99,7 +99,7 @@ public class PyBoolean extends PyInteger {
         return bool___and__(right);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.bool___and___doc)
     final PyObject bool___and__(PyObject right) {
     	if (right instanceof PyBoolean) {
 	        return Py.newBoolean(value & ((PyBoolean)right).value);
@@ -114,7 +114,7 @@ public class PyBoolean extends PyInteger {
         return bool___xor__(right);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.bool___xor___doc)
     final PyObject bool___xor__(PyObject right) {
     	if (right instanceof PyBoolean) {
 	        return Py.newBoolean(value ^ ((PyBoolean)right).value);
@@ -129,7 +129,7 @@ public class PyBoolean extends PyInteger {
         return bool___or__(right);
     }
     
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.bool___or___doc)
     final PyObject bool___or__(PyObject right) {
     	if (right instanceof PyBoolean) {
 	        return Py.newBoolean(value | ((PyBoolean)right).value);
@@ -144,7 +144,7 @@ public class PyBoolean extends PyInteger {
         return bool___neg__();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.bool___neg___doc)
     final PyObject bool___neg__() {
         return Py.newInteger(value ? -1 : 0);
     }
@@ -153,7 +153,7 @@ public class PyBoolean extends PyInteger {
         return bool___pos__();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.bool___pos___doc)
     final PyObject bool___pos__() {
         return Py.newInteger(value ? 1 : 0);
     }
@@ -162,7 +162,7 @@ public class PyBoolean extends PyInteger {
         return bool___abs__();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.bool___abs___doc)
     final PyObject bool___abs__() {
         return Py.newInteger(value ? 1 : 0);
     }
