@@ -103,6 +103,7 @@ import org.python.antlr.ast.Continue;
 import org.python.antlr.ast.Delete;
 import org.python.antlr.ast.Dict;
 import org.python.antlr.ast.Ellipsis;
+import org.python.antlr.ast.ErrorMod;
 import org.python.antlr.ast.ExceptHandler;
 import org.python.antlr.ast.Exec;
 import org.python.antlr.ast.Expr;
@@ -289,6 +290,13 @@ single_input
         mtype = new Interactive($single_input.start, actions.castStmts($compound_stmt.tree));
     }
     ;
+    //XXX: this block is duplicated in three places, how to extract?
+    catch [RecognitionException re] {
+        errorHandler.reportError(this, re);
+        errorHandler.recover(this, input,re);
+        PythonTree badNode = (PythonTree)adaptor.errorNode(input, retval.start, input.LT(-1), re);
+        retval.tree = new ErrorMod(badNode);
+    }
 
 //file_input: (NEWLINE | stmt)* ENDMARKER
 file_input
@@ -318,6 +326,14 @@ file_input
         mtype = new Module($file_input.start, actions.castStmts(stypes));
     }
     ;
+    //XXX: this block is duplicated in three places, how to extract?
+    catch [RecognitionException re] {
+        errorHandler.reportError(this, re);
+        errorHandler.recover(this, input,re);
+        PythonTree badNode = (PythonTree)adaptor.errorNode(input, retval.start, input.LT(-1), re);
+        retval.tree = new ErrorMod(badNode);
+    }
+
 
 //eval_input: testlist NEWLINE* ENDMARKER
 eval_input
@@ -331,6 +347,14 @@ eval_input
         mtype = new Expression($eval_input.start, actions.castExpr($testlist.tree));
     }
     ;
+    //XXX: this block is duplicated in three places, how to extract?
+    catch [RecognitionException re] {
+        errorHandler.reportError(this, re);
+        errorHandler.recover(this, input,re);
+        PythonTree badNode = (PythonTree)adaptor.errorNode(input, retval.start, input.LT(-1), re);
+        retval.tree = new ErrorMod(badNode);
+    }
+
 
 //not in CPython's Grammar file
 dotted_attr returns [expr etype]
