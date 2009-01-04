@@ -145,22 +145,31 @@ public class PyReflectedFunction extends PyObject {
 
     public PyObject __call__(PyObject self, PyObject[] args, String[] keywords) {
         ReflectedCallData callData = new ReflectedCallData();
-        Object method = null;
-        ReflectedArgs[] argsl = argslist;
-        int n = nargs;
-        for (int i = 0; i < n; i++) {
-            ReflectedArgs rargs = argsl[i];
+        ReflectedArgs match = null;
+        for (int i = 0; i < nargs && match == null; i++) {
             // System.err.println(rargs.toString());
-            if (rargs.matches(self, args, keywords, callData)) {
-                method = rargs.data;
-                break;
+            if (argslist[i].matches(self, args, keywords, callData)) {
+                match = argslist[i];
             }
         }
-        if (method == null) {
+        if (match == null) {
             throwError(callData.errArg, args.length, self != null, keywords.length != 0);
         }
         Object cself = callData.self;
-        Method m = (Method)method;
+        Method m = (Method)match.data;
+
+        // If this is a direct call to a Java class instance method with a PyProxy instance as the
+        // arg, use the super__ version to actually route this through the method on the class.
+        if (self == null && cself != null && cself instanceof PyProxy
+                && !__name__.startsWith("super__")
+                && match.declaringClass != cself.getClass()) {
+            String mname = ("super__" + __name__);
+            try {
+                m = cself.getClass().getMethod(mname, m.getParameterTypes());
+            } catch (Exception e) {
+                throw Py.JavaError(e);
+            }
+        }
         Object o;
         try {
             o = m.invoke(cself, callData.getArgsArray());
@@ -247,7 +256,7 @@ public class PyReflectedFunction extends PyObject {
         }
     }
 
-    private static String niceName(Class arg) {
+    private static String niceName(Class<?> arg) {
         if (arg == String.class || arg == PyString.class) {
             return "String";
         }
@@ -260,11 +269,10 @@ public class PyReflectedFunction extends PyObject {
     protected void throwBadArgError(int errArg, int nArgs, boolean self) {
         Set<Class<?>> argTypes = Generic.set();
         for (int i = 0; i < nargs; i++) {
-            // if (!args.isStatic && !self) { len = len-1; }
             // This check works almost all the time.
-            // I'm still a little worried about non-static methods
-            // called with an explict self...
-            if (argslist[i].args.length == nArgs) {
+            // I'm still a little worried about non-static methods called with an explicit self...
+            if (argslist[i].args.length == nArgs ||
+                    (!argslist[i].isStatic && !self && argslist[i].args.length == nArgs - 1)) {
                 if (errArg == ReflectedCallData.UNABLE_TO_CONVERT_SELF) {
                     argTypes.add(argslist[i].declaringClass);
                 } else {

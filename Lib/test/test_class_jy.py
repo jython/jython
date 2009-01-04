@@ -177,6 +177,12 @@ class ClassGeneralTestCase(unittest.TestCase):
         # conflict
         class D(B, C):
             pass
+
+    def test_getitem_exceptions(self):
+        class A:
+            def __getitem__(self, key):
+                raise IndexError, "Fraid not"
+        self.assertRaises(IndexError, A().__getitem__, 'b')
         
 
 class ClassNamelessModuleTestCase(unittest.TestCase):

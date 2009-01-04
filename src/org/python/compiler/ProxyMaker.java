@@ -12,9 +12,10 @@ import java.util.Map;
 import java.util.Set;
 
 import org.python.core.Py;
-import org.python.core.PyJavaType;
+import org.python.core.PyMethod;
 import org.python.core.PyObject;
 import org.python.core.PyProxy;
+import org.python.core.PyReflectedFunction;
 import org.python.objectweb.asm.Label;
 import org.python.objectweb.asm.Opcodes;
 import org.python.util.Generic;
@@ -66,22 +67,21 @@ public class ProxyMaker implements ClassConstants, Opcodes
             proxy.__initProxy__(new Object[0]);
             o = proxy._getPyInstance();
         }
-        PyObject ret = null;
-        if (o.getDict() != null) {
-            ret = o.getDict().__finditem__(name);
-        }
-        if (ret == null) {
-            PyObject[] definedOn = new PyObject[1];
-            PyObject typeDefined = o.getType().lookup_where(name, definedOn);
-            if (!(definedOn[0] instanceof PyJavaType)) {
-                ret = typeDefined;
+        PyObject ret = o.__findattr__(name);
+        if (ret instanceof PyMethod) {
+            PyMethod meth = ((PyMethod)ret);
+            if (meth.im_func instanceof PyReflectedFunction) {
+                PyReflectedFunction func = (PyReflectedFunction)meth.im_func;
+                if (func.nargs > 0 && proxy.getClass() == func.argslist[0].declaringClass) {
+                    // This function is the default return for the proxy type if the Python instance
+                    // hasn't returned something of its own from __findattr__, so do the standard
+                    // Java call on this
+                    return null;
+                }
             }
         }
-        if (ret == null) {
-            return null;
-        }
         Py.setSystemState(proxy._getPySystemState());
-        return ret.__get__(o, null);
+        return ret;
     }
 
     Class<?> superclass;

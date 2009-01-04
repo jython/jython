@@ -2,18 +2,24 @@ import os
 import unittest
 import sys
 import re
-
+ 
 from test import test_support
-from java.awt import Dimension, Color, Component, Rectangle
-from java.util import ArrayList, HashMap, Hashtable, StringTokenizer, Vector
-from java.io import FileOutputStream, FileWriter, OutputStreamWriter
-                     
-from java.lang import (Boolean, Class, ClassLoader, ExceptionInInitializerError, Integer, Object, String,
-        Runnable, Thread, ThreadGroup, System, Runtime, Math, Byte)
+
+from java.lang import (Boolean, Class, ClassLoader, ExceptionInInitializerError, Integer, Object,
+    String, Runnable, Thread, ThreadGroup, System, Runtime, Math, Byte)
+from java.math import BigDecimal
+from java.io import (FileInputStream, FileNotFoundException, FileOutputStream, FileWriter,
+    OutputStreamWriter, UnsupportedEncodingException)
+from java.util import ArrayList, Date, HashMap, Hashtable, StringTokenizer, Vector
+
+from java.awt import Dimension, Color, Component, Container, Rectangle
+from java.awt.event import ComponentEvent
 from javax.swing.table import AbstractTableModel
 from javax.swing.tree import TreePath
-from java.math import BigDecimal
 
+from org.python.core.util import FileUtil
+from org.python.tests import BeanImplementation, Callbacker, Listenable
+from javatests import MethodInvokationTest
 """
 public abstract class Abstract {
     public Abstract() {
@@ -114,7 +120,6 @@ class InstantiationTest(unittest.TestCase):
         self.assertRaises(TypeError, Component)
 
     def test_str_doesnt_coerce_to_int(self):
-        from java.util import Date
         self.assertRaises(TypeError, Date, '99-01-01', 1, 1)
 
     def test_Class_newInstance_works_on_proxies(self):
@@ -128,9 +133,6 @@ class BeanTest(unittest.TestCase):
 
     def test_multiple_listeners(self):
         '''Check that multiple BEP can be assigned to a single cast listener'''
-        from org.python.tests import Listenable
-        from java.awt.event import ComponentEvent
-        from java.awt import Container
         m = Listenable()
         called = []
         def f(evt, called=called):
@@ -143,6 +145,11 @@ class BeanTest(unittest.TestCase):
         self.assertEquals(1, len(called))
         m.fireComponentHidden(ComponentEvent(Container(), 0))
         self.assertEquals(2, len(called))
+    
+    def test_bean_interface(self):
+        b = BeanImplementation()
+        self.assertEquals("name", b.getName())
+        self.assertEquals("name", b.name)
 
 class ExtendJavaTest(unittest.TestCase):
     def test_override_tostring(self):
@@ -158,6 +165,36 @@ class ExtendJavaTest(unittest.TestCase):
             self.fail("Shouldn't be able to subclass more than one concrete java class")
         except TypeError:
             pass
+
+    def test_multilevel_override(self):
+        class SubDate(Date): 
+           def toString(self): 
+               s = Date.toString(self)
+               return 'SubDate -> Date'
+
+        class SubSubDate(SubDate): 
+            def toString(self):
+                return 'SubSubDate -> ' + SubDate.toString(self) 
+        self.assertEquals("SubDate -> Date", SubDate().toString())
+        self.assertEquals("SubSubDate -> SubDate -> Date", SubSubDate().toString())
+
+    def test_passthrough(self):
+        class CallbackPassthrough(Callbacker.Callback):
+            def __init__(self, worker):
+                self.worker = worker
+
+            def __getattribute__(self, name):
+                if name == 'call':
+                    return getattr(self.worker, name)
+                return object.__getattribute__(self, name)
+
+        collector = Callbacker.CollectingCallback()
+        c = CallbackPassthrough(collector)
+        Callbacker.callNoArg(c)
+        self.assertEquals("call()", collector.calls[0])
+        c.call(7)
+        self.assertEquals("call(7)", collector.calls[1])
+
 
 class SysIntegrationTest(unittest.TestCase):
     def setUp(self):
@@ -204,16 +241,13 @@ class PyObjectCmpTest(unittest.TestCase):
 class IOTest(unittest.TestCase):
     def test_io_errors(self):
         "Check that IOException isn't mangled into an IOError"
-        from java.io import UnsupportedEncodingException
         self.assertRaises(UnsupportedEncodingException, OutputStreamWriter, System.out, "garbage")
         self.assertRaises(IOError, OutputStreamWriter, System.out, "garbage")
 
     def test_fileio_error(self):
-        from java.io import FileInputStream, FileNotFoundException
         self.assertRaises(FileNotFoundException, FileInputStream, "garbage")
 
     def test_unsupported_tell(self):
-        from org.python.core.util import FileUtil
         fp = FileUtil.wrap(System.out)
         self.assertRaises(IOError, fp.tell)
 
@@ -436,10 +470,8 @@ class TableModelTest(unittest.TestCase):
             self.assertEquals(expectedClass, model.getColumnClass(i))
 
 class BigDecimalTest(unittest.TestCase):
-    
     def test_coerced_bigdecimal(self):
         from javatests import BigDecimalTest
-        
         x = BigDecimal("123.4321")
         y = BigDecimalTest().asBigDecimal()
 
@@ -449,8 +481,6 @@ class BigDecimalTest(unittest.TestCase):
 class MethodInvTest(unittest.TestCase):
     
     def test_method_invokation(self):
-        from javatests import MethodInvokationTest
-        
         bar = MethodInvokationTest.foo1(Byte(10))
 
         self.assertEquals(bar, "foo1 with byte arg: 10", "Wrong method called")
@@ -458,7 +488,6 @@ class MethodInvTest(unittest.TestCase):
 class InterfaceTest(unittest.TestCase):
     
     def test_override(self):
-        from java.lang import String
         class Foo(Runnable):
             def run(self): pass
             def toString(self): return "Foo!!!"
@@ -469,7 +498,6 @@ class InterfaceTest(unittest.TestCase):
         self.assertEquals(s, "Foo!!!", "toString not overridden in interface")
 
     def test_java_calling_python_interface_implementation(self):
-        from org.python.tests import Callbacker
         called = []
         class PyCallback(Callbacker.Callback):
             def call(self, extraarg=None):
