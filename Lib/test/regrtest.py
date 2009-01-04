@@ -1450,6 +1450,7 @@ _expectations = {
         test_winreg
         test_winsound
         test_xml_etree_c
+        test_zipfile64
         """
 }
 _expectations['freebsd5'] = _expectations['freebsd4']
