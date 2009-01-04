@@ -176,17 +176,14 @@ public class PyType extends PyObject implements Serializable {
         // XXX also __doc__ __module__
 
 
+        Class<?> proxyClass = null;
         if (baseClass != null || interfaces.size() != 0) {
             String proxyName = name;
             PyObject module = dict.__finditem__("__module__");
             if (module != null) {
                 proxyName = module.toString() + "$" + proxyName;
             }
-            Class<?> proxyClass = MakeProxies.makeProxy(baseClass,
-                                                        interfaces,
-                                                        name,
-                                                        proxyName,
-                                                        dict);
+            proxyClass = MakeProxies.makeProxy(baseClass, interfaces, name, proxyName, dict);
             PyType proxyType = PyType.fromClass(proxyClass);
             List<PyObject> cleanedBases = Generic.list();
             boolean addedProxyType = false;
@@ -203,8 +200,11 @@ public class PyType extends PyObject implements Serializable {
             bases_list = cleanedBases.toArray(new PyObject[cleanedBases.size()]);
         }
         PyType newtype;
-        if (new_.for_type == metatype) {
+        if (new_.for_type == metatype || metatype == PyType.fromClass(Class.class)) {
             newtype = new PyType(); // XXX set metatype
+            if(proxyClass != null) {
+                newtype.underlying_class = proxyClass;
+            }
         } else {
             newtype = new PyTypeDerived(metatype);
         }
@@ -1375,7 +1375,11 @@ public class PyType extends PyObject implements Serializable {
         private String name;
 
         TypeResolver(Class<?> underlying_class, String module, String name) {
-            this.underlying_class = underlying_class;
+            // Don't store the underlying_class for PyProxies as the proxy type needs to fill in
+            // based on the class, not be the class
+            if (underlying_class != null && !PyProxy.class.isAssignableFrom(underlying_class)) {
+                this.underlying_class = underlying_class;
+            }
             this.module = module;
             this.name = name;
         }

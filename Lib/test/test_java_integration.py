@@ -98,9 +98,12 @@ class ContextClassloaderTest(unittest.TestCase):
             def method(self):
                 called.append(True)
         A()
-        Class.newInstance(A)
-        self.assertEquals(len(called), 2)
+        self.assertEquals(len(called), 1)
 
+# The no-arg constructor for proxies attempts to look up its Python class by the Python class' name,
+# so the class needs to be visible at the module level or the import will fail
+class ModuleVisibleJavaSubclass(Object):
+    pass
 class InstantiationTest(unittest.TestCase):
     def test_can_subclass_abstract(self):
         class A(Component):
@@ -113,6 +116,9 @@ class InstantiationTest(unittest.TestCase):
     def test_str_doesnt_coerce_to_int(self):
         from java.util import Date
         self.assertRaises(TypeError, Date, '99-01-01', 1, 1)
+
+    def test_Class_newInstance_works_on_proxies(self):
+        Class.newInstance(ModuleVisibleJavaSubclass)
 
 
 class BeanTest(unittest.TestCase):
