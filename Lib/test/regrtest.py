@@ -1380,6 +1380,7 @@ _expectations = {
     'java':
         """
         test__locale
+        test__rawffi
         test_aepack
         test_al
         test_applesingle
@@ -1475,11 +1476,16 @@ _failures = {
         test_gc
         test_iterlen
         test_marshal
+        test_multibytecodec
+        test_multibytecodec_support
         test_peepholer
         test_profile
         test_pyclbr
+        test_stringprep
         test_transformer
         test_ucn
+        test_unicode
+        test_unicodedata
         test_xml_etree
         test_zipimport
         """,
