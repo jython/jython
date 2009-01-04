@@ -82,6 +82,9 @@ public class PyReflectedConstructor extends PyReflectedFunction {
             throw Py.TypeError("invalid self argument to constructor");
         }
         Class<?> javaClass = self.getType().getProxyType();
+        if (javaClass == null) {
+            throw Py.TypeError("self invalid - must be a Java subclass [self=" + self + "]");
+        }
         Class<?> declaringClass = argslist[0] == null ? null : argslist[0].declaringClass;
         // If the declaring class is a pure Java type but we're instantiating a Python proxy,
         // grab the proxy version of the constructor to instantiate the proper type

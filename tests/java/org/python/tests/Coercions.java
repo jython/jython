@@ -67,4 +67,20 @@ public class Coercions {
     public String tellClassNameSerializable(Serializable o) {
         return o.getClass().toString();
     }
+
+    public static String take(int i) {
+        return "take with int arg: " + i;
+    }
+
+    public static String take(char c) {
+        return "take with char arg: " + c;
+    }
+
+    public static String take(boolean b) {
+        return "take with boolean arg: " + b;
+    }
+
+    public static String take(byte bt) {
+        return "take with byte arg: " + bt;
+    }
 }

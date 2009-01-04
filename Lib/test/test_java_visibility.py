@@ -3,7 +3,7 @@ import unittest
 import subprocess
 import sys
 from test import test_support
-from java.lang import Class
+from java.lang import Byte, Class
 from java.util import HashMap, Observable, Observer 
 from org.python.tests import (Coercions, HiddenSuper, InterfaceCombination, Invisible, OnlySubclassable,
         OtherSubVisible, SomePyMethods, SubVisible, Visible, VisibleOverride)
@@ -157,6 +157,7 @@ class CoercionTest(unittest.TestCase):
         self.assertEquals("5", c.takeInt(5))
         self.assertEquals("15", c.takeInteger(15))
         self.assertEquals("150", c.takeNumber(150))
+        self.assertEquals("take with byte arg: 10", Coercions.take(Byte(10)))
 
     def test_array_coercion(self):
         self.assertEquals("double", Coercions.takeArray(array.zeros('d', 2)))
