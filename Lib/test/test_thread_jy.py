@@ -2,7 +2,7 @@ import thread
 import synchronize
 import unittest
 import test.test_support
-from java.lang import Thread
+from java.lang import Runnable, Thread
 from java.util.concurrent import CountDownLatch
 
 class AllocateLockTest(unittest.TestCase):
@@ -15,17 +15,18 @@ class AllocateLockTest(unittest.TestCase):
 
 class SynchronizeTest(unittest.TestCase):
     def test_make_synchronized(self):
-        self.doneSignal = CountDownLatch(10)
-        self.i = 0
-        class SynchedRun(Thread):
-            def run(synchself):
-                self.i = self.i + 1
-                self.doneSignal.countDown()
+        doneSignal = CountDownLatch(10)
+        class SynchedRunnable(Runnable):
+            i = 0
+            def run(self):
+                self.i += 1
+                doneSignal.countDown()
             run = synchronize.make_synchronized(run)
+        runner = SynchedRunnable()
         for _ in xrange(10):
-            SynchedRun().start()
-        self.doneSignal.await()
-        self.assertEquals(10, self.i)
+            Thread(runner).start()
+        doneSignal.await()
+        self.assertEquals(10, runner.i)
 
 
 def test_main():
