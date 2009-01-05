@@ -2265,17 +2265,18 @@ using the optional keyword argument `encoding`:
     File "...", line 7, in test_doctest4.txt
     Failed example:
         u'...'
-    Expected:
-        u'f\xf6\xf6'
-    Got:
-        u'f\xc3\xb6\xc3\xb6'
+    ...
+    **********************************************************************
+    ...
+    **********************************************************************
+    ...
     **********************************************************************
     ...
     **********************************************************************
     1 items had failures:
-       2 of   4 in test_doctest4.txt
-    ***Test Failed*** 2 failures.
-    (2, 4)
+       4 of   4 in test_doctest4.txt
+    ***Test Failed*** 4 failures.
+    (4, 4)
     >>> doctest.master = None  # Reset master.
 
     >>> doctest.testfile('test_doctest4.txt', encoding='utf-8')
