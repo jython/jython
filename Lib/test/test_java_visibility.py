@@ -5,8 +5,8 @@ import sys
 from test import test_support
 from java.lang import Byte, Class
 from java.util import HashMap, Observable, Observer 
-from org.python.tests import (Coercions, HiddenSuper, InterfaceCombination, Invisible, OnlySubclassable,
-        OtherSubVisible, SomePyMethods, SubVisible, Visible, VisibleOverride)
+from org.python.tests import (Coercions, HiddenSuper, InterfaceCombination, Invisible, Matryoshka,
+        OnlySubclassable, OtherSubVisible, SomePyMethods, SubVisible, Visible, VisibleOverride)
 from org.python.tests import VisibilityResults as Results
 
 class VisibilityTest(unittest.TestCase):
@@ -131,6 +131,17 @@ class VisibilityTest(unittest.TestCase):
         '''Bug #222847 - Can't access public member of package private base class'''
         self.assertEquals("hi", HiddenSuper().hi())
 
+    def test_nested_classes(self):
+        """Test deeply nested classes
+
+        Bug #440660 - using nested java cls @ level >2 fails"""
+
+        Matryoshka.Outermost.Middle.Innermost
+
+    def test_inner_class_identity(self):
+        """Bug #452947 - Class of innerclass inst <> innerclass"""
+        self.assertEquals(id(Matryoshka.Outermost), id(Matryoshka.makeOutermost().__class__))
+
 class JavaClassTest(unittest.TestCase):
     def test_class_methods_visible(self):
         self.assertFalse(HashMap.isInterface(),
@@ -212,7 +223,7 @@ def test_main():
     test_support.run_unittest(VisibilityTest,
             JavaClassTest,
             CoercionTest,
-#            RespectJavaAccessibilityTest,
+            RespectJavaAccessibilityTest,
             ClassloaderTest)
 
 if __name__ == "__main__":

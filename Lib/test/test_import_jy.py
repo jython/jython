@@ -89,7 +89,13 @@ class MislabeledImportTestCase(unittest.TestCase):
         # Again ensure we didn't recompile
         self.assertEquals(bytecode, read(init_compiled),
                           'bytecode was recompiled')
-
+    def test_corrupt_bytecode(self):
+        f = open("empty$py.class", "w")
+        f.close()
+        self.assertRaises(ImportError, __import__, "empty")
+        f = open("empty.py", "w")
+        f.close()
+        self.assertRaises(ImportError, __import__, "empty")
 
 class OverrideBuiltinsImportTestCase(unittest.TestCase):
     def test_override(self):
@@ -135,6 +141,14 @@ class ImpTestCase(unittest.TestCase):
         self.assertEqual(imp.find_module('__builtin__'),
                          (None, '__builtin__', ('', '', 6)))
         self.assertEqual(imp.find_module('imp'), (None, 'imp', ('', '', 6)))
+
+    def test_getattr_module(self):
+        '''Replacing __getattr__ in a class shouldn't lead to calls to __getitem__
+
+        http://bugs.jython.org/issue438108'''
+        from test import anygui
+        # causes a stack overflow if the bug occurs
+        self.assertRaises(Exception, getattr, anygui, 'abc')
 
 
 def test_main():

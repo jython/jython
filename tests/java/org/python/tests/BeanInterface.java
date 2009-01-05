@@ -1,6 +1,6 @@
 package org.python.tests;
 
 
-public interface BeanInterface {
+public interface BeanInterface extends Cloneable {
     String getName();
 }

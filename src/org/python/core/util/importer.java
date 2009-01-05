@@ -1,5 +1,6 @@
 package org.python.core.util;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.EnumSet;
 import org.python.core.BytecodeLoader;
@@ -182,7 +183,11 @@ public abstract class importer<T> extends PyObject {
             Bundle bundle = makeBundle(searchPath, tocEntry);
             byte[] codeBytes;
             if (isbytecode) {
-                codeBytes = imp.readCode(fullname, bundle.inputStream, true);
+                try {
+                    codeBytes = imp.readCode(fullname, bundle.inputStream, true);
+                } catch (IOException ioe) {
+                    throw Py.ImportError(ioe.getMessage() + "[path=" + fullPath + searchPath + "]");
+                }
             } else {
                 codeBytes = imp.compileSource(fullname, bundle.inputStream, fullSearchPath);
             }

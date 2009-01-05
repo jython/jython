@@ -158,7 +158,6 @@ def test():
         err = traceback.format_exception_only(None, None)
         self.assertEqual(err, ['None\n'])
 
-
 def test_main():
     run_unittest(TracebackCases)
 

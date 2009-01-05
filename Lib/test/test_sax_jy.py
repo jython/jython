@@ -1,15 +1,12 @@
-"""
-Simple test of xml.
-"""
-
-import support
-import sys, StringIO
+import sys
+import StringIO
+import unittest
 
 from xml.sax import saxutils
 from xml.sax import make_parser
 from xml.sax.handler import feature_namespaces
 
-#print sys.modules
+from test import test_support
 
 file = StringIO.StringIO("""<collection>
   <comic title="Sandman" number='62'>
@@ -26,6 +23,7 @@ file = StringIO.StringIO("""<collection>
 class FindIssue(saxutils.DefaultHandler):
     def __init__(self, title, number):
         self.search_title, self.search_number = title, number
+        self.match = 0
 
     def startElement(self,name,attrs):
         global match
@@ -34,14 +32,19 @@ class FindIssue(saxutils.DefaultHandler):
         title = attrs.get('title', None)
         number = attrs.get('number',None)
         if title == self.search_title and number == self.search_number:
-            match += 1
+            self.match += 1
 
-parser = make_parser()
-parser.setFeature(feature_namespaces,0)
-dh = FindIssue('Sandman', '62')
-parser.setContentHandler(dh)
+class SimpleSaxTest(unittest.TestCase):
+    def test_find_issue(self):
+        parser = make_parser()
+        parser.setFeature(feature_namespaces,0)
+        dh = FindIssue('Sandman', '62')
+        parser.setContentHandler(dh)
+        parser.parse(file)
+        self.assertEquals(1, dh.match)
+def test_main():
+    test_support.run_unittest(SimpleSaxTest)
 
-match = 0
-parser.parse(file)
-assert match == 1
+if __name__ == "__main__":
+    test_main()
 

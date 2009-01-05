@@ -46,6 +46,11 @@ class TracebackTestCase(unittest.TestCase):
         else:
             self.fail('Expected Exception')
 
+    def test_extract_stack(self):
+        # http://bugs.jython.org/issue437809
+        traceback.extract_stack()
+
+
 
 try:
     raise Exception('foo')

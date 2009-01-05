@@ -87,7 +87,15 @@ public class imp {
 
     static PyObject createFromPyClass(String name, InputStream fp, boolean testing,
                                       String sourceName, String compiledName) {
-        byte[] data = readCode(name, fp, testing);
+        byte[] data = null;
+        try {
+            data = readCode(name, fp, testing);
+        } catch (IOException ioe) {
+            if (!testing) {
+                throw Py.ImportError(ioe.getMessage() + "[name=" + name + ", source=" + sourceName
+                        + ", compiled=" + compiledName + "]");
+            }
+        }
         if (testing && data == null) {
             return null;
         }
@@ -108,15 +116,11 @@ public class imp {
         return createFromCode(name, code, compiledName);
     }
 
-    public static byte[] readCode(String name, InputStream fp, boolean testing) {
+    public static byte[] readCode(String name, InputStream fp, boolean testing) throws IOException {
         byte[] data = readBytes(fp);
         int api;
-        try {
-            APIReader ar = new APIReader(data);
-            api = ar.getVersion();
-        } catch (IOException i) {
-            api = -1;
-        }
+        APIReader ar = new APIReader(data);
+        api = ar.getVersion();
         if (api != APIVersion) {
             if (testing) {
                 return null;

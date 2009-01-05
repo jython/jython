@@ -12,7 +12,7 @@ from java.util import Date, Hashtable, Vector
 from java.awt import Color, Component, Dimension, Rectangle
 from javax.swing.table import AbstractTableModel
 
-from org.python.tests import Callbacker
+from org.python.tests import BeanInterface, Callbacker
 
 class InterfaceTest(unittest.TestCase):
     def test_java_calling_python_interface_implementation(self):
@@ -145,6 +145,33 @@ class PythonSubclassesTest(unittest.TestCase):
         fv = FooVector()
         ht.put("a", fv)
         self.failUnless(fv is ht.get("a"))
+
+    def test_proxy_generates_protected_methods(self):
+        """Jython proxies should generate methods for protected methods on their superclasses
+
+        Tests for bug #416871"""
+        output = []
+        class RegularBean(BeanInterface):
+            def __init__(self):
+                output.append("init")
+
+            def getName(self):
+                output.append("getName")
+        class FinalizingBean(RegularBean):
+            def finalize(self):
+                pass
+            def clone(self):
+                return self.__class__()
+
+        for a in FinalizingBean(), RegularBean():
+            self.assertEquals("init", output.pop())
+            a.getName()
+            self.assertEquals("getName", output.pop())
+            aa = a.clone()
+            if isinstance(a, FinalizingBean):
+                self.assertEquals("init", output.pop())
+            aa.name
+            self.assertEquals("getName", output.pop())
 
 
 """

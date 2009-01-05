@@ -1,9 +1,3 @@
-
-grant codeBase "file:./classes/-" {
-  permission java.util.PropertyPermission "*", "read,write";
-  permission java.io.FilePermission "<<ALL FILES>>", "read,write";
-};
-
 grant codeBase "file:${python.home}/-" {
   permission java.util.PropertyPermission "*", "read,write";
   permission java.io.FilePermission "<<ALL FILES>>", "read,write";

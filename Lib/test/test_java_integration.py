@@ -1,5 +1,6 @@
 import os
 import unittest
+import subprocess
 import sys
 import re
  
@@ -279,6 +280,7 @@ class JavaDelegationTest(unittest.TestCase):
     def test_list_delegation(self):
         for c in ArrayList, Vector:
             a = c()
+            self.assertRaises(IndexError, a.__getitem__, 0)
             a.add("blah")
             self.assertTrue("blah" in a)
             self.assertEquals(1, len(a))
@@ -318,6 +320,14 @@ class JavaDelegationTest(unittest.TestCase):
         for i in v:
             pass
 
+class SecurityManagerTest(unittest.TestCase):
+    def test_nonexistent_import_with_security(self):
+        policy = test_support.findfile("python_home.policy")
+        script = test_support.findfile("import_nonexistent.py")
+        self.assertEquals(subprocess.call([sys.executable,  "-J-Dpython.cachedir.skip=true",
+            "-J-Djava.security.manager", "-J-Djava.security.policy=%s" % policy, script]),
+            0)
+
 def test_main():
     test_support.run_unittest(InstantiationTest, 
                               BeanTest, 
@@ -331,7 +341,7 @@ def test_main():
                               BigDecimalTest,
                               JavaStringTest,
                               JavaDelegationTest,
-                              )
+                              SecurityManagerTest)
 
 if __name__ == "__main__":
     test_main()
