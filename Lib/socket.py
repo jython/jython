@@ -617,12 +617,14 @@ def inet_ntoa(packed_ip):
 
 class _nonblocking_api_mixin:
 
-    timeout = _defaulttimeout
     mode = MODE_BLOCKING
     reference_count = 0
     close_lock = threading.Lock()
 
     def __init__(self):
+        self.timeout = _defaulttimeout
+        if self.timeout is not None:
+            self.mode = MODE_TIMEOUT
         self.pending_options = {
             SO_REUSEADDR:  0,
         }
