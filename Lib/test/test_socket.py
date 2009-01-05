@@ -1320,6 +1320,23 @@ class TCPClientTimeoutTest(SocketTCPTest):
 socket.timeout.  This tries to connect to %s in the assumption that it isn't
 used, but if it is on your network this failure is bogus.''' % host)
 
+    def testConnectDefaultTimeout(self):
+        _saved_timeout = socket.getdefaulttimeout()
+        socket.setdefaulttimeout(0.1)
+        cli = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        host = '192.168.192.168'
+        try:
+            cli.connect((host, 5000))
+        except socket.timeout, st:
+            pass
+        except Exception, x:
+            self.fail("Client socket timeout should have raised socket.timeout, not %s" % str(x))
+        else:
+            self.fail('''Client socket timeout should have raised
+socket.timeout.  This tries to connect to %s in the assumption that it isn't
+used, but if it is on your network this failure is bogus.''' % host)
+        socket.setdefaulttimeout(_saved_timeout)
+
     def testRecvTimeout(self):
         def raise_timeout(*args, **kwargs):
             cli_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
