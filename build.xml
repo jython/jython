@@ -108,20 +108,9 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
     <target name="full-build" depends="full-check, install" description="a full build with svn checkout" />
 
     <target name="needed-check" unless="full-build">
-        <uptodate property="antlr.notneeded" targetfile="${output.dir}/jarjar.jar">
+        <uptodate property="antlr.notneeded" targetfile="${dest.dir}/jython.jar">
             <srcfiles dir="grammar" includes="*.g" />
         </uptodate>
-        <!-- When antlr.notneeded isn't set, a clean is run after this, so jarjar's running depends
-             on both that and its own jar -->
-        <condition property="jarjar.notneeded">
-            <and>
-                <isset property="antlr.notneeded"/>
-                <uptodate targetfile="${output.dir}/jarjar.jar">
-                    <srcfiles dir="extlibs" includes="*" />
-                    <srcfiles dir="grammar" includes="*.g" />
-                </uptodate>
-            </and>
-        </condition>
     </target>
 
     <target name="init" depends="version-init">
@@ -166,6 +155,10 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
             <pathelement path="${extlibs.dir}/antlr-2.7.7.jar" />
             <pathelement path="${extlibs.dir}/antlr-3.1.1.jar" />
             <pathelement path="${extlibs.dir}/stringtemplate-3.2.jar" />
+
+            <pathelement path="${extlibs.dir}/asm-3.1.jar" />
+            <pathelement path="${extlibs.dir}/asm-commons-3.1.jar" />
+            <pathelement path="${extlibs.dir}/constantine-0.4.jar" />
         </path>
 
         <available property="informix.present" classname="com.informix.jdbc.IfxDriver" classpath="${informix.jar}" />
@@ -452,7 +445,7 @@ The readme text for the next release will be like:
 
     </target>
  
-    <target name="compile" depends="init,antlr_gen,jarjar,brand-version">
+    <target name="compile" depends="init,antlr_gen,brand-version">
         <javac destdir="${compile.dir}"
                target="${jdk.target.version}"
                source="${jdk.source.version}"
@@ -512,10 +505,12 @@ The readme text for the next release will be like:
             includesfile="${jython.base.dir}/CoreExposed.includes"/>
     </target>
 
-    <target name="jarjar" depends="init,needed-check" unless="jarjar.notneeded">
+    <target name="jar-complete" depends="jar">
         <taskdef name="jarjar" classname="com.tonicsystems.jarjar.JarJarTask" classpath="extlibs/jarjar-0.7.jar"/>
-        <jarjar destfile="${output.dir}/jarjar.jar">
+        <jarjar destfile="${output.dir}/jython-complete.jar">
+            <zipfileset src="${dist.dir}/jython.jar"/>
             <zipfileset src="extlibs/antlr-3.1.1-runtime.jar"/>
+            <rule pattern="org.antlr.runtime.**" result="org.python.antlr.runtime.@1"/>
             <zipfileset src="extlibs/asm-3.1.jar"/>
             <zipfileset src="extlibs/asm-commons-3.1.jar"/>
             <zipfileset src="extlibs/asm-util-3.1.jar"/>
@@ -526,6 +521,21 @@ The readme text for the next release will be like:
             <rule pattern="org.jruby.ext.posix.**" result="org.python.posix.@1"/>
             <zipfileset src="extlibs/constantine-0.4.jar"/>
             <rule pattern="com.kenai.constantine.**" result="org.python.constantine.@1"/>
+            <fileset dir="${dist.dir}" includes="Lib/**/*" />
+            <manifest>
+                <attribute name="Main-Class" value="org.python.util.jython" />
+                <attribute name="Built-By" value="${user.name}" />
+                <!-- info section. ATTN: no blanks, no '.' in the names -->
+                <section name="Build-Info">
+                    <attribute name="version" value="${jython.version}" />
+                    <attribute name="svn-build" value="${do.checkout}" />
+                    <attribute name="oracle" value="${oracle.present}" />
+                    <attribute name="informix" value="${informix.present}" />
+                    <attribute name="build-compiler" value="${build.compiler}" />
+                    <attribute name="jdk-target-version" value="${jdk.target.version}" />
+                    <attribute name="debug" value="${debug}" />
+                </section>
+            </manifest>
         </jarjar>
         <unjar src="${output.dir}/jarjar.jar" dest="${jarjar.dir}">
             <patternset>
@@ -534,30 +544,7 @@ The readme text for the next release will be like:
         </unjar>
     </target>
 
-    <target name="jar-complete" depends="compile,expose,jarjar">
-       <jar destfile="${dist.dir}/jython-complete.jar" duplicate="preserve">
-          <fileset dir="${exposed.dir}"/>
-          <fileset dir="${compile.dir}"/>   
-          <fileset dir="${jarjar.dir}">
-          </fileset>
-          <manifest>
-              <attribute name="Main-Class" value="org.python.util.jython" />
-              <attribute name="Built-By" value="${user.name}" />
-              <!-- info section. ATTN: no blanks, no '.' in the names -->
-              <section name="Build-Info">
-                  <attribute name="version" value="${jython.version}" />
-                  <attribute name="svn-build" value="${do.checkout}" />
-                  <attribute name="oracle" value="${oracle.present}" />
-                  <attribute name="informix" value="${informix.present}" />
-                  <attribute name="build-compiler" value="${build.compiler}" />
-                  <attribute name="jdk-target-version" value="${jdk.target.version}" />
-                  <attribute name="debug" value="${debug}" />
-              </section>
-          </manifest>
-        </jar>
-    </target>
-
-    <target name="jar" depends="compile,expose,jarjar">
+    <target name="jar" depends="compile,expose">
        <typedef name="nameunion" classname="org.python.util.NameUnionAntType">
            <classpath>
                <path refid="main.classpath" />
@@ -572,9 +559,6 @@ The readme text for the next release will be like:
              <fileset dir="${exposed.dir}"/>
              <fileset dir="${compile.dir}" excludes="org/python/expose/generate/**"/>   
           </nameunion>
-          <fileset dir="${jarjar.dir}">
-              <include name="org/python/objectweb/asm/ClassReader.class" />
-          </fileset>
           <manifest>
               <attribute name="Main-Class" value="org.python.util.jython" />
               <attribute name="Built-By" value="${user.name}" />

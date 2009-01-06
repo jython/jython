@@ -7,16 +7,16 @@ import java.util.List;
 import java.util.Map;
 
 import org.python.expose.ExposedType;
-import org.python.objectweb.asm.AnnotationVisitor;
-import org.python.objectweb.asm.ClassAdapter;
-import org.python.objectweb.asm.ClassReader;
-import org.python.objectweb.asm.ClassVisitor;
-import org.python.objectweb.asm.ClassWriter;
-import org.python.objectweb.asm.FieldVisitor;
-import org.python.objectweb.asm.MethodAdapter;
-import org.python.objectweb.asm.MethodVisitor;
-import org.python.objectweb.asm.Opcodes;
-import org.python.objectweb.asm.Type;
+import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.ClassAdapter;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.FieldVisitor;
+import org.objectweb.asm.MethodAdapter;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 import org.python.util.Generic;
 
 /**

@@ -9,11 +9,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.python.objectweb.asm.AnnotationVisitor;
-import org.python.objectweb.asm.ClassWriter;
-import org.python.objectweb.asm.FieldVisitor;
-import org.python.objectweb.asm.MethodVisitor;
-import org.python.objectweb.asm.Opcodes;
+import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.FieldVisitor;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
 
 public class ClassFile
 {

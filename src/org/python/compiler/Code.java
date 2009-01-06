@@ -3,11 +3,11 @@ package org.python.compiler;
 import java.util.BitSet;
 import java.util.Vector;
 
-import org.python.objectweb.asm.AnnotationVisitor;
-import org.python.objectweb.asm.Attribute;
-import org.python.objectweb.asm.Label;
-import org.python.objectweb.asm.MethodVisitor;
-import org.python.objectweb.asm.Opcodes;
+import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.Attribute;
+import org.objectweb.asm.Label;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
 
 class Code implements MethodVisitor, Opcodes {
     MethodVisitor mv;

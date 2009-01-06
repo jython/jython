@@ -11,7 +11,7 @@ import org.apache.tools.ant.taskdefs.MatchingTask;
 import org.apache.tools.ant.types.Path;
 import org.apache.tools.ant.util.GlobPatternMapper;
 import org.apache.tools.ant.util.SourceFileScanner;
-import org.python.objectweb.asm.ClassWriter;
+import org.objectweb.asm.ClassWriter;
 import org.python.util.Generic;
 
 public class ExposeTask extends MatchingTask {

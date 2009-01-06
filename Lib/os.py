@@ -47,9 +47,13 @@ import time
 import stat as _stat
 import sys
 from java.io import File
-from org.python.constantine.platform import Errno
 from org.python.core.io import FileDescriptors, FileIO, IOBase
 from org.python.core.Py import newString as asPyString
+
+try:
+    from org.python.constantine.platform import Errno
+except ImportError:
+    from com.kenai.constantine.platform import Errno
 
 # Mapping of: os._name: [name list, shell command list]
 _os_map = dict(nt=[
@@ -96,7 +100,10 @@ name = 'java'
 # should *NOT* use it
 _name = get_os_type()
 
-from org.python.posix import JavaPOSIX, POSIXHandler, POSIXFactory
+try:
+    from org.python.posix import JavaPOSIX, POSIXHandler, POSIXFactory
+except ImportError:
+    from org.jruby.ext.posix import JavaPOSIX, POSIXHandler, POSIXFactory
 
 class PythonPOSIXHandler(POSIXHandler):
     def error(self, error, msg):
@@ -420,7 +427,10 @@ def strerror(code):
     if constant.name() == constant.description():
         # XXX: have constantine handle this fallback
         # Fake constant or just lacks a description, fallback to Linux's
-        from org.python.constantine.platform.linux import Errno as LinuxErrno
+        try:
+            from org.python.constantine.platform.linux import Errno as LinuxErrno
+        except ImportError:
+            from com.kenai.constantine.platform.linux import Errno as LinuxErrno
         constant = getattr(LinuxErrno, constant.name(), None)
         if not constant:
             return 'Unknown error: %d' % code
@@ -558,7 +568,10 @@ def _to_timeval(seconds):
     global _time_t
     if _time_t is None:
         from java.lang import Integer, Long
-        from org.python.posix.util import Platform
+        try:
+            from org.python.posix import Platform
+        except ImportError:
+            from org.jruby.ext.posix.util import Platform
         _time_t = Integer if Platform.IS_32_BIT else Long
 
     try:

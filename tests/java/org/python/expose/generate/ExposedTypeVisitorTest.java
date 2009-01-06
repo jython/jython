@@ -2,7 +2,7 @@ package org.python.expose.generate;
 
 import junit.framework.TestCase;
 
-import org.python.objectweb.asm.Type;
+import org.objectweb.asm.Type;
 import org.python.core.PyObject;
 import org.python.expose.generate.ExposedTypeVisitor;
 

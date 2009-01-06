@@ -1,6 +1,6 @@
 package org.python.expose.generate;
 
-import org.python.objectweb.asm.Type;
+import org.objectweb.asm.Type;
 import org.python.core.PyDataDescr;
 
 /**

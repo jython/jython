@@ -12,7 +12,7 @@ import java.nio.channels.Channel;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 
-import org.python.constantine.platform.Errno;
+import com.kenai.constantine.platform.Errno;
 import org.python.core.imp;
 import org.python.core.Py;
 import org.python.core.util.RelativeFile;

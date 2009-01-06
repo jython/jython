@@ -20,7 +20,7 @@ import java.util.Calendar;
 import java.util.Set;
 
 import org.python.antlr.base.mod;
-import org.python.constantine.platform.Errno;
+import com.kenai.constantine.platform.Errno;
 import org.python.compiler.Module;
 import org.python.core.adapter.ClassicPyObjectAdapter;
 import org.python.core.adapter.ExtensiblePyObjectAdapter;

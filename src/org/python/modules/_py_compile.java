@@ -3,7 +3,7 @@ package org.python.modules;
 
 import java.io.File;
 
-import org.python.constantine.platform.Errno;
+import com.kenai.constantine.platform.Errno;
 import org.python.core.Py;
 import org.python.core.PyList;
 import org.python.core.PyString;

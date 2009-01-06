@@ -4,7 +4,7 @@ package org.python.core;
 import java.security.SecureClassLoader;
 import java.util.List;
 
-import org.python.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassReader;
 import org.python.util.Generic;
 
 /**

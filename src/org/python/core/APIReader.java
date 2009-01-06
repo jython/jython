@@ -6,9 +6,9 @@ package org.python.core;
 
 import java.io.IOException;
 
-import org.python.objectweb.asm.AnnotationVisitor;
-import org.python.objectweb.asm.ClassReader;
-import org.python.objectweb.asm.commons.EmptyVisitor;
+import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.commons.EmptyVisitor;
 
 /**
  * This class reads a classfile from a byte array and pulls out the value of the class annotation

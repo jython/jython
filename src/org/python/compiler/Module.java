@@ -10,8 +10,8 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 
-import org.python.objectweb.asm.Label;
-import org.python.objectweb.asm.Opcodes;
+import org.objectweb.asm.Label;
+import org.objectweb.asm.Opcodes;
 import org.python.core.CompilerFlags;
 import org.python.core.Py;
 import org.python.core.PyException;

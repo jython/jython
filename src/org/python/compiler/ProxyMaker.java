@@ -16,8 +16,8 @@ import org.python.core.PyMethod;
 import org.python.core.PyObject;
 import org.python.core.PyProxy;
 import org.python.core.PyReflectedFunction;
-import org.python.objectweb.asm.Label;
-import org.python.objectweb.asm.Opcodes;
+import org.objectweb.asm.Label;
+import org.objectweb.asm.Opcodes;
 import org.python.util.Generic;
 
 public class ProxyMaker implements ClassConstants, Opcodes

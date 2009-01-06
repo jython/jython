@@ -6,7 +6,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.Channel;
 import java.nio.channels.ServerSocketChannel;
 
-import org.python.constantine.platform.Errno;
+import com.kenai.constantine.platform.Errno;
 import org.python.core.Py;
 
 /**

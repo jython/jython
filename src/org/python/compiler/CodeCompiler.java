@@ -79,11 +79,11 @@ import org.python.core.PyLong;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyUnicode;
-import org.python.objectweb.asm.ClassWriter;
-import org.python.objectweb.asm.Label;
-import org.python.objectweb.asm.Opcodes;
-import org.python.objectweb.asm.Type;
-import org.python.objectweb.asm.commons.Method;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Label;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.commons.Method;
 
 public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //, PythonGrammarTreeConstants
 {

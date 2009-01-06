@@ -1,7 +1,7 @@
 package org.python.expose.generate;
 
-import org.python.objectweb.asm.AnnotationVisitor;
-import org.python.objectweb.asm.Type;
+import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.Type;
 
 /**
  * Visits an ExposedType annotation and passes the values it gathers to handleResult.

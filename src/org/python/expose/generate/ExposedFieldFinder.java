@@ -1,8 +1,8 @@
 package org.python.expose.generate;
 
-import org.python.objectweb.asm.AnnotationVisitor;
-import org.python.objectweb.asm.Attribute;
-import org.python.objectweb.asm.FieldVisitor;
+import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.Attribute;
+import org.objectweb.asm.FieldVisitor;
 
 public abstract class ExposedFieldFinder implements FieldVisitor, PyTypes {
 
