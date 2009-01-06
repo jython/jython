@@ -108,7 +108,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
     <target name="full-build" depends="full-check, install" description="a full build with svn checkout" />
 
     <target name="needed-check" unless="full-build">
-        <uptodate property="antlr.notneeded" targetfile="${dest.dir}/jython.jar">
+        <uptodate property="antlr.notneeded" targetfile="${dist.dir}/jython.jar">
             <srcfiles dir="grammar" includes="*.g" />
         </uptodate>
     </target>
@@ -507,7 +507,7 @@ The readme text for the next release will be like:
 
     <target name="jar-complete" depends="jar">
         <taskdef name="jarjar" classname="com.tonicsystems.jarjar.JarJarTask" classpath="extlibs/jarjar-0.7.jar"/>
-        <jarjar destfile="${output.dir}/jython-complete.jar">
+        <jarjar destfile="${dist.dir}/jython-complete.jar">
             <zipfileset src="${dist.dir}/jython.jar"/>
             <zipfileset src="extlibs/antlr-3.1.1-runtime.jar"/>
             <rule pattern="org.antlr.runtime.**" result="org.python.antlr.runtime.@1"/>
@@ -537,11 +537,6 @@ The readme text for the next release will be like:
                 </section>
             </manifest>
         </jarjar>
-        <unjar src="${output.dir}/jarjar.jar" dest="${jarjar.dir}">
-            <patternset>
-                <exclude name="META-INF/**"/>
-            </patternset>
-        </unjar>
     </target>
 
     <target name="jar" depends="compile,expose">
