@@ -110,6 +110,11 @@ public class ClasspathPyImporter extends importer<String> {
     }
 
     @Override
+    protected String makeFilePath(String fullname) {
+        return path + fullname.replace('.', '/');
+    }
+
+    @Override
     protected String makePackagePath(String fullname) {
         return path;
     }

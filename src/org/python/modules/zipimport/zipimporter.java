@@ -423,6 +423,11 @@ public class zipimporter extends importer<PyObject> {
     }
 
     @Override
+    protected String makeFilePath(String fullname) {
+        return makePackagePath(fullname);
+    }
+
+    @Override
     protected PyObject makeEntry(String fullFilename) {
         return files.__finditem__(fullFilename);
     }

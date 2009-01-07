@@ -18,22 +18,24 @@ class ClasspathImporterTestCase(unittest.TestCase):
         except KeyError:
             pass
 
-    def setClassLoaderAndCheck(self, jar):
+    def setClassLoaderAndCheck(self, jar, prefix):
         Thread.currentThread().contextClassLoader = test_support.make_jar_classloader(jar)
         import flat_in_jar
         self.assertEquals(flat_in_jar.value, 7)
         import jar_pkg
+        self.assertEquals(prefix + '/jar_pkg/__init__$py.class', jar_pkg.__file__)
         from jar_pkg import prefer_compiled
+        self.assertEquals(prefix + '/jar_pkg/prefer_compiled$py.class', prefer_compiled.__file__)
         self.assert_(prefer_compiled.compiled)
         self.assertRaises(NameError, __import__, 'flat_bad')
         self.assertRaises(NameError, __import__, 'jar_pkg.bad')
 
     def test_default_pyclasspath(self):
-        self.setClassLoaderAndCheck("classimport.jar")
+        self.setClassLoaderAndCheck("classimport.jar", "__pyclasspath__")
 
     def test_path_in_pyclasspath(self):
         sys.path = ['__pyclasspath__/Lib']
-        self.setClassLoaderAndCheck("classimport_Lib.jar")
+        self.setClassLoaderAndCheck("classimport_Lib.jar", "__pyclasspath__/Lib")
 
 def test_main():
     test_support.run_unittest(ClasspathImporterTestCase)

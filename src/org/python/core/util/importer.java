@@ -55,6 +55,12 @@ public abstract class importer<T> extends PyObject {
     protected abstract String makeFilename(String fullname);
 
     /**
+     * Given a full module name, return the potential file path including the archive (without
+     * extension).
+     */
+    protected abstract String makeFilePath(String fullname);
+
+    /**
      * Returns an entry for a filename from makeFilename with a potential suffix such that this
      * importer can make a bundle with it, or null if fullFilename doesn't exist in this importer.
      */
@@ -156,7 +162,7 @@ public abstract class importer<T> extends PyObject {
      */
     protected final ModuleCodeData getModuleCode(String fullname) {
         String path = makeFilename(fullname);
-        String fullPath = makePackagePath(fullname);
+        String fullPath = makeFilePath(fullname);
 
         if (path.length() < 0) {
             return null;
@@ -186,7 +192,7 @@ public abstract class importer<T> extends PyObject {
                 try {
                     codeBytes = imp.readCode(fullname, bundle.inputStream, true);
                 } catch (IOException ioe) {
-                    throw Py.ImportError(ioe.getMessage() + "[path=" + fullPath + searchPath + "]");
+                    throw Py.ImportError(ioe.getMessage() + "[path=" + fullSearchPath + "]");
                 }
             } else {
                 codeBytes = imp.compileSource(fullname, bundle.inputStream, fullSearchPath);
