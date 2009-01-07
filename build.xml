@@ -108,7 +108,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
     <target name="full-build" depends="full-check, install" description="a full build with svn checkout" />
 
     <target name="needed-check" unless="full-build">
-        <uptodate property="antlr.notneeded" targetfile="${dist.dir}/jython.jar">
+        <uptodate property="antlr.notneeded" targetfile="${dist.dir}/${jython.dev.jar}">
             <srcfiles dir="grammar" includes="*.g" />
         </uptodate>
     </target>
@@ -172,6 +172,8 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <!-- 64 bit Java 6 needs roughly 96m for regrtest on most platforms, but Apple's needs
          more -->
         <property name="regrtest.Xmx" value="-Xmx160m" />
+        <property name="jython.dev.jar" value="jython.jar" />
+        <property name="jython.deploy.jar" value="jython-complete.jar" />
     </target>
 
     <target name="version-init">
@@ -504,8 +506,8 @@ The readme text for the next release will be like:
 
     <target name="jar-complete" depends="jar">
         <taskdef name="jarjar" classname="com.tonicsystems.jarjar.JarJarTask" classpath="extlibs/jarjar-0.7.jar"/>
-        <jarjar destfile="${dist.dir}/jython-complete.jar">
-            <zipfileset src="${dist.dir}/jython.jar"/>
+        <jarjar destfile="${dist.dir}/${jython.deploy.jar}">
+            <zipfileset src="${dist.dir}/${jython.dev.jar}"/>
             <zipfileset src="extlibs/antlr-3.1.1-runtime.jar"/>
             <rule pattern="org.antlr.runtime.**" result="org.python.antlr.runtime.@1"/>
             <zipfileset src="extlibs/asm-3.1.jar"/>
@@ -545,7 +547,7 @@ The readme text for the next release will be like:
        <jar destfile="${dist.dir}/callbacker_test.jar">
            <fileset dir="${compile.dir}" includes="org/python/tests/Callbacker*"/>
        </jar>
-       <jar destfile="${dist.dir}/jython.jar" duplicate="fail">
+       <jar destfile="${dist.dir}/${jython.dev.jar}" duplicate="fail">
           <nameunion>
              <fileset dir="${exposed.dir}"/>
              <fileset dir="${compile.dir}" excludes="org/python/expose/generate/**"/>   
@@ -714,7 +716,7 @@ The readme text for the next release will be like:
         <echo>building installer .jar file</echo>
         <jar destfile="${work.dir}/jython_installer-${jython.version.noplus}.jar" update="true">
             <fileset dir="${dist.dir}">
-                <exclude name="jython.jar"/>
+                <exclude name="${jython.dev.jar}"/>
                 <exclude name="callbacker_test.jar"/>
             </fileset>
             <manifest>
@@ -799,7 +801,7 @@ The readme text for the next release will be like:
     <target name="bugtest" depends="create-bugtest-config">
          <java classname="org.python.util.jython" fork="true" dir="${bugtests.dir}">
             <classpath>
-                <pathelement location="${dist.dir}/jython.jar"/>
+                <pathelement location="${dist.dir}/${jython.dev.jar}"/>
             </classpath>
             <jvmarg value="-Dpython.home=${dist.dir}"/>
             <arg value="driver.py"/>
@@ -828,7 +830,7 @@ The readme text for the next release will be like:
 # safe to edit by hand (won't be overwritten)
 java_home="${jdk.home}"
 jython_home="${dist.dir}" 
-classpath="${dist.dir}/jython.jar${path.separator}classes"
+classpath="${dist.dir}/${jython.dev.jar}${path.separator}classes"
         </echo>
     </target>
 
