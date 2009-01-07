@@ -135,7 +135,6 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <property name="extlibs.dir" value="${jython.base.dir}/extlibs" />
         <property name="output.dir" value="${work.dir}/build" />
         <property name="compile.dir" value="${output.dir}/classes" />
-        <property name="jarjar.dir" value="${output.dir}/jarjar" />
         <property name="exposed.dir" value="${output.dir}/exposed" />
         <property name="gensrc.dir" value="${output.dir}/gensrc" />
         <property name="dist.dir" value="${work.dir}/dist" />
@@ -144,7 +143,6 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
 
         <!-- classpaths -->
         <path id="main.classpath">
-            <pathelement path="${jarjar.dir}" />
             <pathelement path="${extlibs.dir}/libreadline-java-0.8.jar" />
             <pathelement path="${extlibs.dir}/jline-0.9.94.jar" />
             <pathelement path="${extlibs.dir}/servlet-api-2.5.jar" />
@@ -325,7 +323,6 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
     <!-- create output directories -->
     <target name ="prepare-output" depends="init,needed-check,clean-if-antlr-needed">
         <mkdir dir="${compile.dir}" />
-        <mkdir dir="${jarjar.dir}" />
         <mkdir dir="${gensrc.dir}/org/python/antlr" />
         <mkdir dir="${exposed.dir}" />
         <mkdir dir="${dist.dir}" />

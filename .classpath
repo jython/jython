@@ -12,8 +12,10 @@
 	<classpathentry kind="lib" path="extlibs/mysql-connector-java-5.1.6.jar"/>
 	<classpathentry kind="lib" path="extlibs/postgresql-8.3-603.jdbc4.jar"/>
 	<classpathentry kind="lib" path="extlibs/servlet-api-2.5.jar"/>
-	<classpathentry kind="lib" path="build/jarjar"/>
 	<classpathentry kind="var" path="ANT_HOME/lib/ant.jar"/>
 	<classpathentry kind="lib" path="extlibs/antlr-3.1.1-runtime.jar"/>
+	<classpathentry kind="lib" path="extlibs/asm-3.1.jar"/>
+	<classpathentry kind="lib" path="extlibs/asm-commons-3.1.jar"/>
+	<classpathentry kind="lib" path="extlibs/constantine-0.4.jar"/>
 	<classpathentry kind="output" path="bugtests/classes"/>
 </classpath>
