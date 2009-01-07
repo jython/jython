@@ -518,7 +518,6 @@ The readme text for the next release will be like:
             <rule pattern="org.jruby.ext.posix.**" result="org.python.posix.@1"/>
             <zipfileset src="extlibs/constantine-0.4.jar"/>
             <rule pattern="com.kenai.constantine.**" result="org.python.constantine.@1"/>
-            <fileset dir="${dist.dir}" includes="Lib/**/*" />
             <manifest>
                 <attribute name="Main-Class" value="org.python.util.jython" />
                 <attribute name="Built-By" value="${user.name}" />
@@ -713,7 +712,11 @@ The readme text for the next release will be like:
             </fileset>
         </copy>
         <echo>building installer .jar file</echo>
-        <jar destfile="${work.dir}/jython_installer-${jython.version.noplus}.jar" basedir="${dist.dir}" update="true">
+        <jar destfile="${work.dir}/jython_installer-${jython.version.noplus}.jar" update="true">
+            <fileset dir="${dist.dir}">
+                <exclude name="jython.jar"/>
+                <exclude name="callbacker_test.jar"/>
+            </fileset>
             <manifest>
                 <attribute name="Main-Class" value="org.python.util.install.Installation" />
                 <attribute name="Built-By" value="${user.name}" />
