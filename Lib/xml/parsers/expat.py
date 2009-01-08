@@ -47,6 +47,14 @@ from org.xml.sax import SAXNotRecognizedException, SAXParseException
 from org.xml.sax.helpers import DefaultHandler, XMLReaderFactory
 from org.xml.sax.ext import DefaultHandler2
 
+# Xerces
+try:
+    # Name mangled by jarjar?
+    import org.python.apache.xerces.parsers.SAXParser
+    _xerces_parser = "org.python.apache.xerces.parsers.SAXParser"
+except ImportError:
+    _xerces_parser = "org.apache.xerces.parsers.SAXParser"
+
 
 def ParserCreate(encoding=None, namespace_separator=None):
     return XMLParser(encoding, namespace_separator)
@@ -77,9 +85,7 @@ class XMLParser(object):
                      "not %s" % type(namespace_separator).__name__)
             raise TypeError(error)
 
-        XMLReader = XMLReaderFactory.createXMLReader
-        xerces_parser = "org.apache.xerces.parsers.SAXParser"
-        self._reader = XMLReader(xerces_parser)
+        self._reader = XMLReaderFactory.createXMLReader(_xerces_parser)
 
         if self.namespace_separator is None:
             try:
