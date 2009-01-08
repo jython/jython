@@ -1,4 +1,3 @@
-
 # coding: utf-8
 
 #------------------------------------------------------------------------------
@@ -23,7 +22,7 @@
 # THE SOFTWARE.
 # -----------------------------------------------------------------------------
 
-__all__ = ["ParserCreate", "XMLParserType", "ExpatError", "error", "errors"]
+__all__ = ["ExpatError", "ParserCreate", "XMLParserType", "error", "errors"]
 
 # Jython check
 import sys
@@ -44,7 +43,7 @@ from java.io import ByteArrayInputStream
 from java.lang import String, StringBuilder
 from org.xml.sax import InputSource
 from org.xml.sax import SAXNotRecognizedException, SAXParseException
-from org.xml.sax.helpers import DefaultHandler, XMLReaderFactory
+from org.xml.sax.helpers import XMLReaderFactory
 from org.xml.sax.ext import DefaultHandler2
 
 # Xerces
@@ -127,14 +126,13 @@ class XMLParser(object):
                 raise NotImplementedError(error)
 
         # experimental
-        # f = "http://xml.org/sax/features/external-general-entities"
+        #f = "http://xml.org/sax/features/external-general-entities"
         f = "http://xml.org/sax/features/external-parameter-entities"
-        # self._reader.setFeature(f, False)
+        #self._reader.setFeature(f, False)
 
         # check
         f = "http://xml.org/sax/features/use-entity-resolver2"
-        assert self._reader.getFeature(f) is True
-
+        assert self._reader.getFeature(f)
 
     def GetBase(self):
         return self._base
@@ -502,7 +500,8 @@ def _init_model():
     for i, type_ in enumerate(types_.split(", ")):
         setattr(model, "XML_CTYPE_" + type_, i+1)
 
-_init_model(); del _init_model
+_init_model()
+del _init_model
 
 
 class ExpatError(Exception):
@@ -559,7 +558,8 @@ def _init_error_strings():
         except IndexError:
             return None
 
-_init_error_strings(); del _init_error_strings
+_init_error_strings()
+del _init_error_strings
 
 
 def _init_errors():
@@ -613,4 +613,5 @@ def _init_errors():
     for i, name in enumerate(error_names[1:]):
         setattr(errors, name, ErrorString(i+1))
 
-_init_errors(); del _init_errors
+_init_errors()
+del _init_errors
