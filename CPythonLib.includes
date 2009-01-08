@@ -8,6 +8,7 @@ email/**
 encodings/**
 logging/*
 test/**
+xml/etree/**
 
 # Lib files, in alphabetical order:
 __future__.py

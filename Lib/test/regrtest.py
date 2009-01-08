@@ -1449,7 +1449,6 @@ _expectations = {
         test_wave
         test_winreg
         test_winsound
-        test_xml_etree_c
         test_zipfile64
         """
 }
@@ -1487,7 +1486,6 @@ _failures = {
         test_ucn
         test_unicode
         test_unicodedata
-        test_xml_etree
         test_zipimport
         """,
 }

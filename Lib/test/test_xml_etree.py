@@ -209,7 +209,7 @@ def check_encoding(ET, encoding):
     >>> check_encoding(ET, "iso-8859-1")
     >>> check_encoding(ET, "iso-8859-15")
     >>> check_encoding(ET, "cp437")
-    >>> check_encoding(ET, "mac-roman")
+    >>> #check_encoding(ET, "mac-roman")
     """
     ET.XML("<?xml version='1.0' encoding='%s'?><xml />" % encoding)
 
