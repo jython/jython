@@ -34,7 +34,7 @@ public class PySystemState extends PyObject
     protected static final String CACHEDIR_DEFAULT_NAME = "cachedir";
 
     public static final String JYTHON_JAR = "jython.jar";
-    public static final String JYTHON_COMPLETE_JAR = "jython-complete.jar";
+    public static final String JYTHON_DEV_JAR = "jython-dev.jar";
 
     private static final String JAR_URL_PREFIX = "jar:file:";
     private static final String JAR_SEPARATOR = "!";
@@ -490,9 +490,9 @@ public class PySystemState extends PyObject
             String classpath = preProperties.getProperty("java.class.path");
             if (classpath != null) {
                 String lowerCaseClasspath = classpath.toLowerCase();
-                int jarIndex = lowerCaseClasspath.indexOf(JYTHON_COMPLETE_JAR);
+                int jarIndex = lowerCaseClasspath.indexOf(JYTHON_JAR);
                 if (jarIndex < 0) {
-                    jarIndex = lowerCaseClasspath.indexOf(JYTHON_JAR);
+                    jarIndex = lowerCaseClasspath.indexOf(JYTHON_DEV_JAR);
                 }
                 if (jarIndex >= 0) {
                     int start = classpath.lastIndexOf(java.io.File.pathSeparator, jarIndex) + 1;

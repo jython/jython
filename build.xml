@@ -172,8 +172,8 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <!-- 64 bit Java 6 needs roughly 96m for regrtest on most platforms, but Apple's needs
          more -->
         <property name="regrtest.Xmx" value="-Xmx160m" />
-        <property name="jython.dev.jar" value="jython.jar" />
-        <property name="jython.deploy.jar" value="jython-complete.jar" />
+        <property name="jython.dev.jar" value="jython-dev.jar" />
+        <property name="jython.deploy.jar" value="jython.jar" />
     </target>
 
     <target name="version-init">
@@ -804,6 +804,7 @@ The readme text for the next release will be like:
          <java classname="org.python.util.jython" fork="true" dir="${bugtests.dir}">
             <classpath>
                 <pathelement location="${dist.dir}/${jython.dev.jar}"/>
+                <fileset dir="${dist.dir}/javalib"/>
             </classpath>
             <jvmarg value="-Dpython.home=${dist.dir}"/>
             <arg value="driver.py"/>

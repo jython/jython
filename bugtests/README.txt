@@ -24,7 +24,7 @@ looks like:
 -----
 java_home = "/Library/Java/Home"
 jython_home = "/Users/bzimmer/Development/sourceforge/jython/dist"
-classpath = jython_home + "/jython.jar:classes"
+classpath = jython_home + "/jython-dev.jar:classes"
 -----
 
 Run the script "driver.py".
