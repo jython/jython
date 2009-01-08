@@ -14,29 +14,15 @@ import _ast
 import sys
 
 if sys.platform.startswith('java'):
-
-    get_symbol_key = lambda op: op
-        
     def get_class_name(t):
         result = t.__class__.__name__
-        if result in ("expr_contextType",
-                      "boolopType",
-                      "unaryopType",
-                      "cmpopType",
-                      "operatorType"):
-            result = str(t)
-            if result == "AugLoad":
-                result = "Load"
-            elif result == "AugStore":
-                result = "Store"
-        else:
-            result = result.split(".")[-1]
-            if result.endswith("Type"):
-                result = result[:-4]
+        if result == "AugLoad":
+            result = "Load"
+        elif result == "AugStore":
+            result = "Store"
         return result
 
 else:
-    get_symbol_key = type
     get_class_name = lambda node: node.__class__.__name__
 
 get_lines_and_cols = True
@@ -48,7 +34,7 @@ def lispify_ast2(node):
     result = get_class_name(node)
     if get_lines_and_cols and hasattr(node, 'lineno') and hasattr(node, 'col_offset'):
         result = "%s (%s,%s)" % (result, node.lineno, node.col_offset)
-    yield result#get_class_name(node)#result
+    yield result
     try:
         for field in node._fields:
             yield tuple(lispify_field(field, getattr(node, field)))
@@ -57,10 +43,10 @@ def lispify_ast2(node):
 
 def lispify_field(field, child):
     yield field
-    if not hasattr(child, '__iter__'):
-        children = [child]
-    else:
+    if isinstance(child, list):
         children = child
+    else:
+        children = [child]
 
     for node in children:
         if isinstance(node, _ast.AST):
