@@ -484,7 +484,7 @@ class JavaVisitor(EmitVisitor):
         self.emit('{%s}, %s);' % (fpargs, len(fields)), depth + 2)
         i = 0
         for f in fields:
-            self.emit("set%s(ap.getPyObject(%s));" % (str(f.name).capitalize(),
+            self.emit("set%s(ap.getPyObject(%s));" % (self.processFieldName(f.name),
                 str(i)), depth+1)
             i += 1
         if str(name) in ('stmt', 'expr', 'excepthandler'):
@@ -506,8 +506,7 @@ class JavaVisitor(EmitVisitor):
         fpargs = ", ".join(["PyObject %s" % f.name for f in fields])
         self.emit("public %s(%s) {" % (clsname, fpargs), depth)
         for f in fields:
-            self.emit("set%s(%s);" % (str(f.name).capitalize(),
-                f.name), depth+1)
+            self.emit("set%s(%s);" % (self.processFieldName(f.name), f.name), depth+1)
         self.emit("}", depth)
         self.emit("", 0)
 
@@ -539,6 +538,14 @@ class JavaVisitor(EmitVisitor):
         self.emit("", 0)
 
 
+    #This is mainly a kludge to turn get/setType -> get/setExceptType because
+    #getType conflicts with a method on PyObject.
+    def processFieldName(self, name):
+        name = str(name).capitalize()
+        if name == "Type":
+            name = "ExceptType"
+        return name
+
     def visitField(self, field, depth):
         self.emit("private %s;" % self.fieldDef(field), depth)
         self.emit("public %s getInternal%s() {" % (self.javaType(field),
@@ -546,7 +553,7 @@ class JavaVisitor(EmitVisitor):
         self.emit("return %s;" % field.name, depth+1)
         self.emit("}", depth)
         self.emit('@ExposedGet(name = "%s")' % field.name, depth)
-        self.emit("public PyObject get%s() {" % (str(field.name).capitalize()), depth)
+        self.emit("public PyObject get%s() {" % self.processFieldName(field.name), depth)
         if field.seq:
             self.emit("return new AstList(%s, AstAdapters.%sAdapter);" % (field.name, field.type), depth+1)
         else:
@@ -567,8 +574,7 @@ class JavaVisitor(EmitVisitor):
             #self.emit("return Py.None;", depth+1)
         self.emit("}", depth)
         self.emit('@ExposedSet(name = "%s")' % field.name, depth)
-        self.emit("public void set%s(PyObject %s) {" % (str(field.name).capitalize(),
-            field.name), depth)
+        self.emit("public void set%s(PyObject %s) {" % (self.processFieldName(field.name), field.name), depth)
         if field.seq:
             #self.emit("this.%s = new %s(" % (field.name, self.javaType(field)), depth+1)
             self.emit("this.%s = AstAdapters.py2%sList(%s);" % (field.name, str(field.type), field.name), depth+1)

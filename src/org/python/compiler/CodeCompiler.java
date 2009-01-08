@@ -751,10 +751,10 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
     @Override
     public Object visitRaise(Raise node) throws Exception {
         setline(node);
-        if (node.getInternalExcepttype() != null) { visit(node.getInternalExcepttype()); stackProduce(); }
+        if (node.getInternalType() != null) { visit(node.getInternalType()); stackProduce(); }
         if (node.getInternalInst() != null) { visit(node.getInternalInst()); stackProduce(); }
         if (node.getInternalTback() != null) { visit(node.getInternalTback()); stackProduce(); }
-        if (node.getInternalExcepttype() == null) {
+        if (node.getInternalType() == null) {
             code.invokestatic("org/python/core/Py", "makeException", "()" + $pyExc);
         } else if (node.getInternalInst() == null) {
             stackConsume();
@@ -1117,10 +1117,10 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
             //setline(name);
             Label end_of_self = new Label();
 
-            if (handler.getInternalExcepttype() != null) {
+            if (handler.getInternalType() != null) {
                 code.aload(exc);
                 //get specific exception
-                visit(handler.getInternalExcepttype());
+                visit(handler.getInternalType());
                 code.invokestatic("org/python/core/Py", "matchException", "(" + $pyExc + $pyObj + ")Z");
                 code.ifeq(end_of_self);
             } else {

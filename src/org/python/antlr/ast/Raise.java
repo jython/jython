@@ -28,17 +28,17 @@ import java.util.ArrayList;
 @ExposedType(name = "_ast.Raise", base = AST.class)
 public class Raise extends stmt {
 public static final PyType TYPE = PyType.fromClass(Raise.class);
-    private expr excepttype;
-    public expr getInternalExcepttype() {
-        return excepttype;
+    private expr type;
+    public expr getInternalType() {
+        return type;
     }
-    @ExposedGet(name = "excepttype")
-    public PyObject getExcepttype() {
-        return excepttype;
+    @ExposedGet(name = "type")
+    public PyObject getExceptType() {
+        return type;
     }
-    @ExposedSet(name = "excepttype")
-    public void setExcepttype(PyObject excepttype) {
-        this.excepttype = AstAdapters.py2expr(excepttype);
+    @ExposedSet(name = "type")
+    public void setExceptType(PyObject type) {
+        this.type = AstAdapters.py2expr(type);
     }
 
     private expr inst;
@@ -69,7 +69,7 @@ public static final PyType TYPE = PyType.fromClass(Raise.class);
 
 
     private final static PyString[] fields =
-    new PyString[] {new PyString("excepttype"), new PyString("inst"), new PyString("tback")};
+    new PyString[] {new PyString("type"), new PyString("inst"), new PyString("tback")};
     @ExposedGet(name = "_fields")
     public PyString[] get_fields() { return fields; }
 
@@ -88,8 +88,8 @@ public static final PyType TYPE = PyType.fromClass(Raise.class);
     @ExposedMethod
     public void Raise___init__(PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("Raise", args, keywords, new String[]
-            {"excepttype", "inst", "tback", "lineno", "col_offset"}, 3);
-        setExcepttype(ap.getPyObject(0));
+            {"type", "inst", "tback", "lineno", "col_offset"}, 3);
+        setExceptType(ap.getPyObject(0));
         setInst(ap.getPyObject(1));
         setTback(ap.getPyObject(2));
         int lin = ap.getInt(3, -1);
@@ -104,36 +104,36 @@ public static final PyType TYPE = PyType.fromClass(Raise.class);
 
     }
 
-    public Raise(PyObject excepttype, PyObject inst, PyObject tback) {
-        setExcepttype(excepttype);
+    public Raise(PyObject type, PyObject inst, PyObject tback) {
+        setExceptType(type);
         setInst(inst);
         setTback(tback);
     }
 
-    public Raise(Token token, expr excepttype, expr inst, expr tback) {
+    public Raise(Token token, expr type, expr inst, expr tback) {
         super(token);
-        this.excepttype = excepttype;
-        addChild(excepttype);
+        this.type = type;
+        addChild(type);
         this.inst = inst;
         addChild(inst);
         this.tback = tback;
         addChild(tback);
     }
 
-    public Raise(Integer ttype, Token token, expr excepttype, expr inst, expr tback) {
+    public Raise(Integer ttype, Token token, expr type, expr inst, expr tback) {
         super(ttype, token);
-        this.excepttype = excepttype;
-        addChild(excepttype);
+        this.type = type;
+        addChild(type);
         this.inst = inst;
         addChild(inst);
         this.tback = tback;
         addChild(tback);
     }
 
-    public Raise(PythonTree tree, expr excepttype, expr inst, expr tback) {
+    public Raise(PythonTree tree, expr type, expr inst, expr tback) {
         super(tree);
-        this.excepttype = excepttype;
-        addChild(excepttype);
+        this.type = type;
+        addChild(type);
         this.inst = inst;
         addChild(inst);
         this.tback = tback;
@@ -147,8 +147,8 @@ public static final PyType TYPE = PyType.fromClass(Raise.class);
 
     public String toStringTree() {
         StringBuffer sb = new StringBuffer("Raise(");
-        sb.append("excepttype=");
-        sb.append(dumpThis(excepttype));
+        sb.append("type=");
+        sb.append(dumpThis(type));
         sb.append(",");
         sb.append("inst=");
         sb.append(dumpThis(inst));
@@ -165,8 +165,8 @@ public static final PyType TYPE = PyType.fromClass(Raise.class);
     }
 
     public void traverse(VisitorIF visitor) throws Exception {
-        if (excepttype != null)
-            excepttype.accept(visitor);
+        if (type != null)
+            type.accept(visitor);
         if (inst != null)
             inst.accept(visitor);
         if (tback != null)
