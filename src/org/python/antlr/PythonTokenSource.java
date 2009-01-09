@@ -146,6 +146,7 @@ public class PythonTokenSource implements TokenSource {
     }
 
     private void generateNewline(Token t) {
+        //System.out.println("generating newline from token: " + t);
         CommonToken newline = new CommonToken(PythonLexer.NEWLINE, "\n");
         newline.setLine(t.getLine());
         newline.setCharPositionInLine(t.getCharPositionInLine());
@@ -153,9 +154,12 @@ public class PythonTokenSource implements TokenSource {
     }
 
     private void handleEOF(CommonToken eof, CommonToken prev) {
+        //System.out.println("processing eof with token: " + prev);
         if (prev != null) {
             eof.setStartIndex(prev.getStopIndex());
             eof.setStopIndex(prev.getStopIndex());
+            eof.setLine(prev.getLine());
+            eof.setCharPositionInLine(prev.getCharPositionInLine());
         }
     }
 

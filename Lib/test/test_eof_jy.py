@@ -45,6 +45,12 @@ class TestEof(unittest.TestCase):
         except ImportError, cause:
             self.fail(cause)
 
+    def test_trailing_paren(self):
+        try:
+            import eof_fodder7
+        except SyntaxError, cause:
+            self.assertEquals(cause.lineno, 5)
+
 #==============================================================================
 
 def test_main(verbose=None):
