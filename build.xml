@@ -187,8 +187,8 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <property name="PY_RELEASE_LEVEL_SNAPSHOT" value="170"/> <!-- 0xAA -->
 
         <!-- The current version info -->
-        <property name="jython.version" value="2.5b0+"/>
-        <property name="jython.version.noplus" value="2.5b0"/>
+        <property name="jython.version" value="2.5b1+"/>
+        <property name="jython.version.noplus" value="2.5b1"/>
         <property name="jython.major_version" value="2"/>
         <property name="jython.minor_version" value="5"/>
         <property name="jython.micro_version" value="0"/>
