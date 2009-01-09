@@ -720,6 +720,15 @@ The readme text for the next release will be like:
             <fileset dir="${dist.dir}">
                 <exclude name="${jython.dev.jar}"/>
                 <exclude name="callbacker_test.jar"/>
+                <exclude name="extlibs/svnant-jars/**" />
+                <exclude name="extlibs/antlr*.jar" />
+                <exclude name="extlibs/asm*.jar" />
+                <exclude name="extlibs/constantine*.jar" />
+                <exclude name="extlibs/jarjar*.jar" />
+                <exclude name="extlibs/junit*.jar" />
+                <exclude name="extlibs/servlet-api*.jar" />
+                <exclude name="extlibs/stringtemplate*.jar" />
+                <exclude name="extlibs/xerces*.jar" />
             </fileset>
             <manifest>
                 <attribute name="Main-Class" value="org.python.util.install.Installation" />
