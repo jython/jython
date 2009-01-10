@@ -569,7 +569,7 @@ def _to_timeval(seconds):
     if _time_t is None:
         from java.lang import Integer, Long
         try:
-            from org.python.posix import Platform
+            from org.python.posix.util import Platform
         except ImportError:
             from org.jruby.ext.posix.util import Platform
         _time_t = Integer if Platform.IS_32_BIT else Long
