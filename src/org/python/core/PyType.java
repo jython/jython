@@ -722,7 +722,8 @@ public class PyType extends PyObject implements Serializable {
         to_merge[n] = bases;
         remain[n] = 0;
 
-        List<PyObject> acc = Generic.list(this);
+        List<PyObject> acc = Generic.list();
+        acc.add(this);
 
         int empty_cnt = 0;
 

@@ -87,7 +87,8 @@ public class PyJavaType extends PyType {
                 bases[i] = PyType.fromClass(underlying_class.getInterfaces()[i - 1]);
             }
             Set<PyObject> seen = Generic.set();
-            List<PyObject> mros = Generic.list(this);
+            List<PyObject> mros = Generic.list();
+            mros.add(this);
             for (PyObject obj : bases) {
                 for (PyObject mroObj : ((PyType)obj).mro) {
                     if (seen.add(mroObj)) {
