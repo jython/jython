@@ -18,7 +18,7 @@ import org.python.expose.MethodType;
 public class PyLong extends PyObject {
 
     public static final PyType TYPE = PyType.fromClass(PyLong.class);
-    
+
     public static final BigInteger minLong = BigInteger.valueOf(Long.MIN_VALUE);
     public static final BigInteger maxLong = BigInteger.valueOf(Long.MAX_VALUE);
     public static final BigInteger maxULong =
@@ -35,6 +35,9 @@ public class PyLong extends PyObject {
 
         ArgParser ap = new ArgParser("long", args, keywords, new String[] {"x", "base"}, 0);
         PyObject x = ap.getPyObject(0, null);
+        if (x != null && x.getJavaProxy() instanceof BigInteger) {
+            return new PyLong((BigInteger)x.getJavaProxy());
+        }
         int base = ap.getInt(1, -909);
 
         if (x == null) {
@@ -74,7 +77,7 @@ public class PyLong extends PyObject {
             return new PyLongDerived(subtype, ((PyLong)tmp).value);
         }
     }
-    
+
     public PyLong(PyType subType, BigInteger v) {
         super(subType);
         value = v;
@@ -264,10 +267,10 @@ public class PyLong extends PyObject {
         return adaptToCoerceTuple(long___coerce_ex__(other));
     }
 
-    /** 
+    /**
      * Coercion logic for long. Implemented as a final method to avoid
-     * invocation of virtual methods from the exposed coerce. 
-     */ 
+     * invocation of virtual methods from the exposed coerce.
+     */
     final Object long___coerce_ex__(PyObject other) {
         if (other instanceof PyLong)
             return other;
@@ -535,7 +538,7 @@ public class PyLong extends PyObject {
     public PyObject __pow__(PyObject right, PyObject modulo) {
         return long___pow__(right, modulo);
     }
-    
+
     @ExposedMethod(type = MethodType.BINARY, defaults = {"null"}, doc = BuiltinDocs.long___pow___doc)
     final PyObject long___pow__(PyObject right, PyObject modulo) {
         if (!canCoerce(right))
@@ -744,7 +747,7 @@ public class PyLong extends PyObject {
     public PyObject __abs__() {
         return long___abs__();
     }
-    
+
     @ExposedMethod(doc = BuiltinDocs.long___abs___doc)
     final PyObject long___abs__() {
         return Py.newLong(value.abs());
@@ -830,7 +833,7 @@ public class PyLong extends PyObject {
     public PyString __str__() {
         return Py.newString(value.toString());
     }
-    
+
     public PyUnicode __unicode__() {
         return new PyUnicode(value.toString());
     }

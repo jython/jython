@@ -50,7 +50,16 @@ class TracebackTestCase(unittest.TestCase):
         # http://bugs.jython.org/issue437809
         traceback.extract_stack()
 
-
+    def test_except_around_raising_call(self):
+        """[ #452526 ] traceback lineno is the except line"""
+        from test import except_in_raising_code
+        try:
+            except_in_raising_code.foo()
+        except NameError:
+            tb = sys.exc_info()[2]
+            self.assertEquals(6, tb.tb_next.tb_lineno)
+        else:
+            self.fail("Should've raised a NameError")
 
 try:
     raise Exception('foo')

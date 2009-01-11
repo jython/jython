@@ -7,7 +7,7 @@ import re
 from test import test_support
 
 from java.lang import (ExceptionInInitializerError, String, Runnable, System, Runtime, Math, Byte)
-from java.math import BigDecimal
+from java.math import BigDecimal, BigInteger
 from java.io import (FileInputStream, FileNotFoundException, FileOutputStream, FileWriter,
     OutputStreamWriter, UnsupportedEncodingException)
 from java.util import ArrayList, Date, HashMap, Hashtable, StringTokenizer, Vector
@@ -56,6 +56,11 @@ class BeanTest(unittest.TestCase):
         b = BeanImplementation()
         self.assertEquals("name", b.getName())
         self.assertEquals("name", b.name)
+        # Tests for #610576
+        class SubBean(BeanImplementation):
+            def __init__(bself):
+                self.assertEquals("name", bself.getName())
+        SubBean()
 
 
 class SysIntegrationTest(unittest.TestCase):
@@ -262,7 +267,7 @@ class TreePathTest(unittest.TestCase):
         self.assertEquals(len(treePath.path), 3, "Object[] not passed correctly")
         self.assertEquals(TreePath(treePath.path).path, treePath.path, "Object[] not passed and returned correctly")
 
-class BigDecimalTest(unittest.TestCase):
+class BigNumberTest(unittest.TestCase):
     def test_coerced_bigdecimal(self):
         from javatests import BigDecimalTest
         x = BigDecimal("123.4321")
@@ -270,6 +275,11 @@ class BigDecimalTest(unittest.TestCase):
 
         self.assertEqual(type(x), type(y), "BigDecimal coerced")
         self.assertEqual(x, y, "coerced BigDecimal not equal to directly created version")
+
+    def test_biginteger_in_long(self):
+        '''Checks for #608628, that long can take a BigInteger in its constructor'''
+        ns = '10000000000'
+        self.assertEquals(ns, str(long(BigInteger(ns))))
 
 class JavaStringTest(unittest.TestCase):
     def test_string_not_iterable(self):
@@ -338,7 +348,7 @@ def test_main():
                               ImportTest,
                               ColorTest,
                               TreePathTest,
-                              BigDecimalTest,
+                              BigNumberTest,
                               JavaStringTest,
                               JavaDelegationTest,
                               SecurityManagerTest)

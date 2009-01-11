@@ -703,9 +703,7 @@ public class ProxyMaker implements ClassConstants, Opcodes
         addMethods(superclass, seenmethods);
         for (Class<?> iface : interfaces) {
             if (iface.isAssignableFrom(superclass)) {
-                Py.writeWarning("compiler",
-                                "discarding redundant interface: "+
-                                iface.getName());
+                Py.writeWarning("compiler", "discarding redundant interface: " + iface.getName());
                 continue;
             }
             classfile.addInterface(mapClass(iface));

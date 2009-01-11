@@ -4,7 +4,7 @@ import subprocess
 import sys
 from test import test_support
 from java.lang import Byte, Class
-from java.util import HashMap, Observable, Observer 
+from java.util import ArrayList, Collections, HashMap, Observable, Observer 
 from org.python.tests import (Coercions, HiddenSuper, InterfaceCombination, Invisible, Matryoshka,
         OnlySubclassable, OtherSubVisible, SomePyMethods, SubVisible, Visible, VisibleOverride)
 from org.python.tests import VisibilityResults as Results
@@ -141,6 +141,14 @@ class VisibilityTest(unittest.TestCase):
     def test_inner_class_identity(self):
         """Bug #452947 - Class of innerclass inst <> innerclass"""
         self.assertEquals(id(Matryoshka.Outermost), id(Matryoshka.makeOutermost().__class__))
+
+    def test_super_methods_merged(self):
+        '''Checks that all signatures on a class' methods are found, not just the first for a name
+
+        Bug #628315'''
+        synchList = Collections.synchronizedList(ArrayList())
+        synchList.add("a string")
+        self.assertEquals("a string", synchList.remove(0))
 
 class JavaClassTest(unittest.TestCase):
     def test_class_methods_visible(self):
