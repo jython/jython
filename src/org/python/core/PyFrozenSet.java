@@ -11,9 +11,9 @@ import org.python.expose.MethodType;
 
 @ExposedType(name = "frozenset", base = PyObject.class)
 public class PyFrozenSet extends BaseSet {
-    
+
     public static final PyType TYPE = PyType.fromClass(PyFrozenSet.class);
-    
+
     public PyFrozenSet() {
         super(new HashSet<PyObject>());
     }
@@ -204,8 +204,8 @@ public class PyFrozenSet extends BaseSet {
     }
 
     public Iterator iterator() {
+        final Iterator i = super.iterator();
         return new Iterator() {
-            Iterator i = _set.iterator();
 
             public boolean hasNext() {
                 return i.hasNext();

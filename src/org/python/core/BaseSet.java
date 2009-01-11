@@ -1,41 +1,35 @@
 package org.python.core;
 
+import java.lang.reflect.Array;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
 public abstract class BaseSet extends PyObject implements Set {
 
     /** The underlying Set. */
-    protected Set _set;
+    protected Set<PyObject> _set;
 
     /**
      * Create a new Python set instance from the specified Set object.
-     *
-     * @param set An Set object.
      */
-    protected BaseSet(Set set) {
+    protected BaseSet(Set<PyObject> set) {
         _set = set;
     }
 
-    protected BaseSet(PyType type, Set set) {
+    protected BaseSet(PyType type, Set<PyObject> set) {
         super(type);
         _set = set;
     }
 
-    protected void _update(PyObject data) throws PyIgnoreMethodTag {
+    protected void _update(PyObject data) {
         _update(_set, data);
     }
 
     /**
      * Update the underlying set with the contents of the iterable.
-     *
-     * @param data An iterable instance.
-     * @throws PyIgnoreMethodTag Ignore.
      */
-    protected static Set _update(Set set, PyObject data) throws PyIgnoreMethodTag {
+    protected static Set<PyObject> _update(Set<PyObject> set, PyObject data) {
         if (data == null) {
             return set;
         }
@@ -53,7 +47,7 @@ public abstract class BaseSet extends PyObject implements Set {
     /**
      * The union of <code>this</code> with <code>other</code>. <p/> <br/> (I.e. all elements
      * that are in either set)
-     * 
+     *
      * @param other
      *            A <code>BaseSet</code> instance.
      * @return The union of the two sets as a new set.
@@ -115,9 +109,9 @@ public abstract class BaseSet extends PyObject implements Set {
 
     final PyObject baseset_difference(PyObject other) {
         BaseSet bs = (other instanceof BaseSet) ? (BaseSet)other : new PySet(other);
-        Set set = bs._set;
+        Set<PyObject> set = bs._set;
         BaseSet o = BaseSet.makeNewSet(getType());
-        for (Object p : _set) {
+        for (PyObject p : _set) {
             if (!set.contains(p)) {
                 o._set.add(p);
             }
@@ -153,12 +147,12 @@ public abstract class BaseSet extends PyObject implements Set {
     final PyObject baseset_symmetric_difference(PyObject other) {
         BaseSet bs = (other instanceof BaseSet) ? (BaseSet)other : new PySet(other);
         BaseSet o = BaseSet.makeNewSet(getType());
-        for (Object p : _set) {
+        for (PyObject p : _set) {
             if (!bs._set.contains(p)) {
                 o._set.add(p);
             }
         }
-        for (Object p : bs._set) {
+        for (PyObject p : bs._set) {
             if (!_set.contains(p)) {
                 o._set.add(p);
             }
@@ -206,7 +200,22 @@ public abstract class BaseSet extends PyObject implements Set {
     }
 
     final PyObject baseset___iter__() {
-        return new PySetIterator(_set);
+        return new PyIterator() {
+            private int size = _set.size();
+
+            private Iterator<PyObject> iterator = _set.iterator();
+
+            @Override
+            public PyObject __iternext__() {
+                if (_set.size() != size) {
+                    throw Py.RuntimeError("set changed size during iteration");
+                }
+                if (iterator.hasNext()) {
+                    return iterator.next();
+                }
+                return null;
+            }
+        };
     }
 
     public boolean __contains__(PyObject other) {
@@ -257,7 +266,7 @@ public abstract class BaseSet extends PyObject implements Set {
     }
 
     final PyObject baseset___le__(PyObject other) {
-        BaseSet bs = _binary_sanity_check(other);
+        _binary_sanity_check(other);
         return baseset_issubset(other);
     }
 
@@ -266,7 +275,7 @@ public abstract class BaseSet extends PyObject implements Set {
     }
 
     final PyObject baseset___ge__(PyObject other) {
-        BaseSet bs = _binary_sanity_check(other);
+        _binary_sanity_check(other);
         return baseset_issuperset(other);
     }
 
@@ -299,7 +308,7 @@ public abstract class BaseSet extends PyObject implements Set {
     public PyObject __reduce__() {
         return baseset___reduce__();
     }
-    
+
     final PyObject baseset___reduce__(){
         PyObject args = new PyTuple(new PyList((PyObject)this));
         PyObject dict = __findattr__("__dict__");
@@ -307,19 +316,6 @@ public abstract class BaseSet extends PyObject implements Set {
             dict = Py.None;
         }
         return new PyTuple(getType(), args, dict);
-    }
-
-    /**
-     * Return this instance as a Java object.  Only coerces to Collection and subinterfaces.
-     *
-     * @param c The Class to coerce to.
-     * @return the underlying HashSet (not a copy)
-     */
-    public Object __tojava__(Class c) {
-        if (Collection.class.isAssignableFrom(c)) {
-            return Collections.unmodifiableSet(_set);
-        }
-        return super.__tojava__(c);
     }
 
     final PyObject baseset_union(PyObject other) {
@@ -388,8 +384,8 @@ public abstract class BaseSet extends PyObject implements Set {
             return name + "(...)";
         }
         StringBuilder buf = new StringBuilder(name).append("([");
-        for (Iterator i = _set.iterator(); i.hasNext();) {
-            buf.append(((PyObject)i.next()).__repr__().toString());
+        for (Iterator<PyObject> i = _set.iterator(); i.hasNext();) {
+            buf.append((i.next()).__repr__().toString());
             if (i.hasNext()) {
                 buf.append(", ");
             }
@@ -408,20 +404,20 @@ public abstract class BaseSet extends PyObject implements Set {
     }
 
     /**
-     * Return a PyFrozenSet whose contents are shared with value when
-     * value is a BaseSet and pye is a TypeError.
+     * Return a PyFrozenSet whose contents are shared with value when value is a BaseSet and pye is
+     * a TypeError.
      *
-     * WARNING: The PyFrozenSet returned is only intended to be used
-     * temporarily (and internally); since its contents are shared
-     * with value, it could be mutated!
-     * 
-     * This is better than special-casing behavior based on
-     * isinstance, because a Python subclass can override, say,
-     * __hash__ and all of a sudden you can't assume that a
-     * non-PyFrozenSet is unhashable anymore.
+     * WARNING: The PyFrozenSet returned is only intended to be used temporarily (and internally);
+     * since its contents are shared with value, it could be mutated!
      *
-     * @param pye   The exception thrown from a hashable operation.
-     * @param value The object which was unhashable.
+     * This is better than special-casing behavior based on isinstance, because a Python subclass
+     * can override, say, __hash__ and all of a sudden you can't assume that a non-PyFrozenSet is
+     * unhashable anymore.
+     *
+     * @param pye
+     *            The exception thrown from a hashable operation.
+     * @param value
+     *            The object which was unhashable.
      * @return A PyFrozenSet if appropriate, otherwise the pye is rethrown
      */
     protected final PyFrozenSet asFrozen(PyException pye, PyObject value) {
@@ -442,7 +438,7 @@ public abstract class BaseSet extends PyObject implements Set {
     protected static BaseSet makeNewSet(PyType type) {
         return makeNewSet(type, null);
     }
- 
+
     /**
      * Create a new <et of type from iterable.
      *
@@ -477,43 +473,89 @@ public abstract class BaseSet extends PyObject implements Set {
         return _set.isEmpty();
     }
 
-    public Object[] toArray() {
-        return _set.toArray();
-    }
-
     public boolean add(Object o) {
-        return _set.add(o);
+        return _set.add(Py.java2py(o));
     }
 
     public boolean contains(Object o) {
-        return _set.contains(o);
+        return _set.contains(Py.java2py(o));
     }
 
     public boolean remove(Object o) {
-        return _set.remove(o);
+        return _set.remove(Py.java2py(o));
     }
 
     public boolean addAll(Collection c) {
-        return _set.addAll(c);
+        boolean added = false;
+        for (Object object : c) {
+            added |= add(object);
+        }
+        return added;
     }
 
     public boolean containsAll(Collection c) {
-        return _set.containsAll(c);
+        for (Object object : c) {
+            if (!_set.contains(Py.java2py(object))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public boolean removeAll(Collection c) {
-        return _set.removeAll(c);
+        boolean removed = false;
+        for (Object object : c) {
+            removed |= _set.remove(Py.java2py(object));
+        }
+        return removed;
     }
 
     public boolean retainAll(Collection c) {
-        return _set.retainAll(c);
+        boolean modified = false;
+        Iterator e = iterator();
+        while (e.hasNext()) {
+            if (!c.contains(e.next())) {
+                e.remove();
+                modified = true;
+            }
+        }
+        return modified;
     }
 
     public Iterator iterator() {
-        return _set.iterator();
+        return new Iterator() {
+            Iterator<PyObject> real = _set.iterator();
+
+            public boolean hasNext() {
+                return real.hasNext();
+            }
+
+            public Object next() {
+                return Py.tojava(real.next(), Object.class);
+            }
+
+            public void remove() {
+                real.remove();
+            }
+        };
+    }
+
+    public Object[] toArray() {
+        return toArray(new Object[size()]);
     }
 
     public Object[] toArray(Object a[]) {
-        return _set.toArray(a);
+        int size = size();
+        if (a.length < size) {
+            a = (Object[])Array.newInstance(a.getClass().getComponentType(), size);
+        }
+        Iterator<PyObject> it = iterator();
+        for (int i = 0; i < size; i++) {
+            a[i] = it.next();
+        }
+        if (a.length > size) {
+            a[size] = null;
+        }
+        return a;
     }
 }

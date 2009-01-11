@@ -472,8 +472,7 @@ public abstract class ListTest {
         int prevIndex = li.previousIndex();
         TestSupport.assertThat(prevIndex == -1,
                                "ListIterator.previousIndex() on empty List did not return -1");
-        List<Object> l = Generic.list();
-        l.add(1);
+        List<Object> l = Generic.list(1);
         li = newInstance(l).listIterator();
         TestSupport.assertThat(!li.hasPrevious(),
                                "ListIterator.hasPrevious() is true with nothing previous");
@@ -494,10 +493,7 @@ public abstract class ListTest {
                 TestSupport.fail("expected IllegalStateException");
             } catch (IllegalStateException e) {}
         }
-        l = Generic.list();
-        l.add(0);
-        l.add(1);
-        l.add(2);
+        l = Generic.list(0, 1, 2);
         li = newInstance(l).listIterator();
         for (int i = 0, n = l.size(); i < n; i++) {
             TestSupport.assertThat(li.next().equals(i),

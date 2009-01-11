@@ -13,7 +13,7 @@ import org.python.expose.MethodType;
 public class PySet extends BaseSet {
 
     public static final PyType TYPE = PyType.fromClass(PySet.class);
-    
+
     public PySet() {
         super(new ConcurrentHashSet<PyObject>());
     }
@@ -25,7 +25,7 @@ public class PySet extends BaseSet {
     public PySet(PyObject data) {
         super(_update(new ConcurrentHashSet<PyObject>(), data));
     }
-    
+
     @ExposedNew
     @ExposedMethod
     final void set___init__(PyObject[] args, String[] kwds) {
@@ -40,7 +40,7 @@ public class PySet extends BaseSet {
         _set.clear();
         _update(args[0]);
     }
-    
+
     @ExposedMethod(type = MethodType.BINARY)
     final PyObject set___cmp__(PyObject o) {
         return new PyInteger(baseset___cmp__(o));
@@ -181,7 +181,7 @@ public class PySet extends BaseSet {
         return set___iand__(other);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)  
+    @ExposedMethod(type = MethodType.BINARY)
     final PyObject set___iand__(PyObject other) {
         if (!(other instanceof BaseSet)) {
             return null;
@@ -281,8 +281,7 @@ public class PySet extends BaseSet {
         }
 
         BaseSet bs = (other instanceof BaseSet) ? (BaseSet)other : new PySet(other);
-        for (Iterator iterator = bs._set.iterator(); iterator.hasNext();) {
-            Object o = iterator.next();
+        for (PyObject o : bs._set) {
             if (_set.contains(o)) {
                 _set.remove(o);
             } else {
