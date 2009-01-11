@@ -4,10 +4,13 @@ package org.python.core;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.Reader;
+import java.io.Writer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
@@ -138,7 +141,7 @@ public class ParserFacade {
         try {
             // prepBufReader takes care of encoding detection and universal
             // newlines:
-            bufReader = prepBufReader(stream, cflags, filename);
+            bufReader = prepBufReader(stream, cflags, filename, false);
             return parse(bufReader, kind, filename, cflags );
         } catch (Throwable t) {
             throw fixParseError(bufReader, t, filename);
@@ -223,7 +226,9 @@ public class ParserFacade {
 
     private static ExpectedEncodingBufferedReader prepBufReader(InputStream input,
                                                                 CompilerFlags cflags,
-                                                String filename) throws IOException {
+                                                                String filename,
+                                                                boolean fromString)
+            throws IOException {
         input = new BufferedInputStream(input);
         boolean bom = adjustForBOM(input);
         String encoding = readEncoding(input);
@@ -250,29 +255,45 @@ public class ParserFacade {
         UniversalIOWrapper textIO = new UniversalIOWrapper(bufferedIO);
         input = new TextIOInputStream(textIO);
 
-        CharsetDecoder dec;
+        Charset cs;
         try {
             // Use ascii for the raw bytes when no encoding was specified
-            dec = Charset.forName(encoding == null ? "ascii" : encoding).newDecoder();
+            if (encoding == null) {
+                if (fromString) {
+                    cs = Charset.forName("ISO-8859-1");
+                } else {
+                    cs = Charset.forName("ascii");
+                }
+            } else {
+                cs = Charset.forName(encoding);
+            }
         } catch (UnsupportedCharsetException exc) {
             throw new PySyntaxError("Unknown encoding: " + encoding, 1, 0, "", filename);
         }
+        CharsetDecoder dec = cs.newDecoder();
         dec.onMalformedInput(CodingErrorAction.REPORT);
         dec.onUnmappableCharacter(CodingErrorAction.REPORT);
         return new ExpectedEncodingBufferedReader(new InputStreamReader(input, dec), encoding);
     }
 
-    private static ExpectedEncodingBufferedReader prepBufReader(String string, CompilerFlags cflags,
-                                                String filename) throws IOException {
+    private static ExpectedEncodingBufferedReader prepBufReader(String string,
+                                                                CompilerFlags cflags,
+                                                                String filename) throws IOException {
+        byte[] stringBytes;
         if (cflags.source_is_utf8) {
             // Passed unicode, re-encode the String to raw bytes
             // NOTE: This could be more efficient if we duplicate
             // prepBufReader/adjustForBOM/readEncoding to work on Readers, instead of
             // encoding
-            string = new PyUnicode(string).encode("utf-8");
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            Writer w = new OutputStreamWriter(out, "utf-8");
+            w.write(string);
+            w.close();
+            stringBytes = out.toByteArray();
+        } else {
+            stringBytes = StringUtil.toBytes(string);
         }
-        InputStream input = new ByteArrayInputStream(StringUtil.toBytes(string));
-        return prepBufReader(input, cflags, filename);
+        return prepBufReader(new ByteArrayInputStream(stringBytes), cflags, filename, true);
     }
 
     /**
