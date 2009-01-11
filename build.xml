@@ -362,7 +362,9 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <exec executable="svnversion" failifexecutionfails="false" outputproperty="build.svn.revision"/>
     </target>
 
-    <target name="brand-version" depends="version-init, svnversion">
+    <!-- skip-brand can be set in ant.properties or as a system property to keep from updating the
+         version.properties file and making the jar on every developer build. -->
+    <target name="brand-version" depends="version-init, svnversion" unless="skip-brand">
         <condition property="build.svn.revision" value="">
             <not>
                 <isset property="build.svn.revision"/>
@@ -520,7 +522,7 @@ The readme text for the next release will be like:
             <rule pattern="org.jruby.ext.posix.**" result="org.python.posix.@1"/>
             <zipfileset src="extlibs/constantine-0.4.jar"/>
             <rule pattern="com.kenai.constantine.**" result="org.python.constantine.@1"/>
-            <zipfileset src="extlibs/xercesImpl.jar"/>
+            <zipfileset src="extlibs/xercesImpl-2.9.1.jar"/>
             <rule pattern="org.apache.**" result="org.python.apache.@1"/>
             <manifest>
                 <attribute name="Main-Class" value="org.python.util.jython" />
