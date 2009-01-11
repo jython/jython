@@ -12,7 +12,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import java.util.concurrent.ConcurrentMap;
-import org.python.core.PyMapSet.PySetIter;
 import org.python.expose.ExposedClassMethod;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
@@ -27,7 +26,7 @@ import org.python.expose.MethodType;
 public class PyDictionary extends PyObject implements ConcurrentMap {
 
     public static final PyType TYPE = PyType.fromClass(PyDictionary.class);
-    
+
     protected final ConcurrentMap<PyObject, PyObject> table;
 
     /**
@@ -39,7 +38,6 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
 
     /**
      * For derived types
-     * @param subtype
      */
     public PyDictionary(PyType subtype) {
         super(subtype);
@@ -47,31 +45,27 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
     }
 
     /**
-     * Create an new dictionary which is based on the hashtable.
-     * @param t  the hashtable used. The supplied hashtable is used as
-     *           is and must only contain PyObject key:value pairs.
+     * Create a new dictionary which is based on given map.
      */
     public PyDictionary(Map<PyObject, PyObject> t) {
         table = new ConcurrentHashMap<PyObject, PyObject>(t);
     }
 
-     /**
-     * Create an new dictionary which is based on the map and for derived types.
-     * @param subtype
-     * @param t  the hashtable used. The supplied hashtable is used as
-     *           is and must only contain PyObject key:value pairs.
+    /**
+     * Create a new derived dictionary which is based on the given map.
      */
     public PyDictionary(PyType subtype, Map<PyObject, PyObject> t) {
         super(subtype);
         table = new ConcurrentHashMap<PyObject, PyObject>(t);
     }
 
-        
+
     /**
      * Create a new dictionary with the element as content.
-     * @param elements The initial elements that is inserted in the
-     *                 dictionary. Even numbered elements are keys,
-     *                 odd numbered elements are values.
+     *
+     * @param elements
+     *            The initial elements that is inserted in the dictionary. Even numbered elements
+     *            are keys, odd numbered elements are values.
      */
     public PyDictionary(PyObject elements[]) {
         this();
@@ -85,7 +79,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
     protected final void dict___init__(PyObject[] args, String[] keywords) {
         updateCommon(args, keywords, "dict");
     }
-    
+
     public static PyObject fromkeys(PyObject keys) {
         return fromkeys(keys, Py.None);
     }
@@ -210,10 +204,10 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
     }
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.dict___eq___doc)
-    final PyObject dict___eq__(PyObject ob_other) {               
+    final PyObject dict___eq__(PyObject ob_other) {
         PyType thisType = getType();
         PyType otherType = ob_other.getType();
-        if (otherType != thisType && !thisType.isSubType(otherType) 
+        if (otherType != thisType && !thisType.isSubType(otherType)
                 && !otherType.isSubType(thisType)) {
             return null;
         }
@@ -291,7 +285,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
     final int dict___cmp__(PyObject ob_other) {
         PyType thisType = getType();
         PyType otherType = ob_other.getType();
-        if (otherType != thisType && !thisType.isSubType(otherType) 
+        if (otherType != thisType && !thisType.isSubType(otherType)
                 && !otherType.isSubType(thisType)) {
             return -2;
         }
@@ -435,7 +429,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
         }
         for (int i = 0; i < keywords.length; i++) {
             dict___setitem__(Py.newString(keywords[i]), args[nargs + i]);
-        }        
+        }
     }
 
     /**
@@ -539,7 +533,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
         }
     }
 
-    
+
     /**
      * Return a value based on key
      * from the dictionary.
@@ -578,18 +572,17 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
 
     @ExposedMethod(doc = BuiltinDocs.dict_popitem_doc)
     final PyObject dict_popitem() {
-        Iterator it = table.entrySet().iterator();
+        Iterator<Entry<PyObject, PyObject>> it = table.entrySet().iterator();
         if (!it.hasNext())
             throw Py.KeyError("popitem(): dictionary is empty");
-        Entry entry = (Entry)it.next();
-        PyTuple tuple = new PyTuple(
-                (PyObject)entry.getKey(), (PyObject)entry.getValue());
+        Entry<PyObject, PyObject> entry = it.next();
+        PyTuple tuple = new PyTuple(entry.getKey(), entry.getValue());
         it.remove();
         return tuple;
     }
 
     /**
-     * Return a copy of the dictionarys list of (key, value) tuple
+     * Return a copy of the dictionary's list of (key, value) tuple
      * pairs.
      */
     public PyList items() {
@@ -606,7 +599,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
     }
 
     /**
-     * Return a copy of the dictionarys list of keys.
+     * Return a copy of the dictionary's list of keys.
      */
     public PyList keys() {
         return dict_keys();
@@ -623,7 +616,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
     }
 
     /**
-     * Return an interator over (key, value) pairs.
+     * Returns an iterator over (key, value) pairs.
      */
     public PyObject iteritems() {
         return dict_iteritems();
@@ -635,7 +628,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
     }
 
     /**
-     * Return an interator over (key, value) pairs.
+     * Returns an iterator over the dictionary's keys.
      */
     public PyObject iterkeys() {
         return dict_iterkeys();
@@ -647,7 +640,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
     }
 
     /**
-     * Return an interator over (key, value) pairs.
+     * Returns an iterator over the dictionary's values.
      */
     public PyObject itervalues() {
         return dict_itervalues();
@@ -703,7 +696,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
             iterator = items.iterator();
             size = items.size();
         }
-        
+
         public PyObject __iternext__() {
             if (table.size() != size) {
                 throw Py.RuntimeError("dictionary changed size during iteration");
@@ -716,13 +709,12 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
         }
     }
 
-    /* The following methods implement the java.util.Map interface
-    which allows PyDictionary to be passed to java methods that take
-    java.util.Map as a parameter.  Basically, the Map methods are a
-    wrapper around the PyDictionary's Map container stored in member
-    variable 'table'. These methods simply convert java Object to
-    PyObjects on insertion, and PyObject to Objects on retrieval. */
-
+    /*
+     * The following methods implement the java.util.Map interface which allows PyDictionary to be
+     * passed to java methods that take java.util.Map as a parameter. Basically, the Map methods are
+     * a wrapper around the PyDictionary's Map container stored in member variable 'table'. These
+     * methods convert java Object to PyObjects on insertion, and PyObject to Objects on retrieval.
+     */
     /** @see java.util.Map#entrySet() */
     public Set entrySet() {
         return new PyMapEntrySet(table.entrySet());
@@ -733,17 +725,15 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
         return new PyMapKeyValSet(table.keySet());
     }
 
-    /** Return a copy of the dictionarys list of values. */
+    /** @see java.util.Map#values() */
     public Collection values() {
         return new PyMapKeyValSet(table.values());
     }
 
-  
     /** @see java.util.Map#putAll(Map map) */
     public void putAll(Map map) {
-        Iterator i = map.entrySet().iterator();
-        while (i.hasNext()) {
-            Entry entry = (Entry)i.next();
+        for (Object o : map.entrySet()) {
+            Entry entry = (Entry)o;
             table.put(Py.java2py(entry.getKey()), Py.java2py(entry.getValue()));
         }
     }
@@ -772,19 +762,19 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
     public boolean containsKey(Object key) {
         return table.containsKey(Py.java2py(key));
     }
-    
-    /** @see java.util.Map#isEmpty(Object key) */
+
+    /** @see java.util.Map#isEmpty() */
     public boolean isEmpty() {
         return table.isEmpty();
     }
-    
-    /** @see java.util.Map#size(Object key) */
+
+    /** @see java.util.Map#size() */
     public int size() {
         return table.size();
     }
 
     /** Convert return values to java objects */
-    static final Object tojava(Object val) {
+    final static Object tojava(Object val) {
         return val == null ? null : ((PyObject)val).__tojava__(Object.class);
     }
 
@@ -805,19 +795,20 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
     }
 
 }
+
 /** Basic implementation of Entry that just holds onto a key and value and returns them. */
-class SimpleEntry<K, V> implements Entry<K, V> {
-    
-    public SimpleEntry(K key, V value){
+class SimpleEntry implements Entry {
+
+    public SimpleEntry(Object key, Object value){
         this.key = key;
         this.value = value;
     }
-    
-    public K getKey() {
+
+    public Object getKey() {
         return key;
     }
 
-    public V getValue() {
+    public Object getValue() {
         return value;
     }
 
@@ -841,31 +832,29 @@ class SimpleEntry<K, V> implements Entry<K, V> {
         return key + "=" + value;
     }
 
-    public V setValue(V val) {
+    public Object setValue(Object val) {
         throw new UnsupportedOperationException("Not supported by this view");
     }
 
-    protected K key;
+    protected Object key;
 
-    protected V value;
+    protected Object value;
 }
 
 /**
- * Wrapper for a Entry object returned from the java.util.Set
- * object which in turn is returned by the entrySet method of
- * java.util.Map.  This is needed to correctly convert from PyObjects
- * to java Objects.  Note that we take care in the equals and hashCode
- * methods to make sure these methods are consistent with Entry
- * objects that contain java Objects for a value so that on the java
- * side they can be reliable compared.
+ * Wrapper for a Entry object returned from the java.util.Set object which in turn is returned by
+ * the entrySet method of java.util.Map. This is needed to correctly convert from PyObjects to java
+ * Objects. Note that we take care in the equals and hashCode methods to make sure these methods are
+ * consistent with Entry objects that contain java Objects for a value so that on the java side they
+ * can be reliable compared.
  */
 class PyToJavaMapEntry extends SimpleEntry {
 
-    /** Create a copy of the Entry with Py.None coverted to null */
+    /** Create a copy of the Entry with Py.None converted to null */
     PyToJavaMapEntry(Entry entry) {
         super(entry.getKey(), entry.getValue());
     }
-    
+
     public boolean equals(Object o) {
         if (o == null || !(o instanceof Entry)) return false;
         Entry me = new JavaToPyMapEntry((Entry)o);
@@ -877,7 +866,7 @@ class PyToJavaMapEntry extends SimpleEntry {
     public Object getKey() {
         return PyDictionary.tojava(key);
     }
-    
+
     public Object getValue() {
         return PyDictionary.tojava(value);
     }
@@ -892,24 +881,22 @@ class PyToJavaMapEntry extends SimpleEntry {
 }
 
 /**
- * MapEntry Object for java MapEntry objects passed to the java.util.Set
- * interface which is returned by the entrySet method of PyDictionary.
- * Essentially like PyTojavaMapEntry, but going the other way converting java
- * Objects to PyObjects.
+ * MapEntry Object for java MapEntry objects passed to the java.util.Set interface which is returned
+ * by the entrySet method of PyDictionary. Essentially like PyTojavaMapEntry, but going the other
+ * way converting java Objects to PyObjects.
  */
 class JavaToPyMapEntry extends SimpleEntry {
-    
+
     public JavaToPyMapEntry(Entry entry) {
         super(Py.java2py(entry.getKey()), Py.java2py(entry.getValue()));
     }
 }
 
 /**
- *  Wrapper collection class for the keySet and values methods of
- *  java.util.Map
+ * Wrapper collection class for the keySet and values methods of java.util.Map
  */
 class PyMapKeyValSet extends PyMapSet {
-    
+
     PyMapKeyValSet(Collection coll) {
         super(coll);
     }
@@ -917,21 +904,18 @@ class PyMapKeyValSet extends PyMapSet {
     Object toJava(Object o) {
         return PyDictionary.tojava(o);
     }
-    
+
     Object toPython(Object o) {
         return Py.java2py(o);
     }
 }
 
 /**
- * Set wrapper for the java.util.EntrySet method. Entry
- * objects are wrapped further in JavaToPyMapEntry and
- * PyToJavaMapEntry.  Note - The set interface is reliable for
- * standard objects like strings and integers, but may be inconstant
- * for other types of objects since the equals method may return false
- * for Entry object that hold more elaborate PyObject types.
- * However, We insure that this iterface works when the Entry
- * object originates from a Set object retrieved from a PyDictionary.
+ * Set wrapper for the entrySet method. Entry objects are wrapped further in JavaToPyMapEntry and
+ * PyToJavaMapEntry. Note - The set interface is reliable for standard objects like strings and
+ * integers, but may be inconsistent for other types of objects since the equals method may return
+ * false for Entry object that hold more elaborate PyObject types. However, we insure that this
+ * interface works when the Entry object originates from a Set object retrieved from a PyDictionary.
  */
 class PyMapEntrySet extends PyMapSet {
 
@@ -939,13 +923,13 @@ class PyMapEntrySet extends PyMapSet {
         super(coll);
     }
 
-    // We know that PyMapEntrySet will only contains Entrys, so
-    // if the object being passed in is null or not a Entry, then
-    // return null which will match nothing for remove and contains methods.
+    // We know that PyMapEntrySet will only contains entries, so if the object being passed in is
+    // null or not an Entry, then return null which will match nothing for remove and contains
+    // methods.
     Object toPython(Object o) {
         if(o == null || !(o instanceof Entry))
             return null;
-        if(o instanceof PyToJavaMapEntry) {
+        if (o instanceof PyToJavaMapEntry) {
             // Use the original entry from PyDictionary
             return ((PyToJavaMapEntry)o).getEntry();
         } else {
@@ -959,15 +943,12 @@ class PyMapEntrySet extends PyMapSet {
 }
 
 /**
- * PyMapSet serves as a wrapper around Set Objects returned by the
- * java.util.Map interface of PyDictionary. entrySet, values and
- * keySet methods return this type for the java.util.Map
- * implementation.  This class is necessary as a wrapper to convert
- * PyObjects to java Objects for methods that return values, and
- * convert Objects to PyObjects for methods that take values. The
- * translation is necessary to provide java access to jython
- * dictionary objects. This wrapper also provides the expected backing
- * functionality such that changes to the wrapper set or reflected in
+ * PyMapSet serves as a wrapper around Set Objects returned by the java.util.Map interface of
+ * PyDictionary. entrySet, values and keySet methods return this type for the java.util.Map
+ * implementation. This class is necessary as a wrapper to convert PyObjects to java Objects for
+ * methods that return values, and convert Objects to PyObjects for methods that take values. The
+ * translation is necessary to provide java access to jython dictionary objects. This wrapper also
+ * provides the expected backing functionality such that changes to the wrapper set or reflected in
  * PyDictionary.
  */
 abstract class PyMapSet extends AbstractSet {
@@ -983,15 +964,15 @@ abstract class PyMapSet extends AbstractSet {
     public int size() {
         return coll.size();
     }
-    
+
     public boolean contains(Object o) {
         return coll.contains(toPython(o));
     }
-    
+
      public boolean remove(Object o) {
          return coll.remove(toPython(o));
     }
-    
+
     public void clear() {
         coll.clear();
     }
@@ -1013,15 +994,15 @@ abstract class PyMapSet extends AbstractSet {
         public Object next() {
             return toJava(itr.next());
         }
-    
+
         public void remove() {
             itr.remove();
         }
     }
-    
+
     public Iterator iterator() {
         return new PySetIter(coll.iterator());
     }
-    
+
     private final Collection coll;
 }
