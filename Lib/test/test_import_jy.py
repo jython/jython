@@ -89,11 +89,9 @@ class MislabeledImportTestCase(unittest.TestCase):
         # Again ensure we didn't recompile
         self.assertEquals(bytecode, read(init_compiled),
                           'bytecode was recompiled')
+
     def test_corrupt_bytecode(self):
         f = open("empty$py.class", "w")
-        f.close()
-        self.assertRaises(ImportError, __import__, "empty")
-        f = open("empty.py", "w")
         f.close()
         self.assertRaises(ImportError, __import__, "empty")
 
