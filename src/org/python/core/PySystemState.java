@@ -55,14 +55,14 @@ public class PySystemState extends PyObject
      */
 
     public static final PyObject copyright = Py.newString(
-        "Copyright (c) 2000-2008, Jython Developers\n" +
+        "Copyright (c) 2000-2009 Jython Developers.\n" +
         "All rights reserved.\n\n" +
 
         "Copyright (c) 2000 BeOpen.com.\n" +
         "All Rights Reserved.\n\n"+
 
-        "Copyright (c) 2000 The Apache Software Foundation.  All rights\n" +
-        "reserved.\n\n" +
+        "Copyright (c) 2000 The Apache Software Foundation.\n" +
+        "All rights reserved.\n\n" +
 
         "Copyright (c) 1995-2000 Corporation for National Research "+
         "Initiatives.\n" +
@@ -70,7 +70,7 @@ public class PySystemState extends PyObject
 
         "Copyright (c) 1991-1995 Stichting Mathematisch Centrum, " +
         "Amsterdam.\n" +
-        "All Rights Reserved.\n\n");
+        "All Rights Reserved.");
 
     private static Map<String,String> builtinNames;
     public static PyTuple builtin_module_names = null;
