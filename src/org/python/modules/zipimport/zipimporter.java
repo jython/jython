@@ -315,7 +315,7 @@ public class zipimporter extends importer<PyObject> {
         String sourcePath = path.substring(0, path.length() - 9) + ".py";
         PyObject sourceTocEntry = files.__finditem__(sourcePath);
         if (sourceTocEntry == null) {
-            return false;
+            return true;// If there is no source, assume the bytecode is ok
         }
         try {
             long bytecodeTime = dosTimeToEpoch(tocEntry.__finditem__(5).asInt(0),
