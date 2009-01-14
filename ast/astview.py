@@ -10,7 +10,7 @@ be handy when comparing Jython's implementation vs CPython.
 
 """
 
-import ast
+import _ast
 import sys
 
 if sys.platform.startswith('java'):
@@ -49,7 +49,7 @@ def lispify_field(field, child):
         children = [child]
 
     for node in children:
-        if isinstance(node, ast.AST):
+        if isinstance(node, _ast.AST):
             yield lispify_ast(node)
         else:
             if isinstance(node, float):
@@ -64,7 +64,7 @@ def lispify_field(field, child):
 
 def tree(pyfile):
     try:
-        node = compile(open(pyfile).read(), pyfile, "exec", ast.PyCF_ONLY_AST)
+        node = compile(open(pyfile).read(), pyfile, "exec", _ast.PyCF_ONLY_AST)
     except SyntaxError:
         return "SyntaxError",
     return lispify_ast(node)
