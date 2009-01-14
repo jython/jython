@@ -624,7 +624,7 @@ print_stmt
       | RIGHTSHIFT t2=printlist2
      -> ^(PRINT<Print>[$PRINT, actions.castExpr($t2.elts.get(0)), actions.castExprs($t2.elts, 1), $t2.newline])
       |
-     -> ^(PRINT<Print>[$PRINT, null, new ArrayList<expr>(), false])
+     -> ^(PRINT<Print>[$PRINT, null, new ArrayList<expr>(), true])
       )
            ;
 
