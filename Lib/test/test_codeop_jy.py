@@ -102,6 +102,8 @@ class CompileTests(unittest.TestCase):
         # Failed for Jython 2.5a2.  See http://bugs.jython.org/issue1116.
         av("@a.b.c\ndef f():\n pass") 
 
+        av("def f():\n pass\n#foo")
+
     def test_incomplete(self):
         ai = self.assertIncomplete
 
