@@ -1412,9 +1412,9 @@ subscript returns [slice sltype]
 //sliceop: ':' [test]
 sliceop
     : COLON
-      (test[expr_contextType.Load]
-     -> test
-      )?
+     (test[expr_contextType.Load] -> test
+     |-> ^(COLON<Name>[$COLON, "None", expr_contextType.Load])
+     )
     ;
 
 //exprlist: expr (',' expr)* [',']
