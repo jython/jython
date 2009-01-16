@@ -269,8 +269,31 @@ public class PyJavaType extends PyType {
                     prop.field = ((PyReflectedField)prev).field;
                 }
             }
+
+            // If one of our superclasses  has something defined for this name, check if its a bean
+            // property, and if so, try to fill in any gaps in our property from there
+            PyObject superForName = lookup(prop.__name__);
+            if (superForName instanceof PyBeanProperty) {
+                PyBeanProperty superProp = ((PyBeanProperty)superForName);
+                // If it has a set method and we don't, take it regardless.  If the types don't line
+                // up, it'll be rejected below
+                if (prop.setMethod == null) {
+                    prop.setMethod = superProp.setMethod;
+                } else if (superProp.myType == prop.setMethod.getParameterTypes()[0]) {
+                    // Otherwise, we must not have a get method. Only take a get method if the type
+                    // on it agrees with the set method we already have. The bean on this type
+                    // overrides a conflicting one o the parent
+                    prop.getMethod = superProp.getMethod;
+                    prop.myType = superProp.myType;
+                }
+
+                if (prop.field == null) {
+                    // If the parent bean is hiding a static field, we need it as well.
+                    prop.field = superProp.field;
+                }
+            }
             // If the return types on the set and get methods for a property don't agree, the get
-            // get method takes precedence
+            // method takes precedence
             if (prop.getMethod != null && prop.setMethod != null
                     && prop.myType != prop.setMethod.getParameterTypes()[0]) {
                 prop.setMethod = null;

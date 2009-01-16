@@ -187,6 +187,15 @@ class CoercionTest(unittest.TestCase):
         self.assertEquals("OtherSubVisible[]", c.takeArray([OtherSubVisible()]))
         self.assertEquals("SubVisible[]", c.takeArray([SubVisible()]))
 
+    def test_iterable_coercion(self):
+        def simple_gen():
+            yield 1
+            yield 2
+            yield 3
+        self.assertEquals(6, Coercions.takeIterable(simple_gen()))
+        self.assertEquals(True, Coercions.takeBoolIterable(simple_gen()))
+
+
     def test_class_coercion(self):
         c = Coercions()
         from java.util import Hashtable, HashMap
