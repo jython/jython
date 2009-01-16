@@ -37,7 +37,7 @@ public class PyJavaType extends PyType {
 
     @Override
     public Class<?> getProxyType() {
-        return PyObject.class.isAssignableFrom(underlying_class) ? null : underlying_class;
+        return (Class<?>)javaProxy;
     }
 
     // Java types are ok with things being added and removed from their dicts as long as there isn't
@@ -57,34 +57,35 @@ public class PyJavaType extends PyType {
     }
 
     @Override
-    protected void init() {
-        name = underlying_class.getName();
+    protected void init(Class<?> forClass) {
+        name = forClass.getName();
         // Strip the java fully qualified class name from Py classes in core
         if (name.startsWith("org.python.core.Py")) {
             name = name.substring("org.python.core.Py".length()).toLowerCase();
         }
         dict = new PyStringMap();
-        Class<?> baseClass = underlying_class.getSuperclass();
-        if (PyObject.class.isAssignableFrom(underlying_class)) {
+        Class<?> baseClass = forClass.getSuperclass();
+        if (PyObject.class.isAssignableFrom(forClass)) {
             // Non-exposed subclasses of PyObject use a simple linear mro to PyObject that ignores
             // their interfaces
+            underlying_class = forClass;
             computeLinearMro(baseClass);
         } else {
-            javaProxy = underlying_class;
+            javaProxy = forClass;
             objtype = PyType.fromClass(Class.class);
             // Wrapped Java types fill in their mro first using their base class and then all of
             // their interfaces.
             if (baseClass == null) {
                 base = PyType.fromClass(PyObject.class);
-            } else if(underlying_class == Class.class) {
+            } else if (javaProxy == Class.class) {
                 base = PyType.fromClass(PyType.class);
             } else {
                 base = PyType.fromClass(baseClass);
             }
-            bases = new PyObject[1 + underlying_class.getInterfaces().length];
+            bases = new PyObject[1 + forClass.getInterfaces().length];
             bases[0] = base;
             for (int i = 1; i < bases.length; i++) {
-                bases[i] = PyType.fromClass(underlying_class.getInterfaces()[i - 1]);
+                bases[i] = PyType.fromClass(forClass.getInterfaces()[i - 1]);
             }
             Set<PyObject> seen = Generic.set();
             List<PyObject> mros = Generic.list();
@@ -101,9 +102,9 @@ public class PyJavaType extends PyType {
 
         // PyReflected* can't call or access anything from non-public classes that aren't in
         // org.python.core
-        if (!Modifier.isPublic(underlying_class.getModifiers()) &&
+        if (!Modifier.isPublic(forClass.getModifiers()) &&
                 !name.startsWith("org.python.core") && Options.respectJavaAccessibility) {
-            handleSuperMethodArgCollisions();
+            handleSuperMethodArgCollisions(forClass);
             return;
         }
 
@@ -113,9 +114,9 @@ public class PyJavaType extends PyType {
         Method[] methods;
         if (Options.respectJavaAccessibility) {
             // returns just the public methods
-            methods = underlying_class.getMethods();
+            methods = forClass.getMethods();
         } else {
-            methods = underlying_class.getDeclaredMethods();
+            methods = forClass.getDeclaredMethods();
             for (Method method : methods) {
                 method.setAccessible(true);
             }
@@ -205,9 +206,9 @@ public class PyJavaType extends PyType {
         Field[] fields;
         if (Options.respectJavaAccessibility) {
             // returns just the public fields
-            fields = underlying_class.getFields();
+            fields = forClass.getFields();
         } else {
-            fields = underlying_class.getDeclaredFields();
+            fields = forClass.getDeclaredFields();
             for (Field field : fields) {
                 field.setAccessible(true);
             }
@@ -281,11 +282,11 @@ public class PyJavaType extends PyType {
         Constructor<?>[] constructors;
         // No matter the security manager, trying to set the constructor on class to accessible
         // blows up
-        if (Options.respectJavaAccessibility || Class.class == underlying_class) {
+        if (Options.respectJavaAccessibility || Class.class == forClass) {
             // returns just the public constructors
-            constructors = underlying_class.getConstructors();
+            constructors = forClass.getConstructors();
         } else {
-            constructors = underlying_class.getDeclaredConstructors();
+            constructors = forClass.getDeclaredConstructors();
             for (Constructor<?> ctr : constructors) {
                 ctr.setAccessible(true);
             }
@@ -293,8 +294,8 @@ public class PyJavaType extends PyType {
         for (Constructor<?> ctr : constructors) {
             reflctr.addConstructor(ctr);
         }
-        if (PyObject.class.isAssignableFrom(underlying_class)) {
-            PyObject new_ = new PyNewWrapper(underlying_class, "__new__", -1, -1) {
+        if (PyObject.class.isAssignableFrom(forClass)) {
+            PyObject new_ = new PyNewWrapper(forClass, "__new__", -1, -1) {
 
                 public PyObject new_impl(boolean init,
                                          PyType subtype,
@@ -307,10 +308,10 @@ public class PyJavaType extends PyType {
         } else {
             dict.__setitem__("__init__", reflctr);
         }
-        for (Class<?> inner : underlying_class.getClasses()) {
+        for (Class<?> inner : forClass.getClasses()) {
             // Only add the class if there isn't something else with that name and it came from this
             // class
-            if (inner.getDeclaringClass() == underlying_class &&
+            if (inner.getDeclaringClass() == forClass &&
                     dict.__finditem__(inner.getSimpleName()) == null) {
                 // If this class is currently being loaded, any exposed types it contains won't have
                 // set their builder in PyType yet, so add them to BOOTSTRAP_TYPES so they're
@@ -323,16 +324,15 @@ public class PyJavaType extends PyType {
             }
         }
         for (Map.Entry<Class<?>, PyBuiltinMethod[]> entry : getCollectionProxies().entrySet()) {
-            if (entry.getKey() == underlying_class) {
+            if (entry.getKey() == forClass) {
                 for (PyBuiltinMethod meth : entry.getValue()) {
                     dict.__setitem__(meth.info.getName(), new PyMethodDescr(this, meth));
                 }
             }
         }
-        if (ClassDictInit.class.isAssignableFrom(underlying_class)
-                && underlying_class != ClassDictInit.class) {
+        if (ClassDictInit.class.isAssignableFrom(forClass) && forClass != ClassDictInit.class) {
             try {
-                Method m = underlying_class.getMethod("classDictInit", PyObject.class);
+                Method m = forClass.getMethod("classDictInit", PyObject.class);
                 m.invoke(null, dict);
                 // allow the class to override its name after it is loaded
                 PyObject nameSpecified = dict.__finditem__("__name__");
@@ -344,10 +344,10 @@ public class PyJavaType extends PyType {
             }
         }
         if (baseClass != Object.class) {
-            has_set = getDescrMethod(underlying_class, "__set__", OO) != null
-                    || getDescrMethod(underlying_class, "_doset", OO) != null;
-            has_delete = getDescrMethod(underlying_class, "__delete__", PyObject.class) != null
-                    || getDescrMethod(underlying_class, "_dodel", PyObject.class) != null;
+            has_set = getDescrMethod(forClass, "__set__", OO) != null
+                    || getDescrMethod(forClass, "_doset", OO) != null;
+            has_delete = getDescrMethod(forClass, "__delete__", PyObject.class) != null
+                    || getDescrMethod(forClass, "_dodel", PyObject.class) != null;
         } else {
             // Pass __eq__ and __repr__ through to subclasses of Object
             PyBuiltinCallable equals = new PyBuiltinMethodNarrow("__eq__", 1, 1) {
@@ -391,8 +391,8 @@ public class PyJavaType extends PyType {
      * drawback of failing when running in a security environment that didn't allow setting
      * accessibility, so this method replaced it.
      */
-    private void handleSuperMethodArgCollisions() {
-        for (Class iface : underlying_class.getInterfaces()) {
+    private void handleSuperMethodArgCollisions(Class<?> forClass) {
+        for (Class<?> iface : forClass.getInterfaces()) {
             for (Method meth : iface.getMethods()) {
                 if (!Modifier.isPublic(meth.getDeclaringClass().getModifiers())) {
                     // Ignore methods from non-public interfaces as they're similarly bugged

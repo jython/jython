@@ -45,7 +45,10 @@ public class PyType extends PyObject implements Serializable {
     /** __flags__, the type's options. */
     private long tp_flags;
 
-    /** The underlying java class or null. */
+    /**
+     * The Java Class instances of this type will be represented as, or null if it's determined by a
+     * base type.
+     */
     protected Class<?> underlying_class;
 
     /** Whether it's a builtin type. */
@@ -202,11 +205,11 @@ public class PyType extends PyObject implements Serializable {
         PyType newtype;
         if (new_.for_type == metatype || metatype == PyType.fromClass(Class.class)) {
             newtype = new PyType(); // XXX set metatype
-            if(proxyClass != null) {
-                newtype.underlying_class = proxyClass;
-            }
         } else {
             newtype = new PyTypeDerived(metatype);
+        }
+        if (proxyClass != null) {
+            newtype.javaProxy = proxyClass;
         }
         if (dict instanceof PyStringMap) {
             dict = ((PyStringMap)dict).copy();
@@ -340,10 +343,11 @@ public class PyType extends PyObject implements Serializable {
     }
 
     /**
-     * Called on builtin types after underlying_class has been set on them. Should fill in dict,
-     * name, mro, base and bases from the class.
+     * Called on builtin types for a particular class. Should fill in dict, name, mro, base and
+     * bases from the class.
      */
-    protected void init() {
+    protected void init(Class<?> forClass) {
+        underlying_class = forClass;
         if (underlying_class == PyObject.class) {
             mro = new PyType[] {this};
         } else {
@@ -950,7 +954,7 @@ public class PyType extends PyObject implements Serializable {
             }
             // The types in Py.BOOTSTRAP_TYPES are initialized before their builders are assigned,
             // so do the work of addFromClass & fillFromClass after the fact
-            fromClass(builder.getTypeClass()).init();
+            fromClass(builder.getTypeClass()).init(builder.getTypeClass());
         }
     }
 
@@ -985,9 +989,8 @@ public class PyType extends PyObject implements Serializable {
         }
 
         class_to_type.put(c, newtype);
-        newtype.underlying_class = c;
         newtype.builtin = true;
-        newtype.init();
+        newtype.init(c);
         return newtype;
     }
 

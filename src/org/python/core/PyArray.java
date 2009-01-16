@@ -96,7 +96,7 @@ public class PyArray extends PySequence implements Cloneable {
             typecode = obj.toString();
             type = char2class(typecode.charAt(0));
         } else if (obj instanceof PyJavaType) {
-            type = ((PyJavaType)obj).underlying_class;
+            type = ((PyJavaType)obj).getProxyType();
             typecode = type.getName();
         } else {
             throw Py.TypeError("array() argument 1 must be char, not " + obj.getType().fastGetName());
