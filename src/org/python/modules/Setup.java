@@ -41,7 +41,6 @@ public class Setup
         "_codecs",
         "imp",
         "ucnhash",
-        "_jython",
         "_new:org.python.modules._newmodule",
         "_weakref:org.python.modules._weakref.WeakrefModule",
         "errno",

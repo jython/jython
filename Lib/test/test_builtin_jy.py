@@ -162,7 +162,7 @@ class ModuleNameTest(unittest.TestCase):
 
     def test_names(self):
         for name in sys.builtin_module_names:
-            if name != '_jython' and name not in ('time', '_random', 'array', '_collections', '_ast'):
+            if name not in ('time', '_random', 'array', '_collections', '_ast'):
                 module = __import__(name)
                 self.assertEqual(name, module.__name__)
 
