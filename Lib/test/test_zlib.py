@@ -81,6 +81,8 @@ class ExceptionTestCase(unittest.TestCase):
         self.assertRaises(ValueError, zlib.decompressobj().flush, 0)
         self.assertRaises(ValueError, zlib.decompressobj().flush, -1)
 
+    def test_decompress_badinput(self):
+        self.assertRaises(zlib.error, zlib.decompress, 'foo')
 
 
 class CompressTestCase(unittest.TestCase):

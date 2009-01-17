@@ -15,7 +15,7 @@ objects support decompress() and flush().
 """
 import jarray, binascii
 
-from java.util.zip import Adler32, Deflater, Inflater
+from java.util.zip import Adler32, Deflater, Inflater, DataFormatException
 from java.lang import Long, String
 
 from cStringIO import StringIO
@@ -66,8 +66,8 @@ def compress(string, level=6):
 def decompress(string, wbits=0, bufsize=16384):
     inflater = Inflater(wbits < 0)
     inflater.setInput(string)
+
     return _get_inflate_data(inflater)
-    
 
 class compressobj:
     # all jython uses wbits for is deciding whether to skip the header if it's negative
@@ -152,22 +152,26 @@ def _get_deflate_data(deflater):
     s = StringIO()
     while not deflater.finished():
         l = deflater.deflate(buf)
+
         if l == 0:
             break
         s.write(String(buf, 0, 0, l))
     s.seek(0)
     return s.read()
 
-        
 def _get_inflate_data(inflater, max_length=0):
     buf = jarray.zeros(1024, 'b')
     s = StringIO()
     total = 0
     while not inflater.finished():
-        if max_length:
-            l = inflater.inflate(buf, 0, min(1024, max_length - total))
-        else:
-            l = inflater.inflate(buf)
+        try:
+            if max_length:
+                l = inflater.inflate(buf, 0, min(1024, max_length - total))
+            else:
+                l = inflater.inflate(buf)
+        except DataFormatException, e:
+            raise error(str(e))
+
         if l == 0:
             break
 
