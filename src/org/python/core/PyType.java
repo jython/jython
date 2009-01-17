@@ -1067,6 +1067,15 @@ public class PyType extends PyObject implements Serializable {
          type___setattr__(name, value);
     }
 
+    /**
+     * Adds the given method to this type's dict under its name in its descriptor. If there's an
+     * existing item in the dict, it's replaced.
+     */
+    public void addMethod(PyBuiltinMethod meth) {
+        PyMethodDescr pmd = meth.makeDescriptor(this);
+        dict.__setitem__(pmd.getName(), pmd);
+    }
+
     protected void checkSetattr() {
         if (builtin) {
             throw Py.TypeError(String.format("can't set attributes of built-in/extension type "

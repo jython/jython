@@ -1,3 +1,4 @@
+import operator
 import os
 import unittest
 import subprocess
@@ -17,7 +18,7 @@ from java.awt.event import ComponentEvent
 from javax.swing.tree import TreePath
 
 from org.python.core.util import FileUtil
-from org.python.tests import BeanImplementation, Listenable
+from org.python.tests import BeanImplementation, Child, Listenable, CustomizableMapHolder
 
 class InstantiationTest(unittest.TestCase):
     def test_cant_instantiate_abstract(self):
@@ -61,6 +62,15 @@ class BeanTest(unittest.TestCase):
             def __init__(bself):
                 self.assertEquals("name", bself.getName())
         SubBean()
+
+    def test_inheriting_half_bean(self):
+        c = Child()
+        self.assertEquals("blah", c.value)
+        c.value = "bleh"
+        self.assertEquals("bleh", c.value)
+        self.assertEquals(7, c.id)
+        c.id = 16
+        self.assertEquals(16, c.id)
 
 
 class SysIntegrationTest(unittest.TestCase):
@@ -338,6 +348,31 @@ class SecurityManagerTest(unittest.TestCase):
             "-J-Djava.security.manager", "-J-Djava.security.policy=%s" % policy, script]),
             0)
 
+class JavaWrapperCustomizationTest(unittest.TestCase):
+    def tearDown(self):
+        CustomizableMapHolder.clearAdditions()
+
+    def test_adding_item_access(self):
+        m = CustomizableMapHolder()
+        self.assertRaises(TypeError, operator.getitem, m, "initial")
+        CustomizableMapHolder.addGetitem()
+        self.assertEquals(m.held["initial"], m["initial"])
+        # dict would throw a KeyError here, but Map returns null for a missing key
+        self.assertEquals(None, m["nonexistent"])
+        self.assertRaises(TypeError, operator.setitem, m, "initial")
+        CustomizableMapHolder.addSetitem()
+        m["initial"] = 12
+        self.assertEquals(12, m["initial"])
+
+    def test_adding_attributes(self):
+        m = CustomizableMapHolder()
+        self.assertRaises(AttributeError, getattr, m, "initial")
+        CustomizableMapHolder.addGetattribute()
+        self.assertEquals(7, m.held["initial"], "Existing fields should still be accessible")
+        self.assertEquals(7, m.initial)
+        self.assertEquals(None, m.nonexistent, "Nonexistent fields should be passed on to the Map")
+
+
 def test_main():
     test_support.run_unittest(InstantiationTest, 
                               BeanTest, 
@@ -351,7 +386,8 @@ def test_main():
                               BigNumberTest,
                               JavaStringTest,
                               JavaDelegationTest,
-                              SecurityManagerTest)
+                              SecurityManagerTest,
+                              JavaWrapperCustomizationTest)
 
 if __name__ == "__main__":
     test_main()
