@@ -245,14 +245,14 @@ public class codecs {
         if (Py.isInstance(exc, Py.UnicodeDecodeError)) {
             PyObject object = exc.__getattr__("object");
             if (!Py.isInstance(object, PyString.TYPE) || Py.isInstance(object, PyUnicode.TYPE)) {
-                throw Py.TypeError("object attribute must be str");        
+                throw Py.TypeError("object attribute must be str");
             }
             PyObject end = exc.__getattr__("end");
             return new PyTuple(new PyUnicode(Py_UNICODE_REPLACEMENT_CHARACTER), end);
         } else if (Py.isInstance(exc, Py.UnicodeEncodeError)) {
             PyObject object = exc.__getattr__("object");
             if (!Py.isInstance(object, PyUnicode.TYPE)) {
-                throw Py.TypeError("object attribute must be unicode");        
+                throw Py.TypeError("object attribute must be unicode");
             }
             PyObject end = exc.__getattr__("end");
             return new PyTuple(Py.java2py("?"), end);
@@ -388,9 +388,9 @@ public class codecs {
                 XMLCHARREFREPLACE,
                 BACKSLASHREPLACE
             };
-            for (int i = 0; i < builtinErrorHandlers.length; i++) {
-                register_error(builtinErrorHandlers[i], Py.newJavaFunc(codecs.class,
-                        builtinErrorHandlers[i] + "_errors"));
+            for (String builtinErrorHandler : builtinErrorHandlers) {
+                register_error(builtinErrorHandler, Py.newJavaFunc(codecs.class,
+                        builtinErrorHandler + "_errors"));
             }
             import_encodings();
         }
@@ -414,9 +414,9 @@ public class codecs {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 1, 1
     ,
 
-            
+
            };
-    
+
     private static boolean SPECIAL(char c, boolean encodeO, boolean encodeWS){
     return (c>127 || utf7_special[(c)] == 1) ||
                 (encodeWS && (utf7_special[(c)] == 2)) ||
@@ -447,7 +447,6 @@ public class codecs {
         int bitsInCharsleft = 0;
         long charsleft = 0;
         boolean surrogate = false;
-        char highOrderSurrogate = 0;
         StringBuilder unicode = new StringBuilder(e);
         while (s < e) {
             // restart:
@@ -470,7 +469,6 @@ public class codecs {
                             surrogate = false;
                         } else if (0xDC00 <= outCh && outCh <= 0xDFFF) {
                             surrogate = true;
-                            highOrderSurrogate = outCh;
                         } else {
                             unicode.append(outCh);
                         }
@@ -537,7 +535,6 @@ public class codecs {
                                     "code pairs are not supported");
                         } else if (0xDC00 <= outCh && outCh <= 0xDFFF) {
                             surrogate = true;
-                            highOrderSurrogate = outCh;
                         } else {
                             unicode.append(outCh);
                         }
@@ -631,7 +628,7 @@ public class codecs {
                         bitsleft -= 6;
                     }
                     /* If the next character is special then we dont' need to terminate
-                    the shift sequence. If the next character is not a BASE64 character 
+                    the shift sequence. If the next character is not a BASE64 character
                     or '-' then the shift sequence will be terminated implicitly and we
                     don't have to insert a '-'. */
 
@@ -1280,7 +1277,7 @@ class StringSubsequenceIterator implements Iterator {
         this.start = start;
         this.stop = stop;
         this.step = step;
-      
+
         // this bounds checking is necessary to convert between use of code units elsewhere, and codepoints here
         // it would be nice if it were unnecessary!
         int count = getCodePointCount(s);
@@ -1290,7 +1287,7 @@ class StringSubsequenceIterator implements Iterator {
         else if (stop >= count) {
             this.stop = count;
         }
-        
+
         for (int i = 0; i < start; i++) {
             nextCodePoint();
         }
@@ -1303,7 +1300,7 @@ class StringSubsequenceIterator implements Iterator {
     private static int getCodePointCount(String s) {
         return s.codePointCount(0, s.length());
     }
-    
+
     public boolean hasNext() {
         return current < stop;
     }

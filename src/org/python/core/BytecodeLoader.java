@@ -8,7 +8,7 @@ import org.objectweb.asm.ClassReader;
 import org.python.util.Generic;
 
 /**
- * Utility class for loading of compiled python modules and java classes defined in python modules.
+ * Utility class for loading compiled python modules and java classes defined in python modules.
  */
 public class BytecodeLoader {
 

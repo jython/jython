@@ -193,8 +193,6 @@ class CoercionTest(unittest.TestCase):
             yield 2
             yield 3
         self.assertEquals(6, Coercions.takeIterable(simple_gen()))
-        self.assertEquals(True, Coercions.takeBoolIterable(simple_gen()))
-
 
     def test_class_coercion(self):
         c = Coercions()

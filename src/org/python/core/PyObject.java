@@ -7,8 +7,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
-
 import org.python.expose.ExposedDelete;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
@@ -765,36 +763,10 @@ public class PyObject implements Serializable {
      */
     public Iterable<PyObject> asIterable() {
         return new Iterable<PyObject>() {
-
             public Iterator<PyObject> iterator() {
-                return new Iterator<PyObject>() {
-
-                    private PyObject iter = __iter__();
-
-                    private PyObject next;
-
-                    private boolean checkedForNext;
-
-                    public boolean hasNext() {
-                        if (!checkedForNext) {
-                            next = iter.__iternext__();
-                            checkedForNext = true;
-                        }
-                        return next != null;
-                    }
-
+                return new WrappedIterIterator<PyObject>(__iter__()) {
                     public PyObject next() {
-                        if (!hasNext()) {
-                            throw new NoSuchElementException("End of the line, bub");
-                        }
-                        PyObject toReturn = next;
-                        checkedForNext = false;
-                        next = null;
-                        return toReturn;
-                    }
-
-                    public void remove() {
-                        throw new UnsupportedOperationException("Can't remove from a Python iterator");
+                        return getNext();
                     }
                 };
             }
@@ -1894,8 +1866,8 @@ public class PyObject implements Serializable {
         where1 = where[0];
         PyObject impl2 = t2.lookup_where(right, where);
         where2 = where[0];
-        if (impl2 != null && impl1 != null && where1 != where2 && 
-            (t2.isSubType(t1) && !Py.isSubClass(where1, where2) 
+        if (impl2 != null && impl1 != null && where1 != where2 &&
+            (t2.isSubType(t1) && !Py.isSubClass(where1, where2)
                               && !Py.isSubClass(t1, where2)     ||
              isStrUnicodeSpecialCase(t1, t2, op))) {
             PyObject tmp = o1;

@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.python.compiler.Module;
 import org.python.core.util.FileUtil;
 
 /**
@@ -189,9 +190,7 @@ public class imp {
         }
     }
 
-    public static byte[] compileSource(String name,
-                                InputStream fp,
-                                String filename) {
+    public static byte[] compileSource(String name, InputStream fp, String filename) {
         ByteArrayOutputStream ofp = new ByteArrayOutputStream();
         try {
             if(filename == null) {
@@ -203,13 +202,7 @@ public class imp {
             } finally {
                 fp.close();
             }
-            org.python.compiler.Module.compile(node,
-                                               ofp,
-                                               name + "$py",
-                                               filename,
-                                               true,
-                                               false,
-                                               null);
+            Module.compile(node, ofp, name + "$py", filename, true, false, null);
             return ofp.toByteArray();
         } catch(Throwable t) {
             throw ParserFacade.fixParseError(null, t, filename);

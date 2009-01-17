@@ -3,13 +3,13 @@ package org.python.core;
 
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 import org.python.expose.MethodType;
+import org.python.util.Generic;
 
 /**
  * A builtin python list.
@@ -51,7 +51,7 @@ public class PyList extends PySequenceList {
     }
 
     private static List<PyObject> listify(Iterator<PyObject> iter) {
-         final List<PyObject> list = new LinkedList<PyObject>();
+         List<PyObject> list = Generic.list();
          while (iter.hasNext()) {
             list.add(iter.next());
          }

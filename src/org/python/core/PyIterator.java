@@ -1,6 +1,8 @@
 // Copyright 2000 Finn Bock
 package org.python.core;
 
+import java.util.Iterator;
+
 /**
  * An abstract helper class useful when implementing an iterator object. This implementation supply
  * a correct __iter__() and a next() method based on the __iternext__() implementation. The
@@ -9,7 +11,7 @@ package org.python.core;
  * If the implementation raises a StopIteration exception, it should be stored in stopException so
  * the correct exception can be thrown to preserve the line numbers in the traceback.
  */
-public abstract class PyIterator extends PyObject {
+public abstract class PyIterator extends PyObject implements Iterable<Object> {
 
     protected PyException stopException;
 
@@ -50,5 +52,14 @@ public abstract class PyIterator extends PyObject {
             throw Py.StopIteration("");
         }
         return ret;
+    }
+
+    public Iterator<Object> iterator() {
+        return new WrappedIterIterator<Object>(this) {
+            @Override
+            public Object next() {
+                return getNext().__tojava__(Object.class);
+            }
+        };
     }
 }

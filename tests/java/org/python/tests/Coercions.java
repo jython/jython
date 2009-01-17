@@ -83,4 +83,21 @@ public class Coercions {
     public static String take(byte bt) {
         return "take with byte arg: " + bt;
     }
+
+    public static int takeIterable(Iterable<Integer> it) {
+        int sum = 0;
+        for (Integer integer : it) {
+            sum += integer;
+        }
+        return sum;
+    }
+
+    public static boolean takeBoolIterable(Iterable<Boolean> it) {
+        for (Boolean integer : it) {
+            if (!integer) {
+                return false;
+            }
+        }
+        return true;
+    }
 }
