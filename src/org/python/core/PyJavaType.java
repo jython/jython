@@ -23,6 +23,16 @@ public class PyJavaType extends PyType {
 
     private final static Class<?>[] OO = {PyObject.class, PyObject.class};
 
+    /** Deprecated methods in java.awt.* that have bean property equivalents we prefer. */
+    private final static Set<String> BAD_AWT_METHODS = Generic.set("layout",
+                                                                   "insets",
+                                                                   "size",
+                                                                   "minimumSize",
+                                                                   "preferredSize",
+                                                                   "maximumSize",
+                                                                   "bounds",
+                                                                   "enable");
+
     private static Map<Class<?>, PyBuiltinMethod[]> collectionProxies;
 
     public static PyObject wrapJavaObject(Object o) {
@@ -121,11 +131,22 @@ public class PyJavaType extends PyType {
                 method.setAccessible(true);
             }
         }
+
+        boolean isInAwt = name.startsWith("java.awt.") && name.indexOf('.', 9) == -1;
         for (Method meth : methods) {
             if (!declaredOnMember(baseClass, meth) || ignore(meth)) {
                 continue;
             }
+
             String methname = meth.getName();
+
+            // Special case a few troublesome methods in java.awt.*. These methods are all
+            // deprecated and interfere too badly with bean properties to be tolerated. This is
+            // totally a hack but a lot of code that uses java.awt will break without it.
+            if (isInAwt && BAD_AWT_METHODS.contains(methname)) {
+                continue;
+            }
+
             String nmethname = normalize(methname);
             PyReflectedFunction reflfunc = (PyReflectedFunction)dict.__finditem__(nmethname);
             if (reflfunc == null) {

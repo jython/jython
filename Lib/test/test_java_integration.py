@@ -72,6 +72,12 @@ class BeanTest(unittest.TestCase):
         c.id = 16
         self.assertEquals(16, c.id)
 
+    def test_awt_hack(self):
+        # We ignore several deprecated methods in java.awt.* in favor of bean properties that were
+        # addded in Java 1.1.  This tests that one of those bean properties is visible.
+        c = Container()
+        c.size = 400, 300
+        self.assertEquals(Dimension(400, 300), c.size)
 
 class SysIntegrationTest(unittest.TestCase):
     def setUp(self):

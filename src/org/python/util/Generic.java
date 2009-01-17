@@ -45,4 +45,16 @@ public class Generic {
     public static <T> Set<T> set() {
         return new HashSet<T>();
     }
+
+    /**
+     * Makes a Set using the generic type inferred from whatever this is being assigned to filled
+     * with the items in <code>contents</code>.
+     */
+    public static <T, U extends T> Set<T> set(U...contents) {
+        Set<T> s = new HashSet<T>(contents.length);
+        for (U u : contents) {
+            s.add(u);
+        }
+        return s;
+    }
 }

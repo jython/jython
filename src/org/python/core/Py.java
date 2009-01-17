@@ -84,13 +84,10 @@ public final class Py {
     public static long TPFLAGS_BASETYPE = 1L << 10;
 
     /** Builtin types that are used to setup PyObject. */
-    static final Set<Class<?>> BOOTSTRAP_TYPES = Generic.set();
-    static {
-        BOOTSTRAP_TYPES.add(PyObject.class);
-        BOOTSTRAP_TYPES.add(PyType.class);
-        BOOTSTRAP_TYPES.add(PyBuiltinCallable.class);
-        BOOTSTRAP_TYPES.add(PyDataDescr.class);
-    }
+    static final Set<Class<?>> BOOTSTRAP_TYPES = Generic.set(PyObject.class,
+                                                             PyType.class,
+                                                             PyBuiltinCallable.class,
+                                                             PyDataDescr.class);
 
     /** A unique object to indicate no conversion is possible
     in __tojava__ methods **/
