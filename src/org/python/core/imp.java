@@ -133,6 +133,14 @@ public class imp {
         return data;
     }
 
+    public static byte[] compileSource(String name, File file) {
+        return compileSource(name, file, null);
+    }
+
+    public static byte[] compileSource(String name, File file, String sourceFilename) {
+        return compileSource(name, file, sourceFilename, null);
+    }
+
     public static byte[] compileSource(String name, File file, String sourceFilename,
             String compiledFilename) {
         if (sourceFilename == null) {
@@ -209,8 +217,7 @@ public class imp {
         }
     }
 
-    public static PyObject createFromSource(String name, InputStream fp,
-            String filename) {
+    public static PyObject createFromSource(String name, InputStream fp, String filename) {
         return createFromSource(name, fp, filename, null);
     }
 

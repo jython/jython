@@ -435,12 +435,12 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
             c.invokevirtual("org/python/core/PyFrame", "getname_or_null", "(" + $str + ")" + $pyObj);
             c.dup();
             c.ifnonnull(label_got_name);
-   
+
             c.pop();
             c.aload(1);
             c.ldc("__name__");
             c.invokevirtual("org/python/core/PyFrame", "getname_or_null", "(" + $str + ")" + $pyObj);
-            
+
             c.label(label_got_name);
             c.astore(module_tmp);
             c.aload(1);
@@ -448,7 +448,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
             c.aload(module_tmp);
             c.invokevirtual("org/python/core/PyFrame", "setlocal", "(" + $str + $pyObj + ")V");
         }
-        
+
         Label genswitch = new Label();
         if (scope.generator) {
             c.goto_(genswitch);
@@ -476,13 +476,13 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
         compiler.parse(tree, c, fast_locals, className, classBody,
                        scope, cflags);
 
-        
+
         // similar to visitResume code in pyasm.py
         if (scope.generator) {
             c.label(genswitch);
-            
+
             c.aload(1);
-            c.getfield("org/python/core/PyFrame", "f_lasti", "I"); 
+            c.getfield("org/python/core/PyFrame", "f_lasti", "I");
             Label[] yields = new Label[compiler.yields.size()+1];
 
             yields[0] = start;
@@ -637,7 +637,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
     public static void compile(mod node, OutputStream ostream,
                                String name, String filename,
                                boolean linenumbers, boolean printResults,
-                               org.python.core.CompilerFlags cflags)
+                               CompilerFlags cflags)
         throws Exception
     {
         Module module = new Module(name, filename, linenumbers);

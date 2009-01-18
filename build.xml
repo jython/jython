@@ -101,9 +101,9 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         </echo>
     </target>
 
-    <target name="jarless" depends="compile, copy-lib"/>
+    <target name="jarless" depends="compile, pycompile"/>
 
-    <target name="developer-build" depends="prepare-output, jar, copy-lib" description="a local build for developers" />
+    <target name="developer-build" depends="prepare-output, pycompile" description="a local build for developers" />
 
     <target name="full-build" depends="full-check, install" description="a full build with svn checkout" />
 
@@ -364,7 +364,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
 
     <!-- skip-brand can be set in ant.properties or as a system property to keep from updating the
          version.properties file and making the jar on every developer build. -->
-    <target name="brand-version" depends="version-init, svnversion" unless="skip-brand">
+    <target name="brand-version" depends="init, svnversion" unless="skip-brand">
         <condition property="build.svn.revision" value="">
             <not>
                 <isset property="build.svn.revision"/>
@@ -522,8 +522,10 @@ The readme text for the next release will be like:
             <rule pattern="org.jruby.ext.posix.**" result="org.python.posix.@1"/>
             <zipfileset src="extlibs/constantine-0.4.jar"/>
             <rule pattern="com.kenai.constantine.**" result="org.python.constantine.@1"/>
-            <zipfileset src="extlibs/xercesImpl-2.9.1.jar"/>
-            <rule pattern="org.apache.**" result="org.python.apache.@1"/>
+            <rule pattern="org.apache.xml.**" result="org.python.apache.xml.@1"/>
+            <rule pattern="org.apache.xerces.**" result="org.python.apache.xerces.@1"/>
+            <rule pattern="org.apache.wml.**" result="org.python.apache.wml.@1"/>
+            <rule pattern="org.apache.html.**" result="org.python.apache.html.@1"/>
             <manifest>
                 <attribute name="Main-Class" value="org.python.util.jython" />
                 <attribute name="Built-By" value="${user.name}" />
@@ -635,6 +637,15 @@ The readme text for the next release will be like:
               <exclude name="**/jpywork/**" />
             </fileset>
         </copy>
+    </target>
+
+    <target name="pycompile" depends="jar,copy-lib">
+        <taskdef name="jycompile" classname="org.python.util.JycompileAntTask">
+            <classpath path="${dist.dir}/Lib"/>
+            <classpath path="${dist.dir}/${jython.dev.jar}" />
+            <classpath refid="main.classpath" />
+        </taskdef>
+        <jycompile srcdir="${dist.dir}/Lib" destdir="${dist.dir}/Lib" excludes="test/**"/>
     </target>
 
     <target name="copy-lib" depends="init, copy-javalib, copy-cpythonlib">

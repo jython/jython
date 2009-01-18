@@ -495,23 +495,23 @@ public class PySystemState extends PyObject
                     jarIndex = lowerCaseClasspath.indexOf(JYTHON_DEV_JAR);
                 }
                 if (jarIndex >= 0) {
-                    int start = classpath.lastIndexOf(java.io.File.pathSeparator, jarIndex) + 1;
+                    int start = classpath.lastIndexOf(File.pathSeparator, jarIndex) + 1;
                     root = classpath.substring(start, jarIndex);
                 } else {
                     // in case JYTHON_JAR is referenced from a MANIFEST inside another jar on the classpath
-                    root = jarFileName;
+                    root = new File(jarFileName).getParent();
                 }
             }
         }
-        if (root != null) {
-            File rootFile = new File(root);
-            try {
-                root = rootFile.getCanonicalPath();
-            } catch (IOException ioe) {
-                root = rootFile.getAbsolutePath();
-            }
+        if (root == null) {
+            return null;
         }
-        return root;
+        File rootFile = new File(root);
+        try {
+            return rootFile.getCanonicalPath();
+        } catch (IOException ioe) {
+            return rootFile.getAbsolutePath();
+        }
     }
 
     public static void determinePlatform(Properties props) {
@@ -554,8 +554,7 @@ public class PySystemState extends PyObject
             }
             try {
                 addRegistryFile(new File(prefix, "registry"));
-                File homeFile = new File(registry.getProperty("user.home"),
-                                         ".jython");
+                File homeFile = new File(registry.getProperty("user.home"), ".jython");
                 addRegistryFile(homeFile);
             } catch (Exception exc) {
             }
@@ -615,21 +614,23 @@ public class PySystemState extends PyObject
     }
 
     public static synchronized void initialize() {
-        initialize(null, null, new String[] {""});
+        initialize(null, null);
+    }
+
+    public static synchronized void initialize(Properties preProperties, Properties postProperties) {
+        initialize(preProperties, postProperties, new String[] {""});
     }
 
     public static synchronized void initialize(Properties preProperties,
                                                Properties postProperties,
-                                               String[] argv)
-    {
+                                               String[] argv) {
         initialize(preProperties, postProperties, argv, null);
     }
 
     public static synchronized void initialize(Properties preProperties,
                                                Properties postProperties,
                                                String[] argv,
-                                               ClassLoader classLoader)
-    {
+                                               ClassLoader classLoader) {
         initialize(preProperties, postProperties, argv, classLoader, new ClassicPyObjectAdapter());
     }
 

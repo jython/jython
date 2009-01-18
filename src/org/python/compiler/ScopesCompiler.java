@@ -19,11 +19,11 @@ import org.python.antlr.ast.Name;
 import org.python.antlr.ast.Return;
 import org.python.antlr.ast.With;
 import org.python.antlr.ast.Yield;
-import org.python.antlr.ast.comprehension;
 import org.python.antlr.ast.arguments;
 import org.python.antlr.ast.expr_contextType;
 import org.python.antlr.base.expr;
 import org.python.antlr.base.stmt;
+import org.python.core.ParserFacade;
 
 import java.util.ArrayList;
 import java.util.Hashtable;
@@ -85,8 +85,7 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
         try {
             visit(node);
         } catch (Throwable t) {
-            throw org.python.core.ParserFacade.fixParseError(null, t,
-                    code_compiler.getFilename());
+            throw ParserFacade.fixParseError(null, t, code_compiler.getFilename());
         }
     }
 
@@ -138,10 +137,10 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
         beginScope(node.getInternalName(), FUNCSCOPE, node, ac);
         int n = ac.names.size();
         for (int i = 0; i < n; i++) {
-            cur.addParam((String) ac.names.get(i));
+            cur.addParam(ac.names.get(i));
         }
         for (int i = 0; i < ac.init_code.size(); i++) {
-            visit((stmt) ac.init_code.get(i));
+            visit(ac.init_code.get(i));
         }
         cur.markFromParam();
         suite(node.getInternalBody());
@@ -291,7 +290,7 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
         traverse(node);
         return null;
     }
-    
+
     @Override
     public Object visitReturn(Return node) throws Exception {
         if (node.getInternalValue() != null) {

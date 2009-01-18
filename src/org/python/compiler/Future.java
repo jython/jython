@@ -26,8 +26,7 @@ public class Future {
             return false;
         int n = cand.getInternalNames().size();
         if (n == 0) {
-            throw new ParseException(
-                    "future statement does not support import *",cand);
+            throw new ParseException("future statement does not support import *", cand);
         }
         for (int i = 0; i < n; i++) {
             String feature = cand.getInternalNames().get(i).getInternalName();
@@ -56,8 +55,7 @@ public class Future {
             if (feature.equals("GIL") || feature.equals("global_interpreter_lock")) {
                 throw new ParseException("Never going to happen!", cand);
             }
-            throw new ParseException("future feature "+feature+
-                                     " is not defined",cand);
+            throw new ParseException("future feature " + feature + " is not defined", cand);
         }
         return true;
     }
@@ -90,7 +88,7 @@ public class Future {
             if (!(s instanceof ImportFrom))
                 break;
             s.from_future_checked = true;
-            if (!check((ImportFrom) s))
+            if (!check((ImportFrom)s))
                 break;
         }
 
@@ -119,7 +117,7 @@ public class Future {
     public boolean areDivisionOn() {
         return division;
     }
-    
+
     public boolean withStatementSupported() {
         return with_statement;
     }
