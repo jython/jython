@@ -889,7 +889,7 @@ public class PySystemState extends PyObject
         if (url != null) {
             try {
                 String urlString = URLDecoder.decode(url.toString());
-                int jarSeparatorIndex = urlString.indexOf(JAR_SEPARATOR);
+                int jarSeparatorIndex = urlString.lastIndexOf(JAR_SEPARATOR);
                 if (urlString.startsWith(JAR_URL_PREFIX) && jarSeparatorIndex > 0) {
                     jarFileName = urlString.substring(JAR_URL_PREFIX.length(), jarSeparatorIndex);
                 }
