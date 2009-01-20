@@ -30,8 +30,8 @@ __all__.extend(['EX_OK', 'F_OK', 'O_APPEND', 'O_CREAT', 'O_EXCL', 'O_RDONLY',
                 'O_RDWR', 'O_SYNC', 'O_TRUNC', 'O_WRONLY', 'R_OK', 'SEEK_CUR',
                 'SEEK_END', 'SEEK_SET', 'W_OK', 'X_OK', '_exit', 'access',
                 'altsep', 'chdir', 'chmod', 'close', 'curdir', 'defpath',
-                'environ', 'error', 'fdopen', 'getcwd', 'getegid', 'getenv',
-                'geteuid', 'getgid', 'getlogin', 'getlogin', 'getpgrp',
+                'environ', 'error', 'fdopen', 'getcwd', 'getcwdu', 'getegid',
+                'getenv','geteuid', 'getgid', 'getlogin', 'getlogin', 'getpgrp',
                 'getpid', 'getppid', 'getuid', 'isatty', 'linesep', 'listdir',
                 'lseek', 'lstat', 'makedirs', 'mkdir', 'name', 'open', 'pardir',
                 'path', 'pathsep', 'popen', 'popen2', 'popen3', 'popen4',
@@ -118,7 +118,7 @@ class PythonPOSIXHandler(POSIXHandler):
     def isVerbose(self):
         return False
     def getCurrentWorkingDirectory(self):
-        return File(getcwd())
+        return File(getcwdu())
     def getEnv(self):
         return ['%s=%s' % (key, val) for key, val in environ.iteritems()]
     def getInputStream(self):
