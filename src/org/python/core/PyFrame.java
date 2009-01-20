@@ -8,7 +8,7 @@ public class PyFrame extends PyObject
 {
     public PyFrame f_back;
 
-    public PyTableCode f_code;
+    public PyBaseCode f_code;
 
     public PyObject f_locals;
 
@@ -58,7 +58,7 @@ public class PyFrame extends PyObject
     private static final String[] __members__ = {"f_back", "f_code", "f_locals", "f_globals",
                                                  "f_lineno", "f_builtins", "f_trace"};
 
-    public PyFrame(PyTableCode code, PyObject locals, PyObject globals,
+    public PyFrame(PyBaseCode code, PyObject locals, PyObject globals,
                    PyObject builtins)
     {
         f_code = code;
@@ -68,7 +68,7 @@ public class PyFrame extends PyObject
         // This needs work to be efficient with multiple interpreter states
         if (locals == null && code != null) {
             // ! f_fastlocals needed for arg passing too
-            if ((code.co_flags & PyTableCode.CO_OPTIMIZED) != 0 || code.nargs > 0) {
+            if ((code.co_flags & PyBaseCode.CO_OPTIMIZED) != 0 || code.nargs > 0) {
                 if (code.co_nlocals > 0) {
                     // internal: may change
                     f_fastlocals = new PyObject[code.co_nlocals - code.jy_npurecell];
@@ -91,7 +91,7 @@ public class PyFrame extends PyObject
         }
     }
 
-    public PyFrame(PyTableCode code, PyObject globals) {
+    public PyFrame(PyBaseCode code, PyObject globals) {
         this(code, null, globals, null);
     }
 
@@ -197,7 +197,7 @@ public class PyFrame extends PyObject
                     PyObject o = f_fastlocals[i];
                     if (o != null) f_locals.__setitem__(f_code.co_varnames[i], o);
                 }
-                if ((f_code.co_flags & PyTableCode.CO_OPTIMIZED) == 0) {
+                if ((f_code.co_flags & PyBaseCode.CO_OPTIMIZED) == 0) {
                     f_fastlocals = null;
                 }
             }
