@@ -251,6 +251,13 @@ def getcwd():
     """
     return asPyString(sys.getCurrentWorkingDir())
 
+def getcwdu():
+    """getcwd() -> path
+    
+    Return a unicode string representing the current working directory.
+    """
+    return sys.getCurrentWorkingDir()
+
 def chdir(path):
     """chdir(path)
 
