@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 public class PyBytecode extends PyBaseCode {
 
@@ -20,7 +19,7 @@ public class PyBytecode extends PyBaseCode {
         return opname;
     }
     // end debugging
-
+    public final static int CO_MAXBLOCKS = 20; // same as in CPython
     public final char[] co_code; // to avoid sign issues
     public final PyObject[] co_consts;
     public final String[] co_names;
@@ -82,6 +81,7 @@ public class PyBytecode extends PyBaseCode {
         }
         return new PyList(members);
     }
+
 
     private void throwReadonly(String name) {
         for (int i = 0; i < __members__.length; i++) {
@@ -161,6 +161,23 @@ public class PyBytecode extends PyBaseCode {
         throw new UnsupportedOperationException("Not yet implemented");
     }
 
+    private static String stringify_blocks(PyFrame f) {
+        if (f.f_exits == null) return "[]";
+        StringBuilder buf = new StringBuilder();
+        for (int i = 0; i < f.f_blockstate[0]; i++) {
+            buf.append(f.f_exits[i].toString());
+        }
+        return buf.toString();
+    }
+
+    private static void print_debug(int next_instr, int opcode, int oparg, PyStack stack, PyFrame f) {
+        System.err.println(count + "," + f.f_lasti + "> opcode: " +
+                getOpname().__getitem__(Py.newInteger(opcode)) +
+                (opcode > Opcode.HAVE_ARGUMENT ? ", oparg: " + oparg : "") +
+                ", stack: " + stack.toString() +
+                           ", blocks: " + stringify_blocks(f));
+    }
+
     @Override
     protected PyObject interpret(PyFrame f) {
         final PyStack stack = new PyStack();
@@ -172,15 +189,15 @@ public class PyBytecode extends PyBaseCode {
 
         while (count < maxCount) { // XXX - replace with while(true)
 
-            f.f_lasti = next_instr++; // should have no worries about needing co_lnotab, just keep this current
+            next_instr += 1;
+            f.f_lasti = next_instr; // should have no worries about needing co_lnotab, just keep this current
             opcode = co_code[next_instr];
             if (opcode > Opcode.HAVE_ARGUMENT) {
                 next_instr += 2;
                 oparg = (co_code[next_instr] << 8) + co_code[next_instr - 1];
-                System.err.println(count + "," + next_instr + "> opcode: " + getOpname().__getitem__(Py.newInteger(opcode)) + ", oparg: " + oparg + ", stack: " + stack.toString());
-            } else {
-                System.err.println(count + "," + next_instr + "> opcode: " + getOpname().__getitem__(Py.newInteger(opcode)) + ", stack: " + stack.toString());
             }
+            print_debug(next_instr, opcode, oparg, stack, f);
+
             count += 1;
 
             try {
@@ -252,14 +269,14 @@ public class PyBytecode extends PyBaseCode {
                     case Opcode.BINARY_POWER: {
                         PyObject b = stack.pop();
                         PyObject a = stack.pop();
-                        stack.push(a.__pow__(b));
+                        stack.push(a._pow(b));
                         break;
                     }
 
                     case Opcode.BINARY_MULTIPLY: {
                         PyObject b = stack.pop();
                         PyObject a = stack.pop();
-                        stack.push(a.__mul__(b));
+                        stack.push(a._mul(b));
                         break;
                     }
 
@@ -268,9 +285,9 @@ public class PyBytecode extends PyBaseCode {
                         PyObject a = stack.pop();
 
                         if ((co_flags & CO_FUTUREDIVISION) == 0) {
-                            stack.push(a.__div__(b));
+                            stack.push(a._div(b));
                         } else {
-                            stack.push(a.__truediv__(b));
+                            stack.push(a._truediv(b));
                         }
                         break;
                     }
@@ -278,35 +295,35 @@ public class PyBytecode extends PyBaseCode {
                     case Opcode.BINARY_TRUE_DIVIDE: {
                         PyObject b = stack.pop();
                         PyObject a = stack.pop();
-                        stack.push(a.__truediv__(b));
+                        stack.push(a._truediv(b));
                         break;
                     }
 
                     case Opcode.BINARY_FLOOR_DIVIDE: {
                         PyObject b = stack.pop();
                         PyObject a = stack.pop();
-                        stack.push(a.__floordiv__(b));
+                        stack.push(a._floordiv(b));
                         break;
                     }
 
                     case Opcode.BINARY_MODULO: {
                         PyObject b = stack.pop();
                         PyObject a = stack.pop();
-                        stack.push(a.__mod__(b));
+                        stack.push(a._mod(b));
                         break;
                     }
 
                     case Opcode.BINARY_ADD: {
                         PyObject b = stack.pop();
                         PyObject a = stack.pop();
-                        stack.push(a.__add__(b));
+                        stack.push(a._add(b));
                         break;
                     }
 
                     case Opcode.BINARY_SUBTRACT: {
                         PyObject b = stack.pop();
                         PyObject a = stack.pop();
-                        stack.push(a.__sub__(b));
+                        stack.push(a._sub(b));
                         break;
                     }
 
@@ -320,21 +337,21 @@ public class PyBytecode extends PyBaseCode {
                     case Opcode.BINARY_LSHIFT: {
                         PyObject b = stack.pop();
                         PyObject a = stack.pop();
-                        stack.push(a.__lshift__(b));
+                        stack.push(a._lshift(b));
                         break;
                     }
 
                     case Opcode.BINARY_RSHIFT: {
                         PyObject b = stack.pop();
                         PyObject a = stack.pop();
-                        stack.push(a.__rshift__(b));
+                        stack.push(a._rshift(b));
                         break;
                     }
 
                     case Opcode.BINARY_AND: {
                         PyObject b = stack.pop();
                         PyObject a = stack.pop();
-                        stack.push(a.__and__(b));
+                        stack.push(a._and(b));
                         break;
                     }
 
@@ -342,14 +359,14 @@ public class PyBytecode extends PyBaseCode {
                     case Opcode.BINARY_XOR: {
                         PyObject b = stack.pop();
                         PyObject a = stack.pop();
-                        stack.push(a.__xor__(b));
+                        stack.push(a._xor(b));
                         break;
                     }
 
                     case Opcode.BINARY_OR: {
                         PyObject b = stack.pop();
                         PyObject a = stack.pop();
-                        stack.push(a.__or__(b));
+                        stack.push(a._or(b));
                         break;
                     }
 
@@ -370,7 +387,7 @@ public class PyBytecode extends PyBaseCode {
                     case Opcode.INPLACE_MULTIPLY: {
                         PyObject b = stack.pop();
                         PyObject a = stack.pop();
-                        stack.push(a.__imul__(b));
+                        stack.push(a._imul(b));
                         break;
                     }
 
@@ -378,9 +395,9 @@ public class PyBytecode extends PyBaseCode {
                         PyObject b = stack.pop();
                         PyObject a = stack.pop();
                         if ((co_flags & CO_FUTUREDIVISION) == 0) {
-                            stack.push(a.__idiv__(b));
+                            stack.push(a._idiv(b));
                         } else {
-                            stack.push(a.__itruediv__(b));
+                            stack.push(a._itruediv(b));
                         }
                         break;
                     }
@@ -388,70 +405,70 @@ public class PyBytecode extends PyBaseCode {
                     case Opcode.INPLACE_TRUE_DIVIDE: {
                         PyObject b = stack.pop();
                         PyObject a = stack.pop();
-                        stack.push(a.__itruediv__(b));
+                        stack.push(a._itruediv(b));
                         break;
                     }
 
                     case Opcode.INPLACE_FLOOR_DIVIDE: {
                         PyObject b = stack.pop();
                         PyObject a = stack.pop();
-                        stack.push(a.__ifloordiv__(b));
+                        stack.push(a._ifloordiv(b));
                         break;
                     }
 
                     case Opcode.INPLACE_MODULO: {
                         PyObject b = stack.pop();
                         PyObject a = stack.pop();
-                        stack.push(a.__imod__(b));
+                        stack.push(a._imod(b));
                         break;
                     }
 
                     case Opcode.INPLACE_ADD: {
                         PyObject b = stack.pop();
                         PyObject a = stack.pop();
-                        stack.push(a.__iadd__(b));
+                        stack.push(a._iadd(b));
                         break;
                     }
 
                     case Opcode.INPLACE_SUBTRACT: {
                         PyObject b = stack.pop();
                         PyObject a = stack.pop();
-                        stack.push(a.__isub__(b));
+                        stack.push(a._isub(b));
                         break;
                     }
 
                     case Opcode.INPLACE_LSHIFT: {
                         PyObject b = stack.pop();
                         PyObject a = stack.pop();
-                        stack.push(a.__ilshift__(b));
+                        stack.push(a._ilshift(b));
                         break;
                     }
 
                     case Opcode.INPLACE_RSHIFT: {
                         PyObject b = stack.pop();
                         PyObject a = stack.pop();
-                        stack.push(a.__irshift__(b));
+                        stack.push(a._irshift(b));
                         break;
                     }
 
                     case Opcode.INPLACE_AND: {
                         PyObject b = stack.pop();
                         PyObject a = stack.pop();
-                        stack.push(a.__iand__(b));
+                        stack.push(a._iand(b));
                         break;
                     }
 
                     case Opcode.INPLACE_XOR: {
                         PyObject b = stack.pop();
                         PyObject a = stack.pop();
-                        stack.push(a.__ixor__(b));
+                        stack.push(a._ixor(b));
                         break;
                     }
 
                     case Opcode.INPLACE_OR: {
                         PyObject b = stack.pop();
                         PyObject a = stack.pop();
-                        stack.push(a.__ior__(b));
+                        stack.push(a._ior(b));
                         break;
                     }
 
@@ -597,6 +614,16 @@ public class PyBytecode extends PyBaseCode {
 
                     case Opcode.YIELD_VALUE:
                         retval = stack.pop();
+                        // need to implement something like this when we reenter after a yield
+//                        code.invokevirtual("org/python/core/PyFrame", "getGeneratorInput", "()" + $obj);
+//                        code.dup();
+//                        code.instanceof_("org/python/core/PyException");
+//                        Label done2 = new Label();
+//                        code.ifeq(done2);
+//                        code.checkcast("java/lang/Throwable");
+//                        code.athrow();
+//                        code.label(done2);
+//                        code.checkcast("org/python/core/PyObject");
                         why = Why.YIELD;
                         break;
 
@@ -617,15 +644,14 @@ public class PyBytecode extends PyBaseCode {
                         break;
                     }
 
-//		case POP_BLOCK:
-//			{
-//				PyTryBlock *b = PyFrame_BlockPop(f);
-//				while (STACK_LEVEL() > b->b_level) {
-//					v = POP();
-//					Py_DECREF(v);
-//				}
-//			}
-//			continue;
+                    case Opcode.POP_BLOCK:
+                         {
+                            PyTryBlock b = (PyTryBlock) (f.f_exits[--f.f_blockstate[0]]);
+                            while (stack.size() > b.b_level) {
+                                stack.pop();
+                            }
+                        }
+                        break;
 //
 //		case END_FINALLY:
 //			v = POP();
@@ -839,7 +865,7 @@ public class PyBytecode extends PyBaseCode {
                         break;
 
                     case Opcode.JUMP_ABSOLUTE:
-                        next_instr = oparg;
+                        next_instr = oparg - 1; // XXX - continue to a label is probably much better
                         break;
 
                     case Opcode.GET_ITER: {
@@ -855,7 +881,9 @@ public class PyBytecode extends PyBaseCode {
                         try {
                             PyObject x = it.__iternext__();
                             if (x != null) {
+                                stack.push(it);
                                 stack.push(x);
+                                break;
                             }
                         } catch (PyException pye) {
                             if (!Py.matchException(pye, Py.StopIteration)) {
@@ -876,16 +904,17 @@ public class PyBytecode extends PyBaseCode {
                             why = Why.CONTINUE;
                         }
                         break;
-//
-//		case SETUP_LOOP:
-//		case SETUP_EXCEPT:
-//		case SETUP_FINALLY:
-//			/* NOTE: If you add any new block-setup opcodes that are not try/except/finally
-//			   handlers, you may need to update the PyGen_NeedsFinalizing() function. */
-//
-//			PyFrame_BlockSetup(f, opcode, INSTR_OFFSET() + oparg,
-//					   STACK_LEVEL());
-//			continue;
+
+                    case Opcode.SETUP_LOOP:
+                    case Opcode.SETUP_EXCEPT:
+                    case Opcode.SETUP_FINALLY: {
+                        if (f.f_exits == null) { // allocate in the frame where they can fit! consider supporting directly in the frame
+                            f.f_exits = new PyObject[CO_MAXBLOCKS]; // f_blockstack in CPython - a simple ArrayList might be best
+                            f.f_blockstate = new int[]{0};        // f_iblock in CPython
+                        }
+                        f.f_exits[f.f_blockstate[0]++] = new PyTryBlock(opcode, next_instr + oparg, stack.size());
+                        break;
+                    }
 //
 //		case WITH_CLEANUP:
 //		{
@@ -1069,7 +1098,7 @@ public class PyBytecode extends PyBaseCode {
 
     // XXX - perhaps add support for max stack size (presumably from co_stacksize)
     // and capacity hints
-    class PyStack {
+    private class PyStack {
 
         final List<PyObject> stack;
 
@@ -1119,9 +1148,35 @@ public class PyBytecode extends PyBaseCode {
             Collections.rotate(lastN, n);
         }
 
+        int size() {
+            return stack.size();
+        }
+
         @Override
         public String toString() {
             return stack.toString();
+        }
+    }
+
+    private class PyTryBlock extends PyObject { // purely to sit on top of the existing PyFrame in f_exits!!!
+
+        int b_type;			/* what kind of block this is */
+
+        int b_handler;		/* where to jump to find handler */
+
+        int b_level;		/* value stack level to pop to */
+
+
+        PyTryBlock(int type, int handler, int level) {
+            b_type = type;
+            b_handler = handler;
+            b_level = level;
+        }
+
+        @Override
+        public String toString() {
+            return "[" + getOpname().__getitem__(Py.newInteger(b_type)) + "," +
+                    b_handler + "," + b_level + "]";
         }
     }
 }
