@@ -21,7 +21,7 @@ public class Options {
      * trace in addition to the Python traceback.  This can slow raising
      * considerably.
      */
-    public static boolean includeJavaStackInExceptions = false;
+    public static boolean includeJavaStackInExceptions = true;
 
     /**
      * When true, python exception raised in overridden methods will be shown on
@@ -63,7 +63,7 @@ public class Options {
      * A directory where the dynamically generated classes are written. Nothing is
      * ever read from here, it is only for debugging purposes.
      */
-    public static String proxyDebugDirectory = null;
+    public static String proxyDebugDirectory;
 
     /**
      * If true, Jython will use the first module found on sys.path where java

@@ -46,13 +46,12 @@ public class JavaMaker extends ProxyMaker implements ClassConstants {
             super.addProxy();
 
         // _initProxy method
-       Code code = classfile.addMethod("__initProxy__",
-                        "([Ljava/lang/Object;)V", Modifier.PUBLIC);
+        Code code = classfile.addMethod("__initProxy__", "([Ljava/lang/Object;)V", Modifier.PUBLIC);
 
         code.visitVarInsn(ALOAD, 0);
         code.visitLdcInsn(pythonModule);
         code.visitLdcInsn(pythonClass);
-        
+
         code.visitVarInsn(ALOAD, 1);
         code.visitMethodInsn(INVOKESTATIC, "org/python/core/Py", "initProxy", "(" + $pyProxy + $str + $str + $objArr + ")V");
         code.visitInsn(RETURN);

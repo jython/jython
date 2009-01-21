@@ -7,6 +7,7 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.List;
+import java.util.Properties;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -131,8 +132,7 @@ public class jython
         }
 
         // Setup the basic python system state from these options
-        PySystemState.initialize(PySystemState.getBaseProperties(),
-                                 opts.properties, opts.argv);
+        PySystemState.initialize(PySystemState.getBaseProperties(), opts.properties, opts.argv);
 
         // Now create an interpreter
         InteractiveConsole interp = newInterpreter();
@@ -339,7 +339,7 @@ class CommandLineOptions
     public boolean fixInteractive;
     public boolean help, version;
     public String[] argv;
-    public java.util.Properties properties;
+    public Properties properties;
     public String command;
     public List<String> warnoptions = Generic.list();
     public String encoding;
@@ -351,7 +351,7 @@ class CommandLineOptions
         jar = fixInteractive = false;
         interactive = notice = true;
         runModule = false;
-        properties = new java.util.Properties();
+        properties = new Properties();
         help = version = false;
     }
 
