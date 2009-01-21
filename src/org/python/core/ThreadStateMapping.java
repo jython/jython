@@ -9,10 +9,13 @@ class ThreadStateMapping {
             return ts;
         }
 
-        Thread t = Thread.currentThread();
 
+        Thread t = Thread.currentThread();
         if (newSystemState == null) {
             Py.writeDebug("threadstate", "no current system state");
+            if (Py.defaultSystemState == null) {
+                PySystemState.initialize();
+            }
             newSystemState = Py.defaultSystemState;
         }
 
