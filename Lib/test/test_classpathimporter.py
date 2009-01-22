@@ -37,6 +37,17 @@ class ClasspathImporterTestCase(unittest.TestCase):
         sys.path = ['__pyclasspath__/Lib']
         self.setClassLoaderAndCheck("classimport_Lib.jar", "__pyclasspath__/Lib")
 
+    # I don't like the checked in jar file bug1239.jar.  The *one* thing I
+    # liked about the tests in bugtests/ is that you could create a java file,
+    # compile it, jar it and destroy the jar when done.  Maybe when we move to
+    # JDK 6 and can use JSR-199 to do runtime compiling, we can go back to
+    # that.  Anyway, see http://bugs.jython.org/issue1239. In short, jars added
+    # with sys.path.append where not getting scanned if they start with a top
+    # level package we already have, like the "org" in org.python.*
+    def test_bug1239(self):
+        sys.path.append("Lib/test/bug1239.jar")
+        import org.test403javapackage.test403
+
 def test_main():
     test_support.run_unittest(ClasspathImporterTestCase)
 
