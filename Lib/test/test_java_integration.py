@@ -7,9 +7,10 @@ import re
  
 from test import test_support
 
-from java.lang import (ExceptionInInitializerError, String, Runnable, System, Runtime, Math, Byte)
+from java.lang import (ClassCastException, ExceptionInInitializerError, String, Runnable, System,
+        Runtime, Math, Byte)
 from java.math import BigDecimal, BigInteger
-from java.io import (FileInputStream, FileNotFoundException, FileOutputStream, FileWriter,
+from java.io import (File, FileInputStream, FileNotFoundException, FileOutputStream, FileWriter,
     OutputStreamWriter, UnsupportedEncodingException)
 from java.util import ArrayList, Date, HashMap, Hashtable, StringTokenizer, Vector
 
@@ -350,6 +351,39 @@ class JavaDelegationTest(unittest.TestCase):
         for i in v:
             pass
 
+    def test_comparable_delegation(self):
+        first_file = File("a")
+        first_date = Date(100)
+        for a, b, c in [(first_file, File("b"), File("c")), (first_date, Date(1000), Date())]:
+            self.assertTrue(a.compareTo(b) < 0)
+            self.assertEquals(-1, cmp(a, b))
+            self.assertTrue(a.compareTo(c) < 0)
+            self.assertEquals(-1, cmp(a, c))
+            self.assertEquals(0, a.compareTo(a))
+            self.assertEquals(0, cmp(a, a))
+            self.assertTrue(b.compareTo(a) > 0)
+            self.assertEquals(1, cmp(b, a))
+            self.assertTrue(c.compareTo(b) > 0)
+            self.assertEquals(1, cmp(c, b))
+            self.assertTrue(a < b)
+            self.assertTrue(a <= a)
+            self.assertTrue(b > a)
+            self.assertTrue(c >= a)
+            self.assertTrue(a != b)
+            l = [b, c, a]
+            self.assertEquals(a, min(l))
+            self.assertEquals(c, max(l))
+            l.sort()
+            self.assertEquals([a, b, c], l)
+        # Check that we fall back to the default comparison(class name) instead of using compareTo
+        # on non-Comparable types
+        self.assertRaises(ClassCastException, first_file.compareTo, first_date)
+        self.assertEquals(-1, cmp(first_file, first_date))
+        self.assertTrue(first_file < first_date)
+        self.assertTrue(first_file <= first_date)
+        self.assertTrue(first_date > first_file)
+        self.assertTrue(first_date >= first_file)
+       
 class SecurityManagerTest(unittest.TestCase):
     def test_nonexistent_import_with_security(self):
         policy = test_support.findfile("python_home.policy")

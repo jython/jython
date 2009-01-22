@@ -402,6 +402,14 @@ public class PyJavaType extends PyType {
                     return proxy.equals(oAsJava) ? Py.True : Py.False;
                 }
             });
+            addMethod(new PyBuiltinMethodNarrow("__ne__", 1) {
+                @Override
+                public PyObject __call__(PyObject o) {
+                    Object proxy = self.getJavaProxy();
+                    Object oAsJava = o.__tojava__(proxy.getClass());
+                    return !proxy.equals(oAsJava) ? Py.True : Py.False;
+                }
+            });
             addMethod(new PyBuiltinMethodNarrow("__hash__") {
                 @Override
                 public PyObject __call__() {
@@ -412,6 +420,32 @@ public class PyJavaType extends PyType {
                 @Override
                 public PyObject __call__() {
                     return Py.newString(self.getJavaProxy().toString());
+                }
+            });
+        }
+        if(forClass == Comparable.class) {
+            addMethod(new ComparableMethod("__lt__", 1) {
+                @Override
+                protected boolean getResult(int comparison) {
+                    return comparison < 0;
+                }
+            });
+            addMethod(new ComparableMethod("__le__", 1) {
+                @Override
+                protected boolean getResult(int comparison) {
+                    return comparison <= 0;
+                }
+            });
+            addMethod(new ComparableMethod("__gt__", 1) {
+                @Override
+                protected boolean getResult(int comparison) {
+                    return comparison > 0;
+                }
+            });
+            addMethod(new ComparableMethod("__ge__", 1) {
+                @Override
+                protected boolean getResult(int comparison) {
+                    return comparison >= 0;
                 }
             });
         }
@@ -557,6 +591,25 @@ public class PyJavaType extends PyType {
         protected Map<Object, Object> asMap(){
             return (Map<Object, Object>)self.getJavaProxy();
         }
+    }
+
+    private static abstract class ComparableMethod extends PyBuiltinMethodNarrow {
+        protected ComparableMethod(String name, int numArgs) {
+            super(name, numArgs);
+        }
+        @Override
+        public PyObject __call__(PyObject arg) {
+            Object asjava = arg.__tojava__(Object.class);
+            int compare;
+            try {
+                compare = ((Comparable<Object>)self.getJavaProxy()).compareTo(asjava);
+            } catch(ClassCastException classCast) {
+                return Py.NotImplemented;
+            }
+            return getResult(compare) ? Py.True : Py.False;
+        }
+
+        protected abstract boolean getResult(int comparison);
     }
 
     private static Map<Class<?>, PyBuiltinMethod[]> getCollectionProxies() {
