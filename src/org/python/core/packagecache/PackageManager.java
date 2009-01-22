@@ -107,7 +107,7 @@ public abstract class PackageManager extends Object {
         for (PyObject pyname : cls.keys().asIterable()) {
             if (!dict.has_key(pyname)) {
                 String name = pyname.toString();
-                jpkg.addClass(name, Py.findClass(name));
+                jpkg.addClass(name, Py.findClass(jpkg.__name__ + "." + name));
             }
         }
 

@@ -164,7 +164,7 @@ public abstract class PathPackageManager extends CachedJarsPackageManager {
                     if (pkgCand) {
                         jpkg.addPackage(jname);
                     } else {
-                        jpkg.addClass(jname, Py.findClass(jname));
+                        jpkg.addClass(jname, Py.findClass(jpkg.__name__ + "." + jname));
                     }
                 }
 
