@@ -83,9 +83,9 @@ def get_os_type():
     """
     os_name = sys.registry.getProperty('python.os')
     if os_name:
-        return str(os_name)
+        return asPyString(os_name)
 
-    os_name = str(java.lang.System.getProperty('os.name'))
+    os_name = asPyString(java.lang.System.getProperty('os.name'))
     os_type = None
     for type, (patterns, shell_commands) in _os_map.iteritems():
         for pattern in patterns:

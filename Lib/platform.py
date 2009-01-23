@@ -624,8 +624,9 @@ def mac_ver(release='',versioninfo=('','',''),machine=''):
 def _java_getprop(name,default):
 
     from java.lang import System
+    from org.python.core.Py import newString
     try:
-        return System.getProperty(name)
+        return newString(System.getProperty(name))
     except:
         return default
 
