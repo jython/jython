@@ -82,7 +82,6 @@ public class PyBytecode extends PyBaseCode {
         return new PyList(members);
     }
 
-
     private void throwReadonly(String name) {
         for (int i = 0; i < __members__.length; i++) {
             if (__members__[i] == name) {
@@ -145,24 +144,48 @@ public class PyBytecode extends PyBaseCode {
 
     };
 
-    private Why do_raise() {
-        throw new UnsupportedOperationException("Not yet implemented");
+    // to enable why's to be stored on a PyStack
+    private class PyStackWhy extends PyObject {
+
+        Why why;
+
+        PyStackWhy(Why why) {
+            this.why = why;
+        }
+
+        @Override
+        public String toString() {
+            return why.toString();
+        }
     }
 
-    private Why do_raise(PyObject type) {
-        throw new UnsupportedOperationException("Not yet implemented");
+    private class PyStackException extends PyObject {
+
+        PyException exception;
+
+        PyStackException(PyException exception) {
+            this.exception = exception;
+        }
+
+        @Override
+        public String toString() {
+            return exception.toString();
+        }
     }
 
-    private Why do_raise(PyObject type, PyObject value) {
-        throw new UnsupportedOperationException("Not yet implemented");
-    }
-
-    private Why do_raise(PyObject type, PyObject value, PyObject traceback) {
-        throw new UnsupportedOperationException("Not yet implemented");
+    private static Why do_raise(ThreadState ts, PyObject type, PyObject value, PyTraceback traceback) {
+        PyException pye = type == null ? ts.exception : new PyException(type, value, traceback);
+        if (traceback == null) {
+            return Why.EXCEPTION;
+        } else {
+            return Why.RERAISE;
+        }
     }
 
     private static String stringify_blocks(PyFrame f) {
-        if (f.f_exits == null) return "[]";
+        if (f.f_exits == null || f.f_blockstate[0] == 0) {
+            return "[]";
+        }
         StringBuilder buf = new StringBuilder();
         for (int i = 0; i < f.f_blockstate[0]; i++) {
             buf.append(f.f_exits[i].toString());
@@ -175,7 +198,27 @@ public class PyBytecode extends PyBaseCode {
                 getOpname().__getitem__(Py.newInteger(opcode)) +
                 (opcode > Opcode.HAVE_ARGUMENT ? ", oparg: " + oparg : "") +
                 ", stack: " + stack.toString() +
-                           ", blocks: " + stringify_blocks(f));
+                ", blocks: " + stringify_blocks(f));
+    }
+
+    private static PyTryBlock popBlock(PyFrame f) {
+        return (PyTryBlock) (f.f_exits[--f.f_blockstate[0]]);
+    }
+
+    private static void pushBlock(PyFrame f, PyTryBlock block) {
+        if (f.f_exits == null) { // allocate in the frame where they can fit! consider supporting directly in the frame
+            f.f_exits = new PyObject[CO_MAXBLOCKS]; // f_blockstack in CPython - a simple ArrayList might be best
+            f.f_blockstate = new int[]{0};        // f_iblock in CPython - f_blockstate is likely go away soon
+        }
+        f.f_exits[f.f_blockstate[0]++] = block;
+    }
+
+    private boolean blocksLeft(PyFrame f) {
+        if (f.f_exits != null) {
+            return f.f_blockstate[0] > 0;
+        } else {
+            return false;
+        }
     }
 
     @Override
@@ -186,10 +229,19 @@ public class PyBytecode extends PyBaseCode {
         int oparg = 0; /* Current opcode argument, if any */
         Why why = Why.NOT;
         PyObject retval = null;
+        ThreadState ts = Py.getThreadState(); // XXX - change interpret to pass through from PyFrame
+
+        // need to support something like this, but perhaps we can get this from the frame itself?
+//        if (throwflag) { /* support for generator.throw() */
+//	    	why = WHY_EXCEPTION;
+//		    goto on_error;
+//	    }
 
         while (count < maxCount) { // XXX - replace with while(true)
 
             next_instr += 1;
+            // this may work: detach setting anything in the frame to improve performance, instead do this
+            // in a shadow version of the frame that we copy back to
             f.f_lasti = next_instr; // should have no worries about needing co_lnotab, just keep this current
             opcode = co_code[next_instr];
             if (opcode > Opcode.HAVE_ARGUMENT) {
@@ -237,7 +289,7 @@ public class PyBytecode extends PyBaseCode {
                         stack.dup();
                         break;
 
-                    case Opcode.DUP_TOPX:
+                    case Opcode.DUP_TOPX: {
                         if (oparg == 2 || oparg == 3) {
                             stack.dupN(oparg);
                         } else {
@@ -245,6 +297,7 @@ public class PyBytecode extends PyBaseCode {
                                     " (bytecode corruption?)");
                         }
                         break;
+                    }
 
                     case Opcode.UNARY_POSITIVE:
                         stack.push(stack.pop().__pos__());
@@ -578,25 +631,25 @@ public class PyBytecode extends PyBaseCode {
 
                         switch (oparg) {
                             case 3: {
-                                PyObject tb = stack.pop();
+                                PyTraceback tb = (PyTraceback) (stack.pop());
                                 PyObject value = stack.pop();
                                 PyObject type = stack.pop();
-                                why = do_raise(type, value, tb);
+                                why = do_raise(ts, type, value, tb);
                                 break;
                             }
                             case 2: {
                                 PyObject value = stack.pop();
                                 PyObject type = stack.pop();
-                                why = do_raise(type, value);
+                                why = do_raise(ts, type, value, null);
                                 break;
                             }
                             case 1: {
                                 PyObject type = stack.pop();
-                                why = do_raise(type);
+                                why = do_raise(ts, type, null, null);
                                 break;
                             }
                             case 0:
-                                why = do_raise();
+                                why = do_raise(ts, null, null, null);
                                 break;
                             default:
                                 throw Py.SystemError("bad RAISE_VARARGS oparg");
@@ -644,39 +697,31 @@ public class PyBytecode extends PyBaseCode {
                         break;
                     }
 
-                    case Opcode.POP_BLOCK:
-                         {
-                            PyTryBlock b = (PyTryBlock) (f.f_exits[--f.f_blockstate[0]]);
-                            while (stack.size() > b.b_level) {
-                                stack.pop();
-                            }
+                    case Opcode.POP_BLOCK: {
+                        PyTryBlock b = popBlock(f);
+                        while (stack.size() > b.b_level) {
+                            stack.pop();
                         }
                         break;
-//
-//		case END_FINALLY:
-//			v = POP();
-//			if (PyInt_Check(v)) {
-//				why = (enum why_code) PyInt_AS_LONG(v);
-//				assert(why != WHY_YIELD);
-//				if (why == WHY_RETURN ||
-//				    why == WHY_CONTINUE)
-//					retval = POP();
-//			}
-//			else if (PyExceptionClass_Check(v) || PyString_Check(v)) {
-//				w = POP();
-//				u = POP();
-//				PyErr_Restore(v, w, u);
-//				why = WHY_RERAISE;
-//				break;
-//			}
-//			else if (v != Py_None) {
-//				PyErr_SetString(PyExc_SystemError,
-//					"'finally' pops bad exception");
-//				why = WHY_EXCEPTION;
-//			}
-//			Py_DECREF(v);
-//			break;
-//
+                    }
+
+                    case Opcode.END_FINALLY: {
+                        PyObject v = stack.pop();
+                        if (v instanceof PyStackWhy) {
+                            why = ((PyStackWhy) v).why;
+                            assert (why != Why.YIELD);
+                            if (why == Why.RETURN || why == Why.CONTINUE) {
+                                retval = stack.pop();
+                            }
+                        } else if ((v instanceof PyStackException) || (v instanceof PyString)) {
+                            ts.exception = ((PyStackException) v).exception;
+                            why = Why.RERAISE;
+                        } else if (v != Py.None) {
+                            throw Py.SystemError("'finally' pops bad exception");
+                        }
+                        break;
+                    }
+
                     case Opcode.BUILD_CLASS: {
                         PyObject methods = stack.pop();
                         PyObject bases[] = (new PyTuple(stack.pop())).getArray();
@@ -804,7 +849,12 @@ public class PyBytecode extends PyBaseCode {
                                 stack.push(a._isnot(b));
                                 break;
                             case Opcode.PyCmp_EXC_MATCH:
-                                stack.push(Py.newBoolean(Py.matchException(new PyException(a), b)));
+                                if (a instanceof PyStackException) {
+                                    PyException pye = ((PyStackException) a).exception;
+                                    stack.push(Py.newBoolean(Py.matchException(pye, b)));
+                                } else {
+                                    stack.push(Py.newBoolean(Py.matchException(new PyException(a), b)));
+                                }
                                 break;
 
                         }
@@ -907,14 +957,9 @@ public class PyBytecode extends PyBaseCode {
 
                     case Opcode.SETUP_LOOP:
                     case Opcode.SETUP_EXCEPT:
-                    case Opcode.SETUP_FINALLY: {
-                        if (f.f_exits == null) { // allocate in the frame where they can fit! consider supporting directly in the frame
-                            f.f_exits = new PyObject[CO_MAXBLOCKS]; // f_blockstack in CPython - a simple ArrayList might be best
-                            f.f_blockstate = new int[]{0};        // f_iblock in CPython
-                        }
-                        f.f_exits[f.f_blockstate[0]++] = new PyTryBlock(opcode, next_instr + oparg, stack.size());
+                    case Opcode.SETUP_FINALLY:
+                        pushBlock(f, new PyTryBlock(opcode, next_instr + oparg, stack.size()));
                         break;
-                    }
 //
 //		case WITH_CLEANUP:
 //		{
@@ -1078,22 +1123,67 @@ public class PyBytecode extends PyBaseCode {
                 } // end switch
             } // end try
             catch (Throwable t) {
-                // wrap so we can consume with our try block handling
                 PyException pye = Py.JavaError(t);
-                // XXX - but since that hasn't been written, for now just rethrow in wrapped form
-                throw pye;
+                why = Why.EXCEPTION;
+                ts.exception = pye;
             }
 
+            // do some trace handling here
+            if (why == Why.RERAISE) {
+                why = Why.EXCEPTION;
+            }
 
-            // process why, blocks
-            switch (why) {
-                case RETURN:
-                    return retval;
-                default:
+            while (why != Why.NOT && blocksLeft(f)) {
+                PyTryBlock b = popBlock(f);
+                assert (why != Why.YIELD);
+                if (b.b_type == Opcode.SETUP_LOOP && why == Why.CONTINUE) {
+                    pushBlock(f, b);
+                    why = Why.NOT;
+                    next_instr = retval.asInt();
                     break;
+                }
+                while (stack.size() > b.b_level) {
+                    stack.pop();
+                }
+                if (b.b_type == Opcode.SETUP_LOOP && why == Why.BREAK) {
+                    why = Why.NOT;
+                    next_instr = b.b_handler;
+                    break;
+                }
+                if (b.b_type == Opcode.SETUP_FINALLY || (b.b_type == Opcode.SETUP_EXCEPT && why == Why.EXCEPTION)) {
+                    if (why == Why.EXCEPTION) {
+                        PyException exc = ts.exception;
+                        if (b.b_type == Opcode.SETUP_EXCEPT) {
+                            exc.normalize();
+                        }
+                        stack.push(Py.None); // XXX - x3 to conform with CPython which
+                        stack.push(Py.None); // stores the type, val, tb separately on the stack
+                        stack.push(new PyStackException(exc));
+                    } else {
+                        if (why == Why.RETURN || why == Why.CONTINUE) {
+                            stack.push(retval);
+                        }
+                        stack.push(Py.newString(why.name())); // XXX - hack!
+                    }
+                    why = Why.NOT;
+                    next_instr = b.b_handler;
+                    break;
+                }
+            } // unwindstack
+
+            if (why != Why.NOT) {
+                break;
             }
-        } // end while
-        return Py.None; // should never get here, just for debugging
+        }
+        assert (why != Why.YIELD);
+        while (stack.size() > 0) {
+            stack.pop();
+        }
+        if (why != Why.RETURN) {
+            retval = Py.None;
+        }
+
+        return retval;
     }
 
     // XXX - perhaps add support for max stack size (presumably from co_stacksize)
