@@ -88,6 +88,12 @@ class TupleTest(seq_tests.CommonTest):
         self.assertEqual(repr(a0), "()")
         self.assertEqual(repr(a2), "(0, 1, 2)")
 
+    def test_setitem(self):
+        #This test is equivalent to (1,2)[0] = 0 which was briefly broken in
+        #Jython 2.5b2
+        import operator
+        self.assertRaises(TypeError, operator.setitem, (1,2), 0, 0)
+
 def test_main():
     test_support.run_unittest(TupleTest)
 
