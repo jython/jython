@@ -8,16 +8,22 @@ import java.util.List;
 public class PyBytecode extends PyBaseCode {
 
     // for debugging
-    static int count = 0; // total number of opcodes run
-    final static int maxCount = 900; // less than my buffer on iterm
-    static PyObject opname;
+    private int count = 0; // total number of opcodes run
+    private int maxCount = 900; // less than my buffer on iterm
+    private static PyObject opname;
 
-    static synchronized PyObject getOpname() {
+    private static synchronized PyObject getOpname() {
         if (opname == null) {
             opname = __builtin__.__import__("dis").__getattr__("opname");
         }
         return opname;
     }
+
+    public PyObject _debug(int maxCount) {
+        this.maxCount = maxCount;
+        return Py.None;
+    }
+
     // end debugging
     public final static int CO_MAXBLOCKS = 20; // same as in CPython
     public final char[] co_code; // to avoid sign issues
@@ -193,7 +199,7 @@ public class PyBytecode extends PyBaseCode {
         return buf.toString();
     }
 
-    private static void print_debug(int next_instr, int opcode, int oparg, PyStack stack, PyFrame f) {
+    private static void print_debug(int count, int next_instr, int opcode, int oparg, PyStack stack, PyFrame f) {
         System.err.println(count + "," + f.f_lasti + "> opcode: " +
                 getOpname().__getitem__(Py.newInteger(opcode)) +
                 (opcode > Opcode.HAVE_ARGUMENT ? ", oparg: " + oparg : "") +
@@ -229,28 +235,41 @@ public class PyBytecode extends PyBaseCode {
         int oparg = 0; /* Current opcode argument, if any */
         Why why = Why.NOT;
         PyObject retval = null;
-        ThreadState ts = Py.getThreadState(); // XXX - change interpret to pass through from PyFrame
+        ThreadState ts = Py.getThreadState(); // XXX - change interpret to pass through from PyFrame since our ts will never change
 
-        // need to support something like this, but perhaps we can get this from the frame itself?
+        // this may work: detach setting/getting anything in the frame to improve performance, instead do this
+        // in a shadow version of the frame that we copy back to
+
+        next_instr = f.f_lasti;
+        // check if we have been thrown an exception in the generatorinput, this
+        // is roughly the same as
 //        if (throwflag) { /* support for generator.throw() */
 //	    	why = WHY_EXCEPTION;
 //		    goto on_error;
 //	    }
 
+        if (f.f_savedlocals != null) {
+            for (int i = 0; i < f.f_savedlocals.length; i++) {
+                PyObject v = (PyObject)(f.f_savedlocals[i]);
+                stack.push(v);
+            }
+            stack.push(Py.None); // put the generator input in here
+            f.f_savedlocals = null;
+        }
+
         while (count < maxCount) { // XXX - replace with while(true)
 
-            next_instr += 1;
-            // this may work: detach setting anything in the frame to improve performance, instead do this
-            // in a shadow version of the frame that we copy back to
-            f.f_lasti = next_instr; // should have no worries about needing co_lnotab, just keep this current
+
             opcode = co_code[next_instr];
             if (opcode > Opcode.HAVE_ARGUMENT) {
                 next_instr += 2;
                 oparg = (co_code[next_instr] << 8) + co_code[next_instr - 1];
             }
-            print_debug(next_instr, opcode, oparg, stack, f);
+            print_debug(count, next_instr, opcode, oparg, stack, f);
 
-            count += 1;
+            count += 1;           
+            next_instr += 1;
+            f.f_lasti = next_instr; // should have no worries about needing co_lnotab, just keep this current
 
             try {
                 switch (opcode) {
@@ -1128,7 +1147,11 @@ public class PyBytecode extends PyBaseCode {
                 ts.exception = pye;
             }
 
-            // do some trace handling here
+            if (why == Why.YIELD) {
+                break;
+            }
+
+            // do some trace handling here, but for now just convert to EXCEPTION
             if (why == Why.RERAISE) {
                 why = Why.EXCEPTION;
             }
@@ -1156,7 +1179,7 @@ public class PyBytecode extends PyBaseCode {
                         if (b.b_type == Opcode.SETUP_EXCEPT) {
                             exc.normalize();
                         }
-                        stack.push(Py.None); // XXX - x3 to conform with CPython which
+                        stack.push(Py.None); // XXX - x3 to conform with CPython's calling convention, which
                         stack.push(Py.None); // stores the type, val, tb separately on the stack
                         stack.push(new PyStackException(exc));
                     } else {
@@ -1174,15 +1197,26 @@ public class PyBytecode extends PyBaseCode {
             if (why != Why.NOT) {
                 break;
             }
-        }
-        assert (why != Why.YIELD);
-        while (stack.size() > 0) {
-            stack.pop();
-        }
-        if (why != Why.RETURN) {
-            retval = Py.None;
+            
+        } // end-while of the instruction loop
+
+        if (why != Why.YIELD) {
+            while (stack.size() > 0) {
+                stack.pop();
+            }
+            if (why != Why.RETURN) {
+                retval = Py.None;
+            }
+        } else {
+            // store the stack in the frame for reentry from the yield;
+            f.f_savedlocals = stack.popN(stack.size());
+            // also need to add support for checking the generatorinput etc
         }
 
+        f.f_lasti = next_instr; // need to update on function entry, etc
+        System.err.println(count + "," + f.f_lasti + "> Returning from " + why + ": " + retval +
+                ", stack: " + stack.toString() +
+                ", blocks: " + stringify_blocks(f));
         return retval;
     }
 
