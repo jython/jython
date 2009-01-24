@@ -200,8 +200,9 @@ public class PyBytecode extends PyBaseCode {
         return buf.toString();
     }
 
-    private static void print_debug(int count, int next_instr, int opcode, int oparg, PyStack stack, PyFrame f) {
-        System.err.println(count + "," + f.f_lasti + "> opcode: " +
+    private void print_debug(int count, int next_instr, int opcode, int oparg, PyStack stack, PyFrame f) {
+        System.err.println(co_name + ":" +
+                count + "," + f.f_lasti + "> opcode: " +
                 getOpname().__getitem__(Py.newInteger(opcode)) +
                 (opcode > Opcode.HAVE_ARGUMENT ? ", oparg: " + oparg : "") +
                 ", stack: " + stack.toString() +
@@ -257,17 +258,21 @@ public class PyBytecode extends PyBaseCode {
 //		    goto on_error;
 //	    }
 
+        // the restore stack aspets should occur ONLY after a yield
         if (f.f_savedlocals != null) {
             for (int i = 0; i < f.f_savedlocals.length; i++) {
                 PyObject v = (PyObject) (f.f_savedlocals[i]);
                 stack.push(v);
             }
-            stack.push(Py.None); // put the generator input in here
+            Object generatorInput = f.getGeneratorInput();
+            if (generatorInput instanceof PyException) {
+                throw (PyException)generatorInput;
+            }
+            stack.push((PyObject)generatorInput); // put the generator input in here
             f.f_savedlocals = null;
         }
 
         while (count < maxCount) { // XXX - replace with while(true)
-
 
             opcode = co_code[next_instr];
             if (opcode > Opcode.HAVE_ARGUMENT) {
@@ -662,16 +667,6 @@ public class PyBytecode extends PyBaseCode {
 
                     case Opcode.YIELD_VALUE:
                         retval = stack.pop();
-                        // need to implement something like this when we reenter after a yield
-//                        code.invokevirtual("org/python/core/PyFrame", "getGeneratorInput", "()" + $obj);
-//                        code.dup();
-//                        code.instanceof_("org/python/core/PyException");
-//                        Label done2 = new Label();
-//                        code.ifeq(done2);
-//                        code.checkcast("java/lang/Throwable");
-//                        code.athrow();
-//                        code.label(done2);
-//                        code.checkcast("org/python/core/PyObject");
                         why = Why.YIELD;
                         break;
 
@@ -910,7 +905,7 @@ public class PyBytecode extends PyBaseCode {
                         break;
 
                     case Opcode.JUMP_ABSOLUTE:
-                        next_instr = oparg - 1; // XXX - continue to a label is probably much better
+                        next_instr = oparg; // XXX - continue to a label is probably much better
                         break;
 
                     case Opcode.GET_ITER: {
