@@ -240,7 +240,15 @@ public class PyBytecode extends PyBaseCode {
         // this may work: detach setting/getting anything in the frame to improve performance, instead do this
         // in a shadow version of the frame that we copy back to
 
+        System.err.println("Entry with " + f.f_lasti + " into " + co_code.length);
+        if (f.f_lasti >= co_code.length) {
+//            f.f_lasti = -1;
+//            return Py.None;
+            throw Py.StopIteration("");
+        }
+
         next_instr = f.f_lasti;
+
         // check if we have been thrown an exception in the generatorinput, this
         // is roughly the same as
 //        if (throwflag) { /* support for generator.throw() */
@@ -250,7 +258,7 @@ public class PyBytecode extends PyBaseCode {
 
         if (f.f_savedlocals != null) {
             for (int i = 0; i < f.f_savedlocals.length; i++) {
-                PyObject v = (PyObject)(f.f_savedlocals[i]);
+                PyObject v = (PyObject) (f.f_savedlocals[i]);
                 stack.push(v);
             }
             stack.push(Py.None); // put the generator input in here
@@ -267,7 +275,7 @@ public class PyBytecode extends PyBaseCode {
             }
             print_debug(count, next_instr, opcode, oparg, stack, f);
 
-            count += 1;           
+            count += 1;
             next_instr += 1;
             f.f_lasti = next_instr; // should have no worries about needing co_lnotab, just keep this current
 
@@ -544,73 +552,40 @@ public class PyBytecode extends PyBaseCode {
                         break;
                     }
 
-//
-//		case SLICE+0:
-//		case SLICE+1:
-//		case SLICE+2:
-//		case SLICE+3:
-//			if ((opcode-SLICE) & 2)
-//				w = POP();
-//			else
-//				w = NULL;
-//			if ((opcode-SLICE) & 1)
-//				v = POP();
-//			else
-//				v = NULL;
-//			u = TOP();
-//			x = apply_slice(u, v, w);
-//			Py_DECREF(u);
-//			Py_XDECREF(v);
-//			Py_XDECREF(w);
-//			SET_TOP(x);
-//			if (x != NULL) continue;
-//			break;
-//
-//		case Opcode.STORE_SLICE+0:
-//		case Opcode.STORE_SLICE+1:
-//		case Opcode.STORE_SLICE+2:
-//		case Opcode.STORE_SLICE+3:
-//			if (((opcode - Opcode.STORE_SLICE) & 2) !=0) {
-//
-//            }
-//				w = POP();
-//			else
-//				w = NULL;
-//			if ((opcode-STORE_SLICE) & 1)
-//				v = POP();
-//			else
-//				v = NULL;
-//			u = POP();
-//			t = POP();
-//			err = assign_slice(u, v, w, t); /* u[v:w] = t */
-//			Py_DECREF(t);
-//			Py_DECREF(u);
-//			Py_XDECREF(v);
-//			Py_XDECREF(w);
-//			if (err == 0) continue;
-//			break;
-//
-//		case DELETE_SLICE+0:
-//		case DELETE_SLICE+1:
-//		case DELETE_SLICE+2:
-//		case DELETE_SLICE+3:
-//			if ((opcode-DELETE_SLICE) & 2)
-//				w = POP();
-//			else
-//				w = NULL;
-//			if ((opcode-DELETE_SLICE) & 1)
-//				v = POP();
-//			else
-//				v = NULL;
-//			u = POP();
-//			err = assign_slice(u, v, w, (PyObject *)NULL);
-//							/* del u[v:w] */
-//			Py_DECREF(u);
-//			Py_XDECREF(v);
-//			Py_XDECREF(w);
-//			if (err == 0) continue;
-//			break;
-//
+                    case Opcode.SLICE + 0:
+                    case Opcode.SLICE + 1:
+                    case Opcode.SLICE + 2:
+                    case Opcode.SLICE + 3: {
+                        PyObject stop = (((opcode - Opcode.SLICE) & 2) != 0) ? stack.pop() : null;
+                        PyObject start = (((opcode - Opcode.SLICE) & 1) != 0) ? stack.pop() : null;
+                        PyObject obj = stack.pop();
+                        stack.push(obj.__getslice__(start, stop));
+                        break;
+                    }
+
+                    case Opcode.STORE_SLICE + 0:
+                    case Opcode.STORE_SLICE + 1:
+                    case Opcode.STORE_SLICE + 2:
+                    case Opcode.STORE_SLICE + 3: {
+                        PyObject stop = (((opcode - Opcode.SLICE) & 2) != 0) ? stack.pop() : null;
+                        PyObject start = (((opcode - Opcode.SLICE) & 1) != 0) ? stack.pop() : null;
+                        PyObject obj = stack.pop();
+                        PyObject value = stack.pop();
+                        obj.__setslice__(start, stop, value);
+                        break;
+                    }
+
+                    case Opcode.DELETE_SLICE + 0:
+                    case Opcode.DELETE_SLICE + 1:
+                    case Opcode.DELETE_SLICE + 2:
+                    case Opcode.DELETE_SLICE + 3: {
+                        PyObject stop = (((opcode - Opcode.SLICE) & 2) != 0) ? stack.pop() : null;
+                        PyObject start = (((opcode - Opcode.SLICE) & 1) != 0) ? stack.pop() : null;
+                        PyObject obj = stack.pop();
+                        obj.__delslice__(start, stop);
+                        break;
+                    }
+
                     case Opcode.STORE_SUBSCR: {
                         PyObject key = stack.pop();
                         PyObject obj = stack.pop();
@@ -979,61 +954,46 @@ public class PyBytecode extends PyBaseCode {
                     case Opcode.SETUP_FINALLY:
                         pushBlock(f, new PyTryBlock(opcode, next_instr + oparg, stack.size()));
                         break;
-//
-//		case WITH_CLEANUP:
-//		{
-//			/* TOP is the context.__exit__ bound method.
-//			   Below that are 1-3 values indicating how/why
-//			   we entered the finally clause:
-//			   - SECOND = None
-//			   - (SECOND, THIRD) = (WHY_{RETURN,CONTINUE}), retval
-//			   - SECOND = WHY_*; no retval below it
-//			   - (SECOND, THIRD, FOURTH) = exc_info()
-//			   In the last case, we must call
-//			     TOP(SECOND, THIRD, FOURTH)
-//			   otherwise we must call
-//			     TOP(None, None, None)
-//
-//			   In addition, if the stack represents an exception,
-//			   *and* the function call returns a 'true' value, we
-//			   "zap" this information, to prevent END_FINALLY from
-//			   re-raising the exception.  (But non-local gotos
-//			   should still be resumed.)
-//			*/
-//
-//			x = TOP();
-//			u = SECOND();
-//			if (PyInt_Check(u) || u == Py_None) {
-//				u = v = w = Py_None;
-//			}
-//			else {
-//				v = THIRD();
-//				w = FOURTH();
-//			}
-//			/* XXX Not the fastest way to call it... */
-//			x = PyObject_CallFunctionObjArgs(x, u, v, w, NULL);
-//			if (x == NULL)
-//				break; /* Go to error exit */
-//			if (u != Py_None && PyObject_IsTrue(x)) {
-//				/* There was an exception and a true return */
-//				Py_DECREF(x);
-//				x = TOP(); /* Again */
-//				STACKADJ(-3);
-//				Py_INCREF(Py_None);
-//				SET_TOP(Py_None);
-//				Py_DECREF(x);
-//				Py_DECREF(u);
-//				Py_DECREF(v);
-//				Py_DECREF(w);
-//			} else {
-//				/* Let END_FINALLY do its thing */
-//				Py_DECREF(x);
-//				x = POP();
-//				Py_DECREF(x);
-//			}
-//			break;
-//		}
-//
+
+                    case Opcode.WITH_CLEANUP: {
+                        /* TOP is the context.__exit__ bound method.
+                        Below that are 1-3 values indicating how/why
+                        we entered the finally clause:
+                        - SECOND = None
+                        - (SECOND, THIRD) = (WHY_{RETURN,CONTINUE}), retval
+                        - SECOND = WHY_*; no retval below it
+                        - (SECOND, THIRD, FOURTH) = exc_info()
+                        In the last case, we must call
+                        TOP(SECOND, THIRD, FOURTH)
+                        otherwise we must call
+                        TOP(None, None, None)
+
+                        In addition, if the stack represents an exception,
+                         *and* the function call returns a 'true' value, we
+                        "zap" this information, to prevent END_FINALLY from
+                        re-raising the exception.  (But non-local gotos
+                        should still be resumed.)
+                         */
+                        PyObject exit = stack.top();
+                        PyObject u = stack.top(2);
+                        PyObject v;
+                        PyObject w;
+                        if (u == Py.None || u instanceof PyStackWhy) {
+                            u = v = w = Py.None;
+                        } else {
+                            v = stack.top(3);
+                            w = stack.top(4);
+                        }
+                        PyObject x = exit.__call__(u, v, w);
+                        if (u != Py.None && x.__nonzero__()) {
+                            stack.popN(4);
+                            stack.push(Py.None);
+                        } else {
+                            stack.pop();
+                        }
+                        break;
+                    }
+
                     case Opcode.CALL_FUNCTION: {
                         int na = oparg & 0xff;
                         int nk = (oparg >> 8) & 0xff;
@@ -1110,21 +1070,14 @@ public class PyBytecode extends PyBaseCode {
                         break;
                     }
 
-//		case BUILD_SLICE:
-//			if (oparg == 3)
-//				w = POP();
-//			else
-//				w = NULL;
-//			v = POP();
-//			u = TOP();
-//			x = PySlice_New(u, v, w);
-//			Py_DECREF(u);
-//			Py_DECREF(v);
-//			Py_XDECREF(w);
-//			SET_TOP(x);
-//			if (x != NULL) continue;
-//			break;
-//
+                    case Opcode.BUILD_SLICE: {
+                        PyObject step = oparg == 3 ? stack.pop() : null;
+                        PyObject stop = stack.pop();
+                        PyObject start = stack.pop();
+                        stack.push(new PySlice(start, stop, step));
+                        break;
+                    }
+
                     case Opcode.EXTENDED_ARG:
                         opcode = co_code[next_instr++];
                         next_instr += 2;
@@ -1197,7 +1150,7 @@ public class PyBytecode extends PyBaseCode {
             if (why != Why.NOT) {
                 break;
             }
-            
+
         } // end-while of the instruction loop
 
         if (why != Why.YIELD) {
@@ -1210,13 +1163,19 @@ public class PyBytecode extends PyBaseCode {
         } else {
             // store the stack in the frame for reentry from the yield;
             f.f_savedlocals = stack.popN(stack.size());
-            // also need to add support for checking the generatorinput etc
+        // also need to add support for checking the generatorinput etc
         }
 
         f.f_lasti = next_instr; // need to update on function entry, etc
+
         System.err.println(count + "," + f.f_lasti + "> Returning from " + why + ": " + retval +
                 ", stack: " + stack.toString() +
                 ", blocks: " + stringify_blocks(f));
+
+        if ((co_flags & CO_GENERATOR) != 0 && why == Why.RETURN && retval == Py.None) {
+            f.f_lasti = -1;
+        }
+
         return retval;
     }
 
@@ -1232,6 +1191,10 @@ public class PyBytecode extends PyBaseCode {
 
         PyObject top() {
             return stack.get(stack.size() - 1);
+        }
+
+        PyObject top(int n) {
+            return stack.get(stack.size() - n);
         }
 
         PyObject pop() {
