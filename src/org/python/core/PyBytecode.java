@@ -193,10 +193,15 @@ public class PyBytecode extends PyBaseCode {
         if (f.f_exits == null || f.f_blockstate[0] == 0) {
             return "[]";
         }
-        StringBuilder buf = new StringBuilder();
-        for (int i = 0; i < f.f_blockstate[0]; i++) {
+        StringBuilder buf = new StringBuilder("[");
+        int len = f.f_blockstate[0];
+        for (int i = 0; i < len; i++) {
             buf.append(f.f_exits[i].toString());
+            if (i < len - 1) {
+                buf.append(", ");
+            }
         }
+        buf.append("]");
         return buf.toString();
     }
 
@@ -239,53 +244,53 @@ public class PyBytecode extends PyBaseCode {
         PyObject retval = null;
         ThreadState ts = Py.getThreadState(); // XXX - change interpret to pass through from PyFrame since our ts will never change
 
-        // this may work: detach setting/getting anything in the frame to improve performance, instead do this
-        // in a shadow version of the frame that we copy back to
+        // XXX - optimization opportunities
+        // 1. consider detaching the setting/getting of frame fields to improve performance, instead do this
+        // in a shadow version of the frame that we copy back to on entry/exit and downcalls
 
         System.err.println("Entry with " + f.f_lasti + " into " + co_code.length);
         if (f.f_lasti >= co_code.length) {
-//            f.f_lasti = -1;
-//            return Py.None;
-            throw Py.StopIteration("");
+            throw Py.SystemError("");
         }
 
         next_instr = f.f_lasti;
 
-        // check if we have been thrown an exception in the generatorinput, this
-        // is roughly the same as
-//        if (throwflag) { /* support for generator.throw() */
-//	    	why = WHY_EXCEPTION;
-//		    goto on_error;
-//	    }
-
-        // the restore stack aspets should occur ONLY after a yield
+        // the restore stack aspects should occur ONLY after a yield
+        boolean checkGeneratorInput = false;
         if (f.f_savedlocals != null) {
             for (int i = 0; i < f.f_savedlocals.length; i++) {
                 PyObject v = (PyObject) (f.f_savedlocals[i]);
                 stack.push(v);
             }
-            Object generatorInput = f.getGeneratorInput();
-            if (generatorInput instanceof PyException) {
-                throw (PyException)generatorInput;
-            }
-            stack.push((PyObject)generatorInput); // put the generator input in here
+            checkGeneratorInput = true;
             f.f_savedlocals = null;
         }
 
         while (count < maxCount) { // XXX - replace with while(true)
 
-            opcode = co_code[next_instr];
-            if (opcode > Opcode.HAVE_ARGUMENT) {
-                next_instr += 2;
-                oparg = (co_code[next_instr] << 8) + co_code[next_instr - 1];
-            }
-            print_debug(count, next_instr, opcode, oparg, stack, f);
-
-            count += 1;
-            next_instr += 1;
-            f.f_lasti = next_instr; // should have no worries about needing co_lnotab, just keep this current
-
             try {
+
+                if (checkGeneratorInput) {
+                    checkGeneratorInput = false;
+                    Object generatorInput = f.getGeneratorInput();
+                    if (generatorInput instanceof PyException) {
+                        throw (PyException) generatorInput;
+                    }
+                    stack.push((PyObject) generatorInput);
+                }
+
+                opcode = co_code[next_instr];
+                if (opcode > Opcode.HAVE_ARGUMENT) {
+                    next_instr += 2;
+                    oparg = (co_code[next_instr] << 8) + co_code[next_instr - 1];
+                }
+                print_debug(count, next_instr, opcode, oparg, stack, f);
+
+                count += 1;
+                next_instr += 1;
+                f.f_lasti = next_instr; // should have no worries about needing co_lnotab, just keep this current
+
+
                 switch (opcode) {
                     case Opcode.NOP:
                         break;
@@ -307,15 +312,15 @@ public class PyBytecode extends PyBaseCode {
                         break;
 
                     case Opcode.ROT_TWO:
-                        stack.rotN(2);
+                        stack.rot(2);
                         break;
 
                     case Opcode.ROT_THREE:
-                        stack.rotN(3);
+                        stack.rot(3);
                         break;
 
                     case Opcode.ROT_FOUR:
-                        stack.rotN(4);
+                        stack.rot(4);
                         break;
 
                     case Opcode.DUP_TOP:
@@ -324,7 +329,7 @@ public class PyBytecode extends PyBaseCode {
 
                     case Opcode.DUP_TOPX: {
                         if (oparg == 2 || oparg == 3) {
-                            stack.dupN(oparg);
+                            stack.dup(oparg);
                         } else {
                             throw Py.RuntimeError("invalid argument to DUP_TOPX" +
                                     " (bytecode corruption?)");
@@ -1094,9 +1099,8 @@ public class PyBytecode extends PyBaseCode {
                         if (b.b_type == Opcode.SETUP_EXCEPT) {
                             exc.normalize();
                         }
-                        stack.push(Py.None); // XXX - x3 to conform with CPython's calling convention, which
-                        stack.push(Py.None); // stores the type, val, tb separately on the stack
-                        stack.push(new PyStackException(exc));
+                        stack.push(new PyStackException(exc)); //  x3 to conform with CPython's calling convention, which
+                        stack.dup(2); // stores the type, val, tb separately on the stack
                     } else {
                         if (why == Why.RETURN || why == Why.CONTINUE) {
                             stack.push(retval);
@@ -1125,7 +1129,6 @@ public class PyBytecode extends PyBaseCode {
         } else {
             // store the stack in the frame for reentry from the yield;
             f.f_savedlocals = stack.popN(stack.size());
-        // also need to add support for checking the generatorinput etc
         }
 
         f.f_lasti = next_instr; // need to update on function entry, etc
@@ -1133,6 +1136,10 @@ public class PyBytecode extends PyBaseCode {
         System.err.println(count + "," + f.f_lasti + "> Returning from " + why + ": " + retval +
                 ", stack: " + stack.toString() +
                 ", blocks: " + stringify_blocks(f));
+
+        if (why == why.EXCEPTION) {
+            throw ts.exception;
+        }
 
         if ((co_flags & CO_GENERATOR) != 0 && why == Why.RETURN && retval == Py.None) {
             f.f_lasti = -1;
@@ -1259,7 +1266,7 @@ public class PyBytecode extends PyBaseCode {
             stack.add(top());
         }
 
-        void dupN(int n) {
+        void dup(int n) {
             PyObject v = top();
             for (int i = 0; i < n; i++) {
                 stack.add(v);
@@ -1275,7 +1282,7 @@ public class PyBytecode extends PyBaseCode {
             return ret;
         }
 
-        void rotN(int n) {
+        void rot(int n) {
             int end = stack.size();
             List<PyObject> lastN = stack.subList(end - n, end);
             Collections.rotate(lastN, n);
@@ -1308,8 +1315,8 @@ public class PyBytecode extends PyBaseCode {
 
         @Override
         public String toString() {
-            return "[" + getOpname().__getitem__(Py.newInteger(b_type)) + "," +
-                    b_handler + "," + b_level + "]";
+            return "<" + getOpname().__getitem__(Py.newInteger(b_type)) + "," +
+                    b_handler + "," + b_level + ">";
         }
     }
 }
