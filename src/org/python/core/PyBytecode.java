@@ -1,7 +1,6 @@
 package org.python.core;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -31,6 +30,8 @@ public class PyBytecode extends PyBaseCode {
     public final String[] co_names;
     public final int co_stacksize; // ignored, probably shouldn't be
     public final PyObject[] co_lnotab; // ignored
+    private final static int CALL_FLAG_VAR = 1;
+    private final static int CALL_FLAG_KW = 2;
 
     // follows new.code's interface
     public PyBytecode(int argcount, int nlocals, int stacksize, int flags,
@@ -997,62 +998,28 @@ public class PyBytecode extends PyBaseCode {
                     case Opcode.CALL_FUNCTION: {
                         int na = oparg & 0xff;
                         int nk = (oparg >> 8) & 0xff;
-                        int n = na + 2 * nk;
 
-                        PyObject args[] = stack.popN(na);
-                        PyObject callable = stack.pop();
-                        System.err.println("__call__:" + callable + "," + Arrays.toString(args));
-                        stack.push(callable.__call__(args));
+                        if (nk == 0) {
+                            call_function(na, stack);
+                        } else {
+                            call_function(na, nk, stack);
+                        }
                         break;
                     }
 
-//
-//		case CALL_FUNCTION_VAR:
-//		case CALL_FUNCTION_KW:
-//		case CALL_FUNCTION_VAR_KW:
-//		{
-//		    int na = oparg & 0xff;
-//		    int nk = (oparg>>8) & 0xff;
-//		    int flags = (opcode - CALL_FUNCTION) & 3;
-//		    int n = na + 2 * nk;
-//		    PyObject **pfunc, *func, **sp;
-//		    PCALL(PCALL_ALL);
-//		    if (flags & CALL_FLAG_VAR)
-//			    n++;
-//		    if (flags & CALL_FLAG_KW)
-//			    n++;
-//		    pfunc = stack_pointer - n - 1;
-//		    func = *pfunc;
-//
-//		    if (PyMethod_Check(func)
-//			&& PyMethod_GET_SELF(func) != NULL) {
-//			    PyObject *self = PyMethod_GET_SELF(func);
-//			    Py_INCREF(self);
-//			    func = PyMethod_GET_FUNCTION(func);
-//			    Py_INCREF(func);
-//			    Py_DECREF(*pfunc);
-//			    *pfunc = self;
-//			    na++;
-//			    n++;
-//		    } else
-//			    Py_INCREF(func);
-//		    sp = stack_pointer;
-//		    READ_TIMESTAMP(intr0);
-//		    x = ext_do_call(func, &sp, flags, na, nk);
-//		    READ_TIMESTAMP(intr1);
-//		    stack_pointer = sp;
-//		    Py_DECREF(func);
-//
-//		    while (stack_pointer > pfunc) {
-//			    w = POP();
-//			    Py_DECREF(w);
-//		    }
-//		    PUSH(x);
-//		    if (x != NULL)
-//			    continue;
-//		    break;
-//		}
-//
+                    case Opcode.CALL_FUNCTION_VAR:
+                    case Opcode.CALL_FUNCTION_KW:
+                    case Opcode.CALL_FUNCTION_VAR_KW: {
+                        int na = oparg & 0xff;
+                        int nk = (oparg >> 8) & 0xff;
+                        int flags = (opcode - Opcode.CALL_FUNCTION) & 3;
+                        call_function(na, nk,
+                                (flags & CALL_FLAG_VAR) != 0,
+                                (flags & CALL_FLAG_KW) != 0,
+                                stack);
+                        break;
+                    }
+
                     case Opcode.MAKE_FUNCTION: {
                         PyCode code = (PyCode) stack.pop();
                         PyObject[] defaults = stack.popN(oparg);
@@ -1177,6 +1144,90 @@ public class PyBytecode extends PyBaseCode {
         }
 
         return retval;
+    }
+
+    private static void call_function(int na, PyStack stack) {
+        switch (na) {
+            case 0: {
+                PyObject callable = stack.pop();
+                stack.push(callable.__call__());
+                break;
+            }
+            case 1: {
+                PyObject arg = stack.pop();
+                PyObject callable = stack.pop();
+                stack.push(callable.__call__(arg));
+                break;
+            }
+            case 2: {
+                PyObject arg1 = stack.pop();
+                PyObject arg0 = stack.pop();
+                PyObject callable = stack.pop();
+                stack.push(callable.__call__(arg0, arg1));
+                break;
+            }
+            case 3: {
+                PyObject arg2 = stack.pop();
+                PyObject arg1 = stack.pop();
+                PyObject arg0 = stack.pop();
+                PyObject callable = stack.pop();
+                stack.push(callable.__call__(arg0, arg1, arg2));
+                break;
+            }
+            case 4: {
+                PyObject arg3 = stack.pop();
+                PyObject arg2 = stack.pop();
+                PyObject arg1 = stack.pop();
+                PyObject arg0 = stack.pop();
+                PyObject callable = stack.pop();
+                stack.push(callable.__call__(arg0, arg1, arg2, arg3));
+                break;
+            }
+            default: {
+                PyObject args[] = stack.popN(na);
+                PyObject callable = stack.pop();
+                stack.push(callable.__call__(args));
+            }
+        }
+    }
+
+    private static void call_function(int na, int nk, PyStack stack) {
+        int n = na + nk * 2;
+        PyObject params[] = stack.popN(n);
+        PyObject callable = stack.pop();
+
+        PyObject args[] = new PyObject[na + nk];
+        String keywords[] = new String[nk];
+        int i;
+        for (i = 0; i < na; i++) {
+            args[i] = params[i];
+        }
+        for (int j = 0; i < n; i += 2, j++) {
+            keywords[j] = params[i].toString();
+            args[na + j] = params[i + 1];
+        }
+        stack.push(callable.__call__(args, keywords));
+    }
+
+    private static void call_function(int na, int nk, boolean var, boolean kw, PyStack stack) {
+        int n = na + nk * 2;
+        PyObject kwargs = kw ? stack.pop() : null;
+        PyObject starargs = var ? stack.pop() : null;
+        PyObject params[] = stack.popN(n);
+        PyObject callable = stack.pop();
+
+        PyObject args[] = new PyObject[na + nk];
+        String keywords[] = new String[nk];
+        int i;
+        for (i = 0; i < na; i++) {
+            args[i] = params[i];
+        }
+        for (int j = 0; i < n; i += 2, j++) {
+            keywords[j] = params[i].toString();
+            args[na + j] = params[i + 1];
+
+        }
+        stack.push(callable._callextra(args, keywords, starargs, kwargs));
     }
 
     // XXX - perhaps add support for max stack size (presumably from co_stacksize)
