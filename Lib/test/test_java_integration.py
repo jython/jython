@@ -21,10 +21,6 @@ from javax.swing.tree import TreePath
 from org.python.core.util import FileUtil
 from org.python.tests import BeanImplementation, Child, Listenable, CustomizableMapHolder
 
-#Just for test_import_star
-#java.util.regex was chosen for its small number of classes to reduce the pollution.
-from java.util.regex import *
-
 class InstantiationTest(unittest.TestCase):
     def test_cant_instantiate_abstract(self):
         self.assertRaises(TypeError, Component)
@@ -417,9 +413,8 @@ class JavaWrapperCustomizationTest(unittest.TestCase):
         self.assertEquals(None, m.nonexistent, "Nonexistent fields should be passed on to the Map")
 
     def test_import_star(self):
-        #Depends on "from java.util.regex import *" at the top.
-        x = Pattern.compile("foo")
-        self.assertEquals(x.flags(), 0)
+        self.assertEquals(subprocess.call([sys.executable,
+            test_support.findfile("import_star_from_java.py")]), 0)
 
 def test_main():
     test_support.run_unittest(InstantiationTest, 
