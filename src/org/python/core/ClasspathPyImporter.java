@@ -83,23 +83,28 @@ public class ClasspathPyImporter extends importer<String> {
     }
 
     @Override
-    protected String makeEntry(String fullFilename) {
-        if (entries.containsKey(fullFilename)) {
-            return fullFilename;
+    protected String makeEntry(String filename) {
+        if (entries.containsKey(filename)) {
+            return filename;
         }
-        InputStream is = null;
-        ClassLoader classLoader = Py.getSystemState().getClassLoader();
-        if (classLoader != null) {
-            Py.writeDebug("import", "trying " + fullFilename + " in sys class loader");
-            is = classLoader.getResourceAsStream(fullFilename);
+        InputStream is = tryClassLoader(filename, Py.getSystemState().getClassLoader(), "sys");
+        if (is == null) {
+            is = tryClassLoader(filename, Thread.currentThread().getContextClassLoader(), "context");
         }
         if (is == null) {
-            Py.writeDebug("import", "trying " + fullFilename + " in context class loader");
-            is = Thread.currentThread().getContextClassLoader().getResourceAsStream(fullFilename);
+            is = tryClassLoader(filename, ClasspathPyImporter.class.getClassLoader(), "current");
         }
         if (is != null) {
-            entries.put(fullFilename, is);
-            return fullFilename;
+            entries.put(filename, is);
+            return filename;
+        }
+        return null;
+    }
+
+    private InputStream tryClassLoader(String fullFilename, ClassLoader loader, String name) {
+        if (loader != null) {
+            Py.writeDebug("import", "trying " + fullFilename + " in " + name + " class loader");
+            return loader.getResourceAsStream(fullFilename);
         }
         return null;
     }
