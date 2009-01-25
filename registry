@@ -1,4 +1,4 @@
-# Python Registry -*- ksh -*-
+# Python Registry -*- sh -*-
 # This default registry sets many common options to their default values
 # All of these settings could be erased with no change in behavior
 
@@ -17,7 +17,7 @@
 python.cachedir = cachedir
 
 # Setting this property to true disables the package scan for the cachedir.
-# Please be aware that disabling this will break imporing * from java packages
+# Please be aware that disabling this will break importing * from java packages
 #python.cachedir.skip = false
 
 # Properties to check for initializing and updating the package cache
