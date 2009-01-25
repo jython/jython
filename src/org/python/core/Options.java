@@ -54,12 +54,6 @@ public class Options {
     public static int verbose = Py.MESSAGE;
 
     /**
-     * Setting this to true will support old 1.0 style keyword+"_" names. This
-     * isn't needed any more due to improvements in the parser
-     */
-    public static boolean deprecatedKeywordMangling = false;
-
-    /**
      * A directory where the dynamically generated classes are written. Nothing is
      * ever read from here, it is only for debugging purposes.
      */
@@ -130,9 +124,6 @@ public class Options {
         Options.showPythonProxyExceptions = getBooleanOption(
                 "options.showPythonProxyExceptions",
                 Options.showPythonProxyExceptions);
-
-        Options.deprecatedKeywordMangling = getBooleanOption(
-                "deprecated.keywordMangling", Options.deprecatedKeywordMangling);
 
         Options.respectJavaAccessibility = getBooleanOption(
                 "security.respectJavaAccessibility",
