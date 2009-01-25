@@ -20,6 +20,7 @@ from javax.swing.tree import TreePath
 
 from org.python.core.util import FileUtil
 from org.python.tests import BeanImplementation, Child, Listenable, CustomizableMapHolder
+from org.python.tests.mro import (ConfusedOnGetitemAdd, FirstPredefinedGetitem, GetitemAdder)
 
 class InstantiationTest(unittest.TestCase):
     def test_cant_instantiate_abstract(self):
@@ -411,10 +412,18 @@ class JavaWrapperCustomizationTest(unittest.TestCase):
         self.assertEquals(7, m.held["initial"], "Existing fields should still be accessible")
         self.assertEquals(7, m.initial)
         self.assertEquals(None, m.nonexistent, "Nonexistent fields should be passed on to the Map")
-
-    def test_import_star(self):
-        self.assertEquals(subprocess.call([sys.executable,
-            test_support.findfile("import_star_from_java.py")]), 0)
+    
+    def test_adding_on_interface(self):    
+        GetitemAdder.addPredefined()
+        class UsesInterfaceMethod(FirstPredefinedGetitem):
+            pass
+        self.assertEquals("key", UsesInterfaceMethod()["key"])
+        
+    def test_add_on_mro_conflict(self):
+        """Adding same-named methods to Java classes with MRO conflicts produces TypeError"""
+        GetitemAdder.addPredefined()
+        self.assertRaises(TypeError, __import__, "org.python.tests.mro.ConfusedOnImport")
+        self.assertRaises(TypeError, GetitemAdder.addPostdefined)
 
 def test_main():
     test_support.run_unittest(InstantiationTest, 

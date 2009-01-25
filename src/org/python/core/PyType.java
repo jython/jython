@@ -507,7 +507,7 @@ public class PyType extends PyObject implements Serializable {
 
     private void mro_internal() {
         if (getType() == TYPE) {
-            mro = compute_mro();
+            mro = computeMro();
         } else {
             PyObject mroDescr = getType().lookup("mro");
             if (mroDescr == null) {
@@ -652,55 +652,18 @@ public class PyType extends PyObject implements Serializable {
         return acc.toArray(new PyObject[acc.size()]);
     }
 
-    private static boolean tail_contains(PyObject[] lst, int whence, PyObject o) {
-        int n = lst.length;
-        for (int i = whence + 1; i < n; i++) {
-            if (lst[i] == o) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static PyException mro_error(PyObject[][] to_merge, int[] remain) {
-        StringBuilder msg = new StringBuilder("Cannot create a consistent method resolution\n"
-                                            + "order (MRO) for bases ");
-        PyDictionary set = new PyDictionary();
-        for (int i = 0; i < to_merge.length; i++) {
-            PyObject[] lst = to_merge[i];
-            if (remain[i] < lst.length) {
-                set.__setitem__(lst[remain[i]], Py.None);
-            }
-        }
-        PyObject iter = set.__iter__();
-        PyObject cur;
-        boolean subq = false;
-        while ((cur = iter.__iternext__()) != null) {
-            PyObject name = cur.__findattr__("__name__");
-            if (!subq) {
-                subq = true;
-            } else {
-                msg.append(", ");
-            }
-            msg.append(name == null ? "?" : name.toString());
-        }
-        return Py.TypeError(msg.toString());
-    }
-
     @ExposedMethod(defaults = "null", doc = BuiltinDocs.type_mro_doc)
     final PyList type_mro(PyObject o) {
         if (o == null) {
-            return new PyList(compute_mro());
+            return new PyList(computeMro());
         }
-        return new PyList(((PyType)o).compute_mro());
+        return new PyList(((PyType)o).computeMro());
     }
 
-    PyObject[] compute_mro() {
-        PyObject[] bases = this.bases;
-        int n = bases.length;
-        for (int i = 0; i < n; i++) {
+    PyObject[] computeMro() {
+        for (int i = 0; i < bases.length; i++) {
             PyObject cur = bases[i];
-            for (int j = i + 1; j < n; j++) {
+            for (int j = i + 1; j < bases.length; j++) {
                 if (bases[j] == cur) {
                     PyObject name = cur.__findattr__("__name__");
                     throw Py.TypeError("duplicate base class " +
@@ -709,55 +672,74 @@ public class PyType extends PyObject implements Serializable {
             }
         }
 
-        int nmerge = n + 1;
-        PyObject[][] to_merge = new PyObject[nmerge][];
-        int[] remain = new int[nmerge];
-
-        for (int i = 0; i < n; i++) {
-            PyObject cur = bases[i];
-            remain[i] = 0;
-            if (cur instanceof PyType) {
-                to_merge[i] = ((PyType)cur).mro;
-            } else if (cur instanceof PyClass) {
-                to_merge[i] = classic_mro((PyClass)cur);
+        MROMergeState[] toMerge = new MROMergeState[bases.length + 1];
+        for (int i = 0; i < bases.length; i++) {
+            toMerge[i] = new MROMergeState();
+            if (bases[i] instanceof PyType) {
+                toMerge[i].mro = ((PyType)bases[i]).mro;
+            } else if (bases[i] instanceof PyClass) {
+                toMerge[i].mro = classic_mro((PyClass)bases[i]);
             }
         }
+        toMerge[bases.length] = new MROMergeState();
+        toMerge[bases.length].mro = bases;
 
-        to_merge[n] = bases;
-        remain[n] = 0;
+        List<PyObject> mro = Generic.list();
+        mro.add(this);
+        return computeMro(toMerge, mro);
+    }
 
-        List<PyObject> acc = Generic.list();
-        acc.add(this);
-
-        int empty_cnt = 0;
-
-        scan : for (int i = 0; i < nmerge; i++) {
-            PyObject candidate;
-            PyObject[] cur = to_merge[i];
-            if (remain[i] >= cur.length) {
-                empty_cnt++;
+    PyObject[] computeMro(MROMergeState[] toMerge, List<PyObject> mro) {
+        scan : for (int i = 0; i < toMerge.length; i++) {
+            if (toMerge[i].isMerged()) {
                 continue scan;
             }
 
-            candidate = cur[remain[i]];
-            for (int j = 0; j < nmerge; j++)
-                if (tail_contains(to_merge[j], remain[j], candidate)) {
+            PyObject candidate = toMerge[i].getCandidate();
+            for (MROMergeState mergee : toMerge) {
+                if(mergee.unmergedContains(candidate)) {
                     continue scan;
                 }
-            acc.add(candidate);
-            for (int j = 0; j < nmerge; j++) {
-                if (remain[j] < to_merge[j].length && to_merge[j][remain[j]] == candidate) {
-                    remain[j]++;
-                }
             }
-            // restart scan
-            i = -1;
-            empty_cnt = 0;
+            mro.add(candidate);
+            for (MROMergeState element : toMerge) {
+                element.noteMerged(candidate);
+            }
+            i = -1;// restart scan
         }
-        if (empty_cnt == nmerge) {
-            return acc.toArray(bases);
+        for (MROMergeState mergee : toMerge) {
+            if (!mergee.isMerged()) {
+                handleMroError(toMerge, mro);
+            }
         }
-        throw mro_error(to_merge, remain);
+        return mro.toArray(new PyObject[mro.size()]);
+    }
+
+
+    /**
+     * Must either throw an exception, or bring the merges in <code>toMerge</code> to completion by
+     * finishing filling in <code>mro</code>.
+     */
+    void handleMroError(MROMergeState[] toMerge, List<PyObject> mro) {
+        StringBuilder msg = new StringBuilder("Cannot create a consistent method resolution\n"
+                + "order (MRO) for bases ");
+        Set<PyObject> set = Generic.set();
+        for (MROMergeState mergee : toMerge) {
+            if(!mergee.isMerged()) {
+                set.add(mergee.mro[0]);
+            }
+        }
+        boolean first = true;
+        for (PyObject unmerged : set) {
+            PyObject name = unmerged.__findattr__("__name__");
+            if (first) {
+                first = false;
+            } else {
+                msg.append(", ");
+            }
+            msg.append(name == null ? "?" : name.toString() + new PyList(((PyType)unmerged).bases));
+        }
+        throw Py.TypeError(msg.toString());
     }
 
     /**
@@ -1076,6 +1058,13 @@ public class PyType extends PyObject implements Serializable {
         dict.__setitem__(pmd.getName(), pmd);
     }
 
+    /**
+     * Removes the given method from this type's dict or raises a KeyError.
+     */
+    public void removeMethod(PyBuiltinMethod meth) {
+        dict.__delitem__(meth.info.getName());
+    }
+
     protected void checkSetattr() {
         if (builtin) {
             throw Py.TypeError(String.format("can't set attributes of built-in/extension type "
@@ -1378,6 +1367,66 @@ public class PyType extends PyObject implements Serializable {
                 throw Py.TypeError(module + "." + name + " must be a type for deserialization");
             }
             return pytyp;
+        }
+    }
+
+    /**
+     * Tracks the status of merging a single base into a subclass' mro in computeMro.
+     */
+    static class MROMergeState {
+
+        /** The mro of the base type we're representing. */
+        public PyObject[] mro;
+
+        /**
+         * The index of the next item to be merged from mro, or mro.length if this base has been
+         * completely merged.
+         */
+        public int next;
+
+        public boolean isMerged() {
+            return mro.length == next;
+        }
+
+        public PyObject getCandidate() {
+            return mro[next];
+        }
+
+        /**
+         * Marks candidate as merged for this base if it's the next item to be merged.
+         */
+        public void noteMerged(PyObject candidate) {
+            if (!isMerged() && getCandidate() == candidate) {
+                next++;
+            }
+        }
+
+        /**
+         * Returns true if candidate is in the items past this state's next item to be merged.
+         */
+        public boolean unmergedContains(PyObject candidate) {
+            for (int i = next + 1; i < mro.length; i++) {
+                if (mro[i] == candidate) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /**
+         * Removes the given item from this state's mro if it isn't already finished.
+         */
+        public void removeFromUnmerged(PyJavaType winner) {
+            if (isMerged()) {
+                return;
+            }
+            List<PyObject> newMro = Generic.list();
+            for (PyObject mroEntry : mro) {
+                if (mroEntry != winner) {
+                    newMro.add(mroEntry);
+                }
+            }
+            mro = newMro.toArray(new PyObject[newMro.size()]);
         }
     }
 }
