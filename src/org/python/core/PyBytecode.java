@@ -38,7 +38,7 @@ public class PyBytecode extends PyBaseCode {
     // follows new.code's interface
     public PyBytecode(int argcount, int nlocals, int stacksize, int flags,
             String codestring, PyObject[] constants, String[] names, String varnames[],
-            String filename, String name, int firstlineno, PyObject[] lnotab) {
+            String filename, String name, int firstlineno, String lnotab) {
         this(argcount, nlocals, stacksize, flags, codestring,
                 constants, names, varnames, filename, name, firstlineno, lnotab,
                 null, null);
@@ -46,7 +46,7 @@ public class PyBytecode extends PyBaseCode {
 
     public PyBytecode(int argcount, int nlocals, int stacksize, int flags,
             String codestring, PyObject[] constants, String[] names, String varnames[],
-            String filename, String name, int firstlineno, PyObject[] lnotab,
+            String filename, String name, int firstlineno, String lnotab,
             String[] cellvars, String[] freevars) {
         co_argcount = nargs = argcount;
         co_varnames = varnames;
@@ -56,18 +56,6 @@ public class PyBytecode extends PyBaseCode {
         co_cellvars = cellvars;
         co_freevars = freevars;
         co_name = name;
-
-// need to look at how this is used, since it's not part of the standard new.code interface
-//        this.varargs = varargs;
-//        if (varargs) {
-//            co_argcount -= 1;
-//            co_flags |= CO_VARARGS;
-//        }
-//        this.varkwargs = varkwargs;
-//        if (varkwargs) {
-//            co_argcount -= 1;
-//            co_flags |= CO_VARKEYWORDS;
-//        }
         varargs = (flags & CO_VARARGS) != 0;
         varkwargs = (flags & CO_VARKEYWORDS) != 0;
         co_flags |= flags;
@@ -76,8 +64,9 @@ public class PyBytecode extends PyBaseCode {
         co_consts = constants;
         co_names = names;
         co_code = codestring.toCharArray();
-        co_lnotab = lnotab;
+        co_lnotab = null; // ignore
     }
+    
     private static final String[] __members__ = {
         "co_name", "co_argcount",
         "co_varnames", "co_filename", "co_firstlineno",
