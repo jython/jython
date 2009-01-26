@@ -56,45 +56,51 @@ public class PyJavaType extends PyType {
         super(TYPE == null ? fromClass(PyType.class) : TYPE);
     }
 
-    // Java types are ok with things being added and removed from their dicts as long as there isn't
-    // something there, so let these checks through
-    @Override
-    protected void checkDelattr() {}
-
-    @Override
-    protected void checkSetattr() {}
-
     protected boolean useMetatypeFirst(PyObject attr) {
         return !(attr instanceof PyReflectedField || attr instanceof PyReflectedFunction);
     }
 
+    // Java types are ok with things being added and removed from their dicts as long as there isn't
     @Override
-    public void addMethod(PyBuiltinMethod meth) {
+    void type___setattr__(String name, PyObject value) {
+        PyObject field = lookup(name);// If we have a static field that takes this, go with that
+        if (field != null) {
+            if (field._doset(null, value)) {
+                return;
+            }
+        }
         if (modified == null) {
             modified = Generic.set();
         }
-        if (modified.add(meth.info.getName())) {
+        if (modified.add(name)) {
             if (conflicted != null) {
                 for (PyJavaType conflict : conflicted) {
-                    if (conflict.modified != null
-                            && conflict.modified.contains(meth.info.getName())) {
+                    if (conflict.modified != null && conflict.modified.contains(name)) {
                         throw Py.TypeError(getName()
-                                + " does not have a consistent method resolution" + " order with "
-                                + conflict.getName() + ", and it already has "
-                                + meth.info.getName() + " added for Python");
+                                + " does not have a consistent method resolution order with "
+                                + conflict.getName() + ", and it already has " + name
+                                + " added for Python");
                     }
                 }
             }
         }
-        super.addMethod(meth);
+        object___setattr__(name, value);
+        postSetattr(name);
     }
 
     @Override
-    public void removeMethod(PyBuiltinMethod meth) {
-        super.removeMethod(meth);
-        if (modified != null) {
-            modified.remove(meth.info.getName());
+    void type___delattr__(String name) {
+        PyObject field = lookup(name);
+        if (field == null) {
+            throw Py.NameError("attribute not found: "+name);
         }
+        if (!field.jdontdel()) {
+            object___delattr__(name);
+        }
+        if (modified != null) {
+            modified.remove(name);
+        }
+        postDelattr(name);
     }
 
     @Override
@@ -136,8 +142,8 @@ public class PyJavaType extends PyType {
                             types.add(othertype);
                         }
                     }
-                    throw Py.TypeError(String.format("Supertypes that share a method "
-                            + " have an MRO conflict[method=%s, types=%s]", method, types));
+                    throw Py.TypeError(String.format("Supertypes that share a modified attribute "
+                            + " have an MRO conflict[attribute=%s, types=%s]", method, types));
                 }
             }
         }

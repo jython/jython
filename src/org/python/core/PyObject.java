@@ -1033,10 +1033,6 @@ public class PyObject implements Serializable {
         return false;
     }
 
-    boolean jtryset(PyObject container, PyObject value) {
-        return _doset(container, value);
-    }
-
     boolean jdontdel() {
         return false;
     }
@@ -3682,7 +3678,7 @@ public class PyObject implements Serializable {
         object___setattr__(asName(name), value);
     }
 
-    private final void object___setattr__(String name, PyObject value) {
+    final void object___setattr__(String name, PyObject value) {
         PyObject descr = objtype.lookup(name);
 
         boolean set = false;

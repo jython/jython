@@ -327,7 +327,7 @@ public class PySystemState extends PyObject
             setWarnoptions(value);
         } else {
             PyObject ret = getType().lookup(name); // xxx fix fix fix
-            if (ret != null && ret.jtryset(this, value)) {
+            if (ret != null && ret._doset(this, value)) {
                 return;
             }
             __dict__.__setitem__(name, value);
@@ -338,7 +338,7 @@ public class PySystemState extends PyObject
         checkMustExist(name);
         PyObject ret = getType().lookup(name); // xxx fix fix fix
         if (ret != null) {
-            ret.jtryset(this, PyAttributeDeleted.INSTANCE);
+            ret._doset(this, PyAttributeDeleted.INSTANCE);
         }
         try {
             __dict__.__delitem__(name);

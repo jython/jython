@@ -1092,26 +1092,26 @@ public class PyType extends PyObject implements Serializable {
      */
     public void addMethod(PyBuiltinMethod meth) {
         PyMethodDescr pmd = meth.makeDescriptor(this);
-        dict.__setitem__(pmd.getName(), pmd);
+        __setattr__(pmd.getName(), pmd);
     }
 
     /**
      * Removes the given method from this type's dict or raises a KeyError.
      */
     public void removeMethod(PyBuiltinMethod meth) {
-        dict.__delitem__(meth.info.getName());
+        __delattr__(meth.info.getName());
     }
 
-    protected void checkSetattr() {
+    void type___setattr__(String name, PyObject value) {
         if (builtin) {
             throw Py.TypeError(String.format("can't set attributes of built-in/extension type "
                     + "'%s'", this.name));
         }
+        super.__setattr__(name, value);
+        postSetattr(name);
     }
 
-    final void type___setattr__(String name, PyObject value) {
-        checkSetattr();
-        super.__setattr__(name, value);
+    void postSetattr(String name) {
         if (name == "__set__") {
             if (!has_set && lookup("__set__") != null) {
                 traverse_hierarchy(false, new OnType() {
@@ -1145,15 +1145,19 @@ public class PyType extends PyObject implements Serializable {
     }
 
     protected void checkDelattr() {
+    }
+
+    void type___delattr__(String name) {
         if (builtin) {
             throw Py.TypeError(String.format("can't set attributes of built-in/extension type "
                     + "'%s'", this.name));
         }
+        super.__delattr__(name);
+        postDelattr(name);
     }
 
-    final void type___delattr__(String name) {
-        checkDelattr();
-        super.__delattr__(name);
+
+    void postDelattr(String name) {
         if (name == "__set__") {
             if (has_set && lookup("__set__") == null) {
                 traverse_hierarchy(false, new OnType() {
@@ -1168,7 +1172,7 @@ public class PyType extends PyObject implements Serializable {
                 });
             }
         } else if (name == "__delete__") {
-            if (has_set && lookup("__delete__") == null) {
+            if (has_delete && lookup("__delete__") == null) {
                 traverse_hierarchy(false, new OnType() {
                     public boolean onType(PyType type) {
                         boolean absent = type.getDict().__finditem__("__delete__") == null;
