@@ -502,8 +502,9 @@ public class PySystemState extends PyObject
                 if (jarIndex >= 0) {
                     int start = classpath.lastIndexOf(File.pathSeparator, jarIndex) + 1;
                     root = classpath.substring(start, jarIndex);
-                } else {
-                    // in case JYTHON_JAR is referenced from a MANIFEST inside another jar on the classpath
+                } else if (jarFileName != null) {
+                    // in case JYTHON_JAR is referenced from a MANIFEST inside another jar on the
+                    // classpath
                     root = new File(jarFileName).getParent();
                 }
             }
