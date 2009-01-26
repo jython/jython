@@ -15,8 +15,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.python.core.util.StringUtil;
-import org.python.expose.ExposeAsSuperclass;
-import org.python.expose.ExposedType;
 import org.python.util.Generic;
 
 public class PyJavaType extends PyType {
@@ -164,8 +162,9 @@ public class PyJavaType extends PyType {
         }
         computeMro(toMerge, mro);
     }
+
     @Override
-    protected void init(Class<?> forClass) {
+    protected void init(Class<?> forClass, Set<PyJavaType> needsInners) {
         name = forClass.getName();
         // Strip the java fully qualified class name from Py classes in core
         if (name.startsWith("org.python.core.Py")) {
@@ -179,8 +178,9 @@ public class PyJavaType extends PyType {
             underlying_class = forClass;
             computeLinearMro(baseClass);
         } else {
+                needsInners.add(this);
             javaProxy = forClass;
-            objtype = PyType.fromClass(Class.class);
+            objtype = PyType.fromClassSkippingInners(Class.class, needsInners);
             // Wrapped Java types fill in their mro first using all of their interfaces then their
             // super class.
             List<PyObject> visibleBases = Generic.list();
@@ -191,16 +191,16 @@ public class PyJavaType extends PyType {
                     // mro
                     continue;
                 }
-                visibleBases.add(PyType.fromClass(iface));
+                visibleBases.add(PyType.fromClassSkippingInners(iface, needsInners));
             }
             if (javaProxy == Object.class) {
-                base = PyType.fromClass(PyObject.class);
+                base = PyType.fromClassSkippingInners(PyObject.class, needsInners);
             } else if(baseClass == null) {
-                base = PyType.fromClass(Object.class);
+                base = PyType.fromClassSkippingInners(Object.class, needsInners);
             }else if (javaProxy == Class.class) {
-                base = PyType.fromClass(PyType.class);
+                base = PyType.fromClassSkippingInners(PyType.class, needsInners);
             } else {
-                base = PyType.fromClass(baseClass);
+                base = PyType.fromClassSkippingInners(baseClass, needsInners);
             }
             visibleBases.add(base);
             this.bases = visibleBases.toArray(new PyObject[visibleBases.size()]);
@@ -448,21 +448,6 @@ public class PyJavaType extends PyType {
             dict.__setitem__("__new__", new_);
         } else {
             dict.__setitem__("__init__", reflctr);
-        }
-        for (Class<?> inner : forClass.getClasses()) {
-            // Only add the class if there isn't something else with that name and it came from this
-            // class
-            if (inner.getDeclaringClass() == forClass &&
-                    dict.__finditem__(inner.getSimpleName()) == null) {
-                // If this class is currently being loaded, any exposed types it contains won't have
-                // set their builder in PyType yet, so add them to BOOTSTRAP_TYPES so they're
-                // created as PyType instead of PyJavaType
-                if (inner.getAnnotation(ExposedType.class) != null
-                        || ExposeAsSuperclass.class.isAssignableFrom(inner)) {
-                    Py.BOOTSTRAP_TYPES.add(inner);
-                }
-                dict.__setitem__(inner.getSimpleName(), PyType.fromClass(inner));
-            }
         }
         for (Map.Entry<Class<?>, PyBuiltinMethod[]> entry : getCollectionProxies().entrySet()) {
             if (entry.getKey() == forClass) {

@@ -357,7 +357,7 @@ public class PyType extends PyObject implements Serializable {
      * Called on builtin types for a particular class. Should fill in dict, name, mro, base and
      * bases from the class.
      */
-    protected void init(Class<?> forClass) {
+    protected void init(Class<?> forClass, Set<PyJavaType> needsInners) {
         underlying_class = forClass;
         if (underlying_class == PyObject.class) {
             mro = new PyType[] {this};
@@ -939,24 +939,24 @@ public class PyType extends PyObject implements Serializable {
             }
             // The types in Py.BOOTSTRAP_TYPES are initialized before their builders are assigned,
             // so do the work of addFromClass & fillFromClass after the fact
-            fromClass(builder.getTypeClass()).init(builder.getTypeClass());
+            fromClass(builder.getTypeClass()).init(builder.getTypeClass(), null);
         }
     }
 
-    private static PyType addFromClass(Class<?> c) {
+    private static PyType addFromClass(Class<?> c, Set<PyJavaType> needsInners) {
         if (ExposeAsSuperclass.class.isAssignableFrom(c)) {
             PyType exposedAs = fromClass(c.getSuperclass());
             class_to_type.put(c, exposedAs);
             return exposedAs;
         }
-        return createType(c);
+        return createType(c, needsInners);
     }
 
     private static TypeBuilder getBuilder(Class<?> c) {
         return classToBuilder == null ? null : classToBuilder.get(c);
     }
 
-    private static PyType createType(Class<?> c) {
+    private static PyType createType(Class<?> c, Set<PyJavaType> needsInners) {
         PyType newtype;
         if (c == PyType.class) {
             newtype = new PyType(false);
@@ -975,20 +975,54 @@ public class PyType extends PyObject implements Serializable {
 
         class_to_type.put(c, newtype);
         newtype.builtin = true;
-        newtype.init(c);
+        newtype.init(c,needsInners);
         return newtype;
     }
 
     public static synchronized PyType fromClass(Class<?> c) {
         if (class_to_type == null) {
             class_to_type = Generic.map();
-            addFromClass(PyType.class);
+            addFromClass(PyType.class, null);
         }
         PyType type = class_to_type.get(c);
         if (type != null) {
             return type;
         }
-        return addFromClass(c);
+        // We haven't seen this class before, so it's type needs to be created. If it's being
+        // exposed as a Java class, defer processing its inner types until it's completely
+        // created in case the inner class references a class that references this class.
+        Set<PyJavaType> needsInners = Generic.set();
+        PyType result = addFromClass(c, needsInners);
+        for (PyJavaType javaType : needsInners) {
+            Class<?> forClass = javaType.getProxyType();
+            if (forClass == null) {
+                continue;
+            }
+            for (Class<?> inner : forClass.getClasses()) {
+                // Only add the class if there isn't something else with that name and it came from this
+                // class
+                if (inner.getDeclaringClass() == forClass &&
+                        javaType.dict.__finditem__(inner.getSimpleName()) == null) {
+                    // If this class is currently being loaded, any exposed types it contains won't have
+                    // set their builder in PyType yet, so add them to BOOTSTRAP_TYPES so they're
+                    // created as PyType instead of PyJavaType
+                    if (inner.getAnnotation(ExposedType.class) != null
+                            || ExposeAsSuperclass.class.isAssignableFrom(inner)) {
+                        Py.BOOTSTRAP_TYPES.add(inner);
+                    }
+                    javaType.dict.__setitem__(inner.getSimpleName(), PyType.fromClass(inner));
+                }
+            }
+        }
+        return result;
+    }
+
+    static PyType fromClassSkippingInners(Class<?> c, Set<PyJavaType> needsInners) {
+        PyType type = class_to_type.get(c);
+        if (type != null) {
+            return type;
+        }
+        return addFromClass(c, needsInners);
     }
 
     @ExposedMethod(doc = BuiltinDocs.type___getattribute___doc)
