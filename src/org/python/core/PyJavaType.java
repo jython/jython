@@ -58,11 +58,6 @@ public class PyJavaType extends PyType {
         super(TYPE == null ? fromClass(PyType.class) : TYPE);
     }
 
-    @Override
-    public Class<?> getProxyType() {
-        return (Class<?>)javaProxy;
-    }
-
     // Java types are ok with things being added and removed from their dicts as long as there isn't
     // something there, so let these checks through
     @Override

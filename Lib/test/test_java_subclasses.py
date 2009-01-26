@@ -12,7 +12,7 @@ from java.util import Date, Hashtable, Vector
 from java.awt import Color, Component, Dimension, Rectangle
 from javax.swing.table import AbstractTableModel
 
-from org.python.tests import BeanInterface, Callbacker
+from org.python.tests import BeanInterface, Callbacker, Coercions
 
 class InterfaceTest(unittest.TestCase):
     def test_java_calling_python_interface_implementation(self):
@@ -117,16 +117,27 @@ class PythonSubclassesTest(unittest.TestCase):
             pass
 
     def test_multilevel_override(self):
-        class SubDate(Date): 
-           def toString(self): 
-               s = Date.toString(self)
-               return 'SubDate -> Date'
+        runs = []
+        class SubDate(Date):
+            def run(self):
+                runs.append("SubDate")
 
-        class SubSubDate(SubDate): 
+            def method(self):
+                return "SubDateMethod"
+
+            def toString(self): 
+                s = Date.toString(self)
+                return 'SubDate -> Date'
+
+        class SubSubDate(SubDate, Runnable):
             def toString(self):
                 return 'SubSubDate -> ' + SubDate.toString(self) 
+
         self.assertEquals("SubDate -> Date", SubDate().toString())
         self.assertEquals("SubSubDate -> SubDate -> Date", SubSubDate().toString())
+        self.assertEquals("SubDateMethod", SubSubDate().method())
+        Coercions.runRunnable(SubSubDate())
+        self.assertEquals(["SubDate"], runs)
 
     def test_passthrough(self):
         class CallbackPassthrough(Callbacker.Callback):

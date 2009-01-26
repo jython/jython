@@ -191,13 +191,24 @@ public class PyType extends PyObject implements Serializable {
             List<PyObject> cleanedBases = Generic.list();
             boolean addedProxyType = false;
             for (PyObject base : bases_list) {
-                if (base instanceof PyJavaType) {
-                    if (!addedProxyType) {
+                if (!(base instanceof PyType)) {
+                    cleanedBases.add(base);
+                    continue;
+                }
+                Class<?> proxy = ((PyType)base).getProxyType();
+                if (proxy == null) {
+                    cleanedBases.add(base);// non-proxy types go straight into our lookup
+                } else {
+                    if (!(base instanceof PyJavaType)) {
+                        // python subclasses of proxy types need to be added as a base so their
+                        // version of methods will show up
+                        cleanedBases.add(base);
+                    } else if (!addedProxyType) {
+                        // Only add a single Java type, since everything's going to go through the
+                        // proxy type
                         cleanedBases.add(proxyType);
                         addedProxyType = true;
                     }
-                } else {
-                    cleanedBases.add(base);
                 }
             }
             bases_list = cleanedBases.toArray(new PyObject[cleanedBases.size()]);
@@ -593,15 +604,7 @@ public class PyType extends PyObject implements Serializable {
      * Returns the Java Class that this type inherits from, or null if this type is Python-only.
      */
     public Class<?> getProxyType() {
-        for (PyObject base : bases) {
-            if (base instanceof PyType) {
-                Class<?> javaType = ((PyType)base).getProxyType();
-                if (javaType != null) {
-                    return javaType;
-                }
-            }
-        }
-        return null;
+        return (Class<?>)javaProxy;
     }
 
     private synchronized void attachSubclass(PyType subtype) {
@@ -1206,6 +1209,10 @@ public class PyType extends PyObject implements Serializable {
         throw Py.TypeError(String.format("can't delete %s.__name__", name));
     }
 
+    /**
+     * Returns the actual dict underlying this type instance. Changes to Java types should go
+     * through {@link #addMethod} and {@link #removeMethod}, or unexpected mro errors can occur.
+     */
     public PyObject fastGetDict() {
         return dict;
     }
