@@ -18,7 +18,9 @@ public class PyBytecode extends PyBaseCode {
         return opname;
     }
 
+    private boolean debug = false;
     public PyObject _debug(int maxCount) {
+        debug = maxCount > 0;
         this.maxCount = maxCount;
         return Py.None;
     }
@@ -66,6 +68,8 @@ public class PyBytecode extends PyBaseCode {
 //            co_argcount -= 1;
 //            co_flags |= CO_VARKEYWORDS;
 //        }
+        varargs = (flags & CO_VARARGS) != 0;
+        varkwargs = (flags & CO_VARKEYWORDS) != 0;
         co_flags |= flags;
 
         co_stacksize = stacksize;
@@ -206,12 +210,14 @@ public class PyBytecode extends PyBaseCode {
     }
 
     private void print_debug(int count, int next_instr, int opcode, int oparg, PyStack stack, PyFrame f) {
-        System.err.println(co_name + ":" +
-                count + "," + f.f_lasti + "> opcode: " +
-                getOpname().__getitem__(Py.newInteger(opcode)) +
-                (opcode > Opcode.HAVE_ARGUMENT ? ", oparg: " + oparg : "") +
-                ", stack: " + stack.toString() +
-                ", blocks: " + stringify_blocks(f));
+        if (debug) {
+            System.err.println(co_name + ":" +
+                    count + "," + f.f_lasti + "> opcode: " +
+                    getOpname().__getitem__(Py.newInteger(opcode)) +
+                    (opcode > Opcode.HAVE_ARGUMENT ? ", oparg: " + oparg : "") +
+                    ", stack: " + stack.toString() +
+                    ", blocks: " + stringify_blocks(f));
+        }
     }
 
     private static PyTryBlock popBlock(PyFrame f) {
@@ -248,7 +254,9 @@ public class PyBytecode extends PyBaseCode {
         // 1. consider detaching the setting/getting of frame fields to improve performance, instead do this
         // in a shadow version of the frame that we copy back to on entry/exit and downcalls
 
-        System.err.println("Entry with " + f.f_lasti + " into " + co_code.length);
+        if (debug) {
+            System.err.println("Entry with " + f.f_lasti + " into " + co_code.length);
+        }
         if (f.f_lasti >= co_code.length) {
             throw Py.SystemError("");
         }
@@ -266,7 +274,7 @@ public class PyBytecode extends PyBaseCode {
             f.f_savedlocals = null;
         }
 
-        while (count < maxCount) { // XXX - replace with while(true)
+        while (!debug || (count < maxCount)) { // XXX - replace with while(true)
 
             try {
 
@@ -289,7 +297,6 @@ public class PyBytecode extends PyBaseCode {
                 count += 1;
                 next_instr += 1;
                 f.f_lasti = next_instr; // should have no worries about needing co_lnotab, just keep this current
-
 
                 switch (opcode) {
                     case Opcode.NOP:
@@ -910,7 +917,7 @@ public class PyBytecode extends PyBaseCode {
                         break;
 
                     case Opcode.JUMP_ABSOLUTE:
-                        next_instr = oparg; // XXX - continue to a label is probably much better
+                        next_instr = oparg;
                         break;
 
                     case Opcode.GET_ITER: {
@@ -1048,7 +1055,7 @@ public class PyBytecode extends PyBaseCode {
                     case Opcode.EXTENDED_ARG:
                         opcode = co_code[next_instr++];
                         next_instr += 2;
-                        oparg = oparg << 16 | ((co_code[next_instr - 1] << 8) + (co_code[next_instr - 2]));
+                        oparg = oparg << 16 | ((co_code[next_instr] << 8) + co_code[next_instr - 1]);
                         break;
 
                     default:
@@ -1057,7 +1064,6 @@ public class PyBytecode extends PyBaseCode {
                                 String.format("XXX lineno: %d, opcode: %d\n",
                                 f.f_lasti, opcode)));
                         throw Py.SystemError("unknown opcode");
-
 
                 } // end switch
             } // end try
@@ -1133,9 +1139,11 @@ public class PyBytecode extends PyBaseCode {
 
         f.f_lasti = next_instr; // need to update on function entry, etc
 
-        System.err.println(count + "," + f.f_lasti + "> Returning from " + why + ": " + retval +
-                ", stack: " + stack.toString() +
-                ", blocks: " + stringify_blocks(f));
+        if (debug) {
+            System.err.println(count + "," + f.f_lasti + "> Returning from " + why + ": " + retval +
+                    ", stack: " + stack.toString() +
+                    ", blocks: " + stringify_blocks(f));
+        }
 
         if (why == why.EXCEPTION) {
             throw ts.exception;

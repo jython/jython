@@ -195,10 +195,10 @@ public class PyFunction extends PyObject {
 
     @ExposedSet(name = "func_code")
     public void setFuncCode(PyCode code) {
-        if (func_code == null || !(code instanceof PyTableCode)) {
+        if (func_code == null || !(code instanceof PyBaseCode)) {
             throw Py.TypeError("func_code must be set to a code object");
         }
-        PyTableCode tcode = (PyTableCode)code;
+        PyBaseCode tcode = (PyBaseCode)code;
         int nfree = tcode.co_freevars == null ? 0 : tcode.co_freevars.length;
         int nclosure = func_closure != null ? func_closure.__len__() : 0;
         if (nclosure != nfree) {
