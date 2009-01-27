@@ -17,8 +17,8 @@ public class PyBytecode extends PyBaseCode {
         }
         return opname;
     }
-
     private boolean debug = false;
+
     public PyObject _debug(int maxCount) {
         debug = maxCount > 0;
         this.maxCount = maxCount;
@@ -66,7 +66,6 @@ public class PyBytecode extends PyBaseCode {
         co_code = codestring.toCharArray();
         co_lnotab = null; // ignore
     }
-    
     private static final String[] __members__ = {
         "co_name", "co_argcount",
         "co_varnames", "co_filename", "co_firstlineno",
@@ -170,15 +169,6 @@ public class PyBytecode extends PyBaseCode {
         @Override
         public String toString() {
             return exception.toString();
-        }
-    }
-
-    private static Why do_raise(ThreadState ts, PyObject type, PyObject value, PyTraceback traceback) {
-        PyException pye = type == null ? ts.exception : new PyException(type, value, traceback);
-        if (traceback == null) {
-            return Why.EXCEPTION;
-        } else {
-            return Why.RERAISE;
         }
     }
 
@@ -635,22 +625,22 @@ public class PyBytecode extends PyBaseCode {
                                 PyTraceback tb = (PyTraceback) (stack.pop());
                                 PyObject value = stack.pop();
                                 PyObject type = stack.pop();
-                                why = do_raise(ts, type, value, tb);
+                                PyException.doRaise(type, value, tb);
                                 break;
                             }
                             case 2: {
                                 PyObject value = stack.pop();
                                 PyObject type = stack.pop();
-                                why = do_raise(ts, type, value, null);
+                                PyException.doRaise(type, value, null);
                                 break;
                             }
                             case 1: {
                                 PyObject type = stack.pop();
-                                why = do_raise(ts, type, null, null);
+                                PyException.doRaise(type, null, null);
                                 break;
                             }
                             case 0:
-                                why = do_raise(ts, null, null, null);
+                                PyException.doRaise(null, null, null);
                                 break;
                             default:
                                 throw Py.SystemError("bad RAISE_VARARGS oparg");
@@ -798,6 +788,7 @@ public class PyBytecode extends PyBaseCode {
 
                     case Opcode.BUILD_MAP:
                         stack.push(new PyDictionary());
+                        break;
 
                     case Opcode.LOAD_ATTR:
                         stack.push(stack.pop().__getattr__(co_names[oparg]));
@@ -1073,6 +1064,7 @@ public class PyBytecode extends PyBaseCode {
 
             while (why != Why.NOT && blocksLeft(f)) {
                 PyTryBlock b = popBlock(f);
+//                System.err.println("Processing block: " + b);
                 assert (why != Why.YIELD);
                 if (b.b_type == Opcode.SETUP_LOOP && why == Why.CONTINUE) {
                     pushBlock(f, b);
@@ -1282,7 +1274,9 @@ public class PyBytecode extends PyBaseCode {
         void rot(int n) {
             int end = stack.size();
             List<PyObject> lastN = stack.subList(end - n, end);
-            Collections.rotate(lastN, n);
+//            System.err.print("rot(" + n + "): " + lastN.toString() + " -> ");
+            Collections.rotate(lastN, n - 1);
+//            System.err.println("rot(" + n + "): " + lastN.toString());
         }
 
         int size() {

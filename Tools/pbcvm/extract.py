@@ -62,7 +62,6 @@ def candidate_functions(mod):
                 functions.append(("%s.%s" % (classname, methodname), method))
     return functions
 
-# what if we are passed a builtin? need to identify that signature
 def extract_code_obj(f_or_code):
     if inspect.iscode(f_or_code):
         code = f_or_code
@@ -91,12 +90,10 @@ def extract_def(code):
                     co_consts.append(extract_def(const))
                 else:
                     co_consts.append(repr(const))
-            values.append("["+', '.join(co_consts)+"]")
-        elif attr == 'co_lnotab':
-            values.append(repr(None))
+            values.append((attr, "["+', '.join(co_consts)+"]"))
         else:
-            values.append(repr(getattr(code, attr)))
-    _codeobjs[code] = "PyBytecode(\n" + ',\n'.join([' '* 4 + v for v in values])+")"
+            values.append((attr, repr(getattr(code, attr))))
+    _codeobjs[code] = "PyBytecode(\n" + ',\n'.join([' '* 4 + v + ' # ' + attr for (attr, v) in values])+")"
     return "_codeobjs[%r]" % (name,)
 
 
