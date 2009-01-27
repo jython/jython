@@ -93,7 +93,7 @@ def extract_def(code):
             values.append((attr, "["+', '.join(co_consts)+"]"))
         else:
             values.append((attr, repr(getattr(code, attr))))
-    _codeobjs[code] = "PyBytecode(\n" + ',\n'.join([' '* 4 + v + ' # ' + attr for (attr, v) in values])+")"
+    _codeobjs[code] = "PyBytecode(\n" + '\n'.join([' '* 4 + v + ', # ' + attr for (attr, v) in values])+"\n    )"
     return "_codeobjs[%r]" % (name,)
 
 

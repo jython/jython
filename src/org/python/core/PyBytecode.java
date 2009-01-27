@@ -193,7 +193,7 @@ public class PyBytecode extends PyBaseCode {
             System.err.println(co_name + ":" +
                     count + "," + f.f_lasti + "> opcode: " +
                     getOpname().__getitem__(Py.newInteger(opcode)) +
-                    (opcode > Opcode.HAVE_ARGUMENT ? ", oparg: " + oparg : "") +
+                    (opcode >= Opcode.HAVE_ARGUMENT ? ", oparg: " + oparg : "") +
                     ", stack: " + stack.toString() +
                     ", blocks: " + stringify_blocks(f));
         }
@@ -267,7 +267,7 @@ public class PyBytecode extends PyBaseCode {
                 }
 
                 opcode = co_code[next_instr];
-                if (opcode > Opcode.HAVE_ARGUMENT) {
+                if (opcode >= Opcode.HAVE_ARGUMENT) {
                     next_instr += 2;
                     oparg = (co_code[next_instr] << 8) + co_code[next_instr - 1];
                 }
@@ -705,18 +705,18 @@ public class PyBytecode extends PyBaseCode {
 
                     case Opcode.BUILD_CLASS: {
                         PyObject methods = stack.pop();
-                        PyObject bases[] = (new PyTuple(stack.pop())).getArray();
+                        PyObject bases[] = ((PyTuple)(stack.pop())).getArray(); // new PyTuple(stack.pop())).getArray();
                         String name = stack.pop().toString();
                         stack.push(Py.makeClass(name, bases, methods));
                         break;
                     }
 
                     case Opcode.STORE_NAME:
-                        f.setlocal(oparg, stack.pop());
+                        f.setlocal(co_names[oparg], stack.pop());
                         break;
 
                     case Opcode.DELETE_NAME:
-                        f.dellocal(oparg);
+                        f.dellocal(co_names[oparg]);
                         break;
 
                     case Opcode.UNPACK_SEQUENCE: {
