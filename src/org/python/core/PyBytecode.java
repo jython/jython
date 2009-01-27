@@ -625,27 +625,22 @@ public class PyBytecode extends PyBaseCode {
                                 PyTraceback tb = (PyTraceback) (stack.pop());
                                 PyObject value = stack.pop();
                                 PyObject type = stack.pop();
-                                PyException.doRaise(type, value, tb);
-                                break;
+                                throw PyException.doRaise(type, value, tb);
                             }
                             case 2: {
                                 PyObject value = stack.pop();
                                 PyObject type = stack.pop();
-                                PyException.doRaise(type, value, null);
-                                break;
+                                throw PyException.doRaise(type, value, null);
                             }
                             case 1: {
                                 PyObject type = stack.pop();
-                                PyException.doRaise(type, null, null);
-                                break;
+                                throw PyException.doRaise(type, null, null);
                             }
                             case 0:
-                                PyException.doRaise(null, null, null);
-                                break;
+                                throw PyException.doRaise(null, null, null);
                             default:
                                 throw Py.SystemError("bad RAISE_VARARGS oparg");
                         }
-                        break;
 
                     case Opcode.LOAD_LOCALS:
                         stack.push(f.f_locals);
