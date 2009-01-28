@@ -814,6 +814,21 @@ class BasicTCPTest(SocketConnectedTest):
         self.serv_conn.send(MSG)
         self.serv_conn.send('and ' + MSG)
 
+class UDPBindTest(unittest.TestCase):
+
+    HOST = HOST
+    PORT = PORT
+
+    def setUp(self):
+        self.sock = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+
+    def testBindEphemeral(self):
+        self.sock.bind( (self.HOST, 0) ) # let system choose a free port
+        self.failUnless(self.sock.getsockname()[1] != 0, "Binding to port zero should have allocated an ephemeral port number") 
+
+    def tearDown(self):
+        self.sock.close()
+
 class BasicUDPTest(ThreadedUDPSocketTest):
 
     def __init__(self, methodName='runTest'):
@@ -1609,6 +1624,7 @@ def test_main():
         TestInvalidUsage,
         TestTCPAddressParameters,
         TestUDPAddressParameters,
+        UDPBindTest,
         BasicUDPTest,
         UDPTimeoutTest,
         NonBlockingTCPTests,

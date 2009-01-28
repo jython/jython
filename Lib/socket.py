@@ -384,7 +384,7 @@ class _datagram_socket_impl(_nio_impl):
     def __init__(self, port=None, address=None, reuse_addr=0):
         self.jchannel = java.nio.channels.DatagramChannel.open()
         self.jsocket = self.jchannel.socket()
-        if port:
+        if port is not None:
             if address is not None:
                 local_address = java.net.InetSocketAddress(address, port)
             else:
