@@ -239,22 +239,6 @@ class _nio_impl:
     def close(self):
         self.jsocket.close()
 
-    def shutdownInput(self):
-        try:
-            self.jsocket.shutdownInput()
-        except AttributeError, ax:
-            pass # Fail silently server sockets
-        except java.lang.Exception, jlx:
-            raise _map_exception(jlx)
-
-    def shutdownOutput(self):
-        try:
-            self.jsocket.shutdownOutput()
-        except AttributeError, ax:
-            pass # Fail silently server sockets
-        except java.lang.Exception, jlx:
-            raise _map_exception(jlx)
-
     def getchannel(self):
         return self.jchannel
 
@@ -329,6 +313,12 @@ class _client_socket_impl(_nio_impl):
         else:
             return self._do_write_nio(buf)
 
+    def shutdown(self, how):
+        if how in (SHUT_RD, SHUT_RDWR):
+            self.jsocket.shutdownInput()
+        if how in (SHUT_WR, SHUT_RDWR):
+            self.jsocket.shutdownOutput()
+
 class _server_socket_impl(_nio_impl):
 
     options = {
@@ -358,6 +348,13 @@ class _server_socket_impl(_nio_impl):
             # In timeout mode now
             new_cli_sock = self.jsocket.accept()
             return _client_socket_impl(new_cli_sock)
+
+    def shutdown(self, how):
+        # This is no-op on java, for server sockets.
+        # What the user wants to achieve is achieved by calling close() on
+        # java/jython. But we can't call that here because that would then
+        # later cause the user explicit close() call to fail
+        pass
 
 class _datagram_socket_impl(_nio_impl):
 
@@ -392,6 +389,13 @@ class _datagram_socket_impl(_nio_impl):
             cpython appears not to have this operation
         """
         self.jchannel.disconnect()
+
+    def shutdown(self, how):
+        # This is no-op on java, for datagram sockets.
+        # What the user wants to achieve is achieved by calling close() on
+        # java/jython. But we can't call that here because that would then
+        # later cause the user explicit close() call to fail
+        pass
 
     def _do_send_net(self, byte_array, socket_address, flags):
         # Need two separate implementations because the java.nio APIs do not support timeouts
@@ -674,6 +678,22 @@ class _nonblocking_api_mixin:
         except java.lang.Exception, jlx:
             raise _map_exception(jlx)
 
+    def shutdown(self, how):
+        assert how in (SHUT_RD, SHUT_WR, SHUT_RDWR)
+        if not self.sock_impl:
+            raise error(errno.ENOTCONN, "Transport endpoint is not connected") 
+        try:
+            self.sock_impl.shutdown(how)
+        except java.lang.Exception, jlx:
+            raise _map_exception(jlx)
+
+    def close(self):
+        try:
+            if self.sock_impl:
+                self.sock_impl.close()
+        except java.lang.Exception, jlx:
+            raise _map_exception(jlx)
+
     def _config(self):
         assert self.mode in _permitted_modes
         if self.sock_impl:
@@ -859,15 +879,6 @@ class _tcpsocket(_nonblocking_api_mixin):
         except java.lang.Exception, jlx:
             raise _map_exception(jlx)
 
-    def shutdown(self, how):
-        if not self.sock_impl:
-            raise error(errno.ENOTCONN, "Transport endpoint is not connected") 
-        assert how in (SHUT_RD, SHUT_WR, SHUT_RDWR)
-        if how in (SHUT_RD, SHUT_RDWR):
-            self.sock_impl.shutdownInput()
-        if how in (SHUT_WR, SHUT_RDWR):
-            self.sock_impl.shutdownOutput()
-
     def close(self):
         try:
             if self.istream:
@@ -877,8 +888,7 @@ class _tcpsocket(_nonblocking_api_mixin):
             if self.sock_impl:
                 self.sock_impl.close()
         except java.lang.Exception, jlx:
-            raise _map_exception(jlx)
-        
+            raise _map_exception(jlx)        
 
 class _udpsocket(_nonblocking_api_mixin):
 
@@ -991,13 +1001,6 @@ class _udpsocket(_nonblocking_api_mixin):
 
     def __del__(self):
         self.close()
-
-    def close(self):
-        try:
-            if self.sock_impl:
-                self.sock_impl.close()
-        except java.lang.Exception, jlx:
-            raise _map_exception(jlx)
 
 _socketmethods = (
     'bind', 'connect', 'connect_ex', 'fileno', 'listen',
