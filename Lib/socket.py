@@ -177,6 +177,9 @@ SO_TIMEOUT     = 128
 
 TCP_NODELAY    = 256
 
+INADDR_ANY = "0.0.0.0"
+INADDR_BROADCAST = "255.255.255.255"
+
 # Options with negative constants are not supported
 # They are being added here so that code that refers to them
 # will not break with an AttributeError
@@ -712,7 +715,7 @@ class _nonblocking_api_mixin:
     def _get_jsocket(self):
         return self.sock_impl.jsocket
 
-def _unpack_address_tuple(address_tuple, for_tx=False):
+def _unpack_address_tuple(address_tuple):
     # TODO: Upgrade to support the 4-tuples used for IPv6 addresses
     # which include flowinfo and scope_id.
     # To be upgraded in synch with getaddrinfo
@@ -722,11 +725,6 @@ def _unpack_address_tuple(address_tuple, for_tx=False):
             or type(address_tuple[1]) is not type(0):
         raise TypeError(error_message)
     hostname = address_tuple[0].strip()
-    if hostname == "<broadcast>":
-        if for_tx:
-            hostname = "255.255.255.255"
-        else:
-            hostname = "0.0.0.0"
     return hostname, address_tuple[1]
 
 class _tcpsocket(_nonblocking_api_mixin):
@@ -902,6 +900,8 @@ class _udpsocket(_nonblocking_api_mixin):
         try:
             assert not self.sock_impl
             host, port = _unpack_address_tuple(addr)
+            if host == "":
+                host = INADDR_ANY
             host_address = java.net.InetAddress.getByName(host)
             self.sock_impl = _datagram_socket_impl(port, host_address, self.pending_options[SO_REUSEADDR])
             self._config()
@@ -941,7 +941,9 @@ class _udpsocket(_nonblocking_api_mixin):
             if not self.sock_impl:
                 self.sock_impl = _datagram_socket_impl()
                 self._config()
-            host, port = _unpack_address_tuple(addr, True)
+            host, port = _unpack_address_tuple(addr)
+            if host == "<broadcast>":
+                host = INADDR_BROADCAST
             byte_array = java.lang.String(data).getBytes('iso-8859-1')
             result = self.sock_impl.sendto(byte_array, host, port, flags)
             return result
