@@ -27,10 +27,10 @@ public class PyBytecode extends PyBaseCode {
 
     // end debugging
     public final static int CO_MAXBLOCKS = 20; // same as in CPython
-    public final char[] co_code; // to avoid sign issues
+    public final char[] co_code; // widened to char to avoid signed byte issues
     public final PyObject[] co_consts;
     public final String[] co_names;
-    public final int co_stacksize; // ignored, probably shouldn't be
+    public final int co_stacksize; // XXX - use to convert PyStack to use PyObject[] instead of ArrayList<PyObject>
     public final PyObject[] co_lnotab; // ignored
     private final static int CALL_FLAG_VAR = 1;
     private final static int CALL_FLAG_KW = 2;

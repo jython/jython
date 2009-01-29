@@ -1,11 +1,11 @@
-"""Given a module, codegens a new module where all functions imported
-from it (using __all__ ?) are replaced with functions tied to
-PyBytecode, including references to code objs in co_consts. Other
-objects are simply imported from the original object. Hopefully this
-provides an opportunity to test something two different ways, which
-seems nice."""
+"""Given a module, generates a new module where all functions that are
+   not builtin (including within classes) have their func_code pointed
+   to a PyBytecode constructor. This enables CPython to generate for
+   Jython the desired PBC.
+"""
 
 import inspect
+import networkx # add dependency to a setup script? probably overkill
 import sys
 from collections import defaultdict
 
@@ -19,9 +19,8 @@ attrs = ["co_" + x for x in """
 _codeobjs = {}
 _codeobjs_names = {}
 counters = defaultdict(int)
-
-# XXX - need to capture with a toposort the dependencies of
-# recursive code objects and emit in that order
+depend = networkx.DiGraph()
+root = "root"
 
 def extract(mod):
     functionobjs = candidate_functions(mod)
@@ -32,12 +31,17 @@ def extract(mod):
     for code, definition in _codeobjs.iteritems():
         codes[_codeobjs_names[code]] = definition
     print "from %s import *" % mod.__name__
-    print "from org.python.core import PyBytecode, PyFunction"
+    print "from org.python.core import PyBytecode"
     print
     print "_codeobjs = {}"
     print
-    for name, obj in sorted(codes.iteritems()):
-        print "_codeobjs[%r] = %s" % (name, obj)
+
+    objs = networkx.topological_sort(depend)
+    for obj in objs:
+        if not inspect.iscode(obj):
+            continue
+        name = _codeobjs_names[obj]
+        print "_codeobjs[%r] = %s" % (name, _codeobjs[obj])
         print
     for name, f in functionobjs:
         print "%s.func_code = _codeobjs[%r]" % (name, _codeobjs_names[f.func_code])
@@ -81,6 +85,7 @@ def extract_def(code):
     _codeobjs_names[code] = name
     # need to treat co_consts specially - maybe use pickling if repr is not suitable?
     values = []
+    depend.add_edge(code, root)
     for attr in attrs:
         if attr == 'co_consts':
             co_consts = []
@@ -88,6 +93,7 @@ def extract_def(code):
                 if inspect.iscode(const):
                     print >> sys.stderr, "Extracting code const " + str(const)
                     co_consts.append(extract_def(const))
+                    depend.add_edge(const, code)
                 else:
                     co_consts.append(repr(const))
             values.append((attr, "["+', '.join(co_consts)+"]"))
