@@ -11,6 +11,7 @@ import java.util.Properties;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import org.python.Version;
 import org.python.core.Options;
 import org.python.core.Py;
 import org.python.core.PyCode;
@@ -119,8 +120,7 @@ public class jython
         CommandLineOptions opts = new CommandLineOptions();
         if (!opts.parse(args)) {
             if (opts.version) {
-                PySystemState.determinePlatform(System.getProperties());
-                System.err.println(InteractiveConsole.getDefaultBanner());
+                System.err.println("Jython " + Version.PY_VERSION);
                 System.exit(0);
             }
             if (!opts.runModule) {
