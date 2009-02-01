@@ -11,7 +11,6 @@ package org.python.modules;
 import org.python.core.Py;
 import org.python.core.PyException;
 import org.python.core.PyFloat;
-import org.python.core.PyInteger;
 import org.python.core.PyList;
 import org.python.core.PyLong;
 import org.python.core.PyObject;
@@ -20,13 +19,7 @@ import org.python.core.PyStringMap;
 import org.python.core.PyTuple;
 
 import java.math.BigInteger;
-import java.util.Arrays;
-import org.python.core.ClassDictInit;
 import org.python.core.PyArray;
-import org.python.core.PyType;
-import org.python.expose.ExposedGet;
-import org.python.expose.ExposedNew;
-import org.python.expose.ExposedType;
 
 /**
  * This module performs conversions between Python values and C
@@ -103,7 +96,7 @@ import org.python.expose.ExposedType;
  *   <tr><td align=center><samp>I</samp></td>
  *       <td><tt>unsigned int</tt></td>
  *       <td>integer</td>
- *   <tr><td align=center><samp>l</samp></td>
+ *   <tr><td align=center><samp>size</samp></td>
  *       <td><tt>long</tt></td>
  *       <td>integer</td>
  *   <tr><td align=center><samp>L</samp></td>
@@ -410,13 +403,13 @@ public class struct {
         }
         
         ByteStream(String s, int offset) {
-            int l = s.length() - offset;
-            data = new char[l];
+            int size = s.length() - offset;
+            data = new char[size];
             s.getChars(offset, s.length(), data, 0);
-            len = l;
+            len = size;
             pos = 0;
             
-//            System.out.println("s.length()=" + s.length() + ",offset=" + offset + ",l=" + l + ",data=" + Arrays.toString(data));
+//            System.out.println("s.length()=" + s.length() + ",offset=" + offset + ",size=" + size + ",data=" + Arrays.toString(data));
         }
 
         int readByte() {
