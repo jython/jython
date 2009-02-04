@@ -177,7 +177,7 @@ def poll2(timeout=0.0, map=None):
 
 poll3 = poll2                           # Alias for backward compatibility
 
-def loop(timeout=30.0, use_poll=False, map=None, count=None):
+def loop(timeout=30.0, use_poll=True, map=None, count=None):
     if map is None:
         map = socket_map
 
@@ -256,13 +256,13 @@ class dispatcher:
         self.family_and_type = family, type
         self.socket = socket.socket(family, type)
         self.socket.setblocking(0)
-        self._fileno = self.socket.fileno()
+        self._fileno = self.socket
         self.add_channel()
 
     def set_socket(self, sock, map=None):
         self.socket = sock
 ##        self.__dict__['socket'] = sock
-        self._fileno = sock.fileno()
+        self._fileno = sock
         self.add_channel(map)
 
     def set_reuse_addr(self):
