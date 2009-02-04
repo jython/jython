@@ -3904,7 +3904,7 @@ public class PyObject implements Serializable {
         if (!(this instanceof PyDictionary)) {
             dictitems = Py.None;
         } else {
-            dictitems = ((PyDictionary)this).iteritems();
+            dictitems = invoke("iteritems");
         }
 
         PyObject copyreg = __builtin__.__import__("copy_reg", null, null, Py.EmptyTuple);
