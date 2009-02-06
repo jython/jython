@@ -1,6 +1,7 @@
 package org.python.core;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -234,7 +235,8 @@ public class PyBytecode extends PyBaseCode {
         // in a shadow version of the frame that we copy back to on entry/exit and downcalls
 
         if (debug) {
-            System.err.println("Entry with " + f.f_lasti + " into " + co_code.length);
+            System.err.println(co_name + ":" + f.f_lasti + "/" + co_code.length +
+                    ", cells:" + Arrays.toString(co_cellvars) + ", free:" + Arrays.toString(co_freevars));
         }
         if (f.f_lasti >= co_code.length) {
             throw Py.SystemError("");
@@ -700,7 +702,7 @@ public class PyBytecode extends PyBaseCode {
 
                     case Opcode.BUILD_CLASS: {
                         PyObject methods = stack.pop();
-                        PyObject bases[] = ((PyTuple)(stack.pop())).getArray(); // new PyTuple(stack.pop())).getArray();
+                        PyObject bases[] = ((PySequenceList)(stack.pop())).getArray();
                         String name = stack.pop().toString();
                         stack.push(Py.makeClass(name, bases, methods));
                         break;
@@ -761,13 +763,26 @@ public class PyBytecode extends PyBaseCode {
                         f.dellocal(oparg);
                         break;
 
-                    case Opcode.LOAD_CLOSURE:
-                        stack.push(f.getclosure(oparg));
+                    case Opcode.LOAD_CLOSURE: {
+                        if (debug) {
+                            System.err.println("LOAD_CLOSURE: " + Arrays.toString(f.f_env));
+                        }
+                        PyCell cell = (PyCell)(f.getclosure(oparg));
+                        if (cell.ob_ref == null) {
+                            cell.ob_ref = f.getlocal(oparg);
+                        }
+//                        cell.ob_ref = f.getname(co_freevars[oparg]);
+                        stack.push(cell);
                         break;
+                    }
 
-                    case Opcode.LOAD_DEREF:
+                    case Opcode.LOAD_DEREF: {
+                        if (debug) {
+                            System.err.println("LOAD_DEREF: " + Arrays.toString(f.f_env));
+                        }
                         stack.push(f.getderef(oparg));
                         break;
+                    }
 
                     case Opcode.STORE_DEREF:
                         f.setderef(oparg, stack.pop());
@@ -864,7 +879,7 @@ public class PyBytecode extends PyBaseCode {
                     case Opcode.IMPORT_FROM:
                         String name = co_names[oparg];
                         try {
-                            stack.push(stack.pop().__getattr__(name));
+                            stack.push(stack.top().__getattr__(name));
 
                         } catch (PyException pye) {
                             if (Py.matchException(pye, Py.AttributeError)) {
@@ -1012,7 +1027,16 @@ public class PyBytecode extends PyBaseCode {
 
                     case Opcode.MAKE_CLOSURE: {
                         PyCode code = (PyCode) stack.pop();
-                        PyObject[] closure_cells = new PyTuple(stack.pop()).getArray();
+                        PyObject[] closure_cells = ((PySequenceList)(stack.pop())).getArray();
+//                        PyObject[] closure_cells = new PyCell[src_closure_cells.length];
+//                        for (int i = 0; i < src_closure_cells.length; i++) {
+//                            PyCell cell = new PyCell();
+//                            cell.ob_ref = src_closure_cells[i];
+//                            closure_cells[i] = cell;
+//                        }
+////                        for (int i = 0; i < src_closure_cells.length; i++) {
+////                            closure_cells[i] = f.getclosure(i);
+////                        }
                         PyObject[] defaults = stack.popN(oparg);
                         PyFunction func = new PyFunction(f.f_globals, defaults, code, closure_cells);
                         stack.push(func);
