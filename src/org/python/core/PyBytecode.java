@@ -566,8 +566,8 @@ public class PyBytecode extends PyBaseCode {
                     case Opcode.STORE_SLICE + 1:
                     case Opcode.STORE_SLICE + 2:
                     case Opcode.STORE_SLICE + 3: {
-                        PyObject stop = (((opcode - Opcode.SLICE) & 2) != 0) ? stack.pop() : null;
-                        PyObject start = (((opcode - Opcode.SLICE) & 1) != 0) ? stack.pop() : null;
+                        PyObject stop = (((opcode - Opcode.STORE_SLICE) & 2) != 0) ? stack.pop() : null;
+                        PyObject start = (((opcode - Opcode.STORE_SLICE) & 1) != 0) ? stack.pop() : null;
                         PyObject obj = stack.pop();
                         PyObject value = stack.pop();
                         obj.__setslice__(start, stop, value);
@@ -578,8 +578,8 @@ public class PyBytecode extends PyBaseCode {
                     case Opcode.DELETE_SLICE + 1:
                     case Opcode.DELETE_SLICE + 2:
                     case Opcode.DELETE_SLICE + 3: {
-                        PyObject stop = (((opcode - Opcode.SLICE) & 2) != 0) ? stack.pop() : null;
-                        PyObject start = (((opcode - Opcode.SLICE) & 1) != 0) ? stack.pop() : null;
+                        PyObject stop = (((opcode - Opcode.DELETE_SLICE) & 2) != 0) ? stack.pop() : null;
+                        PyObject start = (((opcode - Opcode.DELETE_SLICE) & 1) != 0) ? stack.pop() : null;
                         PyObject obj = stack.pop();
                         obj.__delslice__(start, stop);
                         break;
@@ -662,16 +662,7 @@ public class PyBytecode extends PyBaseCode {
                         PyObject locals = stack.pop();
                         PyObject globals = stack.pop();
                         PyObject code = stack.pop();
-
-                        if ((locals == null || locals == Py.None) &&
-                                (globals == null || globals == Py.None)) {
-                            throw Py.SystemError("globals and locals cannot be NULL");
-                        }
                         Py.exec(code, globals, locals);
-
-                        if (!(globals.__finditem__("__builtins__").__nonzero__())) {
-                            globals.__setitem__("__builtins__", f.f_builtins);
-                        }
                         break;
                     }
 
