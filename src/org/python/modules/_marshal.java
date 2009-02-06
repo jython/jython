@@ -105,8 +105,8 @@ public class _marshal implements ClassDictInit {
         }
 
         private void write_long64(long x) {
-            write_int((int) (x & 0xff));
-            write_int((int) ((x >> 32) & 0xff));
+            write_int((int) (x & 0xffffffff));
+            write_int((int) ((x >> 32) & 0xffffffff));
         }
 
         // writes output in 15 bit "digits"
@@ -129,10 +129,8 @@ public class _marshal implements ClassDictInit {
             write_string(f.__repr__().toString());
         }
 
-        // XXX - cache this struct object
-        // XXX - also fix reversed struct stuff!
         private void write_binary_float(PyFloat f) {
-            write_string(struct.pack(new PyObject[]{Py.newString("d"), f}).toString());
+            write_long64(Double.doubleToLongBits(f.getValue()));
         }
 
         private void write_object(PyObject v, int depth) {
@@ -339,9 +337,7 @@ public class _marshal implements ClassDictInit {
         }
 
         private double read_binary_float() {
-            String buffer = read_string(8);
-            PyFloat num = (PyFloat) ((struct.unpack("d", buffer)).__getitem__(0));
-            return num.asDouble();
+            return Double.longBitsToDouble(read_long64());
         }
 
         private PyObject read_object_notnull(int depth) {
