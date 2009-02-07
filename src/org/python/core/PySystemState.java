@@ -1028,7 +1028,10 @@ public class PySystemState extends PyObject
         if(exc == null)
             return new PyTuple(Py.None, Py.None, Py.None);
         PyObject tb = exc.traceback;
-        return new PyTuple(exc.type, exc.value, tb == null ? Py.None : tb);
+        PyObject value = exc.value;
+        return new PyTuple(exc.type,
+                value == null ? Py.None : value,
+                tb == null ? Py.None : tb);
     }
 
     public static void exc_clear() {

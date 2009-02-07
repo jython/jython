@@ -2,20 +2,27 @@ package org.python.core;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 public class PyBytecode extends PyBaseCode {
 
     // for debugging
-    private int count = 0; // total number of opcodes run
-    private int maxCount = -1; // less than my buffer on iterm
-    private static PyObject opname;
+    private int count = 0; // total number of opcodes run so far in this code obj
+    private int maxCount = -1; // if -1, no cap on number of opcodes than can be run
     public static boolean defaultDebug = false;
+    private static PyObject dis;
 
-    private static synchronized PyObject getOpname() {
+    private static synchronized PyObject get_dis() {
+        if (dis == null) {
+            dis = __builtin__.__import__("dis");
+        }
+        return dis;
+    }
+    private static PyObject opname;
+
+    private static synchronized PyObject get_opname() {
         if (opname == null) {
-            opname = __builtin__.__import__("dis").__getattr__("opname");
+            opname = get_dis().__getattr__("opname");
         }
         return opname;
     }
@@ -37,7 +44,7 @@ public class PyBytecode extends PyBaseCode {
     public final PyObject[] co_consts;
     public final String[] co_names;
     public final int co_stacksize; // XXX - use to convert PyStack to use PyObject[] instead of ArrayList<PyObject>
-    public final PyObject[] co_lnotab; // ignored
+    public final String co_lnotab; // ignored for now
     private final static int CALL_FLAG_VAR = 1;
     private final static int CALL_FLAG_KW = 2;
 
@@ -73,7 +80,7 @@ public class PyBytecode extends PyBaseCode {
         co_consts = constants;
         co_names = names;
         co_code = codestring.toCharArray();
-        co_lnotab = null; // ignore
+        co_lnotab = lnotab; // ignore
     }
     private static final String[] __members__ = {
         "co_name", "co_argcount",
@@ -201,7 +208,7 @@ public class PyBytecode extends PyBaseCode {
         if (debug) {
             System.err.println(co_name + ":" +
                     count + "," + f.f_lasti + "> opcode: " +
-                    getOpname().__getitem__(Py.newInteger(opcode)) +
+                    get_opname().__getitem__(Py.newInteger(opcode)) +
                     (opcode >= Opcode.HAVE_ARGUMENT ? ", oparg: " + oparg : "") +
                     ", stack: " + stack.toString() +
                     ", blocks: " + stringify_blocks(f));
@@ -245,9 +252,18 @@ public class PyBytecode extends PyBaseCode {
         if (debug) {
             System.err.println(co_name + ":" + f.f_lasti + "/" + co_code.length +
                     ", cells:" + Arrays.toString(co_cellvars) + ", free:" + Arrays.toString(co_freevars));
+            int i = 0;
+            for (String cellvar : co_cellvars) {
+                System.err.println(cellvar + " = " + f.f_env[i++]);
+            }
+            for (String freevar : co_freevars) {
+                System.err.println(freevar + " = " + f.f_env[i++]);
+            }
+            get_dis().invoke("disassemble", this);
+
         }
         if (f.f_lasti >= co_code.length) {
-            throw Py.SystemError("");
+            throw Py.SystemError(""); // XXX - chose an appropriate error!!!
         }
 
         next_instr = f.f_lasti;
@@ -763,22 +779,53 @@ public class PyBytecode extends PyBaseCode {
                         break;
 
                     case Opcode.LOAD_CLOSURE: {
-                        if (debug) {
-                            System.err.println("LOAD_CLOSURE: " + Arrays.toString(f.f_env));
-                        }
+////                        if (debug) {
+////                            System.err.println("LOAD_CLOSURE: " + Arrays.toString(f.f_env));
+////                        }
+//                        PyCell cell = (PyCell) (f.getclosure(oparg));
+//                        if (cell.ob_ref == null) {
+//                            cell.ob_ref = f.getlocal(oparg);
+//                        }
+//////                        cell.ob_ref = f.getname(co_freevars[oparg]);
+//                        stack.push(cell);
+//                        stack.push(f.getclosure(oparg));
+
+
                         PyCell cell = (PyCell) (f.getclosure(oparg));
                         if (cell.ob_ref == null) {
-                            cell.ob_ref = f.getlocal(oparg);
+//                            if (oparg < co_nlocals) {
+//                                cell.ob_ref = f.getlocal(oparg);
+//                            } else {
+//                                String name = co_cellvars[oparg];
+
+//                                cell.ob_ref = f.getname(name);
+//                            }
+
+                            String name = co_cellvars[oparg];
+//                            System.err.println("Loading closure: " + name);
+                            // XXX - consider some efficient lookup mechanism, like a hash
+                            if (f.f_fastlocals != null) {
+                                int i = 0;
+                                boolean matched = false;
+                                for (String match : co_varnames) {
+                                    if (match.equals(name)) {
+                                        matched = true;
+                                        break;
+                                    }
+                                    i++;
+                                }
+                                if (matched) {
+                                    cell.ob_ref = f.f_fastlocals[i];
+                                }
+                            } else {
+                                cell.ob_ref = f.f_locals.__finditem__(name);
+                            }
                         }
-//                        cell.ob_ref = f.getname(co_freevars[oparg]);
                         stack.push(cell);
                         break;
                     }
 
                     case Opcode.LOAD_DEREF: {
-                        if (debug) {
-                            System.err.println("LOAD_DEREF: " + Arrays.toString(f.f_env));
-                        }
                         stack.push(f.getderef(oparg));
                         break;
                     }
@@ -1354,7 +1401,7 @@ public class PyBytecode extends PyBaseCode {
 
         @Override
         public String toString() {
-            return "<" + getOpname().__getitem__(Py.newInteger(b_type)) + "," +
+            return "<" + get_opname().__getitem__(Py.newInteger(b_type)) + "," +
                     b_handler + "," + b_level + ">";
         }
     }
