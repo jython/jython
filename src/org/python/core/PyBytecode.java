@@ -9,8 +9,9 @@ public class PyBytecode extends PyBaseCode {
 
     // for debugging
     private int count = 0; // total number of opcodes run
-    private int maxCount = 900; // less than my buffer on iterm
+    private int maxCount = 10000; // less than my buffer on iterm
     private static PyObject opname;
+    public static boolean defaultDebug = false;
 
     private static synchronized PyObject getOpname() {
         if (opname == null) {
@@ -18,7 +19,11 @@ public class PyBytecode extends PyBaseCode {
         }
         return opname;
     }
-    private boolean debug = false;
+    private boolean debug;
+
+    public static void _allDebug(boolean setting) {
+        defaultDebug = setting;
+    }
 
     public PyObject _debug(int maxCount) {
         debug = maxCount > 0;
@@ -49,6 +54,9 @@ public class PyBytecode extends PyBaseCode {
             String codestring, PyObject[] constants, String[] names, String varnames[],
             String filename, String name, int firstlineno, String lnotab,
             String[] cellvars, String[] freevars) {
+
+        debug = defaultDebug;
+
         co_argcount = nargs = argcount;
         co_varnames = varnames;
         co_nlocals = nlocals; // maybe assert = varnames.length;
@@ -300,15 +308,15 @@ public class PyBytecode extends PyBaseCode {
                         break;
 
                     case Opcode.ROT_TWO:
-                        stack.rot(2);
+                        stack.rot2();
                         break;
 
                     case Opcode.ROT_THREE:
-                        stack.rot(3);
+                        stack.rot3();
                         break;
 
                     case Opcode.ROT_FOUR:
-                        stack.rot(4);
+                        stack.rot4();
                         break;
 
                     case Opcode.DUP_TOP:
@@ -459,7 +467,7 @@ public class PyBytecode extends PyBaseCode {
                     case Opcode.INPLACE_POWER: {
                         PyObject b = stack.pop();
                         PyObject a = stack.pop();
-                        stack.push(a.__ipow__(b));
+                        stack.push(a._ipow(b));
                         break;
                     }
 
@@ -693,7 +701,7 @@ public class PyBytecode extends PyBaseCode {
 
                     case Opcode.BUILD_CLASS: {
                         PyObject methods = stack.pop();
-                        PyObject bases[] = ((PySequenceList)(stack.pop())).getArray();
+                        PyObject bases[] = ((PySequenceList) (stack.pop())).getArray();
                         String name = stack.pop().toString();
                         stack.push(Py.makeClass(name, bases, methods));
                         break;
@@ -758,7 +766,7 @@ public class PyBytecode extends PyBaseCode {
                         if (debug) {
                             System.err.println("LOAD_CLOSURE: " + Arrays.toString(f.f_env));
                         }
-                        PyCell cell = (PyCell)(f.getclosure(oparg));
+                        PyCell cell = (PyCell) (f.getclosure(oparg));
                         if (cell.ob_ref == null) {
                             cell.ob_ref = f.getlocal(oparg);
                         }
@@ -1018,7 +1026,7 @@ public class PyBytecode extends PyBaseCode {
 
                     case Opcode.MAKE_CLOSURE: {
                         PyCode code = (PyCode) stack.pop();
-                        PyObject[] closure_cells = ((PySequenceList)(stack.pop())).getArray();
+                        PyObject[] closure_cells = ((PySequenceList) (stack.pop())).getArray();
 //                        PyObject[] closure_cells = new PyCell[src_closure_cells.length];
 //                        for (int i = 0; i < src_closure_cells.length; i++) {
 //                            PyCell cell = new PyCell();
@@ -1061,6 +1069,9 @@ public class PyBytecode extends PyBaseCode {
                 PyException pye = Py.JavaError(t);
                 why = Why.EXCEPTION;
                 ts.exception = pye;
+                if (debug) {
+                    System.err.println("Caught exception:" + pye);
+                }
             }
 
             if (why == Why.YIELD) {
@@ -1074,7 +1085,9 @@ public class PyBytecode extends PyBaseCode {
 
             while (why != Why.NOT && blocksLeft(f)) {
                 PyTryBlock b = popBlock(f);
-//                System.err.println("Processing block: " + b);
+                if (debug) {
+                    System.err.println("Processing block: " + b);
+                }
                 assert (why != Why.YIELD);
                 if (b.b_type == Opcode.SETUP_LOOP && why == Why.CONTINUE) {
                     pushBlock(f, b);
@@ -1096,8 +1109,9 @@ public class PyBytecode extends PyBaseCode {
                         if (b.b_type == Opcode.SETUP_EXCEPT) {
                             exc.normalize();
                         }
-                        stack.push(new PyStackException(exc)); //  x3 to conform with CPython's calling convention, which
-                        stack.dup(2); // stores the type, val, tb separately on the stack
+                        stack.push(new PyStackException(exc));
+                        stack.dup(); //  x3 to conform with CPython's calling convention, which
+                        stack.dup(); // stores the type, val, tb separately on the stack
                     } else {
                         if (why == Why.RETURN || why == Why.CONTINUE) {
                             stack.push(retval);
@@ -1266,9 +1280,9 @@ public class PyBytecode extends PyBaseCode {
         }
 
         void dup(int n) {
-            PyObject v = top();
-            for (int i = 0; i < n; i++) {
-                stack.add(v);
+            int length = stack.size();
+            for (int i = n; i > 0; i--) {
+                stack.add(stack.get(length - i));
             }
         }
 
@@ -1281,12 +1295,34 @@ public class PyBytecode extends PyBaseCode {
             return ret;
         }
 
-        void rot(int n) {
-            int end = stack.size();
-            List<PyObject> lastN = stack.subList(end - n, end);
-//            System.err.print("rot(" + n + "): " + lastN.toString() + " -> ");
-            Collections.rotate(lastN, n - 1);
-//            System.err.println("rot(" + n + "): " + lastN.toString());
+        void rot2() {
+            int length = stack.size();
+            PyObject v = stack.get(length - 1);
+            PyObject w = stack.get(length - 2);
+            stack.set(length - 1, w);
+            stack.set(length - 2, v);
+        }
+
+        void rot3() {
+            int length = stack.size();
+            PyObject v = stack.get(length - 1);
+            PyObject w = stack.get(length - 2);
+            PyObject x = stack.get(length - 3);
+            stack.set(length - 1, w);
+            stack.set(length - 2, x);
+            stack.set(length - 3, v);
+        }
+
+        void rot4() {
+            int length = stack.size();
+            PyObject u = stack.get(length - 1);
+            PyObject v = stack.get(length - 2);
+            PyObject w = stack.get(length - 3);
+            PyObject x = stack.get(length - 4);
+            stack.set(length - 1, v);
+            stack.set(length - 2, w);
+            stack.set(length - 3, x);
+            stack.set(length - 4, u);
         }
 
         int size() {
