@@ -9,7 +9,7 @@ public class PyBytecode extends PyBaseCode {
 
     // for debugging
     private int count = 0; // total number of opcodes run
-    private int maxCount = 10000; // less than my buffer on iterm
+    private int maxCount = -1; // less than my buffer on iterm
     private static PyObject opname;
     public static boolean defaultDebug = false;
 
@@ -263,7 +263,7 @@ public class PyBytecode extends PyBaseCode {
             f.f_savedlocals = null;
         }
 
-        while (!debug || (count < maxCount)) { // XXX - replace with while(true)
+        while (!debug || (maxCount == -1 || count < maxCount)) { // XXX - replace with while(true)
 
             try {
 
@@ -870,7 +870,7 @@ public class PyBytecode extends PyBaseCode {
                     }
 
                     case Opcode.IMPORT_STAR: {
-                        String module = stack.pop().toString();
+                        PyObject module = stack.pop();
                         imp.importAll(module, f);
                         break;
                     }
@@ -1109,9 +1109,11 @@ public class PyBytecode extends PyBaseCode {
                         if (b.b_type == Opcode.SETUP_EXCEPT) {
                             exc.normalize();
                         }
-                        stack.push(new PyStackException(exc));
-                        stack.dup(); //  x3 to conform with CPython's calling convention, which
-                        stack.dup(); // stores the type, val, tb separately on the stack
+                        stack.push(exc.traceback);
+                        stack.push(exc.value);
+                        stack.push(new PyStackException(exc)); // instead of stack.push(exc.type);, like CPython
+//                        stack.dup(); //  x3 to conform with CPython's calling convention, which
+//                        stack.dup(); // stores the type, val, tb separately on the stack
                     } else {
                         if (why == Why.RETURN || why == Why.CONTINUE) {
                             stack.push(retval);

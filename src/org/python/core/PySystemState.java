@@ -1027,7 +1027,8 @@ public class PySystemState extends PyObject
         PyException exc = Py.getThreadState().exception;
         if(exc == null)
             return new PyTuple(Py.None, Py.None, Py.None);
-        return new PyTuple(exc.type, exc.value, exc.traceback);
+        PyObject tb = exc.traceback;
+        return new PyTuple(exc.type, exc.value, tb == null ? Py.None : tb);
     }
 
     public static void exc_clear() {
