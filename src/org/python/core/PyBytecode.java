@@ -779,29 +779,14 @@ public class PyBytecode extends PyBaseCode {
                         break;
 
                     case Opcode.LOAD_CLOSURE: {
-////                        if (debug) {
-////                            System.err.println("LOAD_CLOSURE: " + Arrays.toString(f.f_env));
-////                        }
-//                        PyCell cell = (PyCell) (f.getclosure(oparg));
-//                        if (cell.ob_ref == null) {
-//                            cell.ob_ref = f.getlocal(oparg);
-//                        }
-//////                        cell.ob_ref = f.getname(co_freevars[oparg]);
-//                        stack.push(cell);
-//                        stack.push(f.getclosure(oparg));
-
-
                         PyCell cell = (PyCell) (f.getclosure(oparg));
                         if (cell.ob_ref == null) {
-//                            if (oparg < co_nlocals) {
-//                                cell.ob_ref = f.getlocal(oparg);
-//                            } else {
-//                                String name = co_cellvars[oparg];
-
-//                                cell.ob_ref = f.getname(name);
-//                            }
-
-                            String name = co_cellvars[oparg];
+                            String name;
+                            if (oparg >= co_cellvars.length) {
+                                name = co_freevars[oparg - co_cellvars.length];
+                            } else {
+                                name = co_cellvars[oparg];
+                            }
 //                            System.err.println("Loading closure: " + name);
                             // XXX - consider some efficient lookup mechanism, like a hash
                             if (f.f_fastlocals != null) {
