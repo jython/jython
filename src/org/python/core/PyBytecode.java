@@ -706,8 +706,15 @@ public class PyBytecode extends PyBaseCode {
                             if (why == Why.RETURN || why == Why.CONTINUE) {
                                 retval = stack.pop();
                             }
-                        } else if ((v instanceof PyStackException) || (v instanceof PyString)) {
+                        } else if (v instanceof PyStackException) {
                             ts.exception = ((PyStackException) v).exception;
+                            why = Why.RERAISE;
+
+                        } else if (v instanceof PyString) {
+                            if (debug) {
+                                System.err.println("ts.exception=" + ts.exception + ", v=" + v);
+//                            ts.exception = new PyException(v); // XXX - what do I do about string exceptions??!!!
+                            }
                             why = Why.RERAISE;
                         } else if (v != Py.None) {
                             throw Py.SystemError("'finally' pops bad exception");
@@ -1059,15 +1066,6 @@ public class PyBytecode extends PyBaseCode {
                     case Opcode.MAKE_CLOSURE: {
                         PyCode code = (PyCode) stack.pop();
                         PyObject[] closure_cells = ((PySequenceList) (stack.pop())).getArray();
-//                        PyObject[] closure_cells = new PyCell[src_closure_cells.length];
-//                        for (int i = 0; i < src_closure_cells.length; i++) {
-//                            PyCell cell = new PyCell();
-//                            cell.ob_ref = src_closure_cells[i];
-//                            closure_cells[i] = cell;
-//                        }
-////                        for (int i = 0; i < src_closure_cells.length; i++) {
-////                            closure_cells[i] = f.getclosure(i);
-////                        }
                         PyObject[] defaults = stack.popN(oparg);
                         PyFunction func = new PyFunction(f.f_globals, defaults, code, closure_cells);
                         stack.push(func);
@@ -1144,13 +1142,12 @@ public class PyBytecode extends PyBaseCode {
                         stack.push(exc.traceback);
                         stack.push(exc.value);
                         stack.push(new PyStackException(exc)); // instead of stack.push(exc.type);, like CPython
-//                        stack.dup(); //  x3 to conform with CPython's calling convention, which
-//                        stack.dup(); // stores the type, val, tb separately on the stack
                     } else {
                         if (why == Why.RETURN || why == Why.CONTINUE) {
                             stack.push(retval);
                         }
-                        stack.push(Py.newString(why.name())); // XXX - hack!
+                        // FIGURE OUT THE FLOW HERE, in test_optparse2
+                        stack.push(new PyStackWhy(why));
                     }
                     why = Why.NOT;
                     next_instr = b.b_handler;
