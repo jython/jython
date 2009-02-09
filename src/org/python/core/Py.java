@@ -1623,7 +1623,7 @@ public final class Py {
 
     // w/o compiler-flags
     public static PyObject compile(InputStream istream, String filename, String kind) {
-        return compile_flags(istream, filename, kind, null);
+        return compile_flags(istream, filename, kind, new CompilerFlags());
     }
 
     /**
