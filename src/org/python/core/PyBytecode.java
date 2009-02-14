@@ -835,9 +835,11 @@ public class PyBytecode extends PyBaseCode {
                         stack.push(new PyDictionary());
                         break;
 
-                    case Opcode.LOAD_ATTR:
-                        stack.push(stack.pop().__getattr__(co_names[oparg]));
+                    case Opcode.LOAD_ATTR: {
+                        String name = co_names[oparg];
+                        stack.push(stack.pop().__getattr__(name));
                         break;
+                    }
 
                     case Opcode.COMPARE_OP: {
                         PyObject b = stack.pop();
@@ -1055,7 +1057,11 @@ public class PyBytecode extends PyBaseCode {
                     case Opcode.MAKE_FUNCTION: {
                         PyCode code = (PyCode) stack.pop();
                         PyObject[] defaults = stack.popN(oparg);
-                        PyFunction func = new PyFunction(f.f_globals, defaults, code);
+                        PyObject doc = null;
+                        if (code instanceof PyBytecode && ((PyBytecode)code).co_consts.length > 0) {
+                            doc = ((PyBytecode)code).co_consts[0];
+                        }
+                        PyFunction func = new PyFunction(f.f_globals, defaults, code, doc);
                         stack.push(func);
                         break;
                     }
@@ -1093,7 +1099,7 @@ public class PyBytecode extends PyBaseCode {
                 } // end switch
             } // end try
             catch (Throwable t) {
-                PyException pye = Py.JavaError(t);
+                PyException pye = Py.setException(t, f);
                 why = Why.EXCEPTION;
                 ts.exception = pye;
                 if (debug) {
