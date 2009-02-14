@@ -686,7 +686,7 @@ public class PyBytecode extends PyBaseCode {
                         PyObject locals = stack.pop();
                         PyObject globals = stack.pop();
                         PyObject code = stack.pop();
-                        Py.exec(code, globals==Py.None ? null : globals, locals==Py.None ? null : locals);
+                        Py.exec(code, globals == Py.None ? null : globals, locals == Py.None ? null : locals);
                         break;
                     }
 
@@ -1048,12 +1048,19 @@ public class PyBytecode extends PyBaseCode {
                             v = stack.top(3);
                             w = stack.top(4);
                         }
-                        PyObject x = exit.__call__(u, v, w);
-                        if (u != Py.None && x.__nonzero__()) {
-                            stack.popN(4);
+                        PyObject x = null;
+                        if (u instanceof PyStackException) {
+                            PyException exc = ((PyStackException) u).exception;
+                            x = exit.__call__(exc.type, exc.value, exc.traceback);
+                        } else {
+                            x = exit.__call__(u, v, w);
+                        }
+
+                        if (u != Py.None && x != null && x.__nonzero__()) {
+                            stack.popN(4); // XXX - consider stack.stackadj op
                             stack.push(Py.None);
                         } else {
-                            stack.pop();
+                            stack.pop(); // this should be popping off a block
                         }
                         break;
                     }
@@ -1087,8 +1094,8 @@ public class PyBytecode extends PyBaseCode {
                         PyCode code = (PyCode) stack.pop();
                         PyObject[] defaults = stack.popN(oparg);
                         PyObject doc = null;
-                        if (code instanceof PyBytecode && ((PyBytecode)code).co_consts.length > 0) {
-                            doc = ((PyBytecode)code).co_consts[0];
+                        if (code instanceof PyBytecode && ((PyBytecode) code).co_consts.length > 0) {
+                            doc = ((PyBytecode) code).co_consts[0];
                         }
                         PyFunction func = new PyFunction(f.f_globals, defaults, code, doc);
                         stack.push(func);
@@ -1100,8 +1107,8 @@ public class PyBytecode extends PyBaseCode {
                         PyObject[] closure_cells = ((PySequenceList) (stack.pop())).getArray();
                         PyObject[] defaults = stack.popN(oparg);
                         PyObject doc = null;
-                        if (code instanceof PyBytecode && ((PyBytecode)code).co_consts.length > 0) {
-                            doc = ((PyBytecode)code).co_consts[0];
+                        if (code instanceof PyBytecode && ((PyBytecode) code).co_consts.length > 0) {
+                            doc = ((PyBytecode) code).co_consts[0];
                         }
                         PyFunction func = new PyFunction(f.f_globals, defaults, code, doc, closure_cells);
                         stack.push(func);
