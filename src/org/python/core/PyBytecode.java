@@ -734,22 +734,10 @@ public class PyBytecode extends PyBaseCode {
                         f.dellocal(co_names[oparg]);
                         break;
 
-                    case Opcode.UNPACK_SEQUENCE: {
-                        PyObject v = stack.pop();
-                        int i = 0;
-                        PyObject items[] = new PyObject[oparg];
-                        for (PyObject item : v.asIterable()) {
-                            items[i++] = item;
-                            if (i > oparg) {
-                                break;
-                            }
-                        }
-                        for (i = i - 1; i >= 0; i--) {
-                            stack.push(items[i]);
-                        }
+                    case Opcode.UNPACK_SEQUENCE: 
+                        unpack_iterable(oparg, stack);
                         break;
-                    }
-
+                    
                     case Opcode.STORE_ATTR: {
                         PyObject obj = stack.pop();
                         PyObject v = stack.pop();
@@ -1317,6 +1305,26 @@ public class PyBytecode extends PyBaseCode {
 
         }
         stack.push(callable._callextra(args, keywords, starargs, kwargs));
+    }
+
+    private static void unpack_iterable(int oparg, PyStack stack) {
+        PyObject v = stack.pop();
+        int i = oparg;
+        PyObject items[] = new PyObject[oparg];
+        for (PyObject item : v.asIterable()) {
+            if (i <= 0) {
+                throw Py.ValueError("too many values to unpack");
+            }
+            i--;
+            items[i] = item;
+        }
+        if (i > 0) {
+            throw Py.ValueError(String.format("need more than %d value%s to unpack",
+                    i, i == 1 ? "" : "s"));
+        }
+        for (i = 0; i < oparg; i++) {
+            stack.push(items[i]);
+        }
     }
 
     // XXX - perhaps add support for max stack size (presumably from co_stacksize)
