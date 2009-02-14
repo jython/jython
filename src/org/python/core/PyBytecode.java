@@ -815,7 +815,36 @@ public class PyBytecode extends PyBaseCode {
                     }
 
                     case Opcode.LOAD_DEREF: {
-                        stack.push(f.getderef(oparg));
+                        // common code from LOAD_CLOSURE
+                        PyCell cell = (PyCell) (f.getclosure(oparg));
+                        if (cell.ob_ref == null) {
+                            String name;
+                            if (oparg >= co_cellvars.length) {
+                                name = co_freevars[oparg - co_cellvars.length];
+                            } else {
+                                name = co_cellvars[oparg];
+                            }
+                            // XXX - consider some efficient lookup mechanism, like a hash :),
+                            // at least if co_varnames is much greater than say a certain
+                            // size (but i would think, it's not going to happen in real code. profile?)
+                            if (f.f_fastlocals != null) {
+                                int i = 0;
+                                boolean matched = false;
+                                for (String match : co_varnames) {
+                                    if (match.equals(name)) {
+                                        matched = true;
+                                        break;
+                                    }
+                                    i++;
+                                }
+                                if (matched) {
+                                    cell.ob_ref = f.f_fastlocals[i];
+                                }
+                            } else {
+                                cell.ob_ref = f.f_locals.__finditem__(name);
+                            }
+                        }
+                        stack.push(cell.ob_ref);
                         break;
                     }
 
@@ -1070,7 +1099,11 @@ public class PyBytecode extends PyBaseCode {
                         PyCode code = (PyCode) stack.pop();
                         PyObject[] closure_cells = ((PySequenceList) (stack.pop())).getArray();
                         PyObject[] defaults = stack.popN(oparg);
-                        PyFunction func = new PyFunction(f.f_globals, defaults, code, closure_cells);
+                        PyObject doc = null;
+                        if (code instanceof PyBytecode && ((PyBytecode)code).co_consts.length > 0) {
+                            doc = ((PyBytecode)code).co_consts[0];
+                        }
+                        PyFunction func = new PyFunction(f.f_globals, defaults, code, doc, closure_cells);
                         stack.push(func);
                         break;
                     }
