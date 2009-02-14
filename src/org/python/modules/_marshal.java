@@ -235,7 +235,7 @@ public class _marshal implements ClassDictInit {
                 write_strings(code.co_cellvars, depth + 1);
                 write_object(Py.newString(code.co_name), depth + 1);
                 write_int(code.co_firstlineno);
-                write_object(new PyTuple(code.co_lnotab), depth + 1);
+                write_object(Py.newString(new String(code.co_lnotab)), depth + 1);
             } else {
                 write_byte(TYPE_UNKNOWN);
             }
@@ -353,7 +353,7 @@ public class _marshal implements ClassDictInit {
             String some_strings[] = new String[t.__len__()];
             int i = 0;
             for (PyObject item : t.asIterable()) {
-                some_strings[i++] = item.toString();
+                some_strings[i++] = item.toString().intern();
             }
             return some_strings;
         }

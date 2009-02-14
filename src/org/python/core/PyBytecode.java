@@ -44,7 +44,7 @@ public class PyBytecode extends PyBaseCode {
     public final PyObject[] co_consts;
     public final String[] co_names;
     public final int co_stacksize; // XXX - use to convert PyStack to use PyObject[] instead of ArrayList<PyObject>
-    public final String co_lnotab; // ignored for now
+    public final String co_lnotab;
     private final static int CALL_FLAG_VAR = 1;
     private final static int CALL_FLAG_KW = 2;
 
@@ -686,7 +686,7 @@ public class PyBytecode extends PyBaseCode {
                         PyObject locals = stack.pop();
                         PyObject globals = stack.pop();
                         PyObject code = stack.pop();
-                        Py.exec(code, globals, locals);
+                        Py.exec(code, globals==Py.None ? null : globals, locals==Py.None ? null : locals);
                         break;
                     }
 
@@ -711,10 +711,6 @@ public class PyBytecode extends PyBaseCode {
                             why = Why.RERAISE;
 
                         } else if (v instanceof PyString) {
-                            if (debug) {
-                                System.err.println("ts.exception=" + ts.exception + ", v=" + v);
-//                            ts.exception = new PyException(v); // XXX - what do I do about string exceptions??!!!
-                            }
                             why = Why.RERAISE;
                         } else if (v != Py.None) {
                             throw Py.SystemError("'finally' pops bad exception");
@@ -794,8 +790,9 @@ public class PyBytecode extends PyBaseCode {
                             } else {
                                 name = co_cellvars[oparg];
                             }
-//                            System.err.println("Loading closure: " + name);
-                            // XXX - consider some efficient lookup mechanism, like a hash
+                            // XXX - consider some efficient lookup mechanism, like a hash :),
+                            // at least if co_varnames is much greater than say a certain
+                            // size (but i would think, it's not going to happen in real code. profile?)
                             if (f.f_fastlocals != null) {
                                 int i = 0;
                                 boolean matched = false;

@@ -1211,14 +1211,14 @@ public final class Py {
         int flags = 0;
         if (o instanceof PyCode) {
             code = (PyCode) o;
-            if (locals == null && o instanceof PyTableCode && ((PyTableCode) o).hasFreevars()) {
+            if (locals == null && o instanceof PyBaseCode && ((PyBaseCode) o).hasFreevars()) {
                 throw Py.TypeError("code object passed to exec may not contain free variables");
             }
         } else {
             String contents = null;
             if (o instanceof PyString) {
                 if (o instanceof PyUnicode) {
-                    flags |= PyTableCode.PyCF_SOURCE_IS_UTF8;
+                    flags |= PyBaseCode.PyCF_SOURCE_IS_UTF8;
                 }
                 contents = o.toString();
             } else if (o instanceof PyFile) {

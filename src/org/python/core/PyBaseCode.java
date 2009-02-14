@@ -18,7 +18,7 @@ public abstract class PyBaseCode extends PyCode {
     public boolean varargs,  varkwargs;
 
     final public static int CO_OPTIMIZED         = 0x0001;
-    //final public static int CO_NEWLOCALS       = 0x0002
+    final public static int CO_NEWLOCALS       = 0x0002;
     final public static int CO_VARARGS           = 0x0004;
     final public static int CO_VARKEYWORDS       = 0x0008;
     final public static int CO_GENERATOR         = 0x0020;

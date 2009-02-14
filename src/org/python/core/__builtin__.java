@@ -506,7 +506,7 @@ public class __builtin__ {
     }
 
     public static PyObject eval(PyObject o) {
-        if (o instanceof PyTableCode && ((PyTableCode) o).hasFreevars()) {
+        if (o instanceof PyBaseCode && ((PyBaseCode) o).hasFreevars()) {
             throw Py.TypeError("code object passed to eval() may not contain free variables");
         }
         return eval(o, null, null);
