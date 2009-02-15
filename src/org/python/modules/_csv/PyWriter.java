@@ -51,7 +51,7 @@ public class PyWriter extends PyObject {
             "elements will be converted to string.");
 
     public void writerows(PyObject seqseq) {
-        writerows(seqseq);
+        writer_writerows(seqseq);
     }
 
     @ExposedMethod
