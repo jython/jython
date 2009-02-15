@@ -845,6 +845,7 @@ public class PyJavaType extends PyType {
             int j = 0;
             for (int i = start; j < n; i += step) {
                 newList.add(list.get(i));
+                j++;
             }
             return Py.java2py(newList);
         }
