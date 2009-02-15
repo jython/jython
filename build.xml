@@ -426,6 +426,8 @@ The readme text for the next release will be like:
 
     <target name="antlr_gen" depends="prepare-output" unless="antlr.notneeded">
         <java classname="org.antlr.Tool" failonerror="true" fork="true" dir="${jython.base.dir}">
+            <arg value="-Xconversiontimeout"/>
+            <arg value="2000"/>
             <arg value="-fo"/>
             <arg path="${work.dir}/build/gensrc/org/python/antlr"/>
             <arg value="-lib"/>
