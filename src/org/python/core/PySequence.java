@@ -249,7 +249,7 @@ public abstract class PySequence extends PyObject {
     protected int boundToSequence(int index) {
         int length = __len__();
         if(index < 0) {
-            index = index += length;
+            index += length;
             if(index < 0) {
                 index = 0;
             }
