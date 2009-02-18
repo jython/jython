@@ -244,7 +244,7 @@ public class PyFrame extends PyObject
     }
 
     public int getline() {
-        return f_lineno;
+        return f_code.getline(this);
     }
 
     public PyObject getlocal(int index) {

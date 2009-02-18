@@ -40,11 +40,11 @@ public class PyBytecode extends PyBaseCode {
 
     // end debugging
     public final static int CO_MAXBLOCKS = 20; // same as in CPython
-    public final char[] co_code; // widened to char to avoid signed byte issues
+    public final byte[] co_code; // widened to char to avoid signed byte issues
     public final PyObject[] co_consts;
     public final String[] co_names;
     public final int co_stacksize; // XXX - use to convert PyStack to use PyObject[] instead of ArrayList<PyObject>
-    public final String co_lnotab;
+    public final byte[] co_lnotab;
     private final static int CALL_FLAG_VAR = 1;
     private final static int CALL_FLAG_KW = 2;
 
@@ -57,6 +57,8 @@ public class PyBytecode extends PyBaseCode {
                 null, null);
     }
 
+
+    // XXX - intern names HERE instead of in marshal
     public PyBytecode(int argcount, int nlocals, int stacksize, int flags,
             String codestring, PyObject[] constants, String[] names, String varnames[],
             String filename, String name, int firstlineno, String lnotab,
@@ -79,9 +81,10 @@ public class PyBytecode extends PyBaseCode {
         co_stacksize = stacksize;
         co_consts = constants;
         co_names = names;
-        co_code = codestring.toCharArray();
-        co_lnotab = lnotab; // ignore
+        co_code = getBytes(codestring);
+        co_lnotab = getBytes(lnotab);
     }
+
     private static final String[] __members__ = {
         "co_name", "co_argcount",
         "co_varnames", "co_filename", "co_firstlineno",
@@ -89,6 +92,7 @@ public class PyBytecode extends PyBaseCode {
         "co_code", "co_consts", "co_names", "co_lnotab", "co_stacksize"
     };
 
+    @Override
     public PyObject __dir__() {
         PyString members[] = new PyString[__members__.length];
         for (int i = 0; i < __members__.length; i++) {
@@ -144,6 +148,15 @@ public class PyBytecode extends PyBaseCode {
         if (name == "co_name") {
             return new PyString(co_name);
         }
+        if (name == "co_code") {
+            return new PyString(getString(co_code));
+        }
+        if (name == "co_lnotab") {
+            return new PyString(getString(co_lnotab));
+        }
+        if (name == "co_consts") {
+            return new PyTuple(co_consts);
+        }
         return super.__findattr_ex__(name);
     }
 
@@ -184,7 +197,7 @@ public class PyBytecode extends PyBaseCode {
 
         @Override
         public String toString() {
-            return exception.toString();
+            return String.format("PyStackException<%s,%s,%.100s>", exception.type, exception.value, exception.traceback);
         }
     }
 
@@ -207,9 +220,9 @@ public class PyBytecode extends PyBaseCode {
     private void print_debug(int count, int next_instr, int opcode, int oparg, PyStack stack, PyFrame f) {
         if (debug) {
             System.err.println(co_name + ":" +
-                    count + "," + f.f_lasti + "> opcode: " +
+                    count + "," + f.f_lasti + "> " +
                     get_opname().__getitem__(Py.newInteger(opcode)) +
-                    (opcode >= Opcode.HAVE_ARGUMENT ? ", oparg: " + oparg : "") +
+                    (opcode >= Opcode.HAVE_ARGUMENT ? " " + oparg : "") +
                     ", stack: " + stack.toString() +
                     ", blocks: " + stringify_blocks(f));
         }
@@ -292,10 +305,10 @@ public class PyBytecode extends PyBaseCode {
                     stack.push((PyObject) generatorInput);
                 }
 
-                opcode = co_code[next_instr];
+                opcode = getUnsigned(co_code, next_instr);
                 if (opcode >= Opcode.HAVE_ARGUMENT) {
                     next_instr += 2;
-                    oparg = (co_code[next_instr] << 8) + co_code[next_instr - 1];
+                    oparg = (getUnsigned(co_code, next_instr) << 8) + getUnsigned(co_code, next_instr - 1);
                 }
                 print_debug(count, next_instr, opcode, oparg, stack, f);
 
@@ -734,10 +747,10 @@ public class PyBytecode extends PyBaseCode {
                         f.dellocal(co_names[oparg]);
                         break;
 
-                    case Opcode.UNPACK_SEQUENCE: 
+                    case Opcode.UNPACK_SEQUENCE:
                         unpack_iterable(oparg, stack);
                         break;
-                    
+
                     case Opcode.STORE_ATTR: {
                         PyObject obj = stack.pop();
                         PyObject v = stack.pop();
@@ -1112,9 +1125,9 @@ public class PyBytecode extends PyBaseCode {
                     }
 
                     case Opcode.EXTENDED_ARG:
-                        opcode = co_code[next_instr++];
+                        opcode = getUnsigned(co_code, next_instr++);
                         next_instr += 2;
-                        oparg = oparg << 16 | ((co_code[next_instr] << 8) + co_code[next_instr - 1]);
+                        oparg = oparg << 16 | ((getUnsigned(co_code, next_instr) << 8) + getUnsigned(co_code, next_instr - 1));
                         break;
 
                     default:
@@ -1172,19 +1185,18 @@ public class PyBytecode extends PyBaseCode {
                         }
                         stack.push(exc.traceback);
                         stack.push(exc.value);
-                        stack.push(new PyStackException(exc)); // instead of stack.push(exc.type);, like CPython
+                        stack.push(new PyStackException(exc)); // instead of stack.push(exc.type), like CPython
                     } else {
                         if (why == Why.RETURN || why == Why.CONTINUE) {
                             stack.push(retval);
                         }
-                        // FIGURE OUT THE FLOW HERE, in test_optparse2
                         stack.push(new PyStackWhy(why));
                     }
                     why = Why.NOT;
                     next_instr = b.b_handler;
                     break;
                 }
-            } // unwindstack
+            } // unwind block stack
 
             if (why != Why.NOT) {
                 break;
@@ -1413,7 +1425,37 @@ public class PyBytecode extends PyBaseCode {
 
         @Override
         public String toString() {
-            return stack.toString();
+            StringBuilder buffer = new StringBuilder();
+            int size = stack.size();
+            int N = size > 4 ? 4 : size;
+            buffer.append("[");
+            for (int i = 0; i < N; i++) {
+                if (i > 0) {
+                    buffer.append(", ");
+                }
+                PyObject item = stack.get(size - (i + 1));
+                buffer.append(upto(item.__repr__().toString()));
+            }
+            if (N < size) {
+                buffer.append(String.format(", %d more...", size - N));
+            }
+            buffer.append("]");
+            return buffer.toString();
+        }
+
+        private String upto(String x) {
+            return upto(x, 100);
+        }
+
+        private String upto(String x, int n) {
+            x = x.replace('\n', '|');
+            if (x.length() > n) {
+                StringBuilder item = new StringBuilder(x.substring(0, n));
+                item.append("...");
+                return item.toString();
+            } else {
+                return x;
+            }
         }
     }
 
@@ -1438,6 +1480,52 @@ public class PyBytecode extends PyBaseCode {
                     b_handler + "," + b_level + ">";
         }
     }
+
+    @Override
+    protected int getline(PyFrame f) {
+        int addrq = f.f_lasti;
+        int size = co_lnotab.length / 2;
+        int p = 0;
+        int line = co_firstlineno;
+        int addr = 0;
+        while (--size >= 0) {
+            addr += getUnsigned(co_lnotab, p++);
+            if (addr > addrq) {
+                break;
+            }
+            line += getUnsigned(co_lnotab, p++);
+        }
+        return line;
+    }
+
+    // Utility functions to enable storage of unsigned bytes in co_code, co_lnotab byte[] arrays
+    private static char getUnsigned(byte[] x, int i) {
+        byte b = x[i];
+        if (b < 0) {
+            return (char)(b + 256);
+        }
+        else {
+            return (char)b;
+        }
+    }
+
+    private static String getString(byte[] x) {
+        StringBuilder buffer = new StringBuilder(x.length);
+        for (int i = 0; i < x.length; i++) {
+            buffer.append(getUnsigned(x, i));
+        }
+        return buffer.toString();
+    }
+
+    private static byte[] getBytes(String s) {
+        int len = s.length();
+        byte[] x = new byte[len];
+        for (int i = 0; i < len; i++) {
+            x[i] = (byte)(s.charAt(i) & 0xFF);
+        }
+        return x;
+    }
+
 }
 
 

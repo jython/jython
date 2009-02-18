@@ -311,4 +311,8 @@ public abstract class PyBaseCode extends PyCode {
     protected PyObject interpret(PyFrame f) {
         throw new UnsupportedOperationException("interpret not supported");
     }
+
+    protected int getline(PyFrame f) {
+         return f.f_lineno;
+    }
 }
