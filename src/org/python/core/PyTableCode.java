@@ -6,6 +6,8 @@ package org.python.core;
  * is stored as a PyFunctionTable instance and an integer index.
  */
 
+import org.python.modules._systemrestart;
+
 public class PyTableCode extends PyBaseCode
 {
 
@@ -116,7 +118,92 @@ public class PyTableCode extends PyBaseCode
         return super.__findattr_ex__(name);
     }
 
-    protected PyObject interpret(PyFrame frame) {
-        return funcs.call_function(func_id, frame);
+    @Override
+    public PyObject call(PyFrame frame, PyObject closure) {
+//         System.err.println("tablecode call: "+co_name);
+        ThreadState ts = Py.getThreadState();
+        if (ts.systemState == null) {
+            ts.systemState = Py.defaultSystemState;
+        }
+        //System.err.println("got ts: "+ts+", "+ts.systemState);
+
+        // Cache previously defined exception
+        PyException previous_exception = ts.exception;
+
+        // Push frame
+        frame.f_back = ts.frame;
+        if (frame.f_builtins == null) {
+            if (frame.f_back != null) {
+                frame.f_builtins = frame.f_back.f_builtins;
+            } else {
+                //System.err.println("ts: "+ts);
+                //System.err.println("ss: "+ts.systemState);
+                frame.f_builtins = PySystemState.builtins;
+            }
+        }
+        // nested scopes: setup env with closure
+        // this should only be done once, so let the frame take care of it
+        frame.setupEnv((PyTuple)closure);
+
+        ts.frame = frame;
+
+        // Handle trace function for debugging
+        if (ts.tracefunc != null) {
+            frame.f_lineno = co_firstlineno;
+            frame.tracefunc = ts.tracefunc.traceCall(frame);
+        }
+
+        // Handle trace function for profiling
+        if (ts.profilefunc != null) {
+            ts.profilefunc.traceCall(frame);
+        }
+
+        PyObject ret;
+        try {
+            ret = funcs.call_function(func_id, frame);
+        } catch (Throwable t) {
+            // Convert exceptions that occured in Java code to PyExceptions
+            PyException pye = Py.JavaError(t);
+            pye.tracebackHere(frame);
+
+            frame.f_lasti = -1;
+
+            if (frame.tracefunc != null) {
+                frame.tracefunc.traceException(frame, pye);
+            }
+            if (ts.profilefunc != null) {
+                ts.profilefunc.traceException(frame, pye);
+            }
+
+            // Rethrow the exception to the next stack frame
+            ts.exception = previous_exception;
+            ts.frame = ts.frame.f_back;
+            throw pye;
+        }
+
+        if (frame.tracefunc != null) {
+            frame.tracefunc.traceReturn(frame, ret);
+        }
+        // Handle trace function for profiling
+        if (ts.profilefunc != null) {
+            ts.profilefunc.traceReturn(frame, ret);
+        }
+
+        // Restore previously defined exception
+        ts.exception = previous_exception;
+
+        ts.frame = ts.frame.f_back;
+
+        // Check for interruption, which is used for restarting the interpreter
+        // on Jython
+        if (Thread.currentThread().isInterrupted()) {
+            throw new PyException(_systemrestart.SystemRestart);
+        }
+        return ret;
+    }
+
+    @Override
+    protected PyObject interpret(PyFrame f) {
+        throw new UnsupportedOperationException("Inlined interpret to improve call performance (may want to reconsider in the future).");
     }
 }
