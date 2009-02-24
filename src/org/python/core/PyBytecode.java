@@ -84,7 +84,6 @@ public class PyBytecode extends PyBaseCode {
         co_code = getBytes(codestring);
         co_lnotab = getBytes(lnotab);
     }
-
     private static final String[] __members__ = {
         "co_name", "co_argcount",
         "co_varnames", "co_filename", "co_firstlineno",
@@ -217,9 +216,9 @@ public class PyBytecode extends PyBaseCode {
         return buf.toString();
     }
 
-    private void print_debug(int count, int next_instr, int opcode, int oparg, PyStack stack, PyFrame f) {
+    private void print_debug(int count, int next_instr, int line, int opcode, int oparg, PyStack stack, PyFrame f) {
         if (debug) {
-            System.err.println(co_name + ":" +
+            System.err.println(co_name + " " + line + ":" +
                     count + "," + f.f_lasti + "> " +
                     get_opname().__getitem__(Py.newInteger(opcode)) +
                     (opcode >= Opcode.HAVE_ARGUMENT ? " " + oparg : "") +
@@ -249,14 +248,16 @@ public class PyBytecode extends PyBaseCode {
     }
 
     @Override
-    protected PyObject interpret(PyFrame f) {
+    protected PyObject interpret(PyFrame f, ThreadState ts) {
         final PyStack stack = new PyStack();
         int next_instr = -1;
         int opcode;	/* Current opcode */
         int oparg = 0; /* Current opcode argument, if any */
         Why why = Why.NOT;
         PyObject retval = null;
-        ThreadState ts = Py.getThreadState(); // XXX - change interpret to pass through from PyFrame since our ts will never change
+        LineCache lineCache = null;
+        int last_line = -1;
+        int line = 0;
 
         // XXX - optimization opportunities
         // 1. consider detaching the setting/getting of frame fields to improve performance, instead do this
@@ -294,6 +295,19 @@ public class PyBytecode extends PyBaseCode {
 
         while (!debug || (maxCount == -1 || count < maxCount)) { // XXX - replace with while(true)
 
+            if (f.tracefunc != null || debug) {
+                if (lineCache == null) {
+                    lineCache = new LineCache();
+                    if (debug) {
+                        System.err.println("LineCache: " + lineCache.toString());
+                    }
+                }
+                line = lineCache.getline(next_instr); // XXX - should also return the range this is valid to avoid an unnecessary bisect
+                if (line != last_line) {
+                    f.setline(line);
+                }
+            }
+
             try {
 
                 if (checkGeneratorInput) {
@@ -310,11 +324,11 @@ public class PyBytecode extends PyBaseCode {
                     next_instr += 2;
                     oparg = (getUnsigned(co_code, next_instr) << 8) + getUnsigned(co_code, next_instr - 1);
                 }
-                print_debug(count, next_instr, opcode, oparg, stack, f);
+                print_debug(count, next_instr, line, opcode, oparg, stack, f);
 
                 count += 1;
                 next_instr += 1;
-                f.f_lasti = next_instr; // should have no worries about needing co_lnotab, just keep this current
+                f.f_lasti = next_instr;
 
                 switch (opcode) {
                     case Opcode.NOP:
@@ -1498,14 +1512,77 @@ public class PyBytecode extends PyBaseCode {
         return line;
     }
 
+    private class LineCache {
+
+        private class Pair {
+
+            private final int addr;
+            private final int line;
+
+            private Pair(int a, int b) {
+                this.addr = a;
+                this.line = b;
+            }
+
+            public String toString() {
+                return "(" + addr + "," + line + ")";
+            }
+        }
+        List<Integer> addr_breakpoints = new ArrayList<Integer>();
+        List<Integer> lines = new ArrayList<Integer>(); // length should be one more than addr_breakpoints
+
+        private LineCache() { // based on dis.findlinestarts
+
+            int size = co_lnotab.length / 2;
+            int p = 0;
+            int lastline = -1;
+            int line = co_firstlineno;
+            int addr = 0;
+            while (--size >= 0) {
+                int byte_incr = getUnsigned(co_lnotab, p++);
+                int line_incr = getUnsigned(co_lnotab, p++);
+                if (byte_incr > 0) {
+                    if (line != lastline) {
+                        addr_breakpoints.add(addr);
+                        lines.add(line);
+                        lastline = line;
+                    }
+                    addr += byte_incr;
+                }
+                line += line_incr;
+            }
+            if (line != lastline) {
+                lines.add(line);
+            }
+        }
+
+        private int getline(int addrq) { // bisect_right to the lineno
+
+            int lo = 0;
+            int hi = addr_breakpoints.size();
+            while (lo < hi) {
+                int mid = (lo + hi) / 2;
+                if (addrq < addr_breakpoints.get(mid)) {
+                    hi = mid;
+                } else {
+                    lo = mid + 1;
+                }
+            }
+            return lines.get(lo);
+        }
+
+        public String toString() {
+            return addr_breakpoints.toString() + ";" + lines.toString();
+        }
+    }
+
     // Utility functions to enable storage of unsigned bytes in co_code, co_lnotab byte[] arrays
     private static char getUnsigned(byte[] x, int i) {
         byte b = x[i];
         if (b < 0) {
-            return (char)(b + 256);
-        }
-        else {
-            return (char)b;
+            return (char) (b + 256);
+        } else {
+            return (char) b;
         }
     }
 
@@ -1521,11 +1598,10 @@ public class PyBytecode extends PyBaseCode {
         int len = s.length();
         byte[] x = new byte[len];
         for (int i = 0; i < len; i++) {
-            x[i] = (byte)(s.charAt(i) & 0xFF);
+            x[i] = (byte) (s.charAt(i) & 0xFF);
         }
         return x;
     }
-
 }
 
 

@@ -203,7 +203,7 @@ public class PyTableCode extends PyBaseCode
     }
 
     @Override
-    protected PyObject interpret(PyFrame f) {
+    protected PyObject interpret(PyFrame f, ThreadState ts) {
         throw new UnsupportedOperationException("Inlined interpret to improve call performance (may want to reconsider in the future).");
     }
 }

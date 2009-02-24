@@ -86,7 +86,7 @@ public abstract class PyBaseCode extends PyCode {
 
         PyObject ret;
         try {
-            ret = interpret(frame);
+            ret = interpret(frame, ts);
         } catch (Throwable t) {
             // Convert exceptions that occured in Java code to PyExceptions
             PyException pye = Py.JavaError(t);
@@ -308,7 +308,7 @@ public abstract class PyBaseCode extends PyCode {
                              co_name, Py.idstr(this), co_filename, co_firstlineno);
     }
 
-    protected abstract PyObject interpret(PyFrame f);
+    protected abstract PyObject interpret(PyFrame f, ThreadState ts);
 
     protected int getline(PyFrame f) {
          return f.f_lineno;
