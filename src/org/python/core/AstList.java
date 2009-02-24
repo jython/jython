@@ -586,9 +586,10 @@ public class AstList extends PySequence implements Cloneable, List {
     public void pyset(int index, PyObject element) {
         if (adapter == null) {
             data.set(index, element);
+        } else {
+            Object o = adapter.py2ast(element);
+            data.set(index, o);
         }
-        Object o = adapter.py2ast(element);
-        data.set(index, o);
     }
 
     public Object remove(int index) {

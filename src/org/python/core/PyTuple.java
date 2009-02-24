@@ -384,4 +384,9 @@ public class PyTuple extends PySequenceList
         }
         return super.unsupportedopMessage(op, o2);
     }
+
+    public void pyset(int index, PyObject value) {
+        throw Py.TypeError("'tuple' object does not support item assignment");
+    }
+
 }

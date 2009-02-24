@@ -2,9 +2,6 @@ package org.python.expose.generate;
 
 import java.io.IOException;
 
-import junit.framework.TestCase;
-
-import org.objectweb.asm.Type;
 import org.python.core.Py;
 import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
@@ -38,8 +35,9 @@ public class TypeExposerTest extends InterpTestCase {
                 .getResourceAsStream("org/python/expose/generate/TypeExposerTest$SimplestNew.class"));
         TypeBuilder te = etp.getTypeExposer().makeBuilder();
         assertEquals(true, te.getIsBaseType());
-        PyObject new_ = te.getDict(PyType.fromClass(SimplestNew.class)).__finditem__("__new__");
-        assertEquals(Py.One, new_.__call__(PyType.fromClass(SimplestNew.class)));
+        PyType simplestType = PyType.fromClass(SimplestNew.class);
+        PyNewWrapper new_ = (PyNewWrapper)te.getDict(simplestType).__finditem__("__new__");
+        assertEquals(Py.One, new_.new_impl(false, null, null, null));
     }
 
     public void testCatchingDupes() throws IOException {

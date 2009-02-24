@@ -58,4 +58,12 @@ public class Visible extends Invisible {
     public static int visibleStatic(int iinput, String input) {
         return EXTRA_ARG_PUBLIC_STATIC_METHOD;
     }
+
+    public static int getVisibleStaticField() {
+        return visibleStaticField;
+    }
+
+    public static void setVisibleStaticField(int newValue) {
+        visibleStaticField = newValue;
+    }
 }

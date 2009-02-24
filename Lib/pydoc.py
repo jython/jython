@@ -1960,10 +1960,14 @@ pydoc</strong> by Ka-Ping Yee &lt;ping@lfw.org&gt;</font>'''
             self.base.__init__(self, self.address, self.handler)
 
         def serve_until_quit(self):
-            import select
+            import sys
+            if sys.platform.startswith('java'):
+                from select import cpython_compatible_select as select
+            else:
+                from select import select
             self.quit = False
             while not self.quit:
-                rd, wr, ex = select.select([self.socket.fileno()], [], [], 1)
+                rd, wr, ex = select([self.socket], [], [], 1)
                 if rd: self.handle_request()
 
         def server_activate(self):

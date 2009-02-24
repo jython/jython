@@ -624,8 +624,9 @@ def mac_ver(release='',versioninfo=('','',''),machine=''):
 def _java_getprop(name,default):
 
     from java.lang import System
+    from org.python.core.Py import newString
     try:
-        return System.getProperty(name)
+        return newString(System.getProperty(name))
     except:
         return default
 
@@ -793,7 +794,7 @@ def _follow_symlinks(filepath):
     filepath = _abspath(filepath)
     while os.path.islink(filepath):
         filepath = os.path.normpath(
-            os.path.join(filepath,os.readlink(filepath)))
+            os.path.join(os.path.dirname(filepath),os.readlink(filepath)))
     return filepath
 
 def _syscmd_uname(option,default=''):

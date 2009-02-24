@@ -68,6 +68,11 @@ class VisibilityTest(unittest.TestCase):
         v = Visible()
         self.assertEquals(Results.PUBLIC_FIELD, v.visibleField)
         self.assertEquals(Results.PUBLIC_STATIC_FIELD, Visible.visibleStaticField)
+        Visible.visibleStaticField = Results.PUBLIC_STATIC_FIELD + 1
+        self.assertEquals(Results.PUBLIC_STATIC_FIELD + 1, Visible.visibleStaticField)
+        self.assertEquals(Results.PUBLIC_STATIC_FIELD + 1, Visible.getVisibleStaticField())
+        Visible.setVisibleStaticField(Results.PUBLIC_STATIC_FIELD)
+        self.assertEquals(Results.PUBLIC_STATIC_FIELD, Visible.visibleStaticField)
         self.assertEquals(Results.PUBLIC_METHOD, v.visibleInstance(0))
         self.assertEquals(Results.OVERLOADED_PUBLIC_METHOD, v.visibleInstance('a'))
         self.assertEquals(Results.EXTRA_ARG_PUBLIC_METHOD, v.visibleInstance(0, 'b'))

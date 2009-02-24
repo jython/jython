@@ -28,15 +28,15 @@ public abstract class PyNewWrapper extends PyBuiltinMethod {
                                       PyType subtype,
                                       PyObject[] args,
                                       String[] keywords);
-    
+
     public PyBuiltinCallable bind(PyObject self) {
         throw Py.SystemError("__new__ wrappers are already bound");
     }
-    
+
     public PyType getWrappedType() {
         return for_type;
     }
-    
+
     public void setWrappedType(PyType type) {
         self = type;
         for_type = type;
@@ -48,26 +48,22 @@ public abstract class PyNewWrapper extends PyBuiltinMethod {
 
     public PyObject __call__(PyObject[] args, String[] keywords) {
         int nargs = args.length;
-        if(nargs < 1 || nargs == keywords.length) {
-            throw Py.TypeError(for_type.fastGetName()
-                    + ".__new__(): not enough arguments");
+        if (nargs < 1 || nargs == keywords.length) {
+            throw Py.TypeError(for_type.fastGetName() + ".__new__(): not enough arguments");
         }
         PyObject arg0 = args[0];
-        if(!(arg0 instanceof PyType)) {
-            throw Py.TypeError(for_type.fastGetName()
-                    + ".__new__(X): X is not a type object ("
+        if (!(arg0 instanceof PyType)) {
+            throw Py.TypeError(for_type.fastGetName() + ".__new__(X): X is not a type object ("
                     + arg0.getType().fastGetName() + ")");
         }
         PyType subtype = (PyType)arg0;
-        if(!subtype.isSubType(for_type)) {
-            throw Py.TypeError(for_type.fastGetName() + ".__new__("
-                    + subtype.fastGetName() + "): " + subtype.fastGetName()
-                    + " is not a subtype of " + for_type.fastGetName());
+        if (!subtype.isSubType(for_type)) {
+            throw Py.TypeError(for_type.fastGetName() + ".__new__(" + subtype.fastGetName() + "): "
+                    + subtype.fastGetName() + " is not a subtype of " + for_type.fastGetName());
         }
-        if(subtype.getStatic() != for_type) {
-            throw Py.TypeError(for_type.fastGetName() + ".__new__("
-                    + subtype.fastGetName() + ") is not safe, use "
-                    + subtype.fastGetName() + ".__new__()");
+        if (subtype.getStatic() != for_type) {
+            throw Py.TypeError(for_type.fastGetName() + ".__new__(" + subtype.fastGetName()
+                    + ") is not safe, use " + subtype.fastGetName() + ".__new__()");
         }
         PyObject[] rest = new PyObject[nargs - 1];
         System.arraycopy(args, 1, rest, 0, nargs - 1);

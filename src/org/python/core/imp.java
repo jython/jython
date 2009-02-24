@@ -318,40 +318,11 @@ public class imp {
         return importer;
     }
 
-    static PyObject replacePathItem(PySystemState sys, PyObject path) {
-        if (path instanceof SyspathArchive) {
-            // already an archive
-            return null;
-        }
-
-        try {
-            // this has the side affect of adding the jar to the PackageManager
-            // during the initialization of the SyspathArchive
-            return new SyspathArchive(sys.getPath(path.toString()));
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
     static PyObject find_module(String name, String moduleName, PyList path) {
 
         PyObject loader = Py.None;
         PySystemState sys = Py.getSystemState();
         PyObject metaPath = sys.meta_path;
-
-        /*
-         * Needed to convert all entries on the path to SyspathArchives if
-         * necessary.
-         */
-        PyList ppath = path == null ? sys.path : path;
-        for (int i = 0; i < ppath.__len__(); i++) {
-            PyObject p = ppath.__getitem__(i);
-            PyObject q = replacePathItem(sys, p);
-            if (q == null) {
-                continue;
-            }
-            ppath.__setitem__(i, q);
-        }
 
         for (PyObject importer : metaPath.asIterable()) {
             PyObject findModule = importer.__getattr__("find_module");

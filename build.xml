@@ -426,6 +426,8 @@ The readme text for the next release will be like:
 
     <target name="antlr_gen" depends="prepare-output" unless="antlr.notneeded">
         <java classname="org.antlr.Tool" failonerror="true" fork="true" dir="${jython.base.dir}">
+            <arg value="-Xconversiontimeout"/>
+            <arg value="2000"/>
             <arg value="-fo"/>
             <arg path="${work.dir}/build/gensrc/org/python/antlr"/>
             <arg value="-lib"/>
@@ -482,6 +484,16 @@ The readme text for the next release will be like:
                nowarn="${nowarn}"> 
             <classpath refid="test.classpath" />
         </javac>
+        <javac srcdir="tests/data/initializer"
+            destdir="tests/data/initializer"
+            target="${jdk.target.version}"
+            source="${jdk.source.version}"
+            debug="${debug}"
+            deprecation="${deprecation}"
+            nowarn="${nowarn}"> 
+            <classpath refid="test.classpath" />
+        </javac>
+
 
         <copy file="${source.dir}/org/python/modules/ucnhash.dat"
               todir="${compile.dir}/org/python/modules"
@@ -522,7 +534,7 @@ The readme text for the next release will be like:
             <rule pattern="org.jruby.ext.posix.**" result="org.python.posix.@1"/>
             <zipfileset src="extlibs/constantine-0.4.jar"/>
             <rule pattern="com.kenai.constantine.**" result="org.python.constantine.@1"/>
-            <zipfileset src="extlibs/xercesImpl-2.9.1.jar"/>
+            <zipfileset src="extlibs/xercesImpl-2.9.1.jar" excludes="META-INF/services/*"/>
             <rule pattern="org.apache.xml.**" result="org.python.apache.xml.@1"/>
             <rule pattern="org.apache.xerces.**" result="org.python.apache.xerces.@1"/>
             <rule pattern="org.apache.wml.**" result="org.python.apache.wml.@1"/>

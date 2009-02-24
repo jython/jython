@@ -10,6 +10,10 @@ import org.python.core.PySystemState;
 import org.python.core.imp;
 import org.python.modules._py_compile;
 
+/**
+ * Compiles all python files in a directory to bytecode, and writes them to another directory,
+ * possibly the same one.
+ */
 public class JycompileAntTask extends GlobMatchingTask {
 
     @Override
@@ -31,19 +35,28 @@ public class JycompileAntTask extends GlobMatchingTask {
                 compiledFilePath += "/__init__";
             }
             File compiled = new File(destDir, compiledFilePath + "$py.class");
-            byte[] bytes;
-            try {
-                bytes = imp.compileSource(name, src);
-            } catch (PyException pye) {
-                pye.printStackTrace();
-                throw new BuildException("Compile failed; see the compiler error output for details.");
-            }
-            File dir = compiled.getParentFile();
-            if (!dir.exists() && !compiled.getParentFile().mkdirs()) {
-                throw new BuildException("Unable to make directory for compiled file: " + compiled);
-            }
-            imp.cacheCompiledSource(src.getAbsolutePath(), compiled.getAbsolutePath(), bytes);
+            compile(src, compiled, name);
         }
+    }
+
+    /**
+     * Compiles the python file <code>src</code> to bytecode filling in <code>moduleName</code> as
+     * its name, and stores it in <code>compiled</code>. This is called by process for every file
+     * that's compiled, so subclasses can override this method to affect or track the compilation.
+     */
+    protected void compile(File src, File compiled, String moduleName) {
+        byte[] bytes;
+        try {
+            bytes = imp.compileSource(moduleName, src);
+        } catch (PyException pye) {
+            pye.printStackTrace();
+            throw new BuildException("Compile failed; see the compiler error output for details.");
+        }
+        File dir = compiled.getParentFile();
+        if (!dir.exists() && !compiled.getParentFile().mkdirs()) {
+            throw new BuildException("Unable to make directory for compiled file: " + compiled);
+        }
+        imp.cacheCompiledSource(src.getAbsolutePath(), compiled.getAbsolutePath(), bytes);
     }
 
     protected String getFrom() {

@@ -100,4 +100,8 @@ public class Coercions {
         }
         return true;
     }
+
+    public static void runRunnable(Runnable r){
+        r.run();
+    }
 }

@@ -52,6 +52,8 @@ dis.py
 DocXMLRPCServer.py
 dospath.py
 dumbdbm.py
+dummy_thread.py
+dummy_threading.py
 exceptions.py
 fileinput.py
 fnmatch.py

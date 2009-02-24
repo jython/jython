@@ -8,6 +8,7 @@ import shutil
 import sys
 import tempfile
 import unittest
+import subprocess
 from test import test_support
 from test_chdir import read, safe_mktemp, COMPILED_SUFFIX
 
@@ -148,6 +149,15 @@ class ImpTestCase(unittest.TestCase):
         # causes a stack overflow if the bug occurs
         self.assertRaises(Exception, getattr, anygui, 'abc')
 
+    def test_import_star(self):
+        self.assertEquals(subprocess.call([sys.executable,
+        test_support.findfile("import_star_from_java.py")]), 0)
+
+    def test_selfreferential_classes(self):
+        from org.python.tests.inbred import Metis
+        from org.python.tests.inbred import Zeus
+        self.assertEquals(Metis, Zeus.Athena.__bases__[0])
+        self.assertEquals(Zeus, Metis.__bases__[0])
 
 def test_main():
     test_support.run_unittest(MislabeledImportTestCase,

@@ -350,12 +350,17 @@ public class cStringIO {
 
             int newpos = spos + s.length();
 
-            if (newpos > slen) {
-                buf.replace(spos, slen - spos, s);
-                buf.append(s.substring(slen));
-                slen = newpos;
+            if (spos < slen) {
+                if (newpos > slen) {
+                    buf.replace(spos, slen - spos, s);
+                    buf.append(s.substring(slen));
+                    slen = newpos;
+                } else {
+                    buf.replace(spos, spos + s.length(), s);
+                }
             } else {
-                buf.replace(spos, spos + s.length(), s);
+                buf.append(s);
+                slen = newpos;
             }
 
             buf.setLength(slen);

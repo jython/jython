@@ -15,8 +15,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.python.core.util.StringUtil;
-import org.python.expose.ExposeAsSuperclass;
-import org.python.expose.ExposedType;
 import org.python.util.Generic;
 
 public class PyJavaType extends PyType {
@@ -35,6 +33,19 @@ public class PyJavaType extends PyType {
 
     private static Map<Class<?>, PyBuiltinMethod[]> collectionProxies;
 
+    /**
+     * Other Java classes this type has MRO conflicts with. This doesn't matter for Java method
+     * resolution, but if Python methods are added to the type, the added methods can't overlap with
+     * methods added to any of the types in this set. If this type doesn't have any known conflicts,
+     * this is null.
+     */
+    private Set<PyJavaType> conflicted;
+
+    /**
+     * The names of methods that have been added to this class.
+     */
+    private Set<String> modified;
+
     public static PyObject wrapJavaObject(Object o) {
         PyObject obj = new PyObjectDerived(PyType.fromClass(o.getClass()));
         obj.javaProxy = o;
@@ -45,29 +56,121 @@ public class PyJavaType extends PyType {
         super(TYPE == null ? fromClass(PyType.class) : TYPE);
     }
 
-    @Override
-    public Class<?> getProxyType() {
-        return (Class<?>)javaProxy;
-    }
-
-    // Java types are ok with things being added and removed from their dicts as long as there isn't
-    // something there, so let these checks through
-    @Override
-    protected void checkDelattr() {}
-
-    @Override
-    protected void checkSetattr() {}
-
     protected boolean useMetatypeFirst(PyObject attr) {
         return !(attr instanceof PyReflectedField || attr instanceof PyReflectedFunction);
     }
 
-    PyObject[] compute_mro() {
-        return mro;
+    // Java types are ok with things being added and removed from their dicts as long as there isn't
+    @Override
+    void type___setattr__(String name, PyObject value) {
+        PyObject field = lookup(name);// If we have a static field that takes this, go with that
+        if (field != null) {
+            if (field._doset(null, value)) {
+                return;
+            }
+        }
+        if (modified == null) {
+            modified = Generic.set();
+        }
+        if (modified.add(name)) {
+            if (conflicted != null) {
+                for (PyJavaType conflict : conflicted) {
+                    if (conflict.modified != null && conflict.modified.contains(name)) {
+                        throw Py.TypeError(getName()
+                                + " does not have a consistent method resolution order with "
+                                + conflict.getName() + ", and it already has " + name
+                                + " added for Python");
+                    }
+                }
+            }
+        }
+        object___setattr__(name, value);
+        postSetattr(name);
     }
 
     @Override
-    protected void init(Class<?> forClass) {
+    void type___delattr__(String name) {
+        PyObject field = lookup(name);
+        if (field == null) {
+            throw Py.NameError("attribute not found: "+name);
+        }
+        if (!field.jdontdel()) {
+            object___delattr__(name);
+        }
+        if (modified != null) {
+            modified.remove(name);
+        }
+        postDelattr(name);
+    }
+
+    @Override
+    void handleMroError(MROMergeState[] toMerge, List<PyObject> mro) {
+        if (underlying_class != null) {
+            // If this descends from PyObject, don't do the Java mro cleanup
+            super.handleMroError(toMerge, mro);
+        }
+        Set<PyJavaType> inConflict = Generic.set();
+        PyJavaType winner = null;
+        for (MROMergeState mergee : toMerge) {
+            for (int i = mergee.next; i < mergee.mro.length; i++) {
+                if (mergee.mro[i] == PyObject.TYPE
+                        || mergee.mro[i] == PyType.fromClass(Object.class)) {
+                    continue;
+                }
+                if (winner == null) {
+                    // Pick an arbitrary class to be added to the mro next and break the conflict.
+                    // If method name conflicts were allowed between methods added to Java types,
+                    // it would go first, but that's prevented, so being a winner doesn't actually
+                    // get it anything
+                    winner = (PyJavaType)mergee.mro[i];
+                }
+                inConflict.add((PyJavaType)mergee.mro[i]);
+            }
+        }
+
+        Set<String> allModified = Generic.set();
+        PyJavaType[] conflicted = inConflict.toArray(new PyJavaType[inConflict.size()]);
+        for (PyJavaType type : conflicted) {
+            if (type.modified == null) {
+                continue;
+            }
+            for (String method : type.modified) {
+                if (!allModified.add(method)) { // Another type in conflict has this method, fail
+                    PyList types = new PyList();
+                    for (PyJavaType othertype : conflicted) {
+                        if (othertype.modified != null && othertype.modified.contains(method)) {
+                            types.add(othertype);
+                        }
+                    }
+                    throw Py.TypeError(String.format("Supertypes that share a modified attribute "
+                            + " have an MRO conflict[attribute=%s, types=%s]", method, types));
+                }
+            }
+        }
+
+        // We can keep trucking, there aren't any existing method name conflicts.  Mark the
+        // conflicts in all the classes so further method additions can check for trouble
+        for (PyJavaType type : conflicted) {
+            for (PyJavaType otherType : inConflict) {
+                if (otherType != type) {
+                    if (type.conflicted == null) {
+                        type.conflicted = Generic.set();
+                    }
+                    type.conflicted.add(otherType);
+                }
+            }
+        }
+
+        // Add our winner to the mro, clear the clog, and try to finish the rest
+        mro.add(winner);
+        for (MROMergeState mergee : toMerge) {
+            mergee.removeFromUnmerged(winner);
+        }
+        computeMro(toMerge, mro);
+    }
+
+    @Override
+    protected void init(Class<?> forClass, Set<PyJavaType> needsInners) {
         name = forClass.getName();
         // Strip the java fully qualified class name from Py classes in core
         if (name.startsWith("org.python.core.Py")) {
@@ -81,33 +184,33 @@ public class PyJavaType extends PyType {
             underlying_class = forClass;
             computeLinearMro(baseClass);
         } else {
+                needsInners.add(this);
             javaProxy = forClass;
-            objtype = PyType.fromClass(Class.class);
-            // Wrapped Java types fill in their mro first using their base class and then all of
-            // their interfaces.
-            if (baseClass == null) {
-                base = PyType.fromClass(PyObject.class);
-            } else if (javaProxy == Class.class) {
-                base = PyType.fromClass(PyType.class);
-            } else {
-                base = PyType.fromClass(baseClass);
-            }
-            bases = new PyObject[1 + forClass.getInterfaces().length];
-            bases[0] = base;
-            for (int i = 1; i < bases.length; i++) {
-                bases[i] = PyType.fromClass(forClass.getInterfaces()[i - 1]);
-            }
-            Set<PyObject> seen = Generic.set();
-            List<PyObject> mros = Generic.list();
-            mros.add(this);
-            for (PyObject obj : bases) {
-                for (PyObject mroObj : ((PyType)obj).mro) {
-                    if (seen.add(mroObj)) {
-                        mros.add(mroObj);
-                    }
+            objtype = PyType.fromClassSkippingInners(Class.class, needsInners);
+            // Wrapped Java types fill in their mro first using all of their interfaces then their
+            // super class.
+            List<PyObject> visibleBases = Generic.list();
+            for (Class<?> iface : forClass.getInterfaces()) {
+                if (iface == PyProxy.class || iface == ClassDictInit.class) {
+                    // Don't show the interfaces added by proxy type construction; otherwise Python
+                    // subclasses of proxy types and another Java interface can't make a consistent
+                    // mro
+                    continue;
                 }
+                visibleBases.add(PyType.fromClassSkippingInners(iface, needsInners));
             }
-            mro = mros.toArray(new PyObject[mros.size()]);
+            if (javaProxy == Object.class) {
+                base = PyType.fromClassSkippingInners(PyObject.class, needsInners);
+            } else if(baseClass == null) {
+                base = PyType.fromClassSkippingInners(Object.class, needsInners);
+            }else if (javaProxy == Class.class) {
+                base = PyType.fromClassSkippingInners(PyType.class, needsInners);
+            } else {
+                base = PyType.fromClassSkippingInners(baseClass, needsInners);
+            }
+            visibleBases.add(base);
+            this.bases = visibleBases.toArray(new PyObject[visibleBases.size()]);
+            mro = computeMro();
         }
 
         // PyReflected* can't call or access anything from non-public classes that aren't in
@@ -352,21 +455,6 @@ public class PyJavaType extends PyType {
         } else {
             dict.__setitem__("__init__", reflctr);
         }
-        for (Class<?> inner : forClass.getClasses()) {
-            // Only add the class if there isn't something else with that name and it came from this
-            // class
-            if (inner.getDeclaringClass() == forClass &&
-                    dict.__finditem__(inner.getSimpleName()) == null) {
-                // If this class is currently being loaded, any exposed types it contains won't have
-                // set their builder in PyType yet, so add them to BOOTSTRAP_TYPES so they're
-                // created as PyType instead of PyJavaType
-                if (inner.getAnnotation(ExposedType.class) != null
-                        || ExposeAsSuperclass.class.isAssignableFrom(inner)) {
-                    Py.BOOTSTRAP_TYPES.add(inner);
-                }
-                dict.__setitem__(inner.getSimpleName(), PyType.fromClass(inner));
-            }
-        }
         for (Map.Entry<Class<?>, PyBuiltinMethod[]> entry : getCollectionProxies().entrySet()) {
             if (entry.getKey() == forClass) {
                 for (PyBuiltinMethod meth : entry.getValue()) {
@@ -392,7 +480,8 @@ public class PyJavaType extends PyType {
                     || getDescrMethod(forClass, "_doset", OO) != null;
             has_delete = getDescrMethod(forClass, "__delete__", PyObject.class) != null
                     || getDescrMethod(forClass, "_dodel", PyObject.class) != null;
-        } else {
+        }
+        if (forClass == Object.class) {
             // Pass __eq__ and __repr__ through to subclasses of Object
             addMethod(new PyBuiltinMethodNarrow("__eq__", 1) {
                 @Override
@@ -400,6 +489,14 @@ public class PyJavaType extends PyType {
                     Object proxy = self.getJavaProxy();
                     Object oAsJava = o.__tojava__(proxy.getClass());
                     return proxy.equals(oAsJava) ? Py.True : Py.False;
+                }
+            });
+            addMethod(new PyBuiltinMethodNarrow("__ne__", 1) {
+                @Override
+                public PyObject __call__(PyObject o) {
+                    Object proxy = self.getJavaProxy();
+                    Object oAsJava = o.__tojava__(proxy.getClass());
+                    return !proxy.equals(oAsJava) ? Py.True : Py.False;
                 }
             });
             addMethod(new PyBuiltinMethodNarrow("__hash__") {
@@ -412,6 +509,32 @@ public class PyJavaType extends PyType {
                 @Override
                 public PyObject __call__() {
                     return Py.newString(self.getJavaProxy().toString());
+                }
+            });
+        }
+        if(forClass == Comparable.class) {
+            addMethod(new ComparableMethod("__lt__", 1) {
+                @Override
+                protected boolean getResult(int comparison) {
+                    return comparison < 0;
+                }
+            });
+            addMethod(new ComparableMethod("__le__", 1) {
+                @Override
+                protected boolean getResult(int comparison) {
+                    return comparison <= 0;
+                }
+            });
+            addMethod(new ComparableMethod("__gt__", 1) {
+                @Override
+                protected boolean getResult(int comparison) {
+                    return comparison > 0;
+                }
+            });
+            addMethod(new ComparableMethod("__ge__", 1) {
+                @Override
+                protected boolean getResult(int comparison) {
+                    return comparison >= 0;
                 }
             });
         }
@@ -434,42 +557,39 @@ public class PyJavaType extends PyType {
      */
     private void handleSuperMethodArgCollisions(Class<?> forClass) {
         for (Class<?> iface : forClass.getInterfaces()) {
-            for (Method meth : iface.getMethods()) {
-                if (!Modifier.isPublic(meth.getDeclaringClass().getModifiers())) {
-                    // Ignore methods from non-public interfaces as they're similarly bugged
-                    continue;
+            mergeMethods(iface);
+        }
+        if (forClass.getSuperclass() != null) {
+            mergeMethods(forClass.getSuperclass());
+        }
+    }
+
+    private void mergeMethods(Class<?> parent) {
+        for (Method meth : parent.getMethods()) {
+            if (!Modifier.isPublic(meth.getDeclaringClass().getModifiers())) {
+                // Ignore methods from non-public interfaces as they're similarly bugged
+                continue;
+            }
+            String nmethname = normalize(meth.getName());
+            PyObject[] where = new PyObject[1];
+            PyObject obj = lookup_where(nmethname, where);
+            if (obj == null) {
+                // Nothing in our supertype hierarchy defines something with this name, so it
+                // must not be visible there.
+                continue;
+            } else if (where[0] == this) {
+                // This method is the only thing defining items in this class' dict, so it must
+                // be a PyReflectedFunction created here. See if it needs the current method
+                // added to it.
+                if (!((PyReflectedFunction)obj).handles(meth)) {
+                    ((PyReflectedFunction)obj).addMethod(meth);
                 }
-                String nmethname = normalize(meth.getName());
-                PyObject[] where = new PyObject[1];
-                PyObject obj = lookup_where(nmethname, where);
-                if (obj == null) {
-                    // Nothing in our supertype hierarchy defines something with this name, so it
-                    // must not be visible there.
-                    continue;
-                } else if (where[0] == this) {
-                    // This method is the only thing defining items in this class' dict, so it must
-                    // be a PyReflectedFunction created here.  See if it needs the current method
-                    // added to it.
-                    if (!((PyReflectedFunction)obj).handles(meth)) {
-                        ((PyReflectedFunction)obj).addMethod(meth);
-                    }
-                } else {
-                    // There's something in a superclass with the same name. If this class extends a
-                    // class and doesn't just implement something, the extended class is first in
-                    // mro, so items defined on the extended class will show up here. Thanks to that
-                    // and copying the base function, we can get away with just looping over
-                    // interface methods.
-                    PyReflectedFunction func;
-                    if (obj instanceof PyReflectedFunction) {
-                        func = ((PyReflectedFunction)obj).copy();
-                        if (!func.handles(meth)) {
-                            func.addMethod(meth);
-                        }
-                    } else {
-                        func = new PyReflectedFunction(meth);
-                    }
-                    dict.__setitem__(nmethname, func);
-                }
+            } else {
+                // There's something in a superclass with the same name. Add an item to this type's
+                // dict to hide it.  If it's this method, nothing's changed.  If it's a field, we
+                // want to make the method visible.  If it's a different method, it'll be added to
+                // the reflected function created here in a later call.
+                dict.__setitem__(nmethname, new PyReflectedFunction(meth));
             }
         }
     }
@@ -557,6 +677,25 @@ public class PyJavaType extends PyType {
         protected Map<Object, Object> asMap(){
             return (Map<Object, Object>)self.getJavaProxy();
         }
+    }
+
+    private static abstract class ComparableMethod extends PyBuiltinMethodNarrow {
+        protected ComparableMethod(String name, int numArgs) {
+            super(name, numArgs);
+        }
+        @Override
+        public PyObject __call__(PyObject arg) {
+            Object asjava = arg.__tojava__(Object.class);
+            int compare;
+            try {
+                compare = ((Comparable<Object>)self.getJavaProxy()).compareTo(asjava);
+            } catch(ClassCastException classCast) {
+                return Py.NotImplemented;
+            }
+            return getResult(compare) ? Py.True : Py.False;
+        }
+
+        protected abstract boolean getResult(int comparison);
     }
 
     private static Map<Class<?>, PyBuiltinMethod[]> getCollectionProxies() {
@@ -706,6 +845,7 @@ public class PyJavaType extends PyType {
             int j = 0;
             for (int i = start; j < n; i += step) {
                 newList.add(list.get(i));
+                j++;
             }
             return Py.java2py(newList);
         }
