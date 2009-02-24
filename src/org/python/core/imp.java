@@ -798,14 +798,7 @@ public class imp {
         return submods;
     }
 
-    private static PyTuple all = null;
-
-    private synchronized static PyTuple getStarArg() {
-        if (all == null) {
-            all = new PyTuple(Py.newString('*'));
-        }
-        return all;
-    }
+    private final static PyTuple all = new PyTuple(Py.newString('*'));
 
     /**
      * Called from jython generated code when a statement like "from spam.eggs
@@ -813,7 +806,7 @@ public class imp {
      */
     public static void importAll(String mod, PyFrame frame) {
         PyObject module = __builtin__.__import__(mod, frame.f_globals, frame
-                .getLocals(), getStarArg());
+                .getLocals(), all);
         PyObject names;
         boolean filter = true;
         if (module instanceof PyJavaPackage) {
@@ -830,6 +823,27 @@ public class imp {
 
         loadNames(names, module, frame.getLocals(), filter);
     }
+
+    public static void importAll(PyObject module, PyFrame frame) {
+        PyObject names;
+        boolean filter = true;
+        if (module instanceof PyJavaPackage) {
+            names = ((PyJavaPackage) module).fillDir();
+        } else {
+            PyObject __all__ = module.__findattr__("__all__");
+            if (__all__ != null) {
+                names = __all__;
+                filter = false;
+            } else {
+                names = module.__dir__();
+            }
+        }
+
+        loadNames(names, module, frame.getLocals(), filter);
+    }
+
+
+
 
     /**
      * From a module, load the attributes found in <code>names</code> into

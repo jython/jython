@@ -55,6 +55,7 @@ public class Setup
         "_functools:org.python.modules._functools._functools",
         "_csv:org.python.modules._csv._csv",
         "_systemrestart",
-        "_ast:org.python.antlr.ast.AstModule"
+        "_ast:org.python.antlr.ast.AstModule",
+        "_marshal"
     };
 }

@@ -658,143 +658,15 @@ public class cPickle implements ClassDictInit {
 
 
 
-    // Factory for creating IOFile representation.
-    private static IOFile createIOFile(PyObject file) {
-        Object f = file.__tojava__(cStringIO.StringIO.class);
-        if (f != Py.NoConversion)
-            return new cStringIOFile(file);
-        else if (__builtin__.isinstance(file, FileType))
-            return new FileIOFile(file);
-        else
-            return new ObjectIOFile(file);
-    }
-
-
-    // IOFiles encapsulates and optimise access to the different file
-    // representation.
-    interface IOFile {
-        public abstract void write(String str);
-        // Usefull optimization since most data written are chars.
-        public abstract void write(char str);
-        public abstract void flush();
-        public abstract String read(int len);
-        // Usefull optimization since all readlines removes the
-        // trainling newline.
-        public abstract String readlineNoNl();
-
-    }
-
-
-    // Use a cStringIO as a file.
-    static class cStringIOFile implements IOFile {
-        cStringIO.StringIO file;
-
-        cStringIOFile(PyObject file) {
-            this.file = (cStringIO.StringIO)file.__tojava__(Object.class);
-        }
-
-        public void write(String str) {
-            file.write(str);
-        }
-
-        public void write(char ch) {
-            file.writeChar(ch);
-        }
-
-        public void flush() {}
-
-        public String read(int len) {
-            return file.read(len).asString();
-        }
-
-        public String readlineNoNl() {
-            return file.readlineNoNl().asString();
-        }
-    }
-
-
-    // Use a PyFile as a file.
-    static class FileIOFile implements IOFile {
-        PyFile file;
-
-        FileIOFile(PyObject file) {
-            this.file = (PyFile)file.__tojava__(PyFile.class);
-            if (this.file.getClosed())
-                throw Py.ValueError("I/O operation on closed file");
-        }
-
-        public void write(String str) {
-            file.write(str);
-        }
-
-        public void write(char ch) {
-            file.write(cStringIO.getString(ch));
-        }
-
-        public void flush() {}
-
-        public String read(int len) {
-            return file.read(len).toString();
-        }
-
-        public String readlineNoNl() {
-            String line = file.readline().toString();
-            return line.substring(0, line.length()-1);
-        }
-    }
-
-
-    // Use any python object as a file.
-    static class ObjectIOFile implements IOFile {
-        char[] charr = new char[1];
-        StringBuilder buff = new StringBuilder();
-        PyObject write;
-        PyObject read;
-        PyObject readline;
-        final int BUF_SIZE = 256;
-
-        ObjectIOFile(PyObject file) {
-//          this.file = file;
-            write = file.__findattr__("write");
-            read = file.__findattr__("read");
-            readline = file.__findattr__("readline");
-        }
-
-        public void write(String str) {
-            buff.append(str);
-            if (buff.length() > BUF_SIZE)
-                flush();
-        }
-
-        public void write(char ch) {
-            buff.append(ch);
-            if (buff.length() > BUF_SIZE)
-                flush();
-        }
-
-        public void flush() {
-            write.__call__(new PyString(buff.toString()));
-            buff.setLength(0);
-        }
-
-        public String read(int len) {
-            return read.__call__(new PyInteger(len)).toString();
-        }
-
-        public String readlineNoNl() {
-            String line = readline.__call__().toString();
-            return line.substring(0, line.length()-1);
-        }
-    }
-
-
+    // Factory for creating PyIOFile representation.
+    
     /**
      * The Pickler object
      * @see cPickle#Pickler(PyObject)
      * @see cPickle#Pickler(PyObject,int)
      */
     static public class Pickler {
-        private IOFile file;
+        private PyIOFile file;
         private int protocol;
 
         /**
@@ -827,7 +699,7 @@ public class cPickle implements ClassDictInit {
 
 
         public Pickler(PyObject file, int protocol) {
-            this.file = createIOFile(file);
+            this.file = PyIOFileFactory.createIOFile(file);
             this.protocol = protocol;
         }
 
@@ -1700,7 +1572,7 @@ public class cPickle implements ClassDictInit {
      */
     static public class Unpickler {
 
-        private IOFile file;
+        private PyIOFile file;
 
         public Map<String,PyObject> memo = Generic.map();
 
@@ -1723,7 +1595,7 @@ public class cPickle implements ClassDictInit {
 
 
         Unpickler(PyObject file) {
-            this.file = createIOFile(file);
+            this.file = PyIOFileFactory.createIOFile(file);
         }
 
 

@@ -95,7 +95,7 @@ public class PyFunction extends PyObject {
         PyObject defaults = ap.getPyObject(3, Py.None);
         PyObject closure = ap.getPyObject(4, Py.None);
 
-        if (!(code instanceof PyTableCode)) {
+        if (!(code instanceof PyBaseCode)) {
             throw Py.TypeError("function() argument 1 must be code, not " +
                                code.getType().fastGetName());
         }
@@ -106,7 +106,7 @@ public class PyFunction extends PyObject {
             throw Py.TypeError("arg 4 (defaults) must be None or tuple");
         }
 
-        PyTableCode tcode = (PyTableCode)code;
+        PyBaseCode tcode = (PyBaseCode)code;
         int nfree = tcode.co_freevars == null ? 0 : tcode.co_freevars.length;
         if (!(closure instanceof PyTuple)) {
             if (nfree > 0 && closure == Py.None) {
@@ -195,10 +195,10 @@ public class PyFunction extends PyObject {
 
     @ExposedSet(name = "func_code")
     public void setFuncCode(PyCode code) {
-        if (func_code == null || !(code instanceof PyTableCode)) {
+        if (func_code == null || !(code instanceof PyBaseCode)) {
             throw Py.TypeError("func_code must be set to a code object");
         }
-        PyTableCode tcode = (PyTableCode)code;
+        PyBaseCode tcode = (PyBaseCode)code;
         int nfree = tcode.co_freevars == null ? 0 : tcode.co_freevars.length;
         int nclosure = func_closure != null ? func_closure.__len__() : 0;
         if (nclosure != nfree) {
