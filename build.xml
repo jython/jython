@@ -168,6 +168,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
             <pathelement path="${extlibs.dir}/junit-3.8.2.jar" />
             <pathelement path="${exposed.dir}" />
             <pathelement path="${compile.dir}" />
+            <pathelement path="${cpptasks.jar.dir}" />
         </path>
         <!-- 64 bit Java 6 needs roughly 96m for regrtest on most platforms, but Apple's needs
          more -->
@@ -215,6 +216,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <property file="${basedir}/ant.properties" />
 
         <property name="svnant.jar.dir" value="${basedir}/extlibs/svnant-jars" />
+        <property name="cpptasks.jar.dir" value="${basedir}/extlibs/cpptasks/cpptasks.jar" />
 
         <!-- use this property to distinguish a full-build from a developer-build -->
         <property name="full-build" value="true" />
@@ -493,8 +495,6 @@ The readme text for the next release will be like:
             nowarn="${nowarn}"> 
             <classpath refid="test.classpath" />
         </javac>
-
-
         <copy file="${source.dir}/org/python/modules/ucnhash.dat"
               todir="${compile.dir}/org/python/modules"
               preservelastmodified="true" />
@@ -505,6 +505,23 @@ The readme text for the next release will be like:
             </fileset>
         </copy>
     </target>
+
+    <!--
+    If you run this before running regrtest, test__rawffi.py should pass.
+    So far I have been unable to enable cpptasks without passing an arg to ant.
+    To run this task like I am do:
+
+    ant -lib extlibs/cpptasks/cpptasks.jar compile_cpp
+
+    XXX: get cpptasks running without an arg to ant.
+    -->
+    <target name="compile_cpp" depends="compile">
+        <taskdef resource="cpptasks.tasks"/>
+        <cc outtype="shared" subsystem="console" outfile="ctypes_test" objdir="${compile.dir}">
+             <fileset dir="tests/c" includes="*.c"/>
+         </cc>
+    </target>
+
 
     <target name="expose" depends="init">
         <taskdef name="expose" classname="org.python.expose.generate.ExposeTask">
