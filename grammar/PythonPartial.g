@@ -75,12 +75,6 @@ package org.python.antlr;
 @members {
     private ErrorHandler errorHandler = new FailFastHandler();
 
-    protected void mismatch(IntStream input, int ttype, BitSet follow) throws RecognitionException {
-        if (errorHandler.mismatch(this, input, ttype, follow)) {
-            super.mismatch(input, ttype, follow);
-        }
-    }
-
     protected Object recoverFromMismatchedToken(IntStream input, int ttype, BitSet follow)
         throws RecognitionException {
 
