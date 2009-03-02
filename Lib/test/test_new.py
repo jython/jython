@@ -115,8 +115,7 @@ test_closure(f, g.func_closure, ValueError) # no closure needed
 
 print 'new.code()'
 # bogus test of new.code()
-# Note: Jython will never have new.code()
-if hasattr(new, 'code'):
+if hasattr(new, 'code') and not sys.platform.startswith('java'):
     def f(a): pass
 
     c = f.func_code
