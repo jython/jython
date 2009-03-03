@@ -1,5 +1,8 @@
 package org.python.core;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * A utility class for handling mixed positional and keyword arguments.
  * 
@@ -239,19 +242,26 @@ public class ArgParser {
     }
 
     private void check() {
-        int nargs = this.args.length - this.kws.length;
-        l1: for (int i = 0; i < this.kws.length; i++) {
-            for (int j = 0; j < this.params.length; j++) {
-                if (this.kws[i].equals(this.params[j])) {
+        Set<Integer> usedKws = new HashSet<Integer>();
+        int nargs = args.length - kws.length;
+        l1: for (int i = 0; i < kws.length; i++) {
+            for (int j = 0; j < params.length; j++) {
+                if (kws[i].equals(params[j])) {
                     if (j < nargs) {
                         throw Py.TypeError("keyword parameter '"
-                                + this.params[j]
+                                + params[j]
                                 + "' was given by position and by name");
                     }
+                    if (usedKws.contains(j)) {
+                        throw Py.TypeError(String.format(
+                                "%s got multiple values for keyword argument '%s'",
+                                funcname, params[j]));
+                    }
+                    usedKws.add(j);
                     continue l1;
                 }
             }
-            throw Py.TypeError("'" + this.kws[i] + "' is an invalid keyword "
+            throw Py.TypeError("'" + kws[i] + "' is an invalid keyword "
                     + "argument for this function");
         }
     }
