@@ -84,12 +84,12 @@ public class ModjyJServlet extends HttpServlet
 			PythonInterpreter.initialize(System.getProperties(), props, new String[0]);
 			PySystemState systemState = new PySystemState();
 			interp = new PythonInterpreter(null, systemState);
-			String modjyJarLocation = setupEnvironment(interp, props, systemState);
+			setupEnvironment(interp, props, systemState);
 			try
-				{ interp.exec("from modjy import "+MODJY_PYTHON_CLASSNAME); }
+				{ interp.exec("from modjy.modjy import "+MODJY_PYTHON_CLASSNAME); }
 			catch (PyException ix)
-				{ throw new ServletException("Unable to import '"+MODJY_PYTHON_CLASSNAME+"' from "+modjyJarLocation+
-					": do you maybe need to set the 'modjy_jar.location' parameter?", ix);}
+				{ throw new ServletException("Unable to import '"+MODJY_PYTHON_CLASSNAME+
+					"': maybe you need to set the 'python.home' parameter?", ix);}
 			PyObject pyServlet = ((PyType)interp.get(MODJY_PYTHON_CLASSNAME)).__call__();
 			Object temp = pyServlet.__tojava__(HttpServlet.class);
 			if (temp == Py.NoConversion)
@@ -128,40 +128,9 @@ public class ModjyJServlet extends HttpServlet
 	* @returns A String giving the path to the modjy.jar file (which is used only for error reporting)
 	*/
 
-	protected String setupEnvironment(PythonInterpreter interp, Properties props, PySystemState systemState)
+	protected void setupEnvironment(PythonInterpreter interp, Properties props, PySystemState systemState)
 	{
-		String modjyJarLocation = locateModjyJar(props);
-		systemState.path.append(new PyString(modjyJarLocation));
 		processPythonLib(interp, systemState);
-		return modjyJarLocation;
-	}
-
-	/**
-	* Find out the location of "modjy.jar", so that it can
-	* be added to the sys.path and thus imported
-	*
-	* @param The properties from which config options are found
-	* @returns A String giving the path to the modjy.jar file
-	*/
-
-	protected String locateModjyJar ( Properties props )
-	{
-		// Give priority to modjy_jar.location
-		if (props.get("modjy_jar.location") != null)
-			return (String)props.get("modjy_jar.location");
-		// Then try to find it in WEB-INF/lib
-		String location = getServletContext().getRealPath("/WEB-INF/lib/modjy.jar");
-		if (location != null)
-		{
-			File f = new File(location);
-			if (f.exists())
-				return location;
-		}
-		// Try finding the archive that this class was loaded from
-		try
-			{ return this.getClass().getProtectionDomain().getCodeSource().getLocation().getFile(); }
-		catch (Exception x)
-			{ return null;}
 	}
 
 	/**
