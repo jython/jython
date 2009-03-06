@@ -16,17 +16,17 @@ public class BaseTypeBuilder implements TypeBuilder {
 
     private PyDataDescr[] descrs;
 
-    private Class typeClass;
+    private Class<?> typeClass;
 
-    private Class baseClass;
+    private Class<?> baseClass;
 
     private String name;
 
     private boolean isBaseType;
 
     public BaseTypeBuilder(String name,
-                           Class typeClass,
-                           Class baseClass,
+                           Class<?> typeClass,
+                           Class<?> baseClass,
                            boolean isBaseType,
                            PyBuiltinMethod[] meths,
                            PyDataDescr[] descrs,
@@ -50,7 +50,7 @@ public class BaseTypeBuilder implements TypeBuilder {
             descr.setType(type);
             dict.__setitem__(descr.getName(), descr);
         }
-        if(newWrapper != null) {
+        if (newWrapper != null) {
             dict.__setitem__("__new__", newWrapper);
             newWrapper.setWrappedType(type);
         }
@@ -61,11 +61,11 @@ public class BaseTypeBuilder implements TypeBuilder {
         return name;
     }
 
-    public Class getTypeClass() {
+    public Class<?> getTypeClass() {
         return typeClass;
     }
 
-    public Class getBase() {
+    public Class<?> getBase() {
         return baseClass;
     }
 

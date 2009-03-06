@@ -37,12 +37,12 @@ public class PyEnumerate extends PyIterator {
         return enumerate_next();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.enumerate_next_doc)
     final PyObject enumerate_next() {
         return doNext(enumerate___iternext__());
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.enumerate___iter___doc)
     final PyObject enumerate___iter__() {
         return super.__iter__();
     }

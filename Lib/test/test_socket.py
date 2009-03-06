@@ -714,6 +714,16 @@ class BasicTCPTest(SocketConnectedTest):
     def _testRecv(self):
         self.serv_conn.send(MSG)
 
+    def testRecvTimeoutMode(self):
+        # Do this test in timeout mode, because the code path is different
+        self.cli_conn.settimeout(10)
+        msg = self.cli_conn.recv(1024)
+        self.assertEqual(msg, MSG)
+
+    def _testRecvTimeoutMode(self):
+        self.serv_conn.settimeout(10)
+        self.serv_conn.send(MSG)
+
     def testOverFlowRecv(self):
         # Testing receive in chunks over TCP
         seg1 = self.cli_conn.recv(len(MSG) - 3)
@@ -804,6 +814,31 @@ class BasicTCPTest(SocketConnectedTest):
         self.serv_conn.send(MSG)
         self.serv_conn.send('and ' + MSG)
 
+class UDPBindTest(unittest.TestCase):
+
+    HOST = HOST
+    PORT = PORT
+
+    def setUp(self):
+        self.sock = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+
+    def testBindSpecific(self):
+        self.sock.bind( (self.HOST, self.PORT) ) # Use a specific port
+        actual_port = self.sock.getsockname()[1]
+        self.failUnless(actual_port == self.PORT, 
+            "Binding to specific port number should have returned same number: %d != %d" % (actual_port, self.PORT)) 
+
+    def testBindEphemeral(self):
+        self.sock.bind( (self.HOST, 0) ) # let system choose a free port
+        self.failUnless(self.sock.getsockname()[1] != 0, "Binding to port zero should have allocated an ephemeral port number") 
+
+    def testShutdown(self):
+        self.sock.bind( (self.HOST, self.PORT) )
+        self.sock.shutdown(socket.SHUT_RDWR)
+
+    def tearDown(self):
+        self.sock.close()
+
 class BasicUDPTest(ThreadedUDPSocketTest):
 
     def __init__(self, methodName='runTest'):
@@ -873,7 +908,7 @@ class UDPBroadcastTest(ThreadedUDPSocketTest):
         self.serv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
     def testBroadcast(self):
-        self.serv.bind( ("<broadcast>", self.PORT) )
+        self.serv.bind( ("", self.PORT) )
         msg = self.serv.recv(len(EIGHT_BIT_MSG))
         self.assertEqual(msg, EIGHT_BIT_MSG)
 
@@ -1270,14 +1305,14 @@ class SmallBufferedFileObjectClassTestCase(FileObjectClassTestCase):
 
     bufsize = 2 # Exercise the buffering code
 
-class TCPTimeoutTest(SocketTCPTest):
+class TCPServerTimeoutTest(SocketTCPTest):
 
-    def testTCPTimeout(self):
+    def testAcceptTimeout(self):
         def raise_timeout(*args, **kwargs):
             self.serv.settimeout(1.0)
             self.serv.accept()
         self.failUnlessRaises(socket.timeout, raise_timeout,
-                              "Error generating a timeout exception (TCP)")
+                              "TCP socket accept failed to generate a timeout exception (TCP)")
 
     def testTimeoutZero(self):
         ok = False
@@ -1293,9 +1328,9 @@ class TCPTimeoutTest(SocketTCPTest):
         if not ok:
             self.fail("accept() returned success when we did not expect it")
 
-class TCPClientTimeoutTest(unittest.TestCase):
+class TCPClientTimeoutTest(SocketTCPTest):
 
-    def testClientTimeout(self):
+    def testConnectTimeout(self):
         cli = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         cli.settimeout(0.1)
         host = '192.168.192.168'
@@ -1310,7 +1345,61 @@ class TCPClientTimeoutTest(unittest.TestCase):
 socket.timeout.  This tries to connect to %s in the assumption that it isn't
 used, but if it is on your network this failure is bogus.''' % host)
 
-        
+    def testConnectDefaultTimeout(self):
+        _saved_timeout = socket.getdefaulttimeout()
+        socket.setdefaulttimeout(0.1)
+        cli = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        host = '192.168.192.168'
+        try:
+            cli.connect((host, 5000))
+        except socket.timeout, st:
+            pass
+        except Exception, x:
+            self.fail("Client socket timeout should have raised socket.timeout, not %s" % str(x))
+        else:
+            self.fail('''Client socket timeout should have raised
+socket.timeout.  This tries to connect to %s in the assumption that it isn't
+used, but if it is on your network this failure is bogus.''' % host)
+        socket.setdefaulttimeout(_saved_timeout)
+
+    def testRecvTimeout(self):
+        def raise_timeout(*args, **kwargs):
+            cli_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            cli_sock.connect( (HOST, PORT) )
+            cli_sock.settimeout(1)
+            cli_sock.recv(1024)
+        self.failUnlessRaises(socket.timeout, raise_timeout,
+                              "TCP socket recv failed to generate a timeout exception (TCP)")
+
+    # Disable this test, but leave it present for documentation purposes 
+    # socket timeouts only work for read and accept, not for write
+    # http://java.sun.com/j2se/1.4.2/docs/api/java/net/SocketTimeoutException.html
+    def estSendTimeout(self):
+        def raise_timeout(*args, **kwargs):
+            cli_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            cli_sock.connect( (HOST, PORT) )
+            # First fill the socket
+            cli_sock.settimeout(1)
+            sent = 0
+            while True:
+                bytes_sent = cli_sock.send(MSG)
+                sent += bytes_sent
+        self.failUnlessRaises(socket.timeout, raise_timeout,
+                              "TCP socket send failed to generate a timeout exception (TCP)")
+
+    def testSwitchModes(self):
+        cli_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        cli_sock.connect( (HOST, PORT) )
+        # set non-blocking mode
+        cli_sock.setblocking(0)
+        # then set timeout mode
+        cli_sock.settimeout(1)
+        try:
+            cli_sock.send(MSG)
+        except Exception, x:
+            self.fail("Switching mode from non-blocking to timeout raised exception: %s" % x)
+        else:
+            pass
 
 #
 # AMAK: 20070307
@@ -1539,12 +1628,13 @@ def test_main():
         TestSupportedOptions,
         TestUnsupportedOptions,
         BasicTCPTest, 
-        TCPTimeoutTest, 
+        TCPServerTimeoutTest, 
         TCPClientTimeoutTest,
         TestExceptions,
         TestInvalidUsage,
         TestTCPAddressParameters,
         TestUDPAddressParameters,
+        UDPBindTest,
         BasicUDPTest,
         UDPTimeoutTest,
         NonBlockingTCPTests,

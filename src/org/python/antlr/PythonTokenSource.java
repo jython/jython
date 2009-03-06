@@ -146,6 +146,7 @@ public class PythonTokenSource implements TokenSource {
     }
 
     private void generateNewline(Token t) {
+        //System.out.println("generating newline from token: " + t);
         CommonToken newline = new CommonToken(PythonLexer.NEWLINE, "\n");
         newline.setLine(t.getLine());
         newline.setCharPositionInLine(t.getCharPositionInLine());
@@ -153,9 +154,12 @@ public class PythonTokenSource implements TokenSource {
     }
 
     private void handleEOF(CommonToken eof, CommonToken prev) {
+        //System.out.println("processing eof with token: " + prev);
         if (prev != null) {
             eof.setStartIndex(prev.getStopIndex());
             eof.setStopIndex(prev.getStopIndex());
+            eof.setLine(prev.getLine());
+            eof.setCharPositionInLine(prev.getCharPositionInLine());
         }
     }
 
@@ -191,7 +195,7 @@ public class PythonTokenSource implements TokenSource {
             t = stream.LT(1);
             stream.consume();
 
-            enqueueHiddens(t);
+            List<Token> commentedNewlines = enqueueHiddens(t);
 
             // compute cpos as the char pos of next non-WS token in line
             int cpos = t.getCharPositionInLine(); // column dictates indent/dedent
@@ -226,6 +230,9 @@ public class PythonTokenSource implements TokenSource {
                 for(int i=1;i<newlines.length();i++) {
                     generateNewline(newline);
                 }
+                for (Token c : commentedNewlines) {
+                    generateNewline(c);
+                }
             }
 
             if (t.getType() != PythonLexer.LEADING_WS) { // discard WS
@@ -242,7 +249,8 @@ public class PythonTokenSource implements TokenSource {
         tokens.addElement(t);
     }
 
-    private void enqueueHiddens(Token t) {
+    private List<Token> enqueueHiddens(Token t) {
+        List<Token> newlines = new ArrayList<Token>();
         if (inSingle && t.getType() == Token.EOF) {
             if (stream.size() > lastTokenAddedIndex + 1) {
                 Token hidden = stream.get(lastTokenAddedIndex + 1);
@@ -250,7 +258,7 @@ public class PythonTokenSource implements TokenSource {
                     String text = hidden.getText();
                     int i = text.indexOf("\n");
                     while(i != -1) {
-                        generateNewline(hidden);
+                        newlines.add(hidden);
                         i = text.indexOf("\n", i + 1);
                     }
                 }
@@ -261,6 +269,7 @@ public class PythonTokenSource implements TokenSource {
             tokens.addAll(hiddenTokens);
         }
         lastTokenAddedIndex = t.getTokenIndex();
+        return newlines;
     }
 
     private void handleIndents(int cpos, CommonToken t) {

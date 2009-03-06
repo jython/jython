@@ -1,7 +1,7 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
-class ReflectedArgs {
+public class ReflectedArgs {
     public Class[] args;
 
     public Object data;
@@ -258,10 +258,9 @@ class ReflectedArgs {
     }
 
     public String toString() {
-        String s = "" + this.declaringClass + ", " + this.isStatic + ", " + this.flags + ", "
-                + this.data + "\n";
+        String s =  declaringClass + ", " + isStatic + ", " + flags + ", " + data + "\n";
         s = s + "\t(";
-        for (Class arg : this.args) {
+        for (Class<?> arg : args) {
             s += arg.getName() + ", ";
         }
         s += ")";

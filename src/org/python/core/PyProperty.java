@@ -31,6 +31,7 @@ public class PyProperty extends PyObject {
         super(subType);
     }
 
+    //XXX: needs __doc__
     @ExposedNew
     @ExposedMethod
     public void property___init__(PyObject[] args, String[] keywords) {
@@ -58,7 +59,7 @@ public class PyProperty extends PyObject {
         return property___get__(obj,type);
     }
 
-    @ExposedMethod(defaults = "null")
+    @ExposedMethod(defaults = "null", doc = BuiltinDocs.property___get___doc)
     final PyObject property___get__(PyObject obj, PyObject type) {
         if (obj == null || obj == Py.None) {
             return this;
@@ -73,7 +74,7 @@ public class PyProperty extends PyObject {
         property___set__(obj, value);
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.property___set___doc)
     final void property___set__(PyObject obj, PyObject value) {
         if (fset == null) {
             throw Py.AttributeError("can't set attribute");
@@ -85,7 +86,7 @@ public class PyProperty extends PyObject {
         property___delete__(obj);
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.property___delete___doc)
     final void property___delete__(PyObject obj) {
         if (fdel == null) {
             throw Py.AttributeError("can't delete attribute");

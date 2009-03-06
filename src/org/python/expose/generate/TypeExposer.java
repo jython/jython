@@ -7,7 +7,7 @@ import org.python.core.BytecodeLoader;
 import org.python.expose.BaseTypeBuilder;
 import org.python.expose.ExposedType;
 import org.python.expose.TypeBuilder;
-import org.python.objectweb.asm.Type;
+import org.objectweb.asm.Type;
 import org.python.util.Generic;
 
 /**

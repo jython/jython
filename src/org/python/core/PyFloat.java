@@ -90,7 +90,7 @@ public class PyFloat extends PyObject
         return float___str__();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.float___str___doc)
     final PyString float___str__() {
         return Py.newString(formatDouble(PREC_STR));
     }
@@ -99,7 +99,7 @@ public class PyFloat extends PyObject
         return float___repr__();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.float___repr___doc)
     final PyString float___repr__() {
         return Py.newString(formatDouble(PREC_REPR));
     }
@@ -131,7 +131,7 @@ public class PyFloat extends PyObject
         return float___hash__();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.float___hash___doc)
     final int float___hash__() {
         double intPart = Math.floor(value);
         double fractPart = value-intPart;
@@ -151,7 +151,7 @@ public class PyFloat extends PyObject
         return float___nonzero__();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.float___nonzero___doc)
     final boolean float___nonzero__() {
         return value != 0;
     }
@@ -188,6 +188,7 @@ public class PyFloat extends PyObject
         return float___cmp__(other);
     }
 
+    //XXX: needs __doc__
     @ExposedMethod(type = MethodType.CMP)
     final int float___cmp__(PyObject other) {
         double i = value;
@@ -230,7 +231,7 @@ public class PyFloat extends PyObject
         return float___coerce_ex__(other);
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.float___coerce___doc)
     final PyObject float___coerce__(PyObject other) {
         return adaptToCoerceTuple(float___coerce_ex__(other));
     }
@@ -272,7 +273,7 @@ public class PyFloat extends PyObject
         return float___add__(right);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.float___add___doc)
     final PyObject float___add__(PyObject right) {
         if (!canCoerce(right))
             return null;
@@ -284,7 +285,7 @@ public class PyFloat extends PyObject
         return float___radd__(left);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.float___radd___doc)
     final PyObject float___radd__(PyObject left) {
         return __add__(left);
     }
@@ -293,7 +294,7 @@ public class PyFloat extends PyObject
         return float___sub__(right);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.float___sub___doc)
     final PyObject float___sub__(PyObject right) {
         if (!canCoerce(right))
             return null;
@@ -305,7 +306,7 @@ public class PyFloat extends PyObject
         return float___rsub__(left);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.float___rsub___doc)
     final PyObject float___rsub__(PyObject left) {
         if (!canCoerce(left))
             return null;
@@ -317,7 +318,7 @@ public class PyFloat extends PyObject
         return float___mul__(right);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.float___mul___doc)
     final PyObject float___mul__(PyObject right) {
         if (!canCoerce(right))
             return null;
@@ -329,7 +330,7 @@ public class PyFloat extends PyObject
         return float___rmul__(left);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.float___rmul___doc)
     final PyObject float___rmul__(PyObject left) {
         return __mul__(left);
     }
@@ -338,7 +339,7 @@ public class PyFloat extends PyObject
         return float___div__(right);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.float___div___doc)
     final PyObject float___div__(PyObject right) {
         if (!canCoerce(right))
             return null;
@@ -354,7 +355,7 @@ public class PyFloat extends PyObject
         return float___rdiv__(left);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.float___rdiv___doc)
     final PyObject float___rdiv__(PyObject left) {
         if (!canCoerce(left))
             return null;
@@ -370,7 +371,7 @@ public class PyFloat extends PyObject
         return float___floordiv__(right);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.float___floordiv___doc)
     final PyObject float___floordiv__(PyObject right) {
         if (!canCoerce(right))
             return null;
@@ -384,7 +385,7 @@ public class PyFloat extends PyObject
         return float___rfloordiv__(left);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.float___rfloordiv___doc)
     final PyObject float___rfloordiv__(PyObject left) {
         if (!canCoerce(left))
             return null;
@@ -398,7 +399,7 @@ public class PyFloat extends PyObject
         return float___truediv__(right);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.float___truediv___doc)
     final PyObject float___truediv__(PyObject right) {
         if (!canCoerce(right))
             return null;
@@ -412,7 +413,7 @@ public class PyFloat extends PyObject
         return float___rtruediv__(left);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.float___rtruediv___doc)
     final PyObject float___rtruediv__(PyObject left) {
         if (!canCoerce(left))
             return null;
@@ -435,7 +436,7 @@ public class PyFloat extends PyObject
         return float___mod__(right);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.float___mod___doc)
     final PyObject float___mod__(PyObject right) {
         if (!canCoerce(right))
             return null;
@@ -447,7 +448,7 @@ public class PyFloat extends PyObject
         return float___rmod__(left);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.float___rmod___doc)
     final PyObject float___rmod__(PyObject left) {
         if (!canCoerce(left))
             return null;
@@ -459,7 +460,7 @@ public class PyFloat extends PyObject
         return float___divmod__(right);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.float___divmod___doc)
     final PyObject float___divmod__(PyObject right) {
         if (!canCoerce(right))
             return null;
@@ -484,7 +485,7 @@ public class PyFloat extends PyObject
         return new PyTuple(new PyFloat(z), new PyFloat(leftv - z * value));
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.float___rdivmod___doc)
     final PyObject float___rdivmod__(PyObject left) {
     	return __rdivmod__(left);
     }
@@ -494,7 +495,7 @@ public class PyFloat extends PyObject
         return float___pow__(right, modulo);
     }
 
-    @ExposedMethod(type = MethodType.BINARY, defaults = "null")
+    @ExposedMethod(type = MethodType.BINARY, defaults = "null", doc = BuiltinDocs.float___pow___doc)
     final PyObject float___pow__(PyObject right, PyObject modulo) {
         if (!canCoerce(right))
             return null;
@@ -507,7 +508,7 @@ public class PyFloat extends PyObject
         return _pow(value, coerce(right), modulo);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.float___rpow___doc)
     final PyObject float___rpow__(PyObject left) {
     	return __rpow__(left);
     }
@@ -548,7 +549,7 @@ public class PyFloat extends PyObject
         return float___neg__();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.float___neg___doc)
     final PyObject float___neg__() {
         return new PyFloat(-value);
     }
@@ -557,7 +558,7 @@ public class PyFloat extends PyObject
         return float___pos__();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.float___pos___doc)
     final PyObject float___pos__() {
         return Py.newFloat(value);
     }
@@ -570,7 +571,7 @@ public class PyFloat extends PyObject
         return float___abs__();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.float___abs___doc)
     final PyObject float___abs__() {
         if (value >= 0)
             return Py.newFloat(value);
@@ -582,7 +583,7 @@ public class PyFloat extends PyObject
         return float___int__();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.float___int___doc)
     final PyObject float___int__() {
         if (value <= Integer.MAX_VALUE && value >= Integer.MIN_VALUE) {
             return new PyInteger((int)value);
@@ -594,7 +595,7 @@ public class PyFloat extends PyObject
         return float___long__();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.float___long___doc)
     final PyObject float___long__() {
         return new PyLong(value);
     }
@@ -603,7 +604,7 @@ public class PyFloat extends PyObject
         return float___float__();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.float___float___doc)
     final PyFloat float___float__() {
         return Py.newFloat(value);
     }
@@ -611,7 +612,7 @@ public class PyFloat extends PyObject
         return new PyComplex(value, 0.);
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.float___getnewargs___doc)
     final PyTuple float___getnewargs__() {
         return new PyTuple(new PyObject[] {new PyFloat(getValue())});
     }

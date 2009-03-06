@@ -10,15 +10,15 @@ import java.util.ArrayList;
  * AstAdapter turns Python and Java objects into ast nodes.
  */
 public class AstAdapters {
-    public static AliasAdapter aliasAdapter = new AliasAdapter();
-    public static CmpopAdapter cmpopAdapter = new CmpopAdapter();
-    public static ComprehensionAdapter comprehensionAdapter = new ComprehensionAdapter();
-    public static ExcepthandlerAdapter excepthandlerAdapter = new ExcepthandlerAdapter();
-    public static ExprAdapter exprAdapter = new ExprAdapter();
-    public static IdentifierAdapter identifierAdapter = new IdentifierAdapter();
-    public static KeywordAdapter keywordAdapter = new KeywordAdapter();
-    public static SliceAdapter sliceAdapter = new SliceAdapter();
-    public static StmtAdapter stmtAdapter = new StmtAdapter();
+    public final static AliasAdapter aliasAdapter = new AliasAdapter();
+    public final static CmpopAdapter cmpopAdapter = new CmpopAdapter();
+    public final static ComprehensionAdapter comprehensionAdapter = new ComprehensionAdapter();
+    public final static ExcepthandlerAdapter excepthandlerAdapter = new ExcepthandlerAdapter();
+    public final static ExprAdapter exprAdapter = new ExprAdapter();
+    public final static IdentifierAdapter identifierAdapter = new IdentifierAdapter();
+    public final static KeywordAdapter keywordAdapter = new KeywordAdapter();
+    public final static SliceAdapter sliceAdapter = new SliceAdapter();
+    public final static StmtAdapter stmtAdapter = new StmtAdapter();
 
     public static java.util.List<alias> py2aliasList(PyObject o) {
         return (java.util.List<alias>)aliasAdapter.iter2ast(o);

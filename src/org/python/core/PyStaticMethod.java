@@ -34,7 +34,7 @@ public class PyStaticMethod extends PyObject {
         return staticmethod___get__(obj, type);
     }
 
-    @ExposedMethod(defaults = "null")
+    @ExposedMethod(defaults = "null", doc = BuiltinDocs.staticmethod___get___doc)
     final PyObject staticmethod___get__(PyObject obj, PyObject type) {
         return callable;
     }

@@ -20,3 +20,5 @@ from types import ModuleType as module
 #    from types import CodeType as code
 #except ImportError:
 #    pass
+
+from org.python.core import PyBytecode as code

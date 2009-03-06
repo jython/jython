@@ -72,7 +72,7 @@ public class PyLocal extends PyObject {
     @Override
     @ExposedSet(name = "__dict__")
     public void setDict(PyObject dict) {
-        setDict(dict);
+        super.setDict(dict);
     }
 
     @Override

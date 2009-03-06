@@ -3,28 +3,31 @@ package org.python.core;
 import java.io.*;
 
 /**
- * A wrapper for all python exception. Note that the wellknown
- * python exception are <b>not</b> subclasses of PyException.
- * Instead the python exception class is stored in the
- * <code>type</code> field and value or class instance is stored
- * in the <code>value</code> field.
+ * A wrapper for all python exception. Note that the wellknown python exception are <b>not</b>
+ * subclasses of PyException. Instead the python exception class is stored in the <code>type</code>
+ * field and value or class instance is stored in the <code>value</code> field.
  */
-
 public class PyException extends RuntimeException
 {
+
     /**
-     * The python exception class (for class exception) or
-     * identifier (for string exception).
+     * The python exception class (for class exception) or identifier (for string exception).
      */
     public PyObject type;
 
     /**
-     * The exception instance (for class exception) or exception
-     * value (for string exception).
+     * The exception instance (for class exception) or exception value (for string exception).
      */
     public PyObject value = Py.None;
 
+    /** The exception traceback object. */
     public PyTraceback traceback;
+
+    /**
+     * Whether the exception was re-raised, such as when a traceback is specified to
+     * 'raise', or via a 'finally' block.
+     */
+    private boolean isReRaise = false;
 
     private boolean normalized = false;
 
@@ -43,17 +46,9 @@ public class PyException extends RuntimeException
     public PyException(PyObject type, PyObject value, PyTraceback traceback) {
         this.type = type;
         this.value = value;
-
         if (traceback != null) {
             this.traceback = traceback;
-        } else {
-            PyFrame frame = Py.getFrame();
-            if (frame != null) {
-                this.traceback = new PyTraceback(frame);
-                if (frame.tracefunc != null) {
-                    frame.tracefunc = frame.tracefunc.traceException(frame, this);
-                }
-            }
+            isReRaise = true;
         }
     }
 
@@ -137,6 +132,32 @@ public class PyException extends RuntimeException
     }
 
     /**
+     * Register frame as having been visited in the traceback.
+     *
+     * @param here the current PyFrame
+     */
+    public void tracebackHere(PyFrame here) {
+        tracebackHere(here, false);
+    }
+
+    /**
+     * Register frame as having been visited in the traceback.
+     *
+     * @param here the current PyFrame
+     * @param isFinally whether caller is a Python finally block
+     */
+    public void tracebackHere(PyFrame here, boolean isFinally) {
+        if (!isReRaise && here != null) {
+            // the frame is either inapplicable or already registered (from a finally)
+            // during a re-raise
+            traceback = new PyTraceback(traceback, here);
+        }
+        // finally blocks immediately tracebackHere: so they toggle isReRaise to skip the
+        // next tracebackHere hook
+        isReRaise = isFinally;
+    }
+
+    /**
      * Logic for the raise statement
      *
      * @param type the first arg to raise, a type or an instance
@@ -189,6 +210,7 @@ public class PyException extends RuntimeException
             throw Py.TypeError("exceptions must be classes, instances, or strings (deprecated), "
                                + "not " + type.getType().fastGetName());
         }
+
         return new PyException(type, value, (PyTraceback)traceback);
     }
 
@@ -206,7 +228,7 @@ public class PyException extends RuntimeException
             return false;
         }
         PyType type = ((PyType)obj);
-        if(type.isSubType((PyType)Py.BaseException)){
+        if (type.isSubType(PyBaseException.TYPE)) {
             return true;
         }
         return type.getProxyType() != null && Throwable.class.isAssignableFrom(type.getProxyType());

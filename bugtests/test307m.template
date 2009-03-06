@@ -1,4 +1,0 @@
-assert __name__ == 'test307m', " __name__ should've been test307m but was %s" % __name__
-from java.io import File
-expected = "test307.zip%stest307m.py" % File.separator
-assert expected in __file__, "%s should've been in __file__ but was %s" % (expected, __file__)

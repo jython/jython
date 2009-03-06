@@ -7,9 +7,11 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.List;
+import java.util.Properties;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import org.python.Version;
 import org.python.core.Options;
 import org.python.core.Py;
 import org.python.core.PyCode;
@@ -118,8 +120,7 @@ public class jython
         CommandLineOptions opts = new CommandLineOptions();
         if (!opts.parse(args)) {
             if (opts.version) {
-                PySystemState.determinePlatform(System.getProperties());
-                System.err.println(InteractiveConsole.getDefaultBanner());
+                System.err.println("Jython " + Version.PY_VERSION);
                 System.exit(0);
             }
             if (!opts.runModule) {
@@ -131,16 +132,16 @@ public class jython
         }
 
         // Setup the basic python system state from these options
-        PySystemState.initialize(PySystemState.getBaseProperties(),
-                                 opts.properties, opts.argv);
+        PySystemState.initialize(PySystemState.getBaseProperties(), opts.properties, opts.argv);
 
         // Now create an interpreter
         InteractiveConsole interp = newInterpreter();
 
-        PySystemState.warnoptions = new PyList();
+        PyList warnoptions = new PyList();
         for (String wopt : opts.warnoptions) {
-            PySystemState.warnoptions.append(new PyString(wopt));
+            warnoptions.append(new PyString(wopt));
         }
+        Py.getSystemState().setWarnoptions(warnoptions);
 
         // Decide if stdin is interactive
         if (!opts.fixInteractive && opts.interactive) {
@@ -338,7 +339,7 @@ class CommandLineOptions
     public boolean fixInteractive;
     public boolean help, version;
     public String[] argv;
-    public java.util.Properties properties;
+    public Properties properties;
     public String command;
     public List<String> warnoptions = Generic.list();
     public String encoding;
@@ -350,7 +351,7 @@ class CommandLineOptions
         jar = fixInteractive = false;
         interactive = notice = true;
         runModule = false;
-        properties = new java.util.Properties();
+        properties = new Properties();
         help = version = false;
     }
 

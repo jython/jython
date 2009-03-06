@@ -30,8 +30,8 @@ __all__.extend(['EX_OK', 'F_OK', 'O_APPEND', 'O_CREAT', 'O_EXCL', 'O_RDONLY',
                 'O_RDWR', 'O_SYNC', 'O_TRUNC', 'O_WRONLY', 'R_OK', 'SEEK_CUR',
                 'SEEK_END', 'SEEK_SET', 'W_OK', 'X_OK', '_exit', 'access',
                 'altsep', 'chdir', 'chmod', 'close', 'curdir', 'defpath',
-                'environ', 'error', 'fdopen', 'getcwd', 'getegid', 'getenv',
-                'geteuid', 'getgid', 'getlogin', 'getlogin', 'getpgrp',
+                'environ', 'error', 'fdopen', 'getcwd', 'getcwdu', 'getegid',
+                'getenv','geteuid', 'getgid', 'getlogin', 'getlogin', 'getpgrp',
                 'getpid', 'getppid', 'getuid', 'isatty', 'linesep', 'listdir',
                 'lseek', 'lstat', 'makedirs', 'mkdir', 'name', 'open', 'pardir',
                 'path', 'pathsep', 'popen', 'popen2', 'popen3', 'popen4',
@@ -41,14 +41,19 @@ __all__.extend(['EX_OK', 'F_OK', 'O_APPEND', 'O_CREAT', 'O_EXCL', 'O_RDONLY',
                 'write'])
 
 import errno
+import jarray
 import java.lang.System
 import time
 import stat as _stat
 import sys
 from java.io import File
-from org.python.constantine.platform import Errno
 from org.python.core.io import FileDescriptors, FileIO, IOBase
 from org.python.core.Py import newString as asPyString
+
+try:
+    from org.python.constantine.platform import Errno
+except ImportError:
+    from com.kenai.constantine.platform import Errno
 
 # Mapping of: os._name: [name list, shell command list]
 _os_map = dict(nt=[
@@ -78,9 +83,9 @@ def get_os_type():
     """
     os_name = sys.registry.getProperty('python.os')
     if os_name:
-        return str(os_name)
+        return asPyString(os_name)
 
-    os_name = str(java.lang.System.getProperty('os.name'))
+    os_name = asPyString(java.lang.System.getProperty('os.name'))
     os_type = None
     for type, (patterns, shell_commands) in _os_map.iteritems():
         for pattern in patterns:
@@ -95,14 +100,17 @@ name = 'java'
 # should *NOT* use it
 _name = get_os_type()
 
-from org.python.posix import JavaPOSIX, POSIXHandler, POSIXFactory
+try:
+    from org.python.posix import JavaPOSIX, POSIXHandler, POSIXFactory
+except ImportError:
+    from org.jruby.ext.posix import JavaPOSIX, POSIXHandler, POSIXFactory
 
 class PythonPOSIXHandler(POSIXHandler):
     def error(self, error, msg):
         err = getattr(errno, error.name(), None)
         if err is None:
-            raise OSError('%s: %s' % (error, msg))
-        raise OSError(err, strerror(err), msg)
+            raise OSError('%s: %s' % (error, asPyString(msg)))
+        raise OSError(err, strerror(err), asPyString(msg))
     def unimplementedError(self, method_name):
         raise NotImplementedError(method_name)
     def warn(self, warning_id, msg, rest):
@@ -110,7 +118,7 @@ class PythonPOSIXHandler(POSIXHandler):
     def isVerbose(self):
         return False
     def getCurrentWorkingDirectory(self):
-        return File(getcwd())
+        return File(getcwdu())
     def getEnv(self):
         return ['%s=%s' % (key, val) for key, val in environ.iteritems()]
     def getInputStream(self):
@@ -169,6 +177,9 @@ R_OK = 1<<2
 
 # successful termination
 EX_OK = 0
+
+# Java class representing the size of a time_t. internal use, lazily set
+_time_t = None
 
 class stat_result:
 
@@ -239,6 +250,13 @@ def getcwd():
     Return a string representing the current working directory.
     """
     return asPyString(sys.getCurrentWorkingDir())
+
+def getcwdu():
+    """getcwd() -> path
+    
+    Return a unicode string representing the current working directory.
+    """
+    return sys.getCurrentWorkingDir()
 
 def chdir(path):
     """chdir(path)
@@ -416,7 +434,10 @@ def strerror(code):
     if constant.name() == constant.description():
         # XXX: have constantine handle this fallback
         # Fake constant or just lacks a description, fallback to Linux's
-        from org.python.constantine.platform.linux import Errno as LinuxErrno
+        try:
+            from org.python.constantine.platform.linux import Errno as LinuxErrno
+        except ImportError:
+            from com.kenai.constantine.platform.linux import Errno as LinuxErrno
         constant = getattr(LinuxErrno, constant.name(), None)
         if not constant:
             return 'Unknown error: %d' % code
@@ -537,12 +558,42 @@ def utime(path, times):
     if path is None:
         raise TypeError('path must be specified, not None')
 
-    if times is not None:
-        atime, mtime = times
+    if times is None:
+        atimeval = mtimeval = None
+    elif isinstance(times, tuple) and len(times) == 2:
+        atimeval = _to_timeval(times[0])
+        mtimeval = _to_timeval(times[1])
     else:
-        atime = mtime = time.time()
+        raise TypeError('utime() arg 2 must be a tuple (atime, mtime)')
 
-    _posix.utimes(path, long(atime * 1000), long(mtime * 1000))
+    _posix.utimes(path, atimeval, mtimeval)
+
+def _to_timeval(seconds):
+    """Convert seconds (with a fraction) from epoch to a 2 item tuple of
+    seconds, microseconds from epoch as longs
+    """
+    global _time_t
+    if _time_t is None:
+        from java.lang import Integer, Long
+        try:
+            from org.python.posix.util import Platform
+        except ImportError:
+            from org.jruby.ext.posix.util import Platform
+        _time_t = Integer if Platform.IS_32_BIT else Long
+
+    try:
+        floor = long(seconds)
+    except TypeError:
+        raise TypeError('an integer is required')
+    if not _time_t.MIN_VALUE <= floor <= _time_t.MAX_VALUE:
+        raise OverflowError('long int too large to convert to int')
+
+    # usec can't exceed 1000000
+    usec = long((seconds - floor) * 1e6)
+    if usec < 0:
+        # If rounding gave us a negative number, truncate
+        usec = 0
+    return floor, usec
 
 def close(fd):
     """close(fd)
@@ -963,6 +1014,45 @@ if _name == 'posix':
         Call the system call setsid()."""
         return _posix.setsid()
 
+    # This implementation of fork partially works on
+    # Jython. Diagnosing what works, what doesn't, and fixing it is
+    # left for another day. In any event, this would only be
+    # marginally useful.
+
+    # def fork():
+    #     """fork() -> pid
+    #     
+    #     Fork a child process.
+    #     Return 0 to child process and PID of child to parent process."""
+    #     return _posix.fork()
+
+    def kill(pid, sig):
+        """kill(pid, sig)
+
+        Kill a process with a signal."""
+        return _posix.kill(pid, sig)
+
+    def wait():
+        """wait() -> (pid, status)
+        
+        Wait for completion of a child process."""
+
+        status = jarray.zeros(1, 'i')
+        res_pid = _posix.wait(status)
+        if res_pid == -1:
+            raise OSError(status[0], strerror(status[0]))
+        return res_pid, status[0]
+
+    def waitpid(pid, options):
+        """waitpid(pid, options) -> (pid, status)
+
+        Wait for completion of a given child process."""
+        status = jarray.zeros(1, 'i')
+        res_pid = _posix.waitpid(pid, status, options)
+        if res_pid == -1:
+            raise OSError(status[0], strerror(status[0]))
+        return res_pid, status[0]
+
 def getpid():
     """getpid() -> pid
 
@@ -998,8 +1088,13 @@ def isatty(fileno):
 
     return fileno.isatty()
 
+def umask(new_mask):
+    """umask(new_mask) -> old_mask
 
-import jarray
+    Set the current numeric umask and return the previous umask."""
+    return _posix.umask(int(new_mask))
+
+
 from java.security import SecureRandom
 urandom_source = None
 

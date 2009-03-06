@@ -28,17 +28,17 @@ import java.util.ArrayList;
 @ExposedType(name = "_ast.ExceptHandler", base = AST.class)
 public class ExceptHandler extends excepthandler {
 public static final PyType TYPE = PyType.fromClass(ExceptHandler.class);
-    private expr excepttype;
-    public expr getInternalExcepttype() {
-        return excepttype;
+    private expr type;
+    public expr getInternalType() {
+        return type;
     }
-    @ExposedGet(name = "excepttype")
-    public PyObject getExcepttype() {
-        return excepttype;
+    @ExposedGet(name = "type")
+    public PyObject getExceptType() {
+        return type;
     }
-    @ExposedSet(name = "excepttype")
-    public void setExcepttype(PyObject excepttype) {
-        this.excepttype = AstAdapters.py2expr(excepttype);
+    @ExposedSet(name = "type")
+    public void setExceptType(PyObject type) {
+        this.type = AstAdapters.py2expr(type);
     }
 
     private expr name;
@@ -69,7 +69,7 @@ public static final PyType TYPE = PyType.fromClass(ExceptHandler.class);
 
 
     private final static PyString[] fields =
-    new PyString[] {new PyString("excepttype"), new PyString("name"), new PyString("body")};
+    new PyString[] {new PyString("type"), new PyString("name"), new PyString("body")};
     @ExposedGet(name = "_fields")
     public PyString[] get_fields() { return fields; }
 
@@ -88,8 +88,8 @@ public static final PyType TYPE = PyType.fromClass(ExceptHandler.class);
     @ExposedMethod
     public void ExceptHandler___init__(PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("ExceptHandler", args, keywords, new String[]
-            {"excepttype", "name", "body", "lineno", "col_offset"}, 3);
-        setExcepttype(ap.getPyObject(0));
+            {"type", "name", "body", "lineno", "col_offset"}, 3);
+        setExceptType(ap.getPyObject(0));
         setName(ap.getPyObject(1));
         setBody(ap.getPyObject(2));
         int lin = ap.getInt(3, -1);
@@ -104,16 +104,16 @@ public static final PyType TYPE = PyType.fromClass(ExceptHandler.class);
 
     }
 
-    public ExceptHandler(PyObject excepttype, PyObject name, PyObject body) {
-        setExcepttype(excepttype);
+    public ExceptHandler(PyObject type, PyObject name, PyObject body) {
+        setExceptType(type);
         setName(name);
         setBody(body);
     }
 
-    public ExceptHandler(Token token, expr excepttype, expr name, java.util.List<stmt> body) {
+    public ExceptHandler(Token token, expr type, expr name, java.util.List<stmt> body) {
         super(token);
-        this.excepttype = excepttype;
-        addChild(excepttype);
+        this.type = type;
+        addChild(type);
         this.name = name;
         addChild(name);
         this.body = body;
@@ -125,11 +125,11 @@ public static final PyType TYPE = PyType.fromClass(ExceptHandler.class);
         }
     }
 
-    public ExceptHandler(Integer ttype, Token token, expr excepttype, expr name,
-    java.util.List<stmt> body) {
+    public ExceptHandler(Integer ttype, Token token, expr type, expr name, java.util.List<stmt>
+    body) {
         super(ttype, token);
-        this.excepttype = excepttype;
-        addChild(excepttype);
+        this.type = type;
+        addChild(type);
         this.name = name;
         addChild(name);
         this.body = body;
@@ -141,10 +141,10 @@ public static final PyType TYPE = PyType.fromClass(ExceptHandler.class);
         }
     }
 
-    public ExceptHandler(PythonTree tree, expr excepttype, expr name, java.util.List<stmt> body) {
+    public ExceptHandler(PythonTree tree, expr type, expr name, java.util.List<stmt> body) {
         super(tree);
-        this.excepttype = excepttype;
-        addChild(excepttype);
+        this.type = type;
+        addChild(type);
         this.name = name;
         addChild(name);
         this.body = body;
@@ -163,8 +163,8 @@ public static final PyType TYPE = PyType.fromClass(ExceptHandler.class);
 
     public String toStringTree() {
         StringBuffer sb = new StringBuffer("ExceptHandler(");
-        sb.append("excepttype=");
-        sb.append(dumpThis(excepttype));
+        sb.append("type=");
+        sb.append(dumpThis(type));
         sb.append(",");
         sb.append("name=");
         sb.append(dumpThis(name));
@@ -181,8 +181,8 @@ public static final PyType TYPE = PyType.fromClass(ExceptHandler.class);
     }
 
     public void traverse(VisitorIF visitor) throws Exception {
-        if (excepttype != null)
-            excepttype.accept(visitor);
+        if (type != null)
+            type.accept(visitor);
         if (name != null)
             name.accept(visitor);
         if (body != null) {

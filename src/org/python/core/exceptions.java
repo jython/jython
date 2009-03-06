@@ -36,7 +36,7 @@ public class exceptions extends PyObject implements ClassDictInit {
             if (frame.f_back != null) {
                 frame.f_builtins = frame.f_back.f_builtins;
             } else {
-                frame.f_builtins = PySystemState.builtins;
+                frame.f_builtins = PySystemState.getDefaultBuiltins();
             }
         }
         ts.frame = frame;

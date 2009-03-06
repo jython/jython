@@ -153,10 +153,10 @@ class Semaphore(object):
 
 ThreadStates = {
     java.lang.Thread.State.NEW : 'initial',
-    java.lang.Thread.State.RUNNABLE: 'runnable',
-    java.lang.Thread.State.BLOCKED: 'blocked',
-    java.lang.Thread.State.WAITING: 'waiting',
-    java.lang.Thread.State.TIMED_WAITING: 'timed_waiting',
+    java.lang.Thread.State.RUNNABLE: 'started',
+    java.lang.Thread.State.BLOCKED: 'started',
+    java.lang.Thread.State.WAITING: 'started',
+    java.lang.Thread.State.TIMED_WAITING: 'started',
     java.lang.Thread.State.TERMINATED: 'stopped',
 }
 

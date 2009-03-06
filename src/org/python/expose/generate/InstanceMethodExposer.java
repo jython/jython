@@ -1,7 +1,7 @@
 package org.python.expose.generate;
 
-import org.python.objectweb.asm.Label;
-import org.python.objectweb.asm.Type;
+import org.objectweb.asm.Label;
+import org.objectweb.asm.Type;
 import org.python.core.PyBuiltinMethod;
 import org.python.core.PyBuiltinMethodNarrow;
 import org.python.expose.ExposedMethod;

@@ -163,7 +163,7 @@ public class ucnhash implements ucnhashAPI {
        int end = worddata.length;
        if (idx < wordoffs.length-1)
            end = wordoffs[idx+1];
-       StringBuffer buf = new StringBuffer();
+       StringBuilder buf = new StringBuilder();
        for (int i = offset; i < end; i++)
            buf.append(charmap[worddata[i]]);
        return buf.toString();

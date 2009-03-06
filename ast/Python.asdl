@@ -28,8 +28,7 @@ module Python version "$Revision: 62047 $"
 	      | With(expr context_expr, expr? optional_vars, stmt* body)
 
 	      -- 'type' is a bad name
-          -- changed to 'type' to excepttype for Jython
-	      | Raise(expr? excepttype, expr? inst, expr? tback)
+	      | Raise(expr? type, expr? inst, expr? tback)
 	      | TryExcept(stmt* body, excepthandler* handlers, stmt* orelse)
 	      | TryFinally(stmt* body, stmt* finalbody)
 	      | Assert(expr test, expr? msg)
@@ -99,8 +98,7 @@ module Python version "$Revision: 62047 $"
 	comprehension = (expr target, expr iter, expr* ifs)
 
 	-- not sure what to call the first argument for raise and except
-    -- changed to 'type' to excepttype for Jython
-	excepthandler = ExceptHandler(expr? excepttype, expr? name, stmt* body)
+	excepthandler = ExceptHandler(expr? type, expr? name, stmt* body)
 	                attributes (int lineno, int col_offset)
 
 	arguments = (expr* args, identifier? vararg, 

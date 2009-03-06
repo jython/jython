@@ -91,13 +91,11 @@ public class PyJavaPackage extends PyObject {
         return ret;
     }
 
-    public PyObject addLazyClass(String name) {
-        // TODO - make lazy PyJavaType
-        return null;
-    }
-
-    /** Add statically known classes.
-     * @param classes their names as comma-separated string
+    /**
+     * Add statically known classes.
+     *
+     * @param classes
+     *            their names as comma-separated string
      */
     public void addPlaceholders(String classes) {
         StringTokenizer tok = new StringTokenizer(classes, ",@");
@@ -114,11 +112,10 @@ public class PyJavaPackage extends PyObject {
     }
 
     /**
-     * Used for 'from xyz import *', dynamically dir pkg filling up __dict__.
-     * It uses {@link PackageManager#doDir} implementation furnished by
-     * the control package manager with instatiate true. The package
-     * manager should lazily load classes with {@link #addLazyClass} in
-     * the package.
+     * Used for 'from xyz import *', dynamically dir pkg filling up __dict__. It uses
+     * {@link PackageManager#doDir} implementation furnished by the control package manager with
+     * instantiate true. The package manager should load classes with {@link #addClass} in the
+     * package.
      *
      * @return list of member names
      */

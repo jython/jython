@@ -6,8 +6,6 @@ The primary extra it provides is non-blocking support.
 XXX Restrictions:
 
 - Only INET sockets
-- No asynchronous behavior
-- No socket options
 - Can't do a very good gethostbyaddr() right...
 AMAK: 20050527: added socket timeouts
 AMAK: 20070515: Added non-blocking (asynchronous) support
@@ -148,17 +146,6 @@ SHUT_RD   = 0
 SHUT_WR   = 1
 SHUT_RDWR = 2
 
-__all__ = ['AF_UNSPEC', 'AF_INET', 'AF_INET6', 'AI_PASSIVE', 'SOCK_DGRAM',
-        'SOCK_RAW', 'SOCK_RDM', 'SOCK_SEQPACKET', 'SOCK_STREAM', 'SOL_SOCKET',
-        'SO_BROADCAST', 'SO_ERROR', 'SO_KEEPALIVE', 'SO_LINGER', 'SO_OOBINLINE',
-        'SO_RCVBUF', 'SO_REUSEADDR', 'SO_SNDBUF', 'SO_TIMEOUT', 'TCP_NODELAY',
-        'SocketType', 'error', 'herror', 'gaierror', 'timeout',
-        'getfqdn', 'gethostbyaddr', 'gethostbyname', 'gethostname',
-        'socket', 'getaddrinfo', 'getdefaulttimeout', 'setdefaulttimeout',
-        'has_ipv6', 'htons', 'htonl', 'ntohs', 'ntohl',
-        'SHUT_RD', 'SHUT_WR', 'SHUT_RDWR',
-        ]
-
 AF_UNSPEC = 0
 AF_INET = 2
 AF_INET6 = 23
@@ -184,6 +171,9 @@ SO_TIMEOUT     = 128
 
 TCP_NODELAY    = 256
 
+INADDR_ANY = "0.0.0.0"
+INADDR_BROADCAST = "255.255.255.255"
+
 # Options with negative constants are not supported
 # They are being added here so that code that refers to them
 # will not break with an AttributeError
@@ -201,20 +191,22 @@ SO_SNDTIMEO         = -512
 SO_TYPE             = -1024
 SO_USELOOPBACK      = -2048
 
+__all__ = ['AF_UNSPEC', 'AF_INET', 'AF_INET6', 'AI_PASSIVE', 'SOCK_DGRAM',
+        'SOCK_RAW', 'SOCK_RDM', 'SOCK_SEQPACKET', 'SOCK_STREAM', 'SOL_SOCKET',
+        'SO_BROADCAST', 'SO_ERROR', 'SO_KEEPALIVE', 'SO_LINGER', 'SO_OOBINLINE',
+        'SO_RCVBUF', 'SO_REUSEADDR', 'SO_SNDBUF', 'SO_TIMEOUT', 'TCP_NODELAY',
+        'INADDR_ANY', 'INADDR_BROADCAST',
+        'SocketType', 'error', 'herror', 'gaierror', 'timeout',
+        'getfqdn', 'gethostbyaddr', 'gethostbyname', 'gethostname',
+        'socket', 'getaddrinfo', 'getdefaulttimeout', 'setdefaulttimeout',
+        'has_ipv6', 'htons', 'htonl', 'ntohs', 'ntohl',
+        'SHUT_RD', 'SHUT_WR', 'SHUT_RDWR',
+        ]
+
 class _nio_impl:
 
     timeout = None
     mode = MODE_BLOCKING
-
-    def read(self, buf):
-        bytebuf = java.nio.ByteBuffer.wrap(buf)
-        count = self.jchannel.read(bytebuf)
-        return count
-
-    def write(self, buf):
-        bytebuf = java.nio.ByteBuffer.wrap(buf)
-        count = self.jchannel.write(bytebuf)
-        return count
 
     def getpeername(self):
         return (self.jsocket.getInetAddress().getHostAddress(), self.jsocket.getPort() )
@@ -226,6 +218,7 @@ class _nio_impl:
         if self.mode == MODE_NONBLOCKING:
             self.jchannel.configureBlocking(0)
         if self.mode == MODE_TIMEOUT:
+            self.jchannel.configureBlocking(1)
             self._timeout_millis = int(timeout*1000)
             self.jsocket.setSoTimeout(self._timeout_millis)
 
@@ -254,22 +247,6 @@ class _nio_impl:
 
     def close(self):
         self.jsocket.close()
-
-    def shutdownInput(self):
-        try:
-            self.jsocket.shutdownInput()
-        except AttributeError, ax:
-            pass # Fail silently server sockets
-        except java.lang.Exception, jlx:
-            raise _map_exception(jlx)
-
-    def shutdownOutput(self):
-        try:
-            self.jsocket.shutdownOutput()
-        except AttributeError, ax:
-            pass # Fail silently server sockets
-        except java.lang.Exception, jlx:
-            raise _map_exception(jlx)
 
     def getchannel(self):
         return self.jchannel
@@ -317,6 +294,42 @@ class _client_socket_impl(_nio_impl):
     def finish_connect(self):
         return self.jchannel.finishConnect()
 
+    def _do_read_net(self, buf):
+        # Need two separate implementations because the java.nio APIs do not support timeouts
+        return self.jsocket.getInputStream().read(buf)
+
+    def _do_read_nio(self, buf):
+        bytebuf = java.nio.ByteBuffer.wrap(buf)
+        count = self.jchannel.read(bytebuf)
+        return count
+
+    def _do_write_net(self, buf):
+        self.jsocket.getOutputStream().write(buf)
+        return len(buf)
+
+    def _do_write_nio(self, buf):
+        bytebuf = java.nio.ByteBuffer.wrap(buf)
+        count = self.jchannel.write(bytebuf)
+        return count
+
+    def read(self, buf):
+        if self.mode == MODE_TIMEOUT:
+            return self._do_read_net(buf)
+        else:
+            return self._do_read_nio(buf)
+
+    def write(self, buf):
+        if self.mode == MODE_TIMEOUT:
+            return self._do_write_net(buf)
+        else:
+            return self._do_write_nio(buf)
+
+    def shutdown(self, how):
+        if how in (SHUT_RD, SHUT_RDWR):
+            self.jsocket.shutdownInput()
+        if how in (SHUT_WR, SHUT_RDWR):
+            self.jsocket.shutdownOutput()
+
 class _server_socket_impl(_nio_impl):
 
     options = {
@@ -348,6 +361,13 @@ class _server_socket_impl(_nio_impl):
             new_cli_sock = self.jsocket.accept()
             return _client_socket_impl(new_cli_sock)
 
+    def shutdown(self, how):
+        # This is no-op on java, for server sockets.
+        # What the user wants to achieve is achieved by calling close() on
+        # java/jython. But we can't call that here because that would then
+        # later cause the user explicit close() call to fail
+        pass
+
 class _datagram_socket_impl(_nio_impl):
 
     options = {
@@ -361,7 +381,7 @@ class _datagram_socket_impl(_nio_impl):
     def __init__(self, port=None, address=None, reuse_addr=0):
         self.jchannel = java.nio.channels.DatagramChannel.open()
         self.jsocket = self.jchannel.socket()
-        if port:
+        if port is not None:
             if address is not None:
                 local_address = java.net.InetSocketAddress(address, port)
             else:
@@ -382,6 +402,13 @@ class _datagram_socket_impl(_nio_impl):
             cpython appears not to have this operation
         """
         self.jchannel.disconnect()
+
+    def shutdown(self, how):
+        # This is no-op on java, for datagram sockets.
+        # What the user wants to achieve is achieved by calling close() on
+        # java/jython. But we can't call that here because that would then
+        # later cause the user explicit close() call to fail
+        pass
 
     def _do_send_net(self, byte_array, socket_address, flags):
         # Need two separate implementations because the java.nio APIs do not support timeouts
@@ -609,12 +636,14 @@ def inet_ntoa(packed_ip):
 
 class _nonblocking_api_mixin:
 
-    timeout = _defaulttimeout
     mode = MODE_BLOCKING
     reference_count = 0
     close_lock = threading.Lock()
 
     def __init__(self):
+        self.timeout = _defaulttimeout
+        if self.timeout is not None:
+            self.mode = MODE_TIMEOUT
         self.pending_options = {
             SO_REUSEADDR:  0,
         }
@@ -664,6 +693,22 @@ class _nonblocking_api_mixin:
         except java.lang.Exception, jlx:
             raise _map_exception(jlx)
 
+    def shutdown(self, how):
+        assert how in (SHUT_RD, SHUT_WR, SHUT_RDWR)
+        if not self.sock_impl:
+            raise error(errno.ENOTCONN, "Transport endpoint is not connected") 
+        try:
+            self.sock_impl.shutdown(how)
+        except java.lang.Exception, jlx:
+            raise _map_exception(jlx)
+
+    def close(self):
+        try:
+            if self.sock_impl:
+                self.sock_impl.close()
+        except java.lang.Exception, jlx:
+            raise _map_exception(jlx)
+
     def _config(self):
         assert self.mode in _permitted_modes
         if self.sock_impl:
@@ -685,7 +730,7 @@ class _nonblocking_api_mixin:
     def _get_jsocket(self):
         return self.sock_impl.jsocket
 
-def _unpack_address_tuple(address_tuple, for_tx=False):
+def _unpack_address_tuple(address_tuple):
     # TODO: Upgrade to support the 4-tuples used for IPv6 addresses
     # which include flowinfo and scope_id.
     # To be upgraded in synch with getaddrinfo
@@ -701,11 +746,6 @@ def _unpack_address_tuple(address_tuple, for_tx=False):
         # currently broken
         hostname = hostname.encode()
     hostname = hostname.strip()
-    if hostname == "<broadcast>":
-        if for_tx:
-            hostname = "255.255.255.255"
-        else:
-            hostname = "0.0.0.0"
     return hostname, address_tuple[1]
 
 class _tcpsocket(_nonblocking_api_mixin):
@@ -825,6 +865,8 @@ class _tcpsocket(_nonblocking_api_mixin):
             if self.sock_impl.jchannel.isConnectionPending():
                 self.sock_impl.jchannel.finishConnect()
             numwritten = self.sock_impl.write(s)
+            if numwritten == 0 and self.mode == MODE_NONBLOCKING:
+                raise would_block_error()
             return numwritten
         except java.lang.Exception, jlx:
             raise _map_exception(jlx)
@@ -856,15 +898,6 @@ class _tcpsocket(_nonblocking_api_mixin):
         except java.lang.Exception, jlx:
             raise _map_exception(jlx)
 
-    def shutdown(self, how):
-        if not self.sock_impl:
-            raise error(errno.ENOTCONN, "Transport endpoint is not connected") 
-        assert how in (SHUT_RD, SHUT_WR, SHUT_RDWR)
-        if how in (SHUT_RD, SHUT_RDWR):
-            self.sock_impl.shutdownInput()
-        if how in (SHUT_WR, SHUT_RDWR):
-            self.sock_impl.shutdownOutput()
-
     def close(self):
         try:
             if self.istream:
@@ -889,6 +922,8 @@ class _udpsocket(_nonblocking_api_mixin):
         try:
             assert not self.sock_impl
             host, port = _unpack_address_tuple(addr)
+            if host == "":
+                host = INADDR_ANY
             host_address = java.net.InetAddress.getByName(host)
             self.sock_impl = _datagram_socket_impl(port, host_address, self.pending_options[SO_REUSEADDR])
             self._config()
@@ -928,7 +963,9 @@ class _udpsocket(_nonblocking_api_mixin):
             if not self.sock_impl:
                 self.sock_impl = _datagram_socket_impl()
                 self._config()
-            host, port = _unpack_address_tuple(addr, True)
+            host, port = _unpack_address_tuple(addr)
+            if host == "<broadcast>":
+                host = INADDR_BROADCAST
             byte_array = java.lang.String(data).getBytes('iso-8859-1')
             result = self.sock_impl.sendto(byte_array, host, port, flags)
             return result
@@ -988,13 +1025,6 @@ class _udpsocket(_nonblocking_api_mixin):
 
     def __del__(self):
         self.close()
-
-    def close(self):
-        try:
-            if self.sock_impl:
-                self.sock_impl.close()
-        except java.lang.Exception, jlx:
-            raise _map_exception(jlx)
 
 _socketmethods = (
     'bind', 'connect', 'connect_ex', 'fileno', 'listen',
@@ -1350,6 +1380,8 @@ class ssl:
 
     def __init__(self, plain_sock, keyfile=None, certfile=None):
         self.ssl_sock = self.make_ssl_socket(plain_sock)
+        self._in_buf = java.io.BufferedInputStream(self.ssl_sock.getInputStream())
+        self._out_buf = java.io.BufferedOutputStream(self.ssl_sock.getOutputStream())
 
     def make_ssl_socket(self, plain_socket, auto_close=0):
         java_net_socket = plain_socket._get_jsocket()
@@ -1363,10 +1395,8 @@ class ssl:
         return ssl_socket
 
     def read(self, n=4096):
-        # Probably needs some work on efficency
-        in_buf = java.io.BufferedInputStream(self.ssl_sock.getInputStream())
         data = jarray.zeros(n, 'b')
-        m = in_buf.read(data, 0, n)
+        m = self._in_buf.read(data, 0, n)
         if m <= 0:
             return ""
         if m < n:
@@ -1374,10 +1404,9 @@ class ssl:
         return data.tostring()
 
     def write(self, s):
-        # Probably needs some work on efficency
-        out = java.io.BufferedOutputStream(self.ssl_sock.getOutputStream())
-        out.write(s)
-        out.flush()
+        self._out_buf.write(s)
+        self._out_buf.flush()
+        return len(s)
 
     def _get_server_cert(self):
         return self.ssl_sock.getSession().getPeerCertificates()[0]

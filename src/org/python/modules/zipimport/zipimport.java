@@ -8,8 +8,6 @@ import org.python.core.PyException;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyStringMap;
-import org.python.core.PyType;
-import org.python.core.exceptions;
 
 /**
  * This module adds the ability to import Python modules (*.py,

@@ -45,11 +45,8 @@ class CmdLineTest(unittest.TestCase):
         self.assertTrue('usage' in self.start_python('-h'))
 
     def test_version(self):
-        from org.python.util import InteractiveConsole
-        expected = InteractiveConsole.getDefaultBanner()
-        reported = self.start_python('-V')
-        self.assertTrue(reported.startswith(expected),
-                "-V should start with '%s' but it printed '%s'" % (expected, reported))
+        version = 'Jython %d.%d' % sys.version_info[:2]
+        self.assertTrue(self.start_python('-V').startswith(version))
 
 def test_main():
     test.test_support.run_unittest(CmdLineTest)

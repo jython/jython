@@ -20,7 +20,7 @@ import java.util.Calendar;
 import java.util.Set;
 
 import org.python.antlr.base.mod;
-import org.python.constantine.platform.Errno;
+import com.kenai.constantine.platform.Errno;
 import org.python.compiler.Module;
 import org.python.core.adapter.ClassicPyObjectAdapter;
 import org.python.core.adapter.ExtensiblePyObjectAdapter;
@@ -444,6 +444,8 @@ public final class Py {
             return (PyException) t;
         } else if (t instanceof InvocationTargetException) {
             return JavaError(((InvocationTargetException) t).getTargetException());
+        } else if (t instanceof StackOverflowError) {
+            return Py.RuntimeError("maximum recursion depth exceeded");
         } else if (t instanceof OutOfMemoryError) {
             memory_error((OutOfMemoryError) t);
         }
@@ -759,11 +761,15 @@ public final class Py {
                     secEnv = true;
                 }
                 if (classLoader != null) {
-                    return classLoader.loadClass(name);
+                    try {
+                        return classLoader.loadClass(name);
+                    } catch (ClassNotFoundException cnfe) {
+                        // let the context classloader try
+                    }
                 }
             }
 
-            return Class.forName(name);
+            return Thread.currentThread().getContextClassLoader().loadClass(name);
 
         } catch (ClassNotFoundException e) {
             //             e.printStackTrace();
@@ -795,13 +801,17 @@ public final class Py {
                 if (classLoader != null) {
                     writeDebug("import", "trying " + name + " as " + reason +
                             " in syspath loader");
-                    return classLoader.loadClass(name);
+                    try {
+                        return classLoader.loadClass(name);
+                    } catch (ClassNotFoundException cnfe) {
+                        // let the context classloader try
+                    }
                 }
             }
 
             writeDebug("import", "trying " + name + " as " + reason +
                     " in Class.forName");
-            return Class.forName(name);
+            return Thread.currentThread().getContextClassLoader().loadClass(name);
         } catch (ClassNotFoundException e) {
             return null;
         } catch (IllegalArgumentException e) {
@@ -921,8 +931,7 @@ public final class Py {
             stderr.println("Java Traceback:");
             java.io.CharArrayWriter buf = new java.io.CharArrayWriter();
             if (t instanceof PyException) {
-                ((PyException) t).super__printStackTrace(
-                        new java.io.PrintWriter(buf));
+                ((PyException)t).super__printStackTrace(new java.io.PrintWriter(buf));
             } else {
                 t.printStackTrace(new java.io.PrintWriter(buf));
             }
@@ -1054,7 +1063,7 @@ public final class Py {
     }
 
     static String formatException(PyObject type, PyObject value, PyObject tb) {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
 
         if (PyException.isExceptionClass(type)) {
             String className = PyException.exceptionClassName(type);
@@ -1104,28 +1113,15 @@ public final class Py {
 
     /* Helpers to implement finally clauses */
     public static void addTraceback(Throwable t, PyFrame frame) {
-        PyException e = Py.JavaError(t);
-
-        //Add another traceback object to the exception if needed
-        if (e.traceback.tb_frame != frame && e.traceback.tb_frame.f_back != null) {
-            e.traceback = new PyTraceback(e.traceback);
-        }
+        Py.JavaError(t).tracebackHere(frame, true);
     }
 
     /* Helpers to implement except clauses */
     public static PyException setException(Throwable t, PyFrame frame) {
         PyException pye = Py.JavaError(t);
         pye.normalize();
-
-        // attach catching frame
-        if (frame != null && pye.traceback.tb_frame != frame && pye.traceback.tb_frame.f_back != null) {
-            pye.traceback = new PyTraceback(pye.traceback);
-        }
-
-        ThreadState ts = getThreadState();
-
-        ts.exception = pye;
-
+        pye.tracebackHere(frame);
+        getThreadState().exception = pye;
         return pye;
     }
 
@@ -1206,7 +1202,7 @@ public final class Py {
         }
 
         f = new PyFrame(tc, locals, globals,
-                PySystemState.builtins);
+                Py.getSystemState().getBuiltins());
         return code.call(f);
     }
 
@@ -1215,14 +1211,14 @@ public final class Py {
         int flags = 0;
         if (o instanceof PyCode) {
             code = (PyCode) o;
-            if (locals == null && o instanceof PyTableCode && ((PyTableCode) o).hasFreevars()) {
+            if (locals == null && o instanceof PyBaseCode && ((PyBaseCode) o).hasFreevars()) {
                 throw Py.TypeError("code object passed to exec may not contain free variables");
             }
         } else {
             String contents = null;
             if (o instanceof PyString) {
                 if (o instanceof PyUnicode) {
-                    flags |= PyTableCode.PyCF_SOURCE_IS_UTF8;
+                    flags |= PyBaseCode.PyCF_SOURCE_IS_UTF8;
                 }
                 contents = o.toString();
             } else if (o instanceof PyFile) {
@@ -1549,7 +1545,6 @@ public final class Py {
      */
     public static PyObject makeClass(String name, PyObject[] bases, PyObject dict) {
         PyFrame frame = getFrame();
-
         if (dict.__finditem__("__module__") == null) {
             PyObject module = frame.getglobal("__name__");
             if (module != null) {
@@ -1628,7 +1623,7 @@ public final class Py {
 
     // w/o compiler-flags
     public static PyObject compile(InputStream istream, String filename, String kind) {
-        return compile_flags(istream, filename, kind, null);
+        return compile_flags(istream, filename, kind, new CompilerFlags());
     }
 
     /**

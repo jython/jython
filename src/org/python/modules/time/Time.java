@@ -112,6 +112,7 @@ public class Time implements ClassDictInit
         dict.__setitem__("time", new TimeFunctions("time", 0, 0));
         dict.__setitem__("clock", new TimeFunctions("clock", 1, 0));
         dict.__setitem__("struct_time", PyTimeTuple.TYPE);
+        dict.__setitem__("__name__", Py.newString("time"));
 
         // calculate the static variables tzname, timezone, altzone, daylight
         TimeZone tz = TimeZone.getDefault();
@@ -410,7 +411,7 @@ public class Time implements ClassDictInit
     }
 
     public static PyString asctime(PyTuple tup) {
-        StringBuffer buf = new StringBuffer(25);
+        StringBuilder buf = new StringBuilder(25);
         buf.append(enshortdays[item(tup, 6)]).append(' ');
         buf.append(enshortmonths[item(tup, 1)]).append(' ');
         int dayOfMonth = item(tup, 2);

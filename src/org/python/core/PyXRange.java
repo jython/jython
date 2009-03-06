@@ -93,7 +93,7 @@ public class PyXRange extends PySequence {
         return xrange___len__();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.xrange___len___doc)
     final int xrange___len__() {
         return len;
     }
@@ -103,7 +103,7 @@ public class PyXRange extends PySequence {
         return xrange___getitem__(index);
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.xrange___getitem___doc)
     final PyObject xrange___getitem__(PyObject index) {
         PyObject ret = seq___finditem__(index);
         if (ret == null) {
@@ -112,7 +112,7 @@ public class PyXRange extends PySequence {
         return ret;
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.xrange___iter___doc)
     public PyObject xrange___iter__() {
         return seq___iter__();
     }

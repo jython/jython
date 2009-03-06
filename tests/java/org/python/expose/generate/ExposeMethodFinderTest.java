@@ -2,10 +2,10 @@ package org.python.expose.generate;
 
 import junit.framework.TestCase;
 
-import org.python.objectweb.asm.AnnotationVisitor;
-import org.python.objectweb.asm.Opcodes;
-import org.python.objectweb.asm.Type;
-import org.python.objectweb.asm.commons.EmptyVisitor;
+import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.commons.EmptyVisitor;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 

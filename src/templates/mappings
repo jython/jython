@@ -7,6 +7,7 @@
 # lines; one for their expose, and one for their derived class.
 
 BaseException.derived:org.python.core.PyBaseExceptionDerived
+ClasspathPyImporter.derived:org.python.core.ClasspathPyImporterDerived
 array.derived:org.python.core.PyArrayDerived
 bool.derived:org.python.core.PyBooleanDerived
 classmethod.derived:org.python.core.PyClassMethodDerived

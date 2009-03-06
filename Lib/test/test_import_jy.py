@@ -8,6 +8,7 @@ import shutil
 import sys
 import tempfile
 import unittest
+import subprocess
 from test import test_support
 from test_chdir import read, safe_mktemp, COMPILED_SUFFIX
 
@@ -90,6 +91,10 @@ class MislabeledImportTestCase(unittest.TestCase):
         self.assertEquals(bytecode, read(init_compiled),
                           'bytecode was recompiled')
 
+    def test_corrupt_bytecode(self):
+        f = open("empty$py.class", "w")
+        f.close()
+        self.assertRaises(ImportError, __import__, "empty")
 
 class OverrideBuiltinsImportTestCase(unittest.TestCase):
     def test_override(self):
@@ -136,6 +141,23 @@ class ImpTestCase(unittest.TestCase):
                          (None, '__builtin__', ('', '', 6)))
         self.assertEqual(imp.find_module('imp'), (None, 'imp', ('', '', 6)))
 
+    def test_getattr_module(self):
+        '''Replacing __getattr__ in a class shouldn't lead to calls to __getitem__
+
+        http://bugs.jython.org/issue438108'''
+        from test import anygui
+        # causes a stack overflow if the bug occurs
+        self.assertRaises(Exception, getattr, anygui, 'abc')
+
+    def test_import_star(self):
+        self.assertEquals(subprocess.call([sys.executable,
+        test_support.findfile("import_star_from_java.py")]), 0)
+
+    def test_selfreferential_classes(self):
+        from org.python.tests.inbred import Metis
+        from org.python.tests.inbred import Zeus
+        self.assertEquals(Metis, Zeus.Athena.__bases__[0])
+        self.assertEquals(Zeus, Metis.__bases__[0])
 
 def test_main():
     test_support.run_unittest(MislabeledImportTestCase,

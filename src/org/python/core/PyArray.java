@@ -96,7 +96,7 @@ public class PyArray extends PySequence implements Cloneable {
             typecode = obj.toString();
             type = char2class(typecode.charAt(0));
         } else if (obj instanceof PyJavaType) {
-            type = ((PyJavaType)obj).underlying_class;
+            type = ((PyJavaType)obj).getProxyType();
             typecode = type.getName();
         } else {
             throw Py.TypeError("array() argument 1 must be char, not " + obj.getType().fastGetName());
@@ -349,6 +349,11 @@ public class PyArray extends PySequence implements Cloneable {
      * @return number of elements in the array
      */
     public int __len__() {
+        return array___len__();
+    }
+
+    @ExposedMethod
+    final int array___len__() {
         return delegate.getSize();
     }
 
@@ -486,7 +491,7 @@ public class PyArray extends PySequence implements Cloneable {
      * written on a machine with a different byte order.
      */
     public void byteswap() {
-        if (getItemsize() == 0 || "u".equals(typecode)) {
+        if (getStorageSize() == 0 || "u".equals(typecode)) {
             throw Py.RuntimeError("don't know how to byteswap this array type");
         }
         ByteSwapper.swap(data);
@@ -573,6 +578,39 @@ public class PyArray extends PySequence implements Cloneable {
                 return Integer.TYPE;
             case 'I':
                 return Long.TYPE;
+            case 'l':
+                return Long.TYPE;
+            case 'L':
+                return Long.TYPE;
+            case 'f':
+                return Float.TYPE;
+            case 'd':
+                return Double.TYPE;
+            default:
+                throw Py.ValueError("bad typecode (must be c, b, B, u, h, H, i, I, l, L, f or d)");
+        }
+    }
+
+    private static Class char2storageClass(char type) throws PyIgnoreMethodTag {
+        switch(type){
+            case 'z':
+                return Boolean.TYPE;
+            case 'b':
+                return Byte.TYPE;
+            case 'B':
+                return Byte.TYPE;
+            case 'u':
+                return Integer.TYPE;
+            case 'c':
+                return Character.TYPE;
+            case 'h':
+                return Short.TYPE;
+            case 'H':
+                return Short.TYPE;
+            case 'i':
+                return Integer.TYPE;
+            case 'I':
+                return Integer.TYPE;
             case 'l':
                 return Long.TYPE;
             case 'L':
@@ -795,13 +833,13 @@ public class PyArray extends PySequence implements Cloneable {
             throw Py.TypeError("file needs to be in read mode");
         }
         // read the data via the PyFile
-        int readbytes = count * getItemsize();
+        int readbytes = count * getStorageSize();
         String buffer = file.read(readbytes).toString();
         // load whatever was collected into the array
         fromstring(buffer);
         // check for underflow
         if(buffer.length() < readbytes) {
-            int readcount = buffer.length() / getItemsize();
+            int readcount = buffer.length() / getStorageSize();
             throw Py.EOFError("not enough items in file. "
                     + Integer.toString(count) + " requested, "
                     + Integer.toString(readcount) + " actually read");
@@ -849,7 +887,7 @@ public class PyArray extends PySequence implements Cloneable {
      * @throws EOFException
      */
     private int fromStream(InputStream is) throws IOException, EOFException {
-        return fromStream(is, is.available() / getItemsize());
+        return fromStream(is, is.available() / getStorageSize());
     }
 
     /**
@@ -875,47 +913,87 @@ public class PyArray extends PySequence implements Cloneable {
         int index = origsize;
         // create capacity for 'count' items
         delegate.ensureCapacity(index + count);
-        if(type.isPrimitive()) {
-            if(type == Boolean.TYPE) {
-                for(int i = 0; i < count; i++, index++) {
-                    Array.setBoolean(data, index, dis.readBoolean());
-                    delegate.size++;
-                }
-            } else if(type == Byte.TYPE) {
-                for(int i = 0; i < count; i++, index++) {
-                    Array.setByte(data, index, dis.readByte());
-                    delegate.size++;
-                }
-            } else if(type == Character.TYPE) {
-                for(int i = 0; i < count; i++, index++) {
-                    Array.setChar(data, index, (char)(dis.readByte() & 0xff));
-                    delegate.size++;
-                }
-            } else if(type == Integer.TYPE) {
-                for(int i = 0; i < count; i++, index++) {
-                    Array.setInt(data, index, dis.readInt());
-                    delegate.size++;
-                }
-            } else if(type == Short.TYPE) {
-                for(int i = 0; i < count; i++, index++) {
-                    Array.setShort(data, index, dis.readShort());
-                    delegate.size++;
-                }
-            } else if(type == Long.TYPE) {
-                for(int i = 0; i < count; i++, index++) {
-                    Array.setLong(data, index, dis.readLong());
-                    delegate.size++;
-                }
-            } else if(type == Float.TYPE) {
-                for(int i = 0; i < count; i++, index++) {
-                    Array.setFloat(data, index, dis.readFloat());
-                    delegate.size++;
-                }
-            } else if(type == Double.TYPE) {
-                for(int i = 0; i < count; i++, index++) {
-                    Array.setDouble(data, index, dis.readDouble());
-                    delegate.size++;
-                }
+        if (type.isPrimitive()) {
+            switch (typecode.charAt(0)) {
+                case 'z':
+                    for (int i = 0; i < count; i++, index++) {
+                        Array.setBoolean(data, index, dis.readBoolean());
+                        delegate.size++;
+                    }
+                    break;
+                case 'b':
+                    for (int i = 0; i < count; i++, index++) {
+                        Array.setByte(data, index, dis.readByte());
+                        delegate.size++;
+                    }
+                    break;
+                case 'B':
+                    for (int i = 0; i < count; i++, index++) {
+                        Array.setShort(data, index, unsignedByte(dis.readByte()));
+                        delegate.size++;
+                    }
+                    break;
+                case 'u':
+                    // use 32-bit integers since we want UCS-4 storage
+                    for (int i = 0; i < count; i++, index++) {
+                        Array.setInt(data, index, dis.readInt());
+                        delegate.size++;
+                    }
+                    break;
+                case 'c':
+                    for (int i = 0; i < count; i++, index++) {
+                        Array.setChar(data, index, (char) (dis.readByte() & 0xff));
+                        delegate.size++;
+                    }
+                    break;
+                case 'h':
+                    for (int i = 0; i < count; i++, index++) {
+                        Array.setShort(data, index, dis.readShort());
+                        delegate.size++;
+                    }
+                    break;
+                case 'H':
+                    for (int i = 0; i < count; i++, index++) {
+                        Array.setInt(data, index, unsignedShort(dis.readShort()));
+                        delegate.size++;
+                    }
+                    break;
+                case 'i':
+                    for (int i = 0; i < count; i++, index++) {
+                        Array.setInt(data, index, dis.readInt());
+                        delegate.size++;
+                    }
+                    break;
+                case 'I':
+                    for (int i = 0; i < count; i++, index++) {
+                        Array.setLong(data, index, unsignedInt(dis.readInt()));
+                        delegate.size++;
+                    }
+                    break;
+                case 'l':
+                    for (int i = 0; i < count; i++, index++) {
+                        Array.setLong(data, index, dis.readLong());
+                        delegate.size++;
+                    }
+                    break;
+                case 'L': // faking it
+                    for (int i = 0; i < count; i++, index++) {
+                        Array.setLong(data, index, dis.readLong());
+                        delegate.size++;
+                    }
+                    break;
+                case 'f':
+                    for (int i = 0; i < count; i++, index++) {
+                        Array.setFloat(data, index, dis.readFloat());
+                        delegate.size++;
+                    }
+                    break;
+                case 'd':
+                    for (int i = 0; i < count; i++, index++) {
+                        Array.setDouble(data, index, dis.readDouble());
+                        delegate.size++;
+                    }
+                    break;
             }
         }
         dis.close();
@@ -936,7 +1014,7 @@ public class PyArray extends PySequence implements Cloneable {
      */
     @ExposedMethod
     final void array_fromstring(String input) {
-        int itemsize = getItemsize();
+        int itemsize = getStorageSize();
         int strlen = input.length();
         if((strlen % itemsize) != 0) {
             throw Py.ValueError("string length not a multiple of item size");
@@ -1067,6 +1145,43 @@ public class PyArray extends PySequence implements Cloneable {
                 return 4;
             else if(type == Double.TYPE)
                 return 8;
+        }
+        // return something here... could be a calculated size?
+        return 0;
+    }
+
+    public int getStorageSize() {
+        if (type.isPrimitive()) {
+            switch (typecode.charAt(0)) {
+                case 'z':
+                    return 1;
+                case 'b':
+                    return 1;
+                case 'B':
+                    return 1;
+                case 'u':
+                    return 4;
+                case 'c':
+                    return 1;
+                case 'h':
+                    return 2;
+                case 'H':
+                    return 2;
+                case 'i':
+                    return 4;
+                case 'I':
+                    return 4;
+                case 'l':
+                    return 8;
+                case 'L':
+                    return 8;
+                case 'f':
+                    return 4;
+                case 'd':
+                    return 8;
+                default:
+                    throw Py.ValueError("bad typecode (must be c, b, B, u, h, H, i, I, l, L, f or d)");
+            }
         }
         // return something here... could be a calculated size?
         return 0;
@@ -1307,6 +1422,10 @@ public class PyArray extends PySequence implements Cloneable {
      *            value to set the element to
      */
     public void set(int i, PyObject value) {
+        pyset(i, value);
+    }
+
+    protected void pyset(int i, PyObject value) {
         if ("u".equals(typecode)) {
             Array.setInt(data, i, getCodePoint(value));
             return;
@@ -1534,34 +1653,126 @@ public class PyArray extends PySequence implements Cloneable {
      */
     private int toStream(OutputStream os) throws IOException {
         DataOutputStream dos = new DataOutputStream(os);
-        if(type.isPrimitive()) {
-            if(type == Boolean.TYPE) {
+        switch (typecode.charAt(0)) {
+            case 'z':
                 for(int i = 0; i < delegate.getSize(); i++)
                     dos.writeBoolean(Array.getBoolean(data, i));
-            } else if(type == Byte.TYPE) {
+                break;
+            case 'b':
                 for(int i = 0; i < delegate.getSize(); i++)
                     dos.writeByte(Array.getByte(data, i));
-            } else if(type == Character.TYPE) {
+                break;
+            case 'B':
                 for(int i = 0; i < delegate.getSize(); i++)
-                    dos.writeByte((byte)Array.getChar(data, i));
-            } else if(type == Integer.TYPE) {
+                    dos.writeByte(signedByte(Array.getShort(data, i)));
+                break;
+            case 'u':
+                // use 32-bit integers since we want UCS-4 storage
                 for(int i = 0; i < delegate.getSize(); i++)
                     dos.writeInt(Array.getInt(data, i));
-            } else if(type == Short.TYPE) {
+                break;
+            case 'c':
+                for(int i = 0; i < delegate.getSize(); i++)
+                    dos.writeByte((byte)Array.getChar(data, i));
+                break;
+            case 'h':
                 for(int i = 0; i < delegate.getSize(); i++)
                     dos.writeShort(Array.getShort(data, i));
-            } else if(type == Long.TYPE) {
+                break;
+            case 'H':
+                for(int i = 0; i < delegate.getSize(); i++)
+                    dos.writeShort(signedShort(Array.getInt(data, i)));
+                break;
+            case 'i':
+                for(int i = 0; i < delegate.getSize(); i++)
+                    dos.writeInt(Array.getInt(data, i));
+                break;
+            case 'I':
+                for(int i = 0; i < delegate.getSize(); i++)
+                    dos.writeInt(signedInt(Array.getLong(data, i)));
+                break;
+            case 'l':
                 for(int i = 0; i < delegate.getSize(); i++)
                     dos.writeLong(Array.getLong(data, i));
-            } else if(type == Float.TYPE) {
+                break;
+            case 'L': // faking it
+                for(int i = 0; i < delegate.getSize(); i++)
+                    dos.writeLong(Array.getLong(data, i));
+                break;
+            case 'f':
                 for(int i = 0; i < delegate.getSize(); i++)
                     dos.writeFloat(Array.getFloat(data, i));
-            } else if(type == Double.TYPE) {
+                break;
+            case 'd':
                 for(int i = 0; i < delegate.getSize(); i++)
                     dos.writeDouble(Array.getDouble(data, i));
-            }
+                break;
         }
         return dos.size();
+    }
+
+    private static byte signedByte(short x) {
+        if (x >= 128 && x < 256) {
+            return (byte)(x - 256);
+        }
+        else if (x >= 0) {
+            return (byte)x;
+        }
+        else {
+            throw Py.ValueError("invalid storage");
+        }
+    }
+
+     private static short signedShort(int x) {
+        if (x >= 32768 && x < 65536) {
+            return (short)(x - 65536);
+        }
+        else if (x >= 0) {
+            return (short)x;
+        }
+        else {
+            throw Py.ValueError("invalid storage");
+        }
+    }
+
+    private static int signedInt(long x) {
+        if (x >= 2147483648L && x < 4294967296L) {
+            return (int)(x - 4294967296L);
+        }
+        else if (x >= 0) {
+            return (int)x;
+        }
+        else {
+            throw Py.ValueError("invalid storage");
+        }
+    }
+
+    private static short unsignedByte(byte x) {
+        if (x < 0) {
+            return (short)(x + 256);
+        }
+        else {
+            return x;
+        }
+    }
+
+     private static int unsignedShort(short x) {
+        if (x < 0) {
+            return x + 65536;
+        }
+        else  {
+            return x;
+        }
+    }
+
+    private static long unsignedInt(int x) {
+        if (x < 0) {
+            return x + 4294967296L;
+        }
+        else {
+            return x;
+        }
+
     }
 
     @ExposedMethod

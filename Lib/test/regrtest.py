@@ -1380,6 +1380,7 @@ _expectations = {
     'java':
         """
         test__locale
+        test__rawffi
         test_aepack
         test_al
         test_applesingle
@@ -1430,7 +1431,6 @@ _expectations = {
         test_resource
         test_rgbimg
         test_scriptpackages
-        test_signal
         test_socket_ssl
         test_socketserver
         test_sqlite
@@ -1449,7 +1449,7 @@ _expectations = {
         test_wave
         test_winreg
         test_winsound
-        test_xml_etree_c
+        test_zipfile64
         """
 }
 _expectations['freebsd5'] = _expectations['freebsd4']
@@ -1476,12 +1476,16 @@ _failures = {
         test_gc
         test_iterlen
         test_marshal
+        test_multibytecodec
+        test_multibytecodec_support
         test_peepholer
         test_profile
         test_pyclbr
+        test_stringprep
         test_transformer
         test_ucn
-        test_xml_etree
+        test_unicode
+        test_unicodedata
         test_zipimport
         """,
 }

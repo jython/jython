@@ -7,7 +7,7 @@ This used to give an error importing site, as follows:
 
 error importing site
 Traceback (innermost last):
-  File "C:\workspace\jython\bugtests\test394jar\jython.jar\Lib/site.py", line 210, in ?
+  File "C:\workspace\jython\bugtests\test394jar\jython-dev.jar\Lib/site.py", line 210, in ?
 TypeError: unsupported operand type(s) for +: 'NoneType' and 'str'
 Traceback (innermost last):
   File "C:/workspace/jython/bugtests/test394.py", line 71, in ?
@@ -26,7 +26,7 @@ import support_config as cfg
 from java.io import File
 
 TESTDIR = "test394jar"
-JYTHON_JAR = "jython.jar"
+JYTHON_DEV_JAR = "jython-dev.jar"
 RUN_JAR = "run.jar"
 TEST_PY_NAME = TESTDIR +"/test394called.py"
 CLAZZ = "Runner"
@@ -46,11 +46,11 @@ def checkTestDir():
                         
   
 # create a jython standalone jar file:
-# add the contents of jython.jar and /Lib files to an new jython.jar
+# add the contents of jython-dev.jar and /Lib files to a new jython-dev.jar
 def mkJythonJar():
-  jarFile = File(TESTDIR, JYTHON_JAR)
+  jarFile = File(TESTDIR, JYTHON_DEV_JAR)
   jarPacker = support.JarPacker(jarFile)
-  jarPacker.addJarFile(File(cfg.jython_home + "/%s" % JYTHON_JAR))
+  jarPacker.addJarFile(File(cfg.jython_home + "/%s" % JYTHON_DEV_JAR))
   jarPacker.addDirectory(File(cfg.jython_home + "/Lib"))
   jarPacker.close()
   return jarFile
@@ -59,7 +59,7 @@ def mkJythonJar():
 def mkJavaClass():
   support.compileJava("%s/%s.java" % (TESTDIR, CLAZZ))
 
-# create a runnable jar file with a manifest referring to jython.jar
+# create a runnable jar file with a manifest referring to jython-dev.jar
 def mkRunJar():
   jarFile = File(TESTDIR, RUN_JAR)
   manifestFile = File(TESTDIR, MANIFEST)

@@ -11,7 +11,7 @@ import org.python.core.PyType;
  * The python array module, plus jython extensions from jarray.
  */
 public class ArrayModule implements ClassDictInit {
-    
+
     public static PyString __doc__ = new PyString(
         "This module defines a new object type which can efficiently represent\n" +
         "an array of basic values: characters, integers, floating point\n" +
@@ -42,16 +42,16 @@ public class ArrayModule implements ClassDictInit {
         "\n" +
         "ArrayType -- type object for array objects\n"
     );
-    
-    public static void classDictInit(PyObject dict){
+
+    public static void classDictInit(PyObject dict) {
         dict.__setitem__("array", PyType.fromClass(PyArray.class));
         dict.__setitem__("ArrayType", PyType.fromClass(PyArray.class));
     }
-    
+
     /*
-     * These are jython extensions (from jarray module). 
+     * These are jython extensions (from jarray module).
      * Note that the argument order is consistent with
-     * python array module, but is reversed from jarray module. 
+     * python array module, but is reversed from jarray module.
      */
     public static PyArray zeros(char typecode, int n) {
         return PyArray.zeros(n, typecode);
@@ -59,5 +59,5 @@ public class ArrayModule implements ClassDictInit {
 
     public static PyArray zeros(Class type, int n) {
         return PyArray.zeros(n, type);
-    }    
+    }
 }

@@ -3,6 +3,8 @@ define: (CompilationUnit)derived_class
   /* Generated file, do not modify.  See jython/src/templates/gderived.py. */
   package org.python.core;
 
+  import java.io.Serializable;
+
   public class `concat`(`base,Derived) extends `base implements Slotted {
 
     public PyObject getSlot(int index) {

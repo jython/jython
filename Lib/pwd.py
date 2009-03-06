@@ -11,7 +11,6 @@ is raised if the entry asked for cannot be found.
 __all__ = ['getpwuid', 'getpwnam', 'getpwall']
 
 from os import _name, _posix
-from java.lang import NullPointerException
 
 if _name == 'nt':
     raise ImportError, 'pwd module not supported on Windows'
@@ -37,6 +36,7 @@ class struct_passwd(tuple):
         except ValueError:
             raise AttributeError
 
+
 def getpwuid(uid):
     """
     getpwuid(uid) -> (pw_name,pw_passwd,pw_uid,
@@ -44,10 +44,11 @@ def getpwuid(uid):
     Return the password database entry for the given numeric user ID.
     See pwd.__doc__ for more on password database entries.
     """
-    try:
-        return struct_passwd(_posix.getpwuid(uid))
-    except NullPointerException:
-        raise KeyError, uid
+    entry = _posix.getpwuid(uid)
+    if not entry:
+        raise KeyError(uid)
+    return struct_passwd(entry)
+
 
 def getpwnam(name):
     """
@@ -56,10 +57,11 @@ def getpwnam(name):
     Return the password database entry for the given user name.
     See pwd.__doc__ for more on password database entries.
     """
-    try:
-        return struct_passwd(_posix.getpwnam(name))
-    except NullPointerException:
-        raise KeyError, name
+    entry = _posix.getpwnam(name)
+    if not entry:
+        raise KeyError(name)
+    return struct_passwd(entry)
+
 
 def getpwall():
     """
@@ -69,8 +71,9 @@ def getpwall():
     See pwd.__doc__ for more on password database entries.
     """
     entries = []
-    try:
-        while True:
-            entries.append(struct_passwd(_posix.getpwent()))
-    except NullPointerException:
-        return entries
+    while True:
+        entry = _posix.getpwent()
+        if not entry:
+            break
+        entries.append(struct_passwd(entry))
+    return entries

@@ -6,8 +6,8 @@ import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.util.HashSet;
 
-import org.python.objectweb.asm.Label;
-import org.python.objectweb.asm.Opcodes;
+import org.objectweb.asm.Label;
+import org.objectweb.asm.Opcodes;
 import org.python.util.Generic;
 
 

@@ -4,7 +4,6 @@ package org.python.core;
 import java.io.Serializable;
 import java.util.AbstractList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.RandomAccess;
 
 /**
@@ -20,17 +19,15 @@ import java.util.RandomAccess;
  * @author Clark Updike
  */
 public class PyObjectList
-        extends AbstractList implements RandomAccess, Cloneable, Serializable {
+        extends AbstractList<Object> implements RandomAccess, Cloneable, Serializable {
 
-    /* Design note:
-     * This class let's PySequenceList implement java.util.List by delegating
-     * to an instance of this.  The major distinction is that the backing array
-     * is PyObject[], not Object[] (as you'd get by delegating to ArrayList).
-     * There are 2 major benefits:  1) A lot of casting can be avoided
-     * internally (although use of PySequenceList descendants as java
-     * collections does involve some casting);  2) PySequenceList descendants
-     * can still do bulk array operations, allowing better performance and
-     * reuse of much of the pre-collections bulk operation implementation.
+    /*
+     * Design note: This class lets PySequenceList implement java.util.List by delegating to it. The
+     * major distinction is that the backing array is PyObject[], not Object[] (as you'd get by
+     * delegating to ArrayList). There are 2 major benefits: 1) A lot of casting can be avoided
+     * internally (although use of PySequenceList descendants as java collections does involve some
+     * casting); 2) PySequenceList descendants can still do bulk array operations, allowing better
+     * performance and reuse of much of the pre-collections bulk operation implementation.
      */
 
 
@@ -49,7 +46,7 @@ public class PyObjectList
         array.baseArray = pyObjArr;
     }
 
-    public PyObjectList(Collection c) {
+    public PyObjectList(Collection<PyObject> c) {
         array = new PyObjectArray();
         array.appendArray(c.toArray());
     }
@@ -62,8 +59,7 @@ public class PyObjectList
      * For internal jython usage, use {@link #pyadd(int, PyObject)}.
      */
     public void add(int index, Object element) {
-        array.add(index, Py.java2py(element));
-        modCount += array.getModCountIncr();
+        pyadd(index, Py.java2py(element));
     }
 
     public void pyadd(int index, PyObject element) {
@@ -75,8 +71,7 @@ public class PyObjectList
      * For internal jython usage, use {@link #pyadd(PyObject)}.
      */
     public boolean add(Object o) {
-        array.add(Py.java2py(o));
-        modCount += array.getModCountIncr();
+        pyadd(Py.java2py(o));
         return true;
     }
 
@@ -90,7 +85,7 @@ public class PyObjectList
         try {
             PyObjectList tol = (PyObjectList) super.clone();
             tol.array = (PyObjectArray) array.clone();
-            modCount = 0;
+            tol.modCount = 0;
             return tol;
         } catch (CloneNotSupportedException eCNSE) {
             throw new InternalError("Unexpected CloneNotSupportedException.\n"
@@ -113,8 +108,7 @@ public class PyObjectList
      * Use <code>pyget(int)</code> for internal jython usage.
      */
     public Object get(int index) {
-        PyObject obj = array.get(index);
-        return obj.__tojava__(Object.class);
+        return array.get(index).__tojava__(Object.class);
     }
 
     PyObject pyget(int index) {
@@ -137,7 +131,7 @@ public class PyObjectList
      * Use <code>pyset(int, PyObject)</code> for internal jython usage.
      */
     public Object set(int index, Object element) {
-        return array.set(index, Py.java2py(element) ).__tojava__(Object.class);
+        return pyset(index, Py.java2py(element)).__tojava__(Object.class);
     }
 
     PyObject pyset(int index, PyObject element) {
@@ -148,11 +142,11 @@ public class PyObjectList
         return array.getSize();
     }
 
-    public boolean addAll(Collection c) {
+    public boolean addAll(Collection<? extends Object> c) {
         return addAll(size(), c);
     }
 
-    public boolean addAll(int index, Collection c) {
+    public boolean addAll(int index, Collection<? extends Object> c) {
         if (c instanceof PySequenceList) {
             PySequenceList cList = (PySequenceList)c;
             PyObject[] cArray = cList.getArray();
@@ -160,21 +154,20 @@ public class PyObjectList
             array.makeInsertSpace(index, cOrigSize);
             array.replaceSubArray(index, index + cOrigSize, cArray, 0, cOrigSize);
         } else {
-            // need to use add to convert anything pulled from a collection
-            // into a PyObject
-            for (Iterator i = c.iterator(); i.hasNext(); ) {
-                add(i.next());
+            // need to use add to convert anything pulled from a collection into a PyObject
+            for (Object element : c) {
+                add(element);
             }
         }
         return c.size() > 0;
     }
 
-        /**
-         * Get the backing array. The array should generally not be modified.
-         * To get a copy of the array, see {@link #toArray()} which returns a copy.
-         *
-         * @return backing array object
-         */
+    /**
+     * Get the backing array. The array should generally not be modified. To get a copy of the
+     * array, see {@link #toArray()} which returns a copy.
+     *
+     * @return backing array object
+     */
     protected PyObject[] getArray() {
         return (PyObject[])array.getArray();
     }

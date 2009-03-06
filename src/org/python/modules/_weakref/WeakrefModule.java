@@ -20,6 +20,7 @@ public class WeakrefModule implements ClassDictInit {
     public static void classDictInit(PyObject dict)
     {
         dict.__setitem__("__doc__", __doc__);
+        dict.__setitem__("__name__", Py.newString("_weakref"));
         dict.__setitem__("ref", ReferenceType.TYPE);
         dict.__setitem__("ReferenceType", ReferenceType.TYPE);
         dict.__setitem__("ProxyType", ProxyType.TYPE);

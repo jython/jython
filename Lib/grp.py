@@ -18,7 +18,6 @@ complete membership information.)
 __all__ = ['getgrgid', 'getgrnam', 'getgrall']
 
 from os import _name, _posix
-from java.lang import NullPointerException
 
 if _name == 'nt':
     raise ImportError, 'grp module not supported on Windows'
@@ -44,16 +43,18 @@ class struct_group(tuple):
         except ValueError:
             raise AttributeError
 
+
 def getgrgid(uid):
     """
     getgrgid(id) -> tuple
     Return the group database entry for the given numeric group ID.  If
     id is not valid, raise KeyError.
     """
-    try:
-        return struct_group(_posix.getgrgid(uid))
-    except NullPointerException:
-        raise KeyError, uid
+    entry = _posix.getgrgid(uid)
+    if not entry:
+        raise KeyError(uid)
+    return struct_group(entry)
+
 
 def getgrnam(name):
     """
@@ -61,10 +62,11 @@ def getgrnam(name):
     Return the group database entry for the given group name.  If
     name is not valid, raise KeyError.
     """
-    try:
-        return struct_group(_posix.getgrnam(name))
-    except NullPointerException:
-        raise KeyError, name
+    entry = _posix.getgrnam(name)
+    if not entry:
+        raise KeyError(name)
+    return struct_group(entry)
+
 
 def getgrall():
     """
@@ -73,8 +75,9 @@ def getgrall():
     in arbitrary order.
     """
     groups = []
-    try:
-        while True:
-            groups.append(struct_group(_posix.getgrent()))
-    except NullPointerException:
-        return groups
+    while True:
+        group = _posix.getgrent()
+        if not group:
+            break
+        groups.append(struct_group(group))
+    return groups

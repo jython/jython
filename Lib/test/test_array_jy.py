@@ -28,20 +28,20 @@ class ArrayJyTestCase(unittest.TestCase):
                (jStringArr.typecode, str(String)))
         self.assertEqual(zeros(String, 5), Array.newInstance(String, 5))
 
-        import java # require for eval to work
+        import java.lang.String # require for eval to work
         self.assertEqual(jStringArr, eval(str(jStringArr)))
 
     def test_java_compat(self):
-        from java import awt
-        hsb = awt.Color.RGBtoHSB(0,255,255, None)
+        from java.awt import Color
+        hsb = Color.RGBtoHSB(0,255,255, None)
         self.assertEqual(hsb, array('f', [0.5,1,1]),
                          "output hsb float array does not correspond to input rgb values")
 
-        rgb = apply(awt.Color.HSBtoRGB, tuple(hsb))
+        rgb = apply(Color.HSBtoRGB, tuple(hsb))
         self.assertEqual(rgb, -0xff0001,
                          "output rgb bytes don't match input hsb floats")
         hsb1 = zeros('f', 3)
-        awt.Color.RGBtoHSB(0,255,255, hsb1)
+        Color.RGBtoHSB(0, 255, 255, hsb1)
         self.assertEqual(hsb, hsb1, "hsb float arrays were not equal")
 
 def test_main():

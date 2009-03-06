@@ -108,10 +108,10 @@ public class ClassicPyObjectAdapter extends ExtensiblePyObjectAdapter {
 		});
 	}
 
-	/**
-	 * Always returns true as we just return new PyJavaInstance(o) if the
-	 * adapters added to the superclass can't handle o.
-	 */
+    /**
+     * Always returns true as we just return new PyJavaInstance(o) if the adapters added to the
+     * superclass can't handle o.
+     */
 	public boolean canAdapt(Object o) {
 		return true;
 	}

@@ -1,3 +1,0 @@
-
-def bar():
-   return "bar"

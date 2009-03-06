@@ -1,1 +1,0 @@
-assert __name__ == 'test307p.foobar', "__name__ should've been test307p.foobar but was %s" % __name__

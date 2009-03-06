@@ -213,7 +213,7 @@ class BaseTest(unittest.TestCase):
         self.assertRaises(TypeError, b.fromstring, 42)
         b.fromstring(a.tostring())
         self.assertEqual(a, b)
-        if a.itemsize>1:
+        if a.itemsize>1 and self.typecode not in ('b', 'B'):
             self.assertRaises(ValueError, b.fromstring, "x")
 
     def test_repr(self):

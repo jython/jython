@@ -44,31 +44,31 @@ rem (this script typically resides in jython home, or in the /bin subdirectory)
 pushd "%~dp0%"
 set _JYTHON_HOME="%CD%"
 popd
+if exist %_JYTHON_HOME%\jython-dev.jar goto gotHome
 if exist %_JYTHON_HOME%\jython.jar goto gotHome
-if exist %_JYTHON_HOME%\jython-complete.jar goto gotHome
 pushd "%~dp0%\.."
 set _JYTHON_HOME="%CD%"
 popd
+if exist %_JYTHON_HOME%\jython-dev.jar goto gotHome
 if exist %_JYTHON_HOME%\jython.jar goto gotHome
-if exist %_JYTHON_HOME%\jython-complete.jar goto gotHome
 rem jython home fallback (if all else fails)
 rem if present, %JYTHON_HOME_FALLBACK% is already quoted
 set _JYTHON_HOME=%JYTHON_HOME_FALLBACK%
 
 :gotHome
-if not exist %_JYTHON_HOME%\jython.jar goto tryComplete
+if not exist %_JYTHON_HOME%\jython-dev.jar goto tryComplete
 rem prefer built version
-set _CP=%_JYTHON_HOME%\jython.jar
+set _CP=%_JYTHON_HOME%\jython-dev.jar
 for %%j in (%_JYTHON_HOME%\javalib\*.jar) do (
    set _CP=!_CP!;"%%j"
 )
 goto run
 
 :tryComplete
-set _CP=%_JYTHON_HOME%\jython-complete.jar
-if exist %_JYTHON_HOME%/jython-complete.jar goto run
+set _CP=%_JYTHON_HOME%\jython.jar
+if exist %_JYTHON_HOME%/jython.jar goto run
 
-echo Cannot find jython.jar or jython-complete.jar in %_JYTHON_HOME%
+echo Cannot find jython-dev.jar or jython.jar in %_JYTHON_HOME%
 echo Try running this batch file from the 'bin' directory of an installed Jython,
 echo or setting JYTHON_HOME.
 goto cleanup

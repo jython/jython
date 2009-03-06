@@ -18,6 +18,8 @@ public class Invisible implements VisibilityResults {
 
     int packageField = PACKAGE_FIELD;
 
+    Invisible() {}
+
     private static int privateStaticMethod() {
         return 7;
     }

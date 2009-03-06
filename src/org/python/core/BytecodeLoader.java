@@ -4,11 +4,11 @@ package org.python.core;
 import java.security.SecureClassLoader;
 import java.util.List;
 
-import org.python.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassReader;
 import org.python.util.Generic;
 
 /**
- * Utility class for loading of compiled python modules and java classes defined in python modules.
+ * Utility class for loading compiled python modules and java classes defined in python modules.
  */
 public class BytecodeLoader {
 

@@ -325,9 +325,45 @@ public class cStringIO {
 
         public synchronized void write(String s) {
             _complain_ifclosed();
-            buf.setLength(pos);
-            int newpos = pos + s.length();
-            buf.replace(pos, newpos, s);
+
+            int spos = pos;
+            int slen = buf.length();
+
+            if (spos == slen) {
+                buf.append(s);
+                buf.setLength(slen + s.length());
+                pos = spos + s.length();
+
+                return;
+            }
+
+            if (spos > slen) {
+                int l = spos - slen;
+                char[] bytes = new char[l];
+
+                for (int i = 0; i < l - 1; i++)
+                    bytes[i] = '\0';
+
+                buf.append(bytes);
+                slen = spos;
+            }
+
+            int newpos = spos + s.length();
+
+            if (spos < slen) {
+                if (newpos > slen) {
+                    buf.replace(spos, slen - spos, s);
+                    buf.append(s.substring(slen));
+                    slen = newpos;
+                } else {
+                    buf.replace(spos, spos + s.length(), s);
+                }
+            } else {
+                buf.append(s);
+                slen = newpos;
+            }
+
+            buf.setLength(slen);
             pos = newpos;
         }
 

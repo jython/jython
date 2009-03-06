@@ -8,6 +8,7 @@ email/**
 encodings/**
 logging/*
 test/**
+xml/etree/**
 
 # Lib files, in alphabetical order:
 __future__.py
@@ -51,6 +52,8 @@ dis.py
 DocXMLRPCServer.py
 dospath.py
 dumbdbm.py
+dummy_thread.py
+dummy_threading.py
 exceptions.py
 fileinput.py
 fnmatch.py

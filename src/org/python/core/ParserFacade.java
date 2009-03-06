@@ -4,11 +4,18 @@ package org.python.core;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.Reader;
-import java.io.UnsupportedEncodingException;
+import java.io.Writer;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CodingErrorAction;
+import java.nio.charset.UnsupportedCharsetException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -56,9 +63,9 @@ public class ParserFacade {
     }
 
     // if reader != null, reset it
-    public static PyException fixParseError(BufferedReader reader, Throwable t,
-                                     String filename)
-    {
+    public static PyException fixParseError(ExpectedEncodingBufferedReader reader,
+                                            Throwable t,
+                                            String filename) {
         if (reader != null) {
             try {
                 reader.reset();
@@ -82,6 +89,16 @@ public class ParserFacade {
                 return new PyIndentationError(msg, line, col, text, filename);
             }
             return new PySyntaxError(msg, line, col, text, filename);
+        } else if (t instanceof CharacterCodingException) {
+            String msg;
+            if (reader.encoding == null) {
+                msg = "Non-ASCII character in file '" + filename + "', but no encoding declared"
+                        + "; see http://www.python.org/peps/pep-0263.html for details";
+            } else {
+                msg = "Illegal character in file '" + filename + "' for encoding '"
+                        + reader.encoding + "'";
+            }
+            throw Py.SyntaxError(msg);
         }
         else return Py.JavaError(t);
     }
@@ -93,7 +110,7 @@ public class ParserFacade {
      * from it, to translate ParserExceptions into PySyntaxErrors or
      * PyIndentationErrors.
      */
-    private static mod parse(BufferedReader reader,
+    private static mod parse(ExpectedEncodingBufferedReader reader,
                                 String kind,
                                 String filename,
                                 CompilerFlags cflags) throws Throwable {
@@ -120,11 +137,11 @@ public class ParserFacade {
                                 String kind,
                                 String filename,
                                 CompilerFlags cflags) {
-        BufferedReader bufReader = null;
+        ExpectedEncodingBufferedReader bufReader = null;
         try {
             // prepBufReader takes care of encoding detection and universal
             // newlines:
-            bufReader = prepBufReader(stream, cflags, filename);
+            bufReader = prepBufReader(stream, cflags, filename, false);
             return parse(bufReader, kind, filename, cflags );
         } catch (Throwable t) {
             throw fixParseError(bufReader, t, filename);
@@ -137,7 +154,7 @@ public class ParserFacade {
                                 String kind,
                                 String filename,
                                 CompilerFlags cflags) {
-        BufferedReader bufReader = null;
+        ExpectedEncodingBufferedReader bufReader = null;
         try {
             bufReader = prepBufReader(string, cflags, filename);
             return parse(bufReader, kind, filename, cflags);
@@ -154,7 +171,7 @@ public class ParserFacade {
                                        CompilerFlags cflags,
                                        boolean stdprompt) {
         // XXX: What's the idea of the stdprompt argument?
-        BufferedReader reader = null;
+        ExpectedEncodingBufferedReader reader = null;
         try {
             reader = prepBufReader(string, cflags, filename);
             return parse(reader, kind, filename, cflags);
@@ -194,8 +211,24 @@ public class ParserFacade {
         return true;
     }
 
-    private static BufferedReader prepBufReader(InputStream input, CompilerFlags cflags,
-                                                String filename) throws IOException {
+    private static class ExpectedEncodingBufferedReader extends BufferedReader {
+
+        /**
+         * The encoding from the source file, or null if none was specified and ascii is being used.
+         */
+        public final String encoding;
+
+        public ExpectedEncodingBufferedReader(Reader in, String encoding) {
+            super(in);
+            this.encoding = encoding;
+        }
+    }
+
+    private static ExpectedEncodingBufferedReader prepBufReader(InputStream input,
+                                                                CompilerFlags cflags,
+                                                                String filename,
+                                                                boolean fromString)
+            throws IOException {
         input = new BufferedInputStream(input);
         boolean bom = adjustForBOM(input);
         String encoding = readEncoding(input);
@@ -222,31 +255,49 @@ public class ParserFacade {
         UniversalIOWrapper textIO = new UniversalIOWrapper(bufferedIO);
         input = new TextIOInputStream(textIO);
 
-        Reader reader;
+        Charset cs;
         try {
-            // Using iso-8859-1 for the raw bytes when no encoding was specified
-            reader = new InputStreamReader(input, encoding == null ? "iso-8859-1" : encoding);
-        } catch (UnsupportedEncodingException exc) {
+            // Use ascii for the raw bytes when no encoding was specified
+            if (encoding == null) {
+                if (fromString) {
+                    cs = Charset.forName("ISO-8859-1");
+                } else {
+                    cs = Charset.forName("ascii");
+                }
+            } else {
+                cs = Charset.forName(encoding);
+            }
+        } catch (UnsupportedCharsetException exc) {
             throw new PySyntaxError("Unknown encoding: " + encoding, 1, 0, "", filename);
         }
-        return new BufferedReader(reader);
+        CharsetDecoder dec = cs.newDecoder();
+        dec.onMalformedInput(CodingErrorAction.REPORT);
+        dec.onUnmappableCharacter(CodingErrorAction.REPORT);
+        return new ExpectedEncodingBufferedReader(new InputStreamReader(input, dec), encoding);
     }
 
-    private static BufferedReader prepBufReader(String string, CompilerFlags cflags,
-                                                String filename) throws IOException {
+    private static ExpectedEncodingBufferedReader prepBufReader(String string,
+                                                                CompilerFlags cflags,
+                                                                String filename) throws IOException {
+        byte[] stringBytes;
         if (cflags.source_is_utf8) {
             // Passed unicode, re-encode the String to raw bytes
             // NOTE: This could be more efficient if we duplicate
             // prepBufReader/adjustForBOM/readEncoding to work on Readers, instead of
             // encoding
-            string = new PyUnicode(string).encode("utf-8");
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            Writer w = new OutputStreamWriter(out, "utf-8");
+            w.write(string);
+            w.close();
+            stringBytes = out.toByteArray();
+        } else {
+            stringBytes = StringUtil.toBytes(string);
         }
-        InputStream input = new ByteArrayInputStream(StringUtil.toBytes(string));
-        return prepBufReader(input, cflags, filename);
+        return prepBufReader(new ByteArrayInputStream(stringBytes), cflags, filename, true);
     }
 
     /**
-     * Check for a BOM mark at the begginning of stream.  If there is a BOM
+     * Check for a BOM mark at the beginning of stream.  If there is a BOM
      * mark, advance the stream passed it.  If not, reset() to start at the
      * beginning of the stream again.
      *

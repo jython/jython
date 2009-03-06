@@ -53,12 +53,12 @@ if [ -z "$JYTHON_HOME" ] ; then
     # current dir is not the script dir
     JYTHON_HOME_1=`dirname "$PRG"`
   fi
-  if [ -f "$JYTHON_HOME_1"/jython-complete.jar -o -f "$JYTHON_HOME_1"/jython.jar ] ; then
+  if [ -f "$JYTHON_HOME_1"/jython.jar -o -f "$JYTHON_HOME_1"/jython-dev.jar ] ; then
     JYTHON_HOME="$JYTHON_HOME_1"
   else
     JYTHON_HOME=`dirname "$JYTHON_HOME_1"`
   fi
-  if [ ! -f "$JYTHON_HOME"/jython-complete.jar -a ! -f "$JYTHON_HOME"/jython.jar ] ; then
+  if [ ! -f "$JYTHON_HOME"/jython.jar -a ! -f "$JYTHON_HOME"/jython-dev.jar ] ; then
     JYTHON_HOME="$JYTHON_HOME_FALLBACK"
   fi
 fi
@@ -69,7 +69,7 @@ fi
 
 CP_DELIMITER=":"
 
-CP=$JYTHON_HOME/jython.jar
+CP=$JYTHON_HOME/jython-dev.jar
 
 if [ -f "$CP" ] ; then
   # add necessary jars for command-line execution
@@ -80,13 +80,13 @@ if [ -f "$CP" ] ; then
       CP="$j"
     fi
   done
-elif [ ! -f "$JYTHON_HOME"/jython-complete.jar ] ; then
-  echo "$0: $JYTHON_HOME contains neither jython.jar nor jython-complete.jar." >&2
+elif [ ! -f "$JYTHON_HOME"/jython.jar ] ; then
+  echo "$0: $JYTHON_HOME contains neither jython-dev.jar nor jython.jar." >&2
   echo "Try running this script from the 'bin' directory of an installed Jython or " >&2
   echo 'setting $JYTHON_HOME.' >&2
   exit 1
 else
-  CP=$JYTHON_HOME/jython-complete.jar
+  CP=$JYTHON_HOME/jython.jar
 fi
 
 if $cygwin; then

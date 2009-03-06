@@ -45,7 +45,10 @@ public class PyType extends PyObject implements Serializable {
     /** __flags__, the type's options. */
     private long tp_flags;
 
-    /** The underlying java class or null. */
+    /**
+     * The Java Class instances of this type will be represented as, or null if it's determined by a
+     * base type.
+     */
     protected Class<?> underlying_class;
 
     /** Whether it's a builtin type. */
@@ -133,6 +136,12 @@ public class PyType extends PyObject implements Serializable {
             }
             metatype = winner;
         }
+        // Use PyType as the metaclass for Python subclasses of Java classes rather than PyJavaType.
+        // Using PyJavaType as metaclass exposes the java.lang.Object methods on the type, which
+        // doesn't make sense for python subclasses.
+        if (metatype == PyType.fromClass(Class.class)) {
+            metatype = TYPE;
+        }
         if (bases_list.length == 0) {
             bases_list = new PyObject[] {object_type};
         }
@@ -170,37 +179,48 @@ public class PyType extends PyObject implements Serializable {
         // XXX also __doc__ __module__
 
 
+        Class<?> proxyClass = null;
         if (baseClass != null || interfaces.size() != 0) {
             String proxyName = name;
             PyObject module = dict.__finditem__("__module__");
             if (module != null) {
                 proxyName = module.toString() + "$" + proxyName;
             }
-            Class<?> proxyClass = MakeProxies.makeProxy(baseClass,
-                                                        interfaces,
-                                                        name,
-                                                        proxyName,
-                                                        dict);
+            proxyClass = MakeProxies.makeProxy(baseClass, interfaces, name, proxyName, dict);
             PyType proxyType = PyType.fromClass(proxyClass);
             List<PyObject> cleanedBases = Generic.list();
             boolean addedProxyType = false;
             for (PyObject base : bases_list) {
-                if (base instanceof PyJavaType) {
-                    if (!addedProxyType) {
+                if (!(base instanceof PyType)) {
+                    cleanedBases.add(base);
+                    continue;
+                }
+                Class<?> proxy = ((PyType)base).getProxyType();
+                if (proxy == null) {
+                    cleanedBases.add(base);// non-proxy types go straight into our lookup
+                } else {
+                    if (!(base instanceof PyJavaType)) {
+                        // python subclasses of proxy types need to be added as a base so their
+                        // version of methods will show up
+                        cleanedBases.add(base);
+                    } else if (!addedProxyType) {
+                        // Only add a single Java type, since everything's going to go through the
+                        // proxy type
                         cleanedBases.add(proxyType);
                         addedProxyType = true;
                     }
-                } else {
-                    cleanedBases.add(base);
                 }
             }
             bases_list = cleanedBases.toArray(new PyObject[cleanedBases.size()]);
         }
         PyType newtype;
-        if (new_.for_type == metatype) {
+        if (new_.for_type == metatype || metatype == PyType.fromClass(Class.class)) {
             newtype = new PyType(); // XXX set metatype
         } else {
             newtype = new PyTypeDerived(metatype);
+        }
+        if (proxyClass != null) {
+            newtype.javaProxy = proxyClass;
         }
         if (dict instanceof PyStringMap) {
             dict = ((PyStringMap)dict).copy();
@@ -334,10 +354,11 @@ public class PyType extends PyObject implements Serializable {
     }
 
     /**
-     * Called on builtin types after underlying_class has been set on them. Should fill in dict,
-     * name, mro, base and bases from the class.
+     * Called on builtin types for a particular class. Should fill in dict, name, mro, base and
+     * bases from the class.
      */
-    protected void init() {
+    protected void init(Class<?> forClass, Set<PyJavaType> needsInners) {
+        underlying_class = forClass;
         if (underlying_class == PyObject.class) {
             mro = new PyType[] {this};
         } else {
@@ -415,6 +436,7 @@ public class PyType extends PyObject implements Serializable {
         return base.getLayout();
     }
 
+    //XXX: needs __doc__
     @ExposedGet(name = "__base__")
     public PyObject getBase() {
         if (base == null)
@@ -422,6 +444,7 @@ public class PyType extends PyObject implements Serializable {
         return base;
     }
 
+    //XXX: needs __doc__
     @ExposedGet(name = "__bases__")
     public PyObject getBases() {
         return new PyTuple(bases);
@@ -495,7 +518,7 @@ public class PyType extends PyObject implements Serializable {
 
     private void mro_internal() {
         if (getType() == TYPE) {
-            mro = compute_mro();
+            mro = computeMro();
         } else {
             PyObject mroDescr = getType().lookup("mro");
             if (mroDescr == null) {
@@ -564,7 +587,7 @@ public class PyType extends PyObject implements Serializable {
         return new PyLong(tp_flags);
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.type___subclasses___doc)
     public synchronized final PyObject type___subclasses__() {
         PyList result = new PyList();
         cleanup_subclasses();
@@ -581,15 +604,7 @@ public class PyType extends PyObject implements Serializable {
      * Returns the Java Class that this type inherits from, or null if this type is Python-only.
      */
     public Class<?> getProxyType() {
-        for (PyObject base : bases) {
-            if (base instanceof PyType) {
-                Class<?> javaType = ((PyType)base).getProxyType();
-                if (javaType != null) {
-                    return javaType;
-                }
-            }
-        }
-        return null;
+        return (Class<?>)javaProxy;
     }
 
     private synchronized void attachSubclass(PyType subtype) {
@@ -640,55 +655,18 @@ public class PyType extends PyObject implements Serializable {
         return acc.toArray(new PyObject[acc.size()]);
     }
 
-    private static boolean tail_contains(PyObject[] lst, int whence, PyObject o) {
-        int n = lst.length;
-        for (int i = whence + 1; i < n; i++) {
-            if (lst[i] == o) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static PyException mro_error(PyObject[][] to_merge, int[] remain) {
-        StringBuffer msg = new StringBuffer("Cannot create a consistent method resolution\n"
-                                            + "order (MRO) for bases ");
-        PyDictionary set = new PyDictionary();
-        for (int i = 0; i < to_merge.length; i++) {
-            PyObject[] lst = to_merge[i];
-            if (remain[i] < lst.length) {
-                set.__setitem__(lst[remain[i]], Py.None);
-            }
-        }
-        PyObject iter = set.__iter__();
-        PyObject cur;
-        boolean subq = false;
-        while ((cur = iter.__iternext__()) != null) {
-            PyObject name = cur.__findattr__("__name__");
-            if (!subq) {
-                subq = true;
-            } else {
-                msg.append(", ");
-            }
-            msg.append(name == null ? "?" : name.toString());
-        }
-        return Py.TypeError(msg.toString());
-    }
-
-    @ExposedMethod(defaults = "null")
+    @ExposedMethod(defaults = "null", doc = BuiltinDocs.type_mro_doc)
     final PyList type_mro(PyObject o) {
         if (o == null) {
-            return new PyList(compute_mro());
+            return new PyList(computeMro());
         }
-        return new PyList(((PyType)o).compute_mro());
+        return new PyList(((PyType)o).computeMro());
     }
 
-    final PyObject[] compute_mro() {
-        PyObject[] bases = this.bases;
-        int n = bases.length;
-        for (int i = 0; i < n; i++) {
+    PyObject[] computeMro() {
+        for (int i = 0; i < bases.length; i++) {
             PyObject cur = bases[i];
-            for (int j = i + 1; j < n; j++) {
+            for (int j = i + 1; j < bases.length; j++) {
                 if (bases[j] == cur) {
                     PyObject name = cur.__findattr__("__name__");
                     throw Py.TypeError("duplicate base class " +
@@ -697,55 +675,74 @@ public class PyType extends PyObject implements Serializable {
             }
         }
 
-        int nmerge = n + 1;
-        PyObject[][] to_merge = new PyObject[nmerge][];
-        int[] remain = new int[nmerge];
-
-        for (int i = 0; i < n; i++) {
-            PyObject cur = bases[i];
-            remain[i] = 0;
-            if (cur instanceof PyType) {
-                to_merge[i] = ((PyType)cur).mro;
-            } else if (cur instanceof PyClass) {
-                to_merge[i] = classic_mro((PyClass)cur);
+        MROMergeState[] toMerge = new MROMergeState[bases.length + 1];
+        for (int i = 0; i < bases.length; i++) {
+            toMerge[i] = new MROMergeState();
+            if (bases[i] instanceof PyType) {
+                toMerge[i].mro = ((PyType)bases[i]).mro;
+            } else if (bases[i] instanceof PyClass) {
+                toMerge[i].mro = classic_mro((PyClass)bases[i]);
             }
         }
+        toMerge[bases.length] = new MROMergeState();
+        toMerge[bases.length].mro = bases;
 
-        to_merge[n] = bases;
-        remain[n] = 0;
+        List<PyObject> mro = Generic.list();
+        mro.add(this);
+        return computeMro(toMerge, mro);
+    }
 
-        List<PyObject> acc = Generic.list();
-        acc.add(this);
-
-        int empty_cnt = 0;
-
-        scan : for (int i = 0; i < nmerge; i++) {
-            PyObject candidate;
-            PyObject[] cur = to_merge[i];
-            if (remain[i] >= cur.length) {
-                empty_cnt++;
+    PyObject[] computeMro(MROMergeState[] toMerge, List<PyObject> mro) {
+        scan : for (int i = 0; i < toMerge.length; i++) {
+            if (toMerge[i].isMerged()) {
                 continue scan;
             }
 
-            candidate = cur[remain[i]];
-            for (int j = 0; j < nmerge; j++)
-                if (tail_contains(to_merge[j], remain[j], candidate)) {
+            PyObject candidate = toMerge[i].getCandidate();
+            for (MROMergeState mergee : toMerge) {
+                if(mergee.unmergedContains(candidate)) {
                     continue scan;
                 }
-            acc.add(candidate);
-            for (int j = 0; j < nmerge; j++) {
-                if (remain[j] < to_merge[j].length && to_merge[j][remain[j]] == candidate) {
-                    remain[j]++;
-                }
             }
-            // restart scan
-            i = -1;
-            empty_cnt = 0;
+            mro.add(candidate);
+            for (MROMergeState element : toMerge) {
+                element.noteMerged(candidate);
+            }
+            i = -1;// restart scan
         }
-        if (empty_cnt == nmerge) {
-            return acc.toArray(bases);
+        for (MROMergeState mergee : toMerge) {
+            if (!mergee.isMerged()) {
+                handleMroError(toMerge, mro);
+            }
         }
-        throw mro_error(to_merge, remain);
+        return mro.toArray(new PyObject[mro.size()]);
+    }
+
+
+    /**
+     * Must either throw an exception, or bring the merges in <code>toMerge</code> to completion by
+     * finishing filling in <code>mro</code>.
+     */
+    void handleMroError(MROMergeState[] toMerge, List<PyObject> mro) {
+        StringBuilder msg = new StringBuilder("Cannot create a consistent method resolution\n"
+                + "order (MRO) for bases ");
+        Set<PyObject> set = Generic.set();
+        for (MROMergeState mergee : toMerge) {
+            if(!mergee.isMerged()) {
+                set.add(mergee.mro[0]);
+            }
+        }
+        boolean first = true;
+        for (PyObject unmerged : set) {
+            PyObject name = unmerged.__findattr__("__name__");
+            if (first) {
+                first = false;
+            } else {
+                msg.append(", ");
+            }
+            msg.append(name == null ? "?" : name.toString() + new PyList(((PyType)unmerged).bases));
+        }
+        throw Py.TypeError(msg.toString());
     }
 
     /**
@@ -907,34 +904,6 @@ public class PyType extends PyObject implements Serializable {
         return null;
     }
 
-    /**
-     * Like lookup but also provides (in where[0]) the index of the type in the reversed
-     * mro -- that is, how many subtypes away from the base object the type is.
-     *
-     * @param name attribute name (must be interned)
-     * @param where an int[] with a length of at least 1
-     * @return found PyObject or null
-     */
-    public PyObject lookup_where_index(String name, int[] where) {
-        PyObject[] mro = this.mro;
-        if (mro == null) {
-            return null;
-        }
-        int i = mro.length;
-        for (PyObject t : mro) {
-            i--;
-            PyObject dict = t.fastGetDict();
-            if (dict != null) {
-                PyObject obj = dict.__finditem__(name);
-                if (obj != null) {
-                    where[0] = i;
-                    return obj;
-                }
-            }
-        }
-        return null;
-    }
-
     public PyObject super_lookup(PyType ref, String name) {
         PyObject[] mro = this.mro;
         if (mro == null) {
@@ -970,24 +939,24 @@ public class PyType extends PyObject implements Serializable {
             }
             // The types in Py.BOOTSTRAP_TYPES are initialized before their builders are assigned,
             // so do the work of addFromClass & fillFromClass after the fact
-            fromClass(builder.getTypeClass()).init();
+            fromClass(builder.getTypeClass()).init(builder.getTypeClass(), null);
         }
     }
 
-    private static PyType addFromClass(Class<?> c) {
+    private static PyType addFromClass(Class<?> c, Set<PyJavaType> needsInners) {
         if (ExposeAsSuperclass.class.isAssignableFrom(c)) {
             PyType exposedAs = fromClass(c.getSuperclass());
             class_to_type.put(c, exposedAs);
             return exposedAs;
         }
-        return createType(c);
+        return createType(c, needsInners);
     }
 
     private static TypeBuilder getBuilder(Class<?> c) {
         return classToBuilder == null ? null : classToBuilder.get(c);
     }
 
-    private static PyType createType(Class<?> c) {
+    private static PyType createType(Class<?> c, Set<PyJavaType> needsInners) {
         PyType newtype;
         if (c == PyType.class) {
             newtype = new PyType(false);
@@ -997,6 +966,7 @@ public class PyType extends PyObject implements Serializable {
             newtype = new PyJavaType();
         }
 
+
         // If filling in the type above filled the type under creation, use that one
         PyType type = class_to_type.get(c);
         if (type != null) {
@@ -1004,25 +974,58 @@ public class PyType extends PyObject implements Serializable {
         }
 
         class_to_type.put(c, newtype);
-        newtype.underlying_class = c;
         newtype.builtin = true;
-        newtype.init();
+        newtype.init(c,needsInners);
         return newtype;
     }
 
     public static synchronized PyType fromClass(Class<?> c) {
         if (class_to_type == null) {
             class_to_type = Generic.map();
-            addFromClass(PyType.class);
+            addFromClass(PyType.class, null);
         }
         PyType type = class_to_type.get(c);
         if (type != null) {
             return type;
         }
-        return addFromClass(c);
+        // We haven't seen this class before, so it's type needs to be created. If it's being
+        // exposed as a Java class, defer processing its inner types until it's completely
+        // created in case the inner class references a class that references this class.
+        Set<PyJavaType> needsInners = Generic.set();
+        PyType result = addFromClass(c, needsInners);
+        for (PyJavaType javaType : needsInners) {
+            Class<?> forClass = javaType.getProxyType();
+            if (forClass == null) {
+                continue;
+            }
+            for (Class<?> inner : forClass.getClasses()) {
+                // Only add the class if there isn't something else with that name and it came from this
+                // class
+                if (inner.getDeclaringClass() == forClass &&
+                        javaType.dict.__finditem__(inner.getSimpleName()) == null) {
+                    // If this class is currently being loaded, any exposed types it contains won't have
+                    // set their builder in PyType yet, so add them to BOOTSTRAP_TYPES so they're
+                    // created as PyType instead of PyJavaType
+                    if (inner.getAnnotation(ExposedType.class) != null
+                            || ExposeAsSuperclass.class.isAssignableFrom(inner)) {
+                        Py.BOOTSTRAP_TYPES.add(inner);
+                    }
+                    javaType.dict.__setitem__(inner.getSimpleName(), PyType.fromClass(inner));
+                }
+            }
+        }
+        return result;
     }
 
-    @ExposedMethod
+    static PyType fromClassSkippingInners(Class<?> c, Set<PyJavaType> needsInners) {
+        PyType type = class_to_type.get(c);
+        if (type != null) {
+            return type;
+        }
+        return addFromClass(c, needsInners);
+    }
+
+    @ExposedMethod(doc = BuiltinDocs.type___getattribute___doc)
     final PyObject type___getattribute__(PyObject name) {
         String n = asName(name);
         PyObject ret = type___findattr_ex__(n);
@@ -1041,11 +1044,10 @@ public class PyType extends PyObject implements Serializable {
         PyType metatype = getType();
 
         PyObject metaattr = metatype.lookup(name);
-        PyObject res = null;
 
-        if (metaattr != null) {
+        if (metaattr != null && useMetatypeFirst(metaattr)) {
             if (metaattr.isDataDescr()) {
-                res = metaattr.__get__(this, metatype);
+                PyObject res = metaattr.__get__(this, metatype);
                 if (res != null)
                     return res;
             }
@@ -1054,7 +1056,7 @@ public class PyType extends PyObject implements Serializable {
         PyObject attr = lookup(name);
 
         if (attr != null) {
-            res = attr.__get__(null, this);
+            PyObject res = attr.__get__(null, this);
             if (res != null) {
                 return res;
             }
@@ -1067,7 +1069,15 @@ public class PyType extends PyObject implements Serializable {
         return null;
     }
 
-    @ExposedMethod
+    /**
+     * Returns true if the given attribute retrieved from an object's metatype should be used before
+     * looking for the object on the actual object.
+     */
+    protected boolean useMetatypeFirst(PyObject attr) {
+        return true;
+    }
+
+    @ExposedMethod(doc = BuiltinDocs.type___setattr___doc)
     final void type___setattr__(PyObject name, PyObject value) {
         type___setattr__(asName(name), value);
     }
@@ -1076,16 +1086,32 @@ public class PyType extends PyObject implements Serializable {
          type___setattr__(name, value);
     }
 
-    protected void checkSetattr() {
+    /**
+     * Adds the given method to this type's dict under its name in its descriptor. If there's an
+     * existing item in the dict, it's replaced.
+     */
+    public void addMethod(PyBuiltinMethod meth) {
+        PyMethodDescr pmd = meth.makeDescriptor(this);
+        __setattr__(pmd.getName(), pmd);
+    }
+
+    /**
+     * Removes the given method from this type's dict or raises a KeyError.
+     */
+    public void removeMethod(PyBuiltinMethod meth) {
+        __delattr__(meth.info.getName());
+    }
+
+    void type___setattr__(String name, PyObject value) {
         if (builtin) {
             throw Py.TypeError(String.format("can't set attributes of built-in/extension type "
                     + "'%s'", this.name));
         }
+        super.__setattr__(name, value);
+        postSetattr(name);
     }
 
-    final void type___setattr__(String name, PyObject value) {
-        checkSetattr();
-        super.__setattr__(name, value);
+    void postSetattr(String name) {
         if (name == "__set__") {
             if (!has_set && lookup("__set__") != null) {
                 traverse_hierarchy(false, new OnType() {
@@ -1113,21 +1139,25 @@ public class PyType extends PyObject implements Serializable {
         type___delattr__(name);
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.type___delattr___doc)
     final void type___delattr__(PyObject name) {
         type___delattr__(asName(name));
     }
 
     protected void checkDelattr() {
+    }
+
+    void type___delattr__(String name) {
         if (builtin) {
             throw Py.TypeError(String.format("can't set attributes of built-in/extension type "
                     + "'%s'", this.name));
         }
+        super.__delattr__(name);
+        postDelattr(name);
     }
 
-    final void type___delattr__(String name) {
-        checkDelattr();
-        super.__delattr__(name);
+
+    void postDelattr(String name) {
         if (name == "__set__") {
             if (has_set && lookup("__set__") == null) {
                 traverse_hierarchy(false, new OnType() {
@@ -1142,7 +1172,7 @@ public class PyType extends PyObject implements Serializable {
                 });
             }
         } else if (name == "__delete__") {
-            if (has_set && lookup("__delete__") == null) {
+            if (has_delete && lookup("__delete__") == null) {
                 traverse_hierarchy(false, new OnType() {
                     public boolean onType(PyType type) {
                         boolean absent = type.getDict().__finditem__("__delete__") == null;
@@ -1161,7 +1191,7 @@ public class PyType extends PyObject implements Serializable {
         return type___call__(args, keywords);
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.type___call___doc)
     final PyObject type___call__(PyObject[] args, String[] keywords) {
         PyObject new_ = lookup("__new__");
         if (!instantiable || new_ == null) {
@@ -1217,6 +1247,10 @@ public class PyType extends PyObject implements Serializable {
         throw Py.TypeError(String.format("can't delete %s.__name__", name));
     }
 
+    /**
+     * Returns the actual dict underlying this type instance. Changes to Java types should go
+     * through {@link #addMethod} and {@link #removeMethod}, or unexpected mro errors can occur.
+     */
     public PyObject fastGetDict() {
         return dict;
     }
@@ -1278,7 +1312,7 @@ public class PyType extends PyObject implements Serializable {
         return numSlots;
     }
 
-    @ExposedMethod(names = {"__repr__", "__str__"})
+    @ExposedMethod(names = {"__repr__", "__str__"}, doc = BuiltinDocs.type___str___doc)
     public String type_toString() {
         String kind;
         if (!builtin) {
@@ -1359,7 +1393,11 @@ public class PyType extends PyObject implements Serializable {
         private String name;
 
         TypeResolver(Class<?> underlying_class, String module, String name) {
-            this.underlying_class = underlying_class;
+            // Don't store the underlying_class for PyProxies as the proxy type needs to fill in
+            // based on the class, not be the class
+            if (underlying_class != null && !PyProxy.class.isAssignableFrom(underlying_class)) {
+                this.underlying_class = underlying_class;
+            }
             this.module = module;
             this.name = name;
         }
@@ -1374,6 +1412,66 @@ public class PyType extends PyObject implements Serializable {
                 throw Py.TypeError(module + "." + name + " must be a type for deserialization");
             }
             return pytyp;
+        }
+    }
+
+    /**
+     * Tracks the status of merging a single base into a subclass' mro in computeMro.
+     */
+    static class MROMergeState {
+
+        /** The mro of the base type we're representing. */
+        public PyObject[] mro;
+
+        /**
+         * The index of the next item to be merged from mro, or mro.length if this base has been
+         * completely merged.
+         */
+        public int next;
+
+        public boolean isMerged() {
+            return mro.length == next;
+        }
+
+        public PyObject getCandidate() {
+            return mro[next];
+        }
+
+        /**
+         * Marks candidate as merged for this base if it's the next item to be merged.
+         */
+        public void noteMerged(PyObject candidate) {
+            if (!isMerged() && getCandidate() == candidate) {
+                next++;
+            }
+        }
+
+        /**
+         * Returns true if candidate is in the items past this state's next item to be merged.
+         */
+        public boolean unmergedContains(PyObject candidate) {
+            for (int i = next + 1; i < mro.length; i++) {
+                if (mro[i] == candidate) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /**
+         * Removes the given item from this state's mro if it isn't already finished.
+         */
+        public void removeFromUnmerged(PyJavaType winner) {
+            if (isMerged()) {
+                return;
+            }
+            List<PyObject> newMro = Generic.list();
+            for (PyObject mroEntry : mro) {
+                if (mroEntry != winner) {
+                    newMro.add(mroEntry);
+                }
+            }
+            mro = newMro.toArray(new PyObject[newMro.size()]);
         }
     }
 }

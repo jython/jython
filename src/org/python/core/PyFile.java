@@ -42,6 +42,9 @@ public class PyFile extends PyObject {
     @ExposedGet
     public String mode;
 
+    @ExposedGet
+    public String encoding;
+
     /** Indicator dictating whether a space should be written to this
      * file on the next print statement (not currently implemented in
      * print ) */
@@ -137,7 +140,7 @@ public class PyFile extends PyObject {
     }
 
     @ExposedNew
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.file___init___doc)
     final void file___init__(PyObject[] args, String[] kwds) {
         ArgParser ap = new ArgParser("file", args, kwds, new String[] {"name", "mode", "bufsize"},
                                      1);
@@ -236,7 +239,7 @@ public class PyFile extends PyObject {
                 + (updating ? "+" : "");
     }
 
-    @ExposedMethod(defaults = {"-1"})
+    @ExposedMethod(defaults = {"-1"}, doc = BuiltinDocs.file_read_doc)
     final synchronized PyString file_read(int n) {
         checkClosed();
         return new PyString(file.read(n));
@@ -250,7 +253,7 @@ public class PyFile extends PyObject {
         return file_read(-1);
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.file_readinto_doc)
     final synchronized int file_readinto(PyObject buf) {
         checkClosed();
         return file.readinto(buf);
@@ -260,7 +263,7 @@ public class PyFile extends PyObject {
         return file_readinto(buf);
     }
 
-    @ExposedMethod(defaults = {"-1"})
+    @ExposedMethod(defaults = {"-1"}, doc = BuiltinDocs.file_readline_doc)
     final synchronized PyString file_readline(int max) {
         checkClosed();
         return new PyString(file.readline(max));
@@ -274,7 +277,7 @@ public class PyFile extends PyObject {
         return file_readline(-1);
     }
 
-    @ExposedMethod(defaults = {"0"})
+    @ExposedMethod(defaults = {"0"}, doc = BuiltinDocs.file_readlines_doc)
     final synchronized PyObject file_readlines(int sizehint) {
         checkClosed();
         PyList list = new PyList();
@@ -313,7 +316,7 @@ public class PyFile extends PyObject {
         return new PyString(next);
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.file_next_doc)
     final PyObject file_next() {
         PyObject ret = file___iternext__();
         if (ret == null) {
@@ -326,7 +329,7 @@ public class PyFile extends PyObject {
         return file_next();
     }
 
-    @ExposedMethod(names = {"__enter__", "__iter__", "xreadlines"})
+    @ExposedMethod(names = {"__enter__", "__iter__", "xreadlines"}, doc = BuiltinDocs.file___iter___doc)
     final PyObject file_self() {
         checkClosed();
         return this;
@@ -344,7 +347,7 @@ public class PyFile extends PyObject {
         return file_self();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.file_write_doc)
     final void file_write(PyObject o) {
         if (o instanceof PyUnicode) {
             // Call __str__ on unicode objects to encode them before writing
@@ -366,7 +369,7 @@ public class PyFile extends PyObject {
         file_write(s);
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.file_writelines_doc)
     final synchronized void file_writelines(PyObject a) {
         checkClosed();
         PyObject iter = Py.iter(a, "writelines() requires an iterable argument");
@@ -384,7 +387,7 @@ public class PyFile extends PyObject {
         file_writelines(a);
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.file_tell_doc)
     final synchronized long file_tell() {
         checkClosed();
         return file.tell();
@@ -394,7 +397,7 @@ public class PyFile extends PyObject {
         return file_tell();
     }
 
-    @ExposedMethod(defaults = {"0"})
+    @ExposedMethod(defaults = {"0"}, doc = BuiltinDocs.file_seek_doc)
     final synchronized void file_seek(long pos, int how) {
         checkClosed();
         file.seek(pos, how);
@@ -408,7 +411,7 @@ public class PyFile extends PyObject {
         file_seek(pos, 0);
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.file_flush_doc)
     final synchronized void file_flush() {
         checkClosed();
         file.flush();
@@ -418,7 +421,7 @@ public class PyFile extends PyObject {
         file_flush();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.file_close_doc)
     final synchronized void file_close() {
         if (closer != null) {
             closer.close();
@@ -432,7 +435,7 @@ public class PyFile extends PyObject {
         file_close();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.file___exit___doc)
     final void file___exit__(PyObject type, PyObject value, PyObject traceback) {
         file_close();
     }
@@ -441,7 +444,7 @@ public class PyFile extends PyObject {
         file___exit__(type, value, traceback);
     }
 
-    @ExposedMethod(defaults = {"null"})
+    @ExposedMethod(defaults = {"null"}, doc = BuiltinDocs.file_truncate_doc)
     final void file_truncate(PyObject position) {
         if (position == null) {
             file_truncate();
@@ -474,7 +477,7 @@ public class PyFile extends PyObject {
         return file_isatty();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.file_isatty_doc)
     final boolean file_isatty() {
         return file.isatty();
     }
@@ -483,14 +486,14 @@ public class PyFile extends PyObject {
         return file_fileno();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.file_fileno_doc)
     final PyObject file_fileno() {
         return PyJavaType.wrapJavaObject(file.fileno());
     }
 
-    @ExposedMethod(names = {"__str__", "__repr__"})
+    @ExposedMethod(names = {"__str__", "__repr__"}, doc = BuiltinDocs.file___str___doc)
     final String file_toString() {
-        StringBuffer s = new StringBuffer("<");
+        StringBuilder s = new StringBuilder("<");
         if (file.closed()) {
             s.append("closed ");
         } else {

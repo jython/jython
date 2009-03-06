@@ -110,7 +110,7 @@ public class PySuper extends PyObject {
         return super.__findattr_ex__(name);
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.super___getattribute___doc)
     final PyObject super___getattribute__(PyObject name) {
         PyObject ret = super___findattr_ex__(asName(name));
         if (ret == null) {
@@ -123,7 +123,7 @@ public class PySuper extends PyObject {
         return super___get__(obj, type);
     }
 
-    @ExposedMethod(defaults = "null")
+    @ExposedMethod(defaults = "null", doc = BuiltinDocs.super___get___doc)
     final PyObject super___get__(PyObject obj, PyObject type) {
         if (obj == null || obj == Py.None || this.obj != null) {
             return this;

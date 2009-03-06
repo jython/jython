@@ -7,8 +7,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
-
 import org.python.expose.ExposedDelete;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
@@ -26,8 +24,9 @@ public class PyObject implements Serializable {
 
     public static final PyType TYPE = PyType.fromClass(PyObject.class);
 
+    //XXX: in CPython object.__new__ has a doc string...
     @ExposedNew
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.object___init___doc)
     final void object___init__(PyObject[] args, String[] keywords) {
 // XXX: attempted fix for object(foo=1), etc
 // XXX: this doesn't work for metaclasses, for some reason
@@ -44,7 +43,7 @@ public class PyObject implements Serializable {
      */
     protected Object javaProxy;
 
-    private PyType objtype;
+    PyType objtype;
 
     @ExposedGet(name = "__class__")
     public PyType getType() {
@@ -70,6 +69,7 @@ public class PyObject implements Serializable {
         return objtype;
     }
 
+    //XXX: needs doc
     @ExposedGet(name = "__doc__")
     public PyObject getDoc() {
         PyObject d = fastGetDict();
@@ -156,7 +156,10 @@ public class PyObject implements Serializable {
      * configure the string representation of a <code>PyObject</code> is to
      * override the standard Java <code>toString</code> method.
      **/
-    @ExposedMethod(names = "__str__")
+    // counter-intuitively exposing this as __str__, otherwise stack overflow
+    // occurs during regression testing.  XXX: more detail for this comment
+    // is needed.
+    @ExposedMethod(names = "__str__", doc = BuiltinDocs.object___str___doc)
     public PyString __repr__() {
         return new PyString(toString());
     }
@@ -165,7 +168,7 @@ public class PyObject implements Serializable {
         return object_toString();
     }
 
-    @ExposedMethod(names = "__repr__")
+    @ExposedMethod(names = "__repr__", doc = BuiltinDocs.object___repr___doc)
     final String object_toString() {
         if (getType() == null) {
             return "unknown object";
@@ -211,7 +214,7 @@ public class PyObject implements Serializable {
         return object___hash__();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.object___hash___doc)
     final int object___hash__() {
         return System.identityHashCode(this);
     }
@@ -760,36 +763,10 @@ public class PyObject implements Serializable {
      */
     public Iterable<PyObject> asIterable() {
         return new Iterable<PyObject>() {
-
             public Iterator<PyObject> iterator() {
-                return new Iterator<PyObject>() {
-
-                    private PyObject iter = __iter__();
-
-                    private PyObject next;
-
-                    private boolean checkedForNext;
-
-                    public boolean hasNext() {
-                        if (!checkedForNext) {
-                            next = iter.__iternext__();
-                            checkedForNext = true;
-                        }
-                        return next != null;
-                    }
-
+                return new WrappedIterIterator<PyObject>(__iter__()) {
                     public PyObject next() {
-                        if (!hasNext()) {
-                            throw new NoSuchElementException("End of the line, bub");
-                        }
-                        PyObject toReturn = next;
-                        checkedForNext = false;
-                        next = null;
-                        return toReturn;
-                    }
-
-                    public void remove() {
-                        throw new UnsupportedOperationException("Can't remove from a Python iterator");
+                        return getNext();
                     }
                 };
             }
@@ -1007,7 +984,7 @@ public class PyObject implements Serializable {
     protected void mergeClassDict(PyDictionary accum, PyObject aClass) {
         // Merge in the type's dict (if any)
         aClass.mergeDictAttr(accum, "__dict__");
-        
+
         // Recursively merge in the base types' (if any) dicts
         PyObject bases = aClass.__findattr__("__bases__");
         if (bases == null) {
@@ -1054,10 +1031,6 @@ public class PyObject implements Serializable {
 
     public boolean _doset(PyObject container, PyObject value) {
         return false;
-    }
-
-    boolean jtryset(PyObject container, PyObject value) {
-        return _doset(container, value);
     }
 
     boolean jdontdel() {
@@ -1883,14 +1856,16 @@ public class PyObject implements Serializable {
          * test_descr.subclass_right_op.
          */
         PyObject o1 = this;
-        int[] where = new int[1];
-        int where1, where2;
-        PyObject impl1 = t1.lookup_where_index(left, where);
+        PyObject[] where = new PyObject[1];
+        PyObject where1 = null, where2 = null;
+        PyObject impl1 = t1.lookup_where(left, where);
         where1 = where[0];
-        PyObject impl2 = t2.lookup_where_index(right, where);
+        PyObject impl2 = t2.lookup_where(right, where);
         where2 = where[0];
-        if (impl2 != null && where1 < where2 && (t2.isSubType(t1) ||
-                                                 isStrUnicodeSpecialCase(t1, t2, op))) {
+        if (impl2 != null && impl1 != null && where1 != where2 &&
+            (t2.isSubType(t1) && !Py.isSubClass(where1, where2)
+                              && !Py.isSubClass(t1, where2)     ||
+             isStrUnicodeSpecialCase(t1, t2, op))) {
             PyObject tmp = o1;
             o1 = o2;
             o2 = tmp;
@@ -3660,7 +3635,7 @@ public class PyObject implements Serializable {
         throw Py.AttributeError("object internal __delete__ impl is abstract");
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.object___getattribute___doc)
     final PyObject object___getattribute__(PyObject arg0) {
         String name = asName(arg0);
         PyObject ret = object___findattr__(name);
@@ -3697,13 +3672,13 @@ public class PyObject implements Serializable {
         return null;
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.object___setattr___doc)
     final void object___setattr__(PyObject name, PyObject value) {
         hackCheck("__setattr__");
         object___setattr__(asName(name), value);
     }
 
-    private final void object___setattr__(String name, PyObject value) {
+    final void object___setattr__(String name, PyObject value) {
         PyObject descr = objtype.lookup(name);
 
         boolean set = false;
@@ -3733,7 +3708,7 @@ public class PyObject implements Serializable {
         noAttributeError(name);
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.object___delattr___doc)
     final void object___delattr__(PyObject name) {
         hackCheck("__delattr__");
         object___delattr__(asName(name));
@@ -3806,7 +3781,7 @@ public class PyObject implements Serializable {
         return object___reduce__();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.object___reduce___doc)
     final PyObject object___reduce__() {
         return object___reduce_ex__(0);
     }
@@ -3826,7 +3801,7 @@ public class PyObject implements Serializable {
         return object___reduce_ex__(0);
     }
 
-    @ExposedMethod(defaults = "0")
+    @ExposedMethod(defaults = "0", doc = BuiltinDocs.object___reduce___doc)
     final PyObject object___reduce_ex__(int arg) {
         PyObject res;
 
@@ -3929,7 +3904,7 @@ public class PyObject implements Serializable {
         if (!(this instanceof PyDictionary)) {
             dictitems = Py.None;
         } else {
-            dictitems = ((PyDictionary)this).iteritems();
+            dictitems = invoke("iteritems");
         }
 
         PyObject copyreg = __builtin__.__import__("copy_reg", null, null, Py.EmptyTuple);

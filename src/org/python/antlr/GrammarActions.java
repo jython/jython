@@ -159,7 +159,7 @@ public class GrammarActions {
             return new ArrayList<stmt>();
         }
         List <stmt> s = new ArrayList<stmt>();
-        s.add((stmt)elif);
+        s.add(castStmt(elif));
         return s;
     }
 
@@ -461,81 +461,6 @@ public class GrammarActions {
         //return (Token)s.get(s.size() - 1);
     }
 
-    //FROM Walker:
-    mod makeMod(PythonTree t, List stmts) {
-        List<stmt> s = castStmts(stmts);
-        return new Module(t, s);
-    }
-
-    mod makeExpression(PythonTree t, expr e) {
-        return new Expression(t, e);
-    }
-
-    mod makeInteractive(PythonTree t, List stmts) {
-        List<stmt> s = castStmts(stmts);
-        return new Interactive(t, s);
-    }
-
-    stmt makeClassDef(PythonTree t, PythonTree nameToken, List bases, List body, List decorators) {
-        if (nameToken == null) {
-            return errorHandler.errorStmt(t);
-        }
-        cantBeNone(nameToken);
-        List<expr> b = castExprs(bases);
-        List<stmt> s = castStmts(body);
-	List<expr> d = castExprs(decorators);
-        return new ClassDef(t, nameToken.getText(), b, s, d);
-    }
-
-    stmt makeTryExcept(PythonTree t, List body, List handlers, List orelse, List finBody) {
-        List<stmt> b = castStmts(body);
-        List<excepthandler> e = handlers;
-        List<stmt> o = castStmts(orelse);
- 
-        stmt te = new TryExcept(t, b, e, o);
-        if (finBody == null) {
-            return te;
-        }
-        List<stmt> f = castStmts(finBody);
-        List<stmt> mainBody = new ArrayList<stmt>();
-        mainBody.add(te);
-        return new TryFinally(t, mainBody, f);
-    }
-
-    TryFinally makeTryFinally(PythonTree t,  List body, List finBody) {
-        List<stmt> b = castStmts(body);
-        List<stmt> f = castStmts(finBody);
-        return new TryFinally(t, b, f);
-    }
-
-    stmt makeIf(PythonTree t, expr test, List body, List orelse) {
-        if (test == null) {
-            return errorHandler.errorStmt(t);
-        }
-        List<stmt> o = castStmts(orelse);
-        List<stmt> b = castStmts(body);
-        return new If(t, test, b, o);
-    }
-
-    stmt makeWhile(PythonTree t, expr test, List body, List orelse) {
-        if (test == null) {
-            return errorHandler.errorStmt(t);
-        }
-        List<stmt> o = castStmts(orelse);
-        List<stmt> b = castStmts(body);
-        return new While(t, test, b, o);
-    }
-
-    stmt makeFor(PythonTree t, expr target, expr iter, List body, List orelse) {
-        if (target == null || iter == null) {
-            return errorHandler.errorStmt(t);
-        }
-        cantBeNone(target);
-        List<stmt> o = castStmts(orelse);
-        List<stmt> b = castStmts(body);
-        return new For(t, target, iter, b, o);
-    }
-    
     expr makeCall(Token t, expr func) {
         return makeCall(t, func, null, null, null, null);
     }
@@ -558,7 +483,7 @@ public class GrammarActions {
             Num num = (Num)o;
             if (num.getInternalN() instanceof PyInteger) {
                 int v = ((PyInteger)num.getInternalN()).getValue();
-                if (v > 0) {
+                if (v >= 0) {
                     num.setN(new PyInteger(-v));
                     return num;
                 }
@@ -570,13 +495,13 @@ public class GrammarActions {
                 }
             } else if (num.getInternalN() instanceof PyFloat) {
                 double v = ((PyFloat)num.getInternalN()).getValue();
-                if (v > 0) {
+                if (v >= 0) {
                     num.setN(new PyFloat(-v));
                     return num;
                 }
             } else if (num.getInternalN() instanceof PyComplex) {
                 double v = ((PyComplex)num.getInternalN()).imag;
-                if (v > 0) {
+                if (v >= 0) {
                     num.setN(new PyComplex(0,-v));
                     return num;
                 }
@@ -619,6 +544,8 @@ public class GrammarActions {
             errorHandler.error("can't assign to repr", e);
         } else if (e instanceof IfExp) {
             errorHandler.error("can't assign to conditional expression", e);
+        } else if (e instanceof ListComp) {
+            errorHandler.error("can't assign to list comprehension", e);
         } else if (e instanceof Tuple) {
             //XXX: performance problem?  Any way to do this better?
             List<expr> elts = ((Tuple)e).getInternalElts();
@@ -637,14 +564,38 @@ public class GrammarActions {
         }
     }
 
-    List<expr> makeDeleteList(List e) {
-        List<expr> exprs = castExprs(e);
-        for(expr expr : exprs) {
-            if (expr instanceof Call) {
-                errorHandler.error("can't delete function call", expr);
-            }
+    List<expr> makeDeleteList(List deletes) {
+        List<expr> exprs = castExprs(deletes);
+        for(expr e : exprs) {
+            checkDelete(e);
         }
         return exprs;
+    }
+
+    void checkDelete(expr e) {
+        //System.out.println("trying to del " + e);
+        if (e instanceof Call) {
+            errorHandler.error("can't delete function call", e);
+        } else if (e instanceof Num) {
+            errorHandler.error("can't delete number", e);
+        } else if (e instanceof Str) {
+            errorHandler.error("can't delete string", e);
+        } else if (e instanceof Tuple) {
+            //XXX: performance problem?  Any way to do this better?
+            List<expr> elts = ((Tuple)e).getInternalElts();
+            if (elts.size() == 0) {
+                errorHandler.error("can't delete ()", e);
+            }
+            for (int i=0;i<elts.size();i++) {
+                checkDelete(elts.get(i));
+            }
+        } else if (e instanceof org.python.antlr.ast.List) {
+            //XXX: performance problem?  Any way to do this better?
+            List<expr> elts = ((org.python.antlr.ast.List)e).getInternalElts();
+            for (int i=0;i<elts.size();i++) {
+                checkDelete(elts.get(i));
+            }
+        }
     }
 
     slice makeSubscript(PythonTree lower, Token colon, PythonTree upper, PythonTree sliceop) {

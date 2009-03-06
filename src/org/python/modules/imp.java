@@ -9,8 +9,6 @@ import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PySystemState;
 import org.python.core.PyTuple;
-import org.python.core.PyInteger;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -129,6 +127,14 @@ public class imp {
         return null;
     }
 
+    public static PyObject load_dynamic(String name, String pathname) {
+        return load_dynamic(name, pathname, null);
+    }
+
+    public static PyObject load_dynamic(String name, String pathname, PyObject file) {
+        throw Py.ImportError("No module named " + name);
+    }
+
     public static PyObject load_source(String modname, String filename) {
         return load_source(modname, filename, null);
     }
@@ -136,8 +142,7 @@ public class imp {
     public static PyObject load_source(String modname, String filename, PyObject file) {
         PyObject mod = Py.None;
         if (file == null) {
-            // XXX: This should load the accompanying byte code file
-            // instead, if it exists
+            // XXX: This should load the accompanying byte code file instead, if it exists
             file = new PyFile(filename, "r", 1024);
         }
         Object o = file.__tojava__(InputStream.class);
@@ -194,8 +199,7 @@ public class imp {
             String compiledName;
             switch (type) {
                 case PY_SOURCE:
-                    // XXX: This should load the accompanying byte
-                    // code file instead, if it exists
+                    // XXX: This should load the accompanying byte code file instead, if it exists
                     String resolvedFilename = sys.getPath(filename.toString());
                     compiledName = org.python.core.imp.makeCompiledFilename(resolvedFilename);
                     if (name.endsWith(".__init__")) {
@@ -203,10 +207,18 @@ public class imp {
                     } else if (name.equals("__init__")) {
                         name = new File(sys.getCurrentWorkingDir()).getName();
                     }
+
+                    File fp = new File(resolvedFilename);
+                    long mtime = -1;
+                    if (fp.isFile()) {
+                        mtime = fp.lastModified();
+                    }
+
                     mod = org.python.core.imp.createFromSource(name.intern(),
                                                                (InputStream)o,
                                                                filename.toString(),
-                                                               compiledName);
+                                                               compiledName,
+                                                               mtime);
                     break;
                 case PY_COMPILED:
                     compiledName = filename.toString();
@@ -221,8 +233,7 @@ public class imp {
                     break;
                 case PKG_DIRECTORY:
                     PyModule m = org.python.core.imp.addModule(name);
-                    m.__dict__.__setitem__("__path__",
-                        new PyList(new PyObject[] { filename }));
+                    m.__dict__.__setitem__("__path__", new PyList(new PyObject[] {filename}));
                     m.__dict__.__setitem__("__file__", filename);
                     ModuleInfo mi = findFromSource(name, filename.toString(), true, true);
                     type = mi.type;

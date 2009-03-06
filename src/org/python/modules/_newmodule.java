@@ -1,6 +1,7 @@
 /* Copyright (c) 2001, 2003 Finn Bock, Samuele Pedroni */
 package org.python.modules;
 
+import org.python.core.ClassDictInit;
 import org.python.core.Py;
 import org.python.core.PyClass;
 import org.python.core.PyObject;
@@ -11,7 +12,12 @@ import org.python.core.PyType;
  * The internal new module; just provides a hack for new.classobj.
  *
  */
-public class _newmodule {
+public class _newmodule  implements ClassDictInit {
+
+    public static void classDictInit(PyObject dict)
+    {
+        dict.__setitem__("__name__", Py.newString("_new"));
+    }
 
     public static PyObject classobj(String name, PyTuple bases, PyObject dict) {
         // XXX: Hack to return new style classes (originally from

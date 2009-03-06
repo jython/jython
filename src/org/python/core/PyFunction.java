@@ -95,7 +95,7 @@ public class PyFunction extends PyObject {
         PyObject defaults = ap.getPyObject(3, Py.None);
         PyObject closure = ap.getPyObject(4, Py.None);
 
-        if (!(code instanceof PyTableCode)) {
+        if (!(code instanceof PyBaseCode)) {
             throw Py.TypeError("function() argument 1 must be code, not " +
                                code.getType().fastGetName());
         }
@@ -106,7 +106,7 @@ public class PyFunction extends PyObject {
             throw Py.TypeError("arg 4 (defaults) must be None or tuple");
         }
 
-        PyTableCode tcode = (PyTableCode)code;
+        PyBaseCode tcode = (PyBaseCode)code;
         int nfree = tcode.co_freevars == null ? 0 : tcode.co_freevars.length;
         if (!(closure instanceof PyTuple)) {
             if (nfree > 0 && closure == Py.None) {
@@ -195,10 +195,10 @@ public class PyFunction extends PyObject {
 
     @ExposedSet(name = "func_code")
     public void setFuncCode(PyCode code) {
-        if (func_code == null || !(code instanceof PyTableCode)) {
+        if (func_code == null || !(code instanceof PyBaseCode)) {
             throw Py.TypeError("func_code must be set to a code object");
         }
-        PyTableCode tcode = (PyTableCode)code;
+        PyBaseCode tcode = (PyBaseCode)code;
         int nfree = tcode.co_freevars == null ? 0 : tcode.co_freevars.length;
         int nclosure = func_closure != null ? func_closure.__len__() : 0;
         if (nclosure != nfree) {
@@ -276,7 +276,7 @@ public class PyFunction extends PyObject {
         function___setattr__(name, value);
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.function___setattr___doc)
     final void function___setattr__(String name, PyObject value) {
         ensureDict();
         super.__setattr__(name, value);
@@ -292,7 +292,7 @@ public class PyFunction extends PyObject {
         return function___get__(obj, type);
     }
 
-    @ExposedMethod(defaults = "null")
+    @ExposedMethod(defaults = "null", doc = BuiltinDocs.function___get___doc)
     final PyObject function___get__(PyObject obj, PyObject type) {
         return new PyMethod(this, obj, type);
     }
@@ -323,7 +323,7 @@ public class PyFunction extends PyObject {
         return function___call__(args, keywords);
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.function___call___doc)
     final PyObject function___call__(PyObject[] args, String[] keywords) {
         return func_code.call(args, keywords, func_globals, func_defaults, func_closure);
     }

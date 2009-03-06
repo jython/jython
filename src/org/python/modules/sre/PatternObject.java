@@ -246,7 +246,7 @@ public class PatternObject extends PyObject {
 
         SRE_STATE state = new SRE_STATE(string, start, end, flags);
 
-        Vector list = new Vector();
+        final List list = new ArrayList();
 
         while (state.start <= state.end) {
             state.state_reset();
@@ -271,7 +271,7 @@ public class PatternObject extends PyObject {
                     break;
                 }
 
-                list.addElement(item);
+                list.add(item);
 
                 if (state.ptr == state.start)
                     state.start = state.ptr + 1;

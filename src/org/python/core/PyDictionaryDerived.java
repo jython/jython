@@ -1,6 +1,8 @@
 /* Generated file, do not modify.  See jython/src/templates/gderived.py. */
 package org.python.core;
 
+import java.io.Serializable;
+
 public class PyDictionaryDerived extends PyDictionary implements Slotted {
 
     public PyObject getSlot(int index) {
@@ -791,7 +793,12 @@ public class PyDictionaryDerived extends PyDictionary implements Slotted {
             if (impl==null)
                 return super.__nonzero__();
         }
-        return impl.__get__(this,self_type).__call__().__nonzero__();
+        PyObject o=impl.__get__(this,self_type).__call__();
+        Class c=o.getClass();
+        if (c!=PyInteger.class&&c!=PyBoolean.class) {
+            throw Py.TypeError(String.format("__nonzero__ should return bool or int, returned %s",self_type.getName()));
+        }
+        return o.__nonzero__();
     }
 
     public boolean __contains__(PyObject o) {
@@ -1115,7 +1122,7 @@ public class PyDictionaryDerived extends PyDictionary implements Slotted {
         // specified class. Without this, derived.__tojava__(PyObject.class)
         // would broke. (And that's not pure speculation: PyReflectedFunction's
         // ReflectedArgs asks for things like that).
-        if ((c!=Object.class)&&(c.isInstance(this))) {
+        if ((c!=Object.class)&&(c!=Serializable.class)&&(c.isInstance(this))) {
             return this;
         }
         // Otherwise, we call the derived __tojava__, if it exists:

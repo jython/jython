@@ -15,10 +15,21 @@ import java.util.Set;
  */
 public class Generic {
     /**
-     * Makes a List with its generic type inferred from whatever its being assigned to.
+     * Makes a List with its generic type inferred from whatever it's being assigned to.
      */
     public static <T> List<T> list() {
         return new ArrayList<T>();
+    }
+    /**
+     * Makes a List with its generic type inferred from whatever it's being assigned to filled with
+     * the items in <code>contents</code>.
+     */
+    public static <T, U extends T> List<T> list(U...contents) {
+        List<T> l = new ArrayList<T>(contents.length);
+        for (T t : contents) {
+            l.add(t);
+        }
+        return l;
     }
 
     /**
@@ -33,5 +44,17 @@ public class Generic {
      */
     public static <T> Set<T> set() {
         return new HashSet<T>();
+    }
+
+    /**
+     * Makes a Set using the generic type inferred from whatever this is being assigned to filled
+     * with the items in <code>contents</code>.
+     */
+    public static <T, U extends T> Set<T> set(U...contents) {
+        Set<T> s = new HashSet<T>(contents.length);
+        for (U u : contents) {
+            s.add(u);
+        }
+        return s;
     }
 }

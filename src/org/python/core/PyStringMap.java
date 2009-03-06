@@ -131,7 +131,7 @@ public class PyStringMap extends PyObject {
         if (!ts.enterRepr(this)) {
             return "{...}";
         }
-        StringBuffer buf = new StringBuffer("{");
+        StringBuilder buf = new StringBuilder("{");
         for (Entry<Object, PyObject> entry : table.entrySet()) {
             Object key = entry.getKey();
             if (key instanceof String) {

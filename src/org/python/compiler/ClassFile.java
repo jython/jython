@@ -9,16 +9,17 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.python.objectweb.asm.AnnotationVisitor;
-import org.python.objectweb.asm.ClassWriter;
-import org.python.objectweb.asm.FieldVisitor;
-import org.python.objectweb.asm.MethodVisitor;
-import org.python.objectweb.asm.Opcodes;
+import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.FieldVisitor;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
 
 public class ClassFile
 {
     ClassWriter cw;
     int access;
+    long mtime;
     public String name;
     String superclass;
     String sfilename;
@@ -37,14 +38,19 @@ public class ClassFile
     }
 
     public ClassFile(String name) {
-        this(name, "java/lang/Object", Opcodes.ACC_SYNCHRONIZED | Opcodes.ACC_PUBLIC);
+        this(name, "java/lang/Object", Opcodes.ACC_SYNCHRONIZED | Opcodes.ACC_PUBLIC,
+                org.python.core.imp.NO_MTIME);
     }
 
     public ClassFile(String name, String superclass, int access) {
+        this(name, superclass, access, org.python.core.imp.NO_MTIME);
+    }
+    public ClassFile(String name, String superclass, int access, long mtime) {
         this.name = fixName(name);
         this.superclass = fixName(superclass);
         this.interfaces = new String[0];
         this.access = access;
+        this.mtime = mtime;
         
         cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
         methodVisitors = Collections.synchronizedList(new ArrayList());
@@ -101,6 +107,10 @@ public class ClassFile
         AnnotationVisitor av = cw.visitAnnotation("Lorg/python/compiler/APIVersion;", true);
         //XXX: should imp.java really house this value or should imp.java point into org.python.compiler?
         av.visit("value", new Integer(org.python.core.imp.APIVersion));
+        av.visitEnd();
+
+        av = cw.visitAnnotation("Lorg/python/compiler/MTime;", true);
+        av.visit("value", new Long(mtime));
         av.visitEnd();
 
         if (sfilename != null) {

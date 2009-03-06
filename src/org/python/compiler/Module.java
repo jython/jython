@@ -10,8 +10,8 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 
-import org.python.objectweb.asm.Label;
-import org.python.objectweb.asm.Opcodes;
+import org.objectweb.asm.Label;
+import org.objectweb.asm.Opcodes;
 import org.python.core.CompilerFlags;
 import org.python.core.Py;
 import org.python.core.PyException;
@@ -296,11 +296,17 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
     public boolean linenumbers;
     Future futures;
     Hashtable scopes;
+    long mtime;
 
     public Module(String name, String filename, boolean linenumbers) {
+        this(name, filename, linenumbers, org.python.core.imp.NO_MTIME);
+    }
+
+    public Module(String name, String filename, boolean linenumbers, long mtime) {
         this.linenumbers = linenumbers;
+        this.mtime = mtime;
         classfile = new ClassFile(name, "org/python/core/PyFunctionTable",
-                                  ACC_SYNCHRONIZED | ACC_PUBLIC);
+                                  ACC_SYNCHRONIZED | ACC_PUBLIC, mtime);
         constants = new Hashtable();
         sfilename = filename;
         if (filename != null)
@@ -313,7 +319,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
     }
 
     public Module(String name) {
-        this(name, name+".py", true);
+        this(name, name+".py", true, org.python.core.imp.NO_MTIME);
     }
 
     // This block of code handles the pool of Python Constants
@@ -435,12 +441,12 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
             c.invokevirtual("org/python/core/PyFrame", "getname_or_null", "(" + $str + ")" + $pyObj);
             c.dup();
             c.ifnonnull(label_got_name);
-   
+
             c.pop();
             c.aload(1);
             c.ldc("__name__");
             c.invokevirtual("org/python/core/PyFrame", "getname_or_null", "(" + $str + ")" + $pyObj);
-            
+
             c.label(label_got_name);
             c.astore(module_tmp);
             c.aload(1);
@@ -448,7 +454,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
             c.aload(module_tmp);
             c.invokevirtual("org/python/core/PyFrame", "setlocal", "(" + $str + $pyObj + ")V");
         }
-        
+
         Label genswitch = new Label();
         if (scope.generator) {
             c.goto_(genswitch);
@@ -476,13 +482,13 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
         compiler.parse(tree, c, fast_locals, className, classBody,
                        scope, cflags);
 
-        
+
         // similar to visitResume code in pyasm.py
         if (scope.generator) {
             c.label(genswitch);
-            
+
             c.aload(1);
-            c.getfield("org/python/core/PyFrame", "f_lasti", "I"); 
+            c.getfield("org/python/core/PyFrame", "f_lasti", "I");
             Label[] yields = new Label[compiler.yields.size()+1];
 
             yields[0] = start;
@@ -633,14 +639,22 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
         }
         throw new ParseException(msg,node);
     }
+    public static void compile(mod node, OutputStream ostream,
+                               String name, String filename,
+                               boolean linenumbers, boolean printResults,
+                               CompilerFlags cflags)
+        throws Exception 
+    {
+        compile(node, ostream, name, filename, linenumbers, printResults, cflags, org.python.core.imp.NO_MTIME);
+    }
 
     public static void compile(mod node, OutputStream ostream,
                                String name, String filename,
                                boolean linenumbers, boolean printResults,
-                               org.python.core.CompilerFlags cflags)
+                               CompilerFlags cflags, long mtime)
         throws Exception
     {
-        Module module = new Module(name, filename, linenumbers);
+        Module module = new Module(name, filename, linenumbers, mtime);
         if (cflags == null) {
             cflags = new CompilerFlags();
         }

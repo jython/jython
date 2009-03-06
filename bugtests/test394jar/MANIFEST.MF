@@ -1,4 +1,4 @@
 Manifest-Version: 1.0
-Class-Path: . jython.jar
+Class-Path: . jython-dev.jar
 Main-Class: test394jar.Runner
 

@@ -1,8 +1,8 @@
 /* Copyright (c) Jython Developers */
 package org.python.modules;
 
-import org.python.constantine.Constant;
-import org.python.constantine.ConstantSet;
+import com.kenai.constantine.Constant;
+import com.kenai.constantine.ConstantSet;
 import org.python.core.ClassDictInit;
 import org.python.core.Py;
 import org.python.core.PyDictionary;
@@ -14,7 +14,7 @@ import org.python.core.imp;
  * The Python errno module.
  *
  * Errno constants can be accessed from Java code via
- * {@link org.python.constantine.platform.Errno}, e.g. Errno.ENOENT.
+ * {@link com.kenai.constantine.platform.Errno}, e.g. Errno.ENOENT.
  */
 public class errno implements ClassDictInit {
 

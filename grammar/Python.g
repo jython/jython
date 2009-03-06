@@ -73,6 +73,7 @@ options {
 tokens {
     INDENT;
     DEDENT;
+    TRAILBACKSLASH; //For dangling backslashes when partial parsing.
 }
 
 @header {
@@ -102,6 +103,7 @@ import org.python.antlr.ast.Continue;
 import org.python.antlr.ast.Delete;
 import org.python.antlr.ast.Dict;
 import org.python.antlr.ast.Ellipsis;
+import org.python.antlr.ast.ErrorMod;
 import org.python.antlr.ast.ExceptHandler;
 import org.python.antlr.ast.Exec;
 import org.python.antlr.ast.Expr;
@@ -166,12 +168,6 @@ import java.util.ListIterator;
     public void setErrorHandler(ErrorHandler eh) {
         this.errorHandler = eh;
         actions.setErrorHandler(eh);
-    }
-
-    protected void mismatch(IntStream input, int ttype, BitSet follow) throws RecognitionException {
-        if (errorHandler.mismatch(this, input, ttype, follow)) {
-            super.mismatch(input, ttype, follow);
-        }
     }
 
     protected Object recoverFromMismatchedToken(IntStream input, int ttype, BitSet follow)
@@ -288,6 +284,13 @@ single_input
         mtype = new Interactive($single_input.start, actions.castStmts($compound_stmt.tree));
     }
     ;
+    //XXX: this block is duplicated in three places, how to extract?
+    catch [RecognitionException re] {
+        errorHandler.reportError(this, re);
+        errorHandler.recover(this, input,re);
+        PythonTree badNode = (PythonTree)adaptor.errorNode(input, retval.start, input.LT(-1), re);
+        retval.tree = new ErrorMod(badNode);
+    }
 
 //file_input: (NEWLINE | stmt)* ENDMARKER
 file_input
@@ -317,6 +320,14 @@ file_input
         mtype = new Module($file_input.start, actions.castStmts(stypes));
     }
     ;
+    //XXX: this block is duplicated in three places, how to extract?
+    catch [RecognitionException re] {
+        errorHandler.reportError(this, re);
+        errorHandler.recover(this, input,re);
+        PythonTree badNode = (PythonTree)adaptor.errorNode(input, retval.start, input.LT(-1), re);
+        retval.tree = new ErrorMod(badNode);
+    }
+
 
 //eval_input: testlist NEWLINE* ENDMARKER
 eval_input
@@ -330,6 +341,14 @@ eval_input
         mtype = new Expression($eval_input.start, actions.castExpr($testlist.tree));
     }
     ;
+    //XXX: this block is duplicated in three places, how to extract?
+    catch [RecognitionException re] {
+        errorHandler.reportError(this, re);
+        errorHandler.recover(this, input,re);
+        PythonTree badNode = (PythonTree)adaptor.errorNode(input, retval.start, input.LT(-1), re);
+        retval.tree = new ErrorMod(badNode);
+    }
+
 
 //not in CPython's Grammar file
 dotted_attr returns [expr etype]
@@ -599,7 +618,7 @@ print_stmt
       | RIGHTSHIFT t2=printlist2
      -> ^(PRINT<Print>[$PRINT, actions.castExpr($t2.elts.get(0)), actions.castExprs($t2.elts, 1), $t2.newline])
       |
-     -> ^(PRINT<Print>[$PRINT, null, new ArrayList<expr>(), false])
+     -> ^(PRINT<Print>[$PRINT, null, new ArrayList<expr>(), true])
       )
            ;
 
@@ -1387,9 +1406,9 @@ subscript returns [slice sltype]
 //sliceop: ':' [test]
 sliceop
     : COLON
-      (test[expr_contextType.Load]
-     -> test
-      )?
+     (test[expr_contextType.Load] -> test
+     |-> ^(COLON<Name>[$COLON, "None", expr_contextType.Load])
+     )
     ;
 
 //exprlist: expr (',' expr)* [',']
@@ -1516,60 +1535,55 @@ argument[List arguments, List kws, List gens, boolean first] returns [boolean ge
     ;
 
 //list_iter: list_for | list_if
-list_iter [List gens] returns [expr etype]
+list_iter [List gens, List ifs]
     : list_for[gens]
-    | list_if[gens] {
-        $etype = $list_if.etype;
-    }
+    | list_if[gens, ifs]
     ;
 
 //list_for: 'for' exprlist 'in' testlist_safe [list_iter]
 list_for [List gens]
-    : FOR exprlist[expr_contextType.Store] IN testlist[expr_contextType.Load] (list_iter[gens])?
+@init {
+    List ifs = new ArrayList();
+}
+    : FOR exprlist[expr_contextType.Store] IN testlist[expr_contextType.Load] (list_iter[gens, ifs])?
       {
-          List<expr> e = new ArrayList<expr>();
-          if ($list_iter.etype != null) {
-              e.add($list_iter.etype);
-          }
-          gens.add(new comprehension($FOR, $exprlist.etype, actions.castExpr($testlist.tree), e));
+          Collections.reverse(ifs);
+          gens.add(new comprehension($FOR, $exprlist.etype, actions.castExpr($testlist.tree), ifs));
       }
     ;
 
 //list_if: 'if' test [list_iter]
-list_if[List gens] returns [expr etype]
-    : IF test[expr_contextType.Load] (list_iter[gens])?
+list_if[List gens, List ifs]
+    : IF test[expr_contextType.Load] (list_iter[gens, ifs])?
     {
-        $etype = actions.castExpr($test.tree);
+        ifs.add(actions.castExpr($test.tree));
     }
     ;
 
 //gen_iter: gen_for | gen_if
-gen_iter [List gens] returns [expr etype]
+gen_iter [List gens, List ifs]
     : gen_for[gens]
-    | gen_if[gens]
-      {
-          $etype = $gen_if.etype;
-      }
+    | gen_if[gens, ifs]
     ;
 
 //gen_for: 'for' exprlist 'in' or_test [gen_iter]
 gen_for [List gens]
-    : FOR exprlist[expr_contextType.Store] IN or_test[expr_contextType.Load] gen_iter[gens]?
+@init {
+    List ifs = new ArrayList();
+}
+    : FOR exprlist[expr_contextType.Store] IN or_test[expr_contextType.Load] gen_iter[gens, ifs]?
       {
-          List<expr> e = new ArrayList<expr>();
-          if ($gen_iter.etype != null) {
-              e.add($gen_iter.etype);
-          }
-          gens.add(new comprehension($FOR, $exprlist.etype, actions.castExpr($or_test.tree), e));
+          Collections.reverse(ifs);
+          gens.add(new comprehension($FOR, $exprlist.etype, actions.castExpr($or_test.tree), ifs));
       }
     ;
 
 //gen_if: 'if' old_test [gen_iter]
-gen_if[List gens] returns [expr etype]
-    : IF test[expr_contextType.Load] gen_iter[gens]?
-      {
-          $etype = actions.castExpr($test.tree);
-      }
+gen_if[List gens, List ifs]
+    : IF test[expr_contextType.Load] gen_iter[gens, ifs]?
+    {
+        ifs.add(actions.castExpr($test.tree));
+    }
     ;
 
 //yield_expr: 'yield' [testlist]
@@ -1784,9 +1798,21 @@ ESC
  */
 CONTINUED_LINE
     :    '\\' ('\r')? '\n' (' '|'\t')*  { $channel=HIDDEN; }
-         ( nl=NEWLINE {emit(new CommonToken(NEWLINE,nl.getText()));}
+         ( nl=NEWLINE {
+                          if (!partial) {
+                              emit(new CommonToken(NEWLINE,nl.getText()));
+                          }
+                      }
          |
-         )
+         ) {
+               if (input.LA(1) == -1) {
+                   if (partial) {
+                       emit(new CommonToken(TRAILBACKSLASH,"\\"));
+                   } else {
+                       throw new ParseException("unexpected character after line continuation character");
+                   }
+               }
+           }
     ;
 
 /** Treat a sequence of blank lines as a single blank line.  If

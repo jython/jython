@@ -14,9 +14,6 @@ package org.python.core;
  */
 public abstract class PySequence extends PyObject {
 
-    /**
-     * This constructor is used by PyJavaClass.init()
-     */
     public PySequence() {}
     public int gListAllocatedStatus = -1;
 
@@ -63,7 +60,7 @@ public abstract class PySequence extends PyObject {
      * @param value
      *            the value to set this element to.
      */
-    protected void set(int index, PyObject value) {
+    protected void pyset(int index, PyObject value) {
         throw Py.TypeError("can't assign to immutable object");
     }
 
@@ -252,7 +249,7 @@ public abstract class PySequence extends PyObject {
     protected int boundToSequence(int index) {
         int length = __len__();
         if(index < 0) {
-            index = index += length;
+            index += length;
             if(index < 0) {
                 index = 0;
             }
@@ -399,7 +396,7 @@ public abstract class PySequence extends PyObject {
 
         @Override
         public void setItem(int idx, PyObject value) {
-            set(idx, value);
+            pyset(idx, value);
         }
 
         @Override
