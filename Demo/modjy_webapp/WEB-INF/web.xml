@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE web-app
+     PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN"
+    "http://java.sun.com/dtd/web-app_2_3.dtd">
+<web-app>
+
+  <display-name>modjy demo application</display-name>
+  <description>
+     modjy WSGI demo application
+  </description>
+
+  <servlet>
+    <servlet-name>modjy</servlet-name>
+    <servlet-class>com.xhaus.modjy.ModjyJServlet</servlet-class>
+    <init-param>
+      <param-name>python.home</param-name>
+      <param-value>C:/jython2.5</param-value>
+    </init-param>
+<!--
+	There are two different ways you can specify an application to modjy
+	1. Using the app_import_name mechanism
+	2. Using a combination of app_directory/app_filename/app_callable_name
+	Examples of both are given below
+	See the documenation for more details.
+	http://modjy.xhaus.com/locating.html#locating_callables
+-->
+<!--
+	This is the app_import_name mechanism. If you specify a value
+	for this variable, then it will take precedence over the other mechanism
+    <init-param>
+      <param-name>app_import_name</param-name>
+      <param-value>my_wsgi_module.my_handler_class().handler_method</param-value>
+    </init-param>
+-->
+<!--
+	And this is the app_directory/app_filename/app_callable_name combo
+	The defaults for these three variables are ""/application.py/handler
+	So if you specify no values at all for any of app_* variables, then modjy
+	will by default look for "handler" in "application.py" in the servlet
+	context root.
+    <init-param>
+      <param-name>app_directory</param-name>
+      <param-value>some_sub_directory</param-value>
+    </init-param>
+-->
+    <init-param>
+      <param-name>app_filename</param-name>
+      <param-value>demo_app.py</param-value>
+    </init-param>
+<!--
+	Supply a value for this parameter if you want your application
+	callable to have a different name than the default.
+    <init-param>
+      <param-name>app_callable_name</param-name>
+      <param-value>my_handler_func</param-value>
+    </init-param>
+-->
+	<!-- Do you want application callables to be cached? -->
+    <init-param>
+      <param-name>cache_callables</param-name>
+      <param-value>1</param-value>
+    </init-param>
+    <!-- Should the application be reloaded if it's .py file changes? -->
+    <!-- Does not work with the app_import_name mechanism -->
+    <init-param>
+      <param-name>reload_on_mod</param-name>
+      <param-value>1</param-value>
+    </init-param>
+    <init-param>
+      <param-name>log_level</param-name>
+      <param-value>debug</param-value>
+<!--  <param-value>info</param-value>  -->
+<!--  <param-value>warn</param-value>  -->
+<!--  <param-value>error</param-value> -->
+<!--  <param-value>fatal</param-value> -->
+    </init-param>
+    <load-on-startup>1</load-on-startup>
+  </servlet>
+
+  <servlet-mapping>
+    <servlet-name>modjy</servlet-name>
+    <url-pattern>/*</url-pattern>
+  </servlet-mapping>
+
+</web-app>

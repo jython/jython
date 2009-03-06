@@ -1,0 +1,109 @@
+<project name="modjy" default="test">
+
+	<description>Modjy test build.xml</description>
+
+	<!-- set global properties for this build -->
+
+	<property name="test_src"		location="java"/>
+	<property name="build"			location="build"/>
+
+	<!-- Import the environment -->
+	<property environment="env"/>
+
+	<!-- Jython properties	-->
+
+	<property name="jython_home"		location="${env.JYTHON_HOME}"/>
+	<property name="jython_jar"			value="jython-dev.jar"/>
+	<property name="jython_jar_path"	location="${jython_home}/${jython_jar}"/>
+	<property name="jython_cachedir"	location="${jython_home}/cachedir"/>
+
+	<target name="init">
+		<available property="jython.home.set" file="${env.JYTHON_HOME}" />
+		<fail unless="jython.home.set" message="JYTHON_HOME not set" />
+		<available property="mockrunner.home.set" file="${env.MOCKRUNNER_HOME}" />
+		<fail unless="mockrunner.home.set" message="MOCKRUNNER_HOME not set" />
+		<!-- Create the build directory structure used by compile -->
+		<mkdir dir="${build}"/>
+	</target>
+
+	<target name="clean" description="clean up" >
+		<!-- Delete the ${build} and ${dist} directory trees -->
+		<delete dir="${build}"/>
+	</target>
+
+	<!-- Now testing related targets -->
+
+    <target name="do_test" depends="init" description="Run unit tests against a single jdk/servlet combo">
+		<echo message="Running tests against JDK ${jdk_version}, Servlet ${servlet_version}"/>
+		<echo message="Clearing jython package cache located at ${jython_home}/cachedir"/>
+
+		<delete quiet="true">
+			<fileset dir="${jython_cachedir}"/>
+		</delete>
+
+		<property name="mockrunner_home"	value="${env.MOCKRUNNER_HOME}"/>
+		<property name="mockrunner_jar"		location="${mockrunner_home}/jar"/>
+		<property name="mockrunner_lib"		location="${mockrunner_home}/lib/jdk${jdk_version}/${servlet_version}"/>
+
+		<path id="test.classpath">
+			<pathelement path="${build}"/>
+			<pathelement path="${jython_jar_path}"/>
+			<fileset dir="${jython_home}/javalib" includes="**/*.jar"/>
+			<fileset dir="${mockrunner_jar}" includes="**/*.jar"/>
+			<fileset dir="${mockrunner_lib}" includes="**/*.jar"/>
+        </path>
+
+		<javac
+			srcdir="${test_src}"
+			destdir="${build}"
+			classpathref="test.classpath"
+			debug="on"
+		/>
+
+		<java 
+			classname="com.xhaus.modjy.ModjyTestBase"
+			dir="."
+			fork="yes"
+			classpathref="test.classpath"
+		/>
+	</target>
+
+	<target name="test">
+		<antcall target="do_test">
+			<param name="jdk_version"		value="1.5"/>
+			<param name="servlet_version"	value="j2ee1.3"/>
+		</antcall>
+	</target>
+
+	<target name="test_java_15" depends="clean">
+		<antcall target="do_test">
+			<param name="jdk_version"		value="1.5"/>
+			<param name="servlet_version"	value="j2ee1.3"/>
+		</antcall>
+		<antcall target="do_test">
+			<param name="jdk_version"		value="1.5"/>
+			<param name="servlet_version"	value="j2ee1.4"/>
+		</antcall>
+		<antcall target="do_test">
+			<param name="jdk_version"		value="1.5"/>
+			<param name="servlet_version"	value="jee5"/>
+		</antcall>
+	</target>
+
+	<target name="test_java_16" depends="clean">
+		<antcall target="do_test">
+			<param name="jdk_version"		value="1.6"/>
+			<param name="servlet_version"	value="j2ee1.3"/>
+		</antcall>
+		<antcall target="do_test">
+			<param name="jdk_version"		value="1.6"/>
+			<param name="servlet_version"	value="j2ee1.4"/>
+		</antcall>
+		<antcall target="do_test">
+			<param name="jdk_version"		value="1.6"/>
+			<param name="servlet_version"	value="jee5"/>
+		</antcall>
+	</target>
+
+</project>
+
