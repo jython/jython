@@ -207,10 +207,18 @@ public class imp {
                     } else if (name.equals("__init__")) {
                         name = new File(sys.getCurrentWorkingDir()).getName();
                     }
+
+                    File fp = new File(resolvedFilename);
+                    long mtime = -1;
+                    if (fp.isFile()) {
+                        mtime = fp.lastModified();
+                    }
+
                     mod = org.python.core.imp.createFromSource(name.intern(),
                                                                (InputStream)o,
                                                                filename.toString(),
-                                                               compiledName);
+                                                               compiledName,
+                                                               mtime);
                     break;
                 case PY_COMPILED:
                     compiledName = filename.toString();

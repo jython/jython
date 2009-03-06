@@ -296,11 +296,17 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
     public boolean linenumbers;
     Future futures;
     Hashtable scopes;
+    long mtime;
 
     public Module(String name, String filename, boolean linenumbers) {
+        this(name, filename, linenumbers, org.python.core.imp.NO_MTIME);
+    }
+
+    public Module(String name, String filename, boolean linenumbers, long mtime) {
         this.linenumbers = linenumbers;
+        this.mtime = mtime;
         classfile = new ClassFile(name, "org/python/core/PyFunctionTable",
-                                  ACC_SYNCHRONIZED | ACC_PUBLIC);
+                                  ACC_SYNCHRONIZED | ACC_PUBLIC, mtime);
         constants = new Hashtable();
         sfilename = filename;
         if (filename != null)
@@ -313,7 +319,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
     }
 
     public Module(String name) {
-        this(name, name+".py", true);
+        this(name, name+".py", true, org.python.core.imp.NO_MTIME);
     }
 
     // This block of code handles the pool of Python Constants
@@ -633,14 +639,22 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
         }
         throw new ParseException(msg,node);
     }
-
     public static void compile(mod node, OutputStream ostream,
                                String name, String filename,
                                boolean linenumbers, boolean printResults,
                                CompilerFlags cflags)
+        throws Exception 
+    {
+        compile(node, ostream, name, filename, linenumbers, printResults, cflags, org.python.core.imp.NO_MTIME);
+    }
+
+    public static void compile(mod node, OutputStream ostream,
+                               String name, String filename,
+                               boolean linenumbers, boolean printResults,
+                               CompilerFlags cflags, long mtime)
         throws Exception
     {
-        Module module = new Module(name, filename, linenumbers);
+        Module module = new Module(name, filename, linenumbers, mtime);
         if (cflags == null) {
             cflags = new CompilerFlags();
         }

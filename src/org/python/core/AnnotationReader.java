@@ -19,17 +19,19 @@ import org.objectweb.asm.commons.EmptyVisitor;
  * cost too much, we will want to implement a special purpose ClassReader that only reads out the
  * APIVersion annotation I think.
  */
-public class APIReader extends EmptyVisitor {
+public class AnnotationReader extends EmptyVisitor {
 
     private boolean nextVisitIsVersion = false;
+    private boolean nextVisitIsMTime = false;
 
     private int version = -1;
+    private long mtime = -1;
 
     /**
      * Reads the classfile bytecode in data and to extract the version.
      * @throws IOException - if the classfile is malformed.
      */
-    public APIReader(byte[] data) throws IOException {
+    public AnnotationReader(byte[] data) throws IOException {
         ClassReader r;
         try {
             r = new ClassReader(data);
@@ -44,6 +46,7 @@ public class APIReader extends EmptyVisitor {
 
     public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
         nextVisitIsVersion = desc.equals("Lorg/python/compiler/APIVersion;");
+        nextVisitIsMTime = desc.equals("Lorg/python/compiler/MTime;");
         return this;
     }
 
@@ -51,10 +54,17 @@ public class APIReader extends EmptyVisitor {
         if (nextVisitIsVersion) {
             version = (Integer)value;
             nextVisitIsVersion = false;
+        } else if (nextVisitIsMTime) {
+            mtime = (Long)value;
+            nextVisitIsVersion = false;
         }
     }
 
     public int getVersion() {
         return version;
+    }
+
+    public long getMTime() {
+        return mtime;
     }
 }

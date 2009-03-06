@@ -22,6 +22,8 @@ public class imp {
 
     public static final int APIVersion = 17;
 
+    public static final int NO_MTIME = -1;
+
     // This should change to 0 for Python 2.7 and 3.0 see PEP 328
     public static final int DEFAULT_LEVEL = -1;
 
@@ -85,12 +87,17 @@ public class imp {
             throw Py.IOError(ioe);
         }
     }
-
     static PyObject createFromPyClass(String name, InputStream fp, boolean testing,
                                       String sourceName, String compiledName) {
+        return createFromPyClass(name, fp, testing, sourceName, compiledName, NO_MTIME);
+
+    }
+
+    static PyObject createFromPyClass(String name, InputStream fp, boolean testing,
+                                      String sourceName, String compiledName, long mtime) {
         byte[] data = null;
         try {
-            data = readCode(name, fp, testing);
+            data = readCode(name, fp, testing, mtime);
         } catch (IOException ioe) {
             if (!testing) {
                 throw Py.ImportError(ioe.getMessage() + "[name=" + name + ", source=" + sourceName
@@ -118,9 +125,13 @@ public class imp {
     }
 
     public static byte[] readCode(String name, InputStream fp, boolean testing) throws IOException {
+        return readCode(name, fp, testing, NO_MTIME);
+    }
+
+    public static byte[] readCode(String name, InputStream fp, boolean testing, long mtime) throws IOException {
         byte[] data = readBytes(fp);
         int api;
-        APIReader ar = new APIReader(data);
+        AnnotationReader ar = new AnnotationReader(data);
         api = ar.getVersion();
         if (api != APIVersion) {
             if (testing) {
@@ -128,6 +139,12 @@ public class imp {
             } else {
                 throw Py.ImportError("invalid api version(" + api + " != "
                         + APIVersion + ") in: " + name);
+            }
+        }
+        if (testing && mtime != NO_MTIME) {
+            long time = ar.getMTime();
+            if (mtime != time) {
+                return null;
             }
         }
         return data;
@@ -146,7 +163,8 @@ public class imp {
         if (sourceFilename == null) {
             sourceFilename = file.toString();
         }
-        return compileSource(name, makeStream(file), sourceFilename);
+        long mtime = file.lastModified();
+        return compileSource(name, makeStream(file), sourceFilename, mtime);
     }
 
     public static String makeCompiledFilename(String filename) {
@@ -199,6 +217,10 @@ public class imp {
     }
 
     public static byte[] compileSource(String name, InputStream fp, String filename) {
+        return compileSource(name, fp, filename, NO_MTIME);
+    }
+
+    public static byte[] compileSource(String name, InputStream fp, String filename, long mtime) {
         ByteArrayOutputStream ofp = new ByteArrayOutputStream();
         try {
             if(filename == null) {
@@ -210,7 +232,7 @@ public class imp {
             } finally {
                 fp.close();
             }
-            Module.compile(node, ofp, name + "$py", filename, true, false, null);
+            Module.compile(node, ofp, name + "$py", filename, true, false, null, mtime);
             return ofp.toByteArray();
         } catch(Throwable t) {
             throw ParserFacade.fixParseError(null, t, filename);
@@ -218,12 +240,17 @@ public class imp {
     }
 
     public static PyObject createFromSource(String name, InputStream fp, String filename) {
-        return createFromSource(name, fp, filename, null);
+        return createFromSource(name, fp, filename, null, NO_MTIME);
     }
 
     public static PyObject createFromSource(String name, InputStream fp,
             String filename, String outFilename) {
-        byte[] bytes = compileSource(name, fp, filename);
+        return createFromSource(name, fp, filename, outFilename, NO_MTIME);
+    }
+
+    public static PyObject createFromSource(String name, InputStream fp,
+            String filename, String outFilename, long mtime) {
+        byte[] bytes = compileSource(name, fp, filename, mtime);
         outFilename = cacheCompiledSource(filename, outFilename, bytes);
 
         Py.writeComment(IMPORT_LOG, "'" + name + "' as " + filename);
@@ -433,20 +460,20 @@ public class imp {
         }
 
         if (sourceFile.isFile() && caseok(sourceFile, sourceName)) {
+            long pyTime = sourceFile.lastModified();
             if (compiledFile.isFile() && caseok(compiledFile, compiledName)) {
                 Py.writeDebug(IMPORT_LOG, "trying precompiled " + compiledFile.getPath());
-                long pyTime = sourceFile.lastModified();
                 long classTime = compiledFile.lastModified();
                 if (classTime >= pyTime) {
                     PyObject ret = createFromPyClass(modName, makeStream(compiledFile), true,
-                                                     displaySourceName, displayCompiledName);
+                                                     displaySourceName, displayCompiledName, pyTime);
                     if (ret != null) {
                         return ret;
                     }
                 }
             }
             return createFromSource(modName, makeStream(sourceFile), displaySourceName,
-                                    compiledFile.getPath());
+                                    compiledFile.getPath(), pyTime);
         }
 
         // If no source, try loading precompiled
