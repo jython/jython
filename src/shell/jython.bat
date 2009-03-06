@@ -121,9 +121,8 @@ if ["%_CMP%"] == ["--jdb"] (
    goto :nextArg
 )
 
-if ["%_CMP%"] == ["--verify"] (
-   set CLASSPATH=%_CP:"=%;%CLASSPATH:"=%
-   set _CP=
+if ["%_CMP%"] == ["--boot"] (
+   set _BOOT_CP=-Xbootclasspath/a:%_CP%
    goto :nextArg
 )
 
@@ -161,7 +160,8 @@ set _CMP=
 goto scanArgs
 
 :argsDone
-%_JAVA_CMD% %_JAVA_OPTS% %_JAVA_STACK% -Xbootclasspath/a:%_CP% -Dpython.home=%_JYTHON_HOME% -Dpython.executable="%~f0" -classpath "%CLASSPATH%" org.python.util.jython %_JYTHON_OPTS% %_JYTHON_ARGS% %_ARGS%
+if not defined _BOOT_CP set CLASSPATH=%_CP:"=%;%CLASSPATH:"=%
+%_JAVA_CMD% %_JAVA_OPTS% %_JAVA_STACK% %_BOOT_CP% -Dpython.home=%_JYTHON_HOME% -Dpython.executable="%~f0" -classpath "%CLASSPATH%" org.python.util.jython %_JYTHON_OPTS% %_JYTHON_ARGS% %_ARGS%
 set E=%ERRORLEVEL%
 
 :cleanup
