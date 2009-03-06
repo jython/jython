@@ -170,6 +170,7 @@ set _CMP=
 set _CMP1=
 set _CMP2=
 set _CP=
+set _BOOT_CP=
 set _JAVA_CMD=
 set _JAVA_OPTS=
 set _JAVA_STACK=
