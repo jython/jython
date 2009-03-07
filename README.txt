@@ -1,8 +1,9 @@
-Welcome to Jython 2.5b1
+Welcome to Jython 2.5b2
 =======================
 
-This is the second beta of the 2.5 version of Jython. It
-contains most of the new features for the 2.5 release.
+This is the third beta of the 2.5 version of Jython. It
+contains all of the new features for the 2.5 release and represents a feature
+freeze.
 
 The release was compiled on Mac OS X with JDK 5 and requires JDK 5 to run.
 
