@@ -230,26 +230,24 @@ public class PyBytecode extends PyBaseCode {
         }
     }
 
-    // the following code exploits the fact that f_exits and f_lineno are only used by code compiled to Java bytecode;
+    // the following code exploits the fact that f_exits is only used by code compiled to Java bytecode;
     // in their place we implement the block stack for PBC-VM, as mapped below in the comments of pushBlock
 
     private static PyTryBlock popBlock(PyFrame f) {
-        PyTryBlock block = (PyTryBlock) (f.f_exits[--f.f_lineno]);
-        f.f_exits[f.f_lineno] = null; // ensure eventual GC of this reference
-        return block;
+        return (PyTryBlock)(((PyList)f.f_exits[0]).pop());
     }
 
     private static void pushBlock(PyFrame f, PyTryBlock block) {
         if (f.f_exits == null) { // allocate in the frame where they can fit! TODO consider supporting directly in the frame
-            f.f_exits = new PyObject[CO_MAXBLOCKS]; // f_blockstack in CPython - a simple ArrayList might be best
-            f.f_lineno = 0;        // f_iblock in CPython
+            f.f_exits = new PyObject[1]; // f_blockstack in CPython - a simple ArrayList might be best
+            f.f_exits[0] = new PyList();
         }
-        f.f_exits[f.f_lineno++] = block;
+        ((PyList)f.f_exits[0]).append(block);
     }
 
     private boolean blocksLeft(PyFrame f) {
         if (f.f_exits != null) {
-            return f.f_lineno > 0;
+            return ((PyList)f.f_exits[0]).__nonzero__();
         } else {
             return false;
         }
@@ -1579,6 +1577,7 @@ public class PyBytecode extends PyBaseCode {
             return lines.get(lo);
         }
 
+        @Override
         public String toString() {
             return addr_breakpoints.toString() + ";" + lines.toString();
         }
