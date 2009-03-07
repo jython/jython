@@ -74,9 +74,9 @@ public class PyBytecode extends PyBaseCode {
         co_cellvars = cellvars;
         co_freevars = freevars;
         co_name = name;
-        varargs = (flags & CO_VARARGS) != 0;
-        varkwargs = (flags & CO_VARKEYWORDS) != 0;
-        co_flags |= flags;
+        co_flags = new CompilerFlags(flags);
+        varargs = co_flags.varargs;
+        varkwargs = co_flags.varkeywords;
 
         co_stacksize = stacksize;
         co_consts = constants;
@@ -156,6 +156,9 @@ public class PyBytecode extends PyBaseCode {
         if (name == "co_consts") {
             return new PyTuple(co_consts);
         }
+        if (name == "co_flags") {
+            return Py.newInteger(co_flags.toBits());
+        }
         return super.__findattr_ex__(name);
     }
 
@@ -201,11 +204,11 @@ public class PyBytecode extends PyBaseCode {
     }
 
     private static String stringify_blocks(PyFrame f) {
-        if (f.f_exits == null || f.f_blockstate[0] == 0) {
+        if (f.f_exits == null || f.f_lineno == 0) {
             return "[]";
         }
         StringBuilder buf = new StringBuilder("[");
-        int len = f.f_blockstate[0];
+        int len = f.f_lineno;
         for (int i = 0; i < len; i++) {
             buf.append(f.f_exits[i].toString());
             if (i < len - 1) {
@@ -227,21 +230,26 @@ public class PyBytecode extends PyBaseCode {
         }
     }
 
+    // the following code exploits the fact that f_exits and f_lineno are only used by code compiled to Java bytecode;
+    // in their place we implement the block stack for PBC-VM, as mapped below in the comments of pushBlock
+
     private static PyTryBlock popBlock(PyFrame f) {
-        return (PyTryBlock) (f.f_exits[--f.f_blockstate[0]]);
+        PyTryBlock block = (PyTryBlock) (f.f_exits[--f.f_lineno]);
+        f.f_exits[f.f_lineno] = null; // ensure eventual GC of this reference
+        return block;
     }
 
     private static void pushBlock(PyFrame f, PyTryBlock block) {
-        if (f.f_exits == null) { // allocate in the frame where they can fit! consider supporting directly in the frame
+        if (f.f_exits == null) { // allocate in the frame where they can fit! TODO consider supporting directly in the frame
             f.f_exits = new PyObject[CO_MAXBLOCKS]; // f_blockstack in CPython - a simple ArrayList might be best
-            f.f_blockstate = new int[]{0};        // f_iblock in CPython - f_blockstate is likely go away soon
+            f.f_lineno = 0;        // f_iblock in CPython
         }
-        f.f_exits[f.f_blockstate[0]++] = block;
+        f.f_exits[f.f_lineno++] = block;
     }
 
     private boolean blocksLeft(PyFrame f) {
         if (f.f_exits != null) {
-            return f.f_blockstate[0] > 0;
+            return f.f_lineno > 0;
         } else {
             return false;
         }
@@ -414,7 +422,7 @@ public class PyBytecode extends PyBaseCode {
                         PyObject b = stack.pop();
                         PyObject a = stack.pop();
 
-                        if ((co_flags & CO_FUTUREDIVISION) == 0) {
+                        if (!co_flags.division) {
                             stack.push(a._div(b));
                         } else {
                             stack.push(a._truediv(b));
@@ -524,7 +532,7 @@ public class PyBytecode extends PyBaseCode {
                     case Opcode.INPLACE_DIVIDE: {
                         PyObject b = stack.pop();
                         PyObject a = stack.pop();
-                        if ((co_flags & CO_FUTUREDIVISION) == 0) {
+                        if (!co_flags.division) {
                             stack.push(a._idiv(b));
                         } else {
                             stack.push(a._itruediv(b));
@@ -1242,7 +1250,7 @@ public class PyBytecode extends PyBaseCode {
             throw ts.exception;
         }
 
-        if ((co_flags & CO_GENERATOR) != 0 && why == Why.RETURN && retval == Py.None) {
+        if (co_flags.generator && why == Why.RETURN && retval == Py.None) {
             f.f_lasti = -1;
         }
 

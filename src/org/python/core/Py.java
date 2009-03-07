@@ -1613,9 +1613,24 @@ public final class Py {
         } else {
             PyFrame frame = Py.getFrame();
             if (frame != null && frame.f_code != null) {
-                cflags = new CompilerFlags(frame.f_code.co_flags | flags);
+                cflags = frame.f_code.co_flags.combine(flags);
             } else {
                 cflags = new CompilerFlags(flags);
+            }
+        }
+        return cflags;
+    }
+
+    public static CompilerFlags getCompilerFlags(CompilerFlags flags, boolean dont_inherit) {
+        CompilerFlags cflags = null;
+        if (dont_inherit) {
+            cflags = flags;
+        } else {
+            PyFrame frame = Py.getFrame();
+            if (frame != null && frame.f_code != null) {
+                cflags = frame.f_code.co_flags.combine(flags);
+            } else {
+                cflags = flags;
             }
         }
         return cflags;

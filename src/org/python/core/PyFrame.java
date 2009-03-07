@@ -31,12 +31,6 @@ public class PyFrame extends PyObject
 
     public Object[] f_savedlocals;
 
-    /** newcompiler uses this to allow yield in loops. */
-    public PyObject[] f_stackstate; 
-
-    /** newcompiler uses this to allow yield in finally. */
-    public int[] f_blockstate;
-
     private int env_j = 0;
 
     private Object generatorInput = Py.None;
@@ -68,7 +62,7 @@ public class PyFrame extends PyObject
         // This needs work to be efficient with multiple interpreter states
         if (locals == null && code != null) {
             // ! f_fastlocals needed for arg passing too
-            if ((code.co_flags & PyBaseCode.CO_OPTIMIZED) != 0 || code.nargs > 0) {
+            if (code.co_flags.optimized || code.nargs > 0) {
                 if (code.co_nlocals > 0) {
                     // internal: may change
                     f_fastlocals = new PyObject[code.co_nlocals - code.jy_npurecell];
@@ -197,7 +191,7 @@ public class PyFrame extends PyObject
                     PyObject o = f_fastlocals[i];
                     if (o != null) f_locals.__setitem__(f_code.co_varnames[i], o);
                 }
-                if ((f_code.co_flags & PyBaseCode.CO_OPTIMIZED) == 0) {
+                if (!f_code.co_flags.optimized) {
                     f_fastlocals = null;
                 }
             }

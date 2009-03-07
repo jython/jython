@@ -226,7 +226,7 @@ public class _marshal implements ClassDictInit {
                 write_int(code.co_argcount);
                 write_int(code.co_nlocals);
                 write_int(code.co_stacksize);
-                write_int(code.co_flags);
+                write_int(code.co_flags.toBits());
                 write_object(Py.newString(new String(code.co_code)), depth + 1);
                 write_object(new PyTuple(code.co_consts), depth + 1);
                 write_strings(code.co_names, depth + 1);

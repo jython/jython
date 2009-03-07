@@ -1526,7 +1526,7 @@ class CompileFunction extends PyBuiltinFunction {
 
     public static PyObject compile(PyObject source, String filename, String mode, int flags,
                                    boolean dont_inherit) {
-        if ((flags & ~PyTableCode.CO_ALL_FEATURES) != 0) {
+        if ((flags & ~PyBaseCode.CO_ALL_FEATURES) != 0) {
             throw Py.ValueError("compile(): unrecognised flags");
         }
         if (!mode.equals("exec") && !mode.equals("eval") && !mode.equals("single")) {
@@ -1542,8 +1542,27 @@ class CompileFunction extends PyBuiltinFunction {
             throw Py.TypeError("expected a readable buffer object");
         }
         if (source instanceof PyUnicode) {
-            flags |= PyTableCode.PyCF_SOURCE_IS_UTF8;
+            flags |= PyBaseCode.PyCF_SOURCE_IS_UTF8;
         }
+        return Py.compile_flags(((PyString)source).toString(), filename, mode,
+                                Py.getCompilerFlags(flags, dont_inherit));
+    }
+
+    public static PyObject compile(PyObject source, String filename, String mode, CompilerFlags flags,
+                                   boolean dont_inherit) {
+        if (!mode.equals("exec") && !mode.equals("eval") && !mode.equals("single")) {
+            throw Py.ValueError("compile() arg 3 must be 'exec' or 'eval' or 'single'");
+        }
+
+        mod ast = py2node(source);
+        if (ast != null) {
+            return Py.compile_flags(ast, filename, mode, Py.getCompilerFlags(flags, dont_inherit));
+        }
+
+        if (!(source instanceof PyString)) {
+            throw Py.TypeError("expected a readable buffer object");
+        }
+        flags.source_is_utf8 = source instanceof PyUnicode;
         return Py.compile_flags(((PyString)source).toString(), filename, mode,
                                 Py.getCompilerFlags(flags, dont_inherit));
     }

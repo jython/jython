@@ -45,14 +45,14 @@ public class PyTableCode extends PyBaseCode
         co_name = name;
         if (varargs) {
             co_argcount -= 1;
-            co_flags |= CO_VARARGS;
+            co_flags.varargs = true;
         }
         this.varkwargs = varkwargs;
         if (varkwargs) {
             co_argcount -= 1;
-            co_flags |= CO_VARKEYWORDS;
+            co_flags.varkeywords = true;
         }
-        co_flags |= moreflags;
+        co_flags = new CompilerFlags(co_flags.toBits() | moreflags);
         this.funcs = funcs;
         this.func_id = func_id;
     }
@@ -114,6 +114,9 @@ public class PyTableCode extends PyBaseCode
         }
         if (name == "co_name") {
             return new PyString(co_name);
+        }
+        if (name == "co_flags") {
+            return Py.newInteger(co_flags.toBits());
         }
         return super.__findattr_ex__(name);
     }

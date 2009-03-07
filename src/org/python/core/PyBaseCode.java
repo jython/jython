@@ -13,7 +13,7 @@ public abstract class PyBaseCode extends PyCode {
     public int jy_npurecell; // internal: jython specific
     public String co_freevars[];
     public String co_filename;
-    public int co_flags;
+    public CompilerFlags co_flags = new CompilerFlags();
     public int co_nlocals;
     public boolean varargs,  varkwargs;
 
@@ -135,7 +135,7 @@ public abstract class PyBaseCode extends PyCode {
             return call(Py.EmptyObjects, Py.NoKeywords, globals, defaults,
                         closure);
         PyFrame frame = new PyFrame(this, globals);
-        if ((co_flags & CO_GENERATOR) != 0) {
+        if (co_flags.generator) {
             return new PyGenerator(frame, closure);
         }
         return call(frame, closure);
@@ -149,7 +149,7 @@ public abstract class PyBaseCode extends PyCode {
                         Py.NoKeywords, globals, defaults, closure);
         PyFrame frame = new PyFrame(this, globals);
         frame.f_fastlocals[0] = arg1;
-        if ((co_flags & CO_GENERATOR) != 0) {
+        if (co_flags.generator) {
             return new PyGenerator(frame, closure);
         }
         return call(frame, closure);
@@ -164,7 +164,7 @@ public abstract class PyBaseCode extends PyCode {
         PyFrame frame = new PyFrame(this, globals);
         frame.f_fastlocals[0] = arg1;
         frame.f_fastlocals[1] = arg2;
-        if ((co_flags & CO_GENERATOR) != 0) {
+        if (co_flags.generator) {
             return new PyGenerator(frame, closure);
         }
         return call(frame, closure);
@@ -181,7 +181,7 @@ public abstract class PyBaseCode extends PyCode {
         frame.f_fastlocals[0] = arg1;
         frame.f_fastlocals[1] = arg2;
         frame.f_fastlocals[2] = arg3;
-        if ((co_flags & CO_GENERATOR) != 0) {
+        if (co_flags.generator) {
             return new PyGenerator(frame, closure);
         }
         return call(frame, closure);
@@ -297,7 +297,7 @@ public abstract class PyBaseCode extends PyCode {
                                              co_name, argcount));
         }
 
-        if ((co_flags & CO_GENERATOR) != 0) {
+        if (co_flags.generator) {
             return new PyGenerator(frame, closure);
         }
         return call(frame, closure);
@@ -312,5 +312,10 @@ public abstract class PyBaseCode extends PyCode {
 
     protected int getline(PyFrame f) {
          return f.f_lineno;
+    }
+
+    // returns the augmented version of CompilerFlags (instead of just as a bit vector int)
+    public CompilerFlags getCompilerFlags() {
+        return co_flags;
     }
 }

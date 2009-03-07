@@ -78,11 +78,11 @@ public class PyUnicode extends PyString implements Iterable {
         return buffer;
     }
 
-    PyUnicode(Iterator<Integer> iter) {
+    public PyUnicode(Iterator<Integer> iter) {
         this(fromCodePoints(iter));
     }
 
-    PyUnicode(Collection<Integer> ucs4) {
+    public PyUnicode(Collection<Integer> ucs4) {
         this(ucs4.iterator());
     }
 
