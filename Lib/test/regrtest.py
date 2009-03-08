@@ -1535,8 +1535,6 @@ class _ExpectedSkips:
                     self.expected.add('test_mhlib')
                 import platform
                 os_name = platform.java_ver()[3][0]
-                if os_name == 'Mac OS X' or 'BSD' in os_name:
-                    self.expected.add('test_asynchat')
 
             self.valid = True
 
