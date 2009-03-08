@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Special fast dict implementation for __dict__ instances. Allows interned String keys in addition
@@ -14,7 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class PyStringMap extends PyObject {
 
-    private final Map<Object, PyObject> table;
+    private final ConcurrentMap<Object, PyObject> table;
 
     public PyStringMap() {
         this(4);
@@ -334,11 +335,13 @@ public class PyStringMap extends PyObject {
      *            the default value to insert in the mapping if key does not already exist.
      */
     public PyObject setdefault(PyObject key, PyObject failobj) {
-        PyObject o = __finditem__(key);
-        if (o == null) {
-            __setitem__(key, o = failobj);
+        Object internedKey = (key instanceof PyString) ? ((PyString)key).internedString() : key;
+        PyObject oldValue = table.putIfAbsent(internedKey, failobj);
+        if (oldValue == null) {
+            return failobj;
+        } else {
+            return oldValue;
         }
-        return o;
     }
 
     /**
