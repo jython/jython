@@ -635,9 +635,20 @@ public class imp {
             } else {
                 name = dottedName.substring(last_dot, dot);
             }
+            PyJavaPackage jpkg = null;
+            if (mod instanceof PyJavaPackage) {
+                jpkg = (PyJavaPackage)mod;
+            }
+
             mod = import_next(mod, parentNameBuffer, name, fullName, fromlist);
+            if (jpkg != null && (mod == null || mod == Py.None)) {
+                // try again -- under certain circumstances a PyJavaPackage may
+                // have been added as a side effect of the last import_next
+                // attempt.  see Lib/test_classpathimport.py#test_bug1126
+                mod = import_next(jpkg, parentNameBuffer, name, fullName, fromlist);
+            }
             if (mod == null || mod == Py.None) {
-            	throw Py.ImportError("No module named " + name);
+                throw Py.ImportError("No module named " + name);
             }
             last_dot = dot + 1;
         } while (dot != -1);

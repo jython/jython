@@ -48,6 +48,12 @@ class ClasspathImporterTestCase(unittest.TestCase):
         sys.path.append("Lib/test/bug1239.jar")
         import org.test403javapackage.test403
 
+    # different from test_bug1239 in that only a Java package is imported, not
+    # a Java class.  I'd also like to get rid of this checked in test jar.
+    def test_bug1126(self):
+        sys.path.append("Lib/test/bug1126/bug1126.jar")
+        import org.subpackage
+
 def test_main():
     test_support.run_unittest(ClasspathImporterTestCase)
 

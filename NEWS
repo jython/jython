@@ -2,6 +2,7 @@ Jython NEWS
 
 Jython 2.5
   Bugs fixed (new numbering due to move to Roundup)
+    - [ 1126 ] ImportError raised for Java subpackages import
     - [ 1111 ] keyword arguments not supported on __import__
     - [ 1567212 ] Jython $py.class bytecode doesn't include the .py's mtime
     - [ 1024 ] Jython $py.class bytecode doesn't include the .py's mtime
