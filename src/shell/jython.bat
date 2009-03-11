@@ -126,6 +126,11 @@ if ["%_CMP%"] == ["--boot"] (
    goto :nextArg
 )
 
+if ["%_CMP%"] == ["--print"] (
+   set _PRINT=print
+   goto :nextArg
+)
+
 rem now unescape _D, _S and _Q
 set _CMP=%_CMP:_D="%
 set _CMP=%_CMP:_S='%
@@ -167,7 +172,12 @@ if not defined _BOOT_CP (
     set CLASSPATH=%_CP:"=%
   )
 )
-%_JAVA_CMD% %_JAVA_OPTS% %_JAVA_STACK% %_BOOT_CP% -Dpython.home=%_JYTHON_HOME% -Dpython.executable="%~f0" -classpath "%CLASSPATH%" org.python.util.jython %_JYTHON_OPTS% %_JYTHON_ARGS% %_ARGS%
+set _FULL_CMD=%_JAVA_CMD% %_JAVA_OPTS% %_JAVA_STACK% %_BOOT_CP% -Dpython.home=%_JYTHON_HOME% -Dpython.executable="%~f0" -classpath "%CLASSPATH%" org.python.util.jython %_JYTHON_OPTS% %_JYTHON_ARGS% %_ARGS%
+if defined _PRINT (
+  echo %_FULL_CMD%
+) else (
+  %_FULL_CMD%
+)
 set E=%ERRORLEVEL%
 
 :cleanup
@@ -177,12 +187,14 @@ set _CMP1=
 set _CMP2=
 set _CP=
 set _BOOT_CP=
+set _FULL_CMD=
 set _JAVA_CMD=
 set _JAVA_OPTS=
 set _JAVA_STACK=
 set _JYTHON_HOME=
 set _JYTHON_OPTS=
 set _JYTHON_ARGS=
+set _PRINT=
 set _TRIMMED_JAVA_HOME=
 set _TRIMMED_JYTHON_HOME=
 set _TRIMMED_JYTHON_OPTS=
