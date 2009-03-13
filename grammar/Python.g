@@ -739,13 +739,13 @@ import_name
 import_from
     : FROM (d+=DOT* dotted_name | d+=DOT+) IMPORT 
         (STAR
-       -> ^(FROM<ImportFrom>[$FROM, actions.makeFromText($d, $dotted_name.text),
+       -> ^(FROM<ImportFrom>[$FROM, actions.makeFromText($d, $dotted_name.name),
              actions.makeStarAlias($STAR), actions.makeLevel($d)])
         | i1=import_as_names
-       -> ^(FROM<ImportFrom>[$FROM, actions.makeFromText($d, $dotted_name.text),
+       -> ^(FROM<ImportFrom>[$FROM, actions.makeFromText($d, $dotted_name.name),
              actions.makeAliases($i1.atypes), actions.makeLevel($d)])
         | LPAREN i2=import_as_names COMMA? RPAREN
-       -> ^(FROM<ImportFrom>[$FROM, actions.makeFromText($d, $dotted_name.text),
+       -> ^(FROM<ImportFrom>[$FROM, actions.makeFromText($d, $dotted_name.name),
              actions.makeAliases($i2.atypes), actions.makeLevel($d)])
         )
     ;
@@ -778,7 +778,7 @@ dotted_as_name returns [alias atype]
 
     : dotted_name (AS NAME)?
     {
-        $atype = new alias($NAME, $dotted_name.text, $NAME.text);
+        $atype = new alias($NAME, $dotted_name.name, $NAME.text);
     }
     ;
 
@@ -791,8 +791,10 @@ dotted_as_names returns [List<alias> atypes]
     ;
 
 //dotted_name: NAME ('.' NAME)*
-dotted_name
-    : NAME (DOT attr)*
+dotted_name returns [String name]
+    : NAME (DOT dn+=attr)* {
+        $name = actions.makeDottedText($NAME, $dn);
+    }
     ;
 
 //global_stmt: 'global' NAME (',' NAME)*

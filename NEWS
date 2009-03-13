@@ -1,6 +1,10 @@
 Jython NEWS
 
-Jython 2.5
+Jython 2.5.0 rc 1
+  Bugs fixed (new numbering due to move to Roundup)
+    - [ 1215 ] extra spaces in import statement break importing
+
+Jython 2.5.0 a0 - b3
   Bugs fixed (new numbering due to move to Roundup)
     - [ 1126 ] ImportError raised for Java subpackages import
     - [ 1111 ] keyword arguments not supported on __import__

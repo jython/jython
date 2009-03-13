@@ -723,4 +723,17 @@ public class GrammarActions {
         return s;
     }
 
+    public String makeDottedText(Token name, List<PythonTree> c) {
+        final String dot = ".";
+        if (c == null || c.isEmpty()) {
+            return name.getText();
+        }
+        StringBuilder b = new StringBuilder(name.getText());
+        for (PythonTree t : c) {
+            b.append(dot);
+            b.append(t.getToken().getText());
+        }
+        return b.toString();
+    }
+
 }

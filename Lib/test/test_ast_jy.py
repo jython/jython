@@ -11,6 +11,17 @@ class TestCompile(unittest.TestCase):
         node = compile("1/2", '<unknown>', 'exec', PyCF_ONLY_AST)
         compile(node, "<string>", 'exec')
 
+    def test_alias_trim(self):
+        node = compile("import os. path", '<unknown>', 'exec', PyCF_ONLY_AST)
+        self.assertEquals(node.body[0].names[0].name, "os.path")
+
+        node = compile("import os .path", '<unknown>', 'exec', PyCF_ONLY_AST)
+        self.assertEquals(node.body[0].names[0].name, "os.path")
+
+        node = compile("import os . path", '<unknown>', 'exec', PyCF_ONLY_AST)
+        self.assertEquals(node.body[0].names[0].name, "os.path")
+
+
 #==============================================================================
 
 def test_main(verbose=None):
