@@ -400,12 +400,18 @@ public class PySystemState extends PyObject
     }
 
     /**
-     * Initialize the environ dict from System.getenv.
-     *
+     * Initialize the environ dict from System.getenv. environ may be empty when the
+     * security policy doesn't grant us access.
      */
     public void initEnviron() {
         environ = new PyDictionary();
-        for (Map.Entry<String, String> entry : System.getenv().entrySet()) {
+        Map<String, String> env;
+        try {
+            env = System.getenv();
+        } catch (SecurityException se) {
+            return;
+        }
+        for (Map.Entry<String, String> entry : env.entrySet()) {
             environ.__setitem__(Py.newString(entry.getKey()), Py.newString(entry.getValue()));
         }
     }
