@@ -214,6 +214,7 @@ fi
 
 "${JAVA_CMD[@]}" $JAVA_OPTS "${java_args[@]}" -Dpython.home="$JYTHON_HOME" \
   -Dpython.executable="$PRG" org.python.util.jython $JYTHON_OPTS "$@"
+JYTHON_STATUS=$?
 
 if [ -n "$profile_requested" ] ; then
   echo "Profiling results:"
@@ -231,3 +232,5 @@ elif [ -n "$help_requested" ] ; then
   echo "JYTHON_HOME: Jython installation directory" >&2
   echo "JYTHON_OPTS: default command line arguments" >&2
 fi
+
+exit $JYTHON_STATUS
