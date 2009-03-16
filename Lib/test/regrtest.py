@@ -1475,7 +1475,6 @@ _failures = {
         test_frozen
         test_gc
         test_iterlen
-        test_marshal
         test_multibytecodec
         test_multibytecodec_support
         test_peepholer
@@ -1484,7 +1483,6 @@ _failures = {
         test_stringprep
         test_transformer
         test_ucn
-        test_unicode
         test_unicodedata
         test_zipimport
         """,

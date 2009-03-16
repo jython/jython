@@ -712,6 +712,9 @@ class UnicodeTest(
         self.assertEqual(x, y)
 
 def test_main():
+    if test_support.is_jython:
+        # http://bugs.jython.org/issue1153
+        del UnicodeTest.test_codecs_idna
     test_support.run_unittest(UnicodeTest)
 
 if __name__ == "__main__":
