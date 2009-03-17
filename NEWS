@@ -3,6 +3,7 @@ Jython NEWS
 Jython 2.5.0 rc 1
   Bugs fixed (new numbering due to move to Roundup)
     - [ 1272 ] ASTList ClassCastException
+    - [ 1261 ] jython -c "import sys; sys.exit(1)" not giving correct exit code.
     - [ 1215 ] extra spaces in import statement break importing
 
 Jython 2.5.0 a0 - b3
