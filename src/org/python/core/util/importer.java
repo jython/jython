@@ -74,12 +74,12 @@ public abstract class importer<T> extends PyObject {
 
     private SearchOrderEntry[] makeSearchOrder(){
         return new SearchOrderEntry[] {
-              new SearchOrderEntry(getSeparator() + "__init__$py.class",
-                  EnumSet.of(EntryType.IS_PACKAGE, EntryType.IS_BYTECODE)),
-              new SearchOrderEntry(getSeparator() + "__init__.py",
-                  EnumSet.of(EntryType.IS_PACKAGE, EntryType.IS_SOURCE)),
-              new SearchOrderEntry("$py.class", EnumSet.of(EntryType.IS_BYTECODE)),
-               new SearchOrderEntry(".py", EnumSet.of(EntryType.IS_SOURCE)),};
+            new SearchOrderEntry(getSeparator() + "__init__$py.class",
+                                 EnumSet.of(EntryType.IS_PACKAGE, EntryType.IS_BYTECODE)),
+            new SearchOrderEntry(getSeparator() + "__init__.py",
+                                 EnumSet.of(EntryType.IS_PACKAGE, EntryType.IS_SOURCE)),
+            new SearchOrderEntry("$py.class", EnumSet.of(EntryType.IS_BYTECODE)),
+            new SearchOrderEntry(".py", EnumSet.of(EntryType.IS_SOURCE)),};
     }
 
     protected final PyObject importer_find_module(String fullname, String path) {
