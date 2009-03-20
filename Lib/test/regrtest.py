@@ -1399,8 +1399,6 @@ _expectations = {
         test_curses
         test_dbm
         test_dl
-        test_dummy_thread
-        test_dummy_threading
         test_email_codecs
         test_fcntl
         test_fork1
@@ -1410,7 +1408,6 @@ _expectations = {
         test_hotshot
         test_imageop
         test_imgfile
-        test_import
         test_ioctl
         test_largefile
         test_linuxaudiodev
@@ -1441,7 +1438,6 @@ _expectations = {
         test_sundry
         test_symtable
         test_tcl
-        test_threadsignals
         test_timeout
         test_unicode_file
         test_wait3
@@ -1471,9 +1467,11 @@ _failures = {
         test_codecmaps_tw
         test_compiler
         test_dis
+        test_dummy_threading
         test_eof
         test_frozen
         test_gc
+        test_import
         test_iterlen
         test_multibytecodec
         test_multibytecodec_support
@@ -1481,6 +1479,7 @@ _failures = {
         test_profile
         test_pyclbr
         test_stringprep
+        test_threadsignals
         test_transformer
         test_ucn
         test_unicodedata
