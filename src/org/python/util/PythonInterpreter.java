@@ -7,6 +7,7 @@ import org.python.core.Py;
 import org.python.core.PyCode;
 import org.python.core.PyException;
 import org.python.core.PyFile;
+import org.python.core.PyFileWriter;
 import org.python.core.PyModule;
 import org.python.core.PyObject;
 import org.python.core.PyString;
@@ -90,6 +91,11 @@ public class PythonInterpreter {
         systemState.stdout = outStream;
     }
 
+    /** @deprecated */
+    public void setOut(java.io.Writer outStream) {
+        setOut(new PyFileWriter(outStream));
+    }
+
     /**
      * Set a java.io.OutputStream to use for the standard output stream
      *
@@ -102,6 +108,11 @@ public class PythonInterpreter {
 
     public void setErr(PyObject outStream) {
         systemState.stderr = outStream;
+    }
+
+    /** @deprecated */
+    public void setErr(java.io.Writer outStream) {
+        setErr(new PyFileWriter(outStream));
     }
 
     public void setErr(java.io.OutputStream outStream) {
