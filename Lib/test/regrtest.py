@@ -1476,7 +1476,6 @@ _failures = {
         test_multibytecodec
         test_multibytecodec_support
         test_peepholer
-        test_profile
         test_pyclbr
         test_stringprep
         test_threadsignals
