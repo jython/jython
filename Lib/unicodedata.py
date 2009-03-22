@@ -1,19 +1,18 @@
-from __future__ import with_statement
 from bisect import bisect_left
 import operator
-import os
 import java.lang.Character
 
-# this is intended as a stopgap measure; at the very least it should
-# be refactored so that we can avoid its slow startup time
+# XXX - this is intended as a stopgap measure until 2.5.1, which will have a Java implementation
 # requires java 6 for `normalize` function
+# only has one version of the database
+# does not normalized ideographs
 
-# XXX - change so we bind against the specific version
 _codepoints = {}
 _eaw = {}
 _names = {}
 _segments = []
 _eaw_segments = []
+Nonesuch = object()
 
 def get_int(col):
     try:
@@ -35,62 +34,52 @@ def get_numeric(col):
         except:
             return None
 
-def init(path):
-    with open(os.path.join(path, 'UnicodeData.txt')) as data:
-        for row in data:
-            cols = row.split(';')
-            codepoint = int(cols[0], 16)
-            name = cols[1]
-            if name == '<CJK Ideograph, Last>':
-                lookup_name = 'CJK UNIFIED IDEOGRAPH'
-            else:
-                lookup_name = name
-            data = (
-                cols[2],
-                get_int(cols[3]),
-                cols[4],
-                cols[5],
-                get_int(cols[6]),
-                get_int(cols[7]),
-                get_numeric(cols[8]),
-                get_yn(cols[9]),
-                lookup_name,
-                )
+def init_unicodedata(data):
+    for row in data:
+        cols = row.split(';')
+        codepoint = int(cols[0], 16)
+        name = cols[1]
+        if name == '<CJK Ideograph, Last>':
+            lookup_name = 'CJK UNIFIED IDEOGRAPH'
+        else:
+            lookup_name = name
+        data = (
+            cols[2],
+            get_int(cols[3]),
+            cols[4],
+            cols[5],
+            get_int(cols[6]),
+            get_int(cols[7]),
+            get_numeric(cols[8]),
+            get_yn(cols[9]),
+            lookup_name,
+            )
 
-            if name.find('First') >= 0:
-                start = codepoint
-            elif name.find('Last') >= 0:
-                _segments.append((start, (start, codepoint), data))
-            else:
-                _names[name] = unichr(codepoint)
-                _codepoints[codepoint] = data
+        if name.find('First') >= 0:
+            start = codepoint
+        elif name.find('Last') >= 0:
+            _segments.append((start, (start, codepoint), data))
+        else:
+            _names[name] = unichr(codepoint)
+            _codepoints[codepoint] = data
 
-def init_east_asian_width(path):
-    with open(os.path.join(path, 'EastAsianWidth.txt')) as data:
-        for row in data:
-            if row.startswith('#'):
-                continue
-            row = row.partition('#')[0]
-            cols = row.split(';')
-            if len(cols) < 2:
-                continue
-            cr = cols[0].split('..')
-            width = cols[1].rstrip()
-            if len(cr) == 1:
-                codepoint = int(cr[0], 16)
-                _eaw[codepoint] = width
-            else:
-                start = int(cr[0], 16)
-                end = int(cr[1], 16)
-                _eaw_segments.append((start, (start, end), width))
-
-
-# this doesn't work in general, but it should be ok in this case since
-# core libraries don't go through a zip import; see PEP 302 if we
-# actually need to do any loader magic
-my_path = os.path.dirname(__file__)
-init(my_path)
-init_east_asian_width(my_path)
+def init_east_asian_width(data):
+    for row in data:
+        if row.startswith('#'):
+            continue
+        row = row.partition('#')[0]
+        cols = row.split(';')
+        if len(cols) < 2:
+            continue
+        cr = cols[0].split('..')
+        width = cols[1].rstrip()
+        if len(cr) == 1:
+            codepoint = int(cr[0], 16)
+            _eaw[codepoint] = width
+        else:
+            start = int(cr[0], 16)
+            end = int(cr[1], 16)
+            _eaw_segments.append((start, (start, end), width))
 
 # xxx - need to normalize the segments, so
 # <CJK Ideograph, Last> ==> CJK UNIFIED IDEOGRAPH;
@@ -124,7 +113,6 @@ def check_segments(codepoint, segments):
             return segment[2]
     return None
 
-Nonesuch = object()
 
 def get_codepoint(unichr, fn=None):
     if not(isinstance(unichr, unicode)):
@@ -225,3 +213,17 @@ try:
 
 except ImportError:
     pass
+
+
+def init():
+    import pkgutil
+    import os.path
+    import StringIO
+    import sys
+
+    my_path = os.path.dirname(__file__)
+    loader = pkgutil.get_loader('unicodedata')
+    init_unicodedata(StringIO.StringIO(loader.get_data(os.path.join(my_path,'UnicodeData.txt'))))
+    init_east_asian_width(StringIO.StringIO(loader.get_data(os.path.join(my_path,'EastAsianWidth.txt'))))
+
+init()
