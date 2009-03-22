@@ -1,4 +1,5 @@
 from test import test_support
+import java
 import unittest
 
 class DictInitTest(unittest.TestCase):
@@ -93,9 +94,29 @@ class DerivedDictTest(unittest.TestCase):
                 raise CustomKeyError("custom message")
         self.assertRaises(CustomKeyError, lambda: DerivedDict()['foo'])
 
+class JavaIntegrationTest(unittest.TestCase):
+    "Tests for instantiating dicts from Java maps and hashtables"
+    def test_hashmap(self):
+        x = java.util.HashMap()
+        x.put('a', 1)
+        x.put('b', 2)
+        x.put('c', 3)
+        x.put((1,2), "xyz")
+        y = dict(x)
+        self.assertEqual(set(y.items()), set([('a', 1), ('b', 2), ('c', 3), ((1,2), "xyz")]))
+    def test_hashtable(self):
+        x = java.util.Hashtable()
+        x.put('a', 1)
+        x.put('b', 2)
+        x.put('c', 3)
+        x.put((1,2), "xyz")
+        y = dict(x)
+        self.assertEqual(set(y.items()), set([('a', 1), ('b', 2), ('c', 3), ((1,2), "xyz")]))
+
+
 
 def test_main():
-    test_support.run_unittest(DictInitTest, DictCmpTest, DerivedDictTest)
+    test_support.run_unittest(DictInitTest, DictCmpTest, DerivedDictTest, JavaIntegrationTest)
 
 if __name__ == '__main__':
     test_main()

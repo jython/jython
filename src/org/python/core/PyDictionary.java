@@ -4,6 +4,7 @@ package org.python.core;
 import java.util.AbstractSet;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -421,7 +422,12 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
         }
         if (nargs == 1) {
             PyObject arg = args[0];
-            if (arg.__findattr__("keys") != null) {
+
+            Object proxy = arg.getJavaProxy();
+            if (proxy instanceof Map) {
+                merge((Map)proxy);
+            }
+            else if (arg.__findattr__("keys") != null) {
                 merge(arg);
             } else {
                 mergeFromSeq(arg);
@@ -431,6 +437,13 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
             dict___setitem__(Py.newString(keywords[i]), args[nargs + i]);
         }
     }
+
+    private void merge(Map<Object,Object> other) {
+        for (Entry<Object,Object> entry : other.entrySet()) {
+            dict___setitem__(Py.java2py(entry.getKey()), Py.java2py(entry.getValue()));
+        }
+    }
+
 
     /**
      * Merge another PyObject that supports keys() with this
