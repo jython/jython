@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * A Set backed by ConcurrentHashMap.
@@ -16,7 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ConcurrentHashSet<E> extends AbstractSet<E> implements Serializable {
 
     /** The backing Map. */
-    private final ConcurrentHashMap<E, Object> map;
+    private final ConcurrentMap<E, Object> map;
 
     /** Backing's KeySet. */
     private transient Set<E> keySet;
