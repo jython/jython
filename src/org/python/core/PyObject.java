@@ -264,6 +264,20 @@ public class PyObject implements Serializable {
         if (c.isInstance(getJavaProxy())) {
             return javaProxy;
         }
+
+        // convert faux floats
+        // XXX: should also convert faux ints, but that breaks test_java_visibility
+        // (ReflectedArgs resolution)
+        if (c == Double.TYPE || c == Double.class || c == Float.TYPE || c == Float.class) {
+            try {
+                return __float__().getValue();
+            } catch (PyException pye) {
+                if (!Py.matchException(pye, Py.AttributeError)) {
+                    throw pye;
+                }
+            }
+        }
+
         return Py.NoConversion;
     }
 

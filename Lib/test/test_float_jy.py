@@ -98,6 +98,12 @@ class FloatTestCase(unittest.TestCase):
         # regression in 2.5 alphas
         self.assertEqual(4.0 ** Foo(), 16.0)
 
+    def test_faux(self):
+        class F(object):
+            def __float__(self):
+ 		return 1.6
+        self.assertEqual(math.cos(1.6), math.cos(F()))
+
 
 def test_main():
     test_support.run_unittest(FloatTestCase)
