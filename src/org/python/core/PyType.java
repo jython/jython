@@ -1376,7 +1376,7 @@ public class PyType extends PyObject implements Serializable {
 
     /** Used when serializing this type. */
     protected Object writeReplace() {
-        return new TypeResolver(underlying_class, getModule().toString(), name);
+        return new TypeResolver(underlying_class, getModule().toString(), getName());
     }
 
     private interface OnType {

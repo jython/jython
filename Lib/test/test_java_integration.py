@@ -10,8 +10,9 @@ from test import test_support
 from java.lang import (ClassCastException, ExceptionInInitializerError, String, Runnable, System,
         Runtime, Math, Byte)
 from java.math import BigDecimal, BigInteger
-from java.io import (File, FileInputStream, FileNotFoundException, FileOutputStream, FileWriter,
-    OutputStreamWriter, UnsupportedEncodingException)
+from java.io import (ByteArrayInputStream, ByteArrayOutputStream, File, FileInputStream,
+                     FileNotFoundException, FileOutputStream, FileWriter, ObjectInputStream,
+                     ObjectOutputStream, OutputStreamWriter, UnsupportedEncodingException)
 from java.util import ArrayList, Date, HashMap, Hashtable, StringTokenizer, Vector
 
 from java.awt import Dimension, Color, Component, Container
@@ -425,6 +426,19 @@ class JavaWrapperCustomizationTest(unittest.TestCase):
         self.assertRaises(TypeError, __import__, "org.python.tests.mro.ConfusedOnImport")
         self.assertRaises(TypeError, GetitemAdder.addPostdefined)
 
+class SerializationTest(unittest.TestCase):
+
+    def test_java_serialization(self):
+        date_list = [Date(), Date()]
+        output = ByteArrayOutputStream()
+        serializer = ObjectOutputStream(output)
+        serializer.writeObject(date_list)
+        serializer.close()
+
+        input = ByteArrayInputStream(output.toByteArray())
+        unserializer = ObjectInputStream(input)
+        self.assertEqual(date_list, unserializer.readObject())
+
 def test_main():
     test_support.run_unittest(InstantiationTest, 
                               BeanTest, 
@@ -439,7 +453,8 @@ def test_main():
                               JavaStringTest,
                               JavaDelegationTest,
                               SecurityManagerTest,
-                              JavaWrapperCustomizationTest)
+                              JavaWrapperCustomizationTest,
+                              SerializationTest)
 
 if __name__ == "__main__":
     test_main()
