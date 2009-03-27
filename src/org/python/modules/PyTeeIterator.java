@@ -1,7 +1,6 @@
 package org.python.modules;
 
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.python.core.Py;
 import org.python.core.PyException;
@@ -12,6 +11,7 @@ import org.python.core.PyType;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
+import org.python.util.Generic;
 
 @ExposedType(name = "itertools.tee", base = PyObject.class, isBaseType = false)
 public class PyTeeIterator extends PyIterator {
@@ -45,7 +45,7 @@ public class PyTeeIterator extends PyIterator {
             throw Py.ValueError("n must be >= 0");
         }
         PyObject iterator = iterable.__iter__();
-        Map<Integer, PyObject> buffer = new ConcurrentHashMap<Integer, PyObject>();
+        Map<Integer, PyObject> buffer = Generic.concurrentMap();
         int[] offsets = new int[n];
         PyTeeIterator[] tees = new PyTeeIterator[n];
         for (int i = 0; i < n; i++) {

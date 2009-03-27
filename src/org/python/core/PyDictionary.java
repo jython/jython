@@ -4,20 +4,19 @@ package org.python.core;
 import java.util.AbstractSet;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
 import java.util.concurrent.ConcurrentMap;
+
 import org.python.expose.ExposedClassMethod;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 import org.python.expose.MethodType;
+import org.python.util.Generic;
 
 
 /**
@@ -34,7 +33,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
      * Create an empty dictionary.
      */
     public PyDictionary() {
-        table = new ConcurrentHashMap<PyObject, PyObject>();
+        table = Generic.concurrentMap();
     }
 
     /**
@@ -42,14 +41,15 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
      */
     public PyDictionary(PyType subtype) {
         super(subtype);
-        table = new ConcurrentHashMap<PyObject, PyObject>();
+        table = Generic.concurrentMap();
     }
 
     /**
      * Create a new dictionary which is based on given map.
      */
     public PyDictionary(Map<PyObject, PyObject> t) {
-        table = new ConcurrentHashMap<PyObject, PyObject>(t);
+        table = Generic.concurrentMap();
+        table.putAll(t);
     }
 
     /**
@@ -57,7 +57,8 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
      */
     public PyDictionary(PyType subtype, Map<PyObject, PyObject> t) {
         super(subtype);
-        table = new ConcurrentHashMap<PyObject, PyObject>(t);
+        table = Generic.concurrentMap();
+        table.putAll(t);
     }
 
 

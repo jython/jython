@@ -9,6 +9,8 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import org.python.util.Generic;
+
 /**
  * Special fast dict implementation for __dict__ instances. Allows interned String keys in addition
  * to PyObject unlike PyDictionary.
@@ -22,11 +24,13 @@ public class PyStringMap extends PyObject {
     }
 
     public PyStringMap(int capacity) {
-        table = new ConcurrentHashMap<Object, PyObject>(capacity);
+        table = new ConcurrentHashMap<Object, PyObject>(capacity, Generic.CHM_LOAD_FACTOR,
+                                                        Generic.CHM_CONCURRENCY_LEVEL);
     }
 
     public PyStringMap(Map<Object, PyObject> map) {
-        table = new ConcurrentHashMap<Object, PyObject>(map);
+        table = Generic.concurrentMap();
+        table.putAll(map);
     }
 
     public PyStringMap(PyObject elements[]) {

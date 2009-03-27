@@ -2,12 +2,13 @@ package org.python.core;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.Set;
 
-import org.python.core.util.ConcurrentHashSet;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 import org.python.expose.MethodType;
+import org.python.util.Generic;
 
 @ExposedType(name = "set", base = PyObject.class)
 public class PySet extends BaseSet {
@@ -15,15 +16,20 @@ public class PySet extends BaseSet {
     public static final PyType TYPE = PyType.fromClass(PySet.class);
 
     public PySet() {
-        super(new ConcurrentHashSet<PyObject>());
+        super(concurrentSet());
     }
 
     public PySet(PyType type) {
-        super(type, new ConcurrentHashSet<PyObject>());
+        super(type, concurrentSet());
     }
 
     public PySet(PyObject data) {
-        super(_update(new ConcurrentHashSet<PyObject>(), data));
+        super(_update(concurrentSet(), data));
+    }
+
+    /** Contextualize the needed Set<PyObject> type paramaters (generics workaround). */
+    private static Set<PyObject> concurrentSet() {
+        return Generic.concurrentSet();
     }
 
     @ExposedNew
