@@ -30,7 +30,7 @@ public class PythonTreeTester {
         //ErrorHandler eh = new ListErrorHandler();
         ErrorHandler eh = new FailFastHandler();
         CharStream input = new ANTLRFileStream(args[0]);
-        PythonLexer lexer = new ModuleParser.PyLexer(input);
+        PythonLexer lexer = new BaseParser.PyLexer(input);
         lexer.setErrorHandler(eh);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         PythonTokenSource indentedSource = new PythonTokenSource(tokens, args[0]);

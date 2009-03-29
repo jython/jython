@@ -12,6 +12,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import org.python.Version;
+import org.python.core.CodeFlag;
+import org.python.core.CompileMode;
 import org.python.core.Options;
 import org.python.core.Py;
 import org.python.core.PyCode;
@@ -98,7 +100,7 @@ public class jython
             InputStream file = zip.getInputStream(runit);
             PyCode code;
             try {
-                code = (PyCode)Py.compile(file, "__run__", "exec");
+                code = (PyCode)Py.compile(file, "__run__", CompileMode.exec);
             } finally {
                 file.close();
             }
@@ -181,7 +183,7 @@ public class jython
                 Options.divisionWarning = 2;
             else if ("new".equals(opts.division)) {
                 Options.Qnew = true;
-                interp.cflags.division = true;
+                interp.cflags.setFlag(CodeFlag.CO_FUTURE_DIVISION);
             }
         }
 

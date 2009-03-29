@@ -1218,7 +1218,7 @@ public final class Py {
             String contents = null;
             if (o instanceof PyString) {
                 if (o instanceof PyUnicode) {
-                    flags |= PyBaseCode.PyCF_SOURCE_IS_UTF8;
+                    flags |= CompilerFlags.PyCF_SOURCE_IS_UTF8;
                 }
                 contents = o.toString();
             } else if (o instanceof PyFile) {
@@ -1231,7 +1231,7 @@ public final class Py {
                 throw Py.TypeError(
                         "exec: argument 1 must be string, code or file object");
             }
-            code = (PyCode)Py.compile_flags(contents, "<string>", "exec",
+            code = (PyCode)Py.compile_flags(contents, "<string>", CompileMode.exec,
                                             getCompilerFlags(flags, false));
         }
         Py.runCode(code, locals, globals);
@@ -1603,41 +1603,31 @@ public final class Py {
     }
 
     public static CompilerFlags getCompilerFlags() {
-        return getCompilerFlags(0, false);
+        return CompilerFlags.getCompilerFlags();
     }
 
     public static CompilerFlags getCompilerFlags(int flags, boolean dont_inherit) {
-        CompilerFlags cflags = null;
+        final PyFrame frame;
         if (dont_inherit) {
-            cflags = new CompilerFlags(flags);
+            frame = null;
         } else {
-            PyFrame frame = Py.getFrame();
-            if (frame != null && frame.f_code != null) {
-                cflags = frame.f_code.co_flags.combine(flags);
-            } else {
-                cflags = new CompilerFlags(flags);
-            }
+            frame = Py.getFrame();
         }
-        return cflags;
+        return CompilerFlags.getCompilerFlags(flags, frame);
     }
 
     public static CompilerFlags getCompilerFlags(CompilerFlags flags, boolean dont_inherit) {
-        CompilerFlags cflags = null;
+        final PyFrame frame;
         if (dont_inherit) {
-            cflags = flags;
+            frame = null;
         } else {
-            PyFrame frame = Py.getFrame();
-            if (frame != null && frame.f_code != null) {
-                cflags = frame.f_code.co_flags.combine(flags);
-            } else {
-                cflags = flags;
-            }
+            frame = Py.getFrame();
         }
-        return cflags;
+        return CompilerFlags.getCompilerFlags(flags, frame);
     }
 
     // w/o compiler-flags
-    public static PyObject compile(InputStream istream, String filename, String kind) {
+    public static PyCode compile(InputStream istream, String filename, CompileMode kind) {
         return compile_flags(istream, filename, kind, new CompilerFlags());
     }
 
@@ -1655,13 +1645,10 @@ public final class Py {
      * @param cflags Compiler flags
      * @return Code object for the compiled module
      */
-    public static PyObject compile_flags(mod node, String name, String filename,
+    public static PyCode compile_flags(mod node, String name, String filename,
                                          boolean linenumbers, boolean printResults,
                                          CompilerFlags cflags) {
         try {
-            if (cflags != null && cflags.only_ast) {
-                return Py.java2py(node);
-            }
             ByteArrayOutputStream ostream = new ByteArrayOutputStream();
             Module.compile(node, ostream, name, filename, linenumbers, printResults, cflags);
 
@@ -1673,17 +1660,17 @@ public final class Py {
         }
     }
 
-    public static PyObject compile_flags(mod node, String filename,
-                                         String kind, CompilerFlags cflags) {
+    public static PyCode compile_flags(mod node, String filename,
+                                         CompileMode kind, CompilerFlags cflags) {
         return Py.compile_flags(node, getName(), filename, true,
-                                kind.equals("single"), cflags);
+                                kind == CompileMode.single, cflags);
     }
 
     /**
      * Compiles python source code coming from a file or another external stream
      */
-    public static PyObject compile_flags(InputStream istream, String filename,
-                                         String kind, CompilerFlags cflags) {
+    public static PyCode compile_flags(InputStream istream, String filename,
+                                         CompileMode kind, CompilerFlags cflags) {
         mod node = ParserFacade.parse(istream, kind, filename, cflags);
         return Py.compile_flags(node, filename, kind, cflags);
     }
@@ -1694,8 +1681,8 @@ public final class Py {
      * DO NOT use this for PyString input. Use
      * {@link #compile_flags(byte[], String, String, CompilerFlags)} instead.
      */
-    public static PyObject compile_flags(String data, String filename,
-                                         String kind, CompilerFlags cflags) {
+    public static PyCode compile_flags(String data, String filename,
+                                         CompileMode kind, CompilerFlags cflags) {
         if (data.contains("\0")) {
             throw Py.TypeError("compile() expected string without null bytes");
         }
@@ -1709,7 +1696,7 @@ public final class Py {
     }
 
     public static PyObject compile_command_flags(String string, String filename,
-            String kind, CompilerFlags cflags, boolean stdprompt) {
+            CompileMode kind, CompilerFlags cflags, boolean stdprompt) {
         mod node = ParserFacade.partialParse(string + "\n", kind, filename,
                                                  cflags, stdprompt);
         if (node == null) {

@@ -3,7 +3,13 @@ package org.python;
 
 import java.io.InputStream;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.EnumSet;
 import java.util.Properties;
+import java.util.Set;
+
+import org.python.core.CodeFlag;
 
 /**
  * Jython version information.
@@ -35,6 +41,10 @@ public class Version {
 
     /** Short version of branch, e.g. asm. */
     public static String SHORT_BRANCH;
+
+    /** The flags that are set by default in a code object. */
+    private static final Collection<CodeFlag> defaultCodeFlags = Arrays.asList(
+            CodeFlag.CO_NESTED, CodeFlag.CO_GENERATOR_ALLOWED);
 
     private static final String headURL =
             "$HeadURL$";
@@ -143,5 +153,9 @@ public class Version {
      */
     public static String getVersion() {
         return String.format("%.80s (%.80s) %.80s", PY_VERSION, getBuildInfo(), getVM());
+    }
+
+    public static Set<CodeFlag> getDefaultCodeFlags() {
+        return EnumSet.copyOf(defaultCodeFlags);
     }
 }

@@ -8,12 +8,12 @@ import org.python.antlr.base.stmt;
 import org.python.antlr.op.*;
 import org.python.core.AstList;
 import org.python.core.ClassDictInit;
+import org.python.core.CompilerFlags;
 import org.python.core.imp;
 import org.python.core.Py;
 import org.python.core.PyInteger;
 import org.python.core.PyObject;
 import org.python.core.PyString;
-import org.python.core.PyTableCode;
 import org.python.core.PyType;
 
 import org.python.antlr.AST;
@@ -27,7 +27,7 @@ public class AstModule implements ClassDictInit {
         dict.__setitem__("__doc__", Py.None);
         dict.__setitem__("__name__", new PyString("_ast"));
         dict.__setitem__("__version__", new PyString("62047"));
-        dict.__setitem__("PyCF_ONLY_AST", new PyInteger(PyTableCode.PyCF_ONLY_AST));
+        dict.__setitem__("PyCF_ONLY_AST", new PyInteger(CompilerFlags.PyCF_ONLY_AST));
 
         dict.__setitem__("astlist", AstList.TYPE);
 

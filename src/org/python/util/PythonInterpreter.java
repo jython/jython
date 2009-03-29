@@ -2,6 +2,7 @@ package org.python.util;
 
 import java.util.Properties;
 
+import org.python.core.CompileMode;
 import org.python.core.CompilerFlags;
 import org.python.core.Py;
 import org.python.core.PyCode;
@@ -132,7 +133,7 @@ public class PythonInterpreter {
      */
     public void exec(String s) {
         setState();
-        Py.exec(Py.compile_flags(s, "<string>", "exec", cflags), locals, locals);
+        Py.exec(Py.compile_flags(s, "<string>", CompileMode.exec, cflags), locals, locals);
         Py.flushLine();
     }
 
@@ -160,7 +161,7 @@ public class PythonInterpreter {
 
     public void execfile(java.io.InputStream s, String name) {
         setState();
-        Py.runCode((PyCode)Py.compile_flags(s, name, "exec", cflags), locals, locals);
+        Py.runCode((PyCode)Py.compile_flags(s, name, CompileMode.exec, cflags), locals, locals);
         Py.flushLine();
     }
 

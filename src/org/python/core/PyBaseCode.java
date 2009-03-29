@@ -17,29 +17,6 @@ public abstract class PyBaseCode extends PyCode {
     public int co_nlocals;
     public boolean varargs,  varkwargs;
 
-    final public static int CO_OPTIMIZED         = 0x0001;
-    final public static int CO_NEWLOCALS       = 0x0002;
-    final public static int CO_VARARGS           = 0x0004;
-    final public static int CO_VARKEYWORDS       = 0x0008;
-    final public static int CO_GENERATOR         = 0x0020;
-
-    // these are defined in __future__.py
-    final public static int CO_NESTED                 = 0x0010;
-    final public static int CO_GENERATOR_ALLOWED      = 0x0;
-    final public static int CO_FUTUREDIVISION         = 0x2000;
-    final public static int CO_FUTURE_ABSOLUTE_IMPORT = 0x4000;
-    final public static int CO_WITH_STATEMENT         = 0x8000;
-
-    //XXX: I'm not positive that this is the right place for these constants.
-    final public static int PyCF_SOURCE_IS_UTF8    = 0x0100;
-    final public static int PyCF_DONT_IMPLY_DEDENT = 0x0200;
-    final public static int PyCF_ONLY_AST          = 0x0400;
-
-    final public static int CO_ALL_FEATURES = PyCF_DONT_IMPLY_DEDENT|PyCF_ONLY_AST|
-                                              PyCF_SOURCE_IS_UTF8|CO_NESTED|
-                                              CO_GENERATOR_ALLOWED| CO_FUTUREDIVISION|
-                                              CO_FUTURE_ABSOLUTE_IMPORT|CO_WITH_STATEMENT;
-
 
     public boolean hasFreevars() {
         return co_freevars != null && co_freevars.length > 0;
@@ -135,7 +112,7 @@ public abstract class PyBaseCode extends PyCode {
             return call(Py.EmptyObjects, Py.NoKeywords, globals, defaults,
                         closure);
         PyFrame frame = new PyFrame(this, globals);
-        if (co_flags.generator) {
+        if (co_flags.isFlagSet(CodeFlag.CO_GENERATOR)) {
             return new PyGenerator(frame, closure);
         }
         return call(frame, closure);
@@ -149,7 +126,7 @@ public abstract class PyBaseCode extends PyCode {
                         Py.NoKeywords, globals, defaults, closure);
         PyFrame frame = new PyFrame(this, globals);
         frame.f_fastlocals[0] = arg1;
-        if (co_flags.generator) {
+        if (co_flags.isFlagSet(CodeFlag.CO_GENERATOR)) {
             return new PyGenerator(frame, closure);
         }
         return call(frame, closure);
@@ -164,7 +141,7 @@ public abstract class PyBaseCode extends PyCode {
         PyFrame frame = new PyFrame(this, globals);
         frame.f_fastlocals[0] = arg1;
         frame.f_fastlocals[1] = arg2;
-        if (co_flags.generator) {
+        if (co_flags.isFlagSet(CodeFlag.CO_GENERATOR)) {
             return new PyGenerator(frame, closure);
         }
         return call(frame, closure);
@@ -181,7 +158,7 @@ public abstract class PyBaseCode extends PyCode {
         frame.f_fastlocals[0] = arg1;
         frame.f_fastlocals[1] = arg2;
         frame.f_fastlocals[2] = arg3;
-        if (co_flags.generator) {
+        if (co_flags.isFlagSet(CodeFlag.CO_GENERATOR)) {
             return new PyGenerator(frame, closure);
         }
         return call(frame, closure);
@@ -297,7 +274,7 @@ public abstract class PyBaseCode extends PyCode {
                                              co_name, argcount));
         }
 
-        if (co_flags.generator) {
+        if (co_flags.isFlagSet(CodeFlag.CO_GENERATOR)) {
             return new PyGenerator(frame, closure);
         }
         return call(frame, closure);

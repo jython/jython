@@ -39,14 +39,14 @@ public class InteractiveInterpreter extends PythonInterpreter {
      * whether to use sys.ps1 or sys.ps2 to prompt the next line.
      **/
     public boolean runsource(String source) {
-        return runsource(source, "<input>", "single");
+        return runsource(source, "<input>", CompileMode.single);
     }
 
     public boolean runsource(String source, String filename) {
-        return runsource(source, filename, "single");
+        return runsource(source, filename, CompileMode.single);
     }
 
-    public boolean runsource(String source, String filename, String kind) {
+    public boolean runsource(String source, String filename, CompileMode kind) {
         PyObject code;
         try {
             code = Py.compile_command_flags(source, filename, kind, cflags, true);

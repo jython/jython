@@ -75,8 +75,8 @@ public class PyBytecode extends PyBaseCode {
         co_freevars = freevars;
         co_name = name;
         co_flags = new CompilerFlags(flags);
-        varargs = co_flags.varargs;
-        varkwargs = co_flags.varkeywords;
+        varargs = co_flags.isFlagSet(CodeFlag.CO_VARARGS);
+        varkwargs = co_flags.isFlagSet(CodeFlag.CO_VARKEYWORDS);
 
         co_stacksize = stacksize;
         co_consts = constants;
@@ -420,7 +420,7 @@ public class PyBytecode extends PyBaseCode {
                         PyObject b = stack.pop();
                         PyObject a = stack.pop();
 
-                        if (!co_flags.division) {
+                        if (!co_flags.isFlagSet(CodeFlag.CO_FUTURE_DIVISION)) {
                             stack.push(a._div(b));
                         } else {
                             stack.push(a._truediv(b));
@@ -530,7 +530,7 @@ public class PyBytecode extends PyBaseCode {
                     case Opcode.INPLACE_DIVIDE: {
                         PyObject b = stack.pop();
                         PyObject a = stack.pop();
-                        if (!co_flags.division) {
+                        if (!co_flags.isFlagSet(CodeFlag.CO_FUTURE_DIVISION)) {
                             stack.push(a._idiv(b));
                         } else {
                             stack.push(a._itruediv(b));
@@ -1248,7 +1248,7 @@ public class PyBytecode extends PyBaseCode {
             throw ts.exception;
         }
 
-        if (co_flags.generator && why == Why.RETURN && retval == Py.None) {
+        if (co_flags.isFlagSet(CodeFlag.CO_GENERATOR) && why == Why.RETURN && retval == Py.None) {
             f.f_lasti = -1;
         }
 

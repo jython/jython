@@ -527,7 +527,7 @@ public class __builtin__ {
         PyCode code;
 
         try {
-            code = (PyCode)Py.compile_flags(file, name, "exec", cflags);
+            code = (PyCode)Py.compile_flags(file, name, CompileMode.exec, cflags);
         } finally {
             try {
                 file.close();
@@ -1526,45 +1526,41 @@ class CompileFunction extends PyBuiltinFunction {
 
     public static PyObject compile(PyObject source, String filename, String mode, int flags,
                                    boolean dont_inherit) {
-        if ((flags & ~PyBaseCode.CO_ALL_FEATURES) != 0) {
-            throw Py.ValueError("compile(): unrecognised flags");
-        }
-        if (!mode.equals("exec") && !mode.equals("eval") && !mode.equals("single")) {
-            throw Py.ValueError("compile() arg 3 must be 'exec' or 'eval' or 'single'");
-        }
+        CompilerFlags cflags = Py.getCompilerFlags(flags, dont_inherit);
+        CompileMode kind = CompileMode.getMode(mode);
 
-        mod ast = py2node(source);
-        if (ast != null) {
-            return Py.compile_flags(ast, filename, mode, Py.getCompilerFlags(flags, dont_inherit));
-        }
-
-        if (!(source instanceof PyString)) {
-            throw Py.TypeError("expected a readable buffer object");
-        }
-        if (source instanceof PyUnicode) {
-            flags |= PyBaseCode.PyCF_SOURCE_IS_UTF8;
-        }
-        return Py.compile_flags(((PyString)source).toString(), filename, mode,
-                                Py.getCompilerFlags(flags, dont_inherit));
+        return compile(source, filename, kind, cflags, dont_inherit);
     }
 
-    public static PyObject compile(PyObject source, String filename, String mode, CompilerFlags flags,
+    public static PyObject compile(PyObject source, String filename, CompileMode kind, CompilerFlags cflags,
                                    boolean dont_inherit) {
-        if (!mode.equals("exec") && !mode.equals("eval") && !mode.equals("single")) {
-            throw Py.ValueError("compile() arg 3 must be 'exec' or 'eval' or 'single'");
-        }
-
+        cflags = Py.getCompilerFlags(cflags, dont_inherit);
+        
         mod ast = py2node(source);
-        if (ast != null) {
-            return Py.compile_flags(ast, filename, mode, Py.getCompilerFlags(flags, dont_inherit));
+        if (ast == null) {
+            if (!(source instanceof PyString)) {
+                throw Py.TypeError("expected a readable buffer object");
+            }
+            cflags.source_is_utf8 = source instanceof PyUnicode;
+            
+            String data = source.toString();
+            
+            if (data.contains("\0")) {
+                throw Py.TypeError("compile() expected string without null bytes");
+            }
+            if (cflags != null && cflags.dont_imply_dedent) {
+                data += "\n";
+            } else {
+                data += "\n\n";
+            }
+            ast = ParserFacade.parse(data, kind, filename, cflags);
         }
 
-        if (!(source instanceof PyString)) {
-            throw Py.TypeError("expected a readable buffer object");
+        if (cflags.only_ast) {
+            return Py.java2py(ast);
+        } else {
+            return Py.compile_flags(ast, filename, kind, cflags);
         }
-        flags.source_is_utf8 = source instanceof PyUnicode;
-        return Py.compile_flags(((PyString)source).toString(), filename, mode,
-                                Py.getCompilerFlags(flags, dont_inherit));
     }
 
     /**

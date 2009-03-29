@@ -62,7 +62,7 @@ public class PyFrame extends PyObject
         // This needs work to be efficient with multiple interpreter states
         if (locals == null && code != null) {
             // ! f_fastlocals needed for arg passing too
-            if (code.co_flags.optimized || code.nargs > 0) {
+            if (code.co_flags.isFlagSet(CodeFlag.CO_OPTIMIZED) || code.nargs > 0) {
                 if (code.co_nlocals > 0) {
                     // internal: may change
                     f_fastlocals = new PyObject[code.co_nlocals - code.jy_npurecell];
@@ -191,7 +191,7 @@ public class PyFrame extends PyObject
                     PyObject o = f_fastlocals[i];
                     if (o != null) f_locals.__setitem__(f_code.co_varnames[i], o);
                 }
-                if (!f_code.co_flags.optimized) {
+                if (!f_code.co_flags.isFlagSet(CodeFlag.CO_OPTIMIZED)) {
                     f_fastlocals = null;
                 }
             }

@@ -228,7 +228,7 @@ public class imp {
             }
             org.python.antlr.base.mod node;
             try {
-                node = ParserFacade.parse(fp, "exec", filename, new CompilerFlags());
+                node = ParserFacade.parse(fp, CompileMode.exec, filename, new CompilerFlags());
             } finally {
                 fp.close();
             }

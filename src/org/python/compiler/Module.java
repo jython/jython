@@ -12,6 +12,7 @@ import java.util.Map;
 
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Opcodes;
+import org.python.core.CodeFlag;
 import org.python.core.CompilerFlags;
 import org.python.core.Py;
 import org.python.core.PyException;
@@ -506,17 +507,17 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
         code.jy_npurecell = scope.jy_npurecell;
 
         if (compiler.optimizeGlobals) {
-            code.moreflags |= org.python.core.PyTableCode.CO_OPTIMIZED;
+            code.moreflags |= org.python.core.CodeFlag.CO_OPTIMIZED.flag;
         }
         if (compiler.my_scope.generator) {
-            code.moreflags |= org.python.core.PyTableCode.CO_GENERATOR;
+            code.moreflags |= org.python.core.CodeFlag.CO_GENERATOR.flag;
         }
         if (cflags != null) {
-            if (cflags.generator_allowed) {
-                code.moreflags |= org.python.core.PyTableCode.CO_GENERATOR_ALLOWED;
+            if (cflags.isFlagSet(CodeFlag.CO_GENERATOR_ALLOWED)) {
+                code.moreflags |= org.python.core.CodeFlag.CO_GENERATOR_ALLOWED.flag;
             }
-            if (cflags.division) {
-                code.moreflags |= org.python.core.PyTableCode.CO_FUTUREDIVISION;
+            if (cflags.isFlagSet(CodeFlag.CO_FUTURE_DIVISION)) {
+                code.moreflags |= org.python.core.CodeFlag.CO_FUTURE_DIVISION.flag;
             }
         }
 

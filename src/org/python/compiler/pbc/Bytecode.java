@@ -14,6 +14,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import org.python.core.CodeFlag;
 import org.python.core.Py;
 import org.python.core.Opcode;
 import org.python.core.PyBaseCode;
@@ -25,7 +27,7 @@ class Bytecode {
 
     private int co_argcount = 0;
     private int co_stacksize = 0;
-    private int co_flags = PyBaseCode.CO_OPTIMIZED | PyBaseCode.CO_NEWLOCALS; // typical usage
+    private int co_flags = CodeFlag.CO_OPTIMIZED.flag | CodeFlag.CO_NEWLOCALS.flag; // typical usage
 //    co_filename = '<generated code>'
 //    co_name = '<lambda>'
 //    co_firstlineno = 0
@@ -135,7 +137,7 @@ class Bytecode {
 
     public void YIELD_VALUE() {
         stackchange(1, 1);
-        co_flags |= PyBaseCode.CO_GENERATOR;
+        co_flags |= CodeFlag.CO_GENERATOR.flag;
         emit(Opcode.YIELD_VALUE);
     }
 
