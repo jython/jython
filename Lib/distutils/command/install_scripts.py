@@ -46,7 +46,7 @@ class install_scripts (Command):
         if not self.skip_build:
             self.run_command('build_scripts')
         self.outfiles = self.copy_tree(self.build_dir, self.install_dir)
-        if os.name == 'posix':
+        if hasattr(os, 'chmod'):
             # Set the executable bits (owner, group, and world) on
             # all the scripts we just installed.
             for file in self.get_outputs():

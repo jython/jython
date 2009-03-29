@@ -94,18 +94,18 @@ class build_scripts (Command):
             if adjust:
                 log.info("copying and adjusting %s -> %s", script,
                          self.build_dir)
+                if not sysconfig.python_build:
+                    executable = self.executable
+                else:
+                    executable = os.path.join(
+                        sysconfig.get_config_var("BINDIR"),
+                        "python" + sysconfig.get_config_var("EXE"))
+                executable = fix_jython_executable(executable, post_interp)
                 if not self.dry_run:
                     outf = open(outfile, "w")
-                    if not sysconfig.python_build:
-                        outf.write("#!%s%s\n" %
-                                   (self.executable,
-                                    post_interp))
-                    else:
-                        outf.write("#!%s%s\n" %
-                                   (os.path.join(
-                            sysconfig.get_config_var("BINDIR"),
-                            "python" + sysconfig.get_config_var("EXE")),
-                                    post_interp))
+                    outf.write("#!%s%s\n" %
+                               (executable,
+                                post_interp))
                     outf.writelines(f.readlines())
                     outf.close()
                 if f:
@@ -115,7 +115,7 @@ class build_scripts (Command):
                     f.close()
                 self.copy_file(script, outfile)
 
-        if os.name == 'posix':
+        if hasattr(os, 'chmod'):
             for file in outfiles:
                 if self.dry_run:
                     log.info("changing mode of %s", file)
@@ -130,3 +130,29 @@ class build_scripts (Command):
     # copy_scripts ()
 
 # class build_scripts
+
+
+def is_sh(executable):
+    """Determine if the specified executable is a .sh (contains a #! line)"""
+    try:
+        fp = open(executable)
+        magic = fp.read(2)
+        fp.close()
+    except IOError, OSError:
+        return executable
+    return magic == '#!'
+
+
+def fix_jython_executable(executable, options):
+    if sys.platform.startswith('java') and is_sh(executable):
+        # Workaround Jython's sys.executable being a .sh (an invalid
+        # shebang line interpreter)
+        if options:
+            # Can't apply the workaround, leave it broken
+            log.warn("WARNING: Unable to adapt shebang line for Jython,"
+                             " the following script is NOT executable\n"
+                     "         see http://bugs.jython.org/issue1112 for"
+                             " more information.")
+        else:
+            return '/usr/bin/env %s' % executable
+    return executable
