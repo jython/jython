@@ -862,9 +862,19 @@ public final class Py {
      * Called by the code generated in {@link Module#addMain()}
      */
     public static void runMain(PyRunnable main, String[] args) throws Exception {
+        runMain(new PyRunnableBootstrap(main), args);
+    }
+
+    /**
+     * Initializes a default PythonInterpreter and runs the code loaded from the
+     * {@link CodeBootstrap} as __main__ Called by the code generated in
+     * {@link Module#addMain()}
+     */
+    public static void runMain(CodeBootstrap main, String[] args)
+            throws Exception {
         PySystemState.initialize(null, null, args, main.getClass().getClassLoader());
         try {
-            imp.createFromCode("__main__", main.getMain());
+            imp.createFromCode("__main__", CodeLoader.loadCode(main));
         } catch (PyException e) {
             Py.getSystemState().callExitFunc();
             if (Py.matchException(e, Py.SystemExit)) {
@@ -1648,6 +1658,8 @@ public final class Py {
     public static PyCode compile_flags(mod node, String name, String filename,
                                          boolean linenumbers, boolean printResults,
                                          CompilerFlags cflags) {
+        return CompilerFacade.compile(node, name, filename, linenumbers, printResults, cflags);
+        /*
         try {
             ByteArrayOutputStream ostream = new ByteArrayOutputStream();
             Module.compile(node, ostream, name, filename, linenumbers, printResults, cflags);
@@ -1658,6 +1670,7 @@ public final class Py {
         } catch (Throwable t) {
             throw ParserFacade.fixParseError(null, t, filename);
         }
+        */
     }
 
     public static PyCode compile_flags(mod node, String filename,
