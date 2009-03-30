@@ -1410,11 +1410,6 @@ public class PyObject implements Serializable {
             if (res != null)
                 return res;
             return _cmpeq_unsafe(o) == 0 ? Py.True : Py.False;
-        } catch (PyException e) {
-            if (Py.matchException(e, Py.AttributeError)) {
-                return Py.False;
-            }
-            throw e;
         } finally {
             delete_token(ts, token);
             ts.compareStateNesting--;

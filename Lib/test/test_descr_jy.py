@@ -331,6 +331,13 @@ class DescrExceptionsTestCase(unittest.TestCase):
         self.assertRaises(AttributeError, func, old)
         self.assertRaises(TypeError, func, new)
 
+    def test_eq(self):
+        class A(object):
+            def __eq__(self, other):
+                return self.value == other.value
+        self.assertRaises(AttributeError, lambda: A() == A())
+
+
 class GetAttrTestCase(unittest.TestCase):
     def test_raising_custom_attribute_error(self):
         # Very similar to
