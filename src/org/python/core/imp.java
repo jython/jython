@@ -66,6 +66,26 @@ public class imp {
         return module;
     }
 
+    /**
+     * Remove name form sys.modules if it's there.
+     *
+     * @param name the module name
+     */
+    private static void removeModule(String name) {
+        name = name.intern();
+        PyObject modules = Py.getSystemState().modules;
+        if (modules.__finditem__(name) != null) {
+            try {
+                modules.__delitem__(name);
+            } catch (PyException pye) {
+                // another thread may have deleted it
+                if (!Py.matchException(pye, Py.KeyError)) {
+                    throw pye;
+                }
+            }
+        }
+    }
+
     private static byte[] readBytes(InputStream fp) {
         try {
             return FileUtil.readBytes(fp);
@@ -295,7 +315,7 @@ public class imp {
             PyFrame f = new PyFrame(code, module.__dict__, module.__dict__, null);
             code.call(f);
         } catch (RuntimeException t) {
-            Py.getSystemState().modules.__delitem__(name.intern());
+            removeModule(name);
             throw t;
         }
         return module;

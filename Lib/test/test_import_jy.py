@@ -159,6 +159,9 @@ class ImpTestCase(unittest.TestCase):
         self.assertEquals(Metis, Zeus.Athena.__bases__[0])
         self.assertEquals(Zeus, Metis.__bases__[0])
 
+    def test_sys_modules_deletion(self):
+        self.assertRaises(ZeroDivisionError, __import__, 'test.module_deleter')
+
 def test_main():
     test_support.run_unittest(MislabeledImportTestCase,
                               OverrideBuiltinsImportTestCase,
