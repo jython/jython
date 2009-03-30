@@ -22,6 +22,7 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.io.StringReader;
 import java.lang.reflect.Constructor;
+import java.math.BigInteger;
 import java.math.BigDecimal;
 import java.sql.CallableStatement;
 import java.sql.Date;
@@ -122,7 +123,13 @@ public class DataHandler {
     public void setJDBCObject(PreparedStatement stmt, int index, PyObject object) throws SQLException {
 
         try {
-            stmt.setObject(index, object.__tojava__(Object.class));
+            Object o = object.__tojava__(Object.class);
+            if (o instanceof BigInteger) {
+                //XXX: This is in here to specifically fix passing a PyLong into Postgresql.
+                stmt.setObject(index, o, Types.BIGINT);
+            } else {
+                stmt.setObject(index, o);
+            }
         } catch (Exception e) {
             SQLException cause = null, ex = new SQLException("error setting index [" + index + "]");
 
