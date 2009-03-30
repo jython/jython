@@ -3,7 +3,6 @@ package org.python.modules._weakref;
 
 import org.python.core.ArgParser;
 import org.python.core.Py;
-import org.python.core.PyBuiltinCallable;
 import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
 import org.python.core.PyType;
@@ -54,7 +53,7 @@ public class ReferenceType extends AbstractReference {
     final void weakref___init__(PyObject[] args, String[] keywords) {
         // Just ensure at least one arg, leaving other args alone
         ArgParser ap = parseInitArgs("__init__", args, keywords);
-        PyObject ob = ap.getPyObject(0);
+        ap.getPyObject(0);
     }
 
     /**
