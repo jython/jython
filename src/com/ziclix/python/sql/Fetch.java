@@ -259,7 +259,7 @@ abstract public class Fetch {
         for (int i = 1; i <= meta.getColumnCount(); i++) {
             PyObject[] a = new PyObject[7];
 
-            a[0] = Py.newString(meta.getColumnName(i));
+            a[0] = Py.newString(meta.getColumnLabel(i));
             a[1] = Py.newInteger(meta.getColumnType(i));
             a[2] = Py.newInteger(meta.getColumnDisplaySize(i));
             a[3] = Py.None;
