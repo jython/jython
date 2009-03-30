@@ -1219,6 +1219,19 @@ public final class Py {
     public static void exec(PyObject o, PyObject globals, PyObject locals) {
         PyCode code;
         int flags = 0;
+        if (o instanceof PyTuple) {
+            PyTuple tuple = (PyTuple) o;
+            int len = tuple.__len__();
+            if ((globals == null || globals.equals(None))
+                    && (locals == null || locals.equals(None))
+                    && (len >= 2 && len <= 3)) {
+                o = tuple.__getitem__(0);
+                globals = tuple.__getitem__(1);
+                if (len == 3) {
+                    locals = tuple.__getitem__(2);
+                }
+            }
+        }
         if (o instanceof PyCode) {
             code = (PyCode) o;
             if (locals == null && o instanceof PyBaseCode && ((PyBaseCode) o).hasFreevars()) {
