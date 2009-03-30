@@ -330,6 +330,11 @@ class ClassDefinesDunderModule(unittest.TestCase):
         class Bar(object):
             self.assertEqual(__module__, module_name)
 
+    def test_dundermodule_in_class_dict_copy(self):
+        class_dict = {'a': 'this is a', 'b': 'this is b'}
+        Foo = type.__new__(type, 'Foo', (object,), class_dict)
+        Foo.keys = class_dict.keys
+        assert sorted(Foo().keys()) == sorted(['a', 'b']), sorted(Foo().keys())
 
 class ClassMetaclassRepr(unittest.TestCase):
     """Verifies #1131 is fixed"""

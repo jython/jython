@@ -166,19 +166,6 @@ public class PyType extends PyObject implements Serializable {
             }
         }
 
-        if (dict.__finditem__("__module__") == null) {
-           PyFrame frame = Py.getFrame();
-           if (frame != null) {
-               PyObject globals = frame.f_globals;
-               PyObject modname;
-               if ((modname = globals.__finditem__("__name__")) != null) {
-                   dict.__setitem__("__module__", modname);
-               }
-           }
-        }
-        // XXX also __doc__ __module__
-
-
         Class<?> proxyClass = null;
         if (baseClass != null || interfaces.size() != 0) {
             String proxyName = name;
@@ -227,6 +214,19 @@ public class PyType extends PyObject implements Serializable {
         } else {
             dict = ((PyDictionary)dict).copy();
         }
+
+        if (dict.__finditem__("__module__") == null) {
+           PyFrame frame = Py.getFrame();
+           if (frame != null) {
+               PyObject globals = frame.f_globals;
+               PyObject modname;
+               if ((modname = globals.__finditem__("__name__")) != null) {
+                   dict.__setitem__("__module__", modname);
+               }
+           }
+        }
+        // XXX also __doc__ __module__
+
         newtype.dict = dict;
         newtype.name = name;
         newtype.base = best_base(bases_list);
