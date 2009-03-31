@@ -42,10 +42,7 @@ public abstract class AbstractReference extends PyObject {
     }
 
     public int hashCode() {
-        if (gref.realHash) {
-            return gref.hash;
-        }
-        throw Py.TypeError("unhashable instance");
+        return gref.pythonHashCode();
     }
 
     public PyObject __eq__(PyObject other) {

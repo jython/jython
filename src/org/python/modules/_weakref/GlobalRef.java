@@ -5,21 +5,30 @@ import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import java.util.Map;
 import java.util.List;
+import java.util.concurrent.ConcurrentMap;
 
 import org.python.core.Py;
-import org.python.core.PyException;
 import org.python.core.PyList;
 import org.python.core.PyObject;
 import org.python.util.Generic;
 
 public class GlobalRef extends WeakReference {
 
-    int hash;
+    /**
+     * This reference's hashCode: the System.identityHashCode of the referent. Only used
+     * internally.
+     */
+    private int hashCode;
 
-    /** Whether the hash value was calculated by the underlying object. */
-    boolean realHash;
+    /**
+     * The public hashCode for the Python AbstractReference wrapper. Derived from the
+     * referent's hashCode.
+     */
+    private int pythonHashCode;
+
+    /** Whether pythonHashCode was already determined. */
+    private boolean havePythonHashCode;
 
     private List references = new ArrayList();
 
@@ -27,7 +36,7 @@ public class GlobalRef extends WeakReference {
 
     private static RefReaperThread reaperThread;
 
-    private static Map<GlobalRef, GlobalRef> objects = Generic.map();
+    private static ConcurrentMap<GlobalRef, GlobalRef> objects = Generic.concurrentMap();
 
     static {
         initReaperThread();
@@ -35,27 +44,7 @@ public class GlobalRef extends WeakReference {
 
     public GlobalRef(PyObject object) {
         super(object, referenceQueue);
-        calcHash(object);
-    }
-
-    /**
-     * Calculate a hash code to use for this object.  If the PyObject we're
-     * referencing implements hashCode, we use that value.  If not, we use
-     * System.identityHashCode(refedObject).  This allows this object to be
-     * used in a Map while allowing Python ref objects to tell if the
-     * hashCode is actually valid for the object.
-     */
-    private void calcHash(PyObject object) {
-        try {
-            hash = object.hashCode();
-            realHash = true;
-        } catch (PyException pye) {
-            if (Py.matchException(pye, Py.TypeError)) {
-                hash = System.identityHashCode(object);
-            } else {
-                throw pye;
-            }
-        }
+        hashCode = System.identityHashCode(object);
     }
 
     public synchronized void add(AbstractReference ref) {
@@ -148,14 +137,35 @@ public class GlobalRef extends WeakReference {
         if (t == u) {
             return true;
         }
-        return t.equals(u);
+        // Don't consult the objects' equals (__eq__) method, it can't be trusted
+        return false;
     }
 
     /**
-     * Allow GlobalRef's to be used as hashtable keys.
+     * Allows GlobalRef to be used as hashtable keys.
+     *
+     * @return a hashCode int value
      */
     public int hashCode() {
-        return hash;
+        return hashCode;
+    }
+
+    /**
+     * The publicly used hashCode, for the AbstractReference wrapper.
+     *
+     * @return a hashCode int value
+     */
+    public int pythonHashCode() {
+        if (havePythonHashCode) {
+            return pythonHashCode;
+        }
+        Object referent = get();
+        if (referent == null) {
+            throw Py.TypeError("weak object has gone away");
+        }
+        pythonHashCode = referent.hashCode();
+        havePythonHashCode = true;
+        return pythonHashCode;
     }
 
     private static void initReaperThread() {
