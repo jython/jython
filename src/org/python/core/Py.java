@@ -1194,16 +1194,17 @@ public final class Py {
     public static PyObject runCode(PyCode code, PyObject locals,
             PyObject globals) {
         PyFrame f;
+        ThreadState ts = getThreadState();
         if (locals == null || locals == Py.None) {
             if (globals != null && globals != Py.None) {
                 locals = globals;
             } else {
-                locals = Py.getFrame().getLocals();
+                locals = ts.frame.getLocals();
             }
         }
 
         if (globals == null || globals == Py.None) {
-            globals = Py.getFrame().f_globals;
+            globals = ts.frame.f_globals;
         }
 
         PyTableCode tc = null;
@@ -1213,7 +1214,7 @@ public final class Py {
 
         f = new PyFrame(tc, locals, globals,
                 Py.getSystemState().getBuiltins());
-        return code.call(f);
+        return code.call(ts, f);
     }
 
     public static void exec(PyObject o, PyObject globals, PyObject locals) {
@@ -1543,9 +1544,9 @@ public final class Py {
     public static PyObject makeClass(String name, PyObject[] bases,
                                      PyCode code, PyObject doc,
                                      PyObject[] closure_cells) {
-        PyObject globals = getFrame().f_globals;
-        PyObject dict = code.call(Py.EmptyObjects, Py.NoKeywords, globals, Py.EmptyObjects,
-                                  new PyTuple(closure_cells));
+        ThreadState state = getThreadState();
+        PyObject dict = code.call(state, Py.EmptyObjects, Py.NoKeywords,
+                state.frame.f_globals, Py.EmptyObjects, new PyTuple(closure_cells));
         if (doc != null && dict.__finditem__("__doc__") == null) {
             dict.__setitem__("__doc__", doc);
         }
@@ -1997,44 +1998,50 @@ class JavaCode extends PyCode {
         }
     }
 
-    public PyObject call(PyFrame frame, PyObject closure) {
+    public PyObject call(ThreadState state, PyFrame frame, PyObject closure) {
         //XXX: what the heck is this?  Looks like debug code, but it's
         //     been here a long time...
         System.out.println("call #1");
         return Py.None;
     }
 
-    public PyObject call(PyObject args[], String keywords[],
+    public PyObject call(ThreadState state, PyObject args[], String keywords[],
             PyObject globals, PyObject[] defaults,
             PyObject closure) {
         return func.__call__(args, keywords);
     }
 
-    public PyObject call(PyObject self, PyObject args[], String keywords[],
+    public PyObject call(ThreadState state, PyObject self, PyObject args[], String keywords[],
             PyObject globals, PyObject[] defaults,
             PyObject closure) {
         return func.__call__(self, args, keywords);
     }
 
-    public PyObject call(PyObject globals, PyObject[] defaults,
+    public PyObject call(ThreadState state, PyObject globals, PyObject[] defaults,
             PyObject closure) {
         return func.__call__();
     }
 
-    public PyObject call(PyObject arg1, PyObject globals,
+    public PyObject call(ThreadState state, PyObject arg1, PyObject globals,
             PyObject[] defaults, PyObject closure) {
         return func.__call__(arg1);
     }
 
-    public PyObject call(PyObject arg1, PyObject arg2, PyObject globals,
+    public PyObject call(ThreadState state, PyObject arg1, PyObject arg2, PyObject globals,
             PyObject[] defaults, PyObject closure) {
         return func.__call__(arg1, arg2);
     }
 
-    public PyObject call(PyObject arg1, PyObject arg2, PyObject arg3,
+    public PyObject call(ThreadState state, PyObject arg1, PyObject arg2, PyObject arg3,
             PyObject globals, PyObject[] defaults,
             PyObject closure) {
         return func.__call__(arg1, arg2, arg3);
+    }
+    
+    public PyObject call(ThreadState state, PyObject arg1, PyObject arg2,
+            PyObject arg3, PyObject arg4, PyObject globals,
+            PyObject[] defaults, PyObject closure) {
+        return func.__call__(arg1, arg2, arg3, arg4);
     }
 }
 

@@ -314,6 +314,10 @@ public class PyObject implements Serializable {
     public PyObject __call__(PyObject args[], String keywords[]) {
         throw Py.TypeError(String.format("'%s' object is not callable", getType().fastGetName()));
     }
+    
+    public PyObject __call__(ThreadState state, PyObject args[], String keywords[]) {
+        return __call__(args, keywords);
+    }
 
     /**
      * A variant of the __call__ method with one extra initial argument.
@@ -329,14 +333,15 @@ public class PyObject implements Serializable {
      *                 keyword arguments).
      * @param keywords the keywords used for all keyword arguments.
      **/
-    public PyObject __call__(
-        PyObject arg1,
-        PyObject args[],
-        String keywords[]) {
+    public PyObject __call__(PyObject arg1, PyObject args[], String keywords[]) {
         PyObject[] newArgs = new PyObject[args.length + 1];
         System.arraycopy(args, 0, newArgs, 1, args.length);
         newArgs[0] = arg1;
         return __call__(newArgs, keywords);
+    }
+    
+    public PyObject __call__(ThreadState state, PyObject arg1, PyObject args[], String keywords[]) {
+        return __call__(arg1, args, keywords);
     }
 
     /**
@@ -350,6 +355,10 @@ public class PyObject implements Serializable {
     public PyObject __call__(PyObject args[]) {
         return __call__(args, Py.NoKeywords);
     }
+    
+    public PyObject __call__(ThreadState state, PyObject args[]) {
+        return __call__(args);
+    }
 
     /**
      * A variant of the __call__ method with no arguments.  The default
@@ -359,6 +368,10 @@ public class PyObject implements Serializable {
      **/
     public PyObject __call__() {
         return __call__(Py.EmptyObjects, Py.NoKeywords);
+    }
+    
+    public PyObject __call__(ThreadState state) {
+        return __call__();
     }
 
     /**
@@ -371,6 +384,10 @@ public class PyObject implements Serializable {
      **/
     public PyObject __call__(PyObject arg0) {
         return __call__(new PyObject[] { arg0 }, Py.NoKeywords);
+    }
+    
+    public PyObject __call__(ThreadState state, PyObject arg0) {
+        return __call__(arg0);
     }
 
     /**
@@ -386,6 +403,10 @@ public class PyObject implements Serializable {
         return __call__(new PyObject[] { arg0, arg1 }, Py.NoKeywords);
     }
 
+    public PyObject __call__(ThreadState state, PyObject arg0, PyObject arg1) {
+        return __call__(arg0, arg1);
+    }
+
     /**
      * A variant of the __call__ method with three arguments.  The default
      * behavior is to invoke <code>__call__(args, keywords)</code> with the
@@ -399,6 +420,10 @@ public class PyObject implements Serializable {
     public PyObject __call__(PyObject arg0, PyObject arg1, PyObject arg2) {
         return __call__(new PyObject[] { arg0, arg1, arg2 }, Py.NoKeywords);
     }
+    
+    public PyObject __call__(ThreadState state, PyObject arg0, PyObject arg1, PyObject arg2) {
+        return __call__(arg0, arg1, arg2);
+    }
 
     /**
      * A variant of the __call__ method with four arguments.  The default
@@ -411,14 +436,14 @@ public class PyObject implements Serializable {
      * @param arg2     the third argument to the function.
      * @param arg3     the fourth argument to the function.
      **/
-    public PyObject __call__(
-        PyObject arg0,
-        PyObject arg1,
-        PyObject arg2,
-        PyObject arg3) {
+    public PyObject __call__(PyObject arg0, PyObject arg1, PyObject arg2, PyObject arg3) {
         return __call__(
             new PyObject[] { arg0, arg1, arg2, arg3 },
             Py.NoKeywords);
+    }
+    
+    public PyObject __call__(ThreadState state, PyObject arg0, PyObject arg1, PyObject arg2, PyObject arg3) {
+        return __call__(arg0, arg1, arg2, arg3);
     }
 
     /** @deprecated **/

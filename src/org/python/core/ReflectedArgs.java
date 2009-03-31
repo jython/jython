@@ -52,10 +52,11 @@ public class ReflectedArgs {
         if (this.isStatic) {
             if (self != null) {
                 /*
-                 * PyObject[] newArgs = new PyObject[pyArgs.length+1];
-                 * System.arraycopy(pyArgs, 0, newArgs, 1, pyArgs.length);
-                 * newArgs[0] = self; pyArgs = newArgs;
-                 */
+                PyObject[] newArgs = new PyObject[pyArgs.length+1];
+                System.arraycopy(pyArgs, 0, newArgs, 1, pyArgs.length);
+                newArgs[0] = self;
+                pyArgs = newArgs;
+                //*/
                 self = null;
             }
         } else {

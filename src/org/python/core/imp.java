@@ -313,7 +313,7 @@ public class imp {
 
         try {
             PyFrame f = new PyFrame(code, module.__dict__, module.__dict__, null);
-            code.call(f);
+            code.call(Py.getThreadState(), f);
         } catch (RuntimeException t) {
             removeModule(name);
             throw t;

@@ -180,7 +180,14 @@ public class PyReflectedFunction extends PyObject {
     }
 
     public PyObject __call__(PyObject[] args, String[] keywords) {
-        return __call__(null, args, keywords);
+        PyObject self = null;
+        /*
+        PyObject[] new_args = new PyObject[args.length - 1];
+        System.arraycopy(args, 1, new_args, 0, new_args.length);
+        self = args[0];
+        args = new_args;
+        */
+        return __call__(self, args, keywords);
     }
 
     // A bunch of code to make error handling prettier

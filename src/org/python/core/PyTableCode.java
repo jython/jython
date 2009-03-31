@@ -122,9 +122,8 @@ public class PyTableCode extends PyBaseCode
     }
 
     @Override
-    public PyObject call(PyFrame frame, PyObject closure) {
+    public PyObject call(ThreadState ts, PyFrame frame, PyObject closure) {
 //         System.err.println("tablecode call: "+co_name);
-        ThreadState ts = Py.getThreadState();
         if (ts.systemState == null) {
             ts.systemState = Py.defaultSystemState;
         }
@@ -163,7 +162,7 @@ public class PyTableCode extends PyBaseCode
 
         PyObject ret;
         try {
-            ret = funcs.call_function(func_id, frame);
+            ret = funcs.call_function(func_id, frame, ts);
         } catch (Throwable t) {
             // Convert exceptions that occured in Java code to PyExceptions
             PyException pye = Py.JavaError(t);

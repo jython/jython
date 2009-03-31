@@ -8,6 +8,7 @@ public interface ClassConstants {
     final static String $pyUnicode  = "Lorg/python/core/PyUnicode;";
     final static String $pyExc      = "Lorg/python/core/PyException;";
     final static String $pyFrame    = "Lorg/python/core/PyFrame;";
+    final static String $threadState= "Lorg/python/core/ThreadState;";
     final static String $pyCode     = "Lorg/python/core/PyCode;";
     final static String $pyInteger  = "Lorg/python/core/PyInteger;";
     final static String $pyLong     = "Lorg/python/core/PyLong;";

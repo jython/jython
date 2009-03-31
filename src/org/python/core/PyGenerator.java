@@ -106,8 +106,13 @@ public class PyGenerator extends PyIterator {
             super.finalize();
         }
     }
-
+    
+    @Override
     public PyObject __iternext__() {
+        return __iternext__(Py.getThreadState());
+    }
+
+    public PyObject __iternext__(ThreadState state) {
         if (gi_running)
             throw Py.ValueError("generator already executing");
         if (gi_frame == null) {
@@ -121,7 +126,7 @@ public class PyGenerator extends PyIterator {
         gi_running = true;
         PyObject result = null;
         try {
-            result = gi_frame.f_code.call(gi_frame, closure);
+            result = gi_frame.f_code.call(state, gi_frame, closure);
         } catch(PyException e) {
             if (!(e.type == Py.StopIteration || e.type == Py.GeneratorExit)) {
                 gi_frame = null;

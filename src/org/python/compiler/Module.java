@@ -432,7 +432,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
 
         Code c = classfile.addMethod(
             code.fname,
-            "(" + $pyFrame + ")" + $pyObj,
+            "(" + $pyFrame + $threadState + ")" + $pyObj,
             ACC_PUBLIC);
 
         CodeCompiler compiler = new CodeCompiler(this, printResults);
@@ -595,11 +595,12 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
     public void addFunctions() throws IOException {
         Code code = classfile.addMethod(
             "call_function",
-            "(I" + $pyFrame + ")" + $pyObj,
+            "(I" + $pyFrame + $threadState + ")" + $pyObj,
             ACC_PUBLIC);
 
-        code.aload(0);
-        code.aload(2);
+        code.aload(0); // this
+        code.aload(2); // frame
+        code.aload(3); // thread state
         Label def = new Label();
         Label[] labels = new Label[codes.size()];
         int i;
@@ -611,7 +612,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
         code.tableswitch(0, labels.length - 1, def, labels);
         for(i=0; i<labels.length; i++) {
             code.label(labels[i]);
-            code.invokevirtual(classfile.name, ((PyCodeConstant)codes.get(i)).fname, "(" + $pyFrame + ")" + $pyObj);
+            code.invokevirtual(classfile.name, ((PyCodeConstant)codes.get(i)).fname, "(" + $pyFrame + $threadState + ")" + $pyObj);
             code.areturn();
         }
         code.label(def);

@@ -93,21 +93,143 @@ public class PyMethod extends PyObject {
             return this;
         }
     }
-
+    /*// This has been disabled since JavaFunc expects to be called with self + boxed args
+    @Override
+    public PyObject __call__() {
+        return __call__(Py.getThreadState());
+    }
+    
+    @Override
+    public PyObject __call__(ThreadState state) {
+        PyObject self = checkSelf(null, null);
+        if (self == null) {
+            return im_func.__call__(state);
+        } else {
+            return im_func.__call__(state, self);
+        }
+    }
+    
+    @Override
+    public PyObject __call__(PyObject arg0) {
+        return __call__(Py.getThreadState(), arg0);
+    }
+    
+    @Override
+    public PyObject __call__(ThreadState state, PyObject arg0) {
+        PyObject self = checkSelf(arg0, null);
+        if (self == null) {
+            return im_func.__call__(state, arg0);
+        } else {
+            return im_func.__call__(state, self, arg0);
+        }
+    }
+    
+    @Override
+    public PyObject __call__(PyObject arg0, PyObject arg1) {
+        return __call__(Py.getThreadState(), arg0, arg1);
+    }
+    
+    @Override
+    public PyObject __call__(ThreadState state, PyObject arg0, PyObject arg1) {
+        PyObject self = checkSelf(arg0, null);
+        if (self == null) {
+            return im_func.__call__(state, arg0, arg1);
+        } else {
+            return im_func.__call__(state, self, arg0, arg1);
+        }
+    }
+    
+    @Override
+    public PyObject __call__(PyObject arg0, PyObject arg1, PyObject arg2) {
+        return __call__(Py.getThreadState(), arg0, arg1, arg2);
+    }
+    
+    @Override
+    public PyObject __call__(ThreadState state, PyObject arg0, PyObject arg1,
+            PyObject arg2) {
+        PyObject self = checkSelf(arg0, null);
+        if (self == null) {
+            return im_func.__call__(state, arg0, arg1, arg2);
+        } else {
+            return im_func.__call__(state, self, arg0, arg1, arg2);
+        }
+    }
+    
+    @Override
+    public PyObject __call__(PyObject arg0, PyObject arg1, PyObject arg2, PyObject arg3) {
+        return __call__(Py.getThreadState(), arg0, arg1, arg2, arg3);
+    }
+    
+    @Override
+    public PyObject __call__(ThreadState state, PyObject arg0, PyObject arg1,
+            PyObject arg2, PyObject arg3) {
+        PyObject self = checkSelf(arg0, null);
+        if (self == null) {
+            return im_func.__call__(state, arg0, arg1, arg2, arg3);
+        } else {
+            return im_func.__call__(state, self, new PyObject[]{arg0, arg1, arg2, arg3}, Py.NoKeywords);
+        }
+    }
+    
+    
+    @Override
+    public PyObject __call__(PyObject arg1, PyObject[] args, String[] keywords) {
+        return __call__(Py.getThreadState(), arg1, args, keywords);
+    }
+    
+    @Override
+    public PyObject __call__(ThreadState state, PyObject arg1, PyObject[] args,
+            String[] keywords) {
+        PyObject self = checkSelf(arg1, args);
+        if (self == null) {
+            return im_func.__call__(state, arg1, args, keywords);
+        } else {
+            PyObject[] new_args = new PyObject[args.length+1];
+            System.arraycopy(args, 0, new_args, 1, args.length);
+            new_args[0] = arg1;
+            return im_func.__call__(state, self, new_args, keywords);
+        }
+    }
+    
+    @Override
+    public PyObject __call__(PyObject[] args) {
+        return __call__(Py.getThreadState(), args);
+    }
+    
+    @Override
+    public PyObject __call__(ThreadState state, PyObject[] args) {
+        return __call__(state, args, Py.NoKeywords);
+    }
+    */
     @Override
     public PyObject __call__(PyObject[] args, String[] keywords) {
         return instancemethod___call__(args, keywords);
     }
-
+    
+    @Override
+    public PyObject __call__(ThreadState state, PyObject[] args, String[] keywords) {
+        PyObject self = checkSelf(null, args);
+        if (self == null) {
+            return im_func.__call__(state, args, keywords);
+        } else {
+            return im_func.__call__(state, self, args, keywords);
+        }
+    }
+    
     @ExposedMethod(doc = BuiltinDocs.instancemethod___call___doc)
     final PyObject instancemethod___call__(PyObject[] args, String[] keywords) {
-        PyObject self = im_self;
+        return __call__(Py.getThreadState(), args, keywords);
+    }
 
+    private PyObject checkSelf(PyObject arg, PyObject[] args) {
+        PyObject self = im_self;
         if (self == null) {
             // Unbound methods must be called with an instance of the
             // class (or a derived class) as first argument
             boolean ok;
-            if (args.length >= 1) {
+            if (arg != null) {
+                self = arg;
+            } else if (args != null && args.length >= 1) {
                 self = args[0];
             }
             if (self == null) {
@@ -125,9 +247,9 @@ public class PyMethod extends PyObject {
                                            self == null ? "" : " instance");
                 throw Py.TypeError(msg);
             }
-            return im_func.__call__(args, keywords);
+            return null;
         } else {
-            return im_func.__call__(self, args, keywords);
+            return self;
         }
     }
 

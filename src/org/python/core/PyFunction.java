@@ -299,38 +299,90 @@ public class PyFunction extends PyObject {
 
     @Override
     public PyObject __call__() {
-        return func_code.call(func_globals, func_defaults, func_closure);
+        return __call__(Py.getThreadState());
+    }
+    
+    @Override
+    public PyObject __call__(ThreadState state) {
+        return func_code.call(state, func_globals, func_defaults, func_closure);
     }
 
     @Override
     public PyObject __call__(PyObject arg) {
-        return func_code.call(arg, func_globals, func_defaults, func_closure);
+        return __call__(Py.getThreadState(), arg);
+    }
+    
+    @Override
+    public PyObject __call__(ThreadState state, PyObject arg0) {
+        return func_code.call(state, arg0, func_globals, func_defaults, func_closure);
     }
 
     @Override
     public PyObject __call__(PyObject arg1, PyObject arg2) {
-        return func_code.call(arg1, arg2, func_globals, func_defaults, func_closure);
+        return __call__(Py.getThreadState(), arg1, arg2);
+    }
+    
+    @Override
+    public PyObject __call__(ThreadState state, PyObject arg0, PyObject arg1) {
+        return func_code.call(state, arg0, arg1, func_globals, func_defaults, func_closure);
     }
 
     @Override
     public PyObject __call__(PyObject arg1, PyObject arg2, PyObject arg3) {
-        return func_code.call(arg1, arg2, arg3, func_globals, func_defaults,
-                              func_closure);
+        return __call__(Py.getThreadState(), arg1, arg2, arg3);
+    }
+    
+    @Override
+    public PyObject __call__(ThreadState state, PyObject arg0, PyObject arg1,
+            PyObject arg2) {
+        return func_code.call(state, arg0, arg1, arg2, func_globals, func_defaults, func_closure);
+    }
+    
+    @Override
+    public PyObject __call__(PyObject arg0, PyObject arg1, PyObject arg2,
+            PyObject arg3) {
+        return __call__(Py.getThreadState(), arg0, arg1, arg2, arg3);
+    }
+    
+    @Override
+    public PyObject __call__(ThreadState state, PyObject arg0, PyObject arg1,
+            PyObject arg2, PyObject arg3) {
+        return func_code.call(state, arg0, arg1, arg2, arg3, func_globals, func_defaults, func_closure);
+    }
+    
+    @Override
+    public PyObject __call__(PyObject[] args) {
+        return __call__(Py.getThreadState(), args);
+    }
+    
+    @Override
+    public PyObject __call__(ThreadState state, PyObject[] args) {
+        return __call__(state, args, Py.NoKeywords);
     }
 
     @Override
     public PyObject __call__(PyObject[] args, String[] keywords) {
         return function___call__(args, keywords);
     }
+    
+    @Override
+    public PyObject __call__(ThreadState state, PyObject[] args, String[] keywords) {
+        return func_code.call(state, args, keywords, func_globals, func_defaults, func_closure);
+    }
 
     @ExposedMethod(doc = BuiltinDocs.function___call___doc)
     final PyObject function___call__(PyObject[] args, String[] keywords) {
-        return func_code.call(args, keywords, func_globals, func_defaults, func_closure);
+        return __call__(Py.getThreadState(), args, keywords);
     }
 
     @Override
     public PyObject __call__(PyObject arg1, PyObject[] args, String[] keywords) {
-        return func_code.call(arg1, args, keywords, func_globals, func_defaults, func_closure);
+        return __call__(Py.getThreadState(), arg1, args, keywords);
+    }
+    
+    @Override
+    public PyObject __call__(ThreadState state, PyObject arg1, PyObject[] args, String[] keywords) {
+        return func_code.call(state, arg1, args, keywords, func_globals, func_defaults, func_closure);
     }
 
     @Override

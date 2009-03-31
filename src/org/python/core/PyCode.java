@@ -8,32 +8,43 @@ public abstract class PyCode extends PyObject
 {
     public String co_name;
 
-    abstract public PyObject call(PyFrame frame, PyObject closure);
+    abstract public PyObject call(ThreadState state, PyFrame frame, PyObject closure);
 
-    public PyObject call(PyFrame frame) {
-        return call(frame, null);
+    public PyObject call(ThreadState state, PyFrame frame) {
+        return call(state, frame, null);
     }
 
-    abstract public PyObject call(PyObject args[], String keywords[],
+    abstract public PyObject call(ThreadState state,
+                                  PyObject args[], String keywords[],
                                   PyObject globals, PyObject[] defaults,
                                   PyObject closure);
 
-    abstract public PyObject call(PyObject self, PyObject args[],
+    abstract public PyObject call(ThreadState state,
+                                  PyObject self, PyObject args[],
                                   String keywords[],
                                   PyObject globals, PyObject[] defaults,
                                   PyObject closure);
 
-    abstract public PyObject call(PyObject globals, PyObject[] defaults,
-                                  PyObject closure);
-
-    abstract public PyObject call(PyObject arg1, PyObject globals,
-                                  PyObject[] defaults, PyObject closure);
-
-    abstract public PyObject call(PyObject arg1, PyObject arg2,
+    abstract public PyObject call(ThreadState state,
                                   PyObject globals, PyObject[] defaults,
                                   PyObject closure);
 
-    abstract public PyObject call(PyObject arg1, PyObject arg2, PyObject arg3,
+    abstract public PyObject call(ThreadState state,
+                                  PyObject arg1, PyObject globals,
+                                  PyObject[] defaults, PyObject closure);
+
+    abstract public PyObject call(ThreadState state,
+                                  PyObject arg1, PyObject arg2,
+                                  PyObject globals, PyObject[] defaults,
+                                  PyObject closure);
+
+    abstract public PyObject call(ThreadState state,
+                                  PyObject arg1, PyObject arg2, PyObject arg3,
+                                  PyObject globals, PyObject[] defaults,
+                                  PyObject closure);
+
+    abstract public PyObject call(ThreadState state,
+                                  PyObject arg1, PyObject arg2, PyObject arg3, PyObject arg4,
                                   PyObject globals, PyObject[] defaults,
                                   PyObject closure);
 
