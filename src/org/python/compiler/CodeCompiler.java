@@ -420,22 +420,29 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         } else {
             code.invokespecial( "org/python/core/PyFunction", "<init>", "(" + $pyObj + $pyObjArr + $pyCode + $pyObj + $pyObjArr + ")V");
         }
+        
+        applyDecorators(node.getInternalDecorator_list());
 
         set(new Name(node,node.getInternalName(), expr_contextType.Store));
-        doDecorators(node,node.getInternalDecorator_list(), node.getInternalName());
+        //doDecorators(node,node.getInternalDecorator_list(), node.getInternalName());
         return null;
     }
 
-    private void doDecorators(stmt node, java.util.List<expr> decs, String name) throws Exception {
-        if (decs.size() > 0) {
-            expr currentExpr = new Name(node, name, expr_contextType.Load);
-            for (int i=decs.size() - 1;i > -1;i--) {
-                java.util.List args = new ArrayList();
-                args.add(currentExpr);
-                currentExpr = new Call(node, decs.get(i), args, new ArrayList<keyword>(), null, null);
+    private void applyDecorators(java.util.List<expr> decorators) throws Exception {
+        if (decorators != null && !decorators.isEmpty()) {
+            int res = storeTop();
+            for (expr decorator : decorators) {
+                visit(decorator); stackProduce();
             }
-            visit(currentExpr);
-            set(new Name(node, name, expr_contextType.Store));
+            for (int i = decorators.size(); i > 0; i--) {
+                stackConsume();
+                loadThreadState();
+                code.aload(res);
+                code.invokevirtual("org/python/core/PyObject", "__call__", "(" + $threadState + $pyObj + ")" + $pyObj);
+                code.astore(res);
+            }
+            code.aload(res);
+            code.freeLocal(res);
         }
     }
 
@@ -2023,10 +2030,12 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         } else {
             code.invokestatic("org/python/core/Py", "makeClass", "(" + $str + $pyObjArr + $pyCode + $pyObj + $pyObjArr + ")" + $pyObj);
         }
+        
+        applyDecorators(node.getInternalDecorator_list());
 
         //Assign this new class to the given name
         set(new Name(node,node.getInternalName(), expr_contextType.Store));
-        doDecorators(node,node.getInternalDecorator_list(), node.getInternalName());
+        //doDecorators(node,node.getInternalDecorator_list(), node.getInternalName());
         return null;
     }
 
