@@ -304,6 +304,17 @@ public class PyJavaType extends PyType {
                     prop.myType = meth.getReturnType();
                 } else {
                     prop.setMethod = meth;
+                    // Needed for readonly properties.  Getter will be used instead
+                    // if there is one.  Only works if setX method has exactly one
+                    // param, which is the only reasonable case.
+                    // XXX: should we issue a warning if setX and getX have different
+                    // types?
+                    if (prop.myType == null) {
+                        Class[] params = meth.getParameterTypes();
+                        if (params.length == 1) {
+                            prop.myType = params[0];
+                        }
+                    }
                 }
             }
         }
