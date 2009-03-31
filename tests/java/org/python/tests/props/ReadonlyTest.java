@@ -16,6 +16,7 @@ public class ReadonlyTest extends TestCase {
     }
 
     public void testReadonly() {
+        //This used to cause an NPE see http://bugs.jython.org/issue1295 
         interp.exec("from org.python.tests.props import Readonly;Readonly().a = 'test'");
     }
 }
