@@ -312,7 +312,7 @@ public class jython
             String interpClass = PySystemState.registry.getProperty("python.console",
                                                                     "org.python.util.InteractiveConsole");
             return (InteractiveConsole)Class.forName(interpClass).newInstance();
-        } catch (Exception e) {
+        } catch (Throwable t) {
             return new InteractiveConsole();
         }
     }
