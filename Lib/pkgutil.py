@@ -241,8 +241,12 @@ class ImpLoader:
         return mod
 
     def get_data(self, pathname):
-        return open(pathname, "rb").read()
-
+        f = open(pathname, "rb")
+        try:
+            return f.read()
+        finally:
+            f.close()
+    
     def _reopen(self):
         if self.file and self.file.closed:
             mod_type = self.etc[2]
@@ -293,8 +297,10 @@ class ImpLoader:
             elif mod_type==imp.PY_COMPILED:
                 if os.path.exists(self.filename[:-1]):
                     f = open(self.filename[:-1], 'rU')
-                    self.source = f.read()
-                    f.close()
+                    try:
+                        self.source = f.read()
+                    finally:
+                        f.close()
             elif mod_type==imp.PKG_DIRECTORY:
                 self.source = self._get_delegate().get_source()
         return self.source
@@ -538,11 +544,13 @@ def extend_path(path, name):
                 sys.stderr.write("Can't open %s: %s\n" %
                                  (pkgfile, msg))
             else:
-                for line in f:
-                    line = line.rstrip('\n')
-                    if not line or line.startswith('#'):
-                        continue
-                    path.append(line) # Don't check for existence!
-                f.close()
+                try:
+                    for line in f:
+                        line = line.rstrip('\n')
+                        if not line or line.startswith('#'):
+                            continue
+                        path.append(line) # Don't check for existence!
+                finally:
+                    f.close()
 
     return path
