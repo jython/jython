@@ -198,7 +198,7 @@ class stat_result:
 
   def __init__(self, results):
     if len(results) != 10:
-      raise TypeError("stat_result() takes an a  10-sequence")
+      raise TypeError("stat_result() takes an a 10-sequence")
     for (name, index) in stat_result._stat_members:
       self.__dict__[name] = results[index]
 
@@ -233,6 +233,10 @@ class stat_result:
     if not isinstance(other, stat_result):
       return 1
     return cmp(self.__dict__, other.__dict__)
+
+  def __repr__(self):
+      return repr(tuple(self.__dict__[member[0]] for member
+                        in stat_result._stat_members))
 
 error = OSError
 
