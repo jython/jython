@@ -1143,7 +1143,14 @@ class Popen(object):
             if isinstance(args, types.StringTypes):
                 args = [args]
             else:
-                args = escape_args(list(args))
+                args = list(args)
+                for arg in args:
+                    # XXX: CPython posix (execv) will str() any unicode
+                    # args first, maybe we should do the same on
+                    # posix. Windows passes unicode through however
+                    if not isinstance(arg, (str, unicode)):
+                        raise TypeError('args must contain only strings')
+                args = escape_args(args)
 
             if shell:
                 args = shell_command + args
@@ -1171,7 +1178,7 @@ class Popen(object):
             elif not os.path.exists(cwd):
                 raise OSError(errno.ENOENT, os.strerror(errno.ENOENT), cwd)
             elif not os.path.isdir(cwd):
-                raise OSError(errno.ENOTDIR, os.strerror(errno.ENOENT), cwd)
+                raise OSError(errno.ENOTDIR, os.strerror(errno.ENOTDIR), cwd)
             builder.directory(java.io.File(cwd))
 
             # Let Java manage redirection of stderr to stdout (it's more
