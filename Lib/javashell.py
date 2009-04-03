@@ -20,8 +20,11 @@ import string
 import subprocess
 import sys
 import types
+import warnings
+warnings.warn('The javashell module is deprecated. Use the subprocess module.',
+              DeprecationWarning, 2)
 
-__all__ = [ "shellexecute", "environ", "putenv", "getenv" ]
+__all__ = ["shellexecute"]
 
 def __warn( *args ):
     print " ".join( [str( arg ) for arg in args ])

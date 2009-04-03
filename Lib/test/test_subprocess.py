@@ -323,8 +323,10 @@ class ProcessTestCase(unittest.TestCase):
         # communicate() with writes larger than pipe_buf
         # This test will probably deadlock rather than fail, if
         # communicate() does not work properly.
-        if mswindows or jython:
+        if mswindows:
             pipe_buf = 512
+        elif jython:
+            pipe_buf = 16384
         else:
             x, y = os.pipe()
             pipe_buf = os.fpathconf(x, "PC_PIPE_BUF")

@@ -7,26 +7,14 @@ and popen3(cmd) which return two or three pipes to the spawned command.
 """
 
 import os
+import subprocess
 import sys
 
 __all__ = ["popen2", "popen3", "popen4"]
 
-try:
-    MAXFD = os.sysconf('SC_OPEN_MAX')
-except (AttributeError, ValueError):
-    MAXFD = 256
-
-_active = []
-
-def _cleanup():
-    for inst in _active[:]:
-        if inst.poll(_deadstate=sys.maxint) >= 0:
-            try:
-                _active.remove(inst)
-            except ValueError:
-                # This can happen if two threads create a new Popen instance.
-                # It's harmless that it was already removed, so ignore.
-                pass
+MAXFD = subprocess.MAXFD
+_active = subprocess._active
+_cleanup = subprocess._cleanup
 
 class Popen3:
     """Class representing a child process.  Normally instances are created
@@ -44,73 +32,36 @@ class Popen3:
         process.  The default is false.  If the 'bufsize' parameter is
         specified, it specifies the size of the I/O buffers to/from the child
         process."""
-        _cleanup()
+        stderr = subprocess.PIPE if capturestderr else None
+        PIPE = subprocess.PIPE
+        self._popen = subprocess.Popen(cmd, bufsize=bufsize, shell=True,
+                                       stdin=PIPE, stdout=PIPE, stderr=stderr)
+        self._setup(cmd)
+
+    def _setup(self, cmd):
+        """Setup the Popen attributes."""
         self.cmd = cmd
-        p2cread, p2cwrite = os.pipe()
-        c2pread, c2pwrite = os.pipe()
-        if capturestderr:
-            errout, errin = os.pipe()
-        self.pid = os.fork()
-        if self.pid == 0:
-            # Child
-            os.dup2(p2cread, 0)
-            os.dup2(c2pwrite, 1)
-            if capturestderr:
-                os.dup2(errin, 2)
-            self._run_child(cmd)
-        os.close(p2cread)
-        self.tochild = os.fdopen(p2cwrite, 'w', bufsize)
-        os.close(c2pwrite)
-        self.fromchild = os.fdopen(c2pread, 'r', bufsize)
-        if capturestderr:
-            os.close(errin)
-            self.childerr = os.fdopen(errout, 'r', bufsize)
-        else:
-            self.childerr = None
+        self.pid = self._popen.pid
+        self.tochild = self._popen.stdin
+        self.fromchild = self._popen.stdout
+        self.childerr = self._popen.stderr
 
     def __del__(self):
-        # In case the child hasn't been waited on, check if it's done.
-        self.poll(_deadstate=sys.maxint)
-        if self.sts < 0:
-            if _active is not None:
-                # Child is still running, keep us alive until we can wait on it.
-                _active.append(self)
-
-    def _run_child(self, cmd):
-        if isinstance(cmd, basestring):
-            cmd = ['/bin/sh', '-c', cmd]
-        for i in xrange(3, MAXFD):
-            try:
-                os.close(i)
-            except OSError:
-                pass
-        try:
-            os.execvp(cmd[0], cmd)
-        finally:
-            os._exit(1)
+        self._popen.__del__()
 
     def poll(self, _deadstate=None):
         """Return the exit status of the child process if it has finished,
         or -1 if it hasn't finished yet."""
         if self.sts < 0:
-            try:
-                pid, sts = os.waitpid(self.pid, os.WNOHANG)
-                # pid will be 0 if self.pid hasn't terminated
-                if pid == self.pid:
-                    self.sts = sts
-            except os.error:
-                if _deadstate is not None:
-                    self.sts = _deadstate
+            result = self._popen.poll(_deadstate)
+            if result is not None:
+                self.sts = result
         return self.sts
 
     def wait(self):
         """Wait for and return the exit status of the child process."""
         if self.sts < 0:
-            pid, sts = os.waitpid(self.pid, 0)
-            # This used to be a test, but it is believed to be
-            # always true, so I changed it to an assertion - mvl
-            assert pid == self.pid
-            self.sts = sts
+            self.sts = self._popen.wait()
         return self.sts
 
 
@@ -118,21 +69,11 @@ class Popen4(Popen3):
     childerr = None
 
     def __init__(self, cmd, bufsize=-1):
-        _cleanup()
-        self.cmd = cmd
-        p2cread, p2cwrite = os.pipe()
-        c2pread, c2pwrite = os.pipe()
-        self.pid = os.fork()
-        if self.pid == 0:
-            # Child
-            os.dup2(p2cread, 0)
-            os.dup2(c2pwrite, 1)
-            os.dup2(c2pwrite, 2)
-            self._run_child(cmd)
-        os.close(p2cread)
-        self.tochild = os.fdopen(p2cwrite, 'w', bufsize)
-        os.close(c2pwrite)
-        self.fromchild = os.fdopen(c2pread, 'r', bufsize)
+        PIPE = subprocess.PIPE
+        self._popen = subprocess.Popen(cmd, bufsize=bufsize, shell=True,
+                                       stdin=PIPE, stdout=PIPE,
+                                       stderr=subprocess.STDOUT)
+        self._setup(cmd)
 
 
 if sys.platform[:3] == "win" or sys.platform == "os2emx":
@@ -207,7 +148,7 @@ def _test():
     assert not _active, "Active pipes when test starts " + repr([c.cmd for c in _active])
     cmd  = "cat"
     teststr = "ab cd\n"
-    if os.name == "nt":
+    if os.name in ("nt", "java"):
         cmd = "more"
     # "more" doesn't act the same way across Windows flavors,
     # sometimes adding an extra newline at the start or the

@@ -727,27 +727,28 @@ def _handle_oserror(func, *args, **kwargs):
     except:
         raise OSError(errno.EBADF, strerror(errno.EBADF))
 
-# Provide lazy popen*, and system objects
-# Do these lazily, as most jython programs don't need them,
-# and they are very expensive to initialize
-
-def system( *args, **kwargs ):
+def system(command):
     """system(command) -> exit_status
 
     Execute the command (a string) in a subshell.
     """
-    # allow lazy import of popen2 and javashell
-    import popen2
-    return popen2.system( *args, **kwargs )
+    import subprocess
+    return subprocess.call(command, shell=True)
 
-def popen( *args, **kwargs ):
+def popen(command, mode='r', bufsize=-1):
     """popen(command [, mode='r' [, bufsize]]) -> pipe
 
     Open a pipe to/from a command returning a file object.
     """
-    # allow lazy import of popen2 and javashell
-    import popen2
-    return popen2.popen( *args, **kwargs )
+    import subprocess
+    if mode == 'r':
+        return subprocess.Popen(command, bufsize=bufsize, shell=True,
+                                stdout=subprocess.PIPE).stdout
+    elif mode == 'w':
+        return subprocess.Popen(command, bufsize=bufsize, shell=True,
+                                stdin=subprocess.PIPE).stdin
+    else:
+        raise OSError(errno.EINVAL, strerror(errno.EINVAL))
 
 # os module versions of the popen# methods have different return value
 # order than popen2 functions
