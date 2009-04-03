@@ -697,6 +697,10 @@ class ProcessTestCase(unittest.TestCase):
                               [sys.executable,
                                "-c", "import sys; sys.exit(47)"],
                               preexec_fn=lambda: 1)
+            # invalid command line args should raise TypeError
+            self.assertRaises(TypeError, subprocess.call,
+                              [sys.executable,
+                               "-c", 1])
 
 
 def test_main():
