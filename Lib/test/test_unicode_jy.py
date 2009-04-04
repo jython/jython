@@ -109,8 +109,21 @@ class UnicodeTestCase(unittest.TestCase):
         self.assertEquals('\xe2\x82\xac', encoded_euro)
         self.assertEquals(EURO_SIGN, encoded_euro.decode('utf-8'))
 
+
+class UnicodeFormatTestCase(unittest.TestCase):
+    
+    def test_unicode_mapping(self):
+        assertTrue = self.assertTrue
+        class EnsureUnicode(dict):
+            def __missing__(self, key):
+                assertTrue(isinstance(key, unicode))
+                return key
+        u'%(foo)s' % EnsureUnicode()
+
+
 def test_main():
-    test_support.run_unittest(UnicodeTestCase)
+    test_support.run_unittest(UnicodeTestCase,
+                              UnicodeFormatTestCase)
 
 
 if __name__ == "__main__":

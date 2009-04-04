@@ -2852,7 +2852,7 @@ final class StringFormatter
                         parens++;
                 }
                 String tmp = format.substring(keyStart, index-1);
-                this.args = dict.__getitem__(new PyString(tmp));
+                this.args = dict.__getitem__(needUnicode ? new PyUnicode(tmp) : new PyString(tmp));
             } else {
                 push();
             }
