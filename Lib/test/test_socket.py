@@ -531,26 +531,26 @@ class TestSocketOptions(unittest.TestCase):
     def setUp(self):
         self.test_udp = self.test_tcp_client = self.test_tcp_server = 0
 
-    def _testSetAndGetOption(self, sock, option, values):
+    def _testSetAndGetOption(self, sock, level, option, values):
         for expected_value in values:
-            sock.setsockopt(socket.SOL_SOCKET, option, expected_value)
-            retrieved_value = sock.getsockopt(socket.SOL_SOCKET, option)
+            sock.setsockopt(level, option, expected_value)
+            retrieved_value = sock.getsockopt(level, option)
             self.failUnlessEqual(retrieved_value, expected_value, \
-                "Retrieved option(%s) value %s != %s(value set)" % (option, retrieved_value, expected_value))
+                "Retrieved option(%s, %s) value %s != %s(value set)" % (level, option, retrieved_value, expected_value))
 
-    def _testUDPOption(self, option, values):
+    def _testUDPOption(self, level, option, values):
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            self._testSetAndGetOption(sock, option, values)
+            self._testSetAndGetOption(sock, level, option, values)
             # now bind the socket i.e. cause the implementation socket to be created
             sock.bind( (HOST, PORT) )
-            self.failUnlessEqual(sock.getsockopt(socket.SOL_SOCKET, option), values[-1], \
-                 "Option value '%s'='%s' did not propagate to implementation socket" % (option, values[-1]) )
-            self._testSetAndGetOption(sock, option, values)
+            self.failUnlessEqual(sock.getsockopt(level, option), values[-1], \
+                 "Option value '(%s, %s)'='%s' did not propagate to implementation socket" % (level, option, values[-1]) )
+            self._testSetAndGetOption(sock, level, option, values)
         finally:
             sock.close()
 
-    def _testTCPClientOption(self, option, values):
+    def _testTCPClientOption(self, level, option, values):
         sock = None
         try:
             # First listen on a server socket, so that the connection won't be refused.
@@ -559,7 +559,7 @@ class TestSocketOptions(unittest.TestCase):
             server_sock.listen(50)
             # Now do the tests
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self._testSetAndGetOption(sock, option, values)
+            self._testSetAndGetOption(sock, level, option, values)
             # now connect the socket i.e. cause the implementation socket to be created
             # First bind, so that the SO_REUSEADDR setting propagates
             sock.bind( (HOST, PORT+1) )
@@ -571,39 +571,39 @@ class TestSocketOptions(unittest.TestCase):
                 # establishing a connection. seems it will be *at least*
                 # the values we test (which are rather small) on
                 # BSDs. may need to relax this on other platforms also
-                self.assert_(sock.getsockopt(socket.SOL_SOCKET, option) >= values[-1], msg)
+                self.assert_(sock.getsockopt(level, option) >= values[-1], msg)
             else:
-                self.failUnlessEqual(sock.getsockopt(socket.SOL_SOCKET, option), values[-1], msg)
-            self._testSetAndGetOption(sock, option, values)
+                self.failUnlessEqual(sock.getsockopt(level, option), values[-1], msg)
+            self._testSetAndGetOption(sock, level, option, values)
         finally:
             server_sock.close()
             if sock:
                 sock.close()
 
-    def _testTCPServerOption(self, option, values):
+    def _testTCPServerOption(self, level, option, values):
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self._testSetAndGetOption(sock, option, values)
+            self._testSetAndGetOption(sock, level, option, values)
             # now bind and listen on the socket i.e. cause the implementation socket to be created
             sock.bind( (HOST, PORT) )
             sock.listen(50)
-            self.failUnlessEqual(sock.getsockopt(socket.SOL_SOCKET, option), values[-1], \
-                 "Option value '%s'='%s' did not propagate to implementation socket" % (option, values[-1]))
-            self._testSetAndGetOption(sock, option, values)
+            self.failUnlessEqual(sock.getsockopt(level, option), values[-1], \
+                 "Option value '(%s,%s)'='%s' did not propagate to implementation socket" % (level, option, values[-1]))
+            self._testSetAndGetOption(sock, level, option, values)
         finally:
             sock.close()
 
-    def _testOption(self, option, values):
+    def _testOption(self, level, option, values):
         for flag, func in [
             (self.test_udp,        self._testUDPOption),
             (self.test_tcp_server, self._testTCPServerOption),
             (self.test_tcp_client, self._testTCPClientOption),
         ]:
             if flag:
-                func(option, values)
+                func(level, option, values)
             else:
                 try:
-                    func(option, values)
+                    func(level, option, values)
                 except socket.error, se:
                     self.failUnlessEqual(se[0], errno.ENOPROTOOPT, "Wrong errno from unsupported option exception: %d" % se[0])
                 except Exception, x:
@@ -615,48 +615,48 @@ class TestSupportedOptions(TestSocketOptions):
 
     def testSO_BROADCAST(self):
         self.test_udp = 1
-        self._testOption(socket.SO_BROADCAST, [0, 1])
+        self._testOption(socket.SOL_SOCKET, socket.SO_BROADCAST, [0, 1])
 
     def testSO_KEEPALIVE(self):
         self.test_tcp_client = 1
-        self._testOption(socket.SO_KEEPALIVE, [0, 1])
+        self._testOption(socket.SOL_SOCKET, socket.SO_KEEPALIVE, [0, 1])
 
     def testSO_LINGER(self):
         self.test_tcp_client = 1
         off = struct.pack('ii', 0, 0)
         on_2_seconds = struct.pack('ii', 1, 2)
-        self._testOption(socket.SO_LINGER, [off, on_2_seconds])
+        self._testOption(socket.SOL_SOCKET, socket.SO_LINGER, [off, on_2_seconds])
 
     def testSO_OOBINLINE(self):
         self.test_tcp_client = 1
-        self._testOption(socket.SO_OOBINLINE, [0, 1])
+        self._testOption(socket.SOL_SOCKET, socket.SO_OOBINLINE, [0, 1])
 
     def testSO_RCVBUF(self):
         self.test_udp = 1
         self.test_tcp_client = 1
         self.test_tcp_server = 1
-        self._testOption(socket.SO_RCVBUF, [1024, 4096, 16384])
+        self._testOption(socket.SOL_SOCKET, socket.SO_RCVBUF, [1024, 4096, 16384])
 
     def testSO_REUSEADDR(self):
         self.test_udp = 1
         self.test_tcp_client = 1
         self.test_tcp_server = 1
-        self._testOption(socket.SO_REUSEADDR, [0, 1])
+        self._testOption(socket.SOL_SOCKET, socket.SO_REUSEADDR, [0, 1])
 
     def testSO_SNDBUF(self):
         self.test_udp = 1
         self.test_tcp_client = 1
-        self._testOption(socket.SO_SNDBUF, [1024, 4096, 16384])
+        self._testOption(socket.SOL_SOCKET, socket.SO_SNDBUF, [1024, 4096, 16384])
 
     def testSO_TIMEOUT(self):
         self.test_udp = 1
         self.test_tcp_client = 1
         self.test_tcp_server = 1
-        self._testOption(socket.SO_TIMEOUT, [0, 1, 1000])
+        self._testOption(socket.SOL_SOCKET, socket.SO_TIMEOUT, [0, 1, 1000])
 
     def testTCP_NODELAY(self):
         self.test_tcp_client = 1
-        self._testOption(socket.TCP_NODELAY, [0, 1])
+        self._testOption(socket.IPPROTO_TCP, socket.TCP_NODELAY, [0, 1])
 
 class TestUnsupportedOptions(TestSocketOptions):
 

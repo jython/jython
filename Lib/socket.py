@@ -159,6 +159,8 @@ SOCK_RDM       = 4 # not supported
 SOCK_SEQPACKET = 5 # not supported
 
 SOL_SOCKET = 0xFFFF
+IPPROTO_TCP = 6
+IPPROTO_UDP = 17
 
 SO_BROADCAST   = 1
 SO_KEEPALIVE   = 2
@@ -195,7 +197,7 @@ __all__ = ['AF_UNSPEC', 'AF_INET', 'AF_INET6', 'AI_PASSIVE', 'SOCK_DGRAM',
         'SOCK_RAW', 'SOCK_RDM', 'SOCK_SEQPACKET', 'SOCK_STREAM', 'SOL_SOCKET',
         'SO_BROADCAST', 'SO_ERROR', 'SO_KEEPALIVE', 'SO_LINGER', 'SO_OOBINLINE',
         'SO_RCVBUF', 'SO_REUSEADDR', 'SO_SNDBUF', 'SO_TIMEOUT', 'TCP_NODELAY',
-        'INADDR_ANY', 'INADDR_BROADCAST',
+        'INADDR_ANY', 'INADDR_BROADCAST', 'IPPROTO_TCP', 'IPPROTO_UDP', 
         'SocketType', 'error', 'herror', 'gaierror', 'timeout',
         'getfqdn', 'gethostbyaddr', 'gethostbyname', 'gethostname',
         'socket', 'getaddrinfo', 'getdefaulttimeout', 'setdefaulttimeout',
@@ -222,9 +224,9 @@ class _nio_impl:
             self._timeout_millis = int(timeout*1000)
             self.jsocket.setSoTimeout(self._timeout_millis)
 
-    def getsockopt(self, option):
-        if self.options.has_key(option):
-            result = getattr(self.jsocket, "get%s" % self.options[option])()
+    def getsockopt(self, level, option):
+        if self.options.has_key( (level, option) ):
+            result = getattr(self.jsocket, "get%s" % self.options[ (level, option) ])()
             if option == SO_LINGER:
                 if result == -1:
                     enabled, linger_time = 0, 0
@@ -233,17 +235,17 @@ class _nio_impl:
                 return struct.pack('ii', enabled, linger_time)
             return result
         else:
-            raise error(errno.ENOPROTOOPT, "Option not supported on socket(%s): %d" % (str(self.jsocket), option))
+            raise error(errno.ENOPROTOOPT, "Level %d option not supported on socket(%s): %d" % (level, str(self.jsocket), option))
 
-    def setsockopt(self, option, value):
-        if self.options.has_key(option):
+    def setsockopt(self, level, option, value):
+        if self.options.has_key( (level, option) ):
             if option == SO_LINGER:
                 values = struct.unpack('ii', value)
                 self.jsocket.setSoLinger(*values)
             else:
-                getattr(self.jsocket, "set%s" % self.options[option])(value)
+                getattr(self.jsocket, "set%s" % self.options[ (level, option) ])(value)
         else:
-            raise error(errno.ENOPROTOOPT, "Option not supported on socket(%s): %d" % (str(self.jsocket), option))
+            raise error(errno.ENOPROTOOPT, "Level %d option not supported on socket(%s): %d" % (level, str(self.jsocket), option))
 
     def close(self):
         self.jsocket.close()
@@ -257,14 +259,14 @@ class _nio_impl:
 class _client_socket_impl(_nio_impl):
 
     options = {
-        SO_KEEPALIVE:   'KeepAlive',
-        SO_LINGER:      'SoLinger',
-        SO_OOBINLINE:   'OOBInline',
-        SO_RCVBUF:      'ReceiveBufferSize',
-        SO_REUSEADDR:   'ReuseAddress',
-        SO_SNDBUF:      'SendBufferSize',
-        SO_TIMEOUT:     'SoTimeout',
-        TCP_NODELAY:    'TcpNoDelay',
+        (SOL_SOCKET,  SO_KEEPALIVE):   'KeepAlive',
+        (SOL_SOCKET,  SO_LINGER):      'SoLinger',
+        (SOL_SOCKET,  SO_OOBINLINE):   'OOBInline',
+        (SOL_SOCKET,  SO_RCVBUF):      'ReceiveBufferSize',
+        (SOL_SOCKET,  SO_REUSEADDR):   'ReuseAddress',
+        (SOL_SOCKET,  SO_SNDBUF):      'SendBufferSize',
+        (SOL_SOCKET,  SO_TIMEOUT):     'SoTimeout',
+        (IPPROTO_TCP, TCP_NODELAY):    'TcpNoDelay',
     }
 
     def __init__(self, socket=None):
@@ -333,9 +335,9 @@ class _client_socket_impl(_nio_impl):
 class _server_socket_impl(_nio_impl):
 
     options = {
-        SO_RCVBUF:      'ReceiveBufferSize',
-        SO_REUSEADDR:   'ReuseAddress',
-        SO_TIMEOUT:     'SoTimeout',
+        (SOL_SOCKET, SO_RCVBUF):      'ReceiveBufferSize',
+        (SOL_SOCKET, SO_REUSEADDR):   'ReuseAddress',
+        (SOL_SOCKET, SO_TIMEOUT):     'SoTimeout',
     }
 
     def __init__(self, host, port, backlog, reuse_addr):
@@ -371,11 +373,11 @@ class _server_socket_impl(_nio_impl):
 class _datagram_socket_impl(_nio_impl):
 
     options = {
-        SO_BROADCAST:   'Broadcast',
-        SO_RCVBUF:      'ReceiveBufferSize',
-        SO_REUSEADDR:   'ReuseAddress',
-        SO_SNDBUF:      'SendBufferSize',
-        SO_TIMEOUT:     'SoTimeout',
+        (SOL_SOCKET, SO_BROADCAST):   'Broadcast',
+        (SOL_SOCKET, SO_RCVBUF):      'ReceiveBufferSize',
+        (SOL_SOCKET, SO_REUSEADDR):   'ReuseAddress',
+        (SOL_SOCKET, SO_SNDBUF):      'SendBufferSize',
+        (SOL_SOCKET, SO_TIMEOUT):     'SoTimeout',
     }
 
     def __init__(self, port=None, address=None, reuse_addr=0):
@@ -542,13 +544,16 @@ def getprotobyname(protocolname=None):
     # Same situation as above
     raise NotImplementedError("getprotobyname not yet supported on jython.")
 
-def _realsocket(family = AF_INET, type = SOCK_STREAM, flags=0):
-    assert family == AF_INET
-    assert type in (SOCK_DGRAM, SOCK_STREAM)
-    assert flags == 0
+def _realsocket(family = AF_INET, type = SOCK_STREAM, protocol=0):
+    assert family == AF_INET, "Only AF_INET sockets are currently supported on jython"
+    assert type in (SOCK_DGRAM, SOCK_STREAM), "Only SOCK_STREAM and SOCK_DGRAM sockets are currently supported on jython"
     if type == SOCK_STREAM:
+        if protocol != 0:
+            assert protocol == IPPROTO_TCP, "Only IPPROTO_TCP supported on SOCK_STREAM sockets"
         return _tcpsocket()
     else:
+        if protocol != 0:
+            assert protocol == IPPROTO_UDP, "Only IPPROTO_UDP supported on SOCK_DGRAM sockets"
         return _udpsocket()
 
 def getaddrinfo(host, port, family=AF_INET, socktype=None, proto=0, flags=None):
@@ -645,7 +650,7 @@ class _nonblocking_api_mixin:
         if self.timeout is not None:
             self.mode = MODE_TIMEOUT
         self.pending_options = {
-            SO_REUSEADDR:  0,
+            (SOL_SOCKET, SO_REUSEADDR):  0,
         }
 
     def gettimeout(self):
@@ -674,22 +679,20 @@ class _nonblocking_api_mixin:
         return self.mode == MODE_BLOCKING
 
     def setsockopt(self, level, optname, value):
-        if level != SOL_SOCKET: return
         try:
             if self.sock_impl:
-                self.sock_impl.setsockopt(optname, value)
+                self.sock_impl.setsockopt(level, optname, value)
             else:
-                self.pending_options[optname] = value
+                self.pending_options[ (level, optname) ] = value
         except java.lang.Exception, jlx:
             raise _map_exception(jlx)
 
     def getsockopt(self, level, optname):
-        if level != SOL_SOCKET: return
         try:
             if self.sock_impl:
-                return self.sock_impl.getsockopt(optname)
+                return self.sock_impl.getsockopt(level, optname)
             else:
-                return self.pending_options.get(optname, None)
+                return self.pending_options.get( (level, optname), None)
         except java.lang.Exception, jlx:
             raise _map_exception(jlx)
 
@@ -713,9 +716,9 @@ class _nonblocking_api_mixin:
         assert self.mode in _permitted_modes
         if self.sock_impl:
             self.sock_impl.config(self.mode, self.timeout)
-            for k in self.pending_options.keys():
-                if k != SO_REUSEADDR:
-                    self.sock_impl.setsockopt(k, self.pending_options[k])
+            for level, optname in self.pending_options.keys():
+                if optname != SO_REUSEADDR:
+                    self.sock_impl.setsockopt(level, optname, self.pending_options[ (level, optname) ])
 
     def getchannel(self):
         if not self.sock_impl:
@@ -775,7 +778,7 @@ class _tcpsocket(_nonblocking_api_mixin):
                 host, port = _unpack_address_tuple(self.local_addr)
             else:
                 host, port = "", 0
-            self.sock_impl = _server_socket_impl(host, port, backlog, self.pending_options[SO_REUSEADDR])
+            self.sock_impl = _server_socket_impl(host, port, backlog, self.pending_options[ (SOL_SOCKET, SO_REUSEADDR) ])
             self._config()
         except java.lang.Exception, jlx:
             raise _map_exception(jlx)
@@ -790,7 +793,7 @@ class _tcpsocket(_nonblocking_api_mixin):
             if not new_sock:
                 raise would_block_error()
             cliconn = _tcpsocket()
-            cliconn.pending_options[SO_REUSEADDR] = new_sock.jsocket.getReuseAddress()
+            cliconn.pending_options[ (SOL_SOCKET, SO_REUSEADDR) ] = new_sock.jsocket.getReuseAddress()
             cliconn.sock_impl = new_sock
             cliconn._setup()
             return cliconn, new_sock.getpeername()
@@ -810,7 +813,7 @@ class _tcpsocket(_nonblocking_api_mixin):
             self.sock_impl = _client_socket_impl()
             if self.local_addr: # Has the socket been bound to a local address?
                 bind_host, bind_port = _unpack_address_tuple(self.local_addr)
-                self.sock_impl.bind(bind_host, bind_port, self.pending_options[SO_REUSEADDR])
+                self.sock_impl.bind(bind_host, bind_port, self.pending_options[ (SOL_SOCKET, SO_REUSEADDR) ])
             self._config() # Configure timeouts, etc, now that the socket exists
             self.sock_impl.connect(host, port)
         except java.lang.Exception, jlx:
@@ -925,7 +928,7 @@ class _udpsocket(_nonblocking_api_mixin):
             if host == "":
                 host = INADDR_ANY
             host_address = java.net.InetAddress.getByName(host)
-            self.sock_impl = _datagram_socket_impl(port, host_address, self.pending_options[SO_REUSEADDR])
+            self.sock_impl = _datagram_socket_impl(port, host_address, self.pending_options[ (SOL_SOCKET, SO_REUSEADDR) ])
             self._config()
         except java.lang.Exception, jlx:
             raise _map_exception(jlx)
