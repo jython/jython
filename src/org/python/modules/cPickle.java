@@ -1670,6 +1670,9 @@ public class cPickle implements ClassDictInit {
                 case LONG4:           load_bin_long(4); break;
                 case STOP:
                     return load_stop();
+                default:
+                    throw new PyException(UnpicklingError,
+                                          String.format("invalid load key, '%s'.", key));
                 }
             }
         }
@@ -2150,40 +2153,43 @@ public class cPickle implements ClassDictInit {
         }
 
         private void load_build() {
-            PyObject value = pop();
+            PyObject state = pop();
             PyObject inst  = peek();
             PyObject setstate = inst.__findattr__("__setstate__");
-            if(setstate == null) {
-                PyObject slotstate = null;
-                // A default __setstate__.  First see whether state
-                // embeds a slot state dict too (a proto 2 addition).
-                if (value instanceof PyTuple && value.__len__() == 2) {
-                    PyObject temp = value;
-                    value = temp.__getitem__(0);
-                    slotstate = temp.__getitem__(1);
-                }
+            if (setstate != null) {
+                // The explicit __setstate__ is responsible for everything.
+                setstate.__call__(state);
+                return;
+            }
 
-                PyObject dict;
-                if(inst instanceof PyInstance) {
-                    dict = ((PyInstance)inst).__dict__;
-                } else {
-                    dict = inst.getDict();
-                }
-                dict.__findattr__("update").__call__(value);
+            // A default __setstate__.  First see whether state embeds a slot state dict
+            // too (a proto 2 addition).
+            PyObject slotstate = null;
+            if (state instanceof PyTuple && state.__len__() == 2) {
+                PyObject temp = state;
+                state = temp.__getitem__(0);
+                slotstate = temp.__getitem__(1);
+            }
 
-                // Also set instance attributes from the slotstate
-                // dict (if any).
-                if (slotstate != null) {
-                    if (!(slotstate instanceof PyDictionary)) {
-                        throw new PyException(UnpicklingError, "slot state is not a dictionary");
-                    }
-                    for (PyObject item : ((PyDictionary)slotstate).iteritems().asIterable()) {
-                        inst.__setattr__(PyObject.asName(item.__getitem__(0)),
-                                         item.__getitem__(1));
-                    }
+            if (state != Py.None) {
+                if (!(state instanceof PyDictionary)) {
+                    throw new PyException(UnpicklingError, "state is not a dictionary");
                 }
-            } else {
-                setstate.__call__(value);
+                PyObject dict = inst.__getattr__("__dict__");
+                for (PyObject item : ((PyDictionary)state).iteritems().asIterable()) {
+                    dict.__setitem__(item.__getitem__(0), item.__getitem__(1));
+                }
+            }
+
+            // Also set instance attributes from the slotstate dict (if any).
+            if (slotstate != null) {
+                if (!(slotstate instanceof PyDictionary)) {
+                    throw new PyException(UnpicklingError, "slot state is not a dictionary");
+                }
+                for (PyObject item : ((PyDictionary)slotstate).iteritems().asIterable()) {
+                    inst.__setattr__(PyObject.asName(item.__getitem__(0)),
+                                     item.__getitem__(1));
+                }
             }
         }
 
