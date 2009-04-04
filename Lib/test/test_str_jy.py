@@ -92,13 +92,6 @@ class FormatTest(unittest.TestCase):
         # But, args found before the first unicode should not be __unicode__'d
         self.assertEquals("%s %s %s" % (S(), u"bar", S()), u"str bar unicode")
 
-    def test_non_ascii_unicode_mod_str(self):
-        # Regression test for a problem on the formatting logic: when no unicode
-        # args were found, Jython stored the resulting buffer on a PyString,
-        # decoding it later to make a PyUnicode. That crashed when the left side
-        # of % was a unicode containing non-ascii chars
-        self.assertEquals(u"\u00e7%s" % "foo", u"\u00e7foo")
-
 
 class DisplayTest(unittest.TestCase):
 

@@ -120,6 +120,13 @@ class UnicodeFormatTestCase(unittest.TestCase):
                 return key
         u'%(foo)s' % EnsureUnicode()
 
+    def test_non_ascii_unicode_mod_str(self):
+        # Regression test for a problem on the formatting logic: when no unicode
+        # args were found, Jython stored the resulting buffer on a PyString,
+        # decoding it later to make a PyUnicode. That crashed when the left side
+        # of % was a unicode containing non-ascii chars
+        self.assertEquals(u"\u00e7%s" % "foo", u"\u00e7foo")
+
 
 def test_main():
     test_support.run_unittest(UnicodeTestCase,
