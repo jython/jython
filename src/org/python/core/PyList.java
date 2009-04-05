@@ -15,7 +15,7 @@ import org.python.util.Generic;
  * A builtin python list.
  */
 @ExposedType(name = "list", base = PyObject.class)
-public class PyList extends PySequenceList {
+public class PyList extends PySequenceObjectList {
 
     public static final PyType TYPE = PyType.fromClass(PyList.class);
 
@@ -70,8 +70,8 @@ public class PyList extends PySequenceList {
         if(seq == null) {
             return;
         }
-        if(seq instanceof PySequenceList) {
-            PySequenceList p = (PySequenceList)seq.__getslice__(Py.None, Py.None, Py.One);
+        if(seq instanceof PySequenceObjectList) {
+            PySequenceObjectList p = (PySequenceObjectList)seq.__getslice__(Py.None, Py.None, Py.One);
             this.list = p.list;
         } else {
             for (PyObject item : seq.asIterable()) {

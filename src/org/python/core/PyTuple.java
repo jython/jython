@@ -17,7 +17,7 @@ import org.python.expose.MethodType;
  */
 
 @ExposedType(name = "tuple", base = PyObject.class)
-public class PyTuple extends PySequenceList
+public class PyTuple extends PySequenceObjectList
 {
     public static final PyType TYPE = PyType.fromClass(PyTuple.class);
 

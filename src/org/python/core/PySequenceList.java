@@ -5,171 +5,81 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
-public abstract class PySequenceList extends PySequence implements List {
-
-    protected PyObjectList list;
+public abstract class PySequenceList extends PySequence {
 
     public PySequenceList() {
-        list = new PyObjectList();
     }
 
     protected PySequenceList(PyType type) {
         super(type);
-        list = new PyObjectList();
     }
 
-    protected PySequenceList(PyType type, PyObject[] elements) {
-        super(type);
-        list = new PyObjectList(elements);
-    }
+    public abstract void add(int index, Object element);
 
-    /**
-     * Creates an instance directly backed by the array of PyObject elements.
-     */
-    public PySequenceList(PyObject[] elements) {
-        list = new PyObjectList(elements);
-    }
+    public abstract boolean add(Object o);
 
-    public PySequenceList(PyType type, Collection<PyObject> c) {
-        super(type);
-        list = new PyObjectList(c);
-    }
+    public abstract boolean addAll(int index, Collection c);
 
-    public void add(int index, Object element) {
-        list.add(index, element);
-    }
+    public abstract boolean addAll(Collection c);
 
-    public boolean add(Object o) {
-        return list.add(o);
-    }
+    public abstract void clear();
 
-    public boolean addAll(int index, Collection c) {
-        return list.addAll(index, c);
-    }
+    public abstract boolean contains(Object o);
 
-    public boolean addAll(Collection c) {
-        return list.addAll(c);
-    }
+    public abstract boolean containsAll(Collection c);
 
-    public void clear() {
-        list.clear();
-    }
+    public abstract boolean equals(Object o);
 
-    public boolean contains(Object o) {
-        return list.contains(o);
-    }
-
-    public boolean containsAll(Collection c) {
-        return list.containsAll(c);
-    }
-
-    public Object get(int index) {
-        return list.get(index);
-    }
-
-    public int indexOf(Object o) {
-        return list.indexOf(o);
-    }
-
-    public boolean isEmpty() {
-        return list.isEmpty();
-    }
-
-    public Iterator iterator() {
-        return list.iterator();
-    }
-
-    public int lastIndexOf(Object o) {
-        return list.lastIndexOf(o);
-    }
-
-    public ListIterator listIterator() {
-        return list.listIterator();
-    }
-
-    public ListIterator listIterator(int index) {
-        return list.listIterator(index);
-    }
-
-    public void pyadd(int index, PyObject element) {
-        list.pyadd(index, element);
-    }
-
-    public PyObject pyget(int index) {
-        return list.pyget(index);
-    }
-
-    public void pyset(int index, PyObject element) {
-        list.pyset(index, element);
-    }
-
-    public Object remove(int index) {
-        return list.remove(index);
-    }
-
-    public void remove(int start, int stop) {
-        list.remove(start, stop);
-    }
-
-    public boolean remove(Object o) {
-        return list.remove(o);
-    }
-
-    public boolean removeAll(Collection c) {
-        return list.removeAll(c);
-    }
-
-    public boolean retainAll(Collection c) {
-        return list.retainAll(c);
-    }
-
-    public Object set(int index, Object element) {
-        return list.set(index, element);
-    }
-
-    public int size() {
-        return list.size();
-    }
-
-    public List subList(int fromIndex, int toIndex) {
-        return list.subList(fromIndex, toIndex);
-    }
-
-    public Object[] toArray() {
-        return list.toArray();
-    }
-
-    public Object[] toArray(Object[] a) {
-        return list.toArray(a);
-    }
-
-    public String toString() {
-        return list.toString();
-    }
-
-    public boolean pyadd(PyObject o) {
-        return list.pyadd(o);
-    }
-
-    public boolean equals(Object o) {
-        if(o instanceof PySequenceList) {
-            return list.equals(((PySequenceList)o).list);
-        } else if(o instanceof List) {
-            return o.equals(this);
-        } else {
-            return super.equals(o);
-        }
-    }
-
-    public int hashCode() {
-        return list.hashCode();
-    }
+    public abstract Object get(int index);
 
     /**
      * Get the backing array. The array should not be modified. To get a copy of the array, see
      * {@link #toArray()}.
      */
-    public PyObject[] getArray() {
-        return list.getArray();
-    }
+    public abstract PyObject[] getArray();
+
+    public abstract int hashCode();
+
+    public abstract int indexOf(Object o);
+
+    public abstract boolean isEmpty();
+
+    public abstract Iterator iterator();
+
+    public abstract int lastIndexOf(Object o);
+
+    public abstract ListIterator listIterator();
+
+    public abstract ListIterator listIterator(int index);
+
+    public abstract void pyadd(int index, PyObject element);
+
+    public abstract boolean pyadd(PyObject o);
+
+    public abstract PyObject pyget(int index);
+
+    public abstract void pyset(int index, PyObject element);
+
+    public abstract Object remove(int index);
+
+    public abstract void remove(int start, int stop);
+
+    public abstract boolean remove(Object o);
+
+    public abstract boolean removeAll(Collection c);
+
+    public abstract boolean retainAll(Collection c);
+
+    public abstract Object set(int index, Object element);
+
+    public abstract int size();
+
+    public abstract List subList(int fromIndex, int toIndex);
+
+    public abstract Object[] toArray();
+
+    public abstract Object[] toArray(Object[] a);
+
+    public abstract String toString();
+
 }
