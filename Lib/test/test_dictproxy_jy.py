@@ -31,8 +31,18 @@ class DictproxyTestCase(unittest.TestCase):
         self.assert_(proxy is not copy)
         self.assertEqual(len(proxy), len(copy))
 
+    def test_dictproxy_equality(self):
+        self.assertEqual(type.__dict__, type.__dict__)
+        self.assertEqual(type.__dict__, type.__dict__.copy())
+        self.assertEqual(type.__dict__, dict(type.__dict__))
+        self.assertEqual(cmp(type.__dict__, type.__dict__), 0)
+        self.assertEqual(cmp(type.__dict__, type.__dict__.copy()), 0)
+        self.assertEqual(cmp(type.__dict__, dict(type.__dict__)), 0)
+
+
 def test_main():
     test_support.run_unittest(DictproxyTestCase)
+
 
 if __name__ == '__main__':
     test_main()
