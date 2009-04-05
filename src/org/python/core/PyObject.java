@@ -1633,7 +1633,7 @@ public class PyObject implements Serializable {
     public PyObject _isnot(PyObject o) {
         // Access javaProxy directly here as is is for object identity, and at best getJavaProxy
         // will initialize a new object with a different identity
-        return this != o || javaProxy != o.javaProxy ? Py.True : Py.False;
+        return this != o && (javaProxy == null || javaProxy != o.javaProxy) ? Py.True : Py.False;
     }
 
     /**
