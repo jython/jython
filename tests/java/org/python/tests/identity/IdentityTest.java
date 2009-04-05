@@ -14,10 +14,6 @@ public class IdentityTest extends TestCase {
     @Override
     protected void setUp() throws Exception {
         PySystemState sys = new PySystemState();
-        sys.path.append(new PyString("dist/Lib"));
-        sys.path.append(new PyString("dist/javalib/constantine.jar"));
-        sys.path.append(new PyString("dist/javalib/jna.jar"));
-        sys.path.append(new PyString("dist/javalib/jna-posix.jar"));
         interp = new PythonInterpreter(new PyStringMap(), sys);
     }
 
