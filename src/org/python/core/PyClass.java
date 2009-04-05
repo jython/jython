@@ -86,12 +86,12 @@ public class PyClass extends PyObject {
      * Setup cached references to methods where performance really counts
      */
     private void cacheDescriptors() {
-        __getattr__ = lookup("__getattr__", false);
-        __setattr__ = lookup("__setattr__", false);
-        __delattr__ = lookup("__delattr__", false);
-        __tojava__ = lookup("__tojava__", false);
-        __del__ = lookup("__del__", false);
-        __contains__ = lookup("__contains__", false);
+        __getattr__ = lookup("__getattr__");
+        __setattr__ = lookup("__setattr__");
+        __delattr__ = lookup("__delattr__");
+        __tojava__ = lookup("__tojava__");
+        __del__ = lookup("__del__");
+        __contains__ = lookup("__contains__");
     }
 
     private static void findModule(PyObject dict) {
@@ -107,26 +107,17 @@ public class PyClass extends PyObject {
         }
     }
 
-    // returns [PyObject, PyClass]
-    PyObject[] lookupGivingClass(String name, boolean stop_at_java) {
+    PyObject lookup(String name) {
         PyObject result = __dict__.__finditem__(name);
-        PyClass resolvedClass = this;
         if (result == null && __bases__ != null) {
-            int n = __bases__.__len__();
-            for (int i = 0; i < n; i++) {
-                resolvedClass = (PyClass)(__bases__.__getitem__(i));
-                PyObject[] res = resolvedClass.lookupGivingClass(name, stop_at_java);
-                if (res[0] != null) {
-                    return res;
+            for (PyObject base : __bases__.getArray()) {
+                result = ((PyClass)base).lookup(name);
+                if (result != null) {
+                    break;
                 }
             }
         }
-        return new PyObject[] { result, resolvedClass };
-    }
-
-    PyObject lookup(String name, boolean stop_at_java) {
-        PyObject[] result = lookupGivingClass(name, stop_at_java);
-        return result[0];
+        return result;
     }
 
     @Override
@@ -136,12 +127,11 @@ public class PyClass extends PyObject {
 
     @Override
     public PyObject __findattr_ex__(String name) {
-        PyObject[] result = lookupGivingClass(name, false);
-        if (result[0] == null) {
+        PyObject result = lookup(name);
+        if (result == null) {
             return super.__findattr_ex__(name);
         }
-        // XXX: do we need to use result[1] (wherefound) for java cases for backw comp?
-        return result[0].__get__(null, this);
+        return result.__get__(null, this);
     }
 
     @Override

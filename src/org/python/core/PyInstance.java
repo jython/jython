@@ -97,14 +97,14 @@ public class PyInstance extends PyObject
 
     public void __init__(PyObject[] args, String[] keywords) {
         // Invoke our own init function
-        PyObject init = instclass.lookup("__init__", true);
+        PyObject init = instclass.lookup("__init__");
         PyObject ret = null;
         if (init != null) {
             ret = init.__call__(this, args, keywords);
         }
         if (ret == null) {
             if (args.length != 0) {
-                init = instclass.lookup("__init__", false);
+                init = instclass.lookup("__init__");
                 if (init != null) {
                     ret = init.__call__(this, args, keywords);
                 } else {
@@ -117,34 +117,16 @@ public class PyInstance extends PyObject
         }
     }
 
-    public PyObject __jfindattr__(String name) {
-        //System.err.println("jfinding: "+name);
-        return __findattr__(name, true);
-    }
-
     public PyObject __findattr_ex__(String name) {
-        return __findattr_ex__(name, false);
-    }
-
-    public PyObject __findattr__(String name, boolean stopAtJava) {
-        try {
-            return __findattr_ex__(name, stopAtJava);
-        } catch (PyException exc) {
-            if (Py.matchException(exc, Py.AttributeError)) return null;
-            throw exc;
-        }
-    }
-
-    protected PyObject __findattr_ex__(String name, boolean stopAtJava) {
         PyObject result = ifindlocal(name);
-        if (result != null)
+        if (result != null) {
             return result;
+        }
         // it wasn't found in the instance, try the class
-        PyObject[] result2 = instclass.lookupGivingClass(name, stopAtJava);
-        if (result2[0] != null)
-            // xxx do we need to use result2[1] (wherefound) for java cases for backw comp?
-            return result2[0].__get__(this, instclass);
-            // xxx do we need to use
+        result = instclass.lookup(name);
+        if (result != null) {
+            return result.__get__(this, instclass);
+        }
         return ifindfunction(name);
     }
 
@@ -156,8 +138,8 @@ public class PyInstance extends PyObject
         return __dict__.__finditem__(name);
     }
 
-    protected PyObject ifindclass(String name, boolean stopAtJava) {
-        return instclass.lookup(name, stopAtJava);
+    protected PyObject ifindclass(String name) {
+        return instclass.lookup(name);
     }
 
     protected PyObject ifindfunction(String name) {
@@ -180,7 +162,7 @@ public class PyInstance extends PyObject
     public PyObject invoke(String name) {
         PyObject f = ifindlocal(name);
         if (f == null) {
-            f = ifindclass(name, false);
+            f = ifindclass(name);
             if (f != null) {
                 if (f instanceof PyFunction) {
                     return f.__call__(this);
@@ -197,7 +179,7 @@ public class PyInstance extends PyObject
     public PyObject invoke(String name, PyObject arg1) {
         PyObject f = ifindlocal(name);
         if (f == null) {
-            f = ifindclass(name, false);
+            f = ifindclass(name);
             if (f != null) {
                 if (f instanceof PyFunction) {
                     return f.__call__(this, arg1);
@@ -214,7 +196,7 @@ public class PyInstance extends PyObject
     public PyObject invoke(String name, PyObject arg1, PyObject arg2) {
         PyObject f = ifindlocal(name);
         if (f == null) {
-            f = ifindclass(name, false);
+            f = ifindclass(name);
             if (f != null) {
                 if (f instanceof PyFunction) {
                     return f.__call__(this, arg1, arg2);
