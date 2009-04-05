@@ -449,10 +449,16 @@ public class PySystemState extends PyObject
      * @return a resolved path String
      */
     public String getPath(String path) {
-        if (path == null || new File(path).isAbsolute()) {
+        if (path == null) {
             return path;
+        } else {
+            File file = new File(path);
+            if (!file.isAbsolute()) {
+                file = new File(getCurrentWorkingDir(), path);
+            }
+            // This needs to be performed always to trim trailing backslashes on Windows
+            return file.getPath();
         }
-        return new File(getCurrentWorkingDir(), path).getPath();
     }
 
     public void callExitFunc() throws PyIgnoreMethodTag {
