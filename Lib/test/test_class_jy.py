@@ -336,9 +336,11 @@ class ClassDefinesDunderModule(unittest.TestCase):
         Foo.keys = class_dict.keys
         assert sorted(Foo().keys()) == sorted(['a', 'b']), sorted(Foo().keys())
 
+
 class ClassMetaclassRepr(unittest.TestCase):
-    """Verifies #1131 is fixed"""
+
     def test_repr_with_metaclass(self):
+        # http://bugs.jython.org/issue1131
         class FooMetaclass(type):
             def __new__(cls, name, bases, attrs):
                 return super(FooMetaclass, cls).__new__(cls, name, bases, attrs)
@@ -347,7 +349,17 @@ class ClassMetaclassRepr(unittest.TestCase):
             __metaclass__ = FooMetaclass
         self.assertEqual("<class '%s.Foo'>" % __name__, repr(Foo))
 
+    def test_metaclass_str(self):
+        class Foo(type):
+            def __repr__(cls):
+                return 'foo'
+        class Bar(object):
+            __metaclass__ = Foo
+        self.assertEqual(repr(Bar), 'foo')
+        # type.__str__ previously broke this
+        self.assertEqual(str(Bar), 'foo')
 
+        
 def test_main():
     test_support.run_unittest(ClassGeneralTestCase,
                               ClassNamelessModuleTestCase,

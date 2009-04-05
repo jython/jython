@@ -1312,7 +1312,7 @@ public class PyType extends PyObject implements Serializable {
         return numSlots;
     }
 
-    @ExposedMethod(names = {"__repr__", "__str__"}, doc = BuiltinDocs.type___str___doc)
+    @ExposedMethod(names = "__repr__", doc = BuiltinDocs.type___repr___doc)
     public String type_toString() {
         String kind;
         if (!builtin) {
