@@ -33,6 +33,6 @@ public class _newmodule  implements ClassDictInit {
                 return base.getType().__call__(Py.newString(name), bases, dict);
             }
         }
-        return new PyClass(name, bases, dict);
+        return Py.makeClass(name, bases.getArray(), dict);
     }
 }
