@@ -4199,7 +4199,10 @@ def methodwrapper():
     verify(l.__add__ != l.__mul__)
     verify(l.__add__.__name__ == '__add__')
     verify(l.__add__.__self__ is l)
-    verify(l.__add__.__objclass__ is list)
+    if not is_jython:
+        # XXX: method-wrapper implementation detail, not all builtin
+        # instance methods have __objclass__ (e.g. l.append)
+        verify(l.__add__.__objclass__ is list)
     vereq(l.__add__.__doc__, list.__add__.__doc__)
     try:
         hash(l.__add__)
@@ -4418,10 +4421,6 @@ def test_main():
 
             # Lack __basicsize__: http://bugs.jython.org/issue1017
             slotmultipleinheritance,
-
-            # Jython lacks CPython method-wrappers (though maybe this
-            # should pass anyway?)
-            methodwrapper,
 
             # derived classes don't support coerce:
             # http://bugs.jython.org/issue1060

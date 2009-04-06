@@ -50,4 +50,25 @@ public abstract class PyBuiltinMethod extends PyBuiltinCallable implements Expos
         int hashCode = self == null ? 0 : self.hashCode();
         return hashCode ^ getClass().hashCode();
     }
+
+    @Override
+    public int __cmp__(PyObject other) {
+        if (!(other instanceof PyBuiltinMethod)) {
+            return -2;
+        }
+        PyBuiltinMethod otherMethod = (PyBuiltinMethod)other;
+        if (self != otherMethod.self) {
+            if (self == null) {
+                return -1;
+            } else if (otherMethod.self == null) {
+                return 1;
+            }
+            return self._cmp(otherMethod.self);
+        }
+        if (getClass() == otherMethod.getClass()) {
+            return 0;
+        }
+        int compareTo = info.getName().compareTo(otherMethod.info.getName());
+        return compareTo < 0 ? -1 : compareTo > 0 ? 1 : 0;
+    }
 }
