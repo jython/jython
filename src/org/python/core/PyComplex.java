@@ -164,7 +164,7 @@ public class PyComplex extends PyObject {
 
     @ExposedMethod(doc = BuiltinDocs.complex___nonzero___doc)
     final boolean complex___nonzero__() {
-        return real != 0 && imag != 0;
+        return real != 0 || imag != 0;
     }
 
     /*public Object __tojava__(Class c) {

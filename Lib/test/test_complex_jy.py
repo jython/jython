@@ -18,6 +18,10 @@ class ComplexTest(unittest.TestCase):
         # regression in 2.5 alphas
         self.assertEqual((4+0j) ** Foo(), (16+0j))
 
+    def test___nonzero__(self):
+        self.assertTrue(0.25+0j)
+        self.assertTrue(25j)
+
 
 def test_main():
     test_support.run_unittest(ComplexTest)
