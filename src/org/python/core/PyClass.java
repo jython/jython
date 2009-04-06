@@ -149,8 +149,12 @@ public class PyClass extends PyObject {
     }
 
     @Override
-    @ExposedMethod
     public PyObject __call__(PyObject[] args, String[] keywords) {
+        return classobj___call__(args, keywords);
+    }
+
+    @ExposedMethod
+    final PyObject classobj___call__(PyObject[] args, String[] keywords) {
         PyInstance inst;
         if (__del__ == null) {
             inst = new PyInstance(this);
