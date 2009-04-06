@@ -184,7 +184,8 @@ public class math implements ClassDictInit {
         return new PyTuple(new PyFloat(x), new PyInteger(exponent));
     }
 
-    public static double ldexp(double v, int w) {
+    public static double ldexp(double v, PyObject wObj) {
+        int w = wObj.asInt();
         return check(v * Math.pow(2.0, w));
     }
 
