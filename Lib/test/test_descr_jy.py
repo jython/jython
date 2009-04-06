@@ -96,6 +96,7 @@ class TestDescrTestCase(unittest.TestCase):
         except AttributeError, e:
             self.assertEquals("Custom message", str(e))
 
+
 class SubclassDescrTestCase(unittest.TestCase):
 
     def test_subclass_cmp_right_op(self):
@@ -222,6 +223,14 @@ class SubclassDescrTestCase(unittest.TestCase):
         class AnotherDoubler(DoublerBase):
             pass
         self.assertEquals(DoublerBase(2) * AnotherDoubler(3), 12)
+
+    def test_oldstyle_binop_notimplemented(self):
+        class Foo:
+            pass
+        class Bar(object):
+            def __radd__(self, other):
+		return 3
+        self.assertEqual(Foo() + Bar(), 3)
 
 
 class InPlaceTestCase(unittest.TestCase):

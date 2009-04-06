@@ -97,8 +97,15 @@ comment = """\
      **/
 """
 
-template1 = comment + """\
+template1 = """\
+    @Override
     public %(ret)s __%(name)s__() {
+        return instance___%(name)s__();
+    }
+
+""" + comment + """\
+    @ExposedMethod
+    final %(ret)s instance___%(name)s__() {
         PyObject ret = invoke("__%(name)s__");
         if (%(checks)s)
             return %(cast)sret;
@@ -106,8 +113,16 @@ template1 = comment + """\
     }
 
 """
-template2 = comment + """\
+
+template2 = """\
+    @Override
     public PyObject __%(name)s__() {
+        return instance___%(name)s__();
+    }
+
+""" + comment + """\
+    @ExposedMethod
+    public PyObject instance___%(name)s__() {
         return invoke("__%(name)s__");
     }
 
@@ -145,8 +160,15 @@ for item in ops:
 
 
 
-template = comment + """\
+template = """\
+    @Override
     public PyObject __%(name)s__(PyObject o) {
+        return instance___%(name)s__(o);
+    }
+
+""" + comment + """\
+    @ExposedMethod(type = MethodType.BINARY)
+    public PyObject instance___%(name)s__(PyObject o) {
         Object ctmp = __coerce_ex__(o);
         if (ctmp == null || ctmp == Py.None)
             return invoke_ex("__%(name)s__", o);
@@ -173,8 +195,15 @@ template = comment + """\
 """
 
 
-template2 = comment + """\
+template2 = """\
+    @Override
     public PyObject __%(name)s__(PyObject o) {
+        return instance___%(name)s__(o);
+    }
+
+""" + comment + """\
+    @ExposedMethod(type = MethodType.BINARY)
+    public PyObject instance___%(name)s__(PyObject o) {
         PyObject ret = invoke_ex("__%(name)s__", o);
         if (ret != null)
             return ret;

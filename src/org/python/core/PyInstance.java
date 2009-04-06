@@ -1,24 +1,59 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
-/**
- * A python class instance.
- */
+import org.python.expose.ExposedMethod;
+import org.python.expose.ExposedNew;
+import org.python.expose.ExposedType;
+import org.python.expose.MethodType;
 
-public class PyInstance extends PyObject
-{
+/**
+ * An instance of a classic Python class.
+ */
+@ExposedType(name = "instance", isBaseType = false)
+public class PyInstance extends PyObject {
+
+    public static final PyType TYPE = PyType.fromClass(PyInstance.class);
+
     // xxx doc, final name
     public transient PyClass instclass;
 
-    // xxx
+    /** The namespace of this instance.  Contains all instance attributes. */
+    public PyObject __dict__;
+
+    public PyInstance() {
+        super(TYPE);
+    }
+
+    public PyInstance(PyClass iclass, PyObject dict) {
+        super(TYPE);
+        instclass = iclass;
+        if (dict == null) {
+            dict = new PyStringMap();
+        }
+        __dict__ = dict;
+    }
+
+    public PyInstance(PyClass iclass) {
+        this(iclass, null);
+    }
+
+    @ExposedNew
+    public static PyObject instance___new__(PyNewWrapper new_, boolean init, PyType subtype,
+                                            PyObject[] args, String[] keywords) {
+        ArgParser ap = new ArgParser("instance", args, keywords, "name", "bases", "dict");
+        PyClass klass = (PyClass)ap.getPyObjectByType(0, PyClass.TYPE);
+        PyObject dict = ap.getPyObject(1, Py.None);
+        if (dict == Py.None) {
+            dict = null;
+        } else if (!(dict instanceof PyStringMap || dict instanceof PyDictionary)) {
+            throw Py.TypeError("instance() second arg must be dictionary or None");
+        }
+        return new PyInstance(klass, dict);
+    }
+
     public PyObject fastGetClass() {
         return instclass;
     }
-
-    /**
-       The namespace of this instance.  Contains all instance attributes.
-    **/
-    public PyObject __dict__;
 
     /* Override serialization behavior */
     private void readObject(java.io.ObjectInputStream in)
@@ -56,25 +91,7 @@ public class PyInstance extends PyObject
         out.writeUTF(name.toString());
     }
 
-
-    /**
-       Returns a new
-    **/
-
-    public PyInstance(PyClass iclass, PyObject dict) {
-        instclass = iclass;
-        if (dict == Py.None) {
-            dict = new PyStringMap();
-        }
-        __dict__ = dict;
-    }
-
-    public PyInstance(PyClass iclass) {
-        this(iclass, new PyStringMap());
-    }
-
-    public PyInstance() {}
-
+    @Override
     public Object __tojava__(Class c) {
         if (c.isInstance(this))
             return this;
@@ -117,6 +134,7 @@ public class PyInstance extends PyObject
         }
     }
 
+    @Override
     public PyObject __findattr_ex__(String name) {
         PyObject result = ifindlocal(name);
         if (result != null) {
@@ -150,6 +168,7 @@ public class PyInstance extends PyObject
         return getter.__call__(this, new PyString(name));
     }
 
+    @Override
     public boolean isCallable() {
         return __findattr__("__call__") != null;
     }
@@ -159,6 +178,7 @@ public class PyInstance extends PyObject
         return __findattr__("__index__") != null;
     }
 
+    @Override
     public PyObject invoke(String name) {
         PyObject f = ifindlocal(name);
         if (f == null) {
@@ -176,6 +196,7 @@ public class PyInstance extends PyObject
         return f.__call__();
     }
 
+    @Override
     public PyObject invoke(String name, PyObject arg1) {
         PyObject f = ifindlocal(name);
         if (f == null) {
@@ -193,6 +214,7 @@ public class PyInstance extends PyObject
         return f.__call__(arg1);
     }
 
+    @Override
     public PyObject invoke(String name, PyObject arg1, PyObject arg2) {
         PyObject f = ifindlocal(name);
         if (f == null) {
@@ -210,13 +232,20 @@ public class PyInstance extends PyObject
         return f.__call__(arg1, arg2);
     }
 
+    @Override
     public void noAttributeError(String name) {
         throw Py.AttributeError(String.format("%.50s instance has no attribute '%.400s'",
                                               instclass.__name__, name));
     }
 
 
+    @Override
     public void __setattr__(String name, PyObject value) {
+        instance___setattr__(name, value);
+    }
+
+    @ExposedMethod
+    final void instance___setattr__(String name, PyObject value) {
         if (name == "__class__") {
             if (value instanceof PyClass) {
                 instclass = (PyClass)value;
@@ -245,7 +274,13 @@ public class PyInstance extends PyObject
         __dict__.__setitem__(name, value);
     }
 
+    @Override
     public void __delattr__(String name) {
+        instance___delattr__(name);
+    }
+
+    @ExposedMethod
+    final void instance___delattr__(String name) {
         PyObject deller = instclass.__delattr__;
         if (deller != null) {
             deller.__call__(this, new PyString(name));
@@ -287,7 +322,13 @@ public class PyInstance extends PyObject
         return meth.__call__(arg1, arg2);
     }
 
+    @Override
     public PyObject __call__(PyObject args[], String keywords[]) {
+        return instance___call__(args, keywords);
+    }
+
+    @ExposedMethod
+    final PyObject instance___call__(PyObject args[], String keywords[]) {
         ThreadState ts = Py.getThreadState();
         if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
             throw Py.RuntimeError("maximum __call__ recursion depth exceeded");
@@ -298,7 +339,18 @@ public class PyInstance extends PyObject
         }
     }
 
+    @Override
+    public String toString() {
+        return __repr__().toString();
+    }
+
+    @Override
     public PyString __repr__() {
+        return instance___repr__();
+    }
+
+    @ExposedMethod
+    final PyString instance___repr__() {
         PyObject ret = invoke_ex("__repr__");
         if (ret == null) {
             return makeDefaultRepr();
@@ -328,7 +380,13 @@ public class PyInstance extends PyObject
                             Py.idstr(this) + ">");
     }
 
+    @Override
     public PyString __str__() {
+        return instance___str__();
+    }
+
+    @ExposedMethod
+    final PyString instance___str__() {
         PyObject ret = invoke_ex("__str__");
         if (ret == null)
             return __repr__();
@@ -337,7 +395,13 @@ public class PyInstance extends PyObject
         return (PyString)ret;
     }
 
+    @Override
     public PyUnicode __unicode__() {
+        return instance___unicode__();
+    }
+
+    @ExposedMethod
+    final PyUnicode instance___unicode__() {
         PyObject ret = invoke_ex("__unicode__");
         if(ret == null) {
             return super.__unicode__();
@@ -350,6 +414,7 @@ public class PyInstance extends PyObject
         }
     }
 
+    @Override
     public int hashCode() {
         PyObject ret;
         ret = invoke_ex("__hash__");
@@ -368,8 +433,14 @@ public class PyInstance extends PyObject
         throw Py.TypeError("__hash__() must really return int" + ret.getType() );
     }
 
-    // special case: does all the work
+    @Override
     public int __cmp__(PyObject other) {
+        return instance___cmp__(other);
+    }
+
+    // special case: does all the work
+    @ExposedMethod
+    final int instance___cmp__(PyObject other) {
         PyObject[] coerced = this._coerce(other);
         PyObject v;
         PyObject w;
@@ -415,31 +486,73 @@ public class PyInstance extends PyObject
         return ret;
     }
 
+    @Override
     public PyObject __lt__(PyObject o) {
+        return instance___lt__(o);
+    }
+
+    @ExposedMethod
+    final PyObject instance___lt__(PyObject o) {
         return invoke_ex_richcmp("__lt__", o);
     }
 
+    @Override
     public PyObject __le__(PyObject o) {
+        return instance___le__(o);
+    }
+
+    @ExposedMethod
+    final PyObject instance___le__(PyObject o) {
         return invoke_ex_richcmp("__le__", o);
     }
 
+    @Override
     public PyObject __gt__(PyObject o) {
+        return instance___gt__(o);
+    }
+
+    @ExposedMethod
+    final PyObject instance___gt__(PyObject o) {
         return invoke_ex_richcmp("__gt__", o);
     }
 
+    @Override
     public PyObject __ge__(PyObject o) {
+        return instance___ge__(o);
+    }
+
+    @ExposedMethod
+    final PyObject instance___ge__(PyObject o) {
         return invoke_ex_richcmp("__ge__", o);
     }
 
+    @Override
     public PyObject __eq__(PyObject o) {
+        return instance___eq__(o);
+    }
+
+    @ExposedMethod
+    final PyObject instance___eq__(PyObject o) {
         return invoke_ex_richcmp("__eq__", o);
     }
 
+    @Override
     public PyObject __ne__(PyObject o) {
+        return instance___ne__(o);
+    }
+
+    @ExposedMethod
+    final PyObject instance___ne__(PyObject o) {
         return invoke_ex_richcmp("__ne__", o);
     }
 
+    @Override
     public boolean __nonzero__() {
+        return instance___nonzero__();
+    }
+
+    @ExposedMethod
+    final boolean instance___nonzero__() {
         PyObject meth = null;
         try {
             meth = __findattr__("__nonzero__");
@@ -458,13 +571,20 @@ public class PyInstance extends PyObject
         return ret.__nonzero__();
     }
 
+    @Override
     public int __len__() {
+        return instance___len__();
+    }
+
+    @ExposedMethod
+    final int instance___len__() {
         PyObject ret = invoke("__len__");
         if (ret instanceof PyInteger)
             return ((PyInteger)ret).getValue();
         throw Py.TypeError("__len__() should return an int");
     }
 
+    @Override
     public PyObject __finditem__(int key) {
         return __finditem__(new PyInteger(key));
     }
@@ -490,6 +610,7 @@ public class PyInstance extends PyObject
         }
     }
 
+    @Override
     public PyObject __finditem__(PyObject key) {
         try {
             return invoke("__getitem__", key);
@@ -502,19 +623,43 @@ public class PyInstance extends PyObject
         }
     }
 
+    @Override
     public PyObject __getitem__(PyObject key) {
+        return instance___getitem__(key);
+    }
+
+    @ExposedMethod
+    final PyObject instance___getitem__(PyObject key) {
         return invoke("__getitem__", key);
     }
 
+    @Override
     public void __setitem__(PyObject key, PyObject value) {
+        instance___setitem__(key, value);
+    }
+
+    @ExposedMethod
+    final void instance___setitem__(PyObject key, PyObject value) {
         invoke("__setitem__", key, value);
     }
 
+    @Override
     public void __delitem__(PyObject key) {
+        instance___delitem__(key);
+    }
+
+    @ExposedMethod
+    final void instance___delitem__(PyObject key) {
         invoke("__delitem__", key);
     }
 
+    @Override
     public PyObject __getslice__(PyObject start, PyObject stop, PyObject step) {
+        return instance___getslice__(start, stop, step);
+    }
+
+    @ExposedMethod
+    final PyObject instance___getslice__(PyObject start, PyObject stop, PyObject step) {
         if (step != null) {
             return __getitem__(new PySlice(start, stop, step));
         }
@@ -525,7 +670,13 @@ public class PyInstance extends PyObject
         return super.__getslice__(start, stop, step);
     }
 
+    @Override
     public void __setslice__(PyObject start, PyObject stop, PyObject step, PyObject value) {
+        instance___setslice__(start, stop, step, value);
+    }
+
+    @ExposedMethod
+    final void instance___setslice__(PyObject start, PyObject stop, PyObject step, PyObject value) {
         if (step != null) {
             __setitem__(new PySlice(start, stop, step), value);
         } else if (trySlice("__setslice__", start, stop, value) == null) {
@@ -533,7 +684,13 @@ public class PyInstance extends PyObject
         }
     }
 
+    @Override
     public void __delslice__(PyObject start, PyObject stop, PyObject step) {
+        instance___delslice__(start, stop, step);
+    }
+
+    @ExposedMethod
+    final void instance___delslice__(PyObject start, PyObject stop, PyObject step) {
         if (step != null) {
             __delitem__(new PySlice(start, stop, step));
         } else if (trySlice("__delslice__", start, stop) == null) {
@@ -541,7 +698,13 @@ public class PyInstance extends PyObject
         }
     }
 
+    @Override
     public PyObject __iter__() {
+        return instance___iter__();
+    }
+
+    @ExposedMethod
+    final PyObject instance___iter__() {
         PyObject func = __findattr__("__iter__");
         if (func != null)
             return func.__call__();
@@ -552,6 +715,7 @@ public class PyInstance extends PyObject
         return new PySequenceIter(this);
     }
 
+    @Override
     public PyObject __iternext__() {
         PyObject func = __findattr__("next");
         if (func != null) {
@@ -566,7 +730,13 @@ public class PyInstance extends PyObject
         throw Py.TypeError("instance has no next() method");
     }
 
+    @Override
     public boolean __contains__(PyObject o) {
+        return instance___contains__(o);
+    }
+
+    @ExposedMethod
+    final boolean instance___contains__(PyObject o) {
         PyObject func = __findattr__("__contains__");
         if (func == null)
            return super.__contains__(o);
@@ -574,7 +744,7 @@ public class PyInstance extends PyObject
         return ret.__nonzero__();
     }
 
-    //Begin the numeric methods here
+    @Override
     public Object __coerce_ex__(PyObject o) {
         PyObject ret = invoke_ex("__coerce__", o);
         if (ret == null || ret == Py.None)
@@ -584,11 +754,17 @@ public class PyInstance extends PyObject
         return ((PyTuple)ret).getArray();
     }
 
+    @Override
+    public PyObject __index__() {
+        return instance___index__();
+    }
+
     /**
      * Implements the __index__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
-    public PyObject __index__() {
+    @ExposedMethod
+    final PyObject instance___index__() {
         PyObject ret;
         try {
             ret = invoke("__index__");
@@ -605,116 +781,181 @@ public class PyInstance extends PyObject
                                          ret.getType().fastGetName()));
     }
 
-
     // Generated by make_binops.py
 
     // Unary ops
+
+    @Override
+    public PyString __hex__() {
+        return instance___hex__();
+    }
 
     /**
      * Implements the __hex__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
-    public PyString __hex__() {
+    @ExposedMethod
+    final PyString instance___hex__() {
         PyObject ret = invoke("__hex__");
         if (ret instanceof PyString)
             return (PyString)ret;
         throw Py.TypeError("__hex__() should return a string");
     }
 
+    @Override
+    public PyString __oct__() {
+        return instance___oct__();
+    }
+
     /**
      * Implements the __oct__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
-    public PyString __oct__() {
+    @ExposedMethod
+    final PyString instance___oct__() {
         PyObject ret = invoke("__oct__");
         if (ret instanceof PyString)
             return (PyString)ret;
         throw Py.TypeError("__oct__() should return a string");
     }
 
+    @Override
+    public PyObject __int__() {
+        return instance___int__();
+    }
+
     /**
      * Implements the __int__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
-    public PyObject __int__() {
+    @ExposedMethod
+    final PyObject instance___int__() {
         PyObject ret = invoke("__int__");
         if (ret instanceof PyLong || ret instanceof PyInteger)
             return ret;
         throw Py.TypeError("__int__() should return a int");
     }
 
+    @Override
+    public PyFloat __float__() {
+        return instance___float__();
+    }
+
     /**
      * Implements the __float__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
-    public PyFloat __float__() {
+    @ExposedMethod
+    final PyFloat instance___float__() {
         PyObject ret = invoke("__float__");
         if (ret instanceof PyFloat)
             return (PyFloat)ret;
         throw Py.TypeError("__float__() should return a float");
     }
 
+    @Override
+    public PyObject __long__() {
+        return instance___long__();
+    }
+
     /**
      * Implements the __long__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
-    public PyObject __long__() {
+    @ExposedMethod
+    final PyObject instance___long__() {
         PyObject ret = invoke("__long__");
         if (ret instanceof PyLong || ret instanceof PyInteger)
             return ret;
         throw Py.TypeError("__long__() should return a long");
     }
 
+    @Override
+    public PyComplex __complex__() {
+        return instance___complex__();
+    }
+
     /**
      * Implements the __complex__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
-    public PyComplex __complex__() {
+    @ExposedMethod
+    final PyComplex instance___complex__() {
         PyObject ret = invoke("__complex__");
         if (ret instanceof PyComplex)
             return (PyComplex)ret;
         throw Py.TypeError("__complex__() should return a complex");
     }
 
+    @Override
+    public PyObject __pos__() {
+        return instance___pos__();
+    }
+
     /**
      * Implements the __pos__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
-    public PyObject __pos__() {
+    @ExposedMethod
+    public PyObject instance___pos__() {
         return invoke("__pos__");
+    }
+
+    @Override
+    public PyObject __neg__() {
+        return instance___neg__();
     }
 
     /**
      * Implements the __neg__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
-    public PyObject __neg__() {
+    @ExposedMethod
+    public PyObject instance___neg__() {
         return invoke("__neg__");
+    }
+
+    @Override
+    public PyObject __abs__() {
+        return instance___abs__();
     }
 
     /**
      * Implements the __abs__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
-    public PyObject __abs__() {
+    @ExposedMethod
+    public PyObject instance___abs__() {
         return invoke("__abs__");
+    }
+
+    @Override
+    public PyObject __invert__() {
+        return instance___invert__();
     }
 
     /**
      * Implements the __invert__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
-    public PyObject __invert__() {
+    @ExposedMethod
+    public PyObject instance___invert__() {
         return invoke("__invert__");
     }
 
     // Binary ops
 
+    @Override
+    public PyObject __add__(PyObject o) {
+        return instance___add__(o);
+    }
+
     /**
      * Implements the __add__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
-    public PyObject __add__(PyObject o) {
+    @ExposedMethod(type = MethodType.BINARY)
+    public PyObject instance___add__(PyObject o) {
         Object ctmp = __coerce_ex__(o);
         if (ctmp == null || ctmp == Py.None)
             return invoke_ex("__add__", o);
@@ -738,11 +979,17 @@ public class PyInstance extends PyObject
         }
     }
 
+    @Override
+    public PyObject __radd__(PyObject o) {
+        return instance___radd__(o);
+    }
+
     /**
      * Implements the __radd__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
-    public PyObject __radd__(PyObject o) {
+    @ExposedMethod(type = MethodType.BINARY)
+    public PyObject instance___radd__(PyObject o) {
         Object ctmp = __coerce_ex__(o);
         if (ctmp == null || ctmp == Py.None)
             return invoke_ex("__radd__", o);
@@ -766,22 +1013,34 @@ public class PyInstance extends PyObject
         }
     }
 
+    @Override
+    public PyObject __iadd__(PyObject o) {
+        return instance___iadd__(o);
+    }
+
     /**
      * Implements the __iadd__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
-    public PyObject __iadd__(PyObject o) {
+    @ExposedMethod(type = MethodType.BINARY)
+    public PyObject instance___iadd__(PyObject o) {
         PyObject ret = invoke_ex("__iadd__", o);
         if (ret != null)
             return ret;
         return super.__iadd__(o);
     }
 
+    @Override
+    public PyObject __sub__(PyObject o) {
+        return instance___sub__(o);
+    }
+
     /**
      * Implements the __sub__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
-    public PyObject __sub__(PyObject o) {
+    @ExposedMethod(type = MethodType.BINARY)
+    public PyObject instance___sub__(PyObject o) {
         Object ctmp = __coerce_ex__(o);
         if (ctmp == null || ctmp == Py.None)
             return invoke_ex("__sub__", o);
@@ -805,11 +1064,17 @@ public class PyInstance extends PyObject
         }
     }
 
+    @Override
+    public PyObject __rsub__(PyObject o) {
+        return instance___rsub__(o);
+    }
+
     /**
      * Implements the __rsub__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
-    public PyObject __rsub__(PyObject o) {
+    @ExposedMethod(type = MethodType.BINARY)
+    public PyObject instance___rsub__(PyObject o) {
         Object ctmp = __coerce_ex__(o);
         if (ctmp == null || ctmp == Py.None)
             return invoke_ex("__rsub__", o);
@@ -833,22 +1098,34 @@ public class PyInstance extends PyObject
         }
     }
 
+    @Override
+    public PyObject __isub__(PyObject o) {
+        return instance___isub__(o);
+    }
+
     /**
      * Implements the __isub__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
-    public PyObject __isub__(PyObject o) {
+    @ExposedMethod(type = MethodType.BINARY)
+    public PyObject instance___isub__(PyObject o) {
         PyObject ret = invoke_ex("__isub__", o);
         if (ret != null)
             return ret;
         return super.__isub__(o);
     }
 
+    @Override
+    public PyObject __mul__(PyObject o) {
+        return instance___mul__(o);
+    }
+
     /**
      * Implements the __mul__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
-    public PyObject __mul__(PyObject o) {
+    @ExposedMethod(type = MethodType.BINARY)
+    public PyObject instance___mul__(PyObject o) {
         Object ctmp = __coerce_ex__(o);
         if (ctmp == null || ctmp == Py.None)
             return invoke_ex("__mul__", o);
@@ -872,11 +1149,17 @@ public class PyInstance extends PyObject
         }
     }
 
+    @Override
+    public PyObject __rmul__(PyObject o) {
+        return instance___rmul__(o);
+    }
+
     /**
      * Implements the __rmul__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
-    public PyObject __rmul__(PyObject o) {
+    @ExposedMethod(type = MethodType.BINARY)
+    public PyObject instance___rmul__(PyObject o) {
         Object ctmp = __coerce_ex__(o);
         if (ctmp == null || ctmp == Py.None)
             return invoke_ex("__rmul__", o);
@@ -900,22 +1183,34 @@ public class PyInstance extends PyObject
         }
     }
 
+    @Override
+    public PyObject __imul__(PyObject o) {
+        return instance___imul__(o);
+    }
+
     /**
      * Implements the __imul__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
-    public PyObject __imul__(PyObject o) {
+    @ExposedMethod(type = MethodType.BINARY)
+    public PyObject instance___imul__(PyObject o) {
         PyObject ret = invoke_ex("__imul__", o);
         if (ret != null)
             return ret;
         return super.__imul__(o);
     }
 
+    @Override
+    public PyObject __div__(PyObject o) {
+        return instance___div__(o);
+    }
+
     /**
      * Implements the __div__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
-    public PyObject __div__(PyObject o) {
+    @ExposedMethod(type = MethodType.BINARY)
+    public PyObject instance___div__(PyObject o) {
         Object ctmp = __coerce_ex__(o);
         if (ctmp == null || ctmp == Py.None)
             return invoke_ex("__div__", o);
@@ -939,11 +1234,17 @@ public class PyInstance extends PyObject
         }
     }
 
+    @Override
+    public PyObject __rdiv__(PyObject o) {
+        return instance___rdiv__(o);
+    }
+
     /**
      * Implements the __rdiv__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
-    public PyObject __rdiv__(PyObject o) {
+    @ExposedMethod(type = MethodType.BINARY)
+    public PyObject instance___rdiv__(PyObject o) {
         Object ctmp = __coerce_ex__(o);
         if (ctmp == null || ctmp == Py.None)
             return invoke_ex("__rdiv__", o);
@@ -967,22 +1268,34 @@ public class PyInstance extends PyObject
         }
     }
 
+    @Override
+    public PyObject __idiv__(PyObject o) {
+        return instance___idiv__(o);
+    }
+
     /**
      * Implements the __idiv__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
-    public PyObject __idiv__(PyObject o) {
+    @ExposedMethod(type = MethodType.BINARY)
+    public PyObject instance___idiv__(PyObject o) {
         PyObject ret = invoke_ex("__idiv__", o);
         if (ret != null)
             return ret;
         return super.__idiv__(o);
     }
 
+    @Override
+    public PyObject __floordiv__(PyObject o) {
+        return instance___floordiv__(o);
+    }
+
     /**
      * Implements the __floordiv__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
-    public PyObject __floordiv__(PyObject o) {
+    @ExposedMethod(type = MethodType.BINARY)
+    public PyObject instance___floordiv__(PyObject o) {
         Object ctmp = __coerce_ex__(o);
         if (ctmp == null || ctmp == Py.None)
             return invoke_ex("__floordiv__", o);
@@ -1006,11 +1319,17 @@ public class PyInstance extends PyObject
         }
     }
 
+    @Override
+    public PyObject __rfloordiv__(PyObject o) {
+        return instance___rfloordiv__(o);
+    }
+
     /**
      * Implements the __rfloordiv__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
-    public PyObject __rfloordiv__(PyObject o) {
+    @ExposedMethod(type = MethodType.BINARY)
+    public PyObject instance___rfloordiv__(PyObject o) {
         Object ctmp = __coerce_ex__(o);
         if (ctmp == null || ctmp == Py.None)
             return invoke_ex("__rfloordiv__", o);
@@ -1034,22 +1353,34 @@ public class PyInstance extends PyObject
         }
     }
 
+    @Override
+    public PyObject __ifloordiv__(PyObject o) {
+        return instance___ifloordiv__(o);
+    }
+
     /**
      * Implements the __ifloordiv__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
-    public PyObject __ifloordiv__(PyObject o) {
+    @ExposedMethod(type = MethodType.BINARY)
+    public PyObject instance___ifloordiv__(PyObject o) {
         PyObject ret = invoke_ex("__ifloordiv__", o);
         if (ret != null)
             return ret;
         return super.__ifloordiv__(o);
     }
 
+    @Override
+    public PyObject __truediv__(PyObject o) {
+        return instance___truediv__(o);
+    }
+
     /**
      * Implements the __truediv__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
-    public PyObject __truediv__(PyObject o) {
+    @ExposedMethod(type = MethodType.BINARY)
+    public PyObject instance___truediv__(PyObject o) {
         Object ctmp = __coerce_ex__(o);
         if (ctmp == null || ctmp == Py.None)
             return invoke_ex("__truediv__", o);
@@ -1073,11 +1404,17 @@ public class PyInstance extends PyObject
         }
     }
 
+    @Override
+    public PyObject __rtruediv__(PyObject o) {
+        return instance___rtruediv__(o);
+    }
+
     /**
      * Implements the __rtruediv__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
-    public PyObject __rtruediv__(PyObject o) {
+    @ExposedMethod(type = MethodType.BINARY)
+    public PyObject instance___rtruediv__(PyObject o) {
         Object ctmp = __coerce_ex__(o);
         if (ctmp == null || ctmp == Py.None)
             return invoke_ex("__rtruediv__", o);
@@ -1101,22 +1438,34 @@ public class PyInstance extends PyObject
         }
     }
 
+    @Override
+    public PyObject __itruediv__(PyObject o) {
+        return instance___itruediv__(o);
+    }
+
     /**
      * Implements the __itruediv__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
-    public PyObject __itruediv__(PyObject o) {
+    @ExposedMethod(type = MethodType.BINARY)
+    public PyObject instance___itruediv__(PyObject o) {
         PyObject ret = invoke_ex("__itruediv__", o);
         if (ret != null)
             return ret;
         return super.__itruediv__(o);
     }
 
+    @Override
+    public PyObject __mod__(PyObject o) {
+        return instance___mod__(o);
+    }
+
     /**
      * Implements the __mod__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
-    public PyObject __mod__(PyObject o) {
+    @ExposedMethod(type = MethodType.BINARY)
+    public PyObject instance___mod__(PyObject o) {
         Object ctmp = __coerce_ex__(o);
         if (ctmp == null || ctmp == Py.None)
             return invoke_ex("__mod__", o);
@@ -1140,11 +1489,17 @@ public class PyInstance extends PyObject
         }
     }
 
+    @Override
+    public PyObject __rmod__(PyObject o) {
+        return instance___rmod__(o);
+    }
+
     /**
      * Implements the __rmod__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
-    public PyObject __rmod__(PyObject o) {
+    @ExposedMethod(type = MethodType.BINARY)
+    public PyObject instance___rmod__(PyObject o) {
         Object ctmp = __coerce_ex__(o);
         if (ctmp == null || ctmp == Py.None)
             return invoke_ex("__rmod__", o);
@@ -1168,22 +1523,34 @@ public class PyInstance extends PyObject
         }
     }
 
+    @Override
+    public PyObject __imod__(PyObject o) {
+        return instance___imod__(o);
+    }
+
     /**
      * Implements the __imod__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
-    public PyObject __imod__(PyObject o) {
+    @ExposedMethod(type = MethodType.BINARY)
+    public PyObject instance___imod__(PyObject o) {
         PyObject ret = invoke_ex("__imod__", o);
         if (ret != null)
             return ret;
         return super.__imod__(o);
     }
 
+    @Override
+    public PyObject __divmod__(PyObject o) {
+        return instance___divmod__(o);
+    }
+
     /**
      * Implements the __divmod__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
-    public PyObject __divmod__(PyObject o) {
+    @ExposedMethod(type = MethodType.BINARY)
+    public PyObject instance___divmod__(PyObject o) {
         Object ctmp = __coerce_ex__(o);
         if (ctmp == null || ctmp == Py.None)
             return invoke_ex("__divmod__", o);
@@ -1207,11 +1574,17 @@ public class PyInstance extends PyObject
         }
     }
 
+    @Override
+    public PyObject __rdivmod__(PyObject o) {
+        return instance___rdivmod__(o);
+    }
+
     /**
      * Implements the __rdivmod__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
-    public PyObject __rdivmod__(PyObject o) {
+    @ExposedMethod(type = MethodType.BINARY)
+    public PyObject instance___rdivmod__(PyObject o) {
         Object ctmp = __coerce_ex__(o);
         if (ctmp == null || ctmp == Py.None)
             return invoke_ex("__rdivmod__", o);
@@ -1235,11 +1608,17 @@ public class PyInstance extends PyObject
         }
     }
 
+    @Override
+    public PyObject __pow__(PyObject o) {
+        return instance___pow__(o);
+    }
+
     /**
      * Implements the __pow__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
-    public PyObject __pow__(PyObject o) {
+    @ExposedMethod(type = MethodType.BINARY)
+    public PyObject instance___pow__(PyObject o) {
         Object ctmp = __coerce_ex__(o);
         if (ctmp == null || ctmp == Py.None)
             return invoke_ex("__pow__", o);
@@ -1263,11 +1642,17 @@ public class PyInstance extends PyObject
         }
     }
 
+    @Override
+    public PyObject __rpow__(PyObject o) {
+        return instance___rpow__(o);
+    }
+
     /**
      * Implements the __rpow__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
-    public PyObject __rpow__(PyObject o) {
+    @ExposedMethod(type = MethodType.BINARY)
+    public PyObject instance___rpow__(PyObject o) {
         Object ctmp = __coerce_ex__(o);
         if (ctmp == null || ctmp == Py.None)
             return invoke_ex("__rpow__", o);
@@ -1291,22 +1676,34 @@ public class PyInstance extends PyObject
         }
     }
 
+    @Override
+    public PyObject __ipow__(PyObject o) {
+        return instance___ipow__(o);
+    }
+
     /**
      * Implements the __ipow__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
-    public PyObject __ipow__(PyObject o) {
+    @ExposedMethod(type = MethodType.BINARY)
+    public PyObject instance___ipow__(PyObject o) {
         PyObject ret = invoke_ex("__ipow__", o);
         if (ret != null)
             return ret;
         return super.__ipow__(o);
     }
 
+    @Override
+    public PyObject __lshift__(PyObject o) {
+        return instance___lshift__(o);
+    }
+
     /**
      * Implements the __lshift__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
-    public PyObject __lshift__(PyObject o) {
+    @ExposedMethod(type = MethodType.BINARY)
+    public PyObject instance___lshift__(PyObject o) {
         Object ctmp = __coerce_ex__(o);
         if (ctmp == null || ctmp == Py.None)
             return invoke_ex("__lshift__", o);
@@ -1330,11 +1727,17 @@ public class PyInstance extends PyObject
         }
     }
 
+    @Override
+    public PyObject __rlshift__(PyObject o) {
+        return instance___rlshift__(o);
+    }
+
     /**
      * Implements the __rlshift__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
-    public PyObject __rlshift__(PyObject o) {
+    @ExposedMethod(type = MethodType.BINARY)
+    public PyObject instance___rlshift__(PyObject o) {
         Object ctmp = __coerce_ex__(o);
         if (ctmp == null || ctmp == Py.None)
             return invoke_ex("__rlshift__", o);
@@ -1358,22 +1761,34 @@ public class PyInstance extends PyObject
         }
     }
 
+    @Override
+    public PyObject __ilshift__(PyObject o) {
+        return instance___ilshift__(o);
+    }
+
     /**
      * Implements the __ilshift__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
-    public PyObject __ilshift__(PyObject o) {
+    @ExposedMethod(type = MethodType.BINARY)
+    public PyObject instance___ilshift__(PyObject o) {
         PyObject ret = invoke_ex("__ilshift__", o);
         if (ret != null)
             return ret;
         return super.__ilshift__(o);
     }
 
+    @Override
+    public PyObject __rshift__(PyObject o) {
+        return instance___rshift__(o);
+    }
+
     /**
      * Implements the __rshift__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
-    public PyObject __rshift__(PyObject o) {
+    @ExposedMethod(type = MethodType.BINARY)
+    public PyObject instance___rshift__(PyObject o) {
         Object ctmp = __coerce_ex__(o);
         if (ctmp == null || ctmp == Py.None)
             return invoke_ex("__rshift__", o);
@@ -1397,11 +1812,17 @@ public class PyInstance extends PyObject
         }
     }
 
+    @Override
+    public PyObject __rrshift__(PyObject o) {
+        return instance___rrshift__(o);
+    }
+
     /**
      * Implements the __rrshift__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
-    public PyObject __rrshift__(PyObject o) {
+    @ExposedMethod(type = MethodType.BINARY)
+    public PyObject instance___rrshift__(PyObject o) {
         Object ctmp = __coerce_ex__(o);
         if (ctmp == null || ctmp == Py.None)
             return invoke_ex("__rrshift__", o);
@@ -1425,22 +1846,34 @@ public class PyInstance extends PyObject
         }
     }
 
+    @Override
+    public PyObject __irshift__(PyObject o) {
+        return instance___irshift__(o);
+    }
+
     /**
      * Implements the __irshift__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
-    public PyObject __irshift__(PyObject o) {
+    @ExposedMethod(type = MethodType.BINARY)
+    public PyObject instance___irshift__(PyObject o) {
         PyObject ret = invoke_ex("__irshift__", o);
         if (ret != null)
             return ret;
         return super.__irshift__(o);
     }
 
+    @Override
+    public PyObject __and__(PyObject o) {
+        return instance___and__(o);
+    }
+
     /**
      * Implements the __and__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
-    public PyObject __and__(PyObject o) {
+    @ExposedMethod(type = MethodType.BINARY)
+    public PyObject instance___and__(PyObject o) {
         Object ctmp = __coerce_ex__(o);
         if (ctmp == null || ctmp == Py.None)
             return invoke_ex("__and__", o);
@@ -1464,11 +1897,17 @@ public class PyInstance extends PyObject
         }
     }
 
+    @Override
+    public PyObject __rand__(PyObject o) {
+        return instance___rand__(o);
+    }
+
     /**
      * Implements the __rand__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
-    public PyObject __rand__(PyObject o) {
+    @ExposedMethod(type = MethodType.BINARY)
+    public PyObject instance___rand__(PyObject o) {
         Object ctmp = __coerce_ex__(o);
         if (ctmp == null || ctmp == Py.None)
             return invoke_ex("__rand__", o);
@@ -1492,22 +1931,34 @@ public class PyInstance extends PyObject
         }
     }
 
+    @Override
+    public PyObject __iand__(PyObject o) {
+        return instance___iand__(o);
+    }
+
     /**
      * Implements the __iand__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
-    public PyObject __iand__(PyObject o) {
+    @ExposedMethod(type = MethodType.BINARY)
+    public PyObject instance___iand__(PyObject o) {
         PyObject ret = invoke_ex("__iand__", o);
         if (ret != null)
             return ret;
         return super.__iand__(o);
     }
 
+    @Override
+    public PyObject __or__(PyObject o) {
+        return instance___or__(o);
+    }
+
     /**
      * Implements the __or__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
-    public PyObject __or__(PyObject o) {
+    @ExposedMethod(type = MethodType.BINARY)
+    public PyObject instance___or__(PyObject o) {
         Object ctmp = __coerce_ex__(o);
         if (ctmp == null || ctmp == Py.None)
             return invoke_ex("__or__", o);
@@ -1531,11 +1982,17 @@ public class PyInstance extends PyObject
         }
     }
 
+    @Override
+    public PyObject __ror__(PyObject o) {
+        return instance___ror__(o);
+    }
+
     /**
      * Implements the __ror__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
-    public PyObject __ror__(PyObject o) {
+    @ExposedMethod(type = MethodType.BINARY)
+    public PyObject instance___ror__(PyObject o) {
         Object ctmp = __coerce_ex__(o);
         if (ctmp == null || ctmp == Py.None)
             return invoke_ex("__ror__", o);
@@ -1559,22 +2016,34 @@ public class PyInstance extends PyObject
         }
     }
 
+    @Override
+    public PyObject __ior__(PyObject o) {
+        return instance___ior__(o);
+    }
+
     /**
      * Implements the __ior__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
-    public PyObject __ior__(PyObject o) {
+    @ExposedMethod(type = MethodType.BINARY)
+    public PyObject instance___ior__(PyObject o) {
         PyObject ret = invoke_ex("__ior__", o);
         if (ret != null)
             return ret;
         return super.__ior__(o);
     }
 
+    @Override
+    public PyObject __xor__(PyObject o) {
+        return instance___xor__(o);
+    }
+
     /**
      * Implements the __xor__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
-    public PyObject __xor__(PyObject o) {
+    @ExposedMethod(type = MethodType.BINARY)
+    public PyObject instance___xor__(PyObject o) {
         Object ctmp = __coerce_ex__(o);
         if (ctmp == null || ctmp == Py.None)
             return invoke_ex("__xor__", o);
@@ -1598,11 +2067,17 @@ public class PyInstance extends PyObject
         }
     }
 
+    @Override
+    public PyObject __rxor__(PyObject o) {
+        return instance___rxor__(o);
+    }
+
     /**
      * Implements the __rxor__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
-    public PyObject __rxor__(PyObject o) {
+    @ExposedMethod(type = MethodType.BINARY)
+    public PyObject instance___rxor__(PyObject o) {
         Object ctmp = __coerce_ex__(o);
         if (ctmp == null || ctmp == Py.None)
             return invoke_ex("__rxor__", o);
@@ -1626,11 +2101,17 @@ public class PyInstance extends PyObject
         }
     }
 
+    @Override
+    public PyObject __ixor__(PyObject o) {
+        return instance___ixor__(o);
+    }
+
     /**
      * Implements the __ixor__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
-    public PyObject __ixor__(PyObject o) {
+    @ExposedMethod(type = MethodType.BINARY)
+    public PyObject instance___ixor__(PyObject o) {
         PyObject ret = invoke_ex("__ixor__", o);
         if (ret != null)
             return ret;
