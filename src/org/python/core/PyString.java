@@ -101,12 +101,6 @@ public class PyString extends PyBaseString
     }
 
     public PyUnicode __unicode__() {
-        return str___unicode__();
-    }
-
-    //XXX: need doc
-    @ExposedMethod
-    final PyUnicode str___unicode__() {
         return new PyUnicode(this);
     }
 
