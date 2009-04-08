@@ -4,14 +4,18 @@ import marshal
 import struct
 import sys
 from cStringIO import StringIO
+is_jython = sys.platform.startswith('java')
 
 from compiler import ast, parse, walk, syntax
-from compiler import pyassem, misc, future, symbols
+from compiler import misc, future, symbols
 from compiler.consts import SC_LOCAL, SC_GLOBAL, SC_FREE, SC_CELL
 from compiler.consts import (CO_VARARGS, CO_VARKEYWORDS, CO_NEWLOCALS,
      CO_NESTED, CO_GENERATOR, CO_FUTURE_DIVISION,
      CO_FUTURE_ABSIMPORT, CO_FUTURE_WITH_STATEMENT)
-from compiler.pyassem import TupleArg
+if not is_jython:
+    from compiler.pyassem import TupleArg
+else:
+    TupleArg = None
 
 # XXX The version-specific code can go, since this code only works with 2.x.
 # Do we have Python 1.x or Python 2.x?
@@ -47,22 +51,26 @@ def compileFile(filename, display=0):
         mod.dump(f)
         f.close()
 
-def compile(source, filename, mode, flags=None, dont_inherit=None):
-    """Replacement for builtin compile() function"""
-    if flags is not None or dont_inherit is not None:
-        raise RuntimeError, "not implemented yet"
+if is_jython:
+    # use __builtin__ compile
+    compile = compile
+else:
+    def compile(source, filename, mode, flags=None, dont_inherit=None):
+        """Replacement for builtin compile() function"""
+        if flags is not None or dont_inherit is not None:
+            raise RuntimeError, "not implemented yet"
 
-    if mode == "single":
-        gen = Interactive(source, filename)
-    elif mode == "exec":
-        gen = Module(source, filename)
-    elif mode == "eval":
-        gen = Expression(source, filename)
-    else:
-        raise ValueError("compile() 3rd arg must be 'exec' or "
-                         "'eval' or 'single'")
-    gen.compile()
-    return gen.code
+        if mode == "single":
+            gen = Interactive(source, filename)
+        elif mode == "exec":
+            gen = Module(source, filename)
+        elif mode == "eval":
+            gen = Expression(source, filename)
+        else:
+            raise ValueError("compile() 3rd arg must be 'exec' or "
+                             "'eval' or 'single'")
+        gen.compile()
+        return gen.code
 
 class AbstractCompileMode:
 
@@ -119,7 +127,7 @@ class Module(AbstractCompileMode):
         f.write(self.getPycHeader())
         marshal.dump(self.code, f)
 
-    MAGIC = imp.get_magic()
+    MAGIC = None if is_jython else imp.get_magic()
 
     def getPycHeader(self):
         # compile.c uses marshal to write a long directly, with

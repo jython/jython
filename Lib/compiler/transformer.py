@@ -26,10 +26,11 @@ parseFile(path) -> AST
 # and replace OWNER, ORGANIZATION, and YEAR as appropriate.
 
 from compiler.ast import *
-import parser
 import symbol
 import token
 import sys
+if not sys.platform.startswith('java'):
+    import parser
 
 class WalkerError(StandardError):
     pass
