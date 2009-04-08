@@ -57,17 +57,9 @@ except ImportError:
 
 # Mapping of: os._name: [name list, shell command list]
 _os_map = dict(nt=[
-        ['Windows 95', 'Windows 98', 'Windows ME', 'Windows NT',
-         'Windows NT 4.0', 'WindowsNT', 'Windows 2000', 'Windows 2003',
-         'Windows XP', 'Windows Vista'],
+        ['Windows'],
         [['cmd.exe', '/c'], ['command.com', '/c']]
         ],
-
-               ce=[
-        ['Windows CE'],
-        [['cmd.exe', '/c']]
-        ],
-
                posix=[
         [], # posix is a fallback, instead of matching names
         [['/bin/sh', '-c']]
@@ -133,7 +125,7 @@ class PythonPOSIXHandler(POSIXHandler):
 _posix = POSIXFactory.getPOSIX(PythonPOSIXHandler(), True)
 _native_posix = not isinstance(_posix, JavaPOSIX)
 
-if _name in ('nt', 'ce'):
+if _name == 'nt':
     import ntpath as path
 else:
     import posixpath as path

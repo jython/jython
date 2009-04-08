@@ -545,7 +545,7 @@ def list2cmdline(seq):
 
 if jython:
     # Escape the command line arguments with list2cmdline on Windows
-    escape_args_oses = ['nt', 'ce']
+    escape_args_oses = ['nt']
 
     escape_args = None
     shell_command = None
