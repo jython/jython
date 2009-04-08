@@ -20,7 +20,7 @@ import org.python.util.Generic;
  * of the class <code>PyObject</code> or one of its subclasses.
  */
 @ExposedType(name = "object")
-public class PyObject implements Comparable<PyObject>, Serializable {
+public class PyObject implements Serializable {
 
     public static final PyType TYPE = PyType.fromClass(PyObject.class);
 
@@ -1282,10 +1282,6 @@ public class PyObject implements Comparable<PyObject>, Serializable {
             delete_token(ts, token);
             ts.compareStateNesting--;
         }
-    }
-
-    public int compareTo(PyObject o) {
-        return this._cmp(o);
     }
 
     private PyObject make_pair(PyObject o) {

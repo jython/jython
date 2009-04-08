@@ -684,7 +684,8 @@ public class PyList extends PySequenceList implements List {
         //System.out.println("sorting with " + cmp + ":" + key + ":" + reverse);
         //MergeState ms = new MergeState(this, cmp, key, reverse.__nonzero__());
         //ms.sort();
-        Collections.sort(list);
+        PyComparator c = new PyComparator(cmp, key, reverse.__nonzero__());
+        Collections.sort(list, c);
     }
 
     public int hashCode() {
