@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+
 import org.python.expose.ExposedDelete;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
@@ -24,26 +25,62 @@ public class PyObject implements Serializable {
 
     public static final PyType TYPE = PyType.fromClass(PyObject.class);
 
+    /** The type of this object. */
+    PyType objtype;
+
+    /**
+     * An underlying Java instance that this object is wrapping or is a subclass
+     * of. Anything attempting to use the proxy should go through {@link #getJavaProxy()}
+     * which ensures that it's initialized.
+     */
+    protected Object javaProxy;
+
+    /** Primitives classes their wrapper classes. */
+    private static final Map<Class<?>, Class<?>> primitiveMap = Generic.map();
+
+    static {
+        primitiveMap.put(Character.TYPE, Character.class);
+        primitiveMap.put(Boolean.TYPE, Boolean.class);
+        primitiveMap.put(Byte.TYPE, Byte.class);
+        primitiveMap.put(Short.TYPE, Short.class);
+        primitiveMap.put(Integer.TYPE, Integer.class);
+        primitiveMap.put(Long.TYPE, Long.class);
+        primitiveMap.put(Float.TYPE, Float.class);
+        primitiveMap.put(Double.TYPE, Double.class);
+    }
+
+    public PyObject(PyType objtype) {
+        this.objtype = objtype;
+    }
+
+    /**
+     * The standard constructor for a <code>PyObject</code>. It will set the <code>objtype</code>
+     * field to correspond to the specific subclass of <code>PyObject</code> being instantiated.
+     **/
+    public PyObject() {
+        objtype = PyType.fromClass(getClass());
+    }
+
+    /**
+     * Creates the PyObject for the base type. The argument only exists to make the constructor
+     * distinct.
+     */
+    PyObject(boolean ignored) {
+        objtype = (PyType)this;
+    }
+
     //XXX: in CPython object.__new__ has a doc string...
     @ExposedNew
     @ExposedMethod(doc = BuiltinDocs.object___init___doc)
     final void object___init__(PyObject[] args, String[] keywords) {
-// XXX: attempted fix for object(foo=1), etc
-// XXX: this doesn't work for metaclasses, for some reason
-//        if (args.length > 0) {
-//            throw Py.TypeError("default __new__ takes no parameters");
-//        }
-
+        // XXX: attempted fix for object(foo=1), etc
+        // XXX: this doesn't work for metaclasses, for some reason
+        /*
+        if (args.length > 0) {
+            throw Py.TypeError("default __new__ takes no parameters");
+        }
+        */
     }
-
-    /**
-     * An underlying Java instance that this object is wrapping or is a subclass of. Anything
-     * attempting to use the proxy should go through {@link #getJavaProxy()} which ensures that it's
-     * initialized.
-     */
-    protected Object javaProxy;
-
-    PyType objtype;
 
     @ExposedGet(name = "__class__")
     public PyType getType() {
@@ -80,26 +117,6 @@ public class PyObject implements Serializable {
             }
         }
         return Py.None;
-    }
-
-    public PyObject(PyType objtype) {
-        this.objtype = objtype;
-    }
-
-    /**
-     * Creates the PyObject for the base type. The argument only exists to make the constructor
-     * distinct.
-     */
-    PyObject(boolean ignored) {
-        objtype = (PyType)this;
-    }
-
-    /**
-     * The standard constructor for a <code>PyObject</code>. It will set the <code>objtype</code>
-     * field to correspond to the specific subclass of <code>PyObject</code> being instantiated.
-     **/
-    public PyObject() {
-        objtype = PyType.fromClass(getClass());
     }
 
     /**
@@ -286,18 +303,6 @@ public class PyObject implements Serializable {
             proxyInit();
         }
         return javaProxy;
-    }
-
-    private static final Map<Class<?>, Class<?>> primitiveMap = Generic.map();
-    static {
-        primitiveMap.put(Character.TYPE, Character.class);
-        primitiveMap.put(Boolean.TYPE, Boolean.class);
-        primitiveMap.put(Byte.TYPE, Byte.class);
-        primitiveMap.put(Short.TYPE, Short.class);
-        primitiveMap.put(Integer.TYPE, Integer.class);
-        primitiveMap.put(Long.TYPE, Long.class);
-        primitiveMap.put(Float.TYPE, Float.class);
-        primitiveMap.put(Double.TYPE, Double.class);
     }
 
     /**
