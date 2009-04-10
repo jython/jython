@@ -124,9 +124,20 @@ class SlottedWithDictTestCase(unittest.TestCase):
         self.assertEqual(baz.__dict__, {'bar': 'hello bar'})
 
 
+class SlottedWithWeakrefTestCase(unittest.TestCase):
+
+    def test_subclass_oldstyle(self):
+        class OldBase:
+            pass
+        class Foo(OldBase, object):
+            __slots__ = '__dict__'
+        self.assert_(hasattr(Foo, '__weakref__'))
+
+
 def test_main():
     test_support.run_unittest(SlottedTestCase,
-                              SlottedWithDictTestCase)
+                              SlottedWithDictTestCase,
+                              SlottedWithWeakrefTestCase)
 
 
 if __name__ == '__main__':

@@ -1346,9 +1346,6 @@ def slotspecials():
     a.foo = 42
     vereq(a.__dict__, {"foo": 42})
 
-    # XXX: Jython doesn't support __weakref__
-    return
-
     class W(object):
         __slots__ = ["__weakref__"]
     a = W()
@@ -3442,11 +3439,7 @@ def dictproxyiterkeys():
     if verbose: print "Testing dict-proxy iterkeys..."
     keys = [ key for key in C.__dict__.iterkeys() ]
     keys.sort()
-    if is_jython:
-        # XXX: It should include __doc__, but no __weakref__ (for now)
-        vereq(keys, ['__dict__', '__module__', 'meth'])
-    else:
-        vereq(keys, ['__dict__', '__doc__', '__module__', '__weakref__', 'meth'])
+    vereq(keys, ['__dict__', '__doc__', '__module__', '__weakref__', 'meth'])
 
 def dictproxyitervalues():
     class C(object):
@@ -3454,8 +3447,7 @@ def dictproxyitervalues():
             pass
     if verbose: print "Testing dict-proxy itervalues..."
     values = [ values for values in C.__dict__.itervalues() ]
-    # XXX: See dictproxyiterkeys
-    vereq(len(values), is_jython and 3 or 5)
+    vereq(len(values), 5)
 
 def dictproxyiteritems():
     class C(object):
@@ -3464,10 +3456,7 @@ def dictproxyiteritems():
     if verbose: print "Testing dict-proxy iteritems..."
     keys = [ key for (key, value) in C.__dict__.iteritems() ]
     keys.sort()
-    if is_jython:
-        vereq(keys, ['__dict__', '__module__', 'meth'])
-    else:
-        vereq(keys, ['__dict__', '__doc__', '__module__', '__weakref__', 'meth'])
+    vereq(keys, ['__dict__', '__doc__', '__module__', '__weakref__', 'meth'])
 
 def funnynew():
     if verbose: print "Testing __new__ returning something unexpected..."

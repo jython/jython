@@ -1,3 +1,4 @@
+/* Copyright (c) Jython Developers */
 package org.python.core;
 
 import java.io.Serializable;
@@ -17,6 +18,7 @@ import org.python.expose.ExposedNew;
 import org.python.expose.ExposedSet;
 import org.python.expose.ExposedType;
 import org.python.expose.TypeBuilder;
+import org.python.modules._weakref.GlobalRef;
 import org.python.util.Generic;
 
 /**
@@ -27,7 +29,10 @@ public class PyType extends PyObject implements Serializable {
 
     public static PyType TYPE = fromClass(PyType.class);
 
-    /** The type's name. builtin types include their fully qualified name, e.g.: time.struct_time. */
+    /**
+     * The type's name. builtin types include their fully qualified name, e.g.:
+     * time.struct_time.
+     */
     protected String name;
 
     /** __base__, the direct base type or null. */
@@ -46,8 +51,8 @@ public class PyType extends PyObject implements Serializable {
     private long tp_flags;
 
     /**
-     * The Java Class instances of this type will be represented as, or null if it's determined by a
-     * base type.
+     * The Java Class instances of this type will be represented as, or null if it's
+     * determined by a base type.
      */
     protected Class<?> underlying_class;
 
@@ -64,11 +69,14 @@ public class PyType extends PyObject implements Serializable {
     /** Whether this type allows subclassing. */
     private boolean isBaseType = true;
 
+    /** Whether this type has a __dict__. */
+    protected boolean needs_userdict;
+
+    /** Whether this type has a __weakref__ slot (however all types are weakrefable). */
+    protected boolean needs_weakref;
+
     /** Whether finalization is required for this type's instances (implements __del__). */
     private boolean needs_finalizer;
-
-    /** Whether this type's instances require a __dict__. */
-    protected boolean needs_userdict;
 
     /** The number of __slots__ defined. */
     private int numSlots;
@@ -86,8 +94,8 @@ public class PyType extends PyObject implements Serializable {
         super(subtype);
     }
 
-
-    private PyType() {}
+    private PyType() {
+    }
 
     /**
      * Creates the PyType instance for type itself. The argument just exists to make the constructor
@@ -100,33 +108,31 @@ public class PyType extends PyObject implements Serializable {
     @ExposedNew
     public static PyObject type___new__(PyNewWrapper new_, boolean init, PyType subtype,
                                         PyObject[] args, String[] keywords) {
+        // Special case: type(x) should return x.getType()
         if (args.length == 1 && keywords.length == 0) {
             return args[0].getType();
         }
+        // If that didn't trigger, we need 3 arguments. but ArgParser below may give a msg
+        // saying type() needs exactly 3.
         if (args.length + keywords.length != 3) {
-            throw Py.TypeError("type() takes exactly 1 or 3 arguments");
+            throw Py.TypeError("type() takes 1 or 3 arguments");
         }
 
         ArgParser ap = new ArgParser("type()", args, keywords, "name", "bases", "dict");
         String name = ap.getString(0);
-        PyObject bases = ap.getPyObject(1);
-
-        if (!(bases instanceof PyTuple)) {
-            throw Py.TypeError("type(): bases must be tuple");
-        }
+        PyTuple bases = (PyTuple)ap.getPyObjectByType(1, PyTuple.TYPE);
         PyObject dict = ap.getPyObject(2);
         if (!(dict instanceof PyDictionary || dict instanceof PyStringMap)) {
-            throw Py.TypeError("type(): dict must be dict");
+            throw Py.TypeError("type(): argument 3 must be dict, not " + dict.getType());
         }
-        return newType(new_, subtype, name, (PyTuple)bases, dict);
+        return newType(new_, subtype, name, bases, dict);
     }
 
     public static PyObject newType(PyNewWrapper new_, PyType metatype, String name, PyTuple bases,
                                    PyObject dict) {
-        PyType object_type = fromClass(PyObject.class);
+        PyObject[] tmpBases = bases.getArray();
+        PyType winner = findMostDerivedMetatype(tmpBases, metatype);
 
-        PyObject[] bases_list = bases.getArray();
-        PyType winner = findMostDerivedMetatype(bases_list, metatype);
         if (winner != metatype) {
             PyObject winner_new_ = winner.lookup("__new__");
             if (winner_new_ != null && winner_new_ != new_) {
@@ -136,166 +142,146 @@ public class PyType extends PyObject implements Serializable {
             }
             metatype = winner;
         }
-        // Use PyType as the metaclass for Python subclasses of Java classes rather than PyJavaType.
-        // Using PyJavaType as metaclass exposes the java.lang.Object methods on the type, which
-        // doesn't make sense for python subclasses.
+
+        // Use PyType as the metaclass for Python subclasses of Java classes rather than
+        // PyJavaType.  Using PyJavaType as metaclass exposes the java.lang.Object methods
+        // on the type, which doesn't make sense for python subclasses.
         if (metatype == PyType.fromClass(Class.class)) {
             metatype = TYPE;
         }
-        if (bases_list.length == 0) {
-            bases_list = new PyObject[] {object_type};
-        }
-        List<Class<?>> interfaces = Generic.list();
-        Class<?> baseClass = null;
-        for (PyObject base : bases_list) {
-            if (!(base instanceof PyType)) {
-                continue;
-            }
-            Class<?> proxy = ((PyType)base).getProxyType();
-            if (proxy == null) {
-                continue;
-            }
-            if (proxy.isInterface()) {
-                interfaces.add(proxy);
-            } else {
-                if (baseClass != null) {
-                    throw Py.TypeError("no multiple inheritance for Java classes: "
-                            + proxy.getName() + " and " + baseClass.getName());
-                }
-                baseClass = proxy;
-            }
+
+        PyType type;
+        if (new_.for_type == metatype || metatype == PyType.fromClass(Class.class)) {
+            // XXX: set metatype
+            type = new PyType();
+        } else {
+            type = new PyTypeDerived(metatype);
         }
 
-        Class<?> proxyClass = null;
-        if (baseClass != null || interfaces.size() != 0) {
-            String proxyName = name;
-            PyObject module = dict.__finditem__("__module__");
-            if (module != null) {
-                proxyName = module.toString() + "$" + proxyName;
-            }
-            proxyClass = MakeProxies.makeProxy(baseClass, interfaces, name, proxyName, dict);
-            PyType proxyType = PyType.fromClass(proxyClass);
-            List<PyObject> cleanedBases = Generic.list();
-            boolean addedProxyType = false;
-            for (PyObject base : bases_list) {
-                if (!(base instanceof PyType)) {
-                    cleanedBases.add(base);
-                    continue;
-                }
-                Class<?> proxy = ((PyType)base).getProxyType();
-                if (proxy == null) {
-                    cleanedBases.add(base);// non-proxy types go straight into our lookup
-                } else {
-                    if (!(base instanceof PyJavaType)) {
-                        // python subclasses of proxy types need to be added as a base so their
-                        // version of methods will show up
-                        cleanedBases.add(base);
-                    } else if (!addedProxyType) {
-                        // Only add a single Java type, since everything's going to go through the
-                        // proxy type
-                        cleanedBases.add(proxyType);
-                        addedProxyType = true;
-                    }
-                }
-            }
-            bases_list = cleanedBases.toArray(new PyObject[cleanedBases.size()]);
-        }
-        PyType newtype;
-        if (new_.for_type == metatype || metatype == PyType.fromClass(Class.class)) {
-            newtype = new PyType(); // XXX set metatype
-        } else {
-            newtype = new PyTypeDerived(metatype);
-        }
-        if (proxyClass != null) {
-            newtype.javaProxy = proxyClass;
-        }
         if (dict instanceof PyStringMap) {
             dict = ((PyStringMap)dict).copy();
         } else {
             dict = ((PyDictionary)dict).copy();
         }
 
-        if (dict.__finditem__("__module__") == null) {
-           PyFrame frame = Py.getFrame();
-           if (frame != null) {
-               PyObject globals = frame.f_globals;
-               PyObject modname;
-               if ((modname = globals.__finditem__("__name__")) != null) {
-                   dict.__setitem__("__module__", modname);
-               }
-           }
-        }
-        // XXX also __doc__ __module__
+        type.name = name;
+        type.bases = tmpBases.length == 0 ? new PyObject[] {PyObject.TYPE} : tmpBases;
+        type.dict = dict;
+        type.tp_flags = Py.TPFLAGS_HEAPTYPE | Py.TPFLAGS_BASETYPE;
 
-        newtype.dict = dict;
-        newtype.name = name;
-        newtype.base = best_base(bases_list);
-        newtype.numSlots = newtype.base.numSlots;
-        newtype.bases = bases_list;
+        // immediately setup the javaProxy if applicable. may modify bases
+        List<Class<?>> interfaces = Generic.list();
+        Class<?> baseProxyClass = getJavaLayout(type.bases, interfaces);
+        type.setupProxy(baseProxyClass, interfaces);
 
-        if (!newtype.base.isBaseType) {
+        PyType base = type.base = best_base(type.bases);
+        if (!base.isBaseType) {
             throw Py.TypeError(String.format("type '%.100s' is not an acceptable base type",
-                                             newtype.base.name));
+                                             base.name));
         }
 
-        PyObject slots = dict.__finditem__("__slots__");
-        boolean needsDictDescr = false;
-        if (slots == null) {
-            newtype.needs_userdict = true;
-            // a dict descriptor is required if base doesn't already provide a dict
-            needsDictDescr = !newtype.base.needs_userdict;
-        } else {
-            // have slots, but may inherit a dict
-            newtype.needs_userdict = newtype.base.needs_userdict;
+        type.createAllSlots(!base.needs_userdict, !base.needs_weakref);
+        type.ensureAttributes();
 
+        for (PyObject cur : type.bases) {
+            if (cur instanceof PyType)
+                ((PyType)cur).attachSubclass(type);
+        }
+
+        return type;
+    }
+
+    /**
+     * Create all slots and related descriptors.
+     *
+     * @param mayAddDict whether a __dict__ descriptor is allowed on this type
+     * @param mayAddWeak whether a __weakref__ descriptor is allowed on this type
+     */
+    private void createAllSlots(boolean mayAddDict, boolean mayAddWeak) {
+        numSlots = base.numSlots;
+        boolean wantDict = false;
+        boolean wantWeak = false;
+        PyObject slots = dict.__finditem__("__slots__");
+
+        if (slots == null) {
+            wantDict = mayAddDict;
+            wantWeak = mayAddWeak;
+        } else {
             if (slots instanceof PyString) {
-                addSlot(newtype, slots);
-            } else {
-                for (PyObject slotname : slots.asIterable()) {
-                    addSlot(newtype, slotname);
+                slots = new PyTuple(slots);
+            }
+
+            // Check for valid slot names and create them. Handle two special cases
+            for (PyObject slot : slots.asIterable()) {
+                String slotName = confirmIdentifier(slot);
+
+                if (slotName.equals("__dict__")) {
+                    if (!mayAddDict || wantDict) {
+                        throw Py.TypeError("__dict__ slot disallowed: we already got one");
+                    }
+                    wantDict = true;
+                } else if (slotName.equals("__weakref__")) {
+                    if (!mayAddWeak || wantWeak) {
+                        throw Py.TypeError("__weakref__ slot disallowed: we already got one");
+                    }
+                    wantWeak = true;
+                } else {
+                    slotName = mangleName(name, slotName);
+                    if (dict.__finditem__(slotName) == null) {
+                        dict.__setitem__(slotName, new PySlot(this, slotName, numSlots++));
+                    }
                 }
             }
 
-            if (!newtype.base.needs_userdict && newtype.needs_userdict) {
-                // base doesn't provide dict but addSlot found the __dict__ slot
-                needsDictDescr = true;
-            } else if (bases_list.length > 0 && !newtype.needs_userdict) {
-                // secondary bases may provide dict
-                for (PyObject base : bases_list) {
-                    if (base == newtype.base) {
+            // Secondary bases may provide weakrefs or dict
+            if (bases.length > 1
+                && ((mayAddDict && !wantDict) || (mayAddWeak && !wantWeak))) {
+                for (PyObject base : bases) {
+                    if (base == this.base) {
                         // Skip primary base
                         continue;
                     }
+
                     if (base instanceof PyClass) {
-                        // Classic base class provides dict
-                        newtype.needs_userdict = true;
-                        needsDictDescr = true;
+                        // Classic base class provides both
+                        if (mayAddDict && !wantDict) {
+                            wantDict = true;
+                        }
+                        if (mayAddWeak && !wantWeak) {
+                            wantWeak = true;
+                        }
                         break;
                     }
-                    PyType tmpType = (PyType)base;
-                    if (tmpType.needs_userdict) {
-                        newtype.needs_userdict = true;
-                        needsDictDescr = true;
+
+                    PyType baseType = (PyType)base;
+                    if (mayAddDict && !wantDict && baseType.needs_userdict) {
+                        wantDict = true;
+                    }
+                    if (mayAddWeak && !wantWeak && baseType.needs_weakref) {
+                        wantWeak = true;
+                    }
+                    if ((!mayAddDict || wantDict) && (!mayAddWeak || wantWeak)) {
                         // Nothing more to check
                         break;
                     }
                 }
             }
         }
-
-        newtype.tp_flags = Py.TPFLAGS_HEAPTYPE | Py.TPFLAGS_BASETYPE;
-
-        // special case __new__, if function => static method
-        PyObject tmp = dict.__finditem__("__new__");
-        if (tmp != null && tmp instanceof PyFunction) { // XXX java functions?
-            dict.__setitem__("__new__", new PyStaticMethod(tmp));
+        
+        if (wantDict) {
+            createDictSlot();
         }
+        if (wantWeak) {
+            createWeakrefSlot();
+        }
+        needs_finalizer = lookup("__del__") != null;
+    }
 
-        newtype.mro_internal();
-        // __dict__ descriptor
-        if (needsDictDescr && dict.__finditem__("__dict__") == null) {
-            dict.__setitem__("__dict__", new PyDataDescr(newtype, "__dict__", PyObject.class) {
-
+    /**
+     * Create the __dict__ descriptor.
+     */
+    private void createDictSlot() {
+        dict.__setitem__("__dict__", new PyDataDescr(this, "__dict__", PyObject.class) {
                 @Override
                 public Object invokeGet(PyObject obj) {
                     return obj.getDict();
@@ -321,16 +307,93 @@ public class PyType extends PyObject implements Serializable {
                     obj.delDict();
                 }
             });
+        needs_userdict = true;
+    }
+
+    /**
+     * Create the __weakref__ descriptor.
+     */
+    private void createWeakrefSlot() {
+        dict.__setitem__("__weakref__", new PyDataDescr(this, "__weakref__", PyObject.class) {
+                private static final String writeMsg =
+                        "attribute '%s' of '%s' objects is not writable";
+
+                private void notWritable(PyObject obj) {
+                    throw Py.AttributeError(String.format(writeMsg, "__weakref__",
+                                                          obj.getType().fastGetName()));
+                }
+
+                @Override
+                public Object invokeGet(PyObject obj) {
+                    PyList weakrefs = GlobalRef.newInstance(obj).refs();
+                    switch (weakrefs.size()) {
+                    case 0:
+                        return Py.None;
+                    case 1:
+                        return weakrefs.pyget(0);
+                    default:
+                        return weakrefs;
+
+                    }
+                }
+
+                @Override
+                public boolean implementsDescrSet() {
+                    return true;
+                }
+
+                @Override
+                public void invokeSet(PyObject obj, Object value) {
+                    // XXX: Maybe have PyDataDescr do notWritable() for us
+                    notWritable(obj);
+                }
+
+                @Override
+                public boolean implementsDescrDelete() {
+                    return true;
+                }
+
+                @Override
+                public void invokeDelete(PyObject obj) {
+                    notWritable(obj);
+                }
+            });
+        needs_weakref = true;
+    }
+
+    /**
+     * Setup this type's special attributes.
+     */
+    private void ensureAttributes() {
+        inheritSpecial();
+
+        // special case __new__, if function => static method
+        PyObject new_ = dict.__finditem__("__new__");
+        // XXX: java functions?
+        if (new_ != null && new_ instanceof PyFunction) {
+            dict.__setitem__("__new__", new PyStaticMethod(new_));
         }
 
-        newtype.fillHasSetAndDelete();
-        newtype.needs_finalizer = newtype.lookup("__del__") != null;
-
-        for (PyObject cur : bases_list) {
-            if (cur instanceof PyType)
-                ((PyType)cur).attachSubclass(newtype);
+        // NOTE: __module__ is already guaranteed by Py.makeClass
+        if (dict.__finditem__("__doc__") == null) {
+            dict.__setitem__("__doc__", Py.None);
         }
-        return newtype;
+
+        // Calculate method resolution order
+        mro_internal();
+        fillHasSetAndDelete();
+    }
+
+    /**
+     * Inherit special attributes from the dominant base.
+     */
+    private void inheritSpecial() {
+        if (!needs_userdict && base.needs_userdict) {
+            needs_userdict = true;
+        }
+        if (!needs_weakref && base.needs_weakref) {
+            needs_weakref = true;
+        }
     }
 
     private static PyObject invoke_new_(PyObject new_, PyType type, boolean init, PyObject[] args,
@@ -434,6 +497,89 @@ public class PyType extends PyObject implements Serializable {
             return this;
         }
         return base.getLayout();
+    }
+
+    /**
+     * Get the most parent Java proxy Class from bases, tallying any encountered Java
+     * interfaces.
+     *
+     * @param bases array of base Jython classes
+     * @param interfaces List for collecting interfaces to
+     * @return base Java proxy Class
+     * @raises Py.TypeError if multiple Java inheritance was attempted
+     */
+    private static Class<?> getJavaLayout(PyObject[] bases, List<Class<?>> interfaces) {
+        Class<?> baseProxy = null;
+
+        for (PyObject base : bases) {
+            if (!(base instanceof PyType)) {
+                continue;
+            }
+            Class<?> proxy = ((PyType)base).getProxyType();
+            if (proxy == null) {
+                continue;
+            }
+            if (proxy.isInterface()) {
+                interfaces.add(proxy);
+            } else {
+                if (baseProxy != null) {
+                    String msg = "no multiple inheritance for Java classes: %s and %s";
+                    throw Py.TypeError(String.format(msg, proxy.getName(), baseProxy.getName()));
+                }
+                baseProxy = proxy;
+            }
+        }
+
+        return baseProxy;
+    }
+
+    /**
+     * Setup the javaProxy for this type.
+     *
+     * @param baseProxyClass this type's base proxyClass
+     * @param interfaces a list of Java interfaces in bases
+     */
+    private void setupProxy(Class<?> baseProxyClass, List<Class<?>> interfaces) {
+        if (baseProxyClass == null && interfaces.size() == 0) {
+            // javaProxy not applicable
+            return;
+        }
+
+        String proxyName = name;
+        PyObject module = dict.__finditem__("__module__");
+        if (module != null) {
+            proxyName = module.toString() + "$" + proxyName;
+        }
+        Class<?> proxyClass = MakeProxies.makeProxy(baseProxyClass, interfaces, name, proxyName,
+                                                    dict);
+        javaProxy = proxyClass;
+
+        PyType proxyType = PyType.fromClass(proxyClass);
+        List<PyObject> cleanedBases = Generic.list();
+        boolean addedProxyType = false;
+        for (PyObject base : bases) {
+            if (!(base instanceof PyType)) {
+                cleanedBases.add(base);
+                continue;
+            }
+            Class<?> proxy = ((PyType)base).getProxyType();
+            if (proxy == null) {
+                // non-proxy types go straight into our lookup
+                cleanedBases.add(base);
+            } else {
+                if (!(base instanceof PyJavaType)) {
+                    // python subclasses of proxy types need to be added as a base so their
+                    // version of methods will show up
+                    cleanedBases.add(base);
+                } else if (!addedProxyType) {
+                    // Only add a single Java type, since everything's going to go through the
+                    // proxy type
+                    cleanedBases.add(proxyType);
+                    addedProxyType = true;
+                }
+            }
+        }
+        bases = cleanedBases.toArray(new PyObject[cleanedBases.size()]);
     }
 
     //XXX: needs __doc__
@@ -826,20 +972,6 @@ public class PyType extends PyObject implements Serializable {
                                + "(non-strict) subclass of the metaclasses of all its bases");
         }
         return winner;
-    }
-
-    private static void addSlot(PyType newtype, PyObject slotname) {
-        confirmIdentifier(slotname);
-        String slotstring = mangleName(newtype.name, slotname.toString());
-        if (slotstring.equals("__dict__")) {
-            if (newtype.base.needs_userdict || newtype.needs_userdict) {
-                throw Py.TypeError("__dict__ slot disallowed: we already got one");
-            }
-            newtype.needs_userdict = true;
-        } else if (newtype.dict.__finditem__(slotstring) == null) {
-            newtype.dict.__setitem__(slotstring, new PySlot(newtype, slotstring,
-                                                            newtype.numSlots++));
-        }
     }
 
     public boolean isSubType(PyType supertype) {
@@ -1342,22 +1474,28 @@ public class PyType extends PyObject implements Serializable {
 
     //XXX: consider pulling this out into a generally accessible place
     //     I bet this is duplicated more or less in other places.
-    private static void confirmIdentifier(PyObject o) {
-        String msg = "__slots__ must be identifiers";
-        if (o == Py.None) {
-            throw Py.TypeError(msg);
+    private static String confirmIdentifier(PyObject obj) {
+        String identifier;
+        if (!(obj instanceof PyString)) {
+            throw Py.TypeError(String.format("__slots__ items must be strings, not '%.200s'",
+                                             obj.getType().fastGetName()));
+        } else if (obj instanceof PyUnicode) {
+            identifier = ((PyUnicode)obj).encode();
+        } else {
+            identifier = obj.toString();
         }
-        String identifier = o.toString();
-        if (identifier == null || identifier.length() < 1
+
+        String msg = "__slots__ must be identifiers";
+        if (identifier.length() == 0
             || (!Character.isLetter(identifier.charAt(0)) && identifier.charAt(0) != '_')) {
             throw Py.TypeError(msg);
         }
-        char[] chars = identifier.toCharArray();
-        for (int i = 0; i < chars.length; i++) {
-            if (!Character.isLetterOrDigit(chars[i]) && chars[i] != '_') {
+        for (char c : identifier.toCharArray()) {
+            if (!Character.isLetterOrDigit(c) && c != '_') {
                 throw Py.TypeError(msg);
             }
         }
+        return identifier;
     }
 
     //XXX: copied from CodeCompiler.java and changed variable names.
