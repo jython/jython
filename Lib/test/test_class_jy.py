@@ -17,17 +17,24 @@ class ClassGeneralTestCase(unittest.TestCase):
         self.assertEqual(str.__module__, '__builtin__')
         class Foo:
             pass
-        self.assertEqual(Foo.__module__, __name__)
-        self.assertEqual(str(Foo), '%s.Foo' % __name__)
-        self.assert_(repr(Foo).startswith('<class %s.Foo at' % __name__))
-        foo = Foo()
-        self.assert_(str(foo).startswith('<%s.Foo instance at' % __name__))
+        Fu = types.ClassType('Fu', (), {})
+        for cls in Foo, Fu:
+            self.assert_('__module__' in cls.__dict__)
+            self.assertEqual(cls.__module__, __name__)
+            self.assertEqual(str(cls), '%s.%s' % (__name__, cls.__name__))
+            self.assert_(repr(cls).startswith('<class %s.%s at' %
+                                              (__name__, cls.__name__)))
+            obj = cls()
+            self.assert_(str(obj).startswith('<%s.%s instance at' %
+                                             (__name__, cls.__name__)))
 
         class Bar(object):
             pass
         class Baz(Object):
             pass
-        for cls in Bar, Baz:
+        Bang = type('Bang', (), {})
+        for cls in Bar, Baz, Bang:
+            self.assert_('__module__' in cls.__dict__)
             self.assertEqual(cls.__module__, __name__)
             self.assertEqual(str(cls), "<class '%s.%s'>" % (__name__, cls.__name__))
             self.assertEqual(repr(cls), "<class '%s.%s'>" % (__name__, cls.__name__))

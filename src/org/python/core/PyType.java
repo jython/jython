@@ -374,10 +374,8 @@ public class PyType extends PyObject implements Serializable {
             dict.__setitem__("__new__", new PyStaticMethod(new_));
         }
 
-        // NOTE: __module__ is already guaranteed by Py.makeClass
-        if (dict.__finditem__("__doc__") == null) {
-            dict.__setitem__("__doc__", Py.None);
-        }
+        ensureDoc(dict);
+        ensureModule(dict);
 
         // Calculate method resolution order
         mro_internal();
@@ -393,6 +391,37 @@ public class PyType extends PyObject implements Serializable {
         }
         if (!needs_weakref && base.needs_weakref) {
             needs_weakref = true;
+        }
+    }
+
+    /**
+     * Ensure dict contains a __doc__.
+     *
+     * @param dict a PyObject mapping
+     */
+    public static void ensureDoc(PyObject dict) {
+        if (dict.__finditem__("__doc__") == null) {
+            dict.__setitem__("__doc__", Py.None);
+        }
+    }
+
+    /**
+     * Ensure dict contains a __module__, retrieving it from the current frame if it
+     * doesn't exist.
+     *
+     * @param dict a PyObject mapping
+     */
+    public static void ensureModule(PyObject dict) {
+        if (dict.__finditem__("__module__") != null) {
+            return;
+        }
+        PyFrame frame = Py.getFrame();
+        if (frame == null) {
+            return;
+        }
+        PyObject name = frame.f_globals.__finditem__("__name__");
+        if (name != null) {
+            dict.__setitem__("__module__", name);
         }
     }
 

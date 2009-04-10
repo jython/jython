@@ -55,10 +55,8 @@ public class PyClass extends PyObject {
         if (!(dict instanceof PyStringMap || dict instanceof PyDictionary)) {
             throw Py.TypeError("PyClass_New: dict must be a dictionary");
         }
-        if (dict.__finditem__("__doc__") == null) {
-            dict.__setitem__("__doc__", Py.None);
-        }
-        findModule(dict);
+        PyType.ensureDoc(dict);
+        PyType.ensureModule(dict);
 
         if (!(bases instanceof PyTuple)) {
             throw Py.TypeError("PyClass_New: bases must be a tuple");
@@ -92,19 +90,6 @@ public class PyClass extends PyObject {
         __tojava__ = lookup("__tojava__");
         __del__ = lookup("__del__");
         __contains__ = lookup("__contains__");
-    }
-
-    private static void findModule(PyObject dict) {
-        PyObject module = dict.__finditem__("__module__");
-        if (module == null || module == Py.None) {
-            PyFrame f = Py.getFrame();
-            if (f != null) {
-                PyObject nm = f.f_globals.__finditem__("__name__");
-                if (nm != null) {
-                    dict.__setitem__("__module__", nm);
-                }
-            }
-        }
     }
 
     PyObject lookup(String name) {
