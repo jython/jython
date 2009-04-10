@@ -775,6 +775,8 @@ public class PyList extends PySequenceList implements List {
     public boolean equals(Object o) {
         if (o instanceof PyList) {
             return (((PyList) o).list.equals(list));
+        } else if(o instanceof List) { // XXX copied from PyList, but...
+            return o.equals(this);     // XXX shouldn't this compare using py2java?
         }
         return false;
     }
