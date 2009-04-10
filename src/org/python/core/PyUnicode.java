@@ -213,10 +213,8 @@ public class PyUnicode extends PyString implements Iterable {
         return fmt.format(other);
     }
 
-    //XXX: needs doc
-    @ExposedMethod/*(doc = BuiltinDocs.unicode___unicode___doc)*/
-    final PyUnicode unicode___unicode__() {
-        return str___unicode__();
+    public PyUnicode __unicode__() {
+        return this;
     }
 
     @Override

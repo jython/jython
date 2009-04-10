@@ -93,7 +93,7 @@ public class PyDictProxy extends PyObject {
 
     @ExposedMethod(type = MethodType.CMP)
     public int dictproxy___cmp__(PyObject other) {
-        return dict.__cmp__(other);
+        return dict._cmp(other);
     }
 
     @ExposedMethod(type = MethodType.BINARY)

@@ -697,15 +697,13 @@ def metaclass():
     class _instance(object):
         pass
     class M2(object):
-        # XXX: Jython 2.3
-        #@staticmethod
+        @staticmethod
         def __new__(cls, name, bases, dict):
             self = object.__new__(cls)
             self.name = name
             self.bases = bases
             self.dict = dict
             return self
-        __new__ = staticmethod(__new__)
         def __call__(self):
             it = _instance()
             # Early binding of methods
@@ -1347,9 +1345,6 @@ def slotspecials():
     verify(not hasattr(a, "__weakref__"))
     a.foo = 42
     vereq(a.__dict__, {"foo": 42})
-
-    # XXX: Jython doesn't support __weakref__
-    return
 
     class W(object):
         __slots__ = ["__weakref__"]
@@ -2196,11 +2191,9 @@ def supers():
         aProp = property(lambda self: "foo")
 
     class Sub(Base):
-        # XXX: Jython 2.3
-        #@classmethod
+        @classmethod
         def test(klass):
             return super(Sub,klass).aProp
-        test = classmethod(test)
 
     veris(Sub.test(), Base.aProp)
 
@@ -3446,11 +3439,7 @@ def dictproxyiterkeys():
     if verbose: print "Testing dict-proxy iterkeys..."
     keys = [ key for key in C.__dict__.iterkeys() ]
     keys.sort()
-    if is_jython:
-        # XXX: It should include __doc__, but no __weakref__ (for now)
-        vereq(keys, ['__dict__', '__module__', 'meth'])
-    else:
-        vereq(keys, ['__dict__', '__doc__', '__module__', '__weakref__', 'meth'])
+    vereq(keys, ['__dict__', '__doc__', '__module__', '__weakref__', 'meth'])
 
 def dictproxyitervalues():
     class C(object):
@@ -3458,8 +3447,7 @@ def dictproxyitervalues():
             pass
     if verbose: print "Testing dict-proxy itervalues..."
     values = [ values for values in C.__dict__.itervalues() ]
-    # XXX: See dictproxyiterkeys
-    vereq(len(values), is_jython and 3 or 5)
+    vereq(len(values), 5)
 
 def dictproxyiteritems():
     class C(object):
@@ -3468,10 +3456,7 @@ def dictproxyiteritems():
     if verbose: print "Testing dict-proxy iteritems..."
     keys = [ key for (key, value) in C.__dict__.iteritems() ]
     keys.sort()
-    if is_jython:
-        vereq(keys, ['__dict__', '__module__', 'meth'])
-    else:
-        vereq(keys, ['__dict__', '__doc__', '__module__', '__weakref__', 'meth'])
+    vereq(keys, ['__dict__', '__doc__', '__module__', '__weakref__', 'meth'])
 
 def funnynew():
     if verbose: print "Testing __new__ returning something unexpected..."
@@ -4199,7 +4184,10 @@ def methodwrapper():
     verify(l.__add__ != l.__mul__)
     verify(l.__add__.__name__ == '__add__')
     verify(l.__add__.__self__ is l)
-    verify(l.__add__.__objclass__ is list)
+    if not is_jython:
+        # XXX: method-wrapper implementation detail, not all builtin
+        # instance methods have __objclass__ (e.g. l.append)
+        verify(l.__add__.__objclass__ is list)
     vereq(l.__add__.__doc__, list.__add__.__doc__)
     try:
         hash(l.__add__)
@@ -4418,10 +4406,6 @@ def test_main():
 
             # Lack __basicsize__: http://bugs.jython.org/issue1017
             slotmultipleinheritance,
-
-            # Jython lacks CPython method-wrappers (though maybe this
-            # should pass anyway?)
-            methodwrapper,
 
             # derived classes don't support coerce:
             # http://bugs.jython.org/issue1060

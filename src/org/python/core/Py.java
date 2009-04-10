@@ -1532,8 +1532,6 @@ public final class Py {
         String.class, PyTuple.class, PyObject.class, Class.class
     };
 
-    static private final PyType CLASS_TYPE = PyType.fromClass(PyClass.class);
-
     // XXX: The following two makeClass overrides are *only* for the
     // old compiler, they should be removed when the newcompiler hits
     public static PyObject makeClass(String name, PyObject[] bases,
@@ -1590,20 +1588,9 @@ public final class Py {
                 if (globals != null) {
                     metaclass = globals.__finditem__("__metaclass__");
                 }
-            }
-        }
-
-        if (metaclass == null || metaclass == CLASS_TYPE) {
-            boolean moreGeneral = false;
-            for (PyObject base : bases) {
-                if (!(base instanceof PyClass)) {
-                    metaclass = base.getType();
-                    moreGeneral = true;
-                    break;
+                if (metaclass == null) {
+                    metaclass = PyClass.TYPE;
                 }
-            }
-            if (!moreGeneral) {
-                return new PyClass(name, new PyTuple(bases), dict);
             }
         }
 

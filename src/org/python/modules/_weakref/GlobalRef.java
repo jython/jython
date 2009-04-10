@@ -110,6 +110,12 @@ public class GlobalRef extends WeakReference {
         return new PyList(list);
     }
 
+    /**
+     * Create a new tracked GlobalRef.
+     *
+     * @param object a PyObject to reference
+     * @return a new tracked GlobalRef
+     */
     public static GlobalRef newInstance(PyObject object) {
         GlobalRef ref = objects.get(new GlobalRef(object));
         if (ref == null) {
@@ -117,6 +123,28 @@ public class GlobalRef extends WeakReference {
             objects.put(ref, ref);
         }
         return ref;
+    }
+
+    /**
+     * Return the number of references to the specified PyObject.
+     *
+     * @param object a PyObject
+     * @return an int reference count
+     */
+    public static int getCount(PyObject object) {
+        GlobalRef ref = objects.get(new GlobalRef(object));
+        return ref == null ? 0 : ref.count();
+    }
+
+    /**
+     * Return a list of references to the specified PyObject.
+     *
+     * @param object a PyObject
+     * @return a PyList of references. may be empty
+     */
+    public static PyList getRefs(PyObject object) {
+        GlobalRef ref = objects.get(new GlobalRef(object));
+        return ref == null ? new PyList() : ref.refs();
     }
 
     /**

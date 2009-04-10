@@ -1,6 +1,7 @@
 """
  test compile. derived from test_codeop
 """
+import codeop
 import unittest
 from test import test_support
 from test.test_support import run_unittest
@@ -183,8 +184,17 @@ class CompileTests(unittest.TestCase):
                              compile("a = 1\n", "def", 'single').co_filename)
 
 
+class CodeopTests(unittest.TestCase):
+
+    def test_no_universal_newlines(self):
+        # previously \r was translated due to universal newlines
+        code = codeop.compile_command("'\rfoo\r'", symbol='eval')
+        self.assertEqual(eval(code), '\rfoo\r')
+
+
 def test_main():
-    run_unittest(CompileTests)
+    run_unittest(CompileTests,
+                 CodeopTests)
 
 
 if __name__ == "__main__":

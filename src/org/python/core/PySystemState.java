@@ -93,7 +93,6 @@ public class PySystemState extends PyObject
     public static Properties registry; // = init_registry();
     public static PyObject prefix;
     public static PyObject exec_prefix = Py.EmptyString;
-    public static PyString platform = new PyString("java");
 
     public static final PyString byteorder = new PyString("big");
     public static final int maxint = Integer.MAX_VALUE;
@@ -110,6 +109,7 @@ public class PySystemState extends PyObject
     // shadowed statics - don't use directly
     public static PyList warnoptions = new PyList();
     public static PyObject builtins;
+    public static PyObject platform = new PyString("java");
 
     public PyList meta_path;
     public PyList path_hooks;
@@ -197,7 +197,6 @@ public class PySystemState extends PyObject
             name == "__class__" ||
             name == "registry" ||
             name == "exec_prefix" ||
-            name == "platform" ||
             name == "packageManager") {
             throw Py.TypeError("readonly attribute");
         }
@@ -242,8 +241,7 @@ public class PySystemState extends PyObject
     public synchronized PyObject getBuiltins() {
         if (shadowing == null) {
             return getDefaultBuiltins();
-        }
-        else {
+        } else {
             return shadowing.builtins;
         }
     }
@@ -260,8 +258,7 @@ public class PySystemState extends PyObject
     public synchronized PyObject getWarnoptions() {
         if (shadowing == null) {
             return warnoptions;
-        }
-        else {
+        } else {
             return shadowing.warnoptions;
         }
     }
@@ -271,6 +268,22 @@ public class PySystemState extends PyObject
             warnoptions = new PyList(value);
         } else {
             shadowing.warnoptions = new PyList(value);
+        }
+    }
+
+    public synchronized PyObject getPlatform() {
+        if (shadowing == null) {
+            return platform;
+        } else {
+            return shadowing.platform;
+        }
+    }
+
+    public synchronized void setPlatform(PyObject value) {
+        if (shadowing == null) {
+            platform = value;
+        } else {
+            shadowing.platform = value;
         }
     }
 
@@ -298,6 +311,8 @@ public class PySystemState extends PyObject
             return getWarnoptions();
         } else if (name == "builtins") {
             return getBuiltins();
+        } else if (name == "platform") {
+            return getPlatform();
         } else {
             PyObject ret = super.__findattr_ex__(name);
             if (ret != null) {
@@ -321,10 +336,12 @@ public class PySystemState extends PyObject
         if (name == "builtins") {
             shadow();
             setBuiltins(value);
-        }
-        else if (name == "warnoptions") {
+        } else if (name == "warnoptions") {
             shadow();
             setWarnoptions(value);
+        } else if (name == "platform") {
+            shadow();
+            setPlatform(value);
         } else {
             PyObject ret = getType().lookup(name); // xxx fix fix fix
             if (ret != null && ret._doset(this, value)) {
@@ -449,10 +466,16 @@ public class PySystemState extends PyObject
      * @return a resolved path String
      */
     public String getPath(String path) {
-        if (path == null || new File(path).isAbsolute()) {
+        if (path == null) {
             return path;
+        } else {
+            File file = new File(path);
+            if (!file.isAbsolute()) {
+                file = new File(getCurrentWorkingDir(), path);
+            }
+            // This needs to be performed always to trim trailing backslashes on Windows
+            return file.getPath();
         }
-        return new File(getCurrentWorkingDir(), path).getPath();
     }
 
     public void callExitFunc() throws PyIgnoreMethodTag {
@@ -1222,9 +1245,11 @@ class PyAttributeDeleted extends PyObject {
 class Shadow {
     PyObject builtins;
     PyList warnoptions;
+    PyObject platform;
 
     Shadow() {
         builtins = PySystemState.getDefaultBuiltins();
         warnoptions = PySystemState.warnoptions;
+        platform = PySystemState.platform;
     }
 }

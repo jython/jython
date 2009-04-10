@@ -31,6 +31,8 @@ Copyright © Corporation for National Research Initiatives
 
     Cyrille Morvan has written the code for the Jythonc ant task.
 
+    Alan Kennedy contributed modjy, which bridges WSGI to the Servlet API
+
     A huge thanks goes to all the members of the jpython/jython
     mailing lists.  Other folks who have contributed to JPython and 
     Jython in ways large and small, in no particular order:
@@ -66,6 +68,20 @@ Copyright © Corporation for National Research Initiatives
     Nathan Franzen
     Aleks Totic
     Randolph Brown
+    Geoffrey French
+    Tobias Ivarsson
+    Lino Mastrodomenico
+    Sébastien Boisgérault
+    Jim Baker
+    Charlie Groves
+    Otmar Humbel
+    Philip Jenvey
+    Nicholas Riley
+    Frank Wierzbicki
+    Khalid Zuberi
+    Sean McGrath
+    Clark Updike
+    Leonardo Soto
 
 Local Variables:
 mode: indented-text

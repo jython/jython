@@ -35,7 +35,10 @@ public class ReferenceType extends AbstractReference {
 
         GlobalRef gref = GlobalRef.newInstance(ob);
         if (new_.for_type == subtype) {
-            // XXX: Reject types that aren't weak referenceable
+            // NOTE: CPython disallows weakrefs to many builtin types (e.g. dict, list)
+            // and would check weakrefability here. We aren't as strict since the JVM can
+            // weakref anything. Our types' needs_weakref flag only refers to whether it
+            // has a __weakref__ descriptor, not weakrefability
             if (callback == null) {
                 ReferenceType ret = (ReferenceType)gref.find(ReferenceType.class);
                 if (ret != null) {

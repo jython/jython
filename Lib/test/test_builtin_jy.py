@@ -141,23 +141,29 @@ class ExecEvalTest(unittest.TestCase):
 
     def test_parse_str_eval(self):
         foo = 'föö'
-        for code in ("'%s'" % foo.decode('utf-8'),
-                     "# coding: utf-8\n'%s'" % foo,
-                     "%s'%s'" % (BOM_UTF8, foo)):
-            mod = compile(code, 'foo.py', 'eval')
-            bar = eval(mod)
-            self.assertEqual(foo, bar)
-            bar = eval(code)
-            self.assertEqual(foo, bar)
+        for code, expected in (
+            ("'%s'" % foo.decode('utf-8'), foo),
+            ("# coding: utf-8\n'%s'" % foo, foo),
+            ("%s'%s'" % (BOM_UTF8, foo), foo),
+            ("'\rfoo\r'", '\rfoo\r')
+            ):
+            mod = compile(code, 'test.py', 'eval')
+            result = eval(mod)
+            self.assertEqual(result, expected)
+            result = eval(code)
+            self.assertEqual(result, expected)
 
     def test_parse_str_exec(self):
         foo = 'föö'
-        for code in ("a = '%s'" % foo.decode('utf-8'),
-                     "# coding: utf-8\na = '%s'" % foo,
-                     "%sa = '%s'" % (BOM_UTF8, foo)):
+        for code, expected in (
+            ("bar = '%s'" % foo.decode('utf-8'), foo),
+            ("# coding: utf-8\nbar = '%s'" % foo, foo),
+            ("%sbar = '%s'" % (BOM_UTF8, foo), foo),
+            ("bar = '\rfoo\r'", '\rfoo\r')
+            ):
             ns = {}
             exec code in ns
-            self.assertEqual(foo, ns['a'])
+            self.assertEqual(ns['bar'], expected)
 
     def test_general_eval(self):
         # Tests that general mappings can be used for the locals argument

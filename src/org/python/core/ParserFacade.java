@@ -220,6 +220,15 @@ public class ParserFacade {
                                                                 CompilerFlags cflags,
                                                                 String filename,
                                                                 boolean fromString)
+        throws IOException {
+        return prepBufReader(input, cflags, filename, fromString, true);
+    }
+
+    private static ExpectedEncodingBufferedReader prepBufReader(InputStream input,
+                                                                CompilerFlags cflags,
+                                                                String filename,
+                                                                boolean fromString,
+                                                                boolean universalNewlines)
             throws IOException {
         input = new BufferedInputStream(input);
         boolean bom = adjustForBOM(input);
@@ -240,12 +249,14 @@ public class ParserFacade {
         }
         cflags.encoding = encoding;
 
-        // Enable universal newlines mode on the input
-        StreamIO rawIO = new StreamIO(input, true);
-        org.python.core.io.BufferedReader bufferedIO =
-                new org.python.core.io.BufferedReader(rawIO, 0);
-        UniversalIOWrapper textIO = new UniversalIOWrapper(bufferedIO);
-        input = new TextIOInputStream(textIO);
+        if (universalNewlines) {
+            // Enable universal newlines mode on the input
+            StreamIO rawIO = new StreamIO(input, true);
+            org.python.core.io.BufferedReader bufferedIO =
+                    new org.python.core.io.BufferedReader(rawIO, 0);
+            UniversalIOWrapper textIO = new UniversalIOWrapper(bufferedIO);
+            input = new TextIOInputStream(textIO);
+        }
 
         Charset cs;
         try {
@@ -270,7 +281,8 @@ public class ParserFacade {
 
     private static ExpectedEncodingBufferedReader prepBufReader(String string,
                                                                 CompilerFlags cflags,
-                                                                String filename) throws IOException {
+                                                                String filename)
+        throws IOException {
         byte[] stringBytes;
         if (cflags.source_is_utf8) {
             // Passed unicode, re-encode the String to raw bytes
@@ -285,7 +297,7 @@ public class ParserFacade {
         } else {
             stringBytes = StringUtil.toBytes(string);
         }
-        return prepBufReader(new ByteArrayInputStream(stringBytes), cflags, filename, true);
+        return prepBufReader(new ByteArrayInputStream(stringBytes), cflags, filename, true, false);
     }
 
     /**
