@@ -479,8 +479,21 @@ def test_expat_locator_withinfo():
     if os.name == 'java':
         testfile = testfile.replace('\\', '/')
 
-    return xmlgen.location.getSystemId().endswith(testfile) and \
+    t = xmlgen.location.getSystemId().endswith(testfile) and \
            xmlgen.location.getPublicId() is None
+    if not t:
+        print 'os.name: %s' % os.name
+        print 'systemId (%s): %s publicId (%s): %s' % \
+            (type(xmlgen.location.getSystemId()), xmlgen.location.getSystemId(),
+             type(xmlgen.location.getPublicId()), xmlgen.location.getPublicId())
+        content = open(testfile).read()
+        print '------- contents of %s ---------' % testfile
+        print content
+        print '------- end contents of %s ---------' % testfile
+        print '------- repr ---------'
+        print repr(content)
+        print '------- end repr ---------'
+    return t
 
 
 # ===========================================================================

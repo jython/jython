@@ -42,11 +42,13 @@ class CmdLineTest(unittest.TestCase):
         self.verify_valid_flag('-S')
 
     def test_usage(self):
-        self.assertTrue('usage' in self.start_python('-h'))
+        result = self.start_python('-h')
+        self.assertTrue('usage' in result, repr(result))
 
     def test_version(self):
         version = 'Jython %d.%d' % sys.version_info[:2]
-        self.assertTrue(self.start_python('-V').startswith(version))
+        result = self.start_python('-V')
+        self.assertTrue(result.startswith(version), repr(result))
 
 def test_main():
     test.test_support.run_unittest(CmdLineTest)
