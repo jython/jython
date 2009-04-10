@@ -680,12 +680,11 @@ public class PyList extends PySequenceList implements List {
         sort(Py.None, Py.None, Py.False);
     }
 
-    public void sort(PyObject cmp, PyObject key, PyObject reverse) {
-        //System.out.println("sorting with " + cmp + ":" + key + ":" + reverse);
-        //MergeState ms = new MergeState(this, cmp, key, reverse.__nonzero__());
-        //ms.sort();
-        PyComparator c = new PyComparator(cmp, key, reverse.__nonzero__());
+    public synchronized void sort(PyObject cmp, PyObject key, PyObject reverse) {
+        gListAllocatedStatus = -1;
+        PyComparator c = new PyComparator(this, cmp, key, reverse.__nonzero__());
         Collections.sort(list, c);
+        gListAllocatedStatus = __len__();
     }
 
     public int hashCode() {

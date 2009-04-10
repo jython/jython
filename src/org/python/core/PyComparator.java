@@ -4,11 +4,13 @@ import java.util.Comparator;
 
 public class PyComparator implements Comparator<PyObject> {
 
-    protected PyObject cmp = null;
-    protected PyObject key = null;
+    protected PyList list;
+    protected PyObject cmp;
+    protected PyObject key;
     protected boolean reverse = false;
 
-    PyComparator(PyObject cmp, PyObject key, boolean reverse) {
+    PyComparator(PyList list, PyObject cmp, PyObject key, boolean reverse) {
+        this.list = list;
         this.cmp = cmp;
         this.key = key;
         this.reverse = reverse;
@@ -31,6 +33,9 @@ public class PyComparator implements Comparator<PyObject> {
         }
         if (reverse) {
             return -result;
+        }
+        if (this.list.gListAllocatedStatus >= 0) {
+            throw Py.ValueError("list modified during sort");
         }
         return result;
     }
