@@ -1,10 +1,7 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
-import org.python.expose.ExposedGet;
-import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
-import org.python.expose.ExposedSet;
 import org.python.expose.ExposedType;
 
 /**
@@ -16,16 +13,12 @@ public class PyClass extends PyObject {
     public static final PyType TYPE = PyType.fromClass(PyClass.class);
 
     /** Holds the namespace for this class */
-    @ExposedGet
     public PyObject __dict__;
 
     /** The base classes of this class */
-    @ExposedGet
     public PyTuple __bases__;
 
     /** The name of this class */
-    @ExposedGet
-    @ExposedSet
     public String __name__;
 
     // Store these methods for performance optimization. These are only used by PyInstance
@@ -112,11 +105,67 @@ public class PyClass extends PyObject {
 
     @Override
     public PyObject __findattr_ex__(String name) {
+        if (name == "__dict__") {
+            return __dict__;
+        }
+        if (name == "__bases__") {
+            return __bases__;
+        }
+        if (name == "__name__") {
+            return Py.newString(__name__);
+        }
+
         PyObject result = lookup(name);
         if (result == null) {
-            return super.__findattr_ex__(name);
+            return result;
         }
         return result.__get__(null, this);
+    }
+
+    @Override
+    public void __setattr__(String name, PyObject value) {
+        if (name == "__dict__") {
+            setDict(value);
+            return;
+        } else if (name == "__bases__") {
+            setBases(value);
+            return;
+        } else if (name == "__name__") {
+            setName(value);
+            return;
+        } else if (name == "__getattr__") {
+            __getattr__ = value;
+            return;
+        } else if (name == "__setattr__") {
+            __setattr__ = value;
+            return;
+        } else if (name == "__delattr__") {
+            __delattr__ = value;
+            return;
+        } else if (name == "__tojava__") {
+            __tojava__ = value;
+            return;
+        } else if (name == "__del__") {
+            __del__ = value;
+            return;
+        } else if (name == "__contains__") {
+            __contains__ = value;
+            return;
+        }
+
+        if (value == null) {
+            try {
+                __dict__.__delitem__(name);
+            } catch (PyException pye) {
+                noAttributeError(name);
+            }
+        }
+        __dict__.__setitem__(name, value);
+    }
+
+    @Override
+    public void __delattr__(String name) {
+        __setattr__(name, null);
     }
 
     @Override
@@ -135,11 +184,6 @@ public class PyClass extends PyObject {
 
     @Override
     public PyObject __call__(PyObject[] args, String[] keywords) {
-        return classobj___call__(args, keywords);
-    }
-
-    @ExposedMethod
-    final PyObject classobj___call__(PyObject[] args, String[] keywords) {
         PyInstance inst;
         if (__del__ == null) {
             inst = new PyInstance(this);
@@ -149,6 +193,11 @@ public class PyClass extends PyObject {
         }
         inst.__init__(args, keywords);
         return inst;
+    }
+
+    @Override
+    public boolean isCallable() {
+        return true;
     }
 
     /* PyClass's are compared based on __name__ */
@@ -204,17 +253,20 @@ public class PyClass extends PyObject {
         return false;
     }
 
-    @ExposedSet(name = "__dict__")
     public void setDict(PyObject value) {
-        if (!(value instanceof PyStringMap || value instanceof PyDictionary)) {
+        if (value == null || !(value instanceof PyStringMap || value instanceof PyDictionary)) {
             throw Py.TypeError("__dict__ must be a dictionary object");
         }
         __dict__ = value;
     }
 
-    @ExposedSet(name = "__bases__")
-    public void setBases(PyTuple value) {
-        for (PyObject base : value.getArray()) {
+    public void setBases(PyObject value) {
+        if (value == null || !(value instanceof PyTuple)) {
+            throw Py.TypeError("__bases__ must be a tuple object");
+        }
+
+        PyTuple bases = (PyTuple)value;
+        for (PyObject base : bases.getArray()) {
             if (!(base instanceof PyClass)) {
                 throw Py.TypeError("__bases__ items must be classes");
             }
@@ -222,6 +274,17 @@ public class PyClass extends PyObject {
                 throw Py.TypeError("a __bases__ item causes an inheritance cycle");
             }
         }
-        __bases__ = value;
+        __bases__ = bases;
+    }
+
+    public void setName(PyObject value) {
+        if (value == null || !Py.isInstance(value, PyString.TYPE)) {
+            throw Py.TypeError("__name__ must be a string object");
+        }
+        String name = value.toString();
+        if (name.contains("\u0000")) {
+            throw Py.TypeError("__name__ must not contain null bytes");
+        }
+        __name__ = name;
     }
 }
