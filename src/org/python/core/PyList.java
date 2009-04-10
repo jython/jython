@@ -134,7 +134,7 @@ public class PyList extends PySequenceList implements List {
                 value = new PyList((PySequence) value);
             }
             setsliceIterator(start, stop, step, value.asIterable().iterator());
-        } else if (!(value instanceof List)) {
+        } else if (value != null && !(value instanceof List)) {
             //XXX: can we avoid copying here?  Needed to pass test_userlist
             value = new PyList(value);
             setsliceIterator(start, stop, step, value.asIterable().iterator());
