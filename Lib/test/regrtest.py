@@ -1424,7 +1424,6 @@ _expectations = {
         test_plistlib
         test_poll
         test_pty
-        test_pyexpat
         test_resource
         test_rgbimg
         test_scriptpackages
@@ -1477,6 +1476,7 @@ _failures = {
         test_multibytecodec_support
         test_peepholer
         test_pyclbr
+        test_pyexpat
         test_stringprep
         test_threadsignals
         test_transformer
