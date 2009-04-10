@@ -18,7 +18,7 @@ import org.python.expose.ExposedNew;
 import org.python.expose.ExposedSet;
 import org.python.expose.ExposedType;
 import org.python.expose.TypeBuilder;
-import org.python.modules._weakref.GlobalRef;
+import org.python.modules._weakref.WeakrefModule;
 import org.python.util.Generic;
 
 /**
@@ -325,7 +325,7 @@ public class PyType extends PyObject implements Serializable {
 
                 @Override
                 public Object invokeGet(PyObject obj) {
-                    PyList weakrefs = GlobalRef.newInstance(obj).refs();
+                    PyList weakrefs = WeakrefModule.getweakrefs(obj);
                     switch (weakrefs.size()) {
                     case 0:
                         return Py.None;

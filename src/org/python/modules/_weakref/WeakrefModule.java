@@ -55,20 +55,12 @@ public class WeakrefModule implements ClassDictInit {
         }
     }
 
-    public static int getweakrefcount(PyObject o) {
-        GlobalRef ref = GlobalRef.newInstance(o);
-        if (ref == null) {
-            return 0;
-        }
-        return ref.count();
+    public static int getweakrefcount(PyObject object) {
+        return GlobalRef.getCount(object);
     }
 
-    public static PyList getweakrefs(PyObject o) {
-        GlobalRef ref = GlobalRef.newInstance(o);
-        if (ref == null) {
-            return new PyList();
-        }
-        return ref.refs();
+    public static PyList getweakrefs(PyObject object) {
+        return GlobalRef.getRefs(object);
     }
 }
 
