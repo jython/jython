@@ -129,10 +129,12 @@ public class PyList extends PySequenceList implements List {
         if (stop < start) {
             stop = start;
         }
-        if ((value instanceof PySequence) || (!(value instanceof List))) {
+        if (value instanceof PySequence) {
             if (value == this) { // copy
                 value = new PyList((PySequence) value);
             }
+            setsliceIterator(start, stop, step, value.asIterable().iterator());
+        } else if (!(value instanceof List)) {
             setsliceIterator(start, stop, step, value.asIterable().iterator());
         } else {
             System.err.println("List");
