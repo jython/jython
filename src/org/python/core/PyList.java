@@ -155,13 +155,26 @@ public class PyList extends PySequenceList implements List {
     }
 
     protected void setsliceIterator(int start, int stop, int step, Iterator<PyObject> iter) {
-        int size = list.size();
-        for (int j = start; iter.hasNext(); j += step) {
-            PyObject item = iter.next();
-            if (j >= size) {
-                list.add(item);
-            } else {
-                list.set(j, item);
+        if(step == 1) {
+            List<PyObject> copy = new ArrayList<PyObject>();
+            copy.addAll(this.list.subList(0, start));
+            if (iter != null) {
+                while (iter.hasNext()) {
+                    copy.add(iter.next());
+                }
+            }
+            copy.addAll(this.list.subList(stop, this.list.size()));
+            this.list.clear();
+            this.list.addAll(copy);
+        } else {
+            int size = list.size();
+            for (int j = start; iter.hasNext(); j += step) {
+                PyObject item = iter.next();
+                if (j >= size) {
+                    list.add(item);
+                } else {
+                    list.set(j, item);
+                }
             }
         }
     }
