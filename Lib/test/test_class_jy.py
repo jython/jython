@@ -4,7 +4,7 @@ test_class which focuses on operators.
 Made for Jython
 """
 import __builtin__
-import new
+import types
 import unittest
 from java.lang import Object
 from test import test_support
@@ -33,7 +33,6 @@ class ClassGeneralTestCase(unittest.TestCase):
             self.assertEqual(repr(cls), "<class '%s.%s'>" % (__name__, cls.__name__))
         self.assert_(str(Bar()).startswith('<%s.Bar object at' % __name__))
         self.assert_(str(Baz()).startswith("org.python.proxies.%s$Baz" % __name__))
-
 
     def test_builtin_attributes(self):
         for attr, val in dict(__name__='foo', __module__='bar', __dict__={},
@@ -119,7 +118,7 @@ class ClassGeneralTestCase(unittest.TestCase):
             pass
         def hello(self):
             return 'hello'
-        Bar = new.classobj('Bar', (Foo,), dict(hello=hello))
+        Bar = types.ClassType('Bar', (Foo,), dict(hello=hello))
         self.assert_(type(Bar), type)
         self.assert_(issubclass(Bar, Foo))
         self.assert_(hasattr(Bar, 'hello'))
@@ -183,7 +182,7 @@ class ClassGeneralTestCase(unittest.TestCase):
             def __getitem__(self, key):
                 raise IndexError, "Fraid not"
         self.assertRaises(IndexError, A().__getitem__, 'b')
-        
+
 
 class ClassNamelessModuleTestCase(unittest.TestCase):
 
@@ -306,15 +305,12 @@ class IsDescendentTestCase(unittest.TestCase):
 
 
 class JavaClassNamingTestCase(unittest.TestCase):
-    """
-    Tests for PyJavaClass naming.
-    """
+
+    """Tests for PyJavaClass naming."""
 
     def test_java_class_name(self):
-        """
-        The __name__ and __module__ attributes of Java classes should be set
-        according to the same convention that Python uses.
-        """
+        # The __name__ and __module__ attributes of Java classes should
+        # be set according to the same convention that Python uses.
         from java.lang import String
         self.assertEqual(String.__name__, "String")
         self.assertEqual(String.__module__, "java.lang")
@@ -323,7 +319,9 @@ class JavaClassNamingTestCase(unittest.TestCase):
 module_name = __name__
 
 class ClassDefinesDunderModule(unittest.TestCase):
+
     """Verifies http://bugs.jython.org/issue1022 is fixed"""
+
     def test_dundermodule_in_classdef(self):
         class Foo:
             self.assertEqual(__module__, module_name)
@@ -359,17 +357,17 @@ class ClassMetaclassRepr(unittest.TestCase):
         # type.__str__ previously broke this
         self.assertEqual(str(Bar), 'foo')
 
-        
+
 def test_main():
-    test_support.run_unittest(ClassGeneralTestCase,
-                              ClassNamelessModuleTestCase,
-                              BrokenNameTestCase,
-                              ClassLocalsTestCase,
-                              IsDescendentTestCase,
-                              JavaClassNamingTestCase,
-                              ClassDefinesDunderModule,
-                              ClassMetaclassRepr,
-                              )
+    test_support.run_unittest(
+        ClassGeneralTestCase,
+        ClassNamelessModuleTestCase,
+        BrokenNameTestCase,
+        ClassLocalsTestCase,
+        IsDescendentTestCase,
+        JavaClassNamingTestCase,
+        ClassDefinesDunderModule,
+        ClassMetaclassRepr)
 
 
 if __name__ == "__main__":
