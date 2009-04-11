@@ -117,9 +117,13 @@ while [ $# -gt 0 ] ; do
       fi
       ;;
     # Match switches that take an argument
-    -c|-C|-jar|-Q|-W)
-      python_args=("${python_args[@]}" "$1" "$2")
-      shift
+    -c|-C|-m|-jar|-Q|-W)
+      if [ $# = 1 ]; then
+          python_args=("${python_args[@]}" "$1")
+      else
+          python_args=("${python_args[@]}" "$1" "$2")
+          shift
+      fi;
       ;;
     # Match -Dprop=val type args
     -D*)

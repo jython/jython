@@ -50,7 +50,8 @@ class CmdLineTest(unittest.TestCase):
         self.assertTrue('usage' in self.start_python('-h'))
 
     def test_version(self):
-        version = 'Python %d.%d' % sys.version_info[:2]
+        prefix = 'J' if test.test_support.is_jython else 'P'
+        version = prefix + 'ython %d.%d' % sys.version_info[:2]
         self.assertTrue(self.start_python('-V').startswith(version))
 
     def test_run_module(self):
