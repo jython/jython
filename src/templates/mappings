@@ -26,6 +26,7 @@ long.derived:org.python.core.PyLongDerived
 local.derived:org.python.modules.thread.PyLocalDerived
 module.derived:org.python.core.PyModuleDerived
 newlist.derived:org.python.core.PyNewListDerived
+newtuple.derived:org.python.core.PyNewTupleDerived
 object.derived:org.python.core.PyObjectDerived
 partial.derived:org.python.modules._functools.PyPartialDerived
 property.derived:org.python.core.PyPropertyDerived

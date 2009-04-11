@@ -70,7 +70,7 @@ public class PyList extends PySequenceList implements List {
         }
     }
 
-    public PyList fromList(List list) {
+    public static PyList fromList(List list) {
         return new PyList(list, false);
     }
 
@@ -461,9 +461,8 @@ public class PyList extends PySequenceList implements List {
     @ExposedMethod(doc = BuiltinDocs.list_count_doc)
     final int list_count(PyObject o) {
         int count = 0;
-        PyObject[] array = getArray();
-        for (int i = 0, n = size(); i < n; i++) {
-            if (array[i].equals(o)) {
+        for (PyObject item : list) {
+            if (item.equals(o)) {
                 count++;
             }
         }
@@ -511,11 +510,12 @@ public class PyList extends PySequenceList implements List {
         // Follow Python 2.3+ behavior
         int validStop = boundToSequence(stop);
         int validStart = boundToSequence(start);
-        PyObject[] array = getArray();
-        for (int i = validStart; i < validStop && i < size(); i++) {
-            if (array[i].equals(o)) {
+        int i = 0;
+        for (PyObject item : list.subList(validStart, validStop)) {
+            if (item.equals(o)) {
                 return i;
             }
+            i++;
         }
         throw Py.ValueError(message);
     }
