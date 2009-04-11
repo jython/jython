@@ -1,6 +1,7 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
@@ -15,11 +16,12 @@ import org.python.expose.MethodType;
 /**
  * A builtin python tuple.
  */
-
 @ExposedType(name = "tuple", base = PyObject.class)
-public class PyTuple extends PySequenceObjectList
-{
+public class PyTuple extends PySequenceList implements List {
+
     public static final PyType TYPE = PyType.fromClass(PyTuple.class);
+    private final PyObject[] array;
+    private static final PyTuple EMPTY_TUPLE = new PyTuple();
 
     public PyTuple() {
         this(TYPE, Py.EmptyObjects);
@@ -30,25 +32,62 @@ public class PyTuple extends PySequenceObjectList
     }
 
     public PyTuple(PyType subtype, PyObject[] elements) {
-        super(subtype, elements);
+        super(subtype);
+//        System.err.println("Initializing from " + Arrays.toString(elements));
+        if (elements == null) {
+            array = new PyObject[0];
+        } else {
+            array = new PyObject[elements.length];
+            System.arraycopy(elements, 0, array, 0, elements.length);
+        }
+    }
+
+    public PyTuple(PyObject[] elements, boolean copy) {
+        this(TYPE, elements, copy);
+    }
+
+    public PyTuple(PyType subtype, PyObject[] elements, boolean copy) {
+        super(subtype);
+
+        if (copy) {
+            array = new PyObject[elements.length];
+            System.arraycopy(elements, 0, array, 0, elements.length);
+        } else {
+            array = elements;
+        }
+    }
+
+    private static PyTuple fromArrayNoCopy(PyObject[] elements) {
+//        System.err.println("newtuple (no copy):" + Arrays.toString(elements));
+        return new PyTuple(elements, false);
+    }
+    private volatile List<PyObject> cachedList = null;
+
+    private List<PyObject> getList() {
+        if (cachedList == null) {
+            cachedList = Arrays.asList(array);
+        }
+        return cachedList;
     }
 
     @ExposedNew
     final static PyObject tuple_new(PyNewWrapper new_, boolean init, PyType subtype,
             PyObject[] args, String[] keywords) {
-        ArgParser ap = new ArgParser("tuple", args, keywords, new String[] { "sequence" }, 0);
+//        System.err.println("tuple_new");
+        ArgParser ap = new ArgParser("newtuple", args, keywords, new String[]{"sequence"}, 0);
         PyObject S = ap.getPyObject(0, null);
+//        System.err.println("newtuple: new_=" + new_ + ",S=" + S);
         if (new_.for_type == subtype) {
             if (S == null) {
-                return new PyTuple();
+                return EMPTY_TUPLE;
             }
             if (S instanceof PyTupleDerived) {
-                return new PyTuple(((PyTuple)S).getArray());
+                return new PyTuple(((PyTuple) S).getArray());
             }
             if (S instanceof PyTuple) {
                 return S;
             }
-            return new PyTuple(Py.make_array(S));
+            return fromArrayNoCopy(Py.make_array(S));
         } else {
             if (S == null) {
                 return new PyTupleDerived(subtype, Py.EmptyObjects);
@@ -66,26 +105,26 @@ public class PyTuple extends PySequenceObjectList
      * @return a PyTuple containing each item in the iterable
      */
     public static PyTuple fromIterable(PyObject iterable) {
-        return new PyTuple(Py.make_array(iterable));
+        return fromArrayNoCopy(Py.make_array(iterable));
     }
 
     protected PyObject getslice(int start, int stop, int step) {
-        if (step > 0 && stop < start)
+        if (step > 0 && stop < start) {
             stop = start;
+        }
         int n = sliceLength(start, stop, step);
         PyObject[] newArray = new PyObject[n];
-        PyObject[] array = getArray();
 
         if (step == 1) {
-            System.arraycopy(array, start, newArray, 0, stop-start);
-            return new PyTuple(newArray);
+            System.arraycopy(array, start, newArray, 0, stop - start);
+            return fromArrayNoCopy(newArray);
         }
         int j = 0;
-        for (int i=start; j<n; i+=step) {
+        for (int i = start; j < n; i += step) {
             newArray[j] = array[i];
             j++;
         }
-        return new PyTuple(newArray);
+        return fromArrayNoCopy(newArray);
     }
 
     protected PyObject repeat(int count) {
@@ -99,7 +138,7 @@ public class PyTuple extends PySequenceObjectList
                 return this;
             }
             if (size == 0) {
-                return new PyTuple();
+                return EMPTY_TUPLE;
             }
         }
 
@@ -108,12 +147,11 @@ public class PyTuple extends PySequenceObjectList
             throw Py.MemoryError("");
         }
 
-        PyObject[] array = getArray();
         PyObject[] newArray = new PyObject[newSize];
         for (int i = 0; i < count; i++) {
             System.arraycopy(array, 0, newArray, i * size, size);
         }
-        return new PyTuple(newArray);
+        return fromArrayNoCopy(newArray);
     }
 
     public int __len__() {
@@ -124,7 +162,7 @@ public class PyTuple extends PySequenceObjectList
     final int tuple___len__() {
         return size();
     }
-    
+
     @ExposedMethod(doc = BuiltinDocs.tuple___contains___doc)
     final boolean tuple___contains__(PyObject o) {
         return super.__contains__(o);
@@ -168,15 +206,11 @@ public class PyTuple extends PySequenceObjectList
     final PyObject tuple___add__(PyObject generic_other) {
         PyTuple sum = null;
         if (generic_other instanceof PyTuple) {
-            PyTuple otherTuple = (PyTuple)generic_other;
-            PyObject[] array = getArray();
-            PyObject[] otherArray = otherTuple.getArray();
-            int thisLen = size();
-            int otherLen = otherTuple.size();
-            PyObject[] newArray = new PyObject[thisLen + otherLen];
-            System.arraycopy(array, 0, newArray, 0, thisLen);
-            System.arraycopy(otherArray, 0, newArray, thisLen, otherLen);
-            sum = new PyTuple(newArray);
+            PyTuple other = (PyTuple) generic_other;
+            PyObject[] newArray = new PyObject[array.length + other.array.length];
+            System.arraycopy(array, 0, newArray, 0, array.length);
+            System.arraycopy(other.array, 0, newArray, array.length, other.array.length);
+            sum = fromArrayNoCopy(newArray);
         }
         return sum;
     }
@@ -218,13 +252,13 @@ public class PyTuple extends PySequenceObjectList
 
     @ExposedMethod(defaults = "null", doc = BuiltinDocs.tuple___getslice___doc)
     final PyObject tuple___getslice__(PyObject s_start, PyObject s_stop, PyObject s_step) {
-        return seq___getslice__(s_start,s_stop,s_step);
+        return seq___getslice__(s_start, s_stop, s_step);
     }
 
     @ExposedMethod(doc = BuiltinDocs.tuple___getitem___doc)
     final PyObject tuple___getitem__(PyObject index) {
         PyObject ret = seq___finditem__(index);
-        if(ret == null) {
+        if (ret == null) {
             throw Py.IndexError("index out of range: " + index);
         }
         return ret;
@@ -232,7 +266,7 @@ public class PyTuple extends PySequenceObjectList
 
     @ExposedMethod(doc = BuiltinDocs.tuple___getnewargs___doc)
     final PyTuple tuple___getnewargs__() {
-        return new PyTuple(new PyTuple(list.getArray()));
+        return new PyTuple(new PyTuple(getArray()));
     }
 
     public PyTuple __getnewargs__() {
@@ -251,7 +285,6 @@ public class PyTuple extends PySequenceObjectList
         int len = size();
         int mult = 1000003;
         int x = 0x345678;
-        PyObject[] array = getArray();
         while (--len >= 0) {
             y = array[len].hashCode();
             x = (x ^ y) * mult;
@@ -261,8 +294,9 @@ public class PyTuple extends PySequenceObjectList
     }
 
     private String subobjRepr(PyObject o) {
-        if (o == null)
+        if (o == null) {
             return "null";
+        }
         return o.__repr__().toString();
     }
 
@@ -273,22 +307,22 @@ public class PyTuple extends PySequenceObjectList
     @ExposedMethod(doc = BuiltinDocs.tuple___repr___doc)
     final String tuple___repr__() {
         StringBuilder buf = new StringBuilder("(");
-        PyObject[] array = getArray();
-        int arrayLen = size();
-        for (int i = 0; i < arrayLen-1; i++) {
+        for (int i = 0; i < array.length - 1; i++) {
             buf.append(subobjRepr(array[i]));
             buf.append(", ");
         }
-        if (arrayLen > 0)
-            buf.append(subobjRepr(array[arrayLen-1]));
-        if (arrayLen == 1)
+        if (array.length > 0) {
+            buf.append(subobjRepr(array[array.length - 1]));
+        }
+        if (array.length == 1) {
             buf.append(",");
+        }
         buf.append(")");
         return buf.toString();
     }
 
     public List subList(int fromIndex, int toIndex) {
-        return Collections.unmodifiableList(list.subList(fromIndex, toIndex));
+        return Collections.unmodifiableList(getList().subList(fromIndex, toIndex));
     }
 
     // Make PyTuple immutable from the collections interfaces by overriding
@@ -296,20 +330,24 @@ public class PyTuple extends PySequenceObjectList
     // This is how Collections.unmodifiableList() does it.
     public Iterator iterator() {
         return new Iterator() {
-            Iterator i = list.iterator();
+
+            Iterator i = getList().iterator();
+
             public void remove() {
                 throw new UnsupportedOperationException();
             }
+
             public boolean hasNext() {
                 return i.hasNext();
-                }
+            }
+
             public Object next() {
                 return i.next();
-                }
+            }
         };
     }
 
-    public boolean add(Object o){
+    public boolean add(Object o) {
         throw new UnsupportedOperationException();
     }
 
@@ -355,14 +393,32 @@ public class PyTuple extends PySequenceObjectList
 
     public ListIterator listIterator(final int index) {
         return new ListIterator() {
-            ListIterator i = list.listIterator(index);
 
-            public boolean hasNext()     {return i.hasNext();}
-            public Object next()         {return i.next();}
-            public boolean hasPrevious() {return i.hasPrevious();}
-            public Object previous()     {return i.previous();}
-            public int nextIndex()       {return i.nextIndex();}
-            public int previousIndex()   {return i.previousIndex();}
+            ListIterator i = getList().listIterator(index);
+
+            public boolean hasNext() {
+                return i.hasNext();
+            }
+
+            public Object next() {
+                return i.next();
+            }
+
+            public boolean hasPrevious() {
+                return i.hasPrevious();
+            }
+
+            public Object previous() {
+                return i.previous();
+            }
+
+            public int nextIndex() {
+                return i.nextIndex();
+            }
+
+            public int previousIndex() {
+                return i.previousIndex();
+            }
 
             public void remove() {
                 throw new UnsupportedOperationException();
@@ -389,4 +445,108 @@ public class PyTuple extends PySequenceObjectList
         throw Py.TypeError("'tuple' object does not support item assignment");
     }
 
+    @Override
+    public boolean contains(Object o) {
+        PyObject converted = Py.java2py(o);
+        for (int i = 0; i < array.length; i++) {
+            if (array[i].equals(converted)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public boolean containsAll(Collection c) {
+        if (c instanceof PySequenceList) {
+            return getList().containsAll(c);
+        } else {
+            //XXX: FJW this seems unnecessary.
+            return getList().containsAll(new PyList(c));
+        }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof PyTuple) {
+            return Arrays.equals(array, ((PyTuple) o).array);
+        } else if (o instanceof List) { // XXX copied from PyList, but...
+            return o.equals(this);     // XXX shouldn't this compare using py2java?
+        }
+        return false;
+    }
+
+    @Override
+    public Object get(int index) {
+        return array[index].__tojava__(Object.class);
+    }
+
+    @Override
+    public PyObject[] getArray() {
+        return array;
+    }
+
+    @Override
+    public int indexOf(Object o) {
+        PyObject converted = Py.java2py(o);
+        for (int i = 0; i < array.length; i++) {
+            if (array[i].equals(converted)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return array.length == 0;
+    }
+
+    @Override
+    public int lastIndexOf(Object o) {
+        PyObject converted = Py.java2py(o);
+        int lastIndex = -1;
+        for (int i = 0; i < array.length; i++) {
+            if (array[i].equals(converted)) {
+                lastIndex = i;
+            }
+        }
+        return lastIndex;
+    }
+
+    @Override
+    public void pyadd(int index, PyObject element) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public boolean pyadd(PyObject o) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public PyObject pyget(int index) {
+        return array[index];
+    }
+
+    @Override
+    public void remove(int start, int stop) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public int size() {
+        return array.length;
+    }
+
+    @Override
+    public Object[] toArray() {
+        return array;
+    }
+
+    @Override
+    public Object[] toArray(Object[] a) {
+        System.arraycopy(array, 0, a, 0, array.length);
+        return a;
+    }
 }

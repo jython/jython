@@ -16,13 +16,11 @@ import org.python.expose.MethodType;
 /**
  * A builtin python tuple.
  */
-
 @ExposedType(name = "newtuple", base = PyObject.class)
 public class PyNewTuple extends PySequenceList implements List {
-    public static final PyType TYPE = PyType.fromClass(PyNewTuple.class);
 
+    public static final PyType TYPE = PyType.fromClass(PyNewTuple.class);
     private final PyObject[] array;
-    private final List<PyObject> list;
     private static final PyNewTuple EMPTY_TUPLE = new PyNewTuple();
 
     public PyNewTuple() {
@@ -42,11 +40,9 @@ public class PyNewTuple extends PySequenceList implements List {
 //        System.err.println("Initializing from " + Arrays.toString(elements));
         if (elements == null) {
             array = new PyObject[0];
-            list = Collections.emptyList();
         } else {
             array = new PyObject[elements.length];
             System.arraycopy(elements, 0, array, 0, elements.length);
-            list = Collections.unmodifiableList(Arrays.asList(array));
         }
     }
 
@@ -63,18 +59,15 @@ public class PyNewTuple extends PySequenceList implements List {
         } else {
             array = elements;
         }
-        list = Collections.unmodifiableList(Arrays.asList(array));
     }
 
     public PyNewTuple(PyType subtype, Collection<PyObject> elements) {
         super(subtype);
         if (elements == null) {
             array = new PyObject[0];
-            list = Collections.emptyList();
         } else {
             array = new PyObject[elements.size()];
             elements.toArray(array);
-            list = Collections.unmodifiableList(Arrays.asList(array));
         }
     }
 
@@ -82,12 +75,20 @@ public class PyNewTuple extends PySequenceList implements List {
 //        System.err.println("newtuple (no copy):" + Arrays.toString(elements));
         return new PyNewTuple(elements, false);
     }
+    private volatile List<PyObject> cachedList = null;
+
+    private List<PyObject> getList() {
+        if (cachedList == null) {
+            cachedList = Arrays.asList(array);
+        }
+        return cachedList;
+    }
 
     @ExposedNew
     final static PyObject newtuple_new(PyNewWrapper new_, boolean init, PyType subtype,
             PyObject[] args, String[] keywords) {
 //        System.err.println("newtuple_new");
-        ArgParser ap = new ArgParser("newtuple", args, keywords, new String[] { "sequence" }, 0);
+        ArgParser ap = new ArgParser("newtuple", args, keywords, new String[]{"sequence"}, 0);
         PyObject S = ap.getPyObject(0, null);
 //        System.err.println("newtuple: new_=" + new_ + ",S=" + S);
         if (new_.for_type == subtype) {
@@ -95,7 +96,7 @@ public class PyNewTuple extends PySequenceList implements List {
                 return EMPTY_TUPLE;
             }
             if (S instanceof PyNewTupleDerived) {
-                return new PyNewTuple(((PyNewTuple)S).getArray());
+                return new PyNewTuple(((PyNewTuple) S).getArray());
             }
             if (S instanceof PyNewTuple) {
                 return S;
@@ -121,21 +122,20 @@ public class PyNewTuple extends PySequenceList implements List {
         return fromArrayNoCopy(Py.make_array(iterable));
     }
 
-
-
     protected PyObject getslice(int start, int stop, int step) {
-        if (step > 0 && stop < start)
+        if (step > 0 && stop < start) {
             stop = start;
+        }
         int n = sliceLength(start, stop, step);
         PyObject[] newArray = new PyObject[n];
         PyObject[] array = getArray();
 
         if (step == 1) {
-            System.arraycopy(array, start, newArray, 0, stop-start);
+            System.arraycopy(array, start, newArray, 0, stop - start);
             return fromArrayNoCopy(newArray);
         }
         int j = 0;
-        for (int i=start; j<n; i+=step) {
+        for (int i = start; j < n; i += step) {
             newArray[j] = array[i];
             j++;
         }
@@ -222,7 +222,7 @@ public class PyNewTuple extends PySequenceList implements List {
     final PyObject newtuple___add__(PyObject generic_other) {
         PyNewTuple sum = null;
         if (generic_other instanceof PyNewTuple) {
-            PyNewTuple other = (PyNewTuple)generic_other;
+            PyNewTuple other = (PyNewTuple) generic_other;
             PyObject[] newArray = new PyObject[array.length + other.array.length];
             System.arraycopy(array, 0, newArray, 0, array.length);
             System.arraycopy(other.array, 0, newArray, array.length, other.array.length);
@@ -268,13 +268,13 @@ public class PyNewTuple extends PySequenceList implements List {
 
     @ExposedMethod(defaults = "null", doc = BuiltinDocs.tuple___getslice___doc)
     final PyObject newtuple___getslice__(PyObject s_start, PyObject s_stop, PyObject s_step) {
-        return seq___getslice__(s_start,s_stop,s_step);
+        return seq___getslice__(s_start, s_stop, s_step);
     }
 
     @ExposedMethod(doc = BuiltinDocs.tuple___getitem___doc)
     final PyObject newtuple___getitem__(PyObject index) {
         PyObject ret = seq___finditem__(index);
-        if(ret == null) {
+        if (ret == null) {
             throw Py.IndexError("index out of range: " + index);
         }
         return ret;
@@ -311,8 +311,9 @@ public class PyNewTuple extends PySequenceList implements List {
     }
 
     private String subobjRepr(PyObject o) {
-        if (o == null)
+        if (o == null) {
             return "null";
+        }
         return o.__repr__().toString();
     }
 
@@ -323,20 +324,22 @@ public class PyNewTuple extends PySequenceList implements List {
     @ExposedMethod(doc = BuiltinDocs.tuple___repr___doc)
     final String newtuple___repr__() {
         StringBuilder buf = new StringBuilder("(");
-        for (int i = 0; i < array.length-1; i++) {
+        for (int i = 0; i < array.length - 1; i++) {
             buf.append(subobjRepr(array[i]));
             buf.append(", ");
         }
-        if (array.length > 0)
-            buf.append(subobjRepr(array[array.length-1]));
-        if (array.length == 1)
+        if (array.length > 0) {
+            buf.append(subobjRepr(array[array.length - 1]));
+        }
+        if (array.length == 1) {
             buf.append(",");
+        }
         buf.append(")");
         return buf.toString();
     }
 
     public List subList(int fromIndex, int toIndex) {
-        return Collections.unmodifiableList(list.subList(fromIndex, toIndex));
+        return Collections.unmodifiableList(getList().subList(fromIndex, toIndex));
     }
 
     // Make PyNewTuple immutable from the collections interfaces by overriding
@@ -344,20 +347,24 @@ public class PyNewTuple extends PySequenceList implements List {
     // This is how Collections.unmodifiableList() does it.
     public Iterator iterator() {
         return new Iterator() {
-            Iterator i = list.iterator();
+
+            Iterator i = getList().iterator();
+
             public void remove() {
                 throw new UnsupportedOperationException();
             }
+
             public boolean hasNext() {
                 return i.hasNext();
-                }
+            }
+
             public Object next() {
                 return i.next();
-                }
+            }
         };
     }
 
-    public boolean add(Object o){
+    public boolean add(Object o) {
         throw new UnsupportedOperationException();
     }
 
@@ -403,14 +410,32 @@ public class PyNewTuple extends PySequenceList implements List {
 
     public ListIterator listIterator(final int index) {
         return new ListIterator() {
-            ListIterator i = list.listIterator(index);
 
-            public boolean hasNext()     {return i.hasNext();}
-            public Object next()         {return i.next();}
-            public boolean hasPrevious() {return i.hasPrevious();}
-            public Object previous()     {return i.previous();}
-            public int nextIndex()       {return i.nextIndex();}
-            public int previousIndex()   {return i.previousIndex();}
+            ListIterator i = getList().listIterator(index);
+
+            public boolean hasNext() {
+                return i.hasNext();
+            }
+
+            public Object next() {
+                return i.next();
+            }
+
+            public boolean hasPrevious() {
+                return i.hasPrevious();
+            }
+
+            public Object previous() {
+                return i.previous();
+            }
+
+            public int nextIndex() {
+                return i.nextIndex();
+            }
+
+            public int previousIndex() {
+                return i.previousIndex();
+            }
 
             public void remove() {
                 throw new UnsupportedOperationException();
@@ -439,22 +464,38 @@ public class PyNewTuple extends PySequenceList implements List {
 
     @Override
     public boolean contains(Object o) {
-        return list.contains(o);
+        PyObject converted = Py.java2py(o);
+        for (int i = 0; i < array.length; i++) {
+            if (array[i].equals(converted)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
     public boolean containsAll(Collection c) {
-        return list.containsAll(c);
+        if (c instanceof PySequenceList) {
+            return getList().containsAll(c);
+        } else {
+            //XXX: FJW this seems unnecessary.
+            return getList().containsAll(new PyList(c));
+        }
     }
 
     @Override
     public boolean equals(Object o) {
-        return list.equals(o);
+        if (o instanceof PyNewTuple) {
+            return Arrays.equals(array, ((PyNewTuple) o).array);
+        } else if (o instanceof List) { // XXX copied from PyList, but...
+            return o.equals(this);     // XXX shouldn't this compare using py2java?
+        }
+        return false;
     }
 
     @Override
     public Object get(int index) {
-        return list.get(index);
+        return array[index].__tojava__(Object.class);
     }
 
     @Override
@@ -464,17 +505,30 @@ public class PyNewTuple extends PySequenceList implements List {
 
     @Override
     public int indexOf(Object o) {
-        return list.indexOf(o);
+        PyObject converted = Py.java2py(o);
+        for (int i = 0; i < array.length; i++) {
+            if (array[i].equals(converted)) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     @Override
     public boolean isEmpty() {
-        return list.isEmpty();
+        return array.length == 0;
     }
 
     @Override
     public int lastIndexOf(Object o) {
-        return list.lastIndexOf(o);
+        PyObject converted = Py.java2py(o);
+        int lastIndex = -1;
+        for (int i = 0; i < array.length; i++) {
+            if (array[i].equals(converted)) {
+                lastIndex = i;
+            }
+        }
+        return lastIndex;
     }
 
     @Override
@@ -504,12 +558,12 @@ public class PyNewTuple extends PySequenceList implements List {
 
     @Override
     public Object[] toArray() {
-        return list.toArray();
+        return array;
     }
 
     @Override
     public Object[] toArray(Object[] a) {
-        return list.toArray(a);
+        System.arraycopy(array, 0, a, 0, array.length);
+        return a;
     }
-
 }
