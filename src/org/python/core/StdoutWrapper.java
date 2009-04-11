@@ -105,8 +105,14 @@ public class StdoutWrapper extends OutputStream {
                 file.write(" ");
                 file.softspace = false;
             }
-            PyString string = o.__str__();
-            String s = string.toString();
+
+            String s;
+            if (o instanceof PyUnicode && file.encoding != null) {
+                s = ((PyUnicode)o).encode(file.encoding, "strict");
+            } else {
+                s = o.__str__().toString();
+            }
+
             int len = s.length();
             file.write(s);
             if (o instanceof PyString) {
