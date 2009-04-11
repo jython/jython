@@ -541,12 +541,26 @@ public class PyTuple extends PySequenceList implements List {
 
     @Override
     public Object[] toArray() {
-        return array;
+        Object[] converted = new Object[array.length];
+        for (int i = 0; i < array.length; i++) {
+            converted[i] = array[i].__tojava__(Object.class);
+        }
+        return converted;
     }
 
     @Override
-    public Object[] toArray(Object[] a) {
-        System.arraycopy(array, 0, a, 0, array.length);
-        return a;
+    public Object[] toArray(Object[] converted) {
+        if (converted.length != array.length) {
+            converted = new Object[array.length];
+        }
+        for (int i = 0; i < array.length; i++) {
+            converted[i] = array[i].__tojava__(Object.class);
+        }
+        if (array.length < converted.length) {
+            for (int i = array.length; i < converted.length; i++) {
+                converted[i] = null;
+            }
+        }
+        return converted;
     }
 }

@@ -11,6 +11,7 @@ import org.python.util.Generic;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
@@ -510,12 +511,18 @@ public class PyList extends PySequenceList implements List {
         // Follow Python 2.3+ behavior
         int validStop = boundToSequence(stop);
         int validStart = boundToSequence(start);
-        int i = 0;
-        for (PyObject item : list.subList(validStart, validStop)) {
-            if (item.equals(o)) {
-                return i;
+        int i = validStart;
+        if (validStart <= validStop) {
+            try {
+                for (PyObject item : list.subList(validStart, validStop)) {
+                    if (item.equals(o)) {
+                        return i;
+                    }
+                    i++;
+                }
+            } catch (ConcurrentModificationException ex) {
+                throw Py.ValueError(message);
             }
-            i++;
         }
         throw Py.ValueError(message);
     }
