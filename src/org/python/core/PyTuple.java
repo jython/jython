@@ -447,23 +447,12 @@ public class PyTuple extends PySequenceList implements List {
 
     @Override
     public boolean contains(Object o) {
-        PyObject converted = Py.java2py(o);
-        for (int i = 0; i < array.length; i++) {
-            if (array[i].equals(converted)) {
-                return true;
-            }
-        }
-        return false;
+        return getList().contains(o);
     }
 
     @Override
     public boolean containsAll(Collection c) {
-        if (c instanceof PySequenceList) {
-            return getList().containsAll(c);
-        } else {
-            //XXX: FJW this seems unnecessary.
-            return getList().containsAll(new PyList(c));
-        }
+        return getList().containsAll(c);
     }
 
     @Override
@@ -488,13 +477,7 @@ public class PyTuple extends PySequenceList implements List {
 
     @Override
     public int indexOf(Object o) {
-        PyObject converted = Py.java2py(o);
-        for (int i = 0; i < array.length; i++) {
-            if (array[i].equals(converted)) {
-                return i;
-            }
-        }
-        return -1;
+        return getList().indexOf(o);
     }
 
     @Override
@@ -504,24 +487,17 @@ public class PyTuple extends PySequenceList implements List {
 
     @Override
     public int lastIndexOf(Object o) {
-        PyObject converted = Py.java2py(o);
-        int lastIndex = -1;
-        for (int i = 0; i < array.length; i++) {
-            if (array[i].equals(converted)) {
-                lastIndex = i;
-            }
-        }
-        return lastIndex;
+        return getList().lastIndexOf(o);
     }
 
     @Override
     public void pyadd(int index, PyObject element) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public boolean pyadd(PyObject o) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -531,7 +507,7 @@ public class PyTuple extends PySequenceList implements List {
 
     @Override
     public void remove(int start, int stop) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        throw new UnsupportedOperationException();
     }
 
     @Override
