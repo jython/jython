@@ -20,7 +20,7 @@ import java.util.ListIterator;
 public class PyList extends PySequenceList implements List {
 
     public static final PyType TYPE = PyType.fromClass(PyList.class);
-    protected final List<PyObject> list;
+    protected List<PyObject> list;
 
     public PyList() {
         this(TYPE);
@@ -126,21 +126,76 @@ public class PyList extends PySequenceList implements List {
     }
 
     @Override
-    protected void setslice(int start, int stop, int step, PyObject value) {
+    protected void setslice(int start, int stop, int step, PyObject value, int sliceLength, int valueLength) {
         if (stop < start) {
             stop = start;
         }
-        if (value instanceof PySequence) {
-            if (value == this) { // copy
-                value = new PyList((PySequence) value);
+        int size = list.size();
+//        System.err.println("start=" + start + ",stop=" + stop + ",step=" + step + ",sliceLength=" + sliceLength);
+
+
+        // optimize copy into: x[:] = ...
+        if (start == 0 && stop == size && step == 1) { // x[:] = ...
+            Iterator<PyObject> src;
+            if (value == this) {
+                src = ((PyList) value).safeIterator();
+            } else if (value instanceof PySequenceList) {
+                src = ((PySequenceList) value).iterator();
+            } else {
+                src = value.asIterable().iterator();
             }
-            setsliceIterator(start, stop, step, value.asIterable().iterator());
-        } else if (value != null && !(value instanceof List)) {
-            //XXX: can we avoid copying here?  Needed to pass test_userlist
-            value = new PyList(value);
-            setsliceIterator(start, stop, step, value.asIterable().iterator());
-        } else {
-            System.err.println("List");
+            List<PyObject> copy = new ArrayList<PyObject>(valueLength > 0 ? valueLength : 4);
+            if (src != null) {
+                while (src.hasNext()) {
+                    copy.add(src.next());
+                }
+            }
+            list = copy;
+            return;
+        }
+
+        if (value instanceof PyObject) {
+            Iterator<PyObject> src;
+            if (value == this) {
+                PyList valueList = (PyList) value;
+                if (start == 0 && stop == 0 && step == -1) { // x[::-1] = x
+                    valueList.reverse();
+                    return;
+                }
+                src = ((PyList) value).safeIterator();
+            } else if (value instanceof PySequenceList) {
+                src = ((PySequenceList) value).iterator();
+            } else if (value instanceof PySequence) {
+                src = value.asIterable().iterator();
+            } else {
+                src = new PyList(value).iterator();
+            }
+
+            if (sliceLength != -1) {
+                int srcRange = stop - start;
+                int destRange = step * sliceLength;
+
+//                System.err.println("start=" + start + ",stop=" + stop + ",step=" + step +
+//                        ",sliceLength=" + sliceLength + ",srcRange=" + srcRange + ",destRange=" + destRange);
+
+                if ((destRange >= srcRange && srcRange > destRange - step)) {
+                    setsliceSimple(start, stop, step, src);
+                    return;
+                }
+            }
+            if (stop == start && step < 0) {
+                setsliceSimple(start, stop, step, src);
+            } else {
+                setsliceIterator(start, stop, src);
+            }
+
+        } //        else if (value != null && !(value instanceof List)) {
+        //            //XXX: can we avoid copying here?  Needed to pass test_userlist
+        //            value = new PyList(value);
+        //            setsliceIterator(start, stop, value.asIterable().iterator());
+        //        }
+        else {
+//            System.err.println("List");
             List valueList = (List) value.__tojava__(List.class);
             if (valueList != null && valueList != Py.NoConversion) {
                 setsliceList(start, stop, step, valueList);
@@ -148,40 +203,53 @@ public class PyList extends PySequenceList implements List {
         }
     }
 
-    protected void setsliceList(int start, int stop, int step, List value) {
-        int n = sliceLength(start, stop, step);
-        if (list instanceof ArrayList) {
-            ((ArrayList) list).ensureCapacity(start + n);
+    private final Iterator<PyObject> safeIterator() {
+        return new Iterator<PyObject>() {
+
+            private int i = 0;
+            private final PyObject elements[] = getArray();
+
+            public boolean hasNext() {
+                return (i < elements.length);
+            }
+
+            public PyObject next() {
+                return elements[i++];
+            }
+
+            public void remove() {
+                throw new UnsupportedOperationException("Immutable");
+            }
+        };
+    }
+
+    private final void setsliceSimple(int start, int stop, int step, Iterator<PyObject> src) {
+        for (int i = start; src.hasNext(); i += step) {
+            list.set(i, src.next());
         }
+    }
+
+    // XXX needs to follow below logic for setsliceIterator
+    private final void setsliceList(int start, int stop, int step, List value) {
         ListIterator src = value.listIterator();
         for (int j = start; src.hasNext(); j += step) {
             set(j, src.next());
         }
     }
 
-    protected void setsliceIterator(int start, int stop, int step, Iterator<PyObject> iter) {
-        if(step == 1) {
-            List<PyObject> copy = new ArrayList<PyObject>();
-            copy.addAll(this.list.subList(0, start));
-            if (iter != null) {
-                while (iter.hasNext()) {
-                    copy.add(iter.next());
-                }
-            }
-            copy.addAll(this.list.subList(stop, this.list.size()));
-            this.list.clear();
-            this.list.addAll(copy);
-        } else {
-            int size = list.size();
-            for (int j = start; iter.hasNext(); j += step) {
-                PyObject item = iter.next();
-                if (j >= size) {
-                    list.add(item);
-                } else {
-                    list.set(j, item);
-                }
+
+    // XXX need to support prepending via ops like x[:0] = whatever;
+    // note that step must equal 1 in this case
+    private final void setsliceIterator(int start, int stop, Iterator<PyObject> iter) {
+        List<PyObject> copy = new ArrayList<PyObject>();
+        copy.addAll(this.list.subList(0, start));
+        if (iter != null) {
+            while (iter.hasNext()) {
+                copy.add(iter.next());
             }
         }
+        copy.addAll(this.list.subList(stop, this.list.size()));
+        this.list = copy;
     }
 
     @Override
@@ -786,7 +854,7 @@ public class PyList extends PySequenceList implements List {
     public boolean equals(Object o) {
         if (o instanceof PyList) {
             return (((PyList) o).list.equals(list));
-        } else if(o instanceof List) { // XXX copied from PyList, but...
+        } else if (o instanceof List) { // XXX copied from PyList, but...
             return o.equals(this);     // XXX shouldn't this compare using py2java?
         }
         return false;
@@ -797,7 +865,6 @@ public class PyList extends PySequenceList implements List {
         return list.get(index).__tojava__(Object.class);
     }
 
-    /** @deprecated */
     @Override
     public PyObject[] getArray() {
         PyObject a[] = new PyObject[list.size()];
@@ -924,6 +991,27 @@ public class PyList extends PySequenceList implements List {
         return fromList(newList);
     }
 
+    // NOTE: this attempt would seem faster, but the JVM is better optimized for
+    // the ArrayList implementation in limited testing
+    // keeping around for now...
+//    protected PyObject getslice(int start, int stop, int step) {
+//        if (step > 0 && stop < start) {
+//            stop = start;
+//        }
+//        int n = sliceLength(start, stop, step);
+//        PyObject elements[] = new PyObject[n];
+//        if (step == 1) {
+//            ListIterator<PyObject> iter = list.listIterator(start);
+//            for (int i = 0; i < n; i++) {
+//                elements[i] = iter.next();
+//            }
+//        } else {
+//            for (int i = start, j = 0; j < n; i += step, j++) {
+//                elements[j] = list.get(i);
+//            }
+//        }
+//        return new PyList(elements);
+//    }
     @Override
     public boolean remove(Object o) {
         return list.remove(Py.java2py(o));

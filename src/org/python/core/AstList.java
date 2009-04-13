@@ -361,7 +361,7 @@ public class AstList extends PySequence implements Cloneable, List {
     @ExposedMethod
     final void astlist_extend(PyObject iterable){
         int length = size();
-        setslice(length, length, 1, iterable);
+        setslice(length, length, 1, iterable,-1,-1);
     }
 
     public void extend(PyObject iterable) {
@@ -454,7 +454,7 @@ public class AstList extends PySequence implements Cloneable, List {
         return new AstList(newList);
     }
 
-    protected void setslice(int start, int stop, int step, PyObject value) {
+    protected void setslice(int start, int stop, int step, PyObject value,int sliceLength,int valueLength) {
         if(stop < start) {
             stop = start;
         }

@@ -1528,7 +1528,7 @@ public class PyArray extends PySequence implements Cloneable {
      * @param step
      *            stepping increment of the slice
      */
-    protected void setslice(int start, int stop, int step, PyObject value) {
+    protected void setslice(int start, int stop, int step, PyObject value,int sliceLength,int valueLength) {
         if (stop < start) {
             stop = start;
         }

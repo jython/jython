@@ -17,7 +17,7 @@ public abstract class SequenceIndexDelegate implements Serializable {
 
     public abstract PyObject getSlice(int start, int stop, int step);
 
-    public abstract void setSlice(int start, int stop, int step, PyObject value);
+    public abstract void setSlice(int start, int stop, int step, PyObject value, int sliceLength, int valueLength);
 
     public abstract void delItems(int start, int stop);
 
@@ -35,11 +35,29 @@ public abstract class SequenceIndexDelegate implements Serializable {
 
     public void checkIdxAndSetSlice(PySlice slice, PyObject value) {
         int[] indices = slice.indicesEx(len());
-        if ((slice.step != Py.None) && value.__len__() != indices[3]) {
+        final int valueLength;
+        if (slice.step != Py.None) {
+            valueLength = value.__len__();
+            if (valueLength != indices[3]) {
             throw Py.ValueError(String.format("attempt to assign sequence of size %d to extended "
                                               + "slice of size %d", value.__len__(), indices[3]));
+            }
+        } else {
+            valueLength = -1;
         }
-        setSlice(indices[0], indices[1], indices[2], value);
+
+        final int sliceLength;
+        // this enables PyList to use a simpler implementation to avoid List.add for inserts
+        if (slice.step == Py.None) {
+            if (valueLength == indices[3]) {
+                sliceLength = valueLength;
+            } else {
+                sliceLength = -1;
+            }
+        } else {
+            sliceLength = valueLength;
+        }
+        setSlice(indices[0], indices[1], indices[2], value, sliceLength, valueLength);
     }
 
     public void checkIdxAndSetItem(int idx, PyObject value) {
