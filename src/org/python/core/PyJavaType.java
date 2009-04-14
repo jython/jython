@@ -407,7 +407,8 @@ public class PyJavaType extends PyType {
 
             // If one of our superclasses  has something defined for this name, check if its a bean
             // property, and if so, try to fill in any gaps in our property from there
-            PyObject superForName = lookup(prop.__name__);
+            PyObject fromType[] = new PyObject[] { null };
+            PyObject superForName = lookup_where(prop.__name__, fromType);
             if (superForName instanceof PyBeanProperty) {
                 PyBeanProperty superProp = ((PyBeanProperty)superForName);
                 // If it has a set method and we don't, take it regardless.  If the types don't line
@@ -426,6 +427,12 @@ public class PyJavaType extends PyType {
                     // If the parent bean is hiding a static field, we need it as well.
                     prop.field = superProp.field;
                 }
+            } else if (superForName != null  &&  fromType[0] != this  &&  !(superForName instanceof PyBeanEvent)) {
+                // There is already an entry for this name
+                // It came from a type which is not @this; it came from a superclass
+                // It is not a bean event
+                // Do not override methods defined in superclass
+                continue;
             }
             // If the return types on the set and get methods for a property don't agree, the get
             // method takes precedence

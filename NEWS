@@ -2,6 +2,7 @@ Jython NEWS
 
 Jython 2.5.0 rc 1
   Bugs fixed (new numbering due to move to Roundup)
+    - [ 1271 ] Bean property accessors in derived class overide methods in base class
     - [ 1264 ] 'is not' test exhibits incorrect behaviour when wrapping Java objects
     - [ 1295 ] Setting a write-only bean property causes a NPE
     - [ 1272 ] ASTList ClassCastException
