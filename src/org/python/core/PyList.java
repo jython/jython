@@ -130,10 +130,12 @@ public class PyList extends PySequenceList implements List {
         if (stop < start) {
             stop = start;
         }
-        if (value instanceof PySequence) {
+        if (value instanceof PyList) {
             if (value == this) { // copy
                 value = new PyList((PySequence) value);
             }
+            setslicePyList(start, stop, step, (PyList)value);
+        } else if (value instanceof PySequence) {
             setsliceIterator(start, stop, step, value.asIterable().iterator());
         } else if (value != null && !(value instanceof List)) {
             //XXX: can we avoid copying here?  Needed to pass test_userlist
@@ -161,18 +163,34 @@ public class PyList extends PySequenceList implements List {
 
     protected void setsliceIterator(int start, int stop, int step, Iterator<PyObject> iter) {
         if(step == 1) {
-            List<PyObject> copy = new ArrayList<PyObject>();
-            copy.addAll(this.list.subList(0, start));
+            List<PyObject> insertion = new ArrayList<PyObject>();
             if (iter != null) {
                 while (iter.hasNext()) {
-                    copy.add(iter.next());
+                    insertion.add(iter.next());
                 }
             }
-            copy.addAll(this.list.subList(stop, this.list.size()));
-            this.list.clear();
-            this.list.addAll(copy);
+            list.subList(start, stop).clear();
+            list.addAll(start, insertion);
         } else {
             int size = list.size();
+            for (int j = start; iter.hasNext(); j += step) {
+                PyObject item = iter.next();
+                if (j >= size) {
+                    list.add(item);
+                } else {
+                    list.set(j, item);
+                }
+            }
+        }
+    }
+
+    protected void setslicePyList(int start, int stop, int step, PyList other) {
+        if(step == 1) {
+            list.subList(start, stop).clear();
+            list.addAll(start, other.list);
+        } else {
+            int size = list.size();
+            Iterator<PyObject> iter = other.listIterator();
             for (int j = start; iter.hasNext(); j += step) {
                 PyObject item = iter.next();
                 if (j >= size) {
