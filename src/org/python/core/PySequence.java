@@ -67,7 +67,7 @@ public abstract class PySequence extends PyObject {
     /**
      * Sets the given range of elements.
      */
-    protected void setslice(int start, int stop, int step, PyObject value,int sliceLength,int valueLength) {
+    protected void setslice(int start, int stop, int step, PyObject value) {
         throw Py.TypeError(String.format("'%s' object does not support item assignment",
                                          getType().fastGetName()));
     }
@@ -400,8 +400,8 @@ public abstract class PySequence extends PyObject {
         }
 
         @Override
-        public void setSlice(int start, int stop, int step, PyObject value, int sliceLength,int valueLength) {
-            setslice(start, stop, step, value, sliceLength, valueLength);
+        public void setSlice(int start, int stop, int step, PyObject value) {
+            setslice(start, stop, step, value);
         }
 
         @Override

@@ -877,7 +877,7 @@ public class PyJavaType extends PyType {
         }
 
         @Override
-        public void setSlice(int start, int stop, int step, PyObject value, int sliceLength,int valueLength) {
+        public void setSlice(int start, int stop, int step, PyObject value) {
             if (stop < start) {
                 stop = start;
             }
