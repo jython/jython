@@ -142,7 +142,7 @@ public class PyList extends PySequenceList implements List {
             value = new PyList(value);
             setsliceIterator(start, stop, step, value.asIterable().iterator());
         } else {
-            System.err.println("List");
+//            System.err.println("List");
             List valueList = (List) value.__tojava__(List.class);
             if (valueList != null && valueList != Py.NoConversion) {
                 setsliceList(start, stop, step, valueList);

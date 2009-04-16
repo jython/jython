@@ -88,11 +88,9 @@ public abstract class PackageManager extends Object {
 
         if (!instantiate) {
             PyList ret = cls.keys();
-
             PyList dictKeys = dict.keys();
 
-            for (int i = 0; i < dictKeys.__len__(); i++) {
-                PyObject name = dictKeys.pyget(i);
+            for (PyObject name : dictKeys.asIterable()) {
                 if (!cls.has_key(name)) {
                     if (exclpkgs && dict.get(name) instanceof PyJavaPackage)
                         continue;
@@ -102,7 +100,6 @@ public abstract class PackageManager extends Object {
 
             return ret;
         }
-
 
         for (PyObject pyname : cls.keys().asIterable()) {
             if (!dict.has_key(pyname)) {
@@ -118,8 +115,7 @@ public abstract class PackageManager extends Object {
      * Helper merging list2 into list1. Returns list1.
      */
     protected PyList merge(PyList list1, PyList list2) {
-        for (int i = 0; i < list2.__len__(); i++) {
-            PyObject name = list2.pyget(i);
+        for (PyObject name : list2.asIterable()) {
             list1.append(name);
         }
 
