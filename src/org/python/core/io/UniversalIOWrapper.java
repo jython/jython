@@ -3,7 +3,6 @@ package org.python.core.io;
 
 import java.nio.ByteBuffer;
 import java.util.EnumSet;
-import java.util.Iterator;
 
 import org.python.core.Py;
 import org.python.core.PyObject;
@@ -189,7 +188,6 @@ public class UniversalIOWrapper extends TextIOBase {
         byte[] readaheadArray;
         int readaheadPos;
         int interimBuilderPos;
-        String line;
 
         do {
             readaheadArray = readahead.array();
@@ -313,12 +311,12 @@ public class UniversalIOWrapper extends TextIOBase {
         if (size == 0) {
             return Py.None;
         } else if (size == 1) {
-            Newline newline = (Newline)newlineTypes.iterator().next();
+            Newline newline = newlineTypes.iterator().next();
             return new PyString(newline.getValue());
         }
 
-        int i = 0;
         PyObject[] newlines = new PyObject[size];
+        int i = 0;
         for (Newline newline : newlineTypes) {
             newlines[i++] = new PyString(newline.getValue());
         }

@@ -16,8 +16,8 @@ import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 
-import org.python.core.imp;
 import org.python.core.Py;
+import org.python.core.imp;
 
 /**
  * Raw I/O implementation for simple streams.
@@ -82,9 +82,6 @@ public class StreamIO extends RawIOBase {
      * Construct a StreamIO for the given write channel.
      *
      * @param writeChannel a WritableByteChannel
-     * @param isatty boolean whether this io object is a tty device
-     * @param closefd boolean whether the underlying file is closed on
-     *                close() (defaults to True)
      */
     public StreamIO(WritableByteChannel writeChannel) {
         this(writeChannel, true);
@@ -160,56 +157,62 @@ public class StreamIO extends RawIOBase {
 
     /** Unwrap one or more nested FilterInputStreams. */
     private static FileDescriptor getInputFileDescriptor(InputStream stream) throws IOException {
-	if (stream == null)
-	    return null;
-	if (stream instanceof FileInputStream)
-	    return ((FileInputStream)stream).getFD();
-	if (stream instanceof FilterInputStream) {
-	    Field inField = null;
-	    try {
-		inField = FilterInputStream.class.getDeclaredField("in");
-		inField.setAccessible(true);
-		return getInputFileDescriptor((InputStream)inField.get(stream));
-	    } catch (Exception e) {
-	    } finally {
-		if (inField != null && inField.isAccessible())
-		    inField.setAccessible(false);
-	    }
-	}
-	return null;
+        if (stream == null) {
+            return null;
+        }
+        if (stream instanceof FileInputStream) {
+            return ((FileInputStream)stream).getFD();
+        }
+        if (stream instanceof FilterInputStream) {
+            Field inField = null;
+            try {
+                inField = FilterInputStream.class.getDeclaredField("in");
+                inField.setAccessible(true);
+                return getInputFileDescriptor((InputStream)inField.get(stream));
+            } catch (Exception e) {
+                // XXX: masking other exceptions
+            } finally {
+                if (inField != null && inField.isAccessible())
+                    inField.setAccessible(false);
+            }
+        }
+        return null;
     }
 
     /** Unwrap one or more nested FilterOutputStreams. */
     private static FileDescriptor getOutputFileDescriptor(OutputStream stream) throws IOException {
-	if (stream == null)
-	    return null;
-	if (stream instanceof FileOutputStream)
-	    return ((FileOutputStream)stream).getFD();
-	if (stream instanceof FilterOutputStream) {
-	    Field outField = null;
-	    try {
-		outField = FilterOutputStream.class.getDeclaredField("out");
-		outField.setAccessible(true);
-		return getOutputFileDescriptor((OutputStream)outField.get(stream));
-	    } catch (Exception e) {
-	    } finally {
-		if (outField != null && outField.isAccessible())
-		    outField.setAccessible(false);
-	    }
-	}
-	return null;
+        if (stream == null) {
+            return null;
+        }
+        if (stream instanceof FileOutputStream) {
+            return ((FileOutputStream)stream).getFD();
+        }
+        if (stream instanceof FilterOutputStream) {
+            Field outField = null;
+            try {
+                outField = FilterOutputStream.class.getDeclaredField("out");
+                outField.setAccessible(true);
+                return getOutputFileDescriptor((OutputStream)outField.get(stream));
+            } catch (Exception e) {
+                // XXX: masking other exceptions
+            } finally {
+                if (outField != null && outField.isAccessible())
+                    outField.setAccessible(false);
+            }
+        }
+        return null;
     }
 
     /** {@inheritDoc} */
-
     public boolean isatty() {
         checkClosed();
 
         FileDescriptor fd;
         try {
-            if ( ((fd = getInputFileDescriptor(inputStream)) == null) &&
-                 ((fd = getOutputFileDescriptor(outputStream)) == null))
-                   return false;
+            if ((fd = getInputFileDescriptor(inputStream)) == null
+                && (fd = getOutputFileDescriptor(outputStream)) == null) {
+                return false;
+            }
         } catch (IOException e) {
             return false;
         }
