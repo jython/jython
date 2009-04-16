@@ -1566,14 +1566,6 @@ public final class Py {
      * @return a new Python Class PyObject
      */
     public static PyObject makeClass(String name, PyObject[] bases, PyObject dict) {
-        PyFrame frame = getFrame();
-        if (dict.__finditem__("__module__") == null) {
-            PyObject module = frame.getglobal("__name__");
-            if (module != null) {
-                dict.__setitem__("__module__", module);
-            }
-        }
-
         PyObject metaclass = dict.__finditem__("__metaclass__");
 
         if (metaclass == null) {
@@ -1584,7 +1576,7 @@ public final class Py {
                     metaclass = base.getType();
                 }
             } else {
-                PyObject globals = frame.f_globals;
+                PyObject globals = getFrame().f_globals;
                 if (globals != null) {
                     metaclass = globals.__finditem__("__metaclass__");
                 }

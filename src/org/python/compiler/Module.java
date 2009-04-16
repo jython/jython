@@ -438,25 +438,14 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
         CodeCompiler compiler = new CodeCompiler(this, printResults);
 
         if (classBody) {
-            Label label_got_name = new Label();
-            int module_tmp = c.getLocal("org/python/core/PyObject");
-
+            // Set the class's __module__ to __name__. fails when there's no __name__
             c.aload(1);
             c.ldc("__module__");
-            c.invokevirtual("org/python/core/PyFrame", "getname_or_null", "(" + $str + ")" + $pyObj);
-            c.dup();
-            c.ifnonnull(label_got_name);
 
-            c.pop();
             c.aload(1);
             c.ldc("__name__");
-            c.invokevirtual("org/python/core/PyFrame", "getname_or_null", "(" + $str + ")" + $pyObj);
+            c.invokevirtual("org/python/core/PyFrame", "getname", "(" + $str + ")" + $pyObj);
 
-            c.label(label_got_name);
-            c.astore(module_tmp);
-            c.aload(1);
-            c.ldc("__module__");
-            c.aload(module_tmp);
             c.invokevirtual("org/python/core/PyFrame", "setlocal", "(" + $str + $pyObj + ")V");
         }
 

@@ -44,7 +44,7 @@ public class ParserFacade {
 
     private ParserFacade() {}
 
-    private static String getLine(BufferedReader reader, int line) {
+    private static String getLine(ExpectedEncodingBufferedReader reader, int line) {
         if (reader == null) {
             return "";
         }
@@ -53,7 +53,14 @@ public class ParserFacade {
             for (int i = 0; i < line; i++) {
                 text = reader.readLine();
             }
-            return text == null ? text : text + "\n";
+            if (text == null) {
+                return text;
+            }
+            if (reader.encoding != null) {
+                // restore the original encoding
+                text = new PyUnicode(text).encode(reader.encoding);
+            }
+            return text + "\n";
         } catch (IOException ioe) {
         }
         return text;
@@ -80,7 +87,7 @@ public class ParserFacade {
                 line = node.getLine();
                 col = node.getCharPositionInLine();
             }
-            String text=getLine(reader, line);
+            String text= getLine(reader, line);
             String msg = e.getMessage();
             if (e.getType() == Py.IndentationError) {
                 return new PyIndentationError(msg, line, col, text, filename);

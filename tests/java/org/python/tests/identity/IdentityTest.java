@@ -18,7 +18,6 @@ public class IdentityTest extends TestCase {
     }
 
     public void testReadonly() {
-        //This used to cause an NPE see http://bugs.jython.org/issue1295 
         interp.execfile("tests/python/identity_test.py");
     }
 }

@@ -1080,7 +1080,6 @@ def isatty(fileno):
         return _posix.isatty(fileno)
 
     if not isinstance(fileno, IOBase):
-        print fileno
         raise TypeError('a file descriptor is required')
 
     return fileno.isatty()

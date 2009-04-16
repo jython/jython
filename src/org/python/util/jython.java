@@ -259,6 +259,7 @@ public class jython
                     interp.exec(opts.command);
                 } catch (Throwable t) {
                     Py.printException(t);
+                    System.exit(1);
                 }
             }
 
@@ -273,7 +274,7 @@ public class jython
                 } catch (Throwable t) {
                     Py.printException(t);
                     interp.cleanup();
-                    System.exit(0);
+                    System.exit(-1);
                 }
             }
         }
@@ -407,8 +408,20 @@ class CommandLineOptions
                 Options.importSite = false;
             }
             else if (arg.equals("-c")) {
-                command = args[++index];
-                if (!fixInteractive) interactive = false;
+                if (arg.length() > 2) {
+                    command = arg.substring(2);
+                }
+                else if ((index + 1) < args.length) {
+                    command = args[++index];
+                } else {
+                    System.err.println("Argument expected for the -c option");
+                    System.err.print(jython.usageHeader);
+                    System.err.println("Try `jython -h' for more information.");
+                    return false;
+                }
+                if (!fixInteractive) {
+                    interactive = false;
+                }
                 index++;
                 break;
             }

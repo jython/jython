@@ -2,6 +2,7 @@
 # regression test for SAX 2.0
 # $Id: test_sax.py,v 1.13 2004/03/20 07:46:04 fdrake Exp $
 
+import urllib
 from xml.sax import handler, make_parser, ContentHandler, \
                     SAXException, SAXReaderNotAvailable, SAXParseException
 try:
@@ -13,7 +14,7 @@ from xml.sax.saxutils import XMLGenerator, escape, unescape, quoteattr, \
                              XMLFilterBase, Location
 from xml.sax.xmlreader import InputSource, AttributesImpl, AttributesNSImpl
 from cStringIO import StringIO
-from test.test_support import verbose, TestFailed, findfile
+from test.test_support import is_jython, verbose, TestFailed, findfile
 
 # ===== Utilities
 
@@ -472,14 +473,16 @@ def test_expat_locator_withinfo():
     parser.setContentHandler(xmlgen)
     testfile = findfile("test.xml")
     parser.parse(testfile)
-    #In Jython, the system id is a URL with forward slashes, and under Windows
-    #findfile returns a path with backslashes, so replace the backslashes with
-    #forward
-    import os
-    if os.name == 'java':
+    if is_jython:
+        # In Jython, the system id is a URL with forward slashes, and
+        # under Windows findfile returns a path with backslashes, so
+        # replace the backslashes with forward
         testfile = testfile.replace('\\', '/')
 
-    return xmlgen.location.getSystemId().endswith(testfile) and \
+    # XXX: may not match getSystemId when the filename contains funky
+    # characters (like ':')
+    expected = urllib.quote(testfile)
+    return xmlgen.location.getSystemId().endswith(expected) and \
            xmlgen.location.getPublicId() is None
 
 
