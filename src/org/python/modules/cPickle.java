@@ -384,10 +384,7 @@ public class cPickle implements ClassDictInit {
     public static PyObject PicklingError;
     public static PyObject UnpickleableError;
     public static PyObject UnpicklingError;
-
-    public static final PyString BadPickleGet =
-                new PyString("cPickle.BadPickleGet");
-
+    public static PyObject BadPickleGet;
 
     final static char MARK            = '(';
     final static char STOP            = '.';
@@ -510,6 +507,7 @@ public class cPickle implements ClassDictInit {
         PicklingError = Py.makeClass("PicklingError", PickleError, exceptionNamespace());
         UnpickleableError = Py.makeClass("UnpickleableError", PicklingError, _UnpickleableError());
         UnpicklingError = Py.makeClass("UnpicklingError", PickleError, exceptionNamespace());
+        BadPickleGet = Py.makeClass("BadPickleGet", UnpicklingError, exceptionNamespace());
     }
 
     public static PyObject exceptionNamespace() {
@@ -2067,16 +2065,18 @@ public class cPickle implements ClassDictInit {
         final private void load_get() {
             String py_str = file.readlineNoNl();
             PyObject value = memo.get(py_str);
-            if (value == null)
+            if (value == null) {
                 throw new PyException(BadPickleGet, py_str);
+            }
             push(value);
         }
 
         final private void load_binget() {
             String py_key = String.valueOf((int)file.read(1).charAt(0));
             PyObject value = memo.get(py_key);
-            if (value == null)
+            if (value == null) {
                 throw new PyException(BadPickleGet, py_key);
+            }
             push(value);
         }
 
@@ -2084,8 +2084,9 @@ public class cPickle implements ClassDictInit {
             int i = read_binint();
             String py_key = String.valueOf(i);
             PyObject value = memo.get(py_key);
-            if (value == null)
+            if (value == null) {
                 throw new PyException(BadPickleGet, py_key);
+            }
             push(value);
         }
 
