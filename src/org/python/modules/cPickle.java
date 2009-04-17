@@ -770,14 +770,8 @@ public class cPickle implements ClassDictInit {
 
 
         private void save(PyObject object, boolean pers_save) {
-            if (!pers_save) {
-                if (persistent_id != null) {
-                    PyObject pid = persistent_id.__call__(object);
-                    if (pid != Py.None) {
-                        save_pers(pid);
-                        return;
-                    }
-                }
+            if (!pers_save && persistent_id != null && save_pers(object, persistent_id)) {
+                return;
             }
 
             int d = get_id(object);
@@ -801,12 +795,8 @@ public class cPickle implements ClassDictInit {
             if (save_type(object, t))
                 return;
 
-            if (inst_persistent_id != null) {
-                PyObject pid = inst_persistent_id.__call__(object);
-                if (pid != Py.None) {
-                    save_pers(pid);
-                    return;
-                }
+            if (!pers_save && inst_persistent_id != null && save_pers(object, inst_persistent_id)) {
+                return;
             }
 
             if (Py.isSubClass(t, PyType.TYPE)) {
@@ -859,13 +849,20 @@ public class cPickle implements ClassDictInit {
                             "Second element of tupe returned by " +
                             reduce.__repr__() + " must be a tuple");
             }
-            save_reduce(callable, arg_tup, state, listitems, dictitems, putMemo(d, object));
-
+            save_reduce(callable, arg_tup, state, listitems, dictitems, object);
         }
 
 
-        final private void save_pers(PyObject pid) {
+        final private boolean save_pers(PyObject object, PyObject pers_func) {
+            PyObject pid = pers_func.__call__(object);
+            if (pid == Py.None) {
+                return false;
+            }
+
             if (protocol == 0) {
+                if (!Py.isInstance(pid, PyString.TYPE)) {
+                    throw new PyException(PicklingError, "persistent id must be string");
+                }
                 file.write(PERSID);
                 file.write(pid.toString());
                 file.write("\n");
@@ -873,10 +870,12 @@ public class cPickle implements ClassDictInit {
                 save(pid, true);
                 file.write(BINPERSID);
             }
+            return true;
         }
 
         final private void save_reduce(PyObject callable, PyObject arg_tup,
-                                       PyObject state, PyObject listitems, PyObject dictitems, int memoId)
+                                       PyObject state, PyObject listitems, PyObject dictitems,
+                                       PyObject object)
         {
             PyObject callableName = callable.__findattr__("__name__");
             if(protocol >= 2 && callableName != null
@@ -894,7 +893,10 @@ public class cPickle implements ClassDictInit {
                 save(arg_tup);
                 file.write(REDUCE);
             }
-            put(memoId);
+
+            // Memoize
+            put(putMemo(get_id(object), object));
+
             if (listitems != Py.None) {
                 batch_appends(listitems);
             }
@@ -1697,14 +1699,27 @@ public class cPickle implements ClassDictInit {
 
 
         final private void load_persid() {
-            String pid = file.readlineNoNl();
-            push(persistent_load.__call__(new PyString(pid)));
+            load_persid(new PyString(file.readlineNoNl()));
         }
 
 
         final private void load_binpersid() {
-            PyObject pid = pop();
-            push(persistent_load.__call__(pid));
+            load_persid(pop());
+        }
+
+        final private void load_persid(PyObject pid) {
+            if (persistent_load == null) {
+                throw new PyException(UnpicklingError,
+                                      "A load persistent id instruction was encountered,\n"
+                                      + "but no persistent_load function was specified.");
+            }
+
+            if (persistent_load instanceof PyList) {
+                ((PyList)persistent_load).append(pid);
+            } else {
+                pid = persistent_load.__call__(pid);
+            }
+            push(pid);
         }
 
 
