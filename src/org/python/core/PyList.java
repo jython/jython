@@ -31,7 +31,7 @@ public class PyList extends PySequenceList implements List {
         list = Generic.list();
     }
 
-    public PyList(List list, boolean convert) {
+    private PyList(List list, boolean convert) {
         super(TYPE);
         if (!convert) {
             this.list = list;
@@ -71,7 +71,7 @@ public class PyList extends PySequenceList implements List {
         }
     }
 
-    public static PyList fromList(List list) {
+    public static PyList fromList(List<PyObject> list) {
         return new PyList(list, false);
     }
 
@@ -97,7 +97,9 @@ public class PyList extends PySequenceList implements List {
             return;
         }
         if (seq instanceof PyList) {
-            list.addAll((PyList) seq); // don't convert
+            list.addAll(((PyList) seq).list); // don't convert
+        } else if (seq instanceof PyTuple) {
+            list.addAll(((PyTuple) seq).getList());
         } else {
             for (PyObject item : seq.asIterable()) {
                 append(item);
@@ -134,7 +136,7 @@ public class PyList extends PySequenceList implements List {
             if (value == this) { // copy
                 value = new PyList((PySequence) value);
             }
-            setslicePyList(start, stop, step, (PyList)value);
+            setslicePyList(start, stop, step, (PyList) value);
         } else if (value instanceof PySequence) {
             setsliceIterator(start, stop, step, value.asIterable().iterator());
         } else if (value != null && !(value instanceof List)) {
@@ -162,7 +164,7 @@ public class PyList extends PySequenceList implements List {
     }
 
     protected void setsliceIterator(int start, int stop, int step, Iterator<PyObject> iter) {
-        if(step == 1) {
+        if (step == 1) {
             List<PyObject> insertion = new ArrayList<PyObject>();
             if (iter != null) {
                 while (iter.hasNext()) {
@@ -185,12 +187,12 @@ public class PyList extends PySequenceList implements List {
     }
 
     protected void setslicePyList(int start, int stop, int step, PyList other) {
-        if(step == 1) {
+        if (step == 1) {
             list.subList(start, stop).clear();
             list.addAll(start, other.list);
         } else {
             int size = list.size();
-            Iterator<PyObject> iter = other.listIterator();
+            Iterator<PyObject> iter = other.list.listIterator();
             for (int j = start; iter.hasNext(); j += step) {
                 PyObject item = iter.next();
                 if (j >= size) {
@@ -215,7 +217,7 @@ public class PyList extends PySequenceList implements List {
 
         PyList newList = new PyList();
         for (int i = 0; i < count; i++) {
-            newList.addAll(this);
+            newList.addAll(list);
         }
         return newList;
     }
@@ -804,7 +806,7 @@ public class PyList extends PySequenceList implements List {
     public boolean equals(Object o) {
         if (o instanceof PyList) {
             return (((PyList) o).list.equals(list));
-        } else if(o instanceof List) { // XXX copied from PyList, but...
+        } else if (o instanceof List) { // XXX copied from PyList, but...
             return o.equals(this);     // XXX shouldn't this compare using py2java?
         }
         return false;
@@ -818,7 +820,7 @@ public class PyList extends PySequenceList implements List {
     /** @deprecated */
     @Override
     public PyObject[] getArray() {
-        PyObject a[] = new PyObject[list.size()];
+        PyObject a[] = null; // = new PyObject[list.size()];
         return list.toArray(a);
     }
 
@@ -839,17 +841,62 @@ public class PyList extends PySequenceList implements List {
 
     @Override
     public int lastIndexOf(Object o) {
-        return list.lastIndexOf(o);
+        return list.lastIndexOf(Py.java2py(o));
     }
 
     @Override
     public ListIterator listIterator() {
-        return list.listIterator();
+        return new PyListIterator(0);
     }
 
     @Override
     public ListIterator listIterator(int index) {
-        return list.listIterator(index);
+        return new PyListIterator(index);
+    }
+
+    public class PyListIterator implements ListIterator {
+
+        private final ListIterator<PyObject> iter;
+
+        PyListIterator(int index) {
+            iter = list.listIterator(index);
+        }
+
+        public boolean hasNext() {
+            return iter.hasNext();
+        }
+
+        public Object next() {
+            return iter.next().__tojava__(Object.class);
+        }
+
+        public boolean hasPrevious() {
+            return iter.hasPrevious();
+        }
+
+        public Object previous() {
+            return iter.previous().__tojava__(Object.class);
+        }
+
+        public int nextIndex() {
+            return iter.nextIndex();
+        }
+
+        public int previousIndex() {
+            return iter.previousIndex();
+        }
+
+        public void remove() {
+            iter.remove();
+        }
+
+        public void set(Object o) {
+            iter.set(Py.java2py(o));
+        }
+
+        public void add(Object o) {
+            iter.add(Py.java2py(o));
+        }
     }
 
     @Override
@@ -912,17 +959,75 @@ public class PyList extends PySequenceList implements List {
 
     @Override
     public List subList(int fromIndex, int toIndex) {
-        return list.subList(fromIndex, toIndex);
+        return fromList(list.subList(fromIndex, toIndex));
     }
 
     @Override
     public Object[] toArray() {
-        return list.toArray();
+        Object copy[] = list.toArray();
+        for (int i = 0; i < copy.length; i++) {
+            copy[i] = ((PyObject) copy[i]).__tojava__(Object.class);
+        }
+        return copy;
+//        System.err.println("toArray:" + this);
+//        System.err.println(CallStackUtil.getCallStackAsString());
+//        return list.toArray();
+    }
+
+    // from http://roncox.org/20 - XXX just here for debugging
+    static class CallStackUtil {
+
+        public synchronized static String getCallStackAsString() {
+            StringBuilder sb = new StringBuilder();
+
+            StackTraceElement[] stackTraceElements =
+                    Thread.currentThread().getStackTrace();
+
+            String[] array = getCallStackAsStringArray(stackTraceElements);
+
+            for (int i = 0; i < array.length; i++) {
+                sb.append(array[i] + "\n");
+            }
+            return sb.toString();
+        }
+
+        public synchronized static String[] getCallStackAsStringArray() {
+            StackTraceElement[] stackTraceElements =
+                    Thread.currentThread().getStackTrace();
+
+            String[] array = getCallStackAsStringArray(stackTraceElements);
+
+            return array;
+        }
+
+        private synchronized static String[] getCallStackAsStringArray(StackTraceElement[] stackTraceElements) {
+            ArrayList<String> list = new ArrayList<String>();
+            String[] array = new String[1];
+
+            for (int i = 0; i < stackTraceElements.length; i++) {
+                StackTraceElement element = stackTraceElements[i];
+                String classname = element.getClassName();
+                String methodName = element.getMethodName();
+                int lineNumber = element.getLineNumber();
+                list.add(classname + "." + methodName + ":" + lineNumber);
+            }
+            return list.toArray(array);
+        }
     }
 
     @Override
     public Object[] toArray(Object[] a) {
-        return list.toArray(a);
+        Object copy[] = list.toArray();
+        if (a.length != copy.length) {
+            a = copy;
+        }
+        for (int i = 0; i < copy.length; i++) {
+            a[i] = ((PyObject) copy[i]).__tojava__(Object.class);
+        }
+        for (int i = copy.length; i < a.length; i++) {
+            a[i] = null;
+        }
+        return a;
     }
 
     protected PyObject getslice(int start, int stop, int step) {

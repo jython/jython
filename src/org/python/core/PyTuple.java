@@ -63,7 +63,7 @@ public class PyTuple extends PySequenceList implements List {
     }
     private volatile List<PyObject> cachedList = null;
 
-    private List<PyObject> getList() {
+    List<PyObject> getList() {
         if (cachedList == null) {
             cachedList = Arrays.asList(array);
         }
