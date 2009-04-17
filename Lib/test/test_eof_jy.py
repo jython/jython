@@ -47,7 +47,7 @@ class TestEof(unittest.TestCase):
 
     def test_trailing_paren(self):
         try:
-            import eof_fodder7
+            import badsyntax_eof1
         except SyntaxError, cause:
             self.assertEquals(cause.lineno, 5)
 
