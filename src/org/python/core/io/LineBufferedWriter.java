@@ -23,7 +23,7 @@ public class LineBufferedWriter extends BufferedWriter {
 
     /** {@inheritDoc} */
     public int write(ByteBuffer bytes) {
-        int written = 0;
+        int size = bytes.remaining();
 
         while (bytes.hasRemaining()) {
             byte next = bytes.get();
@@ -37,11 +37,10 @@ public class LineBufferedWriter extends BufferedWriter {
             }
 
             if (next == LF_BYTE) {
-                written += buffer.position();
                 flush();
             }
         }
 
-        return written;
+        return size;
     }
 }

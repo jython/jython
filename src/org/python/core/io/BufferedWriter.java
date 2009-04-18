@@ -53,10 +53,11 @@ public class BufferedWriter extends BufferedIOMixin {
 
         int totalToWrite = total - toBuffer;
         int count = totalToWrite;
+        ByteBuffer[] bulk = new ByteBuffer[] {buffer, bytes};
         // Prepare the buffer for writing
         buffer.flip();
         while (count > 0) {
-            count -= rawIO.write(new ByteBuffer[] {buffer, bytes});
+            count -= rawIO.write(bulk);
         }
         // Prepare the buffer for buffering
         buffer.clear();
