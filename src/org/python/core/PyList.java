@@ -1,4 +1,4 @@
-    // Copyright (c) Corporation for National Research Initiatives
+// Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
 import java.util.ArrayList;
@@ -140,11 +140,9 @@ public class PyList extends PySequenceList implements List {
         } else if (value instanceof PySequence) {
             setsliceIterator(start, stop, step, value.asIterable().iterator());
         } else if (value != null && !(value instanceof List)) {
-            //XXX: can we avoid copying here?  Needed to pass test_userlist
             value = new PyList(value);
             setsliceIterator(start, stop, step, value.asIterable().iterator());
         } else {
-//            System.err.println("List");
             List valueList = (List) value.__tojava__(List.class);
             if (valueList != null && valueList != Py.NoConversion) {
                 setsliceList(start, stop, step, valueList);
@@ -782,7 +780,6 @@ public class PyList extends PySequenceList implements List {
         if (c instanceof PySequenceList) {
             return list.containsAll(c);
         } else {
-            //XXX: FJW this seems unnecessary.
             return list.containsAll(new PyList(c));
         }
     }
@@ -948,50 +945,6 @@ public class PyList extends PySequenceList implements List {
             copy[i] = ((PyObject) copy[i]).__tojava__(Object.class);
         }
         return copy;
-//        System.err.println("toArray:" + this);
-//        System.err.println(CallStackUtil.getCallStackAsString());
-//        return list.toArray();
-    }
-
-    // from http://roncox.org/20 - XXX just here for debugging
-    static class CallStackUtil {
-
-        public synchronized static String getCallStackAsString() {
-            StringBuilder sb = new StringBuilder();
-
-            StackTraceElement[] stackTraceElements =
-                    Thread.currentThread().getStackTrace();
-
-            String[] array = getCallStackAsStringArray(stackTraceElements);
-
-            for (int i = 0; i < array.length; i++) {
-                sb.append(array[i] + "\n");
-            }
-            return sb.toString();
-        }
-
-        public synchronized static String[] getCallStackAsStringArray() {
-            StackTraceElement[] stackTraceElements =
-                    Thread.currentThread().getStackTrace();
-
-            String[] array = getCallStackAsStringArray(stackTraceElements);
-
-            return array;
-        }
-
-        private synchronized static String[] getCallStackAsStringArray(StackTraceElement[] stackTraceElements) {
-            ArrayList<String> list = new ArrayList<String>();
-            String[] array = new String[1];
-
-            for (int i = 0; i < stackTraceElements.length; i++) {
-                StackTraceElement element = stackTraceElements[i];
-                String classname = element.getClassName();
-                String methodName = element.getMethodName();
-                int lineNumber = element.getLineNumber();
-                list.add(classname + "." + methodName + ":" + lineNumber);
-            }
-            return list.toArray(array);
-        }
     }
 
     @Override

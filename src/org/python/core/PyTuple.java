@@ -33,7 +33,6 @@ public class PyTuple extends PySequenceList implements List {
 
     public PyTuple(PyType subtype, PyObject[] elements) {
         super(subtype);
-//        System.err.println("Initializing from " + Arrays.toString(elements));
         if (elements == null) {
             array = new PyObject[0];
         } else {
@@ -58,7 +57,6 @@ public class PyTuple extends PySequenceList implements List {
     }
 
     private static PyTuple fromArrayNoCopy(PyObject[] elements) {
-//        System.err.println("newtuple (no copy):" + Arrays.toString(elements));
         return new PyTuple(elements, false);
     }
     private volatile List<PyObject> cachedList = null;
@@ -73,10 +71,8 @@ public class PyTuple extends PySequenceList implements List {
     @ExposedNew
     final static PyObject tuple_new(PyNewWrapper new_, boolean init, PyType subtype,
             PyObject[] args, String[] keywords) {
-//        System.err.println("tuple_new");
         ArgParser ap = new ArgParser("newtuple", args, keywords, new String[]{"sequence"}, 0);
         PyObject S = ap.getPyObject(0, null);
-//        System.err.println("newtuple: new_=" + new_ + ",S=" + S);
         if (new_.for_type == subtype) {
             if (S == null) {
                 return EMPTY_TUPLE;
@@ -154,6 +150,7 @@ public class PyTuple extends PySequenceList implements List {
         return fromArrayNoCopy(newArray);
     }
 
+    @Override
     public int __len__() {
         return tuple___len__();
     }
@@ -198,6 +195,7 @@ public class PyTuple extends PySequenceList implements List {
         return super.__le__(o);
     }
 
+    @Override
     public PyObject __add__(PyObject generic_other) {
         return tuple___add__(generic_other);
     }
@@ -241,6 +239,7 @@ public class PyTuple extends PySequenceList implements List {
         return repeat(o.asIndex(Py.OverflowError));
     }
 
+    @Override
     public PyObject __iter__() {
         return tuple___iter__();
     }
@@ -269,10 +268,12 @@ public class PyTuple extends PySequenceList implements List {
         return new PyTuple(new PyTuple(getArray()));
     }
 
+    @Override
     public PyTuple __getnewargs__() {
         return tuple___getnewargs__();
     }
 
+    @Override
     public int hashCode() {
         return tuple___hash__();
     }
@@ -300,6 +301,7 @@ public class PyTuple extends PySequenceList implements List {
         return o.__repr__().toString();
     }
 
+    @Override
     public String toString() {
         return tuple___repr__();
     }
@@ -335,9 +337,6 @@ public class PyTuple extends PySequenceList implements List {
         return new PyTuple(elements);
     }
 
-    // Make PyTuple immutable from the collections interfaces by overriding
-    // all the mutating methods to throw UnsupportedOperationException exception.
-    // This is how Collections.unmodifiableList() does it.
     public Iterator iterator() {
         return new Iterator() {
 
@@ -469,8 +468,8 @@ public class PyTuple extends PySequenceList implements List {
     public boolean equals(Object o) {
         if (o instanceof PyTuple) {
             return Arrays.equals(array, ((PyTuple) o).array);
-        } else if (o instanceof List) { // XXX copied from PyList, but...
-            return o.equals(this);     // XXX shouldn't this compare using py2java?
+        } else if (o instanceof List) {
+            return o.equals(this);
         }
         return false;
     }
