@@ -322,7 +322,17 @@ public class PyTuple extends PySequenceList implements List {
     }
 
     public List subList(int fromIndex, int toIndex) {
-        return Collections.unmodifiableList(getList().subList(fromIndex, toIndex));
+        if (fromIndex < 0 || toIndex > size()) {
+            throw new IndexOutOfBoundsException();
+        } else if (fromIndex > toIndex) {
+            throw new IllegalArgumentException();
+        }
+        System.err.println("subList" + fromIndex + "," + toIndex);
+        PyObject elements[] = new PyObject[toIndex - fromIndex];
+        for (int i = 0, j = fromIndex; i < elements.length; i++, j++) {
+            elements[i] = array[j];
+        }
+        return new PyTuple(elements);
     }
 
     // Make PyTuple immutable from the collections interfaces by overriding
@@ -331,18 +341,18 @@ public class PyTuple extends PySequenceList implements List {
     public Iterator iterator() {
         return new Iterator() {
 
-            Iterator i = getList().iterator();
+            private final Iterator<PyObject> iter = getList().iterator();
 
             public void remove() {
                 throw new UnsupportedOperationException();
             }
 
             public boolean hasNext() {
-                return i.hasNext();
+                return iter.hasNext();
             }
 
             public Object next() {
-                return i.next();
+                return iter.next().__tojava__(Object.class);
             }
         };
     }
@@ -394,30 +404,30 @@ public class PyTuple extends PySequenceList implements List {
     public ListIterator listIterator(final int index) {
         return new ListIterator() {
 
-            ListIterator i = getList().listIterator(index);
+            private final ListIterator<PyObject> iter = getList().listIterator(index);
 
             public boolean hasNext() {
-                return i.hasNext();
+                return iter.hasNext();
             }
 
             public Object next() {
-                return i.next();
+                return iter.next().__tojava__(Object.class);
             }
 
             public boolean hasPrevious() {
-                return i.hasPrevious();
+                return iter.hasPrevious();
             }
 
             public Object previous() {
-                return i.previous();
+                return iter.previous().__tojava__(Object.class);
             }
 
             public int nextIndex() {
-                return i.nextIndex();
+                return iter.nextIndex();
             }
 
             public int previousIndex() {
-                return i.previousIndex();
+                return iter.previousIndex();
             }
 
             public void remove() {
@@ -447,12 +457,12 @@ public class PyTuple extends PySequenceList implements List {
 
     @Override
     public boolean contains(Object o) {
-        return getList().contains(o);
+        return getList().contains(Py.java2py(o));
     }
 
     @Override
     public boolean containsAll(Collection c) {
-        return getList().containsAll(c);
+        return getList().containsAll(new PyList(c));
     }
 
     @Override
@@ -487,7 +497,7 @@ public class PyTuple extends PySequenceList implements List {
 
     @Override
     public int lastIndexOf(Object o) {
-        return getList().lastIndexOf(o);
+        return getList().lastIndexOf(Py.java2py(o));
     }
 
     @Override

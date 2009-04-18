@@ -758,28 +758,13 @@ public class PyList extends PySequenceList implements List {
 
     @Override
     public boolean addAll(int index, Collection c) {
-        if (c instanceof PySequenceList) {
-            list.addAll(index, c);
-        } else {
-            // need to use add to convert anything pulled from a collection into a PyObject
-            for (Object element : c) {
-                add(element);
-            }
-        }
-        return c.size() > 0;
+        PyList elements = new PyList(c);
+        return list.addAll(index, elements.list);
     }
 
     @Override
     public boolean addAll(Collection c) {
-        if (c instanceof PySequenceList) {
-            list.addAll(c);
-        } else {
-            // need to use add to convert anything pulled from a collection into a PyObject
-            for (Object element : c) {
-                add(element);
-            }
-        }
-        return c.size() > 0;
+        return addAll(0, c);
     }
 
     @Override
@@ -846,57 +831,51 @@ public class PyList extends PySequenceList implements List {
 
     @Override
     public ListIterator listIterator() {
-        return new PyListIterator(0);
+        return listIterator(0);
     }
 
     @Override
-    public ListIterator listIterator(int index) {
-        return new PyListIterator(index);
-    }
+    public ListIterator listIterator(final int index) {
+        return new ListIterator() {
 
-    public class PyListIterator implements ListIterator {
+            private final ListIterator<PyObject> iter = list.listIterator(index);
 
-        private final ListIterator<PyObject> iter;
+            public boolean hasNext() {
+                return iter.hasNext();
+            }
 
-        PyListIterator(int index) {
-            iter = list.listIterator(index);
-        }
+            public Object next() {
+                return iter.next().__tojava__(Object.class);
+            }
 
-        public boolean hasNext() {
-            return iter.hasNext();
-        }
+            public boolean hasPrevious() {
+                return iter.hasPrevious();
+            }
 
-        public Object next() {
-            return iter.next().__tojava__(Object.class);
-        }
+            public Object previous() {
+                return iter.previous().__tojava__(Object.class);
+            }
 
-        public boolean hasPrevious() {
-            return iter.hasPrevious();
-        }
+            public int nextIndex() {
+                return iter.nextIndex();
+            }
 
-        public Object previous() {
-            return iter.previous().__tojava__(Object.class);
-        }
+            public int previousIndex() {
+                return iter.previousIndex();
+            }
 
-        public int nextIndex() {
-            return iter.nextIndex();
-        }
+            public void remove() {
+                iter.remove();
+            }
 
-        public int previousIndex() {
-            return iter.previousIndex();
-        }
+            public void set(Object o) {
+                iter.set(Py.java2py(o));
+            }
 
-        public void remove() {
-            iter.remove();
-        }
-
-        public void set(Object o) {
-            iter.set(Py.java2py(o));
-        }
-
-        public void add(Object o) {
-            iter.add(Py.java2py(o));
-        }
+            public void add(Object o) {
+                iter.add(Py.java2py(o));
+            }
+        };
     }
 
     @Override
