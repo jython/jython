@@ -21,6 +21,8 @@ import java.util.Set;
 
 import org.python.antlr.base.mod;
 import com.kenai.constantine.platform.Errno;
+import java.util.ArrayList;
+import java.util.List;
 import org.python.compiler.Module;
 import org.python.core.adapter.ClassicPyObjectAdapter;
 import org.python.core.adapter.ExtensiblePyObjectAdapter;
@@ -1932,13 +1934,12 @@ public final class Py {
         } catch (PyException exc) {
         }
 
-        PyObjectArray objs = new PyObjectArray(n);
+        List<PyObject> objs = new ArrayList<PyObject>(n);
         for (PyObject item : o.asIterable()) {
             objs.add(item);
         }
-        // Cut back if guess was too large.
-        objs.trimToSize();
-        return (PyObject[]) objs.getArray();
+        PyObject dest[] = new PyObject[0];
+        return (objs.toArray(dest));
     }
 }
 /** @deprecated */

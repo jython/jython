@@ -27,8 +27,6 @@ org/python/core/PyLong.class
 org/python/core/PyMethod.class
 org/python/core/PyMethodDescr.class
 org/python/core/PyModule.class
-org/python/core/PyNewList.class
-org/python/core/PyNewTuple.class
 org/python/core/PyNone.class
 org/python/core/PyObject.class
 org/python/core/PyProperty.class

@@ -651,11 +651,6 @@ public class PyList extends PySequenceList implements List {
     final void list_extend(PyObject o) {
         if (o instanceof PyList) {
             list.addAll(((PyList) o).list);
-        } else if (o instanceof PySequenceObjectList) {
-            PyObject other[] = ((PySequenceObjectList) o).getArray();
-            for (int i = 0; i < other.length; i++) {
-                list.add(other[i]);
-            }
         } else {
             for (PyObject item : o.asIterable()) {
                 list.add(item);
