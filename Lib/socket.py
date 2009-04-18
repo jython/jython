@@ -484,9 +484,10 @@ class _datagram_socket_impl(_nio_impl):
         else:
             return self._do_receive_nio(0, num_bytes, flags)
 
-# Name and address functions
+# For now, we DO NOT have complete IPV6 support.
+has_ipv6 = False
 
-has_ipv6 = 1
+# Name and address functions
 
 def _gethostbyaddr(name):
     # This is as close as I can get; at least the types are correct...
