@@ -1,4 +1,3 @@
-from test_support import *
 from javatests import ListTest
 
 class PyListTest(ListTest):

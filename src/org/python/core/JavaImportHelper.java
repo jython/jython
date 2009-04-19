@@ -120,6 +120,9 @@ public class JavaImportHelper {
             Iterator iterator = ((PyTuple) fromlist).iterator();
             while (iterator.hasNext()) {
                 Object obj = iterator.next();
+                if (obj instanceof PyString) {
+                    obj = ((PyString)obj).string;
+                }
                 if (obj instanceof String) {
                     String fromName = (String) obj;
                     if (!"*".equals(fromName)) {
