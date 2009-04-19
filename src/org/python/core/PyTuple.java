@@ -3,7 +3,6 @@ package org.python.core;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
@@ -20,7 +19,11 @@ import org.python.expose.MethodType;
 public class PyTuple extends PySequenceList implements List {
 
     public static final PyType TYPE = PyType.fromClass(PyTuple.class);
+
     private final PyObject[] array;
+
+    private volatile List<PyObject> cachedList = null;
+
     private static final PyTuple EMPTY_TUPLE = new PyTuple();
 
     public PyTuple() {
@@ -59,7 +62,6 @@ public class PyTuple extends PySequenceList implements List {
     private static PyTuple fromArrayNoCopy(PyObject[] elements) {
         return new PyTuple(elements, false);
     }
-    private volatile List<PyObject> cachedList = null;
 
     List<PyObject> getList() {
         if (cachedList == null) {
@@ -70,8 +72,8 @@ public class PyTuple extends PySequenceList implements List {
 
     @ExposedNew
     final static PyObject tuple_new(PyNewWrapper new_, boolean init, PyType subtype,
-            PyObject[] args, String[] keywords) {
-        ArgParser ap = new ArgParser("newtuple", args, keywords, new String[]{"sequence"}, 0);
+                                    PyObject[] args, String[] keywords) {
+        ArgParser ap = new ArgParser("tuple", args, keywords, new String[] {"sequence"}, 0);
         PyObject S = ap.getPyObject(0, null);
         if (new_.for_type == subtype) {
             if (S == null) {
@@ -115,10 +117,8 @@ public class PyTuple extends PySequenceList implements List {
             System.arraycopy(array, start, newArray, 0, stop - start);
             return fromArrayNoCopy(newArray);
         }
-        int j = 0;
-        for (int i = start; j < n; i += step) {
+        for (int i = start, j = 0; j < n; i += step, j++) {
             newArray[j] = array[i];
-            j++;
         }
         return fromArrayNoCopy(newArray);
     }
@@ -329,7 +329,6 @@ public class PyTuple extends PySequenceList implements List {
         } else if (fromIndex > toIndex) {
             throw new IllegalArgumentException();
         }
-        System.err.println("subList" + fromIndex + "," + toIndex);
         PyObject elements[] = new PyObject[toIndex - fromIndex];
         for (int i = 0, j = fromIndex; i < elements.length; i++, j++) {
             elements[i] = array[j];
