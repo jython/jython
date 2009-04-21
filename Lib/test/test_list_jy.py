@@ -41,6 +41,9 @@ class ListTestCase(unittest.TestCase):
         self.assertEquals(glmt.silly, "spam")
         glmt['my-key']
         self.assertEquals(glmt.silly, "eggs")
+
+    def test_tuple_equality(self):
+        self.assertEqual([(1,), [1]].count([1]), 1) # http://bugs.jython.org/issue1317
      
 def test_main():
     test.test_support.run_unittest(ListTestCase)
