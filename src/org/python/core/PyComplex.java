@@ -639,6 +639,9 @@ public class PyComplex extends PyObject {
 
     @ExposedMethod(doc = BuiltinDocs.complex___pos___doc)
     final PyObject complex___pos__() {
+        if (getType() == TYPE) {
+            return this;
+        }
         return new PyComplex(real, imag);
     }
 

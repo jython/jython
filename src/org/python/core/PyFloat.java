@@ -560,7 +560,7 @@ public class PyFloat extends PyObject
 
     @ExposedMethod(doc = BuiltinDocs.float___pos___doc)
     final PyObject float___pos__() {
-        return Py.newFloat(value);
+        return float___float__();
     }
 
     public PyObject __invert__() {
@@ -573,10 +573,10 @@ public class PyFloat extends PyObject
 
     @ExposedMethod(doc = BuiltinDocs.float___abs___doc)
     final PyObject float___abs__() {
-        if (value >= 0)
-            return Py.newFloat(value);
-        else
-            return __neg__();
+        if (value < 0) {
+            return float___neg__();
+        }
+        return float___float__();
     }
 
     public PyObject __int__() {
@@ -606,6 +606,9 @@ public class PyFloat extends PyObject
 
     @ExposedMethod(doc = BuiltinDocs.float___float___doc)
     final PyFloat float___float__() {
+        if (getType() == TYPE) {
+            return this;
+        }
         return Py.newFloat(value);
     }
     public PyComplex __complex__() {

@@ -722,7 +722,7 @@ public class PyInteger extends PyObject {
 
     @ExposedMethod(doc = BuiltinDocs.int___pos___doc)
     final PyObject int___pos__() {
-        return Py.newInteger(getValue());
+        return int___int__();
     }
 
     public PyObject __abs__() {
@@ -731,10 +731,10 @@ public class PyInteger extends PyObject {
     
     @ExposedMethod(doc = BuiltinDocs.int___abs___doc)
     final PyObject int___abs__() {
-        if (getValue() >= 0)
-            return Py.newInteger(getValue());
-        else
-            return __neg__();
+        if (getValue() < 0) {
+            return int___neg__();
+        }
+        return int___int__();
     }
 
     public PyObject __invert__() {
@@ -752,6 +752,9 @@ public class PyInteger extends PyObject {
 
     @ExposedMethod(doc = BuiltinDocs.int___int___doc)
     final PyInteger int___int__() {
+        if (getType() == TYPE) {
+            return this;
+        }
         return Py.newInteger(getValue());
     }
 

@@ -741,7 +741,7 @@ public class PyLong extends PyObject {
 
     @ExposedMethod(doc = BuiltinDocs.long___pos___doc)
     final PyObject long___pos__() {
-        return Py.newLong(value);
+        return long___long__();
     }
 
     public PyObject __abs__() {
@@ -750,7 +750,10 @@ public class PyLong extends PyObject {
 
     @ExposedMethod(doc = BuiltinDocs.long___abs___doc)
     final PyObject long___abs__() {
-        return Py.newLong(value.abs());
+        if (value.signum() == -1) {
+            return long___neg__();
+        }
+        return long___long__();
     }
 
     public PyObject __invert__() {
@@ -771,7 +774,7 @@ public class PyLong extends PyObject {
         if (value.compareTo(PyInteger.maxInt) <= 0 && value.compareTo(PyInteger.minInt) >= 0) {
             return Py.newInteger(value.intValue());
         }
-        return Py.newLong(value);
+        return long___long__();
     }
 
 
@@ -781,6 +784,9 @@ public class PyLong extends PyObject {
 
     @ExposedMethod(doc = BuiltinDocs.long___long___doc)
     final PyObject long___long__() {
+        if (getType() == TYPE) {
+            return this;
+        }
         return Py.newLong(value);
     }
 
