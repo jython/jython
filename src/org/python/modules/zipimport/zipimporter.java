@@ -91,11 +91,12 @@ public class zipimporter extends importer<PyObject> {
         prefix = "";
         while (true) {
             File fullPathFile = new File(sys.getPath(pathFile.getPath()));
-            if (fullPathFile.exists()) {
-                if (fullPathFile.isFile()) {
-                    archive = pathFile.getPath();
-                }
-                break;
+            try {
+              if (fullPathFile.isFile()) {
+                  archive = pathFile.getPath();
+                  break;
+              }
+            } catch (SecurityException se) {
             }
 
             // back up one path element

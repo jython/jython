@@ -214,11 +214,20 @@ public class imp {
         }
         FileOutputStream fop = null;
         try {
+            SecurityManager man = System.getSecurityManager();
+            if (man != null) {
+                man.checkWrite(compiledFilename);
+            }
             fop = new FileOutputStream(compiledFilename);
             fop.write(compiledSource);
             fop.close();
             return compiledFilename;
         } catch(IOException exc) {
+            // If we can't write the cache file, just log and continue
+            Py.writeDebug(IMPORT_LOG, "Unable to write to source cache file '"
+                    + compiledFilename + "' due to " + exc);
+            return null;
+        } catch(SecurityException exc) {
             // If we can't write the cache file, just log and continue
             Py.writeDebug(IMPORT_LOG, "Unable to write to source cache file '"
                     + compiledFilename + "' due to " + exc);
@@ -463,8 +472,12 @@ public class imp {
         File sourceFile = new File(dir, sourceName);
         File compiledFile = new File(dir, compiledName);
 
-        boolean pkg = dir.isDirectory() && caseok(dir, name) && (sourceFile.isFile()
+        boolean pkg = false;
+        try {
+            pkg = dir.isDirectory() && caseok(dir, name) && (sourceFile.isFile()
                                                                  || compiledFile.isFile());
+        } catch (SecurityException e) {
+        }
         if (!pkg) {
             Py.writeDebug(IMPORT_LOG, "trying source " + dir.getPath());
             sourceName = name + ".py";
@@ -479,28 +492,33 @@ public class imp {
             m.__dict__.__setitem__("__path__", new PyList(new PyObject[] {filename}));
         }
 
-        if (sourceFile.isFile() && caseok(sourceFile, sourceName)) {
-            long pyTime = sourceFile.lastModified();
-            if (compiledFile.isFile() && caseok(compiledFile, compiledName)) {
-                Py.writeDebug(IMPORT_LOG, "trying precompiled " + compiledFile.getPath());
-                long classTime = compiledFile.lastModified();
-                if (classTime >= pyTime) {
-                    PyObject ret = createFromPyClass(modName, makeStream(compiledFile), true,
-                                                     displaySourceName, displayCompiledName, pyTime);
-                    if (ret != null) {
-                        return ret;
+        try {
+            if (sourceFile.isFile() && caseok(sourceFile, sourceName)) {
+                long pyTime = sourceFile.lastModified();
+                if (compiledFile.isFile() && caseok(compiledFile, compiledName)) {
+                    Py.writeDebug(IMPORT_LOG, "trying precompiled " + compiledFile.getPath());
+                    long classTime = compiledFile.lastModified();
+                    if (classTime >= pyTime) {
+                        PyObject ret = createFromPyClass(modName, makeStream(compiledFile), true,
+                                                         displaySourceName, displayCompiledName, pyTime);
+                        if (ret != null) {
+                            return ret;
+                        }
                     }
+                    return createFromSource(modName, makeStream(sourceFile), displaySourceName,
+                                            compiledFile.getPath());
                 }
+                return createFromSource(modName, makeStream(sourceFile), displaySourceName,
+                                        compiledFile.getPath(), pyTime);
             }
-            return createFromSource(modName, makeStream(sourceFile), displaySourceName,
-                                    compiledFile.getPath(), pyTime);
-        }
 
-        // If no source, try loading precompiled
-        Py.writeDebug(IMPORT_LOG, "trying precompiled with no source " + compiledFile.getPath());
-        if (compiledFile.isFile() && caseok(compiledFile, compiledName)) {
-            return createFromPyClass(modName, makeStream(compiledFile), true, displaySourceName,
-                                     displayCompiledName);
+            // If no source, try loading precompiled
+            Py.writeDebug(IMPORT_LOG, "trying precompiled with no source " + compiledFile.getPath());
+            if (compiledFile.isFile() && caseok(compiledFile, compiledName)) {
+                return createFromPyClass(modName, makeStream(compiledFile), true, displaySourceName,
+                                         displayCompiledName);
+            }
+        } catch (SecurityException e) {
         }
         return null;
     }

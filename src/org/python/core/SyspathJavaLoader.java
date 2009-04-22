@@ -105,13 +105,16 @@ public class SyspathJavaLoader extends ClassLoader {
         // Search the sys.path for a .class file matching the named class.
         try {
             return Class.forName(name);
-        } catch(ClassNotFoundException e) {}
+        } catch(ClassNotFoundException e) {
+        }
 
         // The current class loader may be null (e.g., when Jython is loaded
         // from the boot classpath); try the system class loader.
         try {
             return Class.forName(name, true, ClassLoader.getSystemClassLoader());
-        } catch(ClassNotFoundException e) {}
+        } catch(ClassNotFoundException e) {
+        } catch (SecurityException se) {
+        }
 
         Class<?> c = findLoadedClass(name);
         if(c != null) {
@@ -143,10 +146,12 @@ public class SyspathJavaLoader extends ClassLoader {
                 if (file == null) {
                     continue;
                 }
-                size = (int)file.length();
                 try {
+                    size = (int)file.length();
                     fis = new FileInputStream(file);
                 } catch (FileNotFoundException e) {
+                    continue;
+                } catch(SecurityException e) {
                     continue;
                 }
             }
@@ -163,7 +168,8 @@ public class SyspathJavaLoader extends ClassLoader {
             } finally {
                 try {
                     fis.close();
-                } catch (IOException e) {}
+                } catch (IOException e) {
+                }
             }
         }
 

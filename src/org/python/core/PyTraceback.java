@@ -50,9 +50,13 @@ public class PyTraceback extends PyObject {
      */
     private String getLine(String filename, int lineno) {
         RelativeFile file = new RelativeFile(filename);
-        if (!file.isFile() || !file.canRead()) {
-            // XXX: We should run through sys.path until the filename is found
-            return null;
+        try {
+            if (!file.isFile() || !file.canRead()) {
+                // XXX: We should run through sys.path until the filename is found
+                return null;
+            }
+        } catch (SecurityException e) {
+            return null;  // If we don't have read access to the file, return null
         }
 
         PyFile pyFile;

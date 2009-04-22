@@ -1,7 +1,8 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
-import java.security.SecureClassLoader;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.List;
 
 import org.objectweb.asm.ClassReader;
@@ -30,7 +31,8 @@ public class BytecodeLoader {
                 if (cur != null) {
                     loader.addParent(cur);
                 }
-            } catch (SecurityException e) {}
+            } catch (SecurityException e) {
+            }
         }
         return loader.loadClassFromBytes(name, data);
     }
@@ -71,11 +73,12 @@ public class BytecodeLoader {
         }
     }
 
-    public static class Loader extends SecureClassLoader {
+    public static class Loader extends URLClassLoader {
 
         private List<ClassLoader> parents = Generic.list();
 
         public Loader() {
+            super(new URL[0]);
             parents.add(imp.getSyspathJavaLoader());
         }
 
@@ -115,7 +118,6 @@ public class BytecodeLoader {
             }
             Class<?> c = defineClass(name, data, 0, data.length, getClass().getProtectionDomain());
             resolveClass(c);
-            Compiler.compileClass(c);
             return c;
         }
     }

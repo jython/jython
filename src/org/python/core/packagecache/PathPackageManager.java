@@ -41,20 +41,24 @@ public abstract class PathPackageManager extends CachedJarsPackageManager {
             String dir = path.pyget(i).__str__().toString();
 
             File f = new RelativeFile(dir, child);
-            if (f.isDirectory() && imp.caseok(f, name)) {
-                /*
-                 * Figure out if we have a directory a mixture of python and
-                 * java or just an empty directory (which means Java) or a
-                 * directory with only Python source (which means Python).
-                 */
-                PackageExistsFileFilter m = new PackageExistsFileFilter();
-                f.listFiles(m);
-                boolean exists = m.packageExists();
-                if (exists) {
-                    Py.writeComment("import", "java package as '"
-                            + f.getAbsolutePath() + "'");
+            try {
+                if (f.isDirectory() && imp.caseok(f, name)) {
+                    /*
+                     * Figure out if we have a directory a mixture of python and
+                     * java or just an empty directory (which means Java) or a
+                     * directory with only Python source (which means Python).
+                     */
+                    PackageExistsFileFilter m = new PackageExistsFileFilter();
+                    f.listFiles(m);
+                    boolean exists = m.packageExists();
+                    if (exists) {
+                        Py.writeComment("import", "java package as '"
+                                + f.getAbsolutePath() + "'");
+                    }
+                    return exists;
                 }
-                return exists;
+            } catch (SecurityException se) {
+                return false;
             }
         }
         return false;
