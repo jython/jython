@@ -2,10 +2,14 @@
 package org.python.core.util;
 
 import java.io.ByteArrayOutputStream;
+import java.io.FileDescriptor;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import org.python.core.imp;
+import org.python.core.Py;
+import org.python.core.PyException;
 import org.python.core.PyFile;
 
 /**
@@ -60,4 +64,18 @@ public class FileUtil {
         }
         return out.toByteArray();
     }
+
+    public static boolean isatty(FileDescriptor fd) {
+        boolean atty = false;
+        try {
+            atty = imp.load("os").__getattr__("isatty").__call__(Py.java2py(fd)).__nonzero__();
+        } catch (PyException e) {
+            //Weak isatty check copied from jna-posix JavaPOSIX class
+            return (fd == FileDescriptor.in
+                    || fd == FileDescriptor.out
+                    || fd == FileDescriptor.err);
+        }
+        return atty;
+    }
+
 }

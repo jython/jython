@@ -15,6 +15,7 @@ import java.nio.channels.FileChannel;
 import com.kenai.constantine.platform.Errno;
 import org.python.core.imp;
 import org.python.core.Py;
+import org.python.core.util.FileUtil;
 import org.python.core.util.RelativeFile;
 
 /**
@@ -181,7 +182,7 @@ public class FileIO extends RawIOBase {
             return false;
         }
         try {
-            return imp.load("os").invoke("isatty", Py.java2py(file.getFD())).__nonzero__();
+            return FileUtil.isatty(file.getFD());
         } catch (IOException e) {
             return false;
         }

@@ -18,6 +18,7 @@ import java.nio.channels.WritableByteChannel;
 
 import org.python.core.Py;
 import org.python.core.imp;
+import org.python.core.util.FileUtil;
 
 /**
  * Raw I/O implementation for simple streams.
@@ -217,7 +218,7 @@ public class StreamIO extends RawIOBase {
             return false;
         }
 
-        return imp.load("os").__getattr__("isatty").__call__(Py.java2py(fd)).__nonzero__();
+        return FileUtil.isatty(fd);
     }
 
     /** {@inheritDoc} */

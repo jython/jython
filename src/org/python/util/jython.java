@@ -24,6 +24,7 @@ import org.python.core.PyString;
 import org.python.core.PyStringMap;
 import org.python.core.PySystemState;
 import org.python.core.imp;
+import org.python.core.util.FileUtil;
 import org.python.core.util.RelativeFile;
 import org.python.modules._systemrestart;
 import org.python.modules.thread.thread;
@@ -220,7 +221,7 @@ public class jython
                    } catch (java.io.FileNotFoundException e) {
                        throw Py.IOError(e);
                    }
-                   if (imp.load("os").__getattr__("isatty").__call__(Py.java2py(file.getFD())).__nonzero__()) {
+                   if (FileUtil.isatty(file.getFD())) {
                        opts.interactive = true;
                        interp.interact(null, new PyFile(file));
                        System.exit(0);
