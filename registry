@@ -30,10 +30,6 @@ python.packages.directories = java.ext.dirs
 # this option is set from the command line.
 #python.verbose = message
 
-# Setting this to true will support old 1.0 style keyword+"_" names
-# This isn't needed any more due to improvements in the parser
-python.deprecated.keywordMangling = false
-
 # Setting this to the name of different console class, new console
 # features can be enabled. Readline support is such an example
 #python.console=org.python.util.JLineConsole
