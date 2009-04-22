@@ -632,7 +632,7 @@ The readme text for the next release will be like:
 
     <target name="copy-full" depends="copy-lib, copy-license" if="full-build">
         <echo>copy misc files from ${jython.base.dir}</echo>
-        <copy todir="${dist.dir}" preservelastmodified="true">
+        <copy todir="${dist.dir}" preservelastmodified="true" overwrite="true">
             <fileset dir="${jython.base.dir}"
                      includes="ACKNOWLEDGMENTS, build.xml, build.Lib.include.properties, NEWS, LICENSE.txt, README.txt, registry"
             />
@@ -692,14 +692,16 @@ The readme text for the next release will be like:
             </fileset>
         </copy>
 
+        <!-- copy the shell scripts and make them executable -->
         <copy todir="${dist.dir}/bin">
             <fileset dir="${source.dir}/shell"/>
         </copy>
-
         <chmod perm="ugo+rx">
             <fileset dir="${dist.dir}/bin" />
         </chmod>
 
+        <!-- copy the registry -->
+        <copy todir="${dist.dir}" file="${jython.base.dir}/registry" preservelastmodified="true" overwrite="true" />
     </target>
 
     <target name="copy-cpythonlib">
