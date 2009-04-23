@@ -460,7 +460,13 @@ public class PyTuple extends PySequenceList implements List {
 
     @Override
     public boolean containsAll(Collection c) {
-        return getList().containsAll(new PyList(c));
+        if (c instanceof PyList) {
+            return getList().containsAll(((PyList)c).list);
+        } else if (c instanceof PyTuple) {
+            return getList().containsAll(((PyTuple)c).getList());
+        } else {
+            return getList().containsAll(new PyList(c));
+        }
     }
 
     @Override

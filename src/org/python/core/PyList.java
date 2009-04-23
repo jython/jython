@@ -772,8 +772,10 @@ public class PyList extends PySequenceList implements List {
 
     @Override
     public boolean containsAll(Collection c) {
-        if (c instanceof PySequenceList) {
-            return list.containsAll(c);
+        if (c instanceof PyList) {
+            return list.containsAll(((PyList) c).list);
+        } else if (c instanceof PyTuple) {
+            return list.containsAll(((PyTuple) c).getList());
         } else {
             return list.containsAll(new PyList(c));
         }
@@ -783,8 +785,9 @@ public class PyList extends PySequenceList implements List {
     public boolean equals(Object o) {
         if (o instanceof PyList) {
             return (((PyList) o).list.equals(list));
-        } else if (o instanceof List) { // XXX copied from PyList, but...
-            return o.equals(this);     // XXX shouldn't this compare using py2java?
+        } else if (o instanceof List && !(o instanceof PyTuple)) {
+            List oList = (List) o;
+            return oList.equals(list);
         }
         return false;
     }
@@ -813,7 +816,23 @@ public class PyList extends PySequenceList implements List {
 
     @Override
     public Iterator iterator() {
-        return list.iterator();
+        return new Iterator() {
+
+            private final Iterator<PyObject> iter = list.iterator();
+
+            public boolean hasNext() {
+                return iter.hasNext();
+            }
+
+            public Object next() {
+                return iter.next().__tojava__(Object.class);
+            }
+
+            public void remove() {
+                iter.remove();
+            }
+        };
+
     }
 
     @Override
@@ -945,14 +964,14 @@ public class PyList extends PySequenceList implements List {
     @Override
     public Object[] toArray(Object[] a) {
         Object copy[] = list.toArray();
-        if (a.length != copy.length) {
+        if (a.length < copy.length) {
             a = copy;
         }
         for (int i = 0; i < copy.length; i++) {
             a[i] = ((PyObject) copy[i]).__tojava__(Object.class);
         }
-        for (int i = copy.length; i < a.length; i++) {
-            a[i] = null;
+        if (a.length > copy.length) {
+            a[copy.length] = null;
         }
         return a;
     }
