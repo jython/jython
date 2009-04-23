@@ -126,7 +126,7 @@ public class jython
                 System.err.println("Jython " + Version.PY_VERSION);
                 System.exit(0);
             }
-            if (!opts.runModule) {
+            if (!opts.runCommand && !opts.runModule) {
                 System.err.println(usage);
             }
 
@@ -339,7 +339,7 @@ class CommandLineOptions
 {
     public String filename;
     public boolean jar, interactive, notice;
-    public boolean runModule;
+    public boolean runCommand, runModule;
     public boolean fixInteractive;
     public boolean help, version;
     public String[] argv;
@@ -409,6 +409,7 @@ class CommandLineOptions
                 Options.importSite = false;
             }
             else if (arg.equals("-c")) {
+                runCommand = true;
                 if (arg.length() > 2) {
                     command = arg.substring(2);
                 }
