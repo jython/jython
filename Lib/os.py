@@ -30,15 +30,13 @@ __all__.extend(['EX_OK', 'F_OK', 'O_APPEND', 'O_CREAT', 'O_EXCL', 'O_RDONLY',
                 'O_RDWR', 'O_SYNC', 'O_TRUNC', 'O_WRONLY', 'R_OK', 'SEEK_CUR',
                 'SEEK_END', 'SEEK_SET', 'W_OK', 'X_OK', '_exit', 'access',
                 'altsep', 'chdir', 'chmod', 'close', 'curdir', 'defpath',
-                'environ', 'error', 'fdopen', 'getcwd', 'getcwdu', 'getegid',
-                'getenv','geteuid', 'getgid', 'getlogin', 'getlogin', 'getpgrp',
-                'getpid', 'getppid', 'getuid', 'isatty', 'linesep', 'listdir',
-                'lseek', 'lstat', 'makedirs', 'mkdir', 'name', 'open', 'pardir',
-                'path', 'pathsep', 'popen', 'popen2', 'popen3', 'popen4',
-                'putenv', 'read', 'remove', 'removedirs', 'rename', 'renames',
-                'rmdir', 'sep', 'setpgrp', 'setsid', 'stat', 'stat_result',
-                'strerror', 'system', 'unlink', 'unsetenv', 'utime', 'walk',
-                'write'])
+                'environ', 'error', 'fdopen', 'getcwd', 'getcwdu', 'getenv',
+                'getpid', 'isatty', 'linesep', 'listdir', 'lseek', 'lstat',
+                'makedirs', 'mkdir', 'name', 'open', 'pardir', 'path',
+                'pathsep', 'popen', 'popen2', 'popen3', 'popen4', 'putenv',
+                'read', 'remove', 'removedirs', 'rename', 'renames', 'rmdir',
+                'sep', 'stat', 'stat_result', 'strerror', 'system', 'unlink',
+                'unsetenv', 'utime', 'walk', 'write'])
 
 import errno
 import jarray
@@ -1049,6 +1047,10 @@ if _name == 'posix':
         if res_pid == -1:
             raise OSError(status[0], strerror(status[0]))
         return res_pid, status[0]
+
+    __all__.extend(['link', 'symlink', 'readlink', 'getegid', 'geteuid',
+                    'getgid', 'getlogin', 'getpgrp', 'getppid', 'getuid',
+                    'setpgrp', 'setsid', 'kill', 'wait', 'waitpid'])
 
 def getpid():
     """getpid() -> pid
