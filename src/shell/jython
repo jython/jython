@@ -96,6 +96,10 @@ fi
 
 # ----- Execute the requested command -----------------------------------------
 
+if [ -z "$JAVA_MEM" ] ; then
+  JAVA_MEM=-Xmx512m
+fi
+
 if [ -z "$JAVA_STACK" ]; then
    # 32 bit Java 6 needs the stack increased to at least 512k for
    # test_cpickle to pass, but we don't want to shrink 64 bit Java's
@@ -110,8 +114,18 @@ while [ $# -gt 0 ] ; do
     # Stuff after '-J' in this argument goes to JVM
     -J*)
       val=${1:2}
-      if [ "${val:0:4}" = "-Xss" ] ; then
+      if [ "${val:0:4}" = "-Xmx" ]; then
+        JAVA_MEM=$val
+      elif [ "${val:0:4}" = "-Xss" ]; then
         JAVA_STACK=$val
+      elif [ "${val}" = "" ]; then
+          $JAVA_CMD -help
+          echo "(Prepend -J in front of these options when using 'jython' command)" 
+          exit
+      elif [ "${val}" = "-X" ]; then
+          $JAVA_CMD -X
+          echo "(Prepend -J in front of these options when using 'jython' command)" 
+          exit
       else
 	java_args=("${java_args[@]}" "${1:2}")
       fi
@@ -187,7 +201,7 @@ python_args=("${python_args[@]}" "$@")
 # Put the python_args back into the position arguments $1, $2 etc
 set -- "${python_args[@]}"
 
-JAVA_OPTS="$JAVA_OPTS $JAVA_STACK"
+JAVA_OPTS="$JAVA_OPTS $JAVA_MEM $JAVA_STACK"
 
 if $cygwin; then
   JAVA_HOME=`cygpath --mixed "$JAVA_HOME"`

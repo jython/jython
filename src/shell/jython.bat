@@ -76,6 +76,7 @@ goto cleanup
 rem ----- Execute the requested command ----------------------------------------
 
 :run
+set _JAVA_MEM=-Xmx512m
 set _JAVA_STACK=-Xss512k
 
 rem Escape any quotes. Use _S for ', _D for ", and _U to escape _ itself.
@@ -152,13 +153,13 @@ goto nextArg
 :jvmArg
 set _VAL=%_CMP:~2%
 
-if "%_VAL:~0,4%" == "-Xss" (
+if "%_VAL:~0,4%" == "-Xmx" (
+   set _JAVA_MEM=%_VAL%
+) else if "%_VAL:~0,4%" == "-Xss" (
    set _JAVA_STACK=%_VAL%
-   echo %_VAL%
-   goto nextArg
+) else (
+   set _JAVA_OPTS=%_JAVA_OPTS% %_VAL%
 )
-
-set _JAVA_OPTS=%_JAVA_OPTS% %_VAL%
 
 :nextArg
 set _CMP=
@@ -172,7 +173,7 @@ if not defined _BOOT_CP (
     set CLASSPATH=%_CP:"=%
   )
 )
-set _FULL_CMD=%_JAVA_CMD% %_JAVA_OPTS% %_JAVA_STACK% %_BOOT_CP% -Dpython.home=%_JYTHON_HOME% -Dpython.executable="%~f0" -classpath "%CLASSPATH%" org.python.util.jython %_JYTHON_OPTS% %_JYTHON_ARGS% %_ARGS%
+set _FULL_CMD=%_JAVA_CMD% %_JAVA_OPTS% %_JAVA_MEM% %_JAVA_STACK% %_BOOT_CP% -Dpython.home=%_JYTHON_HOME% -Dpython.executable="%~f0" -classpath "%CLASSPATH%" org.python.util.jython %_JYTHON_OPTS% %_JYTHON_ARGS% %_ARGS%
 if defined _PRINT (
   echo %_FULL_CMD%
 ) else (
@@ -190,6 +191,7 @@ set _BOOT_CP=
 set _FULL_CMD=
 set _JAVA_CMD=
 set _JAVA_OPTS=
+set _JAVA_MEM=
 set _JAVA_STACK=
 set _JYTHON_HOME=
 set _JYTHON_OPTS=

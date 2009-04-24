@@ -170,9 +170,6 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
             <pathelement path="${compile.dir}" />
             <pathelement path="${cpptasks.jar.dir}" />
         </path>
-        <!-- 64 bit Java 6 needs roughly 96m for regrtest on most platforms, but Apple's needs
-         more -->
-        <property name="regrtest.Xmx" value="-Xmx160m" />
         <property name="jython.dev.jar" value="jython-dev.jar" />
         <property name="jython.deploy.jar" value="jython.jar" />
     </target>
@@ -834,7 +831,6 @@ The readme text for the next release will be like:
     <target name="regrtest" depends="developer-build,regrtest-unix,regrtest-windows"/>
     <target name="regrtest-unix" if="os.family.unix">
       <exec executable="${dist.dir}/bin/jython">
-        <arg value="-J${regrtest.Xmx}"/>
         <arg value="${dist.dir}/Lib/test/regrtest.py"/>
         <!-- Only run the tests that are expected to work on Jython -->
         <arg value="--expected"/>
@@ -844,7 +840,6 @@ The readme text for the next release will be like:
     </target>
     <target name="regrtest-windows" if="os.family.windows">
       <exec executable="${dist.dir}/bin/jython.bat">
-        <arg value="-J${regrtest.Xmx}"/>
         <arg value="${dist.dir}/Lib/test/regrtest.py"/>
         <!-- Only run the tests that are expected to work on Jython -->
         <arg value="--expected"/>
