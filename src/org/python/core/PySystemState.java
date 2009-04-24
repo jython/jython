@@ -12,6 +12,7 @@ import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.nio.charset.UnsupportedCharsetException;
 import java.security.AccessControlException;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 import java.util.StringTokenizer;
@@ -618,11 +619,20 @@ public class PySystemState extends PyObject
     private static void addRegistryFile(File file) {
         if (file.exists()) {
             if (!file.isDirectory()) {
-                registry = new Properties(registry);
+                // pre (e.g. system) properties should override the registry,
+                // therefore only add missing properties from this registry file
+                Properties fileProperties = new Properties();
                 try {
                     FileInputStream fp = new FileInputStream(file);
                     try {
-                        registry.load(fp);
+                        fileProperties.load(fp);
+                        Iterator<Object> iterator = fileProperties.keySet().iterator();
+                        while (iterator.hasNext()) {
+                            Object key = iterator.next();
+                            if (!registry.containsKey(key)) {
+                                registry.put(key, fileProperties.get(key));
+                            }
+                        }
                     } finally {
                         fp.close();
                     }

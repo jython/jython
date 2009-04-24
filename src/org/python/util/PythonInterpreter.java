@@ -36,6 +36,7 @@ public class PythonInterpreter {
      *
      * @param preProperties
      *            A set of properties. Typically System.getProperties() is used.
+     *            PreProperties override properties from the registry file.
      * @param postProperties
      *            An other set of properties. Values like python.home, python.path and all other
      *            values from the registry files can be added to this property set. PostProperties
