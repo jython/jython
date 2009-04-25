@@ -12,7 +12,6 @@ import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.nio.charset.UnsupportedCharsetException;
 import java.security.AccessControlException;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 import java.util.StringTokenizer;
@@ -626,9 +625,7 @@ public class PySystemState extends PyObject
                     FileInputStream fp = new FileInputStream(file);
                     try {
                         fileProperties.load(fp);
-                        Iterator<Object> iterator = fileProperties.keySet().iterator();
-                        while (iterator.hasNext()) {
-                            Object key = iterator.next();
+                        for (Object key : fileProperties.keySet()) {
                             if (!registry.containsKey(key)) {
                                 registry.put(key, fileProperties.get(key));
                             }
