@@ -228,6 +228,9 @@ class RespectJavaAccessibilityTest(unittest.TestCase):
     def test_protected_class(self):
         self.run_accessibility_script("access_protected_class.py", TypeError)
 
+    def test_overriding(self):
+        self.run_accessibility_script("call_overridden_method.py")
+
 class ClassloaderTest(unittest.TestCase):
     def test_loading_classes_without_import(self):
         cl = test_support.make_jar_classloader("../callbacker_test.jar")

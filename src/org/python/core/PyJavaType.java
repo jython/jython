@@ -229,10 +229,15 @@ public class PyJavaType extends PyType {
             // returns just the public methods
             methods = forClass.getMethods();
         } else {
-            methods = forClass.getDeclaredMethods();
-            for (Method method : methods) {
-                method.setAccessible(true);
+            // Grab all methods on this class and all of its superclasses and make them accessible
+            List<Method> allMethods = Generic.list();
+            for(Class<?> c = forClass; c != null; c = c.getSuperclass()) {
+                for (Method meth : c.getDeclaredMethods()) {
+                    allMethods.add(meth);
+                    meth.setAccessible(true);
+                }
             }
+            methods = allMethods.toArray(new Method[allMethods.size()]);
         }
 
         boolean isInAwt = name.startsWith("java.awt.") && name.indexOf('.', 9) == -1;
