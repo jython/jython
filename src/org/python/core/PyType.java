@@ -267,7 +267,7 @@ public class PyType extends PyObject implements Serializable {
                 }
             }
         }
-        
+
         if (wantDict) {
             createDictSlot();
         }
@@ -596,6 +596,7 @@ public class PyType extends PyObject implements Serializable {
                 // non-proxy types go straight into our lookup
                 cleanedBases.add(base);
             } else {
+
                 if (!(base instanceof PyJavaType)) {
                     // python subclasses of proxy types need to be added as a base so their
                     // version of methods will show up
@@ -875,9 +876,20 @@ public class PyType extends PyObject implements Serializable {
 
             PyObject candidate = toMerge[i].getCandidate();
             for (MROMergeState mergee : toMerge) {
-                if(mergee.unmergedContains(candidate)) {
+                if (mergee.pastnextContains(candidate)) {
                     continue scan;
                 }
+            }
+            if (!(this instanceof PyJavaType) && candidate instanceof PyJavaType
+                    && candidate.javaProxy != null
+                    && PyProxy.class.isAssignableFrom(((Class<?>)candidate.javaProxy))
+                    && candidate.javaProxy != javaProxy) {
+                // If this is a subclass of a Python class that subclasses a Java class, slip the
+                // proxy for this class in before the proxy class in the superclass' mro.
+                // This exposes the methods from the proxy generated for this class in addition to
+                // those generated for the superclass while allowing methods from the superclass to
+                // remain visible from the proxies.
+                mro.add(PyType.fromClass(((Class<?>)javaProxy)));
             }
             mro.add(candidate);
             for (MROMergeState element : toMerge) {
@@ -892,7 +904,6 @@ public class PyType extends PyObject implements Serializable {
         }
         return mro.toArray(new PyObject[mro.size()]);
     }
-
 
     /**
      * Must either throw an exception, or bring the merges in <code>toMerge</code> to completion by
@@ -1616,7 +1627,7 @@ public class PyType extends PyObject implements Serializable {
         /**
          * Returns true if candidate is in the items past this state's next item to be merged.
          */
-        public boolean unmergedContains(PyObject candidate) {
+        public boolean pastnextContains(PyObject candidate) {
             for (int i = next + 1; i < mro.length; i++) {
                 if (mro[i] == candidate) {
                     return true;
