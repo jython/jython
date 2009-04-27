@@ -12,7 +12,7 @@ from java.util import Date, Hashtable, Vector
 from java.awt import Color, Component, Dimension, Rectangle
 from javax.swing.table import AbstractTableModel
 
-from org.python.tests import BeanInterface, Callbacker, Coercions
+from org.python.tests import BeanInterface, Callbacker, Coercions, OwnMethodCaller
 
 class InterfaceTest(unittest.TestCase):
     def test_java_calling_python_interface_implementation(self):
@@ -210,6 +210,19 @@ class PythonSubclassesTest(unittest.TestCase):
                 self.assertEquals("init", output.pop())
             aa.name
             self.assertEquals("getName", output.pop())
+
+    def test_python_subclass_of_python_subclass_of_java_class_overriding(self):
+        '''Test for http://bugs.jython.org/issue1297.
+
+        Checks that getValue on SecondSubclass is overriden correctly when called from Java.'''
+        class FirstSubclass(OwnMethodCaller):
+            pass
+
+        class SecondSubclass(FirstSubclass):
+            def getValue(self):
+                return 10
+
+        self.assertEquals(10, SecondSubclass().callGetValue())
 
 
 """
