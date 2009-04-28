@@ -1,11 +1,13 @@
-Welcome to Jython 2.5b3
+Welcome to Jython 2.5b4
 =======================
 
-This is the forth beta of the 2.5 version of Jython. It contains a couple of
-bug fixes since the 2.5b2 release a couple of days ago.  The bug that prompted
-another release was a corner case on Windows that caused Jython to not start.
-This beta contains all of the new features for the eventual 2.5 release and
-represents a feature freeze.
+This is the fifth beta of the 2.5 version of Jython.  It contains a new
+implementation of List and Tuple, as well as a patch which helps Jython run in
+an envrironment without file write access (specifically for use on Google App
+Engine) There are also a number of smaller bug fixes.  This beta contains all
+of the new features for the eventual 2.5 release continues the feature freeze.
+We are very close, once this beta has been tested in the wild for a bit and we
+close a few more high priority bugs, we will start release candidates.
 
 The release was compiled on Mac OS X with JDK 5 and requires JDK 5 to run.
 
