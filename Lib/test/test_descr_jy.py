@@ -232,6 +232,15 @@ class SubclassDescrTestCase(unittest.TestCase):
 		return 3
         self.assertEqual(Foo() + Bar(), 3)
 
+    def test_int_mul(self):
+        # http://bugs.jython.org/issue1332
+        class Foo(tuple):
+            def __rmul__(self, other):
+                return 'foo'
+        foo = Foo()
+        self.assertEqual(3.0 * foo, 'foo')
+        self.assertEqual(4 * foo, 'foo')
+
 
 class InPlaceTestCase(unittest.TestCase):
 

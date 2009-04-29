@@ -257,9 +257,6 @@ public class PyInteger extends PyObject {
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.int___mul___doc)
     final PyObject int___mul__(PyObject right) {
-        if (right instanceof PySequence)
-            return ((PySequence) right).repeat(getValue());
-
         if (!canCoerce(right))
             return null;
         int rightv = coerce(right);
