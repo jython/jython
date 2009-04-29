@@ -585,9 +585,10 @@ public class PySystemState extends PyObject
                 prefix = exec_prefix = ".";
             }
             try {
-                addRegistryFile(new File(prefix, "registry"));
+                // user registry has precedence over installed registry
                 File homeFile = new File(registry.getProperty("user.home"), ".jython");
                 addRegistryFile(homeFile);
+                addRegistryFile(new File(prefix, "registry"));
             } catch (Exception exc) {
             }
         }
