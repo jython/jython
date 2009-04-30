@@ -11,6 +11,7 @@ import org.python.util.Generic;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.List;
@@ -710,18 +711,180 @@ public class PyList extends PySequenceList implements List {
         sort(cmp, key, reverse);
     }
 
-    public void sort(PyObject compare) {
-        sort(compare, Py.None, Py.False);
+    public void sort(PyObject cmp, PyObject key, PyObject reverse) {
+        boolean bReverse = reverse.__nonzero__();
+        if (key == Py.None || key == null) {
+            if (cmp == Py.None || cmp == null) {
+                sort(bReverse);
+            } else {
+                sort(cmp, bReverse);
+            }
+        } else {
+            sort(cmp, key, bReverse);
+        }
     }
+
+    // a bunch of optimized paths for sort to avoid unnecessary work, such as DSU or checking compare functions for null
 
     public void sort() {
-        sort(Py.None, Py.None, Py.False);
+        sort(false);
     }
 
-    public synchronized void sort(PyObject cmp, PyObject key, PyObject reverse) {
+    private synchronized void sort(boolean reverse) {
         gListAllocatedStatus = -1;
-        PyComparator c = new PyComparator(this, cmp, key, reverse.__nonzero__());
+        if (reverse) {
+            Collections.reverse(list); // maintain stability of sort by reversing first
+        }
+        Collections.sort(list, new PyObjectDefaultComparator(this));
+        if (reverse) {
+            Collections.reverse(list); // maintain stability of sort by reversing first
+        }
+        gListAllocatedStatus = __len__();
+    }
+
+    private static class PyObjectDefaultComparator implements Comparator<PyObject> {
+
+        private final PyList list;
+
+        PyObjectDefaultComparator(PyList list) {
+            this.list = list;
+        }
+
+        public int compare(PyObject o1, PyObject o2) {
+            int result = o1._cmp(o2);
+            if (this.list.gListAllocatedStatus >= 0) {
+                throw Py.ValueError("list modified during sort");
+            }
+            return result;
+        }
+
+        public boolean equals(Object o) {
+            if (o == this) {
+                return true;
+            }
+            if (o instanceof PyObjectDefaultComparator) {
+                return true;
+            }
+            return false;
+        }
+    }
+
+    public void sort(PyObject compare) {
+        sort(compare, false);
+    }
+
+    private synchronized void sort(PyObject compare, boolean reverse) {
+        gListAllocatedStatus = -1;
+        if (reverse) {
+            Collections.reverse(list); // maintain stability of sort by reversing first
+        }
+        PyObjectComparator c = new PyObjectComparator(this, compare);
         Collections.sort(list, c);
+        if (reverse) {
+            Collections.reverse(list);
+        }
+        gListAllocatedStatus = __len__();
+    }
+
+    private static class PyObjectComparator implements Comparator<PyObject> {
+
+        private final PyList list;
+        private final PyObject cmp;
+
+        PyObjectComparator(PyList list, PyObject cmp) {
+            this.list = list;
+            this.cmp = cmp;
+        }
+
+        public int compare(PyObject o1, PyObject o2) {
+            int result = cmp.__call__(o1, o2).asInt();
+            if (this.list.gListAllocatedStatus >= 0) {
+                throw Py.ValueError("list modified during sort");
+            }
+            return result;
+        }
+
+        public boolean equals(Object o) {
+            if (o == this) {
+                return true;
+            }
+
+            if (o instanceof PyObjectComparator) {
+                return cmp.equals(((PyComparator) o).cmp);
+            }
+            return false;
+        }
+    }
+
+    private static class KV {
+
+        private final PyObject key;
+        private final PyObject value;
+
+        KV(PyObject key, PyObject value) {
+            this.key = key;
+            this.value = value;
+        }
+    }
+
+    private static class KVComparator implements Comparator<KV> {
+
+        private final PyList list;
+        private final PyObject cmp;
+
+        KVComparator(PyList list, PyObject cmp) {
+            this.list = list;
+            this.cmp = cmp;
+        }
+
+        public int compare(KV o1, KV o2) {
+            int result;
+            if (cmp != null && cmp != Py.None) {
+                result = cmp.__call__(o1.key, o2.key).asInt();
+            } else {
+                result = o1.key._cmp(o2.key);
+            }
+            if (this.list.gListAllocatedStatus >= 0) {
+                throw Py.ValueError("list modified during sort");
+            }
+            return result;
+        }
+
+        public boolean equals(Object o) {
+            if (o == this) {
+                return true;
+            }
+
+            if (o instanceof PyObjectComparator) {
+                return cmp.equals(((PyComparator) o).cmp);
+            }
+            return false;
+        }
+    }
+
+    private synchronized void sort(PyObject cmp, PyObject key, boolean reverse) {
+        gListAllocatedStatus = -1;
+
+        int size = list.size();
+        final ArrayList<KV> decorated = new ArrayList<KV>(size);
+        for (PyObject value : list) {
+            decorated.add(new KV(key.__call__(value), value));
+        }
+        list.clear();
+        KVComparator c = new KVComparator(this, cmp);
+        if (reverse) {
+            Collections.reverse(decorated); // maintain stability of sort by reversing first
+        }
+        Collections.sort(decorated, c);
+        if (reverse) {
+            Collections.reverse(decorated);
+        }
+        if (list instanceof ArrayList) {
+            ((ArrayList) list).ensureCapacity(size);
+        }
+        for (KV kv : decorated) {
+            list.add(kv.value);
+        }
         gListAllocatedStatus = __len__();
     }
 
