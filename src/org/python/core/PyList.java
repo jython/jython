@@ -810,7 +810,7 @@ public class PyList extends PySequenceList implements List {
             }
 
             if (o instanceof PyObjectComparator) {
-                return cmp.equals(((PyComparator) o).cmp);
+                return cmp.equals(((PyObjectComparator) o).cmp);
             }
             return false;
         }
@@ -855,8 +855,8 @@ public class PyList extends PySequenceList implements List {
                 return true;
             }
 
-            if (o instanceof PyObjectComparator) {
-                return cmp.equals(((PyComparator) o).cmp);
+            if (o instanceof KVComparator) {
+                return cmp.equals(((KVComparator) o).cmp);
             }
             return false;
         }
