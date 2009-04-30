@@ -15,7 +15,6 @@ package org.python.core;
 public abstract class PySequence extends PyObject {
 
     public PySequence() {}
-    public int gListAllocatedStatus = -1;
 
     protected PySequence(PyType type) {
         super(type);
@@ -99,11 +98,11 @@ public abstract class PySequence extends PyObject {
         return new PySequenceIter(this);
     }
 
-    public synchronized PyObject __eq__(PyObject o) {
+    public PyObject __eq__(PyObject o) {
         return seq___eq__(o);
     }
 
-    final synchronized PyObject seq___eq__(PyObject o) {
+    final PyObject seq___eq__(PyObject o) {
         if(!(getType() == o.getType()) && !(getType().isSubType(o.getType()))) {
             return null;
         }
@@ -116,11 +115,11 @@ public abstract class PySequence extends PyObject {
         return (i < 0) ? Py.True : Py.False;
     }
 
-    public synchronized PyObject __ne__(PyObject o) {
+    public PyObject __ne__(PyObject o) {
         return seq___ne__(o);
     }
 
-    final synchronized PyObject seq___ne__(PyObject o) {
+    final PyObject seq___ne__(PyObject o) {
         if(!(getType() == o.getType()) && !(getType().isSubType(o.getType()))) {
             return null;
         }
@@ -133,11 +132,11 @@ public abstract class PySequence extends PyObject {
         return (i < 0) ? Py.False : Py.True;
     }
 
-    public synchronized PyObject __lt__(PyObject o) {
+    public PyObject __lt__(PyObject o) {
         return seq___lt__(o);
     }
 
-    final synchronized PyObject seq___lt__(PyObject o) {
+    final PyObject seq___lt__(PyObject o) {
         if(!(getType() == o.getType()) && !(getType().isSubType(o.getType()))) {
             return null;
         }
@@ -148,11 +147,11 @@ public abstract class PySequence extends PyObject {
         return __finditem__(i)._lt(o.__finditem__(i));
     }
 
-    public synchronized PyObject __le__(PyObject o) {
+    public PyObject __le__(PyObject o) {
         return seq___le__(o);
     }
 
-    final synchronized PyObject seq___le__(PyObject o) {
+    final PyObject seq___le__(PyObject o) {
         if(!(getType() == o.getType()) && !(getType().isSubType(o.getType()))) {
             return null;
         }
@@ -163,11 +162,11 @@ public abstract class PySequence extends PyObject {
         return __finditem__(i)._le(o.__finditem__(i));
     }
 
-    public synchronized PyObject __gt__(PyObject o) {
+    public PyObject __gt__(PyObject o) {
         return seq___gt__(o);
     }
 
-    final synchronized PyObject seq___gt__(PyObject o) {
+    final PyObject seq___gt__(PyObject o) {
         if(!(getType() == o.getType()) && !(getType().isSubType(o.getType()))) {
             return null;
         }
@@ -177,11 +176,11 @@ public abstract class PySequence extends PyObject {
         return __finditem__(i)._gt(o.__finditem__(i));
     }
 
-    public synchronized PyObject __ge__(PyObject o) {
+    public PyObject __ge__(PyObject o) {
         return seq___ge__(o);
     }
 
-    final synchronized PyObject seq___ge__(PyObject o) {
+    final PyObject seq___ge__(PyObject o) {
         if(!(getType() == o.getType()) && !(getType().isSubType(o.getType()))) {
             return null;
         }
@@ -263,7 +262,7 @@ public abstract class PySequence extends PyObject {
         return seq___finditem__(index);
     }
 
-    final synchronized PyObject seq___finditem__(int index) {
+    final PyObject seq___finditem__(int index) {
         return delegator.checkIdxAndFindItem(index);
     }
 
@@ -291,22 +290,22 @@ public abstract class PySequence extends PyObject {
         return false;
     }
 
-    public synchronized PyObject __getslice__(PyObject start, PyObject stop, PyObject step) {
+    public PyObject __getslice__(PyObject start, PyObject stop, PyObject step) {
         return seq___getslice__(start, stop, step);
     }
 
-    final synchronized PyObject seq___getslice__(PyObject start, PyObject stop, PyObject step) {
+    final PyObject seq___getslice__(PyObject start, PyObject stop, PyObject step) {
         return delegator.getSlice(new PySlice(start, stop, step));
     }
 
-    public synchronized void __setslice__(PyObject start,
+    public void __setslice__(PyObject start,
                                           PyObject stop,
                                           PyObject step,
                                           PyObject value) {
         seq___setslice__(start, stop, step, value);
     }
 
-    final synchronized void seq___setslice__(PyObject start,
+    final void seq___setslice__(PyObject start,
                                              PyObject stop,
                                              PyObject step,
                                              PyObject value) {
@@ -317,15 +316,15 @@ public abstract class PySequence extends PyObject {
         delegator.checkIdxAndSetSlice(new PySlice(start, stop, step), value);
     }
 
-    public synchronized void __delslice__(PyObject start, PyObject stop, PyObject step) {
+    public void __delslice__(PyObject start, PyObject stop, PyObject step) {
         seq___delslice__(start, stop, step);
     }
 
-    final synchronized void seq___delslice__(PyObject start, PyObject stop, PyObject step) {
+    final void seq___delslice__(PyObject start, PyObject stop, PyObject step) {
         delegator.checkIdxAndDelItem(new PySlice(start, stop, step));
     }
 
-    public synchronized void __setitem__(int index, PyObject value) {
+    public void __setitem__(int index, PyObject value) {
         delegator.checkIdxAndSetItem(index, value);
     }
 
@@ -337,11 +336,11 @@ public abstract class PySequence extends PyObject {
         delegator.checkIdxAndSetItem(index, value);
     }
 
-    public synchronized void __delitem__(PyObject index) {
+    public void __delitem__(PyObject index) {
         seq___delitem__(index);
     }
 
-    final synchronized void seq___delitem__(PyObject index) {
+    final void seq___delitem__(PyObject index) {
         delegator.checkIdxAndDelItem(index);
     }
 
