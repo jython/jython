@@ -809,7 +809,7 @@ The readme text for the next release will be like:
         <!-- Clean any old test output -->
         <delete dir="${junit.reports}"/>
     </target>
-    <target name="javatest" depends="compile,expose">
+    <target name="javatest" depends="developer-build">
         <mkdir dir="${junit.reports}"/>
         <junit fork="true" printsummary="true">
             <formatter type="xml"/>
