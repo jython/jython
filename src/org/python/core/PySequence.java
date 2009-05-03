@@ -97,7 +97,7 @@ public abstract class PySequence extends PyObject {
     }
 
     final PyObject seq___eq__(PyObject o) {
-        if (getType() != o.getType() && !getType().isSubType(o.getType())) {
+        if (!isSubType(o)) {
             return null;
         }
         int tl = __len__();
@@ -115,7 +115,7 @@ public abstract class PySequence extends PyObject {
     }
 
     final PyObject seq___ne__(PyObject o) {
-        if (getType() != o.getType() && !getType().isSubType(o.getType())) {
+        if (!isSubType(o)) {
             return null;
         }
         int tl = __len__();
@@ -133,7 +133,7 @@ public abstract class PySequence extends PyObject {
     }
 
     final PyObject seq___lt__(PyObject o) {
-        if (getType() != o.getType() && !getType().isSubType(o.getType())) {
+        if (!isSubType(o)) {
             return null;
         }
         int i = cmp(this, -1, o, -1);
@@ -149,7 +149,7 @@ public abstract class PySequence extends PyObject {
     }
 
     final PyObject seq___le__(PyObject o) {
-        if (getType() != o.getType() && !getType().isSubType(o.getType())) {
+        if (!isSubType(o)) {
             return null;
         }
         int i = cmp(this, -1, o, -1);
@@ -165,7 +165,7 @@ public abstract class PySequence extends PyObject {
     }
 
     final PyObject seq___gt__(PyObject o) {
-        if (getType() != o.getType() && !getType().isSubType(o.getType())) {
+        if (!isSubType(o)) {
             return null;
         }
         int i = cmp(this, -1, o, -1);
@@ -181,7 +181,7 @@ public abstract class PySequence extends PyObject {
     }
 
     final PyObject seq___ge__(PyObject o) {
-        if (getType() != o.getType() && !getType().isSubType(o.getType())) {
+        if (!isSubType(o)) {
             return null;
         }
         int i = cmp(this, -1, o, -1);
@@ -189,6 +189,18 @@ public abstract class PySequence extends PyObject {
             return i == -3 || i == -2 ? Py.True : Py.False;
         }
         return __finditem__(i)._ge(o.__finditem__(i));
+    }
+
+    /**
+     * isSubType tailored for PySequence binops.
+     *
+     * @param other PyObject
+     * @return true if subclass of other
+     */
+    protected boolean isSubType(PyObject other) {
+        PyType type = getType();
+        PyType otherType = other.getType();
+        return type == otherType || type.isSubType(otherType);
     }
 
     /**
