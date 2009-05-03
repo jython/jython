@@ -1260,27 +1260,30 @@ public class PyObject implements Serializable {
                     return 0;
             }
 
-            PyObject r;
-            r = __eq__(o);
-            if (r != null && r.__nonzero__())
+            PyObject result;
+            result = __eq__(o);
+            if (result == null) {
+                result = o.__eq__(this);
+            }
+            if (result != null && result.__nonzero__()) {
                 return 0;
-            r = o.__eq__(this);
-            if (r != null && r.__nonzero__())
-                return 0;
+            }
 
-            r = __lt__(o);
-            if (r != null && r.__nonzero__())
+            result = __lt__(o);
+            if (result == null) {
+                result = o.__gt__(this);
+            }
+            if (result != null && result.__nonzero__()) {
                 return -1;
-            r = o.__gt__(this);
-            if (r != null && r.__nonzero__())
-                return -1;
+            }
 
-            r = __gt__(o);
-            if (r != null && r.__nonzero__())
+            result = __gt__(o);
+            if (result == null) {
+                result = o.__lt__(this);
+            }
+            if (result != null && result.__nonzero__()) {
                 return 1;
-            r = o.__lt__(this);
-            if (r != null && r.__nonzero__())
-                return 1;
+            }
 
             return _cmp_unsafe(o);
         } finally {

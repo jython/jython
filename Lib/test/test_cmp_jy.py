@@ -56,6 +56,13 @@ class CustomCmp(unittest.TestCase):
         # object.c:default_3way_compare, and gets 1 here. we don't care
         self.assert_(cmp(100, baz) in (-1, 1))
 
+    def test_cmp_stops_short(self):
+        class Foo(object):
+            __eq__ = lambda self, other: False
+        class Bar(object):
+            __eq__ = lambda self, other: True
+        self.assertEqual(cmp(Foo(), Bar()), 1)
+
 def test_main():
     test_support.run_unittest(
             UnicodeDerivedCmp,
