@@ -1,5 +1,8 @@
 import unittest
-import test.test_support
+from test import test_support
+if test_support.is_jython:
+    from java.util import ArrayList
+    from java.lang import String
 
 class ListTestCase(unittest.TestCase):
 
@@ -21,21 +24,21 @@ class ListTestCase(unittest.TestCase):
         self.assert_(bar2 > bar1)
         self.assert_(bar2 >= bar1)
 
-    #From http://bugs.jython.org/issue600790
     def test_setget_override(self):
-        from java.util import ArrayList
-        from java.lang import String
+        if not test_support.is_jython:
+            return
 
-        class GoofyListMapThing (ArrayList):
+        # http://bugs.jython.org/issue600790
+        class GoofyListMapThing(ArrayList):
             def __init__(self):
                 self.silly = "Nothing"
-        
+
             def __setitem__(self, key, element):
                 self.silly = "spam"
-       
+
             def __getitem__(self, key):
                 self.silly = "eggs"
-      
+
         glmt = GoofyListMapThing()
         glmt['my-key'] = String('el1')
         self.assertEquals(glmt.silly, "spam")
@@ -44,9 +47,9 @@ class ListTestCase(unittest.TestCase):
 
     def test_tuple_equality(self):
         self.assertEqual([(1,), [1]].count([1]), 1) # http://bugs.jython.org/issue1317
-     
+
 def test_main():
-    test.test_support.run_unittest(ListTestCase)
+    test_support.run_unittest(ListTestCase)
 
 
 if __name__ == "__main__":
