@@ -13,7 +13,6 @@ import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 
 import com.kenai.constantine.platform.Errno;
-import org.python.core.imp;
 import org.python.core.Py;
 import org.python.core.util.FileUtil;
 import org.python.core.util.RelativeFile;
@@ -168,8 +167,9 @@ public class FileIO extends RawIOBase {
                 // open("/dev/null", "w") works fine.  Because we have
                 // to simulate the "w" mode in Java, we suppress the
                 // exception.
-                if (ioe.getMessage().equals("Invalid argument"))
+                if (ioe.getMessage().equals("Invalid argument")) {
                     return;
+                }
                 throw Py.IOError(ioe);
             }
         }

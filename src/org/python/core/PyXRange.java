@@ -28,6 +28,8 @@ public class PyXRange extends PySequence {
     }
 
     public PyXRange(int ilow, int ihigh, int istep) {
+        super(TYPE);
+
         if (istep == 0) {
             throw Py.ValueError("xrange() arg 3 must not be zero");
         }

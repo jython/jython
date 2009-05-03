@@ -10,10 +10,6 @@ public abstract class PyBaseString extends PySequence {
     
     public static final PyType TYPE = PyType.fromClass(PyBaseString.class);
 
-    public PyBaseString() {
-        super();
-    }
-
     protected PyBaseString(PyType type) {
         super(type);
     }

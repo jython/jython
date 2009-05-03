@@ -7,9 +7,6 @@ import java.util.ListIterator;
 
 public abstract class PySequenceList extends PySequence {
 
-    public PySequenceList() {
-    }
-
     protected PySequenceList(PyType type) {
         super(type);
     }

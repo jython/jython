@@ -173,8 +173,9 @@ public class StreamIO extends RawIOBase {
             } catch (Exception e) {
                 // XXX: masking other exceptions
             } finally {
-                if (inField != null && inField.isAccessible())
+                if (inField != null && inField.isAccessible()) {
                     inField.setAccessible(false);
+                }
             }
         }
         return null;
@@ -197,8 +198,9 @@ public class StreamIO extends RawIOBase {
             } catch (Exception e) {
                 // XXX: masking other exceptions
             } finally {
-                if (outField != null && outField.isAccessible())
+                if (outField != null && outField.isAccessible()) {
                     outField.setAccessible(false);
+                }
             }
         }
         return null;
