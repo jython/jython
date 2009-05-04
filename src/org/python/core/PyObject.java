@@ -1676,7 +1676,7 @@ public class PyObject implements Serializable {
 
     final boolean object___contains__(PyObject o) {
         for (PyObject item : asIterable()) {
-            if (o._eq(item).__nonzero__()) {
+            if (o.equals(item)) {
                 return true;
             }
         }

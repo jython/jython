@@ -443,7 +443,7 @@ public class PyDeque extends PyObject {
             ol2 = o2.__len__();
         }
         for (int i = 0 ; i < ol1 && i < ol2; i++) {
-            if (!o1.__getitem__(i)._eq(o2.__getitem__(i)).__nonzero__()) {
+            if (!o1.__getitem__(i).equals(o2.__getitem__(i))) {
                 return i;
             }
         }

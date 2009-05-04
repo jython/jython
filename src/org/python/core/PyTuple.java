@@ -470,11 +470,14 @@ public class PyTuple extends PySequenceList implements List {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (o instanceof PyTuple) {
-            return Arrays.equals(array, ((PyTuple) o).array);
-        } else if (o instanceof List && !(o instanceof PyList)) {
-            return o.equals(this);
+    public boolean equals(Object other) {
+        if (this == other) {
+            return true;
+        }
+        if (other instanceof PyTuple) {
+            return _eq((PyTuple)other).__nonzero__();
+        } else if (other instanceof List && !(other instanceof PyList)) {
+            return other.equals(this);
         }
         return false;
     }
