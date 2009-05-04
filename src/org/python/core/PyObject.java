@@ -1252,6 +1252,10 @@ public class PyObject implements Serializable {
      * @return -1 if this < 0; 0 if this == o; +1 if this > o
      **/
     public final int _cmp(PyObject o) {
+        if (this == o) {
+            return 0;
+        }
+
         PyObject token = null;
         ThreadState ts = Py.getThreadState();
         try {
