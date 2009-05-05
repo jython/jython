@@ -1107,8 +1107,8 @@ class Popen(object):
                 pass
             elif stderr == PIPE:
                 errread = PIPE
-            elif stderr == STDOUT or \
-                    isinstance(stderr, org.python.core.io.RawIOBase):
+            elif (stderr == STDOUT or
+                  isinstance(stderr, org.python.core.io.RawIOBase)):
                 errwrite = stderr
             else:
                 # Assuming file-like object
@@ -1123,8 +1123,8 @@ class Popen(object):
             """Determine if the subprocess' stderr should be redirected
             to stdout
             """
-            return errwrite == STDOUT or c2pwrite not in (None, PIPE) and \
-                c2pwrite is errwrite
+            return (errwrite == STDOUT or c2pwrite not in (None, PIPE) and 
+                    c2pwrite is errwrite)
 
 
         def _coupler_thread(self, *args, **kwargs):
@@ -1164,9 +1164,9 @@ class Popen(object):
                 raise OSError(iae.getMessage() or iae)
 
             if env is None:
-                # This is for compatibility with the CPython implementation,
-                # that ends up calling os.execvp(). So os.environ is "inherited"
-                # there if env is not explicitly set.
+                # For compatibility with CPython which calls
+                # os.execvp(). os.environ is "inherited" there if env is
+                # not explicitly set
                 env = os.environ
 
             builder_env = builder.environment()
@@ -1563,9 +1563,9 @@ def _demo_jython():
     #
     print "Running a jython subprocess to return the number of processors..."
     p = Popen([sys.executable, "-c",
-               'import sys;' \
-               'from java.lang import Runtime;' \
-               'sys.exit(Runtime.getRuntime().availableProcessors())'])
+               ('import sys;'
+                'from java.lang import Runtime;'
+                'sys.exit(Runtime.getRuntime().availableProcessors())')])
     print p.wait()
 
     #
@@ -1573,15 +1573,15 @@ def _demo_jython():
     #
     print "Connecting two jython subprocesses..."
     p1 = Popen([sys.executable, "-c",
-                'import os;' \
-                'print os.environ["foo"]'], env=dict(foo='bar'),
+                ('import os;'
+                 'print os.environ["foo"]')], env=dict(foo='bar'),
                stdout=PIPE)
     p2 = Popen([sys.executable, "-c",
-                'import os, sys;' \
-                'their_foo = sys.stdin.read().strip();' \
-                'my_foo = os.environ["foo"];' \
-                'msg = "Their env\'s foo: %r, My env\'s foo: %r";' \
-                'print msg % (their_foo, my_foo)'],
+                ('import os, sys;'
+                 'their_foo = sys.stdin.read().strip();'
+                 'my_foo = os.environ["foo"];'
+                 'msg = "Their env\'s foo: %r, My env\'s foo: %r";'
+                 'print msg % (their_foo, my_foo)')],
                env=dict(foo='baz'), stdin=p1.stdout, stdout=PIPE)
     print p2.communicate()[0]
 

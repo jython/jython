@@ -1,4 +1,4 @@
-"Tests for cmp() compatibility with CPython"
+"""Misc subprocess tests"""
 import unittest
 import os
 import sys
@@ -6,6 +6,7 @@ from test import test_support
 from subprocess import Popen, PIPE
 
 class EnvironmentInheritanceTest(unittest.TestCase):
+
     def testDefaultEnvIsInherited(self):
         # Test for issue #1104
         os.environ['foo'] = 'something'
@@ -15,8 +16,12 @@ class EnvironmentInheritanceTest(unittest.TestCase):
         self.assertEquals('something', p1.stdout.read())
 
 
-# tests for (some parts of) issue #1187: JYTHON_OPTS should not be enriched by arguments
 class JythonOptsTest(unittest.TestCase):
+
+    """ Tests for (some parts of) issue #1187: JYTHON_OPTS should not be
+    enriched by arguments
+    """
+
     def testNoJythonOpts(self):
         os.environ['JYTHON_OPTS'] = ''
         p1 = Popen([sys.executable, "-c",
@@ -32,12 +37,11 @@ class JythonOptsTest(unittest.TestCase):
                    stdout=PIPE)
         self.assertEquals(options, p1.stdout.read())
 
+
 def test_main():
-    test_classes = (
-        EnvironmentInheritanceTest,
-        JythonOptsTest,
-        )
-    test_support.run_unittest(*test_classes)
+    test_support.run_unittest(EnvironmentInheritanceTest,
+                              JythonOptsTest)
+
 
 if __name__ == '__main__':
     test_main()
