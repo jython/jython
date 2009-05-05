@@ -1132,6 +1132,30 @@ class Popen(object):
             return CouplerThread(*args, **kwargs)
 
 
+        def _setup_env(self, env, builder_env):
+            """Carefully merge env with ProcessBuilder's only
+            overwriting key/values that differ
+            
+            System.getenv (Map<String, String>) may be backed by
+            <byte[], byte[]> on UNIX platforms where these are really
+            bytes. ProcessBuilder's env inherits its contents and will
+            maintain those byte values (which may be butchered as
+            Strings) for the subprocess if they haven't been modified.
+            """
+            # Determine what's safe to merge
+            merge_env = dict((key, value) for key, value in env.iteritems()
+                             if key not in builder_env or
+                             builder_env.get(key) != value)
+
+            # Prune anything not in env
+            entries = builder_env.entrySet().iterator()
+            for entry in entries:
+                if entry.getKey() not in env:
+                    entries.remove()
+
+            builder_env.putAll(merge_env)
+
+
         def _execute_child(self, args, executable, preexec_fn, close_fds,
                            cwd, env, universal_newlines,
                            startupinfo, creationflags, shell,
@@ -1163,15 +1187,9 @@ class Popen(object):
             except java.lang.IllegalArgumentException, iae:
                 raise OSError(iae.getMessage() or iae)
 
-            if env is None:
-                # For compatibility with CPython which calls
-                # os.execvp(). os.environ is "inherited" there if env is
-                # not explicitly set
-                env = os.environ
-
-            builder_env = builder.environment()
-            builder_env.clear()
-            builder_env.putAll(dict(env))
+            # os.environ may be inherited for compatibility with CPython
+            self._setup_env(dict(os.environ if env is None else env),
+                            builder.environment())
 
             if cwd is None:
                 cwd = os.getcwd()
