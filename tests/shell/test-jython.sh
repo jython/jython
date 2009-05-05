@@ -52,12 +52,12 @@ for JYTHON_HOME in "$SPACE_DIR" "$1" ; do
     # $CLASSPATH
     CLASSPATH="$JYTHON_HOME/Lib/test/blob.jar" \
 	"$JYTHON" -c "print __import__('Blob')" | \
-	  [ `egrep -c "^Blob"` == 1 ]
+	  [ `egrep -c "Blob"` == 1 ]
 
     # $CLASSPATH + profiling
     CLASSPATH="$JYTHON_HOME/Lib/test/blob.jar" \
 	"$JYTHON" --profile -c "print __import__('Blob')" | \
-	  [ `egrep -c "^Blob"` == 1 ]
+	  [ `egrep -c "Blob"` == 1 ]
 
     set +ex
 done
