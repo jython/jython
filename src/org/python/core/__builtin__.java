@@ -548,13 +548,11 @@ public class __builtin__ {
 
     public static PyObject filter(PyObject func, PyObject seq) {
         if (seq instanceof PyString) {
-            if (seq instanceof PyUnicode) {
-                return filterunicode(func, (PyUnicode)seq);
-            }
-            return filterstring(func, (PyString)seq);
+            return filterBaseString(func, (PyString)seq,
+                                    seq instanceof PyUnicode ? PyUnicode.TYPE : PyString.TYPE);
         }
         if (seq instanceof PyTuple) {
-            return filtertuple(func, (PyTuple)seq);
+            return filterTuple(func, (PyTuple)seq);
         }
 
         PyList list = new PyList();
@@ -571,8 +569,8 @@ public class __builtin__ {
         return list;
     }
 
-    public static PyObject filterstring(PyObject func, PyString seq) {
-        if (func == Py.None && seq.getType() == PyString.TYPE) {
+    public static PyObject filterBaseString(PyObject func, PyBaseString seq, PyType stringType) {
+        if (func == Py.None && seq.getType() == stringType) {
             // If it's a real string we can return the original, as no character is ever
             // false and __getitem__ does return this character. If it's a subclass we
             // must go through the __getitem__ loop
@@ -591,51 +589,24 @@ public class __builtin__ {
                 ok = true;
             }
             if (ok) {
-                if (!(item instanceof PyString) || item instanceof PyUnicode) {
-                    throw Py.TypeError("can't filter str to str: __getitem__ returned different "
-                                       + "type");
+                if (!Py.isInstance(item, stringType)) {
+                    String name = stringType.fastGetName();
+                    throw Py.TypeError(String.format("can't filter %s to %s: __getitem__ returned "
+                                                     + "different type", name, name));
                 }
                 builder.append(item.toString());
             }
         }
-        return new PyString(builder.toString());
+
+        String result = builder.toString();
+        return stringType == PyString.TYPE ? new PyString(result) : new PyUnicode(result);
     }
 
-    public static PyObject filterunicode(PyObject func, PyUnicode seq) {
-        if (func == Py.None && seq.getType() == PyUnicode.TYPE) {
-            // If it's a real string we can return the original, as no character is ever
-            // false and __getitem__ does return this character. If it's a subclass we
-            // must go through the __getitem__ loop
-            return seq;
-        }
-
-        StringBuilder builder = new StringBuilder();
-        boolean ok;
-        for (PyObject item : seq.asIterable()) {
-            ok = false;
-            if (func == Py.None) {
-                if (item.__nonzero__()) {
-                    ok = true;
-                }
-            } else if (func.__call__(item).__nonzero__()) {
-                ok = true;
-            }
-            if (ok) {
-                if (!(item instanceof PyUnicode)) {
-                    throw Py.TypeError("can't filter unicode to unicode: __getitem__ returned "
-                                       + "different type");
-                }
-                builder.append(item.toString());
-            }
-        }
-        return new PyUnicode(builder.toString());
-    }
-
-    public static PyObject filtertuple(PyObject func, PyTuple seq) {
-        int len = seq.__len__();
+    public static PyObject filterTuple(PyObject func, PyTuple seq) {
+        int len = seq.size();
         if (len == 0) {
             if (seq.getType() != PyTuple.TYPE) {
-                seq = new PyTuple();
+                return Py.EmptyTuple;
             }
             return seq;
         }
