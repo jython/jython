@@ -6,6 +6,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.util.Properties;
 
 import junit.framework.TestCase;
@@ -161,13 +162,14 @@ public class PySystemState_registry_Test extends TestCase {
 
     /**
      * determine the installation root (the /dist directory)
+     * @throws Exception 
      */
-    private void findRoot() {
+    private void findRoot() throws Exception {
         Class<? extends PySystemState_registry_Test> thisClass = getClass();
         String classFileName = "/".concat(thisClass.getName().replace('.', '/')).concat(".class");
         URL url = thisClass.getResource(classFileName);
         assertNotNull(url);
-        String path = url.getPath();
+        String path = URLDecoder.decode(url.getPath(), "UTF-8");
         assertTrue(path.endsWith(classFileName));
         String classesDirName = path.substring(0, path.length() - classFileName.length());
         File classesDir = new File(classesDirName);
