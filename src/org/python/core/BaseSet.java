@@ -58,7 +58,7 @@ public abstract class BaseSet extends PyObject implements Set {
 
     final PyObject baseset___or__(PyObject other) {
         if (!(other instanceof BaseSet)) {
-            throw Py.TypeError("Not Implemented");
+            return null;
         }
         return baseset_union(other);
     }
@@ -78,7 +78,7 @@ public abstract class BaseSet extends PyObject implements Set {
 
     final PyObject baseset___and__(PyObject other) {
         if (!(other instanceof BaseSet)) {
-            throw Py.TypeError("Not Implemented");
+            return null;
         }
         return baseset_intersection(other);
     }
@@ -98,7 +98,7 @@ public abstract class BaseSet extends PyObject implements Set {
 
     final PyObject baseset___sub__(PyObject other) {
         if (!(other instanceof BaseSet)) {
-            throw Py.TypeError("Not Implemented");
+            return null;
         }
         return baseset_difference(other);
     }
@@ -135,7 +135,7 @@ public abstract class BaseSet extends PyObject implements Set {
 
     final PyObject baseset___xor__(PyObject other) {
         if (!(other instanceof BaseSet)) {
-            throw Py.TypeError("Not Implemented");
+            return null;
         }
         return baseset_symmetric_difference(other);
     }
@@ -266,8 +266,7 @@ public abstract class BaseSet extends PyObject implements Set {
     }
 
     final PyObject baseset___le__(PyObject other) {
-        _binary_sanity_check(other);
-        return baseset_issubset(other);
+        return baseset_issubset(asBaseSet(other));
     }
 
     public PyObject __ge__(PyObject other) {
@@ -275,8 +274,7 @@ public abstract class BaseSet extends PyObject implements Set {
     }
 
     final PyObject baseset___ge__(PyObject other) {
-        _binary_sanity_check(other);
-        return baseset_issuperset(other);
+        return baseset_issuperset(asBaseSet(other));
     }
 
     public PyObject __lt__(PyObject other) {
@@ -284,7 +282,7 @@ public abstract class BaseSet extends PyObject implements Set {
     }
 
     final PyObject baseset___lt__(PyObject other) {
-        BaseSet bs = _binary_sanity_check(other);
+        BaseSet bs = asBaseSet(other);
         return Py.newBoolean(size() < bs.size() && baseset_issubset(other).__nonzero__());
     }
 
@@ -293,7 +291,7 @@ public abstract class BaseSet extends PyObject implements Set {
     }
 
     final PyObject baseset___gt__(PyObject other) {
-        BaseSet bs = _binary_sanity_check(other);
+        BaseSet bs = asBaseSet(other);
         return Py.newBoolean(size() > bs.size() && baseset_issuperset(other).__nonzero__());
     }
 
@@ -385,12 +383,18 @@ public abstract class BaseSet extends PyObject implements Set {
         return buf.toString();
     }
 
-    protected final BaseSet _binary_sanity_check(PyObject other) throws PyIgnoreMethodTag {
-        try {
+    /**
+     * Casts other as BaseSet, throwing a TypeError tailored for the rich comparison
+     * methods when not applicable.
+     *
+     * @param other a PyObject
+     * @return a BaseSet
+     */
+    protected final BaseSet asBaseSet(PyObject other) {
+        if (other instanceof BaseSet) {
             return (BaseSet)other;
-        } catch (ClassCastException e) {
-            throw Py.TypeError("Binary operation only permitted between sets");
         }
+        throw Py.TypeError("can only compare to a set");
     }
 
     /**
