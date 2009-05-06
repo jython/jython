@@ -1,5 +1,6 @@
 import unittest
 from test import test_support
+from test_weakref import extra_collect
 from weakref import proxy
 import operator
 import copy
@@ -227,7 +228,7 @@ class TestJointOps(unittest.TestCase):
         # Create a nest of cycles to exercise overall ref count check
         class A:
             pass
-        s = set([A() for i in xrange(1000)])
+        s = set(A() for i in xrange(1000))
         for elem in s:
             elem.cycle = s
             elem.sub = elem
@@ -278,25 +279,25 @@ class TestJointOps(unittest.TestCase):
             fo.close()
             os.remove(test_support.TESTFN)
 
-# XXX: tests cpython internals (caches key hashes)
-#     def test_do_not_rehash_dict_keys(self):
-#         n = 10
-#         d = dict.fromkeys(map(HashCountingInt, xrange(n)))
-#         self.assertEqual(sum([elem.hash_count for elem in d]), n)
-#         s = self.thetype(d)
-#         self.assertEqual(sum([elem.hash_count for elem in d]), n)
-#         s.difference(d)
-#         self.assertEqual(sum([elem.hash_count for elem in d]), n)
-#         if hasattr(s, 'symmetric_difference_update'):
-#             s.symmetric_difference_update(d)
-#         self.assertEqual(sum([elem.hash_count for elem in d]), n)
-#         d2 = dict.fromkeys(set(d))
-#         self.assertEqual(sum([elem.hash_count for elem in d]), n)
-#         d3 = dict.fromkeys(frozenset(d))
-#         self.assertEqual(sum([elem.hash_count for elem in d]), n)
-#         d3 = dict.fromkeys(frozenset(d), 123)
-#         self.assertEqual(sum([elem.hash_count for elem in d]), n)
-#         self.assertEqual(d3, dict.fromkeys(d, 123))
+    # XXX: Tests CPython internals (caches key hashes)
+    def _test_do_not_rehash_dict_keys(self):
+        n = 10
+        d = dict.fromkeys(map(HashCountingInt, xrange(n)))
+        self.assertEqual(sum(elem.hash_count for elem in d), n)
+        s = self.thetype(d)
+        self.assertEqual(sum(elem.hash_count for elem in d), n)
+        s.difference(d)
+        self.assertEqual(sum(elem.hash_count for elem in d), n)
+        if hasattr(s, 'symmetric_difference_update'):
+            s.symmetric_difference_update(d)
+        self.assertEqual(sum(elem.hash_count for elem in d), n)
+        d2 = dict.fromkeys(set(d))
+        self.assertEqual(sum(elem.hash_count for elem in d), n)
+        d3 = dict.fromkeys(frozenset(d))
+        self.assertEqual(sum(elem.hash_count for elem in d), n)
+        d3 = dict.fromkeys(frozenset(d), 123)
+        self.assertEqual(sum(elem.hash_count for elem in d), n)
+        self.assertEqual(d3, dict.fromkeys(d, 123))
 
 class TestSet(TestJointOps):
     thetype = set
@@ -478,13 +479,13 @@ class TestSet(TestJointOps):
         t ^= t
         self.assertEqual(t, self.thetype())
 
-# XXX: CPython gc-specific
-#     def test_weakref(self):
-#         s = self.thetype('gallahad')
-#         p = proxy(s)
-#         self.assertEqual(str(p), str(s))
-#         s = None
-#         self.assertRaises(ReferenceError, str, p)
+    def test_weakref(self):
+        s = self.thetype('gallahad')
+        p = proxy(s)
+        self.assertEqual(str(p), str(s))
+        s = None
+        extra_collect()
+        self.assertRaises(ReferenceError, str, p)
 
     # C API test only available in a debug build
     if hasattr(set, "test_c_api"):
@@ -560,15 +561,15 @@ class TestFrozenSet(TestJointOps):
         f = self.thetype('abcdcda')
         self.assertEqual(hash(f), hash(f))
 
-# XXX: tied to cpython's hash implementation
-#     def test_hash_effectiveness(self):
-#         n = 13
-#         hashvalues = set()
-#         addhashvalue = hashvalues.add
-#         elemmasks = [(i+1, 1<<i) for i in range(n)]
-#         for i in xrange(2**n):
-#             addhashvalue(hash(frozenset([e for e, m in elemmasks if m&i])))
-#         self.assertEqual(len(hashvalues), 2**n)
+    # XXX: tied to CPython's hash implementation
+    def _test_hash_effectiveness(self):
+        n = 13
+        hashvalues = set()
+        addhashvalue = hashvalues.add
+        elemmasks = [(i+1, 1<<i) for i in range(n)]
+        for i in xrange(2**n):
+            addhashvalue(hash(frozenset([e for e, m in elemmasks if m&i])))
+        self.assertEqual(len(hashvalues), 2**n)
 
 class FrozenSetSubclass(frozenset):
     pass
@@ -683,11 +684,12 @@ class TestBasicOps(unittest.TestCase):
     def test_iteration(self):
         for v in self.set:
             self.assert_(v in self.values)
-# XXX: jython does not use length_hint
-#         setiter = iter(self.set)
-#         # note: __length_hint__ is an internal undocumented API,
-#         # don't rely on it in your own programs
-#         self.assertEqual(setiter.__length_hint__(), len(self.set))
+        # XXX: jython does not use length_hint
+        if not test_support.is_jython:
+            setiter = iter(self.set)
+            # note: __length_hint__ is an internal undocumented API,
+            # don't rely on it in your own programs
+            self.assertEqual(setiter.__length_hint__(), len(self.set))
 
     def test_pickling(self):
         p = pickle.dumps(self.set)
