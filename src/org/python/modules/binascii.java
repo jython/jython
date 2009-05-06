@@ -910,7 +910,7 @@ static long[] crc_32_tab = new long[] {
         try {
         	val = ap.getInt(index, dflt) != 0;
         } catch (PyException e) {
-        	if (Py.matchException(e, Py.AttributeError) || Py.matchException(e, Py.ValueError))
+        	if (e.match(Py.AttributeError) || e.match(Py.ValueError))
 			throw Py.TypeError(errMsg);
         	throw e;
         }

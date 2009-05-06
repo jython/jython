@@ -93,7 +93,7 @@ public class MethodExposerTest extends InterpTestCase implements Opcodes, PyType
             bound.__call__(Py.None);
             fail("Returning -2 from __cmp__ should yield a type error");
         } catch (PyException e) {
-            if (!Py.matchException(e, Py.TypeError)) {
+            if (!e.match(Py.TypeError)) {
                 fail("Returning -2 from __cmp__ should yield a type error");
             }
         }

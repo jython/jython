@@ -36,7 +36,7 @@ public class PyFloat extends PyObject
             try {
                 floatObject = x.__float__();
             } catch (PyException e) {
-                if (Py.matchException(e, Py.AttributeError)) {
+                if (e.match(Py.AttributeError)) {
                     // Translate AttributeError to TypeError
                     // XXX: We are using the same message as CPython, even if
                     //      it is not strictly correct (instances of types

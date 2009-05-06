@@ -44,7 +44,7 @@ public class PyComplex extends PyObject {
         try {
             real = real.__complex__();
         } catch (PyException pye) {
-            if (!Py.matchException(pye, Py.AttributeError)) {
+            if (!pye.match(Py.AttributeError)) {
                 // __complex__ not supported
                 throw pye;
             }
@@ -60,7 +60,7 @@ public class PyComplex extends PyObject {
             try {
                 toFloat = real.__float__();
             } catch (PyException pye) {
-                if (Py.matchException(pye, Py.AttributeError)) {
+                if (pye.match(Py.AttributeError)) {
                     // __float__ not supported
                     throw Py.TypeError("complex() argument must be a string or a number");
                 }
@@ -78,7 +78,7 @@ public class PyComplex extends PyObject {
             try {
                 toFloat = imag.__float__();
             } catch (PyException pye) {
-                if (Py.matchException(pye, Py.AttributeError)) {
+                if (pye.match(Py.AttributeError)) {
                     // __float__ not supported
                     throw Py.TypeError("complex() argument must be a string or a number");
                 }

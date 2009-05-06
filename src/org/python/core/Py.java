@@ -227,7 +227,7 @@ public final class Py {
     public static PyObject SystemExit;
 
     static void maybeSystemExit(PyException exc) {
-        if (Py.matchException(exc, Py.SystemExit)) {
+        if (exc.match(Py.SystemExit)) {
             PyObject value = exc.value;
             if (PyException.isExceptionInstance(exc.value)) {
                 value = value.__findattr__("code");
@@ -387,7 +387,7 @@ public final class Py {
         try {
             mod = __builtin__.__import__("warnings");
         } catch (PyException e) {
-            if (matchException(e, ImportError)) {
+            if (e.match(ImportError)) {
                 return null;
             }
             throw e;
@@ -879,7 +879,7 @@ public final class Py {
             imp.createFromCode("__main__", CodeLoader.loadCode(main));
         } catch (PyException e) {
             Py.getSystemState().callExitFunc();
-            if (Py.matchException(e, Py.SystemExit)) {
+            if (e.match(Py.SystemExit)) {
                 return;
             }
             throw e;
@@ -1137,40 +1137,13 @@ public final class Py {
         return pye;
     }
 
+    
+    /**
+     * @deprecated As of Jython 2.5, use {@link PyException#match} instead.
+     */
+    @Deprecated
     public static boolean matchException(PyException pye, PyObject exc) {
-        if (exc instanceof PyTuple) {
-            for (PyObject item : ((PyTuple)exc).getArray()) {
-                if (matchException(pye, item)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        pye.normalize();
-        // FIXME, see bug 737978
-        //
-        // A special case for IOError's to allow them to also match
-        // java.io.IOExceptions.  This is a hack for 1.0.x until I can do
-        // it right in 1.1
-        if (exc == Py.IOError) {
-            if (__builtin__.isinstance(pye.value, PyType.fromClass(IOException.class))) {
-                return true;
-            }
-        }
-        // FIXME too, same approach for OutOfMemoryError
-        if (exc == Py.MemoryError) {
-            if (__builtin__.isinstance(pye.value,
-                                       PyType.fromClass(OutOfMemoryError.class))) {
-                return true;
-            }
-        }
-
-        if (PyException.isExceptionClass(pye.type) && PyException.isExceptionClass(exc)) {
-            return isSubClass(pye.type, exc);
-        }
-
-        return pye.type == exc;
+        return pye.match(exc);
     }
 
 
@@ -1591,7 +1564,7 @@ public final class Py {
         try {
             return metaclass.__call__(new PyString(name), new PyTuple(bases), dict);
         } catch (PyException pye) {
-            if (!matchException(pye, TypeError)) {
+            if (!pye.match(TypeError)) {
                 throw pye;
             }
             pye.value = Py.newString(String.format("Error when calling the metaclass bases\n    "
@@ -1741,7 +1714,7 @@ public final class Py {
         try {
             return seq.__iter__();
         } catch (PyException exc) {
-            if (Py.matchException(exc, Py.TypeError)) {
+            if (exc.match(Py.TypeError)) {
                 throw Py.TypeError(message);
             }
             throw exc;

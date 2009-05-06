@@ -72,7 +72,7 @@ public abstract class BufferedIOMixin extends BufferedIOBase {
         try {
             flush();
         } catch (PyException pye) {
-            if (!Py.matchException(pye, Py.IOError)) {
+            if (!pye.match(Py.IOError)) {
                 throw pye;
             }
             // If flush() fails, just give up

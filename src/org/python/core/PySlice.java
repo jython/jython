@@ -204,7 +204,7 @@ public class PySlice extends PyObject {
                     istop += len;
                 }
             } catch (PyException pye) {
-                if (!Py.matchException(pye, Py.AttributeError)) {
+                if (!pye.match(Py.AttributeError)) {
                     throw pye;
                 }
             }

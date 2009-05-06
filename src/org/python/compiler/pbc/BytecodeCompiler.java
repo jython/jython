@@ -1123,7 +1123,7 @@ public class BytecodeCompiler extends Visitor
 //                code.aload(exc);
 //                //get specific exception
 //                visit(handler.getInternalType());
-//                code.invokestatic("org/python/core/Py", "matchException", "(" + $pyExc + $pyObj + ")Z");
+//                code.invokevirtual("org/python/core/PyException", "match", "(" + $pyObj + ")Z");
 //                code.ifeq(end_of_self);
 //            } else {
 //                if (i != node.getInternalHandlers().size()-1) {

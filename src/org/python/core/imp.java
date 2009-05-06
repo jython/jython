@@ -20,7 +20,7 @@ public class imp {
 
     private static final String UNKNOWN_SOURCEFILE = "<unknown>";
 
-    public static final int APIVersion = 20;
+    public static final int APIVersion = 21;
 
     public static final int NO_MTIME = -1;
 
@@ -79,7 +79,7 @@ public class imp {
                 modules.__delitem__(name);
             } catch (PyException pye) {
                 // another thread may have deleted it
-                if (!Py.matchException(pye, Py.KeyError)) {
+                if (!pye.match(Py.KeyError)) {
                     throw pye;
                 }
             }
@@ -362,7 +362,7 @@ public class imp {
                 importer = hook.__call__(p);
                 break;
             } catch (PyException e) {
-                if (!Py.matchException(e, Py.ImportError)) {
+                if (!e.match(Py.ImportError)) {
                     throw e;
                 }
             }

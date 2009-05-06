@@ -220,6 +220,48 @@ public class PyException extends RuntimeException
     }
 
     /**
+     * Determine if this PyException is a match for exc.
+     *
+     * @param exc a PyObject exception type
+     * @return true if a match
+     */
+    public boolean match(PyObject exc) {
+        if (exc instanceof PyTuple) {
+            for (PyObject item : ((PyTuple)exc).getArray()) {
+                if (match(item)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        normalize();
+        // FIXME, see bug 737978
+        //
+        // A special case for IOError's to allow them to also match
+        // java.io.IOExceptions.  This is a hack for 1.0.x until I can do
+        // it right in 1.1
+        if (exc == Py.IOError) {
+            if (__builtin__.isinstance(value, PyType.fromClass(IOException.class))) {
+                return true;
+            }
+        }
+        // FIXME too, same approach for OutOfMemoryError
+        if (exc == Py.MemoryError) {
+            if (__builtin__.isinstance(value,
+                                       PyType.fromClass(OutOfMemoryError.class))) {
+                return true;
+            }
+        }
+
+        if (isExceptionClass(type) && isExceptionClass(exc)) {
+            return Py.isSubClass(type, exc);
+        }
+
+        return type == exc;
+    }
+
+    /**
      * Determine whether obj is a Python exception class
      *
      * @param obj a PyObject

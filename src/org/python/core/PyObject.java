@@ -289,7 +289,7 @@ public class PyObject implements Serializable {
             try {
                 return __float__().getValue();
             } catch (PyException pye) {
-                if (!Py.matchException(pye, Py.AttributeError)) {
+                if (!pye.match(Py.AttributeError)) {
                     throw pye;
                 }
             }
@@ -863,7 +863,7 @@ public class PyObject implements Serializable {
         try {
             return  __findattr_ex__(name);
         } catch (PyException exc) {
-            if (Py.matchException(exc, Py.AttributeError)) {
+            if (exc.match(Py.AttributeError)) {
                 return null;
             }
             throw exc;
@@ -3786,7 +3786,7 @@ public class PyObject implements Serializable {
             try {
                 obj_dict.__delitem__(name);
             } catch (PyException exc) {
-                if (Py.matchException(exc, Py.KeyError))
+                if (exc.match(Py.KeyError))
                     noAttributeError(name);
                 else
                     throw exc;
@@ -4014,7 +4014,7 @@ public class PyObject implements Serializable {
         try {
             intObj = __int__();
         } catch (PyException pye) {
-            if (Py.matchException(pye, Py.AttributeError)) {
+            if (pye.match(Py.AttributeError)) {
                 throw Py.TypeError("an integer is required");
             }
             throw pye;
@@ -4040,7 +4040,7 @@ public class PyObject implements Serializable {
         try {
             floatObj = __float__();
         } catch (PyException pye) {
-            if (Py.matchException(pye, Py.AttributeError)) {
+            if (pye.match(Py.AttributeError)) {
                 throw Py.TypeError("a float is required");
             }
             throw pye;

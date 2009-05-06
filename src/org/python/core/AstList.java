@@ -211,7 +211,7 @@ public class AstList extends PySequence implements Cloneable, List {
         try {
             it = o.__iter__();
         } catch (PyException pye) {
-            if (!Py.matchException(pye, Py.TypeError)) {
+            if (!pye.match(Py.TypeError)) {
                 throw pye;
             }
             return null;
@@ -503,7 +503,7 @@ public class AstList extends PySequence implements Cloneable, List {
         try {
             seq = Py.make_array(value);
         } catch (PyException pye) {
-            if (Py.matchException(pye, Py.TypeError)) {
+            if (pye.match(Py.TypeError)) {
                 throw Py.TypeError("can only assign an iterable");
             }
             throw pye;

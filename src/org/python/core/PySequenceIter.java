@@ -23,7 +23,7 @@ public class PySequenceIter extends PyIterator {
         try {
             result = seq.__finditem__(index++);
         } catch (PyException exc) {
-            if (Py.matchException(exc, Py.StopIteration)) {
+            if (exc.match(Py.StopIteration)) {
                 seq = null;
                 return null;
             }

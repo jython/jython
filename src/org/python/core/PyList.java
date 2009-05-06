@@ -678,7 +678,7 @@ public class PyList extends PySequenceList implements List {
         try {
             it = o.__iter__();
         } catch (PyException pye) {
-            if (!Py.matchException(pye, Py.TypeError)) {
+            if (!pye.match(Py.TypeError)) {
                 throw pye;
             }
             return null;

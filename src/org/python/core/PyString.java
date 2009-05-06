@@ -741,7 +741,7 @@ public class PyString extends PyBaseString
         {
             return Py.newInteger(atoi(10));
         } catch (PyException e) {
-            if (Py.matchException(e, Py.OverflowError)) {
+            if (e.match(Py.OverflowError)) {
                 return atol(10);
             }
             throw e;
@@ -2674,7 +2674,7 @@ final class StringFormatter
                 } catch (PyException e) {
                     // XXX: Swallow customs AttributeError throws from __float__ methods
                     // No better alternative for the moment
-                    if (Py.matchException(e, Py.AttributeError)) {
+                    if (e.match(Py.AttributeError)) {
             throw Py.TypeError("int argument required");
         }
                     throw e;
@@ -2727,7 +2727,7 @@ final class StringFormatter
                 } catch (PyException e) {
                     // XXX: Swallow customs AttributeError throws from __float__ methods
                     // No better alternative for the moment
-                    if (Py.matchException(e, Py.AttributeError)) {
+                    if (e.match(Py.AttributeError)) {
             throw Py.TypeError("float argument required");
         }
                     throw e;
@@ -3022,7 +3022,7 @@ final class StringFormatter
                     // less invasive to mask than a TypeError)
                     val = arg.__int__().asInt();
                 } catch (PyException e){
-                    if (Py.matchException(e, Py.AttributeError)) {
+                    if (e.match(Py.AttributeError)) {
                         throw Py.TypeError("%c requires int or char");
                     }
                     throw e;

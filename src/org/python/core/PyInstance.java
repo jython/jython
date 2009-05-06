@@ -288,7 +288,7 @@ public class PyInstance extends PyObject {
             try {
                 __dict__.__delitem__(name);
             } catch (PyException exc) {
-                if (Py.matchException(exc, Py.KeyError))
+                if (exc.match(Py.KeyError))
                     throw Py.AttributeError("class " + instclass.__name__ +
                                         " has no attribute '" + name + "'");
             };
@@ -615,9 +615,9 @@ public class PyInstance extends PyObject {
         try {
             return invoke("__getitem__", key);
         } catch (PyException e) {
-            if (Py.matchException(e, Py.IndexError))
+            if (e.match(Py.IndexError))
                 return null;
-            if (Py.matchException(e, Py.KeyError))
+            if (e.match(Py.KeyError))
                 return null;
             throw e;
         }
@@ -722,7 +722,7 @@ public class PyInstance extends PyObject {
             try {
                 return func.__call__();
             } catch (PyException exc) {
-                if (Py.matchException(exc, Py.StopIteration))
+                if (exc.match(Py.StopIteration))
                     return null;
                 throw exc;
             }
@@ -769,7 +769,7 @@ public class PyInstance extends PyObject {
         try {
             ret = invoke("__index__");
         } catch (PyException pye) {
-            if (!Py.matchException(pye, Py.AttributeError)) {
+            if (!pye.match(Py.AttributeError)) {
                 throw pye;
             }
             throw Py.TypeError("object cannot be interpreted as an index");

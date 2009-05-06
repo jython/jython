@@ -51,12 +51,11 @@ public class InteractiveInterpreter extends PythonInterpreter {
         try {
             code = Py.compile_command_flags(source, filename, kind, cflags, true);
         } catch (PyException exc) {
-            if (Py.matchException(exc, Py.SyntaxError)) {
+            if (exc.match(Py.SyntaxError)) {
                 // Case 1
                 showexception(exc);
                 return false;
-            } else if (Py.matchException(exc, Py.ValueError) ||
-                       Py.matchException(exc, Py.OverflowError)) {
+            } else if (exc.match(Py.ValueError) || exc.match(Py.OverflowError)) {
                 // Should not print the stack trace, just the error.
                 showexception(exc);
                 return false;
@@ -89,7 +88,7 @@ public class InteractiveInterpreter extends PythonInterpreter {
         try {
             exec(code);
         } catch (PyException exc) {
-            if (Py.matchException(exc, Py.SystemExit)) throw exc;
+            if (exc.match(Py.SystemExit)) throw exc;
             showexception(exc);
         }
     }

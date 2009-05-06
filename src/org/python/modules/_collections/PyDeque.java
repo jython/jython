@@ -262,7 +262,7 @@ public class PyDeque extends PyObject {
         try {
             return deque___getitem__(key);
         } catch (PyException pe) {
-            if (Py.matchException(pe, Py.KeyError)) {
+            if (pe.match(Py.KeyError)) {
                 return null;
             }
             throw pe;

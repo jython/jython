@@ -82,7 +82,7 @@ public class InteractiveConsole extends InteractiveInterpreter {
         	else
         	    line = raw_input(prompt, file);
             } catch(PyException exc) {
-                if(!Py.matchException(exc, Py.EOFError))
+                if(!exc.match(Py.EOFError))
                     throw exc;
                 write("\n");
                 break;

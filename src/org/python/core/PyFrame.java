@@ -334,7 +334,7 @@ public class PyFrame extends PyObject
             try {
                 f_locals.__delitem__(index);
             } catch (PyException pye) {
-                if (Py.matchException(pye, Py.KeyError)) {
+                if (pye.match(Py.KeyError)) {
                     throw Py.NameError(String.format(NAME_ERROR_MSG, index));
                 }
                 throw pye;
@@ -348,7 +348,7 @@ public class PyFrame extends PyObject
         try {
             f_globals.__delitem__(index);
         } catch (PyException pye) {
-            if (Py.matchException(pye, Py.KeyError)) {
+            if (pye.match(Py.KeyError)) {
                 throw Py.NameError(String.format(GLOBAL_NAME_ERROR_MSG, index));
             }
             throw pye;

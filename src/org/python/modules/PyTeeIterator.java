@@ -60,7 +60,7 @@ public class PyTeeIterator extends PyIterator {
         try {
             element = pyIter.__iternext__();//next();
         } catch (PyException pyEx) {
-            if (Py.matchException(pyEx, Py.StopIteration)) {
+            if (pyEx.match(Py.StopIteration)) {
                 // store exception - will be used by PyIterator.next()
                 stopException = pyEx;
             } else {

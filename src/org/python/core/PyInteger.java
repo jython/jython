@@ -46,7 +46,7 @@ public class PyInteger extends PyObject {
             try {
                 return Py.newInteger(((PyString)x).atoi(base));
             } catch (PyException pye) {
-                if (Py.matchException(pye, Py.OverflowError)) {
+                if (pye.match(Py.OverflowError)) {
                     return ((PyString)x).atol(base);
                 }
                 throw pye;
@@ -79,7 +79,7 @@ public class PyInteger extends PyObject {
 		try {
 			return x.__int__();
 		} catch (PyException pye) {
-			if (!Py.matchException(pye, Py.AttributeError))
+			if (!pye.match(Py.AttributeError))
 				throw pye;
 			throw Py.TypeError("int() argument must be a string or a number");
 		}

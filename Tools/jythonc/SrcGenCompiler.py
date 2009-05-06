@@ -969,8 +969,7 @@ class SrcGenCompiler(Visitor, CompilationContext):
                 continue
 
             type = self.visit(exchandler.type)
-            t = jast.InvokeStatic("Py", "matchException",
-                                  [exctmp, type.asAny()])
+            t = jast.Invoke(exctmp, "match", [type.asAny()])
             newbody = []
 
             if exchandler.name is not None:

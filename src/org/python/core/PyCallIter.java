@@ -23,7 +23,7 @@ public class PyCallIter extends PyIterator {
         try {
             result = callable.__call__();
         } catch (PyException exc) {
-            if (Py.matchException(exc, Py.StopIteration)) {
+            if (exc.match(Py.StopIteration)) {
                 callable = null;
                 stopException = exc;
                 return null;

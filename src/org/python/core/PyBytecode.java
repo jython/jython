@@ -930,9 +930,9 @@ public class PyBytecode extends PyBaseCode {
                             case Opcode.PyCmp_EXC_MATCH:
                                 if (a instanceof PyStackException) {
                                     PyException pye = ((PyStackException) a).exception;
-                                    stack.push(Py.newBoolean(Py.matchException(pye, b)));
+                                    stack.push(Py.newBoolean(pye.match(b)));
                                 } else {
-                                    stack.push(Py.newBoolean(Py.matchException(new PyException(a), b)));
+                                    stack.push(Py.newBoolean(new PyException(a).match(b)));
                                 }
                                 break;
 
@@ -969,7 +969,7 @@ public class PyBytecode extends PyBaseCode {
                             stack.push(stack.top().__getattr__(name));
 
                         } catch (PyException pye) {
-                            if (Py.matchException(pye, Py.AttributeError)) {
+                            if (pye.match(Py.AttributeError)) {
                                 throw Py.ImportError(String.format("cannot import name %.230s", name));
                             } else {
                                 throw pye;
@@ -1015,7 +1015,7 @@ public class PyBytecode extends PyBaseCode {
                                 break;
                             }
                         } catch (PyException pye) {
-                            if (!Py.matchException(pye, Py.StopIteration)) {
+                            if (!pye.match(Py.StopIteration)) {
                                 throw pye;
                             }
                         }

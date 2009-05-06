@@ -47,7 +47,7 @@ public class PyLong extends PyObject {
             try {
                 return x.__long__();
             } catch (PyException pye) {
-                if (!Py.matchException(pye, Py.AttributeError)) {
+                if (!pye.match(Py.AttributeError)) {
                     throw pye;
                 }
                 throw Py.TypeError(String.format("long() argument must be a string or a number, "

@@ -304,7 +304,7 @@ public class PyStringMap extends PyObject {
             try {
                 pair = PySequence.fastSequence(pair, "");
             } catch(PyException pye) {
-                if (Py.matchException(pye, Py.TypeError)) {
+                if (pye.match(Py.TypeError)) {
                     throw Py.TypeError(String.format("cannot convert dictionary update sequence "
                                                      + "element #%d to a sequence", i));
                 }

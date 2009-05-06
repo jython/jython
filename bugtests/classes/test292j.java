@@ -10,7 +10,7 @@ public class test292j {
         try {
             __builtin__.__import__("test292j1");
         } catch (PyException exc) {
-            if (!Py.matchException(exc, Py.ImportError))
+            if (!exc.match(Py.ImportError))
                 throw exc;
         }
     }

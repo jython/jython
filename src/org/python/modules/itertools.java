@@ -55,7 +55,7 @@ public class itertools implements ClassDictInit {
             try {
                 element = pyIter.__iternext__();//next();
             } catch (PyException pyEx) {
-                if (Py.matchException(pyEx, Py.StopIteration)) {
+                if (pyEx.match(Py.StopIteration)) {
                     // store exception - will be used by PyIterator.next()
                     stopException = pyEx;
                 } else {
@@ -293,7 +293,7 @@ public class itertools implements ClassDictInit {
                 value = Py.py2int(obj);
             }
             catch (PyException pyEx) {
-                if (Py.matchException(pyEx, Py.TypeError)) {
+                if (pyEx.match(Py.TypeError)) {
                     throw Py.ValueError(msg);
                 } else {
                     throw pyEx;

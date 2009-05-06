@@ -413,7 +413,7 @@ public abstract class BaseSet extends PyObject implements Set {
      * @return A PyFrozenSet if appropriate, otherwise the pye is rethrown
      */
     protected final PyFrozenSet asFrozen(PyException pye, PyObject value) {
-        if (!(value instanceof BaseSet) || !Py.matchException(pye, Py.TypeError)) {
+        if (!(value instanceof BaseSet) || !pye.match(Py.TypeError)) {
             throw pye;
         }
         PyFrozenSet tmp = new PyFrozenSet();

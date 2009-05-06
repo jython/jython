@@ -645,7 +645,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
                            node.getLine() ,null, Py.None);
                 return;
             } catch(PyException e) {
-                if (!Py.matchException(e, Py.SyntaxWarning))
+                if (!e.match(Py.SyntaxWarning))
                     throw e;
             }
         }

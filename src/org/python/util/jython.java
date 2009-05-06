@@ -167,7 +167,7 @@ public class jython
                     System.err.println(COPYRIGHT);
                 }
             } catch (PyException pye) {
-                if (!Py.matchException(pye, Py.ImportError)) {
+                if (!pye.match(Py.ImportError)) {
                     System.err.println("error importing site");
                     Py.printException(pye);
                     System.exit(-1);
@@ -230,7 +230,7 @@ public class jython
                    }
                 } catch(Throwable t) {
                     if (t instanceof PyException &&
-                            Py.matchException((PyException)t, _systemrestart.SystemRestart)) {
+                            ((PyException)t).match(_systemrestart.SystemRestart)) {
                         // Shutdown this instance...
                         shouldRestart = true;
                         shutdownInterpreter();

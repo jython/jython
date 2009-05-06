@@ -840,7 +840,7 @@ public class LoadDerived extends Load implements Slotted {
             try {
                 return impl.__get__(this,self_type).__call__();
             } catch (PyException exc) {
-                if (Py.matchException(exc,Py.StopIteration))
+                if (exc.match(Py.StopIteration))
                     return null;
                 throw exc;
             }
@@ -855,7 +855,7 @@ public class LoadDerived extends Load implements Slotted {
             try {
                 return impl.__get__(this,self_type).__call__(key);
             } catch (PyException exc) {
-                if (Py.matchException(exc,Py.LookupError))
+                if (exc.match(Py.LookupError))
                     return null;
                 throw exc;
             }
@@ -869,7 +869,7 @@ public class LoadDerived extends Load implements Slotted {
             try {
                 return impl.__get__(this,self_type).__call__(new PyInteger(key));
             } catch (PyException exc) {
-                if (Py.matchException(exc,Py.LookupError))
+                if (exc.match(Py.LookupError))
                     return null;
                 throw exc;
             }
@@ -1000,7 +1000,7 @@ public class LoadDerived extends Load implements Slotted {
                 } // else: pass through to __getitem__ invocation
             }
         } catch (PyException e) {
-            if (!Py.matchException(e,Py.AttributeError)) {
+            if (!e.match(Py.AttributeError)) {
                 throw e;
             } else {
                 firstAttributeError=e; // saved to avoid swallowing custom AttributeErrors

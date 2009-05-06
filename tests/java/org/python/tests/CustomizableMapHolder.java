@@ -62,7 +62,7 @@ public class CustomizableMapHolder {
                 try {
                     return objectGetattribute.__call__(self, name);
                 } catch (PyException pye) {
-                    if (!Py.matchException(pye, Py.AttributeError)) {
+                    if (!pye.match(Py.AttributeError)) {
                         throw pye;
                     }
                 }

@@ -20,8 +20,7 @@ public class FunctionThread extends Thread
         try {
             func.__call__(args);
         } catch (PyException exc) {
-            if (Py.matchException(exc, Py.SystemExit) ||
-                    Py.matchException(exc, _systemrestart.SystemRestart)) {
+            if (exc.match(Py.SystemExit) || exc.match(_systemrestart.SystemRestart)) {
                 return;
             }
             Py.stderr.println("Unhandled exception in thread started by " + func);

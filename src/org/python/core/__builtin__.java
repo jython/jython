@@ -649,7 +649,7 @@ public class __builtin__ {
         try {
             result = obj.__getattr__(nameStr.intern());
         } catch (PyException pye) {
-            if (Py.matchException(pye, Py.AttributeError) && def != null) {
+            if (pye.match(Py.AttributeError) && def != null) {
                 result = def;
             } else {
                 throw pye;
@@ -1122,7 +1122,7 @@ public class __builtin__ {
         try {
             return o.__getattr__("__dict__");
         } catch (PyException e) {
-            if (Py.matchException(e, Py.AttributeError)) {
+            if (e.match(Py.AttributeError)) {
                 throw Py.TypeError("vars() argument must have __dict__ attribute");
             }
             throw e;
@@ -1160,7 +1160,7 @@ public class __builtin__ {
                 try {
                     item = iters[j].__iternext__();
                 } catch (PyException e) {
-                    if (Py.matchException(e, Py.StopIteration)) {
+                    if (e.match(Py.StopIteration)) {
                         return ret;
                     }
                     throw e;
