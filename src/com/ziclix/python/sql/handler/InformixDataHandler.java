@@ -124,6 +124,7 @@ public class InformixDataHandler extends FilterDataHandler {
      * @return the mapped Python object
      * @throws SQLException thrown for a sql exception
      */
+    @SuppressWarnings("fallthrough")
     public PyObject getPyObject(ResultSet set, int col, int type) throws SQLException {
 
         PyObject obj = Py.None;
