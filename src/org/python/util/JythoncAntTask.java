@@ -496,7 +496,7 @@ public class JythoncAntTask extends MatchingTask {
 
       //get dependencies list.
       if( srcDir == null ) {
-        srcDir = project.resolveFile(".");
+        srcDir = getProject().resolveFile(".");
       }
       DirectoryScanner scanner = super.getDirectoryScanner(srcDir);
       String[] dependencies = scanner.getIncludedFiles();

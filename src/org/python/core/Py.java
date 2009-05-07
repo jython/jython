@@ -1915,7 +1915,7 @@ public final class Py {
         return (objs.toArray(dest));
     }
 }
-/** @deprecated */
+
  class FixedFileWrapper extends StdoutWrapper {
 
     private PyObject file;

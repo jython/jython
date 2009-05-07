@@ -94,6 +94,7 @@ public class PythonInterpreter {
     }
 
     /** @deprecated */
+    @Deprecated
     public void setOut(java.io.Writer outStream) {
         setOut(new PyFileWriter(outStream));
     }
@@ -113,6 +114,7 @@ public class PythonInterpreter {
     }
 
     /** @deprecated */
+    @Deprecated
     public void setErr(java.io.Writer outStream) {
         setErr(new PyFileWriter(outStream));
     }

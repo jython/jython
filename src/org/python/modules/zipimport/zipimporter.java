@@ -454,7 +454,10 @@ public class zipimporter extends importer<PyObject> {
      * @param time in milliseconds, a long value
      * @return an int, dos style date value
      */
+    @SuppressWarnings("deprecation")
     private int epochToDosDate(long time) {
+        // This and the other conversion methods are cut and pasted from
+        // java.util.zip.ZipEntry: hence the use deprecated Date APIs
         Date d = new Date(time);
         int year = d.getYear() + 1900;
         if (year < 1980) {
@@ -469,6 +472,7 @@ public class zipimporter extends importer<PyObject> {
      * @param time in milliseconds, a long value
      * @return an int, dos style time value
      */
+    @SuppressWarnings("deprecation")
     private int epochToDosTime(long time) {
         Date d = new Date(time);
         return d.getHours() << 11 | d.getMinutes() << 5 | d.getSeconds() >> 1;
@@ -482,6 +486,7 @@ public class zipimporter extends importer<PyObject> {
      * @param dosdate a dos style date integer
      * @return a long time (in milliseconds) value
      */
+    @SuppressWarnings("deprecation")
     private long dosTimeToEpoch(int dosTime, int dosDate) {
         Date d = new Date(((dosDate >> 9) & 0x7f) + 80,
                           ((dosDate >> 5) & 0x0f) - 1,

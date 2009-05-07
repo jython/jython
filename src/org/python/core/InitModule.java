@@ -9,7 +9,7 @@ package org.python.core;
  * @deprecated This class is deprecated. See ClassDictInit for a replacement.
  * @see ClassDictInit
  */
-
+@Deprecated
 public interface InitModule {
     public abstract void initModule(PyObject dict);
 }

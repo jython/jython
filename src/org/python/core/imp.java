@@ -827,6 +827,7 @@ public class imp {
      * replaced by importFrom with level param.  Kept for backwards compatibility.
      * @deprecated use importFrom with level param.
      */
+    @Deprecated
     public static PyObject[] importFrom(String mod, String[] names,
             PyFrame frame) {
         return importFromAs(mod, names, null, frame, DEFAULT_LEVEL);
@@ -845,6 +846,7 @@ public class imp {
      * replaced by importFromAs with level param.  Kept for backwards compatibility.
      * @deprecated use importFromAs with level param.
      */
+    @Deprecated
     public static PyObject[] importFromAs(String mod, String[] names,
             PyFrame frame) {
         return importFromAs(mod, names, null, frame, DEFAULT_LEVEL);

@@ -179,6 +179,7 @@ class Code implements MethodVisitor, Opcodes {
         mv.visitVarInsn(arg0, arg1);
     }
 
+    @SuppressWarnings("fallthrough")
     private int sigSize(String sig, boolean includeReturn) {
         int stack = 0;
         int i = 0;

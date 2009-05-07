@@ -117,9 +117,10 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <property name="build.compiler" value="modern" />
         <property name="jdk.target.version" value="1.5" />
         <property name="jdk.source.version" value="1.5" />
-        <property name="deprecation" value="off" />
+        <property name="deprecation" value="true" />
         <property name="debug" value="true" />
         <property name="nowarn" value="false" />
+        <property name="javac.args" value="-Xlint -Xlint:-serial -Xlint:-unchecked"/>
 
         <!-- properties work.dir and jython.base.dir are also defined in full-preinit -->
         <property name="work.dir" value="${basedir}" />
@@ -413,6 +414,7 @@ The readme text for the next release will be like:
                 deprecation="${deprecation}"
                 nowarn="${nowarn}">
             <include name="org/python/util/TemplateAntTask.java" />
+            <compilerarg line="${javac.args}"/>
         </javac>
     </target>
 
@@ -456,6 +458,7 @@ The readme text for the next release will be like:
                nowarn="${nowarn}"
                memoryMaximumSize="192m"
                fork="true">
+            <compilerarg line="${javac.args}"/>
             <src path="${source.dir}"/>
             <src path="${gensrc.dir}"/>
 
@@ -471,7 +474,9 @@ The readme text for the next release will be like:
                source="${jdk.source.version}"
                debug="${debug}"
                deprecation="${deprecation}"
-               nowarn="${nowarn}"/>
+               nowarn="${nowarn}">
+            <compilerarg line="${javac.args}"/>
+        </javac>
 
         <!-- java files used by tests -->
         <javac srcdir="${test.source.dir}"
@@ -480,7 +485,8 @@ The readme text for the next release will be like:
                source="${jdk.source.version}"
                debug="${debug}"
                deprecation="${deprecation}"
-               nowarn="${nowarn}"> 
+               nowarn="${nowarn}">
+            <compilerarg line="${javac.args}"/>
             <classpath refid="test.classpath" />
         </javac>
         <javac srcdir="tests/data/initializer"
@@ -490,6 +496,7 @@ The readme text for the next release will be like:
             debug="${debug}"
             deprecation="${deprecation}"
             nowarn="${nowarn}"> 
+            <compilerarg line="${javac.args}"/>
             <classpath refid="test.classpath" />
         </javac>
         <copy file="${source.dir}/org/python/modules/ucnhash.dat"

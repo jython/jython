@@ -37,6 +37,7 @@ public class StringUtil {
      * @param len the length
      * @return a new String corresponding to the bytes in buf
      */
+    @SuppressWarnings("deprecation")
     public static String fromBytes(byte[] buf, int off, int len) {
         // Yes, I known the method is deprecated, but it is the fastest
         // way of converting between between byte[] and String

@@ -451,7 +451,6 @@ public class PyObject implements Serializable {
         return __call__(arg0, arg1, arg2, arg3);
     }
 
-    /** @deprecated **/
     public PyObject _callextra(PyObject[] args,
                                String[] keywords,
                                PyObject starargs,

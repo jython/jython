@@ -52,6 +52,7 @@ public class JDBC20DataHandler extends FilterDataHandler {
      * @param type
      * @throws SQLException
      */
+    @SuppressWarnings("fallthrough")
     public void setJDBCObject(PreparedStatement stmt, int index, PyObject object, int type) throws SQLException {
 
         if (DataHandler.checkNull(stmt, index, object, type)) {

@@ -765,6 +765,7 @@ public class PyString extends PyBaseString
       throw Py.TypeError("bad operand type for unary ~");
     }
 
+    @SuppressWarnings("fallthrough")
     public PyComplex __complex__() {
         boolean got_re = false;
         boolean got_im = false;
@@ -2795,6 +2796,7 @@ final class StringFormatter
         return buf.toString();
     }
 
+    @SuppressWarnings("fallthrough")
     public PyString format(PyObject args) {
         PyObject dict = null;
         this.args = args;

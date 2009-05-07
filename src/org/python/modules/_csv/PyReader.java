@@ -96,6 +96,7 @@ public class PyReader extends PyIterator {
         return fields;
     }
 
+    @SuppressWarnings("fallthrough")
     private void parse_process_char(char c) {
         switch (state) {
             case START_RECORD:

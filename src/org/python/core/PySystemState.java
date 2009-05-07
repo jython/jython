@@ -1038,7 +1038,8 @@ public class PySystemState extends PyObject
         // we expect an URL like jar:file:/install_dir/jython.jar!/org/python/core/PySystemState.class
         if (url != null) {
             try {
-                String urlString = URLDecoder.decode(url.toString());
+                String urlString = URLDecoder.decode(url.toString(),
+                                                     Charset.defaultCharset().name());
                 int jarSeparatorIndex = urlString.lastIndexOf(JAR_SEPARATOR);
                 if (urlString.startsWith(JAR_URL_PREFIX) && jarSeparatorIndex > 0) {
                     jarFileName = urlString.substring(JAR_URL_PREFIX.length(), jarSeparatorIndex);
