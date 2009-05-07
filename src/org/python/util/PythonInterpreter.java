@@ -5,7 +5,6 @@ import java.util.Properties;
 import org.python.core.CompileMode;
 import org.python.core.CompilerFlags;
 import org.python.core.Py;
-import org.python.core.PyCode;
 import org.python.core.PyException;
 import org.python.core.PyFile;
 import org.python.core.PyFileWriter;
@@ -164,7 +163,7 @@ public class PythonInterpreter {
 
     public void execfile(java.io.InputStream s, String name) {
         setState();
-        Py.runCode((PyCode)Py.compile_flags(s, name, CompileMode.exec, cflags), locals, locals);
+        Py.runCode(Py.compile_flags(s, name, CompileMode.exec, cflags), locals, locals);
         Py.flushLine();
     }
 

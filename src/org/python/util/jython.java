@@ -101,7 +101,7 @@ public class jython
             InputStream file = zip.getInputStream(runit);
             PyCode code;
             try {
-                code = (PyCode)Py.compile(file, "__run__", CompileMode.exec);
+                code = Py.compile(file, "__run__", CompileMode.exec);
             } finally {
                 file.close();
             }

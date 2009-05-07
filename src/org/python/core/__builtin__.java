@@ -527,7 +527,7 @@ public class __builtin__ {
         PyCode code;
 
         try {
-            code = (PyCode)Py.compile_flags(file, name, CompileMode.exec, cflags);
+            code = Py.compile_flags(file, name, CompileMode.exec, cflags);
         } finally {
             try {
                 file.close();

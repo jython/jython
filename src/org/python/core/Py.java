@@ -1230,8 +1230,8 @@ public final class Py {
                 throw Py.TypeError(
                         "exec: argument 1 must be string, code or file object");
             }
-            code = (PyCode)Py.compile_flags(contents, "<string>", CompileMode.exec,
-                                            getCompilerFlags(flags, false));
+            code = Py.compile_flags(contents, "<string>", CompileMode.exec,
+                                    getCompilerFlags(flags, false));
         }
         Py.runCode(code, locals, globals);
     }

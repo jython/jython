@@ -41,13 +41,13 @@ public class PythonTreeTester {
         PythonTree r = null;
         switch (_block) {
         case MODULE :
-            r = (PythonTree)parser.file_input().tree;
+            r = parser.file_input().tree;
             break;
         case INTERACTIVE :
-            r = (PythonTree)parser.single_input().tree;
+            r = parser.single_input().tree;
             break;
         case EXPRESSION :
-            r = (PythonTree)parser.eval_input().tree;
+            r = parser.eval_input().tree;
                 break;
         }
         if (args.length > 1) {
