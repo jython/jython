@@ -120,7 +120,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <property name="deprecation" value="true" />
         <property name="debug" value="true" />
         <property name="nowarn" value="false" />
-        <property name="javac.args" value="-Xlint -Xlint:-serial -Xlint:-unchecked"/>
+        <property name="javac.args" value="-Xlint -Xlint:-serial -Xlint:-unchecked -Xlint:-cast"/>
 
         <!-- properties work.dir and jython.base.dir are also defined in full-preinit -->
         <property name="work.dir" value="${basedir}" />
