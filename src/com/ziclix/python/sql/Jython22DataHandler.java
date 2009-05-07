@@ -210,6 +210,7 @@ public class Jython22DataHandler extends DataHandler {
      * @param type the column type
      * @throws SQLException if the type is unmappable
      */
+    @SuppressWarnings("deprecation")
     public PyObject getPyObject(ResultSet set, int col, int type) throws SQLException {
 
         PyObject obj = Py.None;
@@ -326,6 +327,7 @@ public class Jython22DataHandler extends DataHandler {
      * @param type the column type
      * @throws SQLException if the type is unmappable
      */
+    @SuppressWarnings("deprecation")
     public PyObject getPyObject(CallableStatement stmt, int col, int type) throws SQLException {
 
         PyObject obj = Py.None;

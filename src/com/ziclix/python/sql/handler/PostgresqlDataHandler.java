@@ -60,14 +60,7 @@ public class PostgresqlDataHandler extends RowIdHandler {
       case Types.NUMERIC:
       case Types.DECIMAL:
 
-        // in JDBC 2.0, use of a scale is deprecated
-        // The big fix here is a problem with numeric types.  It seems the ResultSet
-        // tries to fix a JBuilder bug (as commented in the source) by including a
-        // scale of 0.  Well this blows up BigDecimal if the number is, say, 4.22.
-        // It appears the workaround is to call the deprecated method with a scale of
-        // -1 which forces the return of the BD without setting the scale.
-        BigDecimal bd = set.getBigDecimal(col, -1);
-
+        BigDecimal bd = set.getBigDecimal(col);
         obj = (bd == null) ? Py.None : Py.newFloat(bd.doubleValue());
         break;
 
