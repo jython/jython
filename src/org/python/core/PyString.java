@@ -18,7 +18,6 @@ public class PyString extends PyBaseString
 {
     public static final PyType TYPE = PyType.fromClass(PyString.class);
     protected String string;
-    private transient int cached_hashcode=0;
     protected transient boolean interned=false;
 
     // for PyJavaClass.init()
@@ -579,9 +578,7 @@ public class PyString extends PyBaseString
 
     @ExposedMethod(doc = BuiltinDocs.str___hash___doc)
     final int str___hash__() {
-        if (cached_hashcode == 0)
-            cached_hashcode = string.hashCode();
-        return cached_hashcode;
+        return string.hashCode();
     }
 
     /**
