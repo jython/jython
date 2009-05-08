@@ -10,6 +10,10 @@ public abstract class PyCode extends PyObject
 
     abstract public PyObject call(ThreadState state, PyFrame frame, PyObject closure);
 
+    public PyObject call(PyFrame frame) {
+        return call(Py.getThreadState(), frame);
+    }
+
     public PyObject call(ThreadState state, PyFrame frame) {
         return call(state, frame, null);
     }
