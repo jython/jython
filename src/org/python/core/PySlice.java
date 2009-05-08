@@ -65,6 +65,7 @@ public class PySlice extends PyObject {
         }
     }
 
+    @Override
     public int hashCode() {
         return slice___hash__();
     }
@@ -74,16 +75,7 @@ public class PySlice extends PyObject {
         throw Py.TypeError(String.format("unhashable type: '%.200s'", getType().fastGetName()));
     }
 
-    public PyString __str__() {
-        return new PyString(getStart().__repr__() + ":" + getStop().__repr__() + ":"
-                            + getStep().__repr__());
-    }
-
-    public PyString __repr__() {
-        return new PyString("slice(" + getStart().__repr__() + ", " + getStop().__repr__() + ", "
-                            + getStep().__repr__() + ")");
-    }
-
+    @Override
     public PyObject __eq__(PyObject o) {
         if (getType() != o.getType() && !(getType().isSubType(o.getType()))) {
             return null;
@@ -92,17 +84,15 @@ public class PySlice extends PyObject {
             return Py.True;
         }
         PySlice oSlice = (PySlice)o;
-        if (eq(getStart(), oSlice.getStart()) && eq(getStop(), oSlice.getStop())
-            && eq(getStep(), oSlice.getStep())) {
-            return Py.True;
-        }
-        return Py.False;
+        return Py.newBoolean(eq(getStart(), oSlice.getStart()) && eq(getStop(), oSlice.getStop())
+                             && eq(getStep(), oSlice.getStep()));
     }
 
     private static final boolean eq(PyObject o1, PyObject o2) {
         return o1._cmp(o2) == 0;
     }
 
+    @Override
     public PyObject __ne__(PyObject o) {
         return __eq__(o).__not__();
     }
@@ -219,6 +209,16 @@ public class PySlice extends PyObject {
             return v.asIndex();
         }
         throw Py.TypeError("slice indices must be integers or None or have an __index__ method");
+    }
+
+    @Override
+    public String toString() {
+        return slice_toString();
+    }
+
+    @ExposedMethod(names = "__repr__", doc = BuiltinDocs.slice___repr___doc)
+    final String slice_toString() {
+        return String.format("slice(%s, %s, %s)", getStart(), getStop(), getStep());
     }
 
     public final PyObject getStart() {
