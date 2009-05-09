@@ -47,6 +47,12 @@ public class PyObject implements Serializable {
         primitiveMap.put(Long.TYPE, Long.class);
         primitiveMap.put(Float.TYPE, Float.class);
         primitiveMap.put(Double.TYPE, Double.class);
+
+        if (Py.BOOTSTRAP_TYPES.size() > 0) {
+            Py.writeWarning("init", "Bootstrap types weren't encountered in bootstrapping: "
+                            + Py.BOOTSTRAP_TYPES);
+            
+        }
     }
 
     public PyObject(PyType objtype) {
@@ -4067,13 +4073,6 @@ public class PyObject implements Serializable {
     public int asIndex(PyObject err) {
         // OverflowErrors are handled in PyLong.asIndex
         return __index__().asInt();
-    }
-
-    static {
-        for (Class<?> unbootstrapped : Py.BOOTSTRAP_TYPES) {
-            Py.writeWarning("init", "Bootstrap type wasn't encountered in bootstrapping[class="
-                    + unbootstrapped + "]");
-        }
     }
 }
 
