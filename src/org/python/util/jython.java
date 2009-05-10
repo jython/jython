@@ -137,9 +137,6 @@ public class jython {
         // Setup the basic python system state from these options
         PySystemState.initialize(PySystemState.getBaseProperties(), opts.properties, opts.argv);
 
-        // Now create an interpreter
-        InteractiveConsole interp = newInterpreter();
-
         PyList warnoptions = new PyList();
         for (String wopt : opts.warnoptions) {
             warnoptions.append(new PyString(wopt));
@@ -154,6 +151,9 @@ public class jython {
                 systemState.ps1 = systemState.ps2 = Py.EmptyString;
             }
         }
+
+        // Now create an interpreter
+        InteractiveConsole interp = newInterpreter(opts.interactive);
 
         // Print banner and copyright information (or not)
         if (opts.interactive && opts.notice && !opts.runModule) {
@@ -306,16 +306,25 @@ public class jython {
     /**
      * Returns a new python interpreter using the InteractiveConsole subclass from the
      * <tt>python.console</tt> registry key.
+     * <p>
+
+     * When stdin is interactive the default is {@link JLineConsole}. Otherwise the
+     * featureless {@link InteractiveConsole} is always used as alternative consoles cause
+     * unexpected behavior with the std file streams.
      */
-    private static InteractiveConsole newInterpreter() {
-        try {
-            String interpClass =
-                    PySystemState.registry.getProperty("python.console",
-                                                       "org.python.util.InteractiveConsole");
-            return (InteractiveConsole)Class.forName(interpClass).newInstance();
-        } catch (Throwable t) {
-            return new InteractiveConsole();
+    private static InteractiveConsole newInterpreter(boolean interactiveStdin) {
+        if (interactiveStdin) {
+            String interpClass = PySystemState.registry.getProperty("python.console", "");
+            if (interpClass.length() > 0) {
+                try {
+                    return (InteractiveConsole)Class.forName(interpClass).newInstance();
+                } catch (Throwable t) {
+                    // fall through
+                }
+            }
+            return new JLineConsole();
         }
+        return new InteractiveConsole();
     }
 
     /**

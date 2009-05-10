@@ -145,7 +145,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <!-- classpaths -->
         <path id="main.classpath">
             <pathelement path="${extlibs.dir}/libreadline-java-0.8.jar" />
-            <pathelement path="${extlibs.dir}/jline-0.9.94.jar" />
+            <pathelement path="${extlibs.dir}/jline-0.9.95-SNAPSHOT.jar" />
             <pathelement path="${extlibs.dir}/servlet-api-2.5.jar" />
             <pathelement path="${informix.jar}" />
             <pathelement path="${oracle.jar}" />
@@ -503,8 +503,8 @@ The readme text for the next release will be like:
               todir="${compile.dir}/org/python/modules"
               preservelastmodified="true" />
 
-        <copy todir="${compile.dir}/com" preservelastmodified="true">
-            <fileset dir="${source.dir}/com">
+        <copy todir="${compile.dir}" preservelastmodified="true">
+            <fileset dir="${source.dir}">
                 <include name="**/*.properties" />
             </fileset>
         </copy>
@@ -562,6 +562,8 @@ The readme text for the next release will be like:
             <rule pattern="org.apache.xerces.**" result="org.python.apache.xerces.@1"/>
             <rule pattern="org.apache.wml.**" result="org.python.apache.wml.@1"/>
             <rule pattern="org.apache.html.**" result="org.python.apache.html.@1"/>
+            <zipfileset src="extlibs/jline-0.9.95-SNAPSHOT.jar"/>
+            <rule pattern="jline.**" result="org.python.jline.@1"/>
             <manifest>
                 <attribute name="Main-Class" value="org.python.util.jython" />
                 <attribute name="Built-By" value="${user.name}" />
