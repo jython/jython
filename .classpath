@@ -6,7 +6,7 @@
 	<classpathentry kind="src" path="bugtests/classes"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/3"/>
-	<classpathentry kind="lib" path="extlibs/jline-0.9.94.jar"/>
+	<classpathentry kind="lib" path="extlibs/jline-0.9.95-SNAPSHOT.jar"/>
 	<classpathentry kind="lib" path="extlibs/junit-3.8.2.jar"/>
 	<classpathentry kind="lib" path="extlibs/libreadline-java-0.8.jar"/>
 	<classpathentry kind="lib" path="extlibs/mysql-connector-java-5.1.6.jar"/>
