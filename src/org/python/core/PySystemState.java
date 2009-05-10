@@ -217,7 +217,7 @@ public class PySystemState extends PyObject
     }
 
     private void initEncoding() {
-        String encoding = registry.getProperty("python.console.encoding");
+        String encoding = registry.getProperty(PYTHON_CONSOLE_ENCODING);
         if (encoding == null) {
             return;
         }

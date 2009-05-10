@@ -31,7 +31,7 @@ python.packages.directories = java.ext.dirs
 #python.verbose = message
 
 # Jython ships with a JLine console (http://jline.sourceforge.net/)
-# out of the box. Setting this to the name of different console class,
+# out of the box. Setting this to the name of a different console class,
 # new console features can be enabled. Readline support is such an
 # example:
 #python.console=org.python.util.ReadlineConsole
