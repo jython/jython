@@ -66,16 +66,12 @@ public class FileUtil {
     }
 
     public static boolean isatty(FileDescriptor fd) {
-        boolean atty = false;
         try {
-            atty = imp.load("os").__getattr__("isatty").__call__(Py.java2py(fd)).__nonzero__();
+            return imp.load("os").__getattr__("isatty").__call__(Py.java2py(fd)).__nonzero__();
         } catch (PyException e) {
-            //Weak isatty check copied from jna-posix JavaPOSIX class
-            return (fd == FileDescriptor.in
-                    || fd == FileDescriptor.out
-                    || fd == FileDescriptor.err);
+            // Weak isatty check copied from jna-posix JavaPOSIX class
+            return fd == FileDescriptor.in || fd == FileDescriptor.out || fd == FileDescriptor.err;
         }
-        return atty;
     }
 
 }
