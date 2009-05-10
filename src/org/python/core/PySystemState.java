@@ -36,6 +36,7 @@ public class PySystemState extends PyObject
 {
     public static final String PYTHON_CACHEDIR = "python.cachedir";
     public static final String PYTHON_CACHEDIR_SKIP = "python.cachedir.skip";
+    public static final String PYTHON_CONSOLE_ENCODING = "python.console.encoding";
     protected static final String CACHEDIR_DEFAULT_NAME = "cachedir";
 
     public static final String JYTHON_JAR = "jython.jar";
@@ -216,12 +217,7 @@ public class PySystemState extends PyObject
     }
 
     private void initEncoding() {
-        String encoding;
-        try {
-            encoding = System.getProperty("file.encoding");
-        } catch (SecurityException se) {
-            encoding = null;
-        }
+        String encoding = registry.getProperty("python.console.encoding");
         if (encoding == null) {
             return;
         }
@@ -630,6 +626,15 @@ public class PySystemState extends PyObject
             if (!registry.containsKey(PYTHON_CACHEDIR_SKIP)) {
                 registry.put(PYTHON_CACHEDIR_SKIP, "true");
             }
+        }
+        if (!registry.containsKey(PYTHON_CONSOLE_ENCODING)) {
+            String encoding;
+            try {
+                encoding = System.getProperty("file.encoding");
+            } catch (SecurityException se) {
+                encoding = null;
+            }
+            registry.put(PYTHON_CONSOLE_ENCODING, encoding);
         }
         // Set up options from registry
         Options.setFromRegistry();

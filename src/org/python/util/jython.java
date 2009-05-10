@@ -280,8 +280,7 @@ public class jython {
 
         if (opts.fixInteractive || (opts.filename == null && opts.command == null)) {
             if (opts.encoding == null) {
-                opts.encoding = PySystemState.registry.getProperty(
-                                "python.console.encoding", null);
+                opts.encoding = PySystemState.registry.getProperty("python.console.encoding");
             }
             if (opts.encoding != null) {
                 if (!Charset.isSupported(opts.encoding)) {
@@ -422,6 +421,7 @@ class CommandLineOptions {
                 warnoptions.add(args[++index]);
             } else if (arg.equals("-C")) {
                 encoding = args[++index];
+                setProperty("python.console.encoding", encoding);
             } else if (arg.equals("-E")) {
                 // XXX: accept -E (ignore environment variables) to be compatiable with
                 // CPython. do nothing for now (we could ignore the registry)
