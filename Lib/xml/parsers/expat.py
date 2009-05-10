@@ -55,6 +55,10 @@ except ImportError:
     _xerces_parser = "org.apache.xerces.parsers.SAXParser"
 
 
+# @expat args registry
+_register = {}
+
+
 def ParserCreate(encoding=None, namespace_separator=None):
     return XMLParser(encoding, namespace_separator)
 
@@ -228,13 +232,7 @@ def _encode(arg, encoding):
         return type(arg)(_encode(_arg, encoding) for _arg in iterator)
 
 
-def expat(callback=None, guard="True", force=False, returns="None"):
-    global _register
-    try:
-        _ = _register
-    except NameError:
-        _register = {}
-
+def expat(callback=None, guard=True, force=False, returns=None):
     def _expat(method):
         name = method.__name__
         context = id(sys._getframe(1))
@@ -247,8 +245,10 @@ def expat(callback=None, guard="True", force=False, returns="None"):
             parser = self.parser
             self._update_location(event=name) # bug if multiple method def
             for (method, callback, guard, force, returns) in _register[key]:
-                _callback = callback and eval(guard) and \
-                                         getattr(parser, callback, None)
+                if guard not in (True, False):
+                    guard = getattr(self, guard)
+                _callback = callback and guard and \
+                            getattr(parser, callback, None)
                 if _callback or force:
                     results = method(*args)
                     if _callback:
@@ -257,12 +257,8 @@ def expat(callback=None, guard="True", force=False, returns="None"):
                         if not parser.returns_unicode:
                             results = _encode(results, "utf-8")
                         _callback(*results)
-                    return_ = eval(returns)
-                    if callable(return_):
-                        return return_(*args[1:])
-                    else:
-                        return return_
-                    break
+                    return returns
+
         new_method.__name__ = name
         #new_method.__doc__ = method.__doc__ # what to do with multiple docs ?
         return new_method
@@ -274,7 +270,7 @@ class XMLEventHandler(DefaultHandler2):
     def __init__(self, parser):
         self.parser = parser
         self._tags = {}
-        self.dtd = False
+        self.not_in_dtd = True
         self._entity = {}
         self._previous_event = None
 
@@ -370,33 +366,26 @@ class XMLEventHandler(DefaultHandler2):
     def endPrefixMapping(self, prefix):
         return prefix
 
-    def _empty_source(self, *args):
-        name, publicId, baseURI, systemId = args
-        source = InputSource()
-        byte_stream = ByteArrayInputStream(array([], "b"))
-        source.setByteStream(byte_stream)
-        source.setPublicId(publicId)
-        source.setSystemId(systemId)
-        return source
+    empty_source = InputSource(ByteArrayInputStream(array([], "b")))
 
-    @expat("ExternalEntityRefHandler", guard="not self.dtd",
-                                       returns="self._empty_source")
+    @expat("ExternalEntityRefHandler", guard="not_in_dtd",
+                                       returns=empty_source)
     def resolveEntity(self, name, publicId, baseURI, systemId):
         context = name # wrong. see expat headers documentation.
         base = self.parser.GetBase()
         return context, base, systemId, publicId
 
-    @expat("DefaultHandlerExpand", guard="not self.dtd",
-                                   returns="self._empty_source")
+    @expat("DefaultHandlerExpand", guard="not_in_dtd",
+                                   returns=empty_source)
     def resolveEntity(self, name, publicId, baseURI, systemId):
         return "&%s;" % name
 
-    @expat("DefaultHandler", guard="not self.dtd",
-                             returns="self._empty_source")
+    @expat("DefaultHandler", guard="not_in_dtd",
+                             returns=empty_source)
     def resolveEntity(self, name, publicId, baseURI, systemId):
         return "&%s;" % name
 
-    @expat(force=True, returns="self._empty_source")
+    @expat(force=True, returns=empty_source)
     def resolveEntity(self, name, publicId, baseURI, systemId):
         pass
 
@@ -429,13 +418,13 @@ class XMLEventHandler(DefaultHandler2):
 
     @expat("StartDoctypeDeclHandler", force=True)
     def startDTD(self, name, publicId, systemId):
-        self.dtd = True
+        self.not_in_dtd = False
         has_internal_subset = 0 # don't know this ...
         return name, systemId, publicId, has_internal_subset
 
     @expat("EndDoctypeDeclHandler", force=True)
     def endDTD(self):
-        self.dtd = False
+        self.not_in_dtd = True
 
     def startEntity(self, name):
         self._entity = {}
