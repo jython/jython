@@ -691,7 +691,7 @@ public class PyLocalDerived extends PyLocal implements Slotted {
         if (impl!=null) {
             PyObject res=impl.__get__(this,self_type).__call__();
             if (res instanceof PyInteger||res instanceof PyLong)
-                return(PyObject)res;
+                return res;
             throw Py.TypeError("__int__"+" should return an integer");
         }
         return super.__int__();
