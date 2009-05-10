@@ -164,19 +164,19 @@ public class PySystemState extends PyObject
         // Set up the initial standard ins and outs
         String mode = Options.unbuffered ? "b" : "";
         int buffering = Options.unbuffered ? 0 : 1;
-        stdout = new PyFile(System.out, "<stdout>", "w" + mode, buffering, false);
-        stderr = new PyFile(System.err, "<stderr>", "w" + mode, 0, false);
-        stdin = new PyFile(System.in, "<stdin>", "r" + mode, buffering, false);
+        stdin = __stdin__ = new PyFile(System.in, "<stdin>", "r" + mode, buffering, false);
+        stdout = __stdout__ = new PyFile(System.out, "<stdout>", "w" + mode, buffering, false);
+        stderr = __stderr__ = new PyFile(System.err, "<stderr>", "w" + mode, 0, false);
+        if (Py.getSystemState() != null) {
+            // XXX: initEncoding fails without an existing sys module as it can't import
+            // os (for os.isatty). In that case PySystemState.doInitialize calls it for
+            // us. The correct fix for this is rewriting the posix/nt module portions of
+            // os in Java
+            initEncoding();
+        }
+
         __displayhook__ = new PySystemStateFunctions("displayhook", 10, 1, 1);
         __excepthook__ = new PySystemStateFunctions("excepthook", 30, 3, 3);
-
-        String encoding = registry.getProperty("python.console.encoding", "US-ASCII");
-        ((PyFile)stdout).encoding = encoding;
-        ((PyFile)stderr).encoding = encoding;
-        ((PyFile)stdin).encoding = encoding;
-        __stdout__ = stdout;
-        __stderr__ = stderr;
-        __stdin__ = stdin;
 
         if (builtins == null) {
             builtins = getDefaultBuiltins();
@@ -212,6 +212,25 @@ public class PySystemState extends PyObject
             name == "builtins" ||
             name == "warnoptions") {
             throw Py.TypeError("readonly attribute");
+        }
+    }
+
+    private void initEncoding() {
+        String encoding;
+        try {
+            encoding = System.getProperty("file.encoding");
+        } catch (SecurityException se) {
+            encoding = null;
+        }
+        if (encoding == null) {
+            return;
+        }
+
+        for (PyFile stdStream : new PyFile[] {(PyFile)this.stdin, (PyFile)this.stdout,
+                                              (PyFile)this.stderr}) {
+            if (stdStream.isatty()) {
+                stdStream.encoding = encoding;
+            }
         }
     }
 
@@ -815,6 +834,8 @@ public class PySystemState extends PyObject
             Py.defaultSystemState.setClassLoader(classLoader);
         }
         Py.initClassExceptions(getDefaultBuiltins());
+        // defaultSystemState can't init its own encoding, see its constructor
+        Py.defaultSystemState.initEncoding();
         // Make sure that Exception classes have been loaded
         new PySyntaxError("", 1, 1, "", "");
         return Py.defaultSystemState;

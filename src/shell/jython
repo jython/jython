@@ -16,7 +16,8 @@ cygwin=false
 
 # ----- Identify OS we are running under --------------------------------------
 case "`uname`" in
-  CYGWIN*) cygwin=true
+  CYGWIN*) cygwin=true;;
+  Darwin) darwin=true;;
 esac
 
 # ----- Verify and set required environment variables -------------------------
@@ -107,6 +108,8 @@ if [ -z "$JAVA_STACK" ]; then
   JAVA_STACK=-Xss1024k
 fi
 
+JAVA_ENCODING=""
+
 # Split out any -J argument for passing to the JVM.
 # Scanning for args is aborted by '--'.
 while [ $# -gt 0 ] ; do
@@ -127,7 +130,10 @@ while [ $# -gt 0 ] ; do
           echo "(Prepend -J in front of these options when using 'jython' command)" 
           exit
       else
-	java_args=("${java_args[@]}" "${1:2}")
+          if [ "${val:0:16}" = "-Dfile.encoding=" ]; then
+              JAVA_ENCODING=$val
+          fi
+	  java_args=("${java_args[@]}" "${1:2}")
       fi
       ;;
     # Match switches that take an argument
@@ -194,6 +200,11 @@ while [ $# -gt 0 ] ; do
   esac
   shift
 done
+
+# Force file.encoding to UTF-8 when on Mac, since Apple JDK defaults to MacRoman (JRUBY-3576)
+if [[ $darwin && -z "$JAVA_ENCODING" ]]; then
+  java_args=("${java_args[@]}" "-Dfile.encoding=UTF-8")
+fi
 
 # Append the rest of the arguments
 python_args=("${python_args[@]}" "$@")
