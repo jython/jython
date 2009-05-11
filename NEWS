@@ -1,6 +1,6 @@
 Jython NEWS
 
-Jython 2.5.0 rc 1
+Jython 2.5.0 a0 - rc1
   Bugs fixed (new numbering due to move to Roundup)
     - [ 1188 ] Patch against trunk to handle SecurityExceptions
     - [ 1271 ] Bean property accessors in derived class overide methods in base class
@@ -9,9 +9,6 @@ Jython 2.5.0 rc 1
     - [ 1272 ] ASTList ClassCastException
     - [ 1261 ] jython -c "import sys; sys.exit(1)" not giving correct exit code.
     - [ 1215 ] extra spaces in import statement break importing
-
-Jython 2.5.0 a0 - b3
-  Bugs fixed (new numbering due to move to Roundup)
     - [ 1126 ] ImportError raised for Java subpackages import
     - [ 1111 ] keyword arguments not supported on __import__
     - [ 1567212 ] Jython $py.class bytecode doesn't include the .py's mtime
