@@ -416,8 +416,7 @@ public class _marshal implements ClassDictInit {
                     int size = read_int();
                     String s = read_string(size);
                     if (type == TYPE_INTERNED) {
-                        s.intern(); // do we really honor like this?
-                        PyString pys = PyString.fromInterned(s);
+                        PyString pys = PyString.fromInterned(s.intern());
                         strings.append(pys);
                         return pys;
                     } else {

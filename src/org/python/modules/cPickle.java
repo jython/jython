@@ -1426,7 +1426,7 @@ public class cPickle implements ClassDictInit {
     /*
      * A very specialized and simplified version of PyStringMap. It can
      * only use integers as keys and stores both an integer and an object
-     * as value. It is very private!
+     * as value. It is very private! And should only be used thread-confined.
      */
     static private class PickleMemo {
         //Table of primes to cycle through
@@ -1456,7 +1456,7 @@ public class cPickle implements ClassDictInit {
             this(4);
         }
 
-        public synchronized int size() {
+        public int size() {
             return size;
         }
 
@@ -1521,7 +1521,7 @@ public class cPickle implements ClassDictInit {
         }
 
 
-        private synchronized final void resize(int capacity) {
+        private final void resize(int capacity) {
             int p = prime;
             for(; p<primes.length; p++) {
                 if (primes[p] >= capacity) break;
