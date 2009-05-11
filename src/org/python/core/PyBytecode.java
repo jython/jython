@@ -175,7 +175,7 @@ public class PyBytecode extends PyBaseCode {
     };
 
     // to enable why's to be stored on a PyStack
-    private class PyStackWhy extends PyObject {
+    private static class PyStackWhy extends PyObject {
 
         Why why;
 
@@ -189,7 +189,7 @@ public class PyBytecode extends PyBaseCode {
         }
     }
 
-    private class PyStackException extends PyObject {
+    private static class PyStackException extends PyObject {
 
         PyException exception;
 
@@ -1361,7 +1361,7 @@ public class PyBytecode extends PyBaseCode {
 
     // XXX - perhaps add support for max stack size (presumably from co_stacksize)
     // and capacity hints
-    private class PyStack {
+    private static class PyStack {
 
         final List<PyObject> stack;
 
@@ -1479,7 +1479,7 @@ public class PyBytecode extends PyBaseCode {
         }
     }
 
-    private class PyTryBlock extends PyObject { // purely to sit on top of the existing PyFrame in f_exits!!!
+    private static class PyTryBlock extends PyObject { // purely to sit on top of the existing PyFrame in f_exits!!!
 
         int b_type;			/* what kind of block this is */
 

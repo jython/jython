@@ -33,7 +33,7 @@ public class cStringIO {
 
     // would be nicer if we directly imported from os, but crazy to do so
     // since in python code itself
-    private class os {
+    private static class os {
         public static final int SEEK_SET = 0;
         public static final int SEEK_CUR = 1;
         public static final int SEEK_END = 2;

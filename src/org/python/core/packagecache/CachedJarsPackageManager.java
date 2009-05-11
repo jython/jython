@@ -167,13 +167,13 @@ public abstract class CachedJarsPackageManager extends PackageManager {
 
         // Turn each vector into a comma-separated String
         Map<String, String> transformed = Generic.map();
-        for (String key : zipPackages.keySet()) {
-            List<String>[] vec = zipPackages.get(key);
+        for (Entry<String,List<String>[]> kv : zipPackages.entrySet()) {
+            List<String>[] vec = kv.getValue();
             String classes = listToString(vec[0]);
             if (vec[1].size() > 0) {
                 classes += '@' + listToString(vec[1]);
             }
-            transformed.put(key, classes);
+            transformed.put(kv.getKey(), classes);
         }
 
         return transformed;
@@ -344,6 +344,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
 
     // Read in cache file storing package info for a single .jar
     // Return null and delete this cachefile if it is invalid
+    @SuppressWarnings("empty-statement")
     private Map<String, String> readCacheFile(JarXEntry entry, String jarcanon) {
         String cachefile = entry.cachefile;
         long mtime = entry.mtime;
@@ -388,9 +389,9 @@ public abstract class CachedJarsPackageManager extends PackageManager {
             ostream.writeLong(entry.mtime);
             comment("rewriting cachefile for '" + jarcanon + "'");
 
-            for (String packageName : zipPackages.keySet()) {
-                String classes = zipPackages.get(packageName);
-                ostream.writeUTF(packageName);
+            for (Entry<String,String> kv : zipPackages.entrySet()) {
+                String classes = kv.getValue();
+                ostream.writeUTF(kv.getKey());
                 ostream.writeUTF(classes);
             }
             ostream.close();

@@ -490,15 +490,15 @@ public final class Py {
     /* Helper functions for PyProxy's */
 
     /* Convenience methods to create new constants without using "new" */
-    private static PyInteger[] integerCache = null;
+    private final static PyInteger[] integerCache = new PyInteger[1000];
+
+    static {
+        for (int j = -100; j < 900; j++) {
+            integerCache[j + 100] = new PyInteger(j);
+        }
+    }
 
     public static final PyInteger newInteger(int i) {
-        if (integerCache == null) {
-            integerCache = new PyInteger[1000];
-            for (int j = -100; j < 900; j++) {
-                integerCache[j + 100] = new PyInteger(j);
-            }
-        }
         if (i >= -100 && i < 900) {
             return integerCache[i + 100];
         } else {
@@ -1442,7 +1442,14 @@ public final class Py {
             throw Py.TypeError("None required for void return");
         }
     }
-    private static PyString[] letters = null;
+    
+    private final static PyString[] letters = new PyString[256];
+
+    static {
+        for (char j = 0; j < 256; j++) {
+            letters[j] = new PyString(new Character(j).toString());
+        }
+    }
 
     public static final PyString makeCharacter(Character o) {
         return makeCharacter(o.charValue());
@@ -1460,13 +1467,6 @@ public final class Py {
                                                              + "toUnicode argument", codepoint));
         } else if (codepoint > 256) {
             return new PyString((char)codepoint);
-        }
-
-        if (letters == null) {
-            letters = new PyString[256];
-            for (char j = 0; j < 256; j++) {
-                letters[j] = new PyString(new Character(j).toString());
-            }
         }
         return letters[codepoint];
     }

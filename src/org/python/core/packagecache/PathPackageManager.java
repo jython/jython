@@ -64,7 +64,7 @@ public abstract class PathPackageManager extends CachedJarsPackageManager {
         return false;
     }
 
-    class PackageExistsFileFilter implements FilenameFilter {
+    private static class PackageExistsFileFilter implements FilenameFilter {
         private boolean java;
 
         private boolean python;

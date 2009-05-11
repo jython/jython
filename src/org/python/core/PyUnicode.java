@@ -365,7 +365,7 @@ public class PyUnicode extends PyString implements Iterable {
         }
     }
 
-    private class SteppedIterator<T> implements Iterator {
+    private static class SteppedIterator<T> implements Iterator {
 
         private final Iterator<T> iter;
         private final int step;
@@ -526,7 +526,7 @@ public class PyUnicode extends PyString implements Iterable {
         return new PyUnicode(buffer);
     }
 
-    private class StripIterator implements Iterator {
+    private static class StripIterator implements Iterator {
 
         private final Iterator<Integer> iter;
         private int lookahead = -1;
@@ -715,7 +715,7 @@ public class PyUnicode extends PyString implements Iterable {
         }
     }
 
-    private class PeekIterator<T> implements Iterator {
+    private static class PeekIterator<T> implements Iterator {
 
         private T lookahead = null;
         private final Iterator<T> iter;
@@ -744,7 +744,7 @@ public class PyUnicode extends PyString implements Iterable {
         }
     }
 
-    private class ReversedIterator<T> implements Iterator {
+    private static class ReversedIterator<T> implements Iterator {
 
         private final List<T> reversed = Generic.list();
         private final Iterator<T> iter;

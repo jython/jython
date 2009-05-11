@@ -123,7 +123,7 @@ public class PyInstance extends PyObject {
             if (args.length != 0) {
                 init = instclass.lookup("__init__");
                 if (init != null) {
-                    ret = init.__call__(this, args, keywords);
+                    init.__call__(this, args, keywords);
                 } else {
                     throw Py.TypeError("this constructor takes no arguments");
                 }

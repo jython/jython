@@ -344,40 +344,40 @@ public class Time implements ClassDictInit
                                                           "Nov",
                                                           "Dec"};
 
-    private static String _shortday(int dow) {
+    private synchronized static String _shortday(int dow) {
         // we need to hand craft shortdays[] because Java and Python have
         // different specifications.  Java (undocumented) appears to be
         // first element "", followed by 0=Sun.  Python says 0=Mon
-        try {
-            if (shortdays == null) {
-                shortdays = new String[7];
-                String[] names = datesyms.getShortWeekdays();
-                for (int i=0; i<6; i++)
-                    shortdays[i] = names[i+2];
-                shortdays[6] = names[1];
+        if (shortdays == null) {
+            shortdays = new String[7];
+            String[] names = datesyms.getShortWeekdays();
+            for (int i = 0; i < 6; i++) {
+                shortdays[i] = names[i + 2];
             }
+            shortdays[6] = names[1];
         }
-        catch (ArrayIndexOutOfBoundsException e) {
-            throwValueError("day of week out of range (0-6)");
+        try {
+            return shortdays[dow];
+        } catch (ArrayIndexOutOfBoundsException e) {
+            throw new PyException(Py.ValueError, new PyString("day of week out of range (0-6)"));
         }
-        return shortdays[dow];
     }
 
-    private static String _shortmonth(int month0to11) {
+    private synchronized static String _shortmonth(int month0to11) {
         // getShortWeekdays() returns a 13 element array with the last item
         // being the empty string.  This is also undocumented ;-/
-        try {
-            if (shortmonths == null) {
-                shortmonths = new String[12];
-                String[] names = datesyms.getShortMonths();
-                for (int i=0; i<12; i++)
-                    shortmonths[i] = names[i];
+        if (shortmonths == null) {
+            shortmonths = new String[12];
+            String[] names = datesyms.getShortMonths();
+            for (int i = 0; i < 12; i++) {
+                shortmonths[i] = names[i];
             }
         }
-        catch (ArrayIndexOutOfBoundsException e) {
-            throwValueError("month out of range (1-12)");
+        try {
+            return shortmonths[month0to11];
+        } catch (ArrayIndexOutOfBoundsException e) {
+            throw new PyException(Py.ValueError, new PyString("month out of range (1-12)"));
         }
-        return shortmonths[month0to11];
     }
 
     private static String _padint(int i, int target) {

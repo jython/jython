@@ -13,6 +13,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.UnsupportedCharsetException;
 import java.security.AccessControlException;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.jar.JarEntry;
@@ -650,9 +651,10 @@ public class PySystemState extends PyObject
                     FileInputStream fp = new FileInputStream(file);
                     try {
                         fileProperties.load(fp);
-                        for (Object key : fileProperties.keySet()) {
+                        for (Entry kv : fileProperties.entrySet()) {
+                            Object key = kv.getKey();
                             if (!registry.containsKey(key)) {
-                                registry.put(key, fileProperties.get(key));
+                                registry.put(key, kv.getValue());
                             }
                         }
                     } finally {

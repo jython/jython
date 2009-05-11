@@ -220,12 +220,16 @@ public class jython {
                    } catch (FileNotFoundException e) {
                        throw Py.IOError(e);
                    }
-                   if (FileUtil.isatty(file.getFD())) {
-                       opts.interactive = true;
-                       interp.interact(null, new PyFile(file));
-                       System.exit(0);
-                   } else {
-                       interp.execfile(file, opts.filename);
+                   try {
+                       if (FileUtil.isatty(file.getFD())) {
+                           opts.interactive = true;
+                           interp.interact(null, new PyFile(file));
+                           System.exit(0);
+                       } else {
+                           interp.execfile(file, opts.filename);
+                       }
+                   } finally {
+                       file.close();
                    }
                 } catch (Throwable t) {
                     if (t instanceof PyException
