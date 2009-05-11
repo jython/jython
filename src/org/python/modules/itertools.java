@@ -109,15 +109,14 @@ public class itertools implements ClassDictInit {
      */
     public static PyIterator cycle(final PyObject sequence) {
         return new ItertoolsIterator() {
-            List saved = new ArrayList();
+            List<PyObject> saved = new ArrayList<PyObject>();
             int counter = 0;
             PyObject iter = sequence.__iter__();
 
             boolean save = true;
 
             public PyObject __iternext__() {
-                
-                if(save) {
+                if (save) {
                     PyObject obj = nextElement(iter);
                     if (obj != null) {
                         saved.add(obj);
@@ -126,16 +125,16 @@ public class itertools implements ClassDictInit {
                         save = false;
                     }
                 }
-                if(saved.size() == 0) {
+                if (saved.size() == 0) {
                     return null;
                 }
                 
                 // pick element from saved List
-                if(counter >= saved.size()) {
+                if (counter >= saved.size()) {
                     // start over again
                     counter = 0;
                 }
-                return (PyObject) saved.get(counter++);
+                return (PyObject)saved.get(counter++);
             }
 
         };

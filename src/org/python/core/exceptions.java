@@ -634,11 +634,12 @@ public class exceptions extends PyObject implements ClassDictInit {
         return bindStaticJavaMethod(name, exceptions.class, methodName);
     }
 
-    public static PyObject bindStaticJavaMethod(String name, Class cls, String methodName) {
+    public static PyObject bindStaticJavaMethod(String name, Class<?> cls, String methodName) {
         Method javaMethod;
         try {
-            javaMethod = cls.getMethod(methodName, new Class[] {PyObject.class, PyObject[].class,
-                                                                String[].class});
+            javaMethod = cls.getMethod(methodName,
+                                       new Class<?>[] {PyObject.class, PyObject[].class,
+                                                       String[].class});
         } catch (Exception e) {
             throw Py.JavaError(e);
         }

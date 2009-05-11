@@ -365,14 +365,14 @@ for line in sys.stdin:
         boolean ok = true;
 
         for (;;) {
-            switch ((int)set[setidx++]) {
+            switch (set[setidx++]) {
 
             case SRE_OP_FAILURE:
                 TRACE(setidx, ch, "CHARSET FAILURE");
                 return !ok;
                 
             case SRE_OP_LITERAL:
-                TRACE(setidx, ch, "CHARSET LITERAL " + (int) set[setidx]);
+                TRACE(setidx, ch, "CHARSET LITERAL " + set[setidx]);
                 /* <LITERAL> <code> */
                 if (ch == set[setidx])
                     return ok;
@@ -381,8 +381,8 @@ for line in sys.stdin:
                 
             case SRE_OP_CATEGORY:
                 /* <CATEGORY> <code> */
-                TRACE(setidx, ch, "CHARSET CHARSET " + (int) set[setidx]);
-                if (sre_category((int)set[setidx], ch))
+                TRACE(setidx, ch, "CHARSET CHARSET " + set[setidx]);
+                if (sre_category(set[setidx], ch))
                     return ok;
                 setidx++;
                 break;
@@ -403,7 +403,7 @@ for line in sys.stdin:
                 
             case SRE_OP_RANGE:
                 /* <RANGE> <lower> <upper> */
-                TRACE(setidx, ch, "CHARSET RANGE " + (int) set[setidx] + " " + (int) set[setidx+1]);
+                TRACE(setidx, ch, "CHARSET RANGE " + set[setidx] + " " + set[setidx+1]);
                 if (set[setidx] <= ch && ch <= set[setidx+1])
                     return ok;
                 setidx += 2;
@@ -494,7 +494,7 @@ for line in sys.stdin:
         case SRE_OP_LITERAL_IGNORE:
             /* repeated literal */
             chr = pattern[pidx+1];
-            TRACE(pidx, ptr, "COUNT LITERAL_IGNORE " + (int) chr);
+            TRACE(pidx, ptr, "COUNT LITERAL_IGNORE " + chr);
             while (ptr < end && lower(str[ptr]) == chr)
                 ptr++;
             break;
@@ -502,7 +502,7 @@ for line in sys.stdin:
         case SRE_OP_NOT_LITERAL:
             /* repeated non-literal */
             chr = pattern[pidx+1];
-            TRACE(pidx, ptr, "COUNT NOT_LITERAL " + (int) chr);
+            TRACE(pidx, ptr, "COUNT NOT_LITERAL " + chr);
             while (ptr < end && str[ptr] != chr)
                 ptr++;
             break;
@@ -510,7 +510,7 @@ for line in sys.stdin:
         case SRE_OP_NOT_LITERAL_IGNORE:
             /* repeated non-literal */
             chr = pattern[pidx+1];
-            TRACE(pidx, ptr, "COUNT NOT_LITERAL_IGNORE " + (int) chr);
+            TRACE(pidx, ptr, "COUNT NOT_LITERAL_IGNORE " + chr);
             while (ptr < end && lower(str[ptr]) != chr)
                 ptr++;
             break;
@@ -564,8 +564,8 @@ for line in sys.stdin:
             case SRE_OP_MARK:
                 /* set mark */
                 /* <MARK> <gid> */
-                TRACE(pidx, ptr, "MARK " + (int) pattern[pidx]);
-                i = (int)pattern[pidx];
+                TRACE(pidx, ptr, "MARK " + pattern[pidx]);
+                i = pattern[pidx];
                 if ((i & 1) != 0)
                     this.lastindex = i / 2 + 1;
                 if (i > this.lastmark)
@@ -577,7 +577,7 @@ for line in sys.stdin:
             case SRE_OP_LITERAL:
                 /* match literal character */
                 /* <LITERAL> <code> */
-                TRACE(pidx, ptr, "LITERAL " + (int) pattern[pidx]);
+                TRACE(pidx, ptr, "LITERAL " + pattern[pidx]);
 
                 if (ptr >= end || str[ptr] != pattern[pidx])
                     return 0;
@@ -588,7 +588,7 @@ for line in sys.stdin:
             case SRE_OP_NOT_LITERAL:
                 /* match anything that is not literal character */
                 /* args: <code> */
-                TRACE(pidx, ptr, "NOT_LITERAL " + (int) pattern[pidx]);
+                TRACE(pidx, ptr, "NOT_LITERAL " + pattern[pidx]);
                 if (ptr >= end || str[ptr] == pattern[pidx])
                     return 0;
                 pidx++;
@@ -604,8 +604,8 @@ for line in sys.stdin:
             case SRE_OP_AT:
                 /* match at given position */
                 /* <AT> <code> */
-                TRACE(pidx, ptr, "AT " + (int) pattern[pidx]);
-                if (!SRE_AT(ptr, (int)pattern[pidx]))
+                TRACE(pidx, ptr, "AT " + pattern[pidx]);
+                if (!SRE_AT(ptr, pattern[pidx]))
                     return 0;
                 pidx++;
                 break;
@@ -613,9 +613,9 @@ for line in sys.stdin:
             case SRE_OP_CATEGORY:
                 /* match at given category */
                 /* <CATEGORY> <code> */
-                TRACE(pidx, ptr, "CATEGORY " + (int)pattern[pidx]);
+                TRACE(pidx, ptr, "CATEGORY " + pattern[pidx]);
 
-                if (ptr >= end || !sre_category((int)pattern[pidx], str[ptr]))
+                if (ptr >= end || !sre_category(pattern[pidx], str[ptr]))
                     return 0;
 
                 pidx++;
@@ -650,7 +650,7 @@ for line in sys.stdin:
                 break;
 
             case SRE_OP_LITERAL_IGNORE:
-                TRACE(pidx, ptr, "LITERAL_IGNORE " + (int) pattern[pidx]);
+                TRACE(pidx, ptr, "LITERAL_IGNORE " + pattern[pidx]);
                 if (ptr >= end || lower(str[ptr]) != lower(pattern[pidx]))
                     return 0;
                 pidx++;
@@ -658,7 +658,7 @@ for line in sys.stdin:
                 break;
 
             case SRE_OP_NOT_LITERAL_IGNORE:
-                TRACE(pidx, ptr, "NOT_LITERAL_IGNORE " + (int) pattern[pidx]);
+                TRACE(pidx, ptr, "NOT_LITERAL_IGNORE " + pattern[pidx]);
                 if (ptr >= end || lower(str[ptr]) == lower(pattern[pidx]))
                     return 0;
                 pidx++;
@@ -679,7 +679,7 @@ for line in sys.stdin:
             case SRE_OP_INFO:
                 /* jump forward */
                 /* <JUMP> <offset> */
-                TRACE(pidx, ptr, "JUMP " + (int) pattern[pidx]);
+                TRACE(pidx, ptr, "JUMP " + pattern[pidx]);
                 pidx += pattern[pidx];
                 break;
 
@@ -724,7 +724,7 @@ for line in sys.stdin:
 
                 int mincount = pattern[pidx+1];
 
-                TRACE(pidx, ptr, "REPEAT_ONE " + mincount + " " + (int)pattern[pidx+2]);
+                TRACE(pidx, ptr, "REPEAT_ONE " + mincount + " " + pattern[pidx+2]);
                 if (ptr + mincount > end)
                     return 0; /* cannot match */
 
@@ -860,7 +860,7 @@ for line in sys.stdin:
                    by the UNTIL operator (MAX_UNTIL, MIN_UNTIL) */
                 /* <REPEAT> <skip> <1=min> <2=max> item <UNTIL> tail */
 
-                TRACE(pidx, ptr, "REPEAT " + (int)pattern[pidx+1] + " " + (int)pattern[pidx+2]);
+                TRACE(pidx, ptr, "REPEAT " + pattern[pidx+1] + " " + pattern[pidx+2]);
 
                 SRE_REPEAT rep = new SRE_REPEAT(repeat);
                 rep.count = -1;
@@ -1033,7 +1033,7 @@ for line in sys.stdin:
             case SRE_OP_ASSERT:
                 /* assert subpattern */
                 /* args: <skip> <back> <pattern> */
-                TRACE(pidx, ptr, "ASSERT " + (int) pattern[pidx+1]);
+                TRACE(pidx, ptr, "ASSERT " + pattern[pidx+1]);
 
                 this.ptr = ptr - pattern[pidx + 1];
                 if (this.ptr < this.beginning)
@@ -1047,7 +1047,7 @@ for line in sys.stdin:
             case SRE_OP_ASSERT_NOT:
                 /* assert not subpattern */
                 /* args: <skip> <pattern> */
-                TRACE(pidx, ptr, "ASSERT_NOT " + (int) pattern[pidx]);
+                TRACE(pidx, ptr, "ASSERT_NOT " + pattern[pidx]);
                 this.ptr = ptr - pattern[pidx + 1];
                 if (this.ptr >= this.beginning) {
                     i = SRE_MATCH(pattern, pidx + 2, level + 1);
@@ -1065,7 +1065,7 @@ for line in sys.stdin:
                 return 0;
 
             default:
-                TRACE(pidx, ptr, "UNKNOWN " + (int) pattern[pidx-1]);
+                TRACE(pidx, ptr, "UNKNOWN " + pattern[pidx-1]);
                 return SRE_ERROR_ILLEGAL;
             }
         }

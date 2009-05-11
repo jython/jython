@@ -590,7 +590,7 @@ public class PyString extends PyBaseString
         return StringUtil.toBytes(string);
     }
 
-    public Object __tojava__(Class c) {
+    public Object __tojava__(Class<?> c) {
         if (c.isAssignableFrom(String.class)) {
             return string;
         }

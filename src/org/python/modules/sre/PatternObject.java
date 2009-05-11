@@ -246,7 +246,7 @@ public class PatternObject extends PyObject {
 
         SRE_STATE state = new SRE_STATE(string, start, end, flags);
 
-        final List list = new ArrayList();
+        final List<PyObject> list = new ArrayList<PyObject>();
 
         while (state.start <= state.end) {
             state.state_reset();

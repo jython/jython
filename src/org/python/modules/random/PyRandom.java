@@ -48,7 +48,7 @@ public class PyRandom extends PyObject {
         if (seed instanceof PyLong) {
             PyLong max = new PyLong(Long.MAX_VALUE);
             PyLong seed_modulus = (PyLong)(seed.__mod__(max));
-            this.javaRandom.setSeed(((PyLong)seed_modulus).asLong(0));
+            this.javaRandom.setSeed(seed_modulus.asLong(0));
         } else if (seed instanceof PyInteger) {
             this.javaRandom.setSeed(((PyInteger)seed).getValue());
         } else {
