@@ -151,7 +151,7 @@ public class PyType extends PyObject implements Serializable {
         }
 
         PyType type;
-        if (new_.for_type == metatype || metatype == PyType.fromClass(Class.class)) {
+        if (new_.for_type == metatype) {
             // XXX: set metatype
             type = new PyType();
         } else {
@@ -437,7 +437,7 @@ public class PyType extends PyObject implements Serializable {
             type_prepended[0] = type;
             newobj = new_.__get__(null, type).__call__(type_prepended, keywords);
         }
-        /* special case type(x) */
+        // special case type(x)
         if (type == TYPE && args.length == 1 && keywords.length == 0) {
             return newobj;
         }
