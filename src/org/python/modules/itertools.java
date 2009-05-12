@@ -1,3 +1,4 @@
+/* Copyright (c) Jython Developers */
 package org.python.modules;
 
 import java.util.ArrayList;
@@ -134,7 +135,7 @@ public class itertools implements ClassDictInit {
                     // start over again
                     counter = 0;
                 }
-                return (PyObject)saved.get(counter++);
+                return saved.get(counter++);
             }
 
         };

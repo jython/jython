@@ -1,3 +1,4 @@
+/* Copyright (c) Jython Developers */
 package org.python.util;
 
 import java.io.File;
@@ -87,6 +88,7 @@ public class JLineConsole extends InteractiveConsole {
         return getClass().getResourceAsStream("jline-keybindings.properties");
     }
 
+    @Override
     public String raw_input(PyObject prompt) {
         String line = null;
         try {

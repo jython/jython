@@ -1,9 +1,10 @@
+/* Copyright (c) Jython Developers */
 package javatests;
+
 import java.util.Map;
 import java.util.Set;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 
 /**
  * This class is used by the test_dict2java.py test script for testing
@@ -13,21 +14,21 @@ import java.util.Iterator;
  */
 public class Dict2JavaTest {
     
-    private Map map = null;
+    private Map<Object, Object> map;
 
-    public Dict2JavaTest(Map map) {
+    public Dict2JavaTest(Map<Object, Object> map) {
         this.map = map;
     }
-    
-    public Set entrySet() {
+
+    public Set<Map.Entry<Object, Object>> entrySet() {
         return map.entrySet();
     }
 
-    public Set keySet() {
+    public Set<Object> keySet() {
         return map.keySet();
     }
     
-    public Collection values() {
+    public Collection<Object> values() {
         return map.values();
     }
     
@@ -41,7 +42,7 @@ public class Dict2JavaTest {
     }
 
     public boolean test_putAll_efg() {
-        HashMap hmap = new HashMap();
+        HashMap<String, String> hmap = new HashMap<String, String>();
         hmap.put("e", "1");
         hmap.put("f", null);
         hmap.put("g", "2");
@@ -70,21 +71,21 @@ public class Dict2JavaTest {
 
     public boolean test_java_mapentry() {
         // created outside of Jython with non PyOjects
-        HashMap hmap = new HashMap();
+        HashMap<String, Object> hmap = new HashMap<String, Object>();
         hmap.put("b", "y");
-        Map.Entry entry = (Map.Entry)hmap.entrySet().iterator().next();
+        Map.Entry<String, Object> entry = hmap.entrySet().iterator().next();
         if (!map.entrySet().contains(entry)) return false;
 
         // Test a number
-        hmap = new HashMap();
+        hmap = new HashMap<String, Object>();
         hmap.put("i", new Integer(3));
-        entry = (Map.Entry)hmap.entrySet().iterator().next();
+        entry = hmap.entrySet().iterator().next();
         if (!map.entrySet().contains(entry)) return false;
 
         // test Null
-        hmap = new HashMap();
+        hmap = new HashMap<String, Object>();
         hmap.put("f", null);
-        entry = (Map.Entry)hmap.entrySet().iterator().next();
+        entry = hmap.entrySet().iterator().next();
         if (!map.entrySet().contains(entry)) return false;
         return true;
     }
@@ -92,7 +93,7 @@ public class Dict2JavaTest {
     // make sure nulls are handled and other object types, nulls
     // should never match anything in the entry set.
     public boolean test_entry_set_nulls() {
-        Set set = map.entrySet();
+        Set<Map.Entry<Object, Object>> set = map.entrySet();
         return set.contains(null) == false  && set.remove(null) == false &&
           set.contains(new Boolean(true)) == false && set.remove(new String("")) == false;
     }
