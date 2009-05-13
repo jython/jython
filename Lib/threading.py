@@ -200,7 +200,7 @@ class JavaThread(object):
         return self._thread.getName()
     
     def setName(self, name):
-        self._thread.setName(name)
+        self._thread.setName(str(name))
 
     def isAlive(self):
         return self._thread.isAlive()
@@ -228,7 +228,7 @@ class Thread(JavaThread):
         self._args = args
         self._kwargs = kwargs
         if name:
-            self._thread.setName(name)
+            self._thread.setName(str(name))
 
     def _create_thread(self):
         return _newFunctionThread(self.__bootstrap, ())
