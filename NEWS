@@ -1,5 +1,9 @@
 Jython NEWS
 
+Jython 2.5.0
+  Bugs fixed
+    - [ 1344 ] setName semantics of threading.Thread different to CPython
+
 Jython 2.5.0 a0 - rc1
   Bugs fixed (new numbering due to move to Roundup)
     - [ 1188 ] Patch against trunk to handle SecurityExceptions
