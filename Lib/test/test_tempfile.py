@@ -1,3 +1,4 @@
+# From Python 2.5.1
 # tempfile.py unit tests.
 from __future__ import with_statement
 import tempfile
@@ -207,21 +208,32 @@ class test__mkstemp_inner(TC):
     class mkstemped:
         _bflags = tempfile._bin_openflags
         _tflags = tempfile._text_openflags
-        _close = os.close
-        _unlink = os.unlink
 
         def __init__(self, dir, pre, suf, bin):
             if bin: flags = self._bflags
             else:   flags = self._tflags
 
+            # XXX: CPython assigns _close/_unlink as class vars but this
+            # would rebind Jython's close/unlink (to be classmethods)
+            # because they're not built-in functions (unfortunately
+            # built-in functions act differently when binding:
+            # http://mail.python.org/pipermail/python-dev/2003-April/034749.html)
+            self._close = os.close
+            self._unlink = os.unlink
             (self.fd, self.name) = tempfile._mkstemp_inner(dir, pre, suf, flags)
 
         def write(self, str):
             os.write(self.fd, str)
+            # XXX: self.test_choose_directory expects the file to have been deleted
+            # (via __del__) by the time it's called, which is CPython specific
+            # garbage collection behavior. We need to delete it now in Jython
+            self._close(self.fd)
+            self._unlink(self.name)
 
         def __del__(self):
             self._close(self.fd)
-            self._unlink(self.name)
+            if os.path.exists(self.name):
+                self._unlink(self.name)
 
     def do_create(self, dir=None, pre="", suf="", bin=1):
         if dir is None:
@@ -247,6 +259,10 @@ class test__mkstemp_inner(TC):
         extant = range(TEST_FILES)
         for i in extant:
             extant[i] = self.do_create(pre="aa")
+        # XXX: Ensure mkstemped files are deleted (can't rely on Java's
+        # GC)
+        for i in extant:
+            i.__del__()
 
     def test_choose_directory(self):
         # _mkstemp_inner can create files in a user-selected directory
@@ -256,7 +272,8 @@ class test__mkstemp_inner(TC):
         finally:
             os.rmdir(dir)
 
-    def test_file_mode(self):
+    # XXX: Jython can't set the write mode yet
+    def _test_file_mode(self):
         # _mkstemp_inner creates files with the proper mode
         if not has_stat:
             return            # ugh, can't use TestSkipped.
@@ -477,6 +494,9 @@ class test_mkdtemp(TC):
         # mkdtemp creates directories with the proper mode
         if not has_stat:
             return            # ugh, can't use TestSkipped.
+        if os.name == 'java':
+            # Java doesn't support stating files for permissions
+            return
 
         dir = self.do_create()
         try:
@@ -509,17 +529,24 @@ class test_mktemp(TC):
             self.dir = None
 
     class mktemped:
-        _unlink = os.unlink
         _bflags = tempfile._bin_openflags
 
         def __init__(self, dir, pre, suf):
+            # XXX: Assign _unlink here, instead of as a class var. See
+            # mkstemped.__init__ for an explanation
+            self._unlink = os.unlink
+
             self.name = tempfile.mktemp(dir=dir, prefix=pre, suffix=suf)
             # Create the file.  This will raise an exception if it's
             # mysteriously appeared in the meanwhile.
             os.close(os.open(self.name, self._bflags, 0600))
-
-        def __del__(self):
+            # XXX: test_mktemp.tearDown expects the file to have been deleted
+            # (via __del__) by the time it's called, which is CPython specific
+            # garbage collection behavior. We need to delete it now in Jython
             self._unlink(self.name)
+
+        #def __del__(self):
+        #    self._unlink(self.name)
 
     def do_create(self, pre="", suf=""):
         try:
@@ -675,3 +702,7 @@ def test_main():
 
 if __name__ == "__main__":
     test_main()
+    # XXX: Nudge Java's GC in an attempt to trigger any temp file's
+    # __del__ (cause them to be deleted) that hasn't been called
+    from java.lang import System
+    System.gc()
