@@ -377,30 +377,32 @@ class _TemporaryFileWrapper:
         self.name = name
         self.close_called = False
 
-        # XXX: CPython assigns unlink as a class var but this would
-        # rebind Jython's os.unlink (to be a classmethod) because it's
-        # not a built-in function (unfortunately built-in functions act
-        # differently when binding:
-        # http://mail.python.org/pipermail/python-dev/2003-April/034749.html)
-
-        # Cache the unlinker so we don't get spurious errors at
-        # shutdown when the module-level "os" is None'd out.  Note
-        # that this must be referenced as self.unlink, because the
-        # name TemporaryFileWrapper may also get None'd out before
-        # __del__ is called.
-        self.unlink = _os.unlink
-
     def __getattr__(self, name):
+        # Attribute lookups are delegated to the underlying file
+        # and cached for non-numeric results
+        # (i.e. methods are cached, closed and friends are not)
         file = self.__dict__['file']
         a = getattr(file, name)
         if type(a) != type(0):
             setattr(self, name, a)
         return a
 
+    # The underlying __enter__ method returns the wrong object
+    # (self.file) so override it to return the wrapper
+    def __enter__(self):
+        self.file.__enter__()
+        return self
+
     # NT provides delete-on-close as a primitive, so we don't need
     # the wrapper to do anything special.  We still use it so that
     # file.name is useful (i.e. not "(fdopen)") with NamedTemporaryFile.
     if _os.name != 'nt':
+        # Cache the unlinker so we don't get spurious errors at
+        # shutdown when the module-level "os" is None'd out.  Note
+        # that this must be referenced as self.unlink, because the
+        # name TemporaryFileWrapper may also get None'd out before
+        # __del__ is called.
+        unlink = _os.unlink
 
         def close(self):
             if not self.close_called:
@@ -410,6 +412,14 @@ class _TemporaryFileWrapper:
 
         def __del__(self):
             self.close()
+
+        # Need to trap __exit__ as well to ensure the file gets
+        # deleted when used in a with statement
+        def __exit__(self, exc, value, tb):
+            result = self.file.__exit__(exc, value, tb)
+            self.close()
+            return result
+
 
 def NamedTemporaryFile(mode='w+b', bufsize=-1, suffix="",
                        prefix=template, dir=None):
