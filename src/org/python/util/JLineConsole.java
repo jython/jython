@@ -10,9 +10,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.util.Arrays;
+import java.util.List;
+
+import com.kenai.constantine.platform.Errno;
 
 import jline.ConsoleReader;
 import jline.Terminal;
+import jline.WindowsTerminal;
 
 import org.python.core.Py;
 import org.python.core.PyObject;
@@ -24,7 +29,21 @@ import org.python.core.PyObject;
  */
 public class JLineConsole extends InteractiveConsole {
 
+    /** Main interface to JLine. */
     protected ConsoleReader reader;
+
+    /** Whether reader is a WindowsTerminal. */
+    private boolean windows;
+
+    /** The ctrl-z character String. */
+    protected static final String CTRL_Z = "\u001a";
+
+    /**
+     * Errno strerrors possibly caused by a SIGSTP (ctrl-z). They may propagate up to
+     * IOException messages.
+     */
+    private static final List<String> SUSPENDED_STRERRORS =
+            Arrays.asList(Errno.EINTR.description(), Errno.EIO.description());
 
     public JLineConsole() {
         this(null);
@@ -57,6 +76,8 @@ public class JLineConsole extends InteractiveConsole {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+
+        windows = reader.getTerminal() instanceof WindowsTerminal;
     }
 
     /**
@@ -84,21 +105,55 @@ public class JLineConsole extends InteractiveConsole {
             }
         } catch (SecurityException se) {
             // continue
-        } 
+        }
         return getClass().getResourceAsStream("jline-keybindings.properties");
     }
 
     @Override
     public String raw_input(PyObject prompt) {
         String line = null;
-        try {
-            line = reader.readLine(prompt.toString());
-        } catch (IOException io) {
-            throw Py.IOError(io);
+        String promptString = prompt.toString();
+
+        while (true) {
+            try {
+                line = reader.readLine(promptString);
+                break;
+            } catch (IOException ioe) {
+                if (!fromSuspend(ioe)) {
+                    throw Py.IOError(ioe);
+                }
+
+                // Hopefully an IOException caused by ctrl-z (seems only BSD throws this).
+                // Must reset jline to continue
+                try {
+                    reader.getTerminal().initializeTerminal();
+                } catch (Exception e) {
+                    throw Py.IOError(e.getMessage());
+                }
+                // Don't redisplay the prompt
+                promptString = "";
+            }
         }
-        if (line == null) {
-            throw Py.EOFError("Ctrl-D exit");
+
+        if (isEOF(line)) {
+            throw Py.EOFError("");
         }
-        return line.endsWith("\n") ? line.substring(0, line.length() - 1) : line;
+
+        return line;
+    }
+
+    /**
+     * Determine if the IOException was likely caused by a SIGSTP (ctrl-z). Seems only
+     * applicable to BSD platforms.
+     */
+    private boolean fromSuspend(IOException ioe) {
+        return !windows && SUSPENDED_STRERRORS.contains(ioe.getMessage());
+    }
+
+    /**
+     * Determine if line denotes an EOF.
+     */
+    private boolean isEOF(String line) {
+        return line == null || (windows && CTRL_Z.equals(line));
     }
 }
