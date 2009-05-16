@@ -317,18 +317,19 @@ public class jython {
      * unexpected behavior with the std file streams.
      */
     private static InteractiveConsole newInterpreter(boolean interactiveStdin) {
-        if (interactiveStdin) {
-            String interpClass = PySystemState.registry.getProperty("python.console", "");
-            if (interpClass.length() > 0) {
-                try {
-                    return (InteractiveConsole)Class.forName(interpClass).newInstance();
-                } catch (Throwable t) {
-                    // fall through
-                }
-            }
-            return new JLineConsole();
+        if (!interactiveStdin) {
+            return new InteractiveConsole();
         }
-        return new InteractiveConsole();
+
+        String interpClass = PySystemState.registry.getProperty("python.console", "");
+        if (interpClass.length() == 0) {
+            try {
+                return (InteractiveConsole)Class.forName(interpClass).newInstance();
+            } catch (Throwable t) {
+                // fall through
+            }
+        }
+        return new JLineConsole();
     }
 
     /**
