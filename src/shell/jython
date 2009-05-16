@@ -91,7 +91,9 @@ else
 fi
 
 if $cygwin; then
-  CP=`cygpath -wp "$CP"`
+  # switch delimiter only after building a Unix style $CP
+  CP_DELIMITER=";"
+  CP=`cygpath -p -w "$CP"`
   PRG=`cygpath -w "$PRG"`
 fi
 
@@ -224,6 +226,10 @@ if $cygwin; then
     win_args=("$win_arg" "$@")
     set -- "${win_args[@]}"
   fi
+
+  # fix JLine to use UnixTerminal
+  stty -icanon min 1 -echo
+  JAVA_OPTS="$JAVA_OPTS -Djline.terminal=jline.UnixTerminal"
 fi
 
 if [ -n "$profile_requested" -o -z "$boot_requested" ] ; then
@@ -260,6 +266,10 @@ elif [ -n "$help_requested" ] ; then
   echo "JAVA_HOME  : Java installation directory" >&2
   echo "JYTHON_HOME: Jython installation directory" >&2
   echo "JYTHON_OPTS: default command line arguments" >&2
+fi
+
+if $cygwin; then
+  stty icanon echo
 fi
 
 exit $JYTHON_STATUS
