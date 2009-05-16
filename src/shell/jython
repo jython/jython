@@ -228,8 +228,10 @@ if $cygwin; then
   fi
 
   # fix JLine to use UnixTerminal
-  stty -icanon min 1 -echo
-  JAVA_OPTS="$JAVA_OPTS -Djline.terminal=jline.UnixTerminal"
+  stty -icanon min 1 -echo > /dev/null 2>&1
+  if [ $? = 0 ]; then
+    JAVA_OPTS="$JAVA_OPTS -Djline.terminal=jline.UnixTerminal"
+  fi
 fi
 
 if [ -n "$profile_requested" -o -z "$boot_requested" ] ; then
@@ -269,7 +271,7 @@ elif [ -n "$help_requested" ] ; then
 fi
 
 if $cygwin; then
-  stty icanon echo
+  stty icanon echo > /dev/null 2>&1
 fi
 
 exit $JYTHON_STATUS
