@@ -205,6 +205,16 @@ __all__ = ['AF_UNSPEC', 'AF_INET', 'AF_INET6', 'AI_PASSIVE', 'SOCK_DGRAM',
         'SHUT_RD', 'SHUT_WR', 'SHUT_RDWR',
         ]
 
+def _constant_to_name(const_value):
+    sock_module = sys.modules['socket']
+    try:
+        for name in dir(sock_module):
+            if getattr(sock_module, name) is const_value:
+                return name
+        return "Unknown"
+    finally:
+        sock_module = None
+
 class _nio_impl:
 
     timeout = None
@@ -235,7 +245,7 @@ class _nio_impl:
                 return struct.pack('ii', enabled, linger_time)
             return result
         else:
-            raise error(errno.ENOPROTOOPT, "Level %d option not supported on socket(%s): %d" % (level, str(self.jsocket), option))
+            raise error(errno.ENOPROTOOPT, "Socket option '%s' (level '%s') not supported on socket(%s)" % (_constant_to_name(option), _constant_to_name(level), str(self.jsocket)))
 
     def setsockopt(self, level, option, value):
         if self.options.has_key( (level, option) ):
@@ -245,7 +255,7 @@ class _nio_impl:
             else:
                 getattr(self.jsocket, "set%s" % self.options[ (level, option) ])(value)
         else:
-            raise error(errno.ENOPROTOOPT, "Level %d option not supported on socket(%s): %d" % (level, str(self.jsocket), option))
+            raise error(errno.ENOPROTOOPT, "Socket option '%s' (level '%s') not supported on socket(%s)" % (_constant_to_name(option), _constant_to_name(level), str(self.jsocket)))
 
     def close(self):
         self.jsocket.close()
