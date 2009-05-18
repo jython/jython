@@ -322,7 +322,7 @@ public class jython {
         }
 
         String interpClass = PySystemState.registry.getProperty("python.console", "");
-        if (interpClass.length() == 0) {
+        if (interpClass.length() > 0) {
             try {
                 return (InteractiveConsole)Class.forName(interpClass).newInstance();
             } catch (Throwable t) {
