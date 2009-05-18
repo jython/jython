@@ -3,6 +3,7 @@ Jython NEWS
 Jython 2.5.0
   Bugs fixed
     - [ 1344 ] setName semantics of threading.Thread different to CPython
+    - Fixed JLine console on cygwin
 
 Jython 2.5.0 a0 - rc1
   Bugs fixed (new numbering due to move to Roundup)
@@ -315,10 +316,18 @@ Jython 2.5.0 a0 - rc1
   New Features
     - PyDictionary now implements Map so it may be passed to any Java function expecting a Map.
     - modjy integrated into core 
+    - The interactive interpreter now uses JLine by default
   Ported Modules
+    - _ast
+    - cmath
     - collections
+    - csv
     - filecmp
+    - functools
+    - hashlib
+    - itertools
     - threading.local
+    - zipimport
 
 Jython 2.2.2 rc1
   Bugs fixed (new numbering due to move to Roundup)
