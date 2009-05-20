@@ -294,7 +294,7 @@ class Thread(JavaThread):
         pass
 
     def __delete(self):
-        pass
+        del _threads[self._thread.getId()]
 
 
 class _MainThread(Thread):
