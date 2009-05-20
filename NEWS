@@ -4,6 +4,7 @@ Jython 2.5.0
   Bugs fixed
     - [ 1344 ] setName semantics of threading.Thread different to CPython
     - Fixed JLine console on cygwin
+    - [ 1348 ] muti-threaded issue, maybe threads cannot exit
 
 Jython 2.5.0 a0 - rc1
   Bugs fixed (new numbering due to move to Roundup)
