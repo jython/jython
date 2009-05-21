@@ -158,6 +158,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
             <pathelement path="${extlibs.dir}/asm-3.1.jar" />
             <pathelement path="${extlibs.dir}/asm-commons-3.1.jar" />
             <pathelement path="${extlibs.dir}/constantine-0.4.jar" />
+            <pathelement path="${extlibs.dir}/jna-posix.jar"/>
         </path>
 
         <available property="informix.present" classname="com.informix.jdbc.IfxDriver" classpath="${informix.jar}" />
