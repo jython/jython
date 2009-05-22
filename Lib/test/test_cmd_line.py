@@ -1,4 +1,4 @@
-
+import os
 import test.test_support, unittest
 import sys
 import popen2
@@ -18,8 +18,11 @@ class CmdLineTest(unittest.TestCase):
     def exit_code(self, *args):
         cmd_line = [sys.executable]
         cmd_line.extend(args)
-        return subprocess.call(cmd_line, stdout=subprocess.PIPE,
-                                         stderr=subprocess.PIPE)
+        devnull = open(os.devnull, 'w')
+        result = subprocess.call(cmd_line, stdout=devnull,
+                                 stderr=subprocess.STDOUT)
+        devnull.close()
+        return result
 
     def test_directories(self):
         self.assertNotEqual(self.exit_code('.'), 0)
