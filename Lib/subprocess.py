@@ -1170,12 +1170,11 @@ class Popen(object):
                 args = [args]
             else:
                 args = list(args)
-                for arg in args:
-                    # XXX: CPython posix (execv) will str() any unicode
-                    # args first, maybe we should do the same on
-                    # posix. Windows passes unicode through however
-                    if not isinstance(arg, (str, unicode)):
-                        raise TypeError('args must contain only strings')
+                # NOTE: CPython posix (execv) will str() any unicode
+                # args first, maybe we should do the same on
+                # posix. Windows passes unicode through, however
+                if any(not isinstance(arg, (str, unicode)) for arg in args):
+                    raise TypeError('args must contain only strings')
                 args = _escape_args(args)
 
             if shell:
@@ -1184,11 +1183,7 @@ class Popen(object):
             if executable is not None:
                 args[0] = executable
 
-            try:
-                builder = java.lang.ProcessBuilder(args)
-            except java.lang.IllegalArgumentException, iae:
-                raise OSError(iae.getMessage() or iae)
-
+            builder = java.lang.ProcessBuilder(args)
             # os.environ may be inherited for compatibility with CPython
             self._setup_env(dict(os.environ if env is None else env),
                             builder.environment())
@@ -1210,8 +1205,9 @@ class Popen(object):
 
             try:
                 self._process = builder.start()
-            except java.io.IOException, ioe:
-                raise OSError(ioe.getMessage() or ioe)
+            except (java.io.IOException,
+                    java.lang.IllegalArgumentException), e:
+                raise OSError(e.getMessage() or e)
             self._child_created = True
 
 
