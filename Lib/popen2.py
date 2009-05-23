@@ -47,7 +47,10 @@ class Popen3:
         self.childerr = self._popen.stderr
 
     def __del__(self):
-        self._popen.__del__()
+        # XXX: Should let _popen __del__ on its own, but it's a new
+        # style class: http://bugs.jython.org/issue1057
+        if hasattr(self, '_popen'):
+            self._popen.__del__()
 
     def poll(self, _deadstate=None):
         """Return the exit status of the child process if it has finished,
