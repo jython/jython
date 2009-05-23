@@ -170,7 +170,7 @@ public class FileIO extends RawIOBase {
                 String message = ioe.getMessage();
                 if (((Platform.IS_SOLARIS || Platform.IS_LINUX)
                      && Errno.EINVAL.description().equals(message))
-                    || (Platform.IS_WINDOWS && "Incorrect function".equals(message))) {
+                    || (Platform.IS_WINDOWS && isIncorrectFunction(message))) {
                     return;
                 }
                 throw Py.IOError(ioe);
@@ -178,6 +178,16 @@ public class FileIO extends RawIOBase {
         }
     }
 
+    private boolean isIncorrectFunction(String msg) {
+        String ae = "\u00E4";
+        if ("Incorrect function".equals(msg)) { // en
+            return true;
+        } else if ("Unzul".concat(ae).concat("ssige Funktion").equals(msg)) { // de_CH
+            return true;
+        }
+        return false;
+    }
+    
     /** {@inheritDoc} */
     public boolean isatty() {
         checkClosed();
