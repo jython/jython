@@ -5,7 +5,7 @@
 
 import os
 import sys
-from test.test_support import TestSkipped, reap_children
+from test.test_support import TestSkipped, is_jython, reap_children
 
 # popen2 contains its own testing routine
 # which is especially useful to see if open files
@@ -40,7 +40,7 @@ def _test():
     assert not popen2._active, "Active pipes when test starts " + repr([c.cmd for c in popen2._active])
     cmd  = "cat"
     teststr = "ab cd\n"
-    if os.name == "nt":
+    if os.name == "nt" or (is_jython and os._name == 'nt'):
         cmd = "more"
     # "more" doesn't act the same way across Windows flavors,
     # sometimes adding an extra newline at the start or the
