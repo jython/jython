@@ -202,4 +202,4 @@ set _TRIMMED_JYTHON_HOME=
 set _TRIMMED_JYTHON_OPTS=
 
 :finish
-exit /b %E%
+%COMSPEC% /c exit /b %E%
