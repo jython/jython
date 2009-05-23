@@ -545,45 +545,45 @@ def list2cmdline(seq):
 
 if jython:
     # Escape the command line arguments with list2cmdline on Windows
-    escape_args_oses = ['nt']
+    _escape_args_oses = ['nt']
 
-    escape_args = None
-    shell_command = None
+    _escape_args = None
+    _shell_command = None
 
-    def setup_platform():
+    def _setup_platform():
         """Setup the shell command and the command line argument escape
         function depending on the underlying platform
         """
-        global escape_args, shell_command
+        global _escape_args, _shell_command
 
-        if os._name in escape_args_oses:
-            escape_args = lambda args: [list2cmdline([arg]) for arg in args]
+        if os._name in _escape_args_oses:
+            _escape_args = lambda args: [list2cmdline([arg]) for arg in args]
         else:
-            escape_args = lambda args: args
+            _escape_args = lambda args: args
 
         os_info = os._os_map.get(os._name)
         if os_info is None:
             os_info = os._os_map.get('posix')
             
-        for _shell_command in os_info[1]:
-            executable = _shell_command[0]
+        for shell_command in os_info[1]:
+            executable = shell_command[0]
             if not os.path.isabs(executable):
                 import distutils.spawn
                 executable = distutils.spawn.find_executable(executable)
             if not executable or not os.path.exists(executable):
                 continue
-            _shell_command[0] = executable
-            shell_command = _shell_command
+            shell_command[0] = executable
+            _shell_command = shell_command
             return
 
-        if not shell_command:
+        if not _shell_command:
             import warnings
-            warnings.warn('Unable to determine shell_command for '
+            warnings.warn('Unable to determine _shell_command for '
                           'underlying os: %s' % os._name, RuntimeWarning, 3)
-    setup_platform()
+    _setup_platform()
 
 
-    class CouplerThread(java.lang.Thread):
+    class _CouplerThread(java.lang.Thread):
 
         """Couples a reader and writer RawIOBase.
 
@@ -603,7 +603,8 @@ if jython:
             self.read_func = read_func
             self.write_func = write_func
             self.close_func = close_func
-            self.setName('CouplerThread-%s (%s)' % (id(self), name))
+            self.setName('%s-%s (%s)' % (self.__class__.__name__, id(self),
+                                         name))
             self.setDaemon(True)
 
         def run(self):
@@ -720,7 +721,7 @@ class Popen(object):
             self._stdout_thread = None
             self._stderr_thread = None
 
-            # 'ct' is for CouplerThread
+            # 'ct' is for _CouplerThread
             proc = self._process
             ct2cwrite = org.python.core.io.StreamIO(proc.getOutputStream(),
                                                     True)
@@ -737,8 +738,9 @@ class Popen(object):
                 if p2cread is None:
                     # Coupling stdin is not supported: there's no way to
                     # cleanly interrupt it if it blocks the
-                    # CouplerThread forever (we can Thread.interrupt()
-                    # its CouplerThread but that closes stdin's Channel)
+                    # _CouplerThread forever (we can Thread.interrupt()
+                    # its _CouplerThread but that closes stdin's
+                    # Channel)
                     pass
                 else:
                     self._stdin_thread = self._coupler_thread('stdin',
@@ -1128,8 +1130,8 @@ class Popen(object):
 
 
         def _coupler_thread(self, *args, **kwargs):
-            """Return a CouplerThread"""
-            return CouplerThread(*args, **kwargs)
+            """Return a _CouplerThread"""
+            return _CouplerThread(*args, **kwargs)
 
 
         def _setup_env(self, env, builder_env):
@@ -1174,10 +1176,10 @@ class Popen(object):
                     # posix. Windows passes unicode through however
                     if not isinstance(arg, (str, unicode)):
                         raise TypeError('args must contain only strings')
-                args = escape_args(args)
+                args = _escape_args(args)
 
             if shell:
-                args = shell_command + args
+                args = _shell_command + args
 
             if executable is not None:
                 args[0] = executable
@@ -1200,8 +1202,8 @@ class Popen(object):
             builder.directory(java.io.File(cwd))
 
             # Let Java manage redirection of stderr to stdout (it's more
-            # accurate at doing so than CouplerThreads). We redirect not
-            # only when stderr is marked as STDOUT, but also when
+            # accurate at doing so than _CouplerThreads). We redirect
+            # not only when stderr is marked as STDOUT, but also when
             # c2pwrite is errwrite
             if self._stderr_is_stdout(errwrite, c2pwrite):
                 builder.redirectErrorStream(True)
