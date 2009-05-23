@@ -89,5 +89,5 @@ class _ShellEnv:
 def _getOsType():
     return os._name
 
-_shellEnv = _ShellEnv(subprocess.shell_command)
+_shellEnv = _ShellEnv(subprocess._shell_command)
 shellexecute = _shellEnv.execute
