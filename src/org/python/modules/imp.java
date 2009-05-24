@@ -253,7 +253,7 @@ public class imp {
         return new PyList(new PyObject[] {new PyTuple(new PyString(".py"),
                                                       new PyString("r"),
                                                       Py.newInteger(PY_SOURCE)),
-                                          new PyTuple(new PyString(".class"),
+                                          new PyTuple(new PyString("$py.class"),
                                                       new PyString("rb"),
                                                       Py.newInteger(PY_COMPILED)),});
     }

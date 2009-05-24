@@ -14,9 +14,8 @@ import zipfile
 import zipimport
 from test import test_support
 
-COMPILED_SUFFIX = sys.platform.startswith('java') and '$py.class' or \
-    [suffix for suffix, mode, type in imp.get_suffixes()
-     if type == imp.PY_COMPILED][0]
+COMPILED_SUFFIX = [suffix for suffix, mode, type in imp.get_suffixes()
+                   if type == imp.PY_COMPILED][0]
 
 EXECUTABLE = sys.executable or \
     (sys.platform.startswith('java') and 'jython' or None)
