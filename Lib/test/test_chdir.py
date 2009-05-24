@@ -17,12 +17,7 @@ from test import test_support
 COMPILED_SUFFIX = [suffix for suffix, mode, type in imp.get_suffixes()
                    if type == imp.PY_COMPILED][0]
 
-EXECUTABLE = sys.executable or \
-    (sys.platform.startswith('java') and 'jython' or None)
-
-WINDOWS = os.name in ('nt', 'ce') or sys.platform.startswith('java') and \
-    os._name in ('nt', 'ce')
-    
+WINDOWS = (os._name if test_support.is_jython else os.name) == 'nt'
 
 CODE1 = """result = 'result is %r' % (100.0 * (3.0 / 5.0))"""
 CODE1_RESULT = 'result is %r' % (100.0 * (3.0 / 5.0))
@@ -383,7 +378,7 @@ class SubprocessTestCase(BaseChdirTestCase):
     # Write out the external app's cwd to a file we'll specify in setUp
     COMMAND = '''\
 "%s" -c "import os; fp = open(r'%%s', 'w'); fp.write(os.getcwd())"''' % \
-        EXECUTABLE
+        sys.executable
 
     def test_popen(self):
         os.popen(self._command()).read()
@@ -684,13 +679,13 @@ def test_main():
              ListdirTestCase,
              DirsTestCase,
              FilesTestCase]
-    if sys.platform.startswith('java'):
+    if WINDOWS:
+        tests.append(WindowsChdirTestCase)
+    if test_support.is_jython:
         tests.extend((ImportJavaClassTestCase,
                       ImportJarTestCase))
     if test_support.is_resource_enabled('subprocess'):
         tests.append(SubprocessTestCase)
-    if WINDOWS:
-        tests.append(WindowsChdirTestCase)
     test_support.run_unittest(*tests)
 
 
