@@ -164,13 +164,15 @@ public class FileIO extends RawIOBase {
                 fileChannel.truncate(0);
             } catch (IOException ioe) {
                 // On Solaris and Linux, ftruncate(3C) returns EINVAL if not a regular
-                // file whereas, e.g., open(os.devnull, "w") works. Likewise Windows
-                // returns ERROR_INVALID_FUNCTION. Because we have to simulate the "w"
-                // mode in Java, we suppress the exception.
-                String message = ioe.getMessage();
-                if (((Platform.IS_SOLARIS || Platform.IS_LINUX)
-                     && Errno.EINVAL.description().equals(message))
-                    || (Platform.IS_WINDOWS && isIncorrectFunction(message))) {
+                // file whereas, e.g., open(os.devnull, "w") works. Because we have to
+                // simulate the "w" mode in Java, we suppress the exception.
+                // Likewise Windows returns ERROR_INVALID_FUNCTION in that case and
+                // ERROR_INVALID_HANDLE on ttys. Identifying those by the IOException
+                // message is tedious as their messages are localized, so we suppress them
+                // all =[
+                if (Platform.IS_WINDOWS ||
+                    ((Platform.IS_SOLARIS || Platform.IS_LINUX)
+                     && Errno.EINVAL.description().equals(ioe.getMessage()))) {
                     return;
                 }
                 throw Py.IOError(ioe);
@@ -178,16 +180,6 @@ public class FileIO extends RawIOBase {
         }
     }
 
-    private boolean isIncorrectFunction(String msg) {
-        String ae = "\u00E4";
-        if ("Incorrect function".equals(msg)) { // en
-            return true;
-        } else if ("Unzul".concat(ae).concat("ssige Funktion").equals(msg)) { // de_CH
-            return true;
-        }
-        return false;
-    }
-    
     /** {@inheritDoc} */
     public boolean isatty() {
         checkClosed();
