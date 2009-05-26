@@ -1,5 +1,9 @@
 Jython NEWS
 
+Jython 2.5.0
+  Bugs fixed
+    - [ 1357 ] no sys.executable when script runner is a relative link
+
 Jython 2.5.0 rc3
   Bugs fixed
     - [ 1344 ] setName semantics of threading.Thread different to CPython
