@@ -904,9 +904,22 @@ if _name in ('os2', 'nt'):  # Where Env Var Names Must Be UPPERCASE
             return key.upper() in self.data
         def get(self, key, failobj=None):
             return self.data.get(key.upper(), failobj)
-        def update(self, dict):
-            for k, v in dict.items():
-                self[k] = v
+        def update(self, dict=None, **kwargs):
+            if dict:
+                try:
+                    keys = dict.keys()
+                except AttributeError:
+                    # List of (key, value)
+                    for k, v in dict:
+                        self[k] = v
+                else:
+                    # got keys
+                    # cannot use items(), since mappings
+                    # may not have them.
+                    for k in keys:
+                        self[k] = dict[k]
+            if kwargs:
+                self.update(kwargs)
         def copy(self):
             return dict(self)
 
