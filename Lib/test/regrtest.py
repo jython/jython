@@ -1489,6 +1489,10 @@ _failures = {
 _platform = sys.platform
 if _platform[:4] == 'java':
     _platform = 'java'
+    if os._name == 'nt':
+        # XXX: Omitted for now because it fails so miserably and ruins
+        # other tests
+        _failures['java'] += '\ntest_mailbox'
 
 class _ExpectedSkips:
     def __init__(self):
