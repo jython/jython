@@ -749,7 +749,7 @@ public final class Py {
 
     private static boolean secEnv = false;
 
-    public static Class findClass(String name) {
+    public static Class<?> findClass(String name) {
         try {
             ClassLoader classLoader = Py.getSystemState().getClassLoader();
             if (classLoader != null) {
@@ -771,8 +771,11 @@ public final class Py {
                 }
             }
 
-            return Thread.currentThread().getContextClassLoader().loadClass(name);
-
+            classLoader = Thread.currentThread().getContextClassLoader();
+            if (classLoader != null) {
+                return classLoader.loadClass(name);
+            }
+            return null;
         } catch (ClassNotFoundException e) {
             //             e.printStackTrace();
             return null;
@@ -785,7 +788,7 @@ public final class Py {
         }
     }
 
-    public static Class findClassEx(String name, String reason) {
+    public static Class<?> findClassEx(String name, String reason) {
         try {
             ClassLoader classLoader = Py.getSystemState().getClassLoader();
             if (classLoader != null) {
@@ -813,7 +816,11 @@ public final class Py {
 
             writeDebug("import", "trying " + name + " as " + reason +
                     " in Class.forName");
-            return Thread.currentThread().getContextClassLoader().loadClass(name);
+            classLoader = Thread.currentThread().getContextClassLoader();
+            if (classLoader != null) {
+                return classLoader.loadClass(name);
+            }
+            return null;
         } catch (ClassNotFoundException e) {
             return null;
         } catch (IllegalArgumentException e) {
