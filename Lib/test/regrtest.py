@@ -1532,9 +1532,7 @@ class _ExpectedSkips:
 
             if test_support.is_jython:
                 if os._name != 'posix':
-                    self.expected.add('test_mhlib')
-                import platform
-                os_name = platform.java_ver()[3][0]
+                    self.expected.update(['test_mhlib', 'test_signal'])
 
             self.valid = True
 

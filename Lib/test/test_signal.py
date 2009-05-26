@@ -20,7 +20,8 @@ import subprocess
 import traceback
 import sys, os, time, errno
 
-if sys.platform[:3] in ('win', 'os2') or sys.platform == 'riscos':
+if (sys.platform[:3] in ('win', 'os2') or sys.platform == 'riscos' or
+    (test_support.is_jython and os._name == 'nt')):
     raise test_support.TestSkipped("Can't test signal on %s" % \
                                    sys.platform)
 

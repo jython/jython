@@ -4,7 +4,7 @@
 """
 
 import unittest
-from test.test_support import run_unittest, TESTFN
+from test.test_support import is_jython, run_unittest, TESTFN
 import dircache, os, time, sys, tempfile
 
 
@@ -44,7 +44,8 @@ class DircacheTests(unittest.TestCase):
         # That is, this test can't possibly work under Windows -- dircache
         # is only good for capturing a one-shot snapshot there.
 
-        if sys.platform[:3] not in ('win', 'os2'):
+        if (sys.platform[:3] not in ('win', 'os2') or
+            (is_jython and os._name != 'nt')):
             # Sadly, dircache has the same granularity as stat.mtime, and so
             # can't notice any changes that occurred within 1 sec of the last
             # time it examined a directory.

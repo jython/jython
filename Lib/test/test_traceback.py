@@ -1,5 +1,6 @@
 """Test cases for traceback module"""
 
+from __future__ import with_statement
 import unittest
 from test.test_support import run_unittest, is_jython
 
@@ -62,7 +63,8 @@ class TracebackCases(unittest.TestCase):
         try:
             sys.path.insert(0, testdir)
             testfile = os.path.join(testdir, 'test_bug737473.py')
-            print >> open(testfile, 'w'), """
+            with open(testfile, 'w') as fp:
+                print >> fp, """
 def test():
     raise ValueError"""
 
@@ -84,7 +86,8 @@ def test():
             # three seconds are needed for this test to pass reliably :-(
             time.sleep(4)
 
-            print >> open(testfile, 'w'), """
+            with open(testfile, 'w') as fp:
+                print >> fp, """
 def test():
     raise NotImplementedError"""
             reload(test_bug737473)
