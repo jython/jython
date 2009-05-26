@@ -544,21 +544,80 @@ def list2cmdline(seq):
 
 
 if jython:
-    # Escape the command line arguments with list2cmdline on Windows
-    _escape_args_oses = ['nt']
+    # Parse command line arguments for Windows
+    _win_oses = ['nt']
 
+    _cmdline2list = None
     _escape_args = None
     _shell_command = None
+
+    def cmdline2list(cmdline):
+        """Build an argv list from a Microsoft shell style cmdline str
+
+        The reverse of list2cmdline that follows the same MS C runtime
+        rules.
+
+        Java's ProcessBuilder takes a List<String> cmdline that's joined
+        with a list2cmdline-like routine for Windows CreateProcess
+        (which takes a String cmdline). This process ruins String
+        cmdlines from the user with escapes or quotes. To avoid this we
+        first parse these cmdlines into an argv.
+        
+        Runtime.exec(String) is too naive and useless for this case.
+        """
+        whitespace = ' \t'
+        # count of preceding '\'
+        bs_count = 0
+        in_quotes = False
+        arg = []
+        argv = []
+
+        for ch in cmdline:
+            if ch in whitespace and not in_quotes:
+                if arg:
+                    # finalize arg and reset
+                    argv.append(''.join(arg))
+                    arg = []
+                bs_count = 0
+            elif ch == '\\':
+                arg.append(ch)
+                bs_count += 1
+            elif ch == '"':
+                if not bs_count % 2:
+                    # Even number of '\' followed by a '"'. Place one
+                    # '\' for every pair and treat '"' as a delimiter
+                    if bs_count:
+                        del arg[-(bs_count / 2):]
+                    in_quotes = not in_quotes
+                else:
+                    # Odd number of '\' followed by a '"'. Place one '\'
+                    # for every pair and treat '"' as an escape sequence
+                    # by the remaining '\'
+                    del arg[-(bs_count / 2 + 1):]
+                    arg.append(ch)
+                bs_count = 0
+            else:
+                # regular char
+                arg.append(ch)
+                bs_count = 0
+
+        # A single trailing '"' delimiter yields an empty arg
+        if arg or in_quotes:
+            argv.append(''.join(arg))
+
+        return argv
 
     def _setup_platform():
         """Setup the shell command and the command line argument escape
         function depending on the underlying platform
         """
-        global _escape_args, _shell_command
+        global _cmdline2list, _escape_args, _shell_command
 
-        if os._name in _escape_args_oses:
+        if os._name in _win_oses:
+            _cmdline2list = cmdline2list
             _escape_args = lambda args: [list2cmdline([arg]) for arg in args]
         else:
+            _cmdline2list = lambda args: [args]
             _escape_args = lambda args: args
 
         os_info = os._os_map.get(os._name)
@@ -1167,7 +1226,7 @@ class Popen(object):
             """Execute program (Java version)"""
 
             if isinstance(args, types.StringTypes):
-                args = [args]
+                args = _cmdline2list(args)
             else:
                 args = list(args)
                 # NOTE: CPython posix (execv) will str() any unicode
@@ -1175,7 +1234,7 @@ class Popen(object):
                 # posix. Windows passes unicode through, however
                 if any(not isinstance(arg, (str, unicode)) for arg in args):
                     raise TypeError('args must contain only strings')
-                args = _escape_args(args)
+            args = _escape_args(args)
 
             if shell:
                 args = _shell_command + args

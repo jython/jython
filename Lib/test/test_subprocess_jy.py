@@ -3,7 +3,7 @@ import unittest
 import os
 import sys
 from test import test_support
-from subprocess import Popen, PIPE
+from subprocess import PIPE, Popen, cmdline2list
 
 class EnvironmentInheritanceTest(unittest.TestCase):
 
@@ -38,9 +38,41 @@ class JythonOptsTest(unittest.TestCase):
         self.assertEquals(options, p1.stdout.read())
 
 
+class Cmdline2ListTestCase(unittest.TestCase):
+
+    cmdlines = {
+        # From "Parsing C Command-Line Arguments"
+        # http://msdn.microsoft.com/en-us/library/a1y7w461(VS.80).aspx
+        '"a b c" d e': ['a b c', 'd', 'e'],
+        r'"ab\"c" "\\" d': ['ab"c', '\\', 'd'],
+        r'a\\\b d"e f"g h': [r'a\\\b', 'de fg', 'h'],
+        r'a\\\"b c d': [r'a\"b', 'c', 'd'],
+        r'a\\\\"b c" d e': [r'a\\b c', 'd', 'e'],
+
+        r'C:\\foo\bar\baz jy thon': [r'C:\\foo\bar\baz', 'jy', 'thon'],
+        r'C:\\Program Files\Foo\Bar qu \\ ux':
+            [r'C:\\Program', 'Files\Foo\Bar', 'qu', '\\\\', 'ux'],
+        r'"C:\\Program Files\Foo\Bar" qu \\ ux':
+            [r'C:\\Program Files\Foo\Bar', 'qu', '\\\\', 'ux'],
+        r'dir "C:\\Program Files\Foo\\" bar':
+            ['dir', 'C:\\\\Program Files\\Foo\\', 'bar'],
+
+        r'echo "\"I hate Windows!\""': ['echo', '"I hate Windows!"'],
+        r'print "jython" "': ['print', 'jython', ''],
+        r'print \"jython\" \"': ['print', '"jython"', '"'],
+        r'print \"jython\" \\"': ['print', '"jython"', '\\']
+    }
+
+    def test_cmdline2list(self):
+        for cmdline, argv in self.cmdlines.iteritems():
+            self.assertEqual(cmdline2list(cmdline), argv)
+
+
 def test_main():
-    test_support.run_unittest(EnvironmentInheritanceTest,
-                              JythonOptsTest)
+    test_support.run_unittest(
+        EnvironmentInheritanceTest,
+        JythonOptsTest,
+        Cmdline2ListTestCase)
 
 
 if __name__ == '__main__':
