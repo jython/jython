@@ -153,6 +153,6 @@
 	</target>
 	
 	<target name="build-jython" depends="clean">
-		<ant antfile="build.xml" target="developer-build"/>
+		<ant antfile="build.xml" target="jar-complete"/>
 	</target>
 </project>
