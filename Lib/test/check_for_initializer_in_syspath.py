@@ -1,2 +1,4 @@
+import os
 import sys
-assert "/from_SyspathAppendingInitializer_with_love" in sys.path
+path = os.path.abspath("/from_SyspathAppendingInitializer_with_love")
+assert path in sys.path

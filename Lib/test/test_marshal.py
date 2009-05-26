@@ -16,7 +16,7 @@ def roundtrip(item):
     with open(test_support.TESTFN, "wb") as test_file:
         marshal.dump(item, test_file)
     with open(test_support.TESTFN, "rb") as test_file:
-        got = marshal.load(file(test_support.TESTFN, "rb")) #, debug=True)
+        got = marshal.load(test_file)
     return got
     
 

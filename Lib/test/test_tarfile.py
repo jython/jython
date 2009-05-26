@@ -200,7 +200,8 @@ class ReadTest(BaseTest):
     def test_extractall(self):
         # Test if extractall() correctly restores directory permissions
         # and times (see issue1735).
-        if sys.platform == "win32":
+        if (sys.platform == "win32" or
+            test_support.is_jython and os._name == 'nt'):
             # Win32 has no support for utime() on directories or
             # fine grained permissions.
             return
@@ -275,6 +276,9 @@ class ReadDetectTest(ReadTest):
     def setUp(self):
         self.tar = tarfile.open(tarname(self.comp), self.mode)
 
+    def tearDown(self):
+        self.tar.close()
+
 class ReadDetectFileobjTest(ReadTest):
 
     def setUp(self):
@@ -322,6 +326,7 @@ class ReadFileobjTest(BaseTest):
         fobj.seek(offset)
 
         # Test if the tarfile starts with the second member.
+        self.tar.close()
         self.tar = tarfile.open(tarname(self.comp), "r:", fileobj=fobj)
         t = self.tar.next()
         self.assertEqual(t.name, name)
@@ -330,6 +335,8 @@ class ReadFileobjTest(BaseTest):
         self.tar.getmembers()
         self.assertEqual(self.tar.extractfile(t).read(), data,
                 "seek back did not work")
+        self.tar.close()
+        fobj.close()
 
 class WriteTest(BaseTest):
     mode = 'w'
@@ -460,9 +467,11 @@ class WriteStreamTest(WriteTest):
             s = f.read()
             f.close()
         elif self.comp == "bz2":
-            f = bz2.BZ2Decompressor()
-            s = file(self.dstname).read()
-            s = f.decompress(s)
+            b = bz2.BZ2Decompressor()
+            f = file(self.dstname)
+            s = f.read()
+            f.close()
+            s = b.decompress(s)
             self.assertEqual(len(f.unused_data), 0, "trailing data")
         else:
             f = file(self.dstname)
@@ -718,22 +727,27 @@ class OpenFileobjTest(BaseTest):
 
     def test_no_name_argument(self):
         fobj = open(testtar, "rb")
-        tar = tarfile.open(fileobj=fobj, mode="r")
-        self.assertEqual(tar.name, os.path.abspath(fobj.name))
+        self.tar = tarfile.open(fileobj=fobj, mode="r")
+        self.assertEqual(self.tar.name, os.path.abspath(fobj.name))
+        fobj.close()
 
     def test_no_name_attribute(self):
-        data = open(testtar, "rb").read()
+        fp = open(testtar, "rb")
+        data = fp.read()
+        fp.close()
         fobj = StringIO.StringIO(data)
         self.assertRaises(AttributeError, getattr, fobj, "name")
-        tar = tarfile.open(fileobj=fobj, mode="r")
-        self.assertEqual(tar.name, None)
+        self.tar = tarfile.open(fileobj=fobj, mode="r")
+        self.assertEqual(self.tar.name, None)
 
     def test_empty_name_attribute(self):
-        data = open(testtar, "rb").read()
+        fp = open(testtar, "rb")
+        data = fp.read()
+        fp.close()
         fobj = StringIO.StringIO(data)
         fobj.name = ""
-        tar = tarfile.open(fileobj=fobj, mode="r")
-        self.assertEqual(tar.name, None)
+        self.tar = tarfile.open(fileobj=fobj, mode="r")
+        self.assertEqual(self.tar.name, None)
 
 
 if bz2:
