@@ -98,16 +98,18 @@ class MislabeledImportTestCase(unittest.TestCase):
 
 class OverrideBuiltinsImportTestCase(unittest.TestCase):
     def test_override(self):
+        modname = os.path.__name__
         tests = [
             ("import os.path"         , "('os.path', None, -1, 'os')"  ),
             ("import os.path as path2", "('os.path', None, -1, 'os')"  ),
-            ("from os.path import *"  , "('os.path', ('*',), -1, 'posixpath')"),
+            ("from os.path import *"  ,
+             "('os.path', ('*',), -1, '%s')" % modname),
             ("from os.path import join",
-                 "('os.path', ('join',), -1, 'posixpath')"),
+                 "('os.path', ('join',), -1, '%s')" % modname),
             ("from os.path import join as join2",
-                 "('os.path', ('join',), -1, 'posixpath')"),
+                 "('os.path', ('join',), -1, '%s')" % modname),
             ("from os.path import join as join2, split as split2",
-                 "('os.path', ('join', 'split'), -1, 'posixpath')"),
+                 "('os.path', ('join', 'split'), -1, '%s')" % modname),
         ]
 
         import sys
