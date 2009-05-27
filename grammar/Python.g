@@ -1800,7 +1800,8 @@ ESC
  */
 CONTINUED_LINE
     :    '\\' ('\r')? '\n' (' '|'\t')*  { $channel=HIDDEN; }
-         ( nl=NEWLINE {
+         ( c1=COMMENT
+         | nl=NEWLINE {
                           if (!partial) {
                               emit(new CommonToken(NEWLINE,nl.getText()));
                           }
