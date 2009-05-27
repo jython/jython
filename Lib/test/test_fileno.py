@@ -24,6 +24,7 @@ class TestFilenoTestCase(unittest.TestCase):
     def test_ftruncate(self):
         self.fp.write('jython filenos')
         self.fp.flush()
+        os.fsync(self.fd)
         self.assertEqual(os.path.getsize(self.filename), 14)
         os.ftruncate(self.fd, 8)
         self.assertEqual(os.path.getsize(self.filename), 8)

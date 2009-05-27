@@ -479,9 +479,8 @@ def test_expat_locator_withinfo():
         # replace the backslashes with forward
         testfile = testfile.replace('\\', '/')
 
-    # XXX: may not match getSystemId when the filename contains funky
-    # characters (like ':')
-    expected = urllib.quote(testfile)
+    # urllib.quote isn't the exact encoder (e.g. ':' isn't escaped)
+    expected = urllib.quote(testfile).replace('%3A', ':')
     return xmlgen.location.getSystemId().endswith(expected) and \
            xmlgen.location.getPublicId() is None
 

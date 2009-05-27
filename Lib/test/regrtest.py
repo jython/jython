@@ -1533,7 +1533,7 @@ class _ExpectedSkips:
             if test_support.is_jython:
                 if os._name != 'posix':
                     self.expected.update([
-                            'test_grb', 'test_mhlib', 'test_posix', 'test_pwd',
+                            'test_grp', 'test_mhlib', 'test_posix', 'test_pwd',
                             'test_signal'])
 
             self.valid = True
