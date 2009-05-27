@@ -300,7 +300,7 @@ except_clause : EXCEPT (test (COMMA test)?)? COLON suite
 
 suite : simple_stmt
       | NEWLINE (EOF
-                |DEDENT EOF
+                | (DEDENT)+ EOF
                 |INDENT (stmt)+ (DEDENT
                                 |EOF
                                 )

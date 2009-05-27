@@ -2,6 +2,7 @@ Jython NEWS
 
 Jython 2.5.0
   Bugs fixed
+    - [ 1354 ] core language failures in interactive interpreter
     - [ 1358 ] Simple pogram fails to parse in Jython 2.5rc3, but parses OK with CPython
     - [ 1357 ] no sys.executable when script runner is a relative link
 
