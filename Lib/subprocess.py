@@ -1275,7 +1275,7 @@ class Popen(object):
             attribute."""
             if self.returncode is None:
                 try:
-                    return self._process.exitValue()
+                    self.returncode = self._process.exitValue()
                 except java.lang.IllegalThreadStateException:
                     pass
             return self.returncode
