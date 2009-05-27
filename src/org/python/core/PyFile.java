@@ -493,20 +493,13 @@ public class PyFile extends PyObject {
 
     @ExposedMethod(names = {"__str__", "__repr__"}, doc = BuiltinDocs.file___str___doc)
     final String file_toString() {
-        StringBuilder s = new StringBuilder("<");
-        if (file.closed()) {
-            s.append("closed ");
-        } else {
-            s.append("open ");
+        String state = file.closed() ? "closed" : "open";
+        String id = Py.idstr(this);
+        if (name instanceof PyUnicode) {
+            String escapedName = PyString.encode_UnicodeEscape(name.toString(), false);
+            return String.format("<%s file u'%s', mode '%s' at %s>", state, escapedName, mode, id);
         }
-        s.append("file ");
-        s.append(name.__repr__());
-        s.append(", mode '");
-        s.append(mode);
-        s.append("' at ");
-        s.append(Py.idstr(this));
-        s.append(">");
-        return s.toString();
+        return String.format("<%s file '%s', mode '%s' at %s>", state, name, mode, id);
     }
 
     public String toString() {

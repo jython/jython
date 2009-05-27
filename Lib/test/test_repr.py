@@ -130,13 +130,10 @@ class ReprTests(unittest.TestCase):
     def test_file(self):
         fp = open(unittest.__file__)
         self.failUnless(repr(fp).startswith(
-        # XXX: Jython doesn't use hex ids
-        #    "<open file '%s', mode 'r' at 0x" % unittest.__file__))
-            "<open file '%s', mode 'r' at " % unittest.__file__))
+            "<open file '%s', mode 'r' at 0x" % unittest.__file__))
         fp.close()
         self.failUnless(repr(fp).startswith(
-        #    "<closed file '%s', mode 'r' at 0x" % unittest.__file__))
-            "<closed file '%s', mode 'r' at " % unittest.__file__))
+            "<closed file '%s', mode 'r' at 0x" % unittest.__file__))
 
     def test_lambda(self):
         self.failUnless(repr(lambda x: x).startswith(
@@ -149,8 +146,7 @@ class ReprTests(unittest.TestCase):
         eq(repr(hash), '<built-in function hash>')
         # Methods
         self.failUnless(repr(''.split).startswith(
-        #    '<built-in method split of str object at 0x'))
-            '<built-in method split of str object at '))
+            '<built-in method split of str object at 0x'))
 
     def test_xrange(self):
         import warnings
@@ -197,11 +193,9 @@ class ReprTests(unittest.TestCase):
         class C:
             def foo(cls): pass
         x = staticmethod(C.foo)
-        #self.failUnless(repr(x).startswith('<staticmethod object at 0x'))
-        self.failUnless(repr(x).startswith('<staticmethod object at '))
+        self.failUnless(repr(x).startswith('<staticmethod object at 0x'))
         x = classmethod(C.foo)
-        #self.failUnless(repr(x).startswith('<classmethod object at 0x'))
-        self.failUnless(repr(x).startswith('<classmethod object at '))
+        self.failUnless(repr(x).startswith('<classmethod object at 0x'))
 
     def test_unsortable(self):
         # Repr.repr() used to call sorted() on sets, frozensets and dicts
@@ -283,8 +277,7 @@ class bar:
         from areallylongpackageandmodulenametotestreprtruncation.areallylongpackageandmodulenametotestreprtruncation import bar
         # Module name may be prefixed with "test.", depending on how run.
         self.failUnless(repr(bar.bar).startswith(
-        #    "<class %s.bar at 0x" % bar.__name__))
-            "<class %s.bar at " % bar.__name__))
+            "<class %s.bar at 0x" % bar.__name__))
 
     def test_instance(self):
         touch(os.path.join(self.subpkgname, 'baz'+os.extsep+'py'), '''\
@@ -294,8 +287,7 @@ class baz:
         from areallylongpackageandmodulenametotestreprtruncation.areallylongpackageandmodulenametotestreprtruncation import baz
         ibaz = baz.baz()
         self.failUnless(repr(ibaz).startswith(
-        #    "<%s.baz instance at 0x" % baz.__name__))
-            "<%s.baz instance at " % baz.__name__))
+            "<%s.baz instance at 0x" % baz.__name__))
 
     def test_method(self):
         eq = self.assertEquals
@@ -310,8 +302,7 @@ class aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
         # Bound method next
         iqux = qux.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa()
         self.failUnless(repr(iqux.amethod).startswith(
-        #    '<bound method aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.amethod of <%s.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa instance at 0x' \
-            '<bound method aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.amethod of <%s.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa instance at ' \
+            '<bound method aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.amethod of <%s.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa instance at 0x' \
             % (qux.__name__,) ))
 
     def test_builtin_function(self):
