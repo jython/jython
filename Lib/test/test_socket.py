@@ -23,6 +23,7 @@ MSG = 'Michael Gilfix was here\n'
 EIGHT_BIT_MSG = 'Bh\xed Al\xe1in \xd3 Cinn\xe9ide anseo\n'
 os_name = platform.java_ver()[3][0]
 is_bsd = os_name == 'Mac OS X' or 'BSD' in os_name
+is_solaris = os_name == 'SunOS'
 
 try:
     True
@@ -535,8 +536,11 @@ class TestSocketOptions(unittest.TestCase):
         for expected_value in values:
             sock.setsockopt(level, option, expected_value)
             retrieved_value = sock.getsockopt(level, option)
-            self.failUnlessEqual(retrieved_value, expected_value, \
-                "Retrieved option(%s, %s) value %s != %s(value set)" % (level, option, retrieved_value, expected_value))
+            msg = "Retrieved option(%s, %s) value %s != %s(value set)" % (level, option, retrieved_value, expected_value)
+            if is_solaris and option == socket.SO_RCVBUF:
+                self.assert_(retrieved_value >= expected_value, msg)
+            else:
+                self.failUnlessEqual(retrieved_value, expected_value, msg)
 
     def _testUDPOption(self, level, option, values):
         try:
@@ -565,8 +569,8 @@ class TestSocketOptions(unittest.TestCase):
             sock.bind( (HOST, PORT+1) )
             sock.connect( (HOST, PORT) )
             msg = "Option value '%s'='%s' did not propagate to implementation socket" % (option, values[-1])
-            if is_bsd and option in (socket.SO_RCVBUF, socket.SO_SNDBUF):
-                # XXX: there's no guarantee that bufsize will be the
+            if ((is_bsd or is_solaris) and option in (socket.SO_RCVBUF, socket.SO_SNDBUF)):
+                # NOTE: there's no guarantee that bufsize will be the
                 # exact setsockopt value, particularly after
                 # establishing a connection. seems it will be *at least*
                 # the values we test (which are rather small) on
@@ -587,8 +591,12 @@ class TestSocketOptions(unittest.TestCase):
             # now bind and listen on the socket i.e. cause the implementation socket to be created
             sock.bind( (HOST, PORT) )
             sock.listen(50)
-            self.failUnlessEqual(sock.getsockopt(level, option), values[-1], \
-                 "Option value '(%s,%s)'='%s' did not propagate to implementation socket" % (level, option, values[-1]))
+            msg = "Option value '(%s,%s)'='%s' did not propagate to implementation socket" % (level, option, values[-1])
+            if is_solaris and option == socket.SO_RCVBUF:
+                # NOTE: see similar bsd/solaris workaround above
+                self.assert_(sock.getsockopt(level, option) >= values[-1], msg)
+            else:
+                self.failUnlessEqual(sock.getsockopt(level, option), values[-1], msg)
             self._testSetAndGetOption(sock, level, option, values)
         finally:
             sock.close()

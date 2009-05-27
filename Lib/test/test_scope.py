@@ -438,6 +438,8 @@ for i in range(100):
 if is_jython:
     from test_weakref import extra_collect
     extra_collect()
+    # A lot of garbage
+    extra_collect()
 vereq(Foo.count, 0)
 
 print "17. class and global"
