@@ -1236,6 +1236,9 @@ class Popen(object):
                     raise TypeError('args must contain only strings')
             args = _escape_args(args)
 
+            if len(args) > 0 and '.jar' == args[0][-4:] and executable is None:
+                args = ['java', '-jar'] + args
+            
             if shell:
                 args = _shell_command + args
 
