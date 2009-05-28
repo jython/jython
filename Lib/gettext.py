@@ -46,6 +46,7 @@ internationalized, to the local language and cultural habits.
 #   find this format documented anywhere.
 
 
+from __future__ import with_statement
 import locale, copy, os, re, struct, sys
 from errno import ENOENT
 
