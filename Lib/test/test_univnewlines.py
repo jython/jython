@@ -1,4 +1,5 @@
 # Tests universal newline support for both reading and parsing files.
+from __future__ import with_statement
 import unittest
 import os
 import sys
