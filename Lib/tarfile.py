@@ -1210,6 +1210,7 @@ class TarFile(object):
         try:
             t = cls.taropen(name, mode, fileobj)
         except IOError:
+            fileobj.close()
             raise ReadError("not a gzip file")
         t._extfileobj = False
         return t
@@ -1235,6 +1236,7 @@ class TarFile(object):
         try:
             t = cls.taropen(name, mode, fileobj)
         except IOError:
+            fileobj.close()
             raise ReadError("not a bzip2 file")
         t._extfileobj = False
         return t

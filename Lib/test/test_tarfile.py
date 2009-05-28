@@ -727,6 +727,7 @@ class OpenFileobjTest(BaseTest):
 
     def test_no_name_argument(self):
         fobj = open(testtar, "rb")
+        self.tar.close()
         self.tar = tarfile.open(fileobj=fobj, mode="r")
         self.assertEqual(self.tar.name, os.path.abspath(fobj.name))
         fobj.close()
@@ -737,6 +738,7 @@ class OpenFileobjTest(BaseTest):
         fp.close()
         fobj = StringIO.StringIO(data)
         self.assertRaises(AttributeError, getattr, fobj, "name")
+        self.tar.close()
         self.tar = tarfile.open(fileobj=fobj, mode="r")
         self.assertEqual(self.tar.name, None)
 
@@ -746,6 +748,7 @@ class OpenFileobjTest(BaseTest):
         fp.close()
         fobj = StringIO.StringIO(data)
         fobj.name = ""
+        self.tar.close()
         self.tar = tarfile.open(fileobj=fobj, mode="r")
         self.assertEqual(self.tar.name, None)
 
