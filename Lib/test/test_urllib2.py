@@ -535,7 +535,8 @@ class OpenerDirectorTests(unittest.TestCase):
 def sanepathname2url(path):
     import urllib
     urlpath = urllib.pathname2url(path)
-    if os.name == "nt" and urlpath.startswith("///"):
+    if ((os._name if test_support.is_jython else os.name) == 'nt'
+        and urlpath.startswith("///")):
         urlpath = urlpath[2:]
     # XXX don't ask me about the mac...
     return urlpath

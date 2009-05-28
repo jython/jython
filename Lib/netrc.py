@@ -2,6 +2,7 @@
 
 # Module and documentation by Eric S. Raymond, 21 Dec 1998
 
+from __future__ import with_statement
 import os, shlex
 
 __all__ = ["netrc", "NetrcParseError"]
