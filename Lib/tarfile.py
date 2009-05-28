@@ -1230,13 +1230,16 @@ class TarFile(object):
 
         if fileobj is not None:
             fileobj = _BZ2Proxy(fileobj, mode)
+            extfileobj = True
         else:
             fileobj = bz2.BZ2File(name, mode, compresslevel=compresslevel)
+            extfileobj = False
 
         try:
             t = cls.taropen(name, mode, fileobj)
         except IOError:
-            fileobj.close()
+            if not extfileobj:
+                fileobj.close()
             raise ReadError("not a bzip2 file")
         t._extfileobj = False
         return t
