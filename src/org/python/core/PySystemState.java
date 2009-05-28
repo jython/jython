@@ -19,6 +19,7 @@ import java.util.StringTokenizer;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+import org.jruby.ext.posix.util.Platform;
 import org.python.Version;
 import org.python.core.adapter.ClassicPyObjectAdapter;
 import org.python.core.adapter.ExtensiblePyObjectAdapter;
@@ -482,16 +483,40 @@ public class PySystemState extends PyObject
      * @return a resolved path String
      */
     public String getPath(String path) {
+        return getPath(this, path);
+    }
+
+    /**
+     * Resolve a path. Returns the full path taking the current
+     * working directory into account.
+     *
+     * Like getPath but called statically. The current PySystemState
+     * is only consulted for the current working directory when it's
+     * necessary (when the path is relative).
+     *
+     * @param path a path String
+     * @return a resolved path String
+     */
+    public static String getPathLazy(String path) {
+        // XXX: This method likely an unnecessary optimization
+        return getPath(null, path);
+    }
+
+    private static String getPath(PySystemState sys, String path) {
         if (path == null) {
             return path;
-        } else {
-            File file = new File(path);
-            if (!file.isAbsolute()) {
-                file = new File(getCurrentWorkingDir(), path);
-            }
-            // This needs to be performed always to trim trailing backslashes on Windows
-            return file.getPath();
         }
+
+        File file = new File(path);
+        // Python considers r'\Jython25' an abspath on Windows, unlike java.io.File
+        if (!file.isAbsolute() && (!Platform.IS_WINDOWS || !path.startsWith("\\"))) {
+            if (sys == null) {
+                sys = Py.getSystemState();
+            }
+            file = new File(sys.getCurrentWorkingDir(), path);
+        }
+        // This needs to be performed always to trim trailing backslashes on Windows
+        return file.getPath();
     }
 
     public void callExitFunc() throws PyIgnoreMethodTag {
@@ -1144,24 +1169,6 @@ public class PySystemState extends PyObject
      */
     public static void add_extdir(String directoryPath, boolean cache) {
         packageManager.addJarDir(directoryPath, cache);
-    }
-
-    /**
-     * Resolve a path. Returns the full path taking the current
-     * working directory into account.
-     *
-     * Like getPath but called statically. The current PySystemState
-     * is only consulted for the current working directory when it's
-     * necessary (when the path is relative).
-     *
-     * @param path a path String
-     * @return a resolved path String
-     */
-    public static String getPathLazy(String path) {
-        if (path == null || new File(path).isAbsolute()) {
-            return path;
-        }
-        return new File(Py.getSystemState().getCurrentWorkingDir(), path).getPath();
     }
 
     // Not public by design. We can't rebind the displayhook if
