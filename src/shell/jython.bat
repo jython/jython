@@ -77,7 +77,9 @@ rem ----- Execute the requested command ----------------------------------------
 
 :run
 set _JAVA_MEM=-Xmx512m
-set _JAVA_STACK=-Xss512k
+rem 1152k is the minimum for test_marshal to pass. Windows' default is
+rem apparently 1M, anyway
+set _JAVA_STACK=-Xss1152k
 
 rem Escape any quotes. Use _S for ', _D for ", and _U to escape _ itself.
 rem We have to escape _ itself, otherwise file names with _S and _D
