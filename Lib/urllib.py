@@ -44,7 +44,7 @@ MAXFTPCACHE = 10        # Trim the ftp cache beyond this size
 # Helper for non-unix systems
 if os.name == 'mac':
     from macurl2path import url2pathname, pathname2url
-elif os.name == 'nt' or sys.platform.startswith('java') and os._name == 'nt':
+elif (os._name if sys.platform.startswith('java') else os.name) == 'nt':
     from nturl2path import url2pathname, pathname2url
 elif os.name == 'riscos':
     from rourl2path import url2pathname, pathname2url
@@ -215,7 +215,7 @@ class URLopener:
             try:
                 fp = self.open_local_file(url1)
                 hdrs = fp.info()
-                del fp
+                fp.close()
                 return url2pathname(splithost(url1)[1]), hdrs
             except IOError, msg:
                 pass
@@ -1496,7 +1496,7 @@ def test(args=[]):
                 print '======'
             fp = open(fn, 'rb')
             data = fp.read()
-            del fp
+            fp.close()
             if '\r' in data:
                 table = string.maketrans("", "")
                 data = data.translate(table, "\r")
