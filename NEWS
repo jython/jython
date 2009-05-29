@@ -5,6 +5,10 @@ Jython 2.5.0
     - [ 1354 ] core language failures in interactive interpreter
     - [ 1358 ] Simple pogram fails to parse in Jython 2.5rc3, but parses OK with CPython
     - [ 1357 ] no sys.executable when script runner is a relative link
+    - [ 1338 ] Comparing Java objects to each other fails when classes of values do not match
+    Fix file's repr with Windows paths
+    Fix urllib and urllib2 path handling on Windows
+    Fix r'\Jython25' not considered an abspath on Windows
 
 Jython 2.5.0 rc3
   Bugs fixed

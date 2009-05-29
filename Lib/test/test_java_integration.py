@@ -381,11 +381,36 @@ class JavaDelegationTest(unittest.TestCase):
         self.assertTrue(first_file <= first_date)
         self.assertTrue(first_date > first_file)
         self.assertTrue(first_date >= first_file)
+
+    def test_equals(self):
+        # Test for bug #1338
+        a = range(5)
+
+        x = ArrayList()
+        x.addAll(a)
+
+        y = Vector()
+        y.addAll(a)
+
+        z = ArrayList()
+        z.addAll(range(1, 6))
+
+        self.assertTrue(x.equals(y))
+        self.assertEquals(x, y)
+        self.assertTrue(not (x != y))
+
+        self.assertTrue(not x.equals(z))
+        self.assertNotEquals(x, z)
+        self.assertTrue(not (x == z))
        
 class SecurityManagerTest(unittest.TestCase):
     def test_nonexistent_import_with_security(self):
-        policy = test_support.findfile("python_home.policy")
         script = test_support.findfile("import_nonexistent.py")
+        home = os.path.realpath(sys.prefix)
+        if not os.path.commonprefix((home, os.path.realpath(script))) == home:
+            # script must lie within python.home for this test to work
+            return
+        policy = test_support.findfile("python_home.policy")
         self.assertEquals(subprocess.call([sys.executable,  "-J-Dpython.cachedir.skip=true",
             "-J-Djava.security.manager", "-J-Djava.security.policy=%s" % policy, script]),
             0)

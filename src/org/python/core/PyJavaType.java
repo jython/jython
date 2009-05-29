@@ -510,16 +510,16 @@ public class PyJavaType extends PyType {
                 @Override
                 public PyObject __call__(PyObject o) {
                     Object proxy = self.getJavaProxy();
-                    Object oAsJava = o.__tojava__(proxy.getClass());
-                    return proxy.equals(oAsJava) ? Py.True : Py.False;
+                    Object oProxy = o.getJavaProxy();
+                    return proxy.equals(oProxy) ? Py.True : Py.False;
                 }
             });
             addMethod(new PyBuiltinMethodNarrow("__ne__", 1) {
                 @Override
                 public PyObject __call__(PyObject o) {
                     Object proxy = self.getJavaProxy();
-                    Object oAsJava = o.__tojava__(proxy.getClass());
-                    return !proxy.equals(oAsJava) ? Py.True : Py.False;
+                    Object oProxy = o.getJavaProxy();
+                    return !proxy.equals(oProxy) ? Py.True : Py.False;
                 }
             });
             addMethod(new PyBuiltinMethodNarrow("__hash__") {
