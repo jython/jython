@@ -1244,6 +1244,8 @@ class Popen(object):
 
             if executable is not None:
                 args[0] = executable
+                if '.jar' == executable[-4:]:
+                    args = ['java', '-jar'] + args
 
             builder = java.lang.ProcessBuilder(args)
             # os.environ may be inherited for compatibility with CPython
