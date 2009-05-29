@@ -660,7 +660,9 @@ public class PySystemState extends PyObject
             } catch (SecurityException se) {
                 encoding = null;
             }
-            registry.put(PYTHON_CONSOLE_ENCODING, encoding);
+            if (encoding != null) {
+                registry.put(PYTHON_CONSOLE_ENCODING, encoding);
+            }
         }
         // Set up options from registry
         Options.setFromRegistry();
