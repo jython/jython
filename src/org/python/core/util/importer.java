@@ -188,16 +188,19 @@ public abstract class importer<T> extends PyObject {
 
             Bundle bundle = makeBundle(searchPath, tocEntry);
             byte[] codeBytes;
-            if (isbytecode) {
-                try {
-                    codeBytes = imp.readCode(fullname, bundle.inputStream, true);
-                } catch (IOException ioe) {
-                    throw Py.ImportError(ioe.getMessage() + "[path=" + fullSearchPath + "]");
+            try {
+                if (isbytecode) {
+                    try {
+                        codeBytes = imp.readCode(fullname, bundle.inputStream, true);
+                    } catch (IOException ioe) {
+                        throw Py.ImportError(ioe.getMessage() + "[path=" + fullSearchPath + "]");
+                    }
+                } else {
+                    codeBytes = imp.compileSource(fullname, bundle.inputStream, fullSearchPath);
                 }
-            } else {
-                codeBytes = imp.compileSource(fullname, bundle.inputStream, fullSearchPath);
+            } finally {
+                bundle.close();
             }
-            bundle.close();
 
             if (codeBytes == null) {
                 // bad magic number or non-matching mtime in byte code, try next

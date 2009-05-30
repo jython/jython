@@ -68,7 +68,6 @@ class PyclasspathImporterTestCase(unittest.TestCase):
                   os.path.join(compile_path, 'jar_pkg',
                                'prefer_compiled$py.class'))
         zip.close()
-        zip = zipfile.ZipFile(jar)
 
         Thread.currentThread().contextClassLoader = test_support.make_jar_classloader(jar)
         import flat_in_jar
