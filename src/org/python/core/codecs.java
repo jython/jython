@@ -1116,7 +1116,7 @@ public class codecs {
 
         int input_size = input.length();
         int output_size = 0;
-        ArrayList<Integer> ucs4 = new ArrayList(input_size);
+        ArrayList<Integer> ucs4 = new ArrayList<Integer>(input_size);
         int j = 0;
         for (; j < input_size; j++) {
             int c = input.charAt(j);

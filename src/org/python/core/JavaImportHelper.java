@@ -36,10 +36,8 @@ public class JavaImportHelper {
             // check explicit imports first (performance optimization)
 
             // handle 'from java.net import URL' like explicit imports
-            List stringFromlist = getFromListAsStrings(fromlist);
-            Iterator fromlistIterator = stringFromlist.iterator();
-            while (fromlistIterator.hasNext()) {
-                String fromName = (String) fromlistIterator.next();
+            List<String> stringFromlist = getFromListAsStrings(fromlist);
+            for (String fromName : stringFromlist) {
                 if (isJavaClass(packageName, fromName)) {
                     packageAdded = addPackage(packageName, packageAdded);
 
@@ -59,7 +57,7 @@ public class JavaImportHelper {
             // if all else fails, check already loaded packages
             if (!packageAdded) {
                 // build the actual map with the packages known to the VM
-                Map packages = buildLoadedPackages();
+                Map<String, String> packages = buildLoadedPackages();
 
                 // add known packages
                 String parentPackageName = packageName;
@@ -78,9 +76,7 @@ public class JavaImportHelper {
                 } while (dotPos > 0);
 
                 // handle package imports like 'from java import math'
-                fromlistIterator = stringFromlist.iterator();
-                while (fromlistIterator.hasNext()) {
-                    String fromName = (String) fromlistIterator.next();
+                for (String fromName : stringFromlist) {
                     String fromPackageName = packageName + DOT + fromName;
                     if (isLoadedPackage(fromPackageName, packages)) {
                         packageAdded = addPackage(fromPackageName, packageAdded);
@@ -113,8 +109,8 @@ public class JavaImportHelper {
      * @param fromlist
      * @return a list containing java.lang.String entries
      */
-    private static final List getFromListAsStrings(PyObject fromlist) {
-        List stringFromlist = new ArrayList();
+    private static final List<String> getFromListAsStrings(PyObject fromlist) {
+        List<String> stringFromlist = new ArrayList<String>();
 
         if (fromlist != null && fromlist != Py.EmptyTuple && fromlist instanceof PyTuple) {
             Iterator iterator = ((PyTuple) fromlist).iterator();
@@ -146,7 +142,7 @@ public class JavaImportHelper {
      * @return <code>true</code> if the package with the given name is already loaded by the VM, <code>false</code>
      * otherwise.
      */
-    private static boolean isLoadedPackage(String javaPackageName, Map packages) {
+    private static boolean isLoadedPackage(String javaPackageName, Map<String, String> packages) {
         boolean isLoaded = false;
         if (javaPackageName != null) {
             isLoaded = packages.containsKey(javaPackageName);
@@ -160,8 +156,8 @@ public class JavaImportHelper {
      * All parent packages appear as single entries like python modules, e.g. <code>java</code>,
      * <code>java.lang</code>, <code>java.lang.reflect</code>,
      */
-    private static Map buildLoadedPackages() {
-        TreeMap packageMap = new TreeMap();
+    private static Map<String, String> buildLoadedPackages() {
+        TreeMap<String, String> packageMap = new TreeMap<String, String>();
         Package[] packages = Package.getPackages();
         for (int i = 0; i < packages.length; i++) {
             String packageName = packages[i].getName();

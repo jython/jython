@@ -13,6 +13,7 @@ import java.io.PrintStream;
 import java.io.Serializable;
 import java.io.StreamCorruptedException;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.sql.Date;
 import java.sql.Time;
 import java.sql.Timestamp;
@@ -23,7 +24,6 @@ import org.python.antlr.base.mod;
 import com.kenai.constantine.platform.Errno;
 import java.util.ArrayList;
 import java.util.List;
-import org.python.compiler.Module;
 import org.python.core.adapter.ClassicPyObjectAdapter;
 import org.python.core.adapter.ExtensiblePyObjectAdapter;
 import org.python.util.Generic;
@@ -481,7 +481,7 @@ public final class Py {
     // ??pending: was @deprecated but is actually used by proxie code.
     // Can get rid of it?
     public static Object tojava(PyObject o, String s) {
-        Class c = findClass(s);
+        Class<?> c = findClass(s);
         if (c == null) {
             throw Py.TypeError("can't convert to: " + s);
         }
@@ -663,15 +663,13 @@ public final class Py {
                 funcs, func_id);
     }
 
-    public static PyCode newJavaCode(Class cls, String name) {
+    public static PyCode newJavaCode(Class<?> cls, String name) {
         return new JavaCode(newJavaFunc(cls, name));
     }
 
-    public static PyObject newJavaFunc(Class cls, String name) {
+    public static PyObject newJavaFunc(Class<?> cls, String name) {
         try {
-            java.lang.reflect.Method m = cls.getMethod(name, new Class[]{
-                PyObject[].class, String[].class
-            });
+            Method m = cls.getMethod(name, new Class<?>[]{PyObject[].class, String[].class});
             return new JavaFunc(m);
         } catch (NoSuchMethodException e) {
             throw Py.JavaError(e);
@@ -1510,10 +1508,6 @@ public final class Py {
      */
     private static ExtensiblePyObjectAdapter adapter;
 
-    private static Class[] pyClassCtrSignature = {
-        String.class, PyTuple.class, PyObject.class, Class.class
-    };
-
     // XXX: The following two makeClass overrides are *only* for the
     // old compiler, they should be removed when the newcompiler hits
     public static PyObject makeClass(String name, PyObject[] bases,
@@ -1939,6 +1933,7 @@ public final class Py {
         }
     }
 
+    @Override
     protected PyObject myFile() {
         return file;
     }
@@ -1958,6 +1953,7 @@ class JavaCode extends PyCode {
         }
     }
 
+    @Override
     public PyObject call(ThreadState state, PyFrame frame, PyObject closure) {
         //XXX: what the heck is this?  Looks like debug code, but it's
         //     been here a long time...
@@ -1965,39 +1961,46 @@ class JavaCode extends PyCode {
         return Py.None;
     }
 
+    @Override
     public PyObject call(ThreadState state, PyObject args[], String keywords[],
             PyObject globals, PyObject[] defaults,
             PyObject closure) {
         return func.__call__(args, keywords);
     }
 
+    @Override
     public PyObject call(ThreadState state, PyObject self, PyObject args[], String keywords[],
             PyObject globals, PyObject[] defaults,
             PyObject closure) {
         return func.__call__(self, args, keywords);
     }
 
+    @Override
     public PyObject call(ThreadState state, PyObject globals, PyObject[] defaults,
             PyObject closure) {
         return func.__call__();
     }
 
+    @Override
     public PyObject call(ThreadState state, PyObject arg1, PyObject globals,
             PyObject[] defaults, PyObject closure) {
         return func.__call__(arg1);
     }
 
+    @Override
     public PyObject call(ThreadState state, PyObject arg1, PyObject arg2, PyObject globals,
             PyObject[] defaults, PyObject closure) {
         return func.__call__(arg1, arg2);
     }
 
+    @Override
     public PyObject call(ThreadState state, PyObject arg1, PyObject arg2, PyObject arg3,
             PyObject globals, PyObject[] defaults,
             PyObject closure) {
         return func.__call__(arg1, arg2, arg3);
     }
     
+    @Override
     public PyObject call(ThreadState state, PyObject arg1, PyObject arg2,
             PyObject arg3, PyObject arg4, PyObject globals,
             PyObject[] defaults, PyObject closure) {
@@ -2011,12 +2014,13 @@ class JavaCode extends PyCode {
  */
 class JavaFunc extends PyObject {
 
-    java.lang.reflect.Method method;
+    Method method;
 
-    public JavaFunc(java.lang.reflect.Method method) {
+    public JavaFunc(Method method) {
         this.method = method;
     }
 
+    @Override
     public PyObject __call__(PyObject[] args, String[] kws) {
         Object[] margs = new Object[]{args, kws};
         try {
@@ -2026,10 +2030,12 @@ class JavaFunc extends PyObject {
         }
     }
 
+    @Override
     public PyObject _doget(PyObject container) {
         return _doget(container, null);
     }
 
+    @Override
     public PyObject _doget(PyObject container, PyObject wherefound) {
         if (container == null) {
             return this;

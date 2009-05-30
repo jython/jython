@@ -2,11 +2,11 @@
 package org.python.core;
 
 public class ReflectedArgs {
-    public Class[] args;
+    public Class<?>[] args;
 
     public Object data;
 
-    public Class declaringClass;
+    public Class<?> declaringClass;
 
     public boolean isStatic;
 
@@ -18,8 +18,7 @@ public class ReflectedArgs {
 
     public static final int PyArgsKeywordsCall = 2;
 
-    public ReflectedArgs(Object data, Class[] args, Class declaringClass,
-            boolean isStatic) {
+    public ReflectedArgs(Object data, Class<?>[] args, Class<?> declaringClass, boolean isStatic) {
         this.data = data;
         this.args = args;
         this.declaringClass = declaringClass;
@@ -129,7 +128,7 @@ public class ReflectedArgs {
         return true;
     }
 
-    public static int precedence(Class arg) {
+    public static int precedence(Class<?> arg) {
         if (arg == Object.class) {
             return 3000;
         }
@@ -166,7 +165,7 @@ public class ReflectedArgs {
         }
 
         if (arg.isArray()) {
-            Class componentType = arg.getComponentType();
+            Class<?> componentType = arg.getComponentType();
             if (componentType == Object.class) {
                 return 2500;
             }
@@ -180,7 +179,7 @@ public class ReflectedArgs {
      * unimportantly different Returns +/-2 iff arg1 and arg2 are significantly
      * different
      */
-    public static int compare(Class arg1, Class arg2) {
+    public static int compare(Class<?> arg1, Class<?> arg2) {
         int p1 = precedence(arg1);
         int p2 = precedence(arg2);
         // Special code if they are both nonprimitives
@@ -207,7 +206,7 @@ public class ReflectedArgs {
     public static final int REPLACE = 1998;
 
     public int compareTo(ReflectedArgs other) {
-        Class[] oargs = other.args;
+        Class<?>[] oargs = other.args;
 
         // First decision based on flags
         if (other.flags != this.flags) {
@@ -258,6 +257,7 @@ public class ReflectedArgs {
         return replace ? REPLACE : 0;
     }
 
+    @Override
     public String toString() {
         String s =  declaringClass + ", " + isStatic + ", " + flags + ", " + data + "\n";
         s = s + "\t(";
