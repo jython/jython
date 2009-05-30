@@ -176,6 +176,7 @@ public class PythonTree extends AST {
 		node.setChildIndex(index);
 	}
 
+    @Override
     public String toString() {
         if (isNil()) {
             return "None";
@@ -245,7 +246,7 @@ public class PythonTree extends AST {
         throw new RuntimeException("Unexpected node: " + this);
     }
     
-    public void traverse(VisitorIF visitor) throws Exception {
+    public void traverse(VisitorIF<?> visitor) throws Exception {
         throw new RuntimeException("Cannot traverse node: " + this);
     }
  

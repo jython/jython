@@ -441,7 +441,7 @@ class JavaVisitor(EmitVisitor):
         self.emit("", 0)
 
         # The visitChildren() method
-        self.emit("public void traverse(VisitorIF visitor) throws Exception {", depth)
+        self.emit("public void traverse(VisitorIF<?> visitor) throws Exception {", depth)
         for f in fields:
             if self.bltinnames.has_key(str(f.type)):
                 continue
