@@ -955,6 +955,7 @@ class MH(Mailbox):
         if self._locked:
             _unlock_file(self._file)
             _sync_close(self._file)
+            self._file.close()
             del self._file
             self._locked = False
 
@@ -1780,6 +1781,7 @@ class _ProxyFile:
 
     def close(self):
         """Close the file."""
+        self._file.close()
         del self._file
 
     def _read(self, size, read_method):

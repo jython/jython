@@ -1,6 +1,7 @@
 # This set of tests exercises the backward-compatibility class
 # in mailbox.py (the ones without write support).
 
+from __future__ import with_statement
 import mailbox
 import os
 import time
@@ -63,6 +64,10 @@ class MaildirTestCase(unittest.TestCase):
         self._msgfiles.append(newname)
         return tmpname
 
+    def assert_and_close(self, message):
+        self.assert_(message is not None)
+        message.fp.close()
+
     def test_empty_maildir(self):
         """Test an empty maildir mailbox"""
         # Test for regression on bug #117490:
@@ -75,7 +80,7 @@ class MaildirTestCase(unittest.TestCase):
         self.createMessage("cur")
         self.mbox = mailbox.Maildir(test_support.TESTFN)
         self.assert_(len(self.mbox) == 1)
-        self.assert_(self.mbox.next() is not None)
+        self.assert_and_close(self.mbox.next())
         self.assert_(self.mbox.next() is None)
         self.assert_(self.mbox.next() is None)
 
@@ -83,7 +88,7 @@ class MaildirTestCase(unittest.TestCase):
         self.createMessage("new")
         self.mbox = mailbox.Maildir(test_support.TESTFN)
         self.assert_(len(self.mbox) == 1)
-        self.assert_(self.mbox.next() is not None)
+        self.assert_and_close(self.mbox.next())
         self.assert_(self.mbox.next() is None)
         self.assert_(self.mbox.next() is None)
 
@@ -92,8 +97,8 @@ class MaildirTestCase(unittest.TestCase):
         self.createMessage("new")
         self.mbox = mailbox.Maildir(test_support.TESTFN)
         self.assert_(len(self.mbox) == 2)
-        self.assert_(self.mbox.next() is not None)
-        self.assert_(self.mbox.next() is not None)
+        self.assert_and_close(self.mbox.next())
+        self.assert_and_close(self.mbox.next())
         self.assert_(self.mbox.next() is None)
         self.assert_(self.mbox.next() is None)
 
@@ -102,11 +107,12 @@ class MaildirTestCase(unittest.TestCase):
         import email.Parser
         fname = self.createMessage("cur", True)
         n = 0
-        for msg in mailbox.PortableUnixMailbox(open(fname),
-                                               email.Parser.Parser().parse):
-            n += 1
-            self.assertEqual(msg["subject"], "Simple Test")
-            self.assertEqual(len(str(msg)), len(FROM_)+len(DUMMY_MESSAGE))
+        with open(fname) as fp:
+            for msg in mailbox.PortableUnixMailbox(fp,
+                                                   email.Parser.Parser().parse):
+                n += 1
+                self.assertEqual(msg["subject"], "Simple Test")
+                self.assertEqual(len(str(msg)), len(FROM_)+len(DUMMY_MESSAGE))
         self.assertEqual(n, 1)
 
 class MboxTestCase(unittest.TestCase):
@@ -139,7 +145,10 @@ body4
 """)
         f.close()
         box = mailbox.UnixMailbox(open(self._path, 'r'))
-        self.assert_(len(list(iter(box))) == 4)
+        messages = list(iter(box))
+        self.assert_(len(messages) == 4)
+        for message in messages:
+            message.fp.close()
 
 
     # XXX We still need more tests!

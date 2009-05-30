@@ -18,8 +18,11 @@ class TestShutil(unittest.TestCase):
 
     # See bug #1071513 for why we don't run this on cygwin
     # and bug #1076467 for why we don't run this as root.
+    # XXX: Fails on Jython because Java resets the S_IREAD permission
+    # when removing the file
     if (hasattr(os, 'chmod') and sys.platform[:6] != 'cygwin'
-        and not (hasattr(os, 'geteuid') and os.geteuid() == 0)):
+        and not (hasattr(os, 'geteuid') and os.geteuid() == 0)
+        and (not test_support.is_jython or os._name != 'nt')):
         def test_on_error(self):
             self.errorState = 0
             os.mkdir(TESTFN)
