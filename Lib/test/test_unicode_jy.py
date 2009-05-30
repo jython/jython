@@ -51,6 +51,29 @@ class UnicodeTestCase(unittest.TestCase):
         self.assertEqual(ord(bar[2]), 92)
         self.assertEqual(ord(bar[3]), 110)
 
+        for baz in ur'Hello\u0020World !', ur'Hello\U00000020World !':
+            self.assertEqual(len(baz), 13, repr(baz))
+            self.assertEqual(repr(baz), "u'Hello World !'")
+            self.assertEqual(ord(baz[5]), 32)
+
+        quux = ur'\U00100000'
+        self.assertEqual(repr(quux), "u'\\U00100000'")
+        if sys.maxunicode == 0xffff:
+            self.assertEqual(len(quux), 2)
+            self.assertEqual(ord(quux[0]), 56256)
+            self.assertEqual(ord(quux[1]), 56320)
+        else:
+            self.assertEqual(len(quux), 1)
+            self.assertEqual(ord(quux), 1048576)
+
+    def test_raw_unicode_escape(self):
+        foo = u'\U00100000'
+        self.assertEqual(foo.encode('raw_unicode_escape'), '\\U00100000')
+        self.assertEqual(foo.encode('raw_unicode_escape').decode('raw_unicode_escape'),
+                         foo)
+        for bar in '\\u', '\\u000', '\\U00000':
+            self.assertRaises(UnicodeDecodeError, bar.decode, 'raw_unicode_escape')
+
     def test_encode_decimal(self):
         self.assertEqual(int(u'\u0039\u0032'), 92)
         self.assertEqual(int(u'\u0660'), 0)

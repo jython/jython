@@ -9,6 +9,7 @@ import org.python.core.PyInteger;
 import org.python.core.PyLong;
 import org.python.core.PyString;
 import org.python.core.PyUnicode;
+import org.python.core.codecs;
 import org.python.antlr.ast.alias;
 import org.python.antlr.ast.arguments;
 import org.python.antlr.ast.boolopType;
@@ -441,8 +442,12 @@ public class GrammarActions {
                                                        ustring);
             }
         } else if (raw) {
-            // Raw str without an encoding or raw unicode: simply passthru
+            // Raw str without an encoding or raw unicode
             string = string.substring(start, end);
+            if (ustring) {
+                // Raw unicode: handle unicode escapes
+                string = codecs.PyUnicode_DecodeRawUnicodeEscape(string, "strict");
+            }
         } else {
             // Plain unicode: already decoded, just handle escapes
             string = PyString.decode_UnicodeEscape(string, start, end, "strict", ustring);

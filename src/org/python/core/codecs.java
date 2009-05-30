@@ -920,45 +920,54 @@ public class codecs {
     private static char[] hexdigit = "0123456789ABCDEF".toCharArray();
 
     // The modified flag is used by cPickle.
-    public static String PyUnicode_EncodeRawUnicodeEscape(String str,
-            String errors,
-            boolean modifed) {
-
-        int size = str.length();
+    public static String PyUnicode_EncodeRawUnicodeEscape(String str, String errors,
+                                                          boolean modifed) {
         StringBuilder v = new StringBuilder(str.length());
 
-        for (int i = 0; i < size; i++) {
-            char ch = str.charAt(i);
-            if (ch >= 256 || (modifed && (ch == '\n' || ch == '\\'))) {
+        for (Iterator<Integer> iter = new PyUnicode(str).newSubsequenceIterator();
+             iter.hasNext();) {
+            int codePoint = iter.next();
+            if (codePoint >= Character.MIN_SUPPLEMENTARY_CODE_POINT) {
+                // Map 32-bit characters to '\\Uxxxxxxxx'
+                v.append("\\U");
+                v.append(hexdigit[(codePoint >> 28) & 0xF]);
+                v.append(hexdigit[(codePoint >> 24) & 0xF]);
+                v.append(hexdigit[(codePoint >> 20) & 0xF]);
+                v.append(hexdigit[(codePoint >> 16) & 0xF]);
+                v.append(hexdigit[(codePoint >> 12) & 0xF]);
+                v.append(hexdigit[(codePoint >> 8) & 0xF]);
+                v.append(hexdigit[(codePoint >> 4) & 0xF]);
+                v.append(hexdigit[codePoint & 0xF]);
+            } else if (codePoint >= 256 || (modifed && (codePoint == '\\' || codePoint == '\n'))) {
+                // Map 16-bit chararacters to '\\uxxxx'
                 v.append("\\u");
-                v.append(hexdigit[(ch >>> 12) & 0xF]);
-                v.append(hexdigit[(ch >>> 8) & 0xF]);
-                v.append(hexdigit[(ch >>> 4) & 0xF]);
-                v.append(hexdigit[ch & 0xF]);
+                v.append(hexdigit[(codePoint >> 12) & 0xF]);
+                v.append(hexdigit[(codePoint >> 8) & 0xF]);
+                v.append(hexdigit[(codePoint >> 4) & 0xF]);
+                v.append(hexdigit[codePoint & 0xF]);
             } else {
-                v.append(ch);
+                v.append((char)codePoint);
             }
         }
 
         return v.toString();
     }
 
-    public static String PyUnicode_DecodeRawUnicodeEscape(String str,
-            String errors) {
+    public static String PyUnicode_DecodeRawUnicodeEscape(String str, String errors) {
         int size = str.length();
         StringBuilder v = new StringBuilder(size);
+
         for (int i = 0; i < size;) {
             char ch = str.charAt(i);
-            /* Non-escape characters are interpreted as Unicode ordinals */
+            // Non-escape characters are interpreted as Unicode ordinals
             if (ch != '\\') {
                 v.append(ch);
                 i++;
                 continue;
             }
-            /*
-             * \\u-escapes are only interpreted iff the number of leading
-             * backslashes is odd
-             */
+
+            // \\u-escapes are only interpreted if the number of leading backslashes is
+            // odd
             int bs = i;
             while (i < size) {
                 ch = str.charAt(i);
@@ -968,34 +977,37 @@ public class codecs {
                 v.append(ch);
                 i++;
             }
-            if (((i - bs) & 1) == 0 || i >= size || ch != 'u') {
+            if (((i - bs) & 1) == 0 || i >= size || (ch != 'u' && ch != 'U')) {
                 continue;
             }
             v.setLength(v.length() - 1);
+            int count = ch == 'u' ? 4 : 8;
             i++;
-            /* \\uXXXX with 4 hex digits */
-            int x = 0, d = 0, j = 0;
-            for (; j < 4; j++) {
-                ch = str.charAt(i + j);
-                d = Character.digit(ch, 16);
-                if (d == -1) {
+
+            // \\uXXXX with 4 hex digits, \Uxxxxxxxx with 8
+            int codePoint = 0, asDigit = -1;
+            for (int j = 0; j < count; i++, j++) {
+                if (i == size) {
+                    // EOF in a truncated escape
+                    asDigit = -1;
                     break;
                 }
-                x = ((x << 4) & ~0xF) + d;
+
+                ch = str.charAt(i);
+                asDigit = Character.digit(ch, 16);
+                if (asDigit == -1) {
+                    break;
+                }
+                codePoint = ((codePoint << 4) & ~0xF) + asDigit;
             }
-            if (d == -1) {
-                i = codecs.insertReplacementAndGetResume(v,
-                        errors,
-                        "unicodeescape",
-                        str,
-                        bs,
-                        i + j,
-                        "truncated \\uXXXX");
+            if (asDigit == -1) {
+                i = codecs.insertReplacementAndGetResume(v, errors, "rawunicodeescape", str, bs, i,
+                                                         "truncated \\uXXXX");
             } else {
-                i += 4;
-                v.append((char) x);
+                v.appendCodePoint(codePoint);
             }
         }
+
         return v.toString();
     }
 

@@ -9,6 +9,7 @@ Jython 2.5.0
     Fix file's repr with Windows paths
     Fix urllib and urllib2 path handling on Windows
     Fix r'\Jython25' not considered an abspath on Windows
+    Fix handling of raw unicode escapes
 
 Jython 2.5.0 rc3
   Bugs fixed
