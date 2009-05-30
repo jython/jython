@@ -235,7 +235,7 @@ public static final PyType TYPE = PyType.fromClass(ClassDef.class);
         return visitor.visitClassDef(this);
     }
 
-    public void traverse(VisitorIF visitor) throws Exception {
+    public void traverse(VisitorIF<?> visitor) throws Exception {
         if (bases != null) {
             for (PythonTree t : bases) {
                 if (t != null)

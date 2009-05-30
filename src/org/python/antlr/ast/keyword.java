@@ -128,7 +128,7 @@ public class keyword extends PythonTree {
         return null;
     }
 
-    public void traverse(VisitorIF visitor) throws Exception {
+    public void traverse(VisitorIF<?> visitor) throws Exception {
         if (value != null)
             value.accept(visitor);
     }

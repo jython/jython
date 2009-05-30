@@ -181,7 +181,7 @@ public static final PyType TYPE = PyType.fromClass(With.class);
         return visitor.visitWith(this);
     }
 
-    public void traverse(VisitorIF visitor) throws Exception {
+    public void traverse(VisitorIF<?> visitor) throws Exception {
         if (context_expr != null)
             context_expr.accept(visitor);
         if (optional_vars != null)

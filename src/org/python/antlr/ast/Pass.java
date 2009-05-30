@@ -88,7 +88,7 @@ public static final PyType TYPE = PyType.fromClass(Pass.class);
         return visitor.visitPass(this);
     }
 
-    public void traverse(VisitorIF visitor) throws Exception {
+    public void traverse(VisitorIF<?> visitor) throws Exception {
     }
 
     private int lineno = -1;

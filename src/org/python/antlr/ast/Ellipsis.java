@@ -77,7 +77,7 @@ public static final PyType TYPE = PyType.fromClass(Ellipsis.class);
         return visitor.visitEllipsis(this);
     }
 
-    public void traverse(VisitorIF visitor) throws Exception {
+    public void traverse(VisitorIF<?> visitor) throws Exception {
     }
 
 }

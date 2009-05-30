@@ -179,7 +179,7 @@ public static final PyType TYPE = PyType.fromClass(Compare.class);
         return visitor.visitCompare(this);
     }
 
-    public void traverse(VisitorIF visitor) throws Exception {
+    public void traverse(VisitorIF<?> visitor) throws Exception {
         if (left != null)
             left.accept(visitor);
         if (comparators != null) {

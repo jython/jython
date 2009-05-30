@@ -120,7 +120,7 @@ public static final PyType TYPE = PyType.fromClass(Module.class);
         return visitor.visitModule(this);
     }
 
-    public void traverse(VisitorIF visitor) throws Exception {
+    public void traverse(VisitorIF<?> visitor) throws Exception {
         if (body != null) {
             for (PythonTree t : body) {
                 if (t != null)

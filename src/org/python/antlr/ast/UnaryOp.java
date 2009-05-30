@@ -137,7 +137,7 @@ public static final PyType TYPE = PyType.fromClass(UnaryOp.class);
         return visitor.visitUnaryOp(this);
     }
 
-    public void traverse(VisitorIF visitor) throws Exception {
+    public void traverse(VisitorIF<?> visitor) throws Exception {
         if (operand != null)
             operand.accept(visitor);
     }

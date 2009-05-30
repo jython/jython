@@ -105,7 +105,7 @@ public static final PyType TYPE = PyType.fromClass(Index.class);
         return visitor.visitIndex(this);
     }
 
-    public void traverse(VisitorIF visitor) throws Exception {
+    public void traverse(VisitorIF<?> visitor) throws Exception {
         if (value != null)
             value.accept(visitor);
     }

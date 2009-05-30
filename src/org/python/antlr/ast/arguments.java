@@ -208,7 +208,7 @@ public class arguments extends PythonTree {
         return null;
     }
 
-    public void traverse(VisitorIF visitor) throws Exception {
+    public void traverse(VisitorIF<?> visitor) throws Exception {
         if (args != null) {
             for (PythonTree t : args) {
                 if (t != null)

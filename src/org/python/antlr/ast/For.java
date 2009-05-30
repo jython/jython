@@ -222,7 +222,7 @@ public static final PyType TYPE = PyType.fromClass(For.class);
         return visitor.visitFor(this);
     }
 
-    public void traverse(VisitorIF visitor) throws Exception {
+    public void traverse(VisitorIF<?> visitor) throws Exception {
         if (target != null)
             target.accept(visitor);
         if (iter != null)

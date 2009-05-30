@@ -161,7 +161,7 @@ public static final PyType TYPE = PyType.fromClass(BinOp.class);
         return visitor.visitBinOp(this);
     }
 
-    public void traverse(VisitorIF visitor) throws Exception {
+    public void traverse(VisitorIF<?> visitor) throws Exception {
         if (left != null)
             left.accept(visitor);
         if (right != null)

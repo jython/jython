@@ -177,7 +177,7 @@ public static final PyType TYPE = PyType.fromClass(Print.class);
         return visitor.visitPrint(this);
     }
 
-    public void traverse(VisitorIF visitor) throws Exception {
+    public void traverse(VisitorIF<?> visitor) throws Exception {
         if (dest != null)
             dest.accept(visitor);
         if (values != null) {

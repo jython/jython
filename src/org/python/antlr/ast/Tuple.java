@@ -152,7 +152,7 @@ public static final PyType TYPE = PyType.fromClass(Tuple.class);
         return visitor.visitTuple(this);
     }
 
-    public void traverse(VisitorIF visitor) throws Exception {
+    public void traverse(VisitorIF<?> visitor) throws Exception {
         if (elts != null) {
             for (PythonTree t : elts) {
                 if (t != null)

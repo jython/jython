@@ -120,7 +120,7 @@ public static final PyType TYPE = PyType.fromClass(ExtSlice.class);
         return visitor.visitExtSlice(this);
     }
 
-    public void traverse(VisitorIF visitor) throws Exception {
+    public void traverse(VisitorIF<?> visitor) throws Exception {
         if (dims != null) {
             for (PythonTree t : dims) {
                 if (t != null)

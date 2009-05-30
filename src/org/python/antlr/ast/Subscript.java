@@ -158,7 +158,7 @@ public static final PyType TYPE = PyType.fromClass(Subscript.class);
         return visitor.visitSubscript(this);
     }
 
-    public void traverse(VisitorIF visitor) throws Exception {
+    public void traverse(VisitorIF<?> visitor) throws Exception {
         if (value != null)
             value.accept(visitor);
         if (slice != null)

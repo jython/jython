@@ -131,7 +131,7 @@ public static final PyType TYPE = PyType.fromClass(Import.class);
         return visitor.visitImport(this);
     }
 
-    public void traverse(VisitorIF visitor) throws Exception {
+    public void traverse(VisitorIF<?> visitor) throws Exception {
         if (names != null) {
             for (PythonTree t : names) {
                 if (t != null)

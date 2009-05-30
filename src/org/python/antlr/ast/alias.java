@@ -126,7 +126,7 @@ public class alias extends PythonTree {
         return null;
     }
 
-    public void traverse(VisitorIF visitor) throws Exception {
+    public void traverse(VisitorIF<?> visitor) throws Exception {
     }
 
 }

@@ -155,7 +155,7 @@ public static final PyType TYPE = PyType.fromClass(Assign.class);
         return visitor.visitAssign(this);
     }
 
-    public void traverse(VisitorIF visitor) throws Exception {
+    public void traverse(VisitorIF<?> visitor) throws Exception {
         if (targets != null) {
             for (PythonTree t : targets) {
                 if (t != null)

@@ -105,7 +105,7 @@ public static final PyType TYPE = PyType.fromClass(Expression.class);
         return visitor.visitExpression(this);
     }
 
-    public void traverse(VisitorIF visitor) throws Exception {
+    public void traverse(VisitorIF<?> visitor) throws Exception {
         if (body != null)
             body.accept(visitor);
     }

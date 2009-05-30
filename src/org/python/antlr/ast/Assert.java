@@ -140,7 +140,7 @@ public static final PyType TYPE = PyType.fromClass(Assert.class);
         return visitor.visitAssert(this);
     }
 
-    public void traverse(VisitorIF visitor) throws Exception {
+    public void traverse(VisitorIF<?> visitor) throws Exception {
         if (test != null)
             test.accept(visitor);
         if (msg != null)

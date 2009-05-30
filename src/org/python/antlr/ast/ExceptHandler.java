@@ -180,7 +180,7 @@ public static final PyType TYPE = PyType.fromClass(ExceptHandler.class);
         return visitor.visitExceptHandler(this);
     }
 
-    public void traverse(VisitorIF visitor) throws Exception {
+    public void traverse(VisitorIF<?> visitor) throws Exception {
         if (type != null)
             type.accept(visitor);
         if (name != null)

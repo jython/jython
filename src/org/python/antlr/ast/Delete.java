@@ -131,7 +131,7 @@ public static final PyType TYPE = PyType.fromClass(Delete.class);
         return visitor.visitDelete(this);
     }
 
-    public void traverse(VisitorIF visitor) throws Exception {
+    public void traverse(VisitorIF<?> visitor) throws Exception {
         if (targets != null) {
             for (PythonTree t : targets) {
                 if (t != null)

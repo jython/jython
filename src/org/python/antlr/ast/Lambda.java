@@ -137,7 +137,7 @@ public static final PyType TYPE = PyType.fromClass(Lambda.class);
         return visitor.visitLambda(this);
     }
 
-    public void traverse(VisitorIF visitor) throws Exception {
+    public void traverse(VisitorIF<?> visitor) throws Exception {
         if (args != null)
             args.accept(visitor);
         if (body != null)
