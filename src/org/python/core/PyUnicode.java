@@ -213,6 +213,7 @@ public class PyUnicode extends PyString implements Iterable {
         return fmt.format(other);
     }
 
+    @Override
     public PyUnicode __unicode__() {
         return this;
     }
@@ -411,13 +412,17 @@ public class PyUnicode extends PyString implements Iterable {
         }
     }
 
-    public Iterator newSubsequenceIterator() {
+    // XXX: Parameterize SubsequenceIteratorImpl and friends (and make them Iterable)
+    public Iterator<Integer> newSubsequenceIterator() {
         return new SubsequenceIteratorImpl();
     }
 
-    public Iterator newSubsequenceIterator(int start, int stop, int step) {
+    public Iterator<Integer> newSubsequenceIterator(int start, int stop, int step) {
         if (step < 0) {
-            return new SteppedIterator(step * -1, new ReversedIterator(new SubsequenceIteratorImpl(stop + 1, start + 1, 1)));
+            return new SteppedIterator(step * -1,
+                                       new ReversedIterator(new SubsequenceIteratorImpl(stop + 1,
+                                                                                        start + 1,
+                                                                                        1)));
         } else {
             return new SubsequenceIteratorImpl(start, stop, step);
         }
@@ -454,6 +459,7 @@ public class PyUnicode extends PyString implements Iterable {
         return str___rmul__(o);
     }
 
+    @Override
     public PyObject __add__(PyObject other) {
         return unicode___add__(other);
     }
@@ -632,6 +638,7 @@ public class PyUnicode extends PyString implements Iterable {
                 new ReversedIterator(newSubsequenceIterator()))));
     }
 
+    @Override
     public PyTuple partition(PyObject sep) {
         return unicode_partition(sep);
     }
@@ -872,6 +879,7 @@ public class PyUnicode extends PyString implements Iterable {
         }
     }
 
+    @Override
     public PyTuple rpartition(PyObject sep) {
         return unicode_rpartition(sep);
     }
@@ -1117,6 +1125,7 @@ public class PyUnicode extends PyString implements Iterable {
     }
 
     // end utf-16 aware
+    @Override
     public PyString join(PyObject seq) {
         return unicode_join(seq);
     }
