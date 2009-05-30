@@ -1493,6 +1493,9 @@ if _platform[:4] == 'java':
         # XXX: Omitted for now because it fails so miserably and ruins
         # other tests
         _failures['java'] += '\ntest_mailbox'
+        if ' ' in sys.executable:
+            # http://bugs.python.org/issue1559298
+            _failures['java'] += '\ntest_popen'
 
 class _ExpectedSkips:
     def __init__(self):
