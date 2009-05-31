@@ -147,9 +147,21 @@ except NameError:
 is_jython = sys.platform.startswith('java')
 if is_jython:
     def make_jar_classloader(jar):
-        from java.io import File
-        from java.net import URLClassLoader
-        url = File(findfile(jar)).toURL()
+        import os
+        from java.net import URL, URLClassLoader
+
+        url = URL('jar:file:%s!/' % jar)
+        if os._name == 'nt':
+            # URLJarFiles keep a cached open file handle to the jar even
+            # after this ClassLoader is GC'ed, disallowing Windows tests
+            # from removing the jar file from disk when finished with it
+            conn = url.openConnection()
+            if conn.getDefaultUseCaches():
+                # XXX: Globally turn off jar caching: this stupid
+                # instance method actually toggles a static flag. Need a
+                # better fix
+                conn.setDefaultUseCaches(False)
+
         return URLClassLoader([url])
 
 import os
