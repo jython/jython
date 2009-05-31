@@ -1431,10 +1431,4 @@ public class PyUnicode extends PyString implements Iterable {
         }
         return sb.toString();
     }
-
-    //needs doc
-    @ExposedMethod/*(doc = BuiltinDocs.unicode_toString_doc)*/
-    final String unicode_toString() {
-        return toString();
-    }
 }

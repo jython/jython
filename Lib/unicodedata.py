@@ -209,7 +209,7 @@ try:
             normalizer_form = _forms[form]
         except KeyError:
             raise ValueError('invalid normalization form')
-        return Normalizer.normalize(unistr.toString(), normalizer_form) 
+        return Normalizer.normalize(unistr, normalizer_form) 
 
 except ImportError:
     pass
