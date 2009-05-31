@@ -1067,21 +1067,15 @@ public class cPickle implements ClassDictInit {
 
 
         final private void save_string(PyObject object) {
-            boolean unicode = ((PyString) object).isunicode();
             String str = object.toString();
 
             if (protocol > 0) {
-                if (unicode)
-                    str = codecs.PyUnicode_EncodeUTF8(str, "struct");
                 int l = str.length();
-                if (l < 256 && !unicode) {
+                if (l < 256) {
                     file.write(SHORT_BINSTRING);
                     file.write((char)l);
                 } else {
-                    if (unicode)
-                        file.write(BINUNICODE);
-                    else
-                        file.write(BINSTRING);
+                    file.write(BINSTRING);
                     file.write((char)( l         & 0xFF));
                     file.write((char)((l >>> 8 ) & 0xFF));
                     file.write((char)((l >>> 16) & 0xFF));
@@ -1089,14 +1083,8 @@ public class cPickle implements ClassDictInit {
                 }
                 file.write(str);
             } else {
-                if (unicode) {
-                    file.write(UNICODE);
-                    file.write(codecs.PyUnicode_EncodeRawUnicodeEscape(str,
-                                                            "strict", true));
-                } else {
-                    file.write(STRING);
-                    file.write(object.__repr__().toString());
-                }
+                file.write(STRING);
+                file.write(object.__repr__().toString());
                 file.write("\n");
             }
             put(putMemo(get_id(object), object));

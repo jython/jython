@@ -1318,10 +1318,11 @@ public class PyUnicode extends PyString implements Iterable {
         }
         return true;
     }
-    // XXX: needs doc
+
     // end utf-16 aware
-    @ExposedMethod
+    @ExposedMethod(doc = "isunicode is deprecated.")
     final boolean unicode_isunicode() {
+        Py.warning(Py.DeprecationWarning, "isunicode is deprecated.");
         return true;
     }
 

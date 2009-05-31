@@ -2406,9 +2406,9 @@ public class PyString extends PyBaseString
         return str_isunicode();
     }
 
-    //XXX: need doc
-    @ExposedMethod/*(doc = BuiltinDocs.unicode_isunicode_doc)*/
+    @ExposedMethod(doc = "isunicode is deprecated.")
     final boolean str_isunicode() {
+        Py.warning(Py.DeprecationWarning, "isunicode is deprecated.");
         int n = string.length();
         for (int i = 0; i < n; i++) {
             char ch = string.charAt(i);
