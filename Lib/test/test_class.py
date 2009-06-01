@@ -1,6 +1,6 @@
 "Test the functionality of Python classes implementing operators."
 
-from test.test_support import TestFailed, gc_collect
+from test.test_support import TestFailed
 
 testmeths = [
 
@@ -249,7 +249,9 @@ testme != 1
 # This test has to be last (duh.)
 
 del testme
-gc_collect()
+if sys.platform[:4] == 'java':
+    from test_weakref import extra_collect
+    extra_collect()
 
 # Interfering tests
 

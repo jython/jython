@@ -1,7 +1,7 @@
 # Test iterators.
 
 import unittest
-from test.test_support import gc_collect, run_unittest, TESTFN, unlink, have_unicode
+from test.test_support import run_unittest, TESTFN, unlink, have_unicode
 
 # Test result of triple loop (too big to inline)
 TRIPLETS = [(0, 0, 0), (0, 0, 1), (0, 0, 2),
@@ -781,6 +781,7 @@ class TestCase(unittest.TestCase):
         # Test reference count behavior
 
         # XXX: Jython new style objects don't support __del__ yet
+        from test_weakref import extra_collect
         #class C(object):
         class C:
             count = 0
@@ -796,7 +797,7 @@ class TestCase(unittest.TestCase):
         x = C()
         self.assertEqual(C.count, 1)
         del x
-        gc_collect()
+        extra_collect()
         self.assertEqual(C.count, 0)
         l = [C(), C(), C()]
         self.assertEqual(C.count, 3)
@@ -805,7 +806,7 @@ class TestCase(unittest.TestCase):
         except ValueError:
             pass
         del l
-        gc_collect()
+        extra_collect()
         self.assertEqual(C.count, 0)
 
 

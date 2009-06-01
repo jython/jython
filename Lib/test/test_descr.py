@@ -1,9 +1,14 @@
 # Test enhancements related to descriptors and new-style classes
 
-from test.test_support import verify, vereq, verbose, TestFailed, TESTFN, get_original_stdout, gc_collect, is_jython
+from test.test_support import verify, vereq, verbose, TestFailed, TESTFN, get_original_stdout, is_jython
 from copy import deepcopy
 import warnings
 import types
+if is_jython:
+    from test_weakref import extra_collect
+else:
+    def extra_collect():
+        pass
 
 warnings.filterwarnings("ignore",
          r'complex divmod\(\), // and % are deprecated$',
@@ -1261,7 +1266,7 @@ def slots():
     x.c = Counted()
     vereq(Counted.counter, 3)
     del x
-    gc_collect()
+    extra_collect()
     vereq(Counted.counter, 0)
     class D(C):
         pass
@@ -1270,7 +1275,7 @@ def slots():
     x.z = Counted()
     vereq(Counted.counter, 2)
     del x
-    gc_collect()
+    extra_collect()
     vereq(Counted.counter, 0)
     class E(D):
         __slots__ = ['e']
@@ -1280,7 +1285,7 @@ def slots():
     x.e = Counted()
     vereq(Counted.counter, 3)
     del x
-    gc_collect()
+    extra_collect()
     vereq(Counted.counter, 0)
 
     # Test cyclical leaks [SF bug 519621]
@@ -1293,7 +1298,7 @@ def slots():
     s = None
     import gc
     gc.collect()
-    gc_collect()
+    extra_collect()
     vereq(Counted.counter, 0)
 
     # XXX: This tests a CPython GC reference count bug and Jython lacks
@@ -1326,7 +1331,7 @@ def slots():
     h = H()
     try:
         del h
-        gc_collect()
+        extra_collect()
     finally:
         sys.stderr = save_stderr
 
@@ -1977,7 +1982,7 @@ def weakrefs():
     r = weakref.ref(c)
     verify(r() is c)
     del c
-    gc_collect()
+    extra_collect()
     verify(r() is None)
     del r
     class NoWeak(object):
@@ -1997,7 +2002,7 @@ def weakrefs():
     r = weakref.ref(yes)
     verify(r() is yes)
     del yes
-    gc_collect()
+    extra_collect()
     verify(r() is None)
     del r
 
@@ -3327,7 +3332,7 @@ def delhook():
     c = C()
     vereq(log, [])
     del c
-    gc_collect()
+    extra_collect()
     vereq(log, [1])
 
     class D(object): pass
