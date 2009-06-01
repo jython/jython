@@ -1,6 +1,5 @@
 import unittest
 from test import test_support
-from test_weakref import extra_collect
 from weakref import proxy
 import operator
 import copy
@@ -484,7 +483,7 @@ class TestSet(TestJointOps):
         p = proxy(s)
         self.assertEqual(str(p), str(s))
         s = None
-        extra_collect()
+        test_support.gc_collect()
         self.assertRaises(ReferenceError, str, p)
 
     # C API test only available in a debug build

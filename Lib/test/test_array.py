@@ -11,7 +11,6 @@ from cPickle import loads, dumps
 
 if test_support.is_jython:
     import operator
-    from test_weakref import extra_collect
 
 class ArraySubclass(array.array):
     pass
@@ -704,8 +703,7 @@ class BaseTest(unittest.TestCase):
         p = proxy(s)
         self.assertEqual(p.tostring(), s.tostring())
         s = None
-        if test_support.is_jython:
-            extra_collect()
+        test_support.gc_collect()
         self.assertRaises(ReferenceError, len, p)
 
     def test_bug_782369(self):

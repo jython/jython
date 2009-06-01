@@ -5,7 +5,7 @@ import unittest
 from array import array
 from weakref import proxy
 
-from test.test_support import TESTFN, findfile, is_jython, run_unittest
+from test.test_support import TESTFN, findfile, gc_collect, is_jython, run_unittest
 from UserList import UserList
 
 class AutoFileTests(unittest.TestCase):
@@ -26,9 +26,7 @@ class AutoFileTests(unittest.TestCase):
         self.assertEquals(self.f.tell(), p.tell())
         self.f.close()
         self.f = None
-        if is_jython:
-            from test_weakref import extra_collect
-            extra_collect()
+        gc_collect()
         self.assertRaises(ReferenceError, getattr, p, 'tell')
 
     def testAttributes(self):

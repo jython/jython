@@ -131,9 +131,7 @@ class TestPartial(unittest.TestCase):
         p = proxy(f)
         self.assertEqual(f.func, p.func)
         f = None
-        if test_support.is_jython:
-            from test_weakref import extra_collect
-            extra_collect()
+        test_support.gc_collect()
         self.assertRaises(ReferenceError, getattr, p, 'func')
 
     def test_with_bound_and_unbound_methods(self):

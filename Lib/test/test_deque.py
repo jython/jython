@@ -475,9 +475,7 @@ class TestSubclass(unittest.TestCase):
         p = proxy(d)
         self.assertEqual(str(p), str(d))
         d = None
-        if test_support.is_jython:
-            from test_weakref import extra_collect
-            extra_collect()
+        test_support.gc_collect()
         self.assertRaises(ReferenceError, str, p)
 
     def test_strange_subclass(self):

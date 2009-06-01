@@ -6,19 +6,6 @@ import weakref
 
 from test import test_support
 
-if test_support.is_jython:
-    import time
-
-    def extra_collect():
-        """Kick Java's GC into gear"""
-        gc.collect()
-        time.sleep(0.1)
-        gc.collect()
-        gc.collect()
-else:
-    def extra_collect():
-        pass
-
 # Used in ReferencesTestCase.test_ref_created_during_del() .
 ref_from_del = None
 
@@ -82,7 +69,7 @@ class ReferencesTestCase(TestBase):
         ref1 = weakref.ref(o, self.callback)
         ref2 = weakref.ref(o, self.callback)
         del o
-        extra_collect()
+        test_support.gc_collect()
         self.assert_(ref1() is None,
                      "expected reference to be invalidated")
         self.assert_(ref2() is None,
@@ -118,7 +105,7 @@ class ReferencesTestCase(TestBase):
         def check(proxy):
             proxy.bar
 
-        extra_collect()
+        test_support.gc_collect()
         self.assertRaises(weakref.ReferenceError, check, ref1)
         self.assertRaises(weakref.ReferenceError, check, ref2)
         # XXX: CPython GC collects C() immediately. use ref1 instead on
@@ -143,7 +130,7 @@ class ReferencesTestCase(TestBase):
         o = factory()
         ref = weakref.ref(o, self.callback)
         del o
-        extra_collect()
+        test_support.gc_collect()
         self.assert_(self.cbcalled == 1,
                      "callback did not properly set 'cbcalled'")
         self.assert_(ref() is None,
@@ -168,7 +155,7 @@ class ReferencesTestCase(TestBase):
         self.assert_(weakref.getweakrefcount(o) == 2,
                      "wrong weak ref count for object")
         del proxy
-        extra_collect()
+        test_support.gc_collect()
         self.assert_(weakref.getweakrefcount(o) == 1,
                      "wrong weak ref count for object after deleting proxy")
 
@@ -314,7 +301,7 @@ class ReferencesTestCase(TestBase):
                      "got wrong number of weak reference objects")
 
         del ref1, ref2, proxy1, proxy2
-        extra_collect()
+        test_support.gc_collect()
         self.assert_(weakref.getweakrefcount(o) == 0,
                      "weak reference objects not unlinked from"
                      " referent when discarded.")
@@ -328,7 +315,7 @@ class ReferencesTestCase(TestBase):
         ref1 = weakref.ref(o, self.callback)
         ref2 = weakref.ref(o, self.callback)
         del ref1
-        extra_collect()
+        test_support.gc_collect()
         self.assert_(weakref.getweakrefs(o) == [ref2],
                      "list of refs does not match")
 
@@ -336,7 +323,7 @@ class ReferencesTestCase(TestBase):
         ref1 = weakref.ref(o, self.callback)
         ref2 = weakref.ref(o, self.callback)
         del ref2
-        extra_collect()
+        test_support.gc_collect()
         if test_support.is_jython:
             # XXX: Likely a Jython bug: the following inline declared
             # [ref1] list isn't garbage collected no matter how many
@@ -353,7 +340,7 @@ class ReferencesTestCase(TestBase):
                          "list of refs does not match")
 
         del ref1
-        extra_collect()
+        test_support.gc_collect()
         self.assert_(weakref.getweakrefs(o) == [],
                      "list of refs not cleared")
 
@@ -632,7 +619,7 @@ class ReferencesTestCase(TestBase):
         del callback, c, d, C
         self.assertEqual(alist, [])  # del isn't enough to clean up cycles
         gc.collect()
-        extra_collect()
+        test_support.gc_collect()
         self.assertEqual(alist, ["safe_callback called"])
         self.assertEqual(external_wr(), None)
 
@@ -783,18 +770,18 @@ class MappingTestCase(TestBase):
         del items1, items2
         self.assert_(len(dict) == self.COUNT)
         del objects[0]
-        extra_collect()
+        test_support.gc_collect()
         self.assert_(len(dict) == (self.COUNT - 1),
                      "deleting object did not cause dictionary update")
         del objects, o
-        extra_collect()
+        test_support.gc_collect()
         self.assert_(len(dict) == 0,
                      "deleting the values did not clear the dictionary")
         # regression on SF bug #447152:
         dict = weakref.WeakValueDictionary()
         self.assertRaises(KeyError, dict.__getitem__, 1)
         dict[2] = C()
-        extra_collect()
+        test_support.gc_collect()
         self.assertRaises(KeyError, dict.__getitem__, 2)
 
     def test_weak_keys(self):
@@ -815,11 +802,11 @@ class MappingTestCase(TestBase):
         del items1, items2
         self.assert_(len(dict) == self.COUNT)
         del objects[0]
-        extra_collect()
+        test_support.gc_collect()
         self.assert_(len(dict) == (self.COUNT - 1),
                      "deleting object did not cause dictionary update")
         del objects, o
-        extra_collect()
+        test_support.gc_collect()
         self.assert_(len(dict) == 0,
                      "deleting the keys did not clear the dictionary")
         o = Object(42)
@@ -1128,7 +1115,7 @@ True
 >>> o is o2
 True
 >>> del o, o2
->>> extra_collect()
+>>> test_support.gc_collect()
 >>> print r()
 None
 
@@ -1181,7 +1168,7 @@ True
 >>> id2obj(a_id) is a
 True
 >>> del a
->>> extra_collect()
+>>> test_support.gc_collect()
 >>> try:
 ...     id2obj(a_id)
 ... except KeyError:

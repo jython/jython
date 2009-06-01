@@ -1653,7 +1653,7 @@ And finalization. But we have to force the timing of GC here, since we are runni
 
 >>> g = f()
 >>> g.next()
->>> del g; extra_collect()
+>>> del g; gc_collect()
 exiting
 
 
@@ -1678,7 +1678,7 @@ Our ill-behaved code should be invoked during GC:
 >>> old, sys.stderr = sys.stderr, StringIO.StringIO()
 >>> g = f()
 >>> g.next()
->>> del g; extra_collect()
+>>> del g; gc_collect()
 >>> sys.stderr.getvalue().startswith(
 ...     "Exception RuntimeError"
 ... )
@@ -1795,7 +1795,7 @@ to test.
 ...             raise RuntimeError
 ...
 ...     l = Leaker()
-...     del l; extra_collect()
+...     del l; gc_collect()
 ...     err = sys.stderr.getvalue().strip()
 ...     err.startswith(
 ...         "Exception RuntimeError in <"
@@ -1834,12 +1834,7 @@ def test_main(verbose=None):
     from test import test_support, test_generators
     test_support.run_doctest(test_generators, verbose)
 
-def extra_collect():
-    import gc
-    from time import sleep
-
-    gc.collect(); sleep(1); gc.collect(); sleep(0.1); gc.collect()
-
+from test.test_support import gc_collect
 
 # This part isn't needed for regrtest, but for running the test directly.
 if __name__ == "__main__":
