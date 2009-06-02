@@ -1236,16 +1236,21 @@ class Popen(object):
                     raise TypeError('args must contain only strings')
             args = _escape_args(args)
 
-            if len(args) > 0 and '.jar' == args[0][-4:] and executable is None:
-                args = ['java', '-jar'] + args
+            if len(args) > 0 and self.isJarExecutable(args[0]) and executable is None:
+                args = self.prefixJarExecutable(args)
             
             if shell:
+                if len(args) == 1:
+                    splittedArgs = args[0].split(' ') 
+                    # TODO:Oti breaks if path to jython.jar contains spaces
+                    if self.isJarExecutable(splittedArgs[0]):
+                        args = self.prefixJarExecutable(args, single=True)
                 args = _shell_command + args
 
             if executable is not None:
                 args[0] = executable
-                if '.jar' == executable[-4:]:
-                    args = ['java', '-jar'] + args
+                if self.isJarExecutable(args[0]):
+                    args = self.prefixJarExecutable(args)
 
             builder = java.lang.ProcessBuilder(args)
             # os.environ may be inherited for compatibility with CPython
@@ -1274,6 +1279,18 @@ class Popen(object):
                 raise OSError(e.getMessage() or e)
             self._child_created = True
 
+        def isJarExecutable(self, argument):
+            """returns true if argument is a path to jython.jar"""
+            return 'jython.jar' == argument[-10:]
+
+        def prefixJarExecutable(self, args, single=False):
+            """prepend java -jar to args
+            if single is True, args list is assumed to consit of one single element only"""
+            if not single:
+                args = ['java', '-jar'] + args
+            else:
+                args[0] = 'java -jar ' + args[0]
+            return args
 
         def poll(self, _deadstate=None):
             """Check if child process has terminated.  Returns returncode
