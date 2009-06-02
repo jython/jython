@@ -411,9 +411,6 @@ class SecurityManagerTest(unittest.TestCase):
             # script must lie within python.home for this test to work
             return
         policy = test_support.findfile("python_home.policy")
-        if len(policy.split(' ')) > 1:
-            # quote the policy file if it contains spaces
-            policy = '"%s"' % policy
         self.assertEquals(subprocess.call([sys.executable,  "-J-Dpython.cachedir.skip=true",
             "-J-Djava.security.manager", "-J-Djava.security.policy=%s" % policy, script]),
             0)
