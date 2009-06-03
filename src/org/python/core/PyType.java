@@ -869,6 +869,7 @@ public class PyType extends PyObject implements Serializable {
     }
 
     PyObject[] computeMro(MROMergeState[] toMerge, List<PyObject> mro) {
+        boolean addedProxy = false;
         scan : for (int i = 0; i < toMerge.length; i++) {
             if (toMerge[i].isMerged()) {
                 continue scan;
@@ -880,7 +881,7 @@ public class PyType extends PyObject implements Serializable {
                     continue scan;
                 }
             }
-            if (!(this instanceof PyJavaType) && candidate instanceof PyJavaType
+            if (!addedProxy && !(this instanceof PyJavaType) && candidate instanceof PyJavaType
                     && candidate.javaProxy != null
                     && PyProxy.class.isAssignableFrom(((Class<?>)candidate.javaProxy))
                     && candidate.javaProxy != javaProxy) {
@@ -889,6 +890,7 @@ public class PyType extends PyObject implements Serializable {
                 // This exposes the methods from the proxy generated for this class in addition to
                 // those generated for the superclass while allowing methods from the superclass to
                 // remain visible from the proxies.
+                addedProxy = true;
                 mro.add(PyType.fromClass(((Class<?>)javaProxy)));
             }
             mro.add(candidate);

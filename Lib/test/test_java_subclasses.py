@@ -225,6 +225,17 @@ class PythonSubclassesTest(unittest.TestCase):
         self.assertEquals(10, SecondSubclass().callGetValue())
 
 
+    def test_deep_subclasses(self):
+        '''Checks for http://bugs.jython.org/issue1363.
+
+        Inheriting several classes deep from a Java class caused inconsistent MROs.'''
+        from java.lang import Object
+        class A(Object): pass
+        class B(A): pass
+        class C(B): pass
+        class D(C): pass
+        d = D()
+
 """
 public abstract class Abstract {
     public Abstract() {
