@@ -149,6 +149,10 @@ class CodeopTests(unittest.TestCase):
         ai("9+ \\","eval")
         #ai("lambda z: \\","eval")
 
+        #Did not work in Jython 2.5rc2 see first issue in
+        # http://bugs.jython.org/issue1354
+        ai("if True:\n if True:\n  if True:   \n")
+
     def test_invalid(self):
         ai = self.assertInvalid
         ai("a b")
