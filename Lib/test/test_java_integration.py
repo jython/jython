@@ -20,7 +20,7 @@ from java.awt.event import ComponentEvent
 from javax.swing.tree import TreePath
 
 from org.python.core.util import FileUtil
-from org.python.tests import BeanImplementation, Child, Listenable, CustomizableMapHolder
+from org.python.tests import BeanImplementation, Child, Child2, Listenable, CustomizableMapHolder
 from org.python.tests.mro import (ConfusedOnGetitemAdd, FirstPredefinedGetitem, GetitemAdder)
 
 class InstantiationTest(unittest.TestCase):
@@ -74,6 +74,13 @@ class BeanTest(unittest.TestCase):
         self.assertEquals(7, c.id)
         c.id = 16
         self.assertEquals(16, c.id)
+
+    def test_inheriting_half_bean_issue1333(self):
+        # http://bugs.jython.org/issue1333
+        c = Child2()
+        self.assertEquals("blah", c.value)
+        c.value = "bleh"
+        self.assertEquals("Child2 bleh", c.value)
 
     def test_awt_hack(self):
         # We ignore several deprecated methods in java.awt.* in favor of bean properties that were

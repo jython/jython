@@ -420,10 +420,11 @@ public class PyJavaType extends PyType {
                 // up, it'll be rejected below
                 if (prop.setMethod == null) {
                     prop.setMethod = superProp.setMethod;
-                } else if (superProp.myType == prop.setMethod.getParameterTypes()[0]) {
-                    // Otherwise, we must not have a get method. Only take a get method if the type
-                    // on it agrees with the set method we already have. The bean on this type
-                    // overrides a conflicting one o the parent
+                } else if (prop.getMethod == null
+                           && superProp.myType == prop.setMethod.getParameterTypes()[0]) {
+                    // Only take a get method if the type on it agrees with the set method
+                    // we already have. The bean on this type overrides a conflicting one
+                    // of the parent
                     prop.getMethod = superProp.getMethod;
                     prop.myType = superProp.myType;
                 }
