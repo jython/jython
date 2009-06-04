@@ -91,7 +91,7 @@ class SimpleHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             return None
         self.send_response(200)
         self.send_header("Content-type", ctype)
-        fs = os.fstat(f.fileno())
+        fs = os.fstat(f.fileno()) if hasattr(os, 'fstat') else os.stat(path)
         self.send_header("Content-Length", str(fs[6]))
         self.send_header("Last-Modified", self.date_time_string(fs.st_mtime))
         self.end_headers()

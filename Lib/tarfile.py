@@ -1336,8 +1336,11 @@ class TarFile(object):
                 statres = os.lstat(name)
             else:
                 statres = os.stat(name)
-        else:
+        elif hasattr(os, 'fstat'):
             statres = os.fstat(fileobj.fileno())
+        else:
+            raise NotImplementedError('fileobj argument not supported on this '
+                                      'platform (no os.fstat)')
         linkname = ""
 
         stmd = statres.st_mode

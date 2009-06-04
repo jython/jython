@@ -230,8 +230,8 @@ else:
         return samestat(s1, s2)    
 
 
-# XXX: Plain Jython lacks fstat and st_ino/st_dev
-if os.name != 'java':
+# XXX: Jython currently lacks fstat
+if hasattr(os, 'fstat'):
     # Are two open files really referencing the same file?
     # (Not necessarily the same file descriptor!)
 
@@ -244,6 +244,7 @@ if os.name != 'java':
     __all__.append("sameopenfile")
 
 
+# XXX: Pure Java stat lacks st_ino/st_dev    
 if os._native_posix:
     # Are two stat buffers (obtained from stat, fstat or lstat)
     # describing the same file?

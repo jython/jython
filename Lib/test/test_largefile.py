@@ -75,7 +75,7 @@ try:
     f.seek(size)
     f.write('a')
     f.flush()
-    if not test_support.is_jython:
+    if hasattr(os, 'fstat'):
         if test_support.verbose:
             print 'check file size with os.fstat'
         expect(os.fstat(f.fileno())[stat.ST_SIZE], size+1)
