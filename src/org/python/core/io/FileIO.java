@@ -329,6 +329,12 @@ public class FileIO extends RawIOBase {
     }
 
     /** {@inheritDoc} */
+    public void flush() {
+        checkClosed();
+        checkWritable();
+    }
+
+    /** {@inheritDoc} */
     public void close() {
         if (closed()) {
             return;
