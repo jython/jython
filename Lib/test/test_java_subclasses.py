@@ -229,7 +229,6 @@ class PythonSubclassesTest(unittest.TestCase):
         '''Checks for http://bugs.jython.org/issue1363.
 
         Inheriting several classes deep from a Java class caused inconsistent MROs.'''
-        from java.lang import Object
         class A(Object): pass
         class B(A): pass
         class C(B): pass
