@@ -17,7 +17,6 @@ import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 
 import org.python.core.Py;
-import org.python.core.imp;
 import org.python.core.util.FileUtil;
 
 /**
@@ -129,6 +128,20 @@ public class StreamIO extends RawIOBase {
         checkWritable();
         try {
             return writeChannel.write(buf);
+        } catch (IOException ioe) {
+            throw Py.IOError(ioe);
+        }
+    }
+
+    /** {@inheritDoc} */
+    public void flush() {
+        checkClosed();
+        checkWritable();
+        if (outputStream == null) {
+            return;
+        }
+        try {
+            outputStream.flush();
         } catch (IOException ioe) {
             throw Py.IOError(ioe);
         }
