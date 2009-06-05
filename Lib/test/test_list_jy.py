@@ -1,5 +1,8 @@
 import unittest
+import threading
+import time
 from test import test_support
+
 if test_support.is_jython:
     from java.util import ArrayList
     from java.lang import String
@@ -48,8 +51,34 @@ class ListTestCase(unittest.TestCase):
     def test_tuple_equality(self):
         self.assertEqual([(1,), [1]].count([1]), 1) # http://bugs.jython.org/issue1317
 
+class ThreadSafetyTestCase(unittest.TestCase):
+    
+    def setUp(self):
+        self.globalList = []
+        self.threads = []
+
+    def test_append_remove(self):
+        # derived from Itamar Shtull-Trauring's test for issue 521701
+        def tester():
+            ct = threading.currentThread()
+            for i in range(1000):
+                self.globalList.append(ct)
+                time.sleep(0.0001)
+                self.globalList.remove(ct)
+        for i in range(10):
+            t = threading.Thread(target=tester)
+            t.start()
+            self.threads.append(t)
+        
+        for t in self.threads:
+            t.join(1.)
+        for t in self.threads:
+            self.assertFalse(t.isAlive())
+        self.assertEqual(self.globalList, [])
+
+
 def test_main():
-    test_support.run_unittest(ListTestCase)
+    test_support.run_unittest(ListTestCase, ThreadSafetyTestCase)
 
 
 if __name__ == "__main__":
