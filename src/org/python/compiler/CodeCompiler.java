@@ -323,6 +323,11 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
     }
 
     public int makeArray(java.util.List<? extends PythonTree> nodes) throws Exception {
+        // XXX: This should produce an array on the stack (if possible) instead of a local
+        // the caller is responsible for freeing. All callers are incorrectly freeing the
+        // array reference -- they do call freeLocal, but without nullifying the reference
+        // in the local. This is causing short term memory leaks
+        // (e.g. test_weakref.test_getweakrefs)
         int n;
 
         if (nodes == null)

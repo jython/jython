@@ -338,11 +338,10 @@ class ReferencesTestCase(TestBase):
         del ref2
         extra_collect()
         if test_support.is_jython:
-            # XXX: Likely a Jython bug: the following inline declared
-            # [ref1] list isn't garbage collected no matter how many
-            # times we force gc.collect(), which prevents ref1 from
-            # being garbage collected after it's del'd below. So we
-            # explicitly delete our list
+            # XXX: Jython bug: the compiler creates a hard reference to
+            # the following inline declared [ref1] during
+            # 'weakref.getweakrefs(o) == [ref1]'. See
+            # CodeCompiler.makeArray for more info
             ref1_list = [ref1]
             self.assert_(weakref.getweakrefs(o) == ref1_list,
             #self.assert_(weakref.getweakrefs(o) == [ref1],
