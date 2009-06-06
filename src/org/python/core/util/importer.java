@@ -100,7 +100,7 @@ public abstract class importer<T> extends PyObject {
         // module code may (directly or indirectly) import itself
         PyModule mod = imp.addModule(fullname);
         mod.__dict__.__setitem__("__loader__", this);
-        if (moduleCodeData.ispackage) {
+        if (moduleCodeData.isPackage) {
             // add __path__ to the module *before* the code gets executed
             PyList pkgpath = new PyList();
             pkgpath.add(makePackagePath(fullname));
@@ -187,17 +187,17 @@ public abstract class importer<T> extends PyObject {
                 continue;
             }
 
-            boolean ispackage = entry.type.contains(EntryType.IS_PACKAGE);
-            boolean isbytecode = entry.type.contains(EntryType.IS_BYTECODE);
+            boolean isPackage = entry.type.contains(EntryType.IS_PACKAGE);
+            boolean isBytecode = entry.type.contains(EntryType.IS_BYTECODE);
             long mtime = -1;
-            if (isbytecode) {
+            if (isBytecode) {
                 mtime = getSourceMtime(searchPath);
             }
 
             Bundle bundle = makeBundle(searchPath, tocEntry);
             byte[] codeBytes;
             try {
-                if (isbytecode) {
+                if (isBytecode) {
                     try {
                         codeBytes = imp.readCode(fullname, bundle.inputStream, true, mtime);
                     } catch (IOException ioe) {
@@ -214,13 +214,8 @@ public abstract class importer<T> extends PyObject {
                 bundle.close();
             }
 
-            if (codeBytes == null) {
-                // bad magic number or non-matching mtime in byte code, try next
-                continue;
-            }
-
             PyCode code = BytecodeLoader.makeCode(fullname + "$py", codeBytes, fullSearchPath);
-            return new ModuleCodeData(code, ispackage, fullSearchPath);
+            return new ModuleCodeData(code, isPackage, fullSearchPath);
         }
         return null;
     }
@@ -230,12 +225,12 @@ public abstract class importer<T> extends PyObject {
      */
     protected class ModuleCodeData {
         public PyCode code;
-        public boolean ispackage;
+        public boolean isPackage;
         public String path;
 
-        public ModuleCodeData(PyCode code, boolean ispackage, String path) {
+        public ModuleCodeData(PyCode code, boolean isPackage, String path) {
             this.code = code;
-            this.ispackage = ispackage;
+            this.isPackage = isPackage;
             this.path = path;
         }
     }
