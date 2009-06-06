@@ -1,3 +1,4 @@
+/* Copyright (c) Jython Developers */
 package org.python.core.util;
 
 import java.io.IOException;
@@ -127,7 +128,14 @@ public abstract class importer<T> extends PyObject {
         public abstract void close();
     }
 
-    protected abstract boolean isAcceptableBytecode(String searchPath, T entry);
+    /**
+     * Given a path to a compiled file in the archive, return the modification time of the
+     * matching .py file.
+     *
+     * @param path to the compiled file
+     * @return long mtime of the .py, or -1 if no source is available
+     */
+    protected abstract long getSourceMtime(String path);
 
     /**
      * Return module information for the module with the fully qualified name.
@@ -181,9 +189,9 @@ public abstract class importer<T> extends PyObject {
 
             boolean ispackage = entry.type.contains(EntryType.IS_PACKAGE);
             boolean isbytecode = entry.type.contains(EntryType.IS_BYTECODE);
-
-            if (isbytecode && !isAcceptableBytecode(searchPath, tocEntry)) {
-                continue;
+            long mtime = -1;
+            if (isbytecode) {
+                mtime = getSourceMtime(searchPath);
             }
 
             Bundle bundle = makeBundle(searchPath, tocEntry);
@@ -191,9 +199,13 @@ public abstract class importer<T> extends PyObject {
             try {
                 if (isbytecode) {
                     try {
-                        codeBytes = imp.readCode(fullname, bundle.inputStream, true);
+                        codeBytes = imp.readCode(fullname, bundle.inputStream, true, mtime);
                     } catch (IOException ioe) {
                         throw Py.ImportError(ioe.getMessage() + "[path=" + fullSearchPath + "]");
+                    }
+                    if (codeBytes == null) {
+                        // bad magic number or non-matching mtime in byte code, try next
+                        continue;
                     }
                 } else {
                     codeBytes = imp.compileSource(fullname, bundle.inputStream, fullSearchPath);

@@ -474,10 +474,12 @@ public class imp {
 
         boolean pkg = false;
         try {
-            pkg = dir.isDirectory() && caseok(dir, name) && (sourceFile.isFile()
-                                                                 || compiledFile.isFile());
+            pkg = dir.isDirectory() && caseok(dir, name)
+                    && (sourceFile.isFile() || compiledFile.isFile());
         } catch (SecurityException e) {
+            // ok
         }
+
         if (!pkg) {
             Py.writeDebug(IMPORT_LOG, "trying source " + dir.getPath());
             sourceName = name + ".py";
@@ -506,7 +508,7 @@ public class imp {
                         }
                     }
                     return createFromSource(modName, makeStream(sourceFile), displaySourceName,
-                                            compiledFile.getPath());
+                                            compiledFile.getPath(), pyTime);
                 }
                 return createFromSource(modName, makeStream(sourceFile), displaySourceName,
                                         compiledFile.getPath(), pyTime);
@@ -519,6 +521,7 @@ public class imp {
                                          displayCompiledName);
             }
         } catch (SecurityException e) {
+            // ok
         }
         return null;
     }

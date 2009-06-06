@@ -12,6 +12,7 @@ import java.util.zip.ZipFile;
 import org.python.core.ArgParser;
 import org.python.core.Py;
 import org.python.core.PyDictionary;
+import org.python.core.PyException;
 import org.python.core.PyInteger;
 import org.python.core.PyLong;
 import org.python.core.PyObject;
@@ -299,31 +300,27 @@ public class zipimporter extends importer<PyObject> {
         }
     }
 
-    /**
-     * Determine if the byte code at path with the specified toc entry has a modification time
-     * greater than its accompanying source code's.
-     *
-     * @param path a String path to the byte code
-     * @param tocEntry the byte code's PyObject toc entry
-     * @return boolean whether or not the byte code is older
-     */
     @Override
-    protected boolean isAcceptableBytecode(String path, PyObject tocEntry) {
+    protected long getSourceMtime(String path) {
         String sourcePath = path.substring(0, path.length() - 9) + ".py";
         PyObject sourceTocEntry = files.__finditem__(sourcePath);
         if (sourceTocEntry == null) {
-            return true;// If there is no source, assume the bytecode is ok
+            return -1;
         }
+
+        int time;
+        int date;
         try {
-            long bytecodeTime = dosTimeToEpoch(tocEntry.__finditem__(5).asInt(0),
-                                             tocEntry.__finditem__(6).asInt(0));
-            long sourceTime = dosTimeToEpoch(sourceTocEntry.__finditem__(5).asInt(0),
-                                             sourceTocEntry.__finditem__(6).asInt(0));
-            return bytecodeTime < sourceTime;
+            time = sourceTocEntry.__finditem__(5).asInt();
+            date = sourceTocEntry.__finditem__(6).asInt();
+        } catch (PyException pye) {
+            if (!pye.match(Py.TypeError)) {
+                throw pye;
+            }
+            time = -1;
+            date = -1;
         }
-        catch (PyObject.ConversionException ce) {
-            return false;
-        }
+        return dosTimeToEpoch(time, date);
     }
 
     /**

@@ -1,3 +1,4 @@
+/* Copyright (c) Jython Developers */
 package org.python.core;
 
 import java.io.IOException;
@@ -63,8 +64,9 @@ public class ClasspathPyImporter extends importer<String> {
     }
 
     @Override
-    protected boolean isAcceptableBytecode(String searchPath, String entry) {
-        return true;
+    protected long getSourceMtime(String path) {
+        // Can't determine this easily
+        return -1;
     }
 
     @Override
