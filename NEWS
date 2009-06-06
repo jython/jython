@@ -9,10 +9,16 @@ Jython 2.5.0 rc4
     - [ 1363 ] Deep inheritance from a Java class causes MRO problems
     - [ 1333 ] attribute wrongly deemed 'write-only' if setter comes from an interface
     - [ 1364 ] SimpleHTTPServer.py contains call to missing os.fstat
-    Fix file's repr with Windows paths
-    Fix urllib and urllib2 path handling on Windows
-    Fix r'\Jython25' not considered an abspath on Windows
-    Fix handling of raw unicode escapes
+    - [ 1367 ] PIpes (popen2) do not flush their buffer
+    - [ 1368 ] '\xe4'.decode('utf-8') does not raise UnicodeDecodeError but returns u''
+    - Fix file's repr with Windows paths
+    - Fix urllib and urllib2 path handling on Windows
+    - Fix r'\Jython25' not considered an abspath on Windows
+    - Fix handling of raw unicode escapes
+    - Fix mishandling of the bytecode's tagged mtime in zipimport and when
+    recompiling due to stale bytecode
+    - Fixed minor short term memory leaks in functions on some lists allocated
+    inline
 
 Jython 2.5.0 rc3
   Bugs fixed
