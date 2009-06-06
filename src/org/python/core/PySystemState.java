@@ -858,7 +858,7 @@ public class PySystemState extends PyObject
         // Initialize the path (and add system defaults)
         defaultPath = initPath(registry, standalone, jarFileName);
         defaultArgv = initArgv(argv);
-        defaultExecutable = initExecutable(registry, jarFileName);
+        defaultExecutable = initExecutable(registry);
         // Set up the known Java packages
         initPackages(registry);
         // Finish up standard Python initialization...
@@ -961,23 +961,16 @@ public class PySystemState extends PyObject
     }
 
     /**
-     * Determine the default sys.executable value from the registry. Returns Py.None is no
-     * executable can be found.
-     * 
-     * @param props
-     *            a Properties registry
-     * @param jarFileName
-     *            used as executable if python.executable not otherwise specified
+     * Determine the default sys.executable value from the
+     * registry. Returns Py.None is no executable can be found.
+     *
+     * @param props a Properties registry
      * @return a PyObject path string or Py.None
      */
-    private static PyObject initExecutable(Properties props, String jarFileName) {
+    private static PyObject initExecutable(Properties props) {
         String executable = props.getProperty("python.executable");
         if (executable == null) {
-            if (jarFileName != null) {
-                executable = jarFileName;
-            } else {
-                return Py.None;
-            }
+            return Py.None;
         }
 
         File executableFile = new File(executable);
