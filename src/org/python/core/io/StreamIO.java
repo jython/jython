@@ -135,8 +135,6 @@ public class StreamIO extends RawIOBase {
 
     /** {@inheritDoc} */
     public void flush() {
-        checkClosed();
-        checkWritable();
         if (outputStream == null) {
             return;
         }
