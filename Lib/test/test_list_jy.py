@@ -60,8 +60,10 @@ class ThreadSafetyTestCase(unittest.TestCase):
             t = threading.Thread(target=f)
             t.start()
             threads.append(t)
+        timeout = 10. # be especially generous
         for t in threads:
-            t.join(1.)
+            t.join(timeout)
+            timeout = 0.
         for t in threads:
             self.assertFalse(t.isAlive())
 
