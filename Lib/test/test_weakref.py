@@ -337,19 +337,8 @@ class ReferencesTestCase(TestBase):
         ref2 = weakref.ref(o, self.callback)
         del ref2
         extra_collect()
-        if test_support.is_jython:
-            # XXX: Jython bug: the compiler creates a hard reference to
-            # the following inline declared [ref1] during
-            # 'weakref.getweakrefs(o) == [ref1]'. See
-            # CodeCompiler.makeArray for more info
-            ref1_list = [ref1]
-            self.assert_(weakref.getweakrefs(o) == ref1_list,
-            #self.assert_(weakref.getweakrefs(o) == [ref1],
-                         "list of refs does not match")
-            del ref1_list
-        else:
-            self.assert_(weakref.getweakrefs(o) == [ref1],
-                         "list of refs does not match")
+        self.assert_(weakref.getweakrefs(o) == [ref1],
+                     "list of refs does not match")
 
         del ref1
         extra_collect()

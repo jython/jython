@@ -356,6 +356,14 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         return array;
     }
 
+    // nulls out an array of references
+    public void freeArray(int array) {
+        code.aload(array);
+        code.aconst_null();
+        code.invokestatic("java/util/Arrays", "fill", "(" + $objArr + $obj + ")V");
+        code.freeLocal(array);
+    }
+
     public void getDocString(java.util.List<stmt> suite) throws Exception {
         if (suite.size() > 0 && suite.get(0) instanceof Expr &&
             ((Expr) suite.get(0)).getInternalValue() instanceof Str)
@@ -403,6 +411,8 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
 
         ScopeInfo scope = module.getScopeInfo(node);
 
+        // NOTE: this is attached to the constructed PyFunction, so it cannot be nulled out
+        // with freeArray, unlike other usages of makeArray here
         int defaults = makeArray(scope.ac.getDefaults());
 
         code.new_("org/python/core/PyFunction");
@@ -429,7 +439,6 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         applyDecorators(node.getInternalDecorator_list());
 
         set(new Name(node,node.getInternalName(), expr_contextType.Store));
-        //doDecorators(node,node.getInternalDecorator_list(), node.getInternalName());
         return null;
     }
 
@@ -1668,7 +1677,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
                 code.aload(argArray);
                 code.freeLocal(argArray);
                 stackConsume(2); // target + ts
-                code.invokevirtual("org/python/core/PyObject", "__call__", "(" + $threadState + $pyObjArr + ")" + $pyObj);
+                code.invokevirtual("org/python/core/PyObject", "__call__", "(" + $threadState + $pyObjArr + ")" + $pyObj);//                freeArray(argArray);
                 break;
             }
         }
@@ -1774,8 +1783,8 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         code.new_("org/python/core/PyTuple");
         code.dup();
         code.aload(dims);
-        code.freeLocal(dims);
         code.invokespecial("org/python/core/PyTuple", "<init>", "(" + $pyObjArr + ")V");
+        freeArray(dims);
         return null;
     }
 
@@ -1852,8 +1861,8 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
 
         code.dup();
         code.aload(content);
-        code.freeLocal(content);
         code.invokespecial("org/python/core/PyTuple", "<init>", "(" + $pyObjArr + ")V");
+        freeArray(content);
         return null;
     }
 
@@ -1867,8 +1876,8 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         code.new_("org/python/core/PyList");
         code.dup();
         code.aload(content);
-        code.freeLocal(content);
         code.invokespecial("org/python/core/PyList", "<init>", "(" + $pyObjArr + ")V");
+        freeArray(content);
         return null;
     }
 
@@ -1926,8 +1935,8 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         code.new_("org/python/core/PyDictionary");
         code.dup();
         code.aload(content);
-        code.freeLocal(content);
         code.invokespecial("org/python/core/PyDictionary", "<init>", "(" + $pyObjArr + ")V");
+        freeArray(content);
         return null;
     }
 
@@ -1974,7 +1983,6 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         } else {
             code.invokespecial("org/python/core/PyFunction", "<init>", "(" + $pyObj + $pyObjArr + $pyCode + $pyObjArr + ")V");
         }
-
         return null;
     }
 
@@ -2016,7 +2024,6 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         code.ldc(name);
         
         code.aload(baseArray);
-        code.freeLocal(baseArray);
 
         ScopeInfo scope = module.getScopeInfo(node);
 
@@ -2041,6 +2048,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         //Assign this new class to the given name
         set(new Name(node,node.getInternalName(), expr_contextType.Store));
         //doDecorators(node,node.getInternalDecorator_list(), node.getInternalName());
+        freeArray(baseArray);
         return null;
     }
 
@@ -2207,8 +2215,6 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
 
         int emptyArray = makeArray(new ArrayList<expr>());
         code.aload(emptyArray);
-        code.freeLocal(emptyArray);
-
         scope.setup_closure();
         scope.dump();
 
@@ -2254,6 +2260,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         loadThreadState();
         code.swap();
         code.invokevirtual("org/python/core/PyObject", "__call__", "(" + $threadState + $pyObj + ")" + $pyObj);
+        freeArray(emptyArray);
 
         return null;
     }
