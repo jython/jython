@@ -547,7 +547,9 @@ if jython:
     # Parse command line arguments for Windows
     _win_oses = ['nt']
 
+    _JYTHON_JAR = 'jython.jar'
     _cmdline2list = None
+    _forcecmdline2list = None
     _escape_args = None
     _shell_command = None
 
@@ -611,13 +613,19 @@ if jython:
         """Setup the shell command and the command line argument escape
         function depending on the underlying platform
         """
-        global _cmdline2list, _escape_args, _shell_command
+        global _cmdline2list, _forcecmdline2list, _escape_args, _shell_command
 
         if os._name in _win_oses:
-            _cmdline2list = cmdline2list
+            _cmdline2list = _forcecmdline2list = cmdline2list
             _escape_args = lambda args: [list2cmdline([arg]) for arg in args]
         else:
-            _cmdline2list = lambda args: [args]
+            _cmdline2list = lambda arg: [arg]
+            def _forcecmdline2list(arg):
+                import shlex
+                try:
+                    return shlex.split(arg)
+                except ValueError:
+                    return [arg]
             _escape_args = lambda args: args
 
         os_info = os._os_map.get(os._name)
@@ -1217,6 +1225,28 @@ class Popen(object):
             builder_env.putAll(merge_env)
 
 
+        def _should_run_jar(self, args):
+            """Determine if command should be run via jar -jar.
+
+            When running the standalone Jython jar without the official
+            command line script runner (e.g. java -jar jython.jar)
+            sys.executable cannot be determined, so Jython sets it to
+            the path to jython.jar.
+
+            This detects when a subprocess command executable is that
+            special sys.executable value.
+            """
+            if not sys.executable or not sys.executable.endswith(_JYTHON_JAR):
+                # Not applicable
+                return False
+
+            args = (_forcecmdline2list(args)
+                    if isinstance(args, types.StringTypes) else list(args))
+            if not args:
+                return False
+            return args[0] == sys.executable
+
+
         def _execute_child(self, args, executable, preexec_fn, close_fds,
                            cwd, env, universal_newlines,
                            startupinfo, creationflags, shell,
@@ -1225,7 +1255,10 @@ class Popen(object):
                            errread, errwrite):
             """Execute program (Java version)"""
 
+            run_jar = self._should_run_jar(args)
             if isinstance(args, types.StringTypes):
+                if run_jar:
+                    args = 'java -jar ' + args
                 args = _cmdline2list(args)
             else:
                 args = list(args)
@@ -1234,23 +1267,15 @@ class Popen(object):
                 # posix. Windows passes unicode through, however
                 if any(not isinstance(arg, (str, unicode)) for arg in args):
                     raise TypeError('args must contain only strings')
+                if run_jar:
+                    args = ['java', '-jar'] + args
             args = _escape_args(args)
 
-            if len(args) > 0 and self.isJarExecutable(args[0]) and executable is None:
-                args = self.prefixJarExecutable(args)
-            
             if shell:
-                if len(args) == 1:
-                    splittedArgs = args[0].split(' ') 
-                    # TODO:Oti breaks if path to jython.jar contains spaces
-                    if self.isJarExecutable(splittedArgs[0]):
-                        args = self.prefixJarExecutable(args, single=True)
                 args = _shell_command + args
 
             if executable is not None:
                 args[0] = executable
-                if self.isJarExecutable(args[0]):
-                    args = self.prefixJarExecutable(args)
 
             builder = java.lang.ProcessBuilder(args)
             # os.environ may be inherited for compatibility with CPython
@@ -1279,18 +1304,6 @@ class Popen(object):
                 raise OSError(e.getMessage() or e)
             self._child_created = True
 
-        def isJarExecutable(self, argument):
-            """returns true if argument is a path to jython.jar"""
-            return 'jython.jar' == argument[-10:]
-
-        def prefixJarExecutable(self, args, single=False):
-            """prepend java -jar to args
-            if single is True, args list is assumed to consit of one single element only"""
-            if not single:
-                args = ['java', '-jar'] + args
-            else:
-                args[0] = 'java -jar ' + args[0]
-            return args
 
         def poll(self, _deadstate=None):
             """Check if child process has terminated.  Returns returncode
