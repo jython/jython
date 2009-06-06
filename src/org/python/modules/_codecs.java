@@ -67,9 +67,9 @@ public class _codecs {
     }
 
     public static PyTuple utf_8_decode(String str, String errors, boolean final_) {
-        int[] consumed = final_ ? new int[1] : null;
+        int[] consumed = final_ ? null : new int[1];
         return decode_tuple(codecs.PyUnicode_DecodeUTF8Stateful(str, errors, consumed),
-                            final_ ? consumed[0] : str.length());
+                            final_ ? str.length() : consumed[0]);
     }
 
     public static PyTuple utf_8_encode(String str) {
@@ -431,9 +431,9 @@ public class _codecs {
 
     public static PyTuple utf_16_decode(String str, String errors, boolean final_) {
         int[] bo = new int[] { 0 };
-        int[] consumed = final_ ? new int[1] : null;
+        int[] consumed = final_ ? null : new int[1];
         return decode_tuple(decode_UTF16(str, errors, bo, consumed),
-                            final_ ? consumed[0] : str.length());
+                            final_ ? str.length() : consumed[0]);
     }
 
     public static PyTuple utf_16_le_decode(String str) {
@@ -446,9 +446,9 @@ public class _codecs {
         
     public static PyTuple utf_16_le_decode(String str, String errors, boolean final_) {
         int[] bo = new int[] { -1 };
-        int[] consumed = final_ ? new int[1] : null;
+        int[] consumed = final_ ? null : new int[1];
         return decode_tuple(decode_UTF16(str, errors, bo, consumed),
-                            final_ ? consumed[0] : str.length());
+                            final_ ? str.length() : consumed[0]);
     }
 
     public static PyTuple utf_16_be_decode(String str) {
@@ -461,9 +461,9 @@ public class _codecs {
 
     public static PyTuple utf_16_be_decode(String str, String errors, boolean final_) {
         int[] bo = new int[] { 1 };
-        int[] consumed = final_ ? new int[1] : null;
+        int[] consumed = final_ ? null : new int[1];
         return decode_tuple(decode_UTF16(str, errors, bo, consumed),
-                            final_ ? consumed[0] : str.length());
+                            final_ ? str.length() : consumed[0]);
     }
 
     public static PyTuple utf_16_ex_decode(String str) {
@@ -481,10 +481,10 @@ public class _codecs {
     public static PyTuple utf_16_ex_decode(String str, String errors, int byteorder,
                                            boolean final_) {
         int[] bo = new int[] { 0 };
-        int[] consumed = final_ ? new int[1] : null;
+        int[] consumed = final_ ? null : new int[1];
         String decoded = decode_UTF16(str, errors, bo, consumed);
         return new PyTuple(Py.newString(decoded),
-                           Py.newInteger(final_ ? consumed[0] : str.length()),
+                           Py.newInteger(final_ ? str.length() : consumed[0]),
                            Py.newInteger(bo[0]));
     }
 

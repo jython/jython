@@ -82,6 +82,11 @@ class UnicodeTestCase(unittest.TestCase):
         self.assertEqual(float(u'\u0663.\u0661'), 3.1)
         self.assertEqual(complex(u'\u0663.\u0661'), 3.1+0j)
 
+    def test_unstateful_end_of_data(self):
+        # http://bugs.jython.org/issue1368
+        for encoding in 'utf-8', 'utf-16', 'utf-16-be', 'utf-16-le':
+            self.assertRaises(UnicodeDecodeError, '\xe4'.decode, encoding)
+
     def test_formatchar(self):
         self.assertEqual('%c' % 255, '\xff')
         self.assertRaises(OverflowError, '%c'.__mod__, 256)
