@@ -103,8 +103,8 @@ public class PyFile extends PyObject {
      * method <code>file</code> doesn't expose this functionality (<code>open</code> does
      * albeit deprecated) as it isn't available to regular Python code. To wrap an
      * InputStream in a file from Python, use
-     * {@link FileUtil#wrap(InputStream, int)}
-     * {@link FileUtil#wrap(InputStream)}
+     * {@link util.FileUtil#wrap(InputStream, int)}
+     * {@link util.FileUtil#wrap(InputStream)}
      */
     public PyFile(InputStream istream, int bufsize) {
         this(istream, "<Java InputStream '" + istream + "' as file>", "r", bufsize, true);
@@ -124,8 +124,8 @@ public class PyFile extends PyObject {
      * method <code>file</code> doesn't expose this functionality (<code>open</code> does
      * albeit deprecated) as it isn't available to regular Python code. To wrap an
      * OutputStream in a file from Python, use
-     * {@link FileUtil#wrap(OutputStream, int)}
-     * {@link FileUtil#wrap(OutputStream)}
+     * {@link util.FileUtil#wrap(OutputStream, int)}
+     * {@link util.FileUtil#wrap(OutputStream)}
      */
     public PyFile(OutputStream ostream, int bufsize) {
         this(ostream, "<Java OutputStream '" + ostream + "' as file>", "w", bufsize, true);

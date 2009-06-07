@@ -866,7 +866,7 @@ public final class Py {
      * Initializes a default PythonInterpreter and runs the code from
      * {@link PyRunnable#getMain} as __main__
      *
-     * Called by the code generated in {@link Module#addMain()}
+     * Called by the code generated in {@link org.python.compiler.Module#addMain()}
      */
     public static void runMain(PyRunnable main, String[] args) throws Exception {
         runMain(new PyRunnableBootstrap(main), args);
@@ -875,7 +875,7 @@ public final class Py {
     /**
      * Initializes a default PythonInterpreter and runs the code loaded from the
      * {@link CodeBootstrap} as __main__ Called by the code generated in
-     * {@link Module#addMain()}
+     * {@link org.python.compiler.Module#addMain()}
      */
     public static void runMain(CodeBootstrap main, String[] args)
             throws Exception {
@@ -1628,18 +1628,6 @@ public final class Py {
                                          boolean linenumbers, boolean printResults,
                                          CompilerFlags cflags) {
         return CompilerFacade.compile(node, name, filename, linenumbers, printResults, cflags);
-        /*
-        try {
-            ByteArrayOutputStream ostream = new ByteArrayOutputStream();
-            Module.compile(node, ostream, name, filename, linenumbers, printResults, cflags);
-
-            saveClassFile(name, ostream);
-
-            return BytecodeLoader.makeCode(name, ostream.toByteArray(), filename);
-        } catch (Throwable t) {
-            throw ParserFacade.fixParseError(null, t, filename);
-        }
-        */
     }
 
     public static PyCode compile_flags(mod node, String filename,
@@ -1658,10 +1646,10 @@ public final class Py {
     }
 
     /**
-     * Compiles python source code coming from decoded Strings.
+     * Compiles python source code coming from String (raw bytes) data.
      *
-     * DO NOT use this for PyString input. Use
-     * {@link #compile_flags(byte[], String, String, CompilerFlags)} instead.
+     * If the String is properly decoded (from PyUnicode) the PyCF_SOURCE_IS_UTF8 flag
+     * should be specified.
      */
     public static PyCode compile_flags(String data, String filename,
                                          CompileMode kind, CompilerFlags cflags) {

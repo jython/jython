@@ -166,9 +166,9 @@ public class PyException extends RuntimeException
      * Logic for the raise statement
      *
      * @param type the first arg to raise, a type or an instance
-     * @param value the second arg, the instance of the class or
-     * arguments to its constructor
-     * @param tb a traceback object
+     * @param value the second arg, the instance of the class or arguments to its
+     * constructor
+     * @param traceback a traceback object
      * @return a PyException wrapper
      */
     public static PyException doRaise(PyObject type, PyObject value, PyObject traceback) {

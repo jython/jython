@@ -904,7 +904,7 @@ public class PyObject implements Serializable {
      * @return the value corresponding to name
      * @exception Py.AttributeError if the name is not found.
      *
-     * @see #__findattr_ex__(PyString)
+     * @see #__findattr_ex__(String)
      **/
     public final PyObject __getattr__(PyString name) {
         return __getattr__(name.internedString());
