@@ -547,11 +547,11 @@ if jython:
     # Parse command line arguments for Windows
     _win_oses = ['nt']
 
-    _cmdline2list = None
+    _cmdline2listimpl = None
     _escape_args = None
     _shell_command = None
 
-    def cmdline2list(cmdline):
+    def _cmdline2list(cmdline):
         """Build an argv list from a Microsoft shell style cmdline str
 
         The reverse of list2cmdline that follows the same MS C runtime
@@ -611,13 +611,13 @@ if jython:
         """Setup the shell command and the command line argument escape
         function depending on the underlying platform
         """
-        global _cmdline2list, _escape_args, _shell_command
+        global _cmdline2listimpl, _escape_args, _shell_command
 
         if os._name in _win_oses:
-            _cmdline2list = cmdline2list
+            _cmdline2listimpl = _cmdline2list
             _escape_args = lambda args: [list2cmdline([arg]) for arg in args]
         else:
-            _cmdline2list = lambda args: [args]
+            _cmdline2listimpl = lambda args: [args]
             _escape_args = lambda args: args
 
         os_info = os._os_map.get(os._name)
@@ -1226,7 +1226,7 @@ class Popen(object):
             """Execute program (Java version)"""
 
             if isinstance(args, types.StringTypes):
-                args = _cmdline2list(args)
+                args = _cmdline2listimpl(args)
             else:
                 args = list(args)
                 # NOTE: CPython posix (execv) will str() any unicode

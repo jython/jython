@@ -3,7 +3,7 @@ import unittest
 import os
 import sys
 from test import test_support
-from subprocess import PIPE, Popen, cmdline2list
+from subprocess import PIPE, Popen, _cmdline2list
 
 class EnvironmentInheritanceTest(unittest.TestCase):
 
@@ -65,7 +65,7 @@ class Cmdline2ListTestCase(unittest.TestCase):
 
     def test_cmdline2list(self):
         for cmdline, argv in self.cmdlines.iteritems():
-            self.assertEqual(cmdline2list(cmdline), argv)
+            self.assertEqual(_cmdline2list(cmdline), argv)
 
 
 def test_main():
