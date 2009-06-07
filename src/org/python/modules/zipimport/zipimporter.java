@@ -329,23 +329,9 @@ public class zipimporter extends importer<PyObject> {
      * Given a path to a Zip archive, build a dict, mapping file names
      * (local to the archive, using SEP as a separator) to toc entries.
      *
-     * A tocEntry is a tuple:
-     *
-     *     (__file__,      # value to use for __file__, available for all files
-     *     compress,      # compression kind; 0 for uncompressed
-     *     data_size,     # size of compressed data on disk
-     *     file_size,     # size of decompressed data
-     *     file_offset,   # offset of file header from start of archive (or -1 in Jython)
-     *     time,          # mod time of file (in dos format)
-     *     date,          # mod data of file (in dos format)
-     *     crc,           # crc checksum of the data
-     *     )
-     *
-     * Directories can be recognized by the trailing SEP in the name,
-     * data_size and file_offset are 0.
-     *
      * @param archive PyString path to the archive
      * @return a PyDictionary of tocEntrys
+     * @see #readZipFile(ZipFile, PyObject)
      */
     private PyObject readDirectory(String archive) {
         File file = new File(sys.getPath(archive));
@@ -361,19 +347,53 @@ public class zipimporter extends importer<PyObject> {
         }
 
         PyObject files = new PyDictionary();
+        try {
+            readZipFile(zipFile, files);
+        } finally {
+            try {
+                zipFile.close();
+            } catch (IOException ioe) {
+                throw Py.IOError(ioe);
+            }
+        }
+        return files;
+    }
+
+    /**
+     * Read ZipFile metadata into a dict of toc entries.
+     *
+     * A tocEntry is a tuple:
+     *
+     *     (__file__,     # value to use for __file__, available for all files
+     *     compress,      # compression kind; 0 for uncompressed
+     *     data_size,     # size of compressed data on disk
+     *     file_size,     # size of decompressed data
+     *     file_offset,   # offset of file header from start of archive (or -1 in Jython)
+     *     time,          # mod time of file (in dos format)
+     *     date,          # mod data of file (in dos format)
+     *     crc,           # crc checksum of the data
+     *     )
+     *
+     * Directories can be recognized by the trailing SEP in the name, data_size and
+     * file_offset are 0.
+     *
+     * @param zipFile ZipFile to read
+     * @param files a dict-like PyObject
+     */
+    private void readZipFile(ZipFile zipFile, PyObject files) {
         for (Enumeration<? extends ZipEntry> zipEntries = zipFile.entries();
              zipEntries.hasMoreElements();) {
             ZipEntry zipEntry = zipEntries.nextElement();
             String name = zipEntry.getName().replace('/', File.separatorChar);
 
             PyObject __file__ = new PyString(archive + File.separator + name);
-            PyObject compress = new PyInteger(zipEntry.getMethod());
+            PyObject compress = Py.newInteger(zipEntry.getMethod());
             PyObject data_size = new PyLong(zipEntry.getCompressedSize());
             PyObject file_size = new PyLong(zipEntry.getSize());
-            // file_offset is a CPython optimization; it's used to
-            // seek directly to the file when reading it later. Jython
-            // doesn't do this nor is the offset available
-            PyObject file_offset = new PyInteger(-1);
+            // file_offset is a CPython optimization; it's used to seek directly to the
+            // file when reading it later. Jython doesn't do this nor is the offset
+            // available
+            PyObject file_offset = Py.newInteger(-1);
             PyObject time = new PyInteger(epochToDosTime(zipEntry.getTime()));
             PyObject date = new PyInteger(epochToDosDate(zipEntry.getTime()));
             PyObject crc = new PyLong(zipEntry.getCrc());
@@ -382,14 +402,6 @@ public class zipimporter extends importer<PyObject> {
                                         time, date, crc);
             files.__setitem__(new PyString(name), entry);
         }
-
-        try {
-            zipFile.close();
-        } catch (IOException ioe) {
-            throw Py.IOError(ioe);
-        }
-
-        return files;
     }
 
     @Override
@@ -397,13 +409,6 @@ public class zipimporter extends importer<PyObject> {
         return File.separator;
     }
 
-    /**
-     * Given a full module name, return the potential file path in the archive (without extension).
-     *
-     * @param prefix a String value
-     * @param name a String modulename value
-     * @return the file path String value
-     */
     @Override
     protected String makeFilename(String fullname) {
         return prefix + getSubname(fullname).replace('.', File.separatorChar);
