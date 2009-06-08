@@ -20,6 +20,8 @@ Jython 2.5.0 rc4
     recompiling due to stale bytecode
     - Fixed minor short term memory leaks in functions on some lists allocated
     inline
+    - Updated imp.APIVersion to 23 as some compiler changes occured since the
+    last update.
 
 Jython 2.5.0 rc3
   Bugs fixed
