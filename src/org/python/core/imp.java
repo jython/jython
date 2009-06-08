@@ -20,7 +20,7 @@ public class imp {
 
     private static final String UNKNOWN_SOURCEFILE = "<unknown>";
 
-    public static final int APIVersion = 22;
+    private static final int APIVersion = 22;
 
     public static final int NO_MTIME = -1;
 
@@ -989,5 +989,9 @@ public class imp {
         PyObject ret = find_module(name, modName, path);
         modules.__setitem__(modName, ret);
         return ret;
+    }
+
+    public static int getAPIVersion() {
+        return APIVersion;
     }
 }
