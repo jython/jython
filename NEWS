@@ -11,6 +11,7 @@ Jython 2.5.0 rc4
     - [ 1364 ] SimpleHTTPServer.py contains call to missing os.fstat
     - [ 1367 ] PIpes (popen2) do not flush their buffer
     - [ 1368 ] '\xe4'.decode('utf-8') does not raise UnicodeDecodeError but returns u''
+    - [ 1372 ] No default drive in Windows file paths
     - Fix file's repr with Windows paths
     - Fix urllib and urllib2 path handling on Windows
     - Fix r'\Jython25' not considered an abspath on Windows

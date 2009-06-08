@@ -508,8 +508,10 @@ public class PySystemState extends PyObject
         }
 
         File file = new File(path);
-        // Python considers r'\Jython25' an abspath on Windows, unlike java.io.File
-        if (!file.isAbsolute() && (!Platform.IS_WINDOWS || !path.startsWith("\\"))) {
+        // Python considers r'\Jython25' and '/Jython25' abspaths on Windows, unlike
+        // java.io.File
+        if (!file.isAbsolute() && (!Platform.IS_WINDOWS
+                                   || !(path.startsWith("\\") || path.startsWith("/")))) {
             if (sys == null) {
                 sys = Py.getSystemState();
             }
