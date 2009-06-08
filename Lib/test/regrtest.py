@@ -1538,6 +1538,8 @@ class _ExpectedSkips:
                     self.expected.update([
                             'test_grp', 'test_mhlib', 'test_posix', 'test_pwd',
                             'test_signal'])
+                if os._name != 'nt':
+                    self.expected.add('test_nt_paths_jy')
 
             self.valid = True
 
