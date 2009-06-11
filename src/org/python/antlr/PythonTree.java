@@ -296,7 +296,7 @@ public class PythonTree extends AST {
 		if ( t==null ) {
 			return; // do nothing upon addChild(null)
 		}
-		PythonTree childTree = (PythonTree)t;
+		PythonTree childTree = t;
 		if ( childTree.isNil() ) { // t is an empty node possibly with children
 			if ( this.children!=null && this.children == childTree.children ) {
 				throw new RuntimeException("attempt to add child list to itself");
@@ -444,7 +444,7 @@ public class PythonTree extends AST {
 	public void freshenParentAndChildIndexes(int offset) {
 		int n = getChildCount();
 		for (int c = offset; c < n; c++) {
-			PythonTree child = (PythonTree)getChild(c);
+			PythonTree child = getChild(c);
 			child.setChildIndex(c);
 			child.setParent(this);
 		}

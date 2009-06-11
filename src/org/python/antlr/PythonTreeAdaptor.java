@@ -72,7 +72,7 @@ public class PythonTreeAdaptor extends CommonTreeAdaptor {
 		// handle ^(nil real-node)
 		if ( newRootTree.isNil() ) {
             int nc = newRootTree.getChildCount();
-            if ( nc==1 ) newRootTree = (PythonTree)newRootTree.getChild(0);
+            if ( nc==1 ) newRootTree = newRootTree.getChild(0);
             else if ( nc >1 ) {
 				// TODO: make tree run time exceptions hierarchy
 				throw new RuntimeException("more than one node as root (TODO: make exception hierarchy)");
@@ -93,7 +93,7 @@ public class PythonTreeAdaptor extends CommonTreeAdaptor {
 				r = null;
 			}
 			else if ( r.getChildCount()==1 ) {
-				r = (PythonTree)r.getChild(0);
+				r = r.getChild(0);
 				// whoever invokes rule will set parent and child index
 				r.setParent(null);
 				r.setChildIndex(-1);
