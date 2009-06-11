@@ -8,17 +8,18 @@
  */
 package com.ziclix.python.sql.handler;
 
-import com.ziclix.python.sql.DataHandler;
-import org.python.core.PyFile;
-import org.python.core.PyObject;
-import org.python.core.util.StringUtil;
-
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
+
+import org.python.core.PyFile;
+import org.python.core.PyObject;
+import org.python.core.util.StringUtil;
+
+import com.ziclix.python.sql.DataHandler;
 
 /**
  * MySQL specific data handling.

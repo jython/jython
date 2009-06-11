@@ -8,12 +8,6 @@
  */
 package com.ziclix.python.sql;
 
-import org.python.core.Py;
-import org.python.core.PyFile;
-import org.python.core.PyObject;
-import org.python.core.PyString;
-import org.python.core.util.StringUtil;
-
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -26,6 +20,11 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
+
+import org.python.core.Py;
+import org.python.core.PyFile;
+import org.python.core.PyObject;
+import org.python.core.util.StringUtil;
 
 /**
  * Support for JDBC 2.x type mappings, including Arrays, CLOBs and BLOBs.

@@ -8,14 +8,6 @@
  */
 package com.ziclix.python.sql;
 
-import org.python.core.Py;
-import org.python.core.PyFile;
-import org.python.core.PyLong;
-import org.python.core.PyObject;
-import org.python.core.PyList;
-import org.python.core.PyString;
-import org.python.core.util.StringUtil;
-
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -31,6 +23,13 @@ import java.sql.Statement;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
+
+import org.python.core.Py;
+import org.python.core.PyFile;
+import org.python.core.PyList;
+import org.python.core.PyLong;
+import org.python.core.PyObject;
+import org.python.core.util.StringUtil;
 
 /**
  * A copy of the DataHandler class as it was before Jython 2.5. By that version,

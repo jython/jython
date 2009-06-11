@@ -21,14 +21,13 @@ import java.util.regex.Pattern;
 
 import org.antlr.runtime.CharStream;
 import org.antlr.runtime.CommonTokenStream;
-
 import org.python.antlr.BaseParser;
-import org.python.antlr.ParseException;
 import org.python.antlr.NoCloseReaderStream;
-import org.python.antlr.PythonTree;
+import org.python.antlr.ParseException;
 import org.python.antlr.PythonLexer;
 import org.python.antlr.PythonPartial;
 import org.python.antlr.PythonTokenSource;
+import org.python.antlr.PythonTree;
 import org.python.antlr.base.mod;
 import org.python.core.io.StreamIO;
 import org.python.core.io.TextIOInputStream;
