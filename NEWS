@@ -1,5 +1,8 @@
 Jython NEWS
 
+Jython 2.5.0
+  The same as rc4.
+
 Jython 2.5.0 rc4
   Bugs fixed
     - [ 1354 ] core language failures in interactive interpreter
