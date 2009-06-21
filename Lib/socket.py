@@ -74,7 +74,14 @@ import java.nio.channels.NotYetConnectedException
 import java.nio.channels.UnresolvedAddressException
 import java.nio.channels.UnsupportedAddressTypeException
 
+# Javax.net.ssl classes
 import javax.net.ssl.SSLSocketFactory
+# Javax.net.ssl exceptions
+javax.net.ssl.SSLException
+javax.net.ssl.SSLHandshakeException
+javax.net.ssl.SSLKeyException
+javax.net.ssl.SSLPeerUnverifiedException
+javax.net.ssl.SSLProtocolException
 
 import org.python.core.io.DatagramSocketIO
 import org.python.core.io.ServerSocketIO
@@ -85,6 +92,7 @@ class error(Exception): pass
 class herror(error): pass
 class gaierror(error): pass
 class timeout(error): pass
+class sslerror(error): pass
 
 ALL = None
 
@@ -120,6 +128,15 @@ _exception_map = {
 (java.nio.channels.NotYetConnectedException, ALL)        : None,
 (java.nio.channels.UnresolvedAddressException, ALL)      : lambda: gaierror(errno.EGETADDRINFOFAILED, 'getaddrinfo failed'),
 (java.nio.channels.UnsupportedAddressTypeException, ALL) : None,
+
+# These error codes are currently wrong: getting them correct is going to require
+# some investigation. Cpython 2.6 introduced extensive SSL support.
+
+(javax.net.ssl.SSLException, ALL)                        : lambda: sslerror(-1, 'SSL exception'),
+(javax.net.ssl.SSLHandshakeException, ALL)               : lambda: sslerror(-1, 'SSL handshake exception'),
+(javax.net.ssl.SSLKeyException, ALL)                     : lambda: sslerror(-1, 'SSL key exception'),
+(javax.net.ssl.SSLPeerUnverifiedException, ALL)          : lambda: sslerror(-1, 'SSL peer unverified exception'),
+(javax.net.ssl.SSLProtocolException, ALL)                : lambda: sslerror(-1, 'SSL protocol exception'),
 
 }
 
@@ -1393,11 +1410,14 @@ class _fileobject(object):
 class ssl:
 
     def __init__(self, plain_sock, keyfile=None, certfile=None):
-        self.ssl_sock = self.make_ssl_socket(plain_sock)
-        self._in_buf = java.io.BufferedInputStream(self.ssl_sock.getInputStream())
-        self._out_buf = java.io.BufferedOutputStream(self.ssl_sock.getOutputStream())
+        try:
+            self.ssl_sock = self._make_ssl_socket(plain_sock)
+            self._in_buf = java.io.BufferedInputStream(self.ssl_sock.getInputStream())
+            self._out_buf = java.io.BufferedOutputStream(self.ssl_sock.getOutputStream())
+        except java.lang.Exception, jlx:
+            raise _map_exception(jlx)
 
-    def make_ssl_socket(self, plain_socket, auto_close=0):
+    def _make_ssl_socket(self, plain_socket, auto_close=0):
         java_net_socket = plain_socket._get_jsocket()
         assert isinstance(java_net_socket, java.net.Socket)
         host = java_net_socket.getInetAddress().getHostAddress()
@@ -1409,21 +1429,30 @@ class ssl:
         return ssl_socket
 
     def read(self, n=4096):
-        data = jarray.zeros(n, 'b')
-        m = self._in_buf.read(data, 0, n)
-        if m <= 0:
-            return ""
-        if m < n:
-            data = data[:m]
-        return data.tostring()
+        try:
+            data = jarray.zeros(n, 'b')
+            m = self._in_buf.read(data, 0, n)
+            if m <= 0:
+                return ""
+            if m < n:
+                data = data[:m]
+            return data.tostring()
+        except java.lang.Exception, jlx:
+            raise _map_exception(jlx)
 
     def write(self, s):
-        self._out_buf.write(s)
-        self._out_buf.flush()
-        return len(s)
+        try:
+            self._out_buf.write(s)
+            self._out_buf.flush()
+            return len(s)
+        except java.lang.Exception, jlx:
+            raise _map_exception(jlx)
 
     def _get_server_cert(self):
-        return self.ssl_sock.getSession().getPeerCertificates()[0]
+        try:
+            return self.ssl_sock.getSession().getPeerCertificates()[0]
+        except java.lang.Exception, jlx:
+            raise _map_exception(jlx)
 
     def server(self):
         cert = self._get_server_cert()
