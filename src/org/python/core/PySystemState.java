@@ -698,10 +698,10 @@ public class PySystemState extends PyObject
         }
     }
 
-    public static Properties getBaseProperties(){
-        try{
+    public static Properties getBaseProperties() {
+        try {
             return System.getProperties();
-        }catch(AccessControlException ace){
+        } catch (AccessControlException ace) {
             return new Properties();
         }
     }

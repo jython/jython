@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry excluding="com/ziclix/python/sql/handler/InformixDataHandler.java|com/ziclix/python/sql/handler/OracleDataHandler.java" kind="src" output="build/classes" path="src"/>
+	<classpathentry kind="src" path="tests/modjy/java"/>
 	<classpathentry kind="src" output="build/classes" path="build/gensrc"/>
 	<classpathentry kind="src" output="build/classes" path="tests/java"/>
 	<classpathentry kind="src" path="bugtests/classes"/>
@@ -18,5 +19,7 @@
 	<classpathentry kind="lib" path="extlibs/asm-commons-3.1.jar"/>
 	<classpathentry kind="lib" path="extlibs/constantine-0.4.jar"/>
 	<classpathentry kind="lib" path="extlibs/jna-posix.jar"/>
+	<classpathentry kind="lib" path="extlibs/mockrunner-0.4.1/jar/jdom.jar"/>
+	<classpathentry kind="lib" path="extlibs/mockrunner-0.4.1/lib/jdk1.5/j2ee1.3/mockrunner-servlet.jar"/>
 	<classpathentry kind="output" path="bugtests/classes"/>
 </classpath>

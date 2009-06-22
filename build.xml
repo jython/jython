@@ -813,7 +813,7 @@ The readme text for the next release will be like:
         </jar>
     </target>
 
-    <target name="test" depends="prepare-test,javatest,launchertest,regrtest"/>
+    <target name="test" depends="prepare-test,javatest,launchertest,regrtest,modjytest"/>
     <target name="singlejavatest" depends="compile,expose">
         <junit haltonfailure="true" fork="true">
             <formatter type="brief" usefile="false"/>
@@ -841,6 +841,12 @@ The readme text for the next release will be like:
                 </fileset>
             </batchtest>
         </junit>
+    </target>
+    <target name="modjytest" depends="developer-build">
+        <ant dir="tests/modjy">
+            <property name="jython_home" value="${dist.dir}"/>
+            <property name="mockrunner_home" value="${extlibs.dir}/mockrunner-0.4.1"/>
+        </ant>
     </target>
     <target name="launchertest" depends="developer-build" if="os.family.unix">
       <exec executable="${test.shell.dir}/test-jython.sh">

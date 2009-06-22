@@ -1,34 +1,26 @@
 /*###
 #
-# Copyright Alan Kennedy. 
-# 
+# Copyright Alan Kennedy.
+#
 # You may contact the copyright holder at this uri:
-# 
+#
 # http://www.xhaus.com/contact/modjy
-# 
+#
 # The licence under which this code is released is the Apache License v2.0.
-# 
+#
 # The terms and conditions of this license are listed in a file contained
 # in the distribution that also contained this file, under the name
 # LICENSE.txt.
-# 
+#
 # You may also read a copy of the license at the following web address.
-# 
+#
 # http://modjy.xhaus.com/LICENSE.txt
 #
 ###*/
 
 package com.xhaus.modjy;
 
-import java.io.File;
-
-import java.util.Map;
-import java.util.Iterator;
-
 import junit.framework.*;
-
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServlet;
 
 import com.mockrunner.servlet.BasicServletTestCaseAdapter;
 import com.mockrunner.mock.web.WebMockObjectFactory;
@@ -37,16 +29,16 @@ import com.mockrunner.mock.web.MockServletContext;
 import com.mockrunner.mock.web.MockHttpServletRequest;
 import com.mockrunner.mock.web.MockHttpServletResponse;
 
-import org.jdom.Element;
 import org.jdom.output.XMLOutputter;
 
 import org.python.core.PyObject;
+import org.python.util.PyServletTest;
 import org.python.util.PythonInterpreter;
 
 import com.xhaus.modjy.ModjyJServlet;
 
 /**
- * 
+ *
  */
 
 public class ModjyTestBase extends BasicServletTestCaseAdapter
@@ -226,7 +218,7 @@ public class ModjyTestBase extends BasicServletTestCaseAdapter
     	throws Exception
 	{
 		super.setUp();
-		String jythonHome = System.getenv("JYTHON_HOME");
+		String jythonHome = System.getProperty("JYTHON_HOME");
 		setRealPath(jythonHome, jythonHome);
 		setRealPath("/WEB-INF/"+LIB_PYTHON_DIR, LIB_PYTHON_TEST_PATH);
 		setRealPath("/WEB-INF/lib/modjy.jar", "../modjy.jar");
@@ -267,7 +259,7 @@ public class ModjyTestBase extends BasicServletTestCaseAdapter
 		baseSetUp();
 		createServlet();
 	 	doGet();
-		String result = new XMLOutputter().outputString(getOutputAsJDOMDocument());
+		new XMLOutputter().outputString(getOutputAsJDOMDocument());
 	}
 
 	public static void main(String args[])
@@ -281,6 +273,7 @@ public class ModjyTestBase extends BasicServletTestCaseAdapter
 		suite.addTestSuite(ModjyTestReturnIterable.class);
 		suite.addTestSuite(ModjyTestWebInf.class);
 		suite.addTestSuite(ModjyTestWSGIStreams.class);
+        suite.addTestSuite(PyServletTest.class);
 		junit.textui.TestRunner.run(suite);
 	}
 

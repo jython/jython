@@ -12,16 +12,17 @@
 
 	<!-- Jython properties	-->
 
-	<property name="jython_home"		location="${env.JYTHON_HOME}"/>
+    <property name="jython_home"		location="${env.JYTHON_HOME}"/>
 	<property name="jython_jar"			value="jython-dev.jar"/>
 	<property name="jython_jar_path"	location="${jython_home}/${jython_jar}"/>
 	<property name="jython_cachedir"	location="${jython_home}/cachedir"/>
+    <property name="mockrunner_home"    location="${env.MOCKRUNNER_HOME}"/>
 
 	<target name="init">
-		<available property="jython.home.set" file="${env.JYTHON_HOME}" />
-		<fail unless="jython.home.set" message="JYTHON_HOME not set" />
-		<available property="mockrunner.home.set" file="${env.MOCKRUNNER_HOME}" />
-		<fail unless="mockrunner.home.set" message="MOCKRUNNER_HOME not set" />
+        <available property="jython_home.exists" file="${jython_home}" />
+        <fail unless="jython_home.exists" message="jython_home, ${jython_home}, doesn't exist" />
+        <available property="mockrunner_home.exists" file="${mockrunner_home}" />
+        <fail unless="mockrunner_home.exists" message="mockrunner_home, ${mockrunner_home}, doesn't exist" />
 		<!-- Create the build directory structure used by compile -->
 		<mkdir dir="${build}"/>
 	</target>
@@ -35,11 +36,6 @@
 
     <target name="do_test" depends="init" description="Run unit tests against a single jdk/servlet combo">
 		<echo message="Running tests against JDK ${jdk_version}, Servlet ${servlet_version}"/>
-		<echo message="Clearing jython package cache located at ${jython_home}/cachedir"/>
-
-		<delete quiet="true">
-			<fileset dir="${jython_cachedir}"/>
-		</delete>
 
 		<property name="mockrunner_home"	value="${env.MOCKRUNNER_HOME}"/>
 		<property name="mockrunner_jar"		location="${mockrunner_home}/jar"/>
@@ -57,15 +53,13 @@
 			srcdir="${test_src}"
 			destdir="${build}"
 			classpathref="test.classpath"
-			debug="on"
-		/>
-
-		<java 
-			classname="com.xhaus.modjy.ModjyTestBase"
-			dir="."
-			fork="yes"
-			classpathref="test.classpath"
-		/>
+            debug="on"
+            />
+        <java classname="com.xhaus.modjy.ModjyTestBase" dir="." fork="yes"
+            classpathref="test.classpath">
+            <sysproperty key="JYTHON_HOME" value="${jython_home}"/>
+            <sysproperty key="python.cachedir.skip" value="true"/>
+        </java>
 	</target>
 
 	<target name="test">
