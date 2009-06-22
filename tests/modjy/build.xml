@@ -1,103 +1,97 @@
 <project name="modjy" default="test">
 
-	<description>Modjy test build.xml</description>
+    <description>Modjy test build.xml</description>
 
-	<!-- set global properties for this build -->
+    <!-- set global properties for this build -->
 
-	<property name="test_src"		location="java"/>
-	<property name="build"			location="build"/>
+    <property name="test_src" location="java" />
+    <property name="build" location="build" />
 
-	<!-- Import the environment -->
-	<property environment="env"/>
+    <!-- Import the environment -->
+    <property environment="env" />
 
-	<!-- Jython properties	-->
+    <!-- Jython properties    -->
 
-    <property name="jython_home"		location="${env.JYTHON_HOME}"/>
-	<property name="jython_jar"			value="jython-dev.jar"/>
-	<property name="jython_jar_path"	location="${jython_home}/${jython_jar}"/>
-	<property name="jython_cachedir"	location="${jython_home}/cachedir"/>
-    <property name="mockrunner_home"    location="${env.MOCKRUNNER_HOME}"/>
+    <property name="jython_home" location="${env.JYTHON_HOME}" />
+    <property name="jython_jar" value="jython-dev.jar" />
+    <property name="jython_jar_path" location="${jython_home}/${jython_jar}" />
+    <property name="jython_cachedir" location="${jython_home}/cachedir" />
+    <property name="mockrunner_home" location="${env.MOCKRUNNER_HOME}" />
 
-	<target name="init">
+    <target name="init">
         <available property="jython_home.exists" file="${jython_home}" />
         <fail unless="jython_home.exists" message="jython_home, ${jython_home}, doesn't exist" />
         <available property="mockrunner_home.exists" file="${mockrunner_home}" />
         <fail unless="mockrunner_home.exists" message="mockrunner_home, ${mockrunner_home}, doesn't exist" />
-		<!-- Create the build directory structure used by compile -->
-		<mkdir dir="${build}"/>
-	</target>
+        <!-- Create the build directory structure used by compile -->
+        <mkdir dir="${build}" />
+    </target>
 
-	<target name="clean" description="clean up" >
-		<!-- Delete the ${build} and ${dist} directory trees -->
-		<delete dir="${build}"/>
-	</target>
+    <target name="clean" description="clean up">
+        <!-- Delete the ${build} and ${dist} directory trees -->
+        <delete dir="${build}" />
+    </target>
 
-	<!-- Now testing related targets -->
+    <!-- Now testing related targets -->
 
     <target name="do_test" depends="init" description="Run unit tests against a single jdk/servlet combo">
-		<echo message="Running tests against JDK ${jdk_version}, Servlet ${servlet_version}"/>
+        <echo message="Running tests against JDK ${jdk_version}, Servlet ${servlet_version}" />
 
-		<property name="mockrunner_home"	value="${env.MOCKRUNNER_HOME}"/>
-		<property name="mockrunner_jar"		location="${mockrunner_home}/jar"/>
-		<property name="mockrunner_lib"		location="${mockrunner_home}/lib/jdk${jdk_version}/${servlet_version}"/>
+        <property name="mockrunner_home" value="${env.MOCKRUNNER_HOME}" />
+        <property name="mockrunner_jar" location="${mockrunner_home}/jar" />
+        <property name="mockrunner_lib" location="${mockrunner_home}/lib/jdk${jdk_version}/${servlet_version}" />
 
-		<path id="test.classpath">
-			<pathelement path="${build}"/>
-			<pathelement path="${jython_jar_path}"/>
-			<fileset dir="${jython_home}/javalib" includes="**/*.jar"/>
-			<fileset dir="${mockrunner_jar}" includes="**/*.jar"/>
-			<fileset dir="${mockrunner_lib}" includes="**/*.jar"/>
+        <path id="test.classpath">
+            <pathelement path="${build}" />
+            <pathelement path="${jython_jar_path}" />
+            <fileset dir="${jython_home}/javalib" includes="**/*.jar" />
+            <fileset dir="${mockrunner_jar}" includes="**/*.jar" />
+            <fileset dir="${mockrunner_lib}" includes="**/*.jar" />
         </path>
 
-		<javac
-			srcdir="${test_src}"
-			destdir="${build}"
-			classpathref="test.classpath"
-            debug="on"
-            />
-        <java classname="com.xhaus.modjy.ModjyTestBase" dir="." fork="yes"
-            classpathref="test.classpath">
-            <sysproperty key="JYTHON_HOME" value="${jython_home}"/>
-            <sysproperty key="python.cachedir.skip" value="true"/>
+        <javac srcdir="${test_src}" destdir="${build}" classpathref="test.classpath" debug="on" />
+        <java classname="com.xhaus.modjy.ModjyTestBase" dir="." fork="yes" classpathref="test.classpath">
+            <sysproperty key="JYTHON_HOME" value="${jython_home}" />
+            <sysproperty key="python.cachedir.skip" value="true" />
         </java>
-	</target>
+    </target>
 
-	<target name="test">
-		<antcall target="do_test">
-			<param name="jdk_version"		value="1.5"/>
-			<param name="servlet_version"	value="j2ee1.3"/>
-		</antcall>
-	</target>
+    <target name="test">
+        <antcall target="do_test">
+            <param name="jdk_version" value="1.5" />
+            <param name="servlet_version" value="j2ee1.3" />
+        </antcall>
+    </target>
 
-	<target name="test_java_15" depends="clean">
-		<antcall target="do_test">
-			<param name="jdk_version"		value="1.5"/>
-			<param name="servlet_version"	value="j2ee1.3"/>
-		</antcall>
-		<antcall target="do_test">
-			<param name="jdk_version"		value="1.5"/>
-			<param name="servlet_version"	value="j2ee1.4"/>
-		</antcall>
-		<antcall target="do_test">
-			<param name="jdk_version"		value="1.5"/>
-			<param name="servlet_version"	value="jee5"/>
-		</antcall>
-	</target>
+    <target name="test_java_15" depends="clean">
+        <antcall target="do_test">
+            <param name="jdk_version" value="1.5" />
+            <param name="servlet_version" value="j2ee1.3" />
+        </antcall>
+        <antcall target="do_test">
+            <param name="jdk_version" value="1.5" />
+            <param name="servlet_version" value="j2ee1.4" />
+        </antcall>
+        <antcall target="do_test">
+            <param name="jdk_version" value="1.5" />
+            <param name="servlet_version" value="jee5" />
+        </antcall>
+    </target>
 
-	<target name="test_java_16" depends="clean">
-		<antcall target="do_test">
-			<param name="jdk_version"		value="1.6"/>
-			<param name="servlet_version"	value="j2ee1.3"/>
-		</antcall>
-		<antcall target="do_test">
-			<param name="jdk_version"		value="1.6"/>
-			<param name="servlet_version"	value="j2ee1.4"/>
-		</antcall>
-		<antcall target="do_test">
-			<param name="jdk_version"		value="1.6"/>
-			<param name="servlet_version"	value="jee5"/>
-		</antcall>
-	</target>
+    <target name="test_java_16" depends="clean">
+        <antcall target="do_test">
+            <param name="jdk_version" value="1.6" />
+            <param name="servlet_version" value="j2ee1.3" />
+        </antcall>
+        <antcall target="do_test">
+            <param name="jdk_version" value="1.6" />
+            <param name="servlet_version" value="j2ee1.4" />
+        </antcall>
+        <antcall target="do_test">
+            <param name="jdk_version" value="1.6" />
+            <param name="servlet_version" value="jee5" />
+        </antcall>
+    </target>
 
 </project>
 
