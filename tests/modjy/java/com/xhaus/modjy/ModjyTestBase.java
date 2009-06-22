@@ -20,22 +20,20 @@
 
 package com.xhaus.modjy;
 
-import junit.framework.*;
-
-import com.mockrunner.servlet.BasicServletTestCaseAdapter;
-import com.mockrunner.mock.web.WebMockObjectFactory;
-import com.mockrunner.mock.web.MockServletConfig;
-import com.mockrunner.mock.web.MockServletContext;
-import com.mockrunner.mock.web.MockHttpServletRequest;
-import com.mockrunner.mock.web.MockHttpServletResponse;
+import junit.framework.TestSuite;
 
 import org.jdom.output.XMLOutputter;
-
 import org.python.core.PyObject;
+import org.python.util.PyFilterTest;
 import org.python.util.PyServletTest;
 import org.python.util.PythonInterpreter;
 
-import com.xhaus.modjy.ModjyJServlet;
+import com.mockrunner.mock.web.MockHttpServletRequest;
+import com.mockrunner.mock.web.MockHttpServletResponse;
+import com.mockrunner.mock.web.MockServletConfig;
+import com.mockrunner.mock.web.MockServletContext;
+import com.mockrunner.mock.web.WebMockObjectFactory;
+import com.mockrunner.servlet.BasicServletTestCaseAdapter;
 
 /**
  *
@@ -274,6 +272,7 @@ public class ModjyTestBase extends BasicServletTestCaseAdapter
 		suite.addTestSuite(ModjyTestWebInf.class);
 		suite.addTestSuite(ModjyTestWSGIStreams.class);
         suite.addTestSuite(PyServletTest.class);
+        suite.addTestSuite(PyFilterTest.class);
 		junit.textui.TestRunner.run(suite);
 	}
 

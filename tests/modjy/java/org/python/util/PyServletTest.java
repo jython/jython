@@ -47,7 +47,7 @@ public class PyServletTest extends BasicServletTestCaseAdapter {
         createServlet(PyServlet.class);
     }
 
-    private String doGetAndRead(String testName) {
+    protected String doGetAndRead(String testName) {
         getWebMockObjectFactory().getMockRequest().setServletPath(getTestPath(testName));
         doGet();
         String result = getOutput();
@@ -55,7 +55,7 @@ public class PyServletTest extends BasicServletTestCaseAdapter {
         return result;
     }
 
-    private String getTestPath(String testName) {
+    protected String getTestPath(String testName) {
         return "/test/pyservlet/" + testName + ".py";
     }
 
@@ -84,5 +84,5 @@ public class PyServletTest extends BasicServletTestCaseAdapter {
         };
     }
 
-    private String basePath = System.getProperty("JYTHON_HOME") + "/Lib";
+    protected String basePath = System.getProperty("JYTHON_HOME") + "/Lib";
 }
