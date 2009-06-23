@@ -1,8 +1,11 @@
 Jython NEWS
 
 Jython 2.5.1
- New Features
+  New Features
     - Upgraded to ANTLR 3.1.3
+    - [ 1859477 ] Dynamically loaded ServletFilters like PyServlet
+  Bugs Fixed
+    - [ 1377 ] Event names shadowed by a field name on Java types leads to a NPE
 
 Jython 2.5.0
   The same as rc4.
@@ -10,7 +13,7 @@ Jython 2.5.0
 Jython 2.5.0 rc4
   Bugs fixed
     - [ 1354 ] core language failures in interactive interpreter
-    - [ 1358 ] Simple pogram fails to parse in Jython 2.5rc3, but parses OK with CPython
+    - [ 1358 ] Simple program fails to parse in Jython 2.5rc3, but parses OK with CPython
     - [ 1357 ] no sys.executable when script runner is a relative link
     - [ 1338 ] Comparing Java objects to each other fails when classes of values do not match
     - [ 1363 ] Deep inheritance from a Java class causes MRO problems
