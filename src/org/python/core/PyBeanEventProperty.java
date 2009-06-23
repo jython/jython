@@ -9,7 +9,7 @@ import java.util.WeakHashMap;
 
 import org.python.util.Generic;
 
-public class PyBeanEventProperty extends PyReflectedField {
+public class PyBeanEventProperty extends PyObject {
 
     private static Map<String, Class<?>> adapterClasses = Generic.map();
 
@@ -38,6 +38,7 @@ public class PyBeanEventProperty extends PyReflectedField {
         this.eventClass = eventClass;
     }
 
+    @Override
     public PyObject _doget(PyObject self) {
         if (self == null) {
             return this;
@@ -65,6 +66,7 @@ public class PyBeanEventProperty extends PyReflectedField {
         return func;
     }
 
+    @Override
     public boolean _doset(PyObject self, PyObject value) {
         Object jself = Py.tojava(self, addMethod.getDeclaringClass());
         if (!(value instanceof PyCompoundCallable)) {
@@ -77,6 +79,7 @@ public class PyBeanEventProperty extends PyReflectedField {
         return true;
     }
 
+    @Override
     public String toString() {
         return "<beanEventProperty " + __name__ + " for event " + eventClass.toString() + " "
                 + Py.idstr(this) + ">";

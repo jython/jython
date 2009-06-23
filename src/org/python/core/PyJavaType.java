@@ -56,8 +56,10 @@ public class PyJavaType extends PyType {
         super(TYPE == null ? fromClass(PyType.class) : TYPE);
     }
 
+    @Override
     protected boolean useMetatypeFirst(PyObject attr) {
-        return !(attr instanceof PyReflectedField || attr instanceof PyReflectedFunction);
+        return !(attr instanceof PyReflectedField || attr instanceof PyReflectedFunction ||
+                attr instanceof PyBeanEventProperty);
     }
 
     // Java types are ok with things being added and removed from their dicts as long as there isn't

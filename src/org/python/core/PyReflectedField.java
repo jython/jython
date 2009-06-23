@@ -4,7 +4,6 @@ package org.python.core;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 
-
 public class PyReflectedField extends PyObject {
     public Field field;
 
@@ -14,6 +13,7 @@ public class PyReflectedField extends PyObject {
         this.field = field;
     }
 
+    @Override
     public PyObject _doget(PyObject self) {
         Object iself = null;
         if (!Modifier.isStatic(field.getModifiers())) {
@@ -32,6 +32,7 @@ public class PyReflectedField extends PyObject {
         return Py.java2py(value);
     }
 
+    @Override
     public boolean _doset(PyObject self, PyObject value) {
         Object iself = null;
         if (!Modifier.isStatic(field.getModifiers())) {
@@ -51,6 +52,7 @@ public class PyReflectedField extends PyObject {
         return true;
     }
 
+    @Override
     public String toString() {
         return "<reflected field "+field.toString()+" "+Py.idstr(this)+">";
     }

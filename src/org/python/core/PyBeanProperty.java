@@ -14,6 +14,7 @@ public class PyBeanProperty extends PyReflectedField {
         this.myType = myType;
     }
 
+    @Override
     public PyObject _doget(PyObject self) {
         if (self == null) {
             if (field != null) {
@@ -36,6 +37,7 @@ public class PyBeanProperty extends PyReflectedField {
         }
     }
 
+    @Override
     public boolean _doset(PyObject self, PyObject value) {
         if (self == null) {
             if (field != null) {
@@ -72,6 +74,7 @@ public class PyBeanProperty extends PyReflectedField {
         return new PyBeanProperty(__name__, myType, getMethod, setMethod);
     }
 
+    @Override
     public String toString() {
         String typeName = "unknown";
         if (myType != null) {
