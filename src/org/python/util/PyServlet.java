@@ -9,8 +9,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.servlet.ServletContext;
-import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletContextListener;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
@@ -62,17 +60,11 @@ import org.python.core.PySystemState;
  *
  * </pre>
  */
-public class PyServlet extends HttpServlet implements ServletContextListener {
+public class PyServlet extends HttpServlet {
 
     public static final String SKIP_INIT_NAME = "skip_jython_initialization";
 
     protected static final String INIT_ATTR = "__jython_initialized__";
-
-    public void contextInitialized(ServletContextEvent event) {
-        init(new Properties(), event.getServletContext(), "a ServletContextListener", true);
-    }
-
-    public void contextDestroyed(ServletContextEvent event) {}
 
     @Override
     public void init() {
@@ -83,8 +75,18 @@ public class PyServlet extends HttpServlet implements ServletContextListener {
             String name = (String)e.nextElement();
             props.put(name, getInitParameter(name));
         }
-        init(props, getServletContext(), "the servlet " + getServletConfig().getServletName(),
-             getServletConfig().getInitParameter(SKIP_INIT_NAME) != null);
+        boolean initialize = getServletConfig().getInitParameter(SKIP_INIT_NAME) != null;
+        if (getServletContext().getAttribute(INIT_ATTR) != null) {
+            if (initialize) {
+                System.err.println("Jython has already been initialized in this context, not "
+                        + "initializing for " + getServletName() + ".  Add " + SKIP_INIT_NAME
+                        + " to as an init param to this servlet's configuration to indicate this "
+                        + "is expected.");
+            }
+        } else if (initialize) {
+            init(props, getServletContext());
+        }
+        reset();
     }
 
     /**
@@ -92,45 +94,36 @@ public class PyServlet extends HttpServlet implements ServletContextListener {
      * servlet, and this is the shared init code. If both initializations are used in a single
      * context, the system state initialization code only runs once.
      */
-    private void init(Properties props, ServletContext context, String initializerName,
-                      boolean initialize) {
-        rootPath = context.getRealPath("/");
+    protected static void init(Properties props, ServletContext context) {
+        String rootPath = getRootPath(context);
+        context.setAttribute(INIT_ATTR, true);
+        Properties baseProps = PySystemState.getBaseProperties();
+        // Context parameters
+        Enumeration<?> e = context.getInitParameterNames();
+        while (e.hasMoreElements()) {
+            String name = (String)e.nextElement();
+            props.put(name, context.getInitParameter(name));
+        }
+        if (props.getProperty("python.home") == null
+                && baseProps.getProperty("python.home") == null) {
+            props.put("python.home", rootPath + "WEB-INF" + File.separator + "lib");
+        }
+        PySystemState.initialize(baseProps, props, new String[0]);
+        PySystemState.add_package("javax.servlet");
+        PySystemState.add_package("javax.servlet.http");
+        PySystemState.add_package("javax.servlet.jsp");
+        PySystemState.add_package("javax.servlet.jsp.tagext");
+        PySystemState.add_classdir(rootPath + "WEB-INF" + File.separator + "classes");
+        PySystemState.add_extdir(rootPath + "WEB-INF" + File.separator + "lib", true);
+    }
+
+    protected static String getRootPath(ServletContext context) {
+        String rootPath = context.getRealPath("/");
         if (!rootPath.endsWith(File.separator)) {
             rootPath += File.separator;
         }
-        if (context.getAttribute(INIT_ATTR) != null) {
-            if (initialize) {
-                System.err.println("Jython has already been initialized by "
-                        + context.getAttribute(INIT_ATTR)
-                        + " in this context, not initializing for " + initializerName + ".  Add "
-                        + SKIP_INIT_NAME
-                        + " to as an init param to this servlet's configuration to indicate this "
-                        + "is expected.");
-            }
-        } else if (initialize) {
-            context.setAttribute(INIT_ATTR, initializerName);
-            Properties baseProps = PySystemState.getBaseProperties();
-            // Context parameters
-            Enumeration<?> e = context.getInitParameterNames();
-            while (e.hasMoreElements()) {
-                String name = (String)e.nextElement();
-                props.put(name, context.getInitParameter(name));
-            }
-            if (props.getProperty("python.home") == null
-                    && baseProps.getProperty("python.home") == null) {
-                props.put("python.home", rootPath + "WEB-INF" + File.separator + "lib");
-            }
-            PySystemState.initialize(baseProps, props, new String[0]);
-            PySystemState.add_package("javax.servlet");
-            PySystemState.add_package("javax.servlet.http");
-            PySystemState.add_package("javax.servlet.jsp");
-            PySystemState.add_package("javax.servlet.jsp.tagext");
-            PySystemState.add_classdir(rootPath + "WEB-INF" + File.separator + "classes");
-            PySystemState.add_extdir(rootPath + "WEB-INF" + File.separator + "lib", true);
-        }
-        reset();
+        return rootPath;
     }
-
 
     @Override
     public void service(ServletRequest req, ServletResponse res)
@@ -161,6 +154,7 @@ public class PyServlet extends HttpServlet implements ServletContextListener {
      * requests.
      */
     public void reset() {
+        String rootPath = getRootPath(getServletContext());
         destroyCache();
         interp = new PythonInterpreter(null, new PySystemState());
 
@@ -246,6 +240,5 @@ public class PyServlet extends HttpServlet implements ServletContextListener {
     private static final Pattern FIND_NAME = Pattern.compile("([^/]+)\\.py$");
 
     private PythonInterpreter interp;
-    private String rootPath;
     private Map<String, CacheEntry> cache = Generic.map();
 }

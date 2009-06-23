@@ -43,17 +43,16 @@ import org.python.util.PythonInterpreter;
  * </p>
  *
  * <pre>
- * &lt;!-- PyFilter depends on PyServlet --&gt;
- * &lt;servlet&gt;
- *  &lt;servlet-name&gt;PyServlet&lt;/servlet-name&gt;
- *  &lt;servlet-class&gt;org.python.util.PyServlet&lt;/servlet-class&gt;
- *  &lt;load-on-startup&gt;1&lt;/load-on-startup&gt;
- * &lt;/servlet&gt;
+ * &lt;!-- Initialize the Jython runtime --&gt;
+ *   &lt;listener&gt;
+ *       &lt;listener-class&gt;org.python.util.PyServletInitializer&lt;/listener-class&gt;
+ *       &lt;load-on-startup&gt;1&lt;/load-on-startup&gt;
+ *   &lt;/listener&gt;
  *
  * &lt;!-- Declare a uniquely-named PyFilter --&gt;
  * &lt;filter&gt;
  *  &lt;filter-name&gt;HeaderFilter&lt;/filter-name&gt;
- *  &lt;filter-class&gt;org.jython.util.PyFilter&lt;/filter-class&gt;
+ *  &lt;filter-class&gt;org.python.util.PyFilter&lt;/filter-class&gt;
  *
  *  &lt;!-- The special param __filter__ gives the context-relative path to the Jython source file --&gt;
  *  &lt;init-param&gt;
@@ -72,20 +71,6 @@ import org.python.util.PythonInterpreter;
  *  &lt;url-pattern&gt;/*&lt;/url-pattern&gt;
  * &lt;/filter-mapping&gt;
  * </pre>
- *
- * <p>
- * PyFilter depends on initialization code from PyServlet being run. If PyServlet is used to serve
- * pages, this code will be executed and PyFilter will work properly. However, if you aren't using
- * PyServlet, the initialization code can be invoked as a ServletContextListener instead of as an
- * HttpServlet. Use the following in web.xml instead of a servlet tag:
- *
- * <pre>
- *   &lt;listener&gt;
- *       &lt;listener-class&gt;org.python.util.PyServlet&lt;/listener-class&gt;
- *       &lt;load-on-startup&gt;1&lt;/load-on-startup&gt;
- *   &lt;/listener&gt;
- * </pre>
- *
  */
 public class PyFilter implements Filter {
     public static final String FILTER_PATH_PARAM = "__filter__";
