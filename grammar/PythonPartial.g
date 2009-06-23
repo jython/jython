@@ -52,14 +52,11 @@
  *
  *  I (Terence) tested this by running it on the jython-2.1/Lib
  *  directory of 40k lines of Python.
- *  
+ *
+ *  REQUIRES ANTLR v3
+ *
  *  Updated to Python 2.5 by Frank Wierzbicki.
  *
- *  This particular version has some changes to allow "partial" parsing
- *  So that an interactive session can tell if it should wait for more
- *  input or not.  For example, this grammar will allow a String that
- *  starts with """ but has no ending """ and will allow a Suite to have
- *  an indent but no dedent.
  */
 
 parser grammar PythonPartial;
@@ -93,58 +90,160 @@ catch (RecognitionException e) {
 }
 }
 
-single_input : NEWLINE
-             | simple_stmt
-             | compound_stmt NEWLINE?
-             ;
+//single_input: NEWLINE | simple_stmt | compound_stmt NEWLINE
+single_input
 
-//eval_input: testlist NEWLINE* ENDMARKER
-eval_input : LEADING_WS? (NEWLINE)* testlist? (NEWLINE)* EOF
-           ;
-
-decorators: decorator+
-          ;
-
-decorator: AT dotted_attr (LPAREN arglist? RPAREN)? NEWLINE
-         ;
-
-dotted_attr
-    : NAME (DOT NAME)*
+    : NEWLINE
+    | simple_stmt
+    | compound_stmt NEWLINE?
     ;
 
-funcdef : decorators? DEF NAME parameters COLON suite
-        ;
+//eval_input: testlist NEWLINE* ENDMARKER
+eval_input
 
-parameters : LPAREN (varargslist)? RPAREN
-           ;
+    : LEADING_WS? (NEWLINE)* testlist? (NEWLINE)* EOF
+    ;
 
-varargslist : defparameter (options {greedy=true;}:COMMA defparameter)*
-              (COMMA
-                  ( STAR NAME (COMMA DOUBLESTAR NAME)?
-                  | DOUBLESTAR NAME
-                  )?
-              )?
-            | STAR NAME (COMMA DOUBLESTAR NAME)?
-            | DOUBLESTAR NAME
-            ;
+//not in CPython's Grammar file
+dotted_attr 
+    : NAME
+      ( (DOT NAME)+ 
+      | 
+      )
+    ;
 
-defparameter : fpdef (ASSIGN test)?
-             ;
+//attr is here for Java  compatibility.  A Java foo.getIf() can be called from Jython as foo.if
+//     so we need to support any keyword as an attribute.
 
-fpdef : NAME
-      | LPAREN fplist RPAREN
-      ;
+attr
+    : NAME
+    | AND
+    | AS
+    | ASSERT
+    | BREAK
+    | CLASS
+    | CONTINUE
+    | DEF
+    | DELETE
+    | ELIF
+    | EXCEPT
+    | EXEC
+    | FINALLY
+    | FROM
+    | FOR
+    | GLOBAL
+    | IF
+    | IMPORT
+    | IN
+    | IS
+    | LAMBDA
+    | NOT
+    | OR
+    | ORELSE
+    | PASS
+    | PRINT
+    | RAISE
+    | RETURN
+    | TRY
+    | WHILE
+    | WITH
+    | YIELD
+    ;
 
-fplist : fpdef (options {greedy=true;}:COMMA fpdef)* (COMMA)?
-       ;
+//decorator: '@' dotted_name [ '(' [arglist] ')' ] NEWLINE
+decorator 
 
-stmt : simple_stmt
-     | compound_stmt
-     ;
+    : AT dotted_attr 
+    ( LPAREN
+      ( arglist
+        
+      | 
+      )
+      RPAREN
+    | 
+    ) NEWLINE
+    ;
 
-simple_stmt : small_stmt (options {greedy=true;}:SEMI small_stmt)* (SEMI)? (NEWLINE|EOF)
-            ;
+//decorators: decorator+
+decorators 
+    : decorator+
+      
+    ;
 
+//funcdef: [decorators] 'def' NAME parameters ':' suite
+funcdef
+
+    : decorators? DEF NAME parameters COLON suite
+    
+    ;
+
+//parameters: '(' [varargslist] ')'
+parameters 
+    : LPAREN 
+      (varargslist 
+      | 
+      )
+      RPAREN
+    ;
+
+//not in CPython's Grammar file
+defparameter 
+
+    : fpdef (ASSIGN test)?
+      
+    ;
+
+//varargslist: ((fpdef ['=' test] ',')*
+//              ('*' NAME [',' '**' NAME] | '**' NAME) |
+//              fpdef ['=' test] (',' fpdef ['=' test])* [','])
+varargslist 
+
+    : defparameter (options {greedy=true;}:COMMA defparameter)*
+      (COMMA
+          (STAR NAME (COMMA DOUBLESTAR NAME)?
+          | DOUBLESTAR NAME
+          )?
+      )?
+      
+    | STAR NAME (COMMA DOUBLESTAR NAME)?
+      
+    | DOUBLESTAR NAME
+      
+    ;
+
+//fpdef: NAME | '(' fplist ')'
+fpdef
+    : NAME 
+   
+    | (LPAREN fpdef COMMA) => LPAREN fplist RPAREN
+   
+    | LPAREN fplist RPAREN
+   
+    ;
+
+//fplist: fpdef (',' fpdef)* [',']
+fplist 
+    : fpdef
+      (options {greedy=true;}:COMMA fpdef)* (COMMA)?
+      
+    ;
+
+//stmt: simple_stmt | compound_stmt
+stmt 
+    : simple_stmt
+      
+    | compound_stmt
+      
+    ;
+
+//simple_stmt: small_stmt (';' small_stmt)* [';'] NEWLINE
+simple_stmt 
+    : small_stmt (options {greedy=true;}:SEMI small_stmt)* (SEMI)? (NEWLINE|EOF)
+      
+    ;
+
+//small_stmt: (expr_stmt | print_stmt  | del_stmt | pass_stmt | flow_stmt |
+//             import_stmt | global_stmt | exec_stmt | assert_stmt)
 small_stmt : expr_stmt
            | print_stmt
            | del_stmt
