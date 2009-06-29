@@ -83,8 +83,9 @@ public class PyFilter implements Filter {
 
     public void init(FilterConfig config) throws ServletException {
         if (config.getServletContext().getAttribute(PyServlet.INIT_ATTR) == null) {
-            throw new ServletException("PyServlet has not been initialized, either as a servlet "
-                    + "or as context listener.  This must happen before PyFilter is initialized.");
+            throw new ServletException("Jython has not been initialized.  Add "
+                    + "org.python.util.PyServletInitializer as a listener to your "
+                    + "web.xml.");
         }
         this.config = config;
         String filterPath = config.getInitParameter(FILTER_PATH_PARAM);
