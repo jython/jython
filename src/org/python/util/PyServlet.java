@@ -19,6 +19,7 @@ import org.python.core.Py;
 import org.python.core.PyException;
 import org.python.core.PyObject;
 import org.python.core.PyString;
+import org.python.core.PyStringMap;
 import org.python.core.PySystemState;
 
 /**
@@ -117,6 +118,17 @@ public class PyServlet extends HttpServlet {
         PySystemState.add_extdir(rootPath + "WEB-INF" + File.separator + "lib", true);
     }
 
+    protected static PythonInterpreter createInterpreter(ServletContext servletContext) {
+        String rootPath = getRootPath(servletContext);
+        PySystemState sys = new PySystemState();
+        PythonInterpreter interp = new PythonInterpreter(new PyStringMap(), sys);
+        sys.path.append(new PyString(rootPath));
+
+        String modulesDir = rootPath + "WEB-INF" + File.separator + "jython";
+        sys.path.append(new PyString(modulesDir));
+        return interp;
+    }
+
     protected static String getRootPath(ServletContext context) {
         String rootPath = context.getRealPath("/");
         if (!rootPath.endsWith(File.separator)) {
@@ -154,15 +166,8 @@ public class PyServlet extends HttpServlet {
      * requests.
      */
     public void reset() {
-        String rootPath = getRootPath(getServletContext());
         destroyCache();
-        interp = new PythonInterpreter(null, new PySystemState());
-
-        PySystemState sys = Py.getSystemState();
-        sys.path.append(new PyString(rootPath));
-
-        String modulesDir = rootPath + "WEB-INF" + File.separator + "jython";
-        sys.path.append(new PyString(modulesDir));
+        interp = createInterpreter(getServletContext());
     }
 
     private synchronized HttpServlet getServlet(String path)

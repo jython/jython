@@ -11,7 +11,6 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 
 import org.python.core.PyException;
-import org.python.core.PySystemState;
 import org.python.util.PythonInterpreter;
 
 /**
@@ -96,7 +95,7 @@ public class PyFilter implements Filter {
         if (!source.exists()) {
             throw new ServletException(source.getAbsolutePath() + " does not exist.");
         }
-        interp = new PythonInterpreter(null, new PySystemState());
+        interp = PyServlet.createInterpreter(config.getServletContext());
     }
 
     private String getRealPath(ServletContext context, String appPath) {
