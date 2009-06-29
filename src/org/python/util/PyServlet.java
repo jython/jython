@@ -50,7 +50,7 @@ import org.python.core.PySystemState;
  *         &lt;servlet-class>org.python.util.PyServlet&lt;/servlet-class>
  *         &lt;init-param>
  *             &lt;param-name>python.home&lt;/param-name>
- *             &lt;param-value>/usr/home/jython-2.1&lt;/param-value>
+ *             &lt;param-value>/usr/home/jython-2.5&lt;/param-value>
  *         &lt;/init-param>
  *     &lt;/servlet>
  *     &lt;servlet-mapping>

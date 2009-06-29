@@ -16,6 +16,17 @@ import javax.servlet.ServletContextListener;
  *       &lt;load-on-startup&gt;1&lt;/load-on-startup&gt;
  *   &lt;/listener&gt;
  *</pre>
+ *
+ * To use modules from Python's standard library in servlets and filters initialized by this
+ * listener, either add the standard library to the lib directory in WEB-INF, or add python.home as
+ * a context-param. The latter can be done by adding the following to web.xml:
+ *
+ * <pre>
+ * &lt;context-param&gt;
+ *     &lt;param-name&gt;python.home&lt;/param-name&gt;
+ *     &lt;param-value&gt;/usr/local/jython-2.5&lt;/param-value&gt;
+ * &lt;/context-param&gt;
+ * </pre>
  */
 public class PyServletInitializer implements ServletContextListener {
     public void contextInitialized(ServletContextEvent evt) {
