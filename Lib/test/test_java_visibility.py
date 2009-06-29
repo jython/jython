@@ -3,10 +3,11 @@ import unittest
 import subprocess
 import sys
 from test import test_support
-from java.lang import Byte, Class
-from java.util import ArrayList, Collections, HashMap, Observable, Observer 
-from org.python.tests import (Coercions, HiddenSuper, InterfaceCombination, Invisible, Matryoshka,
-        OnlySubclassable, OtherSubVisible, SomePyMethods, SubVisible, Visible, VisibleOverride)
+from java.lang import Byte, Class, Integer
+from java.util import ArrayList, Collections, HashMap, LinkedList, Observable, Observer 
+from org.python.tests import (Coercions, DisagreeingInterfaceOverrides, HiddenSuper,
+        InterfaceCombination, Invisible, Matryoshka, OnlySubclassable, OtherSubVisible,
+        SomePyMethods, SubVisible, Visible, VisibleOverride)
 from org.python.tests import VisibilityResults as Results
 
 class VisibilityTest(unittest.TestCase):
@@ -154,6 +155,16 @@ class VisibilityTest(unittest.TestCase):
         synchList = Collections.synchronizedList(ArrayList())
         synchList.add("a string")
         self.assertEquals("a string", synchList.remove(0))
+
+    def test_interface_methods_merged(self):
+        '''Checks that implementing interfaces that use the same method name are all reachable.
+
+        Bug #1381'''
+        imp = DisagreeingInterfaceOverrides.Implementation()
+        self.assertEquals("String", imp.call("string argument"))
+        self.assertEquals("int", imp.call(Integer(7)))
+        self.assertEquals("List", imp.call(LinkedList()))
+        self.assertEquals("ArrayList", imp.call(ArrayList()))
 
 class JavaClassTest(unittest.TestCase):
     def test_class_methods_visible(self):
