@@ -6,6 +6,7 @@ Jython 2.5.1
     - [ 1859477 ] Dynamically loaded ServletFilters like PyServlet
   Bugs Fixed
     - [ 1377 ] Event names shadowed by a field name on Java types leads to a NPE
+    - [ 1381 ] Redundant declarations of interface implementation hides overriden methods
 
 Jython 2.5.0
   The same as rc4.
