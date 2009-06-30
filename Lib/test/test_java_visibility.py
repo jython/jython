@@ -5,10 +5,11 @@ import sys
 from test import test_support
 from java.lang import Byte, Class, Integer
 from java.util import ArrayList, Collections, HashMap, LinkedList, Observable, Observer 
-from org.python.tests import (Coercions, DisagreeingInterfaceOverrides, HiddenSuper,
-        InterfaceCombination, Invisible, Matryoshka, OnlySubclassable, OtherSubVisible,
-        SomePyMethods, SubVisible, Visible, VisibleOverride)
+from org.python.tests import (Coercions, HiddenSuper, InterfaceCombination, Invisible, Matryoshka,
+        OnlySubclassable, OtherSubVisible, SomePyMethods, SubVisible, Visible, VisibleOverride)
 from org.python.tests import VisibilityResults as Results
+from org.python.tests.RedundantInterfaceDeclarations import (Implementation, ExtraClass,
+        ExtraString, ExtraStringAndClass, ExtraClassAndString)
 
 class VisibilityTest(unittest.TestCase):
     def test_invisible(self):
@@ -157,14 +158,14 @@ class VisibilityTest(unittest.TestCase):
         self.assertEquals("a string", synchList.remove(0))
 
     def test_interface_methods_merged(self):
-        '''Checks that implementing interfaces that use the same method name are all reachable.
+        '''Checks that declaring an interface redundantly doesn't hide merged methods.
 
         Bug #1381'''
-        imp = DisagreeingInterfaceOverrides.Implementation()
-        self.assertEquals("String", imp.call("string argument"))
-        self.assertEquals("int", imp.call(Integer(7)))
-        self.assertEquals("List", imp.call(LinkedList()))
-        self.assertEquals("ArrayList", imp.call(ArrayList()))
+        for impl in Implementation, ExtraString, ExtraClass, ExtraStringAndClass, ExtraClassAndString:
+            instance = impl()
+            self.assertEquals("String", instance.call("string argument"))
+            self.assertEquals("int", instance.call(7))
+            self.assertEquals("Class", instance.call(LinkedList))
 
 class JavaClassTest(unittest.TestCase):
     def test_class_methods_visible(self):

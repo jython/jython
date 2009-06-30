@@ -199,6 +199,12 @@ public class PyJavaType extends PyType {
                     // mro
                     continue;
                 }
+                if (baseClass != null && iface.isAssignableFrom(baseClass)) {
+                    // Don't include redundant interfaces. If the redundant interface has methods
+                    // that were combined with methods of the same name from other interfaces higher
+                    // in the hierarchy, adding it here hides the forms from those interfaces.
+                    continue;
+                }
                 visibleBases.add(PyType.fromClassSkippingInners(iface, needsInners));
             }
             if (javaProxy == Object.class) {
