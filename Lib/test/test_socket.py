@@ -2,6 +2,8 @@
 AMAK: 20050515: This module is the test_socket.py from cpython 2.4, ported to jython.
 """
 
+import java
+
 import unittest
 from test import test_support
 
@@ -307,22 +309,6 @@ class GeneralModuleTests(unittest.TestCase):
         self.assert_(isinstance(fqhn, str))
         if not fqhn in all_host_names:
             self.fail("Error testing host resolution mechanisms.")
-
-    def testGetAddrInfo(self):
-        try:
-            socket.getaddrinfo(HOST, PORT, 9999)
-        except socket.gaierror, gaix:
-            self.failUnlessEqual(gaix[0], errno.EIO)
-        except Exception, x:
-            self.fail("getaddrinfo with bad family raised wrong exception: %s" % x)
-        else:
-            self.fail("getaddrinfo with bad family should have raised exception")
-            
-        addrinfos = socket.getaddrinfo(HOST, PORT)
-        for addrinfo in addrinfos:
-            family, socktype, proto, canonname, sockaddr = addrinfo
-            self.assert_(isinstance(canonname, str))
-            self.assert_(isinstance(sockaddr[0], str))
 
     def testRefCountGetNameInfo(self):
         # Testing reference count for getnameinfo
@@ -1437,6 +1423,49 @@ class UDPTimeoutTest(SocketUDPTest):
         if not ok:
             self.fail("recv() returned success when we did not expect it")
 
+class TestGetAddrInfo(unittest.TestCase):
+
+    def testBadFamily(self):
+        try:
+            socket.getaddrinfo(HOST, PORT, 9999)
+        except socket.gaierror, gaix:
+            self.failUnlessEqual(gaix[0], errno.EIO)
+        except Exception, x:
+            self.fail("getaddrinfo with bad family raised wrong exception: %s" % x)
+        else:
+            self.fail("getaddrinfo with bad family should have raised exception")
+
+    def testReturnsAreStrings(self):
+        addrinfos = socket.getaddrinfo(HOST, PORT)
+        for addrinfo in addrinfos:
+            family, socktype, proto, canonname, sockaddr = addrinfo
+            self.assert_(isinstance(canonname, str))
+            self.assert_(isinstance(sockaddr[0], str))
+
+    def testAI_PASSIVE(self):
+        IPV4_LOOPBACK = "127.0.0.1"
+        local_hostname = java.net.InetAddress.getLocalHost().getHostName()
+        local_ip_address = java.net.InetAddress.getLocalHost().getHostAddress()
+        for flags, host_param, expected_canonname, expected_sockaddr in [
+            # First passive flag
+        	(socket.AI_PASSIVE, None, "", socket.INADDR_ANY),
+        	(socket.AI_PASSIVE, "", "", local_ip_address),
+        	(socket.AI_PASSIVE, "localhost", "", IPV4_LOOPBACK),
+        	(socket.AI_PASSIVE, local_hostname, "", local_ip_address),
+        	# Now passive flag AND canonname flag
+        	(socket.AI_PASSIVE|socket.AI_CANONNAME, None, "127.0.0.1", "127.0.0.1"),
+        	(socket.AI_PASSIVE|socket.AI_CANONNAME, "", local_hostname, local_ip_address),
+        	# The following result seems peculiar to me, and may be to do with my local machine setup
+        	# Also may be caused by a security permission failure.
+        	# If you have problems with the following result, just comment it out.
+        	(socket.AI_PASSIVE|socket.AI_CANONNAME, "localhost", IPV4_LOOPBACK, IPV4_LOOPBACK),
+        	(socket.AI_PASSIVE|socket.AI_CANONNAME, local_hostname, local_hostname, local_ip_address),
+        ]:
+            addrinfos = socket.getaddrinfo(host_param, 0, socket.AF_INET, socket.SOCK_STREAM, 0, flags)
+            for family, socktype, proto, canonname, sockaddr in addrinfos:
+                self.failUnlessEqual(expected_canonname, canonname, "For hostname '%s' and flags %d, canonname '%s' != '%s'" % (host_param, flags, expected_canonname, canonname) )
+                self.failUnlessEqual(expected_sockaddr, sockaddr[0], "For hostname '%s' and flags %d, sockaddr '%s' != '%s'" % (host_param, flags, expected_sockaddr, sockaddr[0]) )
+
 class TestExceptions(unittest.TestCase):
 
     def testExceptionTree(self):
@@ -1640,6 +1669,7 @@ def test_main():
         TCPClientTimeoutTest,
         TestExceptions,
         TestInvalidUsage,
+        TestGetAddrInfo,
         TestTCPAddressParameters,
         TestUDPAddressParameters,
         UDPBindTest,

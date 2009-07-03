@@ -168,6 +168,13 @@ AF_INET = 2
 AF_INET6 = 23
 
 AI_PASSIVE=1
+AI_CANONNAME=2
+
+# For some reason, probably historical, SOCK_DGRAM and SOCK_STREAM are opposite values of what they are on cpython.
+# I.E. The following is the way they are on cpython
+# SOCK_STREAM    = 1
+# SOCK_DGRAM     = 2
+# At some point, we should probably switch them around, which *should* not affect anybody
 
 SOCK_DGRAM     = 1
 SOCK_STREAM    = 2
@@ -594,16 +601,23 @@ def getaddrinfo(host, port, family=AF_INET, socktype=None, proto=0, flags=None):
             AF_INET6:  lambda x: isinstance(x, java.net.Inet6Address),
             AF_UNSPEC: lambda x: isinstance(x, java.net.InetAddress),
         }[family])
-        # Cant see a way to support AI_PASSIVE right now.
-        # if flags and flags & AI_PASSIVE:
-        #     pass
+        if host == "":
+            host = java.net.InetAddress.getLocalHost().getHostName()
+        passive_mode = flags is not None and flags & AI_PASSIVE
+        canonname_mode = flags is not None and flags & AI_CANONNAME
         results = []
         for a in java.net.InetAddress.getAllByName(host):
             if len([f for f in filter_fns if f(a)]):
                 family = {java.net.Inet4Address: AF_INET, java.net.Inet6Address: AF_INET6}[a.getClass()]
+                if passive_mode and not canonname_mode:
+                    canonname = ""
+                else:
+                    canonname = asPyString(a.getCanonicalHostName())
+                if host is None and passive_mode and not canonname_mode:
+                    sockname = INADDR_ANY
+                else:
+                    sockname = asPyString(a.getHostAddress())
                 # TODO: Include flowinfo and scopeid in a 4-tuple for IPv6 addresses
-                canonname = asPyString(a.getCanonicalHostName())
-                sockname = asPyString(a.getHostAddress())
                 results.append((family, socktype, proto, canonname, (sockname, port)))
         return results
     except java.lang.Exception, jlx:
