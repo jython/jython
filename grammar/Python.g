@@ -620,7 +620,7 @@ print_stmt
       |
      -> ^(PRINT<Print>[$PRINT, null, new ArrayList<expr>(), true])
       )
-           ;
+      ;
 
 //not in CPython's Grammar file
 printlist returns [boolean newline, List elts]

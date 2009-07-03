@@ -255,78 +255,125 @@ small_stmt : expr_stmt
            | assert_stmt
            ;
 
-expr_stmt : testlist
-            ( augassign yield_expr
-            | augassign testlist
-            | assigns
-            )?
-          ;
+expr_stmt 
 
-assigns
-    : assign_testlist+
-    | assign_yield+
+    : ((testlist augassign) => testlist
+        ( (augassign yield_expr 
+            
+          )
+        | (augassign testlist
+            
+          )
+        )
+    | (testlist ASSIGN) => testlist
+        (
+        | ((ASSIGN testlist)+
+       
+          )
+        | ((ASSIGN yield_expr)+
+       
+          )
+        )
+    | testlist
+      
+    )
     ;
 
-assign_testlist
-       : ASSIGN testlist
-       ;
-
-assign_yield
-    : ASSIGN yield_expr
+//augassign: ('+=' | '-=' | '*=' | '/=' | '%=' | '&=' | '|=' | '^=' |
+//            '<<=' | '>>=' | '**=' | '//=')
+augassign 
+    : PLUSEQUAL 
+    | MINUSEQUAL 
+    | STAREQUAL 
+    | SLASHEQUAL 
+    | PERCENTEQUAL 
+    | AMPEREQUAL 
+    | VBAREQUAL 
+    | CIRCUMFLEXEQUAL 
+    | LEFTSHIFTEQUAL 
+    | RIGHTSHIFTEQUAL 
+    | DOUBLESTAREQUAL 
+    | DOUBLESLASHEQUAL 
     ;
 
-augassign : PLUSEQUAL
-          | MINUSEQUAL
-          | STAREQUAL
-          | SLASHEQUAL
-          | PERCENTEQUAL
-          | AMPEREQUAL
-          | VBAREQUAL
-          | CIRCUMFLEXEQUAL
-          | LEFTSHIFTEQUAL
-          | RIGHTSHIFTEQUAL
-          | DOUBLESTAREQUAL
-          | DOUBLESLASHEQUAL
-          ;
+//print_stmt: 'print' ( [ test (',' test)* [','] ] |
+//                      '>>' test [ (',' test)+ [','] ] )
+print_stmt
+    : PRINT 
+      (printlist
+     
+      | RIGHTSHIFT printlist
+     
+      |
+     
+      )
+      ;
 
-print_stmt : PRINT (printlist | RIGHTSHIFT printlist)?
-           ;
-
+//not in CPython's Grammar file
 printlist returns [boolean newline]
     : test (options {k=2;}: COMMA test)* (COMMA)?
     ;
 
-del_stmt : DELETE exprlist
-         ;
+//del_stmt: 'del' exprlist
+del_stmt
+    : DELETE exprlist
+   
+    ;
 
-pass_stmt : PASS
-          ;
+//pass_stmt: 'pass'
+pass_stmt
+    : PASS
+   
+    ;
 
-flow_stmt : break_stmt
-          | continue_stmt
-          | return_stmt
-          | raise_stmt
-          | yield_stmt
-          ;
+//flow_stmt: break_stmt | continue_stmt | return_stmt | raise_stmt | yield_stmt
+flow_stmt
+    : break_stmt
+    | continue_stmt
+    | return_stmt
+    | raise_stmt
+    | yield_stmt
+    ;
 
-break_stmt : BREAK
-           ;
+//break_stmt: 'break'
+break_stmt
+    : BREAK
+   
+    ;
 
-continue_stmt : CONTINUE
-              ;
+//continue_stmt: 'continue'
+continue_stmt
+    : CONTINUE 
+   
+    ;
 
-return_stmt : RETURN (testlist)?
-            ;
+//return_stmt: 'return' [testlist]
+return_stmt
+    : RETURN 
+      (testlist
+     
+      |
+     
+      )
+      ;
 
-yield_stmt : yield_expr
-           ;
+//yield_stmt: yield_expr
+yield_stmt
+    : yield_expr 
+    ;
 
-raise_stmt: RAISE (test (COMMA test (COMMA test)?)?)?
-          ;
+//raise_stmt: 'raise' [test [',' test [',' test]]]
+raise_stmt
+    : RAISE (test (COMMA test
+        (COMMA test)?)?)?
+   
+    ;
 
-import_stmt : import_name
-            | import_from
-            ;
+//import_stmt: import_name | import_from
+import_stmt
+    : import_name
+    | import_from
+    ;
 
 import_name : IMPORT dotted_as_names
             ;
