@@ -156,7 +156,7 @@ import java.math.BigInteger;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.ListIterator;
-} 
+}
 
 @members {
     private ErrorHandler errorHandler;
@@ -195,7 +195,7 @@ catch (RecognitionException re) {
 }
 }
 
-@lexer::header { 
+@lexer::header {
 package org.python.antlr;
 }
 
@@ -221,7 +221,7 @@ private ErrorHandler errorHandler;
         this.errorHandler = eh;
     }
 
-    /** 
+    /**
      *  Taken directly from antlr's Lexer.java -- needs to be re-integrated every time
      *  we upgrade from Antlr (need to consider a Lexer subclass, though the issue would
      *  remain).
@@ -401,7 +401,7 @@ decorator returns [expr etype]
 @after {
    $decorator.tree = $etype;
 }
-    : AT dotted_attr 
+    : AT dotted_attr
     ( LPAREN
       ( arglist
         {
@@ -443,8 +443,10 @@ funcdef
 
 //parameters: '(' [varargslist] ')'
 parameters returns [arguments args]
-    : LPAREN 
-      (varargslist {$args = $varargslist.args;}
+    : LPAREN
+      (varargslist
+          {$args = $varargslist.args;
+          }
       | { $args = new arguments($parameters.start, new ArrayList<expr>(), null, null, new ArrayList<expr>());
         }
       )
@@ -498,7 +500,7 @@ fpdef[expr_contextType ctype]
 @after {
     actions.checkAssign(actions.castExpr($fpdef.tree));
 }
-    : NAME 
+    : NAME
    -> ^(NAME<Name>[$NAME, $NAME.text, ctype])
     | (LPAREN fpdef[null] COMMA) => LPAREN fplist RPAREN
    -> ^(LPAREN<Tuple>[$fplist.start, actions.castExprs($fplist.etypes), expr_contextType.Store])
@@ -551,7 +553,7 @@ small_stmt : expr_stmt
 
 //expr_stmt: testlist (augassign (yield_expr|testlist) |
 //                     ('=' (yield_expr|testlist))*)
-expr_stmt 
+expr_stmt
 @init {
     stmt stype = null;
 }
@@ -561,7 +563,7 @@ expr_stmt
     }
 }
     : ((testlist[null] augassign) => lhs=testlist[expr_contextType.AugStore]
-        ( (aay=augassign y1=yield_expr 
+        ( (aay=augassign y1=yield_expr
             {
                 actions.checkAssign(actions.castExpr($lhs.tree));
                 stype = new AugAssign($lhs.tree, actions.castExpr($lhs.tree), $aay.op, actions.castExpr($y1.tree));
@@ -612,7 +614,7 @@ augassign returns [operatorType op]
 //print_stmt: 'print' ( [ test (',' test)* [','] ] |
 //                      '>>' test [ (',' test)+ [','] ] )
 print_stmt
-    : PRINT 
+    : PRINT
       (t1=printlist
      -> ^(PRINT<Print>[$PRINT, null, actions.castExprs($t1.elts), $t1.newline])
       | RIGHTSHIFT t2=printlist2
@@ -702,7 +704,7 @@ continue_stmt
 
 //return_stmt: 'return' [testlist]
 return_stmt
-    : RETURN 
+    : RETURN
       (testlist[expr_contextType.Load]
      -> ^(RETURN<Return>[$RETURN, actions.castExpr($testlist.tree)])
       |
@@ -737,7 +739,7 @@ import_name
 //import_from: ('from' ('.'* dotted_name | '.'+)
 //              'import' ('*' | '(' import_as_names ')' | import_as_names))
 import_from
-    : FROM (d+=DOT* dotted_name | d+=DOT+) IMPORT 
+    : FROM (d+=DOT* dotted_name | d+=DOT+) IMPORT
         (STAR
        -> ^(FROM<ImportFrom>[$FROM, actions.makeFromText($d, $dotted_name.name),
              actions.makeStarAlias($STAR), actions.makeLevel($d)])
@@ -1001,7 +1003,7 @@ or_test[expr_contextType ctype]
 and_test[expr_contextType ctype]
 @after {
     if ($and != null) {
-        $and_test.tree = actions.makeBoolOp($left.tree, boolopType.And, $right); 
+        $and_test.tree = actions.makeBoolOp($left.tree, boolopType.And, $right);
     }
 }
     : left=not_test[ctype]
@@ -1064,7 +1066,7 @@ scope {
 }
 @after {
     if ($op != null) {
-        $expr.tree = actions.makeBinOp($left.tree, operatorType.BitOr, $right); 
+        $expr.tree = actions.makeBinOp($left.tree, operatorType.BitOr, $right);
     }
 }
     : left=xor_expr
@@ -1080,7 +1082,7 @@ scope {
 xor_expr
 @after {
     if ($op != null) {
-        $xor_expr.tree = actions.makeBinOp($left.tree, operatorType.BitXor, $right); 
+        $xor_expr.tree = actions.makeBinOp($left.tree, operatorType.BitXor, $right);
     }
 }
     : left=and_expr
@@ -1095,7 +1097,7 @@ xor_expr
 and_expr
 @after {
     if ($op != null) {
-        $and_expr.tree = actions.makeBinOp($left.tree, operatorType.BitAnd, $right); 
+        $and_expr.tree = actions.makeBinOp($left.tree, operatorType.BitAnd, $right);
     }
 }
     : left=shift_expr
@@ -1113,7 +1115,7 @@ shift_expr
 }
 @after {
     if (!ops.isEmpty()) {
-        $shift_expr.tree = actions.makeBinOp($left.tree, ops, $right); 
+        $shift_expr.tree = actions.makeBinOp($left.tree, ops, $right);
     }
 }
     : left=arith_expr
@@ -1240,7 +1242,7 @@ power returns [expr etype]
 //       '`' testlist1 '`' |
 //       NAME | NUMBER | STRING+)
 atom
-    : LPAREN 
+    : LPAREN
       ( yield_expr
      -> yield_expr
       | testlist_gexp
@@ -1256,7 +1258,7 @@ atom
      -> ^(LBRACK<org.python.antlr.ast.List>[$LBRACK, new ArrayList<expr>(), $expr::ctype])
       )
       RBRACK
-    | LCURLY 
+    | LCURLY
        (dictmaker
       -> ^(LCURLY<Dict>[$LCURLY, actions.castExprs($dictmaker.keys),
               actions.castExprs($dictmaker.values)])
@@ -1276,7 +1278,7 @@ atom
     -> ^(FLOAT<Num>[$FLOAT, actions.makeFloat($FLOAT)])
      | COMPLEX
     -> ^(COMPLEX<Num>[$COMPLEX, actions.makeComplex($COMPLEX)])
-     | (S+=STRING)+ 
+     | (S+=STRING)+
     -> ^(STRING<Str>[actions.extractStringToken($S), actions.extractStrings($S, encoding)])
      ;
 
@@ -1289,7 +1291,7 @@ listmaker[Token lbrack]
 @after {
    $listmaker.tree = etype;
 }
-    : t+=test[$expr::ctype] 
+    : t+=test[$expr::ctype]
         (list_for[gens]
           {
               Collections.reverse(gens);
@@ -1301,7 +1303,7 @@ listmaker[Token lbrack]
               etype = new org.python.antlr.ast.List($lbrack, actions.castExprs($t), $expr::ctype);
           }
         ) (COMMA)?
-          ;
+    ;
 
 //testlist_gexp: test ( gen_for | (',' test)* [','] )
 testlist_gexp
@@ -1354,7 +1356,7 @@ lambdef
 
 //trailer: '(' [arglist] ')' | '[' subscriptlist ']' | '.' NAME
 trailer [Token begin, PythonTree tree]
-    : LPAREN 
+    : LPAREN
         (arglist
        -> ^(LPAREN<Call>[$begin, actions.castExpr($tree), actions.castExprs($arglist.args),
                actions.makeKeywords($arglist.keywords), $arglist.starargs, $arglist.kwargs])
@@ -1836,7 +1838,7 @@ NEWLINE
 
 WS  :    {startPos>0}?=> (' '|'\t'|'\u000C')+ {$channel=HIDDEN;}
     ;
-    
+
 /** Grab everything before a real symbol.  Then if newline, kill it
  *  as this is a blank line.  If whitespace followed by comment, kill it
  *  as it's a comment on a line by itself.
@@ -1906,7 +1908,7 @@ LEADING_WS
 
     Only match \n here if we didn't start on left edge; let NEWLINE return that.
     Kill if newlines if we live on a line by ourselves
-    
+
     Consume any leading whitespace if it starts on left edge.
  */
 COMMENT
