@@ -375,241 +375,562 @@ import_stmt
     | import_from
     ;
 
-import_name : IMPORT dotted_as_names
-            ;
+//import_name: 'import' dotted_as_names
+import_name
+    : IMPORT dotted_as_names
+   
+    ;
 
-import_from: FROM (DOT* dotted_name | DOT+) IMPORT
-              (STAR
-              | import_as_names
-              | LPAREN import_as_names RPAREN
-              )
-           ;
+//import_from: ('from' ('.'* dotted_name | '.'+)
+//              'import' ('*' | '(' import_as_names ')' | import_as_names))
+import_from
+    : FROM (DOT* dotted_name | DOT+) IMPORT 
+        (STAR
+       
+        | import_as_names
+       
+        | LPAREN import_as_names COMMA? RPAREN
+       
+        )
+    ;
 
-import_as_names : import_as_name (COMMA import_as_name)* (COMMA)?
-                ;
+//import_as_names: import_as_name (',' import_as_name)* [',']
+import_as_names 
+    : import_as_name (COMMA import_as_name)*
+    
+    ;
 
-import_as_name : NAME (AS NAME)?
-               ;
+//import_as_name: NAME [('as' | NAME) NAME]
+import_as_name 
 
-dotted_as_name : dotted_name (AS NAME)?
-               ;
+    : NAME (AS NAME)?
+    
+    ;
 
-dotted_as_names : dotted_as_name (COMMA dotted_as_name)*
-                ;
-dotted_name : NAME (DOT NAME)*
-            ;
+//XXX: when does CPython Grammar match "dotted_name NAME NAME"?
+//dotted_as_name: dotted_name [('as' | NAME) NAME]
+dotted_as_name 
 
-global_stmt : GLOBAL NAME (COMMA NAME)*
-            ;
 
-exec_stmt : EXEC expr (IN test (COMMA test)?)?
-          ;
+    : dotted_name (AS NAME)?
+    
+    ;
 
-assert_stmt : ASSERT test (COMMA test)?
-            ;
+//dotted_as_names: dotted_as_name (',' dotted_as_name)*
+dotted_as_names 
+    : dotted_as_name (COMMA dotted_as_name)*
+    
+    ;
 
-compound_stmt : if_stmt
-              | while_stmt
-              | for_stmt
-              | try_stmt
-              | with_stmt
-              | (decorators? DEF) => funcdef
-              | classdef
-              ;
+//dotted_name: NAME ('.' NAME)*
+dotted_name 
+    : NAME (DOT attr)* 
+    ;
 
-if_stmt: IF test COLON suite elif_clause*  (ORELSE COLON suite)?
-       ;
+//global_stmt: 'global' NAME (',' NAME)*
+global_stmt
+    : GLOBAL NAME (COMMA NAME)*
+   
+    ;
 
-elif_clause : ELIF test COLON suite
-            ;
+//exec_stmt: 'exec' expr ['in' test [',' test]]
+exec_stmt
 
-while_stmt : WHILE test COLON suite (ORELSE COLON suite)?
-           ;
+    : EXEC expr (IN test
+        (COMMA test)?)?
+      
+    ;
 
-for_stmt : FOR exprlist IN testlist COLON suite (ELSE COLON suite)?
-         ;
+//assert_stmt: 'assert' test [',' test]
+assert_stmt
+    : ASSERT test (COMMA test)?
+   
+    ;
 
-try_stmt : TRY COLON suite
-           ( except_clause+ (ELSE COLON suite)? (FINALLY COLON suite)?
-           | FINALLY COLON suite
-           )?
-         ;
+//compound_stmt: if_stmt | while_stmt | for_stmt | try_stmt | funcdef | classdef
+compound_stmt
+    : if_stmt
+    | while_stmt
+    | for_stmt
+    | try_stmt
+    | with_stmt
+    | (decorators? DEF) => funcdef
+    | classdef
+    ;
 
-with_stmt: WITH test (with_var)? COLON suite
-         ;
+//if_stmt: 'if' test ':' suite ('elif' test ':' suite)* ['else' ':' suite]
+if_stmt
+    : IF test COLON suite elif_clause?
+   
+    ;
 
-with_var: (AS | NAME) expr
-        ;
+//not in CPython's Grammar file
+elif_clause  
+    : else_clause 
+    | ELIF test COLON suite
+        (elif_clause
+       
+        |
+       
+        )
+    ;
 
-except_clause : EXCEPT (test (COMMA test)?)? COLON suite
-              ;
+//not in CPython's Grammar file
+else_clause 
+    : ORELSE COLON suite 
+    ;
 
-suite : simple_stmt
-      | NEWLINE (EOF
-                | (DEDENT)+ EOF
-                |INDENT (stmt)+ (DEDENT
-                                |EOF
-                                )
-                )
+//while_stmt: 'while' test ':' suite ['else' ':' suite]
+while_stmt
+
+    : WHILE test COLON suite (ORELSE COLON suite)?
+    
+    ;
+
+//for_stmt: 'for' exprlist 'in' testlist ':' suite ['else' ':' suite]
+for_stmt
+
+    : FOR exprlist IN testlist COLON suite
+        (ORELSE COLON suite)?
+      
+    ;
+
+//try_stmt: ('try' ':' suite
+//           ((except_clause ':' suite)+
+//           ['else' ':' suite]
+//           ['finally' ':' suite] |
+//           'finally' ':' suite))
+try_stmt
+
+    : TRY COLON suite
+      ( except_clause+ (ORELSE COLON suite)? (FINALLY COLON suite)?
+        
+      | FINALLY COLON suite
+        
+      )
       ;
 
-test: or_test
-    ( (IF or_test ELSE) => IF or_test ELSE test)?
+//with_stmt: 'with' test [ with_var ] ':' suite
+with_stmt
+
+    : WITH test (with_var)? COLON suite
+      
+    ;
+
+//with_var: ('as' | NAME) expr
+with_var 
+    : (AS | NAME) expr
+      
+    ;
+
+//except_clause: 'except' [test [',' test]]
+except_clause
+    : EXCEPT (test (COMMA test)?)? COLON suite
+   
+    ;
+
+//suite: simple_stmt | NEWLINE INDENT stmt+ DEDENT
+suite 
+
+    : simple_stmt
+      
+    | NEWLINE (EOF
+              | (DEDENT)+ EOF
+              |INDENT (stmt)+ (DEDENT
+                              |EOF
+                              )
+              )
+    ;
+
+//test: or_test ['if' or_test 'else' test] | lambdef
+test
+    :or_test
+      ( (IF or_test ORELSE) => IF or_test ORELSE test
+     
+      |
+     
+      )
     | lambdef
     ;
 
-or_test : and_test (OR and_test)*
-        ;
+//or_test: and_test ('or' and_test)*
+or_test
+    : and_test
+        ( (OR and_test
+          )+
+        |
+       
+        )
+    ;
 
-and_test : not_test (AND not_test)*
-         ;
+//and_test: not_test ('and' not_test)*
+and_test
+    : not_test
+        ( (AND not_test
+          )+
+        |
+       
+        )
+    ;
 
-not_test : NOT not_test
-         | comparison
-         ;
+//not_test: 'not' not_test | comparison
+not_test
+    : NOT not_test
+   
+    | comparison
+    ;
 
-comparison: expr (comp_op expr)*
-          ;
+//comparison: expr (comp_op expr)*
+comparison
+    : expr
+       ( ( comp_op expr 
+         )+
+       |
+      
+       )
+    ;
 
-comp_op : LESS
-        | GREATER
-        | EQUAL
-        | GREATEREQUAL
-        | LESSEQUAL
-        | ALT_NOTEQUAL
-        | NOTEQUAL
-        | IN
-        | NOT IN
-        | IS
-        | IS NOT
-        ;
+//comp_op: '<'|'>'|'=='|'>='|'<='|'<>'|'!='|'in'|'not' 'in'|'is'|'is' 'not'
+comp_op 
+    : LESS 
+    | GREATER 
+    | EQUAL 
+    | GREATEREQUAL 
+    | LESSEQUAL 
+    | ALT_NOTEQUAL 
+    | NOTEQUAL 
+    | IN 
+    | NOT IN 
+    | IS 
+    | IS NOT 
+    ;
 
-expr : xor_expr (VBAR xor_expr)*
-     ;
 
-xor_expr : and_expr (CIRCUMFLEX and_expr)*
-         ;
+//expr: xor_expr ('|' xor_expr)*
+expr
+    : xor_expr
+        ( (VBAR xor_expr
+          )+
+        |
+       
+        )
+    ;
 
-and_expr : shift_expr (AMPER shift_expr)*
-         ;
 
-shift_expr : arith_expr ((LEFTSHIFT|RIGHTSHIFT) arith_expr)*
-           ;
+//xor_expr: and_expr ('^' and_expr)*
+xor_expr
 
-arith_expr: term ((PLUS|MINUS) term)*
-          ;
+    : and_expr
+        ( (CIRCUMFLEX and_expr
+          )+
+        |
+       
+        )
+    ;
 
-term : factor ((STAR | SLASH | PERCENT | DOUBLESLASH ) factor)*
-     ;
+//and_expr: shift_expr ('&' shift_expr)*
+and_expr
 
-factor : PLUS factor
-       | MINUS factor
-       | TILDE factor
-       | power
-       | TRAILBACKSLASH
-       ;
+    : shift_expr
+        ( (AMPER shift_expr
+          )+
+        |
+       
+        )
+    ;
 
-power : atom (trailer)* (options {greedy=true;}:DOUBLESTAR factor)?
-      ;
+//shift_expr: arith_expr (('<<'|'>>') arith_expr)*
+shift_expr
 
-atom : LPAREN 
-       ( yield_expr
-       | testlist_gexp
-       )?
-       RPAREN
-     | LBRACK (listmaker)? RBRACK
-     | LCURLY (dictmaker)? RCURLY
+    : arith_expr
+        ( ( shift_op arith_expr 
+          )+
+        |
+       
+        )
+    ;
+
+shift_op 
+    : LEFTSHIFT 
+    | RIGHTSHIFT 
+    ;
+
+//arith_expr: term (('+'|'-') term)*
+arith_expr
+
+    : term
+        ( (arith_op term 
+          )+
+        |
+       
+        )
+    ;
+
+arith_op 
+    : PLUS 
+    | MINUS 
+    ;
+
+//term: factor (('*'|'/'|'%'|'//') factor)*
+term
+
+    : factor
+        ( (term_op factor 
+          )+
+        |
+       
+        )
+    ;
+
+term_op 
+    :STAR 
+    |SLASH 
+    |PERCENT 
+    |DOUBLESLASH 
+    ;
+
+//factor: ('+'|'-'|'~') factor | power
+factor 
+
+    : PLUS factor 
+    | MINUS factor 
+    | TILDE factor 
+    | power 
+    | TRAILBACKSLASH
+    ;
+
+//power: atom trailer* ['**' factor]
+power 
+
+    : atom (trailer)* (options {greedy=true;}:DOUBLESTAR factor)?
+      
+    ;
+
+//atom: ('(' [yield_expr|testlist_gexp] ')' |
+//       '[' [listmaker] ']' |
+//       '{' [dictmaker] '}' |
+//       '`' testlist1 '`' |
+//       NAME | NUMBER | STRING+)
+atom
+    : LPAREN 
+      ( yield_expr
+     
+      | testlist_gexp
+     
+      |
+     
+      )
+      RPAREN
+    | LBRACK
+      (listmaker
+     
+      |
+     
+      )
+      RBRACK
+    | LCURLY 
+       (dictmaker
+      
+       |
+      
+       )
+       RCURLY
      | BACKQUOTE testlist BACKQUOTE
+    
      | NAME
+    
      | INT
+    
      | LONGINT
+    
      | FLOAT
+    
      | COMPLEX
-     | (STRING)+
+    
+     | (STRING)+ 
+    
      | STRINGPART
      ;
 
-listmaker : test 
-            ( list_for
-            | (options {greedy=true;}:COMMA test)*
-            ) (COMMA)?
+//listmaker: test ( list_for | (',' test)* [','] )
+listmaker
+    : test 
+        (list_for
+          
+        | (options {greedy=true;}:COMMA test)*
+          
+        ) (COMMA)?
           ;
 
+//testlist_gexp: test ( gen_for | (',' test)* [','] )
 testlist_gexp
-    : test ( (options {k=2;}: COMMA test)* (COMMA)?
-           | gen_for
-           )
+
+    : test
+        ( ((options {k=2;}: COMMA test)* (COMMA)?
+         
+         
+          )
+        | (gen_for
            
+          )
+        )
     ;
 
-lambdef: LABMDA (varargslist)? COLON test
-       ;
+//lambdef: 'lambda' [varargslist] ':' test
+lambdef
 
-trailer : LPAREN (arglist)? RPAREN
-        | LBRACK subscriptlist RBRACK
-        | DOT NAME
-        ;
+    : LAMBDA (varargslist)? COLON test
+      
+    ;
 
-subscriptlist : subscript (options {greedy=true;}:COMMA subscript)* (COMMA)?
-              ;
+//trailer: '(' [arglist] ')' | '[' subscriptlist ']' | '.' NAME
+trailer 
+    : LPAREN 
+        (arglist
+       
+        |
+       
+        )
+      RPAREN
+    | LBRACK subscriptlist RBRACK
+   
+    | DOT attr
+   
+    ;
 
-subscript : DOT DOT DOT
-          | test (COLON (test)? (sliceop)?)?
-          | COLON (test)? (sliceop)?
-          ;
+//subscriptlist: subscript (',' subscript)* [',']
+subscriptlist
+    : subscript (options {greedy=true;}:COMMA subscript)* (COMMA)?
+      
+    ;
 
-sliceop : COLON (test)?
-        ;
+//subscript: '.' '.' '.' | test | [test] ':' [test] [sliceop]
+subscript 
 
-exprlist : expr (options {k=2;}: COMMA expr)* (COMMA)?
-         ;
+    : DOT DOT DOT
+   
+    | (test COLON)
+   => test (COLON (test)? (sliceop)?)?
+      
+    | (COLON)
+   => COLON (test)? (sliceop)?
+      
+    | test
+   
+    ;
 
+//sliceop: ':' [test]
+sliceop
+    : COLON
+     (test 
+     |
+     )
+    ;
+
+//exprlist: expr (',' expr)* [',']
+exprlist 
+    : (expr COMMA) => expr (options {k=2;}: COMMA expr)* (COMMA)?
+      
+    | expr
+      
+    ;
+
+//not in CPython's Grammar file
+//Needed as an exprlist that does not produce tuples for del_stmt.
+del_list 
+    : expr (options {k=2;}: COMMA expr)* (COMMA)?
+      
+    ;
+
+//testlist: test (',' test)* [',']
 testlist
-    : test (options {k=2;}: COMMA test)* (COMMA)?
+    : (test COMMA)
+   => test (options {k=2;}: COMMA test)* (COMMA)?
+   
+    | test
     ;
 
-dictmaker : test COLON test (options {k=2;}:COMMA test COLON test)* (COMMA)?
-          ;
+//dictmaker: test ':' test (',' test ':' test)* [',']
+dictmaker 
+    : test COLON test
+        (options {k=2;}:COMMA test COLON test)*
+        (COMMA)?
+      
+    ;
 
-classdef: decorators (CLASS NAME (LPAREN testlist? RPAREN)? COLON suite)?
-        | CLASS NAME (LPAREN testlist? RPAREN)? COLON suite
-        ;
+//classdef: 'class' NAME ['(' [testlist] ')'] ':' suite
+classdef
 
-arglist : argument (COMMA argument)*
-          ( COMMA
-            ( STAR test (COMMA DOUBLESTAR test)?
-            | DOUBLESTAR test
-            )?
+    : decorators? CLASS NAME (LPAREN testlist? RPAREN)? COLON suite
+      
+    ;
+
+//arglist: (argument ',')* (argument [',']| '*' test [',' '**' test] | '**' test)
+arglist 
+
+    : argument (COMMA argument)*
+          (COMMA
+              ( STAR test (COMMA DOUBLESTAR test)?
+              | DOUBLESTAR test
+              )?
           )?
-        |   STAR test (COMMA DOUBLESTAR test)?
-        |   DOUBLESTAR test
-        ;
+      
+    | STAR test (COMMA DOUBLESTAR test)?
+      
+    | DOUBLESTAR test
+      
+    ;
 
-argument : test ( (ASSIGN test) | gen_for)?
-         ;
+//argument: test [gen_for] | test '=' test  # Really [keyword '='] test
+argument 
+    : test
+        ((ASSIGN test)
+          
+        | gen_for
+          
+        | 
+        )
+    ;
 
-list_iter : list_for
-          | list_if
-          ;
+//list_iter: list_for | list_if
+list_iter 
+    : list_for
+    | list_if
+    ;
 
-list_for : FOR exprlist IN testlist (list_iter)?
-         ;
+//list_for: 'for' exprlist 'in' testlist_safe [list_iter]
+list_for 
+    : FOR exprlist IN testlist (list_iter)?
+      
+    ;
 
-list_if : IF test (list_iter)?
-        ;
+//list_if: 'if' test [list_iter]
+list_if
+    : IF test (list_iter)?
+    
+    ;
 
-gen_iter: gen_for
-        | gen_if
-        ;
+//gen_iter: gen_for | gen_if
+gen_iter 
+    : gen_for
+    | gen_if
+    ;
 
-gen_for: FOR exprlist IN or_test gen_iter?
-       ;
+//gen_for: 'for' exprlist 'in' or_test [gen_iter]
+gen_for 
+    : FOR exprlist IN or_test gen_iter?
+      
+    ;
 
-gen_if: IF test gen_iter?
-      ;
+//gen_if: 'if' old_test [gen_iter]
+gen_if
+    : IF test gen_iter?
+    
+    ;
 
-yield_expr : YIELD testlist?
-           ;
-//XXX:
-//testlist1: test (',' test)*
+//yield_expr: 'yield' [testlist]
+yield_expr
+    : YIELD testlist?
+   
+    ;
 
