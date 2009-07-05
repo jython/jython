@@ -14,12 +14,12 @@ public class PythonPartialTester {
         try {
             PythonTree result = null;
             CharStream input = new ANTLRFileStream(args[0]);
-            PythonLexer lexer = new BaseParser.PyLexer(input);
+            PythonPartialLexer lexer = new BaseParser.PyPartialLexer(input);
             CommonTokenStream tokens = new CommonTokenStream(lexer);
             //PythonTokenSource indentedSource = new PythonTokenSource(tokens);
             PythonTokenSource indentedSource = new PythonTokenSource(tokens, "<test>");
             tokens = new CommonTokenStream(indentedSource);
-            PythonPartial parser = new PythonPartial(tokens);
+            PythonPartialParser parser = new PythonPartialParser(tokens);
             parser.single_input();
             System.out.println("SUCCEED");
         } catch (ParseException e) {

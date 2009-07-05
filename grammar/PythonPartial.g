@@ -59,7 +59,7 @@
  *
  */
 
-parser grammar PythonPartial;
+grammar PythonPartial;
 
 options {
     tokenVocab=Python;
@@ -89,6 +89,78 @@ catch (RecognitionException e) {
     throw e;
 }
 }
+
+@lexer::header { 
+package org.python.antlr;
+}
+
+@lexer::members {
+/** Handles context-sensitive lexing of implicit line joining such as
+ *  the case where newline is ignored in cases like this:
+ *  a = [3,
+ *       4]
+ */
+
+//For use in partial parsing.
+public boolean eofWhileNested = false;
+public boolean partial = false;
+
+int implicitLineJoiningLevel = 0;
+int startPos=-1;
+
+//If you want to use another error recovery mechanism change this
+//and the same one in the parser.
+private ErrorHandler errorHandler;
+
+    public void setErrorHandler(ErrorHandler eh) {
+        this.errorHandler = eh;
+    }
+
+    /** 
+     *  Taken directly from antlr's Lexer.java -- needs to be re-integrated every time
+     *  we upgrade from Antlr (need to consider a Lexer subclass, though the issue would
+     *  remain).
+     */
+    public Token nextToken() {
+        while (true) {
+            state.token = null;
+            state.channel = Token.DEFAULT_CHANNEL;
+            state.tokenStartCharIndex = input.index();
+            state.tokenStartCharPositionInLine = input.getCharPositionInLine();
+            state.tokenStartLine = input.getLine();
+            state.text = null;
+            if ( input.LA(1)==CharStream.EOF ) {
+                if (implicitLineJoiningLevel > 0) {
+                    eofWhileNested = true;
+                }
+                return Token.EOF_TOKEN;
+            }
+            try {
+                mTokens();
+                if ( state.token==null ) {
+                    emit();
+                }
+                else if ( state.token==Token.SKIP_TOKEN ) {
+                    continue;
+                }
+                return state.token;
+            } catch (NoViableAltException nva) {
+                errorHandler.reportError(this, nva);
+                errorHandler.recover(this, nva); // throw out current char and try again
+            } catch (FailedPredicateException fp) {
+                //XXX: added this for failed STRINGPART -- the FailedPredicateException
+                //     hides a NoViableAltException.  This should be the only
+                //     FailedPredicateException that gets thrown by the lexer.
+                errorHandler.reportError(this, fp);
+                errorHandler.recover(this, fp); // throw out current char and try again
+            } catch (RecognitionException re) {
+                errorHandler.reportError(this, re);
+                // match() routine has already called recover()
+            }
+        }
+    }
+}
+
 
 //single_input: NEWLINE | simple_stmt | compound_stmt NEWLINE
 single_input
@@ -932,5 +1004,320 @@ gen_if
 yield_expr
     : YIELD testlist?
    
+    ;
+
+AS        : 'as' ;
+ASSERT    : 'assert' ;
+BREAK     : 'break' ;
+CLASS     : 'class' ;
+CONTINUE  : 'continue' ;
+DEF       : 'def' ;
+DELETE    : 'del' ;
+ELIF      : 'elif' ;
+EXCEPT    : 'except' ;
+EXEC      : 'exec' ;
+FINALLY   : 'finally' ;
+FROM      : 'from' ;
+FOR       : 'for' ;
+GLOBAL    : 'global' ;
+IF        : 'if' ;
+IMPORT    : 'import' ;
+IN        : 'in' ;
+IS        : 'is' ;
+LAMBDA    : 'lambda' ;
+ORELSE    : 'else' ;
+PASS      : 'pass'  ;
+PRINT     : 'print' ;
+RAISE     : 'raise' ;
+RETURN    : 'return' ;
+TRY       : 'try' ;
+WHILE     : 'while' ;
+WITH      : 'with' ;
+YIELD     : 'yield' ;
+
+LPAREN    : '(' {implicitLineJoiningLevel++;} ;
+
+RPAREN    : ')' {implicitLineJoiningLevel--;} ;
+
+LBRACK    : '[' {implicitLineJoiningLevel++;} ;
+
+RBRACK    : ']' {implicitLineJoiningLevel--;} ;
+
+COLON     : ':' ;
+
+COMMA    : ',' ;
+
+SEMI    : ';' ;
+
+PLUS    : '+' ;
+
+MINUS    : '-' ;
+
+STAR    : '*' ;
+
+SLASH    : '/' ;
+
+VBAR    : '|' ;
+
+AMPER    : '&' ;
+
+LESS    : '<' ;
+
+GREATER    : '>' ;
+
+ASSIGN    : '=' ;
+
+PERCENT    : '%' ;
+
+BACKQUOTE    : '`' ;
+
+LCURLY    : '{' {implicitLineJoiningLevel++;} ;
+
+RCURLY    : '}' {implicitLineJoiningLevel--;} ;
+
+CIRCUMFLEX    : '^' ;
+
+TILDE    : '~' ;
+
+EQUAL    : '==' ;
+
+NOTEQUAL    : '!=' ;
+
+ALT_NOTEQUAL: '<>' ;
+
+LESSEQUAL    : '<=' ;
+
+LEFTSHIFT    : '<<' ;
+
+GREATEREQUAL    : '>=' ;
+
+RIGHTSHIFT    : '>>' ;
+
+PLUSEQUAL    : '+=' ;
+
+MINUSEQUAL    : '-=' ;
+
+DOUBLESTAR    : '**' ;
+
+STAREQUAL    : '*=' ;
+
+DOUBLESLASH    : '//' ;
+
+SLASHEQUAL    : '/=' ;
+
+VBAREQUAL    : '|=' ;
+
+PERCENTEQUAL    : '%=' ;
+
+AMPEREQUAL    : '&=' ;
+
+CIRCUMFLEXEQUAL    : '^=' ;
+
+LEFTSHIFTEQUAL    : '<<=' ;
+
+RIGHTSHIFTEQUAL    : '>>=' ;
+
+DOUBLESTAREQUAL    : '**=' ;
+
+DOUBLESLASHEQUAL    : '//=' ;
+
+DOT : '.' ;
+
+AT : '@' ;
+
+AND : 'and' ;
+
+OR : 'or' ;
+
+NOT : 'not' ;
+
+FLOAT
+    :   '.' DIGITS (Exponent)?
+    |   DIGITS '.' Exponent
+    |   DIGITS ('.' (DIGITS (Exponent)?)? | Exponent)
+    ;
+
+LONGINT
+    :   INT ('l'|'L')
+    ;
+
+fragment
+Exponent
+    :    ('e' | 'E') ( '+' | '-' )? DIGITS
+    ;
+
+INT :   // Hex
+        '0' ('x' | 'X') ( '0' .. '9' | 'a' .. 'f' | 'A' .. 'F' )+
+    |   // Octal
+        '0'  ( '0' .. '7' )*
+    |   '1'..'9' DIGITS*
+    ;
+
+COMPLEX
+    :   DIGITS+ ('j'|'J')
+    |   FLOAT ('j'|'J')
+    ;
+
+fragment
+DIGITS : ( '0' .. '9' )+ ;
+
+NAME:    ( 'a' .. 'z' | 'A' .. 'Z' | '_')
+        ( 'a' .. 'z' | 'A' .. 'Z' | '_' | '0' .. '9' )*
+    ;
+
+/** Match various string types.  Note that greedy=false implies '''
+ *  should make us exit loop not continue.
+ */
+STRING
+    :   ('r'|'u'|'ur'|'R'|'U'|'UR'|'uR'|'Ur')?
+        (   '\'\'\'' (options {greedy=false;}:TRIAPOS)* '\'\'\''
+        |   '"""' (options {greedy=false;}:TRIQUOTE)* '"""'
+        |   '"' (ESC|~('\\'|'\n'|'"'))* '"'
+        |   '\'' (ESC|~('\\'|'\n'|'\''))* '\''
+        ) {
+           if (state.tokenStartLine != input.getLine()) {
+               state.tokenStartLine = input.getLine();
+               state.tokenStartCharPositionInLine = -2;
+           }
+        }
+    ;
+
+STRINGPART
+    : ('r'|'u'|'ur'|'R'|'U'|'UR'|'uR'|'Ur')?
+        (   '\'\'\'' ~('\'\'\'')*
+        |   '"""' ~('"""')*
+        )
+    ;
+
+/** the two '"'? cause a warning -- is there a way to avoid that? */
+fragment
+TRIQUOTE
+    : '"'? '"'? (ESC|~('\\'|'"'))+
+    ;
+
+/** the two '\''? cause a warning -- is there a way to avoid that? */
+fragment
+TRIAPOS
+    : '\''? '\''? (ESC|~('\\'|'\''))+
+    ;
+
+fragment
+ESC
+    :    '\\' .
+    ;
+
+/** Consume a newline and any whitespace at start of next line
+ *  unless the next line contains only white space, in that case
+ *  emit a newline.
+ */
+CONTINUED_LINE
+    :    '\\' ('\r')? '\n' (' '|'\t')*  { $channel=HIDDEN; }
+         ( c1=COMMENT
+         | nl=NEWLINE
+         |
+         ) {
+               if (input.LA(1) == -1) {
+                   emit(new CommonToken(TRAILBACKSLASH,"\\"));
+               }
+           }
+    ;
+
+/** Treat a sequence of blank lines as a single blank line.  If
+ *  nested within a (..), {..}, or [..], then ignore newlines.
+ *  If the first newline starts in column one, they are to be ignored.
+ *
+ *  Frank Wierzbicki added: Also ignore FORMFEEDS (\u000C).
+ */
+NEWLINE
+@init {
+    int newlines = 0;
+}
+    :   (('\u000C')?('\r')? '\n' {newlines++; } )+ {
+         if ( startPos==0 || implicitLineJoiningLevel>0 )
+            $channel=HIDDEN;
+        }
+    ;
+
+WS  :    {startPos>0}?=> (' '|'\t'|'\u000C')+ {$channel=HIDDEN;}
+    ;
+    
+/** Grab everything before a real symbol.  Then if newline, kill it
+ *  as this is a blank line.  If whitespace followed by comment, kill it
+ *  as it's a comment on a line by itself.
+ *
+ *  Ignore leading whitespace when nested in [..], (..), {..}.
+ */
+LEADING_WS
+@init {
+    int spaces = 0;
+    int newlines = 0;
+}
+    :   {startPos==0}?=>
+        (   {implicitLineJoiningLevel>0}? ( ' ' | '\t' )+ {$channel=HIDDEN;}
+        |    (     ' '  { spaces++; }
+             |    '\t' { spaces += 8; spaces -= (spaces \% 8); }
+             )+
+             ( ('\r')? '\n' {newlines++; }
+             )* {
+                   if (input.LA(1) != -1 || newlines == 0) {
+                       // make a string of n spaces where n is column number - 1
+                       char[] indentation = new char[spaces];
+                       for (int i=0; i<spaces; i++) {
+                           indentation[i] = ' ';
+                       }
+                       CommonToken c = new CommonToken(LEADING_WS,new String(indentation));
+                       c.setLine(input.getLine());
+                       c.setCharPositionInLine(input.getCharPositionInLine());
+                       c.setStartIndex(input.index() - 1);
+                       c.setStopIndex(input.index() - 1);
+                       emit(c);
+                       // kill trailing newline if present and then ignore
+                       if (newlines != 0) {
+                           if (state.token!=null) {
+                               state.token.setChannel(HIDDEN);
+                           } else {
+                               $channel=HIDDEN;
+                           }
+                       }
+                   } else {
+                       // make a string of n newlines
+                       char[] nls = new char[newlines];
+                       for (int i=0; i<newlines; i++) {
+                           nls[i] = '\n';
+                       }
+                       CommonToken c = new CommonToken(NEWLINE,new String(nls));
+                       c.setLine(input.getLine());
+                       c.setCharPositionInLine(input.getCharPositionInLine());
+                       c.setStartIndex(input.index() - 1);
+                       c.setStopIndex(input.index() - 1);
+                       emit(c);
+                   }
+                }
+        )
+    ;
+
+/** Comments not on line by themselves are turned into newlines.
+
+    b = a # end of line comment
+
+    or
+
+    a = [1, # weird
+         2]
+
+    This rule is invoked directly by nextToken when the comment is in
+    first column or when comment is on end of nonwhitespace line.
+
+    Only match \n here if we didn't start on left edge; let NEWLINE return that.
+    Kill if newlines if we live on a line by ourselves
+    
+    Consume any leading whitespace if it starts on left edge.
+ */
+COMMENT
+@init {
+    $channel=HIDDEN;
+}
+    :    {startPos==0}?=> (' '|'\t')* '#' (~'\n')* '\n'+
+    |    '#' (~'\n')* // let NEWLINE handle \n unless char pos==0 for '#'
     ;
 

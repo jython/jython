@@ -41,7 +41,18 @@ public class BaseParser {
             return super.nextToken();
         }
     }
-    
+
+    public static class PyPartialLexer extends PythonPartialLexer {
+        public PyPartialLexer(CharStream lexer) {
+            super(lexer);
+        }
+
+        public Token nextToken() {
+            startPos = getCharPositionInLine();
+            return super.nextToken();
+        }
+    }
+     
     private CharStream charStream(boolean single) {
         return charStream;
     }
