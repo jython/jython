@@ -1772,13 +1772,6 @@ STRING
         }
     ;
 
-STRINGPART
-    : {partial}?=> ('r'|'u'|'ur'|'R'|'U'|'UR'|'uR'|'Ur')?
-        (   '\'\'\'' ~('\'\'\'')*
-        |   '"""' ~('"""')*
-        )
-    ;
-
 /** the two '"'? cause a warning -- is there a way to avoid that? */
 fragment
 TRIQUOTE
@@ -1804,18 +1797,12 @@ CONTINUED_LINE
     :    '\\' ('\r')? '\n' (' '|'\t')*  { $channel=HIDDEN; }
          ( c1=COMMENT
          | nl=NEWLINE {
-                          if (!partial) {
-                              emit(new CommonToken(NEWLINE,nl.getText()));
-                          }
+                          emit(new CommonToken(NEWLINE,nl.getText()));
                       }
          |
          ) {
                if (input.LA(1) == -1) {
-                   if (partial) {
-                       emit(new CommonToken(TRAILBACKSLASH,"\\"));
-                   } else {
-                       throw new ParseException("unexpected character after line continuation character");
-                   }
+                   throw new ParseException("unexpected character after line continuation character");
                }
            }
     ;
