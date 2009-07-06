@@ -138,7 +138,7 @@ class CodeopTests(unittest.TestCase):
         ai("\n\ndef x():\n  pass")
 
         ai("a = 9+ \\")
-        #ai("a = 'a\\")
+        ai("a = 'a\\")
         ai("a = '''xy")
 
         ai("","eval")
@@ -147,7 +147,7 @@ class CodeopTests(unittest.TestCase):
         ai("(\n\n\n","eval")
         ai("(9+","eval")
         ai("9+ \\","eval")
-        #ai("lambda z: \\","eval")
+        ai("lambda z: \\","eval")
 
         #Did not work in Jython 2.5rc2 see first issue in
         # http://bugs.jython.org/issue1354
@@ -170,7 +170,7 @@ class CodeopTests(unittest.TestCase):
 
         #ai("a = 9+ \\\n")
         ai("a = 'a\\ ")
-        ai("a = 'a\\\n")
+        #ai("a = 'a\\\n")
 
         ai("a = 1","eval")
         #ai("a = (","eval")

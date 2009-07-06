@@ -718,7 +718,8 @@ atom
      | FLOAT
      | COMPLEX
      | (STRING)+
-     | STRINGPART
+     | TRISTRINGPART
+     | STRINGPART TRAILBACKSLASH
      ;
 
 //listmaker: test ( list_for | (',' test)* [','] )
@@ -1043,14 +1044,20 @@ STRING
         }
     ;
 
-STRINGPART
+TRISTRINGPART
     : ('r'|'u'|'ur'|'R'|'U'|'UR'|'uR'|'Ur')?
         (   '\'\'\'' ~('\'\'\'')*
         |   '"""' ~('"""')*
-        |   '"' (ESC|~('\\'|'\n'|'"'))* CONTINUED_LINE
+        )
+    ;
+
+STRINGPART
+    : ('r'|'u'|'ur'|'R'|'U'|'UR'|'uR'|'Ur')?
+        (   '"' (ESC|~('\\'|'\n'|'"'))* CONTINUED_LINE
         |   '\'' (ESC|~('\\'|'\n'|'\''))* CONTINUED_LINE
         )
     ;
+
 
 /** the two '"'? cause a warning -- is there a way to avoid that? */
 fragment
