@@ -274,15 +274,18 @@ single_input
 @after {
     $single_input.tree = mtype;
 }
-    : NEWLINE* EOF {
+    : NEWLINE* EOF
+      {
         mtype = new Interactive($single_input.start, new ArrayList<stmt>());
-    }
-    | simple_stmt NEWLINE* EOF {
+      }
+    | simple_stmt NEWLINE* EOF
+      {
         mtype = new Interactive($single_input.start, actions.castStmts($simple_stmt.stypes));
-    }
-    | compound_stmt NEWLINE+ EOF {
+      }
+    | compound_stmt NEWLINE+ EOF
+      {
         mtype = new Interactive($single_input.start, actions.castStmts($compound_stmt.tree));
-    }
+      }
     ;
     //XXX: this block is duplicated in three places, how to extract?
     catch [RecognitionException re] {
@@ -312,7 +315,8 @@ file_input
     $file_input.tree = mtype;
 }
     : (NEWLINE
-      | stmt {
+      | stmt
+      {
           if ($stmt.stypes != null)
                  {stypes.addAll($stmt.stypes);}
       }
@@ -337,9 +341,10 @@ eval_input
 @after {
     $eval_input.tree = mtype;
 }
-    : LEADING_WS? (NEWLINE)* testlist[expr_contextType.Load] (NEWLINE)* EOF {
+    : LEADING_WS? (NEWLINE)* testlist[expr_contextType.Load] (NEWLINE)* EOF
+      {
         mtype = new Expression($eval_input.start, actions.castExpr($testlist.tree));
-    }
+      }
     ;
     //XXX: this block is duplicated in three places, how to extract?
     catch [RecognitionException re] {
@@ -351,10 +356,17 @@ eval_input
 
 
 //not in CPython's Grammar file
-dotted_attr returns [expr etype]
+dotted_attr
+    returns [expr etype]
     : n1=NAME
-      ( (DOT n2+=NAME)+ { $etype = actions.makeDottedAttr($n1, $n2); }
-      | { $etype = new Name($n1, $n1.text, expr_contextType.Load); }
+      ( (DOT n2+=NAME)+
+        {
+            $etype = actions.makeDottedAttr($n1, $n2);
+        }
+      |
+        {
+            $etype = new Name($n1, $n1.text, expr_contextType.Load);
+        }
       )
     ;
 
@@ -397,7 +409,8 @@ attr
     ;
 
 //decorator: '@' dotted_name [ '(' [arglist] ')' ] NEWLINE
-decorator returns [expr etype]
+decorator
+    returns [expr etype]
 @after {
    $decorator.tree = $etype;
 }
@@ -408,19 +421,22 @@ decorator returns [expr etype]
             $etype = actions.makeCall($LPAREN, $dotted_attr.etype, $arglist.args, $arglist.keywords,
                      $arglist.starargs, $arglist.kwargs);
         }
-      | {
+      |
+        {
             $etype = actions.makeCall($LPAREN, $dotted_attr.etype);
         }
       )
       RPAREN
-    | {
+    |
+      {
           $etype = $dotted_attr.etype;
       }
     ) NEWLINE
     ;
 
 //decorators: decorator+
-decorators returns [List etypes]
+decorators
+    returns [List etypes]
     : d+=decorator+
       {
           $etypes = $d;
@@ -442,19 +458,24 @@ funcdef
     ;
 
 //parameters: '(' [varargslist] ')'
-parameters returns [arguments args]
+parameters
+    returns [arguments args]
     : LPAREN
       (varargslist
-          {$args = $varargslist.args;
-          }
-      | { $args = new arguments($parameters.start, new ArrayList<expr>(), null, null, new ArrayList<expr>());
+        {
+              $args = $varargslist.args;
+        }
+      |
+        {
+            $args = new arguments($parameters.start, new ArrayList<expr>(), null, null, new ArrayList<expr>());
         }
       )
       RPAREN
     ;
 
 //not in CPython's Grammar file
-defparameter[List defaults] returns [expr etype]
+defparameter
+    [List defaults] returns [expr etype]
 @after {
    $defparameter.tree = $etype;
 }
@@ -472,7 +493,8 @@ defparameter[List defaults] returns [expr etype]
 //varargslist: ((fpdef ['=' test] ',')*
 //              ('*' NAME [',' '**' NAME] | '**' NAME) |
 //              fpdef ['=' test] (',' fpdef ['=' test])* [','])
-varargslist returns [arguments args]
+varargslist
+    returns [arguments args]
 @init {
     List defaults = new ArrayList();
 }
@@ -509,7 +531,8 @@ fpdef[expr_contextType ctype]
     ;
 
 //fplist: fpdef (',' fpdef)* [',']
-fplist returns [List etypes]
+fplist
+    returns [List etypes]
     : f+=fpdef[expr_contextType.Store]
       (options {greedy=true;}:COMMA f+=fpdef[expr_contextType.Store])* (COMMA)?
       {
@@ -518,7 +541,8 @@ fplist returns [List etypes]
     ;
 
 //stmt: simple_stmt | compound_stmt
-stmt returns [List stypes]
+stmt
+    returns [List stypes]
     : simple_stmt
       {
           $stypes = $simple_stmt.stypes;
@@ -531,7 +555,8 @@ stmt returns [List stypes]
     ;
 
 //simple_stmt: small_stmt (';' small_stmt)* [';'] NEWLINE
-simple_stmt returns [List stypes]
+simple_stmt
+    returns [List stypes]
     : s+=small_stmt (options {greedy=true;}:SEMI s+=small_stmt)* (SEMI)? NEWLINE
       {
           $stypes = $s;
@@ -564,16 +589,16 @@ expr_stmt
 }
     : ((testlist[null] augassign) => lhs=testlist[expr_contextType.AugStore]
         ( (aay=augassign y1=yield_expr
-            {
-                actions.checkAssign(actions.castExpr($lhs.tree));
-                stype = new AugAssign($lhs.tree, actions.castExpr($lhs.tree), $aay.op, actions.castExpr($y1.tree));
-            }
+           {
+               actions.checkAssign(actions.castExpr($lhs.tree));
+               stype = new AugAssign($lhs.tree, actions.castExpr($lhs.tree), $aay.op, actions.castExpr($y1.tree));
+           }
           )
         | (aat=augassign rhs=testlist[expr_contextType.Load]
-            {
-                actions.checkAssign(actions.castExpr($lhs.tree));
-                stype = new AugAssign($lhs.tree, actions.castExpr($lhs.tree), $aat.op, actions.castExpr($rhs.tree));
-            }
+           {
+               actions.checkAssign(actions.castExpr($lhs.tree));
+               stype = new AugAssign($lhs.tree, actions.castExpr($lhs.tree), $aat.op, actions.castExpr($rhs.tree));
+           }
           )
         )
     | (testlist[null] ASSIGN) => lhs=testlist[expr_contextType.Store]
@@ -596,19 +621,32 @@ expr_stmt
 
 //augassign: ('+=' | '-=' | '*=' | '/=' | '%=' | '&=' | '|=' | '^=' |
 //            '<<=' | '>>=' | '**=' | '//=')
-augassign returns [operatorType op]
-    : PLUSEQUAL {$op = operatorType.Add;}
-    | MINUSEQUAL {$op = operatorType.Sub;}
-    | STAREQUAL {$op = operatorType.Mult;}
-    | SLASHEQUAL {$op = operatorType.Div;}
-    | PERCENTEQUAL {$op = operatorType.Mod;}
-    | AMPEREQUAL {$op = operatorType.BitAnd;}
-    | VBAREQUAL {$op = operatorType.BitOr;}
-    | CIRCUMFLEXEQUAL {$op = operatorType.BitXor;}
-    | LEFTSHIFTEQUAL {$op = operatorType.LShift;}
-    | RIGHTSHIFTEQUAL {$op = operatorType.RShift;}
-    | DOUBLESTAREQUAL {$op = operatorType.Pow;}
-    | DOUBLESLASHEQUAL {$op = operatorType.FloorDiv;}
+augassign
+    returns [operatorType op]
+    : PLUSEQUAL
+        {$op = operatorType.Add;}
+    | MINUSEQUAL
+        {$op = operatorType.Sub;}
+    | STAREQUAL
+        {$op = operatorType.Mult;}
+    | SLASHEQUAL
+        {$op = operatorType.Div;}
+    | PERCENTEQUAL
+        {$op = operatorType.Mod;}
+    | AMPEREQUAL
+        {$op = operatorType.BitAnd;}
+    | VBAREQUAL
+        {$op = operatorType.BitOr;}
+    | CIRCUMFLEXEQUAL
+        {$op = operatorType.BitXor;}
+    | LEFTSHIFTEQUAL
+        {$op = operatorType.LShift;}
+    | RIGHTSHIFTEQUAL
+        {$op = operatorType.RShift;}
+    | DOUBLESTAREQUAL
+        {$op = operatorType.Pow;}
+    | DOUBLESLASHEQUAL
+        {$op = operatorType.FloorDiv;}
     ;
 
 //print_stmt: 'print' ( [ test (',' test)* [','] ] |
@@ -625,10 +663,10 @@ print_stmt
       ;
 
 //not in CPython's Grammar file
-printlist returns [boolean newline, List elts]
+printlist
+    returns [boolean newline, List elts]
     : (test[null] COMMA) =>
-       t+=test[expr_contextType.Load] (options {k=2;}: COMMA t+=test[expr_contextType.Load])*
-         (trailcomma=COMMA)?
+       t+=test[expr_contextType.Load] (options {k=2;}: COMMA t+=test[expr_contextType.Load])* (trailcomma=COMMA)?
        {
            $elts=$t;
            if ($trailcomma == null) {
@@ -646,10 +684,10 @@ printlist returns [boolean newline, List elts]
 
 //XXX: would be nice if printlist and printlist2 could be merged.
 //not in CPython's Grammar file
-printlist2 returns [boolean newline, List elts]
+printlist2
+    returns [boolean newline, List elts]
     : (test[null] COMMA test[null]) =>
-       t+=test[expr_contextType.Load] (options {k=2;}: COMMA t+=test[expr_contextType.Load])*
-         (trailcomma=COMMA)?
+       t+=test[expr_contextType.Load] (options {k=2;}: COMMA t+=test[expr_contextType.Load])* (trailcomma=COMMA)?
        { $elts=$t;
            if ($trailcomma == null) {
                $newline = true;
@@ -694,11 +732,12 @@ break_stmt
 
 //continue_stmt: 'continue'
 continue_stmt
-    : CONTINUE {
-        if (!$suite.isEmpty() && $suite::continueIllegal) {
-            errorHandler.error("'continue' not supported inside 'finally' clause", new PythonTree($continue_stmt.start));
-        }
-    }
+    : CONTINUE
+      {
+          if (!$suite.isEmpty() && $suite::continueIllegal) {
+              errorHandler.error("'continue' not supported inside 'finally' clause", new PythonTree($continue_stmt.start));
+          }
+      }
    -> ^(CONTINUE<Continue>[$CONTINUE])
     ;
 
@@ -753,7 +792,8 @@ import_from
     ;
 
 //import_as_names: import_as_name (',' import_as_name)* [',']
-import_as_names returns [List<alias> atypes]
+import_as_names
+    returns [List<alias> atypes]
     : n+=import_as_name (COMMA! n+=import_as_name)*
     {
         $atypes = $n;
@@ -761,7 +801,8 @@ import_as_names returns [List<alias> atypes]
     ;
 
 //import_as_name: NAME [('as' | NAME) NAME]
-import_as_name returns [alias atype]
+import_as_name
+    returns [alias atype]
 @after {
     $import_as_name.tree = $atype;
 }
@@ -773,7 +814,8 @@ import_as_name returns [alias atype]
 
 //XXX: when does CPython Grammar match "dotted_name NAME NAME"?
 //dotted_as_name: dotted_name [('as' | NAME) NAME]
-dotted_as_name returns [alias atype]
+dotted_as_name
+    returns [alias atype]
 @after {
     $dotted_as_name.tree = $atype;
 }
@@ -785,7 +827,8 @@ dotted_as_name returns [alias atype]
     ;
 
 //dotted_as_names: dotted_as_name (',' dotted_as_name)*
-dotted_as_names returns [List<alias> atypes]
+dotted_as_names
+    returns [List<alias> atypes]
     : d+=dotted_as_name (COMMA! d+=dotted_as_name)*
     {
         $atypes = $d;
@@ -793,8 +836,10 @@ dotted_as_names returns [List<alias> atypes]
     ;
 
 //dotted_name: NAME ('.' NAME)*
-dotted_name returns [String name]
-    : NAME (DOT dn+=attr)* {
+dotted_name
+    returns [String name]
+    : NAME (DOT dn+=attr)*
+    {
         $name = actions.makeDottedText($NAME, $dn);
     }
     ;
@@ -813,8 +858,7 @@ exec_stmt
 @after {
    $exec_stmt.tree = stype;
 }
-    : EXEC expr[expr_contextType.Load] (IN t1=test[expr_contextType.Load]
-        (COMMA t2=test[expr_contextType.Load])?)?
+    : EXEC expr[expr_contextType.Load] (IN t1=test[expr_contextType.Load] (COMMA t2=test[expr_contextType.Load])?)?
       {
          stype = new Exec($EXEC, actions.castExpr($expr.tree), actions.castExpr($t1.tree), actions.castExpr($t2.tree));
       }
@@ -845,10 +889,12 @@ if_stmt
     ;
 
 //not in CPython's Grammar file
-elif_clause [Token iftest] returns [List stypes]
-    : else_clause {
-        $stypes = $else_clause.stypes;
-    }
+elif_clause
+    [Token iftest] returns [List stypes]
+    : else_clause
+      {
+          $stypes = $else_clause.stypes;
+      }
     | ELIF test[expr_contextType.Load] COLON suite[false]
         (e2=elif_clause[$iftest]
        -> ^(ELIF<If>[$iftest, actions.castExpr($test.tree), actions.castStmts($suite.stypes), actions.makeElse($e2.stypes, $e2.tree)])
@@ -858,10 +904,12 @@ elif_clause [Token iftest] returns [List stypes]
     ;
 
 //not in CPython's Grammar file
-else_clause returns [List stypes]
-    : ORELSE COLON elsesuite=suite[false] {
-        $stypes = $suite.stypes;
-    }
+else_clause
+    returns [List stypes]
+    : ORELSE COLON elsesuite=suite[false]
+      {
+          $stypes = $suite.stypes;
+      }
     ;
 
 //while_stmt: 'while' test ':' suite ['else' ':' suite]
@@ -873,9 +921,9 @@ while_stmt
    $while_stmt.tree = stype;
 }
     : WHILE test[expr_contextType.Load] COLON s1=suite[false] (ORELSE COLON s2=suite[false])?
-    {
-        stype = actions.makeWhile($WHILE, actions.castExpr($test.tree), $s1.stypes, $s2.stypes);
-    }
+      {
+          stype = actions.makeWhile($WHILE, actions.castExpr($test.tree), $s1.stypes, $s2.stypes);
+      }
     ;
 
 //for_stmt: 'for' exprlist 'in' testlist ':' suite ['else' ':' suite]
@@ -933,7 +981,8 @@ with_stmt
     ;
 
 //with_var: ('as' | NAME) expr
-with_var returns [expr etype]
+with_var
+    returns [expr etype]
     : (AS | NAME) expr[expr_contextType.Store]
       {
           $etype = actions.castExpr($expr.tree);
@@ -948,7 +997,8 @@ except_clause
     ;
 
 //suite: simple_stmt | NEWLINE INDENT stmt+ DEDENT
-suite[boolean fromFinally] returns [List stypes]
+suite
+    [boolean fromFinally] returns [List stypes]
 scope {
     boolean continueIllegal;
 }
@@ -965,11 +1015,12 @@ scope {
           $stypes = $simple_stmt.stypes;
       }
     | NEWLINE INDENT
-      (stmt {
-          if ($stmt.stypes != null) {
-              $stypes.addAll($stmt.stypes);
-          }
-      }
+      (stmt
+       {
+           if ($stmt.stypes != null) {
+               $stypes.addAll($stmt.stypes);
+           }
+       }
       )+ DEDENT
     ;
 
@@ -1033,7 +1084,10 @@ comparison[expr_contextType ctype]
     }
 }
     : left=expr[ctype]
-       ( ( comp_op right+=expr[ctype] {cmps.add($comp_op.op);}
+       ( ( comp_op right+=expr[ctype]
+           {
+               cmps.add($comp_op.op);
+           }
          )+
        |
       -> $left
@@ -1041,18 +1095,30 @@ comparison[expr_contextType ctype]
     ;
 
 //comp_op: '<'|'>'|'=='|'>='|'<='|'<>'|'!='|'in'|'not' 'in'|'is'|'is' 'not'
-comp_op returns [cmpopType op]
-    : LESS {$op = cmpopType.Lt;}
-    | GREATER {$op = cmpopType.Gt;}
-    | EQUAL {$op = cmpopType.Eq;}
-    | GREATEREQUAL {$op = cmpopType.GtE;}
-    | LESSEQUAL {$op = cmpopType.LtE;}
-    | ALT_NOTEQUAL {$op = cmpopType.NotEq;}
-    | NOTEQUAL {$op = cmpopType.NotEq;}
-    | IN {$op = cmpopType.In;}
-    | NOT IN {$op = cmpopType.NotIn;}
-    | IS {$op = cmpopType.Is;}
-    | IS NOT {$op = cmpopType.IsNot;}
+comp_op
+    returns [cmpopType op]
+    : LESS
+        {$op = cmpopType.Lt;}
+    | GREATER
+        {$op = cmpopType.Gt;}
+    | EQUAL
+        {$op = cmpopType.Eq;}
+    | GREATEREQUAL
+        {$op = cmpopType.GtE;}
+    | LESSEQUAL
+        {$op = cmpopType.LtE;}
+    | ALT_NOTEQUAL
+        {$op = cmpopType.NotEq;}
+    | NOTEQUAL
+        {$op = cmpopType.NotEq;}
+    | IN
+        {$op = cmpopType.In;}
+    | NOT IN
+        {$op = cmpopType.NotIn;}
+    | IS
+        {$op = cmpopType.Is;}
+    | IS NOT
+        {$op = cmpopType.IsNot;}
     ;
 
 
@@ -1119,16 +1185,22 @@ shift_expr
     }
 }
     : left=arith_expr
-        ( ( shift_op right+=arith_expr {ops.add($shift_op.op);}
+        ( ( shift_op right+=arith_expr
+            {
+                ops.add($shift_op.op);
+            }
           )+
         |
        -> $left
         )
     ;
 
-shift_op returns [operatorType op]
-    : LEFTSHIFT {$op = operatorType.LShift;}
-    | RIGHTSHIFT {$op = operatorType.RShift;}
+shift_op
+    returns [operatorType op]
+    : LEFTSHIFT
+        {$op = operatorType.LShift;}
+    | RIGHTSHIFT
+        {$op = operatorType.RShift;}
     ;
 
 //arith_expr: term (('+'|'-') term)*
@@ -1142,7 +1214,10 @@ arith_expr
     }
 }
     : left=term
-        ( (arith_op right+=term {ops.add($arith_op.op);}
+        ( (arith_op right+=term
+           {
+               ops.add($arith_op.op);
+           }
           )+
         |
        -> $left
@@ -1157,9 +1232,12 @@ arith_expr
         errorHandler.error("Internal Parser Error", badNode);
     }
 
-arith_op returns [operatorType op]
-    : PLUS {$op = operatorType.Add;}
-    | MINUS {$op = operatorType.Sub;}
+arith_op
+    returns [operatorType op]
+    : PLUS
+        {$op = operatorType.Add;}
+    | MINUS
+        {$op = operatorType.Sub;}
     ;
 
 //term: factor (('*'|'/'|'%'|'//') factor)*
@@ -1173,33 +1251,47 @@ term
     }
 }
     : left=factor
-        ( (term_op right+=factor {ops.add($term_op.op);}
+        ( (term_op right+=factor
+          {
+              ops.add($term_op.op);
+          }
           )+
         |
        -> $left
         )
     ;
 
-term_op returns [operatorType op]
-    :STAR {$op = operatorType.Mult;}
-    |SLASH {$op = operatorType.Div;}
-    |PERCENT {$op = operatorType.Mod;}
-    |DOUBLESLASH {$op = operatorType.FloorDiv;}
+term_op
+    returns [operatorType op]
+    :STAR
+        {$op = operatorType.Mult;}
+    |SLASH
+        {$op = operatorType.Div;}
+    |PERCENT
+        {$op = operatorType.Mod;}
+    |DOUBLESLASH
+        {$op = operatorType.FloorDiv;}
     ;
 
 //factor: ('+'|'-'|'~') factor | power
-factor returns [expr etype]
+factor
+    returns [expr etype]
 @after {
     $factor.tree = $etype;
 }
-    : PLUS p=factor {$etype = new UnaryOp($PLUS, unaryopType.UAdd, $p.etype);}
-    | MINUS m=factor {$etype = actions.negate($MINUS, $m.etype);}
-    | TILDE t=factor {$etype = new UnaryOp($TILDE, unaryopType.Invert, $t.etype);}
-    | power {$etype = actions.castExpr($power.tree);}
+    : PLUS p=factor
+        {$etype = new UnaryOp($PLUS, unaryopType.UAdd, $p.etype);}
+    | MINUS m=factor
+        {$etype = actions.negate($MINUS, $m.etype);}
+    | TILDE t=factor
+        {$etype = new UnaryOp($TILDE, unaryopType.Invert, $t.etype);}
+    | power
+        {$etype = actions.castExpr($power.tree);}
     ;
 
 //power: atom trailer* ['**' factor]
-power returns [expr etype]
+power
+    returns [expr etype]
 @after {
     $power.tree = $etype;
 }
@@ -1293,15 +1385,15 @@ listmaker[Token lbrack]
 }
     : t+=test[$expr::ctype]
         (list_for[gens]
-          {
-              Collections.reverse(gens);
-              List<comprehension> c = gens;
-              etype = new ListComp($listmaker.start, actions.castExpr($t.get(0)), c);
-          }
+         {
+             Collections.reverse(gens);
+             List<comprehension> c = gens;
+             etype = new ListComp($listmaker.start, actions.castExpr($t.get(0)), c);
+         }
         | (options {greedy=true;}:COMMA t+=test[$expr::ctype])*
-          {
-              etype = new org.python.antlr.ast.List($lbrack, actions.castExprs($t), $expr::ctype);
-          }
+           {
+               etype = new org.python.antlr.ast.List($lbrack, actions.castExprs($t), $expr::ctype);
+           }
         ) (COMMA)?
     ;
 
@@ -1385,7 +1477,8 @@ subscriptlist[Token begin]
     ;
 
 //subscript: '.' '.' '.' | test | [test] ':' [test] [sliceop]
-subscript returns [slice sltype]
+subscript
+    returns [slice sltype]
 @after {
     if ($sltype != null) {
         $subscript.tree = $sltype;
@@ -1410,17 +1503,20 @@ subscript returns [slice sltype]
 //sliceop: ':' [test]
 sliceop
     : COLON
-     (test[expr_contextType.Load] -> test
-     |-> ^(COLON<Name>[$COLON, "None", expr_contextType.Load])
+     (test[expr_contextType.Load]
+    -> test
+     |
+    -> ^(COLON<Name>[$COLON, "None", expr_contextType.Load])
      )
     ;
 
 //exprlist: expr (',' expr)* [',']
-exprlist[expr_contextType ctype] returns [expr etype]
+exprlist
+    [expr_contextType ctype] returns [expr etype]
     : (expr[null] COMMA) => e+=expr[ctype] (options {k=2;}: COMMA e+=expr[ctype])* (COMMA)?
-      {
-          $etype = new Tuple($exprlist.start, actions.castExprs($e), ctype);
-      }
+       {
+           $etype = new Tuple($exprlist.start, actions.castExprs($e), ctype);
+       }
     | expr[ctype]
       {
         $etype = actions.castExpr($expr.tree);
@@ -1429,7 +1525,8 @@ exprlist[expr_contextType ctype] returns [expr etype]
 
 //not in CPython's Grammar file
 //Needed as an exprlist that does not produce tuples for del_stmt.
-del_list returns [List<expr> etypes]
+del_list
+    returns [List<expr> etypes]
     : e+=expr[expr_contextType.Del] (options {k=2;}: COMMA e+=expr[expr_contextType.Del])* (COMMA)?
       {
           $etypes = actions.makeDeleteList($e);
@@ -1445,7 +1542,8 @@ testlist[expr_contextType ctype]
     ;
 
 //dictmaker: test ':' test (',' test ':' test)* [',']
-dictmaker returns [List keys, List values]
+dictmaker
+    returns [List keys, List values]
     : k+=test[expr_contextType.Load] COLON v+=test[expr_contextType.Load]
         (options {k=2;}:COMMA k+=test[expr_contextType.Load] COLON v+=test[expr_contextType.Load])*
         (COMMA)?
@@ -1477,7 +1575,8 @@ classdef
     ;
 
 //arglist: (argument ',')* (argument [',']| '*' test [',' '**' test] | '**' test)
-arglist returns [List args, List keywords, expr starargs, expr kwargs]
+arglist
+    returns [List args, List keywords, expr starargs, expr kwargs]
 @init {
     List arguments = new ArrayList();
     List kws = new ArrayList();
@@ -1510,7 +1609,8 @@ arglist returns [List args, List keywords, expr starargs, expr kwargs]
     ;
 
 //argument: test [gen_for] | test '=' test  # Really [keyword '='] test
-argument[List arguments, List kws, List gens, boolean first] returns [boolean genarg]
+argument
+    [List arguments, List kws, List gens, boolean first] returns [boolean genarg]
     : t1=test[expr_contextType.Load]
         ((ASSIGN t2=test[expr_contextType.Load])
           {
@@ -1529,7 +1629,8 @@ argument[List arguments, List kws, List gens, boolean first] returns [boolean ge
               List<comprehension> c = $gens;
               arguments.add(new GeneratorExp($t1.start, actions.castExpr($t1.tree), c));
           }
-        | {
+        |
+          {
               if (kws.size() > 0) {
                   errorHandler.error("non-keyword arg after keyword arg", $t1.tree);
               }
@@ -1559,9 +1660,9 @@ list_for [List gens]
 //list_if: 'if' test [list_iter]
 list_if[List gens, List ifs]
     : IF test[expr_contextType.Load] (list_iter[gens, ifs])?
-    {
+      {
         ifs.add(actions.castExpr($test.tree));
-    }
+      }
     ;
 
 //gen_iter: gen_for | gen_if
@@ -1585,9 +1686,9 @@ gen_for [List gens]
 //gen_if: 'if' old_test [gen_iter]
 gen_if[List gens, List ifs]
     : IF test[expr_contextType.Load] gen_iter[gens, ifs]?
-    {
+      {
         ifs.add(actions.castExpr($test.tree));
-    }
+      }
     ;
 
 //yield_expr: 'yield' [testlist]
