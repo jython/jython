@@ -5,6 +5,7 @@ Jython 2.5.1
     - Upgraded to ANTLR 3.1.3
     - [ 1859477 ] Dynamically loaded ServletFilters like PyServlet
   Bugs Fixed
+    - [ 1366 ] parsing of lamda expression fails
     - [ 1365 ] continuation lines fail in interactive interpreter
     - [ 1377 ] Event names shadowed by a field name on Java types leads to a NPE
     - [ 1381 ] Redundant declarations of interface implementation hides overriden methods
