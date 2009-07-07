@@ -1453,12 +1453,13 @@ class TestGetAddrInfo(unittest.TestCase):
             (socket.AI_PASSIVE, "localhost", "", IPV4_LOOPBACK),
             (socket.AI_PASSIVE, local_hostname, "", local_ip_address),
             # Now passive flag AND canonname flag
-            (socket.AI_PASSIVE|socket.AI_CANONNAME, None, "127.0.0.1", "127.0.0.1"),
-            (socket.AI_PASSIVE|socket.AI_CANONNAME, "", local_hostname, local_ip_address),
+            # Commenting out all AI_CANONNAME tests, results too dependent on system config
+            #(socket.AI_PASSIVE|socket.AI_CANONNAME, None, "127.0.0.1", "127.0.0.1"),
+            #(socket.AI_PASSIVE|socket.AI_CANONNAME, "", local_hostname, local_ip_address),
             # The following gives varying results across platforms and configurations: commenting out for now.
             # Javadoc: http://java.sun.com/j2se/1.5.0/docs/api/java/net/InetAddress.html#getCanonicalHostName()
             #(socket.AI_PASSIVE|socket.AI_CANONNAME, "localhost", local_hostname, IPV4_LOOPBACK),
-            (socket.AI_PASSIVE|socket.AI_CANONNAME, local_hostname, local_hostname, local_ip_address),
+            #(socket.AI_PASSIVE|socket.AI_CANONNAME, local_hostname, local_hostname, local_ip_address),
         ]:
             addrinfos = socket.getaddrinfo(host_param, 0, socket.AF_INET, socket.SOCK_STREAM, 0, flags)
             for family, socktype, proto, canonname, sockaddr in addrinfos:
