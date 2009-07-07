@@ -54,9 +54,11 @@ public class ModjyJServlet extends HttpServlet {
     protected HttpServlet modjyServlet;
 
     /**
-     * Read configuration 1. Both context and servlet parameters are included in the set, so that
+     * Read configuration 
+     * 1. Both context and servlet parameters are included in the set, so that
      * the definition of some parameters (e.g python.*) can be shared between multiple WSGI
-     * servlets. 2. servlet params take precedence over context parameters
+     * servlets. 
+     * 2. servlet params take precedence over context parameters
      */
     protected Properties readConfiguration() {
         Properties props = new Properties();
@@ -77,8 +79,11 @@ public class ModjyJServlet extends HttpServlet {
     }
 
     /**
-     * Initialise the modjy servlet. 1. Read the configuration 2. Initialise the jython runtime 3.
-     * Setup, in relation to the J2EE servlet environment 4. Create the jython-implemented servlet
+     * Initialise the modjy servlet. 
+     * 1. Read the configuration 
+     * 2. Initialise the jython runtime 
+     * 3. Setup, in relation to the J2EE servlet environment 
+     * 4. Create the jython-implemented servlet
      * 5. Initialise the jython-implemented servlet
      */
     @Override
@@ -110,9 +115,9 @@ public class ModjyJServlet extends HttpServlet {
     /**
      * Actually service the incoming request. Simply delegate to the jython servlet.
      *
-     * @param request
+     * @param req
      *            - The incoming HttpServletRequest
-     * @param response
+     * @param resp
      *            - The outgoing HttpServletResponse
      */
     @Override
@@ -131,8 +136,6 @@ public class ModjyJServlet extends HttpServlet {
      *            - The properties from which config options are found
      * @param systemState
      *            - The PySystemState corresponding to the interpreter servicing requests
-     * @returns A String giving the path to the modjy.jar file (which is used only for error
-     *          reporting)
      */
     protected void setupEnvironment(PythonInterpreter interp,
                                     Properties props,
@@ -144,7 +147,7 @@ public class ModjyJServlet extends HttpServlet {
      * Do all processing in relation to the lib-python subdirectory of WEB-INF
      *
      * @param interp
-     *            - The PythinInterpreter used to service requests
+     *            - The PythonInterpreter used to service requests
      * @param systemState
      *            - The PySystemState whose path should be updated
      */
@@ -167,6 +170,8 @@ public class ModjyJServlet extends HttpServlet {
     /**
      * Process an individual file .pth file in the lib-python directory
      *
+     * @param interp
+     *            - The PythonInterpreter which will execute imports
      * @param systemState
      *            - The PySystemState whose path should be updated
      * @param pythonLibPath

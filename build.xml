@@ -626,7 +626,7 @@ The readme text for the next release will be like:
                  source="${jdk.source.version}"
                  public="true"
                  breakiterator="yes"
-                 packagenames="org.python.core, org.python.util, com.ziclix.python.sql"
+                 packagenames="org.python.core, org.python.util, com.ziclix.python.sql, com.xhaus.modjy"
                  windowtitle="Jython API documentation"
                  bottom="&lt;a href='http://www.jython.org' target='_top'>Jython homepage&lt;/a>"
         >
