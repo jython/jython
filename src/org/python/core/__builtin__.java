@@ -465,10 +465,6 @@ public class __builtin__ {
         return x._divmod(y);
     }
 
-    public static PyEnumerate enumerate(PyObject seq) {
-        return new PyEnumerate(seq);
-    }
-
     private static boolean PyMapping_check(PyObject o, boolean rw) {
         return o == null ||
                o == Py.None ||
