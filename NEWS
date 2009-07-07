@@ -9,6 +9,7 @@ Jython 2.5.1
     - [ 1365 ] continuation lines fail in interactive interpreter
     - [ 1377 ] Event names shadowed by a field name on Java types leads to a NPE
     - [ 1381 ] Redundant declarations of interface implementation hides overriden methods
+    - [ 1189 ] MD5 hash is incorrectly calculated when string contains non-latin chars and using python md5 lib
 
 Jython 2.5.0
   The same as rc4.

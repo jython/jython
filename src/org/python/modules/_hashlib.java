@@ -7,10 +7,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.python.core.ClassDictInit;
+import org.python.core.Py;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyType;
-import org.python.core.Py;
+import org.python.core.PyUnicode;
 import org.python.core.util.StringUtil;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
@@ -105,7 +106,7 @@ public class _hashlib implements ClassDictInit {
 
         public static final PyType TYPE = PyType.fromClass(Hash.class);
 
-        /** The hash algorithm name */
+        /** The hash algorithm name. */
         @ExposedGet
         public String name;
 
@@ -121,14 +122,6 @@ public class _hashlib implements ClassDictInit {
                 put("sha-512", 128);
             }};
 
-        private static final MessageDigest getDigest(String name) {
-            try {
-                return MessageDigest.getInstance(name);
-            } catch (NoSuchAlgorithmException nsae) {
-                throw Py.ValueError("unsupported hash type");
-            }
-        }
-
         public Hash(String name) {
             this(name, getDigest(name));
         }
@@ -137,6 +130,14 @@ public class _hashlib implements ClassDictInit {
             super(TYPE);
             this.name = name;
             this.digest = digest;
+        }
+
+        private static final MessageDigest getDigest(String name) {
+            try {
+                return MessageDigest.getInstance(name);
+            } catch (NoSuchAlgorithmException nsae) {
+                throw Py.ValueError("unsupported hash type");
+            }
         }
 
         /**
@@ -170,6 +171,9 @@ public class _hashlib implements ClassDictInit {
             if (!(obj instanceof PyString)) {
                 throw Py.TypeError("update() argument 1 must be string or read-only buffer, not "
                                    + obj.getType().fastGetName());
+            }
+            if (obj instanceof PyUnicode) {
+                obj = obj.__str__();
             }
             byte[] bytes = ((PyString)obj).toBytes();
             digest.update(bytes);
@@ -232,6 +236,7 @@ public class _hashlib implements ClassDictInit {
             return Py.newInteger(size);
         }
 
+        @Override
         public String toString() {
             return String.format("<%s HASH object @ %s>", name, Py.idstr(this));
         }
