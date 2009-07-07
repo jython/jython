@@ -307,6 +307,8 @@ small_stmt : expr_stmt
            | assert_stmt
            ;
 
+//expr_stmt: testlist (augassign (yield_expr|testlist) |
+//                     ('=' (yield_expr|testlist))*)
 expr_stmt
     : ((testlist augassign) => testlist
         ( (augassign yield_expr
@@ -353,8 +355,11 @@ print_stmt
       ;
 
 //not in CPython's Grammar file
-printlist returns [boolean newline]
-    : test (options {k=2;}: COMMA test)* (COMMA)?
+printlist
+    : (test COMMA) =>
+       test (options {k=2;}: COMMA test)*
+         (COMMA)?
+    | test
     ;
 
 //del_stmt: 'del' exprlist
@@ -392,7 +397,7 @@ return_stmt
       (testlist
       |
       )
-      ;
+    ;
 
 //yield_stmt: yield_expr
 yield_stmt
@@ -459,8 +464,7 @@ global_stmt
 
 //exec_stmt: 'exec' expr ['in' test [',' test]]
 exec_stmt
-    : EXEC expr (IN test
-        (COMMA test)?)?
+    : EXEC expr (IN test (COMMA test)?)?
     ;
 
 //assert_stmt: 'assert' test [',' test]
@@ -1082,7 +1086,7 @@ ESC
  */
 CONTINUED_LINE
     :    '\\' ('\r')? '\n' (' '|'\t')*  { $channel=HIDDEN; }
-         ( c1=COMMENT
+         ( COMMENT
          | nl=NEWLINE
          |
          ) {

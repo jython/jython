@@ -80,11 +80,6 @@ package org.python.antlr;
 }
 
 @rulecatch {
-catch (RecognitionException re) {
-    errorHandler.reportError(this, re);
-    errorHandler.recover(this, input,re);
-    retval.tree = (PythonTree)adaptor.errorNode(input, retval.start, input.LT(-1), re);
-}
 }
 
 @lexer::header {
@@ -739,7 +734,7 @@ listmaker
         (list_for
         | (options {greedy=true;}:COMMA test)*
         ) (COMMA)?
-          ;
+    ;
 
 //testlist_gexp: test ( gen_for | (',' test)* [','] )
 testlist_gexp

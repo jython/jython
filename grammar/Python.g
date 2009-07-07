@@ -320,9 +320,10 @@ file_input
           if ($stmt.stypes != null)
                  {stypes.addAll($stmt.stypes);}
       }
-      )* EOF {
-        mtype = new Module($file_input.start, actions.castStmts(stypes));
-    }
+      )* EOF
+         {
+             mtype = new Module($file_input.start, actions.castStmts(stypes));
+         }
     ;
     //XXX: this block is duplicated in three places, how to extract?
     catch [RecognitionException re] {
@@ -331,7 +332,6 @@ file_input
         PythonTree badNode = (PythonTree)adaptor.errorNode(input, retval.start, input.LT(-1), re);
         retval.tree = new ErrorMod(badNode);
     }
-
 
 //eval_input: testlist NEWLINE* ENDMARKER
 eval_input
@@ -753,7 +753,8 @@ return_stmt
 
 //yield_stmt: yield_expr
 yield_stmt
-    : yield_expr -> ^(YIELD<Expr>[$yield_expr.start, actions.castExpr($yield_expr.tree)])
+    : yield_expr
+   -> ^(YIELD<Expr>[$yield_expr.start, actions.castExpr($yield_expr.tree)])
     ;
 
 //raise_stmt: 'raise' [test [',' test [',' test]]]
@@ -1896,10 +1897,11 @@ ESC
  */
 CONTINUED_LINE
     :    '\\' ('\r')? '\n' (' '|'\t')*  { $channel=HIDDEN; }
-         ( c1=COMMENT
-         | nl=NEWLINE {
-                          emit(new CommonToken(NEWLINE,nl.getText()));
-                      }
+         ( COMMENT
+         | nl=NEWLINE
+           {
+               emit(new CommonToken(NEWLINE,nl.getText()));
+           }
          |
          ) {
                if (input.LA(1) == -1) {
