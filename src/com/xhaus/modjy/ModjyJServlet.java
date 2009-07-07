@@ -189,7 +189,10 @@ public class ModjyJServlet extends HttpServlet {
                 if (line.startsWith("#"))
                     continue;
                 if (line.startsWith("import"))
+                {
                     interp.exec(line);
+                    continue;
+                }
                 File archiveFile = new File(pythonLibPath, line);
                 String archiveRealpath = archiveFile.getAbsolutePath();
                 systemState.path.append(new PyString(archiveRealpath));
