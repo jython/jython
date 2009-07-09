@@ -218,6 +218,7 @@ _jthread_to_pythread = Collections.synchronizedMap(WeakHashMap())
 
 class Thread(JavaThread):
     def __init__(self, group=None, target=None, name=None, args=None, kwargs=None):
+        assert group is None, "group argument must be None for now"
         _thread = self._create_thread()
         JavaThread.__init__(self, _thread)
         if args is None:
