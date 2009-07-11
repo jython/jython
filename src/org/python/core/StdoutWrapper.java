@@ -41,6 +41,7 @@ public class StdoutWrapper extends OutputStream {
         return obj;
     }
 
+    @Override
     public void flush() {
         PyObject obj = myFile();
         if (obj instanceof PyFile) {
@@ -64,10 +65,12 @@ public class StdoutWrapper extends OutputStream {
         }
     }
 
+    @Override
     public void write(int i) {
         write(new String(new char[] { (char) i }));
     }
 
+    @Override
     public void write(byte[] data, int off, int len) {
         write(StringUtil.fromBytes(data, off, len));
     }
@@ -112,10 +115,10 @@ public class StdoutWrapper extends OutputStream {
             } else {
                 s = o.__str__().toString();
             }
-
-            int len = s.length();
             file.write(s);
+
             if (o instanceof PyString) {
+                int len = s.length();
                 if (len == 0 || !Character.isWhitespace(s.charAt(len - 1))
                     || s.charAt(len - 1) == ' ') {
                     file.softspace = space;
@@ -123,6 +126,7 @@ public class StdoutWrapper extends OutputStream {
             } else {
                 file.softspace = space;
             }
+
             if (newline) {
                 file.write("\n");
                 file.softspace = false;
@@ -143,9 +147,10 @@ public class StdoutWrapper extends OutputStream {
             } else {
                 s = o.toString();
             }
-            int len = s.length();
             file.write(s);
+
             if (o instanceof PyString) {
+                int len = s.length();
                 if (len == 0 || !Character.isWhitespace(s.charAt(len - 1))
                     || s.charAt(len - 1) == ' ') {
                     file.softspace = space;
@@ -153,6 +158,7 @@ public class StdoutWrapper extends OutputStream {
             } else {
                 file.softspace = space;
             }
+
             if (newline) {
                 file.write("\n");
                 file.softspace = false;
@@ -164,11 +170,15 @@ public class StdoutWrapper extends OutputStream {
                 obj.invoke("write", Py.Space);
                 obj.__setattr__("softspace", Py.Zero);
             }
-            PyString string = o.__str__();
-            String s = o.toString();
-            int len = s.length();
-            obj.invoke("write", string);
+
+            if (!(o instanceof PyUnicode)) {
+                o = o.__str__();
+            }
+            obj.invoke("write", o);
+
             if (o instanceof PyString) {
+                String s = o.toString();
+                int len = s.length();
                 if (len == 0 || !Character.isWhitespace(s.charAt(len - 1))
                     || s.charAt(len - 1) == ' ') {
                     obj.__setattr__("softspace", space ? Py.One : Py.Zero);
@@ -176,6 +186,7 @@ public class StdoutWrapper extends OutputStream {
             } else {
                 obj.__setattr__("softspace", space ? Py.One : Py.Zero);
             }
+
             if (newline) {
                 obj.invoke("write", Py.Newline);
                 obj.__setattr__("softspace", Py.Zero);

@@ -6,6 +6,7 @@ Made for Jython.
 import re
 import sys
 import unittest
+from StringIO import StringIO
 from test import test_support
 
 class UnicodeTestCase(unittest.TestCase):
@@ -156,9 +157,25 @@ class UnicodeFormatTestCase(unittest.TestCase):
         self.assertEquals(u"\u00e7%s" % "foo", u"\u00e7foo")
 
 
+class UnicodeStdIOTestCase(unittest.TestCase):
+    
+    def setUp(self):
+        self.stdout = sys.stdout
+
+    def tearDown(self):
+        sys.stdout = self.stdout
+
+    def test_intercepted_stdout(self):
+        msg = u'Circle is 360\u00B0'
+        sys.stdout = StringIO()
+        print msg,
+        self.assertEqual(sys.stdout.getvalue(), msg)
+
+
 def test_main():
     test_support.run_unittest(UnicodeTestCase,
-                              UnicodeFormatTestCase)
+                              UnicodeFormatTestCase,
+                              UnicodeStdIOTestCase)
 
 
 if __name__ == "__main__":
