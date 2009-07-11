@@ -1,7 +1,6 @@
 package org.python.modules._collections;
 
 import org.python.core.ClassDictInit;
-import org.python.core.PyType;
 import org.python.core.PyObject;
 
 /**

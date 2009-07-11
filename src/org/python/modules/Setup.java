@@ -55,6 +55,7 @@ public class Setup
         "_csv:org.python.modules._csv._csv",
         "_systemrestart",
         "_ast:org.python.antlr.ast.AstModule",
-        "_marshal"
+        "_marshal",
+        "_threading:org.python.modules._threading._threading"
     };
 }

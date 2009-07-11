@@ -72,6 +72,8 @@ import org.python.antlr.base.expr;
 import org.python.antlr.base.mod;
 import org.python.antlr.base.stmt;
 import org.python.core.CompilerFlags;
+import org.python.core.ContextGuard;
+import org.python.core.ContextManager;
 import org.python.core.PyComplex;
 import org.python.core.PyFloat;
 import org.python.core.PyInteger;
@@ -84,6 +86,7 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.Method;
+
 
 public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //, PythonGrammarTreeConstants
 {
@@ -324,10 +327,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
 
     public int makeArray(java.util.List<? extends PythonTree> nodes) throws Exception {
         // XXX: This should produce an array on the stack (if possible) instead of a local
-        // the caller is responsible for freeing. All callers are incorrectly freeing the
-        // array reference -- they do call freeLocal, but without nullifying the reference
-        // in the local. This is causing short term memory leaks
-        // (e.g. test_weakref.test_getweakrefs)
+        // the caller is responsible for freeing.
         int n;
 
         if (nodes == null)
@@ -2276,24 +2276,24 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         final Label label_catch = new Label();
         final Label label_end = new Label();
 
-        final Method getattr = Method.getMethod("org.python.core.PyObject __getattr__ (String)");
-        final Method call = Method.getMethod("org.python.core.PyObject __call__ (org.python.core.ThreadState)");
-        final Method call3 = Method.getMethod("org.python.core.PyObject __call__ (org.python.core.ThreadState,org.python.core.PyObject,org.python.core.PyObject,org.python.core.PyObject)");
+        final Method contextGuard_getManager = Method.getMethod("org.python.core.ContextManager getManager (org.python.core.PyObject)");
+        final Method __enter__ = Method.getMethod("org.python.core.PyObject __enter__ (org.python.core.ThreadState)");
+        final Method __exit__ = Method.getMethod("boolean __exit__ (org.python.core.ThreadState,org.python.core.PyObject,org.python.core.PyObject,org.python.core.PyObject)");
 
         // mgr = (EXPR)
         visit(node.getInternalContext_expr());
+
+        // wrap the manager with the ContextGuard (or get it directly if it supports the ContextManager interface)
+        code.invokestatic(Type.getType(ContextGuard.class).getInternalName(), contextGuard_getManager.getName(), contextGuard_getManager.getDescriptor());
         code.dup();
         
-        code.ldc("__exit__");
-        code.invokevirtual(Type.getType(PyObject.class).getInternalName(), getattr.getName(), getattr.getDescriptor());
-        final int __exit__ = code.getLocal("org/python/core/PyObject");
-        code.astore(__exit__);
+
+        final int mgr_tmp = code.getLocal(Type.getType(ContextManager.class).getInternalName());
+        code.astore(mgr_tmp);
 
         // value = mgr.__enter__()
-        code.ldc("__enter__");
-        code.invokevirtual(Type.getType(PyObject.class).getInternalName(), getattr.getName(), getattr.getDescriptor());
         loadThreadState();
-        code.invokevirtual(Type.getType(PyObject.class).getInternalName(), call.getName(), call.getDescriptor());
+        code.invokeinterface(Type.getType(ContextManager.class).getInternalName(), __enter__.getName(), __enter__.getDescriptor());
         int value_tmp = code.getLocal("org/python/core/PyObject");
         code.astore(value_tmp);
 
@@ -2311,13 +2311,12 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
 
             @Override
             public void finalBody(CodeCompiler compiler) throws Exception {
-                compiler.code.aload(__exit__);
+                compiler.code.aload(mgr_tmp);
                 loadThreadState();
                 compiler.getNone();
                 compiler.code.dup();
                 compiler.code.dup();
-                compiler.code.invokevirtual(Type.getType(PyObject.class).getInternalName(),
-                                            call3.getName(), call3.getDescriptor());
+                compiler.code.invokeinterface(Type.getType(ContextManager.class).getInternalName(), __exit__.getName(), __exit__.getDescriptor());
                 compiler.code.pop();
             }
         };
@@ -2364,7 +2363,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         // # The exceptional case is handled here
         // exc = False # implicit
         // if not exit(*sys.exc_info()):
-        code.aload(__exit__);
+        code.aload(mgr_tmp);
         loadThreadState();
         code.aload(ts_tmp);
         code.getfield("org/python/core/PyException", "type", $pyObj);
@@ -2374,8 +2373,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         code.freeLocal(ts_tmp);
         code.getfield("org/python/core/PyException", "traceback", "Lorg/python/core/PyTraceback;");
         code.checkcast("org/python/core/PyObject");
-        code.invokevirtual(Type.getType(PyObject.class).getInternalName(), call3.getName(), call3.getDescriptor());
-        code.invokevirtual("org/python/core/PyObject", "__nonzero__", "()Z");
+        code.invokeinterface(Type.getType(ContextManager.class).getInternalName(), __exit__.getName(), __exit__.getDescriptor());
         code.ifne(label_end);
         //    raise
         // # The exception is swallowed if exit() returns true
@@ -2384,7 +2382,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         code.athrow();
 
         code.label(label_end);
-        code.freeLocal(__exit__);
+        code.freeLocal(mgr_tmp);
 
         handler.addExceptionHandlers(label_catch);
         return null;
