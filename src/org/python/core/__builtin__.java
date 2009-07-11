@@ -21,6 +21,7 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
         super(name, index, minargs, maxargs);
     }
 
+    @Override
     public PyObject __call__() {
         switch (this.index) {
             case 4:
@@ -42,6 +43,7 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
         }
     }
 
+    @Override
     public PyObject __call__(PyObject arg1) {
         switch (this.index) {
             case 0:
@@ -121,6 +123,7 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
         }
     }
 
+    @Override
     public PyObject __call__(PyObject arg1, PyObject arg2) {
         switch (this.index) {
             case 2:
@@ -176,6 +179,7 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
         }
     }
 
+    @Override
     public PyObject __call__(PyObject arg1, PyObject arg2, PyObject arg3) {
         switch (this.index) {
             case 2:
@@ -244,6 +248,7 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
         }
     }
 
+    @Override
     public PyObject __call__(PyObject arg1, PyObject arg2, PyObject arg3, PyObject arg4) {
         switch (this.index) {
             case 44:
@@ -261,6 +266,7 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
         }
     }
 
+    @Override
     public PyObject fancyCall(PyObject[] args) {
         switch (this.index) {
             case 29:
@@ -272,6 +278,7 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
         }
     }
 
+    @Override
     public PyObject getModule() {
         return module;
     }
@@ -574,24 +581,20 @@ public class __builtin__ {
         }
 
         StringBuilder builder = new StringBuilder();
-        boolean ok;
         for (PyObject item : seq.asIterable()) {
-            ok = false;
             if (func == Py.None) {
-                if (item.__nonzero__()) {
-                    ok = true;
+                if (!item.__nonzero__()) {
+                    continue;
                 }
-            } else if (func.__call__(item).__nonzero__()) {
-                ok = true;
+            } else if (!func.__call__(item).__nonzero__()) {
+                continue;
             }
-            if (ok) {
-                if (!Py.isInstance(item, stringType)) {
-                    String name = stringType.fastGetName();
-                    throw Py.TypeError(String.format("can't filter %s to %s: __getitem__ returned "
-                                                     + "different type", name, name));
-                }
-                builder.append(item.toString());
+            if (!Py.isInstance(item, stringType)) {
+                String name = stringType.fastGetName();
+                throw Py.TypeError(String.format("can't filter %s to %s: __getitem__ returned "
+                                                 + "different type", name, name));
             }
+            builder.append(item.toString());
         }
 
         String result = builder.toString();
@@ -609,20 +612,16 @@ public class __builtin__ {
 
         PyList list = new PyList();
         PyObject item;
-        boolean ok;
         for (int i = 0; i < len; i++) {
-            ok = false;
             item = seq.__finditem__(i);
             if (func == Py.None) {
-                if (item.__nonzero__()) {
-                    ok = true;
+                if (!item.__nonzero__()) {
+                    continue;
                 }
-            } else if (func.__call__(item).__nonzero__()) {
-                ok = true;
+            } else if (!func.__call__(item).__nonzero__()) {
+                continue;
             }
-            if (ok) {
-                list.append(item);
-            }
+            list.append(item);
         }
         return PyTuple.fromIterable(list);
     }
@@ -1221,6 +1220,7 @@ class ImportFunction extends PyBuiltinFunction {
               "is the number of parent directories to search relative to the current module.");
     }
 
+    @Override
     public PyObject __call__(PyObject args[], String keywords[]) {
         ArgParser ap = new ArgParser("__import__", args, keywords,
                                      new String[]{"name", "globals", "locals", "fromlist", "level"},
@@ -1436,6 +1436,7 @@ class RoundFunction extends PyBuiltinFunction {
               "This always returns a floating point number.  Precision may be negative.");
     }
 
+    @Override
     public PyObject __call__(PyObject args[], String kwds[]) {
         ArgParser ap = new ArgParser("round", args, kwds, new String[] {"number", "ndigits"}, 0);
         PyObject number = ap.getPyObject(0);
@@ -1474,6 +1475,7 @@ class CompileFunction extends PyBuiltinFunction {
               + "in addition to any features explicitly specified.");
     }
 
+    @Override
     public PyObject __call__(PyObject args[], String kwds[]) {
         ArgParser ap = new ArgParser("compile", args, kwds,
                                      new String[] {"source", "filename", "mode", "flags",
@@ -1556,6 +1558,7 @@ class OpenFunction extends PyBuiltinFunction {
             "Passing an Input/OutputStream to open is deprecated, use "
             + "org.python.core.util.FileUtil.wrap(stream[, bufsize]) instead.";
 
+    @Override
     public PyObject __call__(PyObject args[], String kwds[]) {
         ArgParser ap = new ArgParser("file", args, kwds, new String[] {"name", "mode", "bufsize"},
                                      1);
