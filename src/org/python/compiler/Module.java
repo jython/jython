@@ -12,6 +12,11 @@ import java.util.Map;
 
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
+import org.python.antlr.ParseException;
+import org.python.antlr.PythonTree;
+import org.python.antlr.ast.Suite;
+import org.python.antlr.base.mod;
 import org.python.core.CodeBootstrap;
 import org.python.core.CodeFlag;
 import org.python.core.CodeLoader;
@@ -19,11 +24,7 @@ import org.python.core.CompilerFlags;
 import org.python.core.Py;
 import org.python.core.PyException;
 import org.python.core.PyRunnableBootstrap;
-import org.objectweb.asm.Type;
-import org.python.antlr.ParseException;
-import org.python.antlr.PythonTree;
-import org.python.antlr.ast.Suite;
-import org.python.antlr.base.mod;
+import org.python.core.util.StringUtil;
 
 class PyIntegerConstant extends Constant implements ClassConstants, Opcodes
 {
@@ -365,19 +366,6 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
     }
 
     List codes;
-    private boolean isJavaIdentifier(String s) {
-        char[] chars = s.toCharArray();
-        if (chars.length == 0)
-            return false;
-        if (!Character.isJavaIdentifierStart(chars[0]))
-            return false;
-
-        for(int i=1; i<chars.length; i++) {
-            if (!Character.isJavaIdentifierPart(chars[i]))
-                return false;
-        }
-        return true;
-    }
 
     //XXX: this can probably go away now that we can probably just copy the list.
     private List<String> toNameAr(List names,boolean nullok) {
@@ -423,7 +411,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
         code.id = codes.size();
 
         //Better names in the future?
-        if (isJavaIdentifier(name))
+        if (StringUtil.isJavaIdentifier(name))
             code.fname = name+"$"+code.id;
         else
             code.fname = "f$"+code.id;
@@ -549,7 +537,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
         c.invokestatic("org/python/core/Py", "runMain", "(" + bootstrap + $strArr + ")V");
         c.return_();
     }
-    
+
     public void addBootstrap() throws IOException {
         Code c = classfile.addMethod(CodeLoader.GET_BOOTSTRAP_METHOD_NAME,
                 "()" + Type.getDescriptor(CodeBootstrap.class),
@@ -655,7 +643,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
                                String name, String filename,
                                boolean linenumbers, boolean printResults,
                                CompilerFlags cflags)
-        throws Exception 
+        throws Exception
     {
         compile(node, ostream, name, filename, linenumbers, printResults, cflags, org.python.core.imp.NO_MTIME);
     }

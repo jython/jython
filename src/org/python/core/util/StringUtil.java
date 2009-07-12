@@ -3,8 +3,10 @@ package org.python.core.util;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
+import java.util.Set;
 
 import org.python.core.Py;
+import org.python.util.Generic;
 
 /**
  * String Utility methods.
@@ -84,4 +86,47 @@ public class StringUtil {
         chars[0] = Character.toLowerCase(c0);
         return new String(chars);
     }
+
+    /**
+     * Returns true if each segment of <code>name</code> produced by splitting it on '.' is a valid
+     * Java identifier.
+     */
+    public static boolean isJavaClassName(String name) {
+        for (String segment : name.split("\\.")) {
+            if (!isJavaIdentifier(segment)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Returns true if ident is a valid Java identifier as defined by
+     * http://java.sun.com/docs/books/jls/second_edition/html/lexical.doc.html#40625
+     */
+    public static boolean isJavaIdentifier(String ident) {
+        if (ident.isEmpty() || JAVA_LITERALS.contains(ident)) {
+            return false;
+        }
+        int cp = ident.codePointAt(0);
+        if (!Character.isJavaIdentifierStart(cp)) {
+            return false;
+        }
+        for (int i = Character.charCount(cp); i < ident.length(); i += Character.charCount(cp)) {
+            cp = ident.codePointAt(i);
+            if (!Character.isJavaIdentifierPart(cp)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // True false and null are just literals, the rest are keywords
+    private static final Set<String> JAVA_LITERALS = Generic.set("abstract", "continue", "for",
+        "new", "switch", "assert", "default", "goto", "package", "synchronized", "boolean", "do",
+        "if", "private", "this", "break", "double", "implements", "protected", "throw", "byte",
+        "else", "import", "public", "throws", "case", "enum", "instanceof", "return", "transient",
+        "catch", "extends", "int", "short", "try", "char", "final", "interface", "static", "void",
+        "class", "finally", "long", "strictfp", "volatile", "const", "float", "native", "super",
+        "while", "true", "false", "null");
 }
