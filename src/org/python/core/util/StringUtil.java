@@ -105,7 +105,7 @@ public class StringUtil {
      * http://java.sun.com/docs/books/jls/second_edition/html/lexical.doc.html#40625
      */
     public static boolean isJavaIdentifier(String ident) {
-        if (ident.isEmpty() || JAVA_LITERALS.contains(ident)) {
+        if (ident.length() == 0 || JAVA_LITERALS.contains(ident)) {
             return false;
         }
         int cp = ident.codePointAt(0);
