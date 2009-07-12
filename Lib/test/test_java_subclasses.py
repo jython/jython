@@ -1,6 +1,8 @@
 '''Tests subclassing Java classes in Python'''
 import os
 import sys
+import tempfile
+import subprocess
 import unittest
 
 from test import test_support
@@ -345,6 +347,26 @@ class SettingJavaClassNameTest(unittest.TestCase):
         except TypeError:
             pass
 
+class StaticProxyCompilationTest(unittest.TestCase):
+    def setUp(self):
+        self.orig_proxy_dir = sys.javaproxy_dir
+        sys.javaproxy_dir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        sys.javaproxy_dir = self.orig_proxy_dir
+
+    def test_proxies_without_classloader(self):
+        # importing with proxy_dir set compiles RunnableImpl there
+        import static_proxy
+
+        # Use the existing environment with the proxy dir added on the classpath
+        env = dict(os.environ) 
+        env["CLASSPATH"] = sys.javaproxy_dir
+        script = test_support.findfile("import_as_java_class.py")
+        self.assertEquals(subprocess.call([sys.executable,  "-J-Dpython.cachedir.skip=true",
+            script], env=env),
+            0)
+
 def test_main():
     test_support.run_unittest(InterfaceTest,
             TableModelTest,
@@ -352,4 +374,5 @@ def test_main():
             PythonSubclassesTest,
             AbstractOnSyspathTest,
             ContextClassloaderTest,
-            SettingJavaClassNameTest)
+            SettingJavaClassNameTest,
+            StaticProxyCompilationTest)

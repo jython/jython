@@ -61,6 +61,10 @@ class MakeProxies {
                     "must be valid Java identifiers: " +
                     "http://java.sun.com/docs/books/jls/second_edition/html/lexical.doc.html#40625");
             }
+            Class<?> proxy = Py.findClass(fullProxyName);
+            if (proxy != null) {
+                return proxy;
+            }
         } else {
             fullProxyName = proxyPrefix + proxyName + "$" + proxyNumber++;
         }
@@ -81,7 +85,11 @@ class MakeProxies {
             jm.build();
             ByteArrayOutputStream bytes = new ByteArrayOutputStream();
             jm.classfile.write(bytes);
-            Py.saveClassFile(fullProxyName, bytes);
+            if (customProxyName != null) {
+                Py.saveClassFile(fullProxyName, bytes, Py.getSystemState().javaproxy_dir);
+            } else {
+                Py.saveClassFile(fullProxyName, bytes);
+            }
 
             return makeClass(superclass, vinterfaces, jm.myClass, bytes);
         } catch (Exception exc) {
