@@ -11,6 +11,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import org.python.compiler.Module;
 import org.python.core.util.FileUtil;
+import org.python.core.util.PlatformUtil;
 
 /**
  * Utility functions for "import" support.
@@ -527,12 +528,26 @@ public class imp {
     }
 
     public static boolean caseok(File file, String filename) {
-        if (Options.caseok) {
+        if (Options.caseok || !PlatformUtil.isCaseInsensitive()) {
             return true;
         }
         try {
             File canFile = new File(file.getCanonicalPath());
-            return filename.regionMatches(0, canFile.getName(), 0, filename.length());
+            boolean match = filename.regionMatches(0, canFile.getName(), 0, filename.length());
+            if (!match) {
+                //possibly a symlink.  Get parent and look for exact match in listdir()
+                //This is what CPython does in the case of Mac OS X and Cygwin.
+                //XXX: This will be a performance hit, maybe jdk7 nio2 can give us a better
+                //     method?
+                File parent = file.getParentFile();
+                String[] children = parent.list();
+                for (String c: children) {
+                    if (c.equals(filename)) {
+                        return true;
+                    }
+                }
+            }
+            return match;
         } catch (IOException exc) {
             return false;
         }

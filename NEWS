@@ -7,6 +7,7 @@ Jython 2.5.1
     - Setting __javaname__ in classes subclassing Java classes or implementing Java interfaces sets
       the name of the produced proxy class.
   Bugs Fixed
+    - [ 645615 ] cannot import through symbolic links
     - [ 1366 ] parsing of lamda expression fails
     - [ 1365 ] continuation lines fail in interactive interpreter
     - [ 1377 ] Event names shadowed by a field name on Java types leads to a NPE
