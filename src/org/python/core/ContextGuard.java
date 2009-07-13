@@ -11,8 +11,8 @@ public class ContextGuard implements ContextManager {
     private final PyObject __exit__method;
 
     private ContextGuard(PyObject manager) {
-        __enter__method = manager.__getattr__("__enter__");
         __exit__method = manager.__getattr__("__exit__");
+        __enter__method = manager.__getattr__("__enter__");
     }
 
     public PyObject __enter__(ThreadState ts) {
