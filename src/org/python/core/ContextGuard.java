@@ -17,9 +17,18 @@ public class ContextGuard implements ContextManager {
         return __enter__method.__call__(ts);
     }
 
-    public boolean __exit__(ThreadState ts, PyObject type, PyObject value,
-            PyObject traceback) {
-        return __exit__method.__call__(ts, type, value, traceback).__nonzero__();
+    public boolean __exit__(ThreadState ts, PyException exception) {
+        final PyObject type, value, traceback;
+        if (exception != null) {
+            type = exception.type;
+            value = exception.value;
+            traceback = exception.traceback;
+        } else {
+            type = value = traceback = Py.None;
+        }
+        return __exit__method.__call__(ts, type,
+                value == null ? Py.None : value,
+                traceback == null ? Py.None : traceback).__nonzero__();
     }
 
     public static ContextManager getManager(PyObject manager) {
@@ -43,7 +52,7 @@ public class ContextGuard implements ContextManager {
      *     finally:
      *         print "done"
      */
-    
+
     public static PyObject makeManager(PyObject object) {
         if (object instanceof PyFunction) {
             PyFunction function = (PyFunction) object;
@@ -125,19 +134,18 @@ public class ContextGuard implements ContextManager {
             return res;
         }
         
-        public boolean __exit__(ThreadState ts, PyObject type, PyObject value,
-                PyObject traceback) {
-            PyException ex = null;
-            if (type != null && type != Py.None) {
-                ex = Py.makeException(type, value, traceback);
-                frame.setGeneratorInput(ex);
+        public boolean __exit__(ThreadState ts, PyException exception) {
+            if (exception != null) {
+                frame.setGeneratorInput(exception);
             }
-            PyObject res = null;
+            final PyObject res;
             try {
                 res = body(ts);
             } catch(PyException e) {
-                if (e == ex) {
+                if (e.equals(exception)) {
                     return false;
+                } else {
+                    throw e;
                 }
             }
             if (frame.f_lasti != -1) {

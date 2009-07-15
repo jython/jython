@@ -3,6 +3,7 @@ package org.python.modules._threading;
 import java.util.concurrent.locks.ReentrantLock;
 import org.python.core.ContextManager;
 import org.python.core.Py;
+import org.python.core.PyException;
 import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
 import org.python.core.PyType;
@@ -76,7 +77,7 @@ public class Lock extends PyObject implements ContextManager {
         return false;
     }
 
-    public boolean __exit__(ThreadState ts, PyObject type, PyObject value, PyObject traceback) {
+    public boolean __exit__(ThreadState ts, PyException exception) {
         _lock.unlock();
         return false;
     }

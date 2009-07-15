@@ -2278,7 +2278,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
 
         final Method contextGuard_getManager = Method.getMethod("org.python.core.ContextManager getManager (org.python.core.PyObject)");
         final Method __enter__ = Method.getMethod("org.python.core.PyObject __enter__ (org.python.core.ThreadState)");
-        final Method __exit__ = Method.getMethod("boolean __exit__ (org.python.core.ThreadState,org.python.core.PyObject,org.python.core.PyObject,org.python.core.PyObject)");
+        final Method __exit__ = Method.getMethod("boolean __exit__ (org.python.core.ThreadState,org.python.core.PyException)");
 
         // mgr = (EXPR)
         visit(node.getInternalContext_expr());
@@ -2313,9 +2313,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
             public void finalBody(CodeCompiler compiler) throws Exception {
                 compiler.code.aload(mgr_tmp);
                 loadThreadState();
-                compiler.getNone();
-                compiler.code.dup();
-                compiler.code.dup();
+                compiler.code.aconst_null();
                 compiler.code.invokeinterface(Type.getType(ContextManager.class).getInternalName(), __exit__.getName(), __exit__.getDescriptor());
                 compiler.code.pop();
             }
@@ -2355,25 +2353,15 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
 
         loadFrame();
         code.invokestatic("org/python/core/Py", "setException", "(" + $throwable + $pyFrame + ")" + $pyExc);
-        code.pop();
+        code.aload(mgr_tmp);
+        code.swap();
         loadThreadState();
-        code.getfield("org/python/core/ThreadState", "exception", $pyExc);
-        int ts_tmp = storeTop();
+        code.swap();
+        code.invokeinterface(Type.getType(ContextManager.class).getInternalName(), __exit__.getName(), __exit__.getDescriptor());
 
         // # The exceptional case is handled here
         // exc = False # implicit
         // if not exit(*sys.exc_info()):
-        code.aload(mgr_tmp);
-        loadThreadState();
-        code.aload(ts_tmp);
-        code.getfield("org/python/core/PyException", "type", $pyObj);
-        code.aload(ts_tmp);
-        code.getfield("org/python/core/PyException", "value", $pyObj);
-        code.aload(ts_tmp);
-        code.freeLocal(ts_tmp);
-        code.getfield("org/python/core/PyException", "traceback", "Lorg/python/core/PyTraceback;");
-        code.checkcast("org/python/core/PyObject");
-        code.invokeinterface(Type.getType(ContextManager.class).getInternalName(), __exit__.getName(), __exit__.getDescriptor());
         code.ifne(label_end);
         //    raise
         // # The exception is swallowed if exit() returns true

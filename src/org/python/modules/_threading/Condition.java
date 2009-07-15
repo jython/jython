@@ -2,6 +2,7 @@ package org.python.modules._threading;
 
 import org.python.core.ContextManager;
 import org.python.core.Py;
+import org.python.core.PyException;
 import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
 import org.python.core.PyType;
@@ -65,7 +66,7 @@ public class Condition extends PyObject implements ContextManager {
         _lock.release();
     }
 
-    public boolean __exit__(ThreadState ts, PyObject type, PyObject value, PyObject traceback) {
+    public boolean __exit__(ThreadState ts, PyException exception) {
         _lock.release();
         return false;
     }
