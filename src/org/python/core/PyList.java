@@ -21,7 +21,7 @@ import java.util.ListIterator;
 public class PyList extends PySequenceList implements List {
 
     public static final PyType TYPE = PyType.fromClass(PyList.class);
-    protected final List<PyObject> list;
+    private final List<PyObject> list;
     public volatile int gListAllocatedStatus = -1;
 
     public PyList() {
@@ -75,6 +75,10 @@ public class PyList extends PySequenceList implements List {
 
     public static PyList fromList(List<PyObject> list) {
         return new PyList(list, false);
+    }
+
+    List<PyObject> getList() {
+        return Collections.unmodifiableList(list);
     }
 
     private static List<PyObject> listify(Iterator<PyObject> iter) {
@@ -215,11 +219,12 @@ public class PyList extends PySequenceList implements List {
             throw Py.MemoryError("");
         }
 
-        PyList newList = new PyList();
+        PyObject[] elements = list.toArray(new PyObject[size]);
+        PyObject[] newList = new PyObject[newSize];
         for (int i = 0; i < count; i++) {
-            newList.addAll(list);
+            System.arraycopy(elements, 0, newList, i * size, size);
         }
-        return newList;
+        return new PyList(newList);
     }
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.list___ne___doc)
