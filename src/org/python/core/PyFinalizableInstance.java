@@ -31,7 +31,7 @@ public class PyFinalizableInstance extends PyInstance
             } catch (PyException e) { ; }
 
             Py.stderr.println("Exception " +
-                Py.formatException(exc.type, exc.value, exc.traceback) +
+                Py.formatException(exc.type, exc.value) +
                 " in " + method +
                 " ignored");
         }

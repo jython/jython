@@ -1,5 +1,6 @@
 package org.python.jsr223;
 
+import org.python.core.*;
 import java.io.Reader;
 import javax.script.AbstractScriptEngine;
 import javax.script.Bindings;
@@ -10,9 +11,6 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineFactory;
 import javax.script.ScriptException;
-import org.python.core.Py;
-import org.python.core.PyException;
-import org.python.core.PyObject;
 import org.python.util.PythonInterpreter;
 
 public class PyScriptEngine extends AbstractScriptEngine implements Compilable, Invocable {
@@ -26,7 +24,15 @@ public class PyScriptEngine extends AbstractScriptEngine implements Compilable, 
     }
 
     public Object eval(String script, ScriptContext context) throws ScriptException {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return eval(compileScript(script, context));
+    }
+
+    private Object eval(PyCode code) throws ScriptException {
+        try {
+            return interp.eval(code).__tojava__(Object.class);
+        } catch (PyException e) {
+            throw scriptException(e);
+        }
     }
 
     // it would be nice if we supported a Reader interface in Py.compileFlags, instead of having
@@ -43,13 +49,24 @@ public class PyScriptEngine extends AbstractScriptEngine implements Compilable, 
         return factory;
     }
 
-    // i assume this should simply return a PyModule object or something
     public CompiledScript compile(String script) throws ScriptException {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return new PyCompiledScript(compileScript(script, context));
     }
 
     public CompiledScript compile(Reader script) throws ScriptException {
         throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    private PyCode compileScript(String script, ScriptContext context) throws ScriptException {
+        try {
+            String filename = (String) context.getAttribute(ScriptEngine.FILENAME);
+            if (filename == null)
+                return interp.compileExpressionOrModule(script);
+            else
+                return interp.compileExpressionOrModule(script, filename);
+        } catch (PyException e) {
+            throw scriptException(e);
+        }
     }
 
     public Object invokeMethod(Object thiz, String name, Object... args) throws ScriptException, NoSuchMethodException {
@@ -85,6 +102,48 @@ public class PyScriptEngine extends AbstractScriptEngine implements Compilable, 
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
+    private static ScriptException scriptException(PyException e) {
+        ScriptException se = null;
+        try {
+            e.normalize();
+
+            PyObject type = e.type;
+            PyObject value = e.value;
+            PyTraceback tb = e.traceback;
+
+            if (__builtin__.isinstance(value, Py.SyntaxError)) {
+                PyObject filename = value.__findattr__("filename");
+                PyObject lineno = value.__findattr__("lineno");
+                PyObject offset = value.__findattr__("offset");
+                value = value.__findattr__("msg");
+
+                se = new ScriptException(
+                        Py.formatException(type, value),
+                        filename == null ? "<script>" : filename.toString(),
+                        lineno == null ? 0 : lineno.asInt(),
+                        offset == null ? 0 : offset.asInt());
+            } else if (tb != null) {
+                String filename;
+                if (tb.tb_frame == null || tb.tb_frame.f_code == null)
+                    filename = null;
+                else
+                    filename = tb.tb_frame.f_code.co_filename;
+
+                se = new ScriptException(
+                        Py.formatException(type, value),
+                        filename,
+                        tb.tb_lineno);
+            } else {
+                se = new ScriptException(Py.formatException(type, value));
+            }
+            se.initCause(e);
+            return se;
+        } catch (Exception ee) {
+            se = new ScriptException(e);
+        }
+        return se;
+    }
+
     private static PyObject[] java2py(Object[] args) {
         PyObject wrapped[] = new PyObject[args.length];
         for (int i = 0; i < args.length; i++) {
@@ -93,18 +152,20 @@ public class PyScriptEngine extends AbstractScriptEngine implements Compilable, 
         return wrapped;
     }
 
-    // wraps a PyCode object
-    private static class PyCompiledScript extends CompiledScript {
+    private class PyCompiledScript extends CompiledScript {
+        private PyCode code;
 
-        @Override
-        public Object eval(ScriptContext arg0) throws ScriptException {
-            throw new UnsupportedOperationException("Not supported yet.");
+        PyCompiledScript(PyCode code) {
+            this.code = code;
         }
 
-        @Override
         public ScriptEngine getEngine() {
-            throw new UnsupportedOperationException("Not supported yet.");
+            return PyScriptEngine.this;
         }
 
+        public Object eval(ScriptContext ctx) throws ScriptException {
+            // can't read filename from context at this point
+            return PyScriptEngine.this.eval(code);
+        }
     }
 }

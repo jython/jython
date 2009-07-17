@@ -503,6 +503,10 @@ The readme text for the next release will be like:
         </copy>
         <!-- grammar must now be up to date -->
         <property name="antlr.notneeded" value="true" />
+
+	<copy todir="${compile.dir}/META-INF/services">
+	    <fileset dir="${source.dir}/META-INF/services" />
+	</copy>
     </target>
 
     <!--
