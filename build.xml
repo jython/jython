@@ -367,11 +367,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
     <!-- skip-brand can be set in ant.properties or as a system property to keep from updating the
          version.properties file and making the jar on every developer build. -->
     <target name="brand-version" depends="init, svnversion" unless="skip-brand">
-        <condition property="build.svn.revision" value="">
-            <not>
-                <isset property="build.svn.revision"/>
-            </not>
-        </condition>
+        <property name="build.svn.revision" value=""/>
         <tstamp>
             <format property="build.date" pattern="MMM d yyyy" offset="0"/>
             <format property="build.time" pattern="HH:mm:ss" offset="0"/>
@@ -719,7 +715,7 @@ The readme text for the next release will be like:
         </chmod>
 
         <!-- copy the registry -->
-        <copy todir="${dist.dir}" file="${jython.base.dir}/registry" preservelastmodified="true" overwrite="true" />
+        <copy todir="${dist.dir}" file="${jython.base.dir}/registry" preservelastmodified="true"/>
     </target>
 
     <target name="copy-cpythonlib">
