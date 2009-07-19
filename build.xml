@@ -113,7 +113,38 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         </uptodate>
     </target>
 
-    <target name="init" depends="version-init">
+    <target name="init">
+        <property file="${user.home}/ant.properties" />
+        <property file="${basedir}/ant.properties" />
+
+        <property name="PY_RELEASE_LEVEL_ALPHA" value="10"/> <!-- 0xA -->
+        <property name="PY_RELEASE_LEVEL_BETA" value="11"/> <!-- 0xB -->
+        <property name="PY_RELEASE_LEVEL_GAMMA" value="12"/> <!-- 0xC -->
+        <property name="PY_RELEASE_LEVEL_FINAL" value="15"/> <!-- 0xF -->
+        <property name="PY_RELEASE_LEVEL_SNAPSHOT" value="170"/> <!-- 0xAA -->
+
+        <!-- The current version info -->
+        <property name="jython.version" value="2.5.0+"/>
+        <property name="jython.version.noplus" value="2.5.0"/>
+        <property name="jython.major_version" value="2"/>
+        <property name="jython.minor_version" value="5"/>
+        <property name="jython.micro_version" value="0"/>
+        <property name="jython.release_level" value="${PY_RELEASE_LEVEL_FINAL}"/>
+        <property name="jython.release_serial" value="0"/>
+
+        <condition property="do.snapshot.build">
+            <isset property="snapshot.revision" />
+        </condition>
+        <!-- Switch to a snapshot release_level when appropriate -->
+        <condition property="jython.real_release_level" value="${PY_RELEASE_LEVEL_SNAPSHOT}" else="${jython.release_level}">
+            <isset property="do.snapshot.build" />
+        </condition>
+        <condition property="os.family.unix">
+            <os family="unix"/>
+        </condition>
+        <condition property="os.family.windows">
+            <os family="windows"/>
+        </condition>
         <property name="build.compiler" value="modern" />
         <property name="jdk.target.version" value="1.5" />
         <property name="jdk.source.version" value="1.5" />
@@ -175,40 +206,6 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         </path>
         <property name="jython.dev.jar" value="jython-dev.jar" />
         <property name="jython.deploy.jar" value="jython.jar" />
-    </target>
-
-    <target name="version-init">
-        <property file="${user.home}/ant.properties" />
-        <property file="${basedir}/ant.properties" />
-
-        <property name="PY_RELEASE_LEVEL_ALPHA" value="10"/> <!-- 0xA -->
-        <property name="PY_RELEASE_LEVEL_BETA" value="11"/> <!-- 0xB -->
-        <property name="PY_RELEASE_LEVEL_GAMMA" value="12"/> <!-- 0xC -->
-        <property name="PY_RELEASE_LEVEL_FINAL" value="15"/> <!-- 0xF -->
-        <property name="PY_RELEASE_LEVEL_SNAPSHOT" value="170"/> <!-- 0xAA -->
-
-        <!-- The current version info -->
-        <property name="jython.version" value="2.5.0+"/>
-        <property name="jython.version.noplus" value="2.5.0"/>
-        <property name="jython.major_version" value="2"/>
-        <property name="jython.minor_version" value="5"/>
-        <property name="jython.micro_version" value="0"/>
-        <property name="jython.release_level" value="${PY_RELEASE_LEVEL_FINAL}"/>
-        <property name="jython.release_serial" value="0"/>
-
-        <condition property="do.snapshot.build">
-            <isset property="snapshot.revision" />
-        </condition>
-        <!-- Switch to a snapshot release_level when appropriate -->
-        <condition property="jython.real_release_level" value="${PY_RELEASE_LEVEL_SNAPSHOT}" else="${jython.release_level}">
-            <isset property="do.snapshot.build" />
-        </condition>
-        <condition property="os.family.unix">
-            <os family="unix"/>
-        </condition>
-        <condition property="os.family.windows">
-            <os family="windows"/>
-        </condition>
     </target>
 
     <target name="full-preinit">
@@ -593,9 +590,13 @@ The readme text for the next release will be like:
            <fileset dir="${compile.dir}" includes="org/python/tests/Callbacker*"/>
        </jar>
        <jar destfile="${dist.dir}/${jython.dev.jar}" duplicate="fail">
+          <!-- If only nameunion is used, ant issues a spurious warning about no files being
+               included.  Use a fileset for version.properties just to shut that up. -->
+          <fileset dir="${compile.dir}" includes="org/python/version.properties"/>
           <nameunion>
              <fileset dir="${exposed.dir}"/>
-             <fileset dir="${compile.dir}" excludes="org/python/expose/generate/**"/>   
+             <fileset dir="${compile.dir}"
+                 excludes="org/python/expose/generate/**,org/python/version.properties"/>   
           </nameunion>
           <manifest>
               <attribute name="Main-Class" value="org.python.util.jython" />
