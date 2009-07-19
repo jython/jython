@@ -11,6 +11,7 @@ package com.ziclix.python.sql;
 import org.python.core.ClassDictInit;
 import org.python.core.Options;
 import org.python.core.Py;
+import org.python.core.PyArray;
 import org.python.core.PyBuiltinFunctionSet;
 import org.python.core.PyDictionary;
 import org.python.core.PyException;
@@ -455,6 +456,9 @@ class zxJDBCFunc extends PyBuiltinFunctionSet {
                 ticks = ((Number) arg.__tojava__(Number.class)).longValue();
                 return zxJDBC.datefactory.TimestampFromTicks(ticks);
             case 7:
+                if (arg instanceof PyString) {
+                    arg = PyArray.TYPE.__call__(Py.newString("b"), arg);
+                }
                 return arg;
             default :
                 throw info.unexpectedCall(1, false);
