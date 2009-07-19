@@ -12,7 +12,6 @@ import org.python.core.ClassDictInit;
 import org.python.core.Options;
 import org.python.core.Py;
 import org.python.core.PyBuiltinFunctionSet;
-import org.python.core.PyClass;
 import org.python.core.PyDictionary;
 import org.python.core.PyException;
 import org.python.core.PyInteger;
@@ -20,10 +19,13 @@ import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyStringMap;
 
+import java.io.CharArrayWriter;
+import java.io.PrintWriter;
 import java.lang.reflect.Field;
 import java.sql.SQLException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.MissingResourceException;
 import java.util.Properties;
@@ -105,7 +107,8 @@ public class zxJDBC extends PyObject implements ClassDictInit {
 
     static {
         try {
-            resourceBundle = ResourceBundle.getBundle("com.ziclix.python.sql.resource.zxJDBCMessages");
+            resourceBundle =
+                    ResourceBundle.getBundle("com.ziclix.python.sql.resource.zxJDBCMessages");
         } catch (MissingResourceException e) {
             throw new RuntimeException("missing zxjdbc resource bundle");
         }
@@ -117,18 +120,34 @@ public class zxJDBC extends PyObject implements ClassDictInit {
      * @param dict
      */
     public static void classDictInit(PyObject dict) {
+        PyObject version =
+                Py.newString("$Revision$").__getslice__(Py.newInteger(11),
+                                                               Py.newInteger(-2));
 
         dict.__setitem__("apilevel", new PyString("2.0"));
         dict.__setitem__("threadsafety", new PyInteger(1));
         dict.__setitem__("paramstyle", new PyString("qmark"));
-        dict.__setitem__("__version__", Py.newString("$Revision$").__getslice__(Py.newInteger(11), Py.newInteger(-2), null));
-        dict.__setitem__("Date", new zxJDBCFunc("Date", 1, 3, 3, "construct a Date from year, month, day"));
-        dict.__setitem__("Time", new zxJDBCFunc("Time", 2, 3, 3, "construct a Date from hour, minute, second"));
-        dict.__setitem__("Timestamp", new zxJDBCFunc("Timestamp", 3, 6, 6, "construct a Timestamp from year, month, day, hour, minute, second"));
-        dict.__setitem__("DateFromTicks", new zxJDBCFunc("DateFromTicks", 4, 1, 1, "construct a Date from seconds since the epoch"));
-        dict.__setitem__("TimeFromTicks", new zxJDBCFunc("TimeFromTicks", 5, 1, 1, "construct a Time from seconds since the epoch"));
-        dict.__setitem__("TimestampFromTicks", new zxJDBCFunc("TimestampFromTicks", 6, 1, 1, "construct a Timestamp from seconds since the epoch"));
-        dict.__setitem__("Binary", new zxJDBCFunc("Binary", 7, 1, 1, "construct an object capable of holding binary data"));
+        dict.__setitem__("__version__", version);
+        dict.__setitem__("Date", new zxJDBCFunc("Date", 1, 3, 3,
+                                                "construct a Date from year, month, day"));
+        dict.__setitem__("Time", new zxJDBCFunc("Time", 2, 3, 3,
+                                                "construct a Date from hour, minute, second"));
+        dict.__setitem__("Timestamp",
+                         new zxJDBCFunc("Timestamp", 3, 6, 6,
+                                        "construct a Timestamp from year, month, day, hour, "
+                                        + "minute, second"));
+        dict.__setitem__("DateFromTicks",
+                         new zxJDBCFunc("DateFromTicks", 4, 1, 1,
+                                        "construct a Date from seconds since the epoch"));
+        dict.__setitem__("TimeFromTicks",
+                         new zxJDBCFunc("TimeFromTicks", 5, 1, 1,
+                                        "construct a Time from seconds since the epoch"));
+        dict.__setitem__("TimestampFromTicks",
+                         new zxJDBCFunc("TimestampFromTicks", 6, 1, 1,
+                                        "construct a Timestamp from seconds since the epoch"));
+        dict.__setitem__("Binary",
+                         new zxJDBCFunc("Binary", 7, 1, 1,
+                                        "construct an object capable of holding binary data"));
         zxJDBC._addSqlTypes(dict);
         zxJDBC._addConnectors(dict);
         zxJDBC._buildExceptions(dict);
@@ -155,20 +174,17 @@ public class zxJDBC extends PyObject implements ClassDictInit {
      * @throws PyException
      */
     protected static void _addSqlTypes(PyObject dict) throws PyException {
-
         PyDictionary sqltype = new PyDictionary();
 
         dict.__setitem__("sqltype", sqltype);
 
         try {
-            Class c = Class.forName("java.sql.Types");
+            Class<?> c = Class.forName("java.sql.Types");
             Field[] fields = c.getFields();
 
-            for (int i = 0; i < fields.length; i++) {
-                Field f = fields[i];
+            for (Field f : fields) {
                 PyString name = Py.newString(f.getName());
                 PyObject value = new DBApiType(f.getInt(c));
-
                 dict.__setitem__(name, value);
                 sqltype.__setitem__(value, name);
             }
@@ -176,11 +192,9 @@ public class zxJDBC extends PyObject implements ClassDictInit {
             c = Class.forName("java.sql.ResultSet");
             fields = c.getFields();
 
-            for (int i = 0; i < fields.length; i++) {
-                Field f = fields[i];
+            for (Field f : fields) {
                 PyString name = Py.newString(f.getName());
                 PyObject value = Py.newInteger(f.getInt(c));
-
                 dict.__setitem__(name, value);
             }
         } catch (Throwable t) {
@@ -191,8 +205,6 @@ public class zxJDBC extends PyObject implements ClassDictInit {
         dict.__setitem__("NUMBER", dict.__getitem__(Py.newString("NUMERIC")));
         dict.__setitem__("STRING", dict.__getitem__(Py.newString("VARCHAR")));
         dict.__setitem__("DATETIME", dict.__getitem__(Py.newString("TIMESTAMP")));
-
-        return;
     }
 
     /**
@@ -202,7 +214,6 @@ public class zxJDBC extends PyObject implements ClassDictInit {
      * @throws PyException
      */
     protected static void _addConnectors(PyObject dict) throws PyException {
-
         PyObject connector = Py.None;
         Properties props = new Properties();
 
@@ -210,7 +221,7 @@ public class zxJDBC extends PyObject implements ClassDictInit {
         props.put("lookup", "com.ziclix.python.sql.connect.Lookup");
         props.put("connectx", "com.ziclix.python.sql.connect.Connectx");
 
-        java.util.Enumeration names = props.propertyNames();
+        Enumeration<?> names = props.propertyNames();
 
         while (names.hasMoreElements()) {
             String name = ((String) names.nextElement()).trim();
@@ -219,13 +230,13 @@ public class zxJDBC extends PyObject implements ClassDictInit {
             try {
                 connector = (PyObject) Class.forName(className).newInstance();
                 dict.__setitem__(name, connector);
-                Py.writeComment("zxJDBC", "loaded connector [" + className + "] as [" + name + "]");
+                Py.writeComment("zxJDBC", "loaded connector [" + className + "] as [" + name
+                                + "]");
             } catch (Throwable t) {
-                Py.writeComment("zxJDBC", "failed to load connector [" + name + "] using class [" + className + "]");
+                Py.writeComment("zxJDBC", "failed to load connector [" + name
+                                + "] using class [" + className + "]");
             }
         }
-
-        return;
     }
 
     /**
@@ -234,7 +245,6 @@ public class zxJDBC extends PyObject implements ClassDictInit {
      * @param dict
      */
     protected static void _buildExceptions(PyObject dict) {
-
         Error = buildClass("Error", Py.StandardError);
         Warning = buildClass("Warning", Py.StandardError);
         InterfaceError = buildClass("InterfaceError", Error);
@@ -259,20 +269,20 @@ public class zxJDBC extends PyObject implements ClassDictInit {
      */
     public static String getString(String key) {
         int i = 0;
-        List lines = null;
+        List<String> lines = null;
         String resource = null;
         while (true) {
             try {
                 resource = resourceBundle.getString(key + "." + (i++));
                 if (lines == null) {
-                    lines = new ArrayList();
+                    lines = new ArrayList<String>();
                 }
                 lines.add(resource);
             } catch (MissingResourceException e) {
                 break;
             }
         }
-        if ((lines == null) || (lines.size() == 0)) {
+        if (lines == null || lines.size() == 0) {
             try {
                 resource = resourceBundle.getString(key);
             } catch (MissingResourceException e) {
@@ -321,7 +331,7 @@ public class zxJDBC extends PyObject implements ClassDictInit {
      * @return PyException
      */
     public static PyException makeException(PyObject type, String msg) {
-        return Py.makeException(type, Py.newString((msg == null) ? "" : msg));
+        return Py.makeException(type, msg == null ? Py.EmptyString : Py.newString(msg));
     }
 
     /**
@@ -339,7 +349,8 @@ public class zxJDBC extends PyObject implements ClassDictInit {
             // contains most of the SQLSTATES codes.
             // Otherwise, the state is not following the standard.
             if (state != null && state.length() == 5) {
-                if (state.startsWith("23")) { //Class 23 => Integrity Constraint Violation
+                if (state.startsWith("23")) {
+                    // Class 23 => Integrity Constraint Violation
                     type = IntegrityError;
                 } else if (state.equals("40002")) {
                     // 40002  => TRANSACTION INTEGRITY CONSTRAINT VIOLATION
@@ -366,13 +377,13 @@ public class zxJDBC extends PyObject implements ClassDictInit {
      *
      * @param type
      * @param t
-     * @param rowIndex		Row index where the error has happened.  Useful for diagnosing.
+     * @param rowIndex Row index where the error has happened.  Useful for diagnosing.
      * @return PyException
      */
     public static PyException makeException(PyObject type, Throwable t, int rowIndex) {
         if (Options.showJavaExceptions) {
-            java.io.CharArrayWriter buf = new java.io.CharArrayWriter();
-            java.io.PrintWriter writer = new java.io.PrintWriter(buf);
+            CharArrayWriter buf = new CharArrayWriter();
+            PrintWriter writer = new PrintWriter(buf);
             writer.println("Java Traceback:");
             if (t instanceof PyException) {
                 ((PyException) t).super__printStackTrace(writer);
@@ -393,7 +404,7 @@ public class zxJDBC extends PyObject implements ClassDictInit {
                 if (sqlException.getSQLState() != null) {
                     buffer.append(", [SQLState: " + sqlException.getSQLState() + "]");
                 }
-                if(rowIndex >= 0) {
+                if (rowIndex >= 0) {
                     buffer.append(", [Row number: " + rowIndex + "]");
                 }
                 sqlException = sqlException.getNextException();
@@ -430,6 +441,7 @@ class zxJDBCFunc extends PyBuiltinFunctionSet {
         super(name, index, minargs, maxargs, doc);
     }
 
+    @Override
     public PyObject __call__(PyObject arg) {
         long ticks;
         switch (index) {
@@ -449,6 +461,7 @@ class zxJDBCFunc extends PyBuiltinFunctionSet {
         }
     }
 
+    @Override
     public PyObject __call__(PyObject arga, PyObject argb, PyObject argc) {
         switch (index) {
             case 1:
@@ -466,6 +479,7 @@ class zxJDBCFunc extends PyBuiltinFunctionSet {
         }
     }
 
+    @Override
     public PyObject fancyCall(PyObject[] args) {
         switch (index) {
             case 3:
@@ -481,4 +495,3 @@ class zxJDBCFunc extends PyBuiltinFunctionSet {
         }
     }
 }
-
