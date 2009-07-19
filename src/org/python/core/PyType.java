@@ -1051,8 +1051,9 @@ public class PyType extends PyObject implements Serializable {
             PyObject dict = element.fastGetDict();
             if (dict != null) {
                 PyObject obj = dict.__finditem__(name);
-                if (obj != null)
+                if (obj != null) {
                     return obj;
+                }
             }
         }
         return null;

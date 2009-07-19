@@ -8,8 +8,8 @@ import java.util.Set;
 
 import org.apache.tools.ant.BuildException;
 import org.objectweb.asm.ClassWriter;
-import org.python.core.Py;
 import org.python.core.Options;
+import org.python.core.Py;
 import org.python.util.GlobMatchingTask;
 
 public class ExposeTask extends GlobMatchingTask {
