@@ -34,6 +34,20 @@ public class ScriptEngineTest extends TestCase {
         assertTrue("Expected a ScriptException", false);
     }
 
+    public void testPythonException() {
+        ScriptEngineManager manager = new ScriptEngineManager();
+        ScriptEngine pythonEngine = manager.getEngineByName("python");
+
+        try {
+            pythonEngine.eval("pass\ndel undefined");
+        } catch (ScriptException e) {
+            assertEquals(e.getLineNumber(), 2);
+            assertTrue(e.getMessage().startsWith("NameError: "));
+            return;
+        }
+        assertTrue("Expected a ScriptException", false);
+    }
+
     public void testScriptFilename() {
         ScriptEngineManager manager = new ScriptEngineManager();
         ScriptEngine pythonEngine = manager.getEngineByName("python");
