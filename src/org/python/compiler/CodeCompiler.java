@@ -1089,13 +1089,13 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         Label start_loop = new Label();
         Label next_loop = new Label();
 
-        int iter_tmp = code.getLocal("org/python/core/PyObject");
-        int expr_tmp = code.getLocal("org/python/core/PyObject");
-
         setline(node);
 
         //parse the list
         visit(node.getInternalIter());
+
+        int iter_tmp = code.getLocal("org/python/core/PyObject");
+        int expr_tmp = code.getLocal("org/python/core/PyObject");
 
         //set up the loop iterator
         code.invokevirtual("org/python/core/PyObject", "__iter__", "()Lorg/python/core/PyObject;");
