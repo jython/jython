@@ -23,6 +23,7 @@ import org.python.core.PyList;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyTuple;
+import org.python.core.PyUnicode;
 
 import com.ziclix.python.sql.util.PyArgParser;
 
@@ -382,7 +383,8 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
                 stmt = (PyStatement)sql;
             } else {
                 Statement sqlStatement = null;
-                String sqlString = sql.__str__().toString();
+                String sqlString =
+                        sql instanceof PyUnicode ? sql.toString() : sql.__str__().toString();
 
                 if (sqlString.trim().length() == 0) {
                     return null;

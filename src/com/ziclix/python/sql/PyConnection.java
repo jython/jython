@@ -14,6 +14,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+
 import org.python.core.ClassDictInit;
 import org.python.core.Py;
 import org.python.core.PyBuiltinMethodSet;
@@ -22,6 +23,8 @@ import org.python.core.PyInteger;
 import org.python.core.PyList;
 import org.python.core.PyObject;
 import org.python.core.PyString;
+import org.python.core.PyUnicode;
+
 import com.ziclix.python.sql.util.PyArgParser;
 
 /**
@@ -339,7 +342,6 @@ public class PyConnection extends PyObject implements ClassDictInit {
      * @return the native form of this statement
      */
     public PyObject nativesql(PyObject nativeSQL) {
-
         if (closed) {
             throw zxJDBC.makeException(zxJDBC.ProgrammingError, "connection is closed");
         }
@@ -349,6 +351,9 @@ public class PyConnection extends PyObject implements ClassDictInit {
         }
 
         try {
+            if (nativeSQL instanceof PyUnicode) {
+                return Py.newUnicode(this.connection.nativeSQL(nativeSQL.toString()));
+            }
             return Py.newString(this.connection.nativeSQL(nativeSQL.__str__().toString()));
         } catch (SQLException e) {
             throw zxJDBC.makeException(e);
