@@ -657,7 +657,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
             for (String signature : stack) {
                 code.aload(array);
                 // Stack: |- ... array
-                code.iconst(i);
+                code.iconst(i--);
                 code.aaload();
                 // Stack: |- ... value
                 code.checkcast(signature);
