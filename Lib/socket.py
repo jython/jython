@@ -429,9 +429,6 @@ class _datagram_socket_impl(_nio_impl):
     def connect(self, host, port):
         self.jchannel.connect(java.net.InetSocketAddress(host, port))
 
-    def finish_connect(self):
-        return self.jchannel.finishConnect()
-
     def disconnect(self):
         """
             Disconnect the datagram socket.
@@ -449,16 +446,19 @@ class _datagram_socket_impl(_nio_impl):
     def _do_send_net(self, byte_array, socket_address, flags):
         # Need two separate implementations because the java.nio APIs do not support timeouts
         num_bytes = len(byte_array)
-        if socket_address:
-            packet = java.net.DatagramPacket(byte_array, num_bytes, socket_address)
-        else:
+        if self.jsocket.isConnected() and socket_address is None:
             packet = java.net.DatagramPacket(byte_array, num_bytes)
+        else:
+            packet = java.net.DatagramPacket(byte_array, num_bytes, socket_address)
         self.jsocket.send(packet)
         return num_bytes
 
     def _do_send_nio(self, byte_array, socket_address, flags):
         byte_buf = java.nio.ByteBuffer.wrap(byte_array)
-        bytes_sent = self.jchannel.send(byte_buf, socket_address)
+        if self.jchannel.isConnected() and socket_address is None:
+            bytes_sent = self.jchannel.write(byte_buf)
+        else:
+            bytes_sent = self.jchannel.send(byte_buf, socket_address)
         return bytes_sent
 
     def sendto(self, byte_array, host, port, flags):
@@ -993,11 +993,7 @@ class _udpsocket(_nonblocking_api_mixin):
     def connect_ex(self, addr):
         if not self.sock_impl:
             self._do_connect(addr)
-        if self.sock_impl.finish_connect():
-            if self.mode == MODE_NONBLOCKING:
-                return errno.EISCONN
-            return 0
-        return errno.EINPROGRESS
+        return 0
 
     def sendto(self, data, p1, p2=None):
         try:

@@ -857,6 +857,28 @@ class BasicUDPTest(ThreadedUDPSocketTest):
         self.cli.settimeout(10)
         self.cli.sendto(MSG, 0, (self.HOST, self.PORT))
 
+    def testSendAndRecv(self):
+        # Testing send() and recv() over connect'ed UDP
+        msg = self.serv.recv(len(MSG))
+        self.assertEqual(msg, MSG)
+
+    def _testSendAndRecv(self):
+        self.cli.connect( (self.HOST, self.PORT) )
+        self.cli.send(MSG, 0)
+
+    def testSendAndRecvTimeoutMode(self):
+        # Need to test again in timeout mode, which follows
+        # a different code path
+        self.serv.settimeout(10)
+        # Testing send() and recv() over connect'ed UDP
+        msg = self.serv.recv(len(MSG))
+        self.assertEqual(msg, MSG)
+
+    def _testSendAndRecvTimeoutMode(self):
+        self.cli.connect( (self.HOST, self.PORT) )
+        self.cli.settimeout(10)
+        self.cli.send(MSG, 0)
+
     def testRecvFrom(self):
         # Testing recvfrom() over UDP
         msg, addr = self.serv.recvfrom(len(MSG))
