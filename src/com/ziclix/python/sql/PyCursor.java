@@ -634,6 +634,7 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
      * @return a single sequence from the result set, or None when no more data is available
      */
     public PyObject fetchone() {
+        ensureOpen();
         return this.fetch.fetchone();
     }
 
@@ -649,6 +650,7 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
      *         no more data is available
      */
     public PyObject fetchall() {
+        ensureOpen();
         return this.fetch.fetchall();
     }
 
@@ -676,6 +678,7 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
      *         no more data is available
      */
     public PyObject fetchmany(int size) {
+        ensureOpen();
         return this.fetch.fetchmany(size);
     }
 
@@ -685,6 +688,7 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
      * @return true if more sets exist, else None
      */
     public PyObject nextset() {
+        ensureOpen();
         return this.fetch.nextset();
     }
 
@@ -728,6 +732,7 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
      *
      */
     public void scroll(int value, String mode) {
+        ensureOpen();
         this.fetch.scroll(value, mode);
     }
 
@@ -763,9 +768,7 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
      *
      */
     protected void clear() {
-        if (closed) {
-            throw zxJDBC.makeException(zxJDBC.ProgrammingError, "cursor is closed");
-        }
+        ensureOpen();
 
         this.warnings = Py.None;
         this.lastrowid = Py.None;
@@ -857,6 +860,15 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
             return true;
         }
         return false;
+    }
+
+    /**
+     * Throw a ProgrammingError if the cursor has been closed.
+     */
+    private void ensureOpen() {
+        if (closed) {
+            throw zxJDBC.makeException(zxJDBC.ProgrammingError, "cursor is closed");
+        }
     }
 }
 
