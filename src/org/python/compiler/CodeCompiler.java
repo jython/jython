@@ -5,6 +5,7 @@ package org.python.compiler;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Stack;
 import java.util.Vector;
@@ -635,15 +636,23 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
             code.iconst(stack.size());
             code.anewarray("java/lang/Object");
             code.astore(array);
-            for (int i = 0; i < stack.size(); i++) {
-                code.aload(array);
-                // Stack: |- ... value array
-                code.swap();
-                code.iconst(i);
-                code.swap();
-                // Stack: |- ... array index value
-                code.aastore();
-                // Stack: |- ...
+            ListIterator<String> content = stack.listIterator(stack.size());
+            for (int i = 0; content.hasPrevious(); i++) {
+                String signature = content.previous();
+                if ("org/python/core/ThreadState".equals(signature)) {
+                    // Stack: ... threadstate
+                    code.pop();
+                    // Stack: ...
+                } else {
+                    code.aload(array);
+                    // Stack: |- ... value array
+                    code.swap();
+                    code.iconst(i++);
+                    code.swap();
+                    // Stack: |- ... array index value
+                    code.aastore();
+                    // Stack: |- ...
+                }
             }
             return array;
         } else {
@@ -655,12 +664,16 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         if (stack.size() > 0) {
             int i = stack.size() -1;
             for (String signature : stack) {
-                code.aload(array);
-                // Stack: |- ... array
-                code.iconst(i--);
-                code.aaload();
-                // Stack: |- ... value
-                code.checkcast(signature);
+                if ("org/python/core/ThreadState".equals(signature)) {
+                    loadThreadState();
+                } else {
+                    code.aload(array);
+                    // Stack: |- ... array
+                    code.iconst(i--);
+                    code.aaload();
+                    // Stack: |- ... value
+                    code.checkcast(signature);
+                }
             }
             code.freeLocal(array);
         }
