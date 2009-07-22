@@ -109,7 +109,7 @@ public class ParserFacade {
     }
 
     /**
-     * Parse a string of Python source as either an expression (if possible) or module.
+     * Parse Python source as either an expression (if possible) or module.
      *
      * Designed for use by a JSR 223 implementation: "the Scripting API does not distinguish
      * between scripts which return values and those which do not, nor do they make the
