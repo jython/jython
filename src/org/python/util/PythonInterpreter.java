@@ -199,6 +199,7 @@ public class PythonInterpreter {
     }
     public PyCode compile(Reader reader, String filename) {
         mod node = ParserFacade.parseExpressionOrModule(reader, filename, cflags);
+        setState();
         return Py.compile_flags(node, filename, CompileMode.eval, cflags);
     }
 

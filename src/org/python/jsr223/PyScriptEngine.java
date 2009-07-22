@@ -164,9 +164,11 @@ public class PyScriptEngine extends AbstractScriptEngine implements Compilable, 
 
     private class PyCompiledScript extends CompiledScript {
         private PyCode code;
+        private PySystemState systemState;
 
         PyCompiledScript(PyCode code) {
             this.code = code;
+            this.systemState = Py.getSystemState();
         }
 
         public ScriptEngine getEngine() {
@@ -175,6 +177,7 @@ public class PyScriptEngine extends AbstractScriptEngine implements Compilable, 
 
         public Object eval(ScriptContext ctx) throws ScriptException {
             // can't read filename from context at this point
+            Py.setSystemState(systemState);
             return PyScriptEngine.this.eval(code);
         }
     }
