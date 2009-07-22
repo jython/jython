@@ -86,4 +86,16 @@ public class ScriptEngineTest extends TestCase {
         CompiledScript five = ((Compilable)pythonEngine).compile(new StringReader("5"));
         assertEquals(Integer.valueOf(5), five.eval());
     }
+
+    public void testBindings() throws ScriptException {
+        ScriptEngineManager manager = new ScriptEngineManager();
+        ScriptEngine pythonEngine = manager.getEngineByName("python");
+
+        pythonEngine.put("a", 42);
+        assertEquals(Integer.valueOf(42), pythonEngine.eval("a"));
+        assertNull(pythonEngine.eval("x = 5"));
+        assertEquals(Integer.valueOf(5), pythonEngine.get("x"));
+        assertNull(pythonEngine.eval("del x"));
+        assertNull(pythonEngine.get("x"));
+    }
 }

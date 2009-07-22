@@ -11,6 +11,7 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineFactory;
 import javax.script.ScriptException;
+import javax.script.SimpleBindings;
 import org.python.util.PythonInterpreter;
 
 public class PyScriptEngine extends AbstractScriptEngine implements Compilable, Invocable {
@@ -20,7 +21,7 @@ public class PyScriptEngine extends AbstractScriptEngine implements Compilable, 
 
     PyScriptEngine(ScriptEngineFactory factory) {
         this.factory = factory;
-        interp = new PythonInterpreter();
+        interp = new PythonInterpreter(new PyScriptEngineScope(this, context));
     }
 
     public Object eval(String script, ScriptContext context) throws ScriptException {
@@ -40,7 +41,7 @@ public class PyScriptEngine extends AbstractScriptEngine implements Compilable, 
     }
 
     public Bindings createBindings() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return new SimpleBindings();
     }
 
     public ScriptEngineFactory getFactory() {
