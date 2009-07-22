@@ -104,11 +104,11 @@ public class PyScriptEngine extends AbstractScriptEngine implements Compilable, 
         }
     }
 
-    public <T> T getInterface(Class<T> clasz) {
+    public <T> T getInterface(Class<T> clazz) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
-    public <T> T getInterface(Object thiz, Class<T> clasz) {
+    public <T> T getInterface(Object thiz, Class<T> clazz) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
