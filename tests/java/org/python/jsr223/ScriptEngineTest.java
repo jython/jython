@@ -1,5 +1,6 @@
 package org.python.jsr223;
 
+import java.io.StringReader;
 import javax.script.Compilable;
 import javax.script.CompiledScript;
 import javax.script.ScriptContext;
@@ -67,6 +68,22 @@ public class ScriptEngineTest extends TestCase {
         ScriptEngine pythonEngine = manager.getEngineByName("python");
         
         CompiledScript five = ((Compilable)pythonEngine).compile("5");
+        assertEquals(Integer.valueOf(5), five.eval());
+    }
+
+    public void testEvalReader() throws ScriptException {
+        ScriptEngineManager manager = new ScriptEngineManager();
+        ScriptEngine pythonEngine = manager.getEngineByName("python");
+
+        assertNull(pythonEngine.eval(new StringReader("x = 5")));
+        assertEquals(Integer.valueOf(5), pythonEngine.eval(new StringReader("x")));
+    }
+
+    public void testCompileEvalReader() throws ScriptException {
+        ScriptEngineManager manager = new ScriptEngineManager();
+        ScriptEngine pythonEngine = manager.getEngineByName("python");
+
+        CompiledScript five = ((Compilable)pythonEngine).compile(new StringReader("5"));
         assertEquals(Integer.valueOf(5), five.eval());
     }
 }

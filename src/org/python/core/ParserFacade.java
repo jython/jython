@@ -10,6 +10,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
+import java.io.StringReader;
 import java.io.Writer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
@@ -108,6 +109,34 @@ public class ParserFacade {
     }
 
     /**
+     * Parse a string of Python source as either an expression (if possible) or module.
+     *
+     * Designed for use by a JSR 223 implementation: "the Scripting API does not distinguish
+     * between scripts which return values and those which do not, nor do they make the
+     * corresponding distinction between evaluating or executing objects." (SCR.4.2.1)
+     */
+    public static mod parseExpressionOrModule(Reader reader,
+                                String filename,
+                                CompilerFlags cflags) {
+        ExpectedEncodingBufferedReader bufReader = null;
+        try {
+            bufReader = prepBufReader(reader, cflags, filename);
+            // first, try parsing as an expression
+            return parse(bufReader, CompileMode.eval, filename, cflags );
+        } catch (Throwable t) {
+            try {
+                // then, try parsing as a module
+                bufReader.reset();
+                return parse(bufReader, CompileMode.exec, filename, cflags);
+            } catch (Throwable tt) {
+                throw fixParseError(bufReader, tt, filename);
+            }
+        } finally {
+            close(bufReader);
+        }
+    }
+
+    /**
      * Internal parser entry point.
      *
      * Users of this method should call fixParseError on any Throwable thrown
@@ -130,6 +159,21 @@ public class ParserFacade {
         }
     }
 
+    public static mod parse(Reader reader,
+                                CompileMode kind,
+                                String filename,
+                                CompilerFlags cflags) {
+        ExpectedEncodingBufferedReader bufReader = null;
+        try {
+            bufReader = prepBufReader(reader, cflags, filename);
+            return parse(bufReader, kind, filename, cflags );
+        } catch (Throwable t) {
+            throw fixParseError(bufReader, t, filename);
+        } finally {
+            close(bufReader);
+        }
+    }
+    
     public static mod parse(InputStream stream,
                                 CompileMode kind,
                                 String filename,
@@ -223,6 +267,13 @@ public class ParserFacade {
         }
     }
 
+    private static ExpectedEncodingBufferedReader prepBufReader(Reader reader,
+                                                                CompilerFlags cflags,
+                                                                String filename)
+        throws IOException {
+        return new ExpectedEncodingBufferedReader(new BufferedReader(reader), null);
+    }
+
     private static ExpectedEncodingBufferedReader prepBufReader(InputStream input,
                                                                 CompilerFlags cflags,
                                                                 String filename,
@@ -290,20 +341,10 @@ public class ParserFacade {
                                                                 CompilerFlags cflags,
                                                                 String filename)
         throws IOException {
-        byte[] stringBytes;
-        if (cflags.source_is_utf8) {
-            // Passed unicode, re-encode the String to raw bytes
-            // NOTE: This could be more efficient if we duplicate
-            // prepBufReader/adjustForBOM/readEncoding to work on Readers, instead of
-            // encoding
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            Writer w = new OutputStreamWriter(out, "utf-8");
-            w.write(string);
-            w.close();
-            stringBytes = out.toByteArray();
-        } else {
-            stringBytes = StringUtil.toBytes(string);
-        }
+        if (cflags.source_is_utf8)
+            return prepBufReader(new StringReader(string), cflags, filename);
+
+        byte[] stringBytes = StringUtil.toBytes(string);
         return prepBufReader(new ByteArrayInputStream(stringBytes), cflags, filename, true, false);
     }
 

@@ -1,5 +1,9 @@
 package org.python.util;
 
+import java.io.FilterReader;
+import java.io.IOException;
+import java.io.Reader;
+import java.io.StringReader;
 import java.util.Properties;
 
 import org.python.antlr.base.mod;
@@ -184,23 +188,17 @@ public class PythonInterpreter {
      * between scripts which return values and those which do not, nor do they make the
      * corresponding distinction between evaluating or executing objects." (SCR.4.2.1)
      */
-    public PyCode compileExpressionOrModule(String script) {
-        return compileExpressionOrModule(script, "<script>");
+    public PyCode compile(String script) {
+        return compile(script, "<script>");
     }
-
-    public PyCode compileExpressionOrModule(String script, String filename) {
-        mod node;
-        try {
-            // first, try parsing as an expression
-            node = ParserFacade.parse(script, CompileMode.eval, filename, cflags);
-        } catch (PySyntaxError e) {
-            try {
-                // then, try parsing as a module
-                node = ParserFacade.parse(script, CompileMode.exec, filename, cflags);
-            } catch (PySyntaxError ee) {
-                throw ee;
-            }
-        }
+    public PyCode compile(Reader reader) {
+        return compile(reader, "<script>");
+    }
+    public PyCode compile(String script, String filename) {
+        return compile(new StringReader(script), filename);
+    }
+    public PyCode compile(Reader reader, String filename) {
+        mod node = ParserFacade.parseExpressionOrModule(reader, filename, cflags);
         return Py.compile_flags(node, filename, CompileMode.eval, cflags);
     }
 

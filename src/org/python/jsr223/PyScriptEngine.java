@@ -35,10 +35,8 @@ public class PyScriptEngine extends AbstractScriptEngine implements Compilable, 
         }
     }
 
-    // it would be nice if we supported a Reader interface in Py.compileFlags, instead of having
-    // to create a string here
     public Object eval(Reader reader, ScriptContext context) throws ScriptException {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return eval(compileScript(reader, context));
     }
 
     public Bindings createBindings() {
@@ -53,17 +51,29 @@ public class PyScriptEngine extends AbstractScriptEngine implements Compilable, 
         return new PyCompiledScript(compileScript(script, context));
     }
 
-    public CompiledScript compile(Reader script) throws ScriptException {
-        throw new UnsupportedOperationException("Not supported yet.");
+    public CompiledScript compile(Reader reader) throws ScriptException {
+        return new PyCompiledScript(compileScript(reader, context));
     }
 
     private PyCode compileScript(String script, ScriptContext context) throws ScriptException {
         try {
             String filename = (String) context.getAttribute(ScriptEngine.FILENAME);
             if (filename == null)
-                return interp.compileExpressionOrModule(script);
+                return interp.compile(script);
             else
-                return interp.compileExpressionOrModule(script, filename);
+                return interp.compile(script, filename);
+        } catch (PyException e) {
+            throw scriptException(e);
+        }
+    }
+    
+    private PyCode compileScript(Reader reader, ScriptContext context) throws ScriptException {
+        try {
+            String filename = (String) context.getAttribute(ScriptEngine.FILENAME);
+            if (filename == null)
+                return interp.compile(reader);
+            else
+                return interp.compile(reader, filename);
         } catch (PyException e) {
             throw scriptException(e);
         }
