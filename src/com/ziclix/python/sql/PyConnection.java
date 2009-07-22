@@ -118,12 +118,15 @@ public class PyConnection extends PyObject implements ClassDictInit {
      *
      * @return string representation of the object.
      */
+    @Override
     public String toString() {
 
         try {
-            return "<PyConnection user='" + this.connection.getMetaData().getUserName() + "', url='" + this.connection.getMetaData().getURL() + "'>";
+            return String.format("<PyConnection object at %s user='%s', url='%s'>", Py.idstr(this),
+                                 connection.getMetaData().getUserName(),
+                                 connection.getMetaData().getURL());
         } catch (SQLException e) {
-            return "<PyConnection at " + hashCode() + ">";
+            return String.format("<PyConnection object at %s", Py.idstr(this));
         }
     }
 

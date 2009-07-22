@@ -130,20 +130,10 @@ public class PyStatement extends PyObject {
         return super.__str__();
     }
 
-    /**
-     * Method __repr__
-     *
-     * @return PyString
-     */
+    @Override
     public PyString __repr__() {
-
-        // care is taken not to display a rounded second value
-        StringBuffer buf = new StringBuffer("<PyStatement object for [");
-
-        buf.append(__str__().toString());
-        buf.append("] at ").append(Py.id(this)).append(">");
-
-        return Py.newString(buf.toString());
+        return Py.newString(String.format("<PyStatement object at %s for [%s]", Py.idstr(this),
+                                          __str__()));
     }
 
     /**

@@ -166,7 +166,7 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
      */
     @Override
     public String toString() {
-        return "<PyCursor object instance at " + Py.id(this) + ">";
+        return String.format("<PyCursor object at %s>", Py.idstr(this));
     }
 
     /**
