@@ -185,6 +185,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
             <pathelement path="${extlibs.dir}/antlr-2.7.7.jar" />
             <pathelement path="${extlibs.dir}/antlr-3.1.3.jar" />
             <pathelement path="${extlibs.dir}/stringtemplate-3.2.jar" />
+            <pathelement path="${extlibs.dir}/livetribe-jsr223-2.0.5.jar" />
 
             <pathelement path="${extlibs.dir}/asm-3.1.jar" />
             <pathelement path="${extlibs.dir}/asm-commons-3.1.jar" />

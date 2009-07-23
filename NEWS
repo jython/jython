@@ -6,6 +6,7 @@ Jython 2.5.1
     - [ 1859477 ] Dynamically loaded ServletFilters like PyServlet
     - Setting __javaname__ in classes subclassing Java classes or implementing Java interfaces sets
       the name of the produced proxy class.
+    - Built in JSR 223 scripting engine, with LiveTribe JSR 223 implementation for JDK 5
   Bugs Fixed
     - [ 645615 ] cannot import through symbolic links
     - [ 1366 ] parsing of lamda expression fails
@@ -14,6 +15,8 @@ Jython 2.5.1
     - [ 1381 ] Redundant declarations of interface implementation hides overriden methods
     - [ 1189 ] MD5 hash is incorrectly calculated when string contains non-latin chars and using python md5 lib
     - [ 1802339 ] Problem printing unicode when stdout intercepted
+    - [ 1145 ] Jython 2.5 compatibility problem with JSR 223
+    - [ 1400 ] Evaluating expression via JSR 223 ScriptEngine returns null instead of True/False
 
 Jython 2.5.0
   The same as rc4.
