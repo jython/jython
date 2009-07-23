@@ -21,10 +21,12 @@ public class PyScriptEngine extends AbstractScriptEngine implements Compilable, 
 
     private final PythonInterpreter interp;
     private final ScriptEngineFactory factory;
+    private final PyModule module;
 
     PyScriptEngine(ScriptEngineFactory factory) {
         this.factory = factory;
         interp = new PythonInterpreter(new PyScriptEngineScope(this, context));
+        module = (PyModule)Py.getSystemState().modules.__finditem__("__main__");
     }
 
     public Object eval(String script, ScriptContext context) throws ScriptException {
@@ -85,10 +87,9 @@ public class PyScriptEngine extends AbstractScriptEngine implements Compilable, 
 
     public Object invokeMethod(Object thiz, String name, Object... args) throws ScriptException, NoSuchMethodException {
         try {
-            if (thiz instanceof PyObject) {
-                return ((PyObject) thiz).invoke(name, java2py(args)).__tojava__(Object.class);
-            }
-            throw new NoSuchMethodException(name);
+            if (!(thiz instanceof PyObject))
+                thiz = Py.java2py(thiz);
+            return ((PyObject) thiz).invoke(name, java2py(args)).__tojava__(Object.class);
         } catch (PyException pye) {
             return throwInvokeException(pye, name);
         }
@@ -96,30 +97,37 @@ public class PyScriptEngine extends AbstractScriptEngine implements Compilable, 
 
     public Object invokeFunction(String name, Object... args) throws ScriptException, NoSuchMethodException {
         try {
-            return interp.get(name).__call__(java2py(args)).__tojava__(Object.class);
+            PyObject function = interp.get(name);
+            if (function == null)
+                throw new NoSuchMethodException(name);
+            return function.__call__(java2py(args)).__tojava__(Object.class);
         } catch (PyException pye) {
             return throwInvokeException(pye, name);
         }
     }
 
     public <T> T getInterface(Class<T> clazz) {
-        return getInterface(null, clazz);
+        return getInterface(module, clazz);
     }
 
-    public <T> T getInterface(Object thiz, Class<T> clazz) {
+    public <T> T getInterface(Object obj, Class<T> clazz) {
+        if (obj == null)
+            throw new IllegalArgumentException("object expected");
+        if (clazz == null || !clazz.isInterface())
+            throw new IllegalArgumentException("interface expected");
+        final Object thiz = Py.java2py(obj);
         return (T) Proxy.newProxyInstance(
-                clazz.getClassLoader(),
-                new Class[] { clazz },
-                new InvocationHandler() {
-
-            public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-                try {
-                    return ((PyObject) proxy).invoke(method.getName(), java2py(args)).__tojava__(Object.class);
-                } catch (PyException pye) {
-                    return throwInvokeException(pye, method.getName());
+            clazz.getClassLoader(),
+            new Class[] { clazz },
+            new InvocationHandler() {
+                public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+                    try {
+                        return ((PyObject) thiz).invoke(method.getName(), java2py(args)).__tojava__(Object.class);
+                    } catch (PyException pye) {
+                        return throwInvokeException(pye, method.getName());
+                    }
                 }
-            }
-        });
+            });
     }
 
     private static Object throwInvokeException(PyException pye, String methodName)
