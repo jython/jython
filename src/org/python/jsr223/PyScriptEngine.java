@@ -1,7 +1,10 @@
 package org.python.jsr223;
 
+import java.lang.reflect.Method;
 import org.python.core.*;
 import java.io.Reader;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Proxy;
 import javax.script.AbstractScriptEngine;
 import javax.script.Bindings;
 import javax.script.Compilable;
@@ -31,8 +34,8 @@ public class PyScriptEngine extends AbstractScriptEngine implements Compilable, 
     private Object eval(PyCode code) throws ScriptException {
         try {
             return interp.eval(code).__tojava__(Object.class);
-        } catch (PyException e) {
-            throw scriptException(e);
+        } catch (PyException pye) {
+            throw scriptException(pye);
         }
     }
 
@@ -63,8 +66,8 @@ public class PyScriptEngine extends AbstractScriptEngine implements Compilable, 
                 return interp.compile(script);
             else
                 return interp.compile(script, filename);
-        } catch (PyException e) {
-            throw scriptException(e);
+        } catch (PyException pye) {
+            throw scriptException(pye);
         }
     }
     
@@ -75,8 +78,8 @@ public class PyScriptEngine extends AbstractScriptEngine implements Compilable, 
                 return interp.compile(reader);
             else
                 return interp.compile(reader, filename);
-        } catch (PyException e) {
-            throw scriptException(e);
+        } catch (PyException pye) {
+            throw scriptException(pye);
         }
     }
 
@@ -87,10 +90,7 @@ public class PyScriptEngine extends AbstractScriptEngine implements Compilable, 
             }
             throw new NoSuchMethodException(name);
         } catch (PyException pye) {
-            if (Py.matchException(pye, Py.AttributeError)) {
-                throw new NoSuchMethodException(name);
-            }
-            throw new ScriptException(pye);
+            return throwInvokeException(pye, name);
         }
     }
 
@@ -98,29 +98,46 @@ public class PyScriptEngine extends AbstractScriptEngine implements Compilable, 
         try {
             return interp.get(name).__call__(java2py(args)).__tojava__(Object.class);
         } catch (PyException pye) {
-            if (Py.matchException(pye, Py.AttributeError)) {
-                throw new NoSuchMethodException(name);
-            }
-            throw new ScriptException(pye);
+            return throwInvokeException(pye, name);
         }
     }
 
     public <T> T getInterface(Class<T> clazz) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return getInterface(null, clazz);
     }
 
     public <T> T getInterface(Object thiz, Class<T> clazz) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return (T) Proxy.newProxyInstance(
+                clazz.getClassLoader(),
+                new Class[] { clazz },
+                new InvocationHandler() {
+
+            public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+                try {
+                    return ((PyObject) proxy).invoke(method.getName(), java2py(args)).__tojava__(Object.class);
+                } catch (PyException pye) {
+                    return throwInvokeException(pye, method.getName());
+                }
+            }
+        });
     }
 
-    private static ScriptException scriptException(PyException e) {
+    private static Object throwInvokeException(PyException pye, String methodName)
+            throws ScriptException, NoSuchMethodException {
+        if (Py.matchException(pye, Py.AttributeError)) {
+            throw new NoSuchMethodException(methodName);
+        }
+        throw scriptException(pye);
+    }
+
+    private static ScriptException scriptException(PyException pye) {
         ScriptException se = null;
         try {
-            e.normalize();
+            pye.normalize();
 
-            PyObject type = e.type;
-            PyObject value = e.value;
-            PyTraceback tb = e.traceback;
+            PyObject type = pye.type;
+            PyObject value = pye.value;
+            PyTraceback tb = pye.traceback;
 
             if (__builtin__.isinstance(value, Py.SyntaxError)) {
                 PyObject filename = value.__findattr__("filename");
@@ -147,10 +164,10 @@ public class PyScriptEngine extends AbstractScriptEngine implements Compilable, 
             } else {
                 se = new ScriptException(Py.formatException(type, value));
             }
-            se.initCause(e);
+            se.initCause(pye);
             return se;
         } catch (Exception ee) {
-            se = new ScriptException(e);
+            se = new ScriptException(pye);
         }
         return se;
     }
