@@ -1027,7 +1027,7 @@ public final class Py {
                 stderr.println(getStackTrace((Throwable) javaError));
             }
         }
-        stderr.println(formatException(type, value, tb));
+        stderr.println(formatException(type, value));
     }
 
     /**
@@ -1080,7 +1080,7 @@ public final class Py {
         out.print("^\n");
     }
 
-    static String formatException(PyObject type, PyObject value, PyObject tb) {
+    public static String formatException(PyObject type, PyObject value) {
         StringBuilder buf = new StringBuilder();
 
         if (PyException.isExceptionClass(type)) {
@@ -1106,7 +1106,7 @@ public final class Py {
         } else {
             buf.append(type.__str__());
         }
-        if (value != Py.None) {
+        if (value != null && value != Py.None) {
             // only print colon if the str() of the object is not the empty string
             PyObject s = value.__str__();
             if (!(s instanceof PyString) || s.__len__() != 0) {
