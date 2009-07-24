@@ -30,49 +30,49 @@ import com.ziclix.python.sql.DataHandler;
  */
 public class MySQLDataHandler extends RowIdHandler {
 
-  /**
-   * Decorator for handling MySql specific issues.
-   *
-   * @param datahandler the delegate DataHandler
-   */
-  public MySQLDataHandler(DataHandler datahandler) {
-    super(datahandler);
-  }
-
-  protected String getRowIdMethodName() {
-    return "getLastInsertID";
-  }
-
-  /**
-   * Handle LONGVARCHAR.
-   */
-  public void setJDBCObject(PreparedStatement stmt, int index, PyObject object, int type) throws SQLException {
-
-    if (DataHandler.checkNull(stmt, index, object, type)) {
-      return;
+    /**
+     * Decorator for handling MySql specific issues.
+     *
+     * @param datahandler the delegate DataHandler
+     */
+    public MySQLDataHandler(DataHandler datahandler) {
+        super(datahandler);
     }
 
-    switch (type) {
+    @Override
+    protected String getRowIdMethodName() {
+        return "getLastInsertID";
+    }
 
-      case Types.LONGVARCHAR:
-          // XXX: Only works with ASCII data!
-          byte[] bytes;
-        if (object instanceof PyFile) {
-              bytes = ((PyFile) object).read().toBytes();
-        } else {
-              String varchar = (String) object.__tojava__(String.class);
-              bytes = StringUtil.toBytes(varchar);
+    /**
+     * Handle LONGVARCHAR.
+     */
+    @Override
+    public void setJDBCObject(PreparedStatement stmt, int index, PyObject object, int type)
+        throws SQLException {
+        if (DataHandler.checkNull(stmt, index, object, type)) {
+            return;
         }
-          InputStream stream = new ByteArrayInputStream(bytes);
 
-        stream = new BufferedInputStream(stream);
+        switch (type) {
+        case Types.LONGVARCHAR:
+            // XXX: Only works with ASCII data!
+            byte[] bytes;
+            if (object instanceof PyFile) {
+                bytes = ((PyFile) object).read().toBytes();
+            } else {
+                String varchar = (String) object.__tojava__(String.class);
+                bytes = StringUtil.toBytes(varchar);
+            }
+            InputStream stream = new ByteArrayInputStream(bytes);
+            stream = new BufferedInputStream(stream);
 
-          stmt.setAsciiStream(index, stream, bytes.length);
-        break;
+            stmt.setAsciiStream(index, stream, bytes.length);
+            break;
 
-      default :
-        super.setJDBCObject(stmt, index, object, type);
-        break;
+        default :
+            super.setJDBCObject(stmt, index, object, type);
+            break;
+        }
     }
-  }
 }
