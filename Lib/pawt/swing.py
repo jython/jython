@@ -4,8 +4,6 @@ No longer needed, but keeping for backwards compatibility.
 from javax import swing
 import sys
 
-print "testing"
-
 def test(panel, size=None, name='Swing Tester'):
         f = swing.JFrame(name, windowClosing=lambda event: sys.exit(0))
         if hasattr(panel, 'init'):
