@@ -12,9 +12,7 @@ import org.python.core.Py;
 import org.python.core.PyFile;
 import org.python.core.PyObject;
 import org.python.core.PyList;
-import org.python.core.util.StringUtil;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -239,30 +237,12 @@ public class DataHandler {
             case Types.CHAR:
             case Types.VARCHAR:
                 String string = set.getString(col);
-
-                obj = (string == null) ? Py.None : Py.newUnicode(string);
+                obj = string == null ? Py.None : Py.newUnicode(string);
                 break;
 
             case Types.LONGVARCHAR:
-                InputStream longvarchar = set.getAsciiStream(col);
-
-                if (longvarchar == null) {
-                    obj = Py.None;
-                } else {
-                    try {
-                        longvarchar = new BufferedInputStream(longvarchar);
-
-                        byte[] bytes = DataHandler.read(longvarchar);
-
-                        if (bytes != null) {
-                            obj = Py.newUnicode(StringUtil.fromBytes(bytes));
-                        }
-                    } finally {
-                        try {
-                            longvarchar.close();
-                        } catch (Throwable t) {}
-                    }
-                }
+                Reader reader = set.getCharacterStream(col);
+                obj = reader == null ? Py.None : Py.newUnicode(read(reader));
                 break;
 
             case Types.NUMERIC:
