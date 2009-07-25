@@ -303,7 +303,9 @@ public class DataHandler {
                 break;
 
             case Types.DATE:
-                obj = Py.newDate(set.getDate(col));
+                Object date = set.getObject(col);
+                // don't newDate mysql YEAR columns
+                obj = date instanceof Date ? Py.newDate((Date)date) : Py.java2py(date);
                 break;
 
             case Types.NULL:
