@@ -1,7 +1,5 @@
 package org.python.util;
 
-import java.io.FilterReader;
-import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.Properties;
@@ -19,7 +17,6 @@ import org.python.core.PyModule;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyStringMap;
-import org.python.core.PySyntaxError;
 import org.python.core.PySystemState;
 import org.python.core.__builtin__;
 
