@@ -9,13 +9,14 @@ import org.python.Version;
 import org.python.core.Py;
 
 public class PyScriptEngineFactory implements ScriptEngineFactory {
-    
+
     public String getEngineName() {
         return "jython";
     }
 
     public String getEngineVersion() {
-        return String.format("%s.%s.%s", Version.PY_MAJOR_VERSION, Version.PY_MINOR_VERSION, Version.PY_MICRO_VERSION);
+        return String.format("%s.%s.%s", Version.PY_MAJOR_VERSION, Version.PY_MINOR_VERSION,
+            Version.PY_MICRO_VERSION);
     }
 
     public List<String> getExtensions() {
