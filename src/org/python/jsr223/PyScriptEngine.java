@@ -66,43 +66,49 @@ public class PyScriptEngine extends AbstractScriptEngine implements Compilable, 
     private PyCode compileScript(String script, ScriptContext context) throws ScriptException {
         try {
             String filename = (String) context.getAttribute(ScriptEngine.FILENAME);
-            if (filename == null)
+            if (filename == null) {
                 return interp.compile(script);
-            else
+            } else {
                 return interp.compile(script, filename);
-        } catch (PyException pye) {
-            throw scriptException(pye);
-        }
-    }
-    
-    private PyCode compileScript(Reader reader, ScriptContext context) throws ScriptException {
-        try {
-            String filename = (String) context.getAttribute(ScriptEngine.FILENAME);
-            if (filename == null)
-                return interp.compile(reader);
-            else
-                return interp.compile(reader, filename);
+            }
         } catch (PyException pye) {
             throw scriptException(pye);
         }
     }
 
-    public Object invokeMethod(Object thiz, String name, Object... args) throws ScriptException, NoSuchMethodException {
+    private PyCode compileScript(Reader reader, ScriptContext context) throws ScriptException {
         try {
-            if (!(thiz instanceof PyObject))
+            String filename = (String) context.getAttribute(ScriptEngine.FILENAME);
+            if (filename == null) {
+                return interp.compile(reader);
+            } else {
+                return interp.compile(reader, filename);
+            }
+        } catch (PyException pye) {
+            throw scriptException(pye);
+        }
+    }
+
+    public Object invokeMethod(Object thiz, String name, Object... args) throws ScriptException,
+            NoSuchMethodException {
+        try {
+            if (!(thiz instanceof PyObject)) {
                 thiz = Py.java2py(thiz);
-            return ((PyObject) thiz).invoke(name, java2py(args)).__tojava__(Object.class);
+            }
+            return ((PyObject) thiz).invoke(name, Py.javas2pys(args)).__tojava__(Object.class);
         } catch (PyException pye) {
             return throwInvokeException(pye, name);
         }
     }
 
-    public Object invokeFunction(String name, Object... args) throws ScriptException, NoSuchMethodException {
+    public Object invokeFunction(String name, Object... args) throws ScriptException,
+            NoSuchMethodException {
         try {
             PyObject function = interp.get(name);
-            if (function == null)
+            if (function == null) {
                 throw new NoSuchMethodException(name);
-            return function.__call__(java2py(args)).__tojava__(Object.class);
+            }
+            return function.__call__(Py.javas2pys(args)).__tojava__(Object.class);
         } catch (PyException pye) {
             return throwInvokeException(pye, name);
         }
@@ -113,23 +119,28 @@ public class PyScriptEngine extends AbstractScriptEngine implements Compilable, 
     }
 
     public <T> T getInterface(Object obj, Class<T> clazz) {
-        if (obj == null)
+        if (obj == null) {
             throw new IllegalArgumentException("object expected");
-        if (clazz == null || !clazz.isInterface())
+        }
+        if (clazz == null || !clazz.isInterface()) {
             throw new IllegalArgumentException("interface expected");
-        final Object thiz = Py.java2py(obj);
-        return (T) Proxy.newProxyInstance(
+        }
+        final PyObject thiz = Py.java2py(obj);
+        @SuppressWarnings("unchecked")
+        T proxy = (T) Proxy.newProxyInstance(
             clazz.getClassLoader(),
             new Class[] { clazz },
             new InvocationHandler() {
                 public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
                     try {
-                        return ((PyObject) thiz).invoke(method.getName(), java2py(args)).__tojava__(Object.class);
+                        PyObject result = thiz.invoke(method.getName(), Py.javas2pys(args));
+                        return result.__tojava__(Object.class);
                     } catch (PyException pye) {
                         return throwInvokeException(pye, method.getName());
                     }
                 }
             });
+        return proxy;
     }
 
     private static Object throwInvokeException(PyException pye, String methodName)
@@ -162,11 +173,11 @@ public class PyScriptEngine extends AbstractScriptEngine implements Compilable, 
                         offset == null ? 0 : offset.asInt());
             } else if (tb != null) {
                 String filename;
-                if (tb.tb_frame == null || tb.tb_frame.f_code == null)
+                if (tb.tb_frame == null || tb.tb_frame.f_code == null) {
                     filename = null;
-                else
+                } else {
                     filename = tb.tb_frame.f_code.co_filename;
-
+                }
                 se = new ScriptException(
                         Py.formatException(type, value),
                         filename,
@@ -182,14 +193,6 @@ public class PyScriptEngine extends AbstractScriptEngine implements Compilable, 
         return se;
     }
 
-    private static PyObject[] java2py(Object[] args) {
-        PyObject wrapped[] = new PyObject[args.length];
-        for (int i = 0; i < args.length; i++) {
-            wrapped[i] = Py.java2py(args[i]);
-        }
-        return wrapped;
-    }
-
     private class PyCompiledScript extends CompiledScript {
         private PyCode code;
 
@@ -197,10 +200,12 @@ public class PyScriptEngine extends AbstractScriptEngine implements Compilable, 
             this.code = code;
         }
 
+        @Override
         public ScriptEngine getEngine() {
             return PyScriptEngine.this;
         }
 
+        @Override
         public Object eval(ScriptContext ctx) throws ScriptException {
             return PyScriptEngine.this.eval(code, ctx);
         }

@@ -446,7 +446,7 @@ public class Jython22DataHandler extends DataHandler {
      * @return a list of datahandlers
      */
     public PyObject __chain__() {
-        return new PyList(new PyObject[] { Py.java2py(this) });
+        return new PyList(Py.javas2pys(this));
     }
 
 }

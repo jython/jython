@@ -853,9 +853,7 @@ public final class Py {
         if (args == null || args.length == 0) {
             pargs = Py.EmptyObjects;
         } else {
-            pargs = new PyObject[args.length];
-            for(int i=0; i<args.length; i++)
-                pargs[i] = Py.java2py(args[i]);
+            pargs = Py.javas2pys(args);
         }
         instance = pyc.__call__(pargs);
         instance.javaProxy = proxy;
@@ -1484,6 +1482,20 @@ public final class Py {
      */
     public static PyObject java2py(Object o) {
         return getAdapter().adapt(o);
+    }
+
+    /**
+     * Uses the PyObjectAdapter passed to {@link PySystemState#initialize} to turn
+     * <code>objects</code> into an array of PyObjects.
+     *
+     * @see ClassicPyObjectAdapter - default PyObjectAdapter type
+     */
+    public static PyObject[] javas2pys(Object... objects) {
+        PyObject[] objs = new PyObject[objects.length];
+        for (int i = 0; i < objs.length; i++) {
+            objs[i] = java2py(objects[i]);
+        }
+        return objs;
     }
 
     /**

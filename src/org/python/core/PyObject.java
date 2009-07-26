@@ -51,7 +51,7 @@ public class PyObject implements Serializable {
         if (Py.BOOTSTRAP_TYPES.size() > 0) {
             Py.writeWarning("init", "Bootstrap types weren't encountered in bootstrapping: "
                             + Py.BOOTSTRAP_TYPES);
-            
+
         }
     }
 
@@ -325,7 +325,7 @@ public class PyObject implements Serializable {
     public PyObject __call__(PyObject args[], String keywords[]) {
         throw Py.TypeError(String.format("'%s' object is not callable", getType().fastGetName()));
     }
-    
+
     public PyObject __call__(ThreadState state, PyObject args[], String keywords[]) {
         return __call__(args, keywords);
     }
@@ -350,7 +350,7 @@ public class PyObject implements Serializable {
         newArgs[0] = arg1;
         return __call__(newArgs, keywords);
     }
-    
+
     public PyObject __call__(ThreadState state, PyObject arg1, PyObject args[], String keywords[]) {
         return __call__(arg1, args, keywords);
     }
@@ -366,7 +366,7 @@ public class PyObject implements Serializable {
     public PyObject __call__(PyObject args[]) {
         return __call__(args, Py.NoKeywords);
     }
-    
+
     public PyObject __call__(ThreadState state, PyObject args[]) {
         return __call__(args);
     }
@@ -380,7 +380,7 @@ public class PyObject implements Serializable {
     public PyObject __call__() {
         return __call__(Py.EmptyObjects, Py.NoKeywords);
     }
-    
+
     public PyObject __call__(ThreadState state) {
         return __call__();
     }
@@ -396,7 +396,7 @@ public class PyObject implements Serializable {
     public PyObject __call__(PyObject arg0) {
         return __call__(new PyObject[] { arg0 }, Py.NoKeywords);
     }
-    
+
     public PyObject __call__(ThreadState state, PyObject arg0) {
         return __call__(arg0);
     }
@@ -431,7 +431,7 @@ public class PyObject implements Serializable {
     public PyObject __call__(PyObject arg0, PyObject arg1, PyObject arg2) {
         return __call__(new PyObject[] { arg0, arg1, arg2 }, Py.NoKeywords);
     }
-    
+
     public PyObject __call__(ThreadState state, PyObject arg0, PyObject arg1, PyObject arg2) {
         return __call__(arg0, arg1, arg2);
     }
@@ -452,7 +452,7 @@ public class PyObject implements Serializable {
             new PyObject[] { arg0, arg1, arg2, arg3 },
             Py.NoKeywords);
     }
-    
+
     public PyObject __call__(ThreadState state, PyObject arg0, PyObject arg1, PyObject arg2, PyObject arg3) {
         return __call__(arg0, arg1, arg2, arg3);
     }
@@ -3496,12 +3496,8 @@ public class PyObject implements Serializable {
      * A convenience function for PyProxys.
      */
     public PyObject _jcallexc(Object[] args) throws Throwable {
-        PyObject[] pargs = new PyObject[args.length];
         try {
-            for (int i = 0; i < args.length; i++) {
-                pargs[i] = Py.java2py(args[i]);
-            }
-            return __call__(pargs);
+            return __call__(Py.javas2pys(args));
         } catch (PyException e) {
             if (e.value.getJavaProxy() != null) {
                 Object t = e.value.__tojava__(Throwable.class);

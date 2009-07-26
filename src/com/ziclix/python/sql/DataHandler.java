@@ -507,9 +507,9 @@ public class DataHandler {
     public static final DataHandler getSystemDataHandler() {
         DataHandler dh = new DataHandler();
 
-        for (int i = 0; i < SYSTEM_DATAHANDLERS.length; i++) {
+        for (String element : SYSTEM_DATAHANDLERS) {
             try {
-                Class c = Class.forName(SYSTEM_DATAHANDLERS[i]);
+                Class c = Class.forName(element);
                 Constructor cons = c.getConstructor(new Class[]{DataHandler.class});
                 dh = (DataHandler) cons.newInstance(new Object[]{dh});
             } catch (Throwable t) {}
@@ -524,7 +524,7 @@ public class DataHandler {
      * @return a list of datahandlers
      */
     public PyObject __chain__() {
-        return new PyList(new PyObject[] { Py.java2py(this) });
+        return new PyList(Py.javas2pys(this));
     }
 
     /**

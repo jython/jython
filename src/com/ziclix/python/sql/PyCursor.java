@@ -750,12 +750,10 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
 
         SQLWarning warning = event.getWarning();
         while (warning != null) {
-            PyObject[] warn = new PyObject[] {
-                // there are three parts: (reason, state, vendorCode)
-                Py.java2py(warning.getMessage()),
-                Py.java2py(warning.getSQLState()),
-                Py.newInteger(warning.getErrorCode())
-            };
+
+            // there are three parts: (reason, state, vendorCode)
+            PyObject[] warn =
+                Py.javas2pys(warning.getMessage(), warning.getSQLState(), warning.getErrorCode());
 
             // add the warning to the list
             ((PyList)this.warnings).append(new PyTuple(warn));
