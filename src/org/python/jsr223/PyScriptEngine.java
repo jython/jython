@@ -30,11 +30,13 @@ public class PyScriptEngine extends AbstractScriptEngine implements Compilable, 
     }
 
     public Object eval(String script, ScriptContext context) throws ScriptException {
-        return eval(compileScript(script, context));
+        return eval(compileScript(script, context), context);
     }
 
-    private Object eval(PyCode code) throws ScriptException {
+    private Object eval(PyCode code, ScriptContext context) throws ScriptException {
         try {
+            interp.setOut(context.getWriter());
+            interp.setErr(context.getErrorWriter());
             return interp.eval(code).__tojava__(Object.class);
         } catch (PyException pye) {
             throw scriptException(pye);
@@ -42,7 +44,7 @@ public class PyScriptEngine extends AbstractScriptEngine implements Compilable, 
     }
 
     public Object eval(Reader reader, ScriptContext context) throws ScriptException {
-        return eval(compileScript(reader, context));
+        return eval(compileScript(reader, context), context);
     }
 
     public Bindings createBindings() {
@@ -190,11 +192,9 @@ public class PyScriptEngine extends AbstractScriptEngine implements Compilable, 
 
     private class PyCompiledScript extends CompiledScript {
         private PyCode code;
-        private PySystemState systemState;
 
         PyCompiledScript(PyCode code) {
             this.code = code;
-            this.systemState = Py.getSystemState();
         }
 
         public ScriptEngine getEngine() {
@@ -202,9 +202,7 @@ public class PyScriptEngine extends AbstractScriptEngine implements Compilable, 
         }
 
         public Object eval(ScriptContext ctx) throws ScriptException {
-            // can't read filename from context at this point
-            Py.setSystemState(systemState);
-            return PyScriptEngine.this.eval(code);
+            return PyScriptEngine.this.eval(code, ctx);
         }
     }
 }
