@@ -6,7 +6,7 @@ import java.lang.reflect.Modifier;
 
 import org.python.core.PyObject;
 
-public class JavaMaker extends ProxyMaker implements ClassConstants {
+public class JavaMaker extends ProxyMaker {
 
     public String pythonClass, pythonModule;
 
@@ -35,8 +35,7 @@ public class JavaMaker extends ProxyMaker implements ClassConstants {
         callSuper(code, "<init>", name, parameters, null, sig);
         code.visitVarInsn(ALOAD, 0);
         getArgs(code, parameters);
-
-        code.visitMethodInsn(INVOKEVIRTUAL, classfile.name, "__initProxy__", "([Ljava/lang/Object;)V");
+        code.visitMethodInsn(INVOKEVIRTUAL, classfile.name, "__initProxy__", makeSig("V", $objArr));
         code.visitInsn(RETURN);
     }
 
@@ -46,14 +45,14 @@ public class JavaMaker extends ProxyMaker implements ClassConstants {
             super.addProxy();
 
         // _initProxy method
-        Code code = classfile.addMethod("__initProxy__", "([Ljava/lang/Object;)V", Modifier.PUBLIC);
+        Code code = classfile.addMethod("__initProxy__", makeSig("V", $objArr), Modifier.PUBLIC);
 
         code.visitVarInsn(ALOAD, 0);
         code.visitLdcInsn(pythonModule);
         code.visitLdcInsn(pythonClass);
-
         code.visitVarInsn(ALOAD, 1);
-        code.visitMethodInsn(INVOKESTATIC, "org/python/core/Py", "initProxy", "(" + $pyProxy + $str + $str + $objArr + ")V");
+        code.visitMethodInsn(INVOKESTATIC, "org/python/core/Py", "initProxy",
+            makeSig("V", $pyProxy, $str, $str, $objArr));
         code.visitInsn(RETURN);
 
     }

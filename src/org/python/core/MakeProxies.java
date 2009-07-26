@@ -32,16 +32,16 @@ class MakeProxies {
 
     public static Class<?> makeAdapter(Class<?> c) {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-        String name;
+        AdapterMaker maker = new AdapterMaker(proxyPrefix + c.getName(), c);
         try {
-            name = AdapterMaker.makeAdapter(c, bytes);
+            maker.build(bytes);
         } catch (Exception exc) {
             throw Py.JavaError(exc);
         }
 
-        Py.saveClassFile(name, bytes);
+        Py.saveClassFile(maker.myClass, bytes);
 
-        return makeClass(c, null, name, bytes);
+        return makeClass(c, null, maker.myClass, bytes);
     }
 
     private static final String proxyPrefix = "org.python.proxies.";
@@ -82,9 +82,8 @@ class MakeProxies {
                                      fullProxyName,
                                      dict);
         try {
-            jm.build();
             ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-            jm.classfile.write(bytes);
+            jm.build(bytes);
             if (customProxyName != null) {
                 Py.saveClassFile(fullProxyName, bytes, Py.getSystemState().javaproxy_dir);
             } else {

@@ -24,5 +24,4 @@ public interface ClassConstants {
     final static String $str       = "Ljava/lang/String;";
     final static String $strArr    = "[Ljava/lang/String;";
     final static String $throwable = "Ljava/lang/Throwable;";
-
 }

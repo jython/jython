@@ -1,9 +1,6 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.compiler;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -11,13 +8,13 @@ import java.lang.reflect.Modifier;
 import java.util.Map;
 import java.util.Set;
 
+import org.objectweb.asm.Label;
+import org.objectweb.asm.Opcodes;
 import org.python.core.Py;
 import org.python.core.PyMethod;
 import org.python.core.PyObject;
 import org.python.core.PyProxy;
 import org.python.core.PyReflectedFunction;
-import org.objectweb.asm.Label;
-import org.objectweb.asm.Opcodes;
 import org.python.util.Generic;
 
 public class ProxyMaker implements ClassConstants, Opcodes
@@ -34,7 +31,7 @@ public class ProxyMaker implements ClassConstants, Opcodes
     public static final int tOther=9;
     public static final int tNone=10;
 
-    public static Map<Class<?>, Integer> types=fillTypes();
+    public static Map<Class<?>, Integer> types = fillTypes();
 
     public static Map<Class<?>, Integer> fillTypes() {
         Map<Class<?>, Integer> typeMap = Generic.map();
@@ -51,10 +48,15 @@ public class ProxyMaker implements ClassConstants, Opcodes
     }
 
     public static int getType(Class<?> c) {
-        if (c == null) return tNone;
+        if (c == null) {
+            return tNone;
+        }
         Object i = types.get(c);
-        if (i == null) return tOther;
-        else return ((Integer)i).intValue();
+        if (i == null) {
+            return tOther;
+        } else {
+            return ((Integer)i);
+        }
     }
 
     /**
@@ -89,35 +91,58 @@ public class ProxyMaker implements ClassConstants, Opcodes
     Set<String> names;
     Set<String> supernames = Generic.set();
     public ClassFile classfile;
+    /** The name of the class to build. */
     public String myClass;
 
-    public ProxyMaker(String classname, Class<?> superclass) {
-        this.myClass = "org.python.proxies."+classname;
-        if (superclass.isInterface()) {
-            this.superclass = Object.class;
-            this.interfaces = new Class[] {superclass};
-        } else {
-            this.superclass = superclass;
-            this.interfaces = new Class[0];
-        }
+    /**
+     * Creates a proxy class maker that produces classes named
+     * <code>org.python.proxies.(superclassName)</code> with <code>superclass</code> as an
+     * implemented interface or extended class, depending on the its type.
+     *
+     * @deprecated - Use {@link ProxyMaker#ProxyMaker(String, Class, Class[])
+
+     */
+    @Deprecated
+    public ProxyMaker(String superclassName, Class<?> superclass) {
+        this("org.python.proxies." + superclassName,
+            superclass.isInterface() ? Object.class : superclass,
+            superclass.isInterface() ? new Class<?>[] { superclass} : new Class<?>[0]);
+
     }
 
-    public ProxyMaker(String myClass, Class<?> superclass, Class<?>[] interfaces) {
-        this.myClass = myClass;
-        if (superclass == null)
+    /**
+     * Creates a proxy class maker that produces classes named <code>proxyClassName</code> that
+     * extends <code>superclass</code> and implements the interfaces in <code>interfaces</code>.
+     */
+    public ProxyMaker(String proxyClassName, Class<?> superclass, Class<?>... interfaces) {
+        this.myClass = proxyClassName;
+        if (superclass == null) {
             superclass = Object.class;
+        }
+        if (superclass.isInterface()) {
+            throw new IllegalArgumentException("Given an interface,  " + superclass.getName()
+                    + ", for a proxy superclass");
+        }
         this.superclass = superclass;
-        if (interfaces == null)
+        if (interfaces == null) {
             interfaces = new Class[0];
+        }
+        for (Class<?> interfac : interfaces) {
+            if (!interfac.isInterface()) {
+                throw new IllegalArgumentException(
+                    "All classes in the interfaces array must be interfaces, unlike "
+                            + interfac.getName());
+            }
+        }
         this.interfaces = interfaces;
     }
 
     public static String mapClass(Class<?> c) {
         String name = c.getName();
         int index = name.indexOf(".");
-        if (index == -1)
+        if (index == -1) {
             return name;
-
+        }
         StringBuffer buf = new StringBuffer(name.length());
         int last_index = 0;
         while (index != -1) {
@@ -149,20 +174,25 @@ public class ProxyMaker implements ClassConstants, Opcodes
         }
     }
 
-    public static String makeSignature(Class<?>[] sig, Class<?> ret) {
-        StringBuffer buf=new StringBuffer();
-        buf.append("(");
-        for (Class<?> element : sig) {
-            buf.append(mapType(element));
+    public static String makeSig(Class<?> ret, Class<?>... sig) {
+        String[] mapped = new String[sig.length];
+        for (int i = 0; i < mapped.length; i++) {
+            mapped[i] = mapType(sig[i]);
         }
-        buf.append(")");
-        buf.append(mapType(ret));
-        return buf.toString();
+        return makeSig(mapType(ret), mapped);
+    }
+
+    public static String makeSig(String returnType, String... parameterTypes) {
+        StringBuilder buf = new StringBuilder("(");
+        for (String param : parameterTypes) {
+            buf.append(param);
+        }
+        return buf.append(')').append(returnType).toString();
     }
 
 
     public void doConstants() throws Exception {
-        Code code = classfile.addMethod("<clinit>", "()V", Modifier.STATIC);
+        Code code = classfile.addMethod("<clinit>", makeSig("V"), Modifier.STATIC);
         code.return_();
     }
 
@@ -276,8 +306,8 @@ public class ProxyMaker implements ClassConstants, Opcodes
                           String jcallName)
         throws Exception
     {
-        code.invokevirtual("org/python/core/PyObject", jcallName, "(" + $objArr + ")" + $pyObj);
-        code.invokestatic("org/python/core/Py", "py2"+name, "(" + $pyObj + ")"+type);
+        code.invokevirtual("org/python/core/PyObject", jcallName, makeSig($pyObj, $objArr));
+        code.invokestatic("org/python/core/Py", "py2"+name, makeSig(type, $pyObj));
     }
 
 
@@ -385,10 +415,10 @@ public class ProxyMaker implements ClassConstants, Opcodes
             doJavaCall(code, "void", "V", jcallName);
             break;
         default:
-            code.invokevirtual("org/python/core/PyObject", jcallName, "(" + $objArr + ")" + $pyObj);
+            code.invokevirtual("org/python/core/PyObject", jcallName, makeSig($pyObj, $objArr));
             code.ldc(ret.getName());
-            code.invokestatic("java/lang/Class","forName", "(" + $str + ")" + $clss);
-            code.invokestatic("org/python/core/Py", "tojava", "(" + $pyObj + $clss + ")" + $obj);
+            code.invokestatic("java/lang/Class","forName", makeSig($clss, $str));
+            code.invokestatic("org/python/core/Py", "tojava", makeSig($obj, $pyObj, $clss));
             // I guess I need this checkcast to keep the verifier happy
             code.checkcast(mapClass(ret));
             break;
@@ -429,7 +459,7 @@ public class ProxyMaker implements ClassConstants, Opcodes
                 code.aload(instLocal);
                 code.aload(excLocal);
 
-                code.invokevirtual("org/python/core/PyObject", "_jthrow", "(" + $throwable + ")V");
+                code.invokevirtual("org/python/core/PyObject", "_jthrow", makeSig("V", $throwable));
                 code.visitTryCatchBlock(start, end, handlerStart, "java/lang/Throwable");
 
                 code.freeLocal(excLocal);
@@ -450,7 +480,7 @@ public class ProxyMaker implements ClassConstants, Opcodes
 
         Class<?>[] parameters = method.getParameterTypes();
         Class<?> ret = method.getReturnType();
-        String sig = makeSignature(parameters, ret);
+        String sig = makeSig(ret, parameters);
 
         String name = method.getName();
         names.add(name);
@@ -462,8 +492,8 @@ public class ProxyMaker implements ClassConstants, Opcodes
 
         if (!isAbstract) {
             int tmp = code.getLocal("org/python/core/PyObject");
-            code.invokestatic("org/python/compiler/ProxyMaker", "findPython", "(" + $pyProxy + $str
-                    + ")" + $pyObj);
+            code.invokestatic("org/python/compiler/ProxyMaker", "findPython",
+                makeSig($pyObj, $pyProxy, $str));
             code.astore(tmp);
             code.aload(tmp);
 
@@ -480,8 +510,8 @@ public class ProxyMaker implements ClassConstants, Opcodes
             addSuperMethod("super__"+name, name, superClass, parameters,
                            ret, sig, access);
         } else {
-            code.invokestatic("org/python/compiler/ProxyMaker", "findPython", "(" + $pyProxy + $str
-                    + ")" + $pyObj);
+            code.invokestatic("org/python/compiler/ProxyMaker", "findPython",
+                makeSig($pyObj, $pyProxy, $str));
             code.dup();
             Label returnNull = new Label();
             code.ifnull(returnNull);
@@ -506,10 +536,9 @@ public class ProxyMaker implements ClassConstants, Opcodes
     protected void addMethods(Class<?> c, Set<String> t) throws Exception {
         Method[] methods = c.getDeclaredMethods();
         for (Method method : methods) {
-            String s = methodString(method);
-            if (t.contains(s))
+            if (!t.add(methodString(method))) {
                 continue;
-            t.add(s);
+            }
 
             int access = method.getModifiers();
             if (Modifier.isStatic(access) || Modifier.isPrivate(access)) {
@@ -528,16 +557,18 @@ public class ProxyMaker implements ClassConstants, Opcodes
                 }
             } else if (Modifier.isFinal(access)) {
                 continue;
+            } else if (!Modifier.isPublic(access)) {
+                continue; // package protected by process of elimination; we can't override
             }
             addMethod(method, access);
         }
 
         Class<?> sc = c.getSuperclass();
-        if (sc != null)
+        if (sc != null) {
             addMethods(sc, t);
+        }
 
-        Class<?>[] ifaces = c.getInterfaces();
-        for (Class<?> iface : ifaces) {
+        for (Class<?> iface : c.getInterfaces()) {
             addMethods(iface, t);
         }
     }
@@ -556,15 +587,17 @@ public class ProxyMaker implements ClassConstants, Opcodes
         String name = mapClass(c);
         for (Constructor<?> constructor : constructors) {
             int access = constructor.getModifiers();
-            if (Modifier.isPrivate(access))
+            if (Modifier.isPrivate(access)) {
                 continue;
-            if (Modifier.isNative(access))
+            }
+            if (Modifier.isNative(access)) {
                 access = access & ~Modifier.NATIVE;
-            if (Modifier.isProtected(access))
+            }
+            if (Modifier.isProtected(access)) {
                 access = access & ~Modifier.PROTECTED | Modifier.PUBLIC;
+            }
             Class<?>[] parameters = constructor.getParameterTypes();
-            String sig = makeSignature(parameters, Void.TYPE);
-            addConstructor(name, parameters, Void.TYPE, sig, access);
+            addConstructor(name, parameters, Void.TYPE, makeSig(Void.TYPE, parameters), access);
         }
     }
 
@@ -585,7 +618,6 @@ public class ProxyMaker implements ClassConstants, Opcodes
     public void addSuperMethod(Method method, int access) throws Exception {
         Class<?>[] parameters = method.getParameterTypes();
         Class<?> ret = method.getReturnType();
-        String sig = makeSignature(parameters, ret);
         String superClass = mapClass(method.getDeclaringClass());
         String superName = method.getName();
         String methodName = superName;
@@ -594,7 +626,7 @@ public class ProxyMaker implements ClassConstants, Opcodes
             access &= ~Modifier.FINAL;
         }
         addSuperMethod(methodName, superName, superClass, parameters,
-                       ret, sig, access);
+                       ret, makeSig(ret, parameters), access);
     }
 
     public void addSuperMethod(String methodName,
@@ -612,10 +644,11 @@ public class ProxyMaker implements ClassConstants, Opcodes
                first that redefines the JC method foo.
             */
             try {
-                superclass.getMethod(methodName,parameters);
+                superclass.getMethod(methodName, parameters);
                 return;
-            } catch(NoSuchMethodException e) {
-            } catch(SecurityException e) {
+            } catch (NoSuchMethodException e) {
+                // OK, no one else defines it, so we need to
+            } catch (SecurityException e) {
                 return;
             }
         }
@@ -626,64 +659,63 @@ public class ProxyMaker implements ClassConstants, Opcodes
 
     public void addProxy() throws Exception {
         // implement PyProxy interface
-        classfile.addField("__proxy", "Lorg/python/core/PyObject;",
-                           Modifier.PROTECTED);
+        classfile.addField("__proxy", $pyObj, Modifier.PROTECTED);
         // setProxy methods
-        Code code = classfile.addMethod("_setPyInstance",
-                                        "(Lorg/python/core/PyObject;)V",
-                                        Modifier.PUBLIC);
+        Code code = classfile.addMethod("_setPyInstance", makeSig("V", $pyObj), Modifier.PUBLIC);
         code.aload(0);
         code.aload(1);
-        code.putfield(classfile.name, "__proxy", "Lorg/python/core/PyObject;");
+        code.putfield(classfile.name, "__proxy", $pyObj);
         code.return_();
 
         // getProxy method
-        code = classfile.addMethod("_getPyInstance",
-                                   "()Lorg/python/core/PyObject;",
-                                   Modifier.PUBLIC);
+        code = classfile.addMethod("_getPyInstance", makeSig($pyObj), Modifier.PUBLIC);
         code.aload(0);
-        code.getfield(classfile.name, "__proxy", "Lorg/python/core/PyObject;");
+        code.getfield(classfile.name, "__proxy", $pyObj);
         code.areturn();
 
+        String pySys =  "Lorg/python/core/PySystemState;";
         // implement PyProxy interface
-        classfile.addField("__systemState",
-                           "Lorg/python/core/PySystemState;",
-                           Modifier.PROTECTED | Modifier.TRANSIENT);
+        classfile.addField("__systemState", pySys, Modifier.PROTECTED | Modifier.TRANSIENT);
 
         // setProxy method
         code = classfile.addMethod("_setPySystemState",
-                                   "(Lorg/python/core/PySystemState;)V",
+                                   makeSig("V", pySys),
                                    Modifier.PUBLIC);
 
         code.aload(0);
         code.aload(1);
-        code.putfield(classfile.name, "__systemState", "Lorg/python/core/PySystemState;");
+        code.putfield(classfile.name, "__systemState", pySys);
         code.return_();
 
         // getProxy method
-        code = classfile.addMethod("_getPySystemState",
-                                   "()Lorg/python/core/PySystemState;",
-                                   Modifier.PUBLIC);
+        code = classfile.addMethod("_getPySystemState", makeSig(pySys), Modifier.PUBLIC);
         code.aload(0);
-        code.getfield(classfile.name, "__systemState", "Lorg/python/core/PySystemState;");
+        code.getfield(classfile.name, "__systemState", pySys);
         code.areturn();
     }
 
     public void addClassDictInit() throws Exception {
         // classDictInit method
         classfile.addInterface(mapClass(org.python.core.ClassDictInit.class));
-        Code code = classfile.addMethod("classDictInit",
-                                   "(" + $pyObj + ")V",
-                                   Modifier.PUBLIC | Modifier.STATIC);
+        Code code = classfile.addMethod("classDictInit", makeSig("V", $pyObj),
+            Modifier.PUBLIC | Modifier.STATIC);
         code.aload(0);
         code.ldc("__supernames__");
 
         int strArray = CodeCompiler.makeStrings(code, supernames);
         code.aload(strArray);
         code.freeLocal(strArray);
-        code.invokestatic("org/python/core/Py", "java2py", "(" + $obj + ")" + $pyObj);
-        code.invokevirtual("org/python/core/PyObject", "__setitem__", "(" + $str + $pyObj + ")V");
+        code.invokestatic("org/python/core/Py", "java2py", makeSig($pyObj, $obj));
+        code.invokevirtual("org/python/core/PyObject", "__setitem__", makeSig("V", $str, $pyObj));
         code.return_();
+    }
+
+    /**
+     * Builds this proxy and writes its bytecode to <code>out</code>.
+     */
+    public void build(OutputStream out) throws Exception {
+        build();
+        classfile.write(out);
     }
 
     public void build() throws Exception {
@@ -711,24 +743,5 @@ public class ProxyMaker implements ClassConstants, Opcodes
         }
         doConstants();
         addClassDictInit();
-    }
-
-    public static File makeFilename(String name, File dir) {
-        int index = name.indexOf(".");
-        if (index == -1)
-            return new File(dir, name+".class");
-
-        return makeFilename(name.substring(index+1, name.length()),
-                            new File(dir, name.substring(0, index)));
-    }
-
-    // This is not general enough
-    public static OutputStream getFile(String d, String name)
-        throws IOException
-    {
-        File dir = new File(d);
-        File file = makeFilename(name, dir);
-        file.getParentFile().mkdirs();
-        return new FileOutputStream(file);
     }
 }

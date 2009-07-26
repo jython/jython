@@ -1143,7 +1143,7 @@ public final class Py {
         return pye;
     }
 
-    
+
     /**
      * @deprecated As of Jython 2.5, use {@link PyException#match} instead.
      */
@@ -1448,7 +1448,7 @@ public final class Py {
             throw Py.TypeError("None required for void return");
         }
     }
-    
+
     private final static PyString[] letters = new PyString[256];
 
     static {
@@ -1767,10 +1767,12 @@ public final class Py {
         if (dirname == null) {
             return;
         }
-        byte[] bytes = baos.toByteArray();
+        saveClassFile(name, baos.toByteArray(), dirname);
+    }
+
+    public static void saveClassFile(String name, byte[] bytes, String dirname) {
         File dir = new File(dirname);
         File file = makeFilename(name, dir);
-
         new File(file.getParent()).mkdirs();
         try {
             FileOutputStream o = new FileOutputStream(file);
@@ -1991,7 +1993,7 @@ class JavaCode extends PyCode {
             PyObject closure) {
         return func.__call__(arg1, arg2, arg3);
     }
-    
+
     @Override
     public PyObject call(ThreadState state, PyObject arg1, PyObject arg2,
             PyObject arg3, PyObject arg4, PyObject globals,
