@@ -27,7 +27,7 @@ public class PyScriptEngineFactory implements ScriptEngineFactory {
     }
 
     public String getLanguageVersion() {
-        return "2.5.0";
+        return String.format("%s.%s", Version.PY_MAJOR_VERSION, Version.PY_MINOR_VERSION);
     }
 
     public Object getParameter(String key) {
