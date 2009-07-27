@@ -133,8 +133,8 @@ class CodeopTests(unittest.TestCase):
         ai("def x():\n\n")
 
         ai("def x():\n  pass")
-        #ai("def x():\n  pass\n ")
-        #ai("def x():\n  pass\n  ")
+        ai("def x():\n  pass\n ")
+        ai("def x():\n  pass\n  ")
         ai("\n\ndef x():\n  pass")
 
         ai("a = 9+ \\")

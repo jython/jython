@@ -32,9 +32,15 @@ public class BaseParser {
     }
 
     public static class PyLexer extends PythonLexer {
-        public PyLexer(CharStream lexer) {
+        public PyLexer(CharStream lexer, boolean single) {
             super(lexer);
+            this.single = single;
         }
+
+        public PyLexer(CharStream lexer) {
+            this(lexer, false);
+        }
+
 
         public Token nextToken() {
             startPos = getCharPositionInLine();
@@ -53,12 +59,8 @@ public class BaseParser {
         }
     }
      
-    private CharStream charStream(boolean single) {
-        return charStream;
-    }
-
     private PythonParser setupParser(boolean single) {
-        PythonLexer lexer = new PyLexer(this.charStream(single));
+        PythonLexer lexer = new PyLexer(charStream, single);
         lexer.setErrorHandler(errorHandler);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         PythonTokenSource indentedSource = new PythonTokenSource(tokens, filename, single);

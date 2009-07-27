@@ -209,6 +209,7 @@ package org.python.antlr;
 //For use in partial parsing.
 public boolean eofWhileNested = false;
 public boolean partial = false;
+public boolean single = false;
 
 int implicitLineJoiningLevel = 0;
 int startPos=-1;
@@ -1967,6 +1968,8 @@ LEADING_WS
                                $channel=HIDDEN;
                            }
                        }
+                   } else if (this.single && newlines == 1) {
+                       throw new ParseException("Trailing space in single mode.");
                    } else {
                        // make a string of n newlines
                        char[] nls = new char[newlines];
