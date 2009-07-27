@@ -1085,12 +1085,21 @@ ESC
  *  emit a newline.
  */
 CONTINUED_LINE
+@init {
+    boolean extraNewlines = false;
+}
     :    '\\' ('\r')? '\n' (' '|'\t')*  { $channel=HIDDEN; }
          ( COMMENT
          | nl=NEWLINE
+           {
+               extraNewlines = true;
+           }        
          |
          ) {
                if (input.LA(1) == -1) {
+                   if (extraNewlines) {
+                       throw new ParseException("invalid syntax");
+                   }
                    emit(new CommonToken(TRAILBACKSLASH,"\\"));
                }
            }
@@ -1103,10 +1112,7 @@ CONTINUED_LINE
  *  Frank Wierzbicki added: Also ignore FORMFEEDS (\u000C).
  */
 NEWLINE
-@init {
-    int newlines = 0;
-}
-    :   (('\u000C')?('\r')? '\n' {newlines++; } )+ {
+    :   (('\u000C')?('\r')? '\n' )+ {
          if ( startPos==0 || implicitLineJoiningLevel>0 )
             $channel=HIDDEN;
         }

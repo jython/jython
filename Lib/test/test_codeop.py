@@ -168,9 +168,9 @@ class CodeopTests(unittest.TestCase):
 
         ai("\n\n if 1: pass\n\npass")
 
-        #ai("a = 9+ \\\n")
+        ai("a = 9+ \\\n")
         ai("a = 'a\\ ")
-        #ai("a = 'a\\\n")
+        ai("a = 'a\\\n")
 
         ai("a = 1","eval")
         #ai("a = (","eval")
