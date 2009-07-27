@@ -545,9 +545,9 @@ suite
     : simple_stmt
     | NEWLINE (EOF
               | (DEDENT)+ EOF
-              |INDENT (stmt)+ (DEDENT
-                              |EOF
-                              )
+              | INDENT (stmt)+ (DEDENT
+                               |EOF
+                               )
               )
     ;
 
