@@ -173,7 +173,10 @@ class CodeopTests(unittest.TestCase):
         ai("a = 'a\\\n")
 
         ai("a = 1","eval")
-        #ai("a = (","eval")
+        #XXX: Current limitation in PythonPartial.g prevents this from properly
+        #     erroring on Jython.
+        if not is_jython:
+            ai("a = (","eval")
         ai("]","eval")
         ai("())","eval")
         ai("[}","eval")
