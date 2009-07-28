@@ -1143,6 +1143,8 @@ LEADING_WS
                                $channel=HIDDEN;
                            }
                        }
+                   } else if (this.single && newlines == 1) {
+                       throw new ParseException("Trailing space in single mode.");
                    } else {
                        // make a string of n newlines
                        char[] nls = new char[newlines];
