@@ -72,8 +72,8 @@ class Code implements MethodVisitor, Opcodes {
         return returnLocal;
     }
 
-    public Vector getActiveLocals() {
-        Vector ret = new Vector();
+    public Vector<String> getActiveLocals() {
+        Vector<String> ret = new Vector<String>();
         ret.setSize(nlocals);
         for (int l = argcount; l<nlocals; l++) {
             if (l == returnLocal || finallyLocals.get(l))
