@@ -555,7 +555,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
 
         doFinallysDownTo(bcfLevel);
 
-        code.goto_((Label)breakLabels.peek());
+        code.goto_(breakLabels.peek());
         return null;
     }
 
@@ -568,7 +568,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
 
         doFinallysDownTo(bcfLevel);
 
-        code.goto_((Label)continueLabels.peek());
+        code.goto_(continueLabels.peek());
         return Exit;
     }
 
@@ -691,7 +691,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         code.astore(locals);
 
         for (int i = 0; i < v.size(); i++) {
-            String type = (String) v.elementAt(i);
+            String type = v.elementAt(i);
             if (type == null)
                 continue;
             code.aload(locals);
@@ -717,8 +717,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         Label end = new Label();
         code.label(end);
         for (int i = 0; i < exceptionHandlers.size(); ++i) {
-            ExceptionHandler handler = 
-                (ExceptionHandler)exceptionHandlers.elementAt(i);
+            ExceptionHandler handler = exceptionHandlers.elementAt(i);
             handler.exceptionEnds.addElement(end);
         }
     }
@@ -728,8 +727,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         Label start = new Label();
         code.label(start);
         for (int i = 0; i < exceptionHandlers.size(); ++i) {
-            ExceptionHandler handler = 
-                (ExceptionHandler)exceptionHandlers.elementAt(i);
+            ExceptionHandler handler = exceptionHandlers.elementAt(i);
             handler.exceptionStarts.addElement(start);
         }
     }
@@ -742,7 +740,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         code.astore(locals);
 
         for (int i = 0; i < v.size(); i++) {
-            String type = (String) v.elementAt(i);
+            String type = v.elementAt(i);
             if (type == null)
                 continue;
             code.aload(locals);
@@ -1063,8 +1061,8 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
     @Override
     public Object visitWhile(While node) throws Exception {
         int savebcf = beginLoop();
-        Label continue_loop = (Label)continueLabels.peek();
-        Label break_loop = (Label)breakLabels.peek();
+        Label continue_loop = continueLabels.peek();
+        Label break_loop = breakLabels.peek();
 
         Label start_loop = new Label();
 
@@ -1097,8 +1095,8 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
     @Override
     public Object visitFor(For node) throws Exception {
         int savebcf = beginLoop();
-        Label continue_loop = (Label)continueLabels.peek();
-        Label break_loop = (Label)breakLabels.peek();
+        Label continue_loop = continueLabels.peek();
+        Label break_loop = breakLabels.peek();
         Label start_loop = new Label();
         Label next_loop = new Label();
 
@@ -1280,14 +1278,12 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
     private void doFinallysDownTo(int level) throws Exception {
         Stack<ExceptionHandler> poppedHandlers = new Stack<ExceptionHandler>();
         while (exceptionHandlers.size() > level) {
-            ExceptionHandler handler = 
-                (ExceptionHandler)exceptionHandlers.pop();
+            ExceptionHandler handler = exceptionHandlers.pop();
             inlineFinally(handler);
             poppedHandlers.push(handler);
         }
         while (poppedHandlers.size() > 0) {
-            ExceptionHandler handler = 
-                (ExceptionHandler)poppedHandlers.pop();
+            ExceptionHandler handler = poppedHandlers.pop();
             reenterProtectedBody(handler);
             exceptionHandlers.push(handler);
          }

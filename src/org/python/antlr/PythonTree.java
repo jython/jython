@@ -251,19 +251,19 @@ public class PythonTree extends AST {
     }
  
 //XXX: From here down copied from org.antlr.runtime.tree.BaseTree
-	protected List children;
+	protected List<PythonTree> children;
 
 	public PythonTree getChild(int i) {
 		if ( children==null || i>=children.size() ) {
 			return null;
 		}
-		return (PythonTree)children.get(i);
+		return children.get(i);
 	}
 
 	/** Get the children internal List; note that if you directly mess with
 	 *  the list, do so at your own risk.
 	 */
-	public List getChildren() {
+	public List<PythonTree> getChildren() {
 		return children;
 	}
 
@@ -333,7 +333,7 @@ public class PythonTree extends AST {
 	}
 
 	/** Add all elements of kids list as children of this node */
-	public void addChildren(List kids) {
+	public void addChildren(List<PythonTree> kids) {
 		for (int i = 0; i < kids.size(); i++) {
 			PythonTree t = (PythonTree) kids.get(i);
 			addChild(t);
@@ -382,13 +382,13 @@ public class PythonTree extends AST {
 		int replacingHowMany = stopChildIndex - startChildIndex + 1;
 		int replacingWithHowMany;
 		PythonTree newTree = (PythonTree)t;
-		List newChildren = null;
+		List<PythonTree> newChildren = null;
 		// normalize to a list of children to add: newChildren
 		if ( newTree.isNil() ) {
 			newChildren = newTree.children;
 		}
 		else {
-			newChildren = new ArrayList(1);
+			newChildren = new ArrayList<PythonTree>(1);
 			newChildren.add(newTree);
 		}
 		replacingWithHowMany = newChildren.size();
@@ -432,8 +432,8 @@ public class PythonTree extends AST {
 	}
 
 	/** Override in a subclass to change the impl of children list */
-	protected List createChildrenList() {
-		return new ArrayList();
+	protected List<PythonTree> createChildrenList() {
+		return new ArrayList<PythonTree>();
 	}
 
 	/** Set the parent and child index values for all child of t */

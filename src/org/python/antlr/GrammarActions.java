@@ -217,7 +217,7 @@ public class GrammarActions {
         return new For(t, target, iter, b, o);
     }
 
-    stmt makeTryExcept(Token t, List body, List handlers, List orelse, List finBody) {
+    stmt makeTryExcept(Token t, List body, List<excepthandler> handlers, List orelse, List finBody) {
         List<stmt> b = castStmts(body);
         List<excepthandler> e = handlers;
         List<stmt> o = castStmts(orelse);
@@ -695,7 +695,7 @@ public class GrammarActions {
 
         if (isTuple) {
             List<slice> st;
-            List etypes = new ArrayList();
+            List<expr> etypes = new ArrayList<expr>();
             for (Object o : sltypes) {
                 if (o instanceof Index) {
                     Index i = (Index)o;
@@ -706,8 +706,7 @@ public class GrammarActions {
                 }
             }
             if (!extslice) {
-                List<expr> es = etypes;
-                expr t = new Tuple(begin, es, expr_contextType.Load);
+                expr t = new Tuple(begin, etypes, expr_contextType.Load);
                 s = new Index(begin, t);
             }
         } else if (sltypes.size() == 1) {

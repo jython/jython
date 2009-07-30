@@ -475,7 +475,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
 
             yields[0] = start;
             for (int i = 1; i < yields.length; i++) {
-                yields[i] = (Label) compiler.yields.get(i-1);
+                yields[i] = compiler.yields.get(i-1);
             }
             c.tableswitch(0, yields.length - 1, start, yields);
         }

@@ -83,7 +83,7 @@ public class PythonTokenSource implements TokenSource {
     int sp=-1; // grow upwards
 
     /** The queue of tokens */
-    Vector tokens = new Vector();
+    Vector<Token> tokens = new Vector<Token>();
 
     /** We pull real tokens from this lexer */
     CommonTokenStream stream;
@@ -134,7 +134,7 @@ public class PythonTokenSource implements TokenSource {
     public Token nextToken() {
         // if something in queue, just remove and return it
         if (tokens.size() > 0) {
-            Token t = (Token)tokens.firstElement();
+            Token t = tokens.firstElement();
             tokens.removeElementAt(0);
             //System.out.println(filename + t);
             return t;
@@ -264,7 +264,7 @@ public class PythonTokenSource implements TokenSource {
                 }
             }
         }
-        List hiddenTokens = stream.getTokens(lastTokenAddedIndex + 1,t.getTokenIndex() - 1);
+        List<Token> hiddenTokens = stream.getTokens(lastTokenAddedIndex + 1,t.getTokenIndex() - 1);
         if (hiddenTokens != null) {
             tokens.addAll(hiddenTokens);
         }
