@@ -161,6 +161,40 @@ class CodeopTests(unittest.TestCase):
         # http://bugs.jython.org/issue1354
         ai("if True:\n if True:\n  if True:   \n")
 
+        ai("[");
+        ai("[a");
+        ai("[a,");
+        ai("[a,b");
+        ai("[a,b,");
+
+        ai("{");
+        ai("{a");
+        ai("{a:");
+        ai("{a:b");
+        ai("{a:b,");
+        ai("{a:b,c");
+        ai("{a:b,c:");
+        ai("{a:b,c:d");
+        ai("{a:b,c:d,");
+
+        ai("a(")
+        ai("a(b")
+        ai("a(b,")
+        ai("a(b,c")
+        ai("a(b,c,")
+
+        ai("def a(")
+        ai("def a(b")
+        ai("def a(b,")
+        ai("def a(b,c")
+        ai("def a(b,c,")
+
+        ai("(")
+        ai("(a")
+        ai("(a,")
+        ai("(a,b")
+        ai("(a,b,")
+
     def test_invalid(self):
         ai = self.assertInvalid
         ai("a b")
