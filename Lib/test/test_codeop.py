@@ -161,6 +161,18 @@ class CodeopTests(unittest.TestCase):
         # http://bugs.jython.org/issue1354
         ai("if True:\n if True:\n  if True:   \n")
 
+        ai("@a(")
+        ai("@a(b")
+        ai("@a(b,")
+        ai("@a(b,c")
+        ai("@a(b,c,")
+
+        ai("from a import (")
+        ai("from a import (b")
+        ai("from a import (b,")
+        ai("from a import (b,c")
+        ai("from a import (b,c,")
+
         ai("[");
         ai("[a");
         ai("[a,");
@@ -183,6 +195,14 @@ class CodeopTests(unittest.TestCase):
         ai("a(b,c")
         ai("a(b,c,")
 
+        ai("a[")
+        ai("a[b")
+        ai("a[b,")
+        ai("a[b:")
+        ai("a[b:c")
+        ai("a[b:c:")
+        ai("a[b:c:d")
+
         ai("def a(")
         ai("def a(b")
         ai("def a(b,")
@@ -195,10 +215,36 @@ class CodeopTests(unittest.TestCase):
         ai("(a,b")
         ai("(a,b,")
 
+        ai("if a:\n pass\nelif b:")
+        ai("if a:\n pass\nelif b:\n pass\nelse:")
+
+        ai("while a:")
+        ai("while a:\n pass\nelse:")
+
+        ai("for a in b:")
+        ai("for a in b:\n pass\nelse:")
+
         ai("try:")
         ai("try:\n pass\nexcept:")
         ai("try:\n pass\nfinally:")
         ai("try:\n pass\nexcept:\n pass\nfinally:")
+
+        ai("with a:")
+        ai("with a as b:")
+
+        ai("class a:")
+        ai("class a(")
+        ai("class a(b")
+        ai("class a(b,")
+        ai("class a():")
+
+        ai("[x for")
+        ai("[x for x in")
+        ai("[x for x in (")
+
+        ai("(x for")
+        ai("(x for x in")
+        ai("(x for x in (")
 
     def test_invalid(self):
         ai = self.assertInvalid
