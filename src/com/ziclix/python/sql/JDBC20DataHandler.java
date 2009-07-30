@@ -15,6 +15,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.math.BigDecimal;
+import java.sql.Array;
 import java.sql.Blob;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -52,8 +53,9 @@ public class JDBC20DataHandler extends FilterDataHandler {
      * @throws SQLException
      */
     @SuppressWarnings("fallthrough")
-    public void setJDBCObject(PreparedStatement stmt, int index, PyObject object, int type) throws SQLException {
-
+    @Override
+    public void setJDBCObject(PreparedStatement stmt, int index, PyObject object, int type)
+        throws SQLException {
         if (DataHandler.checkNull(stmt, index, object, type)) {
             return;
         }
@@ -97,7 +99,6 @@ public class JDBC20DataHandler extends FilterDataHandler {
 
                 if (lob != null) {
                     stmt.setBytes(index, lob);
-
                     break;
                 }
             default :
@@ -115,8 +116,8 @@ public class JDBC20DataHandler extends FilterDataHandler {
      * @return a Python object
      * @throws SQLException
      */
+    @Override
     public PyObject getPyObject(ResultSet set, int col, int type) throws SQLException {
-
         PyObject obj = Py.None;
 
         switch (type) {
@@ -127,7 +128,6 @@ public class JDBC20DataHandler extends FilterDataHandler {
                 // in JDBC 2.0, use of a scale is deprecated
                 try {
                     BigDecimal bd = set.getBigDecimal(col);
-
                     obj = (bd == null) ? Py.None : Py.newFloat(bd.doubleValue());
                 } catch (SQLException e) {
                     obj = super.getPyObject(set, col, type);
@@ -192,7 +192,8 @@ public class JDBC20DataHandler extends FilterDataHandler {
                 break;
 
             case Types.ARRAY:
-                obj = Py.java2py(set.getArray(col).getArray());
+                Array array = set.getArray(col);
+                obj = array == null ? Py.None : Py.java2py(array.getArray());
                 break;
 
             default :
