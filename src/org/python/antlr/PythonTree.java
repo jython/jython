@@ -202,7 +202,7 @@ public class PythonTree extends AST {
             buf.append(' ');
         }
         for (int i = 0; children != null && i < children.size(); i++) {
-            PythonTree t = (PythonTree)children.get(i);
+            PythonTree t = children.get(i);
             if (i > 0) {
                 buf.append(' ');
             }
@@ -269,7 +269,7 @@ public class PythonTree extends AST {
 
 	public PythonTree getFirstChildWithType(int type) {
 		for (int i = 0; children!=null && i < children.size(); i++) {
-			PythonTree t = (PythonTree) children.get(i);
+			PythonTree t = children.get(i);
 			if ( t.getAntlrType()==type ) {
 				return t;
 			}
@@ -306,7 +306,7 @@ public class PythonTree extends AST {
 				if ( this.children!=null ) { // must copy, this has children already
 					int n = childTree.children.size();
 					for (int i = 0; i < n; i++) {
-						PythonTree c = (PythonTree)childTree.children.get(i);
+						PythonTree c = childTree.children.get(i);
 						this.children.add(c);
 						// handle double-link stuff for each child of nil root
 						c.setParent(this);
@@ -335,7 +335,7 @@ public class PythonTree extends AST {
 	/** Add all elements of kids list as children of this node */
 	public void addChildren(List<PythonTree> kids) {
 		for (int i = 0; i < kids.size(); i++) {
-			PythonTree t = (PythonTree) kids.get(i);
+			PythonTree t = kids.get(i);
 			addChild(t);
 		}
 	}
@@ -359,7 +359,7 @@ public class PythonTree extends AST {
 		if ( children==null ) {
 			return null;
 		}
-		PythonTree killed = (PythonTree)children.remove(i);
+		PythonTree killed = children.remove(i);
 		// walk rest and decrement their child indexes
 		this.freshenParentAndChildIndexes(i);
 		return killed;
@@ -398,7 +398,7 @@ public class PythonTree extends AST {
 		if ( delta == 0 ) {
 			int j = 0; // index into new children
 			for (int i=startChildIndex; i<=stopChildIndex; i++) {
-				PythonTree child = (PythonTree)newChildren.get(j);
+				PythonTree child = newChildren.get(j);
 				children.set(i, child);
 				child.setParent(this);
 				child.setChildIndex(i);
@@ -413,7 +413,7 @@ public class PythonTree extends AST {
 			int indexToDelete = startChildIndex+numNewChildren;
 			for (int c=indexToDelete; c<=stopChildIndex; c++) {
 				// delete same index, shifting everybody down each time
-				PythonTree killed = (PythonTree)children.remove(indexToDelete);
+				PythonTree killed = children.remove(indexToDelete);
 			}
 			freshenParentAndChildIndexes(startChildIndex);
 		}

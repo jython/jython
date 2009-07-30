@@ -287,7 +287,7 @@ public class PyList extends PySequenceList implements List {
         if (list instanceof ArrayList) {
             ((ArrayList) list).ensureCapacity(newSize);
         }
-        List oldList = new ArrayList<PyObject>(list);
+        List<PyObject> oldList = new ArrayList<PyObject>(list);
         for (int i = 1; i < count; i++) {
             list.addAll(oldList);
         }
@@ -1152,7 +1152,7 @@ public class PyList extends PySequenceList implements List {
             stop = start;
         }
         int n = sliceLength(start, stop, step);
-        List newList;
+        List<PyObject> newList;
         if (step == 1) {
             newList = new ArrayList<PyObject>(list.subList(start, stop));
         } else {

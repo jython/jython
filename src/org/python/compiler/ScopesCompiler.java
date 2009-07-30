@@ -66,7 +66,7 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
         level--;
         ScopeInfo up = null;
         if (!scopes.empty()) {
-            up = (ScopeInfo) scopes.pop();
+            up = scopes.pop();
         }
         //Go into the stack to find a non class containing scope to use making the closure
         //See PEP 227
@@ -74,7 +74,7 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
         ScopeInfo referenceable = up;
         for (int i = scopes.size() - 1; i >= 0
                 && referenceable.kind == CLASSSCOPE; i--, dist++) {
-            referenceable = ((ScopeInfo) scopes.get(i));
+            referenceable = (scopes.get(i));
         }
         cur.cook(referenceable, dist, code_compiler);
         cur.dump(); // debug

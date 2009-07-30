@@ -332,7 +332,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
     Hashtable<Constant,Constant> constants;
 
     private Constant findConstant(Constant c) {
-        Constant ret = (Constant)constants.get(c);
+        Constant ret = constants.get(c);
         if (ret != null)
             return ret;
         ret = c;
@@ -620,7 +620,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
     public String getFilename() { return sfilename; }
 
     public ScopeInfo getScopeInfo(PythonTree node) {
-        return (ScopeInfo) scopes.get(node);
+        return scopes.get(node);
     }
 
     public void error(String msg,boolean err,PythonTree node)
