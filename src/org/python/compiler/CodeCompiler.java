@@ -120,12 +120,12 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
     public ScopeInfo my_scope;
 
     boolean optimizeGlobals = true;
-    public Vector names;
+    public Vector<String> names;
     public String className;
 
-    public Stack continueLabels, breakLabels;
-    public Stack exceptionHandlers;
-    public Vector yields = new Vector();
+    public Stack<Label> continueLabels, breakLabels;
+    public Stack<ExceptionHandler> exceptionHandlers;
+    public Vector<Label> yields = new Vector<Label>();
 
     /* break/continue finally's level.
      * This is the lowest level in the exceptionHandlers which should
@@ -148,9 +148,9 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         mrefs = this;
         cw = module.classfile.cw;
 
-        continueLabels = new Stack();
-        breakLabels = new Stack();
-        exceptionHandlers = new Stack();
+        continueLabels = new Stack<Label>();
+        breakLabels = new Stack<Label>();
+        exceptionHandlers = new Stack<ExceptionHandler>();
     }
 
     public void getNone() throws IOException {
@@ -682,7 +682,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
     private void restoreLocals() throws Exception {
         endExceptionHandlers();
         
-        Vector v = code.getActiveLocals();
+        Vector<String> v = code.getActiveLocals();
 
         loadFrame();
         code.getfield("org/python/core/PyFrame", "f_savedlocals", "[Ljava/lang/Object;");
@@ -735,7 +735,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
     }
 
     private void saveLocals() throws Exception {
-        Vector v = code.getActiveLocals();
+        Vector<String> v = code.getActiveLocals();
         code.iconst(v.size());
         code.anewarray("java/lang/Object");
         int locals = code.getLocal("[Ljava/lang/Object;");
@@ -1278,7 +1278,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
      *  all the handlers above level temporarily.
      */
     private void doFinallysDownTo(int level) throws Exception {
-        Stack poppedHandlers = new Stack();
+        Stack<ExceptionHandler> poppedHandlers = new Stack<ExceptionHandler>();
         while (exceptionHandlers.size() > level) {
             ExceptionHandler handler = 
                 (ExceptionHandler)exceptionHandlers.pop();
@@ -2414,8 +2414,8 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
          *  We also need to stop coverage for the recovery of the locals after
          *  a yield.
          */
-        public Vector exceptionStarts = new Vector();
-        public Vector exceptionEnds = new Vector();
+        public Vector<Label> exceptionStarts = new Vector<Label>();
+        public Vector<Label> exceptionEnds = new Vector<Label>();
 
         public boolean bodyDone = false;
 
@@ -2434,13 +2434,13 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
 
         public void addExceptionHandlers(Label handlerStart) throws Exception {
             for (int i = 0; i < exceptionStarts.size(); ++i) {
-                Label start = (Label)exceptionStarts.elementAt(i);
-                Label end = (Label)exceptionEnds.elementAt(i);
+                Label start = exceptionStarts.elementAt(i);
+                Label end = exceptionEnds.elementAt(i);
                 //FIXME: not at all sure that getOffset() test is correct or necessary.
                 if (start.getOffset() != end.getOffset()) {
                     code.trycatch(
-                        (Label)exceptionStarts.elementAt(i),
-                        (Label)exceptionEnds.elementAt(i),
+                        exceptionStarts.elementAt(i),
+                        exceptionEnds.elementAt(i),
                         handlerStart,
                         "java/lang/Throwable");
                 }

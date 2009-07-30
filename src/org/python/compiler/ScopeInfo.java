@@ -69,7 +69,7 @@ public class ScopeInfo extends Object implements ScopeConstants {
     public ArgListCompiler ac;
 
     public Map<String, SymInfo> tbl = new LinkedHashMap<String, SymInfo>();
-    public Vector names = new Vector();
+    public Vector<String> names = new Vector<String>();
 
     public int addGlobal(String name) {
         // global kind = func vs. class
@@ -116,11 +116,11 @@ public class ScopeInfo extends Object implements ScopeConstants {
 
     private final static Object PRESENT = new Object();
 
-    public Hashtable inner_free = new Hashtable();
+    public Hashtable<String,Object> inner_free = new Hashtable<String,Object>();
 
-    public Vector cellvars = new Vector();
+    public Vector<String> cellvars = new Vector<String>();
 
-    public Vector jy_paramcells = new Vector();
+    public Vector<String> jy_paramcells = new Vector<String>();
 
     public int jy_npurecell;
 
@@ -135,7 +135,7 @@ public class ScopeInfo extends Object implements ScopeConstants {
         this.up = up;
         this.distance = distance;
         boolean func = kind == FUNCSCOPE;
-        Vector purecells = new Vector();
+        Vector<String> purecells = new Vector<String>();
         cell = 0;
         boolean some_inner_free = inner_free.size() > 0;
 
@@ -223,7 +223,7 @@ public class ScopeInfo extends Object implements ScopeConstants {
         ctxt.error(illegal.toString(), true, scope_node);
     }
 
-    public Vector freevars = new Vector();
+    public Vector<String> freevars = new Vector<String>();
 
     /**
      * setup the closure on this scope using the scope passed into cook as up as
