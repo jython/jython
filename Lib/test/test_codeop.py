@@ -108,6 +108,12 @@ class CodeopTests(unittest.TestCase):
         av("\n \na**3","eval")
         av("#a\n#b\na**3","eval")
 
+        # From Jython project, not Jython specific
+
+        # this failed under Jython 2.2.1
+        av("def x():\n try: pass\n finally: [a for a in (1,2)]\n")
+
+
     def test_incomplete(self):
         ai = self.assertIncomplete
 
@@ -149,6 +155,8 @@ class CodeopTests(unittest.TestCase):
         ai("9+ \\","eval")
         ai("lambda z: \\","eval")
 
+        # From Jython project, not Jython specific
+
         #Did not work in Jython 2.5rc2 see first issue in
         # http://bugs.jython.org/issue1354
         ai("if True:\n if True:\n  if True:   \n")
@@ -183,6 +191,10 @@ class CodeopTests(unittest.TestCase):
         ai("9+","eval")
         ai("lambda z:","eval")
         ai("a b","eval")
+
+        # From Jython project, not Jython specific
+        ai("return 2.3")
+        ai("if (a == 1 and b = 2): pass")
 
     def test_filename(self):
         self.assertEquals(compile_command("a = 1\n", "abc").co_filename,

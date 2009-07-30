@@ -49,9 +49,6 @@ class CompileTests(unittest.TestCase):
         av("def x():\n  pass\n  ")
         av("\n\ndef x():\n  pass")
 
-        # this failed under 2.2.1
-        av("def x():\n try: pass\n finally: [a for a in (1,2)]\n")
-
         av("if 9==3:\n   pass\nelse:\n   pass")
         av("if 1:\n pass\n if 1:\n  pass\n else:\n  pass")
 
@@ -75,13 +72,11 @@ class CompileTests(unittest.TestCase):
     def test_invalid(self):
         ai = self.assertInvalid
         
-        ai("return 2.3")
         ai("del 1")
         ai("del ()")
         ai("del (1,)")
         ai("del [1]")
         ai("del '1'")
-        ai("if (a == 1 and b = 2): pass")
         ai("[i for i in range(10)] = (1, 2, 3)")
 
 
