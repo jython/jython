@@ -301,7 +301,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
     public Constant mainCode;
     public boolean linenumbers;
     Future futures;
-    Hashtable scopes;
+    Hashtable<PythonTree,ScopeInfo> scopes;
     long mtime;
 
     public Module(String name, String filename, boolean linenumbers) {
@@ -313,15 +313,15 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
         this.mtime = mtime;
         classfile = new ClassFile(name, "org/python/core/PyFunctionTable",
                                   ACC_SYNCHRONIZED | ACC_PUBLIC, mtime);
-        constants = new Hashtable();
+        constants = new Hashtable<Constant,Constant>();
         sfilename = filename;
         if (filename != null)
             this.filename = PyString(filename);
         else
             this.filename = null;
-        codes = new ArrayList();
+        codes = new ArrayList<PyCodeConstant>();
         futures = new Future();
-        scopes = new Hashtable();
+        scopes = new Hashtable<PythonTree,ScopeInfo>();
     }
 
     public Module(String name) {
@@ -329,7 +329,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
     }
 
     // This block of code handles the pool of Python Constants
-    Hashtable constants;
+    Hashtable<Constant,Constant> constants;
 
     private Constant findConstant(Constant c) {
         Constant ret = (Constant)constants.get(c);
@@ -365,10 +365,10 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
         return findConstant(new PyLongConstant(value));
     }
 
-    List codes;
+    List<PyCodeConstant> codes;
 
     //XXX: this can probably go away now that we can probably just copy the list.
-    private List<String> toNameAr(List names,boolean nullok) {
+    private List<String> toNameAr(List<String> names,boolean nullok) {
         int sz = names.size();
         if (sz == 0 && nullok) return null;
         List<String> nameArray = new ArrayList<String>();
@@ -562,7 +562,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
         }
 
         for(int i=0; i<codes.size(); i++) {
-            PyCodeConstant pyc = (PyCodeConstant)codes.get(i);
+            PyCodeConstant pyc = codes.get(i);
             pyc.put(c);
         }
 
@@ -589,7 +589,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
         code.tableswitch(0, labels.length - 1, def, labels);
         for(i=0; i<labels.length; i++) {
             code.label(labels[i]);
-            code.invokevirtual(classfile.name, ((PyCodeConstant)codes.get(i)).fname, "(" + $pyFrame + $threadState + ")" + $pyObj);
+            code.invokevirtual(classfile.name, (codes.get(i)).fname, "(" + $pyFrame + $threadState + ")" + $pyObj);
             code.areturn();
         }
         code.label(def);

@@ -34,17 +34,17 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
 
     private CompilationContext code_compiler;
 
-    private Stack scopes;
+    private Stack<ScopeInfo> scopes;
     private ScopeInfo cur = null;
-    private Hashtable nodeScopes;
+    private Hashtable<PythonTree,ScopeInfo> nodeScopes;
 
     private int level = 0;
     private int func_level = 0;
 
-    public ScopesCompiler(CompilationContext code_compiler, Hashtable nodeScopes) {
+    public ScopesCompiler(CompilationContext code_compiler, Hashtable<PythonTree,ScopeInfo> nodeScopes) {
         this.code_compiler = code_compiler;
         this.nodeScopes = nodeScopes;
-        scopes = new Stack();
+        scopes = new Stack<ScopeInfo>();
     }
 
     public void beginScope(String name, int kind, PythonTree node,
