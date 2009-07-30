@@ -195,6 +195,11 @@ class CodeopTests(unittest.TestCase):
         ai("(a,b")
         ai("(a,b,")
 
+        ai("try:")
+        ai("try:\n pass\nexcept:")
+        ai("try:\n pass\nfinally:")
+        ai("try:\n pass\nexcept:\n pass\nfinally:")
+
     def test_invalid(self):
         ai = self.assertInvalid
         ai("a b")

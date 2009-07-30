@@ -522,7 +522,7 @@ try_stmt
     : TRY COLON suite
       ( except_clause+ (ORELSE COLON suite)? (FINALLY COLON suite)?
       | FINALLY COLON suite
-      )
+      )?
       ;
 
 //with_stmt: 'with' test [ with_var ] ':' suite
