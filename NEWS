@@ -17,6 +17,7 @@ Jython 2.5.1
     - [ 1802339 ] Problem printing unicode when stdout intercepted
     - [ 1145 ] Jython 2.5 compatibility problem with JSR 223
     - [ 1400 ] Evaluating expression via JSR 223 ScriptEngine returns null instead of True/False
+    - [ 1413 ] Array data type (PostgreSQL) is not supported (NPE)
 
 Jython 2.5.0
   The same as rc4.
