@@ -14,6 +14,7 @@ import org.python.core.PyObject;
 import org.python.core.PyList;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
@@ -48,7 +49,7 @@ import java.sql.Types;
  */
 public class DataHandler {
 
-    // default size for buffers
+    /** Default size for buffers. */
     private static final int INITIAL_SIZE = 1024 * 4;
 
     private static final String[] SYSTEM_DATAHANDLERS = {
@@ -153,7 +154,8 @@ public class DataHandler {
      * @param type the <i>java.sql.Types</i> for which this PyObject should be bound
      * @throws SQLException
      */
-    public void setJDBCObject(PreparedStatement stmt, int index, PyObject object, int type) throws SQLException {
+    public void setJDBCObject(PreparedStatement stmt, int index, PyObject object, int type)
+        throws SQLException {
         try {
             if (checkNull(stmt, index, object, type)) {
                 return;
@@ -163,19 +165,16 @@ public class DataHandler {
 
                 case Types.DATE:
                     Date date = (Date) object.__tojava__(Date.class);
-
                     stmt.setDate(index, date);
                     break;
 
                 case Types.TIME:
                     Time time = (Time) object.__tojava__(Time.class);
-
                     stmt.setTime(index, time);
                     break;
 
                 case Types.TIMESTAMP:
                     Timestamp timestamp = (Timestamp) object.__tojava__(Timestamp.class);
-
                     stmt.setTimestamp(index, timestamp);
                     break;
 
@@ -203,7 +202,8 @@ public class DataHandler {
                     break;
             }
         } catch (Exception e) {
-            SQLException cause = null, ex = new SQLException("error setting index [" + index + "], type [" + type + "]");
+            SQLException cause = null, ex = new SQLException("error setting index [" + index
+                                                             + "], type [" + type + "]");
 
             if (e instanceof SQLException) {
                 cause = (SQLException) e;
@@ -212,7 +212,6 @@ public class DataHandler {
             }
 
             ex.setNextException(cause);
-
             throw ex;
         }
     }
@@ -229,7 +228,6 @@ public class DataHandler {
      * @throws SQLException if the type is unmappable
      */
     public PyObject getPyObject(ResultSet set, int col, int type) throws SQLException {
-
         PyObject obj = Py.None;
 
         switch (type) {
@@ -309,7 +307,7 @@ public class DataHandler {
                 throw new SQLException(msg);
         }
 
-        return (set.wasNull() || (obj == null)) ? Py.None : obj;
+        return set.wasNull() || obj == null ? Py.None : obj;
     }
 
     /**
@@ -322,7 +320,6 @@ public class DataHandler {
      * @throws SQLException if the type is unmappable
      */
     public PyObject getPyObject(CallableStatement stmt, int col, int type) throws SQLException {
-
         PyObject obj = Py.None;
 
         switch (type) {
@@ -331,14 +328,12 @@ public class DataHandler {
             case Types.VARCHAR:
             case Types.LONGVARCHAR:
                 String string = stmt.getString(col);
-
                 obj = (string == null) ? Py.None : Py.newUnicode(string);
                 break;
 
             case Types.NUMERIC:
             case Types.DECIMAL:
                 BigDecimal bd = stmt.getBigDecimal(col);
-
                 obj = (bd == null) ? Py.None : Py.newFloat(bd.doubleValue());
                 break;
 
@@ -398,7 +393,7 @@ public class DataHandler {
                 throw new SQLException(msg);
         }
 
-        return (stmt.wasNull() || (obj == null)) ? Py.None : obj;
+        return stmt.wasNull() || obj == null ? Py.None : obj;
     }
 
     /**
@@ -414,7 +409,8 @@ public class DataHandler {
      * @throws SQLException
      *
      */
-    public void registerOut(CallableStatement statement, int index, int colType, int dataType, String dataTypeName) throws SQLException {
+    public void registerOut(CallableStatement statement, int index, int colType, int dataType,
+                            String dataTypeName) throws SQLException {
 
         try {
             statement.registerOutParameter(index, dataType);
@@ -439,7 +435,8 @@ public class DataHandler {
      *
      * @return true if the object is null and was set on the statement, false otherwise
      */
-    public static final boolean checkNull(PreparedStatement stmt, int index, PyObject object, int type) throws SQLException {
+    public static final boolean checkNull(PreparedStatement stmt, int index, PyObject object,
+                                          int type) throws SQLException {
 
         if ((object == null) || (Py.None == object)) {
             stmt.setNull(index, type);
@@ -449,54 +446,57 @@ public class DataHandler {
     }
 
     /**
-     * Since the driver needs to the know the length of all streams,
-     * read it into a byte[] array.
+     * Consume the InputStream into an byte array and close the InputStream.
      *
-     * @return the stream as a byte[]
+     * @return the contents of the InputStream a byte[]
      */
     public static final byte[] read(InputStream stream) {
-
-        int b = -1, read = 0;
-        byte[] results = new byte[INITIAL_SIZE];
+        int size = 0;
+        byte[] buffer = new byte[INITIAL_SIZE];
+        ByteArrayOutputStream baos = new ByteArrayOutputStream(INITIAL_SIZE);
 
         try {
-            while ((b = stream.read()) != -1) {
-                if (results.length < (read + 1)) {
-                    byte[] tmp = results;
-                    results = new byte[results.length * 2];
-                    System.arraycopy(tmp, 0, results, 0, tmp.length);
-                }
-                results[read++] = (byte) b;
+            while ((size = stream.read(buffer)) != -1) {
+                baos.write(buffer, 0, size);
             }
-        } catch (IOException e) {
-            throw zxJDBC.makeException(e);
+        } catch (IOException ioe) {
+            throw zxJDBC.makeException(ioe);
+        } finally {
+            try {
+                stream.close();
+            } catch (IOException ioe) {
+                throw zxJDBC.makeException(ioe);
+            }
         }
 
-        byte[] tmp = results;
-        results = new byte[read];
-        System.arraycopy(tmp, 0, results, 0, read);
-        return results;
+        return baos.toByteArray();
     }
 
     /**
-     * Read all the chars from the Reader into the String.
+     * Consume the Reader into a String and close the Reader.
      *
-     * @return the contents of the Reader in a String
+     * @return the contents of the Reader as a String
      */
-    public static final String read(Reader reader) {
-
-        int c = 0;
-        StringBuffer buffer = new StringBuffer(INITIAL_SIZE);
+    public static String read(Reader reader) {
+        int size = 0;
+        char[] buffer = new char[INITIAL_SIZE];
+        StringBuilder builder = new StringBuilder(INITIAL_SIZE);
 
         try {
-            while ((c = reader.read()) != -1) {
-                buffer.append((char) c);
+            while ((size = reader.read(buffer)) != -1) {
+                builder.append(buffer, 0, size);
             }
-        } catch (IOException e) {
-            throw zxJDBC.makeException(e);
+        } catch (IOException ioe) {
+            throw zxJDBC.makeException(ioe);
+        } finally {
+            try {
+                reader.close();
+            } catch (IOException ioe) {
+                throw zxJDBC.makeException(ioe);
+            }
         }
 
-        return buffer.toString();
+        return builder.toString();
     }
 
     /**
@@ -509,8 +509,8 @@ public class DataHandler {
 
         for (String element : SYSTEM_DATAHANDLERS) {
             try {
-                Class c = Class.forName(element);
-                Constructor cons = c.getConstructor(new Class[]{DataHandler.class});
+                Class<?> c = Class.forName(element);
+                Constructor<?> cons = c.getConstructor(new Class<?>[]{DataHandler.class});
                 dh = (DataHandler) cons.newInstance(new Object[]{dh});
             } catch (Throwable t) {}
         }
@@ -530,6 +530,7 @@ public class DataHandler {
     /**
      * Returns the classname of this datahandler.
      */
+    @Override
     public String toString() {
         return getClass().getName();
     }

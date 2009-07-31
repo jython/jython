@@ -9,10 +9,8 @@
 package com.ziclix.python.sql;
 
 import java.io.BufferedInputStream;
-import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.Reader;
 import java.math.BigDecimal;
 import java.sql.Array;
@@ -92,7 +90,7 @@ public class JDBC20DataHandler extends FilterDataHandler {
 
                 // it really is unfortunate that I need to send the length of the stream
                 if (jobject instanceof InputStream) {
-                    lob = DataHandler.read(new BufferedInputStream((InputStream) jobject));
+                    lob = read((InputStream) jobject);
                 } else if (jobject instanceof byte[]) {
                     lob = (byte[]) jobject;
                 }
@@ -135,60 +133,13 @@ public class JDBC20DataHandler extends FilterDataHandler {
                 break;
 
             case Types.CLOB:
-
-                /*
-                 * It seems some drivers (well at least Informix) don't clean up after themselves
-                 * if the Clob is requested.  The engine keeps a handle to an open table for each
-                 * row requested and cleans up fully only when the ResultSet or Connection is closed.
-                 * While this generally will never be noticed because the number of CLOBs or BLOBs
-                 * queried will likely be small in the event a large number are queried, it is a huge
-                 * problem.  So, handle it as low as possible by managing the stream directly.  I've
-                 * decided to leave this in the generic JDBC20 handler because it works for all engines
-                 * I've tested and seems to perform quite well to boot.
-                 */
-                Reader reader = null;
-
-                try {
-                    InputStream stream = set.getBinaryStream(col);
-
-                    if (stream == null) {
-                        obj = Py.None;
-                    } else {
-                        reader = new InputStreamReader(stream);
-                        reader = new BufferedReader(reader);
-                        obj = Py.newString(DataHandler.read(reader));
-                    }
-                } finally {
-                    if (reader != null) {
-                        try {
-                            reader.close();
-                        } catch (Exception e) {
-                        }
-                    }
-                }
+                Reader reader = set.getCharacterStream(col);
+                obj = reader == null ? Py.None : Py.newUnicode(read(reader));
                 break;
 
             case Types.BLOB:
                 Blob blob = set.getBlob(col);
-
-                if (blob == null) {
-                    obj = Py.None;
-                } else {
-                    InputStream stream = null;
-
-                    try {
-                        stream = blob.getBinaryStream();
-                        stream = new BufferedInputStream(stream);
-                        obj = Py.java2py(DataHandler.read(stream));
-                    } finally {
-                        if (stream != null) {
-                            try {
-                                stream.close();
-                            } catch (Exception e) {
-                            }
-                        }
-                    }
-                }
+                obj = blob == null ? Py.None : Py.java2py(read(blob.getBinaryStream()));
                 break;
 
             case Types.ARRAY:

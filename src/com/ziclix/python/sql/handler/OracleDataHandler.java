@@ -48,18 +48,18 @@ public class OracleDataHandler extends FilterDataHandler {
      * @param name
      * @return String
      */
+    @Override
     public String getMetaDataName(PyObject name) {
-
         String metaName = super.getMetaDataName(name);
-
         return (metaName == null) ? null : metaName.toUpperCase();
     }
 
     /**
      * Provide functionality for Oracle specific types, such as ROWID.
      */
-    public void setJDBCObject(PreparedStatement stmt, int index, PyObject object, int type) throws SQLException {
-
+    @Override
+    public void setJDBCObject(PreparedStatement stmt, int index, PyObject object, int type)
+        throws SQLException {
         if (DataHandler.checkNull(stmt, index, object, type)) {
             return;
         }
@@ -102,22 +102,15 @@ public class OracleDataHandler extends FilterDataHandler {
     /**
      * Provide functionality for Oracle specific types, such as ROWID.
      */
+    @Override
     public PyObject getPyObject(ResultSet set, int col, int type) throws SQLException {
-
         PyObject obj = Py.None;
 
         switch (type) {
 
             case Types.BLOB:
                 BLOB blob = ((OracleResultSet) set).getBLOB(col);
-
-                if (blob == null) {
-                    return Py.None;
-                }
-
-                InputStream stream = new BufferedInputStream(blob.getBinaryStream());
-
-                obj = Py.java2py(DataHandler.read(stream));
+                obj = blob == null ? Py.None : Py.java2py(read(blob.getBinaryStream()));
                 break;
 
             case OracleTypes.ROWID:
@@ -132,7 +125,7 @@ public class OracleDataHandler extends FilterDataHandler {
                 obj = super.getPyObject(set, col, type);
         }
 
-        return (set.wasNull() ? Py.None : obj);
+        return set.wasNull() ? Py.None : obj;
     }
 
     /**
@@ -146,7 +139,9 @@ public class OracleDataHandler extends FilterDataHandler {
      * @param dataTypeName the JDBC datatype name
      * @throws SQLException
      */
-    public void registerOut(CallableStatement statement, int index, int colType, int dataType, String dataTypeName) throws SQLException {
+    @Override
+    public void registerOut(CallableStatement statement, int index, int colType, int dataType,
+                            String dataTypeName) throws SQLException {
 
         if (dataType == Types.OTHER) {
             if ("REF CURSOR".equals(dataTypeName)) {
