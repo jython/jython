@@ -822,6 +822,7 @@ The readme text for the next release will be like:
         <junit haltonfailure="true" fork="true">
             <formatter type="brief" usefile="false"/>
             <sysproperty key="python.cachedir.skip" value="true"/>
+            <sysproperty key="python.home" value="${dist.dir}"/>
             <classpath refid="test.classpath"/>
             <batchtest>
                 <fileset dir="${test.source.dir}" includes="**/${test}.java"/>
