@@ -1,6 +1,5 @@
 package org.python.antlr;
 
-import org.python.antlr.PythonTree;
 import org.python.core.Py;
 import org.python.core.PyObject;
 

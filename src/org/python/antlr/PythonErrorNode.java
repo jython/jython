@@ -20,18 +20,22 @@ public class PythonErrorNode extends PythonTree {
         this.errorNode = errorNode;
     }
 
+    @Override
     public boolean isNil() {
         return errorNode.isNil();
     }
 
+    @Override
     public int getAntlrType() {
         return errorNode.getType();
     }
 
+    @Override
     public String getText() {
         return errorNode.getText();
     }
 
+    @Override
     public String toString() {
         return errorNode.toString();
     }

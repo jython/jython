@@ -89,8 +89,7 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.Method;
 
 
-public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //, PythonGrammarTreeConstants
-{
+public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
 
     public static final Object Exit=new Integer(1);
     public static final Object NoExit=null;
@@ -127,13 +126,13 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
     public Stack<ExceptionHandler> exceptionHandlers;
     public Vector<Label> yields = new Vector<Label>();
 
-    /* break/continue finally's level.
-     * This is the lowest level in the exceptionHandlers which should
-     * be executed at break or continue.
-     * It is saved/updated/restored when compiling loops.
-     * A similar level for returns is not needed because a new CodeCompiler
-     * is used for each PyCode, ie. each 'function'.
-     * When returning through finally's all the exceptionHandlers are executed.
+    /*
+     * break/continue finally's level.  This is the lowest level in the
+     * exceptionHandlers which should be executed at break or continue.  It is
+     * saved/updated/restored when compiling loops.  A similar level for
+     * returns is not needed because a new CodeCompiler is used for each
+     * PyCode, in other words: each 'function'.  When returning through
+     * finally's all the exceptionHandlers are executed.
      */
     public int bcfLevel = 0;
 
@@ -202,12 +201,10 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         code.freeLocal(tmp);
     }
 
-
     public void set(PythonTree node, int tmp) throws Exception {
         temporary = tmp;
         visit(node);
     }
-
 
     private void saveAugTmps(PythonTree node, int count) throws Exception {
         if (count >= 4) {
@@ -233,7 +230,6 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants //,
         if (count >= 4)
             code.aload(augtmp4);
     }
-
 
     private void restoreAugTmps(PythonTree node, int count) throws Exception {
        code.aload(augtmp1);

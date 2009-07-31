@@ -42,6 +42,7 @@ public class BaseParser {
         }
 
 
+        @Override
         public Token nextToken() {
             startPos = getCharPositionInLine();
             return super.nextToken();
@@ -53,6 +54,7 @@ public class BaseParser {
             super(lexer);
         }
 
+        @Override
         public Token nextToken() {
             startPos = getCharPositionInLine();
             return super.nextToken();
