@@ -79,7 +79,7 @@ public class codecs {
         if (searchPath.__len__() == 0) {
             throw new PyException(Py.LookupError,
                     "no codec search functions registered: " +
-                    "can't find encoding");
+                    "can't find encoding '" + encoding + "'");
         }
 
         PyObject iter = searchPath.__iter__();
@@ -96,8 +96,8 @@ public class codecs {
             break;
         }
         if (func == null) {
-            throw new PyException(Py.LookupError, "unknown encoding " +
-                    encoding);
+            throw new PyException(Py.LookupError, "unknown encoding '" +
+                    encoding + "'");
         }
         searchCache.__setitem__(v, result);
         return (PyTuple) result;
