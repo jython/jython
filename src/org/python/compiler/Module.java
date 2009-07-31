@@ -451,7 +451,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
         int nparamcell = scope.jy_paramcells.size();
         if(nparamcell > 0) {
             Map<String, SymInfo> tbl = scope.tbl;
-            List paramcells = scope.jy_paramcells;
+            List<String> paramcells = scope.jy_paramcells;
             for(int i = 0; i < nparamcell; i++) {
                 c.aload(1);
                 SymInfo syminf = tbl.get(paramcells.get(i));

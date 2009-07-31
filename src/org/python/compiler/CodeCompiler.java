@@ -841,10 +841,10 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         Future.checkFromFuture(node); // future stmt support
         setline(node);
         code.ldc(node.getInternalModule());
-        java.util.List<alias> names = node.getInternalNames();
-        if (names == null || names.size() == 0) {
+        java.util.List<alias> aliases = node.getInternalNames();
+        if (aliases == null || aliases.size() == 0) {
             throw new ParseException("Internel parser error", node);
-        } else if (names.size() == 1 && names.get(0).getInternalName().equals("*")) {
+        } else if (aliases.size() == 1 && aliases.get(0).getInternalName().equals("*")) {
             if (node.getInternalLevel() > 0) {
                 throw new ParseException("'import *' not allowed with 'from .'", node);
             }
@@ -870,9 +870,9 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         } else {
             java.util.List<String> fromNames = new ArrayList<String>();//[names.size()];
             java.util.List<String> asnames = new ArrayList<String>();//[names.size()];
-            for (int i = 0; i < names.size(); i++) {
-                fromNames.add(names.get(i).getInternalName());
-                asnames.add(names.get(i).getInternalAsname());
+            for (int i = 0; i < aliases.size(); i++) {
+                fromNames.add(aliases.get(i).getInternalName());
+                asnames.add(aliases.get(i).getInternalAsname());
                 if (asnames.get(i) == null)
                     asnames.set(i, fromNames.get(i));
             }
@@ -893,11 +893,11 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
             }
             code.invokestatic("org/python/core/imp", "importFrom", "(" + $str + $strArr + $pyFrame + "I" + ")" + $pyObjArr);
             int tmp = storeTop();
-            for (int i = 0; i < names.size(); i++) {
+            for (int i = 0; i < aliases.size(); i++) {
                 code.aload(tmp);
                 code.iconst(i);
                 code.aaload();
-                set(new Name(names.get(i), asnames.get(i), expr_contextType.Store));
+                set(new Name(aliases.get(i), asnames.get(i), expr_contextType.Store));
             }
             code.freeLocal(tmp);
         }

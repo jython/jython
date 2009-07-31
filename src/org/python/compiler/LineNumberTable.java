@@ -7,7 +7,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 /**
- * @Deprecated Not used.
+ * @Deprecated Not used.  Delete in 2.6.
  */
 public class LineNumberTable {
     int attName;
