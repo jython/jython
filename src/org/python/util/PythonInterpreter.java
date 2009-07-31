@@ -19,6 +19,7 @@ import org.python.core.PyString;
 import org.python.core.PyStringMap;
 import org.python.core.PySystemState;
 import org.python.core.__builtin__;
+import org.python.core.PyFileReader;
 
 /**
  * The PythonInterpreter class is a standard wrapper for a Jython interpreter for use embedding in a
@@ -85,6 +86,30 @@ public class PythonInterpreter {
 
     protected void setState() {
         Py.setSystemState(systemState);
+    }
+
+    /**
+     * Set the Python object to use for the standard input stream
+     *
+     * @param inStream
+     *            Python file-like object to use as input stream
+     */
+    public void setIn(PyObject inStream) {
+        systemState.stdin = inStream;
+    }
+
+    public void setIn(java.io.Reader inStream) {
+        setIn(new PyFileReader(inStream));
+    }
+
+    /**
+     * Set a java.io.InputStream to use for the standard input stream
+     *
+     * @param inStream
+     *            InputStream to use as input stream
+     */
+    public void setIn(java.io.InputStream inStream) {
+        setIn(new PyFile(inStream));
     }
 
     /**

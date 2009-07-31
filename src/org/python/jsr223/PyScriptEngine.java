@@ -36,6 +36,7 @@ public class PyScriptEngine extends AbstractScriptEngine implements Compilable, 
     @SuppressWarnings("deprecation")
     private Object eval(PyCode code, ScriptContext context) throws ScriptException {
         try {
+            interp.setIn(context.getReader());
             interp.setOut(context.getWriter());
             interp.setErr(context.getErrorWriter());
             return interp.eval(code).__tojava__(Object.class);

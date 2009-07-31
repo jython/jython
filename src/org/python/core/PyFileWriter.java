@@ -1,6 +1,6 @@
 // A file-like object for writing to java.io.Writer objects;
 // only to be used for stdout, stderr in PythonInterpreter#setOut(Writer), #setErr(Writer)
-// (for backwards compatibility)
+// (for backwards compatibility and JSR 223 support)
 //
 // no attempts to close etc at shutdown are done for this object (unlike PyFile),
 // since again just for PythonInterpreter
