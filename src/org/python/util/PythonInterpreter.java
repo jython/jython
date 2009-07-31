@@ -97,8 +97,6 @@ public class PythonInterpreter {
         systemState.stdout = outStream;
     }
 
-    /** @deprecated */
-    @Deprecated
     public void setOut(java.io.Writer outStream) {
         setOut(new PyFileWriter(outStream));
     }
@@ -117,8 +115,6 @@ public class PythonInterpreter {
         systemState.stderr = outStream;
     }
 
-    /** @deprecated */
-    @Deprecated
     public void setErr(java.io.Writer outStream) {
         setErr(new PyFileWriter(outStream));
     }
