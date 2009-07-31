@@ -85,6 +85,7 @@ public class PyScriptEngineFactory implements ScriptEngineFactory {
         return new PyScriptEngine(this);
     }
 
+    @SuppressWarnings("unchecked")
     public List<String> getMimeTypes() {
         return Collections.EMPTY_LIST;
     }
