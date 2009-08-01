@@ -48,8 +48,8 @@ public class PyArgParser extends Object {
         int largs = args.length;
 
         if (kws != null) {
-            for (String kw: kws) {
-                keywords.put(kw, args[--largs]);
+            for (int i = kws.length - 1; i >= 0; i--) {
+                keywords.put(kws[i], args[--largs]);
             }
         }
 
