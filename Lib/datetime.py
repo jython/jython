@@ -1853,12 +1853,14 @@ class datetime(date):
         calendar.clear()
         calendar.set(self.year, self.month - 1, self.day,
                      self.hour, self.minute, self.second)
-        calendar.set(Calendar.MILLISECOND, self.microsecond // 1000)
 
         if java_class == Calendar:
+            calendar.set(Calendar.MILLISECOND, self.microsecond // 1000)
             return calendar
         else:
-            return Timestamp(calendar.getTimeInMillis())
+            timestamp = Timestamp(calendar.getTimeInMillis())
+            timestamp.setNanos(self.microsecond * 1000)
+            return timestamp
 
 
 datetime.min = datetime(1, 1, 1)
