@@ -108,11 +108,25 @@ class CodeopTests(unittest.TestCase):
         av("\n \na**3","eval")
         av("#a\n#b\na**3","eval")
 
-        # From Jython project, not Jython specific
+        av("\n\na = 1\n\n")
+
+        av("\n\nif 1: a=1\n\n")
+
+        av("if 1:\n pass\n if 1:\n  pass\n else:\n  pass\n")
+        av("#a\n\n   \na=3\n\n")
+
+        av("\n\na**3","eval")
+        av("\n \na**3","eval")
+        av("#a\n#b\na**3","eval")
 
         # this failed under Jython 2.2.1
-        av("def x():\n try: pass\n finally: [a for a in (1,2)]\n")
+        av("def f():\n try: pass\n finally: [x for x in (1,2)]\n")
 
+        av("def f():\n pass\n#foo\n")
+
+        #XXX: works in CPython
+        if not is_jython:
+            av("@a.b.c\ndef f():\n pass\n") 
 
     def test_incomplete(self):
         ai = self.assertIncomplete
@@ -154,8 +168,6 @@ class CodeopTests(unittest.TestCase):
         ai("(9+","eval")
         ai("9+ \\","eval")
         ai("lambda z: \\","eval")
-
-        # From Jython project, not Jython specific
 
         #Did not work in Jython 2.5rc2 see first issue in
         # http://bugs.jython.org/issue1354
@@ -266,10 +278,11 @@ class CodeopTests(unittest.TestCase):
         ai("a = 'a\\\n")
 
         ai("a = 1","eval")
-        #XXX: Current limitation in PythonPartial.g prevents this from properly
-        #     erroring on Jython.
+
+        # XXX: PythonPartial.g needs to reject this.
         if not is_jython:
             ai("a = (","eval")
+
         ai("]","eval")
         ai("())","eval")
         ai("[}","eval")
@@ -277,15 +290,28 @@ class CodeopTests(unittest.TestCase):
         ai("lambda z:","eval")
         ai("a b","eval")
 
-        # From Jython project, not Jython specific
         ai("return 2.3")
         ai("if (a == 1 and b = 2): pass")
+
+        # XXX: PythonPartial.g needs to reject these.
+        if not is_jython:
+            ai("del 1")
+            ai("del ()")
+            ai("del (1,)")
+            ai("del [1]")
+            ai("del '1'")
+            ai("[i for i in range(10)] = (1, 2, 3)")
 
     def test_filename(self):
         self.assertEquals(compile_command("a = 1\n", "abc").co_filename,
                           compile("a = 1\n", "abc", 'single').co_filename)
         self.assertNotEquals(compile_command("a = 1\n", "abc").co_filename,
                              compile("a = 1\n", "def", 'single').co_filename)
+
+    def test_no_universal_newlines(self):
+        # previously \r was translated due to universal newlines
+        code = compile_command("'\rfoo\r'", symbol='eval')
+        self.assertEqual(eval(code), '\rfoo\r')
 
 
 def test_main():
