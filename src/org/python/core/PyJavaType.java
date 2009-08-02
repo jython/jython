@@ -457,7 +457,7 @@ public class PyJavaType extends PyType {
             dict.__setitem__(prop.__name__, prop);
         }
 
-        final PyReflectedConstructor reflctr = new PyReflectedConstructor("_new_impl");
+        final PyReflectedConstructor reflctr = new PyReflectedConstructor(name);
         Constructor<?>[] constructors;
         // No matter the security manager, trying to set the constructor on class to accessible
         // blows up
@@ -475,8 +475,7 @@ public class PyJavaType extends PyType {
         }
         if (PyObject.class.isAssignableFrom(forClass)) {
             PyObject new_ = new PyNewWrapper(forClass, "__new__", -1, -1) {
-
-                public PyObject new_impl(boolean init,
+                @Override public PyObject new_impl(boolean init,
                                          PyType subtype,
                                          PyObject[] args,
                                          String[] keywords) {

@@ -36,6 +36,13 @@ class InstantiationTest(unittest.TestCase):
     def test_str_doesnt_coerce_to_int(self):
         self.assertRaises(TypeError, Date, '99-01-01', 1, 1)
 
+    def test_class_in_failed_constructor(self):
+        try:
+            Dimension(123, 456, 789)
+        except TypeError, exc:
+            self.failUnless("java.awt.Dimension" in exc.message)
+
+
 class BeanTest(unittest.TestCase):
     def test_shared_names(self):
         self.failUnless(callable(Vector.size),
