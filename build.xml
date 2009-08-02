@@ -837,6 +837,7 @@ The readme text for the next release will be like:
         <mkdir dir="${junit.reports}"/>
         <junit fork="true" printsummary="true">
             <formatter type="xml"/>
+            <sysproperty key="python.home" value="${dist.dir}"/>
             <classpath refid="test.classpath"/>
             <batchtest todir="${junit.reports}">
                 <fileset dir="${test.source.dir}" includes="**/*Test*.java">
