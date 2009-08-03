@@ -1126,7 +1126,40 @@ public class PyType extends PyObject implements Serializable {
     }
 
     private static TypeBuilder getBuilder(Class<?> c) {
-        return classToBuilder == null ? null : classToBuilder.get(c);
+        if (classToBuilder == null) {
+            // PyType itself has yet to be initialized.  This should be a bootstrap type, so it'll
+            // go through the builder process in a second
+            return null;
+        }
+        if (c.isPrimitive() || !PyObject.class.isAssignableFrom(c)) {
+            // If this isn't a PyObject, don't bother forcing it to be initialized to load its
+            // builder
+            return null;
+        }
+
+        // This is a PyObject, call forName to force static initialization on the class so if it has
+        // a builder, it'll be filled in
+        SecurityException exc = null;
+        try {
+            Class.forName(c.getName(), true, c.getClassLoader());
+        } catch (ClassNotFoundException e) {
+            // Well, this is certainly surprising.
+            throw new RuntimeException("Got ClassNotFound calling Class.forName on an already "
+                + " found class.", e);
+        } catch (ExceptionInInitializerError e) {
+            throw Py.JavaError(e);
+        } catch (SecurityException e) {
+            exc = e;
+        }
+        TypeBuilder builder = classToBuilder.get(c);
+        if (builder == null && exc != null) {
+            Py.writeComment("type",
+                    "Unable to initialize " + c.getName() + ", a PyObject subclass, due to a " +
+                    "security exception, and no type builder could be found for it. If it's an " +
+                    "exposed type, it may not work properly.  Security exception: " +
+                    exc.getMessage());
+        }
+        return builder;
     }
 
     private static PyType createType(Class<?> c, Set<PyJavaType> needsInners) {
