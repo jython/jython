@@ -481,7 +481,7 @@ class JavaVisitor(EmitVisitor):
         self.emit("@ExposedMethod", depth)
         self.emit("public void %s___init__(PyObject[] args, String[] keywords) {" % clsname, depth)
         self.emit('ArgParser ap = new ArgParser("%s", args, keywords, new String[]' % clsname, depth + 1)
-        self.emit('{%s}, 0);' % fpargs, depth + 2)
+        self.emit('{%s}, %s, true);' % (fpargs, len(fields)), depth + 2)
         i = 0
         for f in fields:
             self.emit("set%s(ap.getPyObject(%s, Py.None));" % (self.processFieldName(f.name),

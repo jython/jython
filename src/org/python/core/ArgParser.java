@@ -3,6 +3,8 @@ package org.python.core;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.python.antlr.AST;
+
 /**
  * A utility class for handling mixed positional and keyword arguments.
  * 
@@ -119,6 +121,16 @@ public class ArgParser {
                 this.params.length)) {
             throw PyBuiltinCallable.DefaultInfo.unexpectedCall(args.length,
                     false, funcname, minargs, this.params.length);
+        }
+    }
+
+    public ArgParser(String funcname, PyObject[] args, String[] kws,
+            String[] paramnames, int minargs, boolean takesZeroArgs) {
+        this(funcname, args, kws);
+        this.params = paramnames;
+        check();
+        if (!AST.check(args.length - kws.length, minargs, takesZeroArgs)) {
+            throw AST.unexpectedCall(minargs,  funcname);
         }
     }
 
