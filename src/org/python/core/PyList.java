@@ -17,6 +17,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
+import java.lang.reflect.Array;
+
 @ExposedType(name = "list", base = PyObject.class)
 public class PyList extends PySequenceList implements List {
 
@@ -977,7 +979,7 @@ public class PyList extends PySequenceList implements List {
 
     @Override
     public synchronized int indexOf(Object o) {
-        return list.indexOf(o);
+        return list.indexOf(Py.java2py(o));
     }
 
     @Override
@@ -1134,15 +1136,18 @@ public class PyList extends PySequenceList implements List {
 
     @Override
     public synchronized Object[] toArray(Object[] a) {
-        Object copy[] = list.toArray();
-        if (a.length < copy.length) {
-            a = copy;
+        int size = size();
+        Class<?> type = a.getClass().getComponentType();
+        if (a.length < size) {
+            a = (Object[])Array.newInstance(type, size);
         }
-        for (int i = 0; i < copy.length; i++) {
-            a[i] = ((PyObject) copy[i]).__tojava__(Object.class);
+        for (int i = 0; i < size; i++) {
+            a[i] = list.get(i).__tojava__(type);
         }
-        if (a.length > copy.length) {
-            a[copy.length] = null;
+        if (a.length > size) {
+            for (int i = size; i < a.length; i++) {
+                a[i] = null;
+            }
         }
         return a;
     }

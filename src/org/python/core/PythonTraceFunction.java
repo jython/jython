@@ -52,8 +52,9 @@ class PythonTraceFunction extends TraceFunction {
     }
 
     public TraceFunction traceException(PyFrame frame, PyException exc) {
-        return safeCall(frame,
-                        "exception",
-                        new PyTuple(exc.type, exc.value, exc.traceback));
+        // We must avoid passing a null to a PyTuple
+        PyObject safeTraceback = exc.traceback == null ? Py.None : exc.traceback;
+        return safeCall(frame, "exception",
+                new PyTuple(exc.type, exc.value, safeTraceback));
     }
 }

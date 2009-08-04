@@ -7,6 +7,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
+import java.lang.reflect.Array;
+
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
@@ -494,7 +496,7 @@ public class PyTuple extends PySequenceList implements List {
 
     @Override
     public int indexOf(Object o) {
-        return getList().indexOf(o);
+        return getList().indexOf(Py.java2py(o));
     }
 
     @Override
@@ -543,11 +545,12 @@ public class PyTuple extends PySequenceList implements List {
 
     @Override
     public Object[] toArray(Object[] converted) {
-        if (converted.length != array.length) {
-            converted = new Object[array.length];
+        Class<?> type = converted.getClass().getComponentType();
+        if (converted.length < array.length) {
+            converted = (Object[])Array.newInstance(type, array.length);
         }
         for (int i = 0; i < array.length; i++) {
-            converted[i] = array[i].__tojava__(Object.class);
+            converted[i] = type.cast(array[i].__tojava__(type));
         }
         if (array.length < converted.length) {
             for (int i = array.length; i < converted.length; i++) {

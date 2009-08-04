@@ -634,6 +634,7 @@ The readme text for the next release will be like:
                  windowtitle="Jython API documentation"
                  bottom="&lt;a href='http://www.jython.org' target='_top'>Jython homepage&lt;/a>"
         >
+            <link href="http://java.sun.com/j2se/1.5.0/docs/api/" />
             <classpath refid="javadoc.classpath" />
         </javadoc>
     </target>
