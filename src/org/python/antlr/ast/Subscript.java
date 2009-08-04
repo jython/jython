@@ -88,10 +88,10 @@ public static final PyType TYPE = PyType.fromClass(Subscript.class);
     @ExposedMethod
     public void Subscript___init__(PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("Subscript", args, keywords, new String[]
-            {"value", "slice", "ctx", "lineno", "col_offset"}, 3);
-        setValue(ap.getPyObject(0));
-        setSlice(ap.getPyObject(1));
-        setCtx(ap.getPyObject(2));
+            {"value", "slice", "ctx", "lineno", "col_offset"}, 3, true);
+        setValue(ap.getPyObject(0, Py.None));
+        setSlice(ap.getPyObject(1, Py.None));
+        setCtx(ap.getPyObject(2, Py.None));
         int lin = ap.getInt(3, -1);
         if (lin != -1) {
             setLineno(lin);

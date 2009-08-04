@@ -45,7 +45,7 @@ public static final PyType TYPE = PyType.fromClass(Pass.class);
     @ExposedMethod
     public void Pass___init__(PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("Pass", args, keywords, new String[]
-            {"lineno", "col_offset"}, 0);
+            {"lineno", "col_offset"}, 0, true);
         int lin = ap.getInt(0, -1);
         if (lin != -1) {
             setLineno(lin);

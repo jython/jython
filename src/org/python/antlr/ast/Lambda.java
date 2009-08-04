@@ -75,9 +75,9 @@ public static final PyType TYPE = PyType.fromClass(Lambda.class);
     @ExposedMethod
     public void Lambda___init__(PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("Lambda", args, keywords, new String[]
-            {"args", "body", "lineno", "col_offset"}, 2);
-        setArgs(ap.getPyObject(0));
-        setBody(ap.getPyObject(1));
+            {"args", "body", "lineno", "col_offset"}, 2, true);
+        setArgs(ap.getPyObject(0, Py.None));
+        setBody(ap.getPyObject(1, Py.None));
         int lin = ap.getInt(2, -1);
         if (lin != -1) {
             setLineno(lin);

@@ -88,10 +88,10 @@ public static final PyType TYPE = PyType.fromClass(Exec.class);
     @ExposedMethod
     public void Exec___init__(PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("Exec", args, keywords, new String[]
-            {"body", "globals", "locals", "lineno", "col_offset"}, 3);
-        setBody(ap.getPyObject(0));
-        setGlobals(ap.getPyObject(1));
-        setLocals(ap.getPyObject(2));
+            {"body", "globals", "locals", "lineno", "col_offset"}, 3, true);
+        setBody(ap.getPyObject(0, Py.None));
+        setGlobals(ap.getPyObject(1, Py.None));
+        setLocals(ap.getPyObject(2, Py.None));
         int lin = ap.getInt(3, -1);
         if (lin != -1) {
             setLineno(lin);

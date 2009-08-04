@@ -62,8 +62,8 @@ public static final PyType TYPE = PyType.fromClass(Str.class);
     @ExposedMethod
     public void Str___init__(PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("Str", args, keywords, new String[]
-            {"s", "lineno", "col_offset"}, 1);
-        setS(ap.getPyObject(0));
+            {"s", "lineno", "col_offset"}, 1, true);
+        setS(ap.getPyObject(0, Py.None));
         int lin = ap.getInt(1, -1);
         if (lin != -1) {
             setLineno(lin);

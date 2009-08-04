@@ -88,10 +88,10 @@ public static final PyType TYPE = PyType.fromClass(If.class);
     @ExposedMethod
     public void If___init__(PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("If", args, keywords, new String[]
-            {"test", "body", "orelse", "lineno", "col_offset"}, 3);
-        setTest(ap.getPyObject(0));
-        setBody(ap.getPyObject(1));
-        setOrelse(ap.getPyObject(2));
+            {"test", "body", "orelse", "lineno", "col_offset"}, 3, true);
+        setTest(ap.getPyObject(0, Py.None));
+        setBody(ap.getPyObject(1, Py.None));
+        setOrelse(ap.getPyObject(2, Py.None));
         int lin = ap.getInt(3, -1);
         if (lin != -1) {
             setLineno(lin);

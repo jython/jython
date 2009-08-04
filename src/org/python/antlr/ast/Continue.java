@@ -45,7 +45,7 @@ public static final PyType TYPE = PyType.fromClass(Continue.class);
     @ExposedMethod
     public void Continue___init__(PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("Continue", args, keywords, new String[]
-            {"lineno", "col_offset"}, 0);
+            {"lineno", "col_offset"}, 0, true);
         int lin = ap.getInt(0, -1);
         if (lin != -1) {
             setLineno(lin);

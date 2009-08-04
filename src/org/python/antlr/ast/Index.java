@@ -61,8 +61,8 @@ public static final PyType TYPE = PyType.fromClass(Index.class);
     @ExposedMethod
     public void Index___init__(PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("Index", args, keywords, new String[]
-            {"value"}, 1);
-        setValue(ap.getPyObject(0));
+            {"value"}, 1, true);
+        setValue(ap.getPyObject(0, Py.None));
     }
 
     public Index(PyObject value) {

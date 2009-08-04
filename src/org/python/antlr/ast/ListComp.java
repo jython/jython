@@ -75,9 +75,9 @@ public static final PyType TYPE = PyType.fromClass(ListComp.class);
     @ExposedMethod
     public void ListComp___init__(PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("ListComp", args, keywords, new String[]
-            {"elt", "generators", "lineno", "col_offset"}, 2);
-        setElt(ap.getPyObject(0));
-        setGenerators(ap.getPyObject(1));
+            {"elt", "generators", "lineno", "col_offset"}, 2, true);
+        setElt(ap.getPyObject(0, Py.None));
+        setGenerators(ap.getPyObject(1, Py.None));
         int lin = ap.getInt(2, -1);
         if (lin != -1) {
             setLineno(lin);

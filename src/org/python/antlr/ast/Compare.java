@@ -88,10 +88,10 @@ public static final PyType TYPE = PyType.fromClass(Compare.class);
     @ExposedMethod
     public void Compare___init__(PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("Compare", args, keywords, new String[]
-            {"left", "ops", "comparators", "lineno", "col_offset"}, 3);
-        setLeft(ap.getPyObject(0));
-        setOps(ap.getPyObject(1));
-        setComparators(ap.getPyObject(2));
+            {"left", "ops", "comparators", "lineno", "col_offset"}, 3, true);
+        setLeft(ap.getPyObject(0, Py.None));
+        setOps(ap.getPyObject(1, Py.None));
+        setComparators(ap.getPyObject(2, Py.None));
         int lin = ap.getInt(3, -1);
         if (lin != -1) {
             setLineno(lin);

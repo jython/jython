@@ -87,10 +87,10 @@ public class comprehension extends PythonTree {
     @ExposedMethod
     public void comprehension___init__(PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("comprehension", args, keywords, new String[]
-            {"target", "iter", "ifs"}, 3);
-        setTarget(ap.getPyObject(0));
-        setIter(ap.getPyObject(1));
-        setIfs(ap.getPyObject(2));
+            {"target", "iter", "ifs"}, 3, true);
+        setTarget(ap.getPyObject(0, Py.None));
+        setIter(ap.getPyObject(1, Py.None));
+        setIfs(ap.getPyObject(2, Py.None));
     }
 
     public comprehension(PyObject target, PyObject iter, PyObject ifs) {

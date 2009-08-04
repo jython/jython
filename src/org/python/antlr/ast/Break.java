@@ -45,7 +45,7 @@ public static final PyType TYPE = PyType.fromClass(Break.class);
     @ExposedMethod
     public void Break___init__(PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("Break", args, keywords, new String[]
-            {"lineno", "col_offset"}, 0);
+            {"lineno", "col_offset"}, 0, true);
         int lin = ap.getInt(0, -1);
         if (lin != -1) {
             setLineno(lin);

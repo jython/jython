@@ -62,8 +62,8 @@ public static final PyType TYPE = PyType.fromClass(Yield.class);
     @ExposedMethod
     public void Yield___init__(PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("Yield", args, keywords, new String[]
-            {"value", "lineno", "col_offset"}, 1);
-        setValue(ap.getPyObject(0));
+            {"value", "lineno", "col_offset"}, 1, true);
+        setValue(ap.getPyObject(0, Py.None));
         int lin = ap.getInt(1, -1);
         if (lin != -1) {
             setLineno(lin);

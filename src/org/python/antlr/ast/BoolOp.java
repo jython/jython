@@ -75,9 +75,9 @@ public static final PyType TYPE = PyType.fromClass(BoolOp.class);
     @ExposedMethod
     public void BoolOp___init__(PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("BoolOp", args, keywords, new String[]
-            {"op", "values", "lineno", "col_offset"}, 2);
-        setOp(ap.getPyObject(0));
-        setValues(ap.getPyObject(1));
+            {"op", "values", "lineno", "col_offset"}, 2, true);
+        setOp(ap.getPyObject(0, Py.None));
+        setValues(ap.getPyObject(1, Py.None));
         int lin = ap.getInt(2, -1);
         if (lin != -1) {
             setLineno(lin);

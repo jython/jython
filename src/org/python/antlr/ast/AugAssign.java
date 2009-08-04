@@ -88,10 +88,10 @@ public static final PyType TYPE = PyType.fromClass(AugAssign.class);
     @ExposedMethod
     public void AugAssign___init__(PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("AugAssign", args, keywords, new String[]
-            {"target", "op", "value", "lineno", "col_offset"}, 3);
-        setTarget(ap.getPyObject(0));
-        setOp(ap.getPyObject(1));
-        setValue(ap.getPyObject(2));
+            {"target", "op", "value", "lineno", "col_offset"}, 3, true);
+        setTarget(ap.getPyObject(0, Py.None));
+        setOp(ap.getPyObject(1, Py.None));
+        setValue(ap.getPyObject(2, Py.None));
         int lin = ap.getInt(3, -1);
         if (lin != -1) {
             setLineno(lin);

@@ -89,10 +89,10 @@ public static final PyType TYPE = PyType.fromClass(With.class);
     @ExposedMethod
     public void With___init__(PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("With", args, keywords, new String[]
-            {"context_expr", "optional_vars", "body", "lineno", "col_offset"}, 3);
-        setContext_expr(ap.getPyObject(0));
-        setOptional_vars(ap.getPyObject(1));
-        setBody(ap.getPyObject(2));
+            {"context_expr", "optional_vars", "body", "lineno", "col_offset"}, 3, true);
+        setContext_expr(ap.getPyObject(0, Py.None));
+        setOptional_vars(ap.getPyObject(1, Py.None));
+        setBody(ap.getPyObject(2, Py.None));
         int lin = ap.getInt(3, -1);
         if (lin != -1) {
             setLineno(lin);

@@ -62,8 +62,8 @@ public static final PyType TYPE = PyType.fromClass(Delete.class);
     @ExposedMethod
     public void Delete___init__(PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("Delete", args, keywords, new String[]
-            {"targets", "lineno", "col_offset"}, 1);
-        setTargets(ap.getPyObject(0));
+            {"targets", "lineno", "col_offset"}, 1, true);
+        setTargets(ap.getPyObject(0, Py.None));
         int lin = ap.getInt(1, -1);
         if (lin != -1) {
             setLineno(lin);

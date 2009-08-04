@@ -75,9 +75,9 @@ public class keyword extends PythonTree {
     @ExposedMethod
     public void keyword___init__(PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("keyword", args, keywords, new String[]
-            {"arg", "value"}, 2);
-        setArg(ap.getPyObject(0));
-        setValue(ap.getPyObject(1));
+            {"arg", "value"}, 2, true);
+        setArg(ap.getPyObject(0, Py.None));
+        setValue(ap.getPyObject(1, Py.None));
     }
 
     public keyword(PyObject arg, PyObject value) {

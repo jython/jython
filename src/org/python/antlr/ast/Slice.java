@@ -87,10 +87,10 @@ public static final PyType TYPE = PyType.fromClass(Slice.class);
     @ExposedMethod
     public void Slice___init__(PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("Slice", args, keywords, new String[]
-            {"lower", "upper", "step"}, 3);
-        setLower(ap.getPyObject(0));
-        setUpper(ap.getPyObject(1));
-        setStep(ap.getPyObject(2));
+            {"lower", "upper", "step"}, 3, true);
+        setLower(ap.getPyObject(0, Py.None));
+        setUpper(ap.getPyObject(1, Py.None));
+        setStep(ap.getPyObject(2, Py.None));
     }
 
     public Slice(PyObject lower, PyObject upper, PyObject step) {

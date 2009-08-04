@@ -62,8 +62,8 @@ public static final PyType TYPE = PyType.fromClass(Import.class);
     @ExposedMethod
     public void Import___init__(PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("Import", args, keywords, new String[]
-            {"names", "lineno", "col_offset"}, 1);
-        setNames(ap.getPyObject(0));
+            {"names", "lineno", "col_offset"}, 1, true);
+        setNames(ap.getPyObject(0, Py.None));
         int lin = ap.getInt(1, -1);
         if (lin != -1) {
             setLineno(lin);

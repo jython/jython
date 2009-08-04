@@ -61,8 +61,8 @@ public static final PyType TYPE = PyType.fromClass(Module.class);
     @ExposedMethod
     public void Module___init__(PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("Module", args, keywords, new String[]
-            {"body"}, 1);
-        setBody(ap.getPyObject(0));
+            {"body"}, 1, true);
+        setBody(ap.getPyObject(0, Py.None));
     }
 
     public Module(PyObject body) {

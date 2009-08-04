@@ -62,8 +62,8 @@ public static final PyType TYPE = PyType.fromClass(Repr.class);
     @ExposedMethod
     public void Repr___init__(PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("Repr", args, keywords, new String[]
-            {"value", "lineno", "col_offset"}, 1);
-        setValue(ap.getPyObject(0));
+            {"value", "lineno", "col_offset"}, 1, true);
+        setValue(ap.getPyObject(0, Py.None));
         int lin = ap.getInt(1, -1);
         if (lin != -1) {
             setLineno(lin);

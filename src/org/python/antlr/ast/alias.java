@@ -76,9 +76,9 @@ public class alias extends PythonTree {
     @ExposedMethod
     public void alias___init__(PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("alias", args, keywords, new String[]
-            {"name", "asname"}, 2);
-        setName(ap.getPyObject(0));
-        setAsname(ap.getPyObject(1));
+            {"name", "asname"}, 2, true);
+        setName(ap.getPyObject(0, Py.None));
+        setAsname(ap.getPyObject(1, Py.None));
     }
 
     public alias(PyObject name, PyObject asname) {

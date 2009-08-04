@@ -75,9 +75,9 @@ public static final PyType TYPE = PyType.fromClass(TryFinally.class);
     @ExposedMethod
     public void TryFinally___init__(PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("TryFinally", args, keywords, new String[]
-            {"body", "finalbody", "lineno", "col_offset"}, 2);
-        setBody(ap.getPyObject(0));
-        setFinalbody(ap.getPyObject(1));
+            {"body", "finalbody", "lineno", "col_offset"}, 2, true);
+        setBody(ap.getPyObject(0, Py.None));
+        setFinalbody(ap.getPyObject(1, Py.None));
         int lin = ap.getInt(2, -1);
         if (lin != -1) {
             setLineno(lin);

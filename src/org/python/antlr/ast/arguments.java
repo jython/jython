@@ -103,11 +103,11 @@ public class arguments extends PythonTree {
     @ExposedMethod
     public void arguments___init__(PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("arguments", args, keywords, new String[]
-            {"args", "vararg", "kwarg", "defaults"}, 4);
-        setArgs(ap.getPyObject(0));
-        setVararg(ap.getPyObject(1));
-        setKwarg(ap.getPyObject(2));
-        setDefaults(ap.getPyObject(3));
+            {"args", "vararg", "kwarg", "defaults"}, 4, true);
+        setArgs(ap.getPyObject(0, Py.None));
+        setVararg(ap.getPyObject(1, Py.None));
+        setKwarg(ap.getPyObject(2, Py.None));
+        setDefaults(ap.getPyObject(3, Py.None));
     }
 
     public arguments(PyObject args, PyObject vararg, PyObject kwarg, PyObject defaults) {

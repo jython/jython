@@ -88,10 +88,10 @@ public static final PyType TYPE = PyType.fromClass(ExceptHandler.class);
     @ExposedMethod
     public void ExceptHandler___init__(PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("ExceptHandler", args, keywords, new String[]
-            {"type", "name", "body", "lineno", "col_offset"}, 3);
-        setExceptType(ap.getPyObject(0));
-        setName(ap.getPyObject(1));
-        setBody(ap.getPyObject(2));
+            {"type", "name", "body", "lineno", "col_offset"}, 3, true);
+        setExceptType(ap.getPyObject(0, Py.None));
+        setName(ap.getPyObject(1, Py.None));
+        setBody(ap.getPyObject(2, Py.None));
         int lin = ap.getInt(3, -1);
         if (lin != -1) {
             setLineno(lin);

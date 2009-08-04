@@ -61,8 +61,8 @@ public static final PyType TYPE = PyType.fromClass(Suite.class);
     @ExposedMethod
     public void Suite___init__(PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("Suite", args, keywords, new String[]
-            {"body"}, 1);
-        setBody(ap.getPyObject(0));
+            {"body"}, 1, true);
+        setBody(ap.getPyObject(0, Py.None));
     }
 
     public Suite(PyObject body) {

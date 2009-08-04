@@ -115,12 +115,12 @@ public static final PyType TYPE = PyType.fromClass(Call.class);
     @ExposedMethod
     public void Call___init__(PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("Call", args, keywords, new String[]
-            {"func", "args", "keywords", "starargs", "kwargs", "lineno", "col_offset"}, 5);
-        setFunc(ap.getPyObject(0));
-        setArgs(ap.getPyObject(1));
-        setKeywords(ap.getPyObject(2));
-        setStarargs(ap.getPyObject(3));
-        setKwargs(ap.getPyObject(4));
+            {"func", "args", "keywords", "starargs", "kwargs", "lineno", "col_offset"}, 5, true);
+        setFunc(ap.getPyObject(0, Py.None));
+        setArgs(ap.getPyObject(1, Py.None));
+        setKeywords(ap.getPyObject(2, Py.None));
+        setStarargs(ap.getPyObject(3, Py.None));
+        setKwargs(ap.getPyObject(4, Py.None));
         int lin = ap.getInt(5, -1);
         if (lin != -1) {
             setLineno(lin);

@@ -89,10 +89,10 @@ public static final PyType TYPE = PyType.fromClass(ImportFrom.class);
     @ExposedMethod
     public void ImportFrom___init__(PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("ImportFrom", args, keywords, new String[]
-            {"module", "names", "level", "lineno", "col_offset"}, 3);
-        setModule(ap.getPyObject(0));
-        setNames(ap.getPyObject(1));
-        setLevel(ap.getPyObject(2));
+            {"module", "names", "level", "lineno", "col_offset"}, 3, true);
+        setModule(ap.getPyObject(0, Py.None));
+        setNames(ap.getPyObject(1, Py.None));
+        setLevel(ap.getPyObject(2, Py.None));
         int lin = ap.getInt(3, -1);
         if (lin != -1) {
             setLineno(lin);

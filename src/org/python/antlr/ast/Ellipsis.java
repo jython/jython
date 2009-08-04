@@ -44,7 +44,7 @@ public static final PyType TYPE = PyType.fromClass(Ellipsis.class);
     @ExposedMethod
     public void Ellipsis___init__(PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("Ellipsis", args, keywords, new String[]
-            {}, 0);
+            {}, 0, true);
     }
 
     public Ellipsis() {

@@ -102,11 +102,11 @@ public static final PyType TYPE = PyType.fromClass(For.class);
     @ExposedMethod
     public void For___init__(PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("For", args, keywords, new String[]
-            {"target", "iter", "body", "orelse", "lineno", "col_offset"}, 4);
-        setTarget(ap.getPyObject(0));
-        setIter(ap.getPyObject(1));
-        setBody(ap.getPyObject(2));
-        setOrelse(ap.getPyObject(3));
+            {"target", "iter", "body", "orelse", "lineno", "col_offset"}, 4, true);
+        setTarget(ap.getPyObject(0, Py.None));
+        setIter(ap.getPyObject(1, Py.None));
+        setBody(ap.getPyObject(2, Py.None));
+        setOrelse(ap.getPyObject(3, Py.None));
         int lin = ap.getInt(4, -1);
         if (lin != -1) {
             setLineno(lin);

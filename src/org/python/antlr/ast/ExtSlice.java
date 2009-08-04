@@ -61,8 +61,8 @@ public static final PyType TYPE = PyType.fromClass(ExtSlice.class);
     @ExposedMethod
     public void ExtSlice___init__(PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("ExtSlice", args, keywords, new String[]
-            {"dims"}, 1);
-        setDims(ap.getPyObject(0));
+            {"dims"}, 1, true);
+        setDims(ap.getPyObject(0, Py.None));
     }
 
     public ExtSlice(PyObject dims) {

@@ -88,10 +88,10 @@ public static final PyType TYPE = PyType.fromClass(BinOp.class);
     @ExposedMethod
     public void BinOp___init__(PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("BinOp", args, keywords, new String[]
-            {"left", "op", "right", "lineno", "col_offset"}, 3);
-        setLeft(ap.getPyObject(0));
-        setOp(ap.getPyObject(1));
-        setRight(ap.getPyObject(2));
+            {"left", "op", "right", "lineno", "col_offset"}, 3, true);
+        setLeft(ap.getPyObject(0, Py.None));
+        setOp(ap.getPyObject(1, Py.None));
+        setRight(ap.getPyObject(2, Py.None));
         int lin = ap.getInt(3, -1);
         if (lin != -1) {
             setLineno(lin);
