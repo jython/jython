@@ -20,34 +20,39 @@ import org.python.core.PyObject;
 public class CmpopAdapter implements AstAdapter {
 
     public Object py2ast(PyObject o) {
-        switch ((o).asInt()) {
-            case 1:
-                return cmpopType.Eq;
-            case 2:
-                return cmpopType.NotEq;
-            case 3:
-                return cmpopType.Lt;
-            case 4:
-                return cmpopType.LtE;
-            case 5:
-                return cmpopType.Gt;
-            case 6:
-                return cmpopType.GtE;
-            case 7:
-                return cmpopType.Is;
-            case 8:
-                return cmpopType.IsNot;
-            case 9:
-                return cmpopType.In;
-            case 10:
-                return cmpopType.NotIn;
+        if (o != Py.None) {
+            switch ((o).asInt()) {
+                case 1:
+                    return cmpopType.Eq;
+                case 2:
+                    return cmpopType.NotEq;
+                case 3:
+                    return cmpopType.Lt;
+                case 4:
+                    return cmpopType.LtE;
+                case 5:
+                    return cmpopType.Gt;
+                case 6:
+                    return cmpopType.GtE;
+                case 7:
+                    return cmpopType.Is;
+                case 8:
+                    return cmpopType.IsNot;
+                case 9:
+                    return cmpopType.In;
+                case 10:
+                    return cmpopType.NotIn;
+                default:
+                    return cmpopType.UNDEFINED;
+            }
         }
-
-        //FIXME: investigate the right exception
-        throw Py.TypeError("Can't convert " + o.getClass().getName() + " to cmpop node");
+        return cmpopType.UNDEFINED;
     }
 
     public PyObject ast2py(Object o) {
+        if (o == null) {
+            return Py.None;
+        }
         switch ((cmpopType)o) {
             case Eq:
                 return new Eq();
@@ -69,14 +74,17 @@ public class CmpopAdapter implements AstAdapter {
                 return new In();
             case NotIn:
                 return new NotIn();
+            default:
+                return Py.None;
         }
-        return Py.None;
     }
 
     public List iter2ast(PyObject iter) {
         List<cmpopType> cmpops = new ArrayList<cmpopType>();
-        for(Object o : (Iterable)iter) {
-            cmpops.add((cmpopType)py2ast((PyObject)o));
+        if (iter != Py.None) {
+            for(Object o : (Iterable)iter) {
+                cmpops.add((cmpopType)py2ast((PyObject)o));
+            }
         }
         return cmpops;
     }

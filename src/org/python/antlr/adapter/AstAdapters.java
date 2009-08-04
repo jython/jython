@@ -60,12 +60,11 @@ public class AstAdapters {
         return (expr)exprAdapter.py2ast(o);
     }
 
-    public static int py2int(Object o) {
+    public static Integer py2int(Object o) {
         if (o == null || o instanceof Integer) {
             return (Integer)o;
         }
-        //FIXME: investigate the right exception
-        throw Py.TypeError("Can't convert " + o.getClass().getName() + " to int node");
+        return null;
     }
 
     public static String py2identifier(PyObject o) {
@@ -75,7 +74,8 @@ public class AstAdapters {
     public static expr_contextType py2expr_context(Object o) {
         if (o == null || o instanceof expr_contextType) {
             return (expr_contextType)o;
-        } else if (o instanceof PyObject) {
+        }
+        if (o instanceof PyObject && o != Py.None) {
             switch (((PyObject)o).asInt()) {
                 case 1:
                     return expr_contextType.Load;
@@ -89,10 +89,11 @@ public class AstAdapters {
                     return expr_contextType.AugStore;
                 case 6:
                     return expr_contextType.Param;
+                default:
+                    return expr_contextType.UNDEFINED;
             }
         }
-        //FIXME: investigate the right exception
-        throw Py.TypeError("Can't convert " + o.getClass().getName() + " to expr_context node");
+        return expr_contextType.UNDEFINED;
     }
 
     public static slice py2slice(PyObject o) {
@@ -105,17 +106,16 @@ public class AstAdapters {
 
     //XXX: Unnecessary but needs to be fixed in the code generation of asdl_antlr.py
     public static Object py2string(Object o) {
-        if (o == null || o instanceof PyString) {
+        if (o instanceof PyString) {
             return o;
         }
-        //FIXME: investigate the right exception
-        throw Py.TypeError("Can't convert " + o.getClass().getName() + " to string node");
+        return null;
     }
 
     public static operatorType py2operator(Object o) {
         if (o == null || o instanceof operatorType) {
             return (operatorType)o;
-        } else if (o instanceof PyObject) {
+        } else if (o instanceof PyObject && o != Py.None) {
             switch (((PyObject)o).asInt()) {
                 case 1:
                     return operatorType.Add;
@@ -141,10 +141,11 @@ public class AstAdapters {
                     return operatorType.BitAnd;
                 case 12:
                     return operatorType.FloorDiv;
+                default:
+                    return operatorType.UNDEFINED;
             }
         }
-        //FIXME: investigate the right exception
-        throw Py.TypeError("Can't convert " + o.getClass().getName() + " to operator node");
+        return operatorType.UNDEFINED;
     }
 
     public static PyObject operator2py(operatorType o) {
@@ -173,8 +174,9 @@ public class AstAdapters {
                 return new BitAnd();
             case FloorDiv:
                 return new FloorDiv();
+            default:
+                return Py.None;
         }
-        return Py.None;
     }
 
     public static PyObject boolop2py(boolopType o) {
@@ -183,8 +185,9 @@ public class AstAdapters {
                 return new And();
             case Or: 
                 return new Or();
+            default:
+                return Py.None;
         }
-        return Py.None;
     }
 
     public static PyObject cmpop2py(cmpopType o) {
@@ -209,8 +212,9 @@ public class AstAdapters {
                 return new In();
             case NotIn: 
                 return new NotIn();
+            default:
+                return Py.None;
         }
-        return Py.None;
     }
 
     public static PyObject unaryop2py(unaryopType o) {
@@ -223,8 +227,9 @@ public class AstAdapters {
                 return new UAdd();
             case USub: 
                 return new USub();
+            default:
+                return Py.None;
         }
-        return Py.None;
     }
 
 
@@ -242,31 +247,33 @@ public class AstAdapters {
                 return new AugStore();
             case Param: 
                 return new Param();
+            default:
+                return Py.None;
         }
-        return Py.None;
     }
 
     public static boolopType py2boolop(Object o) {
         if (o == null || o instanceof boolopType) {
             return (boolopType)o;
-        } else if (o instanceof PyObject) {
+        }
+        if (o instanceof PyObject && o != Py.None) {
             switch (((PyObject)o).asInt()) {
                 case 1:
                     return boolopType.And;
                 case 2:
                     return boolopType.Or;
+                default:
+                    return boolopType.UNDEFINED;
             }
         }
-        //FIXME: investigate the right exception
-        throw Py.TypeError("Can't convert " + o.getClass().getName() + " to boolop node");
+        return boolopType.UNDEFINED;
     }
 
     public static arguments py2arguments(Object o) {
-        if (o == null || o instanceof arguments) {
+        if (o instanceof arguments) {
             return (arguments)o;
         }
-        //FIXME: investigate the right exception
-        throw Py.TypeError("Can't convert " + o.getClass().getName() + " to arguments node");
+        return null;
     }
 
     //XXX: clearly this isn't necessary -- need to adjust the code generation.
@@ -275,18 +282,17 @@ public class AstAdapters {
     }
 
     public static Boolean py2bool(Object o) {
-        if (o == null || o instanceof Boolean) {
+        if (o instanceof Boolean) {
             return (Boolean)o;
         }
-        //FIXME: investigate the right exception
-        throw Py.TypeError("Can't convert " + o.getClass().getName() + " to Boolean node");
+        return null;
     }
 
     public static unaryopType py2unaryop(Object o) {
         if (o == null || o instanceof unaryopType) {
             return (unaryopType)o;
         }
-        if (o instanceof PyObject) {
+        if (o instanceof PyObject && o != Py.None) {
             switch (((PyObject)o).asInt()) {
                 case 1:
                     return unaryopType.Invert;
@@ -296,10 +302,10 @@ public class AstAdapters {
                     return unaryopType.UAdd;
                 case 4:
                     return unaryopType.USub;
+                default:
+                    return unaryopType.UNDEFINED;
             }
         }
-        //FIXME: investigate the right exception
-        throw Py.TypeError("Can't convert " + o.getClass().getName() + " to unaryop node");
+        return unaryopType.UNDEFINED;
     }
-
 }

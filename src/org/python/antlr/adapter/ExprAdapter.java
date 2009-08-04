@@ -18,30 +18,32 @@ import org.python.core.PyUnicode;
 public class ExprAdapter implements AstAdapter {
 
     public Object py2ast(PyObject o) {
-        if (o == null || o instanceof expr) {
+        if (o instanceof expr) {
             return o;
-        } else if (o instanceof PyInteger || o instanceof PyLong || o instanceof PyFloat || o instanceof PyComplex) {
-            return new Num(o);
-        } else if (o instanceof PyString || o instanceof PyUnicode) {
-            return new Str(o);
-        } else if (o == Py.None) {
-            return null;
         }
-
-        //FIXME: investigate the right exception
-        throw Py.TypeError("Can't convert " + o.getClass().getName() + " to expr node");
+        if (o instanceof PyInteger || o instanceof PyLong || o instanceof PyFloat || o instanceof PyComplex) {
+            return new Num(o);
+        }
+        if (o instanceof PyString || o instanceof PyUnicode) {
+            return new Str(o);
+        }
+        return null;
     }
 
     public PyObject ast2py(Object o) {
+        if (o == null) {
+            return Py.None;
+        }
         return (PyObject)o;
     }
 
     public List iter2ast(PyObject iter) {
         List<expr> exprs = new ArrayList<expr>();
-        for(Object o : (Iterable)iter) {
-            exprs.add((expr)py2ast((PyObject)o));
+        if (iter != Py.None) {
+            for(Object o : (Iterable)iter) {
+                exprs.add((expr)py2ast((PyObject)o));
+            }
         }
         return exprs;
     }
-
 }
