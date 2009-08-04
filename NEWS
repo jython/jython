@@ -8,6 +8,7 @@ Jython 2.5.1
       the name of the produced proxy class.
     - Built in JSR 223 scripting engine, with LiveTribe JSR 223 implementation for JDK 5
   Bugs Fixed
+    - [ 1415 ] ast Node creation fails with no arg constructors
     - [ 645615 ] cannot import through symbolic links
     - [ 1366 ] parsing of lamda expression fails
     - [ 1365 ] continuation lines fail in interactive interpreter
