@@ -70,6 +70,18 @@ public class jython {
 
     public static boolean shouldRestart;
 
+    /**
+     * Runs a JAR file, by executing the code found in the file __run__.py, 
+     * which should be in the root of the  JAR archive. 
+     * 
+     * Note that the __name__ is set to the base name of the JAR file and not 
+     * to "__main__" (for historic reasons). 
+     * 
+     * This method do NOT handle exceptions. the caller SHOULD handle any 
+     * (Py)Exceptions thrown by the code.
+     * 
+     * @param filename The path to the filename to run. 
+     */
     public static void runJar(String filename) {
         // TBD: this is kind of gross because a local called `zipfile' just magically
         // shows up in the module's globals.  Either `zipfile' should be called
@@ -201,7 +213,12 @@ public class jython {
             }
             Py.getSystemState().path.insert(0, new PyString(path));
             if (opts.jar) {
-                runJar(opts.filename);
+            	try {
+            		runJar(opts.filename);
+            	} catch (Throwable t) {
+                    Py.printException(t);
+                    System.exit(-1);            		
+            	}
             } else if (opts.filename.equals("-")) {
                 try {
                     interp.locals.__setitem__(new PyString("__file__"), new PyString("<stdin>"));
