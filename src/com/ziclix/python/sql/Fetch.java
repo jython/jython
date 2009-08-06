@@ -268,10 +268,12 @@ abstract public class Fetch {
                 case Types.BIGINT:
                 case Types.BIT:
                 case Types.DECIMAL:
+                case Types.NUMERIC:
                 case Types.DOUBLE:
                 case Types.FLOAT:
                 case Types.INTEGER:
                 case Types.SMALLINT:
+                case Types.TINYINT:
                     a[4] = Py.newInteger(meta.getPrecision(i));
                     a[5] = Py.newInteger(meta.getScale(i));
                     break;
