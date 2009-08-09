@@ -16,6 +16,7 @@ import oracle.jdbc.OracleTypes;
 import oracle.sql.BLOB;
 import oracle.sql.ROWID;
 import org.python.core.Py;
+import org.python.core.PyInteger;
 import org.python.core.PyObject;
 
 import java.io.BufferedInputStream;
@@ -23,7 +24,9 @@ import java.io.InputStream;
 import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.sql.Types;
 
 /**
@@ -66,12 +69,17 @@ public class OracleDataHandler extends FilterDataHandler {
 
         switch (type) {
 
-            case OracleTypes.ROWID:
-                stmt.setString(index, (String) object.__tojava__(String.class));
+            case Types.DATE:
+                // Oracle DATE is a timestamp with one second precision
+                Timestamp timestamp = (Timestamp) object.__tojava__(Timestamp.class);
+                if (timestamp != Py.NoConversion) {
+                    stmt.setTimestamp(index, timestamp);
+                } else {
+                    super.setJDBCObject(stmt, index, object, type);
+                }
                 break;
 
             case Types.DECIMAL:
-
                 // Oracle is annoying
                 Object input = object.__tojava__(Double.class);
 
@@ -94,6 +102,18 @@ public class OracleDataHandler extends FilterDataHandler {
                 String msg = zxJDBC.getString("errorSettingIndex", vals);
 
                 throw new SQLException(msg);
+
+            case OracleTypes.ROWID:
+                stmt.setString(index, (String) object.__tojava__(String.class));
+                break;
+
+            case OracleTypes.TIMESTAMPLTZ:
+            case OracleTypes.TIMESTAMPTZ:
+                // XXX: We should include time zone information, but cx_Oracle currently
+                // doesn't either
+                super.setJDBCObject(stmt, index, object, Types.TIMESTAMP);
+                break;
+                
             default :
                 super.setJDBCObject(stmt, index, object, type);
         }
@@ -108,11 +128,55 @@ public class OracleDataHandler extends FilterDataHandler {
 
         switch (type) {
 
+            case Types.DATE:
+                // Oracle DATE is a timestamp with one second precision
+                obj = Py.newDatetime(set.getTimestamp(col));
+                break;
+                
+            case Types.NUMERIC:
+                // Oracle NUMBER encompasses all numeric types
+                String number = set.getString(col);
+                if (number == null) {
+                    obj = Py.None;
+                    break;
+                }
+
+                ResultSetMetaData metaData = set.getMetaData();
+                int scale = metaData.getScale(col);
+                int precision = metaData.getPrecision(col);
+                if (scale == -127) {
+                    if (precision == 0) {
+                        // Unspecified precision. Normally an integer from a sequence but
+                        // possibly any kind of number
+                        obj = number.indexOf('.') == -1
+                                ? PyInteger.TYPE.__call__(Py.newString(number))
+                                : Py.newDecimal(number);
+                    } else {
+                        // Floating point binary precision
+                        obj = Py.newFloat(set.getBigDecimal(col).doubleValue());
+                    }
+                } else {
+                    // Decimal precision. A plain integer when without a scale. Maybe a
+                    // plain integer when NUMBER(0,0) (scale and precision unknown,
+                    // similar to NUMBER(0,-127) above)
+                    obj = scale == 0 && (precision != 0 || number.indexOf('.') == -1)
+                            ? PyInteger.TYPE.__call__(Py.newString(number))
+                            : Py.newDecimal(number);
+                }
+                break;
+
             case Types.BLOB:
                 BLOB blob = ((OracleResultSet) set).getBLOB(col);
                 obj = blob == null ? Py.None : Py.java2py(read(blob.getBinaryStream()));
                 break;
 
+            case OracleTypes.TIMESTAMPLTZ:
+            case OracleTypes.TIMESTAMPTZ:
+                // XXX: We should include time zone information, but cx_Oracle currently
+                // doesn't either
+                obj = super.getPyObject(set, col, Types.TIMESTAMP);
+                break;
+                
             case OracleTypes.ROWID:
                 ROWID rowid = ((OracleResultSet) set).getROWID(col);
 

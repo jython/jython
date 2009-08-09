@@ -618,6 +618,15 @@ public final class Py {
                                       newInteger(timestamp.getNanos() / 1000)});
     }
 
+    public static PyObject newDecimal(String decimal) {
+        if (decimal == null) {
+            return Py.None;
+        }
+        PyObject decimalModule = __builtin__.__import__("decimal");
+        PyObject decimalClass = decimalModule.__getattr__("Decimal");
+        return decimalClass.__call__(newString(decimal));
+    }
+
     public static PyCode newCode(int argcount, String varnames[],
             String filename, String name,
             boolean args, boolean keywords,
