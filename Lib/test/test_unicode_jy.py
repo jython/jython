@@ -123,7 +123,7 @@ class UnicodeTestCase(unittest.TestCase):
             return
 
         f = open(test_support.TESTFN, "w")
-        self.assertRaises(UnicodeEncodeError, f, write, EURO_SIGN, 
+        self.assertRaises(UnicodeEncodeError, f, write, EURO_SIGN,
                 "Shouldn't be able to write out a Euro sign without first encoding")
         f.close()
 
@@ -140,7 +140,7 @@ class UnicodeTestCase(unittest.TestCase):
 
 
 class UnicodeFormatTestCase(unittest.TestCase):
-    
+
     def test_unicode_mapping(self):
         assertTrue = self.assertTrue
         class EnsureUnicode(dict):
@@ -158,7 +158,7 @@ class UnicodeFormatTestCase(unittest.TestCase):
 
 
 class UnicodeStdIOTestCase(unittest.TestCase):
-    
+
     def setUp(self):
         self.stdout = sys.stdout
 

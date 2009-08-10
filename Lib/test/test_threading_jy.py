@@ -16,21 +16,21 @@ class ThreadingTestCase(unittest.TestCase):
         self.assertEqual(t.getName(), '1')
         t.setName(2)
         self.assertEqual(t.getName(), '2')
-    
+
     # make sure activeCount() gets decremented (see issue 1348)
     def test_activeCount(self):
-    	activeBefore = threading.activeCount()
+        activeBefore = threading.activeCount()
         activeCount = 10
         for i in range(activeCount):
-	        t = Thread(target=self._sleep, args=(i,))
-	        t.setDaemon(0)
-	        t.start()
+            t = Thread(target=self._sleep, args=(i,))
+            t.setDaemon(0)
+            t.start()
         polls = activeCount
         while activeCount > activeBefore and polls > 0:
             time.sleep(1)
             activeCount = threading.activeCount()
             polls -= 1
-        self.assertTrue(activeCount <= activeBefore, 'activeCount should to be <= %s, instead of %s' % (activeBefore, activeCount)) 
+        self.assertTrue(activeCount <= activeBefore, 'activeCount should to be <= %s, instead of %s' % (activeBefore, activeCount))
 
     def _sleep(self, n):
         time.sleep(random.random())

@@ -157,7 +157,7 @@ def test_xmlgen_escaped_content():
 def test_xmlgen_escaped_attr():
     result = StringIO()
     gen = XMLGenerator(result)
-    
+
     gen.startDocument()
     gen.startElement("doc", {"x": unicode("\\u3042", "unicode-escape")})
     gen.endElement("doc")

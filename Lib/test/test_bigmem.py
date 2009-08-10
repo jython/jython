@@ -519,7 +519,7 @@ class StrTest(unittest.TestCase):
         # this might make sense for virtually managed collections,
         # but PyObjectArray is backed by PyObject[], so that's a hard
         # limitation of the JVM
-        
+
         # self.assertRaises(IndexError, operator.getitem, s, len(s) + 1<<31)
 
     @bigmemtest(minsize=_2G, memuse=2)
@@ -549,7 +549,7 @@ class StrTest(unittest.TestCase):
 
     # changed for Jython because the hash code of a java.lang.String
     # of 0x00's is 0 regardless of size
-    
+
     @bigmemtest(minsize=_2G + 10, memuse=1)
     def test_hash(self, size):
         # Not sure if we can do any meaningful tests here...  Even if we

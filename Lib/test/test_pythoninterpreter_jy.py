@@ -13,7 +13,7 @@ def exec_code_in_pi(function, out, err, locals=None):
         from org.python.core import Py
         from org.python.util import PythonInterpreter
         from org.python.core import PySystemState
- 
+
         ps = PySystemState()
         pi = PythonInterpreter({}, ps)
         if locals:
@@ -47,7 +47,7 @@ class InterpreterTest(unittest.TestCase):
             # Some language names from wikipedia
             u'Català · Česky · Dansk · Deutsch · English · Español · Esperanto · Français · Bahasa Indonesia · Italiano · Magyar · Nederlands · 日本語 · Norsk (bokmål) · Polski · Português · Русский · Română · Slovenčina · Suomi · Svenska · Türkçe · Українська · Volapük · 中文',
             ]
-        
+
         def f():
             global text
             for x in text:
@@ -65,7 +65,7 @@ class InterpreterTest(unittest.TestCase):
         out = java.io.StringWriter()
         err = java.io.StringWriter()
         exec_code_in_pi(f, out, err)
-        self.assertEquals(u"42\n", out.toString()) 
+        self.assertEquals(u"42\n", out.toString())
 
     def test_more_output(self):
         def f():

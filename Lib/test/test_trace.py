@@ -740,10 +740,10 @@ def test_main():
         tests.append(JumpTestCase)
     else:
         del TraceTestCase.test_02_arigo
-        del TraceTestCase.test_05_no_pop_tops 
-        del TraceTestCase.test_07_raise 
+        del TraceTestCase.test_05_no_pop_tops
+        del TraceTestCase.test_07_raise
         del TraceTestCase.test_09_settrace_and_raise
-        del TraceTestCase.test_10_ireturn 
+        del TraceTestCase.test_10_ireturn
         del TraceTestCase.test_11_tightloop
         del TraceTestCase.test_12_tighterloop
         del TraceTestCase.test_13_genexp

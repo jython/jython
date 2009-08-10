@@ -275,17 +275,17 @@ def test_main(verbose=None):
         TestDecorateSortUndecorate,
         TestBugs,
     )
-    
+
     # In the following test cases, class obj, which has function that changes
     # the data upon which sort is invoked, is passed for "key" argument.
-    # It can not be checked if that function changes data as long as it is 
-    # invoked(e.g. __del__ in SortKiller). so these are currently commented out.        
+    # It can not be checked if that function changes data as long as it is
+    # invoked(e.g. __del__ in SortKiller). so these are currently commented out.
     del TestDecorateSortUndecorate.test_key_with_mutating_del
     del TestDecorateSortUndecorate.test_key_with_mutating_del_and_exception
     #
 
     test_support.run_unittest(*test_classes)
- 
+
     # verify reference counting
     if verbose and hasattr(sys, "gettotalrefcount"):
         import gc

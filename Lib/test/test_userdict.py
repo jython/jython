@@ -175,7 +175,7 @@ class UserDictTest(TestMappingProtocol):
         self.assertEqual(eval(`u2`), eval(`d2`))
 
         # end zyasoft ~
-        
+
         # Test __cmp__ and __len__
         all = [d0, d1, d2, u, u0, u1, u2, uu, uu0, uu1, uu2]
         for a in all:
@@ -219,7 +219,7 @@ class UserDictTest(TestMappingProtocol):
 
         # zyasoft - changed the following three assertions to use sets
         # to remove order dependency
-        
+
         # Test keys, items, values
         self.assertEqual(set(u2.keys()), set(d2.keys()))
         self.assertEqual(set(u2.items()), set(d2.items()))
