@@ -1920,15 +1920,15 @@ def parse(file, parser=None, bufsize=None):
         except ImportError:
             pass
     from xml.dom import pulldom
-    return _do_pulldom_parse(pulldom.parse, (file,), 
+    return _do_pulldom_parse(pulldom.parse, (file,),
             {'parser': parser, 'bufsize': bufsize})
 
 def parseString(string, parser=None):
     """Parse a file into a DOM from a string."""
     import sys
     if parser is None and sys.platform[:4] != "java":
-       from xml.dom import expatbuilder
-       return expatbuilder.parseString(string)
+        from xml.dom import expatbuilder
+        return expatbuilder.parseString(string)
     from xml.dom import pulldom
     return _do_pulldom_parse(pulldom.parseString, (string,),
                                  {'parser': parser})
