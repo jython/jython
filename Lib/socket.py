@@ -24,7 +24,7 @@ import threading
 import time
 import types
 
-# Java.io classes 
+# Java.io classes
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
 # Java.io exceptions
@@ -221,7 +221,7 @@ __all__ = ['AF_UNSPEC', 'AF_INET', 'AF_INET6', 'AI_PASSIVE', 'SOCK_DGRAM',
         'SOCK_RAW', 'SOCK_RDM', 'SOCK_SEQPACKET', 'SOCK_STREAM', 'SOL_SOCKET',
         'SO_BROADCAST', 'SO_ERROR', 'SO_KEEPALIVE', 'SO_LINGER', 'SO_OOBINLINE',
         'SO_RCVBUF', 'SO_REUSEADDR', 'SO_SNDBUF', 'SO_TIMEOUT', 'TCP_NODELAY',
-        'INADDR_ANY', 'INADDR_BROADCAST', 'IPPROTO_TCP', 'IPPROTO_UDP', 
+        'INADDR_ANY', 'INADDR_BROADCAST', 'IPPROTO_TCP', 'IPPROTO_UDP',
         'SocketType', 'error', 'herror', 'gaierror', 'timeout',
         'getfqdn', 'gethostbyaddr', 'gethostbyname', 'gethostname',
         'socket', 'getaddrinfo', 'getdefaulttimeout', 'setdefaulttimeout',
@@ -529,8 +529,8 @@ def _gethostbyaddr(name):
     names = []
     addrs = []
     for addr in addresses:
-      names.append(asPyString(addr.getHostName()))
-      addrs.append(asPyString(addr.getHostAddress()))
+        names.append(asPyString(addr.getHostName()))
+        addrs.append(asPyString(addr.getHostAddress()))
     return (names, addrs)
 
 def getfqdn(name=None):
@@ -741,7 +741,7 @@ class _nonblocking_api_mixin:
     def shutdown(self, how):
         assert how in (SHUT_RD, SHUT_WR, SHUT_RDWR)
         if not self.sock_impl:
-            raise error(errno.ENOTCONN, "Transport endpoint is not connected") 
+            raise error(errno.ENOTCONN, "Transport endpoint is not connected")
         try:
             self.sock_impl.shutdown(how)
         except java.lang.Exception, jlx:
@@ -953,7 +953,7 @@ class _tcpsocket(_nonblocking_api_mixin):
                 self.sock_impl.close()
         except java.lang.Exception, jlx:
             raise _map_exception(jlx)
-        
+
 
 class _udpsocket(_nonblocking_api_mixin):
 
@@ -1027,7 +1027,7 @@ class _udpsocket(_nonblocking_api_mixin):
         http://bugs.sun.com/view_bug.do?bug_id=6621689
         """
         try:
-            # This is the old 2.1 behaviour 
+            # This is the old 2.1 behaviour
             #assert self.sock_impl
             # This is amak's preferred interpretation
             #raise error(errno.ENOTCONN, "Recvfrom on unbound udp socket meaningless operation")
@@ -1124,7 +1124,7 @@ class _socketobject(object):
         if isinstance(_sock, _nonblocking_api_mixin):
             _sock.close_lock.acquire()
             try:
-                _sock.reference_count -=1 
+                _sock.reference_count -=1
                 if not _sock.reference_count:
                     _sock.close()
                 self._sock = _closedsocket()

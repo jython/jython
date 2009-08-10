@@ -125,10 +125,10 @@ class JavaThread(object):
             self._thread.join(millis_int, nanos)
         else:
             self._thread.join()
-            
+
     def getName(self):
         return self._thread.getName()
-    
+
     def setName(self, name):
         self._thread.setName(str(name))
 

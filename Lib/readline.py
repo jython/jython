@@ -6,9 +6,9 @@ We are using the JavaReadline JNI wrapper for GNU readline.
 """
 
 try:
-     from org.gnu.readline import Readline, ReadlineCompleter
+    from org.gnu.readline import Readline, ReadlineCompleter
 except ImportError, msg:
-     raise ImportError, '%s. The readline module requires that java-readline from http://java-readline.sourceforge.net/ be on the classpath' % msg
+    raise ImportError, '%s. The readline module requires that java-readline from http://java-readline.sourceforge.net/ be on the classpath' % msg
 
 __all__ = ["readline"]
 
@@ -55,10 +55,10 @@ def set_completer(completionfunction = None):
     """
     class DerivedCompleter (ReadlineCompleter):
         def __init__ (self, method):
-             self.method = method
+            self.method = method
 
         def completer (self, text, state):
-             return self.method(text, state)
+            return self.method(text, state)
 
     Readline.setCompleter(DerivedCompleter(completionfunction))
 

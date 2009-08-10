@@ -45,7 +45,7 @@ Z_FINISH = 4
 _valid_flush_modes = (Z_FINISH,)
 
 def adler32(s, value=1):
-    if value != 1: 
+    if value != 1:
         raise ValueError, "adler32 only support start value of 1"
     checksum = Adler32()
     checksum.update(String.getBytes(s, 'iso-8859-1'))
@@ -86,7 +86,7 @@ class compressobj:
             raise error("compressobj may not be used after flush(Z_FINISH)")
         self.deflater.setInput(string, 0, len(string))
         return _get_deflate_data(self.deflater)
-        
+
     def flush(self, mode=Z_FINISH):
         if self._ended:
             raise error("compressobj may not be used after flush(Z_FINISH)")
@@ -111,7 +111,7 @@ class decompressobj:
     def decompress(self, string, max_length=0):
         if self._ended:
             raise error("decompressobj may not be used after flush()")
-        
+
         # unused_data is always "" until inflation is finished; then it is
         # the unused bytes of the input;
         # unconsumed_tail is whatever input was not used because max_length
@@ -132,7 +132,7 @@ class decompressobj:
                 self.unconsumed_tail = string[-r:]
             else:
                 self.unused_data = string[-r:]
-        
+
         return inflated
 
     def flush(self, length=None):
