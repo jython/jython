@@ -22,12 +22,12 @@ ds.setPort(3306)
 
 ctx = InitialContext(env)
 try:
-        try:
-                ctx.bind("/jdbc/mysqldb", ds)
-        except NameAlreadyBoundException, e:
-                ctx.unbind("/jdbc/mysqldb")
-                ctx.bind("/jdbc/mysqldb", ds)
+    try:
+        ctx.bind("/jdbc/mysqldb", ds)
+    except NameAlreadyBoundException, e:
+        ctx.unbind("/jdbc/mysqldb")
+        ctx.bind("/jdbc/mysqldb", ds)
 finally:
-        ctx.close()
+    ctx.close()
 
 print "bound [%s] at /jdbc/mysqldb" % (ds)
