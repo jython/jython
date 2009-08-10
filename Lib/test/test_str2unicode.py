@@ -19,7 +19,7 @@ class TestStrReturnsUnicode(unittest.TestCase):
         self.assertEquals(unicode, type('%r %r' % (u'x', 'y')))
         self.assertEquals(unicode, type('%(x)r' % {'x' : u'x'}))
 
-    def test_string_formatting_c(self):    
+    def test_string_formatting_c(self):
         self.assertEquals(unicode, type('%c' % u'x'))
         self.assertEquals(unicode, type('%c %c' % (u'x', 'y')))
         self.assertEquals(unicode, type('%(x)c' % {'x' : u'x'}))
@@ -42,7 +42,7 @@ class TestStrReturnsStr(unittest.TestCase):
         self.assertEquals(str, type('%r' % 'x'))
         self.assertEquals(str, type('%r %r' % ('x', 'y')))
         self.assertEquals(str, type('%(x)r' % {'x' : 'x'}))
-        
+
     def test_string_formatting_c(self):
         self.assertEquals(str, type('%c' % 'x'))
         self.assertEquals(str, type('%c %c' % ('x', 'y')))

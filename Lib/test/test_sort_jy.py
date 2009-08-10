@@ -20,4 +20,4 @@ def test_main():
     test_support.run_unittest(SortTest)
 
 if __name__ == "__main__":
-        test_main()
+    test_main()

@@ -6,12 +6,12 @@ import unittest
 
 class GrammarTest(unittest.TestCase):
     def test_triple_quote_len(self):
-        s1 = r""" 
+        s1 = r"""
         \""" 1.triple-quote
         \""" 2.triple-quote
         """
 
-        s2 = r''' 
+        s2 = r'''
         \""" 1.triple-quote
         \""" 2.triple-quote
         '''

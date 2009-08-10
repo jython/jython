@@ -12,7 +12,7 @@ class StringMapTest(TestMappingProtocol):
 
 class ClassDictTests(StringMapTest):
     """Check that class dicts conform to the mapping protocol"""
-    
+
     def _empty_mapping(self):
         for key in SimpleClass.__dict__.copy():
             SimpleClass.__dict__.pop(key)

@@ -4,7 +4,7 @@ import subprocess
 import sys
 from test import test_support
 from java.lang import Byte, Class, Integer
-from java.util import ArrayList, Collections, HashMap, LinkedList, Observable, Observer 
+from java.util import ArrayList, Collections, HashMap, LinkedList, Observable, Observer
 from org.python.tests import (Coercions, HiddenSuper, InterfaceCombination, Invisible, Matryoshka,
         OnlySubclassable, OtherSubVisible, SomePyMethods, SubVisible, Visible, VisibleOverride)
 from org.python.tests import VisibilityResults as Results
@@ -81,7 +81,7 @@ class VisibilityTest(unittest.TestCase):
         self.assertEquals(Results.OVERLOADED_EXTRA_ARG_PUBLIC_METHOD,
                 v.visibleInstance('a', 'b'))
         self.assertEquals(Results.PUBLIC_STATIC_METHOD, Visible.visibleStatic(0))
-        self.assertEquals(Results.OVERLOADED_PUBLIC_STATIC_METHOD, 
+        self.assertEquals(Results.OVERLOADED_PUBLIC_STATIC_METHOD,
                 v.visibleStatic('a'))
         self.assertEquals(Results.EXTRA_ARG_PUBLIC_STATIC_METHOD,
                 v.visibleStatic(0, 'a'))
@@ -103,11 +103,11 @@ class VisibilityTest(unittest.TestCase):
         self.assertEquals(Results.SUBCLASS_OVERRIDE, s.visibleInstance(3))
         self.assertEquals(Results.SUBCLASS_OVERLOAD, s.visibleInstance(3.0, 'a'))
         self.assertEquals(Results.PACKAGE_METHOD, s.packageMethod())
-        # Java methods don't allow direct calling of the superclass method, so it should 
+        # Java methods don't allow direct calling of the superclass method, so it should
         # return the subclass value here.
         self.assertEquals(Results.SUBCLASS_OVERRIDE, Visible.visibleInstance(s, 3))
         self.assertEquals(Results.PUBLIC_STATIC_FIELD, SubVisible.StaticInner.visibleStaticField)
-        
+
         self.assertEquals(Results.VISIBLE_SHARED_NAME_FIELD, Visible.sharedNameField)
         self.assertEquals(Results.SUBVISIBLE_SHARED_NAME_FIELD, SubVisible.sharedNameField)
         self.assertEquals(Results.VISIBLE_SHARED_NAME_FIELD * 10, Visible().sharedNameField)
@@ -129,7 +129,7 @@ class VisibilityTest(unittest.TestCase):
                 "methods from IIFace should be visible on Implementation")
         self.assertEquals(InterfaceCombination.TWO_ARG_RESULT, i.getValue("one arg", "two arg"),
                 "methods from Base should be visible on Implementation")
-        self.assertRaises(TypeError, i.getValue, "one arg", "two arg", "three arg", 
+        self.assertRaises(TypeError, i.getValue, "one arg", "two arg", "three arg",
                 "methods defined solely on Implementation shouldn't be visible")
         self.assertFalse(hasattr(i, "internalMethod"),
                 "methods from private interfaces shouldn't be visible on a private class")

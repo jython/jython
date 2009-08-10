@@ -24,7 +24,7 @@ class ArrayJyTestCase(unittest.TestCase):
         jStringArr = array(String, [String("a"), String("b"), String("c")])
         self.assert_(
             Arrays.equals(jStringArr.typecode, 'java.lang.String'),
-               "String array typecode of wrong type, expected %s, found %s" % 
+               "String array typecode of wrong type, expected %s, found %s" %
                (jStringArr.typecode, str(String)))
         self.assertEqual(zeros(String, 5), Array.newInstance(String, 5))
 
