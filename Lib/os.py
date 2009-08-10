@@ -173,60 +173,60 @@ _time_t = None
 
 class stat_result:
 
-  _stat_members = (
-    ('st_mode', _stat.ST_MODE),
-    ('st_ino', _stat.ST_INO),
-    ('st_dev', _stat.ST_DEV),
-    ('st_nlink', _stat.ST_NLINK),
-    ('st_uid', _stat.ST_UID),
-    ('st_gid', _stat.ST_GID),
-    ('st_size', _stat.ST_SIZE),
-    ('st_atime', _stat.ST_ATIME),
-    ('st_mtime', _stat.ST_MTIME),
-    ('st_ctime', _stat.ST_CTIME),
-  )
+    _stat_members = (
+      ('st_mode', _stat.ST_MODE),
+      ('st_ino', _stat.ST_INO),
+      ('st_dev', _stat.ST_DEV),
+      ('st_nlink', _stat.ST_NLINK),
+      ('st_uid', _stat.ST_UID),
+      ('st_gid', _stat.ST_GID),
+      ('st_size', _stat.ST_SIZE),
+      ('st_atime', _stat.ST_ATIME),
+      ('st_mtime', _stat.ST_MTIME),
+      ('st_ctime', _stat.ST_CTIME),
+    )
 
-  def __init__(self, results):
-    if len(results) != 10:
-      raise TypeError("stat_result() takes an a 10-sequence")
-    for (name, index) in stat_result._stat_members:
-      self.__dict__[name] = results[index]
+    def __init__(self, results):
+        if len(results) != 10:
+            raise TypeError("stat_result() takes an a 10-sequence")
+        for (name, index) in stat_result._stat_members:
+            self.__dict__[name] = results[index]
 
-  @classmethod
-  def from_jnastat(cls, s):
-      results = []
-      for meth in (s.mode, s.ino, s.dev, s.nlink, s.uid, s.gid, s.st_size,
-                   s.atime, s.mtime, s.ctime):
-          try:
-              results.append(meth())
-          except NotImplementedError:
-              results.append(0)
-      return cls(results)
+    @classmethod
+    def from_jnastat(cls, s):
+        results = []
+        for meth in (s.mode, s.ino, s.dev, s.nlink, s.uid, s.gid, s.st_size,
+                     s.atime, s.mtime, s.ctime):
+            try:
+                results.append(meth())
+            except NotImplementedError:
+                results.append(0)
+        return cls(results)
 
-  def __getitem__(self, i):
-    if i < 0 or i > 9:
-      raise IndexError(i)
-    return getattr(self, stat_result._stat_members[i][0])
+    def __getitem__(self, i):
+        if i < 0 or i > 9:
+            raise IndexError(i)
+        return getattr(self, stat_result._stat_members[i][0])
 
-  def __setitem__(self, x, value):
-    raise TypeError("object doesn't support item assignment")
+    def __setitem__(self, x, value):
+        raise TypeError("object doesn't support item assignment")
 
-  def __setattr__(self, name, value):
-    if name in [x[0] for x in stat_result._stat_members]:
-      raise TypeError(name)
-    raise AttributeError("readonly attribute")
+    def __setattr__(self, name, value):
+        if name in [x[0] for x in stat_result._stat_members]:
+            raise TypeError(name)
+        raise AttributeError("readonly attribute")
 
-  def __len__(self):
-    return 10
+    def __len__(self):
+        return 10
 
-  def __cmp__(self, other):
-    if not isinstance(other, stat_result):
-      return 1
-    return cmp(self.__dict__, other.__dict__)
+    def __cmp__(self, other):
+        if not isinstance(other, stat_result):
+            return 1
+        return cmp(self.__dict__, other.__dict__)
 
-  def __repr__(self):
-      return repr(tuple(self.__dict__[member[0]] for member
-                        in stat_result._stat_members))
+    def __repr__(self):
+        return repr(tuple(self.__dict__[member[0]] for member
+                          in stat_result._stat_members))
 
 error = OSError
 
@@ -247,7 +247,7 @@ def getcwd():
 
 def getcwdu():
     """getcwd() -> path
-    
+
     Return a unicode string representing the current working directory.
     """
     return sys.getCurrentWorkingDir()
@@ -514,8 +514,8 @@ def lstat(path):
     # native
     abs_parent = f.getAbsoluteFile().getParentFile()
     if not abs_parent:
-      # root isn't a link
-      return stat(path)
+        # root isn't a link
+        return stat(path)
     can_parent = abs_parent.getCanonicalFile()
 
     if can_parent.getAbsolutePath() == abs_parent.getAbsolutePath():
@@ -1029,7 +1029,7 @@ if _name == 'posix':
 
     # def fork():
     #     """fork() -> pid
-    #     
+    #
     #     Fork a child process.
     #     Return 0 to child process and PID of child to parent process."""
     #     return _posix.fork()
@@ -1042,7 +1042,7 @@ if _name == 'posix':
 
     def wait():
         """wait() -> (pid, status)
-        
+
         Wait for completion of a child process."""
 
         status = jarray.zeros(1, 'i')
@@ -1063,7 +1063,7 @@ if _name == 'posix':
 
     def fdatasync(fd):
         """fdatasync(fildes)
-        
+
         force write of file with filedescriptor to disk.
         does not force update of metadata.
         """
@@ -1076,7 +1076,7 @@ if _name == 'posix':
 
 def fsync(fd):
     """fsync(fildes)
-    
+
     force write of file with filedescriptor to disk.
     """
     _fsync(fd, True)
@@ -1085,7 +1085,7 @@ def _fsync(fd, metadata):
     """Internal fsync impl"""
     rawio = FileDescriptors.get(fd)
     rawio.checkClosed()
-    
+
     from java.nio.channels import FileChannel
     channel = rawio.getChannel()
     if not isinstance(channel, FileChannel):
