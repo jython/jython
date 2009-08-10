@@ -7,7 +7,7 @@ import test.test_support
 # module in the regrtest
 
 class TestTimeit(unittest.TestCase):
-    
+
     def test_oct(self):
         timing = timeit.Timer('for i in xrange(10): oct(i)', 'gc.enable()').timeit(number=10000)
         self.assertTrue(timing > 0.)

@@ -97,9 +97,9 @@ class LongAsScaledDoubleValueTests(unittest.TestCase):
                 assert e[0] == 0
 
         for d in range(8):
-          for y in [0,255]:
-            assert float((v+d)*256+y) == sdv(((v+d)*256+y)*256, e)
-            assert e[0] == 1
+            for y in [0,255]:
+                assert float((v+d)*256+y) == sdv(((v+d)*256+y)*256, e)
+                assert e[0] == 1
 
 class ExtraMathTests(unittest.TestCase):
     def test_epsilon(self):
@@ -198,7 +198,7 @@ class FrameTest(unittest.TestCase):
                     self = frame.f_locals[frame.f_code.co_varnames[0]]
                     myclass = self.__class__
                     if type(myclass) == ClassType:
-                       classname = myclass.__name__
+                        classname = myclass.__name__
                     else:
                         classname = None
 
@@ -210,14 +210,14 @@ class FrameTest(unittest.TestCase):
             assert (g[0] == "__main__" or g[0] == "test.test_jy_internals")
             self.assertEquals(g[1], None)
             self.assertEquals(g[2], "foo")
-        
+
         class Bar:
             def baz(self):
                 g = getinfo()
                 assert (g[0] == "__main__" or g[0] == "test.test_jy_internals")
                 assert (g[1] == "Bar")
                 assert (g[2] == "baz")
-        
+
         g = getinfo()
         assert (g[0] == "__main__" or g[0] == "test.test_jy_internals")
         self.assertEquals(g[1], None)
@@ -253,4 +253,3 @@ def test_main():
 
 if __name__ == "__main__":
     test_main()
-

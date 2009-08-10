@@ -1577,7 +1577,7 @@ def savememo(memo,good,bad,skipped):
             print >>f," ]"
     finally:
         f.close()
- 
+
 if __name__ == '__main__':
     # Remove regrtest.py's own directory from the module search path.  This
     # prevents relative imports from working, and relative imports will screw
