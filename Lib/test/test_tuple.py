@@ -48,7 +48,7 @@ class TupleTest(seq_tests.CommonTest):
         except OutOfMemoryError, oome:
             oome.printStackTrace()
             raise
-            
+
     def _test_hash(self):
         # See SF bug 942952:  Weakness in tuple hash
         # The hash should:

@@ -45,7 +45,7 @@ class JythonMapInJavaTest(unittest.TestCase):
         self.checksize(oldlen + 3)
         self.checkvalues(('e', '1'), ('f', None), ('g', '2'))
 
-        # test Map.get method, get "g" and "d" test will throw an exception if fail    
+        # test Map.get method, get "g" and "d" test will throw an exception if fail
         self.failUnless(self.testmap.test_get_gd())
 
         # remove elements with keys "a" and "c" with the Map.remove method

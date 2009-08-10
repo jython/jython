@@ -18,7 +18,7 @@ def roundtrip(item):
     with open(test_support.TESTFN, "rb") as test_file:
         got = marshal.load(test_file)
     return got
-    
+
 
 class IntTestCase(unittest.TestCase):
     def test_ints(self):

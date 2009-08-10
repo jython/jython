@@ -41,12 +41,12 @@ fullTestCmds = [
             # should print 'testKey=' on 95 before initialization,
             # and 'testKey=testValue' after
             ("echo %s=%%%s%%" % (key,key),
-                    "(%s=)" % (key,)),     
+                    "(%s=)" % (key,)),
             # should print PATH (on Unix)
             ( "echo PATH=$PATH", "PATH=.*" ),
             # should print 'testKey=testValue' on Unix after initialization
             ( "echo %s=$%s" % (key,key),
-                    "(%s=$%s)|(%s=)|(%s=%s)" % (key, key, key, key, value ) ), 
+                    "(%s=$%s)|(%s=)|(%s=%s)" % (key, key, key, key, value ) ),
             # should output quotes on NT but not on Unix
             ( 'echo "hello there"', '"?hello there"?' ),
             # should print 'why' to stdout.
@@ -138,4 +138,3 @@ def test_main():
 
 if __name__ == "__main__":
     test_main()
-

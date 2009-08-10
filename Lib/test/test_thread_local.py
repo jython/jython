@@ -1,12 +1,12 @@
 #! /usr/bin/env python
-""" Simple test script for Thread.local    
+""" Simple test script for Thread.local
 """
 from thread import _local as local
 import unittest
 from test import test_support
 import threading
 
-class ThreadLocalTestCase(unittest.TestCase):    
+class ThreadLocalTestCase(unittest.TestCase):
 
     def test_two_locals(self):
         '''Ensures that two locals in the same thread have separate dicts.'''
@@ -20,19 +20,19 @@ class ThreadLocalTestCase(unittest.TestCase):
     def test_local(self):
         mydata = local()
         mydata.number = 42
-        self.assertEqual(mydata.number,42)      
+        self.assertEqual(mydata.number,42)
         self.assertEqual(mydata.__dict__,{'number': 42})
         mydata.__dict__.setdefault('widgets', [])
         self.assertEqual(mydata.widgets,[])
         log=[]
-                
-        def f():             
-            items = mydata.__dict__.items()     
-            items.sort()             
+
+        def f():
+            items = mydata.__dict__.items()
+            items.sort()
             log.append(items)
-            mydata.number = 11     
-            log.append(mydata.number)     
-                
+            mydata.number = 11
+            log.append(mydata.number)
+
         thread = threading.Thread(target=f)
         thread.start()
         thread.join()
@@ -40,12 +40,12 @@ class ThreadLocalTestCase(unittest.TestCase):
         self.assertEqual(mydata.number,42)
 
     def test_subclass_local(self):
-        def f():             
-            items = mydata.__dict__.items()     
-            items.sort()             
+        def f():
+            items = mydata.__dict__.items()
+            items.sort()
             log.append(items)
-            mydata.number = 11     
-            log.append(mydata.number) 
+            mydata.number = 11
+            log.append(mydata.number)
 
         class MyLocal(local):
             number = 2
@@ -54,13 +54,13 @@ class ThreadLocalTestCase(unittest.TestCase):
                 if self.initialized:
                     raise SystemError('__init__ called too many times')
                 self.initialized = True
-                self.__dict__.update(kw)       
+                self.__dict__.update(kw)
             def squared(self):
                 return self.number ** 2
-        
+
         class SubSubLocal(MyLocal):
             pass
-                
+
         mydata = MyLocal(color='red')
         self.assertEqual(mydata.number,2)
         self.assertEqual(mydata.color,'red')

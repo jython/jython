@@ -43,7 +43,7 @@ class FinallyTests(unittest.TestCase):
                 try:
                     for i in range(3):
                         try:
-                            try: 
+                            try:
                                 1//0
                             finally:
                                 yield i
@@ -85,7 +85,7 @@ class FinallyTests(unittest.TestCase):
                     finally:
                         for k in range(j):
                             try:
-                                try: 
+                                try:
                                     1//0
                                 finally:
                                     yield (i, j, k)
@@ -98,7 +98,7 @@ class FinallyTests(unittest.TestCase):
                     1//0
                 finally:
                     for k in range(3):
-                        try: 
+                        try:
                             1//0
                         finally:
                             yield (j, k)
@@ -115,7 +115,7 @@ class FinallyTests(unittest.TestCase):
                             1//0
                         finally:
                             for k in range(3):
-                                try: 
+                                try:
                                     1//0
                                 finally:
                                     yield (i, j, k)
@@ -127,7 +127,7 @@ class FinallyTests(unittest.TestCase):
         self.assertEquals([0, 1, 2], list(self.genPass()))
         self.assertEquals([1], list(self.genLocal()))
         self.assertEquals(
-            [1, 2, 1, 2, 0, 1], 
+            [1, 2, 1, 2, 0, 1],
             list(self.genConditional()))
         self.assertEquals([0, 1, 2, 3], list(self.genTryExceptAroundFinally()))
         self.assertEquals(
@@ -137,7 +137,7 @@ class FinallyTests(unittest.TestCase):
             [(0, 0), (0, 1), (1, 0), (1, 1)],
             list(self.genNestedReversed()))
         self.assertEquals(
-            [(2, 1, 0), (3, 1, 0), (3, 2, 0), (3, 2, 1)], 
+            [(2, 1, 0), (3, 1, 0), (3, 2, 0), (3, 2, 1)],
             list(self.genNestedDeeply()))
         self.assertEquals(
             [(0, 0), (1, 0), (2, 0)],
@@ -162,4 +162,3 @@ class TryExceptTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
