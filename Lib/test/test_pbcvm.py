@@ -49,7 +49,7 @@ class AdhocRegrtest(unittest.TestCase):
     def test_regrtest_pyc(self):
         for test in (
             # change the names a bit so we don't have to worry about module unloading or spawning a separate JVM
-            # however, this testing approach too limits the tests that can be run, so we should rewrite to 
+            # however, this testing approach too limits the tests that can be run, so we should rewrite to
             # use subprocess asap
             'test_types_pyc',
             'test_exceptions_pyc'):
@@ -61,8 +61,8 @@ class AdhocRegrtest(unittest.TestCase):
         # typical unsafe ops we have to do in testing...
         test_support.verbose = self.old_verbosity
         sys.path.pop(0)
-        sys.meta_path.pop(0) 
-            
+        sys.meta_path.pop(0)
+
 
 def test_main():
     test_support.run_unittest(PyBytecodeTest, AdhocRegrtest)

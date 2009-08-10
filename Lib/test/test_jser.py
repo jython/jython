@@ -8,8 +8,8 @@ import os, sys
 object1 = 42
 object2 = ['a', 1, 1.0]
 class Foo:
-        def bar(self):
-                return 'bar'
+    def bar(self):
+        return 'bar'
 
 object3 = Foo()
 object3.baz     = 99

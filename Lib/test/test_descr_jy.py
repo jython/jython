@@ -230,7 +230,7 @@ class SubclassDescrTestCase(unittest.TestCase):
             pass
         class Bar(object):
             def __radd__(self, other):
-		return 3
+                return 3
         self.assertEqual(Foo() + Bar(), 3)
 
     def test_int_mul(self):

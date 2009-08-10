@@ -25,14 +25,14 @@ class ReTest(unittest.TestCase):
         result = re.sub('bar', 'baz', Foo2('bar'))
         self.assertEqual(result, Foo2('baz'))
         self.assert_(isinstance(result, Foo2))
-        
+
     def test_unkown_groupname(self):
         self.assertRaises(IndexError,
                           re.match("(?P<int>\d+)\.(\d*)", '3.14').group,
                           "misspelled")
 
 def test_main():
-        test.test_support.run_unittest(ReTest)
+    test.test_support.run_unittest(ReTest)
 
 if __name__ == "__main__":
-        test_main()
+    test_main()

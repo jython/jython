@@ -75,12 +75,12 @@ def exec_code_separately(function, sharing=False):
         from org.python.core import Py
         from org.python.util import PythonInterpreter
         from org.python.core import PySystemState
- 
+
         ps = PySystemState()
         pi = PythonInterpreter({}, ps)
         if not sharing:
             ps.shadow()
-            ps.builtins = ps.builtins.copy() 
+            ps.builtins = ps.builtins.copy()
         pi.exec(function.func_code)
 
     import threading
@@ -94,7 +94,7 @@ def set_globally():
     import test.sys_jy_test_module # used as a probe
 
     # can't use 'foo', test_with wants to have that undefined
-    sys.builtins['test_sys_jy_foo'] = 42 
+    sys.builtins['test_sys_jy_foo'] = 42
 
 
 def set_shadow():
@@ -127,7 +127,7 @@ class ShadowingTest(unittest.TestCase):
     def test_sys_modules_per_instance(self):
         import sys
         self.assertTrue('sys_jy_test_module' not in sys.modules, "sys.modules should be per PySystemState instance")
-        
+
 
 def test_main():
     test.test_support.run_unittest(SysTest, ShadowingTest)

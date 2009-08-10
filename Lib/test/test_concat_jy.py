@@ -83,8 +83,8 @@ class StrUnicodeConcatOverridesTestCase(unittest.TestCase):
 
 
 def test_main():
-     test.test_support.run_unittest(StrUnicodeConcatTestCase,
-                                    StrUnicodeConcatOverridesTestCase)
+    test.test_support.run_unittest(StrUnicodeConcatTestCase,
+                                   StrUnicodeConcatOverridesTestCase)
 
 if __name__ == "__main__":
-     test_main()
+    test_main()

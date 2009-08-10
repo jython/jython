@@ -45,7 +45,7 @@ class InterfaceTest(unittest.TestCase):
         c = ComparableRunner()
         c.compareTo(None)
         c.run()
-        self.assertEquals(calls, ["ComparableRunner.compareTo", "Runner.run"]) 
+        self.assertEquals(calls, ["ComparableRunner.compareTo", "Runner.run"])
 
 class TableModelTest(unittest.TestCase):
     def test_class_coercion(self):
@@ -56,19 +56,19 @@ class TableModelTest(unittest.TestCase):
 
             def getColumnCount(self):
                 return len(self.columnNames)
-                   
+
             def getRowCount(self):
                 return len(self.data)
-                
+
             def getColumnName(self, col):
                 return self.columnNames[col]
 
             def getValueAt(self, row, col):
                 return self.data[row][col]
-                
+
             def getColumnClass(self, c):
                 return Object.getClass(self.getValueAt(0, c))
-                
+
             def isCellEditable(self, row, col):
                 return col >= 2
 
@@ -127,13 +127,13 @@ class PythonSubclassesTest(unittest.TestCase):
             def method(self):
                 return "SubDateMethod"
 
-            def toString(self): 
+            def toString(self):
                 s = Date.toString(self)
                 return 'SubDate -> Date'
 
         class SubSubDate(SubDate, Runnable):
             def toString(self):
-                return 'SubSubDate -> ' + SubDate.toString(self) 
+                return 'SubSubDate -> ' + SubDate.toString(self)
 
         self.assertEquals("SubDate -> Date", SubDate().toString())
         self.assertEquals("SubSubDate -> SubDate -> Date", SubSubDate().toString())
@@ -175,7 +175,7 @@ class PythonSubclassesTest(unittest.TestCase):
         class A(Component):
             pass
         A()
-    
+
     def test_return_proxy(self):
         "Jython proxies properly return back from Java code"
         class FooVector(Vector):
@@ -256,7 +256,7 @@ GKPnQcD30ELgIHQQEexJURZ6SmgN4h1BzKtcEaJlUarV9ZyqeivTEyv2WelDlRO8TXWtM7UojBrM
 
 class AbstractOnSyspathTest(unittest.TestCase):
     '''Subclasses an abstract class that isn't on the startup classpath.
-    
+
     Checks for http://jython.org/bugs/1861985
     '''
     def setUp(self):
@@ -272,7 +272,7 @@ class AbstractOnSyspathTest(unittest.TestCase):
 
     def test_can_subclass_abstract(self):
         import Abstract
-        
+
         class A(Abstract):
             def method(self):
                 pass
@@ -297,7 +297,7 @@ wLozITS4BxwxdsHYgBBkrlVTr9KbP6qaLFc=
 """.decode('base64').decode('zlib')
 class ContextClassloaderTest(unittest.TestCase):
     '''Classes on the context classloader should be importable and subclassable.
-    
+
     http://bugs.jython.org/issue1216'''
     def setUp(self):
         self.orig_context = Thread.currentThread().contextClassLoader
@@ -360,7 +360,7 @@ class StaticProxyCompilationTest(unittest.TestCase):
         import static_proxy
 
         # Use the existing environment with the proxy dir added on the classpath
-        env = dict(os.environ) 
+        env = dict(os.environ)
         env["CLASSPATH"] = sys.javaproxy_dir
         script = test_support.findfile("import_as_java_class.py")
         self.assertEquals(subprocess.call([sys.executable,  "-J-Dpython.cachedir.skip=true",

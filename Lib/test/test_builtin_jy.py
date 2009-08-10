@@ -7,7 +7,7 @@ import sys, UserDict
 from codecs import BOM_UTF8
 
 class BuiltinTest(unittest.TestCase):
-        
+
     def test_in_sys_modules(self):
         self.assert_("__builtin__" in sys.modules,
             "__builtin__ not found in sys.modules")
@@ -79,7 +79,7 @@ class ReprTest(unittest.TestCase):
     def test_unbound(self):
         "Unbound methods indicated properly in repr"
         class Foo:
-            def bar(s): 
+            def bar(s):
                 pass
         self.failUnless(repr(Foo.bar).startswith('<unbound method'))
 
@@ -210,8 +210,8 @@ class ExecEvalTest(unittest.TestCase):
         self.assertEqual(eval('locals()', g, d), d)
 
         # Verify locals stores (used by list comps)
-        eval('[locals() for i in (2,3)]', g, d)        
-	eval('[locals() for i in (2,3)]', g, UserDict.UserDict())
+        eval('[locals() for i in (2,3)]', g, d)
+        eval('[locals() for i in (2,3)]', g, UserDict.UserDict())
 
         class SpreadSheet:
             "Sample application showing nested, calculated lookups."
