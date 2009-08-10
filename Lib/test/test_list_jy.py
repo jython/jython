@@ -53,7 +53,7 @@ class ListTestCase(unittest.TestCase):
         self.assertEqual([(1,), [1]].count([1]), 1) # http://bugs.jython.org/issue1317
 
 class ThreadSafetyTestCase(unittest.TestCase):
-    
+
     def run_threads(self, f, num=10):
         threads = []
         for i in xrange(num):

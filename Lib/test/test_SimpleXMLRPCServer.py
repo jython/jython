@@ -14,9 +14,9 @@ def multiply(x, y):
 class MyService:
     """This test class is going to be used to test an entire class being
     exposed via XML-RPC."""
-    
+
     def _dispatch(self, method, params):
-        """This method is called whenever a call is made to the 
+        """This method is called whenever a call is made to the
         service."""
         func = getattr(self, 'expose_' + method)
         return func(*params)
@@ -37,7 +37,7 @@ class ServerThread(threading.Thread):
         self.server.allow_reuse_address = 1
         self.server.handle_request()
         self.server.server_close()
-    
+
 class SimpleXMLRPCServerTestCase(unittest.TestCase):
     """Test case for the Python SimpleXMLRPCServer module."""
     def test_exposeLambda(self):

@@ -12,7 +12,7 @@ class PyReflFuncEnvl:
 
     def __init__(self,name,meths):
         self.reflfunc = PyReflectedFunction(meths)
-            
+
     def __call__(self,inst,args):
         return self.reflfunc(inst,*args)
 
@@ -21,8 +21,8 @@ def extract_ov_meths(jcl,envl_class):
     names = [ m.name for m in meths]
     meth_dict = {}
     for name in names:
-      if name.startswith('ov_') and not meth_dict.has_key(name):
-          meth_dict[name] = envl_class(name,[ m for m in meths if m.name == name ])
+        if name.startswith('ov_') and not meth_dict.has_key(name):
+            meth_dict[name] = envl_class(name,[ m for m in meths if m.name == name ])
     return meth_dict
 
 from javatests import JOverload
@@ -58,7 +58,7 @@ class OverloadedDispatchTests(unittest.TestCase):
 (java.io.Serializable)
 (java.io.Serializable)
 (java.io.Serializable)
-(java.lang.Object)                   
+(java.lang.Object)
                    """)
 
     def test_scal_string(self):
@@ -115,7 +115,7 @@ class OverloadedDispatchTests(unittest.TestCase):
 (java.io.Serializable)
 (java.io.Serializable)
 (java.io.Serializable)
-(java.lang.Object)     
+(java.lang.Object)
                    """)
 
 
@@ -132,5 +132,3 @@ if __name__ == '__main__' and not sys.argv[1:] == ['break-out']:
         unittest.main()
     else:
         test_support.run_unittest(OverloadedDispatchTests)
-        
-    

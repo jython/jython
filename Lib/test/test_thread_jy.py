@@ -6,11 +6,11 @@ from java.lang import Runnable, Thread
 from java.util.concurrent import CountDownLatch
 
 class AllocateLockTest(unittest.TestCase):
-    
+
     def test_lock_type(self):
         "thread.LockType should exist"
         t = thread.LockType
-        self.assertEquals(t, type(thread.allocate_lock()), 
+        self.assertEquals(t, type(thread.allocate_lock()),
             "thread.LockType has wrong value")
 
 class SynchronizeTest(unittest.TestCase):

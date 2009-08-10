@@ -819,12 +819,12 @@ class UDPBindTest(unittest.TestCase):
     def testBindSpecific(self):
         self.sock.bind( (self.HOST, self.PORT) ) # Use a specific port
         actual_port = self.sock.getsockname()[1]
-        self.failUnless(actual_port == self.PORT, 
-            "Binding to specific port number should have returned same number: %d != %d" % (actual_port, self.PORT)) 
+        self.failUnless(actual_port == self.PORT,
+            "Binding to specific port number should have returned same number: %d != %d" % (actual_port, self.PORT))
 
     def testBindEphemeral(self):
         self.sock.bind( (self.HOST, 0) ) # let system choose a free port
-        self.failUnless(self.sock.getsockname()[1] != 0, "Binding to port zero should have allocated an ephemeral port number") 
+        self.failUnless(self.sock.getsockname()[1] != 0, "Binding to port zero should have allocated an ephemeral port number")
 
     def testShutdown(self):
         self.sock.bind( (self.HOST, self.PORT) )
@@ -1003,7 +1003,7 @@ class NonBlockingTCPTests(ThreadedTCPSocketTest):
     # AMAK: 20070311
     # Introduced a new test for non-blocking connect
     # Renamed old testConnect to testBlockingConnect
-    # 
+    #
 
     def testBlockingConnect(self):
         # Testing blocking connect
@@ -1032,7 +1032,7 @@ class NonBlockingTCPTests(ThreadedTCPSocketTest):
     #
     # AMAK: 20070518
     # Introduced a new test for connect with bind to specific local address
-    # 
+    #
 
     def testConnectWithLocalBind(self):
         # Test blocking connect
@@ -1387,7 +1387,7 @@ used, but if it is on your network this failure is bogus.''' % host)
         self.failUnlessRaises(socket.timeout, raise_timeout,
                               "TCP socket recv failed to generate a timeout exception (TCP)")
 
-    # Disable this test, but leave it present for documentation purposes 
+    # Disable this test, but leave it present for documentation purposes
     # socket timeouts only work for read and accept, not for write
     # http://java.sun.com/j2se/1.4.2/docs/api/java/net/SocketTimeoutException.html
     def estSendTimeout(self):
@@ -1683,11 +1683,11 @@ class TestInvalidUsage(unittest.TestCase):
 
 def test_main():
     tests = [
-        GeneralModuleTests, 
+        GeneralModuleTests,
         TestSupportedOptions,
         TestUnsupportedOptions,
-        BasicTCPTest, 
-        TCPServerTimeoutTest, 
+        BasicTCPTest,
+        TCPServerTimeoutTest,
         TCPClientTimeoutTest,
         TestExceptions,
         TestInvalidUsage,

@@ -101,7 +101,7 @@ class FloatTestCase(unittest.TestCase):
     def test_faux(self):
         class F(object):
             def __float__(self):
- 		return 1.6
+                return 1.6
         self.assertEqual(math.cos(1.6), math.cos(F()))
 
 

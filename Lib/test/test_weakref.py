@@ -659,7 +659,7 @@ class ReferencesTestCase(TestBase):
             weakref.ref(referenced, callback)
 
         finally:
-            # XXX: threshold not applicable to Jython 
+            # XXX: threshold not applicable to Jython
             if not test_support.is_jython:
                 gc.set_threshold(*thresholds)
 
