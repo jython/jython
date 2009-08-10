@@ -110,7 +110,7 @@ def test_utf8():
     >>> parser = expat.ParserCreate(namespace_separator='!')
     >>> HANDLER_NAMES = [
     ...     'StartElementHandler', 'EndElementHandler',
-    ...     'CharacterDataHandler', 
+    ...     'CharacterDataHandler',
     ...     'ProcessingInstructionHandler',
     ...     'UnparsedEntityDeclHandler', 'NotationDeclHandler',
     ...     'StartNamespaceDeclHandler', 'EndNamespaceDeclHandler',
@@ -451,9 +451,9 @@ def test_DTD():
 
 def test_entity():
     """
-    
+
     TODO: need a fallback for entity-resolver so that empty source is returned.
-    
+
     >>> xml = ''' <!DOCTYPE doc SYSTEM "external.dtd" [
     ...           <!ENTITY ext-entity SYSTEM "external-entity">
     ...           ]>

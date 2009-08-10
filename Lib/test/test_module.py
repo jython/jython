@@ -12,7 +12,7 @@ except AttributeError:
     pass
 else:
     raise TestFailed, "__name__ = %s" % repr(s)
-# __doc__ is None by default in CPython but not in Jython. 
+# __doc__ is None by default in CPython but not in Jython.
 # We're not worrying about that now.
 #vereq(foo.__doc__, module.__doc__)
 

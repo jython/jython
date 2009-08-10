@@ -20,7 +20,7 @@ class SetTestCase(unittest.TestCase):
         self.assertEqual(s & foo, 'rand')
         self.assertEqual(s ^ foo, 'rxor')
 
-    
+
 class SetInJavaTestCase(unittest.TestCase):
 
     """Tests for derived dict behaviour"""

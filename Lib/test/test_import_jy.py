@@ -181,7 +181,7 @@ class ImpTestCase(unittest.TestCase):
                 module = os.path.basename(sym)
                 module_obj = __import__(module)
                 self.assertEquals(module_obj.test, 'imported')
- 
+
             finally:
                 shutil.rmtree(test_support.TESTFN)
                 test_support.unlink(sym)

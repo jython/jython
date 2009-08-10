@@ -45,4 +45,3 @@ class NT(tuple):
                 self.__dict__ == other.__dict__)
     def __ne__(self, other):
         return not (self == other)
-

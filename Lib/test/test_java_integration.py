@@ -4,7 +4,7 @@ import unittest
 import subprocess
 import sys
 import re
- 
+
 from test import test_support
 
 from java.lang import (ClassCastException, ExceptionInInitializerError, String, Runnable, System,
@@ -62,7 +62,7 @@ class BeanTest(unittest.TestCase):
         self.assertEquals(1, len(called))
         m.fireComponentHidden(ComponentEvent(Container(), 0))
         self.assertEquals(2, len(called))
-    
+
     def test_bean_interface(self):
         b = BeanImplementation()
         self.assertEquals("name", b.getName())
@@ -111,7 +111,7 @@ class SysIntegrationTest(unittest.TestCase):
         f = open(test_support.TESTFN)
         self.assertEquals('hello', f.read())
         f.close()
-                
+
 class IOTest(unittest.TestCase):
     def test_io_errors(self):
         "Check that IOException isn't mangled into an IOError"
@@ -132,11 +132,11 @@ class JavaReservedNamesTest(unittest.TestCase):
     def test_system_in(self):
         s = System.in
         self.assert_("java.io.BufferedInputStream" in str(s))
-             
+
     def test_runtime_exec(self):
         e = Runtime.getRuntime().exec
         self.assert_(re.search("method .*exec", str(e)) is not None)
-                       
+
     def test_byte_class(self):
         b = Byte(10)
         self.assert_("java.lang.Byte" in str(b.class))
@@ -183,7 +183,7 @@ class PyReservedNamesTest(unittest.TestCase):
 
     def test_in(self):
         self.assertEquals(self.kws.in(), "in")
-    
+
     def test_exec(self):
         self.assertEquals(self.kws.exec(), "exec")
 
@@ -284,7 +284,7 @@ class ColorTest(unittest.TestCase):
 
     def test_static_fields(self):
         self.assertEquals(Color(255, 0, 0), Color.RED)
-        # The bean accessor for getRed should be active on instances, but the static field red 
+        # The bean accessor for getRed should be active on instances, but the static field red
         # should be visible on the class
         self.assertEquals(255, Color.red.red)
         self.assertEquals(Color(0, 0, 255), Color.blue)
@@ -416,7 +416,7 @@ class JavaDelegationTest(unittest.TestCase):
         self.assertTrue(not x.equals(z))
         self.assertNotEquals(x, z)
         self.assertTrue(not (x == z))
-       
+
 class SecurityManagerTest(unittest.TestCase):
     def test_nonexistent_import_with_security(self):
         script = test_support.findfile("import_nonexistent.py")
@@ -452,13 +452,13 @@ class JavaWrapperCustomizationTest(unittest.TestCase):
         self.assertEquals(7, m.held["initial"], "Existing fields should still be accessible")
         self.assertEquals(7, m.initial)
         self.assertEquals(None, m.nonexistent, "Nonexistent fields should be passed on to the Map")
-    
-    def test_adding_on_interface(self):    
+
+    def test_adding_on_interface(self):
         GetitemAdder.addPredefined()
         class UsesInterfaceMethod(FirstPredefinedGetitem):
             pass
         self.assertEquals("key", UsesInterfaceMethod()["key"])
-        
+
     def test_add_on_mro_conflict(self):
         """Adding same-named methods to Java classes with MRO conflicts produces TypeError"""
         GetitemAdder.addPredefined()
@@ -479,8 +479,8 @@ class SerializationTest(unittest.TestCase):
         self.assertEqual(date_list, unserializer.readObject())
 
 def test_main():
-    test_support.run_unittest(InstantiationTest, 
-                              BeanTest, 
+    test_support.run_unittest(InstantiationTest,
+                              BeanTest,
                               SysIntegrationTest,
                               IOTest,
                               JavaReservedNamesTest,

@@ -27,7 +27,7 @@ class anygui:
         candidates = wishlist + candidates
 
         for name in candidates:
-            backend = self.__try_to_get('%sgui' % name) 
+            backend = self.__try_to_get('%sgui' % name)
         if not backend:
             raise Exception, 'not able to import any GUI backends'
         self.__backend = backend

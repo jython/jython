@@ -16,14 +16,14 @@ class CompileTests(unittest.TestCase):
         '''succeed iff str is a valid piece of code'''
         code = compile_(str, "<input>", symbol)
         if values:
-            d = {} 
+            d = {}
             exec code in d
             self.assertEquals(d,values)
         elif value is not None:
             self.assertEquals(eval(code,self.eval_d),value)
         else:
             self.assert_(code)
-        
+
     def assertInvalid(self, str, symbol='single', is_syntax=1):
         '''succeed iff str is the start of an invalid piece of code'''
         try:
@@ -58,7 +58,7 @@ class CompileTests(unittest.TestCase):
     # can be deleted.
     def test_invalid(self):
         ai = self.assertInvalid
-        
+
         ai("del 1")
         ai("del ()")
         ai("del (1,)")
