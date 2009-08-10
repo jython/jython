@@ -35,7 +35,7 @@ try:
     jaxp = 1
 except ImportError:
     jaxp = 0
-    
+
 from java.lang import String
 
 
@@ -50,7 +50,7 @@ def _wrap_sax_exception(e):
 class JyErrorHandlerWrapper(javasax.ErrorHandler):
     def __init__(self, err_handler):
         self._err_handler = err_handler
-        
+
     def error(self, exc):
         self._err_handler.error(_wrap_sax_exception(exc))
 
@@ -105,7 +105,7 @@ class SimpleLocator(xmlreader.Locator):
         self.lineNum = lineNum
         self.pubId = pubId
         self.sysId = sysId
-    
+
     def getColumnNumber(self):
         return self.colNum
 
@@ -265,7 +265,7 @@ class AttributesImpl:
 
     def get(self, name, alt=None):
         try:
-           return self.getValue(name)
+            return self.getValue(name)
         except KeyError:
             return alt
 
