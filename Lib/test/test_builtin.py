@@ -215,7 +215,7 @@ class BuiltinTest(unittest.TestCase):
         from UserList import UserList
         c = UserList(); c.append(c)
         self.assertEqual(cmp(a, b), 0)
-        self.assertEqual(cmp(b, c), 0)       
+        self.assertEqual(cmp(b, c), 0)
         self.assertEqual(cmp(c, a), 0)
         self.assertEqual(cmp(a, c), 0)
        # okay, now break the cycles

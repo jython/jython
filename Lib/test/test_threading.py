@@ -112,7 +112,7 @@ class ThreadTests(unittest.TestCase):
         self.test_various_ops()
         threading.stack_size(0)
 
-    # this test is not applicable to jython since 
+    # this test is not applicable to jython since
     # 1. Lock is equiv to RLock, so this weird sync behavior won't be seen
     # 2. We use a weak hash map to map these threads
     # 3. This behavior doesn't make sense for Jython since any foreign

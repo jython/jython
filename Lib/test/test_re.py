@@ -515,7 +515,7 @@ class ReTests(unittest.TestCase):
         # non-simple '*?' still used to hit the recursion limit, before the
         # non-recursive scheme was implemented.
 
-        # does not apply for Jython, since we do not implement the 
+        # does not apply for Jython, since we do not implement the
         # non-recursive scheme
         # self.assertEqual(re.search('(a|b)*?c', 10000*'ab'+'cd').end(0), 20001)
 

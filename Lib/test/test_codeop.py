@@ -126,7 +126,7 @@ class CodeopTests(unittest.TestCase):
 
         #XXX: works in CPython
         if not is_jython:
-            av("@a.b.c\ndef f():\n pass\n") 
+            av("@a.b.c\ndef f():\n pass\n")
 
     def test_incomplete(self):
         ai = self.assertIncomplete
