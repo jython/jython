@@ -170,13 +170,13 @@ public class ExposedTypeProcessor implements Opcodes, PyTypes {
                                           methodExposers,
                                           descExposers.values(),
                                           newExposer);
-            for(MethodExposer exposer : methodExposers) {
+            for (MethodExposer exposer : methodExposers) {
                 addInnerClass(exposer.getGeneratedType());
             }
-            for(DescriptorExposer exposer : descExposers.values()) {
+            for (DescriptorExposer exposer : descExposers.values()) {
                 addInnerClass(exposer.getGeneratedType());
             }
-            if(newExposer != null) {
+            if (newExposer != null) {
                 addInnerClass(newExposer.getGeneratedType());
             }
             addInnerClass(typeExposer.getGeneratedType());

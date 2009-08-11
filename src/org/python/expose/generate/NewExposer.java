@@ -1,12 +1,8 @@
 package org.python.expose.generate;
 
-import java.lang.reflect.Method;
-
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.python.core.PyNewWrapper;
-import org.python.core.PyObject;
-import org.python.core.PyType;
 
 public class NewExposer extends Exposer {
 
@@ -18,13 +14,13 @@ public class NewExposer extends Exposer {
         super(PyNewWrapper.class, onType.getClassName() + "$exposed___new__");
         this.onType = onType;
         this.name = methodName;
-        if((access & Opcodes.ACC_STATIC) == 0) {
+        if ((access & Opcodes.ACC_STATIC) == 0) {
             throwInvalid("Full methods for @ExposedNew must be static");
         }
-        if(!Type.getReturnType(desc).equals(PYOBJ)) {
+        if (!Type.getReturnType(desc).equals(PYOBJ)) {
             throwInvalid("@ExposedNew methods must return PyObject");
         }
-        if(exceptions != null && exceptions.length > 0) {
+        if (exceptions != null && exceptions.length > 0) {
             throwInvalid("@ExposedNew methods may not throw checked exceptions");
         }
     }
@@ -59,9 +55,5 @@ public class NewExposer extends Exposer {
     }
 
     public static final String NEW_DESCRIPTOR = Type.getMethodDescriptor(PYOBJ,
-                                                                         new Type[] {PYNEWWRAPPER,
-                                                                                     BOOLEAN,
-                                                                                     PYTYPE,
-                                                                                     APYOBJ,
-                                                                                     ASTRING});
+        new Type[] {PYNEWWRAPPER, BOOLEAN, PYTYPE, APYOBJ, ASTRING});
 }
