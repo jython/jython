@@ -12,13 +12,11 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 import org.python.core.ClassDictInit;
 import org.python.core.Py;
 import org.python.core.PyBuiltinMethodSet;
-import org.python.core.PyClass;
 import org.python.core.PyInteger;
 import org.python.core.PyList;
 import org.python.core.PyObject;
@@ -36,39 +34,25 @@ import com.ziclix.python.sql.util.PyArgParser;
  */
 public class PyConnection extends PyObject implements ClassDictInit {
 
-    /**
-     * Field closed
-     */
+    /** True if closed. */
     protected boolean closed;
 
-    /**
-     * Field connection
-     */
-    protected Connection connection;
-
-    /**
-     * Field supportsTransactions
-     */
+    /** Whether transactions are supported. */
     protected boolean supportsTransactions;
 
-    /**
-     * Field cursors
-     */
-    private Set cursors;
+    /** The underlying java.sql.Connection. */
+    protected Connection connection;
 
-    /**
-     * Field statements
-     */
-    private Set statements;
+    /** Underlying cursors. */
+    private Set<PyCursor> cursors;
 
-    /**
-     * Field __members__
-     */
+    /** Underlying statements. */
+    private Set<PyStatement> statements;
+
+    /** Field __members__ */
     protected static PyList __members__;
 
-    /**
-     * Field __methods__
-     */
+    /** Field __methods__ */
     protected static PyList __methods__;
 
     static {
@@ -101,11 +85,10 @@ public class PyConnection extends PyObject implements ClassDictInit {
      * @throws SQLException
      */
     public PyConnection(Connection connection) throws SQLException {
-
         this.closed = false;
-        this.cursors = new HashSet();
+        this.cursors = new HashSet<PyCursor>();
         this.connection = connection;
-        this.statements = new HashSet();
+        this.statements = new HashSet<PyStatement>();
         this.supportsTransactions = this.connection.getMetaData().supportsTransactions();
 
         if (this.supportsTransactions) {
@@ -120,7 +103,6 @@ public class PyConnection extends PyObject implements ClassDictInit {
      */
     @Override
     public String toString() {
-
         try {
             return String.format("<PyConnection object at %s user='%s', url='%s'>", Py.idstr(this),
                                  connection.getMetaData().getUserName(),
@@ -136,14 +118,20 @@ public class PyConnection extends PyObject implements ClassDictInit {
      * @param dict
      */
     static public void classDictInit(PyObject dict) {
-
+        PyObject version =
+                Py.newString("$Revision$").__getslice__(Py.newInteger(11),
+                                                               Py.newInteger(-2));
+        dict.__setitem__("__version__", version);
         dict.__setitem__("autocommit", new PyInteger(0));
-        dict.__setitem__("__version__", Py.newString("$Revision$").__getslice__(Py.newInteger(11), Py.newInteger(-2), null));
         dict.__setitem__("close", new ConnectionFunc("close", 0, 0, 0, zxJDBC.getString("close")));
-        dict.__setitem__("commit", new ConnectionFunc("commit", 1, 0, 0, zxJDBC.getString("commit")));
-        dict.__setitem__("cursor", new ConnectionFunc("cursor", 2, 0, 4, zxJDBC.getString("cursor")));
-        dict.__setitem__("rollback", new ConnectionFunc("rollback", 3, 0, 0, zxJDBC.getString("rollback")));
-        dict.__setitem__("nativesql", new ConnectionFunc("nativesql", 4, 1, 1, zxJDBC.getString("nativesql")));
+        dict.__setitem__("commit", new ConnectionFunc("commit", 1, 0, 0,
+                                                      zxJDBC.getString("commit")));
+        dict.__setitem__("cursor", new ConnectionFunc("cursor", 2, 0, 4,
+                                                      zxJDBC.getString("cursor")));
+        dict.__setitem__("rollback", new ConnectionFunc("rollback", 3, 0, 0,
+                                                        zxJDBC.getString("rollback")));
+        dict.__setitem__("nativesql", new ConnectionFunc("nativesql", 4, 1, 1,
+                                                         zxJDBC.getString("nativesql")));
 
         // hide from python
         dict.__setitem__("initModule", null);
@@ -161,8 +149,8 @@ public class PyConnection extends PyObject implements ClassDictInit {
      * @param name
      * @param value
      */
+    @Override
     public void __setattr__(String name, PyObject value) {
-
         if ("autocommit".equals(name)) {
             try {
                 if (this.supportsTransactions) {
@@ -171,7 +159,6 @@ public class PyConnection extends PyObject implements ClassDictInit {
             } catch (SQLException e) {
                 throw zxJDBC.makeException(zxJDBC.DatabaseError, e);
             }
-
             return;
         }
 
@@ -184,8 +171,8 @@ public class PyConnection extends PyObject implements ClassDictInit {
      * @param name the name of the attribute of interest
      * @return the value for the attribute of the specified name
      */
+    @Override
     public PyObject __findattr_ex__(String name) {
-
         if ("autocommit".equals(name)) {
             try {
                 return connection.getAutoCommit() ? Py.One : Py.Zero;
@@ -240,40 +227,31 @@ public class PyConnection extends PyObject implements ClassDictInit {
     }
 
     /**
-     * Close the connection now (rather than whenever __del__ is called).
-     * The connection will be unusable from this point forward; an Error
-     * (or subclass) exception will be raised if any operation is attempted
-     * with the connection. The same applies to all cursor objects trying
-     * to use the connection.
+     * Close the connection now (rather than whenever __del__ is called).  The connection
+     * will be unusable from this point forward; an Error (or subclass) exception will be
+     * raised if any operation is attempted with the connection. The same applies to all
+     * cursor objects trying to use the connection.
      */
     public void close() {
-
         if (closed) {
             throw zxJDBC.makeException(zxJDBC.ProgrammingError, "connection is closed");
         }
 
-        // mark ourselves closed now so that any callbacks we
-        // get from closing down cursors and statements to not
-        // try and modify our internal sets
+        // mark ourselves closed now so that any callbacks we get from closing down
+        // cursors and statements to not try and modify our internal sets
         this.closed = true;
 
         synchronized (this.cursors) {
-
-            // close the cursors
-            for (Iterator i = this.cursors.iterator(); i.hasNext();) {
-                ((PyCursor) i.next()).close();
+            for (PyCursor cursor: cursors) {
+                cursor.close();
             }
-
             this.cursors.clear();
         }
 
         synchronized (this.statements) {
-
-            // close the cursors
-            for (Iterator i = this.statements.iterator(); i.hasNext();) {
-                ((PyStatement) i.next()).close();
+            for (PyStatement statement : statements) {
+                statement.close();
             }
-
             this.statements.clear();
         }
 
@@ -285,15 +263,14 @@ public class PyConnection extends PyObject implements ClassDictInit {
     }
 
     /**
-     * Commit any pending transaction to the database. Note that if the
-     * database supports an auto-commit feature, this must be initially
-     * off. An interface method may be provided to turn it back on.
+     * Commit any pending transaction to the database. Note that if the database supports
+     * an auto-commit feature, this must be initially off. An interface method may be
+     * provided to turn it back on.
      * <p/>
-     * Database modules that do not support transactions should implement
-     * this method with void functionality.
+     * Database modules that do not support transactions should implement this method with
+     * void functionality.
      */
     public void commit() {
-
         if (closed) {
             throw zxJDBC.makeException(zxJDBC.ProgrammingError, "connection is closed");
         }
@@ -310,16 +287,13 @@ public class PyConnection extends PyObject implements ClassDictInit {
     }
 
     /**
-     * <i>This method is optional since not all databases provide transaction
-     * support.</i>
+     * <i>This method is optional since not all databases provide transaction support.</i>
      * <p/>
-     * In case a database does provide transactions this method causes the database
-     * to roll back to the start of any pending transaction. Closing a connection
-     * without committing the changes first will cause an implicit rollback to be
-     * performed.
+     * In case a database does provide transactions this method causes the database to
+     * roll back to the start of any pending transaction. Closing a connection without
+     * committing the changes first will cause an implicit rollback to be performed.
      */
     public void rollback() {
-
         if (closed) {
             throw zxJDBC.makeException(zxJDBC.ProgrammingError, "connection is closed");
         }
@@ -336,10 +310,10 @@ public class PyConnection extends PyObject implements ClassDictInit {
     }
 
     /**
-     * Converts the given SQL statement into the system's native SQL grammar. A
-     * driver may convert the JDBC sql grammar into its system's native SQL grammar
-     * prior to sending it; this method returns the native form of the statement
-     * that the driver would have sent.
+     * Converts the given SQL statement into the system's native SQL grammar. A driver may
+     * convert the JDBC sql grammar into its system's native SQL grammar prior to sending
+     * it; this method returns the native form of the statement that the driver would have
+     * sent.
      *
      * @param nativeSQL
      * @return the native form of this statement
@@ -364,9 +338,9 @@ public class PyConnection extends PyObject implements ClassDictInit {
     }
 
     /**
-     * Return a new Cursor Object using the connection. If the database does not
-     * provide a direct cursor concept, the module will have to emulate cursors
-     * using other means to the extent needed by this specification.
+     * Return a new Cursor Object using the connection. If the database does not provide a
+     * direct cursor concept, the module will have to emulate cursors using other means to
+     * the extent needed by this specification.
      *
      * @return a new cursor using this connection
      */
@@ -375,9 +349,9 @@ public class PyConnection extends PyObject implements ClassDictInit {
     }
 
     /**
-     * Return a new Cursor Object using the connection. If the database does not
-     * provide a direct cursor concept, the module will have to emulate cursors
-     * using other means to the extent needed by this specification.
+     * Return a new Cursor Object using the connection. If the database does not provide a
+     * direct cursor concept, the module will have to emulate cursors using other means to
+     * the extent needed by this specification.
      *
      * @param dynamicFetch if true, dynamically iterate the result
      * @return a new cursor using this connection
@@ -387,9 +361,9 @@ public class PyConnection extends PyObject implements ClassDictInit {
     }
 
     /**
-     * Return a new Cursor Object using the connection. If the database does not
-     * provide a direct cursor concept, the module will have to emulate cursors
-     * using other means to the extent needed by this specification.
+     * Return a new Cursor Object using the connection. If the database does not provide a
+     * direct cursor concept, the module will have to emulate cursors using other means to
+     * the extent needed by this specification.
      *
      * @param dynamicFetch if true, dynamically iterate the result
      * @param rsType       the type of the underlying ResultSet
@@ -397,15 +371,12 @@ public class PyConnection extends PyObject implements ClassDictInit {
      * @return a new cursor using this connection
      */
     public PyCursor cursor(boolean dynamicFetch, PyObject rsType, PyObject rsConcur) {
-
         if (closed) {
             throw zxJDBC.makeException(zxJDBC.ProgrammingError, "connection is closed");
         }
 
         PyCursor cursor = new PyExtendedCursor(this, dynamicFetch, rsType, rsConcur);
-
         this.cursors.add(cursor);
-
         return cursor;
     }
 
@@ -415,11 +386,9 @@ public class PyConnection extends PyObject implements ClassDictInit {
      * @param cursor
      */
     void remove(PyCursor cursor) {
-
         if (closed) {
             return;
         }
-
         this.cursors.remove(cursor);
     }
 
@@ -429,11 +398,9 @@ public class PyConnection extends PyObject implements ClassDictInit {
      * @param statement statement
      */
     void add(PyStatement statement) {
-
         if (closed) {
             return;
         }
-
         this.statements.add(statement);
     }
 
@@ -444,20 +411,20 @@ public class PyConnection extends PyObject implements ClassDictInit {
      * @return boolean
      */
     boolean contains(PyStatement statement) {
-
         if (closed) {
             return false;
         }
-
         return this.statements.contains(statement);
     }
 }
 
 class ConnectionFunc extends PyBuiltinMethodSet {
+
     ConnectionFunc(String name, int index, int minargs, int maxargs, String doc) {
         super(name, index, minargs, maxargs, doc, PyConnection.class);
     }
 
+    @Override
     public PyObject __call__() {
         PyConnection c = (PyConnection) __self__;
         switch (index) {
@@ -472,11 +439,12 @@ class ConnectionFunc extends PyBuiltinMethodSet {
             case 3:
                 c.rollback();
                 return Py.None;
-            default :
+            default:
                 throw info.unexpectedCall(0, false);
         }
     }
 
+    @Override
     public PyObject __call__(PyObject arg) {
         PyConnection c = (PyConnection) __self__;
         switch (index) {
@@ -484,21 +452,23 @@ class ConnectionFunc extends PyBuiltinMethodSet {
                 return c.cursor(arg.__nonzero__());
             case 4:
                 return c.nativesql(arg);
-            default :
+            default:
                 throw info.unexpectedCall(1, false);
         }
     }
 
+    @Override
     public PyObject __call__(PyObject arg1, PyObject arg2, PyObject arg3) {
         PyConnection c = (PyConnection) __self__;
         switch (index) {
             case 2:
                 return c.cursor(arg1.__nonzero__(), arg2, arg3);
-            default :
+            default:
                 throw info.unexpectedCall(3, false);
         }
     }
 
+    @Override
     public PyObject __call__(PyObject[] args, String[] keywords) {
         PyConnection c = (PyConnection) __self__;
         PyArgParser parser = new PyArgParser(args, keywords);
@@ -514,7 +484,7 @@ class ConnectionFunc extends PyBuiltinMethodSet {
 
                 return c.cursor(dynamic.__nonzero__(), rstype, rsconcur);
 
-            default :
+            default:
                 throw info.unexpectedCall(args.length, true);
         }
     }

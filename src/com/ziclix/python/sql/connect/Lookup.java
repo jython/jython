@@ -8,20 +8,31 @@
  */
 package com.ziclix.python.sql.connect;
 
-import java.sql.*;
-import java.util.*;
 import java.lang.reflect.Field;
-import javax.sql.*;
-import javax.naming.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.util.Hashtable;
 
-import org.python.core.*;
-import com.ziclix.python.sql.*;
-import com.ziclix.python.sql.util.*;
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+import javax.sql.ConnectionPoolDataSource;
+import javax.sql.DataSource;
+
+import org.python.core.Py;
+import org.python.core.PyObject;
+import org.python.core.PyString;
+
+import com.ziclix.python.sql.PyConnection;
+import com.ziclix.python.sql.zxJDBC;
+import com.ziclix.python.sql.util.PyArgParser;
 
 /**
- * Establish a connection through a JNDI lookup.  The bound object can be either a <code>DataSource</code>,
- * <code>ConnectionPooledDataSource</code>, <code>Connection</code> or a <code>String</code>.  If it's a
- * <code>String</code> the value is passed to the DriverManager to obtain a connection, otherwise the
+ * Establish a connection through a JNDI lookup.  The bound object can be either a
+ * <code>DataSource</code>, <code>ConnectionPooledDataSource</code>,
+ * <code>Connection</code> or a <code>String</code>.  If it's a <code>String</code> the
+ * value is passed to the DriverManager to obtain a connection, otherwise the
  * <code>Connection</code> is established using the object.
  *
  * @author brian zimmer
@@ -30,13 +41,8 @@ import com.ziclix.python.sql.util.*;
  */
 public class Lookup extends PyObject {
 
-    private static final PyString _doc = new PyString("establish a connection through a JNDI lookup");
-
-    /**
-     * Constructor Lookup
-     */
-    public Lookup() {
-    }
+    private static final PyString _doc =
+            new PyString("establish a connection through a JNDI lookup");
 
     /**
      * Method __findattr__
@@ -44,8 +50,8 @@ public class Lookup extends PyObject {
      * @param name
      * @return PyObject
      */
+    @Override
     public PyObject __findattr_ex__(String name) {
-
         if ("__doc__".equals(name)) {
             return _doc;
         }
@@ -54,17 +60,18 @@ public class Lookup extends PyObject {
     }
 
     /**
-     * Expects a single PyString argument which is the JNDI name of the bound Connection or DataSource.
-     * If any keywords are passed, an attempt is made to match the keyword to a static final Field on
-     * javax.naming.Context.  If the Field is found, the value of the Field is substituted as the key
-     * and the value of the keyword is the value put in the Hashtable environment.  If the Field is not
-     * found, the key is the keyword with no substitutions.
+     * Expects a single PyString argument which is the JNDI name of the bound Connection
+     * or DataSource.  If any keywords are passed, an attempt is made to match the keyword
+     * to a static final Field on javax.naming.Context.  If the Field is found, the value
+     * of the Field is substituted as the key and the value of the keyword is the value
+     * put in the Hashtable environment.  If the Field is not found, the key is the
+     * keyword with no substitutions.
      */
+    @Override
     public PyObject __call__(PyObject[] args, String[] keywords) {
-
         Object ref = null;
         Connection connection = null;
-        Hashtable env = new Hashtable();
+        Hashtable<String, Object> env = new Hashtable<String, Object>();
 
         // figure out the correct params
         PyArgParser parser = new PyArgParser(args, keywords);
@@ -95,7 +102,6 @@ public class Lookup extends PyObject {
         }
 
         InitialContext context = null;
-
         try {
             context = new InitialContext(env);
             ref = context.lookup((String) jndiName);
@@ -106,12 +112,14 @@ public class Lookup extends PyObject {
                 try {
                     context.close();
                 } catch (NamingException e) {
+                    // ok
                 }
             }
         }
 
         if (ref == null) {
-            throw zxJDBC.makeException(zxJDBC.ProgrammingError, "object [" + jndiName + "] not found in JNDI");
+            throw zxJDBC.makeException(zxJDBC.ProgrammingError,
+                                       "object [" + jndiName + "] not found in JNDI");
         }
 
         try {
@@ -122,14 +130,15 @@ public class Lookup extends PyObject {
             } else if (ref instanceof DataSource) {
                 connection = ((DataSource) ref).getConnection();
             } else if (ref instanceof ConnectionPoolDataSource) {
-                connection = ((ConnectionPoolDataSource) ref).getPooledConnection().getConnection();
+                connection =
+                        ((ConnectionPoolDataSource) ref).getPooledConnection().getConnection();
             }
         } catch (SQLException e) {
             throw zxJDBC.makeException(zxJDBC.DatabaseError, e);
         }
 
         try {
-            if ((connection == null) || connection.isClosed()) {
+            if (connection == null || connection.isClosed()) {
                 throw zxJDBC.makeException(zxJDBC.DatabaseError, "unable to establish connection");
             }
 
@@ -144,7 +153,8 @@ public class Lookup extends PyObject {
      *
      * @return String
      */
+    @Override
     public String toString() {
-        return "<lookup object instance at " + Py.id(this) + ">";
+        return String.format("<lookup object at %s>", Py.idstr(this));
     }
 }
