@@ -885,23 +885,23 @@ compound_stmt
 
 //if_stmt: 'if' test ':' suite ('elif' test ':' suite)* ['else' ':' suite]
 if_stmt
-    : IF test[expr_contextType.Load] COLON ifsuite=suite[false] elif_clause[$test.start]?
+    : IF test[expr_contextType.Load] COLON ifsuite=suite[false] elif_clause?
    -> ^(IF<If>[$IF, actions.castExpr($test.tree), actions.castStmts($ifsuite.stypes),
          actions.makeElse($elif_clause.stypes, $elif_clause.tree)])
     ;
 
 //not in CPython's Grammar file
 elif_clause
-    [Token iftest] returns [List stypes]
+    returns [List stypes]
     : else_clause
       {
           $stypes = $else_clause.stypes;
       }
     | ELIF test[expr_contextType.Load] COLON suite[false]
-        (e2=elif_clause[$iftest]
-       -> ^(ELIF<If>[$iftest, actions.castExpr($test.tree), actions.castStmts($suite.stypes), actions.makeElse($e2.stypes, $e2.tree)])
+        (e2=elif_clause
+       -> ^(ELIF<If>[$test.start, actions.castExpr($test.tree), actions.castStmts($suite.stypes), actions.makeElse($e2.stypes, $e2.tree)])
         |
-       -> ^(ELIF<If>[$iftest, actions.castExpr($test.tree), actions.castStmts($suite.stypes), new ArrayList<stmt>()])
+       -> ^(ELIF<If>[$test.start, actions.castExpr($test.tree), actions.castStmts($suite.stypes), new ArrayList<stmt>()])
         )
     ;
 
