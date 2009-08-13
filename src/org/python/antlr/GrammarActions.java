@@ -658,12 +658,12 @@ public class GrammarActions {
         return current;
     }
 
-    BinOp makeBinOp(PythonTree left, List ops, List rights) {
+    BinOp makeBinOp(PythonTree left, List ops, List rights, List toks) {
         BinOp current = new BinOp(left, castExpr(left), (operatorType)ops.get(0), castExpr(rights.get(0)));
         for (int i = 1; i< rights.size(); i++) {
             expr right = castExpr(rights.get(i));
             operatorType op = (operatorType)ops.get(i);
-            current = new BinOp(left, current, op, right);
+            current = new BinOp((Token)toks.get(i), current, op, right);
         }
         return current;
     }

@@ -1180,16 +1180,18 @@ and_expr
 shift_expr
 @init {
     List ops = new ArrayList();
+    List toks = new ArrayList();
 }
 @after {
     if (!ops.isEmpty()) {
-        $shift_expr.tree = actions.makeBinOp($left.tree, ops, $right);
+        $shift_expr.tree = actions.makeBinOp($left.tree, ops, $right, toks);
     }
 }
     : left=arith_expr
         ( ( shift_op right+=arith_expr
             {
                 ops.add($shift_op.op);
+                toks.add($shift_op.start);
             }
           )+
         |
@@ -1209,16 +1211,18 @@ shift_op
 arith_expr
 @init {
     List ops = new ArrayList();
+    List toks = new ArrayList();
 }
 @after {
     if (!ops.isEmpty()) {
-        $arith_expr.tree = actions.makeBinOp($left.tree, ops, $right);
+        $arith_expr.tree = actions.makeBinOp($left.tree, ops, $right, toks);
     }
 }
     : left=term
         ( (arith_op right+=term
            {
                ops.add($arith_op.op);
+               toks.add($arith_op.start);
            }
           )+
         |
@@ -1246,16 +1250,18 @@ arith_op
 term
 @init {
     List ops = new ArrayList();
+    List toks = new ArrayList();
 }
 @after {
     if (!ops.isEmpty()) {
-        $term.tree = actions.makeBinOp($left.tree, ops, $right);
+        $term.tree = actions.makeBinOp($left.tree, ops, $right, toks);
     }
 }
     : left=factor
         ( (term_op right+=factor
           {
               ops.add($term_op.op);
+              toks.add($term_op.start);
           }
           )+
         |
