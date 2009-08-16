@@ -19,6 +19,7 @@ Jython 2.5.1
     - [ 1145 ] Jython 2.5 compatibility problem with JSR 223
     - [ 1400 ] Evaluating expression via JSR 223 ScriptEngine returns null instead of True/False
     - [ 1413 ] Array data type (PostgreSQL) is not supported (NPE)
+    - [ 1434 ] Cannot get return code from a process started with os.popen with Jython 2.5 (worked in 2.2)
 
 Jython 2.5.0
   The same as rc4.
