@@ -1,4 +1,7 @@
-// Copyright (c) Corporation for National Research Initiatives
+/*
+ * Copyright (c) Corporation for National Research Initiatives
+ * Copyright (c) Jython Developers
+ */
 package org.python.core;
 
 import java.io.InputStream;
@@ -27,7 +30,7 @@ import org.python.expose.ExposedSet;
 import org.python.expose.ExposedType;
 
 /**
- * A python file wrapper around a java stream, reader/writer or file.
+ * The Python file type. Wraps an {@link TextIOBase} object.
  */
 @ExposedType(name = "file")
 public class PyFile extends PyObject {
@@ -103,8 +106,8 @@ public class PyFile extends PyObject {
      * method <code>file</code> doesn't expose this functionality (<code>open</code> does
      * albeit deprecated) as it isn't available to regular Python code. To wrap an
      * InputStream in a file from Python, use
-     * {@link util.FileUtil#wrap(InputStream, int)}
-     * {@link util.FileUtil#wrap(InputStream)}
+     * {@link org.python.core.util.FileUtil#wrap(InputStream, int)}
+     * {@link org.python.core.util.FileUtil#wrap(InputStream)}
      */
     public PyFile(InputStream istream, int bufsize) {
         this(istream, "<Java InputStream '" + istream + "' as file>", "r", bufsize, true);
@@ -124,8 +127,8 @@ public class PyFile extends PyObject {
      * method <code>file</code> doesn't expose this functionality (<code>open</code> does
      * albeit deprecated) as it isn't available to regular Python code. To wrap an
      * OutputStream in a file from Python, use
-     * {@link util.FileUtil#wrap(OutputStream, int)}
-     * {@link util.FileUtil#wrap(OutputStream)}
+     * {@link org.python.core.util.FileUtil#wrap(OutputStream, int)}
+     * {@link org.python.core.util.FileUtil#wrap(OutputStream)}
      */
     public PyFile(OutputStream ostream, int bufsize) {
         this(ostream, "<Java OutputStream '" + ostream + "' as file>", "w", bufsize, true);
@@ -240,13 +243,13 @@ public class PyFile extends PyObject {
     }
 
     @ExposedMethod(defaults = {"-1"}, doc = BuiltinDocs.file_read_doc)
-    final synchronized PyString file_read(int n) {
+    final synchronized PyString file_read(int size) {
         checkClosed();
-        return new PyString(file.read(n));
+        return new PyString(file.read(size));
     }
 
-    public PyString read(int n) {
-        return file_read(n);
+    public PyString read(int size) {
+        return file_read(size);
     }
 
     public PyString read() {
@@ -303,6 +306,7 @@ public class PyFile extends PyObject {
         return file_readlines(0);
     }
 
+    @Override
     public PyObject __iternext__() {
         return file___iternext__();
     }
@@ -329,7 +333,8 @@ public class PyFile extends PyObject {
         return file_next();
     }
 
-    @ExposedMethod(names = {"__enter__", "__iter__", "xreadlines"}, doc = BuiltinDocs.file___iter___doc)
+    @ExposedMethod(names = {"__enter__", "__iter__", "xreadlines"},
+                   doc = BuiltinDocs.file___iter___doc)
     final PyObject file_self() {
         checkClosed();
         return this;
@@ -339,6 +344,7 @@ public class PyFile extends PyObject {
         return file_self();
     }
 
+    @Override
     public PyObject __iter__() {
         return file_self();
     }
@@ -348,35 +354,35 @@ public class PyFile extends PyObject {
     }
 
     @ExposedMethod(doc = BuiltinDocs.file_write_doc)
-    final void file_write(PyObject o) {
-        if (o instanceof PyUnicode) {
+    final void file_write(PyObject obj) {
+        if (obj instanceof PyUnicode) {
             // Call __str__ on unicode objects to encode them before writing
-            file_write(o.__str__().string);
-        } else if (o instanceof PyString) {
-            file_write(((PyString)o).string);
-        } else if (binary && o instanceof PyArray) {
-            file_write(((PyArray)o).tostring());
+            file_write(obj.__str__().string);
+        } else if (obj instanceof PyString) {
+            file_write(((PyString)obj).string);
+        } else if (binary && obj instanceof PyArray) {
+            file_write(((PyArray)obj).tostring());
         } else {
             throw Py.TypeError(String.format("argument 1 must be string or %sbuffer, not %.200s",
                                              binary ? "" : "read-only character ",
-                                             o.getType().fastGetName()));
+                                             obj.getType().fastGetName()));
         }
     }
 
-    final synchronized void file_write(String s) {
+    final synchronized void file_write(String string) {
         checkClosed();
         softspace = false;
-        file.write(s);
+        file.write(string);
     }
 
-    public void write(String s) {
-        file_write(s);
+    public void write(String string) {
+        file_write(string);
     }
 
     @ExposedMethod(doc = BuiltinDocs.file_writelines_doc)
-    final synchronized void file_writelines(PyObject a) {
+    final synchronized void file_writelines(PyObject lines) {
         checkClosed();
-        PyObject iter = Py.iter(a, "writelines() requires an iterable argument");
+        PyObject iter = Py.iter(lines, "writelines() requires an iterable argument");
 
         PyObject item = null;
         while ((item = iter.__iternext__()) != null) {
@@ -387,8 +393,8 @@ public class PyFile extends PyObject {
         }
     }
 
-    public void writelines(PyObject a) {
-        file_writelines(a);
+    public void writelines(PyObject lines) {
+        file_writelines(lines);
     }
 
     @ExposedMethod(doc = BuiltinDocs.file_tell_doc)
@@ -506,6 +512,7 @@ public class PyFile extends PyObject {
         return String.format("<%s file '%s', mode '%s' at %s>", state, name, mode, id);
     }
 
+    @Override
     public String toString() {
         return file_toString();
     }
@@ -540,19 +547,21 @@ public class PyFile extends PyObject {
         throw Py.TypeError("can't delete numeric/char attribute");
     }
 
+    @Override
     public Object __tojava__(Class<?> cls) {
-        Object o = null;
+        Object obj = null;
         if (InputStream.class.isAssignableFrom(cls)) {
-            o = file.asInputStream();
+            obj = file.asInputStream();
         } else if (OutputStream.class.isAssignableFrom(cls)) {
-            o = file.asOutputStream();
+            obj = file.asOutputStream();
         }
-        if (o == null) {
-            o = super.__tojava__(cls);
+        if (obj == null) {
+            obj = super.__tojava__(cls);
         }
-        return o;
+        return obj;
     }
 
+    @Override
     protected void finalize() throws Throwable {
         super.finalize();
         if (closer != null) {
@@ -569,15 +578,15 @@ public class PyFile extends PyObject {
     }
 
     /**
-     * A mechanism to make sure PyFiles are closed on exit. On creation Closer adds itself to a list
-     * of Closers that will be run by PyFileCloser on JVM shutdown. When a PyFile's close or
-     * finalize methods are called, PyFile calls its Closer.close which clears Closer out of the
-     * shutdown queue.
+     * A mechanism to make sure PyFiles are closed on exit. On creation Closer adds itself
+     * to a list of Closers that will be run by PyFileCloser on JVM shutdown. When a
+     * PyFile's close or finalize methods are called, PyFile calls its Closer.close which
+     * clears Closer out of the shutdown queue.
      *
-     * We use a regular object here rather than WeakReferences and their ilk as they may be
-     * collected before the shutdown hook runs. There's no guarantee that finalize will be called
-     * during shutdown, so we can't use it. It's vital that this Closer has no reference to the
-     * PyFile it's closing so the PyFile remains garbage collectable.
+     * We use a regular object here rather than WeakReferences and their ilk as they may
+     * be collected before the shutdown hook runs. There's no guarantee that finalize will
+     * be called during shutdown, so we can't use it. It's vital that this Closer has no
+     * reference to the PyFile it's closing so the PyFile remains garbage collectable.
      */
     private static class Closer {
 
@@ -612,6 +621,7 @@ public class PyFile extends PyObject {
             super("Jython Shutdown File Closer");
         }
 
+        @Override
         public void run() {
             if (closers == null) {
                 // closers can be null in some strange cases
