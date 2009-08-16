@@ -141,9 +141,17 @@ public class OracleDataHandler extends FilterDataHandler {
                     break;
                 }
 
-                ResultSetMetaData metaData = set.getMetaData();
-                int scale = metaData.getScale(col);
-                int precision = metaData.getPrecision(col);
+                int scale;
+                int precision;
+                // Oracle's DML returning ResultSet doesn't support getMetaData
+                try {
+                    ResultSetMetaData metaData = set.getMetaData();
+                    scale = metaData.getScale(col);
+                    precision = metaData.getPrecision(col);
+                } catch (SQLException sqle) {
+                    scale = precision = 0;
+                }
+
                 if (scale == -127) {
                     if (precision == 0) {
                         // Unspecified precision. Normally an integer from a sequence but
