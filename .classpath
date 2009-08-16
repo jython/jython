@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry excluding="com/ziclix/python/sql/handler/InformixDataHandler.java|com/ziclix/python/sql/handler/OracleDataHandler.java" kind="src" output="build/classes" path="src"/>
+	<classpathentry excluding="com/ziclix/python/sql/handler/InformixDataHandler.java|com/ziclix/python/sql/handler/OracleDataHandler.java" kind="src" path="src"/>
 	<classpathentry kind="src" path="tests/modjy/java"/>
-	<classpathentry kind="src" output="build/classes" path="build/gensrc"/>
-	<classpathentry kind="src" output="build/classes" path="tests/java"/>
-	<classpathentry kind="src" path="bugtests/classes"/>
+	<classpathentry kind="src" path="build/gensrc"/>
+	<classpathentry kind="src" path="tests/java"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/3"/>
 	<classpathentry kind="lib" path="extlibs/jline-0.9.95-SNAPSHOT.jar"/>
@@ -20,7 +19,7 @@
 	<classpathentry kind="lib" path="extlibs/constantine-0.4.jar"/>
 	<classpathentry kind="lib" path="extlibs/jna-posix.jar"/>
 	<classpathentry kind="lib" path="extlibs/mockrunner-0.4.1/jar/jdom.jar"/>
-    <classpathentry kind="lib" path="extlibs/mockrunner-0.4.1/lib/jdk1.5/j2ee1.3/mockrunner-servlet.jar"/>
-    <classpathentry kind="lib" path="extlibs/jna.jar"/>
-	<classpathentry kind="output" path="bugtests/classes"/>
+	<classpathentry kind="lib" path="extlibs/mockrunner-0.4.1/lib/jdk1.5/j2ee1.3/mockrunner-servlet.jar"/>
+	<classpathentry kind="lib" path="extlibs/jna.jar"/>
+	<classpathentry kind="output" path="build/classes"/>
 </classpath>
