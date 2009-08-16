@@ -216,6 +216,25 @@ class BaseTest(unittest.TestCase):
         if a.itemsize>1 and self.typecode not in ('b', 'B'):
             self.assertRaises(ValueError, b.fromstring, "x")
 
+    def test_filewrite(self):
+        a = array.array(self.typecode, 2*self.example)
+        f = open(test_support.TESTFN, 'wb')
+        try:
+            f.write(a)
+            f.close()
+            b = array.array(self.typecode)
+            f = open(test_support.TESTFN, 'rb')
+            b.fromfile(f, len(self.example))
+            self.assertEqual(b, array.array(self.typecode, self.example))
+            self.assertNotEqual(a, b)
+            b.fromfile(f, len(self.example))
+            self.assertEqual(a, b)
+            f.close()
+        finally:
+            if not f.closed:
+                f.close()
+            test_support.unlink(test_support.TESTFN)
+
     def test_repr(self):
         a = array.array(self.typecode, 2*self.example)
         self.assertEqual(a, eval(repr(a), {"array": array.array}))
