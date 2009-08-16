@@ -8,8 +8,6 @@ Jython 2.5.1
       the name of the produced proxy class.
     - Built in JSR 223 scripting engine, with LiveTribe JSR 223 implementation for JDK 5
   Bugs Fixed
-    - [ 1439 ] Can't write() array.array
-    - [ 1415 ] ast Node creation fails with no arg constructors
     - [ 645615 ] cannot import through symbolic links
     - [ 1366 ] parsing of lamda expression fails
     - [ 1365 ] continuation lines fail in interactive interpreter
@@ -21,6 +19,13 @@ Jython 2.5.1
     - [ 1400 ] Evaluating expression via JSR 223 ScriptEngine returns null instead of True/False
     - [ 1413 ] Array data type (PostgreSQL) is not supported (NPE)
     - [ 1434 ] Cannot get return code from a process started with os.popen with Jython 2.5 (worked in 2.2)
+    - [ 1391 ] socket.getaddrinfo() breaks ftplib FTP client
+    - [ 1409 ] JSR-233 engine version numbers backwards
+    - [ 1408 ] JSR-223 engine doesn't implement I/O redirection
+    - [ 1393 ] TypeError: _new_impl(): expected 1 args; got 0
+    - [ 1415 ] ast Node creation fails with no arg constructors
+    - [ 1405 ] Executing __run__.py from .jar throws exception(SystemExit: 0) in main when sys.exit(0) is called
+    - [ 1439 ] Can't write() array.array
 
 Jython 2.5.0
   The same as rc4.
