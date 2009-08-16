@@ -732,13 +732,34 @@ def popen(command, mode='r', bufsize=-1):
     """
     import subprocess
     if mode == 'r':
-        return subprocess.Popen(command, bufsize=bufsize, shell=True,
-                                stdout=subprocess.PIPE).stdout
+        proc = subprocess.Popen(command, bufsize=bufsize, shell=True,
+                                stdout=subprocess.PIPE)
+        return _wrap_close(proc.stdout, proc)
     elif mode == 'w':
-        return subprocess.Popen(command, bufsize=bufsize, shell=True,
-                                stdin=subprocess.PIPE).stdin
+        proc = subprocess.Popen(command, bufsize=bufsize, shell=True,
+                                stdin=subprocess.PIPE)
+        return _wrap_close(proc.stdin, proc)
     else:
         raise OSError(errno.EINVAL, strerror(errno.EINVAL))
+
+# Helper for popen() -- a proxy for a file whose close waits for the process
+class _wrap_close(object):
+    def __init__(self, stream, proc):
+        self._stream = stream
+        self._proc = proc
+    def close(self):
+        self._stream.close()
+        returncode = self._proc.wait()
+        if returncode == 0:
+            return None
+        if _name == 'nt':
+            return returncode
+        else:
+            return returncode << 8  # Shift left to match old behavior
+    def __getattr__(self, name):
+        return getattr(self._stream, name)
+    def __iter__(self):
+        return iter(self._stream)
 
 # os module versions of the popen# methods have different return value
 # order than popen2 functions
