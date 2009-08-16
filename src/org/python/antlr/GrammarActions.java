@@ -642,11 +642,11 @@ public class GrammarActions {
         return result;
     }
     
-    BoolOp makeBoolOp(PythonTree left, boolopType op, List right) {
+    BoolOp makeBoolOp(Token t, PythonTree left, boolopType op, List right) {
         List values = new ArrayList();
         values.add(left);
         values.addAll(right);
-        return new BoolOp(left, op, castExprs(values));
+        return new BoolOp(t, op, castExprs(values));
     }
 
     BinOp makeBinOp(PythonTree left, operatorType op, List rights) {

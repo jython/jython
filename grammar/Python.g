@@ -1038,10 +1038,15 @@ test[expr_contextType ctype]
     ;
 
 //or_test: and_test ('or' and_test)*
-or_test[expr_contextType ctype]
+or_test
+    [expr_contextType ctype] returns [Token leftTok]
 @after {
     if ($or != null) {
-        $or_test.tree = actions.makeBoolOp($left.tree, boolopType.Or, $right);
+        Token tok = $left.start;
+        if ($left.leftTok != null) {
+            tok = $left.leftTok;
+        }
+        $or_test.tree = actions.makeBoolOp(tok, $left.tree, boolopType.Or, $right);
     }
 }
     : left=and_test[ctype]
@@ -1053,10 +1058,15 @@ or_test[expr_contextType ctype]
     ;
 
 //and_test: not_test ('and' not_test)*
-and_test[expr_contextType ctype]
+and_test
+    [expr_contextType ctype] returns [Token leftTok]
 @after {
     if ($and != null) {
-        $and_test.tree = actions.makeBoolOp($left.tree, boolopType.And, $right);
+        Token tok = $left.start;
+        if ($left.leftTok != null) {
+            tok = $left.leftTok;
+        }
+        $and_test.tree = actions.makeBoolOp(tok, $left.tree, boolopType.And, $right);
     }
 }
     : left=not_test[ctype]
@@ -1068,18 +1078,21 @@ and_test[expr_contextType ctype]
     ;
 
 //not_test: 'not' not_test | comparison
-not_test[expr_contextType ctype]
-    : NOT nt=not_test[ctype]
+not_test
+    [expr_contextType ctype] returns [Token leftTok]
+    : NOT nt=not_test[ctype] {$leftTok = $nt.leftTok;}
    -> ^(NOT<UnaryOp>[$NOT, unaryopType.Not, actions.castExpr($nt.tree)])
-    | comparison[ctype]
+    | comparison[ctype] {$leftTok = $comparison.leftTok;}
     ;
 
 //comparison: expr (comp_op expr)*
-comparison[expr_contextType ctype]
+comparison
+    [expr_contextType ctype] returns [Token leftTok]
 @init {
     List cmps = new ArrayList();
 }
 @after {
+    $leftTok = $left.leftTok;
     if (!cmps.isEmpty()) {
         $comparison.tree = new Compare($left.start, actions.castExpr($left.tree), actions.makeCmpOps(cmps),
             actions.castExprs($right));
@@ -1125,14 +1138,18 @@ comp_op
 
 
 //expr: xor_expr ('|' xor_expr)*
-expr[expr_contextType ect]
+expr
+    [expr_contextType ect] returns [Token leftTok]
 scope {
     expr_contextType ctype;
+    Token lparen;
 }
 @init {
     $expr::ctype = ect;
+    $expr::lparen = null;
 }
 @after {
+    $leftTok = $expr::lparen;
     if ($op != null) {
         $expr.tree = actions.makeBinOp($left.tree, operatorType.BitOr, $right);
     }
@@ -1342,7 +1359,7 @@ power
 //       '`' testlist1 '`' |
 //       NAME | NUMBER | STRING+)
 atom
-    : LPAREN
+    : LPAREN {$expr::lparen = $LPAREN;}
       ( yield_expr
      -> yield_expr
       | testlist_gexp
