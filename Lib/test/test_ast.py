@@ -64,6 +64,9 @@ exec_tests = [
     "break",
     # Continue
     "continue",
+    # Parens and BoolOp
+    "(a == '') and b",
+    "not (a == '') or b",
 ]
 
 # These are compiled through "single"
@@ -326,6 +329,8 @@ exec_results = [
 ('Module', [('Pass', (1, 0))]),
 ('Module', [('Break', (1, 0))]),
 ('Module', [('Continue', (1, 0))]),
+('Module', [('Expr', (1, 0), ('BoolOp', (1, 0), ('And',), [('Compare', (1, 1), ('Name', (1, 1), 'a', ('Load',)), [('Eq',)], [('Str', (1, 6), '')]), ('Name', (1, 14), 'b', ('Load',))]))]),
+('Module', [('Expr', (1, 0), ('BoolOp', (1, 0), ('Or',), [('UnaryOp', (1, 0), ('Not',), ('Compare', (1, 5), ('Name', (1, 5), 'a', ('Load',)), [('Eq',)], [('Str', (1, 10), '')])), ('Name', (1, 17), 'b', ('Load',))]))]),
 ]
 single_results = [
 ('Interactive', [('Expr', (1, 0), ('BinOp', (1, 0), ('Num', (1, 0), 1), ('Add',), ('Num', (1, 2), 2)))]),
