@@ -755,7 +755,7 @@ class _wrap_close(object):
         if _name == 'nt':
             return returncode
         else:
-            return returncode << 8  # Shift left to match old behavior
+            return returncode
     def __getattr__(self, name):
         return getattr(self._stream, name)
     def __iter__(self):
