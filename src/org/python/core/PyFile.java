@@ -354,12 +354,12 @@ public class PyFile extends PyObject {
             file_write(o.__str__().string);
         } else if (o instanceof PyString) {
             file_write(((PyString)o).string);
-        } else if (o instanceof PyArray) {
-            ((PyArray)o).tofile(this);
+        } else if (binary && o instanceof PyArray) {
+            file_write(((PyArray)o).tostring());
         } else {
-            //XXX: Match CPython's error message better
-            //  "argument 1 must be string or read-only buffer, not {type}"
-            throw Py.TypeError("write requires a string or read-only buffer as its argument");
+            throw Py.TypeError(String.format("argument 1 must be string or %sbuffer, not %.200s",
+                                             binary ? "" : "read-only character ",
+                                             o.getType().fastGetName()));
         }
     }
 
