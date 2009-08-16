@@ -26,6 +26,10 @@ Jython 2.5.1
     - [ 1415 ] ast Node creation fails with no arg constructors
     - [ 1405 ] Executing __run__.py from .jar throws exception(SystemExit: 0) in main when sys.exit(0) is called
     - [ 1439 ] Can't write() array.array
+    - [ 1139 ] crashes on isinstance
+    - [ 1430 ] Oracle JDBC Connection close
+    - [ 1406 ] Parsing a simple PEP 342 coroutine crashes Jython 2.5
+    - [ 1407 ] ClassCastException in plain Python coroutine
 
 Jython 2.5.0
   The same as rc4.
