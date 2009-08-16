@@ -592,6 +592,11 @@ public class PyJavaType extends PyType {
         }
         if (forClass.getSuperclass() != null) {
             mergeMethods(forClass.getSuperclass());
+            if (!Modifier.isPublic(forClass.getSuperclass().getModifiers())) {
+                // If the superclass is also not public, it needs to get the same treatment as we
+                // can't call its methods either.
+                handleSuperMethodArgCollisions(forClass.getSuperclass());
+            }
         }
     }
 

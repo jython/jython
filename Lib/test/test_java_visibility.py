@@ -10,6 +10,7 @@ from org.python.tests import (Coercions, HiddenSuper, InterfaceCombination, Invi
 from org.python.tests import VisibilityResults as Results
 from org.python.tests.RedundantInterfaceDeclarations import (Implementation, ExtraClass,
         ExtraString, ExtraStringAndClass, ExtraClassAndString)
+from org.python.tests.multihidden import BaseConnection
 
 class VisibilityTest(unittest.TestCase):
     def test_invisible(self):
@@ -166,6 +167,15 @@ class VisibilityTest(unittest.TestCase):
             self.assertEquals("String", instance.call("string argument"))
             self.assertEquals("int", instance.call(7))
             self.assertEquals("Class", instance.call(LinkedList))
+
+    def test_extending_multiple_hidden_classes(self):
+        '''Tests multiple levels of non-public classes overriding public methods from superclasses
+
+        Bug #1430'''
+        conn = BaseConnection.newConnection()
+        self.assertEquals("wrapper close", conn.close())
+        self.assertEquals("special close", conn.close(7))
+
 
 class JavaClassTest(unittest.TestCase):
     def test_class_methods_visible(self):
