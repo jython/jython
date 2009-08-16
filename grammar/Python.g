@@ -1080,7 +1080,7 @@ and_test
 //not_test: 'not' not_test | comparison
 not_test
     [expr_contextType ctype] returns [Token leftTok]
-    : NOT nt=not_test[ctype] {$leftTok = $nt.leftTok;}
+    : NOT nt=not_test[ctype]
    -> ^(NOT<UnaryOp>[$NOT, unaryopType.Not, actions.castExpr($nt.tree)])
     | comparison[ctype] {$leftTok = $comparison.leftTok;}
     ;
