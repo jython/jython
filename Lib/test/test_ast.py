@@ -297,7 +297,7 @@ def main():
             print kind+"_results = ["
             for s in statements:
                 print repr(to_tuple(compile(s, "?", kind, 0x400)))+","
-                print "]"
+            print "]"
         print "main()"
         raise SystemExit
     test_main()
