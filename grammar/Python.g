@@ -1142,14 +1142,12 @@ expr
     [expr_contextType ect] returns [Token leftTok]
 scope {
     expr_contextType ctype;
-    Token lparen;
 }
 @init {
     $expr::ctype = ect;
-    $expr::lparen = null;
 }
 @after {
-    $leftTok = $expr::lparen;
+    $leftTok = $left.lparen;
     if ($op != null) {
         $expr.tree = actions.makeBinOp($left.tree, operatorType.BitOr, $right);
     }
@@ -1165,10 +1163,12 @@ scope {
 
 //xor_expr: and_expr ('^' and_expr)*
 xor_expr
+    returns [Token lparen = null]
 @after {
     if ($op != null) {
         $xor_expr.tree = actions.makeBinOp($left.tree, operatorType.BitXor, $right);
     }
+    $lparen = $left.lparen;
 }
     : left=and_expr
         ( (op=CIRCUMFLEX right+=and_expr
@@ -1180,10 +1180,12 @@ xor_expr
 
 //and_expr: shift_expr ('&' shift_expr)*
 and_expr
+    returns [Token lparen = null]
 @after {
     if ($op != null) {
         $and_expr.tree = actions.makeBinOp($left.tree, operatorType.BitAnd, $right);
     }
+    $lparen = $left.lparen;
 }
     : left=shift_expr
         ( (op=AMPER right+=shift_expr
@@ -1195,6 +1197,7 @@ and_expr
 
 //shift_expr: arith_expr (('<<'|'>>') arith_expr)*
 shift_expr
+    returns [Token lparen = null]
 @init {
     List ops = new ArrayList();
     List toks = new ArrayList();
@@ -1203,6 +1206,7 @@ shift_expr
     if (!ops.isEmpty()) {
         $shift_expr.tree = actions.makeBinOp($left.tree, ops, $right, toks);
     }
+    $lparen = $left.lparen;
 }
     : left=arith_expr
         ( ( shift_op right+=arith_expr
@@ -1226,6 +1230,7 @@ shift_op
 
 //arith_expr: term (('+'|'-') term)*
 arith_expr
+    returns [Token lparen = null]
 @init {
     List ops = new ArrayList();
     List toks = new ArrayList();
@@ -1234,6 +1239,7 @@ arith_expr
     if (!ops.isEmpty()) {
         $arith_expr.tree = actions.makeBinOp($left.tree, ops, $right, toks);
     }
+    $lparen = $left.lparen;
 }
     : left=term
         ( (arith_op right+=term
@@ -1265,11 +1271,13 @@ arith_op
 
 //term: factor (('*'|'/'|'%'|'//') factor)*
 term
+    returns [Token lparen = null]
 @init {
     List ops = new ArrayList();
     List toks = new ArrayList();
 }
 @after {
+    $lparen = $left.lparen;
     if (!ops.isEmpty()) {
         $term.tree = actions.makeBinOp($left.tree, ops, $right, toks);
     }
@@ -1300,7 +1308,7 @@ term_op
 
 //factor: ('+'|'-'|'~') factor | power
 factor
-    returns [expr etype]
+    returns [expr etype, Token lparen = null]
 @after {
     $factor.tree = $etype;
 }
@@ -1311,17 +1319,21 @@ factor
     | TILDE t=factor
         {$etype = new UnaryOp($TILDE, unaryopType.Invert, $t.etype);}
     | power
-        {$etype = actions.castExpr($power.tree);}
+      {
+          $etype = actions.castExpr($power.tree);
+          $lparen = $power.lparen;
+      }
     ;
 
 //power: atom trailer* ['**' factor]
 power
-    returns [expr etype]
+    returns [expr etype, Token lparen = null]
 @after {
     $power.tree = $etype;
 }
     : atom (t+=trailer[$atom.start, $atom.tree])* (options {greedy=true;}:d=DOUBLESTAR factor)?
       {
+          $lparen = $atom.lparen;
           //XXX: This could be better.
           $etype = actions.castExpr($atom.tree);
           if ($t != null) {
@@ -1359,7 +1371,8 @@ power
 //       '`' testlist1 '`' |
 //       NAME | NUMBER | STRING+)
 atom
-    : LPAREN {$expr::lparen = $LPAREN;}
+    returns [Token lparen = null]
+    : LPAREN {$lparen = $LPAREN;}
       ( yield_expr
      -> yield_expr
       | testlist_gexp
