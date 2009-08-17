@@ -108,7 +108,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
     <target name="full-build" depends="full-check, install" description="a full build with svn checkout" />
 
     <target name="needed-check" unless="full-build">
-        <uptodate property="antlr.notneeded" targetfile="${dist.dir}/${jython.dev.jar}">
+        <uptodate property="antlr.notneeded" targetfile="${gensrc.dir}/org/python/antlr/PythonParser.java">
             <srcfiles dir="grammar" includes="*.g" />
         </uptodate>
     </target>
@@ -306,6 +306,23 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
             <fileset dir="${work.dir}" includes="jython*.jar" />
         </delete>
     </target>
+
+    <target name="devclean" depends="init"
+        description="clean up build working directories, without deleting antlr files, cachedir, or Lib.">
+
+        <delete includeemptydirs="true" failonerror="false">
+            <fileset dir="${output.dir}" includes="**/*" excludes="gensrc/**"/>
+        </delete>
+        <!-- deletes all files and subdirectories of ${dist.dir}, without ${dist.dir} itself. -->
+        <delete includeemptydirs="true" failonerror="false">
+            <fileset dir="${dist.dir}" includes="**/*" excludes="cachedir/**,Lib/**"/>
+        </delete>
+        <!-- delete the installation .jar file from ${work.dir}, but no other files -->
+        <delete failonerror="false">
+            <fileset dir="${work.dir}" includes="jython*.jar" />
+        </delete>
+    </target>
+
 
     <!-- clean svn.checkout.dir if we really checkout -->
     <target name="clean-checkout-dir" if="do.checkout">
