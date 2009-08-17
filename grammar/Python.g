@@ -1149,7 +1149,11 @@ scope {
 @after {
     $leftTok = $left.lparen;
     if ($op != null) {
-        $expr.tree = actions.makeBinOp($left.tree, operatorType.BitOr, $right);
+        Token tok = $left.start;
+        if ($left.lparen != null) {
+            tok = $left.lparen;
+        }
+        $expr.tree = actions.makeBinOp(tok, $left.tree, operatorType.BitOr, $right);
     }
 }
     : left=xor_expr
@@ -1166,7 +1170,11 @@ xor_expr
     returns [Token lparen = null]
 @after {
     if ($op != null) {
-        $xor_expr.tree = actions.makeBinOp($left.tree, operatorType.BitXor, $right);
+        Token tok = $left.start;
+        if ($left.lparen != null) {
+            tok = $left.lparen;
+        }
+        $xor_expr.tree = actions.makeBinOp(tok, $left.tree, operatorType.BitXor, $right);
     }
     $lparen = $left.lparen;
 }
@@ -1183,7 +1191,11 @@ and_expr
     returns [Token lparen = null]
 @after {
     if ($op != null) {
-        $and_expr.tree = actions.makeBinOp($left.tree, operatorType.BitAnd, $right);
+        Token tok = $left.start;
+        if ($left.lparen != null) {
+            tok = $left.lparen;
+        }
+        $and_expr.tree = actions.makeBinOp(tok, $left.tree, operatorType.BitAnd, $right);
     }
     $lparen = $left.lparen;
 }
@@ -1204,7 +1216,11 @@ shift_expr
 }
 @after {
     if (!ops.isEmpty()) {
-        $shift_expr.tree = actions.makeBinOp($left.start, $left.tree, ops, $right, toks);
+        Token tok = $left.start;
+        if ($left.lparen != null) {
+            tok = $left.lparen;
+        }
+        $shift_expr.tree = actions.makeBinOp(tok, $left.tree, ops, $right, toks);
     }
     $lparen = $left.lparen;
 }
@@ -1237,7 +1253,11 @@ arith_expr
 }
 @after {
     if (!ops.isEmpty()) {
-        $arith_expr.tree = actions.makeBinOp($left.start, $left.tree, ops, $right, toks);
+        Token tok = $left.start;
+        if ($left.lparen != null) {
+            tok = $left.lparen;
+        }
+        $arith_expr.tree = actions.makeBinOp(tok, $left.tree, ops, $right, toks);
     }
     $lparen = $left.lparen;
 }
@@ -1364,7 +1384,7 @@ power
           if ($d != null) {
               List right = new ArrayList();
               right.add($factor.tree);
-              $etype = actions.makeBinOp($etype, operatorType.Pow, right);
+              $etype = actions.makeBinOp($atom.start, $etype, operatorType.Pow, right);
           }
       }
     ;

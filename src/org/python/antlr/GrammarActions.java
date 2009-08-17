@@ -649,8 +649,8 @@ public class GrammarActions {
         return new BoolOp(t, op, castExprs(values));
     }
 
-    BinOp makeBinOp(PythonTree left, operatorType op, List rights) {
-        BinOp current = new BinOp(left, castExpr(left), op, castExpr(rights.get(0)));
+    BinOp makeBinOp(Token t, PythonTree left, operatorType op, List rights) {
+        BinOp current = new BinOp(t, castExpr(left), op, castExpr(rights.get(0)));
         for (int i = 1; i< rights.size(); i++) {
             expr right = castExpr(rights.get(i));
             current = new BinOp(left, current, op, right);
