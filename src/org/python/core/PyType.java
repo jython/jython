@@ -90,9 +90,6 @@ public class PyType extends PyObject implements Serializable {
     /** Mapping of Java classes to their TypeBuilders. */
     private static Map<Class<?>, TypeBuilder> classToBuilder;
 
-    /** Used by {@link #lookup} to call {@link #lookup_where} without allocating an array */
-    private static final PyObject[] WHERE_PLACEHOLDER = new PyObject[1];
-
     protected PyType(PyType subtype) {
         super(subtype);
     }
@@ -1046,7 +1043,7 @@ public class PyType extends PyObject implements Serializable {
      * @return found object or null
      */
     public PyObject lookup(String name) {
-        return lookup_where(name, WHERE_PLACEHOLDER);
+        return lookup_where(name, null);
     }
 
     public PyObject lookup_where(String name, PyObject[] where) {
@@ -1059,7 +1056,9 @@ public class PyType extends PyObject implements Serializable {
             if (dict != null) {
                 PyObject obj = dict.__finditem__(name);
                 if (obj != null) {
-                    where[0] = t;
+                    if (where != null) {
+                        where[0] = t;
+                    }
                     return obj;
                 }
             }
