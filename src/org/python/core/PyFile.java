@@ -355,18 +355,7 @@ public class PyFile extends PyObject {
 
     @ExposedMethod(doc = BuiltinDocs.file_write_doc)
     final void file_write(PyObject obj) {
-        if (obj instanceof PyUnicode) {
-            // Call __str__ on unicode objects to encode them before writing
-            file_write(obj.__str__().string);
-        } else if (obj instanceof PyString) {
-            file_write(((PyString)obj).string);
-        } else if (binary && obj instanceof PyArray) {
-            file_write(((PyArray)obj).tostring());
-        } else {
-            throw Py.TypeError(String.format("argument 1 must be string or %sbuffer, not %.200s",
-                                             binary ? "" : "read-only character ",
-                                             obj.getType().fastGetName()));
-        }
+        file_write(asWritable(obj, null));
     }
 
     final synchronized void file_write(String string) {
@@ -383,18 +372,33 @@ public class PyFile extends PyObject {
     final synchronized void file_writelines(PyObject lines) {
         checkClosed();
         PyObject iter = Py.iter(lines, "writelines() requires an iterable argument");
-
-        PyObject item = null;
-        while ((item = iter.__iternext__()) != null) {
-            if (!(item instanceof PyString)) {
-                throw Py.TypeError("writelines() argument must be a sequence of strings");
-            }
-            file.write(item.toString());
+        for (PyObject item = null; (item = iter.__iternext__()) != null;) {
+            softspace = false;
+            file.write(asWritable(item, "writelines() argument must be a sequence of strings"));
         }
     }
 
     public void writelines(PyObject lines) {
         file_writelines(lines);
+    }
+
+    /**
+     * Return a String for writing to the underlying file from obj.
+     */
+    private String asWritable(PyObject obj, String message) {
+        if (obj instanceof PyUnicode) {
+            return ((PyUnicode)obj).encode();
+        } else if (obj instanceof PyString) {
+            return ((PyString)obj).string;
+        } else if (binary && obj instanceof PyArray) {
+            return ((PyArray)obj).tostring();
+        }
+        if (message == null) {
+            message = String.format("argument 1 must be string or %sbuffer, not %.200s",
+                                    binary ? "" : "read-only character ",
+                                    obj.getType().fastGetName());
+        }
+        throw Py.TypeError(message);
     }
 
     @ExposedMethod(doc = BuiltinDocs.file_tell_doc)
