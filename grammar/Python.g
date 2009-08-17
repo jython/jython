@@ -1204,7 +1204,7 @@ shift_expr
 }
 @after {
     if (!ops.isEmpty()) {
-        $shift_expr.tree = actions.makeBinOp($left.tree, ops, $right, toks);
+        $shift_expr.tree = actions.makeBinOp($left.start, $left.tree, ops, $right, toks);
     }
     $lparen = $left.lparen;
 }
@@ -1237,7 +1237,7 @@ arith_expr
 }
 @after {
     if (!ops.isEmpty()) {
-        $arith_expr.tree = actions.makeBinOp($left.tree, ops, $right, toks);
+        $arith_expr.tree = actions.makeBinOp($left.start, $left.tree, ops, $right, toks);
     }
     $lparen = $left.lparen;
 }
@@ -1279,7 +1279,11 @@ term
 @after {
     $lparen = $left.lparen;
     if (!ops.isEmpty()) {
-        $term.tree = actions.makeBinOp($left.tree, ops, $right, toks);
+        Token tok = $left.start;
+        if ($left.lparen != null) {
+            tok = $left.lparen;
+        }
+        $term.tree = actions.makeBinOp(tok, $left.tree, ops, $right, toks);
     }
 }
     : left=factor
