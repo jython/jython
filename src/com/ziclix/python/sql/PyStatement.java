@@ -10,7 +10,6 @@ package com.ziclix.python.sql;
 
 import org.python.core.Py;
 import org.python.core.PyException;
-import org.python.core.PyInteger;
 import org.python.core.PyList;
 import org.python.core.PyObject;
 import org.python.core.PyString;
@@ -28,74 +27,32 @@ import java.sql.Statement;
  */
 public class PyStatement extends PyObject {
 
-    /**
-     * Field STATEMENT_STATIC
-     */
+    /** Denotes a simple Statement with no parameters. */
     public static final int STATEMENT_STATIC = 2;
 
-    /**
-     * Field STATEMENT_PREPARED
-     */
+    /** Denotes a PreparedStatement either explicitly created by the user, or from a
+     * cursor (due to the presence of bind parameters). */
     public static final int STATEMENT_PREPARED = 4;
 
-    /**
-     * Field STATEMENT_CALLABLE
-     */
+    /** Denotes a stored procedure call. */
     public static final int STATEMENT_CALLABLE = 8;
 
-    /**
-     * Field style
-     */
+    /** One of the above styles. */
     private int style;
 
-    /**
-     * Field sql
-     */
+    /** The underlying sql, a String or a Procedure. */
     private Object sql;
 
-    /**
-     * Field closed
-     */
+    /** Whether this statement is closed. */
     private boolean closed;
 
-    /**
-     * Field statement
-     */
+    /** The underlying java.sql.Statement. */
     Statement statement;
 
-    /**
-     * Constructor PyStatement
-     *
-     * @param statement
-     * @param sql
-     * @param style
-     */
-    public PyStatement(Statement statement, Object sql, int style) {
-
-        this.sql = sql;
-        this.style = style;
-        this.closed = false;
-        this.statement = statement;
-    }
-
-    /**
-     * Constructor PyStatement
-     *
-     * @param statement
-     * @param procedure
-     */
-    public PyStatement(Statement statement, Procedure procedure) {
-        this(statement, procedure, STATEMENT_CALLABLE);
-    }
-
-    /**
-     * Field __methods__
-     */
+    /** Field __methods__ */
     protected static PyList __methods__;
 
-    /**
-     * Field __members__
-     */
+    /** Field __members__ */
     protected static PyList __members__;
 
     static {
@@ -111,12 +68,31 @@ public class PyStatement extends PyObject {
     }
 
     /**
-     * Method __str__
+     * Constructor PyStatement
      *
-     * @return PyString
+     * @param statement
+     * @param sql
+     * @param style
      */
-    public PyString __str__() {
+    public PyStatement(Statement statement, Object sql, int style) {
+        this.statement = statement;
+        this.sql = sql;
+        this.style = style;
+        closed = false;
+    }
 
+    /**
+     * Constructor PyStatement
+     *
+     * @param statement
+     * @param procedure
+     */
+    public PyStatement(Statement statement, Procedure procedure) {
+        this(statement, procedure, STATEMENT_CALLABLE);
+    }
+
+    @Override
+    public PyString __str__() {
         if (sql instanceof String) {
             return Py.newString((String) sql);
         } else if (sql instanceof Procedure) {
@@ -126,23 +102,12 @@ public class PyStatement extends PyObject {
                 throw zxJDBC.makeException(e);
             }
         }
-
         return super.__str__();
     }
 
     @Override
-    public PyString __repr__() {
-        return Py.newString(String.format("<PyStatement object at %s for [%s]", Py.idstr(this),
-                                          __str__()));
-    }
-
-    /**
-     * Method toString
-     *
-     * @return String
-     */
     public String toString() {
-        return __repr__().toString();
+        return String.format("<PyStatement object at %s for [%s]", Py.idstr(this), __str__());
     }
 
     /**
@@ -151,8 +116,8 @@ public class PyStatement extends PyObject {
      * @param name
      * @return the attribute for the given name
      */
+    @Override
     public PyObject __findattr_ex__(String name) {
-
         if ("style".equals(name)) {
             return Py.newInteger(style);
         } else if ("closed".equals(name)) {
@@ -174,8 +139,10 @@ public class PyStatement extends PyObject {
      * @param dict
      */
     static public void classDictInit(PyObject dict) {
-
-        dict.__setitem__("__version__", Py.newString("$Revision$").__getslice__(Py.newInteger(11), Py.newInteger(-2), null));
+        PyObject version =
+                Py.newString("$Revision$").__getslice__(Py.newInteger(11),
+                                                               Py.newInteger(-2));
+        dict.__setitem__("__version__", version);
 
         // hide from python
         dict.__setitem__("classDictInit", null);
@@ -203,25 +170,23 @@ public class PyStatement extends PyObject {
      * @throws SQLException
      */
     public void execute(PyCursor cursor, PyObject params, PyObject bindings) throws SQLException {
-
-        if (this.closed) {
+        if (closed) {
             throw zxJDBC.makeException(zxJDBC.ProgrammingError, "statement is closed");
         }
 
-        this.prepare(cursor, params, bindings);
+        prepare(cursor, params, bindings);
 
         Fetch fetch = cursor.fetch;
-
-        switch (this.style) {
+        switch (style) {
 
             case STATEMENT_STATIC:
-                if (this.statement.execute((String) this.sql)) {
-                    fetch.add(this.statement.getResultSet());
+                if (statement.execute((String) sql)) {
+                    fetch.add(statement.getResultSet());
                 }
                 break;
 
             case STATEMENT_PREPARED:
-                final PreparedStatement preparedStatement = (PreparedStatement) this.statement;
+                final PreparedStatement preparedStatement = (PreparedStatement) statement;
 
                 if (preparedStatement.execute()) {
                     fetch.add(preparedStatement.getResultSet());
@@ -229,7 +194,7 @@ public class PyStatement extends PyObject {
                 break;
 
             case STATEMENT_CALLABLE:
-                final CallableStatement callableStatement = (CallableStatement) this.statement;
+                final CallableStatement callableStatement = (CallableStatement) statement;
 
                 if (callableStatement.execute()) {
                     fetch.add(callableStatement.getResultSet());
@@ -239,7 +204,8 @@ public class PyStatement extends PyObject {
                 break;
 
             default :
-                throw zxJDBC.makeException(zxJDBC.ProgrammingError, zxJDBC.getString("invalidStyle"));
+                throw zxJDBC.makeException(zxJDBC.ProgrammingError,
+                                           zxJDBC.getString("invalidStyle"));
         }
     }
 
@@ -252,8 +218,7 @@ public class PyStatement extends PyObject {
      * @throws SQLException
      */
     private void prepare(PyCursor cursor, PyObject params, PyObject bindings) throws SQLException {
-
-        if ((params == Py.None) || (this.style == STATEMENT_STATIC)) {
+        if (params == Py.None || style == STATEMENT_STATIC) {
             return;
         }
 
@@ -261,63 +226,57 @@ public class PyStatement extends PyObject {
         final DataHandler datahandler = cursor.datahandler;
         int columns = 0, column = 0, index = params.__len__();
         final PreparedStatement preparedStatement = (PreparedStatement) statement;
-        final Procedure procedure = (this.style == STATEMENT_CALLABLE) ? (Procedure) this.sql : null;
+        final Procedure procedure = style == STATEMENT_CALLABLE ? (Procedure) sql : null;
 
-        if (this.style != STATEMENT_CALLABLE) {
+        if (style != STATEMENT_CALLABLE) {
             columns = params.__len__();
-
             // clear the statement so all new bindings take affect only if not a callproc
             // this is because Procedure already registered the OUT parameters and we
             // don't want to lose those
             preparedStatement.clearParameters();
         } else {
-            columns = (procedure.columns == Py.None) ? 0 : procedure.columns.__len__();
+            columns = procedure.columns == Py.None ? 0 : procedure.columns.__len__();
         }
 
         // count backwards through all the columns
         while (columns-- > 0) {
             column = columns + 1;
 
-            if ((procedure != null) && (!procedure.isInput(column))) {
+            if (procedure != null && !procedure.isInput(column)) {
                 continue;
             }
 
             // working from right to left
             PyObject param = params.__getitem__(--index);
-
             if (bindings != Py.None) {
                 PyObject binding = bindings.__finditem__(Py.newInteger(index));
 
                 if (binding != null) {
                     try {
                         int bindingValue = binding.asInt();
-
                         datahandler.setJDBCObject(preparedStatement, column, param, bindingValue);
                     } catch (PyException e) {
-                        throw zxJDBC.makeException(zxJDBC.ProgrammingError, zxJDBC.getString("bindingValue"));
+                        throw zxJDBC.makeException(zxJDBC.ProgrammingError,
+                                                   zxJDBC.getString("bindingValue"));
                     }
-
                     continue;
                 }
             }
 
             datahandler.setJDBCObject(preparedStatement, column, param);
         }
-
-        return;
     }
 
     /**
      * Method close
      */
     public void close() {
-
         try {
-            this.statement.close();
+            statement.close();
         } catch (SQLException e) {
             throw zxJDBC.makeException(e);
         } finally {
-            this.closed = true;
+            closed = true;
         }
     }
 }
