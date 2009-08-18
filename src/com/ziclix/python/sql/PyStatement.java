@@ -8,11 +8,13 @@
  */
 package com.ziclix.python.sql;
 
+import org.python.core.codecs;
 import org.python.core.Py;
 import org.python.core.PyException;
 import org.python.core.PyList;
 import org.python.core.PyObject;
 import org.python.core.PyString;
+import org.python.core.PyUnicode;
 
 import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
@@ -92,22 +94,27 @@ public class PyStatement extends PyObject {
     }
 
     @Override
-    public PyString __str__() {
+    public PyUnicode __unicode__() {
         if (sql instanceof String) {
-            return Py.newString((String) sql);
+            return Py.newUnicode((String) sql);
         } else if (sql instanceof Procedure) {
             try {
-                return Py.newString(((Procedure) sql).toSql());
+                return Py.newUnicode(((Procedure) sql).toSql());
             } catch (SQLException e) {
                 throw zxJDBC.makeException(e);
             }
         }
-        return super.__str__();
+        return super.__unicode__();
+    }
+
+    @Override
+    public PyString __str__() {
+        return Py.newString(__unicode__().encode(codecs.getDefaultEncoding(), "replace"));
     }
 
     @Override
     public String toString() {
-        return String.format("<PyStatement object at %s for [%s]", Py.idstr(this), __str__());
+        return String.format("<PyStatement object at %s for [%s]", Py.idstr(this), __unicode__());
     }
 
     /**
@@ -178,7 +185,6 @@ public class PyStatement extends PyObject {
 
         Fetch fetch = cursor.fetch;
         switch (style) {
-
             case STATEMENT_STATIC:
                 if (statement.execute((String) sql)) {
                     fetch.add(statement.getResultSet());
@@ -203,7 +209,7 @@ public class PyStatement extends PyObject {
                 fetch.add(callableStatement, (Procedure) sql, params);
                 break;
 
-            default :
+            default:
                 throw zxJDBC.makeException(zxJDBC.ProgrammingError,
                                            zxJDBC.getString("invalidStyle"));
         }
