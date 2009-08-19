@@ -135,6 +135,12 @@ while [ $# -gt 0 ] ; do
           $JAVA_CMD -X
           echo "(Prepend -J in front of these options when using 'jython' command)" 
           exit
+        elif [ "${val}" = "-classpath" ]; then
+            CP="$CP$CP_DELIMITER$2"
+            shift
+        elif [ "${val}" = "-cp" ]; then
+            CP="$CP$CP_DELIMITER$2"
+            shift
       else
           if [ "${val:0:16}" = "-Dfile.encoding=" ]; then
               JAVA_ENCODING=$val
