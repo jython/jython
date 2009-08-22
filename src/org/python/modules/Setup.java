@@ -56,6 +56,7 @@ public class Setup
         "_systemrestart",
         "_ast:org.python.antlr.ast.AstModule",
         "_marshal",
-        "_threading:org.python.modules._threading._threading"
+        "_threading:org.python.modules._threading._threading",
+        "jffi:org.python.modules.jffi.jffi"
     };
 }
