@@ -10,14 +10,12 @@ browser.
 Changes for Python: Add support for module versions
 """
 
-#__metaclass__ = type
-
 import os
 import traceback
 
 import spark
 
-class Token:
+class Token(object):
     # spark seems to dispatch in the parser based on a token's
     # type attribute
     def __init__(self, type, lineno):
@@ -45,7 +43,7 @@ class String(Token):
         self.value = value
         self.lineno = lineno
 
-class ASDLSyntaxError:
+class ASDLSyntaxError(Exception):
 
     def __init__(self, lineno, token=None, msg=None):
         self.lineno = lineno
@@ -167,7 +165,7 @@ class ASDLParser(spark.GenericParser, object):
         return Product(fields)
 
     def p_sum_0(self, (constructor,)):
-        " sum ::= constructor """
+        " sum ::= constructor "
         return [constructor]
 
     def p_sum_1(self, (constructor, _, sum)):
@@ -206,19 +204,19 @@ class ASDLParser(spark.GenericParser, object):
 
     def p_field_2(self, (type, _, name)):
         " field ::= Id * Id "
-        return Field(type, name, seq=1)
+        return Field(type, name, seq=True)
 
     def p_field_3(self, (type, _, name)):
         " field ::= Id ? Id "
-        return Field(type, name, opt=1)
+        return Field(type, name, opt=True)
 
     def p_field_4(self, (type, _)):
         " field ::= Id * "
-        return Field(type, seq=1)
+        return Field(type, seq=True)
 
     def p_field_5(self, (type, _)):
         " field ::= Id ? "
-        return Field(type, opt=1)
+        return Field(type, opt=True)
 
 builtin_types = ("identifier", "string", "int", "bool", "object")
 
@@ -226,7 +224,7 @@ builtin_types = ("identifier", "string", "int", "bool", "object")
 # not sure if any of the methods are useful yet, but I'm adding them
 # piecemeal as they seem helpful
 
-class AST:
+class AST(object):
     pass # a marker class
 
 class Module(AST):
@@ -258,7 +256,7 @@ class Constructor(AST):
         return "Constructor(%s, %s)" % (self.name, self.fields)
 
 class Field(AST):
-    def __init__(self, type, name=None, seq=0, opt=0):
+    def __init__(self, type, name=None, seq=False, opt=False):
         self.type = type
         self.name = name
         self.seq = seq
@@ -266,9 +264,9 @@ class Field(AST):
 
     def __repr__(self):
         if self.seq:
-            extra = ", seq=1"
+            extra = ", seq=True"
         elif self.opt:
-            extra = ", opt=1"
+            extra = ", opt=True"
         else:
             extra = ""
         if self.name is None:
@@ -296,7 +294,7 @@ class Product(AST):
 
 class VisitorBase(object):
 
-    def __init__(self, skip=0):
+    def __init__(self, skip=False):
         self.cache = {}
         self.skip = skip
 
@@ -331,7 +329,7 @@ class VisitorBase(object):
 class Check(VisitorBase):
 
     def __init__(self):
-        super(Check, self).__init__(skip=1)
+        super(Check, self).__init__(skip=True)
         self.cons = {}
         self.errors = 0
         self.types = {}
@@ -373,7 +371,7 @@ def check(mod):
     v.visit(mod)
 
     for t in v.types:
-        if not mod.types.has_key(t) and not t in builtin_types:
+        if t not in mod.types and not t in builtin_types:
             v.errors += 1
             uses = ", ".join(v.types[t])
             print "Undefined type %s, used in %s" % (t, uses)
