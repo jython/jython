@@ -59,12 +59,10 @@ public class JycompileAntTask extends GlobMatchingTask {
         imp.cacheCompiledSource(src.getAbsolutePath(), compiled.getAbsolutePath(), bytes);
     }
 
-    @Override
     protected String getFrom() {
         return "*.py";
     }
 
-    @Override
     protected String getTo() {
         return "*$py.class";
     }

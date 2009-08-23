@@ -839,9 +839,8 @@ public final class Py {
 
     public static void initProxy(PyProxy proxy, String module, String pyclass, Object[] args)
     {
-        if (proxy._getPyInstance() != null) {
+        if (proxy._getPyInstance() != null)
             return;
-        }
         ThreadState ts = getThreadState();
         PyObject instance = ts.getInitializingProxy();
         if (instance != null) {
@@ -1781,17 +1780,12 @@ public final class Py {
     }
 
     public static void saveClassFile(String name, ByteArrayOutputStream bytestream) {
-        saveClassFile(name, bytestream, Options.proxyDebugDirectory);
-    }
-
-    public static void saveClassFile(String name, ByteArrayOutputStream baos, String dirname) {
+        String dirname = Options.proxyDebugDirectory;
         if (dirname == null) {
             return;
         }
-        saveClassFile(name, baos.toByteArray(), dirname);
-    }
 
-    public static void saveClassFile(String name, byte[] bytes, String dirname) {
+        byte[] bytes = bytestream.toByteArray();
         File dir = new File(dirname);
         File file = makeFilename(name, dir);
         new File(file.getParent()).mkdirs();

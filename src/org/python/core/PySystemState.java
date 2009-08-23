@@ -40,7 +40,6 @@ public class PySystemState extends PyObject
     public static final String PYTHON_CACHEDIR_SKIP = "python.cachedir.skip";
     public static final String PYTHON_CONSOLE_ENCODING = "python.console.encoding";
     protected static final String CACHEDIR_DEFAULT_NAME = "cachedir";
-    public static final String PYTHON_JAVAPROXYDIR = "python.javaproxydir";
 
     public static final String JYTHON_JAR = "jython.jar";
     public static final String JYTHON_DEV_JAR = "jython-dev.jar";
@@ -139,13 +138,6 @@ public class PySystemState extends PyObject
     public PyObject last_type = Py.None;
     public PyObject last_traceback = Py.None;
 
-    private static String defaultJavaProxyDir;
-
-    /**
-     * The directory where named Java proxies are written.
-     */
-    public String javaproxy_dir;
-
     public PyObject __name__ = new PyString("sys");
 
     public PyObject __dict__;
@@ -197,8 +189,6 @@ public class PySystemState extends PyObject
         __dict__.invoke("update", getType().fastGetDict());
         __dict__.__setitem__("displayhook", __displayhook__);
         __dict__.__setitem__("excepthook", __excepthook__);
-
-        javaproxy_dir = defaultJavaProxyDir;
     }
 
     void reload() throws PyIgnoreMethodTag {
@@ -867,8 +857,6 @@ public class PySystemState extends PyObject
         // other initializations
         initBuiltins(registry);
         initStaticFields();
-        defaultJavaProxyDir = registry.getProperty(PYTHON_JAVAPROXYDIR);
-
         // Initialize the path (and add system defaults)
         defaultPath = initPath(registry, standalone, jarFileName);
         defaultArgv = initArgv(argv);

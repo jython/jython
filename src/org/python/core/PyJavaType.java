@@ -186,7 +186,7 @@ public class PyJavaType extends PyType {
             underlying_class = forClass;
             computeLinearMro(baseClass);
         } else {
-            needsInners.add(this);
+                needsInners.add(this);
             javaProxy = forClass;
             objtype = PyType.fromClassSkippingInners(Class.class, needsInners);
             // Wrapped Java types fill in their mro first using all of their interfaces then their

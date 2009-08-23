@@ -8,7 +8,6 @@ import java.util.List;
 
 import org.python.compiler.AdapterMaker;
 import org.python.compiler.JavaMaker;
-import org.python.core.util.StringUtil;
 
 class MakeProxies {
 
@@ -52,28 +51,13 @@ class MakeProxies {
             List<Class<?>> vinterfaces, String className, String proxyName,
             PyObject dict) {
         Class<?>[] interfaces = vinterfaces.toArray(new Class<?>[vinterfaces.size()]);
-        String fullProxyName;
-        PyObject customProxyName = dict.__finditem__("__javaname__");
-        if (customProxyName != null) {
-            fullProxyName = Py.tojava(customProxyName, String.class);
-            if (!StringUtil.isJavaClassName(fullProxyName)) {
-                throw Py.TypeError(fullProxyName + " isn't a valid Java class name.  Classes " +
-                    "must be valid Java identifiers: " +
-                    "http://java.sun.com/docs/books/jls/second_edition/html/lexical.doc.html#40625");
-            }
-            Class<?> proxy = Py.findClass(fullProxyName);
-            if (proxy != null) {
-                return proxy;
-            }
-        } else {
-            fullProxyName = proxyPrefix + proxyName + "$" + proxyNumber++;
-        }
+        String fullProxyName = proxyPrefix + proxyName + "$" + proxyNumber++;
         String pythonModuleName;
         PyObject mn = dict.__finditem__("__module__");
         if (mn == null) {
             pythonModuleName = "foo";
         } else {
-            pythonModuleName = Py.tojava(mn, String.class);
+            pythonModuleName = (String) mn.__tojava__(String.class);
         }
         JavaMaker jm = new JavaMaker(superclass,
                                      interfaces,
@@ -84,11 +68,7 @@ class MakeProxies {
         try {
             ByteArrayOutputStream bytes = new ByteArrayOutputStream();
             jm.build(bytes);
-            if (customProxyName != null) {
-                Py.saveClassFile(fullProxyName, bytes, Py.getSystemState().javaproxy_dir);
-            } else {
-                Py.saveClassFile(fullProxyName, bytes);
-            }
+            Py.saveClassFile(fullProxyName, bytes);
 
             return makeClass(superclass, vinterfaces, jm.myClass, bytes);
         } catch (Exception exc) {

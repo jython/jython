@@ -579,9 +579,11 @@ public class PyType extends PyObject implements Serializable {
         if (module != null) {
             proxyName = module.toString() + "$" + proxyName;
         }
-        javaProxy = MakeProxies.makeProxy(baseProxyClass, interfaces, name, proxyName, dict);
+        Class<?> proxyClass = MakeProxies.makeProxy(baseProxyClass, interfaces, name, proxyName,
+                                                    dict);
+        javaProxy = proxyClass;
 
-        PyType proxyType = PyType.fromClass((Class<?>)javaProxy);
+        PyType proxyType = PyType.fromClass(proxyClass);
         List<PyObject> cleanedBases = Generic.list();
         boolean addedProxyType = false;
         for (PyObject base : bases) {
