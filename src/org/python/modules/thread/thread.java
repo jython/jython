@@ -64,7 +64,7 @@ public class thread implements ClassDictInit {
     /**
      * Interrupts all running threads spawned by the thread module.
      *
-     * This works in conjuntion with:<ul>
+     * This works in conjunction with:<ul>
      * <li>{@link PyTableCode#call(org.python.core.PyFrame, PyObject)}:
      * checks for the interrupted status of the current thread and raise
      * a SystemRestart exception if a interruption is detected.</li>
