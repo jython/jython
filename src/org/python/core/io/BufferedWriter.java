@@ -82,6 +82,7 @@ public class BufferedWriter extends BufferedIOMixin {
             rawIO.write(buffer);
         }
         buffer.clear();
+        super.flush();
     }
 
     /** {@inheritDoc} */
