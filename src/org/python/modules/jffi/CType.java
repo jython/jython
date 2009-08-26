@@ -14,27 +14,27 @@ import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 
 @ExposedType(name = "jffi.Type", base = PyObjectDerived.class)
-public class Type extends PyObject {
-    public static final PyType TYPE = PyType.fromClass(Type.class);
+public class CType extends PyObject {
+    public static final PyType TYPE = PyType.fromClass(CType.class);
     static {
         TYPE.fastGetDict().__setitem__("Array", Array.TYPE);
         TYPE.fastGetDict().__setitem__("Pointer", Pointer.TYPE);
     }
-    public static final Type VOID = primitive(NativeType.VOID);
-    public static final Type SINT8 = primitive(NativeType.BYTE);
-    public static final Type UINT8 = primitive(NativeType.UBYTE);
-    public static final Type SINT16 = primitive(NativeType.SHORT);
-    public static final Type UINT16 = primitive(NativeType.USHORT);
-    public static final Type SINT32 = primitive(NativeType.INT);
-    public static final Type UINT32 = primitive(NativeType.UINT);
-    public static final Type SINT64 = primitive(NativeType.LONGLONG);
-    public static final Type UINT64 = primitive(NativeType.ULONGLONG);
-    public static final Type SLONG = primitive(NativeType.LONG);
-    public static final Type ULONG = primitive(NativeType.ULONG);
-    public static final Type FLOAT = primitive(NativeType.FLOAT);
-    public static final Type DOUBLE = primitive(NativeType.DOUBLE);
-    public static final Type POINTER = primitive(NativeType.POINTER);
-    public static final Type STRING = primitive(NativeType.STRING);
+    public static final CType VOID = primitive(NativeType.VOID);
+    public static final CType BYTE = primitive(NativeType.BYTE);
+    public static final CType UBYTE = primitive(NativeType.UBYTE);
+    public static final CType SHORT = primitive(NativeType.SHORT);
+    public static final CType USHORT = primitive(NativeType.USHORT);
+    public static final CType INT = primitive(NativeType.INT);
+    public static final CType UINT = primitive(NativeType.UINT);
+    public static final CType LONGLONG = primitive(NativeType.LONGLONG);
+    public static final CType ULONGLONG = primitive(NativeType.ULONGLONG);
+    public static final CType LONG = primitive(NativeType.LONG);
+    public static final CType ULONG = primitive(NativeType.ULONG);
+    public static final CType FLOAT = primitive(NativeType.FLOAT);
+    public static final CType DOUBLE = primitive(NativeType.DOUBLE);
+    public static final CType POINTER = primitive(NativeType.POINTER);
+    public static final CType STRING = primitive(NativeType.STRING);
 
     final com.kenai.jffi.Type jffiType;
     
@@ -51,7 +51,7 @@ public class Type extends PyObject {
     /** The <tt>MemoryOp</tt> used to read/write items of this type */
     private final MemoryOp memoryOp;
 
-    Type(NativeType type, com.kenai.jffi.Type jffiType, MemoryOp memoryOp) {
+    CType(NativeType type, com.kenai.jffi.Type jffiType, MemoryOp memoryOp) {
         this.nativeType = type;
         this.jffiType = jffiType;
         this.size = jffiType.size();
@@ -75,13 +75,13 @@ public class Type extends PyObject {
         return size;
     }    
     
-    static final Type primitive(NativeType type) {
-        Type t = new Builtin(type, NativeType.jffiType(type));
-        Type.TYPE.fastGetDict().__setitem__(type.name(), t);
+    static final CType primitive(NativeType type) {
+        CType t = new Builtin(type, NativeType.jffiType(type));
+        CType.TYPE.fastGetDict().__setitem__(type.name(), t);
         return t;
     }
 
-    static final class Builtin extends Type implements ExposeAsSuperclass {
+    static final class Builtin extends CType implements ExposeAsSuperclass {
         public Builtin(NativeType type, com.kenai.jffi.Type jffiType) {
             super(type, jffiType, MemoryOp.getMemoryOp(type));
         }
@@ -92,15 +92,15 @@ public class Type extends PyObject {
         }
     }
 
-    @ExposedType(name = "jffi.Type.Array", base = Type.class)
-    static final class Array extends Type {
+    @ExposedType(name = "jffi.Type.Array", base = CType.class)
+    static final class Array extends CType {
         public static final PyType TYPE = PyType.fromClass(Array.class);
-        final Type componentType;
+        final CType componentType;
         
         @ExposedGet
         public final int length;
 
-        public Array(Type componentType, int length) {
+        public Array(CType componentType, int length) {
             super(NativeType.ARRAY, new com.kenai.jffi.Array(componentType.jffiType, length), null);
             this.componentType = componentType;
             this.length = length;
@@ -114,11 +114,11 @@ public class Type extends PyObject {
                 throw Py.TypeError(String.format("__init__() takes exactly 2 arguments (%d given)", args.length));
             }
 
-            if (!(args[0] instanceof Type)) {
+            if (!(args[0] instanceof CType)) {
                 throw Py.TypeError("expected jffi.Type");
             }
 
-            return new Array((Type) args[0], args[1].asInt());
+            return new Array((CType) args[0], args[1].asInt());
         }
 
         @Override
@@ -132,17 +132,17 @@ public class Type extends PyObject {
         }
     }
 
-    @ExposedType(name = "jffi.Type.Pointer", base = Type.class)
-    final static class Pointer extends Type {
+    @ExposedType(name = "jffi.Type.Pointer", base = CType.class)
+    final static class Pointer extends CType {
         public static final PyType TYPE = PyType.fromClass(Pointer.class);
         private static final ConcurrentMap<PyObject, Pointer> typeCache
                 = new ConcurrentHashMap<PyObject, Pointer>();
         
-        final Type componentType;
+        final CType componentType;
         final PyType pyComponentType;
         final MemoryOp componentMemoryOp;
 
-        Pointer(PyType subtype, Type componentType, PyType pyComponentType) {
+        Pointer(PyType subtype, CType componentType, PyType pyComponentType) {
             super(NativeType.POINTER, com.kenai.jffi.Type.POINTER, MemoryOp.POINTER);
             this.componentType = componentType;
             this.pyComponentType = pyComponentType;
@@ -167,14 +167,14 @@ public class Type extends PyObject {
                 throw Py.TypeError(String.format("__init__() takes exactly 1 argument (%d given)", args.length));
             }
 
-            if (!(args[0] instanceof Type)) {
+            if (!(args[0] instanceof CType)) {
                 throw Py.TypeError("expected jffi.Type");
             }
 
             if (args.length > 1 && !(args[1] instanceof PyType)) {
                 throw Py.TypeError("expected type");
             }
-            p = new Pointer(subtype, (Type) args[0], args.length > 1 ? (PyType) args[1] : Py.None.getType());
+            p = new Pointer(subtype, (CType) args[0], args.length > 1 ? (PyType) args[1] : Py.None.getType());
             typeCache.put(args[0], p);
             
             return p;

@@ -53,7 +53,7 @@ public class FastIntInvokerFactory {
      * @param parameterTypes The parameter types of the native function.
      * @return <tt>true</tt> if the method can be handled as a fast int method.
      */
-    final boolean isFastIntMethod(Type returnType, Type[] parameterTypes) {
+    final boolean isFastIntMethod(CType returnType, CType[] parameterTypes) {
         for (int i = 0; i < parameterTypes.length; ++i) {
             if (!isFastIntParam(parameterTypes[i])) {
                 return false;
@@ -68,8 +68,8 @@ public class FastIntInvokerFactory {
      * @param type The result type.
      * @return <tt>true</tt> if <tt>type</tt> can be returned as an integer.
      */
-    final boolean isFastIntResult(Type type) {
-        if (type instanceof Type.Builtin) {
+    final boolean isFastIntResult(CType type) {
+        if (type instanceof CType.Builtin) {
             switch (type.getNativeType()) {
                 case VOID:
                 case BYTE:
@@ -99,8 +99,8 @@ public class FastIntInvokerFactory {
      * @param type The parameter type.
      * @return <tt>true</tt> if <tt>type</tt> can be passed as an integer.
      */
-    final boolean isFastIntParam(Type paramType) {
-        if (paramType instanceof Type.Builtin) {
+    final boolean isFastIntParam(CType paramType) {
+        if (paramType instanceof CType.Builtin) {
             switch (paramType.getNativeType()) {
                 case BYTE:
                 case UBYTE:
@@ -132,7 +132,7 @@ public class FastIntInvokerFactory {
      * @param returnType The result type the function will return
      * @return A new {@link Invoker} instance.
      */
-    final Invoker createInvoker(Function function, Type[] parameterTypes, Type returnType) {
+    final Invoker createInvoker(Function function, CType[] parameterTypes, CType returnType) {
         IntParameterConverter[] parameterConverters = new IntParameterConverter[parameterTypes.length];
         
         for (int i = 0; i < parameterConverters.length; ++i) {
@@ -171,8 +171,8 @@ public class FastIntInvokerFactory {
      * @param type The python C type
      * @return An <tt>IntParameterConverter</tt> instance.
      */
-    final IntParameterConverter getIntParameterConverter(Type type) {
-        if (type instanceof Type.Builtin) {
+    final IntParameterConverter getIntParameterConverter(CType type) {
+        if (type instanceof CType.Builtin) {
             return getIntParameterConverter(type.getNativeType());
         }
         throw Py.TypeError("cannot convert objects of type " + type + " to int");
@@ -237,8 +237,8 @@ public class FastIntInvokerFactory {
      * @param type The object type.
      * @return An <tt>IntResultConverter</tt> instance.
      */
-    final IntResultConverter getIntResultConverter(Type type) {
-        return type instanceof Type.Builtin ? getIntResultConverter(type.getNativeType()) : null;
+    final IntResultConverter getIntResultConverter(CType type) {
+        return type instanceof CType.Builtin ? getIntResultConverter(type.getNativeType()) : null;
     }
 
     

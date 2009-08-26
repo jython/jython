@@ -21,8 +21,8 @@ public class Function extends Pointer {
 
     private final PyStringMap dict = new PyStringMap();
     
-    private volatile Type returnType = Type.SINT32;
-    private volatile Type[] parameterTypes = null;
+    private volatile CType returnType = CType.INT;
+    private volatile CType[] parameterTypes = null;
     private Invoker invoker = null;
 
     @ExposedGet
@@ -110,17 +110,17 @@ public class Function extends Pointer {
 
     @ExposedSet(name = "_jffi_restype")
     public void setReturnType(PyObject returnType) {
-        if (!(returnType instanceof Type)) {
+        if (!(returnType instanceof CType)) {
             throw Py.TypeError("wrong argument type (expected jffi.Type)");
         }
 
         this.invoker = null; // invalidate old invoker
-        this.returnType = (Type) returnType;
+        this.returnType = (CType) returnType;
     }
     
     @ExposedGet(name = "_jffi_argtypes")
     public PyObject getParameterTypes() {
-        return new PyList(parameterTypes != null ? parameterTypes : new Type[0]);
+        return new PyList(parameterTypes != null ? parameterTypes : new CType[0]);
     }
 
     @ExposedSet(name = "_jffi_argtypes")
@@ -135,13 +135,13 @@ public class Function extends Pointer {
             throw Py.TypeError("wrong argument type (expected list of jffi.Type)");
         }
 
-        Type[] paramTypes = new Type[((PyList) parameterTypes).size()];
+        CType[] paramTypes = new CType[((PyList) parameterTypes).size()];
         for (int i = 0; i < paramTypes.length; ++i) {
             PyObject t = ((PyList) parameterTypes).pyget(i);
-            if (!(t instanceof Type)) {
+            if (!(t instanceof CType)) {
                 throw Py.TypeError(String.format("wrong argument type for parameter %d (expected jffi.Type)", i));
             }
-            paramTypes[i] = (Type) t;
+            paramTypes[i] = (CType) t;
         }
 
         this.invoker = null; // invalidate old invoker
@@ -156,7 +156,7 @@ public class Function extends Pointer {
         return createInvoker(address, returnType, parameterTypes);
     }
 
-    private synchronized final Invoker createInvoker(long address, Type returnType, Type[] parameterTypes) {
+    private synchronized final Invoker createInvoker(long address, CType returnType, CType[] parameterTypes) {
         if (parameterTypes == null) {
             throw Py.NotImplementedError("variadic functions not supported yet;  specify a parameter list");
         }

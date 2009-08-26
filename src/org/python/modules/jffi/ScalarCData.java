@@ -21,11 +21,11 @@ public class ScalarCData extends CData {
         
         PyObject jffi_type = subtype.__getattr__("_jffi_type");
 
-        if (!(jffi_type instanceof Type.Builtin)) {
+        if (!(jffi_type instanceof CType.Builtin)) {
             throw Py.TypeError("invalid _jffi_type for " + subtype.getName());
         }
         
-        ScalarCData cdata = new ScalarCData(subtype, (Type.Builtin) jffi_type);
+        ScalarCData cdata = new ScalarCData(subtype, (CType.Builtin) jffi_type);
 
         // If an initial value was supplied, use it, else default to zero
         cdata.setValue(args.length > 0 ? args[0] : Py.newInteger(0));
@@ -33,7 +33,7 @@ public class ScalarCData extends CData {
         return cdata;
     }
 
-    ScalarCData(PyType pyType, Type.Builtin type) {
+    ScalarCData(PyType pyType, CType.Builtin type) {
         super(pyType, type, type.getMemoryOp());
     }    
 

@@ -18,7 +18,7 @@ public class jffi implements ClassDictInit  {
     public static void classDictInit(PyObject dict) {
         dict.__setitem__("__name__", Py.newString("jffi"));
         dict.__setitem__("DynamicLibrary", DynamicLibrary.TYPE);
-        dict.__setitem__("Type", Type.TYPE);
+        dict.__setitem__("Type", CType.TYPE);
         dict.__setitem__("Pointer", Pointer.TYPE);
         dict.__setitem__("Function", Function.TYPE);
         dict.__setitem__("ScalarCData", ScalarCData.TYPE);

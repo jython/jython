@@ -14,12 +14,12 @@ public abstract class CData extends PyObject {
     public static final PyType TYPE = PyType.fromClass(CData.class);
 
     final MemoryOp memoryOp;
-    final Type type;
+    final CType type;
 
     private Memory contentMemory;
     private PyObject value;
 
-    CData(PyType subtype, Type type, MemoryOp memoryOp) {
+    CData(PyType subtype, CType type, MemoryOp memoryOp) {
         super(subtype);
         this.type = type;
         this.memoryOp = memoryOp;

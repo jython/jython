@@ -19,7 +19,7 @@ class DefaultInvokerFactory {
 
     private DefaultInvokerFactory() {}
 
-    final Invoker createInvoker(com.kenai.jffi.Function function, Type[] parameterTypes, Type returnType) {
+    final Invoker createInvoker(com.kenai.jffi.Function function, CType[] parameterTypes, CType returnType) {
         ParameterMarshaller[] marshallers = new ParameterMarshaller[parameterTypes.length];
         
         for (int i = 0; i < marshallers.length; ++i) {
@@ -27,7 +27,7 @@ class DefaultInvokerFactory {
         }
 
 
-        if (returnType instanceof Type.Builtin) {
+        if (returnType instanceof CType.Builtin) {
             switch (returnType.getNativeType()) {
                 case VOID:
                     return new VoidInvoker(function, marshallers);
@@ -128,8 +128,8 @@ class DefaultInvokerFactory {
         }
     }
 
-    private static final ParameterMarshaller getMarshaller(Type type) {
-        if (type instanceof Type.Builtin) {
+    private static final ParameterMarshaller getMarshaller(CType type) {
+        if (type instanceof CType.Builtin) {
             return getMarshaller(type.getNativeType());
         } else {
             throw Py.RuntimeError("Unsupported parameter type: " + type);
