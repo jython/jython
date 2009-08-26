@@ -1,20 +1,24 @@
 
 package org.python.modules.jffi;
 
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import org.python.core.Py;
 import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
+import org.python.core.PyObjectDerived;
 import org.python.core.PyType;
 import org.python.expose.ExposeAsSuperclass;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 
-@ExposedType(name = "jffi.Type", base = PyObject.class)
+@ExposedType(name = "jffi.Type", base = PyObjectDerived.class)
 public class Type extends PyObject {
     public static final PyType TYPE = PyType.fromClass(Type.class);
     static {
         TYPE.fastGetDict().__setitem__("Array", Array.TYPE);
+        TYPE.fastGetDict().__setitem__("Pointer", Pointer.TYPE);
     }
     public static final Type VOID = primitive(NativeType.VOID);
     public static final Type SINT8 = primitive(NativeType.BYTE);
@@ -54,7 +58,6 @@ public class Type extends PyObject {
         this.alignment = jffiType.alignment();
         this.memoryOp = memoryOp;
     }
-
 
     public NativeType getNativeType() {
         return nativeType;
@@ -123,6 +126,104 @@ public class Type extends PyObject {
             return length;
         }
 
+        @Override
+        public final String toString() {
+            return String.format("<jffi.Type.Array length=%d>", length);
+        }
+    }
 
+    @ExposedType(name = "jffi.Type.Pointer", base = Type.class)
+    final static class Pointer extends Type {
+        public static final PyType TYPE = PyType.fromClass(Pointer.class);
+        private static final ConcurrentMap<PyObject, Pointer> typeCache
+                = new ConcurrentHashMap<PyObject, Pointer>();
+        
+        final Type componentType;
+        final PyType pyComponentType;
+        final MemoryOp componentMemoryOp;
+
+        Pointer(PyType subtype, Type componentType, PyType pyComponentType) {
+            super(NativeType.POINTER, com.kenai.jffi.Type.POINTER, MemoryOp.POINTER);
+            this.componentType = componentType;
+            this.pyComponentType = pyComponentType;
+            if (pyComponentType.isSubType(ScalarCData.TYPE)) {
+                this.componentMemoryOp = new ScalarOp(MemoryOp.getMemoryOp(componentType.getNativeType()), pyComponentType);
+            } else {
+                throw Py.TypeError("pointer only supported for scalar types");
+            }
+            
+        }
+
+        @ExposedNew
+        public static PyObject Pointer_new(PyNewWrapper new_, boolean init, PyType subtype,
+                PyObject[] args, String[] keywords) {
+
+            Pointer p = typeCache.get(args[0]);
+            if (p != null) {
+                return p;
+            }
+
+            if (args.length < 1) {
+                throw Py.TypeError(String.format("__init__() takes exactly 1 argument (%d given)", args.length));
+            }
+
+            if (!(args[0] instanceof Type)) {
+                throw Py.TypeError("expected jffi.Type");
+            }
+
+            if (args.length > 1 && !(args[1] instanceof PyType)) {
+                throw Py.TypeError("expected type");
+            }
+            p = new Pointer(subtype, (Type) args[0], args.length > 1 ? (PyType) args[1] : Py.None.getType());
+            typeCache.put(args[0], p);
+            
+            return p;
+        }
+
+        @Override
+        public final String toString() {
+            return String.format("<jffi.Type.Pointer component_type=%s>", componentType.toString());
+        }
+
+        @Override
+        public PyObject __call__(PyObject value) {
+            if (value == Py.None) {
+
+                return new org.python.modules.jffi.Pointer(new NullMemory(), componentMemoryOp);
+
+            } else if (value.getType().isSubType(pyComponentType) && value instanceof CData) {
+                
+                return new org.python.modules.jffi.Pointer((DirectMemory) ((CData) value).getContentMemory(), componentMemoryOp);
+
+            } else {
+                throw Py.TypeError("expected " + pyComponentType.getName() + " instead of " + value.getType().getName());
+            }
+        }
+
+        private static final class ScalarOp extends MemoryOp {
+            private final MemoryOp op;
+            private final PyType type;
+
+            public ScalarOp(MemoryOp op, PyType type) {
+                this.op = op;
+                this.type = type;
+            }
+
+            public final void put(Memory mem, long offset, PyObject value) {
+                op.put(mem, offset, value);
+            }
+
+            public final PyObject get(Memory mem, long offset) {
+                PyObject result = type.__call__(op.get(mem, offset));
+                //
+                // Point the CData to the backing memory so all value gets/sets
+                // update the same memory this pointer points to
+                //
+                if (result instanceof CData) {
+                    ((CData) result).setContentMemory(mem);
+                }
+                return result;
+            }
+        }
     }
 }

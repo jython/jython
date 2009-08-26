@@ -8,6 +8,7 @@ import org.python.core.PyObject;
  * Defines memory operations for a primitive type
  */
 abstract class MemoryOp {
+    public static final MemoryOp INVALID = new InvalidOp();
     public static final MemoryOp VOID = new VoidOp();
     public static final MemoryOp INT8 = new Signed8();
     public static final MemoryOp UINT8 = new Unsigned8();
@@ -63,6 +64,16 @@ abstract class MemoryOp {
     
     abstract PyObject get(Memory mem, long offset);
     abstract void put(Memory mem, long offset, PyObject value);
+
+    private static final class InvalidOp extends MemoryOp {
+        public final void put(Memory mem, long offset, PyObject value) {
+            throw Py.TypeError("invalid memory access");
+        }
+
+        public final PyObject get(Memory mem, long offset) {
+            throw Py.TypeError("invalid memory access");
+        }
+    }
 
     private static final class VoidOp extends MemoryOp {
         public final void put(Memory mem, long offset, PyObject value) {
@@ -166,11 +177,16 @@ abstract class MemoryOp {
     }
     private static final class PointerOp extends MemoryOp {
         public final void put(Memory mem, long offset, PyObject value) {
-            mem.putAddress(offset, Util.int64Value(value));
+            if (value instanceof Pointer) {
+                mem.putAddress(offset, ((Pointer) value).address);
+            } else {
+                mem.putAddress(offset, Util.int64Value(value));
+            }
         }
 
         public final PyObject get(Memory mem, long offset) {
-            return Py.newLong(mem.getAddress(offset));
+            DirectMemory dm = new NativeMemory(mem.getAddress(offset));
+            return new Pointer(dm.getAddress(), dm);
         }
     }
     private static final class StringOp extends MemoryOp {

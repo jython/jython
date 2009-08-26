@@ -426,7 +426,11 @@ class DefaultInvokerFactory {
         public static final ParameterMarshaller INSTANCE = new PointerMarshaller();
 
         public void marshal(HeapInvocationBuffer buffer, PyObject parameter) {
-            throw Py.NotImplementedError("POINTER parameters not implemented");
+            if (parameter instanceof Pointer) {
+                buffer.putAddress(((Pointer) parameter).address);
+            } else {
+                throw Py.TypeError("expected pointer argument");
+            }
         }
     }
 

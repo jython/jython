@@ -32,6 +32,15 @@ def sizeof(type):
 def alignment(type):
     return type._jffi_type.alignment
 
+def byref(cdata):
+    return cdata.byref()
+
+def pointer(cdata):
+    return cdata.pointer()
+
+def POINTER(type):
+    return jffi.Type.Pointer(type._jffi_type, type)
+
 class c_byte(_ScalarCData):
     _jffi_type = jffi.Type.BYTE
 

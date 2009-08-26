@@ -14,15 +14,35 @@ public class Pointer extends PyObject {
     public final long address;
 
     final Memory memory;
+    final MemoryOp componentMemoryOp;
 
     public Pointer(PyType type, long address, Memory memory) {
         super(type);
         this.address = address;
         this.memory = memory;
+        this.componentMemoryOp = MemoryOp.INVALID;
     }
 
     public Pointer(long address, Memory memory) {
         this.address = address;
         this.memory = memory;
+        this.componentMemoryOp = MemoryOp.INVALID;
     }
+
+    Pointer(DirectMemory memory, MemoryOp componentMemoryOp) {
+        this(TYPE, memory, componentMemoryOp);
+    }
+
+    Pointer(PyType subtype, DirectMemory memory, MemoryOp componentMemoryOp) {
+        super(subtype);
+        this.address = memory.getAddress();
+        this.memory = memory;
+        this.componentMemoryOp = componentMemoryOp;
+    }
+
+    @ExposedGet(name="contents")
+    public PyObject contents() {
+        return componentMemoryOp.get(memory, 0);
+    }
+
 }

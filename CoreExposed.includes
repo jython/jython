@@ -52,6 +52,7 @@ org/python/modules/_csv/PyReader.class
 org/python/modules/_csv/PyWriter.class
 org/python/modules/_functools/PyPartial.class
 org/python/modules/_hashlib$Hash.class
+org/python/modules/jffi/CData.class
 org/python/modules/jffi/DynamicLibrary.class
 org/python/modules/jffi/DynamicLibrary$Symbol.class
 org/python/modules/jffi/Function.class
@@ -59,6 +60,7 @@ org/python/modules/jffi/Pointer.class
 org/python/modules/jffi/ScalarCData.class
 org/python/modules/jffi/Type.class
 org/python/modules/jffi/Type$Array.class
+org/python/modules/jffi/Type$Pointer.class
 org/python/modules/_threading/Condition.class
 org/python/modules/_threading/Lock.class
 org/python/modules/_weakref/CallableProxyType.class

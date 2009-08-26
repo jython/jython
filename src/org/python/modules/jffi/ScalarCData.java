@@ -7,21 +7,14 @@ import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
 import org.python.core.PyObject.ConversionException;
 import org.python.core.PyType;
-import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
-import org.python.expose.ExposedSet;
 import org.python.expose.ExposedType;
 
-@ExposedType(name = "jffi.ScalarCData", base = PyObject.class)
-public class ScalarCData extends PyObject {
+@ExposedType(name = "jffi.ScalarCData", base = CData.class)
+public class ScalarCData extends CData {
     public static final PyType TYPE = PyType.fromClass(ScalarCData.class);
 
-    final Type.Builtin type;
-    private PyObject value;
-    private Memory memory;
-    
-    
     @ExposedNew
     public static PyObject ScalarCData_new(PyNewWrapper new_, boolean init, PyType subtype,
             PyObject[] args, String[] keywords) {
@@ -41,30 +34,8 @@ public class ScalarCData extends PyObject {
     }
 
     ScalarCData(PyType pyType, Type.Builtin type) {
-        super(pyType);
-        this.type = type;
-        this.memory = null;
-    }
-
-    @ExposedGet(name = "value")
-    public PyObject getValue() {
-        // If native memory has been allocated, read the value from there
-        if (memory != null) {
-            return type.getMemoryOp().get(memory, 0);
-        }
-
-        return value;
-    }
-
-
-    @ExposedSet(name = "value")
-    public void setValue(PyObject value) {
-        this.value = value;
-        // If native memory has been allocated, sync the value to memory
-        if (memory != null) {
-            type.getMemoryOp().put(memory, 0, value);
-        }
-    }
+        super(pyType, type, type.getMemoryOp());
+    }    
 
     @Override
     public int asInt() {
