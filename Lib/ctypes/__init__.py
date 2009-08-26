@@ -6,7 +6,8 @@ class _CTypeMetaClass(type):
         return type.__new__(cls, name, bases, dict)
 
     def __mul__(self, len):
-        return _ArrayType(jffi.Type.Array(self._jffi_type, len))
+        dict = { '_jffi_type': jffi.Type.Array(self, len) }
+        return type("%s_%d" % (self.__name__, len), (_ArrayCData,), dict)
 
 class _ScalarCData(jffi.ScalarCData):
     __metaclass__ = _CTypeMetaClass
@@ -16,11 +17,8 @@ class _ScalarCData(jffi.ScalarCData):
 
     size = classmethod(size)
 
-class _ArrayType(object):
-    def __init__(self, jffi_type):
-        self._jffi_type = jffi_type
-
-    def __call__(self, *args):
+class _ArrayCData(object):
+    def __init__(self, *args):
         raise NotImplementedError("instantiating arrays is not implemented yet")
 
     def __len__(self):
