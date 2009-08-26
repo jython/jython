@@ -72,16 +72,13 @@ public class BufferedWriter extends BufferedIOMixin {
 
     /** {@inheritDoc} */
     public void flush() {
-        if (buffer.position() == 0) {
-            // Empty buffer
-            return;
+        if (buffer.position() > 0) {
+            buffer.flip();
+            while (buffer.hasRemaining()) {
+                rawIO.write(buffer);
+            }
+            buffer.clear();
         }
-
-        buffer.flip();
-        while (buffer.hasRemaining()) {
-            rawIO.write(buffer);
-        }
-        buffer.clear();
         super.flush();
     }
 
