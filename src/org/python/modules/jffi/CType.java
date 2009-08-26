@@ -6,14 +6,13 @@ import java.util.concurrent.ConcurrentMap;
 import org.python.core.Py;
 import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
-import org.python.core.PyObjectDerived;
 import org.python.core.PyType;
 import org.python.expose.ExposeAsSuperclass;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 
-@ExposedType(name = "jffi.Type", base = PyObjectDerived.class)
+@ExposedType(name = "jffi.Type", base = PyObject.class)
 public class CType extends PyObject {
     public static final PyType TYPE = PyType.fromClass(CType.class);
     static {
@@ -92,16 +91,30 @@ public class CType extends PyObject {
         }
     }
 
+    private static CType typeOf(PyObject obj) {
+        if (obj instanceof CType) {
+            return (CType) obj;
+        }
+
+        PyObject jffi_type = obj.__getattr__("_jffi_type");
+        if (!(jffi_type instanceof CType)) {
+            throw Py.TypeError("invalid _jffi_type");
+        }
+        return (CType) jffi_type;
+    }
+
     @ExposedType(name = "jffi.Type.Array", base = CType.class)
     static final class Array extends CType {
         public static final PyType TYPE = PyType.fromClass(Array.class);
         final CType componentType;
-        
+        final PyObject pyComponentType;
+
         @ExposedGet
         public final int length;
 
-        public Array(CType componentType, int length) {
+        public Array(PyObject pyComponentType, CType componentType, int length) {
             super(NativeType.ARRAY, new com.kenai.jffi.Array(componentType.jffiType, length), null);
+            this.pyComponentType = pyComponentType;
             this.componentType = componentType;
             this.length = length;
         }
@@ -114,11 +127,7 @@ public class CType extends PyObject {
                 throw Py.TypeError(String.format("__init__() takes exactly 2 arguments (%d given)", args.length));
             }
 
-            if (!(args[0] instanceof CType)) {
-                throw Py.TypeError("expected jffi.Type");
-            }
-
-            return new Array((CType) args[0], args[1].asInt());
+            return new Array(args[0], typeOf(args[0]), args[1].asInt());
         }
 
         @Override
@@ -128,7 +137,7 @@ public class CType extends PyObject {
 
         @Override
         public final String toString() {
-            return String.format("<jffi.Type.Array length=%d>", length);
+            return String.format("<ctypes.Array elem_type=%s length=%d>", pyComponentType.toString(), length);
         }
     }
 
@@ -142,10 +151,11 @@ public class CType extends PyObject {
         final PyType pyComponentType;
         final MemoryOp componentMemoryOp;
 
-        Pointer(PyType subtype, CType componentType, PyType pyComponentType) {
+        Pointer(PyType subtype, PyType pyComponentType, CType componentType) {
             super(NativeType.POINTER, com.kenai.jffi.Type.POINTER, MemoryOp.POINTER);
-            this.componentType = componentType;
             this.pyComponentType = pyComponentType;
+            this.componentType = componentType;
+
             if (pyComponentType.isSubType(ScalarCData.TYPE)) {
                 this.componentMemoryOp = new ScalarOp(MemoryOp.getMemoryOp(componentType.getNativeType()), pyComponentType);
             } else {
@@ -163,18 +173,15 @@ public class CType extends PyObject {
                 return p;
             }
 
-            if (args.length < 1) {
+            if (args.length != 1) {
                 throw Py.TypeError(String.format("__init__() takes exactly 1 argument (%d given)", args.length));
             }
 
-            if (!(args[0] instanceof CType)) {
-                throw Py.TypeError("expected jffi.Type");
+            if (!(args[0] instanceof PyType)) {
+                throw Py.TypeError("expected ctypes class");
             }
 
-            if (args.length > 1 && !(args[1] instanceof PyType)) {
-                throw Py.TypeError("expected type");
-            }
-            p = new Pointer(subtype, (CType) args[0], args.length > 1 ? (PyType) args[1] : Py.None.getType());
+            p = new Pointer(subtype, (PyType) args[0], typeOf(args[0]));
             typeCache.put(args[0], p);
             
             return p;
