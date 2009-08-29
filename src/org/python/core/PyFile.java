@@ -196,7 +196,7 @@ public class PyFile extends PyObject {
             buffer = lineBuffered ? new LineBufferedWriter(raw) : new BufferedWriter(raw, bufsize);
         } else if (reading) {
             // Line buffering is for output only
-            buffer = new BufferedReader(raw, lineBuffered ? 0 : bufsize);
+            buffer = new BufferedReader(raw, lineBuffered ? IOBase.DEFAULT_BUFFER_SIZE : bufsize);
         } else {
             // Should never happen
             throw Py.ValueError("unknown mode: '" + mode + "'");
