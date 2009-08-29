@@ -30,21 +30,21 @@ public class ServerSocketIO extends SocketIOBase {
         this.socketChannel = socketChannel;
     }
 
-    /** {@inheritDoc} */
+    @Override
     public int readinto(ByteBuffer buf) {
         checkClosed();
         checkReadable();
         throw Py.IOError(Errno.ENOTCONN);
     }
 
-    /** {@inheritDoc} */
+    @Override
     public int write(ByteBuffer buf) {
         checkClosed();
         checkWritable();
         throw Py.IOError(Errno.EBADF);
     }
 
-    /** {@inheritDoc} */
+    @Override
     public void close() {
         if (closed()) {
             return;
@@ -57,7 +57,7 @@ public class ServerSocketIO extends SocketIOBase {
         super.close();
     }
 
-    /** {@inheritDoc} */
+    @Override
     public Channel getChannel() {
         return socketChannel;
     }

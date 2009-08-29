@@ -22,7 +22,7 @@ public class BinaryIOWrapper extends TextIOBase {
         super(bufferedIO);
     }
 
-    /** {@inheritDoc} */
+    @Override
     public String read(int size) {
         if (size < 0) {
             return readall();
@@ -51,7 +51,7 @@ public class BinaryIOWrapper extends TextIOBase {
         return StringUtil.fromBytes(data);
     }
 
-    /** {@inheritDoc} */
+    @Override
     public String readall() {
         if (!readahead.hasRemaining()) {
             return StringUtil.fromBytes(bufferedIO.readall());
@@ -66,7 +66,7 @@ public class BinaryIOWrapper extends TextIOBase {
         return StringUtil.fromBytes(all);
     }
 
-    /** {@inheritDoc} */
+    @Override
     public String readline(int size) {
         // Avoid ByteBuffer (this.readahead) and StringBuilder
         // (this.builder) method calls in the inner loop by reading
@@ -110,7 +110,7 @@ public class BinaryIOWrapper extends TextIOBase {
         return drainBuilder();
     }
 
-    /** {@inheritDoc} */
+    @Override
     public int write(String buf) {
         if (readahead.hasRemaining()) {
             clearReadahead();

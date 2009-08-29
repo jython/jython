@@ -44,27 +44,27 @@ public abstract class BufferedIOMixin extends BufferedIOBase {
         this.bufferSize = bufferSize;
     }
 
-    /** {@inheritDoc} */
+    @Override
     public long seek(long pos, int whence) {
         return rawIO.seek(pos, whence);
     }
 
-    /** {@inheritDoc} */
+    @Override
     public long tell() {
         return rawIO.tell();
     }
 
-    /** {@inheritDoc} */
+    @Override
     public long truncate(long size) {
         return rawIO.truncate(size);
     }
 
-    /** {@inheritDoc} */
+    @Override
     public void flush() {
         rawIO.flush();
     }
 
-    /** {@inheritDoc} */
+    @Override
     public void close() {
         if (closed()) {
             return;
@@ -80,27 +80,27 @@ public abstract class BufferedIOMixin extends BufferedIOBase {
         rawIO.close();
     }
 
-    /** {@inheritDoc} */
+    @Override
     public RawIOBase fileno() {
         return rawIO.fileno();
     }
 
-    /** {@inheritDoc} */
+    @Override
     public boolean isatty() {
         return rawIO.isatty();
     }
 
-    /** {@inheritDoc} */
+    @Override
     public boolean readable() {
         return rawIO.readable();
     }
 
-    /** {@inheritDoc} */
+    @Override
     public boolean writable() {
         return rawIO.writable();
     }
 
-    /** {@inheritDoc} */
+    @Override
     public boolean closed() {
         return rawIO.closed();
     }

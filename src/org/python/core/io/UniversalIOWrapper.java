@@ -33,7 +33,7 @@ public class UniversalIOWrapper extends TextIOBase {
         super(bufferedIO);
     }
 
-    /** {@inheritDoc} */
+    @Override
     public String read(int size) {
         if (size < 0) {
             return readall();
@@ -105,7 +105,7 @@ public class UniversalIOWrapper extends TextIOBase {
         return new String(builderArray, 0, builderPos);
     }
 
-    /** {@inheritDoc} */
+    @Override
     public String readall() {
         // Read the remainder of file
         ByteBuffer remaining = bufferedIO.readall();
@@ -179,7 +179,7 @@ public class UniversalIOWrapper extends TextIOBase {
         return destPos - destStartPos;
     }
 
-    /** {@inheritDoc} */
+    @Override
     public String readline(int size) {
         // Avoid ByteBuffer (this.readahead) and StringBuilder
         // (this.builder) method calls in the inner loop by reading
@@ -268,7 +268,7 @@ public class UniversalIOWrapper extends TextIOBase {
         return drainBuilder();
     }
 
-    /** {@inheritDoc} */
+    @Override
     public int write(String buf) {
         // Universal newlines doesn't support writing; just raise the
         // appropriate exception
@@ -277,14 +277,14 @@ public class UniversalIOWrapper extends TextIOBase {
         return -1;
     }
 
-    /** {@inheritDoc} */
+    @Override
     public long seek(long pos, int whence) {
         pos = super.seek(pos, whence);
         skipNextLF = false;
         return pos;
     }
 
-    /** {@inheritDoc} */
+    @Override
     public long tell() {
         long pos = super.tell();
         if (skipNextLF) {
@@ -305,7 +305,7 @@ public class UniversalIOWrapper extends TextIOBase {
         return pos;
     }
 
-    /** {@inheritDoc} */
+    @Override
     public PyObject getNewlines() {
         int size = newlineTypes.size();
         if (size == 0) {

@@ -21,7 +21,7 @@ public class LineBufferedWriter extends BufferedWriter {
         buffer = ByteBuffer.allocate(DEFAULT_BUFFER_SIZE);
     }
 
-    /** {@inheritDoc} */
+    @Override
     public int write(ByteBuffer bytes) {
         int size = bytes.remaining();
 

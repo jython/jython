@@ -37,7 +37,7 @@ public class TextIOWrapper extends BinaryIOWrapper {
         newlineIsLF = newline.equals("\n");
     }
 
-    /** {@inheritDoc} */
+    @Override
     public String read(int size) {
         if (newlineIsLF) {
             return super.read(size);
@@ -98,7 +98,7 @@ public class TextIOWrapper extends BinaryIOWrapper {
         return new String(builderArray, 0, builderPos);
     }
 
-    /** {@inheritDoc} */
+    @Override
     public String readall() {
         if (newlineIsLF) {
             return super.readall();
@@ -172,7 +172,7 @@ public class TextIOWrapper extends BinaryIOWrapper {
         return destPos - destStartPos;
     }
 
-    /** {@inheritDoc} */
+    @Override
     public String readline(int size) {
         if (newlineIsLF) {
             return super.readline(size);
@@ -252,7 +252,7 @@ public class TextIOWrapper extends BinaryIOWrapper {
         return drainBuilder();
     }
 
-    /** {@inheritDoc} */
+    @Override
     public int write(String buf) {
         if (!newlineIsLF) {
             buf = LF_PATTERN.matcher(buf).replaceAll(newline);

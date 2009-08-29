@@ -27,7 +27,7 @@ public class BufferedReader extends BufferedIOMixin {
         clear();
     }
 
-    /** {@inheritDoc} */
+    @Override
     public int readinto(ByteBuffer bytes) {
         int size = bytes.remaining();
 
@@ -57,7 +57,7 @@ public class BufferedReader extends BufferedIOMixin {
         return (int)read;
     }
 
-    /** {@inheritDoc} */
+    @Override
     public ByteBuffer readall() {
         ByteBuffer remaining = rawIO.readall();
 
@@ -73,7 +73,7 @@ public class BufferedReader extends BufferedIOMixin {
         return all;
     }
 
-    /** {@inheritDoc} */
+    @Override
     public ByteBuffer peek(int size) {
         if (buffer.remaining() < Math.min(size, bufferSize)) {
             // Prepare to fill the buffer
@@ -89,7 +89,7 @@ public class BufferedReader extends BufferedIOMixin {
         return buffer;
     }
 
-    /** {@inheritDoc} */
+    @Override
     public int read1(ByteBuffer bytes) {
         int size = bytes.remaining();
         if (size == 0) {
@@ -106,12 +106,12 @@ public class BufferedReader extends BufferedIOMixin {
         return readinto(bytes);
     }
 
-    /** {@inheritDoc} */
+    @Override
     public long tell() {
         return rawIO.tell() - buffer.remaining();
     }
 
-    /** {@inheritDoc} */
+    @Override
     public long seek(long pos, int whence) {
         if (whence == 1) {
             pos -= buffer.remaining();
@@ -121,17 +121,17 @@ public class BufferedReader extends BufferedIOMixin {
         return pos;
     }
 
-    /** {@inheritDoc} */
+    @Override
     public boolean buffered() {
         return buffer.hasRemaining();
     }
 
-    /** {@inheritDoc} */
+    @Override
     public void clear() {
         buffer.clear().limit(0);
     }
 
-    /** {@inheritDoc} */
+    @Override
     public int write(ByteBuffer bytes) {
         // Never writable; just raise the appropriate exception
         checkClosed();
@@ -139,7 +139,7 @@ public class BufferedReader extends BufferedIOMixin {
         return -1;
     }
 
-    /** {@inheritDoc} */
+    @Override
     public boolean writable() {
         return false;
     }

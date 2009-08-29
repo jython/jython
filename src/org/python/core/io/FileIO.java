@@ -180,7 +180,7 @@ public class FileIO extends RawIOBase {
         }
     }
 
-    /** {@inheritDoc} */
+    @Override
     public boolean isatty() {
         checkClosed();
         if (file == null) {
@@ -193,7 +193,7 @@ public class FileIO extends RawIOBase {
         }
     }
 
-    /** {@inheritDoc} */
+    @Override
     public int readinto(ByteBuffer buf) {
         checkClosed();
         checkReadable();
@@ -252,7 +252,7 @@ public class FileIO extends RawIOBase {
         return all;
     }
 
-    /** {@inheritDoc} */
+    @Override
     public int write(ByteBuffer buf) {
         checkClosed();
         checkWritable();
@@ -280,7 +280,7 @@ public class FileIO extends RawIOBase {
         }
     }
 
-    /** {@inheritDoc} */
+    @Override
     public long seek(long pos, int whence) {
         checkClosed();
         try {
@@ -303,7 +303,7 @@ public class FileIO extends RawIOBase {
         }
     }
 
-    /** {@inheritDoc} */
+    @Override
     public long tell() {
         checkClosed();
         try {
@@ -313,7 +313,7 @@ public class FileIO extends RawIOBase {
         }
     }
 
-    /** {@inheritDoc} */
+    @Override
     public long truncate(long size) {
         checkClosed();
         checkWritable();
@@ -328,7 +328,7 @@ public class FileIO extends RawIOBase {
         return size;
     }
 
-    /** {@inheritDoc} */
+    @Override
     public void close() {
         if (closed()) {
             return;
@@ -351,17 +351,17 @@ public class FileIO extends RawIOBase {
         return readable() ? Channels.newInputStream(fileChannel) : super.asInputStream();
     }
 
-    /** {@inheritDoc} */
+    @Override
     public boolean readable() {
         return reading || plus;
     }
 
-    /** {@inheritDoc} */
+    @Override
     public boolean writable() {
         return writing;
     }
 
-    /** {@inheritDoc} */
+    @Override
     public Channel getChannel() {
         return fileChannel;
     }

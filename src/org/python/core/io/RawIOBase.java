@@ -155,7 +155,7 @@ public abstract class RawIOBase extends IOBase {
         return count;
     }
 
-    /** {@inheritDoc} */
+    @Override
     public RawIOBase fileno() {
         checkClosed();
         return this;

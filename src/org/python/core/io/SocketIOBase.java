@@ -45,12 +45,12 @@ public abstract class SocketIOBase extends RawIOBase {
         }
     }
 
-    /** {@inheritDoc} */
+    @Override
     public boolean readable() {
         return readable;
     }
 
-    /** {@inheritDoc} */
+    @Override
     public boolean writable() {
         return writable;
     }

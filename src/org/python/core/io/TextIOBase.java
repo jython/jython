@@ -129,7 +129,7 @@ public abstract class TextIOBase extends IOBase {
         return -1;
     }
 
-    /** {@inheritDoc} */
+    @Override
     public long truncate(long pos) {
         long initialPos = tell();
         flush();
@@ -143,49 +143,49 @@ public abstract class TextIOBase extends IOBase {
         return pos;
     }
 
-    /** {@inheritDoc} */
+    @Override
     public void flush() {
         bufferedIO.flush();
     }
 
-    /** {@inheritDoc} */
+    @Override
     public void close() {
         bufferedIO.close();
     }
 
-    /** {@inheritDoc} */
+    @Override
     public long seek(long pos, int whence) {
         pos = bufferedIO.seek(pos, whence);
         clearReadahead();
         return pos;
     }
 
-    /** {@inheritDoc} */
+    @Override
     public long tell() {
         return bufferedIO.tell() - readahead.remaining();
     }
 
-    /** {@inheritDoc} */
+    @Override
     public RawIOBase fileno() {
         return bufferedIO.fileno();
     }
 
-    /** {@inheritDoc} */
+    @Override
     public boolean isatty() {
         return bufferedIO.isatty();
     }
 
-    /** {@inheritDoc} */
+    @Override
     public boolean readable() {
         return bufferedIO.readable();
     }
 
-    /** {@inheritDoc} */
+    @Override
     public boolean writable() {
         return bufferedIO.writable();
     }
 
-    /** {@inheritDoc} */
+    @Override
     public boolean closed() {
         return bufferedIO.closed();
     }

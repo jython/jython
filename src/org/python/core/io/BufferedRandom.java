@@ -37,7 +37,7 @@ public class BufferedRandom extends BufferedIOMixin {
         this.writer = new BufferedWriter(rawIO, bufferSize);
     }
 
-    /** {@inheritDoc} */
+    @Override
     public long seek(long pos, int whence) {
         flush();
         // First do the raw seek, then empty the read buffer, so that
@@ -47,7 +47,7 @@ public class BufferedRandom extends BufferedIOMixin {
         return pos;
     }
 
-    /** {@inheritDoc} */
+    @Override
     public long tell() {
         if (writer.buffered()) {
             return writer.tell();
@@ -55,25 +55,25 @@ public class BufferedRandom extends BufferedIOMixin {
         return reader.tell();
     }
 
-    /** {@inheritDoc} */
+    @Override
     public ByteBuffer read(int size) {
         flush();
         return reader.read(size);
     }
 
-    /** {@inheritDoc} */
+    @Override
     public ByteBuffer readall() {
         flush();
         return reader.readall();
     }
 
-    /** {@inheritDoc} */
+    @Override
     public int readinto(ByteBuffer bytes) {
         flush();
         return reader.readinto(bytes);
     }
 
-    /** {@inheritDoc} */
+    @Override
     public int write(ByteBuffer bytes) {
         if (reader.buffered()) {
             reader.clear();
@@ -81,19 +81,19 @@ public class BufferedRandom extends BufferedIOMixin {
         return writer.write(bytes);
     }
 
-    /** {@inheritDoc} */
+    @Override
     public ByteBuffer peek(int size) {
         flush();
         return reader.peek(size);
     }
 
-    /** {@inheritDoc} */
+    @Override
     public int read1(ByteBuffer bytes) {
         flush();
         return reader.read1(bytes);
     }
 
-    /** {@inheritDoc} */
+    @Override
     public void flush() {
         writer.flush();
     }

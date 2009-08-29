@@ -29,7 +29,7 @@ public class DatagramSocketIO extends SocketIOBase {
         this.socketChannel = socketChannel;
     }
 
-    /** {@inheritDoc} */
+    @Override
     public int readinto(ByteBuffer buf) {
         checkClosed();
         checkReadable();
@@ -57,7 +57,7 @@ public class DatagramSocketIO extends SocketIOBase {
         }
     }
 
-    /** {@inheritDoc} */
+    @Override
     public int write(ByteBuffer buf) {
         checkClosed();
         checkWritable();
@@ -85,7 +85,7 @@ public class DatagramSocketIO extends SocketIOBase {
         }
     }
 
-    /** {@inheritDoc} */
+    @Override
     public void close() {
         if (closed()) {
             return;
@@ -98,7 +98,7 @@ public class DatagramSocketIO extends SocketIOBase {
         super.close();
     }
 
-    /** {@inheritDoc} */
+    @Override
     public Channel getChannel() {
         return socketChannel;
     }

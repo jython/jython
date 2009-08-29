@@ -19,7 +19,7 @@ public class LineBufferedRandom extends BufferedRandom {
         super(rawIO, 1);
     }
 
-    /** {@inheritDoc} */
+    @Override
     protected void initChildBuffers() {
         // Line buffering is for output only
         this.reader = new BufferedReader(rawIO, 0);
