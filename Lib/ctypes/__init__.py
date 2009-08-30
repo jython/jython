@@ -37,7 +37,8 @@ def pointer(cdata):
     return cdata.pointer()
 
 def POINTER(type):
-    return jffi.Type.Pointer(type._jffi_type, type)
+#    return jffi.Type.Pointer(type)
+    return c_void_p
 
 class c_byte(_ScalarCData):
     _jffi_type = jffi.Type.BYTE

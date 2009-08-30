@@ -67,8 +67,14 @@ final class Util {
         return parameter.asInt();
     }
     
-    public static final int uint32Value(PyObject parameter) {
-        return parameter.asInt();
+    public static final int uint32Value(PyObject value) {
+        if (value instanceof PyInteger) {
+            return value.asInt();
+        } else if (value instanceof PyLong) {
+            return (int) ((PyLong) value).asLong(0);
+        } else {
+            return (int) __long__value(value);
+        }
     }
 
     public static final long int64Value(PyObject value) {
@@ -82,7 +88,13 @@ final class Util {
     }
 
     public static final long uint64Value(PyObject value) {
-        return int64Value(value);
+        if (value instanceof PyLong) {
+            return ((PyLong) value).getValue().longValue();
+        } else if (value instanceof PyInteger) {
+            return value.asInt();
+        } else {
+            return __long__value(value);
+        }
     }
 
     public static final float floatValue(PyObject parameter) {
@@ -91,6 +103,16 @@ final class Util {
 
     public static final double doubleValue(PyObject parameter) {
         return parameter.asDouble();
+    }
+
+    private static final long __long__value(PyObject value) {
+        PyObject l = value.__long__();
+        if (l instanceof PyLong) {
+            return ((PyLong) l).getValue().longValue();
+        } else if (l instanceof PyInteger) {
+            return value.asInt();
+        }
+        throw Py.TypeError("invalid __long__() result");
     }
 
     public static final void checkBounds(long size, long off, long len) {

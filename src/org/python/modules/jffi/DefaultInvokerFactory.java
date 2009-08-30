@@ -372,7 +372,7 @@ class DefaultInvokerFactory {
         public static final ParameterMarshaller INSTANCE = new Unsigned32Marshaller();
 
         public void marshal(HeapInvocationBuffer buffer, PyObject arg) {
-            buffer.putInt((int) Util.int32Value(arg));
+            buffer.putInt((int) Util.uint32Value(arg));
         }
     }
 
