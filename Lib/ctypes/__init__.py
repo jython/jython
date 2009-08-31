@@ -36,9 +36,26 @@ def byref(cdata):
 def pointer(cdata):
     return cdata.pointer()
 
-def POINTER(type):
-#    return jffi.Type.Pointer(type)
-    return c_void_p
+_pointer_type_cache = {}
+def POINTER(ctype):
+    # If a pointer class for the C type has been created, re-use it
+    if _pointer_type_cache.has_key(ctype):
+        return _pointer_type_cache[ctype]
+
+    # Create a new class for this particular C type
+    dict = { '_jffi_type': jffi.Type.Pointer(ctype) }
+    # Look back up the stack frame to find out the module this new type is declared in
+    import inspect
+    mod = inspect.getmodule(inspect.stack()[1][0])
+    if mod is None:
+        name = "__main__"
+    else:
+        name = mod.__name__
+    dict["__module__"] = name
+
+    ptype = type("LP_%s" % (ctype.__name__,), (jffi.Pointer,), dict)
+    _pointer_type_cache[ctype] = ptype
+    return ptype
 
 class c_byte(_ScalarCData):
     _jffi_type = jffi.Type.BYTE

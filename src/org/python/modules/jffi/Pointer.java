@@ -1,9 +1,13 @@
 
 package org.python.modules.jffi;
 
+import org.python.core.Py;
+import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
 import org.python.core.PyType;
 import org.python.expose.ExposedGet;
+import org.python.expose.ExposedNew;
+import org.python.expose.ExposedSet;
 import org.python.expose.ExposedType;
 
 @ExposedType(name = "jffi.Pointer", base = PyObject.class)
@@ -40,9 +44,35 @@ public class Pointer extends PyObject {
         this.componentMemoryOp = componentMemoryOp;
     }
 
+    @ExposedNew
+    public static PyObject Pointer_new(PyNewWrapper new_, boolean init, PyType subtype,
+            PyObject[] args, String[] keywords) {
+
+        PyObject jffi_type = subtype.__getattr__("_jffi_type");
+
+        if (!(jffi_type instanceof CType.Pointer)) {
+            throw Py.TypeError("invalid _jffi_type for " + subtype.getName());
+        }
+
+        CType.Pointer type = (CType.Pointer) jffi_type;
+
+        if (args.length == 0) {
+            return new Pointer(subtype, NullMemory.INSTANCE, type.componentMemoryOp);
+        }
+        DirectMemory contents = AllocatedNativeMemory.allocate(type.componentType.size(), false);
+        type.componentMemoryOp.put(contents, 0, args[0]);
+
+        return new Pointer(subtype, contents, type.componentMemoryOp);
+    }
+
     @ExposedGet(name="contents")
     public PyObject contents() {
         return componentMemoryOp.get(memory, 0);
+    }
+
+    @ExposedSet(name="contents")
+    public void contents(PyObject value) {
+        componentMemoryOp.put(memory, 0, value);
     }
 
 }
