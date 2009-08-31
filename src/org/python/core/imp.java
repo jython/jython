@@ -619,7 +619,7 @@ public class imp {
      */
     private static PyObject import_next(PyObject mod,
             StringBuilder parentNameBuffer, String name, String outerFullName, PyObject fromlist) {
-        if (parentNameBuffer.length() > 0) {
+        if (parentNameBuffer.length() > 0 && name != null && name.length() > 0) {
             parentNameBuffer.append('.');
         }
         parentNameBuffer.append(name);
