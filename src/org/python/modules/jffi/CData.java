@@ -4,9 +4,7 @@ package org.python.modules.jffi;
 import org.python.core.Py;
 import org.python.core.PyObject;
 import org.python.core.PyType;
-import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
-import org.python.expose.ExposedSet;
 import org.python.expose.ExposedType;
 
 @ExposedType(name = "jffi.CData", base = PyObject.class)
@@ -16,65 +14,55 @@ public abstract class CData extends PyObject {
     final MemoryOp memoryOp;
     final CType type;
 
-    private Memory contentMemory;
-    private PyObject value;
+    private DirectMemory referenceMemory;
 
     CData(PyType subtype, CType type, MemoryOp memoryOp) {
         super(subtype);
         this.type = type;
         this.memoryOp = memoryOp;
-        this.value = Py.None;
-        this.contentMemory = null;
+        this.referenceMemory = null;
     }
-
-    @ExposedGet(name = "value")
-    public PyObject getValue() {
-        // If native memory has been allocated, read the value from there
-        if (contentMemory != null) {
-            return memoryOp.get(contentMemory, 0);
-        }
-
-        return value;
-    }
-
-
-    @ExposedSet(name = "value")
-    public void setValue(PyObject value) {
-        this.value = value;
-        // If native memory has been allocated, sync the value to memory
-        if (contentMemory != null) {
-            memoryOp.put(contentMemory, 0, value);
-        }
-    }
-
+    
     @ExposedMethod(names= { "byref", "pointer" })
     public PyObject byref() {
-        return new Pointer((DirectMemory) getContentMemory(), memoryOp);
+        return new PointerCData(type, getReferenceMemory(), memoryOp);
     }
 
-    boolean hasValueMemory() {
-        return contentMemory != null;
+    final boolean hasReferenceMemory() {
+        return referenceMemory != null;
     }
 
-    void setContentMemory(Memory memory) {
+    final void setReferenceMemory(Memory memory) {
         if (!(memory instanceof DirectMemory)) {
             throw Py.TypeError("invalid memory");
         }
-        this.contentMemory = memory;
+        this.referenceMemory = (DirectMemory) memory;
     }
 
-    Memory getContentMemory() {
-        if (contentMemory != null) {
-            return contentMemory;
+    /**
+     * Returns the memory used when creating a reference to this instance.
+     * e.g. via byref(obj)
+     *
+     * @return The reference memory for this object
+     */
+    public final DirectMemory getReferenceMemory() {
+        if (referenceMemory != null) {
+            return referenceMemory;
         }
 
-        return allocateDirect();
+        return allocateReferenceMemory();
     }
 
-    private DirectMemory allocateDirect() {
+    protected DirectMemory allocateReferenceMemory() {
         DirectMemory m = AllocatedNativeMemory.allocate(type.size(), false);
-        memoryOp.put(m, 0, value);
-        contentMemory = m;
+        initReferenceMemory(m);
+        this.referenceMemory = m;
         return m;
     }
+
+    public Memory getContentMemory() {
+        return getReferenceMemory();
+    }
+
+    protected abstract void initReferenceMemory(Memory m);
 }

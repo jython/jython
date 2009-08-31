@@ -178,7 +178,7 @@ abstract class MemoryOp {
     private static final class PointerOp extends MemoryOp {
         public final void put(Memory mem, long offset, PyObject value) {
             if (value instanceof Pointer) {
-                mem.putAddress(offset, ((Pointer) value).address);
+                mem.putAddress(offset, ((Pointer) value).getAddress());
             } else {
                 mem.putAddress(offset, Util.int64Value(value));
             }
@@ -186,7 +186,7 @@ abstract class MemoryOp {
 
         public final PyObject get(Memory mem, long offset) {
             DirectMemory dm = new NativeMemory(mem.getAddress(offset));
-            return new Pointer(dm.getAddress(), dm);
+            return new PointerCData(CType.POINTER, dm, INVALID);
         }
     }
     private static final class StringOp extends MemoryOp {

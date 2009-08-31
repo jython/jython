@@ -91,7 +91,7 @@ public class CType extends PyObject {
         }
     }
 
-    private static CType typeOf(PyObject obj) {
+    static CType typeOf(PyObject obj) {
         if (obj instanceof CType) {
             return (CType) obj;
         }
@@ -192,21 +192,6 @@ public class CType extends PyObject {
             return String.format("<jffi.Type.Pointer component_type=%s>", componentType.toString());
         }
 
-        @Override
-        public PyObject __call__(PyObject value) {
-            if (value == Py.None) {
-
-                return new org.python.modules.jffi.Pointer(new NullMemory(), componentMemoryOp);
-
-            } else if (value.getType().isSubType(pyComponentType) && value instanceof CData) {
-                
-                return new org.python.modules.jffi.Pointer((DirectMemory) ((CData) value).getContentMemory(), componentMemoryOp);
-
-            } else {
-                throw Py.TypeError("expected " + pyComponentType.getName() + " instead of " + value.getType().getName());
-            }
-        }
-
         private static final class ScalarOp extends MemoryOp {
             private final MemoryOp op;
             private final PyType type;
@@ -226,8 +211,8 @@ public class CType extends PyObject {
                 // Point the CData to the backing memory so all value gets/sets
                 // update the same memory this pointer points to
                 //
-                if (result instanceof CData) {
-                    ((CData) result).setContentMemory(mem);
+                if (result instanceof ScalarCData) {
+                    ((ScalarCData) result).setReferenceMemory(mem);
                 }
                 return result;
             }

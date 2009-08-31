@@ -12,8 +12,8 @@ import org.python.expose.ExposedNew;
 import org.python.expose.ExposedSet;
 import org.python.expose.ExposedType;
 
-@ExposedType(name = "jffi.Function", base = Pointer.class)
-public class Function extends Pointer {
+@ExposedType(name = "jffi.Function", base = PyObject.class)
+public class Function extends PyObject implements Pointer {
     public static final PyType TYPE = PyType.fromClass(Function.class);
 
     private final Pointer pointer;
@@ -27,27 +27,28 @@ public class Function extends Pointer {
 
     @ExposedGet
     public final String name;
-    
+
+    @ExposedGet
+    public final long address;
+
     @ExposedGet
     @ExposedSet
     public PyObject restype;
 
-    Function(PyType type, Pointer address, DirectMemory memory) {
-        super(type, address.address, memory);
+    Function(PyType type, Pointer address) {
+        super(type);
+        this.address = address.getAddress();
         this.library = null;
         this.name = "<anonymous>";
         this.pointer = address;
     }
 
-    Function(PyType type, Pointer address) {
-        this(type, address, new NativeMemory(address.address));
-    }
-
-    Function(PyType type, DynamicLibrary library, String name, long address) {
-        super(type, address, new NativeMemory(address));
-        this.library = library;
-        this.name = name;
-        this.pointer = null;
+    Function(PyType type, DynamicLibrary.Symbol sym) {
+        super(type);
+        this.library = sym.library;
+        this.name = sym.name;
+        this.pointer = sym;
+        this.address = sym.getAddress();
     }
 
     @ExposedNew
@@ -56,14 +57,21 @@ public class Function extends Pointer {
 
         if (args[0] instanceof Pointer) {
             if (args[0] instanceof DynamicLibrary.Symbol) {
-                DynamicLibrary.Symbol sym = (DynamicLibrary.Symbol) args[0];
-                return new Function(subtype, sym.library, sym.name, sym.address);
+                return new Function(subtype, (DynamicLibrary.Symbol) args[0]);
             } else {
                 return new Function(subtype, (Pointer) args[0]);
             }
         } else {
             throw Py.TypeError("expected memory address");
         }
+    }
+
+    public long getAddress() {
+        return address;
+    }
+
+    public DirectMemory getMemory() {
+        return pointer.getMemory();
     }
 
     @Override
@@ -125,6 +133,8 @@ public class Function extends Pointer {
 
     @ExposedSet(name = "_jffi_argtypes")
     public void setParameterTypes(PyObject parameterTypes) {
+        this.invoker = null; // invalidate old invoker
+
         // Removing the parameter types defaults back to varargs
         if (parameterTypes == Py.None) {
             this.parameterTypes = null;
@@ -144,10 +154,13 @@ public class Function extends Pointer {
             paramTypes[i] = (CType) t;
         }
 
-        this.invoker = null; // invalidate old invoker
         this.parameterTypes = paramTypes;
     }
 
+    @Override
+    public boolean __nonzero__() {
+        return !getMemory().isNull();
+    }
 
     private final Invoker getInvoker() {
         if (invoker != null) {

@@ -2,7 +2,6 @@
 package org.python.modules.jffi;
 
 import com.kenai.jffi.Library;
-import org.python.core.ClassDictInit;
 import org.python.core.Py;
 import org.python.core.PyObject;
 import org.python.core.PyType;
@@ -43,7 +42,7 @@ public class DynamicLibrary extends PyObject {
     @ExposedMethod
     public final PyObject find_symbol(PyObject name) {
         long address = findSymbol(name);
-        return new Symbol(this, name.asString(), address, new NativeMemory(address));
+        return new Symbol(this, name.asString(), new NativeMemory(address));
     }
 
     @ExposedMethod
@@ -56,31 +55,49 @@ public class DynamicLibrary extends PyObject {
         return new DataSymbol(this, name.asString(), findSymbol(name));
     }
 
-    @ExposedType(name = "jffi.DynamicLibrary.Symbol", base = Pointer.class)
-    public static class Symbol extends Pointer {
+    @ExposedType(name = "jffi.DynamicLibrary.Symbol", base = PyObject.class)
+    public static class Symbol extends PyObject implements Pointer {
         public static final PyType TYPE = PyType.fromClass(Symbol.class);
 
         final DynamicLibrary library;
+        final DirectMemory memory;
+
+        @ExposedGet
+        public final long address;
 
         @ExposedGet
         public final String name;
 
-        public Symbol(DynamicLibrary library, String name, long address, DirectMemory memory) {
-            super(address, memory);
+        public Symbol(DynamicLibrary library, String name, DirectMemory memory) {
             this.library = library;
             this.name = name;
+            this.memory = memory;
+            this.address = memory.getAddress();
+        }
+
+        public final long getAddress() {
+            return address;
+        }
+
+        public final DirectMemory getMemory() {
+            return memory;
+        }
+
+        @Override
+        public boolean __nonzero__() {
+            return !getMemory().isNull();
         }
     }
     
-    public static class TextSymbol extends Symbol implements ExposeAsSuperclass {
+    public static final class TextSymbol extends Symbol implements ExposeAsSuperclass {
         public TextSymbol(DynamicLibrary lib, String name, long address) {
-            super(lib, name, address, new NativeMemory(address));
+            super(lib, name, new NativeMemory(address));
         }
     }
 
-    public static class DataSymbol extends Symbol implements ExposeAsSuperclass {
+    public static final class DataSymbol extends Symbol implements ExposeAsSuperclass {
         public DataSymbol(DynamicLibrary lib, String name, long address) {
-            super(lib, name, address, new NativeMemory(address));
+            super(lib, name, new NativeMemory(address));
         }
     }
 }

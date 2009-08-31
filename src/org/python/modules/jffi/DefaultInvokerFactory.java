@@ -131,6 +131,8 @@ class DefaultInvokerFactory {
     private static final ParameterMarshaller getMarshaller(CType type) {
         if (type instanceof CType.Builtin) {
             return getMarshaller(type.getNativeType());
+        } else if (type instanceof CType.Pointer) {
+            return PointerMarshaller.INSTANCE;
         } else {
             throw Py.RuntimeError("Unsupported parameter type: " + type);
         }
@@ -427,7 +429,7 @@ class DefaultInvokerFactory {
 
         public void marshal(HeapInvocationBuffer buffer, PyObject parameter) {
             if (parameter instanceof Pointer) {
-                buffer.putAddress(((Pointer) parameter).address);
+                buffer.putAddress(((Pointer) parameter).getAddress());
             } else {
                 throw Py.TypeError("expected pointer argument");
             }

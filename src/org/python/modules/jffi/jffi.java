@@ -19,8 +19,8 @@ public class jffi implements ClassDictInit  {
         dict.__setitem__("__name__", Py.newString("jffi"));
         dict.__setitem__("DynamicLibrary", DynamicLibrary.TYPE);
         dict.__setitem__("Type", CType.TYPE);
-        dict.__setitem__("Pointer", Pointer.TYPE);
         dict.__setitem__("Function", Function.TYPE);
+        dict.__setitem__("PointerCData", PointerCData.TYPE);
         dict.__setitem__("ScalarCData", ScalarCData.TYPE);
         dict.__setitem__("FUNCFLAG_STDCALL", Py.newInteger(FUNCFLAG_STDCALL));
         dict.__setitem__("FUNCFLAG_CDECL", Py.newInteger(FUNCFLAG_CDECL));

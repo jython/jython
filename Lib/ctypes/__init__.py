@@ -53,7 +53,7 @@ def POINTER(ctype):
         name = mod.__name__
     dict["__module__"] = name
 
-    ptype = type("LP_%s" % (ctype.__name__,), (jffi.Pointer,), dict)
+    ptype = type("LP_%s" % (ctype.__name__,), (jffi.PointerCData,), dict)
     _pointer_type_cache[ctype] = ptype
     return ptype
 
