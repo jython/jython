@@ -3,6 +3,7 @@ package org.python.modules.jffi;
 
 import org.python.core.Py;
 import org.python.core.PyObject;
+import org.python.core.PyType;
 
 /**
  * Defines memory operations for a primitive type
@@ -20,7 +21,7 @@ abstract class MemoryOp {
     public static final MemoryOp UINT64 = new Unsigned64();
     public static final MemoryOp FLOAT = new Float32();
     public static final MemoryOp DOUBLE = new Float64();
-    public static final MemoryOp POINTER = new PointerOp();
+    public static final MemoryOp POINTER = new PointerOp(PointerCData.TYPE, CType.POINTER);
     public static final MemoryOp STRING = new StringOp();
 
     public static final MemoryOp getMemoryOp(NativeType type) {
@@ -175,7 +176,15 @@ abstract class MemoryOp {
             return Py.newFloat(mem.getDouble(offset));
         }
     }
-    private static final class PointerOp extends MemoryOp {
+    static final class PointerOp extends MemoryOp {
+        private final PyType pytype;
+        private final CType ctype;
+
+        public PointerOp(PyType pytype, CType ctype) {
+            this.pytype = pytype;
+            this.ctype = ctype;
+        }
+
         public final void put(Memory mem, long offset, PyObject value) {
             if (value instanceof Pointer) {
                 mem.putAddress(offset, ((Pointer) value).getAddress());
@@ -186,9 +195,10 @@ abstract class MemoryOp {
 
         public final PyObject get(Memory mem, long offset) {
             DirectMemory dm = new NativeMemory(mem.getAddress(offset));
-            return new PointerCData(CType.POINTER, dm, INVALID);
+            return new PointerCData(pytype, ctype, dm, INVALID);
         }
     }
+
     private static final class StringOp extends MemoryOp {
         public final void put(Memory mem, long offset, PyObject value) {
             throw Py.NotImplementedError("Cannot set String");
@@ -196,6 +206,34 @@ abstract class MemoryOp {
 
         public final PyObject get(Memory mem, long offset) {
             throw Py.NotImplementedError("Cannot get String");
+        }
+    }
+
+    static final class StructOp extends MemoryOp {
+
+        private final PyType type;
+        private final StructLayout layout;
+
+        public StructOp(PyType type) {
+            this.type = type;
+            PyObject l = type.__getattr__("_jffi_type");
+            if (!(l instanceof StructLayout)) {
+                throw Py.TypeError("invalid _jffi_type for " + type.fastGetName() + "; should be instance of jffi.StructLayout");
+            }
+            this.layout = (StructLayout) l;
+        }
+
+        public StructOp(PyType type, StructLayout layout) {
+            this.type = type;
+            this.layout = layout;
+        }
+
+        public final void put(Memory mem, long offset, PyObject value) {
+            throw Py.NotImplementedError("not implemented");
+        }
+
+        public final PyObject get(Memory mem, long offset) {
+            return new Structure(type, layout, mem.slice(offset));
         }
     }
 }

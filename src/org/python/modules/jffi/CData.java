@@ -23,9 +23,18 @@ public abstract class CData extends PyObject {
         this.referenceMemory = null;
     }
     
-    @ExposedMethod(names= { "byref", "pointer" })
+    @ExposedMethod(names= { "byref" })
     public PyObject byref() {
-        return new PointerCData(type, getReferenceMemory(), memoryOp);
+        return new PointerCData(PointerCData.TYPE, type, getReferenceMemory(), memoryOp);
+    }
+
+    @ExposedMethod(names= { "pointer" })
+    public PyObject pointer(PyObject pytype) {
+        if (!(pytype instanceof PyType)) {
+            throw Py.TypeError("expected type");
+        }
+
+        return new PointerCData((PyType) pytype, type, getReferenceMemory(), memoryOp);
     }
 
     final boolean hasReferenceMemory() {

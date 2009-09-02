@@ -430,6 +430,8 @@ class DefaultInvokerFactory {
         public void marshal(HeapInvocationBuffer buffer, PyObject parameter) {
             if (parameter instanceof Pointer) {
                 buffer.putAddress(((Pointer) parameter).getAddress());
+            } else if (parameter == Py.None) {
+                buffer.putAddress(0);
             } else {
                 throw Py.TypeError("expected pointer argument");
             }

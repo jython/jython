@@ -60,7 +60,11 @@ org/python/modules/jffi/DynamicLibrary.class
 org/python/modules/jffi/DynamicLibrary$Symbol.class
 org/python/modules/jffi/Function.class
 org/python/modules/jffi/PointerCData.class
+org/python/modules/jffi/Structure.class
 org/python/modules/jffi/ScalarCData.class
+org/python/modules/jffi/StructLayout.class
+org/python/modules/jffi/StructLayout$Field.class
+org/python/modules/jffi/StructLayout$ScalarField.class
 org/python/modules/_threading/Condition.class
 org/python/modules/_threading/Lock.class
 org/python/modules/_weakref/CallableProxyType.class

@@ -24,6 +24,70 @@ class _ArrayCData(object):
     def __len__(self):
         return self._jffi_type.length
 
+class _StructLayoutBuilder(object):
+    def __init__(self, union = False):
+        self.size = 0
+        self.offset = 0
+        self.fields = []
+        self.union = union
+
+    def align(self, offset, align):
+        return align + ((offset - 1) & ~(align - 1));
+
+    def add_fields(self, fields):
+        for f in fields:
+            self.add_field(f)
+        return self
+
+    def add_field(self, f):
+        if not issubclass(f[1], _ScalarCData):
+            raise RuntimeError("non-scalar fields not supported")
+
+        if len(f) != 2:
+            raise RuntimeError("structs with bitfields not supported")
+
+        self.offset = self.align(self.offset, alignment(f[1]))
+        self.fields.append(jffi.StructLayout.ScalarField(f[0], f[1], self.offset))
+        if not self.union:
+            self.offset += sizeof(f[1])
+        self.size = max(self.offset, sizeof(f[1]))
+
+        return self
+
+    def build(self):
+        return jffi.StructLayout(fields = self.fields, union = self.union)
+
+class _StructMetaClass(type):
+    def __new__(cls, name, bases, dict):
+        try:
+            layout = dict['_jffi_type'] = _StructLayoutBuilder().add_fields(dict['_fields_']).build()
+            # make all fields accessible via .foo
+            for f in dict['_fields_']:
+                dict[f[0]] = layout[f[0]]
+        except:
+            pass
+
+        return type.__new__(cls, name, bases, dict)
+
+class _UnionMetaClass(type):
+    def __new__(cls, name, bases, dict):
+        try:
+            layout = dict['_jffi_type'] = _StructLayoutBuilder().add_fields(dict['_fields_'], union = True).build()
+            # make all fields accessible via .foo
+            for f in dict['_fields_']:
+                dict[f[0]] = layout[f[0]]
+        except:
+            pass
+
+
+        return type.__new__(cls, name, bases, dict)
+
+class Structure(jffi.Structure):
+    __metaclass__ = _StructMetaClass
+
+class Union(jffi.Structure):
+    __metaclass__ = _UnionMetaClass
+
 def sizeof(type):
     return type._jffi_type.size
 
@@ -34,7 +98,7 @@ def byref(cdata):
     return cdata.byref()
 
 def pointer(cdata):
-    return cdata.pointer()
+    return cdata.pointer(POINTER(cdata.__class__))
 
 _pointer_type_cache = {}
 def POINTER(ctype):
@@ -170,14 +234,3 @@ class LibraryLoader(object):
         return self._dlltype(name)
 
 cdll = LibraryLoader(CDLL)
-
-#
-#class _StructMetaClass(type):
-#    def __new__(cls, name, bases, dict):
-#        for attr in dict:
-#            if attr == '_fields_':
-#                print "%s has attr %s" % (name, attr)
-#        return type.__new__(cls, name, bases, dict)
-#
-#class Structure:
-#    __metaclass__ = _StructMetaClass

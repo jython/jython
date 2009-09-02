@@ -152,12 +152,14 @@ public class CType extends PyObject {
         final MemoryOp componentMemoryOp;
 
         Pointer(PyType subtype, PyType pyComponentType, CType componentType) {
-            super(NativeType.POINTER, com.kenai.jffi.Type.POINTER, MemoryOp.POINTER);
+            super(NativeType.POINTER, com.kenai.jffi.Type.POINTER, new MemoryOp.PointerOp(subtype, CType.POINTER));
             this.pyComponentType = pyComponentType;
             this.componentType = componentType;
 
             if (pyComponentType.isSubType(ScalarCData.TYPE)) {
-                this.componentMemoryOp = new ScalarOp(MemoryOp.getMemoryOp(componentType.getNativeType()), pyComponentType);
+                this.componentMemoryOp = new ScalarOp(componentType.getMemoryOp(), pyComponentType);
+            } else if (pyComponentType.isSubType(Structure.TYPE)) {
+                this.componentMemoryOp = new MemoryOp.StructOp(pyComponentType);
             } else {
                 throw Py.TypeError("pointer only supported for scalar types");
             }
@@ -168,13 +170,13 @@ public class CType extends PyObject {
         public static PyObject Pointer_new(PyNewWrapper new_, boolean init, PyType subtype,
                 PyObject[] args, String[] keywords) {
 
+            if (args.length != 1) {
+                throw Py.TypeError(String.format("__init__() takes exactly 1 argument (%d given)", args.length));
+            }
+
             Pointer p = typeCache.get(args[0]);
             if (p != null) {
                 return p;
-            }
-
-            if (args.length != 1) {
-                throw Py.TypeError(String.format("__init__() takes exactly 1 argument (%d given)", args.length));
             }
 
             if (!(args[0] instanceof PyType)) {
@@ -217,5 +219,7 @@ public class CType extends PyObject {
                 return result;
             }
         }
+
+        
     }
 }
