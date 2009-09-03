@@ -20,6 +20,7 @@ public class CType extends PyObject {
         TYPE.fastGetDict().__setitem__("Pointer", Pointer.TYPE);
     }
     public static final CType VOID = primitive(NativeType.VOID);
+    public static final CType BOOL = primitive(NativeType.BOOL);
     public static final CType BYTE = primitive(NativeType.BYTE);
     public static final CType UBYTE = primitive(NativeType.UBYTE);
     public static final CType SHORT = primitive(NativeType.SHORT);

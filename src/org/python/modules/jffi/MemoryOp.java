@@ -11,6 +11,7 @@ import org.python.core.PyType;
 abstract class MemoryOp {
     public static final MemoryOp INVALID = new InvalidOp();
     public static final MemoryOp VOID = new VoidOp();
+    public static final MemoryOp BOOL = new BooleanOp();
     public static final MemoryOp INT8 = new Signed8();
     public static final MemoryOp UINT8 = new Unsigned8();
     public static final MemoryOp INT16 = new Signed16();
@@ -58,6 +59,8 @@ abstract class MemoryOp {
                 return POINTER;
             case STRING:
                 return STRING;
+            case BOOL:
+                return BOOL;
             default:
                 throw new UnsupportedOperationException("No MemoryOp for " + type);
         }
@@ -85,6 +88,17 @@ abstract class MemoryOp {
             throw Py.TypeError("Attempting to read void from memory");
         }
     }
+
+    private static final class BooleanOp extends MemoryOp {
+        public final void put(Memory mem, long offset, PyObject value) {
+            mem.putInt(offset, value.__nonzero__() ? 1 : 0);
+        }
+
+        public final PyObject get(Memory mem, long offset) {
+            return Py.newBoolean(mem.getInt(offset) != 0);
+        }
+    }
+
     static final class Signed8 extends MemoryOp {
         public final void put(Memory mem, long offset, PyObject value) {
             mem.putByte(offset, Util.int8Value(value));

@@ -4,6 +4,7 @@ package org.python.modules.jffi;
 
 public enum NativeType {
     VOID,
+    BOOL,
     BYTE,
     UBYTE,
     SHORT,
@@ -34,6 +35,7 @@ public enum NativeType {
             case USHORT:
                 return com.kenai.jffi.Type.UINT16;
             case INT:
+            case BOOL:
                 return com.kenai.jffi.Type.SINT32;
             case UINT:
                 return com.kenai.jffi.Type.UINT32;

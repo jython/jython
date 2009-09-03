@@ -1,5 +1,23 @@
 import jffi
 
+_TypeMap = {
+    'b': jffi.Type.BYTE,
+    'B': jffi.Type.UBYTE,
+    'h': jffi.Type.SHORT,
+    'H': jffi.Type.USHORT,
+    'i': jffi.Type.INT,
+    'I': jffi.Type.UINT,
+    'l': jffi.Type.LONG,
+    'L': jffi.Type.ULONG,
+    'q': jffi.Type.LONGLONG,
+    'Q': jffi.Type.ULONGLONG,
+    'f': jffi.Type.FLOAT,
+    'd': jffi.Type.DOUBLE,
+    '?': jffi.Type.BOOL,
+    'z': jffi.Type.STRING,
+    'P': jffi.Type.POINTER
+}
+
 class _CTypeMetaClass(type):
 
     def __new__(cls, name, bases, dict):
@@ -89,7 +107,12 @@ class Union(jffi.Structure):
     __metaclass__ = _UnionMetaClass
 
 def sizeof(type):
-    return type._jffi_type.size
+    if isinstance(type, jffi.CData):
+        return type._jffi_type.size
+    elif hasattr(type, '_type_'):
+        return _TypeMap[type.__getattribute__('_type_')]
+    else:
+        raise TypeError("invalid ctype")
 
 def alignment(type):
     return type._jffi_type.alignment
@@ -121,40 +144,56 @@ def POINTER(ctype):
     _pointer_type_cache[ctype] = ptype
     return ptype
 
+class c_bool(_ScalarCData):
+    _type_ = "?"
+    _jffi_type = jffi.Type.BOOL
+
 class c_byte(_ScalarCData):
+    _type_ = 'b'
     _jffi_type = jffi.Type.BYTE
 
 class c_ubyte(_ScalarCData):
+    _type_ = 'B'
     _jffi_type = jffi.Type.UBYTE
 
 class c_short(_ScalarCData):
+    _type_ = 'h'
     _jffi_type = jffi.Type.SHORT
 
 class c_ushort(_ScalarCData):
+    _type_ = 'H'
     _jffi_type = jffi.Type.USHORT
 
 class c_int(_ScalarCData):
+    _type_ = 'i'
     _jffi_type = jffi.Type.INT
 
 class c_uint(_ScalarCData):
+    _type_ = 'I'
     _jffi_type = jffi.Type.UINT
 
 class c_longlong(_ScalarCData):
+    _type_ = 'q'
     _jffi_type = jffi.Type.LONGLONG
 
 class c_ulonglong(_ScalarCData):
+    _type_ = 'Q'
     _jffi_type = jffi.Type.ULONGLONG
 
 class c_long(_ScalarCData):
+    _type_ = 'l'
     _jffi_type = jffi.Type.LONG
 
 class c_ulong(_ScalarCData):
+    _type_ = 'L'
     _jffi_type = jffi.Type.ULONG
 
 class c_float(_ScalarCData):
+    _type_ = 'f'
     _jffi_type = jffi.Type.FLOAT
 
 class c_double(_ScalarCData):
+    _type_ = 'd'
     _jffi_type = jffi.Type.DOUBLE
 
 c_int8 = c_byte
@@ -170,9 +209,11 @@ c_size_t = c_ulong
 c_ssize_t = c_long
 
 class c_char_p(_ScalarCData):
+    _type_ = 'z'
     _jffi_type = jffi.Type.STRING
 
 class c_void_p(_ScalarCData):
+    _type_ = 'P'
     _jffi_type = jffi.Type.POINTER
 
 class _Function(jffi.Function):

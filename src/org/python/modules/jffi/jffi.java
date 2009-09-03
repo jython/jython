@@ -20,6 +20,7 @@ public class jffi implements ClassDictInit  {
         dict.__setitem__("DynamicLibrary", DynamicLibrary.TYPE);
         dict.__setitem__("Type", CType.TYPE);
         dict.__setitem__("Function", Function.TYPE);
+        dict.__setitem__("CData", CData.TYPE);
         dict.__setitem__("PointerCData", PointerCData.TYPE);
         dict.__setitem__("ScalarCData", ScalarCData.TYPE);
         dict.__setitem__("Structure", Structure.TYPE);
