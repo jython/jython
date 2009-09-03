@@ -37,19 +37,19 @@ public class ScalarCData extends CData {
         return cdata;
     }
 
-    ScalarCData(PyType pyType, CType.Builtin type) {
-        super(pyType, type, type.getMemoryOp());
+    ScalarCData(PyType pytype, CType.Builtin ctype) {
+        super(pytype, ctype);
     }
 
     protected final void initReferenceMemory(Memory m) {
-        memoryOp.put(m, 0, value);
+        getMemoryOp().put(m, 0, value);
     }
 
     @ExposedGet(name = "value")
     public PyObject getValue() {
         // If native memory has been allocated, read the value from there
         if (hasReferenceMemory()) {
-            return memoryOp.get(getReferenceMemory(), 0);
+            return getMemoryOp().get(getReferenceMemory(), 0);
         }
 
         return value;
@@ -61,7 +61,7 @@ public class ScalarCData extends CData {
         this.value = value;
         // If native memory has been allocated, sync the value to memory
         if (hasReferenceMemory()) {
-            memoryOp.put(getReferenceMemory(), 0, value);
+            getMemoryOp().put(getReferenceMemory(), 0, value);
         }
     }
 

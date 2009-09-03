@@ -18,16 +18,11 @@ public class PointerCData extends CData implements Pointer {
     final MemoryOp componentMemoryOp;
 
     PointerCData(PyType subtype, CType type, DirectMemory memory, MemoryOp componentMemoryOp) {
-        super(subtype, type, type.getMemoryOp());
+        super(subtype, type);
         this.memory = memory;
         this.componentMemoryOp = componentMemoryOp;
     }
-
-    PointerCData(CType type, DirectMemory memory, MemoryOp componentMemoryOp) {
-        this(TYPE, type, memory, componentMemoryOp);
-    }
-
-
+    
     @ExposedNew
     public static PyObject PointerCData_new(PyNewWrapper new_, boolean init, PyType subtype,
             PyObject[] args, String[] keywords) {
@@ -38,18 +33,20 @@ public class PointerCData extends CData implements Pointer {
             throw Py.TypeError("invalid _jffi_type for " + subtype.getName());
         }
 
-        CType.Pointer type = (CType.Pointer) jffi_type;
+        CType.Pointer pointerType = (CType.Pointer) jffi_type;
 
+        // No args == create NULL pointer
         if (args.length == 0) {
-            return new PointerCData(subtype, type, NullMemory.INSTANCE, type.componentMemoryOp);
+            return new PointerCData(subtype, pointerType, NullMemory.INSTANCE, pointerType.componentMemoryOp);
         }
-        PyObject value = args[0];
-        if (value instanceof CData && value.getType().isSubType(type.pyComponentType)) {
 
-            return new PointerCData(subtype, type, ((CData) value).getReferenceMemory(), type.componentMemoryOp);
+        PyObject value = args[0];
+        if (value instanceof CData && value.getType().isSubType(pointerType.pyComponentType)) {
+
+            return new PointerCData(subtype, pointerType, ((CData) value).getReferenceMemory(), pointerType.componentMemoryOp);
 
         } else {
-            throw Py.TypeError("expected " + type.pyComponentType.getName() + " instead of " + value.getType().getName());
+            throw Py.TypeError("expected " + pointerType.pyComponentType.getName() + " instead of " + value.getType().getName());
         }
     }
 

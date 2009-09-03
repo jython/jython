@@ -10,22 +10,26 @@ import org.python.expose.ExposedType;
 @ExposedType(name = "jffi.CData", base = PyObject.class)
 public abstract class CData extends PyObject {
     public static final PyType TYPE = PyType.fromClass(CData.class);
-
-    final MemoryOp memoryOp;
-    final CType type;
+    
+    private final CType ctype;
 
     private DirectMemory referenceMemory;
 
-    CData(PyType subtype, CType type, MemoryOp memoryOp) {
+    CData(PyType subtype, CType type) {
         super(subtype);
-        this.type = type;
-        this.memoryOp = memoryOp;
+        this.ctype = type;
         this.referenceMemory = null;
     }
-    
+
+    /**
+     * Wraps up this object in a pointer that can be passed to native code.
+     * The byref() return value cannot be used as anything other than a parameter.
+     *
+     * @return A ByReference instance pointing to this object's native memory.
+     */
     @ExposedMethod(names= { "byref" })
     public PyObject byref() {
-        return new PointerCData(PointerCData.TYPE, type, getReferenceMemory(), memoryOp);
+        return new ByReference(ctype, getReferenceMemory());
     }
 
     @ExposedMethod(names= { "pointer" })
@@ -34,7 +38,15 @@ public abstract class CData extends PyObject {
             throw Py.TypeError("expected type");
         }
 
-        return new PointerCData((PyType) pytype, type, getReferenceMemory(), memoryOp);
+        return new PointerCData((PyType) pytype, CType.typeOf(pytype), getReferenceMemory(), getMemoryOp());
+    }
+
+    final CType getCType() {
+        return ctype;
+    }
+
+    MemoryOp getMemoryOp() {
+        return getCType().getMemoryOp();
     }
 
     final boolean hasReferenceMemory() {
@@ -63,7 +75,7 @@ public abstract class CData extends PyObject {
     }
 
     protected DirectMemory allocateReferenceMemory() {
-        DirectMemory m = AllocatedNativeMemory.allocate(type.size(), false);
+        DirectMemory m = AllocatedNativeMemory.allocate(getCType().size(), false);
         initReferenceMemory(m);
         this.referenceMemory = m;
         return m;

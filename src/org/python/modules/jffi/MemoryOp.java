@@ -188,8 +188,10 @@ abstract class MemoryOp {
         public final void put(Memory mem, long offset, PyObject value) {
             if (value instanceof Pointer) {
                 mem.putAddress(offset, ((Pointer) value).getAddress());
+            } else if (value == Py.None) {
+                mem.putAddress(offset, 0);
             } else {
-                mem.putAddress(offset, Util.int64Value(value));
+                throw Py.RuntimeError("invalid pointer");
             }
         }
 

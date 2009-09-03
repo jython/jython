@@ -52,6 +52,7 @@ org/python/modules/_csv/PyReader.class
 org/python/modules/_csv/PyWriter.class
 org/python/modules/_functools/PyPartial.class
 org/python/modules/_hashlib$Hash.class
+org/python/modules/jffi/ByReference.class
 org/python/modules/jffi/CData.class
 org/python/modules/jffi/CType.class
 org/python/modules/jffi/CType$Array.class

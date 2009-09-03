@@ -13,14 +13,16 @@ public class Structure extends CData implements Pointer {
     public static final PyType TYPE = PyType.fromClass(Structure.class);
 
     private final StructLayout layout;
+    private final MemoryOp memoryOp;
 
     Structure(PyType pyType, StructLayout layout) {
         this(pyType, layout, AllocatedNativeMemory.allocate(layout.size(), true));
     }
 
     Structure(PyType pyType, StructLayout layout, Memory m) {
-        super(pyType, layout, new MemoryOp.StructOp(pyType, layout));
+        super(pyType, layout);
         this.layout = layout;
+        this.memoryOp = new MemoryOp.StructOp(pyType, layout);
         setReferenceMemory(m);
     }
 
@@ -38,6 +40,11 @@ public class Structure extends CData implements Pointer {
 
     protected final void initReferenceMemory(Memory m) {
         throw Py.RuntimeError("reference memory already initialized");
+    }
+
+    @Override
+    MemoryOp getMemoryOp() {
+        return memoryOp;
     }
 
     StructLayout.Field getField(PyObject key) {
