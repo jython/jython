@@ -87,6 +87,9 @@ public class FastIntInvokerFactory {
                 case FLOAT:
                     return Platform.getPlatform().getCPU() == Platform.CPU.I386
                             || Platform.getPlatform().getCPU() == Platform.CPU.X86_64;
+
+                case STRING:
+                    return Platform.getPlatform().addressSize() == 32;
             }
         }
         return false;
@@ -280,6 +283,12 @@ public class FastIntInvokerFactory {
             case ULONG:
                 if (Platform.getPlatform().longSize() == 32) {
                     return Unsigned32ResultConverter.INSTANCE;
+                }
+                break;
+
+            case STRING:
+                if (Platform.getPlatform().addressSize() == 32) {
+                    return StringResultConverter.INSTANCE;
                 }
                 break;
 
@@ -566,6 +575,16 @@ public class FastIntInvokerFactory {
         public static final IntResultConverter INSTANCE = new Unsigned32ResultConverter();
         public final PyObject pyValue(int value) {
             return Util.newUnsigned32(value);
+        }
+    }
+
+    /**
+     * Converts a native string address result into into a python string instance
+     */
+    static final class StringResultConverter extends BaseResultConverter {
+        public static final IntResultConverter INSTANCE = new StringResultConverter();
+        public final PyObject pyValue(int value) {
+            return Util.newString(value);
         }
     }
 

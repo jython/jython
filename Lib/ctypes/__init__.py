@@ -208,7 +208,7 @@ c_uint64 = c_ulonglong
 c_size_t = c_ulong
 c_ssize_t = c_long
 
-class c_char_p(_ScalarCData):
+class c_char_p(jffi.StringCData):
     _type_ = 'z'
     _jffi_type = jffi.Type.STRING
 

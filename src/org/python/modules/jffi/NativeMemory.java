@@ -83,6 +83,14 @@ class NativeMemory implements Memory, DirectMemory {
         return ptr != 0 ? new NativeMemory(ptr) : null;
     }
 
+    public final byte[] getZeroTerminatedByteArray(long offset) {
+        return IO.getZeroTerminatedByteArray(address + offset);
+    }
+
+    public void putZeroTerminatedByteArray(long offset, byte[] bytes, int off, int len) {
+        IO.putZeroTerminatedByteArray(address + offset, bytes, off, len);
+    }
+
     public final void putByte(long offset, byte value) {
         IO.putByte(address + offset, value);
     }

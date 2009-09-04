@@ -113,6 +113,14 @@ public interface Memory {
      * pointed to by the address.
      */
     public DirectMemory getMemory(long offset);
+
+    /**
+     * Reads a zero terminated byte array (e.g. an ascii or utf-8 string)
+     *
+     * @param offset The offset within the memory area of the start of the string.
+     * @return A byte array containing a copy of the data.
+     */
+    public byte[] getZeroTerminatedByteArray(long offset);
     
     /**
      * Writes an 8 bit integer value to the memory area at the specified offset.
@@ -185,7 +193,17 @@ public interface Memory {
      * @param value The pointer value to write to the memory location.
      */
     public void putAddress(long offset, long value);
-    
+
+    /**
+     * Writes a byte array to memory, and appends a zero terminator
+     *
+     * @param offset The offset within the memory area of the start of the string.
+     * @param bytes The byte array to write to the memory.
+     * @param off The offset with the byte array to start copying.
+     * @param maxlen The number of bytes of the byte array to write to the memory area. (not including zero byte)
+     */
+    public void putZeroTerminatedByteArray(long offset, byte[] bytes, int off, int len);
+
     /**
      * Reads an array of bytes from the memory area at the specified offset.
      * 

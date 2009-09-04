@@ -74,6 +74,9 @@ class DefaultInvokerFactory {
                 case POINTER:
                     return new PointerInvoker(function, marshallers);
 
+                case STRING:
+                    return new StringInvoker(function, marshallers);
+
                 default:
                     break;
             }
@@ -325,6 +328,17 @@ class DefaultInvokerFactory {
             return Py.newLong(jffiInvoker.invokeAddress(jffiFunction, convertArguments(args)));
         }
     }
+
+    private static final class StringInvoker extends BaseInvoker {
+        private static final com.kenai.jffi.MemoryIO IO = com.kenai.jffi.MemoryIO.getInstance();
+        public StringInvoker(Function function, ParameterMarshaller[] marshallers) {
+            super(function, marshallers);
+        }
+
+        public final PyObject invoke(PyObject[] args) {
+            return Util.newString(jffiInvoker.invokeAddress(jffiFunction, convertArguments(args)));
+        }
+    }
     
     /*------------------------------------------------------------------------*/
     static abstract class BaseMarshaller implements ParameterMarshaller {
@@ -414,7 +428,9 @@ class DefaultInvokerFactory {
         public static final ParameterMarshaller INSTANCE = new StringMarshaller();
 
         public void marshal(HeapInvocationBuffer buffer, PyObject parameter) {
-            if (parameter instanceof PyNone) {
+            if (parameter instanceof StringCData) {
+                buffer.putAddress(((StringCData) parameter).getMemory().getAddress());
+            } else if (parameter instanceof PyNone) {
                 buffer.putAddress(0);
             } else {
                 byte[] bytes = parameter.toString().getBytes();

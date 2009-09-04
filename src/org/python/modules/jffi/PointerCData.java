@@ -11,15 +11,13 @@ import org.python.expose.ExposedSet;
 import org.python.expose.ExposedType;
 
 @ExposedType(name = "jffi.PointerCData", base = CData.class)
-public class PointerCData extends CData implements Pointer {
+public class PointerCData extends AbstractMemoryCData implements Pointer {
     public static final PyType TYPE = PyType.fromClass(PointerCData.class);
 
-    private final DirectMemory memory;
     final MemoryOp componentMemoryOp;
 
     PointerCData(PyType subtype, CType type, DirectMemory memory, MemoryOp componentMemoryOp) {
-        super(subtype, type);
-        this.memory = memory;
+        super(subtype, type, memory);
         this.componentMemoryOp = componentMemoryOp;
     }
     
@@ -59,23 +57,4 @@ public class PointerCData extends CData implements Pointer {
     public void setContents(PyObject value) {
         componentMemoryOp.put(getMemory(), 0, value);
     }
-
-    @Override
-    public boolean __nonzero__() {
-        return !getMemory().isNull();
-    }
-
-
-    protected void initReferenceMemory(Memory m) {
-        m.putAddress(0, memory);
-    }
-
-    public final long getAddress() {
-        return getMemory().getAddress();
-    }
-
-    public final DirectMemory getMemory() {
-        return hasReferenceMemory() ? getReferenceMemory().getMemory(0) : memory;
-    }
-    
 }

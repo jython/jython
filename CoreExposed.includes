@@ -63,6 +63,7 @@ org/python/modules/jffi/Function.class
 org/python/modules/jffi/PointerCData.class
 org/python/modules/jffi/Structure.class
 org/python/modules/jffi/ScalarCData.class
+org/python/modules/jffi/StringCData.class
 org/python/modules/jffi/StructLayout.class
 org/python/modules/jffi/StructLayout$Field.class
 org/python/modules/jffi/StructLayout$ScalarField.class

@@ -8,6 +8,8 @@ import org.python.core.PyLong;
 import org.python.core.PyObject;
 
 final class Util {
+    private static final com.kenai.jffi.MemoryIO IO = com.kenai.jffi.MemoryIO.getInstance();
+
     private Util() {}
     
     public static final PyObject newSigned8(int value) {
@@ -45,6 +47,12 @@ final class Util {
         return value < 0
                     ? Py.newLong(BigInteger.valueOf(value & 0x7fffffffffffffffL).add(UINT64_BASE))
                     : Py.newInteger(value);
+    }
+
+    public static final PyObject newString(long address) {
+        return address != 0
+                    ? Py.newString(new String(IO.getZeroTerminatedByteArray(address)))
+                    : Py.None;
     }
 
     public static final byte int8Value(PyObject parameter) {

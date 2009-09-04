@@ -121,6 +121,14 @@ public final class HeapMemory implements Memory {
         return IO.getAddress(buffer, index(offset));
     }
 
+    public final byte[] getZeroTerminatedByteArray(long offset) {
+        checkBounds(offset, 1);
+        int len = indexOf(offset, (byte) 0);
+        byte[] bytes = new byte[len != -1 ? len : length - (int) offset];
+        System.arraycopy(buffer, index(offset), bytes, 0, bytes.length);
+        return bytes;
+    }
+
     public final void putByte(long offset, byte value) {
         checkBounds(offset, 1);
         buffer[index(offset)] = value;
@@ -163,6 +171,14 @@ public final class HeapMemory implements Memory {
         checkBounds(offset, ADDRESS_SIZE);
         IO.putAddress(buffer, index(offset), value);
     }
+
+    public void putZeroTerminatedByteArray(long offset, byte[] bytes, int off, int len) {
+        // Ensure room for terminating zero byte
+        checkBounds(offset, len + 1);
+        System.arraycopy(bytes, off, buffer, index(offset), len);
+        buffer[len] = (byte) 0;
+    }
+
     public final void get(long offset, byte[] dst, int off, int len) {
         checkBounds(offset, len);
         System.arraycopy(buffer, index(offset), dst, off, len);

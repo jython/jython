@@ -100,6 +100,17 @@ class BoundedNativeMemory implements Memory, DirectMemory {
         final long ptr = IO.getAddress(address + offset);
         return ptr != 0 ? new NativeMemory(ptr) : null;
     }
+    
+    public final byte[] getZeroTerminatedByteArray(long offset) {
+        checkBounds(offset, 1);
+        return IO.getZeroTerminatedByteArray(address + offset, (int) (size - offset));
+    }
+
+    public void putZeroTerminatedByteArray(long offset, byte[] bytes, int off, int len) {
+        // Ensure room for terminating zero byte
+        checkBounds(offset, len + 1);
+        IO.putZeroTerminatedByteArray(address + offset, bytes, off, len);
+    }
 
     public final void putByte(long offset, byte value) {
         checkBounds(offset, 1);
