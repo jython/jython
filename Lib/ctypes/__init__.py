@@ -88,8 +88,31 @@ class _AggregateMetaClass(type):
             # make all fields accessible via .foo
             for f in dict['_fields_']:
                 dict[f[0]] = layout[f[0]]
+            dict['__fields_'] = dict['_fields_']
+        else:
+            dict['__fields_'] = []
+        if dict.has_key('_pack_'):
+            raise NotImplementedError("struct packing not implemented")
+        if dict.has_key('_anonymous_'):
+            raise NotImplementedError("anonymous fields not implemented")
 
         return type.__new__(cls, name, bases, dict)
+
+    def get_fields(self):
+        return self.__fields_
+
+    def set_fields(self, fields):
+        layout = _StructLayoutBuilder(union = issubclass(Union, self)).add_fields(fields).build()
+        self.__fields_ = fields
+        self._jffi_type = layout
+        # make all fields accessible via .foo
+        for f in fields:
+            setattr(self, f[0], layout[f[0]])
+
+    _fields_ = property(get_fields, set_fields)
+    # Make _pack_ and _anonymous_ throw errors if anyone tries to use them
+    _pack_ = property(None)
+    _anonymous_ = property(None)
 
 class _StructMetaClass(_AggregateMetaClass):
     def __new__(cls, name, bases, dict):
