@@ -1,13 +1,12 @@
 
 package org.python.modules.jffi;
 
-import java.lang.reflect.Field;
 import java.util.List;
-import org.python.core.ArgParser;
 import org.python.core.Py;
 import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
 import org.python.core.PyType;
+import org.python.expose.ExposedClassMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 
@@ -33,12 +32,7 @@ public class Structure extends CData implements Pointer {
     public static PyObject Structure_new(PyNewWrapper new_, boolean init, PyType subtype,
             PyObject[] args, String[] keywords) {
 
-        PyObject jffi_type = subtype.__getattr__("_jffi_type");
-        if (!(jffi_type instanceof StructLayout)) {
-            throw Py.TypeError("invalid _jffi_type for " + subtype.fastGetName() + "; should be instance of jffi.StructLayout");
-        }
-
-        StructLayout layout = (StructLayout) jffi_type;
+        StructLayout layout = getStructLayout(subtype);
         Structure s = new Structure(subtype, layout);
         if (args.length > 0) {
             int n = args.length - keywords.length;
@@ -57,6 +51,20 @@ public class Structure extends CData implements Pointer {
             }
         }
         return s;
+    }
+
+    static final StructLayout getStructLayout(PyType subtype) {
+        PyObject jffi_type = subtype.__getattr__("_jffi_type");
+        if (!(jffi_type instanceof StructLayout)) {
+            throw Py.TypeError("invalid _jffi_type for " + subtype.fastGetName() + "; should be instance of jffi.StructLayout");
+        }
+
+        return (StructLayout) jffi_type;
+    }
+
+    @ExposedClassMethod(names= { "from_address" })
+    public static final PyObject from_address(PyType subtype, PyObject address) {
+        return new Structure(subtype, getStructLayout(subtype), Util.getMemoryForAddress(address));
     }
 
     protected final void initReferenceMemory(Memory m) {

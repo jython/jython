@@ -5,6 +5,7 @@ import org.python.core.Py;
 import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
 import org.python.core.PyType;
+import org.python.expose.ExposedClassMethod;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedSet;
@@ -31,6 +32,16 @@ public class StringCData extends AbstractMemoryCData {
         DirectMemory m = AllocatedNativeMemory.allocate(str.length + 1, false);
         m.putZeroTerminatedByteArray(0, str, 0, str.length);
         return new StringCData(subtype, CType.typeOf(subtype), m);
+    }
+
+    @ExposedClassMethod(names= { "from_address" })
+    public static final PyObject from_address(PyType subtype, PyObject address) {
+
+        DirectMemory m = Util.getMemoryForAddress(address);
+        StringCData cdata = new StringCData(subtype, CType.typeOf(subtype), m.getMemory(0));
+        cdata.setReferenceMemory(m);
+
+        return cdata;
     }
 
     @ExposedGet(name = "value")

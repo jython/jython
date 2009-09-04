@@ -3,10 +3,13 @@ package org.python.modules.jffi;
 
 import org.python.core.Py;
 import org.python.core.PyFloat;
+import org.python.core.PyInteger;
+import org.python.core.PyLong;
 import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
 import org.python.core.PyObject.ConversionException;
 import org.python.core.PyType;
+import org.python.expose.ExposedClassMethod;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
@@ -16,20 +19,16 @@ import org.python.expose.ExposedType;
 @ExposedType(name = "jffi.ScalarCData", base = CData.class)
 public class ScalarCData extends CData {
     public static final PyType TYPE = PyType.fromClass(ScalarCData.class);
-
+    static {
+//        TYPE.fastGetDict().__setitem__("in_dll", new InDll());
+    }
     private PyObject value = Py.None;
 
     @ExposedNew
     public static PyObject ScalarCData_new(PyNewWrapper new_, boolean init, PyType subtype,
             PyObject[] args, String[] keywords) {
         
-        PyObject jffi_type = subtype.__getattr__("_jffi_type");
-
-        if (!(jffi_type instanceof CType.Builtin)) {
-            throw Py.TypeError("invalid _jffi_type for " + subtype.getName());
-        }
-        
-        ScalarCData cdata = new ScalarCData(subtype, (CType.Builtin) jffi_type);
+        ScalarCData cdata = new ScalarCData(subtype, getScalarType(subtype));
 
         // If an initial value was supplied, use it, else default to zero
         cdata.setValue(args.length > 0 ? args[0] : Py.newInteger(0));
@@ -37,8 +36,27 @@ public class ScalarCData extends CData {
         return cdata;
     }
 
+
+    @ExposedClassMethod(names= { "from_address" })
+    public static final PyObject from_address(PyType subtype, PyObject address) {
+        return new ScalarCData(subtype, getScalarType(subtype), Util.getMemoryForAddress(address));
+    }
+
+    static final CType.Builtin getScalarType(PyType subtype) {
+        PyObject jffi_type = subtype.__getattr__("_jffi_type");
+
+        if (!(jffi_type instanceof CType.Builtin)) {
+            throw Py.TypeError("invalid _jffi_type for " + subtype.getName());
+        }
+        return (CType.Builtin) jffi_type;
+    }
+    
     ScalarCData(PyType pytype, CType.Builtin ctype) {
         super(pytype, ctype);
+    }
+
+    ScalarCData(PyType pytype, CType.Builtin ctype, DirectMemory m) {
+        super(pytype, ctype, m);
     }
 
     protected final void initReferenceMemory(Memory m) {

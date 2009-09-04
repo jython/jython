@@ -79,13 +79,22 @@ public class DynamicLibrary extends PyObject {
     
     public static final class TextSymbol extends Symbol implements ExposeAsSuperclass {
         public TextSymbol(DynamicLibrary lib, String name, long address) {
-            super(lib, name, new NativeMemory(address));
+            super(lib, name, new SymbolMemory(lib, address));
         }
     }
 
     public static final class DataSymbol extends Symbol implements ExposeAsSuperclass {
         public DataSymbol(DynamicLibrary lib, String name, long address) {
-            super(lib, name, new NativeMemory(address));
+            super(lib, name, new SymbolMemory(lib, address));
+        }
+    }
+
+    private static final class SymbolMemory extends NativeMemory {
+        private final DynamicLibrary library; // backlink to keep library alive
+
+        public SymbolMemory(DynamicLibrary library, long address) {
+            super(address);
+            this.library = library;
         }
     }
 }

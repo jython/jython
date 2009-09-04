@@ -27,14 +27,19 @@ class _CTypeMetaClass(type):
         dict = { '_jffi_type': jffi.Type.Array(self, len) }
         return type("%s_%d" % (self.__name__, len), (_ArrayCData,), dict)
 
-class _ScalarCData(jffi.ScalarCData):
-    __metaclass__ = _CTypeMetaClass
+class _CData(object):
+    @classmethod
+    def in_dll(self, lib, name):
+        return self.from_address(lib[name])
 
+    @classmethod
     def size(self):
         return self._jffi_type.size
 
-    size = classmethod(size)
+class _ScalarCData(jffi.ScalarCData, _CData):
+    __metaclass__ = _CTypeMetaClass
 
+    
 class _ArrayCData(object):
     def __init__(self, *args):
         raise NotImplementedError("instantiating arrays is not implemented yet")
@@ -76,6 +81,7 @@ class _StructLayoutBuilder(object):
         return jffi.StructLayout(fields = self.fields, union = self.union)
 
 class _AggregateMetaClass(type):
+    @staticmethod
     def __new_aggregate__(cls, name, bases, dict, union = False):
         if dict.has_key('_fields_'):
             layout = dict['_jffi_type'] = _StructLayoutBuilder(union).add_fields(dict['_fields_']).build()
@@ -85,8 +91,6 @@ class _AggregateMetaClass(type):
 
         return type.__new__(cls, name, bases, dict)
 
-    __new_aggregate__ = staticmethod(__new_aggregate__)
-
 class _StructMetaClass(_AggregateMetaClass):
     def __new__(cls, name, bases, dict):
         return _AggregateMetaClass.__new_aggregate__(cls, name, bases, dict, union = False)
@@ -95,7 +99,7 @@ class _UnionMetaClass(type):
     def __new__(cls, name, bases, dict):
         return _AggregateMetaClass.__new_aggregate__(cls, name, bases, dict, union = True)
 
-class Structure(jffi.Structure):
+class Structure(jffi.Structure, _CData):
     __metaclass__ = _StructMetaClass
 
 class Union(jffi.Structure):
@@ -133,7 +137,7 @@ def POINTER(ctype):
         name = mod.__name__
     dict["__module__"] = name
 
-    ptype = type("LP_%s" % (ctype.__name__,), (jffi.PointerCData,), dict)
+    ptype = type("LP_%s" % (ctype.__name__,), (jffi.PointerCData, _CData), dict)
     _pointer_type_cache[ctype] = ptype
     return ptype
 
@@ -201,7 +205,7 @@ c_uint64 = c_ulonglong
 c_size_t = c_ulong
 c_ssize_t = c_long
 
-class c_char_p(jffi.StringCData):
+class c_char_p(jffi.StringCData, _CData):
     _type_ = 'z'
     _jffi_type = jffi.Type.STRING
 

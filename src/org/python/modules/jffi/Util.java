@@ -129,4 +129,15 @@ final class Util {
                     + off + " size=" + len + " is out of bounds");
         }
     }
+
+    static final DirectMemory getMemoryForAddress(PyObject address) {
+        if (address instanceof Pointer) {
+            return ((Pointer) address).getMemory();
+        } else if (address instanceof PyInteger) {
+            return new NativeMemory(address.asInt());
+        } else if (address instanceof PyLong) {
+            return new NativeMemory(((PyLong) address).getValue().longValue());
+        }
+        throw Py.TypeError("invalid address");
+    }
 }

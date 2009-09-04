@@ -2,6 +2,8 @@
 package org.python.modules.jffi;
 
 import org.python.core.Py;
+import org.python.core.PyInteger;
+import org.python.core.PyLong;
 import org.python.core.PyObject;
 import org.python.core.PyType;
 import org.python.expose.ExposedMethod;
@@ -15,10 +17,14 @@ public abstract class CData extends PyObject {
 
     private DirectMemory referenceMemory;
 
-    CData(PyType subtype, CType type) {
+    CData(PyType subtype, CType ctype) {
+        this(subtype, ctype, null);
+    }
+
+    CData(PyType subtype, CType ctype, DirectMemory memory) {
         super(subtype);
-        this.ctype = type;
-        this.referenceMemory = null;
+        this.ctype = ctype;
+        this.referenceMemory = memory;
     }
 
     /**
@@ -86,4 +92,15 @@ public abstract class CData extends PyObject {
     }
 
     protected abstract void initReferenceMemory(Memory m);
+
+    
+
+    protected static final DirectMemory findInDll(PyObject lib, PyObject name) {
+        if (!(lib instanceof DynamicLibrary)) {
+            throw Py.TypeError("expected library, not " + lib.getType().fastGetName());
+        }
+        DynamicLibrary.Symbol sym = (DynamicLibrary.Symbol) ((DynamicLibrary) lib).find_symbol(name);
+        
+        return sym.getMemory();
+    }
 }
