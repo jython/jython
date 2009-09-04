@@ -13,7 +13,7 @@ import org.python.expose.ExposedSet;
 import org.python.expose.ExposedType;
 
 @ExposedType(name = "jffi.Function", base = PyObject.class)
-public class Function extends PyObject implements Pointer {
+public class Function extends BasePointer implements Pointer {
     public static final PyType TYPE = PyType.fromClass(Function.class);
 
     private final Pointer pointer;
@@ -29,15 +29,11 @@ public class Function extends PyObject implements Pointer {
     public final String name;
 
     @ExposedGet
-    public final long address;
-
-    @ExposedGet
     @ExposedSet
     public PyObject restype;
 
     Function(PyType type, Pointer address) {
         super(type);
-        this.address = address.getAddress();
         this.library = null;
         this.name = "<anonymous>";
         this.pointer = address;
@@ -48,7 +44,6 @@ public class Function extends PyObject implements Pointer {
         this.library = sym.library;
         this.name = sym.name;
         this.pointer = sym;
-        this.address = sym.getAddress();
     }
 
     @ExposedNew
@@ -66,14 +61,10 @@ public class Function extends PyObject implements Pointer {
         }
     }
 
-    public long getAddress() {
-        return address;
-    }
-
     public DirectMemory getMemory() {
         return pointer.getMemory();
     }
-
+    
     @Override
     public PyObject fastGetDict() {
         return dict;
@@ -166,7 +157,7 @@ public class Function extends PyObject implements Pointer {
         if (invoker != null) {
             return invoker;
         }
-        return createInvoker(address, returnType, parameterTypes);
+        return createInvoker(getMemory().getAddress(), returnType, parameterTypes);
     }
 
     private synchronized final Invoker createInvoker(long address, CType returnType, CType[] parameterTypes) {

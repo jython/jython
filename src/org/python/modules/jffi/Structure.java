@@ -67,10 +67,6 @@ public class Structure extends CData implements Pointer {
         f.op.put(getReferenceMemory(), f.offset, value);
     }
 
-    public long getAddress() {
-        return getMemory().getAddress();
-    }
-
     public DirectMemory getMemory() {
         return getReferenceMemory();
     }

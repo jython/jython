@@ -201,7 +201,7 @@ abstract class MemoryOp {
 
         public final void put(Memory mem, long offset, PyObject value) {
             if (value instanceof Pointer) {
-                mem.putAddress(offset, ((Pointer) value).getAddress());
+                mem.putAddress(offset, ((Pointer) value).getMemory().getAddress());
             } else if (value == Py.None) {
                 mem.putAddress(offset, 0);
             } else {

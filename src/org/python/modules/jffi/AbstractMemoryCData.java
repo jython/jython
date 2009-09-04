@@ -19,10 +19,6 @@ public abstract class AbstractMemoryCData extends CData implements Pointer {
         m.putAddress(0, memory);
     }
 
-    public final long getAddress() {
-        return getMemory().getAddress();
-    }
-
     public final DirectMemory getMemory() {
         return hasReferenceMemory() ? getReferenceMemory().getMemory(0) : memory;
     }

@@ -16,11 +16,12 @@ public final class ByReference extends PyObject implements Pointer {
         this.memory = memory;
     }
 
-    public long getAddress() {
-        return getMemory().getAddress();
-    }
-
     public final DirectMemory getMemory() {
         return memory;
+    }
+
+    @Override
+    public boolean __nonzero__() {
+        return !getMemory().isNull();
     }
 }

@@ -56,36 +56,24 @@ public class DynamicLibrary extends PyObject {
     }
 
     @ExposedType(name = "jffi.DynamicLibrary.Symbol", base = PyObject.class)
-    public static class Symbol extends PyObject implements Pointer {
+    public static class Symbol extends BasePointer {
         public static final PyType TYPE = PyType.fromClass(Symbol.class);
 
         final DynamicLibrary library;
         final DirectMemory memory;
 
         @ExposedGet
-        public final long address;
-
-        @ExposedGet
         public final String name;
 
         public Symbol(DynamicLibrary library, String name, DirectMemory memory) {
+            super(TYPE);
             this.library = library;
             this.name = name;
             this.memory = memory;
-            this.address = memory.getAddress();
-        }
-
-        public final long getAddress() {
-            return address;
         }
 
         public final DirectMemory getMemory() {
             return memory;
-        }
-
-        @Override
-        public boolean __nonzero__() {
-            return !getMemory().isNull();
         }
     }
     
