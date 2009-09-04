@@ -1,6 +1,9 @@
 
 package org.python.modules.jffi;
 
+import java.lang.reflect.Field;
+import java.util.List;
+import org.python.core.ArgParser;
 import org.python.core.Py;
 import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
@@ -30,12 +33,30 @@ public class Structure extends CData implements Pointer {
     public static PyObject Structure_new(PyNewWrapper new_, boolean init, PyType subtype,
             PyObject[] args, String[] keywords) {
 
-        PyObject layout = subtype.__getattr__("_jffi_type");
-        if (!(layout instanceof StructLayout)) {
+        PyObject jffi_type = subtype.__getattr__("_jffi_type");
+        if (!(jffi_type instanceof StructLayout)) {
             throw Py.TypeError("invalid _jffi_type for " + subtype.fastGetName() + "; should be instance of jffi.StructLayout");
         }
 
-        return new Structure(subtype, (StructLayout) layout);
+        StructLayout layout = (StructLayout) jffi_type;
+        Structure s = new Structure(subtype, layout);
+        if (args.length > 0) {
+            int n = args.length - keywords.length;
+            List<StructLayout.Field> fields = layout.getFieldList();
+            Memory m = s.getMemory();
+            // First, do non-keyword args in order
+            for (int i = 0; i < n; ++i) {
+                StructLayout.Field f = fields.get(i);
+                f.op.put(m, f.offset, args[i]);
+            }
+
+            // Now handle the keyworded args by looking up the field
+            for (int i = n; i < args.length; ++i) {
+                StructLayout.Field f = layout.getField(keywords[i - n]);
+                f.op.put(m, f.offset, args[i]);
+            }
+        }
+        return s;
     }
 
     protected final void initReferenceMemory(Memory m) {

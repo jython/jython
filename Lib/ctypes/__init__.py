@@ -75,30 +75,25 @@ class _StructLayoutBuilder(object):
     def build(self):
         return jffi.StructLayout(fields = self.fields, union = self.union)
 
-class _StructMetaClass(type):
-    def __new__(cls, name, bases, dict):
-        try:
-            layout = dict['_jffi_type'] = _StructLayoutBuilder().add_fields(dict['_fields_']).build()
+class _AggregateMetaClass(type):
+    def __new_aggregate__(cls, name, bases, dict, union = False):
+        if dict.has_key('_fields_'):
+            layout = dict['_jffi_type'] = _StructLayoutBuilder(union).add_fields(dict['_fields_']).build()
             # make all fields accessible via .foo
             for f in dict['_fields_']:
                 dict[f[0]] = layout[f[0]]
-        except:
-            pass
 
         return type.__new__(cls, name, bases, dict)
+
+    __new_aggregate__ = staticmethod(__new_aggregate__)
+
+class _StructMetaClass(_AggregateMetaClass):
+    def __new__(cls, name, bases, dict):
+        return _AggregateMetaClass.__new_aggregate__(cls, name, bases, dict, union = False)
 
 class _UnionMetaClass(type):
     def __new__(cls, name, bases, dict):
-        try:
-            layout = dict['_jffi_type'] = _StructLayoutBuilder().add_fields(dict['_fields_'], union = True).build()
-            # make all fields accessible via .foo
-            for f in dict['_fields_']:
-                dict[f[0]] = layout[f[0]]
-        except:
-            pass
-
-
-        return type.__new__(cls, name, bases, dict)
+        return _AggregateMetaClass.__new_aggregate__(cls, name, bases, dict, union = True)
 
 class Structure(jffi.Structure):
     __metaclass__ = _StructMetaClass
@@ -107,12 +102,10 @@ class Union(jffi.Structure):
     __metaclass__ = _UnionMetaClass
 
 def sizeof(type):
-    if isinstance(type, jffi.CData):
+    if hasattr(type, '_jffi_type'):
         return type._jffi_type.size
-    elif hasattr(type, '_type_'):
-        return _TypeMap[type.__getattribute__('_type_')]
     else:
-        raise TypeError("invalid ctype")
+        raise TypeError("this type has no size")
 
 def alignment(type):
     return type._jffi_type.alignment

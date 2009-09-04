@@ -1,7 +1,10 @@
 
 package org.python.modules.jffi;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.python.core.ArgParser;
 import org.python.core.Py;
@@ -22,15 +25,18 @@ public class StructLayout extends CType {
         TYPE.fastGetDict().__setitem__("ScalarField", ScalarField.TYPE);
     }
 
-    private final Map<PyObject, Field> fieldMap;
+    private final Map<Object, Field> fieldMap;
+    private final List<Field> fields;
 
     StructLayout(Field[] fields, com.kenai.jffi.Type struct, MemoryOp op) {
         super(NativeType.STRUCT, struct, op);
-        Map<PyObject, Field> m = new HashMap<PyObject, Field>(fields.length);
+        Map<Object, Field> m = new HashMap<Object, Field>(fields.length);
         for (Field f : fields) {
             m.put(f.name, f);
+            m.put(f.name.toString(), f);
         }
         this.fieldMap = m;
+        this.fields = Collections.unmodifiableList(Arrays.asList(fields));
     }
 
     @ExposedType(name = "jffi.StructLayout.Field", base = PyObject.class)
@@ -150,6 +156,14 @@ public class StructLayout extends CType {
 
     Field getField(PyObject name) {
         return fieldMap.get(name);
+    }
+
+    Field getField(String name) {
+        return fieldMap.get(name);
+    }
+
+    List<Field> getFieldList() {
+        return fields;
     }
 
     @Override
