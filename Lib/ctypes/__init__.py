@@ -118,14 +118,14 @@ class _StructMetaClass(_AggregateMetaClass):
     def __new__(cls, name, bases, dict):
         return _AggregateMetaClass.__new_aggregate__(cls, name, bases, dict, union = False)
 
-class _UnionMetaClass(type):
+class _UnionMetaClass(_AggregateMetaClass):
     def __new__(cls, name, bases, dict):
         return _AggregateMetaClass.__new_aggregate__(cls, name, bases, dict, union = True)
 
 class Structure(jffi.Structure, _CData):
     __metaclass__ = _StructMetaClass
 
-class Union(jffi.Structure):
+class Union(jffi.Structure, _CData):
     __metaclass__ = _UnionMetaClass
 
 def sizeof(type):
@@ -165,7 +165,7 @@ def POINTER(ctype):
     return ptype
 
 class c_bool(_ScalarCData):
-    _type_ = "?"
+    _type_ = '?'
     _jffi_type = jffi.Type.BOOL
 
 class c_byte(_ScalarCData):
