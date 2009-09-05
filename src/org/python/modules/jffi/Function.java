@@ -27,6 +27,9 @@ public class Function extends BasePointer implements Pointer {
     private Invoker invoker = null;
 
     @ExposedGet
+    public PyObject errcheck = Py.None;
+
+    @ExposedGet
     public final String name;
     
     Function(PyType type, Pointer address) {
@@ -137,6 +140,11 @@ public class Function extends BasePointer implements Pointer {
         }
     }
 
+    @ExposedSet(name = "errcheck")
+    public void errcheck(PyObject errcheck) {
+        this.invoker = null; // invalidate old invoker
+        this.errcheck = errcheck;
+    }
     @Override
     public boolean __nonzero__() {
         return !getMemory().isNull();
@@ -161,12 +169,43 @@ public class Function extends BasePointer implements Pointer {
         }
         com.kenai.jffi.Function jffiFunction = new com.kenai.jffi.Function(getMemory().getAddress(), jffiReturnType, jffiParamTypes);
 
+        Invoker i;
         if (FastIntInvokerFactory.getFactory().isFastIntMethod(restype, argtypes)) {
-            invoker = FastIntInvokerFactory.getFactory().createInvoker(jffiFunction, restype, argtypes);
+            i = FastIntInvokerFactory.getFactory().createInvoker(jffiFunction, restype, argtypes);
         } else {
-            invoker = DefaultInvokerFactory.getFactory().createInvoker(jffiFunction, restype, argtypes);
+            i = DefaultInvokerFactory.getFactory().createInvoker(jffiFunction, restype, argtypes);
         }
-        
-        return invoker;
+
+        return invoker = errcheck != Py.None ? new ErrCheckInvoker(i, errcheck) : i;
+    }
+
+    private static final class ErrCheckInvoker implements Invoker {
+        private final Invoker invoker;
+        private final PyObject errcheck;
+
+        public ErrCheckInvoker(Invoker invoker, PyObject errcheck) {
+            this.invoker = invoker;
+            this.errcheck = errcheck;
+        }
+
+        public PyObject invoke(PyObject[] args) {
+            return errcheck.__call__(invoker.invoke(args));
+        }
+
+        public PyObject invoke() {
+            return errcheck.__call__(invoker.invoke());
+        }
+
+        public PyObject invoke(PyObject arg1) {
+            return errcheck.__call__(invoker.invoke(arg1));
+        }
+
+        public PyObject invoke(PyObject arg1, PyObject arg2) {
+            return errcheck.__call__(invoker.invoke(arg1, arg2));
+        }
+
+        public PyObject invoke(PyObject arg1, PyObject arg2, PyObject arg3) {
+            return errcheck.__call__(invoker.invoke(arg1, arg2, arg3));
+        }
     }
 }
