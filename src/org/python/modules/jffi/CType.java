@@ -95,6 +95,8 @@ public class CType extends PyObject {
     static CType typeOf(PyObject obj) {
         if (obj instanceof CType) {
             return (CType) obj;
+        } else if (obj == Py.None) {
+            return CType.VOID;
         }
 
         PyObject jffi_type = obj.__getattr__("_jffi_type");
