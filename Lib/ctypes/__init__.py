@@ -240,26 +240,6 @@ class _Function(jffi.Function):
     _restype = c_int
     _argtypes = None
 
-    def set_restype(self, restype):
-        self._jffi_restype = restype._jffi_type
-        self._restype = restype
-
-    def get_restype(self):
-        return self._restype
-
-    def set_argtypes(self, argtypes):
-        jffi_types = []
-        for t in argtypes:
-            jffi_types.append(t._jffi_type)
-        self._jffi_argtypes = jffi_types
-        self._argtypes = argtypes
-
-    def get_argtypes(self):
-        return self._argtypes
-
-    restype = property(get_restype, set_restype)
-    argtypes = property(get_argtypes, set_argtypes)
-
 
 class CDLL:
     DEFAULT_MODE = jffi.RTLD_GLOBAL | jffi.RTLD_LAZY

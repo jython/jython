@@ -5,6 +5,7 @@ import org.python.core.Py;
 import org.python.core.PyList;
 import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
+import org.python.core.PySequenceList;
 import org.python.core.PyStringMap;
 import org.python.core.PyType;
 import org.python.expose.ExposedGet;
@@ -20,23 +21,20 @@ public class Function extends BasePointer implements Pointer {
     private final DynamicLibrary library;
 
     private final PyStringMap dict = new PyStringMap();
-    
-    private volatile CType returnType = CType.INT;
-    private volatile CType[] parameterTypes = null;
+
+    private volatile PyObject restype = Py.None;
+    private volatile PyObject[] argtypes = null;
     private Invoker invoker = null;
 
     @ExposedGet
     public final String name;
-
-    @ExposedGet
-    @ExposedSet
-    public PyObject restype;
-
+    
     Function(PyType type, Pointer address) {
         super(type);
         this.library = null;
         this.name = "<anonymous>";
         this.pointer = address;
+        this.restype = type.__getattr__("_restype");
     }
 
     Function(PyType type, DynamicLibrary.Symbol sym) {
@@ -44,6 +42,7 @@ public class Function extends BasePointer implements Pointer {
         this.library = sym.library;
         this.name = sym.name;
         this.pointer = sym;
+        this.restype = type.__getattr__("_restype");
     }
 
     @ExposedNew
@@ -101,51 +100,41 @@ public class Function extends BasePointer implements Pointer {
     }
 
 
-    @ExposedGet(name = "_jffi_restype")
-    public PyObject getReturnType() {
-        return this.returnType;
+    @ExposedGet(name = "restype")
+    public PyObject getResultType() {
+        return this.restype;
     }
 
-
-    @ExposedSet(name = "_jffi_restype")
-    public void setReturnType(PyObject returnType) {
-        if (!(returnType instanceof CType)) {
-            throw Py.TypeError("wrong argument type (expected jffi.Type)");
-        }
-
+    @ExposedSet(name = "restype")
+    public void setResultType(PyObject restype) {
         this.invoker = null; // invalidate old invoker
-        this.returnType = (CType) returnType;
-    }
-    
-    @ExposedGet(name = "_jffi_argtypes")
-    public PyObject getParameterTypes() {
-        return new PyList(parameterTypes != null ? parameterTypes : new CType[0]);
+        this.restype = restype;
     }
 
-    @ExposedSet(name = "_jffi_argtypes")
-    public void setParameterTypes(PyObject parameterTypes) {
+    @ExposedGet(name = "argtypes")
+    public PyObject getArgTypes() {
+        return new PyList(argtypes != null ? argtypes : new PyObject[0]);
+    }
+
+    @ExposedSet(name = "argtypes")
+    public void setArgTypes(PyObject parameterTypes) {
         this.invoker = null; // invalidate old invoker
 
         // Removing the parameter types defaults back to varargs
         if (parameterTypes == Py.None) {
-            this.parameterTypes = null;
+            this.argtypes = null;
             return;
         }
 
-        if (!(parameterTypes instanceof PyList)) {
-            throw Py.TypeError("wrong argument type (expected list of jffi.Type)");
+        if (!(parameterTypes instanceof PySequenceList)) {
+            throw Py.TypeError("wrong argument type (expected list or tuple)");
         }
 
-        CType[] paramTypes = new CType[((PyList) parameterTypes).size()];
-        for (int i = 0; i < paramTypes.length; ++i) {
-            PyObject t = ((PyList) parameterTypes).pyget(i);
-            if (!(t instanceof CType)) {
-                throw Py.TypeError(String.format("wrong argument type for parameter %d (expected jffi.Type)", i));
-            }
-            paramTypes[i] = (CType) t;
+        PySequenceList paramList = (PySequenceList) parameterTypes;
+        argtypes = new PyObject[paramList.size()];
+        for (int i = 0; i < argtypes.length; ++i) {
+            argtypes[i] = paramList.pyget(i);
         }
-
-        this.parameterTypes = paramTypes;
     }
 
     @Override
@@ -157,25 +146,25 @@ public class Function extends BasePointer implements Pointer {
         if (invoker != null) {
             return invoker;
         }
-        return createInvoker(getMemory().getAddress(), returnType, parameterTypes);
+        return createInvoker();
     }
 
-    private synchronized final Invoker createInvoker(long address, CType returnType, CType[] parameterTypes) {
-        if (parameterTypes == null) {
+    private synchronized final Invoker createInvoker() {
+        if (argtypes == null) {
             throw Py.NotImplementedError("variadic functions not supported yet;  specify a parameter list");
         }
 
-        com.kenai.jffi.Type jffiReturnType = NativeType.jffiType(returnType.nativeType);
-        com.kenai.jffi.Type[] jffiParamTypes = new com.kenai.jffi.Type[parameterTypes.length];
+        com.kenai.jffi.Type jffiReturnType = CType.typeOf(restype).jffiType;
+        com.kenai.jffi.Type[] jffiParamTypes = new com.kenai.jffi.Type[argtypes.length];
         for (int i = 0; i < jffiParamTypes.length; ++i) {
-            jffiParamTypes[i] = NativeType.jffiType(parameterTypes[i].nativeType);
+            jffiParamTypes[i] = CType.typeOf(argtypes[i]).jffiType;
         }
-        com.kenai.jffi.Function jffiFunction = new com.kenai.jffi.Function(address, jffiReturnType, jffiParamTypes);
+        com.kenai.jffi.Function jffiFunction = new com.kenai.jffi.Function(getMemory().getAddress(), jffiReturnType, jffiParamTypes);
 
-        if (FastIntInvokerFactory.getFactory().isFastIntMethod(returnType, parameterTypes)) {
-            invoker = FastIntInvokerFactory.getFactory().createInvoker(jffiFunction, parameterTypes, returnType);
+        if (FastIntInvokerFactory.getFactory().isFastIntMethod(restype, argtypes)) {
+            invoker = FastIntInvokerFactory.getFactory().createInvoker(jffiFunction, restype, argtypes);
         } else {
-            invoker = DefaultInvokerFactory.getFactory().createInvoker(jffiFunction, parameterTypes, returnType);
+            invoker = DefaultInvokerFactory.getFactory().createInvoker(jffiFunction, restype, argtypes);
         }
         
         return invoker;

@@ -19,6 +19,16 @@ class DefaultInvokerFactory {
 
     private DefaultInvokerFactory() {}
 
+    final Invoker createInvoker(com.kenai.jffi.Function function, PyObject returnType, PyObject[] parameterTypes) {
+        ParameterMarshaller[] marshallers = new ParameterMarshaller[parameterTypes.length];
+
+        for (int i = 0; i < marshallers.length; ++i) {
+            marshallers[i] = getMarshaller(parameterTypes[i]);
+        }
+
+        return createInvoker(function, returnType, marshallers);
+    }
+
     final Invoker createInvoker(com.kenai.jffi.Function function, CType[] parameterTypes, CType returnType) {
         ParameterMarshaller[] marshallers = new ParameterMarshaller[parameterTypes.length];
         
@@ -26,9 +36,12 @@ class DefaultInvokerFactory {
             marshallers[i] = getMarshaller(parameterTypes[i]);
         }
 
-
-        if (returnType instanceof CType.Builtin) {
-            switch (returnType.getNativeType()) {
+        return createInvoker(function, returnType, marshallers);
+    }
+    final Invoker createInvoker(com.kenai.jffi.Function function, PyObject returnType, ParameterMarshaller[] marshallers) {
+        CType cReturnType = CType.typeOf(returnType);
+        if (cReturnType instanceof CType.Builtin) {
+            switch (cReturnType.getNativeType()) {
                 case VOID:
                     return new VoidInvoker(function, marshallers);
 
@@ -139,6 +152,10 @@ class DefaultInvokerFactory {
         } else {
             throw Py.RuntimeError("Unsupported parameter type: " + type);
         }
+    }
+
+    private static final ParameterMarshaller getMarshaller(PyObject type) {
+        return getMarshaller(CType.typeOf(type));
     }
 
     private static interface ParameterMarshaller {

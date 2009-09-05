@@ -3,6 +3,7 @@ package org.python.modules.jffi;
 
 import com.kenai.jffi.Function;
 import com.kenai.jffi.Platform;
+import com.kenai.jffi.Type;
 import org.python.core.Py;
 import org.python.core.PyObject;
 
@@ -63,6 +64,23 @@ public class FastIntInvokerFactory {
     }
 
     /**
+     * Tests if a combination of result and parameter types can be called using
+     * an {@link Invoker} created by this factory.
+     *
+     * @param returnType The return type of the native function.
+     * @param parameterTypes The parameter types of the native function.
+     * @return <tt>true</tt> if the method can be handled as a fast int method.
+     */
+    final boolean isFastIntMethod(PyObject returnType, PyObject[] parameterTypes) {
+        for (int i = 0; i < parameterTypes.length; ++i) {
+            if (!isFastIntParam(parameterTypes[i])) {
+                return false;
+            }
+        }
+        return parameterTypes.length <= 3 && isFastIntResult(returnType);
+    }
+
+    /**
      * Tests if the type can be returned as an integer result.
      *
      * @param type The result type.
@@ -95,6 +113,15 @@ public class FastIntInvokerFactory {
         return false;
     }
 
+    /**
+     * Tests if the type can be returned as an integer result.
+     *
+     * @param type The result type.
+     * @return <tt>true</tt> if <tt>type</tt> can be returned as an integer.
+     */
+    final boolean isFastIntResult(PyObject type) {
+        return isFastIntResult(CType.typeOf(type));
+    }
 
     /**
      * Tests if the type can be passed as an integer parameter.
@@ -125,6 +152,15 @@ public class FastIntInvokerFactory {
         return false;
     }
 
+    /**
+     * Tests if the type can be passed as an integer parameter.
+     *
+     * @param type The parameter type.
+     * @return <tt>true</tt> if <tt>type</tt> can be passed as an integer.
+     */
+    final boolean isFastIntParam(PyObject paramType) {
+        return isFastIntParam(CType.typeOf(paramType));
+    }
 
     /**
      * Creates a new <tt>Invoker</tt> instance for the given function, with the
@@ -142,31 +178,64 @@ public class FastIntInvokerFactory {
             parameterConverters[i] = getIntParameterConverter(parameterTypes[i]);
         }
         if (returnType.nativeType == NativeType.FLOAT) {
-            switch (parameterTypes.length) {
-                case 0:
-                    return new FastFloatInvokerZero(function, null, parameterConverters);
-                case 1:
-                    return new FastFloatInvokerOne(function, null, parameterConverters);
-                case 2:
-                    return new FastFloatInvokerTwo(function, null, parameterConverters);
-                case 3:
-                    return new FastFloatInvokerThree(function, null, parameterConverters);
-            }
+            return createFloatInvoker(function, null, parameterConverters);
         } else {
-            IntResultConverter resultConverter = getIntResultConverter(returnType);
-            switch (parameterTypes.length) {
-                case 0:
-                    return new FastIntInvokerZero(function, resultConverter, parameterConverters);
-                case 1:
-                    return new FastIntInvokerOne(function, resultConverter, parameterConverters);
-                case 2:
-                    return new FastIntInvokerTwo(function, resultConverter, parameterConverters);
-                case 3:
-                    return new FastIntInvokerThree(function, resultConverter, parameterConverters);
-            }
+            return createIntInvoker(function, getIntResultConverter(returnType), parameterConverters);
         }
-        throw Py.RuntimeError("Fast Integer invoker does not support functions with arity=" + parameterTypes.length);
     }
+
+    /**
+     * Creates a new <tt>Invoker</tt> instance for the given function, with the
+     * given parameter types and return type.
+     *
+     * @param function The JFFI function to wrap
+     * @param parameterTypes The parameter types the function will be called with
+     * @param returnType The result type the function will return
+     * @return A new {@link Invoker} instance.
+     */
+    final Invoker createInvoker(Function function, PyObject returnType, PyObject[] parameterTypes) {
+        IntParameterConverter[] parameterConverters = new IntParameterConverter[parameterTypes.length];
+
+        for (int i = 0; i < parameterConverters.length; ++i) {
+            parameterConverters[i] = getIntParameterConverter(parameterTypes[i]);
+        }
+
+        if (function.getReturnType().equals(Type.FLOAT)) {
+            return createFloatInvoker(function, null, parameterConverters);
+        } else {
+            return createIntInvoker(function, getIntResultConverter(returnType), parameterConverters);
+        }
+    }
+
+
+    final Invoker createFloatInvoker(Function function, IntResultConverter resultConverter, IntParameterConverter[] parameterConverters) {
+        switch (parameterConverters.length) {
+            case 0:
+                return new FastFloatInvokerZero(function, null, parameterConverters);
+            case 1:
+                return new FastFloatInvokerOne(function, null, parameterConverters);
+            case 2:
+                return new FastFloatInvokerTwo(function, null, parameterConverters);
+            case 3:
+                return new FastFloatInvokerThree(function, null, parameterConverters);
+        }
+        throw Py.RuntimeError("fast int invoker does not support functions with arity=" + parameterConverters.length);
+    }
+
+    final Invoker createIntInvoker(Function function, IntResultConverter resultConverter, IntParameterConverter[] parameterConverters) {
+        switch (parameterConverters.length) {
+            case 0:
+                return new FastIntInvokerZero(function, resultConverter, parameterConverters);
+            case 1:
+                return new FastIntInvokerOne(function, resultConverter, parameterConverters);
+            case 2:
+                return new FastIntInvokerTwo(function, resultConverter, parameterConverters);
+            case 3:
+                return new FastIntInvokerThree(function, resultConverter, parameterConverters);
+        }
+        throw Py.RuntimeError("fast int invoker does not support functions with arity=" + parameterConverters.length);
+    }
+
 
     /**
      * Gets a python object to integer parameter converter.
@@ -181,6 +250,15 @@ public class FastIntInvokerFactory {
         throw Py.TypeError("cannot convert objects of type " + type + " to int");
     }
 
+    /**
+     * Gets a python object to integer parameter converter.
+     *
+     * @param type The python C type
+     * @return An <tt>IntParameterConverter</tt> instance.
+     */
+    final IntParameterConverter getIntParameterConverter(PyObject type) {
+        return getIntParameterConverter(CType.typeOf(type));
+    }
 
     /**
      * Gets a python object to integer parameter converter.
@@ -233,6 +311,16 @@ public class FastIntInvokerFactory {
         throw Py.TypeError("cannot convert objects of type " + type + " to int");
     }
     
+
+    /**
+     * Gets a int to python object result converter for the type.
+     *
+     * @param type The object type.
+     * @return An <tt>IntResultConverter</tt> instance.
+     */
+    final IntResultConverter getIntResultConverter(PyObject type) {
+        return getIntResultConverter(CType.typeOf(type));
+    }
 
     /**
      * Gets a int to python object result converter for the type.
