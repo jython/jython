@@ -21,7 +21,7 @@ public class imp {
 
     private static final String UNKNOWN_SOURCEFILE = "<unknown>";
 
-    private static final int APIVersion = 25;
+    private static final int APIVersion = 26;
 
     public static final int NO_MTIME = -1;
 

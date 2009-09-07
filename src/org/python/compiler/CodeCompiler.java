@@ -964,8 +964,9 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
             getNone(); 
         }
         
-        /* Push exception type onto stack(Py.AssertionError) */
-        code.getstatic("org/python/core/Py", "AssertionError", "Lorg/python/core/PyObject;");
+        /* Push exception type onto stack(AssertionError) */
+        loadFrame();
+        emitGetGlobal("AssertionError");
         
         code.swap(); // The type is the first argument, but the message could be a yield
         
