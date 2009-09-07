@@ -5,7 +5,7 @@ from java.util.concurrent.locks import ReentrantLock
 from org.python.util import jython
 from thread import _newFunctionThread
 from thread import _local as local
-from _threading import Lock, RLock, Condition
+from _threading import Lock, RLock, Condition, _Lock, _RLock
 import java.lang.Thread
 import weakref
 

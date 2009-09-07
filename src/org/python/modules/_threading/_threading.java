@@ -10,6 +10,8 @@ public class _threading implements ClassDictInit {
         dict.__setitem__("__name__", Py.newString("_threading"));
         dict.__setitem__("Lock", Lock.TYPE);
         dict.__setitem__("RLock", Lock.TYPE);
+        dict.__setitem__("_Lock", Lock.TYPE);
+        dict.__setitem__("_RLock", Lock.TYPE);
         dict.__setitem__("Condition", Condition.TYPE);
     }
 }

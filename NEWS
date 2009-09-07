@@ -1,5 +1,9 @@
 Jython NEWS
 
+Jython 2.5.1rc2
+  Bugs Fixed
+    - [ 1079 ] fixed regression on issue: twisted.python.threadable module: missing attribute '_RLock'
+
 Jython 2.5.1rc1
   New Features
     - Upgraded to ANTLR 3.1.3

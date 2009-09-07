@@ -36,8 +36,14 @@ class ThreadingTestCase(unittest.TestCase):
         time.sleep(random.random())
 
 
+class TwistedTestCase(unittest.TestCase):
+    
+    def test_needs_underscored_versions(self):
+        self.assertEqual(threading.Lock, threading._Lock)
+        self.assertEqual(threading.RLock, threading._RLock)
+
 def test_main():
-    test_support.run_unittest(ThreadingTestCase)
+    test_support.run_unittest(ThreadingTestCase, TwistedTestCase)
 
 
 if __name__ == "__main__":
