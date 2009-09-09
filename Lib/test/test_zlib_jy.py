@@ -22,11 +22,9 @@ class ArrayTestCase(unittest.TestCase):
         self._test_array(compress, decompress)
 
     def _test_array(self, compress, decompress):
-        self.assertEqual(compress(array('c', 'jython')),
-                         compress('jython'))
+        self.assertEqual(compress(array('c', 'jython')), compress('jython'))
         intarray = array('i', range(5))
-        self.assertEqual(compress(intarray),
-                         compress(intarray.tostring()))
+        self.assertEqual(compress(intarray), compress(intarray.tostring()))
         compressed = array('c', compress('jython'))
         self.assertEqual('jython', decompress(compressed))
 
