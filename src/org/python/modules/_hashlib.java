@@ -8,6 +8,7 @@ import java.util.Map;
 
 import org.python.core.ClassDictInit;
 import org.python.core.Py;
+import org.python.core.PyArray;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyType;
@@ -168,15 +169,19 @@ public class _hashlib implements ClassDictInit {
 
         @ExposedMethod
         final void HASH_update(PyObject obj) {
-            if (!(obj instanceof PyString)) {
+            String string;
+            if (obj instanceof PyUnicode) {
+                string = ((PyUnicode)obj).encode();
+            } else if (obj instanceof PyString) {
+                string = obj.toString();
+            } else if (obj instanceof PyArray) {
+                string = ((PyArray)obj).tostring();
+            }
+            else {
                 throw Py.TypeError("update() argument 1 must be string or read-only buffer, not "
                                    + obj.getType().fastGetName());
             }
-            if (obj instanceof PyUnicode) {
-                obj = obj.__str__();
-            }
-            byte[] bytes = ((PyString)obj).toBytes();
-            digest.update(bytes);
+            digest.update(StringUtil.toBytes(string));
         }
 
         public PyObject digest() {
