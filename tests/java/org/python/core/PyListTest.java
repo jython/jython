@@ -17,7 +17,7 @@ public class PyListTest extends TestCase {
 
     // Test for http://bugs.jython.org/issue1419
     // "Bug in PyTuple.indexOf and PyList.indexOf"
-    public void testFoo() {
+    public void testIndexOf() {
         PyList p = new PyList();
         p.add("foo");
         p.add("bar");

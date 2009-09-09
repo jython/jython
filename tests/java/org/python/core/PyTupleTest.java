@@ -17,9 +17,10 @@ public class PyTupleTest extends TestCase {
 
     // Test for http://bugs.jython.org/issue1419
     // "Bug in PyTuple.indexOf and PyTuple.indexOf"
-    public void testFoo() {
+    public void testIndexOf() {
         PyTuple p = new PyTuple(new PyString("foo"), new PyString("bar"));
         assertEquals(0, p.indexOf("foo"));
         assertEquals(1, p.indexOf("bar"));
     }
+
 }
