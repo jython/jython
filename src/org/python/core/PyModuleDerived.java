@@ -743,7 +743,7 @@ public class PyModuleDerived extends PyModule implements Slotted {
 
     public int __cmp__(PyObject other) {
         PyType self_type=getType();
-        PyType[]where_type=new PyType[1];
+        PyObject[]where_type=new PyObject[1];
         PyObject impl=self_type.lookup_where("__cmp__",where_type);
         // Full Compatibility with CPython __cmp__:
         // If the derived type don't override __cmp__, the
