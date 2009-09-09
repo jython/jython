@@ -4,6 +4,7 @@ Jython 2.5.1rc2
   Bugs Fixed
     - [ 1079 ] fixed regression on issue: twisted.python.threadable module: missing attribute '_RLock'
     - [ 1461 ] assert statement should lookup AssertionError using getglobal
+    - [ 1425 ] distutils/util.py assumes too much posix
 
 Jython 2.5.1rc1
   New Features
