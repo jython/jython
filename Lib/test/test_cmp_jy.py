@@ -1,6 +1,17 @@
 "Tests for cmp() compatibility with CPython"
+import UserDict
 import unittest
 from test import test_support
+
+class CmpGeneralTestCase(unittest.TestCase):
+
+    def test_type_crash(self):
+        # Used to throw ArrayStoreException:
+        # http://bugs.jython.org/issue1382
+        class Configuration(object, UserDict.DictMixin):
+            pass
+        self.assertNotEqual(Configuration(), None)
+
 
 class UnicodeDerivedCmp(unittest.TestCase):
     "Test for http://bugs.jython.org/issue1889394"
@@ -14,12 +25,14 @@ class UnicodeDerivedCmp(unittest.TestCase):
         class B(unicode): pass
         self.assertEqual(A(), B())
 
+
 class LongDerivedCmp(unittest.TestCase):
     def testCompareWithString(self):
         class Test(long):
             pass
         self.assertNotEqual(Test(0), 'foo')
         self.assertTrue('foo' in [Test(12), 'foo'])
+
 
 class IntStrCmp(unittest.TestCase):
     def testIntStrCompares(self):
@@ -30,6 +43,7 @@ class IntStrCmp(unittest.TestCase):
         assert not (-2 > 'a')
         assert (-2 < 'a')
         assert not (-1 == 'a')
+
 
 class CustomCmp(unittest.TestCase):
     def test___cmp___returns(self):
@@ -63,13 +77,16 @@ class CustomCmp(unittest.TestCase):
             __eq__ = lambda self, other: True
         self.assertEqual(cmp(Foo(), Bar()), 1)
 
+
 def test_main():
     test_support.run_unittest(
+            CmpGeneralTestCase,
             UnicodeDerivedCmp,
             LongDerivedCmp,
             IntStrCmp,
             CustomCmp
             )
+
 
 if __name__ == '__main__':
     test_main()

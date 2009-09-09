@@ -5,6 +5,8 @@ Jython 2.5.1rc2
     - [ 1079 ] fixed regression on issue: twisted.python.threadable module: missing attribute '_RLock'
     - [ 1461 ] assert statement should lookup AssertionError using getglobal
     - [ 1425 ] distutils/util.py assumes too much posix
+    - [ 1457 ] Cannot write an array in a file opened in r+b mode.
+    - [ 1382 ] __cmp__ on certain types raises ArrayStoreException
 
 Jython 2.5.1rc1
   New Features
