@@ -802,15 +802,10 @@ public class PyArray extends PySequence implements Cloneable {
      */
     public void fromfile(PyObject f, int count) {
         // check for arg1 as file object
-        if(!(f instanceof PyFile)) {
+        if (!(f instanceof PyFile)) {
             throw Py.TypeError("arg1 must be open file");
         }
         PyFile file = (PyFile)f;
-        // check for read only
-        if(file.mode.indexOf("r") == -1) {
-            throw Py.TypeError("file needs to be in read mode");
-        }
-        // read the data via the PyFile
         int readbytes = count * getStorageSize();
         String buffer = file.read(readbytes).toString();
         // load whatever was collected into the array
@@ -1588,13 +1583,10 @@ public class PyArray extends PySequence implements Cloneable {
      *            Python builtin file object to write data
      */
     public void tofile(PyObject f) {
-        if(!(f instanceof PyFile))
+        if (!(f instanceof PyFile)) {
             throw Py.TypeError("arg must be open file");
-        PyFile file = (PyFile)f;
-        if(file.mode.indexOf("w") == -1 && file.mode.indexOf("a") == -1) {
-            throw Py.TypeError("file needs to be in write or append mode");
         }
-        // write via the PyFile
+        PyFile file = (PyFile)f;
         file.write(tostring());
     }
 
