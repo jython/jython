@@ -16,22 +16,10 @@ public class PythonTree extends AST {
     private int charStartIndex = -1;
     private int charStopIndex = -1;
     private CommonTree node;
-    private PythonTree parent;
-    
-    /** A single token is the payload */
-    //private Token token;
-
-    /** What token indexes bracket all tokens associated with this node
-     *  and below?
-     */
-    //protected int startIndex=-1, stopIndex=-1;
 
     /** Who is the parent node of this node; if null, implies node is root */
-    //private PythonTree parent;
-
-    /** What index is this node in the child list? Range: 0..n-1 */
-    //private int childIndex = -1;
-
+    private PythonTree parent;
+    
     public PythonTree() {
         node = new CommonTree();
     }
@@ -291,8 +279,6 @@ public class PythonTree extends AST {
      *  t.children = child.children; i.e., without copying the array.
      */
     public void addChild(PythonTree t) {
-        //System.out.println("add child "+t.toStringTree()+" "+this.toStringTree());
-        //System.out.println("existing children: "+children);
         if ( t==null ) {
             return; // do nothing upon addChild(null)
         }
@@ -329,7 +315,6 @@ public class PythonTree extends AST {
             childTree.setParent(this);
             childTree.setChildIndex(children.size()-1);
         }
-        // System.out.println("now children are: "+children);
     }
 
     /** Add all elements of kids list as children of this node */
@@ -371,11 +356,6 @@ public class PythonTree extends AST {
      *  children to set their childindex; could be slow.
      */
     public void replaceChildren(int startChildIndex, int stopChildIndex, Object t) {
-        /*
-        System.out.println("replaceChildren "+startChildIndex+", "+stopChildIndex+
-                           " with "+((PythonTree)t).toStringTree());
-        System.out.println("in="+toStringTree());
-        */
         if ( children==null ) {
             throw new IllegalArgumentException("indexes invalid; no children in list");
         }
@@ -428,7 +408,6 @@ public class PythonTree extends AST {
             }
             freshenParentAndChildIndexes(startChildIndex);
         }
-        //System.out.println("out="+toStringTree());
     }
 
     /** Override in a subclass to change the impl of children list */
