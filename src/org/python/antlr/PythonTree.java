@@ -18,19 +18,19 @@ public class PythonTree extends AST {
     private CommonTree node;
     private PythonTree parent;
     
-	/** A single token is the payload */
-	//private Token token;
+    /** A single token is the payload */
+    //private Token token;
 
-	/** What token indexes bracket all tokens associated with this node
-	 *  and below?
-	 */
-	//protected int startIndex=-1, stopIndex=-1;
+    /** What token indexes bracket all tokens associated with this node
+     *  and below?
+     */
+    //protected int startIndex=-1, stopIndex=-1;
 
-	/** Who is the parent node of this node; if null, implies node is root */
-	//private PythonTree parent;
+    /** Who is the parent node of this node; if null, implies node is root */
+    //private PythonTree parent;
 
-	/** What index is this node in the child list? Range: 0..n-1 */
-	//private int childIndex = -1;
+    /** What index is this node in the child list? Range: 0..n-1 */
+    //private int childIndex = -1;
 
     public PythonTree() {
         node = new CommonTree();
@@ -60,73 +60,73 @@ public class PythonTree extends AST {
         charStartIndex = tree.getCharStartIndex();
         charStopIndex = tree.getCharStopIndex();
     }
-	
+    
     public CommonTree getNode() {
         return node;
     }
 
-	public Token getToken() {
-		return node.getToken();
-	}
+    public Token getToken() {
+        return node.getToken();
+    }
 
-	public PythonTree dupNode() {
-		return new PythonTree(this);
-	}
+    public PythonTree dupNode() {
+        return new PythonTree(this);
+    }
 
-	public boolean isNil() {
-		return node.isNil();
-	}
+    public boolean isNil() {
+        return node.isNil();
+    }
 
-	public int getAntlrType() {
-		return node.getType();
-	}
+    public int getAntlrType() {
+        return node.getType();
+    }
 
-	public String getText() {
-		return node.getText();
-	}
+    public String getText() {
+        return node.getText();
+    }
 
-	public int getLine() {
-		if (node.getToken()==null || node.getToken().getLine()==0) {
-			if ( getChildCount()>0 ) {
-				return getChild(0).getLine();
-			}
-			return 1;
-		}
-		return node.getToken().getLine();
-	}
+    public int getLine() {
+        if (node.getToken()==null || node.getToken().getLine()==0) {
+            if ( getChildCount()>0 ) {
+                return getChild(0).getLine();
+            }
+            return 1;
+        }
+        return node.getToken().getLine();
+    }
 
-	public int getCharPositionInLine() {
+    public int getCharPositionInLine() {
         Token token = node.getToken();
-		if (token==null || token.getCharPositionInLine()==-1) {
-			if (getChildCount()>0) {
-				return getChild(0).getCharPositionInLine();
-			}
-			return 0;
-		} else if (token != null && token.getCharPositionInLine() == -2) {
+        if (token==null || token.getCharPositionInLine()==-1) {
+            if (getChildCount()>0) {
+                return getChild(0).getCharPositionInLine();
+            }
+            return 0;
+        } else if (token != null && token.getCharPositionInLine() == -2) {
             //XXX: yucky fix because CPython's ast uses -1 as a real value
             //     for char pos in certain circumstances (for example, the
             //     char pos of multi-line strings.  I would just use -1,
             //     but ANTLR is using -1 in special ways also.
             return -1;
         }
-		return token.getCharPositionInLine();
-	}
+        return token.getCharPositionInLine();
+    }
 
-	public int getTokenStartIndex() {
+    public int getTokenStartIndex() {
         return node.getTokenStartIndex();
-	}
+    }
 
-	public void setTokenStartIndex(int index) {
-		node.setTokenStartIndex(index);
-	}
+    public void setTokenStartIndex(int index) {
+        node.setTokenStartIndex(index);
+    }
 
-	public int getTokenStopIndex() {
+    public int getTokenStopIndex() {
         return node.getTokenStopIndex();
-	}
+    }
 
-	public void setTokenStopIndex(int index) {
-		node.setTokenStopIndex(index);
-	}
+    public void setTokenStopIndex(int index) {
+        node.setTokenStopIndex(index);
+    }
 
     public int getCharStartIndex() {
         if (charStartIndex == -1 && node.getToken() != null) {
@@ -160,33 +160,33 @@ public class PythonTree extends AST {
         charStopIndex = index;
     }
 
-	public int getChildIndex() {
-		return node.getChildIndex();
-	}
+    public int getChildIndex() {
+        return node.getChildIndex();
+    }
 
-	public PythonTree getParent() {
-		return parent;
-	}
+    public PythonTree getParent() {
+        return parent;
+    }
 
-	public void setParent(PythonTree t) {
-		this.parent = t;
-	}
+    public void setParent(PythonTree t) {
+        this.parent = t;
+    }
 
-	public void setChildIndex(int index) {
-		node.setChildIndex(index);
-	}
+    public void setChildIndex(int index) {
+        node.setChildIndex(index);
+    }
 
     @Override
     public String toString() {
         if (isNil()) {
             return "None";
         }
-		if ( getAntlrType()==Token.INVALID_TOKEN_TYPE ) {
-			return "<errornode>";
-		}
-		if ( node.getToken()==null ) {
-			return null;
-		}
+        if ( getAntlrType()==Token.INVALID_TOKEN_TYPE ) {
+            return "<errornode>";
+        }
+        if ( node.getToken()==null ) {
+            return null;
+        }
 
         return node.getToken().getText() + "(" + this.getLine() + "," + this.getCharPositionInLine() + ")";
     }
@@ -251,203 +251,203 @@ public class PythonTree extends AST {
     }
  
 //XXX: From here down copied from org.antlr.runtime.tree.BaseTree
-	protected List<PythonTree> children;
+    protected List<PythonTree> children;
 
-	public PythonTree getChild(int i) {
-		if ( children==null || i>=children.size() ) {
-			return null;
-		}
-		return children.get(i);
-	}
+    public PythonTree getChild(int i) {
+        if ( children==null || i>=children.size() ) {
+            return null;
+        }
+        return children.get(i);
+    }
 
-	/** Get the children internal List; note that if you directly mess with
-	 *  the list, do so at your own risk.
-	 */
-	public List<PythonTree> getChildren() {
-		return children;
-	}
+    /** Get the children internal List; note that if you directly mess with
+     *  the list, do so at your own risk.
+     */
+    public List<PythonTree> getChildren() {
+        return children;
+    }
 
-	public PythonTree getFirstChildWithType(int type) {
-		for (int i = 0; children!=null && i < children.size(); i++) {
-			PythonTree t = children.get(i);
-			if ( t.getAntlrType()==type ) {
-				return t;
-			}
-		}	
-		return null;
-	}
+    public PythonTree getFirstChildWithType(int type) {
+        for (int i = 0; children!=null && i < children.size(); i++) {
+            PythonTree t = children.get(i);
+            if ( t.getAntlrType()==type ) {
+                return t;
+            }
+        }    
+        return null;
+    }
 
-	public int getChildCount() {
-		if ( children==null ) {
-			return 0;
-		}
-		return children.size();
-	}
+    public int getChildCount() {
+        if ( children==null ) {
+            return 0;
+        }
+        return children.size();
+    }
 
-	/** Add t as child of this node.
-	 *
-	 *  Warning: if t has no children, but child does
-	 *  and child isNil then this routine moves children to t via
-	 *  t.children = child.children; i.e., without copying the array.
-	 */
-	public void addChild(PythonTree t) {
-		//System.out.println("add child "+t.toStringTree()+" "+this.toStringTree());
-		//System.out.println("existing children: "+children);
-		if ( t==null ) {
-			return; // do nothing upon addChild(null)
-		}
-		PythonTree childTree = t;
-		if ( childTree.isNil() ) { // t is an empty node possibly with children
-			if ( this.children!=null && this.children == childTree.children ) {
-				throw new RuntimeException("attempt to add child list to itself");
-			}
-			// just add all of childTree's children to this
-			if ( childTree.children!=null ) {
-				if ( this.children!=null ) { // must copy, this has children already
-					int n = childTree.children.size();
-					for (int i = 0; i < n; i++) {
-						PythonTree c = childTree.children.get(i);
-						this.children.add(c);
-						// handle double-link stuff for each child of nil root
-						c.setParent(this);
-						c.setChildIndex(children.size()-1);
-					}
-				}
-				else {
-					// no children for this but t has children; just set pointer
-					// call general freshener routine
-					this.children = childTree.children;
-					this.freshenParentAndChildIndexes();
-				}
-			}
-		}
-		else { // child is not nil (don't care about children)
-			if ( children==null ) {
-				children = createChildrenList(); // create children list on demand
-			}
-			children.add(t);
-			childTree.setParent(this);
-			childTree.setChildIndex(children.size()-1);
-		}
-		// System.out.println("now children are: "+children);
-	}
+    /** Add t as child of this node.
+     *
+     *  Warning: if t has no children, but child does
+     *  and child isNil then this routine moves children to t via
+     *  t.children = child.children; i.e., without copying the array.
+     */
+    public void addChild(PythonTree t) {
+        //System.out.println("add child "+t.toStringTree()+" "+this.toStringTree());
+        //System.out.println("existing children: "+children);
+        if ( t==null ) {
+            return; // do nothing upon addChild(null)
+        }
+        PythonTree childTree = t;
+        if ( childTree.isNil() ) { // t is an empty node possibly with children
+            if ( this.children!=null && this.children == childTree.children ) {
+                throw new RuntimeException("attempt to add child list to itself");
+            }
+            // just add all of childTree's children to this
+            if ( childTree.children!=null ) {
+                if ( this.children!=null ) { // must copy, this has children already
+                    int n = childTree.children.size();
+                    for (int i = 0; i < n; i++) {
+                        PythonTree c = childTree.children.get(i);
+                        this.children.add(c);
+                        // handle double-link stuff for each child of nil root
+                        c.setParent(this);
+                        c.setChildIndex(children.size()-1);
+                    }
+                }
+                else {
+                    // no children for this but t has children; just set pointer
+                    // call general freshener routine
+                    this.children = childTree.children;
+                    this.freshenParentAndChildIndexes();
+                }
+            }
+        }
+        else { // child is not nil (don't care about children)
+            if ( children==null ) {
+                children = createChildrenList(); // create children list on demand
+            }
+            children.add(t);
+            childTree.setParent(this);
+            childTree.setChildIndex(children.size()-1);
+        }
+        // System.out.println("now children are: "+children);
+    }
 
-	/** Add all elements of kids list as children of this node */
-	public void addChildren(List<PythonTree> kids) {
-		for (int i = 0; i < kids.size(); i++) {
-			PythonTree t = kids.get(i);
-			addChild(t);
-		}
-	}
+    /** Add all elements of kids list as children of this node */
+    public void addChildren(List<PythonTree> kids) {
+        for (int i = 0; i < kids.size(); i++) {
+            PythonTree t = kids.get(i);
+            addChild(t);
+        }
+    }
 
-	public void setChild(int i, PythonTree t) {
-		if ( t==null ) {
-			return;
-		}
-		if ( t.isNil() ) {
-			throw new IllegalArgumentException("Can't set single child to a list");
-		}
-		if ( children==null ) {
-			children = createChildrenList();
-		}
-		children.set(i, t);
-		t.setParent(this);
-		t.setChildIndex(i);
-	}
-	
-	public Object deleteChild(int i) {
-		if ( children==null ) {
-			return null;
-		}
-		PythonTree killed = children.remove(i);
-		// walk rest and decrement their child indexes
-		this.freshenParentAndChildIndexes(i);
-		return killed;
-	}
+    public void setChild(int i, PythonTree t) {
+        if ( t==null ) {
+            return;
+        }
+        if ( t.isNil() ) {
+            throw new IllegalArgumentException("Can't set single child to a list");
+        }
+        if ( children==null ) {
+            children = createChildrenList();
+        }
+        children.set(i, t);
+        t.setParent(this);
+        t.setChildIndex(i);
+    }
+    
+    public Object deleteChild(int i) {
+        if ( children==null ) {
+            return null;
+        }
+        PythonTree killed = children.remove(i);
+        // walk rest and decrement their child indexes
+        this.freshenParentAndChildIndexes(i);
+        return killed;
+    }
 
-	/** Delete children from start to stop and replace with t even if t is
-	 *  a list (nil-root tree).  num of children can increase or decrease.
-	 *  For huge child lists, inserting children can force walking rest of
-	 *  children to set their childindex; could be slow.
-	 */
-	public void replaceChildren(int startChildIndex, int stopChildIndex, Object t) {
-		/*
-		System.out.println("replaceChildren "+startChildIndex+", "+stopChildIndex+
-						   " with "+((PythonTree)t).toStringTree());
-		System.out.println("in="+toStringTree());
-		*/
-		if ( children==null ) {
-			throw new IllegalArgumentException("indexes invalid; no children in list");
-		}
-		int replacingHowMany = stopChildIndex - startChildIndex + 1;
-		int replacingWithHowMany;
-		PythonTree newTree = (PythonTree)t;
-		List<PythonTree> newChildren = null;
-		// normalize to a list of children to add: newChildren
-		if ( newTree.isNil() ) {
-			newChildren = newTree.children;
-		}
-		else {
-			newChildren = new ArrayList<PythonTree>(1);
-			newChildren.add(newTree);
-		}
-		replacingWithHowMany = newChildren.size();
-		int numNewChildren = newChildren.size();
-		int delta = replacingHowMany - replacingWithHowMany;
-		// if same number of nodes, do direct replace
-		if ( delta == 0 ) {
-			int j = 0; // index into new children
-			for (int i=startChildIndex; i<=stopChildIndex; i++) {
-				PythonTree child = newChildren.get(j);
-				children.set(i, child);
-				child.setParent(this);
-				child.setChildIndex(i);
+    /** Delete children from start to stop and replace with t even if t is
+     *  a list (nil-root tree).  num of children can increase or decrease.
+     *  For huge child lists, inserting children can force walking rest of
+     *  children to set their childindex; could be slow.
+     */
+    public void replaceChildren(int startChildIndex, int stopChildIndex, Object t) {
+        /*
+        System.out.println("replaceChildren "+startChildIndex+", "+stopChildIndex+
+                           " with "+((PythonTree)t).toStringTree());
+        System.out.println("in="+toStringTree());
+        */
+        if ( children==null ) {
+            throw new IllegalArgumentException("indexes invalid; no children in list");
+        }
+        int replacingHowMany = stopChildIndex - startChildIndex + 1;
+        int replacingWithHowMany;
+        PythonTree newTree = (PythonTree)t;
+        List<PythonTree> newChildren = null;
+        // normalize to a list of children to add: newChildren
+        if ( newTree.isNil() ) {
+            newChildren = newTree.children;
+        }
+        else {
+            newChildren = new ArrayList<PythonTree>(1);
+            newChildren.add(newTree);
+        }
+        replacingWithHowMany = newChildren.size();
+        int numNewChildren = newChildren.size();
+        int delta = replacingHowMany - replacingWithHowMany;
+        // if same number of nodes, do direct replace
+        if ( delta == 0 ) {
+            int j = 0; // index into new children
+            for (int i=startChildIndex; i<=stopChildIndex; i++) {
+                PythonTree child = newChildren.get(j);
+                children.set(i, child);
+                child.setParent(this);
+                child.setChildIndex(i);
                 j++;
             }
-		}
-		else if ( delta > 0 ) { // fewer new nodes than there were
-			// set children and then delete extra
-			for (int j=0; j<numNewChildren; j++) {
-				children.set(startChildIndex+j, newChildren.get(j));
-			}
-			int indexToDelete = startChildIndex+numNewChildren;
-			for (int c=indexToDelete; c<=stopChildIndex; c++) {
-				// delete same index, shifting everybody down each time
-				PythonTree killed = children.remove(indexToDelete);
-			}
-			freshenParentAndChildIndexes(startChildIndex);
-		}
-		else { // more new nodes than were there before
-			// fill in as many children as we can (replacingHowMany) w/o moving data
-			for (int j=0; j<replacingHowMany; j++) {
-				children.set(startChildIndex+j, newChildren.get(j));
-			}
-			int numToInsert = replacingWithHowMany-replacingHowMany;
-			for (int j=replacingHowMany; j<replacingWithHowMany; j++) {
-				children.add(startChildIndex+j, newChildren.get(j));
-			}
-			freshenParentAndChildIndexes(startChildIndex);
-		}
-		//System.out.println("out="+toStringTree());
-	}
+        }
+        else if ( delta > 0 ) { // fewer new nodes than there were
+            // set children and then delete extra
+            for (int j=0; j<numNewChildren; j++) {
+                children.set(startChildIndex+j, newChildren.get(j));
+            }
+            int indexToDelete = startChildIndex+numNewChildren;
+            for (int c=indexToDelete; c<=stopChildIndex; c++) {
+                // delete same index, shifting everybody down each time
+                PythonTree killed = children.remove(indexToDelete);
+            }
+            freshenParentAndChildIndexes(startChildIndex);
+        }
+        else { // more new nodes than were there before
+            // fill in as many children as we can (replacingHowMany) w/o moving data
+            for (int j=0; j<replacingHowMany; j++) {
+                children.set(startChildIndex+j, newChildren.get(j));
+            }
+            int numToInsert = replacingWithHowMany-replacingHowMany;
+            for (int j=replacingHowMany; j<replacingWithHowMany; j++) {
+                children.add(startChildIndex+j, newChildren.get(j));
+            }
+            freshenParentAndChildIndexes(startChildIndex);
+        }
+        //System.out.println("out="+toStringTree());
+    }
 
-	/** Override in a subclass to change the impl of children list */
-	protected List<PythonTree> createChildrenList() {
-		return new ArrayList<PythonTree>();
-	}
+    /** Override in a subclass to change the impl of children list */
+    protected List<PythonTree> createChildrenList() {
+        return new ArrayList<PythonTree>();
+    }
 
-	/** Set the parent and child index values for all child of t */
-	public void freshenParentAndChildIndexes() {
-		freshenParentAndChildIndexes(0);
-	}
+    /** Set the parent and child index values for all child of t */
+    public void freshenParentAndChildIndexes() {
+        freshenParentAndChildIndexes(0);
+    }
 
-	public void freshenParentAndChildIndexes(int offset) {
-		int n = getChildCount();
-		for (int c = offset; c < n; c++) {
-			PythonTree child = getChild(c);
-			child.setChildIndex(c);
-			child.setParent(this);
-		}
-	}
+    public void freshenParentAndChildIndexes(int offset) {
+        int n = getChildCount();
+        for (int c = offset; c < n; c++) {
+            PythonTree child = getChild(c);
+            child.setChildIndex(c);
+            child.setParent(this);
+        }
+    }
 
 }
