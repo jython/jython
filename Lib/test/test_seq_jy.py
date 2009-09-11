@@ -27,6 +27,13 @@ class SeqTestCase(unittest.TestCase):
             self.assertTrue(foo in seq1)
             self.assertFalse(eq_called)
 
+    def test_seq_equality(self):
+        for type2test in self.types2test:
+            class Foo(object):
+                def __eq__(self, other):
+                    return True
+            self.assertTrue(type2test() in [Foo()])
+
     def test_seq_subclass_equality(self):
         # Various combinations of PyObject._eq, overriden Object.equals,
         # and cmp implementations

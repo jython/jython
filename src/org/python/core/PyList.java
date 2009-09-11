@@ -953,15 +953,20 @@ public class PyList extends PySequenceList implements List {
     }
 
     @Override
-    public synchronized boolean equals(Object other) {
+    public boolean equals(Object other) {
         if (this == other) {
             return true;
         }
-        if (other instanceof PyList) {
-            return _eq((PyList)other).__nonzero__();
-        } else if (other instanceof List && !(other instanceof PyTuple)) {
-            List otherList = (List)other;
-            return list.equals(otherList);
+
+        if (other instanceof PyObject) {
+            synchronized (this) {
+                return _eq((PyObject)other).__nonzero__();
+            }
+        }
+        if (other instanceof List) {
+            synchronized (this) {
+                return list.equals(other);
+            }
         }
         return false;
     }
