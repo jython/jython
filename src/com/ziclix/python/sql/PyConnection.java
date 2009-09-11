@@ -40,6 +40,9 @@ public class PyConnection extends PyObject implements ClassDictInit {
     /** Whether transactions are supported. */
     protected boolean supportsTransactions;
 
+    /** Whether multiple ResultSets are supported. */
+    protected boolean supportsMultipleResultSets;
+
     /** The underlying java.sql.Connection. */
     protected Connection connection;
 
@@ -90,6 +93,8 @@ public class PyConnection extends PyObject implements ClassDictInit {
         this.connection = connection;
         this.statements = new HashSet<PyStatement>();
         this.supportsTransactions = this.connection.getMetaData().supportsTransactions();
+        this.supportsMultipleResultSets =
+                this.connection.getMetaData().supportsMultipleResultSets();
 
         if (this.supportsTransactions) {
             this.connection.setAutoCommit(false);
