@@ -9,6 +9,7 @@ Jython 2.5.1rc2
     - [ 1382 ] __cmp__ on certain types raises ArrayStoreException
     - [ 1443 ] Can't update() hashlib.sha1() with array.array('c')
     - [ 1444 ] Can't zlib.compress() with array.array('c')
+    - [ 1458 ] Builtin codecs aren't available without standard lib
 
 Jython 2.5.1rc1
   New Features

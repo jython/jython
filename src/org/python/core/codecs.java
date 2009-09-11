@@ -9,6 +9,7 @@ package org.python.core;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -113,8 +114,7 @@ public class codecs {
         }
     }
 
-    public static PyObject decode(PyString v, String encoding,
-            String errors) {
+    public static PyObject decode(PyString v, String encoding, String errors) {
         if (encoding == null) {
             encoding = getDefaultEncoding();
         } else {
@@ -127,11 +127,27 @@ public class codecs {
 
         /* Shortcut for ascii encoding */
         if (encoding.equals("ascii")) {
-            return new PyUnicode(PyUnicode_DecodeASCII(v.toString(), v.__len__(), errors), true);
+            return wrapDecodeResult(PyUnicode_DecodeASCII(v.toString(), v.__len__(), errors));
         }
 
         /* Decode via the codec registry */
-        PyObject decoder = lookup(encoding).__getitem__(1);
+        PyObject decoder;
+        try {
+            decoder = lookup(encoding).__getitem__(1);
+        } catch (PyException ex) {
+            if (ex.match(Py.LookupError)) {
+                // If we couldn't find an encoding, see if we have a builtin
+                if (encoding.equals("utf-8")) {
+                    return wrapDecodeResult(PyUnicode_DecodeUTF8(v.toString(), errors));
+                } else if(encoding.equals("utf-7")) {
+                    return wrapDecodeResult(PyUnicode_DecodeUTF7(v.toString(), errors));
+                } else if(encoding.equals("latin-1")) {
+                    return wrapDecodeResult(PyUnicode_DecodeLatin1(v.toString(), v.__len__(),
+                        errors));
+                }
+            }
+            throw ex;
+        }
         PyObject result;
         if (errors != null) {
             result = decoder.__call__(v, new PyString(errors));
@@ -143,6 +159,10 @@ public class codecs {
             throw Py.TypeError("decoder must return a tuple (object,integer)");
         }
         return result.__getitem__(0);
+    }
+
+    private static PyUnicode wrapDecodeResult(String result) {
+        return new PyUnicode(result, true);
     }
 
     public static String encode(PyString v, String encoding,
@@ -165,8 +185,21 @@ public class codecs {
             return PyUnicode_EncodeASCII(v.toString(), v.__len__(), errors);
         }
 
-        /* Decode via the codec registry */
-        PyObject encoder = lookup(encoding).__getitem__(0);
+        /* Encode via the codec registry */
+        PyObject encoder;
+        try {
+            encoder = lookup(encoding).__getitem__(0);
+        } catch (PyException ex) {
+            if (ex.match(Py.LookupError)) {
+                // If we couldn't find an encoding, see if we have a builtin
+                if (encoding.equals("utf-8")) {
+                    return PyUnicode_EncodeUTF8(v.toString(), errors);
+                } else if(encoding.equals("utf-7")) {
+                    return codecs.PyUnicode_EncodeUTF7(v.toString(), false, false, errors);
+                }
+            }
+            throw ex;
+        }
         PyObject result;
         if (errors != null) {
             result = encoder.__call__(v, new PyString(errors));
@@ -181,7 +214,7 @@ public class codecs {
         if (encoded instanceof PyString) {
             return encoded.toString();
         } else {
-            throw Py.TypeError("decoder did not return a string/unicode object (type="
+            throw Py.TypeError("encoder did not return a string/unicode object (type="
                     + encoded.getType().fastGetName() + ")");
         }
     }
@@ -415,8 +448,7 @@ public class codecs {
     // note that we follow CPython 2.5 exactly here - it does not support surrogates,
     // but has to process as-if they are there for replacement purposes
     // fortunately no one really cares about utf-7
-    public static String PyUnicode_DecodeUTF7(String str,
-            String errors) {
+    public static String PyUnicode_DecodeUTF7(String str, String errors) {
         int s = 0;
         int e = str.length();
         boolean inShift = false;
@@ -551,9 +583,9 @@ public class codecs {
     }
 
     public static String PyUnicode_EncodeUTF7(String str,
-            boolean encodeSetO,
-            boolean encodeWhiteSpace,
-            String errors) {
+                                              boolean encodeSetO,
+                                              boolean encodeWhiteSpace,
+                                              String errors) {
         int size = str.length();
 
         if (size == 0) {
@@ -786,13 +818,11 @@ public class codecs {
         return v.toString();
     }
 
-    public static String PyUnicode_DecodeASCII(String str, int size,
-            String errors) {
+    public static String PyUnicode_DecodeASCII(String str, int size, String errors) {
         return PyUnicode_DecodeIntLimited(str, size, errors, "ascii", 128);
     }
 
-    public static String PyUnicode_DecodeLatin1(String str, int size,
-            String errors) {
+    public static String PyUnicode_DecodeLatin1(String str, int size, String errors) {
         return PyUnicode_DecodeIntLimited(str, size, errors, "latin-1", 256);
     }
 
