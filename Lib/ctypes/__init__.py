@@ -137,11 +137,17 @@ def sizeof(type):
 def alignment(type):
     return type._jffi_type.alignment
 
-def byref(cdata):
-    return cdata.byref()
+def addressof(cdata):
+    return cdata.address()
+
+def byref(cdata, offset = 0):
+    return cdata.byref(offset)
 
 def pointer(cdata):
     return cdata.pointer(POINTER(cdata.__class__))
+
+memmove = jffi.memmove
+memset = jffi.memset
 
 _pointer_type_cache = {}
 def POINTER(ctype):

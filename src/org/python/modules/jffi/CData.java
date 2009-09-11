@@ -2,8 +2,6 @@
 package org.python.modules.jffi;
 
 import org.python.core.Py;
-import org.python.core.PyInteger;
-import org.python.core.PyLong;
 import org.python.core.PyObject;
 import org.python.core.PyType;
 import org.python.expose.ExposedMethod;
@@ -34,8 +32,8 @@ public abstract class CData extends PyObject {
      * @return A ByReference instance pointing to this object's native memory.
      */
     @ExposedMethod(names= { "byref" })
-    public PyObject byref() {
-        return new ByReference(ctype, getReferenceMemory());
+    public PyObject byref(PyObject offset) {
+        return new ByReference(ctype, (DirectMemory) getReferenceMemory().slice(offset.asInt()));
     }
 
     @ExposedMethod(names= { "pointer" })
@@ -45,6 +43,11 @@ public abstract class CData extends PyObject {
         }
 
         return new PointerCData((PyType) pytype, CType.typeOf(pytype), getReferenceMemory(), getMemoryOp());
+    }
+
+    @ExposedMethod(names = { "address" })
+    public PyObject address() {
+        return Py.newInteger(getReferenceMemory().getAddress());
     }
 
     final CType getCType() {
