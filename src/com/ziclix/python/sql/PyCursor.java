@@ -26,6 +26,9 @@ import org.python.core.PyTuple;
 import org.python.core.PyUnicode;
 
 import com.ziclix.python.sql.util.PyArgParser;
+import org.python.core.ContextManager;
+import org.python.core.ThreadState;
+
 
 /**
  * These objects represent a database cursor, which is used to manage the
@@ -35,7 +38,7 @@ import com.ziclix.python.sql.util.PyArgParser;
  * @author last revised by $Author$
  * @version $Revision$
  */
-public class PyCursor extends PyObject implements ClassDictInit, WarningListener {
+public class PyCursor extends PyObject implements ClassDictInit, WarningListener, ContextManager {
 
     /** Field fetch */
     protected Fetch fetch;
@@ -260,6 +263,8 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
         dict.__setitem__("scroll", new CursorFunc("scroll", 10, 1, 2, "scroll the cursor in the result set to a new position according to mode"));
         dict.__setitem__("write", new CursorFunc("write", 11, 1, "execute the sql written to this file-like object"));
         dict.__setitem__("prepare", new CursorFunc("prepare", 12, 1, "prepare the sql statement for later execution"));
+        dict.__setitem__("__enter__", new CursorFunc("__enter__", 13, 0, 0, "__enter__"));
+        dict.__setitem__("__exit__", new CursorFunc("__exit__", 14, 3, 3, "__exit__"));
 
         // hide from python
         dict.__setitem__("classDictInit", null);
@@ -884,6 +889,24 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
             throw zxJDBC.makeException(zxJDBC.ProgrammingError, "cursor is closed");
         }
     }
+
+    public PyObject __enter__(ThreadState ts) {
+        return this;
+    }
+
+    public PyObject __enter__() {
+        return this;
+    }
+
+    public boolean __exit__(ThreadState ts, PyException exception) {
+        close();
+        return false;
+    }
+
+    public boolean __exit__(PyObject type, PyObject value, PyObject traceback) {
+        close();
+        return false;
+    }
 }
 
 class CursorFunc extends PyBuiltinMethodSet {
@@ -911,6 +934,8 @@ class CursorFunc extends PyBuiltinMethodSet {
             return cursor.fetchone();
         case 4 :
             return cursor.nextset();
+        case 13 :
+            return cursor.__enter__();
         default :
             throw info.unexpectedCall(0, false);
         }
@@ -983,6 +1008,8 @@ class CursorFunc extends PyBuiltinMethodSet {
         case 9 :
             cursor.executemany(arga, argb, argc, Py.None);
             return Py.None;
+        case 14 :
+            return Py.newBoolean(cursor.__exit__(arga, argc, argc));
         default :
             throw info.unexpectedCall(3, false);
         }
