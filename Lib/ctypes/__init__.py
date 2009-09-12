@@ -25,7 +25,16 @@ class _CTypeMetaClass(type):
 
     def __mul__(self, len):
         dict = { '_jffi_type': jffi.Type.Array(self, len) }
-        return type("%s_%d" % (self.__name__, len), (_ArrayCData,), dict)
+
+        # Look back up the stack frame to find out the module this new type is declared in
+        import inspect
+        mod = inspect.getmodule(inspect.stack()[1][0])
+        if mod is None:
+            name = "__main__"
+        else:
+            name = mod.__name__
+        dict["__module__"] = name
+        return type("%s_Array_%d" % (self.__name__, len), (jffi.ArrayCData, _ArrayCData, _CData), dict)
 
 class _CData(object):
     @classmethod
@@ -41,9 +50,6 @@ class _ScalarCData(jffi.ScalarCData, _CData):
 
     
 class _ArrayCData(object):
-    def __init__(self, *args):
-        raise NotImplementedError("instantiating arrays is not implemented yet")
-
     def __len__(self):
         return self._jffi_type.length
 

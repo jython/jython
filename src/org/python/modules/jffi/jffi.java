@@ -23,6 +23,7 @@ public class jffi implements ClassDictInit  {
         dict.__setitem__("Type", CType.TYPE);
         dict.__setitem__("Function", Function.TYPE);
         dict.__setitem__("CData", CData.TYPE);
+        dict.__setitem__("ArrayCData", ArrayCData.TYPE);
         dict.__setitem__("PointerCData", PointerCData.TYPE);
         dict.__setitem__("ScalarCData", ScalarCData.TYPE);
         dict.__setitem__("StringCData", StringCData.TYPE);

@@ -110,15 +110,17 @@ public class CType extends PyObject {
     static final class Array extends CType {
         public static final PyType TYPE = PyType.fromClass(Array.class);
         final CType componentType;
-        final PyObject pyComponentType;
+        final PyType pyComponentType;
+        final MemoryOp componentMemoryOp;
 
         @ExposedGet
         public final int length;
 
-        public Array(PyObject pyComponentType, CType componentType, int length) {
+        public Array(PyType pyComponentType, CType componentType, int length) {
             super(NativeType.ARRAY, new com.kenai.jffi.Array(componentType.jffiType, length), null);
             this.pyComponentType = pyComponentType;
             this.componentType = componentType;
+            this.componentMemoryOp = getComponentMemoryOp((PyType) pyComponentType, componentType);
             this.length = length;
         }
 
@@ -130,7 +132,11 @@ public class CType extends PyObject {
                 throw Py.TypeError(String.format("__init__() takes exactly 2 arguments (%d given)", args.length));
             }
 
-            return new Array(args[0], typeOf(args[0]), args[1].asInt());
+            if (!(args[0] instanceof PyType)) {
+                throw Py.TypeError("invalid component type");
+            }
+            
+            return new Array((PyType) args[0], typeOf(args[0]), args[1].asInt());
         }
 
         @Override
@@ -142,7 +148,19 @@ public class CType extends PyObject {
         public final String toString() {
             return String.format("<ctypes.Array elem_type=%s length=%d>", pyComponentType.toString(), length);
         }
+
+        static final MemoryOp getComponentMemoryOp(PyType pyComponentType, CType componentType) {
+            if (pyComponentType.isSubType(ScalarCData.TYPE)) {
+                return componentType.getMemoryOp();
+            } else if (pyComponentType.isSubType(Structure.TYPE)) {
+                return new MemoryOp.StructOp(pyComponentType);
+            } else {
+                throw Py.TypeError("only scalar and struct types supported");
+            }
+        }
     }
+
+    
 
     @ExposedType(name = "jffi.Type.Pointer", base = CType.class)
     final static class Pointer extends CType {
@@ -166,7 +184,7 @@ public class CType extends PyObject {
             } else {
                 throw Py.TypeError("pointer only supported for scalar types");
             }
-            
+
         }
 
         @ExposedNew
@@ -196,7 +214,7 @@ public class CType extends PyObject {
         public final String toString() {
             return String.format("<jffi.Type.Pointer component_type=%s>", componentType.toString());
         }
-
+    
         private static final class ScalarOp extends MemoryOp {
             private final MemoryOp op;
             private final PyType type;
@@ -217,12 +235,12 @@ public class CType extends PyObject {
                 // update the same memory this pointer points to
                 //
                 if (result instanceof ScalarCData) {
-                    ((ScalarCData) result).setReferenceMemory(mem);
+                        ((ScalarCData) result).setReferenceMemory(mem);
                 }
                 return result;
             }
         }
 
-        
+
     }
 }
