@@ -1,6 +1,8 @@
 Jython NEWS
 
 Jython 2.5.1rc2
+  New Features
+    - zxJDBC supports the with-statement: connections are committed or rollbacked; cursors are closed 
   Bugs Fixed
     - [ 1079 ] fixed regression on issue: twisted.python.threadable module: missing attribute '_RLock'
     - [ 1461 ] assert statement should lookup AssertionError using getglobal
