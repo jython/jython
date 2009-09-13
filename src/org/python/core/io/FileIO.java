@@ -211,6 +211,7 @@ public class FileIO extends RawIOBase {
      * @param bufs {@inheritDoc}
      * @return {@inheritDoc}
      */
+    @Override
     public long readinto(ByteBuffer[] bufs) {
         checkClosed();
         checkReadable();
@@ -229,6 +230,7 @@ public class FileIO extends RawIOBase {
      *
      * @return {@inheritDoc}
      */
+    @Override
     public ByteBuffer readall() {
         checkClosed();
         checkReadable();
@@ -270,6 +272,7 @@ public class FileIO extends RawIOBase {
      * @param bufs {@inheritDoc}
      * @return {@inheritDoc}
      */
+    @Override
     public long write(ByteBuffer[] bufs) {
         checkClosed();
         checkWritable();
