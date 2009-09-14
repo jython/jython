@@ -21,9 +21,9 @@ class FileTestCase(unittest.TestCase):
 
     def _test_append(self, mode):
         # http://bugs.jython.org/issue1466
-        fp1 = open(test_support.TESTFN, 'ab')
+        fp1 = open(test_support.TESTFN, mode)
         fp1.write('test1\n')
-        fp2 = open(test_support.TESTFN, 'ab')
+        fp2 = open(test_support.TESTFN, mode)
         fp2.write('test2\n')
         fp1.close()
         fp2.close()
