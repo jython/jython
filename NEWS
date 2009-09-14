@@ -1,5 +1,9 @@
 Jython NEWS
 
+Jython 2.5.1rc3
+  Bugs Fixed
+    - [ 1466 ] wrong handling of append only files
+
 Jython 2.5.1rc2
   New Features
     - zxJDBC supports the with-statement: connections are committed or rollbacked; cursors are closed 
