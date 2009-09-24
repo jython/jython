@@ -1,4 +1,4 @@
-Welcome to Jython 2.5.1rc2
+Welcome to Jython 2.5.1rc3
 ==========================
 
 This is the third release candidate of the 2.5.1 version of Jython. This
