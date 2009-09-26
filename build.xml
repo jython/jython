@@ -129,8 +129,8 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <property name="jython.major_version" value="2"/>
         <property name="jython.minor_version" value="5"/>
         <property name="jython.micro_version" value="1"/>
-        <property name="jython.release_level" value="${PY_RELEASE_LEVEL_GAMMA}"/>
-        <property name="jython.release_serial" value="2"/>
+        <property name="jython.release_level" value="${PY_RELEASE_LEVEL_FINAL}"/>
+        <property name="jython.release_serial" value="0"/>
 
         <condition property="do.snapshot.build">
             <isset property="snapshot.revision" />
