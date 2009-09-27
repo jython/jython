@@ -8,7 +8,6 @@ import org.python.core.PyException;
 import org.python.core.PyInteger;
 import org.python.core.PyObject;
 import org.python.core.PyString;
-import org.python.core.PyTableCode;
 import org.python.core.PyType;
 import org.python.core.PyTuple;
 
@@ -64,10 +63,10 @@ public class thread implements ClassDictInit {
     /**
      * Interrupts all running threads spawned by the thread module.
      *
-     * This works in conjunction with:<ul>
-     * <li>{@link PyTableCode#call(org.python.core.PyFrame, PyObject)}:
-     * checks for the interrupted status of the current thread and raise
-     * a SystemRestart exception if a interruption is detected.</li>
+     * This works in conjunction with:<ul> <li>
+     * {@link org.python.core.PyTableCode#call}: checks for the interrupted
+     * status of the current thread and raise a SystemRestart exception if a
+     * interruption is detected.</li>
      * <li>{@link FunctionThread#run()}: exits the current thread when a
      * SystemRestart exception is not caught.</li>
      *
