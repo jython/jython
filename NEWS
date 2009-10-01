@@ -1,5 +1,9 @@
 Jython NEWS
 
+Jython 2.5.2a1
+  Bugs Fixed
+    - [ 1478 ] defaultdict & weakref.WeakKeyDictionary [TypeError: first argument must be callable]
+
 Jython 2.5.1rc3
   Bugs Fixed
     - [ 1466 ] wrong handling of append only files

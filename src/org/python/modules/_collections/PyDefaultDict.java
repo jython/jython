@@ -54,7 +54,7 @@ public class PyDefaultDict extends PyDictionary {
         int nargs = args.length - kwds.length;
         if (nargs != 0) {
             defaultFactory = args[0];
-            if (defaultFactory.__findattr__("__call__") == null) {
+            if (!defaultFactory.isCallable()) {
                 throw Py.TypeError("first argument must be callable");
             }
             PyObject newargs[] = new PyObject[args.length - 1];
