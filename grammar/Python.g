@@ -2030,6 +2030,15 @@ LEADING_WS
                            }
                        }
                    } else if (this.single && newlines == 1) {
+                       // This is here for this case in interactive mode:
+                       //
+                       // def foo():
+                       //   print 1
+                       //   <spaces but no code>
+                       //
+                       // The above would complete in interactive mode instead
+                       // of giving ... to wait for more input.
+                       //
                        throw new ParseException("Trailing space in single mode.");
                    } else {
                        // make a string of n newlines
