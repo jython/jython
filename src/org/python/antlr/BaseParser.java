@@ -31,39 +31,10 @@ public class BaseParser {
         this.errorHandler = eh;
     }
 
-    public static class PyLexer extends PythonLexer {
-        public PyLexer(CharStream lexer, boolean single) {
-            super(lexer);
-            this.single = single;
-        }
-
-        public PyLexer(CharStream lexer) {
-            this(lexer, false);
-        }
-
-
-        @Override
-        public Token nextToken() {
-            startPos = getCharPositionInLine();
-            return super.nextToken();
-        }
-    }
-
-    public static class PyPartialLexer extends PythonPartialLexer {
-        public PyPartialLexer(CharStream lexer) {
-            super(lexer);
-        }
-
-        @Override
-        public Token nextToken() {
-            startPos = getCharPositionInLine();
-            return super.nextToken();
-        }
-    }
-     
     private PythonParser setupParser(boolean single) {
-        PythonLexer lexer = new PyLexer(charStream, single);
+        PythonLexer lexer = new PythonLexer(charStream);
         lexer.setErrorHandler(errorHandler);
+        lexer.single = single;
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         PythonTokenSource indentedSource = new PythonTokenSource(tokens, filename, single);
         tokens = new CommonTokenStream(indentedSource);

@@ -121,6 +121,7 @@ private ErrorHandler errorHandler;
      *  remain).
      */
     public Token nextToken() {
+        startPos = getCharPositionInLine();
         while (true) {
             state.token = null;
             state.channel = Token.DEFAULT_CHANNEL;

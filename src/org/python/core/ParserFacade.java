@@ -232,7 +232,7 @@ public class ParserFacade {
         try {
             bufreader.reset();
             CharStream cs = new NoCloseReaderStream(bufreader);
-            lexer = new BaseParser.PyPartialLexer(cs);
+            lexer = new PythonPartialLexer(cs);
             CommonTokenStream tokens = new CommonTokenStream(lexer);
             PythonTokenSource indentedSource = new PythonTokenSource(tokens, filename);
             tokens = new CommonTokenStream(indentedSource);

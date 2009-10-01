@@ -14,9 +14,8 @@ public class PythonPartialTester {
         try {
             PythonTree result = null;
             CharStream input = new ANTLRFileStream(args[0]);
-            PythonPartialLexer lexer = new BaseParser.PyPartialLexer(input);
+            PythonPartialLexer lexer = new PythonPartialLexer(input);
             CommonTokenStream tokens = new CommonTokenStream(lexer);
-            //PythonTokenSource indentedSource = new PythonTokenSource(tokens);
             PythonTokenSource indentedSource = new PythonTokenSource(tokens, "<test>");
             tokens = new CommonTokenStream(indentedSource);
             PythonPartialParser parser = new PythonPartialParser(tokens);
