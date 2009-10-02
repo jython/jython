@@ -25,6 +25,7 @@ public class PythonTree extends AST {
     }
 
     public PythonTree(PyType subType) {
+        super(subType);
         node = new CommonTree();
     }
 

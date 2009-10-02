@@ -28,6 +28,7 @@ public class PyMethod extends PyObject {
     public PyObject im_self;
 
     public PyMethod(PyObject function, PyObject self, PyObject type) {
+        super(TYPE);
         if (self == Py.None){
             self = null;
         }

@@ -57,6 +57,7 @@ public class PyFunction extends PyObject {
 
     public PyFunction(PyObject globals, PyObject[] defaults, PyCode code, PyObject doc,
                       PyObject[] closure_cells) {
+        super(TYPE);
         func_globals = globals;
         __name__ = code.co_name;
         __doc__ = doc != null ? doc : Py.None;

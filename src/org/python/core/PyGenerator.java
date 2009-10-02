@@ -7,6 +7,8 @@ import org.python.expose.ExposedType;
 @ExposedType(name = "generator", base = PyObject.class, isBaseType = false)
 public class PyGenerator extends PyIterator {
 
+    public static final PyType TYPE = PyType.fromClass(PyGenerator.class);
+
     @ExposedGet
     protected PyFrame gi_frame;
 
@@ -18,6 +20,7 @@ public class PyGenerator extends PyIterator {
     private PyObject closure;
 
     public PyGenerator(PyFrame frame, PyObject closure) {
+        super(TYPE);
         gi_frame = frame;
         this.closure = closure;
 

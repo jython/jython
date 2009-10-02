@@ -33,6 +33,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
      * Create an empty dictionary.
      */
     public PyDictionary() {
+        super(TYPE);
         table = Generic.concurrentMap();
     }
 
@@ -48,6 +49,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
      * Create a new dictionary which is based on given map.
      */
     public PyDictionary(Map<PyObject, PyObject> t) {
+        super(TYPE);
         table = Generic.concurrentMap();
         table.putAll(t);
     }

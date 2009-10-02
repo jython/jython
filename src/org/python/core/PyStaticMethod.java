@@ -15,6 +15,7 @@ public class PyStaticMethod extends PyObject {
     protected PyObject callable;
 
     public PyStaticMethod(PyObject callable) {
+        super(TYPE);
         this.callable = callable;
     }
 
