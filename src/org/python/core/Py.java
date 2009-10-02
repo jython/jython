@@ -1178,8 +1178,7 @@ public final class Py {
         return makeException(null);
     }
 
-    public static PyObject runCode(PyCode code, PyObject locals,
-            PyObject globals) {
+    public static PyObject runCode(PyCode code, PyObject locals, PyObject globals) {
         PyFrame f;
         ThreadState ts = getThreadState();
         if (locals == null || locals == Py.None) {
@@ -1194,13 +1193,12 @@ public final class Py {
             globals = ts.frame.f_globals;
         }
 
-        PyTableCode tc = null;
-        if (code instanceof PyTableCode) {
-            tc = (PyTableCode) code;
+        PyBaseCode baseCode = null;
+        if (code instanceof PyBaseCode) {
+            baseCode = (PyBaseCode) code;
         }
 
-        f = new PyFrame(tc, locals, globals,
-                Py.getSystemState().getBuiltins());
+        f = new PyFrame(baseCode, locals, globals, Py.getSystemState().getBuiltins());
         return code.call(ts, f);
     }
 
