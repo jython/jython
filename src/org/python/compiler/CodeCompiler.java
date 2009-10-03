@@ -87,7 +87,7 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.Method;
-
+import static org.python.util.CodegenUtils.*;
 
 public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
 
@@ -153,7 +153,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
     }
 
     public void getNone() throws IOException {
-        code.getstatic("org/python/core/Py", "None", $pyObj);
+        code.getstatic("org/python/core/Py", "None", ci(PyObject.class));
     }
 
     public void loadFrame() throws Exception {
@@ -278,7 +278,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
 
         if (classBody) {
             loadFrame();
-            code.invokevirtual("org/python/core/PyFrame", "getf_locals", "()" + $pyObj);
+            code.invokevirtual("org/python/core/PyFrame", "getf_locals", sig(PyObject.class));
             code.areturn();
         } else {
             if (exit == null) {
@@ -415,7 +415,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         code.new_("org/python/core/PyFunction");
         code.dup();
         loadFrame();
-        code.getfield("org/python/core/PyFrame", "f_globals", $pyObj);
+        code.getfield("org/python/core/PyFrame", "f_globals", ci(PyObject.class));
         code.aload(defaults);
         code.freeLocal(defaults);
 
@@ -1975,7 +1975,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         code.freeLocal(defaultsArray);
 
         loadFrame();
-        code.getfield("org/python/core/PyFrame", "f_globals", $pyObj);
+        code.getfield("org/python/core/PyFrame", "f_globals", ci(PyObject.class));
         
         code.swap();
 
@@ -2215,7 +2215,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         code.new_("org/python/core/PyFunction");
         code.dup();
         loadFrame();
-        code.getfield("org/python/core/PyFrame", "f_globals", $pyObj);
+        code.getfield("org/python/core/PyFrame", "f_globals", ci(PyObject.class));
 
         ScopeInfo scope = module.getScopeInfo(node);
 
