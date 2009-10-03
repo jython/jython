@@ -15,6 +15,7 @@ import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyType;
+import org.python.core.ThreadState;
 import org.python.expose.ExposeAsSuperclass;
 import org.python.expose.ExposedClassMethod;
 import org.python.expose.ExposedDelete;
@@ -70,6 +71,8 @@ public interface PyTypes {
     public static final Type ADATA_DESCR = Type.getType(PyDataDescr[].class);
 
     public static final Type BUILTIN_INFO = Type.getType(PyBuiltinCallable.Info.class);
+
+    public static final Type THREAD_STATE = Type.getType(ThreadState.class);
 
     // Exposer Jython types
     public static final Type EXPOSED_TYPE = Type.getType(ExposedType.class);

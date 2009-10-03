@@ -99,7 +99,7 @@ public class InstanceMethodExposer extends MethodExposer {
                         + "', not a '");
             }
         });
-        mv.visitVarInsn(ALOAD, 1);
+        mv.visitVarInsn(ALOAD, !needsThreadState(args) ? 1 : 2);
         call(PYOBJ, "getType", PYTYPE);
         call(PYTYPE, "fastGetName", STRING);
         call(STRING_BUILDER, "append", STRING_BUILDER, STRING);

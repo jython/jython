@@ -6,6 +6,7 @@ import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyType;
+import org.python.core.ThreadState;
 import org.python.expose.ExposedClassMethod;
 import org.python.expose.ExposedDelete;
 import org.python.expose.ExposedGet;
@@ -150,4 +151,32 @@ public class SimpleExposed extends PyObject {
     public String toStringVal = TO_STRING_RETURN;
 
     public static final String TO_STRING_RETURN = "A simple test class";
+
+    @ExposedMethod
+    public String needsThreadState(ThreadState state, String s) {
+        return needsThreadStateClass(state, null, s, null);
+    }
+
+    @ExposedMethod
+    public int needsThreadStateWide(ThreadState state, PyObject[] args, String[] kws) {
+        if (state == null) {
+            return -1;
+        }
+        return args.length + kws.length;
+    }
+
+    @ExposedClassMethod(defaults = {"null"})
+    public static String needsThreadStateClass(ThreadState state, PyType onType, String s,
+                                               String possiblyNull) {
+        if (state != null) {
+            s += " got state " + state.hashCode();
+        }
+        if (onType != null) {
+            s += " got type";
+        }
+        if (possiblyNull != null) {
+            s += possiblyNull;
+        }
+        return s;
+    }
 }

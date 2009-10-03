@@ -29,12 +29,26 @@ public class ClassMethodExposer extends MethodExposer {
 
     private static Type[] getArgs(Type onType, String methodName, String desc) {
         Type[] args = Type.getArgumentTypes(desc);
-        if (args.length == 0 || !args[0].equals(PYTYPE)) {
-            throw new InvalidExposingException("The first argument to an ExposedClassMethod must be PyType[method="
-                    + onType.getClassName() + "." + methodName + "]");
+        boolean needsThreadState = needsThreadState(args);
+        int offset = needsThreadState ? 1 : 0;
+
+        if (args.length == offset || !args[offset].equals(PYTYPE)) {
+            String msg = String.format("ExposedClassMethod's first argument %smust be "
+                                       + "PyType[method=%s.%s]",
+                                       needsThreadState ? "(following ThreadState) " : "",
+                                       onType.getClassName(), methodName);
+            throw new InvalidExposingException(msg);
         }
+
+        // Remove PyType from the exposed __call__'s args, it'll be already bound as self
         Type[] filledInArgs = new Type[args.length - 1];
-        System.arraycopy(args, 1, filledInArgs, 0, filledInArgs.length);
+        if (needsThreadState) {
+            // ThreadState precedes PyType
+            filledInArgs[0] = args[0];
+            System.arraycopy(args, 2, filledInArgs, 1, filledInArgs.length - 1);
+        } else {
+            System.arraycopy(args, 1, filledInArgs, 0, filledInArgs.length);
+        }
         return filledInArgs;
     }
 
@@ -46,5 +60,14 @@ public class ClassMethodExposer extends MethodExposer {
     @Override
     protected void checkSelf() {
         mv.visitTypeInsn(CHECKCAST, PYTYPE.getInternalName());
+    }
+
+    @Override
+    protected void loadSelfAndThreadState() {
+        // ThreadState precedes self for ClassMethods, load it first if necessary
+        loadThreadState();
+        // Push self on the stack so we can call it
+        get("self", PYOBJ);
+        checkSelf();
     }
 }

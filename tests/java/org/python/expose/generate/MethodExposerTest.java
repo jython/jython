@@ -6,6 +6,8 @@ import org.python.core.BytecodeLoader;
 import org.python.core.Py;
 import org.python.core.PyBuiltinCallable;
 import org.python.core.PyException;
+import org.python.core.PyObject;
+import org.python.core.ThreadState;
 import org.python.expose.MethodType;
 
 public class MethodExposerTest extends InterpTestCase implements Opcodes, PyTypes {
@@ -224,6 +226,55 @@ public class MethodExposerTest extends InterpTestCase implements Opcodes, PyType
         assertEquals(1, bound.__call__(Py.newString("hello")).asInt());
         assertEquals(2, bound.__call__(Py.newString("nothello"), Py.None).asInt());
         assertEquals(3, bound.__call__(Py.newString("nothello"), Py.One).asInt());
+    }
+
+    public void testThreadState() throws Exception {
+        PyBuiltinCallable bound = createBound("needsThreadState", STRING, THREAD_STATE, STRING);
+        ThreadState ts = Py.getThreadState();
+        PyObject expected = Py.newString("foo got state " + ts.hashCode());
+        assertEquals(expected, bound.__call__(Py.getThreadState(), Py.newString("foo")));
+        assertEquals(expected, bound.__call__(Py.newString("foo")));
+        ts = new ThreadState(new Thread(), ts.systemState);
+        assertEquals(Py.newString("foo got state " + ts.hashCode()),
+                     bound.__call__(ts, Py.newString("foo")));
+    }
+
+    public void testThreadStateFullArguments() throws Exception {
+        InstanceMethodExposer exp = new InstanceMethodExposer(Type.getType(SimpleExposed.class),
+                                                              Opcodes.ACC_PUBLIC,
+                                                              "needsThreadStateWide",
+                                                              Type.getMethodDescriptor(Type.INT_TYPE,
+                                                                                       new Type[] {THREAD_STATE,
+                                                                                                   APYOBJ,
+                                                                                                   ASTRING}),
+                                                              "simpleexposed");
+        PyBuiltinCallable bound = createBound(exp);
+        assertEquals(Py.Zero, bound.__call__(Py.getThreadState()));
+        assertEquals(Py.Zero, bound.__call__());
+        assertEquals(Py.One, bound.__call__(Py.getThreadState(), Py.One));
+        assertEquals(Py.One, bound.__call__(Py.One));
+    }
+
+    public void testThreadStateClassMethod() throws Exception {
+        ClassMethodExposer exp = new ClassMethodExposer(Type.getType(SimpleExposed.class),
+                                                        Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,
+                                                        "needsThreadStateClass",
+                                                        Type.getMethodDescriptor(STRING,
+                                                                                 new Type[] {THREAD_STATE,
+                                                                                             PYTYPE,
+                                                                                             STRING,
+                                                                                             STRING}),
+                                                        "simpleexposed",
+                                                        new String[0],
+                                                        new String[] {"null"},
+                                                        "");
+        PyBuiltinCallable bound = createBound(exp);
+        ThreadState ts = Py.getThreadState();
+        PyObject arg0 = Py.newString("bar");
+        PyObject arg1 = Py.newString(" and extra");
+        PyObject expected = Py.newString("bar got state " + ts.hashCode() + " got type and extra");
+        assertEquals(expected, bound.__call__(Py.getThreadState(), arg0, arg1));
+        assertEquals(expected, bound.__call__(arg0, arg1));
     }
 
     public void test__new__() throws Exception {

@@ -132,14 +132,27 @@ public abstract class MethodExposer extends Exposer {
     }
 
     private void generateWideCall() {
-        startMethod("__call__", PYOBJ, APYOBJ, ASTRING);
-        get("self", PYOBJ);
-        checkSelf();
-        mv.visitVarInsn(ALOAD, 1);
-        mv.visitVarInsn(ALOAD, 2);
+        boolean needsThreadState = needsThreadState(args);
+        int offset = needsThreadState ? 1 : 0;
+        Type[] callArgs;
+
+        if (needsThreadState) {
+            callArgs = new Type[] {THREAD_STATE, APYOBJ, ASTRING};
+        } else {
+            callArgs = new Type[] {APYOBJ, ASTRING};
+        }
+        startMethod("__call__", PYOBJ, callArgs);
+
+        loadSelfAndThreadState();
+        mv.visitVarInsn(ALOAD, offset + 1);
+        mv.visitVarInsn(ALOAD, offset + 2);
         makeCall();
         toPy(returnType);
         endMethod(ARETURN);
+
+        if (needsThreadState) {
+            generateCallNoThreadState(callArgs);
+        }
     }
 
     private boolean hasDefault(int argIndex) {
@@ -151,17 +164,25 @@ public abstract class MethodExposer extends Exposer {
     }
 
     private void generateCall(int numDefaults) {
-        int usedLocals = 1;// We always have one used local for self
-        Type[] callArgs = new Type[args.length - numDefaults];
-        for(int i = 0; i < callArgs.length; i++) {
+        boolean needsThreadState = needsThreadState(args);
+        int requiredLength = args.length - numDefaults;
+        int offset = needsThreadState ? 1 : 0;
+        // We always have one used local for self, and possibly one for ThreadState
+        int usedLocals = 1 + offset;
+        Type[] callArgs = new Type[requiredLength];
+
+        if (needsThreadState) {
+            callArgs[0] = THREAD_STATE;
+        }
+        for(int i = offset; i < callArgs.length; i++) {
             callArgs[i] = PYOBJ;
         }
         startMethod("__call__", PYOBJ, callArgs);
-        // Push self on the stack so we can call it
-        get("self", PYOBJ);
-        checkSelf();
+
+        loadSelfAndThreadState();
         // Push the passed in callArgs onto the stack, and convert them if necessary
-        for(int i = 0; i < callArgs.length; i++) {
+        int i;
+        for(i = offset; i < requiredLength; i++) {
             mv.visitVarInsn(ALOAD, usedLocals++);
             if(PRIMITIVES.containsKey(args[i])) {
                 callStatic(PY, "py2" + args[i].getClassName(), args[i], PYOBJ);
@@ -174,12 +195,45 @@ public abstract class MethodExposer extends Exposer {
             }
         }
         // Push the defaults onto the stack
-        for(int i = callArgs.length; i < args.length; i++) {
+        for(; i < args.length; i++) {
             pushDefault(getDefault(i), args[i]);
         }
         makeCall();
         toPy(returnType);
         endMethod(ARETURN);
+
+        if (needsThreadState) {
+            generateCallNoThreadState(callArgs);
+        }
+    }
+
+    private void generateCallNoThreadState(Type[] callArgs) {
+        Type[] noThreadStateArgs = new Type[callArgs.length - 1];
+        System.arraycopy(callArgs, 1, noThreadStateArgs, 0, noThreadStateArgs.length);
+        startMethod("__call__", PYOBJ, noThreadStateArgs);
+
+        mv.visitVarInsn(ALOAD, 0);
+        callStatic(PY, "getThreadState", THREAD_STATE);
+        for (int i = 0; i < noThreadStateArgs.length; i++) {
+            mv.visitVarInsn(ALOAD, i + 1);
+        }
+
+        call(thisType, "__call__", PYOBJ, callArgs);
+        endMethod(ARETURN);
+    }
+
+    protected void loadSelfAndThreadState() {
+        // Push self on the stack so we can call it
+        get("self", PYOBJ);
+        checkSelf();
+        // Load ThreadState if necessary
+        loadThreadState();
+    }
+
+    protected void loadThreadState() {
+        if (needsThreadState(args)) {
+            mv.visitVarInsn(ALOAD, 1);
+        }
     }
 
     protected abstract void checkSelf();
@@ -218,8 +272,14 @@ public abstract class MethodExposer extends Exposer {
         }
     }
 
+    protected static boolean needsThreadState(Type[] args) {
+        return args.length > 0 && args[0].equals(THREAD_STATE);
+    }
+
     protected static boolean isWide(Type[] args) {
-        return args.length == 2 && args[0].equals(APYOBJ) && args[1].equals(ASTRING);
+        int offset = needsThreadState(args) ? 1 : 0;
+        return args.length == 2 + offset
+                && args[offset].equals(APYOBJ) && args[offset + 1].equals(ASTRING);
     }
 
 }
