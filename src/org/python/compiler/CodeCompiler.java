@@ -78,6 +78,7 @@ import org.python.core.ContextGuard;
 import org.python.core.ContextManager;
 import org.python.core.imp;
 import org.python.core.Py;
+import org.python.core.PyCode;
 import org.python.core.PyComplex;
 import org.python.core.PyDictionary;
 import org.python.core.PyException;
@@ -219,18 +220,18 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
 
     private void saveAugTmps(PythonTree node, int count) throws Exception {
         if (count >= 4) {
-            augtmp4 = code.getLocal("Lorg/python/core/PyObject;");
+            augtmp4 = code.getLocal(ci(PyObject.class));
             code.astore(augtmp4);
         }
         if (count >= 3) {
-            augtmp3 = code.getLocal("Lorg/python/core/PyObject;");
+            augtmp3 = code.getLocal(ci(PyObject.class));
             code.astore(augtmp3);
         }
         if (count >= 2) {
-            augtmp2 = code.getLocal("Lorg/python/core/PyObject;");
+            augtmp2 = code.getLocal(ci(PyObject.class));
             code.astore(augtmp2);
         }
-        augtmp1 = code.getLocal("Lorg/python/core/PyObject;");
+        augtmp1 = code.getLocal(ci(PyObject.class));
         code.astore(augtmp1);
 
         code.aload(augtmp1);
@@ -439,9 +440,9 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         getDocString(node.getInternalBody());
 
         if (!makeClosure(scope)) {
-            code.invokespecial(p(PyFunction.class), "<init>", "(" + $pyObj + $pyObjArr + $pyCode + $pyObj + ")V");
+            code.invokespecial(p(PyFunction.class), "<init>", sig(Void.TYPE, PyObject.class, PyObject[].class, PyCode.class, PyObject.class));
         } else {
-            code.invokespecial( p(PyFunction.class), "<init>", "(" + $pyObj + $pyObjArr + $pyCode + $pyObj + $pyObjArr + ")V");
+            code.invokespecial(p(PyFunction.class), "<init>", sig(Void.TYPE, PyObject.class, PyObject[].class, PyCode.class, PyObject.class, PyObject[].class));
         }
         
         applyDecorators(node.getInternalDecorator_list());
@@ -1184,7 +1185,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
 
             if (handler.getInternalName() != null) {
                 code.aload(exc);
-                code.getfield(p(PyException.class), "value", "Lorg/python/core/PyObject;");
+                code.getfield(p(PyException.class), "value", ci(PyObject.class));
                 set(handler.getInternalName());
             }
 
@@ -1800,7 +1801,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         code.new_(p(PyTuple.class));
         code.dup();
         code.aload(dims);
-        code.invokespecial(p(PyTuple.class), "<init>", "(" + $pyObjArr + ")V");
+        code.invokespecial(p(PyTuple.class), "<init>", sig(Void.TYPE, PyObject[].class));
         freeArray(dims);
         return null;
     }
@@ -1878,7 +1879,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
 
         code.dup();
         code.aload(content);
-        code.invokespecial(p(PyTuple.class), "<init>", "(" + $pyObjArr + ")V");
+        code.invokespecial(p(PyTuple.class), "<init>", sig(Void.TYPE, PyObject[].class));
         freeArray(content);
         return null;
     }
@@ -1893,7 +1894,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         code.new_(p(PyList.class));
         code.dup();
         code.aload(content);
-        code.invokespecial(p(PyList.class), "<init>", "(" + $pyObjArr + ")V");
+        code.invokespecial(p(PyList.class), "<init>", sig(Void.TYPE, PyObject[].class));
         freeArray(content);
         return null;
     }
@@ -1903,7 +1904,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         code.new_(p(PyList.class));
 
         code.dup();
-        code.invokespecial(p(PyList.class), "<init>", "()V");
+        code.invokespecial(p(PyList.class), "<init>", sig(Void.TYPE));
 
         code.dup();
 
@@ -1952,7 +1953,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         code.new_(p(PyDictionary.class));
         code.dup();
         code.aload(content);
-        code.invokespecial(p(PyDictionary.class), "<init>", "(" + $pyObjArr + ")V");
+        code.invokespecial(p(PyDictionary.class), "<init>", sig(Void.TYPE, PyObject[].class));
         freeArray(content);
         return null;
     }
@@ -1996,9 +1997,9 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
                       false, false, node.getLine(), scope, cflags).get(code);
 
         if (!makeClosure(scope)) {
-            code.invokespecial(p(PyFunction.class), "<init>", "(" + $pyObj + $pyObjArr + $pyCode + ")V");
+            code.invokespecial(p(PyFunction.class), "<init>", sig(Void.TYPE, PyObject.class, PyObject[].class, PyCode.class));
         } else {
-            code.invokespecial(p(PyFunction.class), "<init>", "(" + $pyObj + $pyObjArr + $pyCode + $pyObjArr + ")V");
+            code.invokespecial(p(PyFunction.class), "<init>", sig(Void.TYPE, PyObject.class, PyObject[].class, PyCode.class, PyObject[].class));
         }
         return null;
     }
@@ -2006,7 +2007,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
 
     @Override
     public Object visitEllipsis(Ellipsis node) throws Exception {
-        code.getstatic(p(Py.class), "Ellipsis", "Lorg/python/core/PyObject;");
+        code.getstatic(p(Py.class), "Ellipsis", ci(PyObject.class));
         return null;
     }
 
@@ -2026,7 +2027,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         code.aload(step);
         code.freeLocal(step);
         
-        code.invokespecial(p(PySlice.class), "<init>", "(" + $pyObj + $pyObj + $pyObj + ")V");
+        code.invokespecial(p(PySlice.class), "<init>", sig(Void.TYPE, PyObject.class, PyObject.class, PyObject.class));
         return null;
     }
 
@@ -2263,9 +2264,9 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
 
         code.aconst_null();
         if (!makeClosure(scope)) {
-            code.invokespecial(p(PyFunction.class), "<init>", "(" + $pyObj + $pyObjArr + $pyCode + $pyObj + ")V");
+            code.invokespecial(p(PyFunction.class), "<init>", sig(Void.TYPE, PyObject.class, PyObject[].class, PyCode.class, PyObject.class));
         } else {
-            code.invokespecial( p(PyFunction.class), "<init>", "(" + $pyObj + $pyObjArr + $pyCode + $pyObj + $pyObjArr + ")V");
+            code.invokespecial(p(PyFunction.class), "<init>", sig(Void.TYPE, PyObject.class, PyObject[].class, PyCode.class, PyObject.class, PyObject[].class));
         }
         int genExp = storeTop();
 
