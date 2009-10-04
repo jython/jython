@@ -183,7 +183,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
     }
     
     private void loadf_back() throws Exception {
-        code.getfield(p(PyFrame.class), "f_back", $pyFrame);
+        code.getfield(p(PyFrame.class), "f_back", ci(PyFrame.class));
     }
 
     public int storeTop() throws Exception {
@@ -283,7 +283,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
             loadFrame();
             code.iconst(scope.max_with_count);
             code.anewarray(p(PyObject.class));
-            code.putfield(p(PyFrame.class), "f_exits", $pyObjArr);
+            code.putfield(p(PyFrame.class), "f_exits", ci(PyObject[].class));
         }
 
         Object exit = visit(node);
@@ -345,9 +345,9 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         else
             n = nodes.size();
 
-        int array = code.getLocal("[Lorg/python/core/PyObject;");
+        int array = code.getLocal(ci(PyObject[].class));
         if (n == 0) {
-            code.getstatic(p(Py.class), "EmptyObjects", $pyObjArr);
+            code.getstatic(p(Py.class), "EmptyObjects", ci(PyObject[].class));
             code.astore(array);
         } else {
             code.iconst(n);
@@ -389,7 +389,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         int n = scope.freevars.size();
         if (n == 0) return false;
 
-        int tmp = code.getLocal("[Lorg/python/core/PyObject;");
+        int tmp = code.getLocal(ci(PyObject[].class));
         code.iconst(n);
         code.anewarray(p(PyObject.class));
         code.astore(tmp);
@@ -647,7 +647,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
 
     private int saveStack() throws Exception {
         if (stack.size() > 0) {
-            int array = code.getLocal("[Ljava/lang/Object;");
+            int array = code.getLocal(ci(Object[].class));
             code.iconst(stack.size());
             code.anewarray(p(Object.class));
             code.astore(array);
@@ -700,9 +700,9 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         Vector<String> v = code.getActiveLocals();
 
         loadFrame();
-        code.getfield(p(PyFrame.class), "f_savedlocals", "[Ljava/lang/Object;");
+        code.getfield(p(PyFrame.class), "f_savedlocals", ci(Object[].class));
 
-        int locals = code.getLocal("[Ljava/lang/Object;");
+        int locals = code.getLocal(ci(Object[].class));
         code.astore(locals);
 
         for (int i = 0; i < v.size(); i++) {
@@ -751,7 +751,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         Vector<String> v = code.getActiveLocals();
         code.iconst(v.size());
         code.anewarray(p(Object.class));
-        int locals = code.getLocal("[Ljava/lang/Object;");
+        int locals = code.getLocal(ci(Object[].class));
         code.astore(locals);
 
         for (int i = 0; i < v.size(); i++) {
@@ -770,7 +770,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
 
         loadFrame();
         code.aload(locals);
-        code.putfield(p(PyFrame.class), "f_savedlocals", "[Ljava/lang/Object;");
+        code.putfield(p(PyFrame.class), "f_savedlocals", ci(Object[].class));
         code.freeLocal(locals);
     }
 
@@ -1553,7 +1553,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
             c.iconst_0();
         }
         c.anewarray(p(String.class));
-        int strings = c.getLocal("[Ljava/lang/String;");
+        int strings = c.getLocal(ci(String[].class));
         c.astore(strings);
         if (names != null) {
             int i = 0;
