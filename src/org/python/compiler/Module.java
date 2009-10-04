@@ -27,6 +27,7 @@ import org.python.core.PyFunctionTable;
 import org.python.core.PyInteger;
 import org.python.core.PyLong;
 import org.python.core.PyObject;
+import org.python.core.PyRunnable;
 import org.python.core.PyRunnableBootstrap;
 import org.python.core.PyString;
 import org.python.core.PyUnicode;
@@ -52,7 +53,7 @@ class PyIntegerConstant extends Constant implements ClassConstants, Opcodes
     public void put(Code c) throws IOException {
         module.classfile.addField(name, ci(PyInteger.class), access);
         c.iconst(value);
-        c.invokestatic("org/python/core/Py", "newInteger", sig(PyInteger.class, Integer.TYPE));
+        c.invokestatic(p(Py.class), "newInteger", sig(PyInteger.class, Integer.TYPE));
         c.putstatic(module.classfile.name, name, ci(PyInteger.class));
     }
 
@@ -63,10 +64,11 @@ class PyIntegerConstant extends Constant implements ClassConstants, Opcodes
 
     @Override
     public boolean equals(Object o) {
-        if (o instanceof PyIntegerConstant)
+        if (o instanceof PyIntegerConstant) {
             return ((PyIntegerConstant)o).value == value;
-        else
+        } else {
             return false;
+        }
     }
 }
 
@@ -85,7 +87,7 @@ class PyFloatConstant extends Constant implements ClassConstants, Opcodes
     public void put(Code c) throws IOException {
         module.classfile.addField(name, ci(PyFloat.class), access);
         c.ldc(new Double(value));
-        c.invokestatic("org/python/core/Py", "newFloat", sig(PyFloat.class, Double.TYPE));
+        c.invokestatic(p(Py.class), "newFloat", sig(PyFloat.class, Double.TYPE));
         c.putstatic(module.classfile.name, name, ci(PyFloat.class));
     }
 
@@ -96,10 +98,11 @@ class PyFloatConstant extends Constant implements ClassConstants, Opcodes
 
     @Override
     public boolean equals(Object o) {
-        if (o instanceof PyFloatConstant)
+        if (o instanceof PyFloatConstant) {
             return ((PyFloatConstant)o).value == value;
-        else
+        } else {
             return false;
+        }
     }
 }
 
@@ -118,7 +121,7 @@ class PyComplexConstant extends Constant implements ClassConstants, Opcodes
     public void put(Code c) throws IOException {
         module.classfile.addField(name, ci(PyComplex.class), access);
         c.ldc(new Double(value));
-        c.invokestatic("org/python/core/Py", "newImaginary", sig(PyComplex.class, Double.TYPE));
+        c.invokestatic(p(Py.class), "newImaginary", sig(PyComplex.class, Double.TYPE));
         c.putstatic(module.classfile.name, name, ci(PyComplex.class));
     }
 
@@ -129,10 +132,11 @@ class PyComplexConstant extends Constant implements ClassConstants, Opcodes
 
     @Override
     public boolean equals(Object o) {
-        if (o instanceof PyComplexConstant)
+        if (o instanceof PyComplexConstant) {
             return ((PyComplexConstant)o).value == value;
-        else
+        } else {
             return false;
+        }
     }
 }
 
@@ -151,8 +155,7 @@ class PyStringConstant extends Constant implements ClassConstants, Opcodes
     public void put(Code c) throws IOException {
         module.classfile.addField(name, ci(PyString.class), access);
         c.ldc(value);
-        c.invokestatic("org/python/core/PyString", "fromInterned", sig(PyString.class,
-                    String.class));
+        c.invokestatic(p(PyString.class), "fromInterned", sig(PyString.class, String.class));
         c.putstatic(module.classfile.name, name, ci(PyString.class));
     }
 
@@ -163,10 +166,11 @@ class PyStringConstant extends Constant implements ClassConstants, Opcodes
 
     @Override
     public boolean equals(Object o) {
-        if (o instanceof PyStringConstant)
+        if (o instanceof PyStringConstant) {
             return ((PyStringConstant)o).value.equals(value);
-        else
+        } else {
             return false;
+        }
     }
 }
 
@@ -185,8 +189,7 @@ class PyUnicodeConstant extends Constant implements ClassConstants, Opcodes
     public void put(Code c) throws IOException {
         module.classfile.addField(name, ci(PyUnicode.class), access);
         c.ldc(value);
-        c.invokestatic("org/python/core/PyUnicode", "fromInterned", sig(PyUnicode.class,
-                    String.class));
+        c.invokestatic(p(PyUnicode.class), "fromInterned", sig(PyUnicode.class, String.class));
         c.putstatic(module.classfile.name, name, ci(PyUnicode.class));
     }
 
@@ -197,10 +200,11 @@ class PyUnicodeConstant extends Constant implements ClassConstants, Opcodes
 
     @Override
     public boolean equals(Object o) {
-        if (o instanceof PyUnicodeConstant)
+        if (o instanceof PyUnicodeConstant) {
             return ((PyUnicodeConstant)o).value.equals(value);
-        else
+        } else {
             return false;
+        }
     }
 }
 
@@ -219,7 +223,7 @@ class PyLongConstant extends Constant implements ClassConstants, Opcodes
     public void put(Code c) throws IOException {
         module.classfile.addField(name, ci(PyLong.class), access);
         c.ldc(value);
-        c.invokestatic("org/python/core/Py", "newLong", sig(PyLong.class, String.class));
+        c.invokestatic(p(Py.class), "newLong", sig(PyLong.class, String.class));
         c.putstatic(module.classfile.name, name, ci(PyLong.class));
     }
 
@@ -230,9 +234,11 @@ class PyLongConstant extends Constant implements ClassConstants, Opcodes
 
     @Override
     public boolean equals(Object o) {
-        if (o instanceof PyLongConstant)
+        if (o instanceof PyLongConstant) {
             return ((PyLongConstant)o).value.equals(value);
-        else return false;
+        } else {
+            return false;
+        }
     }
 }
 
@@ -301,7 +307,7 @@ class PyCodeConstant extends Constant implements ClassConstants, Opcodes
 
         c.iconst(moreflags);
 
-        c.invokestatic("org/python/core/Py", "newCode", sig(PyCode.class, Integer.TYPE, 
+        c.invokestatic(p(Py.class), "newCode", sig(PyCode.class, Integer.TYPE, 
                     String[].class, String.class, String.class, Integer.TYPE, Boolean.TYPE,
                     Boolean.TYPE, PyFunctionTable.class, Integer.TYPE, String[].class,
                     String[].class, Integer.TYPE, Integer.TYPE));
@@ -327,14 +333,15 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
     public Module(String name, String filename, boolean linenumbers, long mtime) {
         this.linenumbers = linenumbers;
         this.mtime = mtime;
-        classfile = new ClassFile(name, "org/python/core/PyFunctionTable",
+        classfile = new ClassFile(name, p(PyFunctionTable.class),
                                   ACC_SYNCHRONIZED | ACC_PUBLIC, mtime);
         constants = new Hashtable<Constant,Constant>();
         sfilename = filename;
-        if (filename != null)
+        if (filename != null) {
             this.filename = PyString(filename);
-        else
+        } else {
             this.filename = null;
+        }
         codes = new ArrayList<PyCodeConstant>();
         futures = new Future();
         scopes = new Hashtable<PythonTree,ScopeInfo>();
@@ -349,8 +356,9 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
 
     private Constant findConstant(Constant c) {
         Constant ret = constants.get(c);
-        if (ret != null)
+        if (ret != null) {
             return ret;
+        }
         ret = c;
         c.module = this;
         //More sophisticated name mappings might be nice
@@ -374,9 +382,11 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
     public Constant PyString(String value) {
         return findConstant(new PyStringConstant(value));
     }
+
     public Constant PyUnicode(String value) {
         return findConstant(new PyUnicodeConstant(value));
     }
+
     public Constant PyLong(String value) {
         return findConstant(new PyLongConstant(value));
     }
@@ -384,14 +394,17 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
     List<PyCodeConstant> codes;
     private boolean isJavaIdentifier(String s) {
         char[] chars = s.toCharArray();
-        if (chars.length == 0)
+        if (chars.length == 0) {
             return false;
-        if (!Character.isJavaIdentifierStart(chars[0]))
+        }
+        if (!Character.isJavaIdentifierStart(chars[0])) {
             return false;
+        }
 
         for(int i=1; i<chars.length; i++) {
-            if (!Character.isJavaIdentifierPart(chars[i]))
+            if (!Character.isJavaIdentifierPart(chars[i])) {
                 return false;
+            }
         }
         return true;
     }
@@ -399,7 +412,9 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
     //XXX: this can probably go away now that we can probably just copy the list.
     private List<String> toNameAr(List<String> names,boolean nullok) {
         int sz = names.size();
-        if (sz == 0 && nullok) return null;
+        if (sz == 0 && nullok) {
+            return null;
+        }
         List<String> nameArray = new ArrayList<String>();
         nameArray.addAll(names);
         return nameArray;
@@ -461,10 +476,8 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
 
             c.aload(1);
             c.ldc("__name__");
-            c.invokevirtual("org/python/core/PyFrame", "getname", sig(PyObject.class,
-                        String.class));
-
-            c.invokevirtual("org/python/core/PyFrame", "setlocal", sig(Void.TYPE, String.class,
+            c.invokevirtual(p(PyFrame.class), "getname", sig(PyObject.class, String.class));
+            c.invokevirtual(p(PyFrame.class), "setlocal", sig(Void.TYPE, String.class,
                         PyObject.class));
         }
 
@@ -488,21 +501,19 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
                 SymInfo syminf = tbl.get(paramcells.get(i));
                 c.iconst(syminf.locals_index);
                 c.iconst(syminf.env_index);
-                c.invokevirtual("org/python/core/PyFrame", "to_cell", sig(Void.TYPE, Integer.TYPE,
+                c.invokevirtual(p(PyFrame.class), "to_cell", sig(Void.TYPE, Integer.TYPE,
                             Integer.TYPE));
             }
         }
 
-        compiler.parse(tree, c, fast_locals, className, classBody,
-                       scope, cflags);
-
+        compiler.parse(tree, c, fast_locals, className, classBody, scope, cflags);
 
         // similar to visitResume code in pyasm.py
         if (scope.generator) {
             c.label(genswitch);
 
             c.aload(1);
-            c.getfield("org/python/core/PyFrame", "f_lasti", "I");
+            c.getfield(p(PyFrame.class), "f_lasti", "I");
             Label[] yields = new Label[compiler.yields.size()+1];
 
             yields[0] = start;
@@ -543,7 +554,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
     public void addInit() throws IOException {
         Code c = classfile.addMethod("<init>", sig(Void.TYPE, String.class), ACC_PUBLIC);
         c.aload(0);
-        c.invokespecial("org/python/core/PyFunctionTable", "<init>", sig(Void.TYPE));
+        c.invokespecial(p(PyFunctionTable.class), "<init>", sig(Void.TYPE));
         addConstants(c);
     }
 
@@ -570,8 +581,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
     }
     
     public void addBootstrap() throws IOException {
-        Code c = classfile.addMethod(CodeLoader.GET_BOOTSTRAP_METHOD_NAME,
-                sig(CodeBootstrap.class),
+        Code c = classfile.addMethod(CodeLoader.GET_BOOTSTRAP_METHOD_NAME, sig(CodeBootstrap.class),
                 ACC_PUBLIC | ACC_STATIC);
         c.ldc(Type.getType("L" + classfile.name + ";"));
         c.invokestatic(p(PyRunnableBootstrap.class), PyRunnableBootstrap.REFLECTION_METHOD_NAME,
@@ -580,8 +590,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
     }
 
     public void addConstants(Code c) throws IOException {
-        classfile.addField("self", "L"+classfile.name+";",
-                           ACC_STATIC|ACC_FINAL);
+        classfile.addField("self", "L"+classfile.name+";", ACC_STATIC|ACC_FINAL);
         c.aload(0);
         c.putstatic(classfile.name, "self", "L"+classfile.name+";");
         Enumeration e = constants.elements();
@@ -600,10 +609,8 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
     }
 
     public void addFunctions() throws IOException {
-        Code code = classfile.addMethod(
-            "call_function",
-            sig(PyObject.class, Integer.TYPE, PyFrame.class, ThreadState.class),
-            ACC_PUBLIC);
+        Code code = classfile.addMethod("call_function",
+            sig(PyObject.class, Integer.TYPE, PyFrame.class, ThreadState.class), ACC_PUBLIC);
 
         code.aload(0); // this
         code.aload(2); // frame
@@ -638,7 +645,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
 
         addFunctions();
 
-        classfile.addInterface("org/python/core/PyRunnable");
+        classfile.addInterface(p(PyRunnable.class));
         if (sfilename != null) {
             classfile.setSource(sfilename);
         }
@@ -659,8 +666,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
     {
         if (!err) {
             try {
-                Py.warning(Py.SyntaxWarning, msg,
-                           (sfilename != null) ? sfilename : "?",
+                Py.warning(Py.SyntaxWarning, msg, (sfilename != null) ? sfilename : "?",
                            node.getLine() ,null, Py.None);
                 return;
             } catch(PyException e) {
@@ -676,7 +682,8 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
                                CompilerFlags cflags)
         throws Exception 
     {
-        compile(node, ostream, name, filename, linenumbers, printResults, cflags, org.python.core.imp.NO_MTIME);
+        compile(node, ostream, name, filename, linenumbers, printResults, cflags,
+                org.python.core.imp.NO_MTIME);
     }
 
     public static void compile(mod node, OutputStream ostream,
