@@ -94,7 +94,7 @@ public class PyMethod extends PyObject {
             return this;
         }
     }
-    /*// This has been disabled since JavaFunc expects to be called with self + boxed args
+
     @Override
     public PyObject __call__() {
         return __call__(Py.getThreadState());
@@ -146,8 +146,7 @@ public class PyMethod extends PyObject {
     }
     
     @Override
-    public PyObject __call__(ThreadState state, PyObject arg0, PyObject arg1,
-            PyObject arg2) {
+    public PyObject __call__(ThreadState state, PyObject arg0, PyObject arg1, PyObject arg2) {
         PyObject self = checkSelf(arg0, null);
         if (self == null) {
             return im_func.__call__(state, arg0, arg1, arg2);
@@ -162,16 +161,16 @@ public class PyMethod extends PyObject {
     }
     
     @Override
-    public PyObject __call__(ThreadState state, PyObject arg0, PyObject arg1,
-            PyObject arg2, PyObject arg3) {
+    public PyObject __call__(ThreadState state, PyObject arg0, PyObject arg1, PyObject arg2,
+                             PyObject arg3) {
         PyObject self = checkSelf(arg0, null);
         if (self == null) {
             return im_func.__call__(state, arg0, arg1, arg2, arg3);
         } else {
-            return im_func.__call__(state, self, new PyObject[]{arg0, arg1, arg2, arg3}, Py.NoKeywords);
+            return im_func.__call__(state, self, new PyObject[]{arg0, arg1, arg2, arg3},
+                                    Py.NoKeywords);
         }
     }
-    
     
     @Override
     public PyObject __call__(PyObject arg1, PyObject[] args, String[] keywords) {
@@ -180,15 +179,15 @@ public class PyMethod extends PyObject {
     
     @Override
     public PyObject __call__(ThreadState state, PyObject arg1, PyObject[] args,
-            String[] keywords) {
+                             String[] keywords) {
         PyObject self = checkSelf(arg1, args);
         if (self == null) {
             return im_func.__call__(state, arg1, args, keywords);
         } else {
-            PyObject[] new_args = new PyObject[args.length+1];
-            System.arraycopy(args, 0, new_args, 1, args.length);
-            new_args[0] = arg1;
-            return im_func.__call__(state, self, new_args, keywords);
+            PyObject[] newArgs = new PyObject[args.length + 1];
+            System.arraycopy(args, 0, newArgs, 1, args.length);
+            newArgs[0] = arg1;
+            return im_func.__call__(state, self, newArgs, keywords);
         }
     }
     
@@ -201,25 +200,25 @@ public class PyMethod extends PyObject {
     public PyObject __call__(ThreadState state, PyObject[] args) {
         return __call__(state, args, Py.NoKeywords);
     }
-    */
+
     @Override
     public PyObject __call__(PyObject[] args, String[] keywords) {
-        return instancemethod___call__(args, keywords);
+        return __call__(Py.getThreadState(), args, keywords);
     }
     
     @Override
     public PyObject __call__(ThreadState state, PyObject[] args, String[] keywords) {
+        return instancemethod___call__(state, args, keywords);
+    }
+    
+    @ExposedMethod(doc = BuiltinDocs.instancemethod___call___doc)
+    final PyObject instancemethod___call__(ThreadState state, PyObject[] args, String[] keywords) {
         PyObject self = checkSelf(null, args);
         if (self == null) {
             return im_func.__call__(state, args, keywords);
         } else {
             return im_func.__call__(state, self, args, keywords);
         }
-    }
-    
-    @ExposedMethod(doc = BuiltinDocs.instancemethod___call___doc)
-    final PyObject instancemethod___call__(PyObject[] args, String[] keywords) {
-        return __call__(Py.getThreadState(), args, keywords);
     }
 
     private PyObject checkSelf(PyObject arg, PyObject[] args) {

@@ -17,6 +17,9 @@ public class PyReflectedFunction extends PyObject {
 
     public int nargs;
 
+    /** Whether __call__ should act as if this is called as a static method. */
+    private boolean calledStatically;
+
     protected PyReflectedFunction(String name) {
         __name__ = name;
     }
@@ -35,17 +38,22 @@ public class PyReflectedFunction extends PyObject {
         }
     }
 
+    @Override
     public PyObject _doget(PyObject container) {
         return _doget(container, null);
     }
 
+    @Override
     public PyObject _doget(PyObject container, PyObject wherefound) {
+        // NOTE: this calledStatically business is pretty hacky
         if (container == null) {
-            return this;
+            return calledStatically ? this : copyWithCalledStatically(true);
         }
-        return new PyMethod(this, container, wherefound);
+        return new PyMethod(calledStatically ? copyWithCalledStatically(false) : this,
+                            container, wherefound);
     }
 
+    @Override
     public PyObject getDoc() {
         return __doc__;
     }
@@ -64,6 +72,12 @@ public class PyReflectedFunction extends PyObject {
         func.argslist = new ReflectedArgs[nargs];
         System.arraycopy(argslist, 0, func.argslist, 0, nargs);
         return func;
+    }
+
+    private PyReflectedFunction copyWithCalledStatically(boolean calledStatically) {
+        PyReflectedFunction copy = copy();
+        copy.calledStatically = calledStatically;
+        return copy;
     }
 
     public boolean handles(Method method) {
@@ -143,6 +157,7 @@ public class PyReflectedFunction extends PyObject {
         nargs = nn;
     }
 
+    @Override
     public PyObject __call__(PyObject self, PyObject[] args, String[] keywords) {
         ReflectedCallData callData = new ReflectedCallData();
         ReflectedArgs match = null;
@@ -179,14 +194,17 @@ public class PyReflectedFunction extends PyObject {
         return Py.java2py(o);
     }
 
+    @Override
     public PyObject __call__(PyObject[] args, String[] keywords) {
-        PyObject self = null;
-        /*
-        PyObject[] new_args = new PyObject[args.length - 1];
-        System.arraycopy(args, 1, new_args, 0, new_args.length);
-        self = args[0];
-        args = new_args;
-        */
+        PyObject self;
+        if (calledStatically) {
+            self = null;
+        } else {
+            PyObject[] unboundArgs = new PyObject[args.length - 1];
+            System.arraycopy(args, 1, unboundArgs, 0, unboundArgs.length);
+            self = args[0];
+            args = unboundArgs;
+        }
         return __call__(self, args, keywords);
     }
 
@@ -317,8 +335,8 @@ public class PyReflectedFunction extends PyObject {
         }
     }
 
+    @Override
     public String toString() {
-        // printArgs();
         return "<java function " + __name__ + " " + Py.idstr(this) + ">";
     }
 }

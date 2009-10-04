@@ -77,6 +77,7 @@ public class PyReflectedConstructor extends PyReflectedFunction {
         return obj;
     }
 
+    @Override
     public PyObject __call__(PyObject self, PyObject[] args, String[] keywords) {
         if (self == null) {
             throw Py.TypeError("invalid self argument to constructor");
@@ -144,6 +145,7 @@ public class PyReflectedConstructor extends PyReflectedFunction {
         return Py.None;
     }
 
+    @Override
     public PyObject __call__(PyObject[] args, String[] keywords) {
         if (args.length < 1) {
             throw Py.TypeError("constructor requires self argument");
@@ -180,6 +182,15 @@ public class PyReflectedConstructor extends PyReflectedFunction {
         obj.javaProxy = jself;
     }
 
+    @Override
+    public PyObject _doget(PyObject container, PyObject wherefound) {
+        if (container == null) {
+            return this;
+        }
+        return new PyMethod(this, container, wherefound);
+    }
+
+    @Override
     public String toString() {
         // printArgs();
         return "<java constructor " + __name__ + " " + Py.idstr(this) + ">";
