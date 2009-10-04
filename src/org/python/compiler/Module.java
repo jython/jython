@@ -16,7 +16,11 @@ import org.python.core.CodeBootstrap;
 import org.python.core.CodeFlag;
 import org.python.core.CodeLoader;
 import org.python.core.CompilerFlags;
+import org.python.core.ThreadState;
 import org.python.core.Py;
+import org.python.core.PyCode;
+import org.python.core.PyFrame;
+import org.python.core.PyObject;
 import org.python.core.PyException;
 import org.python.core.PyRunnableBootstrap;
 import org.objectweb.asm.Type;
@@ -24,6 +28,7 @@ import org.python.antlr.ParseException;
 import org.python.antlr.PythonTree;
 import org.python.antlr.ast.Suite;
 import org.python.antlr.base.mod;
+import static org.python.util.CodegenUtils.*;
 
 class PyIntegerConstant extends Constant implements ClassConstants, Opcodes
 {
@@ -444,9 +449,11 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
 
             c.aload(1);
             c.ldc("__name__");
-            c.invokevirtual("org/python/core/PyFrame", "getname", "(" + $str + ")" + $pyObj);
+            c.invokevirtual("org/python/core/PyFrame", "getname", sig(PyObject.class,
+                        String.class));
 
-            c.invokevirtual("org/python/core/PyFrame", "setlocal", "(" + $str + $pyObj + ")V");
+            c.invokevirtual("org/python/core/PyFrame", "setlocal", sig(Void.TYPE, String.class,
+                        PyObject.class));
         }
 
         Label genswitch = new Label();
@@ -469,7 +476,8 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
                 SymInfo syminf = tbl.get(paramcells.get(i));
                 c.iconst(syminf.locals_index);
                 c.iconst(syminf.env_index);
-                c.invokevirtual("org/python/core/PyFrame", "to_cell", "(II)V");
+                c.invokevirtual("org/python/core/PyFrame", "to_cell", sig(Void.TYPE, Integer.TYPE,
+                            Integer.TYPE));
             }
         }
 
@@ -540,7 +548,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
         c.dup();
         c.ldc(classfile.name);
         c.invokespecial(classfile.name, "<init>", "(" + $str + ")V");
-        c.invokevirtual(classfile.name, "getMain", "()" + $pyCode);
+        c.invokevirtual(classfile.name, "getMain", sig(PyCode.class));
         String bootstrap = Type.getDescriptor(CodeBootstrap.class);
         c.invokestatic(Type.getInternalName(CodeLoader.class),
                 CodeLoader.SIMPLE_FACTORY_METHOD_NAME,
@@ -601,7 +609,8 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
         code.tableswitch(0, labels.length - 1, def, labels);
         for(i=0; i<labels.length; i++) {
             code.label(labels[i]);
-            code.invokevirtual(classfile.name, (codes.get(i)).fname, "(" + $pyFrame + $threadState + ")" + $pyObj);
+            code.invokevirtual(classfile.name, (codes.get(i)).fname, sig(PyObject.class,
+                        PyFrame.class, ThreadState.class));
             code.areturn();
         }
         code.label(def);
