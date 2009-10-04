@@ -60,6 +60,7 @@ ImportError exception, it is silently ignored.
 
 import sys
 import os
+import types
 import __builtin__
 
 
@@ -73,8 +74,10 @@ def makepath(*paths):
 def abs__file__():
     """Set all module' __file__ attribute to an absolute path"""
     for m in sys.modules.values():
-        if hasattr(m, '__loader__'):
-            continue   # don't mess with a PEP 302-supplied __file__
+        if not isinstance(m, types.ModuleType) or hasattr(m, '__loader__'):
+            # only modules need the abspath in Jython. and don't mess
+            # with a PEP 302-supplied __file__
+            continue
         f = getattr(m, '__file__', None)
         if f is None:
             continue
