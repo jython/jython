@@ -46,14 +46,14 @@ class PyIntegerConstant extends Constant implements ClassConstants, Opcodes
     }
 
     public void get(Code c) throws IOException {
-        c.getstatic(module.classfile.name, name, $pyInteger);
+        c.getstatic(module.classfile.name, name, ci(PyInteger.class));
     }
 
     public void put(Code c) throws IOException {
-        module.classfile.addField(name, $pyInteger, access);
+        module.classfile.addField(name, ci(PyInteger.class), access);
         c.iconst(value);
         c.invokestatic("org/python/core/Py", "newInteger", sig(PyInteger.class, Integer.TYPE));
-        c.putstatic(module.classfile.name, name, $pyInteger);
+        c.putstatic(module.classfile.name, name, ci(PyInteger.class));
     }
 
     @Override
@@ -79,14 +79,14 @@ class PyFloatConstant extends Constant implements ClassConstants, Opcodes
     }
 
     public void get(Code c) throws IOException {
-        c.getstatic(module.classfile.name, name, $pyFloat);
+        c.getstatic(module.classfile.name, name, ci(PyFloat.class));
     }
 
     public void put(Code c) throws IOException {
-        module.classfile.addField(name, $pyFloat, access);
+        module.classfile.addField(name, ci(PyFloat.class), access);
         c.ldc(new Double(value));
         c.invokestatic("org/python/core/Py", "newFloat", sig(PyFloat.class, Double.TYPE));
-        c.putstatic(module.classfile.name, name, $pyFloat);
+        c.putstatic(module.classfile.name, name, ci(PyFloat.class));
     }
 
     @Override
@@ -112,14 +112,14 @@ class PyComplexConstant extends Constant implements ClassConstants, Opcodes
     }
 
     public void get(Code c) throws IOException {
-        c.getstatic(module.classfile.name, name, $pyComplex);
+        c.getstatic(module.classfile.name, name, ci(PyComplex.class));
     }
 
     public void put(Code c) throws IOException {
-        module.classfile.addField(name, $pyComplex, access);
+        module.classfile.addField(name, ci(PyComplex.class), access);
         c.ldc(new Double(value));
         c.invokestatic("org/python/core/Py", "newImaginary", sig(PyComplex.class, Double.TYPE));
-        c.putstatic(module.classfile.name, name, $pyComplex);
+        c.putstatic(module.classfile.name, name, ci(PyComplex.class));
     }
 
     @Override
@@ -145,15 +145,15 @@ class PyStringConstant extends Constant implements ClassConstants, Opcodes
     }
 
     public void get(Code c) throws IOException {
-        c.getstatic(module.classfile.name, name, $pyStr);
+        c.getstatic(module.classfile.name, name, ci(PyString.class));
     }
 
     public void put(Code c) throws IOException {
-        module.classfile.addField(name, $pyStr, access);
+        module.classfile.addField(name, ci(PyString.class), access);
         c.ldc(value);
         c.invokestatic("org/python/core/PyString", "fromInterned", sig(PyString.class,
                     String.class));
-        c.putstatic(module.classfile.name, name, $pyStr);
+        c.putstatic(module.classfile.name, name, ci(PyString.class));
     }
 
     @Override
@@ -179,15 +179,15 @@ class PyUnicodeConstant extends Constant implements ClassConstants, Opcodes
     }
 
     public void get(Code c) throws IOException {
-        c.getstatic(module.classfile.name, name, $pyUnicode);
+        c.getstatic(module.classfile.name, name, ci(PyUnicode.class));
     }
 
     public void put(Code c) throws IOException {
-        module.classfile.addField(name, $pyUnicode, access);
+        module.classfile.addField(name, ci(PyUnicode.class), access);
         c.ldc(value);
         c.invokestatic("org/python/core/PyUnicode", "fromInterned", sig(PyUnicode.class,
                     String.class));
-        c.putstatic(module.classfile.name, name, $pyUnicode);
+        c.putstatic(module.classfile.name, name, ci(PyUnicode.class));
     }
 
     @Override
@@ -213,14 +213,14 @@ class PyLongConstant extends Constant implements ClassConstants, Opcodes
     }
 
     public void get(Code c) throws IOException {
-        c.getstatic(module.classfile.name, name, $pyLong);
+        c.getstatic(module.classfile.name, name, ci(PyLong.class));
     }
 
     public void put(Code c) throws IOException {
-        module.classfile.addField(name, $pyLong, access);
+        module.classfile.addField(name, ci(PyLong.class), access);
         c.ldc(value);
         c.invokestatic("org/python/core/Py", "newLong", sig(PyLong.class, String.class));
-        c.putstatic(module.classfile.name, name, $pyLong);
+        c.putstatic(module.classfile.name, name, ci(PyLong.class));
     }
 
     @Override
@@ -257,11 +257,11 @@ class PyCodeConstant extends Constant implements ClassConstants, Opcodes
     }
 
     public void get(Code c) throws IOException {
-        c.getstatic(module.classfile.name, name, $pyCode);
+        c.getstatic(module.classfile.name, name, ci(PyCode.class));
     }
 
     public void put(Code c) throws IOException {
-        module.classfile.addField(name, $pyCode, access);
+        module.classfile.addField(name, ci(PyCode.class), access);
         c.iconst(argcount);
 
         //Make all names
@@ -305,7 +305,7 @@ class PyCodeConstant extends Constant implements ClassConstants, Opcodes
                     String[].class, String.class, String.class, Integer.TYPE, Boolean.TYPE,
                     Boolean.TYPE, PyFunctionTable.class, Integer.TYPE, String[].class,
                     String[].class, Integer.TYPE, Integer.TYPE));
-        c.putstatic(module.classfile.name, name, $pyCode);
+        c.putstatic(module.classfile.name, name, ci(PyCode.class));
     }
 }
 
@@ -449,7 +449,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
 
         Code c = classfile.addMethod(
             code.fname,
-            "(" + $pyFrame + $threadState + ")" + $pyObj,
+            sig(PyObject.class, PyFrame.class, ThreadState.class),
             ACC_PUBLIC);
 
         CodeCompiler compiler = new CodeCompiler(this, printResults);
@@ -541,25 +541,25 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
 
     //This block of code writes out the various standard methods
     public void addInit() throws IOException {
-        Code c = classfile.addMethod("<init>", "(Ljava/lang/String;)V", ACC_PUBLIC);
+        Code c = classfile.addMethod("<init>", sig(Void.TYPE, String.class), ACC_PUBLIC);
         c.aload(0);
-        c.invokespecial("org/python/core/PyFunctionTable", "<init>", "()V");
+        c.invokespecial("org/python/core/PyFunctionTable", "<init>", sig(Void.TYPE));
         addConstants(c);
     }
 
     public void addRunnable() throws IOException {
-        Code c = classfile.addMethod("getMain", "()" + $pyCode, ACC_PUBLIC);
+        Code c = classfile.addMethod("getMain", sig(PyCode.class), ACC_PUBLIC);
         mainCode.get(c);
         c.areturn();
     }
 
     public void addMain() throws IOException {
-        Code c = classfile.addMethod("main", "(" + $strArr + ")V",
+        Code c = classfile.addMethod("main", sig(Void.TYPE, String[].class),
                 ACC_PUBLIC | ACC_STATIC);
         c.new_(classfile.name);
         c.dup();
         c.ldc(classfile.name);
-        c.invokespecial(classfile.name, "<init>", "(" + $str + ")V");
+        c.invokespecial(classfile.name, "<init>", sig(Void.TYPE, String.class));
         c.invokevirtual(classfile.name, "getMain", sig(PyCode.class));
         String bootstrap = Type.getDescriptor(CodeBootstrap.class);
         c.invokestatic(p(CodeLoader.class), CodeLoader.SIMPLE_FACTORY_METHOD_NAME,
@@ -571,7 +571,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
     
     public void addBootstrap() throws IOException {
         Code c = classfile.addMethod(CodeLoader.GET_BOOTSTRAP_METHOD_NAME,
-                "()" + Type.getDescriptor(CodeBootstrap.class),
+                sig(CodeBootstrap.class),
                 ACC_PUBLIC | ACC_STATIC);
         c.ldc(Type.getType("L" + classfile.name + ";"));
         c.invokestatic(p(PyRunnableBootstrap.class), PyRunnableBootstrap.REFLECTION_METHOD_NAME,
@@ -602,7 +602,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
     public void addFunctions() throws IOException {
         Code code = classfile.addMethod(
             "call_function",
-            "(I" + $pyFrame + $threadState + ")" + $pyObj,
+            sig(PyObject.class, Integer.TYPE, PyFrame.class, ThreadState.class),
             ACC_PUBLIC);
 
         code.aload(0); // this
