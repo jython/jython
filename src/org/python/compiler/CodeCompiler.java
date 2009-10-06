@@ -434,7 +434,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
 
         scope.setup_closure();
         scope.dump();
-        module.PyCode(new Suite(node,node.getInternalBody()), name, true,
+        module.codeConstant(new Suite(node,node.getInternalBody()), name, true,
                       className, false, false,
                       node.getLine(), scope, cflags).get(code);
 
@@ -2029,7 +2029,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
 
         scope.setup_closure();
         scope.dump();
-        module.PyCode(retSuite, name, true, className,
+        module.codeConstant(retSuite, name, true, className,
                       false, false, node.getLine(), scope, cflags).get(code);
 
         if (!makeClosure(scope)) {
@@ -2087,7 +2087,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         scope.setup_closure();
         scope.dump();
         //Make code object out of suite
-        module.PyCode(new Suite(node,node.getInternalBody()), name, false, name,
+        module.codeConstant(new Suite(node,node.getInternalBody()), name, false, name,
                       true, false, node.getLine(), scope, cflags).get(code);
 
         //Get doc string (if there)
@@ -2114,13 +2114,13 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
     @Override
     public Object visitNum(Num node) throws Exception {
         if (node.getInternalN() instanceof PyInteger) {
-            module.PyInteger(((PyInteger) node.getInternalN()).getValue()).get(code);
+            module.integerConstant(((PyInteger) node.getInternalN()).getValue()).get(code);
         } else if (node.getInternalN() instanceof PyLong) {
-            module.PyLong(((PyObject)node.getInternalN()).__str__().toString()).get(code);
+            module.longConstant(((PyObject)node.getInternalN()).__str__().toString()).get(code);
         } else if (node.getInternalN() instanceof PyFloat) {
-            module.PyFloat(((PyFloat) node.getInternalN()).getValue()).get(code);
+            module.floatConstant(((PyFloat) node.getInternalN()).getValue()).get(code);
         } else if (node.getInternalN() instanceof PyComplex) {
-            module.PyComplex(((PyComplex) node.getInternalN()).imag).get(code);
+            module.complexConstant(((PyComplex) node.getInternalN()).imag).get(code);
         }
         return null;
     }
@@ -2257,9 +2257,9 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
     public Object visitStr(Str node) throws Exception {
         PyString s = (PyString)node.getInternalS();
         if (s instanceof PyUnicode) {
-            module.PyUnicode(s.asString()).get(code);
+            module.unicodeConstant(s.asString()).get(code);
         } else {
-            module.PyString(s.asString()).get(code);
+            module.stringConstant(s.asString()).get(code);
         }
         return null;
     }
@@ -2304,7 +2304,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
 
         java.util.List<stmt> bod = new ArrayList<stmt>();
         bod.add(n);
-        module.PyCode(new Suite(node, bod), "<genexpr>", true,
+        module.codeConstant(new Suite(node, bod), "<genexpr>", true,
                       className, false, false,
                       node.getLine(), scope, cflags).get(code);
 

@@ -38,19 +38,18 @@ import org.python.antlr.ast.Suite;
 import org.python.antlr.base.mod;
 import static org.python.util.CodegenUtils.*;
 
-class PyIntegerConstant extends Constant implements ClassConstants, Opcodes
-{
-    int value;
+class PyIntegerConstant extends Constant implements ClassConstants, Opcodes {
+    final int value;
 
-    public PyIntegerConstant(int value) {
+    PyIntegerConstant(int value) {
         this.value = value;
     }
 
-    public void get(Code c) throws IOException {
+    void get(Code c) throws IOException {
         c.getstatic(module.classfile.name, name, ci(PyInteger.class));
     }
 
-    public void put(Code c) throws IOException {
+    void put(Code c) throws IOException {
         module.classfile.addField(name, ci(PyInteger.class), access);
         c.iconst(value);
         c.invokestatic(p(Py.class), "newInteger", sig(PyInteger.class, Integer.TYPE));
@@ -74,17 +73,17 @@ class PyIntegerConstant extends Constant implements ClassConstants, Opcodes
 
 class PyFloatConstant extends Constant implements ClassConstants, Opcodes
 {
-    double value;
+    final double value;
 
-    public PyFloatConstant(double value) {
+    PyFloatConstant(double value) {
         this.value = value;
     }
 
-    public void get(Code c) throws IOException {
+    void get(Code c) throws IOException {
         c.getstatic(module.classfile.name, name, ci(PyFloat.class));
     }
 
-    public void put(Code c) throws IOException {
+    void put(Code c) throws IOException {
         module.classfile.addField(name, ci(PyFloat.class), access);
         c.ldc(new Double(value));
         c.invokestatic(p(Py.class), "newFloat", sig(PyFloat.class, Double.TYPE));
@@ -108,17 +107,17 @@ class PyFloatConstant extends Constant implements ClassConstants, Opcodes
 
 class PyComplexConstant extends Constant implements ClassConstants, Opcodes
 {
-    double value;
+    final double value;
 
-    public PyComplexConstant(double value) {
+    PyComplexConstant(double value) {
         this.value = value;
     }
 
-    public void get(Code c) throws IOException {
+    void get(Code c) throws IOException {
         c.getstatic(module.classfile.name, name, ci(PyComplex.class));
     }
 
-    public void put(Code c) throws IOException {
+    void put(Code c) throws IOException {
         module.classfile.addField(name, ci(PyComplex.class), access);
         c.ldc(new Double(value));
         c.invokestatic(p(Py.class), "newImaginary", sig(PyComplex.class, Double.TYPE));
@@ -142,17 +141,17 @@ class PyComplexConstant extends Constant implements ClassConstants, Opcodes
 
 class PyStringConstant extends Constant implements ClassConstants, Opcodes
 {
-    String value;
+    final String value;
 
-    public PyStringConstant(String value) {
+    PyStringConstant(String value) {
         this.value = value;
     }
 
-    public void get(Code c) throws IOException {
+    void get(Code c) throws IOException {
         c.getstatic(module.classfile.name, name, ci(PyString.class));
     }
 
-    public void put(Code c) throws IOException {
+    void put(Code c) throws IOException {
         module.classfile.addField(name, ci(PyString.class), access);
         c.ldc(value);
         c.invokestatic(p(PyString.class), "fromInterned", sig(PyString.class, String.class));
@@ -176,17 +175,17 @@ class PyStringConstant extends Constant implements ClassConstants, Opcodes
 
 class PyUnicodeConstant extends Constant implements ClassConstants, Opcodes
 {
-    String value;
+    final String value;
 
-    public PyUnicodeConstant(String value) {
+    PyUnicodeConstant(String value) {
         this.value = value;
     }
 
-    public void get(Code c) throws IOException {
+    void get(Code c) throws IOException {
         c.getstatic(module.classfile.name, name, ci(PyUnicode.class));
     }
 
-    public void put(Code c) throws IOException {
+    void put(Code c) throws IOException {
         module.classfile.addField(name, ci(PyUnicode.class), access);
         c.ldc(value);
         c.invokestatic(p(PyUnicode.class), "fromInterned", sig(PyUnicode.class, String.class));
@@ -210,17 +209,17 @@ class PyUnicodeConstant extends Constant implements ClassConstants, Opcodes
 
 class PyLongConstant extends Constant implements ClassConstants, Opcodes
 {
-    String value;
+    final String value;
 
-    public PyLongConstant(String value) {
+    PyLongConstant(String value) {
         this.value = value;
     }
 
-    public void get(Code c) throws IOException {
+    void get(Code c) throws IOException {
         c.getstatic(module.classfile.name, name, ci(PyLong.class));
     }
 
-    public void put(Code c) throws IOException {
+    void put(Code c) throws IOException {
         module.classfile.addField(name, ci(PyLong.class), access);
         c.ldc(value);
         c.invokestatic(p(Py.class), "newLong", sig(PyLong.class, String.class));
@@ -244,29 +243,29 @@ class PyLongConstant extends Constant implements ClassConstants, Opcodes
 
 class PyCodeConstant extends Constant implements ClassConstants, Opcodes
 {
-    public String co_name;
-    public int argcount;
-    public List<String> names;
-    public int id;
-    public int co_firstlineno;
-    public boolean arglist, keywordlist;
+    String co_name;
+    int argcount;
+    List<String> names;
+    int id;
+    int co_firstlineno;
+    boolean arglist, keywordlist;
     String fname;
 
     // for nested scopes
-    public List<String> cellvars;
-    public List<String> freevars;
-    public int jy_npurecell;
+    List<String> cellvars;
+    List<String> freevars;
+    int jy_npurecell;
 
-    public int moreflags;
+    int moreflags;
 
-    public PyCodeConstant() {
+    PyCodeConstant() {
     }
 
-    public void get(Code c) throws IOException {
+    void get(Code c) throws IOException {
         c.getstatic(module.classfile.name, name, ci(PyCode.class));
     }
 
-    public void put(Code c) throws IOException {
+    void put(Code c) throws IOException {
         module.classfile.addField(name, ci(PyCode.class), access);
         c.iconst(argcount);
 
@@ -320,7 +319,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
     ClassFile classfile;
     Constant filename;
     String sfilename;
-    public Constant mainCode;
+    Constant mainCode;
     public boolean linenumbers;
     Future futures;
     Hashtable<PythonTree,ScopeInfo> scopes;
@@ -338,7 +337,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
         constants = new Hashtable<Constant,Constant>();
         sfilename = filename;
         if (filename != null) {
-            this.filename = PyString(filename);
+            this.filename = stringConstant(filename);
         } else {
             this.filename = null;
         }
@@ -367,27 +366,27 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
         return ret;
     }
 
-    public Constant PyInteger(int value) {
+    Constant integerConstant(int value) {
         return findConstant(new PyIntegerConstant(value));
     }
 
-    public Constant PyFloat(double value) {
+    Constant floatConstant(double value) {
         return findConstant(new PyFloatConstant(value));
     }
 
-    public Constant PyComplex(double value) {
+    Constant complexConstant(double value) {
         return findConstant(new PyComplexConstant(value));
     }
 
-    public Constant PyString(String value) {
+    Constant stringConstant(String value) {
         return findConstant(new PyStringConstant(value));
     }
 
-    public Constant PyUnicode(String value) {
+    Constant unicodeConstant(String value) {
         return findConstant(new PyUnicodeConstant(value));
     }
 
-    public Constant PyLong(String value) {
+    Constant longConstant(String value) {
         return findConstant(new PyLongConstant(value));
     }
 
@@ -420,20 +419,18 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
         return nameArray;
     }
 
-    private int to_cell;
-
-    public PyCodeConstant PyCode(mod tree, String name,
+    PyCodeConstant codeConstant(mod tree, String name,
                                  boolean fast_locals, String className,
                                  boolean classBody, boolean printResults,
                                  int firstlineno, ScopeInfo scope)
         throws Exception
     {
-        return PyCode(tree,name,fast_locals,className,classBody,
+        return codeConstant(tree,name,fast_locals,className,classBody,
                       printResults,firstlineno,scope,null);
     }
 
 
-    public PyCodeConstant PyCode(mod tree, String name,
+    PyCodeConstant codeConstant(mod tree, String name,
                                  boolean fast_locals, String className,
                                  boolean classBody, boolean printResults,
                                  int firstlineno,
@@ -589,7 +586,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
         c.areturn();
     }
 
-    public void addConstants(Code c) throws IOException {
+    void addConstants(Code c) throws IOException {
         classfile.addField("self", "L"+classfile.name+";", ACC_STATIC|ACC_FINAL);
         c.aload(0);
         c.putstatic(classfile.name, "self", "L"+classfile.name+";");
@@ -701,7 +698,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
 
         //Add __doc__ if it exists
 
-        Constant main = module.PyCode(node, "<module>", false, null, false,
+        Constant main = module.codeConstant(node, "<module>", false, null, false,
                                       printResults, 0,
                                       module.getScopeInfo(node),
                                       cflags);
