@@ -21,7 +21,7 @@
 ###
 
 """
-	A variety of app callables used to test content related headers.
+    A variety of app callables used to test content related headers.
 """
 
 def test_set_content_length(environ, start_response):

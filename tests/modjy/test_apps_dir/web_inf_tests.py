@@ -22,7 +22,7 @@
 
 
 """
-	A variety of app callables used to test WEB-INF interactions.
+    A variety of app callables used to test WEB-INF interactions.
 """
 
 def test_import_from_lib_python(environ, start_response):

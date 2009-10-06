@@ -21,18 +21,18 @@
 ###
 
 """
-	A variety of app callables used to test return types.
+    A variety of app callables used to test return types.
 """
 
 def test_non_iterable_return(environ, start_response):
     writer = start_response("200 OK", [])
     query_string = environ['QUERY_STRING']
     return_object = {
-    	'int':		42,
-    	'float':	42.0,
-    	'str':		"Strings are not permitted return values",
-    	'unicode':	u"Unicode strings are not permitted return values",
-    	'none':		None,
+        'int':      42,
+        'float':    42.0,
+        'str':      "Strings are not permitted return values",
+        'unicode':  u"Unicode strings are not permitted return values",
+        'none':     None,
     }[query_string]
     return return_object
 
@@ -40,9 +40,9 @@ def test_iterable_containing_non_strings_return(environ, start_response):
     writer = start_response("200 OK", [])
     query_string = environ['QUERY_STRING']
     return_object = {
-    	'int':		42,
-    	'float':	42.0,
-    	'none':		None,
+        'int':      42,
+        'float':    42.0,
+        'none':     None,
     }[query_string]
     return [return_object]
 
