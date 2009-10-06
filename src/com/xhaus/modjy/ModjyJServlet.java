@@ -127,6 +127,15 @@ public class ModjyJServlet extends HttpServlet {
     }
 
     /**
+     * Close down the modjy servlet.
+     *
+     */
+    @Override
+    public void destroy( ) {
+        interp.cleanup();
+    }
+
+    /**
      * Setup the modjy environment, i.e. 1. Find the location of the modjy.jar file and add it to
      * sys.path 2. Process the WEB-INF/lib-python directory, if it exists
      *
