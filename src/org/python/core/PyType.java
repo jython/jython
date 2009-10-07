@@ -78,6 +78,9 @@ public class PyType extends PyObject implements Serializable {
     /** Whether finalization is required for this type's instances (implements __del__). */
     private boolean needs_finalizer;
 
+    /** Whether this type's __getattribute__ is object.__getattribute__. */
+    private volatile boolean usesObjectGetattribute;
+
     /** The number of __slots__ defined. */
     private int numSlots;
 
@@ -685,6 +688,7 @@ public class PyType extends PyObject implements Serializable {
             mro = savedMro;
             throw t;
         }
+        postSetattr("__getattribute__");
     }
 
     private void setIsBaseType(boolean isBaseType) {
@@ -1329,6 +1333,12 @@ public class PyType extends PyObject implements Serializable {
                     }
                 });
             }
+        } else if (name == "__getattribute__") {
+            traverse_hierarchy(false, new OnType() {
+                    public boolean onType(PyType type) {
+                        return (type.usesObjectGetattribute = false);
+                    }
+                });
         }
     }
 
@@ -1381,6 +1391,12 @@ public class PyType extends PyObject implements Serializable {
                     }
                 });
             }
+        } else if (name == "__getattribute__") {
+            traverse_hierarchy(false, new OnType() {
+                    public boolean onType(PyType type) {
+                        return (type.usesObjectGetattribute = false);
+                    }
+                });
         }
     }
 
@@ -1478,6 +1494,14 @@ public class PyType extends PyObject implements Serializable {
             return doc.__get__(null, this);
         }
         return doc;
+    }
+
+    boolean getUsesObjectGetattribute() {
+        return usesObjectGetattribute;
+    }
+
+    void setUsesObjectGetattribute(boolean usesObjectGetattribute) {
+        this.usesObjectGetattribute = usesObjectGetattribute;
     }
 
     public Object __tojava__(Class<?> c) {
