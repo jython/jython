@@ -103,20 +103,20 @@ import static org.python.util.CodegenUtils.*;
 
 public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
 
-    public static final Object Exit=new Integer(1);
-    public static final Object NoExit=null;
+    static final Object Exit=new Integer(1);
+    static final Object NoExit=null;
 
-    public static final int GET=0;
-    public static final int SET=1;
-    public static final int DEL=2;
-    public static final int AUGGET=3;
-    public static final int AUGSET=4;
+    static final int GET=0;
+    static final int SET=1;
+    static final int DEL=2;
+    static final int AUGGET=3;
+    static final int AUGSET=4;
 
-    public Module module;
-    public ClassWriter cw;
-    public Code code;
-    public CodeCompiler mrefs;
-    public CompilerFlags cflags;
+    Module module;
+    ClassWriter cw;
+    Code code;
+    CodeCompiler mrefs;
+    CompilerFlags cflags;
 
     int temporary;
     expr_contextType augmode;
@@ -125,18 +125,18 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
     int augtmp3;
     int augtmp4;
 
-    public boolean fast_locals, print_results;
+    boolean fast_locals, print_results;
 
-    public Map<String, SymInfo> tbl;
-    public ScopeInfo my_scope;
+    Map<String, SymInfo> tbl;
+    ScopeInfo my_scope;
 
     boolean optimizeGlobals = true;
-    public Vector<String> names;
-    public String className;
+    Vector<String> names;
+    String className;
 
-    public Stack<Label> continueLabels, breakLabels;
-    public Stack<ExceptionHandler> exceptionHandlers;
-    public Vector<Label> yields = new Vector<Label>();
+    Stack<Label> continueLabels, breakLabels;
+    Stack<ExceptionHandler> exceptionHandlers;
+    Vector<Label> yields = new Vector<Label>();
 
     /*
      * break/continue finally's level.  This is the lowest level in the
@@ -258,8 +258,11 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
            return;
        code.aload(augtmp4);
        code.freeLocal(augtmp4);
-   }
+    }
 
+    static boolean checkOptimizeGlobals(boolean fast_locals, ScopeInfo scope) {
+        return fast_locals&&!scope.exec&&!scope.from_import_star;
+    }
 
     public void parse(mod node, Code code,
                       boolean fast_locals, String className,
@@ -275,7 +278,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         names = scope.names;
 
         tbl = scope.tbl;
-        optimizeGlobals = fast_locals&&!scope.exec&&!scope.from_import_star;
+        optimizeGlobals = checkOptimizeGlobals(fast_locals, scope);
         
         if (scope.max_with_count > 0) {
             // allocate for all the with-exits we will have in the frame;

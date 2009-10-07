@@ -243,22 +243,116 @@ class PyLongConstant extends Constant implements ClassConstants, Opcodes
 
 class PyCodeConstant extends Constant implements ClassConstants, Opcodes
 {
-    String co_name;
-    int argcount;
-    List<String> names;
-    int id;
-    int co_firstlineno;
-    boolean arglist, keywordlist;
-    String fname;
+    final String co_name;
+    final int argcount;
+    final List<String> names;
+    final int id;
+    final int co_firstlineno;
+    final boolean arglist, keywordlist;
+    final String fname;
 
     // for nested scopes
-    List<String> cellvars;
-    List<String> freevars;
-    int jy_npurecell;
+    final List<String> cellvars;
+    final List<String> freevars;
+    final int jy_npurecell;
 
-    int moreflags;
+    final int moreflags;
 
-    PyCodeConstant() {
+    PyCodeConstant(mod tree, String name, boolean fast_locals, String
+            className, boolean classBody, boolean printResults, int
+            firstlineno, ScopeInfo scope, org.python.core.CompilerFlags cflags,
+            Module module)
+        throws Exception {
+
+        this.co_name = name;
+        this.co_firstlineno = firstlineno;
+        this.module = module;
+
+        //Needed so that moreflags can be final.
+        int _moreflags = 0;
+
+        if (scope.ac != null) {
+            arglist = scope.ac.arglist;
+            keywordlist = scope.ac.keywordlist;
+            argcount = scope.ac.names.size();
+    
+            //Do something to add init_code to tree
+            //XXX: not sure we should be modifying scope.ac in a PyCodeConstant
+            //constructor.
+            if (scope.ac.init_code.size() > 0) {
+                scope.ac.appendInitCode((Suite) tree);
+            }
+        } else {
+            arglist = false;
+            keywordlist = false;
+            argcount = 0;
+        }
+
+        id = module.codes.size();
+
+        //Better names in the future?
+        if (isJavaIdentifier(name)) {
+            fname = name+"$"+id;
+        } else {
+            fname = "f$"+id;
+        }
+        //XXX: is fname needed at all, or should we just use "name"?
+        this.name = fname;
+
+        // !classdef only
+        if (!classBody) {
+            names = toNameAr(scope.names,false);
+        } else {
+            names = null;
+        }
+
+        cellvars = toNameAr(scope.cellvars, true);
+        freevars = toNameAr(scope.freevars, true);
+        jy_npurecell = scope.jy_npurecell;
+
+        if (CodeCompiler.checkOptimizeGlobals(fast_locals, scope)) {
+            _moreflags |= org.python.core.CodeFlag.CO_OPTIMIZED.flag;
+        }
+        if (scope.generator) {
+            _moreflags |= org.python.core.CodeFlag.CO_GENERATOR.flag;
+        }
+        if (cflags != null) {
+            if (cflags.isFlagSet(CodeFlag.CO_GENERATOR_ALLOWED)) {
+                _moreflags |= org.python.core.CodeFlag.CO_GENERATOR_ALLOWED.flag;
+            }
+            if (cflags.isFlagSet(CodeFlag.CO_FUTURE_DIVISION)) {
+                _moreflags |= org.python.core.CodeFlag.CO_FUTURE_DIVISION.flag;
+            }
+        }
+        moreflags = _moreflags;
+    }
+
+    //XXX: this can probably go away now that we can probably just copy the list.
+    private List<String> toNameAr(List<String> names,boolean nullok) {
+        int sz = names.size();
+        if (sz == 0 && nullok) {
+            return null;
+        }
+        List<String> nameArray = new ArrayList<String>();
+        nameArray.addAll(names);
+        return nameArray;
+    }
+
+    private boolean isJavaIdentifier(String s) {
+        char[] chars = s.toCharArray();
+        if (chars.length == 0) {
+            return false;
+        }
+        if (!Character.isJavaIdentifierStart(chars[0])) {
+            return false;
+        }
+
+        for(int i=1; i<chars.length; i++) {
+            if (!Character.isJavaIdentifierPart(chars[i])) {
+                return false;
+            }
+        }
+        return true;
     }
 
     void get(Code c) throws IOException {
@@ -320,7 +414,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
     Constant filename;
     String sfilename;
     Constant mainCode;
-    public boolean linenumbers;
+    boolean linenumbers;
     Future futures;
     Hashtable<PythonTree,ScopeInfo> scopes;
     long mtime;
@@ -391,34 +485,6 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
     }
 
     List<PyCodeConstant> codes;
-    private boolean isJavaIdentifier(String s) {
-        char[] chars = s.toCharArray();
-        if (chars.length == 0) {
-            return false;
-        }
-        if (!Character.isJavaIdentifierStart(chars[0])) {
-            return false;
-        }
-
-        for(int i=1; i<chars.length; i++) {
-            if (!Character.isJavaIdentifierPart(chars[i])) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    //XXX: this can probably go away now that we can probably just copy the list.
-    private List<String> toNameAr(List<String> names,boolean nullok) {
-        int sz = names.size();
-        if (sz == 0 && nullok) {
-            return null;
-        }
-        List<String> nameArray = new ArrayList<String>();
-        nameArray.addAll(names);
-        return nameArray;
-    }
-
     PyCodeConstant codeConstant(mod tree, String name,
                                  boolean fast_locals, String className,
                                  boolean classBody, boolean printResults,
@@ -429,7 +495,6 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
                       printResults,firstlineno,scope,null);
     }
 
-
     PyCodeConstant codeConstant(mod tree, String name,
                                  boolean fast_locals, String className,
                                  boolean classBody, boolean printResults,
@@ -438,33 +503,17 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
                                  org.python.core.CompilerFlags cflags)
         throws Exception
     {
-        PyCodeConstant code = new PyCodeConstant();
-        ArgListCompiler ac = (scope != null)?scope.ac:null;
-
-        if (ac != null) {
-            code.arglist = ac.arglist;
-            code.keywordlist = ac.keywordlist;
-            code.argcount = ac.names.size();
-        }
-
-        code.co_name = name;
-        code.co_firstlineno = firstlineno;
-        code.id = codes.size();
-
-        //Better names in the future?
-        if (isJavaIdentifier(name))
-            code.fname = name+"$"+code.id;
-        else
-            code.fname = "f$"+code.id;
-
+        PyCodeConstant code = new PyCodeConstant(tree, name, fast_locals,
+                className, classBody, printResults, firstlineno, scope, cflags,
+                this);
         codes.add(code);
+
+        CodeCompiler compiler = new CodeCompiler(this, printResults);
 
         Code c = classfile.addMethod(
             code.fname,
             sig(PyObject.class, PyFrame.class, ThreadState.class),
             ACC_PUBLIC);
-
-        CodeCompiler compiler = new CodeCompiler(this, printResults);
 
         if (classBody) {
             // Set the class's __module__ to __name__. fails when there's no __name__
@@ -485,10 +534,6 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
         Label start = new Label();
         c.label(start);
 
-        //Do something to add init_code to tree
-        if (ac != null && ac.init_code.size() > 0) {
-            ac.appendInitCode((Suite) tree);
-        }
         int nparamcell = scope.jy_paramcells.size();
         if(nparamcell > 0) {
             Map<String, SymInfo> tbl = scope.tbl;
@@ -504,7 +549,6 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
         }
 
         compiler.parse(tree, c, fast_locals, className, classBody, scope, cflags);
-
         // similar to visitResume code in pyasm.py
         if (scope.generator) {
             c.label(genswitch);
@@ -520,30 +564,6 @@ public class Module implements Opcodes, ClassConstants, CompilationContext
             c.tableswitch(0, yields.length - 1, start, yields);
         }
 
-        // !classdef only
-        if (!classBody) code.names = toNameAr(compiler.names,false);
-
-        code.cellvars = toNameAr(scope.cellvars, true);
-        code.freevars = toNameAr(scope.freevars, true);
-        code.jy_npurecell = scope.jy_npurecell;
-
-        if (compiler.optimizeGlobals) {
-            code.moreflags |= org.python.core.CodeFlag.CO_OPTIMIZED.flag;
-        }
-        if (compiler.my_scope.generator) {
-            code.moreflags |= org.python.core.CodeFlag.CO_GENERATOR.flag;
-        }
-        if (cflags != null) {
-            if (cflags.isFlagSet(CodeFlag.CO_GENERATOR_ALLOWED)) {
-                code.moreflags |= org.python.core.CodeFlag.CO_GENERATOR_ALLOWED.flag;
-            }
-            if (cflags.isFlagSet(CodeFlag.CO_FUTURE_DIVISION)) {
-                code.moreflags |= org.python.core.CodeFlag.CO_FUTURE_DIVISION.flag;
-            }
-        }
-
-        code.module = this;
-        code.name = code.fname;
         return code;
     }
 
