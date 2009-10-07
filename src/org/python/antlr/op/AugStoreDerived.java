@@ -981,43 +981,7 @@ public class AugStoreDerived extends AugStore implements Slotted {
     }
 
     public PyObject __findattr_ex__(String name) {
-        PyType self_type=getType();
-        // TODO: We should speed this up. As the __getattribute__ slot almost never
-        //       changes, it is a good candidate for caching, as PyClass does with
-        //       __getattr__. See #1102.
-        PyObject getattribute=self_type.lookup("__getattribute__");
-        PyString py_name=null;
-        PyException firstAttributeError=null;
-        try {
-            if (getattribute!=null) {
-                py_name=PyString.fromInterned(name);
-                return getattribute.__get__(this,self_type).__call__(py_name);
-            } else {
-                Py.Warning(String.format("__getattribute__ not found on type %s",self_type.getName()));
-                PyObject ret=super.__findattr_ex__(name);
-                if (ret!=null) {
-                    return ret;
-                } // else: pass through to __getitem__ invocation
-            }
-        } catch (PyException e) {
-            if (!e.match(Py.AttributeError)) {
-                throw e;
-            } else {
-                firstAttributeError=e; // saved to avoid swallowing custom AttributeErrors
-            // and pass through to __getattr__ invocation.
-            }
-        }
-        PyObject getattr=self_type.lookup("__getattr__");
-        if (getattr!=null) {
-            if (py_name==null) {
-                py_name=PyString.fromInterned(name);
-            }
-            return getattr.__get__(this,self_type).__call__(py_name);
-        }
-        if (firstAttributeError!=null) {
-            throw firstAttributeError;
-        }
-        return null;
+        return Deriveds.__findattr_ex__(this,name);
     }
 
     public void __setattr__(String name,PyObject value) {
