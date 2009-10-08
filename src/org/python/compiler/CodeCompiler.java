@@ -1,5 +1,4 @@
 // Copyright (c) Corporation for National Research Initiatives
-
 package org.python.compiler;
 
 import java.io.IOException;
@@ -103,37 +102,30 @@ import static org.python.util.CodegenUtils.*;
 
 public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
 
-    static final Object Exit=new Integer(1);
-    static final Object NoExit=null;
-
-    static final int GET=0;
-    static final int SET=1;
-    static final int DEL=2;
-    static final int AUGGET=3;
-    static final int AUGSET=4;
-
+    static final Object Exit = new Integer(1);
+    static final Object NoExit = null;
+    static final int GET = 0;
+    static final int SET = 1;
+    static final int DEL = 2;
+    static final int AUGGET = 3;
+    static final int AUGSET = 4;
     Module module;
     ClassWriter cw;
     Code code;
     CodeCompiler mrefs;
     CompilerFlags cflags;
-
     int temporary;
     expr_contextType augmode;
     int augtmp1;
     int augtmp2;
     int augtmp3;
     int augtmp4;
-
     boolean fast_locals, print_results;
-
     Map<String, SymInfo> tbl;
     ScopeInfo my_scope;
-
     boolean optimizeGlobals = true;
     Vector<String> names;
     String className;
-
     Stack<Label> continueLabels, breakLabels;
     Stack<ExceptionHandler> exceptionHandlers;
     Vector<Label> yields = new Vector<Label>();
@@ -147,9 +139,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
      * finally's all the exceptionHandlers are executed.
      */
     public int bcfLevel = 0;
-
     int yield_count = 0;
-    
     private Stack<String> stack = new Stack<String>();
 
     public CodeCompiler(Module module, boolean print_results) {
@@ -181,7 +171,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         code.iconst(idx);
         code.putfield(p(PyFrame.class), "f_lasti", "I");
     }
-    
+
     private void loadf_back() throws Exception {
         code.getfield(p(PyFrame.class), "f_back", ci(PyFrame.class));
     }
@@ -235,40 +225,45 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         code.astore(augtmp1);
 
         code.aload(augtmp1);
-        if (count >= 2)
+        if (count >= 2) {
             code.aload(augtmp2);
-        if (count >= 3)
+        }
+        if (count >= 3) {
             code.aload(augtmp3);
-        if (count >= 4)
+        }
+        if (count >= 4) {
             code.aload(augtmp4);
+        }
     }
 
     private void restoreAugTmps(PythonTree node, int count) throws Exception {
-       code.aload(augtmp1);
-       code.freeLocal(augtmp1);
-       if (count == 1)
-           return;
-       code.aload(augtmp2);
-       code.freeLocal(augtmp2);
-       if (count == 2)
-           return;
-       code.aload(augtmp3);
-       code.freeLocal(augtmp3);
-       if (count == 3)
-           return;
-       code.aload(augtmp4);
-       code.freeLocal(augtmp4);
+        code.aload(augtmp1);
+        code.freeLocal(augtmp1);
+        if (count == 1) {
+            return;
+        }
+        code.aload(augtmp2);
+        code.freeLocal(augtmp2);
+        if (count == 2) {
+            return;
+        }
+        code.aload(augtmp3);
+        code.freeLocal(augtmp3);
+        if (count == 3) {
+            return;
+        }
+        code.aload(augtmp4);
+        code.freeLocal(augtmp4);
     }
 
     static boolean checkOptimizeGlobals(boolean fast_locals, ScopeInfo scope) {
-        return fast_locals&&!scope.exec&&!scope.from_import_star;
+        return fast_locals && !scope.exec && !scope.from_import_star;
     }
 
     public void parse(mod node, Code code,
-                      boolean fast_locals, String className,
-                      boolean classBody, ScopeInfo scope, CompilerFlags cflags)
-        throws Exception
-    {
+            boolean fast_locals, String className,
+            boolean classBody, ScopeInfo scope, CompilerFlags cflags)
+            throws Exception {
         this.fast_locals = fast_locals;
         this.className = className;
         this.code = code;
@@ -279,7 +274,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
 
         tbl = scope.tbl;
         optimizeGlobals = checkOptimizeGlobals(fast_locals, scope);
-        
+
         if (scope.max_with_count > 0) {
             // allocate for all the with-exits we will have in the frame;
             // this allows yield and with to happily co-exist
@@ -313,17 +308,15 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
 
     @Override
     public Object visitModule(org.python.antlr.ast.Module suite)
-        throws Exception
-    {
+            throws Exception {
         if (suite.getInternalBody().size() > 0 &&
-            suite.getInternalBody().get(0) instanceof Expr &&
-            ((Expr) suite.getInternalBody().get(0)).getInternalValue() instanceof Str)
-        {
+                suite.getInternalBody().get(0) instanceof Expr &&
+                ((Expr) suite.getInternalBody().get(0)).getInternalValue() instanceof Str) {
             loadFrame();
             code.ldc("__doc__");
             visit(((Expr) suite.getInternalBody().get(0)).getInternalValue());
             code.invokevirtual(p(PyFrame.class), "setglobal", sig(Void.TYPE, String.class,
-                        PyObject.class));
+                    PyObject.class));
         }
         traverse(suite);
         return null;
@@ -333,9 +326,9 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
     public Object visitExpression(Expression node) throws Exception {
         if (my_scope.generator && node.getInternalBody() != null) {
             module.error("'return' with argument inside generator",
-                         true, node);
+                    true, node);
         }
-        return visitReturn(new Return(node,node.getInternalBody()), true);
+        return visitReturn(new Return(node, node.getInternalBody()), true);
     }
 
     public int makeArray(java.util.List<? extends PythonTree> nodes) throws Exception {
@@ -343,10 +336,11 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         // the caller is responsible for freeing.
         int n;
 
-        if (nodes == null)
+        if (nodes == null) {
             n = 0;
-        else
+        } else {
             n = nodes.size();
+        }
 
         int array = code.getLocal(ci(PyObject[].class));
         if (n == 0) {
@@ -357,7 +351,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
             code.anewarray(p(PyObject.class));
             code.astore(array);
 
-            for(int i=0; i<n; i++) {
+            for (int i = 0; i < n; i++) {
                 visit(nodes.get(i));
                 code.aload(array);
                 code.swap();
@@ -379,8 +373,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
 
     public void getDocString(java.util.List<stmt> suite) throws Exception {
         if (suite.size() > 0 && suite.get(0) instanceof Expr &&
-            ((Expr) suite.get(0)).getInternalValue() instanceof Str)
-        {
+                ((Expr) suite.get(0)).getInternalValue() instanceof Str) {
             visit(((Expr) suite.get(0)).getInternalValue());
         } else {
             code.aconst_null();
@@ -388,20 +381,24 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
     }
 
     public boolean makeClosure(ScopeInfo scope) throws Exception {
-        if (scope == null || scope.freevars == null) return false;
+        if (scope == null || scope.freevars == null) {
+            return false;
+        }
         int n = scope.freevars.size();
-        if (n == 0) return false;
+        if (n == 0) {
+            return false;
+        }
 
         int tmp = code.getLocal(ci(PyObject[].class));
         code.iconst(n);
         code.anewarray(p(PyObject.class));
         code.astore(tmp);
         Map<String, SymInfo> upTbl = scope.up.tbl;
-        for(int i=0; i<n; i++) {
+        for (int i = 0; i < n; i++) {
             code.aload(tmp);
             code.iconst(i);
             loadFrame();
-            for(int j = 1; j < scope.distance; j++) {
+            for (int j = 1; j < scope.distance; j++) {
                 loadf_back();
             }
             SymInfo symInfo = upTbl.get(scope.freevars.elementAt(i));
@@ -437,23 +434,23 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
 
         scope.setup_closure();
         scope.dump();
-        module.codeConstant(new Suite(node,node.getInternalBody()), name, true,
-                      className, false, false,
-                      node.getLine(), scope, cflags).get(code);
+        module.codeConstant(new Suite(node, node.getInternalBody()), name, true,
+                className, false, false,
+                node.getLine(), scope, cflags).get(code);
 
         getDocString(node.getInternalBody());
 
         if (!makeClosure(scope)) {
             code.invokespecial(p(PyFunction.class), "<init>", sig(Void.TYPE, PyObject.class,
-                        PyObject[].class, PyCode.class, PyObject.class));
+                    PyObject[].class, PyCode.class, PyObject.class));
         } else {
             code.invokespecial(p(PyFunction.class), "<init>", sig(Void.TYPE, PyObject.class,
-                        PyObject[].class, PyCode.class, PyObject.class, PyObject[].class));
+                    PyObject[].class, PyCode.class, PyObject.class, PyObject[].class));
         }
-        
+
         applyDecorators(node.getInternalDecorator_list());
 
-        set(new Name(node,node.getInternalName(), expr_contextType.Store));
+        set(new Name(node, node.getInternalName(), expr_contextType.Store));
         return null;
     }
 
@@ -461,14 +458,15 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         if (decorators != null && !decorators.isEmpty()) {
             int res = storeTop();
             for (expr decorator : decorators) {
-                visit(decorator); stackProduce();
+                visit(decorator);
+                stackProduce();
             }
             for (int i = decorators.size(); i > 0; i--) {
                 stackConsume();
                 loadThreadState();
                 code.aload(res);
                 code.invokevirtual(p(PyObject.class), "__call__", sig(PyObject.class,
-                            ThreadState.class, PyObject.class));
+                        ThreadState.class, PyObject.class));
                 code.astore(res);
             }
             code.aload(res);
@@ -490,7 +488,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
     }
 
     @Override
-    public Object visitAssign(Assign node) throws Exception  {
+    public Object visitAssign(Assign node) throws Exception {
         setline(node);
         visit(node.getInternalValue());
         if (node.getInternalTargets().size() == 1) {
@@ -528,10 +526,10 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
                     visit(node.getInternalValues().get(i));
                     if (node.getInternalNl() && i == node.getInternalValues().size() - 1) {
                         code.invokestatic(p(Py.class), "println", sig(Void.TYPE, PyObject.class,
-                                    PyObject.class));
+                                PyObject.class));
                     } else {
-                        code.invokestatic(p(Py.class), "printComma",  sig(Void.TYPE, PyObject.class,
-                                    PyObject.class));
+                        code.invokestatic(p(Py.class), "printComma", sig(Void.TYPE, PyObject.class,
+                                PyObject.class));
                     }
                 } else {
                     visit(node.getInternalValues().get(i));
@@ -539,7 +537,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
                         code.invokestatic(p(Py.class), "println", sig(Void.TYPE, PyObject.class));
                     } else {
                         code.invokestatic(p(Py.class), "printComma", sig(Void.TYPE,
-                                    PyObject.class));
+                                PyObject.class));
                     }
 
                 }
@@ -598,15 +596,15 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         }
 
         int stackState = saveStack();
-        
+
         if (node.getInternalValue() != null) {
             visit(node.getInternalValue());
         } else {
             getNone();
         }
-        
+
         setLastI(++yield_count);
-        
+
         saveLocals();
         code.areturn();
 
@@ -615,7 +613,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         code.label(restart);
         restoreLocals();
         restoreStack(stackState);
-        
+
         loadFrame();
         code.invokevirtual(p(PyFrame.class), "getGeneratorInput", sig(Object.class));
         code.dup();
@@ -626,14 +624,14 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         code.athrow();
         code.label(done2);
         code.checkcast(p(PyObject.class));
-        
+
         return null;
     }
-    
+
     private void stackProduce() {
         stackProduce(p(PyObject.class));
     }
-    
+
     private void stackProduce(String signature) {
         stack.push(signature);
     }
@@ -641,7 +639,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
     private void stackConsume() {
         stackConsume(1);
     }
-    
+
     private void stackConsume(int numItems) {
         for (int i = 0; i < numItems; i++) {
             stack.pop();
@@ -680,7 +678,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
 
     private void restoreStack(int array) throws Exception {
         if (stack.size() > 0) {
-            int i = stack.size() -1;
+            int i = stack.size() - 1;
             for (String signature : stack) {
                 if (p(ThreadState.class).equals(signature)) {
                     loadThreadState();
@@ -699,7 +697,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
 
     private void restoreLocals() throws Exception {
         endExceptionHandlers();
-        
+
         Vector<String> v = code.getActiveLocals();
 
         loadFrame();
@@ -710,8 +708,9 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
 
         for (int i = 0; i < v.size(); i++) {
             String type = v.elementAt(i);
-            if (type == null)
+            if (type == null) {
                 continue;
+            }
             code.aload(locals);
             code.iconst(i);
             code.aaload();
@@ -730,8 +729,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
      *  variables without the verifier thinking we might jump out of our
      *  handling with an exception.
      */
-    private void endExceptionHandlers()
-    {
+    private void endExceptionHandlers() {
         Label end = new Label();
         code.label(end);
         for (int i = 0; i < exceptionHandlers.size(); ++i) {
@@ -740,8 +738,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         }
     }
 
-    private void restartExceptionHandlers()
-    {
+    private void restartExceptionHandlers() {
         Label start = new Label();
         code.label(start);
         for (int i = 0; i < exceptionHandlers.size(); ++i) {
@@ -759,15 +756,17 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
 
         for (int i = 0; i < v.size(); i++) {
             String type = v.elementAt(i);
-            if (type == null)
+            if (type == null) {
                 continue;
+            }
             code.aload(locals);
             code.iconst(i);
             //code.checkcast(code.pool.Class(p(Object.class)));
             if (i == 2222) {
                 code.aconst_null();
-            } else
+            } else {
                 code.aload(i);
+            }
             code.aastore();
         }
 
@@ -776,7 +775,6 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         code.putfield(p(PyFrame.class), "f_savedlocals", ci(Object[].class));
         code.freeLocal(locals);
     }
-
 
     @Override
     public Object visitReturn(Return node) throws Exception {
@@ -790,9 +788,10 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         }
         int tmp = 0;
         if (node.getInternalValue() != null) {
-            if (my_scope.generator)
+            if (my_scope.generator) {
                 throw new ParseException("'return' with argument " +
-                                         "inside generator", node);
+                        "inside generator", node);
+            }
             visit(node.getInternalValue());
             tmp = code.getReturnLocal();
             code.astore(tmp);
@@ -813,9 +812,18 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
     @Override
     public Object visitRaise(Raise node) throws Exception {
         setline(node);
-        if (node.getInternalType() != null) { visit(node.getInternalType()); stackProduce(); }
-        if (node.getInternalInst() != null) { visit(node.getInternalInst()); stackProduce(); }
-        if (node.getInternalTback() != null) { visit(node.getInternalTback()); stackProduce(); }
+        if (node.getInternalType() != null) {
+            visit(node.getInternalType());
+            stackProduce();
+        }
+        if (node.getInternalInst() != null) {
+            visit(node.getInternalInst());
+            stackProduce();
+        }
+        if (node.getInternalTback() != null) {
+            visit(node.getInternalTback());
+            stackProduce();
+        }
         if (node.getInternalType() == null) {
             code.invokestatic(p(Py.class), "makeException", sig(PyException.class));
         } else if (node.getInternalInst() == null) {
@@ -824,11 +832,11 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         } else if (node.getInternalTback() == null) {
             stackConsume(2);
             code.invokestatic(p(Py.class), "makeException", sig(PyException.class, PyObject.class,
-                        PyObject.class));
+                    PyObject.class));
         } else {
             stackConsume(3);
             code.invokestatic(p(Py.class), "makeException", sig(PyException.class, PyObject.class,
-                        PyObject.class, PyObject.class));
+                    PyObject.class, PyObject.class));
         }
         code.athrow();
         return Exit;
@@ -845,22 +853,22 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
                 code.ldc(name);
                 loadFrame();
                 code.invokestatic(p(imp.class), "importOneAs", sig(PyObject.class, String.class,
-                            PyFrame.class));
+                        PyFrame.class));
             } else {
                 String name = a.getInternalName();
                 asname = name;
-                if (asname.indexOf('.') > 0)
+                if (asname.indexOf('.') > 0) {
                     asname = asname.substring(0, asname.indexOf('.'));
+                }
                 code.ldc(name);
                 loadFrame();
                 code.invokestatic(p(imp.class), "importOne", sig(PyObject.class, String.class,
-                            PyFrame.class));
+                        PyFrame.class));
             }
             set(new Name(a, asname, expr_contextType.Store));
         }
         return null;
     }
-
 
     @Override
     public Object visitImportFrom(ImportFrom node) throws Exception {
@@ -890,18 +898,19 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
                         "' because it is a nested function",
                         true, node);
             }
-            
+
             loadFrame();
             code.invokestatic(p(imp.class), "importAll", sig(Void.TYPE, String.class,
-                        PyFrame.class));
+                    PyFrame.class));
         } else {
             java.util.List<String> fromNames = new ArrayList<String>();//[names.size()];
             java.util.List<String> asnames = new ArrayList<String>();//[names.size()];
             for (int i = 0; i < aliases.size(); i++) {
                 fromNames.add(aliases.get(i).getInternalName());
                 asnames.add(aliases.get(i).getInternalAsname());
-                if (asnames.get(i) == null)
+                if (asnames.get(i) == null) {
                     asnames.set(i, fromNames.get(i));
+                }
             }
             int strArray = makeStrings(code, fromNames);
             code.aload(strArray);
@@ -919,7 +928,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
                 code.iconst(node.getInternalLevel());
             }
             code.invokestatic(p(imp.class), "importFrom", sig(PyObject[].class, String.class,
-                        String[].class, PyFrame.class, Integer.TYPE));
+                    String[].class, PyFrame.class, Integer.TYPE));
             int tmp = storeTop();
             for (int i = 0; i < aliases.size(); i++) {
                 code.aload(tmp);
@@ -960,7 +969,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         //do the real work here
         stackConsume(3);
         code.invokestatic(p(Py.class), "exec", sig(Void.TYPE, PyObject.class, PyObject.class,
-                    PyObject.class));
+                PyObject.class));
         return null;
     }
 
@@ -968,7 +977,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
     public Object visitAssert(Assert node) throws Exception {
         setline(node);
         Label end_of_assert = new Label();
-        
+
         /* First do an if __debug__: */
         loadFrame();
         emitGetGlobal("__debug__");
@@ -978,8 +987,8 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         code.ifeq(end_of_assert);
 
         /* Now do the body of the assert. If PyObject.__nonzero__ is true,
-           then the assertion succeeded, the message portion should not be
-           processed. Otherwise, the message will be processed. */
+        then the assertion succeeded, the message portion should not be
+        processed. Otherwise, the message will be processed. */
         visit(node.getInternalTest());
         code.invokevirtual(p(PyObject.class), "__nonzero__", sig(Boolean.TYPE));
 
@@ -987,24 +996,23 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         code.ifne(end_of_assert);
 
         /* Visit the message part of the assertion, or pass Py.None */
-        if( node.getInternalMsg() != null ) {
-             visit(node.getInternalMsg());
+        if (node.getInternalMsg() != null) {
+            visit(node.getInternalMsg());
         } else {
-            getNone(); 
+            getNone();
         }
-        
+
         /* Push exception type onto stack(AssertionError) */
         loadFrame();
         emitGetGlobal("AssertionError");
-        
+
         code.swap(); // The type is the first argument, but the message could be a yield
-        
+
         code.invokestatic(p(Py.class), "makeException", sig(PyException.class, PyObject.class,
-                    PyObject.class));
-        /* Raise assertion error. Only executes this logic if assertion
-           failed */
+                PyObject.class));
+        /* Raise assertion error. Only executes this logic if assertion failed */
         code.athrow();
- 
+
         /* And finally set the label for the end of it all */
         code.label(end_of_assert);
 
@@ -1012,8 +1020,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
     }
 
     public Object doTest(Label end_of_if, If node, int index)
-        throws Exception
-    {
+            throws Exception {
         Label end_of_suite = new Label();
 
         setline(node.getInternalTest());
@@ -1024,8 +1031,9 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
 
         Object exit = suite(node.getInternalBody());
 
-        if (end_of_if != null && exit == null)
+        if (end_of_if != null && exit == null) {
             code.goto_(end_of_if);
+        }
 
         code.label(end_of_suite);
 
@@ -1039,12 +1047,14 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
     @Override
     public Object visitIf(If node) throws Exception {
         Label end_of_if = null;
-        if (node.getInternalOrelse() != null)
+        if (node.getInternalOrelse() != null) {
             end_of_if = new Label();
+        }
 
         Object exit = doTest(end_of_if, node, 0);
-        if (end_of_if != null)
+        if (end_of_if != null) {
             code.label(end_of_if);
+        }
         return exit;
     }
 
@@ -1082,7 +1092,6 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         breakLabels.pop();
         bcfLevel = savebcf;
     }
-
 
     @Override
     public Object visitWhile(While node) throws Exception {
@@ -1178,11 +1187,10 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
     }
 
     public void exceptionTest(int exc, Label end_of_exceptions,
-                              TryExcept node, int index)
-        throws Exception
-    {
+            TryExcept node, int index)
+            throws Exception {
         for (int i = 0; i < node.getInternalHandlers().size(); i++) {
-            ExceptHandler handler = (ExceptHandler)node.getInternalHandlers().get(i);
+            ExceptHandler handler = (ExceptHandler) node.getInternalHandlers().get(i);
 
             //setline(name);
             Label end_of_self = new Label();
@@ -1192,12 +1200,12 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
                 //get specific exception
                 visit(handler.getInternalType());
                 code.invokevirtual(p(PyException.class), "match", sig(Boolean.TYPE,
-                            PyObject.class));
+                        PyObject.class));
                 code.ifeq(end_of_self);
             } else {
-                if (i != node.getInternalHandlers().size()-1) {
+                if (i != node.getInternalHandlers().size() - 1) {
                     throw new ParseException(
-                        "default 'except:' must be last", handler);
+                            "default 'except:' must be last", handler);
                 }
             }
 
@@ -1216,10 +1224,8 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         code.athrow();
     }
 
-     
     @Override
-    public Object visitTryFinally(TryFinally node) throws Exception
-    {
+    public Object visitTryFinally(TryFinally node) throws Exception {
         Label start = new Label();
         Label end = new Label();
         Label handlerStart = new Label();
@@ -1259,8 +1265,8 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         code.aload(excLocal);
         loadFrame();
 
-        code.invokestatic(p(Py.class), "addTraceback", sig(Void.TYPE, Throwable.class,
-                    PyFrame.class));
+        code.invokestatic(p(Py.class), "addTraceback",
+                sig(Void.TYPE, Throwable.class, PyFrame.class));
 
         inlineFinally(inFinally);
         code.aload(excLocal);
@@ -1284,19 +1290,19 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
             code.label(end);
             handler.exceptionEnds.addElement(end);
             // also exiting the try: portion of this particular finally
-         }
+        }
         if (handler.isFinallyHandler()) {
             handler.finalBody(this);
         }
     }
-    
+
     private void reenterProtectedBody(ExceptionHandler handler) throws Exception {
         // restart exception coverage
         Label restart = new Label();
         code.label(restart);
         handler.exceptionStarts.addElement(restart);
     }
- 
+
     /**
      *  Inline the finally handling code for levels down to the levelth parent
      *  (0 means all).  This takes care to avoid having more nested finallys
@@ -1314,9 +1320,9 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
             ExceptionHandler handler = poppedHandlers.pop();
             reenterProtectedBody(handler);
             exceptionHandlers.push(handler);
-         }
-     }
- 
+        }
+    }
+
     @Override
     public Object visitTryExcept(TryExcept node) throws Exception {
         Label start = new Label();
@@ -1334,15 +1340,16 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         code.label(end);
         handler.exceptionEnds.addElement(end);
 
-        if (exit == null)
+        if (exit == null) {
             code.goto_(handler_end);
+        }
 
         code.label(handler_start);
 
         loadFrame();
 
         code.invokestatic(p(Py.class), "setException", sig(PyException.class, Throwable.class,
-                    PyFrame.class));
+                PyFrame.class));
 
         int exc = code.getFinallyLocal(p(Throwable.class));
         code.astore(exc);
@@ -1373,10 +1380,11 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
     }
 
     public Object suite(java.util.List<stmt> stmts) throws Exception {
-        for(stmt s: stmts) {
+        for (stmt s : stmts) {
             Object exit = visit(s);
-            if (exit != null)
+            if (exit != null) {
                 return Exit;
+            }
         }
         return null;
     }
@@ -1389,12 +1397,12 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
             code.dup();
             code.invokevirtual(p(PyObject.class), "__nonzero__", sig(Boolean.TYPE));
             switch (node.getInternalOp()) {
-            case Or : 
-                code.ifne(end);
-                break;
-            case And : 
-                code.ifeq(end);
-                break;
+                case Or:
+                    code.ifne(end);
+                    break;
+                case And:
+                    code.ifeq(end);
+                    break;
             }
             code.pop();
             visit(node.getInternalValues().get(i));
@@ -1402,7 +1410,6 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         code.label(end);
         return null;
     }
-
 
     @Override
     public Object visitCompare(Compare node) throws Exception {
@@ -1414,7 +1421,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         code.astore(last);
 
         int n = node.getInternalOps().size();
-        for(int i = 0; i < n - 1; i++) {
+        for (int i = 0; i < n - 1; i++) {
             visit(node.getInternalComparators().get(i));
             code.aload(last);
             code.swap();
@@ -1427,10 +1434,10 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
             code.ifeq(end);
         }
 
-        visit(node.getInternalComparators().get(n-1));
+        visit(node.getInternalComparators().get(n - 1));
         code.aload(last);
         code.swap();
-        visitCmpop(node.getInternalOps().get(n-1));
+        visitCmpop(node.getInternalOps().get(n - 1));
 
         if (n > 1) {
             code.astore(result);
@@ -1448,16 +1455,36 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
     public void visitCmpop(cmpopType op) throws Exception {
         String name = null;
         switch (op) {
-        case Eq:    name = "_eq"; break;
-        case NotEq: name = "_ne"; break;
-        case Lt:    name = "_lt"; break;
-        case LtE:   name = "_le"; break;
-        case Gt:    name = "_gt"; break;
-        case GtE:   name = "_ge"; break;
-        case Is:    name = "_is"; break;
-        case IsNot: name = "_isnot"; break;
-        case In:    name = "_in"; break;
-        case NotIn: name = "_notin"; break;
+            case Eq:
+                name = "_eq";
+                break;
+            case NotEq:
+                name = "_ne";
+                break;
+            case Lt:
+                name = "_lt";
+                break;
+            case LtE:
+                name = "_le";
+                break;
+            case Gt:
+                name = "_gt";
+                break;
+            case GtE:
+                name = "_ge";
+                break;
+            case Is:
+                name = "_is";
+                break;
+            case IsNot:
+                name = "_isnot";
+                break;
+            case In:
+                name = "_in";
+                break;
+            case NotIn:
+                name = "_notin";
+                break;
         }
         code.invokevirtual(p(PyObject.class), name, sig(PyObject.class, PyObject.class));
     }
@@ -1470,18 +1497,42 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         stackConsume();
         String name = null;
         switch (node.getInternalOp()) {
-        case Add:    name = "_add"; break;
-        case Sub: name = "_sub"; break;
-        case Mult:    name = "_mul"; break;
-        case Div:   name = "_div"; break;
-        case Mod:    name = "_mod"; break;
-        case Pow:   name = "_pow"; break;
-        case LShift:    name = "_lshift"; break;
-        case RShift: name = "_rshift"; break;
-        case BitOr:    name = "_or"; break;
-        case BitXor: name = "_xor"; break;
-        case BitAnd: name = "_and"; break;
-        case FloorDiv: name = "_floordiv"; break;
+            case Add:
+                name = "_add";
+                break;
+            case Sub:
+                name = "_sub";
+                break;
+            case Mult:
+                name = "_mul";
+                break;
+            case Div:
+                name = "_div";
+                break;
+            case Mod:
+                name = "_mod";
+                break;
+            case Pow:
+                name = "_pow";
+                break;
+            case LShift:
+                name = "_lshift";
+                break;
+            case RShift:
+                name = "_rshift";
+                break;
+            case BitOr:
+                name = "_or";
+                break;
+            case BitXor:
+                name = "_xor";
+                break;
+            case BitAnd:
+                name = "_and";
+                break;
+            case FloorDiv:
+                name = "_floordiv";
+                break;
         }
 
         if (node.getInternalOp() == operatorType.Div && module.getFutures().areDivisionOn()) {
@@ -1490,16 +1541,24 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         code.invokevirtual(p(PyObject.class), name, sig(PyObject.class, PyObject.class));
         return null;
     }
-    
+
     @Override
     public Object visitUnaryOp(UnaryOp node) throws Exception {
         visit(node.getInternalOperand());
         String name = null;
         switch (node.getInternalOp()) {
-        case Invert:    name = "__invert__"; break;
-        case Not: name = "__not__"; break;
-        case UAdd:    name = "__pos__"; break;
-        case USub:   name = "__neg__"; break;
+            case Invert:
+                name = "__invert__";
+                break;
+            case Not:
+                name = "__not__";
+                break;
+            case UAdd:
+                name = "__pos__";
+                break;
+            case USub:
+                name = "__neg__";
+                break;
         }
         code.invokevirtual(p(PyObject.class), name, sig(PyObject.class));
         return null;
@@ -1519,18 +1578,42 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         code.swap();
         String name = null;
         switch (node.getInternalOp()) {
-        case Add:    name = "_iadd"; break;
-        case Sub: name = "_isub"; break;
-        case Mult:    name = "_imul"; break;
-        case Div:   name = "_idiv"; break;
-        case Mod:    name = "_imod"; break;
-        case Pow:   name = "_ipow"; break;
-        case LShift:    name = "_ilshift"; break;
-        case RShift: name = "_irshift"; break;
-        case BitOr:    name = "_ior"; break;
-        case BitXor: name = "_ixor"; break;
-        case BitAnd: name = "_iand"; break;
-        case FloorDiv: name = "_ifloordiv"; break;
+            case Add:
+                name = "_iadd";
+                break;
+            case Sub:
+                name = "_isub";
+                break;
+            case Mult:
+                name = "_imul";
+                break;
+            case Div:
+                name = "_idiv";
+                break;
+            case Mod:
+                name = "_imod";
+                break;
+            case Pow:
+                name = "_ipow";
+                break;
+            case LShift:
+                name = "_ilshift";
+                break;
+            case RShift:
+                name = "_irshift";
+                break;
+            case BitOr:
+                name = "_ior";
+                break;
+            case BitXor:
+                name = "_ixor";
+                break;
+            case BitAnd:
+                name = "_iand";
+                break;
+            case FloorDiv:
+                name = "_ifloordiv";
+                break;
         }
         if (node.getInternalOp() == operatorType.Div && module.getFutures().areDivisionOn()) {
             name = "_itruediv";
@@ -1546,10 +1629,8 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         return null;
     }
 
-
     public static int makeStrings(Code c, Collection<String> names)
-        throws IOException
-    {
+            throws IOException {
         if (names != null) {
             c.iconst(names.size());
         } else {
@@ -1570,68 +1651,76 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         }
         return strings;
     }
-    
+
     public Object invokeNoKeywords(Attribute node, java.util.List<expr> values)
-        throws Exception
-    {
+            throws Exception {
         String name = getName(node.getInternalAttr());
-        visit(node.getInternalValue()); stackProduce();
+        visit(node.getInternalValue());
+        stackProduce();
         code.ldc(name);
         code.invokevirtual(p(PyObject.class), "__getattr__", sig(PyObject.class, String.class));
-        loadThreadState(); stackProduce(p(ThreadState.class));
+        loadThreadState();
+        stackProduce(p(ThreadState.class));
 
         switch (values.size()) {
-        case 0:
-            stackConsume(2); // target + ts
-            code.invokevirtual(p(PyObject.class), "__call__", sig(PyObject.class, ThreadState.class));
-            break;
-        case 1:
-            visit(values.get(0));
-            stackConsume(2); // target + ts
-            code.invokevirtual(p(PyObject.class), "__call__", sig(PyObject.class, ThreadState.class,
+            case 0:
+                stackConsume(2); // target + ts
+                code.invokevirtual(p(PyObject.class), "__call__", sig(PyObject.class,
+                        ThreadState.class));
+                break;
+            case 1:
+                visit(values.get(0));
+                stackConsume(2); // target + ts
+                code.invokevirtual(p(PyObject.class), "__call__", sig(PyObject.class,
+                        ThreadState.class, PyObject.class));
+                break;
+            case 2:
+                visit(values.get(0));
+                stackProduce();
+                visit(values.get(1));
+                stackConsume(3); // target + ts + arguments
+                code.invokevirtual(p(PyObject.class), "__call__", sig(PyObject.class,
+                        ThreadState.class, PyObject.class, PyObject.class));
+                break;
+            case 3:
+                visit(values.get(0));
+                stackProduce();
+                visit(values.get(1));
+                stackProduce();
+                visit(values.get(2));
+                stackConsume(4); // target + ts + arguments
+                code.invokevirtual(p(PyObject.class), "__call__", sig(PyObject.class,
+                        ThreadState.class, PyObject.class, PyObject.class, PyObject.class));
+                break;
+            case 4:
+                visit(values.get(0));
+                stackProduce();
+                visit(values.get(1));
+                stackProduce();
+                visit(values.get(2));
+                stackProduce();
+                visit(values.get(3));
+                stackConsume(5); // target + ts + arguments
+                code.invokevirtual(p(PyObject.class), "__call__", sig(PyObject.class,
+                        ThreadState.class, PyObject.class, PyObject.class, PyObject.class,
                         PyObject.class));
-            break;
-        case 2:
-            visit(values.get(0)); stackProduce();
-            visit(values.get(1));
-            stackConsume(3); // target + ts + arguments
-            code.invokevirtual(p(PyObject.class), "__call__", sig(PyObject.class, ThreadState.class,
-                        PyObject.class, PyObject.class));
-            break;
-        case 3:
-            visit(values.get(0)); stackProduce();
-            visit(values.get(1)); stackProduce();
-            visit(values.get(2));
-            stackConsume(4); // target + ts + arguments
-            code.invokevirtual(p(PyObject.class), "__call__", sig(PyObject.class, ThreadState.class,
-                        PyObject.class, PyObject.class, PyObject.class));
-            break;
-        case 4:
-            visit(values.get(0)); stackProduce();
-            visit(values.get(1)); stackProduce();
-            visit(values.get(2)); stackProduce();
-            visit(values.get(3));
-            stackConsume(5); // target + ts + arguments
-            code.invokevirtual(p(PyObject.class), "__call__", sig(PyObject.class, ThreadState.class,
-                        PyObject.class, PyObject.class, PyObject.class, PyObject.class));
-            break;
-        default:
-            int argArray = makeArray(values);
-            code.aload(argArray);
-            code.freeLocal(argArray);
-            stackConsume(2); // target + ts
-            code.invokevirtual(p(PyObject.class), "__call__", sig(PyObject.class, ThreadState.class,
-                        PyObject[].class));
-            break;
+                break;
+            default:
+                int argArray = makeArray(values);
+                code.aload(argArray);
+                code.freeLocal(argArray);
+                stackConsume(2); // target + ts
+                code.invokevirtual(p(PyObject.class), "__call__", sig(PyObject.class,
+                        ThreadState.class, PyObject[].class));
+                break;
         }
         return null;
     }
 
-
     @Override
     public Object visitCall(Call node) throws Exception {
-        java.util.List<String> keys = new ArrayList<String>();//[node.keywords.size()];
-        java.util.List<expr> values = new ArrayList<expr>();//[node.args.size() + keys.size()];
+        java.util.List<String> keys = new ArrayList<String>();
+        java.util.List<expr> values = new ArrayList<expr>();
         for (int i = 0; i < node.getInternalArgs().size(); i++) {
             values.add(node.getInternalArgs().get(i));
         }
@@ -1640,41 +1729,45 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
             values.add(node.getInternalKeywords().get(i).getInternalValue());
         }
 
-        if ((node.getInternalKeywords() == null || node.getInternalKeywords().size() == 0)&& node.getInternalStarargs() == null &&
-            node.getInternalKwargs() == null && node.getInternalFunc() instanceof Attribute)
-        {
+        if ((node.getInternalKeywords() == null || node.getInternalKeywords().size() == 0) &&
+                node.getInternalStarargs() == null && node.getInternalKwargs() == null &&
+                node.getInternalFunc() instanceof Attribute) {
             return invokeNoKeywords((Attribute) node.getInternalFunc(), values);
         }
 
-        visit(node.getInternalFunc()); stackProduce();
+        visit(node.getInternalFunc());
+        stackProduce();
 
         if (node.getInternalStarargs() != null || node.getInternalKwargs() != null) {
             int argArray = makeArray(values);
             int strArray = makeStrings(code, keys);
-            if (node.getInternalStarargs() == null)
+            if (node.getInternalStarargs() == null) {
                 code.aconst_null();
-            else
+            } else {
                 visit(node.getInternalStarargs());
+            }
             stackProduce();
-            if (node.getInternalKwargs() == null)
+            if (node.getInternalKwargs() == null) {
                 code.aconst_null();
-            else
+            } else {
                 visit(node.getInternalKwargs());
+            }
             stackProduce();
-            
+
             code.aload(argArray);
             code.aload(strArray);
             code.freeLocal(argArray);
             code.freeLocal(strArray);
             code.dup2_x2();
             code.pop2();
-            
+
             stackConsume(3); // target + starargs + kwargs
 
             code.invokevirtual(p(PyObject.class), "_callextra", sig(PyObject.class,
-                        PyObject[].class, String[].class, PyObject.class, PyObject.class));
+                    PyObject[].class, String[].class, PyObject.class, PyObject.class));
         } else if (keys.size() > 0) {
-            loadThreadState(); stackProduce(p(ThreadState.class));
+            loadThreadState();
+            stackProduce(p(ThreadState.class));
             int argArray = makeArray(values);
             int strArray = makeStrings(code, keys);
             code.aload(argArray);
@@ -1683,59 +1776,65 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
             code.freeLocal(strArray);
             stackConsume(2); // target + ts
             code.invokevirtual(p(PyObject.class), "__call__", sig(PyObject.class, ThreadState.class,
-                        PyObject[].class, String[].class));
+                    PyObject[].class, String[].class));
         } else {
-            loadThreadState(); stackProduce(p(ThreadState.class));
+            loadThreadState();
+            stackProduce(p(ThreadState.class));
             switch (values.size()) {
-            case 0:
-                stackConsume(2); // target + ts
-                code.invokevirtual(p(PyObject.class), "__call__", sig(PyObject.class,
+                case 0:
+                    stackConsume(2); // target + ts
+                    code.invokevirtual(p(PyObject.class), "__call__", sig(PyObject.class,
                             ThreadState.class));
-                break;
-            case 1:
-                visit(values.get(0));
-                stackConsume(2); // target + ts
-                code.invokevirtual(p(PyObject.class), "__call__", sig(PyObject.class,
+                    break;
+                case 1:
+                    visit(values.get(0));
+                    stackConsume(2); // target + ts
+                    code.invokevirtual(p(PyObject.class), "__call__", sig(PyObject.class,
                             ThreadState.class, PyObject.class));
-                break;
-            case 2:
-                visit(values.get(0)); stackProduce();
-                visit(values.get(1));
-                stackConsume(3); // target + ts + arguments
-                code.invokevirtual(p(PyObject.class), "__call__", sig(PyObject.class,
+                    break;
+                case 2:
+                    visit(values.get(0));
+                    stackProduce();
+                    visit(values.get(1));
+                    stackConsume(3); // target + ts + arguments
+                    code.invokevirtual(p(PyObject.class), "__call__", sig(PyObject.class,
                             ThreadState.class, PyObject.class, PyObject.class));
-                break;
-            case 3:
-                visit(values.get(0)); stackProduce();
-                visit(values.get(1)); stackProduce();
-                visit(values.get(2));
-                stackConsume(4); // target + ts + arguments
-                code.invokevirtual(p(PyObject.class), "__call__", sig(PyObject.class,
+                    break;
+                case 3:
+                    visit(values.get(0));
+                    stackProduce();
+                    visit(values.get(1));
+                    stackProduce();
+                    visit(values.get(2));
+                    stackConsume(4); // target + ts + arguments
+                    code.invokevirtual(p(PyObject.class), "__call__", sig(PyObject.class,
                             ThreadState.class, PyObject.class, PyObject.class, PyObject.class));
-                break;
-            case 4:
-                visit(values.get(0)); stackProduce();
-                visit(values.get(1)); stackProduce();
-                visit(values.get(2)); stackProduce();
-                visit(values.get(3));
-                stackConsume(5); // target + ts + arguments
-                code.invokevirtual(p(PyObject.class), "__call__", sig(PyObject.class,
+                    break;
+                case 4:
+                    visit(values.get(0));
+                    stackProduce();
+                    visit(values.get(1));
+                    stackProduce();
+                    visit(values.get(2));
+                    stackProduce();
+                    visit(values.get(3));
+                    stackConsume(5); // target + ts + arguments
+                    code.invokevirtual(p(PyObject.class), "__call__", sig(PyObject.class,
                             ThreadState.class, PyObject.class, PyObject.class, PyObject.class,
                             PyObject.class));
-                break;
-            default:
-                int argArray = makeArray(values);
-                code.aload(argArray);
-                code.freeLocal(argArray);
-                stackConsume(2); // target + ts
-                code.invokevirtual(p(PyObject.class), "__call__", sig(PyObject.class,
+                    break;
+                default:
+                    int argArray = makeArray(values);
+                    code.aload(argArray);
+                    code.freeLocal(argArray);
+                    stackConsume(2); // target + ts
+                    code.invokevirtual(p(PyObject.class), "__call__", sig(PyObject.class,
                             ThreadState.class, PyObject[].class));
-                break;
+                    break;
             }
         }
         return null;
     }
-
 
     public Object Slice(Subscript node, Slice slice) throws Exception {
         expr_contextType ctx = node.getInternalCtx();
@@ -1745,23 +1844,27 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         } else {
             visit(node.getInternalValue());
             stackProduce();
-            if (slice.getInternalLower() != null)
+            if (slice.getInternalLower() != null) {
                 visit(slice.getInternalLower());
-            else
+            } else {
                 code.aconst_null();
+            }
             stackProduce();
-            if (slice.getInternalUpper() != null)
+            if (slice.getInternalUpper() != null) {
                 visit(slice.getInternalUpper());
-            else
+            } else {
                 code.aconst_null();
+            }
             stackProduce();
-            if (slice.getInternalStep() != null)
+            if (slice.getInternalStep() != null) {
                 visit(slice.getInternalStep());
-            else
+            } else {
                 code.aconst_null();
+            }
             stackProduce();
 
-            if (node.getInternalCtx() == expr_contextType.AugStore && augmode == expr_contextType.Load) {
+            if (node.getInternalCtx() == expr_contextType.AugStore &&
+                    augmode == expr_contextType.Load) {
                 saveAugTmps(node, 4);
                 ctx = expr_contextType.Load;
             }
@@ -1769,20 +1872,20 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         }
 
         switch (ctx) {
-        case Del:
-            code.invokevirtual(p(PyObject.class), "__delslice__", sig(Void.TYPE, PyObject.class,
+            case Del:
+                code.invokevirtual(p(PyObject.class), "__delslice__", sig(Void.TYPE, PyObject.class,
                         PyObject.class, PyObject.class));
-            return null;
-        case Load:
-            code.invokevirtual(p(PyObject.class), "__getslice__", sig(PyObject.class,
+                return null;
+            case Load:
+                code.invokevirtual(p(PyObject.class), "__getslice__", sig(PyObject.class,
                         PyObject.class, PyObject.class, PyObject.class));
-            return null;
-        case Param:
-        case Store:
-            code.aload(temporary);
-            code.invokevirtual(p(PyObject.class), "__setslice__", sig(Void.TYPE, PyObject.class,
+                return null;
+            case Param:
+            case Store:
+                code.aload(temporary);
+                code.invokevirtual(p(PyObject.class), "__setslice__", sig(Void.TYPE, PyObject.class,
                         PyObject.class, PyObject.class, PyObject.class));
-            return null;
+                return null;
         }
         return null;
 
@@ -1796,33 +1899,38 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
 
         int value = temporary;
         expr_contextType ctx = node.getInternalCtx();
-        if (node.getInternalCtx() == expr_contextType.AugStore && augmode == expr_contextType.Store) {
+        if (node.getInternalCtx() == expr_contextType.AugStore &&
+                augmode == expr_contextType.Store) {
             restoreAugTmps(node, 2);
             ctx = expr_contextType.Store;
         } else {
-            visit(node.getInternalValue()); stackProduce();
+            visit(node.getInternalValue());
+            stackProduce();
             visit(node.getInternalSlice());
             stackConsume();
 
-            if (node.getInternalCtx() == expr_contextType.AugStore && augmode == expr_contextType.Load) {
+            if (node.getInternalCtx() == expr_contextType.AugStore &&
+                    augmode == expr_contextType.Load) {
                 saveAugTmps(node, 2);
                 ctx = expr_contextType.Load;
             }
         }
 
         switch (ctx) {
-        case Del:
-            code.invokevirtual(p(PyObject.class), "__delitem__", sig(Void.TYPE, PyObject.class));
-            return null;
-        case Load:
-            code.invokevirtual(p(PyObject.class), "__getitem__", sig(PyObject.class, PyObject.class));
-            return null;
-        case Param:
-        case Store:
-            code.aload(value);
-            code.invokevirtual(p(PyObject.class), "__setitem__", sig(Void.TYPE, PyObject.class,
-                        PyObject.class));
-            return null;
+            case Del:
+                code.invokevirtual(p(PyObject.class), "__delitem__",
+                        sig(Void.TYPE, PyObject.class));
+                return null;
+            case Load:
+                code.invokevirtual(p(PyObject.class), "__getitem__",
+                        sig(PyObject.class, PyObject.class));
+                return null;
+            case Param:
+            case Store:
+                code.aload(value);
+                code.invokevirtual(p(PyObject.class), "__setitem__",
+                        sig(Void.TYPE, PyObject.class, PyObject.class));
+                return null;
         }
         return null;
     }
@@ -1848,32 +1956,35 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
     public Object visitAttribute(Attribute node) throws Exception {
 
         expr_contextType ctx = node.getInternalCtx();
-        if (node.getInternalCtx() == expr_contextType.AugStore && augmode == expr_contextType.Store) {
+        if (node.getInternalCtx() == expr_contextType.AugStore &&
+                augmode == expr_contextType.Store) {
             restoreAugTmps(node, 2);
             ctx = expr_contextType.Store;
         } else {
             visit(node.getInternalValue());
             code.ldc(getName(node.getInternalAttr()));
 
-            if (node.getInternalCtx() == expr_contextType.AugStore && augmode == expr_contextType.Load) {
+            if (node.getInternalCtx() == expr_contextType.AugStore &&
+                    augmode == expr_contextType.Load) {
                 saveAugTmps(node, 2);
                 ctx = expr_contextType.Load;
             }
         }
 
         switch (ctx) {
-        case Del:
-            code.invokevirtual(p(PyObject.class), "__delattr__", sig(Void.TYPE, String.class));
-            return null;
-        case Load:
-            code.invokevirtual(p(PyObject.class), "__getattr__", sig(PyObject.class, String.class));
-            return null;
-        case Param:
-        case Store:
-            code.aload(temporary);
-            code.invokevirtual(p(PyObject.class), "__setattr__", sig(Void.TYPE, String.class,
-                        PyObject.class));
-            return null;
+            case Del:
+                code.invokevirtual(p(PyObject.class), "__delattr__", sig(Void.TYPE, String.class));
+                return null;
+            case Load:
+                code.invokevirtual(p(PyObject.class), "__getattr__",
+                        sig(PyObject.class, String.class));
+                return null;
+            case Param:
+            case Store:
+                code.aload(temporary);
+                code.invokevirtual(p(PyObject.class), "__setattr__",
+                        sig(Void.TYPE, String.class, PyObject.class));
+                return null;
         }
         return null;
     }
@@ -1881,8 +1992,8 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
     public Object seqSet(java.util.List<expr> nodes) throws Exception {
         code.aload(temporary);
         code.iconst(nodes.size());
-        code.invokestatic(p(Py.class), "unpackSequence", sig(PyObject[].class, PyObject.class,
-                    Integer.TYPE));
+        code.invokestatic(p(Py.class), "unpackSequence",
+                sig(PyObject[].class, PyObject.class, Integer.TYPE));
 
         int tmp = code.getLocal("[org/python/core/PyObject");
         code.astore(tmp);
@@ -1899,7 +2010,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
     }
 
     public Object seqDel(java.util.List<expr> nodes) throws Exception {
-        for (expr e: nodes) {
+        for (expr e : nodes) {
             visit(e);
         }
         return null;
@@ -1907,12 +2018,13 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
 
     @Override
     public Object visitTuple(Tuple node) throws Exception {
-        /* if (mode ==AUGSET)
-            throw new ParseException(
-                      "augmented assign to tuple not possible", node); */
-        if (node.getInternalCtx() == expr_contextType.Store) return seqSet(node.getInternalElts());
-        if (node.getInternalCtx() == expr_contextType.Del) return seqDel(node.getInternalElts());
-        
+        if (node.getInternalCtx() == expr_contextType.Store) {
+            return seqSet(node.getInternalElts());
+        }
+        if (node.getInternalCtx() == expr_contextType.Del) {
+            return seqDel(node.getInternalElts());
+        }
+
         int content = makeArray(node.getInternalElts());
 
         code.new_(p(PyTuple.class));
@@ -1926,9 +2038,13 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
 
     @Override
     public Object visitList(List node) throws Exception {
-        if (node.getInternalCtx() == expr_contextType.Store) return seqSet(node.getInternalElts());
-        if (node.getInternalCtx() == expr_contextType.Del) return seqDel(node.getInternalElts());
-        
+        if (node.getInternalCtx() == expr_contextType.Store) {
+            return seqSet(node.getInternalElts());
+        }
+        if (node.getInternalCtx() == expr_contextType.Del) {
+            return seqDel(node.getInternalElts());
+        }
+
         int content = makeArray(node.getInternalElts());
 
         code.new_(p(PyList.class));
@@ -1951,26 +2067,28 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         code.ldc("append");
 
         code.invokevirtual(p(PyObject.class), "__getattr__", sig(PyObject.class, String.class));
-        String tmp_append ="_[" + node.getLine() + "_" + node.getCharPositionInLine() + "]";
+        String tmp_append = "_[" + node.getLine() + "_" + node.getCharPositionInLine() + "]";
 
         set(new Name(node, tmp_append, expr_contextType.Store));
 
         java.util.List<expr> args = new ArrayList<expr>();
         args.add(node.getInternalElt());
-        stmt n = new Expr(node, new Call(node, new Name(node, tmp_append, expr_contextType.Load), 
-                                       args,
-                                       new ArrayList<keyword>(), null, null));
+        stmt n = new Expr(node, new Call(node, new Name(node, tmp_append, expr_contextType.Load),
+                args,
+                new ArrayList<keyword>(), null, null));
 
         for (int i = node.getInternalGenerators().size() - 1; i >= 0; i--) {
             comprehension lc = node.getInternalGenerators().get(i);
             for (int j = lc.getInternalIfs().size() - 1; j >= 0; j--) {
                 java.util.List<stmt> body = new ArrayList<stmt>();
                 body.add(n);
-                n = new If(lc.getInternalIfs().get(j), lc.getInternalIfs().get(j), body, new ArrayList<stmt>());
+                n = new If(lc.getInternalIfs().get(j), lc.getInternalIfs().get(j), body,
+                        new ArrayList<stmt>());
             }
             java.util.List<stmt> body = new ArrayList<stmt>();
             body.add(n);
-            n = new For(lc,lc.getInternalTarget(), lc.getInternalIter(), body, new ArrayList<stmt>());
+            n = new For(lc, lc.getInternalTarget(), lc.getInternalIter(), body,
+                    new ArrayList<stmt>());
         }
         visit(n);
         java.util.List<expr> targets = new ArrayList<expr>();
@@ -1988,7 +2106,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
             elts.add(node.getInternalValues().get(i));
         }
         int content = makeArray(elts);
-        
+
         code.new_(p(PyDictionary.class));
         code.dup();
         code.aload(content);
@@ -2010,7 +2128,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
 
         //Add a return node onto the outside of suite;
         java.util.List<stmt> bod = new ArrayList<stmt>();
-        bod.add(new Return(node,node.getInternalBody()));
+        bod.add(new Return(node, node.getInternalBody()));
         mod retSuite = new Suite(node, bod);
 
         setline(node);
@@ -2020,31 +2138,30 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         int defaultsArray = makeArray(scope.ac.getDefaults());
 
         code.new_(p(PyFunction.class));
-        
+
         code.dup();
         code.aload(defaultsArray);
         code.freeLocal(defaultsArray);
 
         loadFrame();
         code.getfield(p(PyFrame.class), "f_globals", ci(PyObject.class));
-        
+
         code.swap();
 
         scope.setup_closure();
         scope.dump();
         module.codeConstant(retSuite, name, true, className,
-                      false, false, node.getLine(), scope, cflags).get(code);
+                false, false, node.getLine(), scope, cflags).get(code);
 
         if (!makeClosure(scope)) {
             code.invokespecial(p(PyFunction.class), "<init>", sig(Void.TYPE, PyObject.class,
-                        PyObject[].class, PyCode.class));
+                    PyObject[].class, PyCode.class));
         } else {
             code.invokespecial(p(PyFunction.class), "<init>", sig(Void.TYPE, PyObject.class,
-                        PyObject[].class, PyCode.class, PyObject[].class));
+                    PyObject[].class, PyCode.class, PyObject[].class));
         }
         return null;
     }
-
 
     @Override
     public Object visitEllipsis(Ellipsis node) throws Exception {
@@ -2054,22 +2171,36 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
 
     @Override
     public Object visitSlice(Slice node) throws Exception {
-        if (node.getInternalLower() == null) getNone(); else visit(node.getInternalLower()); stackProduce();
-        if (node.getInternalUpper() == null) getNone(); else visit(node.getInternalUpper()); stackProduce();
-        if (node.getInternalStep() == null) getNone(); else visit(node.getInternalStep());
+        if (node.getInternalLower() == null) {
+            getNone();
+        } else {
+            visit(node.getInternalLower());
+        }
+        stackProduce();
+        if (node.getInternalUpper() == null) {
+            getNone();
+        } else {
+            visit(node.getInternalUpper());
+        }
+        stackProduce();
+        if (node.getInternalStep() == null) {
+            getNone();
+        } else {
+            visit(node.getInternalStep());
+        }
         int step = storeTop();
         stackConsume(2);
-        
+
         code.new_(p(PySlice.class));
         code.dup();
         code.dup2_x2();
         code.pop2();
-        
+
         code.aload(step);
         code.freeLocal(step);
-        
+
         code.invokespecial(p(PySlice.class), "<init>", sig(Void.TYPE, PyObject.class,
-                    PyObject.class, PyObject.class));
+                PyObject.class, PyObject.class));
         return null;
     }
 
@@ -2082,7 +2213,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         //Get class name
         String name = getName(node.getInternalName());
         code.ldc(name);
-        
+
         code.aload(baseArray);
 
         ScopeInfo scope = module.getScopeInfo(node);
@@ -2090,8 +2221,8 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         scope.setup_closure();
         scope.dump();
         //Make code object out of suite
-        module.codeConstant(new Suite(node,node.getInternalBody()), name, false, name,
-                      true, false, node.getLine(), scope, cflags).get(code);
+        module.codeConstant(new Suite(node, node.getInternalBody()), name, false, name,
+                true, false, node.getLine(), scope, cflags).get(code);
 
         //Get doc string (if there)
         getDocString(node.getInternalBody());
@@ -2099,17 +2230,16 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         //Make class out of name, bases, and code
         if (!makeClosure(scope)) {
             code.invokestatic(p(Py.class), "makeClass", sig(PyObject.class, String.class,
-                        PyObject[].class, PyCode.class, PyObject.class));
+                    PyObject[].class, PyCode.class, PyObject.class));
         } else {
             code.invokestatic(p(Py.class), "makeClass", sig(PyObject.class, String.class,
-                        PyObject[].class, PyCode.class, PyObject.class, PyObject[].class));
+                    PyObject[].class, PyCode.class, PyObject.class, PyObject[].class));
         }
-        
+
         applyDecorators(node.getInternalDecorator_list());
 
         //Assign this new class to the given name
-        set(new Name(node,node.getInternalName(), expr_contextType.Store));
-        //doDecorators(node,node.getInternalDecorator_list(), node.getInternalName());
+        set(new Name(node, node.getInternalName(), expr_contextType.Store));
         freeArray(baseArray);
         return null;
     }
@@ -2119,7 +2249,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         if (node.getInternalN() instanceof PyInteger) {
             module.integerConstant(((PyInteger) node.getInternalN()).getValue()).get(code);
         } else if (node.getInternalN() instanceof PyLong) {
-            module.longConstant(((PyObject)node.getInternalN()).__str__().toString()).get(code);
+            module.longConstant(((PyObject) node.getInternalN()).__str__().toString()).get(code);
         } else if (node.getInternalN() instanceof PyFloat) {
             module.floatConstant(((PyFloat) node.getInternalN()).getValue()).get(code);
         } else if (node.getInternalN() instanceof PyComplex) {
@@ -2130,13 +2260,13 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
 
     private String getName(String name) {
         if (className != null && name.startsWith("__") &&
-            !name.endsWith("__"))
-        {
+                !name.endsWith("__")) {
             //remove leading '_' from classname
             int i = 0;
-            while (className.charAt(i) == '_')
+            while (className.charAt(i) == '_') {
                 i++;
-            return "_"+className.substring(i)+name;
+            }
+            return "_" + className.substring(i) + name;
         }
         return name;
     }
@@ -2149,116 +2279,120 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
     @Override
     public Object visitName(Name node) throws Exception {
         String name;
-        if (fast_locals)
+        if (fast_locals) {
             name = node.getInternalId();
-        else
+        } else {
             name = getName(node.getInternalId());
+        }
 
         SymInfo syminf = tbl.get(name);
 
         expr_contextType ctx = node.getInternalCtx();
         if (ctx == expr_contextType.AugStore) {
             ctx = augmode;
-        }        
+        }
 
         switch (ctx) {
-        case Load:
-            loadFrame();
-            if (syminf != null) {
-                int flags = syminf.flags;
-                if ((flags&ScopeInfo.GLOBAL) !=0 || optimizeGlobals&&
-                        (flags&(ScopeInfo.BOUND|ScopeInfo.CELL|
-                                                        ScopeInfo.FREE))==0) {
-                    emitGetGlobal(name);
-                    return null;
-                }
-                if (fast_locals) {
-                    if ((flags&ScopeInfo.CELL) != 0) {
+            case Load:
+                loadFrame();
+                if (syminf != null) {
+                    int flags = syminf.flags;
+                    if ((flags & ScopeInfo.GLOBAL) != 0 || optimizeGlobals &&
+                            (flags & (ScopeInfo.BOUND | ScopeInfo.CELL |
+                            ScopeInfo.FREE)) == 0) {
+                        emitGetGlobal(name);
+                        return null;
+                    }
+                    if (fast_locals) {
+                        if ((flags & ScopeInfo.CELL) != 0) {
+                            code.iconst(syminf.env_index);
+                            code.invokevirtual(p(PyFrame.class), "getderef", sig(PyObject.class,
+                                    Integer.TYPE));
+                            return null;
+                        }
+                        if ((flags & ScopeInfo.BOUND) != 0) {
+                            code.iconst(syminf.locals_index);
+                            code.invokevirtual(p(PyFrame.class), "getlocal", sig(PyObject.class,
+                                    Integer.TYPE));
+                            return null;
+                        }
+                    }
+                    if ((flags & ScopeInfo.FREE) != 0 &&
+                            (flags & ScopeInfo.BOUND) == 0) {
                         code.iconst(syminf.env_index);
                         code.invokevirtual(p(PyFrame.class), "getderef", sig(PyObject.class,
-                                    Integer.TYPE));
-                        return null;
-                    }
-                    if ((flags&ScopeInfo.BOUND) != 0) {
-                        code.iconst(syminf.locals_index);
-                        code.invokevirtual(p(PyFrame.class), "getlocal", sig(PyObject.class,
-                                    Integer.TYPE));
-                        return null;
-                    }
-                }
-                if ((flags&ScopeInfo.FREE) != 0 &&
-                            (flags&ScopeInfo.BOUND) == 0) {
-                    code.iconst(syminf.env_index);
-                    code.invokevirtual(p(PyFrame.class), "getderef", sig(PyObject.class,
                                 Integer.TYPE));
-                    return null;
+                        return null;
+                    }
                 }
-            }
-            code.ldc(name);
-            code.invokevirtual(p(PyFrame.class), "getname", sig(PyObject.class, String.class));
-            return null;
-
-        case Param:
-        case Store:
-            loadFrame();
-            if (syminf != null && (syminf.flags&ScopeInfo.GLOBAL) != 0) {
                 code.ldc(name);
-                code.aload(temporary);
-                code.invokevirtual(p(PyFrame.class), "setglobal", sig(Void.TYPE, String.class,
-                            PyObject.class));
-            } else {
-                if (!fast_locals) {
+                code.invokevirtual(p(PyFrame.class), "getname", sig(PyObject.class, String.class));
+                return null;
+
+            case Param:
+            case Store:
+                loadFrame();
+                if (syminf != null && (syminf.flags & ScopeInfo.GLOBAL) != 0) {
                     code.ldc(name);
                     code.aload(temporary);
-                    code.invokevirtual(p(PyFrame.class), "setlocal", sig(Void.TYPE, String.class,
-                                PyObject.class));
+                    code.invokevirtual(p(PyFrame.class), "setglobal", sig(Void.TYPE, String.class,
+                            PyObject.class));
                 } else {
-                    if (syminf == null) {
-                        throw new ParseException("internal compiler error", node);
-                    }
-                    if ((syminf.flags&ScopeInfo.CELL) != 0) {
-                        code.iconst(syminf.env_index);
+                    if (!fast_locals) {
+                        code.ldc(name);
                         code.aload(temporary);
-                        code.invokevirtual(p(PyFrame.class), "setderef", sig(Void.TYPE,
-                                    Integer.TYPE, PyObject.class));
+                        code.invokevirtual(p(PyFrame.class), "setlocal",
+                                sig(Void.TYPE, String.class, PyObject.class));
                     } else {
-                        code.iconst(syminf.locals_index);
-                        code.aload(temporary);
-                        code.invokevirtual(p(PyFrame.class), "setlocal", sig(Void.TYPE,
+                        if (syminf == null) {
+                            throw new ParseException("internal compiler error", node);
+                        }
+                        if ((syminf.flags & ScopeInfo.CELL) != 0) {
+                            code.iconst(syminf.env_index);
+                            code.aload(temporary);
+                            code.invokevirtual(p(PyFrame.class), "setderef", sig(Void.TYPE,
                                     Integer.TYPE, PyObject.class));
+                        } else {
+                            code.iconst(syminf.locals_index);
+                            code.aload(temporary);
+                            code.invokevirtual(p(PyFrame.class), "setlocal", sig(Void.TYPE,
+                                    Integer.TYPE, PyObject.class));
+                        }
                     }
                 }
-            }
-            return null;
-        case Del: {
-            loadFrame();
-            if (syminf != null && (syminf.flags&ScopeInfo.GLOBAL) != 0) {
-                code.ldc(name);
-                code.invokevirtual(p(PyFrame.class), "delglobal", sig(Void.TYPE, String.class));
-            } else {
-                if (!fast_locals) {
+                return null;
+            case Del: {
+                loadFrame();
+                if (syminf != null && (syminf.flags & ScopeInfo.GLOBAL) != 0) {
                     code.ldc(name);
-                    code.invokevirtual(p(PyFrame.class), "dellocal", sig(Void.TYPE, String.class));
+                    code.invokevirtual(p(PyFrame.class), "delglobal", sig(Void.TYPE, String.class));
                 } else {
-                    if (syminf == null) {
-                        throw new ParseException("internal compiler error", node);
+                    if (!fast_locals) {
+                        code.ldc(name);
+                        code.invokevirtual(p(PyFrame.class), "dellocal",
+                                sig(Void.TYPE, String.class));
+                    } else {
+                        if (syminf == null) {
+                            throw new ParseException("internal compiler error", node);
+                        }
+                        if ((syminf.flags & ScopeInfo.CELL) != 0) {
+                            module.error("can not delete variable '" + name +
+                                    "' referenced in nested scope", true, node);
+                        }
+                        code.iconst(syminf.locals_index);
+                        code.invokevirtual(p(PyFrame.class), "dellocal",
+                                sig(Void.TYPE, Integer.TYPE));
                     }
-                    if ((syminf.flags&ScopeInfo.CELL) != 0) {
-                        module.error("can not delete variable '"+name+
-                              "' referenced in nested scope",true,node);
-                    }
-                    code.iconst(syminf.locals_index);
-                    code.invokevirtual(p(PyFrame.class), "dellocal", sig(Void.TYPE, Integer.TYPE));
                 }
+                return null;
             }
-            return null; }
         }
         return null;
     }
 
     @Override
     public Object visitStr(Str node) throws Exception {
-        PyString s = (PyString)node.getInternalS();
+        PyString s = (PyString) node.getInternalS();
         if (s instanceof PyUnicode) {
             module.unicodeConstant(s.asString()).get(code);
         } else {
@@ -2285,7 +2419,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         scope.setup_closure();
         scope.dump();
 
-        stmt n = new Expr(node, new Yield(node,node.getInternalElt()));
+        stmt n = new Expr(node, new Yield(node, node.getInternalElt()));
 
         expr iter = null;
         for (int i = node.getInternalGenerators().size() - 1; i >= 0; i--) {
@@ -2293,14 +2427,17 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
             for (int j = comp.getInternalIfs().size() - 1; j >= 0; j--) {
                 java.util.List<stmt> bod = new ArrayList<stmt>();
                 bod.add(n);
-                n = new If(comp.getInternalIfs().get(j), comp.getInternalIfs().get(j), bod, new ArrayList<stmt>());
+                n = new If(comp.getInternalIfs().get(j), comp.getInternalIfs().get(j), bod,
+                        new ArrayList<stmt>());
             }
             java.util.List<stmt> bod = new ArrayList<stmt>();
             bod.add(n);
             if (i != 0) {
-                n = new For(comp,comp.getInternalTarget(), comp.getInternalIter(), bod, new ArrayList<stmt>());
+                n = new For(comp, comp.getInternalTarget(), comp.getInternalIter(), bod,
+                        new ArrayList<stmt>());
             } else {
-                n = new For(comp,comp.getInternalTarget(), new Name(node, bound_exp, expr_contextType.Load), bod, new ArrayList<stmt>());
+                n = new For(comp, comp.getInternalTarget(), new Name(node, bound_exp,
+                        expr_contextType.Load), bod, new ArrayList<stmt>());
                 iter = comp.getInternalIter();
             }
         }
@@ -2308,16 +2445,16 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         java.util.List<stmt> bod = new ArrayList<stmt>();
         bod.add(n);
         module.codeConstant(new Suite(node, bod), "<genexpr>", true,
-                      className, false, false,
-                      node.getLine(), scope, cflags).get(code);
+                className, false, false,
+                node.getLine(), scope, cflags).get(code);
 
         code.aconst_null();
         if (!makeClosure(scope)) {
             code.invokespecial(p(PyFunction.class), "<init>", sig(Void.TYPE, PyObject.class,
-                        PyObject[].class, PyCode.class, PyObject.class));
+                    PyObject[].class, PyCode.class, PyObject.class));
         } else {
             code.invokespecial(p(PyFunction.class), "<init>", sig(Void.TYPE, PyObject.class,
-                        PyObject[].class, PyCode.class, PyObject.class, PyObject[].class));
+                    PyObject[].class, PyCode.class, PyObject.class, PyObject[].class));
         }
         int genExp = storeTop();
 
@@ -2328,7 +2465,8 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         code.invokevirtual(p(PyObject.class), "__iter__", sig(PyObject.class));
         loadThreadState();
         code.swap();
-        code.invokevirtual(p(PyObject.class), "__call__", sig(PyObject.class, ThreadState.class, PyObject.class));
+        code.invokevirtual(p(PyObject.class), "__call__",
+                sig(PyObject.class, ThreadState.class, PyObject.class));
         freeArray(emptyArray);
 
         return null;
@@ -2360,7 +2498,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         code.invokestatic(Type.getType(ContextGuard.class).getInternalName(),
                 contextGuard_getManager.getName(), contextGuard_getManager.getDescriptor());
         code.dup();
-        
+
 
         final int mgr_tmp = code.getLocal(Type.getType(ContextManager.class).getInternalName());
         code.astore(mgr_tmp);
@@ -2381,15 +2519,19 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         // if exc: # implicit
         //     exit(None, None, None)
         ExceptionHandler normalExit = new ExceptionHandler() {
+
             @Override
-            public boolean isFinallyHandler() { return true; }
+            public boolean isFinallyHandler() {
+                return true;
+            }
 
             @Override
             public void finalBody(CodeCompiler compiler) throws Exception {
                 compiler.code.aload(mgr_tmp);
                 loadThreadState();
                 compiler.code.aconst_null();
-                compiler.code.invokeinterface(Type.getType(ContextManager.class).getInternalName(), __exit__.getName(), __exit__.getDescriptor());
+                compiler.code.invokeinterface(Type.getType(ContextManager.class).getInternalName(),
+                        __exit__.getName(), __exit__.getDescriptor());
                 compiler.code.pop();
             }
         };
@@ -2406,7 +2548,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
             set(node.getInternalOptional_vars(), value_tmp);
         }
         code.freeLocal(value_tmp);
-        
+
         // BLOCK + FINALLY if non-local-goto
         Object blockResult = suite(node.getInternalBody());
         normalExit.bodyDone = true;
@@ -2428,7 +2570,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
 
         loadFrame();
         code.invokestatic(p(Py.class), "setException", sig(PyException.class, Throwable.class,
-                    PyFrame.class));
+                PyFrame.class));
         code.aload(mgr_tmp);
         code.swap();
         loadThreadState();
@@ -2452,7 +2594,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         handler.addExceptionHandlers(label_catch);
         return null;
     }
-    
+
     @Override
     protected Object unhandled_node(PythonTree node) throws Exception {
         throw new Exception("Unhandled node " + node);
@@ -2469,6 +2611,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
      *  catch block will eventually handle.
      */
     class ExceptionHandler {
+
         /**
          *  Each handler gets several exception ranges, this is because inlined
          *  finally exit code shouldn't be covered by the exception handler of
@@ -2480,9 +2623,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
          */
         public Vector<Label> exceptionStarts = new Vector<Label>();
         public Vector<Label> exceptionEnds = new Vector<Label>();
-
         public boolean bodyDone = false;
-
         public PythonTree node = null;
 
         public ExceptionHandler() {
@@ -2503,17 +2644,17 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
                 //FIXME: not at all sure that getOffset() test is correct or necessary.
                 if (start.getOffset() != end.getOffset()) {
                     code.trycatch(
-                        exceptionStarts.elementAt(i),
-                        exceptionEnds.elementAt(i),
-                        handlerStart,
-                        p(Throwable.class));
+                            exceptionStarts.elementAt(i),
+                            exceptionEnds.elementAt(i),
+                            handlerStart,
+                            p(Throwable.class));
                 }
             }
         }
 
         public void finalBody(CodeCompiler compiler) throws Exception {
             if (node instanceof TryFinally) {
-                suite(((TryFinally)node).getInternalFinalbody());
+                suite(((TryFinally) node).getInternalFinalbody());
             }
         }
     }
