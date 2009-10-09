@@ -102,32 +102,34 @@ import static org.python.util.CodegenUtils.*;
 
 public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
 
-    static final Object Exit = new Integer(1);
-    static final Object NoExit = null;
-    static final int GET = 0;
-    static final int SET = 1;
-    static final int DEL = 2;
-    static final int AUGGET = 3;
-    static final int AUGSET = 4;
-    Module module;
-    ClassWriter cw;
-    Code code;
-    CodeCompiler mrefs;
-    CompilerFlags cflags;
-    int temporary;
-    expr_contextType augmode;
-    int augtmp1;
-    int augtmp2;
-    int augtmp3;
-    int augtmp4;
-    boolean fast_locals, print_results;
-    Map<String, SymInfo> tbl;
-    ScopeInfo my_scope;
-    boolean optimizeGlobals = true;
-    Vector<String> names;
-    String className;
-    Stack<Label> continueLabels, breakLabels;
-    Stack<ExceptionHandler> exceptionHandlers;
+    private static final Object Exit = new Integer(1);
+    private static final Object NoExit = null;
+    private static final int GET = 0;
+    private static final int SET = 1;
+    private static final int DEL = 2;
+    private static final int AUGGET = 3;
+    private static final int AUGSET = 4;
+    private Module module;
+    private ClassWriter cw;
+    private Code code;
+    private CodeCompiler mrefs;
+    private CompilerFlags cflags;
+    private int temporary;
+    private expr_contextType augmode;
+    private int augtmp1;
+    private int augtmp2;
+    private int augtmp3;
+    private int augtmp4;
+    private boolean fast_locals, print_results;
+    private Map<String, SymInfo> tbl;
+    private ScopeInfo my_scope;
+    private boolean optimizeGlobals = true;
+    private Vector<String> names;
+    private String className;
+    private Stack<Label> continueLabels, breakLabels;
+    private Stack<ExceptionHandler> exceptionHandlers;
+
+    //Module uses this, otherwise I'd make it private.
     Vector<Label> yields = new Vector<Label>();
 
     /*
@@ -138,8 +140,8 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
      * PyCode, in other words: each 'function'.  When returning through
      * finally's all the exceptionHandlers are executed.
      */
-    public int bcfLevel = 0;
-    int yield_count = 0;
+    private int bcfLevel = 0;
+    private int yield_count = 0;
     private Stack<String> stack = new Stack<String>();
 
     public CodeCompiler(Module module, boolean print_results) {
