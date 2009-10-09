@@ -348,7 +348,8 @@ public class PyFunction extends PyObject {
     @Override
     public PyObject __call__(ThreadState state, PyObject arg0, PyObject arg1,
             PyObject arg2, PyObject arg3) {
-        return func_code.call(state, arg0, arg1, arg2, arg3, func_globals, func_defaults, func_closure);
+        return func_code.call(state, arg0, arg1, arg2, arg3, func_globals, func_defaults,
+                              func_closure);
     }
     
     @Override
@@ -363,17 +364,17 @@ public class PyFunction extends PyObject {
 
     @Override
     public PyObject __call__(PyObject[] args, String[] keywords) {
-        return function___call__(args, keywords);
+        return __call__(Py.getThreadState(), args, keywords);
     }
     
     @Override
     public PyObject __call__(ThreadState state, PyObject[] args, String[] keywords) {
-        return func_code.call(state, args, keywords, func_globals, func_defaults, func_closure);
+        return function___call__(state, args, keywords);
     }
 
     @ExposedMethod(doc = BuiltinDocs.function___call___doc)
-    final PyObject function___call__(PyObject[] args, String[] keywords) {
-        return __call__(Py.getThreadState(), args, keywords);
+    final PyObject function___call__(ThreadState state, PyObject[] args, String[] keywords) {
+        return func_code.call(state, args, keywords, func_globals, func_defaults, func_closure);
     }
 
     @Override
@@ -382,8 +383,10 @@ public class PyFunction extends PyObject {
     }
     
     @Override
-    public PyObject __call__(ThreadState state, PyObject arg1, PyObject[] args, String[] keywords) {
-        return func_code.call(state, arg1, args, keywords, func_globals, func_defaults, func_closure);
+    public PyObject __call__(ThreadState state, PyObject arg1, PyObject[] args,
+                             String[] keywords) {
+        return func_code.call(state, arg1, args, keywords, func_globals, func_defaults,
+                              func_closure);
     }
 
     @Override
