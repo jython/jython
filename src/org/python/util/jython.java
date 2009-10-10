@@ -355,8 +355,9 @@ public class jython {
      * Run any finalizations on the current interpreter in preparation for a SytemRestart.
      */
     public static void shutdownInterpreter() {
-        // Stop all the active threads
+        // Stop all the active threads and signal the SystemRestart
         thread.interruptAllThreads();
+        Py.getSystemState()._systemRestart = true;
         // Close all sockets -- not all of their operations are stopped by
         // Thread.interrupt (in particular pre-nio sockets)
         try {

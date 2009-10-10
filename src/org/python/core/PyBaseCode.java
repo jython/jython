@@ -98,7 +98,7 @@ public abstract class PyBaseCode extends PyCode {
 
         // Check for interruption, which is used for restarting the interpreter
         // on Jython
-        if (Thread.currentThread().isInterrupted()) {
+        if (ts.systemState._systemRestart && Thread.currentThread().isInterrupted()) {
             throw new PyException(_systemrestart.SystemRestart);
         }
         return ret;

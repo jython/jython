@@ -144,6 +144,9 @@ public class PySystemState extends PyObject
 
     private int recursionlimit = 1000;
 
+    /** true when a SystemRestart is triggered. */
+    public boolean _systemRestart = false;
+
     public PySystemState() {
         initialize();
         modules = new PyStringMap();
