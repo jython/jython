@@ -254,9 +254,11 @@ public class jython {
                         // Shutdown this instance...
                         shouldRestart = true;
                         shutdownInterpreter();
+                        interp.cleanup();
                         // ..reset the state...
                         Py.setSystemState(new PySystemState());
                         // ...and start again
+                        return;
                     } else {
                         Py.printException(t);
                         if (!opts.interactive) {
