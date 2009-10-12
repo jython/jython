@@ -421,7 +421,7 @@ public class PyJavaType extends PyType {
             // If one of our superclasses  has something defined for this name, check if its a bean
             // property, and if so, try to fill in any gaps in our property from there
             PyObject fromType[] = new PyObject[] { null };
-            PyObject superForName = lookup_where(prop.__name__, fromType);
+            PyObject superForName = lookup_where_mro(prop.__name__, fromType);
             if (superForName instanceof PyBeanProperty) {
                 PyBeanProperty superProp = ((PyBeanProperty)superForName);
                 // If it has a set method and we don't, take it regardless.  If the types don't line
@@ -608,7 +608,7 @@ public class PyJavaType extends PyType {
             }
             String nmethname = normalize(meth.getName());
             PyObject[] where = new PyObject[1];
-            PyObject obj = lookup_where(nmethname, where);
+            PyObject obj = lookup_where_mro(nmethname, where);
             if (obj == null) {
                 // Nothing in our supertype hierarchy defines something with this name, so it
                 // must not be visible there.

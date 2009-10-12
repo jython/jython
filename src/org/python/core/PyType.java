@@ -9,6 +9,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReferenceArray;
 
 import org.python.expose.ExposeAsSuperclass;
 import org.python.expose.ExposedDelete;
@@ -81,11 +82,17 @@ public class PyType extends PyObject implements Serializable {
     /** Whether this type's __getattribute__ is object.__getattribute__. */
     private volatile boolean usesObjectGetattribute;
 
+    /** MethodCacheEntry version tag. */
+    private volatile Object versionTag = new Object();
+
     /** The number of __slots__ defined. */
     private int numSlots;
 
     private ReferenceQueue<PyType> subclasses_refq = new ReferenceQueue<PyType>();
     private Set<WeakReference<PyType>> subclasses = Generic.set();
+
+    /** Global mro cache. */
+    private static final MethodCache methodCache = new MethodCache();
 
     /** Mapping of Java classes to their PyTypes. */
     private static Map<Class<?>, PyType> class_to_type;
@@ -185,6 +192,7 @@ public class PyType extends PyObject implements Serializable {
 
         type.createAllSlots(!base.needs_userdict, !base.needs_weakref);
         type.ensureAttributes();
+        type.invalidateMethodCache();
 
         for (PyObject cur : type.bases) {
             if (cur instanceof PyType)
@@ -277,7 +285,7 @@ public class PyType extends PyObject implements Serializable {
         if (wantWeak) {
             createWeakrefSlot();
         }
-        needs_finalizer = lookup("__del__") != null;
+        needs_finalizer = lookup_mro("__del__") != null;
     }
 
     /**
@@ -494,8 +502,8 @@ public class PyType extends PyObject implements Serializable {
     }
 
     private void fillHasSetAndDelete() {
-        has_set = lookup("__set__") != null;
-        has_delete = lookup("__delete__") != null;
+        has_set = lookup_mro("__set__") != null;
+        has_delete = lookup_mro("__delete__") != null;
     }
 
     public PyObject getStatic() {
@@ -1042,17 +1050,50 @@ public class PyType extends PyObject implements Serializable {
     }
 
     /**
-     * INTERNAL lookup for name through mro objects' dicts
+     * Attribute lookup for name through mro objects' dicts. Lookups are cached.
      *
-     * @param name
-     *            attribute name (must be interned)
+     * @param name attribute name (must be interned)
      * @return found object or null
      */
     public PyObject lookup(String name) {
         return lookup_where(name, null);
     }
 
+    /**
+     * Attribute lookup for name directly through mro objects' dicts. This isn't cached,
+     * and should generally only be used during the bootstrapping of a type.
+     *
+     * @param name attribute name (must be interned)
+     * @return found object or null
+     */
+    protected PyObject lookup_mro(String name) {
+        return lookup_where_mro(name, null);
+    }
+
+    /**
+     * Attribute lookup for name through mro objects' dicts. Lookups are cached.
+     *
+     * Returns where in the mro the attribute was found at where[0].
+     *
+     * @param name attribute name (must be interned)
+     * @param where Where in the mro the attribute was found is written to index 0
+     * @return found object or null
+     */
     public PyObject lookup_where(String name, PyObject[] where) {
+        return methodCache.lookup_where(this, name, where);
+    }
+
+    /**
+     * Attribute lookup for name through mro objects' dicts. This isn't cached, and should
+     * generally only be used during the bootstrapping of a type.
+     *
+     * Returns where in the mro the attribute was found at where[0].
+     *
+     * @param name attribute name (must be interned)
+     * @param where Where in the mro the attribute was found is written to index 0
+     * @return found object or null
+     */
+    protected PyObject lookup_where_mro(String name, PyObject[] where) {
         PyObject[] mro = this.mro;
         if (mro == null) {
             return null;
@@ -1176,7 +1217,8 @@ public class PyType extends PyObject implements Serializable {
 
         class_to_type.put(c, newtype);
         newtype.builtin = true;
-        newtype.init(c,needsInners);
+        newtype.init(c, needsInners);
+        newtype.invalidateMethodCache();
         return newtype;
     }
 
@@ -1313,6 +1355,7 @@ public class PyType extends PyObject implements Serializable {
     }
 
     void postSetattr(String name) {
+        invalidateMethodCache();
         if (name == "__set__") {
             if (!has_set && lookup("__set__") != null) {
                 traverse_hierarchy(false, new OnType() {
@@ -1363,8 +1406,8 @@ public class PyType extends PyObject implements Serializable {
         postDelattr(name);
     }
 
-
     void postDelattr(String name) {
+        invalidateMethodCache();
         if (name == "__set__") {
             if (has_set && lookup("__set__") == null) {
                 traverse_hierarchy(false, new OnType() {
@@ -1398,6 +1441,19 @@ public class PyType extends PyObject implements Serializable {
                     }
                 });
         }
+    }
+
+    /**
+     * Invalidate this type's MethodCache entries. *Must* be called after any modification
+     * to __dict__ (or anything else affecting attribute lookups).
+     */
+    protected void invalidateMethodCache() {
+        traverse_hierarchy(false, new OnType() {
+                public boolean onType(PyType type) {
+                    type.versionTag = new Object();
+                    return false;
+                }
+            });
     }
 
     public PyObject __call__(PyObject[] args, String[] keywords) {
@@ -1449,6 +1505,7 @@ public class PyType extends PyObject implements Serializable {
             throw Py.ValueError("__name__ must not contain null bytes");
         }
         setName(nameStr);
+        invalidateMethodCache();
     }
 
     public void setName(String name) {
@@ -1699,6 +1756,109 @@ public class PyType extends PyObject implements Serializable {
                 }
             }
             mro = newMro.toArray(new PyObject[newMro.size()]);
+        }
+    }
+
+    /**
+     * A thead safe, non-blocking version of Armin Rigo's mro cache.
+     */
+    static class MethodCache {
+
+        /** The fixed size cache. */
+        private final AtomicReferenceArray<MethodCacheEntry> table;
+
+        /** Size of the cache exponent (2 ** SIZE_EXP). */
+        public static final int SIZE_EXP = 11;
+
+        public MethodCache() {
+            table = new AtomicReferenceArray<MethodCacheEntry>(1 << SIZE_EXP);
+            clear();
+        }
+
+        public void clear() {
+            int length = table.length();
+            for (int i = 0; i < length; i++) {
+                table.set(i, MethodCacheEntry.EMPTY);
+            }
+        }
+
+        public PyObject lookup_where(PyType type, String name, PyObject where[]) {
+            Object versionTag = type.versionTag;
+            int index = indexFor(versionTag, name);
+            MethodCacheEntry entry = table.get(index);
+
+            if (entry.isValid(versionTag, name)) {
+                return entry.get(where);
+            }
+
+            // Always cache where
+            if (where == null) {
+                where = new PyObject[1];
+            }
+            PyObject value = type.lookup_where_mro(name, where);
+            if (isCacheableName(name)) {
+                // CAS isn't totally necessary here but is possibly more correct. Cache by
+                // the original version before the lookup, if it's changed since then
+                // we'll cache a bad entry. Bad entries and CAS failures aren't a concern
+                // as subsequent lookups will sort themselves out
+                table.compareAndSet(index, entry, new MethodCacheEntry(versionTag, name, where[0],
+                                                                       value));
+            }
+            return value;
+        }
+
+        /**
+         * Return the table index for type version/name.
+         */
+        private static int indexFor(Object version, String name) {
+            long hash = version.hashCode() * name.hashCode();
+            return (int)hash >>> (Integer.SIZE - SIZE_EXP);
+        }
+
+        /**
+         * Determine if name is cacheable.
+         *
+         * Since the cache can keep references to names alive longer than usual, it avoids
+         * caching unusually large strings.
+         */
+        private static boolean isCacheableName(String name) {
+            return name.length() <= 100;
+        }
+
+        static class MethodCacheEntry extends WeakReference<PyObject> {
+
+            /** Version of the entry, a PyType.versionTag. */
+            private final Object version;
+
+            /** The name of the attribute. */
+            private final String name;
+
+            /** Where in the mro the value was found. */
+            private final WeakReference<PyObject> where;
+
+            static final MethodCacheEntry EMPTY = new MethodCacheEntry();
+
+            private MethodCacheEntry() {
+                this(null, null, null, null);
+            }
+
+            public MethodCacheEntry(Object version, String name, PyObject where, PyObject value) {
+                super(value);
+                this.version = version;
+                this.name = name;
+                this.where = new WeakReference<PyObject>(where);
+            }
+
+            public boolean isValid(Object version, String name) {
+                return this.version == version && this.name == name;
+            }
+
+            public PyObject get(PyObject[] where) {
+                if (where != null) {
+                    where[0] = this.where.get();
+                }
+                return get();
+            }
         }
     }
 }
