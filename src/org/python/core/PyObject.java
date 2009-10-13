@@ -38,9 +38,6 @@ public class PyObject implements Serializable {
     /** Primitives classes their wrapper classes. */
     private static final Map<Class<?>, Class<?>> primitiveMap = Generic.map();
 
-    /** object.__getattribute__ descriptor, cached for use by Deriveds.__findattr_ex__. */
-    static final PyObject objectGetattribute;
-
     static {
         primitiveMap.put(Character.TYPE, Character.class);
         primitiveMap.put(Boolean.TYPE, Boolean.class);
@@ -55,8 +52,6 @@ public class PyObject implements Serializable {
             Py.writeWarning("init", "Bootstrap types weren't encountered in bootstrapping: "
                             + Py.BOOTSTRAP_TYPES);
         }
-
-        objectGetattribute = TYPE.__findattr__("__getattribute__");
     }
 
     public PyObject(PyType objtype) {

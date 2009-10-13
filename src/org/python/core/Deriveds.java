@@ -6,8 +6,12 @@ package org.python.core;
  */
 public class Deriveds {
 
+    /** object.__getattribute__ descriptor, cached for use by __findattr_ex__. */
+    private static final PyObject objectGetattribute =
+            PyObject.TYPE.__findattr__("__getattribute__");
+
     /**
-     * Derived's __findattr_ex__ implementation.
+     * Deriveds' __findattr_ex__ implementation.
      *
      * This resides here (in org.python.core) because it manipulates PyType, and doesn't
      * call any of the Derived classes' superclass methods.
@@ -34,7 +38,7 @@ public class Deriveds {
                                                        type.getName()));
                 }
 
-                if (getattribute == PyObject.objectGetattribute) {
+                if (getattribute == objectGetattribute) {
                     type.setUsesObjectGetattribute(true);
                 }
                 pyName = PyString.fromInterned(name);
