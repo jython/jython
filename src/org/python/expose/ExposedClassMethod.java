@@ -22,4 +22,9 @@ public @interface ExposedClassMethod {
      * @return default arguments. Starts at the number of arguments - defaults.length.
      */
     String[] defaults() default {};
+
+    /**
+     * Returns the __doc__ String for this method.
+     */
+    String doc() default "";
 }

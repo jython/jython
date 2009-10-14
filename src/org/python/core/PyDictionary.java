@@ -92,7 +92,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
         return dict_fromkeys(TYPE, keys, value);
     }
 
-    @ExposedClassMethod(defaults = "Py.None")
+    @ExposedClassMethod(defaults = "Py.None", doc = BuiltinDocs.dict_fromkeys_doc)
     final static PyObject dict_fromkeys(PyType type, PyObject keys, PyObject value) {
         PyObject d = type.__call__();
         for (PyObject o : keys.asIterable()) {

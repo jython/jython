@@ -1,5 +1,7 @@
+/* Copyright (c) Jython Developers */
 package org.python.core;
 
+import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedType;
 
@@ -8,10 +10,11 @@ public class PyClassMethodDescr extends PyMethodDescr {
 
     public static final PyType TYPE = PyType.fromClass(PyClassMethodDescr.class);
 
-    PyClassMethodDescr(PyType t, PyBuiltinCallable meth) {
-        super(t, meth);
+    PyClassMethodDescr(PyType type, PyBuiltinCallable meth) {
+        super(type, meth);
     }
 
+    @Override
     public PyObject __get__(PyObject obj, PyObject type) {
         return classmethod_descriptor___get__(obj, type);
     }
@@ -32,5 +35,11 @@ public class PyClassMethodDescr extends PyMethodDescr {
         }
         checkGetterType((PyType)type);
         return meth.bind(type);
+    }
+
+    @Override
+    @ExposedGet(name = "__doc__")
+    public String getDoc() {
+        return super.getDoc();
     }
 }
