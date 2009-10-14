@@ -292,7 +292,8 @@ public class PyType extends PyObject implements Serializable {
      * Create the __dict__ descriptor.
      */
     private void createDictSlot() {
-        dict.__setitem__("__dict__", new PyDataDescr(this, "__dict__", PyObject.class) {
+        String doc = "dictionary for instance variables (if defined)";
+        dict.__setitem__("__dict__", new PyDataDescr(this, "__dict__", PyObject.class, doc) {
                 @Override
                 public Object invokeGet(PyObject obj) {
                     return obj.getDict();
@@ -325,7 +326,8 @@ public class PyType extends PyObject implements Serializable {
      * Create the __weakref__ descriptor.
      */
     private void createWeakrefSlot() {
-        dict.__setitem__("__weakref__", new PyDataDescr(this, "__weakref__", PyObject.class) {
+        String doc = "list of weak references to the object (if defined)";
+        dict.__setitem__("__weakref__", new PyDataDescr(this, "__weakref__", PyObject.class, doc) {
                 private static final String writeMsg =
                         "attribute '%s' of '%s' objects is not writable";
 
@@ -484,6 +486,21 @@ public class PyType extends PyObject implements Serializable {
         TypeBuilder builder = classToBuilder.get(underlying_class);
         name = builder.getName();
         dict = builder.getDict(this);
+        String doc = builder.getDoc();
+        // XXX: Can't create a __doc__ str until the PyBaseString/PyString types are
+        // created
+        if (dict.__finditem__("__doc__") == null && forClass != PyBaseString.class
+            && forClass != PyString.class) {
+            PyObject docObj;
+            if (doc != null) {
+                docObj = new PyString(doc);
+            } else {
+                // XXX: Hack: Py.None may be null during bootstrapping. Most types
+                // encountered then should have docstrings anyway
+                docObj = Py.None == null ? new PyString() : Py.None;
+            }
+            dict.__setitem__("__doc__", docObj);
+        }
         setIsBaseType(builder.getIsBaseType());
         instantiable = dict.__finditem__("__new__") != null;
         fillHasSetAndDelete();
@@ -1543,14 +1560,15 @@ public class PyType extends PyObject implements Serializable {
     }
 
     /**
-     * Equivalent of CPython's typeobject type_get_doc; handles __doc__ descriptors.
+     * Equivalent of CPython's typeobject.c::type_get_doc; handles __doc__ descriptors.
      */
+    @ExposedGet(name = "__doc__")
     public PyObject getDoc() {
-        PyObject doc = super.getDoc();
-        if (!builtin && doc != null && doc.getType().lookup("__get__") != null) {
-            return doc.__get__(null, this);
+        PyObject doc = dict.__finditem__("__doc__");
+        if (doc == null) {
+            return Py.None;
         }
-        return doc;
+        return doc.__get__(null, this);
     }
 
     boolean getUsesObjectGetattribute() {

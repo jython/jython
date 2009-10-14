@@ -63,7 +63,7 @@ public abstract class ExposedMethodFinder extends MethodAdapter implements PyTyp
      */
     public abstract void handleNewExposer(Exposer exposer);
 
-    public abstract void exposeAsGetDescriptor(String descName);
+    public abstract void exposeAsGetDescriptor(String descName, String doc);
 
     public abstract void exposeAsSetDescriptor(String descName);
 
@@ -93,15 +93,15 @@ public abstract class ExposedMethodFinder extends MethodAdapter implements PyTyp
             return new DescriptorVisitor(methodName) {
 
                 @Override
-                public void handleResult(String name) {
-                    exposeAsGetDescriptor(name);
+                public void handleResult(String name, String doc) {
+                    exposeAsGetDescriptor(name, doc);
                 }
             };
         } else if(desc.equals(EXPOSED_SET.getDescriptor())) {
             return new DescriptorVisitor(methodName) {
 
                 @Override
-                public void handleResult(String name) {
+                public void handleResult(String name, String doc) {
                     exposeAsSetDescriptor(name);
                 }
             };
@@ -109,7 +109,7 @@ public abstract class ExposedMethodFinder extends MethodAdapter implements PyTyp
             return new DescriptorVisitor(methodName) {
 
                 @Override
-                public void handleResult(String name) {
+                public void handleResult(String name, String doc) {
                     exposeAsDeleteDescriptor(name);
                 }
             };

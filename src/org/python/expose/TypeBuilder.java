@@ -17,4 +17,6 @@ public interface TypeBuilder {
     public Class getBase();
 
     public boolean getIsBaseType();
+
+    public String getDoc();
 }

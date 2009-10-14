@@ -36,7 +36,7 @@ public class ExposeMethodFinderTest extends TestCase implements Opcodes, PyTypes
             }
 
             @Override
-            public void exposeAsGetDescriptor(String descName) {
+            public void exposeAsGetDescriptor(String descName, String doc) {
                 getName = descName;
             }
 

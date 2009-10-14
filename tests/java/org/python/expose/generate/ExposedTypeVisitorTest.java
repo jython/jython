@@ -12,18 +12,11 @@ public class ExposedTypeVisitorTest extends TestCase {
         etv = new ExposedTypeVisitor(Type.getType("Lsimpletype;"), null) {
 
             @Override
-            public void handleResult(String name) {
+            public void handleResult(String name, Type base, boolean isBaseType, String doc) {
                 result = name;
-            }
-
-            @Override
-            public void handleResult(Type base) {
                 baseResult = base;
-            }
-
-            @Override
-            public void handleResult(boolean isBaseType) {
                 isBaseTypeResult = isBaseType;
+                docResult = doc;
             }
         };
     }
@@ -38,10 +31,12 @@ public class ExposedTypeVisitorTest extends TestCase {
         etv.visit("name", "different");
         etv.visit("base", Type.getType(PyObject.class));
         etv.visit("isBaseType", false);
+        etv.visit("doc", "Different docstring");
         etv.visitEnd();
         assertEquals("different", result);
         assertEquals(Type.getType(PyObject.class), baseResult);
         assertEquals(false, isBaseTypeResult);
+        assertEquals("Different docstring", docResult);
     }
 
     ExposedTypeVisitor etv;
@@ -51,4 +46,6 @@ public class ExposedTypeVisitorTest extends TestCase {
     private Type baseResult;
 
     private boolean isBaseTypeResult;
+
+    private String docResult;
 }

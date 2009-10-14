@@ -21,8 +21,8 @@ public class PyMethodDescr extends PyDescriptor implements PyBuiltinCallable.Inf
     }
 
     @ExposedGet(name = "__doc__")
-    public String fastGetDoc() {
-        return meth.fastGetDoc();
+    public String getDoc() {
+        return meth.getDoc();
     }
 
     public int getMaxargs() {

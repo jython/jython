@@ -7,6 +7,7 @@ import org.python.core.BytecodeLoader;
 import org.python.core.PyBuiltinCallable;
 import org.python.core.PyDataDescr;
 import org.python.core.PyObject;
+import org.python.core.PyString;
 import org.python.core.PyType;
 
 public class ExposedTypeProcessorTest extends InterpTestCase {
@@ -42,6 +43,7 @@ public class ExposedTypeProcessorTest extends InterpTestCase {
         desc.setType(simp.getType());
         assertEquals(doctoredSimple.getField("toStringVal").get(simp),
                      desc.__get__(simp, PyType.fromClass(doctoredSimple)).toString());
+        assertEquals(desc.__getattr__("__doc__"), new PyString("tostring docs"));
     }
 
     public void testNoAnnotationType() throws IOException {

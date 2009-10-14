@@ -10,6 +10,8 @@ public abstract class ExposedFieldFinder implements FieldVisitor, PyTypes {
 
     private FieldVisitor delegate;
 
+    private String doc;
+
     public ExposedFieldFinder(String name, FieldVisitor delegate) {
         fieldName = name;
         this.delegate = delegate;
@@ -20,15 +22,15 @@ public abstract class ExposedFieldFinder implements FieldVisitor, PyTypes {
             return new DescriptorVisitor(fieldName) {
 
                 @Override
-                public void handleResult(String name) {
-                    exposeAsGet(name);
+                public void handleResult(String name, String doc) {
+                    exposeAsGet(name, doc);
                 }
             };
         } else if(EXPOSED_SET.getDescriptor().equals(desc)) {
             return new DescriptorVisitor(fieldName) {
 
                 @Override
-                public void handleResult(String name) {
+                public void handleResult(String name, String doc) {
                     exposeAsSet(name);
                 }
             };
@@ -37,7 +39,7 @@ public abstract class ExposedFieldFinder implements FieldVisitor, PyTypes {
         }
     }
 
-    public abstract void exposeAsGet(String name);
+    public abstract void exposeAsGet(String name, String doc);
 
     public abstract void exposeAsSet(String name);
 

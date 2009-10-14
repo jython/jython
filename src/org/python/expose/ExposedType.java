@@ -31,4 +31,9 @@ public @interface ExposedType {
      * @return Whether this type allows subclassing.
      */
     boolean isBaseType() default true;
+
+    /**
+     * Returns the __doc__ String for this type.
+     */
+    String doc() default "";
 }

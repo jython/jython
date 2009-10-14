@@ -80,18 +80,6 @@ public class PyModule extends PyObject {
         throw Py.TypeError("readonly attribute");
     }
 
-    @ExposedGet(name = "__doc__")
-    public PyObject getDoc() {
-        PyObject dict = fastGetDict();
-        if (dict != null) {
-            PyObject doc = dict.__finditem__("__doc__");
-            if (doc != null) {
-                return doc;
-            }
-        }
-        return moduleDoc;
-    }
-
     protected PyObject impAttr(String name) {
         PyObject path = __dict__.__finditem__("__path__");
         PyObject pyName = __dict__.__finditem__("__name__");

@@ -22,6 +22,7 @@ public class TypeExposerTest extends InterpTestCase {
         assertEquals(false, t.getIsBaseType());
         PyType type = PyType.fromClass(SimpleExposed.class);
         PyObject dict = t.getDict(type);
+        assertEquals(dict.__finditem__("__doc__"), Py.newString("Docstring"));
         assertNotNull(dict.__finditem__("simple_method"));
         assertNotNull(dict.__finditem__("prefixed"));
         assertNotNull(dict.__finditem__("__str__"));

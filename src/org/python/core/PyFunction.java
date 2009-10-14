@@ -284,11 +284,6 @@ public class PyFunction extends PyObject {
     }
 
     @Override
-    public PyObject getDoc() {
-        return __doc__;
-    }
-
-    @Override
     public PyObject __get__(PyObject obj, PyObject type) {
         return function___get__(obj, type);
     }

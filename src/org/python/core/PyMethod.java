@@ -285,9 +285,9 @@ public class PyMethod extends PyObject {
         return hashCode ^ im_func.hashCode();
     }
 
-    @Override
+    @ExposedGet(name = "__doc__")
     public PyObject getDoc() {
-        return im_func.getDoc();
+        return im_func.__getattr__("__doc__");
     }
 
     @Override

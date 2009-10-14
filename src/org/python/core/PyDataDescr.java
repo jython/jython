@@ -17,6 +17,8 @@ public abstract class PyDataDescr extends PyDescriptor {
 
     protected Class ofType;
 
+    private String doc;
+
     /**
      * @param onType -
      *            the type the descriptor belongs to
@@ -25,8 +27,8 @@ public abstract class PyDataDescr extends PyDescriptor {
      * @param ofType -
      *            the type returned by the descriptor
      */
-    public PyDataDescr(PyType onType, String name, Class ofType) {
-        this(name, ofType);
+    public PyDataDescr(PyType onType, String name, Class ofType, String doc) {
+        this(name, ofType, doc);
         setType(onType);
     }
 
@@ -39,9 +41,10 @@ public abstract class PyDataDescr extends PyDescriptor {
      * @param ofType -
      *            the type returned by the descriptor
      */
-    public PyDataDescr(String name, Class ofType) {
+    public PyDataDescr(String name, Class ofType, String doc) {
         this.name = name;
         this.ofType = ofType;
+        this.doc = doc;
     }
     
     /**
@@ -114,6 +117,11 @@ public abstract class PyDataDescr extends PyDescriptor {
     @Override
     public String toString() {
         return String.format("<attribute '%s' of '%s' objects>", name, dtype.fastGetName());
+    }
+
+    @ExposedGet(name = "__doc__")
+    public String getDoc() {
+        return doc;
     }
 
     /**

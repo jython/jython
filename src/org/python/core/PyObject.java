@@ -111,19 +111,6 @@ public class PyObject implements Serializable {
         return objtype;
     }
 
-    //XXX: needs doc
-    @ExposedGet(name = "__doc__")
-    public PyObject getDoc() {
-        PyObject d = fastGetDict();
-        if (d != null) {
-            PyObject doc = d.__finditem__("__doc__");
-            if(doc != null) {
-                return doc;
-            }
-        }
-        return Py.None;
-    }
-
     /**
      * Dispatch __init__ behavior
      */

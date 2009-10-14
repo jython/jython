@@ -111,6 +111,8 @@ public class ExposedTypeProcessor implements Opcodes, PyTypes {
 
         private boolean isBaseType = true;
 
+        private String doc;
+
         private boolean generatedStaticBlock;
 
         private TypeProcessor(ClassVisitor cv) {
@@ -135,17 +137,12 @@ public class ExposedTypeProcessor implements Opcodes, PyTypes {
                 return new ExposedTypeVisitor(onType, visitor) {
 
                     @Override
-                    public void handleResult(String name) {
-                        typeName = name;
-                    }
-
-                    @Override
-                    public void handleResult(Type base) {
-                        baseType = base;
-                    }
-
-                    public void handleResult(boolean boolIsBaseType) {
-                        isBaseType = boolIsBaseType;
+                    public void handleResult(String typeName, Type baseType, boolean isBaseType,
+                                             String doc) {
+                        ExposedTypeProcessor.this.typeName = typeName;
+                        TypeProcessor.this.baseType = baseType;
+                        TypeProcessor.this.isBaseType = isBaseType;
+                        TypeProcessor.this.doc = doc;
                     }
                 };
             }
@@ -166,6 +163,7 @@ public class ExposedTypeProcessor implements Opcodes, PyTypes {
             typeExposer = new TypeExposer(onType,
                                           baseType,
                                           isBaseType,
+                                          doc,
                                           getName(),
                                           methodExposers,
                                           descExposers.values(),
@@ -266,8 +264,8 @@ public class ExposedTypeProcessor implements Opcodes, PyTypes {
                     }
 
                     @Override
-                    public void exposeAsGetDescriptor(String descName) {
-                        getDescriptorExposer(descName).addMethodGetter(name, desc);
+                    public void exposeAsGetDescriptor(String descName, String doc) {
+                        getDescriptorExposer(descName).addMethodGetter(name, desc, doc);
                     }
 
                     @Override
@@ -303,8 +301,8 @@ public class ExposedTypeProcessor implements Opcodes, PyTypes {
             return new ExposedFieldFinder(fieldName, passthroughVisitor) {
 
                 @Override
-                public void exposeAsGet(String name) {
-                    getDescriptorExposer(name).addFieldGetter(fieldName, Type.getType(desc));
+                public void exposeAsGet(String name, String doc) {
+                    getDescriptorExposer(name).addFieldGetter(fieldName, Type.getType(desc), doc);
                 }
 
                 @Override

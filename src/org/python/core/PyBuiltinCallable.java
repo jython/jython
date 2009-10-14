@@ -30,7 +30,7 @@ public abstract class PyBuiltinCallable extends PyObject {
     }
 
     @ExposedGet(name = "__doc__")
-    public String fastGetDoc() {
+    public String getDoc() {
         return doc;
     }
 

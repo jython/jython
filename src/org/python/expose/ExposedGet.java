@@ -10,4 +10,9 @@ import java.lang.annotation.Target;
 public @interface ExposedGet {
 
     String name() default "";
+
+    /**
+     * Returns the __doc__ String for this descriptor.
+     */
+    String doc() default "";
 }

@@ -53,11 +53,6 @@ public class PyReflectedFunction extends PyObject {
                             container, wherefound);
     }
 
-    @Override
-    public PyObject getDoc() {
-        return __doc__;
-    }
-
     private ReflectedArgs makeArgs(Method m) {
         return new ReflectedArgs(m,
                                  m.getParameterTypes(),

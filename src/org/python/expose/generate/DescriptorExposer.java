@@ -15,6 +15,8 @@ public class DescriptorExposer extends Exposer {
 
     private String name;
 
+    private String doc;
+
     private String getterMethodName, getterFieldName, setterMethodName, setterFieldName,
             deleterMethodName;
 
@@ -36,6 +38,10 @@ public class DescriptorExposer extends Exposer {
     }
 
     public void addMethodGetter(String methodName, String desc) {
+        addMethodGetter(methodName, desc, null);
+    }
+
+    public void addMethodGetter(String methodName, String desc, String doc) {
         if(hasGetter()) {
             error("Descriptor can only have one getter");
         }
@@ -44,14 +50,20 @@ public class DescriptorExposer extends Exposer {
         }
         setOfType(Type.getReturnType(desc));
         getterMethodName = methodName;
+        this.doc = doc;
     }
 
     public void addFieldGetter(String fieldName, Type fieldType) {
+        addFieldGetter(fieldName, fieldType, null);
+    }
+
+    public void addFieldGetter(String fieldName, Type fieldType, String doc) {
         if(hasGetter()) {
             error("Can only have one getter for a descriptor");
         }
         setOfType(fieldType);
         getterFieldName = fieldName;
+        this.doc = doc;
     }
 
     public boolean hasGetter() {
@@ -130,7 +142,12 @@ public class DescriptorExposer extends Exposer {
         } else {
             mv.visitLdcInsn(ofType);
         }
-        superConstructor(STRING, CLASS);
+        if (doc == null) {
+            mv.visitInsn(ACONST_NULL);
+        } else {
+            mv.visitLdcInsn(doc);
+        }
+        superConstructor(STRING, CLASS, STRING);
         endConstructor();
     }
 
