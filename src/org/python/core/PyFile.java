@@ -32,20 +32,20 @@ import org.python.expose.ExposedType;
 /**
  * The Python file type. Wraps an {@link TextIOBase} object.
  */
-@ExposedType(name = "file")
+@ExposedType(name = "file", doc = BuiltinDocs.file_doc)
 public class PyFile extends PyObject {
 
     public static final PyType TYPE = PyType.fromClass(PyFile.class);
 
     /** The filename */
-    @ExposedGet
+    @ExposedGet(doc = BuiltinDocs.file_name_doc)
     public PyObject name;
 
     /** The mode string */
-    @ExposedGet
+    @ExposedGet(doc = BuiltinDocs.file_mode_doc)
     public String mode;
 
-    @ExposedGet
+    @ExposedGet(doc = BuiltinDocs.file_encoding_doc)
     public String encoding;
 
     /** Indicator dictating whether a space should be written to this
@@ -525,17 +525,17 @@ public class PyFile extends PyObject {
         file.checkClosed();
     }
 
-    @ExposedGet(name = "closed")
+    @ExposedGet(name = "closed", doc = BuiltinDocs.file_closed_doc)
     public boolean getClosed() {
         return file.closed();
     }
 
-    @ExposedGet(name = "newlines")
+    @ExposedGet(name = "newlines", doc = BuiltinDocs.file_newlines_doc)
     public PyObject getNewlines() {
         return file.getNewlines();
     }
 
-    @ExposedGet(name = "softspace")
+    @ExposedGet(name = "softspace", doc = BuiltinDocs.file_softspace_doc)
     public PyObject getSoftspace() {
         // NOTE: not actual bools because CPython is this way
         return softspace ? Py.One : Py.Zero;

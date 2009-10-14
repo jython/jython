@@ -17,7 +17,7 @@ import org.python.util.Generic;
 /**
  * a builtin python unicode string.
  */
-@ExposedType(name = "unicode", base = PyBaseString.class)
+@ExposedType(name = "unicode", base = PyBaseString.class, doc = BuiltinDocs.unicode_doc)
 public class PyUnicode extends PyString implements Iterable {
 
     private enum Plane {

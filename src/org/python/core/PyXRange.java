@@ -8,7 +8,8 @@ import org.python.expose.ExposedType;
 /**
  * The builtin xrange type.
  */
-@ExposedType(name = "xrange", base = PyObject.class, isBaseType = false)
+@ExposedType(name = "xrange", base = PyObject.class, isBaseType = false,
+             doc = BuiltinDocs.xrange_doc)
 public class PyXRange extends PySequence {
 
     public static final PyType TYPE = PyType.fromClass(PyXRange.class);

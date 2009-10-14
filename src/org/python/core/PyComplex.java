@@ -10,13 +10,16 @@ import org.python.expose.MethodType;
 /**
  * A builtin python complex number
  */
-@ExposedType(name = "complex")
+@ExposedType(name = "complex", doc = BuiltinDocs.complex_doc)
 public class PyComplex extends PyObject {
 
     public static final PyType TYPE = PyType.fromClass(PyComplex.class);
 
-    @ExposedGet
-    public double real, imag;
+    @ExposedGet(doc = BuiltinDocs.complex_real_doc)
+    public double real;
+
+    @ExposedGet(doc = BuiltinDocs.complex_imag_doc)
+    public double imag;
 
     static PyComplex J = new PyComplex(0, 1.);
 

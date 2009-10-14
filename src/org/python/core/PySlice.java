@@ -9,18 +9,18 @@ import org.python.expose.ExposedType;
 /**
  * The Python slice object.
  */
-@ExposedType(name = "slice", isBaseType = false)
+@ExposedType(name = "slice", isBaseType = false, doc = BuiltinDocs.slice_doc)
 public class PySlice extends PyObject {
 
     public static final PyType TYPE = PyType.fromClass(PySlice.class);
 
-    @ExposedGet
+    @ExposedGet(doc = BuiltinDocs.slice_start_doc)
     public PyObject start = Py.None;
 
-    @ExposedGet
+    @ExposedGet(doc = BuiltinDocs.slice_stop_doc)
     public PyObject stop = Py.None;
 
-    @ExposedGet
+    @ExposedGet(doc = BuiltinDocs.slice_step_doc)
     public PyObject step = Py.None;
 
     public PySlice() {

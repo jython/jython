@@ -20,7 +20,7 @@ import org.python.util.Generic;
  * All objects known to the Jython runtime system are represented by an instance
  * of the class <code>PyObject</code> or one of its subclasses.
  */
-@ExposedType(name = "object")
+@ExposedType(name = "object", doc = BuiltinDocs.object_doc)
 public class PyObject implements Serializable {
 
     public static final PyType TYPE = PyType.fromClass(PyObject.class);

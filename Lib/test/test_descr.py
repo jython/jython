@@ -4396,9 +4396,6 @@ def test_main():
             # takes 1 arg)
             specials,
 
-            # Jython file lacks doc strings
-            descrdoc,
-
             # New style classes don't support __del__:
             # http://bugs.jython.org/issue1057
             delhook,

@@ -14,7 +14,7 @@ import org.python.expose.MethodType;
  * A builtin python long. This is implemented as a
  * java.math.BigInteger.
  */
-@ExposedType(name = "long")
+@ExposedType(name = "long", doc = BuiltinDocs.long_doc)
 public class PyLong extends PyObject {
 
     public static final PyType TYPE = PyType.fromClass(PyLong.class);

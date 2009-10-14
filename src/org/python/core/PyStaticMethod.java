@@ -7,7 +7,7 @@ import org.python.expose.ExposedType;
 /**
  * The staticmethod descriptor.
  */
-@ExposedType(name = "staticmethod")
+@ExposedType(name = "staticmethod", doc = BuiltinDocs.staticmethod_doc)
 public class PyStaticMethod extends PyObject {
 
     public static final PyType TYPE = PyType.fromClass(PyStaticMethod.class);

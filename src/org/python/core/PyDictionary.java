@@ -22,7 +22,7 @@ import org.python.util.Generic;
 /**
  * A builtin python dictionary.
  */
-@ExposedType(name = "dict")
+@ExposedType(name = "dict", doc = BuiltinDocs.dict_doc)
 public class PyDictionary extends PyObject implements ConcurrentMap {
 
     public static final PyType TYPE = PyType.fromClass(PyDictionary.class);

@@ -9,18 +9,18 @@ import org.python.expose.ExposedType;
 /**
  * The Python super type.
  */
-@ExposedType(name = "super")
+@ExposedType(name = "super", doc = BuiltinDocs.super_doc)
 public class PySuper extends PyObject {
 
     public static final PyType TYPE = PyType.fromClass(PySuper.class);
 
-    @ExposedGet(name = "__thisclass__")
+    @ExposedGet(name = "__thisclass__", doc = BuiltinDocs.super___thisclass___doc)
     protected PyType superType;
 
-    @ExposedGet(name = "__self__")
+    @ExposedGet(name = "__self__", doc = BuiltinDocs.super___self___doc)
     protected PyObject obj;
 
-    @ExposedGet(name = "__self_class__")
+    @ExposedGet(name = "__self_class__", doc = BuiltinDocs.super___self_class___doc)
     protected PyType objType;
 
     public PySuper() {

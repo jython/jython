@@ -17,7 +17,7 @@ import org.python.expose.MethodType;
 /**
  * A builtin python tuple.
  */
-@ExposedType(name = "tuple", base = PyObject.class)
+@ExposedType(name = "tuple", base = PyObject.class, doc = BuiltinDocs.tuple_doc)
 public class PyTuple extends PySequenceList implements List {
 
     public static final PyType TYPE = PyType.fromClass(PyTuple.class);

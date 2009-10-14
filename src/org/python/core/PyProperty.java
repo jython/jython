@@ -3,21 +3,20 @@ package org.python.core;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
-import org.python.expose.ExposedSet;
 import org.python.expose.ExposedType;
 
-@ExposedType(name = "property")
+@ExposedType(name = "property", doc = BuiltinDocs.property_doc)
 public class PyProperty extends PyObject {
 
     public static final PyType TYPE = PyType.fromClass(PyProperty.class);
 
-    @ExposedGet
+    @ExposedGet(doc = BuiltinDocs.property_fget_doc)
     protected PyObject fget;
 
-    @ExposedGet
+    @ExposedGet(doc = BuiltinDocs.property_fset_doc)
     protected PyObject fset;
 
-    @ExposedGet
+    @ExposedGet(doc = BuiltinDocs.property_fdel_doc)
     protected PyObject fdel;
 
     @ExposedGet(name = "__doc__")

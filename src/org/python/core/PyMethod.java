@@ -10,21 +10,21 @@ import org.python.expose.MethodType;
 /**
  * A Python method.
  */
-@ExposedType(name = "instancemethod", isBaseType = false)
+@ExposedType(name = "instancemethod", isBaseType = false, doc = BuiltinDocs.instancemethod_doc)
 public class PyMethod extends PyObject {
 
     public static final PyType TYPE = PyType.fromClass(PyMethod.class);
 
     /** The class associated with a method. */
-    @ExposedGet
+    @ExposedGet(doc = BuiltinDocs.instancemethod_im_class_doc)
     public PyObject im_class;
 
     /** The function (or other callable) implementing a method. */
-    @ExposedGet
+    @ExposedGet(doc = BuiltinDocs.instancemethod_im_func_doc)
     public PyObject im_func;
 
     /** The instance to which a method is bound; None for unbound methods. */
-    @ExposedGet
+    @ExposedGet(doc = BuiltinDocs.instancemethod_im_self_doc)
     public PyObject im_self;
 
     public PyMethod(PyObject function, PyObject self, PyObject type) {

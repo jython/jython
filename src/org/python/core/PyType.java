@@ -25,7 +25,7 @@ import org.python.util.Generic;
 /**
  * The Python Type object implementation.
  */
-@ExposedType(name = "type")
+@ExposedType(name = "type", doc = BuiltinDocs.type_doc)
 public class PyType extends PyObject implements Serializable {
 
     public static PyType TYPE = fromClass(PyType.class);
@@ -640,7 +640,6 @@ public class PyType extends PyObject implements Serializable {
         bases = cleanedBases.toArray(new PyObject[cleanedBases.size()]);
     }
 
-    //XXX: needs __doc__
     @ExposedGet(name = "__base__")
     public PyObject getBase() {
         if (base == null)
@@ -648,7 +647,6 @@ public class PyType extends PyObject implements Serializable {
         return base;
     }
 
-    //XXX: needs __doc__
     @ExposedGet(name = "__bases__")
     public PyObject getBases() {
         return new PyTuple(bases);

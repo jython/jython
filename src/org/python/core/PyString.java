@@ -13,7 +13,7 @@ import org.python.expose.MethodType;
 /**
  * A builtin python string.
  */
-@ExposedType(name = "str")
+@ExposedType(name = "str", doc = BuiltinDocs.str_doc)
 public class PyString extends PyBaseString
 {
     public static final PyType TYPE = PyType.fromClass(PyString.class);

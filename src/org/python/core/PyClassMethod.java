@@ -7,7 +7,7 @@ import org.python.expose.ExposedType;
 /**
  * The classmethod descriptor.
  */
-@ExposedType(name = "classmethod")
+@ExposedType(name = "classmethod", doc = BuiltinDocs.classmethod_doc)
 public class PyClassMethod extends PyObject {
 
     public static final PyType TYPE = PyType.fromClass(PyClassMethod.class);

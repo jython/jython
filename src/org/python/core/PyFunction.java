@@ -11,7 +11,7 @@ import org.python.expose.ExposedType;
 /**
  * A Python function.
  */
-@ExposedType(name = "function", isBaseType = false)
+@ExposedType(name = "function", isBaseType = false, doc = BuiltinDocs.function_doc)
 public class PyFunction extends PyObject {
 
     public static final PyType TYPE = PyType.fromClass(PyFunction.class);

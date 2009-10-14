@@ -13,7 +13,7 @@ import org.python.expose.MethodType;
 /**
  * A builtin python float.
  */
-@ExposedType(name = "float")
+@ExposedType(name = "float", doc = BuiltinDocs.float_doc)
 public class PyFloat extends PyObject
 {
     /** Precisions used by repr() and str(), respectively. */

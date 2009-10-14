@@ -8,7 +8,7 @@ import org.python.expose.ExposedType;
 /**
  * The Python builtin enumerate type.
  */
-@ExposedType(name = "enumerate", base = PyObject.class)
+@ExposedType(name = "enumerate", base = PyObject.class, doc = BuiltinDocs.enumerate_doc)
 public class PyEnumerate extends PyIterator {
 
     public static final PyType TYPE = PyType.fromClass(PyEnumerate.class);

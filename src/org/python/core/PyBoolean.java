@@ -8,7 +8,7 @@ import org.python.expose.MethodType;
 /**
  * A builtin python bool. 
  */
-@ExposedType(name = "bool", isBaseType = false)
+@ExposedType(name = "bool", isBaseType = false, doc = BuiltinDocs.bool_doc)
 public class PyBoolean extends PyInteger {
     
     public static final PyType TYPE = PyType.fromClass(PyBoolean.class);

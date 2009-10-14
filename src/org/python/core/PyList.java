@@ -19,7 +19,7 @@ import java.util.ListIterator;
 
 import java.lang.reflect.Array;
 
-@ExposedType(name = "list", base = PyObject.class)
+@ExposedType(name = "list", base = PyObject.class, doc = BuiltinDocs.list_doc)
 public class PyList extends PySequenceList implements List {
 
     public static final PyType TYPE = PyType.fromClass(PyList.class);
