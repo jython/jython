@@ -548,7 +548,7 @@ public class cPickle implements ClassDictInit {
      * @param file      a file-like object, can be a cStringIO.StringIO,
      *                  a PyFile or any python object which implements a
      *                  <i>write</i> method. The data will be written as text.
-     * @returns a new Pickler instance.
+     * @return a new Pickler instance.
      */
     public static Pickler Pickler(PyObject file) {
         return new Pickler(file, 0);
@@ -560,7 +560,7 @@ public class cPickle implements ClassDictInit {
      *                  a PyFile or any python object which implements a
      *                  <i>write</i> method.
      * @param protocol  pickle protocol version (0 - text, 1 - pre-2.3 binary, 2 - 2.3)
-     * @returns         a new Pickler instance.
+     * @return         a new Pickler instance.
      */
     public static Pickler Pickler(PyObject file, int protocol) {
         return new Pickler(file, protocol);
@@ -572,7 +572,7 @@ public class cPickle implements ClassDictInit {
      * @param file      a file-like object, can be a cStringIO.StringIO,
      *                  a PyFile or any python object which implements a
      *                  <i>read</i> and <i>readline</i> method.
-     * @returns         a new Unpickler instance.
+     * @return         a new Unpickler instance.
      */
     public static Unpickler Unpickler(PyObject file) {
         return new Unpickler(file);
@@ -586,7 +586,6 @@ public class cPickle implements ClassDictInit {
      *                  a PyFile or any python object which implements a
      *                  <i>write</i>  method. The data will be written as
      *                  text.
-     * @returns         a new Unpickler instance.
      */
     public static void dump(PyObject object, PyObject file) {
         dump(object, file, 0);
@@ -599,7 +598,6 @@ public class cPickle implements ClassDictInit {
      *                  a PyFile or any python object which implements a
      *                  <i>write</i> method.
      * @param protocol  pickle protocol version (0 - text, 1 - pre-2.3 binary, 2 - 2.3)
-     * @returns         a new Unpickler instance.
      */
     public static void dump(PyObject object, PyObject file, int protocol) {
         new Pickler(file, protocol).dump(object);
@@ -609,7 +607,7 @@ public class cPickle implements ClassDictInit {
     /**
      * Shorthand function which pickles and returns the string representation.
      * @param object    a data object which should be pickled.
-     * @returns         a string representing the pickled object.
+     * @return         a string representing the pickled object.
      */
     public static PyString dumps(PyObject object) {
         return dumps(object, 0);
@@ -620,7 +618,7 @@ public class cPickle implements ClassDictInit {
      * Shorthand function which pickles and returns the string representation.
      * @param object    a data object which should be pickled.
      * @param protocol  pickle protocol version (0 - text, 1 - pre-2.3 binary, 2 - 2.3)
-     * @returns         a string representing the pickled object.
+     * @return         a string representing the pickled object.
      */
     public static PyString dumps(PyObject object, int protocol) {
         cStringIO.StringIO file = cStringIO.StringIO();
@@ -635,7 +633,7 @@ public class cPickle implements ClassDictInit {
      * @param file      a file-like object, can be a cStringIO.StringIO,
      *                  a PyFile or any python object which implements a
      *                  <i>read</i> and <i>readline</i> method.
-     * @returns         a new object.
+     * @return         a new object.
      */
     public static Object load(PyObject file) {
         return new Unpickler(file).load();
@@ -647,7 +645,7 @@ public class cPickle implements ClassDictInit {
      * returns the new object.
      * @param str       a strings which must contain a pickled object
      *                  representation.
-     * @returns         a new object.
+     * @return         a new object.
      */
     public static Object loads(PyObject str) {
         cStringIO.StringIO file = cStringIO.StringIO(str.toString());

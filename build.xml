@@ -640,6 +640,7 @@ The readme text for the next release will be like:
     <target name="javadoc" depends="compile">
         <path id="javadoc.classpath">
             <pathelement path="${java.class.path}" />
+            <pathelement path="${compile.dir}" />
             <path refid="main.classpath" />
         </path> 
         <javadoc sourcepath="${source.dir}" 

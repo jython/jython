@@ -354,16 +354,14 @@ public class itertools implements ClassDictInit {
     }
 
     /**
-     * @see islice(PyObject PyObject iterable, PyObject startObj, PyObject
-     *      stopObj, PyObject stepObj) startObj defaults to 0 and stepObj to 1
+     * @see #islice(PyObject, PyObject, PyObject, PyObject) startObj defaults to 0 and stepObj to 1
      */
     public static PyIterator islice(PyObject iterable, PyObject stopObj) {
         return islice(iterable, new PyInteger(0), stopObj, new PyInteger(1));
     }
 
     /**
-     * @see islice(PyObject PyObject iterable, PyObject startObj, PyObject stopObj, PyObject
-     *      stepObj) stepObj defaults to 1
+     * @see #islice(PyObject, PyObject, PyObject, PyObject) stepObj defaults to 1
      */
     public static PyIterator islice(PyObject iterable, PyObject start,
             PyObject stopObj) {
