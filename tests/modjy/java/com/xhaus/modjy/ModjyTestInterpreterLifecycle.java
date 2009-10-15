@@ -22,7 +22,7 @@ package com.xhaus.modjy;
 
 import javax.servlet.http.HttpServlet;
 
-public class ModjyTestServletLifecycle extends ModjyTestBase {
+public class ModjyTestInterpreterLifecycle extends ModjyTestBase {
 
     protected void lifecycleTestSetUp() throws Exception {
         baseSetUp();
@@ -37,6 +37,26 @@ public class ModjyTestServletLifecycle extends ModjyTestBase {
         HttpServlet modjyServlet = getServlet();
         modjyServlet.destroy();
         assertEquals("gone", System.getProperty("modjy"));
+    }
+
+    public void testSitePackagesLoaded() throws Exception {
+        for (int loadSitePackages = -1 ; loadSitePackages < 2 ; loadSitePackages++) {
+            lifecycleTestSetUp();
+            setAppName("load_site_packages_test");
+            String parameter, expectedResult;
+            if (loadSitePackages != -1) {
+                parameter = Integer.toString(loadSitePackages);
+                setInitParameter("load_site_packages", parameter);
+                expectedResult = parameter;
+            } else {
+        	    // Do not set the parameter, so we get default behaviour
+        	    expectedResult = "1";
+        	}
+            createServlet();
+            doGet();
+            String result = getOutput();
+            assertEquals(expectedResult, result);
+        }
     }
 
 }

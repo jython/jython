@@ -238,7 +238,7 @@ public class ModjyTestBase extends BasicServletTestCaseAdapter {
         suite.addTestSuite(ModjyTestHeaders.class);
         suite.addTestSuite(ModjyTestContentHeaders.class);
         suite.addTestSuite(ModjyTestReturnIterable.class);
-        suite.addTestSuite(ModjyTestServletLifecycle.class);
+        suite.addTestSuite(ModjyTestInterpreterLifecycle.class);
         suite.addTestSuite(ModjyTestWebInf.class);
         suite.addTestSuite(ModjyTestWSGIStreams.class);
         suite.addTestSuite(PyServletTest.class);

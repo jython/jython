@@ -29,6 +29,11 @@ def exit_func():
 atexit.register(exit_func)
 
 def lifecycle_test(environ, start_response):
-    writer = start_response("200 OK", [])
-    writer("Hello World!")
-    return []
+    start_response("200 OK", [])
+    return ["Hello World!"]
+
+def load_site_packages_test(environ, start_response):
+    import sys
+    start_response("200 OK", [])
+    response = {True: '1', False: '0'}[sys.modules.has_key('site')]
+    return [response]
