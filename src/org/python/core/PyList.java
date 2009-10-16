@@ -978,8 +978,7 @@ public class PyList extends PySequenceList implements List {
 
     @Override
     public synchronized PyObject[] getArray() {
-        PyObject a[] = null;
-        return list.toArray(a);
+        return list.toArray(Py.EmptyObjects);
     }
 
     @Override
