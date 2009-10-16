@@ -53,6 +53,9 @@ file,
 complex,
 opt('bool'),
 classmethod,
+set,
+frozenset,
+BaseException,
 #buffer,
 # +
 type(f),
@@ -60,7 +63,6 @@ type(m),
 type(f.func_code),
 type(sys._getframe()),
 type(tb),
-#type(slice),
 ]
 
 outfile = open("BuiltinDocs.java", "w")
@@ -75,5 +77,3 @@ for obj in types_list:
         print_doc(outfile, obj, meth)
 
 print >> outfile, '}'
-
-

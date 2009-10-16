@@ -2658,6 +2658,355 @@ public class BuiltinDocs {
     public final static String classmethod___str___doc = 
         "x.__str__() <==> str(x)";
 
+    // Docs for <type 'set'>
+    public final static String set___and___doc = 
+        "x.__and__(y) <==> x&y";
+
+    public final static String set___class___doc = 
+        "type(object) -> the object's type\n" + 
+        "type(name, bases, dict) -> a new type";
+
+    public final static String set___cmp___doc = 
+        "x.__cmp__(y) <==> cmp(x,y)";
+
+    public final static String set___contains___doc = 
+        "x.__contains__(y) <==> y in x.";
+
+    public final static String set___delattr___doc = 
+        "x.__delattr__('name') <==> del x.name";
+
+    public final static String set_doc = 
+        "set(iterable) --> set object\n" + 
+        "\n" + 
+        "Build an unordered collection of unique elements.";
+
+    public final static String set___eq___doc = 
+        "x.__eq__(y) <==> x==y";
+
+    public final static String set___ge___doc = 
+        "x.__ge__(y) <==> x>=y";
+
+    public final static String set___getattribute___doc = 
+        "x.__getattribute__('name') <==> x.name";
+
+    public final static String set___gt___doc = 
+        "x.__gt__(y) <==> x>y";
+
+    public final static String set___hash___doc = 
+        "x.__hash__() <==> hash(x)";
+
+    public final static String set___iand___doc = 
+        "x.__iand__(y) <==> x&y";
+
+    public final static String set___init___doc = 
+        "x.__init__(...) initializes x; see x.__class__.__doc__ for signature";
+
+    public final static String set___ior___doc = 
+        "x.__ior__(y) <==> x|y";
+
+    public final static String set___isub___doc = 
+        "x.__isub__(y) <==> x-y";
+
+    public final static String set___iter___doc = 
+        "x.__iter__() <==> iter(x)";
+
+    public final static String set___ixor___doc = 
+        "x.__ixor__(y) <==> x^y";
+
+    public final static String set___le___doc = 
+        "x.__le__(y) <==> x<=y";
+
+    public final static String set___len___doc = 
+        "x.__len__() <==> len(x)";
+
+    public final static String set___lt___doc = 
+        "x.__lt__(y) <==> x<y";
+
+    public final static String set___ne___doc = 
+        "x.__ne__(y) <==> x!=y";
+
+    public final static String set___new___doc = 
+        "T.__new__(S, ...) -> a new object with type S, a subtype of T";
+
+    public final static String set___or___doc = 
+        "x.__or__(y) <==> x|y";
+
+    public final static String set___rand___doc = 
+        "x.__rand__(y) <==> y&x";
+
+    public final static String set___reduce___doc = 
+        "Return state information for pickling.";
+
+    public final static String set___reduce_ex___doc = 
+        "helper for pickle";
+
+    public final static String set___repr___doc = 
+        "x.__repr__() <==> repr(x)";
+
+    public final static String set___ror___doc = 
+        "x.__ror__(y) <==> y|x";
+
+    public final static String set___rsub___doc = 
+        "x.__rsub__(y) <==> y-x";
+
+    public final static String set___rxor___doc = 
+        "x.__rxor__(y) <==> y^x";
+
+    public final static String set___setattr___doc = 
+        "x.__setattr__('name', value) <==> x.name = value";
+
+    public final static String set___str___doc = 
+        "x.__str__() <==> str(x)";
+
+    public final static String set___sub___doc = 
+        "x.__sub__(y) <==> x-y";
+
+    public final static String set___xor___doc = 
+        "x.__xor__(y) <==> x^y";
+
+    public final static String set_add_doc = 
+        "Add an element to a set.\n" + 
+        "\n" + 
+        "This has no effect if the element is already present.";
+
+    public final static String set_clear_doc = 
+        "Remove all elements from this set.";
+
+    public final static String set_copy_doc = 
+        "Return a shallow copy of a set.";
+
+    public final static String set_difference_doc = 
+        "Return the difference of two sets as a new set.\n" + 
+        "\n" + 
+        "(i.e. all elements that are in this set but not the other.)";
+
+    public final static String set_difference_update_doc = 
+        "Remove all elements of another set from this set.";
+
+    public final static String set_discard_doc = 
+        "Remove an element from a set if it is a member.\n" + 
+        "\n" + 
+        "If the element is not a member, do nothing.";
+
+    public final static String set_intersection_doc = 
+        "Return the intersection of two sets as a new set.\n" + 
+        "\n" + 
+        "(i.e. all elements that are in both sets.)";
+
+    public final static String set_intersection_update_doc = 
+        "Update a set with the intersection of itself and another.";
+
+    public final static String set_issubset_doc = 
+        "Report whether another set contains this set.";
+
+    public final static String set_issuperset_doc = 
+        "Report whether this set contains another set.";
+
+    public final static String set_pop_doc = 
+        "Remove and return an arbitrary set element.";
+
+    public final static String set_remove_doc = 
+        "Remove an element from a set; it must be a member.\n" + 
+        "\n" + 
+        "If the element is not a member, raise a KeyError.";
+
+    public final static String set_symmetric_difference_doc = 
+        "Return the symmetric difference of two sets as a new set.\n" + 
+        "\n" + 
+        "(i.e. all elements that are in exactly one of the sets.)";
+
+    public final static String set_symmetric_difference_update_doc = 
+        "Update a set with the symmetric difference of itself and another.";
+
+    public final static String set_union_doc = 
+        "Return the union of two sets as a new set.\n" + 
+        "\n" + 
+        "(i.e. all elements that are in either set.)";
+
+    public final static String set_update_doc = 
+        "Update a set with the union of itself and another.";
+
+    // Docs for <type 'frozenset'>
+    public final static String frozenset___and___doc = 
+        "x.__and__(y) <==> x&y";
+
+    public final static String frozenset___class___doc = 
+        "type(object) -> the object's type\n" + 
+        "type(name, bases, dict) -> a new type";
+
+    public final static String frozenset___cmp___doc = 
+        "x.__cmp__(y) <==> cmp(x,y)";
+
+    public final static String frozenset___contains___doc = 
+        "x.__contains__(y) <==> y in x.";
+
+    public final static String frozenset___delattr___doc = 
+        "x.__delattr__('name') <==> del x.name";
+
+    public final static String frozenset_doc = 
+        "frozenset(iterable) --> frozenset object\n" + 
+        "\n" + 
+        "Build an immutable unordered collection of unique elements.";
+
+    public final static String frozenset___eq___doc = 
+        "x.__eq__(y) <==> x==y";
+
+    public final static String frozenset___ge___doc = 
+        "x.__ge__(y) <==> x>=y";
+
+    public final static String frozenset___getattribute___doc = 
+        "x.__getattribute__('name') <==> x.name";
+
+    public final static String frozenset___gt___doc = 
+        "x.__gt__(y) <==> x>y";
+
+    public final static String frozenset___hash___doc = 
+        "x.__hash__() <==> hash(x)";
+
+    public final static String frozenset___init___doc = 
+        "x.__init__(...) initializes x; see x.__class__.__doc__ for signature";
+
+    public final static String frozenset___iter___doc = 
+        "x.__iter__() <==> iter(x)";
+
+    public final static String frozenset___le___doc = 
+        "x.__le__(y) <==> x<=y";
+
+    public final static String frozenset___len___doc = 
+        "x.__len__() <==> len(x)";
+
+    public final static String frozenset___lt___doc = 
+        "x.__lt__(y) <==> x<y";
+
+    public final static String frozenset___ne___doc = 
+        "x.__ne__(y) <==> x!=y";
+
+    public final static String frozenset___new___doc = 
+        "T.__new__(S, ...) -> a new object with type S, a subtype of T";
+
+    public final static String frozenset___or___doc = 
+        "x.__or__(y) <==> x|y";
+
+    public final static String frozenset___rand___doc = 
+        "x.__rand__(y) <==> y&x";
+
+    public final static String frozenset___reduce___doc = 
+        "Return state information for pickling.";
+
+    public final static String frozenset___reduce_ex___doc = 
+        "helper for pickle";
+
+    public final static String frozenset___repr___doc = 
+        "x.__repr__() <==> repr(x)";
+
+    public final static String frozenset___ror___doc = 
+        "x.__ror__(y) <==> y|x";
+
+    public final static String frozenset___rsub___doc = 
+        "x.__rsub__(y) <==> y-x";
+
+    public final static String frozenset___rxor___doc = 
+        "x.__rxor__(y) <==> y^x";
+
+    public final static String frozenset___setattr___doc = 
+        "x.__setattr__('name', value) <==> x.name = value";
+
+    public final static String frozenset___str___doc = 
+        "x.__str__() <==> str(x)";
+
+    public final static String frozenset___sub___doc = 
+        "x.__sub__(y) <==> x-y";
+
+    public final static String frozenset___xor___doc = 
+        "x.__xor__(y) <==> x^y";
+
+    public final static String frozenset_copy_doc = 
+        "Return a shallow copy of a set.";
+
+    public final static String frozenset_difference_doc = 
+        "Return the difference of two sets as a new set.\n" + 
+        "\n" + 
+        "(i.e. all elements that are in this set but not the other.)";
+
+    public final static String frozenset_intersection_doc = 
+        "Return the intersection of two sets as a new set.\n" + 
+        "\n" + 
+        "(i.e. all elements that are in both sets.)";
+
+    public final static String frozenset_issubset_doc = 
+        "Report whether another set contains this set.";
+
+    public final static String frozenset_issuperset_doc = 
+        "Report whether this set contains another set.";
+
+    public final static String frozenset_symmetric_difference_doc = 
+        "Return the symmetric difference of two sets as a new set.\n" + 
+        "\n" + 
+        "(i.e. all elements that are in exactly one of the sets.)";
+
+    public final static String frozenset_union_doc = 
+        "Return the union of two sets as a new set.\n" + 
+        "\n" + 
+        "(i.e. all elements that are in either set.)";
+
+    // Docs for <type 'exceptions.BaseException'>
+    public final static String BaseException___class___doc = 
+        "type(object) -> the object's type\n" + 
+        "type(name, bases, dict) -> a new type";
+
+    public final static String BaseException___delattr___doc = 
+        "x.__delattr__('name') <==> del x.name";
+
+    public final static String BaseException___dict___doc = 
+        "";
+
+    public final static String BaseException_doc = 
+        "Common base class for all exceptions";
+
+    public final static String BaseException___getattribute___doc = 
+        "x.__getattribute__('name') <==> x.name";
+
+    public final static String BaseException___getitem___doc = 
+        "x.__getitem__(y) <==> x[y]";
+
+    public final static String BaseException___getslice___doc = 
+        "x.__getslice__(i, j) <==> x[i:j]\n" + 
+        "               \n" + 
+        "               Use of negative indices is not supported.";
+
+    public final static String BaseException___hash___doc = 
+        "x.__hash__() <==> hash(x)";
+
+    public final static String BaseException___init___doc = 
+        "x.__init__(...) initializes x; see x.__class__.__doc__ for signature";
+
+    public final static String BaseException___new___doc = 
+        "T.__new__(S, ...) -> a new object with type S, a subtype of T";
+
+    public final static String BaseException___reduce___doc = 
+        "";
+
+    public final static String BaseException___reduce_ex___doc = 
+        "helper for pickle";
+
+    public final static String BaseException___repr___doc = 
+        "x.__repr__() <==> repr(x)";
+
+    public final static String BaseException___setattr___doc = 
+        "x.__setattr__('name', value) <==> x.name = value";
+
+    public final static String BaseException___setstate___doc = 
+        "";
+
+    public final static String BaseException___str___doc = 
+        "x.__str__() <==> str(x)";
+
+    public final static String BaseException_args_doc = 
+        "";
+
+    public final static String BaseException_message_doc = 
+        "exception message";
+
     // Docs for <type 'function'>
     public final static String function___call___doc = 
         "x.__call__(...) <==> x(...)";

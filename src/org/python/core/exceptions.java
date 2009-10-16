@@ -41,9 +41,6 @@ public class exceptions extends PyObject implements ClassDictInit {
         }
         ts.frame = frame;
 
-        // XXX:
-        PyObject baseExcDict = PyBaseException.TYPE.fastGetDict();
-        baseExcDict.__setitem__("__doc__", Py.newString("Common base class for all exceptions"));
         dict.__setitem__("BaseException",  PyBaseException.TYPE);
 
         buildClass(dict, "KeyboardInterrupt", "BaseException", "Program interrupted by user.");

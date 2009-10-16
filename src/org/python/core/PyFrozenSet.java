@@ -9,7 +9,7 @@ import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 import org.python.expose.MethodType;
 
-@ExposedType(name = "frozenset", base = PyObject.class)
+@ExposedType(name = "frozenset", base = PyObject.class, doc = BuiltinDocs.frozenset_doc)
 public class PyFrozenSet extends BaseSet {
 
     public static final PyType TYPE = PyType.fromClass(PyFrozenSet.class);
@@ -51,72 +51,72 @@ public class PyFrozenSet extends BaseSet {
         return fset;
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.frozenset___cmp___doc)
     final PyObject frozenset___cmp__(PyObject o) {
         return new PyInteger(baseset___cmp__(o));
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.frozenset___ne___doc)
     final PyObject frozenset___ne__(PyObject o) {
         return baseset___ne__(o);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.frozenset___eq___doc)
     final PyObject frozenset___eq__(PyObject o) {
         return baseset___eq__(o);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.frozenset___or___doc)
     final PyObject frozenset___or__(PyObject o) {
         return baseset___or__(o);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.frozenset___xor___doc)
     final PyObject frozenset___xor__(PyObject o) {
         return baseset___xor__(o);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.frozenset___sub___doc)
     final PyObject frozenset___sub__(PyObject o) {
         return baseset___sub__(o);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.frozenset___and___doc)
     final PyObject frozenset___and__(PyObject o) {
         return baseset___and__(o);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.frozenset___lt___doc)
     final PyObject frozenset___lt__(PyObject o) {
         return baseset___lt__(o);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.frozenset___gt___doc)
     final PyObject frozenset___gt__(PyObject o) {
         return baseset___gt__(o);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.frozenset___ge___doc)
     final PyObject frozenset___ge__(PyObject o) {
         return baseset___ge__(o);
     }
 
-    @ExposedMethod(type = MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.frozenset___le___doc)
     final PyObject frozenset___le__(PyObject o) {
         return baseset___le__(o);
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.frozenset___iter___doc)
     final PyObject frozenset___iter__() {
         return baseset___iter__();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.frozenset___contains___doc)
     final boolean frozenset___contains__(PyObject item) {
         return baseset___contains__(item);
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.frozenset_copy_doc)
     final PyObject frozenset_copy() {
         if (getClass() == PyFrozenSet.class) {
                 return this;
@@ -125,52 +125,52 @@ public class PyFrozenSet extends BaseSet {
         return baseset_copy();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.frozenset_union_doc)
     final PyObject frozenset_union(PyObject set) {
         return baseset_union(set);
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.frozenset_difference_doc)
     final PyObject frozenset_difference(PyObject set) {
         return baseset_difference(set);
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.frozenset_symmetric_difference_doc)
     final PyObject frozenset_symmetric_difference(PyObject set) {
         return baseset_symmetric_difference(set);
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.frozenset_intersection_doc)
     final PyObject frozenset_intersection(PyObject set) {
         return baseset_intersection(set);
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.frozenset_issubset_doc)
     final PyObject frozenset_issubset(PyObject set) {
         return baseset_issubset(set);
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.frozenset_issuperset_doc)
     final PyObject frozenset_issuperset(PyObject set) {
         return baseset_issuperset(set);
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.frozenset___len___doc)
     final int frozenset___len__() {
         return baseset___len__();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.frozenset___reduce___doc)
     final PyObject frozenset___reduce__() {
         return baseset___reduce__();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.frozenset___hash___doc)
     final int frozenset___hash__() {
         return _set.hashCode();
     }
 
-    @ExposedMethod(names = "__repr__")
+    @ExposedMethod(names = "__repr__", doc = BuiltinDocs.frozenset___repr___doc)
     final String frozenset_toString() {
         return baseset_toString();
     }

@@ -12,18 +12,18 @@ import org.python.expose.ExposedType;
  * The base class for all standard Python exceptions.
  *
  */
-@ExposedType(name = "exceptions.BaseException")
+@ExposedType(name = "exceptions.BaseException", doc = BuiltinDocs.BaseException_doc)
 public class PyBaseException extends PyObject {
 
     public static final PyType TYPE = PyType.fromClass(PyBaseException.class);
 
     /** Exception message. */
-    @ExposedGet
+    @ExposedGet(doc = BuiltinDocs.BaseException_message_doc)
     @ExposedSet
     public PyObject message = Py.EmptyString;
 
     /** Exception's arguments. */
-    @ExposedGet
+    @ExposedGet(doc = BuiltinDocs.BaseException_args_doc)
     public PyObject args = Py.EmptyTuple;
 
     /** Exception's underlying dictionary, lazily created. */
@@ -42,7 +42,7 @@ public class PyBaseException extends PyObject {
     }
 
     @ExposedNew
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.BaseException___init___doc)
     final void BaseException___init__(PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser(getType().getName(), args, keywords, "args");
         ap.noKeywords();
@@ -56,7 +56,7 @@ public class PyBaseException extends PyObject {
         return BaseException___getitem__(index);
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.BaseException___getitem___doc)
     final PyObject BaseException___getitem__(PyObject index) {
         return args.__getitem__(index);
     }
@@ -65,7 +65,7 @@ public class PyBaseException extends PyObject {
         return BaseException___getslice__(start, stop);
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.BaseException___getslice___doc)
     final PyObject BaseException___getslice__(PyObject start, PyObject stop) {
         return args.__getslice__(start, stop);
     }
@@ -75,7 +75,7 @@ public class PyBaseException extends PyObject {
         return BaseException___reduce__();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.BaseException___reduce___doc)
     final PyObject BaseException___reduce__() {
         if (__dict__ != null) {
             return new PyTuple(getType(), args, __dict__);
@@ -88,7 +88,7 @@ public class PyBaseException extends PyObject {
         return BaseException___setstate__(state);
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.BaseException___setstate___doc)
     final PyObject BaseException___setstate__(PyObject state) {
         if (state != Py.None) {
             if (!(state instanceof PyStringMap) && !(state instanceof PyDictionary)) {
@@ -120,7 +120,7 @@ public class PyBaseException extends PyObject {
         BaseException___setattr__(name, value);
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.BaseException___setattr___doc)
     final void BaseException___setattr__(String name, PyObject value) {
         ensureDict();
         super.__setattr__(name, value);
@@ -130,7 +130,7 @@ public class PyBaseException extends PyObject {
         return __dict__;
     }
     
-    @ExposedGet(name = "__dict__")
+    @ExposedGet(name = "__dict__", doc = BuiltinDocs.BaseException___dict___doc)
     public PyObject getDict() {
         ensureDict();
         return __dict__;
@@ -154,7 +154,7 @@ public class PyBaseException extends PyObject {
         return BaseException___str__();
     }
 
-    @ExposedMethod
+    @ExposedMethod(doc = BuiltinDocs.BaseException___str___doc)
     final PyString BaseException___str__() {
         switch (args.__len__()) {
         case 0:
@@ -171,7 +171,7 @@ public class PyBaseException extends PyObject {
         return BaseException_toString();
     }
 
-    @ExposedMethod(names = ("__repr__"))
+    @ExposedMethod(names = "__repr__", doc = BuiltinDocs.BaseException___repr___doc)
     final String BaseException_toString() {
         PyObject reprSuffix = args.__repr__();
         String name = getType().fastGetName();
