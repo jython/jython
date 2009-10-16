@@ -16,19 +16,12 @@ public class PyGenerator extends PyIterator {
     @ExposedGet
     protected boolean gi_running;
 
-    private PyException generatorExit;
-
     private PyObject closure;
 
     public PyGenerator(PyFrame frame, PyObject closure) {
         super(TYPE);
         gi_frame = frame;
         this.closure = closure;
-
-        // Create an exception instance while we have a frame to create it from. When the GC runs it
-        // doesn't have any associated thread state. this is necessary for finalize calling close on
-        // the generator
-        generatorExit = Py.makeException(Py.GeneratorExit);
     }
 
     public PyObject send(PyObject value) {
@@ -68,7 +61,7 @@ public class PyGenerator extends PyIterator {
     @ExposedMethod
     final PyObject generator_close() {
         try {
-            raiseException(generatorExit);
+            raiseException(Py.makeException(Py.GeneratorExit));
             throw Py.RuntimeError("generator ignored GeneratorExit");
         } catch (PyException e) {
             if (!(e.type == Py.StopIteration || e.type == Py.GeneratorExit)) {
