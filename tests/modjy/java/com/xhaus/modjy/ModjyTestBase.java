@@ -195,13 +195,12 @@ public class ModjyTestBase extends BasicServletTestCaseAdapter {
         String jythonHome = System.getProperty("JYTHON_HOME");
         setRealPath(jythonHome, jythonHome);
         setRealPath("/WEB-INF/" + LIB_PYTHON_DIR, LIB_PYTHON_TEST_PATH);
-        setRealPath("/WEB-INF/lib/modjy.jar", "../modjy.jar");
         setPythonHome(jythonHome);
         setAppDir(DEFAULT_APP_DIR);
         setAppFile(DEFAULT_APP_FILE);
         setAppName(DEFAULT_APP_NAME);
         setInitParameter("exc_handler", "testing");
-// dumpContextRealPaths();
+//      dumpContextRealPaths();
     }
 
     protected PyObject evalPythonString(String pyString) {

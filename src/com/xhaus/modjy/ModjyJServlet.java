@@ -52,6 +52,8 @@ public class ModjyJServlet extends HttpServlet {
 
     protected final static String LOAD_SITE_PACKAGES_PARAM = "load_site_packages";
 
+    protected final static String PYTHON_HOME_PARAM = "python.home";
+
     protected PythonInterpreter interp;
 
     protected HttpServlet modjyServlet;
@@ -78,6 +80,14 @@ public class ModjyJServlet extends HttpServlet {
             String name = (String)e.nextElement();
             props.put(name, getInitParameter(name));
         }
+        // Check if python home is relative, in which case find it in the servlet context
+        String pythonHomeString = props.getProperty(PYTHON_HOME_PARAM);
+        if (pythonHomeString != null) {
+            File pythonHome = new File(pythonHomeString);
+            if (!pythonHome.isAbsolute())
+                pythonHomeString = context.getRealPath(pythonHomeString);
+            props.setProperty(PYTHON_HOME_PARAM, pythonHomeString);
+        }
         return props;
     }
 
@@ -101,7 +111,7 @@ public class ModjyJServlet extends HttpServlet {
                 interp.exec("from modjy.modjy import " + MODJY_PYTHON_CLASSNAME);
             } catch (PyException ix) {
                 throw new ServletException("Unable to import '" + MODJY_PYTHON_CLASSNAME
-                        + "': maybe you need to set the 'python.home' parameter?", ix);
+                        + "': maybe you need to set the '" + PYTHON_HOME_PARAM + "' parameter?", ix);
             }
             PyObject pyServlet = ((PyType)interp.get(MODJY_PYTHON_CLASSNAME)).__call__();
             Object temp = pyServlet.__tojava__(HttpServlet.class);
