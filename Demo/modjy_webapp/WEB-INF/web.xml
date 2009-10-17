@@ -66,6 +66,15 @@
       <param-name>reload_on_mod</param-name>
       <param-value>1</param-value>
     </init-param>
+	<!-- 
+	    Is site-packages to be loaded through imp.load("site")? 
+	    Same as -S option to command line interpreter 
+	-->
+    <init-param>
+      <param-name>load_site_packages</param-name>
+      <param-value>1</param-value>
+<!--  <param-value>0</param-value> -->
+    </init-param>
     <init-param>
       <param-name>log_level</param-name>
       <param-value>debug</param-value>
