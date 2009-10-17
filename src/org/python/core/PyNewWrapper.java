@@ -19,6 +19,7 @@ public abstract class PyNewWrapper extends PyBuiltinMethod {
     public PyNewWrapper(PyType type, String name, int minargs, int maxargs) {
         super(type, new DefaultInfo(name, minargs, maxargs));
         for_type = (PyType)getSelf();
+        doc = BuiltinDocs.type___new___doc;
     }
 
 
