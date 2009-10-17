@@ -1904,23 +1904,29 @@ public final class Py {
         }
     }
 
-    static PyObject[] make_array(PyObject o) {
-        if (o instanceof PyTuple) {
-            return ((PyTuple) o).getArray();
+    static PyObject[] make_array(PyObject iterable) {
+        // Special-case the common tuple and list cases, for efficiency
+        if (iterable instanceof PySequenceList) {
+            return ((PySequenceList) iterable).getArray();
         }
-        // Guess result size and allocate space.
+
+        // Guess result size and allocate space. The typical make_array arg supports
+        // __len__, with one exception being generators, so avoid the overhead of an
+        // exception from __len__ in their case
         int n = 10;
-        try {
-            n = o.__len__();
-        } catch (PyException exc) {
+        if (!(iterable instanceof PyGenerator)) {
+            try {
+                n = iterable.__len__();
+            } catch (PyException pye) {
+                // ok
+            }
         }
 
         List<PyObject> objs = new ArrayList<PyObject>(n);
-        for (PyObject item : o.asIterable()) {
+        for (PyObject item : iterable.asIterable()) {
             objs.add(item);
         }
-        PyObject dest[] = new PyObject[0];
-        return (objs.toArray(dest));
+        return objs.toArray(Py.EmptyObjects);
     }
 }
 
