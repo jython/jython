@@ -6,15 +6,20 @@ import org.python.expose.ExposedType;
 
 /**
  * The Python cell type.
- * 
- * Cells are used to implement variables referenced by multiple
- * scopes.
+ *
+ * Cells are used to implement variables referenced by multiple scopes.
  */
 @ExposedType(name = "cell", isBaseType = false)
 public class PyCell extends PyObject {
 
+    public static final PyType TYPE = PyType.fromClass(PyCell.class);
+
     /** The underlying content of the cell, or null. */
     public PyObject ob_ref;
+
+    public PyCell() {
+        super(TYPE);
+    }
 
     @ExposedGet(name = "cell_contents")
     public PyObject getCellContents() {
