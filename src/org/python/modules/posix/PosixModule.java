@@ -68,9 +68,6 @@ public class PosixModule implements ClassDictInit {
         dict.__setitem__("_posix_impl", Py.java2py(posix));
         dict.__setitem__("_native_posix", Py.newBoolean(!(posix instanceof JavaPOSIX)));
 
-        // Hide functions not applicable to this platform
-        os.hideFunctions(dict);
-
         // Hide from Python
         dict.__setitem__("classDictInit", null);
         dict.__setitem__("getPOSIX", null);
@@ -105,11 +102,5 @@ public class PosixModule implements ClassDictInit {
 
     public static String getOSName() {
         return os.getModuleName();
-    }
-
-    @Retention(RetentionPolicy.RUNTIME)
-    @Target(ElementType.METHOD)
-    @interface Hide {
-        OS[] value();
     }
 }

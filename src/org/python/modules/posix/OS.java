@@ -41,37 +41,6 @@ enum OS {
     }
 
     /**
-     * Hide module level functions defined in the PosixModule dict not applicable to this
-     * OS, identified by the PosixModule.Hide annotation.
-     *
-     * @param dict The PosixModule module dict
-     */
-    void hideFunctions(PyObject dict) {
-        for (Method method: PosixModule.class.getDeclaredMethods()) {
-            if (isHidden(method)) {
-                dict.__setitem__(method.getName(), null);
-            }
-        }
-    }
-
-    /**
-     * Determine if method should be hidden for this OS.
-     *
-     * @param method a PosixModule Method
-     * @return true if should be hidden
-     */
-    private boolean isHidden(Method method) {
-        if (method.isAnnotationPresent(PosixModule.Hide.class)) {
-            for (OS os : method.getAnnotation(PosixModule.Hide.class).value()) {
-                if (os == this) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    /**
      * Return the OS we're running on.
      */
     static OS getOS() {
