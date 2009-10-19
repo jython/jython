@@ -189,7 +189,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
 
             <pathelement path="${extlibs.dir}/asm-3.1.jar" />
             <pathelement path="${extlibs.dir}/asm-commons-3.1.jar" />
-            <pathelement path="${extlibs.dir}/constantine-0.4.jar" />
+            <pathelement path="${extlibs.dir}/constantine.jar" />
             <pathelement path="${extlibs.dir}/jna.jar"/>
             <pathelement path="${extlibs.dir}/jna-posix.jar"/>
         </path>
@@ -573,7 +573,7 @@ The readme text for the next release will be like:
             <zipfileset src="extlibs/jna-posix.jar"/>
             <!-- <rule pattern="com.sun.jna.**" result="org.python.jna.@1"/> -->
             <rule pattern="org.jruby.ext.posix.**" result="org.python.posix.@1"/>
-            <zipfileset src="extlibs/constantine-0.4.jar"/>
+            <zipfileset src="extlibs/constantine.jar"/>
             <rule pattern="com.kenai.constantine.**" result="org.python.constantine.@1"/>
             <zipfileset src="extlibs/xercesImpl-2.9.1.jar" excludes="META-INF/services/*"/>
             <rule pattern="org.apache.xml.**" result="org.python.apache.xml.@1"/>
