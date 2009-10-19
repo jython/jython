@@ -180,7 +180,7 @@ def _calcselecttimeoutvalue(value):
 class poll_object_cache:
 
     def __init__(self):
-        self.is_windows = os.get_os_type() == 'nt'
+        self.is_windows = os._name == 'nt'
         if self.is_windows:
             self.poll_object_queue = Queue.Queue()
         import atexit

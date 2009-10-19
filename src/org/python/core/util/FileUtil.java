@@ -64,14 +64,4 @@ public class FileUtil {
         }
         return out.toByteArray();
     }
-
-    public static boolean isatty(FileDescriptor fd) {
-        try {
-            return imp.load("os").__getattr__("isatty").__call__(Py.java2py(fd)).__nonzero__();
-        } catch (PyException e) {
-            // Weak isatty check copied from jna-posix JavaPOSIX class
-            return fd == FileDescriptor.in || fd == FileDescriptor.out || fd == FileDescriptor.err;
-        }
-    }
-
 }

@@ -17,7 +17,7 @@ complete membership information.)
 
 __all__ = ['getgrgid', 'getgrnam', 'getgrall']
 
-from os import _name, _posix
+from os import _name, _posix_impl
 
 if _name == 'nt':
     raise ImportError, 'grp module not supported on Windows'
@@ -50,7 +50,7 @@ def getgrgid(uid):
     Return the group database entry for the given numeric group ID.  If
     id is not valid, raise KeyError.
     """
-    entry = _posix.getgrgid(uid)
+    entry = _posix_impl.getgrgid(uid)
     if not entry:
         raise KeyError(uid)
     return struct_group(entry)
@@ -62,7 +62,7 @@ def getgrnam(name):
     Return the group database entry for the given group name.  If
     name is not valid, raise KeyError.
     """
-    entry = _posix.getgrnam(name)
+    entry = _posix_impl.getgrnam(name)
     if not entry:
         raise KeyError(name)
     return struct_group(entry)
@@ -76,7 +76,7 @@ def getgrall():
     """
     groups = []
     while True:
-        group = _posix.getgrent()
+        group = _posix_impl.getgrent()
         if not group:
             break
         groups.append(struct_group(group))

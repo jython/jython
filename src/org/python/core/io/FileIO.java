@@ -16,8 +16,8 @@ import java.nio.channels.FileChannel;
 import com.kenai.constantine.platform.Errno;
 import org.jruby.ext.posix.util.Platform;
 import org.python.core.Py;
-import org.python.core.util.FileUtil;
 import org.python.core.util.RelativeFile;
+import org.python.modules.posix.PosixModule;
 
 /**
  * Raw I/O implementation for OS files.
@@ -222,7 +222,8 @@ public class FileIO extends RawIOBase {
             return false;
         }
         try {
-            return FileUtil.isatty(file != null ? file.getFD() : fileOutputStream.getFD());
+            return PosixModule.getPOSIX().isatty(file != null
+                                                 ? file.getFD() : fileOutputStream.getFD());
         } catch (IOException e) {
             return false;
         }

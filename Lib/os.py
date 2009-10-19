@@ -38,8 +38,9 @@ def _get_exports_list(module):
     except AttributeError:
         return [n for n in dir(module) if n[0] != '_']
 
-if 'posix' in _names:
-    name = 'posix'
+name = 'java'
+if '_posix' in _names:
+    _name = 'posix'
     linesep = '\n'
     from posix import *
     try:
@@ -52,8 +53,8 @@ if 'posix' in _names:
     __all__.extend(_get_exports_list(posix))
     del posix
 
-elif 'nt' in _names:
-    name = 'nt'
+elif '_nt' in _names:
+    _name = 'nt'
     linesep = '\r\n'
     from nt import *
     try:
@@ -66,8 +67,8 @@ elif 'nt' in _names:
     __all__.extend(_get_exports_list(nt))
     del nt
 
-elif 'os2' in _names:
-    name = 'os2'
+elif '_os2' in _names:
+    _name = 'os2'
     linesep = '\r\n'
     from os2 import *
     try:
@@ -84,8 +85,8 @@ elif 'os2' in _names:
     __all__.extend(_get_exports_list(os2))
     del os2
 
-elif 'ce' in _names:
-    name = 'ce'
+elif '_ce' in _names:
+    _name = 'ce'
     linesep = '\r\n'
     from ce import *
     try:
@@ -99,8 +100,8 @@ elif 'ce' in _names:
     __all__.extend(_get_exports_list(ce))
     del ce
 
-elif 'riscos' in _names:
-    name = 'riscos'
+elif '_riscos' in _names:
+    _name = 'riscos'
     linesep = '\n'
     from riscos import *
     try:
@@ -304,89 +305,96 @@ try:
 except NameError:
     environ = {}
 
-def execl(file, *args):
-    """execl(file, *args)
+def _exists(name):
+    # CPython eval's the name, whereas looking in __all__ works for
+    # Jython and is much faster
+    return name in __all__
 
-    Execute the executable file with argument list args, replacing the
-    current process. """
-    execv(file, args)
+if _exists('execv'):
 
-def execle(file, *args):
-    """execle(file, *args, env)
+    def execl(file, *args):
+        """execl(file, *args)
 
-    Execute the executable file with argument list args and
-    environment env, replacing the current process. """
-    env = args[-1]
-    execve(file, args[:-1], env)
+        Execute the executable file with argument list args, replacing the
+        current process. """
+        execv(file, args)
 
-def execlp(file, *args):
-    """execlp(file, *args)
+    def execle(file, *args):
+        """execle(file, *args, env)
 
-    Execute the executable file (which is searched for along $PATH)
-    with argument list args, replacing the current process. """
-    execvp(file, args)
+        Execute the executable file with argument list args and
+        environment env, replacing the current process. """
+        env = args[-1]
+        execve(file, args[:-1], env)
 
-def execlpe(file, *args):
-    """execlpe(file, *args, env)
+    def execlp(file, *args):
+        """execlp(file, *args)
 
-    Execute the executable file (which is searched for along $PATH)
-    with argument list args and environment env, replacing the current
-    process. """
-    env = args[-1]
-    execvpe(file, args[:-1], env)
+        Execute the executable file (which is searched for along $PATH)
+        with argument list args, replacing the current process. """
+        execvp(file, args)
 
-def execvp(file, args):
-    """execp(file, args)
+    def execlpe(file, *args):
+        """execlpe(file, *args, env)
 
-    Execute the executable file (which is searched for along $PATH)
-    with argument list args, replacing the current process.
-    args may be a list or tuple of strings. """
-    _execvpe(file, args)
+        Execute the executable file (which is searched for along $PATH)
+        with argument list args and environment env, replacing the current
+        process. """
+        env = args[-1]
+        execvpe(file, args[:-1], env)
 
-def execvpe(file, args, env):
-    """execvpe(file, args, env)
+    def execvp(file, args):
+        """execp(file, args)
 
-    Execute the executable file (which is searched for along $PATH)
-    with argument list args and environment env , replacing the
-    current process.
-    args may be a list or tuple of strings. """
-    _execvpe(file, args, env)
+        Execute the executable file (which is searched for along $PATH)
+        with argument list args, replacing the current process.
+        args may be a list or tuple of strings. """
+        _execvpe(file, args)
 
-__all__.extend(["execl","execle","execlp","execlpe","execvp","execvpe"])
+    def execvpe(file, args, env):
+        """execvpe(file, args, env)
 
-def _execvpe(file, args, env=None):
-    if env is not None:
-        func = execve
-        argrest = (args, env)
-    else:
-        func = execv
-        argrest = (args,)
-        env = environ
+        Execute the executable file (which is searched for along $PATH)
+        with argument list args and environment env , replacing the
+        current process.
+        args may be a list or tuple of strings. """
+        _execvpe(file, args, env)
 
-    head, tail = path.split(file)
-    if head:
-        func(file, *argrest)
-        return
-    if 'PATH' in env:
-        envpath = env['PATH']
-    else:
-        envpath = defpath
-    PATH = envpath.split(pathsep)
-    saved_exc = None
-    saved_tb = None
-    for dir in PATH:
-        fullname = path.join(dir, file)
-        try:
-            func(fullname, *argrest)
-        except error, e:
-            tb = sys.exc_info()[2]
-            if (e.errno != errno.ENOENT and e.errno != errno.ENOTDIR
-                and saved_exc is None):
-                saved_exc = e
-                saved_tb = tb
-    if saved_exc:
-        raise error, saved_exc, saved_tb
-    raise error, e, tb
+    __all__.extend(["execl","execle","execlp","execlpe","execvp","execvpe"])
+
+    def _execvpe(file, args, env=None):
+        if env is not None:
+            func = execve
+            argrest = (args, env)
+        else:
+            func = execv
+            argrest = (args,)
+            env = environ
+
+        head, tail = path.split(file)
+        if head:
+            func(file, *argrest)
+            return
+        if 'PATH' in env:
+            envpath = env['PATH']
+        else:
+            envpath = defpath
+        PATH = envpath.split(pathsep)
+        saved_exc = None
+        saved_tb = None
+        for dir in PATH:
+            fullname = path.join(dir, file)
+            try:
+                func(fullname, *argrest)
+            except error, e:
+                tb = sys.exc_info()[2]
+                if (e.errno != errno.ENOENT and e.errno != errno.ENOTDIR
+                    and saved_exc is None):
+                    saved_exc = e
+                    saved_tb = tb
+        if saved_exc:
+            raise error, saved_exc, saved_tb
+        raise error, e, tb
 
 # Change environ to automatically call putenv() if it exists
 try:
@@ -405,10 +413,10 @@ else:
         def unsetenv(key):
             putenv(key, "")
 
-    if name == "riscos":
+    if _name == "riscos":
         # On RISC OS, all env access goes through getenv and putenv
         from riscosenviron import _Environ
-    elif name in ('os2', 'nt'):  # Where Env Var Names Must Be UPPERCASE
+    elif _name in ('os2', 'nt'):  # Where Env Var Names Must Be UPPERCASE
         # But we store them as upper case
         class _Environ(UserDict.IterableUserDict):
             def __init__(self, environ):
@@ -417,26 +425,11 @@ else:
                 for k, v in environ.items():
                     data[k.upper()] = v
             def __setitem__(self, key, item):
-                putenv(key, item)
                 self.data[key.upper()] = item
             def __getitem__(self, key):
                 return self.data[key.upper()]
-            try:
-                unsetenv
-            except NameError:
-                def __delitem__(self, key):
-                    del self.data[key.upper()]
-            else:
-                def __delitem__(self, key):
-                    unsetenv(key)
-                    del self.data[key.upper()]
-                def clear(self):
-                    for key in self.data.keys():
-                        unsetenv(key)
-                        del self.data[key]
-                def pop(self, key, *args):
-                    unsetenv(key)
-                    return self.data.pop(key.upper(), *args)
+            def __delitem__(self, key):
+                del self.data[key.upper()]
             def has_key(self, key):
                 return key.upper() in self.data
             def __contains__(self, key):
@@ -462,63 +455,13 @@ else:
             def copy(self):
                 return dict(self)
 
-    else:  # Where Env Var Names Can Be Mixed Case
-        class _Environ(UserDict.IterableUserDict):
-            def __init__(self, environ):
-                UserDict.UserDict.__init__(self)
-                self.data = environ
-            def __setitem__(self, key, item):
-                putenv(key, item)
-                self.data[key] = item
-            def update(self,  dict=None, **kwargs):
-                if dict:
-                    try:
-                        keys = dict.keys()
-                    except AttributeError:
-                        # List of (key, value)
-                        for k, v in dict:
-                            self[k] = v
-                    else:
-                        # got keys
-                        # cannot use items(), since mappings
-                        # may not have them.
-                        for k in keys:
-                            self[k] = dict[k]
-                if kwargs:
-                    self.update(kwargs)
-            try:
-                unsetenv
-            except NameError:
-                pass
-            else:
-                def __delitem__(self, key):
-                    unsetenv(key)
-                    del self.data[key]
-                def clear(self):
-                    for key in self.data.keys():
-                        unsetenv(key)
-                        del self.data[key]
-                def pop(self, key, *args):
-                    unsetenv(key)
-                    return self.data.pop(key, *args)
-            def copy(self):
-                return dict(self)
-
-
-    environ = _Environ(environ)
+        environ = _Environ(environ)
 
 def getenv(key, default=None):
     """Get an environment variable, return None if it doesn't exist.
     The optional second argument can specify an alternate default."""
     return environ.get(key, default)
 __all__.append("getenv")
-
-def _exists(name):
-    try:
-        eval(name)
-        return True
-    except NameError:
-        return False
 
 # Supply spawn*() (probably only for Unix)
 if _exists("fork") and not _exists("spawnv") and _exists("execv"):
@@ -655,7 +598,7 @@ otherwise return -SIG, where SIG is the signal that killed it. """
 
 
 # Supply popen2 etc. (for Unix)
-if _exists("fork"):
+if sys.platform.startswith('java') or _exists("fork"):
     if not _exists("popen2"):
         def popen2(cmd, mode="t", bufsize=-1):
             """Execute the shell command 'cmd' in a sub-process.  On UNIX, 'cmd'
@@ -664,10 +607,6 @@ if _exists("fork"):
             is a string it will be passed to the shell (as with os.system()). If
             'bufsize' is specified, it sets the buffer size for the I/O pipes.  The
             file objects (child_stdin, child_stdout) are returned."""
-            import warnings
-            msg = "os.popen2 is deprecated.  Use the subprocess module."
-            warnings.warn(msg, DeprecationWarning, stacklevel=2)
-
             import subprocess
             PIPE = subprocess.PIPE
             p = subprocess.Popen(cmd, shell=isinstance(cmd, basestring),
@@ -684,10 +623,6 @@ if _exists("fork"):
             is a string it will be passed to the shell (as with os.system()). If
             'bufsize' is specified, it sets the buffer size for the I/O pipes.  The
             file objects (child_stdin, child_stdout, child_stderr) are returned."""
-            import warnings
-            msg = "os.popen3 is deprecated.  Use the subprocess module."
-            warnings.warn(msg, DeprecationWarning, stacklevel=2)
-
             import subprocess
             PIPE = subprocess.PIPE
             p = subprocess.Popen(cmd, shell=isinstance(cmd, basestring),
@@ -704,10 +639,6 @@ if _exists("fork"):
             is a string it will be passed to the shell (as with os.system()). If
             'bufsize' is specified, it sets the buffer size for the I/O pipes.  The
             file objects (child_stdin, child_stdout_stderr) are returned."""
-            import warnings
-            msg = "os.popen4 is deprecated.  Use the subprocess module."
-            warnings.warn(msg, DeprecationWarning, stacklevel=2)
-
             import subprocess
             PIPE = subprocess.PIPE
             p = subprocess.Popen(cmd, shell=isinstance(cmd, basestring),
@@ -715,33 +646,6 @@ if _exists("fork"):
                                  stderr=subprocess.STDOUT, close_fds=True)
             return p.stdin, p.stdout
         __all__.append("popen4")
-
-import copy_reg as _copy_reg
-
-def _make_stat_result(tup, dict):
-    return stat_result(tup, dict)
-
-def _pickle_stat_result(sr):
-    (type, args) = sr.__reduce__()
-    return (_make_stat_result, args)
-
-try:
-    _copy_reg.pickle(stat_result, _pickle_stat_result, _make_stat_result)
-except NameError: # stat_result may not exist
-    pass
-
-def _make_statvfs_result(tup, dict):
-    return statvfs_result(tup, dict)
-
-def _pickle_statvfs_result(sr):
-    (type, args) = sr.__reduce__()
-    return (_make_statvfs_result, args)
-
-try:
-    _copy_reg.pickle(statvfs_result, _pickle_statvfs_result,
-                     _make_statvfs_result)
-except NameError: # statvfs_result may not exist
-    pass
 
 if not _exists("urandom"):
     def urandom(n):
@@ -754,10 +658,8 @@ if not _exists("urandom"):
             _urandomfd = open("/dev/urandom", O_RDONLY)
         except (OSError, IOError):
             raise NotImplementedError("/dev/urandom (or equivalent) not found")
-        try:
-            bs = b""
-            while n - len(bs) >= 1:
-                bs += read(_urandomfd, n - len(bs))
-        finally:
-            close(_urandomfd)
-        return bs
+        bytes = ""
+        while len(bytes) < n:
+            bytes += read(_urandomfd, n - len(bytes))
+        close(_urandomfd)
+        return bytes

@@ -25,9 +25,9 @@ import org.python.core.PyString;
 import org.python.core.PyStringMap;
 import org.python.core.PySystemState;
 import org.python.core.imp;
-import org.python.core.util.FileUtil;
 import org.python.core.util.RelativeFile;
 import org.python.modules._systemrestart;
+import org.python.modules.posix.PosixModule;
 import org.python.modules.thread.thread;
 
 public class jython {
@@ -238,7 +238,7 @@ public class jython {
                        throw Py.IOError(e);
                    }
                    try {
-                       if (FileUtil.isatty(file.getFD())) {
+                       if (PosixModule.getPOSIX().isatty(file.getFD())) {
                            opts.interactive = true;
                            interp.interact(null, new PyFile(file));
                            System.exit(0);

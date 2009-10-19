@@ -21,6 +21,7 @@ import java.util.Calendar;
 import java.util.Set;
 
 import org.python.antlr.base.mod;
+import com.kenai.constantine.Constant;
 import com.kenai.constantine.platform.Errno;
 import java.util.ArrayList;
 import java.util.List;
@@ -102,6 +103,12 @@ public final class Py {
         return new PyException(Py.OSError, message);
     }
 
+    public static PyException OSError(Constant errno, String filename) {
+        PyObject args = new PyTuple(Py.newInteger(errno.value()), Py.newString(errno.toString()),
+                                    Py.newString(filename));
+        return new PyException(Py.OSError, args);
+    }
+
     public static PyObject NotImplementedError;
     public static PyException NotImplementedError(String message) {
         return new PyException(Py.NotImplementedError, message);
@@ -163,15 +170,14 @@ public final class Py {
         return new PyException(Py.IOError, message);
     }
 
-    public static PyException IOError(Errno errno) {
-        PyObject args = new PyTuple(Py.newInteger(errno.value()),
-                                    Py.newString(errno.description()));
+    public static PyException IOError(Constant errno) {
+        PyObject args = new PyTuple(Py.newInteger(errno.value()), Py.newString(errno.toString()));
         return new PyException(Py.IOError, args);
     }
 
-    public static PyException IOError(Errno errno, String filename) {
-        PyObject args = new PyTuple(Py.newInteger(errno.value()),
-                                    Py.newString(errno.description()), Py.newString(filename));
+    public static PyException IOError(Constant errno, String filename) {
+        PyObject args = new PyTuple(Py.newInteger(errno.value()), Py.newString(errno.toString()),
+                                    Py.newString(filename));
         return new PyException(Py.IOError, args);
     }
 

@@ -1,234 +1,46 @@
-r"""OS routines for Java, with some attempts to support NT, and Posix
-functionality.
-
-This exports:
-  - all functions from posix, nt, dos, os2, mac, or ce, e.g. unlink, stat, etc.
-  - os.path is one of the modules posixpath, ntpath, macpath, or dospath
-  - os.name is 'posix', 'nt', 'dos', 'os2', 'mac', 'ce' or 'riscos'
-  - os.curdir is a string representing the current directory ('.' or ':')
-  - os.pardir is a string representing the parent directory ('..' or '::')
-  - os.sep is the (or a most common) pathname separator ('/' or ':' or '\\')
-  - os.altsep is the alternate pathname separator (None or '/')
-  - os.pathsep is the component separator used in $PATH etc
-  - os.linesep is the line separator in text files ('\r' or '\n' or '\r\n')
-  - os.defpath is the default search path for executables
-
-Programs that import and use 'os' stand a better chance of being
-portable between different platforms.  Of course, they must then
-only use functions that are defined by all platforms (e.g., unlink
-and opendir), and leave all pathname manipulation to os.path
-(e.g., split and join).
 """
-
-# CPython os.py __all__
-__all__ = ["altsep", "curdir", "pardir", "sep", "pathsep", "linesep",
-           "defpath", "name", "path",
-           "SEEK_SET", "SEEK_CUR", "SEEK_END"]
-
-# Would come from the posix/nt/etc. modules on CPython
-__all__.extend(['EX_OK', 'F_OK', 'O_APPEND', 'O_CREAT', 'O_EXCL', 'O_RDONLY',
-                'O_RDWR', 'O_SYNC', 'O_TRUNC', 'O_WRONLY', 'R_OK', 'SEEK_CUR',
-                'SEEK_END', 'SEEK_SET', 'W_OK', 'X_OK', '_exit', 'access',
-                'altsep', 'chdir', 'chmod', 'close', 'curdir', 'defpath',
-                'environ', 'error', 'fdopen', 'fsync', 'getcwd', 'getcwdu',
-                'getenv', 'getpid', 'isatty', 'linesep', 'listdir', 'lseek',
-                'lstat', 'makedirs', 'mkdir', 'name', 'open', 'pardir', 'path',
-                'pathsep', 'popen', 'popen2', 'popen3', 'popen4', 'putenv',
-                'read', 'remove', 'removedirs', 'rename', 'renames', 'rmdir',
-                'sep', 'stat', 'stat_result', 'strerror', 'system', 'unlink',
-                'unsetenv', 'utime', 'walk', 'write'])
-
+This module provides access to operating system functionality that is
+standardized by the C Standard and the POSIX standard (a thinly
+disguised Unix interface).  Refer to the library manual and
+corresponding Unix manual entries for more information on calls.
+"""
+try:
+    import _posix
+    from _posix import *
+except:
+    import _nt as _posix
+    from _nt import *
 import errno
 import jarray
 import java.lang.System
-import time
 import stat as _stat
 import sys
 from java.io import File
 from org.python.core.io import FileDescriptors, FileIO, IOBase
 from org.python.core.Py import newString as asPyString
-
 try:
     from org.python.constantine.platform import Errno
 except ImportError:
     from com.kenai.constantine.platform import Errno
 
-# Mapping of: os._name: [name list, shell command list]
-_os_map = dict(nt=[
-        ['Windows'],
-        [['cmd.exe', '/c'], ['command.com', '/c']]
-        ],
-               posix=[
-        [], # posix is a fallback, instead of matching names
-        [['/bin/sh', '-c']]
-        ]
-               )
+__all__ = _posix.__all__[:]
+__all__.extend(['_exit', 'access', 'chdir', 'chmod', 'close', 'environ',
+                'fdopen', 'fsync', 'ftruncate', 'getcwd', 'getcwdu', 'getenv',
+                'getpid', 'isatty', 'listdir', 'lseek', 'lstat', 'mkdir',
+                'open', 'popen', 'putenv', 'read', 'remove', 'rename', 'rmdir',
+                'stat', 'strerror', 'system', 'umask', 'unlink', 'unsetenv',
+                'urandom', 'utime', 'write'])
 
-def get_os_type():
-    """Return the name of the type of the underlying OS.
-
-    Returns a value suitable for the os.name variable (though not
-    necessarily intended to be for os.name Jython).  This value may be
-    overwritten in the Jython registry.
-    """
-    os_name = sys.registry.getProperty('python.os')
-    if os_name:
-        return asPyString(os_name)
-
-    os_name = asPyString(java.lang.System.getProperty('os.name'))
-    os_type = None
-    for type, (patterns, shell_commands) in _os_map.iteritems():
-        for pattern in patterns:
-            if os_name.startswith(pattern):
-                # determine the shell_command later, when it's needed:
-                # it requires os.path (which isn't setup yet)
-                return type
-    return 'posix'
-
-name = 'java'
-# WARNING: _name is private: for Jython internal usage only! user code
-# should *NOT* use it
-_name = get_os_type()
-
-try:
-    from org.python.posix import JavaPOSIX, POSIXHandler, POSIXFactory
-except ImportError:
-    from org.jruby.ext.posix import JavaPOSIX, POSIXHandler, POSIXFactory
-
-class PythonPOSIXHandler(POSIXHandler):
-    def error(self, error, msg):
-        err = getattr(errno, error.name(), None)
-        if err is None:
-            raise OSError('%s: %s' % (error, asPyString(msg)))
-        raise OSError(err, strerror(err), asPyString(msg))
-    def unimplementedError(self, method_name):
-        raise NotImplementedError(method_name)
-    def warn(self, warning_id, msg, rest):
-        pass # XXX implement
-    def isVerbose(self):
-        return False
-    def getCurrentWorkingDirectory(self):
-        return File(getcwdu())
-    def getEnv(self):
-        return ['%s=%s' % (key, val) for key, val in environ.iteritems()]
-    def getInputStream(self):
-        return getattr(java.lang.System, 'in') # XXX handle resetting
-    def getOutputStream(self):
-        return java.lang.System.out # XXX handle resetting
-    def getPID(self):
-        return 0
-    def getErrorStream(self):
-        return java.lang.System.err # XXX handle resetting
-
-_posix = POSIXFactory.getPOSIX(PythonPOSIXHandler(), True)
-_native_posix = not isinstance(_posix, JavaPOSIX)
-
-if _name == 'nt':
-    import ntpath as path
-else:
-    import posixpath as path
-
-sys.modules['os.path'] = _path = path
-from os.path import curdir, pardir, sep, pathsep, defpath, extsep, altsep, devnull
-linesep = java.lang.System.getProperty('line.separator')
-
-# open for reading only
-O_RDONLY = 0x0
-# open for writing only
-O_WRONLY = 0x1
-# open for reading and writing
-O_RDWR = 0x2
-
-# set append mode
-O_APPEND = 0x8
-# synchronous writes
-O_SYNC = 0x80
-
-# create if nonexistant
-O_CREAT = 0x200
-# truncate to zero length
-O_TRUNC = 0x400
-# error if already exists
-O_EXCL = 0x800
-
-# seek variables
-SEEK_SET = 0
-SEEK_CUR = 1
-SEEK_END = 2
-
-# test for existence of file
-F_OK = 0
-# test for execute or search permission
-X_OK = 1<<0
-# test for write permission
-W_OK = 1<<1
-# test for read permission
-R_OK = 1<<2
-
-# successful termination
-EX_OK = 0
+_name = _posix.__name__[1:]
 
 # Java class representing the size of a time_t. internal use, lazily set
 _time_t = None
 
-class stat_result:
+# For urandom
+urandom_source = None
 
-    _stat_members = (
-      ('st_mode', _stat.ST_MODE),
-      ('st_ino', _stat.ST_INO),
-      ('st_dev', _stat.ST_DEV),
-      ('st_nlink', _stat.ST_NLINK),
-      ('st_uid', _stat.ST_UID),
-      ('st_gid', _stat.ST_GID),
-      ('st_size', _stat.ST_SIZE),
-      ('st_atime', _stat.ST_ATIME),
-      ('st_mtime', _stat.ST_MTIME),
-      ('st_ctime', _stat.ST_CTIME),
-    )
-
-    def __init__(self, results):
-        if len(results) != 10:
-            raise TypeError("stat_result() takes an a 10-sequence")
-        for (name, index) in stat_result._stat_members:
-            self.__dict__[name] = results[index]
-
-    @classmethod
-    def from_jnastat(cls, s):
-        results = []
-        for meth in (s.mode, s.ino, s.dev, s.nlink, s.uid, s.gid, s.st_size,
-                     s.atime, s.mtime, s.ctime):
-            try:
-                results.append(meth())
-            except NotImplementedError:
-                results.append(0)
-        return cls(results)
-
-    def __getitem__(self, i):
-        if i < 0 or i > 9:
-            raise IndexError(i)
-        return getattr(self, stat_result._stat_members[i][0])
-
-    def __setitem__(self, x, value):
-        raise TypeError("object doesn't support item assignment")
-
-    def __setattr__(self, name, value):
-        if name in [x[0] for x in stat_result._stat_members]:
-            raise TypeError(name)
-        raise AttributeError("readonly attribute")
-
-    def __len__(self):
-        return 10
-
-    def __cmp__(self, other):
-        if not isinstance(other, stat_result):
-            return 1
-        return cmp(self.__dict__, other.__dict__)
-
-    def __repr__(self):
-        return repr(tuple(self.__dict__[member[0]] for member
-                          in stat_result._stat_members))
-
-error = OSError
+# Lazily loaded path module
+_path = None
 
 def _exit(n=0):
     """_exit(status)
@@ -257,12 +69,13 @@ def chdir(path):
 
     Change the current working directory to the specified path.
     """
-    realpath = _path.realpath(path)
-    if not _path.exists(realpath):
-        raise OSError(errno.ENOENT, strerror(errno.ENOENT), path)
-    if not _path.isdir(realpath):
+    global _path
+    if not _stat.S_ISDIR(stat(path).st_mode):
         raise OSError(errno.ENOTDIR, strerror(errno.ENOTDIR), path)
-    sys.setCurrentWorkingDir(realpath)
+    if _path is None:
+        import os
+        _path = os.path
+    sys.setCurrentWorkingDir(_path.realpath(path))
 
 def listdir(path):
     """listdir(path) -> list_of_strings
@@ -289,7 +102,7 @@ def chmod(path, mode):
     abs_path = sys.getPath(path)
     if not File(abs_path).exists():
         raise OSError(errno.ENOENT, strerror(errno.ENOENT), path)
-    _posix.chmod(abs_path, mode)
+    _posix_impl.chmod(abs_path, mode)
 
 def mkdir(path, mode='ignored'):
     """mkdir(path [, mode=0777])
@@ -298,7 +111,7 @@ def mkdir(path, mode='ignored'):
 
     The optional parameter is currently ignored.
     """
-    # XXX: use _posix.mkdir when we can get the real errno upon failure
+    # XXX: use _posix_impl.mkdir when we can get the real errno upon failure
     fp = File(sys.getPath(path))
     if not fp.mkdir():
         if fp.isDirectory() or fp.isFile():
@@ -307,31 +120,6 @@ def mkdir(path, mode='ignored'):
             err = 0
         msg = strerror(err) if err else "couldn't make directory"
         raise OSError(err, msg, path)
-
-def makedirs(path, mode='ignored'):
-    """makedirs(path [, mode=0777])
-
-    Super-mkdir; create a leaf directory and all intermediate ones.
-
-    Works like mkdir, except that any intermediate path segment (not
-    just the rightmost) will be created if it does not exist.
-    The optional parameter is currently ignored.
-    """
-    sys_path = sys.getPath(path)
-    if File(sys_path).mkdirs():
-        return
-
-    # if making a /x/y/z/., java.io.File#mkdirs inexplicably fails. So we need
-    # to force it
-
-    # need to use _path instead of path, because param is hiding
-    # os.path module in namespace!
-    head, tail = _path.split(sys_path)
-    if tail == curdir:
-        if File(_path.join(head)).mkdirs():
-            return
-
-    raise OSError(0, "couldn't make directories", path)
 
 def remove(path):
     """remove(path)
@@ -351,33 +139,6 @@ def rename(path, newpath):
     if not File(sys.getPath(path)).renameTo(File(sys.getPath(newpath))):
         raise OSError(0, "couldn't rename file", path)
 
-#XXX: copied from CPython 2.5.1
-def renames(old, new):
-    """renames(old, new)
-
-    Super-rename; create directories as necessary and delete any left
-    empty.  Works like rename, except creation of any intermediate
-    directories needed to make the new pathname good is attempted
-    first.  After the rename, directories corresponding to rightmost
-    path segments of the old name will be pruned way until either the
-    whole path is consumed or a nonempty directory is found.
-
-    Note: this function can fail with the new directory structure made
-    if you lack permissions needed to unlink the leaf directory or
-    file.
-
-    """
-    head, tail = path.split(new)
-    if head and tail and not path.exists(head):
-        makedirs(head)
-    rename(old, new)
-    head, tail = path.split(old)
-    if head and tail:
-        try:
-            removedirs(head)
-        except error:
-            pass
-
 def rmdir(path):
     """rmdir(path)
 
@@ -389,31 +150,6 @@ def rmdir(path):
         raise OSError(errno.ENOTDIR, strerror(errno.ENOTDIR), path)
     elif not f.delete():
         raise OSError(0, "couldn't delete directory", path)
-
-#XXX: copied from CPython 2.5.1
-def removedirs(name):
-    """removedirs(path)
-
-    Super-rmdir; remove a leaf directory and empty all intermediate
-    ones.  Works like rmdir except that, if the leaf directory is
-    successfully removed, directories corresponding to rightmost path
-    segments will be pruned away until either the whole path is
-    consumed or an error occurs.  Errors during this latter phase are
-    ignored -- they generally mean that a directory was not empty.
-
-    """
-    rmdir(name)
-    head, tail = path.split(name)
-    if not tail:
-        head, tail = path.split(head)
-    while head and tail:
-        try:
-            rmdir(head)
-        except error:
-            break
-        head, tail = path.split(head)
-
-__all__.extend(['makedirs', 'renames', 'removedirs'])
 
 def strerror(code):
     """strerror(code) -> string
@@ -475,7 +211,7 @@ def stat(path):
     """
     abs_path = sys.getPath(path)
     try:
-        return stat_result.from_jnastat(_posix.stat(abs_path))
+        return _from_jnastat(_posix_impl.stat(abs_path))
     except NotImplementedError:
         pass
     f = File(abs_path)
@@ -501,7 +237,7 @@ def lstat(path):
     """
     abs_path = sys.getPath(path)
     try:
-        return stat_result.from_jnastat(_posix.lstat(abs_path))
+        return _from_jnastat(_posix_impl.lstat(abs_path))
     except NotImplementedError:
         pass
     f = File(sys.getPath(path))
@@ -524,7 +260,7 @@ def lstat(path):
     # The parent directory's path is not canonical (one of the parent
     # directories is a symlink). Build a new path with the parent's
     # canonical path and compare the files
-    f = File(_path.join(can_parent.getAbsolutePath(), f.getName()))
+    f = File(can_parent.getAbsolutePath(), f.getName())
     if f.getAbsolutePath() != f.getCanonicalPath():
         return stat_result((_stat.S_IFLNK, 0, 0, 0, 0, 0, 0, 0, 0, 0))
 
@@ -556,7 +292,7 @@ def utime(path, times):
     else:
         raise TypeError('utime() arg 2 must be a tuple (atime, mtime)')
 
-    _posix.utimes(path, atimeval, mtimeval)
+    _posix_impl.utimes(path, atimeval, mtimeval)
 
 def _to_timeval(seconds):
     """Convert seconds (with a fraction) from epoch to a 2 item tuple of
@@ -647,8 +383,9 @@ def open(filename, flag, mode=0777):
     if updating and writing:
         raise OSError(errno.EINVAL, strerror(errno.EINVAL), filename)
 
-    if not creating and not path.exists(filename):
-        raise OSError(errno.ENOENT, strerror(errno.ENOENT), filename)
+    if not creating:
+        # raises ENOENT if it doesn't exist
+        stat(filename)
 
     if not writing:
         if updating:
@@ -678,7 +415,8 @@ def open(filename, flag, mode=0777):
         try:
             fchannel = RandomAccessFile(sys.getPath(filename), 'rws').getChannel()
         except FileNotFoundException, fnfe:
-            if path.isdir(filename):
+            #if path.isdir(filename):
+            if _stat.S_ISDIR(stat(filename).st_mode):
                 raise OSError(errno.EISDIR, strerror(errno.EISDIR))
             raise OSError(errno.ENOENT, strerror(errno.ENOENT), filename)
         return FileIO(fchannel, mode)
@@ -757,51 +495,6 @@ class _wrap_close(object):
     def __iter__(self):
         return iter(self._stream)
 
-# os module versions of the popen# methods have different return value
-# order than popen2 functions
-
-def popen2(cmd, mode="t", bufsize=-1):
-    """Execute the shell command cmd in a sub-process.
-
-    On UNIX, 'cmd' may be a sequence, in which case arguments will be
-    passed directly to the program without shell intervention (as with
-    os.spawnv()).  If 'cmd' is a string it will be passed to the shell
-    (as with os.system()).  If 'bufsize' is specified, it sets the
-    buffer size for the I/O pipes.  The file objects (child_stdin,
-    child_stdout) are returned.
-    """
-    import popen2
-    stdout, stdin = popen2.popen2(cmd, bufsize)
-    return stdin, stdout
-
-def popen3(cmd, mode="t", bufsize=-1):
-    """Execute the shell command 'cmd' in a sub-process.
-
-    On UNIX, 'cmd' may be a sequence, in which case arguments will be
-    passed directly to the program without shell intervention
-    (as with os.spawnv()).  If 'cmd' is a string it will be passed
-    to the shell (as with os.system()).  If 'bufsize' is specified,
-    it sets the buffer size for the I/O pipes.  The file objects
-    (child_stdin, child_stdout, child_stderr) are returned.
-    """
-    import popen2
-    stdout, stdin, stderr = popen2.popen3(cmd, bufsize)
-    return stdin, stdout, stderr
-
-def popen4(cmd, mode="t", bufsize=-1):
-    """Execute the shell command 'cmd' in a sub-process.
-
-    On UNIX, 'cmd' may be a sequence, in which case arguments will be
-    passed directly to the program without shell intervention
-    (as with os.spawnv()).  If 'cmd' is a string it will be passed
-    to the shell (as with os.system()).  If 'bufsize' is specified,
-    it sets the buffer size for the I/O pipes.  The file objects
-    (child_stdin, child_stdout_stderr) are returned.
-    """
-    import popen2
-    stdout, stdin = popen2.popen4(cmd, bufsize)
-    return stdin, stdout
-
 def getlogin():
     """getlogin() -> string
 
@@ -809,138 +502,7 @@ def getlogin():
     """
     return java.lang.System.getProperty("user.name")
 
-#XXX: copied from CPython's release23-maint branch revision 56502
-def walk(top, topdown=True, onerror=None):
-    """Directory tree generator.
-
-    For each directory in the directory tree rooted at top (including top
-    itself, but excluding '.' and '..'), yields a 3-tuple
-
-        dirpath, dirnames, filenames
-
-    dirpath is a string, the path to the directory.  dirnames is a list of
-    the names of the subdirectories in dirpath (excluding '.' and '..').
-    filenames is a list of the names of the non-directory files in dirpath.
-    Note that the names in the lists are just names, with no path components.
-    To get a full path (which begins with top) to a file or directory in
-    dirpath, do os.path.join(dirpath, name).
-
-    If optional arg 'topdown' is true or not specified, the triple for a
-    directory is generated before the triples for any of its subdirectories
-    (directories are generated top down).  If topdown is false, the triple
-    for a directory is generated after the triples for all of its
-    subdirectories (directories are generated bottom up).
-
-    When topdown is true, the caller can modify the dirnames list in-place
-    (e.g., via del or slice assignment), and walk will only recurse into the
-    subdirectories whose names remain in dirnames; this can be used to prune
-    the search, or to impose a specific order of visiting.  Modifying
-    dirnames when topdown is false is ineffective, since the directories in
-    dirnames have already been generated by the time dirnames itself is
-    generated.
-
-    By default errors from the os.listdir() call are ignored.  If
-    optional arg 'onerror' is specified, it should be a function; it
-    will be called with one argument, an os.error instance.  It can
-    report the error to continue with the walk, or raise the exception
-    to abort the walk.  Note that the filename is available as the
-    filename attribute of the exception object.
-
-    Caution:  if you pass a relative pathname for top, don't change the
-    current working directory between resumptions of walk.  walk never
-    changes the current directory, and assumes that the client doesn't
-    either.
-
-    Example:
-
-    from os.path import join, getsize
-    for root, dirs, files in walk('python/Lib/email'):
-        print root, "consumes",
-        print sum([getsize(join(root, name)) for name in files]),
-        print "bytes in", len(files), "non-directory files"
-        if 'CVS' in dirs:
-            dirs.remove('CVS')  # don't visit CVS directories
-    """
-
-    from os.path import join, isdir, islink
-
-    # We may not have read permission for top, in which case we can't
-    # get a list of the files the directory contains.  os.path.walk
-    # always suppressed the exception then, rather than blow up for a
-    # minor reason when (say) a thousand readable directories are still
-    # left to visit.  That logic is copied here.
-    try:
-        # Note that listdir and error are globals in this module due
-        # to earlier import-*.
-        names = listdir(top)
-    except error, err:
-        if onerror is not None:
-            onerror(err)
-        return
-
-    dirs, nondirs = [], []
-    for name in names:
-        if isdir(join(top, name)):
-            dirs.append(name)
-        else:
-            nondirs.append(name)
-
-    if topdown:
-        yield top, dirs, nondirs
-    for name in dirs:
-        path = join(top, name)
-        if not islink(path):
-            for x in walk(path, topdown, onerror):
-                yield x
-    if not topdown:
-        yield top, dirs, nondirs
-
-__all__.append("walk")
-
 environ = sys.getEnviron()
-
-if _name in ('os2', 'nt'):  # Where Env Var Names Must Be UPPERCASE
-    import UserDict
-
-    # But we store them as upper case
-    class _Environ(UserDict.IterableUserDict):
-        def __init__(self, environ):
-            UserDict.UserDict.__init__(self)
-            data = self.data
-            for k, v in environ.items():
-                data[k.upper()] = v
-        def __setitem__(self, key, item):
-            self.data[key.upper()] = item
-        def __getitem__(self, key):
-            return self.data[key.upper()]
-        def __delitem__(self, key):
-            del self.data[key.upper()]
-        def has_key(self, key):
-            return key.upper() in self.data
-        def __contains__(self, key):
-            return key.upper() in self.data
-        def get(self, key, failobj=None):
-            return self.data.get(key.upper(), failobj)
-        def update(self, dict=None, **kwargs):
-            if dict:
-                try:
-                    keys = dict.keys()
-                except AttributeError:
-                    # List of (key, value)
-                    for k, v in dict:
-                        self[k] = v
-                else:
-                    # got keys
-                    # cannot use items(), since mappings
-                    # may not have them.
-                    for k in keys:
-                        self[k] = dict[k]
-            if kwargs:
-                self.update(kwargs)
-        def copy(self):
-            return dict(self)
-
-    environ = _Environ(environ)
 
 def putenv(key, value):
     """putenv(key, value)
@@ -968,14 +530,14 @@ if _name == 'posix':
 
         Create a hard link to a file.
         """
-        _posix.link(sys.getPath(src), sys.getPath(dst))
+        _posix_impl.link(sys.getPath(src), sys.getPath(dst))
 
     def symlink(src, dst):
         """symlink(src, dst)
 
         Create a symbolic link pointing to src named dst.
         """
-        _posix.symlink(src, sys.getPath(dst))
+        _posix_impl.symlink(src, sys.getPath(dst))
 
     def readlink(path):
         """readlink(path) -> path
@@ -983,61 +545,61 @@ if _name == 'posix':
         Return a string representing the path to which the symbolic link
         points.
         """
-        return _posix.readlink(sys.getPath(path))
+        return _posix_impl.readlink(sys.getPath(path))
 
     def getegid():
         """getegid() -> egid
 
         Return the current process's effective group id."""
-        return _posix.getegid()
+        return _posix_impl.getegid()
 
     def geteuid():
         """geteuid() -> euid
 
         Return the current process's effective user id."""
-        return _posix.geteuid()
+        return _posix_impl.geteuid()
 
     def getgid():
         """getgid() -> gid
 
         Return the current process's group id."""
-        return _posix.getgid()
+        return _posix_impl.getgid()
 
     def getlogin():
         """getlogin() -> string
 
         Return the actual login name."""
-        return _posix.getlogin()
+        return _posix_impl.getlogin()
 
     def getpgrp():
         """getpgrp() -> pgrp
 
         Return the current process group id."""
-        return _posix.getpgrp()
+        return _posix_impl.getpgrp()
 
     def getppid():
         """getppid() -> ppid
 
         Return the parent's process id."""
-        return _posix.getppid()
+        return _posix_impl.getppid()
 
     def getuid():
         """getuid() -> uid
 
         Return the current process's user id."""
-        return _posix.getuid()
+        return _posix_impl.getuid()
 
     def setpgrp():
         """setpgrp()
 
         Make this process a session leader."""
-        return _posix.setpgrp()
+        return _posix_impl.setpgrp()
 
     def setsid():
         """setsid()
 
         Call the system call setsid()."""
-        return _posix.setsid()
+        return _posix_impl.setsid()
 
     # This implementation of fork partially works on
     # Jython. Diagnosing what works, what doesn't, and fixing it is
@@ -1049,13 +611,13 @@ if _name == 'posix':
     #
     #     Fork a child process.
     #     Return 0 to child process and PID of child to parent process."""
-    #     return _posix.fork()
+    #     return _posix_impl.fork()
 
     def kill(pid, sig):
         """kill(pid, sig)
 
         Kill a process with a signal."""
-        return _posix.kill(pid, sig)
+        return _posix_impl.kill(pid, sig)
 
     def wait():
         """wait() -> (pid, status)
@@ -1063,7 +625,7 @@ if _name == 'posix':
         Wait for completion of a child process."""
 
         status = jarray.zeros(1, 'i')
-        res_pid = _posix.wait(status)
+        res_pid = _posix_impl.wait(status)
         if res_pid == -1:
             raise OSError(status[0], strerror(status[0]))
         return res_pid, status[0]
@@ -1073,7 +635,7 @@ if _name == 'posix':
 
         Wait for completion of a given child process."""
         status = jarray.zeros(1, 'i')
-        res_pid = _posix.waitpid(pid, status, options)
+        res_pid = _posix_impl.waitpid(pid, status, options)
         if res_pid == -1:
             raise OSError(status[0], strerror(status[0]))
         return res_pid, status[0]
@@ -1117,7 +679,7 @@ def getpid():
     """getpid() -> pid
 
     Return the current process id."""
-    return _posix.getpid()
+    return _posix_impl.getpid()
 
 def isatty(fileno):
     """isatty(fd) -> bool
@@ -1137,10 +699,10 @@ def isatty(fileno):
             raise NotImplemented('Integer file descriptor compatibility only '
                                  'available for stdin, stdout and stderr (0-2)')
 
-        return _posix.isatty(fd)
+        return _posix_impl.isatty(fd)
 
     if isinstance(fileno, FileDescriptor):
-        return _posix.isatty(fileno)
+        return _posix_impl.isatty(fileno)
 
     if not isinstance(fileno, IOBase):
         raise TypeError('a file descriptor is required')
@@ -1151,16 +713,23 @@ def umask(new_mask):
     """umask(new_mask) -> old_mask
 
     Set the current numeric umask and return the previous umask."""
-    return _posix.umask(int(new_mask))
-
-
-from java.security import SecureRandom
-urandom_source = None
+    return _posix_impl.umask(int(new_mask))
 
 def urandom(n):
     global urandom_source
     if urandom_source is None:
+        from java.security import SecureRandom
         urandom_source = SecureRandom()
     buffer = jarray.zeros(n, 'b')
     urandom_source.nextBytes(buffer)
     return buffer.tostring()
+
+def _from_jnastat(s):
+    results = []
+    for meth in (s.mode, s.ino, s.dev, s.nlink, s.uid, s.gid, s.st_size,
+                 s.atime, s.mtime, s.ctime):
+        try:
+            results.append(meth())
+        except NotImplementedError:
+            results.append(0)
+    return stat_result(results)

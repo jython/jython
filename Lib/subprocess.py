@@ -620,11 +620,7 @@ if jython:
             _cmdline2listimpl = lambda args: [args]
             _escape_args = lambda args: args
 
-        os_info = os._os_map.get(os._name)
-        if os_info is None:
-            os_info = os._os_map.get('posix')
-
-        for shell_command in os_info[1]:
+        for shell_command in os._get_shell_commands():
             executable = shell_command[0]
             if not os.path.isabs(executable):
                 import distutils.spawn

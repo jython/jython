@@ -10,7 +10,7 @@ is raised if the entry asked for cannot be found.
 
 __all__ = ['getpwuid', 'getpwnam', 'getpwall']
 
-from os import _name, _posix
+from os import _name, _posix_impl
 
 if _name == 'nt':
     raise ImportError, 'pwd module not supported on Windows'
@@ -44,7 +44,7 @@ def getpwuid(uid):
     Return the password database entry for the given numeric user ID.
     See pwd.__doc__ for more on password database entries.
     """
-    entry = _posix.getpwuid(uid)
+    entry = _posix_impl.getpwuid(uid)
     if not entry:
         raise KeyError(uid)
     return struct_passwd(entry)
@@ -57,7 +57,7 @@ def getpwnam(name):
     Return the password database entry for the given user name.
     See pwd.__doc__ for more on password database entries.
     """
-    entry = _posix.getpwnam(name)
+    entry = _posix_impl.getpwnam(name)
     if not entry:
         raise KeyError(name)
     return struct_passwd(entry)
@@ -72,7 +72,7 @@ def getpwall():
     """
     entries = []
     while True:
-        entry = _posix.getpwent()
+        entry = _posix_impl.getpwent()
         if not entry:
             break
         entries.append(struct_passwd(entry))

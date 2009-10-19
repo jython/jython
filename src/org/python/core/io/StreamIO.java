@@ -17,7 +17,7 @@ import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 
 import org.python.core.Py;
-import org.python.core.util.FileUtil;
+import org.python.modules.posix.PosixModule;
 
 /**
  * Raw I/O implementation for simple streams.
@@ -231,7 +231,7 @@ public class StreamIO extends RawIOBase {
             return false;
         }
 
-        return FileUtil.isatty(fd);
+        return PosixModule.getPOSIX().isatty(fd);
     }
 
     @Override
