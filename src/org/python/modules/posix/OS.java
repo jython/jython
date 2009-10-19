@@ -1,9 +1,6 @@
 /* Copyright (c) Jython Developers */
 package org.python.modules.posix;
 
-import java.lang.reflect.Method;
-
-import org.python.core.PyObject;
 import org.python.core.PySystemState;
 
 /**

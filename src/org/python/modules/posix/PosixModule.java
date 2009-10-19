@@ -1,13 +1,7 @@
 /* Copyright (c) Jython Developers */
 package org.python.modules.posix;
 
-import com.kenai.constantine.Constant;
 import com.kenai.constantine.ConstantSet;
-
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
 
 import org.jruby.ext.posix.JavaPOSIX;
 import org.jruby.ext.posix.POSIX;
