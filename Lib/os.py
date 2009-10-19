@@ -478,8 +478,6 @@ def stat(path):
         return stat_result.from_jnastat(_posix.stat(abs_path))
     except NotImplementedError:
         pass
-    except:
-        raise
     f = File(abs_path)
     if not f.exists():
         raise OSError(errno.ENOENT, strerror(errno.ENOENT), path)
@@ -506,8 +504,6 @@ def lstat(path):
         return stat_result.from_jnastat(_posix.lstat(abs_path))
     except NotImplementedError:
         pass
-    except:
-        raise
     f = File(sys.getPath(path))
     # XXX: jna-posix implements similar link detection in
     # JavaFileStat.calculateSymlink, fallback to that instead when not
