@@ -12,20 +12,18 @@ except:
     from _nt import *
 import errno
 import jarray
-import java.lang.System
 import stat as _stat
 import sys
 from java.io import File
 from org.python.core.io import FileDescriptors, FileIO, IOBase
 from org.python.core.Py import newString as asPyString
 
-__all__ = _posix.__all__[:]
-__all__.extend(['_exit', 'access', 'chdir', 'chmod', 'close', 'fdopen',
-                'fsync', 'ftruncate', 'getcwd', 'getcwdu', 'getenv', 'getpid',
-                'isatty', 'listdir', 'lseek', 'mkdir', 'open', 'popen',
-                'putenv', 'read', 'remove', 'rename', 'rmdir', 'system',
-                'umask', 'unlink', 'unsetenv', 'urandom', 'utime',
-                'write'])
+__all__ = [name for name in _posix.__all__ if not name.startswith('__doc__')]
+__all__.extend(['access', 'chdir', 'chmod', 'close', 'fdopen', 'fsync',
+                'ftruncate', 'getcwd', 'getcwdu', 'getenv', 'getpid', 'isatty',
+                'lseek', 'mkdir', 'open', 'popen', 'putenv', 'read', 'remove',
+                'rename', 'rmdir', 'system', 'umask', 'unlink', 'unsetenv',
+                'urandom', 'utime', 'write'])
 
 _name = _posix.__name__[1:]
 
@@ -37,14 +35,6 @@ urandom_source = None
 
 # Lazily loaded path module
 _path = None
-
-def _exit(n=0):
-    """_exit(status)
-
-    Exit to the system with specified status, without normal exit
-    processing.
-    """
-    java.lang.System.exit(n)
 
 def getcwd():
     """getcwd() -> path
@@ -72,21 +62,6 @@ def chdir(path):
         import os
         _path = os.path
     sys.setCurrentWorkingDir(_path.realpath(path))
-
-def listdir(path):
-    """listdir(path) -> list_of_strings
-
-    Return a list containing the names of the entries in the directory.
-
-        path: path of directory to list
-
-    The list is in arbitrary order.  It does not include the special
-    entries '.' and '..' even if they are present in the directory.
-    """
-    l = File(sys.getPath(path)).list()
-    if l is None:
-        raise OSError(0, 'No such directory', path)
-    return [asPyString(entry) for entry in l]
 
 def chmod(path, mode):
     """chmod(path, mode)
@@ -398,13 +373,6 @@ class _wrap_close(object):
         return getattr(self._stream, name)
     def __iter__(self):
         return iter(self._stream)
-
-def getlogin():
-    """getlogin() -> string
-
-    Return the actual login name.
-    """
-    return java.lang.System.getProperty("user.name")
 
 def putenv(key, value):
     """putenv(key, value)

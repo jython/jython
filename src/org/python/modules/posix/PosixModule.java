@@ -17,13 +17,14 @@ import org.python.core.PyList;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyTuple;
+import org.python.core.util.RelativeFile;
 
 /**
  * The underlying _posix or _nt module, named depending on the platform.
  *
  * This currently contains only some of the basics of the posix/nt modules (which are
- * implemented in Python). In particular things like the PythonPOSIXHandler that are
- * slower to instantiate and thus would affect startup time.
+ * implemented in Python), most importantly things like PythonPOSIXHandler that are slower
+ * to instantiate and thus would affect startup time.
  *
  * Eventually more if not all of the pure Python module should end up here.
  */
@@ -42,9 +43,6 @@ public class PosixModule implements ClassDictInit {
     private static POSIX posix = POSIXFactory.getPOSIX(new PythonPOSIXHandler(), true);
 
     public static void classDictInit(PyObject dict) {
-        dict.__setitem__("__name__", new PyString("_" + os.getModuleName()));
-        dict.__setitem__("__doc__", __doc__);
-
         // os.open flags, only expose what we support
         dict.__setitem__("O_RDONLY", Py.newInteger(0x0));
         dict.__setitem__("O_WRONLY", Py.newInteger(0x1));
@@ -75,13 +73,46 @@ public class PosixModule implements ClassDictInit {
         dict.__setitem__("getOSName", null);
 
         dict.__setitem__("__all__", dict.invoke("keys"));
+
+        dict.__setitem__("__name__", new PyString("_" + os.getModuleName()));
+        dict.__setitem__("__doc__", __doc__);
+    }
+
+    public static PyString __doc___exit = new PyString(
+        "_exit(status)\n\n" +
+        "Exit to the system with specified status, without normal exit processing.");
+    public static void _exit() {
+        _exit(0);
+    }
+
+    public static void _exit(int status) {
+        System.exit(status);
+    }
+
+    public static PyString __doc__listdir = new PyString(
+        "listdir(path) -> list_of_strings\n\n" +
+        "Return a list containing the names of the entries in the directory.\n\n" +
+        "path: path of directory to list\n\n" +
+        "The list is in arbitrary order.  It does not include the special\n" +
+        "entries '.' and '..' even if they are present in the directory.");
+    public static PyList listdir(String path) {
+        PyList list = new PyList();
+        String[] files = new RelativeFile(path).list();
+
+        if (files == null) {
+            throw Py.OSError("No such directory: " + path);
+        }
+        for (String file : files) {
+            list.append(new PyString(file));
+        }
+        return list;
     }
 
     public static PyString __doc__lstat = new PyString(
         "lstat(path) -> stat result\n\n" +
         "Like stat(path), but do not follow symbolic links.");
     public static PyObject lstat(String path) {
-        return PyStatResult.fromFileStat(posix.lstat(Py.getSystemState().getPath(path)));
+        return PyStatResult.fromFileStat(posix.lstat(new RelativeFile(path).getPath()));
     }
 
     public static PyString __doc__stat = new PyString(
@@ -90,11 +121,11 @@ public class PosixModule implements ClassDictInit {
         "Note that some platforms may return only a small subset of the\n" +
         "standard fields");
     public static PyObject stat(String path) {
-        return PyStatResult.fromFileStat(posix.stat(Py.getSystemState().getPath(path)));
+        return PyStatResult.fromFileStat(posix.stat(new RelativeFile(path).getPath()));
     }
 
     public static PyString __doc__strerror = new PyString(
-        "strerror(code) -> string\n\n" + 
+        "strerror(code) -> string\n\n" +
         "Translate an error code to a message string.");
     public static PyObject strerror(int code) {
         Constant errno = Errno.valueOf(code);
