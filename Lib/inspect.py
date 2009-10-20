@@ -30,6 +30,7 @@ __date__ = '1 Jan 2001'
 
 import sys, os, types, string, re, dis, imp, tokenize, linecache
 from operator import attrgetter
+ReflectedFunctionType = type(os.listdir)
 
 # ----------------------------------------------------------- type-checking
 def ismodule(object):
@@ -196,7 +197,8 @@ def isroutine(object):
     return (isbuiltin(object)
             or isfunction(object)
             or ismethod(object)
-            or ismethoddescriptor(object))
+            or ismethoddescriptor(object)
+            or isinstance(object, ReflectedFunctionType))
 
 def getmembers(object, predicate=None):
     """Return all members of an object as (name, value) pairs sorted by name.
