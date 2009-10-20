@@ -278,11 +278,12 @@ def open(filename, flag, mode=0777):
         FileIO(filename, 'w').close()
 
     if exclusive and creating:
+        from java.io import IOException
         try:
             if not File(sys.getPath(filename)).createNewFile():
                 raise OSError(errno.EEXIST, strerror(errno.EEXIST),
                               filename)
-        except java.io.IOException, ioe:
+        except IOException, ioe:
             raise OSError(ioe)
 
     mode = '%s%s%s%s' % (reading and 'r' or '',
@@ -541,6 +542,7 @@ def _fsync(fd, metadata):
     rawio = FileDescriptors.get(fd)
     rawio.checkClosed()
 
+    from java.io import IOException
     from java.nio.channels import FileChannel
     channel = rawio.getChannel()
     if not isinstance(channel, FileChannel):
@@ -548,7 +550,7 @@ def _fsync(fd, metadata):
 
     try:
         channel.force(metadata)
-    except java.io.IOException, ioe:
+    except IOException, ioe:
         raise OSError(ioe)
 
 def getpid():

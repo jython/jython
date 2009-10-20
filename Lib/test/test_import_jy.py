@@ -100,10 +100,8 @@ class OverrideBuiltinsImportTestCase(unittest.TestCase):
     def test_override(self):
         modname = os.path.__name__
         tests = [
-            ("import os.path"         , "('os.path', None, -1, '_%s')"
-             % os._name),
-            ("import os.path as path2", "('os.path', None, -1, '_%s')"
-             % os._name),
+            ("import os.path"         , "('os.path', None, -1, 'os')"),
+            ("import os.path as path2", "('os.path', None, -1, 'os')"),
             ("from os.path import *"  ,
              "('os.path', ('*',), -1, '%s')" % modname),
             ("from os.path import join",
