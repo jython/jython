@@ -4,14 +4,11 @@ package org.python.core;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.StringReader;
-import java.io.Writer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
@@ -25,7 +22,6 @@ import org.antlr.runtime.CommonTokenStream;
 import org.python.antlr.BaseParser;
 import org.python.antlr.NoCloseReaderStream;
 import org.python.antlr.ParseException;
-import org.python.antlr.PythonLexer;
 import org.python.antlr.PythonPartialLexer;
 import org.python.antlr.PythonPartialParser;
 import org.python.antlr.PythonTokenSource;
@@ -387,7 +383,7 @@ public class ParserFacade {
     private static String readEncoding(InputStream stream) throws IOException {
         stream.mark(MARK_LIMIT);
         String encoding = null;
-        BufferedReader br = new BufferedReader(new InputStreamReader(stream), 512);
+        BufferedReader br = new BufferedReader(new InputStreamReader(stream, "ISO-8859-1"), 512);
         encoding = findEncoding(br);
         // XXX: reset() can still raise an IOException if a line exceeds our large mark
         // limit
