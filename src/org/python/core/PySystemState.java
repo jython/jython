@@ -125,8 +125,6 @@ public class PySystemState extends PyObject
 
     private String currentWorkingDir;
 
-    private PyObject environ;
-
     private ClassLoader classLoader = null;
 
     public PyObject stdout, stderr, stdin;
@@ -165,7 +163,6 @@ public class PySystemState extends PyObject
         path_importer_cache = new PyDictionary();
 
         currentWorkingDir = new File("").getAbsolutePath();
-        initEnviron();
 
         // Set up the initial standard ins and outs
         String mode = Options.unbuffered ? "b" : "";
@@ -434,27 +431,6 @@ public class PySystemState extends PyObject
 
     public PyObject getfilesystemencoding() {
         return Py.None;
-    }
-
-    /**
-     * Initialize the environ dict from System.getenv. environ may be empty when the
-     * security policy doesn't grant us access.
-     */
-    public void initEnviron() {
-        environ = new PyDictionary();
-        Map<String, String> env;
-        try {
-            env = System.getenv();
-        } catch (SecurityException se) {
-            return;
-        }
-        for (Map.Entry<String, String> entry : env.entrySet()) {
-            environ.__setitem__(Py.newString(entry.getKey()), Py.newString(entry.getValue()));
-        }
-    }
-
-    public PyObject getEnviron() {
-        return environ;
     }
 
     /**

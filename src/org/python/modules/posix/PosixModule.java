@@ -4,12 +4,15 @@ package org.python.modules.posix;
 import com.kenai.constantine.Constant;
 import com.kenai.constantine.platform.Errno;
 
+import java.util.Map;
+
 import org.jruby.ext.posix.JavaPOSIX;
 import org.jruby.ext.posix.POSIX;
 import org.jruby.ext.posix.POSIXFactory;
 
 import org.python.core.ClassDictInit;
 import org.python.core.Py;
+import org.python.core.PyDictionary;
 import org.python.core.PyList;
 import org.python.core.PyObject;
 import org.python.core.PyString;
@@ -60,6 +63,7 @@ public class PosixModule implements ClassDictInit {
         // Successful termination
         dict.__setitem__("EX_OK", Py.Zero);
 
+        dict.__setitem__("environ", getEnviron());
         dict.__setitem__("error", Py.OSError);
         dict.__setitem__("stat_result", PyStatResult.TYPE);
         dict.__setitem__("_posix_impl", Py.java2py(posix));
@@ -124,6 +128,24 @@ public class PosixModule implements ClassDictInit {
             commandsTup[i++] = args;
         }
         return new PyTuple(commandsTup);
+    }
+
+    /**
+     * Initialize the environ dict from System.getenv. environ may be empty when the
+     * security policy doesn't grant us access.
+     */
+    private static PyObject getEnviron() {
+        PyObject environ = new PyDictionary();
+        Map<String, String> env;
+        try {
+            env = System.getenv();
+        } catch (SecurityException se) {
+            return environ;
+        }
+        for (Map.Entry<String, String> entry : env.entrySet()) {
+            environ.__setitem__(Py.newString(entry.getKey()), Py.newString(entry.getValue()));
+        }
+        return environ;
     }
 
     public static POSIX getPOSIX() {

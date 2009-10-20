@@ -20,11 +20,11 @@ from org.python.core.io import FileDescriptors, FileIO, IOBase
 from org.python.core.Py import newString as asPyString
 
 __all__ = _posix.__all__[:]
-__all__.extend(['_exit', 'access', 'chdir', 'chmod', 'close', 'environ',
-                'fdopen', 'fsync', 'ftruncate', 'getcwd', 'getcwdu', 'getenv',
-                'getpid', 'isatty', 'listdir', 'lseek', 'mkdir', 'open',
-                'popen', 'putenv', 'read', 'remove', 'rename', 'rmdir',
-                'system', 'umask', 'unlink', 'unsetenv', 'urandom', 'utime',
+__all__.extend(['_exit', 'access', 'chdir', 'chmod', 'close', 'fdopen',
+                'fsync', 'ftruncate', 'getcwd', 'getcwdu', 'getenv', 'getpid',
+                'isatty', 'listdir', 'lseek', 'mkdir', 'open', 'popen',
+                'putenv', 'read', 'remove', 'rename', 'rmdir', 'system',
+                'umask', 'unlink', 'unsetenv', 'urandom', 'utime',
                 'write'])
 
 _name = _posix.__name__[1:]
@@ -405,8 +405,6 @@ def getlogin():
     Return the actual login name.
     """
     return java.lang.System.getProperty("user.name")
-
-environ = sys.getEnviron()
 
 def putenv(key, value):
     """putenv(key, value)
