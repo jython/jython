@@ -1,7 +1,9 @@
 /* Copyright (c) Jython Developers */
 package org.python.modules.posix;
 
+import com.kenai.constantine.Constant;
 import com.kenai.constantine.ConstantSet;
+import com.kenai.constantine.platform.Errno;
 
 import org.jruby.ext.posix.JavaPOSIX;
 import org.jruby.ext.posix.POSIX;
@@ -68,6 +70,39 @@ public class PosixModule implements ClassDictInit {
         dict.__setitem__("getOSName", null);
 
         dict.__setitem__("__all__", dict.invoke("keys"));
+    }
+
+    public static PyString __doc__lstat = new PyString(
+        "lstat(path) -> stat result\n\n" +
+        "Like stat(path), but do not follow symbolic links.");
+    public static PyObject lstat(String path) {
+        return PyStatResult.fromFileStat(posix.lstat(Py.getSystemState().getPath(path)));
+    }
+
+    public static PyString __doc__stat = new PyString(
+        "stat(path) -> stat result\n\n" +
+        "Perform a stat system call on the given path.\n\n" +
+        "Note that some platforms may return only a small subset of the\n" +
+        "standard fields");
+    public static PyObject stat(String path) {
+        return PyStatResult.fromFileStat(posix.stat(Py.getSystemState().getPath(path)));
+    }
+
+    public static PyString __doc__strerror = new PyString(
+        "strerror(code) -> string\n\n" + 
+        "Translate an error code to a message string.");
+    public static PyObject strerror(int code) {
+        Constant errno = Errno.valueOf(code);
+        if (errno == Errno.__UNKNOWN_CONSTANT__) {
+            return new PyString("Unknown error: " + code);
+        }
+        if (errno.name() == errno.toString()) {
+            // Fake constant or just lacks a description, fallback to Linux's
+            // XXX: have constantine handle this fallback
+            errno = Enum.valueOf(com.kenai.constantine.platform.linux.Errno.class,
+                                 errno.name());
+        }
+        return new PyString(errno.toString());
     }
 
     /**

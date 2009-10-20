@@ -327,7 +327,7 @@ def raises(exc, expected, callable, *args):
     except exc, val:
         if expected and str(val) != msg:
             raise test_support.TestFailed(
-                "Message %r, expected %r" % (str(value), msg))
+                "Message %r, expected %r" % (str(val), msg))
     else:
         raise test_support.TestFailed("Expected %s" % exc)
 

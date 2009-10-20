@@ -18,18 +18,14 @@ import sys
 from java.io import File
 from org.python.core.io import FileDescriptors, FileIO, IOBase
 from org.python.core.Py import newString as asPyString
-try:
-    from org.python.constantine.platform import Errno
-except ImportError:
-    from com.kenai.constantine.platform import Errno
 
 __all__ = _posix.__all__[:]
 __all__.extend(['_exit', 'access', 'chdir', 'chmod', 'close', 'environ',
                 'fdopen', 'fsync', 'ftruncate', 'getcwd', 'getcwdu', 'getenv',
-                'getpid', 'isatty', 'listdir', 'lseek', 'lstat', 'mkdir',
-                'open', 'popen', 'putenv', 'read', 'remove', 'rename', 'rmdir',
-                'stat', 'strerror', 'system', 'umask', 'unlink', 'unsetenv',
-                'urandom', 'utime', 'write'])
+                'getpid', 'isatty', 'listdir', 'lseek', 'mkdir', 'open',
+                'popen', 'putenv', 'read', 'remove', 'rename', 'rmdir',
+                'system', 'umask', 'unlink', 'unsetenv', 'urandom', 'utime',
+                'write'])
 
 _name = _posix.__name__[1:]
 
@@ -151,28 +147,6 @@ def rmdir(path):
     elif not f.delete():
         raise OSError(0, "couldn't delete directory", path)
 
-def strerror(code):
-    """strerror(code) -> string
-
-    Translate an error code to a message string.
-    """
-    if not isinstance(code, (int, long)):
-        raise TypeError('an integer is required')
-    constant = Errno.valueOf(code)
-    if constant is Errno.__UNKNOWN_CONSTANT__:
-        return 'Unknown error: %d' % code
-    if constant.name() == constant.description():
-        # XXX: have constantine handle this fallback
-        # Fake constant or just lacks a description, fallback to Linux's
-        try:
-            from org.python.constantine.platform.linux import Errno as LinuxErrno
-        except ImportError:
-            from com.kenai.constantine.platform.linux import Errno as LinuxErrno
-        constant = getattr(LinuxErrno, constant.name(), None)
-        if not constant:
-            return 'Unknown error: %d' % code
-    return asPyString(constant.toString())
-
 def access(path, mode):
     """access(path, mode) -> True if granted, False otherwise
 
@@ -200,75 +174,6 @@ def access(path, mode):
         except OSError:
             result = False
     return result
-
-def stat(path):
-    """stat(path) -> stat result
-
-    Perform a stat system call on the given path.
-
-    The Java stat implementation only returns a small subset of
-    the standard fields: size, modification time and change time.
-    """
-    abs_path = sys.getPath(path)
-    try:
-        return _from_jnastat(_posix_impl.stat(abs_path))
-    except NotImplementedError:
-        pass
-    f = File(abs_path)
-    if not f.exists():
-        raise OSError(errno.ENOENT, strerror(errno.ENOENT), path)
-    size = f.length()
-    mtime = f.lastModified() / 1000.0
-    mode = 0
-    if f.isDirectory():
-        mode = _stat.S_IFDIR
-    elif f.isFile():
-        mode = _stat.S_IFREG
-    if f.canRead():
-        mode = mode | _stat.S_IREAD
-    if f.canWrite():
-        mode = mode | _stat.S_IWRITE
-    return stat_result((mode, 0, 0, 0, 0, 0, size, mtime, mtime, 0))
-
-def lstat(path):
-    """lstat(path) -> stat result
-
-    Like stat(path), but do not follow symbolic links.
-    """
-    abs_path = sys.getPath(path)
-    try:
-        return _from_jnastat(_posix_impl.lstat(abs_path))
-    except NotImplementedError:
-        pass
-    f = File(sys.getPath(path))
-    # XXX: jna-posix implements similar link detection in
-    # JavaFileStat.calculateSymlink, fallback to that instead when not
-    # native
-    abs_parent = f.getAbsoluteFile().getParentFile()
-    if not abs_parent:
-        # root isn't a link
-        return stat(path)
-    can_parent = abs_parent.getCanonicalFile()
-
-    if can_parent.getAbsolutePath() == abs_parent.getAbsolutePath():
-        # The parent directory's absolute path is canonical..
-        if f.getAbsolutePath() != f.getCanonicalPath():
-            # but the file's absolute and canonical paths differ (a
-            # link)
-            return stat_result((_stat.S_IFLNK, 0, 0, 0, 0, 0, 0, 0, 0, 0))
-
-    # The parent directory's path is not canonical (one of the parent
-    # directories is a symlink). Build a new path with the parent's
-    # canonical path and compare the files
-    f = File(can_parent.getAbsolutePath(), f.getName())
-    if f.getAbsolutePath() != f.getCanonicalPath():
-        return stat_result((_stat.S_IFLNK, 0, 0, 0, 0, 0, 0, 0, 0, 0))
-
-    # Not a link, only now can we determine if it exists (because
-    # File.exists() returns False for dead links)
-    if not f.exists():
-        raise OSError(errno.ENOENT, strerror(errno.ENOENT), path)
-    return stat(path)
 
 def utime(path, times):
     """utime(path, (atime, mtime))
@@ -723,13 +628,3 @@ def urandom(n):
     buffer = jarray.zeros(n, 'b')
     urandom_source.nextBytes(buffer)
     return buffer.tostring()
-
-def _from_jnastat(s):
-    results = []
-    for meth in (s.mode, s.ino, s.dev, s.nlink, s.uid, s.gid, s.st_size,
-                 s.atime, s.mtime, s.ctime):
-        try:
-            results.append(meth())
-        except NotImplementedError:
-            results.append(0)
-    return stat_result(results)

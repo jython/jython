@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.python.core.adapter.ClassicPyObjectAdapter;
 import org.python.core.adapter.ExtensiblePyObjectAdapter;
+import org.python.modules.posix.PosixModule;
 import org.python.util.Generic;
 
 public final class Py {
@@ -104,7 +105,10 @@ public final class Py {
     }
 
     public static PyException OSError(Constant errno, String filename) {
-        PyObject args = new PyTuple(Py.newInteger(errno.value()), Py.newString(errno.toString()),
+        int value = errno.value();
+        // Pass to strerror because constantine currently lacks Errno descriptions on
+        // Windows, and strerror falls back to Linux's
+        PyObject args = new PyTuple(Py.newInteger(value), PosixModule.strerror(value),
                                     Py.newString(filename));
         return new PyException(Py.OSError, args);
     }
@@ -171,12 +175,14 @@ public final class Py {
     }
 
     public static PyException IOError(Constant errno) {
-        PyObject args = new PyTuple(Py.newInteger(errno.value()), Py.newString(errno.toString()));
+        int value = errno.value();
+        PyObject args = new PyTuple(Py.newInteger(value), PosixModule.strerror(value));
         return new PyException(Py.IOError, args);
     }
 
     public static PyException IOError(Constant errno, String filename) {
-        PyObject args = new PyTuple(Py.newInteger(errno.value()), Py.newString(errno.toString()),
+        int value = errno.value();
+        PyObject args = new PyTuple(Py.newInteger(value), PosixModule.strerror(value),
                                     Py.newString(filename));
         return new PyException(Py.IOError, args);
     }

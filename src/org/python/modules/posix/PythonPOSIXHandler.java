@@ -31,6 +31,10 @@ public class PythonPOSIXHandler implements POSIXHandler {
     }
 
     public void unimplementedError(String methodName) {
+        if (methodName.startsWith("stat.")) {
+            // Ignore unimplemented FileStat methods
+            return;
+        }
         throw Py.NotImplementedError(methodName);
     }
 

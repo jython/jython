@@ -1,11 +1,7 @@
 /* Copyright (c) Jython Developers */
 package org.python.modules.posix;
 
-import org.python.expose.ExposedGet;
-import org.python.expose.ExposedMethod;
-import org.python.expose.ExposedNew;
-import org.python.expose.ExposedType;
-import org.python.expose.MethodType;
+import org.jruby.ext.posix.FileStat;
 
 import org.python.core.ArgParser;
 import org.python.core.Py;
@@ -14,6 +10,12 @@ import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
 import org.python.core.PyTuple;
 import org.python.core.PyType;
+
+import org.python.expose.ExposedGet;
+import org.python.expose.ExposedMethod;
+import org.python.expose.ExposedNew;
+import org.python.expose.ExposedType;
+import org.python.expose.MethodType;
 
 @ExposedType(name = "posix.stat_result", isBaseType = false)
 public class PyStatResult extends PyTuple {
@@ -64,6 +66,17 @@ public class PyStatResult extends PyTuple {
             }
             return new PyStatResult((PyObject[])seq.__tojava__(PyObject[].class));
         }
+    }
+
+    /**
+     * Return a Python stat result from a posix layer FileStat object.
+     */
+    public static PyStatResult fromFileStat(FileStat stat) {
+        return new PyStatResult(Py.newInteger(stat.mode()), Py.newLong(stat.ino()),
+                                Py.newLong(stat.dev()), Py.newInteger(stat.nlink()),
+                                Py.newInteger(stat.uid()), Py.newInteger(stat.gid()),
+                                Py.newLong(stat.st_size()), Py.newLong(stat.atime()),
+                                Py.newLong(stat.mtime()), Py.newLong(stat.ctime()));
     }
 
     @Override
