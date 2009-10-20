@@ -2,7 +2,6 @@
 package org.python.modules.posix;
 
 import com.kenai.constantine.Constant;
-import com.kenai.constantine.ConstantSet;
 import com.kenai.constantine.platform.Errno;
 
 import org.jruby.ext.posix.JavaPOSIX;
@@ -39,18 +38,20 @@ public class PosixModule implements ClassDictInit {
     /** Platform specific POSIX services. */
     private static POSIX posix = POSIXFactory.getPOSIX(new PythonPOSIXHandler(), true);
 
-    private static final String[] openFlags =
-    {"O_RDONLY", "O_WRONLY", "O_RDWR", "O_APPEND", "O_SYNC", "O_CREAT", "O_TRUNC", "O_EXCL"};
-
     public static void classDictInit(PyObject dict) {
         dict.__setitem__("__name__", new PyString("_" + os.getModuleName()));
         dict.__setitem__("__doc__", __doc__);
 
         // os.open flags, only expose what we support
-        ConstantSet openFlagConstants = ConstantSet.getConstantSet("OpenFlags");
-        for (String openFlag : openFlags) {
-            dict.__setitem__(openFlag, Py.newInteger(openFlagConstants.getValue(openFlag)));
-        }
+        dict.__setitem__("O_RDONLY", Py.newInteger(0x0));
+        dict.__setitem__("O_WRONLY", Py.newInteger(0x1));
+        dict.__setitem__("O_RDWR", Py.newInteger(0x2));
+        dict.__setitem__("O_APPEND", Py.newInteger(0x8));
+        dict.__setitem__("O_SYNC", Py.newInteger(0x80));
+        dict.__setitem__("O_CREAT", Py.newInteger(0x200));
+        dict.__setitem__("O_TRUNC", Py.newInteger(0x400));
+        dict.__setitem__("O_EXCL", Py.newInteger(0x800));
+
         // os.access constants
         dict.__setitem__("F_OK", Py.Zero);
         dict.__setitem__("X_OK", Py.newInteger(1 << 0));

@@ -320,7 +320,6 @@ def open(filename, flag, mode=0777):
         try:
             fchannel = RandomAccessFile(sys.getPath(filename), 'rws').getChannel()
         except FileNotFoundException, fnfe:
-            #if path.isdir(filename):
             if _stat.S_ISDIR(stat(filename).st_mode):
                 raise OSError(errno.EISDIR, strerror(errno.EISDIR))
             raise OSError(errno.ENOENT, strerror(errno.ENOENT), filename)
@@ -414,20 +413,26 @@ def putenv(key, value):
 
     Change or add an environment variable.
     """
-    environ[key] = value
+    # XXX: put/unset/getenv should probably be deprecated
+    import os
+    os.environ[key] = value
 
 def unsetenv(key):
     """unsetenv(key)
 
     Delete an environment variable.
     """
-    if key in environ:
-        del environ[key]
+    import os
+    try:
+        del os.environ[key]
+    except KeyError:
+        pass
 
 def getenv(key, default=None):
     """Get an environment variable, return None if it doesn't exist.
     The optional second argument can specify an alternate default."""
-    return environ.get(key, default)
+    import os
+    return os.environ.get(key, default)
 
 if _name == 'posix':
     def link(src, dst):
