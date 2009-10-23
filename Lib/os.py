@@ -403,8 +403,6 @@ try:
 except NameError:
     pass
 else:
-    import UserDict
-
     # Fake unsetenv() for Windows
     # not sure about os2 here but
     # I'm guessing they are the same.
@@ -417,6 +415,8 @@ else:
         # On RISC OS, all env access goes through getenv and putenv
         from riscosenviron import _Environ
     elif _name in ('os2', 'nt'):  # Where Env Var Names Must Be UPPERCASE
+        import UserDict
+
         # But we store them as upper case
         class _Environ(UserDict.IterableUserDict):
             def __init__(self, environ):
