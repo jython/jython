@@ -16,7 +16,7 @@
 	<classpathentry kind="lib" path="extlibs/antlr-runtime-3.1.3.jar"/>
 	<classpathentry kind="lib" path="extlibs/asm-3.1.jar"/>
 	<classpathentry kind="lib" path="extlibs/asm-commons-3.1.jar"/>
-	<classpathentry kind="lib" path="extlibs/constantine-0.4.jar"/>
+	<classpathentry kind="lib" path="extlibs/constantine.jar"/>
 	<classpathentry kind="lib" path="extlibs/jna-posix.jar"/>
 	<classpathentry kind="lib" path="extlibs/mockrunner-0.4.1/jar/jdom.jar"/>
 	<classpathentry kind="lib" path="extlibs/mockrunner-0.4.1/lib/jdk1.5/j2ee1.3/mockrunner-servlet.jar"/>
