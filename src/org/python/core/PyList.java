@@ -293,7 +293,7 @@ public class PyList extends PySequenceList implements List {
         for (int i = 1; i < count; i++) {
             list.addAll(oldList);
         }
-        gListAllocatedStatus = __len__(); // now omit?
+        gListAllocatedStatus = list.size(); // now omit?
         return this;
     }
 
@@ -473,7 +473,7 @@ public class PyList extends PySequenceList implements List {
     @ExposedMethod(doc = BuiltinDocs.list_append_doc)
     final synchronized void list_append(PyObject o) {
         pyadd(o);
-        gListAllocatedStatus = __len__();
+        gListAllocatedStatus = list.size();
     }
 
     /**
@@ -576,7 +576,7 @@ public class PyList extends PySequenceList implements List {
             index = size();
         }
         pyadd(index, o);
-        gListAllocatedStatus = __len__();
+        gListAllocatedStatus = list.size();
     }
 
     /**
@@ -594,7 +594,7 @@ public class PyList extends PySequenceList implements List {
     @ExposedMethod(doc = BuiltinDocs.list_remove_doc)
     final synchronized void list_remove(PyObject o) {
         del(_index(o, "list.remove(x): x not in list", 0, size()));
-        gListAllocatedStatus = __len__();
+        gListAllocatedStatus = list.size();
     }
 
     /**
@@ -609,7 +609,7 @@ public class PyList extends PySequenceList implements List {
     @ExposedMethod(doc = BuiltinDocs.list_reverse_doc)
     final synchronized void list_reverse() {
         Collections.reverse(list);
-        gListAllocatedStatus = __len__();
+        gListAllocatedStatus = list.size();
     }
 
     /**
@@ -665,7 +665,7 @@ public class PyList extends PySequenceList implements List {
                 list.add(item);
             }
         }
-        gListAllocatedStatus = __len__();
+        gListAllocatedStatus = list.size();
     }
 
     @Override
@@ -746,7 +746,7 @@ public class PyList extends PySequenceList implements List {
         if (reverse) {
             Collections.reverse(list); // maintain stability of sort by reversing first
         }
-        gListAllocatedStatus = __len__();
+        gListAllocatedStatus = list.size();
     }
 
     private static class PyObjectDefaultComparator implements Comparator<PyObject> {
@@ -790,7 +790,7 @@ public class PyList extends PySequenceList implements List {
         if (reverse) {
             Collections.reverse(list);
         }
-        gListAllocatedStatus = __len__();
+        gListAllocatedStatus = list.size();
     }
 
     private static class PyObjectComparator implements Comparator<PyObject> {
@@ -892,7 +892,7 @@ public class PyList extends PySequenceList implements List {
         for (KV kv : decorated) {
             list.add(kv.value);
         }
-        gListAllocatedStatus = __len__();
+        gListAllocatedStatus = list.size();
     }
 
     public int hashCode() {
