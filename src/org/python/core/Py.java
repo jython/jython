@@ -104,6 +104,10 @@ public final class Py {
         return new PyException(Py.OSError, message);
     }
 
+    public static PyException OSError(IOException ioe) {
+        return fromIOException(ioe, Py.OSError);
+    }
+
     public static PyException OSError(Constant errno, String filename) {
         int value = errno.value();
         // Pass to strerror because constantine currently lacks Errno descriptions on
@@ -158,16 +162,7 @@ public final class Py {
     public static PyObject IOError;
 
     public static PyException IOError(IOException ioe) {
-        String message = ioe.getMessage();
-        if (message == null) {
-            message = ioe.getClass().getName();
-        }
-        if (ioe instanceof FileNotFoundException) {
-            PyTuple args = new PyTuple(Py.newInteger(Errno.ENOENT.value()),
-                                       Py.newString("File not found - " + message));
-            return new PyException(Py.IOError, args);
-        }
-        return new PyException(Py.IOError, message);
+        return fromIOException(ioe, Py.IOError);
     }
 
     public static PyException IOError(String message) {
@@ -185,6 +180,19 @@ public final class Py {
         PyObject args = new PyTuple(Py.newInteger(value), PosixModule.strerror(value),
                                     Py.newString(filename));
         return new PyException(Py.IOError, args);
+    }
+
+    private static PyException fromIOException(IOException ioe, PyObject err) {
+        String message = ioe.getMessage();
+        if (message == null) {
+            message = ioe.getClass().getName();
+        }
+        if (ioe instanceof FileNotFoundException) {
+            PyTuple args = new PyTuple(Py.newInteger(Errno.ENOENT.value()),
+                                       Py.newString("File not found - " + message));
+            return new PyException(err, args);
+        }
+        return new PyException(err, message);
     }
 
     public static PyObject KeyError;

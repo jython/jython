@@ -15,7 +15,7 @@ import jarray
 import stat as _stat
 import sys
 from java.io import File
-from org.python.core.io import FileDescriptors, FileIO, IOBase
+from org.python.core.io import FileDescriptors, IOBase
 from org.python.core.Py import newString as asPyString
 
 __all__ = [name for name in _posix.__all__ if not name.startswith('__doc__')]
@@ -244,64 +244,6 @@ def lseek(fd, pos, how):
     """
     rawio = FileDescriptors.get(fd)
     return _handle_oserror(rawio.seek, pos, how)
-
-def open(filename, flag, mode=0777):
-    """open(filename, flag [, mode=0777]) -> fd
-
-    Open a file (for low level IO).
-    """
-    reading = flag & O_RDONLY
-    writing = flag & O_WRONLY
-    updating = flag & O_RDWR
-    creating = flag & O_CREAT
-
-    truncating = flag & O_TRUNC
-    exclusive = flag & O_EXCL
-    sync = flag & O_SYNC
-    appending = flag & O_APPEND
-
-    if updating and writing:
-        raise OSError(errno.EINVAL, strerror(errno.EINVAL), filename)
-
-    if not creating:
-        # raises ENOENT if it doesn't exist
-        stat(filename)
-
-    if not writing:
-        if updating:
-            writing = True
-        else:
-            reading = True
-
-    if truncating and not writing:
-        # Explicitly truncate, writing will truncate anyway
-        FileIO(filename, 'w').close()
-
-    if exclusive and creating:
-        from java.io import IOException
-        try:
-            if not File(sys.getPath(filename)).createNewFile():
-                raise OSError(errno.EEXIST, strerror(errno.EEXIST),
-                              filename)
-        except IOException, ioe:
-            raise OSError(ioe)
-
-    mode = '%s%s%s%s' % (reading and 'r' or '',
-                         (not appending and writing) and 'w' or '',
-                         (appending and (writing or updating)) and 'a' or '',
-                         updating and '+' or '')
-
-    if sync and (writing or updating):
-        from java.io import FileNotFoundException, RandomAccessFile
-        try:
-            fchannel = RandomAccessFile(sys.getPath(filename), 'rws').getChannel()
-        except FileNotFoundException, fnfe:
-            if _stat.S_ISDIR(stat(filename).st_mode):
-                raise OSError(errno.EISDIR, strerror(errno.EISDIR))
-            raise OSError(errno.ENOENT, strerror(errno.ENOENT), filename)
-        return FileIO(fchannel, mode)
-
-    return FileIO(filename, mode)
 
 def read(fd, buffersize):
     """read(fd, buffersize) -> string

@@ -4,6 +4,10 @@ package org.python.modules.posix;
 import com.kenai.constantine.Constant;
 import com.kenai.constantine.platform.Errno;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.Map;
 
 import org.jruby.ext.posix.JavaPOSIX;
@@ -17,6 +21,7 @@ import org.python.core.PyList;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyTuple;
+import org.python.core.io.FileIO;
 import org.python.core.util.RelativeFile;
 
 /**
@@ -42,16 +47,26 @@ public class PosixModule implements ClassDictInit {
     /** Platform specific POSIX services. */
     private static POSIX posix = POSIXFactory.getPOSIX(new PythonPOSIXHandler(), true);
 
+    /** os.open flags. */
+    private static int O_RDONLY = 0x0;
+    private static int O_WRONLY = 0x1;
+    private static int O_RDWR = 0x2;
+    private static int O_APPEND = 0x8;
+    private static int O_SYNC = 0x80;
+    private static int O_CREAT = 0x200;
+    private static int O_TRUNC = 0x400;
+    private static int O_EXCL = 0x800;
+
     public static void classDictInit(PyObject dict) {
-        // os.open flags, only expose what we support
-        dict.__setitem__("O_RDONLY", Py.newInteger(0x0));
-        dict.__setitem__("O_WRONLY", Py.newInteger(0x1));
-        dict.__setitem__("O_RDWR", Py.newInteger(0x2));
-        dict.__setitem__("O_APPEND", Py.newInteger(0x8));
-        dict.__setitem__("O_SYNC", Py.newInteger(0x80));
-        dict.__setitem__("O_CREAT", Py.newInteger(0x200));
-        dict.__setitem__("O_TRUNC", Py.newInteger(0x400));
-        dict.__setitem__("O_EXCL", Py.newInteger(0x800));
+        // only expose the open flags we support
+        dict.__setitem__("O_RDONLY", Py.newInteger(O_RDONLY));
+        dict.__setitem__("O_WRONLY", Py.newInteger(O_WRONLY));
+        dict.__setitem__("O_RDWR", Py.newInteger(O_RDWR));
+        dict.__setitem__("O_APPEND", Py.newInteger(O_APPEND));
+        dict.__setitem__("O_SYNC", Py.newInteger(O_SYNC));
+        dict.__setitem__("O_CREAT", Py.newInteger(O_CREAT));
+        dict.__setitem__("O_TRUNC", Py.newInteger(O_TRUNC));
+        dict.__setitem__("O_EXCL", Py.newInteger(O_EXCL));
 
         // os.access constants
         dict.__setitem__("F_OK", Py.Zero);
@@ -113,6 +128,71 @@ public class PosixModule implements ClassDictInit {
         "Like stat(path), but do not follow symbolic links.");
     public static PyObject lstat(String path) {
         return PyStatResult.fromFileStat(posix.lstat(new RelativeFile(path).getPath()));
+    }
+
+    public static PyString __doc__open = new PyString(
+        "open(filename, flag [, mode=0777]) -> fd\n\n" +
+        "Open a file (for low level IO).\n\n" +
+        "Note that the mode argument is not currently supported on Jython.");
+    public static PyObject open(String path, int flag) {
+        return open(path, flag, 0777);
+    }
+
+    public static PyObject open(String path, int flag, int mode) {
+        boolean reading = (flag & O_RDONLY) != 0;
+        boolean writing = (flag & O_WRONLY) != 0;
+        boolean updating = (flag & O_RDWR) != 0;
+        boolean creating = (flag & O_CREAT) != 0;
+        boolean appending = (flag & O_APPEND) != 0;
+        boolean truncating = (flag & O_TRUNC) != 0;
+        boolean exclusive = (flag & O_EXCL) != 0;
+        boolean sync = (flag & O_SYNC) != 0;
+        File file = new RelativeFile(path);
+
+        if (updating && writing) {
+            throw Py.OSError(Errno.EINVAL, path);
+        }
+        if (!creating && !file.exists()) {
+            throw Py.OSError(Errno.ENOENT, path);
+        }
+
+        if (!writing) {
+            if (updating) {
+                writing = true;
+            } else {
+                reading = true;
+            }
+        }
+
+        if (truncating && !writing) {
+            // Explicitly truncate, writing will truncate anyway
+            new FileIO(path, "w").close();
+        }
+
+        if (exclusive && creating) {
+            try {
+                if (!file.createNewFile()) {
+                    throw Py.OSError(Errno.EEXIST, path);
+                }
+            } catch (IOException ioe) {
+                throw Py.OSError(ioe);
+            }
+        }
+
+        String fileIOMode = (reading ? "r" : "") + (!appending && writing ? "w" : "")
+                + (appending && (writing || updating) ? "a" : "") + (updating ? "+" : "");
+        FileIO fileIO;
+        if (sync && (writing || updating)) {
+            try {
+                fileIO = new FileIO(new RandomAccessFile(file, "rws").getChannel(), fileIOMode);
+            } catch (FileNotFoundException fnfe) {
+                throw Py.OSError(file.isDirectory() ? Errno.EISDIR : Errno.ENOENT, path);
+            }
+        } else {
+            fileIO = new FileIO(path, fileIOMode);
+        }
+
+        return Py.java2py(fileIO);
     }
 
     public static PyString __doc__stat = new PyString(
