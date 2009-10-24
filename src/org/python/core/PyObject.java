@@ -1299,25 +1299,33 @@ public class PyObject implements Serializable {
 
     private final int _default_cmp(PyObject other) {
         int result;
-        if (this._is(other).__nonzero__())
+        if (_is(other).__nonzero__())
             return 0;
 
         /* None is smaller than anything */
-        if (this == Py.None)
+        if (this == Py.None) {
             return -1;
-        if (other == Py.None)
+        }
+        if (other == Py.None) {
             return 1;
+        }
 
         // No rational way to compare these, so ask their classes to compare
-        PyType this_type = this.getType();
-        PyType other_type = other.getType();
-        if (this_type == other_type) {
-            return Py.id(this) < Py.id(other)? -1: 1;
+        PyType type = getType();
+        PyType otherType = other.getType();
+        if (type == otherType) {
+            return Py.id(this) < Py.id(other) ? -1 : 1;
         }
-        result = this_type.fastGetName().compareTo(other_type.fastGetName());
-        if (result == 0)
-            return Py.id(this_type)<Py.id(other_type)? -1: 1;
-        return result < 0? -1: 1;
+
+        // different type: compare type names; numbers are smaller
+        String typeName = isNumberType() ? "" : type.fastGetName();
+        String otherTypeName = otherType.isNumberType() ? "" : otherType.fastGetName();
+        result = typeName.compareTo(otherTypeName);
+        if (result == 0) {
+            // Same type name, or (more likely) incomparable numeric types
+            return Py.id(type) < Py.id(otherType) ? -1 : 1;
+        }
+        return result < 0 ? -1 : 1;
     }
 
     private final int _cmp_unsafe(PyObject other) {

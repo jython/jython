@@ -25,6 +25,11 @@ class BuiltinTest(unittest.TestCase):
                 return name
         self.assertEqual(dir(Foo()), [])
 
+    def test_numeric_cmp(self):
+        # http://bugs.jython.org/issue1449
+        for numeric in 1, 2L, 3.0, 4j:
+            self.assertTrue(numeric < Ellipsis)
+
 class LoopTest(unittest.TestCase):
 
     def test_break(self):

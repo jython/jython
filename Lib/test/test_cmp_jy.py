@@ -60,15 +60,14 @@ class CustomCmp(unittest.TestCase):
         baz.cmp = lambda other : Foo()
         self.assertEqual(cmp(100, baz), 0)
         baz.cmp = lambda other : NotImplemented
-        self.assertEqual(cmp(100, baz), 1)
+        # CPython is faulty here (returns 1)
+        self.assertEqual(cmp(100, baz), -1 if test_support.is_jython else 1)
         baz.cmp = lambda other: Bar()
         self.assertRaises(ValueError, cmp, 100, baz)
         baz.cmp = lambda other: 1 / 0
         self.assertRaises(ZeroDivisionError, cmp, 100, baz)
         del Baz.__cmp__
-        # CPython handles numbers differently than other types in
-        # object.c:default_3way_compare, and gets 1 here. we don't care
-        self.assert_(cmp(100, baz) in (-1, 1))
+        self.assertEqual(cmp(100, baz), -1)
 
     def test_cmp_stops_short(self):
         class Foo(object):
