@@ -21,7 +21,7 @@ from org.python.core.Py import newString as asPyString
 __all__ = [name for name in _posix.__all__ if not name.startswith('__doc__')]
 __all__.extend(['access', 'chdir', 'chmod', 'close', 'fdopen', 'fsync',
                 'ftruncate', 'getcwd', 'getcwdu', 'getenv', 'getpid', 'isatty',
-                'lseek', 'mkdir', 'open', 'popen', 'putenv', 'read', 'remove',
+                'lseek', 'mkdir', 'popen', 'putenv', 'read', 'remove',
                 'rename', 'rmdir', 'system', 'umask', 'unlink', 'unsetenv',
                 'urandom', 'utime', 'write'])
 
