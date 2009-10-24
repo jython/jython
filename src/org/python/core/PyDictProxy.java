@@ -20,14 +20,17 @@ public class PyDictProxy extends PyObject {
         this.dict = dict;
     }
 
+    @Override
     public PyObject __iter__() {
         return dict.__iter__();
     }
 
+    @Override
     public PyObject __finditem__(PyObject key) {
         return dict.__finditem__(key);
     }
 
+    @Override
     public int __len__() {
         return dict.__len__();
     }
@@ -87,6 +90,7 @@ public class PyDictProxy extends PyObject {
         return dict.invoke("copy");
     }
 
+    @Override
     public int __cmp__(PyObject other) {
         return dictproxy___cmp__(other);
     }
@@ -126,8 +130,19 @@ public class PyDictProxy extends PyObject {
         return dict.__ge__(other);
     }
 
+    @Override
     @ExposedMethod
     public PyString __str__() {
         return dict.__str__();
+    }
+
+    @Override
+    public boolean isMappingType() {
+        return true;
+    }
+
+    @Override
+    public boolean isSequenceType() {
+        return false;
     }
 }

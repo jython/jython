@@ -174,6 +174,21 @@ public class PyInstance extends PyObject {
     }
 
     @Override
+    public boolean isNumberType() {
+        return __findattr__("__int__") != null || __findattr__("__float__") != null;
+    }
+
+    @Override
+    public boolean isMappingType() {
+        return __findattr__("__getitem__") != null;
+    }
+
+    @Override
+    public boolean isSequenceType() {
+        return __findattr__("__getitem__") != null;
+    }
+
+    @Override
     public boolean isIndex() {
         return __findattr__("__index__") != null;
     }

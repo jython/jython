@@ -712,6 +712,8 @@ public class PyComplex extends PyObject {
         return complex___getnewargs__();
     }
 
-    public boolean isMappingType() { return false; }
-    public boolean isSequenceType() { return false; }
+    @Override
+    public boolean isNumberType() {
+        return true;
+    }
 }

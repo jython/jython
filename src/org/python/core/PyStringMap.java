@@ -435,6 +435,16 @@ public class PyStringMap extends PyObject {
         return new ValuesIter(table.values());
     }
 
+    @Override
+    public boolean isMappingType() {
+        return true;
+    }
+
+    @Override
+    public boolean isSequenceType() {
+        return false;
+    }
+
     private abstract class StringMapIter<T> extends PyIterator {
 
         protected final Iterator<T> iterator;

@@ -864,6 +864,11 @@ public class PyLong extends PyObject {
     }
 
     @Override
+    public boolean isNumberType() {
+        return true;
+    }
+
+    @Override
     public boolean isIndex() {
         return true;
     }

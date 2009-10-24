@@ -676,6 +676,12 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
         throw Py.TypeError(String.format("unhashable type: '%.200s'", getType().fastGetName()));
     }
 
+    @Override
+    public boolean isMappingType() {
+        return true;
+    }
+
+    @Override
     public boolean isSequenceType() {
         return false;
     }

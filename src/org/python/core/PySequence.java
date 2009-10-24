@@ -414,6 +414,11 @@ public abstract class PySequence extends PyObject {
         return null;
     }
 
+    @Override
+    public boolean isSequenceType() {
+        return true;
+    }
+
     protected final SequenceIndexDelegate delegator = new SequenceIndexDelegate() {
 
         @Override

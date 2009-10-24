@@ -523,20 +523,23 @@ public class PyObject implements Serializable {
         return __call__(args, keywords);
     }
 
-    /* xxx fix these around */
-
     public boolean isCallable() {
         return getType().lookup("__call__") != null;
     }
 
-    public boolean isMappingType() {
-        return true;
-    }
     public boolean isNumberType() {
-        return true;
+        PyType type = getType();
+        return type.lookup("__int__") != null || type.lookup("__float__") != null;
     }
+
+    public boolean isMappingType() {
+        PyType type = getType();
+        return type.lookup("__getitem__") != null
+                && !(isSequenceType() && type.lookup("__getslice__") != null);
+    }
+
     public boolean isSequenceType() {
-        return true;
+        return getType().lookup("__getitem__") != null;
     }
 
     /**

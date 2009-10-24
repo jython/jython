@@ -628,6 +628,11 @@ public class PyFloat extends PyObject
         return value;
     }
 
+    @Override
+    public boolean isNumberType() {
+        return true;
+    }
+
     // standard singleton issues apply here to __getformat__/__setformat__,
     // but this is what Python demands
     
@@ -681,8 +686,4 @@ public class PyFloat extends PyObject
             }
         }
     }
-
-    public boolean isMappingType() { return false; }
-    public boolean isSequenceType() { return false; }
-
 }

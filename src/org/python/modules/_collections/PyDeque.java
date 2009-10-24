@@ -474,6 +474,16 @@ public class PyDeque extends PyObject {
         return pd;
     }
 
+    @Override
+    public boolean isMappingType() {
+        return false;
+    }
+
+    @Override
+    public boolean isSequenceType() {
+        return true;
+    }
+
     private static class Node {
         private Node left;
         private Node right;
