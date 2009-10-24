@@ -2,7 +2,6 @@
 package org.python.core.io;
 
 import org.python.core.Py;
-import org.python.core.PyFile;
 import org.python.core.PyObject;
 
 /**
@@ -13,10 +12,6 @@ import org.python.core.PyObject;
  * @author Philip Jenvey
  */
 public class FileDescriptors {
-
-    public static PyFile wrap(RawIOBase raw, String mode, int bufsize) {
-        return new PyFile(raw, "<fdopen>", mode, bufsize);
-    }
 
     /**
      * Return the RawIOBase associated with the specified file descriptor.

@@ -11,19 +11,12 @@ except:
     import _nt as _posix
     from _nt import *
 import errno
-import jarray
-import stat as _stat
 import sys
-from java.io import File
-from org.python.core.io import FileDescriptors, IOBase
-from org.python.core.Py import newString as asPyString
 
 __all__ = [name for name in _posix.__all__ if not name.startswith('__doc__')]
-__all__.extend(['access', 'chdir', 'chmod', 'close', 'fdopen', 'fsync',
-                'ftruncate', 'getcwd', 'getcwdu', 'getenv', 'getpid', 'isatty',
-                'lseek', 'mkdir', 'popen', 'putenv', 'read', 'remove',
-                'rename', 'rmdir', 'system', 'umask', 'unlink', 'unsetenv',
-                'urandom', 'utime', 'write'])
+__all__.extend(['chmod', 'fsync', 'getenv', 'getpid', 'isatty', 'mkdir',
+                'popen', 'putenv', 'remove', 'rename', 'rmdir', 'system',
+                'umask', 'unlink', 'unsetenv', 'urandom', 'utime'])
 
 _name = _posix.__name__[1:]
 
@@ -33,36 +26,6 @@ _time_t = None
 # For urandom
 urandom_source = None
 
-# Lazily loaded path module
-_path = None
-
-def getcwd():
-    """getcwd() -> path
-
-    Return a string representing the current working directory.
-    """
-    return asPyString(sys.getCurrentWorkingDir())
-
-def getcwdu():
-    """getcwd() -> path
-
-    Return a unicode string representing the current working directory.
-    """
-    return sys.getCurrentWorkingDir()
-
-def chdir(path):
-    """chdir(path)
-
-    Change the current working directory to the specified path.
-    """
-    global _path
-    if not _stat.S_ISDIR(stat(path).st_mode):
-        raise OSError(errno.ENOTDIR, strerror(errno.ENOTDIR), path)
-    if _path is None:
-        import os
-        _path = os.path
-    sys.setCurrentWorkingDir(_path.realpath(path))
-
 def chmod(path, mode):
     """chmod(path, mode)
 
@@ -70,6 +33,7 @@ def chmod(path, mode):
     """
     # XXX no error handling for chmod in jna-posix
     # catch not found errors explicitly here, for now
+    from java.io import File
     abs_path = sys.getPath(path)
     if not File(abs_path).exists():
         raise OSError(errno.ENOENT, strerror(errno.ENOENT), path)
@@ -83,6 +47,7 @@ def mkdir(path, mode='ignored'):
     The optional parameter is currently ignored.
     """
     # XXX: use _posix_impl.mkdir when we can get the real errno upon failure
+    from java.io import File
     fp = File(sys.getPath(path))
     if not fp.mkdir():
         if fp.isDirectory() or fp.isFile():
@@ -97,6 +62,7 @@ def remove(path):
 
     Remove a file (same as unlink(path)).
     """
+    from java.io import File
     if not File(sys.getPath(path)).delete():
         raise OSError(0, "couldn't delete file", path)
 
@@ -107,6 +73,7 @@ def rename(path, newpath):
 
     Rename a file or directory.
     """
+    from java.io import File
     if not File(sys.getPath(path)).renameTo(File(sys.getPath(newpath))):
         raise OSError(0, "couldn't rename file", path)
 
@@ -114,6 +81,7 @@ def rmdir(path):
     """rmdir(path)
 
     Remove a directory."""
+    from java.io import File
     f = File(sys.getPath(path))
     if not f.exists():
         raise OSError(errno.ENOENT, strerror(errno.ENOENT), path)
@@ -121,34 +89,6 @@ def rmdir(path):
         raise OSError(errno.ENOTDIR, strerror(errno.ENOTDIR), path)
     elif not f.delete():
         raise OSError(0, "couldn't delete directory", path)
-
-def access(path, mode):
-    """access(path, mode) -> True if granted, False otherwise
-
-    Use the real uid/gid to test for access to a path.  Note that most
-    operations will use the effective uid/gid, therefore this routine can
-    be used in a suid/sgid environment to test if the invoking user has the
-    specified access to the path.  The mode argument can be F_OK to test
-    existence, or the inclusive-OR of R_OK, W_OK, and X_OK.
-    """
-    if not isinstance(mode, (int, long)):
-        raise TypeError('an integer is required')
-
-    f = File(sys.getPath(path))
-    result = True
-    if not f.exists():
-        result = False
-    if mode & R_OK and not f.canRead():
-        result = False
-    if mode & W_OK and not f.canWrite():
-        result = False
-    if mode & X_OK:
-        # NOTE: always False without jna-posix stat
-        try:
-            result = (stat(path).st_mode & _stat.S_IEXEC) != 0
-        except OSError:
-            result = False
-    return result
 
 def utime(path, times):
     """utime(path, (atime, mtime))
@@ -200,78 +140,6 @@ def _to_timeval(seconds):
         # If rounding gave us a negative number, truncate
         usec = 0
     return floor, usec
-
-def close(fd):
-    """close(fd)
-
-    Close a file descriptor (for low level IO).
-    """
-    rawio = FileDescriptors.get(fd)
-    _handle_oserror(rawio.close)
-
-def fdopen(fd, mode='r', bufsize=-1):
-    """fdopen(fd [, mode='r' [, bufsize]]) -> file_object
-
-    Return an open file object connected to a file descriptor.
-    """
-    rawio = FileDescriptors.get(fd)
-    if (len(mode) and mode[0] or '') not in 'rwa':
-        raise ValueError("invalid file mode '%s'" % mode)
-    if rawio.closed():
-        raise OSError(errno.EBADF, strerror(errno.EBADF))
-
-    try:
-        fp = FileDescriptors.wrap(rawio, mode, bufsize)
-    except IOError:
-        raise OSError(errno.EINVAL, strerror(errno.EINVAL))
-    return fp
-
-def ftruncate(fd, length):
-    """ftruncate(fd, length)
-
-    Truncate a file to a specified length.
-    """
-    rawio = FileDescriptors.get(fd)
-    try:
-        rawio.truncate(length)
-    except Exception, e:
-        raise IOError(errno.EBADF, strerror(errno.EBADF))
-
-def lseek(fd, pos, how):
-    """lseek(fd, pos, how) -> newpos
-
-    Set the current position of a file descriptor.
-    """
-    rawio = FileDescriptors.get(fd)
-    return _handle_oserror(rawio.seek, pos, how)
-
-def read(fd, buffersize):
-    """read(fd, buffersize) -> string
-
-    Read a file descriptor.
-    """
-    from org.python.core.util import StringUtil
-    rawio = FileDescriptors.get(fd)
-    buf = _handle_oserror(rawio.read, buffersize)
-    return asPyString(StringUtil.fromBytes(buf))
-
-def write(fd, string):
-    """write(fd, string) -> byteswritten
-
-    Write a string to a file descriptor.
-    """
-    from java.nio import ByteBuffer
-    from org.python.core.util import StringUtil
-    rawio = FileDescriptors.get(fd)
-    return _handle_oserror(rawio.write,
-                           ByteBuffer.wrap(StringUtil.toBytes(string)))
-
-def _handle_oserror(func, *args, **kwargs):
-    """Translate exceptions into OSErrors"""
-    try:
-        return func(*args, **kwargs)
-    except:
-        raise OSError(errno.EBADF, strerror(errno.EBADF))
 
 def system(command):
     """system(command) -> exit_status
@@ -442,7 +310,7 @@ if _name == 'posix':
         """wait() -> (pid, status)
 
         Wait for completion of a child process."""
-
+        import jarray
         status = jarray.zeros(1, 'i')
         res_pid = _posix_impl.wait(status)
         if res_pid == -1:
@@ -453,6 +321,7 @@ if _name == 'posix':
         """waitpid(pid, options) -> (pid, status)
 
         Wait for completion of a given child process."""
+        import jarray
         status = jarray.zeros(1, 'i')
         res_pid = _posix_impl.waitpid(pid, status, options)
         if res_pid == -1:
@@ -481,6 +350,7 @@ def fsync(fd):
 
 def _fsync(fd, metadata):
     """Internal fsync impl"""
+    from org.python.core.io import FileDescriptors
     rawio = FileDescriptors.get(fd)
     rawio.checkClosed()
 
@@ -524,6 +394,7 @@ def isatty(fileno):
     if isinstance(fileno, FileDescriptor):
         return _posix_impl.isatty(fileno)
 
+    from org.python.core.io import IOBase
     if not isinstance(fileno, IOBase):
         raise TypeError('a file descriptor is required')
 
@@ -540,6 +411,7 @@ def urandom(n):
     if urandom_source is None:
         from java.security import SecureRandom
         urandom_source = SecureRandom()
+    import jarray
     buffer = jarray.zeros(n, 'b')
     urandom_source.nextBytes(buffer)
     return buffer.tostring()

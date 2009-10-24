@@ -108,6 +108,12 @@ public final class Py {
         return fromIOException(ioe, Py.OSError);
     }
 
+    public static PyException OSError(Constant errno) {
+        int value = errno.value();
+        PyObject args = new PyTuple(Py.newInteger(value), PosixModule.strerror(value));
+        return new PyException(Py.OSError, args);
+    }
+
     public static PyException OSError(Constant errno, String filename) {
         int value = errno.value();
         // Pass to strerror because constantine currently lacks Errno descriptions on

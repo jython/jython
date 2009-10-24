@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
 import java.util.Map;
 
 import org.jruby.ext.posix.JavaPOSIX;
@@ -17,12 +18,18 @@ import org.jruby.ext.posix.POSIXFactory;
 import org.python.core.ClassDictInit;
 import org.python.core.Py;
 import org.python.core.PyDictionary;
+import org.python.core.PyException;
+import org.python.core.PyFile;
 import org.python.core.PyList;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyTuple;
+import org.python.core.imp;
+import org.python.core.io.FileDescriptors;
 import org.python.core.io.FileIO;
+import org.python.core.io.RawIOBase;
 import org.python.core.util.RelativeFile;
+import org.python.core.util.StringUtil;
 
 /**
  * The underlying _posix or _nt module, named depending on the platform.
@@ -57,6 +64,15 @@ public class PosixModule implements ClassDictInit {
     private static int O_TRUNC = 0x400;
     private static int O_EXCL = 0x800;
 
+    /** os.access constants. */
+    private static int F_OK = 0;
+    private static int X_OK = 1 << 0;
+    private static int W_OK = 1 << 1;
+    private static int R_OK = 1 << 2;
+
+    /** os.path.realpath function for use by chdir. Lazily loaded. */
+    private static PyObject realpath;
+
     public static void classDictInit(PyObject dict) {
         // only expose the open flags we support
         dict.__setitem__("O_RDONLY", Py.newInteger(O_RDONLY));
@@ -68,11 +84,10 @@ public class PosixModule implements ClassDictInit {
         dict.__setitem__("O_TRUNC", Py.newInteger(O_TRUNC));
         dict.__setitem__("O_EXCL", Py.newInteger(O_EXCL));
 
-        // os.access constants
-        dict.__setitem__("F_OK", Py.Zero);
-        dict.__setitem__("X_OK", Py.newInteger(1 << 0));
-        dict.__setitem__("W_OK", Py.newInteger(1 << 1));
-        dict.__setitem__("R_OK", Py.newInteger(1 << 2));
+        dict.__setitem__("F_OK", Py.newInteger(F_OK));
+        dict.__setitem__("X_OK", Py.newInteger(X_OK));
+        dict.__setitem__("W_OK", Py.newInteger(W_OK));
+        dict.__setitem__("R_OK", Py.newInteger(R_OK));
         // Successful termination
         dict.__setitem__("EX_OK", Py.Zero);
 
@@ -86,6 +101,7 @@ public class PosixModule implements ClassDictInit {
         dict.__setitem__("classDictInit", null);
         dict.__setitem__("getPOSIX", null);
         dict.__setitem__("getOSName", null);
+        dict.__setitem__("badFD", null);
 
         dict.__setitem__("__all__", dict.invoke("keys"));
 
@@ -102,6 +118,129 @@ public class PosixModule implements ClassDictInit {
 
     public static void _exit(int status) {
         System.exit(status);
+    }
+
+    public static PyString __doc__access = new PyString(
+        "access(path, mode) -> True if granted, False otherwise\n\n" +
+        "Use the real uid/gid to test for access to a path.  Note that most\n" +
+        "operations will use the effective uid/gid, therefore this routine can\n" +
+        "be used in a suid/sgid environment to test if the invoking user has the\n" +
+        "specified access to the path.  The mode argument can be F_OK to test\n" +
+        "existence, or the inclusive-OR of R_OK, W_OK, and X_OK.");
+    public static boolean access(String path, int mode) {
+        boolean result = true;
+        File file = new RelativeFile(path);
+
+        if (!file.exists()) {
+            result = false;
+        }
+        if ((mode & R_OK) != 0 && !file.canRead()) {
+            result = false;
+        }
+        if ((mode & W_OK) != 0 && !file.canWrite()) {
+            result = false;
+        }
+        if ((mode & X_OK) != 0) {
+            // NOTE: always true without native jna-posix stat
+            try {
+                result = posix.stat(file.getPath()).isExecutable();
+            } catch (PyException pye) {
+                if (!pye.match(Py.OSError)) {
+                    throw pye;
+                }
+                // ENOENT
+                result = false;
+            }
+        }
+        return result;
+    }
+
+    public static PyString __doc__chdir = new PyString(
+        "chdir(path)\n\n" +
+        "Change the current working directory to the specified path.");
+    public static void chdir(PyObject pathObj) {
+        if (!(pathObj instanceof PyString)) {
+            throw Py.TypeError(String.format("coercing to Unicode: need string, '%s' type found",
+                                             pathObj.getType().fastGetName()));
+        }
+
+        String path = pathObj.toString();
+        // stat raises ENOENT for us if path doesn't exist
+        if (!posix.stat(new RelativeFile(path).getPath()).isDirectory()) {
+            throw Py.OSError(Errno.ENOTDIR, path);
+        }
+
+        if (realpath == null) {
+            realpath = imp.load("os.path").__getattr__("realpath");
+        }
+        Py.getSystemState().setCurrentWorkingDir(realpath.__call__(pathObj).toString());
+    }
+
+    public static PyString __doc__close = new PyString(
+        "close(fd)\n\n" +
+        "Close a file descriptor (for low level IO).");
+    public static void close(PyObject fd) {
+        try {
+            FileDescriptors.get(fd).close();
+        } catch (PyException pye) {
+            badFD();
+        }
+    }
+
+    public static PyString __doc__fdopen = new PyString(
+        "fdopen(fd [, mode='r' [, bufsize]]) -> file_object\n\n" +
+        "Return an open file object connected to a file descriptor.");
+    public static PyObject fdopen(PyObject fd) {
+        return fdopen(fd, "r");
+
+    }
+
+    public static PyObject fdopen(PyObject fd, String mode) {
+        return fdopen(fd, mode, -1);
+
+    }
+    public static PyObject fdopen(PyObject fd, String mode, int bufsize) {
+        if (mode.length() == 0 || !"rwa".contains("" + mode.charAt(0))) {
+            throw Py.ValueError(String.format("invalid file mode '%s'", mode));
+        }
+        RawIOBase rawIO = FileDescriptors.get(fd);
+        if (rawIO.closed()) {
+            badFD();
+        }
+
+        try {
+            return new PyFile(rawIO, "<fdopen>", mode, bufsize);
+        } catch (PyException pye) {
+            if (!pye.match(Py.IOError)) {
+                throw pye;
+            }
+            throw Py.OSError(Errno.EINVAL);
+        }
+    }
+
+    public static PyString __doc__ftruncate = new PyString(
+        "ftruncate(fd, length)\n\n" +
+        "Truncate a file to a specified length.");
+    public static void ftruncate(PyObject fd, long length) {
+        try {
+            FileDescriptors.get(fd).truncate(length);
+        } catch (PyException pye) {
+            throw Py.IOError(Errno.EBADF);
+        }
+    }
+
+    public static PyString __doc___getcwd = new PyString(
+        "getcwd() -> path\n\n" +
+        "Return a string representing the current working directory.");
+    public static PyObject getcwd() {
+        return Py.newString(Py.getSystemState().getCurrentWorkingDir());
+    }
+
+    public static PyString __doc___getcwdu = new PyString(
+        "getcwd() -> path\n\n" +
+        "Return a unicode string representing the current working directory.");
+    public static PyObject getcwdu() {
+        return Py.newUnicode(Py.getSystemState().getCurrentWorkingDir());
     }
 
     public static PyString __doc__listdir = new PyString(
@@ -123,6 +262,18 @@ public class PosixModule implements ClassDictInit {
         return list;
     }
 
+    public static PyString __doc__lseek = new PyString(
+        "lseek(fd, pos, how) -> newpos\n\n" +
+        "Set the current position of a file descriptor.");
+    public static long lseek(PyObject fd, long pos, int how) {
+        try {
+            return FileDescriptors.get(fd).seek(pos, how);
+        } catch (PyException pye) {
+            badFD();
+            return -1;
+        }
+    }
+
     public static PyString __doc__lstat = new PyString(
         "lstat(path) -> stat result\n\n" +
         "Like stat(path), but do not follow symbolic links.");
@@ -134,11 +285,11 @@ public class PosixModule implements ClassDictInit {
         "open(filename, flag [, mode=0777]) -> fd\n\n" +
         "Open a file (for low level IO).\n\n" +
         "Note that the mode argument is not currently supported on Jython.");
-    public static PyObject open(String path, int flag) {
+    public static FileIO open(String path, int flag) {
         return open(path, flag, 0777);
     }
 
-    public static PyObject open(String path, int flag, int mode) {
+    public static FileIO open(String path, int flag, int mode) {
         boolean reading = (flag & O_RDONLY) != 0;
         boolean writing = (flag & O_WRONLY) != 0;
         boolean updating = (flag & O_RDWR) != 0;
@@ -181,18 +332,26 @@ public class PosixModule implements ClassDictInit {
 
         String fileIOMode = (reading ? "r" : "") + (!appending && writing ? "w" : "")
                 + (appending && (writing || updating) ? "a" : "") + (updating ? "+" : "");
-        FileIO fileIO;
         if (sync && (writing || updating)) {
             try {
-                fileIO = new FileIO(new RandomAccessFile(file, "rws").getChannel(), fileIOMode);
+                return new FileIO(new RandomAccessFile(file, "rws").getChannel(), fileIOMode);
             } catch (FileNotFoundException fnfe) {
                 throw Py.OSError(file.isDirectory() ? Errno.EISDIR : Errno.ENOENT, path);
             }
-        } else {
-            fileIO = new FileIO(path, fileIOMode);
         }
+        return new FileIO(path, fileIOMode);
+    }
 
-        return Py.java2py(fileIO);
+    public static PyString __doc__read = new PyString(
+        "read(fd, buffersize) -> string\n\n" +
+        "Read a file descriptor.");
+    public static String read(PyObject fd, int buffersize) {
+        try {
+            return StringUtil.fromBytes(FileDescriptors.get(fd).read(buffersize));
+        } catch (PyException pye) {
+            badFD();
+            return null;
+        }
     }
 
     public static PyString __doc__stat = new PyString(
@@ -219,6 +378,18 @@ public class PosixModule implements ClassDictInit {
                                  errno.name());
         }
         return new PyString(errno.toString());
+    }
+
+    public static PyString __doc__write = new PyString(
+        "write(fd, string) -> byteswritten\n\n" +
+        "Write a string to a file descriptor.");
+    public static int write(PyObject fd, String string) {
+        try {
+            return FileDescriptors.get(fd).write(ByteBuffer.wrap(StringUtil.toBytes(string)));
+        } catch (PyException pye) {
+            badFD();
+            return -1;
+        }
     }
 
     /**
@@ -257,6 +428,10 @@ public class PosixModule implements ClassDictInit {
             environ.__setitem__(Py.newString(entry.getKey()), Py.newString(entry.getValue()));
         }
         return environ;
+    }
+
+    private static void badFD() {
+        throw Py.OSError(Errno.EBADF);
     }
 
     public static POSIX getPOSIX() {
