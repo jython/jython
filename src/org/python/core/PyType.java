@@ -1827,8 +1827,7 @@ public class PyType extends PyObject implements Serializable {
          * Return the table index for type version/name.
          */
         private static int indexFor(Object version, String name) {
-            long hash = version.hashCode() * name.hashCode();
-            return (int)hash >>> (Integer.SIZE - SIZE_EXP);
+            return (version.hashCode() * name.hashCode()) >>> (Integer.SIZE - SIZE_EXP);
         }
 
         /**
