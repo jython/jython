@@ -581,7 +581,6 @@ public class Module implements Opcodes, ClassConstants, CompilationContext {
         c.ldc(classfile.name);
         c.invokespecial(classfile.name, "<init>", sig(Void.TYPE, String.class));
         c.invokevirtual(classfile.name, "getMain", sig(PyCode.class));
-        String bootstrap = Type.getDescriptor(CodeBootstrap.class);
         c.invokestatic(p(CodeLoader.class), CodeLoader.SIMPLE_FACTORY_METHOD_NAME,
                 sig(CodeBootstrap.class, PyCode.class));
         c.aload(0);
