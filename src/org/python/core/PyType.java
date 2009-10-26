@@ -144,11 +144,10 @@ public class PyType extends PyObject implements Serializable {
         PyType winner = findMostDerivedMetatype(tmpBases, metatype);
 
         if (winner != metatype) {
-            PyObject winner_new_ = winner.lookup("__new__");
-            if (winner_new_ != null && winner_new_ != new_) {
-                return invoke_new_(new_, winner, false,
-                                   new PyObject[] {new PyString(name), bases, dict},
-                                   Py.NoKeywords);
+            PyObject winnerNew = winner.lookup("__new__");
+            if (winnerNew != null && winnerNew != new_) {
+                return invokeNew(winnerNew, winner, false,
+                                 new PyObject[] {new PyString(name), bases, dict}, Py.NoKeywords);
             }
             metatype = winner;
         }
@@ -438,24 +437,19 @@ public class PyType extends PyObject implements Serializable {
         }
     }
 
-    private static PyObject invoke_new_(PyObject new_, PyType type, boolean init, PyObject[] args,
-                                        String[] keywords) {
-        PyObject newobj;
+    private static PyObject invokeNew(PyObject new_, PyType type, boolean init, PyObject[] args,
+                                      String[] keywords) {
+        PyObject obj;
         if (new_ instanceof PyNewWrapper) {
-            newobj = ((PyNewWrapper)new_).new_impl(init, type, args, keywords);
+            obj = ((PyNewWrapper)new_).new_impl(init, type, args, keywords);
         } else {
             int n = args.length;
-            PyObject[] type_prepended = new PyObject[n + 1];
-            System.arraycopy(args, 0, type_prepended, 1, n);
-            type_prepended[0] = type;
-            newobj = new_.__get__(null, type).__call__(type_prepended, keywords);
+            PyObject[] typePrepended = new PyObject[n + 1];
+            System.arraycopy(args, 0, typePrepended, 1, n);
+            typePrepended[0] = type;
+            obj = new_.__get__(null, type).__call__(typePrepended, keywords);
         }
-        // special case type(x)
-        if (type == TYPE && args.length == 1 && keywords.length == 0) {
-            return newobj;
-        }
-        newobj.dispatch__init__(type, args, keywords);
-        return newobj;
+        return obj;
     }
 
     /**
@@ -1479,9 +1473,16 @@ public class PyType extends PyObject implements Serializable {
     final PyObject type___call__(PyObject[] args, String[] keywords) {
         PyObject new_ = lookup("__new__");
         if (!instantiable || new_ == null) {
-            throw Py.TypeError("cannot create '" + name + "' instances");
+            throw Py.TypeError(String.format("cannot create '%.100s' instances", name));
         }
-        return invoke_new_(new_, this, true, args, keywords);
+
+        PyObject obj = invokeNew(new_, this, true, args, keywords);
+        // special case type(x)
+        if (this == TYPE && args.length == 1 && keywords.length == 0) {
+            return obj;
+        }
+        obj.dispatch__init__(this, args, keywords);
+        return obj;
     }
 
     protected void __rawdir__(PyDictionary accum) {

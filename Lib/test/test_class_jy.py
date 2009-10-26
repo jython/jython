@@ -190,6 +190,22 @@ class ClassGeneralTestCase(unittest.TestCase):
                 raise IndexError, "Fraid not"
         self.assertRaises(IndexError, A().__getitem__, 'b')
 
+    def test_winning_metatype(self):
+        class Meta(type):
+            def __new__(cls, name, bases, attrs):
+                attrs['spam'] = name
+                attrs['counter'] = 0
+                return type.__new__(cls, name, bases, attrs)
+            def __init__(cls, name, bases, attrs):
+                cls.counter += 1
+
+        class Base(object):
+            __metaclass__ = Meta
+        Foo = type('Foo', (Base,), {})
+        # Previously we called the wrong __new__
+        self.assertEqual(Foo.spam, 'Foo')
+        # and called __init__ twice
+        self.assertEqual(Foo.counter, 1)
 
 class ClassNamelessModuleTestCase(unittest.TestCase):
 
