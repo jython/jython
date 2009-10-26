@@ -93,7 +93,6 @@ import org.python.core.PyString;
 import org.python.core.PyTuple;
 import org.python.core.PyUnicode;
 import org.python.core.ThreadState;
-import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -104,15 +103,8 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
 
     private static final Object Exit = new Integer(1);
     private static final Object NoExit = null;
-    private static final int GET = 0;
-    private static final int SET = 1;
-    private static final int DEL = 2;
-    private static final int AUGGET = 3;
-    private static final int AUGSET = 4;
     private Module module;
-    private ClassWriter cw;
     private Code code;
-    private CodeCompiler mrefs;
     private CompilerFlags cflags;
     private int temporary;
     private expr_contextType augmode;
@@ -147,9 +139,6 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
     public CodeCompiler(Module module, boolean print_results) {
         this.module = module;
         this.print_results = print_results;
-
-        mrefs = this;
-        cw = module.classfile.cw;
 
         continueLabels = new Stack<Label>();
         breakLabels = new Stack<Label>();
@@ -262,7 +251,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         return fast_locals && !scope.exec && !scope.from_import_star;
     }
 
-    public void parse(mod node, Code code,
+    void parse(mod node, Code code,
             boolean fast_locals, String className,
             boolean classBody, ScopeInfo scope, CompilerFlags cflags)
             throws Exception {
@@ -1631,7 +1620,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         return null;
     }
 
-    public static int makeStrings(Code c, Collection<String> names)
+    static int makeStrings(Code c, Collection<String> names)
             throws IOException {
         if (names != null) {
             c.iconst(names.size());
