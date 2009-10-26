@@ -116,7 +116,6 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
     private Map<String, SymInfo> tbl;
     private ScopeInfo my_scope;
     private boolean optimizeGlobals = true;
-    private Vector<String> names;
     private String className;
     private Stack<Label> continueLabels, breakLabels;
     private Stack<ExceptionHandler> exceptionHandlers;
@@ -261,7 +260,6 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         this.cflags = cflags;
 
         my_scope = scope;
-        names = scope.names;
 
         tbl = scope.tbl;
         optimizeGlobals = checkOptimizeGlobals(fast_locals, scope);
