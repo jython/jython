@@ -1,4 +1,0 @@
-base_class: PyBoolean
-want_dict: true
-ctr: boolean v
-incl: object

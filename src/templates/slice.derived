@@ -1,5 +1,0 @@
-base_class: PySlice
-want_dict: true
-ctr:
-incl: object
-

@@ -9,7 +9,6 @@
 BaseException.derived:org.python.core.PyBaseExceptionDerived
 ClasspathPyImporter.derived:org.python.core.ClasspathPyImporterDerived
 array.derived:org.python.core.PyArrayDerived
-bool.derived:org.python.core.PyBooleanDerived
 classmethod.derived:org.python.core.PyClassMethodDerived
 complex.derived:org.python.core.PyComplexDerived
 defaultdict.derived:org.python.modules._collections.PyDefaultDictDerived
@@ -30,7 +29,6 @@ partial.derived:org.python.modules._functools.PyPartialDerived
 property.derived:org.python.core.PyPropertyDerived
 random.derived:org.python.modules.random.PyRandomDerived
 set.derived:org.python.core.PySetDerived
-slice.derived:org.python.core.PySliceDerived
 str.derived:org.python.core.PyStringDerived
 super.derived:org.python.core.PySuperDerived
 tuple.derived:org.python.core.PyTupleDerived

@@ -14,32 +14,21 @@ public class PyBoolean extends PyInteger {
     public static final PyType TYPE = PyType.fromClass(PyBoolean.class);
     
     @ExposedNew
-    public static PyObject bool_new(PyNewWrapper new_,
-                                    boolean init,
-                                    PyType subtype,
-                                    PyObject[] args,
-                                    String[] keywords) {
+    public static PyObject bool_new(PyNewWrapper new_, boolean init, PyType subtype,
+                                    PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("bool", args, keywords, new String[] {"x"}, 0);
-        PyObject x = ap.getPyObject(0, null);
-        if (x == null) {
+        PyObject obj = ap.getPyObject(0, null);
+        if (obj == null) {
             return Py.False;
         }
-        if (new_.for_type == subtype) {
-            return x.__nonzero__() ? Py.True : Py.False;
-        } else {
-            return new PyBooleanDerived(subtype, x.__nonzero__());
-        }
+        return obj.__nonzero__() ? Py.True : Py.False;
     }
     
     private boolean value;
 
-    public PyBoolean(PyType subType, boolean v) {
-        super(subType, v ? 1 : 0);
-        value = v;
-    }
-
-    public PyBoolean(boolean v) {
-        this(TYPE, v);
+    public PyBoolean(boolean value) {
+        super(TYPE, value ? 1 : 0);
+        this.value = value;
     }
 
     public int getValue() {
