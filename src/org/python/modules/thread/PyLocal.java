@@ -81,7 +81,7 @@ public class PyLocal extends PyObject {
         if (ldict == null) {
             ldict = new PyDictionary();
             tdict.set(ldict);
-            dispatch__init__(getType(), args, keywords);
+            dispatch__init__(args, keywords);
         }
         return ldict;
     }

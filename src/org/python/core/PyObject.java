@@ -114,13 +114,14 @@ public class PyObject implements Serializable {
     /**
      * Dispatch __init__ behavior
      */
-    public void dispatch__init__(PyType type, PyObject[] args, String[] keywords) {}
+    public void dispatch__init__(PyObject[] args, String[] keywords) {
+    }
 
     /**
      * Attempts to automatically initialize our Java proxy if we have one and it wasn't initialized
      * by our __init__.
      */
-    protected void proxyInit() {
+    void proxyInit() {
         Class<?> c = getType().getProxyType();
         if (javaProxy != null || c == null) {
             return;

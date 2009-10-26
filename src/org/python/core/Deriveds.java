@@ -10,6 +10,20 @@ public class Deriveds {
     private static final PyObject objectGetattribute =
             PyObject.TYPE.__findattr__("__getattribute__");
 
+    public static void dispatch__init__(PyObject self, PyObject[] args, String[] keywords) {
+        PyType type = self.getType();
+        PyObject init = type.lookup("__init__");
+        if (init == null) {
+            return;
+        }
+        PyObject result = init.__get__(self, type).__call__(args, keywords);
+        if (result != Py.None) {
+            throw Py.TypeError(String.format("__init__() should return None, not '%.200s'",
+                                             result.getType().fastGetName()));
+        }
+        self.proxyInit();
+    }
+
     /**
      * Deriveds' __findattr_ex__ implementation.
      *

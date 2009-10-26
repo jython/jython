@@ -1477,11 +1477,13 @@ public class PyType extends PyObject implements Serializable {
         }
 
         PyObject obj = invokeNew(new_, this, true, args, keywords);
-        // special case type(x)
-        if (this == TYPE && args.length == 1 && keywords.length == 0) {
+        // When the call was type(something) or the returned object is not an instance of
+        // type, it won't be initialized
+        if ((this == TYPE && args.length == 1 && keywords.length == 0)
+            || !obj.getType().isSubType(this)) {
             return obj;
         }
-        obj.dispatch__init__(this, args, keywords);
+        obj.dispatch__init__(args, keywords);
         return obj;
     }
 
