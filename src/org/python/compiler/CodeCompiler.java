@@ -258,6 +258,8 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         this.className = className;
         this.code = code;
         this.cflags = cflags;
+        this.my_scope = scope;
+        this.tbl = scope.tbl;
 
         //BEGIN preparse
         if (classBody) {
@@ -273,16 +275,15 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         }
 
         Label genswitch = new Label();
-        if (scope.generator) {
+        if (my_scope.generator) {
             code.goto_(genswitch);
         }
         Label start = new Label();
         code.label(start);
 
-        int nparamcell = scope.jy_paramcells.size();
+        int nparamcell = my_scope.jy_paramcells.size();
         if (nparamcell > 0) {
-            Map<String, SymInfo> tbl = scope.tbl;
-            java.util.List<String> paramcells = scope.jy_paramcells;
+            java.util.List<String> paramcells = my_scope.jy_paramcells;
             for (int i = 0; i < nparamcell; i++) {
                 code.aload(1);
                 SymInfo syminf = tbl.get(paramcells.get(i));
@@ -294,16 +295,13 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         }
         //END preparse
 
-        my_scope = scope;
+        optimizeGlobals = checkOptimizeGlobals(fast_locals, my_scope);
 
-        tbl = scope.tbl;
-        optimizeGlobals = checkOptimizeGlobals(fast_locals, scope);
-
-        if (scope.max_with_count > 0) {
+        if (my_scope.max_with_count > 0) {
             // allocate for all the with-exits we will have in the frame;
             // this allows yield and with to happily co-exist
             loadFrame();
-            code.iconst(scope.max_with_count);
+            code.iconst(my_scope.max_with_count);
             code.anewarray(p(PyObject.class));
             code.putfield(p(PyFrame.class), "f_exits", ci(PyObject[].class));
         }
@@ -326,7 +324,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         //BEGIN postparse
 
         // similar to visitResume code in pyasm.py
-        if (scope.generator) {
+        if (my_scope.generator) {
             code.label(genswitch);
 
             code.aload(1);
