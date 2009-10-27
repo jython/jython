@@ -640,7 +640,7 @@ public class __builtin__ {
             throw Py.TypeError("getattr(): attribute name must be string");
         }
 
-        PyObject result = obj.__findattr__(nameStr.intern());
+        PyObject result = obj.__findattr__(nameStr);
         if (result != null) {
             return result;
         }
