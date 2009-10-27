@@ -1,6 +1,12 @@
-// Copyright (c) Corporation for National Research Initiatives
+/*
+ * Copyright (c) Corporation for National Research Initiatives
+ * Copyright (c) Jython Developers
+ */
 package org.python.core;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Iterator;
@@ -47,20 +53,24 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
     public PyObject __call__(PyObject arg1) {
         switch (this.index) {
             case 0:
-                return Py.newString(__builtin__.chr(Py.py2int(arg1, "chr(): 1st arg can't be coerced to int")));
+                return Py.newString(__builtin__.chr(Py.py2int(arg1,
+                                                              "chr(): 1st arg can't be coerced to "
+                                                              + "int")));
             case 1:
                 return Py.newInteger(__builtin__.len(arg1));
             case 2:
                 return __builtin__.range(arg1);
             case 3:
                 if (!(arg1 instanceof PyString)) {
-                    throw Py.TypeError("ord() expected string of length 1, but " + arg1.getType().fastGetName() + " found");
+                    throw Py.TypeError("ord() expected string of length 1, but " +
+                                       arg1.getType().fastGetName() + " found");
                 }
                 return Py.newInteger(__builtin__.ord(arg1));
             case 5:
                 return __builtin__.hash(arg1);
             case 6:
-                return Py.newUnicode(__builtin__.unichr(Py.py2int(arg1, "unichr(): 1st arg can't be coerced to int")));
+                return Py.newUnicode(__builtin__.unichr(Py.py2int(arg1, "unichr(): 1st arg can't "
+                                                                  + "be coerced to int")));
             case 7:
                 return __builtin__.abs(arg1);
             case 9:
@@ -111,11 +121,11 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
             case 41:
                 return __builtin__.vars(arg1);
             case 30:
-                return fancyCall(new PyObject[]{arg1});
+                return fancyCall(new PyObject[] {arg1});
             case 31:
-                return fancyCall(new PyObject[]{arg1});
+                return fancyCall(new PyObject[] {arg1});
             case 43:
-                return fancyCall(new PyObject[]{arg1});
+                return fancyCall(new PyObject[] {arg1});
             case 45:
                 return __builtin__.reversed(arg1);
             default:
@@ -139,7 +149,8 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
             case 13:
                 return __builtin__.coerce(arg1, arg2);
             case 15:
-                __builtin__.delattr(arg1, asString(arg2, "delattr(): attribute name must be string"));
+                __builtin__.delattr(arg1, asString(arg2,
+                                                   "delattr(): attribute name must be string"));
                 return Py.None;
             case 17:
                 return __builtin__.divmod(arg1, arg2);
@@ -167,13 +178,13 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
             case 35:
                 return __builtin__.reduce(arg1, arg2);
             case 29:
-                return fancyCall(new PyObject[]{arg1, arg2});
+                return fancyCall(new PyObject[] {arg1, arg2});
             case 30:
-                return fancyCall(new PyObject[]{arg1, arg2});
+                return fancyCall(new PyObject[] {arg1, arg2});
             case 31:
-                return fancyCall(new PyObject[]{arg1, arg2});
+                return fancyCall(new PyObject[] {arg1, arg2});
             case 43:
-                return fancyCall(new PyObject[]{arg1, arg2});
+                return fancyCall(new PyObject[] {arg1, arg2});
             default:
                 throw info.unexpectedCall(2, false);
         }
@@ -197,12 +208,14 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
                     PyDictionary d = (PyDictionary) arg3;
                     return __builtin__.apply(arg1, arg2, d);
                 } catch (ClassCastException e) {
-                    throw Py.TypeError("apply() 3rd argument must be a " + "dictionary with string keys");
+                    throw Py.TypeError("apply() 3rd argument must be a "
+                                       + "dictionary with string keys");
                 }
             case 18:
                 return __builtin__.eval(arg1, arg2, arg3);
             case 19:
-                __builtin__.execfile(asString(arg1, "execfile's first argument must be str", false), arg2, arg3);
+                __builtin__.execfile(asString(arg1, "execfile's first argument must be str",
+                                              false), arg2, arg3);
                 return Py.None;
             case 21:
                 return __builtin__.getattr(arg1, arg2, arg3);
@@ -211,25 +224,28 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
             case 35:
                 return __builtin__.reduce(arg1, arg2, arg3);
             case 39:
-                __builtin__.setattr(arg1, asString(arg2, "setattr(): attribute name must be string"), arg3);
+                __builtin__.setattr(arg1, asString(arg2,
+                                                   "setattr(): attribute name must be string"),
+                                    arg3);
                 return Py.None;
             case 44:
-                return fancyCall(new PyObject[]{arg1, arg2, arg3});
+                return fancyCall(new PyObject[] {arg1, arg2, arg3});
             case 29:
-                return fancyCall(new PyObject[]{arg1, arg2, arg3});
+                return fancyCall(new PyObject[] {arg1, arg2, arg3});
             case 30:
-                return fancyCall(new PyObject[]{arg1, arg2, arg3});
+                return fancyCall(new PyObject[] {arg1, arg2, arg3});
             case 31:
-                return fancyCall(new PyObject[]{arg1, arg2, arg3});
+                return fancyCall(new PyObject[] {arg1, arg2, arg3});
             case 43:
-                return fancyCall(new PyObject[]{arg1, arg2, arg3});
+                return fancyCall(new PyObject[] {arg1, arg2, arg3});
             default:
                 throw info.unexpectedCall(3, false);
         }
     }
 
     /**
-     * @return arg as an interned String, or throws TypeError with mesage if asString throws a ConversionException
+     * @return arg as an interned String, or throws TypeError with mesage if asString
+     * throws a ConversionException
      */
     private String asString(PyObject arg, String message) {
         return asString(arg, message, true);
@@ -237,7 +253,8 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
 
     /**
      * @param intern - should the resulting string be interned
-     * @return arg as a String, or throws TypeError with message if asString throws a ConversionException.
+     * @return arg as a String, or throws TypeError with message if asString throws a
+     * ConversionException.
      */
     private String asString(PyObject arg, String message, boolean intern) {
 
@@ -252,15 +269,15 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
     public PyObject __call__(PyObject arg1, PyObject arg2, PyObject arg3, PyObject arg4) {
         switch (this.index) {
             case 44:
-                return fancyCall(new PyObject[]{arg1, arg2, arg3, arg4});
+                return fancyCall(new PyObject[] {arg1, arg2, arg3, arg4});
             case 29:
-                return fancyCall(new PyObject[]{arg1, arg2, arg3, arg4});
+                return fancyCall(new PyObject[] {arg1, arg2, arg3, arg4});
             case 30:
-                return fancyCall(new PyObject[]{arg1, arg2, arg3, arg4});
+                return fancyCall(new PyObject[] {arg1, arg2, arg3, arg4});
             case 31:
-                return fancyCall(new PyObject[]{arg1, arg2, arg3, arg4});
+                return fancyCall(new PyObject[] {arg1, arg2, arg3, arg4});
             case 43:
-                return fancyCall(new PyObject[]{arg1, arg2, arg3, arg4});
+                return fancyCall(new PyObject[] {arg1, arg2, arg3, arg4});
             default:
                 throw info.unexpectedCall(4, false);
         }
@@ -289,6 +306,8 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
  */
 public class __builtin__ {
 
+    private static final PyStringMap internedStrings = new PyStringMap();
+
     public static void fillWithBuiltins(PyObject dict) {
         /* newstyle */
         dict.__setitem__("object", PyObject.TYPE);
@@ -304,7 +323,6 @@ public class __builtin__ {
         dict.__setitem__("tuple", PyTuple.TYPE);
         dict.__setitem__("set", PySet.TYPE);
         dict.__setitem__("frozenset", PyFrozenSet.TYPE);
-
         dict.__setitem__("property", PyProperty.TYPE);
         dict.__setitem__("staticmethod", PyStaticMethod.TYPE);
         dict.__setitem__("classmethod", PyClassMethod.TYPE);
@@ -315,8 +333,6 @@ public class __builtin__ {
         dict.__setitem__("file", PyFile.TYPE);
         dict.__setitem__("slice", PySlice.TYPE);
         dict.__setitem__("xrange", PyXRange.TYPE);
-
-        /* - */
 
         dict.__setitem__("None", Py.None);
         dict.__setitem__("NotImplemented", Py.NotImplemented);
@@ -394,10 +410,10 @@ public class __builtin__ {
     public static PyObject apply(PyObject o, PyObject args, PyDictionary kws) {
         PyObject[] a;
         String[] kw;
-        Map table = kws.table;
+        Map<PyObject, PyObject> table = kws.table;
         if (table.size() > 0) {
-            Iterator ik = table.keySet().iterator();
-            Iterator iv = table.values().iterator();
+            Iterator<PyObject> ik = table.keySet().iterator();
+            Iterator<PyObject> iv = table.values().iterator();
             int n = table.size();
             kw = new String[n];
             PyObject[] aargs = Py.make_array(args);
@@ -406,8 +422,12 @@ public class __builtin__ {
             int offset = aargs.length;
 
             for (int i = 0; i < n; i++) {
-                kw[i] = ((PyString) ik.next()).internedString();
-                a[i + offset] = (PyObject) iv.next();
+                PyObject name = ik.next();
+                if (name.getClass() != PyString.class) {
+                    throw Py.TypeError(String.format("keywords must be strings"));
+                }
+                kw[i] = ((PyString)name).internedString();
+                a[i + offset] = iv.next();
             }
             return o.__call__(a, kw);
         } else {
@@ -462,7 +482,8 @@ public class __builtin__ {
         try {
             ret = (PyList) retObj;
         } catch (ClassCastException e) {
-            throw Py.TypeError("Expected keys() to be a list, not '" + retObj.getType().fastGetName() + "'");
+            throw Py.TypeError(String.format("Expected keys() to be a list, not '%s'",
+                                             retObj.getType().fastGetName()));
         }
         ret.sort();
         return ret;
@@ -519,12 +540,13 @@ public class __builtin__ {
         execfile_flags(name, globals, locals, Py.getCompilerFlags());
     }
 
-    public static void execfile_flags(String name, PyObject globals, PyObject locals, CompilerFlags cflags) {
+    public static void execfile_flags(String name, PyObject globals, PyObject locals,
+                                      CompilerFlags cflags) {
         verify_mappings(globals, locals, true);
-        java.io.FileInputStream file;
+        FileInputStream file;
         try {
-            file = new java.io.FileInputStream(new RelativeFile(name));
-        } catch (java.io.FileNotFoundException e) {
+            file = new FileInputStream(new RelativeFile(name));
+        } catch (FileNotFoundException e) {
             throw Py.IOError(e);
         }
         PyCode code;
@@ -534,7 +556,7 @@ public class __builtin__ {
         } finally {
             try {
                 file.close();
-            } catch (java.io.IOException e) {
+            } catch (IOException e) {
                 throw Py.IOError(e);
             }
         }
@@ -694,7 +716,6 @@ public class __builtin__ {
     public static PyObject input() {
         return input(new PyString(""));
     }
-    private static final PyStringMap internedStrings = new PyStringMap();
 
     public static PyString intern(PyObject obj) {
         if (!(obj instanceof PyString) || obj instanceof PyUnicode) {
@@ -705,11 +726,6 @@ public class __builtin__ {
             throw Py.TypeError("can't intern subclass of string");
         }
         PyString s = (PyString)obj;
-
-        // XXX: for some reason, not seeing this as an instance of PyStringDerived when derived
-        if (s instanceof PyStringDerived) {
-            throw Py.TypeError("can't intern subclass of string");
-        }
         String istring = s.internedString();
         PyObject ret = internedStrings.__finditem__(istring);
         if (ret != null) {
@@ -773,7 +789,8 @@ public class __builtin__ {
         PyObject[] iters = new PyObject[n];
 
         for (int j = 0; j < n; j++) {
-            iters[j] = Py.iter(argstar[j + 1], "argument " + (j + 1) + " to map() must support iteration");
+            iters[j] = Py.iter(argstar[j + 1], "argument " + (j + 1)
+                               + " to map() must support iteration");
         }
 
         while (true) {
@@ -821,7 +838,7 @@ public class __builtin__ {
             }
         }
         throw Py.TypeError("ord() expected a character, but string of length " +
-                length + " found");
+                           length + " found");
     }
 
     public static PyObject pow(PyObject x, PyObject y) {
@@ -1068,7 +1085,7 @@ public class __builtin__ {
     }
 
     public static PyObject reload(PySystemState o) {
-    // reinitialize methods
+        // reinitialize methods
         o.reload();
         return o;
     }
@@ -1123,7 +1140,11 @@ public class __builtin__ {
         }
     }
 
-    public static PyString __doc__zip = new PyString("zip(seq1 [, seq2 [...]]) -> [(seq1[0], seq2[0] ...), (...)]\n" + "\n" + "Return a list of tuples, where each tuple contains the i-th element\n" + "from each of the argument sequences.  The returned list is\n" + "truncated in length to the length of the shortest argument sequence.");
+    public static PyString __doc__zip = new PyString(
+        "zip(seq1 [, seq2 [...]]) -> [(seq1[0], seq2[0] ...), (...)]\n\n" +
+        "Return a list of tuples, where each tuple contains the i-th element\n" +
+        "from each of the argument sequences.  The returned list is\n" +
+        "truncated in length to the length of the shortest argument sequence.");
 
     public static PyObject zip() {
         return new PyList();
@@ -1180,11 +1201,13 @@ public class __builtin__ {
         return __import__(name, globals, locals, null, imp.DEFAULT_LEVEL);
     }
 
-    public static PyObject __import__(String name, PyObject globals, PyObject locals, PyObject fromlist) {
+    public static PyObject __import__(String name, PyObject globals, PyObject locals,
+                                      PyObject fromlist) {
         return __import__(name, globals, locals, fromlist, imp.DEFAULT_LEVEL);
     }
 
-    public static PyObject __import__(String name, PyObject globals, PyObject locals, PyObject fromlist, int level) {
+    public static PyObject __import__(String name, PyObject globals, PyObject locals,
+                                      PyObject fromlist, int level) {
         PyFrame frame = Py.getFrame();
         PyObject builtins;
         if (frame != null && frame.f_builtins != null) {
@@ -1198,7 +1221,8 @@ public class __builtin__ {
             return null;
         }
 
-        PyObject module = __import__.__call__(new PyObject[]{Py.newString(name), globals, locals, fromlist, Py.newInteger(level)});
+        PyObject module = __import__.__call__(new PyObject[] {Py.newString(name), globals, locals,
+                                                              fromlist, Py.newInteger(level)});
         return module;
     }
 }
@@ -1222,14 +1246,15 @@ class ImportFunction extends PyBuiltinFunction {
     @Override
     public PyObject __call__(PyObject args[], String keywords[]) {
         ArgParser ap = new ArgParser("__import__", args, keywords,
-                                     new String[]{"name", "globals", "locals", "fromlist", "level"},
+                                     new String[] {"name", "globals", "locals", "fromlist",
+                                                   "level"},
                                      1);
         String module = ap.getString(0);
         PyObject globals = ap.getPyObject(1, null);
         PyObject fromlist = ap.getPyObject(3, Py.EmptyTuple);
         int level = ap.getInt(4, imp.DEFAULT_LEVEL);
         return imp.importName(module.intern(), fromlist == Py.None || fromlist.__len__() == 0,
-                globals, fromlist, level);
+                              globals, fromlist, level);
     }
 }
 
@@ -1241,13 +1266,15 @@ class SortedFunction extends PyBuiltinFunction {
     @Override
     public PyObject __call__(PyObject args[], String kwds[]) {
         if (args.length == 0) {
-            throw Py.TypeError(" sorted() takes at least 1 argument (0 given)");
+            throw Py.TypeError("sorted() takes at least 1 argument (0 given)");
         } else if (args.length > 4) {
-            throw Py.TypeError(" sorted() takes at most 4 arguments (" + args.length + " given)");
+            throw Py.TypeError(String.format("sorted() takes at most 4 arguments (%s given)",
+                                             args.length));
         } else {
             PyObject iter = args[0].__iter__();
             if (iter == null) {
-                throw Py.TypeError("'" + args[0].getType().fastGetName() + "' object is not iterable");
+                throw Py.TypeError(String.format("'%s' object is not iterable",
+                                                 args[0].getType().fastGetName()));
             }
         }
 
@@ -1255,8 +1282,8 @@ class SortedFunction extends PyBuiltinFunction {
 
         PyObject newargs[] = new PyObject[args.length - 1];
         System.arraycopy(args, 1, newargs, 0, args.length - 1);
-        ArgParser ap = new ArgParser("sorted", newargs, kwds, new String[]{"cmp", "key", "reverse"}, 0);
-
+        ArgParser ap = new ArgParser("sorted", newargs, kwds,
+                                     new String[] {"cmp", "key", "reverse"}, 0);
         PyObject cmp = ap.getPyObject(0, Py.None);
         PyObject key = ap.getPyObject(1, Py.None);
         PyObject reverse = ap.getPyObject(2, Py.None);
@@ -1291,7 +1318,8 @@ class AllFunction extends PyBuiltinFunctionNarrow {
 class AnyFunction extends PyBuiltinFunctionNarrow {
     AnyFunction() {
         super("any", 1, 1,
-              "any(iterable) -> bool\n\nReturn True if bool(x) is True for any x in the iterable.");
+              "any(iterable) -> bool\n\n" +
+              "Return True if bool(x) is True for any x in the iterable.");
     }
 
     @Override
@@ -1312,7 +1340,8 @@ class AnyFunction extends PyBuiltinFunctionNarrow {
 class MaxFunction extends PyBuiltinFunction {
     MaxFunction() {
         super("max",
-              "max(iterable[, key=func]) -> value\nmax(a, b, c, ...[, key=func]) -> value\n\n" +
+              "max(iterable[, key=func]) -> value\n" +
+              "max(a, b, c, ...[, key=func]) -> value\n\n" +
               "With a single iterable argument, return its largest item.\n" +
               "With two or more arguments, return the largest argument.");
     }
@@ -1331,16 +1360,14 @@ class MaxFunction extends PyBuiltinFunction {
                 PyObject newargs[] = new PyObject[argslen - 1];
                 System.arraycopy(args, 0, newargs, 0, argslen - 1);
                 args = newargs;
-            }
-            else {
+            } else {
                 throw Py.TypeError("max() got an unexpected keyword argument");
             }
         }
 
         if (args.length > 1) {
             return max(new PyTuple(args), key);
-        }
-        else {
+        } else {
             return max(args[0], key);
         }
     }
@@ -1352,8 +1379,7 @@ class MaxFunction extends PyBuiltinFunction {
             PyObject itemKey;
             if (key == null) {
                 itemKey = item;
-            }
-            else {
+            } else {
                 itemKey = key.__call__(item);
             }
             if (maxKey == null || itemKey._gt(maxKey).__nonzero__()) {
@@ -1372,7 +1398,8 @@ class MaxFunction extends PyBuiltinFunction {
 class MinFunction extends PyBuiltinFunction {
     MinFunction() {
         super("min",
-              "min(iterable[, key=func]) -> value\nmin(a, b, c, ...[, key=func]) -> value\n\n" +
+              "min(iterable[, key=func]) -> value\n" +
+              "min(a, b, c, ...[, key=func]) -> value\n\n" +
               "With a single iterable argument, return its smallest item.\n" +
               "With two or more arguments, return the smallest argument.'");
     }
@@ -1383,7 +1410,7 @@ class MinFunction extends PyBuiltinFunction {
         PyObject key = null;
 
         if (args.length - kwds.length == 0) {
-            throw Py.TypeError(" min() expected 1 arguments, got 0");
+            throw Py.TypeError("min() expected 1 arguments, got 0");
         }
         if (kwds.length > 0) {
             if (kwds[0].equals("key")) {
@@ -1391,16 +1418,14 @@ class MinFunction extends PyBuiltinFunction {
                 PyObject newargs[] = new PyObject[argslen - 1];
                 System.arraycopy(args, 0, newargs, 0, argslen - 1);
                 args = newargs;
-            }
-            else {
+            } else {
                 throw Py.TypeError("min() got an unexpected keyword argument");
             }
         }
 
         if (args.length > 1) {
             return min(new PyTuple(args), key);
-        }
-        else {
+        } else {
             return min(args[0], key);
         }
     }
@@ -1412,8 +1437,7 @@ class MinFunction extends PyBuiltinFunction {
             PyObject itemKey;
             if (key == null) {
                 itemKey = item;
-            }
-            else {
+            } else {
                 itemKey = key.__call__(item);
             }
             if (minKey == null || itemKey._lt(minKey).__nonzero__()) {
@@ -1500,19 +1524,19 @@ class CompileFunction extends PyBuiltinFunction {
         return compile(source, filename, kind, cflags, dont_inherit);
     }
 
-    public static PyObject compile(PyObject source, String filename, CompileMode kind, CompilerFlags cflags,
-                                   boolean dont_inherit) {
+    public static PyObject compile(PyObject source, String filename, CompileMode kind,
+                                   CompilerFlags cflags, boolean dont_inherit) {
         cflags = Py.getCompilerFlags(cflags, dont_inherit);
-        
+
         mod ast = py2node(source);
         if (ast == null) {
             if (!(source instanceof PyString)) {
                 throw Py.TypeError("expected a readable buffer object");
             }
             cflags.source_is_utf8 = source instanceof PyUnicode;
-            
+
             String data = source.toString();
-            
+
             if (data.contains("\0")) {
                 throw Py.TypeError("compile() expected string without null bytes");
             }
