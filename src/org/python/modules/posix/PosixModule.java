@@ -11,6 +11,7 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
+import org.jruby.ext.posix.FileStat;
 import org.jruby.ext.posix.JavaPOSIX;
 import org.jruby.ext.posix.POSIX;
 import org.jruby.ext.posix.POSIXFactory;
@@ -128,6 +129,7 @@ public class PosixModule implements ClassDictInit {
         "specified access to the path.  The mode argument can be F_OK to test\n" +
         "existence, or the inclusive-OR of R_OK, W_OK, and X_OK.");
     public static boolean access(String path, int mode) {
+        ensurePath(path);
         boolean result = true;
         File file = new RelativeFile(path);
 
@@ -166,7 +168,7 @@ public class PosixModule implements ClassDictInit {
 
         String path = pathObj.toString();
         // stat raises ENOENT for us if path doesn't exist
-        if (!posix.stat(new RelativeFile(path).getPath()).isDirectory()) {
+        if (!posix.stat(absolutePath(path)).isDirectory()) {
             throw Py.OSError(Errno.ENOTDIR, path);
         }
 
@@ -176,6 +178,24 @@ public class PosixModule implements ClassDictInit {
         Py.getSystemState().setCurrentWorkingDir(realpath.__call__(pathObj).toString());
     }
 
+    public static PyString __doc__chmod = new PyString(
+        "chmod(path, mode)\n\n" +
+        "Change the access permissions of a file.");
+    public static void chmod(String path, int mode) {
+        if (posix.chmod(absolutePath(path), mode) < 0) {
+            throw errorFromErrno(path);
+        }
+    }
+
+    public static PyString __doc__chown = new PyString(
+        "chown(path, uid, gid)\n\n" +
+        "Change the owner and group id of path to the numeric uid and gid.");
+    public static void chown(String path, int uid, int gid) {
+        if (posix.chown(absolutePath(path), uid, gid) < 0) {
+            throw errorFromErrno(path);
+        }
+    }
+
     public static PyString __doc__close = new PyString(
         "close(fd)\n\n" +
         "Close a file descriptor (for low level IO).");
@@ -183,7 +203,7 @@ public class PosixModule implements ClassDictInit {
         try {
             FileDescriptors.get(fd).close();
         } catch (PyException pye) {
-            badFD();
+            throw badFD();
         }
     }
 
@@ -205,7 +225,7 @@ public class PosixModule implements ClassDictInit {
         }
         RawIOBase rawIO = FileDescriptors.get(fd);
         if (rawIO.closed()) {
-            badFD();
+            throw badFD();
         }
 
         try {
@@ -250,14 +270,27 @@ public class PosixModule implements ClassDictInit {
         "The list is in arbitrary order.  It does not include the special\n" +
         "entries '.' and '..' even if they are present in the directory.");
     public static PyList listdir(String path) {
+        ensurePath(path);
         PyList list = new PyList();
-        String[] files = new RelativeFile(path).list();
+        File file = new RelativeFile(path);
+        String[] names = file.list();
 
-        if (files == null) {
-            throw Py.OSError("No such directory: " + path);
+        if (names == null) {
+            // Can't read the path for some reason. stat will throw an error if it can't
+            // read it either
+            FileStat stat = posix.stat(file.getPath());
+            // It exists, maybe not a dir, or we don't have permission?
+            if (!stat.isDirectory()) {
+                throw Py.OSError(Errno.ENOTDIR, path);
+            }
+            if (!file.canRead()) {
+                throw Py.OSError(Errno.EACCES, path);
+            }
+            // 
+            throw Py.OSError("listdir(): an unknown error occured: " + path);
         }
-        for (String file : files) {
-            list.append(new PyString(file));
+        for (String name : names) {
+            list.append(new PyString(name));
         }
         return list;
     }
@@ -269,8 +302,7 @@ public class PosixModule implements ClassDictInit {
         try {
             return FileDescriptors.get(fd).seek(pos, how);
         } catch (PyException pye) {
-            badFD();
-            return -1;
+            throw badFD();
         }
     }
 
@@ -278,7 +310,20 @@ public class PosixModule implements ClassDictInit {
         "lstat(path) -> stat result\n\n" +
         "Like stat(path), but do not follow symbolic links.");
     public static PyObject lstat(String path) {
-        return PyStatResult.fromFileStat(posix.lstat(new RelativeFile(path).getPath()));
+        return PyStatResult.fromFileStat(posix.lstat(absolutePath(path)));
+    }
+
+    public static PyString __doc__mkdir = new PyString(
+        "mkdir(path [, mode=0777])\n\n" +
+        "Create a directory.");
+    public static void mkdir(String path) {
+        mkdir(path, 0777);
+    }
+
+    public static void mkdir(String path, int mode) {
+        if (posix.mkdir(absolutePath(path), mode) < 0) {
+            throw errorFromErrno(path);
+        }
     }
 
     public static PyString __doc__open = new PyString(
@@ -290,6 +335,7 @@ public class PosixModule implements ClassDictInit {
     }
 
     public static FileIO open(String path, int flag, int mode) {
+        ensurePath(path);
         boolean reading = (flag & O_RDONLY) != 0;
         boolean writing = (flag & O_WRONLY) != 0;
         boolean updating = (flag & O_RDWR) != 0;
@@ -349,8 +395,7 @@ public class PosixModule implements ClassDictInit {
         try {
             return StringUtil.fromBytes(FileDescriptors.get(fd).read(buffersize));
         } catch (PyException pye) {
-            badFD();
-            return null;
+            throw badFD();
         }
     }
 
@@ -360,7 +405,7 @@ public class PosixModule implements ClassDictInit {
         "Note that some platforms may return only a small subset of the\n" +
         "standard fields");
     public static PyObject stat(String path) {
-        return PyStatResult.fromFileStat(posix.stat(new RelativeFile(path).getPath()));
+        return PyStatResult.fromFileStat(posix.stat(absolutePath(path)));
     }
 
     public static PyString __doc__strerror = new PyString(
@@ -387,8 +432,7 @@ public class PosixModule implements ClassDictInit {
         try {
             return FileDescriptors.get(fd).write(ByteBuffer.wrap(StringUtil.toBytes(string)));
         } catch (PyException pye) {
-            badFD();
-            return -1;
+            throw badFD();
         }
     }
 
@@ -430,8 +474,29 @@ public class PosixModule implements ClassDictInit {
         return environ;
     }
 
-    private static void badFD() {
-        throw Py.OSError(Errno.EBADF);
+    /**
+     * Return the absolute form of path.
+     *
+     * @param path a path String, raising a TypeError when null
+     * @return an absolute path String
+     */
+    private static String absolutePath(String path) {
+        ensurePath(path);
+        return new RelativeFile(path).getPath();
+    }
+
+    private static void ensurePath(String path) {
+        if (path == null) {
+            throw Py.TypeError("coercing to Unicode: need string or buffer, NoneType found");
+        }
+    }
+
+    private static PyException badFD() {
+        return Py.OSError(Errno.EBADF);
+    }
+
+    private static PyException errorFromErrno(String path) {
+        return Py.OSError(Errno.valueOf(posix.errno()), path);
     }
 
     public static POSIX getPOSIX() {

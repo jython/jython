@@ -14,9 +14,9 @@ import errno
 import sys
 
 __all__ = [name for name in _posix.__all__ if not name.startswith('__doc__')]
-__all__.extend(['chmod', 'fsync', 'getenv', 'getpid', 'isatty', 'mkdir',
-                'popen', 'putenv', 'remove', 'rename', 'rmdir', 'system',
-                'umask', 'unlink', 'unsetenv', 'urandom', 'utime'])
+__all__.extend(['fsync', 'getenv', 'getpid', 'isatty', 'popen', 'putenv',
+                'remove', 'rename', 'rmdir', 'system', 'umask', 'unlink',
+                'unsetenv', 'urandom', 'utime'])
 
 _name = _posix.__name__[1:]
 
@@ -25,37 +25,6 @@ _time_t = None
 
 # For urandom
 urandom_source = None
-
-def chmod(path, mode):
-    """chmod(path, mode)
-
-    Change the access permissions of a file.
-    """
-    # XXX no error handling for chmod in jna-posix
-    # catch not found errors explicitly here, for now
-    from java.io import File
-    abs_path = sys.getPath(path)
-    if not File(abs_path).exists():
-        raise OSError(errno.ENOENT, strerror(errno.ENOENT), path)
-    _posix_impl.chmod(abs_path, mode)
-
-def mkdir(path, mode='ignored'):
-    """mkdir(path [, mode=0777])
-
-    Create a directory.
-
-    The optional parameter is currently ignored.
-    """
-    # XXX: use _posix_impl.mkdir when we can get the real errno upon failure
-    from java.io import File
-    fp = File(sys.getPath(path))
-    if not fp.mkdir():
-        if fp.isDirectory() or fp.isFile():
-            err = errno.EEXIST
-        else:
-            err = 0
-        msg = strerror(err) if err else "couldn't make directory"
-        raise OSError(err, msg, path)
 
 def remove(path):
     """remove(path)
@@ -369,6 +338,8 @@ def getpid():
     """getpid() -> pid
 
     Return the current process id."""
+    # XXX: getpid and umask should really be hidden from __all__ when
+    # not _native_posix
     return _posix_impl.getpid()
 
 def isatty(fileno):
