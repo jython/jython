@@ -388,7 +388,7 @@ class _server_socket_impl(_nio_impl):
     def accept(self):
         if self.mode in (MODE_BLOCKING, MODE_NONBLOCKING):
             new_cli_chan = self.jchannel.accept()
-            if new_cli_chan != None:
+            if new_cli_chan is not None:
                 return _client_socket_impl(new_cli_chan.socket())
             else:
                 return None
