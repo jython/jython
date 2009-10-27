@@ -119,9 +119,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
     private String className;
     private Stack<Label> continueLabels, breakLabels;
     private Stack<ExceptionHandler> exceptionHandlers;
-
-    //Module uses this, otherwise I'd make it private.
-    Vector<Label> yields = new Vector<Label>();
+    private Vector<Label> yields = new Vector<Label>();
 
     /*
      * break/continue finally's level.  This is the lowest level in the
