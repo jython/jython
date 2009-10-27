@@ -44,6 +44,8 @@ class OperatorTestCase(unittest.TestCase):
         (2L, True, False, False),
         (3.0, True, False, False),
         (4j, True, False, False),
+        (None, False, False, False),
+        (Ellipsis, False, False, False),
         (Exception(), False, False, True),
         (collections.deque(), False, False, True),
         (collections.defaultdict(), False, True, False),

@@ -1,4 +1,7 @@
-// Copyright (c) Corporation for National Research Initiatives
+/*
+ * Copyright (c) Corporation for National Research Initiatives
+ * Copyright (c) Jython Developers
+ */
 package org.python.core;
 
 import java.io.Serializable;
@@ -7,11 +10,10 @@ import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedType;
 
 /**
- * A class representing the singleton None object,
+ * The singleton None object.
  */
 @ExposedType(name = "NoneType", isBaseType = false)
-public class PyNone extends PyObject implements Serializable
-{
+public class PyNone extends PyObject implements Serializable {
 
     public static final PyType TYPE = PyType.fromClass(PyNone.class);
 
@@ -19,24 +21,25 @@ public class PyNone extends PyObject implements Serializable
         super(TYPE);
     }
 
-    private Object writeReplace() {
-        return new Py.SingletonResolver("None");
-    }    
-    
+    @Override
     public boolean __nonzero__() {
         return false;
     }
 
-    public Object __tojava__(Class c) {
-        //Danger here.  java.lang.Object gets null not None
-        if (c == PyObject.class)
+    @Override
+    public Object __tojava__(Class<?> c) {
+        if (c == PyObject.class) {
             return this;
-        if (c.isPrimitive())
+        }
+        if (c.isPrimitive()) {
             return Py.NoConversion;
+        }
+        // Java gets null
         return null;
     }
 
-    public String toString() throws PyIgnoreMethodTag {
+    @Override
+    public String toString() {
         return NoneType_toString();
     }
 
@@ -45,23 +48,17 @@ public class PyNone extends PyObject implements Serializable
         return "None";
     }
 
-    public boolean isMappingType() {
-        return false;
-    }
-
-    public boolean isSequenceType() {
-        return false;
-    }
-
-    public boolean isNumberType() {
-        return false;
-    }
-
+    @Override
     public String asStringOrNull(int index) {
         return null;
     }
 
+    @Override
     public String asStringOrNull() {
         return null;
+    }
+
+    private Object writeReplace() {
+        return new Py.SingletonResolver("None");
     }
 }
