@@ -633,24 +633,23 @@ public class __builtin__ {
     public static PyObject getattr(PyObject obj, PyObject name, PyObject def) {
         String nameStr;
         if (name instanceof PyUnicode) {
-            nameStr = ((PyUnicode)name).encode();
+            nameStr = ((PyUnicode)name).encode().intern();
         } else if (name instanceof PyString) {
-            nameStr = name.asString();
+            nameStr = ((PyString)name).internedString();
         } else {
             throw Py.TypeError("getattr(): attribute name must be string");
         }
 
-        PyObject result;
-        try {
-            result = obj.__getattr__(nameStr.intern());
-        } catch (PyException pye) {
-            if (pye.match(Py.AttributeError) && def != null) {
-                result = def;
-            } else {
-                throw pye;
-            }
+        PyObject result = obj.__findattr__(nameStr.intern());
+        if (result != null) {
+            return result;
         }
-        return result;
+        if (def != null) {
+            return def;
+        }
+        // throws AttributeError
+        obj.noAttributeError(nameStr);
+        return null;
     }
 
     public static PyObject globals() {
@@ -662,13 +661,13 @@ public class __builtin__ {
         if (name instanceof PyUnicode) {
             nameStr = ((PyUnicode)name).encode().intern();
         } else if (name instanceof PyString) {
-            nameStr = name.asString();
+            nameStr = ((PyString)name).internedString();
         } else {
             throw Py.TypeError("hasattr(): attribute name must be string");
         }
 
         try {
-            return obj.__findattr__(nameStr.intern()) != null;
+            return obj.__findattr__(nameStr) != null;
         } catch (PyException pye) {
             // swallow
         }
