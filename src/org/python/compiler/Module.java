@@ -507,55 +507,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext {
                 sig(PyObject.class, PyFrame.class, ThreadState.class),
                 ACC_PUBLIC);
 
-        if (classBody) {
-            // Set the class's __module__ to __name__. fails when there's no __name__
-            c.aload(1);
-            c.ldc("__module__");
-
-            c.aload(1);
-            c.ldc("__name__");
-            c.invokevirtual(p(PyFrame.class), "getname", sig(PyObject.class, String.class));
-            c.invokevirtual(p(PyFrame.class), "setlocal", sig(Void.TYPE, String.class,
-                    PyObject.class));
-        }
-
-        Label genswitch = new Label();
-        if (scope.generator) {
-            c.goto_(genswitch);
-        }
-        Label start = new Label();
-        c.label(start);
-
-        int nparamcell = scope.jy_paramcells.size();
-        if (nparamcell > 0) {
-            Map<String, SymInfo> tbl = scope.tbl;
-            List<String> paramcells = scope.jy_paramcells;
-            for (int i = 0; i < nparamcell; i++) {
-                c.aload(1);
-                SymInfo syminf = tbl.get(paramcells.get(i));
-                c.iconst(syminf.locals_index);
-                c.iconst(syminf.env_index);
-                c.invokevirtual(p(PyFrame.class), "to_cell", sig(Void.TYPE, Integer.TYPE,
-                        Integer.TYPE));
-            }
-        }
-
         compiler.parse(tree, c, fast_locals, className, classBody, scope, cflags);
-        // similar to visitResume code in pyasm.py
-        if (scope.generator) {
-            c.label(genswitch);
-
-            c.aload(1);
-            c.getfield(p(PyFrame.class), "f_lasti", "I");
-            Label[] yields = new Label[compiler.yields.size() + 1];
-
-            yields[0] = start;
-            for (int i = 1; i < yields.length; i++) {
-                yields[i] = compiler.yields.get(i - 1);
-            }
-            c.tableswitch(0, yields.length - 1, start, yields);
-        }
-
         return code;
     }
 

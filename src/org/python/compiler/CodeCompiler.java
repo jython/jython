@@ -259,6 +259,41 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         this.code = code;
         this.cflags = cflags;
 
+        //BEGIN preparse
+        if (classBody) {
+            // Set the class's __module__ to __name__. fails when there's no __name__
+            code.aload(1);
+            code.ldc("__module__");
+
+            code.aload(1);
+            code.ldc("__name__");
+            code.invokevirtual(p(PyFrame.class), "getname", sig(PyObject.class, String.class));
+            code.invokevirtual(p(PyFrame.class), "setlocal", sig(Void.TYPE, String.class,
+                    PyObject.class));
+        }
+
+        Label genswitch = new Label();
+        if (scope.generator) {
+            code.goto_(genswitch);
+        }
+        Label start = new Label();
+        code.label(start);
+
+        int nparamcell = scope.jy_paramcells.size();
+        if (nparamcell > 0) {
+            Map<String, SymInfo> tbl = scope.tbl;
+            java.util.List<String> paramcells = scope.jy_paramcells;
+            for (int i = 0; i < nparamcell; i++) {
+                code.aload(1);
+                SymInfo syminf = tbl.get(paramcells.get(i));
+                code.iconst(syminf.locals_index);
+                code.iconst(syminf.env_index);
+                code.invokevirtual(p(PyFrame.class), "to_cell", sig(Void.TYPE, Integer.TYPE,
+                        Integer.TYPE));
+            }
+        }
+        //END preparse
+
         my_scope = scope;
 
         tbl = scope.tbl;
@@ -287,6 +322,24 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
                 code.areturn();
             }
         }
+
+        //BEGIN postparse
+
+        // similar to visitResume code in pyasm.py
+        if (scope.generator) {
+            code.label(genswitch);
+
+            code.aload(1);
+            code.getfield(p(PyFrame.class), "f_lasti", "I");
+            Label[] y = new Label[yields.size() + 1];
+
+            y[0] = start;
+            for (int i = 1; i < y.length; i++) {
+                y[i] = yields.get(i - 1);
+            }
+            code.tableswitch(0, y.length - 1, start, y);
+        }
+        //END postparse
     }
 
     @Override
