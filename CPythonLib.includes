@@ -134,6 +134,7 @@ symbol.py
 tabnanny.py
 this.py
 textwrap.py
+tempfile.py
 token.py
 tokenize.py
 trace.py

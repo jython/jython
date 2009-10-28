@@ -92,13 +92,15 @@ public class PosixModule implements ClassDictInit {
         // Successful termination
         dict.__setitem__("EX_OK", Py.Zero);
 
+        boolean nativePosix = !(posix instanceof JavaPOSIX);
+        dict.__setitem__("_native_posix", Py.newBoolean(nativePosix));
+        dict.__setitem__("_posix_impl", Py.java2py(posix));
         dict.__setitem__("environ", getEnviron());
         dict.__setitem__("error", Py.OSError);
         dict.__setitem__("stat_result", PyStatResult.TYPE);
-        dict.__setitem__("_posix_impl", Py.java2py(posix));
-        dict.__setitem__("_native_posix", Py.newBoolean(!(posix instanceof JavaPOSIX)));
 
         // Hide from Python
+        Hider.hideFunctions(PosixModule.class, dict, os, nativePosix);
         dict.__setitem__("classDictInit", null);
         dict.__setitem__("getPOSIX", null);
         dict.__setitem__("getOSName", null);
@@ -190,6 +192,7 @@ public class PosixModule implements ClassDictInit {
     public static PyString __doc__chown = new PyString(
         "chown(path, uid, gid)\n\n" +
         "Change the owner and group id of path to the numeric uid and gid.");
+    @Hide(OS.POSIX)
     public static void chown(String path, int uid, int gid) {
         if (posix.chown(absolutePath(path), uid, gid) < 0) {
             throw errorFromErrno(path);
@@ -263,6 +266,22 @@ public class PosixModule implements ClassDictInit {
         return Py.newUnicode(Py.getSystemState().getCurrentWorkingDir());
     }
 
+    public static PyString __doc___getpid = new PyString(
+        "getpid() -> pid\n\n" +
+        "Return the current process id");
+    @Hide(posixImpl = PosixImpl.JAVA)
+    public static int getpid() {
+        return posix.getpid();
+    }
+
+    public static PyString __doc__link = new PyString(
+        "link(src, dst)\n\n" +
+        "Create a hard link to a file.");
+    @Hide(OS.NT)
+    public static void link(String src, String dst) {
+        posix.link(absolutePath(src), absolutePath(dst));
+    }
+
     public static PyString __doc__listdir = new PyString(
         "listdir(path) -> list_of_strings\n\n" +
         "Return a list containing the names of the entries in the directory.\n\n" +
@@ -286,7 +305,6 @@ public class PosixModule implements ClassDictInit {
             if (!file.canRead()) {
                 throw Py.OSError(Errno.EACCES, path);
             }
-            // 
             throw Py.OSError("listdir(): an unknown error occured: " + path);
         }
         for (String name : names) {
@@ -399,6 +417,13 @@ public class PosixModule implements ClassDictInit {
         }
     }
 
+    public static PyString __doc__remove = new PyString(
+        "remove(path)\n\n" +
+        "Remove a file (same as unlink(path)).");
+    public static void remove(String path) {
+        unlink(path);
+    }
+
     public static PyString __doc__stat = new PyString(
         "stat(path) -> stat result\n\n" +
         "Perform a stat system call on the given path.\n\n" +
@@ -423,6 +448,34 @@ public class PosixModule implements ClassDictInit {
                                  errno.name());
         }
         return new PyString(errno.toString());
+    }
+
+    public static PyString __doc__umask = new PyString(
+        "umask(new_mask) -> old_mask\n\n" +
+        "Set the current numeric umask and return the previous umask.");
+    @Hide(posixImpl = PosixImpl.JAVA)
+    public static int umask(int mask) {
+        return posix.umask(mask);
+    }
+
+    public static PyString __doc__unlink = new PyString(
+        "unlink(path)\n\n" +
+        "Remove a file (same as remove(path)).");
+    public static void unlink(String path) {
+        ensurePath(path);
+        File file = new RelativeFile(path);
+        if (!file.delete()) {
+            // Something went wrong, does stat raise an error?
+            posix.stat(absolutePath(path));
+            // It exists, is it a directory, or do we not have permissions?
+            if (file.isDirectory()) {
+                throw Py.OSError(Errno.EISDIR, path);
+            }
+            if (!file.canWrite()) {
+                throw Py.OSError(Errno.EPERM, path);
+            }
+            throw Py.OSError("unlink(): an unknown error occured: " + path);
+        }
     }
 
     public static PyString __doc__write = new PyString(

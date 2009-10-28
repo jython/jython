@@ -208,18 +208,13 @@ class test__mkstemp_inner(TC):
     class mkstemped:
         _bflags = tempfile._bin_openflags
         _tflags = tempfile._text_openflags
+        _close = os.close
+        _unlink = os.unlink
 
         def __init__(self, dir, pre, suf, bin):
             if bin: flags = self._bflags
             else:   flags = self._tflags
 
-            # XXX: CPython assigns _close/_unlink as class vars but this
-            # would rebind Jython's close/unlink (to be classmethods)
-            # because they're not built-in functions (unfortunately
-            # built-in functions act differently when binding:
-            # http://mail.python.org/pipermail/python-dev/2003-April/034749.html)
-            self._close = os.close
-            self._unlink = os.unlink
             (self.fd, self.name) = tempfile._mkstemp_inner(dir, pre, suf, flags)
 
         def write(self, str):
@@ -494,7 +489,7 @@ class test_mkdtemp(TC):
         # mkdtemp creates directories with the proper mode
         if not has_stat:
             return            # ugh, can't use TestSkipped.
-        if os.name == 'java':
+        if sys.platform.startswith('java') and not os._native_posix:
             # Java doesn't support stating files for permissions
             return
 
@@ -529,13 +524,10 @@ class test_mktemp(TC):
             self.dir = None
 
     class mktemped:
+        _unlink = os.unlink
         _bflags = tempfile._bin_openflags
 
         def __init__(self, dir, pre, suf):
-            # XXX: Assign _unlink here, instead of as a class var. See
-            # mkstemped.__init__ for an explanation
-            self._unlink = os.unlink
-
             self.name = tempfile.mktemp(dir=dir, prefix=pre, suffix=suf)
             # Create the file.  This will raise an exception if it's
             # mysteriously appeared in the meanwhile.
@@ -704,5 +696,5 @@ if __name__ == "__main__":
     test_main()
     # XXX: Nudge Java's GC in an attempt to trigger any temp file's
     # __del__ (cause them to be deleted) that hasn't been called
-    from java.lang import System
-    System.gc()
+    import gc
+    gc.collect()

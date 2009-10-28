@@ -14,8 +14,8 @@ import errno
 import sys
 
 __all__ = [name for name in _posix.__all__ if not name.startswith('__doc__')]
-__all__.extend(['fsync', 'getenv', 'getpid', 'isatty', 'popen', 'putenv',
-                'remove', 'rename', 'rmdir', 'system', 'umask', 'unlink',
+__all__.extend(['fsync', 'getenv', 'isatty', 'popen', 'putenv',
+                'rename', 'rmdir', 'system',
                 'unsetenv', 'urandom', 'utime'])
 
 _name = _posix.__name__[1:]
@@ -25,17 +25,6 @@ _time_t = None
 
 # For urandom
 urandom_source = None
-
-def remove(path):
-    """remove(path)
-
-    Remove a file (same as unlink(path)).
-    """
-    from java.io import File
-    if not File(sys.getPath(path)).delete():
-        raise OSError(0, "couldn't delete file", path)
-
-unlink = remove
 
 def rename(path, newpath):
     """rename(old, new)
@@ -181,13 +170,6 @@ def getenv(key, default=None):
     return os.environ.get(key, default)
 
 if _name == 'posix':
-    def link(src, dst):
-        """link(src, dst)
-
-        Create a hard link to a file.
-        """
-        _posix_impl.link(sys.getPath(src), sys.getPath(dst))
-
     def symlink(src, dst):
         """symlink(src, dst)
 
@@ -305,7 +287,7 @@ if _name == 'posix':
         """
         _fsync(fd, False)
 
-    __all__.extend(['link', 'symlink', 'readlink', 'getegid', 'geteuid',
+    __all__.extend(['symlink', 'readlink', 'getegid', 'geteuid',
                     'getgid', 'getlogin', 'getpgrp', 'getppid', 'getuid',
                     'setpgrp', 'setsid', 'kill', 'wait', 'waitpid',
                     'fdatasync'])
@@ -333,14 +315,6 @@ def _fsync(fd, metadata):
         channel.force(metadata)
     except IOException, ioe:
         raise OSError(ioe)
-
-def getpid():
-    """getpid() -> pid
-
-    Return the current process id."""
-    # XXX: getpid and umask should really be hidden from __all__ when
-    # not _native_posix
-    return _posix_impl.getpid()
 
 def isatty(fileno):
     """isatty(fd) -> bool
@@ -370,12 +344,6 @@ def isatty(fileno):
         raise TypeError('a file descriptor is required')
 
     return fileno.isatty()
-
-def umask(new_mask):
-    """umask(new_mask) -> old_mask
-
-    Set the current numeric umask and return the previous umask."""
-    return _posix_impl.umask(int(new_mask))
 
 def urandom(n):
     global urandom_source
