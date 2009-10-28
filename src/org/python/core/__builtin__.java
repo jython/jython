@@ -86,11 +86,7 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
             case 18:
                 return __builtin__.eval(arg1);
             case 19:
-                try {
-                    __builtin__.execfile(arg1.asString(0));
-                } catch (ConversionException e) {
-                    throw Py.TypeError("execfile's first argument must be str");
-                }
+                __builtin__.execfile(arg1.asString());
                 return Py.None;
             case 23:
                 return __builtin__.hex(arg1);
@@ -149,19 +145,14 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
             case 13:
                 return __builtin__.coerce(arg1, arg2);
             case 15:
-                __builtin__.delattr(arg1, asString(arg2,
-                                                   "delattr(): attribute name must be string"));
+                __builtin__.delattr(arg1, arg2);
                 return Py.None;
             case 17:
                 return __builtin__.divmod(arg1, arg2);
             case 18:
                 return __builtin__.eval(arg1, arg2);
             case 19:
-                try {
-                    __builtin__.execfile(arg1.asString(0), arg2);
-                } catch (ConversionException e) {
-                    throw Py.TypeError("execfile's first argument must be str");
-                }
+                __builtin__.execfile(arg1.asString(), arg2);
                 return Py.None;
             case 20:
                 return __builtin__.filter(arg1, arg2);
@@ -202,9 +193,6 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
                         d.update(arg3);
                         arg3 = d;
                     }
-                    // this catches both casts of arg3 to a PyDictionary, and
-                    // all casts of keys in the dictionary to PyStrings inside
-                    // apply(PyObject, PyObject, PyDictionary)
                     PyDictionary d = (PyDictionary) arg3;
                     return __builtin__.apply(arg1, arg2, d);
                 } catch (ClassCastException e) {
@@ -214,8 +202,7 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
             case 18:
                 return __builtin__.eval(arg1, arg2, arg3);
             case 19:
-                __builtin__.execfile(asString(arg1, "execfile's first argument must be str",
-                                              false), arg2, arg3);
+                __builtin__.execfile(arg1.asString(), arg2, arg3);
                 return Py.None;
             case 21:
                 return __builtin__.getattr(arg1, arg2, arg3);
@@ -224,9 +211,7 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
             case 35:
                 return __builtin__.reduce(arg1, arg2, arg3);
             case 39:
-                __builtin__.setattr(arg1, asString(arg2,
-                                                   "setattr(): attribute name must be string"),
-                                    arg3);
+                __builtin__.setattr(arg1, arg2, arg3);
                 return Py.None;
             case 44:
                 return fancyCall(new PyObject[] {arg1, arg2, arg3});
@@ -240,28 +225,6 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
                 return fancyCall(new PyObject[] {arg1, arg2, arg3});
             default:
                 throw info.unexpectedCall(3, false);
-        }
-    }
-
-    /**
-     * @return arg as an interned String, or throws TypeError with mesage if asString
-     * throws a ConversionException
-     */
-    private String asString(PyObject arg, String message) {
-        return asString(arg, message, true);
-    }
-
-    /**
-     * @param intern - should the resulting string be interned
-     * @return arg as a String, or throws TypeError with message if asString throws a
-     * ConversionException.
-     */
-    private String asString(PyObject arg, String message, boolean intern) {
-
-        try {
-            return intern ? arg.asString(0).intern() : arg.asString(0);
-        } catch (ConversionException e) {
-            throw Py.TypeError(message);
         }
     }
 
@@ -465,8 +428,8 @@ public class __builtin__ {
         throw Py.TypeError("number coercion failed");
     }
 
-    public static void delattr(PyObject o, String n) {
-        o.__delattr__(n);
+    public static void delattr(PyObject obj, PyObject name) {
+        obj.__delattr__(asName(name, "delattr"));
     }
 
     public static PyObject dir(PyObject o) {
@@ -493,25 +456,21 @@ public class __builtin__ {
         return x._divmod(y);
     }
 
-    private static boolean PyMapping_check(PyObject o, boolean rw) {
-        return o == null ||
-               o == Py.None ||
-               (o instanceof PyDictionary) ||
-               (o.__findattr__("__getitem__") != null &&
-                (!rw || o.__findattr__("__setitem__") != null));
+    private static boolean isMappingType(PyObject o) {
+        return o == null || o == Py.None || o.isMappingType();
     }
 
-    private static void verify_mappings(PyObject globals, PyObject locals, boolean rw) {
-        if (!PyMapping_check(globals, rw)) {
+    private static void verify_mappings(PyObject globals, PyObject locals) {
+        if (!isMappingType(globals)) {
             throw Py.TypeError("globals must be a mapping");
         }
-        if (!PyMapping_check(locals, rw)) {
+        if (!isMappingType(locals)) {
             throw Py.TypeError("locals must be a mapping");
         }
     }
 
     public static PyObject eval(PyObject o, PyObject globals, PyObject locals) {
-        verify_mappings(globals, locals, false);
+        verify_mappings(globals, locals);
         PyCode code;
         if (o instanceof PyCode) {
             code = (PyCode) o;
@@ -542,7 +501,7 @@ public class __builtin__ {
 
     public static void execfile_flags(String name, PyObject globals, PyObject locals,
                                       CompilerFlags cflags) {
-        verify_mappings(globals, locals, true);
+        verify_mappings(globals, locals);
         FileInputStream file;
         try {
             file = new FileInputStream(new RelativeFile(name));
@@ -652,17 +611,9 @@ public class __builtin__ {
         return getattr(obj, name, null);
     }
 
-    public static PyObject getattr(PyObject obj, PyObject name, PyObject def) {
-        String nameStr;
-        if (name instanceof PyUnicode) {
-            nameStr = ((PyUnicode)name).encode().intern();
-        } else if (name instanceof PyString) {
-            nameStr = ((PyString)name).internedString();
-        } else {
-            throw Py.TypeError("getattr(): attribute name must be string");
-        }
-
-        PyObject result = obj.__findattr__(nameStr);
+    public static PyObject getattr(PyObject obj, PyObject nameObj, PyObject def) {
+        String name = asName(nameObj, "getattr");
+        PyObject result = obj.__findattr__(name);
         if (result != null) {
             return result;
         }
@@ -670,7 +621,7 @@ public class __builtin__ {
             return def;
         }
         // throws AttributeError
-        obj.noAttributeError(nameStr);
+        obj.noAttributeError(name);
         return null;
     }
 
@@ -678,18 +629,10 @@ public class __builtin__ {
         return Py.getFrame().f_globals;
     }
 
-    public static boolean hasattr(PyObject obj, PyObject name) {
-        String nameStr;
-        if (name instanceof PyUnicode) {
-            nameStr = ((PyUnicode)name).encode().intern();
-        } else if (name instanceof PyString) {
-            nameStr = ((PyString)name).internedString();
-        } else {
-            throw Py.TypeError("hasattr(): attribute name must be string");
-        }
-
+    public static boolean hasattr(PyObject obj, PyObject nameObj) {
+        String name = asName(nameObj, "hasattr");
         try {
-            return obj.__findattr__(nameStr) != null;
+            return obj.__findattr__(name) != null;
         } catch (PyException pye) {
             // swallow
         }
@@ -753,24 +696,8 @@ public class __builtin__ {
         return new PyCallIter(callable, sentinel);
     }
 
-    public static int len(PyObject o) {
-        try {
-            return o.__len__();
-        } catch (PyException e) {
-            // Make this work like CPython where
-            //
-            // a = 7; len(a) raises a TypeError,
-            // a.__len__() raises an AttributeError
-            // and
-            // class F: pass
-            // f = F(); len(f) also raises an AttributeError
-            //
-            // Testing the type of o feels unclean though
-            if (e.type == Py.AttributeError && !(o instanceof PyInstance)) {
-                throw Py.TypeError("len() of unsized object");
-            }
-            throw e;
-        }
+    public static int len(PyObject obj) {
+        return obj.__len__();
     }
 
     public static PyObject locals() {
@@ -1094,8 +1021,8 @@ public class __builtin__ {
         return o.__repr__();
     }
 
-    public static void setattr(PyObject o, String n, PyObject v) {
-        o.__setattr__(n, v);
+    public static void setattr(PyObject obj, PyObject name, PyObject value) {
+        obj.__setattr__(asName(name, "setattr"), value);
     }
 
     public static PyObject sum(PyObject seq, PyObject result) {
@@ -1224,6 +1151,22 @@ public class __builtin__ {
         PyObject module = __import__.__call__(new PyObject[] {Py.newString(name), globals, locals,
                                                               fromlist, Py.newInteger(level)});
         return module;
+    }
+
+    /**
+     * Return an interned String from name, raising a TypeError when conversion fails.
+     *
+     * @param name a PyObject
+     * @param function name of the python function caller
+     * @return an interned String
+     */
+    private static String asName(PyObject name, String function) {
+        if (name instanceof PyUnicode) {
+            return ((PyUnicode)name).encode().intern();
+        } else if (name instanceof PyString) {
+            return ((PyString)name).internedString();
+        }
+        throw Py.TypeError(function + "(): attribute name must be string");
     }
 }
 

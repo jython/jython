@@ -561,7 +561,8 @@ public class PyObject implements Serializable {
      * @return the length of the object
      **/
     public int __len__() {
-        throw Py.AttributeError("__len__");
+        throw Py.TypeError(String.format("object of type '%.200s' has no len()",
+                                         getType().fastGetName()));
     }
 
     /**
