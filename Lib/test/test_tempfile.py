@@ -489,7 +489,7 @@ class test_mkdtemp(TC):
         # mkdtemp creates directories with the proper mode
         if not has_stat:
             return            # ugh, can't use TestSkipped.
-        if sys.platform.startswith('java') and not os._native_posix:
+        if test_support.is_jython and not os._native_posix:
             # Java doesn't support stating files for permissions
             return
 
@@ -498,7 +498,8 @@ class test_mkdtemp(TC):
             mode = stat.S_IMODE(os.stat(dir).st_mode)
             mode &= 0777 # Mask off sticky bits inherited from /tmp
             expected = 0700
-            if sys.platform in ('win32', 'os2emx', 'mac'):
+            if (sys.platform in ('win32', 'os2emx', 'mac') or
+                test_support.is_jython and os._name == 'nt'):
                 # There's no distinction among 'user', 'group' and 'world';
                 # replicate the 'user' bits.
                 user = expected >> 6
@@ -694,7 +695,8 @@ def test_main():
 
 if __name__ == "__main__":
     test_main()
-    # XXX: Nudge Java's GC in an attempt to trigger any temp file's
-    # __del__ (cause them to be deleted) that hasn't been called
-    import gc
-    gc.collect()
+    if test_support.is_jython:
+        # XXX: Nudge Java's GC in an attempt to trigger any temp file's
+        # __del__ (cause them to be deleted) that hasn't been called
+        import gc
+        gc.collect()
