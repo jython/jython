@@ -619,7 +619,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
         for (Entry<PyObject, PyObject> entry : table.entrySet()) {
             list.add(new PyTuple(entry.getKey(), entry.getValue()));
         }
-        return new PyList(list);
+        return PyList.fromList(list);
     }
 
     /**
@@ -631,12 +631,12 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
 
     @ExposedMethod(doc = BuiltinDocs.dict_keys_doc)
     final PyList dict_keys() {
-        return new PyList(new ArrayList<PyObject>(table.keySet()));
+        return PyList.fromList(new ArrayList<PyObject>(table.keySet()));
     }
 
     @ExposedMethod(doc = BuiltinDocs.dict_values_doc)
     final PyList dict_values() {
-        return new PyList(new ArrayList<PyObject>(table.values()));
+        return PyList.fromList(new ArrayList<PyObject>(table.values()));
     }
 
     /**
