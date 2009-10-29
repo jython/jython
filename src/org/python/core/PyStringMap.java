@@ -44,8 +44,8 @@ public class PyStringMap extends PyObject {
     }
 
     public PyStringMap(Map<Object, PyObject> map) {
-        super(getLazyType());
-        table = Generic.concurrentMap();
+        this(Math.max((int) (map.size() / Generic.CHM_LOAD_FACTOR) + 1,
+                      Generic.CHM_INITIAL_CAPACITY));
         table.putAll(map);
     }
 

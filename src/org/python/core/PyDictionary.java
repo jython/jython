@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.python.expose.ExposedClassMethod;
 import org.python.expose.ExposedMethod;
@@ -36,34 +37,40 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
      * Create an empty dictionary.
      */
     public PyDictionary() {
-        super(TYPE);
-        table = Generic.concurrentMap();
+        this(TYPE);
+    }
+
+    /**
+     * Create a dictionary of type with the specified initial capacity.
+     */
+    public PyDictionary(PyType type, int capacity) {
+        super(type);
+        table = new ConcurrentHashMap<PyObject, PyObject>(capacity, Generic.CHM_LOAD_FACTOR,
+                                                          Generic.CHM_CONCURRENCY_LEVEL);
     }
 
     /**
      * For derived types
      */
-    public PyDictionary(PyType subtype) {
-        super(subtype);
+    public PyDictionary(PyType type) {
+        super(type);
         table = Generic.concurrentMap();
     }
 
     /**
      * Create a new dictionary which is based on given map.
      */
-    public PyDictionary(Map<PyObject, PyObject> t) {
-        super(TYPE);
-        table = Generic.concurrentMap();
-        table.putAll(t);
+    public PyDictionary(Map<PyObject, PyObject> map) {
+        this(TYPE, map);
     }
 
     /**
      * Create a new derived dictionary which is based on the given map.
      */
-    public PyDictionary(PyType subtype, Map<PyObject, PyObject> t) {
-        super(subtype);
-        table = Generic.concurrentMap();
-        table.putAll(t);
+    public PyDictionary(PyType type, Map<PyObject, PyObject> map) {
+        this(type, Math.max((int) (map.size() / Generic.CHM_LOAD_FACTOR) + 1,
+                            Generic.CHM_INITIAL_CAPACITY));
+        table.putAll(map);
     }
 
 
