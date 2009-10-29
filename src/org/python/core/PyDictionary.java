@@ -116,12 +116,6 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
 
     @Override
     public boolean __nonzero__() {
-        return dict___nonzero__();
-    }
-
-    //XXX: CPython's dict does not define __nonzero__
-    @ExposedMethod
-    final boolean dict___nonzero__() {
         return table.size() != 0;
     }
 
@@ -549,14 +543,13 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
         return dict_setdefault(key, failobj);
     }
 
-    //XXX: needs __doc__ but CPython does not define setdefault
-    @ExposedMethod(defaults = "Py.None")
+    @ExposedMethod(defaults = "Py.None", doc = BuiltinDocs.dict_setdefault_doc)
     final PyObject dict_setdefault(PyObject key, PyObject failobj) {
         PyObject oldValue = table.putIfAbsent(key, failobj);
         return oldValue == null ? failobj : oldValue;
     }
 
-    //XXX: needs __doc__ but CPython does not define setifabsent
+    // XXX: needs __doc__ but CPython does not define setifabsent
     @ExposedMethod(defaults = "Py.None")
     final PyObject dict_setifabsent(PyObject key, PyObject failobj) {
         PyObject oldValue = table.putIfAbsent(key, failobj);
