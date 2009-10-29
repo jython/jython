@@ -30,7 +30,9 @@ __date__ = '1 Jan 2001'
 
 import sys, os, types, string, re, dis, imp, tokenize, linecache
 from operator import attrgetter
-ReflectedFunctionType = type(os.listdir)
+_jython = sys.platform.startswith('java')
+if _jython:
+    _ReflectedFunctionType = type(os.listdir)
 
 # ----------------------------------------------------------- type-checking
 def ismodule(object):
@@ -198,7 +200,7 @@ def isroutine(object):
             or isfunction(object)
             or ismethod(object)
             or ismethoddescriptor(object)
-            or isinstance(object, ReflectedFunctionType))
+            or (_jython and isinstance(object, _ReflectedFunctionType)))
 
 def getmembers(object, predicate=None):
     """Return all members of an object as (name, value) pairs sorted by name.
@@ -690,7 +692,7 @@ def getargs(co):
     if not iscode(co):
         raise TypeError('arg is not a code object')
 
-    if not sys.platform.startswith('java'):
+    if not _jython:
          # Jython doesn't have co_code
         code = co.co_code
 
