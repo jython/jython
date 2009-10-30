@@ -29,6 +29,7 @@ class BuiltinTest(unittest.TestCase):
         # http://bugs.jython.org/issue1449
         for numeric in 1, 2L, 3.0, 4j:
             self.assertTrue(numeric < Ellipsis)
+            self.assertTrue(Ellipsis > numeric)
 
 class LoopTest(unittest.TestCase):
 

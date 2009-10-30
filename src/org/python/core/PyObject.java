@@ -1321,7 +1321,7 @@ public class PyObject implements Serializable {
 
         // different type: compare type names; numbers are smaller
         String typeName = isNumberType() ? "" : type.fastGetName();
-        String otherTypeName = otherType.isNumberType() ? "" : otherType.fastGetName();
+        String otherTypeName = other.isNumberType() ? "" : otherType.fastGetName();
         result = typeName.compareTo(otherTypeName);
         if (result == 0) {
             // Same type name, or (more likely) incomparable numeric types
