@@ -12,12 +12,8 @@ public abstract class BaseSet extends PyObject implements Set {
     protected Set<PyObject> _set;
 
     /**
-     * Create a new Python set instance from the specified Set object.
+     * Create a new Python set of type from the specified Set object.
      */
-    protected BaseSet(Set<PyObject> set) {
-        _set = set;
-    }
-
     protected BaseSet(PyType type, Set<PyObject> set) {
         super(type);
         _set = set;

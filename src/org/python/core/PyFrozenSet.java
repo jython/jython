@@ -15,11 +15,11 @@ public class PyFrozenSet extends BaseSet {
     public static final PyType TYPE = PyType.fromClass(PyFrozenSet.class);
 
     public PyFrozenSet() {
-        super(new HashSet<PyObject>());
+        super(TYPE, new HashSet<PyObject>());
     }
 
     public PyFrozenSet(PyObject data) {
-        super(_update(new HashSet<PyObject>(), data));
+        this(TYPE, data);
     }
 
     public PyFrozenSet(PyType type, PyObject data) {
