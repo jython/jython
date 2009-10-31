@@ -18,6 +18,7 @@ complete membership information.)
 __all__ = ['getgrgid', 'getgrnam', 'getgrall']
 
 from os import _name, _posix_impl
+from org.python.core.Py import newString
 
 if _name == 'nt':
     raise ImportError, 'grp module not supported on Windows'
@@ -34,8 +35,9 @@ class struct_group(tuple):
     attrs = ['gr_name', 'gr_passwd', 'gr_gid', 'gr_mem']
 
     def __new__(cls, grp):
-        return tuple.__new__(cls, (grp.gr_name, grp.gr_passwd, grp.gr_gid,
-                                   list(grp.getMembers())))
+        grp = (newString(grp.name), newString(grp.password), grp.GID,
+               [newString(member) for member in grp.members])
+        return tuple.__new__(cls, grp)
 
     def __getattr__(self, attr):
         try:

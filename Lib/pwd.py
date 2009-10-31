@@ -11,6 +11,7 @@ is raised if the entry asked for cannot be found.
 __all__ = ['getpwuid', 'getpwnam', 'getpwall']
 
 from os import _name, _posix_impl
+from org.python.core.Py import newString
 
 if _name == 'nt':
     raise ImportError, 'pwd module not supported on Windows'
@@ -28,7 +29,10 @@ class struct_passwd(tuple):
              'pw_dir', 'pw_shell']
 
     def __new__(cls, pwd):
-        return tuple.__new__(cls, (getattr(pwd, attr) for attr in cls.attrs))
+        pwd = (newString(pwd.loginName), newString(pwd.password), pwd.UID,
+               pwd.GID, newString(pwd.GECOS), newString(pwd.home),
+               newString(pwd.shell))
+        return tuple.__new__(cls, pwd)
 
     def __getattr__(self, attr):
         try:
