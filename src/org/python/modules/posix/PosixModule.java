@@ -18,6 +18,7 @@ import org.jruby.ext.posix.POSIXFactory;
 
 import org.python.core.ClassDictInit;
 import org.python.core.Py;
+import org.python.core.PyBuiltinFunction;
 import org.python.core.PyDictionary;
 import org.python.core.PyException;
 import org.python.core.PyFile;
@@ -25,6 +26,7 @@ import org.python.core.PyList;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyTuple;
+import org.python.core.ThreadState;
 import org.python.core.imp;
 import org.python.core.io.FileDescriptors;
 import org.python.core.io.FileIO;
@@ -85,6 +87,7 @@ public class PosixModule implements ClassDictInit {
         dict.__setitem__("O_TRUNC", Py.newInteger(O_TRUNC));
         dict.__setitem__("O_EXCL", Py.newInteger(O_EXCL));
 
+        // os.access flags
         dict.__setitem__("F_OK", Py.newInteger(F_OK));
         dict.__setitem__("X_OK", Py.newInteger(X_OK));
         dict.__setitem__("W_OK", Py.newInteger(W_OK));
@@ -98,6 +101,10 @@ public class PosixModule implements ClassDictInit {
         dict.__setitem__("environ", getEnviron());
         dict.__setitem__("error", Py.OSError);
         dict.__setitem__("stat_result", PyStatResult.TYPE);
+
+        // Faster call paths
+        dict.__setitem__("lstat", new LstatFunction());
+        dict.__setitem__("stat", new StatFunction());
 
         // Hide from Python
         Hider.hideFunctions(PosixModule.class, dict, os, nativePosix);
@@ -252,21 +259,21 @@ public class PosixModule implements ClassDictInit {
         }
     }
 
-    public static PyString __doc___getcwd = new PyString(
+    public static PyString __doc__getcwd = new PyString(
         "getcwd() -> path\n\n" +
         "Return a string representing the current working directory.");
     public static PyObject getcwd() {
         return Py.newString(Py.getSystemState().getCurrentWorkingDir());
     }
 
-    public static PyString __doc___getcwdu = new PyString(
+    public static PyString __doc__getcwdu = new PyString(
         "getcwd() -> path\n\n" +
         "Return a unicode string representing the current working directory.");
     public static PyObject getcwdu() {
         return Py.newUnicode(Py.getSystemState().getCurrentWorkingDir());
     }
 
-    public static PyString __doc___getpid = new PyString(
+    public static PyString __doc__getpid = new PyString(
         "getpid() -> pid\n\n" +
         "Return the current process id");
     @Hide(posixImpl = PosixImpl.JAVA)
@@ -322,13 +329,6 @@ public class PosixModule implements ClassDictInit {
         } catch (PyException pye) {
             throw badFD();
         }
-    }
-
-    public static PyString __doc__lstat = new PyString(
-        "lstat(path) -> stat result\n\n" +
-        "Like stat(path), but do not follow symbolic links.");
-    public static PyObject lstat(String path) {
-        return PyStatResult.fromFileStat(posix.lstat(absolutePath(path)));
     }
 
     public static PyString __doc__mkdir = new PyString(
@@ -422,15 +422,6 @@ public class PosixModule implements ClassDictInit {
         "Remove a file (same as unlink(path)).");
     public static void remove(String path) {
         unlink(path);
-    }
-
-    public static PyString __doc__stat = new PyString(
-        "stat(path) -> stat result\n\n" +
-        "Perform a stat system call on the given path.\n\n" +
-        "Note that some platforms may return only a small subset of the\n" +
-        "standard fields");
-    public static PyObject stat(String path) {
-        return PyStatResult.fromFileStat(posix.stat(absolutePath(path)));
     }
 
     public static PyString __doc__strerror = new PyString(
@@ -558,5 +549,43 @@ public class PosixModule implements ClassDictInit {
 
     public static String getOSName() {
         return os.getModuleName();
+    }
+
+    static class LstatFunction extends PyBuiltinFunction {
+        LstatFunction() {
+            super("lstat",
+                  "lstat(path) -> stat result\n\n" +
+                  "Like stat(path), but do not follow symbolic links.");
+        }
+
+        @Override
+        public PyObject __call__(ThreadState state, PyObject pathObj) {
+            if (!(pathObj instanceof PyString)) {
+                throw Py.TypeError(String.format("coercing to Unicode: need string or buffer, %s " +
+                                                 "found", pathObj.getType().fastGetName()));
+            }
+            String absolutePath = absolutePath(pathObj.toString());
+            return PyStatResult.fromFileStat(posix.lstat(absolutePath));
+        }
+    }
+
+    static class StatFunction extends PyBuiltinFunction {
+        StatFunction() {
+            super("stat",
+                  "stat(path) -> stat result\n\n" +
+                  "Perform a stat system call on the given path.\n\n" +
+                  "Note that some platforms may return only a small subset of the\n" +
+                  "standard fields");
+        }
+
+        @Override
+        public PyObject __call__(ThreadState state, PyObject pathObj) {
+            if (!(pathObj instanceof PyString)) {
+                throw Py.TypeError(String.format("coercing to Unicode: need string or buffer, %s " +
+                                                 "found", pathObj.getType().fastGetName()));
+            }
+            String absolutePath = absolutePath(pathObj.toString());
+            return PyStatResult.fromFileStat(posix.stat(absolutePath));
+        }
     }
 }
