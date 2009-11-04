@@ -61,7 +61,7 @@ public class PostgresqlDataHandler extends RowIdHandler {
       case Types.DECIMAL:
 
         BigDecimal bd = set.getBigDecimal(col);
-        obj = (bd == null) ? Py.None : Py.newFloat(bd.doubleValue());
+        obj = (bd == null) ? Py.None : Py.newDecimal(bd.toString());
         break;
 
       case Types.OTHER:
@@ -78,7 +78,6 @@ public class PostgresqlDataHandler extends RowIdHandler {
       default :
         obj = super.getPyObject(set, col, type);
     }
-
     return (set.wasNull() || (obj == null)) ? Py.None : obj;
   }
 
@@ -108,7 +107,7 @@ public class PostgresqlDataHandler extends RowIdHandler {
         } else {
           varchar = (String) object.__tojava__(String.class);
         }
-        
+
         stmt.setObject(index, varchar, type);
         break;
 
