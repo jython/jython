@@ -29,8 +29,8 @@ class struct_passwd(tuple):
              'pw_dir', 'pw_shell']
 
     def __new__(cls, pwd):
-        pwd = (newString(pwd.loginName), newString(pwd.password), pwd.UID,
-               pwd.GID, newString(pwd.GECOS), newString(pwd.home),
+        pwd = (newString(pwd.loginName), newString(pwd.password), int(pwd.UID),
+               int(pwd.GID), newString(pwd.GECOS), newString(pwd.home),
                newString(pwd.shell))
         return tuple.__new__(cls, pwd)
 

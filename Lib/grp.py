@@ -35,7 +35,7 @@ class struct_group(tuple):
     attrs = ['gr_name', 'gr_passwd', 'gr_gid', 'gr_mem']
 
     def __new__(cls, grp):
-        grp = (newString(grp.name), newString(grp.password), grp.GID,
+        grp = (newString(grp.name), newString(grp.password), int(grp.GID),
                [newString(member) for member in grp.members])
         return tuple.__new__(cls, grp)
 
