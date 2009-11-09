@@ -17,10 +17,25 @@
 	<classpathentry kind="lib" path="extlibs/asm-3.1.jar"/>
 	<classpathentry kind="lib" path="extlibs/asm-commons-3.1.jar"/>
 	<classpathentry kind="lib" path="extlibs/constantine.jar"/>
-	<classpathentry kind="lib" path="extlibs/jna-posix.jar"/>
 	<classpathentry kind="lib" path="extlibs/mockrunner-0.4.1/jar/jdom.jar"/>
 	<classpathentry kind="lib" path="extlibs/mockrunner-0.4.1/lib/jdk1.5/j2ee1.3/mockrunner-servlet.jar"/>
-	<classpathentry kind="lib" path="extlibs/jna.jar"/>
 	<classpathentry kind="lib" path="extlibs/livetribe-jsr223-2.0.5.jar"/>
+	<classpathentry kind="lib" path="extlibs/jaffl.jar"/>
+	<classpathentry kind="lib" path="extlibs/jffi-Darwin.jar"/>
+	<classpathentry kind="lib" path="extlibs/jffi-i386-FreeBSD.jar"/>
+	<classpathentry kind="lib" path="extlibs/jffi-i386-Linux.jar"/>
+	<classpathentry kind="lib" path="extlibs/jffi-i386-OpenBSD.jar"/>
+	<classpathentry kind="lib" path="extlibs/jffi-i386-SunOS.jar"/>
+	<classpathentry kind="lib" path="extlibs/jffi-i386-Windows.jar"/>
+	<classpathentry kind="lib" path="extlibs/jffi-ppc-AIX.jar"/>
+	<classpathentry kind="lib" path="extlibs/jffi-s390x-Linux.jar"/>
+	<classpathentry kind="lib" path="extlibs/jffi-sparc-SunOS.jar"/>
+	<classpathentry kind="lib" path="extlibs/jffi-sparcv9-SunOS.jar"/>
+	<classpathentry kind="lib" path="extlibs/jffi-x86_64-FreeBSD.jar"/>
+	<classpathentry kind="lib" path="extlibs/jffi-x86_64-Linux.jar"/>
+	<classpathentry kind="lib" path="extlibs/jffi-x86_64-OpenBSD.jar"/>
+	<classpathentry kind="lib" path="extlibs/jffi-x86_64-SunOS.jar"/>
+	<classpathentry kind="lib" path="extlibs/jffi.jar"/>
+	<classpathentry kind="lib" path="extlibs/jnr-posix.jar"/>
 	<classpathentry kind="output" path="build/classes"/>
 </classpath>
