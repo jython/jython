@@ -194,6 +194,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
             <pathelement path="${extlibs.dir}/jna-posix.jar"/>
             <pathelement path="${extlibs.dir}/jffi.jar"/>
             <pathelement path="${extlibs.dir}/jffi-Darwin.jar"/>
+            <pathelement path="${extlibs.dir}/jffi-i386-Windows.jar"/>
             <pathelement path="${extlibs.dir}/jffi-i386-SunOS.jar"/>
             <pathelement path="${extlibs.dir}/jffi-x86_64-SunOS.jar"/>
         </path>
@@ -576,6 +577,7 @@ The readme text for the next release will be like:
             <zipfileset src="extlibs/jna.jar"/>
             <zipfileset src="extlibs/jffi.jar"/>
             <zipfileset src="extlibs/jffi-Darwin.jar"/>
+            <zipfileset src="extlibs/jffi-i386-Windows.jar"/>
             <zipfileset src="extlibs/jffi-i386-SunOS.jar"/>
             <zipfileset src="extlibs/jffi-x86_64-SunOS.jar"/>
             <zipfileset src="extlibs/jna-posix.jar"/>
