@@ -75,8 +75,8 @@ public class PyStatResult extends PyTuple {
         return new PyStatResult(Py.newInteger(stat.mode()), Py.newLong(stat.ino()),
                                 Py.newLong(stat.dev()), Py.newInteger(stat.nlink()),
                                 Py.newInteger(stat.uid()), Py.newInteger(stat.gid()),
-                                Py.newLong(stat.st_size()), Py.newLong(stat.atime()),
-                                Py.newLong(stat.mtime()), Py.newLong(stat.ctime()));
+                                Py.newLong(stat.st_size()), Py.newInteger(stat.atime()),
+                                Py.newInteger(stat.mtime()), Py.newInteger(stat.ctime()));
     }
 
     @Override
