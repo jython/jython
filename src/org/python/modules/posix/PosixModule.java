@@ -9,6 +9,9 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
+import java.nio.channels.Channel;
+import java.nio.channels.ClosedChannelException;
+import java.nio.channels.FileChannel;
 import java.util.Map;
 
 import org.jruby.ext.posix.FileStat;
@@ -199,7 +202,7 @@ public class PosixModule implements ClassDictInit {
     public static PyString __doc__chown = new PyString(
         "chown(path, uid, gid)\n\n" +
         "Change the owner and group id of path to the numeric uid and gid.");
-    @Hide(OS.POSIX)
+    @Hide(OS.NT)
     public static void chown(String path, int uid, int gid) {
         if (posix.chown(absolutePath(path), uid, gid) < 0) {
             throw errorFromErrno(path);
@@ -248,6 +251,43 @@ public class PosixModule implements ClassDictInit {
         }
     }
 
+    public static PyString __doc__fdatasync = new PyString(
+        "fdatasync(fildes)\n\n" +
+        "force write of file with filedescriptor to disk.\n" +
+        "does not force update of metadata.");
+    @Hide(OS.NT)
+    public static void fdatasync(PyObject fd) {
+        fsync(fd, false);
+    }
+
+    public static PyString __doc__fsync = new PyString(
+        "fsync(fildes)\n\n" +
+        "force write of file with filedescriptor to disk.");
+    public static void fsync(PyObject fd) {
+        fsync(fd, true);
+    }
+
+    /**
+     * Internal fsync implementation.
+     */
+    private static void fsync(PyObject fd, boolean metadata) {
+        RawIOBase rawIO = FileDescriptors.get(fd);
+        rawIO.checkClosed();
+        Channel channel = rawIO.getChannel();
+        if (!(channel instanceof FileChannel)) {
+            throw Py.OSError(Errno.EINVAL);
+        }
+
+        try {
+            ((FileChannel)channel).force(metadata);
+        } catch (ClosedChannelException cce) {
+            // In the rare case it's closed but the rawIO wasn't
+            throw Py.ValueError("I/O operation on closed file");
+        } catch (IOException ioe) {
+            throw Py.OSError(ioe);
+        }
+    }
+
     public static PyString __doc__ftruncate = new PyString(
         "ftruncate(fd, length)\n\n" +
         "Truncate a file to a specified length.");
@@ -273,12 +313,100 @@ public class PosixModule implements ClassDictInit {
         return Py.newUnicode(Py.getSystemState().getCurrentWorkingDir());
     }
 
+    public static PyString __doc__getegid = new PyString(
+        "getegid() -> egid\n\n" +
+        "Return the current process's effective group id.");
+    @Hide(OS.NT)
+    public static int getegid() {
+        return posix.getegid();
+    }
+
+    public static PyString __doc__geteuid = new PyString(
+        "geteuid() -> euid\n\n" +
+        "Return the current process's effective user id.");
+    @Hide(OS.NT)
+    public static int geteuid() {
+        return posix.geteuid();
+    }
+
+    public static PyString __doc__getgid = new PyString(
+        "getgid() -> gid\n\n" +
+        "Return the current process's group id.");
+    @Hide(OS.NT)
+    public static int getgid() {
+        return posix.getgid();
+    }
+
+    public static PyString __doc__getlogin = new PyString(
+        "getlogin() -> string\n\n" +
+        "Return the actual login name.");
+    @Hide(OS.NT)
+    public static PyObject getlogin() {
+        return new PyString(posix.getlogin());
+    }
+
+    public static PyString __doc__getppid = new PyString(
+        "getppid() -> ppid\n\n" +
+        "Return the parent's process id.");
+    @Hide(OS.NT)
+    public static int getppid() {
+        return posix.getppid();
+    }
+
+    public static PyString __doc__getuid = new PyString(
+        "getuid() -> uid\n\n" +
+        "Return the current process's user id.");
+    @Hide(OS.NT)
+    public static int getuid() {
+        return posix.getuid();
+    }
+
     public static PyString __doc__getpid = new PyString(
         "getpid() -> pid\n\n" +
         "Return the current process id");
     @Hide(posixImpl = PosixImpl.JAVA)
     public static int getpid() {
         return posix.getpid();
+    }
+
+    public static PyString __doc__getpgrp = new PyString(
+        "getpgrp() -> pgrp\n\n" +
+        "Return the current process group id.");
+    @Hide(OS.NT)
+    public static int getpgrp() {
+        return posix.getpgrp();
+    }
+
+    public static PyString __doc__kill = new PyString(
+        "kill(pid, sig)\n\n" +
+        "Kill a process with a signal.");
+    @Hide(OS.NT)
+    public static void kill(int pid, int sig) {
+        if (posix.kill(pid, sig) < 0) {
+            throw errorFromErrno();
+        }
+    }
+
+    public static PyString __doc__lchmod = new PyString(
+        "lchmod(path, mode)\n\n" +
+        "Change the access permissions of a file. If path is a symlink, this\n" +
+        "affects the link itself rather than the target.");
+    @Hide(OS.NT)
+    public static void lchmod(String path, int mode) {
+        if (posix.lchmod(absolutePath(path), mode) < 0) {
+            throw errorFromErrno(path);
+        }
+    }
+
+    public static PyString __doc__lchown = new PyString(
+        "lchown(path, uid, gid)\n\n" +
+        "Change the owner and group id of path to the numeric uid and gid.\n" +
+        "This function will not follow symbolic links.");
+    @Hide(OS.NT)
+    public static void lchown(String path, int uid, int gid) {
+        if (posix.lchown(absolutePath(path), uid, gid) < 0) {
+            throw errorFromErrno(path);
+        }
     }
 
     public static PyString __doc__link = new PyString(
@@ -417,11 +545,43 @@ public class PosixModule implements ClassDictInit {
         }
     }
 
+    public static PyString __doc__readlink = new PyString(
+        "readlink(path) -> path\n\n" +
+        "Return a string representing the path to which the symbolic link points.");
+    @Hide(OS.NT)
+    public static String readlink(String path) {
+        try {
+            return posix.readlink(absolutePath(path));
+        } catch (IOException ioe) {
+            throw Py.OSError(ioe);
+        }
+    }
+
     public static PyString __doc__remove = new PyString(
         "remove(path)\n\n" +
         "Remove a file (same as unlink(path)).");
     public static void remove(String path) {
         unlink(path);
+    }
+
+    public static PyString __doc__setpgrp = new PyString(
+        "setpgrp()\n\n" +
+        "Make this process a session leader.");
+    @Hide(OS.NT)
+    public static void setpgrp() {
+        if (posix.setpgrp(0, 0) < 0) {
+            throw errorFromErrno();
+        }
+    }
+
+    public static PyString __doc__setsid = new PyString(
+        "setsid()\n\n" +
+        "Call the system call setsid().");
+    @Hide(OS.NT)
+    public static void setsid() {
+        if (posix.setsid() < 0) {
+            throw errorFromErrno();
+        }
     }
 
     public static PyString __doc__strerror = new PyString(
@@ -439,6 +599,15 @@ public class PosixModule implements ClassDictInit {
                                  errno.name());
         }
         return new PyString(errno.toString());
+    }
+
+    public static PyString __doc__symlink = new PyString(
+        "symlink(src, dst)\n\n" +
+        "Create a symbolic link pointing to src named dst.");
+    @Hide(OS.NT)
+    public static void symlink(String src, String dst) {
+        ensurePath(src);
+        posix.symlink(src, absolutePath(dst));
     }
 
     public static PyString __doc__umask = new PyString(
@@ -467,6 +636,31 @@ public class PosixModule implements ClassDictInit {
             }
             throw Py.OSError("unlink(): an unknown error occured: " + path);
         }
+    }
+
+    public static PyString __doc__wait = new PyString(
+        "wait() -> (pid, status)\n\n" +
+        "Wait for completion of a child process.");
+    @Hide(OS.NT)
+    public static PyObject wait$() {
+        int[] status = new int[1];
+        int pid = posix.wait(status);
+        if (pid < 0) {
+            throw errorFromErrno();
+        }
+        return new PyTuple(Py.newInteger(pid), Py.newInteger(status[0]));
+    }
+
+    public static PyString __doc__waitpid = new PyString(
+        "wait() -> (pid, status)\n\n" +
+        "Wait for completion of a child process.");
+    public static PyObject waitpid(int pid, int options) {
+        int[] status = new int[1];
+        pid = posix.waitpid(pid, status, options);
+        if (pid < 0) {
+            throw errorFromErrno();
+        }
+        return new PyTuple(Py.newInteger(pid), Py.newInteger(status[0]));
     }
 
     public static PyString __doc__write = new PyString(
@@ -537,6 +731,10 @@ public class PosixModule implements ClassDictInit {
 
     private static PyException badFD() {
         return Py.OSError(Errno.EBADF);
+    }
+
+    private static PyException errorFromErrno() {
+        return Py.OSError(Errno.valueOf(posix.errno()));
     }
 
     private static PyException errorFromErrno(String path) {
