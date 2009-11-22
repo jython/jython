@@ -39,7 +39,7 @@ def _get_exports_list(module):
         return [n for n in dir(module) if n[0] != '_']
 
 name = 'java'
-if '_posix' in _names:
+if 'posix' in _names:
     _name = 'posix'
     linesep = '\n'
     from posix import *
@@ -53,7 +53,7 @@ if '_posix' in _names:
     __all__.extend(_get_exports_list(posix))
     del posix
 
-elif '_nt' in _names:
+elif 'nt' in _names:
     _name = 'nt'
     linesep = '\r\n'
     from nt import *
@@ -67,7 +67,7 @@ elif '_nt' in _names:
     __all__.extend(_get_exports_list(nt))
     del nt
 
-elif '_os2' in _names:
+elif 'os2' in _names:
     _name = 'os2'
     linesep = '\r\n'
     from os2 import *
@@ -85,7 +85,7 @@ elif '_os2' in _names:
     __all__.extend(_get_exports_list(os2))
     del os2
 
-elif '_ce' in _names:
+elif 'ce' in _names:
     _name = 'ce'
     linesep = '\r\n'
     from ce import *
@@ -100,7 +100,7 @@ elif '_ce' in _names:
     __all__.extend(_get_exports_list(ce))
     del ce
 
-elif '_riscos' in _names:
+elif 'riscos' in _names:
     _name = 'riscos'
     linesep = '\n'
     from riscos import *
@@ -663,3 +663,42 @@ if not _exists("urandom"):
             bytes += read(_urandomfd, n - len(bytes))
         close(_urandomfd)
         return bytes
+
+# Supply os.popen()
+def popen(cmd, mode='r', bufsize=-1):
+    """popen(command [, mode='r' [, bufsize]]) -> pipe
+
+    Open a pipe to/from a command returning a file object.
+    """
+    if not isinstance(cmd, (str, unicode)):
+        raise TypeError('invalid cmd type (%s, expected string)' % type(cmd))
+    if mode not in ('r', 'w'):
+        raise ValueError("invalid mode %r" % mode)
+    import subprocess
+    if mode == 'r':
+        proc = subprocess.Popen(cmd, bufsize=bufsize, shell=True,
+                                stdout=subprocess.PIPE)
+        return _wrap_close(proc.stdout, proc)
+    elif mode == 'w':
+        proc = subprocess.Popen(cmd, bufsize=bufsize, shell=True,
+                                stdin=subprocess.PIPE)
+        return _wrap_close(proc.stdin, proc)
+
+# Helper for popen() -- a proxy for a file whose close waits for the process
+class _wrap_close(object):
+    def __init__(self, stream, proc):
+        self._stream = stream
+        self._proc = proc
+    def close(self):
+        self._stream.close()
+        returncode = self._proc.wait()
+        if returncode == 0:
+            return None
+        if _name == 'nt':
+            return returncode
+        else:
+            return returncode
+    def __getattr__(self, name):
+        return getattr(self._stream, name)
+    def __iter__(self):
+        return iter(self._stream)

@@ -5,6 +5,7 @@ import com.kenai.constantine.Constant;
 import com.kenai.constantine.platform.Errno;
 
 import java.io.File;
+import java.io.FileDescriptor;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -12,12 +13,15 @@ import java.nio.ByteBuffer;
 import java.nio.channels.Channel;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.FileChannel;
+import java.security.SecureRandom;
+import java.util.Iterator;
 import java.util.Map;
 
 import org.jruby.ext.posix.FileStat;
 import org.jruby.ext.posix.JavaPOSIX;
 import org.jruby.ext.posix.POSIX;
 import org.jruby.ext.posix.POSIXFactory;
+import org.jruby.ext.posix.util.Platform;
 
 import org.python.core.ClassDictInit;
 import org.python.core.Py;
@@ -25,12 +29,15 @@ import org.python.core.PyBuiltinFunction;
 import org.python.core.PyDictionary;
 import org.python.core.PyException;
 import org.python.core.PyFile;
+import org.python.core.PyFloat;
+import org.python.core.PyInteger;
 import org.python.core.PyList;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyTuple;
 import org.python.core.ThreadState;
 import org.python.core.imp;
+import org.python.core.io.IOBase;
 import org.python.core.io.FileDescriptors;
 import org.python.core.io.FileIO;
 import org.python.core.io.RawIOBase;
@@ -38,13 +45,7 @@ import org.python.core.util.RelativeFile;
 import org.python.core.util.StringUtil;
 
 /**
- * The underlying _posix or _nt module, named depending on the platform.
- *
- * This currently contains only some of the basics of the posix/nt modules (which are
- * implemented in Python), most importantly things like PythonPOSIXHandler that are slower
- * to instantiate and thus would affect startup time.
- *
- * Eventually more if not all of the pure Python module should end up here.
+ * The posix/nt module, depending on the platform.
  */
 public class PosixModule implements ClassDictInit {
 
@@ -78,6 +79,11 @@ public class PosixModule implements ClassDictInit {
 
     /** os.path.realpath function for use by chdir. Lazily loaded. */
     private static PyObject realpath;
+
+    /** Lazily initialzed singleton source for urandom. */
+    private static class UrandomSource {
+        static final SecureRandom INSTANCE = new SecureRandom();
+    }
 
     public static void classDictInit(PyObject dict) {
         // only expose the open flags we support
@@ -116,9 +122,18 @@ public class PosixModule implements ClassDictInit {
         dict.__setitem__("getOSName", null);
         dict.__setitem__("badFD", null);
 
-        dict.__setitem__("__all__", dict.invoke("keys"));
+        // Hide __doc__s
+        PyList keys = (PyList)dict.invoke("keys");
+        for (Iterator<?> it = keys.listIterator(); it.hasNext();) {
+            String key = (String)it.next();
+            if (key.startsWith("__doc__")) {
+                it.remove();
+                dict.__setitem__(key, null);
+            }
+        }
+        dict.__setitem__("__all__", keys);
 
-        dict.__setitem__("__name__", new PyString("_" + os.getModuleName()));
+        dict.__setitem__("__name__", new PyString(os.getModuleName()));
         dict.__setitem__("__doc__", __doc__);
     }
 
@@ -377,6 +392,42 @@ public class PosixModule implements ClassDictInit {
         return posix.getpgrp();
     }
 
+    public static PyString __doc__isatty = new PyString(
+        "isatty(fd) -> bool\n\n" +
+        "Return True if the file descriptor 'fd' is an open file descriptor\n" +
+        "connected to the slave end of a terminal.");
+    public static boolean isatty(PyObject fdObj) {
+        if (fdObj instanceof PyInteger) {
+            FileDescriptor fd;
+            switch (fdObj.asInt()) {
+            case 0:
+                fd = FileDescriptor.in;
+                break;
+            case 1:
+                fd = FileDescriptor.out;
+                break;
+            case 2:
+                fd = FileDescriptor.err;
+                break;
+            default:
+                throw Py.NotImplementedError("Integer file descriptor compatibility only "
+                                             + "available for stdin, stdout and stderr (0-2)");
+            }
+            return posix.isatty(fd);
+        }
+
+        Object tojava = fdObj.__tojava__(FileDescriptor.class);
+        if (tojava != Py.NoConversion) {
+            return posix.isatty((FileDescriptor)tojava);
+        }
+
+        tojava = fdObj.__tojava__(IOBase.class);
+        if (tojava == Py.NoConversion) {
+            throw Py.TypeError("a file descriptor is required");
+        }
+        return ((IOBase)tojava).isatty();
+    }
+
     public static PyString __doc__kill = new PyString(
         "kill(pid, sig)\n\n" +
         "Kill a process with a signal.");
@@ -534,6 +585,26 @@ public class PosixModule implements ClassDictInit {
         return new FileIO(path, fileIOMode);
     }
 
+    public static PyString __doc__popen = new PyString(
+        "popen(command [, mode='r' [, bufsize]]) -> pipe\n\n" +
+        "Open a pipe to/from a command returning a file object.");
+    public static PyObject popen(PyObject[] args, String[] kwds) {
+        // XXX: popen lives in posix in 2.x, but moves to os in 3.x. It's easier for us to
+        // keep it in os
+        // import os; return os.popen(*args, **kwargs)
+        return imp.load("os").__getattr__("popen").__call__(args, kwds);
+    }
+
+    public static PyString __doc__putenv = new PyString(
+        "putenv(key, value)\n\n" +
+        "Change or add an environment variable.");
+    public static void putenv(String key, String value) {
+        // XXX: Consider deprecating putenv/unsetenv
+        // import os; os.environ[key] = value
+        PyObject environ = imp.load("os").__getattr__("environ");
+        environ.__setitem__(key, new PyString(value));
+    }
+
     public static PyString __doc__read = new PyString(
         "read(fd, buffersize) -> string\n\n" +
         "Read a file descriptor.");
@@ -562,6 +633,32 @@ public class PosixModule implements ClassDictInit {
         "Remove a file (same as unlink(path)).");
     public static void remove(String path) {
         unlink(path);
+    }
+
+    public static PyString __doc__rename = new PyString(
+        "rename(old, new)\n\n" +
+        "Rename a file or directory.");
+    public static void rename(String oldpath, String newpath) {
+        if (!new RelativeFile(oldpath).renameTo(new RelativeFile(newpath))) {
+            PyObject args = new PyTuple(Py.Zero, new PyString("Couldn't rename file"));
+            throw new PyException(Py.OSError, args);
+        }
+    }
+
+    public static PyString __doc__rmdir = new PyString(
+        "rmdir(path)\n\n" +
+        "Remove a directory.");
+    public static void rmdir(String path) {
+        File file = new RelativeFile(path);
+        if (!file.exists()) {
+            throw Py.OSError(Errno.ENOENT, path);
+        } else if (!file.isDirectory()) {
+            throw Py.OSError(Errno.ENOTDIR, path);
+        } else if (!file.delete()) {
+            PyObject args = new PyTuple(Py.Zero, new PyString("Couldn't delete directory"),
+                                        new PyString(path));
+            throw new PyException(Py.OSError, args);
+        }
     }
 
     public static PyString __doc__setpgrp = new PyString(
@@ -610,6 +707,15 @@ public class PosixModule implements ClassDictInit {
         posix.symlink(src, absolutePath(dst));
     }
 
+    public static PyString __doc__system = new PyString(
+        "system(command) -> exit_status\n\n" +
+        "Execute the command (a string) in a subshell.");
+    public static void system(PyObject command) {
+        // import subprocess; subprocess.call(command, shell=True)
+        imp.load("subprocess").invoke("call", command, new PyObject[] {Py.True},
+                                      new String[] {"shell"});
+    }
+
     public static PyString __doc__umask = new PyString(
         "umask(new_mask) -> old_mask\n\n" +
         "Set the current numeric umask and return the previous umask.");
@@ -636,6 +742,47 @@ public class PosixModule implements ClassDictInit {
             }
             throw Py.OSError("unlink(): an unknown error occured: " + path);
         }
+    }
+
+    public static PyString __doc__utime = new PyString(
+        "utime(path, (atime, mtime))\n" +
+        "utime(path, None)\n\n" +
+        "Set the access and modified time of the file to the given values.  If the\n" +
+        "second form is used, set the access and modified times to the current time.");
+    public static void utime(String path, PyObject times) {
+        long[] atimeval;
+        long[] mtimeval;
+
+        if (times == Py.None) {
+            atimeval = mtimeval = null;
+        } else if (times instanceof PyTuple && times.__len__() == 2) {
+            atimeval = extractTimeval(times.__getitem__(0));
+            mtimeval = extractTimeval(times.__getitem__(1));
+        } else {
+            throw Py.TypeError("utime() arg 2 must be a tuple (atime, mtime)");
+        }
+        posix.utimes(absolutePath(path), atimeval, mtimeval);
+    }
+
+    /**
+     * Convert seconds (with a possible fraction) from epoch to a 2 item array of seconds,
+     * microseconds from epoch as longs.
+     *
+     * @param seconds a PyObject number
+     * @return a 2 item long[]
+     */
+    private static long[] extractTimeval(PyObject seconds) {
+        long[] timeval = new long[] {Platform.IS_32_BIT ? seconds.asInt() : seconds.asLong(), 0L};
+        if (seconds instanceof PyFloat) {
+            // can't exceed 1000000
+            long usec = (long)((seconds.asDouble() % 1.0) * 1e6);
+            if (usec < 0) {
+                // If rounding gave us a negative number, truncate
+                usec = 0;
+            }
+            timeval[1] = usec;
+        }
+        return timeval;
     }
 
     public static PyString __doc__wait = new PyString(
@@ -672,6 +819,30 @@ public class PosixModule implements ClassDictInit {
         } catch (PyException pye) {
             throw badFD();
         }
+    }
+
+    public static PyString __doc__unsetenv = new PyString(
+        "unsetenv(key)\n\n" +
+        "Delete an environment variable.");
+    public static void unsetenv(String key) {
+        // import os; try: del os.environ[key]; except KeyError: pass
+        PyObject environ = imp.load("os").__getattr__("environ");
+        try {
+            environ.__delitem__(key);
+        } catch (PyException pye) {
+            if (!pye.match(Py.KeyError)) {
+                throw pye;
+            }
+        }
+    }
+
+    public static PyString __doc__urandom = new PyString(
+        "urandom(n) -> str\n\n" +
+        "Return a string of n random bytes suitable for cryptographic use.");
+    public static PyObject urandom(int n) {
+        byte[] buf = new byte[n];
+        UrandomSource.INSTANCE.nextBytes(buf);
+        return new PyString(StringUtil.fromBytes(buf));
     }
 
     /**
