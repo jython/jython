@@ -2459,13 +2459,29 @@ public class PyString extends PyBaseString
 
     @Override
     public int asInt() {
-        // We have to override asInt because we override __int__, but generally don't want
-        // implicit atoi conversions for the base types. blah
-        PyType type = getType();
-        if (type == PyString.TYPE || type == PyUnicode.TYPE || type.lookup("__int__") == null) {
-            throw Py.TypeError("an integer is required");
-        }
+        // We have to override asInt/Long/Double because we override __int/long/float__,
+        // but generally don't want implicit atoi conversions for the base types. blah
+        asNumberCheck("__int__", "an integer");
         return super.asInt();
+    }
+
+    @Override
+    public long asLong() {
+        asNumberCheck("__long__", "an integer");
+        return super.asLong();
+    }
+
+    @Override
+    public double asDouble() {
+        asNumberCheck("__float__", "a float");
+        return super.asDouble();
+    }
+
+    private void asNumberCheck(String methodName, String description) {
+        PyType type = getType();
+        if (type == PyString.TYPE || type == PyUnicode.TYPE || type.lookup(methodName) == null) {
+            throw Py.TypeError(description + " is required");
+        }
     }
 
     public String asName(int index) throws PyObject.ConversionException {

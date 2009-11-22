@@ -4006,6 +4006,11 @@ public class PyObject implements Serializable {
         throw new ConversionException(index);
     }
 
+    /**
+     * Convert this object into an int. Throws a PyException on failure.
+     *
+     * @return an int value
+     */
     public int asInt() {
         PyObject intObj;
         try {
@@ -4016,7 +4021,7 @@ public class PyObject implements Serializable {
             }
             throw pye;
         }
-        if (!(intObj instanceof PyInteger) && !(intObj instanceof PyLong)) {
+        if (!(intObj instanceof PyInteger || intObj instanceof PyLong)) {
             // Shouldn't happen except with buggy builtin types
             throw Py.TypeError("nb_int should return int object");
         }
@@ -4025,6 +4030,28 @@ public class PyObject implements Serializable {
 
     public long asLong(int index) throws ConversionException {
         throw new ConversionException(index);
+    }
+
+    /**
+     * Convert this object longo an long. Throws a PyException on failure.
+     *
+     * @return an long value
+     */
+    public long asLong() {
+        PyObject longObj;
+        try {
+            longObj = __long__();
+        } catch (PyException pye) {
+            if (pye.match(Py.AttributeError)) {
+                throw Py.TypeError("an integer is required");
+            }
+            throw pye;
+        }
+        if (!(longObj instanceof PyLong)) {
+            // Shouldn't happen except with buggy builtin types
+            throw Py.TypeError("integer conversion failed");
+        }
+        return longObj.asLong();
     }
 
     /**

@@ -464,11 +464,7 @@ public class PyFile extends PyObject {
             file_truncate();
             return;
         }
-        try {
-            file_truncate(position.asLong(0));
-        } catch (PyObject.ConversionException ce) {
-            throw Py.TypeError("an integer is required");
-        }
+        file_truncate(position.asLong());
     }
 
     final synchronized void file_truncate(long position) {

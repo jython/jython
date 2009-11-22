@@ -136,6 +136,8 @@ class ConversionTest(unittest.TestCase):
 
     def test_round_non_float(self):
         self.assertEqual(round(self.Foo(), 1), 3.1)
+        # 2.5/2.5.1 regression
+        self.assertRaises(TypeError, round, '1.5')
 
 class ExecEvalTest(unittest.TestCase):
 

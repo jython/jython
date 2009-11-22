@@ -86,7 +86,7 @@ public class Condition extends PyObject implements ContextManager {
         if (timeout == Py.None) {
             _condition.await();
         } else {
-            long nanos = (long) (timeout.__float__().asDouble() * 1e9);
+            long nanos = (long) (timeout.asDouble() * 1e9);
             _condition.awaitNanos(nanos);
         }
     }

@@ -19,7 +19,6 @@ import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 
-
 @ExposedType(name = "_random.Random")
 public class PyRandom extends PyObject {
 
@@ -41,46 +40,39 @@ public class PyRandom extends PyObject {
      * uses the value, else it uses the hash function of PyObject
      */
     @ExposedMethod(defaults = "null")
-    final PyObject Random_seed(PyObject seed) {
+    final void Random_seed(PyObject seed) {
+        long n;
         if (seed == null) {
             seed = new PyLong(System.currentTimeMillis());
         }
         if (seed instanceof PyLong) {
             PyLong max = new PyLong(Long.MAX_VALUE);
-            PyLong seed_modulus = (PyLong)(seed.__mod__(max));
-            this.javaRandom.setSeed(seed_modulus.asLong(0));
+            n = seed.__mod__(max).asLong();
         } else if (seed instanceof PyInteger) {
-            this.javaRandom.setSeed(((PyInteger)seed).getValue());
+            n = seed.asLong();
         } else {
-            this.javaRandom.setSeed(seed.hashCode());
+            n = seed.hashCode();
         }
-
-        // duplicating the _randommodule.c::init_by_array return
-        return Py.None;
+        this.javaRandom.setSeed(n);
     }
 
     @ExposedNew
     @ExposedMethod
-    public void Random___init__(PyObject[] args, String[] keywords) {}
+    final void Random___init__(PyObject[] args, String[] keywords) {}
 
     @ExposedMethod
-    public PyObject Random_jumpahead(PyObject arg0) {
-        long inc;
-        if (arg0 instanceof PyLong) {
-            inc=((PyLong)arg0).asLong(0);
-        } else if (arg0 instanceof PyInteger) {
-            inc=((PyInteger)arg0).getValue();
-        } else {
-            throw Py.TypeError("jumpahead requires an integer");
+    final void Random_jumpahead(PyObject arg0) {
+        if (!(arg0 instanceof PyInteger || arg0 instanceof PyLong)) {
+            throw Py.TypeError(String.format("jumpahead requires an integer, not '%s'",
+                                             arg0.getType().fastGetName()));
         }
-        for(int i=0;i<inc;i++) {
+        for (long i = arg0.asLong(); i > 0; i--) {
             this.javaRandom.nextInt();
         }
-        return Py.None;
     }
 
     @ExposedMethod
-    public PyObject Random_setstate(PyObject arg0) {
+    final void Random_setstate(PyObject arg0) {
         if (!(arg0 instanceof PyTuple)) {
             throw Py.TypeError("state vector must be a tuple");
         }
@@ -104,13 +96,10 @@ public class PyRandom extends PyObject {
         } catch (ClassNotFoundException e) {
             throw Py.SystemError("state vector invalid: "+e.getMessage());
         }
-
-        // duplicating the _randommodule.c::random_setstate return
-        return Py.None;
     }
 
     @ExposedMethod
-    public PyObject Random_getstate() {
+    final PyObject Random_getstate() {
         try {
             ByteArrayOutputStream bout=new ByteArrayOutputStream();
             ObjectOutputStream oout=new ObjectOutputStream(bout);
@@ -134,7 +123,7 @@ public class PyRandom extends PyObject {
      * problems.
      */
     @ExposedMethod
-    public PyObject Random_random() {
+    final PyObject Random_random() {
         long a=this.javaRandom.nextInt()>>>5;
         long b=this.javaRandom.nextInt()>>>6;
         double ret=(a*67108864.0+b)*(1.0/9007199254740992.0);
@@ -142,7 +131,7 @@ public class PyRandom extends PyObject {
     }
     
     @ExposedMethod
-    public PyLong Random_getrandbits(int k) {
+    final PyLong Random_getrandbits(int k) {
         return new PyLong(new BigInteger(k, javaRandom));
     }
 }

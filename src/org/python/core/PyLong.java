@@ -199,7 +199,7 @@ public class PyLong extends PyObject {
     }
 
     public long asLong(int index) {
-        return getLong(Long.MIN_VALUE, Long.MAX_VALUE, "long too big to convert");
+        return asLong();
     }
 
     public int asInt(int index) {
@@ -211,6 +211,11 @@ public class PyLong extends PyObject {
     public int asInt() {
         return (int)getLong(Integer.MIN_VALUE, Integer.MAX_VALUE,
                             "long int too large to convert to int");
+    }
+
+    @Override
+    public long asLong() {
+        return getLong(Long.MIN_VALUE, Long.MAX_VALUE, "long too big to convert");
     }
 
     public Object __tojava__(Class c) {
