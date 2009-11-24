@@ -17,10 +17,15 @@ import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 import org.python.expose.MethodType;
 
-@ExposedType(name = "posix.stat_result", isBaseType = false)
+@ExposedType(name = "stat_result", isBaseType = false)
 public class PyStatResult extends PyTuple {
 
     public static final PyType TYPE = PyType.fromClass(PyStatResult.class);
+
+    static {
+        // Can only determine the module name during runtime
+        TYPE.setName(PosixModule.getOSName() + "." + TYPE.fastGetName());
+    }
 
     @ExposedGet
     public PyObject st_mode, st_ino, st_dev, st_nlink, st_uid, st_gid, st_size, st_atime, st_mtime,
