@@ -10,6 +10,7 @@ from java.lang import (Boolean, Class, ClassLoader, Comparable,Integer, Object, 
 from java.util import Date, Hashtable, Vector
 
 from java.awt import Color, Component, Dimension, Rectangle
+from javax.swing import ComboBoxModel, ListModel
 from javax.swing.table import AbstractTableModel
 
 from org.python.tests import BeanInterface, Callbacker, Coercions, OwnMethodCaller
@@ -44,6 +45,15 @@ class InterfaceTest(unittest.TestCase):
         c.compareTo(None)
         c.run()
         self.assertEquals(calls, ["ComparableRunner.compareTo", "Runner.run"])
+
+    def test_inherit_interface_twice(self):
+        # http://bugs.jython.org/issue1504
+        class A(ListModel): pass
+        class B(A, ComboBoxModel): pass
+        # Regression caused B's proxy to occur in B's mro twice. That
+        # caused the declaration of C to fail with an inconsistent mro
+        class C(B): pass
+        
 
 class TableModelTest(unittest.TestCase):
     def test_class_coercion(self):
@@ -328,3 +338,7 @@ def test_main():
             PythonSubclassesTest,
             AbstractOnSyspathTest,
             ContextClassloaderTest)
+
+
+if __name__ == '__main__':
+    test_main()
