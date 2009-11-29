@@ -68,6 +68,16 @@ public class ModjyTestAppInvocation extends ModjyTestBase {
         return importPath.toString();
     }
 
+    public void testAppImportCallableNoValue() throws Exception {
+        appInvocationTestSetUp();
+        String importableName = setupAppImport("WSGIHandlerFunction");
+        setAppImportable("");
+        createServlet();
+        doGet();
+        String result = getOutput();
+        assertEquals("Status code != 500: ServerError, =='" + getStatus() + "'", 500, getStatus());
+    }
+
     public void testAppImportCallable() throws Exception {
         appInvocationTestSetUp();
         String importableName = setupAppImport("WSGIHandlerFunction");
@@ -183,4 +193,66 @@ public class ModjyTestAppInvocation extends ModjyTestBase {
         doGet();
         assertEquals("Status code != 500: ServerError, =='" + getStatus() + "'", 500, getStatus());
     }
+
+    protected void callableQueryAppInvocationTestSetUp() throws Exception {
+        baseSetUp();
+        setRealPath("/test_apps_dir", "test_apps_dir");
+        setAppDir("$/test_apps_dir");
+        setAppFile("invocation_tests.py");
+        // Callable query names should never fall back on app_callable_name
+        setAppName("should_never_be_called");
+        setCallableQueryName("");
+        setQueryString("");
+    }
+
+    public void testCallableQueryString() throws Exception {
+        callableQueryAppInvocationTestSetUp();
+        setCallableQueryName("python_object");
+        setQueryString("python_object=valid_callable");
+        createServlet();
+        doGet();
+        String result = getOutput();
+        assertEquals("valid_callable invoked", result);
+    }
+
+    public void testCallableQueryStringNoParam() throws Exception {
+        callableQueryAppInvocationTestSetUp();
+        setCallableQueryName("python_object");
+        createServlet();
+        doGet();
+        String result = getOutput();
+        assertEquals("Status code != 500: ServerError, =='" + getStatus() + "'", 500, getStatus());
+    }
+
+    public void testCallableQueryStringParamNoValue() throws Exception {
+        callableQueryAppInvocationTestSetUp();
+        setCallableQueryName("python_object");
+        setQueryString("python_object");
+        createServlet();
+        doGet();
+        String result = getOutput();
+        assertEquals("Status code != 500: ServerError, =='" + getStatus() + "'", 500, getStatus());
+    }
+
+    public void testCallableQueryStringParamTwoValues() throws Exception {
+        // This has to fail, because a python identifier cannot contain an '='
+        callableQueryAppInvocationTestSetUp();
+        setCallableQueryName("python_object");
+        setQueryString("python_object=valid_callable=extra_value");
+        createServlet();
+        doGet();
+        String result = getOutput();
+        assertEquals("Status code != 500: ServerError, =='" + getStatus() + "'", 500, getStatus());
+    }
+
+    public void testCallableQueryStringParamNonExistentValue() throws Exception {
+        callableQueryAppInvocationTestSetUp();
+        setCallableQueryName("python_object");
+        setQueryString("python_object=invalid_callable");
+        createServlet();
+        doGet();
+        String result = getOutput();
+        assertEquals("Status code != 500: ServerError, =='" + getStatus() + "'", 500, getStatus());
+    }
+
 }

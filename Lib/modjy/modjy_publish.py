@@ -42,11 +42,16 @@ class modjy_publisher:
         callable_name = self.params['app_callable_name']
         if self.params['callable_query_name']:
             query_string = req.getQueryString()
-            if query_string and '=' in query_string:
+            if query_string:
                 for name_val in query_string.split('&'):
-                    name, value = name_val.split('=')
+                    if name_val.find('=') != -1:
+                        name, value = name_val.split('=', 1)
+                    else:
+                        name, value = name_val, ''
                     if name == self.params['callable_query_name']:
                         callable_name = value
+            else:
+                callable_name = ''
         return source_uri, callable_name
 
     def get_app_object(self, req, environ):
@@ -55,7 +60,7 @@ class modjy_publisher:
         environ["PATH_INFO"] = path_info
         environ["PATH_TRANSLATED"] = File(self.app_directory, path_info).getPath()
 
-        if self.params['app_import_name'] is not None:
+        if self.params['app_import_name']:
             return self.get_app_object_importable(self.params['app_import_name'])
         else:
             if self.cache is None:

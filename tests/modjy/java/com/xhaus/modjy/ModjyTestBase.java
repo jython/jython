@@ -173,6 +173,10 @@ public class ModjyTestBase extends BasicServletTestCaseAdapter {
         setInitParameter("app_callable_name", app_name);
     }
 
+    public void setCallableQueryName(String query_name) {
+        setInitParameter("callable_query_name", query_name);
+    }
+
     public void setAppImportable(String app_path) {
         setAppDir("");
         setAppFile("");
