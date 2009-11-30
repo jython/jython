@@ -1,6 +1,10 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+
 import org.python.expose.ExposedDelete;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
@@ -387,6 +391,24 @@ public class PyFunction extends PyObject {
     @Override
     public String toString() {
         return String.format("<function %s at %s>", __name__, Py.idstr(this));
+    }
+    
+    @Override
+    public Object __tojava__(Class<?> c) {
+        // Automatically coerce to single method interfaces
+        if (c.isInterface() && c.getDeclaredMethods().length == 1) {
+            return Proxy.newProxyInstance(c.getClassLoader(), new Class[]{c}, new InvocationHandler() {
+                // XXX: not the most efficient implementation - the invocation handler could be shared
+                public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+                    if (args == null || args.length == 0) {
+                        return __call__().__tojava__(method.getReturnType());
+                    } else {
+                        return __call__(Py.javas2pys(args)).__tojava__(method.getReturnType());
+                    }
+                }
+            });
+        }
+        return super.__tojava__( c );
     }
 
     @Override
