@@ -17,26 +17,23 @@ import java.util.concurrent.ConcurrentMap;
 public class ConcurrentHashSet<E> extends AbstractSet<E> implements Serializable {
 
     /** The backing Map. */
-    private final ConcurrentMap<E, Object> map;
+    private final ConcurrentMap<E, Boolean> map;
 
     /** Backing's KeySet. */
     private transient Set<E> keySet;
 
-    /** Dummy value to associate with the key in the backing map. */
-    private static final Object PRESENT = new Object();
-
     public ConcurrentHashSet() {
-        map = new ConcurrentHashMap<E, Object>();
+        map = new ConcurrentHashMap<E, Boolean>();
         keySet = map.keySet();
     }
 
     public ConcurrentHashSet(int initialCapacity) {
-        map = new ConcurrentHashMap<E, Object>(initialCapacity);
+        map = new ConcurrentHashMap<E, Boolean>(initialCapacity);
         keySet = map.keySet();
     }
 
     public ConcurrentHashSet(int initialCapacity, float loadFactor, int concurrencyLevel) {
-        map = new ConcurrentHashMap<E, Object>(initialCapacity, loadFactor, concurrencyLevel);
+        map = new ConcurrentHashMap<E, Boolean>(initialCapacity, loadFactor, concurrencyLevel);
         keySet = map.keySet();
     }
 
@@ -72,7 +69,7 @@ public class ConcurrentHashSet<E> extends AbstractSet<E> implements Serializable
 
     @Override
     public boolean add(E e) {
-        return map.put(e, PRESENT) == null;
+        return map.put(e, Boolean.TRUE) == null;
     }
 
     @Override
