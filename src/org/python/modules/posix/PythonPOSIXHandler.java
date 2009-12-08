@@ -12,6 +12,7 @@ import org.jruby.ext.posix.POSIX;
 import org.jruby.ext.posix.POSIXHandler;
 
 import org.python.core.imp;
+import org.python.core.Options;
 import org.python.core.Py;
 import org.python.core.PyObject;
 
@@ -42,7 +43,7 @@ public class PythonPOSIXHandler implements POSIXHandler {
     }
 
     public boolean isVerbose() {
-        return false;
+        return Options.verbose >= Py.DEBUG;
     }
 
     public File getCurrentWorkingDirectory() {
