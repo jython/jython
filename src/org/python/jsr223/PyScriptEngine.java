@@ -96,9 +96,13 @@ public class PyScriptEngine extends AbstractScriptEngine implements Compilable, 
             if (!(thiz instanceof PyObject)) {
                 thiz = Py.java2py(thiz);
             }
-            return ((PyObject) thiz).invoke(name, Py.javas2pys(args)).__tojava__(Object.class);
+            PyObject method = ((PyObject) thiz).__findattr__(name);
+            if (method == null) {
+                throw new NoSuchMethodException(name);
+            }
+            return method.__call__(Py.javas2pys(args)).__tojava__(Object.class);
         } catch (PyException pye) {
-            return throwInvokeException(pye, name);
+            throw scriptException(pye);
         }
     }
 
@@ -111,7 +115,7 @@ public class PyScriptEngine extends AbstractScriptEngine implements Compilable, 
             }
             return function.__call__(Py.javas2pys(args)).__tojava__(Object.class);
         } catch (PyException pye) {
-            return throwInvokeException(pye, name);
+            throw scriptException(pye);
         }
     }
 
@@ -134,22 +138,17 @@ public class PyScriptEngine extends AbstractScriptEngine implements Compilable, 
             new InvocationHandler() {
                 public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
                     try {
-                        PyObject result = thiz.invoke(method.getName(), Py.javas2pys(args));
+                        PyObject pyMethod = thiz.__findattr__(method.getName());
+                        if (pyMethod == null)
+                            throw new NoSuchMethodException(method.getName());
+                        PyObject result = pyMethod.__call__(Py.javas2pys(args));
                         return result.__tojava__(Object.class);
                     } catch (PyException pye) {
-                        return throwInvokeException(pye, method.getName());
+                        throw scriptException(pye);
                     }
                 }
             });
         return proxy;
-    }
-
-    private static Object throwInvokeException(PyException pye, String methodName)
-            throws ScriptException, NoSuchMethodException {
-        if (pye.match(Py.AttributeError)) {
-            throw new NoSuchMethodException(methodName);
-        }
-        throw scriptException(pye);
     }
 
     private static ScriptException scriptException(PyException pye) {
