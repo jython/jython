@@ -34,7 +34,7 @@ class modjy_publisher:
         else:
             self.app_directory = self.servlet_context.getRealPath('/')
         self.params['app_directory'] = self.app_directory
-        if not self.app_directory in sys.path:
+        if self.app_directory is not None and not self.app_directory in sys.path:
             sys.path.append(self.app_directory)
 
     def map_uri(self, req, environ):
