@@ -292,7 +292,6 @@ class CodeopTests(unittest.TestCase):
 
         ai("return 2.3")
         ai("if (a == 1 and b = 2): pass")
-
         # XXX: PythonPartial.g needs to reject these.
         if not is_jython:
             ai("del 1")
@@ -301,6 +300,7 @@ class CodeopTests(unittest.TestCase):
             ai("del [1]")
             ai("del '1'")
             ai("[i for i in range(10)] = (1, 2, 3)")
+            ai("a = 1 and b = 2");
 
     def test_filename(self):
         self.assertEquals(compile_command("a = 1\n", "abc").co_filename,

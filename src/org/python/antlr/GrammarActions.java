@@ -535,6 +535,8 @@ public class GrammarActions {
             errorHandler.error("can't assign to yield expression", e);
         } else if (e instanceof BinOp) {
             errorHandler.error("can't assign to operator", e);
+        } else if (e instanceof BoolOp) {
+            errorHandler.error("can't assign to operator", e);
         } else if (e instanceof Lambda) {
             errorHandler.error("can't assign to lambda", e);
         } else if (e instanceof Call) {

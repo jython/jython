@@ -2,6 +2,7 @@ Jython NEWS
 
 Jython 2.5.2a1
   Bugs Fixed
+    - [ 1530 ] BoolOp in multiple assign causes VerifyError
     - [ 1478 ] defaultdict & weakref.WeakKeyDictionary [TypeError: first argument must be callable]
     - [ 1487 ] Import of module with latin-1 chars fails on utf-8 file encoding
     - [ 1449 ] Ellipsis comparison different from Python 2.5 to Jython 2.5
