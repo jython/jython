@@ -2,6 +2,7 @@ Jython NEWS
 
 Jython 2.5.2a1
   Bugs Fixed
+    - [ 1532 ] Cannot use docstring when defining class
     - [ 1530 ] BoolOp in multiple assign causes VerifyError
     - [ 1478 ] defaultdict & weakref.WeakKeyDictionary [TypeError: first argument must be callable]
     - [ 1487 ] Import of module with latin-1 chars fails on utf-8 file encoding

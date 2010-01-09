@@ -310,6 +310,12 @@ class ClassLocalsTestCase(unittest.TestCase):
         self.assertEqual(MyFields2.fields, ['FIELDGATHERERMETA', 'JAVA',
                                             'JYTHON', 'SOMECLASS'])
 
+    def test___doc__(self):
+        class Test(object):
+            """doc"""
+            test = 'Test %s' % __doc__
+        self.assertEqual(Test.test, 'Test doc')
+
 
 class IsDescendentTestCase(unittest.TestCase):
 

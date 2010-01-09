@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.List;
-import java.util.Map;
 
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Opcodes;
@@ -33,6 +32,7 @@ import org.python.core.PyUnicode;
 import org.objectweb.asm.Type;
 import org.python.antlr.ParseException;
 import org.python.antlr.PythonTree;
+import org.python.antlr.ast.Str;
 import org.python.antlr.ast.Suite;
 import org.python.antlr.base.mod;
 import static org.python.util.CodegenUtils.*;
@@ -485,16 +485,16 @@ public class Module implements Opcodes, ClassConstants, CompilationContext {
     }
 
     PyCodeConstant codeConstant(mod tree, String name, boolean fast_locals, String className,
-            boolean classBody, boolean printResults, int firstlineno, ScopeInfo scope)
-            throws Exception {
-        return codeConstant(tree, name, fast_locals, className, classBody,
-                printResults, firstlineno, scope, null);
+                                boolean classBody, boolean printResults, int firstlineno,
+                                ScopeInfo scope, CompilerFlags cflags) throws Exception {
+        return codeConstant(tree, name, fast_locals, className, null, classBody, printResults,
+                            firstlineno, scope, cflags);
     }
 
     PyCodeConstant codeConstant(mod tree, String name, boolean fast_locals, String className,
-            boolean classBody, boolean printResults, int firstlineno, ScopeInfo scope,
-            CompilerFlags cflags)
-            throws Exception {
+                                Str classDoc, boolean classBody, boolean printResults,
+                                int firstlineno, ScopeInfo scope, CompilerFlags cflags)
+        throws Exception {
         PyCodeConstant code = new PyCodeConstant(tree, name, fast_locals,
                 className, classBody, printResults, firstlineno, scope, cflags,
                 this);
@@ -507,7 +507,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext {
                 sig(PyObject.class, PyFrame.class, ThreadState.class),
                 ACC_PUBLIC);
 
-        compiler.parse(tree, c, fast_locals, className, classBody, scope, cflags);
+        compiler.parse(tree, c, fast_locals, className, classDoc, classBody, scope, cflags);
         return code;
     }
 
