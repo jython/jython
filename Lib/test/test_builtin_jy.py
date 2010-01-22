@@ -18,6 +18,17 @@ class BuiltinTest(unittest.TestCase):
                 raise TypeError()
         self.assert_(not hasattr(Foo(), 'bar'))
 
+    def test_getattr_custom_AttributeError(self):
+        class Foo(object):
+            def __getattr__(self, name):
+                raise AttributeError('baz')
+        try:
+            getattr(Foo(), 'bar')
+        except AttributeError, ae:
+            self.assertEqual(str(ae), 'baz')
+        else:
+            self.assertTrue(False)
+
     def test_dir(self):
         # for http://bugs.jython.org/issue1196
         class Foo(object):

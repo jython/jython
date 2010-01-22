@@ -613,16 +613,29 @@ public class __builtin__ {
 
     public static PyObject getattr(PyObject obj, PyObject nameObj, PyObject def) {
         String name = asName(nameObj, "getattr");
-        PyObject result = obj.__findattr__(name);
+        PyObject result = null;
+        PyException attributeError = null;
+
+        try {
+            result = obj.__findattr_ex__(name);
+        } catch (PyException pye) {
+            if (!pye.match(Py.AttributeError)) {
+                throw pye;
+            }
+            attributeError = pye;
+        }
         if (result != null) {
             return result;
         }
         if (def != null) {
             return def;
         }
-        // throws AttributeError
-        obj.noAttributeError(name);
-        return null;
+
+        if (attributeError == null) {
+            // throws AttributeError
+            obj.noAttributeError(name);
+        }
+        throw attributeError;
     }
 
     public static PyObject globals() {
