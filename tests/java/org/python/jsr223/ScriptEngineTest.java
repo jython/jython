@@ -2,6 +2,7 @@ package org.python.jsr223;
 
 import java.io.IOException;
 import java.io.StringReader;
+import javax.script.Bindings;
 import javax.script.Compilable;
 import javax.script.CompiledScript;
 import javax.script.Invocable;
@@ -98,6 +99,46 @@ public class ScriptEngineTest extends TestCase {
         assertEquals(Integer.valueOf(42), pythonEngine.eval("a"));
         assertNull(pythonEngine.eval("x = 5"));
         assertEquals(Integer.valueOf(5), pythonEngine.get("x"));
+        assertNull(pythonEngine.eval("del x"));
+        assertNull(pythonEngine.get("x"));
+    }
+
+    class ThreadLocalBindingsTest implements Runnable {
+        ScriptEngine engine;
+        Object x;
+        Throwable exception;
+
+        public ThreadLocalBindingsTest(ScriptEngine engine) {
+            this.engine = engine;
+        }
+
+        public void run() {
+            try {
+                Bindings bindings = engine.createBindings();
+                assertNull(engine.eval("try: a\nexcept NameError: pass\nelse: raise Exception('a is defined', a)", bindings));
+                bindings.put("x", -7);
+                x = engine.eval("x", bindings);
+            } catch (Throwable e) {
+                e.printStackTrace();
+                exception = e;
+            }
+        }
+    }
+
+    public void testThreadLocalBindings() throws ScriptException, InterruptedException {
+        ScriptEngineManager manager = new ScriptEngineManager();
+        ScriptEngine pythonEngine = manager.getEngineByName("python");
+
+        pythonEngine.put("a", 42);
+        pythonEngine.put("x", 15);
+
+        ThreadLocalBindingsTest test = new ThreadLocalBindingsTest(pythonEngine);
+        Thread thread = new Thread(test);
+        thread.run();
+        thread.join();
+        assertNull(test.exception);
+        assertEquals(Integer.valueOf(-7), test.x);
+        assertEquals(Integer.valueOf(15), pythonEngine.get("x"));
         assertNull(pythonEngine.eval("del x"));
         assertNull(pythonEngine.get("x"));
     }

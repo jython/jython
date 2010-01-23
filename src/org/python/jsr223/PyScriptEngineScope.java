@@ -13,6 +13,12 @@ import org.python.expose.ExposedType;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
 
+/**
+ * JSR 223 does not map well to Jython's concept of "locals" and "globals".
+ * Instead, SimpleScriptContext provides ENGINE_SCOPE and GLOBAL_SCOPE, each
+ * with its own bindings.  We adapt this multi-scope object for use as both
+ * a local and global dictionary.
+ */
 @ExposedType(name = "scope", isBaseType = false)
 public final class PyScriptEngineScope extends PyObject {
     public static final PyType TYPE = PyType.fromClass(PyScriptEngineScope.class);
@@ -38,15 +44,13 @@ public final class PyScriptEngineScope extends PyObject {
     @ExposedMethod
     public PyObject scope_keys() {
         PyList members = new PyList();
-        synchronized (context) {
-            List<Integer> scopes = context.getScopes();
-            for (int scope : scopes) {
-                Bindings bindings = context.getBindings(scope);
-                if (bindings == null)
-                    continue;
-                for (String key : bindings.keySet())
-                    members.append(new PyString(key));
-            }
+        List<Integer> scopes = context.getScopes();
+        for (int scope : scopes) {
+            Bindings bindings = context.getBindings(scope);
+            if (bindings == null)
+                continue;
+            for (String key : bindings.keySet())
+                members.append(new PyString(key));
         }
         members.sort();
         return members;
@@ -63,12 +67,10 @@ public final class PyScriptEngineScope extends PyObject {
     }
 
     public PyObject __finditem__(String key) {
-        synchronized (context) {
-            int scope = context.getAttributesScope(key);
-            if (scope == -1)
-                return null;
-            return Py.java2py(context.getAttribute(key, scope));
-        }
+        int scope = context.getAttributesScope(key);
+        if (scope == -1)
+            return null;
+        return Py.java2py(context.getAttribute(key, scope));
     }
 
     @ExposedMethod
@@ -77,12 +79,10 @@ public final class PyScriptEngineScope extends PyObject {
     }
 
     public void __setitem__(String key, PyObject value) {
-        synchronized (context) {
-            int scope = context.getAttributesScope(key);
-            if (scope == -1)
-                scope = ScriptContext.ENGINE_SCOPE;
-            context.setAttribute(key, value.__tojava__(Object.class), scope);
-        }
+        int scope = context.getAttributesScope(key);
+        if (scope == -1)
+            scope = ScriptContext.ENGINE_SCOPE;
+        context.setAttribute(key, value.__tojava__(Object.class), scope);
     }
 
     @ExposedMethod
@@ -91,11 +91,9 @@ public final class PyScriptEngineScope extends PyObject {
     }
 
     public void __delitem__(String key) {
-        synchronized (context) {
-            int scope = context.getAttributesScope(key);
-            if (scope == -1)
-                throw Py.KeyError(key);
-            context.removeAttribute(key, scope);
-        }
+        int scope = context.getAttributesScope(key);
+        if (scope == -1)
+            throw Py.KeyError(key);
+        context.removeAttribute(key, scope);
     }
 }

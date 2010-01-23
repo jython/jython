@@ -221,15 +221,15 @@ public class jython {
             	}
             } else if (opts.filename.equals("-")) {
                 try {
-                    interp.locals.__setitem__(new PyString("__file__"), new PyString("<stdin>"));
+                    interp.globals.__setitem__(new PyString("__file__"), new PyString("<stdin>"));
                     interp.execfile(System.in, "<stdin>");
                 } catch (Throwable t) {
                     Py.printException(t);
                 }
             } else {
                 try {
-                   interp.locals.__setitem__(new PyString("__file__"),
-                                             new PyString(opts.filename));
+                   interp.globals.__setitem__(new PyString("__file__"),
+                                              new PyString(opts.filename));
 
                    FileInputStream file;
                    try {
