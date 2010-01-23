@@ -1,42 +1,43 @@
 <!-- Copyright 2000 Dj Walker-Morgan -->
 <project name="jython" default="developer-build" basedir=".">
-    <target name="usage" description="prints usage hints">
+    <target name="usage" description="print usage hints (-emacs removes [echo] prefix)">
         <echo>
-Use case 1: developer build (in your local jython copy)
+Use case 1: developer build (in your local Jython copy)
 -------------------------------------------------------
-  - call target 'developer-build' (which is the default for this build.xml)
+  - call target 'developer-build' (the default for this build.xml)
+
 This build will create directories /build and /dist below basedir.
 
 
 Use case 2: full build for a release (using svn checkout)
 ---------------------------------------------------------
-  - make sure you have access to the jython subversion repository (https://jython.svn.sourceforge.net/svnroot/jython/trunk)
+  - make sure you have access to the Jython Subversion repository
+    (https://jython.svn.sourceforge.net/svnroot/jython/trunk)
   - override svn.main.dir in ant.properties (if necessary)
   - call target 'full-build'
-This build will create a working directory named full_build/${svn.main.dir} at the same
-level as your local directories jython, sandbox and installer.
-It will contain a big jython_installer-${jython.version}.jar file suitable for installation.
 
-Please be aware:
-To build older releases, it may be necessary to use an older build.xml, too (with the corresponding tag).
-For example it is not possible to build Release_2_2alpha1 with this version of build.xml.
+This build will create a working directory named
+full_build/${svn.main.dir} at the same level as your local directories
+jython, sandbox and installer.  It will contain a big
+jython_installer-${jython.version}.jar file suitable for installation.
+
+To build older releases, it may be necessary to use an older
+build.xml, too (with the corresponding tag).  For example it is not
+possible to build Release_2_2alpha1 with this version of build.xml.
 
 Note on targets
 ---------------
-The following targets are designed for direct invocation:
-  - usage
-  - developer-build
-  - full-build
-  - clean (uses developer-build settings if called directly)
-Following an ant convention, the callable targets have a description attribute.
-All other targets may give unpredicted results if called directly.
+A subset of the available targets are designed for direct invocation.
+Following an ant convention, the callable targets have a description
+attribute.  Use ant -p to display these targets.  All other targets
+may behave unpredictably if called directly.
 
 
-Where ant.properties are searched
----------------------------------
+Where ant looks for ant.properties 
+----------------------------------
   1. in user.home
   2. in the same directory as this build.xml file
-The first setting of a property wins, further settings are ignored.
+The first setting of a property wins. Further settings are ignored.
 
 
 Actions for a release
@@ -46,9 +47,6 @@ See http://wiki.python.org/jython/JythonDeveloperGuide/HowToReleaseJython
         	
 An example ant.properties file:
 -------------------------------
-
-# - define the home of the corresponding CPython version
-python.home=c:/Programme/Python/Python23
 
 # - zxJDBC
 oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/ojdbc14.jar
@@ -244,7 +242,6 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <property name="work.dir" value="${basedir}/../full_build/work" />
         <property name="svn.checkout.dir" value="${work.dir}/checkout" />
         <property name="jython.base.dir" value="${svn.checkout.dir}/${svn.code.dir}" />
-        <property name="python.exe" value="${python.home}/python" />
     	<!-- set has.repositories.connection to false in ant.properties if you want to skip checkout -->
         <property name="has.repositories.connection" value="true" />
         <condition property="do.checkout" value="true">
@@ -292,7 +289,6 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <echo>debug              = '${debug}'</echo>
         <echo>nowarn             = '${nowarn}'</echo>
         <echo>--- properties (used for full-build only) ---</echo>
-        <echo>python.exe         = '${python.exe}'</echo>
         <echo>svn.main.dir       = '${svn.main.dir}'</echo>
         <echo>svn.revision       = '${svn.revision}'</echo>
         <echo>svn.checkout.dir   = '${svn.checkout.dir}'</echo>
@@ -323,7 +319,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
     </target>
 
     <target name="devclean" depends="init"
-        description="clean up build working directories, without deleting antlr files, cachedir, or Lib.">
+        description="clean up build working directories without deleting antlr files, cachedir, or Lib">
 
         <delete includeemptydirs="true" failonerror="false">
             <fileset dir="${output.dir}" includes="**/*" excludes="gensrc/**"/>
@@ -866,8 +862,8 @@ The readme text for the next release will be like:
         </jar>
     </target>
 
-    <target name="test" depends="prepare-test,javatest,launchertest,regrtest,modjytest"/>
-    <target name="singlejavatest" depends="compile,expose">
+    <target name="test" depends="prepare-test,javatest,launchertest,regrtest,modjytest" description="run all the tests"/>
+    <target name="singlejavatest" depends="compile,expose" description="run a single JUnit test (specify with -Dtest=classname)">
         <junit haltonfailure="true" fork="true">
             <formatter type="brief" usefile="false"/>
             <sysproperty key="python.cachedir.skip" value="true"/>
@@ -882,7 +878,7 @@ The readme text for the next release will be like:
         <!-- Clean any old test output -->
         <delete dir="${junit.reports}"/>
     </target>
-    <target name="javatest" depends="developer-build">
+    <target name="javatest" depends="developer-build" description="run all the JUnit tests">
         <mkdir dir="${junit.reports}"/>
         <junit fork="true" printsummary="true">
             <formatter type="xml"/>
@@ -908,7 +904,7 @@ The readme text for the next release will be like:
         <arg value="${dist.dir}"/>
       </exec>
     </target>
-    <target name="regrtest" depends="developer-build,regrtest-unix,regrtest-windows"/>
+    <target name="regrtest" depends="developer-build,regrtest-unix,regrtest-windows" description="run Python tests expected to work on Jython"/>
     <target name="regrtest-unix" if="os.family.unix">
       <exec executable="${dist.dir}/bin/jython">
         <arg value="${dist.dir}/Lib/test/regrtest.py"/>
