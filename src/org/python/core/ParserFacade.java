@@ -130,8 +130,7 @@ public class ParserFacade {
                 throw fixParseError(bufReader, tt, filename);
             }
         } finally {
-            if (bufReader != null)
-                close(bufReader);
+            close(bufReader);
         }
     }
 
