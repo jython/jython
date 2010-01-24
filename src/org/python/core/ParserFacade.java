@@ -118,8 +118,10 @@ public class ParserFacade {
         try {
             bufReader = prepBufReader(reader, cflags, filename);
             // first, try parsing as an expression
-            return parse(bufReader, CompileMode.eval, filename, cflags );
+            return parse(bufReader, CompileMode.eval, filename, cflags);
         } catch (Throwable t) {
+            if (bufReader == null)
+                throw Py.JavaError(t); // can't do any more
             try {
                 // then, try parsing as a module
                 bufReader.reset();
@@ -128,7 +130,8 @@ public class ParserFacade {
                 throw fixParseError(bufReader, tt, filename);
             }
         } finally {
-            close(bufReader);
+            if (bufReader != null)
+                close(bufReader);
         }
     }
 
