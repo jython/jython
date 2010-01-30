@@ -2,6 +2,8 @@
 package org.python.modules.jffi;
 
 import java.math.BigInteger;
+import java.util.HashMap;
+import java.util.Map;
 import org.python.core.Py;
 import org.python.core.PyInteger;
 import org.python.core.PyLong;
@@ -139,5 +141,9 @@ final class Util {
             return new NativeMemory(((PyLong) address).getValue().longValue());
         }
         throw Py.TypeError("invalid address");
+    }
+
+    static final com.kenai.jffi.Type jffiType(CType type) {
+        return (com.kenai.jffi.Type) type.jffiType();
     }
 }

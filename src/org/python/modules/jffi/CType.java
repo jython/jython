@@ -9,11 +9,12 @@ import org.python.core.PyObject;
 import org.python.core.PyType;
 import org.python.expose.ExposeAsSuperclass;
 import org.python.expose.ExposedGet;
+import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 
 @ExposedType(name = "jffi.Type", base = PyObject.class)
-public class CType extends PyObject {
+public abstract class CType extends PyObject {
     public static final PyType TYPE = PyType.fromClass(CType.class);
     static {
         TYPE.fastGetDict().__setitem__("Array", Array.TYPE);
@@ -36,26 +37,13 @@ public class CType extends PyObject {
     public static final CType POINTER = primitive(NativeType.POINTER);
     public static final CType STRING = primitive(NativeType.STRING);
 
-    final com.kenai.jffi.Type jffiType;
-    
     final NativeType nativeType;
-
-    /** Size of this type in bytes */
-    @ExposedGet
-    public final int size;
-
-    /** Minimum alignment of this type in bytes */
-    @ExposedGet
-    public final int alignment;
 
     /** The <tt>MemoryOp</tt> used to read/write items of this type */
     private final MemoryOp memoryOp;
 
-    CType(NativeType type, com.kenai.jffi.Type jffiType, MemoryOp memoryOp) {
+    CType(NativeType type, MemoryOp memoryOp) {
         this.nativeType = type;
-        this.jffiType = jffiType;
-        this.size = jffiType.size();
-        this.alignment = jffiType.alignment();
         this.memoryOp = memoryOp;
     }
 
@@ -63,32 +51,61 @@ public class CType extends PyObject {
         return nativeType;
     }
 
+    abstract com.kenai.jffi.Type jffiType();
+    
     MemoryOp getMemoryOp() {
         return memoryOp;
     }
 
-    public int alignment() {
-        return alignment;
+    public final int alignment() {
+        return jffiType().alignment();
     }
 
-    public int size() {
-        return size;
+    public final int size() {
+        return jffiType().size();
     }    
-    
+
+    @ExposedMethod(names={"size"})
+    public final PyObject pysize() {
+        return Py.newInteger(size());
+    }
+
+    @ExposedMethod(names={"alignment"})
+    public final PyObject pyalignment() {
+        return Py.newInteger(alignment());
+    }
+
     static final CType primitive(NativeType type) {
-        CType t = new Builtin(type, NativeType.jffiType(type));
+        CType t = new Builtin(type);
         CType.TYPE.fastGetDict().__setitem__(type.name(), t);
         return t;
     }
 
     static final class Builtin extends CType implements ExposeAsSuperclass {
-        public Builtin(NativeType type, com.kenai.jffi.Type jffiType) {
-            super(type, jffiType, MemoryOp.getMemoryOp(type));
+        public Builtin(NativeType type) {
+            super(type, MemoryOp.getMemoryOp(type));
         }
 
         @Override
         public final String toString() {
             return "<jffi.Type." + nativeType.name() + ">";
+        }
+
+        final com.kenai.jffi.Type jffiType() {
+            return NativeType.jffiType(nativeType);
+        }
+    }
+
+    static abstract class Custom extends CType implements ExposeAsSuperclass {
+        final com.kenai.jffi.Type jffiType;
+        
+        public Custom(NativeType type, com.kenai.jffi.Type jffiType, MemoryOp op) {
+            super(type, op);
+            this.jffiType = jffiType;
+        }
+
+        final com.kenai.jffi.Type jffiType() {
+            return jffiType;
         }
     }
 
@@ -107,17 +124,17 @@ public class CType extends PyObject {
     }
 
     @ExposedType(name = "jffi.Type.Array", base = CType.class)
-    static final class Array extends CType {
+    static final class Array extends CType.Custom {
         public static final PyType TYPE = PyType.fromClass(Array.class);
         final CType componentType;
         final PyType pyComponentType;
         final MemoryOp componentMemoryOp;
-
+        
         @ExposedGet
         public final int length;
 
         public Array(PyType pyComponentType, CType componentType, int length) {
-            super(NativeType.ARRAY, new com.kenai.jffi.Array(componentType.jffiType, length), null);
+            super(NativeType.ARRAY, new com.kenai.jffi.Array(Util.jffiType(componentType), length), null);
             this.pyComponentType = pyComponentType;
             this.componentType = componentType;
             this.componentMemoryOp = getComponentMemoryOp((PyType) pyComponentType, componentType);
@@ -163,7 +180,7 @@ public class CType extends PyObject {
     
 
     @ExposedType(name = "jffi.Type.Pointer", base = CType.class)
-    final static class Pointer extends CType {
+    final static class Pointer extends Custom {
         public static final PyType TYPE = PyType.fromClass(Pointer.class);
         private static final ConcurrentMap<PyObject, Pointer> typeCache
                 = new ConcurrentHashMap<PyObject, Pointer>();

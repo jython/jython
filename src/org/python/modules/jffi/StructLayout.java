@@ -18,7 +18,7 @@ import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 
 @ExposedType(name = "jffi.StructLayout", base = CType.class)
-public class StructLayout extends CType {
+public class StructLayout extends CType.Custom {
     public static final PyType TYPE = PyType.fromClass(StructLayout.class);
     static {
         TYPE.fastGetDict().__setitem__("Field", Field.TYPE);
@@ -106,6 +106,28 @@ public class StructLayout extends CType {
         }
     }
 
+    /**
+     * We enclose any references to the jffi Type class in a lazily-loaded class
+     * so the exposed types processor does not crash when jffi can't load the
+     * native stub lib.
+     */
+    private static final class StructUtil {
+
+        public static final StructLayout newStructLayout(Field[] fields, boolean isUnion) {
+            com.kenai.jffi.Type[] fieldTypes = new com.kenai.jffi.Type[fields.length];
+
+            for (int i = 0; i < fields.length; ++i) {
+                fieldTypes[i] = Util.jffiType(fields[i].ctype);
+            }
+
+            com.kenai.jffi.Type jffiType = isUnion
+                    ? new com.kenai.jffi.Union(fieldTypes)
+                    : new com.kenai.jffi.Struct(fieldTypes);
+
+            return new StructLayout(fields, jffiType, MemoryOp.INVALID);
+        }
+    }
+
     @ExposedNew
     public static PyObject StructLayout_new(PyNewWrapper new_, boolean init, PyType subtype,
             PyObject[] args, String[] keywords) {
@@ -117,7 +139,6 @@ public class StructLayout extends CType {
         }
 
         PyList pyFields = (PyList) ap.getPyObject(0);
-        com.kenai.jffi.Type[] fieldTypes = new com.kenai.jffi.Type[pyFields.size()];
         Field[] fields = new Field[pyFields.size()];
 
         for (int i = 0; i < fields.length; ++i) {
@@ -125,16 +146,11 @@ public class StructLayout extends CType {
             if (!(pyField instanceof Field)) {
                 throw Py.TypeError(String.format("element %d of field list is not an instance of jffi.StructLayout.Field", i));
             }
-            Field f = (Field) pyField;
-            fields[i] = f;
-            fieldTypes[i] = f.ctype.jffiType;
+            
+            fields[i] = (Field) pyField;
         }
 
-        com.kenai.jffi.Type jffiType = ap.getPyObject(1, Py.False).__nonzero__()
-                ? new com.kenai.jffi.Union(fieldTypes)
-                : new com.kenai.jffi.Struct(fieldTypes);
-
-        return new StructLayout(fields, jffiType, MemoryOp.INVALID);
+        return StructUtil.newStructLayout(fields, ap.getPyObject(1, Py.False).__nonzero__());
     }
     
     @ExposedType(name = "jffi.StructLayout.ScalarField", base = Field.class)

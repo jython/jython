@@ -162,10 +162,10 @@ public class Function extends BasePointer implements Pointer {
             throw Py.NotImplementedError("variadic functions not supported yet;  specify a parameter list");
         }
 
-        com.kenai.jffi.Type jffiReturnType = CType.typeOf(restype).jffiType;
+        com.kenai.jffi.Type jffiReturnType = Util.jffiType(CType.typeOf(restype));
         com.kenai.jffi.Type[] jffiParamTypes = new com.kenai.jffi.Type[argtypes.length];
         for (int i = 0; i < jffiParamTypes.length; ++i) {
-            jffiParamTypes[i] = CType.typeOf(argtypes[i]).jffiType;
+            jffiParamTypes[i] = Util.jffiType(CType.typeOf(argtypes[i]));
         }
         com.kenai.jffi.Function jffiFunction = new com.kenai.jffi.Function(getMemory().getAddress(), jffiReturnType, jffiParamTypes);
 
