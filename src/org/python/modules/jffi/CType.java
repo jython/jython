@@ -96,7 +96,8 @@ public abstract class CType extends PyObject {
         }
     }
 
-    static abstract class Custom extends CType implements ExposeAsSuperclass {
+    @ExposedType(name = "jffi.Type.Custom", base = CType.class)
+    static class Custom extends CType {
         final com.kenai.jffi.Type jffiType;
         
         public Custom(NativeType type, com.kenai.jffi.Type jffiType, MemoryOp op) {

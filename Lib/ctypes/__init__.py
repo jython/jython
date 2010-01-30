@@ -43,7 +43,7 @@ class _CData(object):
 
     @classmethod
     def size(self):
-        return self._jffi_type.size
+        return self._jffi_type.size()
 
 class _ScalarCData(jffi.ScalarCData, _CData):
     __metaclass__ = _CTypeMetaClass
@@ -136,12 +136,12 @@ class Union(jffi.Structure, _CData):
 
 def sizeof(type):
     if hasattr(type, '_jffi_type'):
-        return type._jffi_type.size
+        return type._jffi_type.size()
     else:
         raise TypeError("this type has no size")
 
 def alignment(type):
-    return type._jffi_type.alignment
+    return type._jffi_type.alignment()
 
 def addressof(cdata):
     return cdata.address()
