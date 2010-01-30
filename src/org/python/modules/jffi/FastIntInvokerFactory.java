@@ -3,7 +3,6 @@ package org.python.modules.jffi;
 
 import com.kenai.jffi.Function;
 import com.kenai.jffi.Platform;
-import com.kenai.jffi.Type;
 import org.python.core.Py;
 import org.python.core.PyObject;
 
@@ -102,10 +101,6 @@ public class FastIntInvokerFactory {
                 case ULONG:
                     return Platform.getPlatform().longSize() == 32;
 
-                case FLOAT:
-                    return Platform.getPlatform().getCPU() == Platform.CPU.I386
-                            || Platform.getPlatform().getCPU() == Platform.CPU.X86_64;
-
                 case STRING:
                     return Platform.getPlatform().addressSize() == 32;
             }
@@ -143,12 +138,9 @@ public class FastIntInvokerFactory {
                 case LONG:
                 case ULONG:
                     return Platform.getPlatform().longSize() == 32;
-
-                case FLOAT:
-                    return Platform.getPlatform().getCPU() == Platform.CPU.I386
-                            || Platform.getPlatform().getCPU() == Platform.CPU.X86_64;
             }
         }
+
         return false;
     }
 
@@ -177,11 +169,8 @@ public class FastIntInvokerFactory {
         for (int i = 0; i < parameterConverters.length; ++i) {
             parameterConverters[i] = getIntParameterConverter(parameterTypes[i]);
         }
-        if (returnType.nativeType == NativeType.FLOAT) {
-            return createFloatInvoker(function, null, parameterConverters);
-        } else {
-            return createIntInvoker(function, getIntResultConverter(returnType), parameterConverters);
-        }
+        
+        return createIntInvoker(function, getIntResultConverter(returnType), parameterConverters);
     }
 
     /**
@@ -200,26 +189,7 @@ public class FastIntInvokerFactory {
             parameterConverters[i] = getIntParameterConverter(parameterTypes[i]);
         }
 
-        if (function.getReturnType().equals(Type.FLOAT)) {
-            return createFloatInvoker(function, null, parameterConverters);
-        } else {
-            return createIntInvoker(function, getIntResultConverter(returnType), parameterConverters);
-        }
-    }
-
-
-    final Invoker createFloatInvoker(Function function, IntResultConverter resultConverter, IntParameterConverter[] parameterConverters) {
-        switch (parameterConverters.length) {
-            case 0:
-                return new FastFloatInvokerZero(function, null, parameterConverters);
-            case 1:
-                return new FastFloatInvokerOne(function, null, parameterConverters);
-            case 2:
-                return new FastFloatInvokerTwo(function, null, parameterConverters);
-            case 3:
-                return new FastFloatInvokerThree(function, null, parameterConverters);
-        }
-        throw Py.RuntimeError("fast int invoker does not support functions with arity=" + parameterConverters.length);
+        return createIntInvoker(function, getIntResultConverter(returnType), parameterConverters);
     }
 
     final Invoker createIntInvoker(Function function, IntResultConverter resultConverter, IntParameterConverter[] parameterConverters) {
@@ -520,75 +490,7 @@ public class FastIntInvokerFactory {
                     c0.intValue(arg0), c1.intValue(arg1), c2.intValue(arg2)));
         }
     }
-
-    /**
-     * Fast-int invoker that takes no parameters and returns a float
-     */
-    private static final class FastFloatInvokerZero extends BaseFastIntInvoker {
-
-        public FastFloatInvokerZero(Function function, IntResultConverter resultConverter,
-                IntParameterConverter parameterConverters[]) {
-            super(function, resultConverter, parameterConverters);
-        }
-
-        @Override
-        public final PyObject invoke() {
-            return Py.newFloat(jffiInvoker.invokeVrF(function));
-        }
-    }
-
-    /**
-     * Fast-int invoker that takes one parameter and returns a float
-     */
-    private static final class FastFloatInvokerOne extends BaseFastIntInvoker {
-
-        public FastFloatInvokerOne(Function function, IntResultConverter resultConverter,
-                IntParameterConverter parameterConverters[]) {
-            super(function, resultConverter, parameterConverters);
-        }
-
-        @Override
-        public final PyObject invoke(PyObject arg0) {
-            return Py.newFloat(jffiInvoker.invokeIrF(function,
-                    c0.intValue(arg0)));
-        }
-    }
-
-
-    /**
-     * Fast-int invoker that takes two parameters and returns a float
-     */
-    private static final class FastFloatInvokerTwo extends BaseFastIntInvoker {
-
-        public FastFloatInvokerTwo(Function function, IntResultConverter resultConverter,
-                IntParameterConverter parameterConverters[]) {
-            super(function, resultConverter, parameterConverters);
-        }
-
-        @Override
-        public PyObject invoke(PyObject arg0, PyObject arg1) {
-            return Py.newFloat(jffiInvoker.invokeIIrF(function,
-                    c0.intValue(arg0), c1.intValue(arg1)));
-        }
-    }
-
-    /**
-     * Fast-int invoker that takes three parameters and returns a float
-     */
-    private static final class FastFloatInvokerThree extends BaseFastIntInvoker {
-
-        public FastFloatInvokerThree(Function function, IntResultConverter resultConverter,
-                IntParameterConverter parameterConverters[]) {
-            super(function, resultConverter, parameterConverters);
-        }
-
-        @Override
-        public PyObject invoke(PyObject arg0, PyObject arg1, PyObject arg2) {
-            return Py.newFloat(jffiInvoker.invokeIIIrF(function,
-                    c0.intValue(arg0), c1.intValue(arg1), c2.intValue(arg2)));
-        }
-    }
-
+   
     /**
      * Base class for all fast-int result converters
      */
