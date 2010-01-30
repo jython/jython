@@ -780,35 +780,68 @@ public final class Py {
         return true;
     }
 
-    private static boolean secEnv = false;
+    private static boolean syspathJavaLoaderRestricted = false;
 
+    /**
+     * Common code for findClass and findClassEx
+     * @param name Name of the Java class to load and initialize
+     * @param reason Reason for loading it, used for debugging. No debug output
+     *               is generated if it is null
+     * @return the loaded class, or null if no class loader is accessible
+     * @throws ClassNotFoundException if the class wasn't found by the class loader
+     */
+    private static Class<?> findClassInternal(String name, String reason) throws ClassNotFoundException {
+    	ClassLoader classLoader = Py.getSystemState().getClassLoader();
+        if (classLoader != null) {
+        	if (reason != null) {
+        		writeDebug("import", "trying " + name + " as " + reason +
+        		          " in sys.classLoader");
+        	}
+            return loadAndInitClass(name, classLoader);
+        } 
+
+        if (!syspathJavaLoaderRestricted) {
+            try {
+                classLoader = imp.getSyspathJavaLoader();
+            } catch (SecurityException e) {
+                syspathJavaLoaderRestricted = true;
+            }
+            if (classLoader != null) {
+            	if (reason != null) { 
+	                writeDebug("import", "trying " + name + " as " + reason +
+	                        " in SysPathJavaLoader");
+            	}
+                try {
+                	return loadAndInitClass(name, classLoader);
+                } catch (ClassNotFoundException cnfe) {
+                    // let the default classloader try
+                }
+            }
+        }
+        if (reason != null) {
+	        writeDebug("import", "trying " + name + " as " + reason +
+	                " in Jython's parent class loader");
+        }
+        classLoader = imp.getParentClassLoader();
+        if (classLoader != null) {
+        	return loadAndInitClass(name, classLoader);
+        } 
+        
+        if (reason != null) {
+	        writeDebug("import", "trying " + name + " as " + reason +
+	                   " in Class.forName");
+        }
+        return Class.forName(name);
+    }
+    
+    /**
+     * Tries to find a Java class.
+     * @param name Name of the Java class.
+     * @return The class, or null if it wasn't found
+     */
     public static Class<?> findClass(String name) {
         try {
-            ClassLoader classLoader = Py.getSystemState().getClassLoader();
-            if (classLoader != null) {
-                return classLoader.loadClass(name);
-            }
-
-            if (!secEnv) {
-                try {
-                    classLoader = imp.getSyspathJavaLoader();
-                } catch (SecurityException e) {
-                    secEnv = true;
-                }
-                if (classLoader != null) {
-                    try {
-                        return classLoader.loadClass(name);
-                    } catch (ClassNotFoundException cnfe) {
-                        // let the context classloader try
-                    }
-                }
-            }
-
-            classLoader = Thread.currentThread().getContextClassLoader();
-            if (classLoader != null) {
-                return classLoader.loadClass(name);
-            }
-            return null;
+        	return findClassInternal(name, null);
         } catch (ClassNotFoundException e) {
             //             e.printStackTrace();
             return null;
@@ -821,39 +854,20 @@ public final class Py {
         }
     }
 
+    /**
+     * Tries to find a Java class. 
+     * 
+     * Unless {@link #findClass(String)}, it raises a JavaError 
+     * if the class was found but there were problems loading it.
+     * @param name Name of the Java class.
+     * @param reason Reason for finding the class. Used for debugging messages.
+     * @return The class, or null if it wasn't found
+     * @throws JavaError wrapping LinkageErrors/IllegalArgumentExceptions 
+     * occurred when the class is found but can't be loaded.
+     */
     public static Class<?> findClassEx(String name, String reason) {
-        try {
-            ClassLoader classLoader = Py.getSystemState().getClassLoader();
-            if (classLoader != null) {
-                writeDebug("import", "trying " + name + " as " + reason +
-                        " in classLoader");
-                return classLoader.loadClass(name);
-            }
-
-            if (!secEnv) {
-                try {
-                    classLoader = imp.getSyspathJavaLoader();
-                } catch (SecurityException e) {
-                    secEnv = true;
-                }
-                if (classLoader != null) {
-                    writeDebug("import", "trying " + name + " as " + reason +
-                            " in syspath loader");
-                    try {
-                        return classLoader.loadClass(name);
-                    } catch (ClassNotFoundException cnfe) {
-                        // let the context classloader try
-                    }
-                }
-            }
-
-            writeDebug("import", "trying " + name + " as " + reason +
-                    " in Class.forName");
-            classLoader = Thread.currentThread().getContextClassLoader();
-            if (classLoader != null) {
-                return classLoader.loadClass(name);
-            }
-            return null;
+        try {            
+            return findClassInternal(name, reason);
         } catch (ClassNotFoundException e) {
             return null;
         } catch (IllegalArgumentException e) {
@@ -863,6 +877,14 @@ public final class Py {
         }
     }
 
+    // An alias to express intent (since boolean flags aren't exactly obvious).
+    // We *need* to initialize classes on findClass/findClassEx, so that import 
+    // statements can trigger static initializers
+    private static Class<?> loadAndInitClass(String name, ClassLoader loader) throws ClassNotFoundException {
+    	return Class.forName(name, true, loader);
+    } 
+ 
+    
     public static void initProxy(PyProxy proxy, String module, String pyclass, Object[] args)
     {
         if (proxy._getPyInstance() != null)

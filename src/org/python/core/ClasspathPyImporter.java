@@ -89,12 +89,11 @@ public class ClasspathPyImporter extends importer<String> {
         if (entries.containsKey(filename)) {
             return filename;
         }
-        InputStream is = tryClassLoader(filename, Py.getSystemState().getClassLoader(), "sys");
-        if (is == null) {
-            is = tryClassLoader(filename, Thread.currentThread().getContextClassLoader(), "context");
-        }
-        if (is == null) {
-            is = tryClassLoader(filename, ClasspathPyImporter.class.getClassLoader(), "current");
+        InputStream is;
+        if (Py.getSystemState().getClassLoader() != null) {
+        	is = tryClassLoader(filename, Py.getSystemState().getClassLoader(), "sys");
+        } else {
+        	is = tryClassLoader(filename, imp.getParentClassLoader(), "parent");
         }
         if (is != null) {
             entries.put(filename, is);

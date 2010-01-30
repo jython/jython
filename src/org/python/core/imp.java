@@ -41,10 +41,40 @@ public class imp {
     public static ClassLoader getSyspathJavaLoader() {
         synchronized (syspathJavaLoaderLock) {
             if (syspathJavaLoader == null) {
-                syspathJavaLoader = new SyspathJavaLoader();
-            }
+        		syspathJavaLoader = new SyspathJavaLoader(getParentClassLoader());
+	        }            	
         }
         return syspathJavaLoader;
+    }
+    
+    /**
+     * Returns the parent class loader for Jython. In most environments 
+     * is just the class loader that loaded this class (imp.class). However,
+     * when that class loader is null (e.g., when Jython has been 
+     * loaded using the boot loader) we return the Thread's context class 
+     * loader (which can also be null, but in such case we return null anyway).
+     * 
+     * @return the parent class loader for Jython
+     */
+    public static ClassLoader getParentClassLoader() {
+    	ClassLoader parent = null;
+    	// XXX: While trying the current class loader before using the context class 
+    	// loader seems like the saner approach, there may be legacy code
+    	// expecting Jython to use the context class loader,
+    	//
+    	// Se we should uncomment the following line when we feel like
+    	// doing backwards-incompatible changes (3.0?)
+    	//
+    	// parent = imp.class.getClassLoader();
+		if (parent == null) {
+			// Try the context class loader
+			try {
+				parent = Thread.currentThread().getContextClassLoader();
+			} catch (SecurityException e) {
+				// We just give up 
+			}
+		}
+    	return parent;
     }
 
     private imp() {
