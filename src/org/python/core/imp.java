@@ -48,36 +48,63 @@ public class imp {
     }
     
     /**
-     * Returns the parent class loader for Jython. In most environments 
-     * is just the class loader that loaded this class (imp.class). However,
-     * when that class loader is null (e.g., when Jython has been 
-     * loaded using the boot loader) we return the Thread's context class 
-     * loader (which can also be null, but in such case we return null anyway).
+     * <p>
+     * Selects the parent class loader for Jython, used for dinamically load classes and resources 
      * 
-     * @return the parent class loader for Jython
+     * <p>
+     * The current implementation chooses between the current and context 
+     * classloader based on the following criteria:<ul>
+     * 
+     * <li>If both are the same, that one is returned.
+     * <li>If either is null, the non-null one is selected.
+     * <li>If both are not null, and a parent/child relationship can be determined, 
+     * the child is selected. 
+     * <li>If both are not null and not on a parent/child relationship, the
+     * current class loader is returned (since it is likely for the
+     * context class loader to <b>not</b> see the Jython classes)
+     * 
+     * @return the parent class loader for Jython or null if both the current and context classloaders are null;
      */
     public static ClassLoader getParentClassLoader() {
-    	ClassLoader parent = null;
-    	// XXX: While trying the current class loader before using the context class 
-    	// loader seems like the saner approach, there may be legacy code
-    	// expecting Jython to use the context class loader,
-    	//
-    	// Se we should uncomment the following line when we feel like
-    	// doing backwards-incompatible changes (3.0?)
-    	//
-    	// parent = imp.class.getClassLoader();
-		if (parent == null) {
-			// Try the context class loader
-			try {
-				parent = Thread.currentThread().getContextClassLoader();
-			} catch (SecurityException e) {
-				// We just give up 
-			}
-		}
-    	return parent;
-    }
+    	ClassLoader current = imp.class.getClassLoader();
+    	ClassLoader context = Thread.currentThread().getContextClassLoader();
+    	if (context == current) {
+    		return current;
+    	}
+    	if (context == null) {
+    		return current;
+    	}
+    	if (current == null) {
+    		return context;
+    	}
+    	if (isParentClassLoader(context, current)) {
+    		return current;
+    	}
+    	if (isParentClassLoader(current, context)) {
+    		return context;
+    	}
+    	return current;
+    }    
 
-    private imp() {
+    private static boolean isParentClassLoader(
+    		ClassLoader suspectedParent, ClassLoader child) {
+    	try { 
+	    	ClassLoader parent = child.getParent();
+	    	if (suspectedParent == parent) {
+	    		return true;
+	    	}
+	    	if (parent == null || parent == child) {
+	    		// We reached the boot class loader
+	    		return false;
+	    	}
+	    	return isParentClassLoader(suspectedParent, parent);
+	    	
+    	} catch (SecurityException e) {
+    		return false;
+    	}
+	}
+
+	private imp() {
     }
 
     /**

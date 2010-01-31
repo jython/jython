@@ -787,7 +787,7 @@ public final class Py {
      * @param name Name of the Java class to load and initialize
      * @param reason Reason for loading it, used for debugging. No debug output
      *               is generated if it is null
-     * @return the loaded class, or null if no class loader is accessible
+     * @return the loaded class
      * @throws ClassNotFoundException if the class wasn't found by the class loader
      */
     private static Class<?> findClassInternal(String name, String reason) throws ClassNotFoundException {
@@ -799,39 +799,42 @@ public final class Py {
         	}
             return loadAndInitClass(name, classLoader);
         } 
-
         if (!syspathJavaLoaderRestricted) {
             try {
                 classLoader = imp.getSyspathJavaLoader();
+                if (classLoader != null && reason != null) {
+	                writeDebug("import", "trying " + name + " as " + reason +
+	                        " in SysPathJavaLoader");
+                }                
             } catch (SecurityException e) {
                 syspathJavaLoaderRestricted = true;
             }
-            if (classLoader != null) {
-            	if (reason != null) { 
-	                writeDebug("import", "trying " + name + " as " + reason +
-	                        " in SysPathJavaLoader");
-            	}
-                try {
-                	return loadAndInitClass(name, classLoader);
-                } catch (ClassNotFoundException cnfe) {
-                    // let the default classloader try
-                }
+        }        
+        if (syspathJavaLoaderRestricted) {
+        	classLoader = imp.getParentClassLoader();
+            if (classLoader != null && reason != null) {
+                writeDebug("import", "trying " + name + " as " + reason +
+                        " in Jython's parent class loader");     
+            }
+        } 
+        if (classLoader != null) {
+            try {
+            	return loadAndInitClass(name, classLoader);
+            } catch (ClassNotFoundException cnfe) {
+                // let the default classloader try
+            	// XXX: by trying another classloader that may not be on a
+            	//      parent/child relationship with the Jython's parent 
+            	//      classsloader we are risking some nasty class loading
+            	//      problems (such as having two incompatible copies for 
+            	//      the same class that is itself a dependency of two 
+            	//      classes loaded from these two different class loaders) 
             }
         }
         if (reason != null) {
 	        writeDebug("import", "trying " + name + " as " + reason +
-	                " in Jython's parent class loader");
+	                   " in context class loader, for backwards compatibility");
         }
-        classLoader = imp.getParentClassLoader();
-        if (classLoader != null) {
-        	return loadAndInitClass(name, classLoader);
-        } 
-        
-        if (reason != null) {
-	        writeDebug("import", "trying " + name + " as " + reason +
-	                   " in Class.forName");
-        }
-        return Class.forName(name);
+        return loadAndInitClass(name, Thread.currentThread().getContextClassLoader());
     }
     
     /**
