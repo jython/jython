@@ -59,6 +59,7 @@ public class Setup
         "_ast:org.python.antlr.ast.AstModule",
         "_marshal",
         "_threading:org.python.modules._threading._threading",
-        PosixModule.getOSName() + ":org.python.modules.posix.PosixModule"
+        PosixModule.getOSName() + ":org.python.modules.posix.PosixModule",
+        "jffi:org.python.modules.jffi.jffi"
     };
 }
