@@ -1,5 +1,7 @@
 import jffi
 
+__version__ = "0.0.1"
+
 _TypeMap = {
     'b': jffi.Type.BYTE,
     'B': jffi.Type.UBYTE,
