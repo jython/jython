@@ -2,14 +2,10 @@
 package org.python.core.util;
 
 import java.io.ByteArrayOutputStream;
-import java.io.FileDescriptor;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import org.python.core.imp;
-import org.python.core.Py;
-import org.python.core.PyException;
 import org.python.core.PyFile;
 
 /**
