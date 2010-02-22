@@ -255,25 +255,27 @@ public class Time implements ClassDictInit
             throw Py.ValueError("timestamp out of range for platform time_t");
         }
         cal.setTime(new Date((long)secs));
-        // This call used to be needed to work around JVM bugs.
-        // It appears to break jdk1.2, so it's not removed.
-        // cal.clear();
-        int dow = cal.get(Calendar.DAY_OF_WEEK)-2;
-        if (dow<0)
-            dow = dow+7;
-        // TBD: is this date dst?
-        boolean isdst = tz.inDaylightTime(cal.getTime());
-        return new PyTimeTuple(new PyInteger(cal.get(Calendar.YEAR)),
-                               new PyInteger(cal.get(Calendar.MONTH)+1),
-                               new PyInteger(cal.get(Calendar.DAY_OF_MONTH)),
-                               new PyInteger(cal.get(Calendar.HOUR) +
-                                             12*cal.get(Calendar.AM_PM)),
-                               new PyInteger(cal.get(Calendar.MINUTE)),
-                               new PyInteger(cal.get(Calendar.SECOND)),
-                               new PyInteger(dow),
-                               new PyInteger(cal.get(Calendar.DAY_OF_YEAR)),
-                               new PyInteger(isdst ? 1 : 0));
+        int isdst = tz.inDaylightTime(cal.getTime()) ? 1 : 0;
+        return toTimeTuple(cal, isdst);
     }
+
+    private static PyTimeTuple toTimeTuple(Calendar cal, int isdst) {
+        int dow = cal.get(Calendar.DAY_OF_WEEK) - 2;
+        if (dow < 0) {
+            dow += 7;
+        }
+        return new PyTimeTuple(new PyInteger(cal.get(Calendar.YEAR)),
+                new PyInteger(cal.get(Calendar.MONTH) + 1),
+                new PyInteger(cal.get(Calendar.DAY_OF_MONTH)),
+                new PyInteger(cal.get(Calendar.HOUR)
+                + 12 * cal.get(Calendar.AM_PM)),
+                new PyInteger(cal.get(Calendar.MINUTE)),
+                new PyInteger(cal.get(Calendar.SECOND)),
+                new PyInteger(dow),
+                new PyInteger(cal.get(Calendar.DAY_OF_YEAR)),
+                new PyInteger(isdst));
+    }
+
 
     /**
      * Convert a time argument that may be an optional float or None value to a
@@ -713,17 +715,7 @@ public class Time implements ClassDictInit
         if (jformat.contains("zzz")) {
             isdst = cal.getTimeZone().inDaylightTime(cal.getTime()) ? 1 : 0;
         }
-        return  new PyTuple(new PyObject[] {
-            new PyInteger(cal.get(Calendar.YEAR)),
-            new PyInteger(cal.get(Calendar.MONTH)+1),
-            new PyInteger(cal.get(Calendar.DAY_OF_MONTH)),
-            new PyInteger(cal.get(Calendar.HOUR) + 12*cal.get(Calendar.AM_PM)),
-            new PyInteger(cal.get(Calendar.MINUTE)),
-            new PyInteger(cal.get(Calendar.SECOND)),
-            new PyInteger((cal.get(Calendar.DAY_OF_WEEK)-2) % 7), // refactored for mon(0)-sun(6)
-            new PyInteger(cal.get(Calendar.DAY_OF_YEAR)),
-            new PyInteger(isdst) }
-        );
+        return toTimeTuple(cal, isdst);
     }
 
     private static final String DEFAULT_FORMAT_PY = "%a %b %d %H:%M:%S %Y";
