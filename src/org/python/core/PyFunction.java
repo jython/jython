@@ -16,7 +16,7 @@ import org.python.expose.ExposedType;
  * A Python function.
  */
 @ExposedType(name = "function", isBaseType = false, doc = BuiltinDocs.function_doc)
-public class PyFunction extends PyObject {
+public class PyFunction extends PyObject implements InvocationHandler {
 
     public static final PyType TYPE = PyType.fromClass(PyFunction.class);
 
@@ -301,7 +301,7 @@ public class PyFunction extends PyObject {
     public PyObject __call__() {
         return __call__(Py.getThreadState());
     }
-    
+
     @Override
     public PyObject __call__(ThreadState state) {
         return func_code.call(state, func_globals, func_defaults, func_closure);
@@ -311,7 +311,7 @@ public class PyFunction extends PyObject {
     public PyObject __call__(PyObject arg) {
         return __call__(Py.getThreadState(), arg);
     }
-    
+
     @Override
     public PyObject __call__(ThreadState state, PyObject arg0) {
         return func_code.call(state, arg0, func_globals, func_defaults, func_closure);
@@ -321,7 +321,7 @@ public class PyFunction extends PyObject {
     public PyObject __call__(PyObject arg1, PyObject arg2) {
         return __call__(Py.getThreadState(), arg1, arg2);
     }
-    
+
     @Override
     public PyObject __call__(ThreadState state, PyObject arg0, PyObject arg1) {
         return func_code.call(state, arg0, arg1, func_globals, func_defaults, func_closure);
@@ -331,31 +331,31 @@ public class PyFunction extends PyObject {
     public PyObject __call__(PyObject arg1, PyObject arg2, PyObject arg3) {
         return __call__(Py.getThreadState(), arg1, arg2, arg3);
     }
-    
+
     @Override
     public PyObject __call__(ThreadState state, PyObject arg0, PyObject arg1,
             PyObject arg2) {
         return func_code.call(state, arg0, arg1, arg2, func_globals, func_defaults, func_closure);
     }
-    
+
     @Override
     public PyObject __call__(PyObject arg0, PyObject arg1, PyObject arg2,
             PyObject arg3) {
         return __call__(Py.getThreadState(), arg0, arg1, arg2, arg3);
     }
-    
+
     @Override
     public PyObject __call__(ThreadState state, PyObject arg0, PyObject arg1,
             PyObject arg2, PyObject arg3) {
         return func_code.call(state, arg0, arg1, arg2, arg3, func_globals, func_defaults,
                               func_closure);
     }
-    
+
     @Override
     public PyObject __call__(PyObject[] args) {
         return __call__(Py.getThreadState(), args);
     }
-    
+
     @Override
     public PyObject __call__(ThreadState state, PyObject[] args) {
         return __call__(state, args, Py.NoKeywords);
@@ -365,7 +365,7 @@ public class PyFunction extends PyObject {
     public PyObject __call__(PyObject[] args, String[] keywords) {
         return __call__(Py.getThreadState(), args, keywords);
     }
-    
+
     @Override
     public PyObject __call__(ThreadState state, PyObject[] args, String[] keywords) {
         return function___call__(state, args, keywords);
@@ -380,7 +380,7 @@ public class PyFunction extends PyObject {
     public PyObject __call__(PyObject arg1, PyObject[] args, String[] keywords) {
         return __call__(Py.getThreadState(), arg1, args, keywords);
     }
-    
+
     @Override
     public PyObject __call__(ThreadState state, PyObject arg1, PyObject[] args,
                              String[] keywords) {
@@ -392,23 +392,54 @@ public class PyFunction extends PyObject {
     public String toString() {
         return String.format("<function %s at %s>", __name__, Py.idstr(this));
     }
-    
+
     @Override
     public Object __tojava__(Class<?> c) {
         // Automatically coerce to single method interfaces
-        if (c.isInterface() && c.getDeclaredMethods().length == 1) {
-            return Proxy.newProxyInstance(c.getClassLoader(), new Class[]{c}, new InvocationHandler() {
-                // XXX: not the most efficient implementation - the invocation handler could be shared
-                public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-                    if (args == null || args.length == 0) {
-                        return __call__().__tojava__(method.getReturnType());
-                    } else {
-                        return __call__(Py.javas2pys(args)).__tojava__(method.getReturnType());
+        if (c.isInstance(this) && c != InvocationHandler.class) {
+            // for base types, conversion is simple - so don't wrap!
+            // InvocationHandler is special, since it's a single method interface
+            // that we implement, but if we coerce to it we want the arguments
+            return c.cast( this );
+        } else if (c.isInterface()) {
+            if (c.getDeclaredMethods().length == 1 && c.getInterfaces().length == 0) {
+                // Proper single method interface
+                return proxy(c);
+            } else {
+                // Try coerce to interface with multiple overloaded versions of
+                // the same method (name)
+                String name = null;
+                for (Method method : c.getMethods()) {
+                    if (method.getDeclaringClass() != Object.class) {
+                        if (name == null || name.equals(method.getName())) {
+                            name = method.getName();
+                        } else {
+                            name = null;
+                            break;
+                        }
                     }
                 }
-            });
+                if (name != null) { // single unique method name
+                    return proxy(c);
+                }
+            }
         }
-        return super.__tojava__( c );
+        return super.__tojava__(c);
+    }
+
+    private Object proxy( Class<?> c ) {
+        return Proxy.newProxyInstance(c.getClassLoader(), new Class[]{c}, this);
+    }
+
+    public Object invoke( Object proxy, Method method, Object[] args ) throws Throwable {
+        // Handle invocation when invoked through Proxy (as coerced to single method interface)
+        if (method.getDeclaringClass() == Object.class) {
+            return method.invoke( this, args );
+        } else if (args == null || args.length == 0) {
+            return __call__().__tojava__(method.getReturnType());
+        } else {
+            return __call__(Py.javas2pys(args)).__tojava__(method.getReturnType());
+        }
     }
 
     @Override
