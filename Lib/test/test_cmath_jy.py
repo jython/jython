@@ -99,6 +99,27 @@ class CmathTestCase(unittest.TestCase):
         self.assertAlmostEqual(complex(1.00071, 0.00490826),
                                cmath.tanh(complex(3, 4)))
 
+    def test_faux_float(self):
+        class Foo:
+            def __float__(self):
+                return 1.0
+        class Bar(object):
+            def __float__(self):
+                return 1.0
+        self.assertEqual(cmath.log(Foo()), 0.0)
+        self.assertEqual(cmath.log(Bar()), 0.0)
+
+    def test_faux_complex(self):
+        class Foo:
+            def __complex__(self):
+                return 1.0j
+        class Bar(object):
+            def __complex__(self):
+                return 1.0j
+        self.assertEqual(cmath.log(Foo()), cmath.log(1.0j))
+        self.assertEqual(cmath.log(Bar()), cmath.log(1.0j))
+
+
 def test_main():
     test_support.run_unittest(CmathTestCase)
 

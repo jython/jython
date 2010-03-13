@@ -2,8 +2,8 @@ package org.python.modules;
 
 import org.python.core.Py;
 import org.python.core.PyComplex;
-import org.python.core.PyException;
 import org.python.core.PyFloat;
+import org.python.core.PyInstance;
 import org.python.core.PyObject;
 import org.python.modules.math;
 
@@ -24,28 +24,39 @@ public class cmath {
         return (Math.sqrt(x * x + y * y));
     }
 
-    private static PyComplex complexFromPyObject(PyObject in) {
-        try{
-            return(in.__complex__());
-        } catch(PyException e){
-            if(e.type == Py.AttributeError || e.type == Py.ValueError) {
-                throw Py.TypeError("a float is required");
-            }
-            throw e;
+    private static PyComplex complexFromPyObject(PyObject obj) {
+        // If op is already of type PyComplex_Type, return its value
+        if (obj instanceof PyComplex) {
+            return (PyComplex)obj;
         }
+
+        // If not, use op's __complex__ method, if it exists
+        PyObject newObj = null;
+        if (obj instanceof PyInstance) {
+            // this can go away in python 3000
+            if (obj.__findattr__("__complex__") != null) {
+                newObj = obj.invoke("__complex__");
+            }
+            // else try __float__
+        } else {
+            PyObject complexFunc = obj.getType().lookup("__complex__");
+            if (complexFunc != null) {
+                newObj = complexFunc.__call__(obj);
+            }
+        }
+
+        if (newObj != null) {
+            if (!(newObj instanceof PyComplex)) {
+                throw Py.TypeError("__complex__ should return a complex object");
+            }
+            return (PyComplex)newObj;
+        }
+
+        // If neither of the above works, interpret op as a float giving the real part of
+        // the result, and fill in the imaginary part as 0
+        return new PyComplex(obj.asDouble(), 0);
     }
     
-    private static double doubleFromPyObject(PyObject in) {
-        try{
-            return(in.__float__().getValue());
-        } catch(PyException e){
-            if(e.type == Py.AttributeError || e.type == Py.ValueError) {
-                throw Py.TypeError("a float is required");
-            }
-            throw e;
-        }
-    }
-
     public static PyObject acos(PyObject in) {
         PyComplex x = complexFromPyObject(in);
         return (c_prodi(log(x.__add__(i
@@ -146,7 +157,7 @@ public class cmath {
     }
                     
     public static PyComplex log(PyObject in, PyObject base) {
-        return log(complexFromPyObject(in), doubleFromPyObject(base));
+        return log(complexFromPyObject(in), base.asDouble());
     }
     
     public static PyComplex log(PyComplex x, double base) {
