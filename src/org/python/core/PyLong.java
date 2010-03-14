@@ -1,4 +1,7 @@
-// Copyright (c) Corporation for National Research Initiatives
+/*
+ * Copyright (c) Corporation for National Research Initiatives
+ * Copyright (c) Jython Developers
+ */
 package org.python.core;
 
 import java.io.Serializable;
@@ -11,8 +14,7 @@ import org.python.expose.ExposedType;
 import org.python.expose.MethodType;
 
 /**
- * A builtin python long. This is implemented as a
- * java.math.BigInteger.
+ * A builtin python long. This is implemented as a java.math.BigInteger.
  */
 @ExposedType(name = "long", doc = BuiltinDocs.long_doc)
 public class PyLong extends PyObject {
@@ -22,61 +24,9 @@ public class PyLong extends PyObject {
     public static final BigInteger minLong = BigInteger.valueOf(Long.MIN_VALUE);
     public static final BigInteger maxLong = BigInteger.valueOf(Long.MAX_VALUE);
     public static final BigInteger maxULong =
-        BigInteger.valueOf(1).shiftLeft(64).subtract(BigInteger.valueOf(1));
+            BigInteger.valueOf(1).shiftLeft(64).subtract(BigInteger.valueOf(1));
 
     private BigInteger value;
-
-    @ExposedNew
-    public static PyObject long___new__(PyNewWrapper new_, boolean init, PyType subtype,
-                                        PyObject[] args, String[] keywords) {
-        if (new_.for_type != subtype) {
-            return longSubtypeNew(new_, init, subtype, args, keywords);
-        }
-
-        ArgParser ap = new ArgParser("long", args, keywords, new String[] {"x", "base"}, 0);
-        PyObject x = ap.getPyObject(0, null);
-        if (x != null && x.getJavaProxy() instanceof BigInteger) {
-            return new PyLong((BigInteger)x.getJavaProxy());
-        }
-        int base = ap.getInt(1, -909);
-
-        if (x == null) {
-            return new PyLong(0);
-        }
-        if (base == -909) {
-            try {
-                return x.__long__();
-            } catch (PyException pye) {
-                if (!pye.match(Py.AttributeError)) {
-                    throw pye;
-                }
-                throw Py.TypeError(String.format("long() argument must be a string or a number, "
-                                                 + "not '%.200s'", x.getType().fastGetName()));
-            }
-        }
-        if (!(x instanceof PyString)) {
-            throw Py.TypeError("long: can't convert non-string with explicit base");
-        }
-        return ((PyString)x).atol(base);
-    }
-
-    /**
-     * Wimpy, slow approach to new calls for subtypes of long.
-     *
-     * First creates a regular long from whatever arguments we got, then allocates a
-     * subtype instance and initializes it from the regular long. The regular long is then
-     * thrown away.
-     */
-    private static PyObject longSubtypeNew(PyNewWrapper new_, boolean init, PyType subtype,
-                                           PyObject[] args, String[] keywords) {
-        PyObject tmp = long___new__(new_, init, TYPE, args, keywords);
-        if (tmp instanceof PyInteger) {
-            int intValue = ((PyInteger)tmp).getValue();
-            return new PyLongDerived(subtype, BigInteger.valueOf(intValue));
-        } else {
-            return new PyLongDerived(subtype, ((PyLong)tmp).value);
-        }
-    }
 
     public PyLong(PyType subType, BigInteger v) {
         super(subType);
@@ -99,6 +49,58 @@ public class PyLong extends PyObject {
         this(new BigInteger(s));
     }
 
+    @ExposedNew
+    public static PyObject long___new__(PyNewWrapper new_, boolean init, PyType subtype,
+                                        PyObject[] args, String[] keywords) {
+        if (new_.for_type != subtype) {
+            return longSubtypeNew(new_, init, subtype, args, keywords);
+        }
+
+        ArgParser ap = new ArgParser("long", args, keywords, new String[] {"x", "base"}, 0);
+        PyObject x = ap.getPyObject(0, null);
+        if (x != null && x.getJavaProxy() instanceof BigInteger) {
+            return new PyLong((BigInteger) x.getJavaProxy());
+        }
+        int base = ap.getInt(1, -909);
+
+        if (x == null) {
+            return new PyLong(0);
+        }
+        if (base == -909) {
+            try {
+                return x.__long__();
+            } catch (PyException pye) {
+                if (!pye.match(Py.AttributeError)) {
+                    throw pye;
+                }
+                throw Py.TypeError(String.format("long() argument must be a string or a number, "
+                                                 + "not '%.200s'", x.getType().fastGetName()));
+            }
+        }
+        if (!(x instanceof PyString)) {
+            throw Py.TypeError("long: can't convert non-string with explicit base");
+        }
+        return ((PyString) x).atol(base);
+    }
+
+    /**
+     * Wimpy, slow approach to new calls for subtypes of long.
+     *
+     * First creates a regular long from whatever arguments we got, then allocates a
+     * subtype instance and initializes it from the regular long. The regular long is then
+     * thrown away.
+     */
+    private static PyObject longSubtypeNew(PyNewWrapper new_, boolean init, PyType subtype,
+                                           PyObject[] args, String[] keywords) {
+        PyObject tmp = long___new__(new_, init, TYPE, args, keywords);
+        if (tmp instanceof PyInteger) {
+            int intValue = ((PyInteger) tmp).getValue();
+            return new PyLongDerived(subtype, BigInteger.valueOf(intValue));
+        } else {
+            return new PyLongDerived(subtype, ((PyLong) tmp).value);
+        }
+    }
+
     /**
      * Convert a double to BigInteger, raising an OverflowError if
      * infinite.
@@ -117,15 +119,17 @@ public class PyLong extends PyObject {
         return value;
     }
 
+    @Override
     public String toString() {
         return long_toString();
     }
 
     @ExposedMethod(names = {"__str__", "__repr__"}, doc = BuiltinDocs.long___str___doc)
     final String long_toString() {
-        return value.toString()+"L";
+        return value.toString() + "L";
     }
 
+    @Override
     public int hashCode() {
         return long___hash__();
     }
@@ -135,6 +139,7 @@ public class PyLong extends PyObject {
         return value.intValue();
     }
 
+    @Override
     public boolean __nonzero__() {
         return !value.equals(BigInteger.valueOf(0));
     }
@@ -152,7 +157,7 @@ public class PyLong extends PyObject {
         return v;
     }
 
-    private static final double scaledDoubleValue(BigInteger val, int[] exp){
+    private static final double scaledDoubleValue(BigInteger val, int[] exp) {
         double x = 0;
         int signum = val.signum();
         byte[] digits;
@@ -170,20 +175,19 @@ public class PyLong extends PyObject {
             i++;
             count++;
         }
-        count = count <= digits.length?count:digits.length;
+        count = count <= digits.length ? count : digits.length;
 
         while (i < count) {
             x = x * 256 + (digits[i] & 0xff);
             i++;
         }
         exp[0] = digits.length - i;
-        return signum*x;
+        return signum * x;
     }
 
-    public double scaledDoubleValue(int[] exp){
-        return scaledDoubleValue(value,exp);
+    public double scaledDoubleValue(int[] exp) {
+        return scaledDoubleValue(value, exp);
     }
-
 
     public long getLong(long min, long max) {
         return getLong(min, max, "long int too large to convert");
@@ -192,25 +196,28 @@ public class PyLong extends PyObject {
     public long getLong(long min, long max, String overflowMsg) {
         if (value.compareTo(maxLong) <= 0 && value.compareTo(minLong) >= 0) {
             long v = value.longValue();
-            if (v >= min && v <= max)
+            if (v >= min && v <= max) {
                 return v;
+            }
         }
         throw Py.OverflowError(overflowMsg);
     }
 
+    @Override
     public long asLong(int index) {
         return asLong();
     }
 
+    @Override
     public int asInt(int index) {
-        return (int)getLong(Integer.MIN_VALUE, Integer.MAX_VALUE,
-                            "long int too large to convert to int");
+        return (int) getLong(Integer.MIN_VALUE, Integer.MAX_VALUE,
+                             "long int too large to convert to int");
     }
 
     @Override
     public int asInt() {
-        return (int)getLong(Integer.MIN_VALUE, Integer.MAX_VALUE,
-                            "long int too large to convert to int");
+        return (int) getLong(Integer.MIN_VALUE, Integer.MAX_VALUE,
+                             "long int too large to convert to int");
     }
 
     @Override
@@ -218,32 +225,26 @@ public class PyLong extends PyObject {
         return getLong(Long.MIN_VALUE, Long.MAX_VALUE, "long too big to convert");
     }
 
-    public Object __tojava__(Class c) {
+    @Override
+    public Object __tojava__(Class<?> c) {
         try {
             if (c == Byte.TYPE || c == Byte.class) {
-                return new Byte((byte)getLong(Byte.MIN_VALUE,
-                                              Byte.MAX_VALUE));
+                return new Byte((byte) getLong(Byte.MIN_VALUE, Byte.MAX_VALUE));
             }
             if (c == Short.TYPE || c == Short.class) {
-                return new Short((short)getLong(Short.MIN_VALUE,
-                                                Short.MAX_VALUE));
+                return new Short((short) getLong(Short.MIN_VALUE, Short.MAX_VALUE));
             }
             if (c == Integer.TYPE || c == Integer.class) {
-                return new Integer((int)getLong(Integer.MIN_VALUE,
-                                                Integer.MAX_VALUE));
+                return new Integer((int) getLong(Integer.MIN_VALUE, Integer.MAX_VALUE));
             }
             if (c == Long.TYPE || c == Long.class) {
-                return new Long(getLong(Long.MIN_VALUE,
-                                        Long.MAX_VALUE));
+                return new Long(getLong(Long.MIN_VALUE, Long.MAX_VALUE));
             }
-            if (c == Float.TYPE || c == Double.TYPE || c == Float.class ||
-                c == Double.class)
-            {
+            if (c == Float.TYPE || c == Double.TYPE || c == Float.class || c == Double.class) {
                 return __float__().__tojava__(c);
             }
-            if (c == BigInteger.class || c == Number.class ||
-                c == Object.class || c == Serializable.class)
-            {
+            if (c == BigInteger.class || c == Number.class || c == Object.class
+                || c == Serializable.class) {
                 return value;
             }
         } catch (PyException e) {
@@ -252,17 +253,20 @@ public class PyLong extends PyObject {
         return super.__tojava__(c);
     }
 
+    @Override
     public int __cmp__(PyObject other) {
         return long___cmp__(other);
     }
 
     @ExposedMethod(type = MethodType.CMP, doc = BuiltinDocs.long___cmp___doc)
     final int long___cmp__(PyObject other) {
-        if (!canCoerce(other))
+        if (!canCoerce(other)) {
             return -2;
+        }
         return value.compareTo(coerce(other));
     }
 
+    @Override
     public Object __coerce_ex__(PyObject other) {
         return long___coerce_ex__(other);
     }
@@ -277,14 +281,13 @@ public class PyLong extends PyObject {
      * invocation of virtual methods from the exposed coerce.
      */
     final Object long___coerce_ex__(PyObject other) {
-        if (other instanceof PyLong)
+        if (other instanceof PyLong) {
             return other;
-        else
-            if (other instanceof PyInteger) {
-                return Py.newLong(((PyInteger)other).getValue());
-            } else {
-                return Py.None;
-            }
+        } else if (other instanceof PyInteger) {
+            return Py.newLong(((PyInteger) other).getValue());
+        } else {
+            return Py.None;
+        }
     }
 
     private static final boolean canCoerce(PyObject other) {
@@ -292,26 +295,29 @@ public class PyLong extends PyObject {
     }
 
     private static final BigInteger coerce(PyObject other) {
-        if (other instanceof PyLong)
+        if (other instanceof PyLong) {
             return ((PyLong) other).value;
-        else if (other instanceof PyInteger)
-            return BigInteger.valueOf(
-                   ((PyInteger) other).getValue());
-        else
+        } else if (other instanceof PyInteger) {
+            return BigInteger.valueOf(((PyInteger) other).getValue());
+        } else {
             throw Py.TypeError("xxx");
+        }
     }
 
+    @Override
     public PyObject __add__(PyObject right) {
         return long___add__(right);
     }
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___add___doc)
     final PyObject long___add__(PyObject right) {
-        if (!canCoerce(right))
+        if (!canCoerce(right)) {
             return null;
+        }
         return Py.newLong(value.add(coerce(right)));
     }
 
+    @Override
     public PyObject __radd__(PyObject left) {
         return long___radd__(left);
     }
@@ -321,17 +327,20 @@ public class PyLong extends PyObject {
         return __add__(left);
     }
 
+    @Override
     public PyObject __sub__(PyObject right) {
         return long___sub__(right);
     }
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___sub___doc)
     final PyObject long___sub__(PyObject right) {
-        if (!canCoerce(right))
+        if (!canCoerce(right)) {
             return null;
+        }
         return Py.newLong(value.subtract(coerce(right)));
     }
 
+    @Override
     public PyObject __rsub__(PyObject left) {
         return long___rsub__(left);
     }
@@ -341,30 +350,36 @@ public class PyLong extends PyObject {
         return Py.newLong(coerce(left).subtract(value));
     }
 
+    @Override
     public PyObject __mul__(PyObject right) {
         return long___mul__(right);
     }
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___mul___doc)
     final PyObject long___mul__(PyObject right) {
-        if (right instanceof PySequence)
+        if (right instanceof PySequence) {
             return ((PySequence) right).repeat(coerceInt(this));
+        }
 
-        if (!canCoerce(right))
+        if (!canCoerce(right)) {
             return null;
+        }
         return Py.newLong(value.multiply(coerce(right)));
     }
 
+    @Override
     public PyObject __rmul__(PyObject left) {
         return long___rmul__(left);
     }
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___rmul___doc)
     final PyObject long___rmul__(PyObject left) {
-        if (left instanceof PySequence)
+        if (left instanceof PySequence) {
             return ((PySequence) left).repeat(coerceInt(this));
-        if (!canCoerce(left))
+        }
+        if (!canCoerce(left)) {
             return null;
+        }
         return Py.newLong(coerce(left).multiply(value));
     }
 
@@ -372,88 +387,102 @@ public class PyLong extends PyObject {
     // This convention makes sense when you consider it in tandem with modulo
     private BigInteger divide(BigInteger x, BigInteger y) {
         BigInteger zero = BigInteger.valueOf(0);
-        if (y.equals(zero))
+        if (y.equals(zero)) {
             throw Py.ZeroDivisionError("long division or modulo");
+        }
 
         if (y.compareTo(zero) < 0) {
-            if (x.compareTo(zero) > 0)
-                return (x.subtract(y).subtract(
-                                      BigInteger.valueOf(1))).divide(y);
+            if (x.compareTo(zero) > 0) {
+                return (x.subtract(y).subtract(BigInteger.valueOf(1))).divide(y);
+            }
         } else {
-            if (x.compareTo(zero) < 0)
+            if (x.compareTo(zero) < 0) {
                 return (x.subtract(y).add(BigInteger.valueOf(1))).divide(y);
+            }
         }
         return x.divide(y);
     }
 
+    @Override
     public PyObject __div__(PyObject right) {
         return long___div__(right);
     }
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___div___doc)
     final PyObject long___div__(PyObject right) {
-        if (!canCoerce(right))
+        if (!canCoerce(right)) {
             return null;
-        if (Options.divisionWarning > 0)
+        }
+        if (Options.divisionWarning > 0) {
             Py.warning(Py.DeprecationWarning, "classic long division");
+        }
         return Py.newLong(divide(value, coerce(right)));
     }
 
+    @Override
     public PyObject __rdiv__(PyObject left) {
         return long___rdiv__(left);
     }
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___rdiv___doc)
     final PyObject long___rdiv__(PyObject left) {
-        if (!canCoerce(left))
+        if (!canCoerce(left)) {
             return null;
-        if (Options.divisionWarning > 0)
+        }
+        if (Options.divisionWarning > 0) {
             Py.warning(Py.DeprecationWarning, "classic long division");
+        }
         return Py.newLong(divide(coerce(left), value));
     }
 
+    @Override
     public PyObject __floordiv__(PyObject right) {
         return long___floordiv__(right);
     }
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___floordiv___doc)
     final PyObject long___floordiv__(PyObject right) {
-        if (!canCoerce(right))
+        if (!canCoerce(right)) {
             return null;
+        }
         return Py.newLong(divide(value, coerce(right)));
     }
 
+    @Override
     public PyObject __rfloordiv__(PyObject left) {
         return long___rfloordiv__(left);
     }
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___rfloordiv___doc)
     final PyObject long___rfloordiv__(PyObject left) {
-        if (!canCoerce(left))
+        if (!canCoerce(left)) {
             return null;
+        }
         return Py.newLong(divide(coerce(left), value));
     }
 
-    private static final PyFloat true_divide(BigInteger a,BigInteger b) {
+    private static final PyFloat true_divide(BigInteger a, BigInteger b) {
         int[] ae = new int[1];
         int[] be = new int[1];
-        double ad,bd;
+        double ad, bd;
 
-        ad = scaledDoubleValue(a,ae);
-        bd = scaledDoubleValue(b,be);
+        ad = scaledDoubleValue(a, ae);
+        bd = scaledDoubleValue(b, be);
 
-        if (bd == 0 ) throw Py.ZeroDivisionError("long division or modulo");
+        if (bd == 0) {
+            throw Py.ZeroDivisionError("long division or modulo");
+        }
 
         ad /= bd;
-        int aexp = ae[0]-be[0];
+        int aexp = ae[0] - be[0];
 
-        if (aexp > Integer.MAX_VALUE/8) {
+        if (aexp > Integer.MAX_VALUE / 8) {
             throw Py.OverflowError("long/long too large for a float");
-        } else if ( aexp < -(Integer.MAX_VALUE/8)) {
+        } else if (aexp < -(Integer.MAX_VALUE / 8)) {
             return new PyFloat(0.0);
         }
 
-        ad = ad * Math.pow(2.0, aexp*8);
+        ad = ad * Math.pow(2.0, aexp * 8);
 
         if (Double.isInfinite(ad)) {
             throw Py.OverflowError("long/long too large for a float");
@@ -462,137 +491,157 @@ public class PyLong extends PyObject {
         return new PyFloat(ad);
     }
 
+    @Override
     public PyObject __truediv__(PyObject right) {
         return long___truediv__(right);
     }
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___truediv___doc)
     final PyObject long___truediv__(PyObject right) {
-        if (!canCoerce(right))
+        if (!canCoerce(right)) {
             return null;
-        return true_divide(this.value,coerce(right));
+        }
+        return true_divide(this.value, coerce(right));
     }
 
+    @Override
     public PyObject __rtruediv__(PyObject left) {
         return long___rtruediv__(left);
     }
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___rtruediv___doc)
     final PyObject long___rtruediv__(PyObject left) {
-        if (!canCoerce(left))
+        if (!canCoerce(left)) {
             return null;
-        return true_divide(coerce(left),this.value);
+        }
+        return true_divide(coerce(left), this.value);
     }
 
     private BigInteger modulo(BigInteger x, BigInteger y, BigInteger xdivy) {
         return x.subtract(xdivy.multiply(y));
     }
 
+    @Override
     public PyObject __mod__(PyObject right) {
         return long___mod__(right);
     }
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___mod___doc)
     final PyObject long___mod__(PyObject right) {
-        if (!canCoerce(right))
+        if (!canCoerce(right)) {
             return null;
+        }
         BigInteger rightv = coerce(right);
         return Py.newLong(modulo(value, rightv, divide(value, rightv)));
     }
 
+    @Override
     public PyObject __rmod__(PyObject left) {
         return long___rmod__(left);
     }
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___rmod___doc)
     final PyObject long___rmod__(PyObject left) {
-        if (!canCoerce(left))
+        if (!canCoerce(left)) {
             return null;
+        }
         BigInteger leftv = coerce(left);
         return Py.newLong(modulo(leftv, value, divide(leftv, value)));
     }
 
+    @Override
     public PyObject __divmod__(PyObject right) {
         return long___divmod__(right);
     }
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___divmod___doc)
     final PyObject long___divmod__(PyObject right) {
-        if (!canCoerce(right))
+        if (!canCoerce(right)) {
             return null;
+        }
         BigInteger rightv = coerce(right);
 
         BigInteger xdivy = divide(value, rightv);
         return new PyTuple(Py.newLong(xdivy), Py.newLong(modulo(value, rightv, xdivy)));
     }
 
+    @Override
     public PyObject __rdivmod__(PyObject left) {
         return long___rdivmod__(left);
     }
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___rdivmod___doc)
     final PyObject long___rdivmod__(PyObject left) {
-        if (!canCoerce(left))
+        if (!canCoerce(left)) {
             return null;
+        }
         BigInteger leftv = coerce(left);
 
         BigInteger xdivy = divide(leftv, value);
         return new PyTuple(Py.newLong(xdivy), Py.newLong(modulo(leftv, value, xdivy)));
     }
 
+    @Override
     public PyObject __pow__(PyObject right, PyObject modulo) {
         return long___pow__(right, modulo);
     }
 
-    @ExposedMethod(type = MethodType.BINARY, defaults = {"null"}, doc = BuiltinDocs.long___pow___doc)
+    @ExposedMethod(type = MethodType.BINARY, defaults = {"null"},
+                   doc = BuiltinDocs.long___pow___doc)
     final PyObject long___pow__(PyObject right, PyObject modulo) {
-        if (!canCoerce(right))
+        if (!canCoerce(right)) {
             return null;
+        }
 
-        if (modulo != null && !canCoerce(right))
+        if (modulo != null && !canCoerce(right)) {
             return null;
+        }
         return _pow(value, coerce(right), modulo, this, right);
     }
 
+    @Override
     public PyObject __rpow__(PyObject left) {
         return long___rpow__(left);
     }
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___rpow___doc)
     final PyObject long___rpow__(PyObject left) {
-        if (!canCoerce(left))
+        if (!canCoerce(left)) {
             return null;
+        }
         return _pow(coerce(left), value, null, left, this);
     }
 
-    public static PyObject _pow(BigInteger value, BigInteger y,
-                                PyObject modulo, PyObject left, PyObject right)
-    {
+    public static PyObject _pow(BigInteger value, BigInteger y, PyObject modulo, PyObject left,
+                                PyObject right) {
         if (y.compareTo(BigInteger.valueOf(0)) < 0) {
-            if (value.compareTo(BigInteger.valueOf(0)) != 0)
+            if (value.compareTo(BigInteger.valueOf(0)) != 0) {
                 return left.__float__().__pow__(right, modulo);
-            else
+            } else {
                 throw Py.ZeroDivisionError("zero to a negative power");
+            }
         }
-        if (modulo == null)
+        if (modulo == null) {
             return Py.newLong(value.pow(y.intValue()));
-        else {
+        } else {
             // This whole thing can be trivially rewritten after bugs
             // in modPow are fixed by SUN
 
             BigInteger z = coerce(modulo);
             int zi = z.intValue();
             // Clear up some special cases right away
-            if (zi == 0)
+            if (zi == 0) {
                 throw Py.ValueError("pow(x, y, z) with z == 0");
-            if (zi == 1 || zi == -1)
+            }
+            if (zi == 1 || zi == -1) {
                 return Py.newLong(0);
+            }
 
             if (z.compareTo(BigInteger.valueOf(0)) <= 0) {
                 // Handle negative modulo's specially
                 /*if (z.compareTo(BigInteger.valueOf(0)) == 0) {
-                  throw Py.ValueError("pow(x, y, z) with z == 0");
-                  }*/
+                    throw Py.ValueError("pow(x, y, z) with z == 0");
+                }*/
                 y = value.modPow(y, z.negate());
                 if (y.compareTo(BigInteger.valueOf(0)) > 0) {
                     return Py.newLong(z.add(y));
@@ -611,126 +660,150 @@ public class PyLong extends PyObject {
     }
 
     private static final int coerceInt(PyObject other) {
-        if (other instanceof PyLong)
-            return ((PyLong)other).asInt();
-        else if (other instanceof PyInteger)
+        if (other instanceof PyLong) {
+            return ((PyLong) other).asInt();
+        } else if (other instanceof PyInteger) {
             return ((PyInteger) other).getValue();
-        else
+        } else {
             throw Py.TypeError("xxx");
+        }
     }
 
+    @Override
     public PyObject __lshift__(PyObject right) {
         return long___lshift__(right);
     }
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___lshift___doc)
     final PyObject long___lshift__(PyObject right) {
-        if (!canCoerce(right))
+        if (!canCoerce(right)) {
             return null;
+        }
         int rightv = coerceInt(right);
-        if(rightv < 0)
+        if (rightv < 0) {
             throw Py.ValueError("negative shift count");
+        }
         return Py.newLong(value.shiftLeft(rightv));
     }
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___rlshift___doc)
     final PyObject long___rlshift__(PyObject left) {
-        if (!canCoerce(left))
+        if (!canCoerce(left)) {
             return null;
-        if(value.intValue() < 0)
+        }
+        if (value.intValue() < 0) {
             throw Py.ValueError("negative shift count");
+        }
         return Py.newLong(coerce(left).shiftLeft(coerceInt(this)));
     }
 
+    @Override
     public PyObject __rshift__(PyObject right) {
         return long___rshift__(right);
     }
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___rshift___doc)
     final PyObject long___rshift__(PyObject right) {
-        if (!canCoerce(right))
+        if (!canCoerce(right)) {
             return null;
+        }
         int rightv = coerceInt(right);
-        if(rightv < 0)
+        if (rightv < 0) {
             throw Py.ValueError("negative shift count");
+        }
         return Py.newLong(value.shiftRight(rightv));
     }
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___rrshift___doc)
     final PyObject long___rrshift__(PyObject left) {
-        if (!canCoerce(left))
+        if (!canCoerce(left)) {
             return null;
-        if(value.intValue() < 0)
+        }
+        if (value.intValue() < 0) {
             throw Py.ValueError("negative shift count");
+        }
         return Py.newLong(coerce(left).shiftRight(coerceInt(this)));
     }
 
+    @Override
     public PyObject __and__(PyObject right) {
         return long___and__(right);
     }
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___and___doc)
     final PyObject long___and__(PyObject right) {
-        if (!canCoerce(right))
+        if (!canCoerce(right)) {
             return null;
+        }
         return Py.newLong(value.and(coerce(right)));
     }
 
+    @Override
     public PyObject __rand__(PyObject left) {
         return long___rand__(left);
     }
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___rand___doc)
     final PyObject long___rand__(PyObject left) {
-        if (!canCoerce(left))
+        if (!canCoerce(left)) {
             return null;
+        }
         return Py.newLong(coerce(left).and(value));
     }
 
+    @Override
     public PyObject __xor__(PyObject right) {
         return long___xor__(right);
     }
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___xor___doc)
     final PyObject long___xor__(PyObject right) {
-        if (!canCoerce(right))
+        if (!canCoerce(right)) {
             return null;
+        }
         return Py.newLong(value.xor(coerce(right)));
     }
 
+    @Override
     public PyObject __rxor__(PyObject left) {
         return long___rxor__(left);
     }
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___rxor___doc)
     final PyObject long___rxor__(PyObject left) {
-        if (!canCoerce(left))
+        if (!canCoerce(left)) {
             return null;
+        }
         return Py.newLong(coerce(left).xor(value));
     }
 
+    @Override
     public PyObject __or__(PyObject right) {
         return long___or__(right);
     }
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___or___doc)
     final PyObject long___or__(PyObject right) {
-        if (!canCoerce(right))
+        if (!canCoerce(right)) {
             return null;
+        }
         return Py.newLong(value.or(coerce(right)));
     }
 
+    @Override
     public PyObject __ror__(PyObject left) {
         return long___ror__(left);
     }
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___ror___doc)
     final PyObject long___ror__(PyObject left) {
-        if (!canCoerce(left))
+        if (!canCoerce(left)) {
             return null;
+        }
         return Py.newLong(coerce(left).or(value));
     }
 
+    @Override
     public PyObject __neg__() {
         return long___neg__();
     }
@@ -740,6 +813,7 @@ public class PyLong extends PyObject {
         return Py.newLong(value.negate());
     }
 
+    @Override
     public PyObject __pos__() {
         return long___pos__();
     }
@@ -749,6 +823,7 @@ public class PyLong extends PyObject {
         return long___long__();
     }
 
+    @Override
     public PyObject __abs__() {
         return long___abs__();
     }
@@ -761,6 +836,7 @@ public class PyLong extends PyObject {
         return long___long__();
     }
 
+    @Override
     public PyObject __invert__() {
         return long___invert__();
     }
@@ -770,6 +846,7 @@ public class PyLong extends PyObject {
         return Py.newLong(value.not());
     }
 
+    @Override
     public PyObject __int__() {
         return long___int__();
     }
@@ -782,7 +859,7 @@ public class PyLong extends PyObject {
         return long___long__();
     }
 
-
+    @Override
     public PyObject __long__() {
         return long___long__();
     }
@@ -795,6 +872,7 @@ public class PyLong extends PyObject {
         return Py.newLong(value);
     }
 
+    @Override
     public PyFloat __float__() {
         return long___float__();
     }
@@ -804,6 +882,7 @@ public class PyLong extends PyObject {
         return new PyFloat(doubleValue());
     }
 
+    @Override
     public PyComplex __complex__() {
         return long___complex__();
     }
@@ -812,6 +891,7 @@ public class PyLong extends PyObject {
         return new PyComplex(doubleValue(), 0.);
     }
 
+    @Override
     public PyString __oct__() {
         return long___oct__();
     }
@@ -819,15 +899,16 @@ public class PyLong extends PyObject {
     @ExposedMethod(doc = BuiltinDocs.long___oct___doc)
     final PyString long___oct__() {
         String s = value.toString(8);
-        if (s.startsWith("-"))
-            return new PyString("-0"+s.substring(1, s.length())+"L");
-        else
-            if (s.startsWith("0"))
-                return new PyString(s+"L");
-            else
-                return new PyString("0"+s+"L");
+        if (s.startsWith("-")) {
+            return new PyString("-0" + s.substring(1, s.length()) + "L");
+        } else if (s.startsWith("0")) {
+            return new PyString(s + "L");
+        } else {
+            return new PyString("0" + s + "L");
+        }
     }
 
+    @Override
     public PyString __hex__() {
         return long___hex__();
     }
@@ -835,16 +916,19 @@ public class PyLong extends PyObject {
     @ExposedMethod(doc = BuiltinDocs.long___hex___doc)
     final PyString long___hex__() {
         String s = value.toString(16);
-        if (s.startsWith("-"))
-            return new PyString("-0x"+s.substring(1, s.length())+"L");
-        else
-            return new PyString("0x"+s+"L");
+        if (s.startsWith("-")) {
+            return new PyString("-0x" + s.substring(1, s.length()) + "L");
+        } else {
+            return new PyString("0x" + s + "L");
+        }
     }
 
+    @Override
     public PyString __str__() {
         return Py.newString(value.toString());
     }
 
+    @Override
     public PyUnicode __unicode__() {
         return new PyUnicode(value.toString());
     }
@@ -854,6 +938,7 @@ public class PyLong extends PyObject {
         return new PyTuple(new PyLong(this.getValue()));
     }
 
+    @Override
     public PyTuple __getnewargs__() {
         return long___getnewargs__();
     }
@@ -866,11 +951,6 @@ public class PyLong extends PyObject {
     @ExposedMethod(doc = BuiltinDocs.long___index___doc)
     final PyObject long___index__() {
         return this;
-    }
-
-    @Override
-    public boolean isNumberType() {
-        return true;
     }
 
     @Override
@@ -888,10 +968,21 @@ public class PyLong extends PyObject {
             }
             return tooLow ? Integer.MIN_VALUE : Integer.MAX_VALUE;
         }
-        return (int)value.longValue();
+        return (int) value.longValue();
     }
 
-    public boolean isMappingType() { return false; }
-    public boolean isSequenceType() { return false; }
+    @Override
+    public boolean isMappingType() {
+        return false;
+    }
 
+    @Override
+    public boolean isNumberType() {
+        return true;
+    }
+
+    @Override
+    public boolean isSequenceType() {
+        return false;
+    }
 }
