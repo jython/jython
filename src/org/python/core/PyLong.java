@@ -21,10 +21,20 @@ public class PyLong extends PyObject {
 
     public static final PyType TYPE = PyType.fromClass(PyLong.class);
 
-    public static final BigInteger minLong = BigInteger.valueOf(Long.MIN_VALUE);
-    public static final BigInteger maxLong = BigInteger.valueOf(Long.MAX_VALUE);
-    public static final BigInteger maxULong =
+    public static final BigInteger MIN_LONG = BigInteger.valueOf(Long.MIN_VALUE);
+    public static final BigInteger MAX_LONG = BigInteger.valueOf(Long.MAX_VALUE);
+    public static final BigInteger MAX_ULONG =
             BigInteger.valueOf(1).shiftLeft(64).subtract(BigInteger.valueOf(1));
+
+    /** @deprecated Use MIN_INT instead. */
+    @Deprecated
+    public static final BigInteger minLong = MIN_LONG;
+    /** @deprecated Use MAX_INT instead. */
+    @Deprecated
+    public static final BigInteger maxLong = MAX_LONG;
+    /** @deprecated Use MAX_ULONG instead. */
+    @Deprecated
+    public static final BigInteger maxULong = MAX_ULONG;
 
     private BigInteger value;
 
@@ -194,7 +204,7 @@ public class PyLong extends PyObject {
     }
 
     public long getLong(long min, long max, String overflowMsg) {
-        if (value.compareTo(maxLong) <= 0 && value.compareTo(minLong) >= 0) {
+        if (value.compareTo(MAX_LONG) <= 0 && value.compareTo(MIN_LONG) >= 0) {
             long v = value.longValue();
             if (v >= min && v <= max) {
                 return v;
@@ -853,7 +863,7 @@ public class PyLong extends PyObject {
 
     @ExposedMethod(doc = BuiltinDocs.long___int___doc)
     final PyObject long___int__() {
-        if (value.compareTo(PyInteger.maxInt) <= 0 && value.compareTo(PyInteger.minInt) >= 0) {
+        if (value.compareTo(PyInteger.MAX_INT) <= 0 && value.compareTo(PyInteger.MIN_INT) >= 0) {
             return Py.newInteger(value.intValue());
         }
         return long___long__();
@@ -960,8 +970,8 @@ public class PyLong extends PyObject {
 
     @Override
     public int asIndex(PyObject err) {
-        boolean tooLow = value.compareTo(PyInteger.minInt) < 0;
-        boolean tooHigh = value.compareTo(PyInteger.maxInt) > 0;
+        boolean tooLow = value.compareTo(PyInteger.MIN_INT) < 0;
+        boolean tooHigh = value.compareTo(PyInteger.MAX_INT) > 0;
         if (tooLow || tooHigh) {
             if (err != null) {
                 throw new PyException(err, "cannot fit 'long' into an index-sized integer");

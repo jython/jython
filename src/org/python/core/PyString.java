@@ -1570,7 +1570,7 @@ public class PyString extends PyBaseString
                 bi = new BigInteger("-" + s, base);
             } else
                 bi = new BigInteger(s, base);
-            if (bi.compareTo(PyInteger.maxInt) > 0 || bi.compareTo(PyInteger.minInt) < 0) {
+            if (bi.compareTo(PyInteger.MAX_INT) > 0 || bi.compareTo(PyInteger.MIN_INT) < 0) {
                 throw Py.OverflowError("long int too large to convert to int");
             }
             return bi.intValue();

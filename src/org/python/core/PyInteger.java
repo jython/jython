@@ -21,10 +21,17 @@ public class PyInteger extends PyObject {
     public static final PyType TYPE = PyType.fromClass(PyInteger.class);
 
     /** The minimum value of an int represented by a BigInteger */
-    public static final BigInteger minInt = BigInteger.valueOf(Integer.MIN_VALUE);
+    public static final BigInteger MIN_INT = BigInteger.valueOf(Integer.MIN_VALUE);
 
     /** The maximum value of an int represented by a BigInteger */
-    public static final BigInteger maxInt = BigInteger.valueOf(Integer.MAX_VALUE);
+    public static final BigInteger MAX_INT = BigInteger.valueOf(Integer.MAX_VALUE);
+
+    /** @deprecated Use MIN_INT instead. */
+    @Deprecated
+    public static final BigInteger minInt = MIN_INT;
+    /** @deprecated Use MAX_INT instead. */
+    @Deprecated
+    public static final BigInteger maxInt = MAX_INT;
 
     private int value;
 

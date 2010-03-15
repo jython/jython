@@ -342,7 +342,7 @@ public class struct {
         BigInteger get_ulong(PyObject value) {
             if (value instanceof PyLong){
                 BigInteger v = (BigInteger)value.__tojava__(BigInteger.class);
-                if (v.compareTo(PyLong.maxULong) > 0){
+                if (v.compareTo(PyLong.MAX_ULONG) > 0){
                     throw StructError("unsigned long int too long to convert");
                 }
                 return v;
