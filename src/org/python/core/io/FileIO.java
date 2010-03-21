@@ -65,7 +65,7 @@ public class FileIO extends RawIOBase {
         File absPath = new RelativeFile(name);
 
         try {
-            if (appending && !reading) {
+            if (appending && !(reading || plus)) {
                 // Take advantage of FileOutputStream's append mode
                 fromFileOutputStream(absPath);
             } else {
