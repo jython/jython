@@ -710,10 +710,10 @@ public class PosixModule implements ClassDictInit {
     public static PyString __doc__system = new PyString(
         "system(command) -> exit_status\n\n" +
         "Execute the command (a string) in a subshell.");
-    public static void system(PyObject command) {
-        // import subprocess; subprocess.call(command, shell=True)
-        imp.load("subprocess").invoke("call", command, new PyObject[] {Py.True},
-                                      new String[] {"shell"});
+    public static PyObject system(PyObject command) {
+        // import subprocess; return subprocess.call(command, shell=True)
+        return imp.load("subprocess").invoke("call", command, new PyObject[] {Py.True},
+                                             new String[] {"shell"});
     }
 
     public static PyString __doc__umask = new PyString(
