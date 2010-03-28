@@ -42,6 +42,10 @@ public class alias extends PythonTree {
         this.name = AstAdapters.py2identifier(name);
     }
 
+    private java.util.List<Name> nameNodes;
+    public java.util.List<Name> getInternalNameNodes() {
+        return nameNodes;
+    }
     private String asname;
     public String getInternalAsname() {
         return asname;
@@ -56,6 +60,10 @@ public class alias extends PythonTree {
         this.asname = AstAdapters.py2identifier(asname);
     }
 
+    private Name asnameNode;
+    public Name getInternalAsnameNode() {
+        return asnameNode;
+    }
 
     private final static PyString[] fields =
     new PyString[] {new PyString("name"), new PyString("asname")};
@@ -90,6 +98,21 @@ public class alias extends PythonTree {
         super(token);
         this.name = name;
         this.asname = asname;
+    }
+
+    // [import] name [as asname]
+    public alias(Name name, Name asname) {
+        this(java.util.Arrays.asList(new Name[]{name}), asname);
+    }
+
+    // [import] ...foo.bar.baz [as asname]
+    public alias(java.util.List<Name> nameNodes, Name asname) {
+        this.nameNodes = nameNodes;
+        this.name = dottedNameListToString(nameNodes);
+        if (asname != null) {
+            this.asnameNode = asname;
+            this.asname = asname.getInternalId();
+        }
     }
 
     public alias(Integer ttype, Token token, String name, String asname) {

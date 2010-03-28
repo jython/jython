@@ -45,6 +45,10 @@ public static final PyType TYPE = PyType.fromClass(Attribute.class);
     public String getInternalAttr() {
         return attr;
     }
+    private Name attrName;
+    public Name getInternalAttrName() {
+        return attrName;
+    }
     @ExposedGet(name = "attr")
     public PyObject getAttr() {
         if (attr == null) return Py.None;
@@ -116,6 +120,24 @@ public static final PyType TYPE = PyType.fromClass(Attribute.class);
         this.value = value;
         addChild(value);
         this.attr = attr;
+        this.ctx = ctx;
+    }
+
+    public Attribute(Token token, expr value, Name attr, expr_contextType ctx) {
+        super(token);
+        this.value = value;
+        addChild(value);
+        this.attr = attr.getText();
+        this.attrName = attr;
+        this.ctx = ctx;
+    }
+
+    public Attribute(Integer ttype, Token token, expr value, Name attr, expr_contextType ctx) {
+        super(ttype, token);
+        this.value = value;
+        addChild(value);
+        this.attr = attr.getText();
+        this.attrName = attr;
         this.ctx = ctx;
     }
 

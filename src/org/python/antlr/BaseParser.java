@@ -31,7 +31,7 @@ public class BaseParser {
         this.errorHandler = eh;
     }
 
-    private PythonParser setupParser(boolean single) {
+    protected PythonParser setupParser(boolean single) {
         PythonLexer lexer = new PythonLexer(charStream);
         lexer.setErrorHandler(errorHandler);
         lexer.single = single;

@@ -367,7 +367,7 @@ dotted_attr
         }
       |
         {
-            $etype = new Name($n1, $n1.text, expr_contextType.Load);
+            $etype = actions.makeNameNode($n1);
         }
       )
     ;
@@ -783,13 +783,16 @@ import_name
 import_from
     : FROM (d+=DOT* dotted_name | d+=DOT+) IMPORT
         (STAR
-       -> ^(FROM<ImportFrom>[$FROM, actions.makeFromText($d, $dotted_name.name),
+       -> ^(FROM<ImportFrom>[$FROM, actions.makeFromText($d, $dotted_name.names),
+             actions.makeModuleNameNode($d, $dotted_name.names),
              actions.makeStarAlias($STAR), actions.makeLevel($d)])
         | i1=import_as_names
-       -> ^(FROM<ImportFrom>[$FROM, actions.makeFromText($d, $dotted_name.name),
+       -> ^(FROM<ImportFrom>[$FROM, actions.makeFromText($d, $dotted_name.names),
+             actions.makeModuleNameNode($d, $dotted_name.names),
              actions.makeAliases($i1.atypes), actions.makeLevel($d)])
         | LPAREN i2=import_as_names COMMA? RPAREN
-       -> ^(FROM<ImportFrom>[$FROM, actions.makeFromText($d, $dotted_name.name),
+       -> ^(FROM<ImportFrom>[$FROM, actions.makeFromText($d, $dotted_name.names),
+             actions.makeModuleNameNode($d, $dotted_name.names),
              actions.makeAliases($i2.atypes), actions.makeLevel($d)])
         )
     ;
@@ -811,7 +814,7 @@ import_as_name
 }
     : name=NAME (AS asname=NAME)?
     {
-        $atype = new alias($name, $name.text, $asname.text);
+        $atype = new alias(actions.makeNameNode($name), actions.makeNameNode($asname));
     }
     ;
 
@@ -822,10 +825,9 @@ dotted_as_name
 @after {
     $dotted_as_name.tree = $atype;
 }
-
-    : dotted_name (AS NAME)?
+    : dotted_name (AS asname=NAME)?
     {
-        $atype = new alias($NAME, $dotted_name.name, $NAME.text);
+        $atype = new alias($dotted_name.names, actions.makeNameNode($asname));
     }
     ;
 
@@ -840,17 +842,17 @@ dotted_as_names
 
 //dotted_name: NAME ('.' NAME)*
 dotted_name
-    returns [String name]
+    returns [List<Name> names]
     : NAME (DOT dn+=attr)*
     {
-        $name = actions.makeDottedText($NAME, $dn);
+        $names = actions.makeDottedName($NAME, $dn);
     }
     ;
 
 //global_stmt: 'global' NAME (',' NAME)*
 global_stmt
     : GLOBAL n+=NAME (COMMA n+=NAME)*
-   -> ^(GLOBAL<Global>[$GLOBAL, actions.makeNames($n)])
+   -> ^(GLOBAL<Global>[$GLOBAL, actions.makeNames($n), actions.makeNameNodes($n)])
     ;
 
 //exec_stmt: 'exec' expr ['in' test [',' test]]
@@ -1522,7 +1524,7 @@ trailer [Token begin, PythonTree tree]
     | LBRACK subscriptlist[$begin] RBRACK
    -> ^(LBRACK<Subscript>[$begin, actions.castExpr($tree), actions.castSlice($subscriptlist.tree), $expr::ctype])
     | DOT attr
-   -> ^(DOT<Attribute>[$begin, actions.castExpr($tree), $attr.text, $expr::ctype])
+   -> ^(DOT<Attribute>[$begin, actions.castExpr($tree), new Name($attr.tree, $attr.text, expr_contextType.Load), $expr::ctype])
     ;
 
 //subscriptlist: subscript (',' subscript)* [',']
@@ -1630,7 +1632,7 @@ classdef
           if ($decorators.start != null) {
               t = $decorators.start;
           }
-          stype = new ClassDef(t, actions.cantBeNone($NAME),
+          stype = new ClassDef(t, actions.cantBeNoneName($NAME),
               actions.makeBases(actions.castExpr($testlist.tree)),
               actions.castStmts($suite.stypes),
               actions.castExprs($decorators.etypes));

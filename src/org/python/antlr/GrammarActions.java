@@ -61,17 +61,39 @@ public class GrammarActions {
         this.errorHandler = eh;
     }
 
-    String makeFromText(List dots, String name) {
-        StringBuffer d = new StringBuffer();
+    String makeFromText(List dots, List<Name> names) {
+        StringBuilder d = new StringBuilder();
         if (dots != null) {
             for (int i=0;i<dots.size();i++) {
                 d.append(".");
             }
         }
-        if (name != null) {
-            d.append(name);
-        }
+        d.append(PythonTree.dottedNameListToString(names));
         return d.toString();
+    }
+
+    List<Name> makeModuleNameNode(List dots, List<Name> names) {
+        List<Name> result = new ArrayList<Name>();
+        if (dots != null) {
+            for (Object o : dots) {
+                Token tok = (Token)o;
+                result.add(new Name(tok, tok.getText(), expr_contextType.Load));
+            }
+        }
+        result.addAll(names);
+        return result;
+    }
+
+    List<Name> makeDottedName(Token top, List<PythonTree> attrs) {
+      List<Name> result = new ArrayList<Name>();
+      result.add(new Name(top, top.getText(), expr_contextType.Load));
+      if (attrs != null) {
+        for (PythonTree attr : attrs) {
+          Token token = attr.getToken();
+          result.add(new Name(token, token.getText(), expr_contextType.Load));
+        }
+      }
+      return result;
     }
 
     int makeLevel(List lev) {
@@ -109,6 +131,21 @@ public class GrammarActions {
         List<String> s = new ArrayList<String>();
         for(int i=0;i<names.size();i++) {
             s.add(((Token)names.get(i)).getText());
+        }
+        return s;
+    }
+
+    Name makeNameNode(Token t) {
+        if (t == null) {
+            return null;
+        }
+        return new Name(t, t.getText(), expr_contextType.Load);
+    }
+
+    List<Name> makeNameNodes(List<Token> names) {
+        List<Name> s = new ArrayList<Name>();
+        for (int i=0; i<names.size(); i++) {
+            s.add(makeNameNode(names.get(i)));
         }
         return s;
     }
@@ -191,7 +228,7 @@ public class GrammarActions {
         expr current = new Name(nameToken, nameToken.getText(), expr_contextType.Load);
         for (Object o: attrs) {
             Token t = (Token)o;
-            current = new Attribute(t, current, t.getText(),
+            current = new Attribute(t, current, cantBeNoneName(t),
                 expr_contextType.Load);
         }
         return current;
@@ -236,21 +273,21 @@ public class GrammarActions {
         List<stmt> f = castStmts(finBody);
         return new TryFinally(t, b, f);
     }
- 
+
     stmt makeFuncdef(Token t, Token nameToken, arguments args, List funcStatements, List decorators) {
         if (nameToken == null) {
             return errorHandler.errorStmt(new PythonTree(t));
         }
-        cantBeNone(nameToken);
+        Name n = cantBeNoneName(nameToken);
         arguments a;
         if (args != null) {
             a = args;
         } else {
-            a = new arguments(t, new ArrayList<expr>(), null, null, new ArrayList<expr>()); 
+            a = new arguments(t, new ArrayList<expr>(), (Name)null, null, new ArrayList<expr>());
         }
         List<stmt> s = castStmts(funcStatements);
         List<expr> d = castExprs(decorators);
-        return new FunctionDef(t, nameToken.getText(), a, s, d);
+        return new FunctionDef(t, n, a, s, d);
     }
 
     List<expr> makeAssignTargets(expr lhs, List rhs) {
@@ -293,17 +330,17 @@ public class GrammarActions {
 
         List<expr> p = castExprs(params);
         List<expr> d = castExprs(defaults);
-        String s;
-        String k;
+        Name s;
+        Name k;
         if (snameToken == null) {
             s = null;
         } else {
-            s = cantBeNone(snameToken);
+            s = cantBeNoneName(snameToken);
         }
         if (knameToken == null) {
             k = null;
         } else {
-            k = cantBeNone(knameToken);
+            k = cantBeNoneName(knameToken);
         }
         return new arguments(t, p, s, k, d);
     }
@@ -516,6 +553,13 @@ public class GrammarActions {
         return t.getText();
     }
 
+    Name cantBeNoneName(Token t) {
+        if (t == null || t.getText().equals("None")) {
+            errorHandler.error("can't be None", new PythonTree(t));
+        }
+        return new Name(t, t.getText(), expr_contextType.Load);
+    }
+
     void cantBeNone(PythonTree e) {
         if (e.getText().equals("None")) {
             errorHandler.error("can't be None", e);
@@ -722,18 +766,4 @@ public class GrammarActions {
         }
         return s;
     }
-
-    public String makeDottedText(Token name, List<PythonTree> c) {
-        final String dot = ".";
-        if (c == null || c.isEmpty()) {
-            return name.getText();
-        }
-        StringBuilder b = new StringBuilder(name.getText());
-        for (PythonTree t : c) {
-            b.append(dot);
-            b.append(t.getToken().getText());
-        }
-        return b.toString();
-    }
-
 }

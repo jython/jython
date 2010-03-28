@@ -883,12 +883,57 @@ The readme text for the next release will be like:
         <junit fork="true" printsummary="true">
             <formatter type="xml"/>
             <sysproperty key="python.home" value="${dist.dir}"/>
+            <sysproperty key="python.test.source.dir" value="${test.source.dir}"/>
             <classpath refid="test.classpath"/>
             <batchtest todir="${junit.reports}">
                 <fileset dir="${test.source.dir}" includes="**/*Test*.java">
                     <exclude name="javatests/**/*" />
                     <exclude name="**/InterpTestCase.java" />
                     <exclude name="org/python/antlr/**" />
+                </fileset>
+            </batchtest>
+        </junit>
+    </target>
+    <target name="idxtest" depends="developer-build">
+        <mkdir dir="${junit.reports}"/>
+        <junit fork="true" printsummary="true" showoutput="true">
+            <formatter type="xml"/>
+            <sysproperty key="python.home" value="${dist.dir}"/>
+            <sysproperty key="python.test.source.dir" value="${test.source.dir}"/>
+            <classpath refid="test.classpath"/>
+            <batchtest todir="${junit.reports}">
+                <fileset dir="${test.source.dir}" includes="**/*Test*.java">
+                    <exclude name="javatests/**/*" />
+                    <exclude name="**/InterpTestCase.java" />
+                    <exclude name="org/python/antlr/**" />
+                    <exclude name="org/python/core/**" />
+                    <exclude name="org/python/expose/**" />
+                    <exclude name="org/python/jsr223/**" />
+                    <exclude name="org/python/tests/**" />
+                    <exclude name="org/python/util/**" />
+                </fileset>
+            </batchtest>
+        </junit>
+    </target>
+    <!-- XXX: how do I share common stuff with "idxtest" target? -->
+    <target name="idxtest-debug" depends="developer-build">
+        <mkdir dir="${junit.reports}"/>
+        <junit fork="true" printsummary="true">
+            <formatter type="xml"/>
+            <sysproperty key="python.home" value="${dist.dir}"/>
+            <sysproperty key="python.test.source.dir" value="${test.source.dir}"/>
+            <classpath refid="test.classpath"/>
+            <jvmarg value="-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5000"/>
+            <batchtest todir="${junit.reports}">
+                <fileset dir="${test.source.dir}" includes="**/*Test*.java">
+                    <exclude name="javatests/**/*" />
+                    <exclude name="**/InterpTestCase.java" />
+                    <exclude name="org/python/antlr/**" />
+                    <exclude name="org/python/core/**" />
+                    <exclude name="org/python/expose/**" />
+                    <exclude name="org/python/jsr223/**" />
+                    <exclude name="org/python/tests/**" />
+                    <exclude name="org/python/util/**" />
                 </fileset>
             </batchtest>
         </junit>

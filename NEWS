@@ -22,6 +22,7 @@ Jython 2.5.2a1
       during Django or Pylons development mode reloading)
     - Fix pickling of collections.defaultdict objects
     - Fix the cmath module to accept objects implementing the __float__ method
+    - Add google indexer (by Yin Wang and Steve Yegge)
 
 Jython 2.5.1rc3
   Bugs Fixed

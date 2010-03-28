@@ -5,6 +5,7 @@ import org.antlr.runtime.Token;
 import org.antlr.runtime.tree.CommonTree;
 
 import org.python.core.PyType;
+import org.python.antlr.ast.Name;
 import org.python.antlr.ast.VisitorIF;
 
 import java.util.ArrayList;
@@ -163,6 +164,35 @@ public class PythonTree extends AST {
 
     public void setChildIndex(int index) {
         node.setChildIndex(index);
+    }
+
+    /**
+     * Converts a list of Name to a dotted-name string.
+     * Because leading dots are indexable identifiers (referring
+     * to parent directories in relative imports), a Name list
+     * may include leading dots, but not dots between names.
+     */
+    public static String dottedNameListToString(List<Name> names) {
+        if (names == null) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder();
+        boolean leadingDot = true;
+        for (int i = 0, len = names.size(); i < len; i++) {
+            Name name = names.get(i);
+            String id = name.getInternalId();
+            if (id == null) {
+                continue;
+            }
+            if (!".".equals(id)) {
+                leadingDot = false;
+            }
+            sb.append(id);
+            if (i < len - 1 && !leadingDot) {
+                sb.append(".");
+            }
+        }
+        return sb.toString();
     }
 
     @Override

@@ -34,6 +34,8 @@ Copyright © Corporation for National Research Initiatives
     Alan Kennedy contributed modjy, which bridges WSGI to the Servlet API
 
     Chris Gokey, David Syer and Finn Bock added PyServlet.
+    
+    Yin Wang and Steve Yegge contributed the static analyzer from Google (also called indexer).
 
     A huge thanks goes to all the members of the jpython/jython
     mailing lists.  Other folks who have contributed to JPython and 

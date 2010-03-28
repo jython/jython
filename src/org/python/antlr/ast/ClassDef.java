@@ -32,6 +32,10 @@ public static final PyType TYPE = PyType.fromClass(ClassDef.class);
     public String getInternalName() {
         return name;
     }
+    private Name nameNode;
+    public Name getInternalNameNode() {
+        return nameNode;
+    }
     @ExposedGet(name = "name")
     public PyObject getName() {
         if (name == null) return Py.None;
@@ -131,6 +135,34 @@ public static final PyType TYPE = PyType.fromClass(ClassDef.class);
     body, java.util.List<expr> decorator_list) {
         super(token);
         this.name = name;
+        this.bases = bases;
+        if (bases == null) {
+            this.bases = new ArrayList<expr>();
+        }
+        for(PythonTree t : this.bases) {
+            addChild(t);
+        }
+        this.body = body;
+        if (body == null) {
+            this.body = new ArrayList<stmt>();
+        }
+        for(PythonTree t : this.body) {
+            addChild(t);
+        }
+        this.decorator_list = decorator_list;
+        if (decorator_list == null) {
+            this.decorator_list = new ArrayList<expr>();
+        }
+        for(PythonTree t : this.decorator_list) {
+            addChild(t);
+        }
+    }
+
+    public ClassDef(Token token, Name name, java.util.List<expr> bases, java.util.List<stmt>
+    body, java.util.List<expr> decorator_list) {
+        super(token);
+        this.name = name.getText();
+        this.nameNode = name;
         this.bases = bases;
         if (bases == null) {
             this.bases = new ArrayList<expr>();
