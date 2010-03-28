@@ -175,6 +175,7 @@ public class AstCache {
         }
 
         // Convert to indexer's AST.  Type conversion warnings are harmless here.
+        @SuppressWarnings("unchecked")
         Object obj = ast.accept(new AstConverter());
         if (!(obj instanceof NModule)) {
             warn("\n[warning] converted AST is not a module: " + obj);

@@ -215,6 +215,7 @@ public class AstConverter extends Visitor {
         List<NExceptHandler> out = new ArrayList<NExceptHandler>(in == null ? 0 : in.size());
         if (in != null) {
             for (excepthandler e : in) {
+                @SuppressWarnings("unchecked")
                 NExceptHandler nxh = (NExceptHandler)e.accept(this);
                 if (nxh != null) {
                     out.add(nxh);
@@ -228,6 +229,7 @@ public class AstConverter extends Visitor {
         List<NNode> out = new ArrayList<NNode>(in == null ? 0 : in.size());
         if (in != null) {
             for (expr e : in) {
+                @SuppressWarnings("unchecked")
                 NNode nx = (NNode)e.accept(this);
                 if (nx != null) {
                     out.add(nx);
@@ -241,6 +243,7 @@ public class AstConverter extends Visitor {
         List<NName> out = new ArrayList<NName>(in == null ? 0 : in.size());
         if (in != null) {
             for (expr e : in) {
+                @SuppressWarnings("unchecked")
                 NName nn = (NName)e.accept(this);
                 if (nn != null) {
                     out.add(nn);
@@ -262,6 +265,7 @@ public class AstConverter extends Visitor {
             if (end == -1) {
                 end = n.getCharStopIndex();
             }
+            @SuppressWarnings("unchecked")
             NName nn = (NName)n.accept(this);
             out = new NQname(out, nn, n.getCharStartIndex(), end);
         }
@@ -285,6 +289,7 @@ public class AstConverter extends Visitor {
         List<NNode> out = new ArrayList<NNode>(in == null ? 0 : in.size());
         if (in != null) {
             for (stmt e : in) {
+                @SuppressWarnings("unchecked")
                 NNode nx = (NNode)e.accept(this);
                 if (nx != null) {
                     out.add(nx);
@@ -298,6 +303,7 @@ public class AstConverter extends Visitor {
         if (e == null) {
             return null;
         }
+        @SuppressWarnings("unchecked")
         Object o = e.accept(this);
         if (o instanceof NNode) {
             return (NNode)o;
@@ -353,7 +359,7 @@ public class AstConverter extends Visitor {
     @Override
     public Object visitBoolOp(BoolOp n) throws Exception {
         NBoolOp.OpType op;
-        switch ((boolopType)n.getInternalOp()) {
+        switch (n.getInternalOp()) {
             case And:
                 op = NBoolOp.OpType.AND;
                 break;

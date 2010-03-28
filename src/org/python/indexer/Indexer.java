@@ -907,7 +907,7 @@ public class Indexer {
     }
 
     public List<String> getLoadedFiles() {
-        List files = new ArrayList<String>();
+        List<String> files = new ArrayList<String>();
         for (String file : moduleTable.keySet()) {
             if (file.startsWith("/")) {
                 files.add(file);
