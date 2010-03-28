@@ -142,7 +142,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
 
         List<String>[] vec = zipPackages.get(packageName);
         if (vec == null) {
-            vec = new List[] { Generic.list(), Generic.list() };
+            vec = createGenericStringListArray();
             zipPackages.put(packageName, vec);
         }
         int access = checkAccess(zip);
@@ -153,6 +153,11 @@ public abstract class CachedJarsPackageManager extends PackageManager {
         }
     }
 
+    @SuppressWarnings("unchecked")
+    private List<String>[] createGenericStringListArray(){
+        return new List[] { Generic.list(), Generic.list() };
+    }
+    
     // Extract all of the packages in a single jarfile
     private Map<String, String> getZipPackages(InputStream jarin) throws IOException {
         Map<String, List<String>[]> zipPackages = Generic.map();

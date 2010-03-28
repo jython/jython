@@ -10,6 +10,7 @@ import org.python.util.Generic;
 
 public class PySetInJavaTest {
 
+    @SuppressWarnings("unchecked")
     public static Set<Object> createPySetContainingJavaObjects() {
         PySet s = new PySet();
         s.add("value");
