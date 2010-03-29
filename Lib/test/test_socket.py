@@ -349,7 +349,6 @@ class GeneralModuleTests(unittest.TestCase):
             self.assertRaises(OverflowError, func, 1L<<34)
 
     def testGetServBy(self):
-        if sys.platform[:4] == 'java': return # not implemented on java
         eq = self.assertEqual
         # Find one service that exists, then check all the related interfaces.
         # I've ordered this by protocols that have both a tcp and udp

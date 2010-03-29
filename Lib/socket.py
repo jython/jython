@@ -566,18 +566,26 @@ def gethostbyaddr(name):
     names, addrs = _gethostbyaddr(name)
     return (names[0], names, addrs)
 
-def getservbyname(servicename, protocolname=None):
-    # http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4071389
-    # How complex is the structure of /etc/services?
-    raise NotImplementedError("getservbyname not yet supported on jython.")
+def getservbyname(service_name, protocol_name=None):
+    try:
+        from jnr.netdb import Service
+    except ImportError:
+        return None
+    return Service.getServiceByName(service_name, protocol_name).getPort()
 
-def getservbyport(port, protocolname=None):
-    # Same situation as above
-    raise NotImplementedError("getservbyport not yet supported on jython.")
+def getservbyport(port, protocol_name=None):
+    try:
+        from jnr.netdb import Service
+    except ImportError:
+        return None
+    return Service.getServiceByPort(port, protocol_name).getName()
 
-def getprotobyname(protocolname=None):
-    # Same situation as above
-    raise NotImplementedError("getprotobyname not yet supported on jython.")
+def getprotobyname(protocol_name=None):
+    try:
+        from jnr.netdb import Protocol
+    except ImportError:
+        return None
+    return Protocol.getProtocolByName(protocol_name).getProto()
 
 def _realsocket(family = AF_INET, type = SOCK_STREAM, protocol=0):
     assert family == AF_INET, "Only AF_INET sockets are currently supported on jython"

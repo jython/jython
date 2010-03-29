@@ -205,6 +205,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
             <pathelement path="${extlibs.dir}/jffi-x86_64-SunOS.jar"/>
             <pathelement path="${extlibs.dir}/jffi.jar"/>
             <pathelement path="${extlibs.dir}/jnr-posix.jar"/>
+            <pathelement path="${extlibs.dir}/jnr-netdb-0.4.jar"/>
         </path>
 
         <available property="informix.present" classname="com.informix.jdbc.IfxDriver" classpath="${informix.jar}" />
@@ -597,6 +598,7 @@ The readme text for the next release will be like:
             <zipfileset src="extlibs/jffi-x86_64-SunOS.jar"/>
             <zipfileset src="extlibs/jffi.jar"/>
             <zipfileset src="extlibs/jnr-posix.jar"/>
+            <zipfileset src="extlibs/jnr-netdb-0.4.jar"/>
             <!-- <rule pattern="com.sun.jna.**" result="org.python.jna.@1"/> -->
             <rule pattern="org.jruby.ext.posix.**" result="org.python.posix.@1"/>
             <zipfileset src="extlibs/constantine.jar"/>
