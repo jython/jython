@@ -188,7 +188,7 @@ class JavaSAXParser(xmlreader.XMLReader, javasax.ContentHandler):
         self._cont_handler.characters(String(char, start, len).getBytes('utf-8').tostring().decode('utf-8'))
 
     def ignorableWhitespace(self, char, start, len):
-        self._cont_handler.ignorableWhitespace(str(String(char, start, len)))
+        self._cont_handler.ignorableWhitespace(String(char, start, len).getBytes('utf-8').tostring().decode('utf-8'))
 
     def endElement(self, uri, lname, qname):
         if self._namespaces:

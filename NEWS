@@ -2,6 +2,7 @@ Jython NEWS
 
 Jython 2.5.2a1
   Bugs Fixed
+    - [ 1583 ] xml.dom.Node.data returns bytestrings of decoded unicode
     - [ 1225 ] socket.getservbyname/port() not yet supported
     - [ 1532 ] Cannot use docstring when defining class
     - [ 1530 ] BoolOp in multiple assign causes VerifyError
