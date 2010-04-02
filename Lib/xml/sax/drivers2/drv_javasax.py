@@ -185,10 +185,11 @@ class JavaSAXParser(xmlreader.XMLReader, javasax.ContentHandler):
         self._cont_handler.startPrefixMapping(prefix, uri)
 
     def characters(self, char, start, len):
-        self._cont_handler.characters(String(char, start, len).getBytes('utf-8').tostring().decode('utf-8'))
+        self._cont_handler.characters(unicode(String(char, start, len)))
 
     def ignorableWhitespace(self, char, start, len):
-        self._cont_handler.ignorableWhitespace(String(char, start, len).getBytes('utf-8').tostring().decode('utf-8'))
+        self._cont_handler.ignorableWhitespace(unicode(String(char, start,
+                                                              len)))
 
     def endElement(self, uri, lname, qname):
         if self._namespaces:
