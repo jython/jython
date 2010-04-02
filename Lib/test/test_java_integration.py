@@ -20,7 +20,8 @@ from java.awt.event import ComponentEvent
 from javax.swing.tree import TreePath
 
 from org.python.core.util import FileUtil
-from org.python.tests import BeanImplementation, Child, Child2, Listenable, CustomizableMapHolder
+from org.python.tests import (BeanImplementation, Child, Child2,
+                              CustomizableMapHolder, Listenable, ToUnicode)
 from org.python.tests.mro import (ConfusedOnGetitemAdd, FirstPredefinedGetitem, GetitemAdder)
 
 class InstantiationTest(unittest.TestCase):
@@ -478,6 +479,13 @@ class SerializationTest(unittest.TestCase):
         unserializer = ObjectInputStream(input)
         self.assertEqual(date_list, unserializer.readObject())
 
+class UnicodeTest(unittest.TestCase):
+
+    def test_unicode_conversion(self):
+        test = unicode(ToUnicode())
+        self.assertEqual(type(test), unicode)
+        self.assertEqual(test, u"Circle is 360\u00B0")
+
 def test_main():
     test_support.run_unittest(InstantiationTest,
                               BeanTest,
@@ -493,7 +501,8 @@ def test_main():
                               JavaDelegationTest,
                               SecurityManagerTest,
                               JavaWrapperCustomizationTest,
-                              SerializationTest)
+                              SerializationTest,
+                              UnicodeTest)
 
 if __name__ == "__main__":
     test_main()

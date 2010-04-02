@@ -542,6 +542,12 @@ public class PyJavaType extends PyType {
                     return Py.newString(self.getJavaProxy().toString());
                 }
             });
+            addMethod(new PyBuiltinMethodNarrow("__unicode__") {
+                @Override
+                public PyObject __call__() {
+                    return new PyUnicode(self.toString());
+                }
+            });
         }
         if(forClass == Comparable.class) {
             addMethod(new ComparableMethod("__lt__", 1) {
