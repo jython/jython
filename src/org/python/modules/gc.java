@@ -1,9 +1,6 @@
 package org.python.modules;
 
-import org.python.core.ClassDictInit;
 import org.python.core.Py;
-import org.python.core.PyException;
-import org.python.core.PyInteger;
 import org.python.core.PyObject;
 
 public class gc {
@@ -34,12 +31,12 @@ public class gc {
         throw Py.NotImplementedError("not applicable to Java GC");
     }
     
-    public static void set_debug() {
+    public static void set_debug(int flags) {
         throw Py.NotImplementedError("not applicable to Java GC");
     }
     public static int get_debug() { return 0; }
         
-    public static void set_threshold() {
+    public static void set_threshold(PyObject[] args, String[] kwargs) {
         throw Py.NotImplementedError("not applicable to Java GC");
     }
     public static PyObject get_threshold() {
@@ -49,10 +46,10 @@ public class gc {
     public static PyObject get_objects() {
         throw Py.NotImplementedError("not applicable to Java GC");
     }
-    public static PyObject get_referrers() {
+    public static PyObject get_referrers(PyObject[] args, String[] kwargs) {
         throw Py.NotImplementedError("not applicable to Java GC");
     }
-    public static PyObject get_referents() {
+    public static PyObject get_referents(PyObject[] args, String[] kwargs) {
         throw Py.NotImplementedError("not applicable to Java GC");
     }
 
