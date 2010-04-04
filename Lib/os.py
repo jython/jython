@@ -678,11 +678,14 @@ def popen(cmd, mode='r', bufsize=-1):
     if mode == 'r':
         proc = subprocess.Popen(cmd, bufsize=bufsize, shell=True,
                                 stdout=subprocess.PIPE)
-        return _wrap_close(proc.stdout, proc)
+        fp = proc.stdout
     elif mode == 'w':
         proc = subprocess.Popen(cmd, bufsize=bufsize, shell=True,
                                 stdin=subprocess.PIPE)
-        return _wrap_close(proc.stdin, proc)
+        fp = proc.stdin
+    # files from subprocess are in binary mode but popen needs text mode
+    fp = fdopen(fp.fileno(), mode, bufsize)
+    return _wrap_close(fp, proc)
 
 # Helper for popen() -- a proxy for a file whose close waits for the process
 class _wrap_close(object):
