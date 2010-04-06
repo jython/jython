@@ -118,10 +118,7 @@ public class _codecs {
     }
 
     public static PyTuple escape_encode(String str, String errors) {
-        int size = str.length();
-        str = PyString.encode_UnicodeEscape(str, true);
-        // The string will be quoted, unquote
-        return encode_tuple(str.substring(1, str.length() - 1), size);
+        return encode_tuple(PyString.encode_UnicodeEscape(str, false), str.length());
     }
 
     /* --- Character Mapping Codec --------------------------------------- */

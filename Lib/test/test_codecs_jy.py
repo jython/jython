@@ -18,6 +18,7 @@ class CodecsTestCase(unittest.TestCase):
     def test_string_escape_1502(self):
         # http://bugs.jython.org/issue1502
         self.assertEqual('\\x00'.encode('string-escape'), '\\\\x00')
+        self.assertEqual('\\x00'.encode('unicode-escape'), '\\\\x00')
 
 
 def test_main():

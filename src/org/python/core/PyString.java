@@ -154,7 +154,7 @@ public class PyString extends PyBaseString
         for (int i = 0; size-- > 0; ) {
             int ch = str.charAt(i++);
             /* Escape quotes */
-            if (use_quotes && (ch == quote || ch == '\\')) {
+            if ((use_quotes && ch == quote) || ch == '\\') {
                 v.append('\\');
                 v.append((char) ch);
                 continue;
