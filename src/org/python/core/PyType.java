@@ -496,6 +496,7 @@ public class PyType extends PyObject implements Serializable {
             dict.__setitem__("__doc__", docObj);
         }
         setIsBaseType(builder.getIsBaseType());
+        needs_userdict = dict.__finditem__("__dict__") != null;
         instantiable = dict.__finditem__("__new__") != null;
         fillHasSetAndDelete();
     }
