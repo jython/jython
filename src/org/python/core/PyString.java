@@ -2714,35 +2714,12 @@ final class StringFormatter
         return s;
     }
 
-    private String formatFloatDecimal(PyObject arg, boolean truncate) {
-        PyFloat argAsFloat;
-        if (arg instanceof PyFloat) {
-            // Fast path
-            argAsFloat = (PyFloat)arg;
-        } else {
-            // Use __float__
-            if (arg instanceof PyInteger || arg instanceof PyLong) {
-                // Typical cases, safe to call __float__:
-                argAsFloat = arg.__float__();
-            } else  {
-                try {
-                    // We can't simply call arg.__float__() because PyString implements
-                    // it without exposing it to python (i.e, str instances has no
-                    // __float__ attribute). So, we would support strings as arguments
-                    // for %g format, which is forbidden by CPython tests (on
-                    // test_format.py).
-                    argAsFloat = (PyFloat)arg.__getattr__("__float__").__call__();
-                } catch (PyException e) {
-                    // XXX: Swallow customs AttributeError throws from __float__ methods
-                    // No better alternative for the moment
-                    if (e.match(Py.AttributeError)) {
-            throw Py.TypeError("float argument required");
+    private double asDouble(PyObject obj) {
+        try {
+            return obj.asDouble();
+        } catch (PyException pye) {
+            throw !pye.match(Py.TypeError) ? pye : Py.TypeError("float argument required");
         }
-                    throw e;
-    }
-            }
-        }
-        return formatFloatDecimal(argAsFloat.getValue(), truncate);
     }
 
     private String formatFloatDecimal(double v, boolean truncate) {
@@ -2772,7 +2749,7 @@ final class StringFormatter
                                          boolean truncate)
     {
         StringBuilder buf = new StringBuilder();
-        double v = arg.__float__().getValue();
+        double v = asDouble(arg);
         boolean isNegative = false;
         if (v < 0) {
             v = -v;
@@ -2971,10 +2948,8 @@ final class StringFormatter
                 string = formatFloatExponential(arg, c, false);
                 break;
             case 'f':
-            case 'F':    
-                string = formatFloatDecimal(arg, false);
-//                 if (altFlag && string.indexOf('.') == -1)
-//                     string += '.';
+            case 'F':
+                string = formatFloatDecimal(asDouble(arg), false);
                 break;
             case 'g':
             case 'G':
@@ -2983,7 +2958,7 @@ final class StringFormatter
                     precision = 6;
                 }
 
-                double v = arg.__float__().getValue();
+                double v = asDouble(arg);
                 int exponent = (int)ExtraMath.closeFloor(Math.log10(Math.abs(v == 0 ? 1 : v)));
                 if (v == Double.POSITIVE_INFINITY) {
                     string = "inf";
@@ -2991,7 +2966,7 @@ final class StringFormatter
                     string = "-inf";
                 } else if (exponent >= -4 && exponent < precision) {
                     precision -= exponent + 1;
-                    string = formatFloatDecimal(arg, !altFlag);
+                    string = formatFloatDecimal(v, !altFlag);
 
                     // XXX: this block may be unnecessary now
                     if (altFlag && string.indexOf('.') == -1) {

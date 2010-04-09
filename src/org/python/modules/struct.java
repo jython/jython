@@ -351,7 +351,7 @@ public class struct {
         }
 
         double get_float(PyObject value) {
-            return value.__float__().getValue();
+            return value.asDouble();
         }
 
 
@@ -1000,7 +1000,7 @@ public class struct {
             throw Py.TypeError("pack_into takes an array arg"); // as well as a buffer, what else?
         }
         PyArray buffer = (PyArray)args[argstart];
-        int offset = args[argstart + 1].__int__().asInt();
+        int offset = args[argstart + 1].asInt();
 
         ByteStream res = pack(format, f, size, argstart + 2, args);
         if (res.pos > buffer.__len__()) {

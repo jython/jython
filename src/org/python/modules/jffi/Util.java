@@ -88,13 +88,7 @@ final class Util {
     }
 
     public static final long int64Value(PyObject value) {
-        if (value instanceof PyLong) {
-            return ((PyLong) value).getLong(Long.MIN_VALUE, Long.MAX_VALUE);
-        } else if (value instanceof PyInteger) {
-            return value.asInt();
-        } else {
-            return ((PyLong) value.__long__()).getLong(Long.MIN_VALUE, Long.MAX_VALUE);
-        }
+        return value.asLong();
     }
 
     public static final long uint64Value(PyObject value) {

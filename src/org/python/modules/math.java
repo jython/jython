@@ -53,7 +53,7 @@ public class math implements ClassDictInit {
     }
 
     public static double floor(PyObject v) {
-        return floor(v.__float__().getValue());
+        return floor(v.asDouble());
     }
 
     public static double floor(double v) {
@@ -69,7 +69,7 @@ public class math implements ClassDictInit {
         if (v instanceof PyLong) {
             doubleValue = calculateLongLog((PyLong)v);
         } else {
-            doubleValue = log(v.__float__().getValue());
+            doubleValue = log(v.asDouble());
         }
         if (base != null) {
             return check(applyLoggedBase(doubleValue, base));
@@ -89,7 +89,7 @@ public class math implements ClassDictInit {
         if (base instanceof PyLong) {
             loggedBase = calculateLongLog((PyLong)base);
         } else {
-            loggedBase = log(base.__float__().getValue());
+            loggedBase = log(base.asDouble());
         }
         return check(loggedValue / loggedBase);
     }
@@ -103,7 +103,7 @@ public class math implements ClassDictInit {
     }
 
     public static double sin(PyObject v) {
-        return sin(v.__float__().getValue());
+        return sin(v.asDouble());
     }
 
     public static double sin(double v) {
@@ -111,7 +111,7 @@ public class math implements ClassDictInit {
     }
 
     public static double sqrt(PyObject v) {
-        return sqrt(v.__float__().getValue());
+        return sqrt(v.asDouble());
     }
 
     public static double sqrt(double v) {
@@ -129,7 +129,7 @@ public class math implements ClassDictInit {
             if (x <= 0.0) throw Py.ValueError("math domain error");
             return log10(x) + (e[0]*8.0)*log10(2.0);
         }
-        return log10(v.__float__().getValue());
+        return log10(v.asDouble());
     }
 
     private static double log10(double v) {
