@@ -121,6 +121,7 @@ public class DescriptorExposer extends Exposer {
         } else {
             generateFieldGetter();
         }
+        generateImplement("Get", getterMethodName != null || getterFieldName != null);
         if(setterMethodName != null) {
             generateMethodSetter();
         } else if(setterFieldName != null) {

@@ -3639,22 +3639,22 @@ public class PyObject implements Serializable {
         throw Py.TypeError("can't delete attribute '__dict__' of instance of '" + getType().fastGetName()+ "'");
     }
 
+    public boolean implementsDescrGet() {
+        return objtype.hasGet;
+    }
+
     public boolean implementsDescrSet() {
-        return objtype.has_set;
+        return objtype.hasSet;
     }
 
     public boolean implementsDescrDelete() {
-        return objtype.has_delete;
+        return objtype.hasDelete;
     }
 
-    public boolean isDataDescr() { // implements either __set__ or __delete__
-        return objtype.has_set || objtype.has_delete;
+    public boolean isDataDescr() {
+        return objtype.hasSet || objtype.hasDelete;
     }
 
-    // doc & xxx ok this way?
-    // can return null meaning set-only or throw exception
-
-    // backward comp impls.
     /**
      * Get descriptor for this PyObject.
      *
@@ -3685,8 +3685,9 @@ public class PyObject implements Serializable {
     final PyObject object___getattribute__(PyObject arg0) {
         String name = asName(arg0);
         PyObject ret = object___findattr__(name);
-        if(ret == null)
+        if (ret == null) {
             noAttributeError(name);
+        }
         return ret;
     }
 
@@ -3694,24 +3695,29 @@ public class PyObject implements Serializable {
     final PyObject object___findattr__(String name) {
         PyObject descr = objtype.lookup(name);
         PyObject res;
+        boolean get = false;
 
         if (descr != null) {
-            if (descr.isDataDescr()) {
-                res = descr.__get__(this, objtype);
-                if (res != null)
-                    return res;
+            get = descr.implementsDescrGet();
+            if (get && descr.isDataDescr()) {
+                return descr.__get__(this, objtype);
             }
         }
 
         PyObject obj_dict = fastGetDict();
         if (obj_dict != null) {
             res = obj_dict.__finditem__(name);
-            if (res != null)
+            if (res != null) {
                 return res;
+            }
+        }
+
+        if (get) {
+            return descr.__get__(this, objtype);
         }
 
         if (descr != null) {
-            return descr.__get__(this, objtype);
+            return descr;
         }
 
         return null;
@@ -3783,10 +3789,11 @@ public class PyObject implements Serializable {
             try {
                 obj_dict.__delitem__(name);
             } catch (PyException exc) {
-                if (exc.match(Py.KeyError))
+                if (exc.match(Py.KeyError)) {
                     noAttributeError(name);
-                else
+                } else {
                     throw exc;
+                }
             }
             return;
         }

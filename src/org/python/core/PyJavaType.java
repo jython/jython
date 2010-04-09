@@ -507,9 +507,12 @@ public class PyJavaType extends PyType {
             }
         }
         if (baseClass != Object.class) {
-            has_set = getDescrMethod(forClass, "__set__", OO) != null
+            hasGet = getDescrMethod(forClass, "__get__", OO) != null
+                    || getDescrMethod(forClass, "_doget", PyObject.class) != null
+                    || getDescrMethod(forClass, "_doget", OO) != null;
+            hasSet = getDescrMethod(forClass, "__set__", OO) != null
                     || getDescrMethod(forClass, "_doset", OO) != null;
-            has_delete = getDescrMethod(forClass, "__delete__", PyObject.class) != null
+            hasDelete = getDescrMethod(forClass, "__delete__", PyObject.class) != null
                     || getDescrMethod(forClass, "_dodel", PyObject.class) != null;
         }
         if (forClass == Object.class) {

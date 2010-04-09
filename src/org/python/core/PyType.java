@@ -63,9 +63,10 @@ public class PyType extends PyObject implements Serializable {
     /** Whether new instances of this type can be instantiated */
     protected boolean instantiable = true;
 
-    /** Whether this type has set/delete descriptors */
-    boolean has_set;
-    boolean has_delete;
+    /** Whether this type implements descriptor __get/set/delete__ methods. */
+    boolean hasGet;
+    boolean hasSet;
+    boolean hasDelete;
 
     /** Whether this type allows subclassing. */
     private boolean isBaseType = true;
@@ -294,6 +295,11 @@ public class PyType extends PyObject implements Serializable {
         String doc = "dictionary for instance variables (if defined)";
         dict.__setitem__("__dict__", new PyDataDescr(this, "__dict__", PyObject.class, doc) {
                 @Override
+                public boolean implementsDescrGet() {
+                    return true;
+                }
+
+                @Override
                 public Object invokeGet(PyObject obj) {
                     return obj.getDict();
                 }
@@ -333,6 +339,11 @@ public class PyType extends PyObject implements Serializable {
                 private void notWritable(PyObject obj) {
                     throw Py.AttributeError(String.format(writeMsg, "__weakref__",
                                                           obj.getType().fastGetName()));
+                }
+
+                @Override
+                public boolean implementsDescrGet() {
+                    return true;
                 }
 
                 @Override
@@ -391,7 +402,7 @@ public class PyType extends PyObject implements Serializable {
 
         // Calculate method resolution order
         mro_internal();
-        fillHasSetAndDelete();
+        cacheDescrBinds();
     }
 
     /**
@@ -498,7 +509,7 @@ public class PyType extends PyObject implements Serializable {
         setIsBaseType(builder.getIsBaseType());
         needs_userdict = dict.__finditem__("__dict__") != null;
         instantiable = dict.__finditem__("__new__") != null;
-        fillHasSetAndDelete();
+        cacheDescrBinds();
     }
 
     /**
@@ -513,9 +524,14 @@ public class PyType extends PyObject implements Serializable {
         bases = new PyObject[] {base};
     }
 
-    private void fillHasSetAndDelete() {
-        has_set = lookup_mro("__set__") != null;
-        has_delete = lookup_mro("__delete__") != null;
+    
+    /**
+     * Determine if this type is a descriptor, and if so what kind.
+     */
+    private void cacheDescrBinds() {
+        hasGet = lookup_mro("__get__") != null;
+        hasSet = lookup_mro("__set__") != null;
+        hasDelete = lookup_mro("__delete__") != null;
     }
 
     public PyObject getStatic() {
@@ -1298,11 +1314,12 @@ public class PyType extends PyObject implements Serializable {
     // name must be interned
     final PyObject type___findattr_ex__(String name) {
         PyType metatype = getType();
-
         PyObject metaattr = metatype.lookup(name);
+        boolean get = false;
 
-        if (metaattr != null && useMetatypeFirst(metaattr)) {
-            if (metaattr.isDataDescr()) {
+        if (metaattr != null) {
+            get = metaattr.implementsDescrGet();
+            if (useMetatypeFirst(metaattr) && get && metaattr.isDataDescr()) {
                 PyObject res = metaattr.__get__(this, metatype);
                 if (res != null)
                     return res;
@@ -1318,8 +1335,12 @@ public class PyType extends PyObject implements Serializable {
             }
         }
 
-        if (metaattr != null) {
+        if (get) {
             return metaattr.__get__(this, metatype);
+        }
+
+        if (metaattr != null) {
+            return metaattr;
         }
 
         return null;
@@ -1369,22 +1390,32 @@ public class PyType extends PyObject implements Serializable {
 
     void postSetattr(String name) {
         invalidateMethodCache();
-        if (name == "__set__") {
-            if (!has_set && lookup("__set__") != null) {
+        if (name == "__get__") {
+            if (!hasGet && lookup("__get__") != null) {
                 traverse_hierarchy(false, new OnType() {
                     public boolean onType(PyType type) {
-                        boolean old = type.has_set;
-                        type.has_set = true;
+                        boolean old = type.hasGet;
+                        type.hasGet = true;
+                        return old;
+                    }
+                });
+            }
+        } else if (name == "__set__") {
+            if (!hasSet && lookup("__set__") != null) {
+                traverse_hierarchy(false, new OnType() {
+                    public boolean onType(PyType type) {
+                        boolean old = type.hasSet;
+                        type.hasSet = true;
                         return old;
                     }
                 });
             }
         } else if (name == "__delete__") {
-            if (!has_delete && lookup("__delete__") != null) {
+            if (!hasDelete && lookup("__delete__") != null) {
                 traverse_hierarchy(false, new OnType() {
                     public boolean onType(PyType type) {
-                        boolean old = type.has_delete;
-                        type.has_delete = true;
+                        boolean old = type.hasDelete;
+                        type.hasDelete = true;
                         return old;
                     }
                 });
@@ -1421,13 +1452,26 @@ public class PyType extends PyObject implements Serializable {
 
     void postDelattr(String name) {
         invalidateMethodCache();
-        if (name == "__set__") {
-            if (has_set && lookup("__set__") == null) {
+        if (name == "__get__") {
+            if (hasGet && lookup("__get__") == null) {
+                traverse_hierarchy(false, new OnType() {
+                    public boolean onType(PyType type) {
+                        boolean absent = type.getDict().__finditem__("__get__") == null;
+                        if (absent) {
+                            type.hasGet = false;
+                            return false;
+                        }
+                        return true;
+                    }
+                });
+            }
+        } else if (name == "__set__") {
+            if (hasSet && lookup("__set__") == null) {
                 traverse_hierarchy(false, new OnType() {
                     public boolean onType(PyType type) {
                         boolean absent = type.getDict().__finditem__("__set__") == null;
                         if (absent) {
-                            type.has_set = false;
+                            type.hasSet = false;
                             return false;
                         }
                         return true;
@@ -1435,12 +1479,12 @@ public class PyType extends PyObject implements Serializable {
                 });
             }
         } else if (name == "__delete__") {
-            if (has_delete && lookup("__delete__") == null) {
+            if (hasDelete && lookup("__delete__") == null) {
                 traverse_hierarchy(false, new OnType() {
                     public boolean onType(PyType type) {
                         boolean absent = type.getDict().__finditem__("__delete__") == null;
                         if (absent) {
-                            type.has_delete = false;
+                            type.hasDelete = false;
                             return false;
                         }
                         return true;
