@@ -4054,7 +4054,7 @@ public class PyObject implements Serializable {
             }
             throw pye;
         }
-        if (!(longObj instanceof PyLong)) {
+        if (!(longObj instanceof PyLong || longObj instanceof PyInteger)) {
             // Shouldn't happen except with buggy builtin types
             throw Py.TypeError("integer conversion failed");
         }
