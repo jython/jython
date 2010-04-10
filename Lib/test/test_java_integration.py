@@ -420,6 +420,9 @@ class JavaDelegationTest(unittest.TestCase):
 
 class SecurityManagerTest(unittest.TestCase):
     def test_nonexistent_import_with_security(self):
+        if os._name == 'nt':
+            # http://bugs.jython.org/issue1371
+            return
         script = test_support.findfile("import_nonexistent.py")
         home = os.path.realpath(sys.prefix)
         if not os.path.commonprefix((home, os.path.realpath(script))) == home:
