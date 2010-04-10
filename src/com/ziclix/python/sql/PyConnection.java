@@ -11,10 +11,11 @@ package com.ziclix.python.sql;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.WeakHashMap;
 import java.util.Set;
 
 import org.python.core.ClassDictInit;
+import org.python.core.ContextManager;
 import org.python.core.Py;
 import org.python.core.PyBuiltinMethodSet;
 import org.python.core.PyException;
@@ -23,11 +24,10 @@ import org.python.core.PyList;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyUnicode;
+import org.python.core.ThreadState;
+import org.python.util.Generic;
 
 import com.ziclix.python.sql.util.PyArgParser;
-import org.python.core.ContextManager;
-import org.python.core.ThreadState;
-
 
 /**
  * A connection to the database.
@@ -93,9 +93,11 @@ public class PyConnection extends PyObject implements ClassDictInit, ContextMana
      */
     public PyConnection(Connection connection) throws SQLException {
         this.closed = false;
-        this.cursors = new HashSet<PyCursor>();
+        cursors = Generic.newSetFromMap(new WeakHashMap<PyCursor, Boolean>());
+        cursors = Collections.synchronizedSet(cursors);
         this.connection = connection;
-        this.statements = new HashSet<PyStatement>();
+        statements = Generic.newSetFromMap(new WeakHashMap<PyStatement, Boolean>());
+        statements = Collections.synchronizedSet(statements);
         this.supportsTransactions = this.connection.getMetaData().supportsTransactions();
         this.supportsMultipleResultSets =
                 this.connection.getMetaData().supportsMultipleResultSets();

@@ -1,15 +1,19 @@
 package org.python.util;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
+import java.util.AbstractSet;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-
-import org.python.core.util.ConcurrentHashSet;
 
 /**
  * Static methods to make instances of collections with their generic types inferred from what
@@ -64,8 +68,8 @@ public class Generic {
     /**
      * Makes a Set using the generic type inferred from whatever this is being assigned to.
      */
-    public static <T> Set<T> set() {
-        return new HashSet<T>();
+    public static <E> Set<E> set() {
+        return new HashSet<E>();
     }
 
     /**
@@ -84,8 +88,128 @@ public class Generic {
      * Makes a Set, ensuring safe concurrent operations, using generic types inferred from
      * whatever this is being assigned to.
      */
-    public static <T> Set<T> concurrentSet() {
-        return new ConcurrentHashSet<T>(CHM_INITIAL_CAPACITY, CHM_LOAD_FACTOR,
-                                        CHM_CONCURRENCY_LEVEL);
+    public static <E> Set<E> concurrentSet() {
+        return newSetFromMap(new ConcurrentHashMap<E, Boolean>(CHM_INITIAL_CAPACITY,
+                                                               CHM_LOAD_FACTOR,
+                                                               CHM_CONCURRENCY_LEVEL));
     }
+
+    /**
+     * Return a Set backed by the specified Map with the same ordering, concurrency and
+     * performance characteristics.
+     *
+     * The specified Map must be empty at the time this method is invoked.
+     *
+     * Note that this method is based on Java 6's Collections.newSetFromMap, and will be
+     * removed in a future version of Jython (likely 2.6) that will rely on Java 6.
+     *
+     * @param map the backing Map
+     * @return a Set backed by the Map
+     * @throws IllegalArgumentException if Map is not empty
+     */
+    public static <E> Set<E> newSetFromMap(Map<E, Boolean> map) {
+        return new SetFromMap<E>(map);
+    }
+
+    /**
+     * A Set backed by a generic Map.
+     */
+    private static class SetFromMap<E> extends AbstractSet<E>
+        implements Serializable {
+
+        /** The backing Map. */
+        private final Map<E, Boolean> map;
+
+        /** Backing's KeySet. */
+        private transient Set<E> keySet;
+
+        public SetFromMap(Map<E, Boolean> map) {
+            if (!map.isEmpty()) {
+                throw new IllegalArgumentException("Map is non-empty");
+            }
+            this.map = map;
+            keySet = map.keySet();
+        }
+
+        @Override
+        public int size() {
+            return map.size();
+        }
+
+        @Override
+        public boolean isEmpty() {
+            return map.isEmpty();
+        }
+
+        @Override
+        public boolean contains(Object o) {
+            return map.containsKey(o);
+        }
+
+        @Override
+        public boolean containsAll(Collection<?> c) {
+            return keySet.containsAll(c);
+        }
+
+        @Override
+        public Iterator<E> iterator() {
+            return keySet.iterator();
+        }
+
+        @Override
+        public Object[] toArray() {
+            return keySet.toArray();
+        }
+
+        @Override
+        public <T> T[] toArray(T[] a) {
+            return keySet.toArray(a);
+        }
+
+        @Override
+        public boolean add(E e) {
+            return map.put(e, Boolean.TRUE) == null;
+        }
+
+        @Override
+        public boolean remove(Object o) {
+            return map.remove(o) != null;
+        }
+
+        @Override
+        public boolean removeAll(Collection<?> c) {
+            return keySet.removeAll(c);
+        }
+
+        @Override
+        public boolean retainAll(Collection<?> c) {
+            return keySet.retainAll(c);
+        }
+
+        @Override
+        public void clear() {
+            map.clear();
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            return o == this || keySet.equals(o);
+        }
+
+        @Override
+        public int hashCode() {
+            return keySet.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return keySet.toString();
+        }
+
+        private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+            in.defaultReadObject();
+            keySet = map.keySet();
+        }
+    }
+
 }

@@ -26,6 +26,7 @@ Jython 2.5.2a1
     - [ 1502 ] string-escape codec incorrect
     - [ 1534 ] new style object __dict__[name] ignored
     - [ 1479 ] xml parser file lock
+    - [ 1582 ] com.ziclix.python.sql.PyConnection leaks memory
     - Fix runtime issues during exitfuncs triggered via SystemRestart (such as
       during Django or Pylons development mode reloading)
     - Fix pickling of collections.defaultdict objects
