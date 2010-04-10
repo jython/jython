@@ -49,6 +49,11 @@ public class PyBuiltinMethodSet extends PyBuiltinFunctionSet implements Cloneabl
     }
 
     @Override
+    public boolean implementsDescrGet() {
+        return true;
+    }
+
+    @Override
     public String toString() {
         return String.format("<built-in method %s>", info.getName());
     }
