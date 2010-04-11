@@ -474,12 +474,12 @@ public class PosixModule implements ClassDictInit {
         "path: path of directory to list\n\n" +
         "The list is in arbitrary order.  It does not include the special\n" +
         "entries '.' and '..' even if they are present in the directory.");
-    public static PyList listdir(String path) {
-        ensurePath(path);
+    public static PyList listdir(PyObject pathObj) {
+        ensurePath(pathObj);
+        String path = pathObj.asString();
         PyList list = new PyList();
         File file = new RelativeFile(path);
         String[] names = file.list();
-
         if (names == null) {
             // Can't read the path for some reason. stat will throw an error if it can't
             // read it either
@@ -493,8 +493,10 @@ public class PosixModule implements ClassDictInit {
             }
             throw Py.OSError("listdir(): an unknown error occured: " + path);
         }
+
+        PyString string = (PyString) pathObj;
         for (String name : names) {
-            list.append(new PyString(name));
+            list.append(string.createInstance(name));
         }
         return list;
     }
@@ -892,6 +894,13 @@ public class PosixModule implements ClassDictInit {
     private static String absolutePath(String path) {
         ensurePath(path);
         return new RelativeFile(path).getPath();
+    }
+
+    private static void ensurePath(PyObject path) {
+        if (!(path instanceof PyString)) {
+            throw Py.TypeError(String.format("coercing to Unicode: need string, %s type found",
+                                             path.getType().fastGetName()));
+        }
     }
 
     private static void ensurePath(String path) {
