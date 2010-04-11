@@ -159,6 +159,25 @@ public class imp {
         return mod;
     }
 
+    public static PyObject load_compiled(String name, String pathname) {
+        return load_compiled(name, pathname, new PyFile(pathname, "rb", -1));
+    }
+
+    public static PyObject load_compiled(String name, String pathname, PyObject file) {
+        InputStream stream = (InputStream) file.__tojava__(InputStream.class);
+        if (stream == Py.NoConversion) {
+            throw Py.TypeError("must be a file-like object");
+        }
+
+        // XXX: Ideally we wouldn't care about sourceName here (see
+        // http://bugs.jython.org/issue1605847 msg3805)
+        String sourceName = pathname;
+        if (sourceName.endsWith("$py.class")) {
+            sourceName = sourceName.substring(0, sourceName.length() - 9) + ".py";
+        }
+        return org.python.core.imp.loadFromCompiled(name.intern(), stream, sourceName, pathname);
+    }
+
     public static PyObject find_module(String name) {
         return find_module(name, Py.None);
     }
@@ -192,13 +211,14 @@ public class imp {
         PySystemState sys = Py.getSystemState();
         int type = data.__getitem__(2).asInt();
         while(mod == Py.None) {
-            Object o = file.__tojava__(InputStream.class);
-            if (o == Py.NoConversion) {
-                throw Py.TypeError("must be a file-like object");
-            }
             String compiledName;
             switch (type) {
                 case PY_SOURCE:
+                    Object o = file.__tojava__(InputStream.class);
+                    if (o == Py.NoConversion) {
+                        throw Py.TypeError("must be a file-like object");
+                    }
+
                     // XXX: This should load the accompanying byte code file instead, if it exists
                     String resolvedFilename = sys.getPath(filename.toString());
                     compiledName = org.python.core.imp.makeCompiledFilename(resolvedFilename);
@@ -221,15 +241,7 @@ public class imp {
                                                                mtime);
                     break;
                 case PY_COMPILED:
-                    compiledName = filename.toString();
-                    // XXX: Ideally we wouldn't care about sourceName here (see
-                    // http://bugs.jython.org/issue1605847 msg3805)
-                    String sourceName = compiledName;
-                    if (compiledName.endsWith("$py.class")) {
-                        sourceName = compiledName.substring(0, compiledName.length() - 9) + ".py";
-                    }
-                    mod = org.python.core.imp.loadFromCompiled(
-                        name.intern(), (InputStream)o, sourceName, filename.toString());
+                    mod = load_compiled(name, filename.toString(), file);
                     break;
                 case PKG_DIRECTORY:
                     PyModule m = org.python.core.imp.addModule(name);
@@ -260,6 +272,14 @@ public class imp {
 
     public static PyModule new_module(String name) {
         return new PyModule(name, null);
+    }
+
+    public static boolean is_builtin(String name) {
+        return PySystemState.getBuiltin(name) != null;
+    }
+
+    public static boolean is_frozen(String name) {
+        return false;
     }
 
     /**

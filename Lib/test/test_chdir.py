@@ -269,6 +269,13 @@ class ImportTestCase(BaseImportTestCase):
         self.assertEqual(mod.__file__, self.basename1)
         self.assert_(os.path.exists(self.bytecode))
 
+    def test_imp_load_compiled(self):
+        __import__(self.mod_name)
+        self.assertTrue(os.path.exists(self.bytecode))
+        basename = os.path.basename(self.bytecode)
+        mod = imp.load_compiled(self.mod_name, basename)
+        self.assertEqual(mod.__file__, basename)
+
 
 class ImportPackageTestCase(BaseChdirTestCase):
 

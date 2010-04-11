@@ -2,6 +2,7 @@
 
 Made for Jython.
 """
+from __future__ import with_statement
 import imp
 import os
 import shutil
@@ -142,6 +143,24 @@ class ImpTestCase(unittest.TestCase):
         self.assertEqual(imp.find_module('__builtin__'),
                          (None, '__builtin__', ('', '', 6)))
         self.assertEqual(imp.find_module('imp'), (None, 'imp', ('', '', 6)))
+
+    def test_imp_is_builtin(self):
+        self.assertTrue(all(imp.is_builtin(mod)
+                            for mod in ['sys', '__builtin__', 'imp']))
+        self.assertFalse(imp.is_builtin('os'))
+
+    def test_load_compiled(self):
+        compiled = os.__file__
+        if compiled.endswith('.py'):
+            compiled = compiled[:-3] + COMPILED_SUFFIX
+
+        os.__doc__ = 'foo'
+        self.assertEqual(os, imp.load_compiled("os", compiled))
+        self.assertFalse(os.__doc__ == 'foo')
+        with open(compiled, 'rb') as fp:
+            os.__doc__ = 'foo'
+            self.assertEqual(os, imp.load_compiled("os", compiled, fp))
+            self.assertFalse(os.__doc__ == 'foo')
 
     def test_getattr_module(self):
         '''Replacing __getattr__ in a class shouldn't lead to calls to __getitem__
