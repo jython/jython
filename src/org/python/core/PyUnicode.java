@@ -1147,8 +1147,7 @@ public class PyUnicode extends PyString implements Iterable {
 
     @ExposedMethod(doc = BuiltinDocs.unicode_translate_doc)
     final PyObject unicode_translate(PyObject table) {
-        String trans = _codecs.translate_charmap(string, "ignore", table, true).__getitem__(0).toString();
-        return new PyUnicode(trans);
+        return _codecs.translateCharmap(this, "ignore", table);
     }
 
     // these tests need to be UTF-16 aware because they are character-by-character tests,

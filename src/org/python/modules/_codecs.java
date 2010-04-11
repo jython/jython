@@ -9,6 +9,7 @@ package org.python.modules;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.util.Iterator;
 
 import org.python.core.Py;
 import org.python.core.PyDictionary;
@@ -183,60 +184,38 @@ public class _codecs {
     }
 
     // parallel to CPython's PyUnicode_TranslateCharmap
-    public static PyTuple translate_charmap(String str,
-            String errors,
-            PyObject mapping, boolean ignoreUnmapped) {
+    public static PyObject translateCharmap(PyUnicode str, String errors, PyObject mapping) {
+        StringBuilder buf = new StringBuilder(str.toString().length());
 
-        int size = str.length();
-        StringBuilder v = new StringBuilder(size);
-        for (int i = 0; i < size; i++) {
-            char ch = str.charAt(i);
-            if (ch > 0xFF) {
-                i = codecs.insertReplacementAndGetResume(v,
-                        errors,
-                        "charmap",
-                        str,
-                        i,
-                        i + 1,
-                        "ordinal not in range(255)") - 1;
-                continue;
-            }
-            PyObject w = Py.newInteger(ch);
-            PyObject x = mapping.__finditem__(w);
-            if (x == null) {
-                if (ignoreUnmapped) {
-                    v.append(ch);
-                } else {
-                    i = codecs.insertReplacementAndGetResume(v, errors, "charmap", str, i, i + 1, "no mapping found") - 1;
-                }
-                continue;
-            }
-            /* Apply mapping */
-            if (x instanceof PyInteger) {
-                int value = ((PyInteger) x).getValue();
+        for (Iterator<Integer> iter = str.newSubsequenceIterator(); iter.hasNext();) {
+            int codePoint = iter.next();
+            PyObject result = mapping.__finditem__(Py.newInteger(codePoint));
+            if (result == null) {
+                // No mapping found means: use 1:1 mapping
+                buf.appendCodePoint(codePoint);
+            } else if (result == Py.None) {
+                // XXX: We don't support the fancier error handling CPython does here of
+                // capturing regions of chars removed by the None mapping to optionally
+                // pass to an error handler. Though we don't seem to even use this
+                // functionality anywhere either
+                ;
+            } else if (result instanceof PyInteger) {
+                int value = result.asInt();
                 if (value < 0 || value > PySystemState.maxunicode) {
-                    throw Py.TypeError("character mapping must return " + "integer greater than 0 and less than sys.maxunicode");
+                    throw Py.TypeError(String.format("character mapping must be in range(0x%x)",
+                                                     PySystemState.maxunicode + 1));
                 }
-                v.append((char) value);
-            } else if (x == Py.None) {
-                i = codecs.insertReplacementAndGetResume(v,
-                        errors,
-                        "charmap",
-                        str,
-                        i,
-                        i + 1,
-                        "character maps to <undefined>") - 1;
-            } else if (x instanceof PyUnicode) {
-                v.append(x.toString());
+                buf.appendCodePoint(value);
+            } else if (result instanceof PyUnicode) {
+                buf.append(result.toString());
             } else {
-                /* wrong return value */
-                throw Py.TypeError("character mapping must return " + "integer, None or unicode");
+                // wrong return value
+                throw Py.TypeError("character mapping must return integer, None or unicode");
             }
         }
-        return decode_tuple(v.toString(), size);
+        return new PyUnicode(buf.toString());
     }
-    
-    
+
     public static PyTuple charmap_encode(String str, String errors,
             PyObject mapping) {
         //Default to Latin-1

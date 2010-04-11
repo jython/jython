@@ -138,6 +138,16 @@ class UnicodeTestCase(unittest.TestCase):
         self.assertEquals('\xe2\x82\xac', encoded_euro)
         self.assertEquals(EURO_SIGN, encoded_euro.decode('utf-8'))
 
+    def test_translate(self):
+        # http://bugs.jython.org/issue1483
+        self.assertEqual(
+            u'\u0443\u043a\u0430\u0437\u0430\u0442\u044c'.translate({}),
+            u'\u0443\u043a\u0430\u0437\u0430\u0442\u044c')
+        self.assertEqual(u'\u0443oo'.translate({0x443: 102}), u'foo')
+        self.assertEqual(
+            unichr(sys.maxunicode).translate({sys.maxunicode: 102}),
+            u'f')
+
 
 class UnicodeFormatTestCase(unittest.TestCase):
 
