@@ -34,8 +34,7 @@ import org.python.util.Generic;
  */
 // xxx Many have lamented, this should really be a module!
 // but it will require some refactoring to see this wish come true.
-public class PySystemState extends PyObject
-{
+public class PySystemState extends PyObject implements ClassDictInit {
     public static final String PYTHON_CACHEDIR = "python.cachedir";
     public static final String PYTHON_CACHEDIR_SKIP = "python.cachedir.skip";
     public static final String PYTHON_CONSOLE_ENCODING = "python.console.encoding";
@@ -189,6 +188,12 @@ public class PySystemState extends PyObject
         __dict__.invoke("update", getType().fastGetDict());
         __dict__.__setitem__("displayhook", __displayhook__);
         __dict__.__setitem__("excepthook", __excepthook__);
+    }
+
+    public static void classDictInit(PyObject dict) {
+        // XXX: Remove bean accessors for settrace/profile that we don't want
+        dict.__setitem__("trace", null);
+        dict.__setitem__("profile", null);
     }
 
     void reload() throws PyIgnoreMethodTag {
