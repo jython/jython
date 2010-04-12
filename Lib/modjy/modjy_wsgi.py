@@ -125,7 +125,7 @@ class modjy_wsgi:
 
     def set_wsgi_streams(self, req, resp, dict):
         try:
-            dict["wsgi.input"]  = create_py_file(req.getInputStream())
+            dict["wsgi.input"]  = create_py_file(req.getInputStream(), "rb")
             dict["wsgi.errors"] =  create_py_file(System.err)
         except IOException, iox:
             raise ModjyIOException(iox)

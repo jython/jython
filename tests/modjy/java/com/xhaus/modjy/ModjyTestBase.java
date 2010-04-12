@@ -95,6 +95,12 @@ public class ModjyTestBase extends BasicServletTestCaseAdapter {
         getFactory().addRequestWrapper(request);
     }
 
+    public void setMethod(String method) {
+        MockHttpServletRequest request = (MockHttpServletRequest)getFactory().getWrappedRequest();
+        request.setMethod(method);
+        getFactory().addRequestWrapper(request);
+    }
+
     public void setBodyContent(String content) {
         MockHttpServletRequest request = (MockHttpServletRequest)getFactory().getWrappedRequest();
         request.setBodyContent(content);
@@ -244,6 +250,7 @@ public class ModjyTestBase extends BasicServletTestCaseAdapter {
         suite.addTestSuite(ModjyTestInterpreterLifecycle.class);
         suite.addTestSuite(ModjyTestWebInf.class);
         suite.addTestSuite(ModjyTestWSGIStreams.class);
+        suite.addTestSuite(ModjyTestPostData.class);
         suite.addTestSuite(PyServletTest.class);
         suite.addTestSuite(PyFilterTest.class);
         junit.textui.TestRunner.run(suite);

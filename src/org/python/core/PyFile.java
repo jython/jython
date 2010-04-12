@@ -96,7 +96,7 @@ public class PyFile extends PyObject {
         file___init__(raw, name, mode, bufsize);
     }
 
-    PyFile(InputStream istream, String name, String mode, int bufsize, boolean closefd) {
+    public PyFile(InputStream istream, String name, String mode, int bufsize, boolean closefd) {
         parseMode(mode);
         file___init__(new StreamIO(istream, closefd), name, mode, bufsize);
     }

@@ -14,6 +14,13 @@ import org.python.core.PyFile;
 public class FileUtil {
 
     /**
+     * Creates a PyFile that reads from the given <code>InputStream</code> with mode.
+     */
+    public static PyFile wrap(InputStream is, String mode) {
+        return new PyFile(is, "<Java InputStream '" + is + "' as file>", mode, -1, true);    
+    }
+
+    /**
      * Creates a PyFile that reads from the given <code>InputStream</code> with bufsize.
      */
     public static PyFile wrap(InputStream is, int bufsize) {
