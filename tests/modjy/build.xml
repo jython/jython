@@ -18,7 +18,7 @@
     <property name="jython_cachedir" location="${jython_home}/cachedir" />
     <property name="mockrunner_home" location="${env.MOCKRUNNER_HOME}" />
 
-    <target name="init">
+    <target name="init" depends="clean_py_class_files">
         <available property="jython_home.exists" file="${jython_home}" />
         <fail unless="jython_home.exists" message="jython_home, ${jython_home}, doesn't exist" />
         <available property="mockrunner_home.exists" file="${mockrunner_home}" />
@@ -27,7 +27,14 @@
         <mkdir dir="${build}" />
     </target>
 
-    <target name="clean" description="clean up">
+    <target name="clean_py_class_files">
+        <!-- Clean out $py.class files in case the class file format has changed -->
+        <delete>
+            <fileset dir="." includes="**/*$py.class"/>
+        </delete>
+    </target>
+
+    <target name="clean" depends="clean_py_class_files" description="clean up">
         <!-- Delete the ${build} and ${dist} directory trees -->
         <delete dir="${build}" />
     </target>
