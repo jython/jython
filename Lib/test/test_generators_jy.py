@@ -1,7 +1,7 @@
 from __future__ import generators
 import unittest
 
-#tests for deeply nested try/except/finally's
+# tests for deeply nested try/except/finally's
 
 class FinallyTests(unittest.TestCase):
     def gen1(self):
@@ -159,6 +159,14 @@ class TryExceptTests(unittest.TestCase):
                 pass
     def testExcept(self):
         self.assertEquals([1, 1, 1], list(self.genNestedExcept()))
+
+class TestThrowTestCase(unittest.TestCase):
+
+    def test_just_started_throw(self):
+        genexp = (i for i in range(2))
+        self.assertRaises(IOError, genexp.throw, IOError)
+        self.assertEqual(genexp.gi_frame, None)
+        self.assertRaises(StopIteration, genexp.next)
 
 if __name__ == "__main__":
     unittest.main()

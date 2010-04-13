@@ -31,6 +31,7 @@ Jython 2.5.2a1
     - [ 1483 ] optparse std module dies on non-ASCII unicode data
     - [ 1390 ] ihooks fails due to unimplemented methods in imp module
     - [ 1456 ] sys.trace/profile attributes cause: AttributeError: write-only attr: trace in PyAMF
+    - [ 1385 ] generator.throw uncaught on new generator doesn't stop the generator
     - Fix runtime issues during exitfuncs triggered via SystemRestart (such as
       during Django or Pylons development mode reloading)
     - Fix pickling of collections.defaultdict objects
