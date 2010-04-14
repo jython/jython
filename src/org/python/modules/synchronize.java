@@ -89,5 +89,10 @@ public class synchronize {
                 return callable.__call__(arg1, args, keywords);
             }
         }
+
+        @Override
+        public boolean isCallable() {
+            return true;
+        }
     }
 }
