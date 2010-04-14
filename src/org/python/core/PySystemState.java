@@ -169,13 +169,7 @@ public class PySystemState extends PyObject implements ClassDictInit {
         stdin = __stdin__ = new PyFile(System.in, "<stdin>", "r" + mode, buffering, false);
         stdout = __stdout__ = new PyFile(System.out, "<stdout>", "w" + mode, buffering, false);
         stderr = __stderr__ = new PyFile(System.err, "<stderr>", "w" + mode, 0, false);
-        if (Py.getSystemState() != null) {
-            // XXX: initEncoding fails without an existing sys module as it can't import
-            // os (for os.isatty). In that case PySystemState.doInitialize calls it for
-            // us. The correct fix for this is rewriting the posix/nt module portions of
-            // os in Java
-            initEncoding();
-        }
+        initEncoding();
 
         __displayhook__ = new PySystemStateFunctions("displayhook", 10, 1, 1);
         __excepthook__ = new PySystemStateFunctions("excepthook", 30, 3, 3);

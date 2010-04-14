@@ -25,8 +25,9 @@ class Hider {
      * @param native whether the underlying posix is native
      */
     public static void hideFunctions(Class<?> cls, PyObject dict, OS os, boolean isNative) {
+        PosixImpl posixImpl = isNative ? PosixImpl.NATIVE : PosixImpl.JAVA;
         for (Method method: cls.getDeclaredMethods()) {
-            if (isHidden(method, os, isNative ? PosixImpl.NATIVE : PosixImpl.JAVA)) {
+            if (isHidden(method, os, posixImpl)) {
                 dict.__setitem__(method.getName(), null);
             }
         }

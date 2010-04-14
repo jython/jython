@@ -118,6 +118,7 @@ public class PosixModule implements ClassDictInit {
         // Hide from Python
         Hider.hideFunctions(PosixModule.class, dict, os, nativePosix);
         dict.__setitem__("classDictInit", null);
+        dict.__setitem__("__init__", null);
         dict.__setitem__("getPOSIX", null);
         dict.__setitem__("getOSName", null);
         dict.__setitem__("badFD", null);
