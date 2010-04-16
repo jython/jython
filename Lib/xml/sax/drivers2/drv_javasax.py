@@ -25,6 +25,7 @@ try:
     from org.python.core import FilelikeInputStream
     from org.xml.sax.helpers import XMLReaderFactory
     from org.xml import sax as javasax
+    from org.xml.sax.ext import LexicalHandler
 except ImportError:
     raise _exceptions.SAXReaderNotAvailable("SAX is not on the classpath", None)
 
@@ -119,7 +120,7 @@ class SimpleLocator(xmlreader.Locator):
         return self.sysId
 
 # --- JavaSAXParser
-class JavaSAXParser(xmlreader.XMLReader, javasax.ContentHandler):
+class JavaSAXParser(xmlreader.XMLReader, javasax.ContentHandler, LexicalHandler):
     "SAX driver for the Java SAX parsers."
 
     def __init__(self, jdriver = None):
@@ -133,6 +134,10 @@ class JavaSAXParser(xmlreader.XMLReader, javasax.ContentHandler):
         self.setEntityResolver(self.getEntityResolver())
         self.setErrorHandler(self.getErrorHandler())
         self.setDTDHandler(self.getDTDHandler())
+        try:
+            self._parser.setProperty("http://xml.org/sax/properties/lexical-handler", self)
+        except Exception, x:
+            pass
 
     # XMLReader methods
 
@@ -205,6 +210,9 @@ class JavaSAXParser(xmlreader.XMLReader, javasax.ContentHandler):
 
     def processingInstruction(self, target, data):
         self._cont_handler.processingInstruction(target, data)
+
+    def comment(self, char, start, len):
+        self._cont_handler.comment(unicode(String(char, start, len)))
 
 class AttributesImpl:
     def __init__(self, attrs = None):

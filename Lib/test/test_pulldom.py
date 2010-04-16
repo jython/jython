@@ -22,6 +22,7 @@ class UnicodeTests(unittest.TestCase):
     <p>Some greek: &#x391;&#x392;&#x393;&#x394;&#x395;</p>
     <greek attrs="&#x396;&#x397;&#x398;&#x399;&#x39a;"/>
     <?greek &#x39b;&#x39c;&#x39d;&#x39e;&#x39f;?>
+    <!--&#x39b;&#x39c;&#x39d;&#x39e;&#x39f;-->
 </document>
 """
 
@@ -35,7 +36,7 @@ class UnicodeTests(unittest.TestCase):
                 text.append(node.data)
         try:
             result = u"".join(text)
-            self.failUnlessEqual(repr(result), r"u'\n    Some greek: \u0391\u0392\u0393\u0394\u0395\n    \n    \n'")
+            self.failUnlessEqual(repr(result), r"u'\n    Some greek: \u0391\u0392\u0393\u0394\u0395\n    \n    \n    \n'")
         except Exception, x:
             self.fail("Unexpected exception joining text pieces: %s" % str(x))
 
@@ -65,6 +66,17 @@ class UnicodeTests(unittest.TestCase):
             self.failUnlessEqual(repr(result), r"u'&#x39b;&#x39c;&#x39d;&#x39e;&#x39f;'")
         except Exception, x:
             self.fail("Unexpected exception joining pi data pieces: %s" % str(x))
+
+    def testComment(self):
+        commentText = []
+        for event, node in pulldom.parse(self.testFile):
+            if event == pulldom.COMMENT:
+                commentText.append(node.data)
+        try:
+            result = u"".join(commentText)
+            self.failUnlessEqual(repr(result), r"u'&#x39b;&#x39c;&#x39d;&#x39e;&#x39f;'")
+        except Exception, x:
+            self.fail("Unexpected exception joining comment data pieces: %s" % str(x))
 
 def test_main():
     tests = [
