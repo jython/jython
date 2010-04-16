@@ -212,7 +212,6 @@ class JavaSAXParser(xmlreader.XMLReader, javasax.ContentHandler, LexicalHandler)
         self._cont_handler.processingInstruction(target, data)
 
     def comment(self, char, start, len):
-        print "Content handler is %s" % self._cont_handler.__class__
         self._cont_handler.comment(unicode(String(char, start, len)))
 
 class AttributesImpl:
