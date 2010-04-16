@@ -211,8 +211,31 @@ class JavaSAXParser(xmlreader.XMLReader, javasax.ContentHandler, LexicalHandler)
     def processingInstruction(self, target, data):
         self._cont_handler.processingInstruction(target, data)
 
+    # Lexical handler methods
     def comment(self, char, start, len):
-        self._cont_handler.comment(unicode(String(char, start, len)))
+        try:
+            # Need to wrap this in a try..except in case the parser does not support lexical events
+            self._cont_handler.comment(unicode(String(char, start, len)))
+        except:
+            pass
+
+    def startCDATA(self):
+        pass # TODO
+
+    def endCDATA(self):
+        pass # TODO
+
+    def startDTD(self, name, publicId, systemId):
+        pass # TODO
+
+    def endDTD(self):
+        pass # TODO
+
+    def startEntity(self, name):
+        pass # TODO
+
+    def endEntity(self, name):
+        pass # TODO
 
 class AttributesImpl:
     def __init__(self, attrs = None):
