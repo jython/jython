@@ -1,4 +1,7 @@
-// Copyright (c) Corporation for National Research Initiatives
+/*
+ * Copyright (c) Corporation for National Research Initiatives
+ * Copyright (c) Jython Developers
+ */
 package org.python.core;
 
 import org.python.modules._systemrestart;
@@ -191,17 +194,16 @@ public abstract class PyBaseCode extends PyCode {
         return call(state, os, keywords, globals, defaults, closure);
     }
 
-    public PyObject call(ThreadState state, PyObject args[], String kws[], PyObject globals, PyObject[] defs,
-                          PyObject closure) {
+    public PyObject call(ThreadState state, PyObject args[], String kws[], PyObject globals,
+                         PyObject[] defs, PyObject closure) {
         PyFrame frame = new PyFrame(this, globals);
         int argcount = args.length - kws.length;
-        int defcount = defs != null ? defs.length : 0;
-        PyObject[] fastlocals = frame.f_fastlocals;
 
         if (co_argcount > 0 || (varargs || varkwargs)) {
             int i;
             int n = argcount;
             PyObject kwdict = null;
+            PyObject[] fastlocals = frame.f_fastlocals;
             if (varkwargs) {
                 kwdict = new PyDictionary();
                 i = co_argcount;
@@ -212,6 +214,7 @@ public abstract class PyBaseCode extends PyCode {
             }
             if (argcount > co_argcount) {
                 if (!varargs) {
+                    int defcount = defs != null ? defs.length : 0;
                     String msg = String.format("%.200s() takes %s %d %sargument%s (%d given)",
                                                co_name,
                                                defcount > 0 ? "at most" : "exactly",
@@ -263,6 +266,7 @@ public abstract class PyBaseCode extends PyCode {
                 }
             }
             if (argcount < co_argcount) {
+                int defcount = defs != null ? defs.length : 0;
                 int m = co_argcount - defcount;
                 for (i = argcount; i < m; i++) {
                     if (fastlocals[i] == null) {
