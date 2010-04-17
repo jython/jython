@@ -237,7 +237,22 @@ class JavaSAXParser(xmlreader.XMLReader, javasax.ContentHandler, LexicalHandler)
     def endEntity(self, name):
         pass # TODO
 
+def _fixTuple(nsTuple, frm, to):
+    if len(nsTuple) == 2:
+        nsUri, localName = nsTuple
+        if nsUri == frm:
+            nsUri = to
+        return (nsUri, localName)
+    return nsTuple
+
+def _makeJavaNsTuple(nsTuple):
+    return _fixTuple(nsTuple, None, '')
+
+def _makePythonNsTuple(nsTuple):
+    return _fixTuple(nsTuple, '', None)
+
 class AttributesImpl:
+
     def __init__(self, attrs = None):
         self._attrs = attrs
 
@@ -245,16 +260,16 @@ class AttributesImpl:
         return self._attrs.getLength()
 
     def getType(self, name):
-        return self._attrs.getType(name)
+        return self._attrs.getType(_makeJavaNsTuple(name))
 
     def getValue(self, name):
-        value = self._attrs.getValue(name)
+        value = self._attrs.getValue(_makeJavaNsTuple(name))
         if value == None:
             raise KeyError(name)
         return value
 
     def getNames(self):
-        return [self._attrs.getQName(index) for index in range(len(self))]
+        return [_makePythonNsTuple(self._attrs.getQName(index)) for index in range(len(self))]
 
     def getQNames(self):
         return [self._attrs.getQName(index) for index in range(len(self))]
@@ -272,7 +287,7 @@ class AttributesImpl:
         return qname
 
     def getQNameByName(self, name):
-        idx = self._attrs.getIndex(name)
+        idx = self._attrs.getIndex(_makeJavaNsTuple(name))
         if idx == -1:
             raise KeyError, name
         return name
@@ -316,10 +331,12 @@ class AttributesNSImpl(AttributesImpl):
         AttributesImpl.__init__(self, attrs)
 
     def getType(self, name):
+        name = _makeJavaNsTuple(name)
         return self._attrs.getType(name[0], name[1])
 
     def getValue(self, name):
-        value = self._attrs.getValue(name[0], name[1])
+        jname = _makeJavaNsTuple(name)
+        value = self._attrs.getValue(jname[0], jname[1])
         if value == None:
             raise KeyError(name)
         return value
@@ -327,17 +344,17 @@ class AttributesNSImpl(AttributesImpl):
     def getNames(self):
         names = []
         for idx in range(len(self)):
-            names.append((self._attrs.getURI(idx),
-                          self._attrs.getLocalName(idx)))
+            names.append(_makePythonNsTuple( (self._attrs.getURI(idx), self._attrs.getLocalName(idx)) ))
         return names
 
     def getNameByQName(self, qname):
         idx = self._attrs.getIndex(qname)
         if idx == -1:
             raise KeyError, qname
-        return (self._attrs.getURI(idx), self._attrs.getLocalName(idx))
+        return _makePythonNsTuple( (self._attrs.getURI(idx), self._attrs.getLocalName(idx)) )
 
     def getQNameByName(self, name):
+        name = _makeJavaNsTuple(name)
         idx = self._attrs.getIndex(name[0], name[1])
         if idx == -1:
             raise KeyError, name
