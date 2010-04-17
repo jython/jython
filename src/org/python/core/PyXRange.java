@@ -14,11 +14,11 @@ public class PyXRange extends PySequence {
 
     public static final PyType TYPE = PyType.fromClass(PyXRange.class);
 
-    private int start;
+    private final int start;
 
-    private int step;
+    private final int step;
 
-    private int len;
+    private final int len;
 
     public PyXRange(int ihigh) {
         this(0, ihigh, 1);
@@ -145,15 +145,13 @@ public class PyXRange extends PySequence {
 
     @Override
     public String toString() {
-        String rtn;
         int stop = start + len * step;
         if (start == 0 && step == 1) {
-            rtn = String.format("xrange(%d)", stop);
+            return String.format("xrange(%d)", stop);
         } else if (step == 1) {
-            rtn = String.format("xrange(%d, %d)", start, stop);
+            return String.format("xrange(%d, %d)", start, stop);
         } else {
-            rtn = String.format("xrange(%d, %d, %d)", start, stop, step);
+            return String.format("xrange(%d, %d, %d)", start, stop, step);
         }
-        return rtn;
     }
 }

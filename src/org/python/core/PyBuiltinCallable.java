@@ -1,3 +1,4 @@
+/* Copyright (c) Jython Developers */
 package org.python.core;
 
 import org.python.expose.ExposedGet;
@@ -53,6 +54,7 @@ public abstract class PyBuiltinCallable extends PyObject {
         this.info = info;
     }
 
+    @Override
     public String toString() {
         PyObject self = getSelf();
         if (self == null) {
@@ -76,6 +78,10 @@ public abstract class PyBuiltinCallable extends PyObject {
 
     public static class DefaultInfo implements Info {
 
+        private String name;
+
+        private int maxargs, minargs;
+
         public DefaultInfo(String name, int minargs, int maxargs) {
             this.name = name;
             this.minargs = minargs;
@@ -85,10 +91,6 @@ public abstract class PyBuiltinCallable extends PyObject {
         public DefaultInfo(String name) {
             this(name, -1, -1);
         }
-
-        private String name;
-
-        private int maxargs, minargs;
 
         public String getName() {
             return name;
@@ -103,39 +105,39 @@ public abstract class PyBuiltinCallable extends PyObject {
         }
 
         public static boolean check(int nargs, int minargs, int maxargs) {
-            if(nargs < minargs)
+            if (nargs < minargs) {
                 return false;
-            if(maxargs != -1 && nargs > maxargs)
+            }
+            if (maxargs != -1 && nargs > maxargs) {
                 return false;
+            }
             return true;
         }
 
-        public static PyException unexpectedCall(int nargs,
-                                                 boolean keywords,
-                                                 String name,
-                                                 int minargs,
-                                                 int maxargs) {
-            if(keywords)
+        public static PyException unexpectedCall(int nargs, boolean keywords, String name,
+                                                 int minargs, int maxargs) {
+            if (keywords) {
                 return Py.TypeError(name + "() takes no keyword arguments");
-            String argsblurb;
-            if(minargs == maxargs) {
-                if(minargs == 0)
-                    argsblurb = "no arguments";
-                else if(minargs == 1)
-                    argsblurb = "exactly one argument";
-                else
-                    argsblurb = minargs + " arguments";
-            } else if(maxargs == -1) {
-                return Py.TypeError(name + "() requires at least " + minargs
-                        + " (" + nargs + " given)");
-            } else {
-                if(minargs <= 0)
-                    argsblurb = "at most " + maxargs + " arguments";
-                else
-                    argsblurb = minargs + "-" + maxargs + " arguments";
             }
-            return Py.TypeError(name + "() takes " + argsblurb + " (" + nargs
-                    + " given)");
+
+            String argsblurb;
+            if (minargs == maxargs) {
+                if (minargs == 0) {
+                    argsblurb = "no arguments";
+                } else if (minargs == 1) {
+                    argsblurb = "exactly one argument";
+                } else {
+                    argsblurb = minargs + " arguments";
+                }
+            } else if (maxargs == -1) {
+                return Py.TypeError(String.format("%s() requires at least %d arguments (%d) given",
+                                                  name, minargs, nargs));
+            } else if (minargs <= 0) {
+                argsblurb = "at most " + maxargs + " arguments";
+            } else {
+                argsblurb = minargs + "-" + maxargs + " arguments";
+            }
+            return Py.TypeError(String.format("%s() takes %s (%d given)", name, argsblurb, nargs));
         }
 
         public PyException unexpectedCall(int nargs, boolean keywords) {
