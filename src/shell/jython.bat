@@ -12,6 +12,12 @@ rem   JYTHON_OPTS    Default Jython command line arguments
 rem
 rem ---------------------------------------------------------------------------
 
+rem If running in Take Command (4NT), force to run in cmd.exe
+if not "%@eval[2+2]" == "4" goto normalstart
+cmd /C %0 %*
+goto finish
+
+:normalstart
 setlocal enabledelayedexpansion
 
 rem ----- Verify and set required environment variables -----------------------
