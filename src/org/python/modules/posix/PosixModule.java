@@ -18,7 +18,6 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.jruby.ext.posix.FileStat;
-import org.jruby.ext.posix.JavaPOSIX;
 import org.jruby.ext.posix.POSIX;
 import org.jruby.ext.posix.POSIXFactory;
 import org.jruby.ext.posix.util.Platform;
@@ -104,7 +103,7 @@ public class PosixModule implements ClassDictInit {
         // Successful termination
         dict.__setitem__("EX_OK", Py.Zero);
 
-        boolean nativePosix = !(posix instanceof JavaPOSIX);
+        boolean nativePosix = posix.isNative();
         dict.__setitem__("_native_posix", Py.newBoolean(nativePosix));
         dict.__setitem__("_posix_impl", Py.java2py(posix));
         dict.__setitem__("environ", getEnviron());

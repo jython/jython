@@ -1,8 +1,7 @@
 /* Copyright (c) Jython Developers */
 package org.python.modules.posix;
 
-import com.kenai.constantine.Constant;
-import com.kenai.constantine.ConstantSet;
+import com.kenai.constantine.platform.Errno;
 
 import java.io.File;
 import java.io.InputStream;
@@ -21,14 +20,8 @@ import org.python.core.PyObject;
  */
 public class PythonPOSIXHandler implements POSIXHandler {
 
-    private ConstantSet errnos = ConstantSet.getConstantSet("Errno");
-
-    public void error(POSIX.ERRORS error, String extraData) {
-        Constant errno = errnos.getConstant(error.name());
-        if (errno == null) {
-            throw Py.OSError(extraData);
-        }
-        throw Py.OSError(errno, extraData);
+    public void error(Errno error, String extraData) {
+        throw Py.OSError(error, extraData);
     }
 
     public void unimplementedError(String methodName) {
