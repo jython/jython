@@ -200,7 +200,7 @@ public interface Memory {
      * @param offset The offset within the memory area of the start of the string.
      * @param bytes The byte array to write to the memory.
      * @param off The offset with the byte array to start copying.
-     * @param maxlen The number of bytes of the byte array to write to the memory area. (not including zero byte)
+     * @param len The number of bytes of the byte array to write to the memory area. (not including zero byte)
      */
     public void putZeroTerminatedByteArray(long offset, byte[] bytes, int off, int len);
 
