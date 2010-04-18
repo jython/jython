@@ -3,8 +3,8 @@ package org.python.modules;
 
 import com.kenai.constantine.Constant;
 import com.kenai.constantine.ConstantSet;
-import com.kenai.constantine.Platform;
 import com.kenai.constantine.platform.Errno;
+import org.jruby.ext.posix.util.Platform;
 import org.python.core.ClassDictInit;
 import org.python.core.Py;
 import org.python.core.PyDictionary;
@@ -34,7 +34,7 @@ public class errno implements ClassDictInit {
     public static final PyObject errorcode = new PyDictionary();
 
     public static void classDictInit(PyObject dict) {
-        if (Platform.OS.equals("windows")) {
+        if (Platform.IS_WINDOWS) {
             initWindows(dict);
         } else {
             initPosix(dict);
