@@ -1544,12 +1544,13 @@ class OpenFunction extends PyBuiltinFunction {
         PyObject obj = ap.getPyObject(0);
         if (obj.getJavaProxy() != null) {
             int bufsize = ap.getInt(2, -1);
-            if (obj.javaProxy instanceof InputStream) {
+            Object javaProxy = obj.getJavaProxy();
+            if (javaProxy instanceof InputStream) {
                 Py.warning(Py.DeprecationWarning, warning);
-                return new PyFile((InputStream)obj.javaProxy, bufsize);
-            } else if (obj.javaProxy instanceof OutputStream) {
+                return new PyFile((InputStream) javaProxy, bufsize);
+            } else if (javaProxy instanceof OutputStream) {
                 Py.warning(Py.DeprecationWarning, warning);
-                return new PyFile((OutputStream)obj.javaProxy, bufsize);
+                return new PyFile((OutputStream) javaProxy, bufsize);
             }
         }
         return PyFile.TYPE.__call__(args, kwds);
