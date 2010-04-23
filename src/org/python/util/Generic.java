@@ -89,9 +89,7 @@ public class Generic {
      * whatever this is being assigned to.
      */
     public static <E> Set<E> concurrentSet() {
-        return newSetFromMap(new ConcurrentHashMap<E, Boolean>(CHM_INITIAL_CAPACITY,
-                                                               CHM_LOAD_FACTOR,
-                                                               CHM_CONCURRENCY_LEVEL));
+        return newSetFromMap(Generic.<E, Boolean>concurrentMap());
     }
 
     /**
