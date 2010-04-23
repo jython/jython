@@ -3,7 +3,6 @@ package org.python.core.io;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.Channel;
 import java.nio.channels.DatagramChannel;
 
 import org.python.core.Py;
@@ -13,10 +12,7 @@ import org.python.core.Py;
  *
  * @author Philip Jenvey
  */
-public class DatagramSocketIO extends SocketIOBase {
-
-    /** The underlying socket */
-    private DatagramChannel socketChannel;
+public class DatagramSocketIO extends SocketIOBase<DatagramChannel> {
 
     /**
      * Construct a DatagramSocketIO for the given DatagramChannel.
@@ -25,8 +21,7 @@ public class DatagramSocketIO extends SocketIOBase {
      * @param mode a raw io socket mode String
      */
     public DatagramSocketIO(DatagramChannel socketChannel, String mode) {
-        super(mode);
-        this.socketChannel = socketChannel;
+        super(socketChannel, mode);
     }
 
     @Override
@@ -47,6 +42,7 @@ public class DatagramSocketIO extends SocketIOBase {
      * @param bufs {@inheritDoc}
      * @return {@inheritDoc}
      */
+    @Override
     public long readinto(ByteBuffer[] bufs) {
         checkClosed();
         checkReadable();
@@ -75,6 +71,7 @@ public class DatagramSocketIO extends SocketIOBase {
      * @param bufs {@inheritDoc}
      * @return {@inheritDoc}
      */
+    @Override
     public long write(ByteBuffer[] bufs) {
         checkClosed();
         checkWritable();
@@ -83,23 +80,5 @@ public class DatagramSocketIO extends SocketIOBase {
         } catch (IOException ioe) {
             throw Py.IOError(ioe);
         }
-    }
-
-    @Override
-    public void close() {
-        if (closed()) {
-            return;
-        }
-        try {
-            socketChannel.close();
-        } catch (IOException ioe) {
-            throw Py.IOError(ioe);
-        }
-        super.close();
-    }
-
-    @Override
-    public Channel getChannel() {
-        return socketChannel;
     }
 }

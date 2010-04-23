@@ -1,6 +1,9 @@
 /* Copyright (c) 2007 Jython Developers */
 package org.python.core.io;
 
+import java.io.IOException;
+import java.nio.channels.Channel;
+
 import org.python.core.Py;
 
 /**
@@ -8,7 +11,10 @@ import org.python.core.Py;
  *
  * @author Philip Jenvey
  */
-public abstract class SocketIOBase extends RawIOBase {
+public abstract class SocketIOBase<T extends Channel> extends RawIOBase {
+
+    /** The underlying socket */
+    protected T socketChannel;
 
     /** true if the socket is allowed to be read from */
     private boolean readable = false;
@@ -17,11 +23,13 @@ public abstract class SocketIOBase extends RawIOBase {
     private boolean writable = false;
 
     /**
-     * Construct a SocketIOBase.
+     * Construct a SocketIOBase for the given socket Channel
      *
+     * @param socketChannel a Channel to wrap
      * @param mode a raw io socket mode String
      */
-    public SocketIOBase(String mode) {
+    public SocketIOBase(T socketChannel, String mode) {
+        this.socketChannel = socketChannel;
         parseMode(mode);
     }
 
@@ -33,7 +41,7 @@ public abstract class SocketIOBase extends RawIOBase {
      *
      * @param mode a raw io socket mode String
      */
-    private void parseMode(String mode) {
+    protected void parseMode(String mode) {
         if (mode.equals("r")) {
             readable = true;
         } else if (mode.equals("w")) {
@@ -43,6 +51,24 @@ public abstract class SocketIOBase extends RawIOBase {
         } else {
             throw Py.ValueError("invalid mode: '" + mode + "'");
         }
+    }
+
+    @Override
+    public void close() {
+        if (closed()) {
+            return;
+        }
+        try {
+            socketChannel.close();
+        } catch (IOException ioe) {
+            throw Py.IOError(ioe);
+        }
+        super.close();
+    }
+
+    @Override
+    public T getChannel() {
+        return socketChannel;
     }
 
     @Override

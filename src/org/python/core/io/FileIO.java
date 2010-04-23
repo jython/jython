@@ -9,7 +9,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
-import java.nio.channels.Channel;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 
@@ -423,7 +422,7 @@ public class FileIO extends RawIOBase {
     }
 
     @Override
-    public Channel getChannel() {
+    public FileChannel getChannel() {
         return fileChannel;
     }
 }
