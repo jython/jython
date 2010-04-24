@@ -55,26 +55,25 @@ public abstract class RawIOBase extends IOBase {
      * @return a ByteBuffer containing the bytes read
      */
     public ByteBuffer readall() {
-        long allCount = 0;
-        int readCount = 0;
         ByteBuffer all = ByteBuffer.allocate(DEFAULT_BUFFER_SIZE);
         ByteBuffer readBuffer = ByteBuffer.allocate(DEFAULT_BUFFER_SIZE);
-        while ((readCount = readinto(readBuffer)) > 0) {
+
+        for (int readCount = 0; (readCount = readinto(readBuffer)) > 0;) {
             if (all.remaining() < readCount) {
+                long newSize = (long) all.position() + readCount;
+                if (newSize > Integer.MAX_VALUE) {
+                    throw Py.OverflowError("requested number of bytes is more than a Python "
+                                           + "string can hold");
+                }
+
                 ByteBuffer old = all;
-                all = ByteBuffer.allocate(Math.max(old.capacity() * 2,
-                                                   old.position() + readCount));
+                all = ByteBuffer.allocate(Math.max(old.capacity() * 2, (int) newSize));
                 old.flip();
                 all.put(old);
             }
             readBuffer.flip();
             all.put(readBuffer);
             readBuffer.clear();
-        }
-
-        if (allCount > Integer.MAX_VALUE) {
-            throw Py.OverflowError("requested number of bytes is more than a Python string can "
-                                   + "hold");
         }
 
         all.flip();
