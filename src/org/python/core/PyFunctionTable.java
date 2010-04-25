@@ -1,6 +1,8 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
+import java.io.Serializable;
+
 /**
  * An entry point for class that implements several function calls.
  * <P>
@@ -9,6 +11,6 @@ package org.python.core;
  * @see PyTableCode
  */
 
-public abstract class PyFunctionTable {
+public abstract class PyFunctionTable implements Serializable {
     abstract public PyObject call_function(int index, PyFrame frame, ThreadState ts);
 }

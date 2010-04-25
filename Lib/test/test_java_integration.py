@@ -1,3 +1,4 @@
+import copy
 import operator
 import os
 import unittest
@@ -5,6 +6,7 @@ import subprocess
 import sys
 import re
 
+from collections import deque
 from test import test_support
 
 from java.lang import (ClassCastException, ExceptionInInitializerError, String, Runnable, System,
@@ -469,18 +471,77 @@ class JavaWrapperCustomizationTest(unittest.TestCase):
         self.assertRaises(TypeError, __import__, "org.python.tests.mro.ConfusedOnImport")
         self.assertRaises(TypeError, GetitemAdder.addPostdefined)
 
+
+def roundtrip_serialization(obj):
+    """Returns a deep copy of an object, via serializing it
+ 
+    see http://weblogs.java.net/blog/emcmanus/archive/2007/04/cloning_java_ob.html
+    """
+    output = ByteArrayOutputStream()
+    serializer = CloneOutput(output)
+    serializer.writeObject(obj)
+    serializer.close()
+    input = ByteArrayInputStream(output.toByteArray())
+    unserializer = CloneInput(input, serializer) # to get the list of classes seen, in order
+    return unserializer.readObject()
+
+class CloneOutput(ObjectOutputStream):
+    def __init__(self, output):
+        ObjectOutputStream.__init__(self, output)
+        self.classQueue = deque()
+
+    def annotateClass(self, c):
+        self.classQueue.append(c)
+
+    def annotateProxyClass(self, c):
+        self.classQueue.append(c)
+
+class CloneInput(ObjectInputStream):
+
+    def __init__(self, input, output):
+        ObjectInputStream.__init__(self, input);
+        self.output = output;
+
+    def resolveClass(self, obj_stream_class):
+        c = self.output.classQueue.popleft()
+        return c
+
+    def resolveProxyClass(self, interfaceNames):
+        return self.output.classQueue.popleft()
+
+
 class SerializationTest(unittest.TestCase):
 
     def test_java_serialization(self):
         date_list = [Date(), Date()]
-        output = ByteArrayOutputStream()
-        serializer = ObjectOutputStream(output)
-        serializer.writeObject(date_list)
-        serializer.close()
+        self.assertEqual(date_list, roundtrip_serialization(date_list))
 
-        input = ByteArrayInputStream(output.toByteArray())
-        unserializer = ObjectInputStream(input)
-        self.assertEqual(date_list, unserializer.readObject())
+    def test_java_serialization_pycode(self):
+
+        def universal_answer():
+            return 42
+
+        serialized_code = roundtrip_serialization(universal_answer.func_code)
+        self.assertEqual(eval(serialized_code), universal_answer())
+
+
+class CopyTest(unittest.TestCase):
+    
+    def test_copy(self):
+        fruits = ArrayList(["apple", "banana"])
+        fruits_copy = copy.copy(fruits)
+        self.assertEqual(fruits, fruits_copy)
+        self.assertNotEqual(id(fruits), id(fruits_copy))
+
+    def test_deepcopy(self):
+        items = ArrayList([ArrayList(["apple", "banana"]),
+                           ArrayList(["trs80", "vic20"])])
+        items_copy = copy.deepcopy(items)
+        self.assertEqual(items, items_copy)
+        self.assertNotEqual(id(items), id(items_copy))
+        self.assertNotEqual(id(items[0]), id(items_copy[0]))
+        self.assertNotEqual(id(items[1]), id(items_copy[1]))
+
 
 class UnicodeTest(unittest.TestCase):
 
@@ -505,6 +566,7 @@ def test_main():
                               SecurityManagerTest,
                               JavaWrapperCustomizationTest,
                               SerializationTest,
+                              CopyTest,
                               UnicodeTest)
 
 if __name__ == "__main__":

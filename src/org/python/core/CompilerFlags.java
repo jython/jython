@@ -6,11 +6,12 @@
 
 package org.python.core;
 
+import java.io.Serializable;
 import java.util.Set;
 
 import org.python.Version;
 
-public class CompilerFlags {
+public class CompilerFlags implements Serializable {
     // These flags don't mean anything to the code, only to the compiler
     public static final int PyCF_SOURCE_IS_UTF8 = 0x0100;
     public static final int PyCF_DONT_IMPLY_DEDENT = 0x0200;

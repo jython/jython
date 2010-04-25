@@ -1,5 +1,15 @@
 package org.python.core;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InvalidClassException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.ObjectStreamClass;
+import java.io.OutputStream;
+import java.io.Serializable;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Member;
@@ -10,9 +20,11 @@ import java.util.Collection;
 import java.util.Enumeration;
 import java.util.EventListener;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Queue;
 
 import org.python.core.util.StringUtil;
 import org.python.util.Generic;
@@ -578,8 +590,113 @@ public class PyJavaType extends PyType {
                 }
             });
         }
+
+        // TODO consider adding support for __copy__ of immutable Java objects
+        // (__deepcopy__ should just work since it uses serialization)
+
+        if(forClass == Cloneable.class) {
+            addMethod(new PyBuiltinMethodNarrow("__copy__") {
+                @Override
+                public PyObject __call__() {
+                    Object obj = self.getJavaProxy();
+                    Method clone;
+                    // we could specialize so that for well known objects like collections,
+                    // we don't use reflection to get around the fact that Object#clone is protected (but most subclasses are not);
+                    // also we can potentially cache the method handle in the proxy instead of looking it up each time
+                    try {
+                        clone = obj.getClass().getMethod("clone");
+                        Object copy;
+                        copy = clone.invoke(obj);
+                        return Py.java2py(copy);
+                    } catch (Exception ex) {
+                        throw Py.TypeError("Could not copy Java object");
+                    }
+                }
+            });
+        }
+            
+        if(forClass == Serializable.class) {
+            addMethod(new PyBuiltinMethodNarrow("__deepcopy__") {
+                @Override
+                public PyObject __call__(PyObject memo) {
+                    Object obj = self.getJavaProxy();
+                    try {
+                        Object copy = cloneX(obj);
+                        return Py.java2py(copy);
+                    } catch (Exception ex) {
+                        throw Py.TypeError("Could not copy Java object");
+                    }
+                }
+            });
+            
+        }
     }
 
+    // cloneX, CloneOutput, CloneInput are verbatim from Eamonn McManus'
+    // http://weblogs.java.net/blog/emcmanus/archive/2007/04/cloning_java_ob.html
+    // blog post on deep cloning through serialization -
+    // just what we need for __deepcopy__ support of Java objects
+
+    private static <T> T cloneX(T x) throws IOException, ClassNotFoundException {
+	ByteArrayOutputStream bout = new ByteArrayOutputStream();
+	CloneOutput cout = new CloneOutput(bout);
+	cout.writeObject(x);
+	byte[] bytes = bout.toByteArray();
+	
+	ByteArrayInputStream bin = new ByteArrayInputStream(bytes);
+	CloneInput cin = new CloneInput(bin, cout);
+
+	@SuppressWarnings("unchecked")  // thanks to Bas de Bakker for the tip!
+	T clone = (T) cin.readObject();
+	return clone;
+    }
+
+    private static class CloneOutput extends ObjectOutputStream {
+	Queue<Class<?>> classQueue = new LinkedList<Class<?>>();
+
+	CloneOutput(OutputStream out) throws IOException {
+	    super(out);
+	}
+
+	@Override
+	protected void annotateClass(Class<?> c) {
+	    classQueue.add(c);
+	}
+
+	@Override
+	protected void annotateProxyClass(Class<?> c) {
+	    classQueue.add(c);
+	}
+    }
+
+    private static class CloneInput extends ObjectInputStream {
+	private final CloneOutput output;
+
+	CloneInput(InputStream in, CloneOutput output) throws IOException {
+	    super(in);
+	    this.output = output;
+	}
+
+    	@Override
+	protected Class<?> resolveClass(ObjectStreamClass osc)
+	throws IOException, ClassNotFoundException {
+	    Class<?> c = output.classQueue.poll();
+	    String expected = osc.getName();
+	    String found = (c == null) ? null : c.getName();
+	    if (!expected.equals(found)) {
+		throw new InvalidClassException("Classes desynchronized: " +
+			"found " + found + " when expecting " + expected);
+	    }
+	    return c;
+	}
+
+    	@Override
+    	protected Class<?> resolveProxyClass(String[] interfaceNames)
+	throws IOException, ClassNotFoundException {
+    	    return output.classQueue.poll();
+    	}
+    }
+    
     /**
      * Private, protected or package protected classes that implement public interfaces or extend
      * public classes can't have their implementations of the methods of their supertypes called
