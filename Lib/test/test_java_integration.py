@@ -499,12 +499,11 @@ class CloneOutput(ObjectOutputStream):
 class CloneInput(ObjectInputStream):
 
     def __init__(self, input, output):
-        ObjectInputStream.__init__(self, input);
-        self.output = output;
+        ObjectInputStream.__init__(self, input)
+        self.output = output
 
     def resolveClass(self, obj_stream_class):
-        c = self.output.classQueue.popleft()
-        return c
+        return self.output.classQueue.popleft()
 
     def resolveProxyClass(self, interfaceNames):
         return self.output.classQueue.popleft()
