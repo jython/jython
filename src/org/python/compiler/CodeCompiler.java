@@ -1804,15 +1804,14 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
 
             code.aload(argArray);
             code.aload(strArray);
-            code.freeLocal(argArray);
             code.freeLocal(strArray);
             code.dup2_x2();
             code.pop2();
 
             stackConsume(3); // target + starargs + kwargs
-
             code.invokevirtual(p(PyObject.class), "_callextra", sig(PyObject.class,
                     PyObject[].class, String[].class, PyObject.class, PyObject.class));
+            freeArray(argArray);
         } else if (keys.size() > 0) {
             loadThreadState();
             stackProduce(p(ThreadState.class));
@@ -1820,11 +1819,11 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
             int strArray = makeStrings(code, keys);
             code.aload(argArray);
             code.aload(strArray);
-            code.freeLocal(argArray);
             code.freeLocal(strArray);
             stackConsume(2); // target + ts
             code.invokevirtual(p(PyObject.class), "__call__", sig(PyObject.class, ThreadState.class,
                     PyObject[].class, String[].class));
+            freeArray(argArray);
         } else {
             loadThreadState();
             stackProduce(p(ThreadState.class));

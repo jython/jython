@@ -5,6 +5,7 @@ Made for Jython.
 import unittest
 import weakref
 from test import test_support
+from test_weakref import extra_collect
 
 class ReferencesTestCase(unittest.TestCase):
 
@@ -38,8 +39,45 @@ class ReferencesTestCase(unittest.TestCase):
         self.assertEqual(len(hash_called), 2)
 
 
+class ArgsTestCase(unittest.TestCase):
+
+    # XXX consider adding other tests for dict, list, etc
+
+    def test_python_fn_kwargs(self):
+
+        weakrefs = []
+        sentinel = []
+
+        def watch(obj, kwarg=True):
+            self.assertEqual(kwarg, True)
+            # log the death of the reference by appending to the sentinel
+            ref = weakref.ref(obj, sentinel.append)
+            weakrefs.append(ref)
+
+        self.assert_(not sentinel)
+
+        thunk1 = lambda: None
+        watch(thunk1)
+        self.assert_(not sentinel)
+
+        del thunk1
+        extra_collect()
+        self.assert_(sentinel)
+
+        del sentinel[:]
+
+        thunk2 = lambda: None
+        watch(thunk2, kwarg=True)  # <--- only difference: called with a kwarg
+        self.assert_(not sentinel)
+
+        del thunk2
+        extra_collect()
+        self.assert_(sentinel)
+
+
+
 def test_main():
-    test_support.run_unittest(ReferencesTestCase)
+    test_support.run_unittest(ReferencesTestCase, ArgsTestCase)
 
 
 if __name__ == '__main__':
