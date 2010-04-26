@@ -174,6 +174,7 @@ public class PyObject implements Serializable {
         return new PyString(toString());
     }
 
+    @Override
     public String toString() {
         return object_toString();
     }
@@ -220,6 +221,7 @@ public class PyObject implements Serializable {
         return new PyInteger(hashCode());
     }
 
+    @Override
     public int hashCode() {
         return object___hash__();
     }
@@ -234,6 +236,7 @@ public class PyObject implements Serializable {
      * If overridden, it is the subclasses responsibility to ensure that
      * <code>a.equals(b) == true</code> iff <code>cmp(a,b) == 0</code>
      **/
+    @Override
     public boolean equals(Object ob_other) {
         if(ob_other == this) {
             return true;
@@ -291,7 +294,7 @@ public class PyObject implements Serializable {
         return Py.NoConversion;
     }
 
-    protected Object getJavaProxy() {
+    protected synchronized Object getJavaProxy() {
         if (javaProxy == null) {
             proxyInit();
         }
@@ -1890,7 +1893,7 @@ public class PyObject implements Serializable {
         // situations
         // XXX: This method isn't expensive but could (and maybe
         // should?) be optimized for worst case scenarios
-        return op == "+" && (t1 == PyString.TYPE || t1 == PyUnicode.TYPE) &&
+        return (op == "+") && (t1 == PyString.TYPE || t1 == PyUnicode.TYPE) &&
                 (t2.isSubType(PyString.TYPE) || t2.isSubType(PyUnicode.TYPE));
     }
 
@@ -4116,6 +4119,7 @@ class PyIdentityTuple extends PyObject {
         list = elements;
     }
 
+    @Override
     public int hashCode() {
         int x, y;
         int len = list.length;
@@ -4129,6 +4133,7 @@ class PyIdentityTuple extends PyObject {
         return x;
     }
 
+    @Override
     public boolean equals(Object o) {
         if (!(o instanceof PyIdentityTuple))
             return false;
