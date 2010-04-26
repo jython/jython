@@ -14,6 +14,7 @@ public class IdImpl {
 
         private Map<WeakIdKey, Object> objHashcodeToPyId = Generic.map();
 
+        @SuppressWarnings("element-type-mismatch")
         private void cleanup() {
             Object k;
             while ((k = idKeys.poll()) != null) {
@@ -29,10 +30,12 @@ public class IdImpl {
                 hashcode = System.identityHashCode(obj);
             }
 
+            @Override
             public int hashCode() {
                 return hashcode;
             }
 
+            @Override
             public boolean equals(Object other) {
                 Object obj = get();
                 if (obj != null) {
@@ -82,7 +85,7 @@ public class IdImpl {
         return String.format("0x%x", id(o));
     }
 
-    public long java_obj_id(Object o) {
+    public synchronized long java_obj_id(Object o) {
         Long cand = (Long)idMap.get(o);
         if (cand == null) {
             long new_id = ++sequentialId;
