@@ -413,6 +413,12 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         code.freeLocal(array);
     }
 
+    public void freeArrayRef(int array) {
+        code.aconst_null();
+        code.astore(array);
+        code.freeLocal(array);
+    }
+
     public Str getDocStr(java.util.List<stmt> suite) {
         if (suite.size() > 0) {
             stmt stmt = suite.get(0);
@@ -1811,7 +1817,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
             stackConsume(3); // target + starargs + kwargs
             code.invokevirtual(p(PyObject.class), "_callextra", sig(PyObject.class,
                     PyObject[].class, String[].class, PyObject.class, PyObject.class));
-            freeArray(argArray);
+            freeArrayRef(argArray);
         } else if (keys.size() > 0) {
             loadThreadState();
             stackProduce(p(ThreadState.class));
@@ -1823,7 +1829,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
             stackConsume(2); // target + ts
             code.invokevirtual(p(PyObject.class), "__call__", sig(PyObject.class, ThreadState.class,
                     PyObject[].class, String[].class));
-            freeArray(argArray);
+            freeArrayRef(argArray);
         } else {
             loadThreadState();
             stackProduce(p(ThreadState.class));

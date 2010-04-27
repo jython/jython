@@ -59,9 +59,7 @@ public class PyLocal extends PyObject {
         if (where[0] == TYPE && args.length > 0) {
             throw Py.TypeError("Initialization arguments are not supported");
         }
-        // caller zeros out `args`
-        this.args = new PyObject[args.length];
-        System.arraycopy(args, 0, this.args, 0, args.length);
+        this.args = args;
         this.keywords = keywords;
     }
 
