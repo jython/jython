@@ -183,7 +183,7 @@ goto fullCmd
 set CLASSPATH=%_CP:"=%;%CLASSPATH:"=%
 
 :fullCmd
-set _FULL_CMD=%_JAVA_CMD% %_JAVA_OPTS% %_JAVA_MEM% %_JAVA_STACK% %_BOOT_CP% -Dpython.home=%_JYTHON_HOME% -Dpython.executable="%~f0" -classpath "%CLASSPATH%" org.python.util.jython %_JYTHON_OPTS% %_JYTHON_ARGS% %_ARGS%
+set _FULL_CMD=%_JAVA_CMD% %_JAVA_OPTS% %_JAVA_MEM% %_JAVA_STACK% -Dpython.home=%_JYTHON_HOME% -Dpython.executable="%~f0" %_BOOT_CP% -classpath "%CLASSPATH%" org.python.util.jython %_JYTHON_OPTS% %_JYTHON_ARGS% %_ARGS%
 if defined _PRINT (
   echo %_FULL_CMD%
 ) else (
