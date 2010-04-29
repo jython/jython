@@ -316,18 +316,14 @@ class DoubleDashTest(BaseTest):
     def test_jdb(self):
         self.assertOutput(['--jdb'])
 
+class DummyTest(unittest.TestCase):
+    def test_nothing(self):
+        pass
+
 def test_main():
-    test_support.run_unittest(
-        VanillaTest,
-        JavaHomeTest, 
-        JythonHomeTest, 
-        JythonOptsTest, 
-        JavaOptsTest, 
-        ArgsTest, 
-        DoubleDashTest)
+    test_support.run_unittest(DummyTest)
 
 
 if __name__ == '__main__':
-    # these tests currently only make sense on windows
-    if os._name == 'nt':
-        test_main()
+    test_main()
+        
