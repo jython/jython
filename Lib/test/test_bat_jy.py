@@ -321,7 +321,11 @@ class DummyTest(unittest.TestCase):
         pass
 
 def test_main():
-    test_support.run_unittest(DummyTest)
+    if os._name == 'nt':
+        test_support.run_unittest(VanillaTest)
+    else:
+        # provide at least one test for the other platforms - happier build bots
+        test_support.run_unittest(DummyTest)
 
 
 if __name__ == '__main__':
