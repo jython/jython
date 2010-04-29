@@ -322,7 +322,10 @@ class DummyTest(unittest.TestCase):
 
 def test_main():
     if os._name == 'nt':
-        test_support.run_unittest(VanillaTest)
+        test_support.run_unittest(VanillaTest,
+                                  JavaOptsTest,
+                                  ArgsTest,
+                                  DoubleDashTest)
     else:
         # provide at least one test for the other platforms - happier build bots
         test_support.run_unittest(DummyTest)
