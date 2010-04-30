@@ -5,7 +5,15 @@ Jython 2.5.2a1
     - [ 1586 ] weakref reference count leak when kwargs are used
     - [ 1601 ] Can't serialize PyCode object
     - [ 1551 ] Java objects cannot be copied by the copy module
+    - [ 1375 ] XML SAX: attrs.get((None, 'attr')) gives NPE
+    - [ 1488 ] sax JyInputSourceWrapper does not support unicode strings
+    - [ 1510 ] minidom is not parsing comment information correctly
+    - [ 1549 ] Wrapping an InputStream with a PyFile wrongly carries out line-ending translation.
     - [ 1583 ] xml.dom.Node.data returns bytestrings of decoded unicode
+    - [ 1515 ] modjy sometimes adds None to the sys.path
+    - [ 1507 ] modjy crashes if any query string parameters are not set with '='
+    - [ 1473 ] modjy servlet doesn't import site-packages by default
+    - [ 1474 ] modjy servlet doesn't call atexit handlers
     - [ 1225 ] socket.getservbyname/port() not yet supported
     - [ 1532 ] Cannot use docstring when defining class
     - [ 1530 ] BoolOp in multiple assign causes VerifyError
