@@ -6,7 +6,6 @@ import unittest
 import tempfile
 
 from test import test_support
-from subprocess import Popen, PIPE
 
 from java.lang import IllegalThreadStateException
 from java.lang import Runtime
@@ -47,33 +46,66 @@ class StderrMonitor(Monitor):
     def getStream(self):
         return self.process.getErrorStream()
 
-class SimpleSubprocess:
-    def __init__(self, args):
-        self.args = args
-        self.exitValue = -999
-
-    def run(self):
-        self.process = Runtime.getRuntime().exec(self.args)
-        self.stdoutMonitor = StdoutMonitor(self.process)
-        self.stderrMonitor = StderrMonitor(self.process)
-        self.stdoutMonitor.start()
-        self.stderrMonitor.start()
-        while self.isAlive():
-            Thread.sleep(1000)
-        return self.exitValue
-
-    def getStdout(self):
-        return self.stdoutMonitor.getOutput()
-
-    def getStderr(self):
-        return self.stderrMonitor.getOutput()
-
-    def isAlive(self):
+class StarterProcess:
+    def writeStarter(self, args, javaHome, jythonHome, jythonOpts):
+        (starter, starterPath) = tempfile.mkstemp(suffix='.bat', prefix='starter', text=True)
+        starter.close()
+        outfilePath = starterPath[:-4] + '.out'
+        starter = open(starterPath, 'w') # open starter as simple file
         try:
-            self.exitValue = self.process.exitValue()
+            if javaHome:
+                starter.write('set JAVA_HOME=%s\n' % javaHome)
+            if jythonHome:
+                starter.write('set JYTHON_HOME=%s\n' % jythonHome)
+            if jythonOpts:
+                starter.write('set JYTHON_OPTS=%s\n' % jythonOpts)
+            starter.write(self.buildCommand(args, outfilePath))
+            return (starterPath, outfilePath)
+        finally:
+            starter.close()
+
+    def buildCommand(self, args, outfilePath):
+        line = ''
+        for arg in args:
+            line += arg
+            line += ' '
+        line += '> '
+        line += outfilePath
+        line += ' 2>&1'
+        return line
+
+    def getOutput(self, outfilePath):
+        lines = ''
+        outfile = open(outfilePath, 'r')
+        try:
+            for line in outfile.readlines():
+                lines += line
+        finally:
+            outfile.close()
+        return lines
+
+    def isAlive(self, process):
+        try:
+            process.exitValue()
             return False
         except IllegalThreadStateException:
             return True
+
+    def run(self, args, javaHome, jythonHome, jythonOpts):
+        ''' creates a start script, executes it and captures the output '''
+        (starterPath, outfilePath) = self.writeStarter(args, javaHome, jythonHome, jythonOpts)
+        try:
+            process = Runtime.getRuntime().exec(starterPath)
+            stdoutMonitor = StdoutMonitor(process)
+            stderrMonitor = StderrMonitor(process)
+            stdoutMonitor.start()
+            stderrMonitor.start()
+            while self.isAlive(process):
+                Thread.sleep(500)
+            return self.getOutput(outfilePath)
+        finally:
+            os.remove(starterPath)
+            os.remove(outfilePath)
 
 class BaseTest(unittest.TestCase):
     def quote(self, s):
@@ -96,12 +128,6 @@ class BaseTest(unittest.TestCase):
         else:
             home = ex[:-11] # \jython.bat
         return home
-
-    def copyOsEnviron(self):
-        theCopy = {}
-        for key in os.environ.keys():
-            theCopy[key] = os.environ[key]
-        return theCopy
 
     def assertOutput(self, flags=None, javaHome=None, jythonHome=None, jythonOpts=None):
         args = [sys.executable, '--print']
@@ -132,27 +158,8 @@ class BaseTest(unittest.TestCase):
                     else:
                         jythonArgs = flag
                 args.append(flag)
-        environ = None
-        if javaHome or jythonHome or jythonOpts:
-            environ = self.copyOsEnviron() # copy to prevent os.environ from being changed
-            if javaHome:
-                environ['JAVA_HOME'] = javaHome
-            if jythonHome:
-                environ['JYTHON_HOME'] = jythonHome
-            if jythonOpts:
-                environ['JYTHON_OPTS'] = jythonOpts
-        if environ:
-            # env changes can only be handled by Popen
-            process = Popen(args, stdout=PIPE, stderr=PIPE, env=environ)
-            out = process.stdout.read()
-            err = process.stderr.read()
-        else:
-            # since Popen escapes double quotes, we use a simple subprocess if no env changes are needed
-            simpleProcess = SimpleSubprocess(args)
-            simpleProcess.run()
-            out = simpleProcess.getStdout()
-            err = simpleProcess.getStderr()
-        self.assertEquals('', err)
+        process = StarterProcess()
+        out = process.run(args, javaHome, jythonHome, jythonOpts)
         self.assertNotEquals('', out)
         homeIdx = out.find('-Dpython.home=')
         java = 'java'
@@ -275,21 +282,8 @@ class ArgsTest(BaseTest):
     def test_combined(self):
         self.assertOutput(['-W', 'action', 'line'])
 
-    # something adds double quotes, but in real life this works: 
-    # jython.bat --print -c 'import sys;' 
     def test_singlequoted(self):
-            args = [sys.executable]
-            args.append('--print')
-            args.append('-c')
-            args.append("'import sys;'")
-            simpleProcess = SimpleSubprocess(args)
-            simpleProcess.run()
-            out = simpleProcess.getStdout()
-            err = simpleProcess.getStderr()
-            self.assertEquals('', err)
-            self.assertNotEquals('', out)
-            tail = out[-19:]
-            self.assertEquals('-c "\'import sys;\'" ', tail)
+        self.assertOutput(['-c', "'import sys;'"])
 
     def test_doublequoted(self):
         self.assertOutput(['-c', '"print \'something\'"'])
@@ -323,6 +317,9 @@ class DummyTest(unittest.TestCase):
 def test_main():
     if os._name == 'nt':
         test_support.run_unittest(VanillaTest,
+                                  JavaHomeTest,
+                                  JythonHomeTest,
+                                  JythonOptsTest,
                                   JavaOptsTest,
                                   ArgsTest,
                                   DoubleDashTest)
