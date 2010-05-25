@@ -130,7 +130,7 @@ class BaseTest(unittest.TestCase):
         return home
 
     def assertOutput(self, flags=None, javaHome=None, jythonHome=None, jythonOpts=None):
-        args = [sys.executable, '--print']
+        args = [self.quote(sys.executable), '--print']
         memory = None
         stack = None
         prop = None
