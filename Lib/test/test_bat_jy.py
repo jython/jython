@@ -9,6 +9,7 @@ from test import test_support
 
 from java.lang import IllegalThreadStateException
 from java.lang import Runtime
+from java.lang import System
 from java.lang import Thread
 from java.io import File
 from java.io import BufferedReader;
@@ -210,7 +211,9 @@ class VanillaTest(BaseTest):
 
 class JavaHomeTest(BaseTest):
     def test_unquoted(self):
-        self.assertOutput(javaHome='C:\\Program Files\\Java\\someJava')
+        # for the build bot, try to specify a real java home
+        javaHome = System.getProperty('java.home', 'C:\\Program Files\\Java\\someJava')
+        self.assertOutput(javaHome=javaHome)
 
     def test_quoted(self):
         self.assertOutput(javaHome=self.quote('C:\\Program Files\\Java\\someJava'))
