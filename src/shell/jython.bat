@@ -106,7 +106,7 @@ goto procArg
 
 :getArg
 rem remove quotes around first arg
-for %%i in (%1) do set _CMP=%%~i
+set _CMP=%~1
 set _ARGS=%2
 goto :EOF
 
@@ -140,7 +140,7 @@ if ["%_CMP%"] == ["--print"] (
    goto :nextArg
 )
 
-rem now unescape _D, _S and _Q
+rem now unescape _D, _S and _U
 set _CMP=%_CMP:_D="%
 set _CMP=%_CMP:_S='%
 set _CMP=%_CMP:_U=_%

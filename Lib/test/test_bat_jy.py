@@ -291,6 +291,12 @@ class ArgsTest(BaseTest):
     def test_doublequoted(self):
         self.assertOutput(['-c', '"print \'something\'"'])
 
+    def test_nestedquotes(self):
+        self.assertOutput(['-c', '"print \'something \"really\" cool\'"'])
+
+    def test_nestedquotes2(self):
+        self.assertOutput(['-c', "'print \"something \'really\' cool\"'"])
+
     def test_underscored(self):
         self.assertOutput(['-jar', 'my_stuff.jar'])
     
@@ -313,6 +319,25 @@ class DoubleDashTest(BaseTest):
     def test_jdb(self):
         self.assertOutput(['--jdb'])
 
+class GlobPatternTest(BaseTest):
+    def test_star_nonexisting(self):
+        self.assertOutput(['-c', 'import sys; print sys.argv[1:]', '*.nonexisting', '*.nonexisting'])
+
+    def test_star_nonexisting_doublequoted(self):
+        self.assertOutput(['-c', 'import sys; print sys.argv[1:]', '"*.nonexisting"', '"*.nonexisting"'])
+
+    def test_star_nonexistingfile_singlequoted(self):
+        self.assertOutput(['-c', 'import sys; print sys.argv[1:]', "'*.nonexisting'", "'*.nonexisting'"])
+
+    def test_star_existing(self):
+        self.assertOutput(['-c', 'import sys; print sys.argv[1:]', '*.bat', '*.bat'])
+
+    def test_star_existing_doublequoted(self):
+        self.assertOutput(['-c', 'import sys; print sys.argv[1:]', '"*.bat"', '"*.bat"'])
+
+    def test_star_existing_singlequoted(self):
+        self.assertOutput(['-c', 'import sys; print sys.argv[1:]', "'*.bat'", "'*.bat'"])
+
 class DummyTest(unittest.TestCase):
     def test_nothing(self):
         pass
@@ -325,7 +350,8 @@ def test_main():
                                   JythonOptsTest,
                                   JavaOptsTest,
                                   ArgsTest,
-                                  DoubleDashTest)
+                                  DoubleDashTest,
+                                  GlobPatternTest)
     else:
         # provide at least one test for the other platforms - happier build bots
         test_support.run_unittest(DummyTest)
