@@ -371,6 +371,14 @@ public abstract class CachedJarsPackageManager extends PackageManager {
                 while (true) {
                     String packageName = istream.readUTF();
                     String classes = istream.readUTF();
+                    // XXX: Handle multiple chunks of classes and concatenate them
+                    // together. Multiple chunks were added in 2.5.2 (for #1595) in this
+                    // way to maintain compatibility with the pre 2.5.2 format. In the
+                    // future we should consider changing the cache format to prepend a
+                    // count of chunks to avoid this check
+                    if (packs.containsKey(packageName)) {
+                        classes = packs.get(packageName) + classes;
+                    }
                     packs.put(packageName, classes);
                 }
             } catch (EOFException eof) {
@@ -396,13 +404,46 @@ public abstract class CachedJarsPackageManager extends PackageManager {
 
             for (Entry<String,String> kv : zipPackages.entrySet()) {
                 String classes = kv.getValue();
-                ostream.writeUTF(kv.getKey());
-                ostream.writeUTF(classes);
+                // Make sure each package is not larger than 64k
+                for (String part : splitString(classes, 65535)) {
+                    // For each chunk, write the package name followed by the classes. 
+                    ostream.writeUTF(kv.getKey());
+                    ostream.writeUTF(part);
+                }
             }
             ostream.close();
         } catch (IOException ioe) {
             warning("can't write cache file for '" + jarcanon + "'");
         }
+    }
+
+    /**
+     * Split up a string into several chunks based on a certain size
+     * 
+     *  The writeCacheFile method will use the writeUTF method on a
+     *  DataOutputStream which only allows writing 64k chunks, so use 
+     *  this utility method to split it up
+     * 
+     * @param str - The string to split up into chunks
+     * @param maxLength - The max size a string should be
+     * @return - An array of strings, each of which will not be larger than maxLength
+     */
+    protected static String[] splitString(String str, int maxLength) {
+        if (str == null) {
+            return null;
+        }
+
+        int len = str.length();
+        if (len <= maxLength) {
+            return new String[] {str};
+        }
+
+        int chunkCount = (int) Math.ceil((float) len / maxLength);
+        String[] chunks = new String[chunkCount];
+        for (int i = 0; i < chunkCount; i++) {
+            chunks[i] = str.substring(i * maxLength, Math.min(i * maxLength + maxLength, len));
+        }
+        return chunks;
     }
 
     /**
