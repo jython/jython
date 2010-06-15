@@ -707,8 +707,7 @@ class ProcessTestCase(unittest.TestCase):
 
 def test_main():
     # Spawning many new jython processes takes a long time
-    # TODO:oti uncomment the next line as soon as the fix to #1356 is verified on the build bots
-    #test_support.requires('subprocess')
+    test_support.requires('subprocess')
     test_support.run_unittest(ProcessTestCase)
     if hasattr(test_support, "reap_children"):
         test_support.reap_children()
