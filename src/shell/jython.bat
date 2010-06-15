@@ -18,6 +18,8 @@ cmd /C %0 %*
 goto finish
 
 :normalstart
+set _PERCENT=%%
+set _EXCLAMATION=!
 setlocal enabledelayedexpansion
 
 rem ----- Verify and set required environment variables -----------------------
@@ -25,21 +27,21 @@ rem ----- Verify and set required environment variables -----------------------
 set _JAVA_CMD=java
 rem remove surrounding quotes from java home, to be able to safely empty-test it
 set _TRIMMED_JAVA_HOME=%JAVA_HOME%
-for /f "useback tokens=*" %%a in ('%_TRIMMED_JAVA_HOME%') do set _TRIMMED_JAVA_HOME=%%~a
+for /f "usebackq tokens=*" %%a in ('%_TRIMMED_JAVA_HOME%') do set _TRIMMED_JAVA_HOME=%%~a
 if not "%_TRIMMED_JAVA_HOME%"=="" (
    set _JAVA_CMD="%JAVA_HOME:"=%\bin\java"
 )
 
 rem remove surrounding quotes from jython opts, to be able to safely empty-test it
 set _TRIMMED_JYTHON_OPTS=%JYTHON_OPTS%
-for /f "useback tokens=*" %%a in ('%_TRIMMED_JYTHON_OPTS%') do set _TRIMMED_JYTHON_OPTS=%%~a
+for /f "usebackq tokens=*" %%a in ('%_TRIMMED_JYTHON_OPTS%') do set _TRIMMED_JYTHON_OPTS=%%~a
 if not "%_TRIMMED_JYTHON_OPTS%"=="" (
    set _JYTHON_OPTS="%_TRIMMED_JYTHON_OPTS%"
 )
 
 rem remove surrounding quotes from jython home, to be able to safely empty-test it
 set _TRIMMED_JYTHON_HOME=%JYTHON_HOME%
-for /f "useback tokens=*" %%a in ('%_TRIMMED_JYTHON_HOME%') do set _TRIMMED_JYTHON_HOME=%%~a
+for /f "usebackq tokens=*" %%a in ('%_TRIMMED_JYTHON_HOME%') do set _TRIMMED_JYTHON_HOME=%%~a
 if not "%_TRIMMED_JYTHON_HOME%"=="" (
    set _JYTHON_HOME="%_TRIMMED_JYTHON_HOME%"
    goto gotHome
@@ -95,6 +97,10 @@ if not defined _ARGS goto argsDone
 set _ARGS=%_ARGS:_=_U%
 set _ARGS=%_ARGS:'=_S%
 set _ARGS=%_ARGS:"=_D%
+rem also escape % signs
+set _replaceVal=%_ARGS%
+call :escape
+set _ARGS=%_replaceVal%
 
 set _ARGS="%_ARGS%"
 set _JYTHON_ARGS=
@@ -140,7 +146,10 @@ if ["%_CMP%"] == ["--print"] (
    goto :nextArg
 )
 
-rem now unescape _D, _S and _U
+rem now unescape everything
+set _replaceVal=%_CMP%
+call :escape
+set _CMP=%_replaceVal%
 set _CMP=%_CMP:_D="%
 set _CMP=%_CMP:_S='%
 set _CMP=%_CMP:_U=_%
@@ -210,6 +219,80 @@ set _PRINT=
 set _TRIMMED_JAVA_HOME=
 set _TRIMMED_JYTHON_HOME=
 set _TRIMMED_JYTHON_OPTS=
+goto finish
+
+
+
+REM escapes or unescapes % with @@P@@, and ! with @@E@@
+REM input: a text variable named _replaceVal
+REM result: _replaceVal has the new value
+:escape
+if not defined _replaceVal goto :EOF
+set /a _index=-1
+set _replaced=
+
+:escapeNext
+set /a _index=%_index% + 1
+call set _escapeChar=%%_replaceVal:~%_index%,1%%
+if ^"==^%_escapeChar% goto noEscape
+if ''=='%_escapeChar%' goto escapeEnd
+if "%_escapeChar%"==" " goto noEscape
+if "%_escapeChar%"=="@" goto unescapeCheck
+if "%_escapeChar%"=="%_EXCLAMATION%" goto escapeExclamation
+if "%_escapeChar%"=="%_PERCENT%" goto escapePercent
+:noEscape
+set _replaced=%_replaced%%_escapeChar%
+goto escapeNext
+
+:escapeExclamation
+set _replaced=%_replaced%@@E@@
+goto escapeNext
+
+:escapePercent
+set _replaced=%_replaced%@@P@@
+goto escapeNext
+
+:unescapeCheck
+set _isExclamation=
+set _isPercent=
+set _isUnrecognized=true
+set /a _aheadIndex=%_index% + 1
+call set _aheadChar=%%_replaceVal:~%_aheadIndex%,1%%
+if ^"==^%_aheadChar% goto noEscape
+if "%_aheadChar%"=="@" set /a _aheadIndex=%_aheadIndex% + 1
+call set _aheadChar=%%_replaceVal:~%_aheadIndex%,1%%
+if ^"==^%_aheadChar% goto noEscape
+if "%_aheadChar%"=="E" set _isExclamation=true & set _isUnrecognized=
+if "%_aheadChar%"=="P" set _isPercent=true & set _isUnrecognized=
+if defined _isUnrecognized goto noEscape
+set _isUnrecognized=true
+set /a _aheadIndex=%_aheadIndex% + 1
+call set _aheadChar=%%_replaceVal:~%_aheadIndex%,1%%
+if ^"==^%_aheadChar% goto noEscape
+if "%_aheadChar%"=="@" set /a _aheadIndex=%_aheadIndex% + 1
+call set _aheadChar=%%_replaceVal:~%_aheadIndex%,1%%
+if ^"==^%_aheadChar% goto noEscape
+if "%_aheadChar%"=="@" set _isUnrecognized=
+if defined _isUnrecognized goto noEscape
+if defined _isExclamation goto unescapeExclamation
+if defined _isPercent goto unescapePercent 
+goto noEscape
+
+:unescapeExclamation
+set _replaced=%_replaced%%_EXCLAMATION%
+set /a _index=%_index% + 4
+goto escapeNext
+
+:unescapePercent
+set _replaced=%_replaced%%_PERCENT%
+set /a _index=%_index% + 4
+goto escapeNext
+
+:escapeEnd
+set _replaceVal=%_replaced%
+goto :EOF
+
+
 
 :finish
 %COMSPEC% /c exit /b %E%

@@ -102,7 +102,7 @@ class StarterProcess:
             stdoutMonitor.start()
             stderrMonitor.start()
             while self.isAlive(process):
-                Thread.sleep(500)
+                Thread.sleep(300)
             return self.getOutput(outfilePath)
         finally:
             os.remove(starterPath)
@@ -158,6 +158,7 @@ class BaseTest(unittest.TestCase):
                         jythonArgs += flag
                     else:
                         jythonArgs = flag
+                    jythonArgs = jythonArgs.replace('%%', '%') # workaround two .bat files
                 args.append(flag)
         process = StarterProcess()
         out = process.run(args, javaHome, jythonHome, jythonOpts)
@@ -267,10 +268,18 @@ class JavaOptsTest(BaseTest):
         self.assertOutput(['-J-DmyProperty=myValue'])
 
     def test_property_singlequote(self):
-        self.assertOutput(["-J-DmyProperty='myValue'"]) # a space inside value does not work in jython.bat
+        self.assertOutput(["-J-DmyProperty='myValue'"]) 
+
+    # a space inside value does not work in jython.bat
+    def __test_property_singlequote_space(self):
+        self.assertOutput(["-J-DmyProperty='my Value'"])
 
     def test_property_doublequote(self):
-        self.assertOutput(['-J-DmyProperty="myValue"']) # a space inside value does not work in jython.bat
+        self.assertOutput(['-J-DmyProperty="myValue"']) 
+
+    # a space inside value does not work in jython.bat
+    def __test_property_doublequote_space(self):
+        self.assertOutput(['-J-DmyProperty="my Value"'])
 
     def test_property_underscore(self):
         self.assertOutput(['-J-Dmy_Property=my_Value'])
@@ -338,6 +347,36 @@ class GlobPatternTest(BaseTest):
     def test_star_existing_singlequoted(self):
         self.assertOutput(['-c', 'import sys; print sys.argv[1:]', "'*.bat'", "'*.bat'"])
 
+class ArgsSpacesTest(BaseTest):
+    def test_doublequoted(self):
+        self.assertOutput(['-c', 'import sys; print sys.argv[1:]', '"part1 part2"', '2nd'])
+
+    def test_singlequoted(self):
+        self.assertOutput(['-c', 'import sys; print sys.argv[1:]', "'part1 part2'", '2nd'])
+
+    # this test currently fails
+    def __test_unbalanced_doublequote(self):
+        self.assertOutput(['-c', 'import sys; print sys.argv[1:]', 'Scarlet O"Hara', '2nd'])
+
+    def test_unbalanced_singlequote(self):
+        self.assertOutput(['-c', 'import sys; print sys.argv[1:]', "Scarlet O'Hara", '2nd'])
+
+class ArgsSpecialCharsTest(BaseTest):
+    # exclamation marks are still very special ...
+    def __test_exclamationmark(self):
+        self.assertOutput(['-c', 'import sys; print sys.argv[1:]', 'foo!', 'ba!r', '!baz', '!'])
+
+    # because we go through a starter.bat file, we have to simulate % with %%
+    def test_percentsign(self):
+        self.assertOutput(['-c', 'import sys; print sys.argv[1:]', 'foo%%1', '%%1bar', '%%1', '%%'])
+
+    def test_colon(self):
+        self.assertOutput(['-c', 'import sys; print sys.argv[1:]', 'foo:', ':bar'])
+
+    # a semicolon at the beginning of an arg currently fails (e.g. ;bar)
+    def test_semicolon(self):
+        self.assertOutput(['-c', 'import sys; print sys.argv[1:]', 'foo;'])
+
 class DummyTest(unittest.TestCase):
     def test_nothing(self):
         pass
@@ -351,7 +390,9 @@ def test_main():
                                   JavaOptsTest,
                                   ArgsTest,
                                   DoubleDashTest,
-                                  GlobPatternTest)
+                                  GlobPatternTest,
+                                  ArgsSpacesTest,
+                                  ArgsSpecialCharsTest)
     else:
         # provide at least one test for the other platforms - happier build bots
         test_support.run_unittest(DummyTest)
