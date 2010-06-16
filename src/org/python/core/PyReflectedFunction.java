@@ -55,9 +55,10 @@ public class PyReflectedFunction extends PyObject {
 
     private ReflectedArgs makeArgs(Method m) {
         return new ReflectedArgs(m,
-                                 m.getParameterTypes(),
-                                 m.getDeclaringClass(),
-                                 Modifier.isStatic(m.getModifiers()));
+                m.getParameterTypes(),
+                m.getDeclaringClass(),
+                Modifier.isStatic(m.getModifiers()),
+                m.isVarArgs());
     }
 
     public PyReflectedFunction copy() {

@@ -10,6 +10,8 @@ public class ReflectedArgs {
 
     public boolean isStatic;
 
+    public boolean isVarArgs;
+
     public int flags;
 
     public static final int StandardCall = 0;
@@ -19,10 +21,15 @@ public class ReflectedArgs {
     public static final int PyArgsKeywordsCall = 2;
 
     public ReflectedArgs(Object data, Class<?>[] args, Class<?> declaringClass, boolean isStatic) {
+        this(data, args, declaringClass, isStatic, false);
+    }
+
+    public ReflectedArgs(Object data, Class<?>[] args, Class<?> declaringClass, boolean isStatic, boolean isVarArgs) {
         this.data = data;
         this.args = args;
         this.declaringClass = declaringClass;
         this.isStatic = isStatic;
+        this.isVarArgs = isVarArgs; // only used for varargs matching; it should be added after the unboxed form
 
         if (args.length == 1 && args[0] == PyObject[].class) {
             this.flags = PyArgsCall;
@@ -90,6 +97,38 @@ public class ReflectedArgs {
         }
 
         int n = this.args.length;
+
+        // if we have a varargs method AND the last PyObject is not a list/tuple
+        // we need to do box (wrap with an array) the last pyArgs.length - n args
+        // (which might be empty)
+        //
+        // examples:
+        // test(String... x)
+        // test(List... x)
+        //
+        // in this last example, don't worry if someone is overly clever in calling this,
+        // they can always write their own version of PyReflectedFunction and put it in the proxy
+        // if that's what they need to do ;)
+
+        if (isVarArgs) {
+            if (pyArgs.length == 0 || !(pyArgs[pyArgs.length - 1] instanceof PySequenceList)) {
+                int non_varargs_len = n - 1;
+                if (pyArgs.length >= non_varargs_len) {
+                    PyObject[] boxedPyArgs = new PyObject[n];
+                    for (int i = 0; i < non_varargs_len; i++) {
+                        boxedPyArgs[i] = pyArgs[i];
+                    }
+                    int varargs_len = pyArgs.length - non_varargs_len;
+                    PyObject[] varargs = new PyObject[varargs_len];
+                    for (int i = 0; i < varargs_len; i++) {
+                        varargs[i] = pyArgs[non_varargs_len + i];
+                    }
+                    boxedPyArgs[non_varargs_len] = new PyList(varargs);
+                    pyArgs = boxedPyArgs;
+                }
+            }
+        }
+
         if (pyArgs.length != n) {
             return false;
         }
@@ -111,8 +150,11 @@ public class ReflectedArgs {
         Object[] javaArgs = callData.args;
 
         for (int i = 0; i < n; i++) {
-            if ((javaArgs[i] = pyArgs[i].__tojava__(this.args[i])) == Py.NoConversion) {
-                // Make error messages clearer
+            PyObject pyArg = pyArgs[i];
+            Class targetClass = this.args[i];
+            Object javaArg = pyArg.__tojava__(targetClass);
+            javaArgs[i] = javaArg;
+            if (javaArg == Py.NoConversion) {
                 if (i > callData.errArg) {
                     callData.errArg = i;
                 }
@@ -253,7 +295,7 @@ public class ReflectedArgs {
 
     @Override
     public String toString() {
-        String s =  declaringClass + ", " + isStatic + ", " + flags + ", " + data + "\n";
+        String s =  declaringClass + ", static=" + isStatic + ", varargs=" + isVarArgs + ",flags=" + flags + ", " + data + "\n";
         s = s + "\t(";
         for (Class<?> arg : args) {
             s += arg.getName() + ", ";

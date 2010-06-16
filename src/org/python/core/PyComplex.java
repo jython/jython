@@ -482,6 +482,16 @@ public class PyComplex extends PyObject {
         return _divmod(coerce(left), this).__finditem__(0);
     }
 
+    // Special case __tojava__ for bug 1605, since we broke it with our support for faux floats.
+
+    @Override
+    public Object __tojava__(Class<?> c) {
+        if (c.isInstance(this)) {
+            return this;
+        }
+        return Py.NoConversion;
+    }
+
     @Override
     public PyObject __truediv__(PyObject right) {
         return complex___truediv__(right);
