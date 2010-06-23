@@ -6,12 +6,14 @@ import java.io.Serializable;
 import java.util.AbstractSet;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -55,6 +57,11 @@ public class Generic {
     public static <K, V> Map<K, V> map() {
         return new HashMap<K, V>();
     }
+
+    public static <K, V> Map<K, V> synchronizedWeakHashMap() {
+        return Collections.synchronizedMap(new WeakHashMap<K, V>());
+    }
+
 
     /**
      * Makes a ConcurrentMap using generic types inferred from whatever this is being

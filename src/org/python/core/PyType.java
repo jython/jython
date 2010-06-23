@@ -1251,9 +1251,11 @@ public class PyType extends PyObject implements Serializable {
         return newtype;
     }
 
+    // XXX what's the proper scope of this synchronization? given module import lock, might be
+    // ok to omit this sync here...
     public static synchronized PyType fromClass(Class<?> c) {
         if (class_to_type == null) {
-            class_to_type = Generic.map();
+            class_to_type = Generic.synchronizedWeakHashMap();
             addFromClass(PyType.class, null);
         }
         PyType type = class_to_type.get(c);
