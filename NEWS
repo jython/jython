@@ -2,6 +2,7 @@ Jython NEWS
 
 Jython 2.5.2a1
   Bugs Fixed
+    - [ 1614 ] minidom chunks the character input on multi-line values
     - [ 1615 ] Can't invoke Java method that takes a variable number of arguments with zero arguments
     - [ 1605 ] float preference over PyComplex as arg to __call__ breaks logic
     - [ 1586 ] weakref reference count leak when kwargs are used

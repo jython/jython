@@ -523,6 +523,29 @@ def testNormalize():
             "testNormalize -- single empty node removed")
     doc.unlink()
 
+def testNormalizedAfterLoad():
+    """
+    Introduced this test on jython because 
+    1. Cpython guarantees, by the use of xml.dom.expatbuilder, 
+       that all text nodes are normalized after loading.
+    2. Jython has no expat, and thus uses xml.dom.pulldom.parse 
+       (which uses any java SAX2 compliant parser), and which makes 
+       no guarantees about text node normalization.
+    Thus we have to check if text nodes are normalized after a parse.
+    See this bug for further information
+    minidom chunks the character input on multi-line values
+    http://bugs.jython.org/issue1614
+    """
+    num_lines = 2
+    # Up to 16K lines should be enough to guarantee failure without normalization
+    while num_lines <= 2**14:
+        doc_content = "\n".join( ("Line %d" % i for i in xrange(num_lines)) )
+        doc_text = "<document>%s</document>" % doc_content
+        dom = parseString(doc_text)
+        node_content = dom.getElementsByTagName("document")[0].childNodes[0].nodeValue
+        confirm(node_content == doc_content, "testNormalizedAfterLoad")
+        num_lines *= 2
+
 def testSiblings():
     doc = parseString("<doc><?pi?>text?<elm/></doc>")
     root = doc.documentElement
