@@ -37,5 +37,6 @@
 	<classpathentry kind="lib" path="extlibs/jffi-x86_64-SunOS.jar"/>
 	<classpathentry kind="lib" path="extlibs/jffi.jar"/>
 	<classpathentry kind="lib" path="extlibs/jnr-posix.jar"/>
+	<classpathentry kind="lib" path="extlibs/guava-r05.jar"/>
 	<classpathentry kind="output" path="build/classes"/>
 </classpath>
