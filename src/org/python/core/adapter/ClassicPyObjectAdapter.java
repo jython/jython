@@ -73,7 +73,7 @@ public class ClassicPyObjectAdapter extends ExtensiblePyObjectAdapter {
 		add(new ClassAdapter(Class.class) {
 
 			public PyObject adapt(Object o) {
-                return PyType.fromClass((Class<?>)o);
+                return PyType.fromClass((Class<?>)o, false);
             }
 
 		});

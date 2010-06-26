@@ -59,7 +59,7 @@ public class PyJavaType extends PyType {
     private Set<String> modified;
 
     public static PyObject wrapJavaObject(Object o) {
-        PyObject obj = new PyObjectDerived(PyType.fromClass(o.getClass()));
+        PyObject obj = new PyObjectDerived(PyType.fromClass(o.getClass(), false));
         obj.javaProxy = o;
         return obj;
     }

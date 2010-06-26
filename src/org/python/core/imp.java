@@ -399,7 +399,7 @@ public class imp {
                 throw Py.JavaError(e);
             }
         }
-        return PyType.fromClass(c); // xxx?
+        return PyType.fromClass(c, false); // xxx?
     }
 
     static PyObject getPathImporter(PyObject cache, PyList hooks, PyObject p) {

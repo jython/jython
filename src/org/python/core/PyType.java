@@ -22,6 +22,8 @@ import org.python.expose.TypeBuilder;
 import org.python.modules._weakref.WeakrefModule;
 import org.python.util.Generic;
 
+import com.google.common.collect.MapMaker;
+
 /**
  * The Python Type object implementation.
  */
@@ -97,7 +99,8 @@ public class PyType extends PyObject implements Serializable {
 
     /** Mapping of Java classes to their PyTypes. */
     private static Map<Class<?>, PyType> class_to_type;
-
+    private static Set<PyType> exposedTypes;
+    
     /** Mapping of Java classes to their TypeBuilders. */
     private static Map<Class<?>, TypeBuilder> classToBuilder;
 
@@ -121,7 +124,15 @@ public class PyType extends PyObject implements Serializable {
                                         PyObject[] args, String[] keywords) {
         // Special case: type(x) should return x.getType()
         if (args.length == 1 && keywords.length == 0) {
-            return args[0].getType();
+            PyObject obj = args[0];
+            PyType objType = obj.getType();
+
+            // special case for PyStringMap so that it types as a dict
+            PyType psmType = PyType.fromClass(PyStringMap.class);
+            if (objType == psmType) {
+                return PyDictionary.TYPE;
+            }
+            return objType;
         }
         // If that didn't trigger, we need 3 arguments. but ArgParser below may give a msg
         // saying type() needs exactly 3.
@@ -517,7 +528,7 @@ public class PyType extends PyObject implements Serializable {
      * followed by the mro of baseClass.
      */
     protected void computeLinearMro(Class<?> baseClass) {
-        base = PyType.fromClass(baseClass);
+        base = PyType.fromClass(baseClass, false);
         mro = new PyType[base.mro.length + 1];
         System.arraycopy(base.mro, 0, mro, 1, base.mro.length);
         mro[0] = this;
@@ -622,7 +633,7 @@ public class PyType extends PyObject implements Serializable {
                                                     dict);
         javaProxy = proxyClass;
 
-        PyType proxyType = PyType.fromClass(proxyClass);
+        PyType proxyType = PyType.fromClass(proxyClass, false);
         List<PyObject> cleanedBases = Generic.list();
         boolean addedProxyType = false;
         for (PyObject base : bases) {
@@ -908,7 +919,7 @@ public class PyType extends PyObject implements Serializable {
 
     PyObject[] computeMro(MROMergeState[] toMerge, List<PyObject> mro) {
         boolean addedProxy = false;
-        PyType proxyAsType = javaProxy == null ? null : PyType.fromClass(((Class<?>)javaProxy));
+        PyType proxyAsType = javaProxy == null ? null : PyType.fromClass(((Class<?>)javaProxy), false);
         scan : for (int i = 0; i < toMerge.length; i++) {
             if (toMerge[i].isMerged()) {
                 continue scan;
@@ -1164,7 +1175,7 @@ public class PyType extends PyObject implements Serializable {
         return null;
     }
 
-    public static void addBuilder(Class<?> forClass, TypeBuilder builder) {
+    public synchronized static void addBuilder(Class<?> forClass, TypeBuilder builder) {
         if (classToBuilder == null) {
             classToBuilder = Generic.map();
         }
@@ -1181,9 +1192,9 @@ public class PyType extends PyObject implements Serializable {
         }
     }
 
-    private static PyType addFromClass(Class<?> c, Set<PyJavaType> needsInners) {
+    private synchronized static PyType addFromClass(Class<?> c, Set<PyJavaType> needsInners) {
         if (ExposeAsSuperclass.class.isAssignableFrom(c)) {
-            PyType exposedAs = fromClass(c.getSuperclass());
+            PyType exposedAs = fromClass(c.getSuperclass(), false);
             class_to_type.put(c, exposedAs);
             return exposedAs;
         }
@@ -1227,7 +1238,7 @@ public class PyType extends PyObject implements Serializable {
         return builder;
     }
 
-    private static PyType createType(Class<?> c, Set<PyJavaType> needsInners) {
+    private synchronized static PyType createType(Class<?> c, Set<PyJavaType> needsInners) {
         PyType newtype;
         if (c == PyType.class) {
             newtype = new PyType(false);
@@ -1251,18 +1262,25 @@ public class PyType extends PyObject implements Serializable {
         return newtype;
     }
 
-    // XXX what's the proper scope of this synchronization? given module import lock, might be
-    // ok to omit this sync here...
+    // re the synchronization used here: this result is cached in each type obj,
+    // so we just need to prevent data races. all public methods that access class_to_type
+    // are themselves synchronized. However, if we use Google Collections/Guava,
+    // MapMaker only uses ConcurrentMap anyway
+
     public static synchronized PyType fromClass(Class<?> c) {
+        return fromClass(c, true);
+    }
+
+    public static synchronized PyType fromClass(Class<?> c, boolean hardRef) {
         if (class_to_type == null) {
-            class_to_type = Generic.synchronizedWeakHashMap();
+            class_to_type = new MapMaker().weakKeys().weakValues().makeMap();
             addFromClass(PyType.class, null);
         }
         PyType type = class_to_type.get(c);
         if (type != null) {
             return type;
         }
-        // We haven't seen this class before, so it's type needs to be created. If it's being
+        // We haven't seen this class before, so its type needs to be created. If it's being
         // exposed as a Java class, defer processing its inner types until it's completely
         // created in case the inner class references a class that references this class.
         Set<PyJavaType> needsInners = Generic.set();
@@ -1284,10 +1302,17 @@ public class PyType extends PyObject implements Serializable {
                             || ExposeAsSuperclass.class.isAssignableFrom(inner)) {
                         Py.BOOTSTRAP_TYPES.add(inner);
                     }
-                    javaType.dict.__setitem__(inner.getSimpleName(), PyType.fromClass(inner));
+                    javaType.dict.__setitem__(inner.getSimpleName(), PyType.fromClass(inner, hardRef));
                 }
             }
         }
+        if (hardRef && result != null) {
+            if (exposedTypes == null) {
+                exposedTypes = Generic.set();
+            }
+            exposedTypes.add(result) ;
+        }
+
         return result;
     }
 
@@ -1757,7 +1782,7 @@ public class PyType extends PyObject implements Serializable {
 
         private Object readResolve() {
             if (underlying_class != null) {
-                return PyType.fromClass(underlying_class);
+                return PyType.fromClass(underlying_class, false);
             }
             PyObject mod = imp.importName(module.intern(), false);
             PyObject pytyp = mod.__getattr__(name.intern());

@@ -117,7 +117,7 @@ public class zipimporter extends importer<PyObject> {
                 zipimport._zip_directory_cache.__setitem__(archive, files);
             }
         } else {
-            throw zipimport.ZipImportError("not a Zip file");
+            throw zipimport.ZipImportError("not a Zip file: " + path);
         }
 
         if (prefix != "" && !prefix.endsWith(File.separator)) {

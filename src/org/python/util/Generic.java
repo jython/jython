@@ -58,11 +58,6 @@ public class Generic {
         return new HashMap<K, V>();
     }
 
-    public static <K, V> Map<K, V> synchronizedWeakHashMap() {
-        return Collections.synchronizedMap(new WeakHashMap<K, V>());
-    }
-
-
     /**
      * Makes a ConcurrentMap using generic types inferred from whatever this is being
      * assigned to.

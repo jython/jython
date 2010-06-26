@@ -63,7 +63,7 @@ public class PyObject implements Serializable {
      * field to correspond to the specific subclass of <code>PyObject</code> being instantiated.
      **/
     public PyObject() {
-        objtype = PyType.fromClass(getClass());
+        objtype = PyType.fromClass(getClass(), false);
     }
 
     /**
