@@ -1,6 +1,9 @@
 //Copyright (c) Corporation for National Research Initiatives
 package javatests;
 
+import java.lang.reflect.Field;
+import java.lang.NoSuchFieldException;
+
 /**
  * @author updikca1
  */
@@ -46,5 +49,16 @@ public class TestSupport {
         assertThat( !a.equals(b), message + "[not a.equals(b) failed]");
         assertThat( !b.equals(a), message + "[not b.equals(a) failed]");
     }
+
+    public static Field getField(Class cls, String name) {
+        try {
+            Field f = cls.getDeclaredField(name);
+            f.setAccessible(true);
+            return f;
+        } catch (NoSuchFieldException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
 }
 
