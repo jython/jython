@@ -1,8 +1,8 @@
 Jython NEWS
 
-Jython 2.5.2a1
+Jython 2.5.2b2
   Bugs Fixed
-    - [  ]
+    - [ 1630 ] threading.Thread lacks __tojava__ method
 
 Jython 2.5.2b1
   Bugs Fixed

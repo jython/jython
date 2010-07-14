@@ -3,12 +3,11 @@ from java.util import Collections, WeakHashMap
 from java.util.concurrent import Semaphore, CyclicBarrier
 from java.util.concurrent.locks import ReentrantLock
 from org.python.util import jython
+from org.python.core import Py
 from thread import _newFunctionThread
 from thread import _local as local
-from _threading import Lock, RLock, Condition, _Lock, _RLock
+from _threading import Lock, RLock, Condition, _Lock, _RLock, _threads, _active, _jthread_to_pythread, _register_thread, _unregister_thread
 import java.lang.Thread
-import weakref
-
 import sys as _sys
 from traceback import print_exc as _print_exc
 
@@ -93,8 +92,7 @@ ThreadStates = {
 class JavaThread(object):
     def __init__(self, thread):
         self._thread = thread
-        _jthread_to_pythread[thread] = self
-        _threads[thread.getId()] = self
+        _register_thread(thread, self)
 
     def __repr__(self):
         _thread = self._thread
@@ -141,10 +139,13 @@ class JavaThread(object):
     def setDaemon(self, daemonic):
         self._thread.setDaemon(bool(daemonic))
 
-# relies on the fact that this is a CHM
-_threads = weakref.WeakValueDictionary()
-_active = _threads
-_jthread_to_pythread = Collections.synchronizedMap(WeakHashMap())
+    def __tojava__(self, c):
+        if isinstance(self._thread, c):
+            return self._thread
+        if isinstance(self, c):
+            return self
+        return Py.NoConversion
+
 
 class Thread(JavaThread):
     def __init__(self, group=None, target=None, name=None, args=None, kwargs=None):
@@ -225,7 +226,7 @@ class Thread(JavaThread):
         pass
 
     def __delete(self):
-        del _threads[self._thread.getId()]
+        _unregister_thread(self._thread)
 
 
 class _MainThread(Thread):
@@ -241,7 +242,7 @@ class _MainThread(Thread):
         return False
 
     def __exitfunc(self):
-        del _threads[self._thread.getId()]
+        _unregister_thread(self._thread)
         t = _pickSomeNonDaemonThread()
         while t:
             t.join()

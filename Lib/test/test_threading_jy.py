@@ -2,12 +2,16 @@
 
 Made for Jython.
 """
+from __future__ import with_statement
+
 import unittest
 from test import test_support
 import threading
 import time
 import random
-from threading import Thread
+from threading import Condition, Lock, Thread
+from java.lang import Thread as JThread, InterruptedException
+
 
 class ThreadingTestCase(unittest.TestCase):
 
@@ -42,8 +46,46 @@ class TwistedTestCase(unittest.TestCase):
         self.assertEqual(threading.Lock, threading._Lock)
         self.assertEqual(threading.RLock, threading._RLock)
 
+
+class JavaIntegrationTestCase(unittest.TestCase):
+    """Verifies that Thread.__tojava__ correctly gets the underlying Java thread"""
+
+    def test_interruptible(self):
+
+        def wait_until_interrupted(cv):
+            name = threading.currentThread().getName()
+            with cv:
+                while not JThread.currentThread().isInterrupted():
+                    try:
+                        cv.wait()
+                    except InterruptedException, e:
+                        break
+
+        num_threads = 5
+        unfair_condition = Condition()
+        threads = [
+            Thread(
+                name="thread #%d" % i,
+                target=wait_until_interrupted,
+                args=(unfair_condition,)) 
+            for i in xrange(num_threads)]
+
+        for thread in threads:
+            thread.start()
+        time.sleep(0.1)
+
+        for thread in threads:
+            JThread.interrupt(thread)
+
+        joined_threads = 0
+        for thread in threads:
+            thread.join(1.) # timeout just in case so we don't stall regrtest
+            joined_threads += 1
+        self.assertEqual(joined_threads, num_threads)
+
+
 def test_main():
-    test_support.run_unittest(ThreadingTestCase, TwistedTestCase)
+    test_support.run_unittest(JavaIntegrationTestCase, ThreadingTestCase, TwistedTestCase)
 
 
 if __name__ == "__main__":
