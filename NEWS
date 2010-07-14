@@ -1,5 +1,9 @@
 Jython NEWS
 
+Jython 2.5.2a1
+  Bugs Fixed
+    - [  ]
+
 Jython 2.5.2b1
   Bugs Fixed
     - [ 1614 ] minidom chunks the character input on multi-line values
@@ -53,6 +57,40 @@ Jython 2.5.2b1
     - [ 1356 ] [Windows] test_subprocess test_communicate_pipe_buf fails
     - [ 1595 ] [patch] CachedJarsPackageManager cannot write cache for packages in jar over 64k
     - [ 1522 ] repeated execution of external python scripts causing PermGen out of memory exception
+    - [ 1251 ] select() fails when selecting on a file descriptor
+    - [ 1233 ] couldn't make directories when installing django in jython on Windows
+    - [ 1260 ] Why is asyncore.py so different?
+    - [ 1236 ] Django 1.0.2 jython setup.py install fails in 2.5b1 (ok in 2.5b0)
+    - [ 1263 ] importing * from java-class fails
+    - [ 1252 ] StackOverflow when name referenced before global declaration and run as a script
+    - [ 1275 ] Jython doesn't load directories of JARs
+    - [ 1278 ] socket.py error wording nitpick
+    - [ 1249 ] Trace function is not called with an exception event exactly when the exception occurs
+    - [ 1282 ] Java serialization problem
+    - [ 1289 ] os.path.isdir(path) return 0 istead of False
+    - [ 1290 ] 600x slower network download speed with urllib.urlretrieve() or urllib2.urlopen() compared to CPython
+    - [ 1299 ] NullPointerException without any clues
+    - [ 1277 ] jython applets & jythonc
+    - [ 1273 ] ImportError: No module named os
+    - [ 1308 ] Calling sys.exit() in a spawned thread fails to exit.
+    - [ 1346 ] compiler.transformer uses parser which is not defined
+    - [ 1347 ] socket Level 6 not supported
+    - [ 1321 ] distutils breakage with the setup.py of mercurial
+    - [ 1310 ] Serialization problem for wrapped Java objects
+    - [ 1600 ] jython dict() behaving differently from cpython's.
+    - [ 1269 ] windows jython.bat fails in 2.5b2
+    - [ 1266 ] PythonInterpreter does not have setOut(StringWriter)
+    - [ 1283,1284 ] File resource leaks in pkgutil
+    - [ 1246 ] KeyError: 'twisted.internet.reactor'
+    - [ 1265 ] Possible problem with subclasses of Java classes, constructors, and reflection
+    - [ 1124 ] os.popen variants hang when executed command produces a lot to stderr
+    - [ 1291 ] select() crashes with IOException
+    - [ 1317 ] list.count considers tuples and lists to be equal
+    - [ 1297 ] Methods inherited from a Java class are not overridden properly
+    - [ 1285 ] [2.5b3] respectJavaAccessibility = false makes some Java class method signatures inaccessible from Jython
+    - [ 1254 ] jython.jar (2.5b1) conflicts with previous version (2.2)
+    - [ 1238 ] randomly select() exception on 2.5b1
+    - [ 1259 ] jython 2.5b1 trunk failing manage.py validate
     - Fix runtime issues during exitfuncs triggered via SystemRestart (such as
       during Django or Pylons development mode reloading)
     - Fix pickling of collections.defaultdict objects
