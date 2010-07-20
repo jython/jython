@@ -129,8 +129,25 @@ class ShadowingTest(unittest.TestCase):
         self.assertTrue('sys_jy_test_module' not in sys.modules, "sys.modules should be per PySystemState instance")
 
 
+class SyspathResourceTest(unittest.TestCase):
+    def setUp(self):
+        self.orig_path = sys.path
+        sys.path.insert(0, test.test_support.findfile("bug1373.jar"))
+
+    def tearDown(self):
+        sys.path = self.orig_path
+
+    def test_resource_stream_from_syspath(self):
+        from pck import Main
+        self.assert_(Main.getResourceAsStream('Main.txt'))
+
+    def test_resource_url_from_syspath(self):
+        from pck import Main
+        self.assert_(Main.getResource('Main.txt'))
+
+
 def test_main():
-    test.test_support.run_unittest(SysTest, ShadowingTest)
+    test.test_support.run_unittest(SysTest, ShadowingTest, SyspathResourceTest)
 
 if __name__ == "__main__":
     test_main()
