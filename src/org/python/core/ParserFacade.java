@@ -344,9 +344,9 @@ public class ParserFacade {
     }
 
     private static ExpectedEncodingBufferedReader prepBufReader(String string,
-                                                                CompilerFlags cflags,
-                                                                String filename)
-        throws IOException {
+            CompilerFlags cflags,
+            String filename)
+            throws IOException {
         if (cflags.source_is_utf8)
             return prepBufReader(new StringReader(string), cflags, filename);
 
@@ -429,10 +429,10 @@ public class ParserFacade {
         return encoding;
     }
 
+    private static final Pattern pep263EncodingPattern = Pattern.compile("#.*coding[:=]\\s*([-\\w.]+)");
+
     private static String matchEncoding(String inputStr) {
-        String patternStr = "coding[:=]\\s*([-\\w.]+)";
-        Pattern pattern = Pattern.compile(patternStr);
-        Matcher matcher = pattern.matcher(inputStr);
+        Matcher matcher = pep263EncodingPattern.matcher(inputStr);
         boolean matchFound = matcher.find();
 
         if (matchFound && matcher.groupCount() == 1) {
