@@ -5,6 +5,7 @@ Jython 2.5.2b2
     - [ 1373 ] Jython ClassLoader getResource does not work
     - [ 1506 ] Jython applies PEP263 pattern for determining source-code encoding on noncomments
     - [ 1630 ] threading.Thread lacks __tojava__ method
+    - [ 1558 ] PyFunction to single method interface wrapping does not handle java.lang.Object methods
 
 Jython 2.5.2b1
   Bugs Fixed
@@ -98,6 +99,8 @@ Jython 2.5.2b1
     - Fix pickling of collections.defaultdict objects
     - Fix the cmath module to accept objects implementing the __float__ method
     - Add google indexer (by Yin Wang and Steve Yegge)
+    - Python functions can be directly passed to Java methods that
+       take a single method interface (such as Callable or Runnable)
 
 Jython 2.5.1rc3
   Bugs Fixed
