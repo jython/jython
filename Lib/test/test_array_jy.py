@@ -4,10 +4,7 @@ from __future__ import with_statement
 import os
 import unittest
 from test import test_support
-from array import array, zeros
-from java.lang import String
-from java.lang.reflect import Array
-from java.util import Arrays
+from array import array
 
 class ArrayJyTestCase(unittest.TestCase):
 
@@ -15,12 +12,17 @@ class ArrayJyTestCase(unittest.TestCase):
         # While jarray is still being phased out, just flex the initializers.
         # The rest of the test for array will catch all the big problems.
         import jarray
+        from java.lang import String
         jarray.array(range(5), 'i')
         jarray.array([String("a"), String("b"), String("c")], String)
         jarray.zeros(5, 'i')
         jarray.zeros(5, String)
 
     def test_java_object_arrays(self):
+        from array import zeros
+        from java.lang import String
+        from java.lang.reflect import Array
+        from java.util import Arrays
         jStringArr = array(String, [String("a"), String("b"), String("c")])
         self.assert_(
             Arrays.equals(jStringArr.typecode, 'java.lang.String'),
@@ -32,6 +34,7 @@ class ArrayJyTestCase(unittest.TestCase):
         self.assertEqual(jStringArr, eval(str(jStringArr)))
 
     def test_java_compat(self):
+        from array import zeros
         from java.awt import Color
         hsb = Color.RGBtoHSB(0,255,255, None)
         self.assertEqual(hsb, array('f', [0.5,1,1]),
@@ -68,9 +71,24 @@ class ToFromfileTestCase(unittest.TestCase):
             self.assertEqual(x, array('i', range(5) * 4))
 
 
+class ArrayOpsTestCase(unittest.TestCase):
+
+    def test_ops(self):
+        # http://bugs.jython.org/issue1622
+        class Foo(object):
+            def __radd__(self, that):
+                return '__radd__'
+        ar = array('i', range(5))
+        self.assertEqual('__radd__', ar + Foo())
+        ar += Foo()
+        self.assertEqual('__radd__', ar)
+
+
 def test_main():
-    test_support.run_unittest(ArrayJyTestCase,
-                              ToFromfileTestCase)
+    tests = [ToFromfileTestCase, ArrayOpsTestCase]
+    if test_support.is_jython:
+        tests.extend([ArrayJyTestCase])
+    test_support.run_unittest(*tests)
 
 
 if __name__ == "__main__":

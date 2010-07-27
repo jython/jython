@@ -291,9 +291,12 @@ class BaseTest(unittest.TestCase):
         )
 
         b = array.array(self.badtypecode())
-        self.assertRaises(TypeError, a.__add__, b)
-
-        self.assertRaises(TypeError, a.__add__, "bad")
+        if test_support.is_jython:
+            self.assertRaises(TypeError, operator.add, a, b)
+            self.assertRaises(TypeError, operator.add, a, "bad")
+        else:
+            self.assertRaises(TypeError, a.__add__, b)
+            self.assertRaises(TypeError, a.__add__, "bad")
 
     def test_iadd(self):
         a = array.array(self.typecode, self.example[::-1])
@@ -306,9 +309,12 @@ class BaseTest(unittest.TestCase):
         )
 
         b = array.array(self.badtypecode())
-        self.assertRaises(TypeError, a.__add__, b)
-
-        self.assertRaises(TypeError, a.__iadd__, "bad")
+        if test_support.is_jython:
+            self.assertRaises(TypeError, operator.add, a, b)
+            self.assertRaises(TypeError, operator.iadd, a, "bad")
+        else:
+            self.assertRaises(TypeError, a.__add__, b)
+            self.assertRaises(TypeError, a.__iadd__, "bad")
 
     def test_mul(self):
         a = 5*array.array(self.typecode, self.example)

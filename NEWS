@@ -6,6 +6,7 @@ Jython 2.5.2b2
     - [ 1506 ] Jython applies PEP263 pattern for determining source-code encoding on noncomments
     - [ 1630 ] threading.Thread lacks __tojava__ method
     - [ 1558 ] PyFunction to single method interface wrapping does not handle java.lang.Object methods
+    - [ 1622 ] array type prevents __radd__ fallback
 
 Jython 2.5.2b1
   Bugs Fixed
