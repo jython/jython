@@ -162,8 +162,8 @@ public class ModjyJServlet extends HttpServlet {
     protected void setupEnvironment(PythonInterpreter interp,
                                     Properties props,
                                     PySystemState systemState) throws PyException {
-        checkSitePackages(props);
         processPythonLib(interp, systemState);
+        checkSitePackages(props);
     }
 
     /**
