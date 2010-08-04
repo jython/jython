@@ -2,6 +2,7 @@ Jython NEWS
 
 Jython 2.5.2b2
   Bugs Fixed
+    - [ 1395 ] PyList.indexOf() and PyTuple.indexOf() do not function properly
     - [ 1373 ] Jython ClassLoader getResource does not work
     - [ 1506 ] Jython applies PEP263 pattern for determining source-code encoding on noncomments
     - [ 1630 ] threading.Thread lacks __tojava__ method

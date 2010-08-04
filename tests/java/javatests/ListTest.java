@@ -124,6 +124,7 @@ public abstract class ListTest {
             // skip unhashable types
         }
         test_subList();
+        test_indexOf();
         test_lastIndexOf();
         test_listIterator();
         test_toArray();
@@ -243,7 +244,7 @@ public abstract class ListTest {
     }
 
     /** Tests indexOf(Object o) */
-    public void indexOf() {
+    public void test_indexOf() {
         TestSupport.assertThat(defaultList().indexOf(3) == 3, "indexOf(3) did not return 3");
         TestSupport.assertThat(defaultList().indexOf(42) == -1,
                                "indexOf() non-existing entry did not return -1");
