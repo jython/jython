@@ -5,6 +5,7 @@ Made for Jython.
 import cPickle
 import pickle
 import unittest
+from StringIO import StringIO
 from test import test_support
 
 class MyClass(object):
@@ -33,6 +34,40 @@ class CPickleTestCase(unittest.TestCase):
         self.assertEqual(len(m3.foo), 1)
         m4 = iter(m3.foo).next()
         self.assertEqual(m4.foo, s2)
+
+    def test_find_global(self):
+
+        class A(object):
+            def __init__(self, x, y):
+                self.x = x
+                self.y = y
+
+            def __eq__(self, other):
+                if isinstance(other, A) and self.x == other.x and self.y == other.y:
+                    return True
+                return False
+
+        class B(object):
+            def __init__(self, x, y):
+                self.x = x
+                self.y = y
+
+        def restrictive_find_global(module, clsname):
+            if clsname == 'A':
+                return A
+            else:
+                raise pickle.UnpicklingError("Cannot load class", module, clsname)
+
+        a = A("python", "C")
+        a_pickled = cPickle.dumps(a, 2)
+        a_unpickler = cPickle.Unpickler(StringIO(a_pickled))
+        a_unpickler.find_global = restrictive_find_global
+        self.assertEqual(a_unpickler.load(), a)
+
+        b_pickled = cPickle.dumps(B("jython", "java"), 2)
+        b_unpickler = cPickle.Unpickler(StringIO(b_pickled))
+        b_unpickler.find_global = restrictive_find_global
+        self.assertRaises(pickle.UnpicklingError, b_unpickler.load)
 
 
 def test_main():

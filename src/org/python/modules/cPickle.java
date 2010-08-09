@@ -1573,6 +1573,7 @@ public class cPickle implements ClassDictInit {
          * persistent_load().
          */
         public PyObject persistent_load = null;
+        public PyObject find_global = null;
 
         private PyObject mark = new PyString("spam");
 
@@ -1982,12 +1983,11 @@ public class cPickle implements ClassDictInit {
 
 
         final private PyObject find_class(String module, String name) {
-            PyObject fc = dict.__finditem__("find_global");
-            if (fc != null) {
-               if (fc == Py.None)
+            if (find_global != null) {
+               if (find_global == Py.None)
                    throw new PyException(UnpicklingError,
                          "Global and instance pickles are not supported.");
-               return fc.__call__(new PyString(module), new PyString(name));
+               return find_global.__call__(new PyString(module), new PyString(name));
             }
 
             PyObject modules = Py.getSystemState().modules;
