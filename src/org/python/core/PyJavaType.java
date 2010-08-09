@@ -528,7 +528,23 @@ public class PyJavaType extends PyType {
                     || getDescrMethod(forClass, "_dodel", PyObject.class) != null;
         }
         if (forClass == Object.class) {
-            // Pass __eq__ and __repr__ through to subclasses of Object
+
+            addMethod(new PyBuiltinMethodNarrow("__copy__") {
+                @Override
+                public PyObject __call__() {
+                    throw Py.TypeError("Could not copy Java object because it is not Cloneable or known to be immutable. "
+                            + "Consider monkeypatching __copy__ for " + self.getType().fastGetName());
+                }
+            });
+
+            addMethod(new PyBuiltinMethodNarrow("__deepcopy__") {
+                @Override
+                public PyObject __call__(PyObject memo) {
+                    throw Py.TypeError("Could not deepcopy Java object because it is not Serializable. "
+                            + "Consider monkeypatching __deepcopy__ for " + self.getType().fastGetName());
+                }
+            });
+
             addMethod(new PyBuiltinMethodNarrow("__eq__", 1) {
                 @Override
                 public PyObject __call__(PyObject o) {
@@ -592,7 +608,7 @@ public class PyJavaType extends PyType {
         }
 
         // TODO consider adding support for __copy__ of immutable Java objects
-        // (__deepcopy__ should just work since it uses serialization)
+        // (__deepcopy__ just works for these objects since it uses serialization instead)
 
         if(forClass == Cloneable.class) {
             addMethod(new PyBuiltinMethodNarrow("__copy__") {
@@ -600,13 +616,13 @@ public class PyJavaType extends PyType {
                 public PyObject __call__() {
                     Object obj = self.getJavaProxy();
                     Method clone;
-                    // we could specialize so that for well known objects like collections,
-                    // we don't use reflection to get around the fact that Object#clone is protected (but most subclasses are not);
-                    // also we can potentially cache the method handle in the proxy instead of looking it up each time
+                    // TODO we could specialize so that for well known objects like collections. This would avoid needing to use reflection
+                    // in the general case, because Object#clone is protected (but most subclasses are not).
+                    //
+                    // Lastly we can potentially cache the method handle in the proxy instead of looking it up each time
                     try {
                         clone = obj.getClass().getMethod("clone");
-                        Object copy;
-                        copy = clone.invoke(obj);
+                        Object copy = clone.invoke(obj);
                         return Py.java2py(copy);
                     } catch (Exception ex) {
                         throw Py.TypeError("Could not copy Java object");
