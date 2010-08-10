@@ -561,6 +561,16 @@ class CopyTest(unittest.TestCase):
         copy_bdfl = copy.deepcopy(bdfl)
         self.assertEqual(str(bdfl), str(copy_bdfl))
 
+    def test_immutable(self):
+        abc = String("abc")
+        abc_copy = copy.copy(abc)
+        self.assertEqual(id(abc), id(abc_copy))
+        
+        fruits = ArrayList([String("apple"), String("banana")])
+        fruits_copy = copy.copy(fruits)
+        self.assertEqual(fruits, fruits_copy)
+        self.assertNotEqual(id(fruits), id(fruits_copy))
+
 
 class UnicodeTest(unittest.TestCase):
 

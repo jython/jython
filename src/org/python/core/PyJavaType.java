@@ -43,6 +43,29 @@ public class PyJavaType extends PyType {
                                                                    "bounds",
                                                                    "enable");
 
+
+    // Add well-known immutable classes from standard packages of
+    // java.lang, java.net, java.util that are not marked Cloneable.
+    // This was found by hand, there are likely more!
+    private final static Set<Class<?>> immutableClasses = Generic.set(
+            Boolean.class,
+            Byte.class,
+            Character.class,
+            Class.class,
+            Double.class,
+            Float.class,
+            Integer.class,
+            Long.class,
+            Short.class,
+            String.class,
+            java.net.InetAddress.class,
+            java.net.Inet4Address.class,
+            java.net.Inet6Address.class,
+            java.net.InetSocketAddress.class,
+            java.net.Proxy.class,
+            java.net.URI.class,
+            java.util.concurrent.TimeUnit.class);
+
     private static Map<Class<?>, PyBuiltinMethod[]> collectionProxies;
 
     /**
@@ -143,15 +166,15 @@ public class PyJavaType extends PyType {
         }
 
         Set<String> allModified = Generic.set();
-        PyJavaType[] conflicted = inConflict.toArray(new PyJavaType[inConflict.size()]);
-        for (PyJavaType type : conflicted) {
+        PyJavaType[] conflictedAttributes = inConflict.toArray(new PyJavaType[inConflict.size()]);
+        for (PyJavaType type : conflictedAttributes) {
             if (type.modified == null) {
                 continue;
             }
             for (String method : type.modified) {
                 if (!allModified.add(method)) { // Another type in conflict has this method, fail
                     PyList types = new PyList();
-                    for (PyJavaType othertype : conflicted) {
+                    for (PyJavaType othertype : conflictedAttributes) {
                         if (othertype.modified != null && othertype.modified.contains(method)) {
                             types.add(othertype);
                         }
@@ -164,7 +187,7 @@ public class PyJavaType extends PyType {
 
         // We can keep trucking, there aren't any existing method name conflicts.  Mark the
         // conflicts in all the classes so further method additions can check for trouble
-        for (PyJavaType type : conflicted) {
+        for (PyJavaType type : conflictedAttributes) {
             for (PyJavaType otherType : inConflict) {
                 if (otherType != type) {
                     if (type.conflicted == null) {
@@ -306,23 +329,23 @@ public class PyJavaType extends PyType {
             }
 
             // Now check if it's a bean property accessor
-            String name = null;
+            String beanPropertyName = null;
             boolean get = true;
             if (methname.startsWith("get") && methname.length() > 3 && n == 0) {
-                name = methname.substring(3);
+                beanPropertyName = methname.substring(3);
             } else if (methname.startsWith("is") && methname.length() > 2 && n == 0
                     && meth.getReturnType() == Boolean.TYPE) {
-                name = methname.substring(2);
+                beanPropertyName = methname.substring(2);
             } else if (methname.startsWith("set") && methname.length() > 3 && n == 1) {
-                name = methname.substring(3);
+                beanPropertyName = methname.substring(3);
                 get = false;
             }
-            if (name != null) {
-                name = normalize(StringUtil.decapitalize(name));
-                PyBeanProperty prop = props.get(name);
+            if (beanPropertyName != null) {
+                beanPropertyName = normalize(StringUtil.decapitalize(beanPropertyName));
+                PyBeanProperty prop = props.get(beanPropertyName);
                 if (prop == null) {
-                    prop = new PyBeanProperty(name, null, null, null);
-                    props.put(name, prop);
+                    prop = new PyBeanProperty(beanPropertyName, null, null, null);
+                    props.put(beanPropertyName, prop);
                 }
                 if (get) {
                     prop.getMethod = meth;
@@ -405,11 +428,11 @@ public class PyJavaType extends PyType {
             }
 
             for (Method meth : ev.eventClass.getMethods()) {
-                String name = meth.getName().intern();
-                if (dict.__finditem__(name) != null) {
+                String methodName = meth.getName().intern();
+                if (dict.__finditem__(methodName) != null) {
                     continue;
                 }
-                dict.__setitem__(name, new PyBeanEventProperty(name,
+                dict.__setitem__(methodName, new PyBeanEventProperty(methodName,
                                                                ev.eventClass,
                                                                ev.addMethod,
                                                                meth));
@@ -607,8 +630,18 @@ public class PyJavaType extends PyType {
             });
         }
 
-        // TODO consider adding support for __copy__ of immutable Java objects
-        // (__deepcopy__ just works for these objects since it uses serialization instead)
+
+        if (immutableClasses.contains(forClass)) {
+
+            // __deepcopy__ just works for these objects since it uses serialization instead
+
+            addMethod(new PyBuiltinMethodNarrow("__copy__") {
+                @Override
+                public PyObject __call__() {
+                    return self;
+                }
+            });
+        }
 
         if(forClass == Cloneable.class) {
             addMethod(new PyBuiltinMethodNarrow("__copy__") {
@@ -881,6 +914,7 @@ public class PyJavaType extends PyType {
             collectionProxies = Generic.map();
 
             PyBuiltinMethodNarrow iterableProxy = new PyBuiltinMethodNarrow("__iter__") {
+                @Override
                 public PyObject __call__() {
                     return new IteratorIter(((Iterable)self.getJavaProxy()));
                 }
@@ -906,6 +940,7 @@ public class PyJavaType extends PyType {
                                                                            containsProxy});
 
             PyBuiltinMethodNarrow iteratorProxy = new PyBuiltinMethodNarrow("__iter__") {
+                @Override
                 public PyObject __call__() {
                     return new IteratorIter(((Iterator)self.getJavaProxy()));
                 }
@@ -913,6 +948,7 @@ public class PyJavaType extends PyType {
             collectionProxies.put(Iterator.class, new PyBuiltinMethod[] {iteratorProxy});
 
             PyBuiltinMethodNarrow enumerationProxy = new PyBuiltinMethodNarrow("__iter__") {
+                @Override
                 public PyObject __call__() {
                     return new EnumerationIter(((Enumeration)self.getJavaProxy()));
                 }
@@ -933,6 +969,7 @@ public class PyJavaType extends PyType {
                 }
             };
             PyBuiltinMethodNarrow mapContainsProxy = new MapMethod("__contains__", 1) {
+                @Override
                 public PyObject __call__(PyObject obj) {
                     Object other = obj.__tojava__(Object.class);
                     return asMap().containsKey(other) ? Py.True : Py.False;
