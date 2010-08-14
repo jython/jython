@@ -525,6 +525,12 @@ class SerializationTest(unittest.TestCase):
         serialized_code = roundtrip_serialization(universal_answer.func_code)
         self.assertEqual(eval(serialized_code), universal_answer())
 
+    def test_builtin_names(self):
+        import __builtin__
+        names = [x for x in dir(__builtin__)]
+        self.assertEqual(names, roundtrip_serialization(names))
+
+
 
 class CopyTest(unittest.TestCase):
     
