@@ -85,9 +85,9 @@ public class PyScriptEngineFactory implements ScriptEngineFactory {
         return new PyScriptEngine(this);
     }
 
-    @SuppressWarnings("unchecked")
     public List<String> getMimeTypes() {
-        return Collections.EMPTY_LIST;
+        return Collections.unmodifiableList(Arrays.asList(
+                "text/python", "application/python", "text/x-python", "application/x-python"));
     }
 
     public List<String> getNames() {
