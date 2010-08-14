@@ -1,6 +1,8 @@
 /* Copyright (c) Jython Developers */
 package org.python.core;
 
+import java.io.Serializable;
+
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedType;
 
@@ -65,7 +67,7 @@ public abstract class PyBuiltinCallable extends PyObject {
         }
     }
 
-    public interface Info {
+    public interface Info extends Serializable {
 
         String getName();
 
