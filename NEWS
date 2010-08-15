@@ -2,6 +2,7 @@ Jython NEWS
 
 Jython 2.5.2b2
   Bugs Fixed
+    - [ 1455 ] Classes loaded dynamically from sys.path do not have their package defined
     - [ 1555 ] Jython does not publish MIME types via JSR 223 (ScriptEngine.getFactory().getMimeTypes() is empty).
     - [ 1632 ] cPickle.Unpickler does not allow assignment of find_global
     - [ 1395 ] PyList.indexOf() and PyTuple.indexOf() do not function properly
