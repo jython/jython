@@ -84,6 +84,19 @@ public class SyspathJavaLoader extends ClassLoader {
 			return null;
 		}
     }
+
+    protected Package definePackageForClass(String name) {
+	    int lastDotIndex = name.lastIndexOf('.');
+	    if (lastDotIndex < 0) {
+	    	return null;
+	    }
+        String pkgname = name.substring(0, lastDotIndex);
+        Package pkg = getPackage(pkgname);
+        if (pkg == null) {
+            pkg = definePackage(pkgname, null, null, null, null, null, null, null);
+        }
+        return pkg;
+    }
     
     @Override
     protected Class<?> findClass(String name) throws ClassNotFoundException {
@@ -106,6 +119,7 @@ public class SyspathJavaLoader extends ClassLoader {
             	buffer = getBytesFromDir(dir, name);
             }
             if (buffer != null) {
+            	definePackageForClass(name);
             	return defineClass(name, buffer, 0, buffer.length);
             }
         }
