@@ -2,6 +2,7 @@ Jython NEWS
 
 Jython 2.5.2b2
   Bugs Fixed
+    - [ 1643 ] Tools subdirectory still exists in trunk
     - [ 1455 ] Classes loaded dynamically from sys.path do not have their package defined
     - [ 1555 ] Jython does not publish MIME types via JSR 223 (ScriptEngine.getFactory().getMimeTypes() is empty).
     - [ 1632 ] cPickle.Unpickler does not allow assignment of find_global
