@@ -25,7 +25,11 @@ public class PyFloat extends PyObject {
     private static final int PREC_REPR = 17;
     private static final int PREC_STR = 12;
 
-    private double value;
+    private final double value;
+
+    public double getValue() {
+        return value;
+    }
 
     public PyFloat(PyType subtype, double v) {
         super(subtype);
@@ -81,10 +85,6 @@ public class PyFloat extends PyObject {
         return !Double.isInfinite(value) && !Double.isNaN(value);
     }
 
-    public double getValue() {
-        return value;
-    }
-
     @Override
     public String toString() {
         return __str__().toString();
@@ -111,7 +111,7 @@ public class PyFloat extends PyObject {
     }
 
     private String formatDouble(int precision) {
-        if (Double.isNaN(value)) {
+        if (Double.isNaN(getValue())) {
             return "nan";
         }
 
@@ -140,17 +140,17 @@ public class PyFloat extends PyObject {
 
     @ExposedMethod(doc = BuiltinDocs.float___hash___doc)
     final int float___hash__() {
-        double intPart = Math.floor(value);
-        double fractPart = value - intPart;
+        double intPart = Math.floor(getValue());
+        double fractPart = getValue() - intPart;
 
         if (fractPart == 0) {
             if (intPart <= Integer.MAX_VALUE && intPart >= Integer.MIN_VALUE) {
-                return (int) value;
+                return (int) getValue();
             } else {
                 return __long__().hashCode();
             }
         } else {
-            long v = Double.doubleToLongBits(value);
+            long v = Double.doubleToLongBits(getValue());
             return (int) v ^ (int) (v >> 32);
         }
     }
@@ -162,17 +162,17 @@ public class PyFloat extends PyObject {
 
     @ExposedMethod(doc = BuiltinDocs.float___nonzero___doc)
     final boolean float___nonzero__() {
-        return value != 0;
+        return getValue() != 0;
     }
 
     @Override
     public Object __tojava__(Class<?> c) {
         if (c == Double.TYPE || c == Number.class || c == Double.class || c == Object.class
             || c == Serializable.class) {
-            return new Double(value);
+            return new Double(getValue());
         }
         if (c == Float.TYPE || c == Float.class) {
-            return new Float(value);
+            return new Float(getValue());
         }
         return super.__tojava__(c);
     }
@@ -181,7 +181,7 @@ public class PyFloat extends PyObject {
     public PyObject __eq__(PyObject other) {
         // preclude _cmp_unsafe's this == other shortcut because NaN != anything, even
         // itself
-        if (Double.isNaN(value)) {
+        if (Double.isNaN(getValue())) {
             return Py.False;
         }
         return null;
@@ -189,7 +189,7 @@ public class PyFloat extends PyObject {
 
     @Override
     public PyObject __ne__(PyObject other) {
-        if (Double.isNaN(value)) {
+        if (Double.isNaN(getValue())) {
             return Py.True;
         }
         return null;
@@ -203,11 +203,11 @@ public class PyFloat extends PyObject {
     // XXX: needs __doc__
     @ExposedMethod(type = MethodType.CMP)
     final int float___cmp__(PyObject other) {
-        double i = value;
+        double i = getValue();
         double j;
 
         if (other instanceof PyFloat) {
-            j = ((PyFloat) other).value;
+            j = ((PyFloat) other).getValue();
         } else if (!isFinite()) {
             // we're infinity: our magnitude exceeds any finite
             // integer, so it doesn't matter which int we compare i
@@ -220,7 +220,7 @@ public class PyFloat extends PyObject {
         } else if (other instanceof PyInteger) {
             j = ((PyInteger) other).getValue();
         } else if (other instanceof PyLong) {
-            BigDecimal v = new BigDecimal(value);
+            BigDecimal v = new BigDecimal(getValue());
             BigDecimal w = new BigDecimal(((PyLong) other).getValue());
             return v.compareTo(w);
         } else {
@@ -274,7 +274,7 @@ public class PyFloat extends PyObject {
 
     private static final double coerce(PyObject other) {
         if (other instanceof PyFloat) {
-            return ((PyFloat) other).value;
+            return ((PyFloat) other).getValue();
         } else if (other instanceof PyInteger) {
             return ((PyInteger) other).getValue();
         } else if (other instanceof PyLong) {
@@ -295,7 +295,7 @@ public class PyFloat extends PyObject {
             return null;
         }
         double rightv = coerce(right);
-        return new PyFloat(value + rightv);
+        return new PyFloat(getValue() + rightv);
     }
 
     @Override
@@ -319,7 +319,7 @@ public class PyFloat extends PyObject {
             return null;
         }
         double rightv = coerce(right);
-        return new PyFloat(value - rightv);
+        return new PyFloat(getValue() - rightv);
     }
 
     @Override
@@ -333,7 +333,7 @@ public class PyFloat extends PyObject {
             return null;
         }
         double leftv = coerce(left);
-        return new PyFloat(leftv - value);
+        return new PyFloat(leftv - getValue());
     }
 
     @Override
@@ -347,7 +347,7 @@ public class PyFloat extends PyObject {
             return null;
         }
         double rightv = coerce(right);
-        return new PyFloat(value * rightv);
+        return new PyFloat(getValue() * rightv);
     }
 
     @Override
@@ -378,7 +378,7 @@ public class PyFloat extends PyObject {
         if (rightv == 0) {
             throw Py.ZeroDivisionError("float division");
         }
-        return new PyFloat(value / rightv);
+        return new PyFloat(getValue() / rightv);
     }
 
     @Override
@@ -396,10 +396,10 @@ public class PyFloat extends PyObject {
         }
 
         double leftv = coerce(left);
-        if (value == 0) {
+        if (getValue() == 0) {
             throw Py.ZeroDivisionError("float division");
         }
-        return new PyFloat(leftv / value);
+        return new PyFloat(leftv / getValue());
     }
 
     @Override
@@ -416,7 +416,7 @@ public class PyFloat extends PyObject {
         if (rightv == 0) {
             throw Py.ZeroDivisionError("float division");
         }
-        return new PyFloat(Math.floor(value / rightv));
+        return new PyFloat(Math.floor(getValue() / rightv));
     }
 
     @Override
@@ -430,10 +430,10 @@ public class PyFloat extends PyObject {
             return null;
         }
         double leftv = coerce(left);
-        if (value == 0) {
+        if (getValue() == 0) {
             throw Py.ZeroDivisionError("float division");
         }
-        return new PyFloat(Math.floor(leftv / value));
+        return new PyFloat(Math.floor(leftv / getValue()));
     }
 
     @Override
@@ -450,7 +450,7 @@ public class PyFloat extends PyObject {
         if (rightv == 0) {
             throw Py.ZeroDivisionError("float division");
         }
-        return new PyFloat(value / rightv);
+        return new PyFloat(getValue() / rightv);
     }
 
     @Override
@@ -464,10 +464,10 @@ public class PyFloat extends PyObject {
             return null;
         }
         double leftv = coerce(left);
-        if (value == 0) {
+        if (getValue() == 0) {
             throw Py.ZeroDivisionError("float division");
         }
-        return new PyFloat(leftv / value);
+        return new PyFloat(leftv / getValue());
     }
 
     private static double modulo(double x, double y) {
@@ -492,7 +492,7 @@ public class PyFloat extends PyObject {
             return null;
         }
         double rightv = coerce(right);
-        return new PyFloat(modulo(value, rightv));
+        return new PyFloat(modulo(getValue(),rightv));
     }
 
     @Override
@@ -506,7 +506,7 @@ public class PyFloat extends PyObject {
             return null;
         }
         double leftv = coerce(left);
-        return new PyFloat(modulo(leftv, value));
+        return new PyFloat(modulo(leftv, getValue()));
     }
 
     @Override
@@ -524,9 +524,9 @@ public class PyFloat extends PyObject {
         if (rightv == 0) {
             throw Py.ZeroDivisionError("float division");
         }
-        double z = Math.floor(value / rightv);
+        double z = Math.floor(getValue() / rightv);
 
-        return new PyTuple(new PyFloat(z), new PyFloat(value - z * rightv));
+        return new PyTuple(new PyFloat(z), new PyFloat(getValue() - z * rightv));
     }
 
     @Override
@@ -536,12 +536,12 @@ public class PyFloat extends PyObject {
         }
         double leftv = coerce(left);
 
-        if (value == 0) {
+        if (getValue() == 0) {
             throw Py.ZeroDivisionError("float division");
         }
-        double z = Math.floor(leftv / value);
+        double z = Math.floor(leftv / getValue());
 
-        return new PyTuple(new PyFloat(z), new PyFloat(leftv - z * value));
+        return new PyTuple(new PyFloat(z), new PyFloat(leftv - z * getValue()));
     }
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.float___rdivmod___doc)
@@ -565,7 +565,7 @@ public class PyFloat extends PyObject {
             throw Py.TypeError("pow() 3rd argument not allowed unless all arguments are integers");
         }
 
-        return _pow(value, coerce(right), modulo);
+        return _pow( getValue(), coerce(right), modulo);
     }
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.float___rpow___doc)
@@ -579,7 +579,7 @@ public class PyFloat extends PyObject {
             return null;
         }
 
-        return _pow(coerce(left), value, null);
+        return _pow(coerce(left), getValue(), null);
     }
 
     private static PyFloat _pow(double value, double iw, PyObject modulo) {
@@ -612,7 +612,7 @@ public class PyFloat extends PyObject {
 
     @ExposedMethod(doc = BuiltinDocs.float___neg___doc)
     final PyObject float___neg__() {
-        return new PyFloat(-value);
+        return new PyFloat(-getValue());
     }
 
     @Override
@@ -637,7 +637,7 @@ public class PyFloat extends PyObject {
 
     @ExposedMethod(doc = BuiltinDocs.float___abs___doc)
     final PyObject float___abs__() {
-        if (value < 0) {
+        if (getValue() < 0) {
             return float___neg__();
         }
         return float___float__();
@@ -650,8 +650,8 @@ public class PyFloat extends PyObject {
 
     @ExposedMethod(doc = BuiltinDocs.float___int___doc)
     final PyObject float___int__() {
-        if (value <= Integer.MAX_VALUE && value >= Integer.MIN_VALUE) {
-            return new PyInteger((int) value);
+        if (getValue() <= Integer.MAX_VALUE && getValue() >= Integer.MIN_VALUE) {
+            return new PyInteger((int) getValue());
         }
         return __long__();
     }
@@ -663,7 +663,7 @@ public class PyFloat extends PyObject {
 
     @ExposedMethod(doc = BuiltinDocs.float___long___doc)
     final PyObject float___long__() {
-        return new PyLong(value);
+        return new PyLong(getValue());
     }
 
     @Override
@@ -676,12 +676,12 @@ public class PyFloat extends PyObject {
         if (getType() == TYPE) {
             return this;
         }
-        return Py.newFloat(value);
+        return Py.newFloat(getValue());
     }
 
     @Override
     public PyComplex __complex__() {
-        return new PyComplex(value, 0.);
+        return new PyComplex(getValue(), 0.);
     }
 
     @ExposedMethod(doc = BuiltinDocs.float___getnewargs___doc)
@@ -696,7 +696,7 @@ public class PyFloat extends PyObject {
 
     @Override
     public double asDouble() {
-        return value;
+        return getValue();
     }
 
     @Override

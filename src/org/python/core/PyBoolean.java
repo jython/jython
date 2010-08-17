@@ -7,17 +7,27 @@ import org.python.expose.ExposedType;
 import org.python.expose.MethodType;
 
 /**
- * The builtin python bool.
+ * The builtin python bool. It would be nice if it didn't extend PyInteger,
+ * but too hard to avoid pre-Python 2.2 semantics here.
  */
 @ExposedType(name = "bool", isBaseType = false, doc = BuiltinDocs.bool_doc)
 public class PyBoolean extends PyInteger {
 
     public static final PyType TYPE = PyType.fromClass(PyBoolean.class);
 
-    private boolean value;
+    private final boolean value;
+
+    public boolean getBooleanValue() {
+        return value;
+    }
+
+    @Override
+    public int getValue() {
+        return getBooleanValue() ? 1 : 0;
+    }
 
     public PyBoolean(boolean value) {
-        super(TYPE, value ? 1 : 0);
+        super(TYPE, value ? 1 : 0); // XXX is this necessary?
         this.value = value;
     }
 
@@ -39,7 +49,7 @@ public class PyBoolean extends PyInteger {
 
     @ExposedMethod(names = {"__str__", "__repr__"}, doc = BuiltinDocs.bool___str___doc)
     final String bool_toString() {
-        return value ? "True" : "False";
+        return getBooleanValue() ? "True" : "False";
     }
 
     @Override
@@ -49,7 +59,7 @@ public class PyBoolean extends PyInteger {
 
     @ExposedMethod(doc = BuiltinDocs.bool___hash___doc)
     final int bool___hash__() {
-        return value ? 1 : 0;
+        return getBooleanValue() ? 1 : 0;
     }
 
     @Override
@@ -59,31 +69,31 @@ public class PyBoolean extends PyInteger {
 
     @ExposedMethod(doc = BuiltinDocs.bool___nonzero___doc)
     final boolean bool___nonzero__() {
-        return value;
+        return getBooleanValue();
     }
 
     @Override
     public Object __tojava__(Class<?> c) {
         if (c == Boolean.TYPE || c == Boolean.class || c == Object.class ) {
-            return Boolean.valueOf(value);
+            return Boolean.valueOf(getBooleanValue());
         }
         if (c == Integer.TYPE || c == Number.class || c == Integer.class) {
-            return Integer.valueOf(value ? 1 : 0);
+            return Integer.valueOf(getValue());
         }
         if (c == Byte.TYPE || c == Byte.class) {
-            return Byte.valueOf((byte)(value ? 1 : 0));
+            return Byte.valueOf((byte)(getValue()));
         }
         if (c == Short.TYPE || c == Short.class) {
-            return Short.valueOf((short)(value ? 1 : 0));
+            return Short.valueOf((short)(getValue()));
         }
         if (c == Long.TYPE || c == Long.class) {
-            return Long.valueOf(value ? 1 : 0);
+            return Long.valueOf(getValue());
         }
         if (c == Float.TYPE || c == Float.class) {
-            return Float.valueOf(value ? 1 : 0);
+            return Float.valueOf(getValue());
         }
         if (c == Double.TYPE || c == Double.class) {
-            return Double.valueOf(value ? 1 : 0);
+            return Double.valueOf(getValue());
         }
         return super.__tojava__(c);
     }
@@ -96,7 +106,7 @@ public class PyBoolean extends PyInteger {
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.bool___and___doc)
     final PyObject bool___and__(PyObject right) {
     	if (right instanceof PyBoolean) {
-	        return Py.newBoolean(value & ((PyBoolean)right).value);
+	        return Py.newBoolean(getBooleanValue() & ((PyBoolean) right).getBooleanValue());
     	} else if (right instanceof PyInteger) {
             return Py.newInteger(getValue() & ((PyInteger)right).getValue());
         } else {
@@ -112,7 +122,7 @@ public class PyBoolean extends PyInteger {
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.bool___xor___doc)
     final PyObject bool___xor__(PyObject right) {
     	if (right instanceof PyBoolean) {
-	        return Py.newBoolean(value ^ ((PyBoolean)right).value);
+	        return Py.newBoolean(getBooleanValue() ^ ((PyBoolean) right).getBooleanValue());
     	} else if (right instanceof PyInteger) {
             return Py.newInteger(getValue() ^ ((PyInteger)right).getValue());
         } else {
@@ -128,7 +138,7 @@ public class PyBoolean extends PyInteger {
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.bool___or___doc)
     final PyObject bool___or__(PyObject right) {
     	if (right instanceof PyBoolean) {
-	        return Py.newBoolean(value | ((PyBoolean)right).value);
+	        return Py.newBoolean(getBooleanValue() | ((PyBoolean) right).getBooleanValue());
     	} else if (right instanceof PyInteger) {
             return Py.newInteger(getValue() | ((PyInteger)right).getValue());
         } else {
@@ -143,7 +153,7 @@ public class PyBoolean extends PyInteger {
 
     @ExposedMethod(doc = BuiltinDocs.bool___neg___doc)
     final PyObject bool___neg__() {
-        return Py.newInteger(value ? -1 : 0);
+        return Py.newInteger(getBooleanValue() ? -1 : 0);
     }
 
     @Override
@@ -153,7 +163,7 @@ public class PyBoolean extends PyInteger {
 
     @ExposedMethod(doc = BuiltinDocs.bool___pos___doc)
     final PyObject bool___pos__() {
-        return Py.newInteger(value ? 1 : 0);
+        return Py.newInteger(getValue());
     }
 
     @Override
@@ -163,6 +173,6 @@ public class PyBoolean extends PyInteger {
 
     @ExposedMethod(doc = BuiltinDocs.bool___abs___doc)
     final PyObject bool___abs__() {
-        return Py.newInteger(value ? 1 : 0);
+        return Py.newInteger(getValue());
     }
 }
