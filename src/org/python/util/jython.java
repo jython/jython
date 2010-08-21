@@ -155,17 +155,19 @@ public class jython {
         }
         Py.getSystemState().setWarnoptions(warnoptions);
 
+        PySystemState systemState = Py.getSystemState();
         // Decide if stdin is interactive
         if (!opts.fixInteractive && opts.interactive) {
             opts.interactive = ((PyFile)Py.defaultSystemState.stdin).isatty();
             if (!opts.interactive) {
-                PySystemState systemState = Py.getSystemState();
+
                 systemState.ps1 = systemState.ps2 = Py.EmptyString;
             }
         }
 
         // Now create an interpreter
         InteractiveConsole interp = newInterpreter(opts.interactive);
+        systemState.__setattr__("_jy_interpreter", Py.java2py(interp));
 
         // Print banner and copyright information (or not)
         if (opts.interactive && opts.notice && !opts.runModule) {

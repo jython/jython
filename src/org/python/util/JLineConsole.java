@@ -156,4 +156,11 @@ public class JLineConsole extends InteractiveConsole {
     private boolean isEOF(String line) {
         return line == null || (windows && CTRL_Z.equals(line));
     }
+
+    /**
+     * @return the JLine console reader associated with this interpreter
+     */
+    public ConsoleReader getReader() {
+        return reader;
+    }
 }
