@@ -151,7 +151,7 @@ public class PyLong extends PyObject {
 
     @Override
     public boolean __nonzero__() {
-        return !value.equals(BigInteger.valueOf(0));
+        return !getValue().equals(BigInteger.ZERO);
     }
 
     @ExposedMethod(doc = BuiltinDocs.long___nonzero___doc)

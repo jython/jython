@@ -82,7 +82,7 @@ public class PyFloat extends PyObject {
      * Determine if this float is not infinity, nor NaN.
      */
     public boolean isFinite() {
-        return !Double.isInfinite(value) && !Double.isNaN(value);
+        return !Double.isInfinite(getValue()) && !Double.isNaN(getValue());
     }
 
     @Override
