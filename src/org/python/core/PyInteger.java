@@ -33,7 +33,7 @@ public class PyInteger extends PyObject {
     @Deprecated
     public static final BigInteger maxInt = MAX_INT;
 
-    private int value;
+    private final int value;
 
     public PyInteger(PyType subType, int v) {
         super(subType);

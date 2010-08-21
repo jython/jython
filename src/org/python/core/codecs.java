@@ -1072,7 +1072,7 @@ public class codecs {
             }
             guard_delta = delta + ((m - n) * (h + 1));
             if (guard_delta > Integer.MAX_VALUE) {
-                throw Py.UnicodeEncodeError("punycode", input.string, codePointIndex, codePointIndex + 1, "overflow");
+                throw Py.UnicodeEncodeError("punycode", input.getString(), codePointIndex, codePointIndex + 1, "overflow");
             }
             delta = (int) guard_delta;
 
@@ -1083,7 +1083,7 @@ public class codecs {
                 if (c < n) {
                     guard_delta = delta + 1;
                     if (guard_delta > Integer.MAX_VALUE) {
-                        throw Py.UnicodeEncodeError("punycode", input.string, i, i + 1, "overflow");
+                        throw Py.UnicodeEncodeError("punycode", input.getString(), i, i + 1, "overflow");
                     }
                     delta = (int) guard_delta;
                 }

@@ -389,7 +389,7 @@ public class PyFile extends PyObject {
         if (obj instanceof PyUnicode) {
             return ((PyUnicode)obj).encode();
         } else if (obj instanceof PyString) {
-            return ((PyString)obj).string;
+            return ((PyString) obj).getString();
         } else if (binary && obj instanceof PyArray) {
             return ((PyArray)obj).tostring();
         }

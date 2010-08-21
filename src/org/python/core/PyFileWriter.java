@@ -51,9 +51,9 @@ public class PyFileWriter extends PyObject {
 
     public void write(PyObject o) {
         if (o instanceof PyUnicode) {
-            write(((PyUnicode) o).string);
+            write(((PyUnicode) o).getString());
         } else if (o instanceof PyString) {
-            write(((PyString) o).string);
+            write(((PyString) o).getString());
         } else {
             throw Py.TypeError("write requires a string as its argument");
         }

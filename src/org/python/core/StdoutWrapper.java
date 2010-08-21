@@ -143,7 +143,7 @@ public class StdoutWrapper extends OutputStream {
             // avoid doing an encoding
             String s;
             if (o instanceof PyString) {
-                s = ((PyString)o).string;
+                s = ((PyString) o).getString();
             } else {
                 s = o.toString();
             }

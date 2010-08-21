@@ -268,11 +268,11 @@ public class PyFloat extends PyObject {
         }
     }
 
-    private static final boolean canCoerce(PyObject other) {
+    private static boolean canCoerce(PyObject other) {
         return other instanceof PyFloat || other instanceof PyInteger || other instanceof PyLong;
     }
 
-    private static final double coerce(PyObject other) {
+    private static double coerce(PyObject other) {
         if (other instanceof PyFloat) {
             return ((PyFloat) other).getValue();
         } else if (other instanceof PyInteger) {

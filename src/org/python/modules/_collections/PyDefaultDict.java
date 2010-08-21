@@ -2,6 +2,7 @@
 package org.python.modules._collections;
 
 import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 
 import org.python.core.Py;
 import org.python.core.PyDictionary;
@@ -14,6 +15,11 @@ import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedSet;
 import org.python.expose.ExposedType;
+
+import com.google.common.collect.MapMaker;
+import com.google.common.collect.ComputationException;
+import com.google.common.base.Function;
+import org.python.core.BuiltinDocs;
 
 /**
  * PyDefaultDict - This is a subclass of the builtin dict(PyDictionary) class. It supports
@@ -29,23 +35,39 @@ import org.python.expose.ExposedType;
 public class PyDefaultDict extends PyDictionary {
 
     public static final PyType TYPE = PyType.fromClass(PyDefaultDict.class);
-
     /**
      * This attribute is used by the __missing__ method; it is initialized from the first
      * argument to the constructor, if present, or to None, if absent.
      */
     private PyObject defaultFactory = Py.None;
+    private final ConcurrentMap<PyObject, PyObject> backingMap;
+
+    public ConcurrentMap<PyObject, PyObject> getMap() {
+        return backingMap;
+    }
 
     public PyDefaultDict() {
         this(TYPE);
     }
 
     public PyDefaultDict(PyType subtype) {
-        super(subtype);
+        super(subtype, false);
+        backingMap =
+                new MapMaker().makeComputingMap(
+                new Function<PyObject, PyObject>() {
+
+                    public PyObject apply(PyObject key) {
+                        if (defaultFactory == Py.None) {
+                            throw Py.KeyError(key);
+                        }
+                        return defaultFactory.__call__();
+                    }
+                });
     }
 
     public PyDefaultDict(PyType subtype, Map<PyObject, PyObject> map) {
-        super(subtype, map);
+        this(subtype);
+        getMap().putAll(map);
     }
 
     @ExposedMethod
@@ -59,19 +81,14 @@ public class PyDefaultDict extends PyDictionary {
             }
             PyObject newargs[] = new PyObject[args.length - 1];
             System.arraycopy(args, 1, newargs, 0, newargs.length);
-            dict___init__(newargs , kwds);
+            dict___init__(newargs, kwds);
         }
     }
 
-    @Override
-    public PyObject __finditem__(PyObject key) {
-        return dict___getitem__(key);
-    }
-
     /**
-     * This method is called by the __getitem__ method of the dict class when the
-     * requested key is not found; whatever it returns or raises is then returned or
-     * raised by __getitem__.
+     * This method is NOT called by the __getitem__ method of the dict class when the
+     * requested key is not found. It is simply here as an alternative to the atomic
+     * construction of that factory. (We actually inline it in.)
      */
     @ExposedMethod
     final PyObject defaultdict___missing__(PyObject key) {
@@ -110,7 +127,7 @@ public class PyDefaultDict extends PyDictionary {
 
     @ExposedMethod(names = {"copy", "__copy__"})
     final PyDefaultDict defaultdict_copy() {
-        PyDefaultDict ob = new PyDefaultDict(TYPE, table);
+        PyDefaultDict ob = new PyDefaultDict(TYPE, getMap());
         ob.defaultFactory = defaultFactory;
         return ob;
     }
@@ -138,5 +155,21 @@ public class PyDefaultDict extends PyDictionary {
     @ExposedDelete(name = "default_factory")
     public void delDefaultFactory() {
         defaultFactory = Py.None;
+    }
+
+    @Override
+    public PyObject __finditem__(PyObject key) {
+        return defaultdict___getitem__(key);
+    }
+
+    @ExposedMethod(doc = BuiltinDocs.dict___getitem___doc)
+    protected final PyObject defaultdict___getitem__(PyObject key) {
+        try {
+            return getMap().get(key);
+//        } catch (ComputationException ex) {
+//            throw Py.RuntimeError(ex.getCause());
+        } catch (Exception ex) {
+            throw Py.KeyError(key);
+        }
     }
 }

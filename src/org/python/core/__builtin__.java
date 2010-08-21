@@ -373,7 +373,7 @@ public class __builtin__ {
     public static PyObject apply(PyObject o, PyObject args, PyDictionary kws) {
         PyObject[] a;
         String[] kw;
-        Map<PyObject, PyObject> table = kws.table;
+        Map<PyObject, PyObject> table = kws.getMap();
         if (table.size() > 0) {
             Iterator<PyObject> ik = table.keySet().iterator();
             Iterator<PyObject> iv = table.values().iterator();
@@ -767,14 +767,14 @@ public class __builtin__ {
         final int length;
         PyString x = (PyString) c;
         if (x instanceof PyUnicode) {
-            length = x.string.codePointCount(0, x.string.length());
+            length = x.getString().codePointCount(0, x.getString().length());
             if (length == 1) {
-                return x.string.codePointAt(0);
+                return x.getString().codePointAt(0);
             }
         } else {
-            length = x.string.length();
+            length = x.getString().length();
             if (length == 1) {
-                return x.string.charAt(0);
+                return x.getString().charAt(0);
             }
         }
         throw Py.TypeError("ord() expected a character, but string of length " +

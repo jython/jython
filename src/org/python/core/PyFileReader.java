@@ -155,7 +155,7 @@ public class PyFileReader extends PyObject
             int size = 0;
             do {
                 final PyString line = readline(-1);
-                int len = line.string.length();
+                int len = line.getString().length();
                 if (len == 0) {
                     // EOF
                     break;

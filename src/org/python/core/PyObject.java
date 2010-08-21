@@ -26,7 +26,7 @@ public class PyObject implements Serializable {
     public static final PyType TYPE = PyType.fromClass(PyObject.class);
 
     /** The type of this object. */
-    PyType objtype;
+    protected PyType objtype;
 
     /**
      * An underlying Java instance that this object is wrapping or is a subclass
