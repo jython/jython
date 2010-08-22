@@ -550,7 +550,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext {
     }
 
     void addConstants(Code c) throws IOException {
-        classfile.addField("self", "L" + classfile.name + ";", ACC_STATIC | ACC_FINAL);
+        classfile.addField("self", "L" + classfile.name + ";", ACC_STATIC);
         c.aload(0);
         c.putstatic(classfile.name, "self", "L" + classfile.name + ";");
         Enumeration e = constants.elements();
