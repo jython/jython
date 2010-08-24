@@ -63,11 +63,6 @@ public class GrammarActions {
 
     String makeFromText(List dots, List<Name> names) {
         StringBuilder d = new StringBuilder();
-        if (dots != null) {
-            for (int i=0;i<dots.size();i++) {
-                d.append(".");
-            }
-        }
         d.append(PythonTree.dottedNameListToString(names));
         return d.toString();
     }
@@ -80,7 +75,9 @@ public class GrammarActions {
                 result.add(new Name(tok, tok.getText(), expr_contextType.Load));
             }
         }
-        result.addAll(names);
+        if (null != names) {
+        	result.addAll(names);
+        }
         return result;
     }
 

@@ -896,6 +896,18 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         return Exit;
     }
 
+    /**
+     * Push the import level <code>0</code> or <code>-1</code>. 
+     */
+    private void defaultImportLevel() {
+    	// already prepared for a future change of DEFAULT_LEVEL
+        if (module.getFutures().isAbsoluteImportOn() || imp.DEFAULT_LEVEL == 0) {
+            code.iconst_0();
+        } else {
+            code.iconst_m1();
+        }    	
+    }
+    
     @Override
     public Object visitImport(Import node) throws Exception {
         setline(node);
@@ -906,8 +918,9 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
                 asname = a.getInternalAsname();
                 code.ldc(name);
                 loadFrame();
+                defaultImportLevel();
                 code.invokestatic(p(imp.class), "importOneAs", sig(PyObject.class, String.class,
-                        PyFrame.class));
+                        PyFrame.class, Integer.TYPE));
             } else {
                 String name = a.getInternalName();
                 asname = name;
@@ -916,8 +929,9 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
                 }
                 code.ldc(name);
                 loadFrame();
+                defaultImportLevel();
                 code.invokestatic(p(imp.class), "importOne", sig(PyObject.class, String.class,
-                        PyFrame.class));
+                        PyFrame.class, Integer.TYPE));
             }
             set(new Name(a, asname, expr_contextType.Store));
         }
@@ -954,8 +968,9 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
             }
 
             loadFrame();
+            defaultImportLevel();
             code.invokestatic(p(imp.class), "importAll", sig(Void.TYPE, String.class,
-                    PyFrame.class));
+                    PyFrame.class, Integer.TYPE));
         } else {
             java.util.List<String> fromNames = new ArrayList<String>();//[names.size()];
             java.util.List<String> asnames = new ArrayList<String>();//[names.size()];
@@ -973,11 +988,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
             loadFrame();
 
             if (node.getInternalLevel() == 0) {
-                if (module.getFutures().isAbsoluteImportOn()) {
-                    code.iconst_0();
-                } else {
-                    code.iconst_m1();
-                }
+                defaultImportLevel();
             } else {
                 code.iconst(node.getInternalLevel());
             }

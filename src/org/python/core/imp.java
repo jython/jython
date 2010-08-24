@@ -21,7 +21,7 @@ public class imp {
 
     private static final String UNKNOWN_SOURCEFILE = "<unknown>";
 
-    private static final int APIVersion = 31;
+    private static final int APIVersion = 32;
 
     public static final int NO_MTIME = -1;
 
@@ -621,22 +621,33 @@ public class imp {
         return import_first(name, new StringBuilder());
     }
 
-    /**
-     * Find the parent module name for a module. If __name__ does not exist in
-     * the module then the parent is null. If __name__ does exist then the
-     * __path__ is checked for the parent module. For example, the __name__
-     * 'a.b.c' would return 'a.b'.
-     *
-     * @param dict the __dict__ of a loaded module
-     * @param level used for relative and absolute imports.  -1 means try both,
-     *              0 means absolute only, positive ints represent the level to
-     *              look upward for a relative path.  See PEP 328 at
-     *              http://www.python.org/dev/peps/pep-0328/
-     *
-     * @return the parent name for a module
-     */
+	/**
+	 * Find the parent package name for a module.
+	 * 
+	 * If __name__ does not exist in the module or if level is <code>0</code>,
+	 * then the parent is <code>null</code>. If __name__ does exist and is not a
+	 * package name, the containing package is located. If no such package
+	 * exists and level is <code>-1</code>, the parent is <code>null</code>. If
+	 * level is <code>-1</code>, the parent is the current name. Otherwise,
+	 * <code>level-1</code> doted parts are stripped from the current name. For
+	 * example, the __name__ <code>"a.b.c"</code> and level <code>2</code> would
+	 * return <code>"a.b"</code>, if <code>c</code> is a package and would
+	 * return <code>"a"</code>, if <code>c</code> is not a package.
+	 * 
+	 * @param dict
+	 *            the __dict__ of a loaded module
+	 * @param level
+	 *            used for relative and absolute imports. -1 means try both, 0
+	 *            means absolute only, positive ints represent the level to look
+	 *            upward for a relative path (1 means current package, 2 means
+	 *            one level up). See PEP 328 at
+	 *            http://www.python.org/dev/peps/pep-0328/
+	 * 
+	 * @return the parent name for a module
+	 */
     private static String getParent(PyObject dict, int level) {
         if (dict == null || level == 0) {
+        	// try an absolute import
             return null;
         }
         PyObject tmp = dict.__finditem__("__name__");
@@ -645,20 +656,25 @@ public class imp {
         }
         String name = tmp.toString();
 
+        // locate the current package
         tmp = dict.__finditem__("__path__");
-        if (tmp != null && tmp instanceof PyList) {
-            return name.intern();
-        }
-        int dot = name.lastIndexOf('.');
-        if (dot == -1) {
-            if (level > 0) {
-                throw Py.ValueError("Attempted relative import in non-package");
+        if (! (tmp instanceof PyList)) {
+        	// __name__ is not a package name, try one level upwards.
+            int dot = name.lastIndexOf('.');
+            if (dot == -1) {
+            	if (level <= -1) {
+            		// there is no package, perform an absolute search
+            		return null;
+            	}
+            	throw Py.ValueError("Attempted relative import in non-package");
             }
-            return null;
+            // name should be the package name.
+            name = name.substring(0, dot);
         }
-        name = name.substring(0, dot);
-        while (--level > 0) {
-            dot = name.lastIndexOf('.');
+
+        // walk upwards if required (level >= 2)
+        while (level-- > 1) {
+            int dot = name.lastIndexOf('.');
             if (dot == -1) {
                 throw Py.ValueError("Attempted relative import beyond toplevel package");
             }
@@ -779,7 +795,7 @@ public class imp {
      */
     private static PyObject import_name(String name, boolean top,
             PyObject modDict, PyObject fromlist, int level) {
-        if (name.length() == 0) {
+        if (name.length() == 0 && level <= 0) {
             throw Py.ValueError("Empty module name");
         }
         PyObject modules = Py.getSystemState().modules;
@@ -870,9 +886,17 @@ public class imp {
      * Called from jython generated code when a statement like "import spam" is
      * executed.
      */
+    @Deprecated
     public static PyObject importOne(String mod, PyFrame frame) {
+    	return importOne(mod, frame, imp.DEFAULT_LEVEL);
+    }
+    /**
+     * Called from jython generated code when a statement like "import spam" is
+     * executed.
+     */
+    public static PyObject importOne(String mod, PyFrame frame, int level) {
         PyObject module = __builtin__.__import__(mod, frame.f_globals, frame
-                .getLocals(), Py.None);
+                .getLocals(), Py.None, level);
         return module;
     }
 
@@ -880,9 +904,17 @@ public class imp {
      * Called from jython generated code when a statement like "import spam as
      * foo" is executed.
      */
+    @Deprecated
     public static PyObject importOneAs(String mod, PyFrame frame) {
+    	return importOneAs(mod, frame, imp.DEFAULT_LEVEL);
+    }
+    /**
+     * Called from jython generated code when a statement like "import spam as
+     * foo" is executed.
+     */
+    public static PyObject importOneAs(String mod, PyFrame frame, int level) {
         PyObject module = __builtin__.__import__(mod, frame.f_globals, frame
-                .getLocals(), Py.None);
+                .getLocals(), Py.None, level);
         int dot = mod.indexOf('.');
         while (dot != -1) {
             int dot2 = mod.indexOf('.', dot + 1);
@@ -957,26 +989,17 @@ public class imp {
      * Called from jython generated code when a statement like "from spam.eggs
      * import *" is executed.
      */
-    public static void importAll(String mod, PyFrame frame) {
+    public static void importAll(String mod, PyFrame frame, int level) {
         PyObject module = __builtin__.__import__(mod, frame.f_globals, frame
-                .getLocals(), all);
-        PyObject names;
-        boolean filter = true;
-        if (module instanceof PyJavaPackage) {
-            names = ((PyJavaPackage) module).fillDir();
-        } else {
-            PyObject __all__ = module.__findattr__("__all__");
-            if (__all__ != null) {
-                names = __all__;
-                filter = false;
-            } else {
-                names = module.__dir__();
-            }
-        }
-
-        loadNames(names, module, frame.getLocals(), filter);
+                .getLocals(), all, level);
+        importAll(module, frame);
+    }
+    @Deprecated
+    public static void importAll(String mod, PyFrame frame) {
+        importAll(mod, frame, DEFAULT_LEVEL);
     }
 
+    
     public static void importAll(PyObject module, PyFrame frame) {
         PyObject names;
         boolean filter = true;

@@ -1161,8 +1161,16 @@ public class __builtin__ {
             return null;
         }
 
-        PyObject module = __import__.__call__(new PyObject[] {Py.newString(name), globals, locals,
-                                                              fromlist, Py.newInteger(level)});
+        PyObject[] args;
+        if (level < 0) {
+        	// for backward compatibility provide only 4 arguments
+        	args = new PyObject[] {Py.newString(name), globals, locals, 
+        			fromlist};
+        } else {
+        	args = new PyObject[] {Py.newString(name), globals, locals, 
+        			fromlist, Py.newInteger(level)};
+        }
+        PyObject module = __import__.__call__(args);
         return module;
     }
 
