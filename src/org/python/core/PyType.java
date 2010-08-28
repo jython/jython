@@ -91,7 +91,7 @@ public class PyType extends PyObject implements Serializable {
     /** The number of __slots__ defined. */
     private int numSlots;
 
-    private ReferenceQueue<PyType> subclasses_refq = new ReferenceQueue<PyType>();
+    private transient ReferenceQueue<PyType> subclasses_refq = new ReferenceQueue<PyType>();
     private Set<WeakReference<PyType>> subclasses = Generic.set();
 
     /** Global mro cache. */

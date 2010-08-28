@@ -6,7 +6,7 @@ package org.python.core;
 
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.LinkedList;
+import java.util.concurrent.Callable;
 
 import org.python.core.io.BinaryIOWrapper;
 import org.python.core.io.BufferedIOBase;
@@ -78,13 +78,6 @@ public class PyFile extends PyObject {
      * shutdown */
     private Closer closer;
 
-    /** All PyFiles' closers */
-    private static LinkedList<Closer> closers = new LinkedList<Closer>();
-
-    static {
-        initCloser();
-    }
-
     public PyFile() {}
 
     public PyFile(PyType subType) {
@@ -155,7 +148,7 @@ public class PyFile extends PyObject {
         String mode = ap.getString(1, "r");
         int bufsize = ap.getInt(2, -1);
         file___init__(new FileIO(name.toString(), parseMode(mode)), name, mode, bufsize);
-        closer = new Closer(file);
+        closer = new Closer(file, Py.getSystemState());
     }
 
     private void file___init__(RawIOBase raw, String name, String mode, int bufsize) {
@@ -569,16 +562,9 @@ public class PyFile extends PyObject {
         }
     }
 
-    private static void initCloser() {
-        try {
-            Runtime.getRuntime().addShutdownHook(new PyFileCloser());
-        } catch (SecurityException se) {
-            Py.writeDebug("PyFile", "Can't register file closer hook");
-        }
-    }
-
+  
     /**
-     * A mechanism to make sure PyFiles are closed on exit. On creation Closer adds itself
+     * XXX update docs - A mechanism to make sure PyFiles are closed on exit. On creation Closer adds itself
      * to a list of Closers that will be run by PyFileCloser on JVM shutdown. When a
      * PyFile's close or finalize methods are called, PyFile calls its Closer.close which
      * clears Closer out of the shutdown queue.
@@ -588,55 +574,39 @@ public class PyFile extends PyObject {
      * be called during shutdown, so we can't use it. It's vital that this Closer has no
      * reference to the PyFile it's closing so the PyFile remains garbage collectable.
      */
-    private static class Closer {
+    private static class Closer implements Callable {
 
-        /** The underlying file */
-        private TextIOBase file;
+        /**
+         * The underlying file
+         */
+        private final TextIOBase file;
+        private PySystemState sys;
 
-        public Closer(TextIOBase file) {
+        public Closer(TextIOBase file, PySystemState sys) {
             this.file = file;
-            // Add ourselves to the queue of Closers to be run on shutdown
-            synchronized (closers) {
-                closers.add(this);
-            }
+            this.sys = sys;
+            sys.registerCloser(this);
         }
+
+        // For closing directly
 
         public void close() {
-            synchronized (closers) {
-                if (!closers.remove(this)) {
-                    return;
-                }
+            if (sys.unregisterCloser(this)) {
+                file.close();
             }
-            doClose();
+            sys = null;
         }
 
-        public void doClose() {
+        // For closing as part of a shutdown process
+
+        public Object call() {
             file.close();
+            sys = null;
+            return null;
         }
+
     }
 
-    private static class PyFileCloser extends Thread {
 
-        public PyFileCloser() {
-            super("Jython Shutdown File Closer");
-        }
-
-        @Override
-        public void run() {
-            if (closers == null) {
-                // closers can be null in some strange cases
-                return;
-            }
-            synchronized (closers) {
-                while (closers.size() > 0) {
-                    try {
-                        closers.removeFirst().doClose();
-                    } catch (PyException e) {
-                        // continue
-                    }
-                }
-            }
-        }
-    }
 
 }
