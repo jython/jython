@@ -48,22 +48,24 @@ public class imp {
     }
     
     /**
-     * <p>
-     * Selects the parent class loader for Jython, used for dinamically load classes and resources 
+     * Selects the parent class loader for Jython, to be used for
+     * dynamically loaded classes and resources.  Chooses between the
+     * current and context classloader based on the following
+     * criteria:
+     *
+     * <ul>
+     * <li>If both are the same classloader, return that classloader.
+     * <li>If either is null, then the non-null one is selected.
+     * <li>If both are not null, and a parent/child relationship can
+     * be determined, then the child is selected.
+     * <li>If both are not null and not on a parent/child
+     * relationship, then the current class loader is returned (since
+     * it is likely for the context class loader to <b>not</b> see the
+     * Jython classes)
+     * </ul>
      * 
-     * <p>
-     * The current implementation chooses between the current and context 
-     * classloader based on the following criteria:<ul>
-     * 
-     * <li>If both are the same, that one is returned.
-     * <li>If either is null, the non-null one is selected.
-     * <li>If both are not null, and a parent/child relationship can be determined, 
-     * the child is selected. 
-     * <li>If both are not null and not on a parent/child relationship, the
-     * current class loader is returned (since it is likely for the
-     * context class loader to <b>not</b> see the Jython classes)
-     * 
-     * @return the parent class loader for Jython or null if both the current and context classloaders are null;
+     * @return the parent class loader for Jython or null if both the
+     * current and context classloaders are null.
      */
     public static ClassLoader getParentClassLoader() {
     	ClassLoader current = imp.class.getClassLoader();
@@ -252,14 +254,15 @@ public class imp {
     /**
      * Stores the bytes in compiledSource in compiledFilename.
      *
-     * If compiledFilename is null it's set to the results of
-     * makeCompiledFilename(sourcefileName)
+     * If compiledFilename is null, it's set to the results of
+     * makeCompiledFilename(sourcefileName).
      *
-     * If sourceFilename is null or set to UNKNOWN_SOURCEFILE null is returned
+     * If sourceFilename is null or set to UNKNOWN_SOURCEFILE, then
+     * null is returned.
      *
-     * @return the compiledFilename eventually used or null if a
-     *         compiledFilename couldn't be determined of if an error was thrown
-     *         while writing to the cache file.
+     * @return the compiledFilename eventually used; or null if a
+     *         compiledFilename couldn't be determined or if an error
+     *         was thrown while writing to the cache file.
      */
     public static String cacheCompiledSource(String sourceFilename,
                                               String compiledFilename,
