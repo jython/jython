@@ -28,6 +28,7 @@ public class ExceptionTest extends TestCase {
             "         else:\n" +
             "             raise Throwable()\n" +
             "r = Raiser()";
+        PythonInterpreter.initialize(null, null, null);
         PythonInterpreter interp = new PythonInterpreter();
         interp.exec(raiser);
         t = Py.tojava(interp.get("r"), Thrower.class);

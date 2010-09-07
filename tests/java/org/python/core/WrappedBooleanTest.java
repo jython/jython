@@ -32,6 +32,7 @@ public class WrappedBooleanTest extends TestCase {
 
     @Override
     protected void setUp() throws Exception {
+        PythonInterpreter.initialize(null, null, null);
         interp = new PythonInterpreter(new PyStringMap(), new PySystemState());
         a = new WrappedBoolean();
         b = new WrappedBoolean();
