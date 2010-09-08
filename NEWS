@@ -2,9 +2,10 @@ Jython NEWS
 
 Jython 2.5.2b2
   Bugs Fixed
+    - [ 1604 ] PyBuiltinCallable.Info should be serializable
     - [ 1397 ] Bugs in PyList and PyJavaType.ListIndexDelegate slice setting
     - [ 1503 ] Java constructors should take keyword arguments
-    - [ 1648 ] Incomplete implementation of pep328 for relative imports
+    - [ 1648,1495,1516 ] Incomplete implementation of pep328 for relative imports
     - [ 1611 ] Jython bytecode violated JLS, causing NPE on Sun's JVM when using -Xcomp option
     - [ 1643 ] Tools subdirectory still exists in trunk
     - [ 1455 ] Classes loaded dynamically from sys.path do not have their package defined
