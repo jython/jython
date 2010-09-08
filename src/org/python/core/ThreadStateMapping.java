@@ -21,7 +21,7 @@ class ThreadStateMapping {
         synchronized(this) {
             ThreadState[] threadLocal = cachedThreadState.get();
             if(threadLocal[0] != null)
-                return (ThreadState)threadLocal[0];
+                return threadLocal[0];
 
             Thread t = Thread.currentThread();
             if (newSystemState == null) {
