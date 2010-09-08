@@ -2,6 +2,7 @@ Jython NEWS
 
 Jython 2.5.2b2
   Bugs Fixed
+    - [ 1503 ] Java constructors should take keyword arguments
     - [ 1648 ] Incomplete implementation of pep328 for relative imports
     - [ 1611 ] Jython bytecode violated JLS, causing NPE on Sun's JVM when using -Xcomp option
     - [ 1643 ] Tools subdirectory still exists in trunk
