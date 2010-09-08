@@ -7,6 +7,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.ref.Reference;
+import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.net.URL;
 import java.net.URLDecoder;
@@ -21,11 +23,11 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.concurrent.ConcurrentMap;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
-import com.google.common.base.FinalizablePhantomReference;
-import com.google.common.base.FinalizableReferenceQueue;
+import com.google.common.collect.MapMaker;
 import org.jruby.ext.posix.util.Platform;
 import org.python.Version;
 import org.python.core.adapter.ClassicPyObjectAdapter;
@@ -153,8 +155,11 @@ public class PySystemState extends PyObject implements ClassDictInit {
 
     // Automatically close resources associated with a PySystemState when they get GCed
     private final PySystemStateCloser closer;
-    private static final FinalizableReferenceQueue systemStateQueue = new FinalizableReferenceQueue();
-
+    private static final ReferenceQueue systemStateQueue = new ReferenceQueue<PySystemState>();
+    private static final ConcurrentMap<WeakReference<PySystemState>, PySystemStateCloser> sysClosers = Generic.concurrentMap();
+//    static {
+//        startCleanupThread();
+//    }
 
     public PySystemState() {
         initialize();
@@ -1251,36 +1256,60 @@ public class PySystemState extends PyObject implements ClassDictInit {
         return closer.unregisterCloser(resourceCloser);
     }
 
-    public void shutdown() {
-        closer.shutdown();
+    public void cleanup() {
+        closer.cleanup();
     }
 
+    private static void startCleanupThread() {
+        Thread cleanupThread = new Thread(new Runnable() {
+            public void run() {
+                while (true) {
+                    try {
+                        Reference<PySystemStateCloser> ref = systemStateQueue.remove();
+                        PySystemStateCloser closer = sysClosers.get(ref);
+                        closer.cleanup();
+                        sysClosers.remove(ref);
+                    } catch (InterruptedException ex) {
+                        break;
+                    }
+                }
+            }
+        });
+        cleanupThread.setDaemon(true);
+        cleanupThread.start();
+    }
 
     private static class PySystemStateCloser {
 
         private final ArrayList<WeakReference<ThreadState[]>> threadStateList = new ArrayList<WeakReference<ThreadState[]>>();
         private final Set<Callable> resourceClosers = new LinkedHashSet<Callable>();
-        private final FinalizablePhantomReference<PySystemState> sys;
-        private volatile boolean isShutdown = false;
+        private volatile boolean isCleanup = false;
+        private final Thread shutdownHook;
 
         private PySystemStateCloser(PySystemState sys) {
-            this.sys = new FinalizablePhantomReference<PySystemState>(sys, systemStateQueue) {
-                public void finalizeReferent() {
-                    shutdown();
-                }
-            };
-            initShutdownCloser();
+            shutdownHook = initShutdownCloser();
+            WeakReference<PySystemState> ref = new WeakReference(sys, systemStateQueue);
+            sysClosers.put(ref, this);
+            cleanupOtherClosers();
+        }
+
+        private static void cleanupOtherClosers() {
+            Reference<PySystemStateCloser> ref;
+            while ((ref = systemStateQueue.poll()) != null) {
+                PySystemStateCloser closer = sysClosers.get(ref);
+                closer.cleanup();
+            }
         }
 
         private synchronized void registerThreadState(ThreadState[] threadLocal, ThreadState ts) {
-            if (!isShutdown) { // is this really necessary?
+            if (!isCleanup) {
                 threadLocal[0] = ts;
                 threadStateList.add(new WeakReference<ThreadState[]>(threadLocal));
             }
         }
 
         private synchronized void registerCloser(Callable closer) {
-            if (!isShutdown) {
+            if (!isCleanup) {
                 resourceClosers.add(closer);
             }
         }
@@ -1289,11 +1318,16 @@ public class PySystemState extends PyObject implements ClassDictInit {
             return resourceClosers.remove(closer);
         }
 
-        private synchronized void shutdown() {
-            if (isShutdown) {
+        private synchronized void cleanup() {
+            if (isCleanup) {
                 return;
             }
-            isShutdown = true;
+            isCleanup = true;
+
+            // close this thread so we can unload any associated classloaders in cycle with this instance
+            if (shutdownHook != null) {
+                Runtime.getRuntime().removeShutdownHook(shutdownHook);
+            }
 
             // clear out existing ThreadStates so that they can be GCed - this resolves ClassLoader issues
             for (WeakReference<ThreadState[]> ref : threadStateList) {
@@ -1308,18 +1342,21 @@ public class PySystemState extends PyObject implements ClassDictInit {
                 try {
                     callable.call();
                 } catch (Exception e) {
-                    // just continue
+                    // just continue, nothing we can do
                 }
             }
             resourceClosers.clear();
         }
 
-        // Python scripts expect that files are closed upon an orderly shutdown of the VM.
-        private void initShutdownCloser() {
+        // Python scripts expect that files are closed upon an orderly cleanup of the VM.
+        private Thread initShutdownCloser() {
             try {
-                Runtime.getRuntime().addShutdownHook(new ShutdownCloser());
+                Thread shutdownHook = new ShutdownCloser();
+                Runtime.getRuntime().addShutdownHook(shutdownHook);
+                return shutdownHook;
             } catch (SecurityException se) {
-                Py.writeDebug("PySystemState", "Can't register shutdown closer hook");
+                Py.writeDebug("PySystemState", "Can't register cleanup closer hook");
+                return null;
             }
         }
 

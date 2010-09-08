@@ -773,7 +773,7 @@ public final class Py {
         // memory error.  Fix for bug #1654484
         PyType.fromClass(OutOfMemoryError.class);
     }
-    public static PySystemState defaultSystemState;
+    public static volatile PySystemState defaultSystemState;
     // This is a hack to get initializations to work in proper order
     public static synchronized boolean initPython() {
         PySystemState.initialize();

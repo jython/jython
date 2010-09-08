@@ -12,8 +12,9 @@ if test_support.is_jython:
     def extra_collect():
         """Kick Java's GC into gear"""
         gc.collect()
-        time.sleep(0.1)
+        time.sleep(0.2)
         gc.collect()
+        time.sleep(0.2)
         gc.collect()
 else:
     def extra_collect():

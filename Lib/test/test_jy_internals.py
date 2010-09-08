@@ -50,7 +50,6 @@ class Dog(Comparable):
 
 Dog().bark()
 """)
-            pi.cleanup();
             make_clean()
     
         # get to steady state first, then verify we don't create new proxies

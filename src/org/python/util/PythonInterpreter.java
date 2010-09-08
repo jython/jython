@@ -340,16 +340,18 @@ public class PythonInterpreter {
 
     public void cleanup() {
         setSystemState();
-        Py.getSystemState().callExitFunc();
+        PySystemState sys = Py.getSystemState();
+        sys.callExitFunc();
         try {
-            Py.getSystemState().stdout.invoke("flush");
+            sys.stdout.invoke("flush");
         } catch (PyException pye) {
             // fall through
         }
         try {
-            Py.getSystemState().stderr.invoke("flush");
+            sys.stderr.invoke("flush");
         } catch (PyException pye) {
             // fall through
         }
+        sys.cleanup();
     }
 }
