@@ -147,25 +147,37 @@ public class PyList extends PySequenceList implements List {
             setslicePyList(start, stop, step, (PyList) value);
         } else if (value instanceof PySequence) {
             setsliceIterator(start, stop, step, value.asIterable().iterator());
-        } else if (value != null && !(value instanceof List)) {
-            value = new PyList(value);
-            setsliceIterator(start, stop, step, value.asIterable().iterator());
+        } else if (value instanceof List) {
+                setsliceList(start, stop, step, (List)value);
         } else {
-            List valueList = (List) value.__tojava__(List.class);
+            Object valueList = value.__tojava__(List.class);
             if (valueList != null && valueList != Py.NoConversion) {
-                setsliceList(start, stop, step, valueList);
+                setsliceList(start, stop, step, (List)valueList);
+            } else {
+                value = new PyList(value);
+                setsliceIterator(start, stop, step, value.asIterable().iterator());
             }
         }
     }
 
     final private void setsliceList(int start, int stop, int step, List value) {
-        int n = sliceLength(start, stop, step);
-        if (list instanceof ArrayList) {
-            ((ArrayList) list).ensureCapacity(start + n);
-        }
-        ListIterator src = value.listIterator();
-        for (int j = start; src.hasNext(); j += step) {
-            set(j, src.next());
+        if (step == 1) {
+            list.subList(start, stop).clear();
+            int n = value.size();
+            for (int i=0, j=start; i<n; i++, j++) {
+                list.add(j, Py.java2py(value.get(i)));
+            }
+        } else {
+            int size = list.size();
+            Iterator<Object> iter = value.listIterator();
+            for (int j = start; iter.hasNext(); j += step) {
+                PyObject item = Py.java2py(iter.next());
+                if (j >= size) {
+                    list.add(item);
+                } else {
+                    list.set(j, item);
+                }
+            }
         }
     }
 

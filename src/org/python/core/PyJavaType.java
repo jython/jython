@@ -1079,26 +1079,94 @@ public class PyJavaType extends PyType {
         public void setItem(int idx, PyObject value) {
             list.set(idx, value.__tojava__(Object.class));
         }
-
+        
         @Override
         public void setSlice(int start, int stop, int step, PyObject value) {
-            if (step == 0) {
-                return;
+            if (stop < start) {
+                stop = start;
             }
-            if (value.javaProxy == this) {
-                List newseq = new ArrayList(len());
-                for (Object object : ((List)value.javaProxy)) {
-                    newseq.add(object);
+            if (value.javaProxy == this.list) {
+                List<Object> xs = Generic.list();
+                xs.addAll(this.list);
+                setsliceList(start, stop, step, xs);
+            } else if (value instanceof PyList) {
+                setslicePyList(start, stop, step, (PyList)value);
+            } else {
+                Object valueList = value.__tojava__(List.class);
+                if (valueList != null && valueList != Py.NoConversion) {
+                    setsliceList(start, stop, step, (List)valueList);
+                } else {
+                    setsliceIterator(start, stop, step, value.asIterable().iterator());
                 }
-                value = Py.java2py(newseq);
-            }
-            int j = start;
-            for (PyObject obj : value.asIterable()) {
-                setItem(j, obj);
-                j += step;
             }
         }
 
+        
+        
+        final private void setsliceList(int start, int stop, int step, List<Object> value) {
+            if (step == 1) {
+                list.subList(start, stop).clear();
+                list.addAll(start, value);
+            } else {
+                int size = list.size();
+                Iterator<Object> iter = value.listIterator();
+                for (int j = start; iter.hasNext(); j += step) {
+                    Object item =iter.next();
+                    if (j >= size) {
+                        list.add(item);
+                    } else {
+                        list.set(j, item);
+                    }
+                }
+            }
+        }
+
+        final private void setsliceIterator(int start, int stop, int step, Iterator<PyObject> iter) {
+            if (step == 1) {
+                List<Object> insertion = new ArrayList<Object>();
+                if (iter != null) {
+                    while (iter.hasNext()) {
+                        insertion.add(iter.next().__tojava__(Object.class));
+                    }
+                }
+                list.subList(start, stop).clear();
+                list.addAll(start, insertion);
+            } else {
+                int size = list.size();
+                for (int j = start; iter.hasNext(); j += step) {
+                    Object item = iter.next().__tojava__(Object.class);
+                    if (j >= size) {
+                        list.add(item);
+                    } else {
+                        list.set(j, item);
+                    }
+                }
+            }
+        }
+
+        final private void setslicePyList(int start, int stop, int step, PyList value) {
+            if (step == 1) {
+                list.subList(start, stop).clear();
+                int n = value.getList().size();
+                for (int i=0, j=start; i<n; i++, j++) {
+                    Object item = value.getList().get(i).__tojava__(Object.class);
+                    list.add(j, item);
+                }
+            } else {
+                int size = list.size();
+                Iterator<PyObject> iter = value.getList().listIterator();
+                for (int j = start; iter.hasNext(); j += step) {
+                    Object item = iter.next().__tojava__(Object.class);
+                    if (j >= size) {
+                        list.add(item);
+                    } else {
+                        list.set(j, item);
+                    }
+                }
+            }
+        }
+
+        
         @Override
         public void delItems(int start, int stop) {
             int n = stop - start;
