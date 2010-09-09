@@ -9,33 +9,22 @@ class ThreadStateMapping {
                 }
             };
 
-    public ThreadState getThreadState(PySystemState newSystemState) {
+    public synchronized ThreadState getThreadState(PySystemState newSystemState) {
+        ThreadState[] threadLocal = cachedThreadState.get();
+        if (threadLocal[0] != null)
+            return threadLocal[0];
 
-        // usual double checked locking pattern
-        ThreadState ts = cachedThreadState.get()[0];
-
-        if (ts != null) {
-            return ts;
-        }
-
-        synchronized(this) {
-            ThreadState[] threadLocal = cachedThreadState.get();
-            if(threadLocal[0] != null)
-                return threadLocal[0];
-
-            Thread t = Thread.currentThread();
-            if (newSystemState == null) {
-                Py.writeDebug("threadstate", "no current system state");
-                if (Py.defaultSystemState == null) {
-                    PySystemState.initialize();
-                }
-                newSystemState = Py.defaultSystemState;
+        Thread t = Thread.currentThread();
+        if (newSystemState == null) {
+            Py.writeDebug("threadstate", "no current system state");
+            if (Py.defaultSystemState == null) {
+                PySystemState.initialize();
             }
-
-            ts = new ThreadState(t, newSystemState);
-
-            newSystemState.registerThreadState(threadLocal, ts);
-            return ts;
+            newSystemState = Py.defaultSystemState;
         }
+
+        ThreadState ts = new ThreadState(t, newSystemState);
+        newSystemState.registerThreadState(threadLocal, ts);
+        return ts;
     }
 }
