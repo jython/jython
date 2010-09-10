@@ -70,9 +70,10 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
 #svn.main.dir=trunk
 
 # - the revision; only needed for a snapshot full-build
-# To create a snapshot build: uncomment and indicate the correct revision (it has to be a number)
+# To create a snapshot build: uncomment the two revision lines, and indicate the correct revision (it has to be a number)
 # For 'normal' builds, this defaults to the latest revision on svn.main.dir (HEAD)
-#snapshot.revision=3444
+#svn.revision=7114
+#snapshot.revision=${svn.revision}
 
 # - the directory containing libsvnjavahl-1.dll (on windows) and svnjavahl.jar; only needed for full-build
 # how to get these (for windows):
@@ -241,6 +242,8 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <property name="svn.main.dir" value="trunk" />
         <property name="svn.code.dir" value="jython" />
         <property name="svn.installer.dir" value="installer" />
+        <!-- predefined revision for checkout (this works for both trunk and release branches -->
+        <property name="svn.revision" value="HEAD" />
 
         <!-- properties work.dir and jython.base.dir are also definied in init, 
              so full-preinit must run first to work -->
