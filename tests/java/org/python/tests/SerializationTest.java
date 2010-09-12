@@ -18,7 +18,6 @@ public class SerializationTest extends TestCase {
 
     @Override
     protected void setUp() throws Exception {
-        PythonInterpreter.initialize(null, null, null);
         interp = new PythonInterpreter(new PyStringMap(), new PySystemState());
         interp.exec("from java.io import Serializable");
         interp.exec("class Test(Serializable): pass");

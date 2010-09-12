@@ -1,18 +1,14 @@
 package org.python.core;
 
 class ThreadStateMapping {
-    private static final ThreadLocal<ThreadState[]> cachedThreadState =
-            new ThreadLocal<ThreadState[]>() {
-                @Override
-                protected ThreadState[] initialValue() {
-                    return new ThreadState[1];
-                }
-            };
+    private static final ThreadLocal<ThreadState> cachedThreadState = new ThreadLocal<ThreadState>();
 
-    public synchronized ThreadState getThreadState(PySystemState newSystemState) {
-        ThreadState[] threadLocal = cachedThreadState.get();
-        if (threadLocal[0] != null)
-            return threadLocal[0];
+    public ThreadState getThreadState(PySystemState newSystemState) {
+        ThreadState ts = cachedThreadState.get();
+        if (ts != null) {
+            return ts;
+        }
+
 
         Thread t = Thread.currentThread();
         if (newSystemState == null) {
@@ -23,8 +19,8 @@ class ThreadStateMapping {
             newSystemState = Py.defaultSystemState;
         }
 
-        ThreadState ts = new ThreadState(t, newSystemState);
-        newSystemState.registerThreadState(threadLocal, ts);
+        ts = new ThreadState(t, newSystemState);
+        cachedThreadState.set(ts);
         return ts;
     }
 }

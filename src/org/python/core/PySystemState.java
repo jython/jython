@@ -1244,10 +1244,6 @@ public class PySystemState extends PyObject implements ClassDictInit {
         return f;
     }
 
-    public void registerThreadState(ThreadState[] threadLocal, ThreadState ts) {
-        closer.registerThreadState(threadLocal, ts);
-    }
-
     public void registerCloser(Callable resourceCloser) {
         closer.registerCloser(resourceCloser);
     }
@@ -1281,7 +1277,6 @@ public class PySystemState extends PyObject implements ClassDictInit {
 
     private static class PySystemStateCloser {
 
-        private final ArrayList<WeakReference<ThreadState[]>> threadStateList = new ArrayList<WeakReference<ThreadState[]>>();
         private final Set<Callable> resourceClosers = new LinkedHashSet<Callable>();
         private volatile boolean isCleanup = false;
         private final Thread shutdownHook;
@@ -1298,13 +1293,6 @@ public class PySystemState extends PyObject implements ClassDictInit {
             while ((ref = systemStateQueue.poll()) != null) {
                 PySystemStateCloser closer = sysClosers.get(ref);
                 closer.cleanup();
-            }
-        }
-
-        private synchronized void registerThreadState(ThreadState[] threadLocal, ThreadState ts) {
-            if (!isCleanup) {
-                threadLocal[0] = ts;
-                threadStateList.add(new WeakReference<ThreadState[]>(threadLocal));
             }
         }
 
@@ -1328,15 +1316,6 @@ public class PySystemState extends PyObject implements ClassDictInit {
             if (shutdownHook != null) {
                 Runtime.getRuntime().removeShutdownHook(shutdownHook);
             }
-
-            // clear out existing ThreadStates so that they can be GCed - this resolves ClassLoader issues
-            for (WeakReference<ThreadState[]> ref : threadStateList) {
-                ThreadState[] o = ref.get();
-                if (o != null) {
-                    o[0] = null;
-                }
-            }
-            threadStateList.clear();
 
             for (Callable callable : resourceClosers) {
                 try {
