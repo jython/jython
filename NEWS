@@ -2,6 +2,7 @@ Jython NEWS
 
 Jython 2.5.2b2
   Bugs Fixed
+    - [ 1327 ] Classloaders cannot GC, which exhausts permgen (partial  bug fix)
     - [ 1604 ] PyBuiltinCallable.Info should be serializable
     - [ 1397 ] Bugs in PyList and PyJavaType.ListIndexDelegate slice setting
     - [ 1503 ] Java constructors should take keyword arguments
