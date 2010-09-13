@@ -3,7 +3,7 @@ Welcome to Jython 2.5.2 Beta2
 
 This is the second beta release of the 2.5.2 version of Jython. Our
 current plans is that this will be the last beta of 2.5.2, but this
-will depend on bug report.
+will depend on bug reports.
 
 This release fixes bugs related to resource leaks, Java integration,
 and a number of other issues. See the NEWS file for more details. In
@@ -16,7 +16,7 @@ resource leaks when a Jython application is restarted under certain
 app containers, because the ThreadState often may not cleaned up by
 the app server's thread pool.
 
-Fixing this problem without a breakwards breaking API change appears
+Fixing this problem without a backwards breaking API change appears
 to be difficult. Therefore we recommend exploring workarounds, such as
 the one published in this blog post,
 http://weblogs.java.net/blog/jjviana/archive/2010/06/09/dealing-glassfish-301-memory-leak-or-threadlocal-thread-pool-bad-ide
