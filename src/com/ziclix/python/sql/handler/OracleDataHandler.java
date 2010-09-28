@@ -8,19 +8,6 @@
  */
 package com.ziclix.python.sql.handler;
 
-import com.ziclix.python.sql.DataHandler;
-import com.ziclix.python.sql.FilterDataHandler;
-import com.ziclix.python.sql.zxJDBC;
-import oracle.jdbc.OracleResultSet;
-import oracle.jdbc.OracleTypes;
-import oracle.sql.BLOB;
-import oracle.sql.ROWID;
-import org.python.core.Py;
-import org.python.core.PyInteger;
-import org.python.core.PyObject;
-
-import java.io.BufferedInputStream;
-import java.io.InputStream;
 import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -28,6 +15,18 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
+
+import oracle.jdbc.OracleResultSet;
+import oracle.jdbc.OracleTypes;
+import oracle.sql.BLOB;
+import oracle.sql.ROWID;
+
+import org.python.core.Py;
+import org.python.core.PyInteger;
+import org.python.core.PyObject;
+
+import com.ziclix.python.sql.DataHandler;
+import com.ziclix.python.sql.FilterDataHandler;
 
 /**
  * Oracle specific data handling.
@@ -95,13 +94,6 @@ public class OracleDataHandler extends FilterDataHandler {
             case Types.NUMERIC:
                 super.setJDBCObject(stmt, index, object, Types.DOUBLE);
                 break;
-
-            case Types.BLOB:
-            case Types.CLOB:
-                Integer[] vals = {new Integer(index), new Integer(type)};
-                String msg = zxJDBC.getString("errorSettingIndex", vals);
-
-                throw new SQLException(msg);
 
             case OracleTypes.ROWID:
                 stmt.setString(index, (String) object.__tojava__(String.class));

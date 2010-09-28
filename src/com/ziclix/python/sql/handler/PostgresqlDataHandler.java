@@ -38,6 +38,7 @@ public class PostgresqlDataHandler extends RowIdHandler {
     super(datahandler);
   }
 
+  @Override
   protected String getRowIdMethodName() {
     return "getLastOID";
   }
@@ -51,6 +52,7 @@ public class PostgresqlDataHandler extends RowIdHandler {
    * @return the mapped Python object
    * @throws SQLException thrown for a sql exception
    */
+  @Override
   public PyObject getPyObject(ResultSet set, int col, int type) throws SQLException {
 
     PyObject obj = Py.None;
@@ -90,6 +92,7 @@ public class PostgresqlDataHandler extends RowIdHandler {
    * @param type
    * @throws SQLException
    */
+  @Override
   public void setJDBCObject(PreparedStatement stmt, int index, PyObject object, int type) throws SQLException {
 
     if (DataHandler.checkNull(stmt, index, object, type)) {
@@ -115,6 +118,8 @@ public class PostgresqlDataHandler extends RowIdHandler {
         super.setJDBCObject(stmt, index, object, type);
     }
   }
+  
+  @Override
   public void setJDBCObject(PreparedStatement stmt, int index, PyObject object) throws SQLException {
       // PostgreSQL doesn't support BigIntegers without explicitely setting the
       // type.

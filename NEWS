@@ -1,5 +1,9 @@
 Jython NEWS
 
+Jython 2.5.2rc1
+  Bugs Fixed
+    - [ 1647 ] zxJDBC does not handle NVARCHAR
+
 Jython 2.5.2b2
   Bugs Fixed
     - [ 1327 ] Classloaders cannot GC, which exhausts permgen (partial  bug fix)

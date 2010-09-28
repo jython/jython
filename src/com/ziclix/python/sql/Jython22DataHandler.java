@@ -51,6 +51,7 @@ public class Jython22DataHandler extends DataHandler {
      * most notably Oracle.  This callback allows a DataHandler to affect the
      * name.
      */
+    @Override
     public String getMetaDataName(PyObject name) {
         return ((name == Py.None) ? null : name.__str__().toString());
     }
@@ -63,6 +64,7 @@ public class Jython22DataHandler extends DataHandler {
      * @return an instance of a Procedure
      * @throws SQLException
      */
+    @Override
     public Procedure getProcedure(PyCursor cursor, PyObject name) throws SQLException {
         return new Procedure(cursor, name);
     }
@@ -75,6 +77,7 @@ public class Jython22DataHandler extends DataHandler {
      * @throws SQLException thrown if an exception occurs
      *
      */
+    @Override
     public PyObject getRowId(Statement stmt) throws SQLException {
         return Py.None;
     }
@@ -83,6 +86,7 @@ public class Jython22DataHandler extends DataHandler {
      * A callback prior to each execution of the statement.  If the statement is
      * a PreparedStatement, all the parameters will have been set.
      */
+    @Override
     public void preExecute(Statement stmt) throws SQLException {
         return;
     }
@@ -90,6 +94,7 @@ public class Jython22DataHandler extends DataHandler {
     /**
      * A callback after successfully executing the statement.
      */
+    @Override
     public void postExecute(Statement stmt) throws SQLException {
         return;
     }
@@ -103,6 +108,7 @@ public class Jython22DataHandler extends DataHandler {
      * @param object the PyObject in question
      * @throws SQLException
      */
+    @Override
     public void setJDBCObject(PreparedStatement stmt, int index, PyObject object) throws SQLException {
 
         try {
@@ -133,6 +139,7 @@ public class Jython22DataHandler extends DataHandler {
      * @param type the <i>java.sql.Types</i> for which this PyObject should be bound
      * @throws SQLException
      */
+    @Override
     public void setJDBCObject(PreparedStatement stmt, int index, PyObject object, int type) throws SQLException {
 
         try {
@@ -209,6 +216,7 @@ public class Jython22DataHandler extends DataHandler {
      * @param type the column type
      * @throws SQLException if the type is unmappable
      */
+    @Override
     @SuppressWarnings("deprecation")
     public PyObject getPyObject(ResultSet set, int col, int type) throws SQLException {
 
@@ -308,10 +316,7 @@ public class Jython22DataHandler extends DataHandler {
                 break;
 
             default :
-                Integer[] vals = {new Integer(col), new Integer(type)};
-                String msg = zxJDBC.getString("errorGettingIndex", vals);
-
-                throw new SQLException(msg);
+                throw createUnsupportedTypeSQLException(new Integer(type), col);
         }
 
         return (set.wasNull() || (obj == null)) ? Py.None : obj;
@@ -326,6 +331,7 @@ public class Jython22DataHandler extends DataHandler {
      * @param type the column type
      * @throws SQLException if the type is unmappable
      */
+    @Override
     @SuppressWarnings("deprecation")
     public PyObject getPyObject(CallableStatement stmt, int col, int type) throws SQLException {
 
@@ -398,10 +404,7 @@ public class Jython22DataHandler extends DataHandler {
                 break;
 
             default :
-                Integer[] vals = {new Integer(col), new Integer(type)};
-                String msg = zxJDBC.getString("errorGettingIndex", vals);
-
-                throw new SQLException(msg);
+                throw createUnsupportedTypeSQLException(new Integer(type), col);
         }
 
         return (stmt.wasNull() || (obj == null)) ? Py.None : obj;
@@ -420,6 +423,7 @@ public class Jython22DataHandler extends DataHandler {
      * @throws SQLException
      *
      */
+    @Override
     public void registerOut(CallableStatement statement, int index, int colType, int dataType, String dataTypeName) throws SQLException {
 
         try {
@@ -445,6 +449,7 @@ public class Jython22DataHandler extends DataHandler {
      *
      * @return a list of datahandlers
      */
+    @Override
     public PyObject __chain__() {
         return new PyList(Py.javas2pys(this));
     }
