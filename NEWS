@@ -2,6 +2,7 @@ Jython NEWS
 
 Jython 2.5.2rc1
   Bugs Fixed
+    - [ 1568 ] sys.stdout.encoding returns wrong value in Windows with Jython 2.5.1 (fixed on Java 6 only)
     - [ 1647 ] zxJDBC does not handle NVARCHAR
 
 Jython 2.5.2b2

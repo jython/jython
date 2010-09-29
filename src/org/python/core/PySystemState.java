@@ -10,6 +10,7 @@ import java.io.InputStreamReader;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.nio.charset.Charset;
@@ -652,12 +653,7 @@ public class PySystemState extends PyObject implements ClassDictInit {
             }
         }
         if (!registry.containsKey(PYTHON_CONSOLE_ENCODING)) {
-            String encoding;
-            try {
-                encoding = System.getProperty("file.encoding");
-            } catch (SecurityException se) {
-                encoding = null;
-            }
+            String encoding = getPlatformEncoding();
             if (encoding != null) {
                 registry.put(PYTHON_CONSOLE_ENCODING, encoding);
             }
@@ -665,7 +661,40 @@ public class PySystemState extends PyObject implements ClassDictInit {
         // Set up options from registry
         Options.setFromRegistry();
     }
+    
+    /**
+     * @return the encoding of the underlying platform; can be <code>null</code>
+     */
+    private static String getPlatformEncoding() {
+        // first try to grab the Console encoding
+        String encoding = getConsoleEncoding();
+        if (encoding == null) {
+            try {
+                encoding = System.getProperty("file.encoding");
+            } catch (SecurityException se) {
+                // ignore, can't do anything about it
+            }
+        }
+        return encoding;
+    }
 
+    /**
+     * @return the console encoding; can be <code>null</code>
+     */
+    private static String getConsoleEncoding() {
+        String encoding = null;
+        try {
+            // the Console class is only present in java 6 - have to use reflection
+            Class<?> consoleClass = Class.forName("java.io.Console");
+            Method encodingMethod = consoleClass.getDeclaredMethod("encoding");
+            encodingMethod.setAccessible(true); // private static method
+            encoding = (String)encodingMethod.invoke(consoleClass);
+        } catch (Exception e) {
+            // ignore any exception
+        }
+        return encoding;
+    }
+    
     private static void addRegistryFile(File file) {
         if (file.exists()) {
             if (!file.isDirectory()) {
