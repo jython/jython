@@ -1343,7 +1343,11 @@ public class PySystemState extends PyObject implements ClassDictInit {
 
             // close this thread so we can unload any associated classloaders in cycle with this instance
             if (shutdownHook != null) {
-                Runtime.getRuntime().removeShutdownHook(shutdownHook);
+                try {
+                    Runtime.getRuntime().removeShutdownHook(shutdownHook);
+                } catch (IllegalStateException e) {
+                    // JVM is already shutting down, so we cannot remove this shutdown hook anyway
+                }
             }
 
             for (Callable callable : resourceClosers) {
