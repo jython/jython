@@ -39,6 +39,7 @@ public class DataHandlerTest extends TestCase {
                                                       "DATALINK",
                                                       "DISTINCT",
                                                       "REF",
+                                                      "ROWID", // java 6
                                                       "STRUCT");
         for (Field field : Types.class.getDeclaredFields()) {
             String typeName = field.getName();
