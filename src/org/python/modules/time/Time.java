@@ -790,6 +790,9 @@ public class Time implements ClassDictInit
             builder.append(translated != null ? translated : charAt);
             directive = false;
         }
+        if (inQuote) {
+            builder.append("'");
+        }
         return builder.toString();
     }
 }
