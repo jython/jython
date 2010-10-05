@@ -189,7 +189,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
             <pathelement path="${extlibs.dir}/asm-3.1.jar" />
             <pathelement path="${extlibs.dir}/asm-commons-3.1.jar" />
             <pathelement path="${extlibs.dir}/constantine.jar" />
-            <pathelement path="${extlibs.dir}/guava-r05.jar" />
+            <pathelement path="${extlibs.dir}/guava-r07.jar" />
             <pathelement path="${extlibs.dir}/jaffl.jar"/>
             <pathelement path="${extlibs.dir}/jffi-Darwin.jar"/>
             <pathelement path="${extlibs.dir}/jffi-i386-FreeBSD.jar"/>
@@ -588,7 +588,7 @@ The readme text for the next release will be like:
             <zipfileset src="extlibs/asm-commons-3.1.jar"/>
             <zipfileset src="extlibs/asm-util-3.1.jar"/>
             <rule pattern="org.objectweb.asm.**" result="org.python.objectweb.asm.@1"/>
-            <zipfileset src="extlibs/guava-r05.jar"/>
+            <zipfileset src="extlibs/guava-r07.jar"/>
             <rule pattern="com.google.**" result="org.python.google.@1"/>
             <zipfileset src="extlibs/jaffl.jar"/>
             <zipfileset src="extlibs/jffi-Darwin.jar"/>
