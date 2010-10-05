@@ -20,7 +20,7 @@ public class _threading implements ClassDictInit {
 
     // internals to support threading.py, test_threading.py
     public static Map<Long, PyObject> _threads = new MapMaker().weakValues().makeMap();
-    public static Map<Thread, PyObject> _jthread_to_pythread = new MapMaker().weakKeys().makeMap();
+    public static Map<Thread, PyObject> _jthread_to_pythread = new MapMaker().weakKeys().weakValues().makeMap();
     public static Map<Long, PyObject> _active = _threads;
 
     public static void _register_thread(Thread jthread, PyObject pythread) {
