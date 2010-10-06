@@ -4,11 +4,15 @@ Made for Jython.
 """
 from __future__ import with_statement
 
-import unittest
-from test import test_support
+import random
+import subprocess
+import sys
 import threading
 import time
-import random
+import unittest
+
+from subprocess import PIPE, Popen
+from test import test_support
 from threading import Condition, Lock, Thread
 from java.lang import Thread as JThread, InterruptedException
 
@@ -84,8 +88,24 @@ class JavaIntegrationTestCase(unittest.TestCase):
         self.assertEqual(joined_threads, num_threads)
 
 
+class MemoryLeakTestCase(unittest.TestCase):
+    def test_socket_server(self):
+        # run socketserver with a small amount of memory; verify it exits cleanly
+
+        
+        rc = subprocess.call([sys.executable,
+                   "-J-Xmx32m",
+                   test_support.findfile("socketserver_test.py")])
+        # stdout=PIPE)
+        self.assertEquals(rc, 0)
+
+
 def test_main():
-    test_support.run_unittest(JavaIntegrationTestCase, ThreadingTestCase, TwistedTestCase)
+    test_support.run_unittest(
+        JavaIntegrationTestCase,
+        MemoryLeakTestCase,
+        ThreadingTestCase,
+        TwistedTestCase)
 
 
 if __name__ == "__main__":
