@@ -7,7 +7,7 @@ Jython 2.5.2rc1
     - [ 1568 ] sys.stdout.encoding returns wrong value in Windows with Jython 2.5.1 (fixed on Java 6 only)
     - [ 1647 ] zxJDBC does not handle NVARCHAR
 
-   socket module now supports ephemeral server ports (by using port  0); see discussion for #1660
+   SocketServer module now supports ephemeral server ports (by using port  0); see discussion for #1660
 
 Jython 2.5.2b2
   Bugs Fixed
