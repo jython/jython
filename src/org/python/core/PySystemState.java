@@ -16,19 +16,17 @@ import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.nio.charset.UnsupportedCharsetException;
 import java.security.AccessControlException;
-import java.util.concurrent.Callable;
-import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.Map.Entry;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentMap;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
-import com.google.common.collect.MapMaker;
 import org.jruby.ext.posix.util.Platform;
 import org.python.Version;
 import org.python.core.adapter.ClassicPyObjectAdapter;
@@ -55,6 +53,7 @@ public class PySystemState extends PyObject implements ClassDictInit {
 
     private static final String JAR_URL_PREFIX = "jar:file:";
     private static final String JAR_SEPARATOR = "!";
+    private static final String VFSZIP_PREFIX = "vfszip:";
 
     public static final PyString version = new PyString(Version.getVersion());
     public static final int hexversion = ((Version.PY_MAJOR_VERSION << 24) |
@@ -1112,12 +1111,15 @@ public class PySystemState extends PyObject implements ClassDictInit {
      * @return the full name of the jar file containing this class, <code>null</code> if not available.
      */
     private static String getJarFileName() {
-        String jarFileName = null;
-        Class thisClass = PySystemState.class;
+        Class<PySystemState> thisClass = PySystemState.class;
         String fullClassName = thisClass.getName();
         String className = fullClassName.substring(fullClassName.lastIndexOf(".") + 1);
         URL url = thisClass.getResource(className + ".class");
-        // we expect an URL like jar:file:/install_dir/jython.jar!/org/python/core/PySystemState.class
+        return getJarFileNameFromURL(url);
+    }
+
+    protected static String getJarFileNameFromURL(URL url) {
+        String jarFileName = null;
         if (url != null) {
             try {
                 // escape plus signs, since the URLDecoder would turn them into spaces
@@ -1129,7 +1131,21 @@ public class PySystemState extends PyObject implements ClassDictInit {
                 urlString = urlString.replaceAll(escapedPlus, plus);
                 int jarSeparatorIndex = urlString.lastIndexOf(JAR_SEPARATOR);
                 if (urlString.startsWith(JAR_URL_PREFIX) && jarSeparatorIndex > 0) {
+                    // jar:file:/install_dir/jython.jar!/org/python/core/PySystemState.class
                     jarFileName = urlString.substring(JAR_URL_PREFIX.length(), jarSeparatorIndex);
+                } else if (urlString.startsWith(VFSZIP_PREFIX)) {
+                    // vfszip:/some/path/jython.jar/org/python/core/PySystemState.class
+                    final String path = PySystemState.class.getName().replace('.', '/');
+                    int jarIndex = urlString.indexOf(".jar/".concat(path));
+                    if (jarIndex > 0) {
+                        jarIndex += 4;
+                        int start = VFSZIP_PREFIX.length();
+                        if (Platform.IS_WINDOWS) {
+                            // vfszip:/C:/some/path/jython.jar/org/python/core/PySystemState.class
+                            start++;
+                        }
+                        jarFileName = urlString.substring(start, jarIndex);
+                    }
                 }
             } catch (Exception e) {}
         }
