@@ -295,4 +295,5 @@ goto :EOF
 
 
 :finish
-%COMSPEC% /c exit /b %E%
+set _UNQUOTED_COMSPEC=%COMSPEC:"=%
+"%_UNQUOTED_COMSPEC%" /c exit /b %E%

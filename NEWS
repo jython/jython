@@ -2,6 +2,7 @@ Jython NEWS
 
 Jython 2.5.2rc1
   Bugs Fixed
+    - [ 1661 ] Error at on exit in TCC/LE
     - [ 1639 ] JBoss 5, vfszip protocol in use for jarFileName in PySystemState
     - [ 1660 ] threading module memory leak
     - [ 1452 ] pydoc help() function fails because sys.executable is None in stand-alone Jython
