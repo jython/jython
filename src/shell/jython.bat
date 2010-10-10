@@ -25,27 +25,10 @@ setlocal enabledelayedexpansion
 rem ----- Verify and set required environment variables -----------------------
 
 set _JAVA_CMD=java
-rem remove surrounding quotes from java home, to be able to safely empty-test it
-set _TRIMMED_JAVA_HOME=%JAVA_HOME%
-for /f "usebackq tokens=*" %%a in ('%_TRIMMED_JAVA_HOME%') do set _TRIMMED_JAVA_HOME=%%~a
-if not "%_TRIMMED_JAVA_HOME%"=="" (
-   set _JAVA_CMD="%JAVA_HOME:"=%\bin\java"
-)
-
-rem remove surrounding quotes from jython opts, to be able to safely empty-test it
-set _TRIMMED_JYTHON_OPTS=%JYTHON_OPTS%
-for /f "usebackq tokens=*" %%a in ('%_TRIMMED_JYTHON_OPTS%') do set _TRIMMED_JYTHON_OPTS=%%~a
-if not "%_TRIMMED_JYTHON_OPTS%"=="" (
-   set _JYTHON_OPTS="%_TRIMMED_JYTHON_OPTS%"
-)
-
-rem remove surrounding quotes from jython home, to be able to safely empty-test it
-set _TRIMMED_JYTHON_HOME=%JYTHON_HOME%
-for /f "usebackq tokens=*" %%a in ('%_TRIMMED_JYTHON_HOME%') do set _TRIMMED_JYTHON_HOME=%%~a
-if not "%_TRIMMED_JYTHON_HOME%"=="" (
-   set _JYTHON_HOME="%_TRIMMED_JYTHON_HOME%"
-   goto gotHome
-)
+if defined JAVA_HOME set _JAVA_CMD="%JAVA_HOME:"=%\bin\java"
+if defined JYTHON_OPTS set _JYTHON_OPTS="%JYTHON_OPTS:"=%" 
+if defined JYTHON_HOME set _JYTHON_HOME="%JYTHON_HOME:"=%"
+if defined _JYTHON_HOME goto gotHome
 
 rem try to dynamically determine jython home
 rem (this script typically resides in jython home, or in the /bin subdirectory)
@@ -128,10 +111,10 @@ REM NOTE: use the quoted value: --do_stuff -> --do_Ustuff
 if ["%_CMP%"] == ["--"] goto argsDone
 
 if ["%_CMP%"] == ["--jdb"] (
-   if "%_TRIMMED_JAVA_HOME%"=="" (
-      set _JAVA_CMD=jdb
-   ) else (
+   if defined JAVA_HOME (
       set _JAVA_CMD="%JAVA_HOME:"=%\bin\jdb"
+   ) else (
+      set _JAVA_CMD=jdb
    )
    goto :nextArg
 )
@@ -216,9 +199,6 @@ set _JYTHON_HOME=
 set _JYTHON_OPTS=
 set _JYTHON_ARGS=
 set _PRINT=
-set _TRIMMED_JAVA_HOME=
-set _TRIMMED_JYTHON_HOME=
-set _TRIMMED_JYTHON_OPTS=
 goto finish
 
 
