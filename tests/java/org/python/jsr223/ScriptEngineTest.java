@@ -2,6 +2,8 @@ package org.python.jsr223;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.script.Bindings;
 import javax.script.Compilable;
 import javax.script.CompiledScript;
@@ -70,8 +72,8 @@ public class ScriptEngineTest extends TestCase {
     public void testCompileEvalString() throws ScriptException {
         ScriptEngineManager manager = new ScriptEngineManager();
         ScriptEngine pythonEngine = manager.getEngineByName("python");
-        
-        CompiledScript five = ((Compilable)pythonEngine).compile("5");
+
+        CompiledScript five = ((Compilable) pythonEngine).compile("5");
         assertEquals(Integer.valueOf(5), five.eval());
     }
 
@@ -87,7 +89,7 @@ public class ScriptEngineTest extends TestCase {
         ScriptEngineManager manager = new ScriptEngineManager();
         ScriptEngine pythonEngine = manager.getEngineByName("python");
 
-        CompiledScript five = ((Compilable)pythonEngine).compile(new StringReader("5"));
+        CompiledScript five = ((Compilable) pythonEngine).compile(new StringReader("5"));
         assertEquals(Integer.valueOf(5), five.eval());
     }
 
@@ -104,6 +106,7 @@ public class ScriptEngineTest extends TestCase {
     }
 
     class ThreadLocalBindingsTest implements Runnable {
+
         ScriptEngine engine;
         Object x;
         Throwable exception;
@@ -146,7 +149,7 @@ public class ScriptEngineTest extends TestCase {
     public void testInvoke() throws ScriptException, NoSuchMethodException {
         ScriptEngineManager manager = new ScriptEngineManager();
         ScriptEngine pythonEngine = manager.getEngineByName("python");
-        Invocable invocableEngine = (Invocable)pythonEngine;
+        Invocable invocableEngine = (Invocable) pythonEngine;
 
         assertNull(pythonEngine.eval("def f(x): return abs(x)"));
         assertEquals(Integer.valueOf(5), invocableEngine.invokeFunction("f", Integer.valueOf(-5)));
@@ -156,7 +159,7 @@ public class ScriptEngineTest extends TestCase {
 
     public void testInvokeFunctionNoSuchMethod() throws ScriptException {
         ScriptEngineManager manager = new ScriptEngineManager();
-        Invocable invocableEngine = (Invocable)manager.getEngineByName("python");
+        Invocable invocableEngine = (Invocable) manager.getEngineByName("python");
 
         try {
             invocableEngine.invokeFunction("undefined");
@@ -168,30 +171,39 @@ public class ScriptEngineTest extends TestCase {
 
     public void testInvokeMethodNoSuchMethod() throws ScriptException {
         ScriptEngineManager manager = new ScriptEngineManager();
-        Invocable invocableEngine = (Invocable)manager.getEngineByName("python");
+        Invocable invocableEngine = (Invocable) manager.getEngineByName("python");
 
         try {
             invocableEngine.invokeMethod("eggs", "undefined");
+            fail("Expected a NoSuchMethodException");
         } catch (NoSuchMethodException e) {
-            return;
+            assertEquals("undefined", e.getMessage());
         }
-        assertTrue("Expected a NoSuchMethodException", false);
     }
 
     public void testGetInterface() throws ScriptException, IOException {
         ScriptEngineManager manager = new ScriptEngineManager();
         ScriptEngine pythonEngine = manager.getEngineByName("python");
-        Invocable invocableEngine = (Invocable)pythonEngine;
+        Invocable invocableEngine = (Invocable) pythonEngine;
 
         assertNull(pythonEngine.eval("def read(cb): return 1"));
         Readable readable = invocableEngine.getInterface(Readable.class);
         assertEquals(1, readable.read(null));
 
         assertNull(pythonEngine.eval(
-                "class C(object):\n" + 
-                "    def read(self, cb): return 2\n" +
-                "c = C()"));
+                "class C(object):\n"
+                + "    def read(self, cb): return 2\n"
+                + "c = C()"));
         readable = invocableEngine.getInterface(pythonEngine.get("c"), Readable.class);
         assertEquals(2, readable.read(null));
+    }
+
+    public void testInvokeMethodNoSuchArgs() throws ScriptException, NoSuchMethodException {
+        ScriptEngineManager manager = new ScriptEngineManager();
+        ScriptEngine pythonEngine = manager.getEngineByName("python");
+        Invocable invocableEngine = (Invocable) pythonEngine;
+
+        Object newStringCapitalize = invocableEngine.invokeMethod("test", "capitalize");
+        assertEquals(newStringCapitalize, "Test");
     }
 }
