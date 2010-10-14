@@ -100,7 +100,14 @@ public class PyScriptEngine extends AbstractScriptEngine implements Compilable, 
             if (method == null) {
                 throw new NoSuchMethodException(name);
             }
-            return method.__call__(Py.javas2pys(args)).__tojava__(Object.class);
+            //return method.__call__(Py.javas2pys(args)).__tojava__(Object.class);
+            PyObject result;
+            if(args != null) {
+               result = method.__call__(Py.javas2pys(args));
+            } else {
+               result = method.__call__();
+            }
+            return result.__tojava__(Object.class);
         } catch (PyException pye) {
             throw scriptException(pye);
         }
