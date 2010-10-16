@@ -81,6 +81,9 @@ public class PyModule extends PyObject {
     }
 
     protected PyObject impAttr(String name) {
+        if (__dict__ == null) {
+            return null;
+        }
         PyObject path = __dict__.__finditem__("__path__");
         PyObject pyName = __dict__.__finditem__("__name__");
         if (path == null || pyName == null) {
