@@ -47,6 +47,14 @@ class ArrayJyTestCase(unittest.TestCase):
         Color.RGBtoHSB(0, 255, 255, hsb1)
         self.assertEqual(hsb, hsb1, "hsb float arrays were not equal")
 
+    def test_java_roundtrip(self):
+        # bug 1543
+        from java.lang import Object
+        x = array(Object, [0,1,2])
+        x.append(3)
+        y = array(Object, [x]) # forces an implicit __tojava__
+        self.assertEqual(x, y[0], "Did not shrink to fit")
+
 
 class ToFromfileTestCase(unittest.TestCase):
 

@@ -2,6 +2,7 @@ Jython NEWS
 
 Jython 2.5.2rc1
   Bugs Fixed
+    - [ 1543 ] PyArray fails to clean up pre-allocated space
     - [ 1661 ] Error at on exit in TCC/LE
     - [ 1639 ] JBoss 5, vfszip protocol in use for jarFileName in PySystemState
     - [ 1660 ] threading module memory leak

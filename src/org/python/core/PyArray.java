@@ -412,7 +412,13 @@ public class PyArray extends PySequence implements Cloneable {
     public Object __tojava__(Class<?> c) {
         if(c == Object.class
                 || (c.isArray() && c.getComponentType().isAssignableFrom(type))) {
-            return data;
+            if (delegate.capacity != delegate.size) {
+                // when unboxing, need to shrink the array first, otherwise incorrect
+                // results to Java
+                return delegate.copyArray();
+            } else {
+                return data;
+            }
         }
         if(c.isInstance(this))
             return this;
