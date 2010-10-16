@@ -1,30 +1,17 @@
-""" Emulate module 'readline' from CPython.
-We are using the JavaReadline JNI wrapper for GNU readline.
-
-2004-10-27, mark.asbach@rwth-aachen.de
-
-"""
-
 from __future__ import with_statement
 import os.path
 import sys
 
-# XXX move to _jline_readline.py, just like our _gnu_readline.py (which is orphaned)
-# then simply try successive imports to see what is installed
-
-# XXX what's oru character encoding issues here, if any?
-
 try:    
     reader = sys._jy_interpreter.reader
-    #from JLine import Completor
 except AttributeError:
     raise ImportError("Cannot access JLineConsole")
 
 def parse_and_bind(string):
-    # XXX this should probably reinitialize the reader, if possible
+    # TODO this should probably reinitialize the reader, if possible
     # with any desired settings; this will require some more work to implement
 
-    # most importantly, need to support
+    # most importantly, need to support at least
     # readline.parse_and_bind("tab: complete")
     # but it's possible we can readily support other aspects of a readline file
     pass
@@ -68,33 +55,39 @@ def get_history_item(index):
     return reader.history.historyList[index]
 
 def remove_history_item(pos):
+    # TODO possible?
     raise Exception("not implemented")
 
 def redisplay():
-    reader.drawLine() # XXX not certain
+    reader.redrawLine()
 
 def set_startup_hook(function=None):
+    # TODO add
     pass
 
 def set_pre_input_hook(function=None):
+    # TODO add
     pass
 
 
 _completion_function = None
 
 def set_completer(function=None):
-    # XXX single method interface, http://jline.sourceforge.net/apidocs/jline/Completor.html
-    # just need to figure out what's necessary to adapt to Python's convention,
-    # but it should be fine :)
-
-    """The completer method is called as completerclass.completer(text, state), for state in 0, 1, 2, ..., 
-    until it returns a non-string value. It should return the next possible completion starting with text."""
+    """set_completer([function]) -> None
+    Set or remove the completer function.
+    The function is called as function(text, state),
+    for state in 0, 1, 2, ..., until it returns a non-string.
+    It should return the next possible completion starting with 'text'."""
 
     _completion_function = function
 
     def complete_handler(buffer, cursor, candidates):
-        for state in xrange(100):
-            completion = function(buffer[:cursor], state)
+        for state in xrange(100): # TODO arbitrary, what's the number used by gnu readline?
+            completion = None
+            try:
+                completion = function(buffer[:cursor], state)
+            except:
+                pass
             if completion:
                 candidates.add(completion)
             else:
@@ -108,9 +101,11 @@ def get_completer():
     return _completion_function
 
 def get_begidx():
+    # TODO add
     pass
 
 def get_endidx():
+    # TODO add
     pass
 
 def set_completer_delims(string):
