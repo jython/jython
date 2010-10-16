@@ -2,6 +2,7 @@ Jython NEWS
 
 Jython 2.5.2rc1
   Bugs Fixed
+    - [ 1642 ] JSR223 PyScriptEngine#getInterface returns a NPE when called with zero args
     - [ 1662 ] time.strptime does not use Java date format strings properly
     - [ 1543 ] PyArray fails to clean up pre-allocated space
     - [ 1661 ] Error at on exit in TCC/LE
