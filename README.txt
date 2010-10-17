@@ -1,8 +1,8 @@
-Welcome to Jython 2.5.2 Beta2
-=============================
+Welcome to Jython 2.5.2 rc1
+===========================
 
-This is the second beta release of the 2.5.2 version of Jython. Our
-current plans is that this will be the last beta of 2.5.2, but this
+This is the first release candidate of the 2.5.2 version of Jython.
+We hope that this is the only release candidate of 2.5.2, but this
 will depend on bug reports.
 
 This release fixes bugs related to resource leaks, Java integration,
