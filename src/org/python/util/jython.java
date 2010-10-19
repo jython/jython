@@ -157,7 +157,7 @@ public class jython {
 
         PySystemState systemState = Py.getSystemState();
         // Decide if stdin is interactive
-        if (!opts.fixInteractive && opts.interactive) {
+        if (!opts.fixInteractive || opts.interactive) {
             opts.interactive = ((PyFile)Py.defaultSystemState.stdin).isatty();
             if (!opts.interactive) {
 
