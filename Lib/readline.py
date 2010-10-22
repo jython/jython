@@ -21,12 +21,15 @@ except AttributeError:
 
 _history_list = None
 
-# the need for these warnings should go away once we update JLine
+# The need for the following warnings should go away once we update
+# JLine. Choosing ImportWarning as the closest warning to what is
+# going on here, namely this is functionality not yet available on
+# Jython.
 
-class NotImplementedWarning(UserWarning):
+class NotImplementedWarning(ImportWarning):
     """Not yet implemented by Jython"""
 
-class SecurityWarning(UserWarning):
+class SecurityWarning(ImportWarning):
     """Security manager prevents access to private field"""
 
 
@@ -56,9 +59,9 @@ def parse_and_bind(string):
             if java.lang.reflect.Array.getShort(keybindings, 9) != COMPLETE:
                 java.lang.reflect.Array.setShort(keybindings, 9, COMPLETE)
         except:
-            warn("Cannot bind tab key to complete. You need to do this in a .jlinebindings.properties file instead", SecurityWarning)
+            warn("Cannot bind tab key to complete. You need to do this in a .jlinebindings.properties file instead", SecurityWarning, stacklevel=2)
     else:
-        warn("Cannot bind key %s. You need to do this in a .jlinebindings.properties file instead" % (string,), NotImplementedWarning)
+        warn("Cannot bind key %s. You need to do this in a .jlinebindings.properties file instead" % (string,), NotImplementedWarning, stacklevel=2)
 
 def get_line_buffer():
     return str(_reader.cursorBuffer.buffer)
@@ -67,11 +70,13 @@ def insert_text(string):
     _reader.putString(string)
     
 def read_init_file(filename=None):
-    warn("read_init_file: %s" % (filename,), NotImplementedWarning)
+    warn("read_init_file: %s" % (filename,), NotImplementedWarning, "module", 2)
 
 def read_history_file(filename="~/.history"):
+    print "Reading history:", filename
     expanded = os.path.expanduser(filename)
     new_history = _reader.getHistory().getClass()()
+    # new_history.clear()
     with open(expanded) as f:
         for line in f:
             new_history.addToHistory(line.rstrip())
@@ -83,6 +88,7 @@ def write_history_file(filename="~/.history"):
     with open(expanded, 'w') as f:
         for line in _reader.history.historyList:
             f.write(line)
+            f.write("\n")
 
 def clear_history():
     _reader.history.clear()
@@ -106,7 +112,7 @@ def remove_history_item(pos):
     if _history_list:
         _history_list.remove(pos)
     else:
-        warn("Cannot remove history item at position: %s" % (pos,), SecurityWarning)
+        warn("Cannot remove history item at position: %s" % (pos,), SecurityWarning, stacklevel=2)
 
 def redisplay():
     _reader.redrawLine()
@@ -115,7 +121,7 @@ def set_startup_hook(function=None):
     sys._jy_interpreter.startupHook = function
     
 def set_pre_input_hook(function=None):
-    warn("set_pre_input_hook %s" % (function,), NotImplementedWarning)
+    warn("set_pre_input_hook %s" % (function,), NotImplementedWarning, stacklevel=2)
 
 _completer_function = None
 
