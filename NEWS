@@ -1,5 +1,9 @@
 Jython NEWS
 
+Jython 2.5.2rc2
+  Bugs Fixed
+    - [ 1628 ] getpass.getpass echoes input
+
 Jython 2.5.2rc1
   Bugs Fixed
     - [ 1133 ] Support ipython and other completers with readline emulation
