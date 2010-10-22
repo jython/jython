@@ -2,6 +2,8 @@
 
 Made for Jython.
 """
+import __builtin__
+import sys
 import cPickle
 import pickle
 import unittest
@@ -68,6 +70,25 @@ class CPickleTestCase(unittest.TestCase):
         b_unpickler = cPickle.Unpickler(StringIO(b_pickled))
         b_unpickler.find_global = restrictive_find_global
         self.assertRaises(pickle.UnpicklingError, b_unpickler.load)
+
+
+    def testWithUserDefinedImport(self):
+        """test cPickle calling a user defined import function."""
+        # This tests the fix for http://bugs.jython.org/issue1665
+        # setup
+        original_import = __builtin__.__import__
+        def import_hook(name, _globals=None, locals=None, fromlist=None, level= -1):
+            return original_import(name, _globals, locals, fromlist, level)
+    
+        # test
+        __builtin__.__import__ = import_hook
+        try:
+            if "no_such_module" in sys.modules:
+                del sys.modules["no_such_module"]  # force cPickle to call __import__
+            self.assertRaises(ImportError, cPickle.loads, pickle.GLOBAL + "no_such_module\n" + "no_such_class\n")
+        finally:
+            __builtin__.__import__ = original_import
+
 
 
 def test_main():

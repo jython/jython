@@ -2,7 +2,9 @@ Jython NEWS
 
 Jython 2.5.2rc2
   Bugs Fixed
+    - [ 1665 ] cPickle calls __import__ with illegal parameters
     - [ 1628 ] getpass.getpass echoes input
+    - Fix logic to detect that a console is interactive (related to #1133)
 
 Jython 2.5.2rc1
   Bugs Fixed
@@ -16,8 +18,7 @@ Jython 2.5.2rc1
     - [ 1452 ] pydoc help() function fails because sys.executable is None in stand-alone Jython
     - [ 1568 ] sys.stdout.encoding returns wrong value in Windows with Jython 2.5.1 (fixed on Java 6 only)
     - [ 1647 ] zxJDBC does not handle NVARCHAR
-
-   SocketServer module now supports ephemeral server ports (by using port  0); see discussion for #1660
+    -  SocketServer module now supports ephemeral server ports (by using port  0); see discussion for #1660
 
 Jython 2.5.2b2
   Bugs Fixed
