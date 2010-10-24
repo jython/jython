@@ -1,4 +1,4 @@
-Welcome to Jython 2.5.2 rc1
+Welcome to Jython 2.5.2 rc2
 ===========================
 
 This is the second release candidate of the 2.5.2 version of Jython.
