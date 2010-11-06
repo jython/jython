@@ -1,10 +1,15 @@
 package org.python.jsr223;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
 import javax.script.Bindings;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import org.python.core.Py;
+import org.python.core.PyDictionary;
+import org.python.core.PyIterator;
 import org.python.core.PyList;
 import org.python.core.PyObject;
 import org.python.core.PyString;
@@ -56,16 +61,31 @@ public final class PyScriptEngineScope extends PyObject {
         return members;
     }
 
-    // Not necessary for functionality; present to satisfy __builtin__.PyMapping_check
+    // satisfy mapping and lookup
     @ExposedMethod
+    @Override
     public PyObject __getitem__(PyObject key) {
-        return super.__getitem__(key);
+        return __finditem__(key);
     }
 
+    // satisfy iterable
+    @ExposedMethod
+    @Override
+    public PyObject __iter__() {
+        return new ScopeIterator(this);
+    }
+
+    @Override
+    public String toString() {
+        return getDictionary().toString();
+    }
+
+    @Override
     public PyObject __finditem__(PyObject key) {
         return __finditem__(key.asString());
     }
 
+    @Override
     public PyObject __finditem__(String key) {
         int scope = context.getAttributesScope(key);
         if (scope == -1)
@@ -74,10 +94,12 @@ public final class PyScriptEngineScope extends PyObject {
     }
 
     @ExposedMethod
+    @Override
     public void __setitem__(PyObject key, PyObject value) {
         __setitem__(key.asString(), value);
     }
 
+    @Override
     public void __setitem__(String key, PyObject value) {
         int scope = context.getAttributesScope(key);
         if (scope == -1)
@@ -86,14 +108,57 @@ public final class PyScriptEngineScope extends PyObject {
     }
 
     @ExposedMethod
+    @Override
     public void __delitem__(PyObject key) {
         __delitem__(key.asString());
     }
 
+    @Override
     public void __delitem__(String key) {
         int scope = context.getAttributesScope(key);
         if (scope == -1)
             throw Py.KeyError(key);
         context.removeAttribute(key, scope);
+    }
+
+    private Map<PyObject, PyObject> getMap() {
+        ScopeIterator iterator = new ScopeIterator(this);
+        Map<PyObject, PyObject> map = new HashMap<PyObject, PyObject>(iterator.size());
+        PyObject key = iterator.__iternext__();
+        while (key != null) {
+            map.put(key, __finditem__(key));
+            key = iterator.__iternext__();
+        }
+        return map;
+    }
+
+    private PyDictionary getDictionary() {
+        return new PyDictionary(getMap());
+    }
+
+    public class ScopeIterator extends PyIterator {
+        private int _index;
+        private int _size;
+        private PyObject _keys;
+
+        ScopeIterator(PyScriptEngineScope scope) {
+            _keys = scope.scope_keys();
+            _size = _keys.__len__();
+            _index = -1;
+        }
+
+        public int size() {
+            return _size;
+        }
+
+        @Override
+        public PyObject __iternext__() {
+            PyObject result = null;
+            _index++;
+            if (_index < size()) {
+                result = _keys.__getitem__(_index);
+            }
+            return result;
+        }
     }
 }

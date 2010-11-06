@@ -1,5 +1,9 @@
 Jython NEWS
 
+Jython 2.5.2rc3
+  Bugs Fixed
+    - [ 1674 ] PDB crashes under the JSR-223 scripting engine 
+      
 Jython 2.5.2rc2
   Bugs Fixed
     - [ 1665 ] cPickle calls __import__ with illegal parameters
