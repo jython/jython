@@ -576,6 +576,14 @@ public final class Py {
         return new PyString(s);
     }
 
+    public static PyStringMap newStringMap() {
+        // enable lazy bootstrapping (see issue #1671)
+        if (!PyType.hasBuilder(PyStringMap.class)) {
+            BOOTSTRAP_TYPES.add(PyStringMap.class);
+        }
+        return new PyStringMap();
+    }
+    
     public static PyUnicode newUnicode(char c) {
         return (PyUnicode) makeCharacter(c, true);
     }

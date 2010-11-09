@@ -98,7 +98,7 @@ public class jython {
                 throw Py.ValueError("jar file missing '__run__.py'");
             }
 
-            PyStringMap locals = new PyStringMap();
+            PyStringMap locals = Py.newStringMap();
 
             // Stripping the stuff before the last File.separator fixes Bug #931129 by
             // keeping illegal characters out of the generated proxy class name

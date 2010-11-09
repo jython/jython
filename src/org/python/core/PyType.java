@@ -1201,6 +1201,10 @@ public class PyType extends PyObject implements Serializable {
         return createType(c, needsInners);
     }
 
+    static boolean hasBuilder(Class<?> c) {
+        return classToBuilder.containsKey(c);
+    }
+    
     private static TypeBuilder getBuilder(Class<?> c) {
         if (classToBuilder == null) {
             // PyType itself has yet to be initialized.  This should be a bootstrap type, so it'll

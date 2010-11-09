@@ -121,7 +121,7 @@ public class PyServlet extends HttpServlet {
     protected static PythonInterpreter createInterpreter(ServletContext servletContext) {
         String rootPath = getRootPath(servletContext);
         PySystemState sys = new PySystemState();
-        PythonInterpreter interp = new PythonInterpreter(new PyStringMap(), sys);
+        PythonInterpreter interp = new PythonInterpreter(Py.newStringMap(), sys);
         sys.path.append(new PyString(rootPath));
 
         String modulesDir = rootPath + "WEB-INF" + File.separator + "jython";

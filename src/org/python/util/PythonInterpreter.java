@@ -94,7 +94,7 @@ public class PythonInterpreter {
 
     protected PythonInterpreter(PyObject dict, PySystemState systemState, boolean useThreadLocalState) {
         if (dict == null) {
-            dict = new PyStringMap();
+            dict = Py.newStringMap();
         }
         globals = dict;
 
