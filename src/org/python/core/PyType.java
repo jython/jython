@@ -1202,7 +1202,7 @@ public class PyType extends PyObject implements Serializable {
     }
 
     static boolean hasBuilder(Class<?> c) {
-        return classToBuilder.containsKey(c);
+        return classToBuilder != null && classToBuilder.containsKey(c);
     }
     
     private static TypeBuilder getBuilder(Class<?> c) {
