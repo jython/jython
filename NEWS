@@ -5,6 +5,8 @@ Jython 2.5.2rc3
     - [ 1674 ] PDB crashes under the JSR-223 scripting engine
     - [ 1680 ] jython -c option is not parsed right
     - [ 1681 ] JSR-223, Jython 2.5.2 and implementing Java Interfaces from Python
+    - [ 1675 ] Jython exits prematurely when executing a file, thus killing Swing windows
+    - [ 1682 ] exit code of 0 on unhandled exception
       
 Jython 2.5.2rc2
   Bugs Fixed

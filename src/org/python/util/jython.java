@@ -262,10 +262,8 @@ public class jython {
                         return;
                     } else {
                         Py.printException(t);
-                        if (!opts.interactive) {
-                            interp.cleanup();
-                            System.exit(-1);
-                        }
+                        interp.cleanup();
+                        System.exit(-1);
                     }
                 }
             }
