@@ -160,7 +160,6 @@ public class jython {
         if (!opts.fixInteractive || opts.interactive) {
             opts.interactive = ((PyFile)Py.defaultSystemState.stdin).isatty();
             if (!opts.interactive) {
-
                 systemState.ps1 = systemState.ps2 = Py.EmptyString;
             }
         }
@@ -243,7 +242,7 @@ public class jython {
                        if (PosixModule.getPOSIX().isatty(file.getFD())) {
                            opts.interactive = true;
                            interp.interact(null, new PyFile(file));
-                           System.exit(0);
+                           return;
                        } else {
                            interp.execfile(file, opts.filename);
                        }
@@ -294,7 +293,7 @@ public class jython {
                     interp.set("name", Py.newString(opts.moduleName));
                     interp.exec("runpy.run_module(name, run_name='__main__', alter_sys=True)");
                     interp.cleanup();
-                    System.exit(0);
+                    return;
                 } catch (Throwable t) {
                     Py.printException(t);
                     interp.cleanup();
@@ -323,9 +322,6 @@ public class jython {
             }
         }
         interp.cleanup();
-        if (opts.fixInteractive || opts.interactive) {
-            System.exit(0);
-        }
     }
 
     /**
