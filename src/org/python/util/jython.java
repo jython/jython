@@ -436,7 +436,7 @@ class CommandLineOptions {
                 Options.verbose +=3 ;
             } else if (arg.equals("-S")) {
                 Options.importSite = false;
-            } else if (arg.equals("-c")) {
+            } else if (arg.startsWith("-c")) {
                 runCommand = true;
                 if (arg.length() > 2) {
                     command = arg.substring(2);
@@ -453,7 +453,7 @@ class CommandLineOptions {
                 }
                 index++;
                 break;
-            } else if (arg.equals("-W")) {
+            } else if (arg.startsWith("-W")) {
                 warnoptions.add(args[++index]);
             } else if (arg.equals("-C")) {
                 encoding = args[++index];

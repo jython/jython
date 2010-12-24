@@ -2,7 +2,8 @@ Jython NEWS
 
 Jython 2.5.2rc3
   Bugs Fixed
-    - [ 1674 ] PDB crashes under the JSR-223 scripting engine 
+    - [ 1674 ] PDB crashes under the JSR-223 scripting engine
+    - [ 1680 ] jython -c option is not parsed right
       
 Jython 2.5.2rc2
   Bugs Fixed
