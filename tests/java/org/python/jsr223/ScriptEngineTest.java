@@ -249,5 +249,18 @@ public class ScriptEngineTest extends TestCase {
         pythonEngine.eval("arepr = `var_a`");
         assertEquals("4", pythonEngine.get("arepr"));
     }
+
+    public void testIssue1681() throws ScriptException{
+        ScriptEngineManager manager = new ScriptEngineManager();
+        ScriptEngine pythonEngine = manager.getEngineByName("python");
+        pythonEngine.eval("import PythonCallable\n" +
+                          "class MyPythonCallable(PythonCallable):\n" +
+                          "    def getAString(self): return 'a string'\n\n" +
+                          "result = MyPythonCallable().getAString()\n" +
+                          "test = MyPythonCallable()\n" +
+                          "result2 = test.getAString()");
+        assertEquals("a string", pythonEngine.get("result"));
+        assertEquals("a string", pythonEngine.get("result2"));
+    }
     
 }

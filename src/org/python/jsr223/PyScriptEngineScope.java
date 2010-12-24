@@ -104,7 +104,9 @@ public final class PyScriptEngineScope extends PyObject {
         int scope = context.getAttributesScope(key);
         if (scope == -1)
             scope = ScriptContext.ENGINE_SCOPE;
-        context.setAttribute(key, value.__tojava__(Object.class), scope);
+        context.setAttribute(key,
+                             value instanceof PyType ? value : value.__tojava__(Object.class),
+                             scope);
     }
 
     @ExposedMethod
