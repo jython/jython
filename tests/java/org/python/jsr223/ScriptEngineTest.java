@@ -2,8 +2,7 @@ package org.python.jsr223;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
 import javax.script.Bindings;
 import javax.script.Compilable;
 import javax.script.CompiledScript;
@@ -13,7 +12,9 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import javax.script.SimpleScriptContext;
+
 import junit.framework.TestCase;
+
 import org.python.core.PyString;
 
 public class ScriptEngineTest extends TestCase {
@@ -253,7 +254,7 @@ public class ScriptEngineTest extends TestCase {
     public void testIssue1681() throws ScriptException{
         ScriptEngineManager manager = new ScriptEngineManager();
         ScriptEngine pythonEngine = manager.getEngineByName("python");
-        pythonEngine.eval("import PythonCallable\n" +
+        pythonEngine.eval("from org.python.jsr223 import PythonCallable\n" +
                           "class MyPythonCallable(PythonCallable):\n" +
                           "    def getAString(self): return 'a string'\n\n" +
                           "result = MyPythonCallable().getAString()\n" +
