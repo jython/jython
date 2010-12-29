@@ -759,6 +759,10 @@ public class Time implements ClassDictInit
         boolean directive = false;
         boolean inQuote = false;
 
+        if (format.length() == 0) {
+            return null;
+        }
+
         for (int i = 0; i < format.length(); i++) {
             char charAt = format.charAt(i);
 

@@ -120,6 +120,12 @@ class TimeTestCase(unittest.TestCase):
             except ValueError:
                 self.fail('conversion specifier: %r failed.' % format)
 
+    def test_strptime_empty(self):
+        try:
+            time.strptime('', '')
+        except ValueError:
+            self.fail('strptime failed on empty args.')
+
     def test_asctime(self):
         time.asctime(time.gmtime(self.t))
         self.assertRaises(TypeError, time.asctime, 0)

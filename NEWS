@@ -7,6 +7,7 @@ Jython 2.5.2rc3
     - [ 1681 ] JSR-223, Jython 2.5.2 and implementing Java Interfaces from Python
     - [ 1675 ] Jython exits prematurely when executing a file, thus killing Swing windows
     - [ 1682 ] exit code of 0 on unhandled exception
+    - [ 1668 ] strptime('','') works on cpython but not on jython
       
 Jython 2.5.2rc2
   Bugs Fixed
