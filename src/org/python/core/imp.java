@@ -436,7 +436,6 @@ public class imp {
     }
 
     static PyObject find_module(String name, String moduleName, PyList path) {
-
         PyObject loader = Py.None;
         PySystemState sys = Py.getSystemState();
         PyObject metaPath = sys.meta_path;
@@ -468,7 +467,10 @@ public class imp {
                     return loadFromLoader(loader, moduleName);
                 }
             }
-            ret = loadFromSource(sys, name, moduleName, p.__str__().toString());
+            if (!(p instanceof PyUnicode)) {
+                p = p.__str__();
+            }
+            ret = loadFromSource(sys, name, moduleName, p.toString());
             if (ret != null) {
                 return ret;
             }

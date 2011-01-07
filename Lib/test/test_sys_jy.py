@@ -1,7 +1,10 @@
-import sys
+from __future__ import with_statement
+import os
 import re
+import sys
+import tempfile
 import unittest
-import test.test_support
+from test import test_support
 
 class SysTest(unittest.TestCase):
 
@@ -132,7 +135,7 @@ class ShadowingTest(unittest.TestCase):
 class SyspathResourceTest(unittest.TestCase):
     def setUp(self):
         self.orig_path = sys.path
-        sys.path.insert(0, test.test_support.findfile("bug1373.jar"))
+        sys.path.insert(0, test_support.findfile("bug1373.jar"))
 
     def tearDown(self):
         sys.path = self.orig_path
@@ -146,8 +149,43 @@ class SyspathResourceTest(unittest.TestCase):
         self.assert_(Main.getResource('Main.txt'))
 
 
+class SyspathUnicodeTest(unittest.TestCase):
+    """bug 1693: importing from a unicode path threw a unicode encoding
+    error"""
+
+    def test_nonexisting_import_from_unicodepath(self):
+        # \xf6 = german o umlaut
+        sys.path.append(u'/home/tr\xf6\xf6t')
+        self.assertRaises(ImportError, __import__, 'non_existing_module')
+
+    def test_import_from_unicodepath(self):
+        # \xf6 = german o umlaut
+        moduleDir = tempfile.mkdtemp(suffix=u'tr\xf6\xf6t')
+        try:
+            self.assertTrue(os.path.exists(moduleDir))
+            module = 'unicodetempmodule'
+            moduleFile = '%s/%s.py' % (moduleDir, module)
+            try:
+                with open(moduleFile, 'w') as f:
+                    f.write('# empty module')
+                self.assertTrue(os.path.exists(moduleFile))
+                sys.path.append(moduleDir)
+                __import__(module)
+                moduleClassFile = '%s/%s$py.class' % (moduleDir, module) 
+                self.assertTrue(os.path.exists(moduleClassFile))
+                os.remove(moduleClassFile)
+            finally:
+                os.remove(moduleFile)
+        finally:
+            os.rmdir(moduleDir)
+        self.assertFalse(os.path.exists(moduleDir))        
+        
+
 def test_main():
-    test.test_support.run_unittest(SysTest, ShadowingTest, SyspathResourceTest)
+    test_support.run_unittest(SysTest,
+                              ShadowingTest,
+                              SyspathResourceTest,
+                              SyspathUnicodeTest)
 
 if __name__ == "__main__":
     test_main()

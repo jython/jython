@@ -7,7 +7,9 @@ import org.python.core.imp;
 import org.python.core.Py;
 import org.python.core.PyJavaPackage;
 import org.python.core.PyList;
+import org.python.core.PyObject;
 import org.python.core.PyString;
+import org.python.core.PyUnicode;
 import org.python.core.util.RelativeFile;
 
 import java.io.BufferedInputStream;
@@ -38,7 +40,11 @@ public abstract class PathPackageManager extends CachedJarsPackageManager {
                 + name;
 
         for (int i = 0; i < path.__len__(); i++) {
-            String dir = path.pyget(i).__str__().toString();
+            PyObject entry = path.pyget(i);
+            if (!(entry instanceof PyUnicode)) {
+                entry = entry.__str__();
+            }
+            String dir = entry.toString();
 
             File f = new RelativeFile(dir, child);
             try {
@@ -96,7 +102,12 @@ public abstract class PathPackageManager extends CachedJarsPackageManager {
         String child = jpkg.__name__.replace('.', File.separatorChar);
 
         for (int i = 0; i < path.__len__(); i++) {
-            String dir = path.pyget(i).__str__().toString();
+            PyObject entry = path.pyget(i);
+            if (!(entry instanceof PyUnicode)) {
+                entry = entry.__str__();
+            }
+            String dir = entry.toString();
+
             if (dir.length() == 0) {
                 dir = null;
             }

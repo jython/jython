@@ -3,7 +3,6 @@
 
 package org.python.core;
 
-import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -13,8 +12,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.StringTokenizer;
 import java.util.zip.ZipEntry;
-
-import javax.management.RuntimeErrorException;
 
 import org.python.core.util.RelativeFile;
 
@@ -115,7 +112,10 @@ public class SyspathJavaLoader extends ClassLoader {
                 SyspathArchive archive = (SyspathArchive)entry;
                 buffer = getBytesFromArchive(archive, name);                
             } else {
-                String dir = entry.__str__().toString();
+                if (!(entry instanceof PyUnicode)) {
+                    entry = entry.__str__();
+                }
+                String dir = entry.toString();
             	buffer = getBytesFromDir(dir, name);
             }
             if (buffer != null) {
@@ -155,7 +155,10 @@ public class SyspathJavaLoader extends ClassLoader {
                 }
                 continue;
             }
-            String dir = sys.getPath(entry.__str__().toString());
+            if (!(entry instanceof PyUnicode)) {
+                entry = entry.__str__();
+            }
+            String dir = sys.getPath(entry.toString());
             try {
 				File resource = new File(dir, res);
 				if (!resource.exists()) {

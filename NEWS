@@ -8,6 +8,7 @@ Jython 2.5.2rc3
     - [ 1675 ] Jython exits prematurely when executing a file, thus killing Swing windows
     - [ 1682 ] exit code of 0 on unhandled exception
     - [ 1668 ] strptime('','') works on cpython but not on jython
+    - [ 1693 ] Unicode sys.path elements cause UnicodeErrors on import
       
 Jython 2.5.2rc2
   Bugs Fixed
