@@ -1,10 +1,9 @@
-Welcome to Jython 2.5.2 rc2
+Welcome to Jython 2.5.2 rc3
 ===========================
 
-This is the second release candidate of the 2.5.2 version of Jython.
-The major difference to rc1 is a fix for better IPython support.
-We still hope that there won't be many more release candidates, but this
-will depend on bug reports.
+This is the third release candidate of the 2.5.2 version of Jython.
+It contains the most important bug fixes since 2.5.2 rc2.
+We believe that this is the last release candidate before the final 2.5.2 release!
 
 This release fixes bugs related to resource leaks, Java integration,
 and a number of other issues. See the NEWS file for more details. In
