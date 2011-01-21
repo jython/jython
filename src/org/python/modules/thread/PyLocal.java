@@ -28,8 +28,8 @@ public class PyLocal extends PyObject {
 
     public PyLocal(PyType subType) {
         super(subType);
-        // Don't lazy load the underlying dict in the insantiating thread; that would call
-        // __init__ a the second time
+        // Don't lazy load the underlying dict in the instantiating thread; that would
+        // call __init__ a the second time
         tdict.set(new PyDictionary());
     }
 
