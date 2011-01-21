@@ -1,3 +1,4 @@
+/* Copyright (c) Jython Developers */
 package org.python.modules.thread;
 
 import org.python.core.Py;
@@ -6,7 +7,6 @@ import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
 import org.python.core.PyType;
 import org.python.expose.ExposedGet;
-import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedSet;
 import org.python.expose.ExposedType;
@@ -28,9 +28,8 @@ public class PyLocal extends PyObject {
 
     public PyLocal(PyType subType) {
         super(subType);
-        // Because the instantiation of a type instance in PyType.invoke_new_
-        // calls dispatch__init__, we call tdict.set here so dispatch__init__
-        // doesn't get called a second time for a thread in fastGetDict
+        // Don't lazy load the underlying dict in the insantiating thread; that would call
+        // __init__ a the second time
         tdict.set(new PyDictionary());
     }
 
@@ -40,27 +39,22 @@ public class PyLocal extends PyObject {
                                         PyType subtype,
                                         PyObject[] args,
                                         String[] keywords) {
+        PyObject[] where = new PyObject[1];
+        subtype.lookup_where("__init__", where);
+        if (where[0] == PyObject.TYPE && args.length > 0) {
+            throw Py.TypeError("Initialization arguments are not supported");
+        }
+
         PyLocal newobj;
         if (new_.getWrappedType() == subtype) {
             newobj = new PyLocal();
         } else {
             newobj = new PyLocalDerived(subtype);
         }
-        if (init) {
-            newobj._local___init__(args, keywords);
-        }
-        return newobj;
-    }
+        newobj.args = args;
+        newobj.keywords = keywords;
 
-    @ExposedMethod
-    final void _local___init__(PyObject[] args, String[] keywords) {
-        PyObject[] where = new PyObject[1];
-        getType().lookup_where("__init__", where);
-        if (where[0] == TYPE && args.length > 0) {
-            throw Py.TypeError("Initialization arguments are not supported");
-        }
-        this.args = args;
-        this.keywords = keywords;
+        return newobj;
     }
 
     @Override
@@ -76,7 +70,7 @@ public class PyLocal extends PyObject {
     }
 
     @Override
-    public synchronized PyObject fastGetDict() {
+    public PyObject fastGetDict() {
         PyDictionary ldict = tdict.get();
         if (ldict == null) {
             ldict = new PyDictionary();
