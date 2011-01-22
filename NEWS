@@ -3,6 +3,7 @@ Jython NEWS
 Jython 2.5.2
   Bugs Fixed
     - [ 1667 ] thread.local subclasses with constructor params fail
+    - [ 1698 ] warnings module fails under JSR-223
 
 Jython 2.5.2rc3
   Bugs Fixed

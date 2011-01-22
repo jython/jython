@@ -75,6 +75,46 @@ public final class PyScriptEngineScope extends PyObject {
         return new ScopeIterator(this);
     }
 
+    @ExposedMethod(defaults = "Py.None")
+    final PyObject scope_get(PyObject keyObj, PyObject defaultObj) {
+        String key = keyObj.asString();
+        int scope = context.getAttributesScope(key);
+        return scope == -1 ? defaultObj : Py.java2py(context.getAttribute(key, scope));
+    }
+
+    @ExposedMethod
+    final boolean scope_has_key(PyObject key) {
+        return context.getAttributesScope(key.asString()) != -1;
+    }
+
+    @Override
+    public boolean __contains__(PyObject obj) {
+        return scope___contains__(obj);
+    }
+
+    @ExposedMethod
+    final boolean scope___contains__(PyObject obj) {
+        return scope_has_key(obj);
+    }
+
+    @ExposedMethod(defaults = "Py.None")
+    final PyObject scope_setdefault(PyObject keyObj, PyObject failObj) {
+        PyObject result;
+        String key = keyObj.asString();
+        int scope = context.getAttributesScope(key);
+        if (scope == -1) {
+            scope = ScriptContext.ENGINE_SCOPE;
+            context.setAttribute(key,
+                                 failObj instanceof PyType
+                                 ? failObj : failObj.__tojava__(Object.class),
+                                 scope);
+            result = failObj;
+        } else {
+            result = Py.java2py(context.getAttribute(key, scope));
+        }
+        return result;
+    }
+
     @Override
     public String toString() {
         return getDictionary().toString();

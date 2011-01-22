@@ -263,5 +263,13 @@ public class ScriptEngineTest extends TestCase {
         assertEquals("a string", pythonEngine.get("result"));
         assertEquals("a string", pythonEngine.get("result2"));
     }
+
+    public void testIssue1698() throws ScriptException{
+        ScriptEngineManager manager = new ScriptEngineManager();
+        ScriptEngine pythonEngine = manager.getEngineByName("python");
+        pythonEngine.eval("import warnings");
+        // Would previously fail
+        pythonEngine.eval("warnings.warn('test')");
+    }
     
 }
