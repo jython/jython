@@ -617,16 +617,18 @@ def getaddrinfo(host, port, family=AF_INET, socktype=None, proto=0, flags=None):
         for a in java.net.InetAddress.getAllByName(host):
             if len([f for f in filter_fns if f(a)]):
                 family = {java.net.Inet4Address: AF_INET, java.net.Inet6Address: AF_INET6}[a.getClass()]
-                if passive_mode and not canonname_mode:
-                    canonname = ""
-                else:
-                    canonname = asPyString(a.getCanonicalHostName())
-                if host is None and passive_mode and not canonname_mode:
-                    sockname = INADDR_ANY
-                else:
-                    sockname = asPyString(a.getHostAddress())
-                # TODO: Include flowinfo and scopeid in a 4-tuple for IPv6 addresses
-                results.append((family, socktype, proto, canonname, (sockname, port)))
+                # bug 1697: exclude IPv6 addresses from being returned
+                if family != AF_INET6:
+                    if passive_mode and not canonname_mode:
+                        canonname = ""
+                    else:
+                        canonname = asPyString(a.getCanonicalHostName())
+                    if host is None and passive_mode and not canonname_mode:
+                        sockname = INADDR_ANY
+                    else:
+                        sockname = asPyString(a.getHostAddress())
+                    # TODO: Include flowinfo and scopeid in a 4-tuple for IPv6 addresses
+                    results.append((family, socktype, proto, canonname, (sockname, port)))
         return results
     except java.lang.Exception, jlx:
         raise _map_exception(jlx)
