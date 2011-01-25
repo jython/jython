@@ -1493,6 +1493,15 @@ class TestGetAddrInfo(unittest.TestCase):
                 self.failUnlessEqual(expected_canonname, canonname, "For hostname '%s' and flags %d, canonname '%s' != '%s'" % (host_param, flags, expected_canonname, canonname) )
                 self.failUnlessEqual(expected_sockaddr, sockaddr[0], "For hostname '%s' and flags %d, sockaddr '%s' != '%s'" % (host_param, flags, expected_sockaddr, sockaddr[0]) )
 
+    def testIPV4AddressesOnly(self):
+        socket._use_ipv4_addresses_only(True)
+        def doAddressTest(addrinfos):
+            for family, socktype, proto, canonname, sockaddr in addrinfos:
+                self.failIf(":" in sockaddr[0], "Incorrectly received IPv6 address '%s'" % (sockaddr[0]) )
+        doAddressTest(socket.getaddrinfo("localhost", 0, socket.AF_INET6, socket.SOCK_STREAM, 0, 0))
+        doAddressTest(socket.getaddrinfo("localhost", 0, socket.AF_UNSPEC, socket.SOCK_STREAM, 0, 0))
+        socket._use_ipv4_addresses_only(False)
+
 class TestExceptions(unittest.TestCase):
 
     def testExceptionTree(self):

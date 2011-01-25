@@ -94,29 +94,40 @@ class gaierror(error): pass
 class timeout(error): pass
 class sslerror(error): pass
 
+def _unmapped_exception(exc):
+    return error(-1, 'Unmapped exception: %s' % exc)
+
+def java_net_socketexception_handler(exc):
+    if exc.message.startswith("Address family not supported by protocol family"):
+        return error(errno.EAFNOSUPPORT, 'Address family not supported by protocol family: See http://wiki.python.org/jython/NewSocketModule#IPV6addresssupport')
+    return _unmapped_exception(exc)
+
+def would_block_error(exc=None):
+    return error(errno.EWOULDBLOCK, 'The socket operation could not complete without blocking')
+
 ALL = None
 
 _exception_map = {
 
-# (<javaexception>, <circumstance>) : lambda: <code that raises the python equivalent>, or None to stub out as unmapped
+# (<javaexception>, <circumstance>) : callable that raises the python equivalent exception, or None to stub out as unmapped
 
-(java.io.IOException, ALL)            : lambda: error(errno.ECONNRESET, 'Software caused connection abort'),
-(java.io.InterruptedIOException, ALL) : lambda: timeout('timed out'),
+(java.io.IOException, ALL)            : lambda x: error(errno.ECONNRESET, 'Software caused connection abort'),
+(java.io.InterruptedIOException, ALL) : lambda x: timeout('timed out'),
 
-(java.net.BindException, ALL)            : lambda: error(errno.EADDRINUSE, 'Address already in use'),
-(java.net.ConnectException, ALL)         : lambda: error(errno.ECONNREFUSED, 'Connection refused'),
+(java.net.BindException, ALL)            : lambda x: error(errno.EADDRINUSE, 'Address already in use'),
+(java.net.ConnectException, ALL)         : lambda x: error(errno.ECONNREFUSED, 'Connection refused'),
 (java.net.NoRouteToHostException, ALL)   : None,
 (java.net.PortUnreachableException, ALL) : None,
 (java.net.ProtocolException, ALL)        : None,
-(java.net.SocketException, ALL)          : None,
-(java.net.SocketTimeoutException, ALL)   : lambda: timeout('timed out'),
-(java.net.UnknownHostException, ALL)     : lambda: gaierror(errno.EGETADDRINFOFAILED, 'getaddrinfo failed'),
+(java.net.SocketException, ALL)          : java_net_socketexception_handler,
+(java.net.SocketTimeoutException, ALL)   : lambda x: timeout('timed out'),
+(java.net.UnknownHostException, ALL)     : lambda x: gaierror(errno.EGETADDRINFOFAILED, 'getaddrinfo failed'),
 
-(java.nio.channels.AlreadyConnectedException, ALL)       : lambda: error(errno.EISCONN, 'Socket is already connected'),
+(java.nio.channels.AlreadyConnectedException, ALL)       : lambda x: error(errno.EISCONN, 'Socket is already connected'),
 (java.nio.channels.AsynchronousCloseException, ALL)      : None,
 (java.nio.channels.CancelledKeyException, ALL)           : None,
 (java.nio.channels.ClosedByInterruptException, ALL)      : None,
-(java.nio.channels.ClosedChannelException, ALL)          : lambda: error(errno.EPIPE, 'Socket closed'),
+(java.nio.channels.ClosedChannelException, ALL)          : lambda x: error(errno.EPIPE, 'Socket closed'),
 (java.nio.channels.ClosedSelectorException, ALL)         : None,
 (java.nio.channels.ConnectionPendingException, ALL)      : None,
 (java.nio.channels.IllegalBlockingModeException, ALL)    : None,
@@ -126,28 +137,25 @@ _exception_map = {
 (java.nio.channels.NonWritableChannelException, ALL)     : None,
 (java.nio.channels.NotYetBoundException, ALL)            : None,
 (java.nio.channels.NotYetConnectedException, ALL)        : None,
-(java.nio.channels.UnresolvedAddressException, ALL)      : lambda: gaierror(errno.EGETADDRINFOFAILED, 'getaddrinfo failed'),
+(java.nio.channels.UnresolvedAddressException, ALL)      : lambda x: gaierror(errno.EGETADDRINFOFAILED, 'getaddrinfo failed'),
 (java.nio.channels.UnsupportedAddressTypeException, ALL) : None,
 
 # These error codes are currently wrong: getting them correct is going to require
 # some investigation. Cpython 2.6 introduced extensive SSL support.
 
-(javax.net.ssl.SSLException, ALL)                        : lambda: sslerror(-1, 'SSL exception'),
-(javax.net.ssl.SSLHandshakeException, ALL)               : lambda: sslerror(-1, 'SSL handshake exception'),
-(javax.net.ssl.SSLKeyException, ALL)                     : lambda: sslerror(-1, 'SSL key exception'),
-(javax.net.ssl.SSLPeerUnverifiedException, ALL)          : lambda: sslerror(-1, 'SSL peer unverified exception'),
-(javax.net.ssl.SSLProtocolException, ALL)                : lambda: sslerror(-1, 'SSL protocol exception'),
+(javax.net.ssl.SSLException, ALL)                        : lambda x: sslerror(-1, 'SSL exception'),
+(javax.net.ssl.SSLHandshakeException, ALL)               : lambda x: sslerror(-1, 'SSL handshake exception'),
+(javax.net.ssl.SSLKeyException, ALL)                     : lambda x: sslerror(-1, 'SSL key exception'),
+(javax.net.ssl.SSLPeerUnverifiedException, ALL)          : lambda x: sslerror(-1, 'SSL peer unverified exception'),
+(javax.net.ssl.SSLProtocolException, ALL)                : lambda x: sslerror(-1, 'SSL protocol exception'),
 
 }
-
-def would_block_error(exc=None):
-    return error(errno.EWOULDBLOCK, 'The socket operation could not complete without blocking')
 
 def _map_exception(exc, circumstance=ALL):
 #    print "Mapping exception: %s" % exc
     mapped_exception = _exception_map.get((exc.__class__, circumstance))
     if mapped_exception:
-        exception = mapped_exception()
+        exception = mapped_exception(exc)
     else:
         exception = error(-1, 'Unmapped exception: %s' % exc)
     exception.java_exception = exc
@@ -588,7 +596,7 @@ def getprotobyname(protocol_name=None):
     return Protocol.getProtocolByName(protocol_name).getProto()
 
 def _realsocket(family = AF_INET, type = SOCK_STREAM, protocol=0):
-    assert family == AF_INET, "Only AF_INET sockets are currently supported on jython"
+    assert family in (AF_INET, AF_INET6), "Only AF_INET and AF_INET6 sockets are currently supported on jython"
     assert type in (SOCK_DGRAM, SOCK_STREAM), "Only SOCK_STREAM and SOCK_DGRAM sockets are currently supported on jython"
     if type == SOCK_STREAM:
         if protocol != 0:
@@ -599,16 +607,25 @@ def _realsocket(family = AF_INET, type = SOCK_STREAM, protocol=0):
             assert protocol == IPPROTO_UDP, "Only IPPROTO_UDP supported on SOCK_DGRAM sockets"
         return _udpsocket()
 
+_ipv4_addresses_only = False
+
+def _use_ipv4_addresses_only(value):
+    global _ipv4_addresses_only
+    _ipv4_addresses_only = value
+
 def getaddrinfo(host, port, family=AF_INET, socktype=None, proto=0, flags=None):
     try:
         if not family in [AF_INET, AF_INET6, AF_UNSPEC]:
             raise gaierror(errno.EIO, 'ai_family not supported')
         filter_fns = []
-        filter_fns.append({
-            AF_INET:   lambda x: isinstance(x, java.net.Inet4Address),
-            AF_INET6:  lambda x: isinstance(x, java.net.Inet6Address),
-            AF_UNSPEC: lambda x: isinstance(x, java.net.InetAddress),
-        }[family])
+        if _ipv4_addresses_only:
+            filter_fns.append( lambda x: isinstance(x, java.net.Inet4Address) )
+        else:
+            filter_fns.append({
+                AF_INET:   lambda x: isinstance(x, java.net.Inet4Address),
+                AF_INET6:  lambda x: isinstance(x, java.net.Inet6Address),
+                AF_UNSPEC: lambda x: isinstance(x, java.net.InetAddress),
+            }[family])
         if host == "":
             host = java.net.InetAddress.getLocalHost().getHostName()
         passive_mode = flags is not None and flags & AI_PASSIVE
@@ -617,18 +634,16 @@ def getaddrinfo(host, port, family=AF_INET, socktype=None, proto=0, flags=None):
         for a in java.net.InetAddress.getAllByName(host):
             if len([f for f in filter_fns if f(a)]):
                 family = {java.net.Inet4Address: AF_INET, java.net.Inet6Address: AF_INET6}[a.getClass()]
-                # bug 1697: exclude IPv6 addresses from being returned
-                if family != AF_INET6:
-                    if passive_mode and not canonname_mode:
-                        canonname = ""
-                    else:
-                        canonname = asPyString(a.getCanonicalHostName())
-                    if host is None and passive_mode and not canonname_mode:
-                        sockname = INADDR_ANY
-                    else:
-                        sockname = asPyString(a.getHostAddress())
-                    # TODO: Include flowinfo and scopeid in a 4-tuple for IPv6 addresses
-                    results.append((family, socktype, proto, canonname, (sockname, port)))
+                if passive_mode and not canonname_mode:
+                    canonname = ""
+                else:
+                    canonname = asPyString(a.getCanonicalHostName())
+                if host is None and passive_mode and not canonname_mode:
+                    sockname = INADDR_ANY
+                else:
+                    sockname = asPyString(a.getHostAddress())
+                # TODO: Include flowinfo and scopeid in a 4-tuple for IPv6 addresses
+                results.append((family, socktype, proto, canonname, (sockname, port)))
         return results
     except java.lang.Exception, jlx:
         raise _map_exception(jlx)
