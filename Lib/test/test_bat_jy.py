@@ -48,7 +48,7 @@ class StderrMonitor(Monitor):
         return self.process.getErrorStream()
 
 class StarterProcess:
-    def writeStarter(self, args, javaHome, jythonHome, jythonOpts):
+    def writeStarter(self, args, javaHome, jythonHome, jythonOpts, internals=False):
         (starter, starterPath) = tempfile.mkstemp(suffix='.bat', prefix='starter', text=True)
         starter.close()
         outfilePath = starterPath[:-4] + '.out'
@@ -60,6 +60,9 @@ class StarterProcess:
                 starter.write('set JYTHON_HOME=%s\n' % jythonHome)
             if jythonOpts:
                 starter.write('set JYTHON_OPTS=%s\n' % jythonOpts)
+            if internals:
+                starter.write('set _JYTHON_OPTS=leaking_internals\n')
+                starter.write('set _JYTHON_HOME=c:/leaking/internals\n')
             starter.write(self.buildCommand(args, outfilePath))
             return (starterPath, outfilePath)
         finally:
@@ -92,9 +95,9 @@ class StarterProcess:
         except IllegalThreadStateException:
             return True
 
-    def run(self, args, javaHome, jythonHome, jythonOpts):
+    def run(self, args, javaHome, jythonHome, jythonOpts, internals=False):
         ''' creates a start script, executes it and captures the output '''
-        (starterPath, outfilePath) = self.writeStarter(args, javaHome, jythonHome, jythonOpts)
+        (starterPath, outfilePath) = self.writeStarter(args, javaHome, jythonHome, jythonOpts, internals)
         try:
             process = Runtime.getRuntime().exec(starterPath)
             stdoutMonitor = StdoutMonitor(process)
@@ -130,7 +133,7 @@ class BaseTest(unittest.TestCase):
             home = ex[:-11] # \jython.bat
         return home
 
-    def assertOutput(self, flags=None, javaHome=None, jythonHome=None, jythonOpts=None):
+    def assertOutput(self, flags=None, javaHome=None, jythonHome=None, jythonOpts=None, internals=False):
         args = [self.quote(sys.executable), '--print']
         memory = None
         stack = None
@@ -161,7 +164,7 @@ class BaseTest(unittest.TestCase):
                     jythonArgs = jythonArgs.replace('%%', '%') # workaround two .bat files
                 args.append(flag)
         process = StarterProcess()
-        out = process.run(args, javaHome, jythonHome, jythonOpts)
+        out = process.run(args, javaHome, jythonHome, jythonOpts, internals)
         self.assertNotEquals('', out)
         homeIdx = out.find('-Dpython.home=')
         java = 'java'
@@ -256,7 +259,11 @@ class JythonOptsTest(BaseTest):
         
     def test_multiple(self):
         self.assertOutput(jythonOpts='some arbitrary options')
-     
+
+class InternalsTest(BaseTest):
+    def test_no_leaks(self):
+        self.assertOutput(internals=True)
+
 class JavaOptsTest(BaseTest):
     def test_memory(self):
         self.assertOutput(['-J-Xmx321m'])
@@ -387,6 +394,7 @@ def test_main():
                                   JavaHomeTest,
                                   JythonHomeTest,
                                   JythonOptsTest,
+                                  InternalsTest,
                                   JavaOptsTest,
                                   ArgsTest,
                                   DoubleDashTest,

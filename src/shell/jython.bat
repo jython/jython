@@ -24,9 +24,12 @@ setlocal enabledelayedexpansion
 
 rem ----- Verify and set required environment variables -----------------------
 
+rem make sure to clear the internal variables, to prevent leaking into subprocess calls
 set _JAVA_CMD=java
 if defined JAVA_HOME set _JAVA_CMD="%JAVA_HOME:"=%\bin\java"
-if defined JYTHON_OPTS set _JYTHON_OPTS="%JYTHON_OPTS:"=%" 
+set _JYTHON_OPTS=
+if defined JYTHON_OPTS set _JYTHON_OPTS="%JYTHON_OPTS:"=%"
+set _JYTHON_HOME=
 if defined JYTHON_HOME set _JYTHON_HOME="%JYTHON_HOME:"=%"
 if defined _JYTHON_HOME goto gotHome
 

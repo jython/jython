@@ -5,6 +5,7 @@ Jython 2.5.2
     - [ 1667 ] thread.local subclasses with constructor params fail
     - [ 1698 ] warnings module fails under JSR-223
     - [ 1697 ] Wrong error message when http connection can not be established
+    - [ 1700 ] "virtualenv is not compatible" to 2.5.2rc3
 
 Jython 2.5.2rc3
   Bugs Fixed
