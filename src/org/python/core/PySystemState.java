@@ -157,9 +157,6 @@ public class PySystemState extends PyObject implements ClassDictInit {
     private final PySystemStateCloser closer;
     private static final ReferenceQueue systemStateQueue = new ReferenceQueue<PySystemState>();
     private static final ConcurrentMap<WeakReference<PySystemState>, PySystemStateCloser> sysClosers = Generic.concurrentMap();
-//    static {
-//        startCleanupThread();
-//    }
 
     public PySystemState() {
         initialize();
@@ -1299,25 +1296,6 @@ public class PySystemState extends PyObject implements ClassDictInit {
 
     public void cleanup() {
         closer.cleanup();
-    }
-
-    private static void startCleanupThread() {
-        Thread cleanupThread = new Thread(new Runnable() {
-            public void run() {
-                while (true) {
-                    try {
-                        Reference<PySystemStateCloser> ref = systemStateQueue.remove();
-                        PySystemStateCloser closer = sysClosers.get(ref);
-                        closer.cleanup();
-                        sysClosers.remove(ref);
-                    } catch (InterruptedException ex) {
-                        break;
-                    }
-                }
-            }
-        });
-        cleanupThread.setDaemon(true);
-        cleanupThread.start();
     }
 
     private static class PySystemStateCloser {
