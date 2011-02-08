@@ -155,8 +155,10 @@ public class PySystemState extends PyObject implements ClassDictInit {
 
     // Automatically close resources associated with a PySystemState when they get GCed
     private final PySystemStateCloser closer;
-    private static final ReferenceQueue systemStateQueue = new ReferenceQueue<PySystemState>();
-    private static final ConcurrentMap<WeakReference<PySystemState>, PySystemStateCloser> sysClosers = Generic.concurrentMap();
+    private static final ReferenceQueue<PySystemState> systemStateQueue =
+            new ReferenceQueue<PySystemState>();
+    private static final ConcurrentMap<WeakReference<PySystemState>,
+                                       PySystemStateCloser> sysClosers = Generic.concurrentMap();
 
     public PySystemState() {
         initialize();
@@ -1286,11 +1288,11 @@ public class PySystemState extends PyObject implements ClassDictInit {
         return f;
     }
 
-    public void registerCloser(Callable resourceCloser) {
+    public void registerCloser(Callable<Void> resourceCloser) {
         closer.registerCloser(resourceCloser);
     }
 
-    public synchronized boolean unregisterCloser(Callable resourceCloser) {
+    public boolean unregisterCloser(Callable<Void> resourceCloser) {
         return closer.unregisterCloser(resourceCloser);
     }
 
@@ -1300,32 +1302,33 @@ public class PySystemState extends PyObject implements ClassDictInit {
 
     private static class PySystemStateCloser {
 
-        private final Set<Callable> resourceClosers = new LinkedHashSet<Callable>();
+        private final Set<Callable<Void>> resourceClosers = new LinkedHashSet<Callable<Void>>();
         private volatile boolean isCleanup = false;
         private final Thread shutdownHook;
 
         private PySystemStateCloser(PySystemState sys) {
             shutdownHook = initShutdownCloser();
-            WeakReference<PySystemState> ref = new WeakReference(sys, systemStateQueue);
+            WeakReference<PySystemState> ref =
+                    new WeakReference<PySystemState>(sys, systemStateQueue);
             sysClosers.put(ref, this);
             cleanupOtherClosers();
         }
 
         private static void cleanupOtherClosers() {
-            Reference<PySystemStateCloser> ref;
+            Reference<? extends PySystemState> ref;
             while ((ref = systemStateQueue.poll()) != null) {
                 PySystemStateCloser closer = sysClosers.get(ref);
                 closer.cleanup();
             }
         }
 
-        private synchronized void registerCloser(Callable closer) {
+        private synchronized void registerCloser(Callable<Void> closer) {
             if (!isCleanup) {
                 resourceClosers.add(closer);
             }
         }
 
-        private synchronized boolean unregisterCloser(Callable closer) {
+        private synchronized boolean unregisterCloser(Callable<Void> closer) {
             return resourceClosers.remove(closer);
         }
 
@@ -1335,7 +1338,8 @@ public class PySystemState extends PyObject implements ClassDictInit {
             }
             isCleanup = true;
 
-            // close this thread so we can unload any associated classloaders in cycle with this instance
+            // close this thread so we can unload any associated classloaders in cycle
+            // with this instance
             if (shutdownHook != null) {
                 try {
                     Runtime.getRuntime().removeShutdownHook(shutdownHook);
@@ -1344,7 +1348,7 @@ public class PySystemState extends PyObject implements ClassDictInit {
                 }
             }
 
-            for (Callable callable : resourceClosers) {
+            for (Callable<Void> callable : resourceClosers) {
                 try {
                     callable.call();
                 } catch (Exception e) {
@@ -1378,7 +1382,7 @@ public class PySystemState extends PyObject implements ClassDictInit {
                     // resourceClosers can be null in some strange cases
                     return;
                 }
-                for (Callable callable : resourceClosers) {
+                for (Callable<Void> callable : resourceClosers) {
                     try {
                         callable.call(); // side effect of being removed from this set
                     } catch (Exception e) {

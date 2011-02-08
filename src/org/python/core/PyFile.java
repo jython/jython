@@ -574,7 +574,7 @@ public class PyFile extends PyObject {
      * be called during shutdown, so we can't use it. It's vital that this Closer has no
      * reference to the PyFile it's closing so the PyFile remains garbage collectable.
      */
-    private static class Closer implements Callable {
+    private static class Closer implements Callable<Void> {
 
         /**
          * The underlying file
@@ -588,8 +588,7 @@ public class PyFile extends PyObject {
             sys.registerCloser(this);
         }
 
-        // For closing directly
-
+        /** For closing directly */
         public void close() {
             if (sys.unregisterCloser(this)) {
                 file.close();
@@ -597,9 +596,8 @@ public class PyFile extends PyObject {
             sys = null;
         }
 
-        // For closing as part of a shutdown process
-
-        public Object call() {
+        /** For closing as part of a shutdown process */
+        public Void call() {
             file.close();
             sys = null;
             return null;
