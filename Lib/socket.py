@@ -591,10 +591,7 @@ def _realsocket(family = AF_INET, type = SOCK_STREAM, protocol=0):
             assert protocol == IPPROTO_UDP, "Only IPPROTO_UDP supported on SOCK_DGRAM sockets"
         return _udpsocket()
 
-class _ip_address_t:
-
-    def __str__(self):
-        return "('%s', %d)" % (self.sockaddr, self.port)
+class _ip_address_t: pass
 
 class _ipv4_address_t(_ip_address_t):
 
@@ -613,6 +610,11 @@ class _ipv4_address_t(_ip_address_t):
 
     def __len__(self):
         return 2
+
+    def __str__(self):
+        return "('%s', %d)" % (self.sockaddr, self.port)
+
+    __repr__ = __str__
 
 class _ipv6_address_t(_ip_address_t):
 
@@ -635,6 +637,11 @@ class _ipv6_address_t(_ip_address_t):
 
     def __len__(self):
         return 4
+
+    def __str__(self):
+        return "('%s', %d, 0, %d)" % (self.sockaddr, self.port, self.jaddress.scopeId)
+
+    __repr__ = __str__
 
 def _get_jsockaddr(address_object, for_udp=False):
     if address_object is None:

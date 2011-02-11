@@ -1508,6 +1508,7 @@ class TestGetAddrInfo(unittest.TestCase):
         self.failUnlessEqual(ipv4_address_tuple[1], 80)
         self.failUnlessRaises(IndexError, lambda: ipv4_address_tuple[2])
         self.failUnlessEqual(str(ipv4_address_tuple), "('127.0.0.1', 80)")
+        self.failUnlessEqual(repr(ipv4_address_tuple), "('127.0.0.1', 80)")
 
         ipv6_address_tuple = socket.getaddrinfo("localhost", 80, socket.AF_INET6, socket.SOCK_STREAM, 0, 0)[0][4]
         self.failUnless     (ipv6_address_tuple[0] in ["::1", "0:0:0:0:0:0:0:1"])
@@ -1519,7 +1520,10 @@ class TestGetAddrInfo(unittest.TestCase):
         except IndexError:
             self.fail("Failed to retrieve third element of ipv6 4-tuple")
         self.failUnlessRaises(IndexError, lambda: ipv6_address_tuple[4])
-        self.failUnless(str(ipv6_address_tuple) in ["('::1', 80)", "('0:0:0:0:0:0:0:1', 80)"])
+        # These str/repr tests may fail on some systems: the scope element of the tuple may be non-zero
+        # In this case, we'll have to change the test to use .startswith() or .split() to exclude the scope element
+        self.failUnless(str(ipv6_address_tuple) in ["('::1', 80, 0, 0)", "('0:0:0:0:0:0:0:1', 80, 0, 0)"])
+        self.failUnless(repr(ipv6_address_tuple) in ["('::1', 80, 0, 0)", "('0:0:0:0:0:0:0:1', 80, 0, 0)"])
 
 class TestJython_get_jsockaddr(unittest.TestCase):
     "These tests are specific to jython: they test a key internal routine"
