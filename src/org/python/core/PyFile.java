@@ -590,9 +590,8 @@ public class PyFile extends PyObject {
 
         /** For closing directly */
         public void close() {
-            if (sys.unregisterCloser(this)) {
-                file.close();
-            }
+            sys.unregisterCloser(this);
+            file.close();
             sys = null;
         }
 
