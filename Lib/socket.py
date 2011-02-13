@@ -161,6 +161,17 @@ def _map_exception(exc, circumstance=ALL):
     exception.java_exception = exc
     return exception
 
+_feature_support_map = {
+    'ipv6': True,
+    'idna': False,
+    'tipc': False,
+}
+
+def supports(feature, *args):
+    if len(args) == 1:
+        _feature_support_map[feature] = args[0]
+    return _feature_support_map.get(feature, False)
+
 MODE_BLOCKING    = 'block'
 MODE_NONBLOCKING = 'nonblock'
 MODE_TIMEOUT     = 'timeout'
@@ -591,6 +602,36 @@ def _realsocket(family = AF_INET, type = SOCK_STREAM, protocol=0):
             assert protocol == IPPROTO_UDP, "Only IPPROTO_UDP supported on SOCK_DGRAM sockets"
         return _udpsocket()
 
+#
+# Attempt to provide IDNA (RFC 3490) support.
+#
+# Try java.net.IDN, built into java 6
+#
+
+idna_libraries = [
+    ('java.net.IDN', 'toASCII', java.lang.IllegalArgumentException)
+]
+
+for idna_lib, idna_fn_name, exc in idna_libraries:
+    try:
+        m = __import__(idna_lib, globals(), locals(), [idna_fn_name])
+        idna_fn = getattr(m, idna_fn_name)
+        def _encode_idna(name):
+            try:
+                return idna_fn(name)
+            except exc:
+                raise UnicodeEncodeError(name)
+        supports('idna', True)
+        break
+    except (AttributeError, ImportError), e:
+        pass
+else:
+    _encode_idna = lambda x: x.encode("ascii")
+
+#
+# Define data structures to support IPV4 and IPV6.
+#
+
 class _ip_address_t: pass
 
 class _ipv4_address_t(_ip_address_t):
@@ -668,10 +709,7 @@ def _get_jsockaddr(address_object, for_udp=False):
     if hostname is None:
         return java.net.InetSocketAddress(port)
     if isinstance(hostname, unicode):
-        # XXX: Should be encode('idna') (See CPython
-        # socketmodule::getsockaddrarg), but Jython's idna support is
-        # currently broken
-        hostname = hostname.encode()
+        hostname = _encode_idna(hostname)
     if len(address_object) == 4:
         # There is no way to get a Inet6Address: Inet6Address.getByName() simply calls
         # InetAddress.getByName,() which also returns Inet4Address objects
@@ -701,6 +739,8 @@ def getaddrinfo(host, port, family=AF_INET, socktype=None, proto=0, flags=None):
             }[family])
         if host == "":
             host = java.net.InetAddress.getLocalHost().getHostName()
+        if isinstance(host, unicode):
+            host = _encode_idna(host)
         passive_mode = flags is not None and flags & AI_PASSIVE
         canonname_mode = flags is not None and flags & AI_CANONNAME
         results = []

@@ -1742,6 +1742,47 @@ class UnicodeTest(ThreadedTCPSocketTest):
     def _testUnicodeHostname(self):
         self.cli.connect((unicode(self.HOST), self.PORT))
 
+class IDNATest(unittest.TestCase):
+
+    def testGetAddrInfoIDNAHostname(self):
+        idna_domain = u"al\u00e1n.com"
+        if socket.supports('idna'):
+            try:
+                addresses = socket.getaddrinfo(idna_domain, 80)
+                self.failUnless(len(addresses) > 0, "No addresses returned for test IDNA domain '%s'" % repr(idna_domain))
+            except Exception, x:
+                self.fail("Unexpected exception raised for socket.getaddrinfo(%s)" % repr(idna_domain))
+        else:
+            try:
+                socket.getaddrinfo(idna_domain, 80)
+            except UnicodeEncodeError:
+                pass
+            except Exception, x:
+                self.fail("Non ascii domain '%s' should have raised UnicodeEncodeError, not %s" % (repr(idna_domain), str(x)))
+            else:
+                self.fail("Non ascii domain '%s' should have raised UnicodeEncodeError: no exception raised" % repr(idna_domain))
+
+    def testAddrTupleIDNAHostname(self):
+        idna_domain = u"al\u00e1n.com"
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        if socket.supports('idna'):
+            try:
+                s.bind( (idna_domain, 80) )
+            except socket.error:
+                # We're not worried about socket errors, i.e. bind problems, etc.
+                pass
+            except Exception, x:
+                self.fail("Unexpected exception raised for socket.bind(%s)" % repr(idna_domain))
+        else:
+            try:
+                s.bind( (idna_domain, 80) )
+            except UnicodeEncodeError:
+                pass
+            except Exception, x:
+                self.fail("Non ascii domain '%s' should have raised UnicodeEncodeError, not %s" % (repr(idna_domain), str(x)))
+            else:
+                self.fail("Non ascii domain '%s' should have raised UnicodeEncodeError: no exception raised" % repr(idna_domain))
+
 class TestInvalidUsage(unittest.TestCase):
 
     def setUp(self):
@@ -1793,6 +1834,7 @@ def test_main():
         LineBufferedFileObjectClassTestCase,
         SmallBufferedFileObjectClassTestCase,
         UnicodeTest,
+        IDNATest,
     ]
     if hasattr(socket, "socketpair"):
         tests.append(BasicSocketPairTest)
@@ -1804,7 +1846,6 @@ def test_main():
     # Need some way to discover the network setup on the test machine
     if False:
         tests.append(UDPBroadcastTest)
-#    tests = [TestJython_get_jsockaddr]
     suites = [unittest.makeSuite(klass, 'test') for klass in tests]
     test_support.run_suite(unittest.TestSuite(suites))
 
