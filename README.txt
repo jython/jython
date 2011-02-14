@@ -1,9 +1,9 @@
-Welcome to Jython 2.5.2 rc3
+Welcome to Jython 2.5.2 rc4
 ===========================
 
-This is the third release candidate of the 2.5.2 version of Jython.
-It contains the most important bug fixes since 2.5.2 rc2.
-We believe that this is the last release candidate before the final 2.5.2 release!
+This is the fourth release candidate of the 2.5.2 version of Jython.
+It contains the fixes of the blocker bugs since 2.5.2 rc3.
+We still believe that this is the last release candidate before the final 2.5.2 release!
 
 This release fixes bugs related to resource leaks, Java integration,
 and a number of other issues. See the NEWS file for more details. In

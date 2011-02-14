@@ -1,12 +1,13 @@
 Jython NEWS
 
-Jython 2.5.2
+Jython 2.5.2rc4
   Bugs Fixed
     - [ 1667 ] thread.local subclasses with constructor params fail
     - [ 1698 ] warnings module fails under JSR-223
     - [ 1697 ] Wrong error message when http connection can not be established
     - [ 1210 ] Lib/socket.py doesn't allow IPv6 sockets and fails with an AssertionError
     - [ 1700 ] "virtualenv is not compatible" to 2.5.2rc3
+    - [ 1701 ] Files are not flushed properly when opened from the EDT (partial fix)
 
 Jython 2.5.2rc3
   Bugs Fixed
