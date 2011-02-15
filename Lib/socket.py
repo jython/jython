@@ -1,16 +1,7 @@
 """
-This is an updated socket module for use on JVMs > 1.4; it is derived from the
-old jython socket module.
-The primary extra it provides is non-blocking support.
-
-XXX Restrictions:
-
-- Only INET sockets
-- Can't do a very good gethostbyaddr() right...
-AMAK: 20050527: added socket timeouts
-AMAK: 20070515: Added non-blocking (asynchronous) support
-AMAK: 20070515: Added client-side SSL support
-AMAK: 20080513: Added support for options
+This is an updated socket module for use on JVMs > 1.5; it is derived from the old jython socket module.
+It is documented, along with known issues and workarounds, on the jython wiki.
+http://wiki.python.org/jython/NewSocketModule
 """
 
 _defaulttimeout = None

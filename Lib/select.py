@@ -1,5 +1,7 @@
 """
-AMAK: 20070515: New select implementation that uses java.nio
+This is an select module for use on JVMs > 1.5.
+It is documented, along with known issues and workarounds, on the jython wiki.
+http://wiki.python.org/jython/SelectModule
 """
 
 import java.nio.channels.SelectableChannel
