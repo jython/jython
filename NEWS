@@ -1,5 +1,8 @@
 Jython NEWS
 
+Jython 2.5.2
+  same as 2.5.2rc4
+
 Jython 2.5.2rc4
   Bugs Fixed
     - [ 1667 ] thread.local subclasses with constructor params fail
