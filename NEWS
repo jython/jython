@@ -11,6 +11,10 @@ Jython 2.5.2rc4
     - [ 1210 ] Lib/socket.py doesn't allow IPv6 sockets and fails with an AssertionError
     - [ 1700 ] "virtualenv is not compatible" to 2.5.2rc3
     - [ 1701 ] Files are not flushed properly when opened from the EDT (partial fix)
+  New Features
+    - The socket module now includes ipv6 support
+    - The socket module now also includes Internationalized Domain
+      Names (RFC 3490) support on Java 6
 
 Jython 2.5.2rc3
   Bugs Fixed
@@ -153,9 +157,19 @@ Jython 2.5.2b1
       during Django or Pylons development mode reloading)
     - Fix pickling of collections.defaultdict objects
     - Fix the cmath module to accept objects implementing the __float__ method
-    - Add google indexer (by Yin Wang and Steve Yegge)
+  New Features
+    - Performance improvements around method invocation. 2.5.2 runs
+      the richards benchmark 3x faster and the pystone benchmark 20%
+      faster than 2.5.1
+    - The posix/nt module was rewritten in Java and the performance of
+      its often performance-critical stat function has significantly
+      improved
+    - Improved OSError errno messages on Windows
+    - Slightly improved startup time (ongoing Issue #1380)
+    - better readline module emulation (required for IPython support)
     - Python functions can be directly passed to Java methods that
        take a single method interface (such as Callable or Runnable)
+    - Add google indexer (by Yin Wang and Steve Yegge)
 
 Jython 2.5.1rc3
   Bugs Fixed
