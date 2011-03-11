@@ -1510,7 +1510,12 @@ class TestGetAddrInfo(unittest.TestCase):
         self.failUnlessEqual(str(ipv4_address_tuple), "('127.0.0.1', 80)")
         self.failUnlessEqual(repr(ipv4_address_tuple), "('127.0.0.1', 80)")
 
-        ipv6_address_tuple = socket.getaddrinfo("localhost", 80, socket.AF_INET6, socket.SOCK_STREAM, 0, 0)[0][4]
+        addrinfo = socket.getaddrinfo("localhost", 80, socket.AF_INET6, socket.SOCK_STREAM, 0, 0)
+        if not addrinfo and is_bsd:
+            # older FreeBSDs may have spotty IPV6 Java support (at least
+            # our FreeBSD 6.2 buildbot does)
+            return
+        ipv6_address_tuple = addrinfo[0][4]
         self.failUnless     (ipv6_address_tuple[0] in ["::1", "0:0:0:0:0:0:0:1"])
         self.failUnlessEqual(ipv6_address_tuple[1], 80)
         self.failUnlessEqual(ipv6_address_tuple[2], 0)
@@ -1536,7 +1541,11 @@ class TestJython_get_jsockaddr(unittest.TestCase):
         self.failUnlessEqual(sockaddr.port, 80)
 
     def testIPV6AddressesFromGetAddrInfo(self):
-        local_addr = socket.getaddrinfo("localhost", 80, socket.AF_INET6, socket.SOCK_STREAM, 0, 0)[0][4]
+        addrinfo = socket.getaddrinfo("localhost", 80, socket.AF_INET6, socket.SOCK_STREAM, 0, 0)
+        if not addrinfo and is_bsd:
+            # older FreeBSDs may have spotty IPV6 Java support
+            return
+        local_addr = addrinfo[0][4]
         sockaddr = socket._get_jsockaddr(local_addr)
         self.failUnless(isinstance(sockaddr, java.net.InetSocketAddress), "_get_jsockaddr returned wrong type: '%s'" % str(type(sockaddr)))
         self.failUnless(sockaddr.address.hostAddress in ["::1", "0:0:0:0:0:0:0:1"])
