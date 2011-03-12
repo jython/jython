@@ -79,11 +79,7 @@ class UnicodeTests(unittest.TestCase):
             self.fail("Unexpected exception joining comment data pieces: %s" % str(x))
 
 def test_main():
-    tests = [
-        UnicodeTests,
-    ]
-    suites = [unittest.makeSuite(klass, 'test') for klass in tests]
-    test_support.run_suite(unittest.TestSuite(suites))
+    test_support.run_unittest(__name__)
 
 if __name__ == "__main__":
     test_main()

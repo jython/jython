@@ -238,9 +238,7 @@ class TestSelect(unittest.TestCase):
         self.handler.verify_only_writable()
 
 def test_main():
-    tests = [TestSelect, TestSelectOnAccept]
-    suites = [unittest.makeSuite(klass, 'test') for klass in tests]
-    test_support.run_suite(unittest.TestSuite(suites))    
+    test_support.run_unittest(__name__)    
 
 if __name__ == "__main__":
     test_main()

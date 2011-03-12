@@ -4,7 +4,7 @@
 import gc
 import unittest
 import time
-from test.test_support import run_suite
+from test import test_support
 
 import java
 import jarray
@@ -287,19 +287,7 @@ class ModuleTest(unittest.TestCase):
         self.assertEquals(len(test.__dict__), 4)
 
 def test_main():
-    test_suite = unittest.TestSuite()
-    test_loader = unittest.TestLoader()
-    def suite_add(case):
-        test_suite.addTest(test_loader.loadTestsFromTestCase(case))
-    suite_add(WeakIdentityMapTests)
-    suite_add(LongAsScaledDoubleValueTests)
-    suite_add(ExtraMathTests)
-    suite_add(DatetimeTypeMappingTest)
-    suite_add(IdTest)
-    suite_add(FrameTest)
-    suite_add(ModuleTest)
-    suite_add(MemoryLeakTests)
-    run_suite(test_suite)
+    test_support.run_unittest(__name__)
 
 if __name__ == "__main__":
     test_main()

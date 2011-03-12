@@ -5,10 +5,9 @@
 # (taradino@softhome.net) -- translated from the original Optik
 # test suite to this PyUnit-based version.
 #
-# $Id: test_optparse.py 50791 2006-07-23 16:05:51Z greg.ward $
+# $Id: test_optparse.py 83540 2010-08-02 18:40:55Z ezio.melotti $
 #
 
-import __builtin__
 import sys
 import os
 import re
@@ -17,7 +16,6 @@ import types
 import unittest
 
 from StringIO import StringIO
-from pprint import pprint
 from test import test_support
 
 
@@ -27,12 +25,6 @@ from optparse import make_option, Option, IndentedHelpFormatter, \
      BadOptionError, OptionValueError, Values
 from optparse import _match_abbrev
 from optparse import _parse_num
-
-# Do the right thing with boolean values for all known Python versions.
-try:
-    True, False
-except NameError:
-    (True, False) = (1, 0)
 
 retype = type(re.compile(''))
 
@@ -461,7 +453,7 @@ def _check_duration(option, opt, value):
             return int(value)
         else:
             return int(value[:-1]) * _time_units[value[-1]]
-    except ValueError, IndexError:
+    except (ValueError, IndexError):
         raise OptionValueError(
             'option %s: invalid duration: %r' % (opt, value))
 
@@ -774,6 +766,11 @@ class TestStandard(BaseTest):
                            {'a': "-b3", 'boo': None, 'foo': None},
                            [])
 
+    def test_combined_single_invalid_option(self):
+        self.parser.add_option("-t", action="store_true")
+        self.assertParseFail(["-test"],
+                             "no such option: -e")
+
 class TestBool(BaseTest):
     def setUp(self):
         options = [make_option("-v",
@@ -796,15 +793,13 @@ class TestBool(BaseTest):
         (options, args) = self.assertParseOK(["-q"],
                                              {'verbose': 0},
                                              [])
-        if hasattr(__builtin__, 'False'):
-            self.failUnless(options.verbose is False)
+        self.assertTrue(options.verbose is False)
 
     def test_bool_true(self):
         (options, args) = self.assertParseOK(["-v"],
                                              {'verbose': 1},
                                              [])
-        if hasattr(__builtin__, 'True'):
-            self.failUnless(options.verbose is True)
+        self.assertTrue(options.verbose is True)
 
     def test_bool_flicker_on_and_off(self):
         self.assertParseOK(["-qvq", "-q", "-v"],
@@ -1466,15 +1461,9 @@ class TestHelp(BaseTest):
         # we must restore its original value -- otherwise, this test
         # screws things up for other tests when it's part of the Python
         # test suite.
-        orig_columns = os.environ.get('COLUMNS')
-        os.environ['COLUMNS'] = str(columns)
-        try:
+        with test_support.EnvironmentVarGuard() as env:
+            env.set('COLUMNS', str(columns))
             return InterceptingOptionParser(option_list=options)
-        finally:
-            if orig_columns is None:
-                del os.environ['COLUMNS']
-            else:
-                os.environ['COLUMNS'] = orig_columns
 
     def assertHelpEquals(self, expected_output):
         if type(expected_output) is types.UnicodeType:
@@ -1501,8 +1490,10 @@ class TestHelp(BaseTest):
         self.assertHelpEquals(_expected_help_long_opts_first)
 
     def test_help_title_formatter(self):
-        self.parser.formatter = TitledHelpFormatter()
-        self.assertHelpEquals(_expected_help_title_formatter)
+        with test_support.EnvironmentVarGuard() as env:
+            env.set("COLUMNS", "80")
+            self.parser.formatter = TitledHelpFormatter()
+            self.assertHelpEquals(_expected_help_title_formatter)
 
     def test_wrap_columns(self):
         # Ensure that wrapping respects $COLUMNS environment variable.
@@ -1624,21 +1615,11 @@ class TestParseNumber(BaseTest):
                              "option -l: invalid long integer value: '0x12x'")
 
 
-def _testclasses():
-    mod = sys.modules[__name__]
-    return [getattr(mod, name) for name in dir(mod) if name.startswith('Test')]
-
-def suite():
-    if test_support.is_jython:
-        # XXX: CPython ref count specific test
-        del TestOptionParser.test_refleak
-    suite = unittest.TestSuite()
-    for testclass in _testclasses():
-        suite.addTest(unittest.makeSuite(testclass))
-    return suite
-
 def test_main():
-    test_support.run_suite(suite())
+    is_jython = sys.platform.startswith("java")
+    if is_jython:
+        del TestOptionParser.test_refleak
+    test_support.run_unittest(__name__)
 
 if __name__ == '__main__':
     test_main()

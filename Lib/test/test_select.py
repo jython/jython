@@ -222,16 +222,10 @@ class TestPipes(unittest.TestCase):
         p.close()
 
 def test_main():
-    tests = [
-        TestSelectInvalidParameters,
-        TestSelectClientSocket,
-        TestPollClientSocket,
-        ThreadedPollClientSocket,
-    ]
-    if sys.platform[:4] != 'java':
-        tests.append(TestPipes)
-    suites = [unittest.makeSuite(klass, 'test') for klass in tests]
-    test_support.run_suite(unittest.TestSuite(suites))
+
+    if test_support.is_jython:
+        del TestPipes.test
+    test_support.run_unittest(__name__)
 
 if __name__ == "__main__":
     test_main()

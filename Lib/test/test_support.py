@@ -207,10 +207,6 @@ def bind_port(sock, host=HOST):
     on Windows), it will be set on the socket.  This will prevent anyone else
     from bind()'ing to our host/port for the duration of the test.
     """
-
-    #XXX: This section is probably wrong as I (Frank Wierzbicki) don't really
-    #     understand it, but I needed this to get the asynchat tests running
-    #     again.
     if is_jython:
         # Find some random ports that hopefully no one is listening on.
         # Ideally each test would clean up after itself and not continue
@@ -902,9 +898,7 @@ def run_doctest(module, verbosity=None):
 
 def threading_setup():
     import threading
-    if is_jython:
-        return len(threading._active), 0
-    return len(threading._active), len(threading._limbo)
+    return len(threading._active), 0
 
 def threading_cleanup(num_active, num_limbo):
     import threading
@@ -915,12 +909,6 @@ def threading_cleanup(num_active, num_limbo):
     while len(threading._active) != num_active and count < _MAX_COUNT:
         count += 1
         time.sleep(0.1)
-
-    if not is_jython:
-        count = 0
-        while len(threading._limbo) != num_limbo and count < _MAX_COUNT:
-            count += 1
-            time.sleep(0.1)
 
 def reap_children():
     """Use this function at the end of test_main() whenever sub-processes

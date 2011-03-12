@@ -1856,7 +1856,7 @@ def test_main():
     if False:
         tests.append(UDPBroadcastTest)
     suites = [unittest.makeSuite(klass, 'test') for klass in tests]
-    test_support.run_suite(unittest.TestSuite(suites))
+    test_support._run_suite(unittest.TestSuite(suites))
 
 if __name__ == "__main__":
     test_main()
