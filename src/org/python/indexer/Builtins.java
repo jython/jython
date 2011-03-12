@@ -99,8 +99,8 @@ public class Builtins {
     Scope moduleTable;
 
     String[] builtin_exception_types = {
-        "ArithmeticError", "AssertionError", "AttributeError",
-        "BaseException", "Exception", "DeprecationWarning", "EOFError",
+        "ArithmeticError", "AssertionError", "AttributeError", "BaseException",
+        "BytesWarning", "Exception", "DeprecationWarning", "EOFError",
         "EnvironmentError", "FloatingPointError", "FutureWarning",
         "GeneratorExit", "IOError", "ImportError", "ImportWarning",
         "IndentationError", "IndexError", "KeyError", "KeyboardInterrupt",
@@ -108,11 +108,10 @@ public class Builtins {
         "NotImplementedError", "OSError", "OverflowError",
         "PendingDeprecationWarning", "ReferenceError", "RuntimeError",
         "RuntimeWarning", "StandardError", "StopIteration", "SyntaxError",
-        "SyntaxWarning", "SystemError", "SystemExit", "TabError",
-        "TypeError", "UnboundLocalError", "UnicodeDecodeError",
-        "UnicodeEncodeError", "UnicodeError", "UnicodeTranslateError",
-        "UnicodeWarning", "UserWarning", "ValueError", "Warning",
-        "ZeroDivisionError"
+        "SyntaxWarning", "SystemError", "SystemExit", "TabError", "TypeError",
+        "UnboundLocalError", "UnicodeDecodeError", "UnicodeEncodeError",
+        "UnicodeError", "UnicodeTranslateError", "UnicodeWarning",
+        "UserWarning", "ValueError", "Warning", "ZeroDivisionError"
     };
 
     Set<NType> nativeTypes = new HashSet<NType>();

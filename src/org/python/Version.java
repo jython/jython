@@ -44,7 +44,7 @@ public class Version {
 
     /** The flags that are set by default in a code object. */
     private static final Collection<CodeFlag> defaultCodeFlags = Arrays.asList(
-            CodeFlag.CO_NESTED, CodeFlag.CO_GENERATOR_ALLOWED);
+            CodeFlag.CO_NESTED, CodeFlag.CO_GENERATOR_ALLOWED, CodeFlag.CO_FUTURE_WITH_STATEMENT);
 
     private static final String headURL =
             "$HeadURL$";

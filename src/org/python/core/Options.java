@@ -75,6 +75,10 @@ public class Options {
     /** Force stdin, stdout and stderr to be unbuffered, and opened in
      * binary mode */
     public static boolean unbuffered = false;
+    
+    //XXX: place holder
+    public static int bytes_warning = 0;
+
 
     /**
      * Enable division warning. The value maps to the registry values of

@@ -166,6 +166,10 @@ public class exceptions extends PyObject implements ClassDictInit {
         buildClass(dict, "UnicodeWarning", "Warning",
                    "Base class for warnings about Unicode related problems, mostly\n"
                    + "related to conversion problems.");
+            
+        buildClass(dict, "BytesWarning", "Warning",
+                   "Base class for warnings about bytes and buffer related problems, mostly\n"
+                   + "related to conversion from str or comparing to str."); 
 
         // Initialize ZipImportError here, where it's safe to; it's
         // needed immediately

@@ -65,6 +65,16 @@ public class PySystemState extends PyObject implements ClassDictInit {
     public static PyTuple version_info;
 
     public final static int maxunicode = 1114111;
+
+    //XXX: we should someday make this Long.MAX_VALUE, but see test_index.py
+    //     for tests that would need to pass but today would not.
+    public final static int maxsize = Integer.MAX_VALUE;
+
+    //XXX: place holder
+    public final static boolean py3kwarning = false;
+
+    public final static Class flags = Options.class;
+    
     public static PyTuple subversion;
     /**
      * The copyright notice for this release.

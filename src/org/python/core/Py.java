@@ -402,6 +402,11 @@ public final class Py {
     public static void UnicodeWarning(String message) {
         warning(UnicodeWarning, message);
     }
+    
+    public static PyObject BytesWarning;
+    public static void BytesWarning(String message) {
+        warning(BytesWarning, message);
+    }
 
     private static PyObject warnings_mod;
 
@@ -775,6 +780,7 @@ public final class Py {
         FutureWarning = initExc("FutureWarning", exc, dict);
         ImportWarning = initExc("ImportWarning", exc, dict);
         UnicodeWarning = initExc("UnicodeWarning", exc, dict);
+        BytesWarning = initExc("BytesWarning", exc, dict);
 
         // Pre-initialize the PyJavaClass for OutOfMemoryError so when we need
         // it it creating the pieces for it won't cause an additional out of

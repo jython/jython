@@ -347,20 +347,22 @@ public class GrammarActions {
     }
 
     List<keyword> makeKeywords(List args) {
-        List<keyword> k = new ArrayList<keyword>();
+        List<keyword> keywords = new ArrayList<keyword>();
         if (args != null) {
-            for(int i=0;i<args.size();i++) {
-                List e = (List)args.get(i);
-                checkAssign(castExpr(e.get(0)));
-                if (e.get(0) instanceof Name) {
-                    Name arg = (Name)e.get(0);
-                    k.add(new keyword(arg, arg.getInternalId(), castExpr(e.get(1))));
+            for (Object o : args) {
+                List e = (List)o;
+                Object k = e.get(0);
+                Object v = e.get(1);
+                checkAssign(castExpr(k));
+                if (k instanceof Name) {
+                    Name arg = (Name)k;
+                    keywords.add(new keyword(arg, arg.getInternalId(), castExpr(v)));
                 } else {
-                    errorHandler.error("keyword must be a name", (PythonTree)e.get(0));
+                    errorHandler.error("keyword must be a name", (PythonTree)k);
                 }
             }
         }
-        return k;
+        return keywords;
     }
 
     Object makeFloat(Token t) {
@@ -373,11 +375,20 @@ public class GrammarActions {
         return Py.newImaginary(Double.valueOf(s));
     }
 
+    //XXX: needs to handle NumberFormatException (on input like 0b2) and needs
+    //     a better long guard than ndigits > 11 (this is much to short for
+    //     binary for example)
     Object makeInt(Token t) {
         String s = t.getText();
         int radix = 10;
         if (s.startsWith("0x") || s.startsWith("0X")) {
             radix = 16;
+            s = s.substring(2, s.length());
+        } else if (s.startsWith("0o") || s.startsWith("0O")) {
+            radix = 8;
+            s = s.substring(2, s.length());
+        } else if (s.startsWith("0b") || s.startsWith("0B")) {
+            radix = 2;
             s = s.substring(2, s.length());
         } else if (s.startsWith("0")) {
             radix = 8;
