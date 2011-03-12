@@ -207,7 +207,34 @@ def bind_port(sock, host=HOST):
     on Windows), it will be set on the socket.  This will prevent anyone else
     from bind()'ing to our host/port for the duration of the test.
     """
-    if sock.family == socket.AF_INET and sock.type == socket.SOCK_STREAM:
+
+    #XXX: This section is probably wrong as I (Frank Wierzbicki) don't really
+    #     understand it, but I needed this to get the asynchat tests running
+    #     again.
+    if is_jython:
+        # Find some random ports that hopefully no one is listening on.
+        # Ideally each test would clean up after itself and not continue
+        # listening on any ports.  However, this isn't the case.  The last port
+        # (0) is a stop-gap that asks the O/S to assign a port.  Whenever the
+        # warning message below is printed, the test that is listening on the
+        # port should be fixed to close the socket at the end of the test.
+        # Another reason why we can't use a port is another process (possibly
+        # another instance of the test suite) is using the same port.
+
+        for port in [54321, 9907, 10243, 32999, 0]:
+            try:
+                sock.bind((host, port))
+                if port == 0:
+                    port = sock.getsockname()[1]
+                return port
+            except socket.error, (err, msg):
+                if err != errno.EADDRINUSE:
+                    raise
+                print >>sys.__stderr__, \
+                    '  WARNING: failed to listen on port %d, trying another' % port
+        raise TestFailed, 'unable to find port to listen on'
+
+    elif sock.family == socket.AF_INET and sock.type == socket.SOCK_STREAM:
         if hasattr(socket, 'SO_REUSEADDR'):
             if sock.getsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR) == 1:
                 raise TestFailed("tests should never set the SO_REUSEADDR "   \
@@ -248,6 +275,24 @@ except NameError:
     have_unicode = False
 
 is_jython = sys.platform.startswith('java')
+if is_jython:
+    def make_jar_classloader(jar):
+        import os
+        from java.net import URL, URLClassLoader
+
+        url = URL('jar:file:%s!/' % jar)
+        if os._name == 'nt':
+            # URLJarFiles keep a cached open file handle to the jar even
+            # after this ClassLoader is GC'ed, disallowing Windows tests
+            # from removing the jar file from disk when finished with it
+            conn = url.openConnection()
+            if conn.getDefaultUseCaches():
+                # XXX: Globally turn off jar caching: this stupid
+                # instance method actually toggles a static flag. Need a
+                # better fix
+                conn.setDefaultUseCaches(False)
+
+        return URLClassLoader([url])
 
 # Filename used for testing
 if os.name == 'java':
@@ -857,6 +902,8 @@ def run_doctest(module, verbosity=None):
 
 def threading_setup():
     import threading
+    if is_jython:
+        return len(threading._active), 0
     return len(threading._active), len(threading._limbo)
 
 def threading_cleanup(num_active, num_limbo):
@@ -869,10 +916,11 @@ def threading_cleanup(num_active, num_limbo):
         count += 1
         time.sleep(0.1)
 
-    count = 0
-    while len(threading._limbo) != num_limbo and count < _MAX_COUNT:
-        count += 1
-        time.sleep(0.1)
+    if not is_jython:
+        count = 0
+        while len(threading._limbo) != num_limbo and count < _MAX_COUNT:
+            count += 1
+            time.sleep(0.1)
 
 def reap_children():
     """Use this function at the end of test_main() whenever sub-processes
