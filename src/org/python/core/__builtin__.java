@@ -15,6 +15,8 @@ import java.util.Map;
 import org.python.antlr.base.mod;
 import org.python.core.util.RelativeFile;
 
+import org.python.modules._functools._functools;
+
 class BuiltinFunctions extends PyBuiltinFunctionSet {
 
     public static final PyObject module = Py.newString("__builtin__");
@@ -167,7 +169,7 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
             case 33:
                 return __builtin__.pow(arg1, arg2);
             case 35:
-                return __builtin__.reduce(arg1, arg2);
+                return _functools.reduce(arg1, arg2);
             case 29:
                 return fancyCall(new PyObject[] {arg1, arg2});
             case 30:
@@ -209,7 +211,7 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
             case 33:
                 return __builtin__.pow(arg1, arg2, arg3);
             case 35:
-                return __builtin__.reduce(arg1, arg2, arg3);
+                return _functools.reduce(arg1, arg2, arg3);
             case 39:
                 __builtin__.setattr(arg1, arg2, arg3);
                 return Py.None;

@@ -1506,6 +1506,7 @@ class _fileobject(object):
             raise StopIteration
         return line
 
+_GLOBAL_DEFAULT_TIMEOUT = object()
 
 # Define the SSL support
 

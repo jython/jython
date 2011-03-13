@@ -553,11 +553,12 @@ def runtest_inner(test, generate, verbose, quiet,
     else:
         cfp = cStringIO.StringIO()
 
+    from test.junit_xml import Tee, write_direct_test
     try:
         save_stdout = sys.stdout
+
+        indirect_test = None
         if junit_xml_dir:
-            from test.junit_xml import Tee, write_direct_test
-            indirect_test = None
             save_stderr = sys.stderr
             sys.stdout = stdout = Tee(sys.stdout)
             sys.stderr = stderr = Tee(sys.stderr)
@@ -1445,6 +1446,15 @@ _expectations = {
         test_winreg
         test_winsound
         test_zipfile64
+
+        test_gzip
+        test_ftplib
+        test_logging
+        test_poplib
+        test_pydoc
+        test_queue
+        test_smtplib
+        test_telnetlib
         """
 }
 _expectations['freebsd5'] = _expectations['freebsd4']
