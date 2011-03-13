@@ -507,33 +507,6 @@ class Test_TestLoader(TestCase):
         else:
             self.fail("TestLoader.loadTestsFromName failed to raise TypeError")
 
-    # "The specifier can refer to modules and packages which have not been
-    # imported; they will be imported as a side-effect"
-    def test_loadTestsFromName__module_not_loaded(self):
-        # We're going to try to load this module as a side-effect, so it
-        # better not be loaded before we try.
-        #
-        # Why pick audioop? Google shows it isn't used very often, so there's
-        # a good chance that it won't be imported when this test is run
-        module_name = 'audioop'
-
-        import sys
-        if module_name in sys.modules:
-            del sys.modules[module_name]
-
-        loader = unittest.TestLoader()
-        try:
-            suite = loader.loadTestsFromName(module_name)
-
-            self.failUnless(isinstance(suite, loader.suiteClass))
-            self.assertEqual(list(suite), [])
-
-            # audioop should now be loaded, thanks to loadTestsFromName()
-            self.failUnless(module_name in sys.modules)
-        finally:
-            if module_name in sys.modules:
-                del sys.modules[module_name]
-
     ################################################################
     ### Tests for TestLoader.loadTestsFromName()
 
@@ -894,33 +867,6 @@ class Test_TestLoader(TestCase):
             pass
         else:
             self.fail("TestLoader.loadTestsFromNames failed to raise TypeError")
-
-    # "The specifier can refer to modules and packages which have not been
-    # imported; they will be imported as a side-effect"
-    def test_loadTestsFromNames__module_not_loaded(self):
-        # We're going to try to load this module as a side-effect, so it
-        # better not be loaded before we try.
-        #
-        # Why pick audioop? Google shows it isn't used very often, so there's
-        # a good chance that it won't be imported when this test is run
-        module_name = 'audioop'
-
-        import sys
-        if module_name in sys.modules:
-            del sys.modules[module_name]
-
-        loader = unittest.TestLoader()
-        try:
-            suite = loader.loadTestsFromNames([module_name])
-
-            self.failUnless(isinstance(suite, loader.suiteClass))
-            self.assertEqual(list(suite), [unittest.TestSuite()])
-
-            # audioop should now be loaded, thanks to loadTestsFromName()
-            self.failUnless(module_name in sys.modules)
-        finally:
-            if module_name in sys.modules:
-                del sys.modules[module_name]
 
     ################################################################
     ### /Tests for TestLoader.loadTestsFromNames()
