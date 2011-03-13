@@ -556,7 +556,8 @@ class Sequence(Sized, Iterable, Container):
 
 Sequence.register(tuple)
 Sequence.register(basestring)
-Sequence.register(buffer)
+if sys.platform[:4] != "java":
+    Sequence.register(buffer)
 Sequence.register(xrange)
 
 
