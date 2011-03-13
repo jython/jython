@@ -35,6 +35,7 @@ cmp.py
 cmpcache.py
 code.py
 codecs.py
+collections.py
 colorsys.py
 commands.py
 compileall.py
