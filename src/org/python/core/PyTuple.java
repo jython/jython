@@ -471,6 +471,21 @@ public class PyTuple extends PySequenceList implements List {
         }
     }
 
+    public int count(PyObject obj) {
+        return tuple_count(obj);
+    }
+
+    @ExposedMethod(doc = BuiltinDocs.tuple_count_doc)
+    final int tuple_count(PyObject obj) {
+        int count = 0;
+        for (PyObject item : array) {
+            if (item.equals(obj)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
     @Override
     public boolean equals(Object other) {
         if (this == other) {
