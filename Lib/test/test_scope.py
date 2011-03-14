@@ -1,6 +1,6 @@
 import unittest
 from test.test_support import (check_syntax_error, _check_py3k_warnings,
-                               check_warnings, run_unittest)
+                               check_warnings, is_jython, run_unittest)
 
 
 class ScopeTests(unittest.TestCase):
@@ -444,6 +444,11 @@ self.assertEqual(g.get(), 13)
         for i in range(100):
             f1()
 
+        if is_jython:
+            from test_weakref import extra_collect
+            # A lot of garbage
+            for i in range(3):
+                extra_collect()
         self.assertEqual(Foo.count, 0)
 
     def testClassAndGlobal(self):
