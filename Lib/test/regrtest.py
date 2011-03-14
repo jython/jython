@@ -15,6 +15,8 @@ Command line options:
 -s: single     -- run only a single test (see below)
 -S: slow       -- print the slowest 10 tests
 -r: random     -- randomize test execution order
+-m: memo       -- save results to file
+-j: junit-xml  -- save results as JUnit XML to files in directory
 -f: fromfile   -- read names of tests to run from a file (see below)
 -l: findleaks  -- if GC is available detect tests that leak memory
 -u: use        -- specify which special resource intensive tests to run
@@ -26,6 +28,7 @@ Command line options:
 -L: runleaks   -- run the leaks(1) command just before exit
 -R: huntrleaks -- search for reference leaks (needs debug build, v. slow)
 -M: memlimit   -- run very large memory-consuming tests
+-e: expected  -- run only tests that are expected to run and pass
 
 If non-option arguments are present, they are names for tests to run,
 unless -x is given, in which case they are names for tests not to run.
@@ -169,6 +172,7 @@ if sys.platform == 'darwin':
         newsoft = min(hard, max(soft, 1024*2048))
         resource.setrlimit(resource.RLIMIT_STACK, (newsoft, hard))
 
+import test as _test
 from test import test_support
 
 RESOURCE_NAMES = ('audio', 'curses', 'largefile', 'network', 'bsddb',
@@ -184,7 +188,8 @@ def usage(code, msg=''):
 def main(tests=None, testdir=None, verbose=0, quiet=False,
          exclude=False, single=False, randomize=False, fromfile=None,
          findleaks=False, use_resources=None, trace=False, coverdir='coverage',
-         runleaks=False, huntrleaks=False, verbose2=False, print_slow=False):
+         runleaks=False, huntrleaks=False, verbose2=False, print_slow=False,
+         expected=False, memo=None, junit_xml=None):
     """Execute a test suite.
 
     This also parses command-line options and modifies its behavior
@@ -209,17 +214,19 @@ def main(tests=None, testdir=None, verbose=0, quiet=False,
 
     test_support.record_original_stdout(sys.stdout)
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hvqxsSrf:lu:t:TD:NLR:wM:',
+        opts, args = getopt.getopt(sys.argv[1:], 'hvqxsSrf:lu:t:TD:NLR:wM:em:j:',
                                    ['help', 'verbose', 'quiet', 'exclude',
                                     'single', 'slow', 'random', 'fromfile',
                                     'findleaks', 'use=', 'threshold=', 'trace',
                                     'coverdir=', 'nocoverdir', 'runleaks',
                                     'huntrleaks=', 'verbose2', 'memlimit=',
+                                    'expected', 'memo'
                                     ])
     except getopt.error, msg:
         usage(2, msg)
 
     # Defaults
+    allran = True
     if use_resources is None:
         use_resources = []
     for o, a in opts:
@@ -234,6 +241,10 @@ def main(tests=None, testdir=None, verbose=0, quiet=False,
             verbose = 0
         elif o in ('-x', '--exclude'):
             exclude = True
+            allran = False
+        elif o in ('-e', '--expected'):
+            expected = True
+            allran = False
         elif o in ('-s', '--single'):
             single = True
         elif o in ('-S', '--slow'):
@@ -246,6 +257,10 @@ def main(tests=None, testdir=None, verbose=0, quiet=False,
             findleaks = True
         elif o in ('-L', '--runleaks'):
             runleaks = True
+        elif o in ('-m', '--memo'):
+            memo = a
+        elif o in ('-j', '--junit-xml'):
+            junit_xml = a
         elif o in ('-t', '--threshold'):
             import gc
             gc.set_threshold(int(a))
@@ -303,6 +318,8 @@ def main(tests=None, testdir=None, verbose=0, quiet=False,
 
     if findleaks:
         try:
+            if test_support.is_jython:
+                raise ImportError()
             import gc
         except ImportError:
             print 'No GC available, disabling findleaks.'
@@ -337,6 +354,7 @@ def main(tests=None, testdir=None, verbose=0, quiet=False,
     # Strip .py extensions.
     if args:
         args = map(removepy, args)
+        allran = False
     if tests:
         tests = map(removepy, tests)
 
@@ -360,8 +378,13 @@ def main(tests=None, testdir=None, verbose=0, quiet=False,
     test_times = []
     test_support.verbose = verbose      # Tell tests to be moderately quiet
     test_support.use_resources = use_resources
+    test_support.junit_xml_dir = junit_xml
     save_modules = sys.modules.keys()
+    skips = _ExpectedSkips()
+    failures = _ExpectedFailures()
     for test in tests:
+        if expected and (test in skips or test in failures):
+            continue
         if not quiet:
             print test
             sys.stdout.flush()
@@ -374,7 +397,7 @@ def main(tests=None, testdir=None, verbose=0, quiet=False,
         else:
             try:
                 ok = runtest(test, verbose, quiet, test_times,
-                             testdir, huntrleaks)
+                             testdir, huntrleaks, junit_xml)
             except KeyboardInterrupt:
                 # print a newline separate from the ^C
                 print
@@ -402,6 +425,9 @@ def main(tests=None, testdir=None, verbose=0, quiet=False,
         for module in sys.modules.keys():
             if module not in save_modules and module.startswith("test."):
                 test_support.unload(module)
+                module = module[5:]
+                if hasattr(_test, module):
+                    delattr(_test, module)
 
     if good and not quiet:
         if not bad and not skipped and len(good) > 1:
@@ -412,26 +438,13 @@ def main(tests=None, testdir=None, verbose=0, quiet=False,
         print "10 slowest tests:"
         for time, test in test_times[:10]:
             print "%s: %.1fs" % (test, time)
-    if bad:
-        print count(len(bad), "test"), "failed:"
-        printlist(bad)
+    surprises = 0
     if skipped and not quiet:
         print count(len(skipped), "test"), "skipped:"
-        printlist(skipped)
-
-        e = _ExpectedSkips()
-        plat = sys.platform
-        if e.isvalid():
-            surprise = set(skipped) - e.getexpected() - set(resource_denieds)
-            if surprise:
-                print count(len(surprise), "skip"), \
-                      "unexpected on", plat + ":"
-                printlist(surprise)
-            else:
-                print "Those skips are all expected on", plat + "."
-        else:
-            print "Ask someone to teach regrtest.py about which tests are"
-            print "expected to get skipped on", plat + "."
+        surprises += countsurprises(skips, skipped, 'skip', 'ran', allran, resource_denieds)
+    if bad:
+         print count(len(bad), "test"), "failed:"
+         surprises += countsurprises(failures, bad, 'fail', 'passed', allran, resource_denieds)
 
     if verbose2 and bad:
         print "Re-running failed tests in verbose mode"
@@ -470,7 +483,10 @@ def main(tests=None, testdir=None, verbose=0, quiet=False,
     if runleaks:
         os.system("leaks %d" % os.getpid())
 
-    sys.exit(len(bad) > 0)
+    if memo:
+        savememo(memo,good,bad,skipped)
+
+    sys.exit(surprises > 0)
 
 
 STDTESTS = [
@@ -512,7 +528,7 @@ def findtests(testdir=None, stdtests=STDTESTS, nottests=NOTTESTS):
     return stdtests + tests
 
 def runtest(test, verbose, quiet, test_times,
-            testdir=None, huntrleaks=False):
+            testdir=None, huntrleaks=False, junit_xml=None):
     """Run a single test.
 
     test -- the name of the test
@@ -531,12 +547,12 @@ def runtest(test, verbose, quiet, test_times,
 
     try:
         return runtest_inner(test, verbose, quiet, test_times,
-                             testdir, huntrleaks)
+                             testdir, huntrleaks, junit_xml)
     finally:
         cleanup_test_droppings(test, verbose)
 
 def runtest_inner(test, verbose, quiet, test_times,
-                  testdir=None, huntrleaks=False):
+                  testdir=None, huntrleaks=False, junit_xml_dir=None):
     test_support.unload(test)
     if not testdir:
         testdir = findtestdir()
@@ -545,8 +561,15 @@ def runtest_inner(test, verbose, quiet, test_times,
     else:
         capture_stdout = cStringIO.StringIO()
 
+    from test.junit_xml import Tee, write_direct_test
     try:
         save_stdout = sys.stdout
+
+        indirect_test = None
+        if junit_xml_dir:
+            save_stderr = sys.stderr
+            sys.stdout = stdout = Tee(sys.stdout)
+            sys.stderr = stderr = Tee(sys.stderr)
         try:
             if capture_stdout:
                 sys.stdout = capture_stdout
@@ -562,29 +585,54 @@ def runtest_inner(test, verbose, quiet, test_times,
             # being imported.  For tests based on unittest or doctest,
             # explicitly invoke their test_main() function (if it exists).
             indirect_test = getattr(the_module, "test_main", None)
+            test_time = None
             if indirect_test is not None:
                 indirect_test()
+            elif junit_xml_dir:
+                test_time = time.time() - start_time
+                write_direct_test(junit_xml_dir, abstest, test_time,
+                                  stdout=stdout.getvalue(),
+                                  stderr=stderr.getvalue())
             if huntrleaks:
                 dash_R(the_module, test, indirect_test, huntrleaks)
-            test_time = time.time() - start_time
+            if test_time is None:
+                test_time = time.time() - start_time
             test_times.append((test_time, test))
         finally:
             sys.stdout = save_stdout
+            if junit_xml_dir:
+                sys.stderr = save_stderr
+                test_time = time.time() - start_time
     except test_support.ResourceDenied, msg:
         if not quiet:
             print test, "skipped --", msg
             sys.stdout.flush()
+        if junit_xml_dir:
+            write_direct_test(junit_xml_dir, abstest, test_time,
+                              'skipped', sys.exc_info(),
+                              stdout=stdout.getvalue(),
+                              stderr=stderr.getvalue())
         return -2
     except (ImportError, test_support.TestSkipped), msg:
         if not quiet:
             print test, "skipped --", msg
             sys.stdout.flush()
+        if junit_xml_dir:
+            write_direct_test(junit_xml_dir, abstest, test_time,
+                              'skipped', sys.exc_info(),
+                              stdout=stdout.getvalue(),
+                              stderr=stderr.getvalue())
         return -1
     except KeyboardInterrupt:
         raise
     except test_support.TestFailed, msg:
         print "test", test, "failed --", msg
         sys.stdout.flush()
+        if junit_xml_dir and indirect_test is None:
+            write_direct_test(junit_xml_dir, abstest, test_time,
+                              'failure', sys.exc_info(),
+                              stdout=stdout.getvalue(),
+                              stderr=stderr.getvalue())
         return 0
     except:
         type, value = sys.exc_info()[:2]
@@ -593,6 +641,11 @@ def runtest_inner(test, verbose, quiet, test_times,
         if verbose:
             traceback.print_exc(file=sys.stdout)
             sys.stdout.flush()
+        if junit_xml_dir and indirect_test is None:
+            write_direct_test(junit_xml_dir, abstest, test_time,
+                              'error', sys.exc_info(),
+                              stdout=stdout.getvalue(),
+                              stderr=stderr.getvalue())
         return 0
     else:
         # Except in verbose mode, tests should not print anything
@@ -766,6 +819,23 @@ def printlist(x, width=70, indent=4):
     # Print the sorted list: 'x' may be a '--random' list or a set()
     print fill(' '.join(str(elt) for elt in sorted(x)), width,
                initial_indent=blanks, subsequent_indent=blanks)
+
+def countsurprises(expected, actual, action, antiaction, allran, resource_denieds):
+    """returns the number of items in actual that aren't in expected."""
+    printlist(actual)
+    if not expected.isvalid():
+        print "Ask someone to teach regrtest.py about which tests are"
+        print "expected to %s on %s." % (action, sys.platform)
+        return 1#Surprising not to know what to expect....
+    good_surprise = expected.getexpected() - set(actual)
+    if allran and good_surprise:
+        print count(len(good_surprise), 'test'), antiaction, 'unexpectedly:'
+        printlist(good_surprise)
+    bad_surprise = set(actual) - expected.getexpected() - set(resource_denieds)
+    if bad_surprise:
+        print count(len(bad_surprise), action), "unexpected:"
+        printlist(bad_surprise)
+    return len(bad_surprise)
 
 # Map sys.platform to a string containing the basenames of tests
 # expected to be skipped on that platform.
@@ -1107,11 +1177,135 @@ _expectations = {
         test_tcl
         test_multiprocessing
         """,
+    'java':
+        """
+        test__locale
+        test__rawffi
+        test_aepack
+        test_al
+        test_applesingle
+        test_audioop
+        test_bsddb
+        test_bsddb185
+        test_bsddb3
+        test_bz2
+        test_cProfile
+        test_capi
+        test_cd
+        test_cl
+        test_commands
+        test_crypt
+        test_ctypes
+        test_curses
+        test_dbm
+        test_dl
+        test_email_codecs
+        test_fcntl
+        test_fork1
+        test_gdbm
+        test_getargs2
+        test_gl
+        test_hotshot
+        test_imageop
+        test_imgfile
+        test_ioctl
+        test_largefile
+        test_linuxaudiodev
+        test_locale
+        test_longexp
+        test_macfs
+        test_macostools
+        test_mmap
+        test_nis
+        test_normalization
+        test_openpty
+        test_ossaudiodev
+        test_parser
+        test_plistlib
+        test_poll
+        test_pty
+        test_resource
+        test_rgbimg
+        test_scriptpackages
+        test_socket_ssl
+        test_socketserver
+        test_sqlite
+        test_startfile
+        test_strop
+        test_structmembers
+        test_sunaudiodev
+        test_sundry
+        test_symtable
+        test_tcl
+        test_timeout
+        test_unicode_file
+        test_wait3
+        test_wait4
+        test_wave
+        test_winreg
+        test_winsound
+        test_zipfile64
+
+        test_gzip
+        test_ftplib
+        test_logging
+        test_poplib
+        test_pydoc
+        test_queue
+         test_smtplib
+        test_telnetlib
+        """
 }
 _expectations['freebsd5'] = _expectations['freebsd4']
 _expectations['freebsd6'] = _expectations['freebsd4']
 _expectations['freebsd7'] = _expectations['freebsd4']
 _expectations['freebsd8'] = _expectations['freebsd4']
+
+_failures = {
+    'java':
+        """
+        test_codecencodings_cn
+        test_codecencodings_hk
+        test_codecencodings_jp
+        test_codecencodings_kr
+        test_codecencodings_tw
+        test_codecmaps_cn
+        test_codecmaps_hk
+        test_codecmaps_jp
+        test_codecmaps_kr
+        test_codecmaps_tw
+        test_compiler
+        test_dis
+        test_dummy_threading
+        test_eof
+        test_frozen
+        test_gc
+        test_import
+        test_iterlen
+        test_multibytecodec
+        test_multibytecodec_support
+        test_peepholer
+        test_pyclbr
+        test_pyexpat
+        test_stringprep
+        test_threadsignals
+        test_transformer
+        test_ucn
+        test_unicodedata
+        test_zipimport
+        """,
+}
+
+_platform = sys.platform
+if _platform[:4] == 'java':
+    _platform = 'java'
+    if os._name == 'nt':
+        # XXX: Omitted for now because it fails so miserably and ruins
+        # other tests
+        _failures['java'] += '\ntest_mailbox'
+        if ' ' in sys.executable:
+            # http://bugs.python.org/issue1559298
+            _failures['java'] += '\ntest_popen'
 
 class _ExpectedSkips:
     def __init__(self):
@@ -1119,8 +1313,8 @@ class _ExpectedSkips:
         from test import test_timeout
 
         self.valid = False
-        if sys.platform in _expectations:
-            s = _expectations[sys.platform]
+        if _platform in _expectations:
+            s = _expectations[_platform]
             self.expected = set(s.split())
 
             # expected to be skipped on every platform, even Linux
@@ -1175,6 +1369,14 @@ class _ExpectedSkips:
             if not sys.py3kwarning:
                 self.expected.add('test_py3kwarn')
 
+            if test_support.is_jython:
+                if os._name != 'posix':
+                    self.expected.update([
+                            'test_grp', 'test_mhlib', 'test_posix', 'test_pwd',
+                            'test_signal'])
+                if os._name != 'nt':
+                    self.expected.add('test_nt_paths_jy')
+
             self.valid = True
 
     def isvalid(self):
@@ -1189,6 +1391,28 @@ class _ExpectedSkips:
 
         assert self.isvalid()
         return self.expected
+
+    def __contains__(self, key):
+        return key in self.expected
+
+class _ExpectedFailures(_ExpectedSkips):
+    def __init__(self):
+        self.valid = False
+        if _platform in _failures:
+            s = _failures[_platform]
+            self.expected = set(s.split())
+            self.valid = True
+
+def savememo(memo,good,bad,skipped):
+    f = open(memo,'w')
+    try:
+        for n,l in [('good',good),('bad',bad),('skipped',skipped)]:
+            print >>f,"%s = [" % n
+            for x in l:
+                print >>f,"    %r," % x
+            print >>f," ]"
+    finally:
+        f.close()
 
 if __name__ == '__main__':
     # Remove regrtest.py's own directory from the module search path.  This
