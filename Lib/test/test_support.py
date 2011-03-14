@@ -826,7 +826,28 @@ class BasicTestRunner:
 
 def _run_suite(suite):
     """Run tests from a unittest.TestSuite-derived class."""
-    if verbose:
+    if not junit_xml_dir:
+        # Splitting tests apart slightly changes the handling of the
+        # TestFailed message
+        return _run_suite(suite, testclass)
+
+    failed = False
+    for test in suite:
+        suite = unittest.TestSuite()
+        suite.addTest(test)
+        try:
+            _run_suite(suite, testclass)
+        except TestFailed, e:
+            if not failed:
+                failed = e
+    if failed:
+        raise failed
+
+def _run_suite(suite, testclass=None):
+    if junit_xml_dir:
+        from junit_xml import JUnitXMLTestRunner
+        runner = JUnitXMLTestRunner(junit_xml_dir)
+    elif verbose:
         runner = unittest.TextTestRunner(sys.stdout, verbosity=2)
     else:
         runner = BasicTestRunner()
