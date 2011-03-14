@@ -471,19 +471,49 @@ public class PyTuple extends PySequenceList implements List {
         }
     }
 
-    public int count(PyObject obj) {
-        return tuple_count(obj);
+    public int count(PyObject value) {
+        return tuple_count(value);
     }
 
     @ExposedMethod(doc = BuiltinDocs.tuple_count_doc)
-    final int tuple_count(PyObject obj) {
+    final int tuple_count(PyObject value) {
         int count = 0;
         for (PyObject item : array) {
-            if (item.equals(obj)) {
+            if (item.equals(value)) {
                 count++;
             }
         }
         return count;
+    }
+
+    public int index(PyObject value) {
+        return index(value, 0);
+    }
+
+    public int index(PyObject value, int start) {
+        return index(value, start, size());
+    }
+
+    public int index(PyObject value, int start, int stop) {
+        return tuple_index(value, start, stop);
+    }
+
+    @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.tuple_index_doc)
+    final int tuple_index(PyObject value, PyObject start, PyObject stop) {
+        int startInt = start == null ? 0 : PySlice.calculateSliceIndex(start);
+        int stopInt = stop == null ? size() : PySlice.calculateSliceIndex(stop);
+        return tuple_index(value, startInt, stopInt);
+    }
+
+    final int tuple_index(PyObject value, int start, int stop) {
+        int validStart = boundToSequence(start);
+        int validStop = boundToSequence(stop);
+        for (int i = validStart; i < validStop; i++) {
+            if (array[i].equals(value)) {
+                return i;
+            }
+        }
+        throw Py.ValueError("tuple.index(x): x not in list");
     }
 
     @Override
