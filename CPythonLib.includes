@@ -18,6 +18,7 @@ _strptime.py
 _threading_local.py
 aifc.py
 anydbm.py
+ast.py
 atexit.py
 asynchat.py
 BaseHTTPServer.py
@@ -59,8 +60,10 @@ exceptions.py
 fnmatch.py
 formatter.py
 fpformat.py
+fractions.py
 ftplib.py
 functools.py
+genericpath.py
 getopt.py
 glob.py
 gopherlib.py
@@ -91,6 +94,7 @@ modulefinder.py
 multifile.py
 mutex.py
 nntplib.py
+numbers.py
 nturl2path.py
 opcode.py
 optparse.py
@@ -98,12 +102,14 @@ pdb.py
 pickle.py
 pickletools.py
 pipes.py
+plistlib.py
 poplib.py
 posixfile.py
 pprint.py
 profile.py
 pstats.py
 pyclbr.py
+pydoc_topics.py
 Queue.py
 quopri.py
 random.py
