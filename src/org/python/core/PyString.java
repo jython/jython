@@ -1587,16 +1587,36 @@ public class PyString extends PyBaseString
                 while (b < e && Character.isWhitespace(getString().charAt(b))) b++;
             }
 
-            if (base == 0 || base == 16) {
+            if (base == 16) {
                 if (getString().charAt(b) == '0') {
                     if (b < e-1 &&
                            Character.toUpperCase(getString().charAt(b+1)) == 'X') {
+                        b += 2;
+                    }
+                }
+            } else if (base == 0) {
+                if (getString().charAt(b) == '0') {
+                    if (b < e-1 && Character.toUpperCase(getString().charAt(b+1)) == 'X') {
                         base = 16;
                         b += 2;
+                    } else if (b < e-1 && Character.toUpperCase(getString().charAt(b+1)) == 'O') {
+                        base = 8;
+                        b += 2;
+                    } else if (b < e-1 && Character.toUpperCase(getString().charAt(b+1)) == 'B') {
+                        base = 2;
+                        b += 2;
                     } else {
-                        if (base == 0)
-                            base = 8;
+                        base = 8;
                     }
+                }
+            } else if (base == 8) {
+                if (b < e-1 && Character.toUpperCase(getString().charAt(b+1)) == 'O') {
+                    b += 2;
+                }
+            } else if (base == 2) {
+                if (b < e-1 &&
+                       Character.toUpperCase(getString().charAt(b+1)) == 'B') {
+                    b += 2;
                 }
             }
         }
