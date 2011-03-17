@@ -51,7 +51,7 @@ public class PyInstance extends PyObject {
         return new PyInstance(klass, dict);
     }
 
-    public PyObject fastGetClass() {
+    public PyClass fastGetClass() {
         return instclass;
     }
 
