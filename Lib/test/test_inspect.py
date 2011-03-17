@@ -4,18 +4,23 @@ import unittest
 import inspect
 import datetime
 
-from test.test_support import TESTFN, run_unittest, is_jython
+from test.test_support import is_jython, run_unittest, _check_py3k_warnings
 
-from test import inspect_fodder as mod
-from test import inspect_fodder2 as mod2
-from test import test_support
+with _check_py3k_warnings(
+        ("tuple parameter unpacking has been removed", SyntaxWarning),
+        quiet=True):
+    from test import inspect_fodder as mod
+    from test import inspect_fodder2 as mod2
 
 # Functions tested in this suite:
 # ismodule, isclass, ismethod, isfunction, istraceback, isframe, iscode,
-# isbuiltin, isroutine, getmembers, getdoc, getfile, getmodule,
-# getsourcefile, getcomments, getsource, getclasstree, getargspec,
-# getargvalues, formatargspec, formatargvalues, currentframe, stack, trace
-# isdatadescriptor
+# isbuiltin, isroutine, isgenerator, isgeneratorfunction, getmembers,
+# getdoc, getfile, getmodule, getsourcefile, getcomments, getsource,
+# getclasstree, getargspec, getargvalues, formatargspec, formatargvalues,
+# currentframe, stack, trace, isdatadescriptor
+
+# NOTE: There are some additional tests relating to interaction with
+#       zipimport in the test_zipimport_support test module.
 
 modfile = mod.__file__
 if modfile.endswith(('c', 'o')):
@@ -26,7 +31,7 @@ elif modfile.endswith('$py.class'):
 import __builtin__
 
 try:
-    1/0
+    1 // 0
 except:
     tb = sys.exc_traceback
 
@@ -44,27 +49,37 @@ def na_for_jython(fn):
 class IsTestBase(unittest.TestCase):
     predicates = set([inspect.isbuiltin, inspect.isclass, inspect.iscode,
                       inspect.isframe, inspect.isfunction, inspect.ismethod,
-                      inspect.ismodule, inspect.istraceback])
+                      inspect.ismodule, inspect.istraceback,
+                      inspect.isgenerator, inspect.isgeneratorfunction])
 
     def istest(self, predicate, exp):
         obj = eval(exp)
         self.failUnless(predicate(obj), '%s(%s)' % (predicate.__name__, exp))
 
         for other in self.predicates - set([predicate]):
+            if predicate == inspect.isgeneratorfunction and\
+               other == inspect.isfunction:
+                continue
             self.failIf(other(obj), 'not %s(%s)' % (other.__name__, exp))
 
+def generator_function_example(self):
+    for i in xrange(2):
+        yield i
+
 class TestPredicates(IsTestBase):
-    def test_thirteen(self):
+    def test_sixteen(self):
         count = len(filter(lambda x:x.startswith('is'), dir(inspect)))
-        # Doc/lib/libinspect.tex claims there are 13 such functions
-        expected = 13
+        # This test is here for remember you to update Doc/library/inspect.rst
+        # which claims there are 16 such functions
+        expected = 16
         err_msg = "There are %d (not %d) is* functions" % (count, expected)
         self.assertEqual(count, expected, err_msg)
 
+
     def test_excluding_predicates(self):
-        #XXX: Jython's PySystemState needs more work before this
-        #will be doable.
-        if not test_support.is_jython:
+        # XXX: Jython's PySystemState needs more work before this will
+        # be doable.
+        if not is_jython:
             self.istest(inspect.isbuiltin, 'sys.exit')
         self.istest(inspect.isbuiltin, '[].append')
         self.istest(inspect.isclass, 'mod.StupidGit')
@@ -77,11 +92,12 @@ class TestPredicates(IsTestBase):
         self.istest(inspect.istraceback, 'tb')
         self.istest(inspect.isdatadescriptor, '__builtin__.file.closed')
         self.istest(inspect.isdatadescriptor, '__builtin__.file.softspace')
+        self.istest(inspect.isgenerator, '(x for x in xrange(2))')
+        self.istest(inspect.isgeneratorfunction, 'generator_function_example')
         if hasattr(types, 'GetSetDescriptorType'):
             self.istest(inspect.isgetsetdescriptor,
                         'type(tb.tb_frame).f_locals')
-        #XXX: This detail of PyFrames is not yet supported in Jython
-        elif not test_support.is_jython:
+        else:
             self.failIf(inspect.isgetsetdescriptor(type(tb.tb_frame).f_locals))
         if hasattr(types, 'MemberDescriptorType'):
             self.istest(inspect.ismemberdescriptor, 'datetime.timedelta.days')
@@ -120,7 +136,7 @@ class TestInterpreterStack(IsTestBase):
         self.assertEqual(git.tr[1][1:], (modfile, 9, 'spam',
                                          ['    eggs(b + d, c + f)\n'], 0))
         self.assertEqual(git.tr[2][1:], (modfile, 18, 'eggs',
-                                         ['    q = y / 0\n'], 0))
+                                         ['    q = y // 0\n'], 0))
 
     def test_frame(self):
         args, varargs, varkw, locals = inspect.getargvalues(mod.fr)
@@ -194,6 +210,10 @@ class TestRetrievingSourceCode(GetSourceBase):
         self.assertEqual(inspect.getdoc(git.abuse),
                          'Another\n\ndocstring\n\ncontaining\n\ntabs')
 
+    def test_cleandoc(self):
+        self.assertEqual(inspect.cleandoc('An\n    indented\n    docstring.'),
+                         'An\nindented\ndocstring.')
+
     def test_getcomments(self):
         self.assertEqual(inspect.getcomments(mod), '# line 1\n')
         self.assertEqual(inspect.getcomments(mod.StupidGit), '# line 20\n')
@@ -224,9 +244,9 @@ class TestRetrievingSourceCode(GetSourceBase):
         self.assertEqual(inspect.getfile(mod.StupidGit), mod.__file__)
 
     def test_getmodule_recursion(self):
-        from new import module
+        from types import ModuleType
         name = '__inspect_dummy'
-        m = sys.modules[name] = module(name)
+        m = sys.modules[name] = ModuleType(name)
         m.__file__ = "<string>" # hopefully not a real filename...
         m.__loader__ = "dummy"  # pretend the filename is understood by a loader
         exec "def x(): pass" in m.__dict__
@@ -357,7 +377,6 @@ class TestClassesAndFunctions(unittest.TestCase):
                                  'g', 'h', (3, (4, (5,))),
                                  '(a, b, c, d=3, (e, (f,))=(4, (5,)), *g, **h)')
 
-    @na_for_jython
     def test_getargspec_method(self):
         class A(object):
             def m(self):
@@ -366,11 +385,14 @@ class TestClassesAndFunctions(unittest.TestCase):
 
     @na_for_jython
     def test_getargspec_sublistofone(self):
-        def sublistOfOne((foo,)): return 1
-        self.assertArgSpecEquals(sublistOfOne, [['foo']])
+        with _check_py3k_warnings(
+                ("tuple parameter unpacking has been removed", SyntaxWarning),
+                ("parenthesized argument names are invalid", SyntaxWarning)):
+            exec 'def sublistOfOne((foo,)): return 1'
+            self.assertArgSpecEquals(sublistOfOne, [['foo']])
 
-        def fakeSublistOfOne((foo)): return 1
-        self.assertArgSpecEquals(fakeSublistOfOne, ['foo'])
+            exec 'def fakeSublistOfOne((foo)): return 1'
+            self.assertArgSpecEquals(fakeSublistOfOne, ['foo'])
 
     def test_classify_oldstyle(self):
         class A:
