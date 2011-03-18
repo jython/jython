@@ -86,4 +86,14 @@ public class ThreadState {
         }
         return compareStateDict;
     }
+
+    public void enterRecursiveCall(String where) {
+        if (recursion_depth++ > systemState.getrecursionlimit()) {
+            throw Py.RuntimeError("maximum recursion depth exceeded" + where);
+        }
+    }
+
+    public void leaveRecursiveCall() {
+        --recursion_depth;
+    }
 }
