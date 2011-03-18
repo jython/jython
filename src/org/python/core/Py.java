@@ -86,6 +86,8 @@ public final class Py {
     public static long TPFLAGS_HEAPTYPE = 1L << 9;
     /** Set if the type allows subclassing */
     public static long TPFLAGS_BASETYPE = 1L << 10;
+    /** Type is abstract and cannot be instantiated */
+    public static long TPFLAGS_IS_ABSTRACT = 1L << 20;
 
     /** Builtin types that are used to setup PyObject. */
     static final Set<Class<?>> BOOTSTRAP_TYPES = Generic.set();
@@ -1866,101 +1868,180 @@ public final class Py {
                 new File(dir, name.substring(0, index)));
     }
 
-    private static boolean abstract_issubclass(PyObject derived, PyObject cls) {
-        if (derived == cls) {
+    public static boolean isInstance(PyObject inst, PyObject cls) {
+        // Quick test for an exact match
+        if (inst.getType() == cls) {
             return true;
         }
-        PyObject bases = derived.__findattr__("__bases__");
-        if (bases == null) {
+
+        if (cls instanceof PyTuple) {
+            ThreadState threadState = Py.getThreadState();
+            threadState.enterRecursiveCall(" in __subclasscheck__");
+            try {
+                for (PyObject item : cls.asIterable()) {
+                    if (isInstance(inst, item)) {
+                        return true;
+                    }
+                }
+            } finally {
+                threadState.leaveRecursiveCall();
+            }
             return false;
         }
-        for (int i = 0; i < bases.__len__(); i++) {
-            if (abstract_issubclass(bases.__getitem__(i), cls)) {
-                return true;
-            }
+
+        PyObject checkerResult;
+        if ((checkerResult = dispatchToChecker(inst, cls, "__instancecheck__")) != null) {
+            return checkerResult.__nonzero__();
         }
-        return false;
+
+        return recursiveIsInstance(inst, cls);
     }
 
-    public static boolean isInstance(PyObject inst, PyObject cls) {
-        return recursiveIsInstance(inst, cls, 0);
-    }
-
-    private static boolean recursiveIsInstance(PyObject inst, PyObject cls, int recursionDepth) {
+    static boolean recursiveIsInstance(PyObject inst, PyObject cls) {
         if (cls instanceof PyClass && inst instanceof PyInstance) {
-            PyClass inClass = (PyClass)inst.fastGetClass();
-            return inClass.isSubClass((PyClass)cls);
-        } else if (cls instanceof PyType) {
+            PyClass inClass = ((PyInstance) inst).fastGetClass();
+            return inClass.isSubClass((PyClass) cls);
+        }
+        if (cls instanceof PyType) {
             PyType instType = inst.getType();
-            PyType type = (PyType)cls;
+            PyType type = (PyType) cls;
 
             // equiv. to PyObject_TypeCheck
             if (instType == type || instType.isSubType(type)) {
                 return true;
             }
 
-            PyObject c = inst.__findattr__("__class__");
-            if (c != null && c != instType && c instanceof PyType) {
-                return ((PyType)c).isSubType(type);
+            PyObject instCls = inst.__findattr__("__class__");
+            if (instCls != null && instCls != instType && instCls instanceof PyType) {
+                return ((PyType) instCls).isSubType(type);
             }
             return false;
-        } else if (cls instanceof PyTuple) {
-            if (recursionDepth > Py.getSystemState().getrecursionlimit()) {
-                throw Py.RuntimeError("nest level of tuple too deep");
-            }
-
-            for (PyObject tupleItem : ((PyTuple)cls).getArray()) {
-                if (recursiveIsInstance(inst, tupleItem, recursionDepth + 1)) {
-                    return true;
-                }
-            }
-            return false;
-        } else {
-            if (cls.__findattr__("__bases__") == null) {
-                throw Py.TypeError("isinstance() arg 2 must be a class, type, or tuple of "
-                                   + "classes and types");
-            }
-
-            PyObject icls = inst.__findattr__("__class__");
-            if (icls == null) {
-                return false;
-            }
-            return abstract_issubclass(icls, cls);
         }
+        
+        checkClass(cls, "isinstance() arg 2 must be a class, type, or tuple of classes and types");
+        PyObject instCls = inst.__findattr__("__class__");
+        if (instCls == null) {
+            return false;
+        }
+        return abstractIsSubClass(instCls, cls);
     }
 
-    public static boolean isSubClass(PyObject derived,PyObject cls) {
-        return isSubClass(derived, cls, 0);
+    public static boolean isSubClass(PyObject derived, PyObject cls) {
+        if (cls instanceof PyTuple) {
+            ThreadState threadState = Py.getThreadState();
+            threadState.enterRecursiveCall(" in __subclasscheck__");
+            try {
+                for (PyObject item : cls.asIterable()) {
+                    if (isSubClass(derived, item)) {
+                        return true;
+                    }
+                }
+            } finally {
+                threadState.leaveRecursiveCall();
+            }
+            return false;
+        }
+
+        PyObject checkerResult;
+        if ((checkerResult = dispatchToChecker(derived, cls, "__subclasscheck__")) != null) {
+            return checkerResult.__nonzero__();
+        }
+
+        return recursiveIsSubClass(derived, cls);
     }
 
-    private static boolean isSubClass(PyObject derived, PyObject cls, int recursionDepth) {
+    static boolean recursiveIsSubClass(PyObject derived, PyObject cls) {
         if (derived instanceof PyType && cls instanceof PyType) {
             if (derived == cls) {
                 return true;
             }
             return ((PyType) derived).isSubType((PyType) cls);
-        } else if (cls instanceof PyClass && derived instanceof PyClass) {
+        }
+        if (derived instanceof PyClass && cls instanceof PyClass) {
             return ((PyClass) derived).isSubClass((PyClass) cls);
-        } else if (cls.getClass() == PyTuple.class) {
-            if (recursionDepth > Py.getSystemState().getrecursionlimit()) {
-                throw Py.RuntimeError("nest level of tuple too deep");
+        }
+
+        checkClass(derived, "issubclass() arg 1 must be a class");
+        checkClass(cls, "issubclass() arg 2 must be a class or tuple of classes");
+        return abstractIsSubClass(derived, cls);
+    }
+
+    private static boolean abstractIsSubClass(PyObject derived, PyObject cls) {
+        while (true) {
+            if (derived == cls) {
+                return true;
             }
-            for (int i = 0; i < cls.__len__(); i++) {
-                if (isSubClass(derived, cls.__getitem__(i), recursionDepth + 1)) {
+
+            PyTuple bases = abstractGetBases(derived);
+            if (bases == null) {
+                return false;
+            }
+
+            int basesSize = bases.size();
+            if (basesSize == 0) {
+                return false;
+            }
+            if (basesSize == 1) {
+                // Avoid recursivity in the single inheritance case
+                derived = bases.pyget(0);
+                continue;
+            }
+
+            for (PyObject base : bases.asIterable()) {
+                if (abstractIsSubClass(base, cls)) {
                     return true;
                 }
             }
             return false;
-        } else {
-            if (derived.__findattr__("__bases__") == null) {
-                throw Py.TypeError(
-                        "issubclass() arg 1 must be a class");
-            }
-            if (cls.__findattr__("__bases__") == null) {
-                throw Py.TypeError(
-                        "issubclass() arg 2 must be a class, type," + " or tuple of classes and types");
-            }
-            return abstract_issubclass(derived, cls);
+        }
+    }
+
+    /**
+     * Attempt to dispatch an isinstance/issubclass call to cls's associated
+     * __instance/subclasscheck__.
+     *
+     * @param checkerArg the argument to call the checker with
+     * @param cls a Python class
+     * @param checkerName the checker name
+     * @return null if cls provides no checker, otherwise the result of calling the
+     * checker
+     */
+    private static PyObject dispatchToChecker(PyObject checkerArg, PyObject cls,
+                                              String checkerName) {
+        PyObject checker = cls.__findattr__(checkerName);
+        if (checker == null) {
+            return null;
+        }
+
+        PyObject result;
+        ThreadState threadState = Py.getThreadState();
+        threadState.enterRecursiveCall(" in " + checkerName);
+        try {
+            result = checker.__call__(checkerArg);
+        } finally {
+            threadState.leaveRecursiveCall();
+        }
+        return result;
+    }
+
+    /**
+     * Return the __bases__ of cls. Returns null if no valid __bases__ are found.
+     */
+    private static PyTuple abstractGetBases(PyObject cls) {
+        PyObject bases = cls.__findattr__("__bases__");
+        if (bases instanceof PyTuple) {
+            return (PyTuple) bases;
+        }
+        return null;
+    }
+
+    /**
+     * Throw a TypeError with the specified message if cls does not appear to be a Python
+     * class.
+     */
+    private static void checkClass(PyObject cls, String message) {
+        if (abstractGetBases(cls) == null) {
+            throw Py.TypeError(message);
         }
     }
 

@@ -120,7 +120,7 @@ public class PyType extends PyObject implements Serializable {
     }
 
     @ExposedNew
-    public static PyObject type___new__(PyNewWrapper new_, boolean init, PyType subtype,
+    static final PyObject type___new__(PyNewWrapper new_, boolean init, PyType subtype,
                                         PyObject[] args, String[] keywords) {
         // Special case: type(x) should return x.getType()
         if (args.length == 1 && keywords.length == 0) {
@@ -148,6 +148,18 @@ public class PyType extends PyObject implements Serializable {
             throw Py.TypeError("type(): argument 3 must be dict, not " + dict.getType());
         }
         return newType(new_, subtype, name, bases, dict);
+    }
+
+    @ExposedMethod(doc = BuiltinDocs.type___init___doc)
+    final void type___init__(PyObject[] args, String[] kwds) {
+        if (kwds.length > 0) {
+            throw Py.TypeError("type.__init__() takes no keyword arguments");
+        }
+
+        if (args.length != 1 && args.length != 3) {
+            throw Py.TypeError("type.__init__() takes 1 or 3 arguments");
+        }
+        object___init__(Py.EmptyObjects, Py.NoKeywords);
     }
 
     public static PyObject newType(PyNewWrapper new_, PyType metatype, String name, PyTuple bases,
@@ -739,6 +751,10 @@ public class PyType extends PyObject implements Serializable {
     private void setIsBaseType(boolean isBaseType) {
         this.isBaseType = isBaseType;
         tp_flags = isBaseType ? tp_flags | Py.TPFLAGS_BASETYPE : tp_flags & ~Py.TPFLAGS_BASETYPE;
+    }
+
+    boolean isAbstract() {
+        return (tp_flags & Py.TPFLAGS_IS_ABSTRACT) != 0;
     }
 
     private void mro_internal() {
@@ -1684,6 +1700,26 @@ public class PyType extends PyObject implements Serializable {
         throw Py.TypeError(String.format("can't delete %s.__module__", name));
     }
 
+    @ExposedGet(name = "__abstractmethods__")
+    public PyObject getAbstractmethods() {
+        PyObject result = dict.__finditem__("__abstractmethods__");
+        if (result == null) {
+            noAttributeError("__abstractmethods__");
+        }
+        return result;
+    }
+
+    @ExposedSet(name = "__abstractmethods__")
+    public void setAbstractmethods(PyObject value) {
+        // __abstractmethods__ should only be set once on a type, in abc.ABCMeta.__new__,
+        // so this function doesn't do anything special to update subclasses
+        dict.__setitem__("__abstractmethods__", value);
+        postSetattr("__abstractmethods__");
+        tp_flags = value.__nonzero__()
+                ? tp_flags | Py.TPFLAGS_IS_ABSTRACT
+                : tp_flags & ~Py.TPFLAGS_IS_ABSTRACT;
+    }
+    
     public int getNumSlots() {
         return numSlots;
     }

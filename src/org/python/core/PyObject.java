@@ -8,6 +8,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.python.expose.ExposedClassMethod;
 import org.python.expose.ExposedDelete;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
@@ -74,17 +75,32 @@ public class PyObject implements Serializable {
         objtype = (PyType)this;
     }
 
-    //XXX: in CPython object.__new__ has a doc string...
     @ExposedNew
+    static final PyObject object___new__(PyNewWrapper new_, boolean init, PyType subtype,
+                                         PyObject[] args, String[] keywords) {
+        // don't allow arguments if the default object.__init__() is about to be called
+        PyObject[] where = new PyObject[1];
+        subtype.lookup_where("__init__", where);
+        if (where[0] == TYPE && args.length > 0) {
+            throw Py.TypeError("object.__new__() takes no parameters");
+        }
+
+        if (subtype.isAbstract()) {
+            // Compute ", ".join(sorted(type.__abstractmethods__)) into methods
+            PyObject sorted =
+                    Py.getSystemState().getBuiltins().__getitem__(Py.newString("sorted"));
+            PyString methods =
+                    Py.newString(", ")
+                    .join(sorted.__call__(subtype.getAbstractmethods()));
+            throw Py.TypeError(String.format("Can't instantiate abstract class %s with abstract "
+                                             + "methods %s", subtype.fastGetName(), methods));
+        }
+        
+        return new_.for_type == subtype ? new PyObject() : new PyObjectDerived(subtype);
+    }
+
     @ExposedMethod(doc = BuiltinDocs.object___init___doc)
     final void object___init__(PyObject[] args, String[] keywords) {
-        // XXX: attempted fix for object(foo=1), etc
-        // XXX: this doesn't work for metaclasses, for some reason
-        /*
-        if (args.length > 0) {
-            throw Py.TypeError("default __new__ takes no parameters");
-        }
-        */
     }
 
     @ExposedGet(name = "__class__")
@@ -3974,8 +3990,13 @@ public class PyObject implements Serializable {
     }
 
     public PyTuple __getnewargs__() {
-        //default is empty tuple
+        // default is empty tuple
         return new PyTuple();
+    }
+
+    @ExposedClassMethod(doc = BuiltinDocs.object___subclasshook___doc)
+    public static PyObject object___subclasshook__(PyType type, PyObject subclass) {
+        return Py.NotImplemented;
     }
 
     /* arguments' conversion helpers */
