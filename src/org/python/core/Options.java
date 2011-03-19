@@ -75,6 +75,9 @@ public class Options {
     /** Force stdin, stdout and stderr to be unbuffered, and opened in
      * binary mode */
     public static boolean unbuffered = false;
+
+    /** Whether -3 (py3k warnings) were enabled via the command line. */
+    public static boolean py3kwarning = false;
     
     //XXX: place holder
     public static int bytes_warning = 0;

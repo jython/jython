@@ -70,8 +70,7 @@ public class PySystemState extends PyObject implements ClassDictInit {
     //     for tests that would need to pass but today would not.
     public final static int maxsize = Integer.MAX_VALUE;
 
-    //XXX: place holder
-    public final static boolean py3kwarning = false;
+    public static boolean py3kwarning = false;
 
     public final static Class flags = Options.class;
     
@@ -190,6 +189,7 @@ public class PySystemState extends PyObject implements ClassDictInit {
 
         currentWorkingDir = new File("").getAbsolutePath();
 
+        py3kwarning = Options.py3kwarning;
         // Set up the initial standard ins and outs
         String mode = Options.unbuffered ? "b" : "";
         int buffering = Options.unbuffered ? 0 : 1;

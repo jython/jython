@@ -410,6 +410,16 @@ public final class Py {
         warning(BytesWarning, message);
     }
 
+    public static void warnPy3k(String message) {
+        warnPy3k(message, 1);
+    }
+
+    public static void warnPy3k(String message, int stacklevel) {
+        if (Options.py3kwarning) {
+            warning(DeprecationWarning, message, stacklevel);
+        }
+    }
+
     private static PyObject warnings_mod;
 
     private static PyObject importWarnings() {
@@ -438,6 +448,10 @@ public final class Py {
     }
 
     public static void warning(PyObject category, String message) {
+        warning(category, message, 1);
+    }
+
+    public static void warning(PyObject category, String message, int stacklevel) {
         PyObject func = null;
         PyObject mod = importWarnings();
         if (mod != null) {
@@ -447,7 +461,7 @@ public final class Py {
             System.err.println(warn_hcategory(category) + ": " + message);
             return;
         } else {
-            func.__call__(Py.newString(message), category);
+            func.__call__(Py.newString(message), category, Py.newInteger(stacklevel));
         }
     }
 
