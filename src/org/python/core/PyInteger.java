@@ -7,6 +7,7 @@ package org.python.core;
 import java.io.Serializable;
 import java.math.BigInteger;
 
+import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
@@ -103,6 +104,26 @@ public class PyInteger extends PyObject {
             }
             throw Py.TypeError("int() argument must be a string or a number");
         }
+    }
+
+    @ExposedGet(name = "real", doc = BuiltinDocs.int_real_doc)
+    public PyObject getReal() {
+        return int___int__();
+    }
+
+    @ExposedGet(name = "imag", doc = BuiltinDocs.int_imag_doc)
+    public PyObject getImag() {
+        return Py.newInteger(0);
+    }
+
+    @ExposedGet(name = "numerator", doc = BuiltinDocs.int_numerator_doc)
+    public PyObject getNumerator() {
+        return int___int__();
+    }
+
+    @ExposedGet(name = "denominator", doc = BuiltinDocs.int_denominator_doc)
+    public PyObject getDenominator() {
+        return Py.newInteger(1);
     }
 
     public int getValue() {
@@ -814,10 +835,7 @@ public class PyInteger extends PyObject {
 
     @ExposedMethod(doc = BuiltinDocs.int___int___doc)
     final PyInteger int___int__() {
-        if (getType() == TYPE) {
-            return this;
-        }
-        return Py.newInteger(getValue());
+        return getType() == TYPE ? this : Py.newInteger(getValue());
     }
 
     @Override
