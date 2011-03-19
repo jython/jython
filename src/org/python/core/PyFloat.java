@@ -81,7 +81,7 @@ public class PyFloat extends PyObject {
 
     @ExposedGet(name = "real", doc = BuiltinDocs.float_real_doc)
     public PyObject getReal() {
-        return getType() == TYPE ? this : new PyFloat(value);
+        return float___float__();
     }
 
     @ExposedGet(name = "imag", doc = BuiltinDocs.float_imag_doc)
@@ -684,10 +684,7 @@ public class PyFloat extends PyObject {
 
     @ExposedMethod(doc = BuiltinDocs.float___float___doc)
     final PyFloat float___float__() {
-        if (getType() == TYPE) {
-            return this;
-        }
-        return Py.newFloat(getValue());
+        return getType() == TYPE ? this : Py.newFloat(getValue());
     }
 
     @Override
