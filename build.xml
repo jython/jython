@@ -398,10 +398,33 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <exec executable="svnversion" failifexecutionfails="false" outputproperty="build.svn.revision"/>
     </target>
 
+    <!-- XXX: Might this work on Windows? -->
+    <target name="hg-branch" if="os.family.unix">
+        <exec executable="hg" failifexecutionfails="false" outputproperty="build.hg.branch">
+          <arg line="id -b"/>
+        </exec>
+    </target>
+    <target name="hg-tag" if="os.family.unix">
+        <exec executable="hg" failifexecutionfails="false" outputproperty="build.hg.tag">
+          <arg line="id -t"/>
+        </exec>
+    </target>
+    <target name="hg-version" if="os.family.unix">
+        <exec executable="hg" failifexecutionfails="false" outputproperty="build.hg.version">
+          <arg line="id -i"/>
+        </exec>
+    </target>
+    <target name="hg-id" depends="hg-branch, hg-tag, hg-version"/>
+
     <!-- skip-brand can be set in ant.properties or as a system property to keep from updating the
          version.properties file and making the jar on every developer build. -->
+    <!-- when hg:
+    <target name="brand-version" depends="init, hg-id" unless="skip-brand">-->
     <target name="brand-version" depends="init, svnversion" unless="skip-brand">
         <property name="build.svn.revision" value=""/>
+        <property name="build.hg.branch" value=""/>
+        <property name="build.hg.tag" value=""/>
+        <property name="build.hg.version" value=""/>
         <tstamp>
             <format property="build.date" pattern="MMM d yyyy" offset="0"/>
             <format property="build.time" pattern="HH:mm:ss" offset="0"/>
@@ -416,7 +439,10 @@ jython.release_level=${jython.release_level}
 jython.release_serial=${jython.release_serial}
 jython.build.date=${build.date}
 jython.build.time=${build.time}
-jython.build.svn_revision=${build.svn.revision}</echo>
+jython.build.svn_revision=${build.svn.revision}
+jython.build.hg_branch=${build.hg.branch}
+jython.build.hg_tag=${build.hg.tag}
+jython.build.hg_version=${build.hg.version}</echo>
     </target>
 
     <target name="brand-readme-version" depends="checkout" if="do.snapshot.build">
