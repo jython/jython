@@ -252,23 +252,17 @@ public class codecs {
     public static PyObject replace_errors(PyObject[] args, String[] kws) {
         ArgParser ap = new ArgParser("replace_errors", args, kws, "exc");
         PyObject exc = ap.getPyObject(0);
-        if (Py.isInstance(exc, Py.UnicodeDecodeError)) {
-            PyObject object = exc.__getattr__("object");
-            if (!Py.isInstance(object, PyString.TYPE) || Py.isInstance(object, PyUnicode.TYPE)) {
-                throw Py.TypeError("object attribute must be str");
-            }
-            PyObject end = exc.__getattr__("end");
-            return new PyTuple(new PyUnicode(Py_UNICODE_REPLACEMENT_CHARACTER), end);
-        } else if (Py.isInstance(exc, Py.UnicodeEncodeError)) {
-            PyObject object = exc.__getattr__("object");
-            if (!Py.isInstance(object, PyUnicode.TYPE)) {
-                throw Py.TypeError("object attribute must be unicode");
-            }
-            PyObject end = exc.__getattr__("end");
-            return new PyTuple(Py.java2py("?"), end);
+        if (Py.isInstance(exc, Py.UnicodeEncodeError)) {
+            int end = exceptions.getEnd(exc, true);
+            return new PyTuple(new PyUnicode("?"), Py.newInteger(end));
+        } else if (Py.isInstance(exc, Py.UnicodeDecodeError)) {
+            int end = exceptions.getEnd(exc, false);
+            return new PyTuple(new PyUnicode(Py_UNICODE_REPLACEMENT_CHARACTER),
+                               Py.newInteger(end));
         } else if (Py.isInstance(exc, Py.UnicodeTranslateError)) {
-            PyObject end = exc.__getattr__("end");
-            return new PyTuple(new PyUnicode(Py_UNICODE_REPLACEMENT_CHARACTER), end);
+            int end = exceptions.getEnd(exc, true);
+            return new PyTuple(new PyUnicode(Py_UNICODE_REPLACEMENT_CHARACTER),
+                               Py.newInteger(end));
         }
         throw wrong_exception_type(exc);
     }
