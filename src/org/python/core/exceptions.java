@@ -133,10 +133,12 @@ public class exceptions extends PyObject implements ClassDictInit {
 
         buildClass(dict, "MemoryError", "StandardError", "Out of memory.");
 
+        buildClass(dict, "BufferError", "StandardError", "Buffer error.");
+
         buildClass(dict, "StopIteration", "Exception",
                    "Signal the end from iterator.next().");
 
-        buildClass(dict, "GeneratorExit", "Exception", "Request that a generator exit.");
+        buildClass(dict, "GeneratorExit", "BaseException", "Request that a generator exit.");
 
         buildClass(dict, "Warning", "Exception", "Base class for warning categories.");
 
@@ -166,10 +168,10 @@ public class exceptions extends PyObject implements ClassDictInit {
         buildClass(dict, "UnicodeWarning", "Warning",
                    "Base class for warnings about Unicode related problems, mostly\n"
                    + "related to conversion problems.");
-            
+
         buildClass(dict, "BytesWarning", "Warning",
                    "Base class for warnings about bytes and buffer related problems, mostly\n"
-                   + "related to conversion from str or comparing to str."); 
+                   + "related to conversion from str or comparing to str.");
 
         // Initialize ZipImportError here, where it's safe to; it's
         // needed immediately
@@ -373,14 +375,16 @@ public class exceptions extends PyObject implements ClassDictInit {
 
     public static PyString UnicodeDecodeError__str__(PyObject self, PyObject[] args,
                                                      String[] kwargs) {
-        int start = getStart(self, false);
-        int end = getEnd(self, false);
-        PyObject encoding = self.__getattr__("encoding");
-        PyObject reason = self.__getattr__("reason");
+        int start = self.__getattr__("start").asInt();
+        int end = self.__getattr__("end").asInt();
+        // Get reason and encoding as strings, which they might not be if they've been
+        // modified after we were contructed
+        PyObject reason = self.__getattr__("reason").__str__();
+        PyObject encoding = self.__getattr__("encoding").__str__();
+        PyObject object = getString(self.__getattr__("object"), "object");
 
         String result;
-        if (end == (start + 1)) {
-            PyObject object = self.__getattr__("object");
+        if (start < object.__len__() && end == (start + 1)) {
             int badByte = (object.toString().charAt(start)) & 0xff;
             result = String.format("'%.400s' codec can't decode byte 0x%x in position %d: %.400s",
                                    encoding, badByte, start, reason);
@@ -406,14 +410,16 @@ public class exceptions extends PyObject implements ClassDictInit {
 
     public static PyString UnicodeEncodeError__str__(PyObject self, PyObject[] args,
                                                      String[] kwargs) {
-        int start = getStart(self, true);
-        int end = getEnd(self, true);
-        PyObject encoding = self.__getattr__("encoding");
-        PyObject reason = self.__getattr__("reason");
+        int start = self.__getattr__("start").asInt();
+        int end = self.__getattr__("end").asInt();
+        // Get reason and encoding as strings, which they might not be if they've been
+        // modified after we were contructed
+        PyObject reason = self.__getattr__("reason").__str__();
+        PyObject encoding = self.__getattr__("encoding").__str__();
+        PyObject object = getUnicode(self.__getattr__("object"), "object");
 
         String result;
-        if (end == (start + 1)) {
-            PyObject object = self.__getattr__("object");
+        if (start < object.__len__() && end == (start + 1)) {
             int badchar = object.toString().codePointAt(start);
             String badcharStr;
             if (badchar <= 0xff) {
@@ -455,13 +461,16 @@ public class exceptions extends PyObject implements ClassDictInit {
 
     public static PyString UnicodeTranslateError__str__(PyObject self, PyObject[] args,
                                                         String[] kwargs) {
-        int start = getStart(self, true);
-        int end = getEnd(self, true);
-        PyObject reason = self.__getattr__("reason");
+        int start = self.__getattr__("start").asInt();
+        int end = self.__getattr__("end").asInt();
+        // Get reason as a string, which it might not be if it's been modified after we
+        // were contructed
+        PyObject reason = self.__getattr__("reason").__str__();
+        PyObject object = getUnicode(self.__getattr__("object"), "object");
 
         String result;
-        if (end == (start + 1)) {
-            int badchar = (self.__getattr__("object").toString().codePointAt(start));
+        if (start < object.__len__() && end == (start + 1)) {
+            int badchar = object.toString().codePointAt(start);
             String badCharStr;
             if (badchar <= 0xff) {
                 badCharStr = String.format("x%02x", badchar);
@@ -488,7 +497,7 @@ public class exceptions extends PyObject implements ClassDictInit {
      * @return an the start position
      */
     public static int getStart(PyObject self, boolean unicode) {
-        int start = getInt(self.__getattr__("start"), "start");
+        int start = self.__getattr__("start").asInt();
         PyObject object;
         if (unicode) {
             object = getUnicode(self.__getattr__("object"), "object");
@@ -513,7 +522,7 @@ public class exceptions extends PyObject implements ClassDictInit {
      * @return an the end position
      */
     public static int getEnd(PyObject self, boolean unicode) {
-        int end = getInt(self.__getattr__("end"), "end");
+        int end = self.__getattr__("end").asInt();
         PyObject object;
         if (unicode) {
             object = getUnicode(self.__getattr__("object"), "object");
@@ -530,22 +539,6 @@ public class exceptions extends PyObject implements ClassDictInit {
     }
 
     /**
-     * Parse an int value for UnicodeErrors
-     *
-     * @param attr a PyObject
-     * @param name of the attribute
-     * @return an int value
-     */
-    public static int getInt(PyObject attr, String name) {
-        if (attr instanceof PyInteger) {
-            return ((PyInteger)attr).asInt();
-        } else if (attr instanceof PyLong) {
-            return ((PyLong)attr).asInt();
-        }
-        throw Py.TypeError(String.format("%.200s attribute must be int", name));
-    }
-
-    /**
      * Ensure a PyString value for UnicodeErrors
      *
      * @param attr a PyObject
@@ -553,7 +546,7 @@ public class exceptions extends PyObject implements ClassDictInit {
      * @return an PyString
      */
     public static PyString getString(PyObject attr, String name) {
-        if (!(attr instanceof PyString)) {
+        if (!Py.isInstance(attr, PyString.TYPE)) {
             throw Py.TypeError(String.format("%.200s attribute must be str", name));
         }
         return (PyString)attr;
@@ -663,10 +656,12 @@ public class exceptions extends PyObject implements ClassDictInit {
             this.javaMethod = javaMethod;
         }
 
+        @Override
         public PyBuiltinCallable bind(PyObject self) {
             return new BoundStaticJavaMethod(getType(), self, info, javaMethod);
         }
 
+        @Override
         public PyObject __get__(PyObject obj, PyObject type) {
             if (obj != null) {
                 return bind(obj);
@@ -674,6 +669,7 @@ public class exceptions extends PyObject implements ClassDictInit {
             return makeDescriptor((PyType)type);
         }
 
+        @Override
         public PyObject __call__(PyObject[] args, String kwargs[]) {
             try {
                 return Py.java2py(javaMethod.invoke(null, self, args, kwargs));

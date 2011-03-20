@@ -18,9 +18,7 @@ public class PyBaseException extends PyObject {
     public static final PyType TYPE = PyType.fromClass(PyBaseException.class);
 
     /** Exception message. */
-    @ExposedGet(doc = BuiltinDocs.BaseException_message_doc)
-    @ExposedSet
-    public PyObject message = Py.EmptyString;
+    private PyObject message = Py.EmptyString;
 
     /** Exception's arguments. */
     @ExposedGet(doc = BuiltinDocs.BaseException_args_doc)
@@ -52,25 +50,32 @@ public class PyBaseException extends PyObject {
         }
     }
 
+    @Override
     public PyObject __getitem__(PyObject index) {
         return BaseException___getitem__(index);
     }
 
     @ExposedMethod(doc = BuiltinDocs.BaseException___getitem___doc)
     final PyObject BaseException___getitem__(PyObject index) {
+        Py.warnPy3k("__getitem__ not supported for exception classes in 3.x; use args "
+                    + "attribute");
         return args.__getitem__(index);
     }
 
+    @Override
     public PyObject __getslice__(PyObject start, PyObject stop) {
         return BaseException___getslice__(start, stop);
     }
 
     @ExposedMethod(doc = BuiltinDocs.BaseException___getslice___doc)
     final PyObject BaseException___getslice__(PyObject start, PyObject stop) {
+        Py.warnPy3k("__getslice__ not supported for exception classes in 3.x; use args "
+                    + "attribute");
         return args.__getslice__(start, stop);
     }
 
 
+    @Override
     public PyObject __reduce__() {
         return BaseException___reduce__();
     }
@@ -101,6 +106,7 @@ public class PyBaseException extends PyObject {
         return Py.None;
     }
 
+    @Override
     public PyObject __findattr_ex__(String name) {
         return BaseException___findattr__(name);
     }
@@ -116,6 +122,7 @@ public class PyBaseException extends PyObject {
         return super.__findattr_ex__(name);
     }
 
+    @Override
     public void __setattr__(String name, PyObject value) {
         BaseException___setattr__(name, value);
     }
@@ -126,16 +133,19 @@ public class PyBaseException extends PyObject {
         super.__setattr__(name, value);
     }
 
+    @Override
     public PyObject fastGetDict() {
         return __dict__;
     }
     
+    @Override
     @ExposedGet(name = "__dict__", doc = BuiltinDocs.BaseException___dict___doc)
     public PyObject getDict() {
         ensureDict();
         return __dict__;
     }
 
+    @Override
     @ExposedSet(name = "__dict__")
     public void setDict(PyObject val) {
         if (!(val instanceof PyStringMap) && !(val instanceof PyDictionary)) {
@@ -145,12 +155,14 @@ public class PyBaseException extends PyObject {
     }
 
     private void ensureDict() {
+        // XXX: __dict__ should really be volatile
         if (__dict__ == null) {
             __dict__ = new PyStringMap();
         }
     }
 
-    public PyString __str__() {
+    @Override
+   public PyString __str__() {
         return BaseException___str__();
     }
 
@@ -163,6 +175,35 @@ public class PyBaseException extends PyObject {
             return args.__getitem__(0).__str__();
         default:
             return args.__str__();
+        }
+    }
+
+    @Override
+    public PyUnicode __unicode__() {
+        return BaseException___unicode__();
+    }
+
+    @ExposedMethod(doc = BuiltinDocs.BaseException___unicode___doc)
+    final PyUnicode BaseException___unicode__() {
+        // CPython issue6108: if __str__ has been overridden in the subclass, unicode()
+        // should return the message returned by __str__ as used to happen before this
+        // method was implemented
+        PyType type = getType();
+        PyObject[] where = new PyObject[1];
+        PyObject str = type.lookup_where("__str__", where);
+        if (str != null && where[0] != TYPE) {
+            // Unlike str(), __str__ can return unicode (i.e. return the equivalent
+            // of unicode(e.__str__()) instead of unicode(str(e)))
+            return str.__get__(this, type).__call__().__unicode__();
+        }
+        
+        switch (args.__len__()) {
+        case 0:
+            return new PyUnicode("");
+        case 1:
+            return args.__getitem__(0).__unicode__();
+        default:
+            return args.__unicode__();
         }
     }
 
@@ -187,8 +228,33 @@ public class PyBaseException extends PyObject {
         args = PyTuple.fromIterable(val);
     }
 
+    @ExposedGet(name = "message", doc = BuiltinDocs.BaseException_message_doc)
+    public PyObject getMessage() {
+        PyObject message;
+
+        // if "message" is in self->dict, accessing a user-set message attribute
+        if (__dict__ != null && (message = __dict__.__finditem__("message")) != null) {
+            return message;
+        }
+
+        if (this.message == null) {
+            throw Py.AttributeError("message attribute was deleted");
+        }
+
+        Py.DeprecationWarning("BaseException.message has been deprecated as of Python 2.6");
+        return this.message;
+    }
+
+    @ExposedSet(name = "message")
+    public void setMessage(PyObject value) {
+        getDict().__setitem__("message", value);
+    }
+
     @ExposedDelete(name = "message")
     public void delMessage() {
-        message = Py.None;
+        if (__dict__ != null && (message = __dict__.__finditem__("message")) != null) {
+            __dict__.__delitem__("message");
+            message = null;
+        }
     }
 }

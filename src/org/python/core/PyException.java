@@ -194,9 +194,7 @@ public class PyException extends RuntimeException
             type = type.__getitem__(0);
         }
 
-        if (type.getType() == PyString.TYPE) {
-            Py.warning(Py.DeprecationWarning, "raising a string exception is deprecated");
-        } else if (isExceptionClass(type)) {
+        if (isExceptionClass(type)) {
             PyException pye = new PyException(type, value, (PyTraceback)traceback);
             pye.normalize();
             return pye;
@@ -212,8 +210,12 @@ public class PyException extends RuntimeException
         } else {
             // Not something you can raise.  You get an exception
             // anyway, just not what you specified :-)
-            throw Py.TypeError("exceptions must be classes, instances, or strings (deprecated), "
-                               + "not " + type.getType().fastGetName());
+            throw Py.TypeError("exceptions must be old-style classes or derived from "
+                               + "BaseException, not " + type.getType().fastGetName());
+        }
+
+        if (Options.py3kwarning && type instanceof PyClass) {
+            Py.DeprecationWarning("exceptions must derive from BaseException in 3.x");
         }
 
         return new PyException(type, value, (PyTraceback)traceback);
@@ -255,7 +257,13 @@ public class PyException extends RuntimeException
         }
 
         if (isExceptionClass(type) && isExceptionClass(exc)) {
-            return Py.isSubClass(type, exc);
+            try {
+                return Py.isSubClass(type, exc);
+            } catch (PyException pye) {
+                // This function must not fail, so print the error here
+                Py.writeUnraisable(pye, type);
+                return false;
+            }
         }
 
         return type == exc;

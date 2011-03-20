@@ -248,8 +248,8 @@ def exc_message(exc_info):
     exc = exc_info[1]
     if exc is None:
         return safe_str(exc_info[0])
-    if isinstance(exc, BaseException) and isinstance(exc.message, unicode):
-        return safe_str(exc.message)
+    if isinstance(exc, BaseException) and isinstance(exc.args[0], unicode):
+        return safe_str(exc.args[0])
     try:
         return safe_str(str(exc))
     except UnicodeEncodeError:
