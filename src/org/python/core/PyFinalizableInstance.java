@@ -12,14 +12,14 @@ package org.python.core;
  * This is a special class due to performance. Defining
  * finalize() on a class, makes the class a lot slower.
  */
+public class PyFinalizableInstance extends PyInstance {
 
-public class PyFinalizableInstance extends PyInstance
-{
     public PyFinalizableInstance(PyClass iclass) {
         super(iclass);
     }
 
     // __del__ method is invoked upon object finalization.
+    @Override
     protected void finalize() {
         try {
             instclass.__del__.__call__(this);
@@ -28,12 +28,10 @@ public class PyFinalizableInstance extends PyInstance
             PyObject method = instclass.__del__;
             try {
                 method = __findattr__("__del__");
-            } catch (PyException e) { ; }
-
-            Py.stderr.println("Exception " +
-                Py.formatException(exc.type, exc.value) +
-                " in " + method +
-                " ignored");
+            } catch (PyException e) {
+                // nothing we can do
+            }
+            Py.writeUnraisable(exc, method);
         }
     }
 }

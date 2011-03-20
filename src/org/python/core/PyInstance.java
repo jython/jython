@@ -381,18 +381,9 @@ public class PyInstance extends PyObject {
      */
     protected PyString makeDefaultRepr() {
         PyObject mod = instclass.__dict__.__finditem__("__module__");
-        String smod;
-        if(mod == Py.None) {
-            smod = "";
-        } else {
-            if(mod == null || !(mod instanceof PyString)) {
-                smod = "<unknown>.";
-            } else {
-                smod = ((PyString)mod).toString() + '.';
-            }
-        }
-        return new PyString("<" + smod + instclass.__name__ + " instance at " +
-                            Py.idstr(this) + ">");
+        String modStr = (mod == null || !Py.isInstance(mod, PyString.TYPE)) ? "?" : mod.toString();
+        return new PyString(String.format("<%s.%s instance at %s>", modStr, instclass.__name__,
+                                          Py.idstr(this)));
     }
 
     @Override

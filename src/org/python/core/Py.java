@@ -1168,6 +1168,10 @@ public final class Py {
     }
 
     public static String formatException(PyObject type, PyObject value) {
+        return formatException(type, value, false);
+    }
+
+    public static String formatException(PyObject type, PyObject value, boolean useRepr) {
         StringBuilder buf = new StringBuilder();
 
         if (PyException.isExceptionClass(type)) {
@@ -1178,10 +1182,7 @@ public final class Py {
             }
             PyObject moduleName = type.__findattr__("__module__");
             if (moduleName == null) {
-                // XXX: Workaround the fact that PyClass lacks __module__
-                if (!(type instanceof PyClass)) {
-                    buf.append("<unknown>");
-                }
+                buf.append("<unknown>");
             } else {
                 String moduleStr = moduleName.toString();
                 if (!moduleStr.equals("exceptions")) {
@@ -1191,17 +1192,28 @@ public final class Py {
             }
             buf.append(className);
         } else {
-            buf.append(type.__str__());
+            buf.append(useRepr ? type.__repr__() : type.__str__());
         }
         if (value != null && value != Py.None) {
             // only print colon if the str() of the object is not the empty string
-            PyObject s = value.__str__();
+            PyObject s = useRepr ? value.__repr__() : value.__str__();
             if (!(s instanceof PyString) || s.__len__() != 0) {
                 buf.append(": ");
             }
             buf.append(s);
         }
         return buf.toString();
+    }
+
+    public static void writeUnraisable(Exception exc, PyObject obj) {
+        if (exc instanceof PyException) {
+            PyException pye = (PyException) exc;
+            stderr.println(String.format("Exception %s in %s ignored",
+                                         formatException(pye.type, pye.value, true), obj));
+        } else {
+            // XXX: this could be better handled
+            exc.printStackTrace();
+        }
     }
 
 

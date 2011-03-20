@@ -229,13 +229,8 @@ public class PyClass extends PyObject {
     @Override
     public String toString() {
         PyObject mod = __dict__.__finditem__("__module__");
-        String smod;
-        if (mod == null || !(mod instanceof PyString)) {
-            smod = "<unknown>";
-        } else {
-            smod = ((PyString) mod).toString();
-        }
-        return "<class " + smod + "." + __name__ + " at " + Py.idstr(this) + ">";
+        String modStr = (mod == null || !Py.isInstance(mod, PyString.TYPE)) ? "?" : mod.toString();
+        return String.format("<class %s.%s at %s>", modStr, __name__, Py.idstr(this));
     }
 
     public boolean isSubClass(PyClass superclass) {
