@@ -34,6 +34,8 @@ public class Version {
     public static String DATE;
     public static String TIME;
     public static String SVN_REVISION;
+    /** Current hg global revision id (hg id -i). */
+    public static String HG_VERSION;
 
     /** Determined from headURL, branch is the path under the
      * subversion root, e.g. branches/asm. */
@@ -41,6 +43,12 @@ public class Version {
 
     /** Short version of branch, e.g. asm. */
     public static String SHORT_BRANCH;
+
+    /** Current hg branch (hg id -b). */
+    public static String HG_BRANCH;
+
+    /** Current hg tag (hg id -t), e.g. 'tip'. */
+    public static String HG_TAG;
 
     /** The flags that are set by default in a code object. */
     private static final Collection<CodeFlag> defaultCodeFlags = Arrays.asList(
@@ -103,6 +111,9 @@ public class Version {
                 DATE = properties.getProperty("jython.build.date");
                 TIME = properties.getProperty("jython.build.time");
                 SVN_REVISION = properties.getProperty("jython.build.svn_revision");
+                HG_BRANCH = properties.getProperty("jython.build.hg_branch");
+                HG_TAG = properties.getProperty("jython.build.hg_tag");
+                HG_VERSION = properties.getProperty("jython.build.hg_version");
             } catch (IOException ioe) {
                 System.err.println("There was a problem loading ".concat(versionProperties)
                         .concat(":"));
@@ -137,6 +148,21 @@ public class Version {
     }
 
     /**
+     * Return the current hg version number. May be an empty string on environments that
+     * can't determine it.
+     */
+    public static String getHGVersion() {
+        return HG_VERSION;
+    }
+
+    /**
+     * Return the current hg identifier name, either the current branch or tag.
+     */
+    public static String getHGIdentifier() {
+        return "".equals(HG_TAG) || "tip".equals(HG_TAG) ? HG_BRANCH : HG_TAG;
+    }
+
+    /**
      * Return the current build information, including revision and
      * timestamp.
      */
@@ -145,6 +171,16 @@ public class Version {
         String sep = "".equals(revision) ? "" : ":";
         String branch = getSubversionShortBranch();
         return String.format("%s%s%s, %.20s, %.9s", branch, sep, revision, DATE, TIME);
+    }
+
+    /**
+     * Return the current build information, including revision and timestamp.
+     */
+    public static String getBuildInfoHG() {
+        String revision = getHGVersion();
+        String sep = "".equals(revision) ? "" : ":";
+        String hgId = getHGIdentifier();
+        return String.format("%s%s%s, %.20s, %.9s", hgId, sep, revision, DATE, TIME);
     }
 
     /**
