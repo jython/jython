@@ -21,6 +21,9 @@ from java.lang import System
 import os
 
 from org.python.core.Py import newString as asPyString
+import warnings
+warnings.warn('The javapath module is deprecated. Use the os.path module.',
+              DeprecationWarning, 2)
 
 
 def _tostr(s, method):
