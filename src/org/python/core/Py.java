@@ -1208,15 +1208,10 @@ public final class Py {
         return buf.toString();
     }
 
-    public static void writeUnraisable(Exception exc, PyObject obj) {
-        if (exc instanceof PyException) {
-            PyException pye = (PyException) exc;
-            stderr.println(String.format("Exception %s in %s ignored",
-                                         formatException(pye.type, pye.value, true), obj));
-        } else {
-            // XXX: this could be better handled
-            exc.printStackTrace();
-        }
+    public static void writeUnraisable(Throwable unraisable, PyObject obj) {
+        PyException pye = JavaError(unraisable);
+        stderr.println(String.format("Exception %s in %s ignored",
+                                     formatException(pye.type, pye.value, true), obj));
     }
 
 
