@@ -353,6 +353,7 @@ public final class Py {
     public static PyException MemoryError(String message) {
         return new PyException(Py.MemoryError, message);
     }
+    public static PyObject BufferError;
     public static PyObject ArithmeticError;
     public static PyObject LookupError;
     public static PyObject StandardError;
@@ -767,6 +768,7 @@ public final class Py {
         NameError = initExc("NameError", exc, dict);
         UnboundLocalError = initExc("UnboundLocalError", exc, dict);
         AttributeError = initExc("AttributeError", exc, dict);
+
         SyntaxError = initExc("SyntaxError", exc, dict);
         IndentationError = initExc("IndentationError", exc, dict);
         TabError = initExc("TabError", exc, dict);
@@ -787,6 +789,7 @@ public final class Py {
         ReferenceError = initExc("ReferenceError", exc, dict);
         SystemError = initExc("SystemError", exc, dict);
         MemoryError = initExc("MemoryError", exc, dict);
+        BufferError = initExc("BufferError", exc, dict);
         Warning = initExc("Warning", exc, dict);
         UserWarning = initExc("UserWarning", exc, dict);
         DeprecationWarning = initExc("DeprecationWarning", exc, dict);

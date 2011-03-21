@@ -237,6 +237,13 @@ public class PyException extends RuntimeException
             return false;
         }
 
+        if (exc instanceof PyString) {
+            Py.DeprecationWarning("catching of string exceptions is deprecated");
+        } else if (Options.py3kwarning && !isPy3kExceptionClass(exc)) {
+            Py.DeprecationWarning("catching classes that don't inherit from BaseException is not "
+                                  + "allowed in 3.x");
+        }
+
         normalize();
         // FIXME, see bug 737978
         //
@@ -279,6 +286,16 @@ public class PyException extends RuntimeException
         if (obj instanceof PyClass) {
             return true;
         }
+        return isPy3kExceptionClass(obj);
+    }
+
+    /**
+     * Determine whether obj is a Python 3 exception class
+     *
+     * @param obj a PyObject
+     * @return true if an exception
+     */
+    private static boolean isPy3kExceptionClass(PyObject obj) {
         if (!(obj instanceof PyType)) {
             return false;
         }
@@ -286,7 +303,8 @@ public class PyException extends RuntimeException
         if (type.isSubType(PyBaseException.TYPE)) {
             return true;
         }
-        return type.getProxyType() != null && Throwable.class.isAssignableFrom(type.getProxyType());
+        return type.getProxyType() != null
+                && Throwable.class.isAssignableFrom(type.getProxyType());
     }
 
     /**
