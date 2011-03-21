@@ -982,6 +982,16 @@ public class PyLong extends PyObject {
     }
 
     @Override
+    public PyObject __format__(PyObject format_spec) {
+        return long___format__(format_spec);
+    }
+
+    @ExposedMethod(doc = BuiltinDocs.long___format___doc)
+    final PyObject long___format__(PyObject format_spec) {
+        return PyInteger.formatImpl(getValue(), format_spec);
+    }
+
+    @Override
     public boolean isIndex() {
         return true;
     }

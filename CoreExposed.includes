@@ -44,6 +44,8 @@ org/python/core/PyTuple.class
 org/python/core/PyType.class
 org/python/core/PyUnicode.class
 org/python/core/PyXRange.class
+org/python/core/stringlib/MarkupIterator.class
+org/python/core/stringlib/FieldNameIterator.class
 org/python/modules/PyStruct.class
 org/python/modules/PyTeeIterator.class
 org/python/jsr223/PyScriptEngineScope.class

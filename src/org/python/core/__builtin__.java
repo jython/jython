@@ -358,6 +358,7 @@ public class __builtin__ {
         dict.__setitem__("sorted", new SortedFunction());
         dict.__setitem__("all", new AllFunction());
         dict.__setitem__("any", new AnyFunction());
+        dict.__setitem__("format", new FormatFunction());
     }
 
     public static PyObject abs(PyObject o) {
@@ -1300,6 +1301,25 @@ class AnyFunction extends PyBuiltinFunctionNarrow {
             }
         }
         return Py.False;
+    }
+}
+
+class FormatFunction extends PyBuiltinFunctionNarrow {
+    FormatFunction() {
+        super("format", 1, 2,
+              "format(value[, format_spec]) -> string\n\n" +
+              "Returns value.__format__(format_spec)\n" +
+               "format_spec defaults to \"\"");
+    }
+
+    @Override
+    public PyObject __call__(PyObject arg1) {
+        return __call__(arg1, new PyString(""));
+    }
+
+    @Override
+    public PyObject __call__(PyObject arg1, PyObject arg2) {
+        return arg1.__format__(arg2);
     }
 }
 

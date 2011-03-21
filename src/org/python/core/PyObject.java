@@ -1710,6 +1710,16 @@ public class PyObject implements Serializable {
         return false;
     }
 
+    public PyObject __format__(PyObject format_spec) {
+        return object___format__(format_spec);
+    }
+
+    @ExposedMethod(doc = BuiltinDocs.object___format___doc)
+    final PyObject object___format__(PyObject format_spec) {
+        PyString str = __str__();
+        return str.__format__(format_spec);
+    }
+
     /**
      * Implements boolean not
      *

@@ -7,6 +7,8 @@ package org.python.core;
 import java.io.Serializable;
 import java.math.BigInteger;
 
+import org.python.core.stringlib.InternalFormatSpec;
+import org.python.core.stringlib.InternalFormatSpecParser;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
@@ -909,6 +911,118 @@ public class PyInteger extends PyObject {
     @ExposedMethod(doc = BuiltinDocs.int___index___doc)
     final PyObject int___index__() {
         return this;
+    }
+
+    @Override
+    public PyObject __format__(PyObject format_spec) {
+        return int___format__(format_spec);
+    }
+
+    @ExposedMethod(doc = BuiltinDocs.int___format___doc)
+    final PyObject int___format__(PyObject format_spec) {
+        return formatImpl(getValue(), format_spec);
+    }
+
+    static PyObject formatImpl(Object value, PyObject format_spec) {
+        if (format_spec instanceof PyString) {
+            String result;
+            try {
+                String specString = ((PyString) format_spec).getString();
+                InternalFormatSpec spec = new InternalFormatSpecParser(specString).parse();
+                result = formatIntOrLong(value, spec);
+            } catch (IllegalArgumentException e) {
+                throw Py.ValueError(e.getMessage());
+            }
+            if (format_spec instanceof PyUnicode) {
+                return new PyUnicode(result);
+            }
+            return new PyString(result);
+        }
+        throw Py.TypeError("__format__ requires str or unicode");
+    }
+
+    /**
+     * Formats an integer or long number according to a PEP-3101 format specification.
+     *
+     * @param value Integer or BigInteger object specifying the value to format.
+     * @param spec parsed PEP-3101 format specification.
+     * @return result of the formatting.
+     */
+    public static String formatIntOrLong(Object value, InternalFormatSpec spec) {
+        if (spec.precision != -1) {
+            throw new IllegalArgumentException("Precision not allowed in integer format specifier");
+        }
+        int sign;
+        if (value instanceof Integer) {
+            int intValue = (Integer) value;
+            sign = intValue < 0 ? -1 : intValue == 0 ? 0 : 1;
+        }
+        else {
+            sign = ((BigInteger) value).signum();
+        }
+        String strValue;
+        if (spec.type == 'c') {
+            if (spec.sign != '\0') {
+                throw new IllegalArgumentException("Sign not allowed with " +
+                        "integer format specifier 'c'");
+            }
+            if (value instanceof Integer) {
+                int intValue = (Integer) value;
+                if (intValue > 0xffff) {
+                    throw new IllegalArgumentException("%c arg not in range(0x10000)");
+                }
+                strValue = Character.toString((char) intValue);
+            }
+            else {
+                BigInteger bigInt = (BigInteger) value;
+                if (bigInt.intValue() > 0xffff || bigInt.bitCount() > 16) {
+                    throw new IllegalArgumentException("%c arg not in range(0x10000)");
+                }
+                strValue = Character.toString((char) bigInt.intValue());
+            }
+        } else {
+            int radix = 10;
+            if (spec.type == 'o') {
+                radix = 8;
+            } else if (spec.type == 'x' || spec.type == 'X') {
+                radix = 16;
+            } else if (spec.type == 'b') {
+                radix = 2;
+            }
+
+            // TODO locale-specific formatting for 'n'
+            if (value instanceof BigInteger) {
+                strValue = ((BigInteger) value).toString(radix);
+            }
+            else {
+                strValue = Integer.toString((Integer) value, radix);
+            }
+
+            if (spec.alternate) {
+                if (radix == 2)
+                    strValue = "0b" + strValue;
+                else if (radix == 8)
+                    strValue = "0o" + strValue;
+                else if (radix == 16)
+                    strValue = "0x" + strValue;
+            }
+            if (spec.type == 'X') {
+                strValue = strValue.toUpperCase();
+            }
+
+            if (sign >= 0) {
+                if (spec.sign == '+') {
+                    strValue = "+" + strValue;
+                } else if (spec.sign == ' ') {
+                    strValue = " " + strValue;
+                }
+            }
+        }
+        if (spec.align == '=' && (sign < 0 || spec.sign == '+' || spec.sign == ' ')) {
+            char signChar = strValue.charAt(0);
+            return signChar + spec.pad(strValue.substring(1), '>', 1);
+        }
+        return spec.pad(strValue, '>', 0);
     }
 
     @Override
