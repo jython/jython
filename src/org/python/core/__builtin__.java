@@ -1314,7 +1314,7 @@ class FormatFunction extends PyBuiltinFunctionNarrow {
 
     @Override
     public PyObject __call__(PyObject arg1) {
-        return __call__(arg1, new PyString(""));
+        return __call__(arg1, Py.EmptyString);
     }
 
     @Override

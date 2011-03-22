@@ -1,6 +1,11 @@
 package org.python.core.stringlib;
 
-import org.python.core.*;
+import org.python.core.PyBoolean;
+import org.python.core.PyInteger;
+import org.python.core.PyObject;
+import org.python.core.PyString;
+import org.python.core.PyTuple;
+import org.python.core.PyType;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedType;
 
@@ -9,6 +14,9 @@ import org.python.expose.ExposedType;
  */
 @ExposedType(name = "fieldnameiterator", base = PyObject.class, isBaseType = false)
 public class FieldNameIterator extends PyObject {
+
+    public static final PyType TYPE = PyType.fromClass(FieldNameIterator.class);
+
     private String markup;
     private Object head;
     private int index;
@@ -26,15 +34,21 @@ public class FieldNameIterator extends PyObject {
 
     @Override
     public PyObject __iter__() {
-        return this;
+        return fieldnameiterator___iter__();
     }
 
     @ExposedMethod
-    public PyObject fieldnameiterator___iter__() {
+    final PyObject fieldnameiterator___iter__() {
         return this;
     }
 
+    @Override
     public PyObject __iternext__() {
+        return fieldnameiterator___iternext__();
+    }
+
+    @ExposedMethod
+    final PyObject fieldnameiterator___iternext__() {
         Chunk chunk = nextChunk();
         if (chunk == null) {
             return null;
@@ -43,23 +57,21 @@ public class FieldNameIterator extends PyObject {
         elements [0] = new PyBoolean(chunk.is_attr);
         if (chunk.value instanceof Integer) {
             elements [1] = new PyInteger((Integer) chunk.value);
-        }
-        else {
+        } else {
             elements [1] = new PyString((String) chunk.value);
         }
         return new PyTuple(elements);
     }
 
-    @ExposedMethod
-    public PyObject fieldnameiterator___iternext__() {
-        return __iternext__();
-    }
-
     private int nextDotOrBracket(String markup) {
         int dotPos = markup.indexOf('.', index);
-        if (dotPos < 0) dotPos = markup.length();
+        if (dotPos < 0) {
+            dotPos = markup.length();
+        }
         int bracketPos = markup.indexOf('[', index);
-        if (bracketPos < 0) bracketPos = markup.length();
+        if (bracketPos < 0) {
+            bracketPos = markup.length();
+        }
         return Math.min(dotPos, bracketPos);
     }
 
@@ -74,8 +86,7 @@ public class FieldNameIterator extends PyObject {
         Chunk chunk = new Chunk();
         if (markup.charAt(index) == '[') {
             parseItemChunk(chunk);
-        }
-        else if (markup.charAt(index) == '.') {
+        } else if (markup.charAt(index) == '.') {
             parseAttrChunk(chunk);
         }
         return chunk;
@@ -87,7 +98,7 @@ public class FieldNameIterator extends PyObject {
         if (endBracket < 0) {
             throw new IllegalArgumentException("Missing ']' in format string");
         }
-        String itemValue = markup.substring(index+1, endBracket);
+        String itemValue = markup.substring(index + 1, endBracket);
         if (itemValue.length() == 0) {
             throw new IllegalArgumentException("Empty attribute in format string");
         }
@@ -96,7 +107,7 @@ public class FieldNameIterator extends PyObject {
         } catch (NumberFormatException e) {
             chunk.value = itemValue;
         }
-        index = endBracket+1;
+        index = endBracket + 1;
     }
 
     private void parseAttrChunk(Chunk chunk) {
@@ -112,6 +123,7 @@ public class FieldNameIterator extends PyObject {
 
     public static class Chunk {
         public boolean is_attr;
-        public Object value;     // Integer or String
+        /** Integer or String. */
+        public Object value;
     }
 }

@@ -2533,7 +2533,7 @@ public class PyString extends PyBaseString
     final PyObject str_format(PyObject[] args, String[] keywords) {
         try {
             return new PyString(buildFormattedString(getString(), args, keywords));
-        } catch(IllegalArgumentException e) {
+        } catch (IllegalArgumentException e) {
             throw Py.ValueError(e.getMessage());
         }
     }
@@ -2562,11 +2562,9 @@ public class PyString extends PyBaseString
         }
         if ("r".equals(chunk.conversion)) {
             fieldObj = fieldObj.__repr__();
-        }
-        else if ("s".equals(chunk.conversion)) {
+        } else if ("s".equals(chunk.conversion)) {
             fieldObj = fieldObj.__str__();
-        }
-        else if (chunk.conversion != null) {
+        } else if (chunk.conversion != null) {
             throw Py.ValueError("Unknown conversion specifier " + chunk.conversion);
         }
         String formatSpec = chunk.formatSpec;
@@ -2581,17 +2579,17 @@ public class PyString extends PyBaseString
         Object head = iterator.head();
         PyObject obj = null;
         int positionalCount = args.length - keywords.length;
+
         if (head instanceof Integer) {
             int index = (Integer) head;
             if (index >= positionalCount) {
                 throw Py.IndexError("tuple index out of range");
             }
             obj = args[index];
-        }
-        else {
+        } else {
             for (int i = 0; i < keywords.length; i++) {
                 if (keywords[i].equals(head)) {
-                    obj = args[positionalCount+i];
+                    obj = args[positionalCount + i];
                     break;
                 }
             }
@@ -2607,14 +2605,15 @@ public class PyString extends PyBaseString
                 }
                 if (chunk.is_attr) {
                     obj = obj.__getattr__((String) chunk.value);
-                }
-                else {
+                } else {
                     PyObject key = chunk.value instanceof String
                             ? new PyString((String) chunk.value)
                             : new PyInteger((Integer) chunk.value);
                     obj = obj.__getitem__(key);
                 }
-                if (obj == null) break;
+                if (obj == null) {
+                    break;
+                }
             }
         }
         return obj;
@@ -2626,27 +2625,26 @@ public class PyString extends PyBaseString
     }
 
     @Override
-    public PyObject __format__(PyObject format_spec) {
-        return str___format__(format_spec);
+    public PyObject __format__(PyObject formatSpec) {
+        return str___format__(formatSpec);
     }
 
     @ExposedMethod(doc = BuiltinDocs.str___format___doc)
-    final PyObject str___format__(PyObject format_spec) {
-        if (format_spec instanceof PyString) {
-            String result;
-            try {
-                String specString = ((PyString) format_spec).getString();
-                InternalFormatSpec spec = new InternalFormatSpecParser(specString).parse();
-                result = formatString(getString(), spec);
-            } catch (IllegalArgumentException e) {
-                throw Py.ValueError(e.getMessage());
-            }
-            if (format_spec instanceof PyUnicode) {
-                return new PyUnicode(result);
-            }
-            return new PyString(result);
+    final PyObject str___format__(PyObject formatSpec) {
+        if (!(formatSpec instanceof PyString)) {
+            throw Py.TypeError("__format__ requires str or unicode");
         }
-        throw Py.TypeError("__format__ requires str or unicode");
+
+        PyString formatSpecStr = (PyString) formatSpec;
+        String result;
+        try {
+            String specString = formatSpecStr.getString();
+            InternalFormatSpec spec = new InternalFormatSpecParser(specString).parse();
+            result = formatString(getString(), spec);
+        } catch (IllegalArgumentException e) {
+            throw Py.ValueError(e.getMessage());
+        }
+        return formatSpecStr.createInstance(result);
     }
 
     /**

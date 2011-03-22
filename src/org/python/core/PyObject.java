@@ -1710,14 +1710,13 @@ public class PyObject implements Serializable {
         return false;
     }
 
-    public PyObject __format__(PyObject format_spec) {
-        return object___format__(format_spec);
+    public PyObject __format__(PyObject formatSpec) {
+        return object___format__(formatSpec);
     }
 
     @ExposedMethod(doc = BuiltinDocs.object___format___doc)
-    final PyObject object___format__(PyObject format_spec) {
-        PyString str = __str__();
-        return str.__format__(format_spec);
+    final PyObject object___format__(PyObject formatSpec) {
+        return __str__().__format__(formatSpec);
     }
 
     /**

@@ -982,13 +982,13 @@ public class PyLong extends PyObject {
     }
 
     @Override
-    public PyObject __format__(PyObject format_spec) {
-        return long___format__(format_spec);
+    public PyObject __format__(PyObject formatSpec) {
+        return long___format__(formatSpec);
     }
 
     @ExposedMethod(doc = BuiltinDocs.long___format___doc)
-    final PyObject long___format__(PyObject format_spec) {
-        return PyInteger.formatImpl(getValue(), format_spec);
+    final PyObject long___format__(PyObject formatSpec) {
+        return PyInteger.formatImpl(getValue(), formatSpec);
     }
 
     @Override

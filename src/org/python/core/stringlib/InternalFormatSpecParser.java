@@ -29,8 +29,7 @@ public class InternalFormatSpecParser {
         if (spec.length() >= 1 && isAlign(spec.charAt(0))) {
             result.align = spec.charAt(index);
             index++;
-        }
-        else if (spec.length() >= 2 && isAlign(spec.charAt(1))) {
+        } else if (spec.length() >= 2 && isAlign(spec.charAt(1))) {
             result.fill_char = spec.charAt(0);
             result.align = spec.charAt(1);
             index += 2;
@@ -73,7 +72,9 @@ public class InternalFormatSpecParser {
             index++;
             empty = false;
         }
-        if (empty) return -1;
+        if (empty) {
+            return -1;
+        }
         return value;
     }
 

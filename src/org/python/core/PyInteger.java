@@ -914,31 +914,30 @@ public class PyInteger extends PyObject {
     }
 
     @Override
-    public PyObject __format__(PyObject format_spec) {
-        return int___format__(format_spec);
+    public PyObject __format__(PyObject formatSpec) {
+        return int___format__(formatSpec);
     }
 
     @ExposedMethod(doc = BuiltinDocs.int___format___doc)
-    final PyObject int___format__(PyObject format_spec) {
-        return formatImpl(getValue(), format_spec);
+    final PyObject int___format__(PyObject formatSpec) {
+        return formatImpl(getValue(), formatSpec);
     }
 
-    static PyObject formatImpl(Object value, PyObject format_spec) {
-        if (format_spec instanceof PyString) {
-            String result;
-            try {
-                String specString = ((PyString) format_spec).getString();
-                InternalFormatSpec spec = new InternalFormatSpecParser(specString).parse();
-                result = formatIntOrLong(value, spec);
-            } catch (IllegalArgumentException e) {
-                throw Py.ValueError(e.getMessage());
-            }
-            if (format_spec instanceof PyUnicode) {
-                return new PyUnicode(result);
-            }
-            return new PyString(result);
+    static PyObject formatImpl(Object value, PyObject formatSpec) {
+        if (!(formatSpec instanceof PyString)) {
+            throw Py.TypeError("__format__ requires str or unicode");
         }
-        throw Py.TypeError("__format__ requires str or unicode");
+
+        PyString formatSpecStr = (PyString) formatSpec;
+        String result;
+        try {
+            String specString = formatSpecStr.getString();
+            InternalFormatSpec spec = new InternalFormatSpecParser(specString).parse();
+            result = formatIntOrLong(value, spec);
+        } catch (IllegalArgumentException e) {
+            throw Py.ValueError(e.getMessage());
+        }
+        return formatSpecStr.createInstance(result);
     }
 
     /**
@@ -956,15 +955,14 @@ public class PyInteger extends PyObject {
         if (value instanceof Integer) {
             int intValue = (Integer) value;
             sign = intValue < 0 ? -1 : intValue == 0 ? 0 : 1;
-        }
-        else {
+        } else {
             sign = ((BigInteger) value).signum();
         }
         String strValue;
         if (spec.type == 'c') {
             if (spec.sign != '\0') {
-                throw new IllegalArgumentException("Sign not allowed with " +
-                        "integer format specifier 'c'");
+                throw new IllegalArgumentException("Sign not allowed with integer format "
+                                                   + "specifier 'c'");
             }
             if (value instanceof Integer) {
                 int intValue = (Integer) value;
@@ -972,8 +970,7 @@ public class PyInteger extends PyObject {
                     throw new IllegalArgumentException("%c arg not in range(0x10000)");
                 }
                 strValue = Character.toString((char) intValue);
-            }
-            else {
+            } else {
                 BigInteger bigInt = (BigInteger) value;
                 if (bigInt.intValue() > 0xffff || bigInt.bitCount() > 16) {
                     throw new IllegalArgumentException("%c arg not in range(0x10000)");
@@ -993,18 +990,18 @@ public class PyInteger extends PyObject {
             // TODO locale-specific formatting for 'n'
             if (value instanceof BigInteger) {
                 strValue = ((BigInteger) value).toString(radix);
-            }
-            else {
+            } else {
                 strValue = Integer.toString((Integer) value, radix);
             }
 
             if (spec.alternate) {
-                if (radix == 2)
+                if (radix == 2) {
                     strValue = "0b" + strValue;
-                else if (radix == 8)
+                } else if (radix == 8) {
                     strValue = "0o" + strValue;
-                else if (radix == 16)
+                } else if (radix == 16) {
                     strValue = "0x" + strValue;
+                }
             }
             if (spec.type == 'X') {
                 strValue = strValue.toUpperCase();

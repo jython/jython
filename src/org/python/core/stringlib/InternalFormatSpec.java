@@ -25,8 +25,7 @@ public final class InternalFormatSpec {
         }
         if (useAlign == '^') {
             leading = remaining/2;
-        }
-        else if (useAlign == '<') {
+        } else if (useAlign == '<') {
             leading = 0;
         }
         char fill = fill_char != 0 ? fill_char : ' ';
@@ -34,7 +33,7 @@ public final class InternalFormatSpec {
             result.append(fill);
         }
         result.append(value);
-        for (int i = 0; i < remaining-leading; i++) {
+        for (int i = 0; i < remaining - leading; i++) {
             result.append(fill);
         }
         return result.toString();

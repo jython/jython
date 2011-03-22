@@ -1,6 +1,10 @@
 package org.python.core.stringlib;
 
-import org.python.core.*;
+import org.python.core.Py;
+import org.python.core.PyObject;
+import org.python.core.PyString;
+import org.python.core.PyTuple;
+import org.python.core.PyType;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedType;
 
@@ -9,6 +13,9 @@ import org.python.expose.ExposedType;
  */
 @ExposedType(name = "formatteriterator", base = PyObject.class, isBaseType = false)
 public class MarkupIterator extends PyObject {
+
+    public static final PyType TYPE = PyType.fromClass(MarkupIterator.class);
+
     private final String markup;
     private int index;
 
@@ -18,15 +25,21 @@ public class MarkupIterator extends PyObject {
 
     @Override
     public PyObject __iter__() {
-        return this;
+        return formatteriterator___iter__();
     }
 
     @ExposedMethod
-    public PyObject formatteriterator___iter__() {
+    final PyObject formatteriterator___iter__() {
         return this;
     }
 
+    @Override
     public PyObject __iternext__() {
+        return formatteriterator___iternext__();
+    }
+
+    @ExposedMethod
+    final PyObject formatteriterator___iternext__() {
         Chunk chunk;
         try {
             chunk = nextChunk();
@@ -40,18 +53,13 @@ public class MarkupIterator extends PyObject {
         elements[0] = new PyString(chunk.literalText);
         elements[1] = new PyString(chunk.fieldName);
         if (chunk.fieldName.length() > 0) {
-            elements[2] = chunk.formatSpec == null ? Py.EmptyString : new PyString(chunk.formatSpec);
-        }
-        else {
+            elements[2] = chunk.formatSpec == null
+                    ? Py.EmptyString : new PyString(chunk.formatSpec);
+        } else {
             elements[2] = Py.None;
         }
         elements[3] = chunk.conversion == null ? Py.None : new PyString(chunk.conversion);
         return new PyTuple(elements);
-    }
-
-    @ExposedMethod
-    public PyObject formatteriterator___iternext__() {
-        return __iternext__();
     }
 
     public Chunk nextChunk() {
@@ -60,16 +68,15 @@ public class MarkupIterator extends PyObject {
         }
         Chunk result = new Chunk();
         int pos = index;
-        while(true) {
+        while (true) {
             pos = indexOfFirst(markup, pos, '{', '}');
-            if (pos >= 0 && pos < markup.length()-1 &&
-                    markup.charAt(pos+1) == markup.charAt(pos)) {
-                pos += 2;    // skip escaped bracket
-            }
-            else if (pos >= 0 && markup.charAt(pos) == '}') {
+            if (pos >= 0 && pos < markup.length() - 1
+                && markup.charAt(pos + 1) == markup.charAt(pos)) {
+                // skip escaped bracket
+                pos += 2;
+            } else if (pos >= 0 && markup.charAt(pos) == '}') {
                 throw new IllegalArgumentException("Single '}' encountered in format string");
-            }
-            else {
+            } else {
                 break;
             }
         }
@@ -87,8 +94,7 @@ public class MarkupIterator extends PyObject {
                 if (markup.charAt(pos) == '{') {
                     count++;
                     result.formatSpecNeedsExpanding = true;
-                }
-                else if (markup.charAt(pos) == '}') {
+                } else if (markup.charAt(pos) == '}') {
                     count--;
                     if (count == 0) {
                         parseField(result, markup.substring(fieldStart, pos));
@@ -98,8 +104,9 @@ public class MarkupIterator extends PyObject {
                 }
                 pos++;
             }
-            if (count > 0)
+            if (count > 0) {
                 throw new IllegalArgumentException("Single '{' encountered in format string");
+            }
             index = pos;
         }
         return result;
@@ -125,14 +132,12 @@ public class MarkupIterator extends PyObject {
                         throw new IllegalArgumentException("expected ':' " +
                                 "after conversion specifier");
                     }
-                    result.formatSpec = fieldMarkup.substring(pos+1);
+                    result.formatSpec = fieldMarkup.substring(pos + 1);
                 }
+            } else {
+                result.formatSpec = fieldMarkup.substring(pos + 1);
             }
-            else {
-                result.formatSpec = fieldMarkup.substring(pos+1);
-            }
-        }
-        else {
+        } else {
             result.fieldName = fieldMarkup;
         }
     }
