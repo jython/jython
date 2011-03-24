@@ -254,7 +254,7 @@ public class PyBaseException extends PyObject {
     public void delMessage() {
         if (__dict__ != null && (message = __dict__.__finditem__("message")) != null) {
             __dict__.__delitem__("message");
-            message = null;
         }
+        message = null;
     }
 }
