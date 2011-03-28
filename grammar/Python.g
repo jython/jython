@@ -205,14 +205,13 @@ package org.python.antlr;
  *  a = [3,
  *       4]
  */
+int implicitLineJoiningLevel = 0;
+int startPos=-1;
 
 //For use in partial parsing.
 public boolean eofWhileNested = false;
 public boolean partial = false;
 public boolean single = false;
-
-int implicitLineJoiningLevel = 0;
-int startPos=-1;
 
 //If you want to use another error recovery mechanism change this
 //and the same one in the parser.
@@ -268,6 +267,8 @@ private ErrorHandler errorHandler;
     }
 }
 
+//START OF PARSER RULES
+
 //single_input: NEWLINE | simple_stmt | compound_stmt NEWLINE
 single_input
 @init {
@@ -319,8 +320,9 @@ file_input
     : (NEWLINE
       | stmt
       {
-          if ($stmt.stypes != null)
-                 {stypes.addAll($stmt.stypes);}
+          if ($stmt.stypes != null) {
+              stypes.addAll($stmt.stypes);
+          }
       }
       )* EOF
          {
@@ -447,8 +449,13 @@ decorators
 
 //funcdef: [decorators] 'def' NAME parameters ':' suite
 funcdef
-@init { stmt stype = null; }
-@after { $funcdef.tree = stype; }
+@init {
+    stmt stype = null;
+}
+
+@after {
+    $funcdef.tree = stype;
+}
     : decorators? DEF NAME parameters COLON suite[false]
     {
         Token t = $DEF;
@@ -606,12 +613,16 @@ expr_stmt
     | (testlist[null] ASSIGN) => lhs=testlist[expr_contextType.Store]
         (
         | ((at=ASSIGN t+=testlist[expr_contextType.Store])+
-       -> ^(ASSIGN<Assign>[$lhs.start, actions.makeAssignTargets(actions.castExpr($lhs.tree), $t),
-            actions.makeAssignValue($t)])
+            {
+                stype = new Assign($lhs.tree, actions.makeAssignTargets(
+                    actions.castExpr($lhs.tree), $t), actions.makeAssignValue($t));
+            }
           )
         | ((ay=ASSIGN y2+=yield_expr)+
-       -> ^(ASSIGN<Assign>[$lhs.start, actions.makeAssignTargets(actions.castExpr($lhs.tree), $y2),
-            actions.makeAssignValue($y2)])
+            {
+                stype = new Assign($lhs.start, actions.makeAssignTargets(
+                    actions.castExpr($lhs.tree), $y2), actions.makeAssignValue($y2));
+            }
           )
         )
     | lhs=testlist[expr_contextType.Load]
@@ -626,29 +637,53 @@ expr_stmt
 augassign
     returns [operatorType op]
     : PLUSEQUAL
-        {$op = operatorType.Add;}
+        {
+            $op = operatorType.Add;
+        }
     | MINUSEQUAL
-        {$op = operatorType.Sub;}
+        {
+            $op = operatorType.Sub;
+        }
     | STAREQUAL
-        {$op = operatorType.Mult;}
+        {
+            $op = operatorType.Mult;
+        }
     | SLASHEQUAL
-        {$op = operatorType.Div;}
+        {
+            $op = operatorType.Div;
+        }
     | PERCENTEQUAL
-        {$op = operatorType.Mod;}
+        {
+            $op = operatorType.Mod;
+        }
     | AMPEREQUAL
-        {$op = operatorType.BitAnd;}
+        {
+            $op = operatorType.BitAnd;
+        }
     | VBAREQUAL
-        {$op = operatorType.BitOr;}
+        {
+            $op = operatorType.BitOr;
+        }
     | CIRCUMFLEXEQUAL
-        {$op = operatorType.BitXor;}
+        {
+            $op = operatorType.BitXor;
+        }
     | LEFTSHIFTEQUAL
-        {$op = operatorType.LShift;}
+        {
+            $op = operatorType.LShift;
+        }
     | RIGHTSHIFTEQUAL
-        {$op = operatorType.RShift;}
+        {
+            $op = operatorType.RShift;
+        }
     | DOUBLESTAREQUAL
-        {$op = operatorType.Pow;}
+        {
+            $op = operatorType.Pow;
+        }
     | DOUBLESLASHEQUAL
-        {$op = operatorType.FloorDiv;}
+        {
+            $op = operatorType.FloorDiv;
+        }
     ;
 
 //print_stmt: 'print' ( [ test (',' test)* [','] ] |
@@ -991,6 +1026,7 @@ with_var
     : (AS | NAME) expr[expr_contextType.Store]
       {
           $etype = actions.castExpr($expr.tree);
+          actions.checkAssign($etype);
       }
     ;
 
@@ -1085,7 +1121,10 @@ not_test
     [expr_contextType ctype] returns [Token leftTok]
     : NOT nt=not_test[ctype]
    -> ^(NOT<UnaryOp>[$NOT, unaryopType.Not, actions.castExpr($nt.tree)])
-    | comparison[ctype] {$leftTok = $comparison.leftTok;}
+    | comparison[ctype]
+      {
+          $leftTok = $comparison.leftTok;
+      }
     ;
 
 //comparison: expr (comp_op expr)*
@@ -1116,29 +1155,50 @@ comparison
 comp_op
     returns [cmpopType op]
     : LESS
-        {$op = cmpopType.Lt;}
+      {
+          $op = cmpopType.Lt;
+      }
     | GREATER
-        {$op = cmpopType.Gt;}
+      {
+          $op = cmpopType.Gt;
+      }
     | EQUAL
-        {$op = cmpopType.Eq;}
+      {
+          $op = cmpopType.Eq;
+      }
     | GREATEREQUAL
-        {$op = cmpopType.GtE;}
+      {
+          $op = cmpopType.GtE;
+      }
     | LESSEQUAL
-        {$op = cmpopType.LtE;}
+      {
+          $op = cmpopType.LtE;
+      }
     | ALT_NOTEQUAL
-        {$op = cmpopType.NotEq;}
+      {
+          $op = cmpopType.NotEq;
+      }
     | NOTEQUAL
-        {$op = cmpopType.NotEq;}
+      {
+          $op = cmpopType.NotEq;
+      }
     | IN
-        {$op = cmpopType.In;}
+      {
+          $op = cmpopType.In;
+      }
     | NOT IN
-        {$op = cmpopType.NotIn;}
+      {
+          $op = cmpopType.NotIn;
+      }
     | IS
-        {$op = cmpopType.Is;}
+      {
+          $op = cmpopType.Is;
+      }
     | IS NOT
-        {$op = cmpopType.IsNot;}
+      {
+          $op = cmpopType.IsNot;
+      }
     ;
-
 
 //expr: xor_expr ('|' xor_expr)*
 expr
@@ -1242,9 +1302,13 @@ shift_expr
 shift_op
     returns [operatorType op]
     : LEFTSHIFT
-        {$op = operatorType.LShift;}
+      {
+          $op = operatorType.LShift;
+      }
     | RIGHTSHIFT
-        {$op = operatorType.RShift;}
+      {
+          $op = operatorType.RShift;
+      }
     ;
 
 //arith_expr: term (('+'|'-') term)*
@@ -1287,9 +1351,13 @@ arith_expr
 arith_op
     returns [operatorType op]
     : PLUS
-        {$op = operatorType.Add;}
+      {
+          $op = operatorType.Add;
+      }
     | MINUS
-        {$op = operatorType.Sub;}
+      {
+          $op = operatorType.Sub;
+      }
     ;
 
 //term: factor (('*'|'/'|'%'|'//') factor)*
@@ -1323,14 +1391,22 @@ term
 
 term_op
     returns [operatorType op]
-    :STAR
-        {$op = operatorType.Mult;}
-    |SLASH
-        {$op = operatorType.Div;}
-    |PERCENT
-        {$op = operatorType.Mod;}
-    |DOUBLESLASH
-        {$op = operatorType.FloorDiv;}
+    : STAR
+      {
+          $op = operatorType.Mult;
+      }
+    | SLASH
+      {
+          $op = operatorType.Div;
+      }
+    | PERCENT
+      {
+          $op = operatorType.Mod;
+      }
+    | DOUBLESLASH
+      {
+          $op = operatorType.FloorDiv;
+      }
     ;
 
 //factor: ('+'|'-'|'~') factor | power
@@ -1340,11 +1416,17 @@ factor
     $factor.tree = $etype;
 }
     : PLUS p=factor
-        {$etype = new UnaryOp($PLUS, unaryopType.UAdd, $p.etype);}
+      {
+          $etype = new UnaryOp($PLUS, unaryopType.UAdd, $p.etype);
+      }
     | MINUS m=factor
-        {$etype = actions.negate($MINUS, $m.etype);}
+      {
+          $etype = actions.negate($MINUS, $m.etype);
+      }
     | TILDE t=factor
-        {$etype = new UnaryOp($TILDE, unaryopType.Invert, $t.etype);}
+      {
+          $etype = new UnaryOp($TILDE, unaryopType.Invert, $t.etype);
+      }
     | power
       {
           $etype = actions.castExpr($power.tree);
@@ -1399,7 +1481,10 @@ power
 //       NAME | NUMBER | STRING+)
 atom
     returns [Token lparen = null]
-    : LPAREN {$lparen = $LPAREN;}
+    : LPAREN
+      {
+          $lparen = $LPAREN;
+      }
       ( yield_expr
      -> yield_expr
       | testlist_gexp
@@ -1475,8 +1560,7 @@ testlist_gexp
 }
     : t+=test[$expr::ctype]
         ( ((options {k=2;}: c1=COMMA t+=test[$expr::ctype])* (c2=COMMA)?
-         -> { $c1 != null || $c2 != null }?
-                ^(COMMA<Tuple>[$testlist_gexp.start, actions.castExprs($t), $expr::ctype])
+         -> { $c1 != null || $c2 != null }? ^(COMMA<Tuple>[$testlist_gexp.start, actions.castExprs($t), $expr::ctype])
          -> test
           )
         | (gen_for[gens]
@@ -1665,11 +1749,11 @@ arglist
     | STAR s=test[expr_contextType.Load] (COMMA DOUBLESTAR k=test[expr_contextType.Load])?
       {
           $starargs=actions.castExpr($s.tree);
-            $kwargs=actions.castExpr($k.tree);
+          $kwargs=actions.castExpr($k.tree);
       }
     | DOUBLESTAR k=test[expr_contextType.Load]
       {
-            $kwargs=actions.castExpr($k.tree);
+          $kwargs=actions.castExpr($k.tree);
       }
     ;
 
