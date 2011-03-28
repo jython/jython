@@ -528,15 +528,24 @@ varargslist
 
 //fpdef: NAME | '(' fplist ')'
 fpdef[expr_contextType ctype]
+@init {
+    expr etype = null;
+}
 @after {
+    if (etype != null) {
+        $fpdef.tree = etype;
+    }
     actions.checkAssign(actions.castExpr($fpdef.tree));
 }
     : NAME
-   -> ^(NAME<Name>[$NAME, $NAME.text, ctype])
+      {
+          etype = new Name($NAME, $NAME.text, ctype);
+      }
     | (LPAREN fpdef[null] COMMA) => LPAREN fplist RPAREN
-   -> ^(LPAREN<Tuple>[$fplist.start, actions.castExprs($fplist.etypes), expr_contextType.Store])
-    | LPAREN fplist RPAREN
-   -> fplist
+      {
+          etype = new Tuple($fplist.start, actions.castExprs($fplist.etypes), expr_contextType.Store);
+      }
+    | LPAREN! fplist RPAREN!
     ;
 
 //fplist: fpdef (',' fpdef)* [',']
