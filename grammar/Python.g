@@ -613,12 +613,16 @@ expr_stmt
     | (testlist[null] ASSIGN) => lhs=testlist[expr_contextType.Store]
         (
         | ((at=ASSIGN t+=testlist[expr_contextType.Store])+
-       -> ^(ASSIGN<Assign>[$lhs.start, actions.makeAssignTargets(actions.castExpr($lhs.tree), $t),
-            actions.makeAssignValue($t)])
+            {
+                stype = new Assign($lhs.tree, actions.makeAssignTargets(
+                    actions.castExpr($lhs.tree), $t), actions.makeAssignValue($t));
+            }
           )
         | ((ay=ASSIGN y2+=yield_expr)+
-       -> ^(ASSIGN<Assign>[$lhs.start, actions.makeAssignTargets(actions.castExpr($lhs.tree), $y2),
-            actions.makeAssignValue($y2)])
+            {
+                stype = new Assign($lhs.start, actions.makeAssignTargets(
+                    actions.castExpr($lhs.tree), $y2), actions.makeAssignValue($y2));
+            }
           )
         )
     | lhs=testlist[expr_contextType.Load]
@@ -1196,7 +1200,6 @@ comp_op
       }
     ;
 
-
 //expr: xor_expr ('|' xor_expr)*
 expr
     [expr_contextType ect] returns [Token leftTok]
@@ -1721,7 +1724,7 @@ classdef
     ;
 
 //arglist: (argument ',')* (argument [',']
-//                         |'*' test (',' argument)* [',' '**' test] 
+//                         |'*' test (',' argument)* [',' '**' test]
 //                         |'**' test)
 arglist
     returns [List args, List keywords, expr starargs, expr kwargs]
