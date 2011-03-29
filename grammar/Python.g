@@ -698,13 +698,26 @@ augassign
 //print_stmt: 'print' ( [ test (',' test)* [','] ] |
 //                      '>>' test [ (',' test)+ [','] ] )
 print_stmt
+@init {
+    stmt stype = null;
+}
+
+@after {
+    $print_stmt.tree = stype;
+}
     : PRINT
       (t1=printlist
-     -> ^(PRINT<Print>[$PRINT, null, actions.castExprs($t1.elts), $t1.newline])
+       {
+           stype = new Print($PRINT, null, actions.castExprs($t1.elts), $t1.newline);
+       }
       | RIGHTSHIFT t2=printlist2
-     -> ^(PRINT<Print>[$PRINT, actions.castExpr($t2.elts.get(0)), actions.castExprs($t2.elts, 1), $t2.newline])
+       {
+           stype = new Print($PRINT, actions.castExpr($t2.elts.get(0)), actions.castExprs($t2.elts, 1), $t2.newline);
+       }
       |
-     -> ^(PRINT<Print>[$PRINT, null, new ArrayList<expr>(), true])
+       {
+           stype = new Print($PRINT, null, new ArrayList<expr>(), true);
+       }
       )
       ;
 
@@ -748,17 +761,32 @@ printlist2
       }
     ;
 
-
 //del_stmt: 'del' exprlist
 del_stmt
+@init {
+    stmt stype = null;
+}
+@after {
+   $del_stmt.tree = stype;
+}
     : DELETE del_list
-   -> ^(DELETE<Delete>[$DELETE, $del_list.etypes])
+      {
+          stype = new Delete($DELETE, $del_list.etypes);
+      }
     ;
 
 //pass_stmt: 'pass'
 pass_stmt
+@init {
+    stmt stype = null;
+}
+@after {
+   $pass_stmt.tree = stype;
+}
     : PASS
-   -> ^(PASS<Pass>[$PASS])
+      {
+          stype = new Pass($PASS);
+      }
     ;
 
 //flow_stmt: break_stmt | continue_stmt | return_stmt | raise_stmt | yield_stmt
@@ -772,42 +800,82 @@ flow_stmt
 
 //break_stmt: 'break'
 break_stmt
+@init {
+    stmt stype = null;
+}
+@after {
+   $break_stmt.tree = stype;
+}
     : BREAK
-   -> ^(BREAK<Break>[$BREAK])
+      {
+          stype = new Break($BREAK);
+      }
     ;
 
 //continue_stmt: 'continue'
 continue_stmt
+@init {
+    stmt stype = null;
+}
+@after {
+   $continue_stmt.tree = stype;
+}
     : CONTINUE
       {
           if (!$suite.isEmpty() && $suite::continueIllegal) {
               errorHandler.error("'continue' not supported inside 'finally' clause", new PythonTree($continue_stmt.start));
           }
+          stype = new Continue($CONTINUE);
       }
-   -> ^(CONTINUE<Continue>[$CONTINUE])
     ;
 
 //return_stmt: 'return' [testlist]
 return_stmt
+@init {
+    stmt stype = null;
+}
+@after {
+   $return_stmt.tree = stype;
+}
     : RETURN
       (testlist[expr_contextType.Load]
-     -> ^(RETURN<Return>[$RETURN, actions.castExpr($testlist.tree)])
+       {
+           stype = new Return($RETURN, actions.castExpr($testlist.tree));
+       }
       |
-     -> ^(RETURN<Return>[$RETURN, null])
+       {
+           stype = new Return($RETURN, null);
+       }
       )
       ;
 
 //yield_stmt: yield_expr
 yield_stmt
+@init {
+    stmt stype = null;
+}
+@after {
+   $yield_stmt.tree = stype;
+}
     : yield_expr
-   -> ^(YIELD<Expr>[$yield_expr.start, actions.castExpr($yield_expr.tree)])
+      {
+        stype = new Expr($yield_expr.start, actions.castExpr($yield_expr.tree));
+      }
     ;
 
 //raise_stmt: 'raise' [test [',' test [',' test]]]
 raise_stmt
+@init {
+    stmt stype = null;
+}
+@after {
+   $raise_stmt.tree = stype;
+}
     : RAISE (t1=test[expr_contextType.Load] (COMMA t2=test[expr_contextType.Load]
         (COMMA t3=test[expr_contextType.Load])?)?)?
-   -> ^(RAISE<Raise>[$RAISE, actions.castExpr($t1.tree), actions.castExpr($t2.tree), actions.castExpr($t3.tree)])
+      {
+          stype = new Raise($RAISE, actions.castExpr($t1.tree), actions.castExpr($t2.tree), actions.castExpr($t3.tree));
+      }
     ;
 
 //import_stmt: import_name | import_from
@@ -818,8 +886,16 @@ import_stmt
 
 //import_name: 'import' dotted_as_names
 import_name
+@init {
+    stmt stype = null;
+}
+@after {
+   $import_name.tree = stype;
+}
     : IMPORT dotted_as_names
-   -> ^(IMPORT<Import>[$IMPORT, $dotted_as_names.atypes])
+      {
+          stype = new Import($IMPORT, $dotted_as_names.atypes);
+      }
     ;
 
 //import_from: ('from' ('.'* dotted_name | '.'+)
@@ -915,8 +991,16 @@ exec_stmt
 
 //assert_stmt: 'assert' test [',' test]
 assert_stmt
+@init {
+    stmt stype = null;
+}
+@after {
+   $assert_stmt.tree = stype;
+}
     : ASSERT t1=test[expr_contextType.Load] (COMMA t2=test[expr_contextType.Load])?
-   -> ^(ASSERT<Assert>[$ASSERT, actions.castExpr($t1.tree), actions.castExpr($t2.tree)])
+      {
+          stype = new Assert($ASSERT, actions.castExpr($t1.tree), actions.castExpr($t2.tree));
+      }
     ;
 
 //compound_stmt: if_stmt | while_stmt | for_stmt | try_stmt | funcdef | classdef
@@ -929,12 +1013,19 @@ compound_stmt
     | (decorators? DEF) => funcdef
     | classdef
     ;
-
 //if_stmt: 'if' test ':' suite ('elif' test ':' suite)* ['else' ':' suite]
 if_stmt
+@init {
+    stmt stype = null;
+}
+@after {
+   $if_stmt.tree = stype;
+}
     : IF test[expr_contextType.Load] COLON ifsuite=suite[false] elif_clause?
-   -> ^(IF<If>[$IF, actions.castExpr($test.tree), actions.castStmts($ifsuite.stypes),
-         actions.makeElse($elif_clause.stypes, $elif_clause.tree)])
+      {
+          stype = new If($IF, actions.castExpr($test.tree), actions.castStmts($ifsuite.stypes),
+              actions.makeElse($elif_clause.stypes, $elif_clause.tree));
+      }
     ;
 
 //not in CPython's Grammar file
@@ -1041,9 +1132,17 @@ with_var
 
 //except_clause: 'except' [test [('as' | ',') test]]
 except_clause
+@init {
+    excepthandler extype = null;
+}
+@after {
+   $except_clause.tree = extype;
+}
     : EXCEPT (t1=test[expr_contextType.Load] ((COMMA | AS) t2=test[expr_contextType.Store])?)? COLON suite[!$suite.isEmpty() && $suite::continueIllegal]
-   -> ^(EXCEPT<ExceptHandler>[$EXCEPT, actions.castExpr($t1.tree), actions.castExpr($t2.tree),
-          actions.castStmts($suite.stypes)])
+      {
+          extype = new ExceptHandler($EXCEPT, actions.castExpr($t1.tree), actions.castExpr($t2.tree),
+              actions.castStmts($suite.stypes));
+      }
     ;
 
 //suite: simple_stmt | NEWLINE INDENT stmt+ DEDENT
