@@ -72,7 +72,8 @@ class PyIntegerConstant extends Constant implements ClassConstants, Opcodes {
 }
 
 class PyFloatConstant extends Constant implements ClassConstants, Opcodes {
-
+    private static final double ZERO = 0.0;
+    
     final double value;
 
     PyFloatConstant(double value) {
@@ -98,10 +99,14 @@ class PyFloatConstant extends Constant implements ClassConstants, Opcodes {
     @Override
     public boolean equals(Object o) {
         if (o instanceof PyFloatConstant) {
-            return ((PyFloatConstant) o).value == value;
-        } else {
-            return false;
+            double oVal = ((PyFloatConstant)o).value;
+            if (ZERO == value) {
+                // math.copysign() needs to distinguish signs of zeroes
+                return oVal == value && Double.toString(oVal).equals(Double.toString(value));
+            }
+            return oVal == value;
         }
+        return false;
     }
 }
 
