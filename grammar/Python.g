@@ -901,19 +901,31 @@ import_name
 //import_from: ('from' ('.'* dotted_name | '.'+)
 //              'import' ('*' | '(' import_as_names ')' | import_as_names))
 import_from
+@init {
+    stmt stype = null;
+}
+@after {
+   $import_from.tree = stype;
+}
     : FROM (d+=DOT* dotted_name | d+=DOT+) IMPORT
         (STAR
-       -> ^(FROM<ImportFrom>[$FROM, actions.makeFromText($d, $dotted_name.names),
-             actions.makeModuleNameNode($d, $dotted_name.names),
-             actions.makeStarAlias($STAR), actions.makeLevel($d)])
+         {
+             stype = new ImportFrom($FROM, actions.makeFromText($d, $dotted_name.names),
+                 actions.makeModuleNameNode($d, $dotted_name.names),
+                 actions.makeStarAlias($STAR), actions.makeLevel($d));
+         }
         | i1=import_as_names
-       -> ^(FROM<ImportFrom>[$FROM, actions.makeFromText($d, $dotted_name.names),
-             actions.makeModuleNameNode($d, $dotted_name.names),
-             actions.makeAliases($i1.atypes), actions.makeLevel($d)])
+         {
+             stype = new ImportFrom($FROM, actions.makeFromText($d, $dotted_name.names),
+                 actions.makeModuleNameNode($d, $dotted_name.names),
+                 actions.makeAliases($i1.atypes), actions.makeLevel($d));
+         }
         | LPAREN i2=import_as_names COMMA? RPAREN
-       -> ^(FROM<ImportFrom>[$FROM, actions.makeFromText($d, $dotted_name.names),
-             actions.makeModuleNameNode($d, $dotted_name.names),
-             actions.makeAliases($i2.atypes), actions.makeLevel($d)])
+         {
+             stype = new ImportFrom($FROM, actions.makeFromText($d, $dotted_name.names),
+                 actions.makeModuleNameNode($d, $dotted_name.names),
+                 actions.makeAliases($i2.atypes), actions.makeLevel($d));
+         }
         )
     ;
 
@@ -971,8 +983,16 @@ dotted_name
 
 //global_stmt: 'global' NAME (',' NAME)*
 global_stmt
+@init {
+    stmt stype = null;
+}
+@after {
+   $global_stmt.tree = stype;
+}
     : GLOBAL n+=NAME (COMMA n+=NAME)*
-   -> ^(GLOBAL<Global>[$GLOBAL, actions.makeNames($n), actions.makeNameNodes($n)])
+      {
+          stype = new Global($GLOBAL, actions.makeNames($n), actions.makeNameNodes($n));
+      }
     ;
 
 //exec_stmt: 'exec' expr ['in' test [',' test]]

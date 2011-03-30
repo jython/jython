@@ -88,8 +88,8 @@ public static final PyType TYPE = PyType.fromClass(Global.class);
         this.names = names;
     }
 
-    public Global(Integer ttype, Token token, java.util.List<String> names, java.util.List<Name> nameNodes) {
-        super(ttype, token);
+    public Global(Token token, java.util.List<String> names, java.util.List<Name> nameNodes) {
+        super(token);
         this.names = names;
         this.nameNodes = nameNodes;
     }

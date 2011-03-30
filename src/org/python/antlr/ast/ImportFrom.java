@@ -117,10 +117,10 @@ public static final PyType TYPE = PyType.fromClass(ImportFrom.class);
         setLevel(level);
     }
 
-    public ImportFrom(int ttype, Token token,
+    public ImportFrom(Token token,
                       String module, List<Name> moduleNames,
                       List<alias> names, Integer level) {
-        super(ttype, token);
+        super(token);
         this.module = module;
         this.names = names;
         if (names == null) {
