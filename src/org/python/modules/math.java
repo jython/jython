@@ -11,10 +11,6 @@ import org.python.core.PyLong;
 import org.python.core.PyObject;
 import org.python.core.PyTuple;
 
-//
-// +++++ test the corner cases for every method again (e.g. test_math_jy.py)
-//
-
 public class math implements ClassDictInit {
     public static PyFloat pi = new PyFloat(Math.PI);
     public static PyFloat e = new PyFloat(Math.E);
@@ -31,7 +27,6 @@ public class math implements ClassDictInit {
     private static final double NAN = Double.NaN;
     private static final BigInteger MAX_LONG_BIGINTEGER = new BigInteger(String.valueOf(Long.MAX_VALUE));
     private static final BigInteger MIN_LONG_BIGINTEGER = new BigInteger(String.valueOf(Long.MIN_VALUE));
-
 
     public static void classDictInit(@SuppressWarnings("unused") PyObject dict) {
     }
@@ -556,13 +551,11 @@ public class math implements ClassDictInit {
         }
         return value.longValue();
     }
-    
-    
+
     private static boolean isIntegral(double v) {
         return ceil(v) - v == ZERO;
     }
 
-    
     private static boolean isOdd(double v) {
         return isIntegral(v) && v % TWO != ZERO;
     }
