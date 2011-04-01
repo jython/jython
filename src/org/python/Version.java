@@ -167,6 +167,9 @@ public class Version {
      * timestamp.
      */
     public static String getBuildInfo() {
+        if (HG_VERSION != null && !"".equals(HG_VERSION)) {
+            return getBuildInfoHG();
+        }
         String revision = getSubversionRevision();
         String sep = "".equals(revision) ? "" : ":";
         String branch = getSubversionShortBranch();

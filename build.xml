@@ -393,38 +393,56 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         </svn> 
     </target>
 
-    <!-- XXX: could attempt to utilize subwcrev.exe to get the revision on Windows  -->
-    <target name="svnversion" if="os.family.unix">
-        <exec executable="svnversion" failifexecutionfails="false" outputproperty="build.svn.revision"/>
+    <target name="check-hg">
+      <available file=".hg" type="dir" property="hg.present"/>
+      <condition property="hg-run">
+        <and>
+          <isset property="hg.present"/>
+          <!-- XXX: Might this work on Windows? -->
+          <isset property="os.family.unix"/>
+        </and>
+      </condition>
     </target>
+    <target name="hg-id" depends="check-hg, hg-branch, hg-tag, hg-version"/>
 
-    <!-- XXX: Might this work on Windows? -->
-    <target name="hg-branch" if="os.family.unix">
+    <target name="hg-branch" if="hg-run">
         <exec executable="hg" failifexecutionfails="false" outputproperty="build.hg.branch">
           <arg line="id -b"/>
         </exec>
     </target>
-    <target name="hg-tag" if="os.family.unix">
+    <target name="hg-tag" if="hg-run">
         <exec executable="hg" failifexecutionfails="false" outputproperty="build.hg.tag">
           <arg line="id -t"/>
         </exec>
     </target>
-    <target name="hg-version" if="os.family.unix">
+    <target name="hg-version" if="hg-run">
         <exec executable="hg" failifexecutionfails="false" outputproperty="build.hg.version">
           <arg line="id -i"/>
         </exec>
     </target>
-    <target name="hg-id" depends="hg-branch, hg-tag, hg-version"/>
+
+    <target name="svnversion-check" depends="check-hg">
+      <condition property="svnversion-run">
+        <and>
+          <not>
+            <isset property="hg.present"/>
+          </not>
+          <!-- XXX: could attempt to utilize subwcrev.exe to get the revision on Windows  -->
+          <isset property="os.family.unix"/>
+        </and>
+      </condition>
+    </target>
+    <target name="svnversion" depends="svnversion-check" if="svnversion-run">
+        <exec executable="svnversion" failifexecutionfails="false" outputproperty="build.svn.revision"/>
+    </target>
 
     <!-- skip-brand can be set in ant.properties or as a system property to keep from updating the
          version.properties file and making the jar on every developer build. -->
-    <!-- when hg:
-    <target name="brand-version" depends="init, hg-id" unless="skip-brand">-->
-    <target name="brand-version" depends="init, svnversion" unless="skip-brand">
-        <property name="build.svn.revision" value=""/>
+    <target name="brand-version" depends="init, hg-id, svnversion" unless="skip-brand">
         <property name="build.hg.branch" value=""/>
         <property name="build.hg.tag" value=""/>
         <property name="build.hg.version" value=""/>
+        <property name="build.svn.revision" value=""/>
         <tstamp>
             <format property="build.date" pattern="MMM d yyyy" offset="0"/>
             <format property="build.time" pattern="HH:mm:ss" offset="0"/>
