@@ -2053,10 +2053,7 @@ public final class Py {
      */
     private static PyTuple abstractGetBases(PyObject cls) {
         PyObject bases = cls.__findattr__("__bases__");
-        if (bases instanceof PyTuple) {
-            return (PyTuple) bases;
-        }
-        return null;
+        return bases instanceof PyTuple ? (PyTuple) bases : null;
     }
 
     /**
