@@ -1,7 +1,0 @@
-*.jar *.class *.out *.tmp *.ser *.pyc *.err jpywork cachedir support_config.py *.zip *.diff
-
-.classpath
-.project
-.ipr
-.iws
-.iml
