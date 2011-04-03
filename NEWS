@@ -1,5 +1,9 @@
 Jython NEWS
 
+Jython 2.6a1
+  Bugs Fixed
+    - [ 1727 ] Error in Jython 2.5.2 with os.stat and varargs
+
 Jython 2.5.2
   same as 2.5.2rc4
 

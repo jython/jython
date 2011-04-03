@@ -24,7 +24,7 @@ import org.jruby.ext.posix.util.Platform;
 
 import org.python.core.ClassDictInit;
 import org.python.core.Py;
-import org.python.core.PyBuiltinFunction;
+import org.python.core.PyBuiltinFunctionNarrow;
 import org.python.core.PyDictionary;
 import org.python.core.PyException;
 import org.python.core.PyFile;
@@ -34,7 +34,6 @@ import org.python.core.PyList;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyTuple;
-import org.python.core.ThreadState;
 import org.python.core.imp;
 import org.python.core.io.IOBase;
 import org.python.core.io.FileDescriptors;
@@ -929,15 +928,15 @@ public class PosixModule implements ClassDictInit {
         return os.getModuleName();
     }
 
-    static class LstatFunction extends PyBuiltinFunction {
+    static class LstatFunction extends PyBuiltinFunctionNarrow {
         LstatFunction() {
-            super("lstat",
+            super("lstat", 1, 1,
                   "lstat(path) -> stat result\n\n" +
                   "Like stat(path), but do not follow symbolic links.");
         }
 
         @Override
-        public PyObject __call__(ThreadState state, PyObject pathObj) {
+        public PyObject __call__(PyObject pathObj) {
             if (!(pathObj instanceof PyString)) {
                 throw Py.TypeError(String.format("coercing to Unicode: need string or buffer, %s " +
                                                  "found", pathObj.getType().fastGetName()));
@@ -947,9 +946,9 @@ public class PosixModule implements ClassDictInit {
         }
     }
 
-    static class StatFunction extends PyBuiltinFunction {
+    static class StatFunction extends PyBuiltinFunctionNarrow {
         StatFunction() {
-            super("stat",
+            super("stat", 1, 1,
                   "stat(path) -> stat result\n\n" +
                   "Perform a stat system call on the given path.\n\n" +
                   "Note that some platforms may return only a small subset of the\n" +
@@ -957,7 +956,7 @@ public class PosixModule implements ClassDictInit {
         }
 
         @Override
-        public PyObject __call__(ThreadState state, PyObject pathObj) {
+        public PyObject __call__(PyObject pathObj) {
             if (!(pathObj instanceof PyString)) {
                 throw Py.TypeError(String.format("coercing to Unicode: need string or buffer, %s " +
                                                  "found", pathObj.getType().fastGetName()));
