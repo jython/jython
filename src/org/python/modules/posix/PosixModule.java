@@ -609,9 +609,9 @@ public class PosixModule implements ClassDictInit {
     public static PyString __doc__read = new PyString(
         "read(fd, buffersize) -> string\n\n" +
         "Read a file descriptor.");
-    public static String read(PyObject fd, int buffersize) {
+    public static PyObject read(PyObject fd, int buffersize) {
         try {
-            return StringUtil.fromBytes(FileDescriptors.get(fd).read(buffersize));
+            return new PyString(StringUtil.fromBytes(FileDescriptors.get(fd).read(buffersize)));
         } catch (PyException pye) {
             throw badFD();
         }
