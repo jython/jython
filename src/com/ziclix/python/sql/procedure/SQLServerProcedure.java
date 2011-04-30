@@ -1,7 +1,6 @@
 /*
  * Jython Database Specification API 2.0
  *
- * $Id$
  *
  * Copyright (c) 2002 brian zimmer <mailto:bzimmer@ziclix.com>
  *
@@ -19,8 +18,6 @@ import java.sql.SQLException;
  * Stored procedure support for SQLServer.
  *
  * @author brian zimmer
- * @author last revised by $Author$
- * @version $Revision$
  */
 public class SQLServerProcedure extends Procedure {
 

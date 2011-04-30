@@ -1,7 +1,6 @@
 /*
  * Jython Database Specification API 2.0
  *
- * $Id$
  *
  * Copyright (c) 2001 brian zimmer <bzimmer@ziclix.com>
  *
@@ -12,7 +11,6 @@ package com.ziclix.python.sql.pipe.csv;
  * A utility class to aide in quoting CSV strings.
  *
  * @author brian zimmer
- * @version $Revision$
  */
 public class CSVString {
 

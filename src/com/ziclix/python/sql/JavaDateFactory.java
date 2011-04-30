@@ -1,7 +1,6 @@
 /*
  * Jython Database Specification API 2.0
  *
- * $Id$
  *
  * Copyright (c) 2003 brian zimmer <bzimmer@ziclix.com>
  *
@@ -19,8 +18,6 @@ import java.util.Calendar;
  * Produce java.[util|sql] type dates.
  *
  * @author brian zimmer
- * @author last revised by $Author$
- * @version $Revision$
  */
 public class JavaDateFactory implements DateFactory {
 

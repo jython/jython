@@ -1,7 +1,6 @@
 /*
  * Jython Database Specification API 2.0
  *
- * $Id$
  *
  * Copyright (c) 2001 brian zimmer <bzimmer@ziclix.com>
  *
@@ -17,8 +16,6 @@ import org.python.core.PyInteger;
  * a SQL datatype value.
  *
  * @author brian zimmer
- * @author last modified by $Author$
- * @version $Revision$
  */
 public final class DBApiType extends PyInteger {
 

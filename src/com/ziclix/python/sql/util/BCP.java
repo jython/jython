@@ -1,7 +1,6 @@
 /*
  * Jython Database Specification API 2.0
  *
- * $Id$
  *
  * Copyright (c) 2001 brian zimmer <bzimmer@ziclix.com>
  *
@@ -188,9 +187,6 @@ public class BCP extends PyObject implements ClassDictInit {
 }
 
 /**
- * @author last modified by $Author$
- * @version $Revision$
- * @date last modified on $Date$
  * @copyright 2001 brian zimmer
  */
 class BCPFunc extends PyBuiltinMethodSet {

@@ -1,5 +1,3 @@
-# $Id$
-
 """
 This script provides platform independence by wrapping Python
 Database API 2.0 compatible drivers to allow seamless database

@@ -1,7 +1,6 @@
 /*
  * Jython Database Specification API 2.0
  *
- * $Id: DataHandler.java 3708 2007-11-20 20:03:46Z pjenvey $
  *
  * Copyright (c) 2001 brian zimmer <bzimmer@ziclix.com>
  *
@@ -37,8 +36,6 @@ import org.python.core.util.StringUtil;
  * objects for DATE, TIME and TIMESTAMP columns, instead of java.sql.* classes.
  *
  * @author brian zimmer
- * @author last revised by $Author: pjenvey $
- * @version $Revision: 3708 $
  */
 public class Jython22DataHandler extends DataHandler {
     /**

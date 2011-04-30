@@ -1,7 +1,6 @@
 /*
  * Jython Database Specification API 2.0
  *
- * $Id$
  *
  * Copyright (c) 2001 brian zimmer <bzimmer@ziclix.com>
  *
@@ -15,7 +14,6 @@ import org.python.core.PyObject;
  * from anywhere, but must follow the format detail in next().
  *
  * @author brian zimmer
- * @version $Revision$
  * @see #next
  * @see Sink
  */

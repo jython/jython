@@ -1,7 +1,6 @@
 /*
  * Jython Database Specification API 2.0
  *
- * $Id$
  *
  * Copyright (c) 2001 brian zimmer <bzimmer@ziclix.com>
  *
@@ -24,8 +23,6 @@ import org.python.util.Generic;
  * Handle the rowid methods since the API is not available until JDBC 3.0.
  *
  * @author brian zimmer
- * @author last revised by $Author$
- * @version $Revision$
  */
 public abstract class RowIdHandler extends FilterDataHandler {
 
