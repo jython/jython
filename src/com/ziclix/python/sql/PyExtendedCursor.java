@@ -1,7 +1,6 @@
 /*
  * Jython Database Specification API 2.0
  *
- * $Id$
  *
  * Copyright (c) 2001 brian zimmer <bzimmer@ziclix.com>
  *
@@ -22,8 +21,6 @@ import org.python.core.PyString;
  * A cursor with extensions to the DB API 2.0.
  *
  * @author brian zimmer
- * @author last revised by $Author$
- * @version $Revision$
  */
 public class PyExtendedCursor extends PyCursor {
     /**

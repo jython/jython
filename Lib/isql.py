@@ -1,5 +1,3 @@
-# $Id$
-
 import dbexts, cmd, sys, os
 
 """

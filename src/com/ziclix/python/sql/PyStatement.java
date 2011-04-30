@@ -1,7 +1,6 @@
 /*
  * Jython Database Specification API 2.0
  *
- * $Id$
  *
  * Copyright (c) 2001 brian zimmer <bzimmer@ziclix.com>
  *
@@ -25,7 +24,6 @@ import java.sql.Statement;
  * Class PyStatement
  *
  * @author brian zimmer
- * @version $Revision$
  */
 public class PyStatement extends PyObject {
 

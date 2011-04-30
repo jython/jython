@@ -1,7 +1,6 @@
 /*
  * Jython Database Specification API 2.0
  *
- * $Id$
  *
  * Copyright (c) 2001 brian zimmer <bzimmer@ziclix.com>
  *
@@ -48,7 +47,6 @@ import java.util.Set;
  * require the entire result set be presented as one.</p>
  *
  * @author brian zimmer
- * @version $Revision$
  */
 abstract public class Fetch {
 

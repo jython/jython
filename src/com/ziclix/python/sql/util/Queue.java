@@ -1,7 +1,6 @@
 /*
  * Jython Database Specification API 2.0
  *
- * $Id$
  *
  * Copyright (c) 2001 brian zimmer <bzimmer@ziclix.com>
  *
@@ -16,7 +15,6 @@ import java.util.LinkedList;
  * queue size under a certain threshold.
  *
  * @author brian zimmer
- * @version $Revision$
  */
 public class Queue {
 

@@ -1,7 +1,4 @@
 #!/usr/bin/env jython
-
-# $Id$
-
 """
 This is to be used with the DB API compatibility test available @
   http://stuartbishop.net/Software/DBAPI20TestSuite/

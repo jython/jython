@@ -1,7 +1,6 @@
 /*
 * Jython Database Specification API 2.0
 *
-* $Id$
 *
 * Copyright (c) 2001 brian zimmer <bzimmer@ziclix.com>
 *
@@ -24,8 +23,6 @@ import java.sql.Types;
  * Postgresql specific data handling.
  *
  * @author brian zimmer
- * @author last revised by $Author$
- * @version $Revision$
  */
 public class PostgresqlDataHandler extends RowIdHandler {
 

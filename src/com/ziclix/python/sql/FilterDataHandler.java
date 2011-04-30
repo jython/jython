@@ -1,7 +1,6 @@
 /*
  * Jython Database Specification API 2.0
  *
- * $Id$
  *
  * Copyright (c) 2001 brian zimmer <bzimmer@ziclix.com>
  *
@@ -25,8 +24,6 @@ import java.sql.Statement;
  * pass all requests to the contained data handler.
  *
  * @author brian zimmer
- * @author last revised by $Author$
- * @version $Revision$
  */
 public abstract class FilterDataHandler extends DataHandler {
 

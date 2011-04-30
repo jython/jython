@@ -1,7 +1,6 @@
 /*
  * Jython Database Specification API 2.0
  *
- * $Id$
  *
  * Copyright (c) 2001 brian zimmer <bzimmer@ziclix.com>
  *
@@ -18,7 +17,6 @@ import java.io.PrintWriter;
  * The CSVSink writes data out in a Comma Seperated Format.
  *
  * @author brian zimmer
- * @version $Revision$
  */
 public class CSVSink implements Sink {
 

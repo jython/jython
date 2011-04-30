@@ -1,7 +1,6 @@
 /*
  * Jython Database Specification API 2.0
  *
- * $Id$
  *
  * Copyright (c) 2001 brian zimmer <bzimmer@ziclix.com>
  *
@@ -21,7 +20,6 @@ import com.ziclix.python.sql.util.*;
  * or table to another.
  *
  * @author brian zimmer
- * @version $Revision$
  */
 public class Pipe {
 
@@ -104,10 +102,7 @@ public class Pipe {
  * Class PipeRunner
  *
  * @author
- * @author last modified by $Author$
- * @version $Revision$
  * @date $today.date$
- * @date last modified on $Date$
  * @copyright 2001 brian zimmer
  */
 abstract class PipeRunner extends Thread {
@@ -193,10 +188,7 @@ abstract class PipeRunner extends Thread {
  * Class SourceRunner
  *
  * @author
- * @author last modified by $Author$
- * @version $Revision$
  * @date $today.date$
- * @date last modified on $Date$
  * @copyright 2001 brian zimmer
  */
 class SourceRunner extends PipeRunner {
@@ -250,10 +242,7 @@ class SourceRunner extends PipeRunner {
  * Class SinkRunner
  *
  * @author
- * @author last modified by $Author$
- * @version $Revision$
  * @date $today.date$
- * @date last modified on $Date$
  * @copyright 2001 brian zimmer
  */
 class SinkRunner extends PipeRunner {
