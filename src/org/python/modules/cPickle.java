@@ -350,10 +350,7 @@ public class cPickle implements ClassDictInit {
      * The doc string
      */
     public static String __doc__ =
-       "Java implementation and optimization of the Python pickle module\n" +
-       "\n" +
-       "$Id$\n";
-
+       "Java implementation and optimization of the Python pickle module\n";
 
     /**
      * The program version.

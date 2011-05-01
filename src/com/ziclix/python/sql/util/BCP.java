@@ -148,8 +148,6 @@ public class BCP extends PyObject implements ClassDictInit {
      * @param dict
      */
     static public void classDictInit(PyObject dict) {
-
-        dict.__setitem__("__version__", Py.newString("$Revision$").__getslice__(Py.newInteger(11), Py.newInteger(-2), null));
         dict.__setitem__("bcp", new BCPFunc("bcp", 0, 1, 2, zxJDBC.getString("bcp")));
         dict.__setitem__("batchsize", Py.newString(zxJDBC.getString("batchsize")));
         dict.__setitem__("queuesize", Py.newString(zxJDBC.getString("queuesize")));

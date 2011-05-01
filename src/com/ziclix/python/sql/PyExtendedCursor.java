@@ -104,7 +104,6 @@ public class PyExtendedCursor extends PyCursor {
      */
     static public void classDictInit(PyObject dict) {
         PyCursor.classDictInit(dict);
-        dict.__setitem__("__version__", Py.newString("$Revision$").__getslice__(Py.newInteger(11), Py.newInteger(-2), null));
         dict.__setitem__("tables", new ExtendedCursorFunc("tables", 100, 4, 4, "query for table information"));
         dict.__setitem__("columns", new ExtendedCursorFunc("columns", 101, 4, 4, "query for column information"));
         dict.__setitem__("primarykeys", new ExtendedCursorFunc("primarykeys", 102, 3, 3, "query for primary keys"));

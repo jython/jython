@@ -4,9 +4,6 @@ This is to be used with the DB API compatibility test available @
   http://stuartbishop.net/Software/DBAPI20TestSuite/
 """
 
-__rcs_id__  = '$Id$'
-__version__ = '$Revision$'
-
 import dbapi20
 import unittest
 from com.ziclix.python.sql import zxJDBC as zxjdbc
