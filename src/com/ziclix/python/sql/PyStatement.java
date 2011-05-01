@@ -144,10 +144,7 @@ public class PyStatement extends PyObject {
      * @param dict
      */
     static public void classDictInit(PyObject dict) {
-        PyObject version =
-                Py.newString("$Revision$").__getslice__(Py.newInteger(11),
-                                                               Py.newInteger(-2));
-        dict.__setitem__("__version__", version);
+        dict.__setitem__("__version__", Py.newString("7290"));
 
         // hide from python
         dict.__setitem__("classDictInit", null);

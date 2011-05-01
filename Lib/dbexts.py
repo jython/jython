@@ -47,7 +47,7 @@ import os, re
 from types import StringType
 
 __author__ = "brian zimmer (bzimmer@ziclix.com)"
-__version__ = "$Revision$"[11:-2]
+__version__ = "7290"
 
 __OS__ = os.name
 

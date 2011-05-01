@@ -243,10 +243,7 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
      * @param dict
      */
     static public void classDictInit(PyObject dict) {
-        PyObject version =
-                Py.newString("$Revision$").__getslice__(Py.newInteger(11),
-                                                               Py.newInteger(-2));
-        dict.__setitem__("__version__", version);
+        dict.__setitem__("__version__", Py.newString("7290"));
         dict.__setitem__("fetchmany", new CursorFunc("fetchmany", 0, 0, 1, "fetch specified number of rows"));
         dict.__setitem__("close", new CursorFunc("close", 1, 0, "close the cursor"));
         dict.__setitem__("fetchall", new CursorFunc("fetchall", 2, 0, "fetch all results"));

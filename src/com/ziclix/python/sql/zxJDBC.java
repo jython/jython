@@ -118,14 +118,10 @@ public class zxJDBC extends PyObject implements ClassDictInit {
      * @param dict
      */
     public static void classDictInit(PyObject dict) {
-        PyObject version =
-                Py.newString("$Revision$").__getslice__(Py.newInteger(11),
-                                                               Py.newInteger(-2));
-
         dict.__setitem__("apilevel", new PyString("2.0"));
         dict.__setitem__("threadsafety", new PyInteger(1));
         dict.__setitem__("paramstyle", new PyString("qmark"));
-        dict.__setitem__("__version__", version);
+        dict.__setitem__("__version__", Py.newString("7290"));
         dict.__setitem__("Date", new zxJDBCFunc("Date", 1, 3, 3,
                                                 "construct a Date from year, month, day"));
         dict.__setitem__("Time", new zxJDBCFunc("Time", 2, 3, 3,

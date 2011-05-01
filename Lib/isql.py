@@ -5,7 +5,7 @@ Isql works in conjunction with dbexts to provide an interactive environment
 for database work.
 """
 
-__version__ = "$Revision$"[11:-2]
+__version__ = "7290"
 
 class IsqlExit(Exception): pass
 
