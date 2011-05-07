@@ -1,7 +1,5 @@
 # Asynchronous sockets in Jython.
 #
-# $Id$
-#
 # Copyright (c) 2002 brian zimmer <mailto:bzimmer@ziclix.com>
 
 '''
