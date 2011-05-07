@@ -946,8 +946,7 @@ public class PySystemState extends PyObject implements ClassDictInit {
                                    Py.newInteger(Version.PY_MICRO_VERSION),
                                    Py.newString(s),
                                    Py.newInteger(Version.PY_RELEASE_SERIAL));
-        subversion = new PyTuple(Py.newString("Jython"), Py.newString(Version.BRANCH),
-                                 Py.newString(Version.SVN_REVISION));
+        subversion = new PyTuple(Py.newString("Jython"), Py.EmptyString, Py.EmptyString);
         _mercurial = new PyTuple(Py.newString("Jython"), Py.newString(Version.getHGIdentifier()),
                                  Py.newString(Version.getHGVersion()));
     }
