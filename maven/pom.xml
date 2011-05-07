@@ -23,6 +23,8 @@
     	</license>
   	</licenses>
   	<scm>
-  		<url>http://jython.svn.sourceforge.net/viewvc/jython/</url>
+  		<connection>scm:hg:http://hg.python.org/jython</connection>
+  		<developerConnection>scm:hg:ssh://hg@hg.python.org/jython</developerConnection>
+  		<url>http://hg.python.org/jython</url>
   	</scm>
 </project>
