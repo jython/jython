@@ -74,8 +74,6 @@ public class PySystemState extends PyObject implements ClassDictInit {
 
     public final static Class flags = Options.class;
     
-    public static PyTuple subversion;
-
     public static PyTuple _mercurial;
     /**
      * The copyright notice for this release.
@@ -956,8 +954,6 @@ public class PySystemState extends PyObject implements ClassDictInit {
                                    Py.newInteger(Version.PY_MICRO_VERSION),
                                    Py.newString(s),
                                    Py.newInteger(Version.PY_RELEASE_SERIAL));
-        subversion = new PyTuple(Py.newString("Jython"), Py.newString(Version.BRANCH),
-                                 Py.newString(Version.SVN_REVISION));
         _mercurial = new PyTuple(Py.newString("Jython"), Py.newString(Version.getHGIdentifier()),
                                  Py.newString(Version.getHGVersion()));
     }

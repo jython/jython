@@ -421,28 +421,12 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         </exec>
     </target>
 
-    <target name="svnversion-check" depends="check-hg">
-      <condition property="svnversion-run">
-        <and>
-          <not>
-            <isset property="hg.present"/>
-          </not>
-          <!-- XXX: could attempt to utilize subwcrev.exe to get the revision on Windows  -->
-          <isset property="os.family.unix"/>
-        </and>
-      </condition>
-    </target>
-    <target name="svnversion" depends="svnversion-check" if="svnversion-run">
-        <exec executable="svnversion" failifexecutionfails="false" outputproperty="build.svn.revision"/>
-    </target>
-
     <!-- skip-brand can be set in ant.properties or as a system property to keep from updating the
          version.properties file and making the jar on every developer build. -->
-    <target name="brand-version" depends="init, hg-id, svnversion" unless="skip-brand">
+    <target name="brand-version" depends="init, hg-id" unless="skip-brand">
         <property name="build.hg.branch" value=""/>
         <property name="build.hg.tag" value=""/>
         <property name="build.hg.version" value=""/>
-        <property name="build.svn.revision" value=""/>
         <tstamp>
             <format property="build.date" pattern="MMM d yyyy" offset="0"/>
             <format property="build.time" pattern="HH:mm:ss" offset="0"/>
@@ -457,7 +441,6 @@ jython.release_level=${jython.release_level}
 jython.release_serial=${jython.release_serial}
 jython.build.date=${build.date}
 jython.build.time=${build.time}
-jython.build.svn_revision=${build.svn.revision}
 jython.build.hg_branch=${build.hg.branch}
 jython.build.hg_tag=${build.hg.tag}
 jython.build.hg_version=${build.hg.version}</echo>

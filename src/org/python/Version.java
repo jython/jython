@@ -30,19 +30,9 @@ public class Version {
     public static int PY_RELEASE_LEVEL;
     public static int PY_RELEASE_SERIAL;
 
-    /** Timestamp and revision number of the current build. */
+    /** Timestamp of the current build. */
     public static String DATE;
     public static String TIME;
-    public static String SVN_REVISION;
-    /** Current hg global revision id (hg id -i). */
-    public static String HG_VERSION;
-
-    /** Determined from headURL, branch is the path under the
-     * subversion root, e.g. branches/asm. */
-    public static String BRANCH;
-
-    /** Short version of branch, e.g. asm. */
-    public static String SHORT_BRANCH;
 
     /** Current hg branch (hg id -b). */
     public static String HG_BRANCH;
@@ -50,44 +40,15 @@ public class Version {
     /** Current hg tag (hg id -t), e.g. 'tip'. */
     public static String HG_TAG;
 
+    /** Current hg global revision id (hg id -i). */
+    public static String HG_VERSION;
+
     /** The flags that are set by default in a code object. */
     private static final Collection<CodeFlag> defaultCodeFlags = Arrays.asList(
             CodeFlag.CO_NESTED, CodeFlag.CO_GENERATOR_ALLOWED, CodeFlag.CO_FUTURE_WITH_STATEMENT);
 
-    private static final String headURL =
-            "$HeadURL$";
-
     static {
-        initVersion();
-    }
-
-    /**
-     * Load the version information and determine BRANCH and
-     * SHORT_BRANCH from headURL.
-     */
-    private static void initVersion() {
         loadProperties();
-
-        int jython = headURL.indexOf("/jython/");
-        if (jython > -1) {
-            int brStart = jython + 8;
-            String end = headURL.substring(brStart, headURL.length());
-
-            if (end.startsWith("trunk/")) {
-                BRANCH = SHORT_BRANCH = "trunk";
-                return;
-            } else if (end.startsWith("tags/") || end.startsWith("branches/")) {
-                int brEnd = end.indexOf('/');
-                int brEnd2 = end.indexOf('/', brEnd + 1);
-                if (brEnd2 > -1) {
-                    BRANCH = end.substring(0, brEnd2);
-                    SHORT_BRANCH = end.substring(brEnd + 1, brEnd2);
-                    return;
-                }
-            }
-        }
-        BRANCH = "";
-        SHORT_BRANCH = "unknown";
     }
 
     /**
@@ -110,7 +71,6 @@ public class Version {
                 PY_RELEASE_SERIAL = Integer.valueOf(properties.getProperty("jython.release_serial"));
                 DATE = properties.getProperty("jython.build.date");
                 TIME = properties.getProperty("jython.build.time");
-                SVN_REVISION = properties.getProperty("jython.build.svn_revision");
                 HG_BRANCH = properties.getProperty("jython.build.hg_branch");
                 HG_TAG = properties.getProperty("jython.build.hg_tag");
                 HG_VERSION = properties.getProperty("jython.build.hg_version");
@@ -133,21 +93,6 @@ public class Version {
     }
 
     /**
-     * Return the current subversion revision number. May be an empty
-     * string on environments that can't determine it.
-     */
-    public static String getSubversionRevision() {
-        return SVN_REVISION;
-    }
-
-    /**
-     * Return the current branch name.
-     */
-    public static String getSubversionShortBranch() {
-        return SHORT_BRANCH;
-    }
-
-    /**
      * Return the current hg version number. May be an empty string on environments that
      * can't determine it.
      */
@@ -163,23 +108,9 @@ public class Version {
     }
 
     /**
-     * Return the current build information, including revision and
-     * timestamp.
-     */
-    public static String getBuildInfo() {
-        if (HG_VERSION != null && !"".equals(HG_VERSION)) {
-            return getBuildInfoHG();
-        }
-        String revision = getSubversionRevision();
-        String sep = "".equals(revision) ? "" : ":";
-        String branch = getSubversionShortBranch();
-        return String.format("%s%s%s, %.20s, %.9s", branch, sep, revision, DATE, TIME);
-    }
-
-    /**
      * Return the current build information, including revision and timestamp.
      */
-    public static String getBuildInfoHG() {
+    public static String getBuildInfo() {
         String revision = getHGVersion();
         String sep = "".equals(revision) ? "" : ":";
         String hgId = getHGIdentifier();
