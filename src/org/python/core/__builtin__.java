@@ -9,6 +9,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -359,6 +360,7 @@ public class __builtin__ {
         dict.__setitem__("all", new AllFunction());
         dict.__setitem__("any", new AnyFunction());
         dict.__setitem__("format", new FormatFunction());
+        dict.__setitem__("print", new PrintFunction());
     }
 
     public static PyObject abs(PyObject o) {
@@ -1320,6 +1322,29 @@ class FormatFunction extends PyBuiltinFunctionNarrow {
     @Override
     public PyObject __call__(PyObject arg1, PyObject arg2) {
         return arg1.__format__(arg2);
+    }
+}
+
+class PrintFunction extends PyBuiltinFunction {
+    PrintFunction() {
+
+        super("print",
+              "print(value, ..., sep=' ', end='\\n', file=sys.stdout)\n\n" +
+              "Prints the values to a stream, or to sys.stdout by default.\n" +
+              "Optional keyword arguments:\n" +
+              "file: a file-like object (stream); defaults to the current sys.stdout.\n" +
+              "sep:  string inserted between values, default a space.\n" +
+              "end:  string appended after the last value, default a newline.\n");
+    }
+
+    @Override
+    public PyObject __call__(PyObject args[], String kwds[]) {
+        Map<String, PyObject> keyargs = new HashMap<String, PyObject>();
+        int kwlen = kwds.length;
+        for (int i=kwlen;i>0;i--) {
+            keyargs.put(kwds[kwlen - i], args[args.length - i]);
+        }
+        return Py.None;
     }
 }
 

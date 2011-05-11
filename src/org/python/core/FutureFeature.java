@@ -24,6 +24,10 @@ public enum FutureFeature implements Pragma {
      */
     with_statement(CodeFlag.CO_FUTURE_WITH_STATEMENT),
     /**
+     * Enables the print function.
+     */
+    print_function(CodeFlag.CO_FUTURE_PRINT_FUNCTION),
+    /**
      * Use braces for block delimiters instead of indentation.
      */
     braces {

@@ -165,6 +165,8 @@ import java.util.ListIterator;
 
     private String encoding;
 
+    private boolean printStatement = true;
+
     public void setErrorHandler(ErrorHandler eh) {
         this.errorHandler = eh;
         actions.setErrorHandler(eh);
@@ -374,6 +376,19 @@ dotted_attr
       )
     ;
 
+//not in CPython's Grammar file
+// This is used to allow PRINT as a NAME for the __future__ print_function.
+name_or_print
+    returns [Token tok]
+    : NAME {
+        $tok = $name_or_print.start;
+    }
+    | {!printStatement}? => PRINT {
+        $tok = $name_or_print.start;
+    }
+    ;
+
+//not in CPython's Grammar file
 //attr is here for Java  compatibility.  A Java foo.getIf() can be called from Jython as foo.if
 //     so we need to support any keyword as an attribute.
 
@@ -456,13 +471,13 @@ funcdef
 @after {
     $funcdef.tree = stype;
 }
-    : decorators? DEF NAME parameters COLON suite[false]
+    : decorators? DEF name_or_print parameters COLON suite[false]
     {
         Token t = $DEF;
         if ($decorators.start != null) {
             t = $decorators.start;
         }
-        stype = actions.makeFuncdef(t, $NAME, $parameters.args, $suite.stypes, $decorators.etypes);
+        stype = actions.makeFuncdef(t, $name_or_print.start, $parameters.args, $suite.stypes, $decorators.etypes);
     }
     ;
 
@@ -584,7 +599,6 @@ simple_stmt
 //small_stmt: (expr_stmt | print_stmt  | del_stmt | pass_stmt | flow_stmt |
 //             import_stmt | global_stmt | exec_stmt | assert_stmt)
 small_stmt : expr_stmt
-           | print_stmt
            | del_stmt
            | pass_stmt
            | flow_stmt
@@ -592,6 +606,7 @@ small_stmt : expr_stmt
            | global_stmt
            | exec_stmt
            | assert_stmt
+           | {printStatement}? => print_stmt
            ;
 
 //expr_stmt: testlist (augassign (yield_expr|testlist) |
@@ -916,6 +931,9 @@ import_from
          }
         | i1=import_as_names
          {
+             if ($dotted_name.text.equals("__future__") && $i1.text.equals("print_function")) {
+                 printStatement = false;
+             }
              stype = new ImportFrom($FROM, actions.makeFromText($d, $dotted_name.names),
                  actions.makeModuleNameNode($d, $dotted_name.names),
                  actions.makeAliases($i1.atypes), actions.makeLevel($d));
@@ -1691,9 +1709,9 @@ atom
        {
            etype = new Repr($lb, actions.castExpr($testlist.tree));
        }
-     | NAME
+     | name_or_print
        {
-           etype = new Name($NAME, $NAME.text, $expr::ctype);
+           etype = new Name($name_or_print.start, $name_or_print.text, $expr::ctype);
        }
      | INT
        {
