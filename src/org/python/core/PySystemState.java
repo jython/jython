@@ -162,6 +162,9 @@ public class PySystemState extends PyObject implements ClassDictInit {
     /** true when a SystemRestart is triggered. */
     public boolean _systemRestart = false;
 
+    /** Whether bytecode should be written to disk on import. */
+    public boolean dont_write_bytecode = false;
+
     // Automatically close resources associated with a PySystemState when they get GCed
     private final PySystemStateCloser closer;
     private static final ReferenceQueue<PySystemState> systemStateQueue =
@@ -189,6 +192,7 @@ public class PySystemState extends PyObject implements ClassDictInit {
 
         currentWorkingDir = new File("").getAbsolutePath();
 
+        dont_write_bytecode = Options.dontWriteBytecode;
         py3kwarning = Options.py3kwarning;
         // Set up the initial standard ins and outs
         String mode = Options.unbuffered ? "b" : "";

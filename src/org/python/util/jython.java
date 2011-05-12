@@ -39,7 +39,7 @@ public class jython {
 
     private static final String usage = usageHeader +
         "Options and arguments:\n" + //(and corresponding environment variables):\n" +
-        //"-B     : don't write .py[co] files on import; also PYTHONDONTWRITEBYTECODE=x\n" +
+        "-B     : don't write .py[co] files on import\n" + // "; also PYTHONDONTWRITEBYTECODE=x\n" +
         "-c cmd   : program passed in as string (terminates option list)\n" +
         //"-d       : debug output from parser (also PYTHONDEBUG=x)\n" +
         "-Dprop=v : Set the property `prop' to value `v'\n"+
@@ -435,6 +435,8 @@ class CommandLineOptions {
                 Options.verbose +=3 ;
             } else if (arg.equals("-S")) {
                 Options.importSite = false;
+            } else if (arg.equals("-B")) {
+                Options.dontWriteBytecode = true;
             } else if (arg.startsWith("-c")) {
                 runCommand = true;
                 if (arg.length() > 2) {
