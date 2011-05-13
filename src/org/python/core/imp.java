@@ -341,7 +341,9 @@ public class imp {
     public static PyObject createFromSource(String name, InputStream fp,
             String filename, String outFilename, long mtime) {
         byte[] bytes = compileSource(name, fp, filename, mtime);
-        outFilename = cacheCompiledSource(filename, outFilename, bytes);
+        if (!Py.getSystemState().dont_write_bytecode) {
+            outFilename = cacheCompiledSource(filename, outFilename, bytes);
+        }
 
         Py.writeComment(IMPORT_LOG, "'" + name + "' as " + filename);
 
