@@ -2092,7 +2092,7 @@ public final class Py {
     }
 }
 
- class FixedFileWrapper extends StdoutWrapper {
+class FixedFileWrapper extends StdoutWrapper {
 
     private PyObject file;
 

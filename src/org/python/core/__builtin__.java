@@ -1339,10 +1339,29 @@ class PrintFunction extends PyBuiltinFunction {
 
     @Override
     public PyObject __call__(PyObject args[], String kwds[]) {
+        //XXX: integrate into ArgParser - need key checks etc.
+        //     ArgParser will need to be extended to take keyword-only args.
         Map<String, PyObject> keyargs = new HashMap<String, PyObject>();
         int kwlen = kwds.length;
-        for (int i=kwlen;i>0;i--) {
+        for (int i=kwlen; i>0; i--) {
             keyargs.put(kwds[kwlen - i], args[args.length - i]);
+        }
+        PyObject values[] = new PyObject[args.length - kwlen];
+        System.arraycopy(args, 0, values, 0, args.length - kwlen);
+        return print(values, keyargs.get("sep"), keyargs.get("end"), keyargs.get("file"));
+    }
+
+    private static PyObject print(PyObject values[], PyObject sep, PyObject end, PyObject file) {
+        StdoutWrapper out = Py.stdout;
+        if (file != null && file != Py.None) {
+            out = new FixedFileWrapper(file);
+        }
+
+        if (values.length == 0) {
+            out.println();
+        } else {
+            boolean newline = end == null || end.__nonzero__();
+            out.print(values, false, newline, sep);
         }
         return Py.None;
     }
