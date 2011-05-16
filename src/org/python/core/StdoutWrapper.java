@@ -123,7 +123,7 @@ public class StdoutWrapper extends OutputStream {
         return s;
     }
 
-    private void printToObject(PyObject file, PyObject o) {
+    private void printToFileObject(PyObject file, PyObject o) {
         if (!(o instanceof PyUnicode)) {
             o = o.__str__();
         }
@@ -147,8 +147,21 @@ public class StdoutWrapper extends OutputStream {
             printToFile(file, end);
         } else if (out instanceof PyFileWriter) {
             PyFileWriter file = (PyFileWriter)out;
+            for (int i=0;i<args.length;i++) {
+                printToFileWriter(file, args[i]);
+                if (i < args.length -1) {
+                    printToFileWriter(file, sep);
+                }
+            }
             printToFileWriter(file, end);
         } else {
+            for (int i=0;i<args.length;i++) {
+                printToFileObject(out, args[i]);
+                if (i < args.length -1) {
+                    printToFileObject(out, sep);
+                }
+            }
+            printToFileObject(out, end);
         }
     }
 
@@ -220,7 +233,7 @@ public class StdoutWrapper extends OutputStream {
                 out.__setattr__("softspace", space ? Py.One : Py.Zero);
             }
 
-            printToObject(out, o);
+            printToFileObject(out, o);
 
             if (newline) {
                 out.invoke("write", Py.Newline);
@@ -250,6 +263,10 @@ public class StdoutWrapper extends OutputStream {
     }
 
     public void println() {
+        println(false);
+    }
+
+    public void println(boolean useUnicode) {
         PyObject out = myFile();
 
         if (out instanceof PyFile) {
@@ -258,7 +275,11 @@ public class StdoutWrapper extends OutputStream {
             file.flush();
             file.softspace = false;
         } else {
-            out.invoke("write", Py.Newline);
+            if (useUnicode) {
+                out.invoke("write", Py.UnicodeNewline);
+            } else {
+                out.invoke("write", Py.Newline);
+            }
             out.__setattr__("softspace", Py.Zero);
         }
     }

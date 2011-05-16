@@ -1339,33 +1339,54 @@ class PrintFunction extends PyBuiltinFunction {
 
     @Override
     public PyObject __call__(PyObject args[], String kwds[]) {
-        //XXX: integrate into ArgParser - need key checks etc.
-        //     ArgParser will need to be extended to take keyword-only args.
-        Map<String, PyObject> keyargs = new HashMap<String, PyObject>();
-        //XXX: preloading defaults for now.
-        keyargs.put("sep", Py.newString(" "));
-        keyargs.put("end", Py.newString("\n"));
         int kwlen = kwds.length;
-        for (int i=kwlen; i>0; i--) {
-            keyargs.put(kwds[kwlen - i], args[args.length - i]);
+        int argslen = args.length;
+        boolean useUnicode = false;
+        PyObject values[] = new PyObject[argslen - kwlen];
+        System.arraycopy(args, 0, values, 0, argslen - kwlen);
+        PyObject keyValues[] = new PyObject[kwlen];
+        System.arraycopy(args, argslen - kwlen, keyValues, 0, kwlen);
+        ArgParser ap = new ArgParser("print", keyValues, kwds, new String[] {"sep", "end", "file"});
+        for (PyObject keyValue: keyValues) {
+            if (keyValue instanceof PyUnicode) {
+                //If "file" is passed in as PyUnicode, that's OK as it will error later.
+                useUnicode = true;
+            }
         }
-        PyObject values[] = new PyObject[args.length - kwlen];
-        System.arraycopy(args, 0, values, 0, args.length - kwlen);
-        return print(values, keyargs.get("sep"), keyargs.get("end"), keyargs.get("file"));
+        String sep = ap.getString(0, null);
+        String end = ap.getString(1, null);
+        PyObject file = ap.getPyObject(2, null);
+        return print(values, sep, end, file, useUnicode);
     }
 
-    private static PyObject print(PyObject values[], PyObject sep, PyObject end, PyObject file) {
+    private static PyObject print(PyObject values[], String sep, String end,
+                                  PyObject file, boolean useUnicode) {
         StdoutWrapper out;
         if (file != null && file != Py.None) {
             out = new FixedFileWrapper(file);
         } else {
             out = Py.stdout;
         }
-
         if (values.length == 0) {
-            out.println();
+            out.println(useUnicode);
         } else {
-            out.print(values, sep, end);
+            if (sep == null) {
+                sep = " ";
+            }
+            if (end == null) {
+                end = "\n";
+            }
+            if (!useUnicode) {
+                for (PyObject value: values) {
+                    if (value instanceof PyUnicode) {
+                        useUnicode = true;
+                        break;
+                    }
+                }
+            }
+            out.print(values,
+                      useUnicode ? Py.newUnicode(sep) : Py.newString(sep),
+                      useUnicode ? Py.newUnicode(end) : Py.newString(end));
         }
         return Py.None;
     }

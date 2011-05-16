@@ -933,7 +933,9 @@ public class PySystemState extends PyObject implements ClassDictInit {
 
         Py.EmptyString = new PyString("");
         Py.Newline = new PyString("\n");
+        Py.UnicodeNewline = new PyUnicode("\n");
         Py.Space = new PyString(" ");
+        Py.UnicodeSpace = new PyUnicode(" ");
 
         // Setup standard wrappers for stdout and stderr...
         Py.stderr = new StderrWrapper();
