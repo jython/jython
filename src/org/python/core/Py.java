@@ -85,7 +85,7 @@ public final class Py {
     /** A Python string containing ' ' **/
     public static PyString Space;
     /** A Python unicode string containing ' ' **/
-    public static PyString UnicodeSpace;
+    public static PyUnicode UnicodeSpace;
     /** Set if the type object is dynamically allocated */
     public static long TPFLAGS_HEAPTYPE = 1L << 9;
     /** Set if the type allows subclassing */

@@ -1370,12 +1370,6 @@ class PrintFunction extends PyBuiltinFunction {
         if (values.length == 0) {
             out.println(useUnicode);
         } else {
-            if (sep == null) {
-                sep = " ";
-            }
-            if (end == null) {
-                end = "\n";
-            }
             if (!useUnicode) {
                 for (PyObject value: values) {
                     if (value instanceof PyUnicode) {
@@ -1384,9 +1378,22 @@ class PrintFunction extends PyBuiltinFunction {
                     }
                 }
             }
-            out.print(values,
-                      useUnicode ? Py.newUnicode(sep) : Py.newString(sep),
-                      useUnicode ? Py.newUnicode(end) : Py.newString(end));
+
+            PyObject sepObject;
+            if (sep == null) {
+                sepObject = useUnicode ? Py.UnicodeSpace : Py.Space;
+            } else {
+                sepObject = useUnicode ? Py.newUnicode(sep) : Py.newString(sep);
+            }
+
+            PyObject endObject;
+            if (end == null) {
+                endObject = useUnicode ? Py.UnicodeNewline : Py.Newline;
+            } else {
+                endObject = useUnicode ? Py.newUnicode(end) : Py.newString(end);
+            }
+
+            out.print(values, sepObject, endObject); 
         }
         return Py.None;
     }
