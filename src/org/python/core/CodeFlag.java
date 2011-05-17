@@ -50,7 +50,12 @@ public enum CodeFlag {
     /**
      * With statement.
      */
-    CO_FUTURE_WITH_STATEMENT(0x8000);
+    CO_FUTURE_WITH_STATEMENT(0x8000),
+    /**
+     * print function.
+     */
+    CO_FUTURE_PRINT_FUNCTION(0x10000);
+
 
     public final int flag;
     private static Iterable<CodeFlag> allFlags = Collections.unmodifiableList(Arrays.asList(values()));

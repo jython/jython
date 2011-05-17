@@ -16,20 +16,20 @@ public class StdoutWrapper extends OutputStream {
         return ss.stdout;
     }
 
-    protected void setObject(PySystemState ss, PyObject obj) {
-        ss.stdout = obj;
+    protected void setObject(PySystemState ss, PyObject out) {
+        ss.stdout = out;
     }
 
     protected PyObject myFile() {
         PySystemState ss = Py.getSystemState();
-        PyObject obj = getObject(ss);
-        if (obj == null) {
+        PyObject out = getObject(ss);
+        if (out == null) {
             throw Py.AttributeError("missing sys." + this.name);
         }
-        if (obj.getJavaProxy() != null) {
+        if (out.getJavaProxy() != null) {
             PyFile f = null;
 
-            Object tojava = obj.__tojava__(OutputStream.class);
+            Object tojava = out.__tojava__(OutputStream.class);
             if (tojava != null && tojava != Py.NoConversion) {
                 f = new PyFile((OutputStream)tojava);
             }
@@ -38,17 +38,17 @@ public class StdoutWrapper extends OutputStream {
                 return f;
             }
         }
-        return obj;
+        return out;
     }
 
     @Override
     public void flush() {
-        PyObject obj = myFile();
-        if (obj instanceof PyFile) {
-            ((PyFile) obj).flush();
+        PyObject out = myFile();
+        if (out instanceof PyFile) {
+            ((PyFile) out).flush();
         } else {
             try {
-                obj.invoke("flush");
+                out.invoke("flush");
             } catch (PyException pye) {
                 // ok
             }
@@ -56,12 +56,12 @@ public class StdoutWrapper extends OutputStream {
     }
 
     public void write(String s) {
-        PyObject obj = myFile();
+        PyObject out = myFile();
 
-        if (obj instanceof PyFile) {
-            ((PyFile) obj).write(s);
+        if (out instanceof PyFile) {
+            ((PyFile) out).write(s);
         } else {
-            obj.invoke("write", new PyString(s));
+            out.invoke("write", new PyString(s));
         }
     }
 
@@ -76,46 +76,106 @@ public class StdoutWrapper extends OutputStream {
     }
 
     public void flushLine() {
-        PyObject obj = myFile();
+        PyObject out = myFile();
 
-        if (obj instanceof PyFile) {
-            PyFile file = (PyFile) obj;
+        if (out instanceof PyFile) {
+            PyFile file = (PyFile) out;
             if (file.softspace) {
                 file.write("\n");
                 file.flush();
             }
             file.softspace = false;
         } else {
-            PyObject ss = obj.__findattr__("softspace");
+            PyObject ss = out.__findattr__("softspace");
             if (ss != null && ss.__nonzero__()) {
-                obj.invoke("write", Py.Newline);
+                out.invoke("write", Py.Newline);
             }
             try {
-                obj.invoke("flush");
+                out.invoke("flush");
             } catch (PyException pye) {
                 // ok
             }
-            obj.__setattr__("softspace", Py.Zero);
+            out.__setattr__("softspace", Py.Zero);
+        }
+    }
+
+    private String printToFile(PyFile file, PyObject o) {
+        String s;
+        if (o instanceof PyUnicode && file.encoding != null) {
+            s = ((PyUnicode)o).encode(file.encoding, "strict");
+        } else {
+            s = o.__str__().toString();
+        }
+        file.write(s);
+        return s;
+    }
+
+    private String printToFileWriter(PyFileWriter file, PyObject o) {
+        // since we are outputting directly to a character stream,
+        // avoid doing an encoding
+        String s;
+        if (o instanceof PyString) {
+            s = ((PyString) o).getString();
+        } else {
+            s = o.toString();
+        }
+        file.write(s);
+        return s;
+    }
+
+    private void printToFileObject(PyObject file, PyObject o) {
+        if (!(o instanceof PyUnicode)) {
+            o = o.__str__();
+        }
+        file.invoke("write", o);
+    }
+
+    /**
+     * For __future__ print_function.
+     */
+    public void print(PyObject[] args, PyObject sep, PyObject end) {
+        PyObject out = myFile();
+
+        if (out instanceof PyFile) {
+            PyFile file = (PyFile)out;
+            for (int i=0;i<args.length;i++) {
+                printToFile(file, args[i]);
+                if (i < args.length -1) {
+                    printToFile(file, sep);
+                }
+            }
+            printToFile(file, end);
+        } else if (out instanceof PyFileWriter) {
+            PyFileWriter file = (PyFileWriter)out;
+            for (int i=0;i<args.length;i++) {
+                printToFileWriter(file, args[i]);
+                if (i < args.length -1) {
+                    printToFileWriter(file, sep);
+                }
+            }
+            printToFileWriter(file, end);
+        } else {
+            for (int i=0;i<args.length;i++) {
+                printToFileObject(out, args[i]);
+                if (i < args.length -1) {
+                    printToFileObject(out, sep);
+                }
+            }
+            printToFileObject(out, end);
         }
     }
 
     public void print(PyObject o, boolean space, boolean newline) {
-        PyObject obj = myFile();
+        PyObject out = myFile();
 
-        if (obj instanceof PyFile) {
-            PyFile file = (PyFile)obj;
+        if (out instanceof PyFile) {
+            PyFile file = (PyFile)out;
             if (file.softspace) {
                 file.write(" ");
                 file.softspace = false;
             }
 
-            String s;
-            if (o instanceof PyUnicode && file.encoding != null) {
-                s = ((PyUnicode)o).encode(file.encoding, "strict");
-            } else {
-                s = o.__str__().toString();
-            }
-            file.write(s);
+            String s = printToFile(file, o);
 
             if (o instanceof PyString) {
                 int len = s.length();
@@ -132,22 +192,13 @@ public class StdoutWrapper extends OutputStream {
                 file.softspace = false;
             }
             file.flush();
-        } else if (obj instanceof PyFileWriter) {
-            PyFileWriter file = (PyFileWriter)obj;
+        } else if (out instanceof PyFileWriter) {
+            PyFileWriter file = (PyFileWriter)out;
             if (file.softspace) {
                 file.write(" ");
                 file.softspace = false;
             }
-
-            // since we are outputting directly to a character stream,
-            // avoid doing an encoding
-            String s;
-            if (o instanceof PyString) {
-                s = ((PyString) o).getString();
-            } else {
-                s = o.toString();
-            }
-            file.write(s);
+            String s = printToFileWriter(file, o);
 
             if (o instanceof PyString) {
                 int len = s.length();
@@ -165,31 +216,28 @@ public class StdoutWrapper extends OutputStream {
             }
             file.flush();
         } else {
-            PyObject ss = obj.__findattr__("softspace");
+            PyObject ss = out.__findattr__("softspace");
             if (ss != null && ss.__nonzero__()) {
-                obj.invoke("write", Py.Space);
-                obj.__setattr__("softspace", Py.Zero);
+                out.invoke("write", Py.Space);
+                out.__setattr__("softspace", Py.Zero);
             }
 
-            if (!(o instanceof PyUnicode)) {
-                o = o.__str__();
-            }
-            obj.invoke("write", o);
+            printToFileObject(out, o);
 
             if (o instanceof PyString) {
                 String s = o.toString();
                 int len = s.length();
                 if (len == 0 || !Character.isWhitespace(s.charAt(len - 1))
                     || s.charAt(len - 1) == ' ') {
-                    obj.__setattr__("softspace", space ? Py.One : Py.Zero);
+                    out.__setattr__("softspace", space ? Py.One : Py.Zero);
                 }
             } else {
-                obj.__setattr__("softspace", space ? Py.One : Py.Zero);
+                out.__setattr__("softspace", space ? Py.One : Py.Zero);
             }
 
             if (newline) {
-                obj.invoke("write", Py.Newline);
-                obj.__setattr__("softspace", Py.Zero);
+                out.invoke("write", Py.Newline);
+                out.__setattr__("softspace", Py.Zero);
             }
         }
     }
@@ -215,16 +263,24 @@ public class StdoutWrapper extends OutputStream {
     }
 
     public void println() {
-        PyObject obj = myFile();
+        println(false);
+    }
 
-        if (obj instanceof PyFile) {
-            PyFile file = (PyFile) obj;
+    public void println(boolean useUnicode) {
+        PyObject out = myFile();
+
+        if (out instanceof PyFile) {
+            PyFile file = (PyFile) out;
             file.write("\n");
             file.flush();
             file.softspace = false;
         } else {
-            obj.invoke("write", Py.Newline);
-            obj.__setattr__("softspace", Py.Zero);
+            if (useUnicode) {
+                out.invoke("write", Py.UnicodeNewline);
+            } else {
+                out.invoke("write", Py.Newline);
+            }
+            out.__setattr__("softspace", Py.Zero);
         }
     }
 }
