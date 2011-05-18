@@ -112,4 +112,15 @@ public class PyTimeTuple extends PyTuple {
     public PyTuple __getnewargs__() {
         return new PyTuple(new PyList(getArray()));
     }
+
+    @Override
+    public String toString() {
+        return struct_time_toString();
+    }
+
+    @ExposedMethod(names = {"__str__", "__repr__"})
+    final String struct_time_toString() {
+        return String.format("time.struct_time(tm_year=%s, tm_mon=%s, tm_mday=%s, tm_hour=%s, tm_min=%s, tm_sec=%s, tm_wday=%s, tm_yday=%s, tm_isdst=%s)",
+                             tm_year, tm_mon, tm_mday, tm_hour, tm_min, tm_sec, tm_wday, tm_yday, tm_isdst);
+    }
 }
