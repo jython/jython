@@ -331,18 +331,35 @@ class ClassTests(unittest.TestCase):
 
         # XXX when using new-style classes the slice testme[:42] produces
         #  slice(None, 42, None) instead of slice(0, 42, None). py3k will have
-        #  to change this test.
+        #  to change this test. Jython already shows the py3k behavior by
+        #  default.
         callLst[:] = []
         testme[:42]
-        self.assertCallStack([('__getitem__', (testme, slice(0, 42, None)))])
+        if test_support.is_jython:
+            self.assertCallStack([('__getitem__', (testme,
+                                                   slice(None, 42, None)))])
+        else:
+            self.assertCallStack([('__getitem__', (testme,
+                                                   slice(0, 42, None)))])
 
         callLst[:] = []
         testme[:42] = "The Answer"
-        self.assertCallStack([('__setitem__', (testme, slice(0, 42, None),
-                                                                "The Answer"))])
+        if test_support.is_jython:
+            self.assertCallStack([('__setitem__',(testme,
+                                                  slice(None, 42, None),
+                                                  "The Answer"))])
+        else:
+            self.assertCallStack([('__setitem__', (testme,
+                                                   slice(0, 42, None),
+                                                   "The Answer"))])
         callLst[:] = []
         del testme[:42]
-        self.assertCallStack([('__delitem__', (testme, slice(0, 42, None)))])
+        if test_support.is_jython:
+            self.assertCallStack([('__delitem__', (testme,
+                                                   slice(None, 42, None)))])
+        else:
+            self.assertCallStack([('__delitem__', (testme,
+                                                   slice(0, 42, None)))])
 
         # Restore the slice methods, or the tests will fail with regrtest -R.
         AllTests.__getslice__ = getslice
