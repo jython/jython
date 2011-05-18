@@ -466,16 +466,19 @@ class ClassTests(unittest.TestCase):
         self.assertCallStack([('__delattr__', (testme, "cardinal"))])
 
     def testDel(self):
-        x = []
+        #XXX: gc.collect is not deterministic on Jython, but it would be nice
+        #     to find a way to test this.
+        if not test_support.is_jython:
+            x = []
 
-        class DelTest:
-            def __del__(self):
-                x.append("crab people, crab people")
-        testme = DelTest()
-        del testme
-        import gc
-        gc.collect()
-        self.assertEquals(["crab people, crab people"], x)
+            class DelTest:
+                def __del__(self):
+                    x.append("crab people, crab people")
+            testme = DelTest()
+            del testme
+            import gc
+            gc.collect()
+            self.assertEquals(["crab people, crab people"], x)
 
     def testBadTypeReturned(self):
         # return values of some method are type-checked
