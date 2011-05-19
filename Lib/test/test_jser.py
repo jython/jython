@@ -1,57 +1,65 @@
-from test_support import *
+import unittest
 
-print 'Java Serialization (test_jser.py)'
+from test import test_support
 
 from java import io, awt
-import os, sys
+import os
+import sys
 
-object1 = 42
-object2 = ['a', 1, 1.0]
+
 class Foo:
     def bar(self):
         return 'bar'
 
-object3 = Foo()
-object3.baz     = 99
 
-object4 = awt.Color(1,2,3)
+class JavaSerializationTests(unittest.TestCase):
 
-print 'writing'
+    def setUp(self):
+        self.sername = os.path.join(sys.prefix, "test.ser")
 
-sername = os.path.join(sys.prefix, "test.ser")
-fout = io.ObjectOutputStream(io.FileOutputStream(sername))
-print 'Python int'
-fout.writeObject(object1)
-print 'Python list'
-fout.writeObject(object2)
-print 'Python instance'
-fout.writeObject(object3)
-print 'Java instance'
-fout.writeObject(object4)
-fout.close()
+    def tearDown(self):
+        os.remove(self.sername)
 
-fin     = io.ObjectInputStream(io.FileInputStream(sername))
-print 'reading'
-iobject1 = fin.readObject()
-iobject2 = fin.readObject()
-iobject3 = fin.readObject()
-iobject4 = fin.readObject()
-fin.close()
+    def test_serialization(self):
+        object1 = 42
+        object2 = ['a', 1, 1.0]
+        object3 = Foo()
+        object3.baz = 99
 
-#print iobject1, iobject2, iobject3, iobject3.__class__, iobject4
+        object4 = awt.Color(1, 2, 3)
 
-print 'Python int'
-assert iobject1 == object1
+        #writing
+        fout = io.ObjectOutputStream(io.FileOutputStream(self.sername))
+        #Python int
+        fout.writeObject(object1)
+        #Python list
+        fout.writeObject(object2)
+        #Python instance
+        fout.writeObject(object3)
+        #Java instance
+        fout.writeObject(object4)
+        fout.close()
 
-print 'Python list'
-assert iobject2 == object2
+        fin = io.ObjectInputStream(io.FileInputStream(self.sername))
 
-print 'Python instance'
-assert iobject3.baz     == 99
-assert iobject3.bar() == 'bar'
-assert iobject3.__class__ == Foo
+        #reading
+        iobject1 = fin.readObject()
+        iobject2 = fin.readObject()
+        iobject3 = fin.readObject()
+        iobject4 = fin.readObject()
+        fin.close()
 
-print 'Java instance'
-assert iobject4 == object4
+        self.assertEquals(iobject1, object1)
+        self.assertEquals(iobject2, object2)
+        self.assertEquals(iobject3.baz, 99)
+        self.assertEquals(iobject3.bar(), 'bar')
+        self.assertEquals(iobject3.__class__, Foo)
+        self.assertEquals(iobject4, object4)
 
-os.remove(sername)
+
+def test_main():
+    test_support.run_unittest(JavaSerializationTests)
+
+
+if __name__ == "__main__":
+    test_main()
