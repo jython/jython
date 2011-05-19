@@ -932,10 +932,14 @@ import_from
         | i1=import_as_names
          {
              String dottedText = $dotted_name.text;
-             String importText = $i1.text;
-             if (dottedText != null && dottedText.equals("__future__") &&
-                 importText != null && importText.equals("print_function")) {
-                 printStatement = false;
+             if (dottedText != null && dottedText.equals("__future__")) {
+                 List<alias> aliases = $i1.atypes;
+                 for(alias a: aliases) {
+                     if (a != null && a.getInternalName().equals("print_function")) {
+                         printStatement = false;
+                         break;
+                     }
+                 }
              }
              stype = new ImportFrom($FROM, actions.makeFromText($d, $dotted_name.names),
                  actions.makeModuleNameNode($d, $dotted_name.names),
