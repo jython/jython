@@ -10,6 +10,37 @@ from java.math import BigInteger
 from java.util import Vector
 from javax import swing
 
+from javatests import ListTest
+
+class PyListTest(ListTest):
+
+    def __init__(self):
+        ListTest.__init__(self)
+
+    def newInstance(self, coll):
+        if coll is None:
+            return list()
+        else:
+            return list(coll)
+
+    def isReadOnly(self):
+        return False
+
+
+class PyTupleTest(ListTest):
+
+    def __init__(self):
+        ListTest.__init__(self)
+
+    def newInstance(self, coll):
+        if coll is None:
+            return tuple()
+        else:
+            return tuple(coll)
+
+    def isReadOnly(self):
+        return True
+
 
 class JythonBasicTests(unittest.TestCase):
 
@@ -135,6 +166,19 @@ class JythonBasicTests(unittest.TestCase):
         x = javatests.AnonInner()
         self.assertEquals(x.doit(), 2000)
 
+    def test_javalists(self):
+        # these first two tests just verify that we have a good unit test
+        alt = ListTest.getArrayListTest(False)
+        alt.testAll()
+
+        alt = ListTest.getArrayListTest(True)
+        alt.testAll()
+
+        # Now run the tests
+        plt = PyListTest()
+        plt.testAll()
+        ptt = PyTupleTest()
+        ptt.testAll()
 
 def test_main():
     test_support.run_unittest(JythonBasicTests)
