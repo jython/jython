@@ -18,8 +18,10 @@ class JythonBasicTests(unittest.TestCase):
         self.assertEquals(abs(-2), 2l, 'Python int to Java long')
         self.assertEquals(abs(-2l), 2l, 'Python long to Java long')
 
-        try: abs(-123456789123456789123l)
-        except TypeError: pass
+        try:
+            abs(-123456789123456789123l)
+        except TypeError:
+            pass
 
     def test_strings(self):
         self.assertEquals(Integer.valueOf('42'), 42,
@@ -39,13 +41,12 @@ class JythonBasicTests(unittest.TestCase):
         for i in vec:
             self.assertEquals(i, expected,
                               'testing __iter__ on java.util.Vector')
-            expected = expected+1
+            expected = expected + 1
 
         expected = 0
         for i in iter(vec):
             self.assertEquals(i, expected, 'testing iter(java.util.Vector)')
-            expected = expected+1
-
+            expected = expected + 1
 
     def test_java_objects(self):
         self.assertEquals(BigInteger('1234', 10).intValue(), 1234,
@@ -80,7 +81,7 @@ class JythonBasicTests(unittest.TestCase):
         self.assertFalse(s.regionMatches(1, 'eLl', 0, 3), 'should ignore case')
 
     def test_get_set(self):
-        d = Dimension(3,9)
+        d = Dimension(3, 9)
         self.assertEquals(d.width, 3)
         self.assertEquals(d.height, 9)
         d.width = 42
@@ -92,7 +93,7 @@ class JythonBasicTests(unittest.TestCase):
         except AttributeError:
             pass
         else:
-            raise AssertionError, 'd.foo should throw type error'
+            raise AssertionError('d.foo should throw type error')
 
     # Used in test_java_bean_properties.
     flag = 0
@@ -129,8 +130,14 @@ class JythonBasicTests(unittest.TestCase):
         self.assertEquals(JythonBasicTests.flag, 1,
                           'one actions per event - again')
 
+    def test_anonymous_inner_classes(self):
+        import javatests.AnonInner
+        x = javatests.AnonInner()
+        self.assertEquals(x.doit(), 2000)
+
+
 def test_main():
     test_support.run_unittest(JythonBasicTests)
 
-if __name__=='__main__':
+if __name__ == '__main__':
     test_main()
