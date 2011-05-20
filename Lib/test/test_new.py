@@ -101,8 +101,7 @@ class NewTest(unittest.TestCase):
         test_closure(g, (1, 1), ValueError) # closure is wrong size
         test_closure(f, g.func_closure, ValueError) # no closure needed
 
-    # Note: Jython will never have new.code()
-    if hasattr(new, 'code'):
+    if hasattr(new, 'code') and not test_support.is_jython:
         def test_code(self):
             # bogus test of new.code()
             def f(a): pass
