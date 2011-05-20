@@ -2295,7 +2295,7 @@ NAME:    ( 'a' .. 'z' | 'A' .. 'Z' | '_')
  *  should make us exit loop not continue.
  */
 STRING
-    :   ('r'|'u'|'b'|'ur'|'R'|'U'|'B'|'UR'|'uR'|'Ur')?
+    :   ('r'|'u'|'b'|'ur'|'br'|'R'|'U'|'B'|'UR'|'BR'|'uR'|'Ur'|'Br'|'bR')?
         (   '\'\'\'' (options {greedy=false;}:TRIAPOS)* '\'\'\''
         |   '"""' (options {greedy=false;}:TRIQUOTE)* '"""'
         |   '"' (ESC|~('\\'|'\n'|'"'))* '"'
