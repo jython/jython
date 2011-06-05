@@ -705,7 +705,9 @@ public class PosixModule implements ClassDictInit {
     @Hide(OS.NT)
     public static void symlink(String src, String dst) {
         ensurePath(src);
-        posix.symlink(src, absolutePath(dst));
+        if (posix.symlink(src, absolutePath(dst)) < 0) {
+            throw errorFromErrno();
+        }
     }
 
     public static PyString __doc__system = new PyString(
@@ -762,7 +764,9 @@ public class PosixModule implements ClassDictInit {
         } else {
             throw Py.TypeError("utime() arg 2 must be a tuple (atime, mtime)");
         }
-        posix.utimes(absolutePath(path), atimeval, mtimeval);
+        if (posix.utimes(absolutePath(path), atimeval, mtimeval) < 0) {
+            throw errorFromErrno(path);
+        }
     }
 
     /**
