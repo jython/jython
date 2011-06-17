@@ -178,7 +178,7 @@ class DefaultInvokerFactory {
         void marshal(HeapInvocationBuffer buffer, PyObject arg);
     }
 
-    private static abstract class BaseInvoker implements Invoker {
+    private static abstract class BaseInvoker extends Invoker {
         final Function jffiFunction;
         final com.kenai.jffi.Invoker jffiInvoker = com.kenai.jffi.Invoker.getInstance();
         final ParameterMarshaller[] marshallers;
@@ -215,6 +215,18 @@ class DefaultInvokerFactory {
 
         public final PyObject invoke(PyObject arg0, PyObject arg1, PyObject arg2) {
             return invoke(new PyObject[] { arg0, arg1, arg2 });
+        }
+
+        public final PyObject invoke(PyObject arg0, PyObject arg1, PyObject arg2, PyObject arg3) {
+            return invoke(new PyObject[] { arg0, arg1, arg2, arg3 });
+        }
+
+        public final PyObject invoke(PyObject arg0, PyObject arg1, PyObject arg2, PyObject arg3, PyObject arg4) {
+            return invoke(new PyObject[] { arg0, arg1, arg2, arg3, arg4 });
+        }
+
+        public final PyObject invoke(PyObject arg0, PyObject arg1, PyObject arg2, PyObject arg3, PyObject arg4, PyObject arg5) {
+            return invoke(new PyObject[] { arg0, arg1, arg2, arg3, arg4, arg5 });
         }
 
         final void checkArity(PyObject[] args) {

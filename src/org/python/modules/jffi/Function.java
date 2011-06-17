@@ -106,6 +106,11 @@ public class Function extends BasePointer implements Pointer {
         return getInvoker().invoke(arg0, arg1, arg2);
     }
 
+    @Override
+    public PyObject __call__(PyObject arg0, PyObject arg1, PyObject arg2, PyObject arg3) {
+        return getInvoker().invoke(arg0, arg1, arg2, arg3);
+    }
+
 
     @ExposedGet(name = "restype")
     public PyObject getResultType() {
@@ -216,7 +221,7 @@ public class Function extends BasePointer implements Pointer {
         this.jffiFunction = null;
     }
 
-    private static final class ErrCheckInvoker implements Invoker {
+    private static final class ErrCheckInvoker extends Invoker {
         private final Invoker invoker;
         private final PyObject errcheck;
 
@@ -243,6 +248,18 @@ public class Function extends BasePointer implements Pointer {
 
         public PyObject invoke(PyObject arg1, PyObject arg2, PyObject arg3) {
             return errcheck.__call__(invoker.invoke(arg1, arg2, arg3));
+        }
+
+        public PyObject invoke(PyObject arg1, PyObject arg2, PyObject arg3, PyObject arg4) {
+            return errcheck.__call__(invoker.invoke(arg1, arg2, arg3, arg4));
+        }
+
+        public PyObject invoke(PyObject arg1, PyObject arg2, PyObject arg3, PyObject arg4, PyObject arg5) {
+            return errcheck.__call__(invoker.invoke(arg1, arg2, arg3, arg4, arg5));
+        }
+
+        public PyObject invoke(PyObject arg1, PyObject arg2, PyObject arg3, PyObject arg4, PyObject arg5, PyObject arg6) {
+            return errcheck.__call__(invoker.invoke(arg1, arg2, arg3, arg4, arg5, arg6));
         }
     }
 }

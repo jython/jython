@@ -7,7 +7,7 @@ import org.python.core.PyObject;
 /**
  *
  */
-abstract public class JITInvoker implements Invoker {
+abstract public class JITInvoker extends Invoker {
     protected static final com.kenai.jffi.Invoker jffiInvoker = com.kenai.jffi.Invoker.getInstance();
     private final int arity;
 
@@ -59,8 +59,4 @@ abstract public class JITInvoker implements Invoker {
                 throw Py.RuntimeError("invalid fast-int arity");
         }
     }
-
-    abstract public PyObject invoke(PyObject arg1, PyObject arg2, PyObject arg3, PyObject arg4);
-    abstract public PyObject invoke(PyObject arg1, PyObject arg2, PyObject arg3, PyObject arg4, PyObject arg5);
-    abstract public PyObject invoke(PyObject arg1, PyObject arg2, PyObject arg3, PyObject arg4, PyObject arg5, PyObject arg6);
 }
