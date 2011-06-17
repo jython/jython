@@ -110,7 +110,7 @@ public class Function extends BasePointer implements Pointer {
 
     @ExposedSet(name = "restype")
     public void setResultType(PyObject restype) {
-        this.invoker = null; // invalidate old invoker
+        invalidateInvoker();
         this.restype = restype;
     }
 
@@ -121,7 +121,7 @@ public class Function extends BasePointer implements Pointer {
 
     @ExposedSet(name = "argtypes")
     public void setArgTypes(PyObject parameterTypes) {
-        this.invoker = null; // invalidate old invoker
+        invalidateInvoker();
 
         // Removing the parameter types defaults back to varargs
         if (parameterTypes == Py.None) {
@@ -142,7 +142,7 @@ public class Function extends BasePointer implements Pointer {
 
     @ExposedSet(name = "errcheck")
     public void errcheck(PyObject errcheck) {
-        this.invoker = null; // invalidate old invoker
+        invalidateInvoker();
         this.errcheck = errcheck;
     }
     @Override
@@ -155,6 +155,11 @@ public class Function extends BasePointer implements Pointer {
             return invoker;
         }
         return createInvoker();
+    }
+
+    private synchronized void invalidateInvoker() {
+        // null out the invoker - it will be regenerated on next invocation
+        this.invoker = null;
     }
 
     private synchronized final Invoker createInvoker() {
