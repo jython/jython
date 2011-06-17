@@ -75,16 +75,11 @@ final class AsmClassBuilder {
         // Invokes the super class constructor as super(Library)
 
         init.aload(0);
+        init.aload(1); // jffi Function
+        init.aload(4); // fallback Invoker
         
-        init.invokespecial(p(parentClass), "<init>", sig(void.class));
-        
-        // Save the function argument in a field
-        classVisitor.visitField(ACC_PRIVATE | ACC_FINAL, getFunctionFieldName(), 
-                ci(com.kenai.jffi.Function.class), null, null);
-        init.aload(0);
-        init.aload(1);
-        init.putfield(className, getFunctionFieldName(), ci(com.kenai.jffi.Function.class));
-        
+        init.invokespecial(p(parentClass), "<init>", sig(void.class, com.kenai.jffi.Function.class, Invoker.class));
+
         if (signature.hasResultConverter()) {
             // Save the result converter argument in a field
             classVisitor.visitField(ACC_PRIVATE | ACC_FINAL, getResultConverterFieldName(),
@@ -106,13 +101,7 @@ final class AsmClassBuilder {
                 init.putfield(className, getParameterConverterFieldName(i), ci(NativeDataConverter.class));
             }
         }
-        
-        classVisitor.visitField(ACC_PRIVATE | ACC_FINAL, getFallbackInvokerFieldName(), 
-                ci(Invoker.class), null, null);
-        init.aload(0);
-        init.aload(4);
-        init.putfield(className, getFallbackInvokerFieldName(), ci(Invoker.class));
-        
+
         init.voidreturn();
         init.visitMaxs(10, 10);
         init.visitEnd();
@@ -160,7 +149,7 @@ final class AsmClassBuilder {
 
     
     final String getFunctionFieldName() {
-        return "function";
+        return "jffiFunction";
     }
     
     final String getResultConverterFieldName() {

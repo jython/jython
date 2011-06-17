@@ -33,9 +33,10 @@ abstract class AbstractNumericMethodGenerator implements JITMethodGenerator {
             fallback[i] = new Label();
         }
 
-        mv.getstatic(builder.getClassName(), "jffiInvoker", ci(com.kenai.jffi.Invoker.class));
+        mv.getstatic(p(JITInvoker.class), "jffiInvoker", ci(com.kenai.jffi.Invoker.class));
+        // [ stack now contains: Invoker ]
         mv.aload(0);
-        mv.getfield(builder.getClassName(), builder.getFunctionFieldName(), ci(com.kenai.jffi.Function.class));
+        mv.getfield(p(JITInvoker.class), "jffiFunction", ci(com.kenai.jffi.Function.class));
         // [ stack now contains: Invoker, Function ]
         final int firstParam = 1;
         
@@ -44,7 +45,7 @@ abstract class AbstractNumericMethodGenerator implements JITMethodGenerator {
             if (signature.hasParameterConverter(i)) {
                 mv.aload(0); // this
                 mv.getfield(builder.getClassName(), builder.getParameterConverterFieldName(i), ci(NativeDataConverter.class));
-                mv.aload(firstParam + i); // PyObject
+                mv.aload(firstParam + i); // PyObject parameter
                 mv.invokevirtual(p(NativeDataConverter.class), "toNative", sig(PyObject.class, PyObject.class));
                 mv.astore(firstParam + i);
             }
@@ -175,7 +176,7 @@ abstract class AbstractNumericMethodGenerator implements JITMethodGenerator {
             
             // Call the fallback invoker
             mv.aload(0);
-            mv.getfield(builder.getClassName(), builder.getFallbackInvokerFieldName(), ci(Invoker.class));
+            mv.getfield(p(JITInvoker.class), "fallbackInvoker", ci(Invoker.class));
 
             for (int i = 0; i < signature.getParameterCount(); i++) {
                 mv.aload(firstParam + i);

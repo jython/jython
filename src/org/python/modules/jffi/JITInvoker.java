@@ -9,10 +9,14 @@ import org.python.core.PyObject;
  */
 abstract public class JITInvoker extends Invoker {
     protected static final com.kenai.jffi.Invoker jffiInvoker = com.kenai.jffi.Invoker.getInstance();
+    protected final com.kenai.jffi.Function jffiFunction;
+    protected final Invoker fallbackInvoker;
     private final int arity;
 
-    protected JITInvoker(int arity) {
+    protected JITInvoker(int arity, com.kenai.jffi.Function function, Invoker fallbackInvoker) {
         this.arity = arity;
+        this.jffiFunction = function;
+        this.fallbackInvoker = fallbackInvoker;
     }
 
     protected final PyObject invalidArity(int got) {

@@ -6,8 +6,8 @@ import org.python.core.PyObject;
  * 
  */
 abstract public class JITInvoker2 extends JITInvoker {
-    public JITInvoker2() {
-        super(2);
+    public JITInvoker2(com.kenai.jffi.Function function, Invoker fallbackInvoker) {
+        super(2, function, fallbackInvoker);
     }
 
     public final PyObject invoke() {
