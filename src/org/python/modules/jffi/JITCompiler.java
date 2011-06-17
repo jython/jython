@@ -8,8 +8,10 @@ import org.python.core.PyObject;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.WeakHashMap;
 
 /**
  *
@@ -18,9 +20,12 @@ class JITCompiler {
     
     private final Map<JITSignature, HandleRef> 
             handles = new HashMap<JITSignature, HandleRef>();
+
+    private final Map<Class, JITHandle> classes = Collections.synchronizedMap(new WeakHashMap<Class, JITHandle>());
+
     private final ReferenceQueue referenceQueue = new ReferenceQueue();
     
-    private final JITHandle failedHandle = new JITHandle(
+    private final JITHandle failedHandle = new JITHandle(this,
             new JITSignature(NativeType.VOID, new NativeType[0], false, new boolean[0], CallingConvention.DEFAULT, false),
             true);
 
@@ -90,11 +95,15 @@ class JITCompiler {
             HandleRef ref = handles.get(jitSignature);
             JITHandle handle = ref != null ? ref.get() : null;
             if (handle == null) {
-                handle = new JITHandle(jitSignature, false);
+                handle = new JITHandle(this, jitSignature, false);
                 handles.put(jitSignature, new HandleRef(handle, jitSignature, referenceQueue));
             }
             
             return handle;
         }
+    }
+
+    void registerClass(JITHandle handle, Class<? extends Invoker> klass) {
+        classes.put(klass, handle);
     }
 }
