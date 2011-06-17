@@ -1,6 +1,7 @@
 
 package org.python.modules.jffi;
 
+import com.kenai.jffi.CallingConvention;
 import org.python.core.Py;
 import org.python.core.PyList;
 import org.python.core.PyNewWrapper;
@@ -22,9 +23,12 @@ public class Function extends BasePointer implements Pointer {
 
     private final PyStringMap dict = new PyStringMap();
 
-    private volatile PyObject restype = Py.None;
+    private volatile PyObject restype = CType.INT;
     private volatile PyObject[] argtypes = null;
-    private Invoker invoker = null;
+    private Invoker defaultInvoker;
+    private Invoker compiledInvoker;
+    private volatile JITHandle jitHandle;
+    private volatile com.kenai.jffi.Function jffiFunction;
 
     @ExposedGet
     public PyObject errcheck = Py.None;
@@ -150,38 +154,66 @@ public class Function extends BasePointer implements Pointer {
         return !getMemory().isNull();
     }
 
-    private final Invoker getInvoker() {
-        if (invoker != null) {
-            return invoker;
+    protected final Invoker getInvoker() {
+        return compiledInvoker != null ? compiledInvoker : tryCompilation();
+    }
+
+    private synchronized Invoker tryCompilation() {
+        if (compiledInvoker != null) {
+            return compiledInvoker;
         }
-        return createInvoker();
-    }
 
-    private synchronized void invalidateInvoker() {
-        // null out the invoker - it will be regenerated on next invocation
-        this.invoker = null;
-    }
-
-    private synchronized final Invoker createInvoker() {
         if (argtypes == null) {
             throw Py.NotImplementedError("variadic functions not supported yet;  specify a parameter list");
         }
 
-        com.kenai.jffi.Type jffiReturnType = Util.jffiType(CType.typeOf(restype));
-        com.kenai.jffi.Type[] jffiParamTypes = new com.kenai.jffi.Type[argtypes.length];
-        for (int i = 0; i < jffiParamTypes.length; ++i) {
-            jffiParamTypes[i] = Util.jffiType(CType.typeOf(argtypes[i]));
-        }
-        com.kenai.jffi.Function jffiFunction = new com.kenai.jffi.Function(getMemory().getAddress(), jffiReturnType, jffiParamTypes);
-
-        Invoker i;
-        if (FastIntInvokerFactory.getFactory().isFastIntMethod(restype, argtypes)) {
-            i = FastIntInvokerFactory.getFactory().createInvoker(jffiFunction, restype, argtypes);
-        } else {
-            i = DefaultInvokerFactory.getFactory().createInvoker(jffiFunction, restype, argtypes);
+        CType cResultType = CType.typeOf(restype);
+        CType[] cParameterTypes = new CType[argtypes.length];
+        for (int i = 0; i < cParameterTypes.length; i++) {
+            cParameterTypes[i] = CType.typeOf(argtypes[i]);
         }
 
-        return invoker = errcheck != Py.None ? new ErrCheckInvoker(i, errcheck) : i;
+        if (jitHandle == null) {
+            jitHandle = JITCompiler.getInstance().getHandle(cResultType, cParameterTypes, CallingConvention.DEFAULT, false);
+        }
+
+        if (jffiFunction == null) {
+            com.kenai.jffi.Type jffiReturnType = Util.jffiType(cResultType);
+            com.kenai.jffi.Type[] jffiParamTypes = new com.kenai.jffi.Type[argtypes.length];
+
+            for (int i = 0; i < jffiParamTypes.length; ++i) {
+                jffiParamTypes[i] = Util.jffiType(cParameterTypes[i]);
+            }
+
+            jffiFunction = new com.kenai.jffi.Function(getMemory().getAddress(), jffiReturnType, jffiParamTypes);
+        }
+
+        if (defaultInvoker == null) {
+            Invoker invoker = DefaultInvokerFactory.getFactory().createInvoker(jffiFunction, restype, argtypes);
+            defaultInvoker = errcheck != Py.None ? new ErrCheckInvoker(invoker, errcheck) : invoker;
+        }
+
+        Invoker invoker = jitHandle.compile(jffiFunction, null, new NativeDataConverter[0]);
+        if (invoker != null) {
+            return compiledInvoker = errcheck != Py.None ? new ErrCheckInvoker(invoker, errcheck) : invoker;
+        }
+
+        //
+        // Once compilation has failed, always fallback to the default invoker
+        //
+        if (jitHandle.compilationFailed()) {
+            compiledInvoker = defaultInvoker;
+        }
+
+        return defaultInvoker;
+    }
+
+    private synchronized void invalidateInvoker() {
+        // null out the invoker - it will be regenerated on next invocation
+        this.defaultInvoker = null;
+        this.compiledInvoker = null;
+        this.jitHandle = null;
+        this.jffiFunction = null;
     }
 
     private static final class ErrCheckInvoker implements Invoker {

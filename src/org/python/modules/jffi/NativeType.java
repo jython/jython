@@ -18,6 +18,9 @@ public enum NativeType {
     FLOAT,
     DOUBLE,
     POINTER,
+    BUFFER_IN,
+    BUFFER_OUT,
+    BUFFER_INOUT,
     STRING,
     ARRAY,
     STRUCT;
