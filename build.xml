@@ -188,6 +188,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
 
             <pathelement path="${extlibs.dir}/asm-3.1.jar" />
             <pathelement path="${extlibs.dir}/asm-commons-3.1.jar" />
+            <pathelement path="${extlibs.dir}/asm-util-3.1.jar" />
             <pathelement path="${extlibs.dir}/constantine.jar" />
             <pathelement path="${extlibs.dir}/guava-r07.jar" />
             <pathelement path="${extlibs.dir}/jaffl.jar"/>
@@ -219,6 +220,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <path id="test.classpath">
             <path refid="main.classpath"/>
             <pathelement path="${extlibs.dir}/asm-commons-3.1.jar" />
+            <pathelement path="${extlibs.dir}/asm-util-3.1.jar" />
             <pathelement path="${extlibs.dir}/junit-3.8.2.jar" />
             <pathelement path="${exposed.dir}" />
             <pathelement path="${compile.dir}" />
