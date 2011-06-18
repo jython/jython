@@ -22,7 +22,7 @@ public class ScalarCData extends CData {
     static {
 //        TYPE.fastGetDict().__setitem__("in_dll", new InDll());
     }
-    private PyObject value = Py.None;
+    private PyObject value;
 
     @ExposedNew
     public static PyObject ScalarCData_new(PyNewWrapper new_, boolean init, PyType subtype,
@@ -65,12 +65,13 @@ public class ScalarCData extends CData {
 
     @ExposedGet(name = "value")
     public PyObject getValue() {
+
         // If native memory has been allocated, read the value from there
         if (hasReferenceMemory()) {
             return getMemoryOp().get(getReferenceMemory(), 0);
         }
 
-        return value;
+        return value != null ? value : Py.None;
     }
 
 
@@ -92,6 +93,10 @@ public class ScalarCData extends CData {
     @Override
     public long asLong(int index) throws ConversionException {
         return getValue().asLong(index);
+    }
+
+    public long asLong() {
+        return getValue().asLong();
     }
 
     @ExposedMethod

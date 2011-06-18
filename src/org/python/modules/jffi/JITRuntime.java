@@ -11,6 +11,8 @@ import java.math.BigInteger;
  * 
  */
 public final class JITRuntime {
+    private static final com.kenai.jffi.MemoryIO IO = com.kenai.jffi.MemoryIO.getInstance();
+
     private JITRuntime() {}
 
     public static int pointerValue32(PyObject ptr) {
@@ -28,16 +30,23 @@ public final class JITRuntime {
         } else if (parameter instanceof PyLong) {
             return ((PyLong) parameter).getValue().intValue();
 
+        } else if (parameter instanceof ScalarCData) {
+            return intValue(((ScalarCData) parameter).getValue());
+
         } else {
             return (int) __long__value(parameter);
         }
     }
+
     public static long longValue(PyObject parameter) {
         if (parameter instanceof PyInteger) {
             return ((PyInteger) parameter).getValue();
 
         } else if (parameter instanceof PyLong) {
             return ((PyLong) parameter).getValue().longValue();
+
+        } else if (parameter instanceof ScalarCData) {
+            return longValue(((ScalarCData) parameter).getValue());
 
         } else {
             return __long__value(parameter);
@@ -78,7 +87,7 @@ public final class JITRuntime {
     }
 
     public static long u8Value64(PyObject parameter) {
-        return ((long) intValue(parameter)) & 0xffL;
+        return intValue(parameter) & 0xff;
     }
 
     public static int s16Value32(PyObject parameter) {
@@ -94,7 +103,7 @@ public final class JITRuntime {
     }
 
     public static long u16Value64(PyObject parameter) {
-        return ((long) intValue(parameter)) & 0xffffL;
+        return intValue(parameter) & 0xffff;
     }
 
 
@@ -111,7 +120,7 @@ public final class JITRuntime {
     }
 
     public static long u32Value64(PyObject parameter) {
-        return ((long) intValue(parameter)) & 0xffffffffL;
+        return intValue(parameter) & 0xffffffffL;
     }
 
     public static long s64Value64(PyObject parameter) {
@@ -122,41 +131,75 @@ public final class JITRuntime {
         return longValue(parameter);
     }
 
-    public static int float2int32(PyObject parameter) {
+    public static int f32Value32(PyObject parameter) {
         return Float.floatToRawIntBits((float) parameter.asDouble());
     }
 
-    public static long float2int64(PyObject parameter) {
+    public static long f32Value64(PyObject parameter) {
         return Float.floatToRawIntBits((float) parameter.asDouble());
     }
 
-    public static long double2long64(PyObject parameter) {
+    public static long f64Value64(PyObject parameter) {
         return Double.doubleToRawLongBits(parameter.asDouble());
     }
     
     
-    public static PyObject newSigned8(byte value) {
-        return Py.newInteger(value);
+    public static PyObject newSigned8(int value) {
+        return Py.newInteger((byte) value);
     }
 
-    public static PyObject newUnsigned8(byte value) {
-        return Py.newInteger(value < 0 ? (long)((value & 0x7FL) + 0x80L) : value);
+    public static PyObject newSigned8(long value) {
+        return Py.newInteger((byte) value);
     }
 
-    public static PyObject newSigned16(short value) {
-        return Py.newInteger(value);
+    public static PyObject newUnsigned8(int value) {
+        int n = (byte) value; // sign-extend the low 8 bits to 32
+        return Py.newInteger(n < 0 ? ((n & 0x7F) + 0x80) : n);
     }
 
-    public static PyObject newUnsigned16(short value) {
-        return Py.newInteger(value < 0 ? (long)((value & 0x7FFFL) + 0x8000L) : value);
+    public static PyObject newUnsigned8(long value) {
+        int n = (byte) value; // sign-extend the low 8 bits to 32
+        return Py.newInteger(n < 0 ? ((n & 0x7F) + 0x80) : n);
+    }
+
+    public static PyObject newSigned16(int value) {
+        return Py.newInteger((short) value);
+    }
+
+    public static PyObject newSigned16(long value) {
+        return Py.newInteger((short) value);
+    }
+
+    public static PyObject newUnsigned16(int value) {
+        int n = (short) value; // sign-extend the low 16 bits to 32
+        return Py.newInteger(n < 0 ? ((n & 0x7FFF) + 0x8000) : n);
+    }
+
+    public static PyObject newUnsigned16(long value) {
+        int n = (short) value; // sign-extend the low 16 bits to 32
+        return Py.newInteger(n < 0 ? ((n & 0x7FFF) + 0x8000) : n);
     }
 
     public static PyObject newSigned32(int value) {
         return Py.newInteger(value);
     }
 
+    public static PyObject newSigned32(long value) {
+        return Py.newInteger((int) value);
+    }
+
     public static PyObject newUnsigned32(int value) {
-        return Py.newInteger(value < 0 ? (long)((value & 0x7FFFFFFFL) + 0x80000000L) : value);
+        int n = value;
+        return n < 0 ? Py.newInteger(((n & 0x7FFFFFFFL) + 0x80000000L)) : Py.newInteger(n);
+    }
+
+    public static PyObject newUnsigned32(long value) {
+        long n = (int) value; // only keep the low 32 bits
+        return n < 0 ? Py.newInteger(((n & 0x7FFFFFFFL) + 0x80000000L)) : Py.newInteger(n);
+    }
+
+    public static PyObject newSigned64(int value) {
+        return Py.newInteger(value);
     }
 
     public static PyObject newSigned64(long value) {
@@ -174,7 +217,51 @@ public final class JITRuntime {
         return Py.newFloat(Float.intBitsToFloat(value));
     }
 
+    public static PyObject newFloat32(long value) {
+        return Py.newFloat(Float.intBitsToFloat((int) value));
+    }
+
     public static PyObject newFloat64(long value) {
         return Py.newFloat(Double.longBitsToDouble(value));
+    }
+
+    public static PyObject newBoolean(int value) {
+        return (value & 0x1) != 0 ? Py.True : Py.False;
+    }
+
+    public static PyObject newBoolean(long value) {
+        return (value & 0x1) != 0 ? Py.True : Py.False;
+    }
+
+    public static PyObject newNone(int unused) {
+        return Py.None;
+    }
+
+    public static PyObject newNone(long unused) {
+        return Py.None;
+    }
+
+    public static PyObject newPointer32(int value) {
+        return Py.newLong(value);
+    }
+
+    public static PyObject newPointer32(long value) {
+        return Py.newLong(value & 0xffffffffL);
+    }
+
+    public static PyObject newPointer64(long value) {
+        return Py.newLong(value);
+    }
+
+    public static PyObject newString(int address) {
+        return address != 0
+                ? Py.newString(new String(IO.getZeroTerminatedByteArray(address)))
+                : Py.None;
+    }
+
+    public static PyObject newString(long address) {
+        return address != 0L
+                ? Py.newString(new String(IO.getZeroTerminatedByteArray(address)))
+                : Py.None;
     }
 }

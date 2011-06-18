@@ -135,11 +135,11 @@ abstract class AbstractNumericMethodGenerator implements JITMethodGenerator {
                     break;
 
                 case FLOAT:
-                    unbox(mv, "float2int");
+                    unbox(mv, "f32Value");
                     break;
 
                 case DOUBLE:
-                    unbox(mv, "double2long");
+                    unbox(mv, "f64Value");
                     break;
 
                 default:
@@ -197,90 +197,84 @@ abstract class AbstractNumericMethodGenerator implements JITMethodGenerator {
             mv.invokevirtual(p(NativeDataConverter.class), "fromNative", sig(PyObject.class, PyObject.class));
         }
     }
-    
-    private void boxResult(SkinnyMethodAdapter mv, NativeType type,
-            String boxMethodName, Class primitiveType) {
-        // convert to the appropriate primitive result type
-        narrow(mv, getInvokerIntType(), primitiveType);
-        widen(mv, getInvokerIntType(), primitiveType);
-        
+
+    private void boxResult(SkinnyMethodAdapter mv, String boxMethodName) {
         mv.invokestatic(p(JITRuntime.class), boxMethodName,
-                sig(PyObject.class, primitiveType));
+                sig(PyObject.class, getInvokerIntType()));
     }
 
     private void boxResult(SkinnyMethodAdapter mv, NativeType type) {
         switch (type) {
             case BOOL:
-                boxResult(mv, type, "newBoolean", getInvokerIntType());
+                boxResult(mv, "newBoolean");
                 break;
 
             case BYTE:
-                boxResult(mv, type, "newSigned8", byte.class);
+                boxResult(mv, "newSigned8");
                 break;
 
             case UBYTE:
-                boxResult(mv, type, "newUnsigned8", byte.class);
+                boxResult(mv, "newUnsigned8");
                 break;
 
             case SHORT:
-                boxResult(mv, type, "newSigned16", short.class);
+                boxResult(mv, "newSigned16");
                 break;
 
             case USHORT:
-                boxResult(mv, type, "newUnsigned16", short.class);
+                boxResult(mv, "newUnsigned16");
                 break;
 
             case INT:
-                boxResult(mv, type, "newSigned32", int.class);
+                boxResult(mv, "newSigned32");
                 break;
 
             case UINT:
-                boxResult(mv, type, "newUnsigned32", int.class);
+                boxResult(mv, "newUnsigned32");
                 break;
 
             case LONG:
                 if (Platform.getPlatform().longSize() == 32) {
-                    boxResult(mv, type, "newSigned32", int.class);
+                    boxResult(mv, "newSigned32");
                 } else {
-                    boxResult(mv, type, "newSigned64", long.class);
+                    boxResult(mv, "newSigned64");
                 }
                 break;
 
             case ULONG:
                 if (Platform.getPlatform().longSize() == 32) {
-                    boxResult(mv, type, "newUnsigned32", int.class);
+                    boxResult(mv, "newUnsigned32");
                 } else {
-                    boxResult(mv, type, "newUnsigned64", long.class);
+                    boxResult(mv, "newUnsigned64");
                 }
                 break;
 
             case LONGLONG:
-                boxResult(mv, type, "newSigned64", long.class);
+                boxResult(mv, "newSigned64");
                 break;
 
             case ULONGLONG:
-                boxResult(mv, type, "newUnsigned64", long.class);
+                boxResult(mv, "newUnsigned64");
                 break;
                 
             case FLOAT:
-                boxResult(mv, type, "newFloat32", int.class);
+                boxResult(mv, "newFloat32");
                 break;
                 
             case DOUBLE:
-                boxResult(mv, type, "newFloat64", long.class);
+                boxResult(mv, "newFloat64");
                 break;
 
             case VOID:
-                boxResult(mv, type, "newNil", getInvokerIntType());
+                boxResult(mv, "newNone");
                 break;
 
             case POINTER:
-                boxResult(mv, type, "newPointer" + Platform.getPlatform().addressSize(),
-                    getInvokerIntType());
+                boxResult(mv, "newPointer" + Platform.getPlatform().addressSize());
                 break;
 
             case STRING:
-                boxResult(mv, type, "newString", getInvokerIntType());
+                boxResult(mv, "newString");
                 break;
 
 
