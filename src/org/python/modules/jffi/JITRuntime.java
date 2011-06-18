@@ -1,8 +1,6 @@
 package org.python.modules.jffi;
 
 import org.python.core.Py;
-import org.python.core.PyInteger;
-import org.python.core.PyLong;
 import org.python.core.PyObject;
 
 import java.math.BigInteger;
@@ -23,49 +21,6 @@ public final class JITRuntime {
         return ((Pointer) ptr).getMemory().getAddress();
     }
 
-    public static int intValue(PyObject parameter) {
-        if (parameter instanceof PyInteger) {
-            return ((PyInteger) parameter).getValue();
-
-        } else if (parameter instanceof PyLong) {
-            return ((PyLong) parameter).getValue().intValue();
-
-        } else if (parameter instanceof ScalarCData) {
-            return intValue(((ScalarCData) parameter).getValue());
-
-        } else {
-            return (int) __long__value(parameter);
-        }
-    }
-
-    public static long longValue(PyObject parameter) {
-        if (parameter instanceof PyInteger) {
-            return ((PyInteger) parameter).getValue();
-
-        } else if (parameter instanceof PyLong) {
-            return ((PyLong) parameter).getValue().longValue();
-
-        } else if (parameter instanceof ScalarCData) {
-            return longValue(((ScalarCData) parameter).getValue());
-
-        } else {
-            return __long__value(parameter);
-        }
-    }
-
-    static final long __long__value(PyObject parameter) {
-        PyObject value = parameter.__long__();
-
-        if (value instanceof PyLong) {
-            return ((PyLong) value).getValue().longValue();
-
-        } else if (value instanceof PyInteger) {
-            return ((PyInteger) value).getValue();
-        }
-
-        throw Py.TypeError("invalid __long__() result");
-    }
-
     public static int boolValue32(PyObject parameter) {
         return parameter.__nonzero__() ? 1 : 0;
     }
@@ -75,60 +30,60 @@ public final class JITRuntime {
     }
 
     public static int s8Value32(PyObject parameter) {
-        return (byte) intValue(parameter);
+        return (byte) Util.intValue(parameter);
     }
 
     public static long s8Value64(PyObject parameter) {
-        return (byte) intValue(parameter);
+        return (byte) Util.intValue(parameter);
     }
 
     public static int u8Value32(PyObject parameter) {
-        return intValue(parameter) & 0xff;
+        return Util.intValue(parameter) & 0xff;
     }
 
     public static long u8Value64(PyObject parameter) {
-        return intValue(parameter) & 0xff;
+        return Util.intValue(parameter) & 0xff;
     }
 
     public static int s16Value32(PyObject parameter) {
-        return (short) intValue(parameter);
+        return (short) Util.intValue(parameter);
     }
 
     public static long s16Value64(PyObject parameter) {
-        return (short) intValue(parameter);
+        return (short) Util.intValue(parameter);
     }
 
     public static int u16Value32(PyObject parameter) {
-        return intValue(parameter) & 0xffff;
+        return Util.intValue(parameter) & 0xffff;
     }
 
     public static long u16Value64(PyObject parameter) {
-        return intValue(parameter) & 0xffff;
+        return Util.intValue(parameter) & 0xffff;
     }
 
 
     public static int s32Value32(PyObject parameter) {
-        return intValue(parameter);
+        return Util.intValue(parameter);
     }
 
     public static long s32Value64(PyObject parameter) {
-        return intValue(parameter);
+        return Util.intValue(parameter);
     }
 
     public static int u32Value32(PyObject parameter) {
-        return intValue(parameter);
+        return Util.intValue(parameter);
     }
 
     public static long u32Value64(PyObject parameter) {
-        return intValue(parameter) & 0xffffffffL;
+        return Util.intValue(parameter) & 0xffffffffL;
     }
 
     public static long s64Value64(PyObject parameter) {
-        return longValue(parameter);
+        return Util.longValue(parameter);
     }
 
     public static long u64Value64(PyObject parameter) {
-        return longValue(parameter);
+        return Util.longValue(parameter);
     }
 
     public static int f32Value32(PyObject parameter) {

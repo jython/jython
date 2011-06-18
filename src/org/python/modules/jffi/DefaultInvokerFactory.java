@@ -282,7 +282,7 @@ class DefaultInvokerFactory {
         }
 
         public final PyObject invoke(PyObject[] args) {
-            return Util.newSigned16(jffiInvoker.invokeInt(jffiFunction, convertArguments(args)));
+            return JITRuntime.newSigned16(jffiInvoker.invokeInt(jffiFunction, convertArguments(args)));
         }
     }
 
@@ -293,7 +293,7 @@ class DefaultInvokerFactory {
         }
 
         public final PyObject invoke(PyObject[] args) {
-            return Util.newUnsigned16(jffiInvoker.invokeInt(jffiFunction, convertArguments(args)));
+            return JITRuntime.newUnsigned16(jffiInvoker.invokeInt(jffiFunction, convertArguments(args)));
         }
     }
 
@@ -304,7 +304,7 @@ class DefaultInvokerFactory {
         }
 
         public final PyObject invoke(PyObject[] args) {
-            return Util.newSigned32(jffiInvoker.invokeInt(jffiFunction, convertArguments(args)));
+            return JITRuntime.newSigned32(jffiInvoker.invokeInt(jffiFunction, convertArguments(args)));
         }
     }
 
@@ -315,7 +315,7 @@ class DefaultInvokerFactory {
         }
 
         public final PyObject invoke(PyObject[] args) {
-            return Util.newUnsigned32(jffiInvoker.invokeInt(jffiFunction, convertArguments(args)));
+            return JITRuntime.newUnsigned32(jffiInvoker.invokeInt(jffiFunction, convertArguments(args)));
         }
     }
 
@@ -326,7 +326,7 @@ class DefaultInvokerFactory {
         }
 
         public final PyObject invoke(PyObject[] args) {
-            return Util.newSigned64(jffiInvoker.invokeLong(jffiFunction, convertArguments(args)));
+            return JITRuntime.newSigned64(jffiInvoker.invokeLong(jffiFunction, convertArguments(args)));
         }
     }
 
@@ -337,7 +337,7 @@ class DefaultInvokerFactory {
         }
 
         public final PyObject invoke(PyObject[] args) {
-            return Util.newUnsigned64(jffiInvoker.invokeLong(jffiFunction, convertArguments(args)));
+            return JITRuntime.newUnsigned64(jffiInvoker.invokeLong(jffiFunction, convertArguments(args)));
         }
     }
 
@@ -381,7 +381,7 @@ class DefaultInvokerFactory {
         }
 
         public final PyObject invoke(PyObject[] args) {
-            return Util.newString(jffiInvoker.invokeAddress(jffiFunction, convertArguments(args)));
+            return JITRuntime.newString(jffiInvoker.invokeAddress(jffiFunction, convertArguments(args)));
         }
     }
     

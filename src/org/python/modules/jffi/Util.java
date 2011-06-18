@@ -2,8 +2,7 @@
 package org.python.modules.jffi;
 
 import java.math.BigInteger;
-import java.util.HashMap;
-import java.util.Map;
+
 import org.python.core.Py;
 import org.python.core.PyInteger;
 import org.python.core.PyLong;
@@ -13,23 +12,23 @@ final class Util {
     private static final com.kenai.jffi.MemoryIO IO = com.kenai.jffi.MemoryIO.getInstance();
 
     private Util() {}
-    
+
     public static final PyObject newSigned8(int value) {
-        value &= 0xff;
-        return Py.newInteger(value < 0x80 ? value : -0x80 + (value - 0x80));
+        return Py.newInteger((byte) value);
     }
 
     public static final PyObject newUnsigned8(int value) {
-        return Py.newInteger(value < 0 ? (long)((value & 0x7FL) + 0x80L) : value);
+        int n = (byte) value; // sign-extend the low 8 bits to 32
+        return Py.newInteger(n < 0 ? ((n & 0x7F) + 0x80) : n);
     }
 
     public static final PyObject newSigned16(int value) {
-        value &= 0xffff;
-        return Py.newInteger(value < 0x8000 ? value : -0x8000 + (value - 0x8000));
+        return Py.newInteger((short) value);
     }
 
     public static final PyObject newUnsigned16(int value) {
-        return Py.newInteger(value < 0 ? (long)((value & 0x7FFFL) + 0x8000L) : value);
+        int n = (short) value; // sign-extend the low 16 bits to 32
+        return Py.newInteger(n < 0 ? ((n & 0x7FFF) + 0x8000) : n);
     }
 
     public static final PyObject newSigned32(int value) {
@@ -37,7 +36,8 @@ final class Util {
     }
 
     public static final PyObject newUnsigned32(int value) {
-        return Py.newInteger(value < 0 ? (long)((value & 0x7FFFFFFFL) + 0x80000000L) : value);
+        int n = value;
+        return n < 0 ? Py.newInteger(((n & 0x7FFFFFFFL) + 0x80000000L)) : Py.newInteger(n);
     }
 
     public static final PyObject newSigned64(long value) {
@@ -58,47 +58,35 @@ final class Util {
     }
 
     public static final byte int8Value(PyObject parameter) {
-        return (byte) parameter.asInt();
+        return (byte) intValue(parameter);
     }
     
     public static final byte uint8Value(PyObject parameter) {
-        return (byte) parameter.asInt();
+        return (byte) intValue(parameter);
     }
     
     public static final short int16Value(PyObject parameter) {
-        return (short) parameter.asInt();
+        return (short) intValue(parameter);
     }
     
     public static final short uint16Value(PyObject parameter) {
-        return (short) parameter.asInt();
+        return (short) intValue(parameter);
     }
 
     public static final int int32Value(PyObject parameter) {
-        return parameter.asInt();
+        return intValue(parameter);
     }
     
-    public static final int uint32Value(PyObject value) {
-        if (value instanceof PyInteger) {
-            return value.asInt();
-        } else if (value instanceof PyLong) {
-            return (int) ((PyLong) value).asLong(0);
-        } else {
-            return (int) __long__value(value);
-        }
+    public static final int uint32Value(PyObject parameter) {
+        return intValue(parameter);
     }
 
     public static final long int64Value(PyObject value) {
-        return value.asLong();
+        return longValue(value);
     }
 
     public static final long uint64Value(PyObject value) {
-        if (value instanceof PyLong) {
-            return ((PyLong) value).getValue().longValue();
-        } else if (value instanceof PyInteger) {
-            return value.asInt();
-        } else {
-            return __long__value(value);
-        }
+        return longValue(value);
     }
 
     public static final float floatValue(PyObject parameter) {
@@ -113,9 +101,11 @@ final class Util {
         PyObject l = value.__long__();
         if (l instanceof PyLong) {
             return ((PyLong) l).getValue().longValue();
+
         } else if (l instanceof PyInteger) {
-            return value.asInt();
+            return ((PyInteger) l).getValue();
         }
+
         throw Py.TypeError("invalid __long__() result");
     }
 
@@ -139,5 +129,35 @@ final class Util {
 
     static final com.kenai.jffi.Type jffiType(CType type) {
         return (com.kenai.jffi.Type) type.jffiType();
+    }
+
+    public static int intValue(PyObject parameter) {
+        if (parameter instanceof PyInteger) {
+            return ((PyInteger) parameter).getValue();
+
+        } else if (parameter instanceof PyLong) {
+            return ((PyLong) parameter).getValue().intValue();
+
+        } else if (parameter instanceof ScalarCData) {
+            return intValue(((ScalarCData) parameter).getValue());
+
+        } else {
+            return (int) __long__value(parameter);
+        }
+    }
+
+    public static long longValue(PyObject parameter) {
+        if (parameter instanceof PyInteger) {
+            return ((PyInteger) parameter).getValue();
+
+        } else if (parameter instanceof PyLong) {
+            return ((PyLong) parameter).getValue().longValue();
+
+        } else if (parameter instanceof ScalarCData) {
+            return longValue(((ScalarCData) parameter).getValue());
+
+        } else {
+            return __long__value(parameter);
+        }
     }
 }
