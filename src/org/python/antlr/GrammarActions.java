@@ -615,7 +615,6 @@ public class GrammarActions {
     }
 
     void checkDelete(expr e) {
-        //System.out.println("trying to del " + e);
         if (e instanceof Call) {
             errorHandler.error("can't delete function call", e);
         } else if (e instanceof Num) {

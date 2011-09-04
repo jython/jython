@@ -1588,9 +1588,7 @@ power
           $etype = actions.castExpr($atom.tree);
           if ($t != null) {
               for(Object o : $t) {
-                  if ($etype instanceof Context) {
-                      ((Context)$etype).setContext(expr_contextType.Load);
-                  }
+                  actions.recurseSetContext($etype, expr_contextType.Load);
                   if (o instanceof Call) {
                       Call c = (Call)o;
                       c.setFunc((PyObject)$etype);
