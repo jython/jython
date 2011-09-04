@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 final class JITHandle {
 
-    private static final int THRESHOLD = Integer.getInteger("jython.ctypes.compile.threshold", 10);
+    private static final int THRESHOLD = Integer.getInteger("jython.ctypes.compile.threshold", 100);
     private final JITSignature jitSignature;
     private volatile boolean compilationFailed = false;
     private final AtomicInteger counter = new AtomicInteger(0);
