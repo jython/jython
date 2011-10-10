@@ -44,7 +44,7 @@ MAXFTPCACHE = 10        # Trim the ftp cache beyond this size
 # Helper for non-unix systems
 if os.name == 'mac':
     from macurl2path import url2pathname, pathname2url
-elif os.name == 'nt':
+elif (os._name if sys.platform.startswith('java') else os.name) == 'nt':
     from nturl2path import url2pathname, pathname2url
 elif os.name == 'riscos':
     from rourl2path import url2pathname, pathname2url
