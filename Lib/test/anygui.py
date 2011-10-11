@@ -2,7 +2,6 @@
 import sys
 
 class anygui:
-    __all__ = ['Window'] # Etc...
 
     def __init__(self):
         self.__backend = None
