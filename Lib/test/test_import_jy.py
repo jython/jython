@@ -205,6 +205,12 @@ class ImpTestCase(unittest.TestCase):
                 shutil.rmtree(test_support.TESTFN)
                 test_support.unlink(sym)
 
+    def test_issue1811(self):
+        # Previously this blew out the stack
+        from test.issue1811 import foo
+        self.assertTrue(foo.issue1811.foo is foo)
+
+
 def test_main():
     test_support.run_unittest(MislabeledImportTestCase,
                               OverrideBuiltinsImportTestCase,
