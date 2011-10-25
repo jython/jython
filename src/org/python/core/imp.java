@@ -846,17 +846,42 @@ public class imp {
         }
 
         if (fromlist != null && fromlist != Py.None) {
-            StringBuilder modNameBuffer = new StringBuilder(name);
-            for (PyObject submodName : fromlist.asIterable()) {
-                if (mod.__findattr__(submodName.toString()) != null
-                    || submodName.toString().equals("*")) {
-                    continue;
-                }
-                String fullName = modNameBuffer.toString() + "." + submodName.toString();
-                import_next(mod, modNameBuffer, submodName.toString(), fullName, null);
-            }
+            ensureFromList(mod, fromlist, name);
         }
         return mod;
+    }
+
+    private static void ensureFromList(PyObject mod, PyObject fromlist, String name) {
+        ensureFromList(mod, fromlist, name, false);
+    }
+
+    private static void ensureFromList(PyObject mod, PyObject fromlist, String name,
+                                       boolean recursive) {
+            if (mod.__findattr__("__path__") == null) {
+                return;
+            }
+
+            StringBuilder modNameBuffer = new StringBuilder(name);
+            for (PyObject item : fromlist.asIterable()) {
+                if (!Py.isInstance(item, PyString.TYPE)) {
+                    throw Py.TypeError("Item in ``from list'' not a string");
+                }
+                if (item.toString().equals("*")) {
+                    if (recursive) {
+                        // Avoid endless recursion
+                        continue;
+                    }
+                    PyObject all;
+                    if ((all = mod.__findattr__("__all__")) != null) {
+                        ensureFromList(mod, all, name, true);
+                    }
+                }
+
+                if (mod.__findattr__((PyString) item) == null) {
+                    String fullName = modNameBuffer.toString() + "." + item.toString();
+                    import_next(mod, modNameBuffer, item.toString(), fullName, null);
+                }
+            }
     }
 
     /**

@@ -119,14 +119,6 @@ public class PyModule extends PyObject {
         return null;
     }
 
-    @Override
-    public PyObject __findattr_ex__(String name) {
-        PyObject attr=super.__findattr_ex__(name);
-        if (attr!=null)
-            return attr;
-        return impAttr(name);
-    }
-
     public void __setattr__(String name, PyObject value) {
         module___setattr__(name, value);
     }
