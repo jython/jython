@@ -581,17 +581,25 @@ def getprotobyname(protocol_name=None):
         return None
     return Protocol.getProtocolByName(protocol_name).getProto()
 
-def _realsocket(family = AF_INET, type = SOCK_STREAM, protocol=0):
+def _realsocket(family = AF_INET, sock_type = SOCK_STREAM, protocol=0):
     assert family in (AF_INET, AF_INET6), "Only AF_INET and AF_INET6 sockets are currently supported on jython"
-    assert type in (SOCK_DGRAM, SOCK_STREAM), "Only SOCK_STREAM and SOCK_DGRAM sockets are currently supported on jython"
-    if type == SOCK_STREAM:
+    assert sock_type in (SOCK_DGRAM, SOCK_STREAM), "Only SOCK_STREAM and SOCK_DGRAM sockets are currently supported on jython"
+    if sock_type == SOCK_STREAM:
         if protocol != 0:
             assert protocol == IPPROTO_TCP, "Only IPPROTO_TCP supported on SOCK_STREAM sockets"
-        return _tcpsocket()
+        else:
+            protocol = IPPROTO_TCP
+        result = _tcpsocket()
     else:
         if protocol != 0:
             assert protocol == IPPROTO_UDP, "Only IPPROTO_UDP supported on SOCK_DGRAM sockets"
-        return _udpsocket()
+        else:
+            protocol = IPPROTO_UDP
+        result = _udpsocket()
+    setattr(result, "family", family)
+    setattr(result, "type",   sock_type)
+    setattr(result, "proto",  protocol)
+    return result
 
 #
 # Attempt to provide IDNA (RFC 3490) support.
