@@ -27,11 +27,6 @@ os_name = platform.java_ver()[3][0]
 is_bsd = os_name == 'Mac OS X' or 'BSD' in os_name
 is_solaris = os_name == 'SunOS'
 
-try:
-    True
-except NameError:
-    True, False = 1, 0
-
 class SocketTCPTest(unittest.TestCase):
 
     HOST = HOST
@@ -490,6 +485,18 @@ class GeneralModuleTests(unittest.TestCase):
         sock.bind(("0.0.0.0", PORT+1))
         name = sock.getsockname()
         self.assertEqual(name, ("0.0.0.0", PORT+1))
+
+    def testSockAttributes(self):
+        # Testing required attributes
+        for family in [socket.AF_INET, socket.AF_INET6]:
+            for sock_type in [socket.SOCK_STREAM, socket.SOCK_DGRAM]:
+                s = socket.socket(family, sock_type)
+                self.assertEqual(s.family, family)
+                self.assertEqual(s.type, sock_type)
+                if sock_type == socket.SOCK_STREAM:
+                    self.assertEqual(s.proto, socket.IPPROTO_TCP)
+                else:
+                    self.assertEqual(s.proto, socket.IPPROTO_UDP)
 
     def testGetSockOpt(self):
         # Testing getsockopt()
