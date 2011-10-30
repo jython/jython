@@ -238,7 +238,7 @@ class JavaSAXParser(xmlreader.XMLReader, javasax.ContentHandler, LexicalHandler)
         pass # TODO
 
 def _fixTuple(nsTuple, frm, to):
-    if len(nsTuple) == 2:
+    if isinstance(nsTuple, tuple) and len(nsTuple) == 2:
         nsUri, localName = nsTuple
         if nsUri == frm:
             nsUri = to

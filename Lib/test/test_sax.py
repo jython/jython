@@ -390,22 +390,23 @@ def test_expat_nsattrs_wattr():
     gather = AttrGatherer()
     parser.setContentHandler(gather)
 
-    parser.parse(StringIO("<doc xmlns:ns='%s' ns:attr='val'/>" % ns_uri))
+    a_name = "id" ; a_val = "val"
+    parser.parse(StringIO("<doc xmlns:ns='%s' ns:%s='%s'/>" % (ns_uri, a_name, a_val) ))
 
     attrs = gather._attrs
 
     return attrs.getLength() == 1 and \
-           attrs.getNames() == [(ns_uri, "attr")] and \
-           attrs.getQNames() == ["ns:attr"] and \
+           attrs.getNames() == [(ns_uri, a_name)] and \
+           attrs.getQNames() == ["ns:%s" % a_name] and \
            len(attrs) == 1 and \
-           attrs.has_key((ns_uri, "attr")) and \
-           attrs.keys() == [(ns_uri, "attr")] and \
-           attrs.get((ns_uri, "attr")) == "val" and \
-           attrs.get((ns_uri, "attr"), 25) == "val" and \
-           attrs.items() == [((ns_uri, "attr"), "val")] and \
-           attrs.values() == ["val"] and \
-           attrs.getValue((ns_uri, "attr")) == "val" and \
-           attrs[(ns_uri, "attr")] == "val"
+           attrs.has_key((ns_uri, a_name)) and \
+           attrs.keys() == [(ns_uri, a_name)] and \
+           attrs.get((ns_uri, a_name)) == a_val and \
+           attrs.get((ns_uri, a_name), 25) == a_val and \
+           attrs.items() == [((ns_uri, a_name), a_val)] and \
+           attrs.values() == [a_val] and \
+           attrs.getValue((ns_uri, a_name)) == a_val and \
+           attrs[(ns_uri, a_name)] == a_val
 
 def test_expat_nsattrs_no_namespace():
     parser = make_parser()
@@ -413,22 +414,23 @@ def test_expat_nsattrs_no_namespace():
     gather = AttrGatherer()
     parser.setContentHandler(gather)
 
-    parser.parse(StringIO("<doc attr='val'/>"))
+    a_name = "id" ; a_val = "val"
+    parser.parse(StringIO("<doc %s='%s'/>" % (a_name, a_val) ))
 
     attrs = gather._attrs
 
     return attrs.getLength() == 1 and \
-           attrs.getNames() == [(None, "attr")] and \
-           attrs.getQNames() == ["attr"] and \
+           attrs.getNames() == [(None, a_name)] and \
+           attrs.getQNames() == [a_name] and \
            len(attrs) == 1 and \
-           attrs.has_key((None, "attr")) and \
-           attrs.keys() == [(None, "attr")] and \
-           attrs.get((None, "attr")) == "val" and \
-           attrs.get((None, "attr"), 25) == "val" and \
-           attrs.items() == [((None, "attr"), "val")] and \
-           attrs.values() == ["val"] and \
-           attrs.getValue((None, "attr")) == "val" and \
-           attrs[(None, "attr")] == "val"
+           attrs.has_key((None, a_name)) and \
+           attrs.keys() == [(None, a_name)] and \
+           attrs.get((None, a_name)) == a_val and \
+           attrs.get((None, a_name), 25) == a_val and \
+           attrs.items() == [((None, a_name), a_val)] and \
+           attrs.values() == [a_val] and \
+           attrs.getValue((None, a_name)) == a_val and \
+           attrs[(None, a_name)] == a_val
 
 # ===== InputSource support
 
