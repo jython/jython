@@ -5,6 +5,9 @@ Jython 2.6a1
     - [ 1727 ] Error in Jython 2.5.2 with os.stat and varargs
     - [ 1735 ] return type of os.read is unicode, not str
     - [ 1755 ] os.utime('/tmp/nonexistent-file', None) fails to raise OSError
+    - [ 1768 ] sax.parse doesn't handle attributes with name 'id' correctly
+    - [ 1803 ] _tcpsocket doesn't have 'family' attribute
+    - [ 1804 ] _tcpsocket doesn't have 'type' and 'proto' attributes
     - [ 1811 ] Recursive import bug w/ SQLAlchemy 0.7.3
 
 Jython 2.5.2
