@@ -1,5 +1,5 @@
 """
-This is an updated socket module for use on JVMs > 1.5; it is derived from the old jython socket module.
+This is an updated socket module for use on JVMs >= 1.5; it is derived from the old jython socket module.
 It is documented, along with known issues and workarounds, on the jython wiki.
 http://wiki.python.org/jython/NewSocketModule
 """
@@ -174,11 +174,19 @@ SHUT_WR   = 1
 SHUT_RDWR = 2
 
 AF_UNSPEC = 0
-AF_INET = 2
-AF_INET6 = 23
+AF_INET   = 2
+AF_INET6  = 23
 
-AI_PASSIVE=1
-AI_CANONNAME=2
+AI_PASSIVE     = 1
+AI_CANONNAME   = 2
+AI_NUMERICHOST = 4
+AI_V4MAPPED    = 8
+AI_ALL         = 16
+AI_ADDRCONFIG  = 32
+AI_NUMERICSERV = 1024
+
+EAI_NONAME  = -2
+EAI_SERVICE = -8
 
 # For some reason, probably historical, SOCK_DGRAM and SOCK_STREAM are opposite values of what they are on cpython.
 # I.E. The following is the way they are on cpython
@@ -565,21 +573,30 @@ def getservbyname(service_name, protocol_name=None):
         from jnr.netdb import Service
     except ImportError:
         return None
-    return Service.getServiceByName(service_name, protocol_name).getPort()
+    service = Service.getServiceByName(service_name, protocol_name)
+    if service is None:
+        raise error('service/proto not found')
+    return service.getPort()
 
 def getservbyport(port, protocol_name=None):
     try:
         from jnr.netdb import Service
     except ImportError:
         return None
-    return Service.getServiceByPort(port, protocol_name).getName()
+    service = Service.getServiceByPort(port, protocol_name)
+    if service is None:
+        raise error('port/proto not found')
+    return service.getName()
 
 def getprotobyname(protocol_name=None):
     try:
         from jnr.netdb import Protocol
     except ImportError:
         return None
-    return Protocol.getProtocolByName(protocol_name).getProto()
+    proto = Protocol.getProtocolByName(protocol_name)
+    if proto is None:
+        raise error('protocol not found')
+    return proto.getProto()
 
 def _realsocket(family = AF_INET, sock_type = SOCK_STREAM, protocol=0):
     assert family in (AF_INET, AF_INET6), "Only AF_INET and AF_INET6 sockets are currently supported on jython"
@@ -723,19 +740,39 @@ def _use_ipv4_addresses_only(value):
     global _ipv4_addresses_only
     _ipv4_addresses_only = value
 
+def _get_port_number(port, flags):
+    if isinstance(port, basestring):
+        try:
+            int_port = int(port)
+        except ValueError:
+            if flags and flags & AI_NUMERICSERV:
+                raise gaierror(EAI_NONAME, "Name or service not known")
+            # Lookup the service by name
+            try:
+                int_port = getservbyname(port)
+            except error:
+                raise gaierror(EAI_SERVICE, "Servname not supported for ai_socktype")
+    elif port is None:
+        int_port = 0
+    elif not isinstance(port, (int, long)):
+        raise error("Int or String expected")
+    else:
+        int_port = int(port)
+    return int_port % 65536
+
 def getaddrinfo(host, port, family=AF_INET, socktype=None, proto=0, flags=None):
     try:
+        if _ipv4_addresses_only:
+            family = AF_INET
         if not family in [AF_INET, AF_INET6, AF_UNSPEC]:
             raise gaierror(errno.EIO, 'ai_family not supported')
+        port = _get_port_number(port, flags)
         filter_fns = []
-        if _ipv4_addresses_only:
-            filter_fns.append( lambda x: isinstance(x, java.net.Inet4Address) )
-        else:
-            filter_fns.append({
-                AF_INET:   lambda x: isinstance(x, java.net.Inet4Address),
-                AF_INET6:  lambda x: isinstance(x, java.net.Inet6Address),
-                AF_UNSPEC: lambda x: isinstance(x, java.net.InetAddress),
-            }[family])
+        filter_fns.append({
+            AF_INET:   lambda x: isinstance(x, java.net.Inet4Address),
+            AF_INET6:  lambda x: isinstance(x, java.net.Inet6Address),
+            AF_UNSPEC: lambda x: isinstance(x, java.net.InetAddress),
+        }[family])
         if host == "":
             host = java.net.InetAddress.getLocalHost().getHostName()
         if isinstance(host, unicode):
@@ -793,6 +830,7 @@ def ntohs(x): return x
 def ntohl(x): return x
 
 def inet_pton(family, ip_string):
+    # FIXME: java.net.InetAddress.getByName also accepts hostnames
     try:
         ia = java.net.InetAddress.getByName(ip_string)
         bytes = []
@@ -1514,6 +1552,7 @@ class _fileobject(object):
             raise StopIteration
         return line
 
+_GLOBAL_DEFAULT_TIMEOUT = object()
 
 # Define the SSL support
 

@@ -379,6 +379,39 @@ class GeneralModuleTests(unittest.TestCase):
         if udpport is not None:
             eq(socket.getservbyport(udpport, 'udp'), service)
 
+    def testGetServByExceptions(self):
+        # First getservbyname
+        try:
+            result = socket.getservbyname("nosuchservice")
+        except socket.error:
+            pass
+        except Exception, x:
+            self.fail("getservbyname raised wrong exception for non-existent service: %s" % str(x))
+        else:
+            self.fail("getservbyname failed to raise exception for non-existent service: %s" % str(result))
+
+        # Now getservbyport
+        try:
+            result = socket.getservbyport(55555)
+        except socket.error:
+            pass
+        except Exception, x:
+            self.fail("getservbyport raised wrong exception for unknown port: %s" % str(x))
+        else:
+            self.fail("getservbyport failed to raise exception for unknown port: %s" % str(result))
+
+    def testGetProtoByName(self):
+        self.failUnlessEqual(socket.IPPROTO_TCP, socket.getprotobyname("tcp"))
+        self.failUnlessEqual(socket.IPPROTO_UDP, socket.getprotobyname("udp"))
+        try:
+            result = socket.getprotobyname("nosuchproto")
+        except socket.error:
+            pass
+        except Exception, x:
+            self.fail("getprotobyname raised wrong exception for unknown protocol: %s" % str(x))
+        else:
+            self.fail("getprotobyname failed to raise exception for unknown protocol: %s" % str(result))
+
     def testDefaultTimeout(self):
         # Testing default timeout
         # The default timeout should initially be None
@@ -1537,6 +1570,66 @@ class TestGetAddrInfo(unittest.TestCase):
         self.failUnless(str(ipv6_address_tuple) in ["('::1', 80, 0, 0)", "('0:0:0:0:0:0:0:1', 80, 0, 0)"])
         self.failUnless(repr(ipv6_address_tuple) in ["('::1', 80, 0, 0)", "('0:0:0:0:0:0:0:1', 80, 0, 0)"])
 
+    def testNonIntPort(self):
+        hostname = "localhost"
+
+        # Port value of None should map to 0
+        addrs = socket.getaddrinfo(hostname, None)
+        for a in addrs:
+            self.failUnlessEqual(a[4][1], 0, "Port value of None should have returned 0")
+
+        # Port value can be a string rep of the port number
+        addrs = socket.getaddrinfo(hostname, "80")
+        for a in addrs:
+            self.failUnlessEqual(a[4][1], 80, "Port value of '80' should have returned 80")
+
+        # Can also specify a service name
+        # This test assumes that service http will always be at port 80
+        addrs = socket.getaddrinfo(hostname, "http")
+        for a in addrs:
+            self.failUnlessEqual(a[4][1], 80, "Port value of 'http' should have returned 80")
+
+        # Check treatment of non-integer numeric port
+        try:
+            socket.getaddrinfo(hostname, 79.99)
+        except socket.error, se:
+            self.failUnlessEqual(se[0], "Int or String expected")
+        except Exception, x:
+            self.fail("getaddrinfo for float port number raised wrong exception: %s" % str(x))
+        else:
+            self.fail("getaddrinfo for float port number failed to raise exception")
+
+        # Check treatment of non-integer numeric port, as a string
+        # The result is that it should fail in the same way as a non-existent service
+        try:
+            socket.getaddrinfo(hostname, "79.99")
+        except socket.gaierror, g:
+            self.failUnlessEqual(g[0], socket.EAI_SERVICE)
+        except Exception, x:
+            self.fail("getaddrinfo for non-integer numeric port, as a string raised wrong exception: %s" % str(x))
+        else:
+            self.fail("getaddrinfo for non-integer numeric port, as a string failed to raise exception")
+
+        # Check enforcement of AI_NUMERICSERV
+        try:
+            socket.getaddrinfo(hostname, "http", 0, 0, 0, socket.AI_NUMERICSERV)
+        except socket.gaierror, g:
+            self.failUnlessEqual(g[0], socket.EAI_NONAME)
+        except Exception, x:
+            self.fail("getaddrinfo for service name with AI_NUMERICSERV raised wrong exception: %s" % str(x))
+        else:
+            self.fail("getaddrinfo for service name with AI_NUMERICSERV failed to raise exception")
+
+        # Check treatment of non-existent service
+        try:
+            socket.getaddrinfo(hostname, "nosuchservice")
+        except socket.gaierror, g:
+            self.failUnlessEqual(g[0], socket.EAI_SERVICE)
+        except Exception, x:
+            self.fail("getaddrinfo for unknown service name raised wrong exception: %s" % str(x))
+        else:
+            self.fail("getaddrinfo for unknown service name failed to raise exception")
+
 class TestJython_get_jsockaddr(unittest.TestCase):
     "These tests are specific to jython: they test a key internal routine"
 
@@ -1863,7 +1956,7 @@ def test_main():
     if False:
         tests.append(UDPBroadcastTest)
     suites = [unittest.makeSuite(klass, 'test') for klass in tests]
-    test_support.run_suite(unittest.TestSuite(suites))
+    test_support._run_suite(unittest.TestSuite(suites))
 
 if __name__ == "__main__":
     test_main()
