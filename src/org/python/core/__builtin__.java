@@ -904,18 +904,9 @@ public class __builtin__ {
      * Handle range() when PyLong arguments (that OverFlow ints) are given.
      */
     private static PyObject handleRangeLongs(PyObject ilow, PyObject ihigh, PyObject istep) {
-        if (!(ilow instanceof PyInteger) && !(ilow instanceof PyLong)) {
-            throw Py.TypeError(String.format("range() integer start argument expected, got %s.",
-                                             ilow.getType().fastGetName()));
-        }
-        if (!(ihigh instanceof PyInteger) && !(ihigh instanceof PyLong)) {
-            throw Py.TypeError(String.format("range() integer end argument expected, got %s.",
-                                             ihigh.getType().fastGetName()));
-        }
-        if (!(istep instanceof PyInteger) && !(istep instanceof PyLong)) {
-            throw Py.TypeError(String.format("range() integer step argument expected, got %s.",
-                                             istep.getType().fastGetName()));
-        }
+        ilow = getRangeLongArgument(ilow, "start");
+        ihigh = getRangeLongArgument(ihigh, "end");
+        istep = getRangeLongArgument(istep, "step");
 
         int n;
         int cmpResult = istep._cmp(Py.Zero);
@@ -962,6 +953,30 @@ public class __builtin__ {
         } catch (PyException pye) {
             return -1;
         }
+    }
+
+    /**
+     * Helper function for handleRangeLongs. If arg is int or long object, returns it.  If
+     * arg is float, raises type error. As a last resort, creates a new int by calling arg
+     * type's __int__ method if it is defined.
+     */
+    private static PyObject getRangeLongArgument(PyObject arg, String name) {
+        if (arg instanceof PyInteger || arg instanceof PyLong) {
+            return arg;
+        }
+
+        // isNumberType is roughly arg.__findattr__("__int__") != null. Equiv. to
+        // CPython's type.nb_init != null
+        if (arg instanceof PyFloat || !arg.isNumberType()) {
+            throw Py.TypeError(String.format("range() integer %s argument expected, got %s.",
+                                             name, arg.getType().fastGetName()));
+        }
+
+        PyObject intObj = arg.__int__();
+        if (intObj instanceof PyInteger || intObj instanceof PyLong) {
+            return intObj;
+        }
+        throw Py.TypeError("__int__ should return int object");
     }
 
     private static PyString readline(PyObject file) {
