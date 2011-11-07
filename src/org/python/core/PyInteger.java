@@ -793,8 +793,13 @@ public class PyInteger extends PyObject {
 
     @ExposedMethod(doc = BuiltinDocs.int___neg___doc)
     final PyObject int___neg__() {
-        long x = -getValue();
-        return Py.newInteger(x);
+        long x = getValue();
+        long result = -x;
+        // check for overflow
+        if (x < 0 && result == x) {
+            return new PyLong(x).__neg__();
+        }
+        return Py.newInteger(result);
     }
 
     @Override
