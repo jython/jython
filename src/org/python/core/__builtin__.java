@@ -361,6 +361,7 @@ public class __builtin__ {
         dict.__setitem__("any", new AnyFunction());
         dict.__setitem__("format", new FormatFunction());
         dict.__setitem__("print", new PrintFunction());
+        dict.__setitem__("next", new NextFunction());
     }
 
     public static PyObject abs(PyObject o) {
@@ -1660,5 +1661,36 @@ class OpenFunction extends PyBuiltinFunction {
             }
         }
         return PyFile.TYPE.__call__(args, kwds);
+    }
+}
+
+class NextFunction extends PyBuiltinFunction {
+    NextFunction() {
+        super("next", "next(iterator[, default])\n\n"
+              + "Return the next item from the iterator. If default is given and the iterator\n"
+              + "is exhausted, it is returned instead of raising StopIteration.");
+    }
+
+    @Override
+    public PyObject __call__(PyObject args[], String kwds[]) {
+        ArgParser ap = new ArgParser("next", args, kwds, new String[] {"iterator", "default"}, 1);
+        ap.noKeywords();
+        PyObject it = ap.getPyObject(0);
+        PyObject def = ap.getPyObject(1, null);
+
+        PyObject next;
+        if ((next = it.__findattr__("next")) == null) {
+            throw Py.TypeError(String.format("'%.200s' object is not an iterator",
+                                             it.getType().fastGetName()));
+        }
+
+        try {
+            return next.__call__();
+        } catch (PyException pye) {
+            if (!pye.match(Py.StopIteration) || def == null) {
+                throw pye;
+            }
+        }
+        return def;
     }
 }
