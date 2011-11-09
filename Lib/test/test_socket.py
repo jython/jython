@@ -8,6 +8,7 @@ import unittest
 from test import test_support
 
 import errno
+import jarray
 import Queue
 import platform
 import select
@@ -474,6 +475,31 @@ class GeneralModuleTests(unittest.TestCase):
             f('45ef:76cb:1a:56ef:afeb:bac:1924:aeae')
         )
 
+    def test_inet_pton_exceptions(self):
+        if not hasattr(socket, 'inet_pton'):
+            return # No inet_pton() on this platform
+
+        try:
+            socket.inet_pton(socket.AF_UNSPEC, "doesntmatter")
+        except socket.error, se:
+            self.failUnlessEqual(se[0], errno.EAFNOSUPPORT)
+        except Exception, x:
+            self.fail("inet_pton raised wrong exception for incorrect address family AF_UNSPEC: %s" % str(x))
+
+        try:
+            socket.inet_pton(socket.AF_INET, "1.2.3.")
+        except socket.error, se:
+            pass
+        except Exception, x:
+            self.fail("inet_pton raised wrong exception for invalid AF_INET address: %s" % str(x))
+
+        try:
+            socket.inet_pton(socket.AF_INET6, ":::")
+        except socket.error, se:
+            pass
+        except Exception, x:
+            self.fail("inet_pton raised wrong exception for invalid AF_INET6 address: %s" % str(x))
+
     def testStringToIPv4(self):
         if not hasattr(socket, 'inet_ntop'):
             return # No inet_ntop() on this platform
@@ -509,6 +535,33 @@ class GeneralModuleTests(unittest.TestCase):
             'aef:b01:506:1001:ffff:9997:55:170',
             f('\x0a\xef\x0b\x01\x05\x06\x10\x01\xff\xff\x99\x97\x00\x55\x01\x70')
         )
+
+    def test_inet_ntop_exceptions(self):
+        if not hasattr(socket, 'inet_ntop'):
+            return # No inet_ntop() on this platform
+        valid_address = '\x01\x01\x01\x01'
+        invalid_address = '\x01\x01\x01\x01\x01'
+
+        try:
+            socket.inet_ntop(socket.AF_UNSPEC, valid_address)
+        except ValueError, v:
+            pass
+        except Exception, x:
+            self.fail("inet_ntop raised wrong exception for incorrect address family AF_UNSPEC: %s" % str(x))
+
+        try:
+            socket.inet_ntop(socket.AF_INET, invalid_address)
+        except ValueError, v:
+            pass
+        except Exception, x:
+            self.fail("inet_ntop raised wrong exception for invalid AF_INET address: %s" % str(x))
+
+        try:
+            socket.inet_ntop(socket.AF_INET6, invalid_address)
+        except ValueError, v:
+            pass
+        except Exception, x:
+            self.fail("inet_ntop raised wrong exception for invalid AF_INET address: %s" % str(x))
 
     # XXX The following don't test module-level functionality...
 
@@ -552,6 +605,94 @@ class GeneralModuleTests(unittest.TestCase):
         sock.close()
         self.assertRaises(socket.error, sock.send, "spam")
 
+class IPAddressTests(unittest.TestCase):
+
+    def testValidIpV4Addresses(self):
+        for a in [
+            "0.0.0.1",
+            "1.0.0.1",
+            "127.0.0.1",
+            "255.12.34.56",
+            "255.255.255.255",
+        ]:
+            self.failUnless(socket.is_ipv4_address(a), "is_ipv4_address failed for valid IPV4 address '%s'" % a)
+            self.failUnless(socket.is_ip_address(a), "is_ip_address failed for valid IPV4 address '%s'" % a)
+            
+    def testInvalidIpV4Addresses(self):
+        for a in [
+            "99.2",
+            "99.2.4",
+            "-10.1.2.3",
+            "256.0.0.0",
+            "0.256.0.0",
+            "0.0.256.0",
+            "0.0.0.256",
+            "255.24.x.100",
+            "255.24.-1.128",
+            "255.24.-1.128.",
+            "255.0.0.999",
+        ]:
+            self.failUnless(not socket.is_ipv4_address(a), "not is_ipv4_address failed for invalid IPV4 address '%s'" % a)
+            self.failUnless(not socket.is_ip_address(a), "not is_ip_address failed for invalid IPV4 address '%s'" % a)
+
+    def testValidIpV6Addresses(self):
+        for a in [
+            "::",
+            "::1",
+            "fe80::1",
+            "::192.168.1.1",
+            "0:0:0:0:0:0:0:0",
+            "1080::8:800:2C:4A",
+            "FEC0:0:0:0:0:0:0:1",
+            "::FFFF:192.168.1.1",
+            "abcd:ef:111:f123::1",
+            "1138:0:0:0:8:80:800:417A",
+            "fecc:face::b00c:f001:fedc:fedd",
+            "CaFe:BaBe:dEAd:BeeF:12:345:6789:abcd",
+        ]:
+            self.failUnless(socket.is_ipv6_address(a), "is_ipv6_address failed for valid IPV6 address '%s'" % a)
+            self.failUnless(socket.is_ip_address(a), "is_ip_address failed for valid IPV6 address '%s'" % a)
+            
+    def testInvalidIpV6Addresses(self):
+        for a in [
+            "2001:db8:::192.0.2.1", # from RFC 5954
+            "CaFe:BaBe:dEAd:BeeF:12:345:6789:abcd:",
+            "CaFe:BaBe:dEAd:BeeF:12:345:6789:abcd:ef",
+            "CaFFe:1a77e:dEAd:BeeF:12:345:6789:abcd",
+        ]:
+            self.failUnless(not socket.is_ipv6_address(a), "not is_ipv6_address failed for invalid IPV6 address '%s'" % a)
+            self.failUnless(not socket.is_ip_address(a), "not is_ip_address failed for invalid IPV6 address '%s'" % a)
+
+    def testRFC5952(self):
+        for a in [
+            "2001:db8::",
+            "2001:db8::1",
+            "2001:db8:0::1",
+            "2001:db8:0:0::1",
+            "2001:db8:0:0:0::1",
+            "2001:DB8:0:0:1::1",
+            "2001:db8:0:0:1::1",
+            "2001:db8::1:0:0:1",
+            "2001:0db8::1:0:0:1",
+            "2001:db8::0:1:0:0:1",
+            "2001:db8:0:0:1:0:0:1",
+            "2001:db8:0000:0:1::1",
+            "2001:db8::aaaa:0:0:1",
+            "2001:db8:0:0:aaaa::1",
+            "2001:0db8:0:0:1:0:0:1",
+            "2001:db8:aaaa:bbbb:cccc:dddd::1",
+            "2001:db8:aaaa:bbbb:cccc:dddd:0:1",
+            "2001:db8:aaaa:bbbb:cccc:dddd:eeee:1",
+            "2001:db8:aaaa:bbbb:cccc:dddd:eeee:01",
+            "2001:db8:aaaa:bbbb:cccc:dddd:eeee:001",
+            "2001:db8:aaaa:bbbb:cccc:dddd:eeee:0001",
+            "2001:db8:aaaa:bbbb:cccc:dddd:eeee:aaaa",
+            "2001:db8:aaaa:bbbb:cccc:dddd:eeee:AAAA",
+            "2001:db8:aaaa:bbbb:cccc:dddd:eeee:AaAa",
+        ]:
+            self.failUnless(socket.is_ipv6_address(a), "is_ipv6_address failed for valid RFC 5952 IPV6 address '%s'" % a)
+            self.failUnless(socket.is_ip_address(a), "is_ip_address failed for valid RFC 5952 IPV6 address '%s'" % a)
+      
 class TestSocketOptions(unittest.TestCase):
 
     def setUp(self):
@@ -1630,6 +1771,114 @@ class TestGetAddrInfo(unittest.TestCase):
         else:
             self.fail("getaddrinfo for unknown service name failed to raise exception")
 
+    def testHostNames(self):
+        # None is always acceptable
+        for flags in [0, socket.AI_NUMERICHOST]:
+            try:
+                socket.getaddrinfo(None, 80, 0, 0, 0, flags)
+            except Exception, x:
+                self.fail("hostname == None should not have raised exception: %s" % str(x))
+
+        # Check enforcement of AI_NUMERICHOST
+        for host in ["", " ", "localhost"]:
+            try:
+                socket.getaddrinfo(host, 80, 0, 0, 0, socket.AI_NUMERICHOST)
+            except socket.gaierror, ge:
+                self.failUnlessEqual(ge[0], socket.EAI_NONAME)
+            except Exception, x:
+                self.fail("Non-numeric host with AI_NUMERICHOST raised wrong exception: %s" % str(x))
+            else:
+                self.fail("Non-numeric hostname '%s' with AI_NUMERICHOST should have raised exception" % host)
+
+        # Check enforcement of AI_NUMERICHOST with wrong address families
+        for host, family in [("127.0.0.1", socket.AF_INET6), ("::1", socket.AF_INET)]:
+            try:
+                socket.getaddrinfo(host, 80, family, 0, 0, socket.AI_NUMERICHOST)
+            except socket.gaierror, ge:
+                self.failUnlessEqual(ge[0], socket.EAI_ADDRFAMILY)
+            except Exception, x:
+                self.fail("Numeric host '%s' in wrong family '%s' with AI_NUMERICHOST raised wrong exception: %s" % 
+                    (host, family, str(x)) )
+            else:
+                self.fail("Numeric host '%s' in wrong family '%s' with AI_NUMERICHOST should have raised exception" % 
+                    (host, family) )
+
+class TestGetNameInfo(unittest.TestCase):
+
+    def testBadParameters(self):
+        for address, flags in [
+            ( (0,0),       0),
+            ( (0,"http"),  0),
+            ( "localhost", 0),
+            ( 0,           0),
+            ( ("",),       0),
+        ]:
+            try:
+                socket.getnameinfo(address, flags)
+            except TypeError:
+                pass
+            except Exception, x:
+                self.fail("Bad getnameinfo parameters (%s, %s) raised wrong exception: %s" % (str(address), flags, str(x)))
+            else:
+                self.fail("Bad getnameinfo parameters (%s, %s) failed to raise exception" % (str(address), flags))
+
+    def testPort(self):
+        for address, flags, expected in [
+            ( ("127.0.0.1", 25),  0,                     "smtp" ),
+            ( ("127.0.0.1", 25),  socket.NI_NUMERICSERV, 25     ),
+            ( ("127.0.0.1", 513), socket.NI_DGRAM,       "who"  ),
+            ( ("127.0.0.1", 513), 0,                     "login"),
+        ]:
+            result = socket.getnameinfo(address, flags)
+            self.failUnlessEqual(result[1], expected)
+
+    def testHost(self):
+        for address, flags, expected in [
+            ( ("www.python.org", 80),  0,                     "dinsdale.python.org"),
+            ( ("www.python.org", 80),  socket.NI_NUMERICHOST, "82.94.164.162"      ),
+            ( ("www.python.org", 80),  socket.NI_NAMEREQD,    "dinsdale.python.org"),
+            ( ("82.94.164.162",  80),  socket.NI_NAMEREQD,    "dinsdale.python.org"),
+        ]:
+            result = socket.getnameinfo(address, flags)
+            self.failUnlessEqual(result[0], expected)
+
+    def testNI_NAMEREQD(self):
+        # This test may delay for some seconds
+        unreversible_address = "198.51.100.1"
+        try:
+            socket.getnameinfo( (unreversible_address, 80), socket.NI_NAMEREQD)
+        except socket.gaierror, ge:
+            self.failUnlessEqual(ge[0], socket.EAI_NONAME)
+        except Exception, x:
+            self.fail("Unreversible address with NI_NAMEREQD (%s) raised wrong exception: %s" % (unreversible_address, str(x)))
+        else:
+            self.fail("Unreversible address with NI_NAMEREQD (%s) failed to raise exception" % unreversible_address)
+
+    def testHostIdna(self):
+        fqdn = u"\u043f\u0440\u0430\u0432\u0438\u0442\u0435\u043b\u044c\u0441\u0442\u0432\u043e.\u0440\u0444"
+        idn  = "xn--80aealotwbjpid2k.xn--p1ai"
+        ip   = "95.173.135.62"
+        try:
+            import java.net.IDN
+        except ImportError:
+            try:
+                socket.getnameinfo( (fqdn, 80), 0)
+            except UnicodeEncodeError:
+                pass
+            except Exception, x:
+                self.fail("International domain without java.net.IDN raised wrong exception: %s" % str(x))
+            else:
+                self.fail("International domain without java.net.IDN failed to raise exception")
+        else:
+            # have to disable this test until I find an IDN that reverses to the punycode name
+            return
+            for address, flags, expected in [
+                ( (fqdn, 80),  0,             idn  ),
+                ( (fqdn, 80),  socket.NI_IDN, fqdn ),
+            ]:
+                result = socket.getnameinfo(address, flags)
+                self.failUnlessEqual(result[0], expected)
+
 class TestJython_get_jsockaddr(unittest.TestCase):
     "These tests are specific to jython: they test a key internal routine"
 
@@ -1919,6 +2168,7 @@ class TestInvalidUsage(unittest.TestCase):
 def test_main():
     tests = [
         GeneralModuleTests,
+        IPAddressTests,
         TestSupportedOptions,
         TestUnsupportedOptions,
         BasicTCPTest,
@@ -1927,6 +2177,7 @@ def test_main():
         TestExceptions,
         TestInvalidUsage,
         TestGetAddrInfo,
+        TestGetNameInfo,
         TestTCPAddressParameters,
         TestUDPAddressParameters,
         UDPBindTest,

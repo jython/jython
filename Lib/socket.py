@@ -185,8 +185,20 @@ AI_ALL         = 16
 AI_ADDRCONFIG  = 32
 AI_NUMERICSERV = 1024
 
-EAI_NONAME  = -2
-EAI_SERVICE = -8
+EAI_NONAME     = -2
+EAI_SERVICE    = -8
+EAI_ADDRFAMILY = -9
+
+NI_NUMERICHOST              = 1
+NI_NUMERICSERV              = 2
+NI_NOFQDN                   = 4
+NI_NAMEREQD                 = 8
+NI_DGRAM                    = 16
+NI_MAXSERV                  = 32
+NI_IDN                      = 64
+NI_IDN_ALLOW_UNASSIGNED     = 128
+NI_IDN_USE_STD3_ASCII_RULES = 256
+NI_MAXHOST                  = 1025
 
 # For some reason, probably historical, SOCK_DGRAM and SOCK_STREAM are opposite values of what they are on cpython.
 # I.E. The following is the way they are on cpython
@@ -256,6 +268,24 @@ def _constant_to_name(const_value):
         return "Unknown"
     finally:
         sock_module = None
+
+import _google_ipaddr_r234
+
+def _is_ip_address(addr, version=None):
+    try:
+        _google_ipaddr_r234.IPAddress(addr, version)
+        return True
+    except ValueError:
+        return False
+
+def is_ipv4_address(addr):
+    return _is_ip_address(addr, 4)
+
+def is_ipv6_address(addr):
+    return _is_ip_address(addr, 6)
+
+def is_ip_address(addr):
+    return _is_ip_address(addr)
 
 class _nio_impl:
 
@@ -625,24 +655,38 @@ def _realsocket(family = AF_INET, sock_type = SOCK_STREAM, protocol=0):
 #
 
 idna_libraries = [
-    ('java.net.IDN', 'toASCII', java.lang.IllegalArgumentException)
+    ('java.net.IDN', 'toASCII', 'toUnicode', 
+        'ALLOW_UNASSIGNED', 'USE_STD3_ASCII_RULES', 
+        java.lang.IllegalArgumentException)
 ]
-
-for idna_lib, idna_fn_name, exc in idna_libraries:
+  
+for idna_lib, efn, dfn, au, usar, exc in idna_libraries:
     try:
-        m = __import__(idna_lib, globals(), locals(), [idna_fn_name])
-        idna_fn = getattr(m, idna_fn_name)
+        m = __import__(idna_lib, globals(), locals(), [efn, dfn, au, usar])
+        encode_fn = getattr(m, efn)
         def _encode_idna(name):
             try:
-                return idna_fn(name)
+                return encode_fn(name)
             except exc:
                 raise UnicodeEncodeError(name)
+        decode_fn = getattr(m, dfn)
+        def _decode_idna(name, flags=0):
+            try:
+                jflags = 0
+                if flags & NI_IDN_ALLOW_UNASSIGNED:
+                    jflags |= au
+                if flags & NI_IDN_USE_STD3_ASCII_RULES:
+                    jflags |= usar
+                return decode_fn(name, jflags)
+            except Exception, x:
+                raise UnicodeDecodeError(name)
         supports('idna', True)
         break
     except (AttributeError, ImportError), e:
         pass
 else:
     _encode_idna = lambda x: x.encode("ascii")
+    _decode_idna = lambda x, y=0: x.decode("ascii")
 
 #
 # Define data structures to support IPV4 and IPV6.
@@ -734,18 +778,37 @@ def _get_jsockaddr(address_object, for_udp=False):
         pass
     return java.net.InetSocketAddress(java.net.InetAddress.getByName(hostname), port)
 
+# Workaround for this (predominantly windows) issue
+# http://wiki.python.org/jython/NewSocketModule#IPV6_address_support
+
 _ipv4_addresses_only = False
 
 def _use_ipv4_addresses_only(value):
     global _ipv4_addresses_only
     _ipv4_addresses_only = value
 
-def _get_port_number(port, flags):
+def _getaddrinfo_get_host(host, family, flags):
+    if host is None:
+        return host
+    if not isinstance(host, basestring):
+        raise TypeError("getaddrinfo() argument 1 must be string or None")
+    if flags & AI_NUMERICHOST:
+        if not is_ip_address(host):
+            raise gaierror(EAI_NONAME, "Name or service not known")
+        if family == AF_INET and not is_ipv4_address(host):
+            raise gaierror(EAI_ADDRFAMILY, "Address family for hostname not supported")
+        if family == AF_INET6 and not is_ipv6_address(host):
+            raise gaierror(EAI_ADDRFAMILY, "Address family for hostname not supported")
+    if isinstance(host, unicode):
+        host = _encode_idna(host)
+    return host
+
+def _getaddrinfo_get_port(port, flags):
     if isinstance(port, basestring):
         try:
             int_port = int(port)
         except ValueError:
-            if flags and flags & AI_NUMERICSERV:
+            if flags & AI_NUMERICSERV:
                 raise gaierror(EAI_NONAME, "Name or service not known")
             # Lookup the service by name
             try:
@@ -760,23 +823,20 @@ def _get_port_number(port, flags):
         int_port = int(port)
     return int_port % 65536
 
-def getaddrinfo(host, port, family=AF_INET, socktype=None, proto=0, flags=None):
+def getaddrinfo(host, port, family=AF_INET, socktype=None, proto=0, flags=0):
     try:
         if _ipv4_addresses_only:
             family = AF_INET
         if not family in [AF_INET, AF_INET6, AF_UNSPEC]:
             raise gaierror(errno.EIO, 'ai_family not supported')
-        port = _get_port_number(port, flags)
+        host = _getaddrinfo_get_host(host, family, flags)
+        port = _getaddrinfo_get_port(port, flags)
         filter_fns = []
         filter_fns.append({
             AF_INET:   lambda x: isinstance(x, java.net.Inet4Address),
             AF_INET6:  lambda x: isinstance(x, java.net.Inet6Address),
             AF_UNSPEC: lambda x: isinstance(x, java.net.InetAddress),
         }[family])
-        if host == "":
-            host = java.net.InetAddress.getLocalHost().getHostName()
-        if isinstance(host, unicode):
-            host = _encode_idna(host)
         passive_mode = flags is not None and flags & AI_PASSIVE
         canonname_mode = flags is not None and flags & AI_CANONNAME
         results = []
@@ -798,8 +858,39 @@ def getaddrinfo(host, port, family=AF_INET, socktype=None, proto=0, flags=None):
     except java.lang.Exception, jlx:
         raise _map_exception(jlx)
 
+def _getnameinfo_get_host(address, flags):
+    if not isinstance(address, basestring):
+        raise TypeError("getnameinfo() address 1 must be string, not None")
+    if isinstance(address, unicode):
+        address = _encode_idna(address)
+    jia = java.net.InetAddress.getByName(address)
+    result = jia.getCanonicalHostName()
+    if flags & NI_NAMEREQD:
+        if is_ip_address(result):
+            raise gaierror(EAI_NONAME, "Name or service not known")
+    elif flags & NI_NUMERICHOST:
+        result = jia.getHostAddress()
+    # Ignoring NI_NOFQDN for now
+    if flags & NI_IDN:
+        result = _decode_idna(result, flags)
+    return result
+
+def _getnameinfo_get_port(port, flags):
+    if not isinstance(port, (int, long)):
+        raise TypeError("getnameinfo() port number must be an integer")
+    if flags & NI_NUMERICSERV:
+        return port
+    proto = None
+    if flags & NI_DGRAM:
+        proto = "udp"
+    return getservbyport(port, proto)
+
 def getnameinfo(sock_addr, flags):
-    raise NotImplementedError("getnameinfo not yet supported on jython.")
+    if not isinstance(sock_addr, tuple) or len(sock_addr) < 2:
+        raise TypeError("getnameinfo() argument 1 must be a tuple")
+    host = _getnameinfo_get_host(sock_addr[0], flags)
+    port = _getnameinfo_get_port(sock_addr[1], flags)
+    return (host, port)
 
 def getdefaulttimeout():
     return _defaulttimeout
@@ -830,8 +921,15 @@ def ntohs(x): return x
 def ntohl(x): return x
 
 def inet_pton(family, ip_string):
-    # FIXME: java.net.InetAddress.getByName also accepts hostnames
     try:
+        if family == AF_INET:
+            if not is_ipv4_address(ip_string):
+                raise error("illegal IP address string passed to inet_pton")
+        elif family == AF_INET6:
+            if not is_ipv6_address(ip_string):
+                raise error("illegal IP address string passed to inet_pton")
+        else:
+            raise error(errno.EAFNOSUPPORT, "Address family not supported by protocol")
         ia = java.net.InetAddress.getByName(ip_string)
         bytes = []
         for byte in ia.getAddress():
@@ -846,6 +944,14 @@ def inet_pton(family, ip_string):
 def inet_ntop(family, packed_ip):
     try:
         jByteArray = jarray.array(packed_ip, 'b')
+        if family == AF_INET:
+            if len(jByteArray) != 4:
+                raise ValueError("invalid length of packed IP address string")
+        elif family == AF_INET6:
+            if len(jByteArray) != 16:
+                raise ValueError("invalid length of packed IP address string")
+        else:
+            raise ValueError("unknown address family %s" % family)
         ia = java.net.InetAddress.getByAddress(jByteArray)
         return ia.getHostAddress()
     except java.lang.Exception, jlx:
