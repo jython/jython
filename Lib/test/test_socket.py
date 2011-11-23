@@ -20,7 +20,7 @@ import thread, threading
 from weakref import proxy
 from StringIO import StringIO
 
-PORT = 50007
+PORT = 50100
 HOST = 'localhost'
 MSG = 'Michael Gilfix was here\n'
 EIGHT_BIT_MSG = 'Bh\xed Al\xe1in \xd3 Cinn\xe9ide anseo\n'
