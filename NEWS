@@ -10,6 +10,7 @@ Jython 2.6a1
     - [ 1804 ] _tcpsocket doesn't have 'type' and 'proto' attributes
     - [ 1809 ] socket.getaddrinfo sometimes returns an object that crashes in __str__
     - [ 1811 ] Recursive import bug w/ SQLAlchemy 0.7.3
+    - [ 1819 ] Incorrect handling of Java object toString methods returning null
 
 Jython 2.5.2
   same as 2.5.2rc4

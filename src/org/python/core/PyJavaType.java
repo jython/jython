@@ -593,7 +593,8 @@ public class PyJavaType extends PyType {
             addMethod(new PyBuiltinMethodNarrow("__repr__") {
                 @Override
                 public PyObject __call__() {
-                    return Py.newString(self.getJavaProxy().toString());
+                    String toString = self.getJavaProxy().toString();
+                    return toString == null ? Py.EmptyString : Py.newString(toString);
                 }
             });
             addMethod(new PyBuiltinMethodNarrow("__unicode__") {
