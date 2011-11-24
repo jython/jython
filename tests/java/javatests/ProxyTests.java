@@ -35,4 +35,8 @@ public class ProxyTests {
         }
     }
 
+    public static class NullToString {
+        public String toString() { return null; }
+    }
+
 }

@@ -25,7 +25,7 @@ from org.python.core.util import FileUtil
 from org.python.tests import (BeanImplementation, Child, Child2,
                               CustomizableMapHolder, Listenable, ToUnicode)
 from org.python.tests.mro import (ConfusedOnGetitemAdd, FirstPredefinedGetitem, GetitemAdder)
-from javatests.ProxyTests import Person
+from javatests.ProxyTests import NullToString, Person
 
 
 class InstantiationTest(unittest.TestCase):
@@ -472,6 +472,13 @@ class JavaWrapperCustomizationTest(unittest.TestCase):
         GetitemAdder.addPredefined()
         self.assertRaises(TypeError, __import__, "org.python.tests.mro.ConfusedOnImport")
         self.assertRaises(TypeError, GetitemAdder.addPostdefined)
+
+    def test_null_tostring(self):
+        # http://bugs.jython.org/issue1819
+        nts = NullToString()
+        self.assertEqual(repr(nts), '')
+        self.assertEqual(str(nts), '')
+        self.assertEqual(unicode(nts), '')
 
 
 def roundtrip_serialization(obj):
