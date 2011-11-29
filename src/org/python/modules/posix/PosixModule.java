@@ -464,7 +464,9 @@ public class PosixModule implements ClassDictInit {
         "Create a hard link to a file.");
     @Hide(OS.NT)
     public static void link(String src, String dst) {
-        posix.link(absolutePath(src), absolutePath(dst));
+        if (posix.link(absolutePath(src), absolutePath(dst)) < 0) {
+            throw errorFromErrno();
+        }
     }
 
     public static PyString __doc__listdir = new PyString(

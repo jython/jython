@@ -22,6 +22,11 @@ class OSTestCase(unittest.TestCase):
         os.remove(test_support.TESTFN)
         self.assertRaises(OSError, os.utime, test_support.TESTFN, None)
 
+    def test_issue1824(self):
+        os.remove(test_support.TESTFN)
+        self.assertRaises(OSError, os.link,
+                          test_support.TESTFN, test_support.TESTFN)
+
 
 def test_main():
     test_support.run_unittest(OSTestCase)
