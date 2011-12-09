@@ -21,7 +21,7 @@ public class _py_compile {
 
         File file = new File(filename);
         if (!file.exists()) {
-            throw Py.IOError(Errno.ENOENT, filename);
+            throw Py.IOError(Errno.ENOENT, Py.newString(filename));
         }
         String name = getModuleName(file);
 

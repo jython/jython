@@ -27,6 +27,28 @@ class OSTestCase(unittest.TestCase):
         self.assertRaises(OSError, os.link,
                           test_support.TESTFN, test_support.TESTFN)
 
+    def test_issue1825(self):
+        os.remove(test_support.TESTFN)
+        testfnu = unicode(test_support.TESTFN)
+        try:
+            os.open(testfnu, os.O_RDONLY)
+        except OSError, e:
+            self.assertTrue(isinstance(e.filename, unicode))
+            self.assertEqual(e.filename, testfnu)
+        else:
+            self.assertTrue(False)
+
+        # XXX: currently fail
+        #for fn in os.chdir, os.listdir, os.rmdir:
+        for fn in (os.rmdir,):
+            try:
+                fn(testfnu)
+            except OSError, e:
+                self.assertTrue(isinstance(e.filename, unicode))
+                self.assertEqual(e.filename, testfnu)
+            else:
+                self.assertTrue(False)
+
 
 def test_main():
     test_support.run_unittest(OSTestCase)

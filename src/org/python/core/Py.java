@@ -114,13 +114,20 @@ public final class Py {
         return new PyException(Py.OSError, args);
     }
 
-    public static PyException OSError(Constant errno, String filename) {
+    public static PyException OSError(Constant errno, PyObject filename) {
         int value = errno.value();
         // Pass to strerror because constantine currently lacks Errno descriptions on
         // Windows, and strerror falls back to Linux's
-        PyObject args = new PyTuple(Py.newInteger(value), PosixModule.strerror(value),
-                                    Py.newString(filename));
+        PyObject args = new PyTuple(Py.newInteger(value), PosixModule.strerror(value), filename);
         return new PyException(Py.OSError, args);
+    }
+
+    /**
+     * @deprecated As of Jython 2.5.3, use {@link #OSerror(Constant, PyObject)} instead.
+     */
+    @Deprecated
+    public static PyException OSError(Constant errno, String filename) {
+        return OSError(errno, Py.newString(filename));
     }
 
     public static PyObject NotImplementedError;
@@ -181,11 +188,18 @@ public final class Py {
         return new PyException(Py.IOError, args);
     }
 
-    public static PyException IOError(Constant errno, String filename) {
+    public static PyException IOError(Constant errno, PyObject filename) {
         int value = errno.value();
-        PyObject args = new PyTuple(Py.newInteger(value), PosixModule.strerror(value),
-                                    Py.newString(filename));
+        PyObject args = new PyTuple(Py.newInteger(value), PosixModule.strerror(value), filename);
         return new PyException(Py.IOError, args);
+    }
+
+    /**
+     * @deprecated As of Jython 2.5.3, use {@link #IOError(Constant, PyObject)} instead.
+     */
+    @Deprecated
+    public static PyException IOError(Constant errno, String filename) {
+        return IOError(errno, Py.newString(filename));
     }
 
     private static PyException fromIOException(IOException ioe, PyObject err) {

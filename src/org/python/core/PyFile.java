@@ -147,7 +147,7 @@ public class PyFile extends PyObject {
         }
         String mode = ap.getString(1, "r");
         int bufsize = ap.getInt(2, -1);
-        file___init__(new FileIO(name.toString(), parseMode(mode)), name, mode, bufsize);
+        file___init__(new FileIO((PyString) name, parseMode(mode)), name, mode, bufsize);
         closer = new Closer(file, Py.getSystemState());
     }
 

@@ -33,13 +33,13 @@ import org.python.core.PyInteger;
 import org.python.core.PyList;
 import org.python.core.PyObject;
 import org.python.core.PyString;
+import org.python.core.PySystemState;
 import org.python.core.PyTuple;
 import org.python.core.imp;
 import org.python.core.io.IOBase;
 import org.python.core.io.FileDescriptors;
 import org.python.core.io.FileIO;
 import org.python.core.io.RawIOBase;
-import org.python.core.util.RelativeFile;
 import org.python.core.util.StringUtil;
 
 /**
@@ -154,10 +154,10 @@ public class PosixModule implements ClassDictInit {
         "be used in a suid/sgid environment to test if the invoking user has the\n" +
         "specified access to the path.  The mode argument can be F_OK to test\n" +
         "existence, or the inclusive-OR of R_OK, W_OK, and X_OK.");
-    public static boolean access(String path, int mode) {
-        ensurePath(path);
+    public static boolean access(PyObject path, int mode) {
+        String absolutePath = absolutePath(path);
+        File file = new File(absolutePath);
         boolean result = true;
-        File file = new RelativeFile(path);
 
         if (!file.exists()) {
             result = false;
@@ -171,7 +171,7 @@ public class PosixModule implements ClassDictInit {
         if ((mode & X_OK) != 0) {
             // NOTE: always true without native jna-posix stat
             try {
-                result = posix.stat(file.getPath()).isExecutable();
+                result = posix.stat(absolutePath).isExecutable();
             } catch (PyException pye) {
                 if (!pye.match(Py.OSError)) {
                     throw pye;
@@ -186,13 +186,7 @@ public class PosixModule implements ClassDictInit {
     public static PyString __doc__chdir = new PyString(
         "chdir(path)\n\n" +
         "Change the current working directory to the specified path.");
-    public static void chdir(PyObject pathObj) {
-        if (!(pathObj instanceof PyString)) {
-            throw Py.TypeError(String.format("coercing to Unicode: need string, '%s' type found",
-                                             pathObj.getType().fastGetName()));
-        }
-
-        String path = pathObj.toString();
+    public static void chdir(PyObject path) {
         // stat raises ENOENT for us if path doesn't exist
         if (!posix.stat(absolutePath(path)).isDirectory()) {
             throw Py.OSError(Errno.ENOTDIR, path);
@@ -201,13 +195,13 @@ public class PosixModule implements ClassDictInit {
         if (realpath == null) {
             realpath = imp.load("os.path").__getattr__("realpath");
         }
-        Py.getSystemState().setCurrentWorkingDir(realpath.__call__(pathObj).toString());
+        Py.getSystemState().setCurrentWorkingDir(realpath.__call__(path).asString());
     }
 
     public static PyString __doc__chmod = new PyString(
         "chmod(path, mode)\n\n" +
         "Change the access permissions of a file.");
-    public static void chmod(String path, int mode) {
+    public static void chmod(PyObject path, int mode) {
         if (posix.chmod(absolutePath(path), mode) < 0) {
             throw errorFromErrno(path);
         }
@@ -217,7 +211,7 @@ public class PosixModule implements ClassDictInit {
         "chown(path, uid, gid)\n\n" +
         "Change the owner and group id of path to the numeric uid and gid.");
     @Hide(OS.NT)
-    public static void chown(String path, int uid, int gid) {
+    public static void chown(PyObject path, int uid, int gid) {
         if (posix.chown(absolutePath(path), uid, gid) < 0) {
             throw errorFromErrno(path);
         }
@@ -442,7 +436,7 @@ public class PosixModule implements ClassDictInit {
         "Change the access permissions of a file. If path is a symlink, this\n" +
         "affects the link itself rather than the target.");
     @Hide(OS.NT)
-    public static void lchmod(String path, int mode) {
+    public static void lchmod(PyObject path, int mode) {
         if (posix.lchmod(absolutePath(path), mode) < 0) {
             throw errorFromErrno(path);
         }
@@ -453,7 +447,7 @@ public class PosixModule implements ClassDictInit {
         "Change the owner and group id of path to the numeric uid and gid.\n" +
         "This function will not follow symbolic links.");
     @Hide(OS.NT)
-    public static void lchown(String path, int uid, int gid) {
+    public static void lchown(PyObject path, int uid, int gid) {
         if (posix.lchown(absolutePath(path), uid, gid) < 0) {
             throw errorFromErrno(path);
         }
@@ -463,7 +457,7 @@ public class PosixModule implements ClassDictInit {
         "link(src, dst)\n\n" +
         "Create a hard link to a file.");
     @Hide(OS.NT)
-    public static void link(String src, String dst) {
+    public static void link(PyObject src, PyObject dst) {
         if (posix.link(absolutePath(src), absolutePath(dst)) < 0) {
             throw errorFromErrno();
         }
@@ -475,16 +469,15 @@ public class PosixModule implements ClassDictInit {
         "path: path of directory to list\n\n" +
         "The list is in arbitrary order.  It does not include the special\n" +
         "entries '.' and '..' even if they are present in the directory.");
-    public static PyList listdir(PyObject pathObj) {
-        ensurePath(pathObj);
-        String path = pathObj.asString();
-        PyList list = new PyList();
-        File file = new RelativeFile(path);
+    public static PyList listdir(PyObject path) {
+        String absolutePath = absolutePath(path);
+        File file = new File(absolutePath);
         String[] names = file.list();
+
         if (names == null) {
             // Can't read the path for some reason. stat will throw an error if it can't
             // read it either
-            FileStat stat = posix.stat(file.getPath());
+            FileStat stat = posix.stat(absolutePath);
             // It exists, maybe not a dir, or we don't have permission?
             if (!stat.isDirectory()) {
                 throw Py.OSError(Errno.ENOTDIR, path);
@@ -495,7 +488,8 @@ public class PosixModule implements ClassDictInit {
             throw Py.OSError("listdir(): an unknown error occured: " + path);
         }
 
-        PyString string = (PyString) pathObj;
+        PyList list = new PyList();
+        PyString string = (PyString) path;
         for (String name : names) {
             list.append(string.createInstance(name));
         }
@@ -516,11 +510,11 @@ public class PosixModule implements ClassDictInit {
     public static PyString __doc__mkdir = new PyString(
         "mkdir(path [, mode=0777])\n\n" +
         "Create a directory.");
-    public static void mkdir(String path) {
+    public static void mkdir(PyObject path) {
         mkdir(path, 0777);
     }
 
-    public static void mkdir(String path, int mode) {
+    public static void mkdir(PyObject path, int mode) {
         if (posix.mkdir(absolutePath(path), mode) < 0) {
             throw errorFromErrno(path);
         }
@@ -530,12 +524,13 @@ public class PosixModule implements ClassDictInit {
         "open(filename, flag [, mode=0777]) -> fd\n\n" +
         "Open a file (for low level IO).\n\n" +
         "Note that the mode argument is not currently supported on Jython.");
-    public static FileIO open(String path, int flag) {
+    public static FileIO open(PyObject path, int flag) {
         return open(path, flag, 0777);
     }
 
-    public static FileIO open(String path, int flag, int mode) {
-        ensurePath(path);
+    public static FileIO open(PyObject path, int flag, int mode) {
+        String absolutePath = absolutePath(path);
+        File file = new File(absolutePath);
         boolean reading = (flag & O_RDONLY) != 0;
         boolean writing = (flag & O_WRONLY) != 0;
         boolean updating = (flag & O_RDWR) != 0;
@@ -544,7 +539,6 @@ public class PosixModule implements ClassDictInit {
         boolean truncating = (flag & O_TRUNC) != 0;
         boolean exclusive = (flag & O_EXCL) != 0;
         boolean sync = (flag & O_SYNC) != 0;
-        File file = new RelativeFile(path);
 
         if (updating && writing) {
             throw Py.OSError(Errno.EINVAL, path);
@@ -563,7 +557,7 @@ public class PosixModule implements ClassDictInit {
 
         if (truncating && !writing) {
             // Explicitly truncate, writing will truncate anyway
-            new FileIO(path, "w").close();
+            new FileIO((PyString) path, "w").close();
         }
 
         if (exclusive && creating) {
@@ -585,7 +579,7 @@ public class PosixModule implements ClassDictInit {
                 throw Py.OSError(file.isDirectory() ? Errno.EISDIR : Errno.ENOENT, path);
             }
         }
-        return new FileIO(path, fileIOMode);
+        return new FileIO((PyString) path, fileIOMode);
     }
 
     public static PyString __doc__popen = new PyString(
@@ -623,7 +617,7 @@ public class PosixModule implements ClassDictInit {
         "readlink(path) -> path\n\n" +
         "Return a string representing the path to which the symbolic link points.");
     @Hide(OS.NT)
-    public static String readlink(String path) {
+    public static String readlink(PyObject path) {
         try {
             return posix.readlink(absolutePath(path));
         } catch (IOException ioe) {
@@ -634,15 +628,15 @@ public class PosixModule implements ClassDictInit {
     public static PyString __doc__remove = new PyString(
         "remove(path)\n\n" +
         "Remove a file (same as unlink(path)).");
-    public static void remove(String path) {
+    public static void remove(PyObject path) {
         unlink(path);
     }
 
     public static PyString __doc__rename = new PyString(
         "rename(old, new)\n\n" +
         "Rename a file or directory.");
-    public static void rename(String oldpath, String newpath) {
-        if (!new RelativeFile(oldpath).renameTo(new RelativeFile(newpath))) {
+    public static void rename(PyObject oldpath, PyObject newpath) {
+        if (!new File(absolutePath(oldpath)).renameTo(new File(absolutePath(newpath)))) {
             PyObject args = new PyTuple(Py.Zero, new PyString("Couldn't rename file"));
             throw new PyException(Py.OSError, args);
         }
@@ -651,15 +645,15 @@ public class PosixModule implements ClassDictInit {
     public static PyString __doc__rmdir = new PyString(
         "rmdir(path)\n\n" +
         "Remove a directory.");
-    public static void rmdir(String path) {
-        File file = new RelativeFile(path);
+    public static void rmdir(PyObject path) {
+        File file = new File(absolutePath(path));
         if (!file.exists()) {
             throw Py.OSError(Errno.ENOENT, path);
         } else if (!file.isDirectory()) {
             throw Py.OSError(Errno.ENOTDIR, path);
         } else if (!file.delete()) {
             PyObject args = new PyTuple(Py.Zero, new PyString("Couldn't delete directory"),
-                                        new PyString(path));
+                                        path);
             throw new PyException(Py.OSError, args);
         }
     }
@@ -705,9 +699,8 @@ public class PosixModule implements ClassDictInit {
         "symlink(src, dst)\n\n" +
         "Create a symbolic link pointing to src named dst.");
     @Hide(OS.NT)
-    public static void symlink(String src, String dst) {
-        ensurePath(src);
-        if (posix.symlink(src, absolutePath(dst)) < 0) {
+    public static void symlink(PyObject src, PyObject dst) {
+        if (posix.symlink(asPath(src), absolutePath(dst)) < 0) {
             throw errorFromErrno();
         }
     }
@@ -732,12 +725,12 @@ public class PosixModule implements ClassDictInit {
     public static PyString __doc__unlink = new PyString(
         "unlink(path)\n\n" +
         "Remove a file (same as remove(path)).");
-    public static void unlink(String path) {
-        ensurePath(path);
-        File file = new RelativeFile(path);
+    public static void unlink(PyObject path) {
+        String absolutePath = absolutePath(path);
+        File file = new File(absolutePath);
         if (!file.delete()) {
             // Something went wrong, does stat raise an error?
-            posix.stat(absolutePath(path));
+            posix.stat(absolutePath);
             // It exists, is it a directory, or do we not have permissions?
             if (file.isDirectory()) {
                 throw Py.OSError(Errno.EISDIR, path);
@@ -745,7 +738,7 @@ public class PosixModule implements ClassDictInit {
             if (!file.canWrite()) {
                 throw Py.OSError(Errno.EPERM, path);
             }
-            throw Py.OSError("unlink(): an unknown error occured: " + path);
+            throw Py.OSError("unlink(): an unknown error occured" + absolutePath);
         }
     }
 
@@ -754,7 +747,7 @@ public class PosixModule implements ClassDictInit {
         "utime(path, None)\n\n" +
         "Set the access and modified time of the file to the given values.  If the\n" +
         "second form is used, set the access and modified times to the current time.");
-    public static void utime(String path, PyObject times) {
+    public static void utime(PyObject path, PyObject times) {
         long[] atimeval;
         long[] mtimeval;
 
@@ -891,27 +884,27 @@ public class PosixModule implements ClassDictInit {
     }
 
     /**
+     * Return a path as a String from a PyObject 
+     *
+     * @param path a PyObject, raising a TypeError if an invalid path type
+     * @return a String path
+     */
+    private static String asPath(PyObject path) {
+        if (path instanceof PyString) {
+            return path.toString();
+        }
+        throw Py.TypeError(String.format("coercing to Unicode: need string, %s type found",
+                                         path.getType().fastGetName()));
+    }
+
+    /**
      * Return the absolute form of path.
      *
-     * @param path a path String, raising a TypeError when null
+     * @param path a PyObject, raising a TypeError if an invalid path type
      * @return an absolute path String
      */
-    private static String absolutePath(String path) {
-        ensurePath(path);
-        return new RelativeFile(path).getPath();
-    }
-
-    private static void ensurePath(PyObject path) {
-        if (!(path instanceof PyString)) {
-            throw Py.TypeError(String.format("coercing to Unicode: need string, %s type found",
-                                             path.getType().fastGetName()));
-        }
-    }
-
-    private static void ensurePath(String path) {
-        if (path == null) {
-            throw Py.TypeError("coercing to Unicode: need string or buffer, NoneType found");
-        }
+    private static String absolutePath(PyObject path) {
+        return PySystemState.getPathLazy(asPath(path));
     }
 
     private static PyException badFD() {
@@ -922,7 +915,7 @@ public class PosixModule implements ClassDictInit {
         return Py.OSError(Errno.valueOf(posix.errno()));
     }
 
-    private static PyException errorFromErrno(String path) {
+    private static PyException errorFromErrno(PyObject path) {
         return Py.OSError(Errno.valueOf(posix.errno()), path);
     }
 
@@ -942,13 +935,8 @@ public class PosixModule implements ClassDictInit {
         }
 
         @Override
-        public PyObject __call__(PyObject pathObj) {
-            if (!(pathObj instanceof PyString)) {
-                throw Py.TypeError(String.format("coercing to Unicode: need string or buffer, %s " +
-                                                 "found", pathObj.getType().fastGetName()));
-            }
-            String absolutePath = absolutePath(pathObj.toString());
-            return PyStatResult.fromFileStat(posix.lstat(absolutePath));
+        public PyObject __call__(PyObject path) {
+            return PyStatResult.fromFileStat(posix.lstat(absolutePath(path)));
         }
     }
 
@@ -962,13 +950,8 @@ public class PosixModule implements ClassDictInit {
         }
 
         @Override
-        public PyObject __call__(PyObject pathObj) {
-            if (!(pathObj instanceof PyString)) {
-                throw Py.TypeError(String.format("coercing to Unicode: need string or buffer, %s " +
-                                                 "found", pathObj.getType().fastGetName()));
-            }
-            String absolutePath = absolutePath(pathObj.toString());
-            return PyStatResult.fromFileStat(posix.stat(absolutePath));
+        public PyObject __call__(PyObject path) {
+            return PyStatResult.fromFileStat(posix.stat(absolutePath(path)));
         }
     }
 }
