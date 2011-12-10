@@ -128,14 +128,6 @@ public final class Py {
         return new PyException(Py.OSError, args);
     }
 
-    /**
-     * @deprecated As of Jython 2.5.3, use {@link #OSerror(Constant, PyObject)} instead.
-     */
-    @Deprecated
-    public static PyException OSError(Constant errno, String filename) {
-        return OSError(errno, Py.newString(filename));
-    }
-
     public static PyObject NotImplementedError;
     public static PyException NotImplementedError(String message) {
         return new PyException(Py.NotImplementedError, message);
@@ -198,14 +190,6 @@ public final class Py {
         int value = errno.value();
         PyObject args = new PyTuple(Py.newInteger(value), PosixModule.strerror(value), filename);
         return new PyException(Py.IOError, args);
-    }
-
-    /**
-     * @deprecated As of Jython 2.5.3, use {@link #IOError(Constant, PyObject)} instead.
-     */
-    @Deprecated
-    public static PyException IOError(Constant errno, String filename) {
-        return IOError(errno, Py.newString(filename));
     }
 
     private static PyException fromIOException(IOException ioe, PyObject err) {

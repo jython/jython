@@ -308,7 +308,7 @@ public class cStringIO {
          */
         public synchronized void truncate(long pos) {
             if (pos < 0) {
-                throw Py.IOError(Errno.EINVAL, "Negative size not allowed");
+                throw Py.IOError("Negative size not allowed");
             }
             int pos_int = _convert_to_int(pos);
             if (pos_int < 0)
