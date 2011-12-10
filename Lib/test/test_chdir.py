@@ -569,6 +569,29 @@ class FilesTestCase(BaseChdirTestCase):
                          os.path.getatime(self.basename1))
 
 
+class SymlinkTestCase(BaseChdirTestCase):
+
+    TEST_DIRS = 2
+
+    def setUp(self):
+        super(SymlinkTestCase, self).setUp()
+        self.relsrc = 'src'
+        self.src = os.path.join(self.dir1, self.relsrc)
+        self.link = os.path.join(self.dir2, 'link')
+
+    def test_symlink_src_is_relative(self):
+        write(self.src, 'foo')
+        # Ensure that linking to os.path.basename(self.src) creates a
+        # dead link (since it lives in a different dir)
+        os.symlink(self.relsrc, self.link)
+        # If the cwd (self.dir1) was applied to os.link's src arg then
+        # the link would not be dead
+        self.assertTrue(self.is_dead_link(self.link))
+
+    def is_dead_link(self, link):
+        return os.path.lexists(link) and not os.path.exists(link)
+
+
 class ImportJavaClassTestCase(BaseChdirTestCase):
 
     SYSPATH = ('',)
@@ -685,7 +708,8 @@ def test_main():
              ExecfileTracebackTestCase,
              ListdirTestCase,
              DirsTestCase,
-             FilesTestCase]
+             FilesTestCase,
+             SymlinkTestCase]
     if WINDOWS:
         tests.append(WindowsChdirTestCase)
     if test_support.is_jython:

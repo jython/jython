@@ -33,6 +33,16 @@ class FileTestCase(unittest.TestCase):
             fp.seek(0)
             self.assertEqual(fp.read(), 'test1\n')
 
+    def test_issue1825(self):
+        testfnu = unicode(test_support.TESTFN)
+        try:
+            open(testfnu)
+        except IOError, e:
+            self.assertTrue(isinstance(e.filename, unicode))
+            self.assertEqual(e.filename, testfnu)
+        else:
+            self.assertTrue(False)
+
 
 def test_main():
     test_support.run_unittest(FileTestCase)

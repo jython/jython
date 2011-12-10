@@ -12,6 +12,7 @@ Jython 2.6a1
     - [ 1811 ] Recursive import bug w/ SQLAlchemy 0.7.3
     - [ 1819 ] Incorrect handling of Java object toString methods returning null
     - [ 1824 ] os.link() can silently fail
+    - [ 1825 ] EnvironmentError.filename is `str` even if original name is `unicode`
 
 Jython 2.5.2
   same as 2.5.2rc4

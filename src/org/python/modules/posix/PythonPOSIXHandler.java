@@ -21,7 +21,9 @@ import org.python.core.PyObject;
 public class PythonPOSIXHandler implements POSIXHandler {
 
     public void error(Errno error, String extraData) {
-        throw Py.OSError(error, extraData);
+        // XXX: extraData (filename) could have been unicode!
+        // http://bugs.jython.org/issue1825
+        throw Py.OSError(error, Py.newString(extraData));
     }
 
     public void unimplementedError(String methodName) {
