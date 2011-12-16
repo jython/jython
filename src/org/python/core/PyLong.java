@@ -134,7 +134,7 @@ public class PyLong extends PyObject {
         return long_toString();
     }
 
-    @ExposedMethod(names = {"__str__", "__repr__"}, doc = BuiltinDocs.long___str___doc)
+    @ExposedMethod(names = "__repr__", doc = BuiltinDocs.long___repr___doc)
     final String long_toString() {
         return getValue().toString() + "L";
     }
@@ -151,12 +151,12 @@ public class PyLong extends PyObject {
 
     @Override
     public boolean __nonzero__() {
-        return !getValue().equals(BigInteger.ZERO);
+        return long___nonzero__();
     }
 
     @ExposedMethod(doc = BuiltinDocs.long___nonzero___doc)
     public boolean long___nonzero__() {
-        return __nonzero__();
+        return !getValue().equals(BigInteger.ZERO);
     }
 
     public double doubleValue() {
@@ -933,9 +933,14 @@ public class PyLong extends PyObject {
         }
     }
 
+    @ExposedMethod(doc = BuiltinDocs.long___str___doc)
+    public PyString long___str__() {
+        return Py.newString(getValue().toString());
+    }
+
     @Override
     public PyString __str__() {
-        return Py.newString(getValue().toString());
+        return long___str__();
     }
 
     @Override

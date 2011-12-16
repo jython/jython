@@ -13,6 +13,7 @@ Jython 2.5.3a1
     - [ 1819 ] Incorrect handling of Java object toString methods returning null
     - [ 1824 ] os.link() can silently fail
     - [ 1825 ] EnvironmentError.filename is `str` even if original name is `unicode`
+    - [ 1828 ] Problems inheriting from long
 
 Jython 2.5.2
   same as 2.5.2rc4
