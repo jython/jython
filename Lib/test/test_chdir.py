@@ -582,13 +582,14 @@ class SymlinkTestCase(BaseChdirTestCase):
     def test_symlink_src_is_relative(self):
         write(self.src, 'foo')
         # Ensure that linking to os.path.basename(self.src) creates a
-        # dead link (since it lives in a different dir)
+        # dead link (as self.src lives in a different dir than
+        # self.link)
         os.symlink(self.relsrc, self.link)
         # If the cwd (self.dir1) was applied to os.link's src arg then
         # the link would not be dead
-        self.assertTrue(self.is_dead_link(self.link))
+        self.assertTrue(self.isdeadlink(self.link))
 
-    def is_dead_link(self, link):
+    def isdeadlink(self, link):
         return os.path.lexists(link) and not os.path.exists(link)
 
 
