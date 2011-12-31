@@ -317,6 +317,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
                 }
 
                 zipPackages = getZipPackages(jarin);
+                jarin.close();
 
                 if (caching) {
                     writeCacheFile(entry, jarcanon, zipPackages, brandNew);
