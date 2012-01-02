@@ -595,7 +595,7 @@ The readme text for the next release will be like:
     </target>
 
 
-    <target name="expose" depends="init">
+    <target name="expose" depends="compile">
         <taskdef name="expose" classname="org.python.expose.generate.ExposeTask">
             <classpath>
                 <path refid="main.classpath" />
