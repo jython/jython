@@ -587,21 +587,6 @@ public class PyString extends PyBaseString
         return str___hash__();
     }
 
-//    @Override
-//    public boolean equals(Object obj) {
-//        if (obj == null) {
-//            return false;
-//        }
-//        if (getClass() != obj.getClass()) {
-//            return false;
-//        }
-//        final PyString other = (PyString) obj;
-//        if ((this.string == null) ? (other.string != null) : !this.string.equals(other.string)) {
-//            return false;
-//        }
-//        return true;
-//    }
-
     @ExposedMethod(doc = BuiltinDocs.str___hash___doc)
     final int str___hash__() {
         return getString().hashCode();
@@ -876,7 +861,7 @@ public class PyString extends PyBaseString
                 int end = endDouble(getString(),s);
                 z = Double.valueOf(getString().substring(s, end)).doubleValue();
                 if (z == Double.POSITIVE_INFINITY) {
-                	throw Py.ValueError(String.format("float() out of range: %.150s", getString()));
+                    throw Py.ValueError(String.format("float() out of range: %.150s", getString()));
                 }
 
                 s=end;
@@ -2025,28 +2010,28 @@ public class PyString extends PyBaseString
         int[] indices = translateIndices(start, end);
         
         if (prefix instanceof PyString) {
-        	String strPrefix = ((PyString) prefix).getString();
+            String strPrefix = ((PyString) prefix).getString();
             if (indices[1] - indices[0] < strPrefix.length())
                 return false;
             
-        	return getString().startsWith(strPrefix, indices[0]);
+            return getString().startsWith(strPrefix, indices[0]);
         } else if (prefix instanceof PyTuple) {
-        	PyObject[] prefixes = ((PyTuple)prefix).getArray();
-        	
-        	for (int i = 0 ; i < prefixes.length ; i++) {
-        		if (!(prefixes[i] instanceof PyString))
-        			throw Py.TypeError("expected a character buffer object");
+            PyObject[] prefixes = ((PyTuple)prefix).getArray();
+            
+            for (int i = 0 ; i < prefixes.length ; i++) {
+                if (!(prefixes[i] instanceof PyString))
+                    throw Py.TypeError("expected a character buffer object");
 
-        		String strPrefix = ((PyString) prefixes[i]).getString();
+                String strPrefix = ((PyString) prefixes[i]).getString();
                 if (indices[1] - indices[0] < strPrefix.length())
-                	continue;
+                    continue;
                 
-        		if (getString().startsWith(strPrefix, indices[0]))
-        			return true;
-        	}
-        	return false;
+                if (getString().startsWith(strPrefix, indices[0]))
+                    return true;
+            }
+            return false;
         } else {
-        	throw Py.TypeError("expected a character buffer object or tuple");
+            throw Py.TypeError("expected a character buffer object or tuple");
         }
     }
 
@@ -2068,20 +2053,20 @@ public class PyString extends PyBaseString
 
         String substr = getString().substring(indices[0], indices[1]);
         if (suffix instanceof PyString) {
-	        return substr.endsWith(((PyString) suffix).getString());
+            return substr.endsWith(((PyString) suffix).getString());
         } else if (suffix instanceof PyTuple) {
-        	PyObject[] suffixes = ((PyTuple)suffix).getArray();
-        	
-        	for (int i = 0 ; i < suffixes.length ; i++) {
-        		if (!(suffixes[i] instanceof PyString))
-        			throw Py.TypeError("expected a character buffer object");
+            PyObject[] suffixes = ((PyTuple)suffix).getArray();
+            
+            for (int i = 0 ; i < suffixes.length ; i++) {
+                if (!(suffixes[i] instanceof PyString))
+                    throw Py.TypeError("expected a character buffer object");
 
-        		if (substr.endsWith(((PyString) suffixes[i]).getString()))
-        			return true;
-        	}
-        	return false;
+                if (substr.endsWith(((PyString) suffixes[i]).getString()))
+                    return true;
+            }
+            return false;
         } else {
-        	throw Py.TypeError("expected a character buffer object or tuple");
+            throw Py.TypeError("expected a character buffer object or tuple");
         }
     } 
 
@@ -2785,10 +2770,6 @@ final class StringFormatter
         numberFormat.setGroupingUsed(false);
 
         String ret = numberFormat.format(v);
-//         System.err.println("formatFloat: "+v+", prec="+prec+", ret="+ret);
-//         if (ret.indexOf('.') == -1) {
-//             return ret+'.';
-//         }
         return ret;
     }
 
