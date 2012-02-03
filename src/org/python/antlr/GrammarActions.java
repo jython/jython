@@ -459,6 +459,11 @@ public class GrammarActions {
             ustring = true;
             start++;
         }
+        if (quoteChar == 'b' || quoteChar == 'B') {
+            // In 2.x this is just a str, and the parser prevents a 'u' and a
+            // 'b' in the same identifier, so just advance start.
+            start++;
+        }
         quoteChar = string.charAt(start);
         boolean raw = false;
         if (quoteChar == 'r' || quoteChar == 'R') {
