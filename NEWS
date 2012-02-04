@@ -14,6 +14,7 @@ Jython 2.5.3a1
     - [ 1824 ] os.link() can silently fail
     - [ 1825 ] EnvironmentError.filename is `str` even if original name is `unicode`
     - [ 1828 ] Problems inheriting from long
+    - [ 1833 ] Trouble passing Python objects through a Java class back to Python
 
 Jython 2.5.2
   same as 2.5.2rc4
