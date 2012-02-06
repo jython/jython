@@ -25,6 +25,7 @@ from org.python.core.util import FileUtil
 from org.python.tests import (BeanImplementation, Child, Child2,
                               CustomizableMapHolder, Listenable, ToUnicode)
 from org.python.tests.mro import (ConfusedOnGetitemAdd, FirstPredefinedGetitem, GetitemAdder)
+from javatests import Issue1833
 from javatests.ProxyTests import NullToString, Person
 
 
@@ -592,6 +593,24 @@ class UnicodeTest(unittest.TestCase):
         self.assertEqual(type(test), unicode)
         self.assertEqual(test, u"Circle is 360\u00B0")
 
+
+class BeanPropertyTest(unittest.TestCase):
+
+    def test_issue1833(self):
+        class TargetClass(object):
+            def _getattribute(self):
+                return self.__attribute
+            def _setattribute(self, value):
+                self.__attribute = value
+            attribute = property(_getattribute, _setattribute)
+
+        target = TargetClass()
+        test = Issue1833(target=target)
+        value = ('bleh', 'blah')
+        test.value = value
+        self.assertEqual(target.attribute, value)
+
+
 def test_main():
     test_support.run_unittest(InstantiationTest,
                               BeanTest,
@@ -609,7 +628,8 @@ def test_main():
                               JavaWrapperCustomizationTest,
                               SerializationTest,
                               CopyTest,
-                              UnicodeTest)
+                              UnicodeTest,
+                              BeanPropertyTest)
 
 if __name__ == "__main__":
     test_main()
