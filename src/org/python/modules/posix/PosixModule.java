@@ -485,7 +485,7 @@ public class PosixModule implements ClassDictInit {
             if (!file.canRead()) {
                 throw Py.OSError(Errno.EACCES, path);
             }
-            throw Py.OSError("listdir(): an unknown error occured: " + path);
+            throw Py.OSError("listdir(): an unknown error occurred: " + path);
         }
 
         PyList list = new PyList();
@@ -738,7 +738,7 @@ public class PosixModule implements ClassDictInit {
             if (!file.canWrite()) {
                 throw Py.OSError(Errno.EPERM, path);
             }
-            throw Py.OSError("unlink(): an unknown error occured" + absolutePath);
+            throw Py.OSError("unlink(): an unknown error occurred" + absolutePath);
         }
     }
 

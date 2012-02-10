@@ -51,7 +51,7 @@ public abstract class AbstractArray implements Serializable{
 
     /**
      * The modification count increment indicates if a structural change
-     * occured as a result of an operation that would make concurrent iteration
+     * occurred as a result of an operation that would make concurrent iteration
      * over the array invalid.  It is typically used by subclasses that
      * extend <CODE>AbstractList</CODE>, by adding the value to
      * <CODE>AbstractList.modCount</CODE> after performing a potentially
