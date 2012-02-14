@@ -305,6 +305,7 @@ public class __builtin__ {
         dict.__setitem__("Ellipsis", Py.Ellipsis);
         dict.__setitem__("True", Py.True);
         dict.__setitem__("False", Py.False);
+        dict.__setitem__("bytes", PyString.TYPE);
 
         // Work in debug mode by default
         // Hopefully add -O option in the future to change this
