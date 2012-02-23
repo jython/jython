@@ -52,9 +52,9 @@ An example ant.properties file:
 oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/ojdbc14.jar
 #informix.jar=${basedir}/../externals/external-jars/ifxjdbc.jar
 
-# - option for javac (build.compiler=modern is a global option to use standard jdk 1.3/1.4/1.5)
+# - option for javac (build.compiler=modern is a global option to use standard jdk 1.5/1.6/1.7)
 #build.compiler=modern
-#jdk.target.version=1.5
+#jdk.target.version=1.6
 #debug=false
 #deprecation=off
 
@@ -145,8 +145,8 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
             <os family="windows"/>
         </condition>
         <property name="build.compiler" value="modern" />
-        <property name="jdk.target.version" value="1.5" />
-        <property name="jdk.source.version" value="1.5" />
+        <property name="jdk.target.version" value="1.6" />
+        <property name="jdk.source.version" value="1.6" />
         <property name="deprecation" value="true" />
         <property name="debug" value="true" />
         <property name="nowarn" value="false" />
@@ -242,7 +242,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
 
         <!-- predefined main directory for checkout -->
         <property name="svn.main.dir" value="trunk" />
-        <property name="svn.code.dir" value="jython" />
+        <property name="hg.code.dir" value="jython" />
         <property name="svn.installer.dir" value="installer" />
         <!-- predefined revision for checkout (this works for both trunk and release branches -->
         <property name="svn.revision" value="HEAD" />
@@ -250,8 +250,8 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <!-- properties work.dir and jython.base.dir are also definied in init, 
              so full-preinit must run first to work -->
         <property name="work.dir" value="${basedir}/../full_build/work" />
-        <property name="svn.checkout.dir" value="${work.dir}/checkout" />
-        <property name="jython.base.dir" value="${svn.checkout.dir}/${svn.code.dir}" />
+        <property name="checkout.dir" value="${work.dir}/checkout" />
+        <property name="jython.base.dir" value="${checkout.dir}/${hg.code.dir}" />
     	<!-- set has.repositories.connection to false in ant.properties if you want to skip checkout -->
         <property name="has.repositories.connection" value="true" />
         <condition property="do.checkout" value="true">
@@ -278,6 +278,8 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <echo>Build environment for ${ant.project.name}</echo>
         <echo>(Note: if ${propertyname} is displayed, then the property is not set)</echo>
         <echo>--- optional libraries ---</echo>
+        <echo>oracle location    = '${oracle.jar}'</echo>
+        <echo>informix location  = '${informix.jar}'</echo>
         <echo>oracle             = '${oracle.present}'</echo>
         <echo>informix           = '${informix.present}'</echo>
         <echo>--- properties ---</echo>
@@ -301,7 +303,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <echo>--- properties (used for full-build only) ---</echo>
         <echo>svn.main.dir       = '${svn.main.dir}'</echo>
         <echo>svn.revision       = '${svn.revision}'</echo>
-        <echo>svn.checkout.dir   = '${svn.checkout.dir}'</echo>
+        <echo>checkout.dir   = '${checkout.dir}'</echo>
         <echo>javahl.dir         = '${javahl.dir}'</echo>
         <echo>svnant.jar.dir     = '${svnant.jar.dir}'</echo>
         <echo>do.snapshot.build  = '${do.snapshot.build}'</echo>
@@ -345,10 +347,10 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
     </target>
 
 
-    <!-- clean svn.checkout.dir if we really checkout -->
+    <!-- clean checkout.dir if we really checkout -->
     <target name="clean-checkout-dir" if="do.checkout">
         <delete includeemptydirs="true" failonerror="false">
-            <fileset dir="${svn.checkout.dir}" includes="**/*" defaultexcludes="no" />
+            <fileset dir="${checkout.dir}" includes="**/*" defaultexcludes="no" />
         </delete>
     </target>
 
@@ -380,18 +382,21 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
 
     <!-- create checkout directory if necessary -->
     <target name="prepare-checkout" if="do.checkout">
-        <mkdir dir="${svn.checkout.dir}" />
+        <mkdir dir="${checkout.dir}" />
     </target>
 
     <target name="checkout" depends="prepare" if="do.checkout">
+        <exec executable="hg">
+            <arg line="clone http://hg.python.org/jython-releasing/2.5.3 -b 2.5 ${checkout.dir}/${hg.code.dir}"/>
+        </exec>
+
         <svn javahl="${javahl.dir}" >
             <checkout url="https://jython.svn.sourceforge.net/svnroot/jython/${svn.main.dir}/${svn.installer.dir}" revision="${svn.revision}" destPath="${svn.checkout.dir}/${svn.installer.dir}" />
-            <checkout url="https://jython.svn.sourceforge.net/svnroot/jython/${svn.main.dir}/${svn.code.dir}" revision="${svn.revision}" destPath="${svn.checkout.dir}/${svn.code.dir}" />
         </svn> 
 
         <!-- checkout cpython license from the correct python maintenance branch -->
         <svn javahl="${javahl.dir}" >
-               <checkout url="http://svn.python.org/projects/python/branches/release25-maint/" destPath="${svn.checkout.dir}/python" recurse="false" />
+               <checkout url="http://svn.python.org/projects/python/branches/release26-maint/" destPath="${checkout.dir}/python" recurse="false" />
         </svn> 
     </target>
 
@@ -451,7 +456,7 @@ jython.build.hg_version=${build.hg.version}</echo>
     <target name="brand-readme-version" depends="checkout" if="do.snapshot.build">
         <!-- change README.txt version string, if so defined: used for
         snapshot builds. XXX: a bit broken for now-->
-        <replace file="${jython.base.dir}/README.txt" token='2.5a3+'
+        <replace file="${jython.base.dir}/README.txt" token='2.6a1+'
         value='2.5a${svn.revision}' />
         <replace file="${jython.base.dir}/README.txt">
             <replacetoken>=======================</replacetoken>
@@ -721,14 +726,14 @@ The readme text for the next release will be like:
                  windowtitle="Jython API documentation"
                  bottom="&lt;a href='http://www.jython.org' target='_top'>Jython homepage&lt;/a>"
         >
-            <link href="http://java.sun.com/j2se/1.5.0/docs/api/" />
+            <link href="http://java.sun.com/j2se/1.6.0/docs/api/" />
             <classpath refid="javadoc.classpath" />
         </javadoc>
     </target>
 
     <target name="copy-license" if="do.checkout">
-        <echo>copy CPython LICENSE from ${svn.checkout.dir}/python</echo>
-        <copy file="${svn.checkout.dir}/python/LICENSE" tofile="${dist.dir}/LICENSE_CPython.txt" preservelastmodified="true" />
+        <echo>copy CPython LICENSE from ${checkout.dir}/python</echo>
+        <copy file="${checkout.dir}/python/LICENSE" tofile="${dist.dir}/LICENSE_CPython.txt" preservelastmodified="true" />
     </target>
 
     <target name="copy-full" depends="copy-lib, copy-license" if="full-build">
