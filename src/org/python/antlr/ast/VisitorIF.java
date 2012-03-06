@@ -35,7 +35,10 @@ public interface VisitorIF<R> {
     public R visitLambda(Lambda node) throws Exception;
     public R visitIfExp(IfExp node) throws Exception;
     public R visitDict(Dict node) throws Exception;
+    public R visitSet(Set node) throws Exception;
     public R visitListComp(ListComp node) throws Exception;
+    public R visitSetComp(SetComp node) throws Exception;
+    public R visitDictComp(DictComp node) throws Exception;
     public R visitGeneratorExp(GeneratorExp node) throws Exception;
     public R visitYield(Yield node) throws Exception;
     public R visitCompare(Compare node) throws Exception;

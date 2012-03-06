@@ -42,6 +42,19 @@ public abstract class BaseSet extends PyObject implements Set {
     }
 
     /**
+     * Update the underlying set with the contents of the iterable.
+     */
+    protected static Set<PyObject> _update(Set<PyObject> set, PyObject[] data) {
+        if (data == null) {
+            return set;
+        }
+        for (PyObject item : data) {
+            set.add(item);
+        }
+        return set;
+    }
+
+    /**
      * The union of <code>this</code> with <code>other</code>. <p/> <br/> (I.e. all elements
      * that are in either set)
      *

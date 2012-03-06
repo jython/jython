@@ -221,7 +221,25 @@ public abstract class VisitorBase<R> implements VisitorIF<R> {
         return ret;
     }
 
+    public R visitSet(Set node) throws Exception {
+        R ret = unhandled_node(node);
+        traverse(node);
+        return ret;
+    }
+
     public R visitListComp(ListComp node) throws Exception {
+        R ret = unhandled_node(node);
+        traverse(node);
+        return ret;
+    }
+
+    public R visitSetComp(SetComp node) throws Exception {
+        R ret = unhandled_node(node);
+        traverse(node);
+        return ret;
+    }
+
+    public R visitDictComp(DictComp node) throws Exception {
         R ret = unhandled_node(node);
         traverse(node);
         return ret;

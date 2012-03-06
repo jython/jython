@@ -52,6 +52,7 @@ import org.python.antlr.ast.Print;
 import org.python.antlr.ast.Raise;
 import org.python.antlr.ast.Repr;
 import org.python.antlr.ast.Return;
+import org.python.antlr.ast.Set;
 import org.python.antlr.ast.Slice;
 import org.python.antlr.ast.Str;
 import org.python.antlr.ast.Subscript;
@@ -88,6 +89,7 @@ import org.python.core.PyInteger;
 import org.python.core.PyList;
 import org.python.core.PyLong;
 import org.python.core.PyObject;
+import org.python.core.PySet;
 import org.python.core.PySlice;
 import org.python.core.PyString;
 import org.python.core.PyTuple;
@@ -2178,6 +2180,19 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         freeArray(content);
         return null;
     }
+
+    @Override
+    public Object visitSet(Set node) throws Exception {
+        int content = makeArray(node.getInternalElts());
+
+        code.new_(p(PySet.class));
+        code.dup();
+        code.aload(content);
+        code.invokespecial(p(PySet.class), "<init>", sig(Void.TYPE, PyObject[].class));
+        freeArray(content);
+        return null;
+    }
+
 
     @Override
     public Object visitRepr(Repr node) throws Exception {
