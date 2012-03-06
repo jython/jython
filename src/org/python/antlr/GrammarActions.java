@@ -241,9 +241,17 @@ public class GrammarActions {
         return new While(t, test, b, o);
     }
 
-    stmt makeWith(Token t, List<stmt> withs, List<stmt> body) {
-        With w = (With)withs.get(0);
-        With result = new With(t, w.getInternalContext_expr(), w.getInternalOptional_vars(), w.getInternalBody());
+    stmt makeWith(Token t, List<With> items, List<stmt> body) {
+        int last = items.size() - 1;
+        With result = null;
+        for (int i = last; i>=0; i--) {
+            With current = items.get(i);
+            if (i != last) {
+                body = new ArrayList<stmt>();
+                body.add(result);
+            }
+            result = new With(current.getToken(), current.getInternalContext_expr(), current.getInternalOptional_vars(), body);
+        }
         return result;
     }
 

@@ -1163,7 +1163,7 @@ try_stmt
       )
       ;
 
-//with_stmt: 'with' test [ with_var ] ':' suite
+//with_stmt: 'with' with_item (',' with_item)*  ':' suite
 with_stmt
 @init {
     stmt stype = null;
@@ -1171,30 +1171,29 @@ with_stmt
 @after {
    $with_stmt.tree = stype;
 }
-    : WITH with_item COLON suite[false]
+    : WITH w+=with_item (options {greedy=true;}:COMMA w+=with_item)* COLON suite[false]
       {
-          stype = new With($WITH, $with_item.item, $with_item.var,
-              actions.castStmts($suite.stypes));
+          stype = actions.makeWith($WITH, $w, $suite.stypes);
       }
     ;
 
 //with_item: test ['as' expr]
 with_item
-    returns [expr item, expr var]
-    : test[expr_contextType.Load] (with_var)?
+@init {
+    stmt stype = null;
+}
+@after {
+   $with_item.tree = stype;
+}
+    : test[expr_contextType.Load] (AS expr[expr_contextType.Store])?
       {
-          $item = actions.castExpr($test.tree);
-          $var = $with_var.etype;
-      }
-    ;
-
-//with_var: 'as' expr
-with_var
-    returns [expr etype]
-    : AS expr[expr_contextType.Store]
-      {
-          $etype = actions.castExpr($expr.tree);
-          actions.checkAssign($etype);
+          expr item = actions.castExpr($test.tree);
+          expr var = null;
+          if ($expr.start != null) {
+              var = actions.castExpr($expr.tree);
+              actions.checkAssign(var);
+          }
+          stype = new With($test.start, item, var, null);
       }
     ;
 
