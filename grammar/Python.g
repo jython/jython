@@ -1171,17 +1171,27 @@ with_stmt
 @after {
    $with_stmt.tree = stype;
 }
-    : WITH test[expr_contextType.Load] (with_var)? COLON suite[false]
+    : WITH with_item COLON suite[false]
       {
-          stype = new With($WITH, actions.castExpr($test.tree), $with_var.etype,
+          stype = new With($WITH, $with_item.item, $with_item.var,
               actions.castStmts($suite.stypes));
       }
     ;
 
-//with_var: ('as' | NAME) expr
+//with_item: test ['as' expr]
+with_item
+    returns [expr item, expr var]
+    : test[expr_contextType.Load] (with_var)?
+      {
+          $item = actions.castExpr($test.tree);
+          $var = $with_var.etype;
+      }
+    ;
+
+//with_var: 'as' expr
 with_var
     returns [expr etype]
-    : (AS | NAME) expr[expr_contextType.Store]
+    : AS expr[expr_contextType.Store]
       {
           $etype = actions.castExpr($expr.tree);
           actions.checkAssign($etype);
