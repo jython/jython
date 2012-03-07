@@ -1,6 +1,6 @@
 -- ASDL's five builtin types are identifier, int, string, object, bool
 
-module Python version "$Revision: 62047 $"
+module Python version "$Revision$"
 {
 	mod = Module(stmt* body)
 	    | Interactive(stmt* body)
@@ -11,7 +11,7 @@ module Python version "$Revision: 62047 $"
 
 	stmt = FunctionDef(identifier name, arguments args, 
                             stmt* body, expr* decorator_list)
-	      | ClassDef(identifier name, expr* bases, stmt* body, expr *decorator_list)
+	      | ClassDef(identifier name, expr* bases, stmt* body, expr* decorator_list)
 	      | Return(expr? value)
 
 	      | Delete(expr* targets)
@@ -34,7 +34,7 @@ module Python version "$Revision: 62047 $"
 	      | Assert(expr test, expr? msg)
 
 	      | Import(alias* names)
-	      | ImportFrom(identifier module, alias* names, int? level)
+	      | ImportFrom(identifier? module, alias* names, int? level)
 
 	      -- Doesn't capture requirement that locals must be
 	      -- defined if globals is
@@ -56,7 +56,10 @@ module Python version "$Revision: 62047 $"
 	     | Lambda(arguments args, expr body)
 	     | IfExp(expr test, expr body, expr orelse)
 	     | Dict(expr* keys, expr* values)
+	     | Set(expr* elts)
 	     | ListComp(expr elt, comprehension* generators)
+	     | SetComp(expr elt, comprehension* generators)
+	     | DictComp(expr key, expr value, comprehension* generators)
 	     | GeneratorExp(expr elt, comprehension* generators)
 	     -- the grammar constrains where yield expressions can occur
 	     | Yield(expr? value)

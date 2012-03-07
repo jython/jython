@@ -131,6 +131,7 @@ import org.python.antlr.ast.Print;
 import org.python.antlr.ast.Raise;
 import org.python.antlr.ast.Repr;
 import org.python.antlr.ast.Return;
+import org.python.antlr.ast.Set;
 import org.python.antlr.ast.Slice;
 import org.python.antlr.ast.Str;
 import org.python.antlr.ast.Subscript;
@@ -1675,7 +1676,7 @@ power
 
 //atom: ('(' [yield_expr|testlist_gexp] ')' |
 //       '[' [listmaker] ']' |
-//       '{' [dictmaker] '}' |
+//       '{' [dictorsetmaker] '}' |
 //       '`' testlist1 '`' |
 //       NAME | NUMBER | STRING+)
 atom
@@ -1714,10 +1715,14 @@ atom
       )
       RBRACK
     | LCURLY
-       (dictmaker
+       (dictorsetmaker
         {
-            etype = new Dict($LCURLY, actions.castExprs($dictmaker.keys),
-              actions.castExprs($dictmaker.values));
+            if ($dictorsetmaker.keys != null && $dictorsetmaker.values == null) {
+                etype = new Set($LCURLY, actions.castExprs($dictorsetmaker.keys));
+            } else {
+                etype = new Dict($LCURLY, actions.castExprs($dictorsetmaker.keys),
+                  actions.castExprs($dictorsetmaker.values));
+            }
         }
        |
         {
@@ -1961,16 +1966,26 @@ testlist[expr_contextType ctype]
     | test[ctype]
     ;
 
+//dictorsetmaker: ( (test ':' test (comp_for | (',' test ':' test)* [','])) |
+//                  (test (comp_for | (',' test)* [','])) )
+
 //dictmaker: test ':' test (',' test ':' test)* [',']
-dictmaker
+dictorsetmaker
     returns [List keys, List values]
-    : k+=test[expr_contextType.Load] COLON v+=test[expr_contextType.Load]
-        (options {k=2;}:COMMA k+=test[expr_contextType.Load] COLON v+=test[expr_contextType.Load])*
-        (COMMA)?
-      {
-          $keys = $k;
-          $values= $v;
-      }
+    : k+=test[expr_contextType.Load]
+         (COLON v+=test[expr_contextType.Load]
+           (options {k=2;}:COMMA k+=test[expr_contextType.Load] COLON v+=test[expr_contextType.Load])*
+           {
+               $keys = $k;
+               $values= $v;
+           }
+         |(COMMA k+=test[expr_contextType.Load])*
+          {
+              $keys = $k;
+              $values = null;
+          }
+         )
+         (COMMA)?
     ;
 
 //classdef: 'class' NAME ['(' [testlist] ')'] ':' suite

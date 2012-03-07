@@ -26,6 +26,10 @@ public class PySet extends BaseSet {
         super(TYPE, _update(Generic.<PyObject>concurrentSet(), data));
     }
 
+    public PySet(PyObject[] data) {
+        super(TYPE, _update(Generic.<PyObject>concurrentSet(), data));
+    }
+
     @ExposedNew
     @ExposedMethod(doc = BuiltinDocs.set___init___doc)
     final void set___init__(PyObject[] args, String[] kwds) {
