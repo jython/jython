@@ -41,6 +41,7 @@ import org.python.antlr.ast.Repr;
 import org.python.antlr.ast.Str;
 import org.python.antlr.ast.UnaryOp;
 import org.python.antlr.ast.While;
+import org.python.antlr.ast.With;
 import org.python.antlr.ast.Yield;
 import org.python.antlr.base.excepthandler;
 import org.python.antlr.base.expr;
@@ -238,6 +239,20 @@ public class GrammarActions {
         List<stmt> o = castStmts(orelse);
         List<stmt> b = castStmts(body);
         return new While(t, test, b, o);
+    }
+
+    stmt makeWith(Token t, List<With> items, List<stmt> body) {
+        int last = items.size() - 1;
+        With result = null;
+        for (int i = last; i>=0; i--) {
+            With current = items.get(i);
+            if (i != last) {
+                body = new ArrayList<stmt>();
+                body.add(result);
+            }
+            result = new With(current.getToken(), current.getInternalContext_expr(), current.getInternalOptional_vars(), body);
+        }
+        return result;
     }
 
     stmt makeFor(Token t, expr target, expr iter, List body, List orelse) {
