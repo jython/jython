@@ -429,14 +429,14 @@ public class GrammarActions {
         }
     }
 
-    PyString extractStrings(List s, String encoding) {
+    PyString extractStrings(List s, String encoding, boolean unicodeLiterals) {
         boolean ustring = false;
         Token last = null;
         StringBuffer sb = new StringBuffer();
         Iterator iter = s.iterator();
         while (iter.hasNext()) {
             last = (Token)iter.next();
-            StringPair sp = extractString(last, encoding);
+            StringPair sp = extractString(last, encoding, unicodeLiterals);
             if (sp.isUnicode()) {
                 ustring = true;
             }
@@ -448,12 +448,12 @@ public class GrammarActions {
         return new PyString(sb.toString());
     }
 
-    StringPair extractString(Token t, String encoding) {
+    StringPair extractString(Token t, String encoding, boolean unicodeLiterals) {
         String string = t.getText();
         char quoteChar = string.charAt(0);
         int start = 0;
         int end;
-        boolean ustring = false;
+        boolean ustring = unicodeLiterals;
 
         if (quoteChar == 'u' || quoteChar == 'U') {
             ustring = true;
@@ -462,6 +462,7 @@ public class GrammarActions {
         if (quoteChar == 'b' || quoteChar == 'B') {
             // In 2.x this is just a str, and the parser prevents a 'u' and a
             // 'b' in the same identifier, so just advance start.
+            ustring = false;
             start++;
         }
         quoteChar = string.charAt(start);

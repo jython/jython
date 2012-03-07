@@ -28,6 +28,10 @@ public enum FutureFeature implements Pragma {
      */
     print_function(CodeFlag.CO_FUTURE_PRINT_FUNCTION),
     /**
+     * Enables unicode literals.
+     */
+    unicode_literals(CodeFlag.CO_FUTURE_UNICODE_LITERALS),
+    /**
      * Use braces for block delimiters instead of indentation.
      */
     braces {

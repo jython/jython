@@ -62,6 +62,8 @@ public class Future {
                 FutureFeature.absolute_import.addTo(features);
             if (cflags.isFlagSet(CodeFlag.CO_FUTURE_PRINT_FUNCTION))
                 FutureFeature.print_function.addTo(features);
+            if (cflags.isFlagSet(CodeFlag.CO_FUTURE_UNICODE_LITERALS))
+                FutureFeature.unicode_literals.addTo(features);
         }
         int beg = 0;
         List<stmt> suite = null;

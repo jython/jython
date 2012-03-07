@@ -54,7 +54,11 @@ public enum CodeFlag {
     /**
      * print function.
      */
-    CO_FUTURE_PRINT_FUNCTION(0x10000);
+    CO_FUTURE_PRINT_FUNCTION(0x10000),
+    /**
+     * unicode literals.
+     */
+    CO_FUTURE_UNICODE_LITERALS(0x20000);
 
 
     public final int flag;

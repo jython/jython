@@ -166,6 +166,7 @@ import java.util.ListIterator;
     private String encoding;
 
     private boolean printStatement = true;
+    private boolean unicodeLiterals = false;
 
     public void setErrorHandler(ErrorHandler eh) {
         this.errorHandler = eh;
@@ -935,9 +936,14 @@ import_from
              if (dottedText != null && dottedText.equals("__future__")) {
                  List<alias> aliases = $i1.atypes;
                  for(alias a: aliases) {
-                     if (a != null && a.getInternalName().equals("print_function")) {
-                         printStatement = false;
-                         break;
+                     if (a != null) {
+                         if (a.getInternalName().equals("print_function")) {
+                             printStatement = false;
+                             break;
+                         } else if (a.getInternalName().equals("unicode_literals")) {
+                             unicodeLiterals = true;
+                             break;
+                         }
                      }
                  }
              }
@@ -1736,7 +1742,7 @@ atom
        }
      | (S+=STRING)+
        {
-           etype = new Str(actions.extractStringToken($S), actions.extractStrings($S, encoding));
+           etype = new Str(actions.extractStringToken($S), actions.extractStrings($S, encoding, unicodeLiterals));
        }
      ;
 
