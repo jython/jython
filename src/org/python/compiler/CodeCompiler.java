@@ -53,6 +53,7 @@ import org.python.antlr.ast.Raise;
 import org.python.antlr.ast.Repr;
 import org.python.antlr.ast.Return;
 import org.python.antlr.ast.Set;
+import org.python.antlr.ast.SetComp;
 import org.python.antlr.ast.Slice;
 import org.python.antlr.ast.Str;
 import org.python.antlr.ast.Subscript;
@@ -2135,16 +2136,43 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         code.invokevirtual(p(PyObject.class), "__getattr__", sig(PyObject.class, String.class));
         String tmp_append = "_[" + node.getLine() + "_" + node.getCharPositionInLine() + "]";
 
+        finishComp(node, node.getInternalElt(), node.getInternalGenerators(), tmp_append);
+
+        return null;
+    }
+
+
+    @Override
+    public Object visitSetComp(SetComp node) throws Exception {
+        code.new_(p(PySet.class));
+
+        code.dup();
+        code.invokespecial(p(PySet.class), "<init>", sig(Void.TYPE));
+
+        code.dup();
+
+        code.ldc("add");
+
+        code.invokevirtual(p(PyObject.class), "__getattr__", sig(PyObject.class, String.class));
+        String tmp_append = "_{" + node.getLine() + "_" + node.getCharPositionInLine() + "}";
+
+        finishComp(node, node.getInternalElt(), node.getInternalGenerators(), tmp_append);
+
+        return null;
+    }
+
+    private void finishComp(expr node, expr elt, java.util.List<comprehension> generators,
+            String tmp_append) throws Exception {
         set(new Name(node, tmp_append, expr_contextType.Store));
 
         java.util.List<expr> args = new ArrayList<expr>();
-        args.add(node.getInternalElt());
+        args.add(elt);
         stmt n = new Expr(node, new Call(node, new Name(node, tmp_append, expr_contextType.Load),
                 args,
                 new ArrayList<keyword>(), null, null));
 
-        for (int i = node.getInternalGenerators().size() - 1; i >= 0; i--) {
-            comprehension lc = node.getInternalGenerators().get(i);
+        for (int i = generators.size() - 1; i >= 0; i--) {
+            comprehension lc = generators.get(i);
             for (int j = lc.getInternalIfs().size() - 1; j >= 0; j--) {
                 java.util.List<stmt> body = new ArrayList<stmt>();
                 body.add(n);
@@ -2160,8 +2188,6 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         java.util.List<expr> targets = new ArrayList<expr>();
         targets.add(new Name(n, tmp_append, expr_contextType.Del));
         visit(new Delete(n, targets));
-
-        return null;
     }
 
     @Override

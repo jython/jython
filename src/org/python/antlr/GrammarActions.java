@@ -38,6 +38,7 @@ import org.python.antlr.ast.TryExcept;
 import org.python.antlr.ast.TryFinally;
 import org.python.antlr.ast.Tuple;
 import org.python.antlr.ast.Repr;
+import org.python.antlr.ast.SetComp;
 import org.python.antlr.ast.Str;
 import org.python.antlr.ast.UnaryOp;
 import org.python.antlr.ast.While;
@@ -330,7 +331,10 @@ public class GrammarActions {
         } else if (tree instanceof ListComp) {
             ListComp lc = (ListComp)tree;
             recurseSetContext(lc.getInternalElt(), context);
-        } else if (!(tree instanceof ListComp)) {
+        } else if (tree instanceof SetComp) {
+            SetComp lc = (SetComp)tree;
+            recurseSetContext(lc.getInternalElt(), context);
+        } else if (!(tree instanceof ListComp) && (!(tree instanceof SetComp))) {
             for (int i=0; i<tree.getChildCount(); i++) {
                 recurseSetContext(tree.getChild(i), context);
             }

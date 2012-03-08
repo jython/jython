@@ -132,6 +132,7 @@ import org.python.antlr.ast.Raise;
 import org.python.antlr.ast.Repr;
 import org.python.antlr.ast.Return;
 import org.python.antlr.ast.Set;
+import org.python.antlr.ast.SetComp;
 import org.python.antlr.ast.Slice;
 import org.python.antlr.ast.Str;
 import org.python.antlr.ast.Subscript;
@@ -1717,7 +1718,10 @@ atom
     | LCURLY
        (dictorsetmaker
         {
-            if ($dictorsetmaker.keys != null && $dictorsetmaker.values == null) {
+            if ($dictorsetmaker.etype != null) {
+                etype = $dictorsetmaker.etype;
+            }
+            else if ($dictorsetmaker.keys != null && $dictorsetmaker.values == null) {
                 etype = new Set($LCURLY, actions.castExprs($dictorsetmaker.keys));
             } else {
                 etype = new Dict($LCURLY, actions.castExprs($dictorsetmaker.keys),
@@ -1783,7 +1787,7 @@ listmaker[Token lbrack]
         ) (COMMA)?
     ;
 
-//testlist_gexp: test ( gen_for | (',' test)* [','] )
+//testlist_gexp: test ( comp_for | (',' test)* [','] )
 testlist_gexp
 @init {
     expr etype = null;
@@ -1801,7 +1805,7 @@ testlist_gexp
                etype = new Tuple($testlist_gexp.start, actions.castExprs($t), $expr::ctype);
            }
         | -> test
-        | (gen_for[gens]
+        | (comp_for[gens]
            {
                Collections.reverse(gens);
                List<comprehension> c = gens;
@@ -1971,21 +1975,36 @@ testlist[expr_contextType ctype]
 
 //dictmaker: test ':' test (',' test ':' test)* [',']
 dictorsetmaker
-    returns [List keys, List values]
+    returns [List keys, List values, expr etype]
+@init {
+    List gens = new ArrayList();
+}
     : k+=test[expr_contextType.Load]
-         (COLON v+=test[expr_contextType.Load]
-           (options {k=2;}:COMMA k+=test[expr_contextType.Load] COLON v+=test[expr_contextType.Load])*
+         (
+             (COLON v+=test[expr_contextType.Load]
+               (options {k=2;}:COMMA k+=test[expr_contextType.Load] COLON v+=test[expr_contextType.Load])*
+               {
+                   $keys = $k;
+                   $values= $v;
+               }
+             |(COMMA k+=test[expr_contextType.Load])*
+              {
+                  $keys = $k;
+                  $values = null;
+              }
+             )
+             (COMMA)?
+         | comp_for[gens]
            {
-               $keys = $k;
-               $values= $v;
+               Collections.reverse(gens);
+               List<comprehension> c = gens;
+               expr e = actions.castExpr($k.get(0));
+               if (e instanceof Context) {
+                   ((Context)e).setContext(expr_contextType.Load);
+               }
+               $etype = new SetComp($dictorsetmaker.start, actions.castExpr($k.get(0)), c);
            }
-         |(COMMA k+=test[expr_contextType.Load])*
-          {
-              $keys = $k;
-              $values = null;
-          }
          )
-         (COMMA)?
     ;
 
 //classdef: 'class' NAME ['(' [testlist] ')'] ':' suite
@@ -2046,7 +2065,7 @@ arglist
       }
     ;
 
-//argument: test [gen_for] | test '=' test  # Really [keyword '='] test
+//argument: test [comp_for] | test '=' test  # Really [keyword '='] test
 argument
     [List arguments, List kws, List gens, boolean first, boolean afterStar] returns [boolean genarg]
     : t1=test[expr_contextType.Load]
@@ -2068,10 +2087,10 @@ argument
               exprs.add(actions.castExpr($t2.tree));
               $kws.add(exprs);
           }
-        | gen_for[$gens]
+        | comp_for[$gens]
           {
               if (!first) {
-                  actions.errorGenExpNotSoleArg($gen_for.tree);
+                  actions.errorGenExpNotSoleArg($comp_for.tree);
               }
               $genarg = true;
               Collections.reverse($gens);
@@ -2116,27 +2135,27 @@ list_if[List gens, List ifs]
       }
     ;
 
-//gen_iter: gen_for | gen_if
-gen_iter [List gens, List ifs]
-    : gen_for[gens]
-    | gen_if[gens, ifs]
+//comp_iter: comp_for | comp_if
+comp_iter [List gens, List ifs]
+    : comp_for[gens]
+    | comp_if[gens, ifs]
     ;
 
-//gen_for: 'for' exprlist 'in' or_test [gen_iter]
-gen_for [List gens]
+//comp_for: 'for' exprlist 'in' or_test [comp_iter]
+comp_for [List gens]
 @init {
     List ifs = new ArrayList();
 }
-    : FOR exprlist[expr_contextType.Store] IN or_test[expr_contextType.Load] gen_iter[gens, ifs]?
+    : FOR exprlist[expr_contextType.Store] IN or_test[expr_contextType.Load] comp_iter[gens, ifs]?
       {
           Collections.reverse(ifs);
           gens.add(new comprehension($FOR, $exprlist.etype, actions.castExpr($or_test.tree), ifs));
       }
     ;
 
-//gen_if: 'if' old_test [gen_iter]
-gen_if[List gens, List ifs]
-    : IF test[expr_contextType.Load] gen_iter[gens, ifs]?
+//comp_if: 'if' old_test [comp_iter]
+comp_if[List gens, List ifs]
+    : IF test[expr_contextType.Load] comp_iter[gens, ifs]?
       {
         ifs.add(actions.castExpr($test.tree));
       }

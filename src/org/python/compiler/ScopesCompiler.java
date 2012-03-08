@@ -17,6 +17,7 @@ import org.python.antlr.ast.Lambda;
 import org.python.antlr.ast.ListComp;
 import org.python.antlr.ast.Name;
 import org.python.antlr.ast.Return;
+import org.python.antlr.ast.SetComp;
 import org.python.antlr.ast.With;
 import org.python.antlr.ast.Yield;
 import org.python.antlr.ast.arguments;
@@ -278,6 +279,15 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
     public Object visitListComp(ListComp node) throws Exception {
         String tmp = "_[" + node.getLine() + "_" + node.getCharPositionInLine()
                 + "]";
+        cur.addBound(tmp);
+        traverse(node);
+        return null;
+    }
+
+    @Override
+    public Object visitSetComp(SetComp node) throws Exception {
+        String tmp = "_{" + node.getLine() + "_" + node.getCharPositionInLine()
+                + "}";
         cur.addBound(tmp);
         traverse(node);
         return null;
