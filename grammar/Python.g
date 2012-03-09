@@ -1716,18 +1716,8 @@ atom
       )
       RBRACK
     | LCURLY
-       (dictorsetmaker
-        {
-            if ($dictorsetmaker.etype != null) {
-                etype = $dictorsetmaker.etype;
-            }
-            else if ($dictorsetmaker.keys != null && $dictorsetmaker.values == null) {
-                etype = new Set($LCURLY, actions.castExprs($dictorsetmaker.keys));
-            } else {
-                etype = new Dict($LCURLY, actions.castExprs($dictorsetmaker.keys),
-                  actions.castExprs($dictorsetmaker.values));
-            }
-        }
+       (dictorsetmaker[$LCURLY]
+      -> dictorsetmaker
        |
         {
             etype = new Dict($LCURLY, new ArrayList<expr>(), new ArrayList<expr>());
@@ -1974,23 +1964,26 @@ testlist[expr_contextType ctype]
 //                  (test (comp_for | (',' test)* [','])) )
 
 //dictmaker: test ':' test (',' test ':' test)* [',']
-dictorsetmaker
-    returns [List keys, List values, expr etype]
+dictorsetmaker[Token lcurly]
 @init {
     List gens = new ArrayList();
+    expr etype = null;
+}
+@after {
+    if (etype != null) {
+        $dictorsetmaker.tree = etype;
+    }
 }
     : k+=test[expr_contextType.Load]
          (
              (COLON v+=test[expr_contextType.Load]
                (options {k=2;}:COMMA k+=test[expr_contextType.Load] COLON v+=test[expr_contextType.Load])*
                {
-                   $keys = $k;
-                   $values= $v;
+                   etype = new Dict($lcurly, actions.castExprs($k), actions.castExprs($v));
                }
              |(COMMA k+=test[expr_contextType.Load])*
               {
-                  $keys = $k;
-                  $values = null;
+                  etype = new Set($lcurly, actions.castExprs($k));
               }
              )
              (COMMA)?
@@ -2002,7 +1995,7 @@ dictorsetmaker
                if (e instanceof Context) {
                    ((Context)e).setContext(expr_contextType.Load);
                }
-               $etype = new SetComp($dictorsetmaker.start, actions.castExpr($k.get(0)), c);
+               etype = new SetComp($lcurly, actions.castExpr($k.get(0)), c);
            }
          )
     ;
