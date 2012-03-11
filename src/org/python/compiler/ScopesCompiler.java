@@ -5,6 +5,7 @@ package org.python.compiler;
 import org.python.antlr.Visitor;
 import org.python.antlr.PythonTree;
 import org.python.antlr.ast.ClassDef;
+import org.python.antlr.ast.DictComp;
 import org.python.antlr.ast.Exec;
 import org.python.antlr.ast.Expression;
 import org.python.antlr.ast.FunctionDef;
@@ -286,6 +287,15 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
 
     @Override
     public Object visitSetComp(SetComp node) throws Exception {
+        String tmp = "_{" + node.getLine() + "_" + node.getCharPositionInLine()
+                + "}";
+        cur.addBound(tmp);
+        traverse(node);
+        return null;
+    }
+
+    @Override
+    public Object visitDictComp(DictComp node) throws Exception {
         String tmp = "_{" + node.getLine() + "_" + node.getCharPositionInLine()
                 + "}";
         cur.addBound(tmp);

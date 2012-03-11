@@ -102,6 +102,7 @@ import org.python.antlr.ast.Context;
 import org.python.antlr.ast.Continue;
 import org.python.antlr.ast.Delete;
 import org.python.antlr.ast.Dict;
+import org.python.antlr.ast.DictComp;
 import org.python.antlr.ast.Ellipsis;
 import org.python.antlr.ast.ErrorMod;
 import org.python.antlr.ast.ExceptHandler;
@@ -1977,10 +1978,17 @@ dictorsetmaker[Token lcurly]
     : k+=test[expr_contextType.Load]
          (
              (COLON v+=test[expr_contextType.Load]
-               (options {k=2;}:COMMA k+=test[expr_contextType.Load] COLON v+=test[expr_contextType.Load])*
-               {
-                   etype = new Dict($lcurly, actions.castExprs($k), actions.castExprs($v));
-               }
+               ( comp_for[gens]
+                 {
+                     Collections.reverse(gens);
+                     List<comprehension> c = gens;
+                     etype = new DictComp($dictorsetmaker.start, actions.castExpr($k.get(0)), actions.castExpr($v.get(0)), c);
+                 }
+               | (options {k=2;}:COMMA k+=test[expr_contextType.Load] COLON v+=test[expr_contextType.Load])*
+                 {
+                     etype = new Dict($lcurly, actions.castExprs($k), actions.castExprs($v));
+                 }
+               )
              |(COMMA k+=test[expr_contextType.Load])*
               {
                   etype = new Set($lcurly, actions.castExprs($k));

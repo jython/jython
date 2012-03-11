@@ -26,6 +26,7 @@ import org.python.antlr.ast.Compare;
 import org.python.antlr.ast.Continue;
 import org.python.antlr.ast.Delete;
 import org.python.antlr.ast.Dict;
+import org.python.antlr.ast.DictComp;
 import org.python.antlr.ast.Ellipsis;
 import org.python.antlr.ast.ExceptHandler;
 import org.python.antlr.ast.Exec;
@@ -2136,7 +2137,10 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         code.invokevirtual(p(PyObject.class), "__getattr__", sig(PyObject.class, String.class));
         String tmp_append = "_[" + node.getLine() + "_" + node.getCharPositionInLine() + "]";
 
-        finishComp(node, node.getInternalElt(), node.getInternalGenerators(), tmp_append);
+        java.util.List<expr> args = new ArrayList<expr>();
+        args.add(node.getInternalElt());
+
+        finishComp(node, args, node.getInternalGenerators(), tmp_append);
 
         return null;
     }
@@ -2156,20 +2160,44 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         code.invokevirtual(p(PyObject.class), "__getattr__", sig(PyObject.class, String.class));
         String tmp_append = "_{" + node.getLine() + "_" + node.getCharPositionInLine() + "}";
 
-        finishComp(node, node.getInternalElt(), node.getInternalGenerators(), tmp_append);
+        java.util.List<expr> args = new ArrayList<expr>();
+        args.add(node.getInternalElt());
+
+        finishComp(node, args, node.getInternalGenerators(), tmp_append);
 
         return null;
     }
 
-    private void finishComp(expr node, expr elt, java.util.List<comprehension> generators,
+    @Override
+    public Object visitDictComp(DictComp node) throws Exception {
+        code.new_(p(PyDictionary.class));
+
+        code.dup();
+        code.invokespecial(p(PyDictionary.class), "<init>", sig(Void.TYPE));
+
+        code.dup();
+
+        code.ldc("__setitem__");
+
+        code.invokevirtual(p(PyDictionary.class), "__getattr__", sig(PyObject.class, String.class));
+        String tmp_append = "_{" + node.getLine() + "_" + node.getCharPositionInLine() + "}";
+
+        java.util.List<expr> args = new ArrayList<expr>();
+        args.add(node.getInternalKey());
+        args.add(node.getInternalValue());
+
+        finishComp(node, args, node.getInternalGenerators(), tmp_append);
+
+        return null;
+    }
+
+
+    private void finishComp(expr node, java.util.List<expr> args, java.util.List<comprehension> generators,
             String tmp_append) throws Exception {
         set(new Name(node, tmp_append, expr_contextType.Store));
 
-        java.util.List<expr> args = new ArrayList<expr>();
-        args.add(elt);
         stmt n = new Expr(node, new Call(node, new Name(node, tmp_append, expr_contextType.Load),
-                args,
-                new ArrayList<keyword>(), null, null));
+                args, new ArrayList<keyword>(), null, null));
 
         for (int i = generators.size() - 1; i >= 0; i--) {
             comprehension lc = generators.get(i);

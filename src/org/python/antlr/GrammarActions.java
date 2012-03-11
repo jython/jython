@@ -23,6 +23,7 @@ import org.python.antlr.ast.Attribute;
 import org.python.antlr.ast.BinOp;
 import org.python.antlr.ast.BoolOp;
 import org.python.antlr.ast.Call;
+import org.python.antlr.ast.DictComp;
 import org.python.antlr.ast.ExtSlice;
 import org.python.antlr.ast.For;
 import org.python.antlr.ast.FunctionDef;
@@ -332,9 +333,15 @@ public class GrammarActions {
             ListComp lc = (ListComp)tree;
             recurseSetContext(lc.getInternalElt(), context);
         } else if (tree instanceof SetComp) {
-            SetComp lc = (SetComp)tree;
-            recurseSetContext(lc.getInternalElt(), context);
-        } else if (!(tree instanceof ListComp) && (!(tree instanceof SetComp))) {
+            SetComp sc = (SetComp)tree;
+            recurseSetContext(sc.getInternalElt(), context);
+        } else if (tree instanceof DictComp) {
+            DictComp dc = (DictComp)tree;
+            recurseSetContext(dc.getInternalKey(), context);
+            recurseSetContext(dc.getInternalValue(), context);
+        } else if (!(tree instanceof ListComp) &&
+                  (!(tree instanceof DictComp)) &&
+                  (!(tree instanceof SetComp))) {
             for (int i=0; i<tree.getChildCount(); i++) {
                 recurseSetContext(tree.getChild(i), context);
             }
