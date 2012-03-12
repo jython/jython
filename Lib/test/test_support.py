@@ -20,7 +20,7 @@ __all__ = ["Error", "TestFailed", "TestSkipped", "ResourceDenied", "import_modul
            "is_resource_enabled", "requires", "find_unused_port", "bind_port",
            "fcmp", "have_unicode", "is_jython", "TESTFN", "HOST", "FUZZ",
            "findfile", "verify", "vereq", "sortdict", "check_syntax_error",
-           "open_urlresource", "check_warnings", "_check_py3k_warnings",
+           "open_urlresource", "check_warnings", "check_py3k_warnings",
            "CleanImport", "EnvironmentVarGuard", "captured_output",
            "captured_stdout", "TransientResource", "transient_internet",
            "run_with_locale", "set_memlimit", "bigmemtest", "bigaddrspacetest",
@@ -613,7 +613,7 @@ def check_warnings(*filters, **kwargs):
 
 
 @contextlib.contextmanager
-def _check_py3k_warnings(*filters, **kwargs):
+def check_py3k_warnings(*filters, **kwargs):
     """Context manager to silence py3k warnings.
 
     Accept 2-tuples as positional arguments:
@@ -624,7 +624,7 @@ def _check_py3k_warnings(*filters, **kwargs):
         (default False)
 
     Without argument, it defaults to:
-        _check_py3k_warnings(("", DeprecationWarning), quiet=False)
+        check_py3k_warnings(("", DeprecationWarning), quiet=False)
     """
     if sys.py3kwarning:
         if not filters:
