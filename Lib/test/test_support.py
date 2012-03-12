@@ -15,18 +15,21 @@ import unittest
 import importlib
 import re
 
-__all__ = ["Error", "TestFailed", "TestSkipped", "ResourceDenied", "import_module",
+__all__ = ["Error", "TestFailed", "ResourceDenied", "import_module",
            "verbose", "use_resources", "max_memuse", "record_original_stdout",
            "get_original_stdout", "unload", "unlink", "rmtree", "forget",
            "is_resource_enabled", "requires", "find_unused_port", "bind_port",
            "fcmp", "have_unicode", "is_jython", "TESTFN", "HOST", "FUZZ",
-           "findfile", "verify", "vereq", "sortdict", "check_syntax_error",
+           "SAVEDCWD", "temp_cwd", "findfile", "sortdict", "check_syntax_error",
            "open_urlresource", "check_warnings", "check_py3k_warnings",
            "CleanImport", "EnvironmentVarGuard", "captured_output",
            "captured_stdout", "TransientResource", "transient_internet",
            "run_with_locale", "set_memlimit", "bigmemtest", "bigaddrspacetest",
            "BasicTestRunner", "run_unittest", "run_doctest", "threading_setup",
-           "import_fresh_module", "threading_cleanup", "reap_children"]
+           "threading_cleanup", "reap_children", "cpython_only",
+           "check_impl_detail", "get_attribute", "py3k_bytes",
+           "import_fresh_module", "threading_cleanup", "reap_children",
+           "strip_python_stderr"]
 
 class Error(Exception):
     """Base class for regression test exceptions."""
@@ -34,17 +37,7 @@ class Error(Exception):
 class TestFailed(Error):
     """Test failed."""
 
-class TestSkipped(Error):
-    """Test skipped.
-
-    This can be raised to indicate that a test was deliberatly
-    skipped, but not because a feature wasn't available.  For
-    example, if some resource can't be used, such as the network
-    appears to be unavailable, this should be raised instead of
-    TestFailed.
-    """
-
-class ResourceDenied(TestSkipped):
+class ResourceDenied(unittest.SkipTest):
     """Test skipped because it requested a disallowed resource.
 
     This is raised when a test calls requires() for a resource that
@@ -68,18 +61,16 @@ def _ignore_deprecated_imports(ignore=True):
 
 
 def import_module(name, deprecated=False):
-    """Import the module to be tested, raising TestSkipped if it is not
-    available."""
-    with warnings.catch_warnings():
-        if deprecated:
-            warnings.filterwarnings("ignore", ".+ (module|package)",
-                                    DeprecationWarning)
+    """Import and return the module to be tested, raising SkipTest if
+    it is not available.
+
+    If deprecated is True, any module or package deprecation messages
+    will be suppressed."""
+    with _ignore_deprecated_imports(deprecated):
         try:
-            module = __import__(name, level=0)
-        except ImportError:
-            raise TestSkipped("No module named " + name)
-        else:
-            return module
+            return importlib.import_module(name)
+        except ImportError, msg:
+            raise unittest.SkipTest(str(msg))
 
 
 def _save_and_remove_module(name, orig_modules):
@@ -94,7 +85,6 @@ def _save_and_remove_module(name, orig_modules):
         if modname == name or modname.startswith(name + '.'):
             orig_modules[modname] = sys.modules[modname]
             del sys.modules[modname]
-
 
 def _save_and_block_module(name, orig_modules):
     """Helper function to save and block a module in sys.modules
@@ -145,6 +135,17 @@ def import_fresh_module(name, fresh=(), blocked=(), deprecated=False):
             for name_to_remove in names_to_remove:
                 del sys.modules[name_to_remove]
         return fresh_module
+
+
+def get_attribute(obj, name):
+    """Get an attribute, raising SkipTest if AttributeError is raised."""
+    try:
+        attribute = getattr(obj, name)
+    except AttributeError:
+        raise unittest.SkipTest("module %s has no attribute %s" % (
+            obj.__name__, name))
+    else:
+        return attribute
 
 
 verbose = 1              # Flag set to 0 by regrtest.py
@@ -438,12 +439,14 @@ if fp is not None:
     unlink(TESTFN)
 del fp
 
-def findfile(file, here=__file__):
+def findfile(file, here=__file__, subdir=None):
     """Try to find a file on sys.path and the working directory.  If it is not
     found the argument passed to the function is returned (this does not
     necessarily signal failure; could still be the legitimate path)."""
     if os.path.isabs(file):
         return file
+    if subdir is not None:
+        file = os.path.join(subdir, file)
     path = sys.path
     path = [os.path.dirname(here)] + path
     for dn in path:
@@ -1065,6 +1068,23 @@ def threading_cleanup(num_active, num_limbo):
     while len(threading._active) != num_active and count < _MAX_COUNT:
         count += 1
         time.sleep(0.1)
+
+def reap_threads(func):
+    """Use this function when threads are being used.  This will
+    ensure that the threads are cleaned up even when the test fails.
+    If threading is unavailable this function does nothing.
+    """
+    if not thread:
+        return func
+
+    @functools.wraps(func)
+    def decorator(*args):
+        key = threading_setup()
+        try:
+            return func(*args)
+        finally:
+            threading_cleanup(*key)
+    return decorator
 
 def reap_children():
     """Use this function at the end of test_main() whenever sub-processes
