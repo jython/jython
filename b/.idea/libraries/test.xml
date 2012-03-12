@@ -1,0 +1,14 @@
+<component name="libraryTable">
+  <library name="test">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/Lib/test/bug1239.jar!/" />
+      <root url="jar://$PROJECT_DIR$/Lib/test/bug1373.jar!/" />
+      <root url="jar://$PROJECT_DIR$/Lib/test/classimport_Lib.jar!/" />
+      <root url="jar://$PROJECT_DIR$/Lib/test/classimport.jar!/" />
+      <root url="jar://$PROJECT_DIR$/Lib/test/syspath_import.jar!/" />
+      <root url="jar://$PROJECT_DIR$/Lib/test/blob.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
