@@ -186,9 +186,9 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
             <pathelement path="${extlibs.dir}/stringtemplate-3.2.jar" />
             <pathelement path="${extlibs.dir}/livetribe-jsr223-2.0.5.jar" />
 
-            <pathelement path="${extlibs.dir}/asm-3.1.jar" />
-            <pathelement path="${extlibs.dir}/asm-commons-3.1.jar" />
-            <pathelement path="${extlibs.dir}/asm-util-3.1.jar" />
+            <pathelement path="${extlibs.dir}/asm-4.0.jar" />
+            <pathelement path="${extlibs.dir}/asm-commons-4.0.jar" />
+            <pathelement path="${extlibs.dir}/asm-util-4.0.jar" />
             <pathelement path="${extlibs.dir}/constantine.jar" />
             <pathelement path="${extlibs.dir}/guava-r07.jar" />
             <pathelement path="${extlibs.dir}/jaffl.jar"/>
@@ -219,8 +219,8 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
 
         <path id="test.classpath">
             <path refid="main.classpath"/>
-            <pathelement path="${extlibs.dir}/asm-commons-3.1.jar" />
-            <pathelement path="${extlibs.dir}/asm-util-3.1.jar" />
+            <pathelement path="${extlibs.dir}/asm-commons-4.0.jar" />
+            <pathelement path="${extlibs.dir}/asm-util-4.0.jar" />
             <pathelement path="${extlibs.dir}/junit-3.8.2.jar" />
             <pathelement path="${exposed.dir}" />
             <pathelement path="${compile.dir}" />
@@ -618,9 +618,9 @@ The readme text for the next release will be like:
             <zipfileset src="${dist.dir}/${jython.dev.jar}"/>
             <zipfileset src="extlibs/antlr-runtime-3.1.3.jar"/>
             <rule pattern="org.antlr.runtime.**" result="org.python.antlr.runtime.@1"/>
-            <zipfileset src="extlibs/asm-3.1.jar"/>
-            <zipfileset src="extlibs/asm-commons-3.1.jar"/>
-            <zipfileset src="extlibs/asm-util-3.1.jar"/>
+            <zipfileset src="extlibs/asm-4.0.jar"/>
+            <zipfileset src="extlibs/asm-commons-4.0.jar"/>
+            <zipfileset src="extlibs/asm-util-4.0.jar"/>
             <rule pattern="org.objectweb.asm.**" result="org.python.objectweb.asm.@1"/>
             <zipfileset src="extlibs/guava-r07.jar"/>
             <rule pattern="com.google.**" result="org.python.google.@1"/>

@@ -3,8 +3,9 @@ package org.python.expose.generate;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.Attribute;
 import org.objectweb.asm.FieldVisitor;
+import org.objectweb.asm.Opcodes;
 
-public abstract class ExposedFieldFinder implements FieldVisitor, PyTypes {
+public abstract class ExposedFieldFinder extends FieldVisitor implements PyTypes {
 
     private String fieldName;
 
@@ -13,6 +14,7 @@ public abstract class ExposedFieldFinder implements FieldVisitor, PyTypes {
     private String doc;
 
     public ExposedFieldFinder(String name, FieldVisitor delegate) {
+        super(Opcodes.ASM4, delegate);
         fieldName = name;
         this.delegate = delegate;
     }
