@@ -3,11 +3,9 @@ package org.python.expose.generate;
 import junit.framework.TestCase;
 
 import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.commons.EmptyVisitor;
-import org.python.expose.ExposedMethod;
-import org.python.expose.ExposedNew;
 
 public class ExposeMethodFinderTest extends TestCase implements Opcodes, PyTypes {
 
@@ -18,7 +16,7 @@ public class ExposeMethodFinderTest extends TestCase implements Opcodes, PyTypes
                                        methodName,
                                        descriptor,
                                        null,
-                                       new EmptyVisitor()) {
+                                       new MethodVisitor(Opcodes.ASM4) {}) {
 
             @Override
             public void handleResult(InstanceMethodExposer exposer) {

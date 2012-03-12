@@ -8,7 +8,8 @@ import java.io.IOException;
 
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.commons.EmptyVisitor;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.Opcodes;
 
 /**
  * This class reads a classfile from a byte array and pulls out the value of the class annotation
@@ -19,7 +20,7 @@ import org.objectweb.asm.commons.EmptyVisitor;
  * cost too much, we will want to implement a special purpose ClassReader that only reads out the
  * APIVersion annotation I think.
  */
-public class AnnotationReader extends EmptyVisitor {
+public class AnnotationReader extends ClassVisitor {
 
     private boolean nextVisitIsVersion = false;
     private boolean nextVisitIsMTime = false;
@@ -32,6 +33,7 @@ public class AnnotationReader extends EmptyVisitor {
      * @throws IOException - if the classfile is malformed.
      */
     public AnnotationReader(byte[] data) throws IOException {
+        super(Opcodes.ASM4);
         ClassReader r;
         try {
             r = new ClassReader(data);
@@ -43,11 +45,12 @@ public class AnnotationReader extends EmptyVisitor {
         }
         r.accept(this, 0);
     }
-
+    
+    @Override
     public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
         nextVisitIsVersion = desc.equals("Lorg/python/compiler/APIVersion;");
         nextVisitIsMTime = desc.equals("Lorg/python/compiler/MTime;");
-        return this;
+        return super.visitAnnotation(desc, visible);
     }
 
     public void visit(String name, Object value) {
