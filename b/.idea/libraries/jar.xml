@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="jar">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/extlibs/mockrunner-0.4.1/jar/jdom.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/mockrunner-0.4.1/jar/commons-logging-1.0.4.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/mockrunner-0.4.1/jar/jakarta-oro-2.0.8.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/mockrunner-0.4.1/jar/nekohtml.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
