@@ -6,8 +6,10 @@ compiler/**
 distutils/**
 email/**
 encodings/**
+importlib/*
 logging/*
 test/**
+unittest/**
 xml/etree/**
 
 # Lib files, in alphabetical order:
@@ -18,6 +20,7 @@ _strptime.py
 _threading_local.py
 aifc.py
 anydbm.py
+argparse.py
 ast.py
 atexit.py
 asynchat.py
@@ -147,7 +150,6 @@ tokenize.py
 trace.py
 traceback.py
 tzparse.py
-unittest.py
 urllib2.py
 urlparse.py
 user.py
@@ -155,6 +157,7 @@ UserDict.py
 UserList.py
 UserString.py
 uuid.py
+warnings.py
 whichdb.py
 whrandom.py
 wsgiref.egg-info
