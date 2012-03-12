@@ -30,6 +30,7 @@ public class _hashlib implements ClassDictInit {
     /** A mapping of Python algorithm names to MessageDigest names. */
     private static final Map<String, String> algorithmMap = new HashMap<String, String>() {{
             put("sha1", "sha-1");
+            put("sha224", "sha-224");
             put("sha256", "sha-256");
             put("sha384", "sha-384");
             put("sha512", "sha-512");
@@ -75,6 +76,16 @@ public class _hashlib implements ClassDictInit {
         return new$("sha1", obj);
     }
 
+    public static PyObject openssl_sha224() {
+        return openssl_sha224(null);
+    }
+
+    public static PyObject openssl_sha224(PyObject obj) {
+        //FIXME: WRONG!
+        return new$("sha256", obj);
+        //return new$("sha224", obj);
+    }
+
     public static PyObject openssl_sha256() {
         return openssl_sha256(null);
     }
@@ -118,6 +129,7 @@ public class _hashlib implements ClassDictInit {
         private static final Map<String, Integer> blockSizes = new HashMap<String, Integer>() {{
                 put("md5", 64);
                 put("sha-1", 64);
+                put("sha-224", 64);
                 put("sha-256", 64);
                 put("sha-384", 128);
                 put("sha-512", 128);
