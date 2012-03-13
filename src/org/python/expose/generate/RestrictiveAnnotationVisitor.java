@@ -9,12 +9,9 @@ import org.objectweb.asm.Opcodes;
  */
 public class RestrictiveAnnotationVisitor extends AnnotationVisitor {
 
-    public RestrictiveAnnotationVisitor(int arg0) {
-        super(arg0);
-    }
-
     public RestrictiveAnnotationVisitor() {
-        this(Opcodes.ASM4);
+        super(Opcodes.ASM4);
+        System.err.println("RestrictiveAnnotationVisitor:: constructed ");
     }
 
     public AnnotationVisitor visitAnnotation(String name, String desc) {

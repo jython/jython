@@ -142,7 +142,7 @@ final class AsmClassBuilder {
             Constructor<? extends ClassVisitor> c = tmvClass.getDeclaredConstructor(PrintWriter.class);
             return c.newInstance(out);
         } catch (Throwable t) {
-            return new EmptyVisitor();
+            return null;
         }
     }
 
