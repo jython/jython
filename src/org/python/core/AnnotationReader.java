@@ -50,17 +50,18 @@ public class AnnotationReader extends ClassVisitor {
     public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
         nextVisitIsVersion = desc.equals("Lorg/python/compiler/APIVersion;");
         nextVisitIsMTime = desc.equals("Lorg/python/compiler/MTime;");
-        return super.visitAnnotation(desc, visible);
-    }
+        return new AnnotationVisitor(Opcodes.ASM4) {
 
-    public void visit(String name, Object value) {
-        if (nextVisitIsVersion) {
-            version = (Integer)value;
-            nextVisitIsVersion = false;
-        } else if (nextVisitIsMTime) {
-            mtime = (Long)value;
-            nextVisitIsVersion = false;
-        }
+        	public void visit(String name, Object value) {
+        		if (nextVisitIsVersion) {
+        			version = (Integer)value;
+        			nextVisitIsVersion = false;
+        		} else if (nextVisitIsMTime) {
+        			mtime = (Long)value;
+        			nextVisitIsVersion = false;
+        		}
+        	}
+		};
     }
 
     public int getVersion() {

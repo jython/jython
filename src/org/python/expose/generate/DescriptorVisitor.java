@@ -12,6 +12,7 @@ abstract class DescriptorVisitor extends RestrictiveAnnotationVisitor {
 
     @Override
     public void visit(String name, Object value) {
+    	System.err.println("DescriptorVisitor::visit:: " + name + " value: " + value);
         if (name.equals("name")) {
             val = (String)value;
         } else if (name.equals("doc")) {

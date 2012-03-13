@@ -10,7 +10,8 @@
 package org.python.modules.jffi;
 
 import org.objectweb.asm.*;
-import org.objectweb.asm.util.ASMifier;
+import org.objectweb.asm.util.Printer;
+import org.objectweb.asm.util.Textifier;
 import org.objectweb.asm.util.TraceMethodVisitor;
 
 import java.io.PrintStream;
@@ -25,24 +26,15 @@ import static org.python.modules.jffi.CodegenUtils.*;
 public class SkinnyMethodAdapter extends MethodVisitor implements Opcodes {
     private final static boolean DEBUG = Boolean.getBoolean("jython.compile.dump");
     private MethodVisitor method;
+    private Printer printer;
     private String name;
     private ClassVisitor cv;
     
-    /** Creates a new instance of SkinnyMethodAdapter */
-    public SkinnyMethodAdapter(MethodVisitor method) {
-    	super(Opcodes.ASM4);
-        setMethodVisitor(method);
-    }
-
     public SkinnyMethodAdapter(ClassVisitor cv, int flags, String name, String signature, String something, String[] exceptions) {
-    	super(Opcodes.ASM4);
+    	super(ASM4);
         setMethodVisitor(cv.visitMethod(flags, name, signature, something, exceptions));
         this.cv = cv;
         this.name = name;
-    }
-    
-    public SkinnyMethodAdapter() {
-    	super(Opcodes.ASM4);
     }
     
     public MethodVisitor getMethodVisitor() {
@@ -51,7 +43,8 @@ public class SkinnyMethodAdapter extends MethodVisitor implements Opcodes {
     
     public void setMethodVisitor(MethodVisitor mv) {
         if (DEBUG) {
-            this.method = new TraceMethodVisitor(mv, new ASMifier());
+        	this.printer = new Textifier();
+            this.method = new TraceMethodVisitor(mv, printer);
         } else {
             this.method = mv;
         }
@@ -533,7 +526,7 @@ public class SkinnyMethodAdapter extends MethodVisitor implements Opcodes {
             } else {
                 pw.write("*** Dumping ***\n");
             }
-            ((TraceMethodVisitor)getMethodVisitor()).p.print(pw);
+            printer.print(pw);
             pw.flush();
         }
         getMethodVisitor().visitMaxs(1, 1);
@@ -898,7 +891,7 @@ public class SkinnyMethodAdapter extends MethodVisitor implements Opcodes {
         if (DEBUG) {
             PrintWriter pw = new PrintWriter(System.out);
             pw.write("*** Dumping ***\n");
-            ((TraceMethodVisitor)getMethodVisitor()).p.print(pw);
+            printer.print(pw);
             pw.flush();
         }
         getMethodVisitor().visitMaxs(arg0, arg1);
