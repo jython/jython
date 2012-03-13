@@ -168,7 +168,7 @@ import java.util.ListIterator;
 
     private String encoding;
 
-    private boolean printStatement = true;
+    private boolean printFunction = false;
     private boolean unicodeLiterals = false;
 
     public void setErrorHandler(ErrorHandler eh) {
@@ -387,7 +387,7 @@ name_or_print
     : NAME {
         $tok = $name_or_print.start;
     }
-    | {!printStatement}? => PRINT {
+    | {printFunction}? => PRINT {
         $tok = $name_or_print.start;
     }
     ;
@@ -610,7 +610,7 @@ small_stmt : expr_stmt
            | global_stmt
            | exec_stmt
            | assert_stmt
-           | {printStatement}? => print_stmt
+           | {!printFunction}? => print_stmt
            ;
 
 //expr_stmt: testlist (augassign (yield_expr|testlist) |
@@ -941,7 +941,7 @@ import_from
                  for(alias a: aliases) {
                      if (a != null) {
                          if (a.getInternalName().equals("print_function")) {
-                             printStatement = false;
+                             printFunction = true;
                          } else if (a.getInternalName().equals("unicode_literals")) {
                              unicodeLiterals = true;
                          }
