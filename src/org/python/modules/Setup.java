@@ -60,6 +60,7 @@ public class Setup
         "_marshal",
         "_threading:org.python.modules._threading._threading",
         PosixModule.getOSName() + ":org.python.modules.posix.PosixModule",
-        "jffi:org.python.modules.jffi.jffi"
+        "jffi:org.python.modules.jffi.jffi",
+        "_fileio:org.python.modules._fileio._fileio"
     };
 }

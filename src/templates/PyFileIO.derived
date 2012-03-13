@@ -1,4 +1,4 @@
-base_class: PyPartial
+base_class: PyFileIO
 want_dict: true
 ctr:
 incl: object

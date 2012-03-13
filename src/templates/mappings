@@ -8,6 +8,7 @@
 
 BaseException.derived:org.python.core.PyBaseExceptionDerived
 ClasspathPyImporter.derived:org.python.core.ClasspathPyImporterDerived
+PyFileIO.derived:org.python.modules._fileio.PyFileIODerived
 array.derived:org.python.core.PyArrayDerived
 classmethod.derived:org.python.core.PyClassMethodDerived
 complex.derived:org.python.core.PyComplexDerived

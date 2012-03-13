@@ -1,10 +1,10 @@
 /* Generated file, do not modify.  See jython/src/templates/gderived.py. */
-package org.python.modules._functools;
+package org.python.modules._fileio;
 
 import java.io.Serializable;
 import org.python.core.*;
 
-public class PyPartialDerived extends PyPartial implements Slotted {
+public class PyFileIODerived extends PyFileIO implements Slotted {
 
     public PyObject getSlot(int index) {
         return slots[index];
@@ -39,7 +39,7 @@ public class PyPartialDerived extends PyPartial implements Slotted {
         dict=new PyStringMap();
     }
 
-    public PyPartialDerived(PyType subtype) {
+    public PyFileIODerived(PyType subtype) {
         super(subtype);
         slots=new PyObject[subtype.getNumSlots()];
         dict=subtype.instDict();
