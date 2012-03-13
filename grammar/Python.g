@@ -942,10 +942,8 @@ import_from
                      if (a != null) {
                          if (a.getInternalName().equals("print_function")) {
                              printStatement = false;
-                             break;
                          } else if (a.getInternalName().equals("unicode_literals")) {
                              unicodeLiterals = true;
-                             break;
                          }
                      }
                  }
