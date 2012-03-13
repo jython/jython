@@ -11,7 +11,6 @@ public class RestrictiveAnnotationVisitor extends AnnotationVisitor {
 
     public RestrictiveAnnotationVisitor() {
         super(Opcodes.ASM4);
-        System.err.println("RestrictiveAnnotationVisitor:: constructed ");
     }
 
     public AnnotationVisitor visitAnnotation(String name, String desc) {
