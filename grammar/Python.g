@@ -954,6 +954,21 @@ import_from
          }
         | LPAREN i2=import_as_names COMMA? RPAREN
          {
+             //XXX: this is almost a complete C&P of the code above - is there some way
+             //     to factor it out?
+             String dottedText = $dotted_name.text;
+             if (dottedText != null && dottedText.equals("__future__")) {
+                 List<alias> aliases = $i2.atypes;
+                 for(alias a: aliases) {
+                     if (a != null) {
+                         if (a.getInternalName().equals("print_function")) {
+                             printFunction = true;
+                         } else if (a.getInternalName().equals("unicode_literals")) {
+                             unicodeLiterals = true;
+                         }
+                     }
+                 }
+             }
              stype = new ImportFrom($FROM, actions.makeFromText($d, $dotted_name.names),
                  actions.makeModuleNameNode($d, $dotted_name.names),
                  actions.makeAliases($i2.atypes), actions.makeLevel($d));
