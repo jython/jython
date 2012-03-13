@@ -38,6 +38,9 @@
       <root url="jar://$PROJECT_DIR$/extlibs/jffi-sparc-SunOS.jar!/" />
       <root url="jar://$PROJECT_DIR$/extlibs/junit-3.8.2.jar!/" />
       <root url="jar://$PROJECT_DIR$/extlibs/guava-11.0.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/asm-4.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/asm-commons-4.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/asm-util-4.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />
