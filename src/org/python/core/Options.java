@@ -85,6 +85,10 @@ public class Options {
     //XXX: place holder
     public static int bytes_warning = 0;
 
+    // Corresponds to -O (Python bytecode optimization), -OO (remove docstrings)
+    // flags in CPython; it's not clear how Jython should expose its optimization,
+    // but this is user visible as of 2.7.
+    public static int optimize = 0;
 
     /**
      * Enable division warning. The value maps to the registry values of

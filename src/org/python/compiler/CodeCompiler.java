@@ -846,7 +846,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         }
         int tmp = 0;
         if (node.getInternalValue() != null) {
-            if (my_scope.generator) {
+            if (my_scope.generator && !(node instanceof LambdaSyntheticReturn)) {
                 throw new ParseException("'return' with argument " +
                         "inside generator", node);
             }
@@ -2255,13 +2255,22 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         return null;
     }
 
+
+    // a marker class to distinguish this usage; future generator rewriting may likely
+    // want to remove this support
+    private class LambdaSyntheticReturn extends Return {
+        private LambdaSyntheticReturn(PythonTree tree, expr value) {
+            super(tree, value);
+        }
+    }
+    
     @Override
     public Object visitLambda(Lambda node) throws Exception {
         String name = "<lambda>";
 
-        //Add a return node onto the outside of suite;
+        //Add a synthetic return node onto the outside of suite;
         java.util.List<stmt> bod = new ArrayList<stmt>();
-        bod.add(new Return(node, node.getInternalBody()));
+        bod.add(new LambdaSyntheticReturn(node, node.getInternalBody()));
         mod retSuite = new Suite(node, bod);
 
         setline(node);
