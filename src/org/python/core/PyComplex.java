@@ -434,7 +434,7 @@ public class PyComplex extends PyObject {
         if (!canCoerce(right)) {
             return null;
         }
-        if (Options.divisionWarning >= 2) {
+        if (Options.division_warning >= 2) {
             Py.warning(Py.DeprecationWarning, "classic complex division");
         }
         return _div(this, coerce(right));
@@ -450,7 +450,7 @@ public class PyComplex extends PyObject {
         if (!canCoerce(left)) {
             return null;
         }
-        if (Options.divisionWarning >= 2) {
+        if (Options.division_warning >= 2) {
             Py.warning(Py.DeprecationWarning, "classic complex division");
         }
         return _div(coerce(left), this);

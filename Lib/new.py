@@ -16,10 +16,4 @@ from types import ModuleType as module
 
 # XXX: Jython can't really create a code object like CPython does
 # (according to test.test_new)
-## CodeType is not accessible in restricted execution mode
-#try:
-#    from types import CodeType as code
-#except ImportError:
-#    pass
-
 from org.python.core import PyBytecode as code

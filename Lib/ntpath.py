@@ -6,15 +6,19 @@ module as os.path.
 """
 
 import os
-import stat
 import sys
+import stat
+import genericpath
+import warnings
+
+from genericpath import *
 
 __all__ = ["normcase","isabs","join","splitdrive","split","splitext",
            "basename","dirname","commonprefix","getsize","getmtime",
            "getatime","getctime", "islink","exists","lexists","isdir","isfile",
            "ismount","walk","expanduser","expandvars","normpath","abspath",
            "splitunc","curdir","pardir","sep","pathsep","defpath","altsep",
-           "extsep","devnull","realpath","supports_unicode_filenames"]
+           "extsep","devnull","realpath","supports_unicode_filenames","relpath"]
 
 # strings representing various path-related bits and pieces
 curdir = '.'
@@ -57,7 +61,9 @@ def isabs(s):
 # Join two (or more) paths.
 
 def join(a, *p):
-    """Join two or more pathname components, inserting "\\" as needed"""
+    """Join two or more pathname components, inserting "\\" as needed.
+    If any component is an absolute path, all previous path components
+    will be discarded."""
     path = a
     for b in p:
         b_wins = 0  # set to 1 iff b makes path irrelevant
@@ -181,16 +187,8 @@ def split(p):
 # It is always true that root + ext == p.
 
 def splitext(p):
-    """Split the extension from a pathname.
-
-    Extension is everything from the last dot to the end.
-    Return (root, ext), either part may be empty."""
-
-    i = p.rfind('.')
-    if i<=max(p.rfind('/'), p.rfind('\\')):
-        return p, ''
-    else:
-        return p[:i], p[i:]
+    return genericpath._splitext(p, sep, altsep, extsep)
+splitext.__doc__ = genericpath._splitext.__doc__
 
 
 # Return the tail (basename) part of a path.
@@ -206,85 +204,17 @@ def dirname(p):
     """Returns the directory component of a pathname"""
     return split(p)[0]
 
-
-# Return the longest prefix of all list elements.
-
-def commonprefix(m):
-    "Given a list of pathnames, returns the longest common leading component"
-    if not m: return ''
-    s1 = min(m)
-    s2 = max(m)
-    n = min(len(s1), len(s2))
-    for i in xrange(n):
-        if s1[i] != s2[i]:
-            return s1[:i]
-    return s1[:n]
-
-
-# Get size, mtime, atime of files.
-
-def getsize(filename):
-    """Return the size of a file, reported by os.stat()"""
-    return os.stat(filename).st_size
-
-def getmtime(filename):
-    """Return the last modification time of a file, reported by os.stat()"""
-    return os.stat(filename).st_mtime
-
-def getatime(filename):
-    """Return the last access time of a file, reported by os.stat()"""
-    return os.stat(filename).st_atime
-
-def getctime(filename):
-    """Return the creation time of a file, reported by os.stat()."""
-    return os.stat(filename).st_ctime
-
 # Is a path a symbolic link?
 # This will always return false on systems where posix.lstat doesn't exist.
 
 def islink(path):
-    """Test for symbolic link.  On WindowsNT/95 always returns false"""
+    """Test for symbolic link.
+    On WindowsNT/95 and OS/2 always returns false
+    """
     return False
 
-
-# Does a path exist?
-
-def exists(path):
-    """Test whether a path exists"""
-    try:
-        st = os.stat(path)
-    except os.error:
-        return False
-    return True
-
+# alias exists to lexists
 lexists = exists
-
-
-# Is a path a dos directory?
-# This follows symbolic links, so both islink() and isdir() can be true
-# for the same path.
-
-def isdir(path):
-    """Test whether a path is a directory"""
-    try:
-        st = os.stat(path)
-    except os.error:
-        return False
-    return stat.S_ISDIR(st.st_mode)
-
-
-# Is a path a regular file?
-# This follows symbolic links, so both islink() and isdir() can be true
-# for the same path.
-
-def isfile(path):
-    """Test whether a path is a regular file"""
-    try:
-        st = os.stat(path)
-    except os.error:
-        return False
-    return stat.S_ISREG(st.st_mode)
-
 
 # Is a path a mount point?  Either a root (with or without drive letter)
 # or an UNC path with at most a / or \ after the mount point.
@@ -320,18 +250,17 @@ def walk(top, func, arg):
     beyond that arg is always passed to func.  It can be used, e.g., to pass
     a filename pattern, or a mutable object designed to accumulate
     statistics.  Passing None for arg is common."""
-
+    warnings.warnpy3k("In 3.x, os.path.walk is removed in favor of os.walk.",
+                      stacklevel=2)
     try:
         names = os.listdir(top)
     except os.error:
         return
     func(arg, top, names)
-    exceptions = ('.', '..')
     for name in names:
-        if name not in exceptions:
-            name = join(top, name)
-            if isdir(name):
-                walk(name, func, arg)
+        name = join(top, name)
+        if isdir(name):
+            walk(name, func, arg)
 
 
 # Expand paths beginning with '~' or '~user'.
@@ -352,36 +281,44 @@ def expanduser(path):
     i, n = 1, len(path)
     while i < n and path[i] not in '/\\':
         i = i + 1
-    if i == 1:
-        if 'HOME' in os.environ:
-            userhome = os.environ['HOME']
-        elif not 'HOMEPATH' in os.environ:
-            return path
-        else:
-            try:
-                drive = os.environ['HOMEDRIVE']
-            except KeyError:
-                drive = ''
-            userhome = join(drive, os.environ['HOMEPATH'])
-    else:
+
+    if 'HOME' in os.environ:
+        userhome = os.environ['HOME']
+    elif 'USERPROFILE' in os.environ:
+        userhome = os.environ['USERPROFILE']
+    elif not 'HOMEPATH' in os.environ:
         return path
+    else:
+        try:
+            drive = os.environ['HOMEDRIVE']
+        except KeyError:
+            drive = ''
+        userhome = join(drive, os.environ['HOMEPATH'])
+
+    if i != 1: #~user
+        userhome = join(dirname(userhome), path[1:i])
+
     return userhome + path[i:]
 
 
 # Expand paths containing shell variable substitutions.
 # The following rules apply:
 #       - no expansion within single quotes
-#       - no escape character, except for '$$' which is translated into '$'
+#       - '$$' is translated into '$'
+#       - '%%' is translated into '%' if '%%' are not seen in %var1%%var2%
 #       - ${varname} is accepted.
-#       - varnames can be made out of letters, digits and the character '_'
+#       - $varname is accepted.
+#       - %varname% is accepted.
+#       - varnames can be made out of letters, digits and the characters '_-'
+#         (though is not verifed in the ${varname} and %varname% cases)
 # XXX With COMMAND.COM you can use any characters in a variable name,
 # XXX except '^|<>='.
 
 def expandvars(path):
-    """Expand shell variables of form $var and ${var}.
+    """Expand shell variables of the forms $var, ${var} and %var%.
 
     Unknown variables are left unchanged."""
-    if '$' not in path:
+    if '$' not in path and '%' not in path:
         return path
     import string
     varchars = string.ascii_letters + string.digits + '_-'
@@ -399,6 +336,24 @@ def expandvars(path):
             except ValueError:
                 res = res + path
                 index = pathlen - 1
+        elif c == '%':  # variable or '%'
+            if path[index + 1:index + 2] == '%':
+                res = res + c
+                index = index + 1
+            else:
+                path = path[index+1:]
+                pathlen = len(path)
+                try:
+                    index = path.index('%')
+                except ValueError:
+                    res = res + '%' + path
+                    index = pathlen - 1
+                else:
+                    var = path[:index]
+                    if var in os.environ:
+                        res = res + os.environ[var]
+                    else:
+                        res = res + '%' + var + '%'
         elif c == '$':  # variable or '$$'
             if path[index + 1:index + 2] == '$':
                 res = res + c
@@ -411,8 +366,10 @@ def expandvars(path):
                     var = path[:index]
                     if var in os.environ:
                         res = res + os.environ[var]
+                    else:
+                        res = res + '${' + var + '}'
                 except ValueError:
-                    res = res + path
+                    res = res + '${' + path
                     index = pathlen - 1
             else:
                 var = ''
@@ -424,8 +381,10 @@ def expandvars(path):
                     c = path[index:index + 1]
                 if var in os.environ:
                     res = res + os.environ[var]
+                else:
+                    res = res + '$' + var
                 if c != '':
-                    res = res + c
+                    index = index - 1
         else:
             res = res + c
         index = index + 1
@@ -438,6 +397,14 @@ def expandvars(path):
 
 def normpath(path):
     """Normalize path, eliminating double slashes, etc."""
+    # Preserve unicode (if path is unicode)
+    backslash, dot = (u'\\', u'.') if isinstance(path, unicode) else ('\\', '.')
+    if path.startswith(('\\\\.\\', '\\\\?\\')):
+        # in the case of paths with these prefixes:
+        # \\.\ -> device names
+        # \\?\ -> literal paths
+        # do not do any normalization, but return the path unchanged
+        return path
     path = path.replace("/", "\\")
     prefix, path = splitdrive(path)
     # We need to be careful here. If the prefix is empty, and the path starts
@@ -452,12 +419,12 @@ def normpath(path):
     if prefix == '':
         # No drive letter - preserve initial backslashes
         while path[:1] == "\\":
-            prefix = prefix + "\\"
+            prefix = prefix + backslash
             path = path[1:]
     else:
         # We have a drive letter - collapse initial backslashes
         if path.startswith("\\"):
-            prefix = prefix + "\\"
+            prefix = prefix + backslash
             path = path.lstrip("\\")
     comps = path.split("\\")
     i = 0
@@ -476,8 +443,8 @@ def normpath(path):
             i += 1
     # If the path is now empty, substitute '.'
     if not prefix and not comps:
-        comps.append('.')
-    return prefix + "\\".join(comps)
+        comps.append(dot)
+    return prefix + backslash.join(comps)
 
 
 # Return an absolute path.
@@ -491,7 +458,11 @@ except ImportError: # not running on Windows - mock up something sensible
     def abspath(path):
         """Return the absolute version of a path."""
         if not isabs(path):
-            path = join(os.getcwd(), path)
+            if isinstance(path, unicode):
+                cwd = os.getcwdu()
+            else:
+                cwd = os.getcwd()
+            path = join(cwd, path)
         if not splitunc(path)[0] and not splitdrive(path)[0]:
             # cwd lacks a UNC mount point, so it should have a drive
             # letter (but lacks one): determine it
@@ -509,6 +480,8 @@ else:  # use native Windows method on Windows
                 path = _getfullpathname(path)
             except WindowsError:
                 pass # Bad path - return unchanged.
+        elif isinstance(path, unicode):
+            path = os.getcwdu()
         else:
             path = os.getcwd()
         return normpath(path)
@@ -518,3 +491,42 @@ realpath = abspath
 # Win9x family and earlier have no Unicode filename support.
 supports_unicode_filenames = (hasattr(sys, "getwindowsversion") and
                               sys.getwindowsversion()[3] >= 2)
+
+def _abspath_split(path):
+    abs = abspath(normpath(path))
+    prefix, rest = splitunc(abs)
+    is_unc = bool(prefix)
+    if not is_unc:
+        prefix, rest = splitdrive(abs)
+    return is_unc, prefix, [x for x in rest.split(sep) if x]
+
+def relpath(path, start=curdir):
+    """Return a relative version of a path"""
+
+    if not path:
+        raise ValueError("no path specified")
+
+    start_is_unc, start_prefix, start_list = _abspath_split(start)
+    path_is_unc, path_prefix, path_list = _abspath_split(path)
+
+    if path_is_unc ^ start_is_unc:
+        raise ValueError("Cannot mix UNC and non-UNC paths (%s and %s)"
+                                                            % (path, start))
+    if path_prefix.lower() != start_prefix.lower():
+        if path_is_unc:
+            raise ValueError("path is on UNC root %s, start on UNC root %s"
+                                                % (path_prefix, start_prefix))
+        else:
+            raise ValueError("path is on drive %s, start on drive %s"
+                                                % (path_prefix, start_prefix))
+    # Work out how much of the filepath is shared by start and path.
+    i = 0
+    for e1, e2 in zip(start_list, path_list):
+        if e1.lower() != e2.lower():
+            break
+        i += 1
+
+    rel_list = [pardir] * (len(start_list)-i) + path_list[i:]
+    if not rel_list:
+        return curdir
+    return join(*rel_list)
