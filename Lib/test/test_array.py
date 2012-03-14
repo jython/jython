@@ -18,7 +18,7 @@ class ArraySubclass(array.array):
 
 class ArraySubclassWithKwargs(array.array):
     def __init__(self, typecode, newarg=None):
-        array.array.__init__(typecode)
+        array.array.__init__(self, typecode)
 
 tests = [] # list to accumulate all tests
 typecodes = "cubBhHiIlLfd"
@@ -52,7 +52,7 @@ class BaseTest(unittest.TestCase):
     def test_constructor(self):
         a = array.array(self.typecode)
         self.assertEqual(a.typecode, self.typecode)
-        self.assert_(a.itemsize>=self.minitemsize)
+        self.assertTrue(a.itemsize>=self.minitemsize)
         self.assertRaises(TypeError, array.array, self.typecode, None)
 
     def test_len(self):
@@ -67,10 +67,10 @@ class BaseTest(unittest.TestCase):
         a = array.array(self.typecode, self.example)
         self.assertRaises(TypeError, a.buffer_info, 42)
         bi = a.buffer_info()
-        self.assert_(isinstance(bi, tuple))
+        self.assertIsInstance(bi, tuple)
         self.assertEqual(len(bi), 2)
-        self.assert_(isinstance(bi[0], (int, long)))
-        self.assert_(isinstance(bi[1], int))
+        self.assertIsInstance(bi[0], (int, long))
+        self.assertIsInstance(bi[1], int)
         self.assertEqual(bi[1], len(a))
 
     def test_byteswap(self):
@@ -207,6 +207,25 @@ class BaseTest(unittest.TestCase):
             f.close()
             test_support.unlink(test_support.TESTFN)
 
+    def test_filewrite(self):
+        a = array.array(self.typecode, 2*self.example)
+        f = open(test_support.TESTFN, 'wb')
+        try:
+            f.write(a)
+            f.close()
+            b = array.array(self.typecode)
+            f = open(test_support.TESTFN, 'rb')
+            b.fromfile(f, len(self.example))
+            self.assertEqual(b, array.array(self.typecode, self.example))
+            self.assertNotEqual(a, b)
+            b.fromfile(f, len(self.example))
+            self.assertEqual(a, b)
+            f.close()
+        finally:
+            if not f.closed:
+                f.close()
+            test_support.unlink(test_support.TESTFN)
+
     def test_tofromlist(self):
         a = array.array(self.typecode, 2*self.example)
         b = array.array(self.typecode)
@@ -260,39 +279,39 @@ class BaseTest(unittest.TestCase):
 
     def test_cmp(self):
         a = array.array(self.typecode, self.example)
-        self.assert_((a == 42) is False)
-        self.assert_((a != 42) is True)
+        self.assertTrue((a == 42) is False)
+        self.assertTrue((a != 42) is True)
 
-        self.assert_((a == a) is True)
-        self.assert_((a != a) is False)
-        self.assert_((a < a) is False)
-        self.assert_((a <= a) is True)
-        self.assert_((a > a) is False)
-        self.assert_((a >= a) is True)
+        self.assertTrue((a == a) is True)
+        self.assertTrue((a != a) is False)
+        self.assertTrue((a < a) is False)
+        self.assertTrue((a <= a) is True)
+        self.assertTrue((a > a) is False)
+        self.assertTrue((a >= a) is True)
 
         al = array.array(self.typecode, self.smallerexample)
         ab = array.array(self.typecode, self.biggerexample)
 
-        self.assert_((a == 2*a) is False)
-        self.assert_((a != 2*a) is True)
-        self.assert_((a < 2*a) is True)
-        self.assert_((a <= 2*a) is True)
-        self.assert_((a > 2*a) is False)
-        self.assert_((a >= 2*a) is False)
+        self.assertTrue((a == 2*a) is False)
+        self.assertTrue((a != 2*a) is True)
+        self.assertTrue((a < 2*a) is True)
+        self.assertTrue((a <= 2*a) is True)
+        self.assertTrue((a > 2*a) is False)
+        self.assertTrue((a >= 2*a) is False)
 
-        self.assert_((a == al) is False)
-        self.assert_((a != al) is True)
-        self.assert_((a < al) is False)
-        self.assert_((a <= al) is False)
-        self.assert_((a > al) is True)
-        self.assert_((a >= al) is True)
+        self.assertTrue((a == al) is False)
+        self.assertTrue((a != al) is True)
+        self.assertTrue((a < al) is False)
+        self.assertTrue((a <= al) is False)
+        self.assertTrue((a > al) is True)
+        self.assertTrue((a >= al) is True)
 
-        self.assert_((a == ab) is False)
-        self.assert_((a != ab) is True)
-        self.assert_((a < ab) is True)
-        self.assert_((a <= ab) is True)
-        self.assert_((a > ab) is False)
-        self.assert_((a >= ab) is False)
+        self.assertTrue((a == ab) is False)
+        self.assertTrue((a != ab) is True)
+        self.assertTrue((a < ab) is True)
+        self.assertTrue((a <= ab) is True)
+        self.assertTrue((a > ab) is False)
+        self.assertTrue((a >= ab) is False)
 
     def test_add(self):
         a = array.array(self.typecode, self.example) \
@@ -314,10 +333,16 @@ class BaseTest(unittest.TestCase):
         a = array.array(self.typecode, self.example[::-1])
         b = a
         a += array.array(self.typecode, 2*self.example)
-        self.assert_(a is b)
+        self.assertTrue(a is b)
         self.assertEqual(
             a,
             array.array(self.typecode, self.example[::-1]+2*self.example)
+        )
+        a = array.array(self.typecode, self.example)
+        a += a
+        self.assertEqual(
+            a,
+            array.array(self.typecode, self.example + self.example)
         )
 
         b = array.array(self.badtypecode())
@@ -363,22 +388,22 @@ class BaseTest(unittest.TestCase):
         b = a
 
         a *= 5
-        self.assert_(a is b)
+        self.assertTrue(a is b)
         self.assertEqual(
             a,
             array.array(self.typecode, 5*self.example)
         )
 
         a *= 0
-        self.assert_(a is b)
+        self.assertTrue(a is b)
         self.assertEqual(a, array.array(self.typecode))
 
         a *= 1000
-        self.assert_(a is b)
+        self.assertTrue(a is b)
         self.assertEqual(a, array.array(self.typecode))
 
         a *= -1
-        self.assert_(a is b)
+        self.assertTrue(a is b)
         self.assertEqual(a, array.array(self.typecode))
 
         a = array.array(self.typecode, self.example)
@@ -642,11 +667,11 @@ class BaseTest(unittest.TestCase):
                     data.reverse()
                     L[start:stop:step] = data
                     a[start:stop:step] = array.array(self.typecode, data)
-                    self.assertEquals(a, array.array(self.typecode, L))
+                    self.assertEqual(a, array.array(self.typecode, L))
 
                     del L[start:stop:step]
                     del a[start:stop:step]
-                    self.assertEquals(a, array.array(self.typecode, L))
+                    self.assertEqual(a, array.array(self.typecode, L))
 
     def test_index(self):
         example = 2*self.example
@@ -725,6 +750,13 @@ class BaseTest(unittest.TestCase):
             array.array(self.typecode, self.example+self.example[::-1])
         )
 
+        a = array.array(self.typecode, self.example)
+        a.extend(a)
+        self.assertEqual(
+            a,
+            array.array(self.typecode, self.example+self.example)
+        )
+
         b = array.array(self.badtypecode())
         self.assertRaises(TypeError, a.extend, b)
 
@@ -767,7 +799,7 @@ class BaseTest(unittest.TestCase):
 
     def test_buffer(self):
         a = array.array(self.typecode, self.example)
-        with test_support._check_py3k_warnings():
+        with test_support.check_py3k_warnings():
             b = buffer(a)
         self.assertEqual(b[0], a.tostring()[0])
 

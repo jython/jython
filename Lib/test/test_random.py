@@ -5,7 +5,7 @@ import random
 import time
 import pickle
 import warnings
-from math import log, exp, sqrt, pi, fsum as msum
+from math import log, exp, pi, fsum, sin
 from functools import reduce
 from test import test_support
 
@@ -53,10 +53,8 @@ class TestBasicOps(unittest.TestCase):
         state3 = self.gen.getstate()    # s/b distinct from state2
         self.assertNotEqual(state2, state3)
 
-        with test_support._check_py3k_warnings(quiet=True):
+        with test_support.check_py3k_warnings(quiet=True):
             self.assertRaises(TypeError, self.gen.jumpahead)  # needs an arg
-            self.assertRaises(TypeError, self.gen.jumpahead, "ick")  # wrong type
-            self.assertRaises(TypeError, self.gen.jumpahead, 2.3)  # wrong type
             self.assertRaises(TypeError, self.gen.jumpahead, 2, 3)  # too many
 
     def test_sample(self):
@@ -69,7 +67,7 @@ class TestBasicOps(unittest.TestCase):
             self.assertEqual(len(s), k)
             uniq = set(s)
             self.assertEqual(len(uniq), k)
-            self.failUnless(uniq <= set(population))
+            self.assertTrue(uniq <= set(population))
         self.assertEqual(self.gen.sample([], 0), [])  # test edge case N==k==0
 
     def test_sample_distribution(self):
@@ -114,7 +112,7 @@ class TestBasicOps(unittest.TestCase):
             samp = self.gen.sample(d, k)
             # Verify that we got ints back (keys); the values are complex.
             for x in samp:
-                self.assert_(type(x) is int)
+                self.assertTrue(type(x) is int)
         samp.sort()
         self.assertEqual(samp, range(N))
 
@@ -239,7 +237,7 @@ class SystemRandom_TestBasicOps(TestBasicOps):
         cum = 0
         for i in xrange(100):
             r = self.gen.randrange(span)
-            self.assert_(0 <= r < span)
+            self.assertTrue(0 <= r < span)
             cum |= r
         self.assertEqual(cum, span-1)
 
@@ -249,7 +247,7 @@ class SystemRandom_TestBasicOps(TestBasicOps):
             stop = self.gen.randrange(2 ** (i-2))
             if stop <= start:
                 return
-            self.assert_(start <= self.gen.randrange(start, stop) < stop)
+            self.assertTrue(start <= self.gen.randrange(start, stop) < stop)
 
     def test_rangelimits(self):
         for start, stop in [(-2,0), (-(2**60)-2,-(2**60)), (2**60,2**60+2)]:
@@ -259,7 +257,7 @@ class SystemRandom_TestBasicOps(TestBasicOps):
     def test_genrandbits(self):
         # Verify ranges
         for k in xrange(1, 1000):
-            self.assert_(0 <= self.gen.getrandbits(k) < 2**k)
+            self.assertTrue(0 <= self.gen.getrandbits(k) < 2**k)
 
         # Verify all bits active
         getbits = self.gen.getrandbits
@@ -285,17 +283,17 @@ class SystemRandom_TestBasicOps(TestBasicOps):
             numbits = i+1
             k = int(1.00001 + _log(n, 2))
             self.assertEqual(k, numbits)
-            self.assert_(n == 2**(k-1))
+            self.assertTrue(n == 2**(k-1))
 
             n += n - 1      # check 1 below the next power of two
             k = int(1.00001 + _log(n, 2))
-            self.assert_(k in [numbits, numbits+1])
-            self.assert_(2**k > n > 2**(k-2))
+            self.assertIn(k, [numbits, numbits+1])
+            self.assertTrue(2**k > n > 2**(k-2))
 
             n -= n >> 15     # check a little farther below the next power of two
             k = int(1.00001 + _log(n, 2))
             self.assertEqual(k, numbits)        # note the stronger assertion
-            self.assert_(2**k > n > 2**(k-1))   # note the stronger assertion
+            self.assertTrue(2**k > n > 2**(k-1))   # note the stronger assertion
 
 
 class MersenneTwister_TestBasicOps(TestBasicOps):
@@ -391,7 +389,7 @@ class MersenneTwister_TestBasicOps(TestBasicOps):
         cum = 0
         for i in xrange(100):
             r = self.gen.randrange(span)
-            self.assert_(0 <= r < span)
+            self.assertTrue(0 <= r < span)
             cum |= r
         self.assertEqual(cum, span-1)
 
@@ -401,7 +399,7 @@ class MersenneTwister_TestBasicOps(TestBasicOps):
             stop = self.gen.randrange(2 ** (i-2))
             if stop <= start:
                 return
-            self.assert_(start <= self.gen.randrange(start, stop) < stop)
+            self.assertTrue(start <= self.gen.randrange(start, stop) < stop)
 
     def test_rangelimits(self):
         for start, stop in [(-2,0), (-(2**60)-2,-(2**60)), (2**60,2**60+2)]:
@@ -415,7 +413,7 @@ class MersenneTwister_TestBasicOps(TestBasicOps):
                          97904845777343510404718956115L)
         # Verify ranges
         for k in xrange(1, 1000):
-            self.assert_(0 <= self.gen.getrandbits(k) < 2**k)
+            self.assertTrue(0 <= self.gen.getrandbits(k) < 2**k)
 
         # Verify all bits active
         getbits = self.gen.getrandbits
@@ -441,35 +439,43 @@ class MersenneTwister_TestBasicOps(TestBasicOps):
             numbits = i+1
             k = int(1.00001 + _log(n, 2))
             self.assertEqual(k, numbits)
-            self.assert_(n == 2**(k-1))
+            self.assertTrue(n == 2**(k-1))
 
             n += n - 1      # check 1 below the next power of two
             k = int(1.00001 + _log(n, 2))
-            self.assert_(k in [numbits, numbits+1])
-            self.assert_(2**k > n > 2**(k-2))
+            self.assertIn(k, [numbits, numbits+1])
+            self.assertTrue(2**k > n > 2**(k-2))
 
             n -= n >> 15     # check a little farther below the next power of two
             k = int(1.00001 + _log(n, 2))
             self.assertEqual(k, numbits)        # note the stronger assertion
-            self.assert_(2**k > n > 2**(k-1))   # note the stronger assertion
+            self.assertTrue(2**k > n > 2**(k-1))   # note the stronger assertion
 
     def test_randrange_bug_1590891(self):
         start = 1000000000000
         stop = -100000000000000000000
         step = -200
         x = self.gen.randrange(start, stop, step)
-        self.assert_(stop < x <= start)
+        self.assertTrue(stop < x <= start)
         self.assertEqual((x+stop)%step, 0)
 
-_gammacoeff = (0.9999999999995183, 676.5203681218835, -1259.139216722289,
-              771.3234287757674,  -176.6150291498386, 12.50734324009056,
-              -0.1385710331296526, 0.9934937113930748e-05, 0.1659470187408462e-06)
-
-def gamma(z, cof=_gammacoeff, g=7):
-    z -= 1.0
-    s = msum([cof[0]] + [cof[i] / (z+i) for i in range(1,len(cof))])
-    z += 0.5
-    return (z+g)**z / exp(z+g) * sqrt(2.0*pi) * s
+def gamma(z, sqrt2pi=(2.0*pi)**0.5):
+    # Reflection to right half of complex plane
+    if z < 0.5:
+        return pi / sin(pi*z) / gamma(1.0-z)
+    # Lanczos approximation with g=7
+    az = z + (7.0 - 0.5)
+    return az ** (z-0.5) / exp(az) * sqrt2pi * fsum([
+        0.9999999999995183,
+        676.5203681218835 / z,
+        -1259.139216722289 / (z+1.0),
+        771.3234287757674 / (z+2.0),
+        -176.6150291498386 / (z+3.0),
+        12.50734324009056 / (z+4.0),
+        -0.1385710331296526 / (z+5.0),
+        0.9934937113930748e-05 / (z+6.0),
+        0.1659470187408462e-06 / (z+7.0),
+    ])
 
 class TestDistributions(unittest.TestCase):
     def test_zeroinputs(self):
@@ -528,7 +534,7 @@ class TestModule(unittest.TestCase):
 
     def test__all__(self):
         # tests validity but not completeness of the __all__ list
-        self.failUnless(set(random.__all__) <= set(dir(random)))
+        self.assertTrue(set(random.__all__) <= set(dir(random)))
 
     def test_random_subclass_with_kwargs(self):
         # SF bug #1486663 -- this used to erroneously raise a TypeError

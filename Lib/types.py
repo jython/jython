@@ -43,11 +43,7 @@ DictType = DictionaryType = dict
 def _f(): pass
 FunctionType = type(_f)
 LambdaType = type(lambda: None)         # Same as FunctionType
-try:
-    CodeType = type(_f.func_code)
-except RuntimeError:
-    # Execution in restricted environment
-    pass
+CodeType = type(_f.func_code)
 
 def _g():
     yield 1
@@ -73,15 +69,10 @@ XRangeType = xrange
 try:
     raise TypeError
 except TypeError:
-    try:
-        tb = sys.exc_info()[2]
-        TracebackType = type(tb)
-        FrameType = type(tb.tb_frame)
-    except AttributeError:
-        # In the restricted environment, exc_info returns (None, None,
-        # None) Then, tb.tb_frame gives an attribute error
-        pass
-    tb = None; del tb
+    tb = sys.exc_info()[2]
+    TracebackType = type(tb)
+    FrameType = type(tb.tb_frame)
+    del tb
 
 SliceType = slice
 EllipsisType = type(Ellipsis)

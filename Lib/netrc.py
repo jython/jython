@@ -27,16 +27,23 @@ class netrc:
                 file = os.path.join(os.environ['HOME'], ".netrc")
             except KeyError:
                 raise IOError("Could not find .netrc: $HOME is not set")
-        fp = open(file)
         self.hosts = {}
         self.macros = {}
+        with open(file) as fp:
+            self._parse(file, fp)
+
+    def _parse(self, file, fp):
         lexer = shlex.shlex(fp)
         lexer.wordchars += r"""!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~"""
+        lexer.commenters = lexer.commenters.replace('#', '')
         while 1:
             # Look for a machine, default, or macdef top-level keyword
             toplevel = tt = lexer.get_token()
             if not tt:
                 break
+            elif tt[0] == '#':
+                fp.readline();
+                continue;
             elif tt == 'machine':
                 entryname = lexer.get_token()
             elif tt == 'default':

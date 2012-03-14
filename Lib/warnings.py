@@ -46,7 +46,14 @@ def filterwarnings(action, message="", category=Warning, module="", lineno=0,
                    append=0):
     """Insert an entry into the list of warnings filters (at the front).
 
-    Use assertions to check that all arguments have the right type."""
+    'action' -- one of "error", "ignore", "always", "default", "module",
+                or "once"
+    'message' -- a regex that the warning message must match
+    'category' -- a class that the warning must be a subclass of
+    'module' -- a regex that the module name must match
+    'lineno' -- an integer line number, 0 matches all warnings
+    'append' -- if true, append to the list of filters
+    """
     import re
     assert action in ("error", "ignore", "always", "default", "module",
                       "once"), "invalid action: %r" % (action,)
@@ -68,6 +75,11 @@ def simplefilter(action, category=Warning, lineno=0, append=0):
     """Insert a simple entry into the list of warnings filters (at the front).
 
     A simple filter matches all modules and messages.
+    'action' -- one of "error", "ignore", "always", "default", "module",
+                or "once"
+    'category' -- a class that the warning must be a subclass of
+    'lineno' -- an integer line number, 0 matches all warnings
+    'append' -- if true, append to the list of filters
     """
     assert action in ("error", "ignore", "always", "default", "module",
                       "once"), "invalid action: %r" % (action,)
@@ -264,24 +276,6 @@ def warn_explicit(message, category, filename, lineno,
         raise RuntimeError(
               "Unrecognized action (%r) in warnings.filters:\n %s" %
               (action, item))
-    # Warn if showwarning() does not support the 'line' argument.
-    # Don't use 'inspect' as it relies on an extension module, which break the
-    # build thanks to 'warnings' being imported by setup.py.
-    fxn_code = None
-    if hasattr(showwarning, 'func_code'):
-        fxn_code = showwarning.func_code
-    elif hasattr(showwarning, '__func__'):
-        fxn_code = showwarning.__func__.func_code
-    if fxn_code:
-        args = fxn_code.co_varnames[:fxn_code.co_argcount]
-        CO_VARARGS = 0x4
-        if 'line' not in args and not fxn_code.co_flags & CO_VARARGS:
-            showwarning_msg = ("functions overriding warnings.showwarning() "
-                                "must support the 'line' argument")
-            if message == showwarning_msg:
-                _show_warning(message, category, filename, lineno)
-            else:
-                warn(showwarning_msg, DeprecationWarning)
     # Print message and context
     showwarning(message, category, filename, lineno)
 
@@ -391,8 +385,12 @@ except ImportError:
 # Module initialization
 _processoptions(sys.warnoptions)
 if not _warnings_defaults:
-    simplefilter("ignore", category=PendingDeprecationWarning, append=1)
-    simplefilter("ignore", category=ImportWarning, append=1)
+    silence = [ImportWarning, PendingDeprecationWarning]
+    # Don't silence DeprecationWarning if -3 or -Q was used.
+    if not sys.py3kwarning and not sys.flags.division_warning:
+        silence.append(DeprecationWarning)
+    for cls in silence:
+        simplefilter("ignore", category=cls)
     bytes_warning = sys.flags.bytes_warning
     if bytes_warning > 1:
         bytes_action = "error"

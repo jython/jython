@@ -330,7 +330,7 @@ class CommonTest(seq_tests.CommonTest):
         self.assertRaises(BadExc, d.remove, 'c')
         for x, y in zip(d, e):
             # verify that original order and values are retained.
-            self.assert_(x is y)
+            self.assertIs(x, y)
 
     def test_count(self):
         a = self.type2test([0, 1, 2])*3
@@ -419,7 +419,7 @@ class CommonTest(seq_tests.CommonTest):
         self.assertRaises(TypeError, u.reverse, 42)
 
     def test_sort(self):
-        with test_support._check_py3k_warnings(
+        with test_support.check_py3k_warnings(
                 ("the cmp argument is not supported", DeprecationWarning)):
             self._test_sort()
 
@@ -466,7 +466,7 @@ class CommonTest(seq_tests.CommonTest):
         u = self.type2test([0, 1])
         u2 = u
         u += [2, 3]
-        self.assert_(u is u2)
+        self.assertIs(u, u2)
 
         u = self.type2test("spam")
         u += "eggs"
