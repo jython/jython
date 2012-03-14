@@ -5,9 +5,7 @@ Python scripts."""
 
 # contributed by Bastian Kleineidam
 
-# This module should be kept compatible with Python 2.1.
-
-__revision__ = "$Id: install_scripts.py 37828 2004-11-10 22:23:15Z loewis $"
+__revision__ = "$Id: install_scripts.py 68943 2009-01-25 22:09:10Z tarek.ziade $"
 
 import os
 from distutils.core import Command

@@ -1,8 +1,6 @@
 /// Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
-import java.math.BigInteger;
-
 import org.python.core.stringlib.FieldNameIterator;
 import org.python.core.stringlib.InternalFormatSpec;
 import org.python.core.stringlib.InternalFormatSpecParser;
@@ -13,6 +11,8 @@ import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 import org.python.expose.MethodType;
+
+import java.math.BigInteger;
 
 /**
  * A builtin python string.
@@ -2492,37 +2492,43 @@ public class PyString extends PyBaseString implements MemoryViewProtocol
     }
 
     public String encode() {
-        return str_encode(null, null);
+        return encode(null, null);
     }
 
     public String encode(String encoding) {
-        return str_encode(encoding, null);
+        return encode(encoding, null);
     }
 
     public String encode(String encoding, String errors) {
-        return str_encode(encoding, errors);
-    }
-
-    @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.str_encode_doc)
-    final String str_encode(String encoding, String errors) {
         return codecs.encode(this, encoding, errors);
     }
 
+    @ExposedMethod(doc = BuiltinDocs.str_encode_doc)
+    final String str_encode(PyObject[] args, String[] keywords) {
+        ArgParser ap = new ArgParser("encode", args, keywords, "encoding", "errors");
+        String encoding = ap.getString(0, null);
+        String errors = ap.getString(1, null);
+        return encode(encoding, errors);
+    }
+    
     public PyObject decode() {
-        return str_decode(null, null);
+        return decode(null, null);
     }
 
     public PyObject decode(String encoding) {
-        return str_decode(encoding, null);
+        return decode(encoding, null);
     }
 
     public PyObject decode(String encoding, String errors) {
-        return str_decode(encoding, errors);
+        return codecs.decode(this, encoding, errors);
     }
 
-    @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.str_decode_doc)
-    final PyObject str_decode(String encoding, String errors) {
-        return codecs.decode(this, encoding, errors);
+    @ExposedMethod(doc = BuiltinDocs.str_decode_doc)
+    final PyObject str_decode(PyObject[] args, String[] keywords) {
+        ArgParser ap = new ArgParser("decode", args, keywords, "encoding", "errors");
+        String encoding = ap.getString(0, null);
+        String errors = ap.getString(1, null);
+        return decode(encoding, errors);
     }
 
     @ExposedMethod(doc = BuiltinDocs.str__formatter_parser_doc)

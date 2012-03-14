@@ -2,7 +2,8 @@
 # all included components work as they should.  For a more extensive
 # test suite, see the selftest script in the ElementTree distribution.
 
-import doctest, sys
+import doctest
+import sys
 
 from test import test_support
 
@@ -36,7 +37,7 @@ def sanity():
     """
 
 def check_method(method):
-    if not callable(method):
+    if not hasattr(method, '__call__'):
         print method, "not callable"
 
 def serialize(ET, elem, encoding=None):

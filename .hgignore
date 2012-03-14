@@ -6,11 +6,14 @@ syntax: glob
 *.orig
 *.rej
 *.swp
+\#*
 *~
 # IntelliJ files
 *.ipr
 *.iml
 *.iws
+.idea/misc.xml
+.idea/workspace.xml
 
 .AppleDouble
 .DS_Store

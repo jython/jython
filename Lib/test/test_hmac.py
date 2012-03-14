@@ -1,7 +1,7 @@
 import hmac
-import sha
 import hashlib
 import unittest
+import warnings
 from test import test_support
 
 class TestVectorsTestCase(unittest.TestCase):
@@ -44,7 +44,7 @@ class TestVectorsTestCase(unittest.TestCase):
 
     def test_sha_vectors(self):
         def shatest(key, data, digest):
-            h = hmac.HMAC(key, data, digestmod=sha)
+            h = hmac.HMAC(key, data, digestmod=hashlib.sha1)
             self.assertEqual(h.hexdigest().upper(), digest.upper())
 
         shatest(chr(0x0b) * 20,
@@ -200,6 +200,29 @@ class TestVectorsTestCase(unittest.TestCase):
     def test_sha512_rfc4231(self):
         self._rfc4231_test_cases(hashlib.sha512)
 
+    def test_legacy_block_size_warnings(self):
+        class MockCrazyHash(object):
+            """Ain't no block_size attribute here."""
+            def __init__(self, *args):
+                self._x = hashlib.sha1(*args)
+                self.digest_size = self._x.digest_size
+            def update(self, v):
+                self._x.update(v)
+            def digest(self):
+                return self._x.digest()
+
+        with warnings.catch_warnings():
+            warnings.simplefilter('error', RuntimeWarning)
+            with self.assertRaises(RuntimeWarning):
+                hmac.HMAC('a', 'b', digestmod=MockCrazyHash)
+                self.fail('Expected warning about missing block_size')
+
+            MockCrazyHash.block_size = 1
+            with self.assertRaises(RuntimeWarning):
+                hmac.HMAC('a', 'b', digestmod=MockCrazyHash)
+                self.fail('Expected warning about small block_size')
+
+
 
 class ConstructorTestCase(unittest.TestCase):
 
@@ -220,20 +243,18 @@ class ConstructorTestCase(unittest.TestCase):
 
     def test_withmodule(self):
         # Constructor call with text and digest module.
-        import sha
         try:
-            h = hmac.HMAC("key", "", sha)
+            h = hmac.HMAC("key", "", hashlib.sha1)
         except:
-            self.fail("Constructor call with sha module raised exception.")
+            self.fail("Constructor call with hashlib.sha1 raised exception.")
 
 class SanityTestCase(unittest.TestCase):
 
     def test_default_is_md5(self):
         # Testing if HMAC defaults to MD5 algorithm.
         # NOTE: this whitebox test depends on the hmac class internals
-        import hashlib
         h = hmac.HMAC("key")
-        self.failUnless(h.digest_cons == hashlib.md5)
+        self.assertTrue(h.digest_cons == hashlib.md5)
 
     def test_exercise_all_methods(self):
         # Exercising all methods once.
@@ -253,11 +274,11 @@ class CopyTestCase(unittest.TestCase):
         # Testing if attributes are of same type.
         h1 = hmac.HMAC("key")
         h2 = h1.copy()
-        self.failUnless(h1.digest_cons == h2.digest_cons,
+        self.assertTrue(h1.digest_cons == h2.digest_cons,
             "digest constructors don't match.")
-        self.failUnless(type(h1.inner) == type(h2.inner),
+        self.assertTrue(type(h1.inner) == type(h2.inner),
             "Types of inner don't match.")
-        self.failUnless(type(h1.outer) == type(h2.outer),
+        self.assertTrue(type(h1.outer) == type(h2.outer),
             "Types of outer don't match.")
 
     def test_realcopy(self):
@@ -265,10 +286,10 @@ class CopyTestCase(unittest.TestCase):
         h1 = hmac.HMAC("key")
         h2 = h1.copy()
         # Using id() in case somebody has overridden __cmp__.
-        self.failUnless(id(h1) != id(h2), "No real copy of the HMAC instance.")
-        self.failUnless(id(h1.inner) != id(h2.inner),
+        self.assertTrue(id(h1) != id(h2), "No real copy of the HMAC instance.")
+        self.assertTrue(id(h1.inner) != id(h2.inner),
             "No real copy of the attribute 'inner'.")
-        self.failUnless(id(h1.outer) != id(h2.outer),
+        self.assertTrue(id(h1.outer) != id(h2.outer),
             "No real copy of the attribute 'outer'.")
 
     def test_equality(self):
@@ -276,9 +297,9 @@ class CopyTestCase(unittest.TestCase):
         h1 = hmac.HMAC("key")
         h1.update("some random text")
         h2 = h1.copy()
-        self.failUnless(h1.digest() == h2.digest(),
+        self.assertTrue(h1.digest() == h2.digest(),
             "Digest of copy doesn't match original digest.")
-        self.failUnless(h1.hexdigest() == h2.hexdigest(),
+        self.assertTrue(h1.hexdigest() == h2.hexdigest(),
             "Hexdigest of copy doesn't match original hexdigest.")
 
 def test_main():

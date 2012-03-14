@@ -6,7 +6,7 @@ import sys
 from test import test_support
 
 if not hasattr(sys.stdin, 'newlines'):
-    raise unittest.SkipTest, \
+    raise test_support.TestSkipped, \
         "This Python does not have universal newline support"
 
 FATX = 'x' * (2**14)
@@ -38,8 +38,9 @@ class TestGenericUnivNewlines(unittest.TestCase):
     WRITEMODE = 'wb'
 
     def setUp(self):
-        with open(test_support.TESTFN, self.WRITEMODE) as fp:
-            fp.write(self.DATA)
+        fp = open(test_support.TESTFN, self.WRITEMODE)
+        fp.write(self.DATA)
+        fp.close()
 
     def tearDown(self):
         try:
@@ -48,40 +49,41 @@ class TestGenericUnivNewlines(unittest.TestCase):
             pass
 
     def test_read(self):
-        with open(test_support.TESTFN, self.READMODE) as fp:
-            data = fp.read()
+        fp = open(test_support.TESTFN, self.READMODE)
+        data = fp.read()
         self.assertEqual(data, DATA_LF)
         self.assertEqual(repr(fp.newlines), repr(self.NEWLINE))
 
     def test_readlines(self):
-        with open(test_support.TESTFN, self.READMODE) as fp:
-            data = fp.readlines()
+        fp = open(test_support.TESTFN, self.READMODE)
+        data = fp.readlines()
         self.assertEqual(data, DATA_SPLIT)
         self.assertEqual(repr(fp.newlines), repr(self.NEWLINE))
 
     def test_readline(self):
-        with open(test_support.TESTFN, self.READMODE) as fp:
-            data = []
+        fp = open(test_support.TESTFN, self.READMODE)
+        data = []
+        d = fp.readline()
+        while d:
+            data.append(d)
             d = fp.readline()
-            while d:
-                data.append(d)
-                d = fp.readline()
         self.assertEqual(data, DATA_SPLIT)
         self.assertEqual(repr(fp.newlines), repr(self.NEWLINE))
 
     def test_seek(self):
-        with open(test_support.TESTFN, self.READMODE) as fp:
-            fp.readline()
-            pos = fp.tell()
-            data = fp.readlines()
-            self.assertEqual(data, DATA_SPLIT[1:])
-            fp.seek(pos)
-            data = fp.readlines()
+        fp = open(test_support.TESTFN, self.READMODE)
+        fp.readline()
+        pos = fp.tell()
+        data = fp.readlines()
+        self.assertEqual(data, DATA_SPLIT[1:])
+        fp.seek(pos)
+        data = fp.readlines()
         self.assertEqual(data, DATA_SPLIT[1:])
 
     def test_execfile(self):
         namespace = {}
-        execfile(test_support.TESTFN, namespace)
+        with test_support._check_py3k_warnings():
+            execfile(test_support.TESTFN, namespace)
         func = namespace['line3']
         self.assertEqual(func.func_code.co_firstlineno, 3)
         self.assertEqual(namespace['line4'], FATX)
@@ -106,10 +108,10 @@ class TestCRLFNewlines(TestGenericUnivNewlines):
     DATA = DATA_CRLF
 
     def test_tell(self):
-        with open(test_support.TESTFN, self.READMODE) as fp:
-            self.assertEqual(repr(fp.newlines), repr(None))
-            data = fp.readline()
-            pos = fp.tell()
+        fp = open(test_support.TESTFN, self.READMODE)
+        self.assertEqual(repr(fp.newlines), repr(None))
+        data = fp.readline()
+        pos = fp.tell()
         self.assertEqual(repr(fp.newlines), repr(self.NEWLINE))
 
 class TestMixedNewlines(TestGenericUnivNewlines):

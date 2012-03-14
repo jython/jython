@@ -20,9 +20,9 @@ class RobotTestCase(unittest.TestCase):
             url = self.url
             agent = self.agent
         if self.good:
-            self.failUnless(self.parser.can_fetch(agent, url))
+            self.assertTrue(self.parser.can_fetch(agent, url))
         else:
-            self.failIf(self.parser.can_fetch(agent, url))
+            self.assertFalse(self.parser.can_fetch(agent, url))
 
     def __str__(self):
         return self.str
@@ -202,7 +202,18 @@ bad = ['/folder1/anotherfile.html']
 RobotTest(13, doc, good, bad, agent="googlebot")
 
 
-# 14. For issue #4108 (obey first * entry)
+# 14. For issue #6325 (query string support)
+doc = """
+User-agent: *
+Disallow: /some/path?name=value
+"""
+
+good = ['/some/path']
+bad = ['/some/path?name=value']
+
+RobotTest(14, doc, good, bad)
+
+# 15. For issue #4108 (obey first * entry)
 doc = """
 User-agent: *
 Disallow: /some/path
@@ -214,22 +225,36 @@ Disallow: /another/path
 good = ['/another/path']
 bad = ['/some/path']
 
-RobotTest(14, doc, good, bad)
+RobotTest(15, doc, good, bad)
 
 
-class TestCase(unittest.TestCase):
-    def runTest(self):
+class NetworkTestCase(unittest.TestCase):
+
+    def testPasswordProtectedSite(self):
         test_support.requires('network')
-        # whole site is password-protected.
-        url = 'http://mueblesmoraleda.com'
-        parser = robotparser.RobotFileParser()
-        parser.set_url(url)
-        parser.read()
-        self.assertEqual(parser.can_fetch("*", url+"/robots.txt"), False)
+        with test_support.transient_internet('mueblesmoraleda.com'):
+            url = 'http://mueblesmoraleda.com'
+            parser = robotparser.RobotFileParser()
+            parser.set_url(url)
+            try:
+                parser.read()
+            except IOError:
+                self.skipTest('%s is unavailable' % url)
+            self.assertEqual(parser.can_fetch("*", url+"/robots.txt"), False)
+
+    def testPythonOrg(self):
+        test_support.requires('network')
+        with test_support.transient_internet('www.python.org'):
+            parser = robotparser.RobotFileParser(
+                "http://www.python.org/robots.txt")
+            parser.read()
+            self.assertTrue(
+                parser.can_fetch("*", "http://www.python.org/robots.txt"))
+
 
 def test_main():
     test_support.run_unittest(tests)
-    TestCase().run()
+    test_support.run_unittest(NetworkTestCase)
 
 if __name__=='__main__':
     test_support.verbose = 1
