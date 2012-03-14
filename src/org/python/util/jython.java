@@ -195,11 +195,11 @@ public class jython {
 
         if (opts.division != null) {
             if ("old".equals(opts.division)) {
-                Options.divisionWarning = 0;
+                Options.division_warning = 0;
             } else if ("warn".equals(opts.division)) {
-                Options.divisionWarning = 1;
+                Options.division_warning = 1;
             } else if ("warnall".equals(opts.division)) {
-                Options.divisionWarning = 2;
+                Options.division_warning = 2;
             } else if ("new".equals(opts.division)) {
                 Options.Qnew = true;
                 interp.cflags.setFlag(CodeFlag.CO_FUTURE_DIVISION);

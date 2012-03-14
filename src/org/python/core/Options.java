@@ -98,7 +98,7 @@ public class Options {
      * <li>warnall: 2</li>
      * </ul>
      */
-    public static int divisionWarning = 0;
+    public static int division_warning = 0;
 
     //
     // ####### END OF OPTIONS
@@ -169,16 +169,16 @@ public class Options {
 
         Options.Qnew = getBooleanOption("options.Qnew", Options.Qnew);
 
-        prop = PySystemState.registry.getProperty("python.divisionWarning");
+        prop = PySystemState.registry.getProperty("python.division_warning");
         if (prop != null) {
             if (prop.equalsIgnoreCase("old")) {
-                Options.divisionWarning = 0;
+                Options.division_warning = 0;
             } else if (prop.equalsIgnoreCase("warn")) {
-                Options.divisionWarning = 1;
+                Options.division_warning = 1;
             } else if (prop.equalsIgnoreCase("warnall")) {
-                Options.divisionWarning = 2;
+                Options.division_warning = 2;
             } else {
-                throw Py.ValueError("Illegal divisionWarning option "
+                throw Py.ValueError("Illegal division_warning option "
                         + "setting: '" + prop + "'");
             }
         }

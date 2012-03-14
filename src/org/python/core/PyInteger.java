@@ -361,7 +361,7 @@ public class PyInteger extends PyObject {
         if (!canCoerce(right)) {
             return null;
         }
-        if (Options.divisionWarning > 0) {
+        if (Options.division_warning > 0) {
             Py.warning(Py.DeprecationWarning, "classic int division");
         }
         return Py.newInteger(divide(getValue(), coerce(right)));
@@ -377,7 +377,7 @@ public class PyInteger extends PyObject {
         if (!canCoerce(left)) {
             return null;
         }
-        if (Options.divisionWarning > 0) {
+        if (Options.division_warning > 0) {
             Py.warning(Py.DeprecationWarning, "classic int division");
         }
         return Py.newInteger(divide(coerce(left), getValue()));

@@ -129,7 +129,7 @@ public class _hashlib implements ClassDictInit {
         private static final Map<String, Integer> blockSizes = new HashMap<String, Integer>() {{
                 put("md5", 64);
                 put("sha-1", 64);
-                put("sha-224", 64);
+                //put("sha-224", 64);
                 put("sha-256", 64);
                 put("sha-384", 128);
                 put("sha-512", 128);
