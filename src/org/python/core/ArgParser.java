@@ -1,14 +1,14 @@
 package org.python.core;
 
+import org.python.antlr.AST;
+
 import java.util.HashSet;
 import java.util.Set;
-
-import org.python.antlr.AST;
 
 /**
  * A utility class for handling mixed positional and keyword arguments.
  * 
- * A typical usage:
+ * Typical usage:
  * 
  * <pre>
  *   public MatchObject search(PyObject[] args, String[] kws) {
@@ -51,12 +51,12 @@ public class ArgParser {
     }
 
     /**
-     * Create an ArgParser with one method argument
+     * Create an ArgParser for a one-argument function.
      * 
-     * @param funcname Name of the method. Used in error messages.
+     * @param funcname Name of the function. Used in error messages.
      * @param args The actual call arguments supplied in the call.
      * @param kws The actual keyword names supplied in the call.
-     * @param p0 The expected argument in the method definition.
+     * @param p0 The expected argument in the function definition.
      */
     public ArgParser(String funcname, PyObject[] args, String[] kws, String p0) {
         this(funcname, args, kws);
@@ -65,13 +65,13 @@ public class ArgParser {
     }
 
     /**
-     * Create an ArgParser with two method argument
+     * Create an ArgParser for a two-argument function.
      * 
-     * @param funcname Name of the method. Used in error messages.
+     * @param funcname Name of the function. Used in error messages.
      * @param args The actual call arguments supplied in the call.
      * @param kws The actual keyword names supplied in the call.
-     * @param p0 The first expected argument in the method definition.
-     * @param p1 The second expected argument in the method definition.
+     * @param p0 The first expected argument in the function definition.
+     * @param p1 The second expected argument in the function definition.
      */
     public ArgParser(String funcname, PyObject[] args, String[] kws, String p0,
             String p1) {
@@ -81,14 +81,14 @@ public class ArgParser {
     }
 
     /**
-     * Create an ArgParser with three method argument
+     * Create an ArgParser for a three-argument function.
      * 
-     * @param funcname Name of the method. Used in error messages.
+     * @param funcname Name of the function. Used in error messages.
      * @param args The actual call arguments supplied in the call.
      * @param kws The actual keyword names supplied in the call.
-     * @param p0 The first expected argument in the method definition.
-     * @param p1 The second expected argument in the method definition.
-     * @param p2 The third expected argument in the method definition.
+     * @param p0 The first expected argument in the function definition.
+     * @param p1 The second expected argument in the function definition.
+     * @param p2 The third expected argument in the function definition.
      */
     public ArgParser(String funcname, PyObject[] args, String[] kws, String p0,
             String p1, String p2) {
@@ -98,12 +98,12 @@ public class ArgParser {
     }
 
     /**
-     * Create an ArgParser with three method argument
+     * Create an ArgParser for a multi-argument function.
      * 
-     * @param funcname Name of the method. Used in error messages.
+     * @param funcname Name of the function. Used in error messages.
      * @param args The actual call arguments supplied in the call.
      * @param kws The actual keyword names supplied in the call.
-     * @param paramnames The list of expected argument in the method definition.
+     * @param paramnames The list of expected argument in the function definition.
      */
     public ArgParser(String funcname, PyObject[] args, String[] kws,
             String[] paramnames) {
