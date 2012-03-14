@@ -1325,14 +1325,14 @@ public class PyUnicode extends PyString implements Iterable {
         return true;
     }
 
-    @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.unicode___getslice___doc)
-    final String unicode_encode(String encoding, String errors) {
-        return str_encode(encoding, errors);
+    @ExposedMethod(doc = BuiltinDocs.unicode_encode_doc)
+    final String unicode_encode(PyObject[] args, String[] keywords) {
+        return str_encode(args, keywords);
     }
 
-    @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.unicode___getslice___doc)
-    final PyObject unicode_decode(String encoding, String errors) {
-        return str_decode(encoding, errors);
+    @ExposedMethod(doc = BuiltinDocs.unicode_decode_doc)
+    final PyObject unicode_decode(PyObject[] args, String[] keywords) {
+        return str_decode(args, keywords);
     }
 
     @ExposedMethod(doc = BuiltinDocs.unicode___getnewargs___doc)
