@@ -23,6 +23,7 @@ for dirpath, dirnames, filenames in os.walk('patches'):
         srcpath = os.path.join('CPythonLib', dirpath[8:], realfilename)
         dstpath = srcpath.replace('CPythonLib', 'Lib')
         print '\nCopying %s -> %s' % (srcpath, dstpath) 
+        sys.stdout.flush()
         shutil.copyfile(srcpath, dstpath)
 
         retcode = os.system('patch -p1 -N <%s' % patchpath)
