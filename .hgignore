@@ -6,6 +6,7 @@ syntax: glob
 *.orig
 *.rej
 *.swp
+\#*
 *~
 # IntelliJ files
 *.ipr
