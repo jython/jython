@@ -1,0 +1,48 @@
+<component name="libraryTable">
+  <library name="extlibs">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/extlibs/asm-util-4.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/mysql-connector-java-5.1.6.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/jffi-ppc64-Linux.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/stringtemplate-3.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/jarjar-0.7.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/jffi-x86_64-Windows.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/livetribe-jsr223-2.0.5.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/jffi-i386-FreeBSD.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/constantine.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/jffi.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/antlr-3.1.3.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/jffi-Darwin.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/libreadline-java-0.8.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/jffi-i386-OpenBSD.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/jnr-netdb-0.4.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/jffi-i386-Linux.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/asm-commons-4.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/profile.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/jffi-s390x-Linux.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/jffi-ppc-AIX.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/antlr-runtime-3.1.3.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/asm-4.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/jaffl.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/xercesImpl-2.9.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/servlet-api-2.5.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/jnr-posix.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/jffi-sparcv9-SunOS.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/jffi-x86_64-OpenBSD.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/antlr-2.7.7.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/jffi-i386-SunOS.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/jffi-i386-Windows.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/jffi-x86_64-SunOS.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/jline-0.9.95-SNAPSHOT.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/jffi-ppc-Linux.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/jffi-x86_64-Linux.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/jffi-x86_64-FreeBSD.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/postgresql-8.3-603.jdbc4.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/jffi-sparc-SunOS.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/junit-3.8.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/guava-11.0.2.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
