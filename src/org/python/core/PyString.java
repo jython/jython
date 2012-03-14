@@ -18,7 +18,7 @@ import org.python.expose.MethodType;
  * A builtin python string.
  */
 @ExposedType(name = "str", doc = BuiltinDocs.str_doc)
-public class PyString extends PyBaseString
+public class PyString extends PyBaseString implements MemoryViewProtocol
 {
     public static final PyType TYPE = PyType.fromClass(PyString.class);
     protected String string; // cannot make final because of Python intern support
@@ -90,7 +90,31 @@ public class PyString extends PyBaseString
         }
         return codePoints;
     }
-    
+
+    public MemoryView getMemoryView() {
+        return new MemoryView() {
+            // beginning of support
+            public String get_format() {
+                 return "B";
+            }
+            public int get_itemsize() {
+                return 2;
+            }
+            public PyTuple get_shape() {
+                return new PyTuple(Py.newInteger(getString().length()));
+            }
+            public int get_ndim() {
+                return 1;
+            }
+            public PyTuple get_strides() {
+                return new PyTuple(Py.newInteger(1));
+            }
+            public boolean get_readonly() {
+                return true;
+            }
+        };
+    }
+
     public String substring(int start, int end) {
         return getString().substring(start, end);
     }
@@ -99,6 +123,8 @@ public class PyString extends PyBaseString
     public PyString __str__() {
         return str___str__();
     }
+
+    public
 
     @ExposedMethod(doc = BuiltinDocs.str___str___doc) 
     final PyString str___str__() {
