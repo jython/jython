@@ -32,7 +32,7 @@ for dirpath, dirnames, filenames in os.walk('patches'):
             succeeded.append(dstpath)
 
 if succeeded:
-    print '\nTh following files were successfully patched:'
+    print '\nThe following files were successfully patched:'
     for path in succeeded:
         for path in succeeded:
             print path
