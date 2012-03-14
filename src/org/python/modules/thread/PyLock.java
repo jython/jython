@@ -1,10 +1,9 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.modules.thread;
 
-import org.python.core.Py;
-import org.python.core.PyObject;
+import org.python.core.*;
 
-public class PyLock extends PyObject {
+public class PyLock extends PyObject implements ContextManager {
 
     private boolean locked = false;
 
@@ -44,5 +43,17 @@ public class PyLock extends PyObject {
 
     public boolean locked() {
         return locked;
+    }
+
+    @Override
+    public PyObject __enter__(ThreadState ts) {
+        acquire();
+        return this;
+    }
+
+    @Override
+    public boolean __exit__(ThreadState ts, PyException exception) {
+        release();
+        return false;
     }
 }
