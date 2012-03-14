@@ -1,4 +1,4 @@
-"""TELNET client class.
+r"""TELNET client class.
 
 Based on RFC 854: TELNET Protocol Specification, by J. Postel and
 J. Reynolds
@@ -36,13 +36,13 @@ To do:
 # Imported modules
 import sys
 import socket
+import select
 import os
 if os.name == 'java':
     from select import cpython_compatible_select as select
 else:
     from select import select
 del os
-
 
 
 __all__ = ["Telnet"]
@@ -191,17 +191,18 @@ class Telnet:
 
     """
 
-    def __init__(self, host=None, port=0):
+    def __init__(self, host=None, port=0,
+                 timeout=socket._GLOBAL_DEFAULT_TIMEOUT):
         """Constructor.
 
         When called without arguments, create an unconnected instance.
-        With a hostname argument, it connects the instance; a port
-        number is optional.
-
+        With a hostname argument, it connects the instance; port number
+        and timeout are optional.
         """
         self.debuglevel = DEBUGLEVEL
         self.host = host
         self.port = port
+        self.timeout = timeout
         self.sock = None
         self.rawq = ''
         self.irawq = 0
@@ -212,36 +213,23 @@ class Telnet:
         self.sbdataq = ''
         self.option_callback = None
         if host is not None:
-            self.open(host, port)
+            self.open(host, port, timeout)
 
-    def open(self, host, port=0):
+    def open(self, host, port=0, timeout=socket._GLOBAL_DEFAULT_TIMEOUT):
         """Connect to a host.
 
         The optional second argument is the port number, which
         defaults to the standard telnet port (23).
 
         Don't try to reopen an already connected instance.
-
         """
         self.eof = 0
         if not port:
             port = TELNET_PORT
         self.host = host
         self.port = port
-        msg = "getaddrinfo returns an empty list"
-        for res in socket.getaddrinfo(host, port, 0, socket.SOCK_STREAM):
-            af, socktype, proto, canonname, sa = res
-            try:
-                self.sock = socket.socket(af, socktype, proto)
-                self.sock.connect(sa)
-            except socket.error, msg:
-                if self.sock:
-                    self.sock.close()
-                self.sock = None
-                continue
-            break
-        if not self.sock:
-            raise socket.error, msg
+        self.timeout = timeout
+        self.sock = socket.create_connection((host, port), timeout)
 
     def __del__(self):
         """Destructor -- close the connection."""
@@ -255,7 +243,7 @@ class Telnet:
 
         """
         if self.debuglevel > 0:
-            print 'Telnet(%s,%d):' % (self.host, self.port),
+            print 'Telnet(%s,%s):' % (self.host, self.port),
             if args:
                 print msg % args
             else:
@@ -295,7 +283,7 @@ class Telnet:
         """
         if IAC in buffer:
             buffer = buffer.replace(IAC, IAC+IAC)
-        self.msg("send %s", `buffer`)
+        self.msg("send %r", buffer)
         self.sock.sendall(buffer)
 
     def read_until(self, match, timeout=None):
@@ -318,6 +306,8 @@ class Telnet:
         s_args = s_reply
         if timeout is not None:
             s_args = s_args + (timeout,)
+            from time import time
+            time_start = time()
         while not self.eof and select(*s_args) == s_reply:
             i = max(0, len(self.cookedq)-n)
             self.fill_rawq()
@@ -328,6 +318,11 @@ class Telnet:
                 buf = self.cookedq[:i]
                 self.cookedq = self.cookedq[i:]
                 return buf
+            if timeout is not None:
+                elapsed = time() - time_start
+                if elapsed >= timeout:
+                    break
+                s_args = s_reply + (timeout-elapsed,)
         return self.read_very_lazy()
 
     def read_all(self):
@@ -445,7 +440,7 @@ class Telnet:
                     else:
                         self.iacseq += c
                 elif len(self.iacseq) == 1:
-                    'IAC: IAC CMD [OPTION only for WILL/WONT/DO/DONT]'
+                    # 'IAC: IAC CMD [OPTION only for WILL/WONT/DO/DONT]'
                     if c in (DO, DONT, WILL, WONT):
                         self.iacseq += c
                         continue
@@ -526,7 +521,7 @@ class Telnet:
         # The buffer size should be fairly small so as to avoid quadratic
         # behavior in process_rawq() above
         buf = self.sock.recv(50)
-        self.msg("recv %s", `buf`)
+        self.msg("recv %r", buf)
         self.eof = (not buf)
         self.rawq = self.rawq + buf
 
@@ -608,6 +603,9 @@ class Telnet:
             if not hasattr(list[i], "search"):
                 if not re: import re
                 list[i] = re.compile(list[i])
+        if timeout is not None:
+            from time import time
+            time_start = time()
         while 1:
             self.process_rawq()
             for i in indices:
@@ -620,7 +618,11 @@ class Telnet:
             if self.eof:
                 break
             if timeout is not None:
-                r, w, x = select([self.fileno()], [], [], timeout)
+                elapsed = time() - time_start
+                if elapsed >= timeout:
+                    break
+                s_args = ([self.fileno()], [], [], timeout-elapsed)
+                r, w, x = select(*s_args)
                 if not r:
                     break
             self.fill_rawq()
@@ -654,7 +656,7 @@ def test():
             port = socket.getservbyname(portstr, 'tcp')
     tn = Telnet()
     tn.set_debuglevel(debuglevel)
-    tn.open(host, port)
+    tn.open(host, port, timeout=0.5)
     tn.interact()
     tn.close()
 
