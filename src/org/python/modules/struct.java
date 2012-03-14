@@ -562,7 +562,26 @@ public class struct {
             return Py.newInteger(buf.readByte());
         }
     }
+    
+    static class PointerFormatDef extends FormatDef {
+        FormatDef init(char name) {
+            String dataModel = System.getProperty("sun.arch.data.model");
+            if (dataModel == null)
+                throw Py.NotImplementedError("Can't determine if JVM is 32- or 64-bit");
+            int length = dataModel.equals("64") ? 8 : 4;
+            super.init(name, length, length);
+            return this;
+        }
+        
+        void pack(ByteStream buf, PyObject value) {
+            throw Py.NotImplementedError("Pointer packing/unpacking not implemented in Jython");
+        }
 
+        Object unpack(ByteStream buf) {
+            throw Py.NotImplementedError("Pointer packing/unpacking not implemented in Jython");
+        }
+    }
+    
     static class LEShortFormatDef extends FormatDef {
         void pack(ByteStream buf, PyObject value) {
             int v = get_int(value);
@@ -876,6 +895,7 @@ public class struct {
         new BEUnsignedLongFormatDef()   .init('Q', 8, 8),
         new BEFloatFormatDef()          .init('f', 4, 4),
         new BEDoubleFormatDef()         .init('d', 8, 8),
+        new PointerFormatDef()          .init('P')
     };
 
 
