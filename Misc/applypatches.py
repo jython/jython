@@ -34,12 +34,11 @@ for dirpath, dirnames, filenames in os.walk('patches'):
 
 if succeeded:
     print '\nThe following files were successfully patched:'
-    for path in succeeded:
-        for path in succeeded:
-            print path
+    for path in sorted(succeeded):
+        print path
 
 if failed:
     print '\nPatching failed for the following files:'
-    for path in failed:
+    for path in sorted(failed):
         print path
     print '\nYou will need to migrate these modules manually.'
