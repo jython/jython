@@ -11,6 +11,7 @@ syntax: glob
 *.ipr
 *.iml
 *.iws
+.idea/misc.xml
 .idea/workspace.xml
 
 .AppleDouble
