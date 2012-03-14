@@ -4,6 +4,7 @@ package org.python.modules;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.python.core.__builtin__;
 import org.python.core.ArgParser;
 import org.python.core.ClassDictInit;
 import org.python.core.Py;
@@ -15,6 +16,8 @@ import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyTuple;
 import org.python.core.PyXRange;
+
+import java.util.Arrays; //XXX
 
 /**
  * Functional tools for creating and using iterators. Java implementation of the CPython module
@@ -713,53 +716,48 @@ public class itertools implements ClassDictInit {
         return tee(iterable, 2);
     }
 
-//    classmethod chain.from_iterable(iterable)
-//
-//    Alternate constructor for chain(). Gets chained inputs from a single iterable argument that is evaluated lazily. Equivalent to:
-//
-//    @classmethod
-//    def from_iterable(iterables):
-//            # chain.from_iterable(['ABC', 'DEF']) --> A B C D E F
-//    for it in iterables:
-//            for element in it:
-//    yield element
+//chain.from_iterable(iterable)
+//combinations(iterable, r):
 
-//    def combinations(iterable, r):
-//            # combinations('ABCD', 2) --> AB AC AD BC BD CD
-//    # combinations(range(4), 3) --> 012 013 023 123
-//    pool = tuple(iterable)
-//    n = len(pool)
-//    if r > n:
-//            return
-//    indices = range(r)
-//    yield tuple(pool[i] for i in indices)
-//    while True:
-//            for i in reversed(range(r)):
-//            if indices[i] != i + n - r:
-//            break
-//            else:
-//            return
-//    indices[i] += 1
-//            for j in range(i+1, r):
-//    indices[j] = indices[j-1] + 1
-//    yield tuple(pool[i] for i in indices)
+    public static PyIterator combinations(PyObject iterable, final int r) {
+        final PyTuple pool = PyTuple.fromIterable(iterable);
+        final int n = pool.__len__();
+        final int indices[] = new int[r];
+        for (int i = 0; i < r; i++) {
+            indices[i] = i;
+        }
 
-//def combinations_with_replacement(iterable, r):
-//            # combinations_with_replacement('ABC', 2) --> AA AB AC BB BC CC
-//    pool = tuple(iterable)
-//    n = len(pool)
-//    if not n and r:
-//            return
-//    indices = [0] * r
-//    yield tuple(pool[i] for i in indices)
-//    while True:
-//            for i in reversed(range(r)):
-//            if indices[i] != n - 1:
-//            break
-//            else:
-//            return
-//    indices[i:] = [indices[i] + 1] * (r - i)
-//    yield tuple(pool[i] for i in indices)
+        return new ItertoolsIterator() {
+            boolean firstthru = true;
+
+            @Override
+            public PyObject __iternext__() {
+                if (r > n) { return null; }
+                if (firstthru) {
+                    firstthru = false;
+                    return makeTuple();
+                }
+                int i;
+                for (i = r-1; i >= 0 && indices[i] == i+n-r ; i--);
+                if (i < 0) return null;
+                indices[i]++;
+                for (int j = i+1; j < r; j++) {
+                    indices[j] = indices[j-1] + 1;
+                }
+                return makeTuple();
+            }
+            
+            private PyTuple makeTuple() {
+                PyObject items[] = new PyObject[r];
+                for (int i = 0; i < r; i++) {
+                    items[i] = pool.__getitem__(indices[i]);
+                }                                 
+                return new PyTuple(items);
+            }
+        };
+    }
+
+//combinations_with_replacement(iterable, r):
 
     public static PyString __doc__compress = new PyString(
         "compress(data, selectors) --> iterator over selected data\n\n" +
@@ -777,9 +775,11 @@ public class itertools implements ClassDictInit {
 
         return new ItertoolsIterator() {
 
+            @Override
             public PyObject __iternext__() {
                 while (true) {
                     PyObject datum = nextElement(data);
+                    if (datum == null) { return null; }
                     PyObject selector = nextElement(selectors);
                     if (selector == null) { return null; }
                     if (selector.__nonzero__()) {
@@ -793,51 +793,5 @@ public class itertools implements ClassDictInit {
 
         };
     }
-
-
-//class ZipExhausted(Exception):
-//    pass
-//
-//def izip_longest(*args, **kwds):
-//            # izip_longest('ABCD', 'xy', fillvalue='-') --> Ax By C- D-
-//    fillvalue = kwds.get('fillvalue')
-//    counter = [len(args) - 1]
-//    def sentinel():
-//            if not counter[0]:
-//    raise ZipExhausted
-//    counter[0] -= 1
-//    yield fillvalue
-//    fillers = repeat(fillvalue)
-//    iterators = [chain(it, sentinel(), fillers) for it in args]
-//            try:
-//            while iterators:
-//    yield tuple(map(next, iterators))
-//    except ZipExhausted:
-//    pass
-
-//def permutations(iterable, r=None):
-//            # permutations('ABCD', 2) --> AB AC AD BA BC BD CA CB CD DA DB DC
-//    # permutations(range(3)) --> 012 021 102 120 201 210
-//    pool = tuple(iterable)
-//    n = len(pool)
-//    r = n if r is None else r
-//    if r > n:
-//            return
-//    indices = range(n)
-//    cycles = range(n, n-r, -1)
-//    yield tuple(pool[i] for i in indices[:r])
-//    while n:
-//            for i in reversed(range(r)):
-//    cycles[i] -= 1
-//            if cycles[i] == 0:
-//    indices[i:] = indices[i+1:] + indices[i:i+1]
-//    cycles[i] = n - i
-//    else:
-//    j = cycles[i]
-//    indices[i], indices[-j] = indices[-j], indices[i]
-//    yield tuple(pool[i] for i in indices[:r])
-//    break
-//            else:
-//            return
 
 }
