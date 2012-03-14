@@ -26,21 +26,30 @@ public class itertools implements ClassDictInit {
 
     public static PyString __doc__ = new PyString(
             "Functional tools for creating and using iterators.\n\nInfinite iterators:\n"
-                    + "count([n]) --> n, n+1, n+2, ...\ncycle(p) --> p0, p1, ... plast, p0, p1, ...\n"
-                    + "repeat(elem [,n]) --> elem, elem, elem, ... endlessly or up to n times\n\n"
-                    + "Iterators terminating on the shortest input sequence:"
-                    + "\nizip(p, q, ...) --> (p[0], q[0]), (p[1], q[1]), ... \n"
-                    + "ifilter(pred, seq) --> elements of seq where pred(elem) is True\n"
-                    + "ifilterfalse(pred, seq) --> elements of seq where pred(elem) is False\n"
-                    + "islice(seq, [start,] stop [, step]) --> elements from\n       seq[start:stop:step]\n"
-                    + "imap(fun, p, q, ...) --> fun(p0, q0), fun(p1, q1), ...\n"
-                    + "starmap(fun, seq) --> fun(*seq[0]), fun(*seq[1]), ...\n"
-                    + "chain(p, q, ...) --> p0, p1, ... plast, q0, q1, ... \n"
-                    + "takewhile(pred, seq) --> seq[0], seq[1], until pred fails\n"
-                    + "dropwhile(pred, seq) --> seq[n],seq[n+1], starting when pred fails\n"
-                    + "groupby(iterable[, keyfunc]) -> create an iterator which returns\n"
-                    + "(key, sub-iterator) grouped by each value of key(value)."
-                    + "tee(iterable, n=2) --> tuple of n independent iterators.");
+	        + "count([n]) --> n, n+1, n+2, ...\n"
+	        + "cycle(p) --> p0, p1, ... plast, p0, p1, ...\n"
+	        + "repeat(elem [,n]) --> elem, elem, elem, ... endlessly or up to n times\n\n"
+	    
+	        + "Iterators terminating on the shortest input sequence:\n"
+	        + "chain(p, q, ...) --> p0, p1, ... plast, q0, q1, ...\n"
+	        + "compress(data, selectors) --> (d[0] if s[0]), (d[1] if s[1]), ...\n"
+	        + "dropwhile(pred, seq) --> seq[n], seq[n+1], starting when pred fails\n"
+	        + "groupby(iterable[, keyfunc]) --> sub-iterators grouped by value of keyfunc(v)\n"
+	        + "ifilter(pred, seq) --> elements of seq where pred(elem) is True\n"
+	        + "ifilterfalse(pred, seq) --> elements of seq where pred(elem) is False\n"
+	        + "islice(seq, [start,] stop [, step]) --> elements from seq[start:stop:step]\n"
+	        + "imap(fun, p, q, ...) --> fun(p0, q0), fun(p1, q1), ...\n"
+	        + "starmap(fun, seq) --> fun(*seq[0]), fun(*seq[1]), ...\n"
+	        + "tee(it, n=2) --> (it1, it2 , ... itn) splits one iterator into n\n"
+	        + "takewhile(pred, seq) --> seq[0], seq[1], until pred fails\n"
+	        + "izip(p, q, ...) --> (p[0], q[0]), (p[1], q[1]), ...\n"
+	        + "izip_longest(p, q, ...) --> (p[0], q[0]), (p[1], q[1]), ...\n\n"
+
+	        + "Combinatoric generators:\n"
+	        + "product(p, q, ... [repeat=1]) --> cartesian product\n"
+	        + "permutations(p[, r])\n"
+	        + "combinations(p, r)\n"
+	        + "combinations_with_replacement(p, r)");
 
     /**
      * Iterator base class used by most methods.
@@ -704,7 +713,131 @@ public class itertools implements ClassDictInit {
         return tee(iterable, 2);
     }
 
+//    classmethod chain.from_iterable(iterable)
+//
+//    Alternate constructor for chain(). Gets chained inputs from a single iterable argument that is evaluated lazily. Equivalent to:
+//
+//    @classmethod
+//    def from_iterable(iterables):
+//            # chain.from_iterable(['ABC', 'DEF']) --> A B C D E F
+//    for it in iterables:
+//            for element in it:
+//    yield element
+
+//    def combinations(iterable, r):
+//            # combinations('ABCD', 2) --> AB AC AD BC BD CD
+//    # combinations(range(4), 3) --> 012 013 023 123
+//    pool = tuple(iterable)
+//    n = len(pool)
+//    if r > n:
+//            return
+//    indices = range(r)
+//    yield tuple(pool[i] for i in indices)
+//    while True:
+//            for i in reversed(range(r)):
+//            if indices[i] != i + n - r:
+//            break
+//            else:
+//            return
+//    indices[i] += 1
+//            for j in range(i+1, r):
+//    indices[j] = indices[j-1] + 1
+//    yield tuple(pool[i] for i in indices)
+
+//def combinations_with_replacement(iterable, r):
+//            # combinations_with_replacement('ABC', 2) --> AA AB AC BB BC CC
+//    pool = tuple(iterable)
+//    n = len(pool)
+//    if not n and r:
+//            return
+//    indices = [0] * r
+//    yield tuple(pool[i] for i in indices)
+//    while True:
+//            for i in reversed(range(r)):
+//            if indices[i] != n - 1:
+//            break
+//            else:
+//            return
+//    indices[i:] = [indices[i] + 1] * (r - i)
+//    yield tuple(pool[i] for i in indices)
+
+    public static PyString __doc__compress = new PyString(
+        "compress(data, selectors) --> iterator over selected data\n\n" +
+        "Return data elements corresponding to true selector elements.\n" +
+        "Forms a shorter iterator from selected data elements using the\n" +
+        "selectors to choose the data elements.");
+    
+    public static PyIterator compress(PyObject [] args, String [] kws) {
+        ArgParser ap = new ArgParser("compress", args, kws, "data", "selectors");
+        if (args.length > 2) {
+            throw Py.TypeError(String.format("compress() takes at most 2 arguments (%s given)", args.length));
+        }
+        final PyObject data = ap.getPyObject(0).__iter__();
+        final PyObject selectors = ap.getPyObject(1, null).__iter__();
+
+        return new ItertoolsIterator() {
+
+            public PyObject __iternext__() {
+                while (true) {
+                    PyObject datum = nextElement(data);
+                    PyObject selector = nextElement(selectors);
+                    if (selector == null) { return null; }
+                    if (selector.__nonzero__()) {
+                        return datum;
+                    }
+                }
+            }
+            public PyString __repr__() {
+                return new PyString(String.format("itertools.compress object at 0x%x", Py.id(this)));
+            }
+
+        };
+    }
 
 
+//class ZipExhausted(Exception):
+//    pass
+//
+//def izip_longest(*args, **kwds):
+//            # izip_longest('ABCD', 'xy', fillvalue='-') --> Ax By C- D-
+//    fillvalue = kwds.get('fillvalue')
+//    counter = [len(args) - 1]
+//    def sentinel():
+//            if not counter[0]:
+//    raise ZipExhausted
+//    counter[0] -= 1
+//    yield fillvalue
+//    fillers = repeat(fillvalue)
+//    iterators = [chain(it, sentinel(), fillers) for it in args]
+//            try:
+//            while iterators:
+//    yield tuple(map(next, iterators))
+//    except ZipExhausted:
+//    pass
+
+//def permutations(iterable, r=None):
+//            # permutations('ABCD', 2) --> AB AC AD BA BC BD CA CB CD DA DB DC
+//    # permutations(range(3)) --> 012 021 102 120 201 210
+//    pool = tuple(iterable)
+//    n = len(pool)
+//    r = n if r is None else r
+//    if r > n:
+//            return
+//    indices = range(n)
+//    cycles = range(n, n-r, -1)
+//    yield tuple(pool[i] for i in indices[:r])
+//    while n:
+//            for i in reversed(range(r)):
+//    cycles[i] -= 1
+//            if cycles[i] == 0:
+//    indices[i:] = indices[i+1:] + indices[i:i+1]
+//    cycles[i] = n - i
+//    else:
+//    j = cycles[i]
+//    indices[i], indices[-j] = indices[-j], indices[i]
+//    yield tuple(pool[i] for i in indices[:r])
+//    break
+//            else:
+//            return
 
 }
