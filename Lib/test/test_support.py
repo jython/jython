@@ -8,23 +8,28 @@ import errno
 import socket
 import sys
 import os
+import platform
 import shutil
 import warnings
 import unittest
+import importlib
 import re
 
-__all__ = ["Error", "TestFailed", "TestSkipped", "ResourceDenied", "import_module",
+__all__ = ["Error", "TestFailed", "ResourceDenied", "import_module",
            "verbose", "use_resources", "max_memuse", "record_original_stdout",
            "get_original_stdout", "unload", "unlink", "rmtree", "forget",
            "is_resource_enabled", "requires", "find_unused_port", "bind_port",
            "fcmp", "have_unicode", "is_jython", "TESTFN", "HOST", "FUZZ",
-           "findfile", "verify", "vereq", "sortdict", "check_syntax_error",
-           "open_urlresource", "check_warnings", "_check_py3k_warnings",
+           "SAVEDCWD", "temp_cwd", "findfile", "sortdict", "check_syntax_error",
+           "open_urlresource", "check_warnings", "check_py3k_warnings",
            "CleanImport", "EnvironmentVarGuard", "captured_output",
            "captured_stdout", "TransientResource", "transient_internet",
            "run_with_locale", "set_memlimit", "bigmemtest", "bigaddrspacetest",
            "BasicTestRunner", "run_unittest", "run_doctest", "threading_setup",
-           "threading_cleanup", "reap_children"]
+           "threading_cleanup", "reap_children", "cpython_only",
+           "check_impl_detail", "get_attribute", "py3k_bytes",
+           "import_fresh_module", "threading_cleanup", "reap_children",
+           "strip_python_stderr"]
 
 class Error(Exception):
     """Base class for regression test exceptions."""
@@ -32,17 +37,7 @@ class Error(Exception):
 class TestFailed(Error):
     """Test failed."""
 
-class TestSkipped(Error):
-    """Test skipped.
-
-    This can be raised to indicate that a test was deliberatly
-    skipped, but not because a feature wasn't available.  For
-    example, if some resource can't be used, such as the network
-    appears to be unavailable, this should be raised instead of
-    TestFailed.
-    """
-
-class ResourceDenied(TestSkipped):
+class ResourceDenied(unittest.SkipTest):
     """Test skipped because it requested a disallowed resource.
 
     This is raised when a test calls requires() for a resource that
@@ -50,19 +45,108 @@ class ResourceDenied(TestSkipped):
     and unexpected skips.
     """
 
-def import_module(name, deprecated=False):
-    """Import the module to be tested, raising TestSkipped if it is not
-    available."""
-    with warnings.catch_warnings():
-        if deprecated:
+@contextlib.contextmanager
+def _ignore_deprecated_imports(ignore=True):
+    """Context manager to suppress package and module deprecation
+    warnings when importing them.
+
+    If ignore is False, this context manager has no effect."""
+    if ignore:
+        with warnings.catch_warnings():
             warnings.filterwarnings("ignore", ".+ (module|package)",
                                     DeprecationWarning)
+            yield
+    else:
+        yield
+
+
+def import_module(name, deprecated=False):
+    """Import and return the module to be tested, raising SkipTest if
+    it is not available.
+
+    If deprecated is True, any module or package deprecation messages
+    will be suppressed."""
+    with _ignore_deprecated_imports(deprecated):
         try:
-            module = __import__(name, level=0)
+            return importlib.import_module(name)
+        except ImportError, msg:
+            raise unittest.SkipTest(str(msg))
+
+
+def _save_and_remove_module(name, orig_modules):
+    """Helper function to save and remove a module from sys.modules
+
+       Raise ImportError if the module can't be imported."""
+    # try to import the module and raise an error if it can't be imported
+    if name not in sys.modules:
+        __import__(name)
+        del sys.modules[name]
+    for modname in list(sys.modules):
+        if modname == name or modname.startswith(name + '.'):
+            orig_modules[modname] = sys.modules[modname]
+            del sys.modules[modname]
+
+def _save_and_block_module(name, orig_modules):
+    """Helper function to save and block a module in sys.modules
+
+       Return True if the module was in sys.modules, False otherwise."""
+    saved = True
+    try:
+        orig_modules[name] = sys.modules[name]
+    except KeyError:
+        saved = False
+    sys.modules[name] = None
+    return saved
+
+
+def import_fresh_module(name, fresh=(), blocked=(), deprecated=False):
+    """Imports and returns a module, deliberately bypassing the sys.modules cache
+    and importing a fresh copy of the module. Once the import is complete,
+    the sys.modules cache is restored to its original state.
+
+    Modules named in fresh are also imported anew if needed by the import.
+    If one of these modules can't be imported, None is returned.
+
+    Importing of modules named in blocked is prevented while the fresh import
+    takes place.
+
+    If deprecated is True, any module or package deprecation messages
+    will be suppressed."""
+    # NOTE: test_heapq, test_json, and test_warnings include extra sanity
+    # checks to make sure that this utility function is working as expected
+    with _ignore_deprecated_imports(deprecated):
+        # Keep track of modules saved for later restoration as well
+        # as those which just need a blocking entry removed
+        orig_modules = {}
+        names_to_remove = []
+        _save_and_remove_module(name, orig_modules)
+        try:
+            for fresh_name in fresh:
+                _save_and_remove_module(fresh_name, orig_modules)
+            for blocked_name in blocked:
+                if not _save_and_block_module(blocked_name, orig_modules):
+                    names_to_remove.append(blocked_name)
+            fresh_module = importlib.import_module(name)
         except ImportError:
-            raise TestSkipped("No module named " + name)
-        else:
-            return module
+            fresh_module = None
+        finally:
+            for orig_name, module in orig_modules.items():
+                sys.modules[orig_name] = module
+            for name_to_remove in names_to_remove:
+                del sys.modules[name_to_remove]
+        return fresh_module
+
+
+def get_attribute(obj, name):
+    """Get an attribute, raising SkipTest if AttributeError is raised."""
+    try:
+        attribute = getattr(obj, name)
+    except AttributeError:
+        raise unittest.SkipTest("module %s has no attribute %s" % (
+            obj.__name__, name))
+    else:
+        return attribute
+
 
 verbose = 1              # Flag set to 0 by regrtest.py
 use_resources = None     # Flag set to [] by regrtest.py
@@ -355,12 +439,14 @@ if fp is not None:
     unlink(TESTFN)
 del fp
 
-def findfile(file, here=__file__):
+def findfile(file, here=__file__, subdir=None):
     """Try to find a file on sys.path and the working directory.  If it is not
     found the argument passed to the function is returned (this does not
     necessarily signal failure; could still be the legitimate path)."""
     if os.path.isabs(file):
         return file
+    if subdir is not None:
+        file = os.path.join(subdir, file)
     path = sys.path
     path = [os.path.dirname(here)] + path
     for dn in path:
@@ -531,7 +617,7 @@ def check_warnings(*filters, **kwargs):
 
 
 @contextlib.contextmanager
-def _check_py3k_warnings(*filters, **kwargs):
+def check_py3k_warnings(*filters, **kwargs):
     """Context manager to silence py3k warnings.
 
     Accept 2-tuples as positional arguments:
@@ -542,7 +628,7 @@ def _check_py3k_warnings(*filters, **kwargs):
         (default False)
 
     Without argument, it defaults to:
-        _check_py3k_warnings(("", DeprecationWarning), quiet=False)
+        check_py3k_warnings(("", DeprecationWarning), quiet=False)
     """
     if sys.py3kwarning:
         if not filters:
@@ -825,6 +911,57 @@ class BasicTestRunner:
         return result
 
 
+def _id(obj):
+    return obj
+
+def requires_resource(resource):
+    if is_resource_enabled(resource):
+        return _id
+    else:
+        return unittest.skip("resource {0!r} is not enabled".format(resource))
+
+def cpython_only(test):
+    """
+    Decorator for tests only applicable on CPython.
+    """
+    return impl_detail(cpython=True)(test)
+
+def impl_detail(msg=None, **guards):
+    if check_impl_detail(**guards):
+        return _id
+    if msg is None:
+        guardnames, default = _parse_guards(guards)
+        if default:
+            msg = "implementation detail not available on {0}"
+        else:
+            msg = "implementation detail specific to {0}"
+        guardnames = sorted(guardnames.keys())
+        msg = msg.format(' or '.join(guardnames))
+    return unittest.skip(msg)
+
+def _parse_guards(guards):
+    # Returns a tuple ({platform_name: run_me}, default_value)
+    if not guards:
+        return ({'cpython': True}, False)
+    is_true = guards.values()[0]
+    assert guards.values() == [is_true] * len(guards)   # all True or all False
+    return (guards, not is_true)
+
+# Use the following check to guard CPython's implementation-specific tests --
+# or to run them only on the implementation(s) guarded by the arguments.
+def check_impl_detail(**guards):
+    """This function returns True or False depending on the host platform.
+       Examples:
+          if check_impl_detail():               # only on CPython (default)
+          if check_impl_detail(jython=True):    # only on Jython
+          if check_impl_detail(cpython=False):  # everywhere except on CPython
+    """
+    guards, default = _parse_guards(guards)
+    return guards.get(platform.python_implementation().lower(), default)
+
+
+
+
 def _run_suite(suite):
     """Run tests from a unittest.TestSuite-derived class."""
     if not junit_xml_dir:
@@ -932,6 +1069,23 @@ def threading_cleanup(num_active, num_limbo):
         count += 1
         time.sleep(0.1)
 
+def reap_threads(func):
+    """Use this function when threads are being used.  This will
+    ensure that the threads are cleaned up even when the test fails.
+    If threading is unavailable this function does nothing.
+    """
+    if not thread:
+        return func
+
+    @functools.wraps(func)
+    def decorator(*args):
+        key = threading_setup()
+        try:
+            return func(*args)
+        finally:
+            threading_cleanup(*key)
+    return decorator
+
 def reap_children():
     """Use this function at the end of test_main() whenever sub-processes
     are started.  This will help ensure that no extra children (zombies)
@@ -951,3 +1105,13 @@ def reap_children():
                     break
             except:
                 break
+
+def strip_python_stderr(stderr):
+    """Strip the stderr of a Python process from potential debug output
+    emitted by the interpreter.
+
+    This will typically be run on the result of the communicate() method
+    of a subprocess.Popen object.
+    """
+    stderr = re.sub(br"\[\d+ refs\]\r?\n?$", b"", stderr).strip()
+    return stderr

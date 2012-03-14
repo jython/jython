@@ -8,12 +8,10 @@ import java.util.Map;
 
 import org.python.expose.ExposedType;
 import org.objectweb.asm.AnnotationVisitor;
-import org.objectweb.asm.ClassAdapter;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.FieldVisitor;
-import org.objectweb.asm.MethodAdapter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -105,7 +103,7 @@ public class ExposedTypeProcessor implements Opcodes, PyTypes {
     /**
      * The actual visitor that runs over the bytecode and figures out what to expose.
      */
-    private final class TypeProcessor extends ClassAdapter {
+    private final class TypeProcessor extends ClassVisitor {
 
         private Type baseType = OBJECT;
 
@@ -116,7 +114,7 @@ public class ExposedTypeProcessor implements Opcodes, PyTypes {
         private boolean generatedStaticBlock;
 
         private TypeProcessor(ClassVisitor cv) {
-            super(cv);
+            super(Opcodes.ASM4, cv);
         }
 
         @Override
@@ -227,7 +225,7 @@ public class ExposedTypeProcessor implements Opcodes, PyTypes {
                                                                            desc,
                                                                            signature,
                                                                            exceptions);
-                return new MethodAdapter(passthroughVisitor) {
+                return new MethodVisitor(Opcodes.ASM4, passthroughVisitor) {
 
                     @Override
                     public void visitCode() {

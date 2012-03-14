@@ -123,14 +123,21 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <property name="PY_RELEASE_LEVEL_SNAPSHOT" value="170"/> <!-- 0xAA -->
 
         <!-- The current version info -->
-        <property name="jython.version" value="2.6a0+"/>
-        <property name="jython.version.noplus" value="2.6a0"/>
+        <property name="jython.version" value="2.7a0+"/>
+        <property name="jython.version.noplus" value="2.7a0"/>
         <property name="jython.major_version" value="2"/>
         <property name="jython.minor_version" value="6"/>
         <property name="jython.micro_version" value="0"/>
         <property name="jython.release_level" value="${PY_RELEASE_LEVEL_ALPHA}"/>
         <property name="jython.release_serial" value="0"/>
-
+		
+    	<!--- Indy support -->
+    	<condition property="jython.use.invokedynamic">
+			<equals arg1="${java.specification.version}" arg2="1.7"/>
+    	</condition>
+    	<condition property="jython.java.version" value="1.7" else="1.6">
+    		<isset property="jython.use.invokedynamic"/>
+    	</condition>
         <condition property="do.snapshot.build">
             <isset property="snapshot.revision" />
         </condition>
@@ -145,8 +152,8 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
             <os family="windows"/>
         </condition>
         <property name="build.compiler" value="modern" />
-        <property name="jdk.target.version" value="1.6" />
-        <property name="jdk.source.version" value="1.6" />
+        <property name="jdk.target.version" value="${jython.java.version}" />
+        <property name="jdk.source.version" value="${jython.java.version}" />
         <property name="deprecation" value="true" />
         <property name="debug" value="true" />
         <property name="nowarn" value="false" />
@@ -186,11 +193,11 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
             <pathelement path="${extlibs.dir}/stringtemplate-3.2.jar" />
             <pathelement path="${extlibs.dir}/livetribe-jsr223-2.0.5.jar" />
 
-            <pathelement path="${extlibs.dir}/asm-3.1.jar" />
-            <pathelement path="${extlibs.dir}/asm-commons-3.1.jar" />
-            <pathelement path="${extlibs.dir}/asm-util-3.1.jar" />
+            <pathelement path="${extlibs.dir}/asm-4.0.jar" />
+            <pathelement path="${extlibs.dir}/asm-commons-4.0.jar" />
+            <pathelement path="${extlibs.dir}/asm-util-4.0.jar" />
             <pathelement path="${extlibs.dir}/constantine.jar" />
-            <pathelement path="${extlibs.dir}/guava-r07.jar" />
+            <pathelement path="${extlibs.dir}/guava-11.0.2.jar" />
             <pathelement path="${extlibs.dir}/jaffl.jar"/>
             <pathelement path="${extlibs.dir}/jffi-Darwin.jar"/>
             <pathelement path="${extlibs.dir}/jffi-i386-FreeBSD.jar"/>
@@ -219,8 +226,8 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
 
         <path id="test.classpath">
             <path refid="main.classpath"/>
-            <pathelement path="${extlibs.dir}/asm-commons-3.1.jar" />
-            <pathelement path="${extlibs.dir}/asm-util-3.1.jar" />
+            <pathelement path="${extlibs.dir}/asm-commons-4.0.jar" />
+            <pathelement path="${extlibs.dir}/asm-util-4.0.jar" />
             <pathelement path="${extlibs.dir}/junit-3.8.2.jar" />
             <pathelement path="${exposed.dir}" />
             <pathelement path="${compile.dir}" />
@@ -295,6 +302,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <echo>templates.lazy     = '${templates.lazy}'</echo>
         <echo>python.lib         = '${python.lib}'</echo>
         <echo>build.compiler     = '${build.compiler}'</echo>
+    	<echo>jython.use.invokedynamic = '${jython.use.invokedynamic}'</echo>
         <echo>jdk.target.version = '${jdk.target.version}'</echo>
         <echo>jdk.source.version = '${jdk.source.version}'</echo>
         <echo>deprecation        = '${deprecation}'</echo>
@@ -456,7 +464,7 @@ jython.build.hg_version=${build.hg.version}</echo>
     <target name="brand-readme-version" depends="checkout" if="do.snapshot.build">
         <!-- change README.txt version string, if so defined: used for
         snapshot builds. XXX: a bit broken for now-->
-        <replace file="${jython.base.dir}/README.txt" token='2.6a1+'
+        <replace file="${jython.base.dir}/README.txt" token='2.7a1+'
         value='2.5a${svn.revision}' />
         <replace file="${jython.base.dir}/README.txt">
             <replacetoken>=======================</replacetoken>
@@ -528,7 +536,8 @@ The readme text for the next release will be like:
             <compilerarg line="${javac.Xlint}"/>
             <src path="${source.dir}"/>
             <src path="${gensrc.dir}"/>
-
+        	<exclude name="org/python/compiler/InvokedynamicCodeCompiler.java" unless="jython.use.invokedynamic"/>
+        	<exclude name="org/python/compiler/indy/**" unless="jython.use.invokedynamic"/>
             <exclude name="**/handler/InformixDataHandler.java" unless="informix.present" />
             <exclude name="**/handler/OracleDataHandler.java" unless="oracle.present" />
             <classpath refid="main.classpath" />
@@ -618,9 +627,9 @@ The readme text for the next release will be like:
             <zipfileset src="${dist.dir}/${jython.dev.jar}"/>
             <zipfileset src="extlibs/antlr-runtime-3.1.3.jar"/>
             <rule pattern="org.antlr.runtime.**" result="org.python.antlr.runtime.@1"/>
-            <zipfileset src="extlibs/asm-3.1.jar"/>
-            <zipfileset src="extlibs/asm-commons-3.1.jar"/>
-            <zipfileset src="extlibs/asm-util-3.1.jar"/>
+            <zipfileset src="extlibs/asm-4.0.jar"/>
+            <zipfileset src="extlibs/asm-commons-4.0.jar"/>
+            <zipfileset src="extlibs/asm-util-4.0.jar"/>
             <rule pattern="org.objectweb.asm.**" result="org.python.objectweb.asm.@1"/>
             <zipfileset src="extlibs/guava-r07.jar"/>
             <rule pattern="com.google.**" result="org.python.google.@1"/>

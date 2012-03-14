@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.python.expose.MethodType;
 import org.objectweb.asm.AnnotationVisitor;
-import org.objectweb.asm.MethodAdapter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -15,7 +14,7 @@ import org.python.util.Generic;
  * annotation is visited, calls handleResult with the exposer constructed with that annotation. Only
  * one of the handleResult methods will be called, if any.
  */
-public abstract class ExposedMethodFinder extends MethodAdapter implements PyTypes, Opcodes {
+public abstract class ExposedMethodFinder extends MethodVisitor implements PyTypes, Opcodes {
 
     private Exposer newExp;
 
@@ -36,7 +35,7 @@ public abstract class ExposedMethodFinder extends MethodAdapter implements PyTyp
                                String desc,
                                String[] exceptions,
                                MethodVisitor delegate) {
-        super(delegate);
+        super(Opcodes.ASM4, delegate);
         this.typeName = typeName;
         this.onType = onType;
         this.access = access;
@@ -135,6 +134,10 @@ public abstract class ExposedMethodFinder extends MethodAdapter implements PyTyp
     }
 
     class ExposedMethodVisitor extends RestrictiveAnnotationVisitor {
+
+        public ExposedMethodVisitor() {
+            super();
+        }
 
         @Override
         public void visit(String name, Object value) {

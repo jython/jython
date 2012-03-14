@@ -4,7 +4,7 @@ import platform
 import unittest
 import warnings
 from test.test_support import (fcmp, have_unicode, TESTFN, unlink,
-                               run_unittest, _check_py3k_warnings, check_warnings,
+                               run_unittest, check_py3k_warnings, check_warnings,
                                is_jython)
 from operator import neg
 
@@ -418,7 +418,7 @@ class BuiltinTest(unittest.TestCase):
     f.write('z = z+1\n')
     f.write('z = z*2\n')
     f.close()
-    with _check_py3k_warnings(("execfile.. not supported in 3.x",
+    with check_py3k_warnings(("execfile.. not supported in 3.x",
                               DeprecationWarning)):
         execfile(TESTFN)
 
@@ -1581,7 +1581,7 @@ class TestSorted(unittest.TestCase):
         self.assertRaises(TypeError, sorted, data, None, lambda x,y: 0)
 
 def _run_unittest(*args):
-    with _check_py3k_warnings(
+    with check_py3k_warnings(
             (".+ not supported in 3.x", DeprecationWarning),
             (".+ is renamed to imp.reload", DeprecationWarning),
             ("classic int division", DeprecationWarning)):

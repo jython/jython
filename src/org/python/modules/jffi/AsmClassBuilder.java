@@ -3,7 +3,6 @@ package org.python.modules.jffi;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.commons.EmptyVisitor;
 
 import java.io.PrintWriter;
 import java.lang.reflect.Constructor;
@@ -143,7 +142,7 @@ final class AsmClassBuilder {
             Constructor<? extends ClassVisitor> c = tmvClass.getDeclaredConstructor(PrintWriter.class);
             return c.newInstance(out);
         } catch (Throwable t) {
-            return new EmptyVisitor();
+            return null;
         }
     }
 

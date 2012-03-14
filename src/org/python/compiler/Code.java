@@ -5,11 +5,12 @@ import java.util.Vector;
 
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.Attribute;
+import org.objectweb.asm.Handle;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-class Code implements MethodVisitor, Opcodes {
+class Code extends MethodVisitor implements Opcodes {
     MethodVisitor mv;
     String sig;
     String locals[];
@@ -21,6 +22,7 @@ class Code implements MethodVisitor, Opcodes {
     //XXX: I'd really like to get sig and access out of here since MethodVistitor
     //     should already have this information.
     public Code(MethodVisitor mv, String sig, int access) {
+        super(ASM4);
         this.mv = mv;
         this.sig = sig;
         nlocals = -sigSize(sig, false);
@@ -163,7 +165,7 @@ class Code implements MethodVisitor, Opcodes {
         return mv.visitParameterAnnotation(arg0, arg1, arg2);
     }
 
-    public void visitTableSwitchInsn(int arg0, int arg1, Label arg2, Label[] arg3) {
+    public void visitTableSwitchInsn(int arg0, int arg1, Label arg2, Label... arg3) {
         mv.visitTableSwitchInsn(arg0, arg1, arg2, arg3);
     }
 
@@ -598,4 +600,11 @@ class Code implements MethodVisitor, Opcodes {
     public void setline(int line) {
         mv.visitLineNumber(line, new Label());
     }
+
+    @Override
+    public void visitInvokeDynamicInsn(String name, String descriptor, Handle bsmHandle, 
+                                       Object... bmsArgs) {
+        mv.visitInvokeDynamicInsn(name, descriptor, bsmHandle, bmsArgs);
+    }
+    
 }

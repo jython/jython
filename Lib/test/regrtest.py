@@ -133,6 +133,7 @@ import sys
 import time
 import traceback
 import warnings
+import unittest
 # keep a reference to the ascii module to workaround #7140 bug
 # (see issue #7027)
 import encodings.ascii
@@ -359,7 +360,7 @@ def main(tests=None, testdir=None, verbose=0, quiet=False,
         tests = map(removepy, tests)
 
     stdtests = STDTESTS[:]
-    nottests = NOTTESTS[:]
+    nottests = NOTTESTS.copy()
     if exclude:
         for arg in args:
             if arg in stdtests:
@@ -508,11 +509,11 @@ STDTESTS = [
     'test_py3kwarn',
    ]
 
-NOTTESTS = [
+NOTTESTS = {
     'test_support',
     'test_future1',
     'test_future2',
-    ]
+}
 
 def findtests(testdir=None, stdtests=STDTESTS, nottests=NOTTESTS):
     """Return a list of all applicable test modules."""
@@ -613,7 +614,7 @@ def runtest_inner(test, verbose, quiet, test_times,
                               stdout=stdout.getvalue(),
                               stderr=stderr.getvalue())
         return -2
-    except (ImportError, test_support.TestSkipped), msg:
+    except (ImportError, unittest.SkipTest), msg:
         if not quiet:
             print test, "skipped --", msg
             sys.stdout.flush()
@@ -1189,7 +1190,7 @@ _expectations = {
         test_bsddb185
         test_bsddb3
         test_bz2
-        test_cProfile
+        test_cprofile
         test_capi
         test_cd
         test_cl

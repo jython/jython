@@ -10,11 +10,12 @@
 package org.python.modules.jffi;
 
 import org.objectweb.asm.*;
+import org.objectweb.asm.util.Printer;
+import org.objectweb.asm.util.Textifier;
 import org.objectweb.asm.util.TraceMethodVisitor;
 
 import java.io.PrintStream;
 import java.io.PrintWriter;
-import java.util.Map;
 
 import static org.python.modules.jffi.CodegenUtils.*;
 
@@ -22,24 +23,18 @@ import static org.python.modules.jffi.CodegenUtils.*;
  *
  * @author headius
  */
-public class SkinnyMethodAdapter implements MethodVisitor, Opcodes {
+public class SkinnyMethodAdapter extends MethodVisitor implements Opcodes {
     private final static boolean DEBUG = Boolean.getBoolean("jython.compile.dump");
     private MethodVisitor method;
+    private Printer printer;
     private String name;
     private ClassVisitor cv;
     
-    /** Creates a new instance of SkinnyMethodAdapter */
-    public SkinnyMethodAdapter(MethodVisitor method) {
-        setMethodVisitor(method);
-    }
-
     public SkinnyMethodAdapter(ClassVisitor cv, int flags, String name, String signature, String something, String[] exceptions) {
+    	super(ASM4);
         setMethodVisitor(cv.visitMethod(flags, name, signature, something, exceptions));
         this.cv = cv;
         this.name = name;
-    }
-    
-    public SkinnyMethodAdapter() {
     }
     
     public MethodVisitor getMethodVisitor() {
@@ -48,7 +43,8 @@ public class SkinnyMethodAdapter implements MethodVisitor, Opcodes {
     
     public void setMethodVisitor(MethodVisitor mv) {
         if (DEBUG) {
-            this.method = new TraceMethodVisitor(mv);
+        	this.printer = new Textifier();
+            this.method = new TraceMethodVisitor(mv, printer);
         } else {
             this.method = mv;
         }
@@ -530,7 +526,7 @@ public class SkinnyMethodAdapter implements MethodVisitor, Opcodes {
             } else {
                 pw.write("*** Dumping ***\n");
             }
-            ((TraceMethodVisitor)getMethodVisitor()).print(pw);
+            printer.print(pw);
             pw.flush();
         }
         getMethodVisitor().visitMaxs(1, 1);
@@ -865,7 +861,7 @@ public class SkinnyMethodAdapter implements MethodVisitor, Opcodes {
     }
 
     public void visitTableSwitchInsn(int arg0, int arg1, Label arg2,
-                                     Label[] arg3) {
+                                     Label... arg3) {
         getMethodVisitor().visitTableSwitchInsn(arg0, arg1, arg2, arg3);
     }
 
@@ -895,7 +891,7 @@ public class SkinnyMethodAdapter implements MethodVisitor, Opcodes {
         if (DEBUG) {
             PrintWriter pw = new PrintWriter(System.out);
             pw.write("*** Dumping ***\n");
-            ((TraceMethodVisitor)getMethodVisitor()).print(pw);
+            printer.print(pw);
             pw.flush();
         }
         getMethodVisitor().visitMaxs(arg0, arg1);
