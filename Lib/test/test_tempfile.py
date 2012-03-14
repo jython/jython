@@ -1,6 +1,5 @@
 # From Python 2.5.1
 # tempfile.py unit tests.
-from __future__ import with_statement
 import tempfile
 import os
 import sys
@@ -82,7 +81,8 @@ class test_exports(TC):
             "gettempprefix" : 1,
             "gettempdir" : 1,
             "tempdir" : 1,
-            "template" : 1
+            "template" : 1,
+            "SpooledTemporaryFile" : 1
         }
 
         unexp = []
@@ -128,7 +128,7 @@ class test__RandomNameSequence(TC):
                 if i == 20:
                     break
         except:
-            failOnException("iteration")
+            self.failOnException("iteration")
 
 test_classes.append(test__RandomNameSequence)
 
@@ -150,13 +150,11 @@ class test__candidate_tempdir_list(TC):
         # _candidate_tempdir_list contains the expected directories
 
         # Make sure the interesting environment variables are all set.
-        added = []
-        try:
+        with test_support.EnvironmentVarGuard() as env:
             for envname in 'TMPDIR', 'TEMP', 'TMP':
                 dirname = os.getenv(envname)
                 if not dirname:
-                    os.environ[envname] = os.path.abspath(envname)
-                    added.append(envname)
+                    env.set(envname, os.path.abspath(envname))
 
             cand = tempfile._candidate_tempdir_list()
 
@@ -174,9 +172,6 @@ class test__candidate_tempdir_list(TC):
 
             # Not practical to try to verify the presence of OS-specific
             # paths in this list.
-        finally:
-            for p in added:
-                del os.environ[p]
 
 test_classes.append(test__candidate_tempdir_list)
 
@@ -581,11 +576,12 @@ test_classes.append(test_mktemp)
 class test_NamedTemporaryFile(TC):
     """Test NamedTemporaryFile()."""
 
-    def do_create(self, dir=None, pre="", suf=""):
+    def do_create(self, dir=None, pre="", suf="", delete=True):
         if dir is None:
             dir = tempfile.gettempdir()
         try:
-            file = tempfile.NamedTemporaryFile(dir=dir, prefix=pre, suffix=suf)
+            file = tempfile.NamedTemporaryFile(dir=dir, prefix=pre, suffix=suf,
+                                               delete=delete)
         except:
             self.failOnException("NamedTemporaryFile")
 
@@ -619,6 +615,22 @@ class test_NamedTemporaryFile(TC):
         finally:
             os.rmdir(dir)
 
+    def test_dis_del_on_close(self):
+        # Tests that delete-on-close can be disabled
+        dir = tempfile.mkdtemp()
+        tmp = None
+        try:
+            f = tempfile.NamedTemporaryFile(dir=dir, delete=False)
+            tmp = f.name
+            f.write('blat')
+            f.close()
+            self.failUnless(os.path.exists(f.name),
+                        "NamedTemporaryFile %s missing after close" % f.name)
+        finally:
+            if tmp is not None:
+                os.unlink(tmp)
+            os.rmdir(dir)
+
     def test_multiple_close(self):
         # A NamedTemporaryFile can be closed many times without error
         f = tempfile.NamedTemporaryFile()
@@ -643,6 +655,160 @@ class test_NamedTemporaryFile(TC):
     # How to test the mode and bufsize parameters?
 
 test_classes.append(test_NamedTemporaryFile)
+
+class test_SpooledTemporaryFile(TC):
+    """Test SpooledTemporaryFile()."""
+
+    def do_create(self, max_size=0, dir=None, pre="", suf=""):
+        if dir is None:
+            dir = tempfile.gettempdir()
+        try:
+            file = tempfile.SpooledTemporaryFile(max_size=max_size, dir=dir, prefix=pre, suffix=suf)
+        except:
+            self.failOnException("SpooledTemporaryFile")
+
+        return file
+
+
+    def test_basic(self):
+        # SpooledTemporaryFile can create files
+        f = self.do_create()
+        self.failIf(f._rolled)
+        f = self.do_create(max_size=100, pre="a", suf=".txt")
+        self.failIf(f._rolled)
+
+    def test_del_on_close(self):
+        # A SpooledTemporaryFile is deleted when closed
+        dir = tempfile.mkdtemp()
+        try:
+            f = tempfile.SpooledTemporaryFile(max_size=10, dir=dir)
+            self.failIf(f._rolled)
+            f.write('blat ' * 5)
+            self.failUnless(f._rolled)
+            filename = f.name
+            f.close()
+            self.failIf(os.path.exists(filename),
+                        "SpooledTemporaryFile %s exists after close" % filename)
+        finally:
+            os.rmdir(dir)
+
+    def test_rewrite_small(self):
+        # A SpooledTemporaryFile can be written to multiple within the max_size
+        f = self.do_create(max_size=30)
+        self.failIf(f._rolled)
+        for i in range(5):
+            f.seek(0, 0)
+            f.write('x' * 20)
+        self.failIf(f._rolled)
+
+    def test_write_sequential(self):
+        # A SpooledTemporaryFile should hold exactly max_size bytes, and roll
+        # over afterward
+        f = self.do_create(max_size=30)
+        self.failIf(f._rolled)
+        f.write('x' * 20)
+        self.failIf(f._rolled)
+        f.write('x' * 10)
+        self.failIf(f._rolled)
+        f.write('x')
+        self.failUnless(f._rolled)
+
+    def test_sparse(self):
+        # A SpooledTemporaryFile that is written late in the file will extend
+        # when that occurs
+        f = self.do_create(max_size=30)
+        self.failIf(f._rolled)
+        f.seek(100, 0)
+        self.failIf(f._rolled)
+        f.write('x')
+        self.failUnless(f._rolled)
+
+    def test_fileno(self):
+        # A SpooledTemporaryFile should roll over to a real file on fileno()
+        f = self.do_create(max_size=30)
+        self.failIf(f._rolled)
+        self.failUnless(f.fileno() > 0)
+        self.failUnless(f._rolled)
+
+    def test_multiple_close_before_rollover(self):
+        # A SpooledTemporaryFile can be closed many times without error
+        f = tempfile.SpooledTemporaryFile()
+        f.write('abc\n')
+        self.failIf(f._rolled)
+        f.close()
+        try:
+            f.close()
+            f.close()
+        except:
+            self.failOnException("close")
+
+    def test_multiple_close_after_rollover(self):
+        # A SpooledTemporaryFile can be closed many times without error
+        f = tempfile.SpooledTemporaryFile(max_size=1)
+        f.write('abc\n')
+        self.failUnless(f._rolled)
+        f.close()
+        try:
+            f.close()
+            f.close()
+        except:
+            self.failOnException("close")
+
+    def test_bound_methods(self):
+        # It should be OK to steal a bound method from a SpooledTemporaryFile
+        # and use it independently; when the file rolls over, those bound
+        # methods should continue to function
+        f = self.do_create(max_size=30)
+        read = f.read
+        write = f.write
+        seek = f.seek
+
+        write("a" * 35)
+        write("b" * 35)
+        seek(0, 0)
+        self.failUnless(read(70) == 'a'*35 + 'b'*35)
+
+    def test_context_manager_before_rollover(self):
+        # A SpooledTemporaryFile can be used as a context manager
+        with tempfile.SpooledTemporaryFile(max_size=1) as f:
+            self.failIf(f._rolled)
+            self.failIf(f.closed)
+        self.failUnless(f.closed)
+        def use_closed():
+            with f:
+                pass
+        self.failUnlessRaises(ValueError, use_closed)
+
+    def test_context_manager_during_rollover(self):
+        # A SpooledTemporaryFile can be used as a context manager
+        with tempfile.SpooledTemporaryFile(max_size=1) as f:
+            self.failIf(f._rolled)
+            f.write('abc\n')
+            f.flush()
+            self.failUnless(f._rolled)
+            self.failIf(f.closed)
+        self.failUnless(f.closed)
+        def use_closed():
+            with f:
+                pass
+        self.failUnlessRaises(ValueError, use_closed)
+
+    def test_context_manager_after_rollover(self):
+        # A SpooledTemporaryFile can be used as a context manager
+        f = tempfile.SpooledTemporaryFile(max_size=1)
+        f.write('abc\n')
+        f.flush()
+        self.failUnless(f._rolled)
+        with f:
+            self.failIf(f.closed)
+        self.failUnless(f.closed)
+        def use_closed():
+            with f:
+                pass
+        self.failUnlessRaises(ValueError, use_closed)
+
+
+test_classes.append(test_SpooledTemporaryFile)
 
 
 class test_TemporaryFile(TC):

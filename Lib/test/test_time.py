@@ -110,15 +110,19 @@ class TimeTestCase(unittest.TestCase):
         self.assertEquals(expected, result)
 
     def test_strptime(self):
+        # Should be able to go round-trip from strftime to strptime without
+        # throwing an exception.
         tt = time.gmtime(self.t)
         for directive in ('a', 'A', 'b', 'B', 'c', 'd', 'H', 'I',
                           'j', 'm', 'M', 'p', 'S',
                           'U', 'w', 'W', 'x', 'X', 'y', 'Y', 'Z', '%'):
-            format = ' %' + directive
+            format = '%' + directive
+            strf_output = time.strftime(format, tt)
             try:
-                time.strptime(time.strftime(format, tt), format)
+                time.strptime(strf_output, format)
             except ValueError:
-                self.fail('conversion specifier: %r failed.' % format)
+                self.fail("conversion specifier %r failed with '%s' input." %
+                          (format, strf_output))
 
     def test_strptime_empty(self):
         try:
@@ -129,6 +133,16 @@ class TimeTestCase(unittest.TestCase):
     def test_asctime(self):
         time.asctime(time.gmtime(self.t))
         self.assertRaises(TypeError, time.asctime, 0)
+        self.assertRaises(TypeError, time.asctime, ())
+        # XXX: Posix compiant asctime should refuse to convert
+        # year > 9999, but Linux implementation does not.
+        # self.assertRaises(ValueError, time.asctime,
+        #                  (12345, 1, 0, 0, 0, 0, 0, 0, 0))
+        # XXX: For now, just make sure we don't have a crash:
+        try:
+            time.asctime((12345, 1, 0, 0, 0, 0, 0, 0, 0))
+        except ValueError:
+            pass
 
     def test_tzset(self):
         if not hasattr(time, "tzset"):

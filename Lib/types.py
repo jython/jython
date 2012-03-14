@@ -49,10 +49,9 @@ except RuntimeError:
     # Execution in restricted environment
     pass
 
-def g():
+def _g():
     yield 1
-GeneratorType = type(g())
-del g
+GeneratorType = type(_g())
 
 class _C:
     def _m(self): pass
@@ -90,4 +89,8 @@ EllipsisType = type(Ellipsis)
 DictProxyType = type(TypeType.__dict__)
 NotImplementedType = type(NotImplemented)
 
-del sys, _f, _C, _x                  # Not for export
+# For Jython, the following two types are identical
+GetSetDescriptorType = type(FunctionType.func_code)
+MemberDescriptorType = type(FunctionType.func_globals)
+
+del sys, _f, _g, _C, _x                           # Not for export

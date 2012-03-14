@@ -5,7 +5,7 @@ for the Distutils compiler abstraction model."""
 
 # This module should be kept compatible with Python 2.1.
 
-__revision__ = "$Id: ccompiler.py 46331 2006-05-26 14:07:23Z bob.ippolito $"
+__revision__ = "$Id: ccompiler.py 77425 2010-01-11 22:54:57Z tarek.ziade $"
 
 import sys, os, re
 from types import *
@@ -159,7 +159,7 @@ class CCompiler:
         # basically the same things with Unix C compilers.
 
         for key in args.keys():
-            if not self.executables.has_key(key):
+            if key not in self.executables:
                 raise ValueError, \
                       "unknown executable '%s' for class %s" % \
                       (key, self.__class__.__name__)
@@ -338,10 +338,7 @@ class CCompiler:
 
     def _setup_compile(self, outdir, macros, incdirs, sources, depends,
                        extra):
-        """Process arguments and decide which source files to compile.
-
-        Merges _fix_compile_args() and _prep_compile().
-        """
+        """Process arguments and decide which source files to compile."""
         if outdir is None:
             outdir = self.output_dir
         elif type(outdir) is not StringType:
@@ -371,41 +368,6 @@ class CCompiler:
                                         output_dir=outdir)
         assert len(objects) == len(sources)
 
-        # XXX should redo this code to eliminate skip_source entirely.
-        # XXX instead create build and issue skip messages inline
-
-        if self.force:
-            skip_source = {}            # rebuild everything
-            for source in sources:
-                skip_source[source] = 0
-        elif depends is None:
-            # If depends is None, figure out which source files we
-            # have to recompile according to a simplistic check. We
-            # just compare the source and object file, no deep
-            # dependency checking involving header files.
-            skip_source = {}            # rebuild everything
-            for source in sources:      # no wait, rebuild nothing
-                skip_source[source] = 1
-
-            n_sources, n_objects = newer_pairwise(sources, objects)
-            for source in n_sources:    # no really, only rebuild what's
-                skip_source[source] = 0 # out-of-date
-        else:
-            # If depends is a list of files, then do a different
-            # simplistic check.  Assume that each object depends on
-            # its source and all files in the depends list.
-            skip_source = {}
-            # L contains all the depends plus a spot at the end for a
-            # particular source file
-            L = depends[:] + [None]
-            for i in range(len(objects)):
-                source = sources[i]
-                L[-1] = source
-                if newer_group(L, objects[i]):
-                    skip_source[source] = 0
-                else:
-                    skip_source[source] = 1
-
         pp_opts = gen_preprocess_options(macros, incdirs)
 
         build = {}
@@ -414,10 +376,7 @@ class CCompiler:
             obj = objects[i]
             ext = os.path.splitext(src)[1]
             self.mkpath(os.path.dirname(obj))
-            if skip_source[src]:
-                log.debug("skipping %s (%s up-to-date)", src, obj)
-            else:
-                build[obj] = src, ext
+            build[obj] = (src, ext)
 
         return macros, objects, extra, pp_opts, build
 
@@ -464,7 +423,6 @@ class CCompiler:
 
     # _fix_compile_args ()
 
-
     def _prep_compile(self, sources, output_dir, depends=None):
         """Decide which souce files must be recompiled.
 
@@ -477,42 +435,9 @@ class CCompiler:
         objects = self.object_filenames(sources, output_dir=output_dir)
         assert len(objects) == len(sources)
 
-        if self.force:
-            skip_source = {}            # rebuild everything
-            for source in sources:
-                skip_source[source] = 0
-        elif depends is None:
-            # If depends is None, figure out which source files we
-            # have to recompile according to a simplistic check. We
-            # just compare the source and object file, no deep
-            # dependency checking involving header files.
-            skip_source = {}            # rebuild everything
-            for source in sources:      # no wait, rebuild nothing
-                skip_source[source] = 1
-
-            n_sources, n_objects = newer_pairwise(sources, objects)
-            for source in n_sources:    # no really, only rebuild what's
-                skip_source[source] = 0 # out-of-date
-        else:
-            # If depends is a list of files, then do a different
-            # simplistic check.  Assume that each object depends on
-            # its source and all files in the depends list.
-            skip_source = {}
-            # L contains all the depends plus a spot at the end for a
-            # particular source file
-            L = depends[:] + [None]
-            for i in range(len(objects)):
-                source = sources[i]
-                L[-1] = source
-                if newer_group(L, objects[i]):
-                    skip_source[source] = 0
-                else:
-                    skip_source[source] = 1
-
-        return objects, skip_source
-
-    # _prep_compile ()
-
+        # Return an empty dict for the "which source files can be skipped"
+        # return value to preserve API compatibility.
+        return objects, {}
 
     def _fix_object_args (self, objects, output_dir):
         """Typecheck and fix up some arguments supplied to various methods.
@@ -680,7 +605,6 @@ class CCompiler:
 
         Raises CompileError on failure.
         """
-
         # A concrete compiler class can either override this method
         # entirely or implement _compile().
 
@@ -1041,7 +965,7 @@ main (int argc, char **argv) {
         return move_file (src, dst, dry_run=self.dry_run)
 
     def mkpath (self, name, mode=0777):
-        mkpath (name, mode, self.dry_run)
+        mkpath (name, mode, dry_run=self.dry_run)
 
 
 # class CCompiler

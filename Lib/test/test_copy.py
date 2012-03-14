@@ -1,6 +1,5 @@
 """Unit tests for the copy module."""
 
-import sys
 import copy
 import copy_reg
 
@@ -439,6 +438,7 @@ class TestCopy(unittest.TestCase):
                 return (C, (), self.__dict__)
             def __cmp__(self, other):
                 return cmp(self.__dict__, other.__dict__)
+            __hash__ = None # Silence Py3k warning
         x = C()
         x.foo = [42]
         y = copy.copy(x)
@@ -455,6 +455,7 @@ class TestCopy(unittest.TestCase):
                 self.__dict__.update(state)
             def __cmp__(self, other):
                 return cmp(self.__dict__, other.__dict__)
+            __hash__ = None # Silence Py3k warning
         x = C()
         x.foo = [42]
         y = copy.copy(x)
@@ -481,6 +482,7 @@ class TestCopy(unittest.TestCase):
             def __cmp__(self, other):
                 return (cmp(list(self), list(other)) or
                         cmp(self.__dict__, other.__dict__))
+            __hash__ = None # Silence Py3k warning
         x = C([[1, 2], 3])
         y = copy.copy(x)
         self.assertEqual(x, y)
@@ -498,6 +500,7 @@ class TestCopy(unittest.TestCase):
             def __cmp__(self, other):
                 return (cmp(dict(self), list(dict)) or
                         cmp(self.__dict__, other.__dict__))
+            __hash__ = None # Silence Py3k warning
         x = C([("foo", [1, 2]), ("bar", 3)])
         y = copy.copy(x)
         self.assertEqual(x, y)

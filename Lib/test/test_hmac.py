@@ -1,7 +1,7 @@
 import hmac
-import sha
 import hashlib
 import unittest
+import warnings
 from test import test_support
 
 class TestVectorsTestCase(unittest.TestCase):
@@ -44,7 +44,7 @@ class TestVectorsTestCase(unittest.TestCase):
 
     def test_sha_vectors(self):
         def shatest(key, data, digest):
-            h = hmac.HMAC(key, data, digestmod=sha)
+            h = hmac.HMAC(key, data, digestmod=hashlib.sha1)
             self.assertEqual(h.hexdigest().upper(), digest.upper())
 
         shatest(chr(0x0b) * 20,
@@ -200,6 +200,35 @@ class TestVectorsTestCase(unittest.TestCase):
     def test_sha512_rfc4231(self):
         self._rfc4231_test_cases(hashlib.sha512)
 
+    def test_legacy_block_size_warnings(self):
+        class MockCrazyHash(object):
+            """Ain't no block_size attribute here."""
+            def __init__(self, *args):
+                self._x = hashlib.sha1(*args)
+                self.digest_size = self._x.digest_size
+            def update(self, v):
+                self._x.update(v)
+            def digest(self):
+                return self._x.digest()
+
+        with warnings.catch_warnings():
+            warnings.simplefilter('error', RuntimeWarning)
+            try:
+                hmac.HMAC('a', 'b', digestmod=MockCrazyHash)
+            except RuntimeWarning:
+                pass
+            else:
+                self.fail('Expected warning about missing block_size')
+
+            MockCrazyHash.block_size = 1
+            try:
+                hmac.HMAC('a', 'b', digestmod=MockCrazyHash)
+            except RuntimeWarning:
+                pass
+            else:
+                self.fail('Expected warning about small block_size')
+
+
 
 class ConstructorTestCase(unittest.TestCase):
 
@@ -220,18 +249,16 @@ class ConstructorTestCase(unittest.TestCase):
 
     def test_withmodule(self):
         # Constructor call with text and digest module.
-        import sha
         try:
-            h = hmac.HMAC("key", "", sha)
+            h = hmac.HMAC("key", "", hashlib.sha1)
         except:
-            self.fail("Constructor call with sha module raised exception.")
+            self.fail("Constructor call with hashlib.sha1 raised exception.")
 
 class SanityTestCase(unittest.TestCase):
 
     def test_default_is_md5(self):
         # Testing if HMAC defaults to MD5 algorithm.
         # NOTE: this whitebox test depends on the hmac class internals
-        import hashlib
         h = hmac.HMAC("key")
         self.failUnless(h.digest_cons == hashlib.md5)
 

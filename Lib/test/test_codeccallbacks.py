@@ -109,7 +109,7 @@ class CodecCallbackTest(unittest.TestCase):
         # useful that the error handler is not called for every single
         # unencodable character, but for a complete sequence of
         # unencodable characters, otherwise we would output many
-        # unneccessary escape sequences.
+        # unnecessary escape sequences.
 
         def uninamereplace(exc):
             if not isinstance(exc, UnicodeEncodeError):
@@ -153,28 +153,30 @@ class CodecCallbackTest(unittest.TestCase):
             sout += "\\U%08x" % sys.maxunicode
         self.assertEqual(sin.encode("iso-8859-15", "backslashreplace"), sout)
 
-    def test_decoderelaxedutf8(self):
-        # This is the test for a decoding callback handler,
-        # that relaxes the UTF-8 minimal encoding restriction.
-        # A null byte that is encoded as "\xc0\x80" will be
-        # decoded as a null byte. All other illegal sequences
-        # will be handled strictly.
+    def test_decoding_callbacks(self):
+        # This is a test for a decoding callback handler
+        # that allows the decoding of the invalid sequence
+        # "\xc0\x80" and returns "\x00" instead of raising an error.
+        # All other illegal sequences will be handled strictly.
         def relaxedutf8(exc):
             if not isinstance(exc, UnicodeDecodeError):
                 raise TypeError("don't know how to handle %r" % exc)
-            if exc.object[exc.start:exc.end].startswith("\xc0\x80"):
+            if exc.object[exc.start:exc.start+2] == "\xc0\x80":
                 return (u"\x00", exc.start+2) # retry after two bytes
             else:
                 raise exc
 
-        codecs.register_error(
-            "test.relaxedutf8", relaxedutf8)
+        codecs.register_error("test.relaxedutf8", relaxedutf8)
 
+        # all the "\xc0\x80" will be decoded to "\x00"
         sin = "a\x00b\xc0\x80c\xc3\xbc\xc0\x80\xc0\x80"
         sout = u"a\x00b\x00c\xfc\x00\x00"
         self.assertEqual(sin.decode("utf-8", "test.relaxedutf8"), sout)
+
+        # "\xc0\x81" is not valid and a UnicodeDecodeError will be raised
         sin = "\xc0\x80\xc0\x81"
-        self.assertRaises(UnicodeError, sin.decode, "utf-8", "test.relaxedutf8")
+        self.assertRaises(UnicodeDecodeError, sin.decode,
+                          "utf-8", "test.relaxedutf8")
 
     def test_charmapencode(self):
         # For charmap encodings the replacement string will be
@@ -285,7 +287,8 @@ class CodecCallbackTest(unittest.TestCase):
 
     def test_longstrings(self):
         # test long strings to check for memory overflow problems
-        errors = [ "strict", "ignore", "replace", "xmlcharrefreplace", "backslashreplace"]
+        errors = [ "strict", "ignore", "replace", "xmlcharrefreplace",
+                   "backslashreplace"]
         # register the handlers under different names,
         # to prevent the codec from recognizing the name
         for err in errors:
@@ -293,7 +296,8 @@ class CodecCallbackTest(unittest.TestCase):
         l = 1000
         errors += [ "test." + err for err in errors ]
         for uni in [ s*l for s in (u"x", u"\u3042", u"a\xe4") ]:
-            for enc in ("ascii", "latin-1", "iso-8859-1", "iso-8859-15", "utf-8", "utf-7", "utf-16"):
+            for enc in ("ascii", "latin-1", "iso-8859-1", "iso-8859-15",
+                        "utf-8", "utf-7", "utf-16", "utf-32"):
                 for err in errors:
                     try:
                         uni.encode(enc, err)

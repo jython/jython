@@ -5,7 +5,6 @@ Tests common to list and UserList.UserList
 import sys
 import os
 
-import unittest
 from test import test_support, seq_tests
 
 class CommonTest(seq_tests.CommonTest):
@@ -37,7 +36,7 @@ class CommonTest(seq_tests.CommonTest):
 
         self.assertEqual(str(a0), str(l0))
         self.assertEqual(repr(a0), repr(l0))
-        self.assertEqual(`a2`, `l2`)
+        self.assertEqual(repr(a2), repr(l2))
         self.assertEqual(str(a2), "[0, 1, 2]")
         self.assertEqual(repr(a2), "[0, 1, 2]")
 
@@ -46,6 +45,11 @@ class CommonTest(seq_tests.CommonTest):
         self.assertEqual(str(a2), "[0, 1, 2, [...], 3]")
         self.assertEqual(repr(a2), "[0, 1, 2, [...], 3]")
 
+        l0 = []
+        for i in xrange(sys.getrecursionlimit() + 100):
+            l0 = [l0]
+        self.assertRaises(RuntimeError, repr, l0)
+
     def test_print(self):
         d = self.type2test(xrange(200))
         d.append(d)
@@ -53,13 +57,11 @@ class CommonTest(seq_tests.CommonTest):
         d.append(d)
         d.append(400)
         try:
-            fo = open(test_support.TESTFN, "wb")
-            print >> fo, d,
-            fo.close()
-            fo = open(test_support.TESTFN, "rb")
-            self.assertEqual(fo.read(), repr(d))
+            with open(test_support.TESTFN, "wb") as fo:
+                print >> fo, d,
+            with open(test_support.TESTFN, "rb") as fo:
+                self.assertEqual(fo.read(), repr(d))
         finally:
-            fo.close()
             os.remove(test_support.TESTFN)
 
     def test_set_subscript(self):
@@ -80,6 +82,8 @@ class CommonTest(seq_tests.CommonTest):
         self.assertRaises(StopIteration, r.next)
         self.assertEqual(list(reversed(self.type2test())),
                          self.type2test())
+        # Bug 3689: make sure list-reversed-iterator doesn't have __len__
+        self.assertRaises(TypeError, len, reversed([1,2,3]))
 
     def test_setitem(self):
         a = self.type2test([0, 1])
@@ -179,8 +183,10 @@ class CommonTest(seq_tests.CommonTest):
         self.assertEqual(a, self.type2test(range(10)))
 
         self.assertRaises(TypeError, a.__setslice__, 0, 1, 5)
+        self.assertRaises(TypeError, a.__setitem__, slice(0, 1, 5))
 
         self.assertRaises(TypeError, a.__setslice__)
+        self.assertRaises(TypeError, a.__setitem__)
 
     def test_delslice(self):
         a = self.type2test([0, 1])
@@ -413,6 +419,11 @@ class CommonTest(seq_tests.CommonTest):
         self.assertRaises(TypeError, u.reverse, 42)
 
     def test_sort(self):
+        with test_support._check_py3k_warnings(
+                ("the cmp argument is not supported", DeprecationWarning)):
+            self._test_sort()
+
+    def _test_sort(self):
         u = self.type2test([1, 0])
         u.sort()
         self.assertEqual(u, [0, 1])
@@ -515,13 +526,14 @@ class CommonTest(seq_tests.CommonTest):
         a = self.type2test(range(10))
         a[::2] = tuple(range(5))
         self.assertEqual(a, self.type2test([0, 1, 1, 3, 2, 5, 3, 7, 4, 9]))
+        # test issue7788
+        a = self.type2test(range(10))
+        del a[9::1<<333]
 
     # XXX: CPython specific, PyList doesn't len() during init
     def _test_constructor_exception_handling(self):
         # Bug #1242657
         class F(object):
             def __iter__(self):
-                yield 23
-            def __len__(self):
                 raise KeyboardInterrupt
         self.assertRaises(KeyboardInterrupt, list, F())
