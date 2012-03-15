@@ -717,9 +717,21 @@ public class itertools implements ClassDictInit {
     }
 
 //chain.from_iterable(iterable)
-//combinations(iterable, r):
 
+    private static PyTuple makeIndexedTuple(PyTuple pool, int indices[]) {
+        return makeIndexedTuple(pool, indices, indices.length);
+    }
+    
+    private static PyTuple makeIndexedTuple(PyTuple pool, int indices[], int end) {
+        PyObject items[] = new PyObject[end];
+        for (int i = 0; i < end; i++) {
+            items[i] = pool.__getitem__(indices[i]);
+        }
+        return new PyTuple(items);
+    }
+    
     public static PyIterator combinations(PyObject iterable, final int r) {
+        if (r < 0) throw Py.ValueError("r must be non-negative");
         final PyTuple pool = PyTuple.fromIterable(iterable);
         final int n = pool.__len__();
         final int indices[] = new int[r];
@@ -735,7 +747,7 @@ public class itertools implements ClassDictInit {
                 if (r > n) { return null; }
                 if (firstthru) {
                     firstthru = false;
-                    return makeTuple();
+                    return makeIndexedTuple(pool, indices);
                 }
                 int i;
                 for (i = r-1; i >= 0 && indices[i] == i+n-r ; i--);
@@ -744,16 +756,10 @@ public class itertools implements ClassDictInit {
                 for (int j = i+1; j < r; j++) {
                     indices[j] = indices[j-1] + 1;
                 }
-                return makeTuple();
+                return makeIndexedTuple(pool, indices);
             }
             
-            private PyTuple makeTuple() {
-                PyObject items[] = new PyObject[r];
-                for (int i = 0; i < r; i++) {
-                    items[i] = pool.__getitem__(indices[i]);
-                }                                 
-                return new PyTuple(items);
-            }
+
         };
     }
 
@@ -791,6 +797,53 @@ public class itertools implements ClassDictInit {
                 return new PyString(String.format("itertools.compress object at 0x%x", Py.id(this)));
             }
 
+        };
+    }
+
+    public static PyIterator permutations(PyObject iterable, final int r) {
+        if (r < 0) throw Py.ValueError("r must be non-negative");
+        final PyTuple pool = PyTuple.fromIterable(iterable);
+        final int n = pool.__len__();
+        final int indices[] = new int[n];
+        for (int i = 0; i < n; i++) {
+            indices[i] = i;
+        }
+        final int cycles[] = new int[r];
+        for (int i = 0; i < r; i++) {
+            cycles[i] = n - i;
+        }
+
+        return new ItertoolsIterator() {
+            boolean firstthru = true;
+
+            @Override
+            public PyObject __iternext__() {
+                if (r > n) return null;
+                if (firstthru) {
+                    firstthru = false;
+
+                    return makeIndexedTuple(pool, indices, r);
+                }
+                for (int i = r - 1; i >= 0; i--) {
+                    cycles[i] -= 1;
+                    if (cycles[i] == 0) {
+                        // rotate indices at the ith position
+                        int first = indices[i];
+                        for (int j = i; j < n - 1; j++) {
+                            indices[j] = indices[j + 1];
+                        }
+                        indices[n - 1] = first;
+                        cycles[i] = n - i;
+                    } else {
+                        int j = cycles[i];
+                        int index = indices[i];
+                        indices[i] = indices[n - j];
+                        indices[n - j] = index;
+                        return makeIndexedTuple(pool, indices, r);
+                    }
+                }
+                return null;
+            }
         };
     }
 
