@@ -5,6 +5,7 @@ if __name__ != 'test.test_support':
 
 import contextlib
 import errno
+import functools
 import socket
 import sys
 import os
@@ -14,6 +15,11 @@ import warnings
 import unittest
 import importlib
 import re
+try:
+    import thread
+except ImportError:
+    thread = None
+
 
 __all__ = ["Error", "TestFailed", "ResourceDenied", "import_module",
            "verbose", "use_resources", "max_memuse", "record_original_stdout",
