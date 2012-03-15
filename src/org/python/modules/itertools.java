@@ -821,7 +821,6 @@ public class itertools implements ClassDictInit {
                 if (r > n) return null;
                 if (firstthru) {
                     firstthru = false;
-
                     return makeIndexedTuple(pool, indices, r);
                 }
                 for (int i = r - 1; i >= 0; i--) {
@@ -846,5 +845,75 @@ public class itertools implements ClassDictInit {
             }
         };
     }
+
+    public static PyIterator product(PyObject [] args, String [] kws) {
+        int repeat;
+        int num_iterables;
+        if (kws.length == 1 && kws[0] == "repeat") {
+            repeat = args[args.length -1].asInt();
+            num_iterables = args.length - 1;
+        } else {
+            repeat = 1;
+            num_iterables = args.length;
+        }
+        // XXX error checking on args! XXX
+        final int num_pools = num_iterables * repeat;
+        final PyTuple pools[] = new PyTuple[num_pools];
+        for (int i = 0; i < num_iterables; i++) {
+            pools[i] = PyTuple.fromIterable(args[i]);
+        }
+        // Make repeat -1 duplicates, in order
+        for (int r = 1; r < repeat; r++) {
+            for (int i = 0; i < num_iterables; i++) {
+                pools[r * num_iterables + i] = pools[i];
+            }
+        }
+        final int indices[] = new int[num_pools];
+        for (int i = 0; i < num_pools; i++) {
+            indices[i] = 0;
+        }
+
+        return new ItertoolsIterator() {
+            boolean firstthru = true;
+
+            @Override
+            public PyObject __iternext__() {
+                if (firstthru) {
+                    firstthru = false;
+                    return makeTuple();
+                }
+                for (int i = num_pools - 1; i >= 0; i--) {
+                    indices[i]++;
+
+                    if (indices[i] == pools[i].__len__()) {
+                        indices[i] = 0;
+                    } else {
+                        return makeTuple();         
+                    }
+                }
+                return null;
+            }
+
+            private PyTuple makeTuple() {
+                PyObject items[] = new PyObject[num_pools];
+                for (int i = 0; i < num_pools; i++) {
+                    items[i] = pools[i].__getitem__(indices[i]);
+                }
+                return new PyTuple(items);
+            }
+
+        };
+    }
+
+// def product(*args, **kwds):
+//     # product('ABCD', 'xy') --> Ax Ay Bx By Cx Cy Dx Dy
+//     # product(range(2), repeat=3) --> 000 001 010 011 100 101 110 111
+//     pools = map(tuple, args) * kwds.get('repeat', 1)
+//     result = [[]]
+//     for pool in pools:
+//         result = [x+[y] for x in result for y in pool]
+//     for prod in result:
+//         yield tuple(prod)
+
 
 }
