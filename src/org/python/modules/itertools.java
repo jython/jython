@@ -763,7 +763,37 @@ public class itertools implements ClassDictInit {
         };
     }
 
-//combinations_with_replacement(iterable, r):
+    public static PyIterator combinations_with_replacement(PyObject iterable, final int r) {
+        final PyTuple pool = PyTuple.fromIterable(iterable);
+        final int n = pool.__len__();
+        final int indices[] = new int[r];
+        for (int i = 0; i < r; i++) {
+            indices[i] = 0;
+        }
+
+        return new ItertoolsIterator() {
+            boolean firstthru = true;
+
+            @Override
+            public PyObject __iternext__() {
+                if (n == 0 || r == 0) {
+                    return null;
+                }
+                if (firstthru) {
+                    firstthru = false;
+                    return makeIndexedTuple(pool, indices);
+                }
+                int i;
+                for (i= r - 1 ; i >= 0 && indices[i] == n - 1; i--);
+                if (i < 0) return null;
+                indices[i]++;
+                for (int j = i + 1; j < r; j++) {
+                    indices[j] = indices[j-1];
+                }
+                return makeIndexedTuple(pool, indices);
+            }
+        };
+    }
 
     public static PyString __doc__compress = new PyString(
         "compress(data, selectors) --> iterator over selected data\n\n" +
