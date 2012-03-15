@@ -1106,6 +1106,41 @@ def reap_children():
             except:
                 break
 
+def py3k_bytes(b):
+    """Emulate the py3k bytes() constructor.
+
+    NOTE: This is only a best effort function.
+    """
+    try:
+        # memoryview?
+        return b.tobytes()
+    except AttributeError:
+        try:
+            # iterable of ints?
+            return b"".join(chr(x) for x in b)
+        except TypeError:
+            return bytes(b)
+
+def args_from_interpreter_flags():
+    """Return a list of command-line arguments reproducing the current
+    settings in sys.flags."""
+    flag_opt_map = {
+        'bytes_warning': 'b',
+        'dont_write_bytecode': 'B',
+        'ignore_environment': 'E',
+        'no_user_site': 's',
+        'no_site': 'S',
+        'optimize': 'O',
+        'py3k_warning': '3',
+        'verbose': 'v',
+    }
+    args = []
+    for flag, opt in flag_opt_map.items():
+        v = getattr(sys.flags, flag)
+        if v > 0:
+            args.append('-' + opt * v)
+    return args
+
 def strip_python_stderr(stderr):
     """Strip the stderr of a Python process from potential debug output
     emitted by the interpreter.

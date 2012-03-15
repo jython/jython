@@ -436,7 +436,7 @@ class CommandLineOptions {
             } else if (arg.equals("-S")) {
                 Options.importSite = false;
             } else if (arg.equals("-B")) {
-                Options.dontWriteBytecode = true;
+                Options.dont_write_bytecode = true;
             } else if (arg.startsWith("-c")) {
                 runCommand = true;
                 if (arg.length() > 2) {
@@ -462,6 +462,7 @@ class CommandLineOptions {
             } else if (arg.equals("-E")) {
                 // XXX: accept -E (ignore environment variables) to be compatiable with
                 // CPython. do nothing for now (we could ignore the registry)
+                Options.ignore_environment = true;
             } else if (arg.startsWith("-D")) {
                 String key = null;
                 String value = null;
@@ -506,7 +507,7 @@ class CommandLineOptions {
                 }
                 return true;
             } else if (arg.startsWith("-3")) {
-                Options.py3kwarning = true;
+                Options.py3k_warning = true;
             } else {
                 String opt = args[index];
                 if (opt.startsWith("--")) {

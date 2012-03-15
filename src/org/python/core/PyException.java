@@ -214,7 +214,7 @@ public class PyException extends RuntimeException
                                + "BaseException, not " + type.getType().fastGetName());
         }
 
-        if (Options.py3kwarning && type instanceof PyClass) {
+        if (Options.py3k_warning && type instanceof PyClass) {
             Py.DeprecationWarning("exceptions must derive from BaseException in 3.x");
         }
 
@@ -239,7 +239,7 @@ public class PyException extends RuntimeException
 
         if (exc instanceof PyString) {
             Py.DeprecationWarning("catching of string exceptions is deprecated");
-        } else if (Options.py3kwarning && !isPy3kExceptionClass(exc)) {
+        } else if (Options.py3k_warning && !isPy3kExceptionClass(exc)) {
             Py.DeprecationWarning("catching classes that don't inherit from BaseException is not "
                                   + "allowed in 3.x");
         }

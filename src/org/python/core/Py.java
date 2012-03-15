@@ -418,7 +418,7 @@ public final class Py {
     }
 
     public static void warnPy3k(String message, int stacklevel) {
-        if (Options.py3kwarning) {
+        if (Options.py3k_warning) {
             warning(DeprecationWarning, message, stacklevel);
         }
     }

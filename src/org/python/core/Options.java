@@ -77,10 +77,20 @@ public class Options {
     public static boolean unbuffered = false;
 
     /** Whether -3 (py3k warnings) was enabled via the command line. */
-    public static boolean py3kwarning = false;
+    public static boolean py3k_warning = false;
     
     /** Whether -B (don't write bytecode on import) was enabled via the command line. */
-    public static boolean dontWriteBytecode = false;
+    public static boolean dont_write_bytecode = false;
+
+    /** Whether -E (ignore environment) was enabled via the command line. */
+    //XXX: place holder, not implemented yet.
+    public static boolean ignore_environment = false;
+
+    //XXX: place holder, not implemented yet.
+    public static boolean no_user_site = false;
+
+    //XXX: place holder, not implemented yet.
+    public static boolean no_site = false;
 
     //XXX: place holder
     public static int bytes_warning = 0;

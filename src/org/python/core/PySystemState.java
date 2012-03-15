@@ -192,8 +192,8 @@ public class PySystemState extends PyObject implements ClassDictInit {
 
         currentWorkingDir = new File("").getAbsolutePath();
 
-        dont_write_bytecode = Options.dontWriteBytecode;
-        py3kwarning = Options.py3kwarning;
+        dont_write_bytecode = Options.dont_write_bytecode;
+        py3kwarning = Options.py3k_warning;
         // Set up the initial standard ins and outs
         String mode = Options.unbuffered ? "b" : "";
         int buffering = Options.unbuffered ? 0 : 1;
