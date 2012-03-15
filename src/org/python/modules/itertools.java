@@ -790,7 +790,7 @@ public class itertools implements ClassDictInit {
                     if (selector == null) { return null; }
                     if (selector.__nonzero__()) {
                         return datum;
-                    }
+                        }
                 }
             }
             public PyString __repr__() {
@@ -800,7 +800,56 @@ public class itertools implements ClassDictInit {
         };
     }
 
+    public static PyIterator izip_longest(PyObject[] args, String[] kws) {
+        final int num_iterables;
+        final PyObject fillvalue;
+        if (kws.length == 1 && kws[0] == "fillvalue") {
+            fillvalue = args[args.length - 1];
+            num_iterables = args.length - 1;
+        } else {
+            fillvalue = Py.None;
+            num_iterables = args.length;
+        }
+
+        //XXX error checking on args
+        final PyObject iterators[] = new PyObject[num_iterables];
+        final boolean exhausted[] = new boolean[num_iterables];
+        for (int i = 0; i < num_iterables; i++) {
+            iterators[i] = args[i].__iter__();
+            exhausted[i] = false;
+        }
+
+        return new ItertoolsIterator() {
+            int unexhausted = num_iterables;
+
+            @Override
+            public PyObject __iternext__() {
+                PyObject item[] = new PyObject[num_iterables];
+                for (int i = 0; i < num_iterables; i++) {
+                    if (exhausted[i]) {
+                        item[i] = fillvalue;
+                    } else {
+                        PyObject elem = iterators[i].__iternext__();
+                        if (elem == null) {
+                            unexhausted--;
+                            exhausted[i] = true;
+                            item[i] = fillvalue;
+                        } else {
+                            item[i] = elem;
+                        }
+                    }
+                }
+                if (unexhausted == 0) {
+                    return null;
+                } else {
+                    return new PyTuple(item);
+                }
+            }
+        };
+    }
+
     public static PyIterator permutations(PyObject iterable, final int r) {
+        //XXX keyword args support
         if (r < 0) throw Py.ValueError("r must be non-negative");
         final PyTuple pool = PyTuple.fromIterable(iterable);
         final int n = pool.__len__();
@@ -847,8 +896,8 @@ public class itertools implements ClassDictInit {
     }
 
     public static PyIterator product(PyObject [] args, String [] kws) {
-        int repeat;
-        int num_iterables;
+        final int repeat;
+        final int num_iterables;
         if (kws.length == 1 && kws[0] == "repeat") {
             repeat = args[args.length -1].asInt();
             num_iterables = args.length - 1;
@@ -862,7 +911,7 @@ public class itertools implements ClassDictInit {
         for (int i = 0; i < num_iterables; i++) {
             pools[i] = PyTuple.fromIterable(args[i]);
         }
-        // Make repeat -1 duplicates, in order
+        // Make repeat - 1 duplicates, in order
         for (int r = 1; r < repeat; r++) {
             for (int i = 0; i < num_iterables; i++) {
                 pools[r * num_iterables + i] = pools[i];
@@ -904,16 +953,5 @@ public class itertools implements ClassDictInit {
 
         };
     }
-
-// def product(*args, **kwds):
-//     # product('ABCD', 'xy') --> Ax Ay Bx By Cx Cy Dx Dy
-//     # product(range(2), repeat=3) --> 000 001 010 011 100 101 110 111
-//     pools = map(tuple, args) * kwds.get('repeat', 1)
-//     result = [[]]
-//     for pool in pools:
-//         result = [x+[y] for x in result for y in pool]
-//     for prod in result:
-//         yield tuple(prod)
-
 
 }
