@@ -1185,6 +1185,7 @@ _expectations = {
         test_aepack
         test_al
         test_applesingle
+        test_ascii_formatd
         test_audioop
         test_bsddb
         test_bsddb185
@@ -1201,6 +1202,7 @@ _expectations = {
         test_dbm
         test_dl
         test_email_codecs
+        test_epoll
         test_fcntl
         test_fork1
         test_gdbm

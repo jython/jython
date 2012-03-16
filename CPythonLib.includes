@@ -144,6 +144,7 @@ stat.py
 string.py
 StringIO.py
 symbol.py
+sysconfig.py
 tabnanny.py
 this.py
 textwrap.py
