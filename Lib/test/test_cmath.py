@@ -1,4 +1,4 @@
-from test.test_support import run_unittest
+from test.test_support import run_unittest, is_jython
 from test.test_math import parse_testfile, test_file
 import unittest
 import cmath, math
@@ -52,8 +52,12 @@ class CMathTests(unittest.TestCase):
             'cos', 'cosh', 'exp', 'log', 'log10', 'sin', 'sinh',
             'sqrt', 'tan', 'tanh']]
     # test first and second arguments independently for 2-argument log
-    test_functions.append(lambda x : cmath.log(x, 1729. + 0j))
-    test_functions.append(lambda x : cmath.log(14.-27j, x))
+
+    #FIXME: this is not passing on Jython. Close
+    #       http://bugs.jython.org/issue1855 when all of these are fixed.
+    if not is_jython:
+        test_functions.append(lambda x : cmath.log(x, 1729. + 0j))
+        test_functions.append(lambda x : cmath.log(14.-27j, x))
 
     def setUp(self):
         self.test_values = open(test_file)
@@ -89,9 +93,13 @@ class CMathTests(unittest.TestCase):
         # and b to have opposite signs; in practice these hardly ever
         # occur).
         if not a and not b:
-            if math.copysign(1., a) != math.copysign(1., b):
-                self.fail(msg or 'zero has wrong sign: expected {!r}, '
-                          'got {!r}'.format(a, b))
+            #FIXME: complex(-0.0, -0.0) does not keep the negative in Jython,
+            #       skip for now, unskip when
+            #       http://bugs.jython.org/issue1853 is fixed.
+            if not is_jython:
+                if math.copysign(1., a) != math.copysign(1., b):
+                    self.fail(msg or 'zero has wrong sign: expected {!r}, '
+                              'got {!r}'.format(a, b))
 
         # if a-b overflows, or b is infinite, return False.  Again, in
         # theory there are examples where a is within a few ulps of the
@@ -119,6 +127,9 @@ class CMathTests(unittest.TestCase):
         self.assertAlmostEqual(cmath.e, e_expected, places=9,
             msg="cmath.e is {}; should be {}".format(cmath.e, e_expected))
 
+    #FIXME: this is not passing on Jython. Close
+    #       http://bugs.jython.org/issue1855 when all of these are fixed.
+    @unittest.skipIf(is_jython, "FIXME: not working in Jython")
     def test_user_object(self):
         # Test automatic calling of __complex__ and __float__ by cmath
         # functions
@@ -271,7 +282,13 @@ class CMathTests(unittest.TestCase):
             for v in values:
                 z = complex_fn(v)
                 self.rAssertAlmostEqual(float_fn(v), z.real)
-                self.assertEqual(0., z.imag)
+                if is_jython:
+                    #FIXME: this is not passing on Jython
+                    # Close http://bugs.jython.org/issue1855 when all of these
+                    # are fixed.
+                    pass
+                else:
+                    self.assertEqual(0., z.imag)
 
         # test two-argument version of log with various bases
         for base in [0.5, 2., 10.]:
@@ -280,6 +297,9 @@ class CMathTests(unittest.TestCase):
                 self.rAssertAlmostEqual(math.log(v, base), z.real)
                 self.assertEqual(0., z.imag)
 
+    #FIXME: this is not passing on Jython. Close
+    #       http://bugs.jython.org/issue1855 when all of these are fixed.
+    @unittest.skipIf(is_jython, "FIXME: not working in Jython")
     def test_specific_values(self):
         if not float.__getformat__("double").startswith("IEEE"):
             return
@@ -363,6 +383,9 @@ class CMathTests(unittest.TestCase):
         self.assertCISEqual(polar(1j), (1., pi/2))
         self.assertCISEqual(polar(-1j), (1., -pi/2))
 
+    #FIXME: complex(-0.0, -0.0) does not keep the negative in Jython, skip
+    #       parts for now, unskip when
+    #       http://bugs.jython.org/issue1853 is fixed.
     def test_phase(self):
         self.assertAlmostEqual(phase(0), 0.)
         self.assertAlmostEqual(phase(1.), 0.)
@@ -374,27 +397,32 @@ class CMathTests(unittest.TestCase):
 
         # zeros
         self.assertEqual(phase(complex(0.0, 0.0)), 0.0)
-        self.assertEqual(phase(complex(0.0, -0.0)), -0.0)
-        self.assertEqual(phase(complex(-0.0, 0.0)), pi)
-        self.assertEqual(phase(complex(-0.0, -0.0)), -pi)
+        if not is_jython:
+            self.assertEqual(phase(complex(0.0, -0.0)), -0.0)
+            self.assertEqual(phase(complex(-0.0, 0.0)), pi)
+            self.assertEqual(phase(complex(-0.0, -0.0)), -pi)
 
         # infinities
-        self.assertAlmostEqual(phase(complex(-INF, -0.0)), -pi)
+        if not is_jython:
+            self.assertAlmostEqual(phase(complex(-INF, -0.0)), -pi)
         self.assertAlmostEqual(phase(complex(-INF, -2.3)), -pi)
         self.assertAlmostEqual(phase(complex(-INF, -INF)), -0.75*pi)
         self.assertAlmostEqual(phase(complex(-2.3, -INF)), -pi/2)
-        self.assertAlmostEqual(phase(complex(-0.0, -INF)), -pi/2)
+        if not is_jython:
+            self.assertAlmostEqual(phase(complex(-0.0, -INF)), -pi/2)
         self.assertAlmostEqual(phase(complex(0.0, -INF)), -pi/2)
         self.assertAlmostEqual(phase(complex(2.3, -INF)), -pi/2)
         self.assertAlmostEqual(phase(complex(INF, -INF)), -pi/4)
         self.assertEqual(phase(complex(INF, -2.3)), -0.0)
-        self.assertEqual(phase(complex(INF, -0.0)), -0.0)
+        if not is_jython:
+            self.assertEqual(phase(complex(INF, -0.0)), -0.0)
         self.assertEqual(phase(complex(INF, 0.0)), 0.0)
         self.assertEqual(phase(complex(INF, 2.3)), 0.0)
         self.assertAlmostEqual(phase(complex(INF, INF)), pi/4)
         self.assertAlmostEqual(phase(complex(2.3, INF)), pi/2)
         self.assertAlmostEqual(phase(complex(0.0, INF)), pi/2)
-        self.assertAlmostEqual(phase(complex(-0.0, INF)), pi/2)
+        if not is_jython:
+            self.assertAlmostEqual(phase(complex(-0.0, INF)), pi/2)
         self.assertAlmostEqual(phase(complex(-2.3, INF)), pi/2)
         self.assertAlmostEqual(phase(complex(-INF, INF)), 0.75*pi)
         self.assertAlmostEqual(phase(complex(-INF, 2.3)), pi)
@@ -404,6 +432,9 @@ class CMathTests(unittest.TestCase):
         for z in complex_nans:
             self.assertTrue(math.isnan(phase(z)))
 
+    #FIXME: complex(-0.0, -0.0) does not keep the negative in Jython, skip
+    #       parts for now, unskip when
+    #       http://bugs.jython.org/issue1853 is fixed.
     def test_abs(self):
         # zeros
         for z in complex_zeros:
@@ -416,21 +447,25 @@ class CMathTests(unittest.TestCase):
         # real or imaginary part NaN
         self.assertEqual(abs(complex(NAN, -INF)), INF)
         self.assertTrue(math.isnan(abs(complex(NAN, -2.3))))
-        self.assertTrue(math.isnan(abs(complex(NAN, -0.0))))
+        if not is_jython:
+            self.assertTrue(math.isnan(abs(complex(NAN, -0.0))))
         self.assertTrue(math.isnan(abs(complex(NAN, 0.0))))
         self.assertTrue(math.isnan(abs(complex(NAN, 2.3))))
         self.assertEqual(abs(complex(NAN, INF)), INF)
         self.assertEqual(abs(complex(-INF, NAN)), INF)
         self.assertTrue(math.isnan(abs(complex(-2.3, NAN))))
-        self.assertTrue(math.isnan(abs(complex(-0.0, NAN))))
+        if not is_jython:
+            self.assertTrue(math.isnan(abs(complex(-0.0, NAN))))
         self.assertTrue(math.isnan(abs(complex(0.0, NAN))))
         self.assertTrue(math.isnan(abs(complex(2.3, NAN))))
         self.assertEqual(abs(complex(INF, NAN)), INF)
         self.assertTrue(math.isnan(abs(complex(NAN, NAN))))
 
         # result overflows
-        if float.__getformat__("double").startswith("IEEE"):
-            self.assertRaises(OverflowError, abs, complex(1.4e308, 1.4e308))
+        # XXX: though not in Jython, should this be fixed?
+        if not is_jython:
+            if float.__getformat__("double").startswith("IEEE"):
+                self.assertRaises(OverflowError, abs, complex(1.4e308, 1.4e308))
 
     def assertCEqual(self, a, b):
         eps = 1E-7

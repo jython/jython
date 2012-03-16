@@ -5,6 +5,7 @@ import org.python.core.PyComplex;
 import org.python.core.PyFloat;
 import org.python.core.PyInstance;
 import org.python.core.PyObject;
+import org.python.core.PyTuple;
 import org.python.modules.math;
 
 public class cmath {
@@ -147,6 +148,47 @@ public class cmath {
         return (r);
     }
 
+    public static double phase(PyObject in) {
+        PyComplex x = complexFromPyObject(in);
+        double r = Math.atan2(x.imag, x.real);
+        return r;
+    }
+
+    public static PyTuple polar(PyObject in) {
+        PyComplex z = complexFromPyObject(in);
+        double phi = Math.atan2(z.imag, z.real);
+        double r = Math.abs(z.real) + Math.abs(z.imag);
+        return new PyTuple(new PyFloat(r), new PyFloat(phi));
+    }
+
+    public static PyComplex rect(double r, double phi) {
+        PyComplex z = new PyComplex(0.0, 0.0);
+        z.real = r * Math.cos(phi);
+        z.imag = r * Math.sin(phi);
+        return z;
+    }
+
+    /**
+     * @param in 
+     * 
+     * @return <code>true</code> if in.real or in.imag is positive or negative
+     *         infinity
+     */
+    public static boolean isinf(PyObject in) {
+        PyComplex x = complexFromPyObject(in);
+        return Double.isInfinite(x.real) || Double.isInfinite(x.imag);
+    }
+
+    /**
+     * @param in 
+     * 
+     * @return <code>true</code> if in.real or in.imag is nan.
+     */
+    public static boolean isnan(PyObject in) {
+        PyComplex x = complexFromPyObject(in);
+        return Double.isNaN(x.real) || Double.isNaN(x.imag);
+    }
+  
     public static PyComplex log10(PyObject in) {
         PyComplex r = new PyComplex(0.0, 0.0);
         PyComplex x = complexFromPyObject(in);
