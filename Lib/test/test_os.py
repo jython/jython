@@ -581,6 +581,8 @@ class TestInvalidFD(unittest.TestCase):
             f(test_support.make_bad_fd(), *args)
         except OSError as e:
             self.assertEqual(e.errno, errno.EBADF)
+        except ValueError:
+            self.assertTrue(test_support.is_jython)
         else:
             self.fail("%r didn't raise a OSError with a bad file descriptor"
                       % f)
