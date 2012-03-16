@@ -17,6 +17,7 @@ json/**
 __future__.py
 _LWPCookieJar.py
 _MozillaCookieJar.py
+_pyio.py
 _strptime.py
 _threading_local.py
 aifc.py

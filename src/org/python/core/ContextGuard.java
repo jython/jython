@@ -56,11 +56,11 @@ public class ContextGuard implements ContextManager {
     public static PyObject makeManager(PyObject object) {
         if (object instanceof PyFunction) {
             PyFunction function = (PyFunction) object;
-            PyCode code = function.func_code;
+            PyCode code = function.__code__;
             if (code instanceof PyBaseCode) {
                 PyBaseCode pyCode = (PyBaseCode) code;
                 if (pyCode.co_flags.isFlagSet(CodeFlag.CO_GENERATOR)) {
-                    return new PyFunction(function.func_globals,
+                    return new PyFunction(function.__globals__,
                             function.func_defaults,
                             new ContextCode(pyCode),
                             function.__doc__,
