@@ -11,7 +11,10 @@ import signal
 import subprocess
 import time
 from test import test_support
-import mmap
+try:
+    import mmap
+except:
+    mmap = None
 import uuid
 
 warnings.filterwarnings("ignore", "tempnam", RuntimeWarning, __name__)
@@ -29,6 +32,8 @@ class FileTests(unittest.TestCase):
         os.close(f)
         self.assertTrue(os.access(test_support.TESTFN, os.W_OK))
 
+    @unittest.skipIf(test_support.is_jython,
+                     "Jython does not yet support os.dup.")
     def test_closerange(self):
         first = os.open(test_support.TESTFN, os.O_CREAT|os.O_RDWR)
         # We must allocate two consecutive file descriptors, otherwise
@@ -366,6 +371,8 @@ class EnvironTests(mapping_tests.BasicTestMappingProtocol):
 class WalkTests(unittest.TestCase):
     """Tests for os.walk()."""
 
+    @unittest.skipIf(test_support.is_jython,
+                     "FIXME: investigate in Jython")
     def test_traversal(self):
         import os
         from os.path import join
@@ -527,6 +534,8 @@ class URandomTests (unittest.TestCase):
         except NotImplementedError:
             pass
 
+    @unittest.skipIf(test_support.is_jython,
+                     "Jython does not support os.execvpe.")
     def test_execvpe_with_bad_arglist(self):
         self.assertRaises(ValueError, os.execvpe, 'notepad', [], None)
 
@@ -576,6 +585,7 @@ class TestInvalidFD(unittest.TestCase):
             self.fail("%r didn't raise a OSError with a bad file descriptor"
                       % f)
 
+    @unittest.skipIf(test_support.is_jython, "FIXME: investigate for Jython")
     def test_isatty(self):
         if hasattr(os, "isatty"):
             self.assertEqual(os.isatty(test_support.make_bad_fd()), False)
@@ -612,6 +622,8 @@ class TestInvalidFD(unittest.TestCase):
         if hasattr(os, "fpathconf"):
             self.check(os.fpathconf, "PC_NAME_MAX")
 
+    @unittest.skipIf(test_support.is_jython,
+                     "ftruncate not implemented in Jython")
     def test_ftruncate(self):
         if hasattr(os, "ftruncate"):
             self.check(os.ftruncate, 0)
@@ -802,6 +814,7 @@ class Win32KillTests(unittest.TestCase):
 
         self._kill_with_event(signal.CTRL_C_EVENT, "CTRL_C_EVENT")
 
+    @unittest.skipIf(mmap == None, "This test depends on mmap")
     def test_CTRL_BREAK_EVENT(self):
         self._kill_with_event(signal.CTRL_BREAK_EVENT, "CTRL_BREAK_EVENT")
 

@@ -185,12 +185,12 @@ public abstract class IOBase {
     }
 
     /**
-     * Raise a ValueError if the file is closed.
+     * Raise an OSError if the file is closed.
      *
      */
     public void checkClosed() {
         if (closed()) {
-            throw Py.ValueError("I/O operation on closed file");
+            throw Py.OSError(Errno.EBADF);
         }
     }
 
