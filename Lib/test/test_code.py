@@ -72,8 +72,11 @@ nlocals: 0
 
 import unittest
 import weakref
-import _testcapi
-
+from test import test_support
+try:
+    import _testcapi
+except ImportError:
+    _testcapi = None
 
 def consts(t):
     """Yield a doctest-safe sequence of object reprs."""
@@ -93,6 +96,7 @@ def dump(co):
 
 class CodeTest(unittest.TestCase):
 
+    @unittest.skipIf(_testcapi is None, "No _testcapi present")
     def test_newempty(self):
         co = _testcapi.code_newempty("filename", "funcname", 15)
         self.assertEqual(co.co_filename, "filename")
@@ -102,6 +106,8 @@ class CodeTest(unittest.TestCase):
 
 class CodeWeakRefTest(unittest.TestCase):
 
+    @unittest.skipIf(test_support.is_jython,
+                     "weakrefs are not deterministic in Jython")
     def test_basic(self):
         # Create a code object in a clean environment so that we know we have
         # the only reference to it left.

@@ -32,7 +32,7 @@ public class PyFunction extends PyObject implements InvocationHandler {
 
     /** The read only namespace; a dict (PyStringMap). */
     @ExposedGet
-    public PyObject func_globals;
+    public PyObject __globals__;
 
     /**
      * Default argument values for associated kwargs. Exposed as a
@@ -42,7 +42,7 @@ public class PyFunction extends PyObject implements InvocationHandler {
 
     /** The actual funtion's code, writable. */
     @ExposedGet
-    public PyCode func_code;
+    public PyCode __code__;
 
     /**
      * A function's lazily created __dict__; allows arbitrary
@@ -62,14 +62,14 @@ public class PyFunction extends PyObject implements InvocationHandler {
     public PyFunction(PyObject globals, PyObject[] defaults, PyCode code, PyObject doc,
                       PyObject[] closure_cells) {
         super(TYPE);
-        func_globals = globals;
+        __globals__ = globals;
         __name__ = code.co_name;
         __doc__ = doc != null ? doc : Py.None;
         // XXX: workaround the compiler passing Py.EmptyObjects
         // instead of null for defaults, whereas we want func_defaults
         // to be None (null) in that situation
         func_defaults = (defaults != null && defaults.length == 0) ? null : defaults;
-        func_code = code;
+        __code__ = code;
         func_closure = closure_cells != null ? new PyTuple(closure_cells) : null;
         PyObject moduleName = globals.__finditem__("__name__");
         __module__ = moduleName != null ? moduleName : Py.None;
@@ -147,26 +147,31 @@ public class PyFunction extends PyObject implements InvocationHandler {
         return function;
     }
 
+    @Deprecated
     @ExposedGet(name = "func_name")
     public PyString getFuncName() {
         return new PyString(__name__);
     }
 
+    @Deprecated
     @ExposedSet(name = "func_name")
     public void setFuncName(PyString func_name) {
         __name__ = func_name.asString();
     }
 
+    @Deprecated
     @ExposedGet(name = "func_doc")
     public PyObject getFuncDoc() {
         return __doc__;
     }
 
+    @Deprecated
     @ExposedSet(name = "func_doc")
     public void setFuncDoc(PyObject func_doc) {
         __doc__ = func_doc;
     }
 
+    @Deprecated
     @ExposedDelete(name = "func_doc")
     public void delFuncDoc() {
         delDoc();
@@ -198,10 +203,22 @@ public class PyFunction extends PyObject implements InvocationHandler {
         func_defaults = null;
     }
 
+    @Deprecated
+    @ExposedGet(name = "func_code")
+    public PyCode getFuncCode() {
+        return __code__;
+    }
+
+    @Deprecated
     @ExposedSet(name = "func_code")
     public void setFuncCode(PyCode code) {
-        if (func_code == null || !(code instanceof PyBaseCode)) {
-            throw Py.TypeError("func_code must be set to a code object");
+        setFuncCode(code);
+    }
+
+    @ExposedSet(name = "__code__")
+    public void setCode(PyCode code) {
+        if (__code__ == null || !(code instanceof PyBaseCode)) {
+            throw Py.TypeError("__code__ must be set to a code object");
         }
         PyBaseCode tcode = (PyBaseCode)code;
         int nfree = tcode.co_freevars == null ? 0 : tcode.co_freevars.length;
@@ -210,7 +227,7 @@ public class PyFunction extends PyObject implements InvocationHandler {
             throw Py.ValueError(String.format("%s() requires a code object with %d free vars,"
                                               + " not %d", __name__, nclosure, nfree));
         }
-        this.func_code = code;
+        this.__code__ = code;
     }
 
     @ExposedDelete(name = "__module__")
@@ -256,6 +273,19 @@ public class PyFunction extends PyObject implements InvocationHandler {
     public void delFuncDict() {
         delDict();
     }
+
+    @ExposedGet(name = "func_globals")
+    public PyObject getFuncGlobals() {
+        return __globals__;
+    }
+
+    @ExposedSet(name = "__globals__")
+    public void setGlobals(PyObject value) {
+        // __setattr__ would set __dict__['func_globals'] = value
+        // without this method
+        throw Py.TypeError("readonly attribute");
+    }
+
 
     @ExposedSet(name = "func_globals")
     public void setFuncGlobals(PyObject value) {
@@ -304,7 +334,7 @@ public class PyFunction extends PyObject implements InvocationHandler {
 
     @Override
     public PyObject __call__(ThreadState state) {
-        return func_code.call(state, func_globals, func_defaults, func_closure);
+        return __code__.call(state, __globals__, func_defaults, func_closure);
     }
 
     @Override
@@ -314,7 +344,7 @@ public class PyFunction extends PyObject implements InvocationHandler {
 
     @Override
     public PyObject __call__(ThreadState state, PyObject arg0) {
-        return func_code.call(state, arg0, func_globals, func_defaults, func_closure);
+        return __code__.call(state, arg0, __globals__, func_defaults, func_closure);
     }
 
     @Override
@@ -324,7 +354,7 @@ public class PyFunction extends PyObject implements InvocationHandler {
 
     @Override
     public PyObject __call__(ThreadState state, PyObject arg0, PyObject arg1) {
-        return func_code.call(state, arg0, arg1, func_globals, func_defaults, func_closure);
+        return __code__.call(state, arg0, arg1, __globals__, func_defaults, func_closure);
     }
 
     @Override
@@ -335,7 +365,7 @@ public class PyFunction extends PyObject implements InvocationHandler {
     @Override
     public PyObject __call__(ThreadState state, PyObject arg0, PyObject arg1,
             PyObject arg2) {
-        return func_code.call(state, arg0, arg1, arg2, func_globals, func_defaults, func_closure);
+        return __code__.call(state, arg0, arg1, arg2, __globals__, func_defaults, func_closure);
     }
 
     @Override
@@ -347,7 +377,7 @@ public class PyFunction extends PyObject implements InvocationHandler {
     @Override
     public PyObject __call__(ThreadState state, PyObject arg0, PyObject arg1,
             PyObject arg2, PyObject arg3) {
-        return func_code.call(state, arg0, arg1, arg2, arg3, func_globals, func_defaults,
+        return __code__.call(state, arg0, arg1, arg2, arg3, __globals__, func_defaults,
                               func_closure);
     }
 
@@ -373,7 +403,7 @@ public class PyFunction extends PyObject implements InvocationHandler {
 
     @ExposedMethod(doc = BuiltinDocs.function___call___doc)
     final PyObject function___call__(ThreadState state, PyObject[] args, String[] keywords) {
-        return func_code.call(state, args, keywords, func_globals, func_defaults, func_closure);
+        return __code__.call(state, args, keywords, __globals__, func_defaults, func_closure);
     }
 
     @Override
@@ -384,7 +414,7 @@ public class PyFunction extends PyObject implements InvocationHandler {
     @Override
     public PyObject __call__(ThreadState state, PyObject arg1, PyObject[] args,
                              String[] keywords) {
-        return func_code.call(state, arg1, args, keywords, func_globals, func_defaults,
+        return __code__.call(state, arg1, args, keywords, __globals__, func_defaults,
                               func_closure);
     }
 
