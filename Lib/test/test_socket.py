@@ -703,7 +703,7 @@ class TestSocketOptions(unittest.TestCase):
             sock.setsockopt(level, option, expected_value)
             retrieved_value = sock.getsockopt(level, option)
             msg = "Retrieved option(%s, %s) value %s != %s(value set)" % (level, option, retrieved_value, expected_value)
-            if is_solaris and option == socket.SO_RCVBUF:
+            if option == socket.SO_RCVBUF:
                 self.assert_(retrieved_value >= expected_value, msg)
             else:
                 self.failUnlessEqual(retrieved_value, expected_value, msg)
@@ -735,12 +735,12 @@ class TestSocketOptions(unittest.TestCase):
             sock.bind( (HOST, PORT+1) )
             sock.connect( (HOST, PORT) )
             msg = "Option value '%s'='%s' did not propagate to implementation socket" % (option, values[-1])
-            if ((is_bsd or is_solaris) and option in (socket.SO_RCVBUF, socket.SO_SNDBUF)):
+            if option in (socket.SO_RCVBUF, socket.SO_SNDBUF):
                 # NOTE: there's no guarantee that bufsize will be the
                 # exact setsockopt value, particularly after
                 # establishing a connection. seems it will be *at least*
                 # the values we test (which are rather small) on
-                # BSDs. may need to relax this on other platforms also
+                # BSDs.
                 self.assert_(sock.getsockopt(level, option) >= values[-1], msg)
             else:
                 self.failUnlessEqual(sock.getsockopt(level, option), values[-1], msg)
@@ -1692,9 +1692,8 @@ class TestGetAddrInfo(unittest.TestCase):
         self.failUnlessEqual(repr(ipv4_address_tuple), "('127.0.0.1', 80)")
 
         addrinfo = socket.getaddrinfo("localhost", 80, socket.AF_INET6, socket.SOCK_STREAM, 0, 0)
-        if not addrinfo and is_bsd:
-            # older FreeBSDs may have spotty IPV6 Java support (at least
-            # our FreeBSD 6.2 buildbot does)
+        if not addrinfo:
+            # Maybe no IPv6 configured on the test machine.
             return
         ipv6_address_tuple = addrinfo[0][4]
         self.failUnless     (ipv6_address_tuple[0] in ["::1", "0:0:0:0:0:0:0:1"])
