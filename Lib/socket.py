@@ -230,6 +230,8 @@ TCP_NODELAY    = 256
 INADDR_ANY = "0.0.0.0"
 INADDR_BROADCAST = "255.255.255.255"
 
+IN6ADDR_ANY_INIT = "::"
+
 # Options with negative constants are not supported
 # They are being added here so that code that refers to them
 # will not break with an AttributeError
@@ -744,39 +746,36 @@ class _ipv6_address_t(_ip_address_t):
 
     __repr__ = __str__
 
-def _get_jsockaddr(address_object, for_udp=False):
-    if address_object is None:
-        return java.net.InetSocketAddress(0) # Let the system pick an ephemeral port
+def _get_jsockaddr(address_object, family, sock_type, proto, flags):
+    # Is this an object that was returned from getaddrinfo? If so, it already contains an InetAddress
     if isinstance(address_object, _ip_address_t):
         return java.net.InetSocketAddress(address_object.jaddress, address_object[1]) 
+    # The user passed an address tuple, not an object returned from getaddrinfo
+    # So we must call getaddrinfo, after some translations and checking
+    if address_object is None:
+        address_object = ("", 0)
     error_message = "Address must be a 2-tuple (ipv4: (host, port)) or a 4-tuple (ipv6: (host, port, flow, scope))"
     if not isinstance(address_object, tuple) or \
-            len(address_object) not in [2,4] or \
+            ((family == AF_INET and len(address_object) != 2) or (family == AF_INET6 and len(address_object) not in [2,4] )) or \
             not isinstance(address_object[0], basestring) or \
             not isinstance(address_object[1], (int, long)):
         raise TypeError(error_message)
     if len(address_object) == 4 and not isinstance(address_object[3], (int, long)):
         raise TypeError(error_message)
     hostname, port = address_object[0].strip(), address_object[1]
-    if for_udp:
-        if hostname == "":
-            hostname = INADDR_ANY
-        elif hostname == "<broadcast>":
-            hostname = INADDR_BROADCAST
-    else:
-        if hostname == "":
-            hostname = None
-    if hostname is None:
-        return java.net.InetSocketAddress(port)
+    if family == AF_INET and sock_type == SOCK_DGRAM and hostname == "<broadcast>":
+        hostname = INADDR_BROADCAST
+    if hostname == "":
+        if flags & AI_PASSIVE:
+            hostname = {AF_INET: INADDR_ANY, AF_INET6: IN6ADDR_ANY_INIT}[family]
+        else:
+            hostname = "localhost"
     if isinstance(hostname, unicode):
         hostname = _encode_idna(hostname)
-    if len(address_object) == 4:
-        # There is no way to get a Inet6Address: Inet6Address.getByName() simply calls
-        # InetAddress.getByName,() which also returns Inet4Address objects
-        # If users want to use IPv6 address, scoped or not, 
-        # they should use getaddrinfo(family=AF_INET6)
-        pass
-    return java.net.InetSocketAddress(java.net.InetAddress.getByName(hostname), port)
+    addresses = getaddrinfo(hostname, port, family, sock_type, proto, flags)
+    if len(addresses) == 0:
+        raise gaierror(errno.EGETADDRINFOFAILED, 'getaddrinfo failed')
+    return java.net.InetSocketAddress(addresses[0][4].jaddress, port)
 
 # Workaround for this (predominantly windows) issue
 # http://wiki.python.org/jython/NewSocketModule#IPV6_address_support
@@ -1072,7 +1071,7 @@ class _tcpsocket(_nonblocking_api_mixin):
         assert not self.sock_impl
         assert not self.local_addr
         # Do the address format check
-        _get_jsockaddr(addr)
+        _get_jsockaddr(addr, self.family, self.type, self.proto, 0)
         self.local_addr = addr
 
     def listen(self, backlog):
@@ -1080,7 +1079,8 @@ class _tcpsocket(_nonblocking_api_mixin):
         try:
             assert not self.sock_impl
             self.server = 1
-            self.sock_impl = _server_socket_impl(_get_jsockaddr(self.local_addr), backlog, self.pending_options[ (SOL_SOCKET, SO_REUSEADDR) ])
+            self.sock_impl = _server_socket_impl(_get_jsockaddr(self.local_addr, self.family, self.type, self.proto, AI_PASSIVE), 
+                                  backlog, self.pending_options[ (SOL_SOCKET, SO_REUSEADDR) ])
             self._config()
         except java.lang.Exception, jlx:
             raise _map_exception(jlx)
@@ -1107,9 +1107,10 @@ class _tcpsocket(_nonblocking_api_mixin):
             assert not self.sock_impl
             self.sock_impl = _client_socket_impl()
             if self.local_addr: # Has the socket been bound to a local address?
-                self.sock_impl.bind(_get_jsockaddr(self.local_addr), self.pending_options[ (SOL_SOCKET, SO_REUSEADDR) ])
+                self.sock_impl.bind(_get_jsockaddr(self.local_addr, self.family, self.type, self.proto, 0), 
+                                     self.pending_options[ (SOL_SOCKET, SO_REUSEADDR) ])
             self._config() # Configure timeouts, etc, now that the socket exists
-            self.sock_impl.connect(_get_jsockaddr(addr))
+            self.sock_impl.connect(_get_jsockaddr(addr, self.family, self.type, self.proto, 0))
         except java.lang.Exception, jlx:
             raise _map_exception(jlx)
 
@@ -1218,7 +1219,8 @@ class _udpsocket(_nonblocking_api_mixin):
     def bind(self, addr):
         try:
             assert not self.sock_impl
-            self.sock_impl = _datagram_socket_impl(_get_jsockaddr(addr, True), self.pending_options[ (SOL_SOCKET, SO_REUSEADDR) ])
+            self.sock_impl = _datagram_socket_impl(_get_jsockaddr(addr, self.family, self.type, self.proto, AI_PASSIVE), 
+                                                    self.pending_options[ (SOL_SOCKET, SO_REUSEADDR) ])
             self._config()
         except java.lang.Exception, jlx:
             raise _map_exception(jlx)
@@ -1229,7 +1231,7 @@ class _udpsocket(_nonblocking_api_mixin):
             if not self.sock_impl:
                 self.sock_impl = _datagram_socket_impl()
                 self._config()
-                self.sock_impl.connect(_get_jsockaddr(addr))
+                self.sock_impl.connect(_get_jsockaddr(addr, self.family, self.type, self.proto, 0))
             self.connected = True
         except java.lang.Exception, jlx:
             raise _map_exception(jlx)
@@ -1252,7 +1254,7 @@ class _udpsocket(_nonblocking_api_mixin):
                 self.sock_impl = _datagram_socket_impl()
                 self._config()
             byte_array = java.lang.String(data).getBytes('iso-8859-1')
-            result = self.sock_impl.sendto(byte_array, _get_jsockaddr(addr, True), flags)
+            result = self.sock_impl.sendto(byte_array, _get_jsockaddr(addr, self.family, self.type, self.proto, 0), flags)
             return result
         except java.lang.Exception, jlx:
             raise _map_exception(jlx)
