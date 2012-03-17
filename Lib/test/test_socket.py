@@ -1884,7 +1884,7 @@ class TestJython_get_jsockaddr(unittest.TestCase):
 
     def testIPV4AddressesFromGetAddrInfo(self):
         local_addr = socket.getaddrinfo("localhost", 80, socket.AF_INET, socket.SOCK_STREAM, 0, 0)[0][4]
-        sockaddr = socket._get_jsockaddr(local_addr)
+        sockaddr = socket._get_jsockaddr(local_addr, socket.AF_INET, None, 0, 0)
         self.failUnless(isinstance(sockaddr, java.net.InetSocketAddress), "_get_jsockaddr returned wrong type: '%s'" % str(type(sockaddr)))
         self.failUnlessEqual(sockaddr.address.hostAddress, "127.0.0.1")
         self.failUnlessEqual(sockaddr.port, 80)
@@ -1895,27 +1895,28 @@ class TestJython_get_jsockaddr(unittest.TestCase):
             # older FreeBSDs may have spotty IPV6 Java support
             return
         local_addr = addrinfo[0][4]
-        sockaddr = socket._get_jsockaddr(local_addr)
+        sockaddr = socket._get_jsockaddr(local_addr, socket.AF_INET6, None, 0, 0)
         self.failUnless(isinstance(sockaddr, java.net.InetSocketAddress), "_get_jsockaddr returned wrong type: '%s'" % str(type(sockaddr)))
         self.failUnless(sockaddr.address.hostAddress in ["::1", "0:0:0:0:0:0:0:1"])
         self.failUnlessEqual(sockaddr.port, 80)
 
     def testAddressesFrom2Tuple(self):
-        for addr_tuple in [
-            ("localhost", 80),
+        for family, addr_tuple, jaddress_type, expected in [
+            (socket.AF_INET,  ("localhost", 80), java.net.Inet4Address, ["127.0.0.1"]),
+            (socket.AF_INET6, ("localhost", 80), java.net.Inet6Address, ["::1", "0:0:0:0:0:0:0:1"]),
             ]:
-            sockaddr = socket._get_jsockaddr(addr_tuple)
+            sockaddr = socket._get_jsockaddr(addr_tuple, family, None, 0, 0)
             self.failUnless(isinstance(sockaddr, java.net.InetSocketAddress), "_get_jsockaddr returned wrong type: '%s'" % str(type(sockaddr)))
-            self.failUnless(sockaddr.address.hostAddress in ["127.0.0.1", "::1", "0:0:0:0:0:0:0:1"])
+            self.failUnless(isinstance(sockaddr.address, jaddress_type), "_get_jsockaddr returned wrong address type: '%s'(family=%d)" % (str(type(sockaddr.address)), family))
+            self.failUnless(sockaddr.address.hostAddress in expected)
             self.failUnlessEqual(sockaddr.port, 80)
 
     def testAddressesFrom4Tuple(self):
-        # This test disabled: cannot construct IPV6 addresses from 4-tuple
-        return
         for addr_tuple in [
+            ("localhost", 80),
             ("localhost", 80, 0, 0),
             ]:
-            sockaddr = socket._get_jsockaddr(addr_tuple)
+            sockaddr = socket._get_jsockaddr(addr_tuple, socket.AF_INET6, None, 0, 0)
             self.failUnless(isinstance(sockaddr, java.net.InetSocketAddress), "_get_jsockaddr returned wrong type: '%s'" % str(type(sockaddr)))
             self.failUnless(isinstance(sockaddr.address, java.net.Inet6Address), "_get_jsockaddr returned wrong address type: '%s'" % str(type(sockaddr.address)))
             self.failUnless(sockaddr.address.hostAddress in ["::1", "0:0:0:0:0:0:0:1"])
@@ -1923,13 +1924,44 @@ class TestJython_get_jsockaddr(unittest.TestCase):
             self.failUnlessEqual(sockaddr.port, 80)
 
     def testSpecialHostnames(self):
-        for addr_tuple, for_udp, expected_hostname in [
-            ( ("", 80),            False, socket.INADDR_ANY),
-            ( ("", 80),            True,  socket.INADDR_ANY),
-            ( ("<broadcast>", 80), True,  socket.INADDR_BROADCAST),
+        for family, sock_type, flags, addr_tuple, expected in [
+            ( socket.AF_INET,  None,              0,                 ("", 80),            ["localhost"]),
+            ( socket.AF_INET,  None,              socket.AI_PASSIVE, ("", 80),            [socket.INADDR_ANY]),
+            ( socket.AF_INET6, None,              0,                 ("", 80),            ["localhost"]),
+            ( socket.AF_INET6, None,              socket.AI_PASSIVE, ("", 80),            [socket.IN6ADDR_ANY_INIT, "0:0:0:0:0:0:0:0"]),
+            ( socket.AF_INET,  socket.SOCK_DGRAM, 0,                 ("<broadcast>", 80), [socket.INADDR_BROADCAST]),
             ]:
-            sockaddr = socket._get_jsockaddr(addr_tuple, for_udp)
-            self.failUnlessEqual(sockaddr.hostName, expected_hostname, "_get_jsockaddr returned wrong hostname '%s' for special hostname '%s'" % (sockaddr.hostName, expected_hostname))
+            sockaddr = socket._get_jsockaddr(addr_tuple, family, sock_type, 0, flags)
+            self.failUnless(sockaddr.hostName in expected, "_get_jsockaddr returned wrong hostname '%s' for special hostname '%s'(family=%d)" % (sockaddr.hostName, addr_tuple[0], family))
+
+    def testNoneTo_get_jsockaddr(self):
+        for family, flags, expected in [
+            ( socket.AF_INET,  0,                 ["localhost"]),
+            ( socket.AF_INET,  socket.AI_PASSIVE, [socket.INADDR_ANY]),
+            ( socket.AF_INET6, 0,                 ["localhost"]),
+            ( socket.AF_INET6, socket.AI_PASSIVE, [socket.IN6ADDR_ANY_INIT, "0:0:0:0:0:0:0:0"]),
+            ]:
+            sockaddr = socket._get_jsockaddr(None, family, None, 0, flags)
+            self.failUnless(sockaddr.hostName in expected, "_get_jsockaddr returned wrong hostname '%s' for sock tuple == None (family=%d)" % (sockaddr.hostName, family))
+
+    def testBadAddressTuples(self):
+        for family, address_tuple in [
+            ( socket.AF_INET,  ()                      ),
+            ( socket.AF_INET,  ("")                    ),
+            ( socket.AF_INET,  (80)                    ),
+            ( socket.AF_INET,  ("localhost", 80, 0)    ),
+            ( socket.AF_INET,  ("localhost", 80, 0, 0) ),
+            ( socket.AF_INET6,  ()                      ),
+            ( socket.AF_INET6,  ("")                    ),
+            ( socket.AF_INET6,  (80)                    ),
+            ( socket.AF_INET6,  ("localhost", 80, 0)    ),
+            ]:
+            try:
+                sockaddr = socket._get_jsockaddr(address_tuple, family, None, 0, 0)
+            except TypeError:
+                pass
+            else:
+                self.fail("Bad tuple %s (family=%d) should have raised TypeError" % (str(address_tuple), family))
 
 class TestExceptions(unittest.TestCase):
 
