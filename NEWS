@@ -1,5 +1,9 @@
 Jython NEWS
 
+Jython 2.5.3b2
+  Bugs Fixed
+    - [ 1844 ] bad host returned by getsockname
+
 Jython 2.5.3b1
   Bugs Fixed
     - [ 1727 ] Error in Jython 2.5.2 with os.stat and varargs
