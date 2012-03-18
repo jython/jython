@@ -25,7 +25,7 @@ public class BuiltinDocs {
         "x.__hash__() <==> hash(x)";
 
     public final static String object___init___doc = 
-        "x.__init__(...) initializes x; see x.__class__.__doc__ for signature";
+        "x.__init__(...) initializes x; see help(type(x)) for signature";
 
     public final static String object___new___doc = 
         "T.__new__(S, ...) -> a new object with type S, a subtype of T";
@@ -43,7 +43,8 @@ public class BuiltinDocs {
         "x.__setattr__('name', value) <==> x.name = value";
 
     public final static String object___sizeof___doc = 
-        "__sizeof__() -> size of object in memory, in bytes";
+        "__sizeof__() -> int\n" + 
+        "size of object in memory, in bytes";
 
     public final static String object___str___doc = 
         "x.__str__() <==> str(x)";
@@ -65,8 +66,8 @@ public class BuiltinDocs {
         "The most base type";
 
     public final static String type___bases___doc = 
-        "tuple() -> an empty tuple\n" + 
-        "tuple(sequence) -> tuple initialized from sequence's items\n" + 
+        "tuple() -> empty tuple\n" + 
+        "tuple(iterable) -> tuple initialized from iterable's items\n" + 
         "\n" + 
         "If the argument is a tuple, the return value is the same object.";
 
@@ -87,9 +88,6 @@ public class BuiltinDocs {
     public final static String type___class___doc = 
         "type(object) -> the object's type\n" + 
         "type(name, bases, dict) -> a new type";
-
-    public final static String type___cmp___doc = 
-        "x.__cmp__(y) <==> cmp(x,y)";
 
     public final static String type___delattr___doc = 
         "x.__delattr__('name') <==> del x.name";
@@ -142,10 +140,11 @@ public class BuiltinDocs {
         "x.__hash__() <==> hash(x)";
 
     public final static String type___init___doc = 
-        "x.__init__(...) initializes x; see x.__class__.__doc__ for signature";
+        "x.__init__(...) initializes x; see help(type(x)) for signature";
 
     public final static String type___instancecheck___doc = 
-        "";
+        "__instancecheck__() -> bool\n" + 
+        "check if an object is an instance";
 
     public final static String type___itemsize___doc = 
         "int(x[, base]) -> integer\n" + 
@@ -171,8 +170,8 @@ public class BuiltinDocs {
         "If the argument is a string, the return value is the same object.";
 
     public final static String type___mro___doc = 
-        "tuple() -> an empty tuple\n" + 
-        "tuple(sequence) -> tuple initialized from sequence's items\n" + 
+        "tuple() -> empty tuple\n" + 
+        "tuple(iterable) -> tuple initialized from iterable's items\n" + 
         "\n" + 
         "If the argument is a tuple, the return value is the same object.";
 
@@ -201,13 +200,15 @@ public class BuiltinDocs {
         "x.__setattr__('name', value) <==> x.name = value";
 
     public final static String type___sizeof___doc = 
-        "__sizeof__() -> size of object in memory, in bytes";
+        "__sizeof__() -> int\n" + 
+        "size of object in memory, in bytes";
 
     public final static String type___str___doc = 
         "x.__str__() <==> str(x)";
 
     public final static String type___subclasscheck___doc = 
-        "";
+        "__subclasscheck__() -> bool\n" + 
+        "check if a class is a subclass";
 
     public final static String type___subclasses___doc = 
         "__subclasses__() -> list of immediate subclasses";
@@ -263,7 +264,7 @@ public class BuiltinDocs {
     public final static String unicode___format___doc = 
         "S.__format__(format_spec) -> unicode\n" + 
         "\n" + 
-        "";
+        "Return a formatted version of S as described by format_spec.";
 
     public final static String unicode___ge___doc = 
         "x.__ge__(y) <==> x>=y";
@@ -279,8 +280,8 @@ public class BuiltinDocs {
 
     public final static String unicode___getslice___doc = 
         "x.__getslice__(i, j) <==> x[i:j]\n" + 
-        "	       \n" + 
-        "	       Use of negative indices is not supported.";
+        "           \n" + 
+        "           Use of negative indices is not supported.";
 
     public final static String unicode___gt___doc = 
         "x.__gt__(y) <==> x>y";
@@ -289,7 +290,7 @@ public class BuiltinDocs {
         "x.__hash__() <==> hash(x)";
 
     public final static String unicode___init___doc = 
-        "x.__init__(...) initializes x; see x.__class__.__doc__ for signature";
+        "x.__init__(...) initializes x; see help(type(x)) for signature";
 
     public final static String unicode___le___doc = 
         "x.__le__(y) <==> x<=y";
@@ -357,7 +358,7 @@ public class BuiltinDocs {
         "S.capitalize() -> unicode\n" + 
         "\n" + 
         "Return a capitalized version of S, i.e. make the first character\n" + 
-        "have upper case.";
+        "have upper case and the rest lower case.";
 
     public final static String unicode_center_doc = 
         "S.center(width[, fillchar]) -> unicode\n" + 
@@ -418,7 +419,8 @@ public class BuiltinDocs {
     public final static String unicode_format_doc = 
         "S.format(*args, **kwargs) -> unicode\n" + 
         "\n" + 
-        "";
+        "Return a formatted version of S, using substitutions from args and kwargs.\n" + 
+        "The substitutions are identified by braces ('{' and '}').";
 
     public final static String unicode_index_doc = 
         "S.index(sub [,start [,end]]) -> int\n" + 
@@ -482,10 +484,10 @@ public class BuiltinDocs {
         "at least one cased character in S, False otherwise.";
 
     public final static String unicode_join_doc = 
-        "S.join(sequence) -> unicode\n" + 
+        "S.join(iterable) -> unicode\n" + 
         "\n" + 
         "Return a string which is the concatenation of the strings in the\n" + 
-        "sequence.  The separator between elements is S.";
+        "iterable.  The separator between elements is S.";
 
     public final static String unicode_ljust_doc = 
         "S.ljust(width[, fillchar]) -> int\n" + 
@@ -513,7 +515,7 @@ public class BuiltinDocs {
         "found, return S and two empty strings.";
 
     public final static String unicode_replace_doc = 
-        "S.replace (old, new[, count]) -> unicode\n" + 
+        "S.replace(old, new[, count]) -> unicode\n" + 
         "\n" + 
         "Return a copy of S with all occurrences of substring\n" + 
         "old replaced by new.  If the optional argument count is\n" + 
@@ -540,7 +542,7 @@ public class BuiltinDocs {
         "done using the specified fill character (default is a space).";
 
     public final static String unicode_rpartition_doc = 
-        "S.rpartition(sep) -> (tail, sep, head)\n" + 
+        "S.rpartition(sep) -> (head, sep, tail)\n" + 
         "\n" + 
         "Search for the separator sep in S, starting at the end of S, and return\n" + 
         "the part before it, the separator itself, and the part after it.  If the\n" + 
@@ -644,12 +646,12 @@ public class BuiltinDocs {
         "x.__delitem__(y) <==> del x[y]";
 
     public final static String dict_doc = 
-        "dict() -> new empty dictionary.\n" + 
+        "dict() -> new empty dictionary\n" + 
         "dict(mapping) -> new dictionary initialized from a mapping object's\n" + 
-        "    (key, value) pairs.\n" + 
-        "dict(seq) -> new dictionary initialized as if via:\n" + 
+        "    (key, value) pairs\n" + 
+        "dict(iterable) -> new dictionary initialized as if via:\n" + 
         "    d = {}\n" + 
-        "    for k, v in seq:\n" + 
+        "    for k, v in iterable:\n" + 
         "        d[k] = v\n" + 
         "dict(**kwargs) -> new dictionary initialized with the name=value pairs\n" + 
         "    in the keyword argument list.  For example:  dict(one=1, two=2)";
@@ -676,7 +678,7 @@ public class BuiltinDocs {
         "";
 
     public final static String dict___init___doc = 
-        "x.__init__(...) initializes x; see x.__class__.__doc__ for signature";
+        "x.__init__(...) initializes x; see help(type(x)) for signature";
 
     public final static String dict___iter___doc = 
         "x.__iter__() <==> iter(x)";
@@ -777,6 +779,15 @@ public class BuiltinDocs {
     public final static String dict_values_doc = 
         "D.values() -> list of D's values";
 
+    public final static String dict_viewitems_doc = 
+        "D.viewitems() -> a set-like object providing a view on D's items";
+
+    public final static String dict_viewkeys_doc = 
+        "D.viewkeys() -> a set-like object providing a view on D's keys";
+
+    public final static String dict_viewvalues_doc = 
+        "D.viewvalues() -> an object providing a view on D's values";
+
     // Docs for <type 'list'>
     public final static String list___add___doc = 
         "x.__add__(y) <==> x+y";
@@ -796,12 +807,12 @@ public class BuiltinDocs {
 
     public final static String list___delslice___doc = 
         "x.__delslice__(i, j) <==> del x[i:j]\n" + 
-        "	       \n" + 
-        "	       Use of negative indices is not supported.";
+        "           \n" + 
+        "           Use of negative indices is not supported.";
 
     public final static String list_doc = 
-        "list() -> new list\n" + 
-        "list(sequence) -> new list initialized from sequence's items";
+        "list() -> new empty list\n" + 
+        "list(iterable) -> new list initialized from iterable's items";
 
     public final static String list___eq___doc = 
         "x.__eq__(y) <==> x==y";
@@ -820,8 +831,8 @@ public class BuiltinDocs {
 
     public final static String list___getslice___doc = 
         "x.__getslice__(i, j) <==> x[i:j]\n" + 
-        "	       \n" + 
-        "	       Use of negative indices is not supported.";
+        "           \n" + 
+        "           Use of negative indices is not supported.";
 
     public final static String list___gt___doc = 
         "x.__gt__(y) <==> x>y";
@@ -836,7 +847,7 @@ public class BuiltinDocs {
         "x.__imul__(y) <==> x*=y";
 
     public final static String list___init___doc = 
-        "x.__init__(...) initializes x; see x.__class__.__doc__ for signature";
+        "x.__init__(...) initializes x; see help(type(x)) for signature";
 
     public final static String list___iter___doc = 
         "x.__iter__() <==> iter(x)";
@@ -882,8 +893,8 @@ public class BuiltinDocs {
 
     public final static String list___setslice___doc = 
         "x.__setslice__(i, j, y) <==> x[i:j]=y\n" + 
-        "	       \n" + 
-        "	       Use  of negative indices is not supported.";
+        "           \n" + 
+        "           Use  of negative indices is not supported.";
 
     public final static String list___sizeof___doc = 
         "L.__sizeof__() -- size of L in memory, in bytes";
@@ -957,7 +968,7 @@ public class BuiltinDocs {
         "x.__hash__() <==> hash(x)";
 
     public final static String slice___init___doc = 
-        "x.__init__(...) initializes x; see x.__class__.__doc__ for signature";
+        "x.__init__(...) initializes x; see help(type(x)) for signature";
 
     public final static String slice___new___doc = 
         "T.__new__(S, ...) -> a new object with type S, a subtype of T";
@@ -975,7 +986,8 @@ public class BuiltinDocs {
         "x.__setattr__('name', value) <==> x.name = value";
 
     public final static String slice___sizeof___doc = 
-        "__sizeof__() -> size of object in memory, in bytes";
+        "__sizeof__() -> int\n" + 
+        "size of object in memory, in bytes";
 
     public final static String slice___str___doc = 
         "x.__str__() <==> str(x)";
@@ -1021,7 +1033,7 @@ public class BuiltinDocs {
         "Typical use to call a cooperative superclass method:\n" + 
         "class C(B):\n" + 
         "    def meth(self, arg):\n" + 
-        "	 super(C, self).meth(arg)";
+        "        super(C, self).meth(arg)";
 
     public final static String super___format___doc = 
         "default object formatter";
@@ -1036,7 +1048,7 @@ public class BuiltinDocs {
         "x.__hash__() <==> hash(x)";
 
     public final static String super___init___doc = 
-        "x.__init__(...) initializes x; see x.__class__.__doc__ for signature";
+        "x.__init__(...) initializes x; see help(type(x)) for signature";
 
     public final static String super___new___doc = 
         "T.__new__(S, ...) -> a new object with type S, a subtype of T";
@@ -1060,7 +1072,8 @@ public class BuiltinDocs {
         "x.__setattr__('name', value) <==> x.name = value";
 
     public final static String super___sizeof___doc = 
-        "__sizeof__() -> size of object in memory, in bytes";
+        "__sizeof__() -> int\n" + 
+        "size of object in memory, in bytes";
 
     public final static String super___str___doc = 
         "x.__str__() <==> str(x)";
@@ -1094,8 +1107,8 @@ public class BuiltinDocs {
         "To declare a static method, use this idiom:\n" + 
         "\n" + 
         "     class C:\n" + 
-        "         def f(arg1, arg2, ...): ...\n" + 
-        "	 f = staticmethod(f)\n" + 
+        "     def f(arg1, arg2, ...): ...\n" + 
+        "     f = staticmethod(f)\n" + 
         "\n" + 
         "It can be called either on the class (e.g. C.f()) or on an instance\n" + 
         "(e.g. C().f()).  The instance is ignored except for its class.\n" + 
@@ -1105,6 +1118,9 @@ public class BuiltinDocs {
 
     public final static String staticmethod___format___doc = 
         "default object formatter";
+
+    public final static String staticmethod___func___doc = 
+        "";
 
     public final static String staticmethod___get___doc = 
         "descr.__get__(obj[, type]) -> value";
@@ -1116,7 +1132,7 @@ public class BuiltinDocs {
         "x.__hash__() <==> hash(x)";
 
     public final static String staticmethod___init___doc = 
-        "x.__init__(...) initializes x; see x.__class__.__doc__ for signature";
+        "x.__init__(...) initializes x; see help(type(x)) for signature";
 
     public final static String staticmethod___new___doc = 
         "T.__new__(S, ...) -> a new object with type S, a subtype of T";
@@ -1134,7 +1150,8 @@ public class BuiltinDocs {
         "x.__setattr__('name', value) <==> x.name = value";
 
     public final static String staticmethod___sizeof___doc = 
-        "__sizeof__() -> size of object in memory, in bytes";
+        "__sizeof__() -> int\n" + 
+        "size of object in memory, in bytes";
 
     public final static String staticmethod___str___doc = 
         "x.__str__() <==> str(x)";
@@ -1216,7 +1233,7 @@ public class BuiltinDocs {
         "x.__hash__() <==> hash(x)";
 
     public final static String float___init___doc = 
-        "x.__init__(...) initializes x; see x.__class__.__doc__ for signature";
+        "x.__init__(...) initializes x; see help(type(x)) for signature";
 
     public final static String float___int___doc = 
         "x.__int__() <==> int(x)";
@@ -1307,7 +1324,8 @@ public class BuiltinDocs {
         "This affects how floats are converted to and from binary strings.";
 
     public final static String float___sizeof___doc = 
-        "__sizeof__() -> size of object in memory, in bytes";
+        "__sizeof__() -> int\n" + 
+        "size of object in memory, in bytes";
 
     public final static String float___str___doc = 
         "x.__str__() <==> str(x)";
@@ -1383,12 +1401,13 @@ public class BuiltinDocs {
         "x.__delattr__('name') <==> del x.name";
 
     public final static String enumerate_doc = 
-        "enumerate(iterable) -> iterator for index, value of iterable\n" + 
+        "enumerate(iterable[, start]) -> iterator for index, value of iterable\n" + 
         "\n" + 
         "Return an enumerate object.  iterable must be another object that supports\n" + 
         "iteration.  The enumerate object yields pairs containing a count (from\n" + 
-        "zero) and a value yielded by the iterable argument.  enumerate is useful\n" + 
-        "for obtaining an indexed list: (0, seq[0]), (1, seq[1]), (2, seq[2]), ...";
+        "start, which defaults to zero) and a value yielded by the iterable argument.\n" + 
+        "enumerate is useful for obtaining an indexed list:\n" + 
+        "    (0, seq[0]), (1, seq[1]), (2, seq[2]), ...";
 
     public final static String enumerate___format___doc = 
         "default object formatter";
@@ -1400,7 +1419,7 @@ public class BuiltinDocs {
         "x.__hash__() <==> hash(x)";
 
     public final static String enumerate___init___doc = 
-        "x.__init__(...) initializes x; see x.__class__.__doc__ for signature";
+        "x.__init__(...) initializes x; see help(type(x)) for signature";
 
     public final static String enumerate___iter___doc = 
         "x.__iter__() <==> iter(x)";
@@ -1421,7 +1440,8 @@ public class BuiltinDocs {
         "x.__setattr__('name', value) <==> x.name = value";
 
     public final static String enumerate___sizeof___doc = 
-        "__sizeof__() -> size of object in memory, in bytes";
+        "__sizeof__() -> int\n" + 
+        "size of object in memory, in bytes";
 
     public final static String enumerate___str___doc = 
         "x.__str__() <==> str(x)";
@@ -1459,7 +1479,7 @@ public class BuiltinDocs {
         "x.__hash__() <==> hash(x)";
 
     public final static String basestring___init___doc = 
-        "x.__init__(...) initializes x; see x.__class__.__doc__ for signature";
+        "x.__init__(...) initializes x; see help(type(x)) for signature";
 
     public final static String basestring___new___doc = 
         "T.__new__(S, ...) -> a new object with type S, a subtype of T";
@@ -1477,7 +1497,8 @@ public class BuiltinDocs {
         "x.__setattr__('name', value) <==> x.name = value";
 
     public final static String basestring___sizeof___doc = 
-        "__sizeof__() -> size of object in memory, in bytes";
+        "__sizeof__() -> int\n" + 
+        "size of object in memory, in bytes";
 
     public final static String basestring___str___doc = 
         "x.__str__() <==> str(x)";
@@ -1554,7 +1575,7 @@ public class BuiltinDocs {
         "x[y:z] <==> x[y.__index__():z.__index__()]";
 
     public final static String long___init___doc = 
-        "x.__init__(...) initializes x; see x.__class__.__doc__ for signature";
+        "x.__init__(...) initializes x; see help(type(x)) for signature";
 
     public final static String long___int___doc = 
         "x.__int__() <==> int(x)";
@@ -1679,6 +1700,15 @@ public class BuiltinDocs {
     public final static String long___xor___doc = 
         "x.__xor__(y) <==> x^y";
 
+    public final static String long_bit_length_doc = 
+        "long.bit_length() -> int or long\n" + 
+        "\n" + 
+        "Number of bits necessary to represent self in binary.\n" + 
+        ">>> bin(37L)\n" + 
+        "'0b100101'\n" + 
+        ">>> (37L).bit_length()\n" + 
+        "6";
+
     public final static String long_conjugate_doc = 
         "Returns self, the complex conjugate of any long.";
 
@@ -1709,8 +1739,8 @@ public class BuiltinDocs {
         "x.__delattr__('name') <==> del x.name";
 
     public final static String tuple_doc = 
-        "tuple() -> an empty tuple\n" + 
-        "tuple(sequence) -> tuple initialized from sequence's items\n" + 
+        "tuple() -> empty tuple\n" + 
+        "tuple(iterable) -> tuple initialized from iterable's items\n" + 
         "\n" + 
         "If the argument is a tuple, the return value is the same object.";
 
@@ -1734,8 +1764,8 @@ public class BuiltinDocs {
 
     public final static String tuple___getslice___doc = 
         "x.__getslice__(i, j) <==> x[i:j]\n" + 
-        "	       \n" + 
-        "	       Use of negative indices is not supported.";
+        "           \n" + 
+        "           Use of negative indices is not supported.";
 
     public final static String tuple___gt___doc = 
         "x.__gt__(y) <==> x>y";
@@ -1744,7 +1774,7 @@ public class BuiltinDocs {
         "x.__hash__() <==> hash(x)";
 
     public final static String tuple___init___doc = 
-        "x.__init__(...) initializes x; see x.__class__.__doc__ for signature";
+        "x.__init__(...) initializes x; see help(type(x)) for signature";
 
     public final static String tuple___iter___doc = 
         "x.__iter__() <==> iter(x)";
@@ -1828,9 +1858,9 @@ public class BuiltinDocs {
         "x.__eq__(y) <==> x==y";
 
     public final static String str___format___doc = 
-        "S.__format__(format_spec) -> unicode\n" + 
+        "S.__format__(format_spec) -> string\n" + 
         "\n" + 
-        "";
+        "Return a formatted version of S as described by format_spec.";
 
     public final static String str___ge___doc = 
         "x.__ge__(y) <==> x>=y";
@@ -1846,8 +1876,8 @@ public class BuiltinDocs {
 
     public final static String str___getslice___doc = 
         "x.__getslice__(i, j) <==> x[i:j]\n" + 
-        "	       \n" + 
-        "	       Use of negative indices is not supported.";
+        "           \n" + 
+        "           Use of negative indices is not supported.";
 
     public final static String str___gt___doc = 
         "x.__gt__(y) <==> x>y";
@@ -1856,7 +1886,7 @@ public class BuiltinDocs {
         "x.__hash__() <==> hash(x)";
 
     public final static String str___init___doc = 
-        "x.__init__(...) initializes x; see x.__class__.__doc__ for signature";
+        "x.__init__(...) initializes x; see help(type(x)) for signature";
 
     public final static String str___le___doc = 
         "x.__le__(y) <==> x<=y";
@@ -1981,9 +2011,10 @@ public class BuiltinDocs {
         "Return -1 on failure.";
 
     public final static String str_format_doc = 
-        "S.format(*args, **kwargs) -> unicode\n" + 
+        "S.format(*args, **kwargs) -> string\n" + 
         "\n" + 
-        "";
+        "Return a formatted version of S, using substitutions from args and kwargs.\n" + 
+        "The substitutions are identified by braces ('{' and '}').";
 
     public final static String str_index_doc = 
         "S.index(sub [,start [,end]]) -> int\n" + 
@@ -2035,10 +2066,10 @@ public class BuiltinDocs {
         "at least one cased character in S, False otherwise.";
 
     public final static String str_join_doc = 
-        "S.join(sequence) -> string\n" + 
+        "S.join(iterable) -> string\n" + 
         "\n" + 
         "Return a string which is the concatenation of the strings in the\n" + 
-        "sequence.  The separator between elements is S.";
+        "iterable.  The separator between elements is S.";
 
     public final static String str_ljust_doc = 
         "S.ljust(width[, fillchar]) -> string\n" + 
@@ -2066,7 +2097,7 @@ public class BuiltinDocs {
         "found, return S and two empty strings.";
 
     public final static String str_replace_doc = 
-        "S.replace (old, new[, count]) -> string\n" + 
+        "S.replace(old, new[, count]) -> string\n" + 
         "\n" + 
         "Return a copy of string S with all occurrences of substring\n" + 
         "old replaced by new.  If the optional argument count is\n" + 
@@ -2093,7 +2124,7 @@ public class BuiltinDocs {
         "done using the specified fill character (default is a space)";
 
     public final static String str_rpartition_doc = 
-        "S.rpartition(sep) -> (tail, sep, head)\n" + 
+        "S.rpartition(sep) -> (head, sep, tail)\n" + 
         "\n" + 
         "Search for the separator sep in S, starting at the end of S, and return\n" + 
         "the part before it, the separator itself, and the part after it.  If the\n" + 
@@ -2224,7 +2255,7 @@ public class BuiltinDocs {
         "x.__hash__() <==> hash(x)";
 
     public final static String property___init___doc = 
-        "x.__init__(...) initializes x; see x.__class__.__doc__ for signature";
+        "x.__init__(...) initializes x; see help(type(x)) for signature";
 
     public final static String property___new___doc = 
         "T.__new__(S, ...) -> a new object with type S, a subtype of T";
@@ -2245,7 +2276,8 @@ public class BuiltinDocs {
         "x.__setattr__('name', value) <==> x.name = value";
 
     public final static String property___sizeof___doc = 
-        "__sizeof__() -> size of object in memory, in bytes";
+        "__sizeof__() -> int\n" + 
+        "size of object in memory, in bytes";
 
     public final static String property___str___doc = 
         "x.__str__() <==> str(x)";
@@ -2342,7 +2374,7 @@ public class BuiltinDocs {
         "x[y:z] <==> x[y.__index__():z.__index__()]";
 
     public final static String int___init___doc = 
-        "x.__init__(...) initializes x; see x.__class__.__doc__ for signature";
+        "x.__init__(...) initializes x; see help(type(x)) for signature";
 
     public final static String int___int___doc = 
         "x.__int__() <==> int(x)";
@@ -2441,7 +2473,8 @@ public class BuiltinDocs {
         "x.__setattr__('name', value) <==> x.name = value";
 
     public final static String int___sizeof___doc = 
-        "__sizeof__() -> size of object in memory, in bytes";
+        "__sizeof__() -> int\n" + 
+        "size of object in memory, in bytes";
 
     public final static String int___str___doc = 
         "x.__str__() <==> str(x)";
@@ -2466,6 +2499,15 @@ public class BuiltinDocs {
 
     public final static String int___xor___doc = 
         "x.__xor__(y) <==> x^y";
+
+    public final static String int_bit_length_doc = 
+        "int.bit_length() -> int\n" + 
+        "\n" + 
+        "Number of bits necessary to represent self in binary.\n" + 
+        ">>> bin(37)\n" + 
+        "'0b100101'\n" + 
+        ">>> (37).bit_length()\n" + 
+        "6";
 
     public final static String int_conjugate_doc = 
         "Returns self, the complex conjugate of any int.";
@@ -2510,7 +2552,7 @@ public class BuiltinDocs {
         "x.__hash__() <==> hash(x)";
 
     public final static String xrange___init___doc = 
-        "x.__init__(...) initializes x; see x.__class__.__doc__ for signature";
+        "x.__init__(...) initializes x; see help(type(x)) for signature";
 
     public final static String xrange___iter___doc = 
         "x.__iter__() <==> iter(x)";
@@ -2537,7 +2579,8 @@ public class BuiltinDocs {
         "x.__setattr__('name', value) <==> x.name = value";
 
     public final static String xrange___sizeof___doc = 
-        "__sizeof__() -> size of object in memory, in bytes";
+        "__sizeof__() -> int\n" + 
+        "size of object in memory, in bytes";
 
     public final static String xrange___str___doc = 
         "x.__str__() <==> str(x)";
@@ -2595,7 +2638,7 @@ public class BuiltinDocs {
         "x.__hash__() <==> hash(x)";
 
     public final static String file___init___doc = 
-        "x.__init__(...) initializes x; see x.__class__.__doc__ for signature";
+        "x.__init__(...) initializes x; see help(type(x)) for signature";
 
     public final static String file___iter___doc = 
         "x.__iter__() <==> iter(x)";
@@ -2616,7 +2659,8 @@ public class BuiltinDocs {
         "x.__setattr__('name', value) <==> x.name = value";
 
     public final static String file___sizeof___doc = 
-        "__sizeof__() -> size of object in memory, in bytes";
+        "__sizeof__() -> int\n" + 
+        "size of object in memory, in bytes";
 
     public final static String file___str___doc = 
         "x.__str__() <==> str(x)";
@@ -2774,7 +2818,9 @@ public class BuiltinDocs {
         "x.__floordiv__(y) <==> x//y";
 
     public final static String complex___format___doc = 
-        "default object formatter";
+        "complex.__format__() -> str\n" + 
+        "\n" + 
+        "Converts to a string according to format_spec.";
 
     public final static String complex___ge___doc = 
         "x.__ge__(y) <==> x>=y";
@@ -2792,7 +2838,7 @@ public class BuiltinDocs {
         "x.__hash__() <==> hash(x)";
 
     public final static String complex___init___doc = 
-        "x.__init__(...) initializes x; see x.__class__.__doc__ for signature";
+        "x.__init__(...) initializes x; see help(type(x)) for signature";
 
     public final static String complex___int___doc = 
         "x.__int__() <==> int(x)";
@@ -2870,7 +2916,8 @@ public class BuiltinDocs {
         "x.__setattr__('name', value) <==> x.name = value";
 
     public final static String complex___sizeof___doc = 
-        "__sizeof__() -> size of object in memory, in bytes";
+        "__sizeof__() -> int\n" + 
+        "size of object in memory, in bytes";
 
     public final static String complex___str___doc = 
         "x.__str__() <==> str(x)";
@@ -2962,7 +3009,7 @@ public class BuiltinDocs {
         "x[y:z] <==> x[y.__index__():z.__index__()]";
 
     public final static String bool___init___doc = 
-        "x.__init__(...) initializes x; see x.__class__.__doc__ for signature";
+        "x.__init__(...) initializes x; see help(type(x)) for signature";
 
     public final static String bool___int___doc = 
         "x.__int__() <==> int(x)";
@@ -3061,7 +3108,8 @@ public class BuiltinDocs {
         "x.__setattr__('name', value) <==> x.name = value";
 
     public final static String bool___sizeof___doc = 
-        "__sizeof__() -> size of object in memory, in bytes";
+        "__sizeof__() -> int\n" + 
+        "size of object in memory, in bytes";
 
     public final static String bool___str___doc = 
         "x.__str__() <==> str(x)";
@@ -3086,6 +3134,15 @@ public class BuiltinDocs {
 
     public final static String bool___xor___doc = 
         "x.__xor__(y) <==> x^y";
+
+    public final static String bool_bit_length_doc = 
+        "int.bit_length() -> int\n" + 
+        "\n" + 
+        "Number of bits necessary to represent self in binary.\n" + 
+        ">>> bin(37)\n" + 
+        "'0b100101'\n" + 
+        ">>> (37).bit_length()\n" + 
+        "6";
 
     public final static String bool_conjugate_doc = 
         "Returns self, the complex conjugate of any int.";
@@ -3134,6 +3191,9 @@ public class BuiltinDocs {
     public final static String classmethod___format___doc = 
         "default object formatter";
 
+    public final static String classmethod___func___doc = 
+        "";
+
     public final static String classmethod___get___doc = 
         "descr.__get__(obj[, type]) -> value";
 
@@ -3144,7 +3204,7 @@ public class BuiltinDocs {
         "x.__hash__() <==> hash(x)";
 
     public final static String classmethod___init___doc = 
-        "x.__init__(...) initializes x; see x.__class__.__doc__ for signature";
+        "x.__init__(...) initializes x; see help(type(x)) for signature";
 
     public final static String classmethod___new___doc = 
         "T.__new__(S, ...) -> a new object with type S, a subtype of T";
@@ -3162,7 +3222,8 @@ public class BuiltinDocs {
         "x.__setattr__('name', value) <==> x.name = value";
 
     public final static String classmethod___sizeof___doc = 
-        "__sizeof__() -> size of object in memory, in bytes";
+        "__sizeof__() -> int\n" + 
+        "size of object in memory, in bytes";
 
     public final static String classmethod___str___doc = 
         "x.__str__() <==> str(x)";
@@ -3194,7 +3255,8 @@ public class BuiltinDocs {
         "x.__delattr__('name') <==> del x.name";
 
     public final static String set_doc = 
-        "set(iterable) --> set object\n" + 
+        "set() -> new empty set object\n" + 
+        "set(iterable) -> new set object\n" + 
         "\n" + 
         "Build an unordered collection of unique elements.";
 
@@ -3220,7 +3282,7 @@ public class BuiltinDocs {
         "x.__iand__(y) <==> x&y";
 
     public final static String set___init___doc = 
-        "x.__init__(...) initializes x; see x.__class__.__doc__ for signature";
+        "x.__init__(...) initializes x; see help(type(x)) for signature";
 
     public final static String set___ior___doc = 
         "x.__ior__(y) <==> x|y";
@@ -3322,9 +3384,9 @@ public class BuiltinDocs {
         "If the element is not a member, do nothing.";
 
     public final static String set_intersection_doc = 
-        "Return the intersection of two sets as a new set.\n" + 
+        "Return the intersection of two or more sets as a new set.\n" + 
         "\n" + 
-        "(i.e. all elements that are in both sets.)";
+        "(i.e. elements that are common to all of the sets.)";
 
     public final static String set_intersection_update_doc = 
         "Update a set with the intersection of itself and another.";
@@ -3381,7 +3443,8 @@ public class BuiltinDocs {
         "x.__delattr__('name') <==> del x.name";
 
     public final static String frozenset_doc = 
-        "frozenset(iterable) --> frozenset object\n" + 
+        "frozenset() -> empty frozenset object\n" + 
+        "frozenset(iterable) -> frozenset object\n" + 
         "\n" + 
         "Build an immutable unordered collection of unique elements.";
 
@@ -3404,7 +3467,7 @@ public class BuiltinDocs {
         "x.__hash__() <==> hash(x)";
 
     public final static String frozenset___init___doc = 
-        "x.__init__(...) initializes x; see x.__class__.__doc__ for signature";
+        "x.__init__(...) initializes x; see help(type(x)) for signature";
 
     public final static String frozenset___iter___doc = 
         "x.__iter__() <==> iter(x)";
@@ -3481,9 +3544,9 @@ public class BuiltinDocs {
         "(i.e. all elements that are in this set but not the others.)";
 
     public final static String frozenset_intersection_doc = 
-        "Return the intersection of two sets as a new set.\n" + 
+        "Return the intersection of two or more sets as a new set.\n" + 
         "\n" + 
-        "(i.e. all elements that are in both sets.)";
+        "(i.e. elements that are common to all of the sets.)";
 
     public final static String frozenset_isdisjoint_doc = 
         "Return True if two sets have a null intersection.";
@@ -3529,14 +3592,14 @@ public class BuiltinDocs {
 
     public final static String BaseException___getslice___doc = 
         "x.__getslice__(i, j) <==> x[i:j]\n" + 
-        "	       \n" + 
-        "	       Use of negative indices is not supported.";
+        "           \n" + 
+        "           Use of negative indices is not supported.";
 
     public final static String BaseException___hash___doc = 
         "x.__hash__() <==> hash(x)";
 
     public final static String BaseException___init___doc = 
-        "x.__init__(...) initializes x; see x.__class__.__doc__ for signature";
+        "x.__init__(...) initializes x; see help(type(x)) for signature";
 
     public final static String BaseException___new___doc = 
         "T.__new__(S, ...) -> a new object with type S, a subtype of T";
@@ -3557,7 +3620,8 @@ public class BuiltinDocs {
         "";
 
     public final static String BaseException___sizeof___doc = 
-        "__sizeof__() -> size of object in memory, in bytes";
+        "__sizeof__() -> int\n" + 
+        "size of object in memory, in bytes";
 
     public final static String BaseException___str___doc = 
         "x.__str__() <==> str(x)";
@@ -3627,7 +3691,7 @@ public class BuiltinDocs {
         "x.__hash__() <==> hash(x)";
 
     public final static String function___init___doc = 
-        "x.__init__(...) initializes x; see x.__class__.__doc__ for signature";
+        "x.__init__(...) initializes x; see help(type(x)) for signature";
 
     public final static String function___module___doc = 
         "str(object) -> string\n" + 
@@ -3657,7 +3721,8 @@ public class BuiltinDocs {
         "x.__setattr__('name', value) <==> x.name = value";
 
     public final static String function___sizeof___doc = 
-        "__sizeof__() -> size of object in memory, in bytes";
+        "__sizeof__() -> int\n" + 
+        "size of object in memory, in bytes";
 
     public final static String function___str___doc = 
         "x.__str__() <==> str(x)";
@@ -3727,7 +3792,7 @@ public class BuiltinDocs {
         "x.__hash__() <==> hash(x)";
 
     public final static String instancemethod___init___doc = 
-        "x.__init__(...) initializes x; see x.__class__.__doc__ for signature";
+        "x.__init__(...) initializes x; see help(type(x)) for signature";
 
     public final static String instancemethod___new___doc = 
         "T.__new__(S, ...) -> a new object with type S, a subtype of T";
@@ -3748,7 +3813,8 @@ public class BuiltinDocs {
         "x.__setattr__('name', value) <==> x.name = value";
 
     public final static String instancemethod___sizeof___doc = 
-        "__sizeof__() -> size of object in memory, in bytes";
+        "__sizeof__() -> int\n" + 
+        "size of object in memory, in bytes";
 
     public final static String instancemethod___str___doc = 
         "x.__str__() <==> str(x)";
@@ -3807,7 +3873,7 @@ public class BuiltinDocs {
         "x.__hash__() <==> hash(x)";
 
     public final static String code___init___doc = 
-        "x.__init__(...) initializes x; see x.__class__.__doc__ for signature";
+        "x.__init__(...) initializes x; see help(type(x)) for signature";
 
     public final static String code___le___doc = 
         "x.__le__(y) <==> x<=y";
@@ -3834,7 +3900,8 @@ public class BuiltinDocs {
         "x.__setattr__('name', value) <==> x.name = value";
 
     public final static String code___sizeof___doc = 
-        "__sizeof__() -> size of object in memory, in bytes";
+        "__sizeof__() -> int\n" + 
+        "size of object in memory, in bytes";
 
     public final static String code___str___doc = 
         "x.__str__() <==> str(x)";
@@ -3911,7 +3978,7 @@ public class BuiltinDocs {
         "x.__hash__() <==> hash(x)";
 
     public final static String frame___init___doc = 
-        "x.__init__(...) initializes x; see x.__class__.__doc__ for signature";
+        "x.__init__(...) initializes x; see help(type(x)) for signature";
 
     public final static String frame___new___doc = 
         "T.__new__(S, ...) -> a new object with type S, a subtype of T";
@@ -4000,7 +4067,7 @@ public class BuiltinDocs {
         "x.__hash__() <==> hash(x)";
 
     public final static String traceback___init___doc = 
-        "x.__init__(...) initializes x; see x.__class__.__doc__ for signature";
+        "x.__init__(...) initializes x; see help(type(x)) for signature";
 
     public final static String traceback___new___doc = 
         "T.__new__(S, ...) -> a new object with type S, a subtype of T";
@@ -4018,7 +4085,8 @@ public class BuiltinDocs {
         "x.__setattr__('name', value) <==> x.name = value";
 
     public final static String traceback___sizeof___doc = 
-        "__sizeof__() -> size of object in memory, in bytes";
+        "__sizeof__() -> int\n" + 
+        "size of object in memory, in bytes";
 
     public final static String traceback___str___doc = 
         "x.__str__() <==> str(x)";

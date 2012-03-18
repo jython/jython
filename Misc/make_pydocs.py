@@ -6,7 +6,11 @@ def print_doc(out, obj, meth):
         doc = getattr(obj, meth)
         bdname = '%s_doc' % obj.__name__
     else:
-        doc = getattr(obj, meth).__doc__
+        if meth == '__abstractmethods__':
+            # getattr(type,'__abstractmethods__') would fail
+            doc = ""
+        else:
+            doc = getattr(obj, meth).__doc__
         bdname = '%s_%s_doc' % (obj.__name__, meth)
 
     if doc is None:
