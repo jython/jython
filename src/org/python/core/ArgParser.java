@@ -211,20 +211,37 @@ public class ArgParser {
     }
 
     /**
-     * Return a required argument as a PyObject, ensuring the object
-     * is of the specified type.
-     *
+     * Return a required argument as a PyObject, ensuring the object is of the specified type.
+     * 
      * @param pos the position of the argument. First argument is numbered 0
      * @param type the desired PyType of the argument
-     * @return the PyObject of PyType
+     * @return the PyObject of PyType type
      */
     public PyObject getPyObjectByType(int pos, PyType type) {
-        PyObject arg = getRequiredArg(pos);
-        if (!Py.isInstance(arg, type)) {
-            throw Py.TypeError(String.format("argument %d must be %s, not %s", pos + 1,
-                                             type.fastGetName(), arg.getType().fastGetName()));
-        }
-        return arg;
+        PyObject arg = getRequiredArg(pos); // != null
+        return checkedForType(arg, pos, type);
+    }
+
+    /**
+     * Return an optional argument as a PyObject, or return the default value provided, which may
+     * be <code>null</code>. If the returned value is not <code>null</code>, it must be of the
+     * specified type.
+     * 
+     * @param pos the position of the argument. First argument is numbered 0
+     * @param type the desired PyType of the argument
+     * @param def to return if the argument at pos was not given (null allowed)
+     * @return the PyObject of PyType type
+     */
+    public PyObject getPyObjectByType(int pos, PyType type, PyObject def) {
+        PyObject arg = getOptionalArg(pos);
+        return checkedForType((arg != null ? arg : def), pos, type);
+    }
+
+    // Common code for getObjectByType: don't check null!
+    private static PyObject checkedForType(PyObject arg, int pos, PyType type) {
+        if (arg == null || Py.isInstance(arg, type)) return arg;
+        throw Py.TypeError(String.format("argument %d must be %s, not %s", pos + 1,
+                                         type.fastGetName(), arg.getType().fastGetName()));
     }
 
     /**
