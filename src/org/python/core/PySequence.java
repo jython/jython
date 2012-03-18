@@ -20,6 +20,11 @@ public abstract class PySequence extends PyObject {
 
     // These methods must be defined for any sequence
     /**
+     * Returns the element of the sequence at the given index. This is an extension point called by
+     * PySequence in its implementation of {@link #__getitem__} It is guaranteed by PySequence that
+     * when it calls <code>pyget(int)</code> the index is within the bounds of the array. Any other
+     * clients must make the same guarantee.
+     * 
      * @param index index of element to return.
      * @return the element at the given position in the list.
      */
@@ -36,7 +41,8 @@ public abstract class PySequence extends PyObject {
     protected abstract PyObject getslice(int start, int stop, int step);
 
     /**
-     * Repeats the given sequence.
+     * Returns a (concrete subclass of) PySequence that repeats the given sequence, as
+     * in the implementation of <code>__mul__</code> for strings.
      *
      * @param count the number of times to repeat the sequence.
      * @return this sequence repeated count times.
@@ -45,8 +51,11 @@ public abstract class PySequence extends PyObject {
 
     // These methods only apply to mutable sequences
     /**
-     * Sets the given element of the sequence.
-     *
+     * Sets the indexed element of the sequence to the given value. This is an extension point
+     * called by PySequence in its implementation of {@link #__setitem__} It is guaranteed by
+     * PySequence that when it calls pyset(int) the index is within the bounds of the array. Any
+     * other clients must make the same guarantee.
+     * 
      * @param index index of the element to set.
      * @param value the value to set this element to.
      */
@@ -55,22 +64,45 @@ public abstract class PySequence extends PyObject {
     }
 
     /**
-     * Sets the given range of elements.
+     * Sets the given range of elements according to Python slice assignment semantics.
+     * If the step size is one, it is a simple slice and the operation is equivalent to
+     * deleting that slice, then inserting the value at that position, regarding the
+     * value as a sequence (if possible) or as a single element if it is not a sequence.
+     * If the step size is not one, but <code>start==stop</code>, it is equivalent to insertion
+     * at that point.
+     * If the step size is not one, and <code>start!=stop</code>, the slice defines a certain number
+     * of elements to be replaced, and the value must be a sequence of exactly that many
+     * elements (or convertible to such a sequence).
+     * 
+     * @param start the position of the first element.
+     * @param stop one more than the position of the last element.
+     * @param step the step size.
+     * @param value an object consistent with the slice assignment
      */
     protected void setslice(int start, int stop, int step, PyObject value) {
         throw Py.TypeError(String.format("'%s' object does not support item assignment",
                                          getType().fastGetName()));
     }
 
-    protected void del(int i) {
+    /**
+     * Deletes an element from the sequence (and closes up the gap).
+     * 
+     * @param index index of the element to delete.
+     */
+    protected void del(int index) {
         throw Py.TypeError(String.format("'%s' object does not support item deletion",
                                          getType().fastGetName()));
     }
 
+    /**
+     * Deletes a contiguous sub-sequence (and closes up the gap).
+     * 
+     * @param start the position of the first element.
+     * @param stop one more than the position of the last element.
+     */
     protected void delRange(int start, int stop) {
         throw Py.TypeError(String.format("'%s' object does not support item deletion",
                                          getType().fastGetName()));
-
     }
 
     @Override
