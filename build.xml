@@ -216,7 +216,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <property name="jython.base.dir" value="${basedir}" />
         <property name="source.dir" value="${basedir}/src" />
         <property name="templates.dir" value="${basedir}/src/templates" />
-        <property name="python.lib" value="${basedir}/CPythonLib" />
+        <property name="python.lib" value="${basedir}/lib-python/2.2" />
         <property name="bugtests.dir" value="${basedir}/bugtests" />
         <property name="templates.lazy" value="true" />
     </target>
@@ -236,7 +236,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <property name="jython.base.dir" value="${svn.checkout.dir}/jython" />
         <property name="source.dir" value="${jython.base.dir}/src" />
         <property name="has.repositories.connection" value="true" />
-        <property name="python.lib" value="${jython.base.dir}/CPythonLib" />
+        <property name="python.lib" value="${jython.base.dir}/lib-python/2.2" />
         <property name="python.exe" value="${python.home}/python" />
         <condition property="do.checkout" value="true">
             <istrue value="${has.repositories.connection}" />

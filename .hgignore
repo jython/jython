@@ -1,0 +1,30 @@
+syntax: glob
+*.class
+*.pyc
+*.pyd
+*.pyo
+*.orig
+*.rej
+*.swp
+\#*
+*~
+# IntelliJ files
+*.ipr
+*.iml
+*.iws
+.idea/misc.xml
+.idea/workspace.xml
+
+.AppleDouble
+.DS_Store
+.classpath
+.externalToolBuilders
+.project
+.settings
+__pycache__
+ant.properties
+bin
+build
+cachedir
+dist
+profile.txt
