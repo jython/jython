@@ -1,11 +1,18 @@
 package org.python.jsr223;
 
+import javax.script.Bindings;
+import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import javax.script.ScriptEngineFactory;
+import javax.script.SimpleBindings;
 
 import junit.framework.TestCase;
 
+import java.io.FileReader;
+import java.io.FileNotFoundException;
+import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
 
@@ -78,4 +85,25 @@ public class ScriptEngineIOTest extends TestCase
         assertEquals(testString1, stdout.toString());
         assertEquals(testString2, stderr.toString());
     }
+
+    public void testEvalWithReader() throws ScriptException, FileNotFoundException
+    {
+        final ScriptEngineManager manager = new ScriptEngineManager();
+
+        final String engineType = "jython";
+        final ScriptEngine engine = manager.getEngineByName(engineType);
+
+        final Bindings bindings = new SimpleBindings();
+        bindings.put("firstLevelNodes", 10);
+        bindings.put("secondLevelNodes", 5);
+
+        engine.setBindings(bindings, ScriptContext.ENGINE_SCOPE);
+        engine.setBindings(bindings, ScriptContext.ENGINE_SCOPE);
+
+        final Reader dfsScript = new FileReader("tests/python/dfs.py");
+
+        for (int i = 1; i <= 10; i++)
+            engine.eval(dfsScript);
+    }
+
 }
