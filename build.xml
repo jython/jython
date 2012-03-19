@@ -160,7 +160,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <property name="test.source.dir" value="${jython.base.dir}/tests/java" />
         <property name="test.shell.dir" value="${jython.base.dir}/tests/shell" />
         <property name="templates.dir" value="${source.dir}/templates" />
-        <property name="python.lib" value="${jython.base.dir}/CPythonLib" />
+        <property name="python.lib" value="${jython.base.dir}/lib-python/2.5" />
         <property name="bugtests.dir" value="${jython.base.dir}/bugtests" />
         <property name="templates.lazy" value="true" />
         <property name="extlibs.dir" value="${jython.base.dir}/extlibs" />
@@ -818,7 +818,7 @@ The readme text for the next release will be like:
     <target name="copy-cpythonlib">
         <copy todir="${dist.dir}/Lib">
             <fileset dir="${python.lib}" excludes="**/*.pyc, **/*.pyo" includesfile="${jython.base.dir}/CPythonLib.includes">
-                <!-- The include file gets all of CPythonLib's test directory, but we only want the ones from Jython's Lib.   -->
+                <!-- The include file gets all of lib-python/2.5's test directory, but we only want the ones from Jython's Lib.   -->
                 <present present="srconly" targetdir="${jython.base.dir}/Lib"/>
             </fileset>
         </copy>
