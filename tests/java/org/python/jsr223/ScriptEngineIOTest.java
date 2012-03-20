@@ -1,6 +1,7 @@
 package org.python.jsr223;
 
 import javax.script.Bindings;
+import javax.script.Invocable;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
@@ -12,6 +13,7 @@ import junit.framework.TestCase;
 
 import java.io.FileReader;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
@@ -116,4 +118,33 @@ public class ScriptEngineIOTest extends TestCase
             assertEquals(61, engine.get("result"));
         }
     }
+
+   public void testGetInterfaceCharSequence1() throws ScriptException, IOException {
+           ScriptEngineManager manager = new ScriptEngineManager();
+           ScriptEngine engine = manager.getEngineByName("python");
+           Invocable invocableEngine = (Invocable) engine;
+
+           assertNull(engine.eval(
+                   "from java.lang import CharSequence\n" +
+                   "class MyString(CharSequence):\n" +
+                   "   def length(self): return 3\n" +
+                   "   def charAt(self, index): return 'a'\n" +
+                   "   def subSequence(self, start, end): return \"\"\n" +
+                   "   def toString(self): return \"aaa\"\n" +
+                   "c = MyString()"));
+           CharSequence seq = invocableEngine.getInterface(engine.get("c"), CharSequence.class);
+           assertEquals("aaa", seq.toString());
+   }
+
+   public void testGetInterfaceCharSequence2() throws ScriptException, IOException {
+           ScriptEngineManager manager = new ScriptEngineManager();
+           ScriptEngine pythonEngine = manager.getEngineByName("python");
+           Invocable invocableEngine = (Invocable) pythonEngine;
+
+           assertNull(pythonEngine.eval(
+                   "from java.lang import StringBuilder\r\n" +
+                   "c = StringBuilder(\"abc\")\r\n"));
+           CharSequence seq = invocableEngine.getInterface(pythonEngine.get("c"), CharSequence.class);
+           assertEquals("abc", seq.toString());
+   }
 }
