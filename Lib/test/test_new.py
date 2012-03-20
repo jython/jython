@@ -24,10 +24,18 @@ class NewTest(unittest.TestCase):
         c = new.instance(C, {'yolks': 3})
 
         o = new.instance(C)
-        self.assertEqual(o.__dict__, {}, "new __dict__ should be empty")
+
+        # __dict__ is a non dict mapping in Jython
+        if test_support.is_jython:
+            self.assertEqual(len(o.__dict__), 0, "new __dict__ should be empty")
+        else:
+            self.assertEqual(o.__dict__, {}, "new __dict__ should be empty")
         del o
         o = new.instance(C, None)
-        self.assertEqual(o.__dict__, {}, "new __dict__ should be empty")
+        if test_support.is_jython:
+            self.assertEqual(len(o.__dict__), 0, "new __dict__ should be empty")
+        else:
+            self.assertEqual(o.__dict__, {}, "new __dict__ should be empty")
         del o
 
         def break_yolks(self):
