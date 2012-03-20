@@ -106,6 +106,11 @@ public class cStringIO {
          */
         public void close() {
             closed = true;
+            // No point in zeroing the buf, because it won't be reused.
+            // buf is a final variable, so can't set to null.
+            // Therefore, just leave it and let it be GC'ed when the enclosing object is GC'ed
+            // Or remove the final declaration
+            // buf = null;
         }
 
 
@@ -402,6 +407,7 @@ public class cStringIO {
          * @return      the contents of the StringIO.
          */
         public synchronized PyString getvalue() {
+            _complain_ifclosed();
             return new PyString(buf.toString());
         }
 
