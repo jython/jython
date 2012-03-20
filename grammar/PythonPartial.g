@@ -481,7 +481,8 @@ compound_stmt
     | try_stmt
     | with_stmt
     | (decorators? DEF) => funcdef
-    | classdef
+    | (decorators? CLASS) => classdef
+    | decorators
     ;
 
 //if_stmt: 'if' test ':' suite ('elif' test ':' suite)* ['else' ':' suite]
