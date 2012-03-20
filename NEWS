@@ -5,6 +5,7 @@ Jython 2.7a1
 
 Jython 2.5.3b2
   Bugs Fixed
+    - [ 1640 ] cStringIO does not complain on getvalue after close
     - [ 1749 ] function descriptor doesn't work in interactive console
     - [ 1721 ] NPE when using JSR 223 (TestCase+Patch)
     - [ 1536 ] NPE in org.python.jsr223.PyScriptEngine:187
