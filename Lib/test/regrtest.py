@@ -1187,6 +1187,7 @@ _expectations = {
         test_applesingle
         test_ascii_formatd
         test_audioop
+        test_buffer
         test_bsddb
         test_bsddb185
         test_bsddb3
@@ -1218,6 +1219,7 @@ _expectations = {
         test_longexp
         test_macfs
         test_macostools
+        test_memoryview
         test_mmap
         test_nis
         test_normalization
