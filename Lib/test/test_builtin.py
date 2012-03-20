@@ -244,7 +244,8 @@ class BuiltinTest(unittest.TestCase):
         class Foo(types.ModuleType):
             __dict__ = 8
         f = Foo("foo")
-        self.assertRaises(TypeError, dir, f)
+        if not is_jython: #FIXME #1861
+            self.assertRaises(TypeError, dir, f)
 
         # dir(type)
         self.assert_("strip" in dir(str))
@@ -280,14 +281,16 @@ class BuiltinTest(unittest.TestCase):
             def __dir__(self):
                 return ["kan", "ga", "roo"]
         f = Foo()
-        self.assert_(dir(f) == ["ga", "kan", "roo"])
+        if not is_jython: #FIXME #1861
+            self.assert_(dir(f) == ["ga", "kan", "roo"])
 
         # dir(obj__dir__not_list)
         class Foo(object):
             def __dir__(self):
                 return 7
         f = Foo()
-        self.assertRaises(TypeError, dir, f)
+        if not is_jython: #FIXME #1861
+            self.assertRaises(TypeError, dir, f)
 
     def test_divmod(self):
         self.assertEqual(divmod(12, 7), (1, 5))
@@ -358,7 +361,8 @@ class BuiltinTest(unittest.TestCase):
         self.assertEqual(eval('a', g, m), 12)
         self.assertRaises(NameError, eval, 'b', g, m)
         self.assertEqual(eval('dir()', g, m), list('xyz'))
-        self.assertEqual(eval('globals()', g, m), g)
+        if not is_jython: #FIXME #1861
+            self.assertEqual(eval('globals()', g, m), g)
         self.assertEqual(eval('locals()', g, m), m)
 
         # Jython allows arbitrary mappings for globals
@@ -382,7 +386,8 @@ class BuiltinTest(unittest.TestCase):
         self.assertEqual(eval('a', g, d), 12)
         self.assertRaises(NameError, eval, 'b', g, d)
         self.assertEqual(eval('dir()', g, d), list('xyz'))
-        self.assertEqual(eval('globals()', g, d), g)
+        if not is_jython: #FIXME #1861
+            self.assertEqual(eval('globals()', g, d), g)
         self.assertEqual(eval('locals()', g, d), d)
 
         # Verify locals stores (used by list comps)
@@ -597,11 +602,13 @@ class BuiltinTest(unittest.TestCase):
         class A:
             def __getattr__(self, what):
                 raise KeyboardInterrupt
-        self.assertRaises(KeyboardInterrupt, hasattr, A(), "b")
+        if not is_jython: #FIXME #1861: not working in Jython
+            self.assertRaises(KeyboardInterrupt, hasattr, A(), "b")
         class B:
             def __getattr__(self, what):
                 raise SystemExit
-        self.assertRaises(SystemExit, hasattr, B(), "b")
+        if not is_jython: #FIXME #1861: not working in Jython
+            self.assertRaises(SystemExit, hasattr, B(), "b")
 
     def test_hash(self):
         hash(None)
@@ -1136,6 +1143,7 @@ class BuiltinTest(unittest.TestCase):
             self.assertRaises(TypeError, range, 1e100, 1e100, 1)
             self.assertRaises(TypeError, range, 1e100, 1e100, 1e100)
 
+    @unittest.skipIf(is_jython, "FIXME #1861: not working in Jython")
     def test_input_and_raw_input(self):
         self.write_testfile()
         fp = open(TESTFN, 'r')
@@ -1315,6 +1323,7 @@ class BuiltinTest(unittest.TestCase):
         self.assertRaises(TypeError, round, t)
         self.assertRaises(TypeError, round, t, 0)
 
+    @unittest.skipIf(is_jython, "FIXME #1861: not working in Jython")
     def test_round_large(self):
         # Issue #1869: integral floats should remain unchanged
         self.assertEqual(round(5e15-1), 5e15-1)
@@ -1365,7 +1374,8 @@ class BuiltinTest(unittest.TestCase):
             )
             self.assertRaises(ValueError, unichr, sys.maxunicode+1)
             self.assertRaises(TypeError, unichr)
-            self.assertRaises((OverflowError, ValueError), unichr, 2**32)
+            if not is_jython: #FIXME #1861
+                self.assertRaises((OverflowError, ValueError), unichr, 2**32)
 
     # We don't want self in vars(), so these are static methods
 
@@ -1380,6 +1390,7 @@ class BuiltinTest(unittest.TestCase):
         b = 2
         return vars()
 
+    @unittest.skipIf(is_jython, "FIXME #1861: not working in Jython")
     def test_vars(self):
         self.assertEqual(set(vars()), set(dir()))
         import sys
@@ -1483,8 +1494,9 @@ class BuiltinTest(unittest.TestCase):
             self.assertEqual(format(DerivedFromSimple2(10), 'abcdef'),
                              '10abcdef')
 
-        class_test(*classes_new())
-        class_test(*classes_classic())
+        if not is_jython: #FIXME #1861 check again when __format__ works better.
+            class_test(*classes_new())
+            class_test(*classes_classic())
 
         def empty_format_spec(value):
             # test that:
@@ -1507,7 +1519,8 @@ class BuiltinTest(unittest.TestCase):
         class BadFormatResult:
             def __format__(self, format_spec):
                 return 1.0
-        self.assertRaises(TypeError, format, BadFormatResult(), "")
+        if not is_jython: #FIXME #1861 check again when __format__ works better.
+            self.assertRaises(TypeError, format, BadFormatResult(), "")
 
         # TypeError because format_spec is not unicode or str
         self.assertRaises(TypeError, format, object(), 4)
@@ -1527,6 +1540,7 @@ class BuiltinTest(unittest.TestCase):
         class DerivedFromStr(str): pass
         self.assertEqual(format(0, DerivedFromStr('10')), '         0')
 
+    @unittest.skipIf(is_jython, "FIXME #1861: bin not implemented yet.")
     def test_bin(self):
         self.assertEqual(bin(0), '0b0')
         self.assertEqual(bin(1), '0b1')
@@ -1536,6 +1550,8 @@ class BuiltinTest(unittest.TestCase):
         self.assertEqual(bin(-(2**65)), '-0b1' + '0' * 65)
         self.assertEqual(bin(-(2**65-1)), '-0b' + '1' * 65)
 
+    @unittest.skipIf(is_jython,
+                     "FIXME #1861: bytearray not implemented in Jython yet")
     def test_bytearray_translate(self):
         x = bytearray("abc")
         self.assertRaises(ValueError, x.translate, "1", 1)
