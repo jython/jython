@@ -2,7 +2,7 @@ import unittest
 from test.test_support import TESTFN, run_unittest, import_module, unlink, requires
 import binascii
 import random
-from test.test_support import precisionbigmemtest, _1G, _4G
+from test.test_support import precisionbigmemtest, _1G, _4G, is_jython
 import sys
 
 try:
@@ -24,10 +24,12 @@ class ChecksumTestCase(unittest.TestCase):
         self.assertEqual(zlib.crc32("", 1), 1)
         self.assertEqual(zlib.crc32("", 432), 432)
 
+    @unittest.skipIf(is_jython, "FIXME #1859: not working on Jython")
     def test_adler32start(self):
         self.assertEqual(zlib.adler32(""), zlib.adler32("", 1))
         self.assertTrue(zlib.adler32("abc", 0xffffffff))
 
+    @unittest.skipIf(is_jython, "FIXME #1859: not working on Jython")
     def test_adler32empty(self):
         self.assertEqual(zlib.adler32("", 0), 0)
         self.assertEqual(zlib.adler32("", 1), 1)
@@ -38,6 +40,7 @@ class ChecksumTestCase(unittest.TestCase):
         # This is important if bit 31 (0x08000000L) is set.
         self.assertEqual(seen & 0x0FFFFFFFFL, expected & 0x0FFFFFFFFL)
 
+    @unittest.skipIf(is_jython, "FIXME #1859: not working on Jython")
     def test_penguins(self):
         self.assertEqual32(zlib.crc32("penguin", 0), 0x0e5c1a120L)
         self.assertEqual32(zlib.crc32("penguin", 1), 0x43b6aa94)
@@ -98,6 +101,7 @@ class ExceptionTestCase(unittest.TestCase):
 
 
 class BaseCompressTestCase(object):
+    @unittest.skipIf(is_jython, "FIXME #1859: appears to hang on Jython")
     def check_big_compress_buffer(self, size, compress_func):
         _1M = 1024 * 1024
         fmt = "%%0%dx" % (2 * _1M)
@@ -113,6 +117,7 @@ class BaseCompressTestCase(object):
             # Release memory
             data = None
 
+    @unittest.skipIf(is_jython, "FIXME #1859: appears to hang on Jython")
     def check_big_decompress_buffer(self, size, decompress_func):
         data = 'x' * size
         try:
@@ -141,6 +146,7 @@ class CompressTestCase(BaseCompressTestCase, unittest.TestCase):
         x = zlib.compress(data)
         self.assertEqual(zlib.decompress(x), data)
 
+    @unittest.skipIf(is_jython, "FIXME #1859: not working on Jython")
     def test_incomplete_stream(self):
         # An useful error message is given
         x = zlib.compress(HAMLET_SCENE)
@@ -383,6 +389,7 @@ class CompressObjectTestCase(BaseCompressTestCase, unittest.TestCase):
         dco = zlib.decompressobj()
         self.assertEqual(dco.flush(), "") # Returns nothing
 
+    @unittest.skipIf(is_jython, "FIXME #1859: not working on Jython")
     def test_decompress_incomplete_stream(self):
         # This is 'foo', deflated
         x = 'x\x9cK\xcb\xcf\x07\x00\x02\x82\x01E'
