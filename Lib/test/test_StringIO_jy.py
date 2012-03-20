@@ -28,9 +28,24 @@ class TestWrite(unittest.TestCase):
         f.write("uvwxyz")
         self.assertEqual(f.getvalue(), 'abcdef\x00\x00\x00\x00uvwxyz')
 
+class TestGetValueAfterClose(unittest.TestCase):
+
+    # This test, or something like it, should be really be pushed upstream
+    def test_getvalue_after_close(self):
+        f = cStringIO.StringIO('hello')
+        f.getvalue()
+        f.close()
+        try:
+            f.getvalue()
+        except ValueError:
+            pass
+        else:
+            self.fail("cStringIO.StringIO: getvalue() after close() should have raised ValueError")
+
 def test_main():
     test_support.run_unittest(TestUnicodeInput)
     test_support.run_unittest(TestWrite)
+    test_support.run_unittest(TestGetValueAfterClose)
 
 if __name__ == '__main__':
     test_main()
