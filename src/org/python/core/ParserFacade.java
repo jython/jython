@@ -129,8 +129,6 @@ public class ParserFacade {
             } catch (Throwable tt) {
                 throw fixParseError(bufReader, tt, filename);
             }
-        } finally {
-            close(bufReader);
         }
     }
 
