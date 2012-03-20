@@ -1,7 +1,11 @@
 Jython NEWS
 
+Jython 2.7a1
+  Bugs Fixed
+
 Jython 2.5.3b2
   Bugs Fixed
+    - [ 1721 ] NPE when using JSR 223 (TestCase+Patch)
     - [ 1536 ] NPE in org.python.jsr223.PyScriptEngine:187
     - [ 1829 ] test_socket.py failing on Ubuntu (Oneiric)
     - [ 1844 ] bad host returned by getsockname
