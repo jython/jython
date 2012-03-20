@@ -1,16 +1,23 @@
 import unittest
-from test import test_support
-import zlib
+from test.test_support import TESTFN, run_unittest, import_module, unlink, requires
 import binascii
 import random
-from test.test_support import precisionbigmemtest, _1G
+from test.test_support import precisionbigmemtest, _1G, _4G
+import sys
+
+try:
+    import mmap
+except ImportError:
+    mmap = None
+
+zlib = import_module('zlib')
 
 
 class ChecksumTestCase(unittest.TestCase):
     # checksum test cases
     def test_crc32start(self):
         self.assertEqual(zlib.crc32(""), zlib.crc32("", 0))
-        self.assert_(zlib.crc32("abc", 0xffffffff))
+        self.assertTrue(zlib.crc32("abc", 0xffffffff))
 
     def test_crc32empty(self):
         self.assertEqual(zlib.crc32("", 0), 0)
@@ -19,16 +26,12 @@ class ChecksumTestCase(unittest.TestCase):
 
     def test_adler32start(self):
         self.assertEqual(zlib.adler32(""), zlib.adler32("", 1))
-        # XXX: Jython adler32 only supports start value of 1
-        if not test_support.is_jython:
-            self.assert_(zlib.adler32("abc", 0xffffffff))
+        self.assertTrue(zlib.adler32("abc", 0xffffffff))
 
     def test_adler32empty(self):
-        if not test_support.is_jython:
-            self.assertEqual(zlib.adler32("", 0), 0)
+        self.assertEqual(zlib.adler32("", 0), 0)
         self.assertEqual(zlib.adler32("", 1), 1)
-        if not test_support.is_jython:
-            self.assertEqual(zlib.adler32("", 432), 432)
+        self.assertEqual(zlib.adler32("", 432), 432)
 
     def assertEqual32(self, seen, expected):
         # 32-bit values masked -- checksums on 32- vs 64- bit machines
@@ -38,8 +41,7 @@ class ChecksumTestCase(unittest.TestCase):
     def test_penguins(self):
         self.assertEqual32(zlib.crc32("penguin", 0), 0x0e5c1a120L)
         self.assertEqual32(zlib.crc32("penguin", 1), 0x43b6aa94)
-        if not test_support.is_jython:
-            self.assertEqual32(zlib.adler32("penguin", 0), 0x0bcf02f6)
+        self.assertEqual32(zlib.adler32("penguin", 0), 0x0bcf02f6)
         self.assertEqual32(zlib.adler32("penguin", 1), 0x0bd602f7)
 
         self.assertEqual(zlib.crc32("penguin"), zlib.crc32("penguin", 0))
@@ -69,8 +71,6 @@ class ChecksumTestCase(unittest.TestCase):
         self.assertEqual(zlib.crc32('spam', -(2**31)),
                          zlib.crc32('spam',  (2**31)))
 
-    def test_decompress_badinput(self):
-        self.assertRaises(zlib.error, zlib.decompress, 'foo')
 
 class ExceptionTestCase(unittest.TestCase):
     # make sure we generate some expected errors
@@ -144,14 +144,9 @@ class CompressTestCase(BaseCompressTestCase, unittest.TestCase):
     def test_incomplete_stream(self):
         # An useful error message is given
         x = zlib.compress(HAMLET_SCENE)
-        try:
-            zlib.decompress(x[:-1])
-        except zlib.error as e:
-            self.assertTrue(
-                "Error -5 while decompressing data: incomplete or truncated stream"
-                in str(e), str(e))
-        else:
-            self.fail("zlib.error not raised")
+        self.assertRaisesRegexp(zlib.error,
+            "Error -5 while decompressing data: incomplete or truncated stream",
+            zlib.decompress, x[:-1])
 
     # Memory use of the following functions takes into account overallocation
 
@@ -267,7 +262,7 @@ class CompressObjectTestCase(BaseCompressTestCase, unittest.TestCase):
         while cb:
             #max_length = 1 + len(cb)//10
             chunk = dco.decompress(cb, dcx)
-            self.failIf(len(chunk) > dcx,
+            self.assertFalse(len(chunk) > dcx,
                     'chunk too big (%d>%d)' % (len(chunk), dcx))
             bufs.append(chunk)
             cb = dco.unconsumed_tail
@@ -292,7 +287,7 @@ class CompressObjectTestCase(BaseCompressTestCase, unittest.TestCase):
         while cb:
             max_length = 1 + len(cb)//10
             chunk = dco.decompress(cb, max_length)
-            self.failIf(len(chunk) > max_length,
+            self.assertFalse(len(chunk) > max_length,
                         'chunk too big (%d>%d)' % (len(chunk),max_length))
             bufs.append(chunk)
             cb = dco.unconsumed_tail
@@ -301,7 +296,7 @@ class CompressObjectTestCase(BaseCompressTestCase, unittest.TestCase):
         else:
             while chunk:
                 chunk = dco.decompress('', max_length)
-                self.failIf(len(chunk) > max_length,
+                self.assertFalse(len(chunk) > max_length,
                             'chunk too big (%d>%d)' % (len(chunk),max_length))
                 bufs.append(chunk)
         self.assertEqual(data, ''.join(bufs), 'Wrong data retrieved')
@@ -314,6 +309,15 @@ class CompressObjectTestCase(BaseCompressTestCase, unittest.TestCase):
         dco = zlib.decompressobj()
         self.assertRaises(ValueError, dco.decompress, "", -1)
         self.assertEqual('', dco.unconsumed_tail)
+
+    def test_clear_unconsumed_tail(self):
+        # Issue #12050: calling decompress() without providing max_length
+        # should clear the unconsumed_tail attribute.
+        cdata = "x\x9cKLJ\x06\x00\x02M\x01"     # "abc"
+        dco = zlib.decompressobj()
+        ddata = dco.decompress(cdata, 1)
+        ddata += dco.decompress(dco.unconsumed_tail)
+        self.assertEqual(dco.unconsumed_tail, "")
 
     def test_flushes(self):
         # Test flush() with the various options, using all the
@@ -375,7 +379,7 @@ class CompressObjectTestCase(BaseCompressTestCase, unittest.TestCase):
         # caused a core dump.)
 
         co = zlib.compressobj(zlib.Z_BEST_COMPRESSION)
-        self.failUnless(co.flush())  # Returns a zlib header
+        self.assertTrue(co.flush())  # Returns a zlib header
         dco = zlib.decompressobj()
         self.assertEqual(dco.flush(), "") # Returns nothing
 
@@ -557,7 +561,7 @@ LAERTES
 
 
 def test_main():
-    test_support.run_unittest(
+    run_unittest(
         ChecksumTestCase,
         ExceptionTestCase,
         CompressTestCase,
