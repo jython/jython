@@ -296,8 +296,11 @@ class CodecCallbackTest(unittest.TestCase):
         l = 1000
         errors += [ "test." + err for err in errors ]
         for uni in [ s*l for s in (u"x", u"\u3042", u"a\xe4") ]:
-            for enc in ("ascii", "latin-1", "iso-8859-1", "iso-8859-15",
-                        "utf-8", "utf-7", "utf-16", "utf-32"):
+            encodings = ["ascii", "latin-1", "iso-8859-1", "iso-8859-15",
+                         "utf-8", "utf-7", "utf-16"]
+            if not test.test_support.is_jython: 
+                encodings.append("utf-32")
+            for enc in encodings:
                 for err in errors:
                     try:
                         uni.encode(enc, err)
