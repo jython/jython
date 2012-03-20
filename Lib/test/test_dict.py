@@ -11,6 +11,8 @@ class DictTest(unittest.TestCase):
         self.assertEqual(dict(), {})
         self.assertIsNot(dict(), {})
 
+    @unittest.skipIf(test_support.is_jython,
+                     "FIXME: check Jython again when __format__ works better.")
     def test_literal_constructor(self):
         # check literal constructor for different sized dicts
         # (to exercise the BUILD_MAP oparg).
