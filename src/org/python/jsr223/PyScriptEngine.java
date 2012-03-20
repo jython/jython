@@ -121,7 +121,13 @@ public class PyScriptEngine extends AbstractScriptEngine implements Compilable, 
             if (function == null) {
                 throw new NoSuchMethodException(name);
             }
-            return function.__call__(Py.javas2pys(args)).__tojava__(Object.class);
+            PyObject result;
+            if(args != null) {
+                result = function.__call__(Py.javas2pys(args));
+            } else {
+                result = function.__call__();
+            }
+            return result.__tojava__(Object.class);
         } catch (PyException pye) {
             throw scriptException(pye);
         }
@@ -151,7 +157,12 @@ public class PyScriptEngine extends AbstractScriptEngine implements Compilable, 
                         PyObject pyMethod = thiz.__findattr__(method.getName());
                         if (pyMethod == null)
                             throw new NoSuchMethodException(method.getName());
-                        PyObject result = pyMethod.__call__(Py.javas2pys(args));
+                        PyObject result;
+                        if(args != null) {
+                            result = pyMethod.__call__(Py.javas2pys(args));
+                        } else {
+                            result = pyMethod.__call__();
+                        }
                         return result.__tojava__(Object.class);
                     } catch (PyException pye) {
                         throw scriptException(pye);
