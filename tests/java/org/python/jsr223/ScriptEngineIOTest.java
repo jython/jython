@@ -88,10 +88,19 @@ public class ScriptEngineIOTest extends TestCase
 
     public void testEvalWithReader() throws ScriptException, FileNotFoundException
     {
+        //Check that multiple evals don't cause an NPE.
+        //See issue http://bugs.jython.org/issue1536
         final ScriptEngineManager manager = new ScriptEngineManager();
 
         final String engineType = "jython";
         final ScriptEngine engine = manager.getEngineByName(engineType);
+
+        final StringWriter stdout = new StringWriter();
+        final StringWriter stderr = new StringWriter();
+
+        engine.getContext().setWriter(stdout);
+        engine.getContext().setErrorWriter(stderr);
+
 
         final Bindings bindings = new SimpleBindings();
         bindings.put("firstLevelNodes", 10);
@@ -102,8 +111,9 @@ public class ScriptEngineIOTest extends TestCase
 
         final Reader dfsScript = new FileReader("tests/python/dfs.py");
 
-        for (int i = 1; i <= 10; i++)
+        for (int i = 1; i <= 10; i++) {
             engine.eval(dfsScript);
+            assertEquals(61, engine.get("result"));
+        }
     }
-
 }
