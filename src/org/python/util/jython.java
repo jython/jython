@@ -68,6 +68,7 @@ public class jython {
         "file     : program read from script file\n" +
         "-        : program read from stdin (default; interactive mode if a tty)\n" +
         "arg ...  : arguments passed to program in sys.argv[1:]\n" +
+        "\n" +
         "Other environment variables:\n" +
         "JYTHONPATH: '" + File.pathSeparator +
         "'-separated list of directories prefixed to the default module\n" +
@@ -143,8 +144,11 @@ public class jython {
                 System.err.println("Jython " + Version.PY_VERSION);
                 System.exit(0);
             }
-            if (!opts.runCommand && !opts.runModule) {
+            if (opts.help) {
                 System.err.println(usage);
+            } else if (!opts.runCommand && !opts.runModule) {
+                System.err.print(usageHeader);
+                System.err.println("Try `jython -h' for more information.");
             }
 
             int exitcode = opts.help ? 0 : -1;
@@ -400,6 +404,11 @@ class CommandLineOptions {
             // continue
         }
     }
+    
+    private boolean argumentExpected(String arg) {
+        System.err.println("Argument expected for the " + arg + " option");
+        return false;
+    }
 
     public boolean parse(String[] args) {
         int index = 0;
@@ -444,10 +453,7 @@ class CommandLineOptions {
                 } else if ((index + 1) < args.length) {
                     command = args[++index];
                 } else {
-                    System.err.println("Argument expected for the -c option");
-                    System.err.print(jython.usageHeader);
-                    System.err.println("Try `jython -h' for more information.");
-                    return false;
+                    return argumentExpected(arg);
                 }
                 if (!fixInteractive) {
                     interactive = false;
@@ -489,10 +495,7 @@ class CommandLineOptions {
                 } else if ((index + 1) < args.length) {
                     moduleName = args[++index];
                 } else {
-                    System.err.println("Argument expected for the -m option");
-                    System.err.print(jython.usageHeader);
-                    System.err.println("Try `jython -h' for more information.");
-                    return false;
+                    return argumentExpected(arg);
                 }
                 if (!fixInteractive) {
                     interactive = false;
