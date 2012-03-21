@@ -992,8 +992,13 @@ public class PyInteger extends PyObject {
                 radix = 2;
             }
 
-            // TODO locale-specific formatting for 'n'
-            if (value instanceof BigInteger) {
+            if (spec.type == 'n') {
+                strValue = NumberFormat.getNumberInstance().format(value);
+            } else if (spec.thousands_separators) {
+                NumberFormat format = NumberFormat.getNumberInstance(Locale.US);
+                format.setGroupingUsed(true);
+                strValue = format.format(value);
+            } else if (value instanceof BigInteger) {
                 strValue = ((BigInteger) value).toString(radix);
             } else {
                 strValue = Integer.toString((Integer) value, radix);
