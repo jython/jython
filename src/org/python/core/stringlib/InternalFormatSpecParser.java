@@ -42,9 +42,10 @@ public class InternalFormatSpecParser {
             result.alternate = true;
             index++;
         }
-        if (isAt("0")) {
-            result.align = '=';
+        if (result.fill_char == '\0' && isAt("0")) {
             result.fill_char = '0';
+            if (result.align == '\0')
+                result.align = '=';
             index++;
         }
         result.width = getInteger();
