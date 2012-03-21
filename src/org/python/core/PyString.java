@@ -13,6 +13,8 @@ import org.python.expose.ExposedType;
 import org.python.expose.MethodType;
 
 import java.math.BigInteger;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 
 /**
  * A builtin python string.
@@ -2549,15 +2551,15 @@ public class PyString extends PyBaseString implements MemoryViewProtocol
     @ExposedMethod(doc = BuiltinDocs.str_format_doc)
     final PyObject str_format(PyObject[] args, String[] keywords) {
         try {
-            return new PyString(buildFormattedString(getString(), args, keywords));
+            return new PyString(buildFormattedString(getString(), args, keywords, null));
         } catch (IllegalArgumentException e) {
             throw Py.ValueError(e.getMessage());
         }
     }
 
-    private String buildFormattedString(String value, PyObject[] args, String[] keywords) {
+    private String buildFormattedString(String value, PyObject[] args, String[] keywords, MarkupIterator enclosingIterator) {
         StringBuilder result = new StringBuilder();
-        MarkupIterator it = new MarkupIterator(value);
+        MarkupIterator it = new MarkupIterator(value, enclosingIterator);
         while (true) {
             MarkupIterator.Chunk chunk = it.nextChunk();
             if (chunk == null) {
@@ -2565,30 +2567,27 @@ public class PyString extends PyBaseString implements MemoryViewProtocol
             }
             result.append(chunk.literalText);
             if (chunk.fieldName.length() > 0) {
-                outputMarkup(result, chunk, args, keywords);
+                PyObject fieldObj = getFieldObject(chunk.fieldName, args, keywords);
+                if (fieldObj == null) {
+                    continue;
+                }
+                if ("r".equals(chunk.conversion)) {
+                    fieldObj = fieldObj.__repr__();
+                } else if ("s".equals(chunk.conversion)) {
+                    fieldObj = fieldObj.__str__();
+                } else if (chunk.conversion != null) {
+                    throw Py.ValueError("Unknown conversion specifier " + chunk.conversion);
+                }
+                String formatSpec = chunk.formatSpec;
+                if (chunk.formatSpecNeedsExpanding) {
+                    if (enclosingIterator != null) // PEP 3101 says only 2 levels
+                        throw Py.ValueError("Max string recursion exceeded");
+                    formatSpec = buildFormattedString(formatSpec, args, keywords, it);
+                }
+                renderField(fieldObj, formatSpec, result);
             }
         }
         return result.toString();
-    }
-
-    private void outputMarkup(StringBuilder result, MarkupIterator.Chunk chunk,
-                              PyObject[] args, String[] keywords) {
-        PyObject fieldObj = getFieldObject(chunk.fieldName, args, keywords);
-        if (fieldObj == null) {
-            return;
-        }
-        if ("r".equals(chunk.conversion)) {
-            fieldObj = fieldObj.__repr__();
-        } else if ("s".equals(chunk.conversion)) {
-            fieldObj = fieldObj.__str__();
-        } else if (chunk.conversion != null) {
-            throw Py.ValueError("Unknown conversion specifier " + chunk.conversion);
-        }
-        String formatSpec = chunk.formatSpec;
-        if (chunk.formatSpecNeedsExpanding) {
-            formatSpec = buildFormattedString(formatSpec, args, keywords);
-        }
-        renderField(fieldObj, formatSpec, result);
     }
 
     private PyObject getFieldObject(String fieldName, PyObject[] args, String[] keywords) {
@@ -2672,6 +2671,12 @@ public class PyString extends PyBaseString implements MemoryViewProtocol
      * @return the result of the formatting
      */
     public static String formatString(String text, InternalFormatSpec spec) {
+        if (spec.sign != '\0')
+            throw new IllegalArgumentException("Sign not allowed in string format specifier");
+        if (spec.alternate)
+            throw new IllegalArgumentException("Alternate form (#) not allowed in string format specifier");
+        if (spec.align == '=')
+            throw new IllegalArgumentException("'=' alignment not allowed in string format specifier");
         if (spec.precision >= 0 && text.length() > spec.precision) {
             text = text.substring(0, spec.precision);
         }
@@ -2957,10 +2962,23 @@ final class StringFormatter
         }
     }
 
+    static class DecimalFormatTemplate {
+        static DecimalFormat template;
+        static {
+            template = new DecimalFormat("#,##0.#####");
+            DecimalFormatSymbols symbols = template.getDecimalFormatSymbols();
+            symbols.setNaN("nan");
+            symbols.setInfinity("inf");
+            template.setDecimalFormatSymbols(symbols);
+            template.setGroupingUsed(false);
+        }
+    }
+    private static final DecimalFormat getDecimalFormat() {
+        return (DecimalFormat)DecimalFormatTemplate.template.clone();
+    }
+
     private String formatFloatDecimal(double v, boolean truncate) {
         checkPrecision("decimal");
-        java.text.NumberFormat numberFormat = java.text.NumberFormat.getInstance(
-                                           java.util.Locale.US);
         int prec = precision;
         if (prec == -1)
             prec = 6;
@@ -2968,11 +2986,12 @@ final class StringFormatter
             v = -v;
             negative = true;
         }
-        numberFormat.setMaximumFractionDigits(prec);
-        numberFormat.setMinimumFractionDigits(truncate ? 0 : prec);
-        numberFormat.setGroupingUsed(false);
 
-        String ret = numberFormat.format(v);
+        DecimalFormat decimalFormat = getDecimalFormat();
+        decimalFormat.setMaximumFractionDigits(prec);
+        decimalFormat.setMinimumFractionDigits(truncate ? 0 : prec);
+
+        String ret = decimalFormat.format(v);
         return ret;
     }
 

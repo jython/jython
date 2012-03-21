@@ -18,9 +18,18 @@ public class MarkupIterator extends PyObject {
 
     private final String markup;
     private int index;
+    private final FieldNumbering numbering;
 
     public MarkupIterator(String markup) {
+        this(markup, null);
+    }
+
+    public MarkupIterator(String markup, MarkupIterator enclosingIterator) {
         this.markup = markup;
+        if (enclosingIterator != null)
+            numbering = enclosingIterator.numbering;
+        else
+            numbering = new FieldNumbering();
     }
 
     @Override
@@ -140,6 +149,17 @@ public class MarkupIterator extends PyObject {
         } else {
             result.fieldName = fieldMarkup;
         }
+        if (result.fieldName.isEmpty()) {
+            result.fieldName = numbering.nextAutomaticFieldNumber();
+            return;
+        }
+        char c = result.fieldName.charAt(0);
+        if (c == '.' || c == '[') {
+            result.fieldName = numbering.nextAutomaticFieldNumber() + result.fieldName;
+            return;
+        }
+        if (Character.isDigit(c))
+            numbering.useManualFieldNumbering();
     }
 
     private int indexOfFirst(String s, int start, char c1, char c2) {
@@ -152,6 +172,24 @@ public class MarkupIterator extends PyObject {
             return i1;
         }
         return Math.min(i1, i2);
+    }
+
+    static final class FieldNumbering {
+        private boolean manualFieldNumberSpecified;
+        private int automaticFieldNumber = 0;
+
+        String nextAutomaticFieldNumber() {
+            if (manualFieldNumberSpecified)
+                throw new IllegalArgumentException("cannot switch from manual field specification to automatic field numbering");
+            return Integer.toString(automaticFieldNumber++);
+        }
+        void useManualFieldNumbering() {
+            if (manualFieldNumberSpecified)
+                return;
+            if (automaticFieldNumber != 0)
+                throw new IllegalArgumentException("cannot switch from automatic field numbering to manual field specification");
+            manualFieldNumberSpecified = true;
+        }
     }
 
     public static final class Chunk {
