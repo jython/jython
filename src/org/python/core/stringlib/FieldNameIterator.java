@@ -88,6 +88,8 @@ public class FieldNameIterator extends PyObject {
             parseItemChunk(chunk);
         } else if (markup.charAt(index) == '.') {
             parseAttrChunk(chunk);
+        } else {
+            throw new IllegalArgumentException("Only '.' or '[' may follow ']' in format field specifier");
         }
         return chunk;
     }
