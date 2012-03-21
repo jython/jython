@@ -461,7 +461,13 @@ class CommandLineOptions {
                 index++;
                 break;
             } else if (arg.startsWith("-W")) {
-                warnoptions.add(args[++index]);
+                if (arg.length() > 2) {
+                    warnoptions.add(arg.substring(2));
+                } else if ((index + 1) < args.length) {
+                    warnoptions.add(args[++index]);
+                } else {
+                    return argumentExpected(arg);
+                }
             } else if (arg.equals("-C")) {
                 encoding = args[++index];
                 setProperty("python.console.encoding", encoding);
