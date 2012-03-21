@@ -3236,7 +3236,7 @@ final class StringFormatter
                 } else {
                     // Exponential precision is the number of digits after the decimal
                     // point, whereas 'g' precision is the number of significant digits --
-                    // and expontential always provides one significant digit before the
+                    // and exponential always provides one significant digit before the
                     // decimal point
                     precision--;
                     string = formatFloatExponential(arg, (char)(c-2), !altFlag);
