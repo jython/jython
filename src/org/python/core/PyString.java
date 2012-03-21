@@ -3177,10 +3177,14 @@ final class StringFormatter
             case 'e':
             case 'E':
                 string = formatFloatExponential(arg, c, false);
+                if (c == 'E')
+                    string = string.toUpperCase();
                 break;
             case 'f':
             case 'F':
                 string = formatFloatDecimal(asDouble(arg), false);
+                if (c == 'F')
+                    string = string.toUpperCase();
                 break;
             case 'g':
             case 'G':
@@ -3218,6 +3222,8 @@ final class StringFormatter
                     precision--;
                     string = formatFloatExponential(arg, (char)(c-2), !altFlag);
                 }
+                if (c == 'G')
+                    string = string.toUpperCase();
                 break;
             case 'c':
                 fill = ' ';
