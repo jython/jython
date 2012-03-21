@@ -27,7 +27,7 @@ def get_modules(path):
                 modules.add(fullpath)
     return modules
 
-if not os.path.exists('CPythonLib'):
+if not os.path.exists('lib-python'):
     print >>sys.stderr, 'You need to run this script from the Jython root directory.'
     sys.exit(1)
 
