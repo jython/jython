@@ -1716,6 +1716,8 @@ public class PyObject implements Serializable {
 
     @ExposedMethod(doc = BuiltinDocs.object___format___doc)
     final PyObject object___format__(PyObject formatSpec) {
+        if (formatSpec != null && formatSpec instanceof PyString && !((PyString)formatSpec).getString().isEmpty())
+            Py.warning(Py.PendingDeprecationWarning, "object.__format__ with a non-empty format string is deprecated");
         return __str__().__format__(formatSpec);
     }
 
