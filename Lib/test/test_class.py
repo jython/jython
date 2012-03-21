@@ -636,7 +636,7 @@ class ClassTests(unittest.TestCase):
         hash(a.f)
 
 def test_main():
-    with test_support._check_py3k_warnings(
+    with test_support.check_py3k_warnings(
             (".+__(get|set|del)slice__ has been removed", DeprecationWarning),
             ("classic int division", DeprecationWarning),
             ("<> not supported", DeprecationWarning)):

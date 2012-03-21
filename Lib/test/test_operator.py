@@ -195,7 +195,7 @@ class OperatorTestCase(unittest.TestCase):
             pass
         def check(self, o, v):
             self.assertEqual(operator.isCallable(o), v)
-            with test_support._check_py3k_warnings():
+            with test_support.check_py3k_warnings():
                 self.assertEqual(callable(o), v)
         check(self, 4, 0)
         check(self, operator.isCallable, 1)

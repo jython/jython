@@ -2,7 +2,7 @@
 
 import unittest
 from test.test_support import run_unittest, TESTFN, unlink, have_unicode, \
-                              _check_py3k_warnings
+                              check_py3k_warnings
 
 # Test result of triple loop (too big to inline)
 TRIPLETS = [(0, 0, 0), (0, 0, 1), (0, 0, 2),
@@ -401,7 +401,7 @@ class TestCase(unittest.TestCase):
                     for i in range(5)]
 
         # Deprecated map(None, ...)
-        with _check_py3k_warnings():
+        with check_py3k_warnings():
             self.assertEqual(map(None, SequenceClass(5)), range(5))
             self.assertEqual(map(None, d), d.keys())
             self.assertEqual(map(None, d,
@@ -504,7 +504,7 @@ class TestCase(unittest.TestCase):
 
     # Test reduces()'s use of iterators.
     def test_deprecated_builtin_reduce(self):
-        with _check_py3k_warnings():
+        with check_py3k_warnings():
             self._test_builtin_reduce()
 
     def _test_builtin_reduce(self):

@@ -192,7 +192,7 @@ class ReferencesTestCase(TestBase):
         p.append(12)
         self.assertEqual(len(L), 1)
         self.failUnless(p, "proxy for non-empty UserList should be true")
-        with test_support._check_py3k_warnings():
+        with test_support.check_py3k_warnings():
             p[:] = [2, 3]
         self.assertEqual(len(L), 2)
         self.assertEqual(len(p), 2)
@@ -207,7 +207,7 @@ class ReferencesTestCase(TestBase):
         ## self.assertEqual(repr(L2), repr(p2))
         L3 = UserList.UserList(range(10))
         p3 = weakref.proxy(L3)
-        with test_support._check_py3k_warnings():
+        with test_support.check_py3k_warnings():
             self.assertEqual(L3[:], p3[:])
             self.assertEqual(L3[5:], p3[5:])
             self.assertEqual(L3[:5], p3[:5])

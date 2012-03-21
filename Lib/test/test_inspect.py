@@ -4,9 +4,9 @@ import unittest
 import inspect
 import datetime
 
-from test.test_support import is_jython, run_unittest, _check_py3k_warnings
+from test.test_support import is_jython, run_unittest, check_py3k_warnings
 
-with _check_py3k_warnings(
+with check_py3k_warnings(
         ("tuple parameter unpacking has been removed", SyntaxWarning),
         quiet=True):
     from test import inspect_fodder as mod
@@ -385,7 +385,7 @@ class TestClassesAndFunctions(unittest.TestCase):
 
     @na_for_jython
     def test_getargspec_sublistofone(self):
-        with _check_py3k_warnings(
+        with check_py3k_warnings(
                 ("tuple parameter unpacking has been removed", SyntaxWarning),
                 ("parenthesized argument names are invalid", SyntaxWarning)):
             exec 'def sublistOfOne((foo,)): return 1'

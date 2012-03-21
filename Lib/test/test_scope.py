@@ -1,5 +1,5 @@
 import unittest
-from test.test_support import (check_syntax_error, _check_py3k_warnings,
+from test.test_support import (check_syntax_error, check_py3k_warnings,
                                check_warnings, is_jython, run_unittest)
 
 
@@ -330,7 +330,7 @@ else:
 
         self.assertEqual(makeReturner2(a=11)()['a'], 11)
 
-        with _check_py3k_warnings(("tuple parameter unpacking has been removed",
+        with check_py3k_warnings(("tuple parameter unpacking has been removed",
                                   SyntaxWarning)):
             exec """\
 def makeAddPair((a, b)):
