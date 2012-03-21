@@ -48,6 +48,10 @@ public class InternalFormatSpecParser {
             index++;
         }
         result.width = getInteger();
+        if (isAt(",")) {
+            result.thousands_separators = true;
+            index++;
+        }
         if (isAt(".")) {
             index++;
             result.precision = getInteger();
@@ -60,6 +64,10 @@ public class InternalFormatSpecParser {
             if (index + 1 != spec.length()) {
                 throw new IllegalArgumentException("Invalid conversion specification");
             }
+        }
+        if (result.thousands_separators) {
+            if ("defgEG%F\0".indexOf(result.type) == -1)
+                throw new IllegalArgumentException("Cannot specify ',' with '" + result.type + "'.");
         }
         return result;
     }

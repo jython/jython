@@ -72,6 +72,11 @@ public class StringFormatTest extends TestCase {
         spec.type = 'b';
         assertEquals("1111011", PyInteger.formatIntOrLong(123, spec));
 
+        spec.thousands_separators = true;
+        spec.type = 'd';
+        assertEquals("1,234", PyInteger.formatIntOrLong(1234, spec));
+        spec.thousands_separators = false;
+
         spec.alternate = true;
         spec.type = 'o';
         assertEquals("0o173", PyInteger.formatIntOrLong(123, spec));

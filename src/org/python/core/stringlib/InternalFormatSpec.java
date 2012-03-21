@@ -9,6 +9,7 @@ public final class InternalFormatSpec {
     public boolean alternate;
     public char sign;
     public int width = -1;
+    public boolean thousands_separators;
     public int precision = -1;
     public char type;
 
