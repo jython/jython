@@ -44,8 +44,9 @@ public class InternalFormatSpecParser {
         }
         if (result.fill_char == '\0' && isAt("0")) {
             result.fill_char = '0';
-            if (result.align == '\0')
+            if (result.align == '\0') {
                 result.align = '=';
+            }
             index++;
         }
         result.width = getInteger();
@@ -66,9 +67,8 @@ public class InternalFormatSpecParser {
                 throw new IllegalArgumentException("Invalid conversion specification");
             }
         }
-        if (result.thousands_separators) {
-            if ("defgEG%F\0".indexOf(result.type) == -1)
-                throw new IllegalArgumentException("Cannot specify ',' with '" + result.type + "'.");
+        if (result.thousands_separators && "defgEG%F\0".indexOf(result.type) == -1) {
+            throw new IllegalArgumentException("Cannot specify ',' with '" + result.type + "'.");
         }
         return result;
     }

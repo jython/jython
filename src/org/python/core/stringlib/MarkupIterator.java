@@ -26,10 +26,11 @@ public class MarkupIterator extends PyObject {
 
     public MarkupIterator(String markup, MarkupIterator enclosingIterator) {
         this.markup = markup;
-        if (enclosingIterator != null)
+        if (enclosingIterator != null) {
             numbering = enclosingIterator.numbering;
-        else
+        } else {
             numbering = new FieldNumbering();
+        }
     }
 
     @Override
@@ -158,8 +159,9 @@ public class MarkupIterator extends PyObject {
             result.fieldName = numbering.nextAutomaticFieldNumber() + result.fieldName;
             return;
         }
-        if (Character.isDigit(c))
+        if (Character.isDigit(c)) {
             numbering.useManualFieldNumbering();
+        }
     }
 
     private int indexOfFirst(String s, int start, char c1, char c2) {
@@ -179,15 +181,18 @@ public class MarkupIterator extends PyObject {
         private int automaticFieldNumber = 0;
 
         String nextAutomaticFieldNumber() {
-            if (manualFieldNumberSpecified)
+            if (manualFieldNumberSpecified) {
                 throw new IllegalArgumentException("cannot switch from manual field specification to automatic field numbering");
+            }
             return Integer.toString(automaticFieldNumber++);
         }
         void useManualFieldNumbering() {
-            if (manualFieldNumberSpecified)
+            if (manualFieldNumberSpecified) {
                 return;
-            if (automaticFieldNumber != 0)
+            }
+            if (automaticFieldNumber != 0) {
                 throw new IllegalArgumentException("cannot switch from automatic field numbering to manual field specification");
+            }
             manualFieldNumberSpecified = true;
         }
     }

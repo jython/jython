@@ -6,6 +6,8 @@ package org.python.core;
 
 import java.io.Serializable;
 import java.math.BigInteger;
+import java.text.NumberFormat;
+import java.util.Locale;
 
 import org.python.core.stringlib.InternalFormatSpec;
 import org.python.core.stringlib.InternalFormatSpecParser;

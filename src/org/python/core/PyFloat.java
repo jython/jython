@@ -122,12 +122,13 @@ public class PyFloat extends PyObject {
     }
 
     private String formatDouble(int precision) {
-        if (Double.isNaN(value))
+        if (Double.isNaN(value)) {
             return "nan";
-        else if (value == Double.NEGATIVE_INFINITY)
+        } else if (value == Double.NEGATIVE_INFINITY) {
             return "-inf";
-        else if (value == Double.POSITIVE_INFINITY)
+        } else if (value == Double.POSITIVE_INFINITY) {
             return "inf";
+        }
 
         String result = String.format("%%.%dg", precision);
         result = Py.newString(result).__mod__(this).toString();
