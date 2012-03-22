@@ -1619,11 +1619,6 @@ Traceback (most recent call last):
   ...
 ValueError: 7
 
->>> f().throw("abc")     # throw on just-opened generator
-Traceback (most recent call last):
-  ...
-abc
-
 Now let's try closing a generator:
 
 >>> def f():
@@ -1775,39 +1770,6 @@ was removed.
 ...    g = gen()
 
 >>> leak()
-
-
-
-This test isn't really generator related, but rather exception-in-cleanup
-related. The coroutine tests (above) just happen to cause an exception in
-the generator's __del__ (tp_del) method. We can also test for this
-explicitly, without generators. We do have to redirect stderr to avoid
-printing warnings and to doublecheck that we actually tested what we wanted
-to test.
-
->>> import sys, StringIO
->>> from time import sleep
->>> old = sys.stderr
->>> try:
-...     sys.stderr = StringIO.StringIO()
-...     class Leaker:
-...         def __del__(self):
-...             raise RuntimeError
-...
-...     l = Leaker()
-...     del l; extra_collect()
-...     err = sys.stderr.getvalue().strip()
-...     err.startswith(
-...         "Exception RuntimeError in <"
-...     )
-...     err.endswith("> ignored")
-...     len(err.splitlines())
-... finally:
-...     sys.stderr = old
-True
-True
-1
-
 
 
 These refleak tests should perhaps be in a testfile of their own,
