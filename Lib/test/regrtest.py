@@ -1207,6 +1207,7 @@ _expectations = {
         test_fcntl
         test_fork1
         test_gdbm
+        test_grp
         test_getargs2
         test_gl
         test_hotshot
@@ -1257,9 +1258,14 @@ _expectations = {
         test_poplib
         test_pydoc
         test_queue
-         test_smtplib
+        test_smtplib
         test_telnetlib
+
+        test_binascii
+        test_distutils
+        test_urllib2_localnet
         """
+        #Last group above should be re-evaluated before releasing 2.7.
 }
 _expectations['freebsd5'] = _expectations['freebsd4']
 _expectations['freebsd6'] = _expectations['freebsd4']
