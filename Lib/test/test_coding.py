@@ -1,5 +1,4 @@
-
-import from test import test_support
+from test import test_support
 import unittest
 import os
 
@@ -35,7 +34,7 @@ class CodingTest(unittest.TestCase):
 
 
 def test_main():
-    test.test_support.run_unittest(CodingTest)
+    test_support.run_unittest(CodingTest)
 
 if __name__ == "__main__":
     test_main()
