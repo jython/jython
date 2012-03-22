@@ -7,7 +7,8 @@ import shutil
 import subprocess
 from copy import copy, deepcopy
 
-from test.test_support import run_unittest, TESTFN, unlink, get_attribute
+from test.test_support import (run_unittest, TESTFN, unlink, get_attribute,
+                               is_jython)
 
 import sysconfig
 from sysconfig import (get_paths, get_platform, get_config_vars,
@@ -33,7 +34,8 @@ class TestSysConfig(unittest.TestCase):
         # saving the environment
         self.name = os.name
         self.platform = sys.platform
-        self.version = sys.version
+        if not is_jython:
+            self.version = sys.version
         self.sep = os.sep
         self.join = os.path.join
         self.isabs = os.path.isabs
@@ -53,7 +55,8 @@ class TestSysConfig(unittest.TestCase):
             del os.uname
         os.name = self.name
         sys.platform = self.platform
-        sys.version = self.version
+        if not is_jython:
+            sys.version = self.version
         os.sep = self.sep
         os.path.join = self.join
         os.path.isabs = self.isabs
@@ -106,6 +109,7 @@ class TestSysConfig(unittest.TestCase):
         self.assertIsInstance(cvars, dict)
         self.assertTrue(cvars)
 
+    @unittest.skipIf(is_jython, "Not on Jython")
     def test_get_platform(self):
         # windows XP, 32bits
         os.name = 'nt'
@@ -225,14 +229,16 @@ class TestSysConfig(unittest.TestCase):
 
         # XXX more platforms to tests here
 
+    @unittest.skipIf(is_jython, "config.h not relevent to Jython")
     def test_get_config_h_filename(self):
         config_h = sysconfig.get_config_h_filename()
         self.assertTrue(os.path.isfile(config_h), config_h)
 
     def test_get_scheme_names(self):
-        wanted = ('nt', 'nt_user', 'os2', 'os2_home', 'osx_framework_user',
-                  'posix_home', 'posix_prefix', 'posix_user')
-        self.assertEqual(get_scheme_names(), wanted)
+        wanted = {'nt', 'nt_user', 'os2', 'os2_home', 'osx_framework_user',
+                  'posix_home', 'posix_prefix', 'posix_user', 'java',
+                  'java_user'}
+        self.assertEqual({name for name in get_scheme_names()}, wanted)
 
     def test_symlink(self):
         # Issue 7880

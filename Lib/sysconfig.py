@@ -82,6 +82,26 @@ _INSTALL_SCHEMES = {
         'scripts': '{userbase}/bin',
         'data'   : '{userbase}',
         },
+    'java': {
+        'stdlib': '{base}/lib/jython',
+        'platstdlib': '{base}/lib/jython',
+        'purelib': '{base}/lib/jython',
+        'platlib': '{base}/lib/jython',
+        'include': '{base}/include/jython',
+        'platinclude': '{base}/include/jython',
+        'scripts': '{base}/bin',
+        'data'   : '{base}',
+        },
+
+    'java_user': {
+        'stdlib': '{userbase}/lib/jython{py_version_short}',
+        'platstdlib': '{userbase}/lib/jython{py_version_short}',
+        'purelib': '{userbase}/lib/jython{py_version_short}/site-packages',
+        'platlib': '{userbase}/lib/jython{py_version_short}/site-packages',
+        'include': '{userbase}/include/jython{py_version_short}',
+        'scripts': '{userbase}/bin',
+        'data'   : '{userbase}',
+        },
     }
 
 _SCHEME_KEYS = ('stdlib', 'platstdlib', 'purelib', 'platlib', 'include',
@@ -152,7 +172,7 @@ def _expand_vars(scheme, vars):
     _extend_dict(vars, get_config_vars())
 
     for key, value in _INSTALL_SCHEMES[scheme].items():
-        if os.name in ('posix', 'nt'):
+        if os.name in ('posix', 'nt', 'java'):
             value = os.path.expanduser(value)
         res[key] = os.path.normpath(_subst_vars(value, vars))
     return res
