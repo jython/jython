@@ -688,7 +688,7 @@ public class Time implements ClassDictInit
      */
     private static PyTuple pystrptime(String data_string, String format) {
         return (PyTuple) __builtin__.__import__("_strptime")
-                                    .__getattr__("strptime")
+                                    .__getattr__("_strptime")
                                     .__call__(Py.newUnicode(data_string),
                                               Py.newUnicode(format));
     }
