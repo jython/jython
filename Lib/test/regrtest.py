@@ -1263,6 +1263,7 @@ _expectations = {
 
         test_binascii
         test_distutils
+        test_dumbdbm
         test_urllib2_localnet
         """
         #Last group above should be re-evaluated before releasing 2.7.

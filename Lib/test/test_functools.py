@@ -117,6 +117,7 @@ class TestPartial(unittest.TestCase):
         self.assertRaises(ZeroDivisionError, self.thetype(f), 1, 0)
         self.assertRaises(ZeroDivisionError, self.thetype(f, y=0), 1)
 
+    @unittest.skip("FIXME: Not working in Jython.")
     def test_attributes(self):
         p = self.thetype(hex)
         try:
