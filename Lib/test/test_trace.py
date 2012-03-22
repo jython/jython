@@ -268,7 +268,8 @@ class TraceTestCase(unittest.TestCase):
     # deallocators may be traced as well.
     def setUp(self):
         self.using_gc = gc.isenabled()
-        gc.disable()
+        if not test_support.is_jython:
+            gc.disable()
 
     def tearDown(self):
         if self.using_gc:
