@@ -25,6 +25,8 @@ def read_jython_code(fullname, file, filename):
     data = _imp.readCode(filename, file, False)
     return BytecodeLoader.makeCode(fullname + "$py", data, filename)
 
+read_code = read_jython_code
+
 def simplegeneric(func):
     """Make a trivial single-dispatch generic function"""
     registry = {}

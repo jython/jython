@@ -55,7 +55,9 @@ class CmdLineTest(unittest.TestCase):
     def test_version(self):
         prefix = 'J' if test.test_support.is_jython else 'P'
         version = prefix + 'ython %d.%d' % sys.version_info[:2]
-        self.assertTrue(self.start_python('-V').startswith(version))
+        start = self.start_python('-V')
+        self.assertTrue(start.startswith(version),
+            "%s does not start with %s" % (start, version))
 
     def test_run_module(self):
         # Test expected operation of the '-m' switch

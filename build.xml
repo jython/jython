@@ -126,7 +126,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <property name="jython.version" value="2.7a0+"/>
         <property name="jython.version.noplus" value="2.7a0"/>
         <property name="jython.major_version" value="2"/>
-        <property name="jython.minor_version" value="6"/>
+        <property name="jython.minor_version" value="7"/>
         <property name="jython.micro_version" value="0"/>
         <property name="jython.release_level" value="${PY_RELEASE_LEVEL_ALPHA}"/>
         <property name="jython.release_serial" value="0"/>
