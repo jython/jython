@@ -6,6 +6,7 @@ if __name__ != 'test.test_support':
 import contextlib
 import errno
 import functools
+import gc
 import socket
 import sys
 import os
@@ -14,7 +15,9 @@ import shutil
 import warnings
 import unittest
 import importlib
+import UserDict
 import re
+import time
 try:
     import thread
 except ImportError:
@@ -444,6 +447,50 @@ if fp is not None:
     fp.close()
     unlink(TESTFN)
 del fp
+
+# Disambiguate TESTFN for parallel testing, while letting it remain a valid
+# module name.
+TESTFN = "{}_{}_tmp".format(TESTFN, "1") #XXX "1" is a dummy for os.getpid()
+
+# Save the initial cwd
+SAVEDCWD = os.getcwd()
+
+@contextlib.contextmanager
+def temp_cwd(name='tempcwd', quiet=False):
+    """
+    Context manager that creates a temporary directory and set it as CWD.
+
+    The new CWD is created in the current directory and it's named *name*.
+    If *quiet* is False (default) and it's not possible to create or change
+    the CWD, an error is raised.  If it's True, only a warning is raised
+    and the original CWD is used.
+    """
+    if isinstance(name, unicode):
+        try:
+            name = name.encode(sys.getfilesystemencoding() or 'ascii')
+        except UnicodeEncodeError:
+            if not quiet:
+                raise unittest.SkipTest('unable to encode the cwd name with '
+                                        'the filesystem encoding.')
+    saved_dir = os.getcwd()
+    is_temporary = False
+    try:
+        os.mkdir(name)
+        os.chdir(name)
+        is_temporary = True
+    except OSError:
+        if not quiet:
+            raise
+        warnings.warn('tests may fail, unable to change the CWD to ' + name,
+                      RuntimeWarning, stacklevel=3)
+    try:
+        yield os.getcwd()
+    finally:
+        os.chdir(saved_dir)
+        if is_temporary:
+            rmtree(name)
+
+
 
 def findfile(file, here=__file__, subdir=None):
     """Try to find a file on sys.path and the working directory.  If it is not
