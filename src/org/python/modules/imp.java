@@ -1,6 +1,7 @@
 
 package org.python.modules;
 
+import org.python.core.__builtin__;
 import org.python.core.Py;
 import org.python.core.PyFile;
 import org.python.core.PyList;
@@ -161,6 +162,10 @@ public class imp {
 
     public static PyObject load_compiled(String name, String pathname) {
         return load_compiled(name, pathname, new PyFile(pathname, "rb", -1));
+    }
+
+    public static PyObject reload(PyObject module) {
+        return __builtin__.reload(module);
     }
 
     public static PyObject load_compiled(String name, String pathname, PyObject file) {
