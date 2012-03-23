@@ -67,8 +67,12 @@ public class CompilerFlags implements Serializable {
                 isFlagSet(CodeFlag.CO_NESTED),
                 isFlagSet(CodeFlag.CO_GENERATOR_ALLOWED),
                 isFlagSet(CodeFlag.CO_FUTURE_WITH_STATEMENT),
-                isFlagSet(CodeFlag.CO_FUTURE_ABSOLUTE_IMPORT), only_ast,
-                dont_imply_dedent, source_is_utf8);
+                isFlagSet(CodeFlag.CO_FUTURE_ABSOLUTE_IMPORT),
+                isFlagSet(CodeFlag.CO_FUTURE_PRINT_FUNCTION),
+                isFlagSet(CodeFlag.CO_FUTURE_UNICODE_LITERALS),
+                only_ast,
+                dont_imply_dedent,
+                source_is_utf8);
     }
 
     public static CompilerFlags getCompilerFlags() {
@@ -82,7 +86,9 @@ public class CompilerFlags implements Serializable {
             | CodeFlag.CO_GENERATOR_ALLOWED.flag
             | CodeFlag.CO_FUTURE_DIVISION.flag
             | CodeFlag.CO_FUTURE_ABSOLUTE_IMPORT.flag
-            | CodeFlag.CO_FUTURE_WITH_STATEMENT.flag;
+            | CodeFlag.CO_FUTURE_WITH_STATEMENT.flag
+            | CodeFlag.CO_FUTURE_PRINT_FUNCTION.flag
+            | CodeFlag.CO_FUTURE_UNICODE_LITERALS.flag;
 
     public static CompilerFlags getCompilerFlags(int flags, PyFrame frame) {
         if ((flags & ~CO_ALL_FEATURES) != 0) {
