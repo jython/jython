@@ -7,7 +7,7 @@ a patch for all the changes made after that in each module.
 The script expects to be run in the jython root directory and there should be a "cpython"
 directory in the parent directory. That directory should be a clone of the CPython release
 against which the modules in Lib/ have currently been patched.
-Only modules that are common to Lib/, CPythonLib/ and ../cpython/Lib will be included in
+Only modules that are common to Lib/, lib-python/ and ../cpython/Lib will be included in
 the patches.
 """
 from StringIO import StringIO
@@ -36,7 +36,7 @@ if not os.path.exists('../cpython'):
     sys.exit(1)
 
 jymodules = get_modules(u'Lib')
-cpymodules = get_modules(u'CPythonLib')
+cpymodules = get_modules(u'lib-python')
 cpy25modules = get_modules(u'../cpython/Lib')
 common_modules = jymodules.intersection(cpy25modules).intersection(cpymodules)
 
