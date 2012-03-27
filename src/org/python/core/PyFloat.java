@@ -89,6 +89,74 @@ public class PyFloat extends PyObject {
         return Py.newFloat(0.0);
     }
 
+    @ExposedClassMethod(doc = BuiltinDocs.float_fromhex_doc)
+    public static PyObject float_fromhex(PyType type, PyObject o) {
+        //XXX: I'm sure this could be shortened/simplified, but Double.parseDouble() takes
+        //     non-hex strings and requires the form 0xNUMBERpNUMBER for hex input which
+        //     causes extra complexity here.
+
+        String message = "invalid hexadecimal floating-point string";
+        boolean negative = false;
+
+        PyString s = o.__str__();
+        String value = s.getString().trim().toLowerCase();
+
+        if (value.length() == 0) {
+            throw Py.ValueError(message);
+        }
+        if (value.equals("nan") || value.equals("-nan") || value.equals("+nan")) {
+            return new PyFloat(Double.NaN);
+        }
+        if (value.equals("inf") ||value.equals("infinity") ||
+                value.equals("+inf") ||value.equals("+infinity")) {
+            return new PyFloat(Double.POSITIVE_INFINITY);
+        }
+        if (value.equals("-inf") || value.equals("-infinity")) {
+            return new PyFloat(Double.NEGATIVE_INFINITY);
+        }
+
+        //Strip and record + or -
+        if (value.charAt(0) == '-') {
+            value = value.substring(1);
+            negative = true;
+        } else if (value.charAt(0) == '+') {
+            value = value.substring(1);
+        }
+        if (value.length() == 0) {
+            throw Py.ValueError(message);
+        }
+
+        //Append 0x if not present.
+        if (!value.startsWith("0x") && !value.startsWith("0X")) {
+            value = "0x" + value;
+        }
+
+        //reattach - if needed.
+        if (negative) {
+            value = "-" + value;
+        }
+
+        //Append p if not present.
+        if (value.indexOf('p') == -1) {
+            value = value + "p0";
+        }
+
+        try {
+            double d = Double.parseDouble(value);
+            if (Double.isInfinite(d)) {
+                throw Py.OverflowError("hexadecimal value too large to represent as a float");
+            }
+            return new PyFloat(d);
+        } catch (NumberFormatException n) {
+            throw Py.ValueError(message);
+        }
+    }
+
+    @ExposedClassMethod(doc = BuiltinDocs.float_hex_doc)
+    public static PyObject float_hex(PyType type, double value) {
+        return new PyString(Double.toHexString(value));
+    }
+
     /**
      * Determine if this float is not infinity, nor NaN.
      */
