@@ -185,11 +185,22 @@ import java.util.ListIterator;
         this.encoding = encoding;
     }
 
+    @Override
+    public void reportError(RecognitionException e) {
+      // Update syntax error count and output error.
+      super.reportError(e);
+      errorHandler.reportError(this, e);
+    }
+
+    @Override
+    public void displayRecognitionError(String[] tokenNames, RecognitionException e) {
+      // Do nothing. We record errors instead of printing them.
+    }
 }
 
 @rulecatch {
 catch (RecognitionException re) {
-    errorHandler.reportError(this, re);
+    reportError(re);
     errorHandler.recover(this, input,re);
     retval.tree = (PythonTree)adaptor.errorNode(input, retval.start, input.LT(-1), re);
 }
@@ -251,16 +262,16 @@ private ErrorHandler errorHandler;
                 }
                 return state.token;
             } catch (NoViableAltException nva) {
-                errorHandler.reportError(this, nva);
+                reportError(nva);
                 errorHandler.recover(this, nva); // throw out current char and try again
             } catch (FailedPredicateException fp) {
                 //XXX: added this for failed STRINGPART -- the FailedPredicateException
                 //     hides a NoViableAltException.  This should be the only
                 //     FailedPredicateException that gets thrown by the lexer.
-                errorHandler.reportError(this, fp);
+                reportError(fp);
                 errorHandler.recover(this, fp); // throw out current char and try again
             } catch (RecognitionException re) {
-                errorHandler.reportError(this, re);
+                reportError(re);
                 // match() routine has already called recover()
             }
         }
@@ -292,7 +303,7 @@ single_input
     ;
     //XXX: this block is duplicated in three places, how to extract?
     catch [RecognitionException re] {
-        errorHandler.reportError(this, re);
+        reportError(re);
         errorHandler.recover(this, input,re);
         PythonTree badNode = (PythonTree)adaptor.errorNode(input, retval.start, input.LT(-1), re);
         retval.tree = new ErrorMod(badNode);
@@ -331,7 +342,7 @@ file_input
     ;
     //XXX: this block is duplicated in three places, how to extract?
     catch [RecognitionException re] {
-        errorHandler.reportError(this, re);
+        reportError(re);
         errorHandler.recover(this, input,re);
         PythonTree badNode = (PythonTree)adaptor.errorNode(input, retval.start, input.LT(-1), re);
         retval.tree = new ErrorMod(badNode);
@@ -352,7 +363,7 @@ eval_input
     ;
     //XXX: this block is duplicated in three places, how to extract?
     catch [RecognitionException re] {
-        errorHandler.reportError(this, re);
+        reportError(re);
         errorHandler.recover(this, input,re);
         PythonTree badNode = (PythonTree)adaptor.errorNode(input, retval.start, input.LT(-1), re);
         retval.tree = new ErrorMod(badNode);

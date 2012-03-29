@@ -26,7 +26,6 @@ public class RecordingErrorHandler implements ErrorHandler {
     public List<RecognitionException> errs = new ArrayList<RecognitionException>();
 
     public void reportError(BaseRecognizer br, RecognitionException re) {
-        br.reportError(re);
         errs.add(re);
     }
 
