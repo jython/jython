@@ -5,6 +5,7 @@ Jython 2.7a1
 
 Jython 2.5.3b2
   Bugs Fixed
+    - [ 1837 ] gderived.py and template Ant target fail on Windows
     - [ 1536 ] NPE in org.python.jsr223.PyScriptEngine:187
     - [ 1640 ] cStringIO does not complain on getvalue after close
     - [ 1721 ] NPE when using JSR 223 (TestCase+Patch)

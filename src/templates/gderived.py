@@ -23,6 +23,15 @@ import org.python.core.*;"""
 
 modif_re = re.compile(r"(?:\((\w+)\))?(\w+)")
 
+# os.path.samefile unavailable on Windows before Python v3.2
+if hasattr(os.path,"samefile"):
+    # Good: available on this platform
+    os_path_samefile = os.path.samefile
+else:
+    def os_path_samefile(a,b):
+        'Files are considered the same if their absolute paths are equal'
+        return os.path.abspath(a)==os.path.abspath(b)
+
 class Gen:
 
     priority_order = ['require','define','base_class',
@@ -212,7 +221,7 @@ def hack_derived_header(fn, result):
     org.python.core
     """
     parent = os.path.dirname(fn)
-    if os.path.samefile(parent, core_dir):
+    if os_path_samefile(parent, core_dir):
         return result
 
     print 'Fixing header for: %s' % fn
@@ -220,7 +229,7 @@ def hack_derived_header(fn, result):
     while True:
         parent, tail = os.path.split(parent)
         dirs.insert(0, tail)
-        if os.path.samefile(parent, org_python_dir) or not tail:
+        if os_path_samefile(parent, org_python_dir) or not tail:
             break
 
     result = result.splitlines()
