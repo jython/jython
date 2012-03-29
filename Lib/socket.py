@@ -98,6 +98,8 @@ def would_block_error(exc=None):
 
 ALL = None
 
+_ssl_message = ": Differences between the SSL socket behaviour of cpython vs. jython are explained on the wiki:  http://wiki.python.org/jython/NewSocketModule#SSL_Support"
+
 _exception_map = {
 
 # (<javaexception>, <circumstance>) : callable that raises the python equivalent exception, or None to stub out as unmapped
@@ -134,11 +136,11 @@ _exception_map = {
 # These error codes are currently wrong: getting them correct is going to require
 # some investigation. Cpython 2.6 introduced extensive SSL support.
 
-(javax.net.ssl.SSLException, ALL)                        : lambda x: sslerror(-1, 'SSL exception'),
-(javax.net.ssl.SSLHandshakeException, ALL)               : lambda x: sslerror(-1, 'SSL handshake exception'),
-(javax.net.ssl.SSLKeyException, ALL)                     : lambda x: sslerror(-1, 'SSL key exception'),
-(javax.net.ssl.SSLPeerUnverifiedException, ALL)          : lambda x: sslerror(-1, 'SSL peer unverified exception'),
-(javax.net.ssl.SSLProtocolException, ALL)                : lambda x: sslerror(-1, 'SSL protocol exception'),
+(javax.net.ssl.SSLException, ALL)                        : lambda x: sslerror(-1, 'SSL exception'+_ssl_message),
+(javax.net.ssl.SSLHandshakeException, ALL)               : lambda x: sslerror(-1, 'SSL handshake exception'+_ssl_message),
+(javax.net.ssl.SSLKeyException, ALL)                     : lambda x: sslerror(-1, 'SSL key exception'+_ssl_message),
+(javax.net.ssl.SSLPeerUnverifiedException, ALL)          : lambda x: sslerror(-1, 'SSL peer unverified exception'+_ssl_message),
+(javax.net.ssl.SSLProtocolException, ALL)                : lambda x: sslerror(-1, 'SSL protocol exception'+_ssl_message),
 
 }
 
