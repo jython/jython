@@ -78,6 +78,7 @@ public class JLineConsole extends InteractiveConsole {
             Writer output = new OutputStreamWriter(new FileOutputStream(FileDescriptor.out),
                                                    "ISO-8859-1");
             reader = new ConsoleReader(input, output, getBindings());
+            reader.setBellEnabled(false);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
