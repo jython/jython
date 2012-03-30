@@ -194,7 +194,7 @@ import java.util.ListIterator;
 
     @Override
     public void displayRecognitionError(String[] tokenNames, RecognitionException e) {
-      // Do nothing. We record errors instead of printing them.
+        //Do nothing. We will handle error display elsewhere.
     }
 }
 
@@ -276,6 +276,11 @@ private ErrorHandler errorHandler;
             }
         }
     }
+    @Override
+    public void displayRecognitionError(String[] tokenNames, RecognitionException e) {
+        //Do nothing. We will handle error display elsewhere.
+    }
+
 }
 
 //START OF PARSER RULES
