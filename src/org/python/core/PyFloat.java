@@ -279,6 +279,42 @@ public class PyFloat extends PyObject {
     }
 
     @Override
+    public PyObject __gt__(PyObject other) {
+        // NaN > anything is always false.
+        if (Double.isNaN(getValue())) {
+            return Py.False;
+        }
+        return null;
+    }
+
+    @Override
+    public PyObject __ge__(PyObject other) {
+        //NaN >= anything is always false.
+        if (Double.isNaN(getValue())) {
+            return Py.False;
+        }
+        return null;
+    }
+
+    @Override
+    public PyObject __lt__(PyObject other) {
+        //NaN < anything is always false.
+        if (Double.isNaN(getValue())) {
+            return Py.False;
+        }
+        return null;
+    }
+
+    @Override
+    public PyObject __le__(PyObject other) {
+        //NaN >= anything is always false.
+        if (Double.isNaN(getValue())) {
+            return Py.False;
+        }
+        return null;
+    }
+
+    @Override
     public int __cmp__(PyObject other) {
         return float___cmp__(other);
     }
