@@ -101,7 +101,6 @@ class TestGenericStringIO(unittest.TestCase):
         self._fp.close()
         self.assertRaises(ValueError, self._fp.next)
 
-    @unittest.skipIf(test_support.is_jython, "FIXME #1862: not working in Jython")
     def test_getvalue(self):
         self._fp.close()
         self.assertRaises(ValueError, self._fp.getvalue)
