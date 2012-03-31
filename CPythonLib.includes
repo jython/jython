@@ -62,6 +62,7 @@ dumbdbm.py
 dummy_thread.py
 dummy_threading.py
 exceptions.py
+filecmp.py
 fnmatch.py
 formatter.py
 fpformat.py

@@ -1214,6 +1214,7 @@ _expectations = {
         test_imageop
         test_imgfile
         test_ioctl
+        test_kqueue
         test_largefile
         test_linuxaudiodev
         test_locale
@@ -1221,7 +1222,10 @@ _expectations = {
         test_macfs
         test_macostools
         test_memoryview
+        test_mhlib
         test_mmap
+        test_msilib
+        test_multiprocessing
         test_nis
         test_normalization
         test_openpty
@@ -1244,6 +1248,9 @@ _expectations = {
         test_symtable
         test_tcl
         test_timeout
+        test_tk
+        test_ttk_guionly
+        test_ttk_textonly
         test_unicode_file
         test_wait3
         test_wait4
