@@ -29,11 +29,15 @@ HAVE_FORKING = hasattr(os, "fork") and os.name != "os2"
 
 def signal_alarm(n):
     """Call signal.alarm when it exists (i.e. not on Windows)."""
-    if hasattr(signal, 'alarm'):
+    if hasattr(signal, 'alarm') and not test.test_support.is_jython:
         signal.alarm(n)
 
+select_fn = select.select
+if test.test_support.is_jython:
+    select_fn = select.cpython_compatible_select
+
 def receive(sock, n, timeout=20):
-    r, w, x = select.select([sock], [], [], timeout)
+    r, w, x = select_fn([sock], [], [], timeout)
     if sock in r:
         return sock.recv(n)
     else:

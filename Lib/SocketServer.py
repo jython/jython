@@ -138,6 +138,10 @@ try:
 except ImportError:
     import dummy_threading as threading
 
+select_fn = select.select
+if sys.platform.startswith('java'):
+    select_fn = select.cpython_compatible_select
+
 __all__ = ["TCPServer","UDPServer","ForkingUDPServer","ForkingTCPServer",
            "ThreadingUDPServer","ThreadingTCPServer","BaseRequestHandler",
            "StreamRequestHandler","DatagramRequestHandler",
@@ -222,7 +226,7 @@ class BaseServer:
                 # connecting to the socket to wake this up instead of
                 # polling. Polling reduces our responsiveness to a
                 # shutdown request and wastes cpu at all other times.
-                r, w, e = select.select([self], [], [], poll_interval)
+                r, w, e = select_fn([self], [], [], poll_interval)
                 if self in r:
                     self._handle_request_noblock()
         finally:
@@ -262,7 +266,7 @@ class BaseServer:
             timeout = self.timeout
         elif self.timeout is not None:
             timeout = min(timeout, self.timeout)
-        fd_sets = select.select([self], [], [], timeout)
+        fd_sets = select_fn([self], [], [], timeout)
         if not fd_sets[0]:
             self.handle_timeout()
             return
@@ -271,7 +275,7 @@ class BaseServer:
     def _handle_request_noblock(self):
         """Handle one request, without blocking.
 
-        I assume that select.select has returned that the socket is
+        I assume that select_fn has returned that the socket is
         readable before this function was called, so there should be
         no risk of blocking in get_request().
         """
@@ -426,6 +430,9 @@ class TCPServer(BaseServer):
 
         """
         self.socket.listen(self.request_queue_size)
+        # Adding a second call to getsockname() because of this issue
+        # http://wiki.python.org/jython/NewSocketModule#Deferredsocketcreationonjython
+        self.server_address = self.socket.getsockname()
 
     def server_close(self):
         """Called to clean-up the server.
