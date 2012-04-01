@@ -47,12 +47,8 @@ from org.xml.sax.helpers import XMLReaderFactory
 from org.xml.sax.ext import DefaultHandler2
 
 # Xerces
-try:
-    # Name mangled by jarjar?
-    import org.python.apache.xerces.parsers.SAXParser
-    _xerces_parser = "org.python.apache.xerces.parsers.SAXParser"
-except ImportError:
-    _xerces_parser = "org.apache.xerces.parsers.SAXParser"
+_mangled_xerces_parser_name = "org.python.apache.xerces.parsers.SAXParser"
+_xerces_parser_name = "org.apache.xerces.parsers.SAXParser"
 
 
 # @expat args registry
@@ -88,7 +84,11 @@ class XMLParser(object):
                      "not %s" % type(namespace_separator).__name__)
             raise TypeError(error)
 
-        self._reader = XMLReaderFactory.createXMLReader(_xerces_parser)
+        # See http://bugs.jython.org/issue1537
+        try:
+            self._reader = XMLReaderFactory.createXMLReader(_mangled_xerces_parser_name)
+        except:
+            self._reader = XMLReaderFactory.createXMLReader(_xerces_parser_name)
 
         if self.namespace_separator is None:
             try:
