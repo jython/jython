@@ -275,6 +275,11 @@ class GeneralModuleTests(unittest.TestCase):
         socket.SOL_SOCKET
         socket.SO_REUSEADDR
 
+    def testConstantToNameMapping(self):
+        # Testing for mission critical constants
+        for name in ['SOL_SOCKET', 'IPPROTO_TCP', 'IPPROTO_UDP', 'SO_BROADCAST', 'SO_KEEPALIVE', 'TCP_NODELAY', 'SO_ACCEPTCONN', 'SO_DEBUG']:
+            self.failUnlessEqual(socket._constant_to_name(getattr(socket, name)), name)
+
     def testHostnameRes(self):
         # Testing hostname resolution mechanisms
         hostname = socket.gethostname()

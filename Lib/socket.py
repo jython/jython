@@ -272,7 +272,9 @@ def _constant_to_name(const_value):
     sock_module = sys.modules['socket']
     try:
         for name in dir(sock_module):
-            if getattr(sock_module, name) is const_value:
+            if getattr(sock_module, name) is const_value and \
+                (name.startswith('SO_') or name.startswith('SOL_') or \
+                name.startswith('TCP_') or name.startswith('IPPROTO_')):
                 return name
         return "Unknown"
     finally:
