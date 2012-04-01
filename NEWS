@@ -5,6 +5,7 @@ Jython 2.7a1
 
 Jython 2.5.3b2
   Bugs Fixed
+    - [ 1805 ] threading.Thread always gets name "Thread" instead of a discriminating one
     - [ 1866 ] Parser does not have mismatch token error messages caught by BaseRecognizer
     - [ 1837 ] gderived.py and template Ant target fail on Windows
     - [ 1536 ] NPE in org.python.jsr223.PyScriptEngine:187

@@ -1,5 +1,7 @@
 package org.python.core;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.python.modules._systemrestart;
 
 public class FunctionThread extends Thread
@@ -7,12 +9,14 @@ public class FunctionThread extends Thread
     private final PyObject func;
     private final PyObject[] args;
     private final PySystemState systemState;
+    private static AtomicInteger counter = new AtomicInteger();
 
     public FunctionThread(PyObject func, PyObject[] args, long stack_size, ThreadGroup group) {
         super(group, null, "Thread", stack_size);
         this.func = func;
         this.args = args;
         this.systemState = Py.getSystemState();
+        this.setName("Thread-"+Integer.toString(counter.incrementAndGet()));
     }
 
     public void run() {
