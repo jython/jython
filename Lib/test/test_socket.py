@@ -1,7 +1,3 @@
-"""
-AMAK: 20050515: This module is the test_socket.py from cpython 2.4, ported to jython.
-"""
-
 import java
 
 import unittest
@@ -1970,10 +1966,17 @@ class TestJython_get_jsockaddr(unittest.TestCase):
 class TestExceptions(unittest.TestCase):
 
     def testExceptionTree(self):
-        self.assert_(issubclass(socket.error, Exception))
+        self.assert_(issubclass(socket.error, IOError))
         self.assert_(issubclass(socket.herror, socket.error))
         self.assert_(issubclass(socket.gaierror, socket.error))
         self.assert_(issubclass(socket.timeout, socket.error))
+
+    def testExceptionAtributes(self):
+        for exc_class_name in ['error', 'herror', 'gaierror', 'timeout']:
+            exc_class = getattr(socket, exc_class_name)
+            exc = exc_class(12345, "Expected message")
+            self.failUnlessEqual(getattr(exc, 'errno'), 12345, "Socket module exceptions must have an 'errno' attribute")
+            self.failUnlessEqual(getattr(exc, 'strerror'), "Expected message", "Socket module exceptions must have an 'strerror' attribute")
 
 class TestJythonExceptionsShared:
 

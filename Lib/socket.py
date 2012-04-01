@@ -79,22 +79,28 @@ import org.python.core.io.ServerSocketIO
 import org.python.core.io.SocketIO
 from org.python.core.Py import newString as asPyString
 
-class error(Exception): pass
+class error(IOError): pass
 class herror(error): pass
 class gaierror(error): pass
 class timeout(error): pass
 class sslerror(error): pass
 
+def _add_exception_attrs(exc):
+    setattr(exc, 'errno', exc[0])
+    setattr(exc, 'strerror', exc[1])
+    return exc
+
 def _unmapped_exception(exc):
-    return error(-1, 'Unmapped exception: %s' % exc)
+    return _add_exception_attrs(error(-1, 'Unmapped exception: %s' % exc))
 
 def java_net_socketexception_handler(exc):
     if exc.message.startswith("Address family not supported by protocol family"):
-        return error(errno.EAFNOSUPPORT, 'Address family not supported by protocol family: See http://wiki.python.org/jython/NewSocketModule#IPV6addresssupport')
+        return _add_exception_attrs(error(errno.EAFNOSUPPORT, 
+                'Address family not supported by protocol family: See http://wiki.python.org/jython/NewSocketModule#IPV6addresssupport'))
     return _unmapped_exception(exc)
 
 def would_block_error(exc=None):
-    return error(errno.EWOULDBLOCK, 'The socket operation could not complete without blocking')
+    return _add_exception_attrs(error(errno.EWOULDBLOCK, 'The socket operation could not complete without blocking'))
 
 ALL = None
 
@@ -105,7 +111,7 @@ _exception_map = {
 # (<javaexception>, <circumstance>) : callable that raises the python equivalent exception, or None to stub out as unmapped
 
 (java.io.IOException, ALL)            : lambda x: error(errno.ECONNRESET, 'Software caused connection abort'),
-(java.io.InterruptedIOException, ALL) : lambda x: timeout('timed out'),
+(java.io.InterruptedIOException, ALL) : lambda x: timeout(None, 'timed out'),
 
 (java.net.BindException, ALL)            : lambda x: error(errno.EADDRINUSE, 'Address already in use'),
 (java.net.ConnectException, ALL)         : lambda x: error(errno.ECONNREFUSED, 'Connection refused'),
@@ -113,7 +119,7 @@ _exception_map = {
 (java.net.PortUnreachableException, ALL) : None,
 (java.net.ProtocolException, ALL)        : None,
 (java.net.SocketException, ALL)          : java_net_socketexception_handler,
-(java.net.SocketTimeoutException, ALL)   : lambda x: timeout('timed out'),
+(java.net.SocketTimeoutException, ALL)   : lambda x: timeout(None, 'timed out'),
 (java.net.UnknownHostException, ALL)     : lambda x: gaierror(errno.EGETADDRINFOFAILED, 'getaddrinfo failed'),
 
 (java.nio.channels.AlreadyConnectedException, ALL)       : lambda x: error(errno.EISCONN, 'Socket is already connected'),
@@ -144,15 +150,14 @@ _exception_map = {
 
 }
 
-def _map_exception(exc, circumstance=ALL):
-#    print "Mapping exception: %s" % exc
-    mapped_exception = _exception_map.get((exc.__class__, circumstance))
+def _map_exception(java_exception, circumstance=ALL):
+    mapped_exception = _exception_map.get((java_exception.__class__, circumstance))
     if mapped_exception:
-        exception = mapped_exception(exc)
+        py_exception = mapped_exception(java_exception)
     else:
-        exception = error(-1, 'Unmapped exception: %s' % exc)
-    exception.java_exception = exc
-    return exception
+        py_exception = error(-1, 'Unmapped exception: %s' % java_exception)
+    setattr(py_exception, 'java_exception', java_exception)
+    return _add_exception_attrs(py_exception)
 
 _feature_support_map = {
     'ipv6': True,
