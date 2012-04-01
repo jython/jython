@@ -631,7 +631,7 @@ The readme text for the next release will be like:
             <zipfileset src="extlibs/asm-commons-4.0.jar"/>
             <zipfileset src="extlibs/asm-util-4.0.jar"/>
             <rule pattern="org.objectweb.asm.**" result="org.python.objectweb.asm.@1"/>
-            <zipfileset src="extlibs/guava-r07.jar"/>
+            <zipfileset src="extlibs/guava-11.0.2.jar"/>
             <rule pattern="com.google.**" result="org.python.google.@1"/>
             <zipfileset src="extlibs/jaffl.jar"/>
             <zipfileset src="extlibs/jffi-Darwin.jar"/>
