@@ -878,6 +878,16 @@ public class PyInteger extends PyObject {
     }
 
     @Override
+    public PyObject conjugate() {
+        return int_conjugate();
+    }
+
+    @ExposedMethod(doc = BuiltinDocs.int_conjugate_doc)
+    final PyObject int_conjugate() {
+        return this;
+    }
+
+    @Override
     public PyComplex __complex__() {
         return new PyComplex(getValue(), 0.);
     }

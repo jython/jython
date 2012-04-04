@@ -1811,6 +1811,17 @@ public class PyObject implements Serializable {
     }
 
     /**
+     * Equivalent to the standard Python conjugate method.
+     * Should only be overridden by numeric objects that can calculate a
+     * complex conjugate.
+     *
+     * @return the complex conjugate.
+     **/
+    public PyObject conjugate() {
+        throw Py.AttributeError("conjugate");
+    }
+
+    /**
      * Equivalent to the standard Python __pos__ method.
      *
      * @return +this.

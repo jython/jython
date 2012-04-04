@@ -822,6 +822,16 @@ public class PyFloat extends PyObject {
     }
 
     @Override
+    public PyObject conjugate() {
+        return float_conjugate();
+    }
+
+    @ExposedMethod(doc = BuiltinDocs.float_conjugate_doc)
+    final PyObject float_conjugate() {
+        return this;
+    }
+
+    @Override
     public PyComplex __complex__() {
         return new PyComplex(getValue(), 0.);
     }

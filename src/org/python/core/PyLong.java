@@ -929,6 +929,15 @@ public class PyLong extends PyObject {
         return this;
     }
 
+    @Override
+    public PyObject conjugate() {
+        return long_conjugate();
+    }
+
+    @ExposedMethod(doc = BuiltinDocs.long_conjugate_doc)
+    final PyObject long_conjugate() {
+        return this;
+    }
 
     @Override
     public PyString __oct__() {
