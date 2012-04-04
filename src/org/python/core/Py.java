@@ -2024,7 +2024,7 @@ public final class Py {
 
     /**
      * Attempt to dispatch an isinstance/issubclass call to cls's associated
-     * __instance/subclasscheck__.
+     * __instancecheck__/__subclasscheck__.
      *
      * @param checkerArg the argument to call the checker with
      * @param cls a Python class
@@ -2034,6 +2034,11 @@ public final class Py {
      */
     private static PyObject dispatchToChecker(PyObject checkerArg, PyObject cls,
                                               String checkerName) {
+        //Ignore old style classes.
+        if (cls instanceof PyClass) {
+            return null;
+        }
+
         PyObject checker = cls.__findattr__(checkerName);
         if (checker == null) {
             return null;
