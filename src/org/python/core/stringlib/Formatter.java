@@ -11,18 +11,21 @@ public class Formatter {
 
     public static String formatFloat(double value, InternalFormatSpec spec) {
         InternalFormatter f = new InternalFormatter(spec);
-        return f.format(value);
+        String string = f.format(value);
+        return spec.pad(string, '>', 0);
     }
 
     public static String formatComplex(double real, double imag, InternalFormatSpec spec) {
+        String string;
         InternalFormatter f = new InternalFormatter(spec);
         String r = f.format(real);
         String i = f.format(imag);
         if (i.charAt(0) == '-') {
-            return r + i + "j";
+            string = r + i + "j";
         } else {
-            return r + "+" + i + "j";
+            string = r + "+" + i + "j";
         }
+        return spec.pad(string, '>', 0);
     }
 }
 
@@ -239,6 +242,6 @@ final class InternalFormatter {
         if (sign < 0 && string.charAt(0) != '-') {
             string = "-" + string;
         }
-        return spec.pad(string, '>', 0);
+        return string;
     }
 }
