@@ -8,9 +8,21 @@ import java.text.DecimalFormatSymbols;
 
 
 public class Formatter {
+
     public static String formatFloat(double value, InternalFormatSpec spec) {
         InternalFormatter f = new InternalFormatter(spec);
         return f.format(value);
+    }
+
+    public static String formatComplex(double real, double imag, InternalFormatSpec spec) {
+        InternalFormatter f = new InternalFormatter(spec);
+        String r = f.format(real);
+        String i = f.format(imag);
+        if (i.charAt(0) == '-') {
+            return r + i + "j";
+        } else {
+            return r + "+" + i + "j";
+        }
     }
 }
 
