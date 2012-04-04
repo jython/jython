@@ -1800,6 +1800,17 @@ public class PyObject implements Serializable {
     }
 
     /**
+     * Equivalent to the standard Python __trunc__ method.
+     * Should only be overridden by numeric objects that can reasonably
+     * be truncated to an Integral.
+     *
+     * @return the Integral closest to x between 0 and x.
+     **/
+    public PyObject __trunc__() {
+        throw Py.AttributeError("__trunc__");
+    }
+
+    /**
      * Equivalent to the standard Python __pos__ method.
      *
      * @return +this.

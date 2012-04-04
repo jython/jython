@@ -9,6 +9,7 @@ import org.python.core.stringlib.InternalFormatSpec;
 import org.python.core.stringlib.InternalFormatSpecParser;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 import org.python.expose.ExposedClassMethod;
 import org.python.expose.ExposedGet;
@@ -796,6 +797,22 @@ public class PyFloat extends PyObject {
     @ExposedMethod(doc = BuiltinDocs.float___float___doc)
     final PyFloat float___float__() {
         return getType() == TYPE ? this : Py.newFloat(getValue());
+    }
+
+    @Override
+    public PyObject __trunc__() {
+        return float___trunc__();
+    }
+
+    @ExposedMethod(doc = BuiltinDocs.float___trunc___doc)
+    final PyObject float___trunc__() {
+        if (value < Integer.MAX_VALUE) {
+            return new PyInteger((int)value);
+        } else if (value < Long.MAX_VALUE) {
+            return new PyLong((long)value);
+        }
+        BigDecimal d = new BigDecimal(value);
+        return new PyLong(d.toBigInteger());
     }
 
     @Override

@@ -920,6 +920,17 @@ public class PyLong extends PyObject {
     }
 
     @Override
+    public PyObject __trunc__() {
+        return long___trunc__();
+    }
+
+    @ExposedMethod(doc = BuiltinDocs.long___trunc___doc)
+    final PyObject long___trunc__() {
+        return this;
+    }
+
+
+    @Override
     public PyString __oct__() {
         return long___oct__();
     }

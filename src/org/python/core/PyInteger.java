@@ -868,6 +868,16 @@ public class PyInteger extends PyObject {
     }
 
     @Override
+    public PyObject __trunc__() {
+        return int___trunc__();
+    }
+
+    @ExposedMethod(doc = BuiltinDocs.int___trunc___doc)
+    final PyObject int___trunc__() {
+        return this;
+    }
+
+    @Override
     public PyComplex __complex__() {
         return new PyComplex(getValue(), 0.);
     }

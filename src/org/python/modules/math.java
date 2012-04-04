@@ -357,6 +357,10 @@ public class math implements ClassDictInit {
         return new PyTuple(new PyFloat(x), new PyInteger(exponent));
     }
 
+    public static PyObject trunc(PyObject number) {
+        return number.__getattr__("__trunc__").__call__();
+    }
+
     public static double ldexp(double v, PyObject wObj) {
         if (ZERO == v) {
             return v; // can be negative zero
