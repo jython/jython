@@ -806,6 +806,12 @@ public class PyFloat extends PyObject {
 
     @ExposedMethod(doc = BuiltinDocs.float___trunc___doc)
     final PyObject float___trunc__() {
+        if (Double.isNaN(value)) {
+            throw Py.ValueError("cannot convert float NaN to integer");
+        }
+        if (Double.isInfinite(value)) {
+            throw Py.OverflowError("cannot convert float infinity to integer");
+        }
         if (value < Integer.MAX_VALUE) {
             return new PyInteger((int)value);
         } else if (value < Long.MAX_VALUE) {
