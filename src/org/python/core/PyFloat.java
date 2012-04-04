@@ -4,6 +4,9 @@
  */
 package org.python.core;
 
+import org.python.core.stringlib.Formatter;
+import org.python.core.stringlib.InternalFormatSpec;
+import org.python.core.stringlib.InternalFormatSpecParser;
 import java.io.Serializable;
 import java.math.BigDecimal;
 
@@ -808,6 +811,52 @@ public class PyFloat extends PyObject {
     @Override
     public PyTuple __getnewargs__() {
         return float___getnewargs__();
+    }
+
+    @Override
+    public PyObject __format__(PyObject formatSpec) {
+        return float___format__(formatSpec);
+    }
+
+    @ExposedMethod(doc = BuiltinDocs.float___format___doc)
+    final PyObject float___format__(PyObject formatSpec) {
+        return formatImpl(getValue(), formatSpec);
+    }
+
+    static PyObject formatImpl(double d, PyObject formatSpec) {
+        if (!(formatSpec instanceof PyString)) {
+            throw Py.TypeError("__format__ requires str or unicode");
+        }
+
+        PyString formatSpecStr = (PyString) formatSpec;
+        String result;
+        try {
+            String specString = formatSpecStr.getString();
+            InternalFormatSpec spec = new InternalFormatSpecParser(specString).parse();
+            if (spec.type == '\0'){
+                return (Py.newFloat(d)).__str__();
+            }
+            switch (spec.type) {
+                case '\0': /* No format code: like 'g', but with at least one decimal. */
+                case 'e':
+                case 'E':
+                case 'f':
+                case 'F':
+                case 'g':
+                case 'G':
+                case 'n':
+                case '%':
+                    result = Formatter.formatFloat(d, spec);
+                    break;
+                default:
+                    /* unknown */
+                    throw Py.ValueError(String.format("Unknown format code '%c' for object of type 'float'",
+                                            spec.type));
+            }
+        } catch (IllegalArgumentException e) {
+            throw Py.ValueError(e.getMessage());
+        }
+        return formatSpecStr.createInstance(result);
     }
 
     @Override
