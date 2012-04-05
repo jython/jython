@@ -96,18 +96,44 @@ public class PyInteger extends PyObject {
     } // xxx
 
     /**
-     * @return the result of x.__int__
-     * @throws Py.Type error if x.__int__ throws an Py.AttributeError
+     * @return convert to an int.
+     * @throws TypeError and AttributeError.
      */
     private static PyObject asPyInteger(PyObject x) {
+        //XXX: Not sure that this perfectly matches CPython semantics.
         try {
             return x.__int__();
         } catch (PyException pye) {
             if (!pye.match(Py.AttributeError)) {
                 throw pye;
             }
-            throw Py.TypeError("int() argument must be a string or a number");
+            try {
+                PyObject integral = x.__getattr__("__trunc__").__call__();
+                return convertIntegralToInt(integral);
+            } catch (PyException pye2) {
+                if (!pye2.match(Py.AttributeError)) {
+                    throw pye2;
+                }
+                throw Py.TypeError(
+                    String.format("int() argument must be a string or a number, not '%.200s'", x));
+            }
         }
+    }
+
+    /**
+     * @return convert to an int.
+     * @throws TypeError and AttributeError.
+     */
+    private static PyObject convertIntegralToInt(PyObject integral) {
+        if (!(integral instanceof PyInteger) && !(integral instanceof PyLong)) {
+            PyObject i = integral.__getattr__("__int__").__call__();
+            if (!(i instanceof PyInteger) && !(i instanceof PyLong)) {
+                throw Py.TypeError(String.format("__trunc__ returned non-Integral (type %.200s)",
+                                                 integral.getType().fastGetName()));
+            }
+            return i;
+        }
+        return integral;
     }
 
     @ExposedGet(name = "real", doc = BuiltinDocs.int_real_doc)
