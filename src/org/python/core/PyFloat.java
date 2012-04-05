@@ -7,6 +7,7 @@ package org.python.core;
 import org.python.core.stringlib.Formatter;
 import org.python.core.stringlib.InternalFormatSpec;
 import org.python.core.stringlib.InternalFormatSpecParser;
+import org.python.modules.math;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -890,6 +891,37 @@ public class PyFloat extends PyObject {
             throw Py.ValueError(e.getMessage());
         }
         return formatSpecStr.createInstance(result);
+    }
+
+    @ExposedMethod(doc = BuiltinDocs.float_as_integer_ratio_doc)
+    public PyTuple as_integer_ratio() {
+        if (Double.isInfinite(value)) {
+            throw Py.OverflowError("Cannot pass infinity to float.as_integer_ratio.");
+        }
+        if (Double.isNaN(value)) {
+            throw Py.ValueError("Cannot pass NaN to float.as_integer_ratio.");
+        }
+        PyTuple frexp = math.frexp(value);
+        double float_part = ((Double)frexp.get(0)).doubleValue();
+        int exponent = ((Integer)frexp.get(1)).intValue();
+        for (int i=0; i<300 && float_part != Math.floor(float_part); i++) {
+            float_part *= 2.0;
+            exponent--;
+        }
+        /* self == float_part * 2**exponent exactly and float_part is integral.
+           If FLT_RADIX != 2, the 300 steps may leave a tiny fractional part
+           to be truncated by PyLong_FromDouble(). */
+        
+        PyLong numerator = new PyLong(float_part);
+        PyLong denominator = new PyLong(1);
+        PyLong py_exponent = new PyLong(Math.abs(exponent));
+        py_exponent = (PyLong)denominator.__lshift__(py_exponent);
+        if (exponent > 0) {
+            numerator = new PyLong(numerator.getValue().multiply(py_exponent.getValue()));
+        } else {
+            denominator = py_exponent;
+        }
+        return new PyTuple(numerator, denominator);
     }
 
     @Override
