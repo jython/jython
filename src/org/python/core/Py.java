@@ -1929,8 +1929,15 @@ public final class Py {
             return inClass.isSubClass((PyClass) cls);
         }
         if (cls instanceof PyType) {
+            PyType type = (PyType)cls;
+
+            //Special case PyStringMap to compare as an instance type dict.
+            if (inst instanceof PyStringMap &&
+                type.equals(PyDictionary.TYPE)) {
+                    return true;
+            }
+
             PyType instType = inst.getType();
-            PyType type = (PyType) cls;
 
             // equiv. to PyObject_TypeCheck
             if (instType == type || instType.isSubType(type)) {
@@ -1981,7 +1988,19 @@ public final class Py {
             if (derived == cls) {
                 return true;
             }
-            return ((PyType) derived).isSubType((PyType) cls);
+            PyType type = (PyType)cls;
+            PyType subtype = (PyType)derived;
+
+            // Special case PyStringMap to compare as a subclass of
+            // PyDictionary. Note that we don't need to check for stringmap
+            // subclasses, since stringmap can't be subclassed. PyStringMap's
+            // TYPE is computed lazily, so we have to use PyType.fromClass :(
+            if (type == PyDictionary.TYPE &&
+                subtype == PyType.fromClass(PyStringMap.class)) {
+                return true;
+            }
+
+            return subtype.isSubType(type);
         }
         if (derived instanceof PyClass && cls instanceof PyClass) {
             return ((PyClass) derived).isSubClass((PyClass) cls);
