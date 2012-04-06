@@ -1894,12 +1894,32 @@ public final class Py {
                 new File(dir, name.substring(0, index)));
     }
 
+    /**
+     * We use PyStringMap as our internal __dict__ implementation, so it should
+     * compare as an instance and subclass of type dict.
+     *
+     * @return true if inst is a PyStringMap and cls is type dict.
+     */
+    private static boolean checkStringMapAsDict(PyObject inst, PyObject cls) {
+        if (inst instanceof PyStringMap) {
+            if (cls instanceof PyType) {
+                if (((PyType)cls).equals(PyDictionary.TYPE)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     public static boolean isInstance(PyObject inst, PyObject cls) {
         // Quick test for an exact match
         if (inst.getType() == cls) {
             return true;
         }
 
+        if (checkStringMapAsDict(inst, cls)) {
+            return true;
+        }
         if (cls instanceof PyTuple) {
             ThreadState threadState = Py.getThreadState();
             threadState.enterRecursiveCall(" in __subclasscheck__");
@@ -1966,6 +1986,12 @@ public final class Py {
                 threadState.leaveRecursiveCall();
             }
             return false;
+        }
+
+        // Note that we don't need to check for stringmap subclasses, since stringmap
+        // can't be subclassed.
+        if (checkStringMapAsDict(derived, cls)) {
+            return true;
         }
 
         PyObject checkerResult;
