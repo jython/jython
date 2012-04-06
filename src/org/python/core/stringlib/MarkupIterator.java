@@ -61,7 +61,8 @@ public class MarkupIterator extends PyObject {
         }
         PyObject[] elements = new PyObject[4];
         elements[0] = new PyString(chunk.literalText);
-        elements[1] = new PyString(chunk.fieldName);
+        elements[1] = chunk.fieldName.length() == 0
+                    ? Py.None : new PyString(chunk.fieldName);
         if (chunk.fieldName.length() > 0) {
             elements[2] = chunk.formatSpec == null
                     ? Py.EmptyString : new PyString(chunk.formatSpec);
