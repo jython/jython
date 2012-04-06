@@ -108,7 +108,7 @@ public class PyInteger extends PyObject {
                 throw pye;
             }
             try {
-                PyObject integral = x.__getattr__("__trunc__").__call__();
+                PyObject integral = x.invoke("__trunc__");
                 return convertIntegralToInt(integral);
             } catch (PyException pye2) {
                 if (!pye2.match(Py.AttributeError)) {
@@ -126,7 +126,7 @@ public class PyInteger extends PyObject {
      */
     private static PyObject convertIntegralToInt(PyObject integral) {
         if (!(integral instanceof PyInteger) && !(integral instanceof PyLong)) {
-            PyObject i = integral.__getattr__("__int__").__call__();
+            PyObject i = integral.invoke("__int__");
             if (!(i instanceof PyInteger) && !(i instanceof PyLong)) {
                 throw Py.TypeError(String.format("__trunc__ returned non-Integral (type %.200s)",
                                                  integral.getType().fastGetName()));
