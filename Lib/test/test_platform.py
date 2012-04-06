@@ -49,15 +49,21 @@ class PlatformTest(unittest.TestCase):
         res = platform.processor()
 
     def setUp(self):
-        self.save_version = sys.version
-        self.save_subversion = sys.subversion
-        self.save_platform = sys.platform
+        # These are readonly in Jython
+        if not test_support.is_jython:
+            self.save_version = sys.version
+            self.save_subversion = sys.subversion
+            self.save_platform = sys.platform
 
     def tearDown(self):
-        sys.version = self.save_version
-        sys.subversion = self.save_subversion
-        sys.platform = self.save_platform
+        # These are readonly in Jython
+        if not test_support.is_jython:
+            sys.version = self.save_version
+            sys.subversion = self.save_subversion
+            sys.platform = self.save_platform
 
+    @unittest.skipIf(test_support.is_jython,
+                     "sys.version and sys.subversion are readonly in Jython.")
     def test_sys_version(self):
         # Old test.
         for input, output in (

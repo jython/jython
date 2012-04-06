@@ -56,6 +56,11 @@ public class PySystemState extends PyObject implements ClassDictInit {
     private static final String VFSZIP_PREFIX = "vfszip:";
 
     public static final PyString version = new PyString(Version.getVersion());
+
+    public static final PyTuple subversion = new PyTuple(new PyString("Jython"),
+                                                         Py.newString(""),
+                                                         Py.newString(""));
+
     public static final int hexversion = ((Version.PY_MAJOR_VERSION << 24) |
                                     (Version.PY_MINOR_VERSION << 16) |
                                     (Version.PY_MICRO_VERSION <<  8) |
