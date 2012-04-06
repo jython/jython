@@ -133,7 +133,7 @@ class SimpleHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         length = f.tell()
         f.seek(0)
         self.send_response(200)
-        if not platform.python_implementaton() == "Jython":
+        if not platform.python_implementation() == "Jython":
             encoding = sys.getfilesystemencoding()
             self.send_header("Content-type", "text/html; charset=%s" % encoding)
         self.send_header("Content-Length", str(length))
