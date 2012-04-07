@@ -97,7 +97,6 @@ mimetools.py
 mimetypes.py
 MimeWriter.py
 mimify.py
-modulefinder.py
 multifile.py
 mutex.py
 nntplib.py
