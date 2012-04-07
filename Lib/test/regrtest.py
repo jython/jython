@@ -1224,6 +1224,7 @@ _expectations = {
         test_memoryview
         test_mhlib
         test_mmap
+        test_modulefinder
         test_msilib
         test_multiprocessing
         test_nis
@@ -1240,6 +1241,7 @@ _expectations = {
         test_socket_ssl
         test_socketserver
         test_sqlite
+        test_ssl
         test_startfile
         test_strop
         test_structmembers
@@ -1249,6 +1251,7 @@ _expectations = {
         test_tcl
         test_timeout
         test_tk
+        test_tools
         test_ttk_guionly
         test_ttk_textonly
         test_unicode_file

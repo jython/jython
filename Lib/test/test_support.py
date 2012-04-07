@@ -724,26 +724,39 @@ class CleanImport(object):
         sys.modules.update(self.original_modules)
 
 
-class EnvironmentVarGuard(object):
+class EnvironmentVarGuard(UserDict.DictMixin):
 
     """Class to help protect the environment variable properly.  Can be used as
     a context manager."""
 
     def __init__(self):
+        self._environ = os.environ
         self._changed = {}
 
-    def set(self, envvar, value):
+    def __getitem__(self, envvar):
+        return self._environ[envvar]
+
+    def __setitem__(self, envvar, value):
         # Remember the initial value on the first access
         if envvar not in self._changed:
-            self._changed[envvar] = os.environ.get(envvar)
-        os.environ[envvar] = value
+            self._changed[envvar] = self._environ.get(envvar)
+        self._environ[envvar] = value
+
+    def __delitem__(self, envvar):
+        # Remember the initial value on the first access
+        if envvar not in self._changed:
+            self._changed[envvar] = self._environ.get(envvar)
+        if envvar in self._environ:
+            del self._environ[envvar]
+
+    def keys(self):
+        return self._environ.keys()
+
+    def set(self, envvar, value):
+        self[envvar] = value
 
     def unset(self, envvar):
-        # Remember the initial value on the first access
-        if envvar not in self._changed:
-            self._changed[envvar] = os.environ.get(envvar)
-        if envvar in os.environ:
-            del os.environ[envvar]
+        del self[envvar]
 
     def __enter__(self):
         return self
@@ -751,10 +764,11 @@ class EnvironmentVarGuard(object):
     def __exit__(self, *ignore_exc):
         for (k, v) in self._changed.items():
             if v is None:
-                if k in os.environ:
-                    del os.environ[k]
+                if k in self._environ:
+                    del self._environ[k]
             else:
-                os.environ[k] = v
+                self._environ[k] = v
+        os.environ = self._environ
 
 
 class TransientResource(object):
