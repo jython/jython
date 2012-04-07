@@ -1287,6 +1287,7 @@ _failures = {
         """
         test_codecencodings_cn
         test_codecencodings_hk
+        test_codecencodings_iso2022
         test_codecencodings_jp
         test_codecencodings_kr
         test_codecencodings_tw
