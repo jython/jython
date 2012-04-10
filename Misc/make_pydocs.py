@@ -60,6 +60,7 @@ classmethod,
 set,
 frozenset,
 BaseException,
+bytearray,
 #buffer,
 # +
 type(f),

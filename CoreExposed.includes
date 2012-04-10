@@ -5,6 +5,7 @@ org/python/core/PyBaseString.class
 org/python/core/PyBaseException.class
 org/python/core/PyBoolean.class
 org/python/core/PyBuiltinCallable.class
+org/python/core/PyByteArray.class
 org/python/core/PyCell.class
 org/python/core/PyClass.class
 org/python/core/PyClassMethod.class

@@ -3644,6 +3644,409 @@ public class BuiltinDocs {
     public final static String BaseException_message_doc = 
         "";
 
+    // Docs for <type 'bytearray'>
+    public final static String bytearray___add___doc = 
+        "x.__add__(y) <==> x+y";
+
+    public final static String bytearray___alloc___doc = 
+        "B.__alloc__() -> int\n" + 
+        "\n" + 
+        "Returns the number of bytes actually allocated.";
+
+    public final static String bytearray___class___doc = 
+        "type(object) -> the object's type\n" + 
+        "type(name, bases, dict) -> a new type";
+
+    public final static String bytearray___contains___doc = 
+        "x.__contains__(y) <==> y in x";
+
+    public final static String bytearray___delattr___doc = 
+        "x.__delattr__('name') <==> del x.name";
+
+    public final static String bytearray___delitem___doc = 
+        "x.__delitem__(y) <==> del x[y]";
+
+    public final static String bytearray_doc = 
+        "bytearray(iterable_of_ints) -> bytearray.\n" + 
+        "bytearray(string, encoding[, errors]) -> bytearray.\n" + 
+        "bytearray(bytes_or_bytearray) -> mutable copy of bytes_or_bytearray.\n" + 
+        "bytearray(memory_view) -> bytearray.\n" + 
+        "\n" + 
+        "Construct an mutable bytearray object from:\n" + 
+        "  - an iterable yielding integers in range(256)\n" + 
+        "  - a text string encoded using the specified encoding\n" + 
+        "  - a bytes or a bytearray object\n" + 
+        "  - any object implementing the buffer API.\n" + 
+        "\n" + 
+        "bytearray(int) -> bytearray.\n" + 
+        "\n" + 
+        "Construct a zero-initialized bytearray of the given length.";
+
+    public final static String bytearray___eq___doc = 
+        "x.__eq__(y) <==> x==y";
+
+    public final static String bytearray___format___doc = 
+        "default object formatter";
+
+    public final static String bytearray___ge___doc = 
+        "x.__ge__(y) <==> x>=y";
+
+    public final static String bytearray___getattribute___doc = 
+        "x.__getattribute__('name') <==> x.name";
+
+    public final static String bytearray___getitem___doc = 
+        "x.__getitem__(y) <==> x[y]";
+
+    public final static String bytearray___gt___doc = 
+        "x.__gt__(y) <==> x>y";
+
+    public final static String bytearray___hash___doc = 
+        "x.__hash__() <==> hash(x)";
+
+    public final static String bytearray___iadd___doc = 
+        "x.__iadd__(y) <==> x+=y";
+
+    public final static String bytearray___imul___doc = 
+        "x.__imul__(y) <==> x*=y";
+
+    public final static String bytearray___init___doc = 
+        "x.__init__(...) initializes x; see help(type(x)) for signature";
+
+    public final static String bytearray___iter___doc = 
+        "x.__iter__() <==> iter(x)";
+
+    public final static String bytearray___le___doc = 
+        "x.__le__(y) <==> x<=y";
+
+    public final static String bytearray___len___doc = 
+        "x.__len__() <==> len(x)";
+
+    public final static String bytearray___lt___doc = 
+        "x.__lt__(y) <==> x<y";
+
+    public final static String bytearray___mul___doc = 
+        "x.__mul__(n) <==> x*n";
+
+    public final static String bytearray___ne___doc = 
+        "x.__ne__(y) <==> x!=y";
+
+    public final static String bytearray___new___doc = 
+        "T.__new__(S, ...) -> a new object with type S, a subtype of T";
+
+    public final static String bytearray___reduce___doc = 
+        "Return state information for pickling.";
+
+    public final static String bytearray___reduce_ex___doc = 
+        "helper for pickle";
+
+    public final static String bytearray___repr___doc = 
+        "x.__repr__() <==> repr(x)";
+
+    public final static String bytearray___rmul___doc = 
+        "x.__rmul__(n) <==> n*x";
+
+    public final static String bytearray___setattr___doc = 
+        "x.__setattr__('name', value) <==> x.name = value";
+
+    public final static String bytearray___setitem___doc = 
+        "x.__setitem__(i, y) <==> x[i]=y";
+
+    public final static String bytearray___sizeof___doc = 
+        "B.__sizeof__() -> int\n" + 
+        " \n" + 
+        "Returns the size of B in memory, in bytes";
+
+    public final static String bytearray___str___doc = 
+        "x.__str__() <==> str(x)";
+
+    public final static String bytearray___subclasshook___doc = 
+        "Abstract classes can override this to customize issubclass().\n" + 
+        "\n" + 
+        "This is invoked early on by abc.ABCMeta.__subclasscheck__().\n" + 
+        "It should return True, False or NotImplemented.  If it returns\n" + 
+        "NotImplemented, the normal algorithm is used.  Otherwise, it\n" + 
+        "overrides the normal algorithm (and the outcome is cached).\n" + 
+        "";
+
+    public final static String bytearray_append_doc = 
+        "B.append(int) -> None\n" + 
+        "\n" + 
+        "Append a single item to the end of B.";
+
+    public final static String bytearray_capitalize_doc = 
+        "B.capitalize() -> copy of B\n" + 
+        "\n" + 
+        "Return a copy of B with only its first character capitalized (ASCII)\n" + 
+        "and the rest lower-cased.";
+
+    public final static String bytearray_center_doc = 
+        "B.center(width[, fillchar]) -> copy of B\n" + 
+        "\n" + 
+        "Return B centered in a string of length width.  Padding is\n" + 
+        "done using the specified fill character (default is a space).";
+
+    public final static String bytearray_count_doc = 
+        "B.count(sub [,start [,end]]) -> int\n" + 
+        "\n" + 
+        "Return the number of non-overlapping occurrences of subsection sub in\n" + 
+        "bytes B[start:end].  Optional arguments start and end are interpreted\n" + 
+        "as in slice notation.";
+
+    public final static String bytearray_decode_doc = 
+        "B.decode([encoding[, errors]]) -> unicode object.\n" + 
+        "\n" + 
+        "Decodes B using the codec registered for encoding. encoding defaults\n" + 
+        "to the default encoding. errors may be given to set a different error\n" + 
+        "handling scheme.  Default is 'strict' meaning that encoding errors raise\n" + 
+        "a UnicodeDecodeError.  Other possible values are 'ignore' and 'replace'\n" + 
+        "as well as any other name registered with codecs.register_error that is\n" + 
+        "able to handle UnicodeDecodeErrors.";
+
+    public final static String bytearray_endswith_doc = 
+        "B.endswith(suffix [,start [,end]]) -> bool\n" + 
+        "\n" + 
+        "Return True if B ends with the specified suffix, False otherwise.\n" + 
+        "With optional start, test B beginning at that position.\n" + 
+        "With optional end, stop comparing B at that position.\n" + 
+        "suffix can also be a tuple of strings to try.";
+
+    public final static String bytearray_expandtabs_doc = 
+        "B.expandtabs([tabsize]) -> copy of B\n" + 
+        "\n" + 
+        "Return a copy of B where all tab characters are expanded using spaces.\n" + 
+        "If tabsize is not given, a tab size of 8 characters is assumed.";
+
+    public final static String bytearray_extend_doc = 
+        "B.extend(iterable int) -> None\n" + 
+        "\n" + 
+        "Append all the elements from the iterator or sequence to the\n" + 
+        "end of B.";
+
+    public final static String bytearray_find_doc = 
+        "B.find(sub [,start [,end]]) -> int\n" + 
+        "\n" + 
+        "Return the lowest index in B where subsection sub is found,\n" + 
+        "such that sub is contained within s[start,end].  Optional\n" + 
+        "arguments start and end are interpreted as in slice notation.\n" + 
+        "\n" + 
+        "Return -1 on failure.";
+
+    public final static String bytearray_fromhex_doc = 
+        "bytearray.fromhex(string) -> bytearray\n" + 
+        "\n" + 
+        "Create a bytearray object from a string of hexadecimal numbers.\n" + 
+        "Spaces between two numbers are accepted.\n" + 
+        "Example: bytearray.fromhex('B9 01EF') -> bytearray(b'\\xb9\\x01\\xef').";
+
+    public final static String bytearray_index_doc = 
+        "B.index(sub [,start [,end]]) -> int\n" + 
+        "\n" + 
+        "Like B.find() but raise ValueError when the subsection is not found.";
+
+    public final static String bytearray_insert_doc = 
+        "B.insert(index, int) -> None\n" + 
+        "\n" + 
+        "Insert a single item into the bytearray before the given index.";
+
+    public final static String bytearray_isalnum_doc = 
+        "B.isalnum() -> bool\n" + 
+        "\n" + 
+        "Return True if all characters in B are alphanumeric\n" + 
+        "and there is at least one character in B, False otherwise.";
+
+    public final static String bytearray_isalpha_doc = 
+        "B.isalpha() -> bool\n" + 
+        "\n" + 
+        "Return True if all characters in B are alphabetic\n" + 
+        "and there is at least one character in B, False otherwise.";
+
+    public final static String bytearray_isdigit_doc = 
+        "B.isdigit() -> bool\n" + 
+        "\n" + 
+        "Return True if all characters in B are digits\n" + 
+        "and there is at least one character in B, False otherwise.";
+
+    public final static String bytearray_islower_doc = 
+        "B.islower() -> bool\n" + 
+        "\n" + 
+        "Return True if all cased characters in B are lowercase and there is\n" + 
+        "at least one cased character in B, False otherwise.";
+
+    public final static String bytearray_isspace_doc = 
+        "B.isspace() -> bool\n" + 
+        "\n" + 
+        "Return True if all characters in B are whitespace\n" + 
+        "and there is at least one character in B, False otherwise.";
+
+    public final static String bytearray_istitle_doc = 
+        "B.istitle() -> bool\n" + 
+        "\n" + 
+        "Return True if B is a titlecased string and there is at least one\n" + 
+        "character in B, i.e. uppercase characters may only follow uncased\n" + 
+        "characters and lowercase characters only cased ones. Return False\n" + 
+        "otherwise.";
+
+    public final static String bytearray_isupper_doc = 
+        "B.isupper() -> bool\n" + 
+        "\n" + 
+        "Return True if all cased characters in B are uppercase and there is\n" + 
+        "at least one cased character in B, False otherwise.";
+
+    public final static String bytearray_join_doc = 
+        "B.join(iterable_of_bytes) -> bytes\n" + 
+        "\n" + 
+        "Concatenates any number of bytearray objects, with B in between each pair.";
+
+    public final static String bytearray_ljust_doc = 
+        "B.ljust(width[, fillchar]) -> copy of B\n" + 
+        "\n" + 
+        "Return B left justified in a string of length width. Padding is\n" + 
+        "done using the specified fill character (default is a space).";
+
+    public final static String bytearray_lower_doc = 
+        "B.lower() -> copy of B\n" + 
+        "\n" + 
+        "Return a copy of B with all ASCII characters converted to lowercase.";
+
+    public final static String bytearray_lstrip_doc = 
+        "B.lstrip([bytes]) -> bytearray\n" + 
+        "\n" + 
+        "Strip leading bytes contained in the argument.\n" + 
+        "If the argument is omitted, strip leading ASCII whitespace.";
+
+    public final static String bytearray_partition_doc = 
+        "B.partition(sep) -> (head, sep, tail)\n" + 
+        "\n" + 
+        "Searches for the separator sep in B, and returns the part before it,\n" + 
+        "the separator itself, and the part after it.  If the separator is not\n" + 
+        "found, returns B and two empty bytearray objects.";
+
+    public final static String bytearray_pop_doc = 
+        "B.pop([index]) -> int\n" + 
+        "\n" + 
+        "Remove and return a single item from B. If no index\n" + 
+        "argument is given, will pop the last value.";
+
+    public final static String bytearray_remove_doc = 
+        "B.remove(int) -> None\n" + 
+        "\n" + 
+        "Remove the first occurance of a value in B.";
+
+    public final static String bytearray_replace_doc = 
+        "B.replace(old, new[, count]) -> bytes\n" + 
+        "\n" + 
+        "Return a copy of B with all occurrences of subsection\n" + 
+        "old replaced by new.  If the optional argument count is\n" + 
+        "given, only the first count occurrences are replaced.";
+
+    public final static String bytearray_reverse_doc = 
+        "B.reverse() -> None\n" + 
+        "\n" + 
+        "Reverse the order of the values in B in place.";
+
+    public final static String bytearray_rfind_doc = 
+        "B.rfind(sub [,start [,end]]) -> int\n" + 
+        "\n" + 
+        "Return the highest index in B where subsection sub is found,\n" + 
+        "such that sub is contained within s[start,end].  Optional\n" + 
+        "arguments start and end are interpreted as in slice notation.\n" + 
+        "\n" + 
+        "Return -1 on failure.";
+
+    public final static String bytearray_rindex_doc = 
+        "B.rindex(sub [,start [,end]]) -> int\n" + 
+        "\n" + 
+        "Like B.rfind() but raise ValueError when the subsection is not found.";
+
+    public final static String bytearray_rjust_doc = 
+        "B.rjust(width[, fillchar]) -> copy of B\n" + 
+        "\n" + 
+        "Return B right justified in a string of length width. Padding is\n" + 
+        "done using the specified fill character (default is a space)";
+
+    public final static String bytearray_rpartition_doc = 
+        "B.rpartition(sep) -> (head, sep, tail)\n" + 
+        "\n" + 
+        "Searches for the separator sep in B, starting at the end of B,\n" + 
+        "and returns the part before it, the separator itself, and the\n" + 
+        "part after it.  If the separator is not found, returns two empty\n" + 
+        "bytearray objects and B.";
+
+    public final static String bytearray_rsplit_doc = 
+        "B.rsplit(sep[, maxsplit]) -> list of bytearray\n" + 
+        "\n" + 
+        "Return a list of the sections in B, using sep as the delimiter,\n" + 
+        "starting at the end of B and working to the front.\n" + 
+        "If sep is not given, B is split on ASCII whitespace characters\n" + 
+        "(space, tab, return, newline, formfeed, vertical tab).\n" + 
+        "If maxsplit is given, at most maxsplit splits are done.";
+
+    public final static String bytearray_rstrip_doc = 
+        "B.rstrip([bytes]) -> bytearray\n" + 
+        "\n" + 
+        "Strip trailing bytes contained in the argument.\n" + 
+        "If the argument is omitted, strip trailing ASCII whitespace.";
+
+    public final static String bytearray_split_doc = 
+        "B.split([sep[, maxsplit]]) -> list of bytearray\n" + 
+        "\n" + 
+        "Return a list of the sections in B, using sep as the delimiter.\n" + 
+        "If sep is not given, B is split on ASCII whitespace characters\n" + 
+        "(space, tab, return, newline, formfeed, vertical tab).\n" + 
+        "If maxsplit is given, at most maxsplit splits are done.";
+
+    public final static String bytearray_splitlines_doc = 
+        "B.splitlines([keepends]) -> list of lines\n" + 
+        "\n" + 
+        "Return a list of the lines in B, breaking at line boundaries.\n" + 
+        "Line breaks are not included in the resulting list unless keepends\n" + 
+        "is given and true.";
+
+    public final static String bytearray_startswith_doc = 
+        "B.startswith(prefix [,start [,end]]) -> bool\n" + 
+        "\n" + 
+        "Return True if B starts with the specified prefix, False otherwise.\n" + 
+        "With optional start, test B beginning at that position.\n" + 
+        "With optional end, stop comparing B at that position.\n" + 
+        "prefix can also be a tuple of strings to try.";
+
+    public final static String bytearray_strip_doc = 
+        "B.strip([bytes]) -> bytearray\n" + 
+        "\n" + 
+        "Strip leading and trailing bytes contained in the argument.\n" + 
+        "If the argument is omitted, strip ASCII whitespace.";
+
+    public final static String bytearray_swapcase_doc = 
+        "B.swapcase() -> copy of B\n" + 
+        "\n" + 
+        "Return a copy of B with uppercase ASCII characters converted\n" + 
+        "to lowercase ASCII and vice versa.";
+
+    public final static String bytearray_title_doc = 
+        "B.title() -> copy of B\n" + 
+        "\n" + 
+        "Return a titlecased version of B, i.e. ASCII words start with uppercase\n" + 
+        "characters, all remaining cased characters have lowercase.";
+
+    public final static String bytearray_translate_doc = 
+        "B.translate(table[, deletechars]) -> bytearray\n" + 
+        "\n" + 
+        "Return a copy of B, where all characters occurring in the\n" + 
+        "optional argument deletechars are removed, and the remaining\n" + 
+        "characters have been mapped through the given translation\n" + 
+        "table, which must be a bytes object of length 256.";
+
+    public final static String bytearray_upper_doc = 
+        "B.upper() -> copy of B\n" + 
+        "\n" + 
+        "Return a copy of B with all ASCII characters converted to uppercase.";
+
+    public final static String bytearray_zfill_doc = 
+        "B.zfill(width) -> copy of B\n" + 
+        "\n" + 
+        "Pad a numeric string B with zeros on the left, to fill a field\n" + 
+        "of the specified width.  B is never truncated.";
+
     // Docs for <type 'function'>
     public final static String function___call___doc = 
         "x.__call__(...) <==> x(...)";
