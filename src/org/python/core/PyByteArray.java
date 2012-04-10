@@ -161,9 +161,9 @@ public class PyByteArray extends BaseBytes {
         if (step == 1) {
             // Efficiently copy contiguous slice
             int n = stop-start;
-            if (n<=0)
+            if (n<=0) {
                 return new PyByteArray();
-            else {
+            } else {
                 PyByteArray ret = new PyByteArray(n);
                 System.arraycopy(storage, offset+start, ret.storage, ret.offset, n);
                 return ret;
@@ -210,15 +210,12 @@ public class PyByteArray extends BaseBytes {
     }
 
     /**
-     * Insert the element (interpreted as a Python byte value) at the given index. The default
-     * implementation produces a Python TypeError, for the benefit of immutable types. Mutable types
-     * must override it.
+     * Insert the element (interpreted as a Python byte value) at the given index.
      * 
      * @param index to insert at
      * @param element to insert (by value)
      * @throws PyException(IndexError) if the index is outside the array bounds
      * @throws PyException(ValueError) if element<0 or element>255
-     * @throws PyException(TYpeError) if the subclass is immutable
      */
     public synchronized void pyadd(int index, PyInteger element) {
         // Open a space at the right location.
@@ -256,10 +253,11 @@ public class PyByteArray extends BaseBytes {
     @Override
     protected synchronized void setslice(int start, int stop, int step, PyObject value) {
 
-        if (step == 1 && stop < start)
-        // Because "b[5:2] = v" means insert v just before 5 not 2.
-        // ... although "b[5:2:-1] = v means b[5]=v[0], b[4]=v[1], b[3]=v[2]
-        stop = start;
+        if (step == 1 && stop < start) {
+            // Because "b[5:2] = v" means insert v just before 5 not 2.
+            // ... although "b[5:2:-1] = v means b[5]=v[0], b[4]=v[1], b[3]=v[2]
+            stop = start;
+        }
 
         /*
          * The actual behaviour depends on the nature (type) of value. It may be any kind of
@@ -360,7 +358,9 @@ public class PyByteArray extends BaseBytes {
         } else {
             // This is an extended slice which means we are replacing elements
             int n = sliceLength(start, stop, step);
-            if (n != len) throw SliceSizeError("bytes", len, n);
+            if (n != len) {
+                throw SliceSizeError("bytes", len, n);
+            }
             setBytes(start, step, v);
         }
     }
@@ -381,9 +381,9 @@ public class PyByteArray extends BaseBytes {
         Py.NotImplementedError("memoryview not yet supported in bytearray");
         String format = value.get_format();
         boolean isBytes = format == null || "B".equals(format);
-        if (value.get_ndim() != 1 || !isBytes)
+        if (value.get_ndim() != 1 || !isBytes) {
             Py.TypeError("memoryview value must be byte-oriented");
-        else {
+        } else {
             // Dimensions are given as a PyTple (although only one)
             int len = value.get_shape().pyget(0).asInt();
             if (step == 1) {
@@ -414,7 +414,9 @@ public class PyByteArray extends BaseBytes {
      * @throws PyException(SliceSizeError) if the value size is inconsistent with an extended slice
      */
     private void setslice(int start, int stop, int step, BaseBytes value) throws PyException {
-        if (value == this) value = new PyByteArray(value);  // Must work with a copy
+        if (value == this) {
+            value = new PyByteArray(value);  // Must work with a copy
+        }
         int len = value.size;
         if (step == 1) {
             //Delete this[start:stop] and open a space of the right size
@@ -424,7 +426,9 @@ public class PyByteArray extends BaseBytes {
         } else {
             // This is an extended slice which means we are replacing elements
             int n = sliceLength(start, stop, step);
-            if (n != len) throw SliceSizeError("bytes", len, n);
+            if (n != len) {
+                throw SliceSizeError("bytes", len, n);
+            }
             int no = n + value.offset;
             for (int io = start + offset, jo = value.offset; jo < no; io += step, jo++) {
                 storage[io] = value.storage[jo];    // Assign this[i] = value[j]
@@ -456,10 +460,10 @@ public class PyByteArray extends BaseBytes {
         if (step == 1) {
             // Delete this[start:stop] and open a space of the right size
             storageReplace(start, stop - start, fragList.totalCount);
-            if (fragList.totalCount > 0) 
+            if (fragList.totalCount > 0) {
                 // Stitch the fragments together in the space we made
                 fragList.emptyInto(storage, start + offset);
-
+            }
         } else {
             // This is an extended slice which means we are replacing elements
             int n = sliceLength(start, stop, step);
@@ -516,12 +520,13 @@ public class PyByteArray extends BaseBytes {
             int n = sliceLength(start, stop, step);
 
             if (n > 0) {
-                if (step > 0)
+                if (step > 0) {
                     // The first element is x[start] and the last is x[start+(n-1)*step+1]
                     storageDeleteEx(start, step, n);
-                else
+                } else {
                     // The first element is x[start+(n-1)*step+1] and the last is x[start]
                     storageDeleteEx(start + (n - 1) * step + 1, -step, n);
+                }
             }
         }
     }
@@ -579,7 +584,7 @@ public class PyByteArray extends BaseBytes {
 
         /*
          * This whole method is modelled on CPython (see Objects/bytearrayobject.c : bytes_init())
-         * but reorganised somewhat to maximise re-use withthe implementation of assignment to a
+         * but reorganised somewhat to maximise re-use with the implementation of assignment to a
          * slice, which essentially has to construct a bytearray from the right-hand side.
          * Hopefully, it still tries the same things in the same order and fails in the same way.
          */
@@ -589,7 +594,9 @@ public class PyByteArray extends BaseBytes {
              * bytearray(string [, encoding [, errors]]) Construct from a text string by encoding it
              * using the specified encoding.
              */
-            if (arg == null || !(arg instanceof PyString)) throw Py.TypeError("encoding or errors without sequence argument");
+            if (arg == null || !(arg instanceof PyString)) {
+                throw Py.TypeError("encoding or errors without sequence argument");
+            }
             init((PyString)arg, encoding, errors);
             
         } else {
@@ -891,11 +898,13 @@ public class PyByteArray extends BaseBytes {
      * @param clear if true, storage bytes guaranteed zero
      */
     private void newStorage(int needed, boolean clear) {
-        if (shouldResize(needed))
+        if (shouldResize(needed)) {
             newStorage(needed);                 // guaranteed zero
-        else {
+        } else {
             setStorage(storage, needed, (storage.length - needed) / 2);
-            if (clear) Arrays.fill(storage, (byte)0); // guarantee zero
+            if (clear) {
+                Arrays.fill(storage, (byte)0); // guarantee zero
+            }
         }
     }
 
@@ -950,12 +959,13 @@ public class PyByteArray extends BaseBytes {
             int g = f + (a + d);    // Location of x[-b]
             
             if (shouldShrink(s2)) {
-                if (s2 > 0)
+                if (s2 > 0) {
                     // We have far more storage than we need: shrink and copy both parts
                     newStorage(f, a, g, b, e);
-                else
+                } else {
                     // Need no storage as a+e+b = 0
                     setStorage(emptyStorage);
+                }
 
             } else if (a < b) {
                 // It would be less copying if we moved A=x[:a] not B=x[-b:].
@@ -963,17 +973,20 @@ public class PyByteArray extends BaseBytes {
                 int f2 = f - (e - d);
                 if (f2 >= 0) {
                     // ... which luckily is still inside the array
-                    if (a > 0) System.arraycopy(storage, f, storage, f2, a);
+                    if (a > 0) {
+                        System.arraycopy(storage, f, storage, f2, a);
+                    }
                     this.offset = f2;
                     size = s2;
                 } else {
                     // ... which unfortunately is before the start of the array.
                     // We have to move both A and B and it might be time for a new array.
-                    if (s2<=storage.length)
+                    if (s2<=storage.length) {
                         // Repack it all in the existing array
                         newStorageAvoided(f, a, g, b, e);
-                    else
+                    } else {
                         newStorage(f, a, g, b, e);
+                    }
                 }
 
             } else /* a >= b */{
@@ -982,17 +995,20 @@ public class PyByteArray extends BaseBytes {
                 int g2 = g + (e - d);
                 if (g2 + b <= storage.length) {
                     // ... which luckily leaves all of B inside the array
-                    if (b > 0) System.arraycopy(storage, g, storage, g2, b);
+                    if (b > 0) {
+                        System.arraycopy(storage, g, storage, g2, b);
+                    }
                     // this.offset is unchanged
                     size = s2;
                 } else {
                     // ... which unfortunately runs beyond the end of the array.
                     // We have to move both A and B and it might be time for a new array.
-                    if (s2<=storage.length)
+                    if (s2<=storage.length) {
                         // Repack it all in the existing array
                         newStorageAvoided(f, a, g, b, e);
-                    else
+                    } else {
                         newStorage(f, a, g, b, e);
+                    }
                 }
             }
         }
@@ -1044,10 +1060,10 @@ public class PyByteArray extends BaseBytes {
         // Choose the new offset f' to make prepend or append operations quicker.
         // E.g. if insertion was near the end (b small) put most of the new space at the end.
         int f2;
-        if (a == b)
+        if (a == b) {
             // Mainly to trap the case a=b=0
             f2 = (storage.length - s2) / 2;
-        else {
+        } else {
             // a and b are not both zero (since not equal)
             long spare = storage.length - s2;
             f2 = (int)((spare * b) / (a + b));
@@ -1117,10 +1133,10 @@ public class PyByteArray extends BaseBytes {
         // Choose the new offset f' to make prepend or append operations quicker.
         // E.g. if insertion was near the end (b small) put most of the new space at the end.
         int f2;
-        if (a == b)
+        if (a == b) {
             // Mainly to trap the case a=b=0
             f2 = (newStorage.length - s2) / 2;
-        else {
+        } else {
             // a and b are not both zero (since not equal)
             long spare = newStorage.length - s2;
             f2 = (int)((spare * b) / (a + b));
@@ -1197,14 +1213,18 @@ public class PyByteArray extends BaseBytes {
                 // It would be less copying if we moved A=x[:a] not B=x[-b:].
                 // If B is to stay where it is, it means A will land here:
                 int f2 = f + d;
-                if (a > 0) System.arraycopy(storage, f, storage, f2, a);
+                if (a > 0) {
+                    System.arraycopy(storage, f, storage, f2, a);
+                }
                 this.offset = f2;
 
             } else /* a >= b */{
                 // It would be less copying if we moved B=x[-b:] not A=x[:a]
                 // If A is to stay where it is, it means B will land here:
                 int g2 = f + a;
-                if (b > 0) System.arraycopy(storage, g, storage, g2, b);
+                if (b > 0) {
+                    System.arraycopy(storage, g, storage, g2, b);
+                }
             }
         }
     }

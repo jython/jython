@@ -92,9 +92,9 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
      *             bounds of storage or size<0.
      */
     protected void setStorage(byte[] storage, int size, int offset) throws IllegalArgumentException {
-        if (size < 0 || offset < 0 || offset + size > storage.length)
+        if (size < 0 || offset < 0 || offset + size > storage.length) {
             throw new IllegalArgumentException();
-        else {
+        } else {
             this.storage = storage;
             this.size = size;
             this.offset = offset;
@@ -111,9 +111,9 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
      *             storage.
      */
     protected void setStorage(byte[] storage, int size) throws IllegalArgumentException {
-        if (size < 0 || size > storage.length)
+        if (size < 0 || size > storage.length) {
             throw new IllegalArgumentException();
-        else {
+        } else {
             this.storage = storage;
             this.size = size;
             this.offset = 0;
@@ -318,15 +318,17 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
         String encoded;
 
         if (arg instanceof PyUnicode) {
-            if (encoding != null)
+            if (encoding != null) {
                 encoded = codecs.encode((PyUnicode)arg, encoding, errors);
-            else
+            } else {
                 throw Py.TypeError("unicode argument without an encoding");
+            }
         } else {
-            if (encoding != null)
+            if (encoding != null) {
                 encoded = codecs.encode((PyString)arg, encoding, errors);
-            else
+            } else {
                 encoded = ((PyString)arg).getString();
+            }
         }
         return encoded;
     }
@@ -372,7 +374,9 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
      * @param n size of zero-filled array
      */
     protected void init(int n) {
-        if (n < 0) throw Py.ValueError("negative count");
+        if (n < 0) {
+            throw Py.ValueError("negative count");
+        }
         newStorage(n);
     }
 
@@ -389,9 +393,9 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
         Py.NotImplementedError("memoryview not yet supported in bytearray");
         String format = value.get_format();
         boolean isBytes = format == null || "B".equals(format);
-        if (value.get_ndim() != 1 || !isBytes)
+        if (value.get_ndim() != 1 || !isBytes) {
             Py.TypeError("memoryview value must be byte-oriented");
-        else {
+        } else {
             // Dimensions are given as a PyTuple (although only one)
             int len = value.get_shape().pyget(0).asInt();
             // XXX Access to memoryview bytes to go here
@@ -499,7 +503,9 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
                     // Need a new Fragment
                     curr = new Fragment(fragSize);
                     add(curr);
-                    if (fragSize < Fragment.MAXSIZE) fragSize <<= 1;
+                    if (fragSize < Fragment.MAXSIZE) {
+                        fragSize <<= 1;
+                    }
                 }
                 // Insert next item from iterator.
                 if (curr.isFilledBy(value)) {
@@ -510,8 +516,9 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
             }
 
             // Don't forget the bytes in the final Fragment
-            if (curr != null) totalCount += curr.count;
-
+            if (curr != null) {
+                totalCount += curr.count;
+            }
         }
 
         /**
@@ -586,8 +593,9 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
      * @throws PyException(IndexError) if the index is outside the array bounds
      */
     protected final void indexCheck(int index) throws PyException {
-        if (index<0 || index>=size)
+        if (index<0 || index>=size) {
             throw Py.IndexError(getType().fastGetName() + " index out of range");
+        }
     }
 
     /**
@@ -599,10 +607,11 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
      */
     protected void newStorage(int needed) {
         // The implementation for immutable arrays allocates exactly, and with offset zero.
-        if (needed > 0)
+        if (needed > 0) {
             setStorage(new byte[needed]); // guaranteed zero (by JLS 2ed para 4.5.5)
-        else
+        } else {
             setStorage(emptyStorage);
+        }
     }
 
     
@@ -614,8 +623,9 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
      * @throws PyException(ValueError) if value<0 or value>255
      */
     protected static final byte byteCheck(int value) throws PyException {
-        if (value<0 || value>=255)
+        if (value<0 || value>=255) {
             throw Py.ValueError("byte must be in range(0, 256)");
+        }
         return (byte) value;
     }
     
@@ -644,13 +654,14 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
      * @throws PyException(ValueError) if value<0 or value>255 or string length!=1
      */
     protected static final byte byteCheck(PyObject value) throws PyException {
-        if (value instanceof PyInteger || value instanceof PyLong)
+        if (value instanceof PyInteger || value instanceof PyLong) {
             // This will possibly produce Py.OverflowError("long int too large to convert")
             return byteCheck(value.asInt());
-        else if (value instanceof PyString) {
+        } else if (value instanceof PyString) {
             String strValue = ((PyString)value).getString();
-            if (strValue.length() != 1)
+            if (strValue.length() != 1) {
                 throw Py.ValueError("string must be of size 1");
+            }
             return byteCheck(strValue.charAt(0));
         } else
             throw Py.TypeError("an integer or string of size 1 is required");
@@ -683,7 +694,7 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
      * @param element to insert (by value)
      * @throws PyException(IndexError) if the index is outside the array bounds
      * @throws PyException(ValueError) if element<0 or element>255
-     * @throws PyException(TYpeError) if the subclass is immutable
+     * @throws PyException(TypeError) if the subclass is immutable
      */
     public void pyadd(int index, PyInteger element) {
         // This won't succeed: it just produces the right error.
@@ -788,7 +799,7 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
          * @see java.util.AbstractList#add(int, java.lang.Object)
          * @throws PyException(IndexError) if the index is outside the array bounds
          * @throws PyException(ValueError) if element<0 or element>255
-         * @throws PyException(TYpeError) if the owning concrete subclass is immutable
+         * @throws PyException(TypeError) if the owning concrete subclass is immutable
          */
         @Override
         public void add(int index, PyInteger element) throws PyException {
