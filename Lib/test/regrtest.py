@@ -1276,6 +1276,7 @@ _expectations = {
         test_distutils
         test_dumbdbm
         test_pbcvm
+        test_readline
         test_shutil
         test_urllib2_localnet
         """
