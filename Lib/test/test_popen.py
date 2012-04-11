@@ -40,7 +40,7 @@ class PopenTest(unittest.TestCase):
 
     def test_return_code(self):
         self.assertEqual(os.popen("exit 0").close(), None)
-        if os.name == 'nt':
+        if os.name == 'nt' or test_support.is_jython:
             self.assertEqual(os.popen("exit 42").close(), 42)
         else:
             self.assertEqual(os.popen("exit 42").close(), 42 << 8)
