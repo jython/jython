@@ -146,7 +146,8 @@ class PropertySubclassTests(unittest.TestCase):
                 def spam(self):
                     """Trying to copy this docstring will raise an exception"""
                     return 1
-        except AttributeError:
+        #This raises a TypeError in Jython.
+        except (AttributeError, TypeError):
             pass
         else:
             raise Exception("AttributeError not raised")
