@@ -60,6 +60,7 @@ public class PyModule extends PyObject {
         ensureDict();
         __dict__.__setitem__("__name__", name);
         __dict__.__setitem__("__doc__", doc);
+        __dict__.__setitem__("__package__", Py.None);
     }
 
     public PyObject fastGetDict() {
