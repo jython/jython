@@ -1426,19 +1426,19 @@ public class PyString extends PyBaseString implements MemoryViewProtocol
     }
 
     public int index(String sub) {
-        return str_index(sub, 0, null);
+        return str_index(sub, null, null);
     }
 
-    public int index(String sub, int start) {
+    public int index(String sub, PyObject start) {
         return str_index(sub, start, null);
     }
 
-    public int index(String sub, int start, int end) {
-        return str_index(sub, start, Py.newInteger(end));
+    public int index(String sub, PyObject start, PyObject end) {
+        return str_index(sub, start, end);
     }
 
-    @ExposedMethod(defaults = {"0", "null"}, doc = BuiltinDocs.str_index_doc)
-    final int str_index(String sub, int start, PyObject end) {
+    @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.str_index_doc)
+    final int str_index(String sub, PyObject start, PyObject end) {
         int index = str_find(sub, start, end);
         if (index == -1)
             throw Py.ValueError("substring not found in string.index");
@@ -1446,19 +1446,19 @@ public class PyString extends PyBaseString implements MemoryViewProtocol
     }
 
     public int rindex(String sub) {
-        return str_rindex(sub, 0, null);
+        return str_rindex(sub, null, null);
     }
 
-    public int rindex(String sub, int start) {
+    public int rindex(String sub, PyObject start) {
         return str_rindex(sub, start, null);
     }
 
-    public int rindex(String sub, int start, int end) {
-        return str_rindex(sub, start, Py.newInteger(end));
+    public int rindex(String sub, PyObject start, PyObject end) {
+        return str_rindex(sub, start, end);
     }
 
-    @ExposedMethod(defaults = {"0", "null"}, doc = BuiltinDocs.str_rindex_doc)
-    final int str_rindex(String sub, int start, PyObject end) {
+    @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.str_rindex_doc)
+    final int str_rindex(String sub, PyObject start, PyObject end) {
         int index = str_rfind(sub, start, end);
         if(index == -1)
             throw Py.ValueError("substring not found in string.rindex");
@@ -1466,23 +1466,26 @@ public class PyString extends PyBaseString implements MemoryViewProtocol
     }
 
     public int count(String sub) {
-        return str_count(sub, 0, null);
+        return str_count(sub, null, null);
     }
 
-    public int count(String sub, int start) {
+    public int count(String sub, PyObject start) {
         return str_count(sub, start, null);
     }
 
-    public int count(String sub, int start, int end) {
-        return str_count(sub, start, Py.newInteger(end));
+    public int count(String sub, PyObject start, PyObject end) {
+        return str_count(sub, start, end);
     }
     
-    @ExposedMethod(defaults = {"0", "null"}, doc = BuiltinDocs.str_count_doc)
-    final int str_count(String sub, int start, PyObject end) {
+    @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.str_count_doc)
+    final int str_count(String sub, PyObject start, PyObject end) {
+        if (sub == null) {
+            throw Py.TypeError("count() takes at least 1 argument (0 given)");
+        }
         int[] indices = translateIndices(start, end);
         int n = sub.length();
         if(n == 0) {
-            if (start > getString().length()) {
+            if (indices[2] > getString().length()) {
                 return 0;
             }
             return indices[1] - indices[0] + 1;
@@ -1500,44 +1503,44 @@ public class PyString extends PyBaseString implements MemoryViewProtocol
     }
 
     public int find(String sub) {
-        return str_find(sub, 0, null);
+        return str_find(sub, null, null);
     }
 
-    public int find(String sub, int start) {
+    public int find(String sub, PyObject start) {
         return str_find(sub, start, null);
     }
 
-    public int find(String sub, int start, int end) {
-        return str_find(sub, start, Py.newInteger(end));
+    public int find(String sub, PyObject start, PyObject end) {
+        return str_find(sub, start, end);
     }
 
-    @ExposedMethod(defaults = {"0", "null"}, doc = BuiltinDocs.str_find_doc)
-    final int str_find(String sub, int start, PyObject end) {
+    @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.str_find_doc)
+    final int str_find(String sub, PyObject start, PyObject end) {
         int[] indices = translateIndices(start, end);
         int index = getString().indexOf(sub, indices[0]);
-        if (index < start || index > indices[1]) {
+        if (index < indices[2] || index > indices[1]) {
             return -1;
         }
         return index;
     }
 
     public int rfind(String sub) {
-        return str_rfind(sub, 0, null);
+        return str_rfind(sub, null, null);
     }
 
-    public int rfind(String sub, int start) {
+    public int rfind(String sub, PyObject start) {
         return str_rfind(sub, start, null);
     }
 
-    public int rfind(String sub, int start, int end) {
-        return str_rfind(sub, start, Py.newInteger(end));
+    public int rfind(String sub, PyObject start, PyObject end) {
+        return str_rfind(sub, start, end);
     }
 
-    @ExposedMethod(defaults = {"0", "null"}, doc = BuiltinDocs.str_rfind_doc)
-    final int str_rfind(String sub, int start, PyObject end) {
+    @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.str_rfind_doc)
+    final int str_rfind(String sub, PyObject start, PyObject end) {
         int[] indices = translateIndices(start, end);
         int index = getString().lastIndexOf(sub, indices[1] - sub.length());
-        if (index < start) {
+        if (index < indices[2]) {
             return -1;
         }
         return index;
@@ -2046,19 +2049,19 @@ public class PyString extends PyBaseString implements MemoryViewProtocol
     }
 
     public boolean startswith(PyObject prefix) {
-        return str_startswith(prefix, 0, null);
+        return str_startswith(prefix, null, null);
     }
 
-    public boolean startswith(PyObject prefix, int offset) {
+    public boolean startswith(PyObject prefix, PyObject offset) {
         return str_startswith(prefix, offset, null);
     }
 
-    public boolean startswith(PyObject prefix, int start, int end) {
-        return str_startswith(prefix, start, Py.newInteger(end));
+    public boolean startswith(PyObject prefix, PyObject start, PyObject end) {
+        return str_startswith(prefix, start, end);
     }
 
-    @ExposedMethod(defaults = {"0", "null"}, doc = BuiltinDocs.str_startswith_doc)
-    final boolean str_startswith(PyObject prefix, int start, PyObject end) {
+    @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.str_startswith_doc)
+    final boolean str_startswith(PyObject prefix, PyObject start, PyObject end) {
         int[] indices = translateIndices(start, end);
         
         if (prefix instanceof PyString) {
@@ -2088,19 +2091,19 @@ public class PyString extends PyBaseString implements MemoryViewProtocol
     }
 
     public boolean endswith(PyObject suffix) {
-        return str_endswith(suffix, 0, null);
+        return str_endswith(suffix, null, null);
     }
 
-    public boolean endswith(PyObject suffix, int start) {
+    public boolean endswith(PyObject suffix, PyObject start) {
         return str_endswith(suffix, start, null);
     }
 
-    public boolean endswith(PyObject suffix, int start, int end) {
-        return str_endswith(suffix, start, Py.newInteger(end));
+    public boolean endswith(PyObject suffix, PyObject start, PyObject end) {
+        return str_endswith(suffix, start, end);
     }
 
-    @ExposedMethod(defaults = {"0", "null"}, doc = BuiltinDocs.str_endswith_doc)
-    final boolean str_endswith(PyObject suffix, int start, PyObject end) {
+    @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.str_endswith_doc)
+    final boolean str_endswith(PyObject suffix, PyObject start, PyObject end) {
         int[] indices = translateIndices(start, end);
 
         String substr = getString().substring(indices[0], indices[1]);
@@ -2126,14 +2129,17 @@ public class PyString extends PyBaseString implements MemoryViewProtocol
      * Turns the possibly negative Python slice start and end into valid indices
      * into this string.
      * 
-     * @return a 2 element array of indices into this string describing a
+     * @return a 3 element array of indices into this string describing a
      *         substring from [0] to [1]. [0] <= [1], [0] >= 0 and [1] <=
-     *         string.length()
-     * 
+     *         string.length(). The third element contains the unadjusted 
+     *         start value.
      */
-    protected int[] translateIndices(int start, PyObject end) {
+    protected int[] translateIndices(PyObject start, PyObject end) {
+        int iStart;
+        int iStartAdjusted;
         int iEnd;
-        if(end == null) {
+
+        if(end == null || end == Py.None) {
             iEnd = getString().length();
         } else {
             iEnd = end.asInt();
@@ -2147,16 +2153,23 @@ public class PyString extends PyBaseString implements MemoryViewProtocol
         } else if(iEnd > n) {
             iEnd = n;
         }
-        if(start < 0) {
-            start = n + start;
-            if(start < 0) {
-                start = 0;
+        if(start == null || start == Py.None) {
+            iStart = 0;
+        } else {
+            iStart = start.asInt();
+        }
+
+        iStartAdjusted = iStart;
+        if(iStartAdjusted < 0) {
+            iStartAdjusted = n + iStartAdjusted;
+            if(iStartAdjusted < 0) {
+                iStartAdjusted = 0;
             }
         }
-        if(start > iEnd) {
-            start = iEnd;
+        if(iStartAdjusted > iEnd) {
+            iStartAdjusted = iEnd;
         }
-        return new int[] {start, iEnd};
+        return new int[] {iStartAdjusted, iEnd, iStart};
     }
 
     public String translate(String table) {

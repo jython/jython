@@ -924,18 +924,18 @@ public class PyUnicode extends PyString implements Iterable {
         return new PyUnicode(getString().substring(begin, end));
     }
 
-    @ExposedMethod(defaults = {"0", "null"}, doc = BuiltinDocs.unicode___getslice___doc)
-    final int unicode_index(String sub, int start, PyObject end) {
+    @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.unicode___getslice___doc)
+    final int unicode_index(String sub, PyObject start, PyObject end) {
         return str_index(sub, start, end);
     }
 
-    @ExposedMethod(defaults = {"0", "null"}, doc = BuiltinDocs.unicode___getslice___doc)
-    final int unicode_rindex(String sub, int start, PyObject end) {
+    @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.unicode___getslice___doc)
+    final int unicode_rindex(String sub, PyObject start, PyObject end) {
         return str_rindex(sub, start, end);
     }
 
-    @ExposedMethod(defaults = {"0", "null"}, doc = BuiltinDocs.unicode___getslice___doc)
-    final int unicode_count(PyObject subObj, int start, PyObject end) {
+    @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.unicode___getslice___doc)
+    final int unicode_count(PyObject subObj, PyObject start, PyObject end) {
         final PyUnicode sub = coerceToUnicode(subObj);
         if (isBasicPlane()) {
             return str_count(sub.getString(), start, end);
@@ -960,13 +960,13 @@ public class PyUnicode extends PyString implements Iterable {
         return count;
     }
 
-    @ExposedMethod(defaults = {"0", "null"}, doc = BuiltinDocs.unicode___getslice___doc)
-    final int unicode_find(String sub, int start, PyObject end) {
+    @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.unicode___getslice___doc)
+    final int unicode_find(String sub, PyObject start, PyObject end) {
         return str_find(sub, start, end);
     }
 
-    @ExposedMethod(defaults = {"0", "null"}, doc = BuiltinDocs.unicode___getslice___doc)
-    final int unicode_rfind(String sub, int start, PyObject end) {
+    @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.unicode___getslice___doc)
+    final int unicode_rfind(String sub, PyObject start, PyObject end) {
         return str_rfind(sub, start, end);
     }
 
@@ -1135,13 +1135,13 @@ public class PyUnicode extends PyString implements Iterable {
         return unicodeJoin(seq);
     }
 
-    @ExposedMethod(defaults = {"0", "null"}, doc = BuiltinDocs.unicode___getslice___doc)
-    final boolean unicode_startswith(PyObject prefix, int start, PyObject end) {
+    @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.unicode___getslice___doc)
+    final boolean unicode_startswith(PyObject prefix, PyObject start, PyObject end) {
         return str_startswith(prefix, start, end);
     }
 
-    @ExposedMethod(defaults = {"0", "null"}, doc = BuiltinDocs.unicode___getslice___doc)
-    final boolean unicode_endswith(PyObject suffix, int start, PyObject end) {
+    @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.unicode___getslice___doc)
+    final boolean unicode_endswith(PyObject suffix, PyObject start, PyObject end) {
         return str_endswith(suffix, start, end);
     }
 
