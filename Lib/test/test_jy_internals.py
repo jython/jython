@@ -281,11 +281,11 @@ class ModuleTest(unittest.TestCase):
         from org.python.core import PyModule, PyInstance
         test = PyModule("test", {})
         exec "a = 2" in test.__dict__
-        self.assertEquals(len(test.__dict__), 3)
+        self.assertEquals(len(test.__dict__), 4)
 
         #test = PyInstance.__tojava__(test, PyModule)
         exec "b = 3" in test.__dict__
-        self.assertEquals(len(test.__dict__), 4)
+        self.assertEquals(len(test.__dict__), 5)
 
 def test_main():
     test_support.run_unittest(__name__)
