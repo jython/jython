@@ -1278,6 +1278,8 @@ _expectations = {
         test_pbcvm
         test_readline
         test_shutil
+        test_sys_setprofile
+        test_sys_settrace
         test_urllib2_localnet
         """
         #Last group above should be re-evaluated before releasing 2.7.
