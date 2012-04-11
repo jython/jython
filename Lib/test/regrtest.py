@@ -1197,6 +1197,7 @@ _expectations = {
         test_cd
         test_cl
         test_commands
+        test_compileall
         test_crypt
         test_ctypes
         test_curses
