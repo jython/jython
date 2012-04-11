@@ -2570,7 +2570,7 @@ public class PyString extends PyBaseString implements MemoryViewProtocol
         }
     }
 
-    private String buildFormattedString(String value, PyObject[] args, String[] keywords, MarkupIterator enclosingIterator) {
+    protected String buildFormattedString(String value, PyObject[] args, String[] keywords, MarkupIterator enclosingIterator) {
         StringBuilder result = new StringBuilder();
         MarkupIterator it = new MarkupIterator(value, enclosingIterator);
         while (true) {

@@ -1340,6 +1340,20 @@ public class PyUnicode extends PyString implements Iterable {
         return new PyTuple(new PyUnicode(this.getString()));
     }
 
+    @Override
+    public PyObject __format__(PyObject formatSpec) {
+        return str___format__(formatSpec);
+    }
+
+    @ExposedMethod(doc = BuiltinDocs.unicode_format_doc)
+    final PyObject unicode_format(PyObject[] args, String[] keywords) {
+        try {
+            return new PyUnicode(buildFormattedString(getString(), args, keywords, null));
+        } catch (IllegalArgumentException e) {
+            throw Py.ValueError(e.getMessage());
+        }
+    }
+
     public Iterator<Integer> iterator() {
         return newSubsequenceIterator();
     }
