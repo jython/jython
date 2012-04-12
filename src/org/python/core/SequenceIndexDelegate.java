@@ -121,7 +121,7 @@ public abstract class SequenceIndexDelegate implements Serializable {
                 stop--;
             }
         } else if(step < 0) {
-            for(int i = start; i >= 0 && i >= stop; i += step) {
+            for(int i = start; i >= 0 && i > stop; i += step) {
                 delItem(i);
             }
         }
