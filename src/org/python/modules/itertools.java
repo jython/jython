@@ -84,22 +84,35 @@ public class itertools implements ClassDictInit {
     
 
     public static PyString __doc__count = new PyString(
-            "count([firstval]) --> count object\n\nReturn a count object whose .next() "
-                    + "method returns consecutive\nintegers starting from zero or, if specified, from firstval.");
+        "count(start=0, step=1) --> count object\n\n" +
+        "Return a count object whose .next() method returns consecutive values.\n" +
+        "  Equivalent to:\n" +
+        "\n" +
+        "      def count(firstval=0, step=1):\n" +
+        "      x = firstval\n" +
+        "      while 1:\n" +
+        "          yield x\n" +
+        "          x += step\n");
+
+    public static PyIterator count(final int init) {
+        return count(init, 1);
+    }
 
     /**
      * Creates an iterator that returns consecutive integers starting at <code>init</code>.
      */
-    public static PyIterator count(final int init) {
+    public static PyIterator count(final int init, final int step) {
         return new PyIterator() {
             int counter = init;
+            int stepper = step;
 
             public PyObject __iternext__() {
-                return new PyInteger(counter++);
+                return new PyInteger(counter+=stepper);
             }
             
             public PyString __repr__() {
-                return (PyString)(Py.newString("count(%d)").__mod__(Py.newInteger(counter)));
+                return (PyString)(Py.newString("count(%d, %d)").__mod__(new PyTuple(
+                                Py.newInteger(counter), Py.newInteger(stepper))));
             }
 
         };
