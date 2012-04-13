@@ -1243,7 +1243,7 @@ public class PyString extends PyBaseString
         String sep;
 
         if (sepObj instanceof PyUnicode) {
-            return unicodePartition(sepObj);
+            return unicodeRpartition(sepObj);
         } else if (sepObj instanceof PyString) {
             sep = ((PyString) sepObj).getString();
         } else {
