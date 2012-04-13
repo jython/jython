@@ -149,6 +149,22 @@ public class PyPartial extends PyObject {
     }
 
     @Override
+    public void __setattr__(String name, PyObject value) {
+    	partial___setattr__(name, value);
+    }
+
+    @ExposedMethod
+    final void partial___setattr__(String name, PyObject value) {
+        ensureDict();
+        super.__setattr__(name, value);
+    }
+
+    @Override
+    public PyObject fastGetDict() {
+        return __dict__;
+    }
+
+    @Override
     @ExposedGet(name = "__dict__")
     public PyObject getDict() {
         ensureDict();

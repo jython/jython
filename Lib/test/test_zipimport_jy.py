@@ -1,8 +1,12 @@
+from zipimport import zipimporter
+from tempfile import NamedTemporaryFile
 import unittest
 import sys
+import os.path
 import java.lang.Package
 
 from test import test_support
+from zipfile import ZipFile
 
 class SyspathZipimportTest(unittest.TestCase):
     def setUp(self):
@@ -31,8 +35,15 @@ class SyspathZipimportTest(unittest.TestCase):
         from syspathpkg import module
         self.assertEquals(module.__name__, 'syspathpkg.module')
 
+class ZipImporterDictTest(unittest.TestCase):
+    def test_subclass_assign_attribute(self):
+        class A(zipimporter): pass
+        path = os.path.abspath('tests/modjy/lib_python_folder/test_modules.zip')
+        A(path).somevar = 1
+
 def test_main():
     test_support.run_unittest(SyspathZipimportTest)
+    test_support.run_unittest(ZipImporterDictTest)
 
 if __name__ == "__main__":
     test_main()

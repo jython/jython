@@ -1,4 +1,4 @@
 base_class: zipimporter
-want_dict: false
+want_dict: true
 ctr:
 incl: object
