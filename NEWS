@@ -5,6 +5,7 @@ Jython 2.7a1
 
 Jython 2.5.3b2
   Bugs Fixed
+    - [ 1730 ] functools.partial incorrectly makes __doc__ property readonly
     - [ 1537 ] expat: org.python.apache.xerces.parsers.SAXParser
     - [ 1268 ] SAX parsers wants to load external DTDs, causing an exception
     - [ 1805 ] threading.Thread always gets name "Thread" instead of a discriminating one
