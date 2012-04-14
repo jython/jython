@@ -145,7 +145,7 @@ class XMLRPCTestCase(unittest.TestCase):
                          xmlrpclib.loads(strg)[0][0])
         self.assertRaises(TypeError, xmlrpclib.dumps, (arg1,))
 
-    @unittest.skipIf(test_support.is_jython, "FIXME: #1857 not working in Jython")
+    @unittest.skipIf(test_support.is_jython, "FIXME: #1875 not working in Jython")
     def test_default_encoding_issues(self):
         # SF bug #1115989: wrong decoding in '_stringify'
         utf8 = """<?xml version='1.0' encoding='iso-8859-1'?>
