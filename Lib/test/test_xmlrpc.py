@@ -877,7 +877,7 @@ class CGIHandlerTestCase(unittest.TestCase):
             self.assertEqual(status, '400')
             self.assertEqual(message, 'Bad Request')
 
-    @unittest.skipIf(test_support.is_jython, "FIXME: #1857 not working in Jython")
+    #@unittest.skipIf(test_support.is_jython, "FIXME: #1857 not working in Jython")
     def test_cgi_xmlrpc_response(self):
         data = """<?xml version='1.0'?>
         <methodCall>

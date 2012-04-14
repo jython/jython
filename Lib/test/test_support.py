@@ -827,6 +827,9 @@ def captured_output(stream_name):
 def captured_stdout():
     return captured_output("stdout")
 
+def captured_stdin():
+    return captured_output("stdin")
+
 
 #=======================================================================
 # Decorator for running a function in a different locale, correctly resetting
