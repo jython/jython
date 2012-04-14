@@ -13,7 +13,7 @@ import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 
 import com.kenai.constantine.platform.Errno;
-import org.jruby.ext.posix.util.Platform;
+import jnr.posix.util.Platform;
 import org.python.core.Py;
 import org.python.core.PyString;
 import org.python.core.util.RelativeFile;

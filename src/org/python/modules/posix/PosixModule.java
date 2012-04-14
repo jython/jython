@@ -17,10 +17,10 @@ import java.security.SecureRandom;
 import java.util.Iterator;
 import java.util.Map;
 
-import org.jruby.ext.posix.FileStat;
-import org.jruby.ext.posix.POSIX;
-import org.jruby.ext.posix.POSIXFactory;
-import org.jruby.ext.posix.util.Platform;
+import jnr.posix.FileStat;
+import jnr.posix.POSIX;
+import jnr.posix.POSIXFactory;
+import jnr.posix.util.Platform;
 
 import org.python.core.ClassDictInit;
 import org.python.core.Py;

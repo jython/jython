@@ -119,9 +119,17 @@ public final class Py {
         PyObject args = new PyTuple(Py.newInteger(value), PosixModule.strerror(value));
         return new PyException(Py.OSError, args);
     }
-
+    
     public static PyException OSError(Constant errno, PyObject filename) {
         int value = errno.value();
+        // Pass to strerror because constantine currently lacks Errno descriptions on
+        // Windows, and strerror falls back to Linux's
+        PyObject args = new PyTuple(Py.newInteger(value), PosixModule.strerror(value), filename);
+        return new PyException(Py.OSError, args);
+    }
+
+    public static PyException OSError(jnr.constants.Constant errno, PyObject filename) {
+        int value = errno.intValue();
         // Pass to strerror because constantine currently lacks Errno descriptions on
         // Windows, and strerror falls back to Linux's
         PyObject args = new PyTuple(Py.newInteger(value), PosixModule.strerror(value), filename);

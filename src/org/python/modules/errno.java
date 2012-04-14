@@ -4,7 +4,7 @@ package org.python.modules;
 import com.kenai.constantine.Constant;
 import com.kenai.constantine.ConstantSet;
 import com.kenai.constantine.platform.Errno;
-import org.jruby.ext.posix.util.Platform;
+import jnr.posix.util.Platform;
 import org.python.core.ClassDictInit;
 import org.python.core.Py;
 import org.python.core.PyDictionary;

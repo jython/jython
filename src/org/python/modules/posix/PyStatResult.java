@@ -1,7 +1,7 @@
 /* Copyright (c) Jython Developers */
 package org.python.modules.posix;
 
-import org.jruby.ext.posix.FileStat;
+import jnr.posix.FileStat;
 
 import org.python.core.ArgParser;
 import org.python.core.Py;

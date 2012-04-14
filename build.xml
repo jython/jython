@@ -156,7 +156,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <property name="jdk.source.version" value="${jython.java.version}" />
         <property name="deprecation" value="true" />
         <property name="debug" value="true" />
-        <property name="nowarn" value="false" />
+        <property name="nowarn" value="true" />
         <property name="javac.Xlint" value="-Xlint -Xlint:-serial -Xlint:-unchecked -Xlint:-cast"/>
 
         <!-- properties work.dir and jython.base.dir are also defined in full-preinit -->
@@ -216,9 +216,11 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
             <pathelement path="${extlibs.dir}/jffi-x86_64-OpenBSD.jar"/>
             <pathelement path="${extlibs.dir}/jffi-x86_64-SunOS.jar"/>
             <pathelement path="${extlibs.dir}/jffi-x86_64-Windows.jar"/>
-            <pathelement path="${extlibs.dir}/jffi.jar"/>
-            <pathelement path="${extlibs.dir}/jnr-posix.jar"/>
-            <pathelement path="${extlibs.dir}/jnr-netdb-0.4.jar"/>
+            <pathelement path="${extlibs.dir}/jffi-1.2.2-SNAPSHOT.jar"/>
+            <pathelement path="${extlibs.dir}/jnr-constants-0.8.3-SNAPSHOT.jar"/>
+            <pathelement path="${extlibs.dir}/jnr-ffi-0.7.4-SNAPSHOT.jar"/>
+			<pathelement path="${extlibs.dir}/jnr-netdb-1.0.6-SNAPSHOT.jar"/>
+			<pathelement path="${extlibs.dir}/jnr-posix-2.1-SNAPSHOT.jar"/>
         </path>
 
         <available property="informix.present" classname="com.informix.jdbc.IfxDriver" classpath="${informix.jar}" />

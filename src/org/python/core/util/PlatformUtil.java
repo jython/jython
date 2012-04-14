@@ -1,7 +1,7 @@
 /* Copyright (c) 2009 Jython project */
 package org.python.core.util;
 
-import org.jruby.ext.posix.util.Platform;
+import jnr.posix.util.Platform;
 
 /**
  * Methods for testing the platform/operating system that we are on.

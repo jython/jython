@@ -27,7 +27,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
-import org.jruby.ext.posix.util.Platform;
+import jnr.posix.util.Platform;
 import org.python.Version;
 import org.python.core.adapter.ClassicPyObjectAdapter;
 import org.python.core.adapter.ExtensiblePyObjectAdapter;

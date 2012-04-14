@@ -7,7 +7,7 @@ import java.net.URLStreamHandler;
 
 import junit.framework.TestCase;
 
-import org.jruby.ext.posix.util.Platform;
+import jnr.posix.util.Platform;
 
 public class PySystemStateTest extends TestCase {
 
