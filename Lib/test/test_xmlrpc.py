@@ -428,7 +428,9 @@ class BaseServerTestCase(unittest.TestCase):
         self.evt = threading.Event()
         # start server thread to handle requests
         serv_args = (self.evt, self.request_count, self.requestHandler)
-        threading.Thread(target=self.threadFunc, args=serv_args).start()
+        t = threading.Thread(target=self.threadFunc, args=serv_args)
+        t.setDaemon(True)
+        t.start()
 
         # wait for the server to be ready
         self.evt.wait(10)
@@ -635,7 +637,6 @@ class BaseKeepaliveServerTestCase(BaseServerTestCase):
 #A test case that verifies that a server using the HTTP/1.1 keep-alive mechanism
 #does indeed serve subsequent requests on the same connection
 class KeepaliveServerTestCase1(BaseKeepaliveServerTestCase):
-    @unittest.skipIf(test_support.is_jython, "FIXME: #1857 not working in Jython")
     def test_two(self):
         p = xmlrpclib.ServerProxy(URL)
         #do three requests.
@@ -656,7 +657,6 @@ class KeepaliveServerTestCase2(BaseKeepaliveServerTestCase):
     #ask for two keepalive requests to be handled.
     request_count=2
 
-    @unittest.skipIf(test_support.is_jython, "FIXME: #1857 not working in Jython")
     def test_close(self):
         p = xmlrpclib.ServerProxy(URL)
         #do some requests with close.
@@ -674,7 +674,6 @@ class KeepaliveServerTestCase2(BaseKeepaliveServerTestCase):
         self.assertGreaterEqual(len(self.RequestHandler.myRequests[-1]), 2)
         self.assertGreaterEqual(len(self.RequestHandler.myRequests[-2]), 2)
 
-    @unittest.skipIf(test_support.is_jython, "FIXME: #1857 not working in Jython")
     def test_transport(self):
         p = xmlrpclib.ServerProxy(URL)
         #do some requests with close.
@@ -714,7 +713,6 @@ class GzipServerTestCase(BaseServerTestCase):
     def setUp(self):
         BaseServerTestCase.setUp(self)
 
-    @unittest.skipIf(test_support.is_jython, "FIXME: #1857 not working in Jython")
     def test_gzip_request(self):
         t = self.Transport()
         t.encode_threshold = None
@@ -726,7 +724,6 @@ class GzipServerTestCase(BaseServerTestCase):
         b = self.RequestHandler.content_length
         self.assertTrue(a>b)
 
-    @unittest.skipIf(test_support.is_jython, "FIXME: #1857 not working in Jython")
     def test_bad_gzip_request(self):
         t = self.Transport()
         t.encode_threshold = None
@@ -737,7 +734,6 @@ class GzipServerTestCase(BaseServerTestCase):
         with cm:
             p.pow(6, 8)
 
-    @unittest.skipIf(test_support.is_jython, "FIXME: #1857 not working in Jython")
     def test_gsip_response(self):
         t = self.Transport()
         p = xmlrpclib.ServerProxy(URL, transport=t)
