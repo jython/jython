@@ -1832,8 +1832,6 @@ class TestGetNameInfo(unittest.TestCase):
             result = socket.getnameinfo(address, flags)
             self.failUnlessEqual(result[1], expected)
 
-    @unittest.skipIf(test_support.is_jython,
-        "FIXME: this is broken but worked recently - has dinsdale changed?")
     def testHost(self):
         for address, flags, expected in [
             ( ("www.python.org", 80),  0,                     "dinsdale.python.org"),
@@ -1891,7 +1889,6 @@ class TestJython_get_jsockaddr(unittest.TestCase):
         self.failUnlessEqual(sockaddr.address.hostAddress, "127.0.0.1")
         self.failUnlessEqual(sockaddr.port, 80)
 
-    @unittest.skip("FIXME: broken")
     def testIPV6AddressesFromGetAddrInfo(self):
         addrinfo = socket.getaddrinfo("localhost", 80, socket.AF_INET6, socket.SOCK_STREAM, 0, 0)
         if not addrinfo and is_bsd:
@@ -1903,7 +1900,6 @@ class TestJython_get_jsockaddr(unittest.TestCase):
         self.failUnless(sockaddr.address.hostAddress in ["::1", "0:0:0:0:0:0:0:1"])
         self.failUnlessEqual(sockaddr.port, 80)
 
-    @unittest.skip("FIXME: broken")
     def testAddressesFrom2Tuple(self):
         for family, addr_tuple, jaddress_type, expected in [
             (socket.AF_INET,  ("localhost", 80), java.net.Inet4Address, ["127.0.0.1"]),
@@ -1915,7 +1911,6 @@ class TestJython_get_jsockaddr(unittest.TestCase):
             self.failUnless(sockaddr.address.hostAddress in expected)
             self.failUnlessEqual(sockaddr.port, 80)
 
-    @unittest.skip("FIXME: broken")
     def testAddressesFrom4Tuple(self):
         for addr_tuple in [
             ("localhost", 80),
@@ -1928,7 +1923,6 @@ class TestJython_get_jsockaddr(unittest.TestCase):
             self.failUnlessEqual(sockaddr.address.scopeId, 0)
             self.failUnlessEqual(sockaddr.port, 80)
 
-    @unittest.skip("FIXME: broken")
     def testSpecialHostnames(self):
         for family, sock_type, flags, addr_tuple, expected in [
             ( socket.AF_INET,  None,              0,                 ("", 80),            ["localhost"]),
@@ -1940,7 +1934,6 @@ class TestJython_get_jsockaddr(unittest.TestCase):
             sockaddr = socket._get_jsockaddr(addr_tuple, family, sock_type, 0, flags)
             self.failUnless(sockaddr.hostName in expected, "_get_jsockaddr returned wrong hostname '%s' for special hostname '%s'(family=%d)" % (sockaddr.hostName, addr_tuple[0], family))
 
-    @unittest.skip("FIXME: broken")
     def testNoneTo_get_jsockaddr(self):
         for family, flags, expected in [
             ( socket.AF_INET,  0,                 ["localhost"]),
