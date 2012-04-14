@@ -832,7 +832,6 @@ class FailingServerTestCase(unittest.TestCase):
         else:
             self.fail('ProtocolError not raised')
 
-    @unittest.skipIf(test_support.is_jython, "FIXME: #1857 not working in Jython")
     def test_fail_with_info(self):
         # use the broken message class
         SimpleXMLRPCServer.SimpleXMLRPCRequestHandler.MessageClass = FailingMessageClass

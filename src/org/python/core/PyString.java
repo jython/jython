@@ -1659,9 +1659,9 @@ public class PyString extends PyBaseString implements MemoryViewProtocol
             }
             return bi.intValue();
         } catch (NumberFormatException exc) {
-            throw Py.ValueError("invalid literal for int() with base " + base + ": " + getString());
+            throw Py.ValueError("invalid literal for int() with base " + base + ": '" + getString()+"'");
         } catch (StringIndexOutOfBoundsException exc) {
-            throw Py.ValueError("invalid literal for int() with base " + base + ": " + getString());
+            throw Py.ValueError("invalid literal for int() with base " + base + ": '" + getString()+"'");
         }
     }
 
@@ -1733,10 +1733,10 @@ public class PyString extends PyBaseString implements MemoryViewProtocol
                         0,0, "invalid decimal Unicode string");
             }
             else {
-            throw Py.ValueError("invalid literal for long() with base " + base + ": " + getString());
+            throw Py.ValueError("invalid literal for long() with base " + base + ": '" + getString()+"'");
             }
         } catch (StringIndexOutOfBoundsException exc) {
-            throw Py.ValueError("invalid literal for long() with base " + base + ": " + getString());
+            throw Py.ValueError("invalid literal for long() with base " + base + ": '" + getString()+"'");
         }
     }
 
