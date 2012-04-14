@@ -91,7 +91,6 @@ class XMLRPCTestCase(unittest.TestCase):
         s = xmlrpclib.dumps((new_d,), methodresponse=True)
         self.assertIsInstance(s, str)
 
-    @unittest.skipIf(test_support.is_jython, "FIXME: #1857 not working in Jython")
     def test_newstyle_class(self):
         class T(object):
             pass
@@ -307,6 +306,7 @@ def http_server(evt, numrequests, requestHandler=None):
     try:
         serv.socket.settimeout(3)
         serv.server_bind()
+        serv.server_activate()
         global ADDR, PORT, URL
         ADDR, PORT = serv.socket.getsockname()
         #connect to IP address directly.  This avoids socket.create_connection()
@@ -314,7 +314,6 @@ def http_server(evt, numrequests, requestHandler=None):
         #causes slowdown e.g. on vista which supports AF_INET6.  The server listens
         #on AF_INET only.
         URL = "http://%s:%d"%(ADDR, PORT)
-        serv.server_activate()
         serv.register_introspection_functions()
         serv.register_multicall_functions()
         serv.register_function(pow)
@@ -366,6 +365,7 @@ def http_multi_server(evt, numrequests, requestHandler=None):
     serv.socket.settimeout(3)
     serv.server_bind()
     try:
+        serv.server_activate()
         global ADDR, PORT, URL
         ADDR, PORT = serv.socket.getsockname()
         #connect to IP address directly.  This avoids socket.create_connection()
@@ -373,7 +373,6 @@ def http_multi_server(evt, numrequests, requestHandler=None):
         #causes slowdown e.g. on vista which supports AF_INET6.  The server listens
         #on AF_INET only.
         URL = "http://%s:%d"%(ADDR, PORT)
-        serv.server_activate()
         paths = ["/foo", "/foo/bar"]
         for path in paths:
             d = serv.add_dispatcher(path, SimpleXMLRPCServer.SimpleXMLRPCDispatcher())
@@ -450,7 +449,6 @@ class BaseServerTestCase(unittest.TestCase):
 # situation more gracefully, these tests should be modified appropriately.
 
 class SimpleServerTestCase(BaseServerTestCase):
-    @unittest.skipIf(test_support.is_jython, "FIXME: #1857 not working in Jython")
     def test_simple1(self):
         try:
             p = xmlrpclib.ServerProxy(URL)
@@ -461,7 +459,6 @@ class SimpleServerTestCase(BaseServerTestCase):
                 # protocol error; provide additional information in test output
                 self.fail("%s\n%s" % (e, getattr(e, "headers", "")))
 
-    @unittest.skipIf(test_support.is_jython, "FIXME: #1857 not working in Jython")
     def test_nonascii(self):
         start_string = 'P\N{LATIN SMALL LETTER Y WITH CIRCUMFLEX}t'
         end_string = 'h\N{LATIN SMALL LETTER O WITH HORN}n'
@@ -476,7 +473,6 @@ class SimpleServerTestCase(BaseServerTestCase):
                 # protocol error; provide additional information in test output
                 self.fail("%s\n%s" % (e, getattr(e, "headers", "")))
 
-    @unittest.skipIf(test_support.is_jython, "FIXME: #1857 not working in Jython")
     def test_unicode_host(self):
         server = xmlrpclib.ServerProxy(u"http://%s:%d/RPC2"%(ADDR, PORT))
         self.assertEqual(server.add("a", u"\xe9"), u"a\xe9")
@@ -493,7 +489,6 @@ class SimpleServerTestCase(BaseServerTestCase):
         self.assertEqual(response.status, 404)
         self.assertEqual(response.reason, 'Not Found')
 
-    @unittest.skipIf(test_support.is_jython, "FIXME: #1857 not working in Jython")
     def test_introspection1(self):
         try:
             p = xmlrpclib.ServerProxy(URL)
@@ -508,7 +503,6 @@ class SimpleServerTestCase(BaseServerTestCase):
                 # protocol error; provide additional information in test output
                 self.fail("%s\n%s" % (e, getattr(e, "headers", "")))
 
-    @unittest.skipIf(test_support.is_jython, "FIXME: #1857 not working in Jython")
     def test_introspection2(self):
         try:
             # test _methodHelp()
@@ -521,7 +515,6 @@ class SimpleServerTestCase(BaseServerTestCase):
                 # protocol error; provide additional information in test output
                 self.fail("%s\n%s" % (e, getattr(e, "headers", "")))
 
-    @unittest.skipIf(test_support.is_jython, "FIXME: #1857 not working in Jython")
     @unittest.skipIf(sys.flags.optimize >= 2,
                      "Docstrings are omitted with -O2 and above")
     def test_introspection3(self):
@@ -536,7 +529,6 @@ class SimpleServerTestCase(BaseServerTestCase):
                 # protocol error; provide additional information in test output
                 self.fail("%s\n%s" % (e, getattr(e, "headers", "")))
 
-    @unittest.skipIf(test_support.is_jython, "FIXME: #1857 not working in Jython")
     def test_introspection4(self):
         # the SimpleXMLRPCServer doesn't support signatures, but
         # at least check that we can try making the call
@@ -550,7 +542,6 @@ class SimpleServerTestCase(BaseServerTestCase):
                 # protocol error; provide additional information in test output
                 self.fail("%s\n%s" % (e, getattr(e, "headers", "")))
 
-    @unittest.skipIf(test_support.is_jython, "FIXME: #1857 not working in Jython")
     def test_multicall(self):
         try:
             p = xmlrpclib.ServerProxy(URL)
@@ -568,7 +559,6 @@ class SimpleServerTestCase(BaseServerTestCase):
                 # protocol error; provide additional information in test output
                 self.fail("%s\n%s" % (e, getattr(e, "headers", "")))
 
-    @unittest.skipIf(test_support.is_jython, "FIXME: #1857 not working in Jython")
     def test_non_existing_multicall(self):
         try:
             p = xmlrpclib.ServerProxy(URL)
@@ -590,7 +580,6 @@ class SimpleServerTestCase(BaseServerTestCase):
                 # protocol error; provide additional information in test output
                 self.fail("%s\n%s" % (e, getattr(e, "headers", "")))
 
-    @unittest.skipIf(test_support.is_jython, "FIXME: #1857 not working in Jython")
     def test_dotted_attribute(self):
         # Raises an AttributeError because private methods are not allowed.
         self.assertRaises(AttributeError,
@@ -601,7 +590,6 @@ class SimpleServerTestCase(BaseServerTestCase):
         # This avoids waiting for the socket timeout.
         self.test_simple1()
 
-    @unittest.skipIf(test_support.is_jython, "FIXME: #1857 not working in Jython")
     def test_partial_post(self):
         # Check that a partial POST doesn't make the server loop: issue #14001.
         conn = httplib.HTTPConnection(ADDR, PORT)
@@ -611,12 +599,10 @@ class SimpleServerTestCase(BaseServerTestCase):
 class MultiPathServerTestCase(BaseServerTestCase):
     threadFunc = staticmethod(http_multi_server)
     request_count = 2
-    @unittest.skipIf(test_support.is_jython, "FIXME: #1857 not working in Jython")
     def test_path1(self):
         p = xmlrpclib.ServerProxy(URL+"/foo")
         self.assertEqual(p.pow(6,8), 6**8)
         self.assertRaises(xmlrpclib.Fault, p.add, 6, 8)
-    @unittest.skipIf(test_support.is_jython, "FIXME: #1857 not working in Jython")
     def test_path2(self):
         p = xmlrpclib.ServerProxy(URL+"/foo/bar")
         self.assertEqual(p.add(6,8), 6+8)
@@ -777,12 +763,10 @@ class ServerProxyTestCase(unittest.TestCase):
             # enough to choose the scheme (HTTP)
             self.url = 'http://'
 
-    @unittest.skipIf(test_support.is_jython, "FIXME: #1857 not working in Jython")
     def test_close(self):
         p = xmlrpclib.ServerProxy(self.url)
         self.assertEqual(p('close')(), None)
 
-    @unittest.skipIf(test_support.is_jython, "FIXME: #1857 not working in Jython")
     def test_transport(self):
         t = xmlrpclib.Transport()
         p = xmlrpclib.ServerProxy(self.url, transport=t)
@@ -818,7 +802,6 @@ class FailingServerTestCase(unittest.TestCase):
         # reset message class
         SimpleXMLRPCServer.SimpleXMLRPCRequestHandler.MessageClass = mimetools.Message
 
-    @unittest.skipIf(test_support.is_jython, "FIXME: #1857 not working in Jython")
     def test_basic(self):
         # check that flag is false by default
         flagval = SimpleXMLRPCServer.SimpleXMLRPCServer._send_traceback_header
@@ -837,7 +820,6 @@ class FailingServerTestCase(unittest.TestCase):
                 # protocol error; provide additional information in test output
                 self.fail("%s\n%s" % (e, getattr(e, "headers", "")))
 
-    @unittest.skipIf(test_support.is_jython, "FIXME: #1857 not working in Jython")
     def test_fail_no_info(self):
         # use the broken message class
         SimpleXMLRPCServer.SimpleXMLRPCRequestHandler.MessageClass = FailingMessageClass
@@ -883,7 +865,6 @@ class CGIHandlerTestCase(unittest.TestCase):
     def tearDown(self):
         self.cgi = None
 
-    @unittest.skipIf(test_support.is_jython, "FIXME: #1857 not working in Jython")
     def test_cgi_get(self):
         with test_support.EnvironmentVarGuard() as env:
             env['REQUEST_METHOD'] = 'GET'
@@ -900,7 +881,6 @@ class CGIHandlerTestCase(unittest.TestCase):
 
             self.assertEqual(status, '400')
             self.assertEqual(message, 'Bad Request')
-
 
     @unittest.skipIf(test_support.is_jython, "FIXME: #1857 not working in Jython")
     def test_cgi_xmlrpc_response(self):
