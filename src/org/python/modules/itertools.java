@@ -94,12 +94,9 @@ public class itertools implements ClassDictInit {
         "          yield x\n" +
         "          x += step\n");
 
-    public static PyIterator count(final int init) {
-        return count(init, 1);
-    }
 
     /**
-     * Creates an iterator that returns consecutive integers starting at <code>init</code>.
+     * Creates an iterator that returns consecutive integers starting at <code>init</code> with <code>step</code> step.
      */
     public static PyIterator count(final int init, final int step) {
         return new PyIterator() {
@@ -107,7 +104,9 @@ public class itertools implements ClassDictInit {
             int stepper = step;
 
             public PyObject __iternext__() {
-                return new PyInteger(counter+=stepper);
+                int result = counter;
+                counter += stepper;
+                return new PyInteger(result);
             }
             
             public PyString __repr__() {
@@ -119,11 +118,19 @@ public class itertools implements ClassDictInit {
     }
 
     /**
+     * Creates an iterator that returns consecutive integers starting at <code>init</code>.
+     */
+    public static PyIterator count(final int init) {
+        return count(init, 1);
+    }
+
+    /**
      * Creates an iterator that returns consecutive integers starting at 0.
      */
     public static PyIterator count() {
         return itertools.count(0);
     }
+
 
     public static PyString __doc__cycle = new PyString(
             "cycle(iterable) --> cycle object\n\nReturn elements from the iterable "
