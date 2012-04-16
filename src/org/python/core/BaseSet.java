@@ -372,8 +372,9 @@ public abstract class BaseSet extends PyObject implements Set {
     
     final PyObject baseset_intersection(PyObject [] args) {
     	BaseSet result = BaseSet.makeNewSet(getType(), this);
-    	if (args.length == 0)
+    	if (args.length == 0) {
     		return result;
+        }
     	
     	for (PyObject other: args) {
     		result = (BaseSet)result.baseset_intersection(other);

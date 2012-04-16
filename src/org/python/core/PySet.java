@@ -324,8 +324,9 @@ public class PySet extends BaseSet {
             throw Py.TypeError("difference_update() takes no keyword arguments");
         }
         
-    	if (args.length == 0)
+    	if (args.length == 0) {
     		return;
+        }
     	
     	for (PyObject other: args) {
     		if (other instanceof BaseSet) {
