@@ -126,13 +126,19 @@ public class PyFrozenSet extends BaseSet {
     }
 
     @ExposedMethod(doc = BuiltinDocs.frozenset_union_doc)
-    final PyObject frozenset_union(PyObject set) {
-        return baseset_union(set);
+    final PyObject frozenset_union(PyObject[] args, String [] kws) {
+        if (kws.length > 0) {
+            throw Py.TypeError("difference() takes no keyword arguments");
+        }
+        return baseset_union(args);
     }
 
     @ExposedMethod(doc = BuiltinDocs.frozenset_difference_doc)
-    final PyObject frozenset_difference(PyObject set) {
-        return baseset_difference(set);
+    final PyObject frozenset_difference(PyObject[] args, String [] kws) {
+        if (kws.length > 0) {
+            throw Py.TypeError("difference() takes no keyword arguments");
+        }
+        return baseset_difference(args);
     }
 
     @ExposedMethod(doc = BuiltinDocs.frozenset_symmetric_difference_doc)
@@ -141,8 +147,11 @@ public class PyFrozenSet extends BaseSet {
     }
 
     @ExposedMethod(doc = BuiltinDocs.frozenset_intersection_doc)
-    final PyObject frozenset_intersection(PyObject set) {
-        return baseset_intersection(set);
+    final PyObject frozenset_intersection(PyObject[] args, String [] kws) {
+        if (kws.length > 0) {
+            throw Py.TypeError("intersection() takes no keyword arguments");
+        }
+        return baseset_intersection(args);
     }
 
     @ExposedMethod(doc = BuiltinDocs.frozenset_issubset_doc)
@@ -153,6 +162,11 @@ public class PyFrozenSet extends BaseSet {
     @ExposedMethod(doc = BuiltinDocs.frozenset_issuperset_doc)
     final PyObject frozenset_issuperset(PyObject set) {
         return baseset_issuperset(set);
+    }
+    
+    @ExposedMethod(doc = BuiltinDocs.frozenset_isdisjoint_doc)
+    final PyObject frozenset_isdisjoint(PyObject set) {
+        return baseset_isdisjoint(set);
     }
 
     @ExposedMethod(doc = BuiltinDocs.frozenset___len___doc)

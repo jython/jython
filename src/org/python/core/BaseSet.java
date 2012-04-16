@@ -3,6 +3,7 @@ package org.python.core;
 
 import java.lang.reflect.Array;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -23,6 +24,10 @@ public abstract class BaseSet extends PyObject implements Set {
         _update(_set, data);
     }
 
+    protected void _update(PyObject [] args) {
+        _update(_set, args);
+    }
+    
     /**
      * Update the underlying set with the contents of the iterable.
      */
@@ -33,16 +38,16 @@ public abstract class BaseSet extends PyObject implements Set {
         if (data instanceof BaseSet) {
             // Skip the iteration if both are sets
             set.addAll(((BaseSet)data)._set);
-            return set;
-        }
-        for (PyObject item : data.asIterable()) {
-            set.add(item);
+        } else {
+        	for (PyObject item : data.asIterable()) {
+        		set.add(item);
+        	}
         }
         return set;
     }
 
     /**
-     * Update the underlying set with the contents of the iterable.
+     * Update the underlying set with the contents of the array.
      */
     protected static Set<PyObject> _update(Set<PyObject> set, PyObject[] data) {
         if (data == null) {
@@ -115,16 +120,26 @@ public abstract class BaseSet extends PyObject implements Set {
     public PyObject difference(PyObject other) {
         return baseset_difference(other);
     }
-
+    
     final PyObject baseset_difference(PyObject other) {
-        BaseSet bs = other instanceof BaseSet ? (BaseSet)other : new PySet(other);
-        Set<PyObject> set = bs._set;
-        BaseSet o = BaseSet.makeNewSet(getType());
+    	return baseset_difference(new PyObject[] {other});
+    }
+    
+    final PyObject baseset_difference(PyObject [] args) {
+    	if (args.length == 0) {
+    		return BaseSet.makeNewSet(getType(), this);
+    	}
+    	
+    	BaseSet o = BaseSet.makeNewSet(getType(), this);
+    	for (PyObject item: args) {
+    		BaseSet bs = args[0] instanceof BaseSet ? (BaseSet)item : new PySet(item);
+    		Set<PyObject> set = bs._set;
 
-        for (PyObject p : _set) {
-            if (!set.contains(p)) {
-                o._set.add(p);
-            }
+    		for (PyObject p : set) {
+    			if (_set.contains(p)) {
+    				o._set.remove(p);
+    			}
+    		}
         }
         return o;
     }
@@ -328,6 +343,14 @@ public abstract class BaseSet extends PyObject implements Set {
         result._update(other);
         return result;
     }
+    
+    final PyObject baseset_union(PyObject [] args) {
+        BaseSet result = BaseSet.makeNewSet(getType(), this);
+        for (PyObject item: args) {
+        	result._update(item);
+        }
+        return result;
+    }
 
     final PyObject baseset_intersection(PyObject other) {
         PyObject little, big;
@@ -345,6 +368,17 @@ public abstract class BaseSet extends PyObject implements Set {
 
         PyObject common = __builtin__.filter(big.__getattr__("__contains__"), little);
         return BaseSet.makeNewSet(getType(), common);
+    }
+    
+    final PyObject baseset_intersection(PyObject [] args) {
+    	BaseSet result = BaseSet.makeNewSet(getType(), this);
+    	if (args.length == 0)
+    		return result;
+    	
+    	for (PyObject other: args) {
+    		result = (BaseSet)result.baseset_intersection(other);
+    	}
+    	return result;
     }
 
     final PyObject baseset_copy() {
@@ -368,6 +402,11 @@ public abstract class BaseSet extends PyObject implements Set {
     final PyObject baseset_issuperset(PyObject other) {
         BaseSet bs = other instanceof BaseSet ? (BaseSet)other : new PySet(other);
         return bs.baseset_issubset(this);
+    }
+    
+    final PyObject baseset_isdisjoint(PyObject other) {
+    	BaseSet bs = other instanceof BaseSet ? (BaseSet)other : new PySet(other);
+    	return Collections.disjoint(_set, bs._set) ? Py.True : Py.False;
     }
 
     public String toString() {
