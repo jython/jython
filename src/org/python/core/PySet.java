@@ -242,7 +242,7 @@ public class PySet extends BaseSet {
     }
 
     @ExposedMethod(doc = BuiltinDocs.set_pop_doc)
-    final PyObject set_pop() {
+    final synchronized PyObject set_pop() {
         Iterator iterator = _set.iterator();
         try {
             Object first = iterator.next();

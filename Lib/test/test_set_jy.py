@@ -1,6 +1,8 @@
 import unittest
 from test import test_support
 
+import threading
+
 if test_support.is_jython:
     from java.io import (ByteArrayInputStream, ByteArrayOutputStream,
                          ObjectInputStream, ObjectOutputStream)
@@ -22,6 +24,16 @@ class SetTestCase(unittest.TestCase):
         self.assertEqual(s & foo, 'rand')
         self.assertEqual(s ^ foo, 'rxor')
 
+    def test_pop_race(self):
+        # issue 1854
+        nthreads = 200
+        # the race might not happen the first time so we try a few just in case
+        for i in xrange(4):
+            s = set(range(200))
+            threads = [threading.Thread(target=s.pop) for i in range(nthreads)]
+            for t in threads: t.start()
+            for t in threads: t.join()
+            self.assertEqual(len(s), 0)
 
 class SetInJavaTestCase(unittest.TestCase):
 
@@ -60,7 +72,6 @@ class SetInJavaTestCase(unittest.TestCase):
         input = ByteArrayInputStream(output.toByteArray())
         unserializer = ObjectInputStream(input)
         self.assertEqual(s, unserializer.readObject())
-
 
 def test_main():
     tests = [SetTestCase]
