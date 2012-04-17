@@ -967,6 +967,20 @@ public class PyInteger extends PyObject {
     }
 
     @Override
+    public int bit_length() {
+        return int_bit_length();
+    }
+
+    @ExposedMethod(doc = BuiltinDocs.int_bit_length_doc)
+    final int int_bit_length() {
+        int v = value;
+        if (v < 0) {
+            v = -v;
+        }
+        return BigInteger.valueOf(v).bitLength();
+    }
+
+    @Override
     public PyObject __format__(PyObject formatSpec) {
         return int___format__(formatSpec);
     }

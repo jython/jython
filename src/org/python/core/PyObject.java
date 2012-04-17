@@ -1822,6 +1822,17 @@ public class PyObject implements Serializable {
     }
 
     /**
+     * Equivalent to the standard Python bit_length method.
+     * Should only be overridden by numeric objects that can calculate a
+     * bit_length.
+     *
+     * @return the bit_length of this object.
+     **/
+    public int bit_length() {
+        throw Py.AttributeError("bit_length");
+    }
+
+    /**
      * Equivalent to the standard Python __pos__ method.
      *
      * @return +this.

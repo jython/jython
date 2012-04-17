@@ -1007,6 +1007,20 @@ public class PyLong extends PyObject {
     }
 
     @Override
+    public int bit_length() {
+        return long_bit_length();
+    }
+
+    @ExposedMethod(doc = BuiltinDocs.long_bit_length_doc)
+    final int long_bit_length() {
+        BigInteger v = value;
+        if (v.compareTo(BigInteger.ZERO) == -1) {
+            v = v.negate();
+        }
+        return v.bitLength();
+    }
+
+    @Override
     public PyObject __format__(PyObject formatSpec) {
         return long___format__(formatSpec);
     }

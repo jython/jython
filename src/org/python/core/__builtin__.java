@@ -355,6 +355,7 @@ public class __builtin__ {
         dict.__setitem__("format", new FormatFunction());
         dict.__setitem__("print", new PrintFunction());
         dict.__setitem__("next", new NextFunction());
+        dict.__setitem__("bin", new BinFunction());
     }
 
     public static PyObject abs(PyObject o) {
@@ -1714,5 +1715,23 @@ class NextFunction extends PyBuiltinFunction {
             }
         }
         return def;
+    }
+}
+
+class BinFunction extends PyBuiltinFunction {
+    BinFunction() {
+        super("bin", "bin(number)\n\n"
+              + "Return the binary representation of an integer or long integer.");
+    }
+
+    @Override
+    public PyObject __call__(PyObject args[], String kwds[]) {
+        ArgParser ap = new ArgParser("bin", args, kwds, new String[] {"number"}, 1);
+        ap.noKeywords();
+        PyObject number = ap.getPyObject(0);
+
+        //XXX: this could be made more efficient by using a binary only formatter
+        //     instead of using generic formatting.
+        return number.__format__(new PyString("#b"));
     }
 }
