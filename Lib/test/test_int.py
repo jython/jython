@@ -1,7 +1,7 @@
 import sys
 
 import unittest
-from test.test_support import run_unittest, have_unicode
+from test.test_support import run_unittest, have_unicode, is_jython
 import math
 
 L = [
@@ -319,7 +319,10 @@ class IntTestCases(unittest.TestCase):
         # Test __int__()
         class ClassicMissingMethods:
             pass
-        self.assertRaises(AttributeError, int, ClassicMissingMethods())
+        if is_jython:
+            self.assertRaises(TypeError, int, ClassicMissingMethods())
+        else:
+            self.assertRaises(AttributeError, int, ClassicMissingMethods())
 
         class MissingMethods(object):
             pass
@@ -392,9 +395,10 @@ class IntTestCases(unittest.TestCase):
                 try:
                     int(TruncReturnsNonIntegral())
                 except TypeError as e:
-                    self.assertEqual(str(e),
-                                      "__trunc__ returned non-Integral"
-                                      " (type NonIntegral)")
+                    if not is_jython:
+                        self.assertEqual(str(e),
+                                          "__trunc__ returned non-Integral"
+                                          " (type NonIntegral)")
                 else:
                     self.fail("Failed to raise TypeError with %s" %
                               ((base, trunc_result_base),))
