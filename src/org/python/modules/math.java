@@ -10,6 +10,7 @@ import org.python.core.PyInteger;
 import org.python.core.PyLong;
 import org.python.core.PyObject;
 import org.python.core.PyTuple;
+import org.python.modules.math_erf;
 
 public class math implements ClassDictInit {
     public static PyFloat pi = new PyFloat(Math.PI);
@@ -31,6 +32,14 @@ public class math implements ClassDictInit {
     public static void classDictInit(@SuppressWarnings("unused") PyObject dict) {
     }
 
+    public static double erf(double v) {
+        return math_erf.erf(v);
+    }
+
+    public static double erfc(double v) {
+        return math_erf.erfc(v);
+    }
+
     public static double acos(double v) {
         if (isinf(v)) {
             throwMathDomainValueError();
@@ -42,14 +51,23 @@ public class math implements ClassDictInit {
     }
     
     public static double acosh(double v) {
+        final double ln2 = 6.93147180559945286227e-01;
+        final double large = 1 << 28;
+
         if (isninf(v)) {
             throwMathDomainValueError();
         }
         if (v == ZERO || v == MINUS_ONE) {
             throwMathDomainValueError();
         }
-        if (isnan(v) || isinf(v)) {
+        if (isnan(v) || isinf(v) || (v < 1.0)) {
             return v;
+        }
+        if (v == 1.0) {
+            return 0;
+        }
+        if (v >= large) {
+            return log(v) + ln2;
         }
         return log(v + sqrt(v * v - 1));
     }
@@ -104,7 +122,10 @@ public class math implements ClassDictInit {
     }
 
     public static double cos(double v) {
-        if (isnan(v) || isinf(v)) {
+        if (isinf(v)) {
+            throwMathDomainValueError();
+        }
+        if (isnan(v)) {
             return NAN;
         }
         return Math.cos(v);
@@ -231,6 +252,9 @@ public class math implements ClassDictInit {
     }
 
     public static double sin(double v) {
+        if (isinf(v)) {
+            throwMathDomainValueError();
+        }
         if (isnan(v)) {
             return v;
         }
@@ -255,8 +279,11 @@ public class math implements ClassDictInit {
     }
 
     public static double tan(double v) {
-        if (isnan(v) || isinf(v)) {
+        if (isnan(v)) {
             return NAN;
+        }
+        if (isinf(v)) {
+            throw Py.ValueError("math domain error");
         }
         return Math.tan(v);
     }

@@ -714,11 +714,19 @@ public class PyFloat extends PyObject {
             }
             return new PyFloat(1.0);
         }
+
         if (value == 0.0) {
             if (iw < 0.0) {
                 throw Py.ZeroDivisionError("0.0 cannot be raised to a negative power");
             }
+            if (Double.isNaN(iw)) {
+                return new PyFloat(Double.NaN);
+            }
             return new PyFloat(0);
+        }
+
+        if ((value == 1.0) && Double.isNaN(iw)) {
+            return new PyFloat(1.0);
         }
 
         if (value < 0 && iw != Math.floor(iw)) {
