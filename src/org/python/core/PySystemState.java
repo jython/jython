@@ -182,6 +182,9 @@ public class PySystemState extends PyObject implements ClassDictInit {
     // float_info
     public static PyObject float_info;
 
+    // long_info
+    public static PyObject long_info;
+
     public PySystemState() {
         initialize();
         closer = new PySystemStateCloser(this);
@@ -975,6 +978,7 @@ public class PySystemState extends PyObject implements ClassDictInit {
                                  Py.newString(Version.getHGVersion()));
 
         float_info = FloatInfo.getInfo();
+        long_info = LongInfo.getInfo();
     }
 
 
@@ -1524,6 +1528,30 @@ class FloatInfo extends PyTuple {
             Py.newFloat(2.2204460492503131e-16), // DBL_EPSILON
             Py.newLong(2),                       // FLT_RADIX
             Py.newLong(1)                        // FLT_ROUNDS
+        );
+    }
+}
+
+@ExposedType(name = "sys.long_info", isBaseType = false)
+class LongInfo extends PyTuple {
+    @ExposedGet
+    public PyObject bits_per_digit, sizeof_digit;
+
+    public static final PyType TYPE = PyType.fromClass(LongInfo.class);
+    
+    private LongInfo(PyObject ...vals) {
+        super(TYPE, vals);
+
+        bits_per_digit = vals[0];
+        sizeof_digit = vals[1];
+    }
+
+    //XXX: I've cheated and just used the values that CPython gives me for my
+    //     local Ubuntu system. I'm not sure that they are correct.
+    static public LongInfo getInfo() {
+        return new LongInfo(
+            Py.newLong(30),
+            Py.newLong(4)
         );
     }
 }

@@ -1581,15 +1581,7 @@ public class PyString extends PyBaseString implements MemoryViewProtocol
         }
     }
 
-    public int atoi() {
-        return atoi(10);
-    }
-
-    public int atoi(int base) {
-        if ((base != 0 && base < 2) || (base > 36)) {
-            throw Py.ValueError("invalid base for atoi()");
-        }
-
+    private BigInteger asciiToBigInteger(int base) {
         int b = 0;
         int e = getString().length();
 
@@ -1641,19 +1633,35 @@ public class PyString extends PyBaseString implements MemoryViewProtocol
             }
         }
 
-        if (base == 0)
+        if (base == 0) {
             base = 10;
+        }
 
         String s = getString();
-        if (b > 0 || e < getString().length())
+        if (b > 0 || e < getString().length()) {
             s = getString().substring(b, e);
+        }
+
+        BigInteger bi;
+        if (sign == '-') {
+            bi = new BigInteger("-" + s, base);
+        } else {
+            bi = new BigInteger(s, base);
+        }
+        return bi;
+    }
+
+    public int atoi() {
+        return atoi(10);
+    }
+
+    public int atoi(int base) {
+        if ((base != 0 && base < 2) || (base > 36)) {
+            throw Py.ValueError("invalid base for atoi()");
+        }
 
         try {
-            BigInteger bi;
-            if (sign == '-') {
-                bi = new BigInteger("-" + s, base);
-            } else
-                bi = new BigInteger(s, base);
+            BigInteger bi = asciiToBigInteger(base);
             if (bi.compareTo(PyInteger.MAX_INT) > 0 || bi.compareTo(PyInteger.MIN_INT) < 0) {
                 throw Py.OverflowError("long int too large to convert to int");
             }
@@ -1700,6 +1708,12 @@ public class PyString extends PyBaseString implements MemoryViewProtocol
                         if (base == 0)
                             base = 8;
                     }
+                }
+            }
+            if (base == 2) {
+                if (b < e-1 &&
+                       Character.toUpperCase(getString().charAt(b+1)) == 'B') {
+                    b += 2;
                 }
             }
         }
