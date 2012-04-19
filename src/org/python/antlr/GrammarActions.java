@@ -606,7 +606,7 @@ public class GrammarActions {
         }
     }
 
-    void checkAssign(expr e) {
+    private void checkGenericAssign(expr e) {
         if (e instanceof Name && ((Name)e).getInternalId().equals("None")) {
             errorHandler.error("assignment to None", e);
         } else if (e instanceof GeneratorExp) {
@@ -631,7 +631,21 @@ public class GrammarActions {
             errorHandler.error("can't assign to conditional expression", e);
         } else if (e instanceof ListComp) {
             errorHandler.error("can't assign to list comprehension", e);
-        } else if (e instanceof Tuple) {
+        }
+    }
+
+    void checkAugAssign(expr e) {
+        checkGenericAssign(e);
+        if (e instanceof Tuple) {
+            errorHandler.error("assignment to tuple illegal for augmented assignment", e);
+        } else if (e instanceof org.python.antlr.ast.List) {
+            errorHandler.error("assignment to list illegal for augmented assignment", e);
+        }
+    }
+
+    void checkAssign(expr e) {
+        checkGenericAssign(e);
+        if (e instanceof Tuple) {
             //XXX: performance problem?  Any way to do this better?
             List<expr> elts = ((Tuple)e).getInternalElts();
             if (elts.size() == 0) {

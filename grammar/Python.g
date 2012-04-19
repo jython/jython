@@ -643,13 +643,13 @@ expr_stmt
     : ((testlist[null] augassign) => lhs=testlist[expr_contextType.AugStore]
         ( (aay=augassign y1=yield_expr
            {
-               actions.checkAssign(actions.castExpr($lhs.tree));
+               actions.checkAugAssign(actions.castExpr($lhs.tree));
                stype = new AugAssign($lhs.tree, actions.castExpr($lhs.tree), $aay.op, actions.castExpr($y1.etype));
            }
           )
         | (aat=augassign rhs=testlist[expr_contextType.Load]
            {
-               actions.checkAssign(actions.castExpr($lhs.tree));
+               actions.checkAugAssign(actions.castExpr($lhs.tree));
                stype = new AugAssign($lhs.tree, actions.castExpr($lhs.tree), $aat.op, actions.castExpr($rhs.tree));
            }
           )
