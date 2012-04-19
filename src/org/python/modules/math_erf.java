@@ -132,6 +132,7 @@ public class math_erf {
             }
             return erx + P/Q;
         }
+
         if (x >= 6) { // inf > |x| >= 6
             if (sign) {
                 return -1;
@@ -148,8 +149,10 @@ public class math_erf {
             R = rb0 + s*(rb1+s*(rb2+s*(rb3+s*(rb4+s*(rb5+s*rb6)))));
             S = 1 + s*(sb1+s*(sb2+s*(sb3+s*(sb4+s*(sb5+s*(sb6+s*sb7))))));
         }
+
         // pseudo-single (20-bit) precision x
-        double z = (double)(Double.doubleToLongBits(x) & 0xffffffff00000000L);
+        long t20 = Double.doubleToLongBits(x) & 0xffffffff00000000L;
+        double z = Double.longBitsToDouble(t20);
         double r = Math.exp(-z*z-0.5625) * Math.exp((z-x)*(z+x)+R/S);
         if (sign) {
             return r/x - 1;
@@ -219,7 +222,8 @@ public class math_erf {
                 S = 1 + s*(sb1+s*(sb2+s*(sb3+s*(sb4+s*(sb5+s*(sb6+s*sb7))))));
             }
             // pseudo-single (20-bit) precision x
-            double z = (double)(Double.doubleToLongBits(x) & 0xffffffff00000000L);
+            long t20 = Double.doubleToLongBits(x) & 0xffffffff00000000L;
+            double z = Double.longBitsToDouble(t20);
             double r = Math.exp(-z*z-0.5625) * Math.exp((z-x)*(z+x)+R/S);
             if (sign) {
                 return 2 - r/x;
