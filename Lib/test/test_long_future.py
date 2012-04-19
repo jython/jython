@@ -7,7 +7,7 @@ import sys
 import random
 import math
 import unittest
-from test.test_support import run_unittest
+from test.test_support import run_unittest, cpython_only
 
 # decorator for skipping tests on non-IEEE 754 platforms
 requires_IEEE_754 = unittest.skipUnless(
@@ -121,6 +121,7 @@ class TrueDivisionTests(unittest.TestCase):
         self.assertEqual(expected, got, "Incorrectly rounded division {}/{}: "
                          "expected {}, got {}".format(a, b, expected, got))
 
+    @cpython_only
     @requires_IEEE_754
     def test_correctly_rounded_true_division(self):
         # more stringent tests than those above, checking that the
