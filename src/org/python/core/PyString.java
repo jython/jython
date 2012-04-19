@@ -1581,40 +1581,42 @@ public class PyString extends PyBaseString implements MemoryViewProtocol
         }
     }
 
-    private BigInteger asciiToBigInteger(int base) {
+    private BigInteger asciiToBigInteger(int base, boolean isLong) {
+        String str = getString();
+        
         int b = 0;
-        int e = getString().length();
+        int e = str.length();
 
-        while (b < e && Character.isWhitespace(getString().charAt(b)))
+        while (b < e && Character.isWhitespace(str.charAt(b)))
             b++;
 
-        while (e > b && Character.isWhitespace(getString().charAt(e-1)))
+        while (e > b && Character.isWhitespace(str.charAt(e-1)))
             e--;
 
         char sign = 0;
         if (b < e) {
-            sign = getString().charAt(b);
+            sign = str.charAt(b);
             if (sign == '-' || sign == '+') {
                 b++;
-                while (b < e && Character.isWhitespace(getString().charAt(b))) b++;
+                while (b < e && Character.isWhitespace(str.charAt(b))) b++;
             }
 
             if (base == 16) {
-                if (getString().charAt(b) == '0') {
+                if (str.charAt(b) == '0') {
                     if (b < e-1 &&
-                           Character.toUpperCase(getString().charAt(b+1)) == 'X') {
+                           Character.toUpperCase(str.charAt(b+1)) == 'X') {
                         b += 2;
                     }
                 }
             } else if (base == 0) {
-                if (getString().charAt(b) == '0') {
-                    if (b < e-1 && Character.toUpperCase(getString().charAt(b+1)) == 'X') {
+                if (str.charAt(b) == '0') {
+                    if (b < e-1 && Character.toUpperCase(str.charAt(b+1)) == 'X') {
                         base = 16;
                         b += 2;
-                    } else if (b < e-1 && Character.toUpperCase(getString().charAt(b+1)) == 'O') {
+                    } else if (b < e-1 && Character.toUpperCase(str.charAt(b+1)) == 'O') {
                         base = 8;
                         b += 2;
-                    } else if (b < e-1 && Character.toUpperCase(getString().charAt(b+1)) == 'B') {
+                    } else if (b < e-1 && Character.toUpperCase(str.charAt(b+1)) == 'B') {
                         base = 2;
                         b += 2;
                     } else {
@@ -1622,12 +1624,12 @@ public class PyString extends PyBaseString implements MemoryViewProtocol
                     }
                 }
             } else if (base == 8) {
-                if (b < e-1 && Character.toUpperCase(getString().charAt(b+1)) == 'O') {
+                if (b < e-1 && Character.toUpperCase(str.charAt(b+1)) == 'O') {
                     b += 2;
                 }
             } else if (base == 2) {
                 if (b < e-1 &&
-                       Character.toUpperCase(getString().charAt(b+1)) == 'B') {
+                       Character.toUpperCase(str.charAt(b+1)) == 'B') {
                     b += 2;
                 }
             }
@@ -1637,9 +1639,14 @@ public class PyString extends PyBaseString implements MemoryViewProtocol
             base = 10;
         }
 
-        String s = getString();
-        if (b > 0 || e < getString().length()) {
-            s = getString().substring(b, e);
+        // if the base >= 22, then an 'l' or 'L' is a digit!
+        if (isLong && base < 22 && e > b && (str.charAt(e-1) == 'L' || str.charAt(e-1) == 'l')) {
+            e--;
+        }
+        
+        String s = str;
+        if (b > 0 || e < str.length()) {
+            s = str.substring(b, e);
         }
 
         BigInteger bi;
@@ -1661,7 +1668,7 @@ public class PyString extends PyBaseString implements MemoryViewProtocol
         }
 
         try {
-            BigInteger bi = asciiToBigInteger(base);
+            BigInteger bi = asciiToBigInteger(base, false);
             if (bi.compareTo(PyInteger.MAX_INT) > 0 || bi.compareTo(PyInteger.MIN_INT) < 0) {
                 throw Py.OverflowError("long int too large to convert to int");
             }
@@ -1678,64 +1685,13 @@ public class PyString extends PyBaseString implements MemoryViewProtocol
     }
 
     public PyLong atol(int base) {
-        String str = getString();
-        int b = 0;
-        int e = str.length();
-
-        while (b < e && Character.isWhitespace(str.charAt(b)))
-            b++;
-
-        while (e > b && Character.isWhitespace(str.charAt(e-1)))
-            e--;
-
-
-        char sign = 0;
-        if (b < e) {
-            sign = getString().charAt(b);
-            if (sign == '-' || sign == '+') {
-                b++;
-                while (b < e && Character.isWhitespace(str.charAt(b))) b++;
-            }
-
-
-            if (base == 0 || base == 16) {
-                if (getString().charAt(b) == '0') {
-                    if (b < e-1 &&
-                           Character.toUpperCase(getString().charAt(b+1)) == 'X') {
-                        base = 16;
-                        b += 2;
-                    } else {
-                        if (base == 0)
-                            base = 8;
-                    }
-                }
-            }
-            if (base == 2) {
-                if (b < e-1 &&
-                       Character.toUpperCase(getString().charAt(b+1)) == 'B') {
-                    b += 2;
-                }
-            }
-        }
-        if (base == 0)
-            base = 10;
-
-        if (base < 2 || base > 36)
+        if ((base != 0 && base < 2) || (base > 36)) {
             throw Py.ValueError("invalid base for long literal:" + base);
+        }
 
-        // if the base >= 22, then an 'l' or 'L' is a digit!
-        if (base < 22 && e > b && (str.charAt(e-1) == 'L' || str.charAt(e-1) == 'l'))
-            e--;
-        
-        if (b > 0 || e < str.length())
-            str = str.substring(b, e);
-        
+       
         try {
-            java.math.BigInteger bi = null;
-            if (sign == '-')
-                bi = new java.math.BigInteger("-" + str, base);
-            else
-                bi = new java.math.BigInteger(str, base);
+            BigInteger bi = asciiToBigInteger(base, true);
             return new PyLong(bi);
         } catch (NumberFormatException exc) {
             if (this instanceof PyUnicode) {
@@ -1745,9 +1701,8 @@ public class PyString extends PyBaseString implements MemoryViewProtocol
                 // CPython regardless of the codec, that's going to require some more work
                 throw Py.UnicodeEncodeError("decimal", "codec can't encode character",
                         0,0, "invalid decimal Unicode string");
-            }
-            else {
-            throw Py.ValueError("invalid literal for long() with base " + base + ": '" + getString()+"'");
+            } else {
+                throw Py.ValueError("invalid literal for long() with base " + base + ": '" + getString()+"'");
             }
         } catch (StringIndexOutOfBoundsException exc) {
             throw Py.ValueError("invalid literal for long() with base " + base + ": '" + getString()+"'");
