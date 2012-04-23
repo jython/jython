@@ -351,7 +351,7 @@ def test_dir():
     minstance.b = 2
     minstance.a = 1
     names = [x for x in dir(minstance) if x not in ["__name__", "__doc__"]]
-    vereq(names, ['a', 'b'])
+    vereq(names, ['__package__', 'a', 'b'])
 
     class M2(M):
         def getdict(self):
