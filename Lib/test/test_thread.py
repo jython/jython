@@ -104,6 +104,8 @@ class ThreadRunningTests(BasicThreadTest):
 
             thread.stack_size(0)
 
+    @unittest.skipIf(test_support.is_jython,
+                     "This seems cpython internal, so skip for Jython")
     def test__count(self):
         # Test the _count() function.
         orig = thread._count()
@@ -201,6 +203,7 @@ class TestForkInThread(unittest.TestCase):
     def setUp(self):
         self.read_fd, self.write_fd = os.pipe()
 
+    @unittest.skipIf(test_support.is_jython, "Jython does not support os.fork")
     @unittest.skipIf(sys.platform.startswith('win'),
                      "This test is only appropriate for POSIX-like systems.")
     @test_support.reap_threads
