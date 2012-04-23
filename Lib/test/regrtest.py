@@ -1265,7 +1265,6 @@ _expectations = {
 
         test_gzip
         test_ftplib
-        test_logging
         test_poplib
         test_pydoc
         test_queue
