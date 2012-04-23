@@ -15,6 +15,11 @@ import org.python.core.util.PlatformUtil;
 
 /**
  * Utility functions for "import" support.
+ *
+ * Note that this class tries to match the names of the corresponding functions
+ * from CPython's Python/import.c. In these cases we use CPython's function
+ * naming style (underscores and all lowercase) instead of Java's typical
+ * camelCase style so that it's easier to compare with import.c.
  */
 public class imp {
     private static final String IMPORT_LOG = "import";
@@ -650,7 +655,7 @@ public class imp {
 	 * 
 	 * @return the parent name for a module
 	 */
-    private static String getParent(PyObject dict, int level) {
+    private static String get_parent(PyObject dict, int level) {
         if (dict == null || level == 0) {
         	// try an absolute import
             return null;
@@ -805,7 +810,7 @@ public class imp {
         PyObject pkgMod = null;
         String pkgName = null;
         if (modDict != null && !(modDict instanceof PyNone)) {
-            pkgName = getParent(modDict, level);
+            pkgName = get_parent(modDict, level);
             pkgMod = modules.__finditem__(pkgName);
             if (pkgMod != null && !(pkgMod instanceof PyModule)) {
                 pkgMod = null;
