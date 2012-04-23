@@ -659,13 +659,13 @@ public class imp {
         if (tmp == null) {
             return null;
         }
-        String name = tmp.toString();
+        String modname = tmp.toString();
 
         // locate the current package
         tmp = dict.__finditem__("__path__");
         if (! (tmp instanceof PyList)) {
         	// __name__ is not a package name, try one level upwards.
-            int dot = name.lastIndexOf('.');
+            int dot = modname.lastIndexOf('.');
             if (dot == -1) {
             	if (level <= -1) {
             		// there is no package, perform an absolute search
@@ -673,19 +673,19 @@ public class imp {
             	}
             	throw Py.ValueError("Attempted relative import in non-package");
             }
-            // name should be the package name.
-            name = name.substring(0, dot);
+            // modname should be the package name.
+            modname = modname.substring(0, dot);
         }
 
         // walk upwards if required (level >= 2)
         while (level-- > 1) {
-            int dot = name.lastIndexOf('.');
+            int dot = modname.lastIndexOf('.');
             if (dot == -1) {
                 throw Py.ValueError("Attempted relative import beyond toplevel package");
             }
-            name = name.substring(0, dot);
+            modname = modname.substring(0, dot);
         }
-        return name.intern();
+        return modname.intern();
     }
 
     /**
@@ -791,14 +791,12 @@ public class imp {
     }
 
     /**
-     * Most similar to import.c:import_module_ex.
-     *
      * @param name
      * @param top
      * @param modDict
      * @return a module
      */
-    private static PyObject import_name(String name, boolean top,
+    private static PyObject import_module_level(String name, boolean top,
             PyObject modDict, PyObject fromlist, int level) {
         if (name.length() == 0 && level <= 0) {
             throw Py.ValueError("Empty module name");
@@ -890,7 +888,7 @@ public class imp {
      * @return an imported module (Java or Python)
      */
     public static PyObject importName(String name, boolean top) {
-        return import_name(name, top, null, null, DEFAULT_LEVEL);
+        return import_module_level(name, top, null, null, DEFAULT_LEVEL);
     }
 
     /**
@@ -906,7 +904,7 @@ public class imp {
             PyObject modDict, PyObject fromlist, int level) {
         importLock.lock();
         try {
-            return import_name(name, top, modDict, fromlist, level);
+            return import_module_level(name, top, modDict, fromlist, level);
         } finally {
             importLock.unlock();
         }
