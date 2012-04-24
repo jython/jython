@@ -80,6 +80,13 @@ public class itertools implements ClassDictInit {
     }
 
     public static void classDictInit(PyObject dict) {
+        dict.__setitem__("__name__", new PyString("itertools"));
+        dict.__setitem__("__doc__", __doc__);
+        dict.__setitem__("chain", chain.TYPE);
+
+        // Hide from Python
+        dict.__setitem__("classDictInit", null);
+        dict.__setitem__("initClassExceptions", null);
     }
     
 
@@ -173,37 +180,12 @@ public class itertools implements ClassDictInit {
         };
     }
     
-    
-
-    public static PyString __doc__chain = new PyString(
-            "chain(*iterables) --> chain object\n\nReturn a chain object "
-                    + "whose .next() method returns elements from the\nfirst iterable until it is exhausted, then elements"
-                    + " from the next\niterable, until all of the iterables are exhausted.");
-
     /**
      * Creates an iterator that iterates over a <i>chain</i> of iterables.
      */
     public static PyIterator chain(final PyObject[] iterables) {
-        final PyObject[] iterators = new PyObject[iterables.length];
-        for (int i = 0; i < iterables.length; i++) {
-            iterators[i] = iterables[i].__iter__();
-        }
-
-        return new ItertoolsIterator() {
-            int iteratorIndex = 0;
-
-            public PyObject __iternext__() {
-                PyObject next = null;
-                for (; iteratorIndex < iterators.length; iteratorIndex++) {
-                    next = nextElement(iterators[iteratorIndex]);
-                    if (next != null) {
-                        break;
-                    }
-                }
-                return next;
-            }
-
-        };
+        Chain chain= new Chain();
+        return chain.chain(iterables);
     }
 
     public static PyString __doc__repeat = new PyString(
