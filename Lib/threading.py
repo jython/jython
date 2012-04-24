@@ -136,6 +136,8 @@ class JavaThread(object):
     def isAlive(self):
         return self._thread.isAlive()
 
+    is_alive = isAlive
+
     def isDaemon(self):
         return self._thread.isDaemon()
 

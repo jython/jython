@@ -423,6 +423,16 @@ public class PyList extends PySequenceList implements List {
         return new PyFastSequenceIter(this);
     }
 
+    //@Override
+    public PyIterator __reversed__() {
+        return list___reversed__();
+    }
+
+    @ExposedMethod(doc = BuiltinDocs.list___reversed___doc)
+    final synchronized PyIterator list___reversed__() {
+        return new PyReversedIterator(this);
+    }
+
     @ExposedMethod(defaults = "null", doc = BuiltinDocs.list___getslice___doc)
     final synchronized PyObject list___getslice__(PyObject start, PyObject stop, PyObject step) {
         return seq___getslice__(start, stop, step);
@@ -1021,7 +1031,6 @@ public class PyList extends PySequenceList implements List {
                 iter.remove();
             }
         };
-
     }
 
     @Override

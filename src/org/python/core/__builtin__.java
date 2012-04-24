@@ -1078,12 +1078,16 @@ public class __builtin__ {
     }
 
     public static PyObject reversed(PyObject seq) {
-        if (seq.__findattr__("__getitem__") != null && seq.__findattr__("__len__") != null
+        PyObject reversed = seq.__findattr__("__reversed__");
+        if (reversed != null) {
+            return reversed.__call__();
+        } else if (seq.__findattr__("__getitem__") != null && seq.__findattr__("__len__") != null
             && seq.__findattr__("keys") == null) {
-            return new PyReversedIterator(seq);
+            reversed = new PyReversedIterator(seq);
         } else {
             throw Py.TypeError("argument to reversed() must be a sequence");
         }
+        return reversed;
     }
 
     public static PyObject sum(PyObject seq) {
