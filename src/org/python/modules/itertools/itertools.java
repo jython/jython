@@ -1,5 +1,5 @@
 /* Copyright (c) Jython Developers */
-package org.python.modules;
+package org.python.modules.itertools;
 
 import java.util.ArrayList;
 import java.util.List;

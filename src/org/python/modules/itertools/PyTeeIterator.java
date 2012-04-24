@@ -1,4 +1,4 @@
-package org.python.modules;
+package org.python.modules.itertools;
 
 import java.util.Map;
 

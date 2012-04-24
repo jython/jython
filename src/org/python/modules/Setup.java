@@ -48,7 +48,7 @@ public class Setup
         "array:org.python.modules.ArrayModule",
         "_random:org.python.modules.random.RandomModule",
         "cmath",
-        "itertools",
+        "itertools:org.python.modules.itertools.itertools",
         "zipimport:org.python.modules.zipimport.zipimport",
         "_collections:org.python.modules._collections.Collections",
         "gc",
