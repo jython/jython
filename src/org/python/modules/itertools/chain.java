@@ -7,10 +7,13 @@ import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyTuple;
 import org.python.core.PyType;
+import org.python.expose.ExposedClassMethod;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedType;
+
+import java.util.ArrayList;
 
 @ExposedType(name = "itertools.chain", base = PyObject.class)
 public class chain extends PyObject {
@@ -35,6 +38,15 @@ public class chain extends PyObject {
     public chain(PyObject[] iterables) {
         super();
         chain___init__(iterables);
+    }
+
+    @ExposedClassMethod
+    public static final PyObject from_iterable(PyObject iterable) {
+        ArrayList<PyObject> iterables = new ArrayList<PyObject>();
+        for (PyObject i: iterable.asIterable()) {
+            iterables.add(i);
+        }
+        return new chain(iterables.toArray(new PyObject[iterables.size()]));
     }
 
     /**

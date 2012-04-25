@@ -180,14 +180,6 @@ public class itertools implements ClassDictInit {
         };
     }
     
-    /**
-     * Creates an iterator that iterates over a <i>chain</i> of iterables.
-     */
-    public static PyIterator chain(final PyObject[] iterables) {
-        Chain chain= new Chain();
-        return chain.chain(iterables);
-    }
-
     public static PyString __doc__repeat = new PyString(
             "'repeat(element [,times]) -> create an iterator which returns the element\n"
                     + "for the specified number of times.  If not specified, returns the element\nendlessly.");
@@ -717,8 +709,6 @@ public class itertools implements ClassDictInit {
     public static PyTuple tee(PyObject iterable) {
         return tee(iterable, 2);
     }
-
-//chain.from_iterable(iterable)
 
     private static PyTuple makeIndexedTuple(PyTuple pool, int indices[]) {
         return makeIndexedTuple(pool, indices, indices.length);
