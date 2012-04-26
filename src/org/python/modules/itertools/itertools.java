@@ -83,6 +83,7 @@ public class itertools implements ClassDictInit {
         dict.__setitem__("__name__", new PyString("itertools"));
         dict.__setitem__("__doc__", __doc__);
         dict.__setitem__("chain", chain.TYPE);
+        dict.__setitem__("imap", imap.TYPE);
 
         // Hide from Python
         dict.__setitem__("classDictInit", null);
@@ -223,61 +224,6 @@ public class itertools implements ClassDictInit {
             public PyString __repr__() {
                 return (PyString)(Py.newString("repeat(%r)").
                         __mod__(new PyTuple(object)));
-            }
-        };
-    }
-
-    public static PyString __doc__imap = new PyString(
-            "'map(func, *iterables) --> imap object\n\nMake an iterator that computes the "
-                    + "function using arguments from\neach of the iterables.\tLike map() except that it returns\n"
-                    + "an iterator instead of a list and that it stops when the shortest\niterable is exhausted "
-                    + "instead of filling in None for shorter\niterables.");
-
-    /**
-     * Works as <code>__builtin__.map()</code> but returns an iterator instead of a list. (Code in
-     * this method is based on __builtin__.map()).
-     */
-    public static PyIterator imap(PyObject[] argstar) {
-        final int n = argstar.length - 1;
-        if (n < 1) {
-            throw Py.TypeError("imap requires at least two arguments");
-        }
-
-        final PyObject callable = argstar[0];
-        final PyObject[] iters = new PyObject[n];
-
-        for (int j = 0; j < n; j++) {
-            iters[j] = Py.iter(argstar[j + 1], "argument " + (j + 1)
-                    + " to imap() must support iteration");
-        }
-
-        return new PyIterator() {
-            PyObject[] args = new PyObject[n];
-
-            PyObject element = null;
-
-            public PyObject __iternext__() {
-
-                for (int i = 0; i < n; i++) {
-                    if ((element = iters[i].__iternext__()) != null) {
-                        // collect the arguments for the callable
-                        args[i] = element;
-                    } else {
-                        // break iteration
-                        return null;
-                    }
-                }
-                if (callable == Py.None) {
-                    // if None is supplied as callable we just return what's in
-                    // the iterable(s)
-                    if (n == 1) {
-                        return args[0];
-                    } else {
-                        return new PyTuple(args.clone());
-                    }
-                } else {
-                    return callable.__call__(args);
-                }
             }
         };
     }
