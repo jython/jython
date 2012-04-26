@@ -49,7 +49,7 @@ public class imap extends PyObject {
      */
     @ExposedNew
     @ExposedMethod
-    final void imap___init__(final PyObject[] args, String[] kwds) {
+    final void imap___init__(PyObject[] args, String[] kwds) {
         if (kwds.length > 0) {
             throw Py.TypeError(String.format("imap does not take keyword arguments"));
         }
