@@ -85,6 +85,7 @@ public class itertools implements ClassDictInit {
         dict.__setitem__("chain", chain.TYPE);
         dict.__setitem__("imap", imap.TYPE);
         dict.__setitem__("ifilter", ifilter.TYPE);
+        dict.__setitem__("ifilterfalse", ifilterfalse.TYPE);
         dict.__setitem__("izip", izip.TYPE);
 
         // Hide from Python
@@ -365,20 +366,6 @@ public class itertools implements ClassDictInit {
                 }
             }
         }
-    }
-
-    public static PyString __doc__ifilterfalse = new PyString(
-            "'ifilterfalse(function or None, sequence) --> ifilterfalse object\n\n"
-                    + "Return those items of sequence for which function(item) is false.\nIf function is None, "
-                    + "return the items that are false.'");
-
-    /**
-     * Creates an iterator that returns the items of the iterable for which
-     * <code>predicate(item)</code> is <code>false</code>. If <code>predicate</code> is null
-     * (None) return the items that are false.
-     */
-    public static PyIterator ifilterfalse(PyObject predicate, PyObject iterable) {
-        return new FilterIterator(predicate, iterable, false);
     }
 
     public static PyString __doc__starmap = new PyString(
