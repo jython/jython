@@ -84,6 +84,8 @@ public class itertools implements ClassDictInit {
         dict.__setitem__("__doc__", __doc__);
         dict.__setitem__("chain", chain.TYPE);
         dict.__setitem__("imap", imap.TYPE);
+        dict.__setitem__("ifilter", ifilter.TYPE);
+        dict.__setitem__("izip", izip.TYPE);
 
         // Hide from Python
         dict.__setitem__("classDictInit", null);
@@ -365,20 +367,6 @@ public class itertools implements ClassDictInit {
         }
     }
 
-    public static PyString __doc__ifilter = new PyString(
-            "ifilter(function or None, sequence) --> ifilter object\n\n"
-                    + "Return those items of sequence for which function(item) is true.\nIf function is None, "
-                    + "return the items that are true.");
-
-    /**
-     * Creates an iterator that returns the items of the iterable for which
-     * <code>predicate(item)</code> is <code>true</code>. If <code>predicate</code> is null
-     * (None) return the items that are true.
-     */
-    public static PyIterator ifilter(PyObject predicate, PyObject iterable) {
-        return new FilterIterator(predicate, iterable, true);
-    }
-
     public static PyString __doc__ifilterfalse = new PyString(
             "'ifilterfalse(function or None, sequence) --> ifilterfalse object\n\n"
                     + "Return those items of sequence for which function(item) is false.\nIf function is None, "
@@ -391,63 +379,6 @@ public class itertools implements ClassDictInit {
      */
     public static PyIterator ifilterfalse(PyObject predicate, PyObject iterable) {
         return new FilterIterator(predicate, iterable, false);
-    }
-
-    public static PyString __doc__izip = new PyString(
-            "izip(iter1 [,iter2 [...]]) --> izip object\n\nReturn an izip object "
-                    + "whose .next() method returns a tuple where\nthe i-th element comes from the i-th iterable argument.  "
-                    + "The .next()\nmethod continues until the shortest iterable in the argument sequence\nis exhausted and then it "
-                    + "raises StopIteration.  Works like the zip()\nfunction but consumes less memory by returning an iterator "
-                    + "instead of\na list.");
-
-    /**
-     * Create an iterator whose <code>next()</code> method returns a tuple where the i-th element
-     * comes from the i-th iterable argument. Continues until the shortest iterable is exhausted.
-     * (Code in this method is based on __builtin__.zip()).
-     * 
-     */
-    public static PyIterator izip(PyObject[] argstar) {
-        final int itemsize = argstar.length;
-        
-        if (itemsize == 0) {
-            return (PyIterator)(new PyXRange(0).__iter__());            
-        }
-
-        // Type check the arguments; they must be sequences.
-        final PyObject[] iters = new PyObject[itemsize];
-
-        for (int i = 0; i < itemsize; i++) {
-            PyObject iter = argstar[i].__iter__();
-            if (iter == null) {
-                throw Py.TypeError("izip argument #" + (i + 1)
-                        + " must support iteration");
-            }
-            iters[i] = iter;
-        }
-
-        return new ItertoolsIterator() {
-
-            public PyObject __iternext__() {
-                if (itemsize == 0)
-                    return null;
-
-                PyObject[] next = new PyObject[itemsize];
-                PyObject item;
-
-                for (int i = 0; i < itemsize; i++) {
-
-                    item = nextElement(iters[i]);
-
-                    if (item == null) {
-                        return null;
-                    }
-                    next[i] = item;
-                }
-                return new PyTuple(next);
-            }
-
-        };
-
     }
 
     public static PyString __doc__starmap = new PyString(
