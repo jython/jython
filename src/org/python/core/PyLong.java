@@ -82,20 +82,52 @@ public class PyLong extends PyObject {
             return new PyLong(0);
         }
         if (base == -909) {
-            try {
-                return x.__long__();
-            } catch (PyException pye) {
-                if (!pye.match(Py.AttributeError)) {
-                    throw pye;
-                }
-                throw Py.TypeError(String.format("long() argument must be a string or a number, "
-                                                 + "not '%.200s'", x.getType().fastGetName()));
-            }
+            return asPyLong(x);
         }
         if (!(x instanceof PyString)) {
             throw Py.TypeError("long: can't convert non-string with explicit base");
         }
         return ((PyString) x).atol(base);
+    }
+
+    /**
+     * @return convert to a long.
+     * @throws TypeError and AttributeError.
+     */
+    private static PyObject asPyLong(PyObject x) {
+        try {
+            return x.__long__();
+        } catch (PyException pye) {
+            if (!pye.match(Py.AttributeError)) {
+                throw pye;
+            }
+            try {
+                PyObject integral = x.invoke("__trunc__");
+                return convertIntegralToLong(integral);
+            } catch (PyException pye2) {
+                if (!pye2.match(Py.AttributeError)) {
+                    throw pye2;
+                }
+                throw Py.TypeError(
+                    String.format("long() argument must be a string or a number, not '%.200s'", x.getType().fastGetName()));
+            }
+        }
+    }
+
+    /**
+     * @return convert to an int.
+     * @throws TypeError and AttributeError.
+     */
+    private static PyObject convertIntegralToLong(PyObject integral) {
+        if (!(integral instanceof PyInteger) && !(integral instanceof PyLong)) {
+            PyObject i = integral.invoke("__int__");
+            if (!(i instanceof PyInteger) && !(i instanceof PyLong)) {
+                throw Py.TypeError(String.format("__trunc__ returned non-Integral (type %.200s)",
+                                                 integral.getType().fastGetName()));
+            }
+            return i;
+        }
+        return integral;
     }
 
     /**
@@ -125,7 +157,7 @@ public class PyLong extends PyObject {
             throw Py.OverflowError("cannot convert float infinity to long");
         }
         if (Double.isNaN(value)) {
-            return BigInteger.valueOf(0);
+            throw Py.ValueError("cannot convert float NaN to integer");
         }
         return new BigDecimal(value).toBigInteger();
     }
