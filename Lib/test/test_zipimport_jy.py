@@ -1,5 +1,6 @@
 import unittest
 import sys
+import os.path
 import java.lang.Package
 
 from test import test_support

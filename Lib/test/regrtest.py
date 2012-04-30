@@ -1207,6 +1207,7 @@ _expectations = {
         test_epoll
         test_fcntl
         test_fork1
+        test_gdb
         test_gdbm
         test_grp
         test_getargs2
