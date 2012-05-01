@@ -72,9 +72,6 @@ class FloatTestCase(unittest.TestCase):
             # support Java syntax
             self.assert_(type(float('NaN')), float)
 
-        # CPython 2.4/2.5 allow this
-        self.assertEqual(long(nan), 0)
-
         self.assertNotEqual(nan, float('nan'))
         self.assertNotEqual(nan, nan)
         self.assertEqual(cmp(nan, float('nan')), 1)
