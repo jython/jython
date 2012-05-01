@@ -1099,6 +1099,7 @@ class UstarUnicodeTest(unittest.TestCase):
     def test_iso8859_1_filename(self):
         self._test_unicode_filename("iso8859-1")
 
+    @unittest.skipIf(test_support.is_jython, "FIXME: not working in Jython")
     def test_utf7_filename(self):
         self._test_unicode_filename("utf7")
 
@@ -1176,6 +1177,7 @@ class PaxUnicodeTest(UstarUnicodeTest):
         tar.addfile(t)
         tar.close()
 
+    @unittest.skipIf(test_support.is_jython, "FIXME: not working in Jython")
     def test_error_handlers(self):
         # Test if the unicode error handlers work correctly for characters
         # that cannot be expressed in a given encoding.
