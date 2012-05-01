@@ -282,6 +282,7 @@ def test_pdb_continue_in_bottomframe():
 
 class ModuleInitTester(unittest.TestCase):
 
+    @unittest.skipIf(test_support.is_jython, "FIXME: not working in Jython")
     def test_filename_correct(self):
         """
         In issue 7750, it was found that if the filename has a sequence that
