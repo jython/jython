@@ -583,7 +583,7 @@ public class PyInteger extends PyObject {
             if (value != 0) {
                 return left.__float__().__pow__(right, modulo);
             } else {
-                throw Py.ZeroDivisionError("cannot raise 0 to a negative power");
+                throw Py.ZeroDivisionError("0.0 cannot be raised to a negative power");
             }
         }
 
