@@ -451,6 +451,25 @@ class Example:
         self.options = options
         self.exc_msg = exc_msg
 
+    def __eq__(self, other):
+        if type(self) is not type(other):
+            return NotImplemented
+
+        return self.source == other.source and \
+               self.want == other.want and \
+               self.lineno == other.lineno and \
+               self.indent == other.indent and \
+               self.options == other.options and \
+               self.exc_msg == other.exc_msg
+
+    def __ne__(self, other):
+        return not self == other
+
+    def __hash__(self):
+        return hash((self.source, self.want, self.lineno, self.indent,
+                     self.exc_msg))
+
+
 class DocTest:
     """
     A collection of doctest examples that should be run in a single
@@ -499,6 +518,22 @@ class DocTest:
         return ('<DocTest %s from %s:%s (%s)>' %
                 (self.name, self.filename, self.lineno, examples))
 
+    def __eq__(self, other):
+        if type(self) is not type(other):
+            return NotImplemented
+
+        return self.examples == other.examples and \
+               self.docstring == other.docstring and \
+               self.globs == other.globs and \
+               self.name == other.name and \
+               self.filename == other.filename and \
+               self.lineno == other.lineno
+
+    def __ne__(self, other):
+        return not self == other
+
+    def __hash__(self):
+        return hash((self.docstring, self.name, self.filename, self.lineno))
 
     # This lets us sort tests by name:
     def __cmp__(self, other):
@@ -882,12 +917,6 @@ class DocTestFinder:
         elif inspect.isfunction(object):
             return module.__dict__ is object.func_globals
         elif inspect.isclass(object):
-            # XXX: Jython transition 2.5
-            # Java classes appear as Python classes to inspect, but they
-            # have no __module__ http://jython.org/bugs/1758279
-            # org.python.modules uses Java classes to masq
-            if not hasattr(object, '__module__'):
-                return False
             return module.__name__ == object.__module__
         elif hasattr(object, '__module__'):
             return module.__name__ == object.__module__
@@ -993,8 +1022,6 @@ class DocTestFinder:
             filename = getattr(module, '__file__', module.__name__)
             if filename[-4:] in (".pyc", ".pyo"):
                 filename = filename[:-1]
-            elif filename.endswith('$py.class'):
-                filename = '%s.py' % filename[:-9]
         return self._parser.get_doctest(docstring, globs, name,
                                         filename, lineno)
 
@@ -1225,7 +1252,7 @@ class DocTestRunner:
         # Process each example.
         for examplenum, example in enumerate(test.examples):
 
-            # If REPORT_ONLY_FIRST_FAILURE is set, then supress
+            # If REPORT_ONLY_FIRST_FAILURE is set, then suppress
             # reporting after the first failure.
             quiet = (self.optionflags & REPORT_ONLY_FIRST_FAILURE and
                      failures > 0)
@@ -1711,8 +1738,7 @@ class DebugRunner(DocTestRunner):
 
        If a failure or error occurs, the globals are left intact:
 
-         >>> if '__builtins__' in test.globs:
-         ...     del test.globs['__builtins__']
+         >>> del test.globs['__builtins__']
          >>> test.globs
          {'x': 1}
 
@@ -1726,8 +1752,7 @@ class DebugRunner(DocTestRunner):
          ...
          UnexpectedException: <DocTest foo from foo.py:0 (2 examples)>
 
-         >>> if '__builtins__' in test.globs:
-         ...     del test.globs['__builtins__']
+         >>> del test.globs['__builtins__']
          >>> test.globs
          {'x': 2}
 
@@ -2196,7 +2221,7 @@ class DocTestCase(unittest.TestCase):
            caller can catch the errors and initiate post-mortem debugging.
 
            The DocTestCase provides a debug method that raises
-           UnexpectedException errors if there is an unexepcted
+           UnexpectedException errors if there is an unexpected
            exception:
 
              >>> test = DocTestParser().get_doctest('>>> raise KeyError\n42',
@@ -2261,6 +2286,23 @@ class DocTestCase(unittest.TestCase):
 
     def id(self):
         return self._dt_test.name
+
+    def __eq__(self, other):
+        if type(self) is not type(other):
+            return NotImplemented
+
+        return self._dt_test == other._dt_test and \
+               self._dt_optionflags == other._dt_optionflags and \
+               self._dt_setUp == other._dt_setUp and \
+               self._dt_tearDown == other._dt_tearDown and \
+               self._dt_checker == other._dt_checker
+
+    def __ne__(self, other):
+        return not self == other
+
+    def __hash__(self):
+        return hash((self._dt_optionflags, self._dt_setUp, self._dt_tearDown,
+                     self._dt_checker))
 
     def __repr__(self):
         name = self._dt_test.name.split('.')
@@ -2347,8 +2389,6 @@ def DocTestSuite(module=None, globs=None, extraglobs=None, test_finder=None,
             filename = module.__file__
             if filename[-4:] in (".pyc", ".pyo"):
                 filename = filename[:-1]
-            elif filename.endswith('$py.class'):
-                filename = '%s.py' % filename[:-9]
             test.filename = filename
         suite.addTest(DocTestCase(test, **options))
 
