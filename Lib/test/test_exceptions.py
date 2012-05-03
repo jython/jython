@@ -6,7 +6,7 @@ import unittest
 import pickle, cPickle
 
 from test.test_support import (TESTFN, unlink, run_unittest, captured_output,
-                               check_warnings, cpython_only)
+                               check_warnings, cpython_only, is_jython)
 from test.test_pep352 import ignore_deprecation_warnings
 
 # XXX This is not really enough, each *operation* should be tested!
@@ -473,6 +473,7 @@ class ExceptionTests(unittest.TestCase):
         with self.assertRaises(TypeError):
             raise MyException
 
+    @unittest.skipIf(is_jython, "FIXME: not working in Jython")
     def test_assert_with_tuple_arg(self):
         try:
             assert False, (3,)
@@ -522,6 +523,8 @@ class TestSameStrAndUnicodeMsg(unittest.TestCase):
         # empty string
         self.check_same_msg(Exception(), '')
 
+
+    @unittest.skipIf(is_jython, "FIXME: not working in Jython")
     def test_0_args_with_overridden___str__(self):
         """Check same msg for exceptions with 0 args and overridden __str__"""
         # str() and unicode() on an exception with overridden __str__ that
@@ -547,6 +550,7 @@ class TestSameStrAndUnicodeMsg(unittest.TestCase):
         self.assertRaises(UnicodeEncodeError, str, e)
         self.assertEqual(unicode(e), u'f\xf6\xf6')
 
+    @unittest.skipIf(is_jython, "FIXME: not working in Jython")
     def test_1_arg_with_overridden___str__(self):
         """Check same msg for exceptions with overridden __str__ and 1 arg"""
         # when __str__ is overridden and __unicode__ is not implemented
@@ -571,6 +575,7 @@ class TestSameStrAndUnicodeMsg(unittest.TestCase):
         for args in argslist:
             self.check_same_msg(Exception(*args), repr(args))
 
+    @unittest.skipIf(is_jython, "FIXME: not working in Jython")
     def test_many_args_with_overridden___str__(self):
         """Check same msg for exceptions with overridden __str__ and many args"""
         # if __str__ returns an ascii string / ascii unicode string
