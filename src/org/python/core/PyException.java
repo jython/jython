@@ -197,6 +197,11 @@ public class PyException extends RuntimeException
         if (isExceptionClass(type)) {
             PyException pye = new PyException(type, value, (PyTraceback)traceback);
             pye.normalize();
+            if (!isExceptionInstance(pye.value)) {
+                throw Py.TypeError(String.format(
+                    "calling %s() should have returned an instance of BaseException, not '%s'",
+                    pye.type, pye.value));
+            }
             return pye;
         } else if (isExceptionInstance(type)) {
             // Raising an instance.  The value should be a dummy.
