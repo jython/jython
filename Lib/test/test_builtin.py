@@ -602,13 +602,11 @@ class BuiltinTest(unittest.TestCase):
         class A:
             def __getattr__(self, what):
                 raise KeyboardInterrupt
-        if not is_jython: #FIXME #1861: not working in Jython
-            self.assertRaises(KeyboardInterrupt, hasattr, A(), "b")
+        self.assertRaises(KeyboardInterrupt, hasattr, A(), "b")
         class B:
             def __getattr__(self, what):
                 raise SystemExit
-        if not is_jython: #FIXME #1861: not working in Jython
-            self.assertRaises(SystemExit, hasattr, B(), "b")
+        self.assertRaises(SystemExit, hasattr, B(), "b")
 
     def test_hash(self):
         hash(None)

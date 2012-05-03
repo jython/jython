@@ -647,7 +647,10 @@ public class __builtin__ {
         try {
             return obj.__findattr__(name) != null;
         } catch (PyException pye) {
-            // swallow
+            if (pye.match(Py.KeyboardInterrupt) || pye.match(Py.SystemExit)) {
+                throw pye;
+            }
+            //Otherwise swallow exception.
         }
         return false;
     }
