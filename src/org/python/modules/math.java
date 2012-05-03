@@ -40,6 +40,19 @@ public class math implements ClassDictInit {
         return math_erf.erfc(v);
     }
 
+    public static double expm1(double v) {
+        if (Double.POSITIVE_INFINITY == v) {
+            return v;
+        }
+
+        double result = Math.expm1(v);
+        if (Double.isInfinite(result)) {
+            throw Py.OverflowError(Double.toString(v));
+        }
+
+        return result;
+    }
+
     public static double acos(double v) {
         if (isinf(v)) {
             throwMathDomainValueError();
