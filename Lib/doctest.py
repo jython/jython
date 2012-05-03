@@ -1022,6 +1022,8 @@ class DocTestFinder:
             filename = getattr(module, '__file__', module.__name__)
             if filename[-4:] in (".pyc", ".pyo"):
                 filename = filename[:-1]
+            elif filename.endswith('$py.class'):
+                filename = '%s.py' % filename[:-9]
         return self._parser.get_doctest(docstring, globs, name,
                                         filename, lineno)
 
@@ -1738,7 +1740,8 @@ class DebugRunner(DocTestRunner):
 
        If a failure or error occurs, the globals are left intact:
 
-         >>> del test.globs['__builtins__']
+         >>> if '__builtins__' in test.globs:
+         ...     del test.globs['__builtins__']
          >>> test.globs
          {'x': 1}
 
@@ -1752,7 +1755,8 @@ class DebugRunner(DocTestRunner):
          ...
          UnexpectedException: <DocTest foo from foo.py:0 (2 examples)>
 
-         >>> del test.globs['__builtins__']
+         >>> if '__builtins__' in test.globs:
+         ...     del test.globs['__builtins__']
          >>> test.globs
          {'x': 2}
 
@@ -2389,6 +2393,8 @@ def DocTestSuite(module=None, globs=None, extraglobs=None, test_finder=None,
             filename = module.__file__
             if filename[-4:] in (".pyc", ".pyo"):
                 filename = filename[:-1]
+            elif filename.endswith('$py.class'):
+                filename = '%s.py' % filename[:-9]
             test.filename = filename
         suite.addTest(DocTestCase(test, **options))
 
