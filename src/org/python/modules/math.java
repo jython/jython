@@ -86,7 +86,29 @@ public class math implements ClassDictInit {
         if (isnan(v) || isinf(v)) {
             return v;
         }
-        return log(v + sqrt(v * v + 1));
+
+        final double ln2 = 6.93147180559945286227e-01;
+        final double large = 1 << 28;
+        final double small = 1.0 / (1 << 28);
+        boolean sign = false;
+
+        if (v < 0) {
+            v = -v;
+            sign = true;
+        }
+
+        double temp;
+        if (v > large) {
+            temp = log(v) + ln2;
+        } else if (v > 2) {
+            temp = log(2*v + 1/(sqrt(v*v+1)+v));
+        } else if (v < small) {
+		temp = v;
+        } else {
+            temp = log1p(v + v*v/(1+sqrt(1+v*v)));
+        }
+
+        return sign ? -temp : temp;
     }
 
     public static double atan(double v) {
