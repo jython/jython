@@ -114,6 +114,20 @@ elif 'riscos' in _names:
     __all__.extend(_get_exports_list(riscos))
     del riscos
 
+elif 'ibmi' in _names:
+    _name = 'ibmi'
+    linesep = '\n'
+    from ibmi import *
+    try:
+        from ibmi import _exit
+    except ImportError:
+        pass
+    import posixpath as path
+
+    import ibmi
+    __all__.extend(_get_exports_list(ibmi))
+    del ibmi
+
 else:
     raise ImportError, 'no os specific module found'
 

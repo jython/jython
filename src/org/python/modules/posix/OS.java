@@ -9,6 +9,8 @@ import org.python.core.PySystemState;
  */
 enum OS {
     NT("Windows", new String[] {"cmd.exe", "/c"}, new String[] {"command.com", "/c"}),
+    // http://bugs.jython.org/issue1842
+    IBMi("OS/400", new String[] {"/QOpenSys/usr/bin/sh", "-c"}),
     POSIX(new String[] {"/bin/sh", "-c"});
 
     /** An array of potential shell commands this platform may use. */
