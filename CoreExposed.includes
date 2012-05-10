@@ -13,6 +13,9 @@ org/python/core/PyClassMethodDescr.class
 org/python/core/PyComplex.class
 org/python/core/PyDataDescr.class
 org/python/core/PyDictionary.class
+org/python/core/PyDictionary$PyDictionaryViewValues.class
+org/python/core/PyDictionary$PyDictionaryViewKeys.class
+org/python/core/PyDictionary$PyDictionaryViewItems.class
 org/python/core/PyDictProxy.class
 org/python/core/PyEnumerate.class
 org/python/core/PyEllipsis.class

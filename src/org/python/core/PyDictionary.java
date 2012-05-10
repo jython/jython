@@ -21,6 +21,7 @@ import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 import org.python.expose.MethodType;
 import org.python.util.Generic;
+import org.python.core.BaseDictionaryView;
 
 
 /**
@@ -693,7 +694,31 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
     public PyObject itervalues() {
         return dict_itervalues();
     }
-
+    
+    /**
+     * Returns a dict_keys on the dictionary's keys
+     */
+    @ExposedMethod(doc = BuiltinDocs.dict_viewkeys_doc)
+    public PyObject viewkeys() {
+    	return new PyDictionaryViewKeys(this);
+    }
+    
+    /**
+     * Returns a dict_items on the dictionary's items
+     */
+    @ExposedMethod(doc = BuiltinDocs.dict_viewitems_doc)
+    public PyObject viewitems() {
+        return new PyDictionaryViewItems(this);
+    }
+    
+    /**
+     * Returns a dict_values on the dictionary's values
+     */
+    @ExposedMethod(doc = BuiltinDocs.dict_viewvalues_doc)
+    public PyObject viewvalues() {
+    	return new PyDictionaryViewValues(this);
+    }
+    
     @ExposedMethod(doc = BuiltinDocs.dict_itervalues_doc)
     final PyObject dict_itervalues() {
         return new ValuesIter(getMap().values());
@@ -781,6 +806,266 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
         }
     }
 
+    @ExposedType(name = "dict_values", base = PyObject.class, doc = "")
+    class PyDictionaryViewValues extends BaseDictionaryView {
+        public final PyType TYPE = PyType.fromClass(PyDictionaryViewValues.class);
+        
+        public PyDictionaryViewValues(PyDictionary dvDict) {
+            super(dvDict);
+        }
+        
+        @Override
+        public PyObject __iter__() {
+            return dict_values___iter__();
+        }
+        
+        @ExposedMethod(doc = BuiltinDocs.set___iter___doc)
+        final PyObject dict_values___iter__() {
+            return new ValuesIter(dvDict.getMap().values());
+        }
+        
+        @ExposedMethod(doc = BuiltinDocs.set___len___doc)
+        final int dict_values___len__() {
+            return dict_view___len__();
+        }
+        
+        @ExposedMethod(names = {"__repr__", "__str__"}, doc = BuiltinDocs.set___str___doc)
+        final String dict_values_toString() {
+            return dict_view_toString();
+        }
+    }
+    
+    @ExposedType(name = "dict_keys", base = PyObject.class)
+    class PyDictionaryViewKeys extends BaseDictionaryView {
+        public final PyType TYPE = PyType.fromClass(PyDictionaryViewKeys.class);
+        
+        public PyDictionaryViewKeys(PyDictionary dvDict) {
+            super(dvDict);
+        }
+        
+        @Override
+        public PyObject __iter__() {
+            return dict_keys___iter__();
+        }
+        
+        @ExposedMethod(doc = BuiltinDocs.set___iter___doc)
+        final PyObject dict_keys___iter__() {
+            return new ValuesIter(dvDict.getMap().keySet());
+        }
+
+        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___ne___doc)
+        final PyObject dict_keys___ne__(PyObject otherObj) {
+            return dict_view___ne__(otherObj);
+        }
+        
+        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___eq___doc)
+        final PyObject dict_keys___eq__(PyObject otherObj) {
+            return dict_view___eq__(otherObj);
+        }
+
+        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___lt___doc)
+        final PyObject dict_keys___lt__(PyObject otherObj) {
+            return dict_view___lt__(otherObj);
+        }
+
+        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___gt___doc)
+        final PyObject dict_keys___gt__(PyObject otherObj) {
+            return dict_view___gt__(otherObj);
+        }
+
+        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___ge___doc)
+        final PyObject dict_keys___ge__(PyObject otherObj) {
+            return dict_view___ge__(otherObj);
+        }
+
+        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___le___doc)
+        final PyObject dict_keys___le__(PyObject otherObj) {
+            return dict_view___le__(otherObj);
+        }
+
+        @Override
+        public PyObject __or__(PyObject otherObj) {
+            return dict_keys___or__(otherObj);
+        }
+        
+        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___or___doc)
+        final PyObject dict_keys___or__(PyObject otherObj) {
+            PySet result = new PySet(dvDict);
+            result.set_update(new PyObject[]{otherObj}, new String[] {});
+            return result;
+        }
+
+        @Override
+        public PyObject __xor__(PyObject otherObj) {
+            return dict_keys___xor__(otherObj);
+        }
+        
+        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___xor___doc)
+        final PyObject dict_keys___xor__(PyObject otherObj) {
+            PySet result = new PySet(dvDict);
+            result.set_symmetric_difference_update(otherObj);
+            return result;
+        }
+
+        @Override
+        public PyObject __sub__(PyObject otherObj) {
+            return dict_keys___sub__(otherObj);
+        }
+        
+        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___sub___doc)
+        final PyObject dict_keys___sub__(PyObject otherObj) {
+            PySet result = new PySet(dvDict);
+            result.set_difference_update(new PyObject[]{otherObj}, new String[] {});
+            return result;
+        }
+
+        @Override
+        public PyObject __and__(PyObject otherObj) {
+            return dict_keys___and__(otherObj);
+        }
+        
+        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___and___doc)
+        final PyObject dict_keys___and__(PyObject otherObj) {
+            PySet result = new PySet(dvDict);
+            result.set_intersection_update(new PyObject[]{otherObj}, new String[] {});
+            return result;
+        }
+
+        @Override
+        public boolean __contains__(PyObject otherObj) {
+            return dict_keys___contains__(otherObj);
+        }
+        
+        @ExposedMethod(doc = BuiltinDocs.set___contains___doc)
+        final boolean dict_keys___contains__(PyObject item) {
+            return dvDict.__contains__(item);
+        }
+        
+        @ExposedMethod(names = "__repr__", doc = BuiltinDocs.set___repr___doc)
+        final String dict_keys_toString() {
+            return dict_view_toString();
+        }
+    }
+
+    @ExposedType(name = "dict_items")
+    class PyDictionaryViewItems extends BaseDictionaryView {
+        public final PyType TYPE = PyType.fromClass(PyDictionaryViewItems.class);
+        
+        public PyDictionaryViewItems(PyDictionary dvDict) {
+            super(dvDict);
+        }
+        
+        @Override
+        public PyObject __iter__() {
+            return dict_items___iter__();
+        }
+        
+        @ExposedMethod(doc = BuiltinDocs.set___iter___doc)
+        final PyObject dict_items___iter__() {
+            return new ItemsIter(dvDict.getMap().entrySet());
+        }
+        
+        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___ne___doc)
+        final PyObject dict_items___ne__(PyObject otherObj) {
+            return dict_view___ne__(otherObj);
+        }
+        
+        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___eq___doc)
+        final PyObject dict_items___eq__(PyObject otherObj) {
+            return dict_view___eq__(otherObj);
+        }
+
+        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___lt___doc)
+        final PyObject dict_items___lt__(PyObject otherObj) {
+            return dict_view___lt__(otherObj);
+        }
+
+        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___gt___doc)
+        final PyObject dict_items___gt__(PyObject otherObj) {
+            return dict_view___gt__(otherObj);
+        }
+
+        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___ge___doc)
+        final PyObject dict_items___ge__(PyObject otherObj) {
+            return dict_view___ge__(otherObj);
+        }
+
+        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___le___doc)
+        final PyObject dict_items___le__(PyObject otherObj) {
+            return dict_view___le__(otherObj);
+        }
+
+        @Override
+        public PyObject __or__(PyObject otherObj) {
+            return dict_items___or__(otherObj);
+        }
+        
+        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___or___doc)
+        final PyObject dict_items___or__(PyObject otherObj) {
+            PySet result = new PySet(dvDict.iteritems());
+            result.set_update(new PyObject[]{otherObj}, new String[] {});
+            return result;
+        }
+
+        @Override
+        public PyObject __xor__(PyObject otherObj) {
+            return dict_items___xor__(otherObj);
+        }
+        
+        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___xor___doc)
+        final PyObject dict_items___xor__(PyObject otherObj) {
+            PySet result = new PySet(dvDict.iteritems());
+            result.set_symmetric_difference_update(otherObj);
+            return result;
+        }
+
+        @Override
+        public PyObject __sub__(PyObject otherObj) {
+            return dict_items___sub__(otherObj);
+        }
+        
+        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___sub___doc)
+        final PyObject dict_items___sub__(PyObject otherObj) {
+            PySet result = new PySet(dvDict.iteritems());
+            result.set_difference_update(new PyObject[]{otherObj}, new String[] {});
+            return result;
+        }
+
+        @Override
+        public PyObject __and__(PyObject otherObj) {
+            return dict_items___and__(otherObj);
+        }
+        
+        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___and___doc)
+        final PyObject dict_items___and__(PyObject otherObj) {
+            PySet result = new PySet(dvDict.iteritems());
+            result.set_intersection_update(new PyObject[]{otherObj}, new String[] {});
+            return result;
+        }
+
+        @Override
+        public boolean __contains__(PyObject otherObj) {
+            return dict_items___contains__(otherObj);
+        }
+        
+        @ExposedMethod(doc = BuiltinDocs.set___contains___doc)
+        final boolean dict_items___contains__(PyObject item) {
+            if (item instanceof PyTuple) {
+                PyTuple tupleItem = (PyTuple)item;
+                if (tupleItem.size() == 2) {
+                    SimpleEntry entry = new SimpleEntry(tupleItem.get(0), tupleItem.get(1));
+                    return dvDict.entrySet().contains(entry);
+                }
+            }
+            return false;
+        }
+        
+        @ExposedMethod(names = "__repr__", doc = BuiltinDocs.set___repr___doc)
+        final String dict_keys_toString() {
+            return dict_view_toString();
+        }
+    }
+    
     /*
      * The following methods implement the java.util.Map interface which allows PyDictionary to be
      * passed to java methods that take java.util.Map as a parameter. Basically, the Map methods are
