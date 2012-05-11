@@ -2,6 +2,7 @@ Jython NEWS
 
 Jython 2.7a1
   Bugs Fixed
+    - [ 1880 ] Sha 224 library not present in Jython
 
 Jython 2.5.3b2
   Bugs Fixed

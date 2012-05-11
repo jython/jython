@@ -145,6 +145,10 @@ public class _hashlib implements ClassDictInit {
 
         private static final MessageDigest getDigest(String name) {
             try {
+                // since sha 224 is not present in java.security
+                if (name.equals("sha-224")) {
+                    return new SHA224Digest();
+                }
                 return MessageDigest.getInstance(name);
             } catch (NoSuchAlgorithmException nsae) {
                 throw Py.ValueError("unsupported hash type");
@@ -186,8 +190,7 @@ public class _hashlib implements ClassDictInit {
                 string = obj.toString();
             } else if (obj instanceof PyArray) {
                 string = ((PyArray)obj).tostring();
-            }
-            else {
+            } else {
                 throw Py.TypeError("update() argument 1 must be string or read-only buffer, not "
                                    + obj.getType().fastGetName());
             }
