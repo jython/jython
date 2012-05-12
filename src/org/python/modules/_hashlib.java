@@ -162,7 +162,9 @@ public class _hashlib implements ClassDictInit {
          */
         private MessageDigest cloneDigest() {
             try {
-                return (MessageDigest)digest.clone();
+                synchronized (this) {
+                    return (MessageDigest)digest.clone();
+                }
             } catch (CloneNotSupportedException cnse) {
                 throw Py.RuntimeError(String.format("_hashlib.HASH (%s) internal error", name));
             }
@@ -194,7 +196,10 @@ public class _hashlib implements ClassDictInit {
                 throw Py.TypeError("update() argument 1 must be string or read-only buffer, not "
                                    + obj.getType().fastGetName());
             }
-            digest.update(StringUtil.toBytes(string));
+            byte[] input = StringUtil.toBytes(string);
+            synchronized (this) {
+                digest.update(input);
+            }
         }
 
         public PyObject digest() {
@@ -236,7 +241,7 @@ public class _hashlib implements ClassDictInit {
         }
 
         @ExposedGet(name = "digestsize")
-        public int getDigestSize() {
+        public synchronized int getDigestSize() {
             return digest.getDigestLength();
         }
 
