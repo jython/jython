@@ -862,6 +862,11 @@ public class imp {
                 return;
             }
 
+            //This can happen with imports like "from . import foo"
+            if (name.length() == 0) {
+                name = mod.__findattr__("__name__").toString();
+            }
+
             StringBuilder modNameBuffer = new StringBuilder(name);
             for (PyObject item : fromlist.asIterable()) {
                 if (!Py.isInstance(item, PyString.TYPE)) {
