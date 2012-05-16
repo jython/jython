@@ -184,7 +184,6 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <!-- classpaths -->
         <path id="main.classpath">
             <pathelement path="${extlibs.dir}/libreadline-java-0.8.jar" />
-            <pathelement path="${extlibs.dir}/jline-0.9.95-SNAPSHOT.jar" />
             <pathelement path="${extlibs.dir}/servlet-api-2.5.jar" />
             <pathelement path="${informix.jar}" />
             <pathelement path="${oracle.jar}" />
@@ -219,10 +218,11 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
             <pathelement path="${extlibs.dir}/jffi-x86_64-SunOS.jar"/>
             <pathelement path="${extlibs.dir}/jffi-x86_64-Windows.jar"/>
             <pathelement path="${extlibs.dir}/jffi-1.2.2-SNAPSHOT.jar"/>
-            <pathelement path="${extlibs.dir}/jnr-constants-0.8.3-SNAPSHOT.jar"/>
             <pathelement path="${extlibs.dir}/jnr-ffi-0.7.4-SNAPSHOT.jar"/>
 			<pathelement path="${extlibs.dir}/jnr-netdb-1.0.6-SNAPSHOT.jar"/>
 			<pathelement path="${extlibs.dir}/jnr-posix-2.1-SNAPSHOT.jar"/>
+            <pathelement path="${extlibs.dir}/jnr-constants-0.8.3-SNAPSHOT.jar"/>
+            <pathelement path="${extlibs.dir}/jline-0.9.95-SNAPSHOT.jar" />
         </path>
 
         <available property="informix.present" classname="com.informix.jdbc.IfxDriver" classpath="${informix.jar}" />
@@ -399,11 +399,14 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
 
     <target name="checkout" depends="prepare" if="do.checkout">
         <exec executable="hg">
+            <!--
             <arg line="clone http://hg.python.org/jython-releasing/2.5.3 -b 2.5 ${checkout.dir}/${hg.code.dir}"/>
+            -->
+            <arg line="clone http://hg.python.org/jython ${checkout.dir}/${hg.code.dir}"/>
         </exec>
 
         <svn javahl="${javahl.dir}" >
-            <checkout url="https://jython.svn.sourceforge.net/svnroot/jython/${svn.main.dir}/${svn.installer.dir}" revision="${svn.revision}" destPath="${svn.checkout.dir}/${svn.installer.dir}" />
+            <checkout url="https://jython.svn.sourceforge.net/svnroot/jython/${svn.main.dir}/${svn.installer.dir}" revision="${svn.revision}" destPath="${checkout.dir}/${svn.installer.dir}" />
         </svn> 
 
         <!-- checkout cpython license from the correct python maintenance branch -->
@@ -655,13 +658,12 @@ The readme text for the next release will be like:
             <zipfileset src="extlibs/jffi-x86_64-OpenBSD.jar"/>
             <zipfileset src="extlibs/jffi-x86_64-SunOS.jar"/>
             <zipfileset src="extlibs/jffi-x86_64-Windows.jar"/>
-            <zipfileset src="extlibs/jffi.jar"/>
-            <zipfileset src="extlibs/jnr-posix.jar"/>
-            <zipfileset src="extlibs/jnr-netdb-0.4.jar"/>
-            <!-- <rule pattern="com.sun.jna.**" result="org.python.jna.@1"/> -->
-            <rule pattern="org.jruby.ext.posix.**" result="org.python.posix.@1"/>
-            <zipfileset src="extlibs/constantine.jar"/>
-            <rule pattern="com.kenai.constantine.**" result="org.python.constantine.@1"/>
+            <zipfileset src="extlibs/jffi-1.2.2-SNAPSHOT.jar"/>
+            <zipfileset src="${extlibs.dir}/jnr-ffi-0.7.4-SNAPSHOT.jar"/>
+			<zipfileset src="${extlibs.dir}/jnr-netdb-1.0.6-SNAPSHOT.jar"/>
+			<zipfileset src="${extlibs.dir}/jnr-posix-2.1-SNAPSHOT.jar"/>
+            <zipfileset src="${extlibs.dir}/jnr-constants-0.8.3-SNAPSHOT.jar"/>
+            <!-- <rule pattern="com.kenai.constantine.**" result="org.python.constantine.@1"/> -->
             <zipfileset src="extlibs/xercesImpl-2.9.1.jar" excludes="META-INF/services/*"/>
             <rule pattern="org.apache.xml.**" result="org.python.apache.xml.@1"/>
             <rule pattern="org.apache.xerces.**" result="org.python.apache.xerces.@1"/>
