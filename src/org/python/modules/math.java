@@ -9,7 +9,9 @@ import org.python.core.PyFloat;
 import org.python.core.PyInteger;
 import org.python.core.PyLong;
 import org.python.core.PyObject;
+import org.python.core.PySystemState;
 import org.python.core.PyTuple;
+import org.python.core.__builtin__;
 import org.python.modules.math_erf;
 
 public class math implements ClassDictInit {
@@ -507,11 +509,12 @@ public class math implements ClassDictInit {
         return log(ONE + v);
     }
     
-    public static double fsum(double... values) {
-        // TODO need an iterable
-        // TODO need sys.float_info
-        return 0;
+    public static double fsum(final PyObject iterable) {
+        PyFloat result = (PyFloat)__builtin__.__import__("_fsum")
+            .invoke("fsum", iterable);
+        return result.asDouble();
     }
+
 
     private static double calculateLongLog(PyLong v) {
         int exp[] = new int[1];
