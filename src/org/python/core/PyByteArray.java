@@ -5,6 +5,7 @@ import java.util.Arrays;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
+import org.python.expose.MethodType;
 
 /**
  * Partial implementation of Python bytearray. At the present stage of development, the class
@@ -18,21 +19,22 @@ import org.python.expose.ExposedType;
  * implementation does not support the <code>memoryview</code> interface either for access or a a
  * source for its constructors although the signatures are present. The rich set of string-like
  * operations due a <code>bytearray</code> is not implemented.
- * 
+ *
  */
 @ExposedType(name = "bytearray", base = PyObject.class, doc = BuiltinDocs.bytearray_doc)
 public class PyByteArray extends BaseBytes {
 
     public static final PyType TYPE = PyType.fromClass(PyByteArray.class);
-    
+
     /**
      * Create a zero-length Python bytearray of explicitly-specified sub-type
+     *
      * @param type explicit Jython type
      */
     public PyByteArray(PyType type) {
         super(type);
     }
-    
+
     /**
      * Create a zero-length Python bytearray.
      */
@@ -42,6 +44,7 @@ public class PyByteArray extends BaseBytes {
 
     /**
      * Create zero-filled Python bytearray of specified size.
+     *
      * @param size of bytearray
      */
     public PyByteArray(int size) {
@@ -51,7 +54,7 @@ public class PyByteArray extends BaseBytes {
 
     /**
      * Construct bytearray by copying values from int[].
-     * 
+     *
      * @param value source of the bytes (and size)
      */
     public PyByteArray(int[] value) {
@@ -59,39 +62,40 @@ public class PyByteArray extends BaseBytes {
     }
 
     /**
-     * Create a new array filled exactly by a copy of the contents of the
-     * source.
+     * Create a new array filled exactly by a copy of the contents of the source.
+     *
      * @param value source of the bytes (and size)
      */
     public PyByteArray(BaseBytes value) {
         super(TYPE);
         init(value);
     }
-    
+
     /**
-     * Create a new array filled exactly by a copy of the contents of the
-     * source.
+     * Create a new array filled exactly by a copy of the contents of the source.
+     *
      * @param value source of the bytes (and size)
      */
     public PyByteArray(MemoryViewProtocol value) {
         super(TYPE);
         init(value.getMemoryView());
     }
-    
+
     /**
      * Create a new array filled from an iterable of PyObject. The iterable must yield objects
      * convertible to Python bytes (non-negative integers less than 256 or strings of length 1).
+     *
      * @param value source of the bytes (and size)
      */
     public PyByteArray(Iterable<? extends PyObject> value) {
         super(TYPE);
         init(value);
     }
-    
+
     /**
      * Create a new array by encoding a PyString argument to bytes. If the PyString is actually a
      * PyUnicode, the encoding must be explicitly specified.
-     * 
+     *
      * @param arg primary argument from which value is taken
      * @param encoding name of optional encoding (must be a string type)
      * @param errors name of optional errors policy (must be a string type)
@@ -104,7 +108,7 @@ public class PyByteArray extends BaseBytes {
     /**
      * Create a new array by encoding a PyString argument to bytes. If the PyString is actually a
      * PyUnicode, the encoding must be explicitly specified.
-     * 
+     *
      * @param arg primary argument from which value is taken
      * @param encoding name of optional encoding (may be null to select the default for this
      *            installation)
@@ -113,6 +117,17 @@ public class PyByteArray extends BaseBytes {
     public PyByteArray(PyString arg, String encoding, String errors) {
         super(TYPE);
         init(arg, encoding, errors);
+    }
+
+    /**
+     * Create a new array by encoding a PyString argument to bytes. If the PyString is actually a
+     * PyUnicode, an exception is thrown saying that the encoding must be explicitly specified.
+     *
+     * @param arg primary argument from which value is taken
+     */
+    public PyByteArray(PyString arg) {
+        super(TYPE);
+        init(arg, (String)null, (String)null);
     }
 
     /**
@@ -133,16 +148,17 @@ public class PyByteArray extends BaseBytes {
      * <code>bytearray(string, encoding[, errors])</code>, use the constructor
      * {@link #PyByteArray(PyString, String, String)}. If the PyString is actually a PyUnicode, an
      * encoding must be specified, and using this constructor will throw an exception about that.
-     * 
+     *
      * @param arg primary argument from which value is taken (may be null)
      * @throws PyException in the same circumstances as bytearray(arg), TypeError for non-iterable,
-     * non-integer argument type, and ValueError if iterables do not yield byte [0..255] values.
+     *             non-integer argument type, and ValueError if iterables do not yield byte [0..255]
+     *             values.
      */
     public PyByteArray(PyObject arg) throws PyException {
         super(TYPE);
         init(arg);
     }
-    
+
     /* ========================================================================================
      * API for org.python.core.PySequence
      * ========================================================================================
@@ -160,12 +176,12 @@ public class PyByteArray extends BaseBytes {
     protected synchronized PyByteArray getslice(int start, int stop, int step) {
         if (step == 1) {
             // Efficiently copy contiguous slice
-            int n = stop-start;
-            if (n<=0) {
+            int n = stop - start;
+            if (n <= 0) {
                 return new PyByteArray();
             } else {
                 PyByteArray ret = new PyByteArray(n);
-                System.arraycopy(storage, offset+start, ret.storage, ret.offset, n);
+                System.arraycopy(storage, offset + start, ret.storage, ret.offset, n);
                 return ret;
             }
         } else {
@@ -173,16 +189,17 @@ public class PyByteArray extends BaseBytes {
             PyByteArray ret = new PyByteArray(n);
             n += ret.offset;
             byte[] dst = ret.storage;
-            for (int io = start + offset, jo = ret.offset; jo < n; io += step, jo++)
+            for (int io = start + offset, jo = ret.offset; jo < n; io += step, jo++) {
                 dst[jo] = storage[io];
+            }
             return ret;
         }
     }
 
-    
     /**
-     * Returns a PyByteArray that repeats this  sequence the given number of times, as
-     * in the implementation of <tt>__mul__</tt> for strings.
+     * Returns a PyByteArray that repeats this sequence the given number of times, as in the
+     * implementation of <tt>__mul__</tt> for strings.
+     *
      * @param count the number of times to repeat this.
      * @return this byte array repeated count times.
      */
@@ -191,14 +208,13 @@ public class PyByteArray extends BaseBytes {
         PyByteArray ret = new PyByteArray();
         ret.setStorage(repeatImpl(count));
         return ret;
-    }    
+    }
 
     /**
-     * Sets the indexed element of the bytearray to the given value.
-     * This is an extension point called by PySequence in its implementation of
-     * {@link #__setitem__}
-     * It is guaranteed by PySequence that the index is within the bounds of the array.
-     * Any other clients calling <tt>pyset(int)</tt> must make the same guarantee.
+     * Sets the indexed element of the bytearray to the given value. This is an extension point
+     * called by PySequence in its implementation of {@link #__setitem__} It is guaranteed by
+     * PySequence that the index is within the bounds of the array. Any other clients calling
+     * <tt>pyset(int)</tt> must make the same guarantee.
      *
      * @param index index of the element to set.
      * @param value the value to set this element to.
@@ -206,23 +222,26 @@ public class PyByteArray extends BaseBytes {
      * @throws PyException(ValueError) if value<0 or value>255
      */
     public synchronized void pyset(int index, PyObject value) throws PyException {
-        storage[index+offset] = byteCheck(value); 
+        storage[index + offset] = byteCheck(value);
     }
 
     /**
      * Insert the element (interpreted as a Python byte value) at the given index.
-     * 
+     * Python int, long and string types of length 1 are allowed.
+     *
      * @param index to insert at
      * @param element to insert (by value)
      * @throws PyException(IndexError) if the index is outside the array bounds
      * @throws PyException(ValueError) if element<0 or element>255
+     * @throws PyException(TypeError) if the subclass is immutable
      */
-    public synchronized void pyadd(int index, PyInteger element) {
+    @Override
+    public synchronized void pyinsert(int index, PyObject element) {
         // Open a space at the right location.
         storageReplace(index, 0, 1);
-        storage[index] = byteCheck(element); 
+        storage[offset+index] = byteCheck(element);
     }
-    
+
     /**
      * Sets the given range of elements according to Python slice assignment semantics. If the step
      * size is one, it is a simple slice and the operation is equivalent to deleting that slice,
@@ -236,15 +255,15 @@ public class PyByteArray extends BaseBytes {
      * <code>PyObject</code>s, but acceptable ones are PyInteger, PyLong or PyString of length 1. If
      * any one of them proves unsuitable for assignment to a Python bytarray element, an exception
      * is thrown and this bytearray is unchanged.
-     * 
+     *
      * <pre>
      * a = bytearray(b'abcdefghijklmnopqrst')
      * a[2:12:2] = iter( [65, 66, 67, long(68), "E"] )
      * </pre>
-     * 
+     *
      * Results in <code>a=bytearray(b'abAdBfChDjElmnopqrst')</code>.
      * <p>
-     * 
+     *
      * @param start the position of the first element.
      * @param stop one more than the position of the last element.
      * @param step the step size.
@@ -308,12 +327,10 @@ public class PyByteArray extends BaseBytes {
         }
     }
 
-
-
     /**
      * Sets the given range of elements according to Python slice assignment semantics from a
      * zero-filled bytearray of the given length.
-     * 
+     *
      * @see #setslice(int, int, int, PyObject)
      * @param start the position of the first element.
      * @param stop one more than the position of the last element.
@@ -330,17 +347,19 @@ public class PyByteArray extends BaseBytes {
         } else {
             // This is an extended slice which means we are replacing elements
             int n = sliceLength(start, stop, step);
-            if (n != len) throw SliceSizeError("bytes", len, n);
-            for (int io = start + offset; n > 0; io += step, --n)
+            if (n != len) {
+                throw SliceSizeError("bytes", len, n);
+            }
+            for (int io = start + offset; n > 0; io += step, --n) {
                 storage[io] = 0;
+            }
         }
     }
-
 
     /**
      * Sets the given range of elements according to Python slice assignment semantics from a
      * PyString.
-     * 
+     *
      * @see #setslice(int, int, int, PyObject)
      * @param start the position of the first element.
      * @param stop one more than the position of the last element.
@@ -368,7 +387,7 @@ public class PyByteArray extends BaseBytes {
     /**
      * Sets the given range of elements according to Python slice assignment semantics from an
      * object supporting the Jython implementation of PEP 3118.
-     * 
+     *
      * @see #setslice(int, int, int, PyObject)
      * @param start the position of the first element.
      * @param stop one more than the position of the last element.
@@ -378,34 +397,37 @@ public class PyByteArray extends BaseBytes {
      */
     private void setslice(int start, int stop, int step, MemoryView value) throws PyException {
         // XXX Support memoryview once means of access to bytes is defined
-        Py.NotImplementedError("memoryview not yet supported in bytearray");
-        String format = value.get_format();
-        boolean isBytes = format == null || "B".equals(format);
-        if (value.get_ndim() != 1 || !isBytes) {
-            Py.TypeError("memoryview value must be byte-oriented");
-        } else {
-            // Dimensions are given as a PyTple (although only one)
-            int len = value.get_shape().pyget(0).asInt();
-            if (step == 1) {
-                // Delete this[start:stop] and open a space of the right size
-                storageReplace(start, stop - start, len);
-                // System.arraycopy(value.storage, value.offset, storage, start
-                // + offset, len);
-            } else {
-                // This is an extended slice which means we are replacing elements
-                int n = sliceLength(start, stop, step);
-                if (n != len) throw SliceSizeError("bytes", len, n);
-                // int no = n + value.offset;
-                // for (int io = start + offset, jo = value.offset; jo < no; io += step, jo++) {
-                // storage[io] = value.storage[jo]; // Assign this[i] = value[j]
-                // }
-            }
-        }
+        throw Py.NotImplementedError("memoryview not yet supported in bytearray");
+//        String format = value.get_format();
+//        boolean isBytes = format == null || "B".equals(format);
+//        if (value.get_ndim() != 1 || !isBytes) {
+//            throw Py.TypeError("memoryview value must be byte-oriented");
+//        } else {
+//            // Dimensions are given as a PyTuple (although only one)
+//            int len = value.get_shape().pyget(0).asInt();
+//            if (step == 1) {
+//                // Delete this[start:stop] and open a space of the right size
+//                storageReplace(start, stop - start, len);
+//                // System.arraycopy(value.storage, value.offset, storage, start
+//                // + offset, len);
+//            } else {
+//                // This is an extended slice which means we are replacing elements
+//                int n = sliceLength(start, stop, step);
+//                if (n != len) {
+//                    throw SliceSizeError("bytes", len, n);
+//                }
+//                // int no = n + value.offset;
+//                // for (int io = start + offset, jo = value.offset; jo < no; io += step, jo++) {
+//                // storage[io] = value.storage[jo]; // Assign this[i] = value[j]
+//                // }
+//            }
+//        }
     }
 
     /**
-     * Sets the given range of elements according to Python slice assignment semantics
-     * from a bytearray (or bytes).
+     * Sets the given range of elements according to Python slice assignment semantics from a
+     * bytearray (or bytes).
+     *
      * @see #setslice(int, int, int, PyObject)
      * @param start the position of the first element.
      * @param stop one more than the position of the last element.
@@ -414,33 +436,37 @@ public class PyByteArray extends BaseBytes {
      * @throws PyException(SliceSizeError) if the value size is inconsistent with an extended slice
      */
     private void setslice(int start, int stop, int step, BaseBytes value) throws PyException {
-        if (value == this) {
-            value = new PyByteArray(value);  // Must work with a copy
+
+        if (value == this) {  // Must work with a copy
+            value = new PyByteArray(value);
         }
+
         int len = value.size;
+
         if (step == 1) {
-            //Delete this[start:stop] and open a space of the right size
+            // Delete this[start:stop] and open a space of the right size
             storageReplace(start, stop - start, len);
-            System.arraycopy(value.storage, value.offset, storage, start
-                    + offset, len);
+            System.arraycopy(value.storage, value.offset, storage, start + offset, len);
+
         } else {
             // This is an extended slice which means we are replacing elements
             int n = sliceLength(start, stop, step);
             if (n != len) {
                 throw SliceSizeError("bytes", len, n);
             }
+
             int no = n + value.offset;
             for (int io = start + offset, jo = value.offset; jo < no; io += step, jo++) {
                 storage[io] = value.storage[jo];    // Assign this[i] = value[j]
             }
+
         }
     }
-
 
     /**
      * Sets the given range of elements according to Python slice assignment semantics from a
      * bytearray (or bytes).
-     * 
+     *
      * @see #setslice(int, int, int, PyObject)
      * @param start the position of the first element.
      * @param stop one more than the position of the last element.
@@ -452,7 +478,8 @@ public class PyByteArray extends BaseBytes {
     private void setslice(int start, int stop, int step, Iterable<? extends PyObject> iter) {
         /*
          * As we don't know how many elements the iterable represents, we can't adjust the array
-         * until after we run the iterator. We use this elastic byte structure to hold the bytes until then.
+         * until after we run the iterator. We use this elastic byte structure to hold the bytes
+         * until then.
          */
         FragmentList fragList = new BaseBytes.FragmentList();
         fragList.loadFrom(iter);
@@ -464,29 +491,30 @@ public class PyByteArray extends BaseBytes {
                 // Stitch the fragments together in the space we made
                 fragList.emptyInto(storage, start + offset);
             }
+
         } else {
             // This is an extended slice which means we are replacing elements
             int n = sliceLength(start, stop, step);
-            if (n != fragList.totalCount) throw SliceSizeError("bytes", fragList.totalCount, n);
+            if (n != fragList.totalCount) {
+                throw SliceSizeError("bytes", fragList.totalCount, n);
+            }
             fragList.emptyInto(storage, start + offset, step);
         }
     }
 
+// Idiom:
+// if (step == 1) {
+// // Do something efficient with block start...stop-1
+// } else {
+// int n = sliceLength(start, stop, step);
+// for (int i = start, j = 0; j < n; i += step, j++) {
+// // Perform jth operation with element i
+// }
+// }
 
-// Idiom:    
-//    if (step == 1) {
-//        // Do something efficient with block start...stop-1
-//    } else {
-//        int n = sliceLength(start, stop, step);
-//        for (int i = start, j = 0; j < n; i += step, j++) {
-//            // Perform jth operation with element i
-//        }
-//    }
-    
-    
-    
     /*
      * Deletes an element from the sequence (and closes up the gap).
+     *
      * @param index index of the element to delete.
      */
     protected synchronized void del(int index) {
@@ -496,17 +524,18 @@ public class PyByteArray extends BaseBytes {
 
     /*
      * Deletes contiguous sub-sequence (and closes up the gap).
+     *
      * @param start the position of the first element.
+     *
      * @param stop one more than the position of the last element.
      */
     protected synchronized void delRange(int start, int stop) {
-        // XXX Use the specialised storageDelete()
-        storageReplace(start, stop-start, 0);
+        storageDelete(start, stop - start);
     }
 
     /**
      * Deletes a simple or extended slice and closes up the gap(s).
-     * 
+     *
      * @param start the position of the first element.
      * @param stop one more than the position of the last element.
      * @param step from one element to the next
@@ -532,21 +561,19 @@ public class PyByteArray extends BaseBytes {
     }
 
     /**
-     * Convenience method to create a <code>ValueError</code> PyException with the message
+     * Convenience method to build (but not throw) a <code>ValueError</code> PyException with the message
      * "attempt to assign {type} of size {valueSize} to extended slice of size {sliceSize}"
-     * 
+     *
      * @param valueType
      * @param valueSize size of sequence being assigned to slice
      * @param sliceSize size of slice expected to receive
-     * @throws PyException (ValueError) as detailed
+     * @return PyException (ValueError) as detailed
      */
-    public static PyException SliceSizeError(String valueType, int valueSize, int sliceSize)
-            throws PyException {
+    public static PyException SliceSizeError(String valueType, int valueSize, int sliceSize) {
         String fmt = "attempt to assign %s of size %d to extended slice of size %d";
         return Py.ValueError(String.format(fmt, valueType, valueSize, sliceSize));
-        // XXX consider moving to SequenceIndexDelegate.java or somewhere else generic
+        // XXX consider moving to SequenceIndexDelegate.java or somewhere else generic, even Py
     }
-
 
     /**
      * Initialise a mutable bytearray object from various arguments. This single initialisation must
@@ -566,17 +593,18 @@ public class PyByteArray extends BaseBytes {
      * Construct as copy of any object implementing the buffer API.</li> </ul> Although effectively
      * a constructor, it is possible to call __init__ on a 'used' object so the method does not
      * assume any particular prior state.
-     * 
+     *
      * @param args argument array according to Jython conventions
-     * @param kwds Keywords according to Jython conventions 
+     * @param kwds Keywords according to Jython conventions
      * @throws PyException in the same circumstances as bytearray(arg), TypeError for non-iterable,
-     * non-integer argument type, and ValueError if iterables do not yield byte [0..255] values.
+     *             non-integer argument type, and ValueError if iterables do not yield byte [0..255]
+     *             values.
      */
     @ExposedNew
     @ExposedMethod(doc = BuiltinDocs.bytearray___init___doc)
     final synchronized void bytearray___init__(PyObject[] args, String[] kwds) {
-        
-        ArgParser ap = new ArgParser("bytearray", args, kwds, "source", "encoding", "errors");        
+
+        ArgParser ap = new ArgParser("bytearray", args, kwds, "source", "encoding", "errors");
         PyObject arg = ap.getPyObject(0, null);
         // If not null, encoding and errors must be PyString (or PyUnicode)
         PyObject encoding = ap.getPyObjectByType(1, PyBaseString.TYPE, null);
@@ -598,57 +626,277 @@ public class PyByteArray extends BaseBytes {
                 throw Py.TypeError("encoding or errors without sequence argument");
             }
             init((PyString)arg, encoding, errors);
-            
+
         } else {
             // Now construct from arbitrary object (or null)
             init(arg);
         }
 
     }
-    
-    
+
+
+    /* ========================================================================================
+     * Python API rich comparison operations
+     * ========================================================================================
+     */
+
     @Override
-    public int __len__() {
-        return list___len__();
+    public PyObject __eq__(PyObject other) {
+        return basebytes___eq__(other);
     }
 
-    @ExposedMethod(doc = BuiltinDocs.list___len___doc)
-    final int list___len__() {
-        return size;
+    @Override
+    public PyObject __ne__(PyObject other) {
+        return basebytes___ne__(other);
     }
 
-    
+    @Override
+    public PyObject __lt__(PyObject other) {
+        return basebytes___lt__(other);
+    }
+
+    @Override
+    public PyObject __le__(PyObject other) {
+        return basebytes___le__(other);
+    }
+
+    @Override
+    public PyObject __ge__(PyObject other) {
+        return basebytes___ge__(other);
+    }
+
+    @Override
+    public PyObject __gt__(PyObject other) {
+        return basebytes___gt__(other);
+    }
+
+
+
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.bytearray___eq___doc)
+    final synchronized PyObject bytearray___eq__(PyObject other) {
+        return basebytes___eq__(other);
+    }
+
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.bytearray___ne___doc)
+    final synchronized PyObject bytearray___ne__(PyObject other) {
+        return basebytes___ne__(other);
+    }
+
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.bytearray___lt___doc)
+    final synchronized PyObject bytearray___lt__(PyObject other) {
+        return basebytes___lt__(other);
+    }
+
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.bytearray___le___doc)
+    final synchronized PyObject bytearray___le__(PyObject other) {
+        return basebytes___le__(other);
+    }
+
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.bytearray___ge___doc)
+    final synchronized PyObject bytearray___ge__(PyObject other) {
+        return basebytes___ge__(other);
+    }
+
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.bytearray___gt___doc)
+    final synchronized PyObject bytearray___gt__(PyObject other) {
+        return basebytes___gt__(other);
+    }
+
+/* ========================================================================================
+ * Python API for bytearray
+ * ========================================================================================
+ */
+
+    @Override
+    public PyObject __add__(PyObject o) {
+        return bytearray___add__(o);
+    }
+
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.bytearray___add___doc)
+    final synchronized PyObject bytearray___add__(PyObject o) {
+        PyByteArray sum = null;
+
+        if (o instanceof BaseBytes) {
+            BaseBytes ob = (BaseBytes)o;
+            // Quick route: allocate the right size bytearray and copy the two parts in.
+            sum = new PyByteArray(size + ob.size);
+            System.arraycopy(storage, offset, sum.storage, sum.offset, size);
+            System.arraycopy(ob.storage, ob.offset, sum.storage, sum.offset + size, ob.size);
+
+        } else if (o.getType() == PyString.TYPE) {
+            // Support bytes type, which in in Python 2.7 is an alias of str. Remove in 3.0
+            PyString os = (PyString)o;
+            // Allocate the right size bytearray and copy the two parts in.
+            sum = new PyByteArray(size + os.__len__());
+            System.arraycopy(storage, offset, sum.storage, sum.offset, size);
+            sum.setslice(size, sum.size, 1, os);
+
+        } else {
+            // Unsuitable type
+            // XXX note reversed order relative to __iadd__ may be wrong, matches Python 2.7
+            throw ConcatenationTypeError(TYPE, o.getType());
+        }
+
+        return sum;
+    }
+
+
+    /**
+     * Returns the number of bytes actually allocated.
+     */
+    public int __alloc__() {
+        return bytearray___alloc__();
+    }
+
+    @ExposedMethod(doc = BuiltinDocs.bytearray___alloc___doc)
+    final int bytearray___alloc__() {
+        return storage.length;
+    }
+
+    /**
+     * Append a single element to the end of the array, equivalent to:
+     * <code>s[len(s):len(s)] = o</code>. The argument must be a PyInteger, PyLong or string of length 1.
+     *
+     * @param o the item to append to the list.
+     */
+    public void append(PyObject o) {
+        bytearray_append(o);
+    }
+
+    @ExposedMethod(doc = BuiltinDocs.bytearray_append_doc)
+    final synchronized void bytearray_append(PyObject o) {
+        // Insert at the end, checked for type and range
+        pyinsert(size, o);
+    }
+
+    @ExposedMethod(doc = BuiltinDocs.bytearray___contains___doc)
+    final boolean bytearray___contains__(PyObject o) {
+        return basebytes___contains__(o);
+    }
+
+    @ExposedMethod(doc = BuiltinDocs.bytearray_decode_doc)
+    final PyObject bytearray_decode(PyObject[] args, String[] keywords) {
+        return basebytes_decode(args, keywords);
+    }
+
+    /**
+     * Implementation of Python <code>find(sub)</code>. Return the lowest index in the byte array
+     * where byte sequence <code>sub</code> is found. Return -1 if <code>sub</code> is not found.
+     *
+     * @param sub bytes to find
+     * @return index of start of ocurrence of sub within this byte array
+     */
+    public int find(PyObject sub) {
+        return basebytes_find(sub, null, null);
+    }
+
+    /**
+     * Implementation of Python <code>find( sub [, start ] )</code>. Return the lowest index in the
+     * byte array where byte sequence <code>sub</code> is found, such that <code>sub</code> is
+     * contained in the slice <code>[start:]</code>. Return -1 if <code>sub</code> is not found.
+     *
+     * @param sub bytes to find
+     * @param start of slice to search
+     * @return index of start of ocurrence of sub within this byte array
+     */
+    public int find(PyObject sub, PyObject start) {
+        return basebytes_find(sub, start, null);
+    }
+
+    /**
+     * Implementation of Python <code>find( sub [, start [, end ]] )</code>. Return the lowest index
+     * in the byte array where byte sequence <code>sub</code> is found, such that <code>sub</code>
+     * is contained in the slice <code>[start:end]</code>. Arguments <code>start</code> and
+     * <code>end</code> (which may be <code>null</code> or <code>Py.None</code> ) are interpreted as
+     * in slice notation. Return -1 if <code>sub</code> is not found.
+     *
+     * @param sub bytes to find
+     * @param start of slice to search
+     * @param end of slice to search
+     * @return index of start of ocurrence of sub within this byte array
+     */
+    public int find(PyObject sub, PyObject start, PyObject end) {
+        return basebytes_find(sub, start, end);
+    }
+
+    @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.bytearray_find_doc)
+    final int bytearray_find(PyObject sub, PyObject start, PyObject end) {
+        return basebytes_find(sub, start, end);
+    }
+
+
+
+    /**
+     * Append the elements in the argument sequence to the end of the array, equivalent to:
+     * <code>s[len(s):len(s)] = o</code>. The argument must be a subclass of BaseBytes or an
+     * iterable type returning elements compatible with byte assignment.
+     *
+     * @param o the sequence of items to append to the list.
+     */
+    public void extend(PyObject o) {
+        bytearray_extend(o);
+    }
+
+    @ExposedMethod(doc = BuiltinDocs.bytearray_extend_doc)
+    final synchronized void bytearray_extend(PyObject o) {
+        // Use the general method, assigning to the crack at the end of the array.
+        // Note this deals with all legitimate PyObject types and the case o==this.
+        setslice(size, size, 1, o);
+    }
+
+    @Override
+    public PyObject __iadd__(PyObject o) {
+        return bytearray___iadd__(o);
+    }
+
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.bytearray___iadd___doc)
+    final synchronized PyObject bytearray___iadd__(PyObject o) {
+        PyType oType = o.getType();
+        if (oType == TYPE) {
+            // Use the general method, specifying the crack at the end of the array.
+            // Note this deals with the case o==this.
+            setslice(size, size, 1, (BaseBytes)o);
+        } else if (oType == PyString.TYPE) {
+            // Will fail if somehow not 8-bit clean
+            setslice(size, size, 1, (PyString)o);
+        } else {
+            // Unsuitable type
+            throw ConcatenationTypeError(oType, TYPE);
+        }
+        return this;
+    }
+
+    /**
+     * Insert the argument element into the byte array at the specified index.
+     * Same as <code>s[index:index] = [o] if index &gt;= 0</code>.
+     *
+     * @param index the position where the element will be inserted.
+     * @param value the element to insert.
+     */
+    public void insert(PyObject index, PyObject value) {
+        bytearray_insert(index, value);
+    }
+
+    @ExposedMethod(doc = BuiltinDocs.bytearray_insert_doc)
+    final synchronized void bytearray_insert(PyObject index, PyObject value) {
+        // XXX: do something with delegator instead?
+        pyinsert(boundToSequence(index.asIndex()), value);
+    }
+
+
+    @ExposedMethod(doc = BuiltinDocs.bytearray___len___doc)
+    final int bytearray___len__() {
+        return __len__();
+    }
+
+    @ExposedMethod(doc = BuiltinDocs.bytearray___reduce___doc)
+    final PyObject bytearray___reduce__() {
+        return basebytes___reduce__();
+    }
+
+
+
 // Based on PyList and not yet properly implemented.
-//
-//    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.bytearray___ne___doc)
-//    final synchronized PyObject bytearray___ne__(PyObject o) {
-//        return seq___ne__(o);
-//    }
-//
-//    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.bytearray___eq___doc)
-//    final synchronized PyObject bytearray___eq__(PyObject o) {
-//        return seq___eq__(o);
-//    }
-//
-//    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.bytearray___lt___doc)
-//    final synchronized PyObject bytearray___lt__(PyObject o) {
-//        return seq___lt__(o);
-//    }
-//
-//    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.bytearray___le___doc)
-//    final synchronized PyObject bytearray___le__(PyObject o) {
-//        return seq___le__(o);
-//    }
-//
-//    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.bytearray___gt___doc)
-//    final synchronized PyObject bytearray___gt__(PyObject o) {
-//        return seq___gt__(o);
-//    }
-//
-//    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.bytearray___ge___doc)
-//    final synchronized PyObject bytearray___ge__(PyObject o) {
-//        return seq___ge__(o);
-//    }
 //
 //    @Override
 //    public PyObject __imul__(PyObject o) {
@@ -714,37 +962,6 @@ public class PyByteArray extends BaseBytes {
 //        return repeat(o.asIndex(Py.OverflowError));
 //    }
 //
-//    @Override
-//    public PyObject __add__(PyObject o) {
-//        return bytearray___add__(o);
-//    }
-//
-//    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.bytearray___add___doc)
-//    final synchronized PyObject bytearray___add__(PyObject o) {
-//        PyByteArray sum = null;
-//        if (o instanceof PySequenceList && !(o instanceof PyTuple)) {
-//            if (o instanceof PyByteArray) {
-//                List oList = ((PyByteArray) o).storage;
-//                List newList = new ArrayList(storage.size() + oList.size());
-//                newList.addAll(storage);
-//                newList.addAll(oList);
-//                sum = fromList(newList);
-//            }
-//        } else if (!(o instanceof PySequenceList)) {
-//            // also support adding java lists (but not PyTuple!)
-//            Object oList = o.__tojava__(List.class);
-//            if (oList != Py.NoConversion && oList != null) {
-//                List otherList = (List) oList;
-//                sum = new PyByteArray();
-//                sum.bytearray_extend(this);
-//                for (Iterator i = otherList.iterator(); i.hasNext();) {
-//                    sum.add(i.next());
-//                }
-//            }
-//        }
-//        return sum;
-//    }
-//
 //    @ExposedMethod(doc = BuiltinDocs.bytearray___contains___doc)
 //    final synchronized boolean bytearray___contains__(PyObject o) {
 //        return object___contains__(o);
@@ -787,275 +1004,238 @@ public class PyByteArray extends BaseBytes {
 //        return super.unsupportedopMessage(op, o2);
 //    }
 //
-//    public String toString() {
-//        return bytearray_toString();
-//    }
-//
-    @ExposedMethod(names = "__repr__", doc = BuiltinDocs.bytearray___repr___doc)
-    final synchronized String bytearray_toString() {
-        // XXX revisit: understand the thread state logic and use encode()
-//        ThreadState ts = Py.getThreadState();
-//        if (!ts.enterRepr(this)) {
-//            return "[...]";
-//        }
-        StringBuilder buf = new StringBuilder("bytearray(b'");
-        final int last = size()-1;
-        for (int i=0; i<=last; i++) {
-            int element = intAt(i);
-            if (Character.isISOControl(element))
-                buf.append(String.format("\\x%02x", element));
-            else
-                buf.append((char)element);
-        }
-        buf.append("')");
-//        ts.exitRepr(this);
-        return buf.toString();
+    @Override
+    public String toString() {
+        return bytearray_toString();
     }
 
-    
-    
-    
-    
+    @ExposedMethod(names = {"__repr__", "__str__"}, doc = BuiltinDocs.bytearray___repr___doc)
+    final synchronized String bytearray_toString() {
+        return "bytearray(b'" + asEscapedString()  + "')";
+    }
+
     /*
      * ========================================================================================
      * Manipulation of storage capacity
      * ========================================================================================
-     * 
+     *
      * Here we add to the inherited variables defining byte storage, the methods necessary to resize
      * it.
-     */    
-   
+     */
+
     /**
      * Choose a size appropriate to store the given number of bytes, with some room for growth.
-     * @param size
-     * @return n >= needed
+     * We'll be more generous than CPython for small array sizes to avoid needless reallocation.
+     *
+     * @param size of storage actually needed
+     * @return n >= size a recommended storage array size
      */
     private static final int roundUp(int size) {
-        // XXX Consider equivalent case statement
-        int alloc = size + (size >> 3) + (size < 9 ? 3 : 6);    // As CPython
-        // XXX What's a good allocation unit size here?
-        final int ALLOC = 8;
-        return (alloc+(ALLOC-1)) & ~(ALLOC-1);                  // round up to multiple of ALLOC
-    }
-    
-    /**
-     * Used mainly to prevent repeated attempts to shrink an array that is already minimal.
-     */
-    private static final int minAlloc = roundUp(1);
-        
-    /**
-     * Decide whether a new storage array should be allocated (but don't do it). This method returns
-     * true if the needed storage is bigger than the allocated array length.
-     * 
-     * @param needed number of bytes needed
-     * @return true if needed number of bytes justifies a new array
-     */
-    private final boolean shouldGrow(int needed) {
-        return needed > storage.length;
+        /*
+         * The CPython formula is: size + (size >> 3) + (size < 9 ? 3 : 6). But when the array
+         * grows, CPython can use a realloc(), which will often be able to extend the allocation
+         * into memory already secretly allocated by the initial malloc(). Extension in Java means
+         * that we have to allocate a new array of bytes and copy to it.
+         */
+        final int ALLOC = 16;   // Must be power of two!
+        final int SIZE2 = 10;   // Smallest size leading to a return value of 2*ALLOC
+        if (size >= SIZE2) {       // Result > ALLOC, so work it out
+            // Same recommendation as Python, but rounded up to multiple of ALLOC
+            return (size + (size >> 3) + (6 + ALLOC - 1)) & ~(ALLOC - 1);
+        } else if (size > 0) {  // Easy: save arithmetic
+            return ALLOC;
+        } else {                // Very easy
+            return 0;
+        }
     }
 
     /**
-     * Decide whether a smaller storage array should be allocated (but don't do it). This method
-     * returns true if the needed storage size is much smaller than the allocated array length.
-     * 
+     * Recommend a length for (but don't allocate) a new storage array, taking into account the
+     * current length and the number of bytes now needed. The returned value will always be at least
+     * as big as the argument (the length will always be sufficient). If the return value is equal
+     * to the present length, it is recommending no reallocation; otherwise, the return is either
+     * comfortably bigger than what is currently needed, or significantly smaller than currently
+     * allocated. This method embeds our policy for growing or shrinking the allocated array.
+     *
      * @param needed number of bytes needed
-     * @return true if needed number of bytes justifies a new array
+     * @return recommended amount to allocate
      */
-    private final boolean shouldShrink(int needed) {
-        return needed == 0 || (needed * 2 + minAlloc) < storage.length;
-    }
-
-    /**
-     * Decide whether a new storage array should be allocated (but don't do it). This method returns
-     * true if the needed storage is bigger, or much smaller, than the allocated array length.
-     * 
-     * @param needed number of bytes needed
-     * @return true if needed number of bytes justifies a new array
-     */
-    private final boolean shouldResize(int needed) {
-        return shouldGrow(needed) || shouldShrink(needed);
+    private final int recLength(int needed) {
+        final int L = storage.length;
+        if (needed > L || needed * 2 < L) {
+            // Amount needed is a lot less than current length, or
+            // more space we have, so recommend the new ideal size.
+            return roundUp(needed);
+        } else {
+            // Amount needed is less than current length, but it doesn't justify reallocation
+            return L;
+        }
     }
 
     /**
      * Allocate fresh storage for at least the requested number of bytes. Spare bytes are alloceted
-     * evenly at each end of the new storage by choice of a new value for offset.
-     * If the size needed is zero, the "storage" allocated is the shared emptyStorage array.
+     * evenly at each end of the new storage by choice of a new value for offset. If the size needed
+     * is zero, the "storage" allocated is the shared emptyStorage array.
+     *
      * @param needed becomes the new value of this.size
      */
     protected void newStorage(int needed) {
         if (needed > 0) {
-            byte[] s = new byte[roundUp(needed)]; // guaranteed zero (by JLS 2ed para 4.5.5)
-            setStorage(s, needed, (s.length - needed) / 2);
-        } else
-            setStorage(emptyStorage);
-    }
-
-    /**
-     * Ensure there is storage for at least the requested number of bytes, optionally clearing
-     * elements to zero. After the call, the needed number of bytes will be available,
-     * and if requested in the second parameter, they are guaranteed to be zero.
-     * @param needed number of bytes
-     * @param clear if true, storage bytes guaranteed zero
-     */
-    private void newStorage(int needed, boolean clear) {
-        if (shouldResize(needed)) {
-            newStorage(needed);                 // guaranteed zero
+            final int L = recLength(needed);
+            byte[] s = new byte[L]; // guaranteed zero (by JLS 2ed para 4.5.5)
+            setStorage(s, needed, (L - needed) / 2);
         } else {
-            setStorage(storage, needed, (storage.length - needed) / 2);
-            if (clear) {
-                Arrays.fill(storage, (byte)0); // guarantee zero
-            }
+            setStorage(emptyStorage);
         }
     }
 
-
-    
     /**
-     * Delete <code>d</code> elements at index <code>a</code> and prepare to insert
-     * <code>e</code> elements there by moving aside the surrounding elements.
-     * The method manipulates the <code>storage</code> array contents, <code>size</code> and
-     * <code>offset</code>. It will allocate a new array <code>storage</code> if necessary,
-     * or if desirable for efficiency. If the initial storage looks like this:
+     * Delete <code>d</code> elements at index <code>a</code> and prepare to insert <code>e</code>
+     * elements there by moving aside the surrounding elements. The method manipulates the
+     * <code>storage</code> array contents, <code>size</code> and <code>offset</code>. It will
+     * allocate a new array <code>storage</code> if necessary, or if desirable for efficiency. If
+     * the initial storage looks like this:
+     *
      * <pre>
      *       |-                  s                -|
      * |--f--|--------a--------|---d---|-----b-----|----------------|
      * </pre>
+     *
      * then after the call the (possibly new) storage looks like this:
+     *
      * <pre>
      *            |-                   s'                -|
      * |----f'----|--------a--------|----e----|-----b-----|--------------|
      * </pre>
+     *
      * where the contents of regions of length <code>a</code> and <code>b=size-(a+d)</code> have
-     * been preserved, although probably moved, and the gap between them has been adjusted to
-     * the requested size.
+     * been preserved, although probably moved, and the gap between them has been adjusted to the
+     * requested size.
      * <p>
      * The effect on this PyByteArray is that:
+     *
      * <pre>
      * this.offset = f'
      * this.size = s' = a + e + b
      * </pre>
-     * The method does not implement the Python repertoire of slice indices but avoids indexing
-     * outside the bytearray by silently adjusting a to be within it.
-     * Negative d or e is treated as 0 and if d is too large, it is truncated to the array end.
-     * @param a index of hole in byte array 
+     *
+     * The method does not implement the Python repertoire of slice indices, or bound-check the
+     * sizes given, since code leading up to the call has done that.
+     *
+     * @param a index of hole in byte array
      * @param d number to discard (will discard x[a,a+d-1])
      * @param e size of hole to open (will be x[a, a+e-1])
      */
     private void storageReplace(int a, int d, int e) {
 
-        int s = this.size;
+        final int c = e - d; // Change in overall size
+        if (c == 0)
+         {
+            return; // Everything stays where it is.
+        }
 
-        // Some of these should perhaps be errors but let's silently correct insane requests
-        if (a<0) a=0; else if (a>s) a = s;
-        if (d<0) d=0; else if (d>s-a) d = s-a;
-        if (e<0) e=0;
+        // Compute some handy points of reference
+        final int L = storage.length;
+        final int f = offset;
+        final int b = size - (a + d); // Count of B section
+        final int s2 = a + e + b; // Size of result s'
+        final int L2 = recLength(s2); // Length of storage for result
 
-        if (e != d) {
-            // Otherwise, everything stays where it is.
-            // Handy derived values:
-            int b = s - (a + d);    // which is >= 0
-            int s2 = a + e + b;     // which is >= 0
-            int f = this.offset;    // Location of x[0]
-            int g = f + (a + d);    // Location of x[-b]
-            
-            if (shouldShrink(s2)) {
-                if (s2 > 0) {
-                    // We have far more storage than we need: shrink and copy both parts
-                    newStorage(f, a, g, b, e);
-                } else {
-                    // Need no storage as a+e+b = 0
-                    setStorage(emptyStorage);
-                }
+        if (L2 == L) {
+            // The result will definitely fit into the existing array
 
-            } else if (a < b) {
+            if (a <= b) {
+
                 // It would be less copying if we moved A=x[:a] not B=x[-b:].
                 // If B is to stay where it is, it means A will land here:
-                int f2 = f - (e - d);
+                final int f2 = f - c;
                 if (f2 >= 0) {
                     // ... which luckily is still inside the array
                     if (a > 0) {
                         System.arraycopy(storage, f, storage, f2, a);
                     }
-                    this.offset = f2;
+                    offset = f2;
                     size = s2;
+
                 } else {
                     // ... which unfortunately is before the start of the array.
-                    // We have to move both A and B and it might be time for a new array.
-                    if (s2<=storage.length) {
-                        // Repack it all in the existing array
-                        newStorageAvoided(f, a, g, b, e);
-                    } else {
-                        newStorage(f, a, g, b, e);
-                    }
+                    // We have to move both A and B within the existing array
+                    newStorageAvoided(a, d, b, e);
                 }
 
-            } else /* a >= b */{
+            } else /* a > b */{
+
                 // It would be less copying if we moved B=x[-b:] not A=x[:a]
                 // If A is to stay where it is, it means B will land here:
-                int g2 = g + (e - d);
-                if (g2 + b <= storage.length) {
+                final int g2 = f + a + e;
+                if (g2 + b <= L) {
                     // ... which luckily leaves all of B inside the array
                     if (b > 0) {
-                        System.arraycopy(storage, g, storage, g2, b);
+                        System.arraycopy(storage, g2 - c, storage, g2, b);
                     }
                     // this.offset is unchanged
                     size = s2;
+
                 } else {
                     // ... which unfortunately runs beyond the end of the array.
-                    // We have to move both A and B and it might be time for a new array.
-                    if (s2<=storage.length) {
-                        // Repack it all in the existing array
-                        newStorageAvoided(f, a, g, b, e);
-                    } else {
-                        newStorage(f, a, g, b, e);
-                    }
+                    // We have to move both A and B within the existing array
+                    newStorageAvoided(a, d, b, e);
                 }
             }
-        }
 
+        } else if (L2 > 0) {
+
+            // New storage (bigger or much smaller) is called for. Copy A and B to it.
+            newStorage(L2, a, d, b, e);
+
+        } else {
+
+            // We need no storage at all
+            setStorage(emptyStorage);
+
+        }
     }
-    
-   
+
     /**
      * Use the existing storage but move two blocks within it to leave a gap of the required size.
-     * This is the strategy usually used when the array is still big enough to hold the required
-     * new value, but we can't leave either block fixed.
-     * If the initial storage looks like this:
-     * 
+     * This is the strategy usually used when the array is still big enough to hold the required new
+     * value, but we can't leave either block fixed. If the initial storage looks like this:
+     *
      * <pre>
      * |-----f-----|--------a--------|---d---|----------b----------|----------|
      * </pre>
-     * 
+     *
      * then after the call the storage looks like this:
-     * 
+     *
      * <pre>
      *        |-                             s'                          -|
      * |--f'--|--------a--------|---------e---------|----------b----------|---|
      * </pre>
-     * 
+     *
      * where the regions of length <code>a</code> and <code>b=size-(a+d)</code> have been preserved
      * and the gap between them adjusted to specification. The new offset f' is chosen heuristically
      * by the method to optimise the efficiency of repeated adjustment near either end of the array,
      * e.g. repeated prepend or append operations. The effect on this PyByteArray is that:
-     * 
+     *
      * <pre>
      * this.offset = f'
      * this.size = s' = a+e+b
      * </pre>
-     * 
-     * Arguments are not checked for validity <b>at all</b>.
-     * a, e and b are non-negative and not all zero.
-     * 
-     * @param f location (with offset) of A
+     *
+     * Arguments are not checked for validity <b>at all</b>. At call time, a, d, b, and e are
+     * non-negative and not all zero.
+     *
      * @param a length of A
-     * @param g = f+a+d location (with offset) of B
+     * @param d gap between A and B in current storage layout
      * @param b length of B
-     * @param e gap between A and B in new storage.
+     * @param e gap between A and B in new storage layout.
      */
-    private void newStorageAvoided(int f, int a, int g, int b, int e) {
+    private void newStorageAvoided(int a, int d, int b, int e) {
 
-        // Shorthands
-        int s2 = a + e + b;
+        // Compute some handy points of reference
+        final int f = offset;
+        final int g = f + a + d; // Location of B section x[-b]
+        final int s2 = a + e + b; // Size of result s'
 
         // Choose the new offset f' to make prepend or append operations quicker.
         // E.g. if insertion was near the end (b small) put most of the new space at the end.
@@ -1068,164 +1248,201 @@ public class PyByteArray extends BaseBytes {
             long spare = storage.length - s2;
             f2 = (int)((spare * b) / (a + b));
         }
-        // We have a new size and offset (but the same storage)
-        size = s2;
-        offset = f2;
-        
+
         // This puts B at
-        int g2 = f2 + a + e;
+        final int g2 = f2 + a + e;
 
         // We can make do with the existing array. Do an in place copy.
         if (f2 + a > g) {
             // New A overlaps existing B so we must copy B first
-            if (b > 0) System.arraycopy(storage, g, storage, g2, b);
-            if (a > 0) System.arraycopy(storage, f, storage, f2, a);
+            if (b > 0) {
+                System.arraycopy(storage, g, storage, g2, b);
+            }
+            if (a > 0) {
+                System.arraycopy(storage, f, storage, f2, a);
+            }
         } else {
             // Safe to copy A first
-            if (a > 0) System.arraycopy(storage, f, storage, f2, a);
-            if (b > 0) System.arraycopy(storage, g, storage, g2, b);
+            if (a > 0) {
+                System.arraycopy(storage, f, storage, f2, a);
+            }
+            if (b > 0) {
+                System.arraycopy(storage, g, storage, g2, b);
+            }
         }
 
+        // We have a new size and offset (but the same storage)
+        size = s2;
+        offset = f2;
+
     }
-    
 
     /**
      * Allocate new storage and copy two blocks from the current storage to it. If the initial
      * storage looks like this:
-     * 
+     *
      * <pre>
      * |--f--|--------a--------|---d---|-----b-----|----------------|
      * </pre>
-     * 
+     *
      * then after the call the (definitely new) storage looks like this:
-     * 
+     *
      * <pre>
      *            |-                   s'                -|
      * |----f'----|--------a--------|----e----|-----b-----|--------------|
      * </pre>
-     * 
+     *
      * where the regions of length <code>a</code> and <code>b=size-(a+d)</code> have been preserved
      * and the gap between them adjusted to specification. The new offset f' is chosen heuristically
      * by the method to optimise the efficiency of repeated adjustment near either end of the array,
      * e.g. repeated prepend or append operations. The effect on this PyByteArray is that:
-     * 
+     *
      * <pre>
      * this.offset = f'
      * this.size = s' = a+e+b
      * </pre>
-     * 
-     * Arguments are not checked for validity <b>at all</b>.
-     * a, e and b are non-negative and not all zero.
-     * 
-     * @param f location (with offset) of A
+     *
+     * Arguments are not checked for validity <b>at all</b>. At call time, a, e and b are
+     * non-negative and not all zero.
+     *
+     * @param L2 length of storage array to allocate (decided by caller)
      * @param a length of A
-     * @param g = f+a+d location (with offset) of B
+     * @param d gap between A and B in current storage layout
      * @param b length of B
-     * @param e gap between A and B in new storage.
+     * @param e gap between A and B in new storage layout.
      */
-    private void newStorage(int f, int a, int g, int b, int e) {
-        // Enough room for the data and the gap
-        int s2 = a + e + b;
-        // Preserve a reference to the current data in the storage being discarded
-        byte[] source = this.storage;
-        // New storage with a bit of elbow-room
-        byte[] newStorage = new byte[roundUp(s2)];
-        // Choose the new offset f' to make prepend or append operations quicker.
+    private void newStorage(int L2, int a, int d, int b, int e) {
+
+        // Compute some handy points of reference
+        final int f = offset;
+        final int g = f + a + d; // Location of B section x[-b]
+        final int s2 = a + e + b; // Size of result s'
+
+        // New storage as specified by caller
+        byte[] newStorage = new byte[L2];
+
+        // Choose the new offset f' to make repeated prepend or append operations quicker.
         // E.g. if insertion was near the end (b small) put most of the new space at the end.
         int f2;
         if (a == b) {
             // Mainly to trap the case a=b=0
-            f2 = (newStorage.length - s2) / 2;
+            f2 = (L2 - s2) / 2;
         } else {
             // a and b are not both zero (since not equal)
-            long spare = newStorage.length - s2;
+            long spare = L2 - s2;
             f2 = (int)((spare * b) / (a + b));
         }
-        setStorage(newStorage, s2, f2);
 
-        // Copy across the data
-        if (a > 0) System.arraycopy(source, f, storage, offset, a);
-        if (b > 0) System.arraycopy(source, g, storage, offset + (a + e), b);
+        // Copy across the data from existing to new storage.
+        if (a > 0) {
+            System.arraycopy(storage, f, newStorage, f2, a);
+        }
+        if (b > 0) {
+            System.arraycopy(storage, g, newStorage, f2 + a + e, b);
+        }
+        setStorage(newStorage, s2, f2);
     }
-    
 
     /**
      * Delete <code>d</code> elements at index <code>a</code> by moving together the surrounding
      * elements. The method manipulates the <code>storage</code> array, <code>size</code> and
      * <code>offset</code>, and will allocate a new storage array if necessary, or if the deletion
      * is big enough. If the initial storage looks like this:
-     * 
+     *
      * <pre>
      * |-                           L                              -|
      *       |-                  s                -|
      * |--f--|--------a--------|---d---|-----b-----|----------------|
      * </pre>
-     * 
+     *
      * then after the call the (possibly new) storage looks like this:
-     * 
+     *
      * <pre>
      * |-                 L'                     -|
      *      |-                  s'               -|
      * |-f'-|--------a--------|-----b-----|-------|
      * </pre>
-     * 
+     *
      * where the regions of length <code>a</code> and <code>b=size-(a+d)</code> have been preserved
      * and the gap between them eliminated. The effect on this PyByteArray is that:
-     * 
+     *
      * <pre>
      * this.offset = f'
      * this.size = s' = a+b
      * </pre>
+     *
      * The method does not implement the Python repertoire of slice indices but avoids indexing
-     * outside the bytearray by silently adjusting a to be within it.
-     * Negative d is treated as 0 and if d is too large, it is truncated to the array end.
-     * 
+     * outside the bytearray by silently adjusting a to be within it. Negative d is treated as 0 and
+     * if d is too large, it is truncated to the array end.
+     *
      * @param a index of hole in byte array
      * @param d number to discard (will discard x[a,a+d-1])
      * @param e size of hole to open (will be x[a, a+e-1])
      */
     private void storageDelete(int a, int d) {
         // storageReplace specialised for delete (e=0)
-        int s = this.size;
 
-        // Some of these should perhaps be errors but let's silently correct insane requests
-        if (a < 0) a = 0; else if (a > s) a = s;
-        if (d < 0) d = 0; else if (d > s - a) d = s - a;
+        if (d == 0)
+         {
+            return; // Everything stays where it is.
+        }
 
-        // Handy derived values
-        int b = s - (a + d);    // which is >= 0
-        int s2 = s - d;         // which is >= 0
-        int f = this.offset;    // Location of x[0]
-        int g = f + (a + d);    // Location of x[-b]
+        // Compute some handy points of reference
+        final int L = storage.length;
+        final int f = offset;
+        final int b = size - (a + d); // Count of B section
+        final int s2 = a + b; // Size of result s'
+        final int L2 = recLength(s2); // Length of storage for result
 
-        if (shouldShrink(s2)) {
-            // We have far more storage than we need: shrink and copy both parts
-            // Preserve a reference to the current data in the storage being discarded
-            byte[] source = this.storage;
-            // New storage with a bit of elbow-room
-            newStorage(s2);
-            // Copy across the data
-            if (a > 0) System.arraycopy(source, f, storage, offset, a);
-            if (b > 0) System.arraycopy(source, g, storage, offset + a, b);
+        if (L2 == L) {
 
-        } else {
-            if (a < b) {
+            // We are re-using the existing array
+            if (a <= b) {
                 // It would be less copying if we moved A=x[:a] not B=x[-b:].
                 // If B is to stay where it is, it means A will land here:
-                int f2 = f + d;
+                final int f2 = f + d;
                 if (a > 0) {
                     System.arraycopy(storage, f, storage, f2, a);
                 }
-                this.offset = f2;
+                offset = f2;
+                size = s2;
 
-            } else /* a >= b */{
+            } else /* a > b */{
                 // It would be less copying if we moved B=x[-b:] not A=x[:a]
                 // If A is to stay where it is, it means B will land here:
-                int g2 = f + a;
+                final int g2 = f + a;
                 if (b > 0) {
-                    System.arraycopy(storage, g, storage, g2, b);
+                    System.arraycopy(storage, g2 + d, storage, g2, b);
                 }
+                // this.offset is unchanged
+                size = s2;
             }
+
+        } else if (L2 > 0) {
+
+            // New storage (much smaller) is called for. Copy A and B to it.
+            final int g = f + a + d; // Location of B section x[-b]
+
+            // Choose the new offset f' to distribute space evenly.
+            int f2 = (L2 - s2) / 2;
+
+            // New storage as specified
+            byte[] newStorage = new byte[L2];
+
+            // Copy across the data from existing to new storage.
+            if (a > 0) {
+                System.arraycopy(storage, f, newStorage, f2, a);
+            }
+            if (b > 0) {
+                System.arraycopy(storage, g, newStorage, f2 + a, b);
+            }
+            setStorage(newStorage, s2, f2);
+
+        } else {
+
+            // Everything must go
+            setStorage(emptyStorage);
+
         }
     }
 
@@ -1234,45 +1451,47 @@ public class PyByteArray extends BaseBytes {
      * <code>a</code> by moving together the surrounding elements. The method manipulates the
      * <code>storage</code> array, <code>size</code> and <code>offset</code>, and will allocate a
      * new storage array if the deletion is big enough. If the initial storage looks like this:
-     * 
+     *
      * <pre>
      * |-                               L                                -|
      *       |-                    s                    -|
      * |--f--|-----a-----|---------e---------|-----b-----|----------------|
      * </pre>
-     * 
+     *
      * then after the call the (possibly new) storage looks like this:
-     * 
+     *
      * <pre>
-     * |-                  L'                  -|
+     * |-                   L'                         -|
      *      |-                s'               -|
      * |-f'-|-----a-----|---(e-d)---|-----b-----|-------|
      * </pre>
-     * 
+     *
      * where the regions of length <code>a</code> and <code>b=size-(a+e)</code> have been preserved
      * and the <code>e</code> intervening elements reduced to <code>e-d</code> elements, by removing
      * exactly the elements with indices (relative to the start of valid data) <code>a+k*c</code>
      * for <code>k=0...d-1</code>. The effect on this PyByteArray is that:
-     * 
+     *
      * <pre>
      * this.offset = f'
      * this.size = s' = a+b
      * </pre>
-     * 
+     *
      * The method does not implement the Python repertoire of slice indices but avoids indexing
      * outside the bytearray by silently adjusting a to be within it. Negative d is treated as 0 and
      * if d is too large, it is truncated to the array end.
-     * 
+     *
      * @param a index of hole in byte array
      * @param c (>0) step size between the locations of elements to delete
      * @param d number to discard (will discard x[a+k*c] for k=0...d-1)
      */
     private void storageDeleteEx(int a, int c, int d) {
-        
+
         // XXX Base this on storageReplace with the same a<b logic but piecewise copy
         // XXX Change SequenceIndexDelegate to use (and PyList to implement) delslice()
     }
 }
+
+
 
 /*
  *  >>> for method in dir(bytearray):

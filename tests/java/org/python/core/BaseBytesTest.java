@@ -42,8 +42,10 @@ public class BaseBytesTest extends TestCase {
         super(name);
     }
 
-    static PythonInterpreter interp = null;
+    /** Sometimes we need the interpreter to be initialised **/
+    PythonInterpreter interp;
 
+    /** State for random data fills */
     Random random;
 
     public static char toChar(int b) {
@@ -102,17 +104,20 @@ public class BaseBytesTest extends TestCase {
     /**
      * Compare expected and result array sections at specified locations and length.
      * 
-     * @param expected reference values
+     * @param expected reference values (may be null iff len==0)
      * @param first first value to compare in expected values
      * @param result bytearray from method under test
      * @param start first value to compare in result values
      * @param len number of values to compare
      */
     static void checkInts(int[] expected, int first, BaseBytes result, int start, int len) {
-        int end = first + len;
-        if (end > expected.length) end = expected.length;
-        for (int i = first, j = start; i < end; i++, j++)
-            assertEquals("element value", expected[i], result.intAt(j));
+        if (len > 0) {
+            int end = first + len;
+            if (end > expected.length) end = expected.length;
+            for (int i = first, j = start; i < end; i++, j++) {
+                assertEquals("element value", expected[i], result.intAt(j));
+            }
+        }
     }
 
     /**
@@ -125,8 +130,9 @@ public class BaseBytesTest extends TestCase {
         // Size must be the same
         assertEquals("size", expected.length, result.size());
         // And each element
-        for (int i = 0; i < expected.length; i++)
+        for (int i = 0; i < expected.length; i++) {
             assertEquals("element value", expected[i], result.intAt(i));
+        }
     }
 
     /**
@@ -168,7 +174,7 @@ public class BaseBytesTest extends TestCase {
         List<PyObject> list = new ArrayList<PyObject>(source.length);
         int choose = 0;
         for (int b : source) {
-            switch(choose++){
+            switch (choose++) {
                 case 0:
                     PyInteger i = new PyInteger(b);
                     list.add(i);
@@ -210,6 +216,7 @@ public class BaseBytesTest extends TestCase {
         BaseBytes a = getInstance(aRef);
         System.out.println(toString(a));
         assertEquals(aRef.length, a.size());
+
         // init(int) at various sizes
         for (int n : new int[] {0, 1, 2, 7, 8, 9, MEDIUM, LARGE, HUGE}) {
             a = getInstance(n);
@@ -231,8 +238,9 @@ public class BaseBytesTest extends TestCase {
         assertEquals(a.size(), b.size());
         // assertEquals(a.storage, b.storage); // Supposed to share?
         // Check we got the same bytes
-        for (int i = 0; i < a.size(); i++)
+        for (int i = 0; i < a.size(); i++) {
             assertEquals(a.intAt(i), b.intAt(i));
+        }
     }
 
     /**
@@ -424,9 +432,11 @@ public class BaseBytesTest extends TestCase {
         for (int count = 0; count <= maxCount; count++) {
             // Reference answer
             int[] bRef = new int[count * L];
-            for (int i = 0; i < count; i++)
-                for (int j = 0; j < L; j++)
+            for (int i = 0; i < count; i++) {
+                for (int j = 0; j < L; j++) {
                     bRef[i * L + j] = aRef[j];
+                }
+            }
             // Test
             BaseBytes b = a.repeat(count);
             // System.out.println(toString(b));
@@ -704,13 +714,16 @@ public class BaseBytesTest extends TestCase {
             if (step == 1) {
                 // This is a contiguous slice [start:stop] so we can share storage
                 r = new MyBytes();
-                if (stop > start) r.setStorage(storage, stop - start, start + offset);
+                if (stop > start) {
+                    r.setStorage(storage, stop - start, start + offset);
+                }
             } else {
                 // This is an extended slice [start:stop:step] so we have to copy elements from it
                 r = new MyBytes(sliceLength(start, stop, step));
                 int iomax = r.size + r.offset;
-                for (int io = r.offset, jo = start; io < iomax; jo += step, io++)
+                for (int io = r.offset, jo = start; io < iomax; jo += step, io++) {
                     r.storage[io] = storage[jo]; // Assign r[i] = this[j]
+                }
             }
             return r;
         }
@@ -747,13 +760,16 @@ public class BaseBytesTest extends TestCase {
             super(TYPE);
             int n = value.length;
             store = new byte[n];
-            for (int i = 0; i < n; i++)
+            for (int i = 0; i < n; i++) {
                 store[i] = (byte)value[i];
+            }
         }
 
         @Override
         public MemoryView getMemoryView() {
-            if (mv == null) mv = new MemoryViewImpl();
+            if (mv == null) {
+                mv = new MemoryViewImpl();
+            }
             return mv;
         }
 
@@ -823,26 +839,31 @@ public class BaseBytesTest extends TestCase {
         private StringBuilder image = new StringBuilder(100);
 
         private void repeat(char c, int n) {
-            for (int i = 0; i < n; i++)
+            for (int i = 0; i < n; i++) {
                 image.append(i == 0 ? '|' : ' ').append(c);
+            }
         }
 
         // Show in image s[pos:pos+n] (as 2*n characters)
         private void append(byte[] s, int pos, int n) {
-            if (pos < 0 || pos + n > s.length) return;
+            if (pos < 0 || pos + n > s.length)
+                return;
             for (int i = 0; i < n; i++) {
                 int c = 0xff & ((int)s[pos + i]);
-                if (c == 0)
+                if (c == 0) {
                     c = '.';
-                else if (Character.isISOControl(c)) c = '#';
+                } else if (Character.isISOControl(c)) {
+                    c = '#';
+                }
                 image.append(i == 0 ? '|' : ' ').append(toChar(c));
             }
         }
 
         // Show an extent of n bytes (as 2*n charactrs)
         public void padTo(int n) {
-            while (n > image.length())
+            while (n > image.length()) {
                 image.append(' ');
+            }
         }
 
         /**
