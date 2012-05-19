@@ -13,6 +13,7 @@ import org.python.core.PySystemState;
 import org.python.core.PyTuple;
 import org.python.core.__builtin__;
 import org.python.modules.math_erf;
+import org.python.modules.math_gamma;
 
 public class math implements ClassDictInit {
     public static PyFloat pi = new PyFloat(Math.PI);
@@ -32,6 +33,14 @@ public class math implements ClassDictInit {
     private static final BigInteger MIN_LONG_BIGINTEGER = new BigInteger(String.valueOf(Long.MIN_VALUE));
 
     public static void classDictInit(@SuppressWarnings("unused") PyObject dict) {
+    }
+
+    public static double gamma(double v) {
+        return math_gamma.gamma(v);
+    }
+
+    public static double lgamma(double v) {
+        return math_gamma.lgamma(v);
     }
 
     public static double erf(double v) {
