@@ -11,7 +11,6 @@ __version__ = "0.6"
 __all__ = ["SimpleHTTPRequestHandler"]
 
 import os
-import platform
 import posixpath
 import BaseHTTPServer
 import urllib
@@ -133,7 +132,7 @@ class SimpleHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         length = f.tell()
         f.seek(0)
         self.send_response(200)
-        if not platform.python_implementation() == "Jython":
+        if not sys.platform.startswith("java"):
             encoding = sys.getfilesystemencoding()
             self.send_header("Content-type", "text/html; charset=%s" % encoding)
         self.send_header("Content-Length", str(length))

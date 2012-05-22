@@ -33,11 +33,6 @@ import os as _os
 import errno as _errno
 from random import Random as _Random
 
-import platform as _platform
-
-_is_jython = _platform.python_implementation() == "Jython"
-
-
 try:
     from cStringIO import StringIO as _StringIO
 except ImportError:
@@ -127,7 +122,7 @@ class _RandomNameSequence:
 
     @property
     def rng(self):
-        if _is_jython:
+        if _os.sys.platform.startswith("java"):
             #A JVM run cannot determine or change its pid so dummy this.
             cur_pid = 1
         else:
