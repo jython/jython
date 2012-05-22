@@ -227,7 +227,7 @@ class HelperFunctionsTests(unittest.TestCase):
         site.PREFIXES = ['xoxo']
         dirs = site.getsitepackages()
 
-        if sys.platform in ('os2emx', 'riscos'):
+        if sys.platform in ('os2emx', 'riscos') or is_jython:
             self.assertEqual(len(dirs), 1)
             wanted = os.path.join('xoxo', 'Lib', 'site-packages')
             self.assertEqual(dirs[0], wanted)

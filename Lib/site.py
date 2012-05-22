@@ -65,7 +65,7 @@ import traceback
 
 import platform as _platform
 
-_is_jython = _platform.python_implementation == "Jython"
+_is_jython = _platform.python_implementation() == "Jython"
 if _is_jython:
     _ModuleType = type(os)
 

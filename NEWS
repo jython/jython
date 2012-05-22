@@ -1,5 +1,8 @@
 Jython NEWS
 
+Jython 2.7a2
+    - [ 1892 ] site-packages is not in sys.path
+
 Jython 2.7a1
   Bugs Fixed
     - [ 1880 ] Sha 224 library not present in Jython
