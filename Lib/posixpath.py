@@ -19,7 +19,7 @@ __all__ = ["normcase","isabs","join","splitdrive","split","splitext",
            "walk","expanduser","expandvars","normpath","abspath",
            "samefile",
            "curdir","pardir","sep","pathsep","defpath","altsep","extsep",
-           "devnull","realpath","supports_unicode_filenames"]
+           "devnull","realpath","supports_unicode_filenames", "relpath"]
 
 # strings representing various path-related bits and pieces
 curdir = '.'
@@ -475,7 +475,22 @@ else:
                 path = normpath(resolved)
         return path
 
+def relpath(path, start=curdir):
+    """Return a relative version of a path"""
 
+    if not path:
+        raise ValueError("no path specified")
+
+    start_list = [x for x in abspath(start).split(sep) if x]
+    path_list = [x for x in abspath(path).split(sep) if x]
+
+    # Work out how much of the filepath is shared by start and path.
+    i = len(commonprefix([start_list, path_list]))
+
+    rel_list = [pardir] * (len(start_list)-i) + path_list[i:]
+    if not rel_list:
+        return curdir
+    return join(*rel_list)
 def _ensure_str(obj):
     """Ensure obj is a string, otherwise raise a TypeError"""
     if isinstance(obj, basestring):
