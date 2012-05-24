@@ -123,15 +123,15 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <property name="PY_RELEASE_LEVEL_SNAPSHOT" value="170"/> <!-- 0xAA -->
 
         <!-- The current version info -->
-        <property name="jython.version" value="2.7a1+"/>
-        <property name="jython.version.noplus" value="2.7a1"/>
+        <property name="jython.version" value="2.7.0a2+"/>
+        <property name="jython.version.noplus" value="2.7.0a2"/>
         <property name="jython.major_version" value="2"/>
         <property name="jython.minor_version" value="7"/>
         <property name="jython.micro_version" value="0"/>
         <property name="jython.release_level" value="${PY_RELEASE_LEVEL_ALPHA}"/>
         <!-- Usually zero, only used for alpha, beta and candidate versions
              where it must be greater than zero. -->
-        <property name="jython.release_serial" value="1"/>
+        <property name="jython.release_serial" value="2"/>
 		
     	<!--- Indy support -->
     	<condition property="jython.use.invokedynamic">
