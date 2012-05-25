@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+import marshal
 import linecache
 import os
 import StringIO
@@ -9,6 +10,9 @@ from test import test_support
 from test.script_helper import assert_python_ok
 
 import warning_tests
+
+warning_tests_file = os.path.splitext(warning_tests.__file__)[0] + '.py'
+warning_tests_file = warning_tests_file.replace('$py', '')  # Jython
 
 import warnings as original_warnings
 
@@ -519,7 +523,7 @@ class _WarningsTests(BaseTest):
         self.assertEqual(result.count('\n'), 2,
                              "Too many newlines in %r" % result)
         first_line, second_line = result.split('\n', 1)
-        expected_file = os.path.splitext(warning_tests.__file__)[0] + '.py'
+        expected_file = warning_tests_file
         first_line_parts = first_line.rsplit(':', 3)
         path, line, warning_class, message = first_line_parts
         line = int(line)
@@ -551,7 +555,7 @@ class WarningsDisplayTests(unittest.TestCase):
     def test_formatwarning(self):
         message = "msg"
         category = Warning
-        file_name = os.path.splitext(warning_tests.__file__)[0] + '.py'
+        file_name = warning_tests_file
         line_num = 3
         file_line = linecache.getline(file_name, line_num).strip()
         format = "%s:%s: %s: %s\n  %s\n"
@@ -567,7 +571,7 @@ class WarningsDisplayTests(unittest.TestCase):
                                     category, file_name, line_num, file_line))
 
     def test_showwarning(self):
-        file_name = os.path.splitext(warning_tests.__file__)[0] + '.py'
+        file_name = warning_tests_file
         line_num = 3
         expected_file_line = linecache.getline(file_name, line_num).strip()
         message = 'msg'
@@ -706,35 +710,42 @@ class PyCatchWarningTests(CatchWarningTests):
 
 class EnvironmentVariableTests(BaseTest):
 
-    def test_single_warning(self):
+    def check_child(self, env, cmdline, expected):
         newenv = os.environ.copy()
-        newenv["PYTHONWARNINGS"] = "ignore::DeprecationWarning"
-        p = subprocess.Popen([sys.executable,
-                "-c", "import sys; sys.stdout.write(str(sys.warnoptions))"],
-                stdout=subprocess.PIPE, env=newenv)
-        self.assertEqual(p.communicate()[0], "['ignore::DeprecationWarning']")
+        newenv["PYTHONWARNINGS"] = env
+
+        cmd = [sys.executable]
+        if cmdline:
+            cmd.extend(["-W", cmdline])
+
+        cmd.extend([
+            "-c",
+            "import sys, marshal; marshal.dump(sys.warnoptions, sys.stdout)",
+        ])
+
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, env=newenv)
         self.assertEqual(p.wait(), 0)
+        child_opts = marshal.load(p.stdout)
+        self.assertEqual(set(child_opts), set(expected))
+
+    def test_single_warning(self):
+        self.check_child(
+            "ignore::DeprecationWarning",
+            None,
+            ["ignore::DeprecationWarning"])
 
     def test_comma_separated_warnings(self):
-        newenv = os.environ.copy()
-        newenv["PYTHONWARNINGS"] = ("ignore::DeprecationWarning,"
-                                    "ignore::UnicodeWarning")
-        p = subprocess.Popen([sys.executable,
-                "-c", "import sys; sys.stdout.write(str(sys.warnoptions))"],
-                stdout=subprocess.PIPE, env=newenv)
-        self.assertEqual(p.communicate()[0],
-                "['ignore::DeprecationWarning', 'ignore::UnicodeWarning']")
-        self.assertEqual(p.wait(), 0)
+        self.check_child(
+            "ignore::DeprecationWarning,ignore::UnicodeWarning",
+            None,
+            ['ignore::DeprecationWarning', 'ignore::UnicodeWarning'])
 
     def test_envvar_and_command_line(self):
-        newenv = os.environ.copy()
-        newenv["PYTHONWARNINGS"] = "ignore::DeprecationWarning"
-        p = subprocess.Popen([sys.executable, "-W" "ignore::UnicodeWarning",
-                "-c", "import sys; sys.stdout.write(str(sys.warnoptions))"],
-                stdout=subprocess.PIPE, env=newenv)
-        self.assertEqual(p.communicate()[0],
-                "['ignore::UnicodeWarning', 'ignore::DeprecationWarning']")
-        self.assertEqual(p.wait(), 0)
+        self.check_child(
+            "ignore::DeprecationWarning",
+            "ignore::UnicodeWarning",
+            ['ignore::UnicodeWarning', 'ignore::DeprecationWarning'])
+
 
 class CEnvironmentVariableTests(EnvironmentVariableTests):
     module = c_warnings
@@ -746,15 +757,21 @@ class PyEnvironmentVariableTests(EnvironmentVariableTests):
 def test_main():
     py_warnings.onceregistry.clear()
     c_warnings.onceregistry.clear()
-    test_support.run_unittest(CFilterTests, PyFilterTests,
-                                CWarnTests, PyWarnTests,
-                                CWCmdLineTests, PyWCmdLineTests,
-                                _WarningsTests,
-                                CWarningsDisplayTests, PyWarningsDisplayTests,
-                                CCatchWarningTests, PyCatchWarningTests,
-                                CEnvironmentVariableTests,
-                                PyEnvironmentVariableTests
-                             )
+    test_support.run_unittest(
+        CFilterTests,
+        PyFilterTests,
+        CWarnTests,
+        PyWarnTests,
+        CWCmdLineTests,
+        PyWCmdLineTests,
+        _WarningsTests,
+        CWarningsDisplayTests,
+        PyWarningsDisplayTests,
+        CCatchWarningTests,
+        PyCatchWarningTests,
+        CEnvironmentVariableTests,
+        PyEnvironmentVariableTests
+     )
 
 
 if __name__ == "__main__":

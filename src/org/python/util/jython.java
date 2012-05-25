@@ -7,6 +7,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 import java.util.zip.ZipEntry;
@@ -136,6 +138,45 @@ public class jython {
         } while (shouldRestart);
     }
 
+    private static List<String> warnOptionsFromEnv() {
+        ArrayList<String> opts = new ArrayList<String>();
+
+        try {
+            String envVar = System.getenv("PYTHONWARNINGS");
+            if (envVar == null) {
+                return opts;
+            }
+
+
+            for (String opt : envVar.split(",")) {
+                opt = opt.trim();
+                if (opt.length() == 0) {
+                    continue;
+                }
+                opts.add(opt);
+            }
+        } catch (SecurityException e) {
+        }
+
+        return opts;
+    }
+
+    private static List<String> validWarnActions = Arrays.asList(
+        "error", "ignore", "always", "default", "module", "once",
+        "i");
+
+    private static void addWarnings(List<String> from, PyList to) {
+        for (String opt : from) {
+            String action = opt.split(":")[0];
+            if (!validWarnActions.contains(action)) {
+                System.err.println(String.format(
+                            "Invalid -W option ignored: invalid action: '%s'", action));
+                continue;
+            }
+            to.append(Py.newString(opt));
+        }
+    }
+
     public static void run(String[] args) {
         // Parse the command line options
         CommandLineOptions opts = new CommandLineOptions();
@@ -157,14 +198,20 @@ public class jython {
 
         // Setup the basic python system state from these options
         PySystemState.initialize(PySystemState.getBaseProperties(), opts.properties, opts.argv);
+        PySystemState systemState = Py.getSystemState();
 
         PyList warnoptions = new PyList();
-        for (String wopt : opts.warnoptions) {
-            warnoptions.append(new PyString(wopt));
-        }
-        Py.getSystemState().setWarnoptions(warnoptions);
+        addWarnings(opts.warnoptions, warnoptions);
+        addWarnings(warnOptionsFromEnv(), warnoptions);
+        systemState.setWarnoptions(warnoptions);
 
-        PySystemState systemState = Py.getSystemState();
+        // Make sure warnings module is loaded if there are warning options
+        // Not sure this is needed, but test_warnings.py expects this
+        if (warnoptions.size() > 0) {
+            imp.load("warnings");
+        }
+
+
         // Decide if stdin is interactive
         if (!opts.fixInteractive || opts.interactive) {
             opts.interactive = ((PyFile)Py.defaultSystemState.stdin).isatty();

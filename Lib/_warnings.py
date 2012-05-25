@@ -171,6 +171,7 @@ def _getcategory(category):
         raise _OptionError("invalid warning category: %r" % (category,))
     return cat
 
+onceregistry = {}
 
 # Code typically replaced by _warnings
 def warn(message, category=None, stacklevel=1):
@@ -360,44 +361,3 @@ class catch_warnings(object):
             raise RuntimeError("Cannot exit %r without entering first" % self)
         self._module.filters = self._filters
         self._module.showwarning = self._showwarning
-
-
-# filters contains a sequence of filter 5-tuples
-# The components of the 5-tuple are:
-# - an action: error, ignore, always, default, module, or once
-# - a compiled regex that must match the warning message
-# - a class representing the warning category
-# - a compiled regex that must match the module that is being warned
-# - a line number for the line being warning, or 0 to mean any line
-# If either if the compiled regexs are None, match anything.
-_warnings_defaults = False
-try:
-    from _warnings import (filters, default_action, once_registry,
-                            warn, warn_explicit)
-    defaultaction = default_action
-    onceregistry = once_registry
-    _warnings_defaults = True
-except ImportError:
-    filters = []
-    defaultaction = "default"
-    onceregistry = {}
-
-
-# Module initialization
-_processoptions(sys.warnoptions)
-if not _warnings_defaults:
-    silence = [ImportWarning, PendingDeprecationWarning]
-    # Don't silence DeprecationWarning if -3 or -Q was used.
-    if not sys.py3kwarning and not sys.flags.division_warning:
-        silence.append(DeprecationWarning)
-    for cls in silence:
-        simplefilter("ignore", category=cls)
-    bytes_warning = sys.flags.bytes_warning
-    if bytes_warning > 1:
-        bytes_action = "error"
-    elif bytes_warning:
-        bytes_action = "default"
-    else:
-        bytes_action = "ignore"
-    simplefilter(bytes_action, category=BytesWarning, append=1)
-del _warnings_defaults
