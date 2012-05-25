@@ -10,8 +10,6 @@ import types
 __all__ = ["warn", "showwarning", "formatwarning", "filterwarnings",
            "resetwarnings", "catch_warnings"]
 
-onceregistry = {}
-
 def warnpy3k(message, category=None, stacklevel=1):
     """Issue a deprecation warning for Python 3.x related changes.
 

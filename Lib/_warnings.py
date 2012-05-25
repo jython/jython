@@ -7,10 +7,13 @@ import linecache
 import sys
 import types
 
-__all__ = ["warn", "showwarning", "formatwarning", "filterwarnings",
-           "resetwarnings", "catch_warnings"]
+__all__ = ["filters", "default_action", "once_registry", "warn",
+           "warn_explicit"]
 
-onceregistry = {}
+once_registry = {}
+onceregistry = once_registry
+default_action = "default"
+defaultaction = default_action
 
 def warnpy3k(message, category=None, stacklevel=1):
     """Issue a deprecation warning for Python 3.x related changes.
@@ -170,8 +173,6 @@ def _getcategory(category):
     if not issubclass(cat, Warning):
         raise _OptionError("invalid warning category: %r" % (category,))
     return cat
-
-onceregistry = {}
 
 # Code typically replaced by _warnings
 def warn(message, category=None, stacklevel=1):
