@@ -52,6 +52,21 @@ public class PyByteArray extends BaseBytes {
         init(size);
     }
 
+//    /**
+//     * Create zero-filled Python bytearray of specified size and capacity for appending to. The
+//     * capacity is the (minimum) storage allocated, while the size is the number of zero-filled
+//     * bytes it currently contains. Simple append and extend operations on a bytearray will not
+//     * shrink the allocated capacity, but insertions and deletions may cause it to be reallocated at
+//     * the size then in use.
+//     *
+//     * @param size of bytearray
+//     * @param capacity allocated
+//     */
+//    public PyByteArray(int size, int capacity) {
+//        super(TYPE);
+//        setStorage(new byte[capacity], size);
+//    }
+//
     /**
      * Construct bytearray by copying values from int[].
      *
@@ -62,7 +77,8 @@ public class PyByteArray extends BaseBytes {
     }
 
     /**
-     * Create a new array filled exactly by a copy of the contents of the source.
+     * Create a new array filled exactly by a copy of the contents of the source, which is a
+     * bytearray (or bytes).
      *
      * @param value source of the bytes (and size)
      */
@@ -72,7 +88,19 @@ public class PyByteArray extends BaseBytes {
     }
 
     /**
-     * Create a new array filled exactly by a copy of the contents of the source.
+     * Create a new array filled exactly by a copy of the contents of the source, which is a
+     * byte-oriented view.
+     *
+     * @param value source of the bytes (and size)
+     */
+    PyByteArray(View value) {
+        super(TYPE);
+        init(value);
+    }
+
+    /**
+     * Create a new array filled exactly by a copy of the contents of the source, which is a
+     * memoryview.
      *
      * @param value source of the bytes (and size)
      */
@@ -131,6 +159,16 @@ public class PyByteArray extends BaseBytes {
     }
 
     /**
+     * Construct bytearray by re-using an array of byte as storage initialised by the client.
+     *
+     * @param newStorage pre-initialised storage: the caller should not keep a reference
+     */
+    PyByteArray(byte[] newStorage) {
+        super(TYPE);
+        setStorage(newStorage);
+    }
+
+    /**
      * Create a new bytearray object from an arbitrary Python object according to the same rules as
      * apply in Python to the bytearray() constructor:
      * <ul>
@@ -159,9 +197,10 @@ public class PyByteArray extends BaseBytes {
         init(arg);
     }
 
-    /* ========================================================================================
+
+    /* ============================================================================================
      * API for org.python.core.PySequence
-     * ========================================================================================
+     * ============================================================================================
      */
 
     /**
@@ -561,8 +600,8 @@ public class PyByteArray extends BaseBytes {
     }
 
     /**
-     * Convenience method to build (but not throw) a <code>ValueError</code> PyException with the message
-     * "attempt to assign {type} of size {valueSize} to extended slice of size {sliceSize}"
+     * Convenience method to build (but not throw) a <code>ValueError</code> PyException with the
+     * message "attempt to assign {type} of size {valueSize} to extended slice of size {sliceSize}"
      *
      * @param valueType
      * @param valueSize size of sequence being assigned to slice
@@ -635,9 +674,9 @@ public class PyByteArray extends BaseBytes {
     }
 
 
-    /* ========================================================================================
+    /* ============================================================================================
      * Python API rich comparison operations
-     * ========================================================================================
+     * ============================================================================================
      */
 
     @Override
@@ -702,9 +741,9 @@ public class PyByteArray extends BaseBytes {
         return basebytes___gt__(other);
     }
 
-/* ========================================================================================
+/* ============================================================================================
  * Python API for bytearray
- * ========================================================================================
+ * ============================================================================================
  */
 
     @Override
@@ -715,6 +754,10 @@ public class PyByteArray extends BaseBytes {
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.bytearray___add___doc)
     final synchronized PyObject bytearray___add__(PyObject o) {
         PyByteArray sum = null;
+
+
+        // XXX re-write using View
+
 
         if (o instanceof BaseBytes) {
             BaseBytes ob = (BaseBytes)o;
@@ -755,7 +798,8 @@ public class PyByteArray extends BaseBytes {
 
     /**
      * Append a single element to the end of the array, equivalent to:
-     * <code>s[len(s):len(s)] = o</code>. The argument must be a PyInteger, PyLong or string of length 1.
+     * <code>s[len(s):len(s)] = o</code>. The argument must be a PyInteger, PyLong or string of
+     * length 1.
      *
      * @param o the item to append to the list.
      */
@@ -783,7 +827,7 @@ public class PyByteArray extends BaseBytes {
      * Implementation of Python <code>find(sub)</code>. Return the lowest index in the byte array
      * where byte sequence <code>sub</code> is found. Return -1 if <code>sub</code> is not found.
      *
-     * @param sub bytes to find
+     * @param sub sequence to find (of a type viewable as a byte sequence)
      * @return index of start of ocurrence of sub within this byte array
      */
     public int find(PyObject sub) {
@@ -795,7 +839,7 @@ public class PyByteArray extends BaseBytes {
      * byte array where byte sequence <code>sub</code> is found, such that <code>sub</code> is
      * contained in the slice <code>[start:]</code>. Return -1 if <code>sub</code> is not found.
      *
-     * @param sub bytes to find
+     * @param sub sequence to find (of a type viewable as a byte sequence)
      * @param start of slice to search
      * @return index of start of ocurrence of sub within this byte array
      */
@@ -810,7 +854,7 @@ public class PyByteArray extends BaseBytes {
      * <code>end</code> (which may be <code>null</code> or <code>Py.None</code> ) are interpreted as
      * in slice notation. Return -1 if <code>sub</code> is not found.
      *
-     * @param sub bytes to find
+     * @param sub sequence to find (of a type viewable as a byte sequence)
      * @param start of slice to search
      * @param end of slice to search
      * @return index of start of ocurrence of sub within this byte array
@@ -823,8 +867,6 @@ public class PyByteArray extends BaseBytes {
     final int bytearray_find(PyObject sub, PyObject start, PyObject end) {
         return basebytes_find(sub, start, end);
     }
-
-
 
     /**
      * Append the elements in the argument sequence to the end of the array, equivalent to:
@@ -894,7 +936,85 @@ public class PyByteArray extends BaseBytes {
         return basebytes___reduce__();
     }
 
+    /**
+     * An implementation of Python <code>replace( old, new )</code>, returning a
+     * <code>PyByteArray</code> with all occurrences of sequence <code>oldB</code> replaced by
+     * <code>newB</code>.
+     *
+     * @param oldB sequence to find
+     * @param newB relacement sequence
+     * @return result of replacement as a new PyByteArray
+     */
+    public PyByteArray replace(PyObject oldB, PyObject newB) {
+        return basebytes_replace(oldB, newB, -1);
+    }
 
+    /**
+     * An implementation of Python <code>replace( old, new [, count ] )</code>, returning a
+     * <code>PyByteArray</code> with all occurrences of sequence <code>oldB</code> replaced by
+     * <code>newB</code>. If the optional argument <code>count</code> is given, only the first
+     * <code>count</code> occurrences are replaced.
+     *
+     * @param oldB sequence to find
+     * @param newB relacement sequence
+     * @param maxcount maximum occurrences are replaced or all if <code>maxcount &lt; 0</code>
+     * @return result of replacement as a new PyByteArray
+     */
+    public PyByteArray replace(PyObject oldB, PyObject newB, int maxcount) {
+        return basebytes_replace(oldB, newB, maxcount);
+    }
+
+    @ExposedMethod(defaults = "null", doc = BuiltinDocs.bytearray_replace_doc)
+    final PyByteArray bytearray_replace(PyObject oldB, PyObject newB, PyObject count) {
+        int maxcount = (count == null) ? -1 : count.asInt(); // or count.asIndex() ?
+        return basebytes_replace(oldB, newB, maxcount);
+    }
+
+    /**
+     * Implementation of Python <code>rfind(sub)</code>. Return the highest index in the byte array
+     * where byte sequence <code>sub</code> is found. Return -1 if <code>sub</code> is not found.
+     *
+     * @param sub sequence to find (of a type viewable as a byte sequence)
+     * @return index of start of rightmost ocurrence of sub within this byte array
+     */
+    public int rfind(PyObject sub) {
+        return basebytes_rfind(sub, null, null);
+    }
+
+    /**
+     * Implementation of Python <code>rfind( sub [, start ] )</code>. Return the highest index in
+     * the byte array where byte sequence <code>sub</code> is found, such that <code>sub</code> is
+     * contained in the slice <code>[start:]</code>. Return -1 if <code>sub</code> is not found.
+     *
+     * @param sub sequence to find (of a type viewable as a byte sequence)
+     * @param start of slice to search
+     * @return index of start of rightmost ocurrence of sub within this byte array
+     */
+    public int rfind(PyObject sub, PyObject start) {
+        return basebytes_rfind(sub, start, null);
+    }
+
+    /**
+     * Implementation of Python <code>rfind( sub [, start [, end ]] )</code>. Return the highest
+     * index in the byte array where byte sequence <code>sub</code> is found, such that
+     * <code>sub</code> is contained in the slice <code>[start:end]</code>. Arguments
+     * <code>start</code> and <code>end</code> (which may be <code>null</code> or
+     * <code>Py.None</code> ) are interpreted as in slice notation. Return -1 if <code>sub</code> is
+     * not found.
+     *
+     * @param sub sequence to find (of a type viewable as a byte sequence)
+     * @param start of slice to search
+     * @param end of slice to search
+     * @return index of start of rightmost ocurrence of sub within this byte array
+     */
+    public int rfind(PyObject sub, PyObject start, PyObject end) {
+        return basebytes_rfind(sub, start, end);
+    }
+
+    @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.bytearray_rfind_doc)
+    final int bytearray_rfind(PyObject sub, PyObject start, PyObject end) {
+        return basebytes_rfind(sub, start, end);
+    }
 
 // Based on PyList and not yet properly implemented.
 //
@@ -1015,9 +1135,9 @@ public class PyByteArray extends BaseBytes {
     }
 
     /*
-     * ========================================================================================
+     * ============================================================================================
      * Manipulation of storage capacity
-     * ========================================================================================
+     * ============================================================================================
      *
      * Here we add to the inherited variables defining byte storage, the methods necessary to resize
      * it.
@@ -1073,7 +1193,7 @@ public class PyByteArray extends BaseBytes {
     }
 
     /**
-     * Allocate fresh storage for at least the requested number of bytes. Spare bytes are alloceted
+     * Allocate fresh storage for at least the requested number of bytes. Spare bytes are allocated
      * evenly at each end of the new storage by choice of a new value for offset. If the size needed
      * is zero, the "storage" allocated is the shared emptyStorage array.
      *
@@ -1128,16 +1248,19 @@ public class PyByteArray extends BaseBytes {
      */
     private void storageReplace(int a, int d, int e) {
 
+        final int b = size - (a + d); // Count of B section
         final int c = e - d; // Change in overall size
-        if (c == 0)
-         {
-            return; // Everything stays where it is.
+
+        if (c == 0) {
+            return;// Everything stays where it is.
+        } else if (c > 0 && b == 0) {
+            storageExtend(c); // This is really an extend/append operation
+            return;
         }
 
         // Compute some handy points of reference
         final int L = storage.length;
         final int f = offset;
-        final int b = size - (a + d); // Count of B section
         final int s2 = a + e + b; // Size of result s'
         final int L2 = recLength(s2); // Length of storage for result
 
@@ -1344,6 +1467,93 @@ public class PyByteArray extends BaseBytes {
     }
 
     /**
+     * Prepare to insert <code>e</code> elements at the end of the storage currently in use. If
+     * necessary. existing elements will be moved. The method manipulates the <code>storage</code>
+     * array contents, <code>size</code> and <code>offset</code>. It will allocate a new array
+     * <code>storage</code> if necessary for growth. If the initial storage looks like this:
+     *
+     * <pre>
+     *               |-          s          -|
+     * |------f------|-----------a-----------|-----------|
+     * </pre>
+     *
+     * then after the call the storage looks like this:
+     *
+     * <pre>
+     *               |-              s'             -|
+     * |------f------|-----------a-----------|---e---|---|
+     * </pre>
+     *
+     * or like this if e was too big for the gap, but not enough to provoke reallocation:
+     *
+     * <pre>
+     * |-                    s'                 -|
+     * |-----------a-----------|--------e--------|-------|
+     * </pre>
+     *
+     * or like this if was necessary to allocate more storage:
+     *
+     * <pre>
+     * |-                        s'                       -|
+     * |-----------a-----------|-------------e-------------|--------------|
+     * </pre>
+     *
+     * where the contents of region <code>a</code> have been preserved, although possbly moved, and
+     * the gap at the end has the requested size. this method never shrinks the total storage. The
+     * effect on this PyByteArray is that:
+     *
+     * <pre>
+     * this.offset = f or 0
+     * this.size = s' = a + e
+     * </pre>
+     *
+     * The method does not implement the Python repertoire of slice indices, or bound-check the
+     * sizes given, since code leading up to the call has done that.
+     *
+     * @param e size of hole to open (will be x[a, a+e-1]) where a = size before call
+     */
+    private void storageExtend(int e) {
+
+        if (e == 0) {
+            return; // Everything stays where it is.
+        }
+
+        // Compute some handy points of reference
+        final int L = storage.length;
+        final int f = offset;
+        final int s2 = size + e; // Size of result s'
+        final int L2 = recLength(s2); // Length of storage for result
+
+        if (L2 <= L) {
+            // Ignore recommendations to shrink and use the existing array
+            // If A is to stay where it is, it means E will end here:
+            final int g2 = f + s2;
+            if (g2 > L) {
+                // ... which unfortunately runs beyond the end of the array.
+                // We have to move A within the existing array to make room
+                if (size > 0) {
+                    System.arraycopy(storage, offset, storage, 0, size);
+                }
+                offset = 0;
+            }
+            // New size
+            size = s2;
+
+        } else {
+            // New storage size as recommended
+            byte[] newStorage = new byte[L2];
+
+            // Choose the new offset f'=0 to make repeated append operations quicker.
+            // Copy across the data from existing to new storage.
+            if (size > 0) {
+                System.arraycopy(storage, f, newStorage, 0, size);
+            }
+            setStorage(newStorage, s2);
+
+        }
+    }
+
+    /**
      * Delete <code>d</code> elements at index <code>a</code> by moving together the surrounding
      * elements. The method manipulates the <code>storage</code> array, <code>size</code> and
      * <code>offset</code>, and will allocate a new storage array if necessary, or if the deletion
@@ -1491,87 +1701,3 @@ public class PyByteArray extends BaseBytes {
     }
 }
 
-
-
-/*
- *  >>> for method in dir(bytearray):
-        ...     print method
-        ...
-        __add__
-        __alloc__
-        __class__
-        __contains__
-        __delattr__
-        __delitem__
-        __doc__
-        __eq__
-        __format__
-        __ge__
-        __getattribute__
-        __getitem__
-        __gt__
-        __hash__
-        __iadd__
-        __imul__
-        __init__
-        __iter__
-        __le__
-        __len__
-        __lt__
-        __mul__
-        __ne__
-        __new__
-        __reduce__
-        __reduce_ex__
-        __repr__
-        __rmul__
-        __setattr__
-        __setitem__
-        __sizeof__
-        __str__
-        __subclasshook__
-        append
-        capitalize
-        center
-        count
-        decode
-        endswith
-        expandtabs
-        extend
-        find
-        fromhex
-        index
-        insert
-        isalnum
-        isalpha
-        isdigit
-        islower
-        isspace
-        istitle
-        isupper
-        join
-        ljust
-        lower
-        lstrip
-        partition
-        pop
-        remove
-        replace
-        reverse
-        rfind
-        rindex
-        rjust
-        rpartition
-        rsplit
-        rstrip
-        split
-        splitlines
-        startswith
-        strip
-        swapcase
-        title
-        translate
-        upper
-        zfill
-        >>>
- */
