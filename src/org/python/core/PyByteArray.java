@@ -813,6 +813,17 @@ public class PyByteArray extends BaseBytes {
         pyinsert(size, o);
     }
 
+    /**
+     * Implement to the standard Python __contains__ method, which in turn implements the
+     * <code>in</code> operator.
+     *
+     * @param o the element to search for in this bytearray.
+     * @return the result of the search.
+     **/
+    public boolean __contains__(PyObject o) {
+        return basebytes___contains__(o);
+    }
+
     @ExposedMethod(doc = BuiltinDocs.bytearray___contains___doc)
     final boolean bytearray___contains__(PyObject o) {
         return basebytes___contains__(o);
@@ -823,50 +834,53 @@ public class PyByteArray extends BaseBytes {
         return basebytes_decode(args, keywords);
     }
 
+
     /**
-     * Implementation of Python <code>find(sub)</code>. Return the lowest index in the byte array
-     * where byte sequence <code>sub</code> is found. Return -1 if <code>sub</code> is not found.
+     * Implementation of Python <code>count(sub)</code>.
+     *  Return
+     * the number of non-overlapping occurrences of <code>sub</code> in this byte array.
      *
      * @param sub sequence to find (of a type viewable as a byte sequence)
-     * @return index of start of ocurrence of sub within this byte array
+     * @return count of occurrences of sub within this byte array
      */
-    public int find(PyObject sub) {
-        return basebytes_find(sub, null, null);
+    public int count(PyObject sub) {
+        return basebytes_count(sub, null, null);
     }
 
     /**
-     * Implementation of Python <code>find( sub [, start ] )</code>. Return the lowest index in the
-     * byte array where byte sequence <code>sub</code> is found, such that <code>sub</code> is
-     * contained in the slice <code>[start:]</code>. Return -1 if <code>sub</code> is not found.
+     * Implementation of Python <code>count( sub [, start ] )</code>.
+     *  Return
+     * the number of non-overlapping occurrences of <code>sub</code> in the range [start:].
      *
      * @param sub sequence to find (of a type viewable as a byte sequence)
      * @param start of slice to search
-     * @return index of start of ocurrence of sub within this byte array
+     * @return count of occurrences of sub within this byte array
      */
-    public int find(PyObject sub, PyObject start) {
-        return basebytes_find(sub, start, null);
+    public int count(PyObject sub, PyObject start) {
+        return basebytes_count(sub, start, null);
     }
 
     /**
-     * Implementation of Python <code>find( sub [, start [, end ]] )</code>. Return the lowest index
-     * in the byte array where byte sequence <code>sub</code> is found, such that <code>sub</code>
-     * is contained in the slice <code>[start:end]</code>. Arguments <code>start</code> and
-     * <code>end</code> (which may be <code>null</code> or <code>Py.None</code> ) are interpreted as
-     * in slice notation. Return -1 if <code>sub</code> is not found.
+     * Implementation of Python <code>count( sub [, start [, end ]] )</code>.
+     *  Return
+     * the number of non-overlapping occurrences of <code>sub</code> in the range [start, end].
+     * Optional arguments <code>start</code> and <code>end</code> (which may be <code>null</code> or
+     * <code>Py.None</code> ) are interpreted as in slice notation.
      *
      * @param sub sequence to find (of a type viewable as a byte sequence)
      * @param start of slice to search
      * @param end of slice to search
-     * @return index of start of ocurrence of sub within this byte array
+     * @return count of occurrences of sub within this byte array
      */
-    public int find(PyObject sub, PyObject start, PyObject end) {
-        return basebytes_find(sub, start, end);
+    public int count(PyObject sub, PyObject start, PyObject end) {
+        return basebytes_count(sub, start, end);
     }
 
-    @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.bytearray_find_doc)
-    final int bytearray_find(PyObject sub, PyObject start, PyObject end) {
-        return basebytes_find(sub, start, end);
+    @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.bytearray_count_doc)
+    final int bytearray_count(PyObject sub, PyObject start, PyObject end) {
+        return basebytes_count(sub, start, end);
     }
+
 
     /**
      * Append the elements in the argument sequence to the end of the array, equivalent to:
@@ -884,6 +898,51 @@ public class PyByteArray extends BaseBytes {
         // Use the general method, assigning to the crack at the end of the array.
         // Note this deals with all legitimate PyObject types and the case o==this.
         setslice(size, size, 1, o);
+    }
+
+    /**
+     * Implementation of Python <code>find(sub)</code>. Return the lowest index in the byte array
+     * where byte sequence <code>sub</code> is found. Return -1 if <code>sub</code> is not found.
+     *
+     * @param sub sequence to find (of a type viewable as a byte sequence)
+     * @return index of start of occurrence of sub within this byte array
+     */
+    public int find(PyObject sub) {
+        return basebytes_find(sub, null, null);
+    }
+
+    /**
+     * Implementation of Python <code>find( sub [, start ] )</code>. Return the lowest index in the
+     * byte array where byte sequence <code>sub</code> is found, such that <code>sub</code> is
+     * contained in the slice <code>[start:]</code>. Return -1 if <code>sub</code> is not found.
+     *
+     * @param sub sequence to find (of a type viewable as a byte sequence)
+     * @param start of slice to search
+     * @return index of start of occurrence of sub within this byte array
+     */
+    public int find(PyObject sub, PyObject start) {
+        return basebytes_find(sub, start, null);
+    }
+
+    /**
+     * Implementation of Python <code>find( sub [, start [, end ]] )</code>. Return the lowest index
+     * in the byte array where byte sequence <code>sub</code> is found, such that <code>sub</code>
+     * is contained in the slice <code>[start:end]</code>. Arguments <code>start</code> and
+     * <code>end</code> (which may be <code>null</code> or <code>Py.None</code> ) are interpreted as
+     * in slice notation. Return -1 if <code>sub</code> is not found.
+     *
+     * @param sub sequence to find (of a type viewable as a byte sequence)
+     * @param start of slice to search
+     * @param end of slice to search
+     * @return index of start of occurrence of sub within this byte array
+     */
+    public int find(PyObject sub, PyObject start, PyObject end) {
+        return basebytes_find(sub, start, end);
+    }
+
+    @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.bytearray_find_doc)
+    final int bytearray_find(PyObject sub, PyObject start, PyObject end) {
+        return basebytes_find(sub, start, end);
     }
 
     @Override
@@ -906,6 +965,56 @@ public class PyByteArray extends BaseBytes {
             throw ConcatenationTypeError(oType, TYPE);
         }
         return this;
+    }
+
+    /**
+     * Implementation of Python <code>index(sub)</code>.
+     * Like {@link #find(PyObject)}
+     * but raise {@link Py#ValueError} if <code>sub</code> is not found.
+     *
+     * @param sub sequence to find (of a type viewable as a byte sequence)
+     * @return index of start of occurrence of sub within this byte array
+     */
+    public int index(PyObject sub) {
+        return bytearray_index(sub, null, null);
+    }
+
+    /**
+     * Implementation of Python <code>index( sub [, start ] )</code>.
+     * Like {@link #find(PyObject,PyObject)}
+     * but raise {@link Py#ValueError} if <code>sub</code> is not found.
+     *
+     * @param sub sequence to find (of a type viewable as a byte sequence)
+     * @param start of slice to search
+     * @return index of start of occurrence of sub within this byte array
+     */
+    public int index(PyObject sub, PyObject start) {
+        return bytearray_index(sub, start, null);
+    }
+
+    /**
+     * Implementation of Python <code>index( sub [, start [, end ]] )</code>.
+     * Like {@link #find(PyObject,PyObject,PyObject)}
+     * but raise {@link Py#ValueError} if <code>sub</code> is not found.
+     *
+     * @param sub sequence to find (of a type viewable as a byte sequence)
+     * @param start of slice to search
+     * @param end of slice to search
+     * @return index of start of occurrence of sub within this byte array
+     * @throws PyException ValueError if sub not found in byte array
+     */
+    public int index(PyObject sub, PyObject start, PyObject end) throws PyException {
+        return bytearray_index(sub, start, end);
+    }
+
+    @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.bytearray_index_doc)
+    final int bytearray_index(PyObject sub, PyObject start, PyObject end) {
+        // Like find but raise a ValueError if not found
+        int pos = basebytes_find(sub, start, end);
+        if (pos<0) {
+            throw Py.ValueError("subsection not found");
+        }
+        return pos;
     }
 
     /**
@@ -934,6 +1043,32 @@ public class PyByteArray extends BaseBytes {
     @ExposedMethod(doc = BuiltinDocs.bytearray___reduce___doc)
     final PyObject bytearray___reduce__() {
         return basebytes___reduce__();
+    }
+
+
+    /**
+     * Remove the first occurrence of an element from the array, equivalent to:
+     * <code>del s[s.index(x)]</code>, although x must be convertable to a single byte value. The
+     * argument must be a PyInteger, PyLong or string of length 1.
+     *
+     * @param o the value to remove from the list.
+     * @throws PyException ValueError if o not found in bytearray
+     */
+    public void remove(PyObject o) throws PyException {
+        bytearray_append(o);
+    }
+
+    @ExposedMethod(doc = BuiltinDocs.bytearray_remove_doc)
+    final synchronized void bytearray_remove(PyObject o) {
+        // Check and extract the value, and search for it.
+        byte b = byteCheck(o);
+        int pos = index(b);
+        // Not finding it is an error
+        if (pos < 0) {
+            throw Py.ValueError("value not found in bytearray");
+        } else {
+            storageDelete(pos, 1);
+        }
     }
 
     /**
@@ -975,7 +1110,7 @@ public class PyByteArray extends BaseBytes {
      * where byte sequence <code>sub</code> is found. Return -1 if <code>sub</code> is not found.
      *
      * @param sub sequence to find (of a type viewable as a byte sequence)
-     * @return index of start of rightmost ocurrence of sub within this byte array
+     * @return index of start of rightmost occurrence of sub within this byte array
      */
     public int rfind(PyObject sub) {
         return basebytes_rfind(sub, null, null);
@@ -988,7 +1123,7 @@ public class PyByteArray extends BaseBytes {
      *
      * @param sub sequence to find (of a type viewable as a byte sequence)
      * @param start of slice to search
-     * @return index of start of rightmost ocurrence of sub within this byte array
+     * @return index of start of rightmost occurrence of sub within this byte array
      */
     public int rfind(PyObject sub, PyObject start) {
         return basebytes_rfind(sub, start, null);
@@ -1005,7 +1140,7 @@ public class PyByteArray extends BaseBytes {
      * @param sub sequence to find (of a type viewable as a byte sequence)
      * @param start of slice to search
      * @param end of slice to search
-     * @return index of start of rightmost ocurrence of sub within this byte array
+     * @return index of start of rightmost occurrence of sub within this byte array
      */
     public int rfind(PyObject sub, PyObject start, PyObject end) {
         return basebytes_rfind(sub, start, end);
@@ -1014,6 +1149,55 @@ public class PyByteArray extends BaseBytes {
     @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.bytearray_rfind_doc)
     final int bytearray_rfind(PyObject sub, PyObject start, PyObject end) {
         return basebytes_rfind(sub, start, end);
+    }
+
+    /**
+     * Implementation of Python <code>rindex(sub)</code>.
+     * Like {@link #find(PyObject)}
+     * but raise {@link Py#ValueError} if <code>sub</code> is not found.
+     *
+     * @param sub sequence to find (of a type viewable as a byte sequence)
+     * @return index of start of occurrence of sub within this byte array
+     */
+    public int rindex(PyObject sub) {
+        return bytearray_rindex(sub, null, null);
+    }
+
+    /**
+     * Implementation of Python <code>rindex( sub [, start ] )</code>.
+     * Like {@link #find(PyObject,PyObject)}
+     * but raise {@link Py#ValueError} if <code>sub</code> is not found.
+     *
+     * @param sub sequence to find (of a type viewable as a byte sequence)
+     * @param start of slice to search
+     * @return index of start of occurrence of sub within this byte array
+     */
+    public int rindex(PyObject sub, PyObject start) {
+        return bytearray_rindex(sub, start, null);
+    }
+
+    /**
+     * Implementation of Python <code>rindex( sub [, start [, end ]] )</code>.
+     * Like {@link #find(PyObject,PyObject,PyObject)}
+     * but raise {@link Py#ValueError} if <code>sub</code> is not found.
+     *
+     * @param sub sequence to find (of a type viewable as a byte sequence)
+     * @param start of slice to search
+     * @param end of slice to search
+     * @return index of start of occurrence of sub within this byte array
+     */
+    public int rindex(PyObject sub, PyObject start, PyObject end) {
+        return bytearray_rindex(sub, start, end);
+    }
+
+    @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.bytearray_rindex_doc)
+    final int bytearray_rindex(PyObject sub, PyObject start, PyObject end) {
+        // Like rfind but raise a ValueError if not found
+        int pos = basebytes_rfind(sub, start, end);
+        if (pos<0) {
+            throw Py.ValueError("subsection not found");
+        }
+        return pos;
     }
 
 // Based on PyList and not yet properly implemented.

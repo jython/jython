@@ -1431,20 +1431,24 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
 
     /**
      * Search for the target in this byte array, returning true if found and false if not. The
-     * target must be compatible with the Python byte range.
+     * target must either convertible to an integer in the Python byte range, or capable of being
+     * viewed as a byte array.
      *
      * @param target byte value to search for
      * @return true iff found
      */
     protected final synchronized boolean basebytes___contains__(PyObject target) {
-        byte t = byteCheck(target);
-        int jmax = offset + size;
-        for (int j = offset; j < jmax; j++) {
-            if (storage[j] == t) {
-                return true;
-            }
+        if (target.isIndex()) {
+            // Caller is treating this as an array of integers, so the value has to be in range.
+            byte b = byteCheck(target.asIndex());
+            return index(b) >= 0;
+        } else {
+            // Caller is treating this as a byte-string and looking for substring 'target'
+            View targetView = getViewOrError(target);
+            Finder finder = new Finder(targetView);
+            finder.setText(this);
+            return finder.nextIndex() >= 0;
         }
-        return false;
     }
 
     /**
@@ -1570,6 +1574,23 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
      * of the buffer API and C memcpy(), we use View.copyTo. The logic is much the same, however,
      * even down to variable names.
      */
+
+    /**
+     * The very simplest kind of find operation: return the index in the byte array of the first
+     * occurrence of the byte value
+     *
+     * @param b byte to search for
+     * @return index in the byte array (0..size-1) or -1 if not found
+     */
+    protected int index(byte b) {
+        int limit = offset + size;
+        for (int p = offset; p < limit; p++) {
+            if (storage[p] == b) {
+                return p - offset;
+            }
+        }
+        return -1;
+    }
 
     /**
      * This class implements the Boyer-Moore-Horspool Algorithm for findind a pattern in text,
@@ -1921,6 +1942,29 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
     }
 
     /**
+     * Ready-to-expose implementation of Python <code>count( sub [, start [, end ]] )</code>.
+     *  Return
+     * the number of non-overlapping occurrences of <code>sub</code> in the range [start, end].
+     * Optional arguments <code>start</code> and <code>end</code> (which may be <code>null</code> or
+     * <code>Py.None</code> ) are interpreted as in slice notation.
+     *
+     * @param sub bytes to find
+     * @param ostart of slice to search
+     * @param oend of slice to search
+     * @return count of occurrences of sub within this byte array
+     */
+    final int basebytes_count(PyObject sub, PyObject ostart, PyObject oend) {
+        Finder finder = new Finder(getViewOrError(sub));
+
+        // Convert [start:end] to integers
+        PySlice s = new PySlice(ostart, oend, null);
+        int[] index = s.indicesEx(size());  // [ start, end, 1, end-start ]
+
+        // Make this slice the thing we count within.
+        return finder.count(storage, offset + index[0], index[3]);
+    }
+
+    /**
      * Ready-to-expose implementation of Python <code>find( sub [, start [, end ]] )</code>. Return
      * the lowest index in the byte array where byte sequence <code>sub</code> is found, such that
      * <code>sub</code> is contained in the slice <code>[start:end]</code>. Arguments
@@ -1931,7 +1975,7 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
      * @param sub bytes to find
      * @param ostart of slice to search
      * @param oend of slice to search
-     * @return index of start of ocurrence of sub within this byte array
+     * @return index of start of occurrence of sub within this byte array
      */
     final int basebytes_find(PyObject sub, PyObject ostart, PyObject oend) {
         Finder finder = new Finder(getViewOrError(sub));
@@ -1949,7 +1993,7 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
      * @param sub bytes to find
      * @param ostart of slice to search
      * @param oend of slice to search
-     * @return index of start of ocurrence of sub within this byte array
+     * @return index of start of occurrence of sub within this byte array
      */
     final int basebytes_rfind(PyObject sub, PyObject ostart, PyObject oend) {
         Finder finder = new ReverseFinder(getViewOrError(sub));
@@ -1964,7 +2008,7 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
      * @param finder for the bytes to find, sometime forwards, sometime backwards
      * @param ostart of slice to search
      * @param oend of slice to search
-     * @return index of start of ocurrence of sub within this byte array
+     * @return index of start of occurrence of sub within this byte array
      */
     private final int find(Finder finder, PyObject ostart, PyObject oend) {
 
