@@ -213,7 +213,7 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
      * ============================================================================================
      *
      * Methods here help subclasses set the initial state. They are designed with bytearray in mind,
-     * but note that from Python 3, bytes() has the same set of calls and behaviours, although in
+     * but note that from Python 3, bytes() has the same set of calls and behaviours. In
      * Peterson's "sort of backport" to Python 2.x, bytes is effectively an alias for str and it
      * shows.
      */
@@ -306,7 +306,7 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
     }
 
     /**
-     * Helper for {@linkplain #setslice(int, int, int, PyObject)}, for <code>__new__</code> and
+     * Helper for {@link #setslice(int, int, int, PyObject)}, for <code>__new__</code> and
      * <code>__init__</code> and the Java API constructor from a text string with the specified
      * encoding in subclasses. This method thinly wraps a call to the codecs module and deals with
      * checking for PyUnicode (where the encoding argument is mandatory).
@@ -511,7 +511,7 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
             Fragment curr = null;
 
             // Allocate series of fragments as needed, while the iterator runs to completion
-            //
+
             for (PyObject value : iter) {
                 if (curr == null) {
                     // Need a new Fragment
@@ -738,8 +738,9 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
         public View slice(PyObject start, PyObject end);
 
         /**
-         * Copy the bytes of this view to the specified position in a destination array.
-         * All the bytes of the View are copied.
+         * Copy the bytes of this view to the specified position in a destination array. All the
+         * bytes of the View are copied.
+         *
          * @param dest destination array
          * @param destPos index in the destination at which this.byteAt(0) is written
          * @throws ArrayIndexOutOfBoundsException if the destination is too small
@@ -1235,7 +1236,6 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
 
     }
 
-
     /**
      * Comparison function between a byte array and a byte-oriented View of some other object, such
      * as a String, returning 1, 0 or -1 as a>b, a==b, or a&lt;b respectively. The comparison is by
@@ -1314,7 +1314,6 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
         }
     }
 
-
     /**
      * Fail-fast comparison function between byte array types and any other object, for when the
      * test is only for equality. The "rich comparison" operators <code>__eq__</code> and
@@ -1349,7 +1348,6 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
             }
         }
     }
-
 
     /**
      * Implementation of __eq__ (equality) operator, capable of comparison with another byte array
@@ -1665,6 +1663,12 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
         return basebytes___reduce__();
     }
 
+    /**
+     * Ready-to-expose implementation of Python __reduce__() method used in pickle (persistence) of
+     * Python objects.
+     *
+     * @return required tuple of type, arguments needed by init, and any user-added attributes.
+     */
     final PyTuple basebytes___reduce__() {
         PyUnicode encoded = new PyUnicode(this.asEncodedString());
         PyObject args = new PyTuple(encoded, getPickleEncoding());
@@ -1814,7 +1818,7 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
 
             /*
              * We defer computing the table from construction to this point mostly because
-             * calculateSkipTable() may be overridden.
+             * calculateSkipTable() may be overridden, and we want to use the right one.
              */
             if (pattern.size() > 1 && skipTable == null) {
                 skipTable = calculateSkipTable();
@@ -1963,6 +1967,10 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
         /**
          * Mask defining how many of the bits of each byte are used when looking up the skip, used
          * like: <code>skip = skipTable[MASK & currentByte]</code>.
+         * <p>
+         * Note that the way this is written at the moment, if <code>MASK</code> is different from
+         * <code>super.MASK</code> <code>calculateSkipTable()</code> and <code>nextIndex()</code>
+         * must both be overridden consistently to use the local definition.
          */
         private static final byte MASK = 0x1f;
 
@@ -2063,8 +2071,7 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
     }
 
     /**
-     * Ready-to-expose implementation of Python <code>count( sub [, start [, end ]] )</code>.
-     *  Return
+     * Ready-to-expose implementation of Python <code>count( sub [, start [, end ]] )</code>. Return
      * the number of non-overlapping occurrences of <code>sub</code> in the range [start, end].
      * Optional arguments <code>start</code> and <code>end</code> (which may be <code>null</code> or
      * <code>Py.None</code> ) are interpreted as in slice notation.
@@ -2108,7 +2115,7 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
      * the highest index in the byte array where byte sequence <code>sub</code> is found, such that
      * <code>sub</code> is contained in the slice <code>[start:end]</code>. Arguments
      * <code>start</code> and <code>end</code> (which may be <code>null</code> or
-     * <code>Py.None</code> ) are interpreted as in slice notation. Return -1 if <code>sub</code> is
+     * <code>Py.None</code>) are interpreted as in slice notation. Return -1 if <code>sub</code> is
      * not found.
      *
      * @param sub bytes to find
@@ -2484,9 +2491,6 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
      * Helper to implement {@link #repeat(int)}. Use something like:
      *
      * <pre>
-     *
-     *
-     *
      * &#064;Override
      * protected PyByteArray repeat(int count) {
      *     PyByteArray ret = new PyByteArray();
@@ -2609,8 +2613,6 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
     }
 
     /*
-     * @return
-     *
      * @see java.util.List#iterator()
      */
     public Iterator<PyInteger> iterator() {
@@ -2618,8 +2620,6 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
     }
 
     /*
-     * @return
-     *
      * @see java.util.List#toArray()
      */
     public Object[] toArray() {
@@ -2627,10 +2627,6 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
     }
 
     /*
-     * @param a
-     *
-     * @return
-     *
      * @see java.util.List#toArray(T[])
      */
     public <T> T[] toArray(T[] a) {
@@ -2638,10 +2634,6 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
     }
 
     /*
-     * @param o
-     *
-     * @return
-     *
      * @see java.util.List#add(java.lang.Object)
      */
     public boolean add(PyInteger o) {
@@ -2649,10 +2641,6 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
     }
 
     /*
-     * @param o
-     *
-     * @return
-     *
      * @see java.util.List#remove(java.lang.Object)
      */
     public boolean remove(Object o) {
@@ -2660,10 +2648,6 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
     }
 
     /*
-     * @param c
-     *
-     * @return
-     *
      * @see java.util.List#containsAll(java.util.Collection)
      */
     public boolean containsAll(Collection<?> c) {
@@ -2671,10 +2655,6 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
     }
 
     /*
-     * @param c
-     *
-     * @return
-     *
      * @see java.util.List#addAll(java.util.Collection)
      */
     public boolean addAll(Collection<? extends PyInteger> c) {
@@ -2682,12 +2662,6 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
     }
 
     /*
-     * @param index
-     *
-     * @param c
-     *
-     * @return
-     *
      * @see java.util.List#addAll(int, java.util.Collection)
      */
     public boolean addAll(int index, Collection<? extends PyInteger> c) {
@@ -2695,10 +2669,6 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
     }
 
     /*
-     * @param c
-     *
-     * @return
-     *
      * @see java.util.List#removeAll(java.util.Collection)
      */
     public boolean removeAll(Collection<?> c) {
@@ -2706,10 +2676,6 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
     }
 
     /*
-     * @param c
-     *
-     * @return
-     *
      * @see java.util.List#retainAll(java.util.Collection)
      */
     public boolean retainAll(Collection<?> c) {
@@ -2717,7 +2683,6 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
     }
 
     /*
-     *
      * @see java.util.List#clear()
      */
     public void clear() {
@@ -2725,10 +2690,6 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
     }
 
     /*
-     * @param o
-     *
-     * @return
-     *
      * @see java.util.List#equals(java.lang.Object)
      */
     public boolean equals(Object o) {
@@ -2736,8 +2697,6 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
     }
 
     /*
-     * @return
-     *
      * @see java.util.List#hashCode()
      */
     public int hashCode() {
@@ -2745,10 +2704,6 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
     }
 
     /*
-     * @param index
-     *
-     * @return
-     *
      * @see java.util.List#get(int)
      */
     public PyInteger get(int index) {
@@ -2756,12 +2711,6 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
     }
 
     /*
-     * @param index
-     *
-     * @param element
-     *
-     * @return
-     *
      * @see java.util.List#set(int, java.lang.Object)
      */
     public PyInteger set(int index, PyInteger element) {
@@ -2769,10 +2718,6 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
     }
 
     /*
-     * @param index
-     *
-     * @param element
-     *
      * @see java.util.List#add(int, java.lang.Object)
      */
     public void add(int index, PyInteger element) {
@@ -2780,10 +2725,6 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
     }
 
     /*
-     * @param index
-     *
-     * @return
-     *
      * @see java.util.List#remove(int)
      */
     public PyInteger remove(int index) {
@@ -2791,10 +2732,6 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
     }
 
     /*
-     * @param o
-     *
-     * @return
-     *
      * @see java.util.List#indexOf(java.lang.Object)
      */
     public int indexOf(Object o) {
@@ -2802,10 +2739,6 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
     }
 
     /*
-     * @param o
-     *
-     * @return
-     *
      * @see java.util.List#lastIndexOf(java.lang.Object)
      */
     public int lastIndexOf(Object o) {
@@ -2813,8 +2746,6 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
     }
 
     /*
-     * @return
-     *
      * @see java.util.List#listIterator()
      */
     public ListIterator<PyInteger> listIterator() {
@@ -2822,10 +2753,6 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
     }
 
     /*
-     * @param index
-     *
-     * @return
-     *
      * @see java.util.List#listIterator(int)
      */
     public ListIterator<PyInteger> listIterator(int index) {
@@ -2833,12 +2760,6 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
     }
 
     /*
-     * @param fromIndex
-     *
-     * @param toIndex
-     *
-     * @return
-     *
      * @see java.util.List#subList(int, int)
      */
     public List<PyInteger> subList(int fromIndex, int toIndex) {

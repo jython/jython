@@ -197,7 +197,6 @@ public class PyByteArray extends BaseBytes {
         init(arg);
     }
 
-
     /* ============================================================================================
      * API for org.python.core.PySequence
      * ============================================================================================
@@ -362,7 +361,6 @@ public class PyByteArray extends BaseBytes {
              * it isn't one, we get an exception about not being iterable, or about the values.
              */
             setslice(start, stop, step, value.asIterable());
-
         }
     }
 
@@ -437,30 +435,6 @@ public class PyByteArray extends BaseBytes {
     private void setslice(int start, int stop, int step, MemoryView value) throws PyException {
         // XXX Support memoryview once means of access to bytes is defined
         throw Py.NotImplementedError("memoryview not yet supported in bytearray");
-//        String format = value.get_format();
-//        boolean isBytes = format == null || "B".equals(format);
-//        if (value.get_ndim() != 1 || !isBytes) {
-//            throw Py.TypeError("memoryview value must be byte-oriented");
-//        } else {
-//            // Dimensions are given as a PyTuple (although only one)
-//            int len = value.get_shape().pyget(0).asInt();
-//            if (step == 1) {
-//                // Delete this[start:stop] and open a space of the right size
-//                storageReplace(start, stop - start, len);
-//                // System.arraycopy(value.storage, value.offset, storage, start
-//                // + offset, len);
-//            } else {
-//                // This is an extended slice which means we are replacing elements
-//                int n = sliceLength(start, stop, step);
-//                if (n != len) {
-//                    throw SliceSizeError("bytes", len, n);
-//                }
-//                // int no = n + value.offset;
-//                // for (int io = start + offset, jo = value.offset; jo < no; io += step, jo++) {
-//                // storage[io] = value.storage[jo]; // Assign this[i] = value[j]
-//                // }
-//            }
-//        }
     }
 
     /**
@@ -650,10 +624,11 @@ public class PyByteArray extends BaseBytes {
         PyObject errors = ap.getPyObjectByType(2, PyBaseString.TYPE, null);
 
         /*
-         * This whole method is modelled on CPython (see Objects/bytearrayobject.c : bytes_init())
-         * but reorganised somewhat to maximise re-use with the implementation of assignment to a
-         * slice, which essentially has to construct a bytearray from the right-hand side.
-         * Hopefully, it still tries the same things in the same order and fails in the same way.
+         * This method and the related init()s are modelled on CPython (see
+         * Objects/bytearrayobject.c : bytes_init()) but reorganised somewhat to maximise re-use
+         * with the implementation of assignment to a slice, which essentially has to construct a
+         * bytearray from the right-hand side. Hopefully, it still tries the same things in the same
+         * order and fails in the same way.
          */
 
         if (encoding != null || errors != null) {
@@ -783,7 +758,6 @@ public class PyByteArray extends BaseBytes {
         return sum;
     }
 
-
     /**
      * Returns the number of bytes actually allocated.
      */
@@ -834,11 +808,9 @@ public class PyByteArray extends BaseBytes {
         return basebytes_decode(args, keywords);
     }
 
-
     /**
-     * Implementation of Python <code>count(sub)</code>.
-     *  Return
-     * the number of non-overlapping occurrences of <code>sub</code> in this byte array.
+     * Implementation of Python <code>count(sub)</code>. Return the number of non-overlapping
+     * occurrences of <code>sub</code> in this byte array.
      *
      * @param sub sequence to find (of a type viewable as a byte sequence)
      * @return count of occurrences of sub within this byte array
@@ -848,9 +820,8 @@ public class PyByteArray extends BaseBytes {
     }
 
     /**
-     * Implementation of Python <code>count( sub [, start ] )</code>.
-     *  Return
-     * the number of non-overlapping occurrences of <code>sub</code> in the range [start:].
+     * Implementation of Python <code>count( sub [, start ] )</code>. Return the number of
+     * non-overlapping occurrences of <code>sub</code> in the range [start:].
      *
      * @param sub sequence to find (of a type viewable as a byte sequence)
      * @param start of slice to search
@@ -861,10 +832,9 @@ public class PyByteArray extends BaseBytes {
     }
 
     /**
-     * Implementation of Python <code>count( sub [, start [, end ]] )</code>.
-     *  Return
-     * the number of non-overlapping occurrences of <code>sub</code> in the range [start, end].
-     * Optional arguments <code>start</code> and <code>end</code> (which may be <code>null</code> or
+     * Implementation of Python <code>count( sub [, start [, end ]] )</code>. Return the number of
+     * non-overlapping occurrences of <code>sub</code> in the range [start, end]. Optional arguments
+     * <code>start</code> and <code>end</code> (which may be <code>null</code> or
      * <code>Py.None</code> ) are interpreted as in slice notation.
      *
      * @param sub sequence to find (of a type viewable as a byte sequence)
@@ -1022,9 +992,8 @@ public class PyByteArray extends BaseBytes {
     }
 
     /**
-     * Implementation of Python <code>index(sub)</code>.
-     * Like {@link #find(PyObject)}
-     * but raise {@link Py#ValueError} if <code>sub</code> is not found.
+     * Implementation of Python <code>index(sub)</code>. Like {@link #find(PyObject)} but raise
+     * {@link Py#ValueError} if <code>sub</code> is not found.
      *
      * @param sub sequence to find (of a type viewable as a byte sequence)
      * @return index of start of occurrence of sub within this byte array
@@ -1034,9 +1003,9 @@ public class PyByteArray extends BaseBytes {
     }
 
     /**
-     * Implementation of Python <code>index( sub [, start ] )</code>.
-     * Like {@link #find(PyObject,PyObject)}
-     * but raise {@link Py#ValueError} if <code>sub</code> is not found.
+     * Implementation of Python <code>index( sub [, start ] )</code>. Like
+     * {@link #find(PyObject,PyObject)} but raise {@link Py#ValueError} if <code>sub</code> is not
+     * found.
      *
      * @param sub sequence to find (of a type viewable as a byte sequence)
      * @param start of slice to search
@@ -1047,9 +1016,9 @@ public class PyByteArray extends BaseBytes {
     }
 
     /**
-     * Implementation of Python <code>index( sub [, start [, end ]] )</code>.
-     * Like {@link #find(PyObject,PyObject,PyObject)}
-     * but raise {@link Py#ValueError} if <code>sub</code> is not found.
+     * Implementation of Python <code>index( sub [, start [, end ]] )</code>. Like
+     * {@link #find(PyObject,PyObject,PyObject)} but raise {@link Py#ValueError} if <code>sub</code>
+     * is not found.
      *
      * @param sub sequence to find (of a type viewable as a byte sequence)
      * @param start of slice to search
@@ -1065,15 +1034,15 @@ public class PyByteArray extends BaseBytes {
     final int bytearray_index(PyObject sub, PyObject start, PyObject end) {
         // Like find but raise a ValueError if not found
         int pos = basebytes_find(sub, start, end);
-        if (pos<0) {
+        if (pos < 0) {
             throw Py.ValueError("subsection not found");
         }
         return pos;
     }
 
     /**
-     * Insert the argument element into the byte array at the specified index.
-     * Same as <code>s[index:index] = [o] if index &gt;= 0</code>.
+     * Insert the argument element into the byte array at the specified index. Same as
+     * <code>s[index:index] = [o] if index &gt;= 0</code>.
      *
      * @param index the position where the element will be inserted.
      * @param value the element to insert.
@@ -1088,7 +1057,6 @@ public class PyByteArray extends BaseBytes {
         pyinsert(boundToSequence(index.asIndex()), value);
     }
 
-
     @ExposedMethod(doc = BuiltinDocs.bytearray___len___doc)
     final int bytearray___len__() {
         return __len__();
@@ -1098,7 +1066,6 @@ public class PyByteArray extends BaseBytes {
     final PyObject bytearray___reduce__() {
         return basebytes___reduce__();
     }
-
 
     /**
      * Remove the first occurrence of an element from the array, equivalent to:
@@ -1206,9 +1173,8 @@ public class PyByteArray extends BaseBytes {
     }
 
     /**
-     * Implementation of Python <code>rindex(sub)</code>.
-     * Like {@link #find(PyObject)}
-     * but raise {@link Py#ValueError} if <code>sub</code> is not found.
+     * Implementation of Python <code>rindex(sub)</code>. Like {@link #find(PyObject)} but raise
+     * {@link Py#ValueError} if <code>sub</code> is not found.
      *
      * @param sub sequence to find (of a type viewable as a byte sequence)
      * @return index of start of occurrence of sub within this byte array
@@ -1218,9 +1184,9 @@ public class PyByteArray extends BaseBytes {
     }
 
     /**
-     * Implementation of Python <code>rindex( sub [, start ] )</code>.
-     * Like {@link #find(PyObject,PyObject)}
-     * but raise {@link Py#ValueError} if <code>sub</code> is not found.
+     * Implementation of Python <code>rindex( sub [, start ] )</code>. Like
+     * {@link #find(PyObject,PyObject)} but raise {@link Py#ValueError} if <code>sub</code> is not
+     * found.
      *
      * @param sub sequence to find (of a type viewable as a byte sequence)
      * @param start of slice to search
@@ -1231,9 +1197,9 @@ public class PyByteArray extends BaseBytes {
     }
 
     /**
-     * Implementation of Python <code>rindex( sub [, start [, end ]] )</code>.
-     * Like {@link #find(PyObject,PyObject,PyObject)}
-     * but raise {@link Py#ValueError} if <code>sub</code> is not found.
+     * Implementation of Python <code>rindex( sub [, start [, end ]] )</code>. Like
+     * {@link #find(PyObject,PyObject,PyObject)} but raise {@link Py#ValueError} if <code>sub</code>
+     * is not found.
      *
      * @param sub sequence to find (of a type viewable as a byte sequence)
      * @param start of slice to search
@@ -1248,7 +1214,7 @@ public class PyByteArray extends BaseBytes {
     final int bytearray_rindex(PyObject sub, PyObject start, PyObject end) {
         // Like rfind but raise a ValueError if not found
         int pos = basebytes_rfind(sub, start, end);
-        if (pos<0) {
+        if (pos < 0) {
             throw Py.ValueError("subsection not found");
         }
         return pos;
@@ -1309,114 +1275,11 @@ public class PyByteArray extends BaseBytes {
         return basebytes_starts_or_endswith(prefix, start, end, false);
     }
 
-// Based on PyList and not yet properly implemented.
-//
-//    @Override
-//    public PyObject __imul__(PyObject o) {
-//        return bytearray___imul__(o);
-//    }
-//
-//    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.bytearray___imul___doc)
-//    final synchronized PyObject bytearray___imul__(PyObject o) {
-//        if (!o.isIndex()) {
-//            return null;
-//        }
-//        int count = o.asIndex(Py.OverflowError);
-//
-//        int size = size();
-//        if (size == 0 || count == 1) {
-//            return this;
-//        }
-//
-//        if (count < 1) {
-//            clear();
-//            return this;
-//        }
-//
-//        if (size > Integer.MAX_VALUE / count) {
-//            throw Py.MemoryError("");
-//        }
-//
-//        int newSize = size * count;
-//        if (storage instanceof ArrayList) {
-//            ((ArrayList) storage).ensureCapacity(newSize);
-//        }
-//        List<PyObject> oldList = new ArrayList<PyObject>(storage);
-//        for (int i = 1; i < count; i++) {
-//            storage.addAll(oldList);
-//        }
-//        gListAllocatedStatus = storage.size(); // now omit?
-//        return this;
-//    }
-//
-//    @Override
-//    public PyObject __mul__(PyObject o) {
-//        return bytearray___mul__(o);
-//    }
-//
-//    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.bytearray___mul___doc)
-//    final synchronized PyObject bytearray___mul__(PyObject o) {
-//        if (!o.isIndex()) {
-//            return null;
-//        }
-//        return repeat(o.asIndex(Py.OverflowError));
-//    }
-//
-//    @Override
-//    public PyObject __rmul__(PyObject o) {
-//        return bytearray___rmul__(o);
-//    }
-//
-//    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.bytearray___rmul___doc)
-//    final synchronized PyObject bytearray___rmul__(PyObject o) {
-//        if (!o.isIndex()) {
-//            return null;
-//        }
-//        return repeat(o.asIndex(Py.OverflowError));
-//    }
-//
-//    @ExposedMethod(doc = BuiltinDocs.bytearray___contains___doc)
-//    final synchronized boolean bytearray___contains__(PyObject o) {
-//        return object___contains__(o);
-//    }
-//
-//    @ExposedMethod(doc = BuiltinDocs.bytearray___delitem___doc)
-//    final synchronized void bytearray___delitem__(PyObject index) {
-//        seq___delitem__(index);
-//    }
-//
     @ExposedMethod(doc = BuiltinDocs.bytearray___setitem___doc)
     final synchronized void bytearray___setitem__(PyObject o, PyObject def) {
         seq___setitem__(o, def);
     }
 
-//    @ExposedMethod(doc = BuiltinDocs.bytearray___getitem___doc)
-//    final synchronized PyObject bytearray___getitem__(PyObject o) {
-//        PyObject ret = seq___finditem__(o);
-//        if (ret == null) {
-//            throw Py.IndexError("index out of range: " + o);
-//        }
-//        return ret;
-//    }
-//
-//    @Override
-//    public PyObject __iter__() {
-//        return bytearray___iter__();
-//    }
-//
-//    @ExposedMethod(doc = BuiltinDocs.bytearray___iter___doc)
-//    public synchronized PyObject bytearray___iter__() {
-//        return new PyFastSequenceIter(this);
-//    }
-//
-//    @Override
-//    protected String unsupportedopMessage(String op, PyObject o2) {
-//        if (op.equals("+")) {
-//            return "can only concatenate storage (not \"{2}\") to storage";
-//        }
-//        return super.unsupportedopMessage(op, o2);
-//    }
-//
     @Override
     public String toString() {
         return bytearray_toString();
@@ -1424,7 +1287,7 @@ public class PyByteArray extends BaseBytes {
 
     @ExposedMethod(names = {"__repr__", "__str__"}, doc = BuiltinDocs.bytearray___repr___doc)
     final synchronized String bytearray_toString() {
-        return "bytearray(b'" + asEscapedString()  + "')";
+        return "bytearray(b'" + asEscapedString() + "')";
     }
 
     /*
